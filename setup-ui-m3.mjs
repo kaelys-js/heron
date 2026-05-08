@@ -7,8 +7,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const UI = "/Users/home/career-ops/ui";
-const CO = "/Users/home/career-ops";
+const UI = path.join(import.meta.dirname, 'ui');
+const CO = import.meta.dirname;
 
 // ---------- New career-ops modes ----------
 

@@ -9,7 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const UI = '/Users/home/career-ops/ui';
+const UI = path.join(import.meta.dirname, 'ui');
 
 const files = {
   // ---------- Tailwind config ----------
