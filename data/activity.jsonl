@@ -1,0 +1,133 @@
+{"id":"49f49a0ebeaf","ts":1778166683679,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"ea3e6dcf6a99","ts":1778166683679,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"50f8bf945327","ts":1778166683679,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"77918beb07d3","ts":1778166683688,"level":"warn","category":"api","source":"run","title":"[400] /api/run","message":"unknown task: BAD"}
+{"id":"46f13a238ef7","ts":1778166684876,"level":"error","category":"api","source":"agent-chat","title":"[500] /api/agent-chat","message":"ANTHROPIC_API_KEY not set; configure it in Settings","stack":"Error: ANTHROPIC_API_KEY not set; configure it in Settings\n    at chat (/Users/home/career-ops/ui/src/lib/server/ai.ts:36:16)\n    at eval (/Users/home/career-ops/ui/src/routes/api/agent-chat/+server.ts:36:52)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async eval (/Users/home/career-ops/ui/src/lib/server/api-helpers.ts:62:19)\n    at async render_endpoint (/Users/home/career-ops/ui/node_modules/.pnpm/@sveltejs+kit@2.59.1_@sveltejs+vite-plugin-svelte@7.1.1_svelte@5.55.5_vite@8.0.11_@type_814089d47074c562f69e5fb8ad52a37e/node_modules/@sveltejs/kit/src/runtime/server/endpoint.js?v=69939594:54:20)\n    at async resolve (/Users/home/career-ops/ui/node_modules/.pnpm/@sveltejs+kit@2.59.1_@sveltejs+vite-plugin-svelte@7.1.1_svelte@5.55.5_vite@8.0.11_@type_814089d47074c562f69e5fb8ad52a37e/node_modules/@sveltejs/kit/src/runtime/server/respond.js?v=69939594:520:17)\n    at async fn (/Users/home/career-ops/ui/node_modules/.pnpm/@sveltejs+kit@2.59.1_@sveltejs+vite-plugin-svelte@7.1.1_svelte@5.55.5_vite@8.0.11_@type_814089d47074c562f69e5fb8ad52a37e/node_modules/@sveltejs/kit/src/runtime/server/respond.js?v=69939594:379:12)\n    at async internal_respond (/Users/home/career-ops/ui/node_modules/.pnpm/@sveltejs+kit@2.59.1_@sveltejs+vite-plugin-svelte@7.1.1_svelte@5.55.5_vite@8.0.11_@type_814089d47074c562f69e5fb8ad52a37e/node_modules/@sveltejs/kit/src/runtime/server/respond.js?v=69939594:361:20)\n    at async file:///Users/home/career-ops/ui/node_modules/.pnpm/@sveltejs+kit@2.59.1_@sveltejs+vite-plugin-svelte@7.1.1_svelte@5.55.5_vite@8.0.11_@type_814089d47074c562f69e5fb8ad52a37e/node_modules/@sveltejs/kit/src/exports/vite/dev/index.js:558:22"}
+{"id":"27e78c8e4aa6","ts":1778166794928,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"db87300c661b","ts":1778166794929,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"69e932c50eba","ts":1778166794929,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"3d04ef4704e3","ts":1778167445292,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"3a2fe8412f9c","ts":1778167445293,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"15eb636283d0","ts":1778167445293,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"2da8529fb195","ts":1778167445324,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"65999e6d42d2","ts":1778167626496,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"c78c39cbd535","ts":1778167626497,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"5edb4d7ea3c5","ts":1778167626497,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"60876955f25a","ts":1778167626506,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"22297828887e","ts":1778167636549,"level":"info","category":"system","source":"autopilot","title":"Triggering Daily scan","message":"task=scan"}
+{"id":"52a60d5ab082","ts":1778167636551,"level":"info","category":"task","source":"scan","title":"Task started","message":"/Users/home/career-ops/.venv/bin/python scan-broad.py"}
+{"id":"aed5d95a449c","ts":1778167639531,"level":"warn","category":"task","source":"scan","title":"2026-05-07 08:27:19,526 - ERROR - JobSpy:Glassdoor - Glassdoor response status code 400"}
+{"id":"0dfd24069c64","ts":1778167639534,"level":"warn","category":"task","source":"scan","title":"2026-05-07 08:27:19,526 - ERROR - JobSpy:Glassdoor - Glassdoor: location not parsed"}
+{"id":"9917dcbed048","ts":1778167639769,"level":"warn","category":"task","source":"scan","title":"2026-05-07 08:27:19,768 - ERROR - JobSpy:ZipRecruiter - ZipRecruiter response status code 403 with response: {\"error_code\":\"forbidden aa\",\"error_message\":\"forbidden aa\",\"request_id\":\"CFRAY:9f813f84ae2a5fbe-IAD\",\"status_code\":403}"}
+{"id":"0ad803ac5695","ts":1778167649179,"level":"warn","category":"task","source":"scan","title":"2026-05-07 08:27:29,177 - INFO - JobSpy:Linkedin - finished scraping"}
+{"id":"794edc0be07b","ts":1778167649278,"level":"warn","category":"task","source":"scan","title":"2026-05-07 08:27:29,278 - ERROR - JobSpy:Glassdoor - Glassdoor response status code 400"}
+{"id":"34cbc169cb9b","ts":1778167649279,"level":"warn","category":"task","source":"scan","title":"2026-05-07 08:27:29,278 - ERROR - JobSpy:Glassdoor - Glassdoor: location not parsed"}
+{"id":"2877c525817f","ts":1778167649525,"level":"warn","category":"task","source":"scan","title":"2026-05-07 08:27:29,525 - ERROR - JobSpy:ZipRecruiter - ZipRecruiter response status code 403 with response: {\"error_code\":\"forbidden aa\",\"error_message\":\"forbidden aa\",\"request_id\":\"CFRAY:9f813fc1ca989943-IAD\",\"status_code\":403}"}
+{"id":"fb3cc543609b","ts":1778168003889,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"f499aa3c4e12","ts":1778168003892,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"569a516e61af","ts":1778168003893,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"ce683f567e8f","ts":1778168003930,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"8d0c05a29c2b","ts":1778168021795,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"0afa621b5be6","ts":1778168021797,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"51c21ea76a49","ts":1778168021797,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"8a608afe12e8","ts":1778168021832,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"d809a0a32ad5","ts":1778168027768,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"fe5c0a3a3100","ts":1778168027770,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"2692ce7d21d5","ts":1778168027770,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"907ba28fed80","ts":1778168027804,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"f7b83964ab7e","ts":1778168212645,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"b6dfcf374975","ts":1778168212646,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"73ad5450d0de","ts":1778168212646,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"24a3b8d6fdb5","ts":1778168212655,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"7683f095c26c","ts":1778168242343,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"3742bce2d4b3","ts":1778168242343,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"59d80e6abd14","ts":1778168242343,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"4cae6d0f0db2","ts":1778168242352,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"ea5b18c0aa21","ts":1778168279245,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"6a26456ab050","ts":1778168279245,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"ef6788b544bd","ts":1778168279245,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"2cdf9e8e448c","ts":1778168279253,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"54a9d6578d82","ts":1778168740243,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"3f56b80c12e6","ts":1778168740243,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"ca26f679d716","ts":1778168740244,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"c6ecec04f12b","ts":1778168740252,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"c0c6656b87bd","ts":1778169326514,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"390ab2e6c39f","ts":1778169326514,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"b5cc1f0bfd1a","ts":1778169326514,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"c0834beada20","ts":1778169326523,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"2f69f5262608","ts":1778169872872,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"d6d9bdcf0f9f","ts":1778169872873,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"bae467ce05ef","ts":1778169872873,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"903630f12938","ts":1778169872892,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"7fcdf7aa6a79","ts":1778169884514,"level":"success","category":"user","source":"profile","title":"Profile updated"}
+{"id":"81d325bacce2","ts":1778170230455,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"5edf6c6ab6a4","ts":1778170230455,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"006a8102f8b9","ts":1778170230455,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"3d6d36548ccc","ts":1778170230466,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"eb9cb2b891c1","ts":1778170239975,"level":"success","category":"application","source":"status","title":"Status changed to Scored","message":"https://example.com/test-add-job"}
+{"id":"d20f0938444d","ts":1778170584740,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"fa442fbcfe84","ts":1778170584740,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"ab58c214da5f","ts":1778170584740,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"ff4db77fcd54","ts":1778170584757,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"b1b66781df86","ts":1778171820232,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"fa755528c756","ts":1778171820233,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"656542bd1870","ts":1778171820233,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"e195516b8e6e","ts":1778171820242,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"99866bd516c8","ts":1778172181838,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"909dcb553465","ts":1778172181841,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"20528f10146a","ts":1778172181841,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"08a141b7b6b6","ts":1778172181845,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"78a695d2b2f8","ts":1778172214744,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"ebc81b4cac5b","ts":1778172214744,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"7caded490bc7","ts":1778172214744,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"a5a295cffc54","ts":1778172214754,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"4594cff15d15","ts":1778172223461,"level":"success","category":"application","source":"job-apply","title":"Marked Applied: Parloa","message":"Software Engineer, GTM"}
+{"id":"87bd5d40d8f0","ts":1778172223478,"level":"warn","category":"api","source":"job-apply","title":"[400] /api/job/64e61be77f96/apply","message":"Job URL is not on LinkedIn — only Easy Apply jobs can be auto-applied"}
+{"id":"c74745b75ee6","ts":1778174310910,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"9f2cd32043d2","ts":1778174310910,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"7f185b183e38","ts":1778174310910,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"cdfcac727c21","ts":1778174310921,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"556034a81545","ts":1778179823994,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"694e626b5c98","ts":1778179823994,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"ea7bf55125b7","ts":1778179823994,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"e06b704449bc","ts":1778179824003,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"a470098b80bd","ts":1778186740093,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"c6625aa7c74f","ts":1778186740093,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"dd409f7f9aa2","ts":1778186740093,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"400a507f71a4","ts":1778186740102,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"c19a838788d7","ts":1778187803109,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"9dd0d615e7d4","ts":1778187803117,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"1c68f2a4b132","ts":1778187803123,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"21505e903edb","ts":1778187803156,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"85ab98f53c07","ts":1778187833063,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"619dafbf2c88","ts":1778187833064,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"b43734a9433a","ts":1778187833064,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"128da318f55b","ts":1778187833069,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"fe899a09d704","ts":1778189697192,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"28f07144dcbe","ts":1778189697199,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"f00f07d08c77","ts":1778189697203,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"54a5078a1db2","ts":1778189697231,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"c8b5eb490c60","ts":1778189714977,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"34cac42f9d0e","ts":1778189714978,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"ec7aef1a231e","ts":1778189714978,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"35a10d78e337","ts":1778189714980,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"e01b6f0fd79e","ts":1778189729967,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"80bf27e94f63","ts":1778189729967,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"7c0edfea5587","ts":1778189729968,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"e4dc41592571","ts":1778189729981,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"348a7b432c43","ts":1778189745010,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"caf0b6acc9a6","ts":1778189745011,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"7a9aa557744a","ts":1778189745011,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"7d5d46b7623c","ts":1778189745017,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"2c19df3fe634","ts":1778189796365,"level":"info","category":"system","source":"boot","title":"Server started"}
+{"id":"8b629826f5d2","ts":1778189796366,"level":"warn","category":"system","source":"boot","title":"Gemini API key not set","message":"Add a key in Settings to enable first-pass scoring.","link":"/settings"}
+{"id":"d0da98ee5ffb","ts":1778189796366,"level":"success","category":"system","source":"boot","title":"Ready","message":"Pipeline + scores already populated"}
+{"id":"562d4f7fbaf6","ts":1778189796373,"level":"info","category":"system","source":"autopilot","title":"Scheduler started","message":"tick interval 30s"}
+{"id":"46687bc088e7","ts":1778192108303,"level":"error","category":"system","source":"server","title":"[500] /profile","message":"/Users/home/career-ops/ui/src/routes/profile/+page.svelte:310:8 `</Card.Content>` attempted to close an element that was not open\nhttps://svelte.dev/e/element_invalid_closing_tag"}
+{"id":"b9e48b939a36","ts":1778192130019,"level":"error","category":"system","source":"server","title":"[500] /profile","message":"/Users/home/career-ops/ui/src/routes/profile/+page.svelte:389:8 `</Card.Content>` attempted to close an element that was not open\nhttps://svelte.dev/e/element_invalid_closing_tag"}
+{"id":"c5c8edd73222","ts":1778192141878,"level":"error","category":"system","source":"server","title":"[500] /profile","message":"/Users/home/career-ops/ui/src/routes/profile/+page.svelte:389:8 `</Card.Content>` attempted to close an element that was not open\nhttps://svelte.dev/e/element_invalid_closing_tag"}
+{"id":"a6c242679122","ts":1778192150632,"level":"error","category":"system","source":"server","title":"[500] /profile","message":"/Users/home/career-ops/ui/src/routes/profile/+page.svelte:389:8 `</Card.Content>` attempted to close an element that was not open\nhttps://svelte.dev/e/element_invalid_closing_tag"}
+{"id":"0937cd46d381","ts":1778193616093,"level":"error","category":"system","source":"server","title":"[500] /profile","message":"/Users/home/career-ops/ui/src/lib/components/ProofPointEditor.svelte:156:29 Unexpected token\nhttps://svelte.dev/e/js_parse_error"}
+{"id":"aec3b222aa03","ts":1778193664626,"level":"error","category":"system","source":"server","title":"[500] /profile","message":"/Users/home/career-ops/ui/src/lib/components/ProofPointEditor.svelte:156:29 Unexpected token\nhttps://svelte.dev/e/js_parse_error"}
+{"id":"9d9a0acea127","ts":1778193688034,"level":"error","category":"system","source":"server","title":"[500] /profile","message":"/Users/home/career-ops/ui/src/lib/components/ProofPointEditor.svelte:156:29 Unexpected token\nhttps://svelte.dev/e/js_parse_error"}
+{"id":"819d4f8f79ab","ts":1778193688245,"level":"error","category":"system","source":"server","title":"[500] /profile","message":"/Users/home/career-ops/ui/src/lib/components/ProofPointEditor.svelte:156:29 Unexpected token\nhttps://svelte.dev/e/js_parse_error"}

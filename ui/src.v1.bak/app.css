@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { height: 100%; }
+body { @apply bg-bg text-ink font-sans antialiased; }
+* { box-sizing: border-box; }
+
+.score-badge { @apply px-1.5 py-0.5 rounded text-xs font-mono font-semibold; }
+.score-bad { @apply bg-bad/20 text-bad; }
+.score-warn { @apply bg-warn/20 text-warn; }
+.score-ok { @apply bg-ok/20 text-ok; }
+.score-na { @apply bg-line text-sub; }
+
+.bg-low { @apply bg-ok/10 text-ok border-ok/30; }
+.bg-medium { @apply bg-warn/10 text-warn border-warn/30; }
+.bg-high { @apply bg-bad/10 text-bad border-bad/30; }
+.bg-blocked { @apply bg-bad/30 text-bad border-bad/60; }
+
+.col { @apply min-w-[280px] w-[280px] flex-shrink-0 bg-panel/40 rounded border border-line h-full flex flex-col; }
+.col-head { @apply px-3 py-2 text-xs font-medium text-sub uppercase tracking-wide flex items-center gap-2 border-b border-line; }
+.col-body { @apply flex-1 overflow-y-auto p-2 space-y-2; }
+.card { @apply bg-panel rounded border border-line p-3 cursor-pointer hover:border-accent/50 hover:bg-panel/80 transition-colors; }
+.card-title { @apply text-sm font-medium text-ink leading-tight; }
+.card-meta { @apply text-xs text-sub mt-1; }

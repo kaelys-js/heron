@@ -1,0 +1,377 @@
+url	company	role	tier	reason
+https://job-boards.eu.greenhouse.io/parloa/jobs/4688953101	Parloa	Engineering Manager - Product Engineering	archetype	archetype mismatch: management role
+https://job-boards.eu.greenhouse.io/parloa/jobs/4694390101	Parloa	Forward Deployed Engineer, DevOps	archetype	archetype mismatch: forward deployed (client-facing, not core IC)
+https://boards.greenhouse.io/faire/jobs/8495303002?gh_jid=8495303002	Faire	Senior Engineering Manager	archetype	archetype mismatch: management role
+https://boards.greenhouse.io/faire/jobs/8449617002?gh_jid=8449617002	Faire	Senior Staff Machine Learning Platform Engineer	archetype	archetype mismatch: ML infra/platform (not Cole TS profile)
+https://job-boards.greenhouse.io/anthropic/jobs/5159608008	Anthropic	Engineering Manager, Agent Prompts & Evals	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5141377008	Anthropic	Engineering Manager, Cloud Inference AWS	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5068296008	Anthropic	Engineering Manager, Detection and Response	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/4741104008	Anthropic	Engineering Manager, GPU (ML Accelerator)	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/4741102008	Anthropic	Engineering Manager, Inference	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5155391008	Anthropic	Engineering Manager, Inference Routing and Performance	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5210631008	Anthropic	Engineering Manager, Marketplace	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5210629008	Anthropic	Engineering Manager, Passport	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5146363008	Anthropic	Engineering Manager, Product Monetization (Billing Platform)	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5103078008	Anthropic	Engineering Manager, Safeguards Data Infrastructure	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5140492008	Anthropic	Engineering Manager, Vertical AI Products (Multiple Roles)	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5186067008	Anthropic	Full-Stack Software Engineer, Reinforcement Learning	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/4980335008	Anthropic	GRC Engineering Manager	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5064817008	Anthropic	Head of Solutions Architects, Applied AI (Korea)	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5030680008	Anthropic	Infrastructure Engineer, Sandboxing	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/4964610008	Anthropic	Manager of Solutions Architecture, Applied AI (Industries)	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/4778843008	Anthropic	ML Infrastructure Engineer, Safeguards	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5098025008	Anthropic	Model Quality Software Engineer, Claude Code	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/4950664008	Anthropic	Partner Solutions Architect, Applied AI	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5197337008	Anthropic	Research Engineer, RL Infrastructure and Reliability (Knowledge Work)	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5206456008	Anthropic	Research Engineer, Search and Knowledge Post-Training	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/4595463008	Anthropic	Security Software Engineer, Detection & Response Platform	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5209776008	Anthropic	Security Software Engineer, Platform Integration	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5098565008	Anthropic	Senior Full Stack Engineer, Education	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5197714008	Anthropic	Senior Security Software Engineer, Linux Kernel Security - Nodes & Sensors	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5174743008	Anthropic	Senior Software Engineer, Full-stack	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/4641822008	Anthropic	Senior Software Engineer, Inference	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/4981828008	Anthropic	Senior+ Software Engineer, Research Tools	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5134895008	Anthropic	Senior Staff Software Engineer, API	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5172245008	Anthropic	Senior / Staff+ Software Engineer, Voice Platform	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5123039008	Anthropic	Software Engineer, Account Abuse	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5108982008	Anthropic	Software Engineer, Compute Efficiency	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5063007008	Anthropic	Software Engineer, Cybersecurity Products	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/4980420008	Anthropic	Software Engineer, Desktop	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5109273008	Anthropic	Software Engineer, Human Data Interface	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5191226008	Anthropic	Software Engineer, Research Data Platform	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/4951844008	Anthropic	Software Engineer, Safeguards	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5074908008	Anthropic	Software Engineer, Safeguards Infrastructure	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5083039008	Anthropic	Software Engineer, Sandboxing	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5025591008	Anthropic	Software Engineer, Sandboxing (Systems)	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/4673416008	Anthropic	Software Engineer, UI Platform	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5126080008	Anthropic	Solutions Architect, National Security	HARD STOP	HARD STOP: clearance-bound role per BG policy
+https://job-boards.greenhouse.io/anthropic/jobs/5152348008	Anthropic	Sr. Software Engineer, Inference	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5206978008	Anthropic	Staff Infrastructure Engineer, Cluster Infrastructure	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5126702008	Anthropic	Staff / Senior Software Engineer, Compute Capacity	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5101169008	Anthropic	Staff Software Engineer, AI Reliability Engineering	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5174755008	Anthropic	Staff+ Software Engineer, Backend	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5146298008	Anthropic	Staff Software Engineer, Billing Platform	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5168829008	Anthropic	Staff Software Engineer, Cloud Inference Safeguards	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5073998008	Anthropic	Staff Software Engineer, Continuous Integration	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5151069008	Anthropic	Staff+ Software Engineer, Databases	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5110511008	Anthropic	Staff+ Software Engineer, Developer Productivity	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5174747008	Anthropic	Staff+ Software Engineer, Full-stack	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5150472008	Anthropic	Staff Software Engineer, Inference	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5203868008	Anthropic	Staff Software Engineer, Node Infra	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5102440008	Anthropic	Staff+ Software Engineer, Observability	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5157847008	Anthropic	Staff+ Software Engineer, Platform	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5205704008	Anthropic	Staff+ Software Engineer, Public Sector	HARD STOP	HARD STOP: clearance-bound role per BG policy
+https://job-boards.greenhouse.io/anthropic/jobs/4915842008	Anthropic	Staff Software Engineer, Systems	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5113224008	Anthropic	Staff + Sr. Software Engineer, AI Reliability	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5107466008	Anthropic	Staff + Sr. Software Engineer, Cloud Inference	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/4951696008	Anthropic	Staff + Sr. Software Engineer, Inference	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5111745008	Anthropic	Staff + Sr. Software Engineer, Inference Deployment	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5026097008	Anthropic	UI Software Engineer, Claude.ai Consumer Product	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://jobs.ashbyhq.com/vapi/854a9bf5-e330-4afa-9c0f-38c3d6084808	Vapi	Member of Technical Staff, Forward Deployed	archetype	archetype mismatch: forward deployed (client-facing, not core IC)
+https://jobs.ashbyhq.com/deepgram/844ec2d9-4256-4be0-a6c6-78ebf1391a78	Deepgram	Solutions Architect (EST or PST)	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/deepgram/9cb09363-9b68-4957-869a-da70b95ad6bd	Deepgram	Solutions Architect - Europe	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/deepgram/64895340-1377-4b40-b182-1ec6b9644997	Deepgram	Solutions Architect - India	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/deepgram/4e87eb01-262c-4978-9a29-b8cdf09386df	Deepgram	Engineering Manager, Active Learning	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/deepgram/c270da71-66b3-4f9f-9ee1-773a062944d3	Deepgram	QA Engineering Manager	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/deepgram/0796cc37-96a7-4158-8a00-155962da275a	Deepgram	Backend Software Engineer - Active Learning Team	archetype	archetype mismatch: ML active learning team
+https://jobs.ashbyhq.com/deepgram/1ab00006-f525-4e2d-a1a9-5cab4264637b	Deepgram	Backend Engineer- Inference Services	archetype	archetype mismatch: inference/ML systems
+https://jobs.ashbyhq.com/deepgram/f424ef6a-c27f-4984-9e77-40a1ad16ae28	Deepgram	Site Reliability Engineer - AI & ML Infrastructure (Kubernetes, AWS & Terraform)	archetype	archetype mismatch: ML infra/platform (not Cole TS profile)
+https://jobs.ashbyhq.com/deepgram/5e26347c-f7c6-412c-93c8-2b162d546cc1	Deepgram	Senior Developer Advocate, Partner Ecosystem	archetype	archetype mismatch: DevRel/advocacy
+https://jobs.ashbyhq.com/deepgram/7ced4c1f-4126-44fe-9cf1-da427a9e4e3e	Deepgram	ML Ops Infrastructure Engineer	archetype	archetype mismatch: ML infra/platform (not Cole TS profile)
+https://jobs.ashbyhq.com/deepgram/d6558e6d-cefe-41f1-97aa-21e964cab0f4	Deepgram	Engineering Manager, Engine Team	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/deepgram/66aa70a5-7de9-4657-a710-6af3dbb4c262	Deepgram	Defense / Edge Tech Lead	HARD STOP	HARD STOP: clearance-bound role per BG policy
+https://jobs.ashbyhq.com/deepgram/be9609b4-b48d-4421-90e5-69049ad0d6ce	Deepgram	Solutions Architect (San Francisco, CA)	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/deepgram/e90eefc1-88ec-4d3c-948b-b21c57ef6b18	Deepgram	Engineering Manager, Console Team (Product-Led Growth Strategy)	archetype	archetype mismatch: management role
+https://job-boards.eu.greenhouse.io/polyai/jobs/4848010101	PolyAI	Developer Relations Manager	archetype	archetype mismatch: DevRel/advocacy
+https://job-boards.eu.greenhouse.io/polyai/jobs/4723162101	PolyAI	Engineering Manager - Runtime Team	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/airtable/jobs/8397665002	Airtable	Engineering Manager, Enterprise Product	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/airtable/jobs/8462421002	Airtable	Senior Partner Solutions Architect	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://job-boards.greenhouse.io/airtable/jobs/8487502002	Airtable	Senior Solutions Architect	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://job-boards.greenhouse.io/vercel/jobs/5701765004	Vercel	Engineering Manager, CDN	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/vercel/jobs/5806456004	Vercel	Manager, Solutions Architecture	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/vercel/jobs/5788954004	Vercel	Senior Software Engineer, Trust & Safety	archetype	archetype mismatch: T&S/abuse (heavy BG)
+https://job-boards.greenhouse.io/vercel/jobs/5796302004	Vercel	Solutions Architect	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://job-boards.greenhouse.io/vercel/jobs/5806749004	Vercel	Solutions Architect	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://job-boards.greenhouse.io/vercel/jobs/5461002004	Vercel	Sr. Engineering Manager, Platform	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/intercom/jobs/7818586	Intercom	Engineering Manager, AI Models Infrastructure	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/intercom/jobs/7749413	Intercom	Engineering Manager, Forward Deployed Engineering	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/intercom/jobs/7556413	Intercom	Forward Deployed Software Engineer	archetype	archetype mismatch: forward deployed (client-facing, not core IC)
+https://job-boards.greenhouse.io/intercom/jobs/7774295	Intercom	Full-Stack Marketer, Customer Advocacy	archetype	archetype mismatch: marketing role
+https://job-boards.greenhouse.io/intercom/jobs/7699745	Intercom	Senior Engineering Manager - Developer Experience Platform	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/intercom/jobs/7825849	Intercom	Senior Engineering Manager, Fin AI Agent	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/intercom/jobs/7610485	Intercom	Senior Engineering Manager - Team Billing	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/intercom/jobs/7601731	Intercom	Senior Security Engineering Manager	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/intercom/jobs/7262006	Intercom	Senior Solutions Architect	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/elevenlabs/6c4c57c1-ec72-42ba-af3a-eb7aebbde2e6	ElevenLabs	Forward Deployed Engineer - Software Engineer	archetype	archetype mismatch: forward deployed (client-facing, not core IC)
+https://jobs.ashbyhq.com/elevenlabs/7664e3c4-2336-4d1a-90cf-91d1268de10d	ElevenLabs	Forward Deployed Engineer - Software Engineer - Spain	archetype	archetype mismatch: forward deployed (client-facing, not core IC)
+https://jobs.ashbyhq.com/lindy/a5100dbe-d851-4544-bb4c-0428d77940eb	Lindy	Full Stack Software Engineer (Early Career)	hard_no	hard_no: junior/mid title
+https://jobs.ashbyhq.com/decagon/b295b323-3d01-4126-94c1-9fc7489ebdf0	Decagon	Engineering Manager, Agent Orchestration	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/decagon/a81a1a50-d497-4dff-8105-c7a890310396	Decagon	Solutions Architect - Infrastructure	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/decagon/14ce8c8d-8c58-456f-acd1-0e200f9bce20	Decagon	Staff Software Engineer, ML Infrastructure	archetype	archetype mismatch: ML infra/platform (not Cole TS profile)
+https://jobs.ashbyhq.com/decagon/63cd7634-f67f-4051-be45-515ed4f6a074	Decagon	Senior Software Engineer, ML Infrastructure	archetype	archetype mismatch: ML infra/platform (not Cole TS profile)
+https://jobs.ashbyhq.com/decagon/4ee23873-108d-4e1a-9a13-2cc048051ce5	Decagon	Engineering Manager, Platform Infrastructure	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/decagon/522cc0c1-67ce-4eaa-93cc-16a1a21a2566	Decagon	Engineering Manager, AI & Data Infrastructure	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/sierra/7053ca02-ee36-48cc-b331-9d795a966c4c	Sierra	Developer Relations Engineer	archetype	archetype mismatch: DevRel/advocacy
+https://jobs.ashbyhq.com/sierra/0ff928f7-cca0-4d2b-ae64-c07277ff5252	Sierra	Software Engineer, Agent (New Grad)	hard_no	hard_no: junior/mid title
+https://jobs.ashbyhq.com/sierra/a0b9444b-2354-4db3-8fe8-87892e2e282e	Sierra	Software Engineer, Mobile	hard_no	hard_no: native mobile (iOS/Android)
+https://jobs.ashbyhq.com/sierra/d9c0aa93-e35d-4752-9cef-4c39dcad5365	Sierra	Forward Deployed Infrastructure Engineer	archetype	archetype mismatch: forward deployed (client-facing, not core IC)
+https://job-boards.greenhouse.io/arizeai/jobs/5704428004	Arize AI	Developer Relations Engineer	archetype	archetype mismatch: DevRel/advocacy
+https://job-boards.greenhouse.io/arizeai/jobs/5704417004	Arize AI	Developer Relations Engineer	archetype	archetype mismatch: DevRel/advocacy
+https://job-boards.greenhouse.io/arizeai/jobs/5421310004	Arize AI	Engineering Manager - Product & Platform	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/runpod/jobs/5020164008	RunPod	Engineering Manager - Product & Platform Delivery	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/zapier/16e61b90-b31d-4328-b81c-ba543248640e	Zapier	Director of Engineering, Infrastructure	archetype	archetype mismatch: leadership role
+https://jobs.ashbyhq.com/zapier/d5c823f7-bd1f-4cbb-8763-fc5630e95003	Zapier	Sr. Engineering Manager (India Engineering Leader)	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/gleanwork/jobs/4012745005	Glean	Software Engineer, Machine Learning	archetype	archetype mismatch: ML engineering
+https://job-boards.greenhouse.io/gleanwork/jobs/4508312005	Glean	Solutions Architect	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://job-boards.greenhouse.io/gleanwork/jobs/4434258005	Glean	Solutions Architect (PST/EST Customer hours)	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://job-boards.greenhouse.io/gleanwork/jobs/4676087005	Glean	Solutions Engineering Manager	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/gleanwork/jobs/4686315005	Glean	Tech Lead Manager, Admin Console	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/gleanwork/jobs/4677083005	Glean	Tech Lead Manager, Agentic Runtime	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/gleanwork/jobs/4673278005	Glean	Tech Lead Manager, Apps & App Infrastructure	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/pinecone/4433b308-1ff4-4b5f-9184-810e5d9844f6	Pinecone	Staff Developer Advocate	archetype	archetype mismatch: DevRel/advocacy
+https://job-boards.eu.greenhouse.io/speechmatics/jobs/4838230101	Speechmatics	ML Platform Engineer	archetype	archetype mismatch: ML infra/platform (not Cole TS profile)
+https://job-boards.eu.greenhouse.io/speechmatics/jobs/4834548101	Speechmatics	Software Engineer - FutureVoices	archetype	archetype mismatch: voice/speech synthesis ML
+https://jobs.ashbyhq.com/n8n/2e152f2d-165f-4a25-89f1-7a9a7ab561e6	n8n	Senior Developer Advocate, US	archetype	archetype mismatch: DevRel/advocacy
+https://jobs.ashbyhq.com/n8n/f814f5ce-b615-413d-bbe0-b5786b3872e9	n8n	AI Engineering Manager | Remote | Europe	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/n8n/2c2023f0-cb2d-4c4b-9f03-9278f479a866	n8n	Engineering Manager, Core Platform | Remote | Europe	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/n8n/42c09bd6-1571-493d-b5af-f2de77f4f0ba	n8n	Director of Engineering | Remote | Europe	archetype	archetype mismatch: leadership role
+https://jobs.ashbyhq.com/cohere/31c47498-0ccf-4d23-a418-0d2c616ba909	Cohere	Member of Technical Staff, MLE (Korea)	archetype	archetype mismatch: AI-lab MTS ML/research role
+https://jobs.ashbyhq.com/cohere/6142564c-1e47-48f7-9519-2ce857c92ed9	Cohere	Senior Member of Technical Staff, MLE (Middle East)	archetype	archetype mismatch: AI-lab MTS ML/research role
+https://jobs.ashbyhq.com/cohere/3136a5a5-06fd-4c82-8b72-a43467e6b128	Cohere	Member of Technical Staff, Modeling	archetype	archetype mismatch: AI-lab MTS ML/research role
+https://jobs.ashbyhq.com/cohere/443368a3-6276-4b90-9671-27fed40fd6d2	Cohere	Senior Member of Technical Staff, Multimodal AI	archetype	archetype mismatch: AI lab ML research
+https://jobs.ashbyhq.com/cohere/bda8d35e-92c2-4b01-b4ed-e43fe0a49aba	Cohere	Member of Technical Staff, MLE (North)	archetype	archetype mismatch: AI-lab MTS ML/research role
+https://jobs.ashbyhq.com/cohere/d42f5fd4-1ffc-45b9-957c-f09862db6af6	Cohere	Member of Technical Staff, Training Performance Engineer	archetype	archetype mismatch: AI-lab MTS ML/research role
+https://jobs.ashbyhq.com/cohere/a13207e7-dc82-473f-8ca4-e832452fe8c3	Cohere	Member of Technical Staff, Training Infra Engineer	archetype	archetype mismatch: AI-lab MTS ML/research role
+https://jobs.ashbyhq.com/cohere/6d0f0753-ff22-46fd-90e9-08998914a8e7	Cohere	Solutions Architect - Public Sector	HARD STOP	HARD STOP: clearance-bound role per BG policy
+https://jobs.ashbyhq.com/cohere/554a9380-ab50-4338-88a9-c6b8ab19d92e	Cohere	Member of Technical Staff, Post-Training	archetype	archetype mismatch: ML pre/post-training
+https://jobs.ashbyhq.com/cohere/61703710-4379-42fd-a508-946f2a5fb6bc	Cohere	Member of Technical Staff, Data Analysis and Evaluation	archetype	archetype mismatch: AI-lab MTS ML/research role
+https://jobs.ashbyhq.com/cohere/859e2e47-02fb-4afe-bb8a-e83bf4d8c265	Cohere	Member of Technical Staff, Pre-Training Data	archetype	archetype mismatch: ML pre/post-training
+https://jobs.ashbyhq.com/cohere/ca446389-c793-459b-b07a-a3544defea04	Cohere	Solutions Architect	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/cohere/e9ef9420-88e5-403b-82e8-1c36fa010d4d	Cohere	Member of Technical Staff, Integration/RL Team (Research Engineer)	archetype	archetype mismatch: research role
+https://jobs.ashbyhq.com/cohere/24fe6a0b-6209-4ee0-b622-49c18636d99c	Cohere	Member of Technical Staff, Agents Modeling	archetype	archetype mismatch: agent modeling (ML research)
+https://jobs.ashbyhq.com/cohere/df93ec57-d51e-4466-93be-4878c5fda4da	Cohere	Software Engineer - Applied ML - UK Public Sector	HARD STOP	HARD STOP: clearance-bound role per BG policy
+https://jobs.ashbyhq.com/cohere/876a2d31-e6c3-497b-9c8e-0b7d111fb4cd	Cohere	Member of Technical Staff, MLE (UK/EU)	archetype	archetype mismatch: AI-lab MTS ML/research role
+https://jobs.ashbyhq.com/cohere/b9306620-a110-46b5-b4c4-7363e1d03a8d	Cohere	Member of Technical Staff - Sovereign AI	archetype	archetype mismatch: AI lab ML research
+https://jobs.ashbyhq.com/cohere/2a989030-6d14-4924-88c1-d878911e26fa	Cohere	Member of Technical Staff, Model Efficiency	archetype	archetype mismatch: ML modeling/evaluation
+https://jobs.ashbyhq.com/cohere/ef9b939d-da66-464c-a878-ef45616c0473	Cohere	Staff Software Engineer, GPU Infrastructure (HPC)	archetype	archetype mismatch: GPU/HPC infra
+https://jobs.ashbyhq.com/cohere/2df2da3c-fb69-4d4d-b3c9-077b3df2ba3d	Cohere	Member of Technical Staff, Synthetic Data	archetype	archetype mismatch: AI lab ML research
+https://jobs.ashbyhq.com/cohere/eb58bff6-645c-4434-9893-b34586d69be7	Cohere	Senior Solutions Architect - San Francisco	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/cohere/110ba167-4efd-43b7-85d2-3ff719a28b0f	Cohere	Member of Technical Staff, MLE	archetype	archetype mismatch: AI-lab MTS ML/research role
+https://jobs.ashbyhq.com/cohere/86b305e5-84fe-47ab-bc5c-b79a74a63194	Cohere	Member of Technical Staff, Senior/Staff MLE	archetype	archetype mismatch: AI-lab MTS ML/research role
+https://jobs.ashbyhq.com/cohere/41f23dad-9da2-451a-bd1e-a1800437cb64	Cohere	Staff Software Engineer, Inference Infrastructure	archetype	archetype mismatch: inference/ML systems
+https://jobs.ashbyhq.com/cohere/8b6696e1-f1c4-4010-bde9-3cec1340a2a6	Cohere	Site Reliability Engineer, Inference Infrastructure	archetype	archetype mismatch: inference/ML systems
+https://jobs.ashbyhq.com/cohere/a29a310d-074e-46f2-bdad-308d458d4011	Cohere	Member of Technical Staff, MLE [Singapore]	archetype	archetype mismatch: AI-lab MTS ML/research role
+https://jobs.ashbyhq.com/cohere/2166a40a-1e80-4966-9082-aa4640fc4ac5	Cohere	Engineering Manager, North	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/cohere/1f7cc5e6-5f31-40d8-ad49-fe22c98a3ea4	Cohere	Member of Technical Staff, Safety for Agents	archetype	archetype mismatch: AI-lab MTS ML/research role
+https://jobs.ashbyhq.com/cohere/9bdbb821-6536-4090-8faa-a2b04a70bbf1	Cohere	Engineering Manager, FDE Infrastructure (EMEA)	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/cohere/5806a521-8584-4bbe-b60a-49031b919251	Cohere	Lead Member of Technical Staff, Inference Infrastructure	archetype	archetype mismatch: inference/ML systems
+https://jobs.ashbyhq.com/cohere/7a420921-b7dc-4341-a134-6fe209615e86	Cohere	Engineering Manager, Agentic Platform	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/langchain/e1263bfe-b638-4019-b4d5-0aacca93b2b3	LangChain	Software Engineering Manager, AI Observability & Evals Platform (New York, NY)	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/langchain/e12d7176-8b9f-438a-8f3b-0cbbffab9c5c	LangChain	Solutions Architect (San Francisco)	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/langchain/33f6d721-f75f-4fcc-8df9-e2a13c018e1c	LangChain	Software Engineering Manager, AI Observability & Evals Platform (San Francisco, CA)	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/langchain/fc868832-3865-4f4a-8222-33422a7d3d96	LangChain	Solutions Architect (Amsterdam)	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/langchain/faeb56fd-e7d6-47d6-babe-e35315969206	LangChain	Solutions Architect (London)	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/langchain/f71210f9-12e1-4726-88b9-ebafa194d5b2	LangChain	Solutions Architect (NYC)	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/langchain/da7cbabd-ceed-4d7d-ae25-f226cac0c1c1	LangChain	Solutions Architect (Austin)	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/langchain/933a41a3-43ca-44de-a0ae-f541149151b7	LangChain	Solutions Architect (Dallas)	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/langchain/0a5dd30c-6da1-4095-bd96-b16f27eeb333	LangChain	Solutions Architect (Remote)	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://job-boards.greenhouse.io/later/jobs/8531688002	Later	ML Infrastructure Engineer	archetype	archetype mismatch: ML infra/platform (not Cole TS profile)
+https://job-boards.greenhouse.io/later/jobs/8531689002	Later	ML Infrastructure Engineer	archetype	archetype mismatch: ML infra/platform (not Cole TS profile)
+https://careers.hootsuite.com/job/?gh_jid=7784300	Hootsuite	Senior Solutions Architect	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/AlephAlpha/1963147c-dc27-416e-b432-065295733bef	Aleph Alpha	Senior AI Software Engineer - Model Evaluation (f/m/d)	archetype	archetype mismatch: ML modeling/evaluation
+https://job-boards.greenhouse.io/blackforestlabs/jobs/5125852008	Black Forest Labs	Developer Relations Engineer	archetype	archetype mismatch: DevRel/advocacy
+https://job-boards.greenhouse.io/blackforestlabs/jobs/4132217008	Black Forest Labs	Member of Technical Staff - Image / Video Generation	archetype	archetype mismatch: AI-lab MTS ML/research role
+https://job-boards.greenhouse.io/blackforestlabs/jobs/5193512008	Black Forest Labs	Member of Technical Staff - Post Training	archetype	archetype mismatch: ML pre/post-training
+https://job-boards.greenhouse.io/blackforestlabs/jobs/5193508008	Black Forest Labs	Member of Technical Staff - Pretraining	archetype	archetype mismatch: ML pre/post-training
+https://job-boards.greenhouse.io/blackforestlabs/jobs/5193513008	Black Forest Labs	Member of Technical Staff - VLM	archetype	archetype mismatch: AI lab ML research
+https://job-boards.greenhouse.io/blackforestlabs/jobs/4642947008	Black Forest Labs	Senior Solutions Architect	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://getyourguide.careers/jobs/7602318?gh_jid=7602318	GetYourGuide	Data Engineering Manager, Supply	archetype	archetype mismatch: management role
+https://getyourguide.careers/jobs/7774866?gh_jid=7774866	GetYourGuide	Engineering Manager, Activity Differentiation	archetype	archetype mismatch: management role
+https://getyourguide.careers/jobs/7422312?gh_jid=7422312	GetYourGuide	Engineering Manager, AI Platform	archetype	archetype mismatch: management role
+https://getyourguide.careers/jobs/7588385?gh_jid=7588385	GetYourGuide	Engineering Manager, User Profiles	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/contentful/jobs/7713339	Contentful	Engineering Manager - Workflows (f/m/d)	archetype	archetype mismatch: management role
+https://traderepublic.com/en-de/about?jobId=6539149003&gh_jid=6539149003	Trade Republic	Backend Engineer (Berlin)	HIGH BG	HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy)
+https://traderepublic.com/en-de/about?jobId=7718242003&gh_jid=7718242003	Trade Republic	Backend Engineer (Haskell)	HIGH BG	HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy)
+https://traderepublic.com/en-de/about?jobId=6327292003&gh_jid=6327292003	Trade Republic	Backend Engineer (London)	HIGH BG	HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy)
+https://traderepublic.com/en-de/about?jobId=6539038003&gh_jid=6539038003	Trade Republic	Backend Engineer (Paris)	HIGH BG	HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy)
+https://traderepublic.com/en-de/about?jobId=7685043003&gh_jid=7685043003	Trade Republic	Cloud Platform Tech Lead	HIGH BG	HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy)
+https://traderepublic.com/en-de/about?jobId=7685045003&gh_jid=7685045003	Trade Republic	Database Platform Tech Lead	HIGH BG	HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy)
+https://traderepublic.com/en-de/about?jobId=7685048003&gh_jid=7685048003	Trade Republic	Kubernetes Platform Tech Lead	HIGH BG	HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy)
+https://traderepublic.com/en-de/about?jobId=7685037003&gh_jid=7685037003	Trade Republic	Observability Tech Lead	HIGH BG	HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy)
+https://traderepublic.com/en-de/about?jobId=7685052003&gh_jid=7685052003	Trade Republic	Senior Kafka Platform Engineer	HIGH BG	HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy)
+https://traderepublic.com/en-de/about?jobId=6673504003&gh_jid=6673504003	Trade Republic	(Senior) Platform Engineer (Go)	HIGH BG	HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy)
+https://traderepublic.com/en-de/about?jobId=7685049003&gh_jid=7685049003	Trade Republic	Senior PostgreSQL Platform Engineer	HIGH BG	HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy)
+https://n26.com/en-eu/careers/positions/7883078?gh_jid=7883078	N26	Data Engineer - Platform Engineering	HIGH BG	HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy)
+https://n26.com/en-eu/careers/positions/7731929?gh_jid=7731929	N26	Engineering Manager - Customer Risk Lifecycle	HIGH BG	HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy)
+https://n26.com/en-eu/careers/positions/7841923?gh_jid=7841923	N26	Engineering Manager - Data Platform	HIGH BG	HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy)
+https://n26.com/en-eu/careers/positions/7686804?gh_jid=7686804	N26	Lead Backend Engineer - Assistance	HIGH BG	HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy)
+https://n26.com/en-eu/careers/positions/7811482?gh_jid=7811482	N26	Senior Backend Engineer	HIGH BG	HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy)
+https://n26.com/en-eu/careers/positions/7597686?gh_jid=7597686	N26	Senior Full-Stack Security Automation Engineer	HIGH BG	HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy)
+https://n26.com/en-eu/careers/positions/7405138?gh_jid=7405138	N26	Site Reliability Engineer - Observability	HIGH BG	HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy)
+https://n26.com/en-eu/careers/positions/7866309?gh_jid=7866309	N26	Site Reliability Engineer - Platform Engineering	HIGH BG	HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy)
+https://jobs.ashbyhq.com/lakera.ai/1429bdc6-3e78-4c24-b641-675e94684fc3	Lakera	Solutions Architect  (Zurich)	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://job-boards.greenhouse.io/celonis/jobs/7517493003?gh_jid=7517493003	Celonis	Engineering Manager - Celonis Process Management	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/celonis/jobs/7695047003?gh_jid=7695047003	Celonis	Senior Applied AI Solutions Architect - Process Intelligence	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://job-boards.greenhouse.io/celonis/jobs/7683570003?gh_jid=7683570003	Celonis	Senior Applied AI Solutions Architect - Process Intelligence (Public Sector)	HARD STOP	HARD STOP: clearance-bound role per BG policy
+https://job-boards.greenhouse.io/celonis/jobs/7677452003?gh_jid=7677452003	Celonis	Senior Solutions Architect	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/photoroom/1be71f55-fa9a-41db-9457-1323f4053795	Photoroom	Senior Software Engineer (Rust)	archetype	archetype mismatch: Rust specialist (Cole TS-first)
+https://careers.hellofresh.com/global/en/job/7807798?gh_jid=7807798	HelloFresh	Engineering Manager, Growth	archetype	archetype mismatch: management role
+https://www.scandit.com/careers/job-description/?gh_jid=7563159	Scandit	Engineering Manager, Platform	archetype	archetype mismatch: management role
+https://wayve.firststage.co/jobs?gh_jid=8431006002	Wayve	Engineering Manager, App SW	archetype	archetype mismatch: management role
+https://wayve.firststage.co/jobs?gh_jid=8435003002	Wayve	Senior Site Reliability Engineer, Vehicle SW	hard_no	hard_no: robotics/embedded/vehicle/research-labs low-level
+https://wayve.firststage.co/jobs?gh_jid=8423176002	Wayve	Software Engineer - OS & Kernel, Robot Software	hard_no	hard_no: robotics/embedded/vehicle/research-labs low-level
+https://wayve.firststage.co/jobs?gh_jid=8423839002	Wayve	Software Engineer - Sensor Systems, Robot Software	hard_no	hard_no: robotics/embedded/vehicle/research-labs low-level
+https://wayve.firststage.co/jobs?gh_jid=8482117002	Wayve	Software Engineer - System Performance, Robot Software	hard_no	hard_no: robotics/embedded/vehicle/research-labs low-level
+https://wayve.firststage.co/jobs?gh_jid=8389765002	Wayve	Software Engineer -System Performance, Robot Software	hard_no	hard_no: robotics/embedded/vehicle/research-labs low-level
+https://wayve.firststage.co/jobs?gh_jid=8519535002	Wayve	Tech Lead, ML Engineer - AV Product engineering	archetype	archetype mismatch: ML engineering
+https://wayve.firststage.co/jobs?gh_jid=8072846002	Wayve	Tech Lead, Wayve Labs	hard_no	hard_no: robotics/embedded/vehicle/research-labs low-level
+https://sumup.com/careers/positions/7475989002?gh_jid=7475989002	SumUp	Backend Engineer (Global Bank Tribe)	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8497866002?gh_jid=8497866002	SumUp	Backend engineer (Go)-  Payments Experience	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8427119002?gh_jid=8427119002	SumUp	Backend Engineer - POS	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8388972002?gh_jid=8388972002	SumUp	Backend Engineer - Transfers	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8213032002?gh_jid=8213032002	SumUp	Engineering Manager	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8249153002?gh_jid=8249153002	SumUp	Engineering Manager	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8448680002?gh_jid=8448680002	SumUp	Engineering Manager - Verification	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8482965002?gh_jid=8482965002	SumUp	Engineering Manager - Website	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8518456002?gh_jid=8518456002	SumUp	Fullstack Engineer	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8482959002?gh_jid=8482959002	SumUp	Fullstack Engineer (NodeJs)	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8468006002?gh_jid=8468006002	SumUp	Senior AI Backend Engineer	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/7480776002?gh_jid=7480776002	SumUp	Senior Backend Engineer	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8418083002?gh_jid=8418083002	SumUp	Senior Backend Engineer - Accounts	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8321240002?gh_jid=8321240002	SumUp	Senior Backend Engineer - Fiscalization	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8207403002?gh_jid=8207403002	SumUp	(Senior) Backend Engineer - Global Bank	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/6651430002?gh_jid=6651430002	SumUp	Senior Backend Engineer- Global Bank	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8396347002?gh_jid=8396347002	SumUp	Senior Backend Engineer - Golang	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8454657002?gh_jid=8454657002	SumUp	Senior Backend Engineer (Golang) - Bank	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8207386002?gh_jid=8207386002	SumUp	(Senior) Backend Engineer (Golang) - Global Bank	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8494767002?gh_jid=8494767002	SumUp	Senior Backend Engineer Go - Payments Reporting	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8383464002?gh_jid=8383464002	SumUp	Senior Backend Engineer - Transfers	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8482964002?gh_jid=8482964002	SumUp	Senior Database DevOps Engineer	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8520784002?gh_jid=8520784002	SumUp	(Senior/Mid) Software Engineer, Golang - Payments Platform	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8468000002?gh_jid=8468000002	SumUp	Senior Software Engineer	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8448678002?gh_jid=8448678002	SumUp	Software Engineer	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8520790002?gh_jid=8520790002	SumUp	Software Engineer (Golang) - Online Payments	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8468005002?gh_jid=8468005002	SumUp	Software Engineer II	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8420811002?gh_jid=8420811002	SumUp	Software Engineering Manager	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/isomorphiclabs/jobs/5837899004	Isomorphic Labs	Senior Software Engineer, ML Ops	archetype	archetype mismatch: ML infra/platform (not Cole TS profile)
+https://jobs.ashbyhq.com/synthesia/163816a3-11d0-4f20-b138-6629c73e3886	Synthesia	Solutions Architect	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/synthesia/b1f960fd-f07a-4788-8e5c-8a7c62c77fb2	Synthesia	Software Engineer, Machine Learning	archetype	archetype mismatch: ML engineering
+https://jobs.ashbyhq.com/synthesia/23026b5f-de00-4eb8-8817-a34183b0ee9a	Synthesia	Engineering Manager (Avatars)	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/synthesia/87fc1f29-e018-4ce7-aa5d-ece47f933061	Synthesia	Engineering Manager (Growth)	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/synthesia/cf24f2a4-8950-4c97-af0b-0518f2bba9cb	Synthesia	Senior Knowledge & Enablement Specialist	archetype	archetype mismatch: enablement specialist
+https://jobs.ashbyhq.com/synthesia/b13d30f4-45ea-4adf-9918-831551c27ed7	Synthesia	Knowledge & Enablement Specialist	archetype	archetype mismatch: enablement specialist
+https://jobs.ashbyhq.com/synthesia/e9c63d3d-13cc-4049-ae0a-5fef402c595b	Synthesia	Principal ML Platform Engineer	archetype	archetype mismatch: ML infra/platform (not Cole TS profile)
+https://jobs.ashbyhq.com/synthesia/dfe4614e-040d-4447-885b-8f0827428f6e	Synthesia	Staff Software Engineer, Voices	archetype	archetype mismatch: voice/speech synthesis ML
+https://jobs.ashbyhq.com/lovable/ac61dda2-bff0-4f22-adca-a48b0b2f560c	Lovable	Solutions Architect	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/legora/ed78f7f3-9183-4c78-9728-f135ce7cb112	Legora	Engineering Manager	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/perplexity/8a976851-9bef-4b07-8d36-567fa9540aef	Perplexity	Member of Technical Staff (AI Inference Engineer)	archetype	archetype mismatch: inference/ML systems
+https://jobs.ashbyhq.com/perplexity/aa511ea8-96e3-42ba-b28f-5e222170bcee	Perplexity	Member of Technical Staff (Forward Deployed Engineer, Applied AI)	archetype	archetype mismatch: forward deployed (client-facing, not core IC)
+https://jobs.ashbyhq.com/perplexity/0190699f-010b-44f2-8399-278899fef018	Perplexity	Member of Technical Staff (Machine Learning Engineer, Search)	archetype	archetype mismatch: ML engineering
+https://jobs.ashbyhq.com/perplexity/16bc54a6-83ab-4802-8a65-d88fbb7ebe03	Perplexity	Member of Technical Staff (AI Research Lead)	archetype	archetype mismatch: research role
+https://jobs.ashbyhq.com/perplexity/8fe61c73-0daf-4432-a47d-44714c1ef764	Perplexity	Member of Technical Staff (AI Researcher)	archetype	archetype mismatch: AI researcher
+https://jobs.ashbyhq.com/perplexity/a19f1774-5944-4981-b446-e3e40d0dd281	Perplexity	Member of Technical Staff (Rust Engineer, Search)	archetype	archetype mismatch: Rust specialist (Cole TS-first)
+https://jobs.ashbyhq.com/perplexity/30a09c0f-8715-447d-92b7-9f0adb772fd6	Perplexity	Member of Technical Staff (Golang Engineer, Search)	archetype	archetype mismatch: Go/Golang specialist (Cole TS-first)
+https://jobs.ashbyhq.com/perplexity/a805e14b-061d-469c-9136-b9e6a1855902	Perplexity	Member of Technical Staff (Product Data Scientist, Search Quality)	archetype	archetype mismatch: data engineering
+https://jobs.ashbyhq.com/perplexity/44181937-a55e-4c68-a2dc-9a86e0898498	Perplexity	Engineering Manager (Agents)	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/perplexity/9904db61-b8ca-4207-8f93-88ab6f0cd3fd	Perplexity	Member of Technical Staff (Model Behavior Architect)	archetype	archetype mismatch: ML modeling/evaluation
+https://jobs.ashbyhq.com/perplexity/2a87ccbf-82ef-4fc7-b1ed-4dd18b11baf9	Perplexity	Engineering Manager (AI Inference)	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/perplexity/08d510a4-c217-4967-a035-b5b8147e5c62	Perplexity	Engineering Manager (AI Research & Model Training)	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/perplexity/4615ca06-bea7-47e3-9e57-f5cee52b75e6	Perplexity	Member of Technical Staff (Data Scientist, Evals)	archetype	archetype mismatch: data engineering
+https://jobs.ashbyhq.com/perplexity/768efd34-3854-4c9b-9686-2a128ab35405	Perplexity	Member of Technical Staff (Data Scientist/Engineer, Online Metrics)	archetype	archetype mismatch: data engineering
+https://jobs.ashbyhq.com/perplexity/d680e788-14d3-43f6-8ce8-5df486ca32d0	Perplexity	Member of Technical Staff (Data Scientist)	archetype	archetype mismatch: data engineering
+https://jobs.ashbyhq.com/perplexity/fed8d2c4-9c82-43ad-a168-434146c759ff	Perplexity	Member of Technical Staff (Analytics Engineer)	archetype	archetype mismatch: data engineering
+https://jobs.ashbyhq.com/perplexity/e48aaf8c-24cd-4733-aa5b-752773467bfa	Perplexity	Member of Technical Staff (Secure Intelligence Institute)	archetype	archetype mismatch: AI-lab MTS ML/research role
+https://jobs.ashbyhq.com/perplexity/0359ebb4-7cbd-4641-a6d1-1127823e2fd5	Perplexity	Member of Technical Staff (AI Policy and Strategic Initiatives)	archetype	archetype mismatch: AI-lab MTS ML/research role
+https://jobs.ashbyhq.com/perplexity/69fd6a56-0050-44f7-9ed2-2c3a7320908d	Perplexity	Member of Technical Staff (Offensive Security Engineer)	archetype	archetype mismatch: offensive security (specialist)
+https://jobs.ashbyhq.com/perplexity/1a3df802-9238-4827-ab1f-12a9d1e4b81c	Perplexity	Member of Technical Staff (Machine Learning Research Engineer)	archetype	archetype mismatch: research role
+https://jobs.ashbyhq.com/claylabs/2eba1b88-d3d2-4c80-a506-b367d85110bd	Clay Labs	Engineering Manager	archetype	archetype mismatch: management role
+https://job-boards.eu.greenhouse.io/physicsx/jobs/4838226101	PhysicsX	DevOps Consultant	archetype	archetype mismatch: consultant role
+https://job-boards.eu.greenhouse.io/physicsx/jobs/4789344101	PhysicsX	Forward Deployed Applications - Senior Software Engineer	archetype	archetype mismatch: forward deployed (client-facing, not core IC)
+https://job-boards.eu.greenhouse.io/physicsx/jobs/4789348101	PhysicsX	Forward Deployed Applications - Software Engineer	archetype	archetype mismatch: forward deployed (client-facing, not core IC)
+https://job-boards.eu.greenhouse.io/physicsx/jobs/4652630101	PhysicsX	Machine Learning Software Engineer, Research	archetype	archetype mismatch: ML engineering
+https://job-boards.eu.greenhouse.io/physicsx/jobs/4750000101	PhysicsX	Principal Forward Deployed Software Engineer	archetype	archetype mismatch: forward deployed (client-facing, not core IC)
+https://job-boards.eu.greenhouse.io/physicsx/jobs/4789202101	PhysicsX	Principal Machine Learning Infrastructure Engineer	archetype	archetype mismatch: ML infra/platform (not Cole TS profile)
+https://job-boards.eu.greenhouse.io/physicsx/jobs/4839390101	PhysicsX	Senior Forward Deployed Software Engineer	archetype	archetype mismatch: forward deployed (client-facing, not core IC)
+https://job-boards.eu.greenhouse.io/physicsx/jobs/4851342101	PhysicsX	Staff Machine Learning Software Engineer, Research	archetype	archetype mismatch: ML engineering
+https://jobs.ashbyhq.com/workos/96a03aa5-c2da-4f10-a0d1-951160188f9b	WorkOS	Engineering Manager	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/workos/bb4e927b-5bbd-4704-954d-5b716c3ff1f3	WorkOS	Developer Relations	archetype	archetype mismatch: DevRel/advocacy
+https://jobs.ashbyhq.com/supabase/a1320bbf-bfae-49a8-a1b7-12eeccaf39ca	Supabase	Developer Relations Engineer (San Francisco, CA)	archetype	archetype mismatch: DevRel/advocacy
+https://jobs.ashbyhq.com/supabase/a5a5a35a-ff03-4777-bb05-6eaaf5e8a1a6	Supabase	Strategic Customer Solutions Architect (AMER)	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/supabase/e569b7f7-fa8f-4139-86f6-4f52b456882d	Supabase	Software Engineer (Go) - Auth Product	archetype	archetype mismatch: Go/Golang specialist (Cole TS-first)
+https://jobs.ashbyhq.com/supabase/77439e1c-e4eb-483c-aa8e-7686913886e3	Supabase	Software Engineer (Go) - Auth	archetype	archetype mismatch: Go/Golang specialist (Cole TS-first)
+https://jobs.ashbyhq.com/supabase/dc8187e4-c799-48a9-a408-ad8393eec39f	Supabase	Strategic Customer Solutions Architect (APAC)	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/supabase/64085bde-a5c2-4198-a2e1-d76f5a78f56f	Supabase	Strategic Customer Solutions Architect (EMEA)	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://job-boards.greenhouse.io/hightouch/jobs/5835944004	Hightouch	Engineering Manager, Destinations	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/hightouch/jobs/5775517004	Hightouch	Engineering Manager, Head of Machine Learning	archetype	archetype mismatch: management role
+https://job-boards.eu.greenhouse.io/amplemarket/jobs/4087603101	Amplemarket	Spontaneous Application - Engineering Manager	archetype	archetype mismatch: management role
+https://jobs.lever.co/pigment/641a1bbd-7750-4404-9066-ad0975b221eb	Pigment	Engineering Manager	archetype	archetype mismatch: management role
+https://jobs.lever.co/pigment/4c49978c-2aff-45cb-add9-921c8fc41b2b	Pigment	Engineering Manager - Front-end background	archetype	archetype mismatch: management role
+https://jobs.lever.co/pigment/3fbcf5f3-924f-4749-a90d-8394817c40be	Pigment	Solutions Architect - Paris	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.lever.co/pigment/fb659c21-bd62-4b67-ade9-1b7f55e7f1cf	Pigment	Solutions Architect - UK	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.lever.co/qonto/21bf0ae1-b5b1-428a-b1e6-2cdb9476987e	Qonto	Full-Stack Engineer - People Products (Freelance)	HIGH BG	HIGH BG risk: Qonto (AI lab / fintech / large public US tech per BG policy)
+https://jobs.lever.co/qonto/a2a71652-40f6-4c1a-8ae1-90127e0ce1cf	Qonto	Senior/Staff -  Backend Engineer - remote friendly	HIGH BG	HIGH BG risk: Qonto (AI lab / fintech / large public US tech per BG policy)
+https://jobs.lever.co/qonto/1fb7a10a-9377-47d4-99f6-e826880c3a6b	Qonto	Senior/Staff - Backend Engineer - remote friendly	HIGH BG	HIGH BG risk: Qonto (AI lab / fintech / large public US tech per BG policy)
+https://jobs.lever.co/qonto/99dc99ea-39c7-4c1b-8f23-27eaccef087d	Qonto	Software Engineer — Engineering Efficiency	HIGH BG	HIGH BG risk: Qonto (AI lab / fintech / large public US tech per BG policy)
+https://jobs.lever.co/mistral/b56f6523-b7d2-47a3-abe6-2c793c7672fc	Mistral AI	AI Developer Advocate	archetype	archetype mismatch: DevRel/advocacy
+https://jobs.lever.co/mistral/3e8b03e7-ff33-4cd1-8042-90b7ac3c4683	Mistral AI	AI Developer Advocate - Singapore	archetype	archetype mismatch: DevRel/advocacy
+https://jobs.lever.co/mistral/ebfdc0da-13fd-4ae9-9861-bedb5ff493ea	Mistral AI	Applied AI, Technical Lead - Forward Deployed AI Engineer	archetype	archetype mismatch: forward deployed (client-facing, not core IC)
+https://jobs.lever.co/mistral/e2cf255f-49c8-4630-afe0-7f665f51f01f	Mistral AI	Applied AI, Technical Lead, Forward Deployed AI Engineer - EMEA	archetype	archetype mismatch: forward deployed (client-facing, not core IC)
+https://jobs.lever.co/mistral/042d7b29-279b-48e2-a44b-c7bdc3180dab	Mistral AI	Applied AI, Technical Lead, Forward Deployed AI Engineer - Montreal	archetype	archetype mismatch: forward deployed (client-facing, not core IC)
+https://jobs.lever.co/mistral/add3ec37-a655-4a60-8823-1e871aa1e9b2	Mistral AI	Engineering Manager	archetype	archetype mismatch: management role
+https://jobs.lever.co/mistral/9f3f377e-c85c-4521-b0ea-52afbca2a5e4	Mistral AI	Executive Assistant to the VP Engineering - Paris	archetype	archetype mismatch: admin/EA
+https://jobs.lever.co/mistral/64c9a48e-6d23-4090-bf0f-5a979830fbaf	Mistral AI	Mistral Cloud - Software Engineer, Backend (Golang)	archetype	archetype mismatch: Go/Golang specialist (Cole TS-first)
+https://jobs.lever.co/mistral/18be2b70-c05d-48e4-82ac-e5cb462c96c0	Mistral AI	Research Platform Engineer	archetype	archetype mismatch: research role
+https://jobs.lever.co/mistral/df0d75c1-97ef-4e50-85e6-0ffd8f5b7d7c	Mistral AI	Research Software Engineer - Paris/London	archetype	archetype mismatch: research role
+https://jobs.lever.co/mistral/03918386-cb56-4e4d-afa8-1f8b7676a4a6	Mistral AI	Software Engineer, QA	archetype	archetype mismatch: QA
+https://jobs.lever.co/mistral/9a6c0605-8beb-4122-99c8-ae96beea691b	Mistral AI	Solutions Architect, Partner - EMEA	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.lever.co/spotify/361e8a26-1386-477f-bfd0-c819ba863be3	Spotify	C++ Engineer - Platform Engineering	archetype	archetype mismatch: C++ specialist (Cole TS-first)
+https://jobs.lever.co/spotify/fb7929b7-73b8-43fc-b6a0-888e96722617	Spotify	Director of Engineering, Experience	archetype	archetype mismatch: leadership role
+https://jobs.lever.co/spotify/b47245e8-8727-4cf4-b010-2bb9afcdc5a4	Spotify	Engineering Manager - Advertising	archetype	archetype mismatch: management role
+https://jobs.lever.co/spotify/40ac451e-2886-4f22-96a0-be69aef6c6f0	Spotify	Engineering Manager - Content Platform	archetype	archetype mismatch: management role
+https://jobs.lever.co/spotify/050e9c0b-2087-4438-bc5e-54b0601a44dc	Spotify	Engineering Manager - Core Experience	archetype	archetype mismatch: management role
+https://jobs.lever.co/spotify/64ef2493-3b1e-407a-ac07-9e95a57f6d7c	Spotify	Engineering Manager - Experimentation	archetype	archetype mismatch: management role
+https://jobs.lever.co/spotify/b12565d7-30fb-4eee-84df-9ea90da70174	Spotify	Engineering Manager - Social Listening	archetype	archetype mismatch: management role
+https://jobs.lever.co/spotify/0b042afc-7dfb-4efe-bf96-123b4c3c447f	Spotify	Engineering Manager - Subscriptions	archetype	archetype mismatch: management role
+https://jobs.lever.co/spotify/aaa18791-cdb6-493a-87c8-ef233f848a99	Spotify	Engineering Manager – Messaging Platform & Tooling	archetype	archetype mismatch: management role
+https://jobs.lever.co/spotify/fd0b87ca-dec2-4bec-8341-4911c88851b6	Spotify	Engineering Manager II - Analytics Platform	archetype	archetype mismatch: management role
+https://jobs.lever.co/spotify/d4de4dc1-7e20-4e15-965e-4c0401e47c5a	Spotify	Engineering Manager II - Creator and Publisher Analytics	archetype	archetype mismatch: management role
+https://jobs.lever.co/spotify/7d3bdd39-0edd-41f2-aef4-f1e9ef92b364	Spotify	Machine Learning Engineering Manager - Music	archetype	archetype mismatch: management role
+https://jobs.lever.co/spotify/3efb102a-0829-4338-bd73-28387ae010b6	Spotify	Machine Learning Engineering Manager - Personalization	archetype	archetype mismatch: management role
+https://jobs.lever.co/spotify/5277f56c-0e14-4593-921c-5460c46d6a35	Spotify	Machine Learning Engineering Manager - Surfaces Music	archetype	archetype mismatch: management role
+https://jobs.lever.co/spotify/c7213c8c-e5e7-4b7b-a425-6ba90fc55efa	Spotify	Senior C++ Engineer - Platform Engineering	archetype	archetype mismatch: C++ specialist (Cole TS-first)
+https://jobs.lever.co/spotify/b2116fac-5c9d-4f89-8753-b6c0bef1b380	Spotify	Senior Engineering Manager - Native Ads	archetype	archetype mismatch: management role
+https://jobs.lever.co/spotify/df494b56-c5d2-4858-a980-c082b3de65c9	Spotify	Senior Engineering Manager - Spotify for Artists	archetype	archetype mismatch: management role
+https://jobs.lever.co/spotify/827bfa7b-cc50-46d7-bdac-f642a14fe92b	Spotify	Senior Software Engineer - TV Playback (C++)	archetype	archetype mismatch: C++ specialist (Cole TS-first)
+https://job-boards.eu.greenhouse.io/parloa/jobs/4694431101	Parloa	Forward Deployed Engineer, DevOps	archetype	archetype mismatch: forward deployed (client-facing, not core IC)
+https://boards.greenhouse.io/faire/jobs/8426105002?gh_jid=8426105002	Faire	Senior Staff Machine Learning Platform Engineer	archetype	archetype mismatch: ML infra/platform (not Cole TS profile)
+https://job-boards.greenhouse.io/airtable/jobs/8461582002	Airtable	Senior Partner Solutions Architect	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://job-boards.greenhouse.io/airtable/jobs/8341413002	Airtable	Senior Solutions Architect	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://job-boards.greenhouse.io/intercom/jobs/7818588	Intercom	Engineering Manager, AI Models Infrastructure	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/intercom/jobs/7765466	Intercom	Engineering Manager, Forward Deployed Engineering	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/intercom/jobs/7610471	Intercom	Senior Engineering Manager - Team Billing	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/intercom/jobs/7601740	Intercom	Senior Security Engineering Manager	archetype	archetype mismatch: management role
+https://job-boards.greenhouse.io/anthropic/jobs/5101173008	Anthropic	Staff Software Engineer, AI Reliability Engineering	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/anthropic/jobs/5097742008	Anthropic	Staff Software Engineer, Inference	HIGH BG	HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.greenhouse.io/vercel/jobs/5804110004	Vercel	Solutions Architect	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://job-boards.eu.greenhouse.io/speechmatics/jobs/4834542101	Speechmatics	Software Engineer - FutureVoices	archetype	archetype mismatch: voice/speech synthesis ML
+https://job-boards.greenhouse.io/later/jobs/8444485002	Later	ML Infrastructure Engineer	archetype	archetype mismatch: ML infra/platform (not Cole TS profile)
+https://jobs.ashbyhq.com/cohere/1bc73d85-e6f4-4338-b53a-9ffb609a950d	Cohere	Solutions Architect - Public Sector	HARD STOP	HARD STOP: clearance-bound role per BG policy
+https://jobs.lever.co/mistral/fd865fe4-7344-43b0-9d8d-600e8b366725	Mistral AI	AI Developer Advocate	archetype	archetype mismatch: DevRel/advocacy
+https://job-boards.greenhouse.io/celonis/jobs/7661631003?gh_jid=7661631003	Celonis	Senior Applied AI Solutions Architect - Process Intelligence	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://job-boards.greenhouse.io/contentful/jobs/7721455	Contentful	Engineering Manager - Workflows (f/m/d)	archetype	archetype mismatch: management role
+https://n26.com/en-eu/careers/positions/7857802?gh_jid=7857802	N26	Data Engineer - Platform Engineering	HIGH BG	HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy)
+https://n26.com/en-eu/careers/positions/7577884?gh_jid=7577884	N26	Senior Full-Stack Security Automation Engineer	HIGH BG	HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy)
+https://n26.com/en-eu/careers/positions/7866308?gh_jid=7866308	N26	Site Reliability Engineer - Platform Engineering	HIGH BG	HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy)
+https://jobs.lever.co/pigment/8acafa76-06a7-409f-91bc-0a2f0a186b7d	Pigment	Engineering Manager	archetype	archetype mismatch: management role
+https://sumup.com/careers/positions/8420739002?gh_jid=8420739002	SumUp	Backend Engineer (Global Bank Tribe)	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8507674002?gh_jid=8507674002	SumUp	Engineering Manager - Verification	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8418287002?gh_jid=8418287002	SumUp	Senior Backend Engineer - Accounts	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8222274002?gh_jid=8222274002	SumUp	Senior Backend Engineer - Fiscalization	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://sumup.com/careers/positions/8236280002?gh_jid=8236280002	SumUp	Senior Backend Engineer - Golang	HIGH BG	HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy)
+https://job-boards.eu.greenhouse.io/physicsx/jobs/4750017101	PhysicsX	Senior Forward Deployed Software Engineer	archetype	archetype mismatch: forward deployed (client-facing, not core IC)
+https://www.scandit.com/careers/job-description/?gh_jid=7563160	Scandit	Engineering Manager, Platform	archetype	archetype mismatch: management role
+https://jobs.lever.co/spotify/95ee28cc-1339-48ea-993d-4efc3ea6db2c	Spotify	Engineering Manager - Subscriptions	archetype	archetype mismatch: management role
+https://jobs.lever.co/spotify/8fa32f77-1067-4e2b-a148-e3e198e006ca	Spotify	Machine Learning Engineering Manager - Music	archetype	archetype mismatch: management role
+https://jobs.ashbyhq.com/lovable/642dfe37-d5f5-4cf7-a38d-d6dac3dde58f	Lovable	Solutions Architect	archetype	archetype mismatch: solutions architect (sales-adjacent)
+https://jobs.ashbyhq.com/perplexity/e4777627-ff8f-4257-8612-3a016bb58592	Perplexity	Member of Technical Staff (AI Inference Engineer)	archetype	archetype mismatch: inference/ML systems
+https://jobs.ashbyhq.com/sierra/06453dd1-a29f-4aea-bb06-2d49862860e8	Sierra	Developer Relations Engineer	archetype	archetype mismatch: DevRel/advocacy

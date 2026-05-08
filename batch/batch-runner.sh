@@ -355,9 +355,10 @@ process_offer() {
     -e "s|{{ID}}|${esc_id}|g" \
     "$PROMPT_FILE" > "$resolved_prompt"
 
-  # Launch claude -p worker (uses default model from Claude Max subscription)
+  # Launch claude -p worker (forced to Sonnet via --model sonnet)
   local exit_code=0
   claude -p \
+    --model sonnet \
     --dangerously-skip-permissions \
     --append-system-prompt-file "$resolved_prompt" \
     "$prompt" \
@@ -573,9 +574,9 @@ main() {
             running=$((running - 1))
           fi
         done
-        # Compact arrays
-        pids=("${pids[@]}")
-        pid_ids=("${pid_ids[@]}")
+        # Compact arrays (safe under set -u when fully empty)
+        pids=("${pids[@]+"${pids[@]}"}")
+        pid_ids=("${pid_ids[@]+"${pid_ids[@]}"}")
         sleep 1
       done
 
@@ -586,8 +587,8 @@ main() {
       running=$((running + 1))
     done
 
-    # Wait for remaining workers
-    for pid in "${pids[@]}"; do
+    # Wait for remaining workers (safe under set -u when fully empty)
+    for pid in "${pids[@]+"${pids[@]}"}"; do
       wait "$pid" 2>/dev/null || true
     done
   fi
