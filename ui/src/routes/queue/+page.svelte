@@ -105,13 +105,14 @@
       <div class="space-y-1.5">
         <h1 class="text-xl font-semibold tracking-tight flex items-center gap-2">
           <ListChecks class="size-5 text-fuchsia-400" />
-          Pre-submit queue
+          Send queue
         </h1>
         <p class="text-sm text-muted-foreground leading-relaxed max-w-3xl">
-          Jobs whose tailored CV finished generating but haven't been sent yet. Auto-flipped from
-          <span class="font-mono">Ready → Queued</span> when their report + PDF land. Review the
-          selected rows and Send all to fire LinkedIn Easy Apply for those URLs and open the rest
-          in tabs (status flips to Applied immediately).
+          Jobs that have a tailored CV ready and are waiting to be sent. The system flips them here
+          automatically when CV generation finishes (<span class="font-mono">Ready → Queued</span>).
+          Untick anything you don't want, then click Send to dispatch the rest in one shot —
+          LinkedIn jobs go through the auto-apply bot, everything else opens in new tabs and is
+          marked Applied immediately.
         </p>
       </div>
 
@@ -159,11 +160,10 @@
         <div class="rounded-md border border-border/40 bg-muted/20 px-3 py-2 flex items-start gap-2">
           <Info class="size-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
           <p class="text-[11px] text-muted-foreground/90 leading-relaxed">
-            LinkedIn jobs run through the Playwright auto-apply queue (subject to the daily cap in
-            <a href="/autopilot" class="text-foreground hover:underline">Autopilot</a>).
-            Other portals open in new tabs in 300ms staggered intervals — your browser may block popups
-            for batches over ~5; allow popups for this site to send all in one click. Failed jobs surface
-            a Retry button on their toast.
+            LinkedIn jobs run through the Easy-Apply automation in the background, capped per day by your
+            <a href="/autopilot" class="text-foreground hover:underline">Autopilot settings</a>.
+            Non-LinkedIn jobs each open in a new tab (allow popups for localhost so they all open at once)
+            and are marked Applied straight away. If anything fails, a Retry button appears in the toast.
           </p>
         </div>
 

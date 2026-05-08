@@ -381,11 +381,12 @@
 
       <Card.Root>
         <Card.Header>
-          <Card.Title class="text-base">Browser bookmarklet · form auto-fill</Card.Title>
+          <Card.Title class="text-base">Browser bookmarklet · auto-fill application forms</Card.Title>
           <Card.Description>
-            One-click form fill on Greenhouse / Ashby / Lever pages. Drag the link below to your bookmarks bar.
-            On any application page, click the bookmark — the script scrapes the labelled fields, pipes them
-            here, and fills your tailored answers (you review and click Submit yourself).
+            One click to fill out a Greenhouse / Ashby / Lever application form with your tailored answers.
+            Drag the link below to your bookmarks bar. When you're on a job application page, click the
+            bookmark — it reads the form fields, asks this dashboard for matching answers, and fills them
+            in. You review what landed in each field and click Submit yourself.
           </Card.Description>
         </Card.Header>
         <Card.Content class="space-y-3">
@@ -402,9 +403,9 @@
           </div>
           <ul class="text-[11px] text-muted-foreground/80 list-disc pl-4 space-y-0.5">
             <li>Works on Greenhouse, Ashby, and Lever portals.</li>
-            <li>Add the job's URL to your pipeline first so the answers reference your CV proof points.</li>
-            <li>Reads from cv.md + profile.yml — same data the manual "Open answers" sheet uses.</li>
-            <li>Hits localhost:5174 — your dashboard must be running. Nothing leaves your machine.</li>
+            <li>Add the job's URL to your pipeline first — without it, the answers fall back to generic copy with no CV proof points.</li>
+            <li>Reads from cv.md + config/profile.yml — the same files the "Pre-fill application answers" action on each job uses.</li>
+            <li>Posts to your local dashboard at localhost:5174 — the dashboard must be running. Nothing leaves your machine.</li>
           </ul>
         </Card.Content>
       </Card.Root>
