@@ -180,7 +180,12 @@ class Bus extends EventEmitter {
     this.buf = [];
     try {
       fs.writeFileSync(LOG_FILE, '');
-    } catch {}
+    } catch (e) {
+      // Use safeConsole here; logEvent would re-emit and re-fail.
+      // The buffer was cleared in-memory regardless, so the UI sees a
+      // cleared feed; only on-disk persistence is impacted.
+      safeConsole('error', '[events] failed to clear log file:', e);
+    }
   }
 }
 

@@ -15,7 +15,7 @@ import { wrap, badRequest } from '$lib/server/api-helpers';
 import { loadAllJobs } from '$lib/server/parsers';
 import { runBulkApply } from '$lib/server/orchestrator';
 import { markApplied } from '$lib/server/applications';
-import { logEvent } from '$lib/server/events';
+import { logEvent, reportServerError } from '$lib/server/events';
 
 const MAX_BULK = 50;
 
@@ -70,7 +70,9 @@ export const POST = wrap('bulk-apply', async ({ request }: { request: Request })
 
   // Fire LinkedIn pipeline async — orchestrator drives the activity feed.
   if (linkedIn.length > 0) {
-    runBulkApply(linkedIn.map((g) => ({ url: g.url, isLinkedIn: true }))).catch(() => {});
+    runBulkApply(linkedIn.map((g) => ({ url: g.url, isLinkedIn: true }))).catch((err) =>
+      reportServerError('bulk-apply', 'LinkedIn bulk-apply rejected', err, { category: 'task' }),
+    );
   }
 
   return {

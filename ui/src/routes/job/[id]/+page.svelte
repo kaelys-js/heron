@@ -89,13 +89,17 @@
     chatHistory = [];
     chatLoading = true;
     try {
-      const r = await fetch('/api/mock-interview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportFile: data.job.reportFile, history: [], persona: chatPersona }),
-      });
-      const j = await r.json();
-      chatHistory = [{ role: 'assistant', content: j.ok ? j.reply : '⚠️ ' + (j.error || 'error') }];
+      // api.post auto-toasts network errors; keep `silent: true` here
+      // because the chat UI itself surfaces the error inline below.
+      const r = await api.post<{ reply: string }>(
+        '/api/mock-interview',
+        { reportFile: data.job.reportFile, history: [], persona: chatPersona },
+        { silent: true },
+      );
+      chatHistory = [{ role: 'assistant', content: r.reply }];
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : (e as Error).message ?? 'Network error';
+      chatHistory = [{ role: 'assistant', content: '⚠️ ' + msg }];
     } finally {
       chatLoading = false;
     }
@@ -109,13 +113,15 @@
     chatHistory = newHistory;
     chatLoading = true;
     try {
-      const r = await fetch('/api/mock-interview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportFile: data.job.reportFile, history: newHistory, persona: chatPersona }),
-      });
-      const j = await r.json();
-      chatHistory = [...newHistory, { role: 'assistant', content: j.ok ? j.reply : '⚠️ ' + (j.error || 'error') }];
+      const r = await api.post<{ reply: string }>(
+        '/api/mock-interview',
+        { reportFile: data.job.reportFile, history: newHistory, persona: chatPersona },
+        { silent: true },
+      );
+      chatHistory = [...newHistory, { role: 'assistant', content: r.reply }];
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : (e as Error).message ?? 'Network error';
+      chatHistory = [...newHistory, { role: 'assistant', content: '⚠️ ' + msg }];
     } finally {
       chatLoading = false;
     }
@@ -126,19 +132,16 @@
     negotiationLoading = true;
     negotiationError = null;
     try {
-      const r = await fetch('/api/negotiation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportFile: data.job.reportFile, offer: offerInput }),
-      });
-      const j = await r.json();
-      if (j.ok) {
-        negotiationContent = j.content;
-      } else {
-        negotiationError = j.error?.message ?? j.error ?? 'Generation failed';
-      }
+      const r = await api.post<{ content: string }>(
+        '/api/negotiation',
+        { reportFile: data.job.reportFile, offer: offerInput },
+        { inlineError: true },
+      );
+      negotiationContent = r.content;
     } catch (e) {
-      negotiationError = (e as Error).message ?? 'Network error';
+      negotiationError = e instanceof ApiError
+        ? (e.message ?? 'Generation failed')
+        : (e as Error).message ?? 'Network error';
     } finally {
       negotiationLoading = false;
     }

@@ -9,6 +9,7 @@
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { runById } from '$lib/server/jobs';
+import { reportServerError } from '$lib/server/events';
 
 export const POST = wrap('bulk-liveness', async ({ request }: { request: Request }) => {
   const body = (await request.json().catch(() => null)) as
@@ -29,6 +30,8 @@ export const POST = wrap('bulk-liveness', async ({ request }: { request: Request
     }
   }
   // Fire and forget — the activity feed is the source of truth for progress.
-  runById('liveness', args).catch(() => {});
+  runById('liveness', args).catch((err) =>
+    reportServerError('bulk-liveness', 'Liveness sweep rejected', err, { category: 'system' }),
+  );
   return { ok: true, message: 'Liveness sweep queued — watch the activity feed.' };
 });

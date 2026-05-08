@@ -12,6 +12,7 @@ import {
   ROOT, readSafe, APPLICATIONS, PIPELINE, GEMINI_SCORES, REPORTS_DIR, OUTPUT_DIR,
 } from './files';
 import { parse, stringify } from 'yaml';
+import { logEvent } from './events';
 
 const PROFILE_PATH = path.join(ROOT, 'config', 'profile.yml');
 const EXAMPLE_PATH = path.join(ROOT, 'config', 'profile.example.yml');
@@ -280,6 +281,7 @@ function emptyDir(dir: string, resetFiles: string[], displayName: string) {
   try {
     const entries = fs.readdirSync(dir);
     let removed = 0;
+    let failed = 0;
     for (const name of entries) {
       // Skip backup files so a previous reset stays recoverable.
       if (name.endsWith('.bak')) continue;
@@ -287,10 +289,29 @@ function emptyDir(dir: string, resetFiles: string[], displayName: string) {
       try {
         fs.rmSync(full, { recursive: true, force: true });
         removed++;
-      } catch {}
+      } catch (e) {
+        failed++;
+        // Log per-file failure at warn — user expects "reset" to clear and
+        // a partial reset is misleading without a signal.
+        logEvent('reset-profile', 'Could not remove ' + name, {
+          level: 'warn', category: 'application',
+          message: displayName + ' — ' + (e instanceof Error ? e.message : String(e)),
+        });
+      }
     }
     if (removed > 0) resetFiles.push(displayName + ' (' + removed + ' files)');
-  } catch {}
+    if (failed > 0) {
+      logEvent('reset-profile', 'Partial reset of ' + displayName, {
+        level: 'warn', category: 'application',
+        message: removed + ' removed · ' + failed + ' failed (see warnings above)',
+      });
+    }
+  } catch (e) {
+    logEvent('reset-profile', 'Could not enumerate ' + displayName, {
+      level: 'warn', category: 'application',
+      message: e instanceof Error ? e.message : String(e),
+    });
+  }
 }
 
 export function resetProfile(scope: ResetScope = 'profile'): ResetResult {
@@ -351,7 +372,12 @@ export function resetProfile(scope: ResetScope = 'profile'): ResetResult {
     try {
       fs.unlinkSync(p);
       resetFiles.push(path.relative(ROOT, p));
-    } catch {}
+    } catch (e) {
+      logEvent('reset-profile', 'Could not delete ' + path.basename(p), {
+        level: 'warn', category: 'application',
+        message: e instanceof Error ? e.message : String(e),
+      });
+    }
   }
 
   // Reports + output PDFs — clear directories
