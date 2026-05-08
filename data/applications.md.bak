@@ -1,0 +1,380 @@
+# Applications Tracker
+
+| # | Date | Company | Role | Score | Status | PDF | Report | Notes |
+|---|------|---------|------|-------|--------|-----|--------|-------|
+| 1 | 2026-05-05 | Airtable | Engineering Manager, Enterprise Product | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 2 | 2026-05-05 | Airtable | Senior Partner Solutions Architect | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 3 | 2026-05-05 | Airtable | Senior Partner Solutions Architect | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 4 | 2026-05-05 | Airtable | Senior Solutions Architect | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 5 | 2026-05-05 | Airtable | Senior Solutions Architect | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 6 | 2026-05-05 | Aleph Alpha | Senior AI Software Engineer - Model Evaluation (f/m/d) | — | SKIP | ❌ | — | archetype mismatch: ML modeling/evaluation |
+| 7 | 2026-05-05 | Amplemarket | Spontaneous Application - Engineering Manager | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 8 | 2026-05-05 | Anthropic | Engineering Manager, Agent Prompts & Evals | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 9 | 2026-05-05 | Anthropic | Engineering Manager, Cloud Inference AWS | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 10 | 2026-05-05 | Anthropic | Engineering Manager, Detection and Response | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 11 | 2026-05-05 | Anthropic | Engineering Manager, GPU (ML Accelerator) | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 12 | 2026-05-05 | Anthropic | Engineering Manager, Inference | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 13 | 2026-05-05 | Anthropic | Engineering Manager, Inference Routing and Performance | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 14 | 2026-05-05 | Anthropic | Engineering Manager, Marketplace | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 15 | 2026-05-05 | Anthropic | Engineering Manager, Passport | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 16 | 2026-05-05 | Anthropic | Engineering Manager, Product Monetization (Billing Platform) | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 17 | 2026-05-05 | Anthropic | Engineering Manager, Safeguards Data Infrastructure | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 18 | 2026-05-05 | Anthropic | Engineering Manager, Vertical AI Products (Multiple Roles) | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 19 | 2026-05-05 | Anthropic | Full-Stack Software Engineer, Reinforcement Learning | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 20 | 2026-05-05 | Anthropic | GRC Engineering Manager | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 21 | 2026-05-05 | Anthropic | Head of Solutions Architects, Applied AI (Korea) | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 22 | 2026-05-05 | Anthropic | Infrastructure Engineer, Sandboxing | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 23 | 2026-05-05 | Anthropic | Manager of Solutions Architecture, Applied AI (Industries) | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 24 | 2026-05-05 | Anthropic | ML Infrastructure Engineer, Safeguards | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 25 | 2026-05-05 | Anthropic | Model Quality Software Engineer, Claude Code | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 26 | 2026-05-05 | Anthropic | Partner Solutions Architect, Applied AI | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 27 | 2026-05-05 | Anthropic | Research Engineer, RL Infrastructure and Reliability (Knowledge Work) | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 28 | 2026-05-05 | Anthropic | Research Engineer, Search and Knowledge Post-Training | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 29 | 2026-05-05 | Anthropic | Security Software Engineer, Detection & Response Platform | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 30 | 2026-05-05 | Anthropic | Security Software Engineer, Platform Integration | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 31 | 2026-05-05 | Anthropic | Senior / Staff+ Software Engineer, Voice Platform | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 32 | 2026-05-05 | Anthropic | Senior Full Stack Engineer, Education | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 33 | 2026-05-05 | Anthropic | Senior Security Software Engineer, Linux Kernel Security - Nodes & Sensors | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 34 | 2026-05-05 | Anthropic | Senior Software Engineer, Full-stack | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 35 | 2026-05-05 | Anthropic | Senior Software Engineer, Inference | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 36 | 2026-05-05 | Anthropic | Senior Staff Software Engineer, API | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 37 | 2026-05-05 | Anthropic | Senior+ Software Engineer, Research Tools | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 38 | 2026-05-05 | Anthropic | Software Engineer, Account Abuse | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 39 | 2026-05-05 | Anthropic | Software Engineer, Compute Efficiency | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 40 | 2026-05-05 | Anthropic | Software Engineer, Cybersecurity Products | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 41 | 2026-05-05 | Anthropic | Software Engineer, Desktop | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 42 | 2026-05-05 | Anthropic | Software Engineer, Human Data Interface | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 43 | 2026-05-05 | Anthropic | Software Engineer, Research Data Platform | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 44 | 2026-05-05 | Anthropic | Software Engineer, Safeguards | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 45 | 2026-05-05 | Anthropic | Software Engineer, Safeguards Infrastructure | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 46 | 2026-05-05 | Anthropic | Software Engineer, Sandboxing | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 47 | 2026-05-05 | Anthropic | Software Engineer, Sandboxing (Systems) | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 48 | 2026-05-05 | Anthropic | Software Engineer, UI Platform | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 49 | 2026-05-05 | Anthropic | Solutions Architect, National Security | — | SKIP | ❌ | — | HARD STOP: clearance-bound role per BG policy |
+| 50 | 2026-05-05 | Anthropic | Sr. Software Engineer, Inference | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 51 | 2026-05-05 | Anthropic | Staff / Senior Software Engineer, Compute Capacity | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 52 | 2026-05-05 | Anthropic | Staff + Sr. Software Engineer, AI Reliability | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 53 | 2026-05-05 | Anthropic | Staff + Sr. Software Engineer, Cloud Inference | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 54 | 2026-05-05 | Anthropic | Staff + Sr. Software Engineer, Inference | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 55 | 2026-05-05 | Anthropic | Staff + Sr. Software Engineer, Inference Deployment | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 56 | 2026-05-05 | Anthropic | Staff Infrastructure Engineer, Cluster Infrastructure | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 57 | 2026-05-05 | Anthropic | Staff Software Engineer, AI Reliability Engineering | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 58 | 2026-05-05 | Anthropic | Staff Software Engineer, AI Reliability Engineering | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 59 | 2026-05-05 | Anthropic | Staff Software Engineer, Billing Platform | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 60 | 2026-05-05 | Anthropic | Staff Software Engineer, Cloud Inference Safeguards | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 61 | 2026-05-05 | Anthropic | Staff Software Engineer, Continuous Integration | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 62 | 2026-05-05 | Anthropic | Staff Software Engineer, Inference | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 63 | 2026-05-05 | Anthropic | Staff Software Engineer, Inference | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 64 | 2026-05-05 | Anthropic | Staff Software Engineer, Node Infra | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 65 | 2026-05-05 | Anthropic | Staff Software Engineer, Systems | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 66 | 2026-05-05 | Anthropic | Staff+ Software Engineer, Backend | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 67 | 2026-05-05 | Anthropic | Staff+ Software Engineer, Databases | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 68 | 2026-05-05 | Anthropic | Staff+ Software Engineer, Developer Productivity | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 69 | 2026-05-05 | Anthropic | Staff+ Software Engineer, Full-stack | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 70 | 2026-05-05 | Anthropic | Staff+ Software Engineer, Observability | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 71 | 2026-05-05 | Anthropic | Staff+ Software Engineer, Platform | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 72 | 2026-05-05 | Anthropic | Staff+ Software Engineer, Public Sector | — | SKIP | ❌ | — | HARD STOP: clearance-bound role per BG policy |
+| 73 | 2026-05-05 | Anthropic | UI Software Engineer, Claude.ai Consumer Product | — | SKIP | ❌ | — | HIGH BG risk: Anthropic (AI lab / fintech / large public US tech per BG policy) |
+| 74 | 2026-05-05 | Arize AI | Developer Relations Engineer | — | SKIP | ❌ | — | archetype mismatch: DevRel/advocacy |
+| 75 | 2026-05-05 | Arize AI | Developer Relations Engineer | — | SKIP | ❌ | — | archetype mismatch: DevRel/advocacy |
+| 76 | 2026-05-05 | Arize AI | Engineering Manager - Product & Platform | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 77 | 2026-05-05 | Black Forest Labs | Developer Relations Engineer | — | SKIP | ❌ | — | archetype mismatch: DevRel/advocacy |
+| 78 | 2026-05-05 | Black Forest Labs | Member of Technical Staff - Image / Video Generation | — | SKIP | ❌ | — | archetype mismatch: AI-lab MTS ML/research role |
+| 79 | 2026-05-05 | Black Forest Labs | Member of Technical Staff - Post Training | — | SKIP | ❌ | — | archetype mismatch: ML pre/post-training |
+| 80 | 2026-05-05 | Black Forest Labs | Member of Technical Staff - Pretraining | — | SKIP | ❌ | — | archetype mismatch: ML pre/post-training |
+| 81 | 2026-05-05 | Black Forest Labs | Member of Technical Staff - VLM | — | SKIP | ❌ | — | archetype mismatch: AI lab ML research |
+| 82 | 2026-05-05 | Black Forest Labs | Senior Solutions Architect | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 83 | 2026-05-05 | Celonis | Engineering Manager - Celonis Process Management | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 84 | 2026-05-05 | Celonis | Senior Applied AI Solutions Architect - Process Intelligence | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 85 | 2026-05-05 | Celonis | Senior Applied AI Solutions Architect - Process Intelligence | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 86 | 2026-05-05 | Celonis | Senior Applied AI Solutions Architect - Process Intelligence (Public Sector) | — | SKIP | ❌ | — | HARD STOP: clearance-bound role per BG policy |
+| 87 | 2026-05-05 | Celonis | Senior Solutions Architect | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 88 | 2026-05-05 | Clay Labs | Engineering Manager | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 89 | 2026-05-05 | Cohere | Engineering Manager, Agentic Platform | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 90 | 2026-05-05 | Cohere | Engineering Manager, FDE Infrastructure (EMEA) | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 91 | 2026-05-05 | Cohere | Engineering Manager, North | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 92 | 2026-05-05 | Cohere | Lead Member of Technical Staff, Inference Infrastructure | — | SKIP | ❌ | — | archetype mismatch: inference/ML systems |
+| 93 | 2026-05-05 | Cohere | Member of Technical Staff - Sovereign AI | — | SKIP | ❌ | — | archetype mismatch: AI lab ML research |
+| 94 | 2026-05-05 | Cohere | Member of Technical Staff, Agents Modeling | — | SKIP | ❌ | — | archetype mismatch: agent modeling (ML research) |
+| 95 | 2026-05-05 | Cohere | Member of Technical Staff, Data Analysis and Evaluation | — | SKIP | ❌ | — | archetype mismatch: AI-lab MTS ML/research role |
+| 96 | 2026-05-05 | Cohere | Member of Technical Staff, Integration/RL Team (Research Engineer) | — | SKIP | ❌ | — | archetype mismatch: research role |
+| 97 | 2026-05-05 | Cohere | Member of Technical Staff, MLE | — | SKIP | ❌ | — | archetype mismatch: AI-lab MTS ML/research role |
+| 98 | 2026-05-05 | Cohere | Member of Technical Staff, MLE (Korea) | — | SKIP | ❌ | — | archetype mismatch: AI-lab MTS ML/research role |
+| 99 | 2026-05-05 | Cohere | Member of Technical Staff, MLE (North) | — | SKIP | ❌ | — | archetype mismatch: AI-lab MTS ML/research role |
+| 100 | 2026-05-05 | Cohere | Member of Technical Staff, MLE (UK/EU) | — | SKIP | ❌ | — | archetype mismatch: AI-lab MTS ML/research role |
+| 101 | 2026-05-05 | Cohere | Member of Technical Staff, MLE [Singapore] | — | SKIP | ❌ | — | archetype mismatch: AI-lab MTS ML/research role |
+| 102 | 2026-05-05 | Cohere | Member of Technical Staff, Model Efficiency | — | SKIP | ❌ | — | archetype mismatch: ML modeling/evaluation |
+| 103 | 2026-05-05 | Cohere | Member of Technical Staff, Modeling | — | SKIP | ❌ | — | archetype mismatch: AI-lab MTS ML/research role |
+| 104 | 2026-05-05 | Cohere | Member of Technical Staff, Post-Training | — | SKIP | ❌ | — | archetype mismatch: ML pre/post-training |
+| 105 | 2026-05-05 | Cohere | Member of Technical Staff, Pre-Training Data | — | SKIP | ❌ | — | archetype mismatch: ML pre/post-training |
+| 106 | 2026-05-05 | Cohere | Member of Technical Staff, Safety for Agents | — | SKIP | ❌ | — | archetype mismatch: AI-lab MTS ML/research role |
+| 107 | 2026-05-05 | Cohere | Member of Technical Staff, Senior/Staff MLE | — | SKIP | ❌ | — | archetype mismatch: AI-lab MTS ML/research role |
+| 108 | 2026-05-05 | Cohere | Member of Technical Staff, Synthetic Data | — | SKIP | ❌ | — | archetype mismatch: AI lab ML research |
+| 109 | 2026-05-05 | Cohere | Member of Technical Staff, Training Infra Engineer | — | SKIP | ❌ | — | archetype mismatch: AI-lab MTS ML/research role |
+| 110 | 2026-05-05 | Cohere | Member of Technical Staff, Training Performance Engineer | — | SKIP | ❌ | — | archetype mismatch: AI-lab MTS ML/research role |
+| 111 | 2026-05-05 | Cohere | Senior Member of Technical Staff, MLE (Middle East) | — | SKIP | ❌ | — | archetype mismatch: AI-lab MTS ML/research role |
+| 112 | 2026-05-05 | Cohere | Senior Member of Technical Staff, Multimodal AI | — | SKIP | ❌ | — | archetype mismatch: AI lab ML research |
+| 113 | 2026-05-05 | Cohere | Senior Solutions Architect - San Francisco | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 114 | 2026-05-05 | Cohere | Site Reliability Engineer, Inference Infrastructure | — | SKIP | ❌ | — | archetype mismatch: inference/ML systems |
+| 115 | 2026-05-05 | Cohere | Software Engineer - Applied ML - UK Public Sector | — | SKIP | ❌ | — | HARD STOP: clearance-bound role per BG policy |
+| 116 | 2026-05-05 | Cohere | Solutions Architect | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 117 | 2026-05-05 | Cohere | Solutions Architect - Public Sector | — | SKIP | ❌ | — | HARD STOP: clearance-bound role per BG policy |
+| 118 | 2026-05-05 | Cohere | Solutions Architect - Public Sector | — | SKIP | ❌ | — | HARD STOP: clearance-bound role per BG policy |
+| 119 | 2026-05-05 | Cohere | Staff Software Engineer, GPU Infrastructure (HPC) | — | SKIP | ❌ | — | archetype mismatch: GPU/HPC infra |
+| 120 | 2026-05-05 | Cohere | Staff Software Engineer, Inference Infrastructure | — | SKIP | ❌ | — | archetype mismatch: inference/ML systems |
+| 121 | 2026-05-05 | Contentful | Engineering Manager - Workflows (f/m/d) | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 122 | 2026-05-05 | Contentful | Engineering Manager - Workflows (f/m/d) | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 123 | 2026-05-05 | Decagon | Engineering Manager, Agent Orchestration | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 124 | 2026-05-05 | Decagon | Engineering Manager, AI & Data Infrastructure | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 125 | 2026-05-05 | Decagon | Engineering Manager, Platform Infrastructure | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 126 | 2026-05-05 | Decagon | Senior Software Engineer, ML Infrastructure | — | SKIP | ❌ | — | archetype mismatch: ML infra/platform (not Cole TS profile) |
+| 127 | 2026-05-05 | Decagon | Solutions Architect - Infrastructure | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 128 | 2026-05-05 | Decagon | Staff Software Engineer, ML Infrastructure | — | SKIP | ❌ | — | archetype mismatch: ML infra/platform (not Cole TS profile) |
+| 129 | 2026-05-05 | Deepgram | Backend Engineer- Inference Services | — | SKIP | ❌ | — | archetype mismatch: inference/ML systems |
+| 130 | 2026-05-05 | Deepgram | Backend Software Engineer - Active Learning Team | — | SKIP | ❌ | — | archetype mismatch: ML active learning team |
+| 131 | 2026-05-05 | Deepgram | Defense / Edge Tech Lead | — | SKIP | ❌ | — | HARD STOP: clearance-bound role per BG policy |
+| 132 | 2026-05-05 | Deepgram | Engineering Manager, Active Learning | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 133 | 2026-05-05 | Deepgram | Engineering Manager, Console Team (Product-Led Growth Strategy) | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 134 | 2026-05-05 | Deepgram | Engineering Manager, Engine Team | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 135 | 2026-05-05 | Deepgram | ML Ops Infrastructure Engineer | — | SKIP | ❌ | — | archetype mismatch: ML infra/platform (not Cole TS profile) |
+| 136 | 2026-05-05 | Deepgram | QA Engineering Manager | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 137 | 2026-05-05 | Deepgram | Senior Developer Advocate, Partner Ecosystem | — | SKIP | ❌ | — | archetype mismatch: DevRel/advocacy |
+| 138 | 2026-05-05 | Deepgram | Site Reliability Engineer - AI & ML Infrastructure (Kubernetes, AWS & Terraform) | — | SKIP | ❌ | — | archetype mismatch: ML infra/platform (not Cole TS profile) |
+| 139 | 2026-05-05 | Deepgram | Solutions Architect - Europe | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 140 | 2026-05-05 | Deepgram | Solutions Architect - India | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 141 | 2026-05-05 | Deepgram | Solutions Architect (EST or PST) | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 142 | 2026-05-05 | Deepgram | Solutions Architect (San Francisco, CA) | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 143 | 2026-05-05 | ElevenLabs | Forward Deployed Engineer - Software Engineer | — | SKIP | ❌ | — | archetype mismatch: forward deployed (client-facing, not core IC) |
+| 144 | 2026-05-05 | ElevenLabs | Forward Deployed Engineer - Software Engineer - Spain | — | SKIP | ❌ | — | archetype mismatch: forward deployed (client-facing, not core IC) |
+| 145 | 2026-05-05 | Faire | Senior Engineering Manager | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 146 | 2026-05-05 | Faire | Senior Staff Machine Learning Platform Engineer | — | SKIP | ❌ | — | archetype mismatch: ML infra/platform (not Cole TS profile) |
+| 147 | 2026-05-05 | Faire | Senior Staff Machine Learning Platform Engineer | — | SKIP | ❌ | — | archetype mismatch: ML infra/platform (not Cole TS profile) |
+| 148 | 2026-05-05 | GetYourGuide | Data Engineering Manager, Supply | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 149 | 2026-05-05 | GetYourGuide | Engineering Manager, Activity Differentiation | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 150 | 2026-05-05 | GetYourGuide | Engineering Manager, AI Platform | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 151 | 2026-05-05 | GetYourGuide | Engineering Manager, User Profiles | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 152 | 2026-05-05 | Glean | Software Engineer, Machine Learning | — | SKIP | ❌ | — | archetype mismatch: ML engineering |
+| 153 | 2026-05-05 | Glean | Solutions Architect | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 154 | 2026-05-05 | Glean | Solutions Architect (PST/EST Customer hours) | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 155 | 2026-05-05 | Glean | Solutions Engineering Manager | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 156 | 2026-05-05 | Glean | Tech Lead Manager, Admin Console | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 157 | 2026-05-05 | Glean | Tech Lead Manager, Agentic Runtime | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 158 | 2026-05-05 | Glean | Tech Lead Manager, Apps & App Infrastructure | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 159 | 2026-05-05 | HelloFresh | Engineering Manager, Growth | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 160 | 2026-05-05 | Hightouch | Engineering Manager, Destinations | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 161 | 2026-05-05 | Hightouch | Engineering Manager, Head of Machine Learning | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 162 | 2026-05-05 | Hootsuite | Senior Solutions Architect | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 163 | 2026-05-05 | Intercom | Engineering Manager, AI Models Infrastructure | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 164 | 2026-05-05 | Intercom | Engineering Manager, AI Models Infrastructure | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 165 | 2026-05-05 | Intercom | Engineering Manager, Forward Deployed Engineering | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 166 | 2026-05-05 | Intercom | Engineering Manager, Forward Deployed Engineering | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 167 | 2026-05-05 | Intercom | Forward Deployed Software Engineer | — | SKIP | ❌ | — | archetype mismatch: forward deployed (client-facing, not core IC) |
+| 168 | 2026-05-05 | Intercom | Full-Stack Marketer, Customer Advocacy | — | SKIP | ❌ | — | archetype mismatch: marketing role |
+| 169 | 2026-05-05 | Intercom | Senior Engineering Manager - Developer Experience Platform | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 170 | 2026-05-05 | Intercom | Senior Engineering Manager - Team Billing | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 171 | 2026-05-05 | Intercom | Senior Engineering Manager - Team Billing | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 172 | 2026-05-05 | Intercom | Senior Engineering Manager, Fin AI Agent | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 173 | 2026-05-05 | Intercom | Senior Security Engineering Manager | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 174 | 2026-05-05 | Intercom | Senior Security Engineering Manager | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 175 | 2026-05-05 | Intercom | Senior Solutions Architect | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 176 | 2026-05-05 | Isomorphic Labs | Senior Software Engineer, ML Ops | — | SKIP | ❌ | — | archetype mismatch: ML infra/platform (not Cole TS profile) |
+| 177 | 2026-05-05 | Lakera | Solutions Architect  (Zurich) | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 178 | 2026-05-05 | LangChain | Software Engineering Manager, AI Observability & Evals Platform (New York, NY) | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 179 | 2026-05-05 | LangChain | Software Engineering Manager, AI Observability & Evals Platform (San Francisco, CA) | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 180 | 2026-05-05 | LangChain | Solutions Architect (Amsterdam) | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 181 | 2026-05-05 | LangChain | Solutions Architect (Austin) | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 182 | 2026-05-05 | LangChain | Solutions Architect (Dallas) | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 183 | 2026-05-05 | LangChain | Solutions Architect (London) | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 184 | 2026-05-05 | LangChain | Solutions Architect (NYC) | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 185 | 2026-05-05 | LangChain | Solutions Architect (Remote) | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 186 | 2026-05-05 | LangChain | Solutions Architect (San Francisco) | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 187 | 2026-05-05 | Later | ML Infrastructure Engineer | — | SKIP | ❌ | — | archetype mismatch: ML infra/platform (not Cole TS profile) |
+| 188 | 2026-05-05 | Later | ML Infrastructure Engineer | — | SKIP | ❌ | — | archetype mismatch: ML infra/platform (not Cole TS profile) |
+| 189 | 2026-05-05 | Later | ML Infrastructure Engineer | — | SKIP | ❌ | — | archetype mismatch: ML infra/platform (not Cole TS profile) |
+| 190 | 2026-05-05 | Legora | Engineering Manager | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 191 | 2026-05-05 | Lindy | Full Stack Software Engineer (Early Career) | — | SKIP | ❌ | — | hard_no: junior/mid title |
+| 192 | 2026-05-05 | Lovable | Solutions Architect | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 193 | 2026-05-05 | Lovable | Solutions Architect | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 194 | 2026-05-05 | Mistral AI | AI Developer Advocate | — | SKIP | ❌ | — | archetype mismatch: DevRel/advocacy |
+| 195 | 2026-05-05 | Mistral AI | AI Developer Advocate | — | SKIP | ❌ | — | archetype mismatch: DevRel/advocacy |
+| 196 | 2026-05-05 | Mistral AI | AI Developer Advocate - Singapore | — | SKIP | ❌ | — | archetype mismatch: DevRel/advocacy |
+| 197 | 2026-05-05 | Mistral AI | Applied AI, Technical Lead - Forward Deployed AI Engineer | — | SKIP | ❌ | — | archetype mismatch: forward deployed (client-facing, not core IC) |
+| 198 | 2026-05-05 | Mistral AI | Applied AI, Technical Lead, Forward Deployed AI Engineer - EMEA | — | SKIP | ❌ | — | archetype mismatch: forward deployed (client-facing, not core IC) |
+| 199 | 2026-05-05 | Mistral AI | Applied AI, Technical Lead, Forward Deployed AI Engineer - Montreal | — | SKIP | ❌ | — | archetype mismatch: forward deployed (client-facing, not core IC) |
+| 200 | 2026-05-05 | Mistral AI | Engineering Manager | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 201 | 2026-05-05 | Mistral AI | Executive Assistant to the VP Engineering - Paris | — | SKIP | ❌ | — | archetype mismatch: admin/EA |
+| 202 | 2026-05-05 | Mistral AI | Mistral Cloud - Software Engineer, Backend (Golang) | — | SKIP | ❌ | — | archetype mismatch: Go/Golang specialist (Cole TS-first) |
+| 203 | 2026-05-05 | Mistral AI | Research Platform Engineer | — | SKIP | ❌ | — | archetype mismatch: research role |
+| 204 | 2026-05-05 | Mistral AI | Research Software Engineer - Paris/London | — | SKIP | ❌ | — | archetype mismatch: research role |
+| 205 | 2026-05-05 | Mistral AI | Software Engineer, QA | — | SKIP | ❌ | — | archetype mismatch: QA |
+| 206 | 2026-05-05 | Mistral AI | Solutions Architect, Partner - EMEA | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 207 | 2026-05-05 | N26 | Data Engineer - Platform Engineering | — | SKIP | ❌ | — | HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy) |
+| 208 | 2026-05-05 | N26 | Data Engineer - Platform Engineering | — | SKIP | ❌ | — | HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy) |
+| 209 | 2026-05-05 | N26 | Engineering Manager - Customer Risk Lifecycle | — | SKIP | ❌ | — | HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy) |
+| 210 | 2026-05-05 | N26 | Engineering Manager - Data Platform | — | SKIP | ❌ | — | HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy) |
+| 211 | 2026-05-05 | N26 | Lead Backend Engineer - Assistance | — | SKIP | ❌ | — | HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy) |
+| 212 | 2026-05-05 | N26 | Senior Backend Engineer | — | SKIP | ❌ | — | HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy) |
+| 213 | 2026-05-05 | N26 | Senior Full-Stack Security Automation Engineer | — | SKIP | ❌ | — | HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy) |
+| 214 | 2026-05-05 | N26 | Senior Full-Stack Security Automation Engineer | — | SKIP | ❌ | — | HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy) |
+| 215 | 2026-05-05 | N26 | Site Reliability Engineer - Observability | — | SKIP | ❌ | — | HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy) |
+| 216 | 2026-05-05 | N26 | Site Reliability Engineer - Platform Engineering | — | SKIP | ❌ | — | HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy) |
+| 217 | 2026-05-05 | N26 | Site Reliability Engineer - Platform Engineering | — | SKIP | ❌ | — | HIGH BG risk: N26 (AI lab / fintech / large public US tech per BG policy) |
+| 218 | 2026-05-05 | n8n | AI Engineering Manager \| Remote \| Europe | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 219 | 2026-05-05 | n8n | Director of Engineering \| Remote \| Europe | — | SKIP | ❌ | — | archetype mismatch: leadership role |
+| 220 | 2026-05-05 | n8n | Engineering Manager, Core Platform \| Remote \| Europe | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 221 | 2026-05-05 | n8n | Senior Developer Advocate, US | — | SKIP | ❌ | — | archetype mismatch: DevRel/advocacy |
+| 222 | 2026-05-05 | Parloa | Engineering Manager - Product Engineering | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 223 | 2026-05-05 | Parloa | Forward Deployed Engineer, DevOps | — | SKIP | ❌ | — | archetype mismatch: forward deployed (client-facing, not core IC) |
+| 224 | 2026-05-05 | Parloa | Forward Deployed Engineer, DevOps | — | SKIP | ❌ | — | archetype mismatch: forward deployed (client-facing, not core IC) |
+| 225 | 2026-05-05 | Perplexity | Engineering Manager (Agents) | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 226 | 2026-05-05 | Perplexity | Engineering Manager (AI Inference) | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 227 | 2026-05-05 | Perplexity | Engineering Manager (AI Research & Model Training) | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 228 | 2026-05-05 | Perplexity | Member of Technical Staff (AI Inference Engineer) | — | SKIP | ❌ | — | archetype mismatch: inference/ML systems |
+| 229 | 2026-05-05 | Perplexity | Member of Technical Staff (AI Inference Engineer) | — | SKIP | ❌ | — | archetype mismatch: inference/ML systems |
+| 230 | 2026-05-05 | Perplexity | Member of Technical Staff (AI Policy and Strategic Initiatives) | — | SKIP | ❌ | — | archetype mismatch: AI-lab MTS ML/research role |
+| 231 | 2026-05-05 | Perplexity | Member of Technical Staff (AI Research Lead) | — | SKIP | ❌ | — | archetype mismatch: research role |
+| 232 | 2026-05-05 | Perplexity | Member of Technical Staff (AI Researcher) | — | SKIP | ❌ | — | archetype mismatch: AI researcher |
+| 233 | 2026-05-05 | Perplexity | Member of Technical Staff (Analytics Engineer) | — | SKIP | ❌ | — | archetype mismatch: data engineering |
+| 234 | 2026-05-05 | Perplexity | Member of Technical Staff (Data Scientist, Evals) | — | SKIP | ❌ | — | archetype mismatch: data engineering |
+| 235 | 2026-05-05 | Perplexity | Member of Technical Staff (Data Scientist) | — | SKIP | ❌ | — | archetype mismatch: data engineering |
+| 236 | 2026-05-05 | Perplexity | Member of Technical Staff (Data Scientist/Engineer, Online Metrics) | — | SKIP | ❌ | — | archetype mismatch: data engineering |
+| 237 | 2026-05-05 | Perplexity | Member of Technical Staff (Forward Deployed Engineer, Applied AI) | — | SKIP | ❌ | — | archetype mismatch: forward deployed (client-facing, not core IC) |
+| 238 | 2026-05-05 | Perplexity | Member of Technical Staff (Golang Engineer, Search) | — | SKIP | ❌ | — | archetype mismatch: Go/Golang specialist (Cole TS-first) |
+| 239 | 2026-05-05 | Perplexity | Member of Technical Staff (Machine Learning Engineer, Search) | — | SKIP | ❌ | — | archetype mismatch: ML engineering |
+| 240 | 2026-05-05 | Perplexity | Member of Technical Staff (Machine Learning Research Engineer) | — | SKIP | ❌ | — | archetype mismatch: research role |
+| 241 | 2026-05-05 | Perplexity | Member of Technical Staff (Model Behavior Architect) | — | SKIP | ❌ | — | archetype mismatch: ML modeling/evaluation |
+| 242 | 2026-05-05 | Perplexity | Member of Technical Staff (Offensive Security Engineer) | — | SKIP | ❌ | — | archetype mismatch: offensive security (specialist) |
+| 243 | 2026-05-05 | Perplexity | Member of Technical Staff (Product Data Scientist, Search Quality) | — | SKIP | ❌ | — | archetype mismatch: data engineering |
+| 244 | 2026-05-05 | Perplexity | Member of Technical Staff (Rust Engineer, Search) | — | SKIP | ❌ | — | archetype mismatch: Rust specialist (Cole TS-first) |
+| 245 | 2026-05-05 | Perplexity | Member of Technical Staff (Secure Intelligence Institute) | — | SKIP | ❌ | — | archetype mismatch: AI-lab MTS ML/research role |
+| 246 | 2026-05-05 | Photoroom | Senior Software Engineer (Rust) | — | SKIP | ❌ | — | archetype mismatch: Rust specialist (Cole TS-first) |
+| 247 | 2026-05-05 | PhysicsX | DevOps Consultant | — | SKIP | ❌ | — | archetype mismatch: consultant role |
+| 248 | 2026-05-05 | PhysicsX | Forward Deployed Applications - Senior Software Engineer | — | SKIP | ❌ | — | archetype mismatch: forward deployed (client-facing, not core IC) |
+| 249 | 2026-05-05 | PhysicsX | Forward Deployed Applications - Software Engineer | — | SKIP | ❌ | — | archetype mismatch: forward deployed (client-facing, not core IC) |
+| 250 | 2026-05-05 | PhysicsX | Machine Learning Software Engineer, Research | — | SKIP | ❌ | — | archetype mismatch: ML engineering |
+| 251 | 2026-05-05 | PhysicsX | Principal Forward Deployed Software Engineer | — | SKIP | ❌ | — | archetype mismatch: forward deployed (client-facing, not core IC) |
+| 252 | 2026-05-05 | PhysicsX | Principal Machine Learning Infrastructure Engineer | — | SKIP | ❌ | — | archetype mismatch: ML infra/platform (not Cole TS profile) |
+| 253 | 2026-05-05 | PhysicsX | Senior Forward Deployed Software Engineer | — | SKIP | ❌ | — | archetype mismatch: forward deployed (client-facing, not core IC) |
+| 254 | 2026-05-05 | PhysicsX | Senior Forward Deployed Software Engineer | — | SKIP | ❌ | — | archetype mismatch: forward deployed (client-facing, not core IC) |
+| 255 | 2026-05-05 | PhysicsX | Staff Machine Learning Software Engineer, Research | — | SKIP | ❌ | — | archetype mismatch: ML engineering |
+| 256 | 2026-05-05 | Pigment | Engineering Manager | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 257 | 2026-05-05 | Pigment | Engineering Manager | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 258 | 2026-05-05 | Pigment | Engineering Manager - Front-end background | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 259 | 2026-05-05 | Pigment | Solutions Architect - Paris | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 260 | 2026-05-05 | Pigment | Solutions Architect - UK | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 261 | 2026-05-05 | Pinecone | Staff Developer Advocate | — | SKIP | ❌ | — | archetype mismatch: DevRel/advocacy |
+| 262 | 2026-05-05 | PolyAI | Developer Relations Manager | — | SKIP | ❌ | — | archetype mismatch: DevRel/advocacy |
+| 263 | 2026-05-05 | PolyAI | Engineering Manager - Runtime Team | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 264 | 2026-05-05 | Qonto | Full-Stack Engineer - People Products (Freelance) | — | SKIP | ❌ | — | HIGH BG risk: Qonto (AI lab / fintech / large public US tech per BG policy) |
+| 265 | 2026-05-05 | Qonto | Senior/Staff -  Backend Engineer - remote friendly | — | SKIP | ❌ | — | HIGH BG risk: Qonto (AI lab / fintech / large public US tech per BG policy) |
+| 266 | 2026-05-05 | Qonto | Senior/Staff - Backend Engineer - remote friendly | — | SKIP | ❌ | — | HIGH BG risk: Qonto (AI lab / fintech / large public US tech per BG policy) |
+| 267 | 2026-05-05 | Qonto | Software Engineer — Engineering Efficiency | — | SKIP | ❌ | — | HIGH BG risk: Qonto (AI lab / fintech / large public US tech per BG policy) |
+| 268 | 2026-05-05 | RunPod | Engineering Manager - Product & Platform Delivery | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 269 | 2026-05-05 | Scandit | Engineering Manager, Platform | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 270 | 2026-05-05 | Scandit | Engineering Manager, Platform | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 271 | 2026-05-05 | Sierra | Developer Relations Engineer | — | SKIP | ❌ | — | archetype mismatch: DevRel/advocacy |
+| 272 | 2026-05-05 | Sierra | Developer Relations Engineer | — | SKIP | ❌ | — | archetype mismatch: DevRel/advocacy |
+| 273 | 2026-05-05 | Sierra | Forward Deployed Infrastructure Engineer | — | SKIP | ❌ | — | archetype mismatch: forward deployed (client-facing, not core IC) |
+| 274 | 2026-05-05 | Sierra | Software Engineer, Agent (New Grad) | — | SKIP | ❌ | — | hard_no: junior/mid title |
+| 275 | 2026-05-05 | Sierra | Software Engineer, Mobile | — | SKIP | ❌ | — | hard_no: native mobile (iOS/Android) |
+| 276 | 2026-05-05 | Speechmatics | ML Platform Engineer | — | SKIP | ❌ | — | archetype mismatch: ML infra/platform (not Cole TS profile) |
+| 277 | 2026-05-05 | Speechmatics | Software Engineer - FutureVoices | — | SKIP | ❌ | — | archetype mismatch: voice/speech synthesis ML |
+| 278 | 2026-05-05 | Speechmatics | Software Engineer - FutureVoices | — | SKIP | ❌ | — | archetype mismatch: voice/speech synthesis ML |
+| 279 | 2026-05-05 | Spotify | C++ Engineer - Platform Engineering | — | SKIP | ❌ | — | archetype mismatch: C++ specialist (Cole TS-first) |
+| 280 | 2026-05-05 | Spotify | Director of Engineering, Experience | — | SKIP | ❌ | — | archetype mismatch: leadership role |
+| 281 | 2026-05-05 | Spotify | Engineering Manager - Advertising | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 282 | 2026-05-05 | Spotify | Engineering Manager - Content Platform | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 283 | 2026-05-05 | Spotify | Engineering Manager - Core Experience | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 284 | 2026-05-05 | Spotify | Engineering Manager - Experimentation | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 285 | 2026-05-05 | Spotify | Engineering Manager - Social Listening | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 286 | 2026-05-05 | Spotify | Engineering Manager - Subscriptions | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 287 | 2026-05-05 | Spotify | Engineering Manager - Subscriptions | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 288 | 2026-05-05 | Spotify | Engineering Manager – Messaging Platform & Tooling | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 289 | 2026-05-05 | Spotify | Engineering Manager II - Analytics Platform | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 290 | 2026-05-05 | Spotify | Engineering Manager II - Creator and Publisher Analytics | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 291 | 2026-05-05 | Spotify | Machine Learning Engineering Manager - Music | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 292 | 2026-05-05 | Spotify | Machine Learning Engineering Manager - Music | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 293 | 2026-05-05 | Spotify | Machine Learning Engineering Manager - Personalization | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 294 | 2026-05-05 | Spotify | Machine Learning Engineering Manager - Surfaces Music | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 295 | 2026-05-05 | Spotify | Senior C++ Engineer - Platform Engineering | — | SKIP | ❌ | — | archetype mismatch: C++ specialist (Cole TS-first) |
+| 296 | 2026-05-05 | Spotify | Senior Engineering Manager - Native Ads | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 297 | 2026-05-05 | Spotify | Senior Engineering Manager - Spotify for Artists | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 298 | 2026-05-05 | Spotify | Senior Software Engineer - TV Playback (C++) | — | SKIP | ❌ | — | archetype mismatch: C++ specialist (Cole TS-first) |
+| 299 | 2026-05-05 | SumUp | (Senior) Backend Engineer - Global Bank | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 300 | 2026-05-05 | SumUp | (Senior) Backend Engineer (Golang) - Global Bank | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 301 | 2026-05-05 | SumUp | (Senior/Mid) Software Engineer, Golang - Payments Platform | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 302 | 2026-05-05 | SumUp | Backend Engineer - POS | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 303 | 2026-05-05 | SumUp | Backend Engineer - Transfers | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 304 | 2026-05-05 | SumUp | Backend Engineer (Global Bank Tribe) | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 305 | 2026-05-05 | SumUp | Backend Engineer (Global Bank Tribe) | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 306 | 2026-05-05 | SumUp | Backend engineer (Go)-  Payments Experience | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 307 | 2026-05-05 | SumUp | Engineering Manager | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 308 | 2026-05-05 | SumUp | Engineering Manager | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 309 | 2026-05-05 | SumUp | Engineering Manager - Verification | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 310 | 2026-05-05 | SumUp | Engineering Manager - Verification | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 311 | 2026-05-05 | SumUp | Engineering Manager - Website | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 312 | 2026-05-05 | SumUp | Fullstack Engineer | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 313 | 2026-05-05 | SumUp | Fullstack Engineer (NodeJs) | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 314 | 2026-05-05 | SumUp | Senior AI Backend Engineer | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 315 | 2026-05-05 | SumUp | Senior Backend Engineer | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 316 | 2026-05-05 | SumUp | Senior Backend Engineer - Accounts | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 317 | 2026-05-05 | SumUp | Senior Backend Engineer - Accounts | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 318 | 2026-05-05 | SumUp | Senior Backend Engineer - Fiscalization | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 319 | 2026-05-05 | SumUp | Senior Backend Engineer - Fiscalization | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 320 | 2026-05-05 | SumUp | Senior Backend Engineer - Golang | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 321 | 2026-05-05 | SumUp | Senior Backend Engineer - Golang | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 322 | 2026-05-05 | SumUp | Senior Backend Engineer - Transfers | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 323 | 2026-05-05 | SumUp | Senior Backend Engineer (Golang) - Bank | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 324 | 2026-05-05 | SumUp | Senior Backend Engineer Go - Payments Reporting | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 325 | 2026-05-05 | SumUp | Senior Backend Engineer- Global Bank | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 326 | 2026-05-05 | SumUp | Senior Database DevOps Engineer | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 327 | 2026-05-05 | SumUp | Senior Software Engineer | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 328 | 2026-05-05 | SumUp | Software Engineer | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 329 | 2026-05-05 | SumUp | Software Engineer (Golang) - Online Payments | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 330 | 2026-05-05 | SumUp | Software Engineer II | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 331 | 2026-05-05 | SumUp | Software Engineering Manager | — | SKIP | ❌ | — | HIGH BG risk: SumUp (AI lab / fintech / large public US tech per BG policy) |
+| 332 | 2026-05-05 | Supabase | Developer Relations Engineer (San Francisco, CA) | — | SKIP | ❌ | — | archetype mismatch: DevRel/advocacy |
+| 333 | 2026-05-05 | Supabase | Software Engineer (Go) - Auth | — | SKIP | ❌ | — | archetype mismatch: Go/Golang specialist (Cole TS-first) |
+| 334 | 2026-05-05 | Supabase | Software Engineer (Go) - Auth Product | — | SKIP | ❌ | — | archetype mismatch: Go/Golang specialist (Cole TS-first) |
+| 335 | 2026-05-05 | Supabase | Strategic Customer Solutions Architect (AMER) | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 336 | 2026-05-05 | Supabase | Strategic Customer Solutions Architect (APAC) | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 337 | 2026-05-05 | Supabase | Strategic Customer Solutions Architect (EMEA) | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 338 | 2026-05-05 | Synthesia | Engineering Manager (Avatars) | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 339 | 2026-05-05 | Synthesia | Engineering Manager (Growth) | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 340 | 2026-05-05 | Synthesia | Knowledge & Enablement Specialist | — | SKIP | ❌ | — | archetype mismatch: enablement specialist |
+| 341 | 2026-05-05 | Synthesia | Principal ML Platform Engineer | — | SKIP | ❌ | — | archetype mismatch: ML infra/platform (not Cole TS profile) |
+| 342 | 2026-05-05 | Synthesia | Senior Knowledge & Enablement Specialist | — | SKIP | ❌ | — | archetype mismatch: enablement specialist |
+| 343 | 2026-05-05 | Synthesia | Software Engineer, Machine Learning | — | SKIP | ❌ | — | archetype mismatch: ML engineering |
+| 344 | 2026-05-05 | Synthesia | Solutions Architect | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 345 | 2026-05-05 | Synthesia | Staff Software Engineer, Voices | — | SKIP | ❌ | — | archetype mismatch: voice/speech synthesis ML |
+| 346 | 2026-05-05 | Trade Republic | (Senior) Platform Engineer (Go) | — | SKIP | ❌ | — | HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy) |
+| 347 | 2026-05-05 | Trade Republic | Backend Engineer (Berlin) | — | SKIP | ❌ | — | HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy) |
+| 348 | 2026-05-05 | Trade Republic | Backend Engineer (Haskell) | — | SKIP | ❌ | — | HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy) |
+| 349 | 2026-05-05 | Trade Republic | Backend Engineer (London) | — | SKIP | ❌ | — | HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy) |
+| 350 | 2026-05-05 | Trade Republic | Backend Engineer (Paris) | — | SKIP | ❌ | — | HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy) |
+| 351 | 2026-05-05 | Trade Republic | Cloud Platform Tech Lead | — | SKIP | ❌ | — | HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy) |
+| 352 | 2026-05-05 | Trade Republic | Database Platform Tech Lead | — | SKIP | ❌ | — | HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy) |
+| 353 | 2026-05-05 | Trade Republic | Kubernetes Platform Tech Lead | — | SKIP | ❌ | — | HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy) |
+| 354 | 2026-05-05 | Trade Republic | Observability Tech Lead | — | SKIP | ❌ | — | HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy) |
+| 355 | 2026-05-05 | Trade Republic | Senior Kafka Platform Engineer | — | SKIP | ❌ | — | HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy) |
+| 356 | 2026-05-05 | Trade Republic | Senior PostgreSQL Platform Engineer | — | SKIP | ❌ | — | HIGH BG risk: Trade Republic (AI lab / fintech / large public US tech per BG policy) |
+| 357 | 2026-05-05 | Vapi | Member of Technical Staff, Forward Deployed | — | SKIP | ❌ | — | archetype mismatch: forward deployed (client-facing, not core IC) |
+| 358 | 2026-05-05 | Vercel | Engineering Manager, CDN | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 359 | 2026-05-05 | Vercel | Manager, Solutions Architecture | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 360 | 2026-05-05 | Vercel | Senior Software Engineer, Trust & Safety | — | SKIP | ❌ | — | archetype mismatch: T&S/abuse (heavy BG) |
+| 361 | 2026-05-05 | Vercel | Solutions Architect | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 362 | 2026-05-05 | Vercel | Solutions Architect | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 363 | 2026-05-05 | Vercel | Solutions Architect | — | SKIP | ❌ | — | archetype mismatch: solutions architect (sales-adjacent) |
+| 364 | 2026-05-05 | Vercel | Sr. Engineering Manager, Platform | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 365 | 2026-05-05 | Wayve | Engineering Manager, App SW | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 366 | 2026-05-05 | Wayve | Senior Site Reliability Engineer, Vehicle SW | — | SKIP | ❌ | — | hard_no: robotics/embedded/vehicle/research-labs low-level |
+| 367 | 2026-05-05 | Wayve | Software Engineer - OS & Kernel, Robot Software | — | SKIP | ❌ | — | hard_no: robotics/embedded/vehicle/research-labs low-level |
+| 368 | 2026-05-05 | Wayve | Software Engineer - Sensor Systems, Robot Software | — | SKIP | ❌ | — | hard_no: robotics/embedded/vehicle/research-labs low-level |
+| 369 | 2026-05-05 | Wayve | Software Engineer - System Performance, Robot Software | — | SKIP | ❌ | — | hard_no: robotics/embedded/vehicle/research-labs low-level |
+| 370 | 2026-05-05 | Wayve | Software Engineer -System Performance, Robot Software | — | SKIP | ❌ | — | hard_no: robotics/embedded/vehicle/research-labs low-level |
+| 371 | 2026-05-05 | Wayve | Tech Lead, ML Engineer - AV Product engineering | — | SKIP | ❌ | — | archetype mismatch: ML engineering |
+| 372 | 2026-05-05 | Wayve | Tech Lead, Wayve Labs | — | SKIP | ❌ | — | hard_no: robotics/embedded/vehicle/research-labs low-level |
+| 373 | 2026-05-05 | WorkOS | Developer Relations | — | SKIP | ❌ | — | archetype mismatch: DevRel/advocacy |
+| 374 | 2026-05-05 | WorkOS | Engineering Manager | — | SKIP | ❌ | — | archetype mismatch: management role |
+| 375 | 2026-05-05 | Zapier | Director of Engineering, Infrastructure | — | SKIP | ❌ | — | archetype mismatch: leadership role |
+| 376 | 2026-05-05 | Zapier | Sr. Engineering Manager (India Engineering Leader) | — | SKIP | ❌ | — | archetype mismatch: management role |

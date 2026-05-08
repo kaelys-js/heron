@@ -1,0 +1,3 @@
+# career-ops is a local, single-user dashboard. Don't index it.
+User-agent: *
+Disallow: /
