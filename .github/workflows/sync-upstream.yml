@@ -115,7 +115,8 @@ jobs:
           BEHIND: ${{ steps.check.outputs.behind }}
           AHEAD: ${{ steps.check.outputs.ahead }}
         run: |
-          set -e
+          set -euo pipefail
+
           EXISTING=$(gh pr list \
             --head "${SYNC_BRANCH}" \
             --base "${TARGET_BRANCH}" \
@@ -134,20 +135,14 @@ jobs:
           BODY=$(printf '%s\n\n%s\n\n%s\n\n%s\n' "$BODY_HEADER" "$BODY_CONFLICT" "$BODY_STATS" "$BODY_FOOTER")
 
           if [ -n "$EXISTING" ]; then
-            echo "::notice::Sync PR #${EXISTING} already open; force-push updated its branch."
-            gh pr edit "$EXISTING" --body "$BODY" || true
+            echo "::notice::Sync PR #${EXISTING} already open — branch was force-pushed."
+            gh pr edit "$EXISTING" --body "$BODY"
           else
+            # No labels — keeps the workflow self-contained. Identify sync
+            # PRs by the branch name (sync/upstream) or title prefix.
             gh pr create \
               --title "chore: sync from upstream/${UPSTREAM_BRANCH}" \
               --body "$BODY" \
               --base "${TARGET_BRANCH}" \
-              --head "${SYNC_BRANCH}" \
-              --label "sync" 2>&1 | tee /tmp/pr-create.log || {
-              # --label fails if the label doesn't exist; retry without it.
-              gh pr create \
-                --title "chore: sync from upstream/${UPSTREAM_BRANCH}" \
-                --body "$BODY" \
-                --base "${TARGET_BRANCH}" \
-                --head "${SYNC_BRANCH}"
-            }
+              --head "${SYNC_BRANCH}"
           fi
