@@ -1,0 +1,216 @@
+/**
+ * Stats page data: pipeline funnel, score distribution, velocity, top companies/sources.
+ *
+ * @module
+ */
+
+import { loadAllJobs, groupByStatus } from '$lib/server/parsers';
+import { listReports, listPdfs, PIPELINE, APPLICATIONS, readSafe } from '$lib/server/files';
+import type { Job, Status, BgRisk } from '$lib/types';
+import { STATUS_ORDER } from '$lib/types';
+import fs from 'node:fs';
+
+const SOURCE_PATTERNS: Array<{ name: string; match: RegExp }> = [
+  { name: 'LinkedIn', match: /linkedin\.com/i },
+  { name: 'Indeed', match: /indeed\.com/i },
+  { name: 'Greenhouse', match: /greenhouse\.io/i },
+  { name: 'Ashby', match: /ashbyhq\.com|jobs\.ashbyhq/i },
+  { name: 'Lever', match: /lever\.co/i },
+  { name: 'Workday', match: /myworkdayjobs|workday\.com/i },
+  { name: 'SmartRecruiters', match: /smartrecruiters\.com/i },
+  { name: 'Wellfound', match: /wellfound\.com|angel\.co/i },
+  { name: 'YC Work', match: /ycombinator\.com|workatastartup\.com/i },
+  { name: 'Hacker News', match: /news\.ycombinator/i },
+  { name: 'The Muse', match: /themuse\.com/i },
+  { name: 'Adzuna', match: /adzuna/i },
+  { name: 'Google Jobs', match: /jobs\.google/i },
+  { name: 'Glassdoor', match: /glassdoor\.com/i },
+  { name: 'Monster', match: /monster\.com/i },
+];
+
+function sourceOf(url: string): string {
+  for (const p of SOURCE_PATTERNS) if (p.match.test(url)) return p.name;
+  try {
+    const h = new URL(url).hostname.replace(/^www\./, '');
+    return h.split('.').slice(-2, -1)[0]?.replace(/^./, (c) => c.toUpperCase()) || h;
+  } catch {
+    return 'Other';
+  }
+}
+
+function parseApplicationDates(): string[] {
+  const txt = readSafe(APPLICATIONS);
+  const dates: string[] = [];
+  for (const line of txt.split('\n')) {
+    if (!line.startsWith('|') || line.startsWith('| #') || line.startsWith('|---')) continue;
+    const cells = line.split('|').map((c) => c.trim());
+    if (cells.length < 6) continue;
+    const date = cells[2];
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) dates.push(date);
+  }
+  return dates;
+}
+
+function velocityBuckets(dates: string[]): { day: string; count: number }[] {
+  const map = new Map<string, number>();
+  for (const d of dates) map.set(d, (map.get(d) ?? 0) + 1);
+  const out: { day: string; count: number }[] = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    out.push({ day: key, count: map.get(key) ?? 0 });
+  }
+  return out;
+}
+
+export async function load() {
+  const jobs: Job[] = loadAllJobs();
+  const grouped = groupByStatus(jobs);
+
+  // Funnel
+  const funnel = STATUS_ORDER.map((s) => ({ status: s, count: grouped[s].length }));
+  // Counts by status
+  const counts: Record<string, number> = { total: jobs.length };
+  for (const s of STATUS_ORDER) counts[s.toLowerCase()] = grouped[s].length;
+
+  const reports = listReports().length;
+  const pdfs = listPdfs().length;
+  const appliedStatuses: Status[] = ['Applied', 'Screened', 'Interview', 'Offer', 'Rejected'];
+  const applied = appliedStatuses.reduce((acc, s) => acc + grouped[s].length, 0);
+
+  // Score distribution — 5 buckets, applied vs unapplied
+  const buckets = [
+    { label: '0–1', range: [0, 1], total: 0, applied: 0 },
+    { label: '1–2', range: [1, 2], total: 0, applied: 0 },
+    { label: '2–3', range: [2, 3], total: 0, applied: 0 },
+    { label: '3–4', range: [3, 4], total: 0, applied: 0 },
+    { label: '4–5', range: [4, 5.001], total: 0, applied: 0 },
+  ];
+  let scoreSum = 0;
+  let scoreCount = 0;
+  let unscored = 0;
+  for (const j of jobs) {
+    const s = j.score ?? j.geminiScore;
+    if (s == null) {
+      unscored++;
+      continue;
+    }
+    scoreSum += s;
+    scoreCount++;
+    const isApplied = appliedStatuses.includes(j.status);
+    for (const b of buckets) {
+      if (s >= b.range[0] && s < b.range[1]) {
+        b.total++;
+        if (isApplied) b.applied++;
+        break;
+      }
+    }
+  }
+  const avgScore = scoreCount > 0 ? scoreSum / scoreCount : 0;
+
+  // Top companies
+  const companyMap = new Map<string, { count: number; statuses: Record<string, number> }>();
+  for (const j of jobs) {
+    const key = j.company || '(unknown)';
+    let entry = companyMap.get(key);
+    if (!entry) {
+      entry = { count: 0, statuses: {} };
+      companyMap.set(key, entry);
+    }
+    entry.count++;
+    entry.statuses[j.status] = (entry.statuses[j.status] ?? 0) + 1;
+  }
+  const topCompanies = [...companyMap.entries()]
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 10)
+    .map(([name, v]) => ({ name, count: v.count, statuses: v.statuses }));
+
+  // Top sources
+  const sourceMap = new Map<string, { count: number; applied: number }>();
+  for (const j of jobs) {
+    const src = sourceOf(j.url);
+    let entry = sourceMap.get(src);
+    if (!entry) {
+      entry = { count: 0, applied: 0 };
+      sourceMap.set(src, entry);
+    }
+    entry.count++;
+    if (appliedStatuses.includes(j.status)) entry.applied++;
+  }
+  const topSources = [...sourceMap.entries()]
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 8)
+    .map(([name, v]) => ({
+      name,
+      count: v.count,
+      applied: v.applied,
+      rate: v.count > 0 ? v.applied / v.count : 0,
+    }));
+
+  // BG-risk distribution — normalize defensively (some legacy reports may have lowercased values)
+  const bgCounts: Record<NonNullable<BgRisk>, number> = { LOW: 0, MEDIUM: 0, HIGH: 0, BLOCKED: 0 };
+  let bgUnknown = 0;
+  const VALID_BG = new Set(['LOW', 'MEDIUM', 'HIGH', 'BLOCKED']);
+  for (const j of jobs) {
+    const raw = j.bgRisk ? String(j.bgRisk).toUpperCase() : null;
+    if (raw && VALID_BG.has(raw)) bgCounts[raw as NonNullable<BgRisk>]++;
+    else bgUnknown++;
+  }
+
+  // Velocity (applications.md dates)
+  const appDates = parseApplicationDates();
+  const velocity = velocityBuckets(appDates);
+  const last7 = velocity.slice(-7).reduce((a, b) => a + b.count, 0);
+  const prev7 = velocity.slice(0, 7).reduce((a, b) => a + b.count, 0);
+  const velocityDelta = prev7 > 0 ? Math.round(((last7 - prev7) / prev7) * 100) : null;
+
+  // Top 5 ready jobs
+  const topReady = grouped.Ready.slice(0, 5).map((j) => ({
+    id: j.id,
+    company: j.company,
+    role: j.role,
+    score: j.score ?? j.geminiScore ?? null,
+    bgRisk: j.bgRisk,
+  }));
+
+  // Pipeline staleness
+  let pipelineStaleDays: number | null = null;
+  try {
+    const stat = fs.statSync(PIPELINE);
+    pipelineStaleDays = Math.floor((Date.now() - stat.mtimeMs) / (1000 * 60 * 60 * 24));
+  } catch {}
+
+  // Conversion rates
+  const conversion = {
+    scoredOfTotal: counts.total > 0 ? (counts.total - unscored) / counts.total : 0,
+    readyOfScored: counts.scored + counts.ready > 0 ? counts.ready / (counts.scored + counts.ready + applied) : 0,
+    appliedOfReady: applied + counts.ready > 0 ? applied / (applied + counts.ready) : 0,
+    interviewOfApplied: counts.applied + counts.screened + counts.interview + counts.offer > 0
+      ? (counts.interview + counts.offer) / (counts.applied + counts.screened + counts.interview + counts.offer + counts.rejected)
+      : 0,
+    overallApplied: counts.total > 0 ? applied / counts.total : 0,
+  };
+
+  return {
+    counts,
+    reports,
+    pdfs,
+    applied,
+    avgScore,
+    unscored,
+    funnel,
+    buckets,
+    topCompanies,
+    topSources,
+    bgCounts,
+    bgUnknown,
+    velocity,
+    last7,
+    prev7,
+    velocityDelta,
+    topReady,
+    pipelineStaleDays,
+    conversion,
+  };
+}
