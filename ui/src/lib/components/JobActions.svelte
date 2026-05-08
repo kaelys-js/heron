@@ -660,9 +660,10 @@
           <Activity class="size-3.5 mt-0.5 text-blue-400 flex-shrink-0" />
         {/if}
         <div class="flex-1 min-w-0">
-          <div class="text-xs font-medium">Check still live</div>
+          <div class="text-xs font-medium">Check if still open</div>
           <div class="text-[10px] text-muted-foreground/70 leading-tight">
-            Playwright probe of the URL. Auto-closes the row if the posting is gone.
+            Loads the URL with Playwright and looks for "expired" / "no longer accepting" markers.
+            If the posting is gone, the row flips to Closed automatically.
           </div>
         </div>
       </DropdownMenu.Item>
@@ -679,9 +680,10 @@
           <Bell class="size-3.5 mt-0.5 text-amber-400 flex-shrink-0" />
         {/if}
         <div class="flex-1 min-w-0">
-          <div class="text-xs font-medium">Draft follow-up</div>
+          <div class="text-xs font-medium">Draft follow-up message</div>
           <div class="text-[10px] text-muted-foreground/70 leading-tight">
-            Generates 2–3 message variants tuned to days-since-applied. Reuses contacts from your tracker.
+            Spawns Claude to draft 2–3 message variants based on how long it's been since you
+            applied. Picks tone (warm / direct / short) and references the contacts from your tracker.
           </div>
         </div>
       </DropdownMenu.Item>
@@ -698,9 +700,11 @@
           <ClipboardCheck class="size-3.5 mt-0.5 text-fuchsia-400 flex-shrink-0" />
         {/if}
         <div class="flex-1 min-w-0">
-          <div class="text-xs font-medium">Open answers</div>
+          <div class="text-xs font-medium">Pre-fill application answers</div>
           <div class="text-[10px] text-muted-foreground/70 leading-tight">
-            Pre-fills "why this role / why this company / years of X / comp / availability" — copy each block into the portal.
+            Drafts answers to the standard application-form questions ("why this role", "years of X",
+            "salary expectations", "when can you start") so you can copy each one into a Greenhouse /
+            Ashby / Lever portal instead of typing from scratch.
           </div>
         </div>
       </DropdownMenu.Item>
