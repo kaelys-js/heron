@@ -138,11 +138,14 @@ jobs:
             echo "::notice::Sync PR #${EXISTING} already open — branch was force-pushed."
             gh pr edit "$EXISTING" --body "$BODY"
           else
-            # No labels — keeps the workflow self-contained. Identify sync
-            # PRs by the branch name (sync/upstream) or title prefix.
-            gh pr create \
-              --title "chore: sync from upstream/${UPSTREAM_BRANCH}" \
-              --body "$BODY" \
-              --base "${TARGET_BRANCH}" \
-              --head "${SYNC_BRANCH}"
+            # Use the REST API (POST /repos/{}/{}/pulls) instead of `gh pr create`.
+            # `gh pr create` goes through GraphQL which requires a separate
+            # account-level "Allow Actions to create PRs" toggle that's not
+            # exposed via the REST API surface. The REST endpoint honors
+            # `pull-requests: write` from the workflow permissions block alone.
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/pulls" \
+              -f title="chore: sync from upstream/${UPSTREAM_BRANCH}" \
+              -f body="$BODY" \
+              -f head="${SYNC_BRANCH}" \
+              -f base="${TARGET_BRANCH}"
           fi
