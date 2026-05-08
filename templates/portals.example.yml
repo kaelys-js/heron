@@ -278,10 +278,39 @@ search_queries:
     query: 'site:news.ycombinator.com OR site:hnrss.org "AI Engineer" OR "Forward Deployed" OR "DevRel" OR "Founding Engineer" remote'
     enabled: true
 
+# -- Per-source toggles (optional) --
+# scan.mjs detects each company's ATS from `careers_url`. If you want to
+# disable an entire ATS without removing each company entry, set it to
+# false here. Anything not listed is enabled.
+#
+# Supported ATS providers (auto-detected):
+#   greenhouse, ashby, lever                  — public REST APIs
+#   workday                                   — POST API (paginates 20/req)
+#   smartrecruiters                           — public REST API
+#   workable                                  — public widget API
+#   personio                                  — XML feed (DACH-heavy)
+#   recruitee, teamtailor                     — public REST APIs
+#
+# Companies on an ATS we don't auto-detect can use `ats: workday` /
+# `ats: smartrecruiters` overrides plus the matching per-tenant fields
+# (workday: { tenant, pod, site } or smartrecruiters_company: '<slug>').
+#
+# sources:
+#   workday: false        # skip every Workday tenant
+#   teamtailor: false
+
+
 # -- Tracked companies --
 # Companies whose career pages are checked directly.
 # scan_method: playwright (default), websearch, greenhouse_api
 # For Greenhouse companies, add api: field for faster structured JSON access.
+#
+# Workday companies need either careers_url with the *.myworkdayjobs.com
+# pattern (auto-detected) OR explicit override:
+#   - name: Mastercard
+#     ats: workday
+#     workday: { tenant: mastercard, pod: wd1, site: CorporateCareers }
+#     workday_max_pages: 5     # optional, default 5 (20 jobs/page)
 
 tracked_companies:
 
