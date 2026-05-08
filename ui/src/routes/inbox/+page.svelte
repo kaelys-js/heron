@@ -12,7 +12,7 @@
     Inbox as InboxIcon, Sparkles, Send, Search, Plus, ArrowRight, RefreshCw,
     AlertCircle, AlertTriangle, Info, CheckCircle2, Clock, Zap, TrendingUp, TrendingDown,
     Flame, Activity as ActivityIcon, Briefcase, Target, ListTodo, FileText,
-    KanbanSquare, ChevronRight, Globe,
+    KanbanSquare, ChevronRight, Globe, Bell,
   } from '@lucide/svelte';
   import { goto, invalidateAll } from '$app/navigation';
   import { api, ApiError } from '$lib/api';
@@ -29,6 +29,7 @@
     actionLabel?: string;
     actionUrl?: string;
     actionTask?: 'scan' | 'gemini' | 'apply-linkedin';
+    actionPostUrl?: string;
   };
 
   let { data }: {
@@ -53,6 +54,9 @@
       recentErrorsCount: number;
       pipelineDaysAgo: number | null;
       alerts: InboxAlert[];
+      followupsUrgent: { job: Job; entry: import('$lib/server/followup-cadence').FollowupEntry }[];
+      followupsOverdue: { job: Job; entry: import('$lib/server/followup-cadence').FollowupEntry }[];
+      followupsCadenceMeta: import('$lib/server/followup-cadence').FollowupCadence['metadata'] | null;
       runtime: { hasAnthropic: boolean; hasGemini: boolean; runningTasks: string[] };
     };
   } = $props();
@@ -77,9 +81,28 @@
     }
   }
 
+  let postingAlert = $state<string | null>(null);
+
+  async function postAlertAction(a: InboxAlert) {
+    if (!a.actionPostUrl || postingAlert) return;
+    postingAlert = a.id;
+    try {
+      await api.post(a.actionPostUrl, {}, { silent: true });
+      toast.success(a.title.replace(/^Autopilot paused:?\s*/i, 'Autopilot resumed · '));
+      await invalidateAll();
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Action failed', { description: err.message });
+    } finally {
+      postingAlert = null;
+    }
+  }
+
   function onAlertAction(a: InboxAlert) {
     if (a.actionTask) {
       runTask(a.actionTask, a.title);
+    } else if (a.actionPostUrl) {
+      postAlertAction(a);
     } else if (a.actionUrl) {
       goto(a.actionUrl);
     }
@@ -369,11 +392,14 @@
                   size="sm"
                   class="h-7 text-xs gap-1.5 flex-shrink-0"
                   onclick={() => onAlertAction(alert)}
-                  disabled={alert.actionTask != null && (busyTask === alert.actionTask || data.runtime.runningTasks.includes(alert.actionTask))}
+                  disabled={(alert.actionTask != null && (busyTask === alert.actionTask || data.runtime.runningTasks.includes(alert.actionTask))) || postingAlert === alert.id}
                 >
                   {#if alert.actionTask != null && (busyTask === alert.actionTask || data.runtime.runningTasks.includes(alert.actionTask))}
                     <ActivityIcon class="size-3 animate-pulse" />
                     Running…
+                  {:else if postingAlert === alert.id}
+                    <ActivityIcon class="size-3 animate-pulse" />
+                    Resuming…
                   {:else}
                     {alert.actionLabel}
                     <ArrowRight class="size-3" />
@@ -488,6 +514,42 @@
               </p>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {#each data.inFlight as job (job.id)}
+                  <JobCard {job} />
+                {/each}
+              </div>
+            </section>
+          {/if}
+
+          <!--
+            Follow-ups due — surfaces from the daily cadence snapshot. We only
+            render the urgent + overdue buckets here; the full grouped list
+            lives on /applied. Click "View all" to jump there.
+          -->
+          {#if data.followupsUrgent.length > 0 || data.followupsOverdue.length > 0}
+            <section id="follow-ups-due" class="space-y-2.5 scroll-mt-4">
+              <header class="flex items-center gap-2">
+                <Bell class="size-4 text-amber-400" />
+                <h2 class="text-sm font-semibold">Follow-ups due</h2>
+                <span class="text-[10px] text-muted-foreground tabular-nums">
+                  {data.followupsUrgent.length + data.followupsOverdue.length} ready
+                  {#if data.followupsCadenceMeta}
+                    · {data.followupsCadenceMeta.actionable} active
+                  {/if}
+                </span>
+                <div class="flex-1"></div>
+                <a href="/applied" class="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5">
+                  View all
+                  <ChevronRight class="size-3" />
+                </a>
+              </header>
+              <p class="text-[11px] text-muted-foreground leading-relaxed">
+                Active applications past the cadence window. Click any one and use the More menu → Draft follow-up to generate a tuned message.
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {#each data.followupsUrgent as { job } (job.id)}
+                  <JobCard {job} />
+                {/each}
+                {#each data.followupsOverdue as { job } (job.id)}
                   <JobCard {job} />
                 {/each}
               </div>

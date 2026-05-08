@@ -3,6 +3,17 @@ cv.md
 data/applications.md
 data/pipeline.md
 data/scan-history.tsv
+
+# Server runtime state — never commit. activity.jsonl is rotated at 50MB
+# (see ui/src/lib/server/events.ts) but a runaway log can still hit GB
+# before rotation kicks in; the file regenerates per session anyway.
+# Caches are deterministic outputs of analyze-patterns / followup-cadence.
+data/activity.jsonl
+data/activity.jsonl.1
+data/issues.jsonl
+data/followup-cache.json
+data/insights-cache.json
+data/autopilot.json
 reports/*.md
 !reports/.gitkeep
 output/*

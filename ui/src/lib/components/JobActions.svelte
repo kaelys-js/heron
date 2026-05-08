@@ -21,11 +21,12 @@
 <script lang="ts">
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import * as Tooltip from '$lib/components/ui/tooltip';
+  import * as Sheet from '$lib/components/ui/sheet';
   import { Button } from '$lib/components/ui/button';
   import {
     ChevronDown, MoreHorizontal, Send, Check, ClipboardCheck, ArrowUpRight,
     Sparkles, ExternalLink, Copy, FileBadge2, FileText, Network as Linkedin,
-    Loader2, Wand2,
+    Loader2, Wand2, Activity, Bell,
   } from '@lucide/svelte';
   import CheckMark from './CheckMark.svelte';
   import { api, ApiError } from '$lib/api';
@@ -56,11 +57,18 @@
 
   let applyBusy = $state<ApplyMode | null>(null);
   let cvBusy = $state(false);
+  let livenessBusy = $state(false);
+  let followupBusy = $state(false);
+  let followupDraft = $state<{ path: string; content: string } | null>(null);
+  let followupSheetOpen = $state(false);
+  let formAnswersBusy = $state(false);
+  let formAnswersData = $state<{ path: string; content: string } | null>(null);
+  let formAnswersSheetOpen = $state(false);
   let statusBusy = $state(false);
 
   const STATUS_DOTS: Record<Status, string> = {
     New: 'bg-zinc-400', Scoring: 'bg-blue-400', Scored: 'bg-cyan-400',
-    Ready: 'bg-emerald-400', Applied: 'bg-violet-400', Screened: 'bg-amber-400',
+    Ready: 'bg-emerald-400', Queued: 'bg-fuchsia-400', Applied: 'bg-violet-400', Screened: 'bg-amber-400',
     Interview: 'bg-orange-400', Offer: 'bg-green-400', Rejected: 'bg-red-400', Closed: 'bg-zinc-500',
   };
   const STATUS_HINT: Record<Status, string> = {
@@ -68,6 +76,7 @@
     Scoring: 'Gemini is processing this job',
     Scored: 'Has a Gemini score · review and promote',
     Ready: 'Eval done · CV PDF ready · go apply',
+    Queued: 'Staged for batch send · review on /queue',
     Applied: 'Application sent',
     Screened: 'Recruiter responded',
     Interview: 'Active interview process',
@@ -95,6 +104,17 @@
       );
       toast.success('Status → ' + newStatus, { description: jobLabel });
       await invalidateAll();
+
+      // Fire the post-rejection capture sheet (mounted at layout level) so the
+      // user has a non-blocking nudge to record what they learned. Sheet itself
+      // owns the 600ms delay so the success toast lands first.
+      if (newStatus === 'Rejected' && typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('career-ops:post-rejection-prompt', {
+            detail: { jobId: job.id, jobLabel },
+          }),
+        );
+      }
     } catch (e) {
       const err = e as ApiError;
       toast.error('Status update failed', {
@@ -183,6 +203,179 @@
       cvBusy = false;
     }
   }
+
+  async function checkLiveness() {
+    if (!job.id || livenessBusy) return;
+    livenessBusy = true;
+    try {
+      const r = await withMinDuration(
+        api.post<{ verdict: 'active' | 'expired' | 'uncertain'; reason?: string; closed: boolean }>(
+          '/api/job/' + encodeURIComponent(job.id) + '/liveness',
+          {},
+          { silent: true },
+        ),
+        700,
+      );
+      if (r.verdict === 'active') {
+        toast.success('Posting still live', {
+          description: jobLabel + ' — go ahead and apply.',
+        });
+      } else if (r.verdict === 'expired') {
+        toast.warning('Posting expired · marked Closed', {
+          description: jobLabel + (r.reason ? ' — ' + r.reason : '') + '. Tracker updated automatically.',
+          duration: 8_000,
+        });
+        await invalidateAll();
+      } else {
+        toast.info('Liveness uncertain', {
+          description: jobLabel + (r.reason ? ' — ' + r.reason : '') + '. Flagged in the Inbox; verify by hand.',
+          duration: 8_000,
+        });
+      }
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Liveness check failed', {
+        description: jobLabel + ' — ' + err.message + '. Playwright must be installed in the venv.',
+        action: { label: 'Retry', onClick: () => checkLiveness() },
+        duration: 10_000,
+      });
+    } finally {
+      livenessBusy = false;
+    }
+  }
+
+  async function draftFollowup(tone: 'warm' | 'direct' | 'short' = 'warm') {
+    if (!job.id || followupBusy) return;
+    followupBusy = true;
+    followupDraft = null;
+    followupSheetOpen = true;
+    try {
+      const r = await api.post<{ ok: boolean; path: string; content: string; error?: string }>(
+        '/api/job/' + encodeURIComponent(job.id) + '/followup-draft',
+        { tone },
+        { silent: true },
+      );
+      if (!r.ok) throw new Error(r.error ?? 'Draft generation failed');
+      followupDraft = { path: r.path, content: r.content };
+      toast.success('Follow-up drafted', {
+        description: jobLabel + ' — opened in a sheet. Copy a variant and paste into LinkedIn / email.',
+        duration: 6_000,
+      });
+    } catch (e) {
+      followupSheetOpen = false;
+      const err = e as ApiError;
+      toast.error('Follow-up draft failed', {
+        description: jobLabel + ' — ' + err.message + '. Claude Code CLI must be on PATH.',
+        action: { label: 'Retry', onClick: () => draftFollowup(tone) },
+        duration: 12_000,
+      });
+    } finally {
+      followupBusy = false;
+    }
+  }
+
+  async function copyDraft() {
+    if (!followupDraft) return;
+    try {
+      await navigator.clipboard.writeText(followupDraft.content);
+      toast.success('Draft copied to clipboard');
+    } catch {
+      toast.error('Copy failed', { description: 'Browser blocked clipboard access.' });
+    }
+  }
+
+  async function openFormAnswers() {
+    if (!job.id) return;
+    formAnswersSheetOpen = true;
+    if (formAnswersData || formAnswersBusy) return; // already loaded / loading
+    // Try cached first; if missing, generate.
+    formAnswersBusy = true;
+    try {
+      const cached = await api.get<{ cached: { path: string; body: string } | null }>(
+        '/api/job/' + encodeURIComponent(job.id) + '/form-answers',
+        { silent: true },
+      );
+      if (cached.cached) {
+        formAnswersData = { path: cached.cached.path, content: cached.cached.body };
+      } else {
+        await regenerateFormAnswers();
+      }
+    } catch {
+      // Fall through to generate path on any cache fetch error
+      await regenerateFormAnswers();
+    } finally {
+      formAnswersBusy = false;
+    }
+  }
+
+  async function regenerateFormAnswers() {
+    if (!job.id) return;
+    formAnswersBusy = true;
+    try {
+      const r = await api.post<{ ok: boolean; path?: string; body?: string; error?: string }>(
+        '/api/job/' + encodeURIComponent(job.id) + '/form-answers',
+        {},
+        { silent: true },
+      );
+      if (!r.ok) throw new Error(r.error ?? 'Form-answers generation failed');
+      formAnswersData = { path: r.path ?? '', content: r.body ?? '' };
+      toast.success('Form answers ready', {
+        description: jobLabel + ' — copy each answer into the matching field on the portal.',
+        duration: 6_000,
+      });
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Form answers failed', {
+        description: jobLabel + ' — ' + err.message + '. Claude Code CLI must be on PATH.',
+        action: { label: 'Retry', onClick: () => regenerateFormAnswers() },
+        duration: 12_000,
+      });
+    } finally {
+      formAnswersBusy = false;
+    }
+  }
+
+  async function copyFormAnswers() {
+    if (!formAnswersData) return;
+    try {
+      await navigator.clipboard.writeText(formAnswersData.content);
+      toast.success('All answers copied');
+    } catch {
+      toast.error('Copy failed', { description: 'Browser blocked clipboard access.' });
+    }
+  }
+
+  async function copyOneAnswer(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Answer copied');
+    } catch {
+      toast.error('Copy failed', { description: 'Browser blocked clipboard access.' });
+    }
+  }
+
+  /** Split the markdown into per-question blocks for individual Copy buttons.
+   *  The mode writes one `## N. {question}` heading per answer. */
+  function parseAnswerBlocks(md: string): { heading: string; body: string }[] {
+    const out: { heading: string; body: string }[] = [];
+    const lines = md.split('\n');
+    let cur: { heading: string; body: string } | null = null;
+    for (const line of lines) {
+      const m = /^##\s+(?:\d+\.\s+)?(.+)$/.exec(line.trim());
+      if (m) {
+        if (cur) out.push(cur);
+        cur = { heading: m[1], body: '' };
+      } else if (cur) {
+        cur.body += line + '\n';
+      }
+    }
+    if (cur) out.push(cur);
+    return out
+      .filter((b) => b.heading && !b.heading.startsWith('Form answers'))
+      .map((b) => ({ heading: b.heading, body: b.body.trim() }));
+  }
+
+  let formAnswerBlocks = $derived(formAnswersData ? parseAnswerBlocks(formAnswersData.content) : []);
 
   async function copyUrl() {
     if (!job.url) return;
@@ -455,6 +648,63 @@
         </div>
       </DropdownMenu.Item>
 
+      <DropdownMenu.Item
+        onSelect={checkLiveness}
+        closeOnSelect={false}
+        class="gap-2 items-start py-2"
+        disabled={!job.url || livenessBusy}
+      >
+        {#if livenessBusy}
+          <Loader2 class="size-3.5 mt-0.5 animate-spin flex-shrink-0" />
+        {:else}
+          <Activity class="size-3.5 mt-0.5 text-blue-400 flex-shrink-0" />
+        {/if}
+        <div class="flex-1 min-w-0">
+          <div class="text-xs font-medium">Check still live</div>
+          <div class="text-[10px] text-muted-foreground/70 leading-tight">
+            Playwright probe of the URL. Auto-closes the row if the posting is gone.
+          </div>
+        </div>
+      </DropdownMenu.Item>
+
+      <DropdownMenu.Item
+        onSelect={() => draftFollowup('warm')}
+        closeOnSelect={false}
+        class="gap-2 items-start py-2"
+        disabled={!job.url || followupBusy}
+      >
+        {#if followupBusy}
+          <Loader2 class="size-3.5 mt-0.5 animate-spin flex-shrink-0" />
+        {:else}
+          <Bell class="size-3.5 mt-0.5 text-amber-400 flex-shrink-0" />
+        {/if}
+        <div class="flex-1 min-w-0">
+          <div class="text-xs font-medium">Draft follow-up</div>
+          <div class="text-[10px] text-muted-foreground/70 leading-tight">
+            Generates 2–3 message variants tuned to days-since-applied. Reuses contacts from your tracker.
+          </div>
+        </div>
+      </DropdownMenu.Item>
+
+      <DropdownMenu.Item
+        onSelect={openFormAnswers}
+        closeOnSelect={false}
+        class="gap-2 items-start py-2"
+        disabled={!job.url || formAnswersBusy}
+      >
+        {#if formAnswersBusy}
+          <Loader2 class="size-3.5 mt-0.5 animate-spin flex-shrink-0" />
+        {:else}
+          <ClipboardCheck class="size-3.5 mt-0.5 text-fuchsia-400 flex-shrink-0" />
+        {/if}
+        <div class="flex-1 min-w-0">
+          <div class="text-xs font-medium">Open answers</div>
+          <div class="text-[10px] text-muted-foreground/70 leading-tight">
+            Pre-fills "why this role / why this company / years of X / comp / availability" — copy each block into the portal.
+          </div>
+        </div>
+      </DropdownMenu.Item>
+
       <DropdownMenu.Separator />
       <DropdownMenu.Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Open</DropdownMenu.Label>
 
@@ -513,3 +763,117 @@
     </DropdownMenu.Content>
   </DropdownMenu.Root>
 </div>
+
+<!--
+  Follow-up draft sheet — opens when the user picks "Draft follow-up". Renders
+  the persisted markdown (Claude usually returns 2–3 variants in one file) so
+  the user can copy the right tone for the moment.
+-->
+<Sheet.Root bind:open={followupSheetOpen}>
+  <Sheet.Content side="right" class="w-full sm:max-w-2xl flex flex-col p-0 gap-0">
+    <Sheet.Header class="px-5 pt-5 pb-3 border-b">
+      <div class="flex items-start gap-3">
+        <div class="size-9 rounded-lg bg-amber-500/10 ring-1 ring-amber-500/40 flex items-center justify-center flex-shrink-0">
+          <Bell class="size-4 text-amber-300" />
+        </div>
+        <div class="flex-1 min-w-0">
+          <Sheet.Title class="text-base">Follow-up draft</Sheet.Title>
+          <Sheet.Description class="text-xs mt-0.5">
+            {jobLabel}
+          </Sheet.Description>
+        </div>
+      </div>
+    </Sheet.Header>
+
+    <div class="flex items-center gap-2 px-5 py-3 border-b">
+      <span class="text-[10px] uppercase tracking-wider text-muted-foreground">Tone</span>
+      <Button variant="outline" size="sm" class="h-7 text-xs" onclick={() => draftFollowup('warm')} disabled={followupBusy}>Warm</Button>
+      <Button variant="outline" size="sm" class="h-7 text-xs" onclick={() => draftFollowup('direct')} disabled={followupBusy}>Direct</Button>
+      <Button variant="outline" size="sm" class="h-7 text-xs" onclick={() => draftFollowup('short')} disabled={followupBusy}>Short</Button>
+      <div class="flex-1"></div>
+      {#if followupDraft}
+        <Button size="sm" class="h-7 text-xs gap-1.5" onclick={copyDraft}>
+          <Copy class="size-3" /> Copy all
+        </Button>
+      {/if}
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-5">
+      {#if followupBusy && !followupDraft}
+        <div class="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 class="size-4 animate-spin" />
+          Generating draft via Claude — usually 30–60s.
+        </div>
+      {:else if followupDraft}
+        <article class="prose prose-invert prose-sm max-w-none whitespace-pre-wrap font-sans">{followupDraft.content}</article>
+        <p class="mt-6 text-[10px] text-muted-foreground/60 font-mono">{followupDraft.path}</p>
+      {/if}
+    </div>
+  </Sheet.Content>
+</Sheet.Root>
+
+<!--
+  Form-answers sheet — pre-filled Q&A for non-LinkedIn portals (Greenhouse,
+  Ashby, Lever). Each answer block has its own Copy button so the user pastes
+  one-by-one into the matching field on the application form.
+-->
+<Sheet.Root bind:open={formAnswersSheetOpen}>
+  <Sheet.Content side="right" class="w-full sm:max-w-2xl flex flex-col p-0 gap-0">
+    <Sheet.Header class="px-5 pt-5 pb-3 border-b">
+      <div class="flex items-start gap-3">
+        <div class="size-9 rounded-lg bg-fuchsia-500/10 ring-1 ring-fuchsia-500/40 flex items-center justify-center flex-shrink-0">
+          <ClipboardCheck class="size-4 text-fuchsia-300" />
+        </div>
+        <div class="flex-1 min-w-0">
+          <Sheet.Title class="text-base">Form answers</Sheet.Title>
+          <Sheet.Description class="text-xs mt-0.5">
+            {jobLabel}
+          </Sheet.Description>
+        </div>
+      </div>
+    </Sheet.Header>
+
+    <div class="flex items-center gap-2 px-5 py-3 border-b">
+      <span class="text-[10px] uppercase tracking-wider text-muted-foreground">{formAnswerBlocks.length} questions</span>
+      <div class="flex-1"></div>
+      <Button variant="outline" size="sm" class="h-7 text-xs gap-1.5" onclick={regenerateFormAnswers} disabled={formAnswersBusy}>
+        {#if formAnswersBusy}
+          <Loader2 class="size-3 animate-spin" /> Regenerating…
+        {:else}
+          <Wand2 class="size-3" /> Regenerate
+        {/if}
+      </Button>
+      {#if formAnswersData}
+        <Button size="sm" class="h-7 text-xs gap-1.5" onclick={copyFormAnswers}>
+          <Copy class="size-3" /> Copy all
+        </Button>
+      {/if}
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-5 space-y-3">
+      {#if formAnswersBusy && !formAnswersData}
+        <div class="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 class="size-4 animate-spin" />
+          Generating answers via Claude — usually 30–60s.
+        </div>
+      {:else if formAnswersData && formAnswerBlocks.length > 0}
+        {#each formAnswerBlocks as block, i (i)}
+          <div class="rounded-md border border-border/40 bg-card px-4 py-3 space-y-1.5">
+            <div class="flex items-start justify-between gap-2">
+              <h4 class="text-xs font-semibold text-foreground">{block.heading}</h4>
+              <Button variant="ghost" size="sm" class="h-6 px-2 text-[10px] gap-1" onclick={() => copyOneAnswer(block.body)}>
+                <Copy class="size-2.5" /> Copy
+              </Button>
+            </div>
+            <p class="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">{block.body}</p>
+          </div>
+        {/each}
+        {#if formAnswersData.path}
+          <p class="text-[10px] text-muted-foreground/60 font-mono pt-2">{formAnswersData.path}</p>
+        {/if}
+      {:else if formAnswersData}
+        <article class="prose prose-invert prose-sm max-w-none whitespace-pre-wrap font-sans">{formAnswersData.content}</article>
+      {/if}
+    </div>
+  </Sheet.Content>
+</Sheet.Root>

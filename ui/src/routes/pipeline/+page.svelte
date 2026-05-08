@@ -18,6 +18,10 @@
   import { browser } from '$app/environment';
   import { onMount } from 'svelte';
   import { reportClientError } from '$lib/notifications.svelte';
+  import { api } from '$lib/api';
+  import { Button } from '$lib/components/ui/button';
+  import { Activity, Loader2 } from '@lucide/svelte';
+  import { toast } from 'svelte-sonner';
 
   let { data }: { data: { jobs: Job[]; total: number; initialTab: TabFilter; initialFilter: FilterState; fromProject: string | null } } = $props();
   // svelte-ignore state_referenced_locally — server data seeds local mutable state on first render.
@@ -185,6 +189,34 @@ for (const job of data.jobs) {
     });
     return candidates.slice(0, 25);
   });
+
+  // Liveness sweep candidates: visible jobs that look like they could be stale
+  // (New / Scored / Ready). >10 makes the bulk button worth showing — the user
+  // can also run a sweep at any time from Settings → Maintenance.
+  let livenessCandidateCount = $derived(
+    listJobs.filter((j) => ['New', 'Scoring', 'Scored', 'Ready'].includes(j.status)).length,
+  );
+  let livenessBusy = $state(false);
+
+  async function runLivenessSweep() {
+    if (livenessBusy) return;
+    livenessBusy = true;
+    try {
+      await api.post('/api/bulk/liveness', { scope: 'stale' }, { silent: true });
+      toast.success('Liveness sweep queued', {
+        description: 'Walking up to ~200 URLs through Playwright. Expired postings auto-close; uncertain ones land in the Inbox. Watch the bell for completion.',
+        duration: 8_000,
+      });
+    } catch (e) {
+      const err = e as { message?: string };
+      toast.error('Failed to queue liveness sweep', {
+        description: err.message ?? 'Network error',
+        action: { label: 'Retry', onClick: () => runLivenessSweep() },
+      });
+    } finally {
+      livenessBusy = false;
+    }
+  }
 </script>
 
 <div class="h-full overflow-y-auto">
@@ -210,6 +242,34 @@ for (const job of data.jobs) {
         applyLabel="Apply to all Ready"
         cvLabel="Generate CVs for high-fit"
       />
+    {/if}
+
+    <!--
+      Liveness sweep — surfaces when there are enough open jobs that some are
+      probably dead links. The sweep itself runs weekly via Autopilot; this
+      button is the "check now" escape hatch.
+    -->
+    {#if livenessCandidateCount >= 10}
+      <div class="flex items-center gap-2 px-3 py-2 rounded-md border border-border/40 bg-muted/20 text-xs">
+        <Activity class="size-3.5 text-blue-400/80 flex-shrink-0" />
+        <span class="flex-1 min-w-0">
+          <span class="font-medium">{livenessCandidateCount} open jobs</span>
+          <span class="text-muted-foreground">— some links may be dead. Run a liveness sweep to auto-close expired postings.</span>
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          class="h-7 text-xs gap-1.5 flex-shrink-0"
+          onclick={runLivenessSweep}
+          disabled={livenessBusy}
+        >
+          {#if livenessBusy}
+            <Loader2 class="size-3 animate-spin" /> Queueing…
+          {:else}
+            <Activity class="size-3" /> Liveness sweep
+          {/if}
+        </Button>
+      </div>
     {/if}
 
     {#if listJobs.length === 0}

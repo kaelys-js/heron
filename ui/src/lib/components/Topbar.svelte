@@ -81,6 +81,7 @@
     Scoring: 'Gemini is processing this job',
     Scored: 'Has a Gemini score · review and promote',
     Ready: 'Eval done · CV PDF ready · go apply',
+    Queued: 'CV + drafts ready · staged for batch send · review on /queue',
     Applied: 'Application sent',
     Screened: 'Recruiter responded',
     Interview: 'Active interview process',
@@ -91,7 +92,7 @@
 
   const STATUS_DOTS: Record<Status, string> = {
     New: 'bg-zinc-400',     Scoring: 'bg-blue-400',  Scored: 'bg-cyan-400',
-    Ready: 'bg-emerald-400', Applied: 'bg-violet-400', Screened: 'bg-amber-400',
+    Ready: 'bg-emerald-400', Queued: 'bg-fuchsia-400', Applied: 'bg-violet-400', Screened: 'bg-amber-400',
     Interview: 'bg-orange-400', Offer: 'bg-green-400', Rejected: 'bg-red-400', Closed: 'bg-zinc-500',
   };
 
