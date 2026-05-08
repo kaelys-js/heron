@@ -25,7 +25,9 @@
  *
  * Sources:
  *   • a16z       — embedded JSON in /portfolio/ HTML; 800+ companies
- *   • Sequoia    — HTML table in /our-companies/; ~600 companies
+ *   • Sequoia    — HTML table in /our-companies/; ~52 server-rendered
+ *                  companies (the rest are FacetWP-lazy-loaded behind
+ *                  an authenticated payload we can't easily replay).
  *
  * Skipped (with reasons):
  *   • Underdog.io   — Webflow-rendered, list isn't in the initial HTML

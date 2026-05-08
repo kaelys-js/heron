@@ -204,6 +204,7 @@ function normalizeFilter(f?: Partial<FilterState>): FilterState {
     hasReport: !!f.hasReport,
     hasSalary: !!f.hasSalary,
     search: typeof f.search === 'string' ? f.search.trim() : '',
+    source: typeof f.source === 'string' ? f.source : '',
   };
 }
 
@@ -294,5 +295,9 @@ export function parseFilterFromUrl(url: URL): Partial<FilterState> {
   if (url.searchParams.get('report') === '1') out.hasReport = true;
   const search = url.searchParams.get('search');
   if (search) out.search = search;
+  // `?source=workday-api` — single source filter, persists in URL so a
+  // bookmark like /pipeline?source=linkedin-alert-email gives a focused view.
+  const source = url.searchParams.get('source');
+  if (source) out.source = source;
   return out;
 }
