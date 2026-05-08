@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './files';
 import { readEnv } from './env';
-import { bus } from './events';
+import { bus, logEvent } from './events';
 import { listRunning } from './orchestrator';
 import type { ActivityEvent } from '$lib/types';
 
@@ -60,7 +60,14 @@ function readPackageJson(): { dependencies?: Record<string, string>; devDependen
   try {
     const txt = fs.readFileSync(path.join(ROOT, 'ui', 'package.json'), 'utf8');
     return JSON.parse(txt);
-  } catch { return {}; }
+  } catch (e) {
+    logEvent('runtime-info', 'Failed to read ui/package.json', {
+      level: 'warn',
+      category: 'system',
+      message: e instanceof Error ? e.message : String(e),
+    });
+    return {};
+  }
 }
 
 function detectPython(): { exists: boolean; version?: string; sitePackagesPath?: string; packagesCount?: number; hasJobspy: boolean; hasPlaywright: boolean; hasGoogleGenAI: boolean } {
@@ -79,7 +86,15 @@ function detectPython(): { exists: boolean; version?: string; sitePackagesPath?:
       version = py.replace('python', '');
       sitePackagesPath = path.join(libDir, py, 'site-packages');
     }
-  } catch {}
+  } catch (e) {
+    // .venv exists but lib/ is unreadable — corrupt venv. Surface so the
+    // user knows why the Runtimes page shows "unconfigured" despite a venv.
+    logEvent('runtime-info', 'Could not read .venv/lib', {
+      level: 'warn',
+      category: 'system',
+      message: e instanceof Error ? e.message : String(e),
+    });
+  }
 
   let packagesCount = 0;
   let hasJobspy = false;
@@ -96,7 +111,13 @@ function detectPython(): { exists: boolean; version?: string; sitePackagesPath?:
       hasJobspy = lower.some((n) => n.startsWith('python_jobspy') || n === 'jobspy');
       hasPlaywright = lower.includes('playwright') || lower.some((n) => n.startsWith('playwright-'));
       hasGoogleGenAI = lower.some((n) => n.includes('google_ai_generativelanguage') || n.includes('google_genai') || n.includes('google-generativeai'));
-    } catch {}
+    } catch (e) {
+      logEvent('runtime-info', 'Could not read site-packages', {
+        level: 'warn',
+        category: 'system',
+        message: e instanceof Error ? e.message : String(e),
+      });
+    }
   }
 
   return { exists: true, version, sitePackagesPath, packagesCount, hasJobspy, hasPlaywright, hasGoogleGenAI };

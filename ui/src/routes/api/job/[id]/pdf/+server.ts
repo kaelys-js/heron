@@ -18,6 +18,7 @@ import path from 'node:path';
 import { error } from '@sveltejs/kit';
 import { loadAllJobs } from '$lib/server/parsers';
 import { OUTPUT_DIR } from '$lib/server/files';
+import { reportServerError } from '$lib/server/events';
 
 export const GET = async ({ params }: { params: { id: string } }) => {
   const job = loadAllJobs().find((j) => j.id === params.id);
@@ -34,7 +35,22 @@ export const GET = async ({ params }: { params: { id: string } }) => {
     throw error(404, 'PDF file missing on disk: ' + job.pdfFile);
   }
 
-  const buf = fs.readFileSync(candidate);
+  // existsSync → readFileSync is technically a TOCTOU race; if the file
+  // disappears (rotation, delete, etc.) between the two calls readFileSync
+  // throws and we'd return a 500 with no log entry. Wrap in an IIFE so the
+  // error path can call reportServerError + throw a 404 without TS losing
+  // narrowing on the Buffer type.
+  const buf = (() => {
+    try {
+      return fs.readFileSync(candidate);
+    } catch (e) {
+      reportServerError('job-pdf', 'Failed to read PDF', e, {
+        category: 'api',
+        link: '/job/' + params.id,
+      });
+      throw error(404, 'PDF file unreadable: ' + (e instanceof Error ? e.message : String(e)));
+    }
+  })();
   return new Response(buf, {
     headers: {
       'Content-Type': 'application/pdf',

@@ -14,6 +14,7 @@
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { loadAllJobs } from '$lib/server/parsers';
 import { runOferta } from '$lib/server/orchestrator';
+import { reportServerError } from '$lib/server/events';
 
 export const POST = wrap('job-cv', async ({ params }: { params: { id: string } }) => {
   const jobs = loadAllJobs();
@@ -22,7 +23,13 @@ export const POST = wrap('job-cv', async ({ params }: { params: { id: string } }
   if (!job!.url) badRequest('Job has no URL — cannot run oferta');
 
   // Fire and forget — the activity feed is the source of truth for progress.
-  runOferta(job!.url).catch(() => {});
+  // runOferta resolves with {ok, code} rather than throwing, but the outer
+  // catch covers truly exceptional rejection paths.
+  runOferta(job!.url).catch((err) =>
+    reportServerError('job-cv', 'Oferta rejected for ' + (job!.company || job!.id), err, {
+      category: 'task',
+    }),
+  );
   return {
     ok: true,
     message: 'Generating tailored CV — watch the activity feed. This typically takes 1–3 minutes per job.',

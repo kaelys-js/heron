@@ -7,17 +7,55 @@
 
 import fs from 'node:fs';
 import { APPLICATIONS } from './files';
+import { logEvent, reportServerError } from './events';
 
 const HEADER =
   '# Applications Tracker\n\n' +
   '| # | Date | Company | Role | URL | Score | Status | PDF | Report | Notes |\n' +
   '|---|------|---------|------|-----|-------|--------|-----|--------|-------|\n';
 
+/**
+ * Read applications.md, distinguishing "doesn't exist yet" (expected on
+ * first run) from real IO failures (perms, partial-write corruption).
+ * Returns '' in both cases so callers can fall through to HEADER, but real
+ * errors get logged at warn level so they show up on the bell instead of
+ * silently producing an empty file the user then mutates.
+ */
+function readApplicationsSafe(source: string): string {
+  try {
+    return fs.readFileSync(APPLICATIONS, 'utf8');
+  } catch (e) {
+    const code = (e as NodeJS.ErrnoException).code;
+    if (code !== 'ENOENT') {
+      logEvent(source, 'Failed to read applications.md', {
+        level: 'warn',
+        category: 'application',
+        message: code + ': ' + (e instanceof Error ? e.message : String(e)),
+      });
+    }
+    return '';
+  }
+}
+
+/** Persist `lines` to applications.md. Surfaces write failures via the
+ *  events bus instead of letting fs.writeFileSync's throw bubble up to a
+ *  500 — the caller can decide whether to retry or surface an issue. */
+function writeApplicationsSafe(source: string, content: string): boolean {
+  try {
+    fs.writeFileSync(APPLICATIONS, content);
+    return true;
+  } catch (e) {
+    reportServerError(source, 'Failed to write applications.md', e, {
+      category: 'application',
+    });
+    return false;
+  }
+}
+
 /** Flip the row matching `url` to status=Closed (used by the liveness sweep
  *  when a posting is detected as expired). Adds a row if none exists. */
 export function markClosed(url: string, reason?: string): boolean {
-  let text = '';
-  try { text = fs.readFileSync(APPLICATIONS, 'utf8'); } catch {}
+  let text = readApplicationsSafe('mark-closed');
   if (!text) text = HEADER;
   const lines = text.split('\n');
   let updated = false;
@@ -43,8 +81,7 @@ export function markClosed(url: string, reason?: string): boolean {
       '| - | ' + today + ' | (auto) | ' + url + ' | - | - | Closed | - | - | ' + (reason ?? 'auto-closed') + ' |';
     lines.push(row);
   }
-  fs.writeFileSync(APPLICATIONS, lines.join('\n'));
-  return true;
+  return writeApplicationsSafe('mark-closed', lines.join('\n'));
 }
 
 /**
@@ -56,8 +93,7 @@ export function markClosed(url: string, reason?: string): boolean {
  * where each automatic flip came from.
  */
 export function markStatus(url: string, newStatus: string, note?: string): boolean {
-  let text = '';
-  try { text = fs.readFileSync(APPLICATIONS, 'utf8'); } catch {}
+  let text = readApplicationsSafe('mark-status');
   if (!text) text = HEADER;
   const lines = text.split('\n');
   let updated = false;
@@ -82,14 +118,12 @@ export function markStatus(url: string, newStatus: string, note?: string): boole
       '| - | ' + today + ' | (auto) | ' + url + ' | - | - | ' + newStatus + ' | - | - | ' + (note ?? 'auto') + ' |';
     lines.push(row);
   }
-  fs.writeFileSync(APPLICATIONS, lines.join('\n'));
-  return true;
+  return writeApplicationsSafe('mark-status', lines.join('\n'));
 }
 
 /** Flip the row matching `url` to status=Applied. Adds a row if none exists. */
 export function markApplied(url: string, company?: string, role?: string): boolean {
-  let text = '';
-  try { text = fs.readFileSync(APPLICATIONS, 'utf8'); } catch {}
+  let text = readApplicationsSafe('mark-applied');
   if (!text) text = HEADER;
   const lines = text.split('\n');
   let updated = false;
@@ -110,6 +144,5 @@ export function markApplied(url: string, company?: string, role?: string): boole
       ' | ' + url + ' | - | Applied | - | - | manual mark |';
     lines.push(row);
   }
-  fs.writeFileSync(APPLICATIONS, lines.join('\n'));
-  return true;
+  return writeApplicationsSafe('mark-applied', lines.join('\n'));
 }

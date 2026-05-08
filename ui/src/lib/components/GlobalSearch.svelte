@@ -5,6 +5,7 @@
   import { onMount } from 'svelte';
   import { cn } from '$lib/utils';
   import { globalActions } from '$lib/global-actions.svelte';
+  import { api } from '$lib/api';
   import type { Status, BgRisk } from '$lib/types';
 
   type IndexedJob = {
@@ -32,9 +33,10 @@
   async function load() {
     loading = true;
     try {
-      const r = await fetch('/api/search-index');
-      const j = await r.json();
-      jobs = Array.isArray(j?.jobs) ? j.jobs : [];
+      // silent: search index failure shouldn't block the user from typing —
+      // the empty-state UI below makes the failure obvious.
+      const r = await api.get<{ jobs?: unknown[] }>('/api/search-index', { silent: true });
+      jobs = Array.isArray(r.jobs) ? (r.jobs as typeof jobs) : [];
       loaded = true;
     } catch {
       jobs = [];
