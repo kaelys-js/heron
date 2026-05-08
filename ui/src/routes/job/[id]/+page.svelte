@@ -370,26 +370,34 @@
           {/if}
 
           <Tabs.Root value={activeTab} onValueChange={(v: string) => (activeTab = v)} class="w-full">
-            <Tabs.List class="bg-transparent border h-9 p-0.5 mb-4">
-              <Tabs.Trigger value="overview" class="text-xs h-8 px-3">
-                <ScrollText class="size-3.5 mr-1.5" /> Report
-              </Tabs.Trigger>
-              <Tabs.Trigger value="prep" class="text-xs h-8 px-3" disabled={!data.job.reportFile}>
-                <Briefcase class="size-3.5 mr-1.5" /> Interview Prep
-              </Tabs.Trigger>
-              <Tabs.Trigger value="mock" class="text-xs h-8 px-3" disabled={!data.job.reportFile}>
-                <MessageSquare class="size-3.5 mr-1.5" /> Mock Interview
-              </Tabs.Trigger>
-              <Tabs.Trigger value="negotiation" class="text-xs h-8 px-3" disabled={!data.job.reportFile}>
-                <DollarSign class="size-3.5 mr-1.5" /> Negotiation
-              </Tabs.Trigger>
-              <Tabs.Trigger value="outreach" class="text-xs h-8 px-3">
-                <Linkedin class="size-3.5 mr-1.5" /> Outreach
-              </Tabs.Trigger>
-              <Tabs.Trigger value="cover-letter" class="text-xs h-8 px-3">
-                <Mail class="size-3.5 mr-1.5" /> Cover letter
-              </Tabs.Trigger>
-            </Tabs.List>
+            <!--
+              Six tabs at text-xs + icon overflow on narrow viewports. We wrap
+              Tabs.List in a horizontally-scrollable shell so the whole strip
+              stays on a single row and the active tab can be scrolled into
+              view. Scrollbar is hidden visually but trackpad swipes work.
+            -->
+            <div class="mb-4 -mx-1 px-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+              <Tabs.List class="bg-transparent border h-9 p-0.5 inline-flex">
+                <Tabs.Trigger value="overview" class="text-xs h-8 px-3 whitespace-nowrap">
+                  <ScrollText class="size-3.5 mr-1.5" /> Report
+                </Tabs.Trigger>
+                <Tabs.Trigger value="prep" class="text-xs h-8 px-3 whitespace-nowrap" disabled={!data.job.reportFile}>
+                  <Briefcase class="size-3.5 mr-1.5" /> Interview prep
+                </Tabs.Trigger>
+                <Tabs.Trigger value="mock" class="text-xs h-8 px-3 whitespace-nowrap" disabled={!data.job.reportFile}>
+                  <MessageSquare class="size-3.5 mr-1.5" /> Mock interview
+                </Tabs.Trigger>
+                <Tabs.Trigger value="negotiation" class="text-xs h-8 px-3 whitespace-nowrap" disabled={!data.job.reportFile}>
+                  <DollarSign class="size-3.5 mr-1.5" /> Negotiation
+                </Tabs.Trigger>
+                <Tabs.Trigger value="outreach" class="text-xs h-8 px-3 whitespace-nowrap">
+                  <Linkedin class="size-3.5 mr-1.5" /> Outreach
+                </Tabs.Trigger>
+                <Tabs.Trigger value="cover-letter" class="text-xs h-8 px-3 whitespace-nowrap">
+                  <Mail class="size-3.5 mr-1.5" /> Cover letter
+                </Tabs.Trigger>
+              </Tabs.List>
+            </div>
 
             <Tabs.Content value="overview">
               {#if data.report}
@@ -608,20 +616,21 @@
             </Tabs.Content>
 
             <Tabs.Content value="cover-letter">
-              <div class="space-y-3">
+              <div class="space-y-3 max-w-full overflow-hidden">
+                <!-- Header row: title + action buttons -->
                 <div class="flex items-start justify-between gap-3 flex-wrap">
-                  <div class="space-y-0.5">
+                  <div class="space-y-1 max-w-2xl">
                     <h3 class="text-sm font-semibold flex items-center gap-1.5">
                       <Mail class="size-4 text-amber-400" /> Cover letter
                     </h3>
-                    <p class="text-[11px] text-muted-foreground leading-relaxed max-w-xl">
-                      A one-page cover letter, written in your CV's voice, anchored on the two strongest proof
-                      points that map to the JD's headline requirements. Saved to
-                      <code class="font-mono text-[10px] bg-muted/40 px-1 py-0.5 rounded">output/{coverPath ? coverPath.split('/').pop() : '{slug}-cover.md'}</code>
-                      so it lives next to your tailored CV PDF.
+                    <p class="text-[11px] text-muted-foreground leading-relaxed">
+                      A one-page letter in your own voice, written specifically for this job. Two of your
+                      strongest CV proof points are matched to the most important requirements in the JD,
+                      then tied to a public detail about the company. The output is plain markdown — copy
+                      it into the application form, an email, or a Word doc.
                     </p>
                   </div>
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 flex-shrink-0">
                     {#if coverContent}
                       <Button variant="ghost" size="sm" class="h-8 gap-1.5" onclick={copyCover}>
                         <Copy class="size-3" /> Copy
@@ -639,6 +648,20 @@
                   </div>
                 </div>
 
+                <!-- Inline guidance for what to do next -->
+                {#if coverContent}
+                  <div class="rounded-md border border-border/40 bg-muted/20 px-3 py-2 flex items-start gap-2">
+                    <Mail class="size-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
+                    <p class="text-[11px] text-muted-foreground/90 leading-relaxed">
+                      Saved to
+                      <code class="font-mono text-[10px] bg-background/60 px-1 py-0.5 rounded break-all">output/{coverPath ? coverPath.split('/').pop() : ''}</code>.
+                      Read it once before you send — if a sentence sounds off, click Regenerate (each run is fresh,
+                      not a refinement). Replace any <code class="font-mono text-[10px]">_TODO_</code> placeholders
+                      from your profile.yml gaps before submitting.
+                    </p>
+                  </div>
+                {/if}
+
                 {#if coverError && !coverContent}
                   <ErrorState
                     title="Cover letter generation failed"
@@ -646,17 +669,49 @@
                     onretry={generateCover}
                   />
                 {:else if coverContent}
-                  <article class="prose prose-invert prose-sm max-w-none rounded-md border border-border/40 bg-card px-4 py-3 prose-headings:font-semibold prose-pre:bg-muted prose-strong:text-foreground">
+                  <!-- max-w-full + overflow-hidden + prose-pre wrap to prevent the markdown
+                       article from expanding the tab content past the card width -->
+                  <article class="prose prose-invert prose-sm max-w-full overflow-hidden rounded-md border border-border/40 bg-card px-4 py-3 prose-headings:font-semibold prose-pre:bg-muted prose-pre:whitespace-pre-wrap prose-pre:break-words prose-code:break-words prose-strong:text-foreground prose-a:break-all">
                     {@html coverHtml}
                   </article>
                 {:else if coverLoaded && !coverBusy}
-                  <EmptyState
-                    size="md"
-                    variant="card"
-                    icon={Mail}
-                    title="No cover letter generated yet"
-                    description={'Click Generate to draft one. Runs ' + cmd('cover-letter') + ' against cv.md plus this job\'s evaluation report — usually 30–60s. The result is saved to output/ alongside your CV PDF.'}
-                  />
+                  <div class="space-y-3">
+                    <EmptyState
+                      size="md"
+                      variant="card"
+                      icon={Mail}
+                      title="No cover letter generated yet"
+                      description={'Click Generate to draft one. The mode reads cv.md plus this job\'s evaluation report (so it has the same context the CV PDF was tailored against). First run takes 30–60s; later runs hit the on-disk copy instantly.'}
+                    />
+                    <!-- What you'll get + what you have to do -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div class="rounded-md border border-border/40 bg-card px-3 py-2.5 space-y-1">
+                        <h4 class="text-[11px] font-semibold uppercase tracking-wider text-emerald-300/80">What you get</h4>
+                        <ul class="text-[11px] text-muted-foreground/90 leading-relaxed list-disc pl-4 space-y-0.5">
+                          <li>Single page, ≤ 350 words</li>
+                          <li>Your two strongest CV proof points (with numbers, not invented ones)</li>
+                          <li>One reference to the company you'd actually plausibly know</li>
+                          <li>An honest framing of the riskiest gap, not a hedge</li>
+                          <li>Plain markdown — easy to paste anywhere</li>
+                        </ul>
+                      </div>
+                      <div class="rounded-md border border-border/40 bg-card px-3 py-2.5 space-y-1">
+                        <h4 class="text-[11px] font-semibold uppercase tracking-wider text-amber-300/80">What's still on you</h4>
+                        <ul class="text-[11px] text-muted-foreground/90 leading-relaxed list-disc pl-4 space-y-0.5">
+                          <li>Reading it. Don't send something Claude wrote without scanning it first.</li>
+                          <li>Picking the medium (paste into the portal, an email, or a Word doc)</li>
+                          <li>Submitting — this never sends anything for you</li>
+                          <li>Filling any <code class="font-mono">_TODO_</code> markers if profile.yml is incomplete</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                {:else if !coverLoaded}
+                  <!-- First render before the cached lookup completes -->
+                  <div class="flex items-center gap-2 text-xs text-muted-foreground py-6">
+                    <Loader2 class="size-3.5 animate-spin" />
+                    Looking for an existing cover letter…
+                  </div>
                 {/if}
               </div>
             </Tabs.Content>
