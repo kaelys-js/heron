@@ -5,6 +5,7 @@
   import { BG_TINTS } from '$lib/types';
   import { cn } from '$lib/utils';
   import JobActions from './JobActions.svelte';
+  import SourceChip from './SourceChip.svelte';
 
   /**
    * `hideCompany` removes the company column — used inside CompanyGroup
@@ -122,6 +123,12 @@
       <!-- 4. Company (w-40) -->
       <span class="text-muted-foreground truncate w-40 flex-shrink-0">{job.company || '—'}</span>
     {/if}
+
+    <!-- 4b. Source chip (w-24) — small pill naming the scanner that
+         first surfaced this URL. Tooltip on hover for context. -->
+    <span class="w-24 flex-shrink-0 flex items-center">
+      <SourceChip source={job.source} />
+    </span>
 
     <!-- 5. Location (w-36, always present with em-dash fallback) -->
     <span class="text-muted-foreground/80 inline-flex items-center gap-1 truncate w-36 flex-shrink-0">

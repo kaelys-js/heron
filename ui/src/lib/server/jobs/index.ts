@@ -25,6 +25,10 @@ import './auto-triage.job';
 
 // Phase 2 discovery jobs.
 import './scan-portals.job';
+import './scan-curated.job';
+import './scan-vc.job';
+import './scan-email.job';
+import './scan-all.job';
 
 // Phase 3 insight jobs.
 import './followup-cadence.job';

@@ -18,7 +18,7 @@
   import ThemeToggle from './ThemeToggle.svelte';
   import CheckMark from './CheckMark.svelte';
   import type { TabFilter, SortKey, ViewMode, FilterState, BgRisk, Status, WorkMode } from '$lib/types';
-  import { DEFAULT_FILTER, BG_TINTS, STATUS_ORDER, TAB_PRESETS, tabLabel } from '$lib/types';
+  import { DEFAULT_FILTER, BG_TINTS, STATUS_ORDER, TAB_PRESETS, tabLabel, SOURCE_LABELS } from '$lib/types';
   import { cn } from '$lib/utils';
   import { APP_NAME, docTitle as buildDocTitle } from '$lib/config/branding';
 
@@ -148,10 +148,19 @@
   let bgActive      = $derived(BG_KEYS.some((k) => filter.bgRisk[k] !== DEFAULT_FILTER.bgRisk[k]));
   let workModeActive = $derived((['remote','hybrid','onsite','unknown'] as WorkMode[]).some((k) => filter.workMode[k] !== DEFAULT_FILTER.workMode[k]));
   let extrasActive  = $derived(filter.hasReport || filter.hasPdf || filter.hasSalary);
+  let sourceActive  = $derived(!!filter.source);
 
   let activeFilterCount = $derived(
-    [scoreActive, bgActive, workModeActive, extrasActive, !!filter.search.trim()].filter(Boolean).length,
+    [scoreActive, bgActive, workModeActive, extrasActive, sourceActive, !!filter.search.trim()].filter(Boolean).length,
   );
+
+  /** Source dropdown options, alphabetised by label so "All sources" stays
+   *  pinned at the top and the rest are easy to scan. */
+  const SOURCE_OPTIONS = (() => {
+    const entries = Object.entries(SOURCE_LABELS).map(([id, meta]) => ({ id, label: meta.label }));
+    entries.sort((a, b) => a.label.localeCompare(b.label));
+    return entries;
+  })();
 
   function clearFilter() {
     filter = {
@@ -161,11 +170,12 @@
     };
   }
 
-  function resetSection(section: 'score' | 'bg' | 'workMode' | 'extras') {
+  function resetSection(section: 'score' | 'bg' | 'workMode' | 'extras' | 'source') {
     if (section === 'score') filter = { ...filter, minScore: 0 };
     else if (section === 'bg') filter = { ...filter, bgRisk: { ...DEFAULT_FILTER.bgRisk } };
     else if (section === 'workMode') filter = { ...filter, workMode: { ...DEFAULT_FILTER.workMode } };
     else if (section === 'extras') filter = { ...filter, hasReport: false, hasPdf: false, hasSalary: false };
+    else if (section === 'source') filter = { ...filter, source: '' };
   }
 </script>
 
@@ -467,6 +477,32 @@
                     <Switch id="f-salary" checked={filter.hasSalary} onCheckedChange={(v: boolean) => (filter = { ...filter, hasSalary: !!v })} />
                   </div>
                 </div>
+              </section>
+
+              <!-- SOURCE — single-select dropdown of which scanner first surfaced the URL -->
+              <section class="space-y-2 pt-1 border-t border-border/40">
+                <header class="flex items-center justify-between pt-3">
+                  <Label for="f-source" class="text-xs flex items-center gap-1.5">
+                    <Layers class={cn('size-3', sourceActive ? 'text-fuchsia-400' : 'text-muted-foreground/60')} />
+                    Source
+                  </Label>
+                  {#if sourceActive}
+                    <button type="button" onclick={() => resetSection('source')} class="text-[10px] text-muted-foreground hover:text-foreground transition-colors">reset</button>
+                  {/if}
+                </header>
+                <p class="text-[10px] text-muted-foreground/70">
+                  Limit to one scanner — useful when you want to spot-check what's coming out of a specific source.
+                </p>
+                <select
+                  id="f-source"
+                  bind:value={filter.source}
+                  class="w-full text-xs px-2.5 py-1.5 rounded-md border border-border/40 bg-card hover:border-border focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-colors"
+                >
+                  <option value="">All sources</option>
+                  {#each SOURCE_OPTIONS as opt (opt.id)}
+                    <option value={opt.id}>{opt.label}</option>
+                  {/each}
+                </select>
               </section>
             </div>
           </Popover.Content>

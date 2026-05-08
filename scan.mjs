@@ -44,6 +44,29 @@ mkdirSync('data', { recursive: true });
 
 const CONCURRENCY = 10;
 const FETCH_TIMEOUT_MS = 10_000;
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 1500;
+
+/** Retry on transient network/5xx errors. Hard-fails on 4xx (bad request,
+ *  not-found, unauthorized) since those won't fix themselves on retry.
+ *  Used by both the per-page and full-pagination paths. */
+async function withRetry(label, fn) {
+  let lastErr;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try { return await fn(); }
+    catch (err) {
+      lastErr = err;
+      const msg = err?.message || '';
+      // Don't retry on 4xx — they're permanent (404, 401, 403, 422 etc).
+      if (/HTTP 4\d\d/.test(msg)) throw err;
+      // Last attempt: rethrow.
+      if (attempt === MAX_RETRIES) throw err;
+      // Backoff (1.5s, 3s) — easy on the upstream.
+      await new Promise(r => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));
+    }
+  }
+  throw lastErr;
+}
 
 // ── API detection ───────────────────────────────────────────────────
 //
@@ -65,7 +88,8 @@ function detectApi(company) {
   if (company.ats === 'smartrecruiters' && company.smartrecruiters_company) {
     return {
       type: 'smartrecruiters',
-      url: `https://api.smartrecruiters.com/v1/companies/${company.smartrecruiters_company}/postings?limit=100`,
+      url: `https://api.smartrecruiters.com/v1/companies/${company.smartrecruiters_company}/postings?limit=100&offset=0`,
+      fetch: { paginate: 'smartrecruiters', maxPages: 50 },
       meta: { company_slug: company.smartrecruiters_company },
     };
   }
@@ -119,10 +143,13 @@ function detectApi(company) {
   if (wdayMatch) {
     const [, tenant, pod, site] = wdayMatch;
     // Per-tenant pagination cap — `workday_max_pages` in portals.yml lets the
-    // user override (each page is 20 jobs). Default 5 pages = 100 jobs.
+    // user override (each page is 20 jobs). Default 100 pages = 2000 jobs,
+    // which covers >99% of real Workday tenants. The pagination loop also
+    // short-circuits as soon as `total` is exhausted, so this is a safety
+    // ceiling not a fixed cost.
     const maxPages = Number.isFinite(company.workday_max_pages)
-      ? Math.max(1, Math.min(50, company.workday_max_pages))
-      : 5;
+      ? Math.max(1, Math.min(500, company.workday_max_pages))
+      : 100;
     return {
       type: 'workday',
       url: `https://${tenant}.${pod}.myworkdayjobs.com/wday/cxs/${tenant}/${site}/jobs`,
@@ -144,7 +171,8 @@ function detectApi(company) {
   if (srMatch) {
     return {
       type: 'smartrecruiters',
-      url: `https://api.smartrecruiters.com/v1/companies/${srMatch[1]}/postings?limit=100`,
+      url: `https://api.smartrecruiters.com/v1/companies/${srMatch[1]}/postings?limit=100&offset=0`,
+      fetch: { paginate: 'smartrecruiters', maxPages: 50 },
       meta: { company_slug: srMatch[1] },
     };
   }
@@ -403,21 +431,54 @@ async function fetchOne(apiSpec) {
   };
 
   // Helper: one HTTP round-trip with timeout + body-shape negotiation.
+  // Wrapped in withRetry so transient network errors / 5xx don't drop a
+  // whole company's worth of jobs from the run. 4xx (auth, not-found,
+  // bad-request) bypass retry — they won't fix themselves.
   async function once(reqUrl, reqInit) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-    try {
-      const res = await fetch(reqUrl, { ...reqInit, signal: controller.signal });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      if (type === 'personio') return { text: await res.text() };
-      const ct = res.headers.get('content-type') || '';
-      if (ct.includes('json')) return { json: await res.json() };
-      const txt = await res.text();
-      try { return { json: JSON.parse(txt) }; }
-      catch { return { text: txt }; }
-    } finally {
-      clearTimeout(timer);
+    return withRetry(reqUrl, async () => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+      try {
+        const res = await fetch(reqUrl, { ...reqInit, signal: controller.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (type === 'personio') return { text: await res.text() };
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('json')) return { json: await res.json() };
+        const txt = await res.text();
+        try { return { json: JSON.parse(txt) }; }
+        catch { return { text: txt }; }
+      } finally {
+        clearTimeout(timer);
+      }
+    });
+  }
+
+  // SmartRecruiters pagination: GET-style offset/limit (default limit=100,
+  // server returns `totalFound`). Loop until totalFound is reached or
+  // maxPages is hit. Combined `content` array goes back to the parser.
+  if (spec.paginate === 'smartrecruiters') {
+    const pageSize = 100;
+    const maxPages = spec.maxPages ?? 50;
+    let combined = null;
+    let totalFromFirst = Infinity;
+    for (let page = 0; page < maxPages; page++) {
+      const offset = page * pageSize;
+      // Replace the offset query param on each iteration; URL already has
+      // limit=100&offset=0 from detectApi().
+      const pagedUrl = url.replace(/(\bo)ffset=\d+/, `$1ffset=${offset}`);
+      const r = await once(pagedUrl, { method, headers });
+      const json = r.json;
+      if (!json) break;
+      if (!combined) {
+        combined = { ...json, content: [] };
+        if (Number.isFinite(json.totalFound) && json.totalFound > 0) totalFromFirst = json.totalFound;
+      }
+      const pageContent = json.content || [];
+      combined.content.push(...pageContent);
+      if (combined.content.length >= totalFromFirst) break;
+      if (pageContent.length < pageSize) break;
     }
+    return { json: combined };
   }
 
   // Workday pagination: server caps `limit` at 20. We loop until `total` is

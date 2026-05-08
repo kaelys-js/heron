@@ -1,8 +1,38 @@
-import { readSafe, listReports, PIPELINE, APPLICATIONS, GEMINI_SCORES, REPORTS_DIR } from './files';
+import { readSafe, listReports, PIPELINE, APPLICATIONS, GEMINI_SCORES, REPORTS_DIR, ROOT } from './files';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import type { Job, Status, BgRisk, WorkMode } from '$lib/types';
 import { STATUS_ORDER } from '$lib/types';
+
+/**
+ * Build a URL → source map from data/scan-history.tsv. Every scanner
+ * writes a row when it discovers a new URL with the `portal` column =
+ * source identifier (e.g. `workday-api`, `aijobs`). This map lets the
+ * pipeline page render a "where did this come from" chip per row.
+ *
+ * Returns an empty map if the file doesn't exist (first-run case) or
+ * fails to parse — never throws.
+ */
+function loadSourceMap(): Record<string, string> {
+  const out: Record<string, string> = {};
+  try {
+    const text = readSafe(path.join(ROOT, 'data', 'scan-history.tsv'));
+    if (!text) return out;
+    const lines = text.split('\n');
+    // Header: url\tfirst_seen\tportal\ttitle\tcompany\tstatus
+    for (let i = 1; i < lines.length; i++) {
+      const parts = lines[i].split('\t');
+      if (parts.length < 3) continue;
+      const url = parts[0];
+      const portal = parts[2];
+      if (!url || !portal) continue;
+      // First-seen wins — earliest source attribution sticks even if a
+      // later scanner re-encountered the same URL.
+      if (!(url in out)) out[url] = portal;
+    }
+  } catch { /* tolerate */ }
+  return out;
+}
 
 export function urlId(url: string): string {
   return crypto.createHash('md5').update(url).digest('hex').slice(0, 12);
@@ -165,6 +195,7 @@ export function loadAllJobs(): Job[] {
   const reportFileToUrlId: Record<string, string> = {};
   for (const [id, r] of Object.entries(reports)) reportFileToUrlId[r.file] = id;
   const apps = parseApplications(reportFileToUrlId);
+  const sourceByUrl = loadSourceMap();
 
   for (const job of pipeline) {
     const g = gemini[job.id];
@@ -181,6 +212,10 @@ export function loadAllJobs(): Job[] {
     }
     if (g && job.status === 'New') job.status = 'Scored';
     if (a) Object.assign(job, a);
+    // Source: looked up by URL — kept on the Job object so every list
+    // view + filter doesn't have to re-parse scan-history.tsv.
+    const src = sourceByUrl[job.url];
+    if (src) job.source = src;
   }
   return pipeline;
 }
