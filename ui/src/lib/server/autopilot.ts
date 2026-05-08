@@ -9,14 +9,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './files';
-import { bus, logEvent, reportServerError } from './events';
+import { installBusListener, removeBusListener, logEvent, reportServerError } from './events';
 import { listRunning, runScan, runGemini, runLinkedInApply } from './orchestrator';
 import type { ActivityEvent } from '$lib/types';
+import { get as getJob, runById as runJobById } from './jobs';
 
 const CONFIG_PATH = path.join(ROOT, 'data', 'autopilot.json');
 
-export type TaskName = 'scan' | 'gemini' | 'apply-linkedin';
-export type ScheduleId = 'daily-scan' | 'auto-gemini-after-scan' | 'weekday-apply';
+/** Task name — any registered job id. The legacy literal union is kept as
+ *  a type alias for readability + boot-time defaults; runtime treats
+ *  Schedule.task as an open string so new jobs work without code changes. */
+export type TaskName = string;
+export type ScheduleId = string;
 
 export type DailyTrigger = {
   type: 'daily';
@@ -27,6 +31,7 @@ export type DailyTrigger = {
 };
 export type AfterTrigger = {
   type: 'after';
+  /** Source task id this schedule fires after. Any registered job id is OK. */
   task: TaskName;
 };
 export type Trigger = DailyTrigger | AfterTrigger;
@@ -209,7 +214,7 @@ export function nextRunAt(s: Schedule): number | null {
   return nextMatchTimestamp(s.trigger);
 }
 
-function runTask(s: Schedule): void {
+async function runTask(s: Schedule): Promise<void> {
   if (listRunning().includes(s.task)) {
     logEvent('autopilot', 'Skipped: ' + s.name, {
       level: 'warn',
@@ -220,6 +225,15 @@ function runTask(s: Schedule): void {
   }
   logEvent('autopilot', 'Triggering ' + s.name, { category: 'system', message: 'task=' + s.task });
   patchSchedule(s.id, { lastRunAt: Date.now(), lastRunResult: 'started' });
+
+  // Pluggable path: any registered job (legacy 3 + every Phase 1+ hygiene job)
+  // can be invoked by id. Falls back to the legacy direct calls only if the
+  // registry hasn't been installed yet (boot race).
+  const def = getJob(s.task);
+  if (def) {
+    await runJobById(s.task, s.args ?? {});
+    return;
+  }
   switch (s.task) {
     case 'scan':
       runScan();
@@ -230,6 +244,12 @@ function runTask(s: Schedule): void {
     case 'apply-linkedin':
       runLinkedInApply(false);
       break;
+    default:
+      logEvent('autopilot', 'Unknown task: ' + s.task, {
+        level: 'error',
+        category: 'system',
+        message: 'No registered job and no legacy fallback for ' + s.task,
+      });
   }
 }
 
@@ -280,14 +300,15 @@ function trackResult(task: TaskName, success: boolean, message?: string): void {
 
 let schedulerStarted = false;
 let schedulerInterval: ReturnType<typeof setInterval> | null = null;
-let busHandler: ((ev: ActivityEvent) => void) | null = null;
+const SCHEDULER_BUS_NAME = 'autopilot/scheduler-task-tracker';
 
 export function startScheduler(): void {
   if (schedulerStarted) return;
   schedulerStarted = true;
 
   // Subscribe to task lifecycle events on the bus (avoids a circular import with orchestrator).
-  busHandler = (ev: ActivityEvent) => {
+  // installBusListener is HMR-idempotent — see events.ts.
+  installBusListener(SCHEDULER_BUS_NAME, (ev: ActivityEvent) => {
     if (ev.category !== 'task') return;
     const task = ev.source as TaskName;
     if (!['scan', 'gemini', 'apply-linkedin'].includes(task)) return;
@@ -297,8 +318,7 @@ export function startScheduler(): void {
     } else if (ev.level === 'error' && (ev.title === 'Task failed' || ev.title.endsWith('failed'))) {
       trackResult(task, false, ev.message);
     }
-  };
-  bus.on('event', busHandler);
+  });
 
   // Tick every 30s — finer-grained matching while still cheap.
   schedulerInterval = setInterval(tick, 30_000);
@@ -309,8 +329,7 @@ export function startScheduler(): void {
 export function stopScheduler(): void {
   if (schedulerInterval) clearInterval(schedulerInterval);
   schedulerInterval = null;
-  if (busHandler) bus.off('event', busHandler);
-  busHandler = null;
+  removeBusListener(SCHEDULER_BUS_NAME);
   schedulerStarted = false;
 }
 

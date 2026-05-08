@@ -6,9 +6,9 @@
   import { Button } from '$lib/components/ui/button';
   import CollapsibleGroup from './CollapsibleGroup.svelte';
   import {
-    Inbox, ListTodo, Pin, KanbanSquare, FolderKanban, PlayCircle, Bot,
+    Inbox, ListTodo, Pin, KanbanSquare, FolderKanban, PlayCircle, Bot, ListChecks,
     Cpu, Wrench, Settings as SettingsIcon, ChevronsUpDown, Search, Plus,
-    HelpCircle, BarChart3, MoreHorizontal, Star, Trash2, User,
+    HelpCircle, BarChart3, MoreHorizontal, Star, Trash2, User, Lightbulb,
   } from '@lucide/svelte';
   import { page } from '$app/state';
   import { onMount, onDestroy } from 'svelte';
@@ -19,7 +19,11 @@
   import { ConfirmGate } from '$lib/confirm.svelte';
 
   type PinnedJob = { id: string; company: string; role: string };
-  let { inboxCount = 0, pinnedJobs = [] }: { inboxCount?: number; pinnedJobs?: PinnedJob[] } = $props();
+  let { inboxCount = 0, queueCount = 0, pinnedJobs = [] }: {
+    inboxCount?: number;
+    queueCount?: number;
+    pinnedJobs?: PinnedJob[];
+  } = $props();
 
   let pathname = $derived(page.url.pathname);
   let isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
@@ -260,6 +264,19 @@
               </Sidebar.MenuButton>
             </Sidebar.MenuItem>
             <Sidebar.MenuItem>
+              <Sidebar.MenuButton isActive={isActive('/queue')}>
+                {#snippet child({ props })}
+                  <a href="/queue" {...props}>
+                    <ListChecks class="size-4" />
+                    <span>Queue</span>
+                    {#if queueCount > 0}
+                      <Badge variant="secondary" class="ml-auto h-5 px-1.5 text-[10px] border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-300">{queueCount}</Badge>
+                    {/if}
+                  </a>
+                {/snippet}
+              </Sidebar.MenuButton>
+            </Sidebar.MenuItem>
+            <Sidebar.MenuItem>
               <Sidebar.MenuButton isActive={isActive('/projects')}>
                 {#snippet child({ props })}
                   <a href="/projects" {...props}>
@@ -295,6 +312,16 @@
                   <a href="/stats" {...props}>
                     <BarChart3 class="size-4" />
                     <span>Stats</span>
+                  </a>
+                {/snippet}
+              </Sidebar.MenuButton>
+            </Sidebar.MenuItem>
+            <Sidebar.MenuItem>
+              <Sidebar.MenuButton isActive={isActive('/insights')}>
+                {#snippet child({ props })}
+                  <a href="/insights" {...props}>
+                    <Lightbulb class="size-4" />
+                    <span>Insights</span>
                   </a>
                 {/snippet}
               </Sidebar.MenuButton>

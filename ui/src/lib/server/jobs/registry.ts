@@ -12,7 +12,7 @@
  * when a `Task finished` event for that source comes through the activity bus.
  */
 
-import { bus, logEvent, reportServerError } from '../events';
+import { installBusListener, logEvent, reportServerError } from '../events';
 import type { ActivityEvent } from '$lib/types';
 import type { JobArgs, JobDef, JobResult, JobSummary } from './types';
 
@@ -23,8 +23,6 @@ const registry = new Map<string, JobDef>();
  *  orchestrator's child-process map; here we only track `running by id`
  *  to avoid stampedes when an after-event fires while one's already going). */
 const inFlight = new Set<string>();
-
-let busListenerInstalled = false;
 
 /**
  * Register a job. Last-writer-wins on collision so a `*.job.ts` reload
@@ -91,20 +89,32 @@ export function isRunning(id: string): boolean {
 
 /**
  * Install a single bus listener that fires `after`-triggered jobs when any
- * upstream task emits a successful `Task finished`-shaped event. Idempotent
- * — calling twice is a no-op.
+ * upstream task emits a success-level event. Idempotent — calling twice is
+ * a no-op.
+ *
+ * The listener fires on ANY level=success event whose source matches one of
+ * a job's `trigger.tasks` list. This intentionally accepts both:
+ *   - Spawned-process completion events (category='task', e.g. scan finished)
+ *   - Synthetic events from API endpoints (e.g. category='application' with
+ *     source='status-update'), which is how /api/status fires the normalize
+ *     hygiene job.
+ *
+ * To prevent infinite chains, the listener skips its own emitted "after-
+ * trigger" notification events (source=jobId, title starts with 'After-trigger').
  */
 export function installAfterListener(): void {
-  if (busListenerInstalled) return;
-  busListenerInstalled = true;
-  bus.on('event', (ev: ActivityEvent) => {
+  // installBusListener is idempotent across HMR — re-call replaces the
+  // previous listener instead of stacking. See events.ts for rationale.
+  installBusListener('jobs/registry/after', (ev: ActivityEvent) => {
     if (ev.level !== 'success') return;
-    if (ev.category !== 'task') return;
+    if (ev.title.startsWith('After-trigger from ')) return;
     const finishedId = ev.source;
     // Find every registered job whose trigger.tasks list includes this id
     for (const def of registry.values()) {
       if (def.trigger.type !== 'after') continue;
       if (!def.trigger.tasks.includes(finishedId)) continue;
+      // Don't chain a job to its own success event
+      if (def.id === finishedId) continue;
       // Fire and forget — log if it errors
       logEvent(def.id, 'After-trigger from ' + finishedId, {
         category: 'system',

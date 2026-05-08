@@ -11,7 +11,7 @@
   import { withMinDuration } from '$lib/utils';
   import { notifications } from '$lib/notifications.svelte';
 
-  type AgentId = 'scan' | 'gemini' | 'apply-linkedin';
+  type AgentId = 'scan' | 'scan-portals' | 'gemini' | 'apply-linkedin';
 
   let busy = $state<AgentId | null>(null);
 
@@ -64,12 +64,21 @@
   const agents: AgentDef[] = [
     {
       id: 'scan',
-      name: 'Portal Scanner',
-      desc: 'Hits LinkedIn / Indeed / Greenhouse / Ashby / Lever / The Muse / HN. Free, ~5 min.',
+      name: 'Portal Scanner (broad)',
+      desc: 'Hits LinkedIn / Indeed / Greenhouse / Ashby / Lever / The Muse / HN via JobSpy. Free, ~5 min, may hit captchas.',
       icon: Globe,
       button: 'Run Scan',
       busyLabel: 'Scanning…',
-      notifies: 'Activity feed streams every URL added. Final toast: "Scan finished — N new jobs". Errors surface as red toasts with a Retry button.',
+      notifies: 'Activity feed streams every URL added. Final toast: "Scan finished — N new jobs". Auto-triage runs immediately after.',
+    },
+    {
+      id: 'scan-portals',
+      name: 'Portal Scanner (zero-token)',
+      desc: 'Direct Greenhouse / Ashby / Lever / Workable API hits — no scraping, no captchas, ~30s.',
+      icon: Globe,
+      button: 'Run Portal Scan',
+      busyLabel: 'Scanning…',
+      notifies: 'Faster + free alternative to broad scan. Combine the two on different schedules for max coverage. Auto-triage chains automatically.',
     },
     {
       id: 'gemini',
@@ -95,7 +104,7 @@
 </script>
 
 <div class="h-full overflow-y-auto">
-  <Topbar title="Agents" subtitle="3 available" showTabs={false} />
+  <Topbar title="Agents" subtitle={agents.length + ' available'} showTabs={false} />
   <div class="p-6">
     <div class="max-w-4xl mx-auto space-y-4">
       <p class="text-xs text-muted-foreground leading-relaxed max-w-3xl">

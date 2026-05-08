@@ -1,6 +1,6 @@
 export type Status =
   | 'New' | 'Scoring' | 'Scored' | 'Ready'
-  | 'Applied' | 'Screened' | 'Interview'
+  | 'Queued' | 'Applied' | 'Screened' | 'Interview'
   | 'Offer' | 'Rejected' | 'Closed';
 
 export type BgRisk = 'LOW' | 'MEDIUM' | 'HIGH' | 'BLOCKED' | undefined;
@@ -28,7 +28,7 @@ export type Job = {
 };
 
 export const STATUS_ORDER: Status[] = [
-  'New', 'Scoring', 'Scored', 'Ready',
+  'New', 'Scoring', 'Scored', 'Ready', 'Queued',
   'Applied', 'Screened', 'Interview',
   'Offer', 'Rejected', 'Closed',
 ];
@@ -38,6 +38,7 @@ export const STATUS_TINTS: Record<Status, string> = {
   Scoring: 'bg-blue-500/10 text-blue-300 border-blue-500/30',
   Scored: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30',
   Ready: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
+  Queued: 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/30',
   Applied: 'bg-violet-500/10 text-violet-300 border-violet-500/30',
   Screened: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
   Interview: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
@@ -58,6 +59,7 @@ export const STATUS_EMPTY_COPY: Record<Status, string> = {
   Scoring: 'Nothing being scored right now.',
   Scored: 'No scored jobs yet — run Gemini first-pass.',
   Ready: 'No jobs ready to apply yet.',
+  Queued: 'Nothing queued for the next batch send.',
   Applied: "You haven't submitted any applications.",
   Screened: 'No screening calls scheduled.',
   Interview: 'No interviews in progress.',
@@ -81,6 +83,33 @@ export type ActivityEvent = {
   read?: boolean;
   /** Stack trace (only set for level === 'error'). Truncated to ~2KB. */
   stack?: string;
+};
+
+/**
+ * Issue — a structured, persisted "open problem" that needs user attention.
+ * Distinct from ActivityEvent because issues represent open work that should
+ * stay visible until resolved (failed integrity check, dead links found,
+ * autopilot circuit-broken). Backed by data/issues.jsonl.
+ */
+export type Issue = {
+  id: string;
+  ts: number;
+  /** Determines visual treatment in the Inbox. */
+  severity: 'info' | 'warn' | 'error';
+  /** Subsystem that detected the issue (used for filtering + dedupeKey). */
+  source: string;
+  /** Short user-facing summary. */
+  summary: string;
+  /** Optional longer body / diagnostic detail (markdown OK). */
+  detail?: string;
+  /** Optional fix hint — a button + URL the UI surfaces. */
+  fix?: { label: string; href: string };
+  /** When set, repeated reports of the same dedupeKey overwrite the previous
+   *  open issue rather than creating a new one. */
+  dedupeKey?: string;
+  /** Resolution timestamp. Resolved issues stay in the file (audit trail) but
+   *  drop off the open-list. */
+  resolvedAt?: number;
 };
 
 export type SortKey = 'score-desc' | 'score-asc' | 'date-desc' | 'company-asc';

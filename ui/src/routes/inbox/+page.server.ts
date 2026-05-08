@@ -4,6 +4,8 @@ import { listRunning } from '$lib/server/orchestrator';
 import { readEnv, loadEnv } from '$lib/server/env';
 import { PIPELINE, APPLICATIONS, readSafe } from '$lib/server/files';
 import { readProfile } from '$lib/server/profile';
+import { getFollowupCadence, findEntryByCompanyRole, type FollowupEntry } from '$lib/server/followup-cadence';
+import { listOpenIssues } from '$lib/server/issues';
 import fs from 'node:fs';
 import type { Job, ActivityEvent, Status } from '$lib/types';
 
@@ -53,6 +55,8 @@ export type InboxAlert = {
   actionUrl?: string;
   /** orchestrator task to spawn via /api/run when actionLabel clicked */
   actionTask?: 'scan' | 'gemini' | 'apply-linkedin';
+  /** When set, clicking the actionLabel POSTs here (used by autopilot resume). */
+  actionPostUrl?: string;
 };
 
 export async function load() {
@@ -144,6 +148,20 @@ export async function load() {
 
   // Alerts
   const alerts: InboxAlert[] = [];
+  // Circuit-breaker takes precedence — surface at the top so the user always
+  // sees the operationally most-blocking thing first.
+  const openIssues = listOpenIssues();
+  const breakerIssue = openIssues.find((i) => i.dedupeKey === 'autopilot-circuit-breaker');
+  if (breakerIssue) {
+    alerts.push({
+      id: 'circuit-breaker',
+      level: 'error',
+      title: breakerIssue.summary,
+      message: breakerIssue.detail,
+      actionLabel: 'Resume autopilot',
+      actionPostUrl: '/api/autopilot/resume',
+    });
+  }
   if (lastError) {
     alerts.push({
       id: 'recent-error',
@@ -196,6 +214,28 @@ export async function load() {
 
   const firstName = (profile.candidate?.full_name ?? '').split(' ')[0] || '';
 
+  // Follow-up cadence — best-effort. If the script chokes (no tracker yet,
+  // missing Node), the page renders without the urgent-followups section.
+  let followupsUrgent: { job: Job; entry: FollowupEntry }[] = [];
+  let followupsOverdue: { job: Job; entry: FollowupEntry }[] = [];
+  let followupsCadenceMeta: Awaited<ReturnType<typeof getFollowupCadence>>['metadata'] | null = null;
+  try {
+    const cadence = await getFollowupCadence();
+    followupsCadenceMeta = cadence.metadata;
+    const activeJobs = jobs.filter((j) => ['Applied', 'Screened', 'Interview', 'Offer'].includes(j.status));
+    for (const j of activeJobs) {
+      const entry = findEntryByCompanyRole(cadence, j.company, j.role);
+      if (!entry) continue;
+      if (entry.urgency === 'urgent') followupsUrgent.push({ job: j, entry });
+      else if (entry.urgency === 'overdue') followupsOverdue.push({ job: j, entry });
+    }
+    // Cap to keep the section scannable; full list lives on /applied
+    followupsUrgent = followupsUrgent.slice(0, 6);
+    followupsOverdue = followupsOverdue.slice(0, 6);
+  } catch {
+    // Silent — Inbox stays usable even if cadence parsing fails
+  }
+
   return {
     firstName,
     nowISO: new Date().toISOString(),
@@ -222,6 +262,9 @@ export async function load() {
     recentErrorsCount,
     pipelineDaysAgo,
     alerts,
+    followupsUrgent,
+    followupsOverdue,
+    followupsCadenceMeta,
     runtime: {
       hasAnthropic: !!env.ANTHROPIC_API_KEY,
       hasGemini: !!env.GEMINI_API_KEY,

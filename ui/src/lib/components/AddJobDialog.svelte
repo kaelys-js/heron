@@ -24,6 +24,9 @@
   let role = $state('');
   let status = $state<Status>('Scored');
   let busy = $state(false);
+  // Opt-in: when ticked + URL is on a known portal, fire a per-company scan
+  // alongside the per-URL save. Default off so the dialog stays cheap.
+  let alsoScanCompany = $state(false);
 
   // Reset on close
   $effect(() => {
@@ -33,6 +36,7 @@
       role = '';
       status = 'Scored';
       busy = false;
+      alsoScanCompany = false;
     }
   });
 
@@ -127,6 +131,27 @@
       toast.success('Added to ' + status, {
         description: trimmedCompany || trimmedUrl,
       });
+
+      // If the user opted in AND we have a company name to target, fire a
+      // per-company portal scan so the rest of that company's open roles
+      // land in the pipeline too. Fire-and-forget — the activity feed is
+      // the source of truth for completion.
+      if (alsoScanCompany && trimmedCompany) {
+        api.post('/api/scan/company', { company: trimmedCompany }, { silent: true })
+          .then(() => {
+            toast.info('Scanning all roles at ' + trimmedCompany, {
+              description: 'Watch the bell — auto-triage runs after.',
+              duration: 6_000,
+            });
+          })
+          .catch((e: unknown) => {
+            const err = e as ApiError;
+            toast.error('Per-company scan failed to start', {
+              description: err.message,
+            });
+          });
+      }
+
       globalActions.closeAddJob();
       await invalidateAll();
     } catch (e) {
@@ -136,6 +161,16 @@
       busy = false;
     }
   }
+
+  // Show the "also scan" opt-in only when we recognise the URL's portal
+  // (Greenhouse / Ashby / Lever) AND the company field is populated.
+  let canOfferCompanyScan = $derived.by(() => {
+    const d = detected;
+    if (!d) return false;
+    const portal = d.source.toLowerCase();
+    if (!['greenhouse', 'ashby', 'lever'].includes(portal)) return false;
+    return company.trim().length > 0;
+  });
 
   // ---- Status definitions for the visual picker ----
   type StatusDef = { value: Status; label: string; desc: string; icon: any; tint: string };
@@ -215,6 +250,28 @@
           <p class="text-[10px] text-muted-foreground/70">Auto-filled when we recognize the URL.</p>
         </div>
       </div>
+
+      <!--
+        Opt-in: also fire a per-company portal scan. Visible only when we
+        recognised a Greenhouse / Ashby / Lever URL AND the company is named —
+        these are the portals scan.mjs supports natively.
+      -->
+      {#if canOfferCompanyScan}
+        <label class="flex items-start gap-2.5 px-3 py-2.5 rounded-md border border-border/40 bg-muted/20 cursor-pointer hover:bg-muted/30 transition-colors">
+          <input
+            type="checkbox"
+            bind:checked={alsoScanCompany}
+            class="mt-0.5 size-4 rounded border-border accent-foreground"
+          />
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-medium">Also pull every other open role at {company}</div>
+            <p class="text-[10px] text-muted-foreground/70 mt-0.5 leading-relaxed">
+              Fires a zero-token portal scan against {detected?.source ?? 'this portal'} for {company} after this URL is saved.
+              ~30s, free, auto-triage runs after.
+            </p>
+          </div>
+        </label>
+      {/if}
 
       <!-- Status with rich descriptions -->
       <div class="space-y-1.5">

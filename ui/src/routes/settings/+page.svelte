@@ -179,6 +179,21 @@
     }
   }
 
+  // Bookmarklet wrapper. Loads /bookmarklet.js from the dashboard at click
+  // time so updates ship without users having to re-drag the bookmark. The
+  // wrapper hard-codes the host so the bookmarklet knows where to POST when
+  // it's running on a third-party domain (greenhouse.io, ashbyhq.com, etc.).
+  let bookmarkletHref = $derived.by(() => {
+    if (typeof window === 'undefined') return '#';
+    const host = window.location.origin;
+    const code =
+      "(function(){window.__CAREER_OPS_HOST__='" + host + "';" +
+      "var s=document.createElement('script');" +
+      "s.src='" + host + "/bookmarklet.js?t='+Date.now();" +
+      "document.body.appendChild(s);})();";
+    return 'javascript:' + encodeURIComponent(code);
+  });
+
   async function linkedinLogin() {
     toast.info('Opening LinkedIn…', {
       description: 'A headed browser window will open. Log in, then close it — the cookies persist.',
@@ -361,6 +376,36 @@
         </Card.Header>
         <Card.Content>
           <Button onclick={linkedinLogin} variant="outline">Connect LinkedIn</Button>
+        </Card.Content>
+      </Card.Root>
+
+      <Card.Root>
+        <Card.Header>
+          <Card.Title class="text-base">Browser bookmarklet · form auto-fill</Card.Title>
+          <Card.Description>
+            One-click form fill on Greenhouse / Ashby / Lever pages. Drag the link below to your bookmarks bar.
+            On any application page, click the bookmark — the script scrapes the labelled fields, pipes them
+            here, and fills your tailored answers (you review and click Submit yourself).
+          </Card.Description>
+        </Card.Header>
+        <Card.Content class="space-y-3">
+          <div class="rounded-md border border-border/40 bg-muted/20 p-3 flex items-center gap-3 flex-wrap">
+            <a
+              href={bookmarkletHref}
+              draggable="true"
+              class="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-200 hover:bg-fuchsia-500/20 transition-colors"
+              onclick={(e: MouseEvent) => e.preventDefault()}
+            >
+              📎 career-ops fill
+            </a>
+            <span class="text-[11px] text-muted-foreground">↑ Drag this to your bookmarks bar</span>
+          </div>
+          <ul class="text-[11px] text-muted-foreground/80 list-disc pl-4 space-y-0.5">
+            <li>Works on Greenhouse, Ashby, and Lever portals.</li>
+            <li>Add the job's URL to your pipeline first so the answers reference your CV proof points.</li>
+            <li>Reads from cv.md + profile.yml — same data the manual "Open answers" sheet uses.</li>
+            <li>Hits localhost:5174 — your dashboard must be running. Nothing leaves your machine.</li>
+          </ul>
         </Card.Content>
       </Card.Root>
     </div>

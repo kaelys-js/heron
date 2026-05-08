@@ -20,6 +20,148 @@ function venvPython(): string {
 export function isRunning(name: TaskName): boolean { return running.has(name); }
 export function listRunning(): string[] { return [...running.keys()]; }
 
+// =============================================================================
+// Spawn hardening — shared across every long-running task in this module.
+// Adds three guards that any production-shape orchestrator needs:
+//   1. A timeout — children that hang (Anthropic API stall, captcha block,
+//      infinite loop) get SIGTERM'd and never sit in `running` forever
+//      holding pipes & cookies.
+//   2. A bounded stdoutBuf — a child that writes megabytes without `\n`
+//      (e.g. a JSON dump) used to OOM the dev server's heap. Now capped
+//      at 1MB; we force-flush a truncation breadcrumb and reset.
+//   3. A per-spawn line-rate limiter — a runaway `print()` loop produced
+//      one logEvent (and one disk write) per line. Capped at 100 lines/s
+//      with a single rate-limit warning when the cap is hit.
+// All wired at boot via `installChildCleanup()` which kills surviving
+// children on SIGINT/SIGTERM/beforeExit so dev-server reloads don't leak.
+// =============================================================================
+
+/** Per-task default kill-after deadline. The longest-running task today is
+ *  the parallel batch CV runner — 4h ceiling matches the documented user
+ *  expectation. Override via `attachTimeout` if a caller knows better. */
+const TIMEOUT_MS: Record<TaskName, number> = {
+  scan: 30 * 60_000,           // 30 min
+  gemini: 15 * 60_000,         // 15 min
+  oferta: 10 * 60_000,         // 10 min — a single Claude oferta run
+  pdf: 5 * 60_000,             // 5 min
+  'apply-linkedin': 30 * 60_000, // 30 min — Playwright + login + apply
+  'bulk-cv': 4 * 60 * 60_000,  // 4h — covers the largest realistic batch
+  'bulk-apply': 2 * 60 * 60_000, // 2h
+};
+
+const MAX_STDOUT_BUF = 1024 * 1024; // 1MB — see comment above
+const MAX_LINES_PER_SEC = 100;
+
+/**
+ * Attach stdout + stderr line-by-line forwarders that go through `logEvent`.
+ * Replaces ~5 copy-pasted blocks across this file. Bounds memory + log volume.
+ */
+function attachStdio(p: ChildProcess, taskName: TaskName, opts: { stderrLevel?: 'warn' | 'error' } = {}): void {
+  let stdoutBuf = '';
+  const stderrLevel = opts.stderrLevel ?? 'warn';
+  let windowStart = Date.now();
+  let lineCount = 0;
+  let dropped = 0;
+
+  const flushDropped = () => {
+    if (dropped > 0) {
+      logEvent(taskName, 'Output rate-limited', {
+        level: 'warn',
+        category: 'task',
+        message: 'Dropped ' + dropped + ' lines in last second (>100/s).',
+      });
+      dropped = 0;
+    }
+  };
+
+  const onLine = (line: string, level: 'info' | 'warn' | 'error') => {
+    const now = Date.now();
+    if (now - windowStart > 1000) {
+      flushDropped();
+      windowStart = now;
+      lineCount = 0;
+    }
+    lineCount++;
+    if (lineCount > MAX_LINES_PER_SEC) {
+      dropped++;
+      return;
+    }
+    if (line.trim()) logEvent(taskName, line.trim(), { level, category: 'task' });
+  };
+
+  p.stdout?.on('data', (chunk: Buffer) => {
+    stdoutBuf += chunk.toString();
+    if (stdoutBuf.length > MAX_STDOUT_BUF) {
+      onLine(
+        stdoutBuf.slice(0, 200) + '… [truncated · no newline within ' + (MAX_STDOUT_BUF / 1024) + 'KB]',
+        'warn',
+      );
+      stdoutBuf = '';
+      return;
+    }
+    let i: number;
+    while ((i = stdoutBuf.indexOf('\n')) >= 0) {
+      const line = stdoutBuf.slice(0, i);
+      stdoutBuf = stdoutBuf.slice(i + 1);
+      onLine(line, 'info');
+    }
+  });
+  p.stderr?.on('data', (chunk: Buffer) => {
+    const lines = chunk.toString().split('\n');
+    for (const line of lines) if (line) onLine(line, stderrLevel);
+  });
+  p.on('close', () => {
+    if (stdoutBuf.trim()) onLine(stdoutBuf, 'info');
+    flushDropped();
+  });
+}
+
+/** SIGTERM after `ms`; SIGKILL 5s later if the child still hasn't exited. */
+function attachTimeout(p: ChildProcess, taskName: TaskName, ms: number): void {
+  const term = setTimeout(() => {
+    if (p.exitCode !== null || p.signalCode !== null) return;
+    logEvent(taskName, 'Task timed out', {
+      level: 'error',
+      category: 'task',
+      message: 'Killing after ' + Math.round(ms / 60_000) + ' min · ' + taskName,
+    });
+    try { p.kill('SIGTERM'); } catch {}
+    const hard = setTimeout(() => {
+      if (p.exitCode !== null) return;
+      try { p.kill('SIGKILL'); } catch {}
+    }, 5_000);
+    p.once('close', () => clearTimeout(hard));
+  }, ms);
+  p.once('close', () => clearTimeout(term));
+  p.once('error', () => clearTimeout(term));
+}
+
+let cleanupInstalled = false;
+/**
+ * Idempotent. Registers process-exit handlers that SIGTERM every surviving
+ * child in `running`. Without this, Vite/SvelteKit hot-reload of
+ * hooks.server.ts orphans child PIDs across the dev session and leaks file
+ * handles + cookies + ports.
+ */
+export function installChildCleanup(): void {
+  if (cleanupInstalled) return;
+  cleanupInstalled = true;
+  const killAll = () => {
+    for (const [, child] of running.entries()) {
+      const c = child as ChildProcess | null;
+      if (c && typeof c.kill === 'function' && c.exitCode === null) {
+        try { c.kill('SIGTERM'); } catch {}
+      }
+    }
+    running.clear();
+  };
+  // 'beforeExit' fires when the loop empties; dev-server reloads also fire
+  // SIGTERM/SIGINT depending on host. Cover all three.
+  process.once('beforeExit', killAll);
+  process.once('SIGTERM', () => { killAll(); process.exit(0); });
+  process.once('SIGINT', () => { killAll(); process.exit(0); });
+}
+
 /**
  * Spawn a long-running task and stream its stdout/stderr lines into the
  * activity feed via logEvent. Every transition (start, line, finish, fail,
@@ -53,20 +195,8 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
     return;
   }
   running.set(name, p);
-  let stdoutBuf = '';
-  p.stdout?.on('data', (chunk: Buffer) => {
-    stdoutBuf += chunk.toString();
-    let i;
-    while ((i = stdoutBuf.indexOf('\n')) >= 0) {
-      const line = stdoutBuf.slice(0, i);
-      stdoutBuf = stdoutBuf.slice(i + 1);
-      if (line.trim()) logEvent(name, line.trim(), { category: 'task' });
-    }
-  });
-  p.stderr?.on('data', (chunk: Buffer) => {
-    const lines = chunk.toString().split('\n').filter(Boolean);
-    for (const line of lines) logEvent(name, line, { level: 'warn', category: 'task' });
-  });
+  attachStdio(p, name);
+  attachTimeout(p, name, TIMEOUT_MS[name] ?? 30 * 60_000);
   // Critical: without this listener, a spawn failure (ENOENT — binary missing)
   // emits an unhandled error and crashes the dev server.
   p.on('error', (err: Error) => {
@@ -147,14 +277,8 @@ export function runLinkedInApply(autoSubmit = false, url?: string) {
     return;
   }
   running.set('apply-linkedin', p);
-  p.stdout?.on('data', (c: Buffer) => {
-    const lines = c.toString().split('\n').filter(Boolean);
-    for (const line of lines) logEvent('apply-linkedin', line, { category: 'task' });
-  });
-  p.stderr?.on('data', (c: Buffer) => {
-    const lines = c.toString().split('\n').filter(Boolean);
-    for (const line of lines) logEvent('apply-linkedin', line, { level: 'warn', category: 'task' });
-  });
+  attachStdio(p, 'apply-linkedin');
+  attachTimeout(p, 'apply-linkedin', TIMEOUT_MS['apply-linkedin']);
   p.on('error', (err: Error) => {
     running.delete('apply-linkedin');
     const isMissingBinary = (err as NodeJS.ErrnoException).code === 'ENOENT';
@@ -235,14 +359,8 @@ export function runOferta(url: string, taskKey: TaskName = 'oferta'): Promise<Of
       return;
     }
     running.set(taskKey, p);
-    p.stdout?.on('data', (c: Buffer) => {
-      const lines = c.toString().split('\n').filter(Boolean);
-      for (const line of lines) logEvent(taskKey, line, { category: 'task' });
-    });
-    p.stderr?.on('data', (c: Buffer) => {
-      const lines = c.toString().split('\n').filter(Boolean);
-      for (const line of lines) logEvent(taskKey, line, { level: 'warn', category: 'task' });
-    });
+    attachStdio(p, taskKey);
+    attachTimeout(p, taskKey, TIMEOUT_MS[taskKey] ?? TIMEOUT_MS.oferta);
     p.on('error', (err: Error) => {
       running.delete(taskKey);
       const isMissingBinary = (err as NodeJS.ErrnoException).code === 'ENOENT';
@@ -274,6 +392,90 @@ export function runOferta(url: string, taskKey: TaskName = 'oferta'): Promise<Of
 // Bulk CV — sequentially run oferta for each URL. We don't parallelize to avoid
 // Claude rate limits and to keep the activity feed readable.
 // =============================================================================
+
+/**
+ * Parallel bulk-CV — wraps batch/batch-runner.sh which orchestrates N
+ * concurrent `claude -p` workers. Faster than the sequential `runBulkOferta`
+ * but consumes more Anthropic credits in parallel; the dialog explains the
+ * tradeoff. Writes batch/batch-input.tsv from the URL list, kicks off the
+ * shell script, and streams output to the activity feed.
+ *
+ * Returns a coarse summary; per-job tracker rows are merged in by the fs
+ * watcher (Phase 1.3) once batch-runner.sh writes its tracker-additions/
+ * TSVs.
+ */
+export async function runBulkOfertaParallel(
+  urls: string[],
+  workers: number,
+): Promise<{ started: boolean; total: number }> {
+  if (running.has('bulk-cv')) {
+    logEvent('bulk-cv', 'Bulk CV already running', { level: 'warn', category: 'task' });
+    return { started: false, total: 0 };
+  }
+  if (urls.length === 0) return { started: false, total: 0 };
+
+  // Build the batch-input.tsv from the URL list. Format expected by
+  // batch-runner.sh (per `batch/batch-runner.sh` parsing):
+  //   <num>\t<url>\t<company>\t<role>
+  // We don't know company/role here from the URL alone — leave blank, the
+  // worker prompt fills them in.
+  const inputPath = path.join(ROOT, 'batch', 'batch-input.tsv');
+  try {
+    fs.mkdirSync(path.dirname(inputPath), { recursive: true });
+    const rows = urls.map((u, i) => (i + 1) + '\t' + u + '\t\t');
+    fs.writeFileSync(inputPath, rows.join('\n') + '\n');
+  } catch (err) {
+    logEvent('bulk-cv', 'Failed to write batch-input.tsv', {
+      level: 'error',
+      category: 'task',
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return { started: false, total: 0 };
+  }
+
+  running.set('bulk-cv', null as any);
+  const w = Math.max(1, Math.min(8, Math.floor(workers)));
+  logEvent('bulk-cv', 'Bulk CV (parallel) started', {
+    category: 'task',
+    message: urls.length + ' jobs · ' + w + ' worker' + (w === 1 ? '' : 's'),
+  });
+
+  let p: ChildProcess;
+  try {
+    p = spawn('bash', ['batch/batch-runner.sh', '--parallel', String(w)], {
+      cwd: ROOT,
+      env: { ...process.env },
+    });
+  } catch (e) {
+    running.delete('bulk-cv');
+    logEvent('bulk-cv', 'Bulk CV failed to spawn batch-runner', {
+      level: 'error',
+      category: 'task',
+      message: e instanceof Error ? e.message : String(e),
+    });
+    return { started: false, total: 0 };
+  }
+  attachStdio(p, 'bulk-cv');
+  attachTimeout(p, 'bulk-cv', TIMEOUT_MS['bulk-cv']);
+  p.on('error', (err: Error) => {
+    running.delete('bulk-cv');
+    logEvent('bulk-cv', 'Bulk CV (parallel) crashed', {
+      level: 'error',
+      category: 'task',
+      message: err.message,
+    });
+  });
+  p.on('close', (code: number | null) => {
+    running.delete('bulk-cv');
+    const ok = code === 0;
+    logEvent('bulk-cv', ok ? 'Bulk CV (parallel) finished' : 'Bulk CV (parallel) failed', {
+      level: ok ? 'success' : 'error',
+      category: 'task',
+      message: ok ? urls.length + ' job(s) · ' + w + ' workers' : 'exit ' + code,
+    });
+  });
+  return { started: true, total: urls.length };
+}
 
 export async function runBulkOferta(urls: string[]): Promise<{ ok: number; failed: number; total: number }> {
   if (running.has('bulk-cv')) {
@@ -336,14 +538,8 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean }> {
       return;
     }
     running.set('apply-linkedin', p);
-    p.stdout?.on('data', (c: Buffer) => {
-      const lines = c.toString().split('\n').filter(Boolean);
-      for (const line of lines) logEvent('apply-linkedin', line, { category: 'task' });
-    });
-    p.stderr?.on('data', (c: Buffer) => {
-      const lines = c.toString().split('\n').filter(Boolean);
-      for (const line of lines) logEvent('apply-linkedin', line, { level: 'warn', category: 'task' });
-    });
+    attachStdio(p, 'apply-linkedin');
+    attachTimeout(p, 'apply-linkedin', TIMEOUT_MS['apply-linkedin']);
     p.on('error', (err: Error) => {
       running.delete('apply-linkedin');
       const isMissingBinary = (err as NodeJS.ErrnoException).code === 'ENOENT';
@@ -416,6 +612,10 @@ export function bootOnce() {
   if (bootRan) return;
   bootRan = true;
   loadEnv();
+  // Register exit handlers so spawned children don't outlive the dev server.
+  // Idempotent across HMR reloads (re-import re-creates `cleanupInstalled`
+  // but `process.once` fires only once per signal).
+  installChildCleanup();
   // Lazy import to avoid circular dep at module init. If it fails, the user
   // loses Autopilot — we MUST log so the bell shows it instead of silently
   // pretending scheduling works.
@@ -427,6 +627,18 @@ export function bootOnce() {
         category: 'system',
         message: err instanceof Error ? err.message : String(err),
         link: '/autopilot',
+      });
+    });
+  // Install the pluggable job registry. Each *.job.ts module registers its
+  // own JobDef; this barrel triggers all of them at boot. Failure here
+  // shouldn't block boot — log + continue.
+  import('./jobs')
+    .then((m) => m.installAllJobs())
+    .catch((err) => {
+      logEvent('boot', 'Job registry failed to install', {
+        level: 'error',
+        category: 'system',
+        message: err instanceof Error ? err.message : String(err),
       });
     });
   const pipelineExists = fs.existsSync(PIPELINE);
