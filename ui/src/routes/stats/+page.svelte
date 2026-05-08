@@ -6,12 +6,41 @@
   import Histogram from '$lib/components/charts/Histogram.svelte';
   import Sparkline from '$lib/components/charts/Sparkline.svelte';
   import StackedBar from '$lib/components/charts/StackedBar.svelte';
-  import { ArrowRight, Play, Sparkles, AlertCircle, TrendingUp, TrendingDown, Building2, Globe, CheckCircle2 } from '@lucide/svelte';
+  import { ArrowRight, Play, Sparkles, AlertCircle, TrendingUp, TrendingDown, Building2, Globe, CheckCircle2, RefreshCw, Loader2 } from '@lucide/svelte';
   import EmptyState from '$lib/components/EmptyState.svelte';
-  import { api } from '$lib/api';
+  import { api, ApiError } from '$lib/api';
   import { invalidateAll } from '$app/navigation';
+  import { toast } from 'svelte-sonner';
+  import * as Tooltip from '$lib/components/ui/tooltip';
 
   let { data } = $props();
+
+  // Per-company refresh — fires the zero-token portal scan with --company.
+  // Tracks which company is in flight so a row's button can show a spinner.
+  let refreshingCompany = $state<string | null>(null);
+  async function refreshCompany(name: string) {
+    if (refreshingCompany) return;
+    refreshingCompany = name;
+    try {
+      await api.post<{ ok: boolean; message: string }>(
+        '/api/scan/company',
+        { company: name },
+        { silent: true },
+      );
+      toast.success('Scanning ' + name, {
+        description: 'Hitting Greenhouse / Ashby / Lever directly. Watch the bell — auto-triage fires after.',
+        duration: 8_000,
+      });
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Failed to scan ' + name, {
+        description: err.message,
+        action: { label: 'Retry', onClick: () => refreshCompany(name) },
+      });
+    } finally {
+      refreshingCompany = null;
+    }
+  }
 
   const STATUS_TINT: Record<string, string> = {
     New: 'bg-zinc-400/60',
@@ -210,6 +239,66 @@
         </Card.Content>
       </Card.Root>
 
+      <!-- Scan history — shows scanner ROI day-by-day -->
+      {#if data.scanHistory && data.scanHistory.totalRuns > 0}
+        <Card.Root>
+          <Card.Header class="pb-2">
+            <Card.Title class="text-sm flex items-center gap-2">
+              Scan history
+              <span class="text-[10px] font-mono text-muted-foreground/70">
+                {data.scanHistory.totalRuns} scan{data.scanHistory.totalRuns === 1 ? '' : 's'} ·
+                {data.scanHistory.totalAdded.toLocaleString()} new ·
+                {data.scanHistory.totalDuplicates.toLocaleString()} dup
+              </span>
+            </Card.Title>
+            <Card.Description class="text-xs">
+              Daily new-jobs found across every scan source. Last run: {data.scanHistory.lastRunDate ?? '—'}.
+            </Card.Description>
+          </Card.Header>
+          <Card.Content class="space-y-3">
+            <div class="flex items-end gap-1 h-20">
+              {#each data.scanHistory.recent.slice().reverse() as run (run.date)}
+                {@const max = Math.max(1, ...data.scanHistory.recent.map((r) => r.added))}
+                {@const h = Math.max(2, Math.round((run.added / max) * 64))}
+                <div class="flex-1 flex flex-col items-center gap-1" title={run.date + ' · ' + run.added + ' new'}>
+                  <div class="w-full bg-emerald-500/40 hover:bg-emerald-500/60 transition-colors rounded-sm" style="height: {h}px"></div>
+                </div>
+              {/each}
+            </div>
+            <div class="flex items-center justify-between text-[10px] text-muted-foreground/70">
+              <span class="font-mono">{data.scanHistory.recent.at(-1)?.date ?? ''}</span>
+              <span class="font-mono">{data.scanHistory.recent[0]?.date ?? ''}</span>
+            </div>
+            {#if data.scanHistory.topPortals.length > 0}
+              <div class="pt-2 border-t border-border/40 grid grid-cols-2 gap-3">
+                <div>
+                  <div class="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">Top portals</div>
+                  <ul class="space-y-0.5">
+                    {#each data.scanHistory.topPortals.slice(0, 5) as p}
+                      <li class="flex items-center justify-between text-[11px]">
+                        <span class="truncate">{p.portal}</span>
+                        <span class="font-mono tabular-nums text-muted-foreground/80">{p.count}</span>
+                      </li>
+                    {/each}
+                  </ul>
+                </div>
+                <div>
+                  <div class="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">Top companies</div>
+                  <ul class="space-y-0.5">
+                    {#each data.scanHistory.topCompanies.slice(0, 5) as c}
+                      <li class="flex items-center justify-between text-[11px]">
+                        <span class="truncate">{c.company}</span>
+                        <span class="font-mono tabular-nums text-muted-foreground/80">{c.count}</span>
+                      </li>
+                    {/each}
+                  </ul>
+                </div>
+              </div>
+            {/if}
+          </Card.Content>
+        </Card.Root>
+      {/if}
+
       <!-- Score distribution + BG risk side-by-side -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <Card.Root>
@@ -247,17 +336,43 @@
           </Card.Header>
           <Card.Content>
             <div class="space-y-1.5">
-              {#each data.topCompanies as c}
-                {@const max = data.topCompanies[0]?.count ?? 1}
-                {@const pct2 = (c.count / max) * 100}
-                <div class="flex items-center gap-3">
-                  <div class="w-32 text-xs overflow-hidden whitespace-nowrap shrink-0" title={c.name}>{c.name}</div>
-                  <div class="flex-1 relative h-5 rounded bg-muted/30 overflow-hidden">
-                    <div class="absolute inset-y-0 left-0 bg-primary/40" style={'width: ' + pct2 + '%'}></div>
+              <Tooltip.Provider delayDuration={300}>
+                {#each data.topCompanies as c}
+                  {@const max = data.topCompanies[0]?.count ?? 1}
+                  {@const pct2 = (c.count / max) * 100}
+                  {@const busy = refreshingCompany === c.name}
+                  <div class="flex items-center gap-3 group/cmpny">
+                    <div class="w-32 text-xs overflow-hidden whitespace-nowrap shrink-0" title={c.name}>{c.name}</div>
+                    <div class="flex-1 relative h-5 rounded bg-muted/30 overflow-hidden">
+                      <div class="absolute inset-y-0 left-0 bg-primary/40" style={'width: ' + pct2 + '%'}></div>
+                    </div>
+                    <div class="w-10 text-right text-xs font-medium tabular-nums">{c.count}</div>
+                    <Tooltip.Root>
+                      <Tooltip.Trigger>
+                        {#snippet child({ props })}
+                          <button
+                            {...props}
+                            type="button"
+                            onclick={() => refreshCompany(c.name)}
+                            disabled={busy || !!refreshingCompany}
+                            aria-label={'Refresh ' + c.name}
+                            class="size-6 inline-flex items-center justify-center rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 transition-colors disabled:opacity-50 opacity-0 group-hover/cmpny:opacity-100 focus:opacity-100"
+                          >
+                            {#if busy}
+                              <Loader2 class="size-3 animate-spin" />
+                            {:else}
+                              <RefreshCw class="size-3" />
+                            {/if}
+                          </button>
+                        {/snippet}
+                      </Tooltip.Trigger>
+                      <Tooltip.Content side="left" class="text-xs max-w-xs">
+                        Refresh open roles at {c.name} via direct Greenhouse / Ashby / Lever API. Auto-triage runs after.
+                      </Tooltip.Content>
+                    </Tooltip.Root>
                   </div>
-                  <div class="w-10 text-right text-xs font-medium tabular-nums">{c.count}</div>
-                </div>
-              {/each}
+                {/each}
+              </Tooltip.Provider>
               {#if data.topCompanies.length === 0}
                 <EmptyState size="sm" variant="inline" icon={Building2} description="No companies yet — run a scan." />
               {/if}

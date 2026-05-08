@@ -6,6 +6,7 @@
 
 import { loadAllJobs, groupByStatus } from '$lib/server/parsers';
 import { listReports, listPdfs, PIPELINE, APPLICATIONS, readSafe } from '$lib/server/files';
+import { readScanHistorySummary } from '$lib/server/scan-history';
 import type { Job, Status, BgRisk } from '$lib/types';
 import { STATUS_ORDER } from '$lib/types';
 import fs from 'node:fs';
@@ -192,6 +193,9 @@ export async function load() {
     overallApplied: counts.total > 0 ? applied / counts.total : 0,
   };
 
+  // Scan-history summary — used by the new "Scan history" card
+  const scanHistory = readScanHistorySummary();
+
   return {
     counts,
     reports,
@@ -212,5 +216,6 @@ export async function load() {
     topReady,
     pipelineStaleDays,
     conversion,
+    scanHistory,
   };
 }

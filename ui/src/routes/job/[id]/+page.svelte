@@ -11,9 +11,11 @@
   import EmptyState from '$lib/components/EmptyState.svelte';
   import ErrorState from '$lib/components/ErrorState.svelte';
   import JobActions from '$lib/components/JobActions.svelte';
+  import PdfPreviewPanel from '$lib/components/PdfPreviewPanel.svelte';
   import {
     Send, MessageSquare, DollarSign, Briefcase, ScrollText,
-    ChevronDown, FileText,
+    ChevronDown, FileText, Network as Linkedin, Loader2, Copy, ExternalLink,
+    Mail, RefreshCw,
   } from '@lucide/svelte';
   import { invalidateAll } from '$app/navigation';
   import { api, ApiError } from '$lib/api';
@@ -43,24 +45,40 @@
   let negotiationLoading = $state(false);
 
 
+  let prepLoaded = $state(false);
+
+  /** Try the persisted file first; only spawn a fresh generation if missing. */
+  async function ensurePrepLoaded() {
+    if (prepLoaded || !data.job?.id) return;
+    prepLoaded = true;
+    try {
+      const r = await api.get<{ exists: boolean; content?: string }>(
+        '/api/job/' + encodeURIComponent(data.job.id) + '/interview-prep',
+        { silent: true },
+      );
+      if (r.exists && r.content) prepContent = r.content;
+    } catch {
+      // 404 or no report yet — leave empty so the user can hit Generate
+    }
+  }
+
   async function loadPrep() {
-    if (!data.job?.reportFile) return;
+    if (!data.job?.reportFile || !data.job?.id) return;
     prepLoading = true;
     prepError = null;
     try {
-      const r = await fetch('/api/interview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportFile: data.job.reportFile }),
-      });
-      const j = await r.json();
-      if (j.ok) {
-        prepContent = j.content;
+      const r = await api.post<{ ok: boolean; content?: string; error?: string }>(
+        '/api/job/' + encodeURIComponent(data.job.id) + '/interview-prep',
+        {},
+        { silent: true },
+      );
+      if (r.ok && r.content) {
+        prepContent = r.content;
       } else {
-        prepError = j.error?.message ?? j.error ?? 'Generation failed';
+        prepError = r.error ?? 'Generation failed';
       }
     } catch (e) {
-      prepError = (e as Error).message ?? 'Network error';
+      prepError = (e as ApiError).message ?? 'Network error';
     } finally {
       prepLoading = false;
     }
@@ -140,6 +158,176 @@
       toast.error('Status update failed', { description: err.message });
     }
   }
+
+  // ---- Outreach tab state ----
+  // Three personas, each independently spawnable + persisted. The cached
+  // endpoint primes the UI with anything previously generated so a reload
+  // doesn't lose work.
+  type Persona = 'hiring-manager' | 'recruiter' | 'peer';
+  let outreachPersona = $state<Persona>('hiring-manager');
+  let outreachByPersona = $state<Record<Persona, string>>({
+    'hiring-manager': '',
+    recruiter: '',
+    peer: '',
+  });
+  let outreachBusy = $state(false);
+  let outreachLoaded = $state(false);
+
+  async function loadCachedOutreach() {
+    if (outreachLoaded || !data.job?.id) return;
+    outreachLoaded = true;
+    try {
+      const r = await api.get<{ variants: { persona: Persona; content: string }[] }>(
+        '/api/job/' + encodeURIComponent(data.job.id) + '/outreach/cached',
+        { silent: true },
+      );
+      const next = { ...outreachByPersona };
+      for (const v of r.variants) next[v.persona] = v.content;
+      outreachByPersona = next;
+    } catch {
+      // 404 / parse failure → just leave empty; user clicks Generate to populate
+    }
+  }
+
+  async function generateOutreach() {
+    if (!data.job?.id || outreachBusy) return;
+    outreachBusy = true;
+    try {
+      const r = await api.post<{ ok: boolean; persona: Persona; path: string; content: string; error?: string }>(
+        '/api/job/' + encodeURIComponent(data.job.id) + '/outreach',
+        { persona: outreachPersona },
+        { silent: true },
+      );
+      if (!r.ok) throw new Error(r.error ?? 'Outreach generation failed');
+      outreachByPersona = { ...outreachByPersona, [outreachPersona]: r.content };
+      toast.success('Outreach drafted', {
+        description: '3 variants ready · pick a tone and copy into LinkedIn / email.',
+        duration: 6_000,
+      });
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Outreach failed', {
+        description: err.message + ' — Claude Code CLI must be on PATH.',
+        action: { label: 'Retry', onClick: () => generateOutreach() },
+        duration: 12_000,
+      });
+    } finally {
+      outreachBusy = false;
+    }
+  }
+
+  async function copyOutreach() {
+    const content = outreachByPersona[outreachPersona];
+    if (!content) return;
+    try {
+      await navigator.clipboard.writeText(content);
+      toast.success('Outreach copied');
+    } catch {
+      toast.error('Copy failed', { description: 'Browser blocked clipboard access.' });
+    }
+  }
+
+  // Lazy-load cached drafts the first time the user opens the Outreach tab.
+  $effect(() => {
+    if (activeTab === 'outreach') {
+      void loadCachedOutreach();
+    }
+  });
+
+  // Same lazy-load pattern for the Interview Prep tab — pulls the persisted
+  // brief if one exists (auto-fired by the bus listener on status→Interview).
+  $effect(() => {
+    if (activeTab === 'prep') {
+      void ensurePrepLoaded();
+    }
+  });
+
+  let outreachContent = $derived(outreachByPersona[outreachPersona]);
+  let outreachHtml = $derived(outreachContent ? marked.parse(outreachContent) : '');
+
+  // ---- Cover letter tab state ----
+  // One letter per job, persisted next to the tailored CV PDF in output/.
+  // Lazy-loads on first tab open; "Regenerate" overwrites the file.
+  let coverContent = $state('');
+  let coverPath = $state('');
+  let coverBusy = $state(false);
+  let coverLoaded = $state(false);
+  let coverError = $state<string | null>(null);
+
+  async function loadCachedCover() {
+    if (coverLoaded || !data.job?.id) return;
+    coverLoaded = true;
+    try {
+      const r = await api.get<{ cached: { path: string; body: string } | null }>(
+        '/api/job/' + encodeURIComponent(data.job.id) + '/cover-letter',
+        { silent: true },
+      );
+      if (r.cached) {
+        coverContent = r.cached.body;
+        coverPath = r.cached.path;
+      }
+    } catch {
+      // 404 → leave empty; user clicks Generate
+    }
+  }
+
+  async function generateCover() {
+    if (!data.job?.id || coverBusy) return;
+    coverBusy = true;
+    coverError = null;
+    try {
+      const r = await api.post<{ ok: boolean; path?: string; body?: string; error?: string }>(
+        '/api/job/' + encodeURIComponent(data.job.id) + '/cover-letter',
+        {},
+        { silent: true },
+      );
+      if (!r.ok) throw new Error(r.error ?? 'Cover letter generation failed');
+      coverContent = r.body ?? '';
+      coverPath = r.path ?? '';
+      toast.success('Cover letter ready', {
+        description: 'Saved to ' + (r.path ?? 'output/'),
+        duration: 6_000,
+      });
+    } catch (e) {
+      const err = e as ApiError;
+      coverError = err.message;
+      toast.error('Cover letter failed', {
+        description: err.message + ' — Claude Code CLI must be on PATH.',
+        action: { label: 'Retry', onClick: () => generateCover() },
+        duration: 12_000,
+      });
+    } finally {
+      coverBusy = false;
+    }
+  }
+
+  async function copyCover() {
+    if (!coverContent) return;
+    try {
+      await navigator.clipboard.writeText(coverContent);
+      toast.success('Cover letter copied');
+    } catch {
+      toast.error('Copy failed', { description: 'Browser blocked clipboard access.' });
+    }
+  }
+
+  $effect(() => {
+    if (activeTab === 'cover-letter') {
+      void loadCachedCover();
+    }
+  });
+
+  let coverHtml = $derived(coverContent ? marked.parse(coverContent) : '');
+
+  let linkedInSearchUrl = $derived(
+    'https://www.linkedin.com/search/results/people/?keywords=' +
+      encodeURIComponent(
+        (data.job?.company ? data.job.company + ' ' : '') +
+        (outreachPersona === 'hiring-manager' ? 'engineering manager' :
+         outreachPersona === 'recruiter' ? 'recruiter' :
+         (data.job?.role ?? '')),
+      ),
+  );
 </script>
 
 <div class="h-full overflow-y-auto">
@@ -170,6 +358,14 @@
             <ReportSummary summary={data.summary} />
           {/if}
 
+          <!--
+            Tailored CV preview — renders inline via /api/job/[id]/pdf when a
+            PDF has been generated. Collapsed by default so the user opts in.
+          -->
+          {#if data.job.pdfFile}
+            <PdfPreviewPanel jobId={data.job.id} pdfFile={data.job.pdfFile} defaultOpen={false} />
+          {/if}
+
           <Tabs.Root value={activeTab} onValueChange={(v: string) => (activeTab = v)} class="w-full">
             <Tabs.List class="bg-transparent border h-9 p-0.5 mb-4">
               <Tabs.Trigger value="overview" class="text-xs h-8 px-3">
@@ -183,6 +379,12 @@
               </Tabs.Trigger>
               <Tabs.Trigger value="negotiation" class="text-xs h-8 px-3" disabled={!data.job.reportFile}>
                 <DollarSign class="size-3.5 mr-1.5" /> Negotiation
+              </Tabs.Trigger>
+              <Tabs.Trigger value="outreach" class="text-xs h-8 px-3">
+                <Linkedin class="size-3.5 mr-1.5" /> Outreach
+              </Tabs.Trigger>
+              <Tabs.Trigger value="cover-letter" class="text-xs h-8 px-3">
+                <Mail class="size-3.5 mr-1.5" /> Cover letter
               </Tabs.Trigger>
             </Tabs.List>
 
@@ -219,16 +421,32 @@
                   onretry={loadPrep}
                 />
               {:else if !prepContent}
-                <Button onclick={loadPrep} disabled={prepLoading || !data.job.reportFile}>
-                  {prepLoading ? 'Generating…' : 'Generate Interview Prep Brief'}
-                </Button>
-                <p class="text-xs text-muted-foreground mt-2">
-                  Likely 8–12 questions, STAR map, study plan, talking points, red flags, and questions to ask back.
-                </p>
+                <div class="space-y-3">
+                  <Button onclick={loadPrep} disabled={prepLoading || !data.job.reportFile} class="gap-1.5">
+                    {#if prepLoading}<Loader2 class="size-3.5 animate-spin" /> Generating…{:else}<Briefcase class="size-3.5" /> Generate Interview Prep Brief{/if}
+                  </Button>
+                  <p class="text-xs text-muted-foreground leading-relaxed max-w-2xl">
+                    Produces 8–12 likely questions, a STAR map mapping your proof points to expected behaviorals,
+                    a 5-topic study plan, 3 strong talking points, red flags to watch for, and 5 questions to ask back.
+                    Auto-fires when this job's status flips to <span class="font-mono">Interview</span> — so by the time
+                    you have an interview scheduled, the brief is already waiting.
+                  </p>
+                </div>
               {:else}
-                <article class="prose prose-invert prose-sm max-w-none">
-                  {@html prepHtml}
-                </article>
+                <div class="space-y-4">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] uppercase tracking-wider text-muted-foreground flex-1">Persisted at <code class="font-mono">interview-prep/{data.job.id}.md</code></span>
+                    <Button variant="outline" size="sm" class="h-7 text-xs gap-1.5" onclick={() => (activeTab = 'mock')}>
+                      <MessageSquare class="size-3" /> Practice with this
+                    </Button>
+                    <Button variant="outline" size="sm" class="h-7 text-xs gap-1.5" onclick={loadPrep} disabled={prepLoading}>
+                      {#if prepLoading}<Loader2 class="size-3 animate-spin" /> Regenerating…{:else}<Briefcase class="size-3" /> Regenerate{/if}
+                    </Button>
+                  </div>
+                  <article class="prose prose-invert prose-sm max-w-none">
+                    {@html prepHtml}
+                  </article>
+                </div>
               {/if}
             </Tabs.Content>
 
@@ -296,6 +514,144 @@
                   <article class="prose prose-invert prose-sm max-w-none">
                     {@html negotiationHtml}
                   </article>
+                {/if}
+              </div>
+            </Tabs.Content>
+
+            <!--
+              Outreach — generates cold-message drafts to a chosen persona.
+              Three personas, each independently spawnable; we lazy-load any
+              previously persisted drafts when the tab is first opened so
+              regeneration is opt-in.
+            -->
+            <Tabs.Content value="outreach">
+              <div class="space-y-4">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-[10px] uppercase tracking-wider text-muted-foreground">Persona</span>
+                  <Button
+                    variant={outreachPersona === 'hiring-manager' ? 'default' : 'outline'}
+                    size="sm"
+                    class="h-7 text-xs"
+                    onclick={() => (outreachPersona = 'hiring-manager')}
+                    disabled={outreachBusy}
+                  >Hiring manager</Button>
+                  <Button
+                    variant={outreachPersona === 'recruiter' ? 'default' : 'outline'}
+                    size="sm"
+                    class="h-7 text-xs"
+                    onclick={() => (outreachPersona = 'recruiter')}
+                    disabled={outreachBusy}
+                  >Recruiter</Button>
+                  <Button
+                    variant={outreachPersona === 'peer' ? 'default' : 'outline'}
+                    size="sm"
+                    class="h-7 text-xs"
+                    onclick={() => (outreachPersona = 'peer')}
+                    disabled={outreachBusy}
+                  >Peer at the company</Button>
+                  <div class="flex-1"></div>
+                  {#if outreachContent}
+                    <Button variant="ghost" size="sm" class="h-7 text-xs gap-1.5" onclick={copyOutreach}>
+                      <Copy class="size-3" /> Copy
+                    </Button>
+                  {/if}
+                  <Button
+                    size="sm"
+                    class="h-7 text-xs gap-1.5"
+                    onclick={generateOutreach}
+                    disabled={outreachBusy}
+                  >
+                    {#if outreachBusy}
+                      <Loader2 class="size-3 animate-spin" /> Drafting…
+                    {:else if outreachContent}
+                      <Linkedin class="size-3" /> Regenerate
+                    {:else}
+                      <Linkedin class="size-3" /> Generate
+                    {/if}
+                  </Button>
+                </div>
+
+                <p class="text-[11px] text-muted-foreground/80 leading-relaxed">
+                  Drafts 2–3 message variants for {outreachPersona === 'hiring-manager' ? 'an engineering manager / decision-maker' : outreachPersona === 'recruiter' ? 'an in-house recruiter' : 'a current employee at the company'}.
+                  Pulls proof points from your CV + the job report so the message references things that matter to this specific role.
+                </p>
+
+                {#if outreachContent}
+                  <article class="prose prose-invert prose-sm max-w-none">
+                    {@html outreachHtml}
+                  </article>
+                  <div class="flex items-center gap-2 pt-2 border-t border-border/40">
+                    <span class="text-[10px] text-muted-foreground/70">Find someone to message:</span>
+                    <a
+                      href={linkedInSearchUrl}
+                      target="_blank"
+                      rel="noopener"
+                      class="inline-flex items-center gap-1 text-[11px] text-foreground hover:text-foreground/80 underline underline-offset-2"
+                    >
+                      Search LinkedIn for {outreachPersona === 'hiring-manager' ? 'managers' : outreachPersona === 'recruiter' ? 'recruiters' : 'team members'} at {data.job.company}
+                      <ExternalLink class="size-2.5" />
+                    </a>
+                  </div>
+                {:else}
+                  <EmptyState
+                    size="md"
+                    variant="card"
+                    icon={Linkedin}
+                    title="No outreach drafted yet"
+                    description={'Click Generate to spawn ' + cmd('contacto') + ' for the ' + outreachPersona.replace('-', ' ') + ' persona. Each variant references a specific proof point from your CV.'}
+                  />
+                {/if}
+              </div>
+            </Tabs.Content>
+
+            <Tabs.Content value="cover-letter">
+              <div class="space-y-3">
+                <div class="flex items-start justify-between gap-3 flex-wrap">
+                  <div class="space-y-0.5">
+                    <h3 class="text-sm font-semibold flex items-center gap-1.5">
+                      <Mail class="size-4 text-amber-400" /> Cover letter
+                    </h3>
+                    <p class="text-[11px] text-muted-foreground leading-relaxed max-w-xl">
+                      Single-page letter anchored on your strongest CV proof points and the JD's headline requirements.
+                      Saved to <code class="font-mono text-[10px] bg-muted/40 px-1 py-0.5 rounded">output/{coverPath ? coverPath.split('/').pop() : '{slug}-cover.md'}</code> next to your tailored CV.
+                    </p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    {#if coverContent}
+                      <Button variant="ghost" size="sm" class="h-8 gap-1.5" onclick={copyCover}>
+                        <Copy class="size-3" /> Copy
+                      </Button>
+                    {/if}
+                    <Button size="sm" class="h-8 gap-1.5" onclick={generateCover} disabled={coverBusy}>
+                      {#if coverBusy}
+                        <Loader2 class="size-3 animate-spin" /> Drafting…
+                      {:else if coverContent}
+                        <RefreshCw class="size-3" /> Regenerate
+                      {:else}
+                        <Mail class="size-3" /> Generate
+                      {/if}
+                    </Button>
+                  </div>
+                </div>
+
+                {#if coverError && !coverContent}
+                  <ErrorState
+                    title="Cover letter generation failed"
+                    description={coverError}
+                    onretry={generateCover}
+                  />
+                {:else if coverContent}
+                  <article class="prose prose-invert prose-sm max-w-none rounded-md border border-border/40 bg-card px-4 py-3 prose-headings:font-semibold prose-pre:bg-muted prose-strong:text-foreground">
+                    {@html coverHtml}
+                  </article>
+                {:else if coverLoaded && !coverBusy}
+                  <EmptyState
+                    size="md"
+                    variant="card"
+                    icon={Mail}
+                    title="No cover letter yet"
+                    description={'Click Generate to spawn ' + cmd('cover-letter') + '. The letter reads cv.md + the matching report and lands in output/{slug}-cover.md.'}
+                  />
                 {/if}
               </div>
             </Tabs.Content>

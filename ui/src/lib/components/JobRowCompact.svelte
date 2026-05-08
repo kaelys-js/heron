@@ -45,6 +45,7 @@
     Scoring: 'Gemini is processing this job',
     Scored: 'Has a Gemini score · review and promote to Ready',
     Ready: 'Eval done · CV PDF ready · go apply',
+    Queued: 'Staged for batch send · review on /queue',
     Applied: 'Application sent',
     Screened: 'Recruiter responded',
     Interview: 'Active interview process',

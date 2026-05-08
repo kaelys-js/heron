@@ -5,6 +5,7 @@
   import AgentChat from '$lib/components/AgentChat.svelte';
   import GlobalSearch from '$lib/components/GlobalSearch.svelte';
   import AddJobDialog from '$lib/components/AddJobDialog.svelte';
+  import PostRejectionSheet from '$lib/components/PostRejectionSheet.svelte';
   import { Toaster } from '$lib/components/ui/sonner';
   import { Button } from '$lib/components/ui/button';
   import { AlertTriangle, RefreshCw } from '@lucide/svelte';
@@ -69,7 +70,11 @@
   taller than viewport would push the wrapper to grow, breaking sticky topbars.
 -->
 <Sidebar.Provider class="h-svh overflow-hidden">
-  <AppSidebar inboxCount={data?.inboxCount ?? 0} pinnedJobs={data?.pinnedJobs ?? []} />
+  <AppSidebar
+    inboxCount={data?.inboxCount ?? 0}
+    queueCount={data?.queueCount ?? 0}
+    pinnedJobs={data?.pinnedJobs ?? []}
+  />
   <Sidebar.Inset class="bg-card overflow-hidden">
     <svelte:boundary onerror={handleBoundaryError}>
       {@render children?.()}
@@ -106,4 +111,5 @@
 </svelte:boundary>
 <GlobalSearch />
 <AddJobDialog />
+<PostRejectionSheet />
 <Toaster />

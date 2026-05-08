@@ -6,20 +6,75 @@ import type { ActivityEvent, EventLevel, EventCategory } from '$lib/types';
 import { ROOT } from './files';
 
 const LOG_FILE = path.join(ROOT, 'data', 'activity.jsonl');
+const LOG_BACKUP = LOG_FILE + '.1';
 const MAX_BUFFER = 500;
+/** Rotate the activity log when it exceeds this size on append.
+ *  Keeps one backup (`activity.jsonl.1`) so total disk usage is bounded
+ *  at ~2× this number. Set conservatively — we don't read the whole log
+ *  at boot, only the tail, so size has no practical upside. */
+const MAX_LOG_BYTES = 50 * 1024 * 1024; // 50MB
+
+/**
+ * `safeConsole` is the *only* console pathway used inside this module.
+ * If a wrapping debugger / extension intercepts console and that pathway
+ * fails (e.g. Cursor's wallaby/console-ninja closing its socket → EPIPE),
+ * the error is swallowed instead of propagating up to the runtime's
+ * `uncaughtException` handler — which would re-enter logEvent and cause
+ * an unbounded feedback loop. See data/activity.jsonl growing to 15GB
+ * for what happens without this guard.
+ */
+function safeConsole(level: 'log' | 'error', ...args: unknown[]): void {
+  try {
+    if (level === 'error') console.error(...args);
+    else console.log(...args);
+  } catch {
+    // Intentionally empty — we cannot do anything useful if console itself
+    // is throwing, and any logEvent call from here would re-enter.
+  }
+}
 
 class Bus extends EventEmitter {
   private buf: ActivityEvent[] = [];
+  /** Reentrancy guard. If a listener of the 'event' channel itself emits
+   *  events (via logEvent → emitEvent), we cap the recursion depth so a
+   *  pathological listener can't melt the disk. Lossy by design. */
+  private depth = 0;
+  /** Most recent rapid-fire window: { ts (ms), count }. Resets every 1s.
+   *  If we cross BURST_LIMIT in one window we drop further events for the
+   *  remainder of the window — belt-and-braces against any future loop. */
+  private windowStart = 0;
+  private windowCount = 0;
+  private droppedThisWindow = 0;
 
   constructor() {
     super();
+    this.setMaxListeners(50); // dev HMR can stack listeners — avoid noise warning
     this.loadFromDisk();
   }
 
   private loadFromDisk() {
     try {
       if (!fs.existsSync(LOG_FILE)) return;
-      const txt = fs.readFileSync(LOG_FILE, 'utf8');
+      // Read only the tail so a runaway log doesn't OOM us at boot.
+      const stat = fs.statSync(LOG_FILE);
+      const size = stat.size;
+      const TAIL_BYTES = 256 * 1024; // 256KB tail is more than 500 events worth
+      let txt: string;
+      if (size > TAIL_BYTES) {
+        const fd = fs.openSync(LOG_FILE, 'r');
+        try {
+          const buf = Buffer.alloc(TAIL_BYTES);
+          fs.readSync(fd, buf, 0, TAIL_BYTES, size - TAIL_BYTES);
+          txt = buf.toString('utf8');
+          // Drop the first (probably partial) line
+          const nl = txt.indexOf('\n');
+          if (nl >= 0) txt = txt.slice(nl + 1);
+        } finally {
+          fs.closeSync(fd);
+        }
+      } else {
+        txt = fs.readFileSync(LOG_FILE, 'utf8');
+      }
       const lines = txt.trim().split('\n').slice(-MAX_BUFFER);
       for (const line of lines) {
         if (!line) continue;
@@ -29,24 +84,92 @@ class Bus extends EventEmitter {
         } catch {}
       }
     } catch (e) {
-      console.error('[events] failed to load', e);
+      safeConsole('error', '[events] failed to load', e);
+    }
+  }
+
+  private rotateIfNeeded(): void {
+    try {
+      if (!fs.existsSync(LOG_FILE)) return;
+      const size = fs.statSync(LOG_FILE).size;
+      if (size <= MAX_LOG_BYTES) return;
+      // Move the current log out of the way; the next append re-creates it.
+      // Replace any existing .1 (we keep only one backup to bound disk use).
+      try { if (fs.existsSync(LOG_BACKUP)) fs.unlinkSync(LOG_BACKUP); } catch {}
+      try { fs.renameSync(LOG_FILE, LOG_BACKUP); } catch {}
+      // Drop a rotation breadcrumb without going through logEvent (avoid
+      // recursion if rotation fails repeatedly).
+      try {
+        fs.writeFileSync(
+          LOG_FILE,
+          JSON.stringify({
+            id: crypto.randomBytes(6).toString('hex'),
+            ts: Date.now(),
+            level: 'info',
+            category: 'system',
+            source: 'events',
+            title: 'Activity log rotated',
+            message: 'previous file moved to activity.jsonl.1 (' + Math.round(size / 1024 / 1024) + 'MB)',
+          }) + '\n',
+        );
+      } catch {}
+    } catch {
+      // Rotation is best-effort — never let it crash the caller.
     }
   }
 
   private appendToDisk(ev: ActivityEvent) {
     try {
       fs.mkdirSync(path.dirname(LOG_FILE), { recursive: true });
+      this.rotateIfNeeded();
       fs.appendFileSync(LOG_FILE, JSON.stringify(ev) + '\n');
     } catch (e) {
-      console.error('[events] failed to persist', e);
+      safeConsole('error', '[events] failed to persist', e);
     }
   }
 
   emitEvent(ev: ActivityEvent) {
+    // ---- recursion + burst guards ----
+    if (this.depth > 8) return; // stop runaway recursion at ~depth 8
+    const now = Date.now();
+    const BURST_WINDOW = 1000;
+    const BURST_LIMIT = 200; // events per second across the whole bus
+    if (now - this.windowStart > BURST_WINDOW) {
+      // Window rolled over — if we dropped anything, surface it once.
+      if (this.droppedThisWindow > 0) {
+        const note: ActivityEvent = {
+          id: crypto.randomBytes(6).toString('hex'),
+          ts: now,
+          level: 'warn',
+          category: 'system',
+          source: 'events',
+          title: 'Bus rate-limited',
+          message: 'Dropped ' + this.droppedThisWindow + ' events in the last second.',
+        };
+        this.droppedThisWindow = 0;
+        this.windowStart = now;
+        this.windowCount = 1;
+        this.buf.push(note);
+        if (this.buf.length > MAX_BUFFER) this.buf.shift();
+        this.appendToDisk(note);
+        this.depth++;
+        try { this.emit('event', note); } finally { this.depth--; }
+      } else {
+        this.windowStart = now;
+        this.windowCount = 0;
+      }
+    }
+    this.windowCount++;
+    if (this.windowCount > BURST_LIMIT) {
+      this.droppedThisWindow++;
+      return; // silently drop
+    }
+
     this.buf.push(ev);
     if (this.buf.length > MAX_BUFFER) this.buf.shift();
     this.appendToDisk(ev);
-    this.emit('event', ev);
+    this.depth++;
+    try { this.emit('event', ev); } finally { this.depth--; }
   }
 
   recent(): ActivityEvent[] {
@@ -62,6 +185,39 @@ class Bus extends EventEmitter {
 }
 
 export const bus = new Bus();
+
+/**
+ * Install a named bus listener — idempotent across Vite HMR reloads.
+ *
+ * Without this helper, every save of a module that does `bus.on('event', …)`
+ * at module init stacks a fresh listener on top of the previous one. After
+ * ~50 dev saves every event fires through 50 listener callbacks; if any
+ * listener emits its own events that's a 50× amplifier on log volume.
+ *
+ * The trick: stamp the handler with a `__busName` tag so we can find any
+ * prior listener with the same name (regardless of whether the calling
+ * module's local state survived the reload) and remove it before adding
+ * the new one. EventEmitter doesn't index by name natively so we walk the
+ * existing listener list — cheap, called once per module load.
+ */
+export function installBusListener(name: string, handler: (ev: ActivityEvent) => void): void {
+  for (const h of bus.listeners('event')) {
+    if ((h as { __busName?: string }).__busName === name) {
+      bus.off('event', h as (ev: ActivityEvent) => void);
+    }
+  }
+  (handler as { __busName?: string }).__busName = name;
+  bus.on('event', handler);
+}
+
+/** Remove a named bus listener (if present). Counterpart to installBusListener. */
+export function removeBusListener(name: string): void {
+  for (const h of bus.listeners('event')) {
+    if ((h as { __busName?: string }).__busName === name) {
+      bus.off('event', h as (ev: ActivityEvent) => void);
+    }
+  }
+}
 
 export function logEvent(
   source: string,
@@ -88,12 +244,13 @@ export function logEvent(
   bus.emitEvent(ev);
   const prefix = ev.level === 'error' ? '✗' : ev.level === 'warn' ? '⚠' : ev.level === 'success' ? '✓' : 'ℹ';
   const head = prefix + ' [' + source + '] ' + title + (opts.message ? ' — ' + opts.message : '');
+  // safeConsole swallows EPIPE/EBADF from intercepted-console extensions —
+  // see comment at the top of this file.
   if (ev.level === 'error') {
-    // For errors: log via console.error so they hit stderr + show as red in node
-    console.error(head);
-    if (opts.stack) console.error(opts.stack);
+    safeConsole('error', head);
+    if (opts.stack) safeConsole('error', opts.stack);
   } else {
-    console.log(head);
+    safeConsole('log', head);
   }
   return ev;
 }
