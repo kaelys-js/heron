@@ -13,6 +13,7 @@ data/activity.jsonl.1
 data/issues.jsonl
 data/followup-cache.json
 data/insights-cache.json
+data/patterns-cache.json
 data/autopilot.json
 reports/*.md
 !reports/.gitkeep

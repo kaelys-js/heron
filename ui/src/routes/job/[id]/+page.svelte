@@ -575,8 +575,8 @@
                 </div>
 
                 <p class="text-[11px] text-muted-foreground/80 leading-relaxed">
-                  Drafts 2–3 message variants for {outreachPersona === 'hiring-manager' ? 'an engineering manager / decision-maker' : outreachPersona === 'recruiter' ? 'an in-house recruiter' : 'a current employee at the company'}.
-                  Pulls proof points from your CV + the job report so the message references things that matter to this specific role.
+                  Generates short LinkedIn messages tuned for {outreachPersona === 'hiring-manager' ? 'an engineering manager or other decision-maker' : outreachPersona === 'recruiter' ? 'an in-house recruiter or sourcer' : 'a current employee on the team (a peer, not someone with hiring power)'}.
+                  Each variant pulls one specific proof point from your CV and references something concrete from the job's evaluation report — so it doesn't read like the generic "I'm interested in your role" template everyone else sends.
                 </p>
 
                 {#if outreachContent}
@@ -601,7 +601,7 @@
                     variant="card"
                     icon={Linkedin}
                     title="No outreach drafted yet"
-                    description={'Click Generate to spawn ' + cmd('contacto') + ' for the ' + outreachPersona.replace('-', ' ') + ' persona. Each variant references a specific proof point from your CV.'}
+                    description={'Click Generate to draft messages for the ' + (outreachPersona === 'hiring-manager' ? 'hiring-manager' : outreachPersona) + ' angle. Runs ' + cmd('contacto') + ' in the background — usually 30–60s. The result is saved to interview-prep/ so a reload restores it.'}
                   />
                 {/if}
               </div>
@@ -615,8 +615,10 @@
                       <Mail class="size-4 text-amber-400" /> Cover letter
                     </h3>
                     <p class="text-[11px] text-muted-foreground leading-relaxed max-w-xl">
-                      Single-page letter anchored on your strongest CV proof points and the JD's headline requirements.
-                      Saved to <code class="font-mono text-[10px] bg-muted/40 px-1 py-0.5 rounded">output/{coverPath ? coverPath.split('/').pop() : '{slug}-cover.md'}</code> next to your tailored CV.
+                      A one-page cover letter, written in your CV's voice, anchored on the two strongest proof
+                      points that map to the JD's headline requirements. Saved to
+                      <code class="font-mono text-[10px] bg-muted/40 px-1 py-0.5 rounded">output/{coverPath ? coverPath.split('/').pop() : '{slug}-cover.md'}</code>
+                      so it lives next to your tailored CV PDF.
                     </p>
                   </div>
                   <div class="flex items-center gap-2">
@@ -652,8 +654,8 @@
                     size="md"
                     variant="card"
                     icon={Mail}
-                    title="No cover letter yet"
-                    description={'Click Generate to spawn ' + cmd('cover-letter') + '. The letter reads cv.md + the matching report and lands in output/{slug}-cover.md.'}
+                    title="No cover letter generated yet"
+                    description={'Click Generate to draft one. Runs ' + cmd('cover-letter') + ' against cv.md plus this job\'s evaluation report — usually 30–60s. The result is saved to output/ alongside your CV PDF.'}
                   />
                 {/if}
               </div>
