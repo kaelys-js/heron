@@ -67,7 +67,15 @@ function collectUrls(scope: 'stale' | 'all'): string[] {
       const m = line.match(/https?:\/\/\S+/);
       if (m) urls.add(m[0].replace(/[)\].,>]+$/, ''));
     }
-  } catch {}
+  } catch (e) {
+    const code = (e as NodeJS.ErrnoException).code;
+    if (code !== 'ENOENT') {
+      logEvent('liveness', 'Could not read pipeline.md', {
+        level: 'warn', category: 'system',
+        message: code + ': ' + (e instanceof Error ? e.message : String(e)),
+      });
+    }
+  }
   if (scope === 'all') {
     // Also include applications.md
     try {
@@ -76,7 +84,15 @@ function collectUrls(scope: 'stale' | 'all'): string[] {
         const m = line.match(/https?:\/\/\S+/);
         if (m) urls.add(m[0].replace(/[)\].,>]+$/, ''));
       }
-    } catch {}
+    } catch (e) {
+      const code = (e as NodeJS.ErrnoException).code;
+      if (code !== 'ENOENT') {
+        logEvent('liveness', 'Could not read applications.md', {
+          level: 'warn', category: 'system',
+          message: code + ': ' + (e instanceof Error ? e.message : String(e)),
+        });
+      }
+    }
   }
   // For 'stale' scope we don't have per-row timestamps in pipeline.md, so we
   // approximate: include only URLs that are also IN applications.md with a
@@ -149,7 +165,16 @@ async function runLivenessSweep(args?: JobArgs): Promise<JobResult> {
   for (const o of outcomes) {
     if (o.verdict === 'expired') {
       expired++;
-      try { markClosed(o.url, o.reason ?? 'liveness-sweep'); } catch {}
+      try {
+        markClosed(o.url, o.reason ?? 'liveness-sweep');
+      } catch (err) {
+        // markClosed has its own internal error logging via reportServerError,
+        // but the throw shouldn't blow up the sweep loop. Log once and move on.
+        logEvent('liveness', 'Could not mark URL closed', {
+          level: 'warn', category: 'application',
+          message: o.url + ' — ' + (err instanceof Error ? err.message : String(err)),
+        });
+      }
     } else if (o.verdict === 'uncertain') {
       uncertain++;
       reportIssue({

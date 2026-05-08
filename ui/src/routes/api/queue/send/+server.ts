@@ -18,7 +18,7 @@ import { loadAllJobs } from '$lib/server/parsers';
 import { runBulkApply } from '$lib/server/orchestrator';
 import { markApplied } from '$lib/server/applications';
 import { readConfig } from '$lib/server/autopilot';
-import { logEvent } from '$lib/server/events';
+import { logEvent, reportServerError } from '$lib/server/events';
 
 const MAX_BATCH = 50;
 
@@ -75,7 +75,9 @@ export const POST = wrap('queue-send', async ({ request }: { request: Request })
   }
 
   if (linkedInToSend.length > 0) {
-    runBulkApply(linkedInToSend.map((g) => ({ url: g.url, isLinkedIn: true }))).catch(() => {});
+    runBulkApply(linkedInToSend.map((g) => ({ url: g.url, isLinkedIn: true }))).catch((err) =>
+      reportServerError('queue-send', 'LinkedIn queue dispatch rejected', err, { category: 'task' }),
+    );
   }
 
   return {

@@ -13,6 +13,7 @@
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { loadAllJobs } from '$lib/server/parsers';
 import { runBulkOferta, runBulkOfertaParallel } from '$lib/server/orchestrator';
+import { reportServerError } from '$lib/server/events';
 
 const MAX_BULK = 25;
 const MAX_WORKERS = 8;
@@ -36,7 +37,9 @@ export const POST = wrap('bulk-cv', async ({ request }: { request: Request }) =>
   if (urls.length === 0) badRequest('No jobs found for the given ids');
 
   if (workers > 1) {
-    runBulkOfertaParallel(urls, workers).catch(() => {});
+    runBulkOfertaParallel(urls, workers).catch((err) =>
+      reportServerError('bulk-cv', 'Parallel bulk-CV rejected', err, { category: 'task' }),
+    );
     return {
       ok: true,
       queued: urls.length,
@@ -47,8 +50,12 @@ export const POST = wrap('bulk-cv', async ({ request }: { request: Request }) =>
         'Costs more per minute but ~' + Math.ceil(workers * 0.7) + 'x faster wall-clock.',
     };
   }
-  // Fire and forget — orchestrator drives the activity feed.
-  runBulkOferta(urls).catch(() => {});
+  // Fire and forget — orchestrator drives the activity feed. Outer catch
+  // covers the unlikely case the promise itself rejects (orchestrator
+  // already logs per-job failures internally).
+  runBulkOferta(urls).catch((err) =>
+    reportServerError('bulk-cv', 'Sequential bulk-CV rejected', err, { category: 'task' }),
+  );
   return {
     ok: true,
     queued: urls.length,
