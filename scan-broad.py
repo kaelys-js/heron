@@ -42,27 +42,34 @@ PIPELINE = ROOT / "data" / "pipeline.md"
 HISTORY = ROOT / "data" / "scan-history.tsv"
 
 # ----- Cole's search profiles -----
+# results_wanted is per (search, source) combination — JobSpy fans out to
+# LinkedIn / Indeed / Glassdoor / ZipRecruiter / Google Jobs internally.
+# Higher numbers fetch more from each source but trip rate limits on
+# LinkedIn/Indeed sooner. 200 per source × 5 sources × 10 searches =
+# 10K listings ceiling per run; the title-drop filter discards >80% so
+# the actual writes to pipeline.md are an order of magnitude smaller.
+RESULTS_WANTED_DEFAULT = 200
 SEARCHES = [
     {"term": "Senior Software Engineer TypeScript", "location": "Vancouver, BC, Canada",
-     "is_remote": False, "results_wanted": 30, "country_indeed": "Canada"},
+     "is_remote": False, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "Canada"},
     {"term": "Senior Full-Stack Engineer", "location": "Vancouver, BC, Canada",
-     "is_remote": False, "results_wanted": 30, "country_indeed": "Canada"},
+     "is_remote": False, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "Canada"},
     {"term": "Senior Software Engineer TypeScript Remote", "location": "Canada",
-     "is_remote": True, "results_wanted": 30, "country_indeed": "Canada"},
+     "is_remote": True, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "Canada"},
     {"term": "Senior Software Engineer TypeScript", "location": "United States",
-     "is_remote": True, "results_wanted": 50, "country_indeed": "USA"},
+     "is_remote": True, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "USA"},
     {"term": "Senior Full-Stack Engineer Node React", "location": "United States",
-     "is_remote": True, "results_wanted": 50, "country_indeed": "USA"},
+     "is_remote": True, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "USA"},
     {"term": "Senior Backend Engineer Node.js", "location": "United States",
-     "is_remote": True, "results_wanted": 30, "country_indeed": "USA"},
+     "is_remote": True, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "USA"},
     {"term": "Senior Frontend Engineer React TypeScript", "location": "United States",
-     "is_remote": True, "results_wanted": 30, "country_indeed": "USA"},
+     "is_remote": True, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "USA"},
     {"term": "Senior Platform Engineer", "location": "United States",
-     "is_remote": True, "results_wanted": 30, "country_indeed": "USA"},
+     "is_remote": True, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "USA"},
     {"term": "Cloudflare Workers Engineer", "location": "United States",
-     "is_remote": True, "results_wanted": 20, "country_indeed": "USA"},
+     "is_remote": True, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "USA"},
     {"term": "Founding Engineer TypeScript", "location": "United States",
-     "is_remote": True, "results_wanted": 30, "country_indeed": "USA"},
+     "is_remote": True, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "USA"},
 ]
 
 # ----- Title filtering (mirrors portals.yml) -----

@@ -93,6 +93,9 @@
     if (filter.hasPdf && !j.pdfFile) return false;
     if (filter.hasReport && !j.reportFile) return false;
     if (filter.hasSalary && !j.salary) return false;
+    // Source filter — '' means "all sources"; anything else must match
+    // exactly the scan-history source identifier.
+    if (filter.source && j.source !== filter.source) return false;
     if (filter.search.trim()) {
       const q = filter.search.trim().toLowerCase();
       if (!j.company.toLowerCase().includes(q) &&
@@ -311,6 +314,14 @@ for (const job of data.jobs) {
                 {/snippet}
               </Tooltip.Trigger>
               <Tooltip.Content side="bottom" class="text-xs">Hiring company name</Tooltip.Content>
+            </Tooltip.Root>
+            <Tooltip.Root>
+              <Tooltip.Trigger>
+                {#snippet child({ props })}
+                  <span {...props} class="w-24 flex-shrink-0 cursor-help">Source</span>
+                {/snippet}
+              </Tooltip.Trigger>
+              <Tooltip.Content side="bottom" class="text-xs max-w-xs">Where this URL was first surfaced — direct ATS scan, JobSpy aggregator, niche board, email alert, etc.</Tooltip.Content>
             </Tooltip.Root>
             <Tooltip.Root>
               <Tooltip.Trigger>

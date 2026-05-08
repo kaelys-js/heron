@@ -46,27 +46,52 @@ const APPLICATIONS_PATH = 'data/applications.md';
 mkdirSync('data', { recursive: true });
 
 const FETCH_TIMEOUT_MS = 12_000;
-const DEFAULT_MAX_PAGES = 2;
+// 50 pages × 50 jobs = 2500 jobs ceiling. Loop short-circuits as soon as
+// a page returns 0 listings, so this is a safety cap not a fixed cost.
+// Override via `--pages N` for one-off bigger pulls.
+const DEFAULT_MAX_PAGES = 50;
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 1500;
+
+/** Retry on transient network/5xx; hard-fail on 4xx. Same semantics as
+ *  scan.mjs's withRetry — kept duplicated here to avoid a shared-utility
+ *  module that has to be installed via a build step. */
+async function withRetry(label, fn) {
+  let lastErr;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try { return await fn(); }
+    catch (err) {
+      lastErr = err;
+      const msg = err?.message || '';
+      if (/HTTP 4\d\d/.test(msg)) throw err;
+      if (attempt === MAX_RETRIES) throw err;
+      await new Promise(r => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));
+    }
+  }
+  throw lastErr;
+}
 
 // ── HTTP helper ─────────────────────────────────────────────────────
 
 async function fetchText(url, opts = {}) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (career-ops-scanner; +https://github.com/santifer/career-ops)',
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9',
-        ...(opts.headers || {}),
-      },
-      signal: controller.signal,
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.text();
-  } finally {
-    clearTimeout(timer);
-  }
+  return withRetry(url, async () => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (career-ops-scanner; +https://github.com/santifer/career-ops)',
+          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9',
+          ...(opts.headers || {}),
+        },
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.text();
+    } finally {
+      clearTimeout(timer);
+    }
+  });
 }
 
 // ── Source: aijobs.net ──────────────────────────────────────────────
