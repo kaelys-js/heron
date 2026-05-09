@@ -6,7 +6,7 @@
   import {
     Search, Sparkles, Send, FileText, Bot, KanbanSquare, FolderKanban, BarChart3,
     Inbox, ListTodo, Cpu, Wrench, Settings, User, HelpCircle, ChevronRight,
-    Copy, Check, Terminal, Code2, MessageCircle, ExternalLink, Zap, Map,
+    Copy, Check, Terminal, Code2, MessageCircle, ExternalLink, Zap, Map, Plug,
   } from '@lucide/svelte';
   import { toast } from 'svelte-sonner';
   import { cn } from '$lib/utils';
@@ -124,11 +124,34 @@
       when: 'On first run. Update whenever your search criteria evolve.',
     },
     {
+      href: '/sources',
+      label: 'Sources',
+      icon: Plug,
+      purpose: 'One card per scanner. Authenticated LinkedIn / Indeed (saved Playwright sessions), Gmail IMAP polling, API-key sources, and the always-on aggregators. Connect / Test / Disconnect from one place.',
+      when: 'When a scanner is failing; after re-installing; whenever you want to add a source.',
+    },
+    {
       href: '/settings',
       label: 'Settings',
       icon: Settings,
       purpose: 'API keys (Anthropic / Gemini / Adzuna) and the LinkedIn session login. All stored locally in .env.',
       when: 'On first run; whenever you rotate a key.',
+    },
+  ];
+
+  type DeepDive = { href: string; title: string; blurb: string; icon: any };
+  const DEEP_DIVES: DeepDive[] = [
+    {
+      href: '/help/onboarding',
+      title: 'Onboarding wizard',
+      blurb: 'What each step does, what files it writes, and how to redo it later from the per-page UIs.',
+      icon: Sparkles,
+    },
+    {
+      href: '/help/sources',
+      title: 'Sources & scanners',
+      blurb: 'How each source works, when to reconnect, common failure modes (LinkedIn session expiry, Indeed captcha, Gmail app-password rotation), and what each /sources action does.',
+      icon: Plug,
     },
   ];
 
@@ -242,6 +265,39 @@
                 </a>
               {/if}
             </div>
+          {/each}
+        </Card.Content>
+      </Card.Root>
+
+      <!-- Deep dives -->
+      <Card.Root>
+        <Card.Header>
+          <Card.Title class="text-sm flex items-center gap-2">
+            <HelpCircle class="size-3.5 text-muted-foreground" /> Deep dives
+          </Card.Title>
+          <Card.Description class="text-xs">
+            Topic-specific reference docs for the multi-step features.
+          </Card.Description>
+        </Card.Header>
+        <Card.Content class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {#each DEEP_DIVES as d (d.href)}
+            {@const DIcon = d.icon}
+            <a
+              href={d.href}
+              class="flex items-start gap-3 p-3 rounded-md border border-border/40 bg-card/40 hover:bg-accent/30 hover:border-accent/60 transition-colors group"
+            >
+              <div class="size-8 rounded-md bg-muted/40 flex items-center justify-center flex-shrink-0">
+                <DIcon class="size-4 text-muted-foreground" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-medium">{d.title}</span>
+                  <code class="text-[10px] font-mono text-muted-foreground/60">{d.href}</code>
+                </div>
+                <p class="text-[11px] text-muted-foreground leading-relaxed mt-1">{d.blurb}</p>
+              </div>
+              <ChevronRight class="size-3.5 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors flex-shrink-0 mt-1" />
+            </a>
           {/each}
         </Card.Content>
       </Card.Root>

@@ -1,17 +1,26 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
+  import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
-  import { FileText, ArrowRight, ArrowLeft, Loader2, Wand2, Info } from '@lucide/svelte';
+  import { FileText, ArrowRight, ArrowLeft, Loader2, Wand2, Info, ExternalLink, Globe } from '@lucide/svelte';
   import { goto } from '$app/navigation';
   import { api, ApiError } from '$lib/api';
   import { toast } from 'svelte-sonner';
 
-  let { data }: { data: { existing: string } } = $props();
+  let { data }: { data: { existing: string; linkedinConnected: boolean; linkedinUrl: string } } = $props();
 
+  type Mode = 'markdown' | 'plain' | 'linkedin';
+
+  // Default mode: markdown if a CV is already saved, else linkedin if
+  // connected (one-click flow), else plain text.
   // svelte-ignore state_referenced_locally — initial seed only
-  let mode = $state<'markdown' | 'plain'>(data.existing ? 'markdown' : 'plain');
+  let mode = $state<Mode>(
+    data.existing ? 'markdown' : (data.linkedinConnected ? 'linkedin' : 'plain'),
+  );
   // svelte-ignore state_referenced_locally — initial seed only
   let textArea = $state(data.existing);
+  // svelte-ignore state_referenced_locally — initial seed only
+  let linkedinUrl = $state(data.linkedinUrl);
   let working = $state(false);
   let workingLabel = $state('');
 
@@ -58,43 +67,78 @@ Skills: TypeScript, Python, Go, AWS, Kubernetes, Postgres`;
 
   async function saveAndContinue() {
     if (working) return;
-    const text = textArea.trim();
-    if (!text) {
-      toast.error('Paste your CV first');
-      return;
-    }
-    if (text.length < 50) {
-      toast.error('That looks too short to be a CV');
-      return;
-    }
-    working = true;
-    try {
-      let markdown = text;
+    let markdown = '';
 
-      // Plain-text mode: convert to canonical markdown via Claude.
-      if (mode === 'plain') {
-        workingLabel = 'Converting to markdown…';
-        const { markdown: converted } = await api.post<{ markdown: string }>(
-          '/api/profile/cv-from-text',
-          { text },
+    // Validate per-mode and resolve a final markdown string before writing.
+    if (mode === 'linkedin') {
+      const url = linkedinUrl.trim();
+      if (!url) {
+        toast.error('LinkedIn URL required');
+        return;
+      }
+      if (!/linkedin\.com\/in\//i.test(url)) {
+        toast.error('Not a LinkedIn /in/ profile URL', {
+          description: 'Use a link like https://www.linkedin.com/in/your-handle',
+        });
+        return;
+      }
+      working = true;
+      try {
+        workingLabel = 'Reading LinkedIn profile…';
+        const r = await api.post<{ markdown: string }>(
+          '/api/profile/cv-from-linkedin',
+          { url },
           { silent: true },
         );
-        markdown = converted;
+        markdown = r.markdown;
+      } catch (e) {
+        const err = e as ApiError;
+        toast.error('Could not import from LinkedIn', { description: err.message });
+        working = false;
+        workingLabel = '';
+        return;
       }
+    } else {
+      const text = textArea.trim();
+      if (!text) {
+        toast.error('Paste your CV first');
+        return;
+      }
+      if (text.length < 50) {
+        toast.error('That looks too short to be a CV');
+        return;
+      }
+      working = true;
+      markdown = text;
+      try {
+        if (mode === 'plain') {
+          workingLabel = 'Converting to markdown…';
+          const r = await api.post<{ markdown: string }>(
+            '/api/profile/cv-from-text',
+            { text },
+            { silent: true },
+          );
+          markdown = r.markdown;
+        }
+      } catch (e) {
+        const err = e as ApiError;
+        toast.error('Could not convert', { description: err.message });
+        working = false;
+        workingLabel = '';
+        return;
+      }
+    }
 
+    try {
       // Write cv.md.
       workingLabel = 'Saving cv.md…';
       await api.put('/api/profile/file/cv', { content: markdown }, { silent: true });
 
-      // Auto-extract structured profile fields from cv.md so the user doesn't
-      // have to manually re-enter their identity / superpowers / proof points
-      // on the /profile page later. Failure here is non-fatal — the CV is
-      // saved, the user can re-run reprocessing from /profile any time.
+      // Auto-extract structured profile fields. Failure is non-fatal.
       try {
         workingLabel = 'Extracting profile fields…';
         await api.post('/api/profile/reprocess', {}, { silent: true });
       } catch (e) {
-        // Don't block the wizard on a reprocess failure — log and continue.
         console.warn('reprocess failed, continuing anyway:', e);
       }
 
@@ -118,13 +162,13 @@ Skills: TypeScript, Python, Go, AWS, Kubernetes, Postgres`;
     </h1>
     <p class="text-sm text-muted-foreground leading-relaxed max-w-xl">
       Your CV is the source of truth — the system reads it on every job evaluation, every cover
-      letter, every tailored CV PDF it generates. Paste it in clean markdown, or paste plain text
-      and we'll convert it for you.
+      letter, every tailored CV PDF it generates. Paste markdown, paste plain text (Claude
+      converts), or import from your LinkedIn profile if you've connected it.
     </p>
   </header>
 
-  <!-- Mode toggle -->
-  <div class="grid grid-cols-2 gap-2">
+  <!-- Mode toggle (3 options) -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
     <button
       type="button"
       class={`rounded-md border px-4 py-3 text-left transition-colors ${
@@ -156,7 +200,29 @@ Skills: TypeScript, Python, Go, AWS, Kubernetes, Postgres`;
         <span class="text-xs font-semibold">Paste plain text</span>
       </div>
       <p class="mt-1 text-[11px] text-muted-foreground">
-        Copy from Word, PDF, or LinkedIn. Claude converts to clean markdown.
+        Copy from Word, PDF, or anywhere. Claude converts to clean markdown.
+      </p>
+    </button>
+    <button
+      type="button"
+      disabled={!data.linkedinConnected}
+      class={`rounded-md border px-4 py-3 text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+        mode === 'linkedin'
+          ? 'border-emerald-500/40 bg-emerald-500/5 ring-1 ring-emerald-500/30'
+          : 'border-border/40 bg-card hover:border-border/70 disabled:hover:border-border/40'
+      }`}
+      onclick={() => (mode = 'linkedin')}
+    >
+      <div class="flex items-center gap-1.5">
+        <Globe class="size-3.5 text-emerald-400" />
+        <span class="text-xs font-semibold">Import from LinkedIn URL</span>
+      </div>
+      <p class="mt-1 text-[11px] text-muted-foreground">
+        {#if data.linkedinConnected}
+          We read your profile via the saved LinkedIn session, then Claude structures it.
+        {:else}
+          Connect LinkedIn first (Sources step) — needed to read profile pages reliably.
+        {/if}
       </p>
     </button>
   </div>
@@ -172,33 +238,62 @@ Skills: TypeScript, Python, Go, AWS, Kubernetes, Postgres`;
         <code class="font-mono text-[10px]">## Education</code>,
         <code class="font-mono text-[10px]">## Skills</code>. Bullet experience with
         <code class="font-mono text-[10px]">-</code>. Use <code class="font-mono text-[10px]">###</code> for each role.
+      {:else if mode === 'plain'}
+        Just paste — formatting doesn't matter. We'll structure it into standard sections. From a
+        Word CV use Select All → Copy. From a PDF, use the Mac Preview text-export or paste from
+        the PDF reader. From LinkedIn use "Save to PDF" then copy the text out, or use the
+        LinkedIn URL option above.
       {:else}
-        Just paste — formatting doesn't matter. We'll structure it into the standard sections.
-        Tip: from LinkedIn use "Save to PDF" then copy text out; from a Word CV use Select All →
-        Copy.
+        We use your authenticated LinkedIn session (saved when you connected LinkedIn from
+        /sources) to fetch the profile page and extract its visible text. Claude then converts
+        that into the canonical markdown CV. Public scraping isn't possible — LinkedIn blocks
+        unauthenticated profile views.
       {/if}
     </p>
   </div>
 
-  <!-- Textarea -->
-  <div class="space-y-1.5">
-    <Label for="cv-textarea" class="text-xs">
-      {mode === 'markdown' ? 'Markdown CV' : 'Plain-text CV'}
-    </Label>
-    <textarea
-      id="cv-textarea"
-      bind:value={textArea}
-      placeholder={mode === 'markdown' ? MARKDOWN_PLACEHOLDER : PLAIN_PLACEHOLDER}
-      class="w-full min-h-[400px] rounded-md border border-border/60 bg-background px-3 py-2 text-xs font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-y"
-      disabled={working}
-    ></textarea>
-    <div class="flex items-center justify-between text-[10px] text-muted-foreground/70">
-      <span>{textArea.length.toLocaleString()} chars</span>
-      {#if data.existing && textArea === data.existing}
-        <span>Loaded from existing cv.md — edit or replace</span>
+  <!-- Per-mode input -->
+  {#if mode === 'linkedin'}
+    <div class="space-y-1.5">
+      <Label for="linkedin-url" class="text-xs">LinkedIn profile URL</Label>
+      <Input
+        id="linkedin-url"
+        type="url"
+        bind:value={linkedinUrl}
+        placeholder="https://www.linkedin.com/in/your-handle"
+        class="text-sm font-mono"
+        disabled={working}
+      />
+      <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+        Pulls the profile via Playwright (using your saved LinkedIn cookies) and runs Claude over
+        the result. Takes 10–30s. Reads only — never writes anything to LinkedIn.
+      </p>
+      {#if !data.linkedinConnected}
+        <a href="/onboarding/sources" class="text-[11px] text-emerald-300 hover:text-emerald-200 inline-flex items-center gap-1">
+          Connect LinkedIn first <ExternalLink class="size-2.5" />
+        </a>
       {/if}
     </div>
-  </div>
+  {:else}
+    <div class="space-y-1.5">
+      <Label for="cv-textarea" class="text-xs">
+        {mode === 'markdown' ? 'Markdown CV' : 'Plain-text CV'}
+      </Label>
+      <textarea
+        id="cv-textarea"
+        bind:value={textArea}
+        placeholder={mode === 'markdown' ? MARKDOWN_PLACEHOLDER : PLAIN_PLACEHOLDER}
+        class="w-full min-h-[400px] rounded-md border border-border/60 bg-background px-3 py-2 text-xs font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-y"
+        disabled={working}
+      ></textarea>
+      <div class="flex items-center justify-between text-[10px] text-muted-foreground/70">
+        <span>{textArea.length.toLocaleString()} chars</span>
+        {#if data.existing && textArea === data.existing}
+          <span>Loaded from existing cv.md — edit or replace</span>
+        {/if}
+      </div>
+    </div>
+  {/if}
 
   <div class="flex items-center justify-between pt-4 border-t border-border/40">
     <a href="/onboarding/identity" class="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
