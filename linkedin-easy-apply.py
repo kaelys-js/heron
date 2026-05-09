@@ -34,7 +34,7 @@ import argparse
 from pathlib import Path
 
 try:
-    from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
+    from playwright.sync_api import TimeoutError as PlaywrightTimeout
 except ImportError:
     print("ERROR: playwright not installed. Run:\n  .venv/bin/pip install playwright && .venv/bin/python -m playwright install chromium")
     sys.exit(1)
@@ -45,9 +45,14 @@ except ImportError:
     print("ERROR: pyyaml not installed. Run:\n  .venv/bin/pip install pyyaml")
     sys.exit(1)
 
+# Shared Playwright session helpers — same persistent profile dir
+# (.playwright-linkedin/) the new scan-linkedin-auth.py uses, so a single
+# `--login` works for both apply + scrape.
+from lib_playwright_auth import launch_persistent, login_interactive, USER_DATA_DIRS
+
 
 ROOT = Path(__file__).parent
-USER_DATA_DIR = ROOT / ".playwright-linkedin"
+USER_DATA_DIR = USER_DATA_DIRS["linkedin"]  # backward-compat alias
 PROFILE_YML = ROOT / "config" / "profile.yml"
 APPLICATIONS_MD = ROOT / "data" / "applications.md"
 PIPELINE_MD = ROOT / "data" / "pipeline.md"
@@ -224,31 +229,25 @@ def main():
 
     profile = load_profile()
 
-    with sync_playwright() as p:
-        ctx = p.chromium.launch_persistent_context(
-            user_data_dir=str(USER_DATA_DIR),
-            headless=False,
-            viewport={"width": 1280, "height": 800},
-        )
-        page = ctx.new_page()
-
-        if args.login:
-            page.goto("https://www.linkedin.com/login")
-            print("=" * 60)
-            print("Login to LinkedIn manually in the browser window.")
-            print("Once logged in, return to this terminal and press Enter.")
-            print("=" * 60)
-            input("Press Enter when logged in: ")
-            ctx.close()
+    # --login is delegated to the shared module so a single saved session
+    # works for both apply (here) and scrape (scan-linkedin-auth.py). The
+    # shared helper auto-detects login completion (no Enter-to-continue).
+    if args.login:
+        ok = login_interactive("linkedin")
+        if ok:
             print("Login session saved. Run without --login next time.")
-            return
+        else:
+            print("Login did not complete within timeout — try again.")
+        sys.exit(0 if ok else 1)
+
+    with launch_persistent("linkedin", headed=True) as ctx:
+        page = ctx.new_page()
 
         # Verify logged in
         page.goto("https://www.linkedin.com/feed/")
         jitter(2, 4)
         if "login" in page.url or "signup" in page.url:
             print("Not logged in. Run: .venv/bin/python linkedin-easy-apply.py --login")
-            ctx.close()
             sys.exit(1)
 
         already_applied = applied_urls()
@@ -302,9 +301,9 @@ def main():
         print("\n=== RESULTS ===")
         for k, v in results.items():
             print(f"  {k}: {v}")
-        print(f"\nappplications.md updated. Browser will stay open for review.")
+        print(f"\napplications.md updated. Browser will stay open for review.")
         input("Press Enter to close browser: ")
-        ctx.close()
+        # ctx is closed automatically by the launch_persistent() context manager.
 
 
 if __name__ == "__main__":
