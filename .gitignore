@@ -49,6 +49,13 @@ modes/_profile.md
 node_modules/
 bun.lock
 
+# Reset / rollback backups (resetProfile() writes <path>.bak before
+# overwriting; previously these were accidentally tracked, so a fresh
+# reset always dirtied the worktree). Files stay on disk as actual
+# backups — just never committed.
+*.bak
+*.bak.*
+
 # OS
 .DS_Store
 *.mov
