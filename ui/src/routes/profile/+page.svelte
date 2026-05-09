@@ -27,7 +27,7 @@
   import { TARGET_RANGE_OPTIONS, WALKAWAY_OPTIONS, LOCATION_FLEX_OPTIONS } from '$lib/data/comp';
   import {
     User, MapPin, Target as TargetIcon, Sparkles, DollarSign, ShieldAlert, FileText, Mic2,
-    AlertCircle, AlertTriangle, ChevronRight, ExternalLink, FileCode, Copy, Check, Eye, Pencil, ReplaceAll, Wand2, Trash2,
+    AlertCircle, AlertTriangle, ChevronRight, ExternalLink, FileCode, Copy, Check, Eye, Pencil, ReplaceAll, Wand2, Trash2, Briefcase,
   } from '@lucide/svelte';
   import { api, ApiError } from '$lib/api';
   import { invalidateAll } from '$app/navigation';
@@ -59,8 +59,12 @@
   type CvTab = 'view' | 'edit' | 'replace' | 'reprocess';
   let cvOpen = $state(false);
   let cvInitialTab = $state<CvTab>('view');
-  // Nuclear reset dialog — type RESET to enable the destructive button.
+  // Reset dialog — type RESET to enable the destructive button.
+  // initialScope lets the danger-zone "Clear jobs…" button open the dialog
+  // pre-selected on the jobs scope, while the generic "Reset…" button
+  // defaults to profile.
   let resetOpen = $state(false);
+  let resetInitialScope = $state<'profile' | 'jobs' | 'everything'>('profile');
 
   function openCv(tab: CvTab) {
     cvInitialTab = tab;
@@ -921,7 +925,7 @@
       <!-- ============ DANGER ZONE ============ -->
       <CollapsibleCard
         title="Danger zone"
-        description="Irreversible actions hidden behind a type-to-confirm dialog. Two scopes: profile-only (keeps your tracker) or everything (deletes the entire job search). Modified files get .bak backups."
+        description="Irreversible actions hidden behind a type-to-confirm dialog. Three scopes: profile-only (keeps tracker), jobs-only (keeps profile + targeting + sources), or everything (clean slate). Modified files get .bak backups."
         storageKey="danger-zone"
         defaultOpen={false}
         class="border-red-500/30 bg-red-500/[0.02]"
@@ -933,43 +937,62 @@
             <div class="flex-1 min-w-0 space-y-1.5">
               <div class="text-xs font-medium text-red-200">Reset to scratch</div>
               <p class="text-[11px] text-red-200/80 leading-relaxed">
-                Opens a dialog with two destructiveness levels:
+                Opens a dialog with three destructiveness levels:
               </p>
               <ul class="text-[11px] text-red-200/80 leading-relaxed list-disc list-inside ml-1 space-y-0.5">
                 <li>
                   <strong class="text-red-200">Profile only</strong> — wipes <code class="font-mono">profile.yml</code>,
                   <code class="font-mono">cv.md</code>, and <code class="font-mono">modes/_profile.md</code>.
-                  Tracker / reports / projects are kept.
+                  Tracker / reports / sources are kept.
                 </li>
                 <li>
-                  <strong class="text-red-200">Everything</strong> — also wipes
+                  <strong class="text-red-200">Jobs data only</strong> — wipes
                   <code class="font-mono">applications.md</code>, <code class="font-mono">pipeline.md</code>,
-                  every project, every report, every tailored CV PDF, and the activity feed.
-                  Closest thing to a clean slate.
+                  scan history, scores, every report, every tailored CV PDF, follow-ups, interview-prep
+                  company files, issues, and the activity feed. <em>Profile, CV, targeting, and connected
+                  sources are preserved</em> so you can keep working.
+                </li>
+                <li>
+                  <strong class="text-red-200">Everything</strong> — strict superset of the above,
+                  plus saved filter profiles, autopilot schedule, and the story bank. Closest thing
+                  to a clean slate.
                 </li>
               </ul>
               <p class="text-[11px] text-red-200/70 leading-relaxed">
-                Both modes back up modified files to <code class="font-mono">.bak</code> first.
-                <code class="font-mono">.env</code> / API keys / Python <code class="font-mono">.venv</code> are never touched.
+                All modes back up modified files to <code class="font-mono">.bak</code> first.
+                <code class="font-mono">.env</code> / API keys / Python <code class="font-mono">.venv</code> /
+                Playwright sessions / <code class="font-mono">portals.yml</code> are never touched by Profile-only
+                or Jobs-only resets.
                 You'll have to type <code class="font-mono text-red-200">RESET</code> in the dialog to enable the button.
               </p>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              class="h-7 text-xs gap-1.5 border-red-500/40 text-red-300 hover:bg-red-500/15 hover:text-red-200 flex-shrink-0"
-              onclick={() => (resetOpen = true)}
-            >
-              <Trash2 class="size-3" /> Reset…
-            </Button>
+            <div class="flex flex-col gap-1.5 flex-shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                class="h-7 text-xs gap-1.5 border-orange-500/40 text-orange-300 hover:bg-orange-500/15 hover:text-orange-200"
+                onclick={() => { resetInitialScope = 'jobs'; resetOpen = true; }}
+              >
+                <Briefcase class="size-3" /> Clear jobs…
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                class="h-7 text-xs gap-1.5 border-red-500/40 text-red-300 hover:bg-red-500/15 hover:text-red-200"
+                onclick={() => { resetInitialScope = 'profile'; resetOpen = true; }}
+              >
+                <Trash2 class="size-3" /> Reset…
+              </Button>
+            </div>
           </div>
         </div>
       </CollapsibleCard>
 
       <!-- CV manager sheet + Reset dialog — open via buttons above -->
       <CvManagerSheet bind:open={cvOpen} initialTab={cvInitialTab} onApplySuggestion={applyCvSuggestion} />
-      <ResetProfileDialog bind:open={resetOpen} />
+      <ResetProfileDialog bind:open={resetOpen} initialScope={resetInitialScope} />
     </div>
   </div>
 

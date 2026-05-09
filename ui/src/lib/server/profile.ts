@@ -261,8 +261,15 @@ const SCAN_HISTORY = path.join(ROOT, 'data', 'scan-history.tsv');
 const PROJECTS_JSON = path.join(ROOT, 'data', 'projects.json');
 const AUTOPILOT_JSON = path.join(ROOT, 'data', 'autopilot.json');
 const ACTIVITY_JSONL = path.join(ROOT, 'data', 'activity.jsonl');
+// Job-search artifacts that "Everything" had been leaving behind (now also wiped)
+const FOLLOW_UPS = path.join(ROOT, 'data', 'follow-ups.md');
+const FOLLOWUP_CACHE = path.join(ROOT, 'data', 'followup-cache.json');
+const PATTERNS_CACHE = path.join(ROOT, 'data', 'patterns-cache.json');
+const ISSUES_JSONL = path.join(ROOT, 'data', 'issues.jsonl');
+const INTERVIEW_PREP_DIR = path.join(ROOT, 'interview-prep');
+const STORY_BANK_NAME = 'story-bank.md';
 
-export type ResetScope = 'profile' | 'everything';
+export type ResetScope = 'profile' | 'jobs' | 'everything';
 export type ResetResult = { resetFiles: string[]; backups: string[]; scope: ResetScope };
 
 function backupTo(p: string, backups: string[]): void {
@@ -275,8 +282,10 @@ function backupTo(p: string, backups: string[]): void {
   }
 }
 
-/** Empty a directory's contents but leave the directory itself (so other tools that index it don't break). */
-function emptyDir(dir: string, resetFiles: string[], displayName: string) {
+/** Empty a directory's contents but leave the directory itself (so other tools that index it don't break).
+ *  `exclude` is an optional set of basenames to leave untouched — used by the 'jobs' scope to keep
+ *  long-lived artifacts like interview-prep/story-bank.md while still wiping company-specific files. */
+function emptyDir(dir: string, resetFiles: string[], displayName: string, exclude?: Set<string>) {
   if (!fs.existsSync(dir)) return;
   try {
     const entries = fs.readdirSync(dir);
@@ -285,6 +294,7 @@ function emptyDir(dir: string, resetFiles: string[], displayName: string) {
     for (const name of entries) {
       // Skip backup files so a previous reset stays recoverable.
       if (name.endsWith('.bak')) continue;
+      if (exclude?.has(name)) continue;
       const full = path.join(dir, name);
       try {
         fs.rmSync(full, { recursive: true, force: true });
@@ -314,45 +324,75 @@ function emptyDir(dir: string, resetFiles: string[], displayName: string) {
   }
 }
 
+/** Backup + delete a single file. No-op if the file doesn't exist. */
+function backupAndDelete(p: string, resetFiles: string[], backups: string[]): void {
+  if (!fs.existsSync(p)) return;
+  backupTo(p, backups);
+  try {
+    fs.unlinkSync(p);
+    resetFiles.push(path.relative(ROOT, p));
+  } catch (e) {
+    logEvent('reset-profile', 'Could not delete ' + path.basename(p), {
+      level: 'warn', category: 'application',
+      message: e instanceof Error ? e.message : String(e),
+    });
+  }
+}
+
+/**
+ * Three scopes:
+ *   - 'profile'    → only the user's identity/CV/_profile.md (existing behavior)
+ *   - 'jobs'       → only job-search artifacts (tracker, pipeline, scoring,
+ *                    reports, PDFs, follow-ups, interview-prep company files,
+ *                    issues, activity feed). Profile + CV + targeting +
+ *                    sources are PRESERVED so the user can keep working.
+ *   - 'everything' → both of the above, plus longer-lived configs (saved
+ *                    filter profiles, autopilot schedule, story bank).
+ */
 export function resetProfile(scope: ResetScope = 'profile'): ResetResult {
   const resetFiles: string[] = [];
   const backups: string[] = [];
 
-  // ===== Always-wiped files (profile scope) =====
+  // ===== Profile-only block =====
+  // Run for 'profile' and 'everything'. SKIPPED for 'jobs' so the user's
+  // identity / CV / _profile.md stay intact.
+  if (scope === 'profile' || scope === 'everything') {
+    // 1. profile.yml — restore from example if available, else clear
+    backupTo(PROFILE_PATH, backups);
+    if (fs.existsSync(EXAMPLE_PATH)) {
+      fs.copyFileSync(EXAMPLE_PATH, PROFILE_PATH);
+    } else if (fs.existsSync(PROFILE_PATH)) {
+      fs.unlinkSync(PROFILE_PATH);
+    }
+    resetFiles.push('config/profile.yml');
 
-  // 1. profile.yml — restore from example if available, else clear
-  backupTo(PROFILE_PATH, backups);
-  if (fs.existsSync(EXAMPLE_PATH)) {
-    fs.copyFileSync(EXAMPLE_PATH, PROFILE_PATH);
-  } else if (fs.existsSync(PROFILE_PATH)) {
-    fs.unlinkSync(PROFILE_PATH);
-  }
-  resetFiles.push('config/profile.yml');
+    // 2. cv.md — delete
+    backupTo(CV_PATH, backups);
+    if (fs.existsSync(CV_PATH)) {
+      fs.unlinkSync(CV_PATH);
+      resetFiles.push('cv.md');
+    }
 
-  // 2. cv.md — delete
-  backupTo(CV_PATH, backups);
-  if (fs.existsSync(CV_PATH)) {
-    fs.unlinkSync(CV_PATH);
-    resetFiles.push('cv.md');
-  }
-
-  // 3. modes/_profile.md — restore from template
-  backupTo(MODES_PROFILE, backups);
-  if (fs.existsSync(PROFILE_TEMPLATE)) {
-    fs.copyFileSync(PROFILE_TEMPLATE, MODES_PROFILE);
-    resetFiles.push('modes/_profile.md');
-  } else if (fs.existsSync(MODES_PROFILE)) {
-    fs.unlinkSync(MODES_PROFILE);
-    resetFiles.push('modes/_profile.md');
+    // 3. modes/_profile.md — restore from template
+    backupTo(MODES_PROFILE, backups);
+    if (fs.existsSync(PROFILE_TEMPLATE)) {
+      fs.copyFileSync(PROFILE_TEMPLATE, MODES_PROFILE);
+      resetFiles.push('modes/_profile.md');
+    } else if (fs.existsSync(MODES_PROFILE)) {
+      fs.unlinkSync(MODES_PROFILE);
+      resetFiles.push('modes/_profile.md');
+    }
   }
 
   if (scope === 'profile') {
     return { resetFiles, backups, scope };
   }
 
-  // ===== Deep wipe — tracker / scan / project / report / output =====
+  // ===== Job-search artifacts block =====
+  // Run for 'jobs' and 'everything'. This is the new shared set — keeps
+  // 'everything' a strict superset of 'jobs'.
 
-  // Tracker files: backup, then truncate to header-only state
+  // Tracker file: backup, then truncate to header-only state
   backupTo(APPLICATIONS, backups);
   fs.writeFileSync(
     APPLICATIONS,
@@ -360,29 +400,48 @@ export function resetProfile(scope: ResetScope = 'profile'): ResetResult {
   );
   resetFiles.push('data/applications.md');
 
+  // Pipeline: empty file (preserves the file so writers don't crash)
   backupTo(PIPELINE, backups);
   if (fs.existsSync(PIPELINE)) {
     fs.writeFileSync(PIPELINE, '');
     resetFiles.push('data/pipeline.md');
   }
 
-  for (const p of [SCAN_HISTORY, GEMINI_SCORES, PROJECTS_JSON, AUTOPILOT_JSON, ACTIVITY_JSONL]) {
-    if (!fs.existsSync(p)) continue;
-    backupTo(p, backups);
-    try {
-      fs.unlinkSync(p);
-      resetFiles.push(path.relative(ROOT, p));
-    } catch (e) {
-      logEvent('reset-profile', 'Could not delete ' + path.basename(p), {
-        level: 'warn', category: 'application',
-        message: e instanceof Error ? e.message : String(e),
-      });
-    }
+  // Per-job derivatives + bell feed + analysis caches (always wiped in jobs+)
+  for (const p of [
+    SCAN_HISTORY,
+    GEMINI_SCORES,
+    ACTIVITY_JSONL,
+    FOLLOW_UPS,
+    FOLLOWUP_CACHE,
+    PATTERNS_CACHE,
+    ISSUES_JSONL,
+  ]) {
+    backupAndDelete(p, resetFiles, backups);
   }
 
   // Reports + output PDFs — clear directories
   emptyDir(REPORTS_DIR, resetFiles, 'reports/');
   emptyDir(OUTPUT_DIR, resetFiles, 'output/');
+
+  // Interview prep — wipe company-specific files. For 'jobs' scope keep
+  // story-bank.md (accumulated STAR stories carry across hunts). 'everything'
+  // wipes the whole directory.
+  if (scope === 'jobs') {
+    emptyDir(INTERVIEW_PREP_DIR, resetFiles, 'interview-prep/', new Set([STORY_BANK_NAME]));
+  } else {
+    emptyDir(INTERVIEW_PREP_DIR, resetFiles, 'interview-prep/');
+  }
+
+  if (scope === 'jobs') {
+    return { resetFiles, backups, scope };
+  }
+
+  // ===== Everything-only block =====
+  // Long-lived configs that 'jobs' deliberately preserves.
+  for (const p of [PROJECTS_JSON, AUTOPILOT_JSON]) {
+    backupAndDelete(p, resetFiles, backups);
+  }
 
   return { resetFiles, backups, scope };
 }
