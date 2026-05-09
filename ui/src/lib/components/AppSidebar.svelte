@@ -9,6 +9,7 @@
     Inbox, ListTodo, Pin, KanbanSquare, FolderKanban, PlayCircle, Bot, ListChecks,
     Cpu, Wrench, Settings as SettingsIcon, ChevronsUpDown, Search, Plus,
     HelpCircle, BarChart3, MoreHorizontal, Star, Trash2, User, Lightbulb,
+    Plug,
   } from '@lucide/svelte';
   import { page } from '$app/state';
   import { onMount, onDestroy } from 'svelte';
@@ -341,6 +342,16 @@
                   <a href="/profile" {...props}>
                     <User class="size-4" />
                     <span>Profile</span>
+                  </a>
+                {/snippet}
+              </Sidebar.MenuButton>
+            </Sidebar.MenuItem>
+            <Sidebar.MenuItem>
+              <Sidebar.MenuButton isActive={isActive('/sources')}>
+                {#snippet child({ props })}
+                  <a href="/sources" {...props}>
+                    <Plug class="size-4" />
+                    <span>Sources</span>
                   </a>
                 {/snippet}
               </Sidebar.MenuButton>
