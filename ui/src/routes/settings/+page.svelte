@@ -7,7 +7,7 @@
   import * as Card from '$lib/components/ui/card';
   import { toast } from 'svelte-sonner';
   import { ApiError, api } from '$lib/api';
-  import { ExternalLink, KeyRound, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, RotateCw } from '@lucide/svelte';
+  import { ExternalLink, KeyRound, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, RotateCw, Sparkles } from '@lucide/svelte';
 
   let { data }: { data: { env: Record<string, string> } } = $props();
 
@@ -212,6 +212,27 @@
     }
   }
 
+  let resettingOnboarding = $state(false);
+  async function resetOnboarding() {
+    if (resettingOnboarding) return;
+    if (!confirm(
+      'Re-run onboarding? This wipes the wizard\'s state file ONLY — your CV, profile, ' +
+      'tracker, and reports are NOT touched. The wizard will run again on your next page load.',
+    )) return;
+    resettingOnboarding = true;
+    try {
+      await api.post('/api/onboarding/reset', {}, { silent: true });
+      toast.success('Onboarding reset', {
+        description: 'The wizard will run again on next page load. Your data is intact.',
+      });
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Could not reset', { description: err.message });
+    } finally {
+      resettingOnboarding = false;
+    }
+  }
+
   function fmtRelative(ts: number): string {
     const dt = Date.now() - ts;
     if (dt < 5_000) return 'just now';
@@ -376,6 +397,26 @@
         </Card.Header>
         <Card.Content>
           <Button onclick={linkedinLogin} variant="outline">Connect LinkedIn</Button>
+        </Card.Content>
+      </Card.Root>
+
+      <Card.Root>
+        <Card.Header>
+          <div class="flex items-center gap-2">
+            <Sparkles class="size-4 text-fuchsia-400" />
+            <Card.Title class="text-base">Re-run onboarding</Card.Title>
+          </div>
+          <Card.Description>
+            Wipes the wizard's state file so the multi-step onboarding flow runs again from scratch
+            on your next page load. Your CV, profile, tracker, reports, and connected sources are
+            <strong>not</strong> touched. Useful when you want to revisit the targeting / source-connection
+            steps as a guided flow.
+          </Card.Description>
+        </Card.Header>
+        <Card.Content>
+          <Button onclick={resetOnboarding} variant="outline" disabled={resettingOnboarding} class="gap-1.5">
+            {#if resettingOnboarding}<Loader2 class="size-3.5 animate-spin" /> Resetting…{:else}<RotateCw class="size-3.5" /> Reset onboarding{/if}
+          </Button>
         </Card.Content>
       </Card.Root>
 

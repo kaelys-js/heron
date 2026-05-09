@@ -23,6 +23,7 @@ import { ROOT } from '../files';
 import { logEvent } from '../events';
 import { runById, has as hasJob } from './registry';
 import { register } from './registry';
+import { getSource } from '../sources';
 import type { JobArgs, JobResult } from './types';
 
 const INBOX_MBOX = path.join(ROOT, 'data', 'inbox-mbox');
@@ -39,10 +40,22 @@ function inboxHasMbox(): boolean {
 async function runScanAll(args?: JobArgs): Promise<JobResult> {
   // Each child must be registered (orchestrator + registry imports run at
   // boot via jobs/index.ts). hasJob guards against partial-boot races.
+  // Authenticated scanners (linkedin-auth, indeed-auth) only join the
+  // fan-out when their source is connected — otherwise they'd just exit
+  // early with a "not connected" error and clutter the activity feed.
   const children: Array<{ id: string; args?: JobArgs }> = [];
   if (hasJob('scan-portals')) children.push({ id: 'scan-portals' });
   if (hasJob('scan'))         children.push({ id: 'scan' });
   if (hasJob('scan-curated')) children.push({ id: 'scan-curated' });
+  if (hasJob('scan-linkedin-auth') && getSource('linkedin-auth').connected) {
+    children.push({ id: 'scan-linkedin-auth' });
+  }
+  if (hasJob('scan-indeed-auth') && getSource('indeed-auth').connected) {
+    children.push({ id: 'scan-indeed-auth' });
+  }
+  if (hasJob('scan-email-imap') && getSource('gmail-imap').connected) {
+    children.push({ id: 'scan-email-imap' });
+  }
   if (hasJob('scan-email') && inboxHasMbox()) children.push({ id: 'scan-email' });
 
   if (children.length === 0) {
