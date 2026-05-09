@@ -48,6 +48,9 @@ export const SOURCE_LABELS: Record<string, { label: string; tint: string }> = {
   'personio-api':         { label: 'Personio',       tint: 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/30' },
   'recruitee-api':        { label: 'Recruitee',      tint: 'bg-pink-500/10 text-pink-300 border-pink-500/30' },
   'teamtailor-api':       { label: 'Teamtailor',     tint: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30' },
+  // Authenticated Playwright scrapers (your logged-in personalised feed)
+  'linkedin-authenticated': { label: 'LinkedIn (auth)', tint: 'bg-sky-500/15 text-sky-200 border-sky-500/50' },
+  'indeed-authenticated':   { label: 'Indeed (auth)',   tint: 'bg-blue-700/15 text-blue-200 border-blue-700/50' },
   // Broad scan (scan-broad.py — JobSpy + free aggregators)
   'linkedin':             { label: 'LinkedIn',       tint: 'bg-sky-500/10 text-sky-300 border-sky-500/30' },
   'indeed':               { label: 'Indeed',         tint: 'bg-blue-700/10 text-blue-300 border-blue-700/30' },

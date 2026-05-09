@@ -28,6 +28,9 @@ import './scan-portals.job';
 import './scan-curated.job';
 import './scan-vc.job';
 import './scan-email.job';
+import './scan-email-imap.job';
+import './scan-linkedin-auth.job';
+import './scan-indeed-auth.job';
 import './scan-all.job';
 
 // Phase 3 insight jobs.

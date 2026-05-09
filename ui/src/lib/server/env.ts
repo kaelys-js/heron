@@ -13,9 +13,19 @@ export type EnvVars = {
   ANTHROPIC_API_KEY?: string;
   ADZUNA_APP_ID?: string;
   ADZUNA_APP_KEY?: string;
+  // Gmail IMAP — populated by the /sources page's Gmail Connect form,
+  // consumed by scan-email-imap.mjs. Plain-text in .env (per user choice
+  // for simplest auth). Removed by the Disconnect endpoint.
+  GMAIL_IMAP_HOST?: string;
+  GMAIL_IMAP_USER?: string;
+  GMAIL_IMAP_PASSWORD?: string;
+  GMAIL_IMAP_LABEL?: string;
 };
 
-const KEYS: (keyof EnvVars)[] = ['GEMINI_API_KEY', 'ANTHROPIC_API_KEY', 'ADZUNA_APP_ID', 'ADZUNA_APP_KEY'];
+const KEYS: (keyof EnvVars)[] = [
+  'GEMINI_API_KEY', 'ANTHROPIC_API_KEY', 'ADZUNA_APP_ID', 'ADZUNA_APP_KEY',
+  'GMAIL_IMAP_HOST', 'GMAIL_IMAP_USER', 'GMAIL_IMAP_PASSWORD', 'GMAIL_IMAP_LABEL',
+];
 
 export function readEnv(): EnvVars {
   const out: EnvVars = {};
