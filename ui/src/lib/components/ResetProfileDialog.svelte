@@ -1,14 +1,19 @@
 <!--
-  Nuclear reset dialog — two scopes hidden behind a type-the-word confirmation.
+  Reset dialog — three scopes hidden behind a type-the-word confirmation.
   The button stays disabled until the user types `RESET` exactly. That's
   intentionally awkward: a single misclick should never destroy data.
 
-  Two-level destructiveness:
-    * Profile only        — wipes profile.yml + cv.md + _profile.md back to defaults.
-                            Tracker / reports / projects ALL kept.
-    * Everything          — also wipes pipeline / applications / reports /
-                            output / projects / activity feed. The closest
-                            thing to a fresh `rm -rf`.
+  Three-level destructiveness:
+    * Profile only        — wipes profile.yml + cv.md + _profile.md back to
+                            defaults. Tracker / reports / sources ALL kept.
+    * Jobs data only      — wipes the job-search tracker (applications,
+                            pipeline, scan history, scores, reports, PDFs,
+                            follow-ups, interview-prep company files, issues,
+                            activity feed). Profile + CV + targeting +
+                            sources are PRESERVED so you can keep working.
+    * Everything          — strict superset of the two above, plus the
+                            longer-lived configs (filter profiles, autopilot
+                            schedule, story bank). Closest thing to `rm -rf`.
 
   Backs up every modified file to `<path>.bak` before overwriting. Everything
   except .env / .venv / source code is fair game in 'everything' mode.
@@ -19,30 +24,32 @@
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
   import {
-    AlertTriangle, Trash2, Loader2, Check, FileWarning, Info, ShieldAlert, Flame,
+    AlertTriangle, Trash2, Loader2, Check, FileWarning, Info, ShieldAlert, Flame, Briefcase,
   } from '@lucide/svelte';
   import { api, ApiError } from '$lib/api';
   import { toast } from 'svelte-sonner';
   import { invalidateAll } from '$app/navigation';
   import { withMinDuration, cn } from '$lib/utils';
 
-  type Scope = 'profile' | 'everything';
+  type Scope = 'profile' | 'jobs' | 'everything';
 
-  let { open = $bindable(false) }: { open?: boolean } = $props();
+  let { open = $bindable(false), initialScope = 'profile' }: { open?: boolean; initialScope?: Scope } = $props();
 
   const REQUIRED_PHRASE = 'RESET';
   let typed = $state('');
   let busy = $state(false);
-  let scope = $state<Scope>('profile');
+  // svelte-ignore state_referenced_locally — initial seed only
+  let scope = $state<Scope>(initialScope);
 
   let confirmed = $derived(typed.trim().toUpperCase() === REQUIRED_PHRASE);
 
   // Wipe local state every time the dialog re-opens so a previously-armed
-  // RESET doesn't survive a cancel.
+  // RESET doesn't survive a cancel. The initial scope is honoured per-open
+  // so a "Clear jobs data" button can land directly on the jobs scope.
   $effect(() => {
     if (open) {
       typed = '';
-      scope = 'profile';
+      scope = initialScope;
     }
   });
 
@@ -58,14 +65,21 @@
         ),
         500,
       );
-      const headline = scope === 'everything' ? 'Tracker + profile reset' : 'Profile reset';
-      toast.success(headline, {
+      const headlines: Record<Scope, string> = {
+        profile: 'Profile reset',
+        jobs: 'Jobs data wiped',
+        everything: 'Tracker + profile reset',
+      };
+      const tails: Record<Scope, string> = {
+        profile: 'Tracker / reports / projects are still intact. Reload to re-onboard.',
+        jobs: 'Profile, CV, targeting, and connected sources are preserved.',
+        everything: 'Pipeline, applications, reports, projects, and activity feed are wiped. Reload to start onboarding.',
+      };
+      toast.success(headlines[scope], {
         description:
           r.resetFiles.length + ' file(s) reset · ' +
           r.backups.length + ' backup(s) saved alongside (.bak). ' +
-          (scope === 'everything'
-            ? 'Pipeline, applications, reports, projects, and activity feed are wiped. Reload to start onboarding.'
-            : 'Tracker / reports / projects are still intact. Reload to re-onboard.'),
+          tails[scope],
         duration: 14_000,
       });
       open = false;
@@ -82,10 +96,11 @@
     }
   }
 
-  // Two-mode card config — keeps the JSX simple
-  const SCOPES: { value: Scope; label: string; icon: any; sub: string; tone: 'amber' | 'red' }[] = [
-    { value: 'profile',     label: 'Profile only',  icon: ShieldAlert, sub: 'profile.yml + cv.md + _profile.md', tone: 'amber' },
-    { value: 'everything',  label: 'Everything',    icon: Flame,       sub: 'profile + entire tracker',          tone: 'red' },
+  // Three-mode card config — keeps the JSX simple
+  const SCOPES: { value: Scope; label: string; icon: any; sub: string; tone: 'amber' | 'orange' | 'red' }[] = [
+    { value: 'profile',     label: 'Profile only',    icon: ShieldAlert, sub: 'profile.yml + cv.md + _profile.md',           tone: 'amber'  },
+    { value: 'jobs',        label: 'Jobs data only',  icon: Briefcase,   sub: 'tracker, reports, PDFs — keep profile/CV',    tone: 'orange' },
+    { value: 'everything',  label: 'Everything',      icon: Flame,       sub: 'profile + entire tracker + configs',          tone: 'red'    },
   ];
 </script>
 
@@ -117,18 +132,31 @@
             class={cn(
               'flex items-start gap-3 p-3 rounded-md border text-left transition-all',
               active
-                ? (s.tone === 'red' ? 'border-red-500/60 bg-red-500/10 ring-1 ring-red-500/40' : 'border-amber-500/50 bg-amber-500/10 ring-1 ring-amber-500/30')
+                ? (
+                    s.tone === 'red'    ? 'border-red-500/60 bg-red-500/10 ring-1 ring-red-500/40' :
+                    s.tone === 'orange' ? 'border-orange-500/55 bg-orange-500/10 ring-1 ring-orange-500/35' :
+                                          'border-amber-500/50 bg-amber-500/10 ring-1 ring-amber-500/30'
+                  )
                 : 'border-border/40 bg-card/30 hover:bg-card/50',
             )}
           >
             <div class={cn(
               'size-8 rounded-md flex items-center justify-center flex-shrink-0',
-              s.tone === 'red' ? 'bg-red-500/15 text-red-300' : 'bg-amber-500/15 text-amber-300',
+              s.tone === 'red'    ? 'bg-red-500/15 text-red-300' :
+              s.tone === 'orange' ? 'bg-orange-500/15 text-orange-300' :
+                                    'bg-amber-500/15 text-amber-300',
             )}>
               <Icon class="size-4" />
             </div>
             <div class="flex-1 min-w-0">
-              <div class={cn('text-sm font-semibold', active ? (s.tone === 'red' ? 'text-red-200' : 'text-amber-200') : 'text-foreground')}>
+              <div class={cn(
+                'text-sm font-semibold',
+                active ? (
+                  s.tone === 'red'    ? 'text-red-200' :
+                  s.tone === 'orange' ? 'text-orange-200' :
+                                        'text-amber-200'
+                ) : 'text-foreground',
+              )}>
                 {s.label}
                 {#if active}<span class="ml-2 text-[10px] uppercase tracking-wider opacity-70">selected</span>{/if}
               </div>
@@ -155,7 +183,37 @@
           <div class="rounded border border-emerald-500/30 bg-emerald-500/5 p-2 mt-2 flex items-start gap-2">
             <Check class="size-3 text-emerald-300 mt-0.5 flex-shrink-0" />
             <p class="text-[10px] text-emerald-200/85 leading-relaxed">
-              Kept: applications.md, pipeline.md, projects, reports/, output/, activity feed, .env / API keys.
+              Kept: applications.md, pipeline.md, projects, reports/, output/, activity feed, .env / API keys, sources.
+            </p>
+          </div>
+        </div>
+      {:else if scope === 'jobs'}
+        <div class="rounded-md border border-orange-500/35 bg-orange-500/10 p-3 space-y-2">
+          <div class="flex items-baseline gap-2">
+            <Briefcase class="size-3.5 text-orange-300" />
+            <span class="text-sm font-medium text-orange-200">Jobs data only — what happens</span>
+          </div>
+          <p class="text-[11px] text-orange-200/85 leading-relaxed">
+            Wipes the entire job-search tracker so you can start a new hunt with a clean slate —
+            without losing your CV, profile, targeting filters, or connected sources.
+          </p>
+          <ul class="text-[11px] text-orange-200/85 leading-relaxed space-y-0.5 list-disc list-inside ml-1">
+            <li><code class="font-mono">data/applications.md</code> → header-only · every applied job lost</li>
+            <li><code class="font-mono">data/pipeline.md</code> → emptied · every queued URL lost</li>
+            <li><code class="font-mono">data/scan-history.tsv</code>, <code class="font-mono">gemini-scores.tsv</code> → deleted</li>
+            <li><code class="font-mono">data/follow-ups.md</code> + <code class="font-mono">followup-cache.json</code> + <code class="font-mono">patterns-cache.json</code> → deleted</li>
+            <li><code class="font-mono">data/issues.jsonl</code> → cleared (open issues feed)</li>
+            <li><code class="font-mono">data/activity.jsonl</code> → cleared (bell empties)</li>
+            <li><code class="font-mono">reports/*</code> + <code class="font-mono">output/*</code> → every deep eval and tailored CV PDF deleted</li>
+            <li><code class="font-mono">interview-prep/*</code> company files → deleted (story-bank.md kept)</li>
+          </ul>
+          <div class="rounded border border-emerald-500/30 bg-emerald-500/5 p-2 mt-2 flex items-start gap-2">
+            <Check class="size-3 text-emerald-300 mt-0.5 flex-shrink-0" />
+            <p class="text-[10px] text-emerald-200/85 leading-relaxed">
+              Kept: <code class="font-mono">profile.yml</code>, <code class="font-mono">cv.md</code>, <code class="font-mono">modes/_profile.md</code>,
+              <code class="font-mono">portals.yml</code> (targeting), <code class="font-mono">.env</code>, saved Playwright sessions
+              (<code class="font-mono">.playwright-linkedin/</code>, <code class="font-mono">.playwright-indeed/</code>),
+              <code class="font-mono">data/projects.json</code>, <code class="font-mono">autopilot.json</code>, the story bank.
             </p>
           </div>
         </div>
@@ -166,20 +224,20 @@
             <span class="text-sm font-medium text-red-200">Everything — what happens</span>
           </div>
           <p class="text-[11px] text-red-200/85 leading-relaxed">
-            All of "Profile only", PLUS the entire job-search tracker:
+            Strict superset of "Profile only" + "Jobs data only", PLUS longer-lived configs:
           </p>
           <ul class="text-[11px] text-red-200/85 leading-relaxed space-y-0.5 list-disc list-inside ml-1">
-            <li><code class="font-mono">data/applications.md</code> → header-only · every applied job lost</li>
-            <li><code class="font-mono">data/pipeline.md</code> → emptied · every queued URL lost</li>
-            <li><code class="font-mono">data/scan-history.tsv</code>, <code class="font-mono">gemini-scores.tsv</code> → deleted</li>
-            <li><code class="font-mono">data/projects.json</code>, <code class="font-mono">autopilot.json</code> → deleted</li>
-            <li><code class="font-mono">data/activity.jsonl</code> → cleared (bell empties)</li>
-            <li><code class="font-mono">reports/*</code> + <code class="font-mono">output/*</code> → every deep eval and tailored CV PDF deleted</li>
+            <li>Everything in <strong>Profile only</strong> (profile.yml, cv.md, _profile.md)</li>
+            <li>Everything in <strong>Jobs data only</strong> (tracker, pipeline, scan history, scores, reports, PDFs, follow-ups, interview-prep, issues, activity feed)</li>
+            <li><code class="font-mono">data/projects.json</code> → deleted (saved filter profiles)</li>
+            <li><code class="font-mono">data/autopilot.json</code> → deleted (recurring schedule config)</li>
+            <li><code class="font-mono">interview-prep/story-bank.md</code> → deleted (accumulated STAR stories)</li>
           </ul>
           <div class="rounded border border-emerald-500/30 bg-emerald-500/5 p-2 mt-2 flex items-start gap-2">
             <Check class="size-3 text-emerald-300 mt-0.5 flex-shrink-0" />
             <p class="text-[10px] text-emerald-200/85 leading-relaxed">
-              Kept: <code class="font-mono">.env</code> (API keys), Python <code class="font-mono">.venv</code>, source code.
+              Kept: <code class="font-mono">.env</code> (API keys), Python <code class="font-mono">.venv</code>, source code,
+              connected Playwright sessions, <code class="font-mono">portals.yml</code>.
               Existing <code class="font-mono">.bak</code> files from previous resets are also preserved.
             </p>
           </div>
@@ -221,13 +279,17 @@
           'gap-1.5 text-white',
           scope === 'everything'
             ? 'bg-red-500/90 hover:bg-red-500 disabled:bg-red-500/30 disabled:text-red-200/50'
-            : 'bg-amber-500/80 hover:bg-amber-500 disabled:bg-amber-500/30 disabled:text-amber-200/50 text-amber-50',
+            : scope === 'jobs'
+              ? 'bg-orange-500/85 hover:bg-orange-500 disabled:bg-orange-500/30 disabled:text-orange-200/50 text-orange-50'
+              : 'bg-amber-500/80 hover:bg-amber-500 disabled:bg-amber-500/30 disabled:text-amber-200/50 text-amber-50',
         )}
       >
         {#if busy}
           <Loader2 class="size-3.5 animate-spin" /> Resetting…
         {:else if scope === 'everything'}
           <Flame class="size-3.5" /> Wipe everything
+        {:else if scope === 'jobs'}
+          <Briefcase class="size-3.5" /> Clear jobs data
         {:else}
           <Trash2 class="size-3.5" /> Reset profile
         {/if}
