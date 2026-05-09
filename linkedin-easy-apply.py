@@ -56,7 +56,16 @@ USER_DATA_DIR = USER_DATA_DIRS["linkedin"]  # backward-compat alias
 PROFILE_YML = ROOT / "config" / "profile.yml"
 APPLICATIONS_MD = ROOT / "data" / "applications.md"
 PIPELINE_MD = ROOT / "data" / "pipeline.md"
-DEFAULT_PDF = ROOT / "output" / "cv-cole-b-vercel-2026-05-05.pdf"  # fallback PDF
+# General-purpose CV PDF that matches the user's LinkedIn profile (NOT a per-job
+# tailored CV). LinkedIn Easy Apply shows the recruiter your LinkedIn profile +
+# the uploaded resume side by side; uploading a tailored resume that diverges
+# from the LinkedIn profile is a recruiter red flag, so we deliberately keep
+# this file consistent with the user's profile.
+#
+# Generated from cv.md by /profile → "Generate general CV". If the file is
+# missing we silently skip the resume-upload step rather than uploading a
+# different user's CV (the prior hardcoded fallback was a long-standing bug).
+DEFAULT_GENERAL_CV = ROOT / "output" / "cv-general.pdf"
 
 MAX_PER_RUN = int(os.environ.get("LINKEDIN_MAX_PER_RUN", "30"))
 AUTO_SUBMIT = os.environ.get("LINKEDIN_AUTO_SUBMIT", "0") == "1"
@@ -163,12 +172,19 @@ def fill_easy_apply(page, profile, pdf_path) -> str:
                 except Exception:
                     pass
 
-            # Resume upload
+            # Resume upload — only if the user has actually generated a general
+            # CV. We DELIBERATELY do not fall back to any other PDF. Uploading
+            # a per-job tailored CV here is a recruiter red flag (LinkedIn
+            # shows them the user's profile + resume side by side) and
+            # uploading a stranger's CV (the old DEFAULT_PDF bug) is worse.
             try:
                 upload = page.locator('input[type="file"]').first
-                if upload.is_visible(timeout=1000) and pdf_path:
-                    upload.set_input_files(str(pdf_path))
-                    jitter(2, 4)
+                if upload.is_visible(timeout=1000):
+                    if pdf_path and Path(pdf_path).exists():
+                        upload.set_input_files(str(pdf_path))
+                        jitter(2, 4)
+                    else:
+                        print(f"    [skip resume upload] no general CV at {pdf_path} — generate one from /profile to enable")
             except Exception:
                 pass
 
@@ -221,11 +237,28 @@ def main():
                         help="Open LinkedIn for manual login; saves cookies for next run")
     parser.add_argument("--dry-run", action="store_true",
                         help="Walk forms but do not click Submit even if AUTO_SUBMIT=1")
-    parser.add_argument("--pdf", default=str(DEFAULT_PDF),
-                        help=f"Path to CV PDF to upload (default: {DEFAULT_PDF})")
+    parser.add_argument("--general-cv", default=str(DEFAULT_GENERAL_CV),
+                        help=("Path to your GENERAL CV PDF (must match your LinkedIn profile — "
+                              "do NOT pass a per-job tailored CV). Generated from cv.md via the "
+                              "/profile page. If the file is missing the resume-upload step is "
+                              f"silently skipped. Default: {DEFAULT_GENERAL_CV}"))
+    # Backward-compat alias: --pdf was the old name. New callers should pass
+    # --general-cv. We keep --pdf accepted-but-deprecated so anyone with a
+    # cron job using --pdf doesn't break overnight.
+    parser.add_argument("--pdf", dest="pdf_legacy", default=None,
+                        help="(deprecated) Alias for --general-cv. Prefer --general-cv.")
     parser.add_argument("--url",
                         help="Apply to this single job URL (instead of iterating the pipeline)")
     args = parser.parse_args()
+
+    # Resolve general-cv: --pdf wins if explicitly passed (legacy callers),
+    # else use --general-cv. Stash on args.pdf so the body code below doesn't
+    # need to change.
+    if args.pdf_legacy:
+        print("WARNING: --pdf is deprecated. Use --general-cv instead.")
+        args.pdf = args.pdf_legacy
+    else:
+        args.pdf = args.general_cv
 
     profile = load_profile()
 

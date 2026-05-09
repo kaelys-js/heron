@@ -259,9 +259,24 @@ export function runLinkedInApply(autoSubmit = false, url?: string) {
   }
   const env = { ...process.env };
   if (autoSubmit) env.LINKEDIN_AUTO_SUBMIT = '1';
+  // Surface up-front whether the general CV is missing so the user knows the
+  // upload step will be skipped (see `linkedin-easy-apply.py`'s upload site).
+  // We don't fail-fast here — Easy Apply forms vary; some don't ask for a
+  // resume at all, in which case running anyway is fine.
+  let cvNote = '';
+  try {
+    // Lazy-require so the import graph doesn't grow if this codepath isn't hit.
+    const { generalCvStatus } = require('./cv-pdf') as typeof import('./cv-pdf');
+    const s = generalCvStatus();
+    if (!s.exists) {
+      cvNote = ' · WARN: no general CV (output/cv-general.pdf) — resume upload will be skipped';
+    } else if (s.outdated) {
+      cvNote = ' · NOTE: general CV is older than cv.md — regenerate from /profile';
+    }
+  } catch { /* non-fatal */ }
   logEvent('apply-linkedin', 'LinkedIn Easy Apply started', {
     category: 'task',
-    message: url ? 'single URL: ' + url : 'queue mode · autoSubmit=' + autoSubmit,
+    message: (url ? 'single URL: ' + url : 'queue mode · autoSubmit=' + autoSubmit) + cvNote,
   });
   const args = ['linkedin-easy-apply.py'];
   if (url) args.push('--url', url);
