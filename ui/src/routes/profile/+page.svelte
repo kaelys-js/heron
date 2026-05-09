@@ -27,17 +27,18 @@
   import { TARGET_RANGE_OPTIONS, WALKAWAY_OPTIONS, LOCATION_FLEX_OPTIONS } from '$lib/data/comp';
   import {
     User, MapPin, Target as TargetIcon, Sparkles, DollarSign, ShieldAlert, FileText, Mic2,
-    AlertCircle, AlertTriangle, ChevronRight, ExternalLink, FileCode, Copy, Check, Eye, Pencil, ReplaceAll, Wand2, Trash2, Briefcase,
+    AlertCircle, AlertTriangle, ChevronRight, ExternalLink, FileCode, Copy, Check, Eye, Pencil, ReplaceAll, Wand2, Trash2, Briefcase, Loader2,
   } from '@lucide/svelte';
   import { api, ApiError } from '$lib/api';
   import { invalidateAll } from '$app/navigation';
   import { toast } from 'svelte-sonner';
   import { cn, withMinDuration } from '$lib/utils';
   import type { ProfileSnapshot, ProfileEdit } from '$lib/server/profile';
+  import type { GeneralCvStatus } from '$lib/server/cv-pdf';
   import { ConfirmGate } from '$lib/confirm.svelte';
   import { onDestroy } from 'svelte';
 
-  let { data }: { data: { profile: ProfileSnapshot } } = $props();
+  let { data }: { data: { profile: ProfileSnapshot; generalCv: GeneralCvStatus } } = $props();
 
   // Project a ProfileSnapshot down to JUST the editable ProfileEdit shape.
   // Without this, structuredClone(data.profile) would seed `edit` with all
@@ -65,6 +66,56 @@
   // defaults to profile.
   let resetOpen = $state(false);
   let resetInitialScope = $state<'profile' | 'jobs' | 'everything'>('profile');
+
+  // General-CV PDF generation state. The general CV is what gets uploaded
+  // by LinkedIn Easy Apply (where consistency with the LinkedIn profile
+  // matters); per-job tailored CVs continue to be used for non-LinkedIn
+  // portals.
+  // svelte-ignore state_referenced_locally — initial seed only
+  let generalCv = $state<GeneralCvStatus>(data.generalCv);
+  let generatingGeneralCv = $state(false);
+
+  async function generateGeneralCvNow() {
+    if (generatingGeneralCv) return;
+    generatingGeneralCv = true;
+    try {
+      const r = await withMinDuration(
+        api.post<GeneralCvStatus & { pages?: number }>(
+          '/api/profile/general-cv/generate',
+          {},
+          { silent: true },
+        ),
+        500,
+      );
+      generalCv = r;
+      toast.success('General CV generated', {
+        description:
+          'output/cv-general.pdf · ' +
+          (r.bytes ? (r.bytes / 1024).toFixed(1) + ' KB' : '') +
+          (r.pages ? ' · ' + r.pages + ' page' + (r.pages === 1 ? '' : 's') : '') +
+          ' · this is what LinkedIn Easy Apply uploads from now on.',
+        duration: 8_000,
+      });
+      await invalidateAll();
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Generation failed', {
+        description: err.message,
+        action: { label: 'Retry', onClick: () => generateGeneralCvNow() },
+        duration: 14_000,
+      });
+    } finally {
+      generatingGeneralCv = false;
+    }
+  }
+
+  function fmtAge(ts: number): string {
+    const dt = Date.now() - ts;
+    if (dt < 60_000) return 'just now';
+    if (dt < 3_600_000) return Math.floor(dt / 60_000) + 'm ago';
+    if (dt < 86_400_000) return Math.floor(dt / 3_600_000) + 'h ago';
+    return Math.floor(dt / 86_400_000) + 'd ago';
+  }
 
   function openCv(tab: CvTab) {
     cvInitialTab = tab;
@@ -881,6 +932,114 @@
                   </Tooltip.Root>
                 </div>
               </Tooltip.Provider>
+            </div>
+          </div>
+
+          <!-- ============ General CV PDF — what LinkedIn Easy Apply uploads ============ -->
+          <div class="flex items-start gap-3 p-3 rounded-md border border-border/40 bg-card/50">
+            <FileText class="size-4 text-blue-400/80 mt-0.5 flex-shrink-0" />
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-medium">General CV PDF (cv-general.pdf)</span>
+                {#if generalCv.exists && !generalCv.outdated}
+                  <Badge variant="outline" class="text-[10px] h-4 px-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-300">
+                    {(generalCv.bytes ?? 0) > 0 ? ((generalCv.bytes ?? 0) / 1024).toFixed(1) + ' KB' : 'ready'}
+                  </Badge>
+                  {#if generalCv.generatedAt}
+                    <span class="text-[10px] text-muted-foreground/70">generated {fmtAge(generalCv.generatedAt)}</span>
+                  {/if}
+                {:else if generalCv.exists && generalCv.outdated}
+                  <Badge variant="outline" class="text-[10px] h-4 px-1 border-amber-500/40 bg-amber-500/10 text-amber-300">
+                    outdated
+                  </Badge>
+                  <span class="text-[10px] text-amber-300/80">cv.md was edited after the PDF was generated</span>
+                {:else if generalCv.missingSource}
+                  <Badge variant="outline" class="text-[10px] h-4 px-1 border-amber-500/40 bg-amber-500/10 text-amber-300">cv.md missing</Badge>
+                {:else}
+                  <Badge variant="outline" class="text-[10px] h-4 px-1 border-zinc-500/40 bg-zinc-500/10 text-muted-foreground">not generated</Badge>
+                {/if}
+              </div>
+
+              <p class="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                Used by <strong>LinkedIn Easy Apply</strong> only. LinkedIn shows recruiters your
+                profile and the uploaded resume <em>side by side</em> — uploading a per-job tailored
+                CV here is a known recruiter red flag. So this PDF is built straight from
+                <code class="font-mono">cv.md</code> with <em>no</em> per-job rewriting, keeping it
+                consistent with your LinkedIn profile. Per-job tailored CVs continue to be used for
+                Greenhouse / Ashby / Lever / Workday / etc.
+              </p>
+              <code class="text-[10px] font-mono text-muted-foreground/70 mt-1 inline-block">{generalCv.path}</code>
+
+              <!-- Action row -->
+              <Tooltip.Provider delayDuration={300}>
+                <div class="flex items-center gap-1 mt-2.5 flex-wrap">
+                  <Tooltip.Root>
+                    <Tooltip.Trigger>
+                      {#snippet child({ props })}
+                        <Button
+                          {...props}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          class={cn(
+                            'h-7 text-xs gap-1.5',
+                            (!generalCv.exists || generalCv.outdated) && 'border-blue-500/40 hover:bg-blue-500/10',
+                          )}
+                          onclick={generateGeneralCvNow}
+                          disabled={generatingGeneralCv || generalCv.missingSource}
+                        >
+                          {#if generatingGeneralCv}
+                            <Loader2 class="size-3 animate-spin text-blue-400" /> Generating…
+                          {:else if generalCv.exists && !generalCv.outdated}
+                            <Wand2 class="size-3" /> Regenerate
+                          {:else}
+                            <Wand2 class="size-3 text-blue-400" /> Generate
+                          {/if}
+                        </Button>
+                      {/snippet}
+                    </Tooltip.Trigger>
+                    <Tooltip.Content side="bottom" class="text-xs max-w-xs">
+                      Runs Claude over <code class="font-mono">cv.md</code> + the HTML template, then renders the PDF via headless Chromium. Costs ~$0.30–$0.60. Takes ~15–30s.
+                    </Tooltip.Content>
+                  </Tooltip.Root>
+
+                  {#if generalCv.exists}
+                    <Tooltip.Root>
+                      <Tooltip.Trigger>
+                        {#snippet child({ props })}
+                          <Button
+                            {...props}
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            class="h-7 text-xs gap-1 ml-auto"
+                            onclick={() => copyText(generalCv.path, 'general-cv')}
+                          >
+                            {#if copiedKey === 'general-cv'}
+                              <Check class="size-3 text-emerald-400" /> Copied
+                            {:else}
+                              <Copy class="size-3" /> Copy path
+                            {/if}
+                          </Button>
+                        {/snippet}
+                      </Tooltip.Trigger>
+                      <Tooltip.Content side="bottom" class="text-xs">
+                        Copy <code class="font-mono">{generalCv.path}</code> so you can preview the PDF
+                      </Tooltip.Content>
+                    </Tooltip.Root>
+                  {/if}
+                </div>
+              </Tooltip.Provider>
+
+              {#if generalCv.missingSource}
+                <p class="text-[10px] text-amber-300/85 mt-2 leading-relaxed">
+                  Add your CV first (use the row above) — the general PDF can't be generated without <code class="font-mono">cv.md</code>.
+                </p>
+              {:else if !generalCv.exists}
+                <p class="text-[10px] text-muted-foreground/80 mt-2 leading-relaxed">
+                  Until you generate this, LinkedIn Easy Apply will skip the resume-upload step entirely (LinkedIn falls back to whatever resume you already have on file there, or none).
+                </p>
+              {/if}
             </div>
           </div>
 

@@ -497,6 +497,22 @@
           </div>
           {#if applyBusy === 'linkedin'}<Loader2 class="size-3 animate-spin mt-1" />{/if}
         </DropdownMenu.Item>
+
+        <!-- Why we don't tailor the resume for LinkedIn — recruiters see your
+             LinkedIn profile and the uploaded resume side-by-side. A tailored
+             CV that diverges from the profile is a known red flag, so this
+             path uses the General CV PDF (cv-general.pdf) which is generated
+             straight from cv.md with no per-job rewriting. -->
+        <div class="px-2 py-1.5 text-[10px] text-muted-foreground/80 leading-tight border-l-2 border-blue-500/40 ml-2 mr-2 my-1 bg-blue-500/5 rounded-sm">
+          <div class="font-medium text-blue-200/90 mb-0.5">Uploads your General CV (not the per-job tailored one)</div>
+          <p class="text-muted-foreground/80">
+            Recruiters see your LinkedIn profile + resume side by side. A tailored CV that
+            diverges from your profile is a recruiter red flag, so this path uses the
+            untailored <code class="font-mono">cv-general.pdf</code> built from
+            <code class="font-mono">cv.md</code>. Tailored CVs are still used for non-LinkedIn portals.
+            <a href="/profile#companion-files" class="underline underline-offset-2 hover:text-foreground">Manage general CV →</a>
+          </p>
+        </div>
       {:else}
         <div class="px-2 py-1.5 text-[10px] text-muted-foreground/70 leading-tight border-l-2 border-amber-500/40 ml-2 mr-2 my-1 bg-amber-500/5 rounded-sm py-1.5 px-2">
           Not a LinkedIn URL — Easy Apply automation isn't available.

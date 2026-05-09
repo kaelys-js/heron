@@ -1,0 +1,230 @@
+/**
+ * Generate the user's "general CV" PDF — a non-tailored, ATS-friendly PDF
+ * built straight from cv.md, deliberately consistent with their LinkedIn
+ * profile.
+ *
+ * Why a separate concept from the per-job tailored CVs:
+ *   LinkedIn Easy Apply shows recruiters the user's LinkedIn profile and the
+ *   uploaded resume side by side. Uploading a CV that reframes the user's
+ *   experience differently from their LinkedIn profile is a known recruiter
+ *   red flag. So the rule is:
+ *     - LinkedIn Easy Apply → upload this general CV (matches profile)
+ *     - Greenhouse / Ashby / Lever / Workday / etc. → tailored per-job CV
+ *
+ * Pipeline:
+ *   1. Read cv.md
+ *   2. Read templates/cv-template.html
+ *   3. Ask Claude to populate the template's placeholders from cv.md.
+ *      No JD-specific tailoring — the prompt is explicit about this.
+ *   4. Write filled HTML to a temp file in output/.tmp/
+ *   5. Spawn `node generate-pdf.mjs <tmp.html> output/cv-general.pdf` to
+ *      render the actual PDF (handles fonts, margins, ATS unicode cleanup)
+ *   6. Return the path + sizing info
+ *
+ * Cost: 1 Anthropic call (~$0.30–$0.60) + ~5s Playwright render. Done once
+ * per cv.md edit, not per application. Status endpoint surfaces whether the
+ * existing PDF is stale relative to cv.md so the UI can prompt regeneration.
+ */
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { ROOT, CV_MD, OUTPUT_DIR, readSafe } from './files';
+import { complete } from './ai';
+import { logEvent } from './events';
+
+const CV_TEMPLATE_HTML = path.join(ROOT, 'templates', 'cv-template.html');
+const GENERAL_CV_PDF = path.join(OUTPUT_DIR, 'cv-general.pdf');
+const TMP_DIR = path.join(OUTPUT_DIR, '.tmp');
+const GENERAL_CV_HTML = path.join(TMP_DIR, 'cv-general.html');
+
+export type GeneralCvStatus = {
+  exists: boolean;
+  path: string;
+  bytes?: number;
+  generatedAt?: number;
+  /** Mtime of cv.md when the PDF was last produced — null if PDF doesn't exist. */
+  cvLastModified?: number;
+  /** True when cv.md is newer than the PDF — caller should prompt regenerate. */
+  outdated: boolean;
+  /** True when cv.md is missing — can't generate without it. */
+  missingSource: boolean;
+};
+
+export function generalCvStatus(): GeneralCvStatus {
+  const missingSource = !fs.existsSync(CV_MD);
+  if (!fs.existsSync(GENERAL_CV_PDF)) {
+    return {
+      exists: false,
+      path: path.relative(ROOT, GENERAL_CV_PDF),
+      outdated: false,
+      missingSource,
+    };
+  }
+  const pdfStat = fs.statSync(GENERAL_CV_PDF);
+  const cvStat = missingSource ? null : fs.statSync(CV_MD);
+  return {
+    exists: true,
+    path: path.relative(ROOT, GENERAL_CV_PDF),
+    bytes: pdfStat.size,
+    generatedAt: pdfStat.mtimeMs,
+    cvLastModified: cvStat?.mtimeMs,
+    // Outdated when cv.md was edited after the PDF was generated. We compare
+    // by 1s buckets so a same-second double-write doesn't flag as outdated.
+    outdated: cvStat ? Math.floor(cvStat.mtimeMs / 1000) > Math.floor(pdfStat.mtimeMs / 1000) : false,
+    missingSource,
+  };
+}
+
+const SYSTEM_PROMPT =
+  'You are populating an HTML CV template from a markdown CV.\n\n' +
+  'INPUT (in user message): the markdown CV (cv.md), then a separator line "===HTML TEMPLATE===", then the HTML template with {{PLACEHOLDER}} tokens.\n\n' +
+  'TASK: Output the FULL HTML with every {{PLACEHOLDER}} replaced. Return ONLY the HTML — no markdown fences, no commentary, no preamble.\n\n' +
+  'PLACEHOLDER REFERENCE:\n' +
+  '  Identity:\n' +
+  '    {{NAME}}              — full name (required)\n' +
+  '    {{EMAIL}}             — email\n' +
+  '    {{PHONE}}             — phone (omit cleanly if not in CV)\n' +
+  '    {{LOCATION}}          — "City, Country"\n' +
+  '    {{LINKEDIN_URL}}      — full https URL\n' +
+  '    {{LINKEDIN_DISPLAY}}  — human label like "linkedin.com/in/jane"\n' +
+  '    {{PORTFOLIO_URL}}     — full https URL\n' +
+  '    {{PORTFOLIO_DISPLAY}} — human label like "github.com/jane"\n' +
+  '  Document chrome:\n' +
+  '    {{LANG}}              — IETF tag (en, de, fr, ja, etc.) — derive from CV\'s primary language\n' +
+  '    {{PAGE_WIDTH}}        — "8.5in" for letter sizes (use this default unless CV is clearly EU/A4 oriented; then use "210mm")\n' +
+  '  Sections (each pair is heading label + body HTML):\n' +
+  '    {{SECTION_SUMMARY}}      → "Summary" / localized\n' +
+  '    {{SUMMARY_TEXT}}         → 3-5 sentence summary as <p>...</p>\n' +
+  '    {{SECTION_EXPERIENCE}}   → "Experience"\n' +
+  '    {{EXPERIENCE}}           → series of role blocks (see structure rule below)\n' +
+  '    {{SECTION_PROJECTS}}     → "Projects"\n' +
+  '    {{PROJECTS}}             → series of project blocks\n' +
+  '    {{SECTION_EDUCATION}}    → "Education"\n' +
+  '    {{EDUCATION}}            → list of degree entries\n' +
+  '    {{SECTION_SKILLS}}       → "Skills"\n' +
+  '    {{SKILLS}}               → grouped skills HTML\n' +
+  '    {{SECTION_COMPETENCIES}} → "Core Competencies" or omit empty section entirely\n' +
+  '    {{COMPETENCIES}}         → competencies HTML or empty string\n' +
+  '    {{SECTION_CERTIFICATIONS}} → "Certifications" or omit if none in CV\n' +
+  '    {{CERTIFICATIONS}}       → cert list or empty string\n\n' +
+  'STRUCTURE RULES:\n' +
+  '- For {{EXPERIENCE}}: each role uses the same HTML pattern as the surrounding template. If the template shows a specific role markup, mirror it exactly. Default pattern when in doubt:\n' +
+  '  <div class="experience-item">\n' +
+  '    <div class="exp-header"><span class="exp-role">{Role}</span><span class="exp-company">{Company}</span><span class="exp-dates">{Start} – {End or Present}</span></div>\n' +
+  '    <ul><li>{bullet}</li>...</ul>\n' +
+  '  </div>\n' +
+  '- For {{PROJECTS}}: <div class="project-item"><h3>{Name}</h3><ul><li>{bullet}</li>...</ul></div>\n' +
+  '- For {{EDUCATION}}: <ul><li><strong>{Degree}</strong>, {Institution} ({year})</li>...</ul>\n' +
+  '- For {{SKILLS}}: <ul><li><strong>{Category}:</strong> a, b, c</li>...</ul>\n' +
+  '- IF a section has no content in cv.md (e.g. no Projects), set BOTH the heading AND body placeholder to empty string ("") so the rendered HTML has no orphan section title.\n\n' +
+  'CRITICAL CONTENT RULES:\n' +
+  '- This is a GENERAL CV — do NOT tailor it to any specific job, do NOT reorder bullets to emphasize particular skills, do NOT inject keywords that aren\'t already in cv.md. Match the cv.md content as faithfully as possible.\n' +
+  '- Preserve every role and every metric verbatim.\n' +
+  '- HTML-escape any < > & in the user\'s text.\n' +
+  '- Do not invent dates, employers, metrics, or sections not present in cv.md.\n' +
+  '- Keep the template\'s CSS, fonts, and class names exactly as given — only fill placeholders.';
+
+export type GenerateResult = GeneralCvStatus & { pages?: number };
+
+/**
+ * Run the full pipeline: cv.md + template → Claude → HTML → spawn
+ * generate-pdf.mjs → cv-general.pdf. Throws on any step failure with a
+ * descriptive message; the caller logs + surfaces it.
+ */
+export async function generateGeneralCv(): Promise<GenerateResult> {
+  if (!fs.existsSync(CV_MD)) {
+    throw new Error('cv.md is missing — paste your CV first via Profile → CV manager.');
+  }
+  if (!fs.existsSync(CV_TEMPLATE_HTML)) {
+    throw new Error('templates/cv-template.html is missing — your install may be incomplete.');
+  }
+
+  const cvText = readSafe(CV_MD);
+  if (cvText.trim().length < 100) {
+    throw new Error('cv.md looks too short to be a CV (under 100 chars). Update it first.');
+  }
+  const template = readSafe(CV_TEMPLATE_HTML);
+  if (!template) throw new Error('cv-template.html is empty — re-clone the repo to restore it.');
+
+  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+  fs.mkdirSync(TMP_DIR, { recursive: true });
+
+  logEvent('cv-pdf', 'Generating general CV PDF', {
+    category: 'user',
+    message: cvText.length.toLocaleString() + ' chars in cv.md · model=claude-opus-4-7',
+  });
+
+  const userMessage = cvText + '\n\n===HTML TEMPLATE===\n\n' + template;
+  // 32k tokens is plenty — the template is ~700 lines, the filled HTML is
+  // typically 1-2k lines.
+  const html = await complete(SYSTEM_PROMPT, userMessage, { maxTokens: 32000, thinking: false });
+
+  // Strip code fences if Claude added them despite the instruction.
+  const cleanHtml = html.trim().replace(/^```(?:html)?\s*/i, '').replace(/\s*```$/, '').trim();
+  if (!cleanHtml.startsWith('<!DOCTYPE') && !cleanHtml.startsWith('<html')) {
+    throw new Error('Claude did not return a valid HTML document (no <!DOCTYPE>). Try regenerating.');
+  }
+  // Sanity check: any leftover {{...}} placeholders means Claude fumbled. The
+  // PDF would render with literal "{{NAME}}" text, which is worse than failing.
+  const leftover = cleanHtml.match(/\{\{[A-Z_]+\}\}/g);
+  if (leftover && leftover.length > 0) {
+    throw new Error('Claude left ' + leftover.length + ' placeholders unfilled (' + leftover.slice(0, 4).join(', ') + '…). Try regenerating.');
+  }
+
+  fs.writeFileSync(GENERAL_CV_HTML, cleanHtml);
+
+  // Spawn the existing PDF renderer. Letter format matches what the per-job
+  // tailored CVs use.
+  const result = await spawnPdfRender(GENERAL_CV_HTML, GENERAL_CV_PDF);
+
+  logEvent('cv-pdf', 'General CV PDF generated', {
+    level: 'success',
+    category: 'user',
+    message:
+      'output/cv-general.pdf · ' + (result.bytes / 1024).toFixed(1) + ' KB' +
+      (result.pages ? ' · ' + result.pages + 'p' : ''),
+  });
+
+  return { ...generalCvStatus(), pages: result.pages };
+}
+
+function spawnPdfRender(htmlPath: string, pdfPath: string): Promise<{ bytes: number; pages?: number }> {
+  return new Promise((resolve, reject) => {
+    const p = spawn('node', ['generate-pdf.mjs', htmlPath, pdfPath, '--format=letter'], {
+      cwd: ROOT,
+      env: { ...process.env },
+    });
+    let stdoutBuf = '';
+    let stderrBuf = '';
+    p.stdout?.on('data', (c: Buffer) => { stdoutBuf += c.toString(); });
+    p.stderr?.on('data', (c: Buffer) => { stderrBuf += c.toString(); });
+
+    const timer = setTimeout(() => {
+      try { p.kill('SIGTERM'); } catch {}
+      reject(new Error('PDF render timed out after 90s'));
+    }, 90_000);
+
+    p.on('error', (err) => { clearTimeout(timer); reject(err); });
+    p.on('close', (code) => {
+      clearTimeout(timer);
+      if (code !== 0) {
+        const tail = (stderrBuf || stdoutBuf || '').slice(-400).trim();
+        reject(new Error('generate-pdf.mjs exited ' + code + (tail ? ': ' + tail : '')));
+        return;
+      }
+      try {
+        const stat = fs.statSync(pdfPath);
+        // generate-pdf.mjs prints "📊 Pages: N" on success — parse if present.
+        const pageMatch = stdoutBuf.match(/Pages:\s*(\d+)/);
+        resolve({ bytes: stat.size, pages: pageMatch ? Number(pageMatch[1]) : undefined });
+      } catch (e) {
+        reject(new Error('PDF render reported success but file missing at ' + pdfPath));
+      }
+    });
+  });
+}
+
+/** Path the apply script should be told to use. Static so the script's
+ *  default and the dashboard agree without IPC. */
+export const GENERAL_CV_PATH = GENERAL_CV_PDF;
