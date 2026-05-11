@@ -5,13 +5,16 @@
  */
 
 import { loadAllJobs } from '$lib/server/parsers';
+import { getActiveProfileId } from '$lib/server/profiles';
 import { getFollowupCadence, findEntryByCompanyRole, type FollowupEntry } from '$lib/server/followup-cadence';
 import type { Status } from '$lib/types';
 
 const ACTIVE: Status[] = ['Applied', 'Screened', 'Interview', 'Offer'];
 
-export async function load() {
-  const jobs = loadAllJobs().filter((j) => ACTIVE.includes(j.status));
+export async function load({ url }: { url: URL }) {
+  const profileParam = url.searchParams.get('profile') ?? undefined;
+  const profileId = profileParam === 'all' ? 'all' : (profileParam ?? getActiveProfileId());
+  const jobs = loadAllJobs(profileId).filter((j) => ACTIVE.includes(j.status));
 
   // Cadence snapshot is best-effort — if the script chokes (no applications
   // tracker yet, malformed file, missing node), the page still renders
@@ -33,5 +36,5 @@ export async function load() {
     }
   }
 
-  return { jobs, followups, cadenceMeta: cadence?.metadata ?? null };
+  return { jobs, followups, cadenceMeta: cadence?.metadata ?? null, profileId };
 }
