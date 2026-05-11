@@ -3,8 +3,8 @@
   import * as Card from '$lib/components/ui/card';
   import { Button } from '$lib/components/ui/button';
   import {
-    Sparkles, KeyRound, User, FileText, Target, Plug, Search, Trophy,
-    ArrowLeft, ArrowRight, RotateCw, CheckCircle2, AlertCircle, ExternalLink,
+    Sparkles, KeyRound, User, FileText, Target, Plug, Search, Trophy, Users,
+    ArrowLeft, ArrowRight, RotateCw, CheckCircle2, AlertCircle, ExternalLink, Plus,
   } from '@lucide/svelte';
 
   type Step = {
@@ -106,12 +106,62 @@
         </h1>
         <p class="text-sm text-muted-foreground leading-relaxed">
           The wizard at <a href="/onboarding" class="underline underline-offset-2 hover:text-foreground">/onboarding</a>
-          walks a fresh install through 7 steps in 5–10 minutes. By the end you have keys
+          walks a fresh install through 7 steps in 5–10 minutes. Onboarding is also how you
+          ADD A NEW PROFILE — career-ops supports multiple distinct career tracks per install
+          (e.g. Software Engineering + Electrician), and each track gets its own walk-through
+          so the CV / targeting / first-scan are scoped to that profile.
+          By the end you have keys
           configured, identity captured, CV imported, target roles + filters set, sources connected,
           and a first scan complete. This page documents what each step does, what files it
           writes, and where you can edit the same data after the wizard finishes.
         </p>
       </div>
+
+      <!-- Multi-profile -->
+      <Card.Root>
+        <Card.Header>
+          <div class="flex items-center gap-2">
+            <Users class="size-4 text-fuchsia-400" />
+            <Card.Title class="text-base">Multi-profile onboarding</Card.Title>
+          </div>
+          <Card.Description>
+            Career-ops supports multiple distinct career tracks per install. Each profile has its
+            own CV, target roles, filters, pipeline, applications tracker, and reports.
+          </Card.Description>
+        </Card.Header>
+        <Card.Content class="space-y-2">
+          <p class="text-[12px] text-muted-foreground/90 leading-relaxed">
+            <strong>First-run</strong> — onboarding creates a profile (or skips that prompt if
+            you launched the wizard with no <code class="font-mono">?new=1</code> param). The
+            target profile's slug is threaded through every step page via
+            <code class="font-mono">?profile=&lt;slug&gt;</code>, so all the CV / identity /
+            targeting writes land in <code class="font-mono">data/profiles/&lt;slug&gt;/</code>.
+          </p>
+          <p class="text-[12px] text-muted-foreground/90 leading-relaxed">
+            <strong>Adding a profile later</strong> — click the profile switcher in the sidebar,
+            pick "Add new profile", or hit <code class="font-mono">/onboarding?new=1</code> directly.
+            The wizard's Welcome step prompts for a display name + color, derives a kebab-case slug,
+            persists, and redirects you into the API-keys step with the new slug.
+          </p>
+          <p class="text-[12px] text-muted-foreground/90 leading-relaxed">
+            <strong>Shared steps</strong> — API keys (in <code class="font-mono">.env</code>) and
+            connected sources (Playwright sessions, Gmail IMAP) are SHARED across every profile.
+            On 2nd+ profile onboarding the API-keys step shows a "Keys already configured —
+            continue" express path, and the sources step shows existing connections as already-
+            connected so you can skip them.
+          </p>
+          <p class="text-[12px] text-muted-foreground/90 leading-relaxed">
+            <strong>Per-profile steps</strong> — Identity, CV, Targeting, First-scan, Done. The
+            Done step makes the just-onboarded profile active and routes to
+            <code class="font-mono">/inbox?profile=&lt;slug&gt;</code>.
+          </p>
+          <p class="text-[11px] text-muted-foreground/80 leading-relaxed pt-1">
+            See <a href="/help/sources" class="underline underline-offset-2 hover:text-foreground">/help/sources</a>
+            for how scanners interact with multi-profile, or
+            <a href="/profiles" class="underline underline-offset-2 hover:text-foreground">/profiles</a> to manage them.
+          </p>
+        </Card.Content>
+      </Card.Root>
 
       <!-- Trigger conditions -->
       <Card.Root>
@@ -125,16 +175,17 @@
         <Card.Content class="space-y-2">
           <ul class="text-[12px] text-muted-foreground/90 list-disc pl-5 space-y-1 leading-relaxed">
             <li><code class="font-mono">data/onboarding-state.json</code> doesn't exist OR has <code class="font-mono">completed: false</code></li>
-            <li><code class="font-mono">cv.md</code> is missing</li>
-            <li><code class="font-mono">config/profile.yml</code> is missing</li>
-            <li><code class="font-mono">portals.yml</code> is missing</li>
-            <li><code class="font-mono">modes/_profile.md</code> is missing</li>
+            <li>The active profile's <code class="font-mono">cv.md</code> is missing</li>
+            <li>The active profile's <code class="font-mono">profile.yml</code> is missing</li>
+            <li>The active profile's <code class="font-mono">portals.yml</code> is missing</li>
+            <li>The active profile's <code class="font-mono">_profile.md</code> is missing</li>
             <li><code class="font-mono">ANTHROPIC_API_KEY</code> isn't set in <code class="font-mono">.env</code></li>
           </ul>
           <p class="text-[11px] text-muted-foreground/80 leading-relaxed pt-1">
             Once <code class="font-mono">completed: true</code> is written, the redirect stops firing
             even if you later delete a config file. To force the wizard to re-run, hit
-            <strong>Settings → Reset onboarding</strong>.
+            <strong>Settings → Reset onboarding</strong>. To add a NEW profile, use the sidebar
+            profile switcher's "Add new profile" or visit <code class="font-mono">/onboarding?new=1</code> directly.
           </p>
         </Card.Content>
       </Card.Root>

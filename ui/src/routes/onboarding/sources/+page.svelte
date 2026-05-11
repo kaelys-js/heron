@@ -14,7 +14,8 @@
 
   type Row = KnownSource & { state: SourceState };
 
-  let { data }: { data: { sources: Row[] } } = $props();
+  let { data }: { data: { sources: Row[]; profileId: string; anyConnected: boolean } } = $props();
+  let q = $derived('?profile=' + encodeURIComponent(data.profileId));
 
   let busy = $state<Record<string, 'connect' | 'test' | 'disconnect' | null>>({});
 
@@ -108,7 +109,7 @@
     advancing = true;
     try {
       await api.post('/api/onboarding/step', { step: 'sources', action }, { silent: true });
-      await goto('/onboarding/first-scan');
+      await goto('/onboarding/first-scan' + q);
     } catch (e) {
       const err = e as ApiError;
       toast.error('Could not advance', { description: err.message });

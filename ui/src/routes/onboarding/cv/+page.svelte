@@ -7,7 +7,10 @@
   import { api, ApiError } from '$lib/api';
   import { toast } from 'svelte-sonner';
 
-  let { data }: { data: { existing: string; linkedinConnected: boolean; linkedinUrl: string } } = $props();
+  let { data }: { data: { profileId: string; existing: string; linkedinConnected: boolean; linkedinUrl: string } } = $props();
+
+  /** Profile query suffix used for every API call + navigation. */
+  let q = $derived('?profile=' + encodeURIComponent(data.profileId));
 
   type Mode = 'markdown' | 'plain' | 'linkedin';
 
@@ -132,19 +135,19 @@ Skills: TypeScript, Python, Go, AWS, Kubernetes, Postgres`;
     try {
       // Write cv.md.
       workingLabel = 'Saving cv.md…';
-      await api.put('/api/profile/file/cv', { content: markdown }, { silent: true });
+      await api.put('/api/profile/file/cv' + q, { content: markdown }, { silent: true });
 
       // Auto-extract structured profile fields. Failure is non-fatal.
       try {
         workingLabel = 'Extracting profile fields…';
-        await api.post('/api/profile/reprocess', {}, { silent: true });
+        await api.post('/api/profile/reprocess' + q, {}, { silent: true });
       } catch (e) {
         console.warn('reprocess failed, continuing anyway:', e);
       }
 
       await api.post('/api/onboarding/step', { step: 'cv', action: 'complete' }, { silent: true });
       toast.success('CV saved');
-      await goto('/onboarding/targeting');
+      await goto('/onboarding/targeting' + q);
     } catch (e) {
       const err = e as ApiError;
       toast.error('Could not save CV', { description: err.message });

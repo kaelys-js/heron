@@ -11,8 +11,10 @@
   let { data }: {
     data: {
       children: { id: string; label: string; alwaysOn?: boolean; source?: string }[];
+      profileId: string;
     };
   } = $props();
+  let q = $derived('?profile=' + encodeURIComponent(data.profileId));
 
   type ChildStatus = 'pending' | 'running' | 'success' | 'error';
 
@@ -83,7 +85,9 @@
     }, 500);
     try {
       // Fire and forget — the SSE stream tells us when each child finishes.
-      await api.post('/api/run', { task: 'scan-all' }, { silent: true });
+      // Pass profileId in the body so the scan-all fan-out targets this
+      // profile only (not every profile in the system).
+      await api.post('/api/run', { task: 'scan-all', args: { profileId: data.profileId } }, { silent: true });
     } catch (e) {
       const err = e as ApiError;
       toast.error('Could not start scan', { description: err.message });
@@ -98,7 +102,7 @@
   async function continueOn(action: 'complete' | 'skip') {
     try {
       await api.post('/api/onboarding/step', { step: 'first-scan', action }, { silent: true });
-      await goto('/onboarding/done');
+      await goto('/onboarding/done' + q);
     } catch (e) {
       const err = e as ApiError;
       toast.error('Could not advance', { description: err.message });

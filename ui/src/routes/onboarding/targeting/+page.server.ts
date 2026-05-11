@@ -1,7 +1,8 @@
-/** Pre-fills the targeting form with anything the user already has in
- *  profile.yml + portals.yml so revisits are non-destructive. */
+/** Pre-fills the targeting form with anything the target profile already
+ *  has in profile.yml + portals.yml so revisits are non-destructive. */
 import { readProfile } from '$lib/server/profile';
 import { readPortals } from '$lib/server/portals';
+import { getActiveProfileId, getProfile } from '$lib/server/profiles';
 
 const DEFAULT_NEGATIVE = [
   'Junior', 'Intern', '.NET', 'Java ', 'iOS', 'Android', 'PHP', 'Ruby',
@@ -9,11 +10,14 @@ const DEFAULT_NEGATIVE = [
   'Salesforce Admin', 'SAP ', 'Oracle EBS', 'Mainframe', 'COBOL',
 ];
 
-export async function load() {
-  const profile = readProfile();
-  const portals = readPortals();
+export async function load({ url }: { url: URL }) {
+  const queryProfile = url.searchParams.get('profile');
+  const profileId = (queryProfile && getProfile(queryProfile)) ? queryProfile : getActiveProfileId();
+  const profile = readProfile(profileId);
+  const portals = readPortals(profileId);
   const tf = portals.title_filter;
   return {
+    profileId,
     initial: {
       target_roles: profile.target_roles?.primary ?? [],
       positive: tf.positive.length > 0 ? tf.positive : [],

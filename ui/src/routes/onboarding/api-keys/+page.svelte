@@ -7,7 +7,37 @@
   import { api, ApiError } from '$lib/api';
   import { toast } from 'svelte-sonner';
 
-  let { data }: { data: { masked: Record<string, string> } } = $props();
+  let { data }: {
+    data: {
+      profileId: string;
+      masked: Record<string, string>;
+      hasRequiredKeys: boolean;
+      isAdditionalProfile: boolean;
+    };
+  } = $props();
+  let q = $derived('?profile=' + encodeURIComponent(data.profileId));
+
+  /** When the user is onboarding their 2nd+ profile AND all required API
+   *  keys are already configured (carried over from the first profile),
+   *  this step is essentially a no-op. We surface a "Keys already
+   *  configured — continue" path that skips ahead. The user can still
+   *  expand and edit if they want different keys for this profile,
+   *  but defaults to one click forward. */
+  let canSkipApiKeys = $derived(data.isAdditionalProfile && data.hasRequiredKeys);
+  let expanded = $state(false);
+
+  async function skipApiKeys() {
+    if (saving) return;
+    saving = true;
+    try {
+      await api.post('/api/onboarding/step', { step: 'api-keys', action: 'skip' }, { silent: true });
+      await goto('/onboarding/identity' + q);
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Could not advance', { description: err.message });
+      saving = false;
+    }
+  }
 
   // Pre-populate empty fields; if a key is already masked (****abcd), we
   // keep that as the placeholder and let the user choose to replace it.
@@ -75,7 +105,7 @@
       }
       await api.post('/api/onboarding/step', { step: 'api-keys', action: 'complete' }, { silent: true });
       toast.success('API keys verified');
-      await goto('/onboarding/identity');
+      await goto('/onboarding/identity' + q);
     } catch (e) {
       const err = e as ApiError;
       toast.error('Could not save', { description: err.message });
@@ -97,6 +127,33 @@
       it if you want the extra source.
     </p>
   </header>
+
+  {#if canSkipApiKeys && !expanded}
+    <!-- 2nd+ profile + keys already configured. Express path. -->
+    <div class="rounded-md border border-emerald-500/30 bg-emerald-500/5 px-4 py-4 flex items-start gap-3">
+      <CheckCircle2 class="size-5 text-emerald-400 mt-0.5 flex-shrink-0" />
+      <div class="flex-1 space-y-2">
+        <p class="text-sm font-medium text-emerald-200">Keys already configured</p>
+        <p class="text-[11px] text-emerald-200/80 leading-relaxed">
+          Anthropic + Gemini + Adzuna are shared across every profile, so the keys you set up on
+          your first profile carry over. Click Continue to skip ahead — or expand to edit if you
+          want different keys for this profile.
+        </p>
+        <div class="flex items-center gap-2 pt-1">
+          <Button onclick={skipApiKeys} disabled={saving} class="gap-1.5" size="sm">
+            {#if saving}<Loader2 class="size-3.5 animate-spin" /> Continuing…{:else}Continue<ArrowRight class="size-3.5" />{/if}
+          </Button>
+          <button
+            type="button"
+            onclick={() => (expanded = true)}
+            class="text-[11px] text-muted-foreground/70 hover:text-foreground underline underline-offset-2"
+          >
+            Edit keys instead
+          </button>
+        </div>
+      </div>
+    </div>
+  {:else}
 
   <div class="space-y-4">
     <!-- Anthropic — required -->
@@ -193,4 +250,5 @@
       {#if saving}<Loader2 class="size-3.5 animate-spin" /> Saving…{:else}Continue<ArrowRight class="size-4" />{/if}
     </Button>
   </div>
+  {/if}
 </div>

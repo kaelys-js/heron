@@ -12,7 +12,8 @@
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { readSafe } from '$lib/server/files';
-import { activePath } from '$lib/server/profile-paths';
+import { profilePath } from '$lib/server/profile-paths';
+import { getActiveProfileId, getProfile } from '$lib/server/profiles';
 import { complete } from '$lib/server/ai';
 import { logEvent } from '$lib/server/events';
 
@@ -61,8 +62,10 @@ const SYSTEM_PROMPT =
   '- For superpowers: prefer concrete tech ("Production TypeScript + Node end-to-end") over vague adjectives ("Strong communicator").\n' +
   '- For proof_points: only include ones the CV actually mentions with a metric.';
 
-export const POST = wrap('profile-reprocess', async () => {
-  const cv = readSafe(activePath('cv-md'));
+export const POST = wrap('profile-reprocess', async ({ url }: { url: URL }) => {
+  const q = url.searchParams.get('profile');
+  const profileId = q && getProfile(q) ? q : getActiveProfileId();
+  const cv = readSafe(profilePath(profileId, 'cv-md'));
   if (!cv.trim()) {
     badRequest('cv.md is empty or missing — paste a CV via Replace before reprocessing');
   }
