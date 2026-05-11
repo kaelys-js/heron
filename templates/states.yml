@@ -28,7 +28,40 @@ states:
   - id: interview
     label: Interview
     aliases: [entrevista]
-    description: Active interview process
+    description: Active interview process (use sub-stages below for finer tracking)
+    dashboard_group: interview
+
+  # Interview sub-stages — finer-grained than the legacy 'Interview' bucket.
+  # Pick one of these for new rows; 'Interview' stays as a fallback for
+  # legacy data + ambiguous early-stage outreach.
+  - id: phonescreen
+    label: PhoneScreen
+    aliases: [phone-screen, phone screen, phone, recruiter screen, hr screen]
+    description: Initial recruiter / hiring-manager phone screen
+    dashboard_group: interview
+
+  - id: technical
+    label: Technical
+    aliases: [tech screen, technical interview, coding interview, tech]
+    description: Technical interview (algorithms, system design, live coding)
+    dashboard_group: interview
+
+  - id: takehome
+    label: TakeHome
+    aliases: [take-home, take home, takehome assignment, coding test, coding challenge]
+    description: Take-home coding assignment or homework
+    dashboard_group: interview
+
+  - id: onsite
+    label: Onsite
+    aliases: [on-site, on site, virtual onsite, panel, super day, loop]
+    description: Multi-round onsite / panel loop
+    dashboard_group: interview
+
+  - id: final
+    label: Final
+    aliases: [final round, exec, vp, hiring committee, hiring manager final, leadership]
+    description: Final round / hiring committee / executive interview
     dashboard_group: interview
 
   - id: offer

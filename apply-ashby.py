@@ -56,6 +56,8 @@ from lib_apply import (  # noqa: E402
     human_type, human_click, detect_captcha, detect_already_applied,
     upload_file, fill_react_select, append_step, emit_result,
     screenshot_for_issue, write_apply_state, detect_portal,
+    load_form_answers, normalize_question,
+    is_eeo_label, auto_decline_eeo,
 )
 from lib_profiles import resolve_profile_arg, profile_path  # noqa: E402
 
@@ -247,7 +249,15 @@ def fill_custom(page, question: dict, answers_cache: dict) -> str:
     label = question.get("label", "")
     required = bool(question.get("required"))
     qtype = (question.get("type") or "input_text").lower()
-    key = re.sub(r"[^a-z0-9 ]", "", label.lower()).strip()
+    # EEO short-circuit — Ashby's voluntary self-ID step uses the same
+    # decline-to-answer escape hatch as Greenhouse. Default: decline.
+    if is_eeo_label(label):
+        if auto_decline_eeo(page, label):
+            return "filled"
+        return "unknown" if required else "skipped"
+    # Use the shared normalize_question() so the lookup key matches what
+    # form-answers-cache.ts writes.
+    key = normalize_question(label)
     answer = answers_cache.get(key)
     if not answer:
         return "unknown" if required else "skipped"
@@ -408,8 +418,13 @@ def run(args) -> int:
                     except Exception:
                         pass
 
-            # Custom Q&A.
-            answers_cache = (profile.get("form_answers") or {})
+            # Custom Q&A — pull from the persistent JSONL cache (the TS-side
+            # UI writes here when the user confirms an answer). Legacy
+            # profile.yml.form_answers entries are merged in for back-compat.
+            answers_cache = load_form_answers(profile_id)
+            for legacy_k, legacy_v in (profile.get("form_answers") or {}).items():
+                if isinstance(legacy_k, str) and isinstance(legacy_v, str):
+                    answers_cache.setdefault(normalize_question(legacy_k), legacy_v)
             unknown_required: list[str] = []
             for q in plan["custom"]:
                 result = fill_custom(page, q, answers_cache)

@@ -6,6 +6,7 @@
   import { Badge } from '$lib/components/ui/badge';
   import * as Card from '$lib/components/ui/card';
   import BackupsCard, { type BackupInfo } from '$lib/components/BackupsCard.svelte';
+  import PushNotificationsToggle from '$lib/components/PushNotificationsToggle.svelte';
   import { toast } from 'svelte-sonner';
   import { ApiError, api } from '$lib/api';
   import { ExternalLink, KeyRound, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, RotateCw, Sparkles, Activity } from '@lucide/svelte';
@@ -510,6 +511,23 @@
            up here (above the LinkedIn / onboarding cards) because data loss
            is the highest-impact failure mode. -->
       <BackupsCard initialBackups={data.backups} initialConfig={data.backupConfig} />
+
+      <!-- OS-level notifications + daily digest. Enable so high-priority
+           events ping you even when the tab is in the background. The
+           daily-digest autopilot job (07:00) fires regardless of
+           Notification permission — that one is bell + activity-feed. -->
+      <Card.Root>
+        <Card.Header>
+          <Card.Title class="text-base">Notifications</Card.Title>
+          <Card.Description>
+            Get OS-level pings for important events (ManualApplyNeeded, recruiter emails detected,
+            offers received). The daily digest at 07:00 summarizes what to focus on.
+          </Card.Description>
+        </Card.Header>
+        <Card.Content>
+          <PushNotificationsToggle />
+        </Card.Content>
+      </Card.Root>
 
       <Card.Root>
         <Card.Header>

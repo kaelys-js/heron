@@ -179,6 +179,24 @@ function mapStatus(s: string): Status {
 
   // Pipeline-stage substring matches (legacy heuristic).
   if (up.includes('READY')) return 'Ready';
+
+  // Interview sub-stages — checked BEFORE the generic 'screen'/'interview'
+  // catch-alls so "Phone Screen" → PhoneScreen and "Tech Interview" →
+  // Technical instead of getting flattened to the legacy bucket.
+  if (lower === 'phonescreen' || lower.includes('phone screen') || lower.includes('phone-screen') ||
+      lower === 'phone' || lower.includes('hr screen') || lower.includes('recruiter screen')) return 'PhoneScreen';
+  if (lower === 'technical' || lower.includes('tech screen') || lower.includes('tech interview') ||
+      lower.includes('technical interview') || lower.includes('coding interview') ||
+      lower === 'tech') return 'Technical';
+  if (lower === 'takehome' || lower.includes('take-home') || lower.includes('take home') ||
+      lower.includes('coding test') || lower.includes('coding challenge')) return 'TakeHome';
+  if (lower === 'onsite' || lower.includes('on-site') || lower.includes('on site') ||
+      lower.includes('virtual onsite') || lower === 'panel' || lower === 'super day' ||
+      lower === 'loop') return 'Onsite';
+  if (lower === 'final' || lower.includes('final round') || lower === 'exec' || lower === 'vp' ||
+      lower.includes('hiring committee') || lower.includes('hiring manager final') ||
+      lower === 'leadership') return 'Final';
+
   if (up.includes('SCREEN')) return 'Screened';
   if (up.includes('INTERVIEW') || lower === 'entrevista') return 'Interview';
   if (up.includes('OFFER') || lower === 'oferta') return 'Offer';

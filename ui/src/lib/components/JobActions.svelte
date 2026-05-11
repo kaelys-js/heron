@@ -89,6 +89,7 @@
   let followupDraft = $state<{ path: string; content: string } | null>(null);
   let followupSheetOpen = $state(false);
   let formAnswersBusy = $state(false);
+  let techPrepBusy = $state(false);
   let formAnswersData = $state<{ path: string; content: string } | null>(null);
   let formAnswersSheetOpen = $state(false);
   let statusBusy = $state(false);
@@ -97,6 +98,9 @@
     New: 'bg-zinc-400', Scoring: 'bg-blue-400', Scored: 'bg-cyan-400',
     Ready: 'bg-emerald-400', Queued: 'bg-fuchsia-400', Applying: 'bg-blue-400',
     Applied: 'bg-violet-400', Screened: 'bg-amber-400',
+    // Interview sub-stages — warm hue family, ordered light → dark by progression.
+    PhoneScreen: 'bg-amber-300', Technical: 'bg-orange-400', TakeHome: 'bg-yellow-400',
+    Onsite: 'bg-orange-500', Final: 'bg-red-400',
     Interview: 'bg-orange-400', Offer: 'bg-green-400', Rejected: 'bg-red-400', Closed: 'bg-zinc-500',
     ManualApplyNeeded: 'bg-amber-500',
   };
@@ -109,7 +113,12 @@
     Applying: 'Autonomous-apply script running right now',
     Applied: 'Application sent',
     Screened: 'Recruiter responded',
-    Interview: 'Active interview process',
+    PhoneScreen: 'Recruiter / hiring-manager phone screen scheduled or in progress',
+    Technical: 'Technical interview · algorithms / system design / live coding',
+    TakeHome: 'Take-home coding assignment in progress',
+    Onsite: 'Onsite / panel loop · multiple rounds in one day',
+    Final: 'Final round · hiring committee / VP / exec',
+    Interview: 'Active interview process (use sub-stages to track which round)',
     Offer: 'Offer in hand · negotiate',
     Rejected: 'Closed by company',
     Closed: 'You skipped this one',
@@ -370,6 +379,50 @@
       toast.success('Draft copied to clipboard');
     } catch {
       toast.error('Copy failed', { description: 'Browser blocked clipboard access.' });
+    }
+  }
+
+  /**
+   * Generate a technical-interview prep plan for this job. Spawns the
+   * tech-prep Claude mode in the background; the user gets a toast +
+   * activity-feed events. The file lands at
+   *   interview-prep/{company-slug}-{role-slug}-tech-prep.md
+   * with budgeted hours, specific LeetCode problems, and the architectural
+   * debates this company cares about.
+   */
+  async function generateTechPrep() {
+    if (!job.id || techPrepBusy) return;
+    techPrepBusy = true;
+    try {
+      const r = await withMinDuration(
+        api.post<{
+          ok: boolean;
+          path?: string;
+          meta?: { rounds?: number; hoursEstimated?: number; sourcesCited?: number };
+          error?: string;
+        }>('/api/job/' + encodeURIComponent(job.id) + '/tech-prep' + pq, {}, { silent: true }),
+        500,
+      );
+      if (r.ok) {
+        toast.success('Tech prep generated', {
+          description: jobLabel + ' — ' +
+            (r.meta?.rounds ? r.meta.rounds + ' rounds · ' : '') +
+            (r.meta?.hoursEstimated ? '~' + r.meta.hoursEstimated + 'h prep · ' : '') +
+            (r.path ?? ''),
+          duration: 8_000,
+        });
+      } else {
+        toast.error('Tech prep failed', { description: jobLabel + ' — ' + (r.error ?? 'unknown') });
+      }
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Tech prep failed', {
+        description: jobLabel + ' — ' + err.message,
+        action: { label: 'Retry', onClick: () => generateTechPrep() },
+        duration: 12_000,
+      });
+    } finally {
+      techPrepBusy = false;
     }
   }
 
@@ -893,6 +946,50 @@
             Drafts answers to the standard application-form questions ("why this role", "years of X",
             "salary expectations", "when can you start") so you can copy each one into a Greenhouse /
             Ashby / Lever portal instead of typing from scratch.
+          </div>
+        </div>
+      </DropdownMenu.Item>
+
+      <!-- Tech-prep — produces a focused technical-interview prep plan
+           with budgeted hours, specific LeetCode problems, system-design
+           topics, and behavioral story mapping. Useful once a job hits
+           any interview stage (PhoneScreen / Technical / Onsite / Final). -->
+      <DropdownMenu.Item
+        onSelect={generateTechPrep}
+        closeOnSelect={false}
+        class="gap-2 items-start py-2"
+        disabled={!job.url || techPrepBusy}
+      >
+        {#if techPrepBusy}
+          <Loader2 class="size-3.5 mt-0.5 animate-spin flex-shrink-0" />
+        {:else}
+          <Sparkles class="size-3.5 mt-0.5 text-orange-300 flex-shrink-0" />
+        {/if}
+        <div class="flex-1 min-w-0">
+          <div class="text-xs font-medium">Generate tech-prep plan</div>
+          <div class="text-[10px] text-muted-foreground/70 leading-tight">
+            Per-company technical-interview prep: pipeline map, coding rounds with specific
+            LeetCode problems, system-design topics (this company's actual debates), behavioral
+            story mapping. ~1-2 min via Claude.
+          </div>
+        </div>
+      </DropdownMenu.Item>
+
+      <!-- Mock interview — voice-driven drill. Browser STT + TTS.
+           Per-stage prompts (recruiter / technical / onsite / final);
+           each turn scored 1-5 with feedback; transcript saved on end. -->
+      <DropdownMenu.Item
+        onSelect={() => location.assign('/job/' + job.id + '/mock' + pq)}
+        class="gap-2 items-start py-2"
+        disabled={!job.url}
+      >
+        <FileBadge2 class="size-3.5 mt-0.5 text-orange-300 flex-shrink-0" />
+        <div class="flex-1 min-w-0">
+          <div class="text-xs font-medium">Mock interview (voice)</div>
+          <div class="text-[10px] text-muted-foreground/70 leading-tight">
+            Voice drill — Claude speaks the questions, listens to your spoken answer, scores each
+            turn 1-5 with one-sentence feedback. Per-stage (recruiter / technical / onsite / final).
+            Saves a transcript + session summary you can refine before the real interview.
           </div>
         </div>
       </DropdownMenu.Item>

@@ -8,6 +8,7 @@ import { getActiveProfileId } from '$lib/server/profiles';
 import { readProfile } from '$lib/server/profile';
 import { getFollowupCadence, findEntryByCompanyRole, type FollowupEntry } from '$lib/server/followup-cadence';
 import { listOpenIssues } from '$lib/server/issues';
+import { listLeads } from '$lib/server/email-reactor';
 import fs from 'node:fs';
 import type { Job, ActivityEvent, Status } from '$lib/types';
 
@@ -267,10 +268,18 @@ export async function load({ url }: { url: URL }) {
     // Silent — Inbox stays usable even if cadence parsing fails
   }
 
+  // Inbound recruiter leads — emails the reactor classified as
+  // `recruiter-reach-out` (no prior tracker match). Highest-converting
+  // channel historically; surface up.
+  const leads = (() => {
+    try { return listLeads().slice(0, 10); } catch { return []; }
+  })();
+
   return {
     profileId,
     firstName,
     nowISO: new Date().toISOString(),
+    inboundLeads: leads,
     upNext,
     upNextTotal,
     ready,
