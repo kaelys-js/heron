@@ -1,6 +1,11 @@
 export type Status =
   | 'New' | 'Scoring' | 'Scored' | 'Ready'
-  | 'Queued' | 'Applying' | 'Applied' | 'Screened' | 'Interview'
+  | 'Queued' | 'Applying' | 'Applied' | 'Screened'
+  // Interview sub-stages — finer-grained than the legacy 'Interview' bucket.
+  // 'Interview' is preserved as a catch-all parent for back-compat with
+  // existing applications.md rows; new flows should pick one of the specific
+  // stages below.
+  | 'Interview' | 'PhoneScreen' | 'Technical' | 'Onsite' | 'TakeHome' | 'Final'
   | 'Offer' | 'Rejected' | 'Closed'
   | 'ManualApplyNeeded';
 
@@ -106,7 +111,11 @@ export const SOURCE_LABELS: Record<string, { label: string; tint: string }> = {
 export const STATUS_ORDER: Status[] = [
   'New', 'Scoring', 'Scored', 'Ready',
   'Queued', 'Applying',
-  'Applied', 'Screened', 'Interview',
+  'Applied', 'Screened',
+  // Interview stages — ordered by typical progression. 'Interview' as a
+  // generic bucket sits last so users with legacy data still see it grouped
+  // but don't pick it for new flows.
+  'PhoneScreen', 'Technical', 'TakeHome', 'Onsite', 'Final', 'Interview',
   'Offer', 'Rejected', 'Closed',
   'ManualApplyNeeded',
 ];
@@ -121,6 +130,13 @@ export const STATUS_TINTS: Record<Status, string> = {
   Applying: 'bg-blue-500/15 text-blue-200 border-blue-500/50 animate-pulse',
   Applied: 'bg-violet-500/10 text-violet-300 border-violet-500/30',
   Screened: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
+  // Interview stages share a warm hue family — distinguishable but
+  // visually clustered so you can tell "interview pipeline" at a glance.
+  PhoneScreen: 'bg-amber-500/10 text-amber-200 border-amber-500/40',
+  Technical: 'bg-orange-500/10 text-orange-200 border-orange-500/40',
+  TakeHome: 'bg-yellow-500/10 text-yellow-200 border-yellow-500/40',
+  Onsite: 'bg-orange-600/15 text-orange-200 border-orange-600/50',
+  Final: 'bg-red-400/15 text-red-200 border-red-400/50',
   Interview: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
   Offer: 'bg-green-500/15 text-green-300 border-green-500/40',
   Rejected: 'bg-red-500/10 text-red-300 border-red-500/30',
@@ -144,6 +160,11 @@ export const STATUS_EMPTY_COPY: Record<Status, string> = {
   Queued: 'Nothing queued for the next batch send.',
   Applied: "You haven't submitted any applications.",
   Screened: 'No screening calls scheduled.',
+  PhoneScreen: 'No phone screens scheduled.',
+  Technical: 'No technical interviews in progress.',
+  TakeHome: 'No take-homes in flight.',
+  Onsite: 'No onsite / final-round loops scheduled.',
+  Final: 'No final-round / hiring-committee stages active.',
   Interview: 'No interviews in progress.',
   Offer: 'No offers in hand yet — keep going.',
   Rejected: 'No rejections (or you haven\u2019t tracked them).',

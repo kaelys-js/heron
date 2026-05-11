@@ -147,7 +147,60 @@ export function markStatus(arg1: string | undefined, arg2: string, arg3?: string
       '| - | ' + today + ' | (auto) | ' + url + ' | - | - | ' + newStatus + ' | - | - | ' + (note ?? 'auto') + ' |';
     lines.push(row);
   }
-  return writeApplicationsSafe('mark-status', id, lines.join('\n'));
+  const writeOk = writeApplicationsSafe('mark-status', id, lines.join('\n'));
+
+  // Auto-trigger tech-prep when a job transitions into an interview stage.
+  // Implements #4 of the punch-list: the user doesn't have to click
+  // "Generate tech-prep plan" per job — the system does it on stage
+  // change. De-duped server-side (tech-prep endpoint skips when the
+  // output file already exists).
+  if (writeOk) {
+    try {
+      maybeAutoFireTechPrep(id, url, newStatus);
+    } catch (e) {
+      // Never let auto-fire side-effects break the status update.
+      void e;
+    }
+  }
+
+  return writeOk;
+}
+
+const INTERVIEW_STAGES = new Set(['PhoneScreen', 'Technical', 'TakeHome', 'Onsite', 'Final', 'Interview']);
+
+/** Fire tech-prep generation in the background when status moves into an
+ *  interview stage. Best-effort: errors are swallowed. */
+function maybeAutoFireTechPrep(profileId: string, url: string, newStatus: string): void {
+  if (!INTERVIEW_STAGES.has(newStatus)) return;
+
+  // Look up the job by URL so we can pass jobId to the endpoint.
+  // We import lazily to avoid a circular dep with parsers.ts.
+  void (async () => {
+    try {
+      const { loadAllJobs } = await import('./parsers');
+      const jobs = loadAllJobs('all');
+      const match = jobs.find((j) => j.url === url);
+      if (!match) return;
+      // Fire-and-forget HTTP call to our own tech-prep endpoint.
+      const q = match.profileId ? '?profile=' + encodeURIComponent(match.profileId) : '';
+      const fetchUrl = 'http://127.0.0.1:5174/api/job/' + encodeURIComponent(match.id) + '/tech-prep' + q;
+      fetch(fetchUrl, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: '{}',
+      }).catch(() => { /* surfaced via tech-prep endpoint's own error path */ });
+      // Log the trigger so the user sees it in the bell.
+      const { logEvent } = await import('./events');
+      logEvent('auto-tech-prep', 'Tech-prep auto-triggered · ' + newStatus, {
+        level: 'info', category: 'application',
+        message: (match.company || '?') + ' · ' + (match.role || '?') +
+          ' — runs in background, watch the bell for completion.',
+        profileId: match.profileId,
+      });
+    } catch {
+      /* silent — auto-fire is best-effort */
+    }
+  })();
 }
 
 /** Flip the row matching `url` to status=Applied. Adds a row if none exists. */

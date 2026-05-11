@@ -38,6 +38,8 @@ export const PRODUCTION_PORTALS: ReadonlySet<SupportedPortal> = new Set([
   'linkedin',
   'greenhouse',
   'ashby',
+  'lever',
+  'workday',
 ]);
 
 export type DetectResult = {

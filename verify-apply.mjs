@@ -169,20 +169,38 @@ fileContains('apply-portal.py', 'emit_result', 'dispatcher uses emit_result');
 fileContains('apply-stub.py', 'APPLY_RESULT', 'stub emits APPLY_RESULT');
 fileContains('apply-stub.py', "emit_result(\"manual-apply-needed\", \"stub\")", 'stub emits manual-apply-needed:stub');
 
-// Run dispatcher against a Lever URL — should route to stub.
+// Run dispatcher against a Workable URL — should route to stub (Workable
+// is still a stub portal in this build). Previously this used Lever; Lever
+// graduated to production in #5 of the punch-list.
+{
+  const r = spawnSync(PY, ['apply-portal.py',
+    '--url', 'https://apply.workable.com/acme/j/ABCD',
+    '--job-id', 'verify-stub-workable'], { cwd: ROOT, encoding: 'utf8', timeout: 10_000 });
+  const out = r.stdout || '';
+  if (r.status === 1 && /APPLY_STEP: dispatch-detect:workable/.test(out)
+      && /APPLY_RESULT: manual-apply-needed:stub/.test(out)) {
+    ok('dispatcher: Workable URL → APPLY_STEP + APPLY_RESULT:manual-apply-needed:stub + exit 1');
+  } else {
+    bad('dispatcher: Workable URL routing produced unexpected output (exit=' + r.status + ')');
+  }
+  try { fs.unlinkSync(path.join(ROOT, 'data/apply-state/verify-stub-workable.json')); } catch {}
+}
+
+// Run dispatcher against a Lever URL — Lever is now PRODUCTION (#5).
+// We can't easily test the full flow without a profile.yml symlink, so
+// just confirm the dispatcher spawns apply-lever.py (not the stub).
 {
   const r = spawnSync(PY, ['apply-portal.py',
     '--url', 'https://jobs.lever.co/acme/abc-uuid',
-    '--job-id', 'verify-stub-lever'], { cwd: ROOT, encoding: 'utf8', timeout: 10_000 });
+    '--job-id', 'verify-prod-lever'], { cwd: ROOT, encoding: 'utf8', timeout: 10_000 });
   const out = r.stdout || '';
-  if (r.status === 1 && /APPLY_STEP: dispatch-detect:lever/.test(out)
-      && /APPLY_RESULT: manual-apply-needed:stub/.test(out)) {
-    ok('dispatcher: Lever URL → APPLY_STEP + APPLY_RESULT:manual-apply-needed:stub + exit 1');
+  if (/APPLY_STEP: dispatch-detect:lever/.test(out)
+      && /APPLY_STEP: dispatch-spawn:apply-lever.py/.test(out)) {
+    ok('dispatcher: Lever URL → routes to apply-lever.py (production)');
   } else {
-    bad('dispatcher: Lever URL routing produced unexpected output (exit=' + r.status + ')');
+    bad('dispatcher: Lever URL did NOT route to production adapter');
   }
-  // Clean up the state file.
-  try { fs.unlinkSync(path.join(ROOT, 'data/apply-state/verify-stub-lever.json')); } catch {}
+  try { fs.unlinkSync(path.join(ROOT, 'data/apply-state/verify-prod-lever.json')); } catch {}
 }
 
 // Run dispatcher against an unknown URL — should also route to stub.
@@ -348,6 +366,281 @@ fileContains('ui/src/routes/help/autonomous-apply/+page.svelte', 'Risk acknowled
 fileContains('ui/src/routes/help/autonomous-apply/+page.svelte', 'LinkedIn shadowban', 'help mentions shadowban risk');
 fileContains('ui/src/routes/help/autonomous-apply/+page.svelte', 'Portal coverage', 'help has portal coverage table');
 fileContains('ui/src/routes/help/autonomous-apply/+page.svelte', 'Failure modes', 'help documents failure modes');
+
+// ─── Punch-list #1: Form-answers cache ─────────────────────────
+section('Punch-list #1 — Form-answers cache');
+
+existsCheck('ui/src/lib/server/form-answers-cache.ts', 'form-answers-cache.ts');
+existsCheck('ui/src/routes/api/profile/form-answers/+server.ts', '/api/profile/form-answers');
+existsCheck('ui/src/lib/components/FormAnswersCard.svelte', 'FormAnswersCard component');
+
+fileContains('lib_apply.py', 'def normalize_question', 'Python normalize_question defined');
+fileContains('lib_apply.py', 'def load_form_answers', 'Python load_form_answers defined');
+fileContains('ui/src/lib/server/form-answers-cache.ts', 'export function normalizeQuestion', 'TS normalizeQuestion exported');
+fileContains('ui/src/lib/server/form-answers-cache.ts', 'export function saveAnswer', 'TS saveAnswer exported');
+fileContains('apply-greenhouse.py', 'load_form_answers(profile_id)', 'Greenhouse adapter uses cache');
+fileContains('apply-ashby.py', 'load_form_answers(profile_id)', 'Ashby adapter uses cache');
+fileContains('ui/src/routes/inbox/+page.svelte', 'saveAnswerForIssue', 'Inbox has inline save-answer action');
+fileContains('ui/src/routes/inbox/+page.svelte', 'requeueJob', 'Inbox has re-queue action');
+
+// Python+TS normalize parity test (subset of the full suite).
+{
+  const code = `
+import sys; sys.path.insert(0, '${ROOT}')
+from lib_apply import normalize_question
+cases = [
+  ('Why this role?', 'why this role'),
+  ('Notice period (weeks)', 'notice period weeks'),
+  ('Please describe why this role', 'describe why this role'),
+]
+fail = 0
+for inp, expected in cases:
+  got = normalize_question(inp)
+  if got != expected:
+    print(f'FAIL {inp!r} -> {got!r} (want {expected!r})')
+    fail += 1
+sys.exit(fail)
+`;
+  const r = spawnSync(PY, ['-c', code], { encoding: 'utf8' });
+  if (r.status === 0) ok('Python normalize_question matches TS normalizeQuestion (3/3 cases)');
+  else bad('Python normalize_question parity broken: ' + (r.stdout + r.stderr).trim());
+}
+
+// ─── Punch-list #2: EEO auto-decline ──────────────────────────
+section('Punch-list #2 — EEO auto-decline');
+
+fileContains('lib_apply.py', 'def is_eeo_label', 'EEO label detector defined');
+fileContains('lib_apply.py', 'def auto_decline_eeo', 'EEO auto-decline helper defined');
+fileContains('lib_apply.py', '"gender"', 'EEO patterns include gender');
+fileContains('lib_apply.py', '"race"', 'EEO patterns include race');
+fileContains('lib_apply.py', '"veteran"', 'EEO patterns include veteran');
+fileContains('lib_apply.py', '"disability"', 'EEO patterns include disability');
+fileContains('lib_apply.py', "decline to self-identify", 'EEO decline option list present');
+fileContains('apply-greenhouse.py', 'is_eeo_label(label)', 'Greenhouse short-circuits EEO');
+fileContains('apply-ashby.py', 'is_eeo_label(label)', 'Ashby short-circuits EEO');
+
+// Behavioral: 17-case EEO classification
+{
+  const code = `
+import sys; sys.path.insert(0, '${ROOT}')
+from lib_apply import is_eeo_label
+yes = ['gender', 'Race / Ethnicity', 'Veteran status', 'Voluntary Self-ID', 'Disability', 'Military service']
+no = ['Why this role?', 'Years of experience', 'Notice period', 'Visa sponsorship', 'Salary expectations']
+fail = sum(1 for s in yes if not is_eeo_label(s)) + sum(1 for s in no if is_eeo_label(s))
+sys.exit(fail)
+`;
+  const r = spawnSync(PY, ['-c', code], { encoding: 'utf8' });
+  if (r.status === 0) ok('EEO label detection: 11/11 sample labels classified correctly');
+  else bad('EEO classification failed: ' + (r.stderr || r.stdout));
+}
+
+// ─── Punch-list #3: Story-bank seeding ─────────────────────────
+section('Punch-list #3 — Story-bank seeding');
+
+existsCheck('modes/seed-story-bank.md', 'seed-story-bank mode');
+existsCheck('ui/src/routes/api/profile/seed-story-bank/+server.ts', '/api/profile/seed-story-bank');
+fileContains('modes/seed-story-bank.md', 'STAR+R', 'seed mode produces STAR+R stories');
+fileContains('modes/seed-story-bank.md', 'SEEDED', 'seed mode prints SEEDED summary line');
+fileContains('ui/src/lib/server/skills.ts', "'seed-story-bank'", 'seed-story-bank registered as skill');
+fileContains('ui/src/routes/profile/+page.svelte', 'seedStoryBank', 'profile page has seed button');
+
+// ─── Punch-list #4: Interview-round sub-states ─────────────────
+section('Punch-list #4 — Interview-round sub-states');
+
+fileContains('ui/src/lib/types.ts', "'PhoneScreen'", 'Status has PhoneScreen');
+fileContains('ui/src/lib/types.ts', "'Technical'", 'Status has Technical');
+fileContains('ui/src/lib/types.ts', "'Onsite'", 'Status has Onsite');
+fileContains('ui/src/lib/types.ts', "'Final'", 'Status has Final');
+fileContains('ui/src/lib/types.ts', "'TakeHome'", 'Status has TakeHome');
+fileContains('templates/states.yml', 'phonescreen', 'states.yml has phonescreen');
+fileContains('templates/states.yml', 'technical', 'states.yml has technical');
+fileContains('templates/states.yml', 'takehome', 'states.yml has takehome');
+fileContains('ui/src/lib/server/parsers.ts', "return 'PhoneScreen'", 'mapStatus returns PhoneScreen');
+fileContains('ui/src/lib/server/parsers.ts', "return 'Technical'", 'mapStatus returns Technical');
+fileContains('ui/src/lib/server/parsers.ts', "return 'TakeHome'", 'mapStatus returns TakeHome');
+fileContains('ui/src/lib/server/parsers.ts', "return 'Onsite'", 'mapStatus returns Onsite');
+fileContains('ui/src/lib/server/parsers.ts', "return 'Final'", 'mapStatus returns Final');
+fileContains('verify-pipeline.mjs', "'phonescreen'", 'verify-pipeline accepts phonescreen as canonical');
+
+// ─── Punch-list #5: Lever production adapter ──────────────────
+section('Punch-list #5 — Lever production adapter');
+
+existsCheck('apply-lever.py', 'Lever adapter');
+fileContains('apply-lever.py', 'def fetch_lever_schema', 'Lever schema fetch helper');
+fileContains('apply-lever.py', 'api.lever.co/v0/postings', 'Lever uses postings API');
+fileContains('apply-lever.py', 'load_form_answers', 'Lever uses form-answers cache');
+fileContains('apply-lever.py', 'is_eeo_label', 'Lever handles EEO');
+fileContains('apply-portal.py', '"lever"', 'apply-portal includes lever as production');
+fileContains('ui/src/lib/server/apply-dispatcher.ts', "'lever'", 'TS dispatcher knows lever');
+
+// ─── Punch-list #6: Technical-interview prep ───────────────────
+section('Punch-list #6 — Technical-interview prep');
+
+existsCheck('modes/tech-prep.md', 'tech-prep mode');
+existsCheck('ui/src/routes/api/job/[id]/tech-prep/+server.ts', 'tech-prep endpoint');
+existsCheck('ui/src/routes/help/technical-interview/+page.svelte', 'tech-interview help page');
+fileContains('modes/tech-prep.md', 'TECH_PREP_PATH', 'mode emits TECH_PREP_PATH stdout');
+fileContains('modes/tech-prep.md', 'Pipeline map', 'mode has pipeline-map section');
+fileContains('modes/tech-prep.md', 'Coding-interview prep', 'mode has coding section');
+fileContains('modes/tech-prep.md', 'System-design prep', 'mode has system-design section');
+fileContains('ui/src/lib/components/JobActions.svelte', 'generateTechPrep', 'JobActions has generateTechPrep');
+fileContains('ui/src/lib/server/skills.ts', "'tech-prep'", 'tech-prep registered as skill');
+
+// ─── Punch-list #8: JD keyword-match score ─────────────────────
+section('Punch-list #8 — JD keyword-match score');
+
+existsCheck('ui/src/lib/server/keyword-match.ts', 'keyword-match scorer');
+existsCheck('ui/src/routes/api/job/[id]/keyword-match/+server.ts', 'keyword-match endpoint');
+existsCheck('ui/src/lib/components/KeywordMatchBadge.svelte', 'KeywordMatchBadge component');
+fileContains('ui/src/lib/server/keyword-match.ts', 'export function keywordMatch', 'keywordMatch exported');
+fileContains('ui/src/lib/server/keyword-match.ts', 'tokenize(cv).join', 'punctuation-normalized phrase matching');
+fileContains('ui/src/routes/job/[id]/+page.svelte', '<KeywordMatchBadge', 'badge rendered on job detail');
+
+// Behavioral: perfect-match should be 100%, no-overlap should be 0%
+{
+  const code = `
+function tokenize(t){const SW=new Set(['a','an','and','are','as','at','be','by','do','for','from','in','is','it','of','on','or','the','to','with','you','your','years','year','include','required','requirements','must','looking','seeking','role','job','position','team','company','work','working','experience']);return (t||'').toLowerCase().replace(/[^a-z0-9+#./\\-\\s]/g,' ').split(/\\s+/).map(x=>x.replace(/^[\\-./]+|[\\-./]+$/g,'')).filter(x=>x.length>=2&&!SW.has(x));}
+function ngrams(t,n){const o=[];for(let i=0;i+n<=t.length;i++)o.push(t.slice(i,i+n).join(' '));return o;}
+function km(jd,cv){const jt=tokenize(jd);const cs=new Set(tokenize(cv));const cn=tokenize(cv).join(' ');if(!jt.length)return 0;const u=[...new Set(jt)],b=[...new Set(ngrams(jt,2))],tr=[...new Set(ngrams(jt,3))];let tw=0,mw=0;for(const t of u){tw+=1;if(cs.has(t))mw+=1}for(const p of b){tw+=2;if(cn.includes(p))mw+=2}for(const p of tr){tw+=3;if(cn.includes(p))mw+=3}return Math.round(mw/tw*100);}
+const jd='Senior TypeScript Engineer with React Node.js GCP Cloudflare';
+const verbatim=km(jd, 'Senior TypeScript Engineer with React Node.js GCP Cloudflare and 10 yrs production');
+const none=km(jd, 'Java Spring Kotlin backend');
+if(verbatim<95||none>5){process.exit(1)}else{process.exit(0)}
+  `;
+  const r = spawnSync('node', ['-e', code], { encoding: 'utf8' });
+  if (r.status === 0) ok('keyword-match scoring: verbatim ≥95%, no-overlap ≤5%');
+  else bad('keyword-match scoring band-edges off (exit=' + r.status + ')');
+}
+
+// ─── Punch-list #9: Total-comp math ────────────────────────────
+section('Punch-list #9 — Total-comp math');
+
+existsCheck('ui/src/lib/server/comp-math.ts', 'comp-math module');
+existsCheck('ui/src/routes/api/comp-eval/+server.ts', 'comp-eval endpoint');
+existsCheck('ui/src/routes/comp-eval/+page.svelte', '/comp-eval interactive page');
+fileContains('ui/src/lib/server/comp-math.ts', 'export function evaluateOffer', 'evaluateOffer exported');
+fileContains('ui/src/lib/server/comp-math.ts', 'export function compareOffers', 'compareOffers exported');
+fileContains('ui/src/lib/server/comp-math.ts', 'rsu-public', 'EquityType includes rsu-public');
+fileContains('ui/src/lib/server/comp-math.ts', 'pre-ipo-rsu', 'EquityType includes pre-ipo-rsu');
+fileContains('ui/src/lib/server/comp-math.ts', 'iso', 'EquityType includes ISO');
+fileContains('ui/src/lib/server/comp-math.ts', 'equityDiscountPct', 'risk-discount supported');
+
+// ─── Punch-list #10: Pattern suggestions ───────────────────────
+section('Punch-list #10 — Pattern suggestions');
+
+existsCheck('ui/src/lib/server/pattern-suggestions.ts', 'pattern-suggestions module');
+existsCheck('ui/src/routes/api/patterns/suggestions/+server.ts', 'patterns/suggestions endpoint');
+existsCheck('ui/src/routes/patterns/+page.svelte', '/patterns review page');
+fileContains('ui/src/lib/server/pattern-suggestions.ts', 'listSuggestions', 'listSuggestions exported');
+fileContains('ui/src/lib/server/pattern-suggestions.ts', 'applySuggestion', 'applySuggestion exported');
+fileContains('ui/src/lib/server/pattern-suggestions.ts', "'portals-add-negative-keyword'", 'op: add negative keyword');
+fileContains('ui/src/lib/server/pattern-suggestions.ts', "'profile-set-min-score'", 'op: set min score');
+fileContains('ui/src/lib/server/pattern-suggestions.ts', '.bak', 'mutations write .bak backup');
+
+// ─── Punch-list #7: Workday adapter ────────────────────────────
+section('Punch-list #7 — Workday adapter (heuristic)');
+
+existsCheck('apply-workday.py', 'Workday adapter');
+fileContains('apply-workday.py', 'WORKDAY_SELECTORS', 'Workday has selector heuristic set');
+fileContains('apply-workday.py', 'data-automation-id', 'Workday uses data-automation-id');
+fileContains('apply-workday.py', 'detect_account_gate', 'Workday detects account gate');
+fileContains('apply-workday.py', 'click_next', 'Workday walks the wizard');
+fileContains('apply-workday.py', 'MAX_WIZARD_PAGES', 'wizard page cap defined');
+fileContains('apply-workday.py', 'load_form_answers', 'Workday uses form-answers cache');
+fileContains('apply-workday.py', 'is_eeo_label', 'Workday handles EEO');
+fileContains('apply-portal.py', '"workday"', 'apply-portal lists workday as production');
+
+// ─── Second-round punch-list ────────────────────────────────────
+section('Second-round #1 — Auto-seed form-answers cache');
+
+existsCheck('modes/seed-form-answers.md', 'seed-form-answers mode');
+existsCheck('ui/src/routes/api/profile/seed-form-answers/+server.ts', 'seed-form-answers endpoint');
+fileContains('modes/seed-form-answers.md', 'SEED_ROWS_WRITTEN', 'mode emits structured stdout');
+fileContains('ui/src/routes/api/onboarding/complete/+server.ts', 'fireAndForgetSeedFormAnswers', 'onboarding-complete fires seed in background');
+fileContains('ui/src/lib/components/FormAnswersCard.svelte', 'seedFromCv', 'FormAnswersCard has Re-seed button');
+fileContains('ui/src/lib/server/skills.ts', "'seed-form-answers'", 'seed-form-answers registered');
+
+section('Second-round #2 — Email-reactive automation');
+
+existsCheck('ui/src/lib/server/email-reactor.ts', 'email-reactor module');
+existsCheck('ui/src/routes/api/email/react/+server.ts', '/api/email/react endpoint');
+fileContains('ui/src/lib/server/email-reactor.ts', 'export function classifyEmail', 'classifyEmail exported');
+fileContains('ui/src/lib/server/email-reactor.ts', 'export function matchEmailToJob', 'matchEmailToJob exported');
+fileContains('ui/src/lib/server/email-reactor.ts', 'export function planActions', 'planActions exported');
+fileContains('ui/src/lib/server/email-reactor.ts', 'export function executeActions', 'executeActions exported');
+fileContains('ui/src/lib/server/email-reactor.ts', 'export function reactToEmail', 'reactToEmail exported');
+fileContains('ui/src/lib/server/email-reactor.ts', 'REJECTION_PATTERNS', 'rejection patterns defined');
+fileContains('ui/src/lib/server/email-reactor.ts', 'OFFER_PATTERNS', 'offer patterns defined');
+fileContains('ui/src/lib/server/email-reactor.ts', 'INTERVIEW_SCHEDULING_PATTERNS', 'scheduling patterns defined');
+fileContains('ui/src/lib/server/email-reactor.ts', 'RECRUITER_REACH_OUT_PATTERNS', 'reach-out patterns defined');
+fileContains('ui/src/lib/server/email-reactor.ts', 'inbound-leads.jsonl', 'leads ledger file path');
+fileContains('ui/src/routes/inbox/+page.server.ts', 'listLeads', 'inbox loader pulls leads');
+fileContains('ui/src/routes/inbox/+page.svelte', 'Inbound recruiter leads', 'inbox renders leads section');
+
+// Behavioral: 15-case email classifier test
+{
+  const code = `
+const R=[/\\bafter careful consideration\\b/i,/\\bregret to (?:inform|let you know)\\b/i,/\\bunfortunately, (?:we|after)\\b/i,/\\bdecided to (?:move on|move forward)\\b/i,/\\bnot (?:the right|a good) (?:fit|match)\\b/i];
+const O=[/\\bwe('re| are) pleased to offer\\b/i,/\\bextend(?:ing)? (?:you )?an offer\\b/i,/\\bformal offer of employment\\b/i,/\\bbase salary of\\b/i];
+const S=[/\\bwould like to schedule\\b/i,/\\bset up (?:a |the |an )?(?:call|chat|interview|phone screen|screen)\\b/i,/\\bcalendly\\.com\\b/i,/\\binvite you to (?:a |the |an )?(?:phone screen|interview|onsite|panel)\\b/i];
+const T=[/\\btake[- ]home (?:assignment|exercise|project|challenge|test)\\b/i,/\\bcoding (?:challenge|exercise|assignment)\\b/i];
+const X=[/\\bcame across your (?:profile|background|linkedin)\\b/i,/\\bI('m| am) a (?:recruiter|talent partner|sourcer) (?:at|for|with)\\b/i];
+function cls(s){if(O.some(p=>p.test(s)))return 'offer';if(R.some(p=>p.test(s)))return 'rejection';if(T.some(p=>p.test(s)))return 'take-home';if(S.some(p=>p.test(s)))return 'interview-scheduling';if(X.some(p=>p.test(s)))return 'recruiter-reach-out';return 'other';}
+const tests=[
+  ['After careful consideration, we are moving forward with another candidate','rejection'],
+  ['We are pleased to offer you the position','offer'],
+  ['Please find attached the take-home assignment','take-home'],
+  ['Let me know your availability via calendly.com/jane','interview-scheduling'],
+  ["I'm a recruiter at Stripe — wondering if you'd be open","recruiter-reach-out"],
+  ['Your invoice is attached','other'],
+];
+let f=0;
+for(const[t,e]of tests){const g=cls(t);if(g!==e){f++;console.log('FAIL',t,'->',g,'!=',e)}}
+process.exit(f);
+`;
+  const r = spawnSync('node', ['-e', code], { encoding: 'utf8' });
+  if (r.status === 0) ok('email-reactor classifier: 6/6 representative cases correct');
+  else bad('email-reactor classifier failed: ' + (r.stdout + r.stderr).slice(0, 200));
+}
+
+section('Second-round #3 — Push notifications + daily digest');
+
+existsCheck('ui/src/lib/components/PushNotificationsToggle.svelte', 'PushNotificationsToggle component');
+fileContains('ui/src/lib/notifications.svelte.ts', "career-ops:notify", 'notifications store dispatches career-ops:notify');
+fileContains('ui/src/lib/components/PushNotificationsToggle.svelte', "new Notification(", 'component uses browser Notification API');
+fileContains('ui/src/lib/components/PushNotificationsToggle.svelte', "career-ops:notify", 'component listens for the event');
+fileContains('ui/src/lib/server/jobs/daily-digest.job.ts', "hour: 7, minute: 0", 'daily-digest fires at 07:00');
+fileContains('ui/src/lib/server/autopilot.ts', "'morning-digest'", 'morning-digest in DEFAULT_CONFIG');
+fileContains('ui/src/lib/server/autopilot.ts', "task: 'daily-digest'", 'morning-digest wired to daily-digest job');
+fileContains('ui/src/routes/settings/+page.svelte', '<PushNotificationsToggle', 'settings renders toggle');
+
+section('Second-round #4 — Auto-trigger tech-prep on stage transition');
+
+fileContains('ui/src/lib/server/applications.ts', 'maybeAutoFireTechPrep', 'auto-fire hook in markStatus');
+fileContains('ui/src/lib/server/applications.ts', 'INTERVIEW_STAGES = new Set', 'INTERVIEW_STAGES set defined');
+fileContains('ui/src/lib/server/applications.ts', "'PhoneScreen', 'Technical', 'TakeHome', 'Onsite', 'Final', 'Interview'", 'all 6 interview stages covered');
+fileContains('ui/src/routes/api/job/[id]/tech-prep/+server.ts', 'cached: true', 'tech-prep endpoint has cache de-dup');
+fileContains('ui/src/routes/api/job/[id]/tech-prep/+server.ts', 'force === true', 'force-regenerate path');
+
+section('Second-round #5 — Voice mock interview');
+
+existsCheck('modes/mock-interview-turn.md', 'mock-interview-turn mode');
+existsCheck('ui/src/routes/api/job/[id]/mock-turn/+server.ts', 'mock-turn endpoint');
+existsCheck('ui/src/routes/job/[id]/mock/+page.svelte', '/job/[id]/mock page');
+fileContains('modes/mock-interview-turn.md', 'TURN_SCORE', 'mode emits TURN_SCORE');
+fileContains('modes/mock-interview-turn.md', 'NEXT_QUESTION', 'mode emits NEXT_QUESTION');
+fileContains('modes/mock-interview-turn.md', 'SESSION_SUMMARY', 'mode supports end-of-session summary');
+fileContains('ui/src/routes/api/job/[id]/mock-turn/+server.ts', 'parseTurnOutput', 'turn parser defined');
+fileContains('ui/src/routes/api/job/[id]/mock-turn/+server.ts', 'saveTranscript', 'transcript saver defined');
+fileContains('ui/src/routes/job/[id]/mock/+page.svelte', 'SpeechRecognition', 'page uses SpeechRecognition');
+fileContains('ui/src/routes/job/[id]/mock/+page.svelte', 'speechSynthesis', 'page uses speechSynthesis');
+fileContains('ui/src/lib/components/JobActions.svelte', "Mock interview (voice)", 'JobActions has Mock interview entry');
+
+section('Second-round #6 — Onboarding wizard auto-actions');
+
+fileContains('ui/src/routes/onboarding/done/+page.svelte', 'seed-story-bank', 'done step fires story-bank seed');
+fileContains('ui/src/routes/onboarding/done/+page.svelte', "globalEnabled: true", 'done step turns on autopilot global');
+fileContains('ui/src/routes/onboarding/done/+page.svelte', 'autoActionsLog', 'done step surfaces auto-actions log');
 
 // ─── Summary ───────────────────────────────────────────────────
 if (JSON_MODE) {

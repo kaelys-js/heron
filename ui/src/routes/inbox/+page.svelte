@@ -34,6 +34,7 @@
 
   let { data }: {
     data: {
+      profileId: string;
       firstName: string;
       nowISO: string;
       upNext: Job[];
@@ -64,6 +65,7 @@
         source: string;
         ts: number;
       }>;
+      inboundLeads: Array<{ sender: string; subject: string; ts: number }>;
       followupsUrgent: { job: Job; entry: import('$lib/server/followup-cadence').FollowupEntry }[];
       followupsOverdue: { job: Job; entry: import('$lib/server/followup-cadence').FollowupEntry }[];
       followupsCadenceMeta: import('$lib/server/followup-cadence').FollowupCadence['metadata'] | null;
@@ -115,6 +117,70 @@
       postAlertAction(a);
     } else if (a.actionUrl) {
       goto(a.actionUrl);
+    }
+  }
+
+  // ---- Apply-issue inline save-answer + re-queue ----
+  // When an apply:{jobId} issue's detail starts with "unknown-field:label1,label2",
+  // we parse out the missing question labels and let the user save an answer
+  // inline — POSTs to /api/profile/form-answers, then re-queues the job so
+  // the drain picks it up again on next run.
+  let expandedIssueId = $state<string | null>(null);
+  let savingAnswer = $state(false);
+  let requeueing = $state<string | null>(null);
+  // Map of "issueId/label" → typed answer (so each row keeps its own state)
+  let answerInputs = $state<Record<string, string>>({});
+
+  /** Parse the unknown-field labels out of an issue.detail body.
+   *  Format: "unknown-field:label1,label2,...\n\nPosting: <url>..." */
+  function parseUnknownFields(detail?: string): string[] {
+    if (!detail) return [];
+    const firstLine = detail.split('\n')[0] ?? '';
+    const m = /^unknown-field:(.+)$/.exec(firstLine.trim());
+    if (!m) return [];
+    return m[1].split(',').map((s) => s.trim()).filter(Boolean);
+  }
+
+  async function saveAnswerForIssue(issueId: string, label: string) {
+    const key = issueId + '/' + label;
+    const answer = (answerInputs[key] ?? '').trim();
+    if (!answer || savingAnswer) return;
+    savingAnswer = true;
+    try {
+      await api.post(
+        '/api/profile/form-answers',
+        { label, answer },
+        { silent: true },
+      );
+      toast.success('Answer saved · ' + label.slice(0, 50), {
+        description: 'Re-queue the job to apply again — the drain will use this answer next time.',
+        duration: 7_000,
+      });
+      // Clear the input.
+      answerInputs = { ...answerInputs, [key]: '' };
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Save failed', { description: err.message });
+    } finally {
+      savingAnswer = false;
+    }
+  }
+
+  async function requeueJob(jobId: string) {
+    if (requeueing) return;
+    requeueing = jobId;
+    try {
+      // Re-queue endpoint: POST /api/job/[id]/queue-apply forces a new
+      // Queued status. If the job is currently ManualApplyNeeded, that
+      // change lets apply-queue-drain pick it back up.
+      await api.post('/api/job/' + encodeURIComponent(jobId) + '/queue-apply', {}, { silent: true });
+      toast.success('Re-queued', { description: 'Drain will pick it up on next run (or "Run drain now" on /queue).' });
+      await invalidateAll();
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Re-queue failed', { description: err.message });
+    } finally {
+      requeueing = null;
     }
   }
 
@@ -435,43 +501,140 @@
             Auto-apply needs review · {data.applyIssues.length}
           </h2>
           {#each data.applyIssues as issue (issue.id)}
+            {@const unknownLabels = parseUnknownFields(issue.detail)}
+            {@const isUnknownField = unknownLabels.length > 0}
+            {@const isExpanded = expandedIssueId === issue.id}
             <div class={cn(
-              'flex items-start gap-3 px-3.5 py-2.5 rounded-md border',
+              'rounded-md border',
               issue.severity === 'error'
                 ? 'border-red-500/40 bg-red-500/5'
                 : 'border-amber-500/40 bg-amber-500/5',
             )}>
-              {#if issue.severity === 'error'}
-                <AlertCircle class="size-4 mt-0.5 text-red-400 flex-shrink-0" />
-              {:else}
-                <AlertTriangle class="size-4 mt-0.5 text-amber-400 flex-shrink-0" />
-              {/if}
-              <div class="flex-1 min-w-0">
-                <div class="text-sm font-medium">{issue.summary}</div>
-                {#if issue.detail}
-                  <p class="text-[11px] opacity-80 leading-relaxed mt-0.5 whitespace-pre-wrap font-mono">
-                    {issue.detail.split('\n').slice(0, 3).join('\n')}
-                  </p>
+              <div class="flex items-start gap-3 px-3.5 py-2.5">
+                {#if issue.severity === 'error'}
+                  <AlertCircle class="size-4 mt-0.5 text-red-400 flex-shrink-0" />
+                {:else}
+                  <AlertTriangle class="size-4 mt-0.5 text-amber-400 flex-shrink-0" />
                 {/if}
-                <div class="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
-                  <span class="font-mono">{issue.source}</span>
-                  <span>·</span>
-                  <span>{formatRelativeTime(issue.ts)}</span>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium">{issue.summary}</div>
+                  {#if issue.detail}
+                    <p class="text-[11px] opacity-80 leading-relaxed mt-0.5 whitespace-pre-wrap font-mono">
+                      {issue.detail.split('\n').slice(0, 3).join('\n')}
+                    </p>
+                  {/if}
+                  <div class="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                    <span class="font-mono">{issue.source}</span>
+                    <span>·</span>
+                    <span>{formatRelativeTime(issue.ts)}</span>
+                  </div>
                 </div>
+                {#if isUnknownField}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    class="h-7 text-xs gap-1.5 flex-shrink-0"
+                    onclick={() => expandedIssueId = isExpanded ? null : issue.id}
+                  >
+                    {isExpanded ? 'Hide' : 'Save answers'}
+                  </Button>
+                {/if}
+                {#if issue.fix?.href}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    class="h-7 text-xs gap-1.5 flex-shrink-0"
+                    onclick={() => window.open(issue.fix!.href, '_blank', 'noopener')}
+                  >
+                    {issue.fix.label}
+                    <ArrowRight class="size-3" />
+                  </Button>
+                {/if}
               </div>
-              {#if issue.fix?.href}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  class="h-7 text-xs gap-1.5 flex-shrink-0"
-                  onclick={() => window.open(issue.fix!.href, '_blank', 'noopener')}
-                >
-                  {issue.fix.label}
-                  <ArrowRight class="size-3" />
-                </Button>
+              <!-- Inline save-answer form (only for unknown-field issues) -->
+              {#if isUnknownField && isExpanded}
+                <div class="border-t border-amber-500/20 px-3.5 py-3 space-y-3 bg-amber-500/5">
+                  <p class="text-[11px] text-amber-100/90 leading-relaxed">
+                    Save an answer for each question below. Adapter will pull these from your form-answers
+                    cache next time. Once saved, click <strong>Re-queue</strong> to retry the apply.
+                  </p>
+                  {#each unknownLabels as label, i (label + i)}
+                    {@const inputKey = issue.id + '/' + label}
+                    <div class="space-y-1.5">
+                      <div class="text-xs font-medium text-foreground">{label}</div>
+                      <div class="flex items-start gap-2">
+                        <textarea
+                          rows="2"
+                          placeholder="Your answer (e.g. '2 weeks' for notice period)"
+                          class="flex-1 rounded-md border border-border/40 bg-background px-2 py-1.5 text-xs font-sans resize-y"
+                          value={answerInputs[inputKey] ?? ''}
+                          oninput={(e) => answerInputs = { ...answerInputs, [inputKey]: (e.currentTarget as HTMLTextAreaElement).value }}
+                        ></textarea>
+                        <Button
+                          size="sm"
+                          onclick={() => saveAnswerForIssue(issue.id, label)}
+                          disabled={savingAnswer || !((answerInputs[inputKey] ?? '').trim())}
+                          class="h-7 text-[11px] gap-1 flex-shrink-0"
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    </div>
+                  {/each}
+                  <div class="flex items-center justify-between pt-1 border-t border-amber-500/20">
+                    <p class="text-[10px] text-muted-foreground/80">
+                      Stored under your profile's form-answers cache.
+                      <a href={'/profile?profile=' + encodeURIComponent(data.profileId) + '#autonomous-apply'} class="underline">Manage all answers →</a>
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onclick={() => requeueJob(issue.jobId)}
+                      disabled={requeueing === issue.jobId}
+                      class="h-7 text-[11px] gap-1"
+                    >
+                      {#if requeueing === issue.jobId}
+                        <ActivityIcon class="size-3 animate-pulse" /> Re-queuing…
+                      {:else}
+                        Re-queue apply
+                      {/if}
+                    </Button>
+                  </div>
+                </div>
               {/if}
             </div>
           {/each}
+        </section>
+      {/if}
+
+      <!-- ===================== INBOUND RECRUITER LEADS ===================== -->
+      <!--
+        Emails classified as "recruiter-reach-out" by the email-reactor.
+        These are recruiters who emailed the user about a NEW opportunity
+        (not a follow-up on an existing application). Historically the
+        highest-converting channel — surface up.
+      -->
+      {#if data.inboundLeads && data.inboundLeads.length > 0}
+        <section class="space-y-2">
+          <h2 class="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <Sparkles class="size-3 text-emerald-400" />
+            Inbound recruiter leads · {data.inboundLeads.length}
+          </h2>
+          <div class="space-y-1.5">
+            {#each data.inboundLeads as lead}
+              <div class="flex items-start gap-3 px-3.5 py-2.5 rounded-md border border-emerald-500/30 bg-emerald-500/5">
+                <Sparkles class="size-4 mt-0.5 text-emerald-300 flex-shrink-0" />
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium truncate">{lead.subject}</div>
+                  <div class="text-[10px] text-muted-foreground flex items-center gap-2 mt-0.5">
+                    <span class="font-mono truncate">{lead.sender}</span>
+                    <span>·</span>
+                    <span>{formatRelativeTime(lead.ts)}</span>
+                  </div>
+                </div>
+              </div>
+            {/each}
+          </div>
         </section>
       {/if}
 

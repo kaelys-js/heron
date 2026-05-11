@@ -167,6 +167,21 @@ const DEFAULT_CONFIG: AutopilotConfig = {
       enabled: true,
       trigger: { type: 'daily', hour: 2, minute: 0, weekdays: [0, 1, 2, 3, 4, 5, 6] },
     },
+    {
+      id: 'morning-digest',
+      name: 'Morning digest',
+      description: 'Once-per-day 07:00 rollup so you know what to focus on today without opening the dashboard.',
+      details: [
+        'Aggregates the last 24h of activity: applications fired, queued jobs, interview-stage transitions, offers, rejections, follow-ups due, new pattern recommendations.',
+        'Emits a single info-level activity event with a one-liner summary; the bell shows it.',
+        'Pairs with OS-level Notifications (enable on /settings) so the digest fires as a desktop ping even when the dashboard tab is in the background.',
+        'On by default — the daily focus list is the biggest "should I open the dashboard?" decision-maker.',
+      ],
+      taskLabel: 'daily-digest',
+      task: 'daily-digest',
+      enabled: true,
+      trigger: { type: 'daily', hour: 7, minute: 0, weekdays: [0, 1, 2, 3, 4, 5, 6] },
+    },
   ],
   thresholds: {
     autoEvaluateScore: 4.0,

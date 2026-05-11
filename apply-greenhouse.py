@@ -75,6 +75,8 @@ from lib_apply import (  # noqa: E402
     human_type, human_click, detect_captcha, detect_already_applied,
     upload_file, fill_react_select, append_step, emit_result,
     screenshot_for_issue, write_apply_state, detect_portal,
+    load_form_answers, normalize_question,
+    is_eeo_label, auto_decline_eeo,
 )
 from lib_profiles import resolve_profile_arg, profile_path  # noqa: E402
 
@@ -279,9 +281,10 @@ def fill_basic_text(page, name: str, value: str) -> bool:
 
 def fill_custom_question(page, question: dict, answers_cache: dict) -> str:
     """Fill one custom question. Returns:
-        'filled'           — answered from cache or schema default
+        'filled'           — answered from cache, EEO auto-decline, or schema default
         'skipped-empty'    — optional + no answer, left blank
         'unknown'          — required + no answer source
+        'eeo-decline'      — EEO field declined (counted as filled)
     """
     label = question.get("label", "")
     required = bool(question.get("required"))
@@ -289,8 +292,19 @@ def fill_custom_question(page, question: dict, answers_cache: dict) -> str:
     if not label:
         return "skipped-empty"
 
-    # Look up the answer. Cache key is the lowercased label trimmed of punctuation.
-    key = re.sub(r"[^a-z0-9 ]", "", label.lower()).strip()
+    # EEO short-circuit — every US-facing Greenhouse has a Voluntary Self-ID
+    # step. Default policy: decline. If the field is EEO and we can pick a
+    # decline option, that counts as "filled" (the form is satisfied).
+    if is_eeo_label(label):
+        if auto_decline_eeo(page, label):
+            return "eeo-decline"
+        # If we couldn't auto-decline but the field is required, treat as
+        # unknown so the user gets surfaced an issue. If optional, skip.
+        return "unknown" if required else "skipped-empty"
+
+    # Look up the answer using the SAME normalization as form-answers-cache.ts
+    # so TS-side writes and Python-side reads agree on the cache key.
+    key = normalize_question(label)
     answer = answers_cache.get(key)
 
     if not answer:
@@ -487,7 +501,16 @@ def run(args) -> int:
                     pass
 
             # ── Custom Q&A ──
-            answers_cache = (profile.get("form_answers") or {})
+            # Load the PER-PROFILE persistent cache (data/profiles/{slug}/
+            # form-answers-cache.jsonl). Fall back to the legacy
+            # profile.yml.form_answers dict ONLY for backward-compat with
+            # any hand-maintained YAML — the persistent JSONL is the new
+            # source of truth and what the UI writes to.
+            answers_cache = load_form_answers(profile_id)
+            for legacy_k, legacy_v in (profile.get("form_answers") or {}).items():
+                if isinstance(legacy_k, str) and isinstance(legacy_v, str):
+                    # Normalize legacy keys too so they match the lookup.
+                    answers_cache.setdefault(normalize_question(legacy_k), legacy_v)
             unknown_required: list[str] = []
             for q in plan["custom"]:
                 outcome = fill_custom_question(page, q, answers_cache)

@@ -22,6 +22,7 @@ import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
 import { CLI_NAMESPACE } from '$lib/config/branding';
 import { AGENT_CLI } from '$lib/config/cli';
+import { saveAnswer } from '$lib/server/form-answers-cache';
 
 function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'job';
@@ -107,14 +108,62 @@ export const POST = wrap('form-answers', async ({ params, url }: { params: { id:
 
   try {
     const out = await spawnFormAnswers(job.url, job.id, profileId);
+    // Auto-seed the per-question cache from the markdown's "## {question}"
+    // headings — each Q+A pair becomes a persistent cache entry the future
+    // apply-greenhouse / apply-ashby runs can look up.
+    let seeded = 0;
+    try {
+      seeded = seedCacheFromMarkdown(profileId, out.body);
+    } catch (e) {
+      logEvent('form-answers', 'Cache auto-seed failed', {
+        level: 'warn', category: 'application',
+        message: e instanceof Error ? e.message : String(e),
+      });
+    }
     logEvent('form-answers', 'Form answers ready', {
       level: 'success',
       category: 'application',
-      message: out.path,
+      message: out.path + (seeded ? ' · seeded ' + seeded + ' cache entries' : ''),
     });
-    return { ok: true, path: out.path, body: out.body };
+    return { ok: true, path: out.path, body: out.body, seeded };
   } catch (err) {
     reportServerError('form-answers', 'Form answers failed', err, { category: 'application' });
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
 });
+
+/** Parse a form-answers.md (Claude output) into Q+A pairs and persist each
+ *  into the per-question cache. The mode writes "## {question}" headings
+ *  followed by the answer text on subsequent lines until the next heading. */
+function seedCacheFromMarkdown(profileId: string, markdown: string): number {
+  if (!markdown.trim()) return 0;
+  const blocks: { heading: string; body: string[] }[] = [];
+  let current: { heading: string; body: string[] } | null = null;
+  for (const line of markdown.split('\n')) {
+    const trimmed = line.trim();
+    // Accept "## N. Question" or "## Question"
+    const m = /^##\s+(?:\d+\.\s*)?(.+)$/.exec(trimmed);
+    if (m) {
+      if (current) blocks.push(current);
+      current = { heading: m[1].trim(), body: [] };
+    } else if (current) {
+      current.body.push(line);
+    }
+  }
+  if (current) blocks.push(current);
+  let count = 0;
+  for (const b of blocks) {
+    // Skip the document title (e.g. "Form answers · Acme · Senior Eng")
+    if (/^form answers?\b/i.test(b.heading)) continue;
+    const answer = b.body.join('\n').trim();
+    // Skip empty blocks and obvious placeholder responses.
+    if (!answer || /^_?n\/?a_?$/i.test(answer)) continue;
+    try {
+      saveAnswer(profileId, b.heading, answer);
+      count++;
+    } catch {
+      // skip — empty key after normalization, etc.
+    }
+  }
+  return count;
+}
