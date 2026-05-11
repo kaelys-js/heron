@@ -2,8 +2,11 @@
  *  which child scanners scan-all will fan out to. We don't trigger anything
  *  here; the page does that on mount via /api/run. */
 import { listSourcesWithState } from '$lib/server/sources';
+import { getActiveProfileId, getProfile } from '$lib/server/profiles';
 
-export async function load() {
+export async function load({ url }: { url: URL }) {
+  const queryProfile = url.searchParams.get('profile');
+  const profileId = (queryProfile && getProfile(queryProfile)) ? queryProfile : getActiveProfileId();
   const sources = listSourcesWithState();
   // Filter to the children scan-all actually fans out to (matches the logic
   // in scan-all.job.ts). Always-on aggregators always run.
@@ -18,5 +21,5 @@ export async function load() {
     if (c.alwaysOn) return true;
     return sources.find((s) => s.id === c.source)?.state.connected ?? false;
   });
-  return { children };
+  return { children, profileId };
 }

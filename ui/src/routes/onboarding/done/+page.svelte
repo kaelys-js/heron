@@ -8,6 +8,7 @@
 
   let { data }: {
     data: {
+      profileId: string;
       summary: {
         connectedCount: number;
         connectedLabels: string[];
@@ -19,10 +20,19 @@
   let marking = $state(true);
   let markError = $state<string | null>(null);
 
-  // Mark the wizard complete on mount so revisits don't redirect back here.
+  // Mark the wizard complete + ensure the just-onboarded profile is the
+  // active one (so the next page load shows this profile's data).
   onMount(async () => {
     try {
       await api.post('/api/onboarding/complete', {}, { silent: true });
+      // Set this profile as active so the inbox shows its data after the
+      // user clicks "Open inbox". The active-profile call is idempotent
+      // if this is already the active one.
+      try {
+        await api.post('/api/profiles/active', { id: data.profileId }, { silent: true });
+      } catch {
+        // Non-fatal — the user can switch from the sidebar.
+      }
     } catch (e) {
       const err = e as ApiError;
       markError = err.message;
@@ -36,7 +46,12 @@
 
   async function gotoInbox() {
     if (marking) return;
-    await goto('/inbox');
+    // CTA routes to /inbox?profile=<slug> so the destination view is
+    // explicitly scoped to the just-onboarded profile. The active-flip
+    // in onMount means it'd be the same view either way, but the explicit
+    // param survives if the user later switches profiles and comes back
+    // via browser history.
+    await goto('/inbox?profile=' + encodeURIComponent(data.profileId));
   }
 </script>
 

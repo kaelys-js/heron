@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { getContext } from 'svelte';
   import { Badge } from '$lib/components/ui/badge';
   import * as Card from '$lib/components/ui/card';
   import * as Tooltip from '$lib/components/ui/tooltip';
@@ -8,7 +9,30 @@
   import { cn } from '$lib/utils';
   import JobActions from './JobActions.svelte';
 
-  let { job }: { job: Job } = $props();
+  /**
+   * Optional `activeProfileId` prop overrides the layout-context value (used
+   * in tests). Normally the active profile id flows down via Svelte context
+   * from `+layout.svelte` so every JobCard auto-decides whether to render
+   * a "from profile" chip without per-callsite prop drilling.
+   */
+  let { job, activeProfileId }: { job: Job; activeProfileId?: string } = $props();
+  const activeCtx = getContext<{ id: string | undefined } | undefined>('activeProfile');
+  let resolvedActiveId = $derived(activeProfileId ?? activeCtx?.id);
+
+  let showProfileBadge = $derived(
+    job.profileId && resolvedActiveId && job.profileId !== resolvedActiveId,
+  );
+
+  function profileDot(): string {
+    // Color is hashed from the profile slug for stable visual identity
+    // without requiring the list view to know each profile's saved color.
+    const slug = job.profileId ?? '';
+    let h = 0;
+    for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) | 0;
+    const colors = ['bg-blue-400', 'bg-emerald-400', 'bg-violet-400', 'bg-amber-400',
+                    'bg-rose-400', 'bg-cyan-400', 'bg-orange-400', 'bg-pink-400'];
+    return colors[Math.abs(h) % colors.length];
+  }
 
   let displayScore = $derived(job.score ?? job.geminiScore);
   let isGemini = $derived(job.score == null && job.geminiScore != null);
@@ -81,8 +105,21 @@
               </Tooltip.Root>
             {/if}
           </div>
-          <div class="text-xs text-muted-foreground truncate mt-0.5">
-            {job.company}
+          <div class="text-xs text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
+            <span class="truncate">{job.company}</span>
+            {#if showProfileBadge}
+              <Tooltip.Root>
+                <Tooltip.Trigger>
+                  {#snippet child({ props })}
+                    <span {...props} class={cn('inline-flex items-center gap-1 rounded px-1 py-0.5 border border-border/40 bg-card/80 text-[9px] font-mono uppercase tracking-wider cursor-help')}>
+                      <span class={cn('size-1.5 rounded-full', profileDot())}></span>
+                      {job.profileId}
+                    </span>
+                  {/snippet}
+                </Tooltip.Trigger>
+                <Tooltip.Content side="top" class="text-xs">From profile: {job.profileId}</Tooltip.Content>
+              </Tooltip.Root>
+            {/if}
           </div>
         </div>
       </div>

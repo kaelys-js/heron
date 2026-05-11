@@ -1,11 +1,6 @@
 Several Issues (you have skills for doing proper work right?):
 
-- Multiple Job Profiles like: Software Enginnering, Accounting, Electrician, Laborer, etc.. do we support this fully/properly/easily? + In Onboarding
-
-- Automation
-  - After the automatic job searching of all sources are jobs automatically scanned and tailored cvs generated for each job that scores good enough?
-
-- Review Onboarding
+- Review Onboarding Manually
   - Does profile danger zone reset onboarding
 
 - Multi-user + Profiles + Login/Logout (Full User Flow & Account Creation/Deletion). I'm sure you understand the perfect/entirety of what is needed

@@ -69,18 +69,47 @@ AI-powered, CLI-agnostic job search automation: pipeline tracking, offer evaluat
 | `liveness-core.mjs` | Shared liveness logic (expired signals win over generic Apply text) |
 | `reports/` | Evaluation reports (format: `{###}-{company-slug}-{YYYY-MM-DD}.md`). Blocks A-F + G (Posting Legitimacy). Header includes `**Legitimacy:** {tier}`. |
 
+### Multi-Profile Layout (read this first)
+
+Career-ops supports MULTIPLE distinct career identities ("profiles") per install. Each profile owns its own content under `data/profiles/{slug}/`:
+
+```
+data/profiles/{slug}/
+├── cv.md
+├── profile.yml
+├── _profile.md            ← per-profile copy of modes/_profile.md
+├── portals.yml
+├── article-digest.md
+├── pipeline.md
+├── applications.md
+├── scan-history.tsv
+├── gemini-scores.tsv
+├── follow-ups.md
+├── projects.json
+├── reports/
+├── output/                ← incl. cv-general.pdf
+└── interview-prep/        ← per-company files
+```
+
+**Shared infrastructure** (NOT per-profile): `.env`, `.playwright-linkedin/`, `.playwright-indeed/`, `data/profiles.json`, `data/sources.json`, `data/onboarding-state.json`, `data/autopilot.json`, `data/activity.jsonl`, `data/issues.jsonl`, `interview-prep/story-bank.md`.
+
+**Active profile**: `data/profiles.json` has `{ activeId, profiles: [...] }`. Reads default to the active profile unless an explicit `--profile <slug>` flag (Python/MJS scripts) or `?profile=<slug>` query param (dashboard routes) is passed. The Claude CLI reads the legacy repo-root paths (`cv.md`, `config/profile.yml`, `portals.yml`, `modes/_profile.md`) — those are SYMLINKS into the active profile's dir, maintained automatically by the dashboard.
+
+**When the user asks for personalization**, ALWAYS write to the active profile's files via the per-profile paths above (or via the legacy paths, which symlink to the same place). Never write to `data/profiles/default/` directly when the user might be on a different profile — let the dashboard's active-profile selection drive the path.
+
 ### First Run — Onboarding (IMPORTANT)
 
 **Before doing ANYTHING else, check if the system is set up.** Run these checks silently every time a session starts:
 
-1. Does `cv.md` exist?
-2. Does `config/profile.yml` exist (not just profile.example.yml)?
-3. Does `modes/_profile.md` exist (not just _profile.template.md)?
-4. Does `portals.yml` exist (not just templates/portals.example.yml)?
+1. Does `data/profiles.json` exist? If yes, read it — `activeId` tells you which profile to operate on.
+2. Does the active profile's `cv.md` exist? (resolved via the legacy symlink at repo root)
+3. Does the active profile's `profile.yml` exist?
+4. Does the active profile's `_profile.md` exist?
+5. Does the active profile's `portals.yml` exist?
 
-If `modes/_profile.md` is missing, copy from `modes/_profile.template.md` silently. This is the user's customization file — it will never be overwritten by updates.
+If `data/profiles.json` is missing, the install is pre-multi-profile. The dashboard's boot routine auto-migrates the flat layout into `data/profiles/default/` on next start — let the dashboard handle this rather than running scripts that read the old paths.
 
-**If ANY of these is missing, enter onboarding mode.** Do NOT proceed with evaluations, scans, or any other mode until the basics are in place. Guide the user step by step:
+**If the active profile is incomplete, enter onboarding mode.** Do NOT proceed with evaluations, scans, or any other mode until the basics are in place. Guide the user step by step (note: paths below are the LEGACY paths shown for familiarity — they symlink to the active profile's files, so `cv.md` writes land in `data/profiles/<active>/cv.md`):
 
 #### Step 1: CV (required)
 If `cv.md` is missing, ask:

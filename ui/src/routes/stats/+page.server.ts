@@ -6,11 +6,20 @@
 
 import { loadAllJobs, groupByStatus } from '$lib/server/parsers';
 import { readSafe } from '$lib/server/files';
-import { activePath } from '$lib/server/profile-paths';
+import { activePath, profilePath } from '$lib/server/profile-paths';
+import { listProfiles } from '$lib/server/profiles';
 
 function countDir(dir: string, ext: string): number {
   try { return fs.readdirSync(dir).filter((f) => f.endsWith(ext)).length; }
   catch { return 0; }
+}
+
+/** Count files across one or every profile's per-profile dir. */
+function countAcross(profileId: string, kind: 'reports-dir' | 'output-dir', ext: string): number {
+  if (profileId === 'all') {
+    return listProfiles().reduce((sum, p) => sum + countDir(profilePath(p.id, kind), ext), 0);
+  }
+  return countDir(profilePath(profileId, kind), ext);
 }
 import { readScanHistorySummary } from '$lib/server/scan-history';
 import type { Job, Status, BgRisk } from '$lib/types';
@@ -45,15 +54,21 @@ function sourceOf(url: string): string {
   }
 }
 
-function parseApplicationDates(): string[] {
-  const txt = readSafe(activePath('applications'));
+function parseApplicationDates(profileId: string): string[] {
+  // 'all' → sum dates across every profile's applications.md
+  const sources: string[] = profileId === 'all'
+    ? listProfiles().map((p) => profilePath(p.id, 'applications'))
+    : [profilePath(profileId, 'applications')];
   const dates: string[] = [];
-  for (const line of txt.split('\n')) {
-    if (!line.startsWith('|') || line.startsWith('| #') || line.startsWith('|---')) continue;
-    const cells = line.split('|').map((c) => c.trim());
-    if (cells.length < 6) continue;
-    const date = cells[2];
-    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) dates.push(date);
+  for (const src of sources) {
+    const txt = readSafe(src);
+    for (const line of txt.split('\n')) {
+      if (!line.startsWith('|') || line.startsWith('| #') || line.startsWith('|---')) continue;
+      const cells = line.split('|').map((c) => c.trim());
+      if (cells.length < 6) continue;
+      const date = cells[2];
+      if (/^\d{4}-\d{2}-\d{2}$/.test(date)) dates.push(date);
+    }
   }
   return dates;
 }
@@ -71,8 +86,12 @@ function velocityBuckets(dates: string[]): { day: string; count: number }[] {
   return out;
 }
 
-export async function load() {
-  const jobs: Job[] = loadAllJobs();
+export async function load({ url }: { url: URL }) {
+  // /stats is CROSS-PROFILE by default — comparing track performance is the
+  // whole point. `?profile=<slug>` narrows to one profile for drill-down.
+  const queryProfile = url.searchParams.get('profile');
+  const profileId = (queryProfile && queryProfile !== 'all') ? queryProfile : 'all';
+  const jobs: Job[] = loadAllJobs(profileId);
   const grouped = groupByStatus(jobs);
 
   // Funnel
@@ -81,8 +100,8 @@ export async function load() {
   const counts: Record<string, number> = { total: jobs.length };
   for (const s of STATUS_ORDER) counts[s.toLowerCase()] = grouped[s].length;
 
-  const reports = countDir(activePath('reports-dir'), '.md');
-  const pdfs = countDir(activePath('output-dir'), '.pdf');
+  const reports = countAcross(profileId, 'reports-dir', '.md');
+  const pdfs = countAcross(profileId, 'output-dir', '.pdf');
   const appliedStatuses: Status[] = ['Applied', 'Screened', 'Interview', 'Offer', 'Rejected'];
   const applied = appliedStatuses.reduce((acc, s) => acc + grouped[s].length, 0);
 
@@ -166,7 +185,7 @@ export async function load() {
   }
 
   // Velocity (applications.md dates)
-  const appDates = parseApplicationDates();
+  const appDates = parseApplicationDates(profileId);
   const velocity = velocityBuckets(appDates);
   const last7 = velocity.slice(-7).reduce((a, b) => a + b.count, 0);
   const prev7 = velocity.slice(0, 7).reduce((a, b) => a + b.count, 0);
@@ -181,11 +200,24 @@ export async function load() {
     bgRisk: j.bgRisk,
   }));
 
-  // Pipeline staleness
+  // Pipeline staleness — for 'all' mode, use the freshest mtime across
+  // every profile (so a recently-scanned profile makes the overall view
+  // appear fresh).
   let pipelineStaleDays: number | null = null;
   try {
-    const stat = fs.statSync(activePath('pipeline'));
-    pipelineStaleDays = Math.floor((Date.now() - stat.mtimeMs) / (1000 * 60 * 60 * 24));
+    const pipelinePaths = profileId === 'all'
+      ? listProfiles().map((p) => profilePath(p.id, 'pipeline'))
+      : [profilePath(profileId, 'pipeline')];
+    let mostRecent = 0;
+    for (const p of pipelinePaths) {
+      try {
+        const stat = fs.statSync(p);
+        if (stat.mtimeMs > mostRecent) mostRecent = stat.mtimeMs;
+      } catch {}
+    }
+    if (mostRecent > 0) {
+      pipelineStaleDays = Math.floor((Date.now() - mostRecent) / (1000 * 60 * 60 * 24));
+    }
   } catch {}
 
   // Conversion rates
@@ -200,9 +232,10 @@ export async function load() {
   };
 
   // Scan-history summary — used by the new "Scan history" card
-  const scanHistory = readScanHistorySummary();
+  const scanHistory = readScanHistorySummary(profileId);
 
   return {
+    profileId,
     counts,
     reports,
     pdfs,

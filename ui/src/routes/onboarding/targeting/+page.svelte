@@ -9,6 +9,7 @@
 
   let { data }: {
     data: {
+      profileId: string;
       initial: {
         target_roles: string[];
         positive: string[];
@@ -23,6 +24,9 @@
       bootstrappedFromTemplate: boolean;
     };
   } = $props();
+
+  /** Profile query suffix threaded through every API call + navigation. */
+  let q = $derived('?profile=' + encodeURIComponent(data.profileId));
 
   // Each chip-list owns its own draft input + array. Local state, never cross-bound.
   // svelte-ignore state_referenced_locally — initial seed only
@@ -114,14 +118,14 @@
           hard_no: hardNo,
         },
       };
-      await api.post('/api/profile', profilePatch, { silent: true });
+      await api.post('/api/profile' + q, profilePatch, { silent: true });
 
       // Portals patch: title_filter.positive + .negative (preserves rest).
-      await api.post('/api/portals/title-filter', { positive, negative }, { silent: true });
+      await api.post('/api/portals/title-filter' + q, { positive, negative }, { silent: true });
 
       await api.post('/api/onboarding/step', { step: 'targeting', action: 'complete' }, { silent: true });
       toast.success('Targeting saved');
-      await goto('/onboarding/sources');
+      await goto('/onboarding/sources' + q);
     } catch (e) {
       const err = e as ApiError;
       toast.error('Could not save', { description: err.message });

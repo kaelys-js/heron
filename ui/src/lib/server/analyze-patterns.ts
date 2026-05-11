@@ -141,11 +141,13 @@ function writeCache(r: PatternsResult): void {
   }
 }
 
-function spawnAnalyze(): Promise<PatternsResult> {
+function spawnAnalyze(profileId?: string): Promise<PatternsResult> {
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
-    const p = spawn('node', ['analyze-patterns.mjs'], {
+    const args = ['analyze-patterns.mjs'];
+    if (profileId) args.push('--profile', profileId);
+    const p = spawn('node', args, {
       cwd: ROOT,
       env: { ...process.env },
     });
@@ -167,12 +169,12 @@ function spawnAnalyze(): Promise<PatternsResult> {
   });
 }
 
-export async function getPatterns(opts?: { force?: boolean }): Promise<PatternsResult> {
+export async function getPatterns(opts?: { force?: boolean; profileId?: string }): Promise<PatternsResult> {
   if (!opts?.force) {
     const cached = readCache();
     if (cached) return cached;
   }
-  const fresh = await spawnAnalyze();
+  const fresh = await spawnAnalyze(opts?.profileId);
   writeCache(fresh);
   return fresh;
 }
