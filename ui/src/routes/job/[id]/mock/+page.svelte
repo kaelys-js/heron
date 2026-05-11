@@ -38,9 +38,25 @@
   let { data }: { data: { job: Job; profileId: string } } = $props();
 
   type Stage = 'PhoneScreen' | 'Technical' | 'TakeHome' | 'Onsite' | 'Final';
-  type Turn = { question: string; answer: string; score?: number | null; feedback?: string };
+  type Turn = { question: string; answer: string; score?: number | null; feedback?: string; audioUrl?: string };
+
+  // MediaRecorder state — capture the user's audio per turn so they can
+  // replay themselves and HEAR what they sound like. Browser-side only;
+  // never uploaded. Blob URLs are revoked on session end / unmount.
+  let mediaStream: MediaStream | null = null;
+  let mediaRecorder: MediaRecorder | null = null;
+  let mediaChunks: Blob[] = [];
+  let recording = $state(false);
+  let recordingSupported = $state(false);
+  let currentAudioUrl = $state<string | undefined>(undefined);
+  // Track every blob URL we create so we can revoke them on unmount.
+  let blobUrlsToRevoke: string[] = [];
 
   let stage = $state<Stage>('PhoneScreen');
+  // Panel mode (#10) — auto-enables when stage is Onsite, since that's
+  // the typical panel format. User can also force it on for other stages.
+  let panelMode = $state(false);
+  $effect(() => { if (stage === 'Onsite') panelMode = true; });
   let history = $state<Turn[]>([]);
   let currentQuestion = $state<string>('');
   let currentAnswer = $state<string>('');
@@ -68,6 +84,8 @@
         || (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
       recognitionSupported = !!SR;
       synthesisSupported = 'speechSynthesis' in window;
+      // MediaRecorder check — capturing audio for playback.
+      recordingSupported = 'MediaRecorder' in window && !!navigator.mediaDevices;
       if (recognitionSupported) {
         // @ts-expect-error - vendor-specific class
         recognition = new SR();
@@ -103,6 +121,21 @@
   onDestroy(() => {
     try { recognition?.abort(); } catch {}
     try { window.speechSynthesis?.cancel(); } catch {}
+    // Stop + release mic + revoke every Blob URL we ever created so the
+    // browser doesn't leak memory across long sessions.
+    try { mediaRecorder?.stop(); } catch {}
+    if (mediaStream) {
+      for (const t of mediaStream.getTracks()) {
+        try { t.stop(); } catch {}
+      }
+      mediaStream = null;
+    }
+    const allUrls = [...blobUrlsToRevoke];
+    if (currentAudioUrl) allUrls.push(currentAudioUrl);
+    for (const t of history) if (t.audioUrl) allUrls.push(t.audioUrl);
+    for (const u of allUrls) {
+      try { URL.revokeObjectURL(u); } catch {}
+    }
   });
 
   function speak(text: string) {
@@ -119,16 +152,67 @@
     } catch { /* silent */ }
   }
 
-  function startListening() {
+  /** Acquire mic (once per session). Returns true if we got it. */
+  async function ensureMicStream(): Promise<boolean> {
+    if (!recordingSupported) return false;
+    if (mediaStream) return true;
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      return true;
+    } catch {
+      // User denied or no mic. Recognition still works via the existing
+      // Web Speech path even without recording.
+      recordingSupported = false;
+      return false;
+    }
+  }
+
+  /** Start capturing audio for this turn. Chunks land in mediaChunks;
+   *  on stop we build a single Blob URL the user can play back. */
+  async function startRecording() {
+    if (recording) return;
+    if (!await ensureMicStream()) return;
+    try {
+      mediaChunks = [];
+      mediaRecorder = new MediaRecorder(mediaStream!);
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) mediaChunks.push(e.data);
+      };
+      mediaRecorder.onstop = () => {
+        if (mediaChunks.length === 0) return;
+        const blob = new Blob(mediaChunks, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        // Replace prior turn-in-progress audio. Old URLs get queued for
+        // revoke on unmount (we keep them addressable for the history list).
+        if (currentAudioUrl) blobUrlsToRevoke.push(currentAudioUrl);
+        currentAudioUrl = url;
+      };
+      mediaRecorder.start();
+      recording = true;
+    } catch {
+      recording = false;
+    }
+  }
+
+  function stopRecording() {
+    if (!recording || !mediaRecorder) return;
+    try { mediaRecorder.stop(); } catch {}
+    recording = false;
+  }
+
+  async function startListening() {
     if (!recognition || listening) return;
     try {
       recognition.start();
       listening = true;
+      // Also begin recording so the user can replay their own audio.
+      await startRecording();
     } catch { /* already-started errors */ }
   }
   function stopListening() {
     if (!recognition || !listening) return;
     try { recognition.stop(); } catch {}
+    stopRecording();
     listening = false;
   }
 
@@ -166,15 +250,26 @@
         latestAnswer,
         endSession: false,
         startedAt,
+        panelMode,
       }, { silent: true });
       if (!r.ok) {
         toast.error('Turn failed', { description: r.error ?? 'unknown' });
         return;
       }
-      // Persist the previous turn (if there was one) with its score.
+      // Persist the previous turn (if there was one) with its score +
+      // any captured audio. The audio Blob URL stays addressable for the
+      // life of the page; cleanup happens on onDestroy.
       if (currentQuestion && latestAnswer) {
-        history = [...history, { question: currentQuestion, answer: latestAnswer, score: r.score ?? null, feedback: r.feedback }];
+        history = [...history, {
+          question: currentQuestion,
+          answer: latestAnswer,
+          score: r.score ?? null,
+          feedback: r.feedback,
+          audioUrl: currentAudioUrl,
+        }];
       }
+      // Reset the per-turn audio pointer so the next turn captures fresh.
+      currentAudioUrl = undefined;
       lastScore = r.score ?? null;
       lastFeedback = r.feedback;
       currentQuestion = r.nextQuestion ?? '';
@@ -216,6 +311,7 @@
         latestAnswer: '',
         endSession: true,
         startedAt,
+        panelMode,
       }, { silent: true });
       if (r.ok) {
         endedTranscriptPath = r.transcriptPath;
@@ -300,6 +396,23 @@
                 <div class="text-[10px] text-muted-foreground/80 leading-tight">{opt.blurb}</div>
               </button>
             {/each}
+          </div>
+
+          <!-- Panel mode (#10) — rotate personas (EM → peer → cross-fn →
+               bar-raiser). Auto-enables on Onsite stage; user can force
+               on/off for other stages. -->
+          <div class="flex items-center gap-2 pt-2 border-t border-border/30">
+            <input
+              type="checkbox"
+              id="panel-mode"
+              checked={panelMode}
+              onchange={(e) => { if (!sessionActive) panelMode = (e.currentTarget as HTMLInputElement).checked; }}
+              disabled={sessionActive}
+              class="size-3.5 rounded border-border accent-foreground"
+            />
+            <label for="panel-mode" class="text-xs cursor-pointer">
+              Panel mode — rotate personas (EM → peer eng → cross-fn → bar-raiser)
+            </label>
           </div>
         </Card.Content>
       </Card.Root>
@@ -396,6 +509,17 @@
                   Q{i + 1}: <span class="font-normal">{t.question}</span>
                 </div>
                 <p class="text-[11px] text-muted-foreground/80 italic leading-relaxed">"{t.answer.slice(0, 200)}"</p>
+                <!--
+                  Voice playback (#1) — hear yourself. Counting "uh"s and
+                  "kind of"s is a different kind of feedback from the
+                  text-only score. <audio> is small + native, no extra
+                  controls component needed.
+                -->
+                {#if t.audioUrl}
+                  <div class="pt-1">
+                    <audio controls src={t.audioUrl} class="h-6 w-full max-w-xs"></audio>
+                  </div>
+                {/if}
                 {#if t.score != null || t.feedback}
                   <div class="flex items-start gap-2 text-[10px]">
                     {#if t.score != null}

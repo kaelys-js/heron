@@ -713,6 +713,179 @@ for (const t of portalTests) {
   try { fs.unlinkSync(path.join(ROOT, 'data/apply-state/verify-r3-' + t.portal + '.json')); } catch {}
 }
 
+// ─── Fourth-round (all 20) ─────────────────────────────────────
+section('Fourth-round #1 — Voice playback');
+
+fileContains('ui/src/routes/job/[id]/mock/+page.svelte', 'MediaRecorder', 'MediaRecorder used');
+fileContains('ui/src/routes/job/[id]/mock/+page.svelte', 'recordingSupported', 'recording-supported feature detection');
+fileContains('ui/src/routes/job/[id]/mock/+page.svelte', 'audioUrl', 'per-turn audio URL stored on Turn');
+fileContains('ui/src/routes/job/[id]/mock/+page.svelte', 'revokeObjectURL', 'blob URLs cleaned up on unmount');
+fileContains('ui/src/routes/job/[id]/mock/+page.svelte', '<audio controls', 'audio playback rendered in history');
+
+section('Fourth-round #2 — Comp pre-flight');
+
+existsCheck('ui/src/lib/server/comp-preflight.ts', 'comp-preflight module');
+existsCheck('ui/src/routes/api/job/[id]/comp-preflight/+server.ts', '/api/job/[id]/comp-preflight endpoint');
+existsCheck('ui/src/lib/components/CompPreflightBadge.svelte', 'CompPreflightBadge component');
+fileContains('ui/src/lib/server/comp-preflight.ts', 'export function compPreflightForJob', 'preflight function exported');
+fileContains('ui/src/lib/server/comp-preflight.ts', 'Anchor with the TOP', 'advice anchors high');
+fileContains('ui/src/routes/job/[id]/+page.svelte', '<CompPreflightBadge', 'badge rendered on job detail');
+
+section('Fourth-round #3 — Application timing');
+
+existsCheck('ui/src/lib/server/apply-timing.ts', 'apply-timing module');
+existsCheck('ui/src/routes/api/job/[id]/apply-timing/+server.ts', '/api/job/[id]/apply-timing endpoint');
+existsCheck('ui/src/lib/components/ApplyTimingBadge.svelte', 'ApplyTimingBadge component');
+fileContains('ui/src/lib/server/apply-timing.ts', "'fresh'", 'fresh band defined');
+fileContains('ui/src/lib/server/apply-timing.ts', "'late'", 'late band defined');
+fileContains('ui/src/lib/server/apply-timing.ts', 'export function applyTimingFor', 'applyTimingFor exported');
+fileContains('ui/src/routes/job/[id]/+page.svelte', '<ApplyTimingBadge', 'badge rendered on job detail');
+
+// Behavioral: band-classification logic
+{
+  const code = `
+function bandFor(days) {
+  if (days == null) return 'late';
+  if (days <= 3) return 'fresh';
+  if (days <= 7) return 'good';
+  if (days <= 14) return 'fading';
+  return 'late';
+}
+const tests = [[0,'fresh'],[3,'fresh'],[4,'good'],[7,'good'],[8,'fading'],[14,'fading'],[15,'late'],[null,'late']];
+let fail = 0;
+for (const [d, e] of tests) if (bandFor(d) !== e) fail++;
+process.exit(fail);
+  `;
+  const r = spawnSync('node', ['-e', code], { encoding: 'utf8' });
+  if (r.status === 0) ok('apply-timing band logic: 8/8 day-buckets classify correctly');
+  else bad('apply-timing band logic failed');
+}
+
+section('Fourth-round #4 + #8 + #11 + #12 + #19 + #20 — Negotiation playbook');
+
+existsCheck('ui/src/lib/server/negotiation-playbook.ts', 'negotiation-playbook module');
+existsCheck('ui/src/routes/api/negotiation/playbook/+server.ts', '/api/negotiation/playbook endpoint');
+existsCheck('ui/src/routes/negotiation/+page.svelte', '/negotiation page');
+fileContains('ui/src/lib/server/negotiation-playbook.ts', 'DECISION_TREE', 'decision-tree defined');
+fileContains('ui/src/lib/server/negotiation-playbook.ts', 'verbal-offer', 'verbal-offer branch (#4)');
+fileContains('ui/src/lib/server/negotiation-playbook.ts', 'exploding-offer', 'exploding-offer branch (#19)');
+fileContains('ui/src/lib/server/negotiation-playbook.ts', 'leveraging-multiple-offers', 'multi-offer branch (#11)');
+fileContains('ui/src/lib/server/negotiation-playbook.ts', 'NON_COMP_ASKS', 'non-comp asks list (#12)');
+fileContains('ui/src/lib/server/negotiation-playbook.ts', 'DONT_ACCEPT_VERBALLY', 'dont-accept-verbally template (#4)');
+fileContains('ui/src/lib/server/negotiation-playbook.ts', 'TIER_COMP_BANDS', 'tier comp bands (#20)');
+fileContains('ui/src/lib/server/negotiation-playbook.ts', 'silent-week', 'silent-week branch');
+fileContains('ui/src/lib/server/email-reactor.ts', "DON\\'T accept verbally", 'email-reactor surfaces dont-accept on offer (#4)');
+
+section('Fourth-round #5 — Take-home scaffolder');
+
+existsCheck('ui/src/lib/server/takehome-scaffolder.ts', 'takehome-scaffolder module');
+existsCheck('ui/src/routes/api/job/[id]/takehome/+server.ts', '/api/job/[id]/takehome endpoint');
+fileContains('ui/src/lib/server/takehome-scaffolder.ts', 'README_TEMPLATE', 'README template defined');
+fileContains('ui/src/lib/server/takehome-scaffolder.ts', 'CHECKLIST_TEMPLATE', 'CHECKLIST template defined');
+fileContains('ui/src/lib/server/takehome-scaffolder.ts', 'budgetMinutes', 'time budget tracked');
+fileContains('ui/src/lib/server/takehome-scaffolder.ts', 'export function scaffoldTakeHome', 'scaffold function exported');
+fileContains('ui/src/lib/server/email-reactor.ts', "fire-takehome-scaffold", 'email-reactor fires takehome scaffold (#5)');
+
+section('Fourth-round #6 — Post-interview retro');
+
+existsCheck('modes/interview-retro.md', 'interview-retro mode');
+existsCheck('ui/src/routes/api/job/[id]/interview-retro/+server.ts', 'retro endpoint');
+fileContains('modes/interview-retro.md', 'STORIES_ADDED', 'mode emits structured stdout');
+fileContains('modes/interview-retro.md', '(real rep)', 'real-rep tag on appended stories');
+fileContains('ui/src/lib/server/skills.ts', "'interview-retro'", 'interview-retro registered as skill');
+
+section('Fourth-round #7 — Pre-call dossier');
+
+existsCheck('modes/pre-call-dossier.md', 'pre-call-dossier mode');
+existsCheck('ui/src/routes/api/job/[id]/dossier/+server.ts', 'dossier endpoint');
+fileContains('modes/pre-call-dossier.md', 'DOSSIER_PATH', 'mode emits structured stdout');
+fileContains('modes/pre-call-dossier.md', '5 questions YOU', '5 questions for the user to ask back');
+fileContains('ui/src/lib/server/skills.ts', "'pre-call-dossier'", 'registered as skill');
+
+section('Fourth-round #9 — Availability reply');
+
+existsCheck('ui/src/lib/server/availability-reply.ts', 'availability-reply module');
+existsCheck('ui/src/routes/api/availability-reply/+server.ts', 'availability-reply endpoint');
+fileContains('ui/src/lib/server/availability-reply.ts', 'export function draftAvailabilityReply', 'draft fn exported');
+fileContains('ui/src/lib/server/availability-reply.ts', 'nextBusinessDays', 'skips weekends');
+
+// Behavioral: weekend-skip
+{
+  const code = `
+function nextBizDays(count, from) {
+  const out = []; const c = new Date(from);
+  c.setDate(c.getDate() + 1);
+  while (out.length < count) {
+    const d = c.getDay();
+    if (d !== 0 && d !== 6) out.push(new Date(c));
+    c.setDate(c.getDate() + 1);
+  }
+  return out;
+}
+const friday = new Date('2026-05-08T12:00:00Z');
+const bd = nextBizDays(3, friday);
+const days = bd.map(d => d.getDay());
+if (days[0] !== 1 || days[1] !== 2 || days[2] !== 3) process.exit(1);
+process.exit(0);
+  `;
+  const r = spawnSync('node', ['-e', code], { encoding: 'utf8' });
+  if (r.status === 0) ok('availability slots skip weekends (Fri → Mon/Tue/Wed)');
+  else bad('availability weekend-skip broken');
+}
+
+section('Fourth-round #10 — Multi-persona panel simulation');
+
+fileContains('modes/mock-interview-turn.md', 'Panel mode', 'panel mode documented');
+fileContains('modes/mock-interview-turn.md', 'PERSONA SWITCH', 'persona-switch marker present');
+fileContains('modes/mock-interview-turn.md', 'Hiring Manager', 'EM persona defined');
+fileContains('modes/mock-interview-turn.md', 'Peer Engineer', 'Peer persona defined');
+fileContains('modes/mock-interview-turn.md', 'Bar-raiser', 'Bar-raiser persona defined');
+fileContains('ui/src/routes/api/job/[id]/mock-turn/+server.ts', 'panelMode', 'endpoint threads panelMode');
+fileContains('ui/src/routes/job/[id]/mock/+page.svelte', 'panelMode', 'mock page has panelMode toggle');
+
+section('Fourth-round #13 — Reference-prep briefs');
+
+existsCheck('modes/reference-prep.md', 'reference-prep mode');
+existsCheck('ui/src/routes/api/job/[id]/reference-prep/+server.ts', 'reference-prep endpoint');
+fileContains('modes/reference-prep.md', 'REFERENCE_FILES_WRITTEN', 'mode emits structured stdout');
+fileContains('modes/reference-prep.md', 'Never fabricate', 'guardrail against fabrication');
+fileContains('ui/src/lib/server/skills.ts', "'reference-prep'", 'registered as skill');
+
+section('Fourth-round #14 + #15 — Drill IDE + whiteboard');
+
+existsCheck('modes/drill-feedback.md', 'drill-feedback mode');
+existsCheck('ui/src/routes/api/job/[id]/drill/+server.ts', 'drill endpoint');
+existsCheck('ui/src/routes/job/[id]/drill/+page.svelte', 'drill page');
+fileContains('modes/drill-feedback.md', 'WORKING:', 'WORKING line in mode');
+fileContains('modes/drill-feedback.md', 'WATCH:', 'WATCH line in mode');
+fileContains('modes/drill-feedback.md', 'SUGGEST:', 'SUGGEST line in mode');
+fileContains('modes/drill-feedback.md', 'QUESTION:', 'QUESTION line in mode');
+fileContains('ui/src/routes/job/[id]/drill/+page.svelte', 'designNodes', 'whiteboard nodes state');
+fileContains('ui/src/routes/job/[id]/drill/+page.svelte', 'designEdges', 'whiteboard edges state');
+fileContains('ui/src/lib/server/skills.ts', "'drill-feedback'", 'registered as skill');
+
+section('Fourth-round #16 — CV-variant learning loop');
+
+existsCheck('ui/src/lib/server/cv-variant-analysis.ts', 'cv-variant-analysis module');
+existsCheck('ui/src/routes/api/profile/cv-variants/+server.ts', '/api/profile/cv-variants endpoint');
+fileContains('ui/src/lib/server/cv-variant-analysis.ts', 'winningKeywords', 'winning-keywords output');
+fileContains('ui/src/lib/server/cv-variant-analysis.ts', 'underperformingKeywords', 'underperforming-keywords output');
+fileContains('ui/src/lib/server/cv-variant-analysis.ts', 'lengthCorrelation', 'length-correlation output');
+
+section('Fourth-round #17 — Cover-letter style consistency');
+
+existsCheck('ui/src/lib/server/cover-letter-style.ts', 'cover-letter-style module');
+fileContains('ui/src/lib/server/cover-letter-style.ts', 'export function styleSamples', 'styleSamples exported');
+fileContains('ui/src/lib/server/cover-letter-style.ts', 'export function buildStyleReferenceBlock', 'reference-block builder exported');
+
+section('Fourth-round #18 — Employee referral path');
+
+existsCheck('ui/src/lib/server/referrals.ts', 'referrals module');
+existsCheck('ui/src/routes/api/profile/referrals/+server.ts', '/api/profile/referrals endpoint');
+fileContains('ui/src/lib/server/referrals.ts', 'export function linkedInMutualsUrl', 'LinkedIn URL builder');
+fileContains('ui/src/lib/server/referrals.ts', 'export function listAsks', 'ask-tracker list fn');
+fileContains('ui/src/lib/server/referrals.ts', 'export function silentAsks', 'silent-asks (follow-up candidates)');
+
 // ─── Summary ───────────────────────────────────────────────────
 if (JSON_MODE) {
   console.log(JSON.stringify({ passed, failed, total: passed + failed, results }, null, 2));

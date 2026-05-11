@@ -12,6 +12,8 @@
   import ErrorState from '$lib/components/ErrorState.svelte';
   import JobActions from '$lib/components/JobActions.svelte';
   import KeywordMatchBadge from '$lib/components/KeywordMatchBadge.svelte';
+  import CompPreflightBadge from '$lib/components/CompPreflightBadge.svelte';
+  import ApplyTimingBadge from '$lib/components/ApplyTimingBadge.svelte';
   import PdfPreviewPanel from '$lib/components/PdfPreviewPanel.svelte';
   import {
     Send, MessageSquare, DollarSign, Briefcase, ScrollText,
@@ -354,12 +356,15 @@
                 <h1 class="text-2xl font-semibold tracking-tight leading-tight">{data.job.role}</h1>
                 <p class="text-muted-foreground mt-1 text-sm">{data.job.company} · {data.job.location || '—'}</p>
                 <!--
-                  ATS-match badge — auto-fetches the JD ⇄ CV keyword
-                  overlap. Click to see missing keywords. Hidden until a
-                  deep-eval report exists (the JD source).
+                  Badges row — surfaces high-signal context inline near
+                  the title rather than buried in tabs. ATS-match badge
+                  hidden until a deep-eval report exists; comp-preflight
+                  hidden until the job is in an interview stage.
                 -->
-                <div class="mt-2">
+                <div class="mt-2 flex items-center gap-2 flex-wrap">
+                  <ApplyTimingBadge jobId={data.job.id} profileId={data.profileId} status={data.job.status} />
                   <KeywordMatchBadge jobId={data.job.id} profileId={data.profileId} />
+                  <CompPreflightBadge jobId={data.job.id} status={data.job.status} />
                 </div>
               </div>
 
