@@ -74,6 +74,7 @@ export type EmailAction =
   | { type: 'mark-status'; jobId: string; profileId?: string; url: string; status: string; note: string }
   | { type: 'fire-tech-prep'; jobId: string; profileId?: string }
   | { type: 'fire-post-rejection'; jobId: string; profileId?: string }
+  | { type: 'fire-takehome-scaffold'; jobId: string; profileId?: string }
   | { type: 'log-lead'; sender: string; subject: string; ts: number }
   | { type: 'flag-offer'; jobId: string; profileId?: string };
 
@@ -335,6 +336,11 @@ export function planActions(
       url: match.url, status: 'TakeHome', note,
     });
     actions.push({ type: 'fire-tech-prep', jobId: match.jobId, profileId: match.profileId });
+    // (#5) Scaffold the take-home working dir: README + CHECKLIST + state
+    // with a default 4h budget. The user adjusts via the UI; reading the
+    // CHECKLIST before starting is the single biggest predictor of a
+    // good submission.
+    actions.push({ type: 'fire-takehome-scaffold', jobId: match.jobId, profileId: match.profileId });
   }
 
   return actions;
@@ -389,13 +395,36 @@ export function executeActions(actions: EmailAction[]): ExecutionResult {
           });
           result.executed++;
           break;
-        case 'flag-offer':
-          logEvent('email-reactor', 'OFFER detected · review /comp-eval', {
-            level: 'success', category: 'application',
-            message: a.jobId, profileId: a.profileId,
+        case 'fire-takehome-scaffold':
+          fireBackgroundTakehomeScaffold(a.jobId, a.profileId);
+          logEvent('email-reactor', 'Take-home scaffold fired', {
+            level: 'info', category: 'application',
+            message: 'Working dir + README + checklist + state.json created · open the job\'s tech-prep menu',
+            profileId: a.profileId,
           });
           result.executed++;
           break;
+        case 'flag-offer': {
+          // (#4) "Don't accept verbally" auto-prompt. The reactor has
+          // detected an offer email; immediately surface the playbook +
+          // a do-not-screw-up checklist in the activity feed as a
+          // success-level event (priority for OS notifications).
+          //
+          // The link drives the user to /negotiation where the full
+          // structured wizard lives. We surface as a single event (the
+          // bell catches it; PushNotificationsToggle bridges to OS
+          // notification when tab isn't focused).
+          logEvent('email-reactor', '🎉 OFFER detected · DON\'T accept verbally', {
+            level: 'success', category: 'application',
+            message:
+              'Open /negotiation for the if-they-say-X-you-say-Y scripts + non-comp asks checklist. ' +
+              'Plug numbers into /comp-eval before responding. 48h response window — buy yourself the time.',
+            link: '/negotiation',
+            profileId: a.profileId,
+          });
+          result.executed++;
+          break;
+        }
         default:
           result.skipped++;
       }
@@ -447,6 +476,22 @@ function fireBackgroundPostRejection(jobId: string, profileId?: string): void {
       level: 'warn', category: 'application',
       message: err instanceof Error ? err.message : String(err),
     }));
+}
+
+function fireBackgroundTakehomeScaffold(jobId: string, profileId?: string): void {
+  // Fire-and-forget POST to the takehome endpoint, which scaffolds the
+  // working dir + README + CHECKLIST + state.json with a default 4h
+  // budget. The user can adjust budget via PATCH from the UI.
+  const url = '/api/job/' + encodeURIComponent(jobId) + '/takehome' +
+    (profileId ? '?profile=' + encodeURIComponent(profileId) : '');
+  void fetch('http://127.0.0.1:5174' + url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({}),
+  }).catch((err) => logEvent('email-reactor', 'Background takehome-scaffold failed', {
+    level: 'warn', category: 'application',
+    message: err instanceof Error ? err.message : String(err),
+  }));
 }
 
 /** Full pipeline: classify → match → plan → execute. Returns the audit

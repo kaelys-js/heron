@@ -40,6 +40,9 @@ function spawnMockTurn(args: {
   latestAnswer: string;
   endSession: boolean;
   profileId: string;
+  /** Panel-mode (#10): rotate personas (EM → peer eng → cross-fn → bar-raiser).
+   *  Useful for Onsite simulation; otherwise leave false. */
+  panelMode?: boolean;
 }): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     let stdout = '';
@@ -55,6 +58,7 @@ function spawnMockTurn(args: {
       history: args.history.slice(-10), // cap history sent to LLM to avoid huge prompts
       latestAnswer: args.latestAnswer,
       endOfSession: args.endSession,
+      panelMode: !!args.panelMode,
     };
     const prompt = '/' + CLI_NAMESPACE + ' mock-interview-turn ' + JSON.stringify(promptInput);
     try { swapProfileSymlinks(args.profileId); } catch { /* logged elsewhere */ }
@@ -133,12 +137,13 @@ export const POST = wrap('mock-turn', async ({ params, url, request }: { params:
   const latestAnswer = typeof body?.latestAnswer === 'string' ? body.latestAnswer : '';
   const endSession = !!body?.endSession;
   const startedAt = typeof body?.startedAt === 'number' ? body.startedAt : Date.now();
+  const panelMode = !!body?.panelMode;
 
   try {
     const { stdout } = await spawnMockTurn({
       company: job.company || '?',
       role: job.role || '?',
-      stage, history, latestAnswer, endSession,
+      stage, history, latestAnswer, endSession, panelMode,
       profileId,
     });
     const parsed = parseTurnOutput(stdout);
