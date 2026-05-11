@@ -15,23 +15,23 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { loadAllJobs } from '$lib/server/parsers';
 import { ROOT } from '$lib/server/files';
+import { profilePath } from '$lib/server/profile-paths';
+import { resolveJobAndProfile } from '$lib/server/job-resolver';
+import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
 import { CLI_NAMESPACE } from '$lib/config/branding';
-
-const PREP_DIR = path.join(ROOT, 'interview-prep');
 
 function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'job';
 }
 
-function persistedPath(jobId: string): string {
-  return path.join(PREP_DIR, slugify(jobId) + '-form-answers.md');
+function persistedPath(profileId: string, jobId: string): string {
+  return path.join(profilePath(profileId, 'interview-prep-dir'), slugify(jobId) + '-form-answers.md');
 }
 
-function readCached(jobId: string): { path: string; body: string } | null {
-  const p = persistedPath(jobId);
+function readCached(profileId: string, jobId: string): { path: string; body: string } | null {
+  const p = persistedPath(profileId, jobId);
   try {
     if (fs.existsSync(p)) {
       return { path: path.relative(ROOT, p), body: fs.readFileSync(p, 'utf8') };
@@ -40,11 +40,17 @@ function readCached(jobId: string): { path: string; body: string } | null {
   return null;
 }
 
-function spawnFormAnswers(url: string, jobId: string): Promise<{ path: string; body: string }> {
+function spawnFormAnswers(url: string, jobId: string, profileId: string): Promise<{ path: string; body: string }> {
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
     const prompt = '/' + CLI_NAMESPACE + ' form-answers ' + url;
+    try { swapProfileSymlinks(profileId); } catch (e) {
+      logEvent('form-answers', 'Symlink swap failed — form-answers may read wrong profile', {
+        level: 'warn', category: 'application',
+        message: e instanceof Error ? e.message : String(e),
+      });
+    }
     const p = spawn('claude', ['-p', prompt, '--dangerously-skip-permissions'], {
       cwd: ROOT,
       env: { ...process.env },
@@ -58,8 +64,9 @@ function spawnFormAnswers(url: string, jobId: string): Promise<{ path: string; b
         return;
       }
       try {
-        fs.mkdirSync(PREP_DIR, { recursive: true });
-        const fullPath = persistedPath(jobId);
+        const prepDir = profilePath(profileId, 'interview-prep-dir');
+        fs.mkdirSync(prepDir, { recursive: true });
+        const fullPath = persistedPath(profileId, jobId);
         // The mode is supposed to write the file itself; if it didn't, persist
         // stdout as a safety net so the user always gets something.
         if (!fs.existsSync(fullPath) && stdout.trim()) {
@@ -78,25 +85,27 @@ function spawnFormAnswers(url: string, jobId: string): Promise<{ path: string; b
   });
 }
 
-export const GET = wrap('form-answers', async ({ params }: { params: { id: string } }) => {
-  const job = loadAllJobs().find((j) => j.id === params.id);
-  if (!job) badRequest('Job not found: ' + params.id);
-  return { cached: readCached(job!.id) };
+export const GET = wrap('form-answers', async ({ params, url }: { params: { id: string }; url: URL }) => {
+  const resolved = resolveJobAndProfile(params.id, url);
+  if (!resolved) badRequest('Job not found: ' + params.id);
+  const { job, profileId } = resolved!;
+  return { cached: readCached(profileId, job.id) };
 });
 
-export const POST = wrap('form-answers', async ({ params }: { params: { id: string } }) => {
-  const job = loadAllJobs().find((j) => j.id === params.id);
-  if (!job) badRequest('Job not found: ' + params.id);
-  if (!job!.url) badRequest('Job has no URL');
+export const POST = wrap('form-answers', async ({ params, url }: { params: { id: string }; url: URL }) => {
+  const resolved = resolveJobAndProfile(params.id, url);
+  if (!resolved) badRequest('Job not found: ' + params.id);
+  const { job, profileId } = resolved!;
+  if (!job.url) badRequest('Job has no URL');
 
   logEvent('form-answers', 'Generating form answers', {
     level: 'info',
     category: 'application',
-    message: (job!.company || '?') + ' · ' + (job!.role || '?'),
+    message: (job.company || '?') + ' · ' + (job.role || '?'),
   });
 
   try {
-    const out = await spawnFormAnswers(job!.url, job!.id);
+    const out = await spawnFormAnswers(job.url, job.id, profileId);
     logEvent('form-answers', 'Form answers ready', {
       level: 'success',
       category: 'application',

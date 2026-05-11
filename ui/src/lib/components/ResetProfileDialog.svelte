@@ -33,7 +33,11 @@
 
   type Scope = 'profile' | 'jobs' | 'everything';
 
-  let { open = $bindable(false), initialScope = 'profile' }: { open?: boolean; initialScope?: Scope } = $props();
+  let {
+    open = $bindable(false),
+    initialScope = 'profile',
+    profileId,
+  }: { open?: boolean; initialScope?: Scope; profileId?: string } = $props();
 
   const REQUIRED_PHRASE = 'RESET';
   let typed = $state('');
@@ -57,10 +61,14 @@
     if (!confirmed || busy) return;
     busy = true;
     try {
+      // CRITICAL: target the profile the dialog was opened FROM, not the
+      // currently-active one. Otherwise opening /profile?profile=B and
+      // clicking reset wipes profile A. Body field wins server-side over
+      // the URL query so it's unambiguous.
       const r = await withMinDuration(
-        api.post<{ resetFiles: string[]; backups: string[]; scope: Scope }>(
+        api.post<{ resetFiles: string[]; backups: string[]; scope: Scope; profileId: string }>(
           '/api/profile/reset',
-          { confirm: REQUIRED_PHRASE, scope },
+          { confirm: REQUIRED_PHRASE, scope, profileId },
           { silent: true },
         ),
         500,

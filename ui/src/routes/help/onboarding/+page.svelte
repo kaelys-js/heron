@@ -32,7 +32,7 @@
       href: '/onboarding/identity',
       blurb:
         'Captures name, email, location, work-auth, and optional links (LinkedIn, GitHub, portfolio). Drives CV signing, scraper search location, and the recruiter outreach mode.',
-      writes: ['config/profile.yml (candidate.*, location.*)'],
+      writes: ['data/profiles/{slug}/profile.yml (candidate.*, location.*)'],
       redo: 'Profile page → Identity card. Or re-run the wizard via Settings → Reset onboarding.',
     },
     {
@@ -41,7 +41,7 @@
       href: '/onboarding/cv',
       blurb:
         'Three options: paste markdown directly, paste plain text (Claude converts to canonical sections), or paste a LinkedIn URL (uses the authenticated LinkedIn session if connected). After save, runs Reprocess to extract structured profile fields automatically.',
-      writes: ['cv.md', 'config/profile.yml (auto-populated by Reprocess)'],
+      writes: ['data/profiles/{slug}/cv.md', 'data/profiles/{slug}/profile.yml (auto-populated by Reprocess)'],
       redo: 'Profile page → CV manager (View / Replace / Reprocess).',
     },
     {
@@ -51,9 +51,9 @@
       blurb:
         'Target roles drive LinkedIn / Indeed search queries. Title-filter positive + negative keywords drive scan.mjs filtering. Compensation + hard preferences feed the deeper Claude evaluation.',
       writes: [
-        'config/profile.yml (target_roles, compensation, preferences)',
-        'portals.yml (title_filter.positive, title_filter.negative)',
-        'modes/_profile.md (seeded from template if missing)',
+        'data/profiles/{slug}/profile.yml (target_roles, compensation, preferences)',
+        'data/profiles/{slug}/portals.yml (title_filter.positive, title_filter.negative)',
+        'data/profiles/{slug}/_profile.md (seeded from template if missing)',
       ],
       redo: 'Profile page → Targeting + preferences cards. Edit portals.yml directly for advanced search-query changes.',
     },
@@ -77,7 +77,7 @@
       href: '/onboarding/first-scan',
       blurb:
         'Triggers the same daily scan-all fan-out that runs on schedule. Live SSE progress per child scanner. Skippable — the daily run will populate your inbox tomorrow either way.',
-      writes: ['data/pipeline.md (new jobs)', 'data/scan-history.tsv (dedup)'],
+      writes: ['data/profiles/{slug}/pipeline.md (new jobs)', 'data/profiles/{slug}/scan-history.tsv (dedup)'],
       redo: 'Agents page → Run Scan. Or wait for the next daily 09:00 weekday run.',
     },
     {

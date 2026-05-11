@@ -25,12 +25,18 @@
 
   let { data }: {
     data: {
+      profileId: string;
       projects: Project[];
       stats: Record<string, ProjectStats>;
       starters: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>[];
       totalJobs: number;
     };
   } = $props();
+
+  // Profile-scoped projects endpoints — append ?profile=<slug> so writes
+  // land in the same profile the page is showing (avoids "I edited project
+  // foo while on Electrician, but it saved to Software").
+  let pq = $derived('?profile=' + encodeURIComponent(data.profileId));
 
   const COLORS: ProjectColor[] = ['emerald', 'blue', 'violet', 'amber', 'rose', 'cyan', 'orange', 'pink'];
 
@@ -89,7 +95,7 @@
     previewTimer = setTimeout(async () => {
       try {
         const r = await api.post<PreviewStats & { ok: boolean }>(
-          '/api/projects/preview',
+          '/api/projects/preview' + pq,
           { filter: editor.filter },
           { silent: true },
         );
@@ -149,13 +155,13 @@
       };
       if (editorMode === 'create') {
         await withMinDuration(
-          api.post<{ project: Project }>('/api/projects', payload, { silent: true }),
+          api.post<{ project: Project }>('/api/projects' + pq, payload, { silent: true }),
           400,
         );
         toast.success('Project created', { description: editor.name });
       } else {
         await withMinDuration(
-          api.put<{ project: Project }>('/api/projects/' + encodeURIComponent(editor.id), payload, { silent: true }),
+          api.put<{ project: Project }>('/api/projects/' + encodeURIComponent(editor.id) + pq, payload, { silent: true }),
           400,
         );
         toast.success('Project saved');
@@ -177,7 +183,7 @@
     e.preventDefault();
     if (!confirmDelete.trigger('delete:' + p.id)) return;
     try {
-      await withMinDuration(api.delete('/api/projects/' + encodeURIComponent(p.id), { silent: true }), 400);
+      await withMinDuration(api.delete('/api/projects/' + encodeURIComponent(p.id) + pq, { silent: true }), 400);
       toast.success('Project deleted', { description: p.name });
       await invalidateAll();
     } catch (e) {
@@ -190,7 +196,7 @@
     try {
       await withMinDuration(
         api.post<{ project: Project }>(
-          '/api/projects',
+          '/api/projects' + pq,
           {
             name: p.name + ' (copy)',
             description: p.description,

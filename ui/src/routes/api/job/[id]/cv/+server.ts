@@ -12,21 +12,24 @@
  */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { loadAllJobs } from '$lib/server/parsers';
+import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { runOferta } from '$lib/server/orchestrator';
 import { reportServerError } from '$lib/server/events';
 
-export const POST = wrap('job-cv', async ({ params }: { params: { id: string } }) => {
-  const jobs = loadAllJobs();
-  const job = jobs.find((j) => j.id === params.id);
-  if (!job) badRequest('Job not found: ' + params.id);
-  if (!job!.url) badRequest('Job has no URL — cannot run oferta');
+export const POST = wrap('job-cv', async ({ params, url }: { params: { id: string }; url: URL }) => {
+  const resolved = resolveJobAndProfile(params.id, url);
+  if (!resolved) badRequest('Job not found: ' + params.id);
+  const { job, profileId } = resolved!;
+  if (!job.url) badRequest('Job has no URL — cannot run oferta');
 
   // Fire and forget — the activity feed is the source of truth for progress.
   // runOferta resolves with {ok, code} rather than throwing, but the outer
-  // catch covers truly exceptional rejection paths.
-  runOferta(job!.url).catch((err) =>
-    reportServerError('job-cv', 'Oferta rejected for ' + (job!.company || job!.id), err, {
+  // catch covers truly exceptional rejection paths. Pass profileId so the
+  // orchestrator swaps repo-root symlinks to this job's profile before
+  // spawning Claude (`oferta` writes report + PDF into that profile's
+  // reports/ + output/ dirs).
+  runOferta(job.url, 'oferta', profileId).catch((err) =>
+    reportServerError('job-cv', 'Oferta rejected for ' + (job.company || job.id), err, {
       category: 'task',
     }),
   );

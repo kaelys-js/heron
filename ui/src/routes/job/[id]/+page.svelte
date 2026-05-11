@@ -24,8 +24,12 @@
   import type { ReportSummary as ReportSummaryT } from '$lib/server/report-summary';
   import { cmd } from '$lib/config/branding';
 
-  let { data }: { data: { job: Job; report: string; summary: ReportSummaryT | null } } = $props();
+  let { data }: { data: { job: Job; report: string; summary: ReportSummaryT | null; profileId: string } } = $props();
   let html = $derived(data.report ? marked.parse(data.report) : '');
+  // Every per-job endpoint takes ?profile so it reads from the right
+  // profile's interview-prep / output / reports dirs and swaps symlinks
+  // before spawning Claude. Append this query to every /api/job/... call.
+  let pq = $derived('?profile=' + encodeURIComponent(data.profileId));
   let activeTab = $state('overview');
 
   let prepLoading = $state(false);
@@ -53,7 +57,7 @@
     prepLoaded = true;
     try {
       const r = await api.get<{ exists: boolean; content?: string }>(
-        '/api/job/' + encodeURIComponent(data.job.id) + '/interview-prep',
+        '/api/job/' + encodeURIComponent(data.job.id) + '/interview-prep' + pq,
         { silent: true },
       );
       if (r.exists && r.content) prepContent = r.content;
@@ -68,7 +72,7 @@
     prepError = null;
     try {
       const r = await api.post<{ ok: boolean; content?: string; error?: string }>(
-        '/api/job/' + encodeURIComponent(data.job.id) + '/interview-prep',
+        '/api/job/' + encodeURIComponent(data.job.id) + '/interview-prep' + pq,
         {},
         { silent: true },
       );
@@ -91,8 +95,10 @@
     try {
       // api.post auto-toasts network errors; keep `silent: true` here
       // because the chat UI itself surfaces the error inline below.
+      // Pass ?profile so the report + CV are read from the right profile
+      // (the job page's loader resolves it and exposes data.profileId).
       const r = await api.post<{ reply: string }>(
-        '/api/mock-interview',
+        '/api/mock-interview?profile=' + encodeURIComponent(data.profileId),
         { reportFile: data.job.reportFile, history: [], persona: chatPersona },
         { silent: true },
       );
@@ -114,7 +120,7 @@
     chatLoading = true;
     try {
       const r = await api.post<{ reply: string }>(
-        '/api/mock-interview',
+        '/api/mock-interview?profile=' + encodeURIComponent(data.profileId),
         { reportFile: data.job.reportFile, history: newHistory, persona: chatPersona },
         { silent: true },
       );
@@ -132,8 +138,9 @@
     negotiationLoading = true;
     negotiationError = null;
     try {
+      // Pass ?profile so /api/negotiation reads the right profile's report.
       const r = await api.post<{ content: string }>(
-        '/api/negotiation',
+        '/api/negotiation?profile=' + encodeURIComponent(data.profileId),
         { reportFile: data.job.reportFile, offer: offerInput },
         { inlineError: true },
       );
@@ -181,7 +188,7 @@
     outreachLoaded = true;
     try {
       const r = await api.get<{ variants: { persona: Persona; content: string }[] }>(
-        '/api/job/' + encodeURIComponent(data.job.id) + '/outreach/cached',
+        '/api/job/' + encodeURIComponent(data.job.id) + '/outreach/cached' + pq,
         { silent: true },
       );
       const next = { ...outreachByPersona };
@@ -197,7 +204,7 @@
     outreachBusy = true;
     try {
       const r = await api.post<{ ok: boolean; persona: Persona; path: string; content: string; error?: string }>(
-        '/api/job/' + encodeURIComponent(data.job.id) + '/outreach',
+        '/api/job/' + encodeURIComponent(data.job.id) + '/outreach' + pq,
         { persona: outreachPersona },
         { silent: true },
       );
@@ -262,7 +269,7 @@
     coverLoaded = true;
     try {
       const r = await api.get<{ cached: { path: string; body: string } | null }>(
-        '/api/job/' + encodeURIComponent(data.job.id) + '/cover-letter',
+        '/api/job/' + encodeURIComponent(data.job.id) + '/cover-letter' + pq,
         { silent: true },
       );
       if (r.cached) {
@@ -280,7 +287,7 @@
     coverError = null;
     try {
       const r = await api.post<{ ok: boolean; path?: string; body?: string; error?: string }>(
-        '/api/job/' + encodeURIComponent(data.job.id) + '/cover-letter',
+        '/api/job/' + encodeURIComponent(data.job.id) + '/cover-letter' + pq,
         {},
         { silent: true },
       );
@@ -366,7 +373,7 @@
             PDF has been generated. Collapsed by default so the user opts in.
           -->
           {#if data.job.pdfFile}
-            <PdfPreviewPanel jobId={data.job.id} pdfFile={data.job.pdfFile} defaultOpen={false} />
+            <PdfPreviewPanel jobId={data.job.id} pdfFile={data.job.pdfFile} profileId={data.profileId} defaultOpen={false} />
           {/if}
 
           <Tabs.Root value={activeTab} onValueChange={(v: string) => (activeTab = v)} class="w-full">
