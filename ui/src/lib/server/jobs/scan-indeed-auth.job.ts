@@ -35,6 +35,9 @@ function runScanIndeedAuth(args?: JobArgs): Promise<JobResult> {
     const py = fs.existsSync(venvPython) ? venvPython : 'python3';
 
     const cliArgs = ['scan-indeed-auth.py'];
+    if (typeof args?.profileId === 'string' && args.profileId.trim()) {
+      cliArgs.push('--profile', args.profileId.trim());
+    }
     if (args?.dryRun === true) cliArgs.push('--dry-run');
     if (typeof args?.maxPages === 'number' && args.maxPages > 0) {
       cliArgs.push('--max-pages', String(Math.floor(args.maxPages)));

@@ -4,9 +4,14 @@
 // and appended Skipped rows in applications.md.
 
 import { readFileSync, writeFileSync } from 'node:fs';
+import { profilePath, ensureProfileDirs, profileFromArgv } from './lib-profiles.mjs';
 
-const PIPELINE = 'data/pipeline.md';
-const APPLICATIONS = 'data/applications.md';
+const PROFILE_ID = profileFromArgv();
+ensureProfileDirs(PROFILE_ID);
+const PIPELINE = profilePath(PROFILE_ID, 'pipeline');
+const APPLICATIONS = profilePath(PROFILE_ID, 'applications');
+// batch/ is a shared workspace; orchestrator runs triage once per profile
+// and consumes survivors before triggering the next profile's run.
 const SURVIVORS_OUT = 'batch/pipeline-survivors.tsv';
 const SKIPPED_OUT = 'batch/pipeline-skipped.tsv';
 

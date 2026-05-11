@@ -52,11 +52,15 @@ from lib_playwright_auth import (
 
 
 ROOT = Path(__file__).resolve().parent
-PROFILE_YML = ROOT / "config" / "profile.yml"
-PORTALS_YML = ROOT / "portals.yml"
-PIPELINE_MD = ROOT / "data" / "pipeline.md"
-APPLICATIONS_MD = ROOT / "data" / "applications.md"
-SCAN_HISTORY_TSV = ROOT / "data" / "scan-history.tsv"
+from lib_profiles import resolve_profile_arg, profile_path, ensure_profile_dirs
+
+# Per-profile paths are set inside main() once --profile is parsed.
+# Placeholders for module-level type annotations; real values land later.
+PROFILE_YML: Path = ROOT / "data" / "profiles" / "default" / "profile.yml"
+PORTALS_YML: Path = ROOT / "data" / "profiles" / "default" / "portals.yml"
+PIPELINE_MD: Path = ROOT / "data" / "profiles" / "default" / "pipeline.md"
+APPLICATIONS_MD: Path = ROOT / "data" / "profiles" / "default" / "applications.md"
+SCAN_HISTORY_TSV: Path = ROOT / "data" / "profiles" / "default" / "scan-history.tsv"
 
 # LinkedIn job search caps:
 #   * 25 page-equivalents (~25 × 25 results = ~625 jobs) per query before
@@ -269,11 +273,22 @@ def append_to_scan_history(rows: list[dict]) -> None:
 
 
 def main():
+    global PROFILE_YML, PORTALS_YML, PIPELINE_MD, APPLICATIONS_MD, SCAN_HISTORY_TSV
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--max-pages", type=int, default=DEFAULT_MAX_PAGES)
     parser.add_argument("--query", help="Override profile-derived queries with a single keyword string")
+    parser.add_argument("--profile", default=None,
+                        help="Profile slug (defaults to active profile in data/profiles.json).")
     args = parser.parse_args()
+
+    profile_id = resolve_profile_arg(args.profile)
+    ensure_profile_dirs(profile_id)
+    PROFILE_YML = profile_path(profile_id, "profile-yml")
+    PORTALS_YML = profile_path(profile_id, "portals-yml")
+    PIPELINE_MD = profile_path(profile_id, "pipeline")
+    APPLICATIONS_MD = profile_path(profile_id, "applications")
+    SCAN_HISTORY_TSV = profile_path(profile_id, "scan-history")
 
     udd = USER_DATA_DIRS["linkedin"]
     if not udd.exists():

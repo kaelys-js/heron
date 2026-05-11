@@ -53,19 +53,17 @@ from lib_playwright_auth import launch_persistent, login_interactive, USER_DATA_
 
 ROOT = Path(__file__).parent
 USER_DATA_DIR = USER_DATA_DIRS["linkedin"]  # backward-compat alias
-PROFILE_YML = ROOT / "config" / "profile.yml"
-APPLICATIONS_MD = ROOT / "data" / "applications.md"
-PIPELINE_MD = ROOT / "data" / "pipeline.md"
-# General-purpose CV PDF that matches the user's LinkedIn profile (NOT a per-job
-# tailored CV). LinkedIn Easy Apply shows the recruiter your LinkedIn profile +
-# the uploaded resume side by side; uploading a tailored resume that diverges
-# from the LinkedIn profile is a recruiter red flag, so we deliberately keep
-# this file consistent with the user's profile.
-#
-# Generated from cv.md by /profile → "Generate general CV". If the file is
-# missing we silently skip the resume-upload step rather than uploading a
-# different user's CV (the prior hardcoded fallback was a long-standing bug).
-DEFAULT_GENERAL_CV = ROOT / "output" / "cv-general.pdf"
+
+from lib_profiles import resolve_profile_arg, profile_path, ensure_profile_dirs
+
+# Per-profile paths set in main() once --profile is parsed. Placeholders
+# so module-level type-checkers don't choke before main() runs.
+PROFILE_YML: Path = ROOT / "data" / "profiles" / "default" / "profile.yml"
+APPLICATIONS_MD: Path = ROOT / "data" / "profiles" / "default" / "applications.md"
+PIPELINE_MD: Path = ROOT / "data" / "profiles" / "default" / "pipeline.md"
+# General-purpose CV PDF — per profile. Falls back to default profile's
+# cv-general.pdf when no --profile is passed.
+DEFAULT_GENERAL_CV: Path = ROOT / "data" / "profiles" / "default" / "output" / "cv-general.pdf"
 
 MAX_PER_RUN = int(os.environ.get("LINKEDIN_MAX_PER_RUN", "30"))
 AUTO_SUBMIT = os.environ.get("LINKEDIN_AUTO_SUBMIT", "0") == "1"
@@ -232,33 +230,42 @@ def append_application_row(num, company, role, url, status, notes=""):
 
 
 def main():
+    global PROFILE_YML, APPLICATIONS_MD, PIPELINE_MD
     parser = argparse.ArgumentParser()
     parser.add_argument("--login", action="store_true",
                         help="Open LinkedIn for manual login; saves cookies for next run")
     parser.add_argument("--dry-run", action="store_true",
                         help="Walk forms but do not click Submit even if AUTO_SUBMIT=1")
-    parser.add_argument("--general-cv", default=str(DEFAULT_GENERAL_CV),
-                        help=("Path to your GENERAL CV PDF (must match your LinkedIn profile — "
-                              "do NOT pass a per-job tailored CV). Generated from cv.md via the "
-                              "/profile page. If the file is missing the resume-upload step is "
-                              f"silently skipped. Default: {DEFAULT_GENERAL_CV}"))
-    # Backward-compat alias: --pdf was the old name. New callers should pass
-    # --general-cv. We keep --pdf accepted-but-deprecated so anyone with a
-    # cron job using --pdf doesn't break overnight.
+    parser.add_argument("--profile", default=None,
+                        help="Profile slug (defaults to active profile in data/profiles.json).")
+    parser.add_argument("--general-cv", default=None,
+                        help=("Path to your GENERAL CV PDF. Defaults to the per-profile "
+                              "data/profiles/<slug>/output/cv-general.pdf. If the file is "
+                              "missing the resume-upload step is silently skipped."))
+    # Backward-compat alias: --pdf was the old name.
     parser.add_argument("--pdf", dest="pdf_legacy", default=None,
                         help="(deprecated) Alias for --general-cv. Prefer --general-cv.")
     parser.add_argument("--url",
                         help="Apply to this single job URL (instead of iterating the pipeline)")
     args = parser.parse_args()
 
+    profile_id = resolve_profile_arg(args.profile)
+    ensure_profile_dirs(profile_id)
+    PROFILE_YML = profile_path(profile_id, "profile-yml")
+    APPLICATIONS_MD = profile_path(profile_id, "applications")
+    PIPELINE_MD = profile_path(profile_id, "pipeline")
+    profile_general_cv = profile_path(profile_id, "output-dir") / "cv-general.pdf"
+
     # Resolve general-cv: --pdf wins if explicitly passed (legacy callers),
-    # else use --general-cv. Stash on args.pdf so the body code below doesn't
-    # need to change.
+    # else --general-cv, else the active profile's default. Stash on args.pdf
+    # so the body code below doesn't need to change.
     if args.pdf_legacy:
         print("WARNING: --pdf is deprecated. Use --general-cv instead.")
         args.pdf = args.pdf_legacy
-    else:
+    elif args.general_cv:
         args.pdf = args.general_cv
+    else:
+        args.pdf = str(profile_general_cv)
 
     profile = load_profile()
 

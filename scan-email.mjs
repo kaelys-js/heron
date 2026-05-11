@@ -41,12 +41,18 @@ import {
   readdirSync, renameSync, statSync,
 } from 'fs';
 import path from 'path';
+import { profilePath, ensureProfileDirs, profileFromArgv } from './lib-profiles.mjs';
 
+// Mbox inbox is shared (drop emails here from any client) — output is
+// per-profile.
 const INBOX_DIR = 'data/inbox-mbox';
 const PROCESSED_DIR = path.join(INBOX_DIR, 'processed');
-const SCAN_HISTORY_PATH = 'data/scan-history.tsv';
-const PIPELINE_PATH = 'data/pipeline.md';
-const APPLICATIONS_PATH = 'data/applications.md';
+
+const PROFILE_ID = profileFromArgv();
+ensureProfileDirs(PROFILE_ID);
+const SCAN_HISTORY_PATH = profilePath(PROFILE_ID, 'scan-history');
+const PIPELINE_PATH = profilePath(PROFILE_ID, 'pipeline');
+const APPLICATIONS_PATH = profilePath(PROFILE_ID, 'applications');
 
 mkdirSync(INBOX_DIR, { recursive: true });
 mkdirSync(PROCESSED_DIR, { recursive: true });
