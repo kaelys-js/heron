@@ -1017,13 +1017,13 @@
                   { id: 'greenhouse', label: 'Greenhouse', supported: true },
                   { id: 'ashby', label: 'Ashby', supported: true },
                   { id: 'lever', label: 'Lever', supported: true },
-                  { id: 'workable', label: 'Workable (stub)', supported: false },
-                  { id: 'personio', label: 'Personio (stub)', supported: false },
-                  { id: 'smartrecruiters', label: 'SmartRecruiters (stub)', supported: false },
-                  { id: 'recruitee', label: 'Recruitee (stub)', supported: false },
-                  { id: 'teamtailor', label: 'Teamtailor (stub)', supported: false },
+                  { id: 'workable', label: 'Workable', supported: true },
+                  { id: 'personio', label: 'Personio (DACH)', supported: true },
+                  { id: 'smartrecruiters', label: 'SmartRecruiters', supported: true },
+                  { id: 'recruitee', label: 'Recruitee', supported: true },
+                  { id: 'teamtailor', label: 'Teamtailor', supported: true },
                   { id: 'workday', label: 'Workday (heuristic — instance varies)', supported: true },
-                  { id: 'indeed', label: 'Indeed (stub)', supported: false },
+                  { id: 'indeed', label: 'Indeed (Easy Apply only)', supported: true },
                 ] as portal (portal.id)}
                   {@const enabled = (edit.automation?.enabled_portals ?? ['linkedin', 'greenhouse', 'ashby']).includes(portal.id)}
                   <label class="flex items-center gap-2 text-[11px] cursor-pointer">

@@ -40,13 +40,16 @@ ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
 from lib_apply import detect_portal, write_apply_state, emit_result  # noqa: E402
 
-PRODUCTION_PORTALS = {"linkedin", "greenhouse", "ashby", "lever", "workday"}
-# Everything else routes to the stub. Listed explicitly (not "anything not
-# production") so a typo in the adapter filename doesn't get masked.
-STUB_PORTALS = {
-    "workable", "personio", "smartrecruiters",
-    "recruitee", "teamtailor", "indeed", "unknown",
+PRODUCTION_PORTALS = {
+    "linkedin", "greenhouse", "ashby", "lever", "workday",
+    # Second-round graduations — heuristic-quality where instance-specific,
+    # selector-stable on the common case. Each adapter is 50-80 lines on
+    # top of the shared lib_portal.PortalConfig scaffold.
+    "workable", "personio", "smartrecruiters", "recruitee", "teamtailor", "indeed",
 }
+# Only 'unknown' remains as a stub now. Listed explicitly so a typo in
+# an adapter filename doesn't get silently masked.
+STUB_PORTALS = {"unknown"}
 
 
 def adapter_for(portal: str) -> Path:
