@@ -68,13 +68,14 @@ Built by someone who used it to evaluate 740+ job offers, generate 100+ tailored
 | Feature | Description |
 |---------|-------------|
 | **Auto-Pipeline** | Paste a URL, get a full evaluation + PDF + tracker entry |
-| **6-Block Evaluation** | Role summary, CV match, level strategy, comp research, personalization, interview prep (STAR+R) |
+| **7-Block Evaluation (A–G)** | Role summary, CV match, level strategy, comp research, personalization, interview prep (STAR+R), and posting legitimacy |
 | **Interview Story Bank** | Accumulates STAR+Reflection stories across evaluations -- 5-10 master stories that answer any behavioral question |
 | **Negotiation Scripts** | Salary negotiation frameworks, geographic discount pushback, competing offer leverage |
 | **ATS PDF Generation** | Keyword-injected CVs with Space Grotesk + DM Sans design |
 | **Portal Scanner** | 45+ companies pre-configured (Anthropic, OpenAI, ElevenLabs, Retool, n8n...) + custom queries across Ashby, Greenhouse, Lever, Wellfound |
-| **Batch Processing** | Parallel evaluation with `claude -p` workers |
-| **Dashboard TUI** | Terminal UI to browse, filter, and sort your pipeline |
+| **Batch Processing** | Parallel evaluation with `$AGENT_CLI -p` workers (claude by default; override via env) |
+| **SvelteKit Dashboard** | Local-first dashboard for inbox / pipeline / applied / agents / autopilot / stats — the primary UX |
+| **Dashboard TUI** | Optional Go + Bubble Tea terminal UI for the same pipeline (secondary surface) |
 | **Human-in-the-Loop** | AI evaluates and recommends, you decide and act. The system never submits an application -- you always have the final call |
 | **Pipeline Integrity** | Automated merge, dedup, status normalization, health checks |
 
@@ -89,12 +90,19 @@ npx playwright install chromium   # Required for PDF generation
 # 2. Check setup
 npm run doctor                     # Validates all prerequisites
 
-# 3. Configure
-cp config/profile.example.yml config/profile.yml  # Edit with your details
-cp templates/portals.example.yml portals.yml       # Customize companies
+# 3. Boot the dashboard once — the SvelteKit dashboard auto-creates
+#    data/profiles/default/ on first start and walks you through the
+#    onboarding wizard for cv.md, profile.yml, portals.yml, _profile.md.
+cd ui && pnpm install && pnpm dev
+# → http://localhost:5174
 
-# 4. Add your CV
-# Create cv.md in the project root with your CV in markdown
+# Manual setup (if you prefer to hand-edit instead of the wizard):
+#   cp config/profile.example.yml data/profiles/default/profile.yml
+#   cp templates/portals.example.yml data/profiles/default/portals.yml
+#   write your CV to data/profiles/default/cv.md
+# Repo-root symlinks (cv.md, config/profile.yml, portals.yml,
+# modes/_profile.md) auto-point at the active profile after onboarding —
+# the Claude CLI keeps reading at the canonical flat paths.
 
 # 5. Personalize with Claude
 claude   # Open Claude Code in this directory
@@ -113,9 +121,21 @@ claude   # Open Claude Code in this directory
 
 See [docs/SETUP.md](docs/SETUP.md) for the full setup guide.
 
+### Switching the AI CLI
+
+The dashboard's spawned-CLI flows (oferta, cover-letter, outreach, post-rejection, form-answers, followup-draft, batch-runner) default to `claude`. Override with the `AGENT_CLI` env var:
+
+```sh
+AGENT_CLI=gemini pnpm dev
+AGENT_CLI=codex  pnpm dev
+AGENT_CLI=opencode pnpm dev
+```
+
+Caveat: the spawn flags are Claude-Code-specific (`--dangerously-skip-permissions`, `--append-system-prompt-file`, `--model sonnet`). Adapter shims may be needed for other CLIs. See [AGENTS.md → Switching the AI CLI](AGENTS.md) for the support matrix.
+
 ## Gemini CLI Integration
 
-Career-ops supports [Gemini CLI](https://github.com/google-gemini/gemini-cli) natively — the same way it supports Claude Code and OpenCode. All 15 slash commands are available, using the same `modes/*.md` evaluation logic.
+Career-ops supports [Gemini CLI](https://github.com/google-gemini/gemini-cli) natively — the same way it supports Claude Code and OpenCode. All 23 slash commands (the full `modes/*.md` set, including cover-letter, form-answers, mock-interview, negotiation, post-rejection, latex) are available, using the same `modes/*.md` evaluation logic.
 
 ### Option A — Native Gemini CLI (Recommended)
 
@@ -139,7 +159,7 @@ gemini
 /career-ops-tracker
 ```
 
-The `GEMINI.md` file is auto-loaded as context. All 15 commands are defined in `.gemini/commands/*.toml`.
+The `GEMINI.md` file is auto-loaded as context. The slash-command surface mirrors the full mode catalog in `modes/*.md`.
 
 ### Option B — Standalone API Script (No CLI install needed)
 
@@ -217,9 +237,25 @@ The scanner comes with **45+ companies** ready to scan and **19 search queries**
 
 **Job boards searched:** Ashby, Greenhouse, Lever, Wellfound, Workable, RemoteFront
 
-## Dashboard TUI
+## Dashboard
 
-The built-in terminal dashboard lets you browse your pipeline visually:
+The **primary** dashboard is the SvelteKit app under `ui/`. It runs locally
+on `http://localhost:5174` and is what every screenshot / docs reference
+in this README points at:
+
+```bash
+cd ui && pnpm install && pnpm dev
+```
+
+Surfaces: Inbox, Pipeline (board / list / compact / table / by-company),
+Applied, Queue, Projects, Autopilot, Agents, Stats, Insights, Profile,
+Sources, Runtimes, Skills, Settings, Profiles, Help.
+
+### Optional Go TUI (secondary surface)
+
+A terminal UI for the same pipeline data also exists for users who prefer
+a CLI. It is independent of the SvelteKit dashboard and reads the same
+profile-scoped files:
 
 ```bash
 cd dashboard

@@ -18,6 +18,7 @@ import { ROOT } from '$lib/server/files';
 import { profilePath } from '$lib/server/profile-paths';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
+import { AGENT_CLI } from '$lib/config/cli';
 import { logEvent, reportServerError } from '$lib/server/events';
 import { CLI_NAMESPACE } from '$lib/config/branding';
 
@@ -62,7 +63,7 @@ function spawnCoverLetter(url: string, profileId: string): Promise<{ path: strin
       });
     }
     const outputDir = profilePath(profileId, 'output-dir');
-    const p = spawn('claude', ['-p', prompt, '--dangerously-skip-permissions'], {
+    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
       cwd: ROOT,
       env: { ...process.env },
     });

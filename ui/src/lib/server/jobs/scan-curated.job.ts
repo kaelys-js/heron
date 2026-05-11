@@ -19,6 +19,7 @@ import { spawn } from 'node:child_process';
 import { ROOT } from '../files';
 import { logEvent } from '../events';
 import { register } from './registry';
+import { recordSuccess, recordFailure } from '../sources';
 import type { JobArgs, JobResult } from './types';
 
 const FOUND_RE = /New offers:\s+(\d+)/i;
@@ -53,6 +54,7 @@ function runScanCurated(args?: JobArgs): Promise<JobResult> {
         category: 'task',
         message: err.message,
       });
+      try { recordFailure('scan-curated', err); } catch {}
       resolve({ ok: false, error: err.message });
     });
     p.on('close', (code) => {
@@ -63,6 +65,7 @@ function runScanCurated(args?: JobArgs): Promise<JobResult> {
           category: 'task',
           message: 'exit ' + code + (stderr ? ' · ' + stderr.slice(0, 150) : ''),
         });
+        try { recordFailure('scan-curated', new Error('scan-curated.mjs exited ' + code)); } catch {}
         resolve({ ok: false, error: 'scan-curated.mjs exited ' + code });
         return;
       }
@@ -71,6 +74,7 @@ function runScanCurated(args?: JobArgs): Promise<JobResult> {
         category: 'task',
         message: found + ' new offers',
       });
+      try { recordSuccess('scan-curated'); } catch {}
       resolve({ ok: true, message: found + ' new offers', meta: { found } });
     });
   });
@@ -87,4 +91,4 @@ register({
   run: runScanCurated,
 });
 
-export { runScanCurated };
+// D24 — `runScanCurated` was only used by the registry; export removed.

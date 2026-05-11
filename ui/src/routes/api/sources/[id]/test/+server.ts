@@ -9,10 +9,14 @@
  *   gmail-imap                  → reads creds from .env, opens an IMAP
  *                                  connection, lists inbox (no fetch)
  *
- *   anthropic / gemini / adzuna → checks API-key presence in .env (the
- *                                  Settings page does the real round-trip
- *                                  probe; this is just "is the key still
- *                                  there")
+ *   anthropic / gemini / adzuna → delegates to /api/settings/test logic
+ *                                  which does the real round-trip probe
+ *                                  against the provider (issue B13).
+ *
+ *   scan-portals / scan-broad / → dry-run --probe of the underlying
+ *   scan-curated                  scanner (B12) — confirms the scanner
+ *                                  can hit at least one provider without
+ *                                  actually adding rows to pipeline.md.
  *
  * On success: recordSuccess updates lastSuccessfulPullAt.
  * On failure: recordFailure increments consecutiveFailures (3 strikes → disconnect).
@@ -65,24 +69,146 @@ export const POST = wrap('sources-test', async ({ params }: { params: { id: stri
   }
 
   if (id === 'anthropic' || id === 'gemini' || id === 'adzuna') {
-    const env = readEnv();
-    const ok =
-      (id === 'anthropic' && !!env.ANTHROPIC_API_KEY) ||
-      (id === 'gemini' && !!env.GEMINI_API_KEY) ||
-      (id === 'adzuna' && !!(env.ADZUNA_APP_ID && env.ADZUNA_APP_KEY));
-    if (ok) {
-      recordSuccess(id);
-      return { ok: true, message: id + ' key present in .env' };
+    // Delegate to the same round-trip probe the /settings page uses, so a
+    // valid env var alone is no longer enough to pass Test (B13). Helper
+    // is shared via the testApiKey() function below.
+    try {
+      const r = await probeApiKey(id);
+      if (r.ok) {
+        recordSuccess(id);
+        return { ok: true, message: r.message };
+      }
+      const err = new Error(r.message);
+      recordFailure(id, err);
+      return { ok: false, error: r.message };
+    } catch (err) {
+      recordFailure(id, err);
+      return { ok: false, error: err instanceof Error ? err.message : String(err) };
     }
-    const err = new Error(id + ' key not configured');
-    recordFailure(id, err);
-    return { ok: false, error: err.message };
   }
 
-  // always-on sources don't have a "test" — just report current state
+  if (id === 'scan-portals' || id === 'scan-broad' || id === 'scan-curated') {
+    // Real probe of the always-on scanners (B12). Each script understands
+    // --dry-run + --probe (no pipeline writes; just exercise one provider).
+    try {
+      const r = await probeAlwaysOnScanner(id);
+      if (r.ok) {
+        recordSuccess(id);
+        return { ok: true, message: r.message };
+      }
+      const err = new Error(r.message);
+      recordFailure(id, err);
+      return { ok: false, error: r.message };
+    } catch (err) {
+      recordFailure(id, err);
+      return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  }
+
+  // Unknown id — explicit "no probe available" rather than fake success.
   const s = getSource(id);
-  return { ok: true, message: 'always-on', state: s };
+  return { ok: false, error: 'No probe available for source: ' + id, state: s };
 });
+
+/**
+ * Round-trip probe an API key. Mirrors `/api/settings/test` logic so
+ * `/sources` Test agrees with what Settings reports.
+ */
+async function probeApiKey(id: 'anthropic' | 'gemini' | 'adzuna'): Promise<{ ok: boolean; message: string }> {
+  const env = readEnv();
+  if (id === 'anthropic') {
+    if (!env.ANTHROPIC_API_KEY) return { ok: false, message: 'ANTHROPIC_API_KEY not set' };
+    try {
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': env.ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5',
+          max_tokens: 4,
+          messages: [{ role: 'user', content: 'hi' }],
+        }),
+      });
+      if (r.ok) return { ok: true, message: 'Anthropic key round-trip OK.' };
+      const txt = await r.text();
+      return { ok: false, message: 'Anthropic ' + r.status + ': ' + txt.slice(0, 200) };
+    } catch (e) {
+      return { ok: false, message: e instanceof Error ? e.message : String(e) };
+    }
+  }
+  if (id === 'gemini') {
+    if (!env.GEMINI_API_KEY) return { ok: false, message: 'GEMINI_API_KEY not set' };
+    try {
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + env.GEMINI_API_KEY);
+      if (r.ok) return { ok: true, message: 'Gemini key round-trip OK.' };
+      return { ok: false, message: 'Gemini ' + r.status };
+    } catch (e) {
+      return { ok: false, message: e instanceof Error ? e.message : String(e) };
+    }
+  }
+  // adzuna
+  if (!env.ADZUNA_APP_ID || !env.ADZUNA_APP_KEY) {
+    return { ok: false, message: 'ADZUNA_APP_ID + ADZUNA_APP_KEY not both set' };
+  }
+  try {
+    const u = 'https://api.adzuna.com/v1/api/jobs/gb/search/1?app_id=' + env.ADZUNA_APP_ID +
+      '&app_key=' + env.ADZUNA_APP_KEY + '&results_per_page=1';
+    const r = await fetch(u);
+    if (r.ok) return { ok: true, message: 'Adzuna key round-trip OK.' };
+    return { ok: false, message: 'Adzuna ' + r.status };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/** Probe the underlying always-on scanner with --dry-run --probe. */
+function probeAlwaysOnScanner(id: 'scan-portals' | 'scan-broad' | 'scan-curated'): Promise<{ ok: boolean; message: string }> {
+  return new Promise((resolve) => {
+    const script =
+      id === 'scan-portals' ? 'scan.mjs' :
+      id === 'scan-broad'   ? 'scan-broad.py' :
+                              'scan-curated.mjs';
+    const isPython = script.endsWith('.py');
+    const venvPython = path.join(ROOT, '.venv', 'bin', 'python');
+    const bin = isPython
+      ? (fs.existsSync(venvPython) ? venvPython : 'python3')
+      : 'node';
+    let stdout = '';
+    let stderr = '';
+    let p: import('node:child_process').ChildProcess;
+    try {
+      p = spawn(bin, [script, '--dry-run', '--probe'], { cwd: ROOT, env: { ...process.env } });
+    } catch (e) {
+      resolve({ ok: false, message: e instanceof Error ? e.message : String(e) });
+      return;
+    }
+    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
+    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    const timer = setTimeout(() => {
+      try { p.kill('SIGTERM'); } catch {}
+      resolve({ ok: false, message: id + ' probe timed out after 30s' });
+    }, 30_000);
+    p.on('error', (err: Error) => {
+      clearTimeout(timer);
+      resolve({ ok: false, message: err.message });
+    });
+    p.on('close', (code: number | null) => {
+      clearTimeout(timer);
+      if (code === 0) {
+        // Surface a count-style line from stdout if the script emitted one,
+        // otherwise a generic success message.
+        const tail = stdout.trim().split('\n').slice(-3).join(' · ').slice(0, 200);
+        resolve({ ok: true, message: id + ' probe OK' + (tail ? ' · ' + tail : '') });
+      } else {
+        const tail = (stderr || stdout).trim().slice(-200);
+        resolve({ ok: false, message: id + ' probe exited ' + code + (tail ? ': ' + tail : '') });
+      }
+    });
+  });
+}
 
 function spawnSessionCheck(portal: 'linkedin' | 'indeed'): Promise<void> {
   return new Promise((resolve, reject) => {

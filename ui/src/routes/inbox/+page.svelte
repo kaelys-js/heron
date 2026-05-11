@@ -142,7 +142,7 @@
 </script>
 
 <div class="h-full overflow-y-auto">
-  <Topbar title="Inbox" showTabs={false} />
+  <Topbar title="Inbox" showTabs={false} showFilter={true} />
 
   <div class="p-6 pb-24">
     <div class="max-w-6xl mx-auto space-y-5">

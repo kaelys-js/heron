@@ -166,16 +166,46 @@ async function testImapConnection(host: string, user: string, password: string, 
   }
 }
 
-/** Probe an API key by calling the existing /api/settings/test endpoint
- *  internals. Throws if the key is unset or invalid. */
+/** Probe an API key end-to-end (real round-trip, not just env presence —
+ *  B13). Same probe the /api/settings/test endpoint runs. Throws on any
+ *  non-2xx so the caller can flip Connect to failure. */
 async function testApiKey(provider: 'anthropic' | 'gemini' | 'adzuna'): Promise<void> {
   const env = readEnv();
-  if (provider === 'anthropic' && !env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY not set');
-  if (provider === 'gemini' && !env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not set');
-  if (provider === 'adzuna' && (!env.ADZUNA_APP_ID || !env.ADZUNA_APP_KEY)) {
-    throw new Error('ADZUNA_APP_ID and ADZUNA_APP_KEY required');
+  if (provider === 'anthropic') {
+    if (!env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY not set');
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5',
+        max_tokens: 4,
+        messages: [{ role: 'user', content: 'hi' }],
+      }),
+    });
+    if (!r.ok) {
+      const txt = await r.text();
+      throw new Error('Anthropic ' + r.status + ': ' + txt.slice(0, 200));
+    }
+    return;
   }
-  // The actual probe lives at /api/settings/test — keep keys-side validation
-  // here lightweight (presence-only). The Settings page already does the
-  // round-trip probe; we just want a "key looks set" check on /sources.
+  if (provider === 'gemini') {
+    if (!env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not set');
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + env.GEMINI_API_KEY);
+    if (!r.ok) throw new Error('Gemini ' + r.status);
+    return;
+  }
+  if (provider === 'adzuna') {
+    if (!env.ADZUNA_APP_ID || !env.ADZUNA_APP_KEY) {
+      throw new Error('ADZUNA_APP_ID and ADZUNA_APP_KEY required');
+    }
+    const u = 'https://api.adzuna.com/v1/api/jobs/gb/search/1?app_id=' + env.ADZUNA_APP_ID +
+      '&app_key=' + env.ADZUNA_APP_KEY + '&results_per_page=1';
+    const r = await fetch(u);
+    if (!r.ok) throw new Error('Adzuna ' + r.status);
+    return;
+  }
 }

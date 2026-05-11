@@ -1,7 +1,7 @@
 Several Issues (you have skills for doing proper work right?):
 
-- Review Onboarding Manually
-  - Does profile danger zone reset onboarding
+- ~~Review Onboarding Manually~~
+  - ~~Does profile danger zone reset onboarding~~ — **DONE** (Phase 5 of B+D+F+P cleanup). ResetProfileDialog now has an "Also reset onboarding state" checkbox; the 'everything' scope force-on it. `data/onboarding-state.json` is backed up to `.bak` before deletion.
 
 - Multi-user + Profiles + Login/Logout (Full User Flow & Account Creation/Deletion). I'm sure you understand the perfect/entirety of what is needed
 

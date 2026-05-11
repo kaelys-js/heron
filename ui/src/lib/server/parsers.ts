@@ -140,6 +140,10 @@ export function parseApplications(
     out[jobIdStr] = {
       score: isNaN(score) ? undefined : score,
       status: mapStatus(status),
+      // Preserve the states.yml canonical value separately so the UI can
+      // render a secondary chip (e.g. "Discarded" vs "Skip" both fold to
+      // pipeline "Closed" but mean different things to the user).
+      applicationStatus: extractApplicationStatus(status),
       pdfFile: pdf && pdf !== '—' && !pdf.includes('regen') ? pdf : undefined,
       reportFile: report && report !== '—' ? path.basename((report.match(/\(([^)]+)\)/) || ['', report])[1]) : undefined,
       notes,
@@ -148,16 +152,69 @@ export function parseApplications(
   return out;
 }
 
+/**
+ * Map an applications.md status cell to the dashboard's pipeline `Status`.
+ *
+ * Handles three vocabularies in priority order:
+ *   1. Dashboard's own pipeline labels (Ready / Applied / Screened / ...)
+ *   2. states.yml canonical IDs (evaluated, applied, responded, ...)
+ *   3. Legacy Spanish aliases from when the project shipped bilingual modes
+ *
+ * See `docs/STATUS_MODEL.md` for why the pipeline `Status` is orthogonal to
+ * `ApplicationStatus` — this function does the "fold" for display purposes;
+ * the orthogonal value is preserved separately via `extractApplicationStatus`.
+ */
 function mapStatus(s: string): Status {
-  const up = s.toUpperCase();
+  const up = s.toUpperCase().trim();
+  const lower = s.toLowerCase().trim();
+
+  // Pipeline-stage substring matches (legacy heuristic).
   if (up.includes('READY')) return 'Ready';
-  if (up.includes('APPLIED')) return 'Applied';
   if (up.includes('SCREEN')) return 'Screened';
-  if (up.includes('INTERVIEW')) return 'Interview';
-  if (up.includes('OFFER')) return 'Offer';
-  if (up.includes('REJECT')) return 'Rejected';
-  if (up.includes('CLOSE') || up.includes('SKIP')) return 'Closed';
+  if (up.includes('INTERVIEW') || lower === 'entrevista') return 'Interview';
+  if (up.includes('OFFER') || lower === 'oferta') return 'Offer';
+  if (up.includes('REJECT') || lower === 'rechazado' || lower === 'rechazada') return 'Rejected';
+  if (up.includes('APPLIED') || ['aplicado', 'enviada', 'aplicada', 'sent'].includes(lower)) return 'Applied';
+
+  // states.yml canonical + Spanish aliases mapped onto pipeline.
+  if (lower === 'responded' || lower === 'respondido') return 'Screened';
+  if (lower === 'discarded' || ['descartado', 'descartada', 'cerrada', 'cancelada'].includes(lower)) return 'Closed';
+  if (
+    up.includes('CLOSE') || up.includes('SKIP') ||
+    lower === 'no aplicar' || lower === 'no_aplicar' || lower === 'monitor' || lower === 'geo blocker'
+  ) return 'Closed';
+  if (lower === 'evaluated' || ['evaluada', 'condicional', 'hold', 'evaluar', 'verificar'].includes(lower)) return 'Scored';
+
   return 'Scored';
+}
+
+/**
+ * Extract the canonical states.yml `ApplicationStatus` from the same cell.
+ * Returns undefined when the row is in pipeline-stage vocabulary (e.g.
+ * "Ready" / "Screened") that has no states.yml equivalent — the dashboard
+ * just won't render a secondary chip in that case.
+ */
+function extractApplicationStatus(s: string): import('$lib/types').ApplicationStatus | undefined {
+  const lower = s.toLowerCase().replace(/\*\*/g, '').trim();
+  // Direct match against canonical ids.
+  if (lower === 'evaluated') return 'evaluated';
+  if (lower === 'applied') return 'applied';
+  if (lower === 'responded') return 'responded';
+  if (lower === 'interview') return 'interview';
+  if (lower === 'offer') return 'offer';
+  if (lower === 'rejected') return 'rejected';
+  if (lower === 'discarded') return 'discarded';
+  if (lower === 'skip') return 'skip';
+  // Spanish + legacy aliases (mirror verify-pipeline.mjs:ALIASES).
+  if (['evaluada', 'condicional', 'hold', 'evaluar', 'verificar'].includes(lower)) return 'evaluated';
+  if (['aplicado', 'enviada', 'aplicada', 'sent'].includes(lower)) return 'applied';
+  if (lower === 'respondido') return 'responded';
+  if (lower === 'entrevista') return 'interview';
+  if (lower === 'oferta') return 'offer';
+  if (['rechazado', 'rechazada'].includes(lower)) return 'rejected';
+  if (['descartado', 'descartada', 'cerrada', 'cancelada'].includes(lower)) return 'discarded';
+  if (['no aplicar', 'no_aplicar', 'monitor', 'geo blocker'].includes(lower)) return 'skip';
+  return undefined;
 }
 
 function classifyWorkMode(raw: string): WorkMode {

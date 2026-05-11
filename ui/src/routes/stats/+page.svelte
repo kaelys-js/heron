@@ -115,7 +115,7 @@
 </script>
 
 <div class="h-full overflow-y-auto">
-  <Topbar title="Stats" showTabs={false} />
+  <Topbar title="Stats" showTabs={false} showFilter={true} />
   <div class="p-6">
     <div class="max-w-6xl mx-auto space-y-6">
 

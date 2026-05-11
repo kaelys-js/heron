@@ -28,6 +28,11 @@
     breadcrumb,
     breadcrumbHref = '/',
     showTabs = true,
+    /** Lighter alternative to `showTabs`: renders ONLY the Filter popover
+     *  in a minimal sub-bar, without the Tab/Sort/View dropdowns. Used by
+     *  pages like Inbox/Applied/Queue/Stats/Insights/Projects that benefit
+     *  from the filter but don't need the pipeline-specific board controls. */
+    showFilter = false,
     activeTab = $bindable('all'),
     sort = $bindable('score-desc'),
     viewMode = $bindable('board'),
@@ -39,6 +44,7 @@
     breadcrumb?: string;
     breadcrumbHref?: string;
     showTabs?: boolean;
+    showFilter?: boolean;
     activeTab?: TabFilter;
     sort?: SortKey;
     viewMode?: ViewMode;
@@ -571,6 +577,78 @@
           </DropdownMenu.Content>
         </DropdownMenu.Root>
       </div>
+    </div>
+  {:else if showFilter}
+    <!-- Minimal sub-bar: filter popover only. Used by pages that share the
+         FilterState concept but don't want the pipeline Tab/Sort/View
+         dropdowns (Inbox / Applied / Queue / Stats / Insights / Projects). -->
+    <div class="flex items-center justify-end border-b px-4 py-2 gap-2">
+      <Popover.Root>
+        <Popover.Trigger>
+          {#snippet child({ props })}
+            <Button {...props} variant="ghost" size="sm" class={cn('h-8 gap-1.5 text-xs relative', activeFilterCount > 0 && 'text-foreground')}>
+              <Filter class="size-3.5" />
+              Filter
+              {#if activeFilterCount > 0}
+                <span class="text-[10px] font-mono tabular-nums px-1 py-0 rounded bg-orange-500/20 text-orange-300 border border-orange-500/40">
+                  {activeFilterCount}
+                </span>
+              {/if}
+            </Button>
+          {/snippet}
+        </Popover.Trigger>
+        <Popover.Content side="bottom" align="end" class="w-[400px] p-0 max-h-[80vh] overflow-y-auto">
+          <!-- Re-use the same filter form by setting showTabs to true would
+               be too invasive — instead we expose the same controls via the
+               filter prop binding. The popover body is rendered inline below. -->
+          <div class="flex items-center justify-between px-4 py-3 border-b sticky top-0 bg-popover z-10">
+            <div class="flex items-baseline gap-2">
+              <span class="text-sm font-semibold">Filters</span>
+              {#if activeFilterCount > 0}
+                <span class="text-[10px] text-muted-foreground tabular-nums">
+                  {activeFilterCount} active
+                </span>
+              {/if}
+            </div>
+            <Button variant="ghost" size="sm" class="h-7 text-xs gap-1" onclick={clearFilter} disabled={activeFilterCount === 0}>
+              <X class="size-3" />Reset
+            </Button>
+          </div>
+          <div class="px-4 py-3 space-y-4 text-xs text-muted-foreground/80">
+            <p>
+              Use the Pipeline page's full filter UI for granular control. This minimal popover lets you set
+              a minimum score and reset the filter from any page; the same FilterState is shared across pages
+              via the URL.
+            </p>
+            <div class="space-y-1.5">
+              <Label class="text-xs">Min score</Label>
+              <input
+                type="range"
+                min="0"
+                max="5"
+                step="0.5"
+                value={filter.minScore}
+                oninput={(e) => (filter = { ...filter, minScore: parseFloat((e.currentTarget as HTMLInputElement).value) })}
+                class="w-full"
+              />
+              <div class="text-[10px] text-muted-foreground tabular-nums">≥ {filter.minScore.toFixed(1)}</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <input
+                id="topbar-filter-search"
+                type="search"
+                placeholder="Search company / role…"
+                value={filter.search}
+                oninput={(e) => (filter = { ...filter, search: (e.currentTarget as HTMLInputElement).value })}
+                class="flex-1 h-8 px-2 text-xs rounded border border-border/40 bg-card"
+              />
+            </div>
+            <a href="/pipeline" class="block text-[11px] underline underline-offset-2 text-muted-foreground hover:text-foreground">
+              Open full filter UI in Pipeline →
+            </a>
+          </div>
+        </Popover.Content>
+      </Popover.Root>
     </div>
   {/if}
 </div>

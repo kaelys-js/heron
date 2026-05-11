@@ -58,9 +58,33 @@ function parseStdout(stdout: string, urls: string[]): Outcome[] {
   return out;
 }
 
-/** Pull URLs from data files for the requested scope. */
+/** Stale threshold: a job hasn't been touched (per scan-history.tsv mtime
+ *  AND applications.md date column) for at least this many days. F6 + P8. */
+const STALE_DAYS = 14;
+
+/** Parse the date column from an applications.md row. Returns null when the
+ *  row doesn't have a parseable YYYY-MM-DD in its second pipe-delimited cell. */
+function applicationsDate(line: string): Date | null {
+  const cells = line.split('|').map((c) => c.trim());
+  // Layout: '', '#', 'date', 'company', 'role', ... — date is at cells[2].
+  const m = cells[2]?.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  const d = new Date(m[1] + '-' + m[2] + '-' + m[3]);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/** Pull URLs from data files for the requested scope.
+ *
+ *  Stale scope (F6 + P8): a URL counts as stale when (a) it's in
+ *  applications.md with a date column older than STALE_DAYS, OR (b) the
+ *  scan-history.tsv mtime for the URL's domain is older than STALE_DAYS.
+ *  The 'all' scope ignores age and includes every URL in pipeline +
+ *  applications.
+ */
 function collectUrls(scope: 'stale' | 'all'): string[] {
   const urls = new Set<string>();
+  const staleCutoff = Date.now() - STALE_DAYS * 24 * 60 * 60 * 1000;
+
   // Pipeline (active jobs awaiting evaluation)
   try {
     const text = fs.readFileSync(activePath('pipeline'), 'utf8');
@@ -77,28 +101,34 @@ function collectUrls(scope: 'stale' | 'all'): string[] {
       });
     }
   }
-  if (scope === 'all') {
-    // Also include applications.md
-    try {
-      const text = fs.readFileSync(activePath('applications'), 'utf8');
-      for (const line of text.split('\n')) {
-        const m = line.match(/https?:\/\/\S+/);
-        if (m) urls.add(m[0].replace(/[)\].,>]+$/, ''));
+  // applications.md — included in both scopes, but with different filtering.
+  try {
+    const text = fs.readFileSync(activePath('applications'), 'utf8');
+    for (const line of text.split('\n')) {
+      const m = line.match(/https?:\/\/\S+/);
+      if (!m) continue;
+      const url = m[0].replace(/[)\].,>]+$/, '');
+      if (scope === 'all') {
+        urls.add(url);
+        continue;
       }
-    } catch (e) {
-      const code = (e as NodeJS.ErrnoException).code;
-      if (code !== 'ENOENT') {
-        logEvent('liveness', 'Could not read applications.md', {
-          level: 'warn', category: 'system',
-          message: code + ': ' + (e instanceof Error ? e.message : String(e)),
-        });
+      // 'stale': include only when the row's date is older than STALE_DAYS,
+      // OR when there's no date at all (means it predates the dated layout
+      // — likely very old, safe to check).
+      const date = applicationsDate(line);
+      if (!date || date.getTime() <= staleCutoff) {
+        urls.add(url);
       }
     }
+  } catch (e) {
+    const code = (e as NodeJS.ErrnoException).code;
+    if (code !== 'ENOENT') {
+      logEvent('liveness', 'Could not read applications.md', {
+        level: 'warn', category: 'system',
+        message: code + ': ' + (e instanceof Error ? e.message : String(e)),
+      });
+    }
   }
-  // For 'stale' scope we don't have per-row timestamps in pipeline.md, so we
-  // approximate: include only URLs that are also IN applications.md with a
-  // date that's >= STALE_DAYS old. For now, ship the simpler "everything in
-  // pipeline.md" — the user can tune later via args.
   return [...urls].slice(0, 200); // hard cap to avoid runaway sweeps
 }
 

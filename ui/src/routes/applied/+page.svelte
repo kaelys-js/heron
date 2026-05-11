@@ -65,6 +65,7 @@
     title="My Applications"
     subtitle={data.jobs.length + ' active' + (data.cadenceMeta?.urgent ? ' · ' + data.cadenceMeta.urgent + ' need a nudge today' : '')}
     showTabs={false}
+    showFilter={true}
   />
   <div class="p-6">
     <div class="max-w-3xl mx-auto space-y-6">

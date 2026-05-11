@@ -137,7 +137,7 @@ export function clearResolved(): number {
   return removed;
 }
 
-/** Wipe everything. Used by Danger Zone reset (scope=everything). */
-export function clearAll(): void {
-  writeAll([]);
-}
+// D19 — `clearAll` removed: Danger Zone reset doesn't actually wipe
+// issues.jsonl (it's in the "shared infra preserved" list — see
+// profile.ts:resetProfile). `clearResolved` covers the routine
+// housekeeping case.

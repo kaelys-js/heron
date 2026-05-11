@@ -21,6 +21,7 @@ import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
 import { CLI_NAMESPACE } from '$lib/config/branding';
+import { AGENT_CLI } from '$lib/config/cli';
 
 function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'job';
@@ -51,7 +52,7 @@ function spawnFormAnswers(url: string, jobId: string, profileId: string): Promis
         message: e instanceof Error ? e.message : String(e),
       });
     }
-    const p = spawn('claude', ['-p', prompt, '--dangerously-skip-permissions'], {
+    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
       cwd: ROOT,
       env: { ...process.env },
     });

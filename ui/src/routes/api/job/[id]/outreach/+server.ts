@@ -22,6 +22,7 @@ import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
 import { CLI_NAMESPACE } from '$lib/config/branding';
+import { AGENT_CLI } from '$lib/config/cli';
 
 const VALID_PERSONAS = ['hiring-manager', 'recruiter', 'peer'] as const;
 type Persona = (typeof VALID_PERSONAS)[number];
@@ -51,7 +52,7 @@ function spawnContacto(url: string, persona: Persona, jobId: string, profileId: 
         message: e instanceof Error ? e.message : String(e),
       });
     }
-    const p = spawn('claude', ['-p', prompt, '--dangerously-skip-permissions'], {
+    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
       cwd: ROOT,
       env: { ...process.env },
     });

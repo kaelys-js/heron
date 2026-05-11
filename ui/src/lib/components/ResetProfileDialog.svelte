@@ -44,8 +44,13 @@
   let busy = $state(false);
   // svelte-ignore state_referenced_locally — initial seed only
   let scope = $state<Scope>(initialScope);
+  // Force-on (and disabled) when scope is 'everything', user-toggleable
+  // otherwise. Resetting onboarding wipes `data/onboarding-state.json` so
+  // the next dashboard load lands on the wizard.
+  let alsoOnboarding = $state(false);
 
   let confirmed = $derived(typed.trim().toUpperCase() === REQUIRED_PHRASE);
+  let onboardingChecked = $derived(scope === 'everything' || alsoOnboarding);
 
   // Wipe local state every time the dialog re-opens so a previously-armed
   // RESET doesn't survive a cancel. The initial scope is honoured per-open
@@ -54,6 +59,7 @@
     if (open) {
       typed = '';
       scope = initialScope;
+      alsoOnboarding = false;
     }
   });
 
@@ -68,7 +74,12 @@
       const r = await withMinDuration(
         api.post<{ resetFiles: string[]; backups: string[]; scope: Scope; profileId: string }>(
           '/api/profile/reset',
-          { confirm: REQUIRED_PHRASE, scope, profileId },
+          {
+            confirm: REQUIRED_PHRASE,
+            scope,
+            profileId,
+            resetOnboarding: onboardingChecked,
+          },
           { silent: true },
         ),
         500,
@@ -236,16 +247,20 @@
           </p>
           <ul class="text-[11px] text-red-200/85 leading-relaxed space-y-0.5 list-disc list-inside ml-1">
             <li>Everything in <strong>Profile only</strong> (profile.yml, cv.md, _profile.md)</li>
-            <li>Everything in <strong>Jobs data only</strong> (tracker, pipeline, scan history, scores, reports, PDFs, follow-ups, interview-prep, issues, activity feed)</li>
-            <li><code class="font-mono">data/projects.json</code> → deleted (saved filter profiles)</li>
-            <li><code class="font-mono">data/autopilot.json</code> → deleted (recurring schedule config)</li>
+            <li>Everything in <strong>Jobs data only</strong> (tracker, pipeline, scan history, scores, reports, PDFs, follow-ups, interview-prep)</li>
+            <li><code class="font-mono">data/profiles/&lcub;slug&rcub;/projects.json</code> → deleted (saved filter profiles)</li>
+            <li><code class="font-mono">data/autopilot.json</code> → reset to defaults (recurring schedule config)</li>
+            <li><code class="font-mono">data/activity.jsonl</code> → truncated (event feed)</li>
+            <li><code class="font-mono">data/job-last-run.json</code> → deleted (registry last-run state)</li>
+            <li><code class="font-mono">data/apply-counter.json</code> → deleted (daily apply cap counter)</li>
             <li><code class="font-mono">interview-prep/story-bank.md</code> → deleted (accumulated STAR stories)</li>
           </ul>
           <div class="rounded border border-emerald-500/30 bg-emerald-500/5 p-2 mt-2 flex items-start gap-2">
             <Check class="size-3 text-emerald-300 mt-0.5 flex-shrink-0" />
             <p class="text-[10px] text-emerald-200/85 leading-relaxed">
               Kept: <code class="font-mono">.env</code> (API keys), Python <code class="font-mono">.venv</code>, source code,
-              connected Playwright sessions, <code class="font-mono">portals.yml</code>.
+              connected Playwright sessions, <code class="font-mono">data/sources.json</code>, <code class="font-mono">data/profiles.json</code>,
+              <code class="font-mono">data/issues.jsonl</code>, <code class="font-mono">data/onboarding-state.json</code>.
               Existing <code class="font-mono">.bak</code> files from previous resets are also preserved.
             </p>
           </div>
@@ -260,6 +275,21 @@
           restore by hand. <strong>Reports + output PDFs are deleted outright in "Everything" mode</strong> — no backup of those.
         </p>
       </div>
+
+      <!-- Onboarding-reset toggle. Force-on for 'everything', opt-in otherwise. -->
+      <label class="flex items-start gap-2 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={onboardingChecked}
+          disabled={scope === 'everything'}
+          onchange={(e) => (alsoOnboarding = (e.currentTarget as HTMLInputElement).checked)}
+          class="mt-0.5"
+        />
+        <span class="text-[11px] leading-relaxed">
+          <span class="font-medium text-foreground/90">Also reset onboarding state</span>
+          <span class="text-muted-foreground/70"> — wipes <code class="font-mono">data/onboarding-state.json</code> so the next dashboard load lands on the wizard. Force-on for "Everything".</span>
+        </span>
+      </label>
 
       <!-- Type-to-confirm input -->
       <div class="pt-2 space-y-1.5">

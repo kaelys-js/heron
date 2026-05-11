@@ -298,6 +298,36 @@ When spawning headless workers for batch processing, use the appropriate command
 | OpenCode | `opencode run "prompt"` |
 | Qwen | `qwen -p "prompt"` |
 
+## Switching the AI CLI
+
+The dashboard spawns an AI CLI binary for every slash-command-driven flow
+(oferta, cover-letter, outreach, post-rejection, form-answers, followup-draft,
+answer-form, batch-runner). The binary is read from the `AGENT_CLI`
+environment variable; it defaults to `claude`.
+
+```sh
+# default — Claude Code
+pnpm dev
+
+# Gemini CLI
+AGENT_CLI=gemini pnpm dev
+
+# Codex
+AGENT_CLI=codex pnpm dev
+
+# any other CLI on PATH
+AGENT_CLI=opencode pnpm dev
+```
+
+**Caveat**: career-ops still passes Claude-Code-specific flags to every
+spawn (`--dangerously-skip-permissions`, `--append-system-prompt-file`,
+`--model sonnet`). Other CLIs may need adapter shims that translate or
+strip those flags. Track per-CLI compatibility in
+[issues](https://github.com/santifer/career-ops/issues) — the abstraction
+ships intentionally minimal so adapter work is incremental and discoverable.
+
+Single source of truth: `ui/src/lib/config/cli.ts`.
+
 ## Stack and Conventions
 
 - Node.js (mjs modules), Playwright (PDF + scraping), YAML (config), HTML/CSS (template), Markdown (data), Canva MCP (optional visual CV)

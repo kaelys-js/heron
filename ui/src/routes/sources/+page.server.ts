@@ -52,22 +52,55 @@ export async function load({ url }: { url: URL }) {
     profileId,
     sources: sources.map((s) => ({
       ...s,
-      pulls: pulls[s.id] ?? pulls[mapToScanHistorySource(s.id)] ?? { last7d: 0, total: 0 },
+      pulls: pulls[s.id] ?? aggregatePullsFor(s.id, pulls) ?? { last7d: 0, total: 0 },
     })),
   };
 }
 
-/** scan.mjs writes `{type}-api` (e.g. `workday-api`) into scan-history.tsv,
- *  but our KNOWN_SOURCES uses friendlier ids. Some bridging required for
- *  the always-on aggregate sources. */
-function mapToScanHistorySource(id: string): string {
-  const map: Record<string, string> = {
-    'scan-portals': 'workday-api', // hack: aggregates many providers; just show "anything"
-    'scan-broad': 'linkedin',
-    'scan-curated': 'aijobs',
-    'linkedin-auth': 'linkedin-authenticated',
-    'indeed-auth': 'indeed-authenticated',
-    'gmail-imap': 'linkedin-alert-email',
+/**
+ * For "aggregator" sources (the always-on entries), sum pull counts across
+ * every provider portal they cover. P19: previously hardcoded to a single
+ * provider per aggregator ("workday-api" for scan-portals, etc.), which
+ * underreported counts whenever the scanner pulled from other providers.
+ *
+ * - scan-portals = scan.mjs → every ATS-API portal (greenhouse / ashby /
+ *   lever / workday / smartrecruiters / workable / personio / recruitee /
+ *   teamtailor)
+ * - scan-broad   = scan-broad.py → JobSpy-fed aggregators (linkedin,
+ *   indeed, glassdoor, ziprecruiter, google, themuse, adzuna, remoteok,
+ *   wwr, hn, yc)
+ * - scan-curated = scan-curated.mjs → aijobs + future niche boards
+ */
+function aggregatePullsFor(
+  sourceId: string,
+  pulls: Record<string, { last7d: number; total: number }>,
+): { last7d: number; total: number } | null {
+  const groups: Record<string, string[]> = {
+    'scan-portals': [
+      'greenhouse-api', 'ashby-api', 'lever-api', 'workday-api',
+      'smartrecruiters-api', 'workable-api', 'personio-api',
+      'recruitee-api', 'teamtailor-api',
+    ],
+    'scan-broad': [
+      'linkedin', 'indeed', 'glassdoor', 'ziprecruiter', 'google',
+      'themuse', 'adzuna', 'remoteok', 'wwr', 'hn', 'yc',
+    ],
+    'scan-curated': ['aijobs'],
+    'linkedin-auth': ['linkedin-authenticated'],
+    'indeed-auth': ['indeed-authenticated'],
+    'gmail-imap': ['linkedin-alert-email', 'indeed-alert-email', 'email-digest'],
   };
-  return map[id] ?? id;
+  const members = groups[sourceId];
+  if (!members) return null;
+  let last7d = 0;
+  let total = 0;
+  let anyHit = false;
+  for (const m of members) {
+    const v = pulls[m];
+    if (!v) continue;
+    anyHit = true;
+    last7d += v.last7d;
+    total += v.total;
+  }
+  return anyHit ? { last7d, total } : null;
 }

@@ -6,6 +6,7 @@ import { activePath } from './profile-paths';
 import { logEvent } from './events';
 import { loadEnv } from './env';
 import { CLI_NAMESPACE } from '$lib/config/branding';
+import { AGENT_CLI } from '$lib/config/cli';
 
 loadEnv();
 
@@ -18,7 +19,8 @@ function venvPython(): string {
   return 'python3';
 }
 
-export function isRunning(name: TaskName): boolean { return running.has(name); }
+// D14 — `isRunning` removed; callers consult `listRunning()` instead, and
+// the job registry has its own `isRunning(jobId)` for registered jobs.
 export function listRunning(): string[] { return [...running.keys()]; }
 
 // =============================================================================
@@ -145,7 +147,8 @@ let cleanupInstalled = false;
  * hooks.server.ts orphans child PIDs across the dev session and leaks file
  * handles + cookies + ports.
  */
-export function installChildCleanup(): void {
+// D15: kept internal — only `bootOnce()` calls this. Removed the export.
+function installChildCleanup(): void {
   if (cleanupInstalled) return;
   cleanupInstalled = true;
   const killAll = () => {
@@ -214,6 +217,16 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
   });
   p.on('close', (code: number | null) => {
     running.delete(name);
+    // P18: tag the always-on source counter when this is one of the scan
+    // jobs that has a KNOWN_SOURCES entry. recordSuccess/Failure is a
+    // no-op for any other task name, so this is safe to call broadly.
+    if (name === 'scan') {
+      try {
+        const { recordSuccess, recordFailure } = require('./sources') as typeof import('./sources');
+        if (code === 0) recordSuccess('scan-broad');
+        else if (code !== null) recordFailure('scan-broad', new Error('exit ' + code));
+      } catch { /* sources record best-effort */ }
+    }
     if (code === 0) {
       logEvent(name, 'Task finished', { level: 'success', category: 'task', message: 'Exit code 0 · ' + name });
     } else if (code === null) {
@@ -257,10 +270,28 @@ export function runGemini(top = 30, profileId?: string) {
   start('gemini', venvPython(), ['gemini-first-pass.py', '--top', String(top), ...profileFlags(profileId)]);
 }
 
-export function runLinkedInLogin() {
+/**
+ * Login flow for an authenticated portal — opens Playwright, lets the user
+ * sign in, persists the session to `.playwright-<portal>/`. P14: previously
+ * hardcoded to LinkedIn; now generalised to support Indeed too via the
+ * shared lib_playwright_auth.py helper (same module used by
+ * /api/sources/[id]/connect).
+ *
+ * `runLinkedInLogin` remains as a thin shim for backward compatibility
+ * with the /api/run switch.
+ */
+export function runPortalLogin(portal: 'linkedin' | 'indeed') {
   // Login is profile-agnostic — it writes the Playwright session to a
-  // shared dir (.playwright-linkedin/) that all profiles use.
-  start('apply-linkedin', venvPython(), ['linkedin-easy-apply.py', '--login']);
+  // shared dir (.playwright-<portal>/) that all profiles use.
+  if (portal === 'linkedin') {
+    start('apply-linkedin', venvPython(), ['linkedin-easy-apply.py', '--login']);
+  } else {
+    start('apply-linkedin', venvPython(), ['lib_playwright_auth.py', '--portal', 'indeed', '--login']);
+  }
+}
+
+export function runLinkedInLogin() {
+  runPortalLogin('linkedin');
 }
 
 export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: string) {
@@ -272,6 +303,22 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
     });
     return;
   }
+  // Enforce autopilot's per-day apply cap. The cap is a real cost / shadowban
+  // safety knob — every Submit risks LinkedIn flagging the session — so we
+  // honour it on both per-URL and queue-mode invocations.
+  try {
+    const { readConfig } = require('./autopilot') as typeof import('./autopilot');
+    const { todayCount } = require('./apply-counter') as typeof import('./apply-counter');
+    const cap = readConfig().thresholds.maxAppliesPerDay;
+    if (todayCount() >= cap) {
+      logEvent('apply-linkedin', 'Apply cap reached for today', {
+        level: 'warn',
+        category: 'task',
+        message: 'today=' + todayCount() + ' · cap=' + cap + '. Adjust via /autopilot → Thresholds.',
+      });
+      return;
+    }
+  } catch { /* non-fatal: fall through if autopilot module not ready (boot race) */ }
   const env = { ...process.env };
   if (autoSubmit) env.LINKEDIN_AUTO_SUBMIT = '1';
   // Surface up-front whether the general CV is missing for the targeted profile.
@@ -320,11 +367,27 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
   p.on('close', (code: number | null) => {
     running.delete('apply-linkedin');
     if (code === 0) {
-      logEvent('apply-linkedin', 'LinkedIn apply finished', {
-        level: 'success',
-        category: 'task',
-        message: url ? 'Applied: ' + url : 'Queue exhausted — see counts in /applied',
-      });
+      // Successful apply path — bump the daily counter so the cap covers
+      // subsequent fires within today. For queue-mode we conservatively
+      // bump by 1 even though the queue may have applied to multiple
+      // postings; the Python script is responsible for re-checking the
+      // cap internally for queue-mode multi-applies.
+      try {
+        const { bumpApplyCounter } = require('./apply-counter') as typeof import('./apply-counter');
+        const n = bumpApplyCounter();
+        logEvent('apply-linkedin', 'LinkedIn apply finished', {
+          level: 'success',
+          category: 'task',
+          message: (url ? 'Applied: ' + url : 'Queue exhausted — see counts in /applied') +
+            ' · today=' + n,
+        });
+      } catch {
+        logEvent('apply-linkedin', 'LinkedIn apply finished', {
+          level: 'success',
+          category: 'task',
+          message: url ? 'Applied: ' + url : 'Queue exhausted — see counts in /applied',
+        });
+      }
     } else if (code === null) {
       logEvent('apply-linkedin', 'LinkedIn apply interrupted', {
         level: 'warn',
@@ -403,12 +466,12 @@ export function runOferta(url: string, taskKey: TaskName = 'oferta', profileId?:
     });
     let p: ChildProcess;
     try {
-      p = spawn('claude', ['-p', prompt, '--dangerously-skip-permissions'], {
+      p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
         cwd: ROOT,
         env: { ...process.env },
       });
     } catch (e) {
-      logEvent(taskKey, 'Failed to spawn claude CLI', {
+      logEvent(taskKey, 'Failed to spawn ' + AGENT_CLI + ' CLI', {
         level: 'error',
         category: 'task',
         message: e instanceof Error ? e.message : String(e),
@@ -422,11 +485,11 @@ export function runOferta(url: string, taskKey: TaskName = 'oferta', profileId?:
     p.on('error', (err: Error) => {
       running.delete(taskKey);
       const isMissingBinary = (err as NodeJS.ErrnoException).code === 'ENOENT';
-      logEvent(taskKey, 'Failed to spawn claude CLI', {
+      logEvent(taskKey, 'Failed to spawn ' + AGENT_CLI + ' CLI', {
         level: 'error',
         category: 'task',
         message: isMissingBinary
-          ? '`claude` not found on PATH — install Claude Code or use a different CLI.'
+          ? '`' + AGENT_CLI + '` not found on PATH — install it or override via AGENT_CLI env var.'
           : err.message,
       });
       resolve({ ok: false, code: null });
@@ -466,12 +529,29 @@ export function runOferta(url: string, taskKey: TaskName = 'oferta', profileId?:
 export async function runBulkOfertaParallel(
   urls: string[],
   workers: number,
+  profileId?: string,
 ): Promise<{ started: boolean; total: number }> {
   if (running.has('bulk-cv')) {
     logEvent('bulk-cv', 'Bulk CV already running', { level: 'warn', category: 'task' });
     return { started: false, total: 0 };
   }
   if (urls.length === 0) return { started: false, total: 0 };
+  // batch-runner.sh reads profile context from the symlinks at repo root.
+  // Swap them once up front so every spawned worker reads from the right
+  // profile. The runner is serial-spawn-per-worker so concurrent swaps
+  // aren't a risk here.
+  if (profileId) {
+    try {
+      const { swapProfileSymlinks } = require('./profile-symlinks') as typeof import('./profile-symlinks');
+      swapProfileSymlinks(profileId);
+    } catch (e) {
+      logEvent('bulk-cv', 'Symlink swap failed — batch may read wrong profile', {
+        level: 'warn',
+        category: 'task',
+        message: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
 
   // Build the batch-input.tsv from the URL list. Format expected by
   // batch-runner.sh (per `batch/batch-runner.sh` parsing):
@@ -536,7 +616,10 @@ export async function runBulkOfertaParallel(
   return { started: true, total: urls.length };
 }
 
-export async function runBulkOferta(urls: string[]): Promise<{ ok: number; failed: number; total: number }> {
+export async function runBulkOferta(
+  urls: string[],
+  profileId?: string,
+): Promise<{ ok: number; failed: number; total: number }> {
   if (running.has('bulk-cv')) {
     logEvent('bulk-cv', 'Bulk CV already running', { level: 'warn', category: 'task' });
     return { ok: 0, failed: 0, total: 0 };
@@ -545,7 +628,7 @@ export async function runBulkOferta(urls: string[]): Promise<{ ok: number; faile
   running.set('bulk-cv', null as any);
   logEvent('bulk-cv', 'Bulk CV started', {
     category: 'task',
-    message: urls.length + ' job(s) queued',
+    message: urls.length + ' job(s) queued' + (profileId ? ' · profile=' + profileId : ''),
   });
   let ok = 0;
   let failed = 0;
@@ -555,7 +638,7 @@ export async function runBulkOferta(urls: string[]): Promise<{ ok: number; faile
         category: 'task',
         message: urls[i],
       });
-      const r = await runOferta(urls[i], 'oferta');
+      const r = await runOferta(urls[i], 'oferta', profileId);
       if (r.ok) ok++; else failed++;
     }
   } finally {
@@ -763,8 +846,26 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
 
 export type BulkApplyOutcome = { url: string; mode: 'linkedin' | 'mark'; ok: boolean; error?: string };
 
-function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean }> {
+function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boolean }> {
   return new Promise((resolve) => {
+    // Cap check: same enforcement as the fire-and-forget path. Treats
+    // "cap reached" as a non-error skip — caller can interpret the
+    // `capped: true` flag.
+    try {
+      const { readConfig } = require('./autopilot') as typeof import('./autopilot');
+      const { todayCount } = require('./apply-counter') as typeof import('./apply-counter');
+      const cap = readConfig().thresholds.maxAppliesPerDay;
+      if (todayCount() >= cap) {
+        logEvent('apply-linkedin', 'Apply cap reached for today', {
+          level: 'warn',
+          category: 'task',
+          message: 'url=' + url + ' · today=' + todayCount() + ' · cap=' + cap,
+        });
+        resolve({ ok: false, capped: true });
+        return;
+      }
+    } catch { /* non-fatal */ }
+
     let p: ChildProcess;
     try {
       p = spawn(venvPython(), ['linkedin-easy-apply.py', '--url', url], {
@@ -804,6 +905,14 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean }> {
           message: 'url=' + url + ' · exit=' + code,
         });
       }
+      // Successful per-job apply — bump counter so the bulk caller's
+      // subsequent iterations see the updated daily count.
+      if (code === 0) {
+        try {
+          const { bumpApplyCounter } = require('./apply-counter') as typeof import('./apply-counter');
+          bumpApplyCounter();
+        } catch { /* non-fatal */ }
+      }
       resolve({ ok: code === 0 });
     });
   });
@@ -829,7 +938,19 @@ export async function runBulkApply(jobs: { url: string; isLinkedIn: boolean }[])
       });
       if (j.isLinkedIn) {
         const r = await runLinkedInApplyAwait(j.url);
-        outcomes.push({ url: j.url, mode: 'linkedin', ok: r.ok, error: r.ok ? undefined : 'LinkedIn Easy Apply exited non-zero' });
+        outcomes.push({
+          url: j.url,
+          mode: 'linkedin',
+          ok: r.ok,
+          error: r.ok
+            ? undefined
+            : r.capped
+              ? 'Apply cap reached for today — skipped'
+              : 'LinkedIn Easy Apply exited non-zero',
+        });
+        // If we just hit the cap, stop iterating — subsequent calls would
+        // also be no-ops and just spam the activity feed.
+        if (r.capped) break;
       } else {
         // The status flip itself happens in the API endpoint via markApplied(url),
         // but for orchestrator-driven bulk we still log here so the activity feed
