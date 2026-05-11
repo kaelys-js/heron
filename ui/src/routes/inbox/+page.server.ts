@@ -3,7 +3,8 @@ import { bus } from '$lib/server/events';
 import { listRunning } from '$lib/server/orchestrator';
 import { readEnv, loadEnv } from '$lib/server/env';
 import { readSafe } from '$lib/server/files';
-import { activePath } from '$lib/server/profile-paths';
+import { activePath, profilePath } from '$lib/server/profile-paths';
+import { getActiveProfileId } from '$lib/server/profiles';
 import { readProfile } from '$lib/server/profile';
 import { getFollowupCadence, findEntryByCompanyRole, type FollowupEntry } from '$lib/server/followup-cadence';
 import { listOpenIssues } from '$lib/server/issues';
@@ -16,8 +17,12 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 type AppliedRow = { date: string; company: string; status: string };
 
-function parseAppliedRows(): AppliedRow[] {
-  const txt = readSafe(activePath('applications'));
+function parseAppliedRows(profileId?: string): AppliedRow[] {
+  const txt = readSafe(
+    profileId && profileId !== 'all'
+      ? profilePath(profileId, 'applications')
+      : activePath('applications'),
+  );
   const rows: AppliedRow[] = [];
   for (const line of txt.split('\n')) {
     if (!line.startsWith('|') || line.startsWith('| #') || line.startsWith('|---')) continue;
@@ -60,16 +65,23 @@ export type InboxAlert = {
   actionPostUrl?: string;
 };
 
-export async function load() {
-  const jobs = loadAllJobs();
+export async function load({ url }: { url: URL }) {
+  const profileParam = url.searchParams.get('profile') ?? undefined;
+  const profileId = profileParam === 'all' ? 'all' : (profileParam ?? getActiveProfileId());
+  const jobs = loadAllJobs(profileId);
   const env = readEnv();
   const recent = bus.recent();
   const running = listRunning();
-  const profile = readProfile();
+  const profile = readProfile(profileId === 'all' ? undefined : profileId);
 
   // Pipeline freshness
   let pipelineMtime: number | null = null;
-  try { pipelineMtime = fs.statSync(activePath('pipeline')).mtimeMs; } catch {}
+  try {
+    const pipelinePath = profileId && profileId !== 'all'
+      ? profilePath(profileId, 'pipeline')
+      : activePath('pipeline');
+    pipelineMtime = fs.statSync(pipelinePath).mtimeMs;
+  } catch {}
   const pipelineDaysAgo = pipelineMtime ? Math.floor((Date.now() - pipelineMtime) / DAY_MS) : null;
 
   // Sort helper
@@ -109,7 +121,7 @@ export async function load() {
   ).length;
 
   // Velocity
-  const appliedRows = parseAppliedRows();
+  const appliedRows = parseAppliedRows(profileId);
   const velocity = velocityBuckets(appliedRows);
   const last7 = velocity.slice(-7).reduce((a, b) => a + b.count, 0);
   const prev7 = velocity.slice(0, 7).reduce((a, b) => a + b.count, 0);
@@ -238,6 +250,7 @@ export async function load() {
   }
 
   return {
+    profileId,
     firstName,
     nowISO: new Date().toISOString(),
     upNext,

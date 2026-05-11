@@ -1,5 +1,6 @@
 import { loadAllJobs, groupByStatus } from '$lib/server/parsers';
 import { parseFilterFromUrl } from '$lib/server/projects';
+import { getActiveProfileId } from '$lib/server/profiles';
 import { STATUS_ORDER, DEFAULT_FILTER, type TabFilter, type Status, type FilterState } from '$lib/types';
 
 const PRESETS = new Set<TabFilter>(['all', 'ready', 'applied']);
@@ -15,7 +16,9 @@ function parseTab(raw: string | null): TabFilter {
 }
 
 export async function load({ url }: { url: URL }) {
-  const jobs = loadAllJobs();
+  const profileParam = url.searchParams.get('profile') ?? undefined;
+  const profileId = profileParam === 'all' ? 'all' : (profileParam ?? getActiveProfileId());
+  const jobs = loadAllJobs(profileId);
   const grouped = groupByStatus(jobs);
   // Seed the filter from URL params (used by Projects "Open in Pipeline" deep links).
   const overrides = parseFilterFromUrl(url);
@@ -31,5 +34,6 @@ export async function load({ url }: { url: URL }) {
     initialTab: parseTab(url.searchParams.get('tab')),
     initialFilter,
     fromProject: url.searchParams.get('from'),
+    profileId,
   };
 }
