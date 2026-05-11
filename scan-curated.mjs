@@ -256,10 +256,30 @@ function appendToScanHistory(offers, date) {
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
+  const probeOnly = args.includes('--probe');
   const sourceFlag = args.indexOf('--source');
   const filterSource = sourceFlag !== -1 ? args[sourceFlag + 1]?.toLowerCase() : null;
   const pagesFlag = args.indexOf('--pages');
   const pages = pagesFlag !== -1 ? Math.max(1, Math.min(20, parseInt(args[pagesFlag + 1], 10) || DEFAULT_MAX_PAGES)) : DEFAULT_MAX_PAGES;
+
+  // /sources Test button (B12) — connectivity probe. Hit aijobs.net's
+  // search page and confirm a 200 response. Exits 0/non-zero.
+  if (probeOnly) {
+    try {
+      const r = await fetch('https://aijobs.net/?page=1', {
+        headers: { 'User-Agent': 'career-ops-probe/1.0' },
+      });
+      if (!r.ok) {
+        console.error('probe failed: HTTP ' + r.status);
+        process.exit(3);
+      }
+      console.log('probe OK · aijobs.net reachable');
+      process.exit(0);
+    } catch (err) {
+      console.error('probe failed: ' + (err?.message || String(err)));
+      process.exit(3);
+    }
+  }
 
   // Optional title filter from portals.yml — same as scan.mjs.
   let titleFilter = (_t) => true;

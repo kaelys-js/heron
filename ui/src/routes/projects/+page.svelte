@@ -274,6 +274,7 @@
     title="Projects"
     subtitle={data.projects.length === 0 ? 'no projects yet' : data.projects.length + ' saved'}
     showTabs={false}
+    showFilter={true}
   />
 
   <div class="p-6">

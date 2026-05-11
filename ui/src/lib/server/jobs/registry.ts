@@ -4,8 +4,13 @@
  *
  * Designed to coexist with the legacy `runScan / runGemini / runLinkedInApply`
  * exports in `orchestrator.ts`. Those existing functions remain importable
- * for backward compatibility; we additionally register them here so that
- * Autopilot, /api/jobs/run, and after-event chains all see them.
+ * for backward compatibility; we additionally register them here so that:
+ *  - The Agents page (lists all `allowManual: true` jobs)
+ *  - Autopilot's scheduler (honors `trigger: daily | weekly` for every
+ *    registered job — see `autopilot.ts:tick()`)
+ *  - `/api/jobs/[id]/run` (the manual-trigger HTTP endpoint)
+ *  - After-event chains (`installAfterListener` below)
+ * all see the same canonical set.
  *
  * Bus listening for `after`-trigger jobs lives here so any job module can
  * declare `trigger: { type: 'after', tasks: ['scan'] }` and fire automatically
@@ -32,9 +37,9 @@ export function register(def: JobDef): void {
   registry.set(def.id, def);
 }
 
-export function unregister(id: string): void {
-  registry.delete(id);
-}
+// D21 — `unregister` removed: no caller (HMR re-imports replace via
+// `register`'s last-writer-wins semantics, which already covers the
+// reload case the function was anticipating).
 
 export function get(id: string): JobDef | undefined {
   return registry.get(id);

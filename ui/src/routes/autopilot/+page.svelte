@@ -57,19 +57,24 @@
     if (s.trigger.type === 'after') {
       return 'When ' + s.trigger.task + ' completes';
     }
+    if (s.trigger.type === 'weekly') {
+      const t = s.trigger;
+      return WEEKDAY_FULL[t.dayOfWeek] + ' at ' + formatTimeLabel(t.hour, t.minute);
+    }
     const t = s.trigger;
     const time = formatTimeLabel(t.hour, t.minute);
-    if (t.weekdays.length === 0) return 'Every day at ' + time;
-    if (t.weekdays.length === 7) return 'Every day at ' + time;
+    const days: number[] = t.weekdays;
+    if (days.length === 0) return 'Every day at ' + time;
+    if (days.length === 7) return 'Every day at ' + time;
     if (
-      t.weekdays.length === 5 &&
-      t.weekdays.every((d) => [1, 2, 3, 4, 5].includes(d))
+      days.length === 5 &&
+      days.every((d: number) => [1, 2, 3, 4, 5].includes(d))
     ) return 'Weekdays at ' + time;
     if (
-      t.weekdays.length === 2 &&
-      t.weekdays.every((d) => [0, 6].includes(d))
+      days.length === 2 &&
+      days.every((d: number) => [0, 6].includes(d))
     ) return 'Weekends at ' + time;
-    return t.weekdays.map((d) => WEEKDAY_LABELS[d]).join(' · ') + ' at ' + time;
+    return days.map((d: number) => WEEKDAY_LABELS[d]).join(' · ') + ' at ' + time;
   }
 
   function formatTimeLabel(h: number, m: number): string {

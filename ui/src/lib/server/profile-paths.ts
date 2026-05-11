@@ -118,10 +118,8 @@ export function ensureProfileDirs(profileId: string): void {
   fs.mkdirSync(profilePath(profileId, 'interview-prep-dir'), { recursive: true });
 }
 
-/** Returns true when the profile directory exists on disk. Cheap check. */
-export function profileDirExists(profileId: string): boolean {
-  return fs.existsSync(profilePath(profileId, 'profile-dir'));
-}
+// D20 — `profileDirExists` removed: no caller. Use `fs.existsSync(profilePath(id, 'profile-dir'))`
+// directly if needed; reinstate as a helper once two+ call sites materialise.
 
 /**
  * Shortcut for `profilePath(getActiveProfileId(), kind)`. Used by code that

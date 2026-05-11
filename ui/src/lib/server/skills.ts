@@ -27,7 +27,11 @@ export type Skill = {
   description: string;   // first non-heading paragraph
   category: SkillCategory;
   emoji: string;
+  /** Heuristic language inferred from the text body. */
   language: 'en' | 'es' | 'mixed';
+  /** Concrete on-disk language directory: 'en' for top-level modes, otherwise
+   *  the two-letter subdir code ('de', 'fr', 'ja', 'pt', 'ru', 'es'). */
+  lang: 'en' | 'de' | 'fr' | 'ja' | 'pt' | 'ru' | 'es';
   invocation: string;    // '/career-ops oferta'
   /** When relevant: list of inputs the user provides (parsed from the body) */
   inputs?: string[];
@@ -47,6 +51,8 @@ const CATEGORY: Record<string, SkillCategory> = {
 
   apply: 'application',
   contacto: 'application',
+  'cover-letter': 'application',
+  'form-answers': 'application',
   'post-rejection': 'application',
   negotiation: 'application',
 
@@ -65,16 +71,27 @@ const CATEGORY: Record<string, SkillCategory> = {
   _profile: 'system',
   _shared: 'system',
   '_profile.template': 'system',
+  // Localized modes use parallel ids — surfaces them with the right category
+  // even though they live under modes/{lang}/.
+  angebot: 'evaluation',     // de: Stellenangebot
+  offre: 'evaluation',       // fr: offre d'emploi
+  kyujin: 'evaluation',      // ja: 求人
+  bewerben: 'application',   // de: bewerben
+  postuler: 'application',   // fr: postuler
+  oubo: 'application',       // ja: 応募
 };
 
 const EMOJI: Record<string, string> = {
   oferta: '🎯', ofertas: '⚖️', deep: '🔍', project: '🧪', training: '📚',
   patterns: '📈', followup: '📨',
-  apply: '✉️', contacto: '🤝', 'post-rejection': '↩️', negotiation: '💬',
+  apply: '✉️', contacto: '🤝', 'cover-letter': '✉️', 'form-answers': '📝',
+  'post-rejection': '↩️', negotiation: '💬',
   scan: '🔭', pipeline: '🔁', batch: '📦', tracker: '📋', 'auto-pipeline': '⚡',
   'interview-prep': '🎤', 'mock-interview': '🎭',
   pdf: '📄', latex: '📐',
   _profile: '🪪', _shared: '🧩', '_profile.template': '🪪',
+  angebot: '🎯', offre: '🎯', kyujin: '🎯',
+  bewerben: '✉️', postuler: '✉️', oubo: '✉️',
 };
 
 function inferCategory(id: string): SkillCategory {
@@ -149,22 +166,35 @@ function detectLanguage(text: string): 'en' | 'es' | 'mixed' {
   return 'mixed';
 }
 
-export function listSkills(includeSystem = false): Skill[] {
-  let files: string[] = [];
-  try {
-    files = fs.readdirSync(MODES_DIR)
-      .filter((f) => f.endsWith('.md'))
-      .sort();
-  } catch { return []; }
+/** Set of valid two-letter language subdir codes. Recursion is exactly one
+ *  level deep so the skills catalog stays scannable. */
+const LANG_SUBDIRS = new Set(['de', 'fr', 'ja', 'pt', 'ru', 'es']);
 
+/**
+ * List every `*.md` mode discoverable in modes/ — both top-level (English)
+ * and one-level language subdirs (modes/de/, modes/fr/, etc.). Skill ids
+ * use a `<lang>:<id>` prefix for localized entries (e.g. `de:angebot`) so
+ * they don't collide with the English file. The `/skills` page filters
+ * + groups by `lang` so the user can browse one language at a time.
+ */
+export function listSkills(includeSystem = false): Skill[] {
   const skills: Skill[] = [];
-  for (const f of files) {
-    const id = f.replace(/\.md$/, '');
-    const category = inferCategory(id);
-    if (!includeSystem && category === 'system') continue;
-    const filePath = path.join(MODES_DIR, f);
+
+  const consumeFile = (
+    f: string,
+    dirAbs: string,
+    lang: Skill['lang'],
+    idPrefix: string,
+  ) => {
+    const id = idPrefix + f.replace(/\.md$/, '');
+    // Don't carry the prefix into category lookup — `de:angebot` should look
+    // up `angebot` in CATEGORY.
+    const lookupId = id.includes(':') ? id.split(':', 2)[1] : id;
+    const category = inferCategory(lookupId);
+    if (!includeSystem && category === 'system') return;
+    const filePath = path.join(dirAbs, f);
     let stat;
-    try { stat = fs.statSync(filePath); } catch { continue; }
+    try { stat = fs.statSync(filePath); } catch { return; }
     const text = readSafe(filePath);
     const { title, subtitle } = parseHeader(text);
     const description = parseDescription(text);
@@ -172,25 +202,59 @@ export function listSkills(includeSystem = false): Skill[] {
     skills.push({
       id,
       name: subtitle ? title + ' — ' + subtitle : title,
-      title: title || id,
+      title: title || lookupId,
       subtitle,
       description,
       category,
-      emoji: EMOJI[id] ?? '🛠',
+      emoji: EMOJI[lookupId] ?? '🛠',
       language: detectLanguage(text),
-      invocation: '/' + CLI_NAMESPACE + ' ' + id,
+      lang,
+      invocation: '/' + CLI_NAMESPACE + ' ' + lookupId,
       inputs: inputs.length > 0 ? inputs : undefined,
       filePath,
       bytes: stat.size,
     });
+  };
+
+  // Top-level English modes.
+  try {
+    for (const f of fs.readdirSync(MODES_DIR).sort()) {
+      const full = path.join(MODES_DIR, f);
+      let stat;
+      try { stat = fs.statSync(full); } catch { continue; }
+      if (stat.isFile() && f.endsWith('.md')) {
+        consumeFile(f, MODES_DIR, 'en', '');
+      } else if (stat.isDirectory() && LANG_SUBDIRS.has(f)) {
+        // One-level recursion into modes/<lang>/.
+        try {
+          for (const lf of fs.readdirSync(full).sort()) {
+            if (!lf.endsWith('.md')) continue;
+            consumeFile(lf, full, f as Skill['lang'], f + ':');
+          }
+        } catch { /* unreadable lang dir — skip */ }
+      }
+    }
+  } catch {
+    return [];
   }
   return skills;
 }
 
 export function readSkillBody(id: string): string | null {
-  const safe = id.replace(/[^a-zA-Z0-9_\-.]/g, '');
-  if (safe !== id) return null;
-  const filePath = path.join(MODES_DIR, id + '.md');
+  // Support `<lang>:<id>` prefix for localized skills.
+  let lang: string | null = null;
+  let bareId = id;
+  const colon = id.indexOf(':');
+  if (colon >= 0) {
+    lang = id.slice(0, colon);
+    bareId = id.slice(colon + 1);
+    if (!LANG_SUBDIRS.has(lang)) return null;
+  }
+  // Sanitize. Reject path-traversal and stray punctuation.
+  const safe = bareId.replace(/[^a-zA-Z0-9_\-.]/g, '');
+  if (safe !== bareId) return null;
+  const dir = lang ? path.join(MODES_DIR, lang) : MODES_DIR;
+  const filePath = path.join(dir, bareId + '.md');
   if (!fs.existsSync(filePath)) return null;
   return readSafe(filePath);
 }

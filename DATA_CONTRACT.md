@@ -115,3 +115,10 @@ If you're writing a new utility script that needs per-profile paths:
 - **Node/MJS**: import from `lib-profiles.mjs` — use `profilePath(profileId, kind)` and `profileFromArgv()` to add a `--profile <slug>` CLI flag.
 - **Python**: import from `lib_profiles.py` — same API.
 - **Dashboard (TypeScript)**: import from `$lib/server/profile-paths.ts` — use `profilePath(id, kind)` for explicit profile, `activePath(kind)` when you just want the active one.
+
+## Status vocabularies
+
+career-ops tracks **two** status values per job, not one — the dashboard's
+pipeline stage and the applications.md canonical state. They're orthogonal,
+not equivalent. See [`docs/STATUS_MODEL.md`](docs/STATUS_MODEL.md) for the
+full mapping table and the reason both exist.

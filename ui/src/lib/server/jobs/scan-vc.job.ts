@@ -77,4 +77,4 @@ register({
   run: runScanVc,
 });
 
-export { runScanVc };
+// D24 — `runScanVc` was only used by the registry; export removed.

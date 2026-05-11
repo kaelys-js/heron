@@ -84,4 +84,4 @@ register({
   run: runScanEmail,
 });
 
-export { runScanEmail };
+// D24 — `runScanEmail` was only used by the registry; export removed.

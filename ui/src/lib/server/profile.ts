@@ -66,6 +66,14 @@ export type ProfileEdit = {
     strong_plus?: string[];
     hard_no?: string[];
   };
+  /** Mode-file localization. Empty / 'modes' = English (modes/), otherwise
+   *  'modes/<lang>' (one of 'modes/de', 'modes/fr', 'modes/ja', 'modes/pt',
+   *  'modes/ru', 'modes/es'). Read by `modesPathFor()` to pick the right
+   *  language directory; falls back to English when a specific .md is
+   *  missing from the localized dir. */
+  language?: {
+    modes_dir?: string;
+  };
 };
 
 export type ProfileSnapshot = ProfileEdit & {
@@ -121,6 +129,7 @@ export function readProfile(profileId?: string): ProfileSnapshot {
   const compensation = (doc.compensation ?? {}) as ProfileEdit['compensation'] & Record<string, unknown>;
   const location = (doc.location ?? {}) as ProfileEdit['location'] & Record<string, unknown>;
   const preferences = (doc.preferences ?? {}) as ProfileEdit['preferences'] & Record<string, unknown>;
+  const language = (doc.language ?? {}) as { modes_dir?: string };
 
   const archetypes = Array.isArray(target_roles.archetypes)
     ? (target_roles.archetypes as { name?: string; level?: string; fit?: string }[]).map((a) => ({
@@ -183,6 +192,9 @@ export function readProfile(profileId?: string): ProfileSnapshot {
       strong_plus: Array.isArray(preferences.strong_plus) ? (preferences.strong_plus as string[]) : [],
       hard_no: Array.isArray(preferences.hard_no) ? (preferences.hard_no as string[]) : [],
     },
+    language: {
+      modes_dir: typeof language.modes_dir === 'string' ? language.modes_dir : '',
+    },
     archetypes,
     exists: fs.existsSync(profilePathYml),
     files: {
@@ -242,6 +254,11 @@ export function writeProfile(arg1: string | ProfileEdit | undefined, arg2?: Prof
     if (edit.preferences.hard_no !== undefined) p.hard_no = edit.preferences.hard_no;
     doc.preferences = p;
   }
+  if (edit.language) {
+    const l = (doc.language as Record<string, unknown>) ?? {};
+    if (edit.language.modes_dir !== undefined) l.modes_dir = edit.language.modes_dir;
+    doc.language = l;
+  }
 
   const out = stringify(doc, { lineWidth: 100 });
   fs.writeFileSync(profilePath(id, 'profile-yml'), out);
@@ -274,27 +291,34 @@ export function readSiblingFile(arg1: string | undefined | 'profileMd' | 'cv', a
  * `.bak` so a panicked user can recover by hand. Returns the list of files
  * that got reset so the API caller can describe what happened.
  *
- * Three scopes (ALL scoped to a single profile — they no longer touch shared
- * infrastructure files; see "Shared infrastructure" below):
+ * Three scopes:
  *   - 'profile'    → wipes that profile's profile.yml + cv.md + _profile.md
  *                    only. Tracker/pipeline/sources/reports preserved.
+ *                    Shared infrastructure UNTOUCHED.
  *   - 'jobs'       → wipes that profile's job-search artifacts:
  *                    applications.md, pipeline.md, scan-history.tsv,
  *                    gemini-scores.tsv, follow-ups.md, reports/, output/,
  *                    interview-prep/{company}-*.md. Profile YAML / CV /
  *                    targeting / sources connections preserved.
- *   - 'everything' → strict superset of both, PLUS that profile's
- *                    projects.json (saved filter views).
+ *                    Shared infrastructure UNTOUCHED.
+ *   - 'everything' → strict superset of both, plus that profile's
+ *                    projects.json AND shared infrastructure listed below.
  *
- * Shared infrastructure NEVER touched by any scope:
- *   data/autopilot.json     ← global scheduler, applies to all profiles
- *   data/activity.jsonl     ← shared event log
- *   data/issues.jsonl       ← shared open-issues feed
- *   data/sources.json       ← shared source connection state
- *   data/onboarding-state   ← shared wizard state
+ * Shared infrastructure ALSO wiped on scope='everything' (per the
+ * ResetProfileDialog's "Everything — what happens" description). The
+ * 'profile' and 'jobs' scopes do NOT touch these:
+ *   data/autopilot.json     ← reset to DEFAULT_CONFIG
+ *   data/activity.jsonl     ← truncated
+ *   data/job-last-run.json  ← deleted
+ *   data/apply-counter.json ← deleted
+ *   interview-prep/story-bank.md ← deleted
+ *
+ * Shared files NEVER touched by ANY scope:
+ *   data/issues.jsonl       ← open-issues feed (driver: liveness, integrity)
+ *   data/sources.json       ← source connection state
+ *   data/onboarding-state.json  ← wizard state (Phase 5 handles this separately)
  *   data/profiles.json      ← profile registry
  *   data/followup-cache.json + patterns-cache.json ← derived caches
- *   interview-prep/story-bank.md ← shared STAR-story bank
  *   .env, .venv, .playwright-<portal> dirs, node_modules, .git, source code
  *   .bak siblings           ← so previous resets stay recoverable
  *
@@ -314,6 +338,9 @@ function backupTo(p: string, backups: string[]): void {
 }
 
 /** Empty a directory's contents but leave the directory itself (so other tools that index it don't break).
+ *  Before each delete the file/subtree is backed up to `<path>.bak` (file)
+ *  or `<path>.bak.tar` (directory subtree) so a panicked user can recover.
+ *  Skip the backup if `.bak` already exists — don't clobber the previous one.
  *  `exclude` is an optional set of basenames to leave untouched — used by the 'jobs' scope to keep
  *  long-lived artifacts like interview-prep/story-bank.md while still wiping company-specific files. */
 function emptyDir(dir: string, resetFiles: string[], displayName: string, exclude?: Set<string>) {
@@ -327,6 +354,26 @@ function emptyDir(dir: string, resetFiles: string[], displayName: string, exclud
       if (name.endsWith('.bak')) continue;
       if (exclude?.has(name)) continue;
       const full = path.join(dir, name);
+      // Per-entry backup. For plain files we copyFileSync to a .bak sibling.
+      // For directories we recursively copy to <name>.bak/. Both are skipped
+      // when a .bak already exists so a previous reset stays recoverable.
+      try {
+        const stat = fs.statSync(full);
+        const bakPath = full + '.bak';
+        if (!fs.existsSync(bakPath)) {
+          if (stat.isDirectory()) {
+            fs.cpSync(full, bakPath, { recursive: true });
+          } else {
+            fs.copyFileSync(full, bakPath);
+          }
+        }
+      } catch (e) {
+        // Backup failure is non-fatal — still attempt the delete.
+        logEvent('reset-profile', 'Could not back up ' + name, {
+          level: 'warn', category: 'application',
+          message: displayName + ' — ' + (e instanceof Error ? e.message : String(e)),
+        });
+      }
       try {
         fs.rmSync(full, { recursive: true, force: true });
         removed++;
@@ -459,8 +506,61 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
     return { resetFiles, backups, scope, profileId: id };
   }
 
-  // ===== Everything-only block (this profile's saved filter views) =====
+  // ===== Everything-only block =====
+  // This profile's saved filter views.
   backupAndDelete(PROJECTS_JSON_PATH, resetFiles, backups);
+
+  // Shared infrastructure — wiped per the ResetProfileDialog "Everything"
+  // description. Each gets backed up to <path>.bak before deletion/reset.
+  const AUTOPILOT_JSON = path.join(ROOT, 'data', 'autopilot.json');
+  const ACTIVITY_JSONL = path.join(ROOT, 'data', 'activity.jsonl');
+  const JOB_LAST_RUN_JSON = path.join(ROOT, 'data', 'job-last-run.json');
+  const APPLY_COUNTER_JSON = path.join(ROOT, 'data', 'apply-counter.json');
+  const STORY_BANK_MD = path.join(ROOT, 'interview-prep', 'story-bank.md');
+
+  // Reset autopilot.json to defaults rather than deleting it — the
+  // scheduler depends on the file existing on next read; rewriting to
+  // DEFAULT_CONFIG is more honest than deleting and racing with the
+  // scheduler's next tick.
+  if (fs.existsSync(AUTOPILOT_JSON)) {
+    backupTo(AUTOPILOT_JSON, backups);
+    try {
+      // Lazy-require to avoid circular imports.
+      const { readConfig: _read, writeConfig } = require('./autopilot') as typeof import('./autopilot');
+      void _read;
+      // Force-write the static defaults by deleting and triggering a fresh read.
+      // Simpler: just delete; next readConfig() seeds DEFAULT_CONFIG automatically.
+      fs.unlinkSync(AUTOPILOT_JSON);
+      // Re-seed defaults so the file exists for the scheduler's next tick.
+      const fresh = (require('./autopilot') as typeof import('./autopilot')).readConfig();
+      writeConfig(fresh);
+      resetFiles.push(path.relative(ROOT, AUTOPILOT_JSON));
+    } catch (e) {
+      logEvent('reset-profile', 'Could not reset autopilot.json', {
+        level: 'warn', category: 'application',
+        message: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+
+  // Activity feed — backup then truncate (preserve file so the bus's append
+  // path doesn't need to recreate it on next emit).
+  if (fs.existsSync(ACTIVITY_JSONL)) {
+    backupTo(ACTIVITY_JSONL, backups);
+    try {
+      fs.writeFileSync(ACTIVITY_JSONL, '');
+      resetFiles.push(path.relative(ROOT, ACTIVITY_JSONL));
+    } catch (e) {
+      logEvent('reset-profile', 'Could not truncate activity.jsonl', {
+        level: 'warn', category: 'application',
+        message: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+
+  backupAndDelete(JOB_LAST_RUN_JSON, resetFiles, backups);
+  backupAndDelete(APPLY_COUNTER_JSON, resetFiles, backups);
+  backupAndDelete(STORY_BANK_MD, resetFiles, backups);
 
   return { resetFiles, backups, scope, profileId: id };
 }

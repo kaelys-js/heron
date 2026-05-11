@@ -1,14 +1,15 @@
 /**
- * Follow-up cadence snapshot.
+ * Follow-up cadence snapshot (HTTP surface).
  *
  *   GET             → cached snapshot (≤5min stale ok)
  *   GET ?fresh=1    → force re-spawn the script (slower but live)
  *
- * Drives:
- *   - /applied page badges (per-row urgency)
- *   - Inbox "Follow-ups due" section
- *   - JobActions "Draft follow-up" menu (it reads the cached entry to
- *     prefill the persona / days-since-applied context)
+ * Note on consumers: the dashboard's page loaders (/applied, Inbox,
+ * JobActions sheet) call `getFollowupCadence()` via SERVER-SIDE import
+ * from `$lib/server/followup-cadence`, not via this HTTP endpoint —
+ * cheaper than a round trip and avoids a network hop. This endpoint
+ * remains as the public surface for external integrations (bookmarklets,
+ * scripts, mobile clients) that want the same JSON shape over HTTP.
  */
 
 import { wrap } from '$lib/server/api-helpers';

@@ -114,4 +114,4 @@ register({
   run: runScanLinkedinAuth,
 });
 
-export { runScanLinkedinAuth };
+// D24 — `runScanLinkedinAuth` was only used by the registry; export removed.

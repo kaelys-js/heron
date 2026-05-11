@@ -23,6 +23,7 @@ import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
 import { CLI_NAMESPACE } from '$lib/config/branding';
+import { AGENT_CLI } from '$lib/config/cli';
 
 // Story-bank stays SHARED across profiles per architecture decision —
 // rejection learnings are cross-track wisdom (negotiation, behavioral
@@ -53,7 +54,7 @@ function spawnPostRejection(url: string, notes: Notes, profileId: string): Promi
         message: e instanceof Error ? e.message : String(e),
       });
     }
-    const p = spawn('claude', args, { cwd: ROOT, env: { ...process.env } });
+    const p = spawn(AGENT_CLI, args, { cwd: ROOT, env: { ...process.env } });
     p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
     p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
     p.on('error', (err) => reject(err));

@@ -107,12 +107,31 @@ function localVersion() {
   return existsSync(vPath) ? readFileSync(vPath, 'utf-8').trim() : '0.0.0';
 }
 
+/**
+ * Compare two semver strings. Supports pre-release tags (1.6.0-rc1) per
+ * the canonical semver ordering: pre-release < release for the same major.minor.patch.
+ * (P11 — prior numeric-split implementation silently equated 1.6.0-rc1 == 1.6.0.)
+ *
+ * Pre-release identifiers compare ASCII-lexicographically (rc1 < rc2,
+ * alpha < beta < rc), good enough for the small set of tags this project uses.
+ */
 function compareVersions(a, b) {
-  const pa = a.split('.').map(Number);
-  const pb = b.split('.').map(Number);
+  // Split off pre-release suffix on each side.
+  const [aBase, aPre] = a.split('-', 2);
+  const [bBase, bPre] = b.split('-', 2);
+  const pa = aBase.split('.').map(Number);
+  const pb = bBase.split('.').map(Number);
   for (let i = 0; i < 3; i++) {
     if ((pa[i] || 0) < (pb[i] || 0)) return -1;
     if ((pa[i] || 0) > (pb[i] || 0)) return 1;
+  }
+  // Bases equal — pre-release comparison.
+  // Per semver: 1.6.0-rc1 < 1.6.0 (no pre-release).
+  if (aPre && !bPre) return -1;
+  if (!aPre && bPre) return 1;
+  if (aPre && bPre) {
+    if (aPre < bPre) return -1;
+    if (aPre > bPre) return 1;
   }
   return 0;
 }
@@ -241,6 +260,18 @@ async function apply() {
   const local = localVersion();
   const initialStatusPaths = new Set(gitStatusEntries().map(entry => entry.path));
 
+  // P12: honour the .update-dismissed flag here too — not just on check.
+  // A user who explicitly dismissed an update shouldn't have it apply on
+  // accident from a different code path (autopilot, manual `apply` run).
+  // The `--force` flag (any argv after the action) lets advanced users
+  // override.
+  const dismissFile = join(ROOT, '.update-dismissed');
+  const hasForce = process.argv.slice(3).includes('--force');
+  if (existsSync(dismissFile) && !hasForce) {
+    console.error('Update was dismissed. Run with --force to apply anyway, or delete .update-dismissed to clear the flag.');
+    process.exit(2);
+  }
+
   // Check for lock
   const lockFile = join(ROOT, '.update-lock');
   if (existsSync(lockFile)) {
@@ -300,11 +331,25 @@ async function apply() {
       process.exit(1);
     }
 
-    // 5. Install any new dependencies
+    // 5. Install any new dependencies (root + ui/, since the SvelteKit
+    //    dashboard's deps live in ui/package.json — P10).
     try {
       execSync('npm install --silent', { cwd: ROOT, timeout: 60000 });
     } catch {
-      console.log('npm install skipped (may need manual run)');
+      console.log('npm install (root) skipped (may need manual run)');
+    }
+    const uiPath = join(ROOT, 'ui');
+    if (existsSync(join(uiPath, 'package.json'))) {
+      try {
+        // Prefer pnpm if a pnpm-lock.yaml is present (the ui/ dir uses pnpm).
+        const usePnpm = existsSync(join(uiPath, 'pnpm-lock.yaml'));
+        execSync(usePnpm ? 'pnpm install --silent' : 'npm install --silent', {
+          cwd: uiPath,
+          timeout: 120000,
+        });
+      } catch {
+        console.log('ui/ install skipped (may need manual run: cd ui && pnpm install)');
+      }
     }
 
     // 6. Commit the update

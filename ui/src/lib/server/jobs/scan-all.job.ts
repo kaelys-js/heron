@@ -54,11 +54,33 @@ async function runScanAll(args?: JobArgs): Promise<JobResult> {
   if (hasJob('scan-portals')) baseChildren.push('scan-portals');
   if (hasJob('scan'))         baseChildren.push('scan');
   if (hasJob('scan-curated')) baseChildren.push('scan-curated');
-  if (hasJob('scan-linkedin-auth') && getSource('linkedin-auth').connected) {
-    baseChildren.push('scan-linkedin-auth');
+  // P9: skip the authenticated scrapers when their `consecutiveFailures`
+  // counter is non-zero — re-firing into a dead session just produces more
+  // failures (and eventually a 3-strike disconnect). The user has to
+  // re-login from /sources to clear the counter.
+  if (hasJob('scan-linkedin-auth')) {
+    const s = getSource('linkedin-auth');
+    if (s.connected && (s.consecutiveFailures ?? 0) === 0) {
+      baseChildren.push('scan-linkedin-auth');
+    } else if (s.connected) {
+      logEvent('scan-all', 'Skipping scan-linkedin-auth — recent failures', {
+        level: 'warn',
+        category: 'task',
+        message: 'consecutiveFailures=' + (s.consecutiveFailures ?? 0) + '. Re-login via /sources to clear.',
+      });
+    }
   }
-  if (hasJob('scan-indeed-auth') && getSource('indeed-auth').connected) {
-    baseChildren.push('scan-indeed-auth');
+  if (hasJob('scan-indeed-auth')) {
+    const s = getSource('indeed-auth');
+    if (s.connected && (s.consecutiveFailures ?? 0) === 0) {
+      baseChildren.push('scan-indeed-auth');
+    } else if (s.connected) {
+      logEvent('scan-all', 'Skipping scan-indeed-auth — recent failures', {
+        level: 'warn',
+        category: 'task',
+        message: 'consecutiveFailures=' + (s.consecutiveFailures ?? 0) + '. Re-login via /sources to clear.',
+      });
+    }
   }
   if (hasJob('scan-email-imap') && getSource('gmail-imap').connected) {
     baseChildren.push('scan-email-imap');
@@ -147,4 +169,4 @@ register({
   run: runScanAll,
 });
 
-export { runScanAll };
+// D24 — `runScanAll` was only used by the registry; export removed.

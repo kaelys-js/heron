@@ -135,4 +135,4 @@ export function installImapPollerDaemon(): void {
 // Auto-install when the module is first imported (jobs/index.ts barrel).
 installImapPollerDaemon();
 
-export { runScanEmailImap };
+// D24 — `runScanEmailImap` was only used by the registry; export removed.

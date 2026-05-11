@@ -97,4 +97,4 @@ register({
   run: runScanIndeedAuth,
 });
 
-export { runScanIndeedAuth };
+// D24 — `runScanIndeedAuth` was only used by the registry; export removed.

@@ -5,7 +5,7 @@
   import * as Tooltip from '$lib/components/ui/tooltip';
   import { MapPin, FileText, FileBadge2, Wifi, Building, Globe, DollarSign } from '@lucide/svelte';
   import type { Job, WorkMode } from '$lib/types';
-  import { BG_TINTS } from '$lib/types';
+  import { BG_TINTS, APPLICATION_STATUS_TINTS } from '$lib/types';
   import { cn } from '$lib/utils';
   import JobActions from './JobActions.svelte';
 
@@ -175,6 +175,26 @@
             {job.salary ?? 'No salary range parsed from the posting'}
           </Tooltip.Content>
         </Tooltip.Root>
+
+        {#if job.applicationStatus}
+          {@const as = job.applicationStatus}
+          <Tooltip.Root>
+            <Tooltip.Trigger>
+              {#snippet child({ props })}
+                <Badge
+                  {...props}
+                  variant="outline"
+                  class={cn('text-[10px] h-4 px-1 font-mono uppercase border cursor-help', APPLICATION_STATUS_TINTS[as])}
+                >
+                  {as}
+                </Badge>
+              {/snippet}
+            </Tooltip.Trigger>
+            <Tooltip.Content side="top" class="text-xs max-w-xs">
+              Application status from <code class="font-mono">applications.md</code> ({as}). Pipeline stage is shown separately as the colored dot.
+            </Tooltip.Content>
+          </Tooltip.Root>
+        {/if}
 
         {#if job.bgRisk}
           {@const bg = job.bgRisk}

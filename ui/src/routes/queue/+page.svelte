@@ -96,6 +96,7 @@
     title="Queue"
     subtitle={data.queued.length === 0 ? 'empty' : data.queued.length + ' staged'}
     showTabs={false}
+    showFilter={true}
   />
 
   <div class="p-6 pb-24">

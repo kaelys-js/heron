@@ -41,6 +41,8 @@ import './auto-interview-prep';
 // Phase 4 auto-apply pipeline jobs.
 import './auto-queue';
 import './daily-digest.job';
+import './apply-linkedin-login.job';
+import './compile-latex.job';
 import '../autopilot-circuit-breaker';
 
 let installed = false;
@@ -55,9 +57,17 @@ export function installAllJobs(): void {
   try {
     migrateToMultiProfile();
   } catch (e) {
-    // Don't let a migration error kill boot. Activity feed will surface
-    // the issue separately; the dashboard falls through to default state.
-    console.error('[boot] profile migration failed:', e);
+    // P16: surface the failure in the activity feed (not just stdout) so
+    // a user who only sees the dashboard knows their data wasn't migrated.
+    // Don't let a migration error kill boot — fall through to default state.
+    // Use a dynamic import to avoid a circular dependency with the bus.
+    import('../events').then(({ reportServerError }) => {
+      reportServerError('migrate', 'Multi-profile migration failed', e, {
+        category: 'system',
+      });
+    }).catch(() => {
+      console.error('[boot] profile migration failed:', e);
+    });
   }
 
   // Legacy tasks — preserve the exact ids used in /api/run today so
@@ -114,7 +124,6 @@ export function installAllJobs(): void {
 export * from './types';
 export {
   register,
-  unregister,
   get,
   has,
   list,

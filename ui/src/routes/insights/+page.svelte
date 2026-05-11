@@ -121,6 +121,7 @@
     title="Insights"
     subtitle={dateRangeLabel || undefined}
     showTabs={false}
+    showFilter={true}
   />
 
   <div class="p-6 pb-24">

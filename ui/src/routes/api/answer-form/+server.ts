@@ -22,6 +22,7 @@ import { loadAllJobs } from '$lib/server/parsers';
 import { ROOT } from '$lib/server/files';
 import { logEvent, reportServerError } from '$lib/server/events';
 import { CLI_NAMESPACE } from '$lib/config/branding';
+import { AGENT_CLI } from '$lib/config/cli';
 
 type Question = { label: string; type?: string };
 type Answer = { label: string; value: string };
@@ -53,7 +54,7 @@ function spawnAnswers(url: string, portal: string, questions: Question[]): Promi
       '/' + CLI_NAMESPACE + ' form-answers ' + url +
       ' --bookmarklet --json-output' +
       ' (questions piped via stdin as JSON)';
-    const p = spawn('claude', ['-p', prompt, '--dangerously-skip-permissions'], {
+    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
       cwd: ROOT,
       env: { ...process.env },
     });

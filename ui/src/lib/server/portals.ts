@@ -163,49 +163,6 @@ export function writePortalsTitleFilter(
   return readPortals(id);
 }
 
-/**
- * Append/replace tracked companies for the named profile. Used by the future
- * "Add this company" flow on /sources. Companies are matched by case-insensitive name.
- */
-export function writePortalsCompanies(
-  profileId: string | undefined,
-  companies: TrackedCompany[],
-): PortalsSnapshot;
-export function writePortalsCompanies(companies: TrackedCompany[]): PortalsSnapshot;
-export function writePortalsCompanies(
-  arg1: string | undefined | TrackedCompany[],
-  arg2?: TrackedCompany[],
-): PortalsSnapshot {
-  let profileId: string | undefined;
-  let companies: TrackedCompany[];
-  if (Array.isArray(arg1)) {
-    profileId = undefined;
-    companies = arg1;
-  } else {
-    profileId = arg1;
-    companies = arg2 ?? [];
-  }
-  const id = resolveId(profileId);
-  ensureProfileDirs(id);
-  const portalsPath = profilePath(id, 'portals-yml');
-
-  const { doc, source } = readDoc(id);
-  let live: Record<string, unknown>;
-  if (!doc || source === 'empty') {
-    live = {};
-  } else if (source === 'template') {
-    fs.copyFileSync(PORTALS_TEMPLATE, portalsPath);
-    live = (parse(readSafe(portalsPath)) as Record<string, unknown>) ?? {};
-  } else {
-    live = doc as Record<string, unknown>;
-  }
-  const existing = Array.isArray(live.tracked_companies)
-    ? (live.tracked_companies as TrackedCompany[])
-    : [];
-  const byName = new Map<string, TrackedCompany>();
-  for (const c of existing) byName.set(c.name.toLowerCase(), c);
-  for (const c of companies) byName.set(c.name.toLowerCase(), { ...byName.get(c.name.toLowerCase()), ...c });
-  live.tracked_companies = [...byName.values()];
-  fs.writeFileSync(portalsPath, stringify(live, { lineWidth: 100 }));
-  return readPortals(id);
-}
+// D18 — `writePortalsCompanies` removed: no caller. The "Add this company"
+// flow it was anticipating doesn't exist yet; when it lands, reinstate
+// from git history rather than carry dead surface in the meantime.
