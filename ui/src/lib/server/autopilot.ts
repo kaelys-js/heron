@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './files';
 import { installBusListener, removeBusListener, logEvent, reportServerError } from './events';
-import { listRunning, runScan, runGemini, runLinkedInApply } from './orchestrator';
+import { listRunning, runScan, runGemini, runLinkedInApply, runAutoEval } from './orchestrator';
 import type { ActivityEvent } from '$lib/types';
 import { get as getJob, runById as runJobById } from './jobs';
 
@@ -61,6 +61,10 @@ export type AutopilotConfig = {
   thresholds: {
     /** Auto-eval triggers when Gemini scoring tags a job ≥ this score. */
     autoEvaluateScore: number;
+    /** Auto-eval batch is capped at this many oferta runs per fire. Each
+     *  run costs ~$0.30–$1.00 of Claude usage, so a low cap is a real
+     *  cost-safety knob, not just a perf knob. */
+    maxAutoEvalsPerRun: number;
     /** LinkedIn Easy Apply caps at this number of submissions per UTC day. */
     maxAppliesPerDay: number;
   };
@@ -101,6 +105,24 @@ const DEFAULT_CONFIG: AutopilotConfig = {
       args: { top: 30 },
     },
     {
+      id: 'auto-eval-after-gemini',
+      name: 'Auto deep-eval high-fit jobs',
+      description: 'After Gemini scoring, run a deep Claude evaluation + generate a tailored CV PDF for every job scoring ≥ Auto-evaluate score.',
+      details: [
+        'Triggers after every successful gemini-first-pass.py run.',
+        'Picks up to N jobs (Max auto-evals / run) sorted by Gemini score, descending.',
+        'Each oferta run takes 1–3 min and costs ~$0.30–$1.00 in Claude usage.',
+        'Skips jobs that already have a deep-eval report. Skips jobs the user moved past Scored.',
+        'Aborts the batch after 3 consecutive failures (likely Claude CLI broken or API key revoked).',
+        '1-hour cooldown between runs prevents accidental double-billing from manual scan retries.',
+        'Off by default — flip the toggle to enable. Tune via the "Auto-evaluate score" + "Max auto-evals / run" thresholds below.',
+      ],
+      taskLabel: 'auto-eval (orchestrator)',
+      task: 'auto-eval',
+      enabled: false,
+      trigger: { type: 'after', task: 'gemini' },
+    },
+    {
       id: 'weekday-apply',
       name: 'Weekday LinkedIn Easy Apply',
       description: 'Auto-fill LinkedIn Easy Apply forms on weekdays. You review before Submit.',
@@ -118,6 +140,7 @@ const DEFAULT_CONFIG: AutopilotConfig = {
   ],
   thresholds: {
     autoEvaluateScore: 4.0,
+    maxAutoEvalsPerRun: 10,
     maxAppliesPerDay: 30,
   },
 };
@@ -244,6 +267,19 @@ async function runTask(s: Schedule): Promise<void> {
     case 'apply-linkedin':
       runLinkedInApply(false);
       break;
+    case 'auto-eval':
+      // Fire-and-forget — runAutoEval emits its own batch start/finish
+      // events on the activity bus, and the scheduler's bus listener picks
+      // those up to update lastRunResult. We don't await here because the
+      // batch can run for up to an hour.
+      runAutoEval().catch((err) => {
+        logEvent('auto-eval', 'Task failed', {
+          level: 'error',
+          category: 'task',
+          message: err instanceof Error ? err.message : String(err),
+        });
+      });
+      break;
     default:
       logEvent('autopilot', 'Unknown task: ' + s.task, {
         level: 'error',
@@ -311,7 +347,7 @@ export function startScheduler(): void {
   installBusListener(SCHEDULER_BUS_NAME, (ev: ActivityEvent) => {
     if (ev.category !== 'task') return;
     const task = ev.source as TaskName;
-    if (!['scan', 'gemini', 'apply-linkedin'].includes(task)) return;
+    if (!['scan', 'gemini', 'apply-linkedin', 'auto-eval'].includes(task)) return;
     if (ev.level === 'success' && (ev.title === 'Task finished' || ev.title.endsWith('finished'))) {
       trackResult(task, true, ev.message);
       onTaskCompleted(task);

@@ -8,7 +8,7 @@ import { CLI_NAMESPACE } from '$lib/config/branding';
 
 loadEnv();
 
-type TaskName = 'scan' | 'gemini' | 'oferta' | 'pdf' | 'apply-linkedin' | 'bulk-cv' | 'bulk-apply';
+type TaskName = 'scan' | 'gemini' | 'oferta' | 'pdf' | 'apply-linkedin' | 'bulk-cv' | 'bulk-apply' | 'auto-eval';
 const running = new Map<TaskName, ChildProcess>();
 
 function venvPython(): string {
@@ -47,6 +47,7 @@ const TIMEOUT_MS: Record<TaskName, number> = {
   'apply-linkedin': 30 * 60_000, // 30 min — Playwright + login + apply
   'bulk-cv': 4 * 60 * 60_000,  // 4h — covers the largest realistic batch
   'bulk-apply': 2 * 60 * 60_000, // 2h
+  'auto-eval': 60 * 60_000,    // 60 min — up to 10 oferta runs × 3min + headroom
 };
 
 const MAX_STDOUT_BUF = 1024 * 1024; // 1MB — see comment above
@@ -523,6 +524,169 @@ export async function runBulkOferta(urls: string[]): Promise<{ ok: number; faile
     message: ok + ' generated · ' + failed + ' failed',
   });
   return { ok, failed, total: urls.length };
+}
+
+// =============================================================================
+// Auto-eval — fires after Gemini scoring lands. For every job scoring ≥
+// thresholds.autoEvaluateScore that doesn't already have a deep-eval report,
+// queue a runOferta() call serially up to thresholds.maxAutoEvalsPerRun.
+//
+// Wired in via the autopilot scheduler's runTask switch + the after-trigger
+// listener on 'gemini' completions. Also exposed via /api/run for power-user
+// manual triggering / E2E testing.
+//
+// Safety rails (see plan):
+//   • per-run cap from autopilot.thresholds.maxAutoEvalsPerRun
+//   • 1h cooldown via the schedule's lastRunAt
+//   • 3-strike abort on consecutive runOferta failures (Claude CLI broken /
+//     API key revoked → bail before burning more $$)
+//   • globalEnabled self-check (defensive — autopilot scheduler already
+//     gates, but /api/run can call this directly)
+// =============================================================================
+
+export type AutoEvalResult = {
+  ok: boolean;
+  evaluated: number;
+  skipped: number;
+  failed: number;
+  aborted?: 'already-running' | 'disabled' | 'cooldown' | 'cli-error';
+};
+
+const AUTO_EVAL_COOLDOWN_MS = 60 * 60_000; // 1h
+const AUTO_EVAL_FAILURE_CIRCUIT = 3;
+
+export async function runAutoEval(): Promise<AutoEvalResult> {
+  // -------- Pre-flight gates --------
+  if (running.has('auto-eval')) {
+    logEvent('auto-eval', 'Auto-eval already running', {
+      level: 'warn',
+      category: 'task',
+      message: 'Wait for the in-flight batch to finish.',
+    });
+    return { ok: false, evaluated: 0, skipped: 0, failed: 0, aborted: 'already-running' };
+  }
+
+  // Lazy-require to avoid the autopilot ↔ orchestrator import cycle.
+  const { readConfig } = await import('./autopilot');
+  const cfg = readConfig();
+  if (!cfg.globalEnabled) {
+    logEvent('auto-eval', 'Auto-eval skipped — autopilot disabled', {
+      level: 'warn',
+      category: 'task',
+      message: 'Enable Autopilot on /autopilot to allow auto-eval batches.',
+    });
+    return { ok: false, evaluated: 0, skipped: 0, failed: 0, aborted: 'disabled' };
+  }
+
+  const schedule = cfg.schedules.find((s) => s.id === 'auto-eval-after-gemini');
+  if (schedule?.lastRunAt) {
+    const sinceLast = Date.now() - schedule.lastRunAt;
+    if (sinceLast < AUTO_EVAL_COOLDOWN_MS) {
+      const minsAgo = Math.round(sinceLast / 60_000);
+      logEvent('auto-eval', 'Auto-eval skipped — cooldown active', {
+        level: 'warn',
+        category: 'task',
+        message: 'Last run ' + minsAgo + 'm ago · 1h cooldown prevents accidental double-billing',
+      });
+      return { ok: false, evaluated: 0, skipped: 0, failed: 0, aborted: 'cooldown' };
+    }
+  }
+
+  // -------- Build candidate list --------
+  // loadAllJobs joins pipeline.md + gemini-scores.tsv + reports/. We use:
+  //   geminiScore ≥ threshold  →  the bar
+  //   !reportFile              →  not already deeply-evaluated
+  //   status === 'Scored'      →  user hasn't manually advanced this job
+  // Sorted by geminiScore desc so we burn the cap on the highest-fit ones.
+  const { loadAllJobs } = await import('./parsers');
+  const threshold = cfg.thresholds.autoEvaluateScore;
+  const cap = cfg.thresholds.maxAutoEvalsPerRun ?? 10;
+  const candidates = loadAllJobs()
+    .filter((j) => j.geminiScore != null && j.geminiScore >= threshold)
+    .filter((j) => !j.reportFile)
+    .filter((j) => j.status === 'Scored')
+    .sort((a, b) => (b.geminiScore ?? 0) - (a.geminiScore ?? 0))
+    .slice(0, cap);
+
+  if (candidates.length === 0) {
+    logEvent('auto-eval', 'Auto-eval: nothing to do', {
+      level: 'info',
+      category: 'task',
+      message: 'No Scored jobs with geminiScore ≥ ' + threshold.toFixed(1) + ' awaiting deep eval',
+    });
+    return { ok: true, evaluated: 0, skipped: 0, failed: 0 };
+  }
+
+  // -------- Reserve slot + start batch --------
+  // We don't have a real ChildProcess for this synthetic task — slot reservation
+  // is the cheap way to make isRunning('auto-eval') accurate for the scheduler.
+  running.set('auto-eval', null as unknown as ChildProcess);
+  logEvent('auto-eval', 'Task started', {
+    category: 'task',
+    message: 'Auto-eval started: ' + candidates.length + ' jobs (score ≥ ' +
+      threshold.toFixed(1) + ', cap ' + cap + ')',
+  });
+
+  let evaluated = 0;
+  let skipped = 0;
+  let failed = 0;
+  let consecutive = 0;
+  let aborted: AutoEvalResult['aborted'];
+
+  try {
+    for (let i = 0; i < candidates.length; i++) {
+      const job = candidates[i];
+
+      // Re-check liveness of the candidate against the current pipeline state.
+      // A manual eval / status flip mid-batch should remove the URL from our
+      // queue automatically. Cheap — entirely in-memory file reads.
+      const fresh = loadAllJobs().find((j) => j.url === job.url);
+      if (!fresh) { skipped++; continue; }
+      if (fresh.reportFile) { skipped++; continue; }
+      if (fresh.status !== 'Scored') { skipped++; continue; }
+
+      logEvent('auto-eval', 'Auto-eval ' + (i + 1) + '/' + candidates.length, {
+        category: 'task',
+        message: (fresh.company || '?') + ' · ' + (fresh.role || '?') +
+          ' · score ' + (fresh.geminiScore ?? 0).toFixed(1),
+      });
+
+      const r = await runOferta(job.url, 'auto-eval');
+      if (r.ok) {
+        evaluated++;
+        consecutive = 0;
+      } else {
+        failed++;
+        consecutive++;
+        if (consecutive >= AUTO_EVAL_FAILURE_CIRCUIT) {
+          aborted = 'cli-error';
+          logEvent('auto-eval', 'Auto-eval aborted: 3 consecutive failures', {
+            level: 'warn',
+            category: 'task',
+            message: 'Check Claude CLI availability + ANTHROPIC_API_KEY. ' +
+              evaluated + ' eval\'d before abort.',
+          });
+          break;
+        }
+      }
+    }
+  } finally {
+    running.delete('auto-eval');
+  }
+
+  // -------- Summary --------
+  // 'Task finished' suffix is what autopilot.ts's scheduler bus listener
+  // matches on (`title.endsWith('finished')`), so trackResult will fire and
+  // the schedule's lastRunResult + lastRunMessage update automatically.
+  const ok = aborted == null && (evaluated > 0 || failed === 0);
+  logEvent('auto-eval', ok ? 'Task finished' : 'Task failed', {
+    level: ok ? 'success' : 'warn',
+    category: 'task',
+    message: 'Auto-eval ' + (aborted ? 'aborted (' + aborted + ')' : 'finished') +
+      ': ' + evaluated + ' eval\'d · ' + skipped + ' skipped · ' + failed + ' failed',
+  });
+
+  return { ok, evaluated, skipped, failed, aborted };
 }
 
 // =============================================================================
