@@ -1,41 +1,70 @@
 /**
- * Onboarding layout loader — bypasses the parent +layout.server.ts's
- * fresh-install redirect (otherwise the redirect would catch every step
- * and infinite-loop). Loads the current onboarding state so the sidebar
- * progress indicator and the Welcome step's resume hint can render.
+ * Onboarding layout loader.
  *
- * Also silently seeds `modes/_profile.md` from the bundled template the
- * first time the wizard loads. The template is generic enough that the
- * user can leave it untouched; advanced users can edit it later from the
- * Profile page. This belongs in the layout (not a single step) so any
- * entry point into the wizard triggers the seed once.
+ * Three responsibilities:
+ *
+ *   1. Seeds the active profile's `_profile.md` from the bundled template
+ *      the first time the wizard loads. Per-profile copy now; previously
+ *      shared at `modes/_profile.md`.
+ *
+ *   2. Resolves the wizard's TARGET profile:
+ *      - `?profile=<slug>` → use that profile
+ *      - `?new=1` (no slug yet) → flag that the Welcome step needs to
+ *        prompt for a new profile name + color, then create + redirect
+ *      - default → active profile
+ *
+ *   3. Loads onboarding state for the sidebar progress indicator.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { readOnboarding, progressSummary } from '$lib/server/onboarding';
 import { ROOT } from '$lib/server/files';
+import { profilePath, ensureProfileDirs } from '$lib/server/profile-paths';
+import { getActiveProfileId, getProfile, listProfiles } from '$lib/server/profiles';
 
-const PROFILE_MD = path.join(ROOT, 'modes', '_profile.md');
 const PROFILE_TEMPLATE = path.join(ROOT, 'modes', '_profile.template.md');
 
-function seedProfileMd(): void {
-  if (fs.existsSync(PROFILE_MD)) return;
+function seedProfileMd(profileId: string): void {
+  const target = profilePath(profileId, 'profile-md');
+  if (fs.existsSync(target)) return;
   if (!fs.existsSync(PROFILE_TEMPLATE)) return;
   try {
-    fs.mkdirSync(path.dirname(PROFILE_MD), { recursive: true });
-    fs.copyFileSync(PROFILE_TEMPLATE, PROFILE_MD);
+    ensureProfileDirs(profileId);
+    fs.copyFileSync(PROFILE_TEMPLATE, target);
   } catch {
-    // Non-fatal — wizard still works without _profile.md, the user can
-    // populate it later from /profile.
+    // Non-fatal — wizard still works without _profile.md.
   }
 }
 
-export async function load() {
-  seedProfileMd();
+export async function load({ url }: { url: URL }) {
+  const queryProfile = url.searchParams.get('profile');
+  const isNewProfile = url.searchParams.get('new') === '1';
+
+  // Resolve the wizard's target profile:
+  //   - explicit ?profile=<slug> AND exists → use it
+  //   - ?new=1 AND no slug yet → leave undefined; Welcome step prompts
+  //     for name + color, then creates the profile and redirects with
+  //     ?profile=<new-slug>
+  //   - default → active profile
+  let targetProfileId: string | undefined;
+  if (queryProfile && getProfile(queryProfile)) {
+    targetProfileId = queryProfile;
+  } else if (!isNewProfile) {
+    targetProfileId = getActiveProfileId();
+  }
+
+  if (targetProfileId) seedProfileMd(targetProfileId);
+
   const state = readOnboarding();
   const progress = progressSummary();
-  return { state, progress };
+  return {
+    state,
+    progress,
+    profileId: targetProfileId,
+    isNewProfile,
+    profiles: listProfiles(),
+  };
 }
 
 // Tell SvelteKit to NOT inherit parent layout data — we don't need
