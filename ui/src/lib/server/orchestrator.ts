@@ -1,7 +1,8 @@
 import { spawn, type ChildProcess } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
-import { ROOT, GEMINI_SCORES, PIPELINE } from './files';
+import { ROOT } from './files';
+import { activePath } from './profile-paths';
 import { logEvent } from './events';
 import { loadEnv } from './env';
 import { CLI_NAMESPACE } from '$lib/config/branding';
@@ -820,10 +821,12 @@ export function bootOnce() {
         message: err instanceof Error ? err.message : String(err),
       });
     });
-  const pipelineExists = fs.existsSync(PIPELINE);
-  const geminiExists = fs.existsSync(GEMINI_SCORES);
+  const pipelinePath = activePath('pipeline');
+  const geminiPath = activePath('gemini-scores');
+  const pipelineExists = fs.existsSync(pipelinePath);
+  const geminiExists = fs.existsSync(geminiPath);
   logEvent('boot', 'Server started', { category: 'system' });
-  if (!pipelineExists || fs.statSync(PIPELINE).size < 200) {
+  if (!pipelineExists || fs.statSync(pipelinePath).size < 200) {
     logEvent('boot', 'Pipeline empty — running auto-scan', { category: 'system', message: 'Spawning scan-broad.py' });
     runScan();
     return;

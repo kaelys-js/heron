@@ -5,7 +5,7 @@
  */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { APPLICATIONS } from '$lib/server/files';
+import { activePath } from '$lib/server/profile-paths';
 import { logEvent } from '$lib/server/events';
 import fs from 'node:fs';
 
@@ -17,7 +17,7 @@ export const POST = wrap('status', async ({ request }: any) => {
 
   let text = '';
   try {
-    text = fs.readFileSync(APPLICATIONS, 'utf8');
+    text = fs.readFileSync(activePath('applications'), 'utf8');
   } catch {
     text = '# Applications Tracker\n\n| # | Date | Company | Role | URL | Score | Status | PDF | Report | Notes |\n|---|------|---------|------|-----|-------|--------|-----|--------|-------|\n';
   }
@@ -43,7 +43,7 @@ export const POST = wrap('status', async ({ request }: any) => {
     lines.push('| - | ' + today + ' | (manual) | ' + url + ' | - | ' + newStatus + ' | - | - | ' + (notes ?? '') + ' |');
   }
   try {
-    fs.writeFileSync(APPLICATIONS, lines.join('\n'));
+    fs.writeFileSync(activePath('applications'), lines.join('\n'));
   } catch (e: any) {
     throw new Error('failed to write applications.md: ' + (e?.message ?? String(e)));
   }

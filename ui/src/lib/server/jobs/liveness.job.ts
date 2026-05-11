@@ -20,7 +20,8 @@
 
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
-import { ROOT, APPLICATIONS, PIPELINE } from '../files';
+import { ROOT } from '../files';
+import { activePath } from '../profile-paths';
 import { logEvent } from '../events';
 import { reportIssue } from '../issues';
 import { markClosed } from '../applications';
@@ -62,7 +63,7 @@ function collectUrls(scope: 'stale' | 'all'): string[] {
   const urls = new Set<string>();
   // Pipeline (active jobs awaiting evaluation)
   try {
-    const text = fs.readFileSync(PIPELINE, 'utf8');
+    const text = fs.readFileSync(activePath('pipeline'), 'utf8');
     for (const line of text.split('\n')) {
       const m = line.match(/https?:\/\/\S+/);
       if (m) urls.add(m[0].replace(/[)\].,>]+$/, ''));
@@ -79,7 +80,7 @@ function collectUrls(scope: 'stale' | 'all'): string[] {
   if (scope === 'all') {
     // Also include applications.md
     try {
-      const text = fs.readFileSync(APPLICATIONS, 'utf8');
+      const text = fs.readFileSync(activePath('applications'), 'utf8');
       for (const line of text.split('\n')) {
         const m = line.match(/https?:\/\/\S+/);
         if (m) urls.add(m[0].replace(/[)\].,>]+$/, ''));
