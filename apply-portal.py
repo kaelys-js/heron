@@ -40,12 +40,12 @@ ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
 from lib_apply import detect_portal, write_apply_state, emit_result  # noqa: E402
 
-PRODUCTION_PORTALS = {"linkedin", "greenhouse", "ashby"}
+PRODUCTION_PORTALS = {"linkedin", "greenhouse", "ashby", "lever", "workday"}
 # Everything else routes to the stub. Listed explicitly (not "anything not
 # production") so a typo in the adapter filename doesn't get masked.
 STUB_PORTALS = {
-    "lever", "workable", "personio", "smartrecruiters",
-    "recruitee", "teamtailor", "workday", "indeed", "unknown",
+    "workable", "personio", "smartrecruiters",
+    "recruitee", "teamtailor", "indeed", "unknown",
 }
 
 

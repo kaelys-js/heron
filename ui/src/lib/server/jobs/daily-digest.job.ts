@@ -143,9 +143,9 @@ async function runDailyDigest(): Promise<JobResult> {
 register({
   id: 'daily-digest',
   label: 'Daily digest',
-  description: 'Once-per-day rollup of applications, queued jobs, interviews, follow-ups, errors, and new patterns.',
+  description: 'Morning rollup of applications, queued jobs, interviews, follow-ups, errors, and new patterns.',
   category: 'insight',
-  trigger: { type: 'daily', hour: 18, minute: 0 },
+  trigger: { type: 'daily', hour: 7, minute: 0 },
   allowManual: true,
   run: runDailyDigest,
 });

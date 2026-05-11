@@ -11,6 +11,7 @@
   import EmptyState from '$lib/components/EmptyState.svelte';
   import ErrorState from '$lib/components/ErrorState.svelte';
   import JobActions from '$lib/components/JobActions.svelte';
+  import KeywordMatchBadge from '$lib/components/KeywordMatchBadge.svelte';
   import PdfPreviewPanel from '$lib/components/PdfPreviewPanel.svelte';
   import {
     Send, MessageSquare, DollarSign, Briefcase, ScrollText,
@@ -352,6 +353,14 @@
               <div class="min-w-0">
                 <h1 class="text-2xl font-semibold tracking-tight leading-tight">{data.job.role}</h1>
                 <p class="text-muted-foreground mt-1 text-sm">{data.job.company} · {data.job.location || '—'}</p>
+                <!--
+                  ATS-match badge — auto-fetches the JD ⇄ CV keyword
+                  overlap. Click to see missing keywords. Hidden until a
+                  deep-eval report exists (the JD source).
+                -->
+                <div class="mt-2">
+                  <KeywordMatchBadge jobId={data.job.id} profileId={data.profileId} />
+                </div>
               </div>
 
               <!--

@@ -156,6 +156,23 @@ class NotificationStore {
     if (opts.autoToast && !this.autoToastSet.has(ev.id)) {
       this.autoToastSet.add(ev.id);
       this.fireToast(ev);
+      // Dispatch `career-ops:notify` for PushNotificationsToggle. It
+      // listens and fires an OS-level Notification when the tab is in
+      // the background + the user has granted permission + the level is
+      // enabled. Tightly scoped — only auto-toast events propagate so
+      // backfill/replay events don't trigger a barrage.
+      if (typeof window !== 'undefined') {
+        try {
+          window.dispatchEvent(new CustomEvent('career-ops:notify', {
+            detail: {
+              level: ev.level,
+              title: ev.title,
+              message: ev.message,
+              source: ev.source,
+            },
+          }));
+        } catch {}
+      }
     }
   }
 

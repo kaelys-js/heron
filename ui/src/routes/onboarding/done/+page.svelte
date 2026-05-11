@@ -19,12 +19,20 @@
 
   let marking = $state(true);
   let markError = $state<string | null>(null);
+  // Track auto-actions that fire in the background so the user sees what
+  // the system did for them.
+  let autoActionsLog = $state<string[]>([]);
 
   // Mark the wizard complete + ensure the just-onboarded profile is the
-  // active one (so the next page load shows this profile's data).
+  // active one + kick off the "auto-actions" that close the cold-start
+  // gap (form-answers seed already fires inside the complete handler;
+  // we add story-bank seed + autopilot global-enable here so the user
+  // doesn't have to discover them).
   onMount(async () => {
     try {
       await api.post('/api/onboarding/complete', {}, { silent: true });
+      autoActionsLog = [...autoActionsLog, 'Marked wizard complete'];
+
       // Set this profile as active so the inbox shows its data after the
       // user clicks "Open inbox". The active-profile call is idempotent
       // if this is already the active one.
@@ -33,6 +41,24 @@
       } catch {
         // Non-fatal — the user can switch from the sidebar.
       }
+
+      // Fire-and-forget: seed the story bank from cv.md. Same idea as the
+      // form-answers seed that runs server-side inside /complete: do the
+      // work BEFORE the user discovers they have to do it themselves.
+      try {
+        api.post('/api/profile/seed-story-bank?profile=' + encodeURIComponent(data.profileId), {}, { silent: true })
+          .then(() => { autoActionsLog = [...autoActionsLog, 'Seeded story-bank from CV (~30-60s)']; })
+          .catch(() => { /* surfaced via activity feed */ });
+        autoActionsLog = [...autoActionsLog, 'Seeding form-answers cache + story bank in background'];
+      } catch { /* non-fatal */ }
+
+      // Turn on the autopilot global toggle. Each individual schedule
+      // can still be flipped off, but the master switch lets defaults
+      // (daily-backup, morning-digest) actually fire.
+      try {
+        await api.put('/api/autopilot', { globalEnabled: true }, { silent: true });
+        autoActionsLog = [...autoActionsLog, 'Enabled autopilot (daily-backup + morning-digest)'];
+      } catch { /* non-fatal */ }
     } catch (e) {
       const err = e as ApiError;
       markError = err.message;
@@ -130,6 +156,20 @@
       <p class="text-[11px] text-amber-200/90 leading-relaxed">
         Couldn't mark onboarding complete: <code class="font-mono">{markError}</code>.
         You can still use the dashboard — the wizard will simply show on next visit until this is resolved.
+      </p>
+    </div>
+  {/if}
+
+  {#if autoActionsLog.length > 0}
+    <div class="rounded-md border border-emerald-500/40 bg-emerald-500/5 px-3 py-2 space-y-1">
+      <p class="text-[11px] uppercase tracking-wider text-emerald-300/80">Set up for you automatically</p>
+      <ul class="text-[11px] text-emerald-100/90 leading-relaxed list-disc pl-4 space-y-0.5">
+        {#each autoActionsLog as line}
+          <li>{line}</li>
+        {/each}
+      </ul>
+      <p class="text-[10px] text-emerald-200/70 pt-1 border-t border-emerald-500/20">
+        You can change any of this on /profile, /settings, or /autopilot.
       </p>
     </div>
   {/if}

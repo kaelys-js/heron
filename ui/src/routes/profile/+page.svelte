@@ -14,6 +14,7 @@
   import RichTextarea from '$lib/components/RichTextarea.svelte';
   import ResetProfileDialog from '$lib/components/ResetProfileDialog.svelte';
   import ConfirmButton from '$lib/components/ConfirmButton.svelte';
+  import FormAnswersCard, { type FormAnswer } from '$lib/components/FormAnswersCard.svelte';
   import ValidatedInput from '$lib/components/ValidatedInput.svelte';
   import Combobox from '$lib/components/Combobox.svelte';
   import {
@@ -40,9 +41,17 @@
   // ConfirmGate import removed — the Discard button now uses ConfirmButton
   // (which encapsulates the gate). Other places on this page that need the
   // gate import directly should re-add this line as needed.
-  import { onDestroy } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
 
-  let { data }: { data: { profileId: string; profile: ProfileSnapshot; generalCv: GeneralCvStatus } } = $props();
+  let { data }: {
+    data: {
+      profileId: string;
+      profile: ProfileSnapshot;
+      generalCv: GeneralCvStatus;
+      formAnswers: FormAnswer[];
+      formAnswersStats: { total: number; usedToday: number; lastUpdatedAt: number | null };
+    };
+  } = $props();
 
   // Project a ProfileSnapshot down to JUST the editable ProfileEdit shape.
   // Without this, structuredClone(data.profile) would seed `edit` with all
@@ -84,6 +93,55 @@
   // svelte-ignore state_referenced_locally — initial seed only
   let generalCv = $state<GeneralCvStatus>(data.generalCv);
   let generatingGeneralCv = $state(false);
+
+  // Story bank state — refreshed on mount + after seeding.
+  type StoryBankStats = { exists: boolean; storyCount: number; lastUpdatedAt: number | null; bytes?: number };
+  let storyBankStats = $state<StoryBankStats | null>(null);
+  let seedingStoryBank = $state(false);
+
+  async function refreshStoryBankStats() {
+    try {
+      const r = await api.get<StoryBankStats>('/api/profile/seed-story-bank', { silent: true });
+      storyBankStats = r;
+    } catch {
+      storyBankStats = { exists: false, storyCount: 0, lastUpdatedAt: null };
+    }
+  }
+
+  async function seedStoryBank() {
+    if (seedingStoryBank) return;
+    seedingStoryBank = true;
+    try {
+      const r = await withMinDuration(
+        api.post<{
+          ok: boolean;
+          seeded?: number;
+          grewBy?: number;
+          bankPath?: string;
+          summary?: string;
+          error?: string;
+        }>('/api/profile/seed-story-bank?profile=' + encodeURIComponent(data.profileId), {}, { silent: true }),
+        600,
+      );
+      if (r.ok) {
+        toast.success('Story bank seeded', {
+          description: (r.summary ?? 'OK') + ' · file grew by ' + (r.grewBy ?? 0) + ' bytes',
+          duration: 8_000,
+        });
+        await refreshStoryBankStats();
+      } else {
+        toast.error('Seeding failed', { description: r.error ?? 'unknown' });
+      }
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Seeding failed', { description: err.message });
+    } finally {
+      seedingStoryBank = false;
+    }
+  }
+
+  // Load story-bank stats on mount.
+  onMount(() => { refreshStoryBankStats(); });
 
   /** Re-fetch the general-CV status from the dedicated endpoint. Used after
    *  external mutations (CV manager replace / reprocess) or to check
@@ -958,13 +1016,13 @@
                   { id: 'linkedin', label: 'LinkedIn', supported: true },
                   { id: 'greenhouse', label: 'Greenhouse', supported: true },
                   { id: 'ashby', label: 'Ashby', supported: true },
-                  { id: 'lever', label: 'Lever (stub)', supported: false },
+                  { id: 'lever', label: 'Lever', supported: true },
                   { id: 'workable', label: 'Workable (stub)', supported: false },
                   { id: 'personio', label: 'Personio (stub)', supported: false },
                   { id: 'smartrecruiters', label: 'SmartRecruiters (stub)', supported: false },
                   { id: 'recruitee', label: 'Recruitee (stub)', supported: false },
                   { id: 'teamtailor', label: 'Teamtailor (stub)', supported: false },
-                  { id: 'workday', label: 'Workday (stub)', supported: false },
+                  { id: 'workday', label: 'Workday (heuristic — instance varies)', supported: true },
                   { id: 'indeed', label: 'Indeed (stub)', supported: false },
                 ] as portal (portal.id)}
                   {@const enabled = (edit.automation?.enabled_portals ?? ['linkedin', 'greenhouse', 'ashby']).includes(portal.id)}
@@ -1006,6 +1064,74 @@
               for risks (LinkedIn shadowban, generic cover-letter quality, selector breakage).
             </p>
           </div>
+        </div>
+      </CollapsibleCard>
+
+      <!-- FORM-ANSWERS CACHE -->
+      <!--
+        Reusable per-question answers. Seeded by the user (recommended:
+        notice period, salary, visa status, years of X) and auto-grown by
+        apply-greenhouse.py / apply-ashby.py via the inline "Save answer"
+        action on Inbox apply-issues. The Python adapters read this cache
+        before every form fill via lib_apply.load_form_answers().
+      -->
+      <FormAnswersCard
+        profileId={data.profileId}
+        initialAnswers={data.formAnswers}
+        initialStats={data.formAnswersStats}
+      />
+
+      <!-- STORY BANK -->
+      <!--
+        The story bank is interview-prep/story-bank.md — a SHARED file
+        across profiles that holds 5-10 master STAR+R stories. Without
+        seeding, every interview-prep run starts cold and re-derives
+        stories from the CV ad-hoc. Seeding once produces a curated bank
+        the user can edit + grow.
+      -->
+      <CollapsibleCard
+        title="Story bank (interview prep)"
+        description="5-10 master STAR+R stories Claude pulls out of your cv.md, used by interview-prep + mock-interview. Seed once, edit by hand to taste, then every future interview-prep run uses these instead of regenerating from scratch."
+        storageKey="story-bank"
+      >
+        {#snippet icon()}<Mic2 class="size-3.5 text-muted-foreground" />{/snippet}
+        <div class="space-y-3">
+          <div class="rounded-md border border-border/40 bg-card px-3 py-2.5 flex items-center gap-3 flex-wrap">
+            <span class="text-xs">
+              {#if storyBankStats}
+                <span class="font-mono">{storyBankStats.storyCount}</span>
+                <span class="text-muted-foreground">{storyBankStats.storyCount === 1 ? 'story' : 'stories'} in bank</span>
+              {:else}
+                <span class="text-muted-foreground">Loading…</span>
+              {/if}
+            </span>
+            {#if storyBankStats?.lastUpdatedAt}
+              <span class="text-[10px] text-muted-foreground/70">
+                last updated {new Date(storyBankStats.lastUpdatedAt).toLocaleDateString()}
+              </span>
+            {/if}
+            <div class="flex-1"></div>
+            <Button
+              onclick={seedStoryBank}
+              disabled={seedingStoryBank}
+              size="sm"
+              class="gap-1.5"
+            >
+              {#if seedingStoryBank}
+                <Loader2 class="size-3 animate-spin" /> Seeding…
+              {:else}
+                <Sparkles class="size-3" />
+                {storyBankStats && storyBankStats.storyCount > 0 ? 'Re-seed from CV' : 'Seed from CV'}
+              {/if}
+            </Button>
+          </div>
+          <p class="text-[11px] text-muted-foreground/80 leading-relaxed">
+            Reads <code class="font-mono">cv.md</code> + <code class="font-mono">_profile.md</code>
+            and appends STAR+R stories to <code class="font-mono">interview-prep/story-bank.md</code>.
+            Existing stories aren't overwritten — re-seeding only adds new ones from CV bullets
+            that don't already have a story. Edit by hand to refine wording.
+            ~30-60s per seed via Claude CLI.
+          </p>
         </div>
       </CollapsibleCard>
 

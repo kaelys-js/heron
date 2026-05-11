@@ -64,6 +64,10 @@ const CATEGORY: Record<string, SkillCategory> = {
 
   'interview-prep': 'interview',
   'mock-interview': 'interview',
+  'mock-interview-turn': 'interview',
+  'seed-story-bank': 'interview',
+  'tech-prep': 'interview',
+  'seed-form-answers': 'application',
 
   pdf: 'output',
   latex: 'output',
@@ -87,7 +91,7 @@ const EMOJI: Record<string, string> = {
   apply: '✉️', contacto: '🤝', 'cover-letter': '✉️', 'form-answers': '📝',
   'post-rejection': '↩️', negotiation: '💬',
   scan: '🔭', pipeline: '🔁', batch: '📦', tracker: '📋', 'auto-pipeline': '⚡',
-  'interview-prep': '🎤', 'mock-interview': '🎭',
+  'interview-prep': '🎤', 'mock-interview': '🎭', 'mock-interview-turn': '🗣️', 'seed-story-bank': '🌱', 'tech-prep': '🧪', 'seed-form-answers': '📋',
   pdf: '📄', latex: '📐',
   _profile: '🪪', _shared: '🧩', '_profile.template': '🪪',
   angebot: '🎯', offre: '🎯', kyujin: '🎯',

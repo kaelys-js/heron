@@ -1,6 +1,7 @@
 import { readProfile } from '$lib/server/profile';
 import { generalCvStatus } from '$lib/server/cv-pdf';
 import { getActiveProfileId, getProfile } from '$lib/server/profiles';
+import { listAnswers, cacheStats } from '$lib/server/form-answers-cache';
 
 export async function load({ url }: { url: URL }) {
   // `?profile=<slug>` lets the user edit a non-active profile from this
@@ -12,5 +13,7 @@ export async function load({ url }: { url: URL }) {
     profileId,
     profile: readProfile(profileId),
     generalCv: generalCvStatus(profileId),
+    formAnswers: listAnswers(profileId),
+    formAnswersStats: cacheStats(profileId),
   };
 }
