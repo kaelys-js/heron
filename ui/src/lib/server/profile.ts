@@ -1,23 +1,29 @@
 /**
- * Read/write `config/profile.yml` — the user's single source of truth for personal data.
- * Uses the `yaml` library so comments and structure round-trip cleanly when possible.
+ * Read/write per-profile `profile.yml`, `cv.md`, `_profile.md` + reset helpers.
  *
- * Mutations from the UI come in as a typed `ProfileEdit` patch and are merged into the
- * existing YAML document. Unknown / advanced fields are preserved as-is.
+ * Every exported function takes an OPTIONAL `profileId` as its first argument.
+ * When omitted, the active profile (from `data/profiles.json`) is used. This
+ * keeps existing single-profile callers working unchanged while letting new
+ * callers explicitly target a specific profile.
+ *
+ * Path resolution is centralised in `profile-paths.ts`. The flat-layout
+ * constants previously imported from `files.ts` (CV_PATH, APPLICATIONS,
+ * PIPELINE, …) are no longer used here — they're per-active-profile shims
+ * for legacy callers and shouldn't be used from new code.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
-import {
-  ROOT, readSafe, APPLICATIONS, PIPELINE, GEMINI_SCORES, REPORTS_DIR, OUTPUT_DIR,
-} from './files';
+import { ROOT, readSafe } from './files';
 import { parse, stringify } from 'yaml';
 import { logEvent } from './events';
+import { profilePath, ensureProfileDirs } from './profile-paths';
+import { getActiveProfileId } from './profiles';
 
-const PROFILE_PATH = path.join(ROOT, 'config', 'profile.yml');
+/** Path to the example profile template — system-layer, shared, NOT per-profile. */
 const EXAMPLE_PATH = path.join(ROOT, 'config', 'profile.example.yml');
-const MODES_PROFILE = path.join(ROOT, 'modes', '_profile.md');
-const CV_PATH = path.join(ROOT, 'cv.md');
+/** Path to the `modes/_profile.md` template — system-layer, shared, NOT per-profile. */
+const PROFILE_TEMPLATE = path.join(ROOT, 'modes', '_profile.template.md');
 
 /** Subset of profile.yml that the UI exposes as editable. */
 export type ProfileEdit = {
@@ -84,22 +90,31 @@ function fileInfo(p: string) {
   }
 }
 
-function readDoc(): Record<string, unknown> {
+/** Resolve a profileId argument to the actual profile id used downstream.
+ *  Undefined → active. Caller never sees `undefined` past this point. */
+function resolveId(profileId?: string): string {
+  return profileId ?? getActiveProfileId();
+}
+
+function readDoc(profileId?: string): Record<string, unknown> {
+  const id = resolveId(profileId);
+  const p = profilePath(id, 'profile-yml');
   try {
-    if (!fs.existsSync(PROFILE_PATH)) {
+    if (!fs.existsSync(p)) {
       // Fall back to example so the UI has something to render on first run
       const example = readSafe(EXAMPLE_PATH);
       if (example) return parse(example) as Record<string, unknown>;
       return {};
     }
-    return (parse(readSafe(PROFILE_PATH)) as Record<string, unknown>) ?? {};
+    return (parse(readSafe(p)) as Record<string, unknown>) ?? {};
   } catch {
     return {};
   }
 }
 
-export function readProfile(): ProfileSnapshot {
-  const doc = readDoc();
+export function readProfile(profileId?: string): ProfileSnapshot {
+  const id = resolveId(profileId);
+  const doc = readDoc(id);
   const candidate = (doc.candidate ?? {}) as ProfileEdit['candidate'] & Record<string, unknown>;
   const target_roles = (doc.target_roles ?? {}) as Record<string, unknown>;
   const narrative = (doc.narrative ?? {}) as ProfileEdit['narrative'] & Record<string, unknown>;
@@ -118,6 +133,10 @@ export function readProfile(): ProfileSnapshot {
   const proofPointsRaw = Array.isArray(narrative.proof_points)
     ? (narrative.proof_points as { name?: string; hero_metric?: string; url?: string; description?: string }[])
     : [];
+
+  const profilePathYml = profilePath(id, 'profile-yml');
+  const profileMdPath = profilePath(id, 'profile-md');
+  const cvPath = profilePath(id, 'cv-md');
 
   return {
     candidate: {
@@ -165,11 +184,11 @@ export function readProfile(): ProfileSnapshot {
       hard_no: Array.isArray(preferences.hard_no) ? (preferences.hard_no as string[]) : [],
     },
     archetypes,
-    exists: fs.existsSync(PROFILE_PATH),
+    exists: fs.existsSync(profilePathYml),
     files: {
-      profile: fileInfo(PROFILE_PATH),
-      profileMd: fileInfo(MODES_PROFILE),
-      cv: fileInfo(CV_PATH),
+      profile: fileInfo(profilePathYml),
+      profileMd: fileInfo(profileMdPath),
+      cv: fileInfo(cvPath),
     },
   };
 }
@@ -179,8 +198,15 @@ export function readProfile(): ProfileSnapshot {
  * and write back. Existing comments may be stripped because YAML round-trip via parse/stringify
  * doesn't preserve them — we accept that trade-off for v1; the user can always edit by hand.
  */
-export function writeProfile(edit: ProfileEdit): ProfileSnapshot {
-  const doc = readDoc();
+export function writeProfile(profileId: string | undefined, edit: ProfileEdit): ProfileSnapshot;
+// Back-compat overload: callers that don't pass profileId pass edit as first arg.
+export function writeProfile(edit: ProfileEdit): ProfileSnapshot;
+export function writeProfile(arg1: string | ProfileEdit | undefined, arg2?: ProfileEdit): ProfileSnapshot {
+  const profileId = typeof arg1 === 'string' ? arg1 : undefined;
+  const edit = (typeof arg1 === 'string' ? arg2 : arg1) ?? {};
+  const id = resolveId(profileId);
+  ensureProfileDirs(id);
+  const doc = readDoc(id);
   // Helper: merge two plain objects shallowly
   const merge = <T extends Record<string, unknown>>(base: T, patch: Partial<T> | undefined): T => {
     if (!patch) return base;
@@ -217,15 +243,28 @@ export function writeProfile(edit: ProfileEdit): ProfileSnapshot {
     doc.preferences = p;
   }
 
-  fs.mkdirSync(path.dirname(PROFILE_PATH), { recursive: true });
   const out = stringify(doc, { lineWidth: 100 });
-  fs.writeFileSync(PROFILE_PATH, out);
-  return readProfile();
+  fs.writeFileSync(profilePath(id, 'profile-yml'), out);
+  return readProfile(id);
 }
 
 /** Read companion files (modes/_profile.md, cv.md) for preview in the UI. */
-export function readSiblingFile(name: 'profileMd' | 'cv'): string | null {
-  const p = name === 'profileMd' ? MODES_PROFILE : CV_PATH;
+export function readSiblingFile(profileId: string | undefined, name: 'profileMd' | 'cv'): string | null;
+export function readSiblingFile(name: 'profileMd' | 'cv'): string | null;
+export function readSiblingFile(arg1: string | undefined | 'profileMd' | 'cv', arg2?: 'profileMd' | 'cv'): string | null {
+  // Disambiguate the overloads. The legacy signature passes 'profileMd'/'cv' as
+  // the first arg; the new signature passes a profile id.
+  let profileId: string | undefined;
+  let name: 'profileMd' | 'cv';
+  if (arg2 !== undefined) {
+    profileId = arg1 as string | undefined;
+    name = arg2;
+  } else {
+    profileId = undefined;
+    name = arg1 as 'profileMd' | 'cv';
+  }
+  const id = resolveId(profileId);
+  const p = name === 'profileMd' ? profilePath(id, 'profile-md') : profilePath(id, 'cv-md');
   if (!fs.existsSync(p)) return null;
   return readSafe(p);
 }
@@ -235,42 +274,34 @@ export function readSiblingFile(name: 'profileMd' | 'cv'): string | null {
  * `.bak` so a panicked user can recover by hand. Returns the list of files
  * that got reset so the API caller can describe what happened.
  *
- * Two scopes:
- *   - 'profile' (default) — only personal-info files
- *       config/profile.yml      → restored from config/profile.example.yml
- *       cv.md                   → deleted
- *       modes/_profile.md       → restored from modes/_profile.template.md
+ * Three scopes (ALL scoped to a single profile — they no longer touch shared
+ * infrastructure files; see "Shared infrastructure" below):
+ *   - 'profile'    → wipes that profile's profile.yml + cv.md + _profile.md
+ *                    only. Tracker/pipeline/sources/reports preserved.
+ *   - 'jobs'       → wipes that profile's job-search artifacts:
+ *                    applications.md, pipeline.md, scan-history.tsv,
+ *                    gemini-scores.tsv, follow-ups.md, reports/, output/,
+ *                    interview-prep/{company}-*.md. Profile YAML / CV /
+ *                    targeting / sources connections preserved.
+ *   - 'everything' → strict superset of both, PLUS that profile's
+ *                    projects.json (saved filter views).
  *
- *   - 'everything' — also wipes the tracker / scan / project data
- *       all of the above PLUS:
- *       data/applications.md, data/pipeline.md, data/scan-history.tsv,
- *       data/gemini-scores.tsv, data/projects.json, data/autopilot.json,
- *       data/activity.jsonl
- *       reports/* and output/* (deep delete)
+ * Shared infrastructure NEVER touched by any scope:
+ *   data/autopilot.json     ← global scheduler, applies to all profiles
+ *   data/activity.jsonl     ← shared event log
+ *   data/issues.jsonl       ← shared open-issues feed
+ *   data/sources.json       ← shared source connection state
+ *   data/onboarding-state   ← shared wizard state
+ *   data/profiles.json      ← profile registry
+ *   data/followup-cache.json + patterns-cache.json ← derived caches
+ *   interview-prep/story-bank.md ← shared STAR-story bank
+ *   .env, .venv, .playwright-<portal> dirs, node_modules, .git, source code
+ *   .bak siblings           ← so previous resets stay recoverable
  *
- * What's NEVER touched even in 'everything':
- *   - .env (API keys; configured in Settings)
- *   - .venv (Python dependencies)
- *   - node_modules, .git, source code
- *   - .bak files (so the previous reset is still recoverable)
- *
- * Returns: { resetFiles, backups, scope }
+ * Returns: { resetFiles, backups, scope, profileId }
  */
-const PROFILE_TEMPLATE = path.join(ROOT, 'modes', '_profile.template.md');
-const SCAN_HISTORY = path.join(ROOT, 'data', 'scan-history.tsv');
-const PROJECTS_JSON = path.join(ROOT, 'data', 'projects.json');
-const AUTOPILOT_JSON = path.join(ROOT, 'data', 'autopilot.json');
-const ACTIVITY_JSONL = path.join(ROOT, 'data', 'activity.jsonl');
-// Job-search artifacts that "Everything" had been leaving behind (now also wiped)
-const FOLLOW_UPS = path.join(ROOT, 'data', 'follow-ups.md');
-const FOLLOWUP_CACHE = path.join(ROOT, 'data', 'followup-cache.json');
-const PATTERNS_CACHE = path.join(ROOT, 'data', 'patterns-cache.json');
-const ISSUES_JSONL = path.join(ROOT, 'data', 'issues.jsonl');
-const INTERVIEW_PREP_DIR = path.join(ROOT, 'interview-prep');
-const STORY_BANK_NAME = 'story-bank.md';
-
 export type ResetScope = 'profile' | 'jobs' | 'everything';
-export type ResetResult = { resetFiles: string[]; backups: string[]; scope: ResetScope };
+export type ResetResult = { resetFiles: string[]; backups: string[]; scope: ResetScope; profileId: string };
 
 function backupTo(p: string, backups: string[]): void {
   if (!fs.existsSync(p)) return;
@@ -339,124 +370,130 @@ function backupAndDelete(p: string, resetFiles: string[], backups: string[]): vo
   }
 }
 
-/**
- * Three scopes:
- *   - 'profile'    → only the user's identity/CV/_profile.md (existing behavior)
- *   - 'jobs'       → only job-search artifacts (tracker, pipeline, scoring,
- *                    reports, PDFs, follow-ups, interview-prep company files,
- *                    issues, activity feed). Profile + CV + targeting +
- *                    sources are PRESERVED so the user can keep working.
- *   - 'everything' → both of the above, plus longer-lived configs (saved
- *                    filter profiles, autopilot schedule, story bank).
- */
-export function resetProfile(scope: ResetScope = 'profile'): ResetResult {
+export function resetProfile(profileId: string | undefined, scope?: ResetScope): ResetResult;
+export function resetProfile(scope?: ResetScope): ResetResult;
+export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): ResetResult {
+  const isFirstArgScope =
+    arg1 === 'profile' || arg1 === 'jobs' || arg1 === 'everything';
+  const profileId = isFirstArgScope ? undefined : (arg1 as string | undefined);
+  const scope: ResetScope = isFirstArgScope ? (arg1 as ResetScope) : (arg2 ?? 'profile');
+  const id = resolveId(profileId);
   const resetFiles: string[] = [];
   const backups: string[] = [];
 
+  const PROFILE_YML = profilePath(id, 'profile-yml');
+  const CV_MD = profilePath(id, 'cv-md');
+  const PROFILE_MD = profilePath(id, 'profile-md');
+  const APPLICATIONS_MD = profilePath(id, 'applications');
+  const PIPELINE_MD = profilePath(id, 'pipeline');
+  const SCAN_HISTORY_TSV = profilePath(id, 'scan-history');
+  const GEMINI_SCORES_TSV = profilePath(id, 'gemini-scores');
+  const FOLLOW_UPS_MD = profilePath(id, 'follow-ups');
+  const PROJECTS_JSON_PATH = profilePath(id, 'projects-json');
+  const REPORTS_DIR = profilePath(id, 'reports-dir');
+  const OUTPUT_DIR = profilePath(id, 'output-dir');
+  const INTERVIEW_PREP_DIR = profilePath(id, 'interview-prep-dir');
+
   // ===== Profile-only block =====
-  // Run for 'profile' and 'everything'. SKIPPED for 'jobs' so the user's
-  // identity / CV / _profile.md stay intact.
   if (scope === 'profile' || scope === 'everything') {
-    // 1. profile.yml — restore from example if available, else clear
-    backupTo(PROFILE_PATH, backups);
+    backupTo(PROFILE_YML, backups);
     if (fs.existsSync(EXAMPLE_PATH)) {
-      fs.copyFileSync(EXAMPLE_PATH, PROFILE_PATH);
-    } else if (fs.existsSync(PROFILE_PATH)) {
-      fs.unlinkSync(PROFILE_PATH);
+      fs.copyFileSync(EXAMPLE_PATH, PROFILE_YML);
+    } else if (fs.existsSync(PROFILE_YML)) {
+      fs.unlinkSync(PROFILE_YML);
     }
-    resetFiles.push('config/profile.yml');
+    resetFiles.push(path.relative(ROOT, PROFILE_YML));
 
-    // 2. cv.md — delete
-    backupTo(CV_PATH, backups);
-    if (fs.existsSync(CV_PATH)) {
-      fs.unlinkSync(CV_PATH);
-      resetFiles.push('cv.md');
+    backupTo(CV_MD, backups);
+    if (fs.existsSync(CV_MD)) {
+      fs.unlinkSync(CV_MD);
+      resetFiles.push(path.relative(ROOT, CV_MD));
     }
 
-    // 3. modes/_profile.md — restore from template
-    backupTo(MODES_PROFILE, backups);
+    backupTo(PROFILE_MD, backups);
     if (fs.existsSync(PROFILE_TEMPLATE)) {
-      fs.copyFileSync(PROFILE_TEMPLATE, MODES_PROFILE);
-      resetFiles.push('modes/_profile.md');
-    } else if (fs.existsSync(MODES_PROFILE)) {
-      fs.unlinkSync(MODES_PROFILE);
-      resetFiles.push('modes/_profile.md');
+      fs.copyFileSync(PROFILE_TEMPLATE, PROFILE_MD);
+      resetFiles.push(path.relative(ROOT, PROFILE_MD));
+    } else if (fs.existsSync(PROFILE_MD)) {
+      fs.unlinkSync(PROFILE_MD);
+      resetFiles.push(path.relative(ROOT, PROFILE_MD));
     }
   }
 
   if (scope === 'profile') {
-    return { resetFiles, backups, scope };
+    return { resetFiles, backups, scope, profileId: id };
   }
 
   // ===== Job-search artifacts block =====
-  // Run for 'jobs' and 'everything'. This is the new shared set — keeps
-  // 'everything' a strict superset of 'jobs'.
-
-  // Tracker file: backup, then truncate to header-only state
-  backupTo(APPLICATIONS, backups);
+  backupTo(APPLICATIONS_MD, backups);
+  fs.mkdirSync(path.dirname(APPLICATIONS_MD), { recursive: true });
   fs.writeFileSync(
-    APPLICATIONS,
+    APPLICATIONS_MD,
     '# Applications Tracker\n\n| # | Date | Company | Role | URL | Score | Status | PDF | Report | Notes |\n|---|------|---------|------|-----|-------|--------|-----|--------|-------|\n',
   );
-  resetFiles.push('data/applications.md');
+  resetFiles.push(path.relative(ROOT, APPLICATIONS_MD));
 
-  // Pipeline: empty file (preserves the file so writers don't crash)
-  backupTo(PIPELINE, backups);
-  if (fs.existsSync(PIPELINE)) {
-    fs.writeFileSync(PIPELINE, '');
-    resetFiles.push('data/pipeline.md');
+  backupTo(PIPELINE_MD, backups);
+  if (fs.existsSync(PIPELINE_MD)) {
+    fs.writeFileSync(PIPELINE_MD, '');
+    resetFiles.push(path.relative(ROOT, PIPELINE_MD));
   }
 
-  // Per-job derivatives + bell feed + analysis caches (always wiped in jobs+)
-  for (const p of [
-    SCAN_HISTORY,
-    GEMINI_SCORES,
-    ACTIVITY_JSONL,
-    FOLLOW_UPS,
-    FOLLOWUP_CACHE,
-    PATTERNS_CACHE,
-    ISSUES_JSONL,
-  ]) {
+  for (const p of [SCAN_HISTORY_TSV, GEMINI_SCORES_TSV, FOLLOW_UPS_MD]) {
     backupAndDelete(p, resetFiles, backups);
   }
 
-  // Reports + output PDFs — clear directories
-  emptyDir(REPORTS_DIR, resetFiles, 'reports/');
-  emptyDir(OUTPUT_DIR, resetFiles, 'output/');
+  emptyDir(REPORTS_DIR, resetFiles, path.relative(ROOT, REPORTS_DIR) + '/');
+  emptyDir(OUTPUT_DIR, resetFiles, path.relative(ROOT, OUTPUT_DIR) + '/');
 
-  // Interview prep — wipe company-specific files. For 'jobs' scope keep
-  // story-bank.md (accumulated STAR stories carry across hunts). 'everything'
-  // wipes the whole directory.
+  // Per-profile interview-prep dir — story-bank.md was never moved here by
+  // migration (it stays at the shared top-level path), but a future per-profile
+  // story-bank.md could exist; preserve it under 'jobs' scope to be safe.
   if (scope === 'jobs') {
-    emptyDir(INTERVIEW_PREP_DIR, resetFiles, 'interview-prep/', new Set([STORY_BANK_NAME]));
+    emptyDir(INTERVIEW_PREP_DIR, resetFiles, path.relative(ROOT, INTERVIEW_PREP_DIR) + '/', new Set(['story-bank.md']));
   } else {
-    emptyDir(INTERVIEW_PREP_DIR, resetFiles, 'interview-prep/');
+    emptyDir(INTERVIEW_PREP_DIR, resetFiles, path.relative(ROOT, INTERVIEW_PREP_DIR) + '/');
   }
 
   if (scope === 'jobs') {
-    return { resetFiles, backups, scope };
+    return { resetFiles, backups, scope, profileId: id };
   }
 
-  // ===== Everything-only block =====
-  // Long-lived configs that 'jobs' deliberately preserves.
-  for (const p of [PROJECTS_JSON, AUTOPILOT_JSON]) {
-    backupAndDelete(p, resetFiles, backups);
-  }
+  // ===== Everything-only block (this profile's saved filter views) =====
+  backupAndDelete(PROJECTS_JSON_PATH, resetFiles, backups);
 
-  return { resetFiles, backups, scope };
+  return { resetFiles, backups, scope, profileId: id };
 }
 
 /**
- * Overwrite cv.md (or modes/_profile.md). Always copies the previous file to
- * `<name>.bak` first so an accidental Replace can be recovered manually. The
- * user does not lose their old CV silently.
- *
- * Returns metadata so the caller can render a useful confirmation toast
- * ("12.4 KB written · previous version backed up to cv.md.bak").
+ * Overwrite cv.md (or _profile.md) for the given profile. Always copies the
+ * previous file to `<name>.bak` first so an accidental Replace can be
+ * recovered manually. The user does not lose their old CV silently.
  */
 export type WriteResult = { bytes: number; backedUp: boolean; backupPath: string | null };
-export function writeSiblingFile(name: 'profileMd' | 'cv', content: string): WriteResult {
-  const p = name === 'profileMd' ? MODES_PROFILE : CV_PATH;
+export function writeSiblingFile(profileId: string | undefined, name: 'profileMd' | 'cv', content: string): WriteResult;
+export function writeSiblingFile(name: 'profileMd' | 'cv', content: string): WriteResult;
+export function writeSiblingFile(
+  arg1: string | undefined | 'profileMd' | 'cv',
+  arg2: 'profileMd' | 'cv' | string,
+  arg3?: string,
+): WriteResult {
+  // Disambiguate: 3-arg form is (profileId, name, content); 2-arg form is (name, content).
+  let profileId: string | undefined;
+  let name: 'profileMd' | 'cv';
+  let content: string;
+  if (arg3 !== undefined) {
+    profileId = arg1 as string | undefined;
+    name = arg2 as 'profileMd' | 'cv';
+    content = arg3;
+  } else {
+    profileId = undefined;
+    name = arg1 as 'profileMd' | 'cv';
+    content = arg2 as string;
+  }
+  const id = resolveId(profileId);
+  ensureProfileDirs(id);
+  const p = name === 'profileMd' ? profilePath(id, 'profile-md') : profilePath(id, 'cv-md');
   let backedUp = false;
   let backupPath: string | null = null;
   if (fs.existsSync(p)) {
@@ -466,11 +503,9 @@ export function writeSiblingFile(name: 'profileMd' | 'cv', content: string): Wri
       backupPath = p + '.bak';
     } catch {
       // Backup failures are non-fatal — proceed with the write so the user
-      // doesn't lose their new content. The bell will surface the read-failure
-      // separately if it happens.
+      // doesn't lose their new content.
     }
   }
-  fs.mkdirSync(path.dirname(p), { recursive: true });
   fs.writeFileSync(p, content);
   return { bytes: content.length, backedUp, backupPath };
 }

@@ -1,3 +1,19 @@
+/**
+ * Path constants for the flat legacy single-profile layout.
+ *
+ * Multi-profile layout (data/profiles/{slug}/...) is being rolled out
+ * incrementally. Modules that have been updated to accept `profileId`
+ * (see profile.ts, portals.ts) call `profilePath()` directly and should
+ * NOT import from this file. Modules that haven't been migrated yet
+ * keep using these constants, which continue to point at the original
+ * flat paths.
+ *
+ * Once Phase 1 of the multi-profile rollout is complete (every reader
+ * threads profileId through), these constants will be removed entirely
+ * and migration will be turned on at boot. Until then, migration MUST
+ * stay off — moving files out from under these constants would break
+ * the dashboard.
+ */
 import fs from 'node:fs';
 import path from 'node:path';
 
