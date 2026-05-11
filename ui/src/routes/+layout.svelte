@@ -13,7 +13,7 @@
   import { onNavigate } from '$app/navigation';
   import { APP_NAME, APP_DESCRIPTION } from '$lib/config/branding';
   import { theme } from '$lib/theme.svelte';
-  import { onMount } from 'svelte';
+  import { onMount, setContext } from 'svelte';
 
   onMount(() => {
     // Hydrate the theme store so OS-preference changes propagate at runtime.
@@ -23,6 +23,17 @@
   });
 
   let { children, data } = $props();
+
+  // Expose the active profile id via a reactive Svelte context so any
+  // descendant (JobCard, JobList, etc.) can render a profile badge when a
+  // job from a different profile appears (cross-profile `?profile=all`
+  // views). setContext only fires once at mount; the wrapper object is
+  // mutated so consumers calling getContext('activeProfile').id stay reactive
+  // across profile switches without manual prop drilling.
+  // svelte-ignore state_referenced_locally — initial seed only; $effect keeps it live
+  const activeProfileCtx = $state<{ id: string | undefined }>({ id: data?.activeProfile?.id });
+  $effect(() => { activeProfileCtx.id = data?.activeProfile?.id; });
+  setContext('activeProfile', activeProfileCtx);
 
   function handleBoundaryError(err: unknown, _reset: () => void) {
     reportClientError('boundary', 'Component crashed', err);

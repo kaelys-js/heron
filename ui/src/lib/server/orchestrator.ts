@@ -354,7 +354,18 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
 
 export type OfertaResult = { ok: boolean; code: number | null };
 
-export function runOferta(url: string, taskKey: TaskName = 'oferta'): Promise<OfertaResult> {
+/**
+ * Spawn the Claude CLI to run the oferta mode for a single URL.
+ *
+ * Multi-profile note: the oferta slash-command reads cv.md / profile.yml /
+ * portals.yml via the AGENTS.md instructions, which still point at the
+ * repo-root flat-layout paths. Until those instructions are updated (out of
+ * scope for now), we maintain a per-profile symlink set at the repo root
+ * before spawning so the active profile's files are at the expected paths.
+ * The symlinks are atomic-swap on each call so a concurrent oferta for a
+ * different profile is guaranteed to see consistent state.
+ */
+export function runOferta(url: string, taskKey: TaskName = 'oferta', profileId?: string): Promise<OfertaResult> {
   return new Promise((resolve) => {
     if (running.has(taskKey)) {
       logEvent(taskKey, 'Generate CV already running', {
@@ -365,10 +376,29 @@ export function runOferta(url: string, taskKey: TaskName = 'oferta'): Promise<Of
       resolve({ ok: false, code: null });
       return;
     }
+    // If a specific profile is requested, swap the repo-root flat-layout
+    // symlinks to point at that profile's files before spawning Claude.
+    // The Claude CLI reads cv.md / config/profile.yml / portals.yml /
+    // modes/_profile.md at their canonical paths per the AGENTS.md /
+    // CLAUDE.md instructions; symlinks let multi-profile work without
+    // rewriting every slash-command prompt.
+    if (profileId) {
+      try {
+        // Lazy-require to avoid circular import.
+        const { swapProfileSymlinks } = require('./profile-symlinks') as typeof import('./profile-symlinks');
+        swapProfileSymlinks(profileId);
+      } catch (e) {
+        logEvent(taskKey, 'Symlink swap failed — oferta may read wrong profile', {
+          level: 'warn',
+          category: 'task',
+          message: e instanceof Error ? e.message : String(e),
+        });
+      }
+    }
     const prompt = '/' + CLI_NAMESPACE + ' oferta ' + url;
     logEvent(taskKey, 'Generate CV started', {
       category: 'task',
-      message: 'oferta · ' + url,
+      message: 'oferta · ' + url + (profileId ? ' · profile=' + profileId : ''),
     });
     let p: ChildProcess;
     try {
@@ -566,7 +596,7 @@ export type AutoEvalResult = {
 const AUTO_EVAL_COOLDOWN_MS = 60 * 60_000; // 1h
 const AUTO_EVAL_FAILURE_CIRCUIT = 3;
 
-export async function runAutoEval(): Promise<AutoEvalResult> {
+export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
   // -------- Pre-flight gates --------
   if (running.has('auto-eval')) {
     logEvent('auto-eval', 'Auto-eval already running', {
@@ -603,39 +633,60 @@ export async function runAutoEval(): Promise<AutoEvalResult> {
     }
   }
 
-  // -------- Build candidate list --------
-  // loadAllJobs joins pipeline.md + gemini-scores.tsv + reports/. We use:
-  //   geminiScore ≥ threshold  →  the bar
-  //   !reportFile              →  not already deeply-evaluated
-  //   status === 'Scored'      →  user hasn't manually advanced this job
-  // Sorted by geminiScore desc so we burn the cap on the highest-fit ones.
+  // -------- Resolve target profile(s) --------
+  // Without an explicit profileId, iterate every profile so a single
+  // auto-eval run after the daily scan covers every track. The orchestrator
+  // serialises across profiles to avoid burning the per-run cap on one
+  // profile while starving another.
+  const { listProfiles } = await import('./profiles');
+  const profilesToRun = profileId ? [profileId] : listProfiles().map((p) => p.id);
+
+  // -------- Build candidate list per profile --------
   const { loadAllJobs } = await import('./parsers');
   const threshold = cfg.thresholds.autoEvaluateScore;
   const cap = cfg.thresholds.maxAutoEvalsPerRun ?? 10;
-  const candidates = loadAllJobs()
-    .filter((j) => j.geminiScore != null && j.geminiScore >= threshold)
-    .filter((j) => !j.reportFile)
-    .filter((j) => j.status === 'Scored')
-    .sort((a, b) => (b.geminiScore ?? 0) - (a.geminiScore ?? 0))
-    .slice(0, cap);
+
+  // For each profile, gather candidates up to the cap. Across profiles
+  // we still respect the same cap — a single auto-eval run is the user's
+  // budget for that timeslice, multi-profile or not.
+  type Candidate = { url: string; profileId: string; company: string; role: string; geminiScore: number };
+  const allCandidates: Candidate[] = [];
+  for (const pid of profilesToRun) {
+    const profileCandidates = loadAllJobs(pid)
+      .filter((j) => j.geminiScore != null && j.geminiScore >= threshold)
+      .filter((j) => !j.reportFile)
+      .filter((j) => j.status === 'Scored')
+      .sort((a, b) => (b.geminiScore ?? 0) - (a.geminiScore ?? 0))
+      .map((j) => ({
+        url: j.url,
+        profileId: pid,
+        company: j.company || '?',
+        role: j.role || '?',
+        geminiScore: j.geminiScore ?? 0,
+      }));
+    allCandidates.push(...profileCandidates);
+  }
+
+  // Global sort by score desc, then take the top `cap` across all profiles.
+  allCandidates.sort((a, b) => b.geminiScore - a.geminiScore);
+  const candidates = allCandidates.slice(0, cap);
 
   if (candidates.length === 0) {
     logEvent('auto-eval', 'Auto-eval: nothing to do', {
       level: 'info',
       category: 'task',
-      message: 'No Scored jobs with geminiScore ≥ ' + threshold.toFixed(1) + ' awaiting deep eval',
+      message: 'No Scored jobs with geminiScore ≥ ' + threshold.toFixed(1) +
+        ' awaiting deep eval (across ' + profilesToRun.length + ' profile(s))',
     });
     return { ok: true, evaluated: 0, skipped: 0, failed: 0 };
   }
 
   // -------- Reserve slot + start batch --------
-  // We don't have a real ChildProcess for this synthetic task — slot reservation
-  // is the cheap way to make isRunning('auto-eval') accurate for the scheduler.
   running.set('auto-eval', null as unknown as ChildProcess);
   logEvent('auto-eval', 'Task started', {
     category: 'task',
     message: 'Auto-eval started: ' + candidates.length + ' jobs (score ≥ ' +
-      threshold.toFixed(1) + ', cap ' + cap + ')',
+      threshold.toFixed(1) + ', cap ' + cap + ', profiles=' + profilesToRun.length + ')',
   });
 
   let evaluated = 0;
@@ -648,21 +699,21 @@ export async function runAutoEval(): Promise<AutoEvalResult> {
     for (let i = 0; i < candidates.length; i++) {
       const job = candidates[i];
 
-      // Re-check liveness of the candidate against the current pipeline state.
-      // A manual eval / status flip mid-batch should remove the URL from our
-      // queue automatically. Cheap — entirely in-memory file reads.
-      const fresh = loadAllJobs().find((j) => j.url === job.url);
+      // Re-check this candidate against its profile's current state. A
+      // manual eval / status flip mid-batch should remove the URL from
+      // our queue automatically. Cheap — in-memory file reads.
+      const fresh = loadAllJobs(job.profileId).find((j) => j.url === job.url);
       if (!fresh) { skipped++; continue; }
       if (fresh.reportFile) { skipped++; continue; }
       if (fresh.status !== 'Scored') { skipped++; continue; }
 
       logEvent('auto-eval', 'Auto-eval ' + (i + 1) + '/' + candidates.length, {
         category: 'task',
-        message: (fresh.company || '?') + ' · ' + (fresh.role || '?') +
-          ' · score ' + (fresh.geminiScore ?? 0).toFixed(1),
+        message: '[' + job.profileId + '] ' + job.company + ' · ' + job.role +
+          ' · score ' + job.geminiScore.toFixed(1),
       });
 
-      const r = await runOferta(job.url, 'auto-eval');
+      const r = await runOferta(job.url, 'auto-eval', job.profileId);
       if (r.ok) {
         evaluated++;
         consecutive = 0;

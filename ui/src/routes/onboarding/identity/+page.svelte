@@ -8,7 +8,12 @@
   import { toast } from 'svelte-sonner';
   import { onMount } from 'svelte';
 
-  let { data }: { data: { initial: Record<string, string> } } = $props();
+  let { data }: { data: { initial: Record<string, string>; profileId: string } } = $props();
+
+  /** Query suffix that threads the active wizard profile through every
+   *  cross-route API call + Continue link. Without this, adding a second
+   *  profile would write to whatever happens to be active at submit time. */
+  let q = $derived('?profile=' + encodeURIComponent(data.profileId));
 
   // svelte-ignore state_referenced_locally — initial seed only
   let form = $state({ ...data.initial });
@@ -60,10 +65,10 @@
           visa_status: form.visa_status,
         }),
       };
-      await api.post('/api/profile', patch, { silent: true });
+      await api.post('/api/profile' + q, patch, { silent: true });
       await api.post('/api/onboarding/step', { step: 'identity', action: 'complete' }, { silent: true });
       toast.success('Identity saved');
-      await goto('/onboarding/cv');
+      await goto('/onboarding/cv' + q);
     } catch (e) {
       const err = e as ApiError;
       toast.error('Could not save', { description: err.message });
