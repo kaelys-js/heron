@@ -54,6 +54,16 @@
       recentErrorsCount: number;
       pipelineDaysAgo: number | null;
       alerts: InboxAlert[];
+      applyIssues: Array<{
+        id: string;
+        severity: 'info' | 'warn' | 'error';
+        summary: string;
+        detail?: string;
+        fix?: { label: string; href: string };
+        jobId: string;
+        source: string;
+        ts: number;
+      }>;
       followupsUrgent: { job: Job; entry: import('$lib/server/followup-cadence').FollowupEntry }[];
       followupsOverdue: { job: Job; entry: import('$lib/server/followup-cadence').FollowupEntry }[];
       followupsCadenceMeta: import('$lib/server/followup-cadence').FollowupCadence['metadata'] | null;
@@ -404,6 +414,60 @@
                     {alert.actionLabel}
                     <ArrowRight class="size-3" />
                   {/if}
+                </Button>
+              {/if}
+            </div>
+          {/each}
+        </section>
+      {/if}
+
+      <!-- ===================== AUTO-APPLY FAILURES ===================== -->
+      <!--
+        Surfaces every Issue with dedupeKey starting with "apply:" — one per
+        job that the autonomous-apply drain bailed on. Each row's "Open posting"
+        CTA pops the posting in a new tab so the user can finish by hand.
+        Rows are deduped server-side so retries don't multiply.
+      -->
+      {#if data.applyIssues && data.applyIssues.length > 0}
+        <section class="space-y-2">
+          <h2 class="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <Bell class="size-3 text-amber-400" />
+            Auto-apply needs review · {data.applyIssues.length}
+          </h2>
+          {#each data.applyIssues as issue (issue.id)}
+            <div class={cn(
+              'flex items-start gap-3 px-3.5 py-2.5 rounded-md border',
+              issue.severity === 'error'
+                ? 'border-red-500/40 bg-red-500/5'
+                : 'border-amber-500/40 bg-amber-500/5',
+            )}>
+              {#if issue.severity === 'error'}
+                <AlertCircle class="size-4 mt-0.5 text-red-400 flex-shrink-0" />
+              {:else}
+                <AlertTriangle class="size-4 mt-0.5 text-amber-400 flex-shrink-0" />
+              {/if}
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium">{issue.summary}</div>
+                {#if issue.detail}
+                  <p class="text-[11px] opacity-80 leading-relaxed mt-0.5 whitespace-pre-wrap font-mono">
+                    {issue.detail.split('\n').slice(0, 3).join('\n')}
+                  </p>
+                {/if}
+                <div class="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <span class="font-mono">{issue.source}</span>
+                  <span>·</span>
+                  <span>{formatRelativeTime(issue.ts)}</span>
+                </div>
+              </div>
+              {#if issue.fix?.href}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="h-7 text-xs gap-1.5 flex-shrink-0"
+                  onclick={() => window.open(issue.fix!.href, '_blank', 'noopener')}
+                >
+                  {issue.fix.label}
+                  <ArrowRight class="size-3" />
                 </Button>
               {/if}
             </div>

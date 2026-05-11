@@ -74,6 +74,27 @@ export type ProfileEdit = {
   language?: {
     modes_dir?: string;
   };
+  /** Autonomous apply settings — OPT-IN per profile. When `autonomous_apply`
+   *  is true, the system MAY auto-submit applications on supported portals
+   *  (LinkedIn / Greenhouse / Ashby) subject to score gate, daily cap, and
+   *  per-portal toggles. See AGENTS.md "Ethical Use" + /help/autonomous-apply
+   *  for the safety story. */
+  automation?: {
+    /** Master switch. Default false — must be explicitly enabled per profile. */
+    autonomous_apply?: boolean;
+    /** For the first N days after autonomous_apply flips on, the daily cap
+     *  is reduced to 5/day (LinkedIn shadowban + ATS bot-filter mitigation). */
+    warmup_days?: number;
+    /** Minimum oferta / Gemini score required to autonomous-apply. Below this
+     *  threshold the job stays at Scored regardless of autonomous_apply. */
+    min_score_to_apply?: number;
+    /** Which ATS portals this profile auto-applies via. Portals not listed
+     *  here fall back to ManualApplyNeeded even when autonomous_apply is on. */
+    enabled_portals?: string[];
+    /** Timestamp (unix ms) when autonomous_apply was last flipped from
+     *  false → true. Used to compute the warmup window. */
+    enabled_at?: number;
+  };
 };
 
 export type ProfileSnapshot = ProfileEdit & {
@@ -130,6 +151,13 @@ export function readProfile(profileId?: string): ProfileSnapshot {
   const location = (doc.location ?? {}) as ProfileEdit['location'] & Record<string, unknown>;
   const preferences = (doc.preferences ?? {}) as ProfileEdit['preferences'] & Record<string, unknown>;
   const language = (doc.language ?? {}) as { modes_dir?: string };
+  const automation = (doc.automation ?? {}) as {
+    autonomous_apply?: boolean;
+    warmup_days?: number;
+    min_score_to_apply?: number;
+    enabled_portals?: string[];
+    enabled_at?: number;
+  };
 
   const archetypes = Array.isArray(target_roles.archetypes)
     ? (target_roles.archetypes as { name?: string; level?: string; fit?: string }[]).map((a) => ({
@@ -195,6 +223,15 @@ export function readProfile(profileId?: string): ProfileSnapshot {
     language: {
       modes_dir: typeof language.modes_dir === 'string' ? language.modes_dir : '',
     },
+    automation: {
+      autonomous_apply: automation.autonomous_apply === true,
+      warmup_days: typeof automation.warmup_days === 'number' ? automation.warmup_days : 7,
+      min_score_to_apply: typeof automation.min_score_to_apply === 'number' ? automation.min_score_to_apply : 4.0,
+      enabled_portals: Array.isArray(automation.enabled_portals)
+        ? (automation.enabled_portals as string[])
+        : ['linkedin', 'greenhouse', 'ashby'],
+      enabled_at: typeof automation.enabled_at === 'number' ? automation.enabled_at : undefined,
+    },
     archetypes,
     exists: fs.existsSync(profilePathYml),
     files: {
@@ -258,6 +295,17 @@ export function writeProfile(arg1: string | ProfileEdit | undefined, arg2?: Prof
     const l = (doc.language as Record<string, unknown>) ?? {};
     if (edit.language.modes_dir !== undefined) l.modes_dir = edit.language.modes_dir;
     doc.language = l;
+  }
+  if (edit.automation) {
+    const a = (doc.automation as Record<string, unknown>) ?? {};
+    const before = a.autonomous_apply === true;
+    if (edit.automation.autonomous_apply !== undefined) a.autonomous_apply = edit.automation.autonomous_apply;
+    if (edit.automation.warmup_days !== undefined) a.warmup_days = edit.automation.warmup_days;
+    if (edit.automation.min_score_to_apply !== undefined) a.min_score_to_apply = edit.automation.min_score_to_apply;
+    if (edit.automation.enabled_portals !== undefined) a.enabled_portals = edit.automation.enabled_portals;
+    // Stamp enabled_at when flipping false → true so the warmup window starts ticking.
+    if (!before && edit.automation.autonomous_apply === true) a.enabled_at = Date.now();
+    doc.automation = a;
   }
 
   const out = stringify(doc, { lineWidth: 100 });

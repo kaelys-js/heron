@@ -69,6 +69,8 @@ for (const s of SCOPES) mkdirSync(join(s.reportsBase, 'reports'), { recursive: t
 const CANONICAL_STATUSES = [
   'evaluated', 'applied', 'responded', 'interview',
   'offer', 'rejected', 'discarded', 'skip',
+  // Autonomous-apply additions (Phase 0.3 of autonomous-apply plan).
+  'queued', 'applying', 'manual-apply-needed', 'manualapplyneeded',
 ];
 
 const ALIASES = {
