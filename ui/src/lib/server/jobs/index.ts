@@ -49,16 +49,16 @@ export function installAllJobs(): void {
   if (installed) return;
   installed = true;
 
-  // NOTE: migrateToMultiProfile() is intentionally NOT called yet.
-  // It will be turned on in the Phase 1 commit (rewriting all reads to use
-  // profile-paths). Running migration here without Phase 1 in place would
-  // move files out from under the existing flat-layout constants — every
-  // page would 404 on its config files.
-  //
-  // Once Phase 1 lands, uncomment:
-  //   try { migrateToMultiProfile(); }
-  //   catch (e) { console.error('[boot] profile migration failed:', e); }
-  void migrateToMultiProfile; // satisfy ts unused-import check
+  // FIRST: migrate legacy single-profile layout into data/profiles/default/.
+  // Idempotent — once profiles.json exists and no legacy files remain at
+  // their flat-layout paths, this is a cheap early-return.
+  try {
+    migrateToMultiProfile();
+  } catch (e) {
+    // Don't let a migration error kill boot. Activity feed will surface
+    // the issue separately; the dashboard falls through to default state.
+    console.error('[boot] profile migration failed:', e);
+  }
 
   // Legacy tasks — preserve the exact ids used in /api/run today so
   // existing callers and Autopilot config keep working unchanged.

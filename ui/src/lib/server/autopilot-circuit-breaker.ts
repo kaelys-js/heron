@@ -23,7 +23,7 @@ import fs from 'node:fs';
 import { installBusListener, logEvent } from './events';
 import { readConfig, writeConfig } from './autopilot';
 import { reportIssue, listOpenIssues, resolveIssue } from './issues';
-import { CV_MD, PROFILE_YML } from './files';
+import { activePath } from './profile-paths';
 import type { ActivityEvent } from '$lib/types';
 
 const DEDUPE_KEY = 'autopilot-circuit-breaker';
@@ -79,18 +79,21 @@ function isProfileYamlError(ev: ActivityEvent): boolean {
 
 function checkPreflight(): void {
   // Boot-time sanity check — if the user-layer essentials are missing the
-  // autopilot has nothing to apply with, so trip pre-emptively.
-  if (!fs.existsSync(CV_MD)) {
+  // autopilot has nothing to apply with, so trip pre-emptively. Scoped to
+  // the active profile.
+  const cvPath = activePath('cv-md');
+  const profileYml = activePath('profile-yml');
+  if (!fs.existsSync(cvPath)) {
     trip(
       'cv.md is missing',
-      'The autopilot needs your CV to generate tailored applications. Add cv.md to the repo root.',
+      'The autopilot needs your CV to generate tailored applications. Add cv.md via /profile.',
       { label: 'Onboarding guide', href: '/help' },
     );
     return;
   }
-  if (fs.existsSync(PROFILE_YML)) {
+  if (fs.existsSync(profileYml)) {
     try {
-      const txt = fs.readFileSync(PROFILE_YML, 'utf8');
+      const txt = fs.readFileSync(profileYml, 'utf8');
       // Trivial syntactic check: profile.yml should not be empty and should
       // contain at least one top-level key.
       if (!txt.trim() || !/^[a-zA-Z_]/m.test(txt)) {

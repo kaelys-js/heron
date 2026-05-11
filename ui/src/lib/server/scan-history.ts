@@ -11,10 +11,12 @@
  */
 
 import fs from 'node:fs';
-import path from 'node:path';
-import { ROOT } from './files';
+import { profilePath } from './profile-paths';
+import { getActiveProfileId, listProfiles } from './profiles';
 
-const HISTORY_PATH = path.join(ROOT, 'data', 'scan-history.tsv');
+function resolveId(profileId?: string): string {
+  return profileId ?? getActiveProfileId();
+}
 
 export type ScanRow = {
   url: string;
@@ -46,10 +48,11 @@ export type ScanHistorySummary = {
   topCompanies: { company: string; count: number }[];
 };
 
-function readRows(): ScanRow[] {
-  if (!fs.existsSync(HISTORY_PATH)) return [];
+function readRowsForProfile(profileId: string): ScanRow[] {
+  const historyPath = profilePath(profileId, 'scan-history');
+  if (!fs.existsSync(historyPath)) return [];
   let text = '';
-  try { text = fs.readFileSync(HISTORY_PATH, 'utf8'); } catch { return []; }
+  try { text = fs.readFileSync(historyPath, 'utf8'); } catch { return []; }
   const lines = text.split('\n').slice(1); // skip header
   const out: ScanRow[] = [];
   for (const line of lines) {
@@ -68,8 +71,17 @@ function readRows(): ScanRow[] {
   return out;
 }
 
-export function readScanHistorySummary(): ScanHistorySummary {
-  const rows = readRows();
+function readRows(profileId?: string): ScanRow[] {
+  if (profileId === 'all') {
+    const all: ScanRow[] = [];
+    for (const p of listProfiles()) all.push(...readRowsForProfile(p.id));
+    return all;
+  }
+  return readRowsForProfile(resolveId(profileId));
+}
+
+export function readScanHistorySummary(profileId?: string): ScanHistorySummary {
+  const rows = readRows(profileId);
   const byDate = new Map<string, DailyAggregate>();
   const portalCounts = new Map<string, number>();
   const companyCounts = new Map<string, number>();

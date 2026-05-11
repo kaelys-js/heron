@@ -17,7 +17,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { error } from '@sveltejs/kit';
 import { loadAllJobs } from '$lib/server/parsers';
-import { OUTPUT_DIR } from '$lib/server/files';
+import { activePath } from '$lib/server/profile-paths';
 import { reportServerError } from '$lib/server/events';
 
 export const GET = async ({ params }: { params: { id: string } }) => {
@@ -25,9 +25,10 @@ export const GET = async ({ params }: { params: { id: string } }) => {
   if (!job) throw error(404, 'Job not found');
   if (!job.pdfFile) throw error(404, 'No CV PDF generated for this job yet');
 
-  // Resolve safely under OUTPUT_DIR — reject any traversal attempt.
-  const candidate = path.resolve(OUTPUT_DIR, job.pdfFile);
-  const root = path.resolve(OUTPUT_DIR);
+  // Resolve safely under the active profile's output dir — reject traversal.
+  const outputDir = activePath('output-dir');
+  const candidate = path.resolve(outputDir, job.pdfFile);
+  const root = path.resolve(outputDir);
   if (!candidate.startsWith(root + path.sep) && candidate !== root) {
     throw error(400, 'Invalid PDF path');
   }

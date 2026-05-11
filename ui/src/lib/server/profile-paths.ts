@@ -122,3 +122,15 @@ export function ensureProfileDirs(profileId: string): void {
 export function profileDirExists(profileId: string): boolean {
   return fs.existsSync(profilePath(profileId, 'profile-dir'));
 }
+
+/**
+ * Shortcut for `profilePath(getActiveProfileId(), kind)`. Used by code that
+ * doesn't have an explicit profileId context (most server endpoints today)
+ * and just wants the active profile's path. New code that DOES have a
+ * profileId in scope should prefer `profilePath(id, kind)` directly so the
+ * call site is explicit about which profile it targets.
+ */
+import { getActiveProfileId } from './profiles';
+export function activePath(kind: ProfileFileKind): string {
+  return profilePath(getActiveProfileId(), kind);
+}

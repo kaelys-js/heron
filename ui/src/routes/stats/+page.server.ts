@@ -5,7 +5,13 @@
  */
 
 import { loadAllJobs, groupByStatus } from '$lib/server/parsers';
-import { listReports, listPdfs, PIPELINE, APPLICATIONS, readSafe } from '$lib/server/files';
+import { readSafe } from '$lib/server/files';
+import { activePath } from '$lib/server/profile-paths';
+
+function countDir(dir: string, ext: string): number {
+  try { return fs.readdirSync(dir).filter((f) => f.endsWith(ext)).length; }
+  catch { return 0; }
+}
 import { readScanHistorySummary } from '$lib/server/scan-history';
 import type { Job, Status, BgRisk } from '$lib/types';
 import { STATUS_ORDER } from '$lib/types';
@@ -40,7 +46,7 @@ function sourceOf(url: string): string {
 }
 
 function parseApplicationDates(): string[] {
-  const txt = readSafe(APPLICATIONS);
+  const txt = readSafe(activePath('applications'));
   const dates: string[] = [];
   for (const line of txt.split('\n')) {
     if (!line.startsWith('|') || line.startsWith('| #') || line.startsWith('|---')) continue;
@@ -75,8 +81,8 @@ export async function load() {
   const counts: Record<string, number> = { total: jobs.length };
   for (const s of STATUS_ORDER) counts[s.toLowerCase()] = grouped[s].length;
 
-  const reports = listReports().length;
-  const pdfs = listPdfs().length;
+  const reports = countDir(activePath('reports-dir'), '.md');
+  const pdfs = countDir(activePath('output-dir'), '.pdf');
   const appliedStatuses: Status[] = ['Applied', 'Screened', 'Interview', 'Offer', 'Rejected'];
   const applied = appliedStatuses.reduce((acc, s) => acc + grouped[s].length, 0);
 
@@ -178,7 +184,7 @@ export async function load() {
   // Pipeline staleness
   let pipelineStaleDays: number | null = null;
   try {
-    const stat = fs.statSync(PIPELINE);
+    const stat = fs.statSync(activePath('pipeline'));
     pipelineStaleDays = Math.floor((Date.now() - stat.mtimeMs) / (1000 * 60 * 60 * 24));
   } catch {}
 
