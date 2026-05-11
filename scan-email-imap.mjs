@@ -29,14 +29,18 @@ import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } fr
 import path from 'path';
 import dotenv from 'dotenv';
 import { ImapFlow } from 'imapflow';
+import { profilePath, ensureProfileDirs, profileFromArgv } from './lib-profiles.mjs';
 
 const ROOT = path.resolve(process.cwd());
 const ENV_FILE = path.join(ROOT, '.env');
-const PIPELINE = path.join(ROOT, 'data', 'pipeline.md');
-const APPLICATIONS = path.join(ROOT, 'data', 'applications.md');
-const SCAN_HISTORY = path.join(ROOT, 'data', 'scan-history.tsv');
 
-mkdirSync(path.dirname(PIPELINE), { recursive: true });
+// Resolve profile from argv (--profile <slug>). Output lands in that
+// profile's pipeline / applications / scan-history.
+const PROFILE_ID = profileFromArgv();
+ensureProfileDirs(PROFILE_ID);
+const PIPELINE = profilePath(PROFILE_ID, 'pipeline');
+const APPLICATIONS = profilePath(PROFILE_ID, 'applications');
+const SCAN_HISTORY = profilePath(PROFILE_ID, 'scan-history');
 
 // Load .env so creds populate process.env
 if (existsSync(ENV_FILE)) {

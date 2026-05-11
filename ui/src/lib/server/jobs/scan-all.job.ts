@@ -38,27 +38,34 @@ function inboxHasMbox(): boolean {
 }
 
 async function runScanAll(args?: JobArgs): Promise<JobResult> {
-  // Each child must be registered (orchestrator + registry imports run at
-  // boot via jobs/index.ts). hasJob guards against partial-boot races.
-  // Authenticated scanners (linkedin-auth, indeed-auth) only join the
-  // fan-out when their source is connected — otherwise they'd just exit
-  // early with a "not connected" error and clutter the activity feed.
-  const children: Array<{ id: string; args?: JobArgs }> = [];
-  if (hasJob('scan-portals')) children.push({ id: 'scan-portals' });
-  if (hasJob('scan'))         children.push({ id: 'scan' });
-  if (hasJob('scan-curated')) children.push({ id: 'scan-curated' });
+  // Fan-out across every profile × every active scanner.
+  //
+  // Phase 4: scan-all now iterates profiles. Each profile gets the same
+  // set of child scanners; each child receives the profile slug so its
+  // output lands in data/profiles/{slug}/. Profiles run SEQUENTIALLY to
+  // avoid hammering rate limits when a user has 3+ profiles (each scanner
+  // would otherwise fire 3 concurrent LinkedIn/Indeed sessions).
+  //
+  // Within a profile, scanners run in PARALLEL (existing behavior preserved).
+  const { listProfiles } = await import('../profiles');
+  const profiles = listProfiles();
+
+  const baseChildren: Array<string> = [];
+  if (hasJob('scan-portals')) baseChildren.push('scan-portals');
+  if (hasJob('scan'))         baseChildren.push('scan');
+  if (hasJob('scan-curated')) baseChildren.push('scan-curated');
   if (hasJob('scan-linkedin-auth') && getSource('linkedin-auth').connected) {
-    children.push({ id: 'scan-linkedin-auth' });
+    baseChildren.push('scan-linkedin-auth');
   }
   if (hasJob('scan-indeed-auth') && getSource('indeed-auth').connected) {
-    children.push({ id: 'scan-indeed-auth' });
+    baseChildren.push('scan-indeed-auth');
   }
   if (hasJob('scan-email-imap') && getSource('gmail-imap').connected) {
-    children.push({ id: 'scan-email-imap' });
+    baseChildren.push('scan-email-imap');
   }
-  if (hasJob('scan-email') && inboxHasMbox()) children.push({ id: 'scan-email' });
+  if (hasJob('scan-email') && inboxHasMbox()) baseChildren.push('scan-email');
 
-  if (children.length === 0) {
+  if (baseChildren.length === 0) {
     logEvent('scan-all', 'Nothing to scan', {
       level: 'warn',
       category: 'task',
@@ -70,33 +77,46 @@ async function runScanAll(args?: JobArgs): Promise<JobResult> {
   logEvent('scan-all', 'Scan-all dispatched', {
     level: 'info',
     category: 'task',
-    message: 'fan-out: ' + children.map(c => c.id).join(', '),
+    message:
+      profiles.length + ' profile(s) × ' + baseChildren.length + ' scanner(s): ' +
+      baseChildren.join(', '),
   });
 
-  // Parallel — each writes to pipeline.md / scan-history.tsv with its own
-  // dedup pass, so order doesn't matter.
-  const results = await Promise.allSettled(
-    children.map(c => runById(c.id, c.args)),
-  );
+  // For each profile, fan out scanners in parallel. Profiles iterate
+  // sequentially to bound concurrent network load.
+  type ChildResult = { id: string; profileId: string; ok: boolean; meta?: unknown; error?: string };
+  const results: ChildResult[] = [];
+  for (const profile of profiles) {
+    const profileArgs = { ...(args ?? {}), profileId: profile.id };
+    const settled = await Promise.allSettled(
+      baseChildren.map((id) => runById(id, profileArgs)),
+    );
+    for (let i = 0; i < settled.length; i++) {
+      const r = settled[i];
+      if (r.status === 'fulfilled' && r.value.ok) {
+        results.push({ id: baseChildren[i], profileId: profile.id, ok: true, meta: r.value.meta });
+      } else {
+        const err = r.status === 'rejected'
+          ? (r.reason instanceof Error ? r.reason.message : String(r.reason))
+          : (r.value.ok === false ? r.value.error : 'unknown');
+        results.push({ id: baseChildren[i], profileId: profile.id, ok: false, error: err });
+      }
+    }
+  }
 
   let totalFound = 0;
   let okCount = 0;
   let failCount = 0;
   const breakdown: string[] = [];
-  for (let i = 0; i < results.length; i++) {
-    const r = results[i];
-    const id = children[i].id;
-    if (r.status === 'fulfilled' && r.value.ok) {
+  for (const r of results) {
+    if (r.ok) {
       okCount++;
-      const found = (r.value.meta as { found?: number } | undefined)?.found ?? 0;
+      const found = (r.meta as { found?: number } | undefined)?.found ?? 0;
       totalFound += found;
-      breakdown.push(id + '=' + found);
+      breakdown.push(r.profileId + '/' + r.id + '=' + found);
     } else {
       failCount++;
-      const err = r.status === 'rejected'
-        ? (r.reason instanceof Error ? r.reason.message : String(r.reason))
-        : (r.value.ok === false ? r.value.error : 'unknown');
-      breakdown.push(id + '=fail(' + (err || '?').slice(0, 40) + ')');
+      breakdown.push(r.profileId + '/' + r.id + '=fail(' + (r.error || '?').slice(0, 40) + ')');
     }
   }
 
@@ -106,10 +126,9 @@ async function runScanAll(args?: JobArgs): Promise<JobResult> {
     message: totalFound + ' total · ' + breakdown.join(' · '),
   });
 
-  // JobResult is a discriminated union — `ok: boolean` doesn't fit either
-  // arm, so split on the actual outcome.
-  const message = totalFound + ' jobs across ' + okCount + '/' + children.length + ' scanners';
-  if (failCount < children.length) {
+  const totalChildren = results.length;
+  const message = totalFound + ' jobs across ' + okCount + '/' + totalChildren + ' runs';
+  if (failCount < totalChildren) {
     return { ok: true, message, meta: { totalFound, okCount, failCount, breakdown } };
   }
   return { ok: false, error: 'All scanners failed: ' + breakdown.join('; '), meta: { totalFound, okCount, failCount, breakdown } };

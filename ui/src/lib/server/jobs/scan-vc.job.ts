@@ -20,6 +20,9 @@ const NEW_RE = /New candidates:\s+(\d+)/i;
 function runScanVc(args?: JobArgs): Promise<JobResult> {
   return new Promise((resolve) => {
     const cliArgs = ['scan-vc.mjs'];
+    if (typeof args?.profileId === 'string' && args.profileId.trim()) {
+      cliArgs.push('--profile', args.profileId.trim());
+    }
     if (typeof args?.source === 'string' && args.source.trim()) {
       cliArgs.push('--source', args.source.trim());
     }

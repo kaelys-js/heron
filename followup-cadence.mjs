@@ -14,12 +14,14 @@
 import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { profilePath, profileFromArgv } from './lib-profiles.mjs';
 
 const CAREER_OPS = dirname(fileURLToPath(import.meta.url));
-const APPS_FILE = existsSync(join(CAREER_OPS, 'data/applications.md'))
-  ? join(CAREER_OPS, 'data/applications.md')
-  : join(CAREER_OPS, 'applications.md');
-const FOLLOWUPS_FILE = join(CAREER_OPS, 'data/follow-ups.md');
+const PROFILE_ID = profileFromArgv();
+const APPS_FILE = existsSync(profilePath(PROFILE_ID, 'applications'))
+  ? profilePath(PROFILE_ID, 'applications')
+  : join(CAREER_OPS, 'applications.md'); // legacy fallback
+const FOLLOWUPS_FILE = profilePath(PROFILE_ID, 'follow-ups');
 
 
 // --- CLI args ---
