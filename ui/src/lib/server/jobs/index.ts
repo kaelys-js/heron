@@ -14,6 +14,7 @@
 import { register, installAfterListener } from './registry';
 import { runScan, runGemini, runLinkedInApply } from '../orchestrator';
 import { startBatchWatcher } from './auto-merge-batch';
+import { migrateToMultiProfile } from '../profile-migrate';
 
 // Phase 1 hygiene jobs — importing each module triggers its register() call.
 // These imports MUST stay; tree-shaking would skip them otherwise.
@@ -47,6 +48,17 @@ let installed = false;
 export function installAllJobs(): void {
   if (installed) return;
   installed = true;
+
+  // NOTE: migrateToMultiProfile() is intentionally NOT called yet.
+  // It will be turned on in the Phase 1 commit (rewriting all reads to use
+  // profile-paths). Running migration here without Phase 1 in place would
+  // move files out from under the existing flat-layout constants — every
+  // page would 404 on its config files.
+  //
+  // Once Phase 1 lands, uncomment:
+  //   try { migrateToMultiProfile(); }
+  //   catch (e) { console.error('[boot] profile migration failed:', e); }
+  void migrateToMultiProfile; // satisfy ts unused-import check
 
   // Legacy tasks — preserve the exact ids used in /api/run today so
   // existing callers and Autopilot config keep working unchanged.
