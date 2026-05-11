@@ -7,7 +7,40 @@
   import * as Card from '$lib/components/ui/card';
   import { toast } from 'svelte-sonner';
   import { ApiError, api } from '$lib/api';
-  import { ExternalLink, KeyRound, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, RotateCw, Sparkles } from '@lucide/svelte';
+  import { ExternalLink, KeyRound, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, RotateCw, Sparkles, Activity } from '@lucide/svelte';
+  import { cn } from '$lib/utils';
+  import { onMount } from 'svelte';
+
+  /** Compact "Nm/Nh/Nd ago" formatter for the health card. */
+  function sinceShort(ts: number): string {
+    const dt = Date.now() - ts;
+    if (dt < 60_000) return 'just now';
+    if (dt < 3600_000) return Math.floor(dt / 60_000) + 'm ago';
+    if (dt < 86_400_000) return Math.floor(dt / 3600_000) + 'h ago';
+    return Math.floor(dt / 86_400_000) + 'd ago';
+  }
+
+  // /api/health snapshot — surfaced at the top so the user sees pipeline
+  // freshness + key configuration without leaving Settings. Refreshes on
+  // mount only; click Refresh to re-poll.
+  type HealthSnapshot = {
+    pipeline: { exists: boolean; size?: number; mtime?: number; stale: boolean };
+    reports: { count: number };
+    gemini: { scoresExists: boolean; keyConfigured: boolean };
+    anthropic: { keyConfigured: boolean };
+    runningTasks: string[];
+    lastScanAt: number | null;
+  };
+  let health = $state<HealthSnapshot | null>(null);
+  let healthLoading = $state(false);
+  async function refreshHealth() {
+    healthLoading = true;
+    try {
+      health = await api.get<HealthSnapshot>('/api/health', { silent: true });
+    } catch { /* leave previous snapshot in place */ }
+    finally { healthLoading = false; }
+  }
+  onMount(() => { void refreshHealth(); });
 
   let { data }: { data: { env: Record<string, string> } } = $props();
 
@@ -245,6 +278,84 @@
   <Topbar title="Settings" showTabs={false} />
   <div class="p-6">
     <div class="max-w-2xl mx-auto space-y-4">
+      <!-- Pipeline health summary — consumes /api/health. Reads the active
+           profile's pipeline + reports + key configuration so the user
+           sees at a glance whether anything is stale or unconfigured
+           without having to navigate to Runtimes / Stats / Sources. -->
+      <Card.Root>
+        <Card.Header>
+          <div class="flex items-center gap-2">
+            <Activity class="size-4 text-muted-foreground" />
+            <Card.Title class="text-base">Pipeline health</Card.Title>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-7 w-7 ml-auto"
+              disabled={healthLoading}
+              onclick={refreshHealth}
+              aria-label="Refresh"
+            >
+              {#if healthLoading}
+                <Loader2 class="size-3.5 animate-spin" />
+              {:else}
+                <RotateCw class="size-3.5" />
+              {/if}
+            </Button>
+          </div>
+          <Card.Description>
+            Snapshot of pipeline freshness, reports count, key configuration, and any tasks running right now.
+            Refreshes on page load; click the icon to re-poll.
+          </Card.Description>
+        </Card.Header>
+        <Card.Content>
+          {#if health}
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+              <div class={cn('rounded-md border px-3 py-2', health.pipeline.stale ? 'border-amber-500/30 bg-amber-500/5' : 'border-emerald-500/30 bg-emerald-500/5')}>
+                <div class="text-[10px] uppercase tracking-wider text-muted-foreground/70">Pipeline</div>
+                <div class="text-sm font-medium">
+                  {health.pipeline.exists ? (health.pipeline.stale ? 'Stale' : 'Fresh') : 'Missing'}
+                </div>
+                {#if health.lastScanAt}
+                  <div class="text-[10px] text-muted-foreground/80">
+                    Last update {sinceShort(health.lastScanAt)}
+                  </div>
+                {/if}
+              </div>
+              <div class="rounded-md border border-border/40 bg-card px-3 py-2">
+                <div class="text-[10px] uppercase tracking-wider text-muted-foreground/70">Reports</div>
+                <div class="text-sm font-medium">{health.reports.count}</div>
+                <div class="text-[10px] text-muted-foreground/80">deep evaluations done</div>
+              </div>
+              <div class={cn('rounded-md border px-3 py-2', health.anthropic.keyConfigured ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-amber-500/30 bg-amber-500/5')}>
+                <div class="text-[10px] uppercase tracking-wider text-muted-foreground/70">Anthropic</div>
+                <div class="text-sm font-medium">{health.anthropic.keyConfigured ? 'Configured' : 'Missing'}</div>
+                <div class="text-[10px] text-muted-foreground/80">ANTHROPIC_API_KEY in .env</div>
+              </div>
+              <div class={cn('rounded-md border px-3 py-2', health.gemini.keyConfigured ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-zinc-500/30 bg-zinc-500/5')}>
+                <div class="text-[10px] uppercase tracking-wider text-muted-foreground/70">Gemini</div>
+                <div class="text-sm font-medium">{health.gemini.keyConfigured ? 'Configured' : 'Optional'}</div>
+                <div class="text-[10px] text-muted-foreground/80">{health.gemini.scoresExists ? 'scores.tsv present' : 'no scores yet'}</div>
+              </div>
+              <div class="rounded-md border border-border/40 bg-card px-3 py-2 col-span-2 md:col-span-1">
+                <div class="text-[10px] uppercase tracking-wider text-muted-foreground/70">Running</div>
+                <div class="text-sm font-medium">
+                  {health.runningTasks.length === 0 ? 'Idle' : health.runningTasks.length + ' task(s)'}
+                </div>
+                {#if health.runningTasks.length > 0}
+                  <div class="text-[10px] text-muted-foreground/80 truncate">
+                    {health.runningTasks.join(' · ')}
+                  </div>
+                {/if}
+              </div>
+            </div>
+          {:else if healthLoading}
+            <div class="text-xs text-muted-foreground">Loading…</div>
+          {:else}
+            <div class="text-xs text-muted-foreground">No data — click refresh.</div>
+          {/if}
+        </Card.Content>
+      </Card.Root>
+
       <Card.Root>
         <Card.Header>
           <div class="flex items-center gap-2">
