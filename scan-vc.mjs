@@ -44,11 +44,15 @@
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import path from 'node:path';
+import { profilePath, ensureProfileDirs, profileFromArgv } from './lib-profiles.mjs';
 
 const FETCH_TIMEOUT_MS = 15_000;
-const VC_DIR = 'data';
-
-mkdirSync(VC_DIR, { recursive: true });
+const PROFILE_ID = profileFromArgv();
+ensureProfileDirs(PROFILE_ID);
+const PROFILE_DIR = profilePath(PROFILE_ID, 'profile-dir');
+const VC_DIR = PROFILE_DIR; // VC candidates land in the active profile's dir
+const PORTALS_PATH = profilePath(PROFILE_ID, 'portals-yml');
 
 async function fetchText(url, opts = {}) {
   const controller = new AbortController();
@@ -143,8 +147,8 @@ const SOURCES = {
 
 function loadAlreadyTracked() {
   // Don't suggest companies the user already has in portals.yml.
-  if (!existsSync('portals.yml')) return new Set();
-  const text = readFileSync('portals.yml', 'utf-8');
+  if (!existsSync(PORTALS_PATH)) return new Set();
+  const text = readFileSync(PORTALS_PATH, 'utf-8');
   const names = new Set();
   for (const m of text.matchAll(/^\s*-\s*name:\s*(.+)$/gm)) {
     names.add(m[1].trim().toLowerCase().replace(/\s+/g, ''));

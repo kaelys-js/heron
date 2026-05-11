@@ -38,8 +38,13 @@ except ImportError:
     JOBSPY_OK = False
 
 ROOT = Path(__file__).parent
-PIPELINE = ROOT / "data" / "pipeline.md"
-HISTORY = ROOT / "data" / "scan-history.tsv"
+
+# PIPELINE and HISTORY are now per-profile — set inside main() once we
+# know which profile this run targets (parse_args resolves --profile).
+PIPELINE: Path = ROOT / "data" / "pipeline.md"  # placeholder; overridden in main()
+HISTORY: Path = ROOT / "data" / "scan-history.tsv"
+
+from lib_profiles import resolve_profile_arg, profile_path, ensure_profile_dirs
 
 # ----- Cole's search profiles -----
 # results_wanted is per (search, source) combination — JobSpy fans out to
@@ -422,11 +427,18 @@ def parse_args():
     ap = argparse.ArgumentParser(description="Broad multi-source job scanner")
     ap.add_argument("--only", help="Comma-separated source ids to run (default: all). Choices: " + ", ".join(SOURCES.keys()))
     ap.add_argument("--skip", help="Comma-separated source ids to skip")
+    ap.add_argument("--profile", default=None,
+                    help="Profile slug (defaults to active profile in data/profiles.json).")
     return ap.parse_args()
 
 
 def main():
+    global PIPELINE, HISTORY
     args = parse_args()
+    profile_id = resolve_profile_arg(args.profile)
+    ensure_profile_dirs(profile_id)
+    PIPELINE = profile_path(profile_id, "pipeline")
+    HISTORY = profile_path(profile_id, "scan-history")
 
     selected = list(SOURCES.keys())
     if args.only:

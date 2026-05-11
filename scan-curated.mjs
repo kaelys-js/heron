@@ -36,14 +36,16 @@
 
 import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from 'fs';
 import yaml from 'js-yaml';
+import { profilePath, ensureProfileDirs, profileFromArgv } from './lib-profiles.mjs';
 const parseYaml = yaml.load;
 
-const PORTALS_PATH = 'portals.yml';
-const SCAN_HISTORY_PATH = 'data/scan-history.tsv';
-const PIPELINE_PATH = 'data/pipeline.md';
-const APPLICATIONS_PATH = 'data/applications.md';
+const PROFILE_ID = profileFromArgv();
+ensureProfileDirs(PROFILE_ID);
 
-mkdirSync('data', { recursive: true });
+const PORTALS_PATH = profilePath(PROFILE_ID, 'portals-yml');
+const SCAN_HISTORY_PATH = profilePath(PROFILE_ID, 'scan-history');
+const PIPELINE_PATH = profilePath(PROFILE_ID, 'pipeline');
+const APPLICATIONS_PATH = profilePath(PROFILE_ID, 'applications');
 
 const FETCH_TIMEOUT_MS = 12_000;
 // 50 pages × 50 jobs = 2500 jobs ceiling. Loop short-circuits as soon as

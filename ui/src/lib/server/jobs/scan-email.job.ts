@@ -26,6 +26,9 @@ const FOUND_RE = /New offers:\s+(\d+)/i;
 function runScanEmail(args?: JobArgs): Promise<JobResult> {
   return new Promise((resolve) => {
     const cliArgs = ['scan-email.mjs'];
+    if (typeof args?.profileId === 'string' && args.profileId.trim()) {
+      cliArgs.push('--profile', args.profileId.trim());
+    }
     if (args?.dryRun === true) cliArgs.push('--dry-run');
     if (args?.keep === true) cliArgs.push('--keep');
     if (typeof args?.file === 'string' && args.file.trim()) {

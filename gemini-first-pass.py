@@ -39,9 +39,13 @@ except ImportError:
 
 
 ROOT = Path(__file__).parent
-PIPELINE = ROOT / "data" / "pipeline.md"
-SCORES_TSV = ROOT / "data" / "gemini-scores.tsv"
-CV_MD = ROOT / "cv.md"
+from lib_profiles import resolve_profile_arg, profile_path, ensure_profile_dirs
+
+# Per-profile; set in main() after --profile is resolved. Placeholders so
+# module-level imports + type-checkers don't choke.
+PIPELINE: Path = ROOT / "data" / "profiles" / "default" / "pipeline.md"
+SCORES_TSV: Path = ROOT / "data" / "profiles" / "default" / "gemini-scores.tsv"
+CV_MD: Path = ROOT / "data" / "profiles" / "default" / "cv.md"
 
 API_KEY = os.environ.get("GEMINI_API_KEY")
 if not API_KEY:
@@ -151,11 +155,20 @@ def score_batch(jobs_batch, cv_summary):
 
 
 def main():
+    global PIPELINE, SCORES_TSV, CV_MD
     parser = argparse.ArgumentParser()
     parser.add_argument("--top", type=int, default=30, help="Top N to print at end")
     parser.add_argument("--batch-size", type=int, default=40, help="Jobs per Gemini request")
     parser.add_argument("--delay", type=float, default=1.5, help="Sec between batches (rate limit)")
+    parser.add_argument("--profile", default=None,
+                        help="Profile slug (defaults to active profile in data/profiles.json).")
     args = parser.parse_args()
+
+    profile_id = resolve_profile_arg(args.profile)
+    ensure_profile_dirs(profile_id)
+    PIPELINE = profile_path(profile_id, "pipeline")
+    SCORES_TSV = profile_path(profile_id, "gemini-scores")
+    CV_MD = profile_path(profile_id, "cv-md")
 
     jobs = parse_pipeline()
     print(f"Loaded {len(jobs)} pending jobs from {PIPELINE.name}")

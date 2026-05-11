@@ -26,6 +26,9 @@ const FOUND_RE = /New offers:\s+(\d+)/i;
 function runScanCurated(args?: JobArgs): Promise<JobResult> {
   return new Promise((resolve) => {
     const cliArgs = ['scan-curated.mjs'];
+    if (typeof args?.profileId === 'string' && args.profileId.trim()) {
+      cliArgs.push('--profile', args.profileId.trim());
+    }
     if (typeof args?.source === 'string' && args.source.trim()) {
       cliArgs.push('--source', args.source.trim());
     }

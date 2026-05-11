@@ -30,17 +30,19 @@
 
 import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from 'fs';
 import yaml from 'js-yaml';
+import { profilePath, ensureProfileDirs, profileFromArgv } from './lib-profiles.mjs';
 const parseYaml = yaml.load;
 
-// ── Config ──────────────────────────────────────────────────────────
+// ── Config — per-profile paths ─────────────────────────────────────
+// Resolve --profile <slug> from argv (defaults to active profile in
+// data/profiles.json). All scanner output goes to that profile's dir.
+const PROFILE_ID = profileFromArgv();
+ensureProfileDirs(PROFILE_ID);
 
-const PORTALS_PATH = 'portals.yml';
-const SCAN_HISTORY_PATH = 'data/scan-history.tsv';
-const PIPELINE_PATH = 'data/pipeline.md';
-const APPLICATIONS_PATH = 'data/applications.md';
-
-// Ensure required directories exist (fresh setup)
-mkdirSync('data', { recursive: true });
+const PORTALS_PATH = profilePath(PROFILE_ID, 'portals-yml');
+const SCAN_HISTORY_PATH = profilePath(PROFILE_ID, 'scan-history');
+const PIPELINE_PATH = profilePath(PROFILE_ID, 'pipeline');
+const APPLICATIONS_PATH = profilePath(PROFILE_ID, 'applications');
 
 const CONCURRENCY = 10;
 const FETCH_TIMEOUT_MS = 10_000;

@@ -233,9 +233,18 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
   });
 }
 
-export function runScan() { start('scan', venvPython(), ['scan-broad.py']); }
+/** Resolve a profileId argument to CLI flags. Returns ['--profile', '<id>']
+ *  when an explicit id is passed; empty array when omitted (script reads
+ *  active profile via lib-profiles helpers). */
+function profileFlags(profileId?: string): string[] {
+  return profileId ? ['--profile', profileId] : [];
+}
 
-export function runGemini(top = 30) {
+export function runScan(profileId?: string) {
+  start('scan', venvPython(), ['scan-broad.py', ...profileFlags(profileId)]);
+}
+
+export function runGemini(top = 30, profileId?: string) {
   if (!process.env.GEMINI_API_KEY) {
     logEvent('gemini', 'Gemini API key not set', {
       level: 'error',
@@ -245,12 +254,16 @@ export function runGemini(top = 30) {
     });
     return;
   }
-  start('gemini', venvPython(), ['gemini-first-pass.py', '--top', String(top)]);
+  start('gemini', venvPython(), ['gemini-first-pass.py', '--top', String(top), ...profileFlags(profileId)]);
 }
 
-export function runLinkedInLogin() { start('apply-linkedin', venvPython(), ['linkedin-easy-apply.py', '--login']); }
+export function runLinkedInLogin() {
+  // Login is profile-agnostic — it writes the Playwright session to a
+  // shared dir (.playwright-linkedin/) that all profiles use.
+  start('apply-linkedin', venvPython(), ['linkedin-easy-apply.py', '--login']);
+}
 
-export function runLinkedInApply(autoSubmit = false, url?: string) {
+export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: string) {
   if (running.has('apply-linkedin')) {
     logEvent('apply-linkedin', 'LinkedIn apply already running', {
       level: 'warn',
@@ -261,26 +274,23 @@ export function runLinkedInApply(autoSubmit = false, url?: string) {
   }
   const env = { ...process.env };
   if (autoSubmit) env.LINKEDIN_AUTO_SUBMIT = '1';
-  // Surface up-front whether the general CV is missing so the user knows the
-  // upload step will be skipped (see `linkedin-easy-apply.py`'s upload site).
-  // We don't fail-fast here — Easy Apply forms vary; some don't ask for a
-  // resume at all, in which case running anyway is fine.
+  // Surface up-front whether the general CV is missing for the targeted profile.
   let cvNote = '';
   try {
-    // Lazy-require so the import graph doesn't grow if this codepath isn't hit.
     const { generalCvStatus } = require('./cv-pdf') as typeof import('./cv-pdf');
-    const s = generalCvStatus();
+    const s = generalCvStatus(profileId);
     if (!s.exists) {
-      cvNote = ' · WARN: no general CV (output/cv-general.pdf) — resume upload will be skipped';
+      cvNote = ' · WARN: no general CV — resume upload will be skipped';
     } else if (s.outdated) {
       cvNote = ' · NOTE: general CV is older than cv.md — regenerate from /profile';
     }
   } catch { /* non-fatal */ }
   logEvent('apply-linkedin', 'LinkedIn Easy Apply started', {
     category: 'task',
-    message: (url ? 'single URL: ' + url : 'queue mode · autoSubmit=' + autoSubmit) + cvNote,
+    message: (url ? 'single URL: ' + url : 'queue mode · autoSubmit=' + autoSubmit) +
+      (profileId ? ' · profile=' + profileId : '') + cvNote,
   });
-  const args = ['linkedin-easy-apply.py'];
+  const args = ['linkedin-easy-apply.py', ...profileFlags(profileId)];
   if (url) args.push('--url', url);
   let p: ChildProcess;
   try {
