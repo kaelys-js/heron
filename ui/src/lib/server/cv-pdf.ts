@@ -29,14 +29,29 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { ROOT, CV_MD, OUTPUT_DIR, readSafe } from './files';
+import { ROOT, readSafe } from './files';
 import { complete } from './ai';
 import { logEvent } from './events';
+import { profilePath, ensureProfileDirs } from './profile-paths';
+import { getActiveProfileId } from './profiles';
 
+/** System-layer template — shared, never per-profile. */
 const CV_TEMPLATE_HTML = path.join(ROOT, 'templates', 'cv-template.html');
-const GENERAL_CV_PDF = path.join(OUTPUT_DIR, 'cv-general.pdf');
-const TMP_DIR = path.join(OUTPUT_DIR, '.tmp');
-const GENERAL_CV_HTML = path.join(TMP_DIR, 'cv-general.html');
+
+function resolveId(profileId?: string): string {
+  return profileId ?? getActiveProfileId();
+}
+
+function paths(profileId: string) {
+  const outputDir = profilePath(profileId, 'output-dir');
+  return {
+    cvMd: profilePath(profileId, 'cv-md'),
+    outputDir,
+    generalCvPdf: path.join(outputDir, 'cv-general.pdf'),
+    tmpDir: path.join(outputDir, '.tmp'),
+    generalCvHtml: path.join(outputDir, '.tmp', 'cv-general.html'),
+  };
+}
 
 export type GeneralCvStatus = {
   exists: boolean;
@@ -51,21 +66,23 @@ export type GeneralCvStatus = {
   missingSource: boolean;
 };
 
-export function generalCvStatus(): GeneralCvStatus {
-  const missingSource = !fs.existsSync(CV_MD);
-  if (!fs.existsSync(GENERAL_CV_PDF)) {
+export function generalCvStatus(profileId?: string): GeneralCvStatus {
+  const id = resolveId(profileId);
+  const { cvMd, generalCvPdf } = paths(id);
+  const missingSource = !fs.existsSync(cvMd);
+  if (!fs.existsSync(generalCvPdf)) {
     return {
       exists: false,
-      path: path.relative(ROOT, GENERAL_CV_PDF),
+      path: path.relative(ROOT, generalCvPdf),
       outdated: false,
       missingSource,
     };
   }
-  const pdfStat = fs.statSync(GENERAL_CV_PDF);
-  const cvStat = missingSource ? null : fs.statSync(CV_MD);
+  const pdfStat = fs.statSync(generalCvPdf);
+  const cvStat = missingSource ? null : fs.statSync(cvMd);
   return {
     exists: true,
-    path: path.relative(ROOT, GENERAL_CV_PDF),
+    path: path.relative(ROOT, generalCvPdf),
     bytes: pdfStat.size,
     generatedAt: pdfStat.mtimeMs,
     cvLastModified: cvStat?.mtimeMs,
@@ -132,61 +149,58 @@ export type GenerateResult = GeneralCvStatus & { pages?: number };
  * generate-pdf.mjs → cv-general.pdf. Throws on any step failure with a
  * descriptive message; the caller logs + surfaces it.
  */
-export async function generateGeneralCv(): Promise<GenerateResult> {
-  if (!fs.existsSync(CV_MD)) {
+export async function generateGeneralCv(profileId?: string): Promise<GenerateResult> {
+  const id = resolveId(profileId);
+  ensureProfileDirs(id);
+  const { cvMd, outputDir, generalCvPdf, tmpDir, generalCvHtml } = paths(id);
+
+  if (!fs.existsSync(cvMd)) {
     throw new Error('cv.md is missing — paste your CV first via Profile → CV manager.');
   }
   if (!fs.existsSync(CV_TEMPLATE_HTML)) {
     throw new Error('templates/cv-template.html is missing — your install may be incomplete.');
   }
 
-  const cvText = readSafe(CV_MD);
+  const cvText = readSafe(cvMd);
   if (cvText.trim().length < 100) {
     throw new Error('cv.md looks too short to be a CV (under 100 chars). Update it first.');
   }
   const template = readSafe(CV_TEMPLATE_HTML);
   if (!template) throw new Error('cv-template.html is empty — re-clone the repo to restore it.');
 
-  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-  fs.mkdirSync(TMP_DIR, { recursive: true });
+  fs.mkdirSync(outputDir, { recursive: true });
+  fs.mkdirSync(tmpDir, { recursive: true });
 
   logEvent('cv-pdf', 'Generating general CV PDF', {
     category: 'user',
-    message: cvText.length.toLocaleString() + ' chars in cv.md · model=claude-opus-4-7',
+    message: cvText.length.toLocaleString() + ' chars in cv.md · model=claude-opus-4-7 · profile=' + id,
   });
 
   const userMessage = cvText + '\n\n===HTML TEMPLATE===\n\n' + template;
-  // 32k tokens is plenty — the template is ~700 lines, the filled HTML is
-  // typically 1-2k lines.
   const html = await complete(SYSTEM_PROMPT, userMessage, { maxTokens: 32000, thinking: false });
 
-  // Strip code fences if Claude added them despite the instruction.
   const cleanHtml = html.trim().replace(/^```(?:html)?\s*/i, '').replace(/\s*```$/, '').trim();
   if (!cleanHtml.startsWith('<!DOCTYPE') && !cleanHtml.startsWith('<html')) {
     throw new Error('Claude did not return a valid HTML document (no <!DOCTYPE>). Try regenerating.');
   }
-  // Sanity check: any leftover {{...}} placeholders means Claude fumbled. The
-  // PDF would render with literal "{{NAME}}" text, which is worse than failing.
   const leftover = cleanHtml.match(/\{\{[A-Z_]+\}\}/g);
   if (leftover && leftover.length > 0) {
     throw new Error('Claude left ' + leftover.length + ' placeholders unfilled (' + leftover.slice(0, 4).join(', ') + '…). Try regenerating.');
   }
 
-  fs.writeFileSync(GENERAL_CV_HTML, cleanHtml);
+  fs.writeFileSync(generalCvHtml, cleanHtml);
 
-  // Spawn the existing PDF renderer. Letter format matches what the per-job
-  // tailored CVs use.
-  const result = await spawnPdfRender(GENERAL_CV_HTML, GENERAL_CV_PDF);
+  const result = await spawnPdfRender(generalCvHtml, generalCvPdf);
 
   logEvent('cv-pdf', 'General CV PDF generated', {
     level: 'success',
     category: 'user',
     message:
-      'output/cv-general.pdf · ' + (result.bytes / 1024).toFixed(1) + ' KB' +
+      path.relative(ROOT, generalCvPdf) + ' · ' + (result.bytes / 1024).toFixed(1) + ' KB' +
       (result.pages ? ' · ' + result.pages + 'p' : ''),
   });
 
-  return { ...generalCvStatus(), pages: result.pages };
+  return { ...generalCvStatus(id), pages: result.pages };
 }
 
 function spawnPdfRender(htmlPath: string, pdfPath: string): Promise<{ bytes: number; pages?: number }> {
@@ -225,6 +239,7 @@ function spawnPdfRender(htmlPath: string, pdfPath: string): Promise<{ bytes: num
   });
 }
 
-/** Path the apply script should be told to use. Static so the script's
- *  default and the dashboard agree without IPC. */
-export const GENERAL_CV_PATH = GENERAL_CV_PDF;
+/** Path the apply script should be told to use for the given profile. */
+export function generalCvPath(profileId?: string): string {
+  return paths(resolveId(profileId)).generalCvPdf;
+}

@@ -1,29 +1,38 @@
 /**
- * Helpers for mutating data/applications.md from server endpoints.
+ * Helpers for mutating per-profile applications.md from server endpoints.
+ *
+ * Each mutator (markClosed / markStatus / markApplied) accepts an optional
+ * `profileId` first argument (or via a 2-arg overload preserving the old
+ * signature). When omitted, mutations target the active profile.
  *
  * Kept out of any +server.ts file because SvelteKit only allows HTTP-method
- * exports there, so cross-route helpers must live in $lib/server/*.
+ * exports there.
  */
 
 import fs from 'node:fs';
-import { APPLICATIONS } from './files';
 import { logEvent, reportServerError } from './events';
+import { profilePath, ensureProfileDirs } from './profile-paths';
+import { getActiveProfileId } from './profiles';
 
 const HEADER =
   '# Applications Tracker\n\n' +
   '| # | Date | Company | Role | URL | Score | Status | PDF | Report | Notes |\n' +
   '|---|------|---------|------|-----|-------|--------|-----|--------|-------|\n';
 
+function resolveId(profileId?: string): string {
+  return profileId ?? getActiveProfileId();
+}
+
 /**
- * Read applications.md, distinguishing "doesn't exist yet" (expected on
- * first run) from real IO failures (perms, partial-write corruption).
- * Returns '' in both cases so callers can fall through to HEADER, but real
- * errors get logged at warn level so they show up on the bell instead of
- * silently producing an empty file the user then mutates.
+ * Read applications.md for the named profile, distinguishing "doesn't exist
+ * yet" (expected on first run) from real IO failures (perms, partial-write
+ * corruption). Returns '' in both cases so callers can fall through to
+ * HEADER, but real errors get logged at warn level so they show up on the
+ * bell instead of silently producing an empty file the user then mutates.
  */
-function readApplicationsSafe(source: string): string {
+function readApplicationsSafe(source: string, profileId: string): string {
   try {
-    return fs.readFileSync(APPLICATIONS, 'utf8');
+    return fs.readFileSync(profilePath(profileId, 'applications'), 'utf8');
   } catch (e) {
     const code = (e as NodeJS.ErrnoException).code;
     if (code !== 'ENOENT') {
@@ -37,12 +46,10 @@ function readApplicationsSafe(source: string): string {
   }
 }
 
-/** Persist `lines` to applications.md. Surfaces write failures via the
- *  events bus instead of letting fs.writeFileSync's throw bubble up to a
- *  500 — the caller can decide whether to retry or surface an issue. */
-function writeApplicationsSafe(source: string, content: string): boolean {
+function writeApplicationsSafe(source: string, profileId: string, content: string): boolean {
   try {
-    fs.writeFileSync(APPLICATIONS, content);
+    ensureProfileDirs(profileId);
+    fs.writeFileSync(profilePath(profileId, 'applications'), content);
     return true;
   } catch (e) {
     reportServerError(source, 'Failed to write applications.md', e, {
@@ -54,8 +61,18 @@ function writeApplicationsSafe(source: string, content: string): boolean {
 
 /** Flip the row matching `url` to status=Closed (used by the liveness sweep
  *  when a posting is detected as expired). Adds a row if none exists. */
-export function markClosed(url: string, reason?: string): boolean {
-  let text = readApplicationsSafe('mark-closed');
+export function markClosed(profileId: string | undefined, url: string, reason?: string): boolean;
+export function markClosed(url: string, reason?: string): boolean;
+export function markClosed(arg1: string | undefined, arg2?: string, arg3?: string): boolean {
+  // Disambiguate: if arg1 looks like a URL OR arg2 isn't a URL, it's the
+  // legacy 2-arg signature.
+  const isLegacy = arg1 != null && (arg1.startsWith('http') || arg1.startsWith('local:'));
+  const profileId = isLegacy ? undefined : arg1;
+  const url = isLegacy ? arg1 : arg2!;
+  const reason = isLegacy ? arg2 : arg3;
+  const id = resolveId(profileId);
+
+  let text = readApplicationsSafe('mark-closed', id);
   if (!text) text = HEADER;
   const lines = text.split('\n');
   let updated = false;
@@ -81,7 +98,7 @@ export function markClosed(url: string, reason?: string): boolean {
       '| - | ' + today + ' | (auto) | ' + url + ' | - | - | Closed | - | - | ' + (reason ?? 'auto-closed') + ' |';
     lines.push(row);
   }
-  return writeApplicationsSafe('mark-closed', lines.join('\n'));
+  return writeApplicationsSafe('mark-closed', id, lines.join('\n'));
 }
 
 /**
@@ -92,8 +109,20 @@ export function markClosed(url: string, reason?: string): boolean {
  * Appends a Notes-column tag when `note` is provided so audits can trace
  * where each automatic flip came from.
  */
-export function markStatus(url: string, newStatus: string, note?: string): boolean {
-  let text = readApplicationsSafe('mark-status');
+export function markStatus(profileId: string | undefined, url: string, newStatus: string, note?: string): boolean;
+export function markStatus(url: string, newStatus: string, note?: string): boolean;
+export function markStatus(arg1: string | undefined, arg2: string, arg3?: string, arg4?: string): boolean {
+  // Legacy signature: (url, newStatus, note?). New: (profileId, url, newStatus, note?).
+  // Heuristic: if arg1 looks like a URL, it's legacy. Profile slugs never
+  // start with http and don't contain '://'.
+  const isLegacy = arg1 != null && (arg1.startsWith('http') || arg1.startsWith('local:'));
+  const profileId = isLegacy ? undefined : arg1;
+  const url = isLegacy ? arg1 : arg2;
+  const newStatus = isLegacy ? arg2 : arg3!;
+  const note = isLegacy ? arg3 : arg4;
+  const id = resolveId(profileId);
+
+  let text = readApplicationsSafe('mark-status', id);
   if (!text) text = HEADER;
   const lines = text.split('\n');
   let updated = false;
@@ -118,12 +147,21 @@ export function markStatus(url: string, newStatus: string, note?: string): boole
       '| - | ' + today + ' | (auto) | ' + url + ' | - | - | ' + newStatus + ' | - | - | ' + (note ?? 'auto') + ' |';
     lines.push(row);
   }
-  return writeApplicationsSafe('mark-status', lines.join('\n'));
+  return writeApplicationsSafe('mark-status', id, lines.join('\n'));
 }
 
 /** Flip the row matching `url` to status=Applied. Adds a row if none exists. */
-export function markApplied(url: string, company?: string, role?: string): boolean {
-  let text = readApplicationsSafe('mark-applied');
+export function markApplied(profileId: string | undefined, url: string, company?: string, role?: string): boolean;
+export function markApplied(url: string, company?: string, role?: string): boolean;
+export function markApplied(arg1: string | undefined, arg2?: string, arg3?: string, arg4?: string): boolean {
+  const isLegacy = arg1 != null && (arg1.startsWith('http') || arg1.startsWith('local:'));
+  const profileId = isLegacy ? undefined : arg1;
+  const url = isLegacy ? arg1 : arg2!;
+  const company = isLegacy ? arg2 : arg3;
+  const role = isLegacy ? arg3 : arg4;
+  const id = resolveId(profileId);
+
+  let text = readApplicationsSafe('mark-applied', id);
   if (!text) text = HEADER;
   const lines = text.split('\n');
   let updated = false;
@@ -144,5 +182,5 @@ export function markApplied(url: string, company?: string, role?: string): boole
       ' | ' + url + ' | - | Applied | - | - | manual mark |';
     lines.push(row);
   }
-  return writeApplicationsSafe('mark-applied', lines.join('\n'));
+  return writeApplicationsSafe('mark-applied', id, lines.join('\n'));
 }

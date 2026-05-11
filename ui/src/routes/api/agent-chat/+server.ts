@@ -6,7 +6,8 @@
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { chat } from '$lib/server/ai';
-import { readSafe, CV_MD, PROFILE_YML, MODES_DIR, REPORTS_DIR } from '$lib/server/files';
+import { readSafe, MODES_DIR } from '$lib/server/files';
+import { activePath } from '$lib/server/profile-paths';
 import { APP_NAME, CLI_NAMESPACE } from '$lib/config/branding';
 import fs from 'node:fs';
 
@@ -16,8 +17,8 @@ export const POST = wrap('agent-chat', async ({ request }: { request: Request })
   if (history != null && !Array.isArray(history)) {
     badRequest('history must be an array', { field: 'history' });
   }
-  const cv = readSafe(CV_MD);
-  const profile = readSafe(PROFILE_YML);
+  const cv = readSafe(activePath('cv-md'));
+  const profile = readSafe(activePath('profile-yml'));
   let modeList = '';
   try {
     const files: string[] = fs.readdirSync(MODES_DIR);
@@ -25,7 +26,7 @@ export const POST = wrap('agent-chat', async ({ request }: { request: Request })
   } catch {}
   let recentReports = '';
   try {
-    const files: string[] = fs.readdirSync(REPORTS_DIR);
+    const files: string[] = fs.readdirSync(activePath('reports-dir'));
     recentReports = files.filter((f: string) => f.endsWith('.md')).sort().slice(-5).join(', ');
   } catch {}
   const ns = '/' + CLI_NAMESPACE;

@@ -11,7 +11,8 @@
  */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { readSafe, CV_MD } from '$lib/server/files';
+import { readSafe } from '$lib/server/files';
+import { activePath } from '$lib/server/profile-paths';
 import { complete } from '$lib/server/ai';
 import { logEvent } from '$lib/server/events';
 
@@ -61,7 +62,7 @@ const SYSTEM_PROMPT =
   '- For proof_points: only include ones the CV actually mentions with a metric.';
 
 export const POST = wrap('profile-reprocess', async () => {
-  const cv = readSafe(CV_MD);
+  const cv = readSafe(activePath('cv-md'));
   if (!cv.trim()) {
     badRequest('cv.md is empty or missing — paste a CV via Replace before reprocessing');
   }

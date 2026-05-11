@@ -2,7 +2,8 @@ import { loadAllJobs } from '$lib/server/parsers';
 import { bus } from '$lib/server/events';
 import { listRunning } from '$lib/server/orchestrator';
 import { readEnv, loadEnv } from '$lib/server/env';
-import { PIPELINE, APPLICATIONS, readSafe } from '$lib/server/files';
+import { readSafe } from '$lib/server/files';
+import { activePath } from '$lib/server/profile-paths';
 import { readProfile } from '$lib/server/profile';
 import { getFollowupCadence, findEntryByCompanyRole, type FollowupEntry } from '$lib/server/followup-cadence';
 import { listOpenIssues } from '$lib/server/issues';
@@ -16,7 +17,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 type AppliedRow = { date: string; company: string; status: string };
 
 function parseAppliedRows(): AppliedRow[] {
-  const txt = readSafe(APPLICATIONS);
+  const txt = readSafe(activePath('applications'));
   const rows: AppliedRow[] = [];
   for (const line of txt.split('\n')) {
     if (!line.startsWith('|') || line.startsWith('| #') || line.startsWith('|---')) continue;
@@ -68,7 +69,7 @@ export async function load() {
 
   // Pipeline freshness
   let pipelineMtime: number | null = null;
-  try { pipelineMtime = fs.statSync(PIPELINE).mtimeMs; } catch {}
+  try { pipelineMtime = fs.statSync(activePath('pipeline')).mtimeMs; } catch {}
   const pipelineDaysAgo = pipelineMtime ? Math.floor((Date.now() - pipelineMtime) / DAY_MS) : null;
 
   // Sort helper

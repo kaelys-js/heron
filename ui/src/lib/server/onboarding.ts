@@ -19,7 +19,8 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, CV_MD, PROFILE_YML } from './files';
+import { ROOT } from './files';
+import { activePath } from './profile-paths';
 import { reportServerError } from './events';
 import { readEnv } from './env';
 
@@ -142,10 +143,10 @@ export function isFreshInstall(): boolean {
   // Required files for any career-ops workflow to function. Each one would
   // cause a downstream feature to silently fail (or 500) if missing.
   const requiredFiles = [
-    CV_MD,                                          // cv.md — read by oferta + every CV-tailoring path
-    PROFILE_YML,                                    // config/profile.yml — every personalization read
-    path.join(ROOT, 'portals.yml'),                 // tracker company list + title filter
-    path.join(ROOT, 'modes', '_profile.md'),        // user-customisable mode fragment
+    activePath('cv-md'),       // cv.md — read by oferta + every CV-tailoring path
+    activePath('profile-yml'), // profile.yml — every personalization read
+    activePath('portals-yml'), // tracker company list + title filter
+    activePath('profile-md'),  // user-customisable mode fragment (per-profile)
   ];
   for (const p of requiredFiles) {
     if (!fs.existsSync(p)) return true;

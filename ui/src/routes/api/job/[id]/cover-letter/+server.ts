@@ -15,8 +15,13 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { loadAllJobs } from '$lib/server/parsers';
-import { ROOT, OUTPUT_DIR } from '$lib/server/files';
+import { ROOT } from '$lib/server/files';
+import { activePath } from '$lib/server/profile-paths';
 import { logEvent, reportServerError } from '$lib/server/events';
+
+/** Recompute on every access so the cover-letter resolver follows the
+ *  currently-active profile, not the one at module-load time. */
+function outputDir(): string { return activePath('output-dir'); }
 import { CLI_NAMESPACE } from '$lib/config/branding';
 
 /** The CV-pdf naming convention is `{n}-{slug}-{date}.pdf` (or with leading
@@ -26,7 +31,7 @@ function findCachedCover(reportFile?: string): { path: string; body: string } | 
   if (!reportFile) return null;
   // reportFile is e.g. "047-vercel-2026-05-05.md"
   const stem = reportFile.replace(/\.md$/, '');
-  const candidate = path.join(OUTPUT_DIR, stem + '-cover.md');
+  const candidate = path.join(outputDir(), stem + '-cover.md');
   try {
     if (fs.existsSync(candidate)) {
       const body = fs.readFileSync(candidate, 'utf8');
@@ -35,10 +40,10 @@ function findCachedCover(reportFile?: string): { path: string; body: string } | 
   } catch {}
   // Fallback: scan output dir for `*-cover.md` matching the stem
   try {
-    const files = fs.readdirSync(OUTPUT_DIR).filter((f) => f.endsWith('-cover.md'));
+    const files = fs.readdirSync(outputDir()).filter((f) => f.endsWith('-cover.md'));
     const match = files.find((f) => f.startsWith(stem));
     if (match) {
-      const full = path.join(OUTPUT_DIR, match);
+      const full = path.join(outputDir(), match);
       const body = fs.readFileSync(full, 'utf8');
       return { path: path.relative(ROOT, full), body };
     }
@@ -64,7 +69,7 @@ function spawnCoverLetter(url: string): Promise<{ path: string; body: string }> 
         return;
       }
       // Mode prints "Wrote: <path>" — try to capture it; otherwise fall back
-      // to scanning OUTPUT_DIR for the newest *-cover.md created in last 60s.
+      // to scanning outputDir() for the newest *-cover.md created in last 60s.
       const m = stdout.match(/(?:wrote|saved|file)\s*[:=]?\s*([\S]+-cover\.md)/i);
       let coverPath: string | null = null;
       if (m) {
@@ -72,12 +77,12 @@ function spawnCoverLetter(url: string): Promise<{ path: string; body: string }> 
       } else {
         try {
           const cutoff = Date.now() - 60_000;
-          const files = fs.readdirSync(OUTPUT_DIR)
+          const files = fs.readdirSync(outputDir())
             .filter((f) => f.endsWith('-cover.md'))
-            .map((f) => ({ f, mtime: fs.statSync(path.join(OUTPUT_DIR, f)).mtimeMs }))
+            .map((f) => ({ f, mtime: fs.statSync(path.join(outputDir(), f)).mtimeMs }))
             .filter((x) => x.mtime >= cutoff)
             .sort((a, b) => b.mtime - a.mtime);
-          if (files[0]) coverPath = path.join(OUTPUT_DIR, files[0].f);
+          if (files[0]) coverPath = path.join(outputDir(), files[0].f);
         } catch {}
       }
       if (!coverPath || !fs.existsSync(coverPath)) {
