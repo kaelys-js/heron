@@ -32,6 +32,12 @@ export type Job = {
    * names + tints.
    */
   source?: string;
+  /**
+   * Profile slug this job belongs to. Set by loadAllJobs(); used by the
+   * cross-profile "all profiles" inbox to render a profile badge per job.
+   * Single-profile installs / profile-scoped queries leave this undefined.
+   */
+  profileId?: string;
 };
 
 /** Per-source UI metadata. Anything not listed renders as a neutral "Other"

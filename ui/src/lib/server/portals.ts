@@ -1,23 +1,26 @@
 /**
- * Read/write `portals.yml` — the scanner's source of truth for tracked
- * companies, title filters, and search queries.
+ * Read/write per-profile `portals.yml` — the scanner's source of truth for
+ * tracked companies, title filters, and search queries.
  *
- * Onboarding's targeting step uses this to seed `title_filter.positive` and
- * `title_filter.negative` from the user's chosen target roles + defaults.
- * The rest of the file (tracked_companies, search_queries, sources) is
- * preserved verbatim so existing scanner setups aren't clobbered.
+ * Each profile owns its own portals.yml under `data/profiles/{id}/portals.yml`
+ * (electrician's tracked companies are very different from software's). On
+ * first read for a profile, if portals.yml doesn't exist there, we fall back
+ * to the bundled template `templates/portals.example.yml` so the user inherits
+ * the curated 100+-company starter list — then writes seed it into the
+ * per-profile path on first save.
  *
- * On first run, if portals.yml doesn't exist, we copy the canonical template
- * from `templates/portals.example.yml` so the user inherits the curated
- * 100+-company starter list.
+ * Every exported function takes an OPTIONAL `profileId` as its first arg;
+ * undefined → active profile.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { parse, stringify } from 'yaml';
 import { ROOT, readSafe } from './files';
+import { profilePath, ensureProfileDirs } from './profile-paths';
+import { getActiveProfileId } from './profiles';
 
-const PORTALS_PATH = path.join(ROOT, 'portals.yml');
+/** System-layer template — shared across profiles, never overwritten. */
 const PORTALS_TEMPLATE = path.join(ROOT, 'templates', 'portals.example.yml');
 
 export type TitleFilter = {
@@ -47,12 +50,18 @@ export type PortalsSnapshot = {
   search_queries: { name: string; query: string; enabled?: boolean }[];
 };
 
-/** Load the YAML doc preferring the user's portals.yml, falling back to the
- *  bundled template. Returns `null` when neither exists. */
-function readDoc(): { doc: Record<string, unknown> | null; source: PortalsSnapshot['source'] } {
-  if (fs.existsSync(PORTALS_PATH)) {
+function resolveId(profileId?: string): string {
+  return profileId ?? getActiveProfileId();
+}
+
+/** Load the YAML doc preferring the user's per-profile portals.yml, falling
+ *  back to the bundled template. Returns `null` when neither exists. */
+function readDoc(profileId?: string): { doc: Record<string, unknown> | null; source: PortalsSnapshot['source'] } {
+  const id = resolveId(profileId);
+  const portalsPath = profilePath(id, 'portals-yml');
+  if (fs.existsSync(portalsPath)) {
     try {
-      const doc = parse(readSafe(PORTALS_PATH)) as Record<string, unknown>;
+      const doc = parse(readSafe(portalsPath)) as Record<string, unknown>;
       return { doc: doc ?? {}, source: 'portals.yml' };
     } catch {
       return { doc: {}, source: 'portals.yml' };
@@ -69,8 +78,9 @@ function readDoc(): { doc: Record<string, unknown> | null; source: PortalsSnapsh
   return { doc: null, source: 'empty' };
 }
 
-export function readPortals(): PortalsSnapshot {
-  const { doc, source } = readDoc();
+export function readPortals(profileId?: string): PortalsSnapshot {
+  const id = resolveId(profileId);
+  const { doc, source } = readDoc(id);
   const tf = (doc?.title_filter ?? {}) as Partial<TitleFilter>;
   const companies = Array.isArray(doc?.tracked_companies)
     ? (doc!.tracked_companies as TrackedCompany[])
@@ -92,32 +102,56 @@ export function readPortals(): PortalsSnapshot {
 }
 
 /**
- * Patch `title_filter.positive` and `title_filter.negative` in portals.yml,
- * preserving every other field (tracked_companies, search_queries, sources,
- * seniority_boost, etc.) verbatim. If portals.yml doesn't exist yet, the
- * template is copied first so the user inherits the curated starter list.
- *
- * Returns the new on-disk snapshot.
+ * Patch `title_filter.positive` and `title_filter.negative` in the profile's
+ * portals.yml, preserving every other field (tracked_companies, search_queries,
+ * sources, seniority_boost). If portals.yml doesn't exist yet for this profile,
+ * the template is copied first so the curated starter list is inherited.
  */
-export function writePortalsTitleFilter(positive: string[], negative: string[]): PortalsSnapshot {
-  const { doc, source } = readDoc();
+export function writePortalsTitleFilter(
+  profileId: string | undefined,
+  positive: string[],
+  negative: string[],
+): PortalsSnapshot;
+export function writePortalsTitleFilter(positive: string[], negative: string[]): PortalsSnapshot;
+export function writePortalsTitleFilter(
+  arg1: string | undefined | string[],
+  arg2: string[],
+  arg3?: string[],
+): PortalsSnapshot {
+  // Disambiguate: 3-arg (profileId, positive, negative) vs 2-arg (positive, negative).
+  let profileId: string | undefined;
+  let positive: string[];
+  let negative: string[];
+  if (Array.isArray(arg1)) {
+    profileId = undefined;
+    positive = arg1;
+    negative = arg2;
+  } else {
+    profileId = arg1;
+    positive = arg2;
+    negative = arg3 ?? [];
+  }
+  const id = resolveId(profileId);
+  ensureProfileDirs(id);
+  const portalsPath = profilePath(id, 'portals-yml');
+
+  const { doc, source } = readDoc(id);
   // Bootstrap from template if there's nothing yet.
   if (!doc || source === 'empty') {
-    fs.mkdirSync(path.dirname(PORTALS_PATH), { recursive: true });
     fs.writeFileSync(
-      PORTALS_PATH,
+      portalsPath,
       stringify({ title_filter: { positive, negative } }, { lineWidth: 100 }),
     );
-    return readPortals();
+    return readPortals(id);
   }
   // Bootstrap from template — copy so we keep the curated companies + queries.
   if (source === 'template') {
-    fs.copyFileSync(PORTALS_TEMPLATE, PORTALS_PATH);
+    fs.copyFileSync(PORTALS_TEMPLATE, portalsPath);
   }
   // Re-read from the now-existing portals.yml so we round-trip the same doc.
   let live: Record<string, unknown> = {};
   try {
-    live = (parse(readSafe(PORTALS_PATH)) as Record<string, unknown>) ?? {};
+    live = (parse(readSafe(portalsPath)) as Record<string, unknown>) ?? {};
   } catch {
     live = {};
   }
@@ -125,23 +159,43 @@ export function writePortalsTitleFilter(positive: string[], negative: string[]):
   tf.positive = positive;
   tf.negative = negative;
   live.title_filter = tf;
-  fs.writeFileSync(PORTALS_PATH, stringify(live, { lineWidth: 100 }));
-  return readPortals();
+  fs.writeFileSync(portalsPath, stringify(live, { lineWidth: 100 }));
+  return readPortals(id);
 }
 
 /**
- * Append/replace tracked companies. Used by the future "Add this company"
- * flow on /sources. Companies are matched by case-insensitive name.
+ * Append/replace tracked companies for the named profile. Used by the future
+ * "Add this company" flow on /sources. Companies are matched by case-insensitive name.
  */
-export function writePortalsCompanies(companies: TrackedCompany[]): PortalsSnapshot {
-  const { doc, source } = readDoc();
+export function writePortalsCompanies(
+  profileId: string | undefined,
+  companies: TrackedCompany[],
+): PortalsSnapshot;
+export function writePortalsCompanies(companies: TrackedCompany[]): PortalsSnapshot;
+export function writePortalsCompanies(
+  arg1: string | undefined | TrackedCompany[],
+  arg2?: TrackedCompany[],
+): PortalsSnapshot {
+  let profileId: string | undefined;
+  let companies: TrackedCompany[];
+  if (Array.isArray(arg1)) {
+    profileId = undefined;
+    companies = arg1;
+  } else {
+    profileId = arg1;
+    companies = arg2 ?? [];
+  }
+  const id = resolveId(profileId);
+  ensureProfileDirs(id);
+  const portalsPath = profilePath(id, 'portals-yml');
+
+  const { doc, source } = readDoc(id);
   let live: Record<string, unknown>;
   if (!doc || source === 'empty') {
-    fs.mkdirSync(path.dirname(PORTALS_PATH), { recursive: true });
     live = {};
   } else if (source === 'template') {
-    fs.copyFileSync(PORTALS_TEMPLATE, PORTALS_PATH);
-    live = (parse(readSafe(PORTALS_PATH)) as Record<string, unknown>) ?? {};
+    fs.copyFileSync(PORTALS_TEMPLATE, portalsPath);
+    live = (parse(readSafe(portalsPath)) as Record<string, unknown>) ?? {};
   } else {
     live = doc as Record<string, unknown>;
   }
@@ -152,6 +206,6 @@ export function writePortalsCompanies(companies: TrackedCompany[]): PortalsSnaps
   for (const c of existing) byName.set(c.name.toLowerCase(), c);
   for (const c of companies) byName.set(c.name.toLowerCase(), { ...byName.get(c.name.toLowerCase()), ...c });
   live.tracked_companies = [...byName.values()];
-  fs.writeFileSync(PORTALS_PATH, stringify(live, { lineWidth: 100 }));
-  return readPortals();
+  fs.writeFileSync(portalsPath, stringify(live, { lineWidth: 100 }));
+  return readPortals(id);
 }
