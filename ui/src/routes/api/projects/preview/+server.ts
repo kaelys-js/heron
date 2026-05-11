@@ -6,11 +6,12 @@
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { loadAllJobs } from '$lib/server/parsers';
 import { matchesProject } from '$lib/server/projects';
+import { getActiveProfileId, getProfile } from '$lib/server/profiles';
 import { DEFAULT_FILTER, type FilterState, type Status } from '$lib/types';
 
 type PreviewBody = { filter?: Partial<FilterState> };
 
-export const POST = wrap('projects-preview', async ({ request }: { request: Request }) => {
+export const POST = wrap('projects-preview', async ({ request, url }: { request: Request; url: URL }) => {
   const body = (await request.json().catch(() => null)) as PreviewBody | null;
   const filter: FilterState = {
     ...DEFAULT_FILTER,
@@ -20,7 +21,11 @@ export const POST = wrap('projects-preview', async ({ request }: { request: Requ
   };
   if (!body) badRequest('expected JSON body with { filter }');
 
-  const jobs = loadAllJobs();
+  // Preview against the same profile the editor is scoped to (so the count
+  // matches what `?profile=<slug>` would actually show on /pipeline).
+  const queryProfile = url.searchParams.get('profile');
+  const profileId = queryProfile && getProfile(queryProfile) ? queryProfile : getActiveProfileId();
+  const jobs = loadAllJobs(profileId);
   // Build a fake project for the matcher to consume
   const fakeProject = {
     id: '_preview',

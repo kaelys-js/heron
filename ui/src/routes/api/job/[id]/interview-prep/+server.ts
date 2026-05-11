@@ -14,36 +14,40 @@
  */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { loadAllJobs } from '$lib/server/parsers';
+import { resolveJobAndProfile } from '$lib/server/job-resolver';
 import { generateInterviewPrep, readPersistedInterviewPrep } from '$lib/server/interview';
 import { logEvent, reportServerError } from '$lib/server/events';
 
-export const GET = wrap('interview-prep', async ({ params }: { params: { id: string } }) => {
-  const job = loadAllJobs().find((j) => j.id === params.id);
-  if (!job) badRequest('Job not found: ' + params.id);
-  const cached = readPersistedInterviewPrep(job!.id);
+export const GET = wrap('interview-prep', async ({ params, url }: { params: { id: string }; url: URL }) => {
+  const resolved = resolveJobAndProfile(params.id, url);
+  if (!resolved) badRequest('Job not found: ' + params.id);
+  const { job, profileId } = resolved!;
+  const cached = readPersistedInterviewPrep(profileId, job.id);
   if (cached) return { exists: true, content: cached };
   return { exists: false };
 });
 
-export const POST = wrap('interview-prep', async ({ params, request }: { params: { id: string }; request: Request }) => {
-  const job = loadAllJobs().find((j) => j.id === params.id);
-  if (!job) badRequest('Job not found: ' + params.id);
-  if (!job!.reportFile) badRequest('Job has no deep evaluation report yet — run oferta first.');
+export const POST = wrap('interview-prep', async ({ params, request, url }: { params: { id: string }; request: Request; url: URL }) => {
+  const resolved = resolveJobAndProfile(params.id, url);
+  if (!resolved) badRequest('Job not found: ' + params.id);
+  const { job, profileId } = resolved!;
+  if (!job.reportFile) badRequest('Job has no deep evaluation report yet — run oferta first.');
   const body = (await request.json().catch(() => ({}))) as { archetype?: string };
 
   logEvent('interview-prep', 'Generating interview prep', {
     level: 'info',
     category: 'task',
-    message: (job!.company || '?') + ' · ' + (job!.role || '?'),
+    message: (job.company || '?') + ' · ' + (job.role || '?'),
   });
 
   try {
-    const md = await generateInterviewPrep(job!.reportFile, body.archetype, job!.id);
+    // Pass the job's profileId so report + CV + persistedPath all resolve to
+    // this job's profile, not the active one.
+    const md = await generateInterviewPrep(profileId, job.reportFile, body.archetype, job.id);
     logEvent('interview-prep', 'Interview prep ready', {
       level: 'success',
       category: 'task',
-      message: (job!.company || '?') + ' · ' + (job!.role || '?'),
+      message: (job.company || '?') + ' · ' + (job.role || '?'),
     });
     return { ok: true, content: md };
   } catch (err) {

@@ -21,18 +21,29 @@
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resetProfile, type ResetScope } from '$lib/server/profile';
+import { getActiveProfileId, getProfile } from '$lib/server/profiles';
 import { logEvent } from '$lib/server/events';
 
 const VALID_SCOPES = new Set<ResetScope>(['profile', 'jobs', 'everything']);
 
-export const POST = wrap('profile-reset', async ({ request }: { request: Request }) => {
-  const body = (await request.json().catch(() => null)) as { confirm?: string; scope?: string } | null;
+export const POST = wrap('profile-reset', async ({ request, url }: { request: Request; url: URL }) => {
+  const body = (await request.json().catch(() => null)) as { confirm?: string; scope?: string; profileId?: string } | null;
   if (!body || body.confirm !== 'RESET') {
     badRequest('Profile reset requires { confirm: "RESET" } in the body — type the word RESET in the dialog to enable the button.');
   }
   const requested = body.scope as ResetScope | undefined;
   const scope: ResetScope = requested && VALID_SCOPES.has(requested) ? requested : 'profile';
-  const result = resetProfile(scope);
+
+  // SAFETY: the body or URL can name an explicit target profile. If the user
+  // is viewing /profile?profile=B and clicks reset, this MUST wipe B not the
+  // currently-active profile A. Body field wins over query so the
+  // ResetProfileDialog (which already knows the profile from data) can pass
+  // it through unambiguously.
+  const queryProfile = url.searchParams.get('profile') ?? undefined;
+  const explicit = body.profileId || queryProfile;
+  const profileId = (explicit && getProfile(explicit)) ? explicit : getActiveProfileId();
+
+  const result = resetProfile(profileId, scope);
 
   const titles: Record<ResetScope, string> = {
     profile: 'Profile reset to first-run state',
@@ -45,10 +56,11 @@ export const POST = wrap('profile-reset', async ({ request }: { request: Request
     everything: 'Pipeline, applications, reports, projects, and activity feed are gone.',
   };
 
-  logEvent('profile-reset', titles[scope], {
+  logEvent('profile-reset', titles[scope] + ' · ' + profileId, {
     level: 'warn',
     category: 'user',
     message:
+      'profile=' + profileId + ' · ' +
       result.resetFiles.length + ' file(s) reset · ' +
       result.backups.length + ' backup(s) at .bak. ' +
       summaries[scope],

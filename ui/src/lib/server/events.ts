@@ -233,6 +233,9 @@ export function logEvent(
     message?: string;
     link?: string;
     stack?: string;
+    /** Profile slug if the event is per-profile (scan in profile X, oferta
+     *  for a job in profile Y, etc.). Omit for shared-infra events. */
+    profileId?: string;
   } = {}
 ): ActivityEvent {
   const ev: ActivityEvent = {
@@ -245,6 +248,7 @@ export function logEvent(
     message: opts.message,
     link: opts.link,
     stack: opts.stack,
+    profileId: opts.profileId,
   };
   bus.emitEvent(ev);
   const prefix = ev.level === 'error' ? '✗' : ev.level === 'warn' ? '⚠' : ev.level === 'success' ? '✓' : 'ℹ';
@@ -269,7 +273,7 @@ export function reportServerError(
   source: string,
   title: string,
   err: unknown,
-  opts: { category?: EventCategory; link?: string } = {},
+  opts: { category?: EventCategory; link?: string; profileId?: string } = {},
 ): ActivityEvent {
   const isError = err instanceof Error;
   const message = isError ? err.message : typeof err === 'string' ? err : (() => {
@@ -282,5 +286,6 @@ export function reportServerError(
     message,
     link: opts.link,
     stack,
+    profileId: opts.profileId,
   });
 }

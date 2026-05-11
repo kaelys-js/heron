@@ -54,6 +54,12 @@
   let isApplied = $derived(['Applied', 'Screened', 'Interview', 'Offer', 'Rejected'].includes(job.status));
   let hasPdf = $derived(!!job.pdfFile);
   let hasReport = $derived(!!job.reportFile);
+  // Append `?profile=<slug>` to every per-job endpoint call so the server
+  // resolves the right profile's interview-prep / output / reports dirs
+  // and swaps repo-root symlinks before spawning Claude. Empty when the
+  // job has no profileId (legacy pre-migration data); the endpoint's
+  // resolveJobAndProfile fallback finds it cross-profile in that case.
+  let pq = $derived(job.profileId ? '?profile=' + encodeURIComponent(job.profileId) : '');
 
   let applyBusy = $state<ApplyMode | null>(null);
   let cvBusy = $state(false);
@@ -111,7 +117,10 @@
       if (newStatus === 'Rejected' && typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent('career-ops:post-rejection-prompt', {
-            detail: { jobId: job.id, jobLabel },
+            // Pass profileId so the sheet's POST appends to the right profile's
+            // story bank (story-bank.md itself is shared, but the spawned
+            // claude-cli reads the matching profile's CV + report).
+            detail: { jobId: job.id, jobLabel, profileId: job.profileId },
           }),
         );
       }
@@ -137,7 +146,7 @@
       }
       const r = await withMinDuration(
         api.post<{ ok: boolean; mode: string; message: string }>(
-          '/api/job/' + encodeURIComponent(job.id) + '/apply',
+          '/api/job/' + encodeURIComponent(job.id) + '/apply' + pq,
           { mode },
           { silent: true },
         ),
@@ -180,7 +189,7 @@
     try {
       const r = await withMinDuration(
         api.post<{ ok: boolean; message: string }>(
-          '/api/job/' + encodeURIComponent(job.id) + '/cv',
+          '/api/job/' + encodeURIComponent(job.id) + '/cv' + pq,
           {},
           { silent: true },
         ),
@@ -210,7 +219,7 @@
     try {
       const r = await withMinDuration(
         api.post<{ verdict: 'active' | 'expired' | 'uncertain'; reason?: string; closed: boolean }>(
-          '/api/job/' + encodeURIComponent(job.id) + '/liveness',
+          '/api/job/' + encodeURIComponent(job.id) + '/liveness' + pq,
           {},
           { silent: true },
         ),
@@ -251,7 +260,7 @@
     followupSheetOpen = true;
     try {
       const r = await api.post<{ ok: boolean; path: string; content: string; error?: string }>(
-        '/api/job/' + encodeURIComponent(job.id) + '/followup-draft',
+        '/api/job/' + encodeURIComponent(job.id) + '/followup-draft' + pq,
         { tone },
         { silent: true },
       );
@@ -292,7 +301,7 @@
     formAnswersBusy = true;
     try {
       const cached = await api.get<{ cached: { path: string; body: string } | null }>(
-        '/api/job/' + encodeURIComponent(job.id) + '/form-answers',
+        '/api/job/' + encodeURIComponent(job.id) + '/form-answers' + pq,
         { silent: true },
       );
       if (cached.cached) {
@@ -313,7 +322,7 @@
     formAnswersBusy = true;
     try {
       const r = await api.post<{ ok: boolean; path?: string; body?: string; error?: string }>(
-        '/api/job/' + encodeURIComponent(job.id) + '/form-answers',
+        '/api/job/' + encodeURIComponent(job.id) + '/form-answers' + pq,
         {},
         { silent: true },
       );
@@ -756,7 +765,7 @@
 
       {#if hasPdf}
         <DropdownMenu.Item
-          onSelect={() => window.open('/api/job/' + job.id + '/pdf', '_blank', 'noopener')}
+          onSelect={() => window.open('/api/job/' + job.id + '/pdf' + pq, '_blank', 'noopener')}
           class="gap-2 items-start py-1.5"
         >
           <FileBadge2 class="size-3.5 mt-0.5 text-emerald-400 flex-shrink-0" />

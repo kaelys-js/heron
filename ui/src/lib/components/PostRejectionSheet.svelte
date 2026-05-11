@@ -22,16 +22,18 @@
 
   let open = $state(false);
   let jobId = $state<string | null>(null);
+  let profileId = $state<string | null>(null);
   let jobLabel = $state('');
   let wentWell = $state('');
   let surprised = $state('');
   let wouldChange = $state('');
   let busy = $state(false);
 
-  type PromptDetail = { jobId: string; jobLabel: string };
+  type PromptDetail = { jobId: string; jobLabel: string; profileId?: string };
 
   function openFor(detail: PromptDetail) {
     jobId = detail.jobId;
+    profileId = detail.profileId ?? null;
     jobLabel = detail.jobLabel;
     wentWell = '';
     surprised = '';
@@ -58,8 +60,9 @@
     if (!jobId || busy) return;
     busy = true;
     try {
+      const pq = profileId ? '?profile=' + encodeURIComponent(profileId) : '';
       const r = await api.post<{ ok: boolean; path: string; content: string; error?: string }>(
-        '/api/job/' + encodeURIComponent(jobId) + '/post-rejection',
+        '/api/job/' + encodeURIComponent(jobId) + '/post-rejection' + pq,
         { wentWell, surprised, wouldChange },
         { silent: true },
       );
