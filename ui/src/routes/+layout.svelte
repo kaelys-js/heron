@@ -6,6 +6,7 @@
   import GlobalSearch from '$lib/components/GlobalSearch.svelte';
   import AddJobDialog from '$lib/components/AddJobDialog.svelte';
   import PostRejectionSheet from '$lib/components/PostRejectionSheet.svelte';
+  import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
   import { Toaster } from '$lib/components/ui/sonner';
   import { Button } from '$lib/components/ui/button';
   import { AlertTriangle, RefreshCw } from '@lucide/svelte';
@@ -119,10 +120,19 @@
   </Sidebar.Inset>
 </Sidebar.Provider>
 
-<svelte:boundary onerror={handleAgentError}>
+<!-- Agent chat + global dialogs use the shared ErrorBoundary so a render
+     error in any of them shows the standard "something went wrong" panel
+     with a Try-again button instead of silently swallowing the crash.
+     The chat error handler also logs to the activity feed via the
+     existing handleAgentError. -->
+<ErrorBoundary title="Agent chat crashed">
   <AgentChat />
-</svelte:boundary>
+</ErrorBoundary>
 <GlobalSearch />
-<AddJobDialog />
-<PostRejectionSheet />
+<ErrorBoundary title="Add-job dialog crashed">
+  <AddJobDialog />
+</ErrorBoundary>
+<ErrorBoundary title="Post-rejection sheet crashed">
+  <PostRejectionSheet />
+</ErrorBoundary>
 <Toaster />

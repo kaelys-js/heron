@@ -13,6 +13,7 @@
   import CollapsibleCard from '$lib/components/CollapsibleCard.svelte';
   import RichTextarea from '$lib/components/RichTextarea.svelte';
   import ResetProfileDialog from '$lib/components/ResetProfileDialog.svelte';
+  import ConfirmButton from '$lib/components/ConfirmButton.svelte';
   import ValidatedInput from '$lib/components/ValidatedInput.svelte';
   import Combobox from '$lib/components/Combobox.svelte';
   import {
@@ -28,6 +29,7 @@
   import {
     User, MapPin, Target as TargetIcon, Sparkles, DollarSign, ShieldAlert, FileText, Mic2,
     AlertCircle, AlertTriangle, ChevronRight, ExternalLink, FileCode, Copy, Check, Eye, Pencil, ReplaceAll, Wand2, Trash2, Briefcase, Loader2,
+    RotateCw,
   } from '@lucide/svelte';
   import { api, ApiError } from '$lib/api';
   import { invalidateAll } from '$app/navigation';
@@ -35,7 +37,9 @@
   import { cn, withMinDuration } from '$lib/utils';
   import type { ProfileSnapshot, ProfileEdit } from '$lib/server/profile';
   import type { GeneralCvStatus } from '$lib/server/cv-pdf';
-  import { ConfirmGate } from '$lib/confirm.svelte';
+  // ConfirmGate import removed — the Discard button now uses ConfirmButton
+  // (which encapsulates the gate). Other places on this page that need the
+  // gate import directly should re-add this line as needed.
   import { onDestroy } from 'svelte';
 
   let { data }: { data: { profileId: string; profile: ProfileSnapshot; generalCv: GeneralCvStatus } } = $props();
@@ -75,6 +79,19 @@
   // svelte-ignore state_referenced_locally — initial seed only
   let generalCv = $state<GeneralCvStatus>(data.generalCv);
   let generatingGeneralCv = $state(false);
+
+  /** Re-fetch the general-CV status from the dedicated endpoint. Used after
+   *  external mutations (CV manager replace / reprocess) or to check
+   *  whether a stale PDF flag has cleared without forcing a page reload. */
+  async function refetchGeneralCvStatus(): Promise<void> {
+    try {
+      const r = await api.get<GeneralCvStatus>(
+        '/api/profile/general-cv/status?profile=' + encodeURIComponent(data.profileId),
+        { silent: true },
+      );
+      generalCv = r;
+    } catch { /* leave previous snapshot in place */ }
+  }
 
   async function generateGeneralCvNow() {
     if (generatingGeneralCv) return;
@@ -197,13 +214,10 @@
     }
   }
 
-  // Discard throws away typed work — same red double-click pattern as the
-  // app's other destructive actions.
-  const confirmDiscard = new ConfirmGate();
-  onDestroy(() => confirmDiscard.destroy());
-  let discardArmed = $derived(confirmDiscard.isArmed('discard'));
-  function discard() {
-    if (!confirmDiscard.trigger('discard')) return;
+  // Discard throws away typed work. The ConfirmButton component below
+  // handles the double-click gate itself, so this function just performs
+  // the actual reset when the second click fires.
+  function discardImmediate() {
     edit = snapshotEdit(data.profile);
   }
 
@@ -1038,6 +1052,31 @@
                     </Tooltip.Content>
                   </Tooltip.Root>
 
+                  <!-- Refresh status — uses /api/profile/general-cv/status to
+                       re-check whether cv.md has changed since the PDF was
+                       generated. Cheap (just fs.stat). Useful after editing
+                       cv.md in the CV manager without leaving this page. -->
+                  <Tooltip.Root>
+                    <Tooltip.Trigger>
+                      {#snippet child({ props })}
+                        <Button
+                          {...props}
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          class="h-7 w-7"
+                          onclick={refetchGeneralCvStatus}
+                          aria-label="Refresh CV status"
+                        >
+                          <RotateCw class="size-3" />
+                        </Button>
+                      {/snippet}
+                    </Tooltip.Trigger>
+                    <Tooltip.Content side="bottom" class="text-xs max-w-xs">
+                      Re-check the PDF's freshness vs <code class="font-mono">cv.md</code> without reloading.
+                    </Tooltip.Content>
+                  </Tooltip.Root>
+
                   {#if generalCv.exists}
                     <Tooltip.Root>
                       <Tooltip.Trigger>
@@ -1196,18 +1235,17 @@
       <div class="max-w-3xl mx-auto px-6 py-3 flex items-center gap-3">
         <AlertCircle class="size-4 text-amber-300" />
         <span class="text-xs text-amber-200 flex-1">Unsaved changes to your profile</span>
-        <Button
+        <!-- Shared destructive-button component (ConfirmButton) — same
+             red-armed double-click pattern as every other destructive
+             action across the app. -->
+        <ConfirmButton
           variant="ghost"
           size="sm"
-          onclick={discard}
+          idleLabel="Discard"
+          confirmVerb="discard"
           disabled={saving}
-          class={cn(
-            'transition-all',
-            discardArmed && 'bg-red-500/15 text-red-300 hover:bg-red-500/25 ring-1 ring-red-500/40 animate-pulse',
-          )}
-        >
-          {discardArmed ? 'Click again to discard' : 'Discard'}
-        </Button>
+          onconfirm={discardImmediate}
+        />
         <Button size="sm" onclick={save} disabled={saving}>
           {saving ? 'Saving…' : 'Save profile'}
         </Button>
