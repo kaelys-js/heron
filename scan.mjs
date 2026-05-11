@@ -664,9 +664,35 @@ async function main() {
   const sourceFlag = args.indexOf('--source');
   const filterSource = sourceFlag !== -1 ? args[sourceFlag + 1]?.toLowerCase() : null;
   const probeFlag = args.indexOf('--probe');
-  const probeUrl = probeFlag !== -1 ? args[probeFlag + 1] : null;
+  const probeArgRaw = probeFlag !== -1 ? args[probeFlag + 1] : null;
+  // Distinguish `--probe https://...` (URL probe) from bare `--probe` /
+  // `--probe --dry-run` (connectivity probe). The bare form is used by the
+  // /sources Test button (B12) to confirm the scanner can hit a stable
+  // provider without writing pipeline rows.
+  const probeUrl = probeArgRaw && !probeArgRaw.startsWith('--') ? probeArgRaw : null;
+  const probeOnly = probeFlag !== -1 && !probeUrl;
 
-  // --probe: ad-hoc detection + sample fetch for a single careers URL.
+  // --probe (no URL): connectivity sanity check. Hits a stable Greenhouse
+  // public listing and confirms it returns valid JSON. Exits 0 if so.
+  if (probeOnly) {
+    const PROBE_URL = 'https://boards-api.greenhouse.io/v1/boards/vercel/jobs';
+    try {
+      const r = await fetch(PROBE_URL, { headers: { 'User-Agent': 'career-ops-probe/1.0' } });
+      if (!r.ok) {
+        console.error('✗ probe HTTP ' + r.status);
+        process.exit(3);
+      }
+      const json = await r.json();
+      const count = Array.isArray(json?.jobs) ? json.jobs.length : 0;
+      console.log('probe OK · Greenhouse · ' + count + ' jobs visible');
+      process.exit(0);
+    } catch (err) {
+      console.error('✗ probe failed: ' + (err?.message || String(err)));
+      process.exit(3);
+    }
+  }
+
+  // --probe URL: ad-hoc detection + sample fetch for a single careers URL.
   // Useful when adding a company to portals.yml — confirms the URL maps to
   // a known ATS before you commit to it.
   if (probeUrl) {

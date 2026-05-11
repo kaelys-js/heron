@@ -17,10 +17,14 @@
  * point at the ACTIVE profile's actual files. When the user switches
  * profiles or before a per-profile oferta spawn, we re-point the symlinks.
  *
- * Atomicity: each swap unlinks + recreates the symlink. If concurrent
- * oferta calls for different profiles overlap, the later swap wins — which
- * is OK because we only support one runOferta concurrently anyway (the
- * `running` map gate enforces that).
+ * Atomicity (F7): each swap unlinks + recreates the symlink. Concurrent
+ * spawns for different profiles can race the swap, so this module uses a
+ * named file-system lock at `data/.symlink-lock` to serialize swaps
+ * across the process. The `running` map gates one oferta at a time, but
+ * runOferta + runAutoEval use different task keys ('oferta' vs 'auto-eval')
+ * AND runBulkOfertaParallel spawns multiple workers in parallel — without
+ * the lock those paths can swap symlinks while another claude -p worker is
+ * mid-read.
  *
  * If the target legacy path is a REAL FILE (not a symlink), we DO NOT
  * touch it — the user may have run the migration partially or restored a
@@ -32,6 +36,51 @@ import path from 'node:path';
 import { ROOT } from './files';
 import { profilePath } from './profile-paths';
 import { logEvent } from './events';
+
+/** Lock file path. Created via O_EXCL flag so two concurrent acquireLock
+ *  calls produce exactly one winner. */
+const LOCK_FILE = path.join(ROOT, 'data', '.symlink-lock');
+const LOCK_TIMEOUT_MS = 30_000;
+const LOCK_POLL_MS = 50;
+
+/** Acquire a process-local advisory lock. Spin-waits up to LOCK_TIMEOUT_MS
+ *  for a stale lock to age out. Returns once we hold it; throws on timeout. */
+function acquireLock(): void {
+  fs.mkdirSync(path.dirname(LOCK_FILE), { recursive: true });
+  const start = Date.now();
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try {
+      // O_CREAT|O_EXCL|O_WRONLY — atomically create-or-fail.
+      const fd = fs.openSync(LOCK_FILE, fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_WRONLY);
+      fs.writeSync(fd, String(process.pid) + '@' + Date.now());
+      fs.closeSync(fd);
+      return;
+    } catch (e) {
+      const code = (e as NodeJS.ErrnoException).code;
+      if (code !== 'EEXIST') throw e;
+      // Stale-lock detection — if the lock file is older than the timeout,
+      // assume the previous holder crashed and reclaim it.
+      try {
+        const stat = fs.statSync(LOCK_FILE);
+        if (Date.now() - stat.mtimeMs > LOCK_TIMEOUT_MS) {
+          fs.unlinkSync(LOCK_FILE);
+          continue;
+        }
+      } catch { /* file gone — loop and retry */ }
+      if (Date.now() - start > LOCK_TIMEOUT_MS) {
+        throw new Error('symlink-swap lock timeout after ' + LOCK_TIMEOUT_MS + 'ms');
+      }
+      // Sync sleep — this whole function is called sync from spawn sites.
+      const deadline = Date.now() + LOCK_POLL_MS;
+      while (Date.now() < deadline) { /* spin */ }
+    }
+  }
+}
+
+function releaseLock(): void {
+  try { fs.unlinkSync(LOCK_FILE); } catch { /* already gone */ }
+}
 
 type LegacyTarget = {
   legacyPath: string;
@@ -52,6 +101,15 @@ const TARGETS: LegacyTarget[] = [
  * it and warn — we don't want to silently clobber the user's data.
  */
 export function swapProfileSymlinks(profileId: string): void {
+  acquireLock();
+  try {
+    swapInner(profileId);
+  } finally {
+    releaseLock();
+  }
+}
+
+function swapInner(profileId: string): void {
   for (const t of TARGETS) {
     const dst = profilePath(profileId, t.kind);
     try {

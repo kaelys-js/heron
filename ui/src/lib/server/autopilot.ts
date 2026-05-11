@@ -9,10 +9,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './files';
-import { installBusListener, removeBusListener, logEvent, reportServerError } from './events';
+import { installBusListener, logEvent, reportServerError } from './events';
 import { listRunning, runScan, runGemini, runLinkedInApply, runAutoEval } from './orchestrator';
 import type { ActivityEvent } from '$lib/types';
-import { get as getJob, runById as runJobById } from './jobs';
+import { get as getJob, runById as runJobById, list as listJobs, isRunning as isJobRunning } from './jobs';
+import { readLastRun, writeLastRun } from './job-last-run';
 
 const CONFIG_PATH = path.join(ROOT, 'data', 'autopilot.json');
 
@@ -29,12 +30,19 @@ export type DailyTrigger = {
   /** 0=Sunday, 6=Saturday. Empty array = every day. */
   weekdays: number[];
 };
+export type WeeklyTrigger = {
+  type: 'weekly';
+  /** 0=Sunday, 6=Saturday. */
+  dayOfWeek: number;
+  hour: number;
+  minute: number;
+};
 export type AfterTrigger = {
   type: 'after';
   /** Source task id this schedule fires after. Any registered job id is OK. */
   task: TaskName;
 };
-export type Trigger = DailyTrigger | AfterTrigger;
+export type Trigger = DailyTrigger | WeeklyTrigger | AfterTrigger;
 
 export type Schedule = {
   id: ScheduleId;
@@ -50,6 +58,11 @@ export type Schedule = {
   enabled: boolean;
   trigger: Trigger;
   args?: Record<string, unknown>;
+  /** P2: Scope this schedule to a single profile by slug. When set, the
+   *  scheduler fires the task with `--profile <slug>` instead of fanning
+   *  out across every profile. Leave unset for global (multi-profile
+   *  fan-out for scan/gemini, active-profile for everything else). */
+  profileId?: string;
   lastRunAt?: number;
   lastRunResult?: 'success' | 'failure' | 'started';
   lastRunMessage?: string;
@@ -231,10 +244,23 @@ function nextMatchTimestamp(t: DailyTrigger, from: number = Date.now()): number 
   return from + 7 * 24 * 60 * 60 * 1000;
 }
 
+function nextMatchTimestampWeekly(t: WeeklyTrigger, from: number = Date.now()): number {
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(from);
+    d.setDate(d.getDate() + i);
+    d.setHours(t.hour, t.minute, 0, 0);
+    if (d.getTime() <= from) continue;
+    if (d.getDay() !== t.dayOfWeek) continue;
+    return d.getTime();
+  }
+  return from + 7 * 24 * 60 * 60 * 1000;
+}
+
 export function nextRunAt(s: Schedule): number | null {
   if (!s.enabled) return null;
-  if (s.trigger.type !== 'daily') return null;
-  return nextMatchTimestamp(s.trigger);
+  if (s.trigger.type === 'daily') return nextMatchTimestamp(s.trigger);
+  if (s.trigger.type === 'weekly') return nextMatchTimestampWeekly(s.trigger);
+  return null;
 }
 
 async function runTask(s: Schedule): Promise<void> {
@@ -259,20 +285,31 @@ async function runTask(s: Schedule): Promise<void> {
   }
   switch (s.task) {
     case 'scan':
-      runScan();
+      // P1: default daily-scan fans out across every profile sequentially
+      // so a 2-profile install gets scanned for BOTH career tracks per
+      // run, not just the active one. Explicit `s.profileId` overrides.
+      if (s.profileId) {
+        runScan(s.profileId);
+      } else {
+        runScanForAllProfiles();
+      }
       break;
     case 'gemini':
-      runGemini((s.args?.top as number) ?? 30);
+      if (s.profileId) {
+        runGemini((s.args?.top as number) ?? 30, s.profileId);
+      } else {
+        runGeminiForAllProfiles((s.args?.top as number) ?? 30);
+      }
       break;
     case 'apply-linkedin':
-      runLinkedInApply(false);
+      runLinkedInApply(false, undefined, s.profileId);
       break;
     case 'auto-eval':
       // Fire-and-forget — runAutoEval emits its own batch start/finish
       // events on the activity bus, and the scheduler's bus listener picks
       // those up to update lastRunResult. We don't await here because the
       // batch can run for up to an hour.
-      runAutoEval().catch((err) => {
+      runAutoEval(s.profileId).catch((err) => {
         logEvent('auto-eval', 'Task failed', {
           level: 'error',
           category: 'task',
@@ -286,6 +323,55 @@ async function runTask(s: Schedule): Promise<void> {
         category: 'system',
         message: 'No registered job and no legacy fallback for ' + s.task,
       });
+  }
+}
+
+/**
+ * Fan out a daily-scan run across every profile sequentially. Sequential
+ * because the underlying Python scrapers share rate limits + Playwright
+ * resources — running them in parallel for multiple profiles would just
+ * fight each other.
+ */
+async function runScanForAllProfiles(): Promise<void> {
+  try {
+    const { listProfiles } = await import('./profiles');
+    const profiles = listProfiles();
+    if (profiles.length === 0) {
+      runScan();
+      return;
+    }
+    for (const p of profiles) {
+      logEvent('autopilot', 'Daily scan for profile ' + p.id, {
+        category: 'system',
+        message: 'fan-out · ' + p.id,
+      });
+      runScan(p.id);
+    }
+  } catch (e) {
+    reportServerError('autopilot', 'Fan-out scan failed', e);
+    // Best-effort fallback to the active-profile path.
+    runScan();
+  }
+}
+
+async function runGeminiForAllProfiles(top: number): Promise<void> {
+  try {
+    const { listProfiles } = await import('./profiles');
+    const profiles = listProfiles();
+    if (profiles.length === 0) {
+      runGemini(top);
+      return;
+    }
+    for (const p of profiles) {
+      logEvent('autopilot', 'Gemini for profile ' + p.id, {
+        category: 'system',
+        message: 'fan-out · ' + p.id + ' · top=' + top,
+      });
+      runGemini(top, p.id);
+    }
+  } catch (e) {
+    reportServerError('autopilot', 'Fan-out gemini failed', e);
+    runGemini(top);
   }
 }
 
@@ -321,8 +407,12 @@ function onTaskCompleted(task: TaskName): void {
   }
 }
 
-/** Update lastRunResult when a task finishes (regardless of who triggered it). */
+/** Update lastRunResult when a task finishes (regardless of who triggered it).
+ *  Touches both `cfg.schedules` (legacy / user-configured) AND
+ *  `data/job-last-run.json` (registry-declared) so the /autopilot page
+ *  shows the right state regardless of which path triggered the run. */
 function trackResult(task: TaskName, success: boolean, message?: string): void {
+  // Legacy / user-configured schedules — update the matching cfg entries.
   const cfg = readConfig();
   let dirty = false;
   const next = cfg.schedules.map((s) => {
@@ -332,6 +422,18 @@ function trackResult(task: TaskName, success: boolean, message?: string): void {
     return { ...s, lastRunResult: (success ? 'success' : 'failure') as 'success' | 'failure', lastRunMessage: message };
   });
   if (dirty) writeConfig({ ...cfg, schedules: next });
+
+  // Registry-declared schedules — update job-last-run.json. Only flip from
+  // 'started' to a terminal state so a manual run doesn't clobber a
+  // scheduler-driven success that already landed.
+  const last = readLastRun(task);
+  if (last && last.lastRunResult === 'started') {
+    writeLastRun(task, {
+      lastRunAt: Date.now(),
+      lastRunResult: success ? 'success' : 'failure',
+      lastRunMessage: message,
+    });
+  }
 }
 
 let schedulerStarted = false;
@@ -345,9 +447,15 @@ export function startScheduler(): void {
   // Subscribe to task lifecycle events on the bus (avoids a circular import with orchestrator).
   // installBusListener is HMR-idempotent — see events.ts.
   installBusListener(SCHEDULER_BUS_NAME, (ev: ActivityEvent) => {
-    if (ev.category !== 'task') return;
+    if (ev.category !== 'task' && ev.category !== 'system') return;
     const task = ev.source as TaskName;
-    if (!['scan', 'gemini', 'apply-linkedin', 'auto-eval'].includes(task)) return;
+    // Accept any registered job id OR the 4 legacy task ids. Filtering by
+    // an open-ended allowlist is what makes registry-declared schedules
+    // get their lastRunResult updated automatically — previously only the
+    // 4 hardcoded ids passed this gate.
+    const isLegacy = ['scan', 'gemini', 'apply-linkedin', 'auto-eval'].includes(task);
+    const isRegistered = !!getJob(task);
+    if (!isLegacy && !isRegistered) return;
     if (ev.level === 'success' && (ev.title === 'Task finished' || ev.title.endsWith('finished'))) {
       trackResult(task, true, ev.message);
       onTaskCompleted(task);
@@ -362,12 +470,9 @@ export function startScheduler(): void {
   logEvent('autopilot', 'Scheduler started', { category: 'system', message: 'tick interval 30s' });
 }
 
-export function stopScheduler(): void {
-  if (schedulerInterval) clearInterval(schedulerInterval);
-  schedulerInterval = null;
-  removeBusListener(SCHEDULER_BUS_NAME);
-  schedulerStarted = false;
-}
+// D17 — `stopScheduler` removed: scheduler lives for the dashboard's
+// lifetime; HMR resets the schedulerStarted flag implicitly. removeBusListener
+// goes with it (D22) since it had no other caller.
 
 function tick(): void {
   try {
@@ -380,19 +485,76 @@ function tick(): void {
     const minute = nowDate.getMinutes();
     const weekday = nowDate.getDay();
 
+    // (1) User-configured / legacy schedules — same logic as before, plus
+    //     a `weekly` branch.
+    const userTaskIds = new Set<string>();
     for (const s of cfg.schedules) {
+      userTaskIds.add(s.task);
       if (!s.enabled) continue;
-      if (s.trigger.type !== 'daily') continue;
       const t = s.trigger;
-      // Run if: hour matches, minute matches (within tick window), weekday allowed, and not already run today
-      if (t.hour !== hour) continue;
-      if (t.minute !== minute) continue;
-      const days = t.weekdays.length === 0 ? [0, 1, 2, 3, 4, 5, 6] : t.weekdays;
-      if (!days.includes(weekday)) continue;
-      if (s.lastRunAt && s.lastRunAt >= today) continue;
-      runTask(s);
+      if (t.type === 'daily') {
+        if (t.hour !== hour) continue;
+        if (t.minute !== minute) continue;
+        const days = t.weekdays.length === 0 ? [0, 1, 2, 3, 4, 5, 6] : t.weekdays;
+        if (!days.includes(weekday)) continue;
+        if (s.lastRunAt && s.lastRunAt >= today) continue;
+        runTask(s);
+      } else if (t.type === 'weekly') {
+        if (t.dayOfWeek !== weekday) continue;
+        if (t.hour !== hour) continue;
+        if (t.minute !== minute) continue;
+        if (s.lastRunAt && s.lastRunAt >= today) continue;
+        runTask(s);
+      }
+      // 'after' triggers fire from onTaskCompleted, not from tick.
+    }
+
+    // (2) Registry-declared schedules — every JobDef whose trigger is
+    //     daily/weekly gets fired automatically here if the user hasn't
+    //     overridden it via a cfg.schedules entry. State lives in
+    //     `data/job-last-run.json` (see job-last-run.ts).
+    for (const def of listJobs()) {
+      if (!def.allowManual) continue; // skip pure after-event chains
+      if (userTaskIds.has(def.id)) continue; // user override wins
+      const t = def.trigger;
+      if (t.type === 'daily') {
+        if (t.hour !== hour) continue;
+        if (t.minute !== minute) continue;
+        const days = !t.weekdays || t.weekdays.length === 0 ? [0, 1, 2, 3, 4, 5, 6] : t.weekdays;
+        if (!days.includes(weekday)) continue;
+      } else if (t.type === 'weekly') {
+        if (t.dayOfWeek !== weekday) continue;
+        if (t.hour !== hour) continue;
+        if (t.minute !== minute) continue;
+      } else {
+        continue; // manual or after — not driven by the clock
+      }
+      const last = readLastRun(def.id);
+      if (last && last.lastRunAt >= today) continue; // already fired today
+      if (isJobRunning(def.id)) continue;            // in-flight dedupe
+      runRegistryJob(def.id, def.label);
     }
   } catch (e) {
     reportServerError('autopilot', 'Scheduler tick failed', e);
   }
+}
+
+/** Fire a registry-declared job and record its result in JobLastRun. */
+function runRegistryJob(id: string, label: string): void {
+  logEvent('autopilot', 'Triggering ' + label, { category: 'system', message: 'task=' + id });
+  writeLastRun(id, { lastRunAt: Date.now(), lastRunResult: 'started' });
+  runJobById(id).then((r) => {
+    writeLastRun(id, {
+      lastRunAt: Date.now(),
+      lastRunResult: r.ok ? 'success' : 'failure',
+      lastRunMessage: r.ok ? r.message : r.error,
+    });
+  }).catch((err) => {
+    writeLastRun(id, {
+      lastRunAt: Date.now(),
+      lastRunResult: 'failure',
+      lastRunMessage: err instanceof Error ? err.message : String(err),
+    });
+    reportServerError('autopilot', 'Registry job ' + id + ' threw', err, { category: 'system' });
+  });
 }

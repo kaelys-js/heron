@@ -5,7 +5,8 @@
  * The script keeps the highest-scored row, merges notes, and writes a backup.
  *
  * Trigger: after every successful 'batch-merge' event (Phase 1.3 fs watcher
- * emits these). Manual run also exposed via /api/jobs/dedup-tracker/run.
+ * emits these). Manual run via the Agents page Run button OR via
+ * `POST /api/jobs/dedup-tracker/run` (same code path as the Agents page).
  *
  * Activity feed: silent unless ≥1 row was actually removed. Stdout parsed
  * for the "📊 N duplicates removed" summary line.

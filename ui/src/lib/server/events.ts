@@ -202,8 +202,12 @@ export const bus = new Bus();
  * The trick: stamp the handler with a `__busName` tag so we can find any
  * prior listener with the same name (regardless of whether the calling
  * module's local state survived the reload) and remove it before adding
- * the new one. EventEmitter doesn't index by name natively so we walk the
- * existing listener list — cheap, called once per module load.
+ * the new one. EventEmitter doesn't index by name natively, so we walk
+ * the existing listener list — that's O(N) in current listener count,
+ * not O(1). Called once per module load (~10 listeners at runtime) so
+ * even with HMR amplification it remains fast enough; a true O(1) lookup
+ * would need a separate Map<name, handler> mirror, deliberately not done
+ * because it doubles the bookkeeping.
  */
 export function installBusListener(name: string, handler: (ev: ActivityEvent) => void): void {
   for (const h of bus.listeners('event')) {
@@ -215,14 +219,9 @@ export function installBusListener(name: string, handler: (ev: ActivityEvent) =>
   bus.on('event', handler);
 }
 
-/** Remove a named bus listener (if present). Counterpart to installBusListener. */
-export function removeBusListener(name: string): void {
-  for (const h of bus.listeners('event')) {
-    if ((h as { __busName?: string }).__busName === name) {
-      bus.off('event', h as (ev: ActivityEvent) => void);
-    }
-  }
-}
+// D22 — `removeBusListener` removed: only `stopScheduler` called it, and
+// that itself is dead (D17). `installBusListener` is idempotent across
+// HMR via the __busName tag walk, so explicit removal isn't needed.
 
 export function logEvent(
   source: string,

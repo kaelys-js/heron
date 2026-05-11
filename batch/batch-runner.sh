@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# career-ops batch runner — standalone orchestrator for claude -p workers
-# Reads batch-input.tsv, delegates each offer to a claude -p worker,
+# career-ops batch runner — standalone orchestrator for AI CLI workers
+# Reads batch-input.tsv, delegates each offer to an AGENT_CLI -p worker,
 # tracks state in batch-state.tsv for resumability.
 #
-# NOTE: This script is Claude Code-specific. It uses claude -p with
-# --dangerously-skip-permissions and --append-system-prompt-file flags
-# that are not available in other CLIs. Multi-CLI support is out of scope
-# for now — contributions welcome.
+# CLI selection: defaults to `claude`. Override by setting AGENT_CLI=<binary>
+# in the environment (e.g. AGENT_CLI=gemini). The flags used below
+# (--dangerously-skip-permissions, --append-system-prompt-file) are
+# Claude-Code-specific; other CLIs may need adapter shims. See AGENTS.md
+# "Switching the AI CLI" for the support matrix.
+AGENT_CLI="${AGENT_CLI:-claude}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -124,8 +126,8 @@ check_prerequisites() {
     exit 1
   fi
 
-  if ! command -v claude &>/dev/null; then
-    echo "ERROR: 'claude' CLI not found in PATH."
+  if ! command -v "$AGENT_CLI" &>/dev/null; then
+    echo "ERROR: '$AGENT_CLI' CLI not found in PATH. Set AGENT_CLI=<binary> to override."
     exit 1
   fi
 
@@ -355,9 +357,11 @@ process_offer() {
     -e "s|{{ID}}|${esc_id}|g" \
     "$PROMPT_FILE" > "$resolved_prompt"
 
-  # Launch claude -p worker (forced to Sonnet via --model sonnet)
+  # Launch $AGENT_CLI -p worker. --model sonnet + --dangerously-skip-permissions
+  # + --append-system-prompt-file are Claude-Code-specific; other CLIs need
+  # adapter shims (see AGENTS.md).
   local exit_code=0
-  claude -p \
+  "$AGENT_CLI" -p \
     --model sonnet \
     --dangerously-skip-permissions \
     --append-system-prompt-file "$resolved_prompt" \

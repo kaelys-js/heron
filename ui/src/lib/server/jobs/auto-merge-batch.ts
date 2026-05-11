@@ -171,17 +171,8 @@ export function startBatchWatcher(): void {
   }
 }
 
-/** Stop watching. Used in tests + on hot-reload. */
-export function stopBatchWatcher(): void {
-  if (watchHandle) {
-    try { watchHandle.close(); } catch {}
-    watchHandle = null;
-  }
-  if (debounceTimer) {
-    clearTimeout(debounceTimer);
-    debounceTimer = null;
-  }
-}
+// D16 — `stopBatchWatcher` removed: HMR creates a fresh module instance
+// so the previous fs.watch handle is GC'd. No caller imported it.
 
 // Register a manual run option so power users can force a merge from the UI.
 register({

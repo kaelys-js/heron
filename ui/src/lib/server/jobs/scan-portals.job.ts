@@ -15,6 +15,7 @@ import { spawn } from 'node:child_process';
 import { ROOT } from '../files';
 import { logEvent } from '../events';
 import { register } from './registry';
+import { recordSuccess, recordFailure } from '../sources';
 import type { JobArgs, JobResult } from './types';
 
 const FOUND_RE = /Total jobs found:\s+(\d+)/i;
@@ -49,6 +50,7 @@ function runScanPortals(args?: JobArgs): Promise<JobResult> {
         category: 'task',
         message: err.message,
       });
+      try { recordFailure('scan-portals', err); } catch { /* sources record best-effort */ }
       resolve({ ok: false, error: err.message });
     });
     p.on('close', (code) => {
@@ -59,6 +61,7 @@ function runScanPortals(args?: JobArgs): Promise<JobResult> {
           category: 'task',
           message: 'exit ' + code + (stderr ? ' · ' + stderr.slice(0, 150) : ''),
         });
+        try { recordFailure('scan-portals', new Error('scan.mjs exited ' + code)); } catch {}
         resolve({ ok: false, error: 'scan.mjs exited ' + code });
         return;
       }
@@ -67,6 +70,7 @@ function runScanPortals(args?: JobArgs): Promise<JobResult> {
         category: 'task',
         message: found + ' jobs found',
       });
+      try { recordSuccess('scan-portals'); } catch {}
       resolve({ ok: true, message: found + ' jobs found', meta: { found } });
     });
   });
@@ -84,4 +88,4 @@ register({
 
 // Re-export for use by /api/scan/company (Phase 2.2 — calls runScanPortals
 // with { company } arg).
-export { runScanPortals };
+// D24 — `runScanPortals` was only used by the registry; export removed.

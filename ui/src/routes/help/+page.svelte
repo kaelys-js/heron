@@ -92,7 +92,7 @@
       href: '/agents',
       label: 'Agents',
       icon: Bot,
-      purpose: 'Manual one-shot triggers for Python tasks: Portal Scanner, Gemini First-Pass, LinkedIn Easy Apply.',
+      purpose: 'Manual one-shot triggers for every registered background task — scanners, evaluators, hygiene sweeps, insights. List auto-derives from the job registry, so new jobs appear here automatically.',
       when: 'When you want to run something now without waiting for Autopilot.',
     },
     {
@@ -222,6 +222,10 @@
     {
       q: 'How do I customize archetypes / scoring weights?',
       a: 'Edit modes/_profile.md (your overrides — never auto-updated) for per-user customization. Don\'t touch modes/_shared.md — that\'s system-layer and gets overwritten by updates.',
+    },
+    {
+      q: 'Why does a job show two status badges (e.g. "Closed" + "Discarded")?',
+      a: 'They\'re tracking different things. The colored dot is the pipeline stage (where the job lives in the funnel — New / Scored / Applied / Closed). The all-caps chip is the canonical application status from applications.md (evaluated / applied / discarded / skip / ...). See docs/STATUS_MODEL.md for the full mapping table.',
     },
   ];
 </script>

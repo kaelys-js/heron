@@ -429,12 +429,35 @@ def parse_args():
     ap.add_argument("--skip", help="Comma-separated source ids to skip")
     ap.add_argument("--profile", default=None,
                     help="Profile slug (defaults to active profile in data/profiles.json).")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="Don't write to pipeline.md or scan-history.tsv.")
+    ap.add_argument("--probe", action="store_true",
+                    help="Connectivity probe — hit one stable source (jobspy) and confirm it returns. Exits 0/non-zero.")
     return ap.parse_args()
 
 
 def main():
     global PIPELINE, HISTORY
     args = parse_args()
+
+    # /sources Test button (B12) — quick connectivity probe.
+    if args.probe:
+        try:
+            import urllib.request
+            req = urllib.request.Request(
+                "https://news.ycombinator.com/jobs",
+                headers={"User-Agent": "career-ops-probe/1.0"},
+            )
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                ok = resp.status == 200
+            if ok:
+                print("probe OK · YC jobs reachable")
+                sys.exit(0)
+            print(f"probe failed: HTTP {resp.status}", file=sys.stderr)
+            sys.exit(3)
+        except Exception as e:
+            print(f"probe failed: {e}", file=sys.stderr)
+            sys.exit(3)
     profile_id = resolve_profile_arg(args.profile)
     ensure_profile_dirs(profile_id)
     PIPELINE = profile_path(profile_id, "pipeline")

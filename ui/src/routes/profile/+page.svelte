@@ -53,6 +53,7 @@
       compensation: structuredClone(p.compensation ?? {}),
       location: structuredClone(p.location ?? {}),
       preferences: structuredClone(p.preferences ?? {}),
+      language: structuredClone(p.language ?? {}),
     };
   }
 
@@ -793,6 +794,40 @@
               emptyText="No deal-breakers set."
             />
           </div>
+        </div>
+      </CollapsibleCard>
+
+      <!-- LANGUAGE -->
+      <CollapsibleCard
+        title="Language"
+        description={"Pick which mode-template language the dashboard uses for evaluations + interview prep. Defaults to English (top-level modes/). Selecting German / French / Japanese / Portuguese / Russian / Spanish points spawned-CLI flows at modes/<lang>/ — individual files fall back to English when the localized version is missing. The Skills page groups + filters by this language too."}
+        storageKey="language"
+      >
+        {#snippet icon()}<ShieldAlert class="size-3.5 text-muted-foreground" />{/snippet}
+        <div class="space-y-2">
+          <Label class="text-xs" for="profile-language-modes-dir">Modes directory</Label>
+          <select
+            id="profile-language-modes-dir"
+            class="h-9 w-full rounded-md border border-border/40 bg-card text-xs px-2"
+            value={edit.language?.modes_dir ?? ''}
+            onchange={(e) => {
+              const v = (e.currentTarget as HTMLSelectElement).value;
+              edit = { ...edit, language: { ...edit.language, modes_dir: v } };
+            }}
+          >
+            <option value="">English (modes/) — default</option>
+            <option value="modes/de">Deutsch (modes/de)</option>
+            <option value="modes/fr">Français (modes/fr)</option>
+            <option value="modes/ja">日本語 (modes/ja)</option>
+            <option value="modes/pt">Português (modes/pt)</option>
+            <option value="modes/ru">Русский (modes/ru)</option>
+            <option value="modes/es">Español (modes/es)</option>
+          </select>
+          <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+            Saved to <code class="font-mono">profile.yml.language.modes_dir</code>. Picked up immediately by
+            mock-interview, interview-prep, and negotiation flows; oferta + outreach use it once the symlink
+            re-swap on next spawn lands. Missing translations gracefully fall back to English.
+          </p>
         </div>
       </CollapsibleCard>
 

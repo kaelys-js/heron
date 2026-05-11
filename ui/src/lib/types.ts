@@ -3,6 +3,28 @@ export type Status =
   | 'Queued' | 'Applied' | 'Screened' | 'Interview'
   | 'Offer' | 'Rejected' | 'Closed';
 
+/**
+ * Canonical application status per `templates/states.yml`. This is the
+ * "where in the hiring process is this job" axis, parallel to the
+ * pipeline `Status` above. See `docs/STATUS_MODEL.md` for why they're
+ * orthogonal. The dashboard renders this as a secondary chip beside the
+ * pipeline badge when it differs from the trivial fold.
+ */
+export type ApplicationStatus =
+  | 'evaluated' | 'applied' | 'responded' | 'interview'
+  | 'offer' | 'rejected' | 'discarded' | 'skip';
+
+export const APPLICATION_STATUS_TINTS: Record<ApplicationStatus, string> = {
+  evaluated: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30',
+  applied:   'bg-violet-500/10 text-violet-300 border-violet-500/30',
+  responded: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
+  interview: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
+  offer:     'bg-green-500/15 text-green-300 border-green-500/40',
+  rejected:  'bg-red-500/10 text-red-300 border-red-500/30',
+  discarded: 'bg-zinc-500/10 text-zinc-300 border-zinc-500/30',
+  skip:      'bg-zinc-500/5 text-zinc-500 border-zinc-500/20',
+};
+
 export type BgRisk = 'LOW' | 'MEDIUM' | 'HIGH' | 'BLOCKED' | undefined;
 
 export type WorkMode = 'remote' | 'hybrid' | 'onsite' | 'unknown';
@@ -16,6 +38,9 @@ export type Job = {
   score?: number;
   geminiScore?: number;
   status: Status;
+  /** states.yml canonical, parsed straight from the applications.md row.
+   *  Orthogonal to `status` (pipeline stage). See `docs/STATUS_MODEL.md`. */
+  applicationStatus?: ApplicationStatus;
   bgRisk?: BgRisk;
   reportFile?: string;
   pdfFile?: string;
@@ -119,7 +144,7 @@ export const STATUS_EMPTY_COPY: Record<Status, string> = {
 };
 
 export type EventLevel = 'info' | 'warn' | 'error' | 'success';
-export type EventCategory = 'task' | 'api' | 'application' | 'system' | 'user' | 'orchestrator';
+export type EventCategory = 'task' | 'api' | 'application' | 'system' | 'user';
 
 export type ActivityEvent = {
   id: string;

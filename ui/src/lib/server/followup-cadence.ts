@@ -61,12 +61,24 @@ export type FollowupCadence = {
   generatedAt: number;
 };
 
-/** Spawn the script and resolve with parsed JSON. */
-function spawnCadence(): Promise<FollowupCadence> {
+/** Spawn the script and resolve with parsed JSON.
+ *  P6: pass `--profile <slug>` so the cache reflects the profile the
+ *  caller is interested in (defaults to the active profile). The script
+ *  understands the flag via lib-profiles.mjs:profileFromArgv. */
+function spawnCadence(profileId?: string): Promise<FollowupCadence> {
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
-    const p = spawn('node', ['followup-cadence.mjs'], {
+    let resolvedProfileId = profileId;
+    if (!resolvedProfileId) {
+      try {
+        const { getActiveProfileId } = require('./profiles') as typeof import('./profiles');
+        resolvedProfileId = getActiveProfileId();
+      } catch { /* leave undefined; script will default to active */ }
+    }
+    const args = ['followup-cadence.mjs'];
+    if (resolvedProfileId) args.push('--profile', resolvedProfileId);
+    const p = spawn('node', args, {
       cwd: ROOT,
       env: { ...process.env },
     });
@@ -116,12 +128,12 @@ function writeCache(cadence: FollowupCadence): void {
  *
  * `force=true` skips the cache (used by the daily Autopilot job).
  */
-export async function getFollowupCadence(opts?: { force?: boolean }): Promise<FollowupCadence> {
+export async function getFollowupCadence(opts?: { force?: boolean; profileId?: string }): Promise<FollowupCadence> {
   if (!opts?.force) {
     const cached = readCache();
     if (cached) return cached;
   }
-  const fresh = await spawnCadence();
+  const fresh = await spawnCadence(opts?.profileId);
   writeCache(fresh);
   return fresh;
 }
