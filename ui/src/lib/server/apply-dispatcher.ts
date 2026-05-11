@@ -40,6 +40,14 @@ export const PRODUCTION_PORTALS: ReadonlySet<SupportedPortal> = new Set([
   'ashby',
   'lever',
   'workday',
+  // Second-round graduations — Workable/Personio/SmartRecruiters/Recruitee/
+  // Teamtailor/Indeed are all production via the lib_portal scaffold.
+  'workable',
+  'personio',
+  'smartrecruiters',
+  'recruitee',
+  'teamtailor',
+  'indeed',
 ]);
 
 export type DetectResult = {

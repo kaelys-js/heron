@@ -216,6 +216,13 @@ async function main() {
   const processedUids = [];
   let processedMessages = 0;
   let dupeCount = 0;
+  // Reactor counters — emails that weren't job alerts went through
+  // /api/email/react. classified = the dashboard accepted + classified,
+  // acted = the classification was actionable (not 'other'),
+  // errors = the POST failed (dashboard not running, etc).
+  let reactorClassified = 0;
+  let reactorActed = 0;
+  let reactorErrors = 0;
   const startedAt = Date.now();
 
   console.log(`Connecting to ${HOST} as ${USER}…`);
@@ -240,6 +247,10 @@ async function main() {
         processedMessages++;
         const raw = msg.source?.toString('utf8') || '';
         const from = msg.envelope?.from?.[0]?.address || '';
+        const subject = msg.envelope?.subject || '';
+        const messageId = msg.envelope?.messageId || '';
+        const dateRaw = msg.envelope?.date;
+        const ts = dateRaw ? new Date(dateRaw).getTime() : Date.now();
         // Pull Content-Transfer-Encoding from headers section.
         const cteMatch = raw.match(/^Content-Transfer-Encoding:\s*([^\r\n]+)/im);
         const encoding = (cteMatch?.[1] || '').trim();
@@ -247,23 +258,68 @@ async function main() {
         // Pick the body — split off headers at the first blank line.
         const blank = raw.indexOf('\n\n');
         const body = blank === -1 ? '' : raw.slice(blank + 2);
+        // Decode the body once for the reactor path. The reactor classifier
+        // pattern-matches against plain text; quoted-printable digests
+        // would otherwise carry =\n line wraps that break phrase matches.
+        const decodedBody = /quoted-printable/i.test(encoding)
+          ? decodeQuotedPrintable(body)
+          : body;
 
         let extracted = null;
         for (const parser of PARSERS) {
           extracted = parser(from, body, encoding);
           if (extracted && extracted.length > 0) break;
         }
-        if (!extracted) continue;
 
-        for (const offer of extracted) {
-          if (seen.has(offer.url)) {
-            dupeCount++;
-            continue;
+        if (extracted && extracted.length > 0) {
+          // Job-alert digest path — same as before.
+          for (const offer of extracted) {
+            if (seen.has(offer.url)) {
+              dupeCount++;
+              continue;
+            }
+            seen.add(offer.url);
+            newOffers.push(offer);
           }
-          seen.add(offer.url);
-          newOffers.push(offer);
+          processedUids.push(msg.uid);
+        } else if (!dryRun) {
+          // NOT a job-alert. Route to the email-reactor endpoint, which
+          // classifies (rejection / interview-scheduling / offer /
+          // take-home / recruiter-reach-out) and auto-applies status
+          // transitions + tech-prep + lead-logging side-effects.
+          //
+          // Best-effort: a failed POST shouldn't block the rest of the
+          // batch. We mark the message Seen even when the reactor fails
+          // because retrying the classification won't help (it's
+          // deterministic on the same body) and re-trying triggers the
+          // reactor's auto-fire side-effects again, which is worse than
+          // missing one.
+          try {
+            const reactorUrl = process.env.CAREER_OPS_DASHBOARD_URL || 'http://127.0.0.1:5174';
+            const res = await fetch(reactorUrl + '/api/email/react', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({
+                ts, from, subject, body: decodedBody.slice(0, 8000), messageId,
+              }),
+            });
+            if (res.ok) {
+              const json = await res.json().catch(() => ({}));
+              reactorClassified++;
+              if (json?.classification?.kind && json.classification.kind !== 'other') {
+                reactorActed++;
+              }
+            } else {
+              reactorErrors++;
+            }
+          } catch {
+            // Dashboard not running, or network blip. Don't crash — the
+            // user can re-run with the dashboard up. We still mark
+            // Seen below so we don't loop on the same unparseable mail.
+            reactorErrors++;
+          }
+          processedUids.push(msg.uid);
         }
-        processedUids.push(msg.uid);
       }
 
       // Mark processed messages as \Seen (unless --keep-unread or --dry-run).
@@ -291,6 +347,7 @@ async function main() {
   console.log(`Messages processed: ${processedMessages}`);
   console.log(`Duplicates:         ${dupeCount}`);
   console.log(`New offers:         ${newOffers.length}`);
+  console.log(`Reactor classified: ${reactorClassified} (${reactorActed} actionable, ${reactorErrors} errors)`);
   // Stable summary line for the orchestrator's regex.
   console.log(`Total jobs found: ${newOffers.length}`);
 

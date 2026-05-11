@@ -169,21 +169,21 @@ fileContains('apply-portal.py', 'emit_result', 'dispatcher uses emit_result');
 fileContains('apply-stub.py', 'APPLY_RESULT', 'stub emits APPLY_RESULT');
 fileContains('apply-stub.py', "emit_result(\"manual-apply-needed\", \"stub\")", 'stub emits manual-apply-needed:stub');
 
-// Run dispatcher against a Workable URL — should route to stub (Workable
-// is still a stub portal in this build). Previously this used Lever; Lever
-// graduated to production in #5 of the punch-list.
+// Workable has graduated to production (third-round). We can't full-flow
+// test without a profile, so just verify the dispatcher spawns the
+// dedicated adapter (NOT the stub). Same shape as the Lever check below.
 {
   const r = spawnSync(PY, ['apply-portal.py',
     '--url', 'https://apply.workable.com/acme/j/ABCD',
-    '--job-id', 'verify-stub-workable'], { cwd: ROOT, encoding: 'utf8', timeout: 10_000 });
+    '--job-id', 'verify-prod-workable'], { cwd: ROOT, encoding: 'utf8', timeout: 10_000 });
   const out = r.stdout || '';
-  if (r.status === 1 && /APPLY_STEP: dispatch-detect:workable/.test(out)
-      && /APPLY_RESULT: manual-apply-needed:stub/.test(out)) {
-    ok('dispatcher: Workable URL → APPLY_STEP + APPLY_RESULT:manual-apply-needed:stub + exit 1');
+  if (/APPLY_STEP: dispatch-detect:workable/.test(out)
+      && /APPLY_STEP: dispatch-spawn:apply-workable.py/.test(out)) {
+    ok('dispatcher: Workable URL → routes to apply-workable.py (production)');
   } else {
-    bad('dispatcher: Workable URL routing produced unexpected output (exit=' + r.status + ')');
+    bad('dispatcher: Workable URL did NOT route to production adapter');
   }
-  try { fs.unlinkSync(path.join(ROOT, 'data/apply-state/verify-stub-workable.json')); } catch {}
+  try { fs.unlinkSync(path.join(ROOT, 'data/apply-state/verify-prod-workable.json')); } catch {}
 }
 
 // Run dispatcher against a Lever URL — Lever is now PRODUCTION (#5).
@@ -641,6 +641,77 @@ section('Second-round #6 — Onboarding wizard auto-actions');
 fileContains('ui/src/routes/onboarding/done/+page.svelte', 'seed-story-bank', 'done step fires story-bank seed');
 fileContains('ui/src/routes/onboarding/done/+page.svelte', "globalEnabled: true", 'done step turns on autopilot global');
 fileContains('ui/src/routes/onboarding/done/+page.svelte', 'autoActionsLog', 'done step surfaces auto-actions log');
+
+// ─── Third-round #A: IMAP-to-reactor wire-up ───────────────────
+section('Third-round #A — IMAP-to-reactor wire-up');
+
+fileContains('scan-email-imap.mjs', '/api/email/react', 'IMAP scanner POSTs to /api/email/react');
+fileContains('scan-email-imap.mjs', 'reactorClassified', 'reactor counter tracked');
+fileContains('scan-email-imap.mjs', 'reactorActed', 'actionable count tracked');
+fileContains('scan-email-imap.mjs', 'CAREER_OPS_DASHBOARD_URL', 'dashboard URL configurable via env');
+fileContains('scan-email-imap.mjs', 'decodeQuotedPrintable', 'body decoded for classification');
+
+// ─── Third-round #B: 6 portal adapters ────────────────────────
+section('Third-round #B — 6 portal adapters graduated to production');
+
+existsCheck('lib_portal.py', 'shared PortalConfig + run_portal_apply scaffold');
+existsCheck('apply-workable.py', 'Workable adapter');
+existsCheck('apply-personio.py', 'Personio adapter');
+existsCheck('apply-smartrecruiters.py', 'SmartRecruiters adapter');
+existsCheck('apply-recruitee.py', 'Recruitee adapter');
+existsCheck('apply-teamtailor.py', 'Teamtailor adapter');
+existsCheck('apply-indeed.py', 'Indeed adapter');
+
+fileContains('lib_portal.py', 'class PortalConfig', 'PortalConfig dataclass');
+fileContains('lib_portal.py', 'def run_portal_apply', 'standard apply loop');
+fileContains('lib_portal.py', 'def discover_required_questions', 'heuristic question discovery');
+fileContains('lib_portal.py', 'def adapter_main', 'standard adapter scaffold');
+
+fileContains('apply-workable.py', 'workable_config', 'Workable config factory');
+fileContains('apply-personio.py', 'Bewerbung absenden', 'Personio handles German submit text');
+fileContains('apply-smartrecruiters.py', 'firstName', 'SmartRecruiters basic-field selectors');
+fileContains('apply-recruitee.py', 'recruitee_config', 'Recruitee config factory');
+fileContains('apply-teamtailor.py', "aria-label", 'Teamtailor uses aria-label selectors');
+fileContains('apply-indeed.py', 'multipage=True', 'Indeed walks multi-page wizard');
+
+fileContains('apply-portal.py', '"workable"', 'apply-portal includes workable as production');
+fileContains('apply-portal.py', '"personio"', 'apply-portal includes personio as production');
+fileContains('apply-portal.py', '"smartrecruiters"', 'apply-portal includes smartrecruiters as production');
+fileContains('apply-portal.py', '"recruitee"', 'apply-portal includes recruitee as production');
+fileContains('apply-portal.py', '"teamtailor"', 'apply-portal includes teamtailor as production');
+fileContains('apply-portal.py', '"indeed"', 'apply-portal includes indeed as production');
+fileLacks('apply-portal.py', 'STUB_PORTALS = {\n    "workable"', 'workable removed from stubs');
+
+fileContains('ui/src/lib/server/apply-dispatcher.ts', "'workable',", 'TS dispatcher lists workable as production');
+fileContains('ui/src/lib/server/apply-dispatcher.ts', "'personio',", 'TS dispatcher lists personio as production');
+fileContains('ui/src/lib/server/apply-dispatcher.ts', "'smartrecruiters',", 'TS dispatcher lists smartrecruiters as production');
+fileContains('ui/src/lib/server/apply-dispatcher.ts', "'recruitee',", 'TS dispatcher lists recruitee as production');
+fileContains('ui/src/lib/server/apply-dispatcher.ts', "'teamtailor',", 'TS dispatcher lists teamtailor as production');
+fileContains('ui/src/lib/server/apply-dispatcher.ts', "'indeed',", 'TS dispatcher lists indeed as production');
+
+// Behavioral: every adapter routes correctly when invoked through the dispatcher
+const portalTests = [
+  { portal: 'workable', url: 'https://apply.workable.com/test/j/ABCD/apply/' },
+  { portal: 'personio', url: 'https://test.jobs.personio.com/job/12345' },
+  { portal: 'smartrecruiters', url: 'https://jobs.smartrecruiters.com/test/123' },
+  { portal: 'recruitee', url: 'https://test.recruitee.com/o/eng-role' },
+  { portal: 'teamtailor', url: 'https://test.teamtailor.com/jobs/123' },
+  { portal: 'indeed', url: 'https://www.indeed.com/viewjob?jk=xyz' },
+];
+for (const t of portalTests) {
+  const r = spawnSync(PY, ['apply-portal.py', '--url', t.url,
+    '--job-id', 'verify-r3-' + t.portal], { cwd: ROOT, encoding: 'utf8', timeout: 8_000 });
+  const out = r.stdout || '';
+  // Each should detect the portal AND spawn the dedicated adapter (NOT apply-stub.py).
+  const detected = new RegExp('APPLY_STEP: dispatch-detect:' + t.portal).test(out);
+  const spawned = new RegExp('APPLY_STEP: dispatch-spawn:apply-' + t.portal + '\\.py').test(out);
+  if (detected && spawned) {
+    ok('dispatcher: ' + t.portal + ' URL → spawns apply-' + t.portal + '.py');
+  } else {
+    bad('dispatcher: ' + t.portal + ' routing broken (detected=' + detected + ', spawned=' + spawned + ')');
+  }
+  try { fs.unlinkSync(path.join(ROOT, 'data/apply-state/verify-r3-' + t.portal + '.json')); } catch {}
+}
 
 // ─── Summary ───────────────────────────────────────────────────
 if (JSON_MODE) {
