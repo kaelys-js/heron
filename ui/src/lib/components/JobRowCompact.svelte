@@ -47,12 +47,14 @@
     Scored: 'Has a Gemini score · review and promote to Ready',
     Ready: 'Eval done · CV PDF ready · go apply',
     Queued: 'Staged for batch send · review on /queue',
+    Applying: 'Autonomous-apply script running',
     Applied: 'Application sent',
     Screened: 'Recruiter responded',
     Interview: 'Active interview process',
     Offer: 'Offer in hand · negotiate',
     Rejected: 'Closed by company',
     Closed: 'You skipped this one',
+    ManualApplyNeeded: 'Auto-apply blocked — finish by hand',
   };
 
   const WORK_MODE: Record<WorkMode, { label: string; icon: any; tint: string; tip: string }> = {

@@ -49,12 +49,14 @@
     Scored: 'bg-cyan-400',
     Ready: 'bg-emerald-400',
     Queued: 'bg-fuchsia-400',
+    Applying: 'bg-blue-400',
     Applied: 'bg-violet-400',
     Screened: 'bg-amber-400',
     Interview: 'bg-orange-400',
     Offer: 'bg-green-400',
     Rejected: 'bg-red-400',
     Closed: 'bg-zinc-500',
+    ManualApplyNeeded: 'bg-amber-500',
   };
   const STATUS_HINT: Record<Status, string> = {
     New: 'Just discovered',
@@ -62,12 +64,14 @@
     Scored: 'Has a Gemini score',
     Ready: 'Eval done · CV PDF ready · go apply',
     Queued: 'Staged for batch send',
+    Applying: 'Auto-apply running',
     Applied: 'Application sent',
     Screened: 'Recruiter responded',
     Interview: 'Active interview process',
     Offer: 'Offer in hand',
     Rejected: 'Closed by company',
     Closed: 'Closed by you',
+    ManualApplyNeeded: 'Auto-apply blocked — finish by hand',
   };
 
   // Work-mode visual + tip

@@ -54,3 +54,25 @@ states:
     aliases: [no_aplicar, no aplicar, skip, monitor]
     description: Doesn't fit, don't apply
     dashboard_group: skip
+
+  # Autonomous-apply states. The apply-queue drain writes "Queued" when
+  # the user clicks Apply, "Applying" while the Playwright script is running,
+  # then either "Applied" (success) or "ManualApplyNeeded" (script hit a
+  # captcha / anti-bot / unknown field; user needs to finish by hand).
+  - id: queued
+    label: Queued
+    aliases: []
+    description: Queued for autonomous apply
+    dashboard_group: queued
+
+  - id: applying
+    label: Applying
+    aliases: []
+    description: Autonomous-apply script running
+    dashboard_group: applying
+
+  - id: manual-apply-needed
+    label: ManualApplyNeeded
+    aliases: [manualapplyneeded, manual apply needed]
+    description: Autonomous apply blocked (captcha / anti-bot / unknown field); user must finish
+    dashboard_group: manual-apply-needed

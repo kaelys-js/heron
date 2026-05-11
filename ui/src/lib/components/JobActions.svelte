@@ -26,12 +26,13 @@
   import {
     ChevronDown, MoreHorizontal, Send, Check, ClipboardCheck, ArrowUpRight,
     Sparkles, ExternalLink, Copy, FileBadge2, FileText, Network as Linkedin,
-    Loader2, Wand2, Activity, Bell,
+    Loader2, Wand2, Activity, Bell, Zap,
   } from '@lucide/svelte';
   import CheckMark from './CheckMark.svelte';
   import { api, ApiError } from '$lib/api';
   import { toast } from 'svelte-sonner';
   import { invalidateAll } from '$app/navigation';
+  import { page } from '$app/state';
   import { withMinDuration, cn } from '$lib/utils';
   import type { Job, Status } from '$lib/types';
   import { STATUS_ORDER } from '$lib/types';
@@ -52,8 +53,27 @@
   // ---------- derived state ----------
   let isLinkedIn = $derived(!!job.url && /linkedin\.com/.test(job.url));
   let isApplied = $derived(['Applied', 'Screened', 'Interview', 'Offer', 'Rejected'].includes(job.status));
+  let isQueued = $derived(job.status === 'Queued');
+  let isApplying = $derived(job.status === 'Applying');
+  let needsManual = $derived(job.status === 'ManualApplyNeeded');
   let hasPdf = $derived(!!job.pdfFile);
   let hasReport = $derived(!!job.reportFile);
+  // Pull the per-profile automation block surfaced by +layout.server.ts.
+  // When the job's profile has autonomous_apply ON, we collapse the
+  // 3-mode dropdown into a single "Queue apply" button — clicking it
+  // hands the job off to apply-queue-drain which runs the right portal
+  // adapter automatically.
+  type ProfileAutomation = {
+    autonomous_apply?: boolean;
+    min_score_to_apply?: number;
+    enabled_portals?: string[];
+  };
+  let profileAutomations = $derived(
+    (page.data?.profileAutomations as Record<string, ProfileAutomation> | undefined) ?? {},
+  );
+  let autonomousMode = $derived(
+    !!(job.profileId && profileAutomations[job.profileId]?.autonomous_apply),
+  );
   // Append `?profile=<slug>` to every per-job endpoint call so the server
   // resolves the right profile's interview-prep / output / reports dirs
   // and swaps repo-root symlinks before spawning Claude. Empty when the
@@ -62,6 +82,7 @@
   let pq = $derived(job.profileId ? '?profile=' + encodeURIComponent(job.profileId) : '');
 
   let applyBusy = $state<ApplyMode | null>(null);
+  let queueApplyBusy = $state(false);
   let cvBusy = $state(false);
   let livenessBusy = $state(false);
   let followupBusy = $state(false);
@@ -74,8 +95,10 @@
 
   const STATUS_DOTS: Record<Status, string> = {
     New: 'bg-zinc-400', Scoring: 'bg-blue-400', Scored: 'bg-cyan-400',
-    Ready: 'bg-emerald-400', Queued: 'bg-fuchsia-400', Applied: 'bg-violet-400', Screened: 'bg-amber-400',
+    Ready: 'bg-emerald-400', Queued: 'bg-fuchsia-400', Applying: 'bg-blue-400',
+    Applied: 'bg-violet-400', Screened: 'bg-amber-400',
     Interview: 'bg-orange-400', Offer: 'bg-green-400', Rejected: 'bg-red-400', Closed: 'bg-zinc-500',
+    ManualApplyNeeded: 'bg-amber-500',
   };
   const STATUS_HINT: Record<Status, string> = {
     New: 'Just discovered — no score yet',
@@ -83,12 +106,14 @@
     Scored: 'Has a Gemini score · review and promote',
     Ready: 'Eval done · CV PDF ready · go apply',
     Queued: 'Staged for batch send · review on /queue',
+    Applying: 'Autonomous-apply script running right now',
     Applied: 'Application sent',
     Screened: 'Recruiter responded',
     Interview: 'Active interview process',
     Offer: 'Offer in hand · negotiate',
     Rejected: 'Closed by company',
     Closed: 'You skipped this one',
+    ManualApplyNeeded: 'Auto-apply blocked — finish the form by hand from Inbox',
   };
 
   // ---------- actions ----------
@@ -133,6 +158,61 @@
       });
     } finally {
       statusBusy = false;
+    }
+  }
+
+  /**
+   * Stage the job for apply-queue-drain. Used when the job's profile has
+   * autonomous_apply ON — collapses the 3-mode dropdown into a single
+   * click that hands off to the autopilot drain. Returns immediately;
+   * progress flows through APPLY_STEP events to the activity bell.
+   */
+  async function queueApply() {
+    if (!job.id || queueApplyBusy) return;
+    queueApplyBusy = true;
+    try {
+      const r = await withMinDuration(
+        api.post<{
+          ok: boolean;
+          status?: string;
+          already?: string;
+          capped?: boolean;
+          portal?: string;
+          message: string;
+        }>(
+          '/api/job/' + encodeURIComponent(job.id) + '/queue-apply' + pq,
+          {},
+          { silent: true },
+        ),
+        300,
+      );
+      if (r.ok) {
+        toast.success('Queued · ' + (r.portal ?? 'auto'), {
+          description: jobLabel + ' — ' + r.message,
+          duration: 8_000,
+        });
+        await invalidateAll();
+      } else if (r.capped) {
+        toast.warning('Daily apply cap reached', {
+          description: r.message + ' (raise it on /autopilot).',
+          duration: 10_000,
+        });
+      } else if (r.already) {
+        toast.info('Already ' + r.already, {
+          description: jobLabel + ' — ' + r.message,
+        });
+      } else {
+        toast.error('Queue refused', { description: r.message });
+      }
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Queue apply failed', {
+        description: jobLabel + ' — ' + err.message,
+        action: { label: 'Retry', onClick: () => queueApply() },
+        duration: 12_000,
+      });
+    } finally {
+      queueApplyBusy = false;
     }
   }
 
@@ -415,11 +495,93 @@
 >
   <!-- ============ APPLY MENU ============ -->
   <!--
-    Canonical bits-ui pattern: DropdownMenu.Root outermost, Tooltip nested INSIDE,
-    DropdownMenu.Trigger nested inside Tooltip.Trigger so spread order is
-    {...tipProps} {...ddProps} → DropdownMenu's onclick wins. This matches
-    NotificationsBell.svelte and StatusColumn.svelte (both verified working).
+    Two shapes, switched by profile.automation.autonomous_apply:
+
+      autonomousMode ON  → single "Queue apply" button (POST /queue-apply)
+      autonomousMode OFF → 3-mode dropdown (LinkedIn / Open & Mark / Mark)
+
+    Both share the bits-ui Tooltip + DropdownMenu nesting pattern when
+    the dropdown is shown.
   -->
+  {#if autonomousMode && !isApplied}
+    <!-- ───── Autonomous: single Queue Apply button ───── -->
+    <Tooltip.Provider delayDuration={300}>
+      <Tooltip.Root>
+        <Tooltip.Trigger>
+          {#snippet child({ props: tipProps })}
+            {#if size === 'hero'}
+              <Button
+                {...tipProps}
+                onclick={queueApply}
+                variant={isQueued || isApplying ? 'outline' : 'default'}
+                size="sm"
+                class={cn(
+                  'h-9 gap-1.5',
+                  isQueued && 'border-fuchsia-500/40 text-fuchsia-200',
+                  isApplying && 'border-blue-500/40 text-blue-200',
+                  needsManual && 'border-amber-500/40 text-amber-200',
+                )}
+                disabled={queueApplyBusy || isQueued || isApplying}
+              >
+                {#if queueApplyBusy}
+                  <Loader2 class="size-3.5 animate-spin" />
+                  <span>Queuing…</span>
+                {:else if isQueued}
+                  <ClipboardCheck class="size-3.5" />
+                  <span>Queued</span>
+                {:else if isApplying}
+                  <Loader2 class="size-3.5 animate-spin" />
+                  <span>Applying…</span>
+                {:else if needsManual}
+                  <Bell class="size-3.5" />
+                  <span>Needs review</span>
+                {:else}
+                  <Zap class="size-3.5" />
+                  <span>Apply</span>
+                {/if}
+              </Button>
+            {:else}
+              <Button
+                {...tipProps}
+                onclick={queueApply}
+                variant="ghost"
+                size="icon"
+                class={cn(
+                  size === 'card' ? 'size-7' : 'size-7',
+                  isQueued && 'text-fuchsia-300',
+                  isApplying && 'text-blue-300',
+                  needsManual && 'text-amber-300',
+                )}
+                disabled={queueApplyBusy || isQueued || isApplying}
+                aria-label="Queue apply"
+              >
+                {#if queueApplyBusy || isApplying}
+                  <Loader2 class="size-3.5 animate-spin" />
+                {:else if isQueued}
+                  <ClipboardCheck class="size-3.5" />
+                {:else if needsManual}
+                  <Bell class="size-3.5" />
+                {:else}
+                  <Zap class="size-3.5" />
+                {/if}
+              </Button>
+            {/if}
+          {/snippet}
+        </Tooltip.Trigger>
+        <Tooltip.Content side="top" class="text-xs max-w-xs">
+          {#if isQueued}
+            Queued for autonomous apply — apply-queue-drain will pick it up at its next run, or run it manually from /agents.
+          {:else if isApplying}
+            Apply script is running right now — watch the bell for step events.
+          {:else if needsManual}
+            Auto-apply hit a soft block (CAPTCHA, unknown field, anti-bot). Open Inbox to finish by hand.
+          {:else}
+            Stage for autopilot apply — cover letter + tailored CV will be generated, then the right portal adapter runs against your saved session.
+          {/if}
+        </Tooltip.Content>
+      </Tooltip.Root>
+    </Tooltip.Provider>
+  {:else}
   <DropdownMenu.Root>
     <Tooltip.Provider delayDuration={300}>
       <Tooltip.Root>
@@ -567,6 +729,7 @@
       </div>
     </DropdownMenu.Content>
   </DropdownMenu.Root>
+  {/if}
 
   <!-- ============ STATUS DROPDOWN ============ -->
   <DropdownMenu.Root>
