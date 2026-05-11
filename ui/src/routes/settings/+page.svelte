@@ -5,6 +5,7 @@
   import { Label } from '$lib/components/ui/label';
   import { Badge } from '$lib/components/ui/badge';
   import * as Card from '$lib/components/ui/card';
+  import BackupsCard, { type BackupInfo } from '$lib/components/BackupsCard.svelte';
   import { toast } from 'svelte-sonner';
   import { ApiError, api } from '$lib/api';
   import { ExternalLink, KeyRound, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, RotateCw, Sparkles, Activity } from '@lucide/svelte';
@@ -42,7 +43,13 @@
   }
   onMount(() => { void refreshHealth(); });
 
-  let { data }: { data: { env: Record<string, string> } } = $props();
+  let { data }: {
+    data: {
+      env: Record<string, string>;
+      backups: BackupInfo[];
+      backupConfig: { retentionDays: number };
+    };
+  } = $props();
 
   type ProviderKey = 'ANTHROPIC_API_KEY' | 'GEMINI_API_KEY' | 'ADZUNA_APP_ID' | 'ADZUNA_APP_KEY';
 
@@ -498,6 +505,11 @@
           </div>
         </Card.Footer>
       </Card.Root>
+
+      <!-- Backups card — nightly auto + manual trigger + restore. Surfaced
+           up here (above the LinkedIn / onboarding cards) because data loss
+           is the highest-impact failure mode. -->
+      <BackupsCard initialBackups={data.backups} initialConfig={data.backupConfig} />
 
       <Card.Root>
         <Card.Header>

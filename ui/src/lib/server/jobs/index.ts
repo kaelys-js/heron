@@ -45,6 +45,12 @@ import './apply-linkedin-login.job';
 import './compile-latex.job';
 import '../autopilot-circuit-breaker';
 
+// Phase 5 autonomous-apply system.
+import './apply-queue.job';
+
+// Phase 6 maintenance jobs.
+import './backup.job';
+
 let installed = false;
 
 export function installAllJobs(): void {

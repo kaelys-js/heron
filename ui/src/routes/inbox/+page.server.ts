@@ -175,6 +175,24 @@ export async function load({ url }: { url: URL }) {
       actionPostUrl: '/api/autopilot/resume',
     });
   }
+
+  // Apply-failure issues — emitted by reportApplyFailure() whenever an
+  // autonomous-apply run hits a soft block (CAPTCHA, anti-bot, unknown
+  // form field, stub-portal, upload-failed, validation, error). Each
+  // has dedupeKey `apply:{jobId}` so retries don't accumulate.
+  const applyIssues = openIssues
+    .filter((i) => (i.dedupeKey ?? '').startsWith('apply:'))
+    .map((i) => ({
+      id: i.id,
+      severity: i.severity,
+      summary: i.summary,
+      detail: i.detail,
+      fix: i.fix,
+      jobId: (i.dedupeKey ?? '').slice('apply:'.length),
+      source: i.source, // e.g. 'apply-greenhouse', 'apply-stub'
+      ts: i.ts,
+    }))
+    .sort((a, b) => b.ts - a.ts);
   if (lastError) {
     alerts.push({
       id: 'recent-error',
@@ -276,6 +294,7 @@ export async function load({ url }: { url: URL }) {
     recentErrorsCount,
     pipelineDaysAgo,
     alerts,
+    applyIssues,
     followupsUrgent,
     followupsOverdue,
     followupsCadenceMeta,

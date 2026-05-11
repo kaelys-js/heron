@@ -58,6 +58,11 @@
       location: structuredClone(p.location ?? {}),
       preferences: structuredClone(p.preferences ?? {}),
       language: structuredClone(p.language ?? {}),
+      // Carry the automation block through so the autonomous-apply card
+      // can edit it in place. snapshotEdit was originally written before
+      // this block existed — including it now keeps the dirty-compare
+      // and PUT round-trip symmetric.
+      automation: structuredClone(p.automation ?? {}),
     };
   }
 
@@ -842,6 +847,165 @@
             mock-interview, interview-prep, and negotiation flows; oferta + outreach use it once the symlink
             re-swap on next spawn lands. Missing translations gracefully fall back to English.
           </p>
+        </div>
+      </CollapsibleCard>
+
+      <!-- AUTONOMOUS APPLY -->
+      <!--
+        Per-profile opt-in for the autonomous-apply pipeline. When ON:
+          - JobActions collapses to a single "Queue apply" button
+          - apply-queue-drain picks up Queued jobs and runs the right portal
+          - Submit is clicked automatically (LinkedIn / Greenhouse / Ashby)
+          - Soft-failures surface as Inbox Issues with "Open posting" CTA
+        When OFF (default):
+          - The 3-mode dropdown stays (LinkedIn / Open+Mark / Mark)
+          - apply-queue-drain skips this profile's queued jobs
+
+        Score gate (min_score_to_apply) prevents auto-submitting borderline
+        fits even when autonomous_apply is true. Warmup days clamps the per-
+        profile cap to 5/day for the first N days after opt-in — useful for
+        LinkedIn shadowban mitigation.
+      -->
+      <CollapsibleCard
+        title="Autonomous apply"
+        description="Stage jobs in one click and let the autopilot drain submit them across LinkedIn / Greenhouse / Ashby. Default: OFF. The autopilot stops at the score gate and the daily cap. Soft-failures (CAPTCHA, anti-bot, unknown form field) land in the Inbox with a finish-by-hand CTA."
+        storageKey="autonomous-apply"
+      >
+        {#snippet icon()}<Wand2 class="size-3.5 text-fuchsia-400" />{/snippet}
+        <div class="space-y-4">
+          <!-- Master toggle -->
+          <div class="flex items-start gap-3 rounded-md border border-border/40 bg-card px-3 py-3">
+            <input
+              type="checkbox"
+              id="auto-apply-toggle"
+              class="size-4 rounded border-border accent-foreground mt-0.5"
+              checked={!!edit.automation?.autonomous_apply}
+              onchange={(e) => {
+                const v = (e.currentTarget as HTMLInputElement).checked;
+                edit = { ...edit, automation: { ...edit.automation, autonomous_apply: v } };
+              }}
+            />
+            <div class="flex-1 min-w-0">
+              <Label for="auto-apply-toggle" class="text-sm font-medium cursor-pointer">
+                Enable autonomous apply for this profile
+              </Label>
+              <p class="text-[11px] text-muted-foreground/80 leading-relaxed mt-0.5">
+                When ON, the autopilot drain submits applications without per-job confirmation — including
+                the final Submit click. Read <a href="/help/autonomous-apply" class="underline underline-offset-2 hover:text-foreground">the risk acknowledgment</a> first.
+              </p>
+            </div>
+          </div>
+
+          <!-- Sub-options (only relevant if autonomous_apply is ON) -->
+          <div class={cn(
+            'space-y-3 pl-3 ml-2 border-l-2 border-border/30',
+            !edit.automation?.autonomous_apply && 'opacity-50',
+          )}>
+            <!-- Score gate -->
+            <div class="space-y-1.5">
+              <Label class="text-xs" for="auto-min-score">Minimum score to auto-submit</Label>
+              <div class="flex items-center gap-2">
+                <input
+                  id="auto-min-score"
+                  type="range"
+                  min="3.0"
+                  max="5.0"
+                  step="0.1"
+                  class="flex-1 accent-foreground"
+                  value={edit.automation?.min_score_to_apply ?? 4.0}
+                  oninput={(e) => {
+                    const v = parseFloat((e.currentTarget as HTMLInputElement).value);
+                    edit = { ...edit, automation: { ...edit.automation, min_score_to_apply: v } };
+                  }}
+                />
+                <span class="font-mono text-xs tabular-nums w-10 text-right">
+                  {(edit.automation?.min_score_to_apply ?? 4.0).toFixed(1)}
+                </span>
+              </div>
+              <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+                Jobs below this threshold land in <code class="font-mono">ManualApplyNeeded</code> even when autonomous mode is on.
+                Default 4.0 — recommended floor.
+              </p>
+            </div>
+
+            <!-- Warmup days -->
+            <div class="space-y-1.5">
+              <Label class="text-xs" for="auto-warmup">Warmup window (days)</Label>
+              <Input
+                id="auto-warmup"
+                type="number"
+                min="0"
+                max="60"
+                class="h-9 text-xs w-24"
+                value={edit.automation?.warmup_days ?? 7}
+                oninput={(e) => {
+                  const v = parseInt((e.currentTarget as HTMLInputElement).value, 10);
+                  edit = { ...edit, automation: { ...edit.automation, warmup_days: isFinite(v) ? v : 0 } };
+                }}
+              />
+              <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+                For the first N days after enabling, the per-profile cap is clamped to 5/day regardless of the
+                global "Max applies / day" setting. Limits LinkedIn shadowban risk while you confirm the
+                pipeline behaves as expected.
+              </p>
+            </div>
+
+            <!-- Enabled portals -->
+            <div class="space-y-1.5">
+              <Label class="text-xs">Enabled portals</Label>
+              <div class="grid grid-cols-2 gap-1.5">
+                {#each [
+                  { id: 'linkedin', label: 'LinkedIn', supported: true },
+                  { id: 'greenhouse', label: 'Greenhouse', supported: true },
+                  { id: 'ashby', label: 'Ashby', supported: true },
+                  { id: 'lever', label: 'Lever (stub)', supported: false },
+                  { id: 'workable', label: 'Workable (stub)', supported: false },
+                  { id: 'personio', label: 'Personio (stub)', supported: false },
+                  { id: 'smartrecruiters', label: 'SmartRecruiters (stub)', supported: false },
+                  { id: 'recruitee', label: 'Recruitee (stub)', supported: false },
+                  { id: 'teamtailor', label: 'Teamtailor (stub)', supported: false },
+                  { id: 'workday', label: 'Workday (stub)', supported: false },
+                  { id: 'indeed', label: 'Indeed (stub)', supported: false },
+                ] as portal (portal.id)}
+                  {@const enabled = (edit.automation?.enabled_portals ?? ['linkedin', 'greenhouse', 'ashby']).includes(portal.id)}
+                  <label class="flex items-center gap-2 text-[11px] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      class="size-3.5 rounded border-border accent-foreground"
+                      checked={enabled}
+                      disabled={!portal.supported}
+                      onchange={(e) => {
+                        const on = (e.currentTarget as HTMLInputElement).checked;
+                        const cur = edit.automation?.enabled_portals ?? ['linkedin', 'greenhouse', 'ashby'];
+                        const next = on
+                          ? [...new Set([...cur, portal.id])]
+                          : cur.filter((p) => p !== portal.id);
+                        edit = { ...edit, automation: { ...edit.automation, enabled_portals: next } };
+                      }}
+                    />
+                    <span class={cn(!portal.supported && 'text-muted-foreground/50')}>{portal.label}</span>
+                  </label>
+                {/each}
+              </div>
+              <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+                Stub portals route to <code class="font-mono">apply-stub.py</code> which emits a
+                <code class="font-mono">ManualApplyNeeded</code> Issue. Production adapters land in future
+                releases; the queue stays useful as a "review later" inbox in the meantime.
+              </p>
+            </div>
+          </div>
+
+          <!-- Warning banner -->
+          <div class="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 flex items-start gap-2">
+            <AlertTriangle class="size-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
+            <p class="text-[11px] text-amber-100/90 leading-relaxed">
+              Autonomous apply overrides the default "review before Submit" ethical rule via this per-profile
+              opt-in. Use only on a profile where you trust the score gate to filter low-fit roles — every
+              submission costs a recruiter's time. Read the
+              <a href="/help/autonomous-apply" class="underline underline-offset-2 hover:text-foreground">help page</a>
+              for risks (LinkedIn shadowban, generic cover-letter quality, selector breakage).
+            </p>
+          </div>
         </div>
       </CollapsibleCard>
 

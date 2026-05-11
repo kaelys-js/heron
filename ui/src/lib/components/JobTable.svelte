@@ -59,12 +59,14 @@
     Scored: 'Has a Gemini score',
     Ready: 'Eval done · CV PDF ready',
     Queued: 'Staged for batch send',
+    Applying: 'Auto-apply running',
     Applied: 'Application sent',
     Screened: 'Recruiter responded',
     Interview: 'Active interview',
     Offer: 'Offer in hand',
     Rejected: 'Closed by company',
     Closed: 'You skipped',
+    ManualApplyNeeded: 'Auto-apply blocked — finish by hand',
   };
 
   function statusDot(status: string): string {

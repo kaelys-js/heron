@@ -1,7 +1,8 @@
 export type Status =
   | 'New' | 'Scoring' | 'Scored' | 'Ready'
-  | 'Queued' | 'Applied' | 'Screened' | 'Interview'
-  | 'Offer' | 'Rejected' | 'Closed';
+  | 'Queued' | 'Applying' | 'Applied' | 'Screened' | 'Interview'
+  | 'Offer' | 'Rejected' | 'Closed'
+  | 'ManualApplyNeeded';
 
 /**
  * Canonical application status per `templates/states.yml`. This is the
@@ -103,9 +104,11 @@ export const SOURCE_LABELS: Record<string, { label: string; tint: string }> = {
 };
 
 export const STATUS_ORDER: Status[] = [
-  'New', 'Scoring', 'Scored', 'Ready', 'Queued',
+  'New', 'Scoring', 'Scored', 'Ready',
+  'Queued', 'Applying',
   'Applied', 'Screened', 'Interview',
   'Offer', 'Rejected', 'Closed',
+  'ManualApplyNeeded',
 ];
 
 export const STATUS_TINTS: Record<Status, string> = {
@@ -114,12 +117,16 @@ export const STATUS_TINTS: Record<Status, string> = {
   Scored: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30',
   Ready: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
   Queued: 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/30',
+  // Applying = active blue with pulse anim — script is running right now.
+  Applying: 'bg-blue-500/15 text-blue-200 border-blue-500/50 animate-pulse',
   Applied: 'bg-violet-500/10 text-violet-300 border-violet-500/30',
   Screened: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
   Interview: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
   Offer: 'bg-green-500/15 text-green-300 border-green-500/40',
   Rejected: 'bg-red-500/10 text-red-300 border-red-500/30',
   Closed: 'bg-zinc-500/5 text-zinc-500 border-zinc-500/20',
+  // ManualApplyNeeded = amber with dashed border — action required.
+  ManualApplyNeeded: 'bg-amber-500/15 text-amber-200 border-amber-500/50 border-dashed',
 };
 
 export const BG_TINTS: Record<NonNullable<BgRisk>, string> = {
@@ -141,6 +148,8 @@ export const STATUS_EMPTY_COPY: Record<Status, string> = {
   Offer: 'No offers in hand yet — keep going.',
   Rejected: 'No rejections (or you haven\u2019t tracked them).',
   Closed: 'Nothing closed.',
+  Applying: 'No applications in flight right now.',
+  ManualApplyNeeded: 'No jobs awaiting manual apply \u2014 autonomous mode is keeping up.',
 };
 
 export type EventLevel = 'info' | 'warn' | 'error' | 'success';

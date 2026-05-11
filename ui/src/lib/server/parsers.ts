@@ -168,6 +168,15 @@ function mapStatus(s: string): Status {
   const up = s.toUpperCase().trim();
   const lower = s.toLowerCase().trim();
 
+  // Autonomous-apply states (Phase 0.3 of autonomous-apply plan).
+  // These come from the apply-queue drain writing back to applications.md.
+  if (lower === 'queued') return 'Queued';
+  if (lower === 'applying' || up.includes('APPLYING')) return 'Applying';
+  if (
+    lower === 'manualapplyneeded' || lower === 'manual-apply-needed' || lower === 'manual apply needed' ||
+    up.includes('MANUALAPPLYNEEDED')
+  ) return 'ManualApplyNeeded';
+
   // Pipeline-stage substring matches (legacy heuristic).
   if (up.includes('READY')) return 'Ready';
   if (up.includes('SCREEN')) return 'Screened';

@@ -56,6 +56,19 @@ bun.lock
 *.bak
 *.bak.*
 
+# Per-profile user data — dashboard manages this on boot; same reason
+# config/profile.yml / cv.md / portals.yml are gitignored.
+data/profiles/
+
+# Autonomous-apply system runtime state.
+data/apply-state/
+
+# Daily backups (tar.gz snapshots — local-only by design).
+data/backups/
+
+# Playwright persistent contexts — browser session data per portal.
+.playwright-*/
+
 # OS
 .DS_Store
 *.mov

@@ -252,7 +252,13 @@ Default modes are in `modes/` (English). Additional language-specific modes are 
 
 **This system is designed for quality, not quantity.** The goal is to help the user find and apply to roles where there is a genuine match -- not to spam companies with mass applications.
 
-- **NEVER submit an application without the user reviewing it first.** Fill forms, draft answers, generate PDFs -- but always STOP before clicking Submit/Send/Apply. The user makes the final call.
+- **By default, NEVER submit an application without the user reviewing it first.** Fill forms, draft answers, generate PDFs -- but stop at Submit. The user makes the final call.
+- **Autonomous mode is opt-in per profile.** When `profile.yml.automation.autonomous_apply: true`, the system MAY auto-submit on supported portals (LinkedIn, Greenhouse, Ashby) ONLY when ALL four conditions hold:
+  1. The job's score is ≥ `automation.min_score_to_apply` (default 4.0)
+  2. The daily cap (`thresholds.maxAppliesPerDay`, plus the per-profile `automation.warmup_days` window) hasn't been hit
+  3. The portal's automation is supported AND no CAPTCHA / anti-bot / unknown-required-field is encountered
+  4. The pre-apply assembly (tailored CV + cover letter) succeeded
+  If ANY of those fail, the job falls back to `ManualApplyNeeded` and the user finishes by hand from the Inbox.
 - **Strongly discourage low-fit applications.** If a score is below 4.0/5, explicitly recommend against applying. The user's time and the recruiter's time are both valuable. Only proceed if the user has a specific reason to override the score.
 - **Quality over speed.** A well-targeted application to 5 companies beats a generic blast to 50. Guide the user toward fewer, better applications.
 - **Respect recruiters' time.** Every application a human reads costs someone's attention. Only send what's worth reading.
