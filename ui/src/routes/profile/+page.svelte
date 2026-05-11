@@ -38,7 +38,7 @@
   import { ConfirmGate } from '$lib/confirm.svelte';
   import { onDestroy } from 'svelte';
 
-  let { data }: { data: { profile: ProfileSnapshot; generalCv: GeneralCvStatus } } = $props();
+  let { data }: { data: { profileId: string; profile: ProfileSnapshot; generalCv: GeneralCvStatus } } = $props();
 
   // Project a ProfileSnapshot down to JUST the editable ProfileEdit shape.
   // Without this, structuredClone(data.profile) would seed `edit` with all
@@ -1151,7 +1151,7 @@
 
       <!-- CV manager sheet + Reset dialog — open via buttons above -->
       <CvManagerSheet bind:open={cvOpen} initialTab={cvInitialTab} onApplySuggestion={applyCvSuggestion} />
-      <ResetProfileDialog bind:open={resetOpen} initialScope={resetInitialScope} />
+      <ResetProfileDialog bind:open={resetOpen} initialScope={resetInitialScope} profileId={data.profileId} />
     </div>
   </div>
 

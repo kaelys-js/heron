@@ -19,18 +19,23 @@
   let {
     jobId,
     pdfFile,
+    profileId,
     defaultOpen = true,
     class: className = '',
   }: {
     jobId: string;
     pdfFile: string;
+    /** When set, appended as `?profile=<slug>` so the PDF endpoint reads
+     *  from the right profile's output dir. Omit to default to active. */
+    profileId?: string;
     defaultOpen?: boolean;
     class?: string;
   } = $props();
 
   // svelte-ignore state_referenced_locally — initial seed only.
   let open = $state(defaultOpen);
-  let pdfUrl = $derived('/api/job/' + encodeURIComponent(jobId) + '/pdf');
+  let pq = $derived(profileId ? '?profile=' + encodeURIComponent(profileId) : '');
+  let pdfUrl = $derived('/api/job/' + encodeURIComponent(jobId) + '/pdf' + pq);
 </script>
 
 <div class={cn('rounded-md border border-border/40 bg-card overflow-hidden', className)}>

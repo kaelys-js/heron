@@ -18,11 +18,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { loadAllJobs } from '$lib/server/parsers';
 import { ROOT } from '$lib/server/files';
+import { resolveJobAndProfile } from '$lib/server/job-resolver';
+import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
 import { CLI_NAMESPACE } from '$lib/config/branding';
 
+// Story-bank stays SHARED across profiles per architecture decision —
+// rejection learnings are cross-track wisdom (negotiation, behavioral
+// stories, communication patterns), not tied to a specific career identity.
 const STORY_BANK = path.join(ROOT, 'interview-prep', 'story-bank.md');
 
 type Notes = {
@@ -31,7 +35,7 @@ type Notes = {
   wouldChange?: string;
 };
 
-function spawnPostRejection(url: string, notes: Notes): Promise<string> {
+function spawnPostRejection(url: string, notes: Notes, profileId: string): Promise<string> {
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
@@ -40,6 +44,15 @@ function spawnPostRejection(url: string, notes: Notes): Promise<string> {
       ' --notes ' + JSON.stringify(JSON.stringify(notes)),
       '--dangerously-skip-permissions',
     ];
+    // Swap symlinks so the slash-command reads this job's profile data
+    // (CV, profile.yml, applications.md, the report file) and not the
+    // currently-active profile's.
+    try { swapProfileSymlinks(profileId); } catch (e) {
+      logEvent('post-rejection', 'Symlink swap failed — capture may read wrong profile', {
+        level: 'warn', category: 'application',
+        message: e instanceof Error ? e.message : String(e),
+      });
+    }
     const p = spawn('claude', args, { cwd: ROOT, env: { ...process.env } });
     p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
     p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
@@ -65,10 +78,11 @@ function appendToStoryBank(jobLabel: string, content: string): string {
 
 export const POST = wrap(
   'post-rejection',
-  async ({ params, request }: { params: { id: string }; request: Request }) => {
-    const job = loadAllJobs().find((j) => j.id === params.id);
-    if (!job) badRequest('Job not found: ' + params.id);
-    if (!job!.url) badRequest('Job has no URL — cannot capture rejection learning');
+  async ({ params, request, url }: { params: { id: string }; request: Request; url: URL }) => {
+    const resolved = resolveJobAndProfile(params.id, url);
+    if (!resolved) badRequest('Job not found: ' + params.id);
+    const { job, profileId } = resolved!;
+    if (!job.url) badRequest('Job has no URL — cannot capture rejection learning');
 
     const body = (await request.json().catch(() => ({}))) as Notes;
     const notes: Notes = {
@@ -80,12 +94,12 @@ export const POST = wrap(
     logEvent('post-rejection', 'Capturing rejection learning', {
       level: 'info',
       category: 'application',
-      message: (job!.company || '?') + ' · ' + (job!.role || '?'),
+      message: (job.company || '?') + ' · ' + (job.role || '?'),
     });
 
     try {
-      const expanded = await spawnPostRejection(job!.url, notes);
-      const label = (job!.company || 'unknown') + (job!.role ? ' · ' + job!.role : '');
+      const expanded = await spawnPostRejection(job.url, notes, profileId);
+      const label = (job.company || 'unknown') + (job.role ? ' · ' + job.role : '');
       const filePath = appendToStoryBank(label, expanded);
       logEvent('post-rejection', 'Captured rejection learning', {
         level: 'success',

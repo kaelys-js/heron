@@ -16,17 +16,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { error } from '@sveltejs/kit';
-import { loadAllJobs } from '$lib/server/parsers';
-import { activePath } from '$lib/server/profile-paths';
+import { resolveJobAndProfile } from '$lib/server/job-resolver';
+import { profilePath } from '$lib/server/profile-paths';
 import { reportServerError } from '$lib/server/events';
 
-export const GET = async ({ params }: { params: { id: string } }) => {
-  const job = loadAllJobs().find((j) => j.id === params.id);
-  if (!job) throw error(404, 'Job not found');
+export const GET = async ({ params, url }: { params: { id: string }; url: URL }) => {
+  const resolved = resolveJobAndProfile(params.id, url);
+  if (!resolved) throw error(404, 'Job not found');
+  const { job, profileId } = resolved;
   if (!job.pdfFile) throw error(404, 'No CV PDF generated for this job yet');
 
-  // Resolve safely under the active profile's output dir — reject traversal.
-  const outputDir = activePath('output-dir');
+  // Resolve safely under THIS JOB'S profile output dir — reject traversal.
+  const outputDir = profilePath(profileId, 'output-dir');
   const candidate = path.resolve(outputDir, job.pdfFile);
   const root = path.resolve(outputDir);
   if (!candidate.startsWith(root + path.sep) && candidate !== root) {

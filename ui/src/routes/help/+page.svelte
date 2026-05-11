@@ -173,18 +173,25 @@
   ];
 
   type FileDef = { path: string; purpose: string; tier: 'user' | 'system' | 'output' };
+  // Multi-profile layout: per-profile content lives under data/profiles/{slug}/.
+  // The repo-root paths (cv.md, config/profile.yml, portals.yml, modes/_profile.md)
+  // are SYMLINKS into the active profile's dir — the Claude CLI reads them at
+  // their canonical paths, the dashboard swaps the symlinks when you switch
+  // profiles. See /help/onboarding for the full multi-profile primer.
   const FILES: FileDef[] = [
-    { path: 'config/profile.yml', purpose: 'Your profile — identity, narrative, comp, preferences. Single source of truth.', tier: 'user' },
-    { path: 'cv.md', purpose: 'Canonical CV (markdown). All PDFs are generated from this.', tier: 'user' },
-    { path: 'modes/_profile.md', purpose: 'BG-check policy + archetype + language overrides. NEVER auto-updated.', tier: 'user' },
-    { path: 'data/pipeline.md', purpose: 'Inbox of pending job URLs (auto-appended by scanner).', tier: 'system' },
-    { path: 'data/applications.md', purpose: 'Application tracker — every evaluated job, with status and notes.', tier: 'system' },
-    { path: 'data/gemini-scores.tsv', purpose: 'Gemini first-pass scores per URL.', tier: 'system' },
-    { path: 'data/projects.json', purpose: 'Saved filter profiles (Projects page).', tier: 'system' },
-    { path: 'data/autopilot.json', purpose: 'Autopilot schedule config.', tier: 'system' },
-    { path: 'data/activity.jsonl', purpose: 'Append-only event log (powers the activity feed and stats).', tier: 'system' },
-    { path: 'reports/{n}-{slug}-{date}.md', purpose: 'Deep Claude evaluation reports per job.', tier: 'output' },
-    { path: 'output/{n}-{slug}-{date}.pdf', purpose: 'Tailored CV PDFs.', tier: 'output' },
+    { path: 'data/profiles/{slug}/profile.yml', purpose: 'Per-profile identity + narrative + comp. config/profile.yml symlinks to the active one.', tier: 'user' },
+    { path: 'data/profiles/{slug}/cv.md', purpose: 'Per-profile canonical CV. cv.md at repo root symlinks to the active profile.', tier: 'user' },
+    { path: 'data/profiles/{slug}/_profile.md', purpose: 'Per-profile BG-check policy + archetype + language overrides. NEVER auto-updated.', tier: 'user' },
+    { path: 'data/profiles/{slug}/pipeline.md', purpose: 'Per-profile inbox of pending job URLs (auto-appended by scanner).', tier: 'system' },
+    { path: 'data/profiles/{slug}/applications.md', purpose: 'Per-profile application tracker — every evaluated job, with status and notes.', tier: 'system' },
+    { path: 'data/profiles/{slug}/gemini-scores.tsv', purpose: 'Per-profile Gemini first-pass scores per URL.', tier: 'system' },
+    { path: 'data/profiles/{slug}/projects.json', purpose: 'Per-profile saved filter views (Projects page).', tier: 'system' },
+    { path: 'data/profiles/{slug}/reports/{n}-{slug}-{date}.md', purpose: 'Per-profile deep Claude evaluation reports.', tier: 'output' },
+    { path: 'data/profiles/{slug}/output/{n}-{slug}-{date}.pdf', purpose: 'Per-profile tailored CV PDFs.', tier: 'output' },
+    { path: 'data/profiles.json', purpose: 'Profile registry + active profile selection. SHARED across the install.', tier: 'system' },
+    { path: 'data/autopilot.json', purpose: 'Autopilot schedule config. SHARED (one schedule across all profiles).', tier: 'system' },
+    { path: 'data/activity.jsonl', purpose: 'Append-only event log. SHARED — events tagged with profileId where applicable.', tier: 'system' },
+    { path: '.env', purpose: 'API keys (Anthropic / Gemini / Adzuna) + IMAP creds. SHARED across all profiles.', tier: 'user' },
     { path: 'modes/*.md', purpose: 'Slash-command prompts (the "Skills" page lists these).', tier: 'system' },
   ];
 

@@ -399,6 +399,7 @@ export function runOferta(url: string, taskKey: TaskName = 'oferta', profileId?:
     logEvent(taskKey, 'Generate CV started', {
       category: 'task',
       message: 'oferta · ' + url + (profileId ? ' · profile=' + profileId : ''),
+      profileId,
     });
     let p: ChildProcess;
     try {
@@ -439,6 +440,7 @@ export function runOferta(url: string, taskKey: TaskName = 'oferta', profileId?:
         message: ok
           ? 'Report + tailored CV PDF generated · ' + url
           : 'Exit code ' + code + ' — review the spawned process output above. Common causes: rate limits, prompt errors, missing CV file.',
+        profileId,
       });
       resolve({ ok, code });
     });

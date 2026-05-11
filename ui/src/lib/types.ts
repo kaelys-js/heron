@@ -131,6 +131,10 @@ export type ActivityEvent = {
   message?: string;
   link?: string;
   read?: boolean;
+  /** Profile slug this event originated in (when the event is profile-scoped).
+   *  Cross-profile events (autopilot tick, IMAP daemon, migration) omit this
+   *  so the activity feed can distinguish "shared infra" from "this profile". */
+  profileId?: string;
   /** Stack trace (only set for level === 'error'). Truncated to ~2KB. */
   stack?: string;
 };

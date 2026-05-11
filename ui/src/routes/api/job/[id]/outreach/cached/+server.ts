@@ -12,23 +12,25 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { loadAllJobs } from '$lib/server/parsers';
 import { ROOT } from '$lib/server/files';
+import { profilePath } from '$lib/server/profile-paths';
+import { resolveJobAndProfile } from '$lib/server/job-resolver';
 
-const PREP_DIR = path.join(ROOT, 'interview-prep');
 const PERSONAS = ['hiring-manager', 'recruiter', 'peer'] as const;
 
 function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'job';
 }
 
-export const GET = wrap('outreach-cached', async ({ params }: { params: { id: string } }) => {
-  const job = loadAllJobs().find((j) => j.id === params.id);
-  if (!job) badRequest('Job not found: ' + params.id);
-  const slug = slugify(job!.id);
+export const GET = wrap('outreach-cached', async ({ params, url }: { params: { id: string }; url: URL }) => {
+  const resolved = resolveJobAndProfile(params.id, url);
+  if (!resolved) badRequest('Job not found: ' + params.id);
+  const { job, profileId } = resolved!;
+  const slug = slugify(job.id);
+  const prepDir = profilePath(profileId, 'interview-prep-dir');
   const variants: { persona: string; content: string; path: string }[] = [];
   for (const persona of PERSONAS) {
-    const full = path.join(PREP_DIR, slug + '-outreach-' + persona + '.md');
+    const full = path.join(prepDir, slug + '-outreach-' + persona + '.md');
     if (fs.existsSync(full)) {
       try {
         variants.push({

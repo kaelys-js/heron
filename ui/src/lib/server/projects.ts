@@ -3,16 +3,28 @@
  * target (e.g. 5 applications) so the user can track parallel job-hunting tracks
  * (e.g. "Vancouver Senior", "Remote US Staff", "Founding Engineer").
  *
- * Persisted to `data/projects.json`. Stats are derived live from current pipeline jobs.
+ * Per-profile storage: each career profile owns its own `projects.json`. The
+ * file lives at `data/profiles/{slug}/projects.json` and is one of the items
+ * the migration (`profile-migrate.ts`) moves out of the flat layout.
+ *
+ * Every read/write accepts an optional `profileId` first argument. Legacy
+ * call shapes without `profileId` resolve to the active profile.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT } from './files';
 import type { Job, Status, FilterState, BgRisk } from '$lib/types';
 import { STATUS_ORDER, DEFAULT_FILTER } from '$lib/types';
+import { profilePath } from './profile-paths';
+import { getActiveProfileId } from './profiles';
 
-const PROJECTS_PATH = path.join(ROOT, 'data', 'projects.json');
+function resolveId(profileId?: string): string {
+  return profileId ?? getActiveProfileId();
+}
+
+function projectsPath(profileId: string): string {
+  return profilePath(profileId, 'projects-json');
+}
 
 export type ProjectColor =
   | 'emerald' | 'blue' | 'violet' | 'amber' | 'rose' | 'cyan' | 'orange' | 'pink';
@@ -97,10 +109,11 @@ export function getStarterTemplates(): Omit<Project, 'id' | 'createdAt' | 'updat
   }));
 }
 
-function readRaw(): Project[] {
+function readRaw(profileId: string): Project[] {
+  const p = projectsPath(profileId);
   try {
-    if (!fs.existsSync(PROJECTS_PATH)) return [];
-    const raw = fs.readFileSync(PROJECTS_PATH, 'utf8');
+    if (!fs.existsSync(p)) return [];
+    const raw = fs.readFileSync(p, 'utf8');
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     return parsed.filter((p): p is Project => typeof p?.id === 'string' && typeof p?.name === 'string');
@@ -109,25 +122,38 @@ function readRaw(): Project[] {
   }
 }
 
-function writeRaw(projects: Project[]): void {
-  fs.mkdirSync(path.dirname(PROJECTS_PATH), { recursive: true });
-  fs.writeFileSync(PROJECTS_PATH, JSON.stringify(projects, null, 2) + '\n');
+function writeRaw(profileId: string, projects: Project[]): void {
+  const p = projectsPath(profileId);
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  fs.writeFileSync(p, JSON.stringify(projects, null, 2) + '\n');
 }
 
-export function listProjects(): Project[] {
-  return readRaw().sort((a, b) => b.updatedAt - a.updatedAt);
+export function listProjects(profileId?: string): Project[] {
+  return readRaw(resolveId(profileId)).sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
-export function getProject(id: string): Project | null {
-  return readRaw().find((p) => p.id === id) ?? null;
+export function getProject(profileId: string | undefined, id: string): Project | null;
+export function getProject(id: string): Project | null;
+export function getProject(arg1: string | undefined, arg2?: string): Project | null {
+  // Legacy 1-arg call: getProject(id). New: getProject(profileId, id).
+  const isLegacy = arg2 === undefined;
+  const profileId = isLegacy ? undefined : arg1;
+  const id = isLegacy ? (arg1 as string) : arg2!;
+  return readRaw(resolveId(profileId)).find((p) => p.id === id) ?? null;
 }
 
-export function createProject(input: Partial<Project>): Project {
-  const projects = readRaw();
+export function createProject(profileId: string | undefined, input: Partial<Project>): Project;
+export function createProject(input: Partial<Project>): Project;
+export function createProject(arg1: string | undefined | Partial<Project>, arg2?: Partial<Project>): Project {
+  const isLegacy = typeof arg1 !== 'string' && arg2 === undefined;
+  const profileId = isLegacy ? undefined : (arg1 as string | undefined);
+  const input = (isLegacy ? arg1 : arg2!) as Partial<Project>;
+  const id = resolveId(profileId);
+  const projects = readRaw(id);
   const now = Date.now();
-  const id = input.id ?? slugifyId(input.name ?? 'project', new Set(projects.map((p) => p.id)));
+  const slug = input.id ?? slugifyId(input.name ?? 'project', new Set(projects.map((p) => p.id)));
   const project: Project = {
-    id,
+    id: slug,
     name: (input.name ?? 'Untitled').trim() || 'Untitled',
     description: (input.description ?? '').trim(),
     color: input.color ?? PROJECT_COLORS[projects.length % PROJECT_COLORS.length],
@@ -136,12 +162,19 @@ export function createProject(input: Partial<Project>): Project {
     createdAt: input.createdAt ?? now,
     updatedAt: now,
   };
-  writeRaw([project, ...projects]);
+  writeRaw(id, [project, ...projects]);
   return project;
 }
 
-export function updateProject(id: string, patch: Partial<Project>): Project | null {
-  const projects = readRaw();
+export function updateProject(profileId: string | undefined, id: string, patch: Partial<Project>): Project | null;
+export function updateProject(id: string, patch: Partial<Project>): Project | null;
+export function updateProject(arg1: string | undefined, arg2: string | Partial<Project>, arg3?: Partial<Project>): Project | null {
+  const isLegacy = arg3 === undefined;
+  const profileId = isLegacy ? undefined : arg1;
+  const id = isLegacy ? (arg1 as string) : (arg2 as string);
+  const patch = (isLegacy ? arg2 : arg3) as Partial<Project>;
+  const pid = resolveId(profileId);
+  const projects = readRaw(pid);
   const idx = projects.findIndex((p) => p.id === id);
   if (idx === -1) return null;
   const next: Project = {
@@ -156,15 +189,21 @@ export function updateProject(id: string, patch: Partial<Project>): Project | nu
     description: (patch.description ?? projects[idx].description).trim(),
   };
   projects[idx] = next;
-  writeRaw(projects);
+  writeRaw(pid, projects);
   return next;
 }
 
-export function deleteProject(id: string): boolean {
-  const projects = readRaw();
+export function deleteProject(profileId: string | undefined, id: string): boolean;
+export function deleteProject(id: string): boolean;
+export function deleteProject(arg1: string | undefined, arg2?: string): boolean {
+  const isLegacy = arg2 === undefined;
+  const profileId = isLegacy ? undefined : arg1;
+  const id = isLegacy ? (arg1 as string) : arg2!;
+  const pid = resolveId(profileId);
+  const projects = readRaw(pid);
   const next = projects.filter((p) => p.id !== id);
   if (next.length === projects.length) return false;
-  writeRaw(next);
+  writeRaw(pid, next);
   return true;
 }
 
