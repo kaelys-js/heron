@@ -5,7 +5,7 @@
  */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { runScan, runGemini, runLinkedInApply, runLinkedInLogin, listRunning } from '$lib/server/orchestrator';
+import { runScan, runGemini, runLinkedInApply, runLinkedInLogin, runAutoEval, listRunning } from '$lib/server/orchestrator';
 import { runById, has as hasJob } from '$lib/server/jobs';
 import { reportServerError } from '$lib/server/events';
 
@@ -21,6 +21,13 @@ export const POST = wrap('run', async ({ request }: any) => {
     case 'gemini': runGemini(); return { running: listRunning() };
     case 'apply-linkedin': runLinkedInApply(!!autoSubmit); return { running: listRunning() };
     case 'apply-linkedin-login': runLinkedInLogin(); return { running: listRunning() };
+    case 'auto-eval':
+      // Fire-and-forget — runAutoEval emits its own start/finish events.
+      // The .catch is defensive; runAutoEval already wraps internals.
+      runAutoEval().catch((err) =>
+        reportServerError('run', 'Auto-eval rejected', err, { category: 'task' }),
+      );
+      return { running: listRunning() };
   }
   // Pluggable path — any registered job id (Phase 2+ scan-portals, etc.).
   // Job's internal try/catch normalises throws to {ok: false, error}; this

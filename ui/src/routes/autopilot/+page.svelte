@@ -489,6 +489,27 @@
 
           <div class="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-start">
             <div class="space-y-1">
+              <Label class="text-xs font-medium">Max auto-evals / run</Label>
+              <p class="text-[11px] text-muted-foreground leading-relaxed">
+                Cap on how many deep Claude evaluations run in one batch after Gemini scoring.
+                <span class="text-muted-foreground/70">Each costs ~$0.30–$1.00 in Claude usage. At 10/run × daily scans, expect ~$3–$10/day if your pipeline runs hot. The 1h cooldown prevents accidental double-billing from manual rescans.</span>
+              </p>
+            </div>
+            <Stepper
+              value={config.thresholds.maxAutoEvalsPerRun}
+              onchange={(v) => (config = { ...config, thresholds: { ...config.thresholds, maxAutoEvalsPerRun: v } })}
+              min={1}
+              max={50}
+              step={1}
+              decimals={0}
+              suffix=" / run"
+              label="Max auto-evals per run"
+              class="w-32"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-start">
+            <div class="space-y-1">
               <Label class="text-xs font-medium">Max applies / day</Label>
               <p class="text-[11px] text-muted-foreground leading-relaxed">
                 LinkedIn Easy Apply stops after this many submissions in a UTC day.

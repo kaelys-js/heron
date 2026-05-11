@@ -1,7 +1,4 @@
 Several Issues (you have skills for doing proper work right?):
-- Clear All Jobs data from profile danger zone
-
-- LinkedIn Easy Apply will use the users linkedin profile which may not match "tailored cvs"; how is this handled and explained to the user? We can't use tailored cvs here right?
 
 - Multiple Job Profiles like: Software Enginnering, Accounting, Electrician, Laborer, etc.. do we support this fully/properly/easily? + In Onboarding
 
