@@ -74,6 +74,8 @@
     inboxCount={data?.inboxCount ?? 0}
     queueCount={data?.queueCount ?? 0}
     pinnedJobs={data?.pinnedJobs ?? []}
+    profilesState={data?.profilesState}
+    activeProfile={data?.activeProfile}
   />
   <Sidebar.Inset class="bg-card overflow-hidden">
     <svelte:boundary onerror={handleBoundaryError}>

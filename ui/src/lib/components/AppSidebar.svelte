@@ -9,27 +9,71 @@
     Inbox, ListTodo, Pin, KanbanSquare, FolderKanban, PlayCircle, Bot, ListChecks,
     Cpu, Wrench, Settings as SettingsIcon, ChevronsUpDown, Search, Plus,
     HelpCircle, BarChart3, MoreHorizontal, Star, Trash2, User, Lightbulb,
-    Plug,
+    Plug, Check, Cog,
   } from '@lucide/svelte';
   import { page } from '$app/state';
+  import { goto, invalidateAll } from '$app/navigation';
   import { onMount, onDestroy } from 'svelte';
   import { pinStore } from '$lib/sidebar-pins.svelte';
   import { globalActions } from '$lib/global-actions.svelte';
   import { cn } from '$lib/utils';
-  import { APP_NAME, APP_TAGLINE } from '$lib/config/branding';
+  import { APP_NAME } from '$lib/config/branding';
   import { ConfirmGate } from '$lib/confirm.svelte';
+  import { api, ApiError } from '$lib/api';
+  import { toast } from 'svelte-sonner';
+  import type { Profile, ProfilesState } from '$lib/server/profiles';
 
   type PinnedJob = { id: string; company: string; role: string };
-  let { inboxCount = 0, queueCount = 0, pinnedJobs = [] }: {
+  let {
+    inboxCount = 0,
+    queueCount = 0,
+    pinnedJobs = [],
+    profilesState,
+    activeProfile,
+  }: {
     inboxCount?: number;
     queueCount?: number;
     pinnedJobs?: PinnedJob[];
+    profilesState?: ProfilesState;
+    activeProfile?: Profile;
   } = $props();
 
   let pathname = $derived(page.url.pathname);
   let isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
 
-  const workspace = { name: APP_NAME, tagline: APP_TAGLINE };
+  // Profile switcher. The dropdown renders one item per profile + "Add new"
+  // + "Manage profiles". Clicking a profile flips the active-id on the
+  // server and invalidates so every route reloads against the new profile.
+  let switching = $state(false);
+  async function switchActiveProfile(id: string) {
+    if (switching || id === activeProfile?.id) return;
+    switching = true;
+    try {
+      await api.post('/api/profiles/active', { id }, { silent: true });
+      toast.success('Switched to ' + (profilesState?.profiles.find((p) => p.id === id)?.name ?? id));
+      await invalidateAll();
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Could not switch profile', { description: err.message });
+    } finally {
+      switching = false;
+    }
+  }
+
+  /** Map ProfileColor → Tailwind dot class. */
+  function profileDot(color: string): string {
+    const map: Record<string, string> = {
+      blue:    'bg-blue-400',
+      emerald: 'bg-emerald-400',
+      violet:  'bg-violet-400',
+      amber:   'bg-amber-400',
+      rose:    'bg-rose-400',
+      cyan:    'bg-cyan-400',
+      orange:  'bg-orange-400',
+      pink:    'bg-pink-400',
+    };
+    return map[color] ?? 'bg-zinc-400';
+  }
 
   onMount(() => {
     pinStore.init();
@@ -79,19 +123,48 @@
                     <line x1="6.5" y1="17.5" x2="25.5" y2="17.5" stroke="currentColor" stroke-width="1.2" opacity="0.55" class="text-zinc-200"/>
                     <rect x="14" y="16.4" width="4" height="2.2" rx="0.5" fill="currentColor" class="text-emerald-400"/>
                   </svg>
-                  <span class="absolute top-0.5 right-0.5 size-1.5 rounded-full bg-emerald-400 ring-2 ring-zinc-900"></span>
+                  {#if activeProfile}
+                    <span class={cn('absolute top-0.5 right-0.5 size-1.5 rounded-full ring-2 ring-zinc-900', profileDot(activeProfile.color))}></span>
+                  {/if}
                 </div>
-                <div class="flex flex-col gap-0.5 leading-none flex-1 text-left">
-                  <span class="font-semibold text-sm">{workspace.name}</span>
-                  <span class="text-xs text-muted-foreground">{workspace.tagline}</span>
+                <div class="flex flex-col gap-0.5 leading-none flex-1 text-left min-w-0">
+                  <span class="font-semibold text-sm truncate">{activeProfile?.name ?? APP_NAME}</span>
+                  <span class="text-xs text-muted-foreground truncate">
+                    {profilesState && profilesState.profiles.length > 1
+                      ? profilesState.profiles.length + ' profiles'
+                      : 'Active profile'}
+                  </span>
                 </div>
                 <ChevronsUpDown class="ml-auto size-4" />
               </Sidebar.MenuButton>
             {/snippet}
           </DropdownMenu.Trigger>
-          <DropdownMenu.Content side="right" align="start" class="w-56">
-            <DropdownMenu.Label>Workspaces</DropdownMenu.Label>
-            <DropdownMenu.Item>{workspace.name}</DropdownMenu.Item>
+          <DropdownMenu.Content side="right" align="start" class="w-64">
+            <DropdownMenu.Label class="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Switch profile
+            </DropdownMenu.Label>
+            {#each profilesState?.profiles ?? [] as p (p.id)}
+              <DropdownMenu.Item
+                onSelect={() => switchActiveProfile(p.id)}
+                disabled={switching}
+                class="gap-2"
+              >
+                <span class={cn('size-2 rounded-full flex-shrink-0', profileDot(p.color))}></span>
+                <span class="flex-1 truncate">{p.name}</span>
+                {#if p.id === activeProfile?.id}
+                  <Check class="size-3.5 text-emerald-400 flex-shrink-0" />
+                {/if}
+              </DropdownMenu.Item>
+            {/each}
+            <DropdownMenu.Separator />
+            <DropdownMenu.Item onSelect={() => goto('/onboarding?new=1')} class="gap-2 text-xs">
+              <Plus class="size-3.5" />
+              Add new profile
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => goto('/profiles')} class="gap-2 text-xs">
+              <Cog class="size-3.5" />
+              Manage profiles
+            </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Root>
       </Sidebar.MenuItem>
