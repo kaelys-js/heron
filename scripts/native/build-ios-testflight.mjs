@@ -74,6 +74,20 @@ run('pnpm', ['build'], {
 step(5, 'Syncing iOS');
 run('pnpm', ['exec', 'cap', 'sync', 'ios'], { cwd: UI });
 
+// Same self-heal as dev-ios.mjs — see comment there. xcodebuild via
+// Fastlane will fail with "cannot find type" if any App/*.swift file
+// isn't in the App target's compile-sources phase.
+if (which('ruby') && which('gem')) {
+  run('gem', ['install', 'xcodeproj', 'plist', '--user-install', '--no-document'], {
+    silent: true,
+    allowFail: true,
+  });
+  run('ruby', [join(ROOT, 'scripts', 'native', 'add-xcode-targets.rb')], {
+    cwd: iosDir,
+    allowFail: true,
+  });
+}
+
 step(6, 'Installing CocoaPods');
 run('pod', ['install', '--repo-update'], { cwd: iosDir });
 
