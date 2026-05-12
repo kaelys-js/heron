@@ -873,7 +873,28 @@ function shouldSkip() {
   if (process.argv.includes('--force') || process.env.BRAND_APPLY_FORCE === '1') return false;
   try {
     const prev = readFileSync(CACHE_FILE, 'utf8').trim();
-    return prev === computeApplyHash();
+    if (prev !== computeApplyHash()) return false;
+    // Cache says "no work to do" — but verify the canonical generated outputs
+    // still exist on disk. CI starts from a fresh checkout with NO generated
+    // files: if the cache file got committed (or restored from turbo cache)
+    // the hash would match but the outputs would be missing. In that case,
+    // re-run apply-brand to regenerate everything.
+    const fs = require('node:fs');
+    const canonicalOutputs = [
+      join(UI, 'src', 'lib', 'client', 'brand.ts'),
+      join(UI, 'electron', 'src', 'brand.ts'),
+      join(UI, 'static', 'favicon.svg'),
+      join(UI, 'static', 'manifest.webmanifest'),
+      join(UI, 'electron', 'build', 'icon.png'),
+      join(UI, 'electron', 'build', 'icon.icns'),
+      join(UI, 'electron', 'build', 'icon.ico'),
+    ];
+    for (const p of canonicalOutputs) {
+      if (!fs.existsSync(p)) {
+        return false; // missing output → run again, ignore hash
+      }
+    }
+    return true;
   } catch {
     return false;
   }
