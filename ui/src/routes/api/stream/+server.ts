@@ -1,19 +1,34 @@
 /**
- * SSE stream of activity events. Sends recent buffer first, then live events.
+ * SSE stream of activity events, scoped to the current user.
+ *
+ * Sends:
+ *   1. The recent in-memory buffer (events tagged for this user OR broadcast).
+ *   2. Live events as they happen.
+ *
+ * The endpoint requires authentication — the hooks-level guard refuses
+ * anonymous traffic to anything under /api/* that isn't on the public
+ * allowlist, but we ALSO double-check here so the SSE filter has a userId
+ * to gate against.
  *
  * @module
  */
 
 import { bus, logEvent } from '$lib/server/events';
+import { requireUserId } from '$lib/server/auth-helpers';
+import { SYSTEM_USER_ID } from '$lib/server/user-context';
 import type { ActivityEvent } from '$lib/types';
 
-export const GET = async ({ request }: { request: Request }) => {
+export const GET = async ({ request, locals }: { request: Request; locals: App.Locals }) => {
+  const userId = requireUserId(locals);
+  const matches = (ev: ActivityEvent) =>
+    !ev.userId || ev.userId === userId || ev.userId === SYSTEM_USER_ID;
   const stream = new ReadableStream({
     start(controller) {
       const enc = new TextEncoder();
       let closed = false;
       const send = (ev: ActivityEvent) => {
         if (closed) return;
+        if (!matches(ev)) return;
         try {
           controller.enqueue(enc.encode('data: ' + JSON.stringify(ev) + '\n\n'));
         } catch (e: unknown) {
@@ -25,13 +40,11 @@ export const GET = async ({ request }: { request: Request }) => {
           });
         }
       };
-      // Flush a comment line immediately so EventSource fires `onopen` without
-      // waiting for a real event or the 25s heartbeat.
       try {
         controller.enqueue(enc.encode(': connected\n\n'));
       } catch {}
       try {
-        for (const ev of bus.recent()) send(ev);
+        for (const ev of bus.recentForUser(userId)) send(ev);
       } catch (e: unknown) {
         logEvent('stream', 'failed to send recent events', {
           level: 'warn',

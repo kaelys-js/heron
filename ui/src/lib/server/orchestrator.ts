@@ -216,8 +216,24 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
     message: cmd + ' ' + args.join(' ') + ' · cwd=' + cwd,
   });
   let p: ChildProcess;
+  // Inject the current user's id into the spawned env. Both lib_profiles.py
+  // and lib-profiles.mjs honor `CAREER_OPS_USER_ID` as a fallback for the
+  // `--user` CLI flag, so even scripts that don't yet accept the flag
+  // pick up the right user's data tree automatically.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { maybeCurrentUserId, SYSTEM_USER_ID } =
+    require('./user-context') as typeof import('./user-context');
+  const ctxUserId = maybeCurrentUserId();
+  const envWithUser: NodeJS.ProcessEnv = { ...process.env };
+  if (ctxUserId && ctxUserId !== SYSTEM_USER_ID) {
+    envWithUser.CAREER_OPS_USER_ID = ctxUserId;
+  } else if (process.env.CAREER_OPS_USER_ID) {
+    // Inherit any pre-set var (autopilot jobs may set it explicitly before
+    // calling start()).
+    envWithUser.CAREER_OPS_USER_ID = process.env.CAREER_OPS_USER_ID;
+  }
   try {
-    p = spawn(cmd, args, { cwd, env: { ...process.env } });
+    p = spawn(cmd, args, { cwd, env: envWithUser });
   } catch (e) {
     // Synchronous spawn() rarely throws (most failures emit 'error'), but
     // EACCES on the binary can come back here.
@@ -369,6 +385,13 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
   }
   const env = { ...process.env };
   if (autoSubmit) env.LINKEDIN_AUTO_SUBMIT = '1';
+  // Pass the acting user id so lib_profiles.py resolves the right
+  // data/users/{userId}/profiles/{slug}/ tree.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { maybeCurrentUserId: _curUser, SYSTEM_USER_ID: _sys } =
+    require('./user-context') as typeof import('./user-context');
+  const _uid = _curUser();
+  if (_uid && _uid !== _sys) env.CAREER_OPS_USER_ID = _uid;
   // Surface up-front whether the general CV is missing for the targeted profile.
   let cvNote = '';
   try {
@@ -527,10 +550,20 @@ export function runOferta(
       profileId,
     });
     let p: ChildProcess;
+    // Pass the acting user id so any helper script the CLI invokes (e.g.
+    // generate-pdf.mjs) sees the right user's tree.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { maybeCurrentUserId, SYSTEM_USER_ID } =
+      require('./user-context') as typeof import('./user-context');
+    const ofertaUserId = maybeCurrentUserId();
+    const ofertaEnv: NodeJS.ProcessEnv = { ...process.env };
+    if (ofertaUserId && ofertaUserId !== SYSTEM_USER_ID) {
+      ofertaEnv.CAREER_OPS_USER_ID = ofertaUserId;
+    }
     try {
       p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
         cwd: ROOT,
-        env: { ...process.env },
+        env: ofertaEnv,
       });
     } catch (e) {
       logEvent(taskKey, 'Failed to spawn ' + AGENT_CLI + ' CLI', {

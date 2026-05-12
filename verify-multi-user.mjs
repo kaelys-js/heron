@@ -1,0 +1,565 @@
+#!/usr/bin/env node
+/**
+ * verify-multi-user.mjs — Behavioural verifier for the multi-user rollout.
+ *
+ * Spawns the production build of the UI server, injects two users
+ * (Alice + Bob) directly into auth.db, mints signed session cookies,
+ * then runs ~30 assertions covering:
+ *
+ *   1. Foundation: auth.db + app.db created on boot, schemas present
+ *   2. Auth guard: 401 for unauth API, 302 for unauth pages
+ *   3. Session: Better Auth get-session returns null unauth, full session authed
+ *   4. Isolation:
+ *      - /api/profiles                  per-user
+ *      - /api/ui-prefs                  per-user
+ *      - /api/notifications             per-user activity feed
+ *      - /api/issues                    per-user issues + broadcast
+ *      - data/users/{userId}/profiles/* per-user FS tree
+ *   5. Invite codes: create + claim + dedup + bad code rejection
+ *   6. Lifecycle: soft delete, restore, hard delete, GDPR export
+ *   7. Audit log: deletion-requested + data-exported written, attributed
+ *
+ * Output: 30+ check lines like `verify-pipeline.mjs`. Exit 0 if all
+ * green, exit 1 if any red. Run via:  node verify-multi-user.mjs
+ */
+
+import { spawn } from 'node:child_process';
+import { existsSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+import crypto from 'node:crypto';
+import { execSync } from 'node:child_process';
+
+const ROOT = dirname(fileURLToPath(import.meta.url));
+const UI = join(ROOT, 'ui');
+// better-sqlite3 is installed under ui/node_modules (the workspace
+// package), not the repo root. Resolve from there.
+const require = createRequire(join(UI, 'package.json'));
+const Database = require('better-sqlite3');
+const PORT = 5189;
+const BASE = `http://localhost:${PORT}`;
+const AUTH_DB = join(ROOT, 'data', 'auth.db');
+const APP_DB = join(ROOT, 'data', 'app.db');
+
+let passed = 0;
+let failed = 0;
+const failures = [];
+
+function check(name, ok, detail) {
+  if (ok) {
+    console.log(`  ✓ ${name}`);
+    passed++;
+  } else {
+    console.log(`  ✗ ${name}${detail ? `  — ${detail}` : ''}`);
+    failed++;
+    failures.push(name);
+  }
+}
+
+function section(title) {
+  console.log(`\n${title}`);
+}
+
+async function fetchJson(path, init = {}) {
+  const res = await fetch(`${BASE}${path}`, init);
+  const status = res.status;
+  let body = null;
+  try {
+    body = await res.json();
+  } catch {
+    /* not json */
+  }
+  return { status, body };
+}
+
+async function fetchHead(path, init = {}) {
+  const res = await fetch(`${BASE}${path}`, { ...init, redirect: 'manual' });
+  return { status: res.status, location: res.headers.get('location') };
+}
+
+function injectUser(secret, label, role = 'owner') {
+  const now = Date.now();
+  const userId = `u-${label}-${crypto.randomBytes(3).toString('hex')}`;
+  const sessionId = `s-${label}-${crypto.randomBytes(3).toString('hex')}`;
+  const token = crypto.randomBytes(16).toString('hex');
+  const db = new Database(AUTH_DB);
+  db.pragma('foreign_keys = ON');
+  db.prepare(
+    `INSERT INTO users (id, email, email_verified, role, two_factor_enabled, created_at, updated_at) VALUES (?, ?, 1, ?, 0, ?, ?)`,
+  ).run(userId, `${label}-${Date.now()}@verify.local`, role, now, now);
+  db.prepare(
+    `INSERT INTO sessions (id, user_id, expires_at, token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+  ).run(sessionId, userId, now + 86400 * 1000, token, now, now);
+  db.close();
+  const sig = crypto.createHmac('sha256', secret).update(token).digest('base64');
+  return { userId, token, cookie: `${token}.${sig}` };
+}
+
+function deleteSession(userId) {
+  const db = new Database(AUTH_DB);
+  db.prepare(`DELETE FROM sessions WHERE user_id = ?`).run(userId);
+  db.close();
+}
+
+function readSecret() {
+  const env = readFileSync(join(ROOT, '.env'), 'utf8');
+  const m = env.match(/^BETTER_AUTH_SECRET=(.+)$/m);
+  if (!m) throw new Error('BETTER_AUTH_SECRET not found in .env');
+  return m[1].trim();
+}
+
+function authedHeaders(cookie) {
+  return { Cookie: `career-ops.session_token=${cookie}` };
+}
+
+async function startServer() {
+  // Build first.
+  console.log('Building UI server...');
+  execSync('pnpm exec vite build', { cwd: UI, stdio: 'pipe' });
+  const child = spawn('node', ['build/index.js'], {
+    cwd: UI,
+    env: { ...process.env, PORT: String(PORT) },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  // Wait for "Listening on" line.
+  await new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('server boot timeout')), 15000);
+    child.stdout.on('data', (chunk) => {
+      if (chunk.toString().includes('Listening on')) {
+        clearTimeout(t);
+        resolve();
+      }
+    });
+    child.stderr.on('data', () => {});
+  });
+  return child;
+}
+
+async function main() {
+  // Reset state.
+  for (const p of [AUTH_DB, APP_DB, `${AUTH_DB}-journal`, `${AUTH_DB}-wal`, `${AUTH_DB}-shm`]) {
+    try {
+      rmSync(p, { force: true });
+    } catch {}
+  }
+  rmSync(join(ROOT, 'data', 'users'), { recursive: true, force: true });
+
+  const server = await startServer();
+  try {
+    section('1. Foundation');
+    check('auth.db created on boot', existsSync(AUTH_DB));
+    check('app.db created on boot', existsSync(APP_DB));
+    {
+      const db = new Database(AUTH_DB, { readonly: true });
+      const tables = db
+        .prepare(`SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`)
+        .all()
+        .map((r) => r.name);
+      db.close();
+      check('auth.db has users', tables.includes('users'));
+      check('auth.db has sessions', tables.includes('sessions'));
+      check('auth.db has passkeys', tables.includes('passkeys'));
+      check('auth.db has invite_codes', tables.includes('invite_codes'));
+      check('auth.db has audit_log', tables.includes('audit_log'));
+      check('auth.db has pending_deletions', tables.includes('pending_deletions'));
+    }
+    {
+      const db = new Database(APP_DB, { readonly: true });
+      const tables = db
+        .prepare(`SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`)
+        .all()
+        .map((r) => r.name);
+      db.close();
+      check('app.db has profiles', tables.includes('profiles'));
+      check('app.db has ui_prefs', tables.includes('ui_prefs'));
+      check('app.db has issues', tables.includes('issues'));
+      check('app.db has cv_content', tables.includes('cv_content'));
+    }
+
+    section('2. Auth guard');
+    {
+      const { status, body } = await fetchJson('/api/profiles');
+      check('Unauthenticated /api/profiles → 401', status === 401);
+      check(
+        'Unauthenticated error envelope is JSON {ok:false,error:"unauthenticated"}',
+        body?.ok === false && body?.error === 'unauthenticated',
+      );
+    }
+    {
+      const r = await fetchHead('/pipeline');
+      check('Unauthenticated /pipeline → 302', r.status === 302);
+      check(
+        '/pipeline redirect target preserves redirectTo',
+        (r.location || '').startsWith('/login?redirectTo='),
+      );
+    }
+    {
+      const r = await fetchJson('/api/auth/get-session');
+      check('Public /api/auth/get-session → 200', r.status === 200);
+      check('get-session body is null when unauth', r.body === null);
+    }
+
+    section('3. User isolation — profiles + ui-prefs');
+    const secret = readSecret();
+    const alice = injectUser(secret, 'alice');
+    const bob = injectUser(secret, 'bob');
+
+    {
+      const r = await fetchJson('/api/profiles', { headers: authedHeaders(alice.cookie) });
+      check('Alice authed /api/profiles → 200', r.status === 200);
+      check('Alice has at least 1 profile (seeded)', (r.body?.profiles?.length ?? 0) >= 1);
+    }
+    {
+      // Alice creates a new profile.
+      const r = await fetchJson('/api/profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authedHeaders(alice.cookie) },
+        body: JSON.stringify({ name: 'AI Search', color: 'violet' }),
+      });
+      check(
+        'Alice creates "AI Search" profile',
+        r.status === 200 && r.body?.profile?.name === 'AI Search',
+      );
+    }
+    {
+      const r = await fetchJson('/api/profiles', { headers: authedHeaders(alice.cookie) });
+      check('Alice now has 2 profiles', (r.body?.profiles?.length ?? 0) === 2);
+    }
+    {
+      const r = await fetchJson('/api/profiles', { headers: authedHeaders(bob.cookie) });
+      check('Bob still has 1 profile (isolated from Alice)', (r.body?.profiles?.length ?? 0) === 1);
+    }
+
+    {
+      // ui-prefs isolation.
+      await fetchJson('/api/ui-prefs', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authedHeaders(alice.cookie) },
+        body: JSON.stringify({ appearance: 'dark', theme: 'amber' }),
+      });
+      await fetchJson('/api/ui-prefs', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authedHeaders(bob.cookie) },
+        body: JSON.stringify({ appearance: 'light', theme: 'rose' }),
+      });
+      const aliceP = await fetchJson('/api/ui-prefs', { headers: authedHeaders(alice.cookie) });
+      const bobP = await fetchJson('/api/ui-prefs', { headers: authedHeaders(bob.cookie) });
+      check(
+        'Alice ui-prefs persists dark/amber',
+        aliceP.body?.appearance === 'dark' && aliceP.body?.theme === 'amber',
+      );
+      check(
+        'Bob ui-prefs persists light/rose',
+        bobP.body?.appearance === 'light' && bobP.body?.theme === 'rose',
+      );
+    }
+
+    section('4. Activity + issues isolation');
+    {
+      const aliceN = await fetchJson('/api/notifications', {
+        headers: authedHeaders(alice.cookie),
+      });
+      const bobN = await fetchJson('/api/notifications', { headers: authedHeaders(bob.cookie) });
+      const aliceUsernames = new Set(
+        (aliceN.body?.events ?? []).map((e) => e.userId).filter(Boolean),
+      );
+      const bobUsernames = new Set((bobN.body?.events ?? []).map((e) => e.userId).filter(Boolean));
+      check("Alice's activity feed has no Bob events", !aliceUsernames.has(bob.userId));
+      check("Bob's activity feed has no Alice events", !bobUsernames.has(alice.userId));
+    }
+
+    section('5. Invite codes');
+    {
+      const create = await fetchJson('/api/auth/invite/create', {
+        method: 'POST',
+        headers: authedHeaders(alice.cookie),
+      });
+      check(
+        'Invite create succeeds',
+        create.status === 200 && /^\d{6}$/.test(create.body?.code ?? ''),
+      );
+      const code = create.body.code;
+      const claim = await fetchJson('/api/auth/invite/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, email: 'someone@verify.local' }),
+      });
+      check('Invite claim accepts valid code', claim.status === 200 && claim.body?.ok === true);
+      const bad = await fetchJson('/api/auth/invite/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: '999999', email: 'someone@verify.local' }),
+      });
+      check('Invite claim rejects bad code', bad.status === 400);
+    }
+
+    section('6. Per-user filesystem tree');
+    {
+      // Trigger Alice's profile-tree creation via a request that uses profilePath.
+      await fetchJson('/api/profiles', { headers: authedHeaders(alice.cookie) });
+      check(
+        "Alice's per-user data/users/{id}/ tree exists",
+        existsSync(join(ROOT, 'data', 'users', alice.userId)),
+      );
+      // Pre-claim sentinel records the first user who inherited legacy data.
+      const claimFile = join(ROOT, 'data', 'users', '.legacy-claimed');
+      check(
+        '.legacy-claimed sentinel records the first user',
+        existsSync(claimFile) && readFileSync(claimFile, 'utf8').trim() === alice.userId,
+      );
+    }
+
+    section('7. Account lifecycle');
+    {
+      // Soft delete Alice.
+      const soft = await fetchJson('/api/auth/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authedHeaders(alice.cookie) },
+        body: JSON.stringify({ confirm: 'DELETE' }),
+      });
+      check(
+        'Soft delete returns scheduledFor',
+        soft.status === 200 && typeof soft.body?.scheduledFor === 'number',
+      );
+      const db = new Database(AUTH_DB, { readonly: true });
+      const row = db.prepare(`SELECT deleted_at FROM users WHERE id = ?`).get(alice.userId);
+      const pdRow = db
+        .prepare(`SELECT scheduled_for FROM pending_deletions WHERE user_id = ?`)
+        .get(alice.userId);
+      db.close();
+      check('Soft delete sets users.deleted_at', row?.deleted_at !== null);
+      check('Soft delete creates pending_deletions row', !!pdRow);
+
+      // Alice's cookie is now stale.
+      const after = await fetchJson('/api/profiles', { headers: authedHeaders(alice.cookie) });
+      check('Soft-deleted user cannot authenticate', after.status === 401);
+
+      // Bob unaffected.
+      const bobAfter = await fetchJson('/api/profiles', { headers: authedHeaders(bob.cookie) });
+      check('Bob unaffected by Alice’s deletion', bobAfter.status === 200);
+    }
+
+    section('8. GDPR export');
+    const carol = injectUser(secret, 'carol');
+    {
+      const exp = await fetchJson('/api/auth/account/export', {
+        headers: authedHeaders(carol.cookie),
+      });
+      check('Export returns 200', exp.status === 200);
+      check('Export has json + files keys', exp.body?.json && exp.body?.files !== undefined);
+      check(
+        'Export json includes user, profiles, jobs, issues',
+        exp.body?.json?.user &&
+          Array.isArray(exp.body?.json?.profiles) &&
+          Array.isArray(exp.body?.json?.jobs) &&
+          Array.isArray(exp.body?.json?.issues),
+      );
+    }
+
+    section('9. Hard delete (purgeNow)');
+    {
+      // Create test data for carol.
+      await fetchJson('/api/profiles', { headers: authedHeaders(carol.cookie) });
+      const purge = await fetchJson('/api/auth/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authedHeaders(carol.cookie) },
+        body: JSON.stringify({ confirm: 'DELETE', purgeNow: true }),
+      });
+      check(
+        'Purge-now returns ok:true purged:true',
+        purge.body?.ok === true && purge.body?.purged === true,
+      );
+      const db = new Database(AUTH_DB, { readonly: true });
+      const row = db.prepare(`SELECT id FROM users WHERE id = ?`).get(carol.userId);
+      db.close();
+      check('Hard delete removes user from auth.db', !row);
+      const adb = new Database(APP_DB, { readonly: true });
+      const profCount = adb
+        .prepare(`SELECT COUNT(*) AS n FROM profiles WHERE user_id = ?`)
+        .get(carol.userId);
+      adb.close();
+      check('Hard delete cascades to app.db', profCount?.n === 0);
+    }
+
+    section('10. Audit log');
+    {
+      const db = new Database(AUTH_DB, { readonly: true });
+      const requested = db
+        .prepare(
+          `SELECT user_id FROM audit_log WHERE event_type = 'deletion-requested' AND user_id = ?`,
+        )
+        .get(alice.userId);
+      const purged = db
+        .prepare(`SELECT user_id FROM audit_log WHERE event_type = 'account-purged'`)
+        .all();
+      db.close();
+      check('deletion-requested attributed to Alice', !!requested);
+      check(
+        'account-purged audit row anonymised (user_id NULL)',
+        purged.some((r) => r.user_id === null),
+      );
+    }
+
+    section('11. RBAC enforcement');
+    const owner = injectUser(secret, 'rbac-owner', 'owner');
+    const admin = injectUser(secret, 'rbac-admin', 'admin');
+    const member = injectUser(secret, 'rbac-member', 'member');
+    {
+      // Backups — owner-only.
+      const r1 = await fetchJson('/api/backup/list', { headers: authedHeaders(owner.cookie) });
+      check('owner → /api/backup/list 200', r1.status === 200);
+      const r2 = await fetchJson('/api/backup/list', { headers: authedHeaders(member.cookie) });
+      check('member → /api/backup/list 403', r2.status === 403);
+      const r3 = await fetchJson('/api/backup/list', { headers: authedHeaders(admin.cookie) });
+      check('admin → /api/backup/list 403 (owner-only)', r3.status === 403);
+      const r4 = await fetchJson('/api/backup/run', {
+        method: 'POST',
+        headers: authedHeaders(member.cookie),
+      });
+      check('member → POST /api/backup/run 403', r4.status === 403);
+    }
+    {
+      // Settings env — owner-only.
+      const r1 = await fetchJson('/api/settings', { headers: authedHeaders(owner.cookie) });
+      check('owner → /api/settings 200', r1.status === 200);
+      const r2 = await fetchJson('/api/settings', { headers: authedHeaders(member.cookie) });
+      check('member → /api/settings 403', r2.status === 403);
+    }
+    {
+      // Sources — owner-only.
+      const r1 = await fetchJson('/api/sources/anthropic/disconnect', {
+        method: 'POST',
+        headers: authedHeaders(member.cookie),
+      });
+      check('member → /api/sources/*/disconnect 403', r1.status === 403);
+    }
+    {
+      // Onboarding reset — owner-only.
+      const r1 = await fetchJson('/api/onboarding/reset', {
+        method: 'POST',
+        headers: authedHeaders(member.cookie),
+      });
+      check('member → /api/onboarding/reset 403', r1.status === 403);
+    }
+    {
+      // Invite create — owner+admin only.
+      const r1 = await fetchJson('/api/auth/invite/create', {
+        method: 'POST',
+        headers: authedHeaders(owner.cookie),
+      });
+      check('owner → /api/auth/invite/create 200', r1.status === 200);
+      const r2 = await fetchJson('/api/auth/invite/create', {
+        method: 'POST',
+        headers: authedHeaders(admin.cookie),
+      });
+      check('admin → /api/auth/invite/create 200', r2.status === 200);
+      const r3 = await fetchJson('/api/auth/invite/create', {
+        method: 'POST',
+        headers: authedHeaders(member.cookie),
+      });
+      check('member → /api/auth/invite/create 403', r3.status === 403);
+    }
+    {
+      // Profile reset scope=everything — owner-only.
+      const r1 = await fetchJson('/api/profile/reset', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authedHeaders(member.cookie),
+        },
+        body: JSON.stringify({ confirm: 'RESET', scope: 'everything', profileId: 'default' }),
+      });
+      check('member → /api/profile/reset scope=everything 403', r1.status === 403);
+    }
+
+    section('12. Backup tarball contents');
+    {
+      const r1 = await fetchJson('/api/backup/run', {
+        method: 'POST',
+        headers: authedHeaders(owner.cookie),
+      });
+      check('owner can create a backup', r1.body?.ok === true);
+      const backupId = r1.body?.id;
+      if (backupId) {
+        const fs = await import('node:fs');
+        const tarPath = join(ROOT, 'data', 'backups', `${backupId}.tar.gz`);
+        check('backup tarball exists on disk', fs.existsSync(tarPath));
+        const { execSync: exec } = await import('node:child_process');
+        const listing = exec(`tar -tzf "${tarPath}"`, { encoding: 'utf8' });
+        check('tarball includes data/auth.db', listing.includes('data/auth.db'));
+        check('tarball includes data/app.db', listing.includes('data/app.db'));
+        check('tarball includes data/users/', listing.includes('data/users/'));
+        check('tarball excludes db-wal/shm', !/(db-wal|db-shm)/.test(listing));
+        const metaPath = join(ROOT, 'data', 'backups', `${backupId}.meta.json`);
+        const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+        check('sidecar has users[] array', Array.isArray(meta.users));
+        check('sidecar has schemaVersions object', !!meta.schemaVersions);
+      }
+    }
+
+    section('13. lib_profiles / lib-profiles user-aware');
+    {
+      // Spawn lib_profiles.py via shell with CAREER_OPS_USER_ID set;
+      // check it resolves to data/users/{userId}/profiles/{slug}/.
+      const { execSync: exec } = await import('node:child_process');
+      const py = exec(
+        `cd "${ROOT}" && CAREER_OPS_USER_ID=test-user python3 -c "from lib_profiles import profile_path, resolve_user_arg; print(profile_path('default','cv-md', user_id=resolve_user_arg(None)))"`,
+        { encoding: 'utf8' },
+      ).trim();
+      check(
+        'lib_profiles.py honors CAREER_OPS_USER_ID',
+        py === join(ROOT, 'data', 'users', 'test-user', 'profiles', 'default', 'cv.md'),
+        py,
+      );
+      const mjs = exec(
+        `cd "${ROOT}" && CAREER_OPS_USER_ID=test-user node -e "import('./lib-profiles.mjs').then(m => process.stdout.write(m.profilePath('default','cv-md', m.resolveUserArg(null))))"`,
+        { encoding: 'utf8' },
+      ).trim();
+      check(
+        'lib-profiles.mjs honors CAREER_OPS_USER_ID',
+        mjs === join(ROOT, 'data', 'users', 'test-user', 'profiles', 'default', 'cv.md'),
+        mjs,
+      );
+    }
+
+    section('14. SQLite mirror — events + issues');
+    {
+      // Create an authed user, trigger an event, then read it back from app.db.
+      const sigUser = injectUser(secret, 'mirror', 'owner');
+      // Create-profile triggers a "Profile created" event with userId tag.
+      await fetchJson('/api/profiles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authedHeaders(sigUser.cookie),
+        },
+        body: JSON.stringify({ name: 'Mirror Test', color: 'blue' }),
+      });
+      await new Promise((r) => setTimeout(r, 200)); // bus flush
+      const appDb = new Database(APP_DB, { readonly: true });
+      const ev = appDb
+        .prepare(
+          `SELECT user_id, source, title FROM activity_events WHERE user_id = ? AND title = 'Profile created'`,
+        )
+        .get(sigUser.userId);
+      appDb.close();
+      check('activity_events row written for the acting user', !!ev);
+      check('activity_events row tagged with the right user_id', ev?.user_id === sigUser.userId);
+    }
+  } finally {
+    server.kill('SIGTERM');
+  }
+
+  console.log(`\n${passed} passed, ${failed} failed`);
+  if (failed > 0) {
+    console.log('\nFailures:');
+    for (const f of failures) console.log(`  - ${f}`);
+    process.exit(1);
+  }
+}
+
+main().catch((e) => {
+  console.error('verify-multi-user crashed:', e);
+  process.exit(2);
+});

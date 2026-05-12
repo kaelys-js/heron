@@ -5,28 +5,62 @@ import { readProfiles } from '$lib/server/profiles';
 import { readProfile } from '$lib/server/profile';
 
 /**
- * Layout-level loader. Three responsibilities:
+ * Layout-level loader. Four responsibilities:
  *
  *   1. **First-run redirect** — fresh installs (missing cv.md / profile.yml /
  *      portals.yml / modes/_profile.md / ANTHROPIC_API_KEY) get bounced to
  *      /onboarding. The wizard's own routes are exempt to avoid an infinite
  *      loop, and so are /api/* routes (the wizard hits them mid-flow).
  *
- *   2. **Profile state** — the active profile + the full profile list, so
+ *   2. **Unauthenticated bypass** — anonymous traffic on public auth pages
+ *      (/login, /signup, /onboarding/account, root) doesn't need the
+ *      profile + sidebar payload. Return a minimal shape so the layout
+ *      renders without spending a DB round-trip.
+ *
+ *   3. **Profile state** — the active profile + the full profile list, so
  *      the sidebar profile-switcher dropdown can render without a separate
  *      fetch.
  *
- *   3. **Sidebar data** — pinned jobs, inbox count, queue count for the
+ *   4. **Sidebar data** — pinned jobs, inbox count, queue count for the
  *      AppSidebar's badges. Computed against the ACTIVE profile only.
  */
-export async function load({ url }: { url: URL }) {
+export async function load({ url, locals }: { url: URL; locals: App.Locals }) {
   if (
     isFreshInstall() &&
     !url.pathname.startsWith('/onboarding') &&
     !url.pathname.startsWith('/api') &&
-    !url.pathname.startsWith('/help')
+    !url.pathname.startsWith('/help') &&
+    // Multi-user auth pages bypass the onboarding redirect. A user who
+    // already has an account on a fresh install (e.g. partner being
+    // invited) needs to reach /login or /signup directly.
+    !url.pathname.startsWith('/login') &&
+    !url.pathname.startsWith('/signup')
   ) {
     throw redirect(302, '/onboarding');
+  }
+
+  // Unauthenticated traffic skips the per-user data fetches. The pages
+  // that need profile state (/, /pipeline, /job/*, /settings, …) are
+  // already protected by the hooks middleware; the only requests that
+  // can reach this branch without a session are the public auth pages.
+  if (!locals.user) {
+    return {
+      profilesState: { activeId: 'default', profiles: [] as never[] },
+      activeProfile: undefined,
+      profileAutomations: {} as Record<
+        string,
+        {
+          autonomous_apply?: boolean;
+          warmup_days?: number;
+          min_score_to_apply?: number;
+          enabled_portals?: string[];
+          enabled_at?: number;
+        }
+      >,
+      inboxCount: 0,
+      queueCount: 0,
+      pinnedJobs: [] as Array<{ id: string; company: string; role: string }>,
+    };
   }
 
   const profilesState = readProfiles();

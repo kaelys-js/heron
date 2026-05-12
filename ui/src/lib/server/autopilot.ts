@@ -372,20 +372,49 @@ async function runTask(s: Schedule): Promise<void> {
  * resources — running them in parallel for multiple profiles would just
  * fight each other.
  */
+/** List every real user (deleted_at IS NULL) for fan-out scheduling.
+ *  Falls back to the SYSTEM_USER_ID legacy install when no users exist
+ *  yet (pre-multi-user single-user mode). */
+async function listSchedulableUsers(): Promise<string[]> {
+  try {
+    const { authDb } = await import('./db');
+    const { users } = await import('./db/auth-schema');
+    const { isNull } = await import('drizzle-orm');
+    const rows = authDb.select({ id: users.id }).from(users).where(isNull(users.deletedAt)).all();
+    if (rows.length === 0) {
+      const { SYSTEM_USER_ID } = await import('./user-context');
+      return [SYSTEM_USER_ID];
+    }
+    return rows.map((r) => r.id);
+  } catch {
+    const { SYSTEM_USER_ID } = await import('./user-context');
+    return [SYSTEM_USER_ID];
+  }
+}
+
 async function runScanForAllProfiles(): Promise<void> {
   try {
-    const { listProfiles } = await import('./profiles');
-    const profiles = listProfiles();
-    if (profiles.length === 0) {
-      runScan();
-      return;
-    }
-    for (const p of profiles) {
-      logEvent('autopilot', 'Daily scan for profile ' + p.id, {
-        category: 'system',
-        message: 'fan-out · ' + p.id,
-      });
-      runScan(p.id);
+    const { runAsUser } = await import('./user-context');
+    const { listProfilesForUser } = await import('./profiles-db');
+    const userIds = await listSchedulableUsers();
+    for (const userId of userIds) {
+      const profiles = listProfilesForUser(userId);
+      if (profiles.length === 0) {
+        await runAsUser(userId, async () => {
+          runScan();
+        });
+        continue;
+      }
+      for (const p of profiles) {
+        logEvent('autopilot', 'Daily scan for user ' + userId + ' / profile ' + p.slug, {
+          category: 'system',
+          message: 'fan-out · user=' + userId + ' · profile=' + p.slug,
+          userId,
+        });
+        await runAsUser(userId, async () => {
+          runScan(p.slug);
+        });
+      }
     }
   } catch (e) {
     reportServerError('autopilot', 'Fan-out scan failed', e);
@@ -396,18 +425,27 @@ async function runScanForAllProfiles(): Promise<void> {
 
 async function runGeminiForAllProfiles(top: number): Promise<void> {
   try {
-    const { listProfiles } = await import('./profiles');
-    const profiles = listProfiles();
-    if (profiles.length === 0) {
-      runGemini(top);
-      return;
-    }
-    for (const p of profiles) {
-      logEvent('autopilot', 'Gemini for profile ' + p.id, {
-        category: 'system',
-        message: 'fan-out · ' + p.id + ' · top=' + top,
-      });
-      runGemini(top, p.id);
+    const { runAsUser } = await import('./user-context');
+    const { listProfilesForUser } = await import('./profiles-db');
+    const userIds = await listSchedulableUsers();
+    for (const userId of userIds) {
+      const profiles = listProfilesForUser(userId);
+      if (profiles.length === 0) {
+        await runAsUser(userId, async () => {
+          runGemini(top);
+        });
+        continue;
+      }
+      for (const p of profiles) {
+        logEvent('autopilot', 'Gemini for user ' + userId + ' / profile ' + p.slug, {
+          category: 'system',
+          message: 'fan-out · user=' + userId + ' · profile=' + p.slug + ' · top=' + top,
+          userId,
+        });
+        await runAsUser(userId, async () => {
+          runGemini(top, p.slug);
+        });
+      }
     }
   } catch (e) {
     reportServerError('autopilot', 'Fan-out gemini failed', e);

@@ -1,5 +1,8 @@
 /**
- * POST /api/backup/restore — restore from a specific snapshot.
+ * POST /api/backup/restore — restore from a specific snapshot. Owner-only.
+ *
+ * A restore overwrites EVERY user's data. Members and admins cannot
+ * trigger this — only the install owner.
  *
  * Body: { id: string }
  *
@@ -9,11 +12,16 @@
  */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
+import { requireOwner } from '$lib/server/auth-helpers';
 import { restoreBackup } from '$lib/server/backup';
 
-export const POST = wrap('backup-restore', async ({ request }: { request: Request }) => {
-  const body = await request.json().catch(() => ({}));
-  const id = typeof body?.id === 'string' ? body.id : '';
-  if (!id) badRequest('id required');
-  return await restoreBackup(id);
-});
+export const POST = wrap(
+  'backup-restore',
+  async ({ request, locals }: { request: Request; locals: App.Locals }) => {
+    requireOwner(locals);
+    const body = await request.json().catch(() => ({}));
+    const id = typeof body?.id === 'string' ? body.id : '';
+    if (!id) badRequest('id required');
+    return await restoreBackup(id);
+  },
+);

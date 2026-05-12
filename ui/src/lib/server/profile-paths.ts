@@ -49,6 +49,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './files';
+import { currentUserIdOrDefault, SYSTEM_USER_ID } from './user-context';
 
 export type ProfileFileKind =
   // Top-level user content
@@ -71,6 +72,56 @@ export type ProfileFileKind =
   | 'interview-prep-dir';
 
 const PROFILES_ROOT = path.join(ROOT, 'data', 'profiles');
+const USERS_ROOT = path.join(ROOT, 'data', 'users');
+
+/**
+ * Where the per-profile content tree lives for the given user.
+ *
+ *   • System / pre-multi-user mode (userId === SYSTEM_USER_ID): legacy
+ *     layout at `data/profiles/{slug}/...`. This stays the source of truth
+ *     for single-user installs and for code paths that haven't been
+ *     audited for user-context yet.
+ *
+ *   • Real users: `data/users/{userId}/profiles/{slug}/...`. The
+ *     per-user prefix guarantees two users with the same profile slug
+ *     ("default", "engineer-search") never collide on disk.
+ *
+ * Migration story: on first read for a user under the new layout, the
+ * caller (or the migration helper in `profile-migrate.ts`) copies the
+ * relevant data/profiles/{slug}/ tree under `data/users/{userId}/...`.
+ * The legacy tree is left in place so single-user-mode tooling still
+ * works during the transition.
+ */
+function userProfilesRoot(userId: string): string {
+  if (userId === SYSTEM_USER_ID) return PROFILES_ROOT;
+  return path.join(USERS_ROOT, userId, 'profiles');
+}
+
+function validateProfileId(profileId: unknown): asserts profileId is string {
+  if (!profileId || typeof profileId !== 'string') {
+    throw new Error('profilePath: profileId is required (got ' + JSON.stringify(profileId) + ')');
+  }
+  if (
+    (profileId as string).includes('/') ||
+    (profileId as string).includes('\\') ||
+    (profileId as string).includes('..')
+  ) {
+    throw new Error('profilePath: invalid profileId (path-traversal attempt): ' + profileId);
+  }
+}
+
+function validateUserId(userId: unknown): asserts userId is string {
+  if (!userId || typeof userId !== 'string') {
+    throw new Error('profilePath: userId is required (got ' + JSON.stringify(userId) + ')');
+  }
+  if (
+    (userId as string).includes('/') ||
+    (userId as string).includes('\\') ||
+    (userId as string).includes('..')
+  ) {
+    throw new Error('profilePath: invalid userId (path-traversal attempt): ' + userId);
+  }
+}
 
 /**
  * Resolve the on-disk path of a per-profile file or directory.
@@ -79,18 +130,26 @@ const PROFILES_ROOT = path.join(ROOT, 'data', 'profiles');
  * the active profile. Defaulting happens at the helper-function level
  * (readProfile, readPortals, etc.) so a missing-profileId bug surfaces
  * loudly here rather than silently writing to the active profile's files.
+ *
+ * User scope is implicit (via `user-context.ts`'s AsyncLocalStorage). For
+ * explicit per-user calls (e.g. background jobs that iterate every user),
+ * use `profilePathForUser(userId, profileId, kind)`.
  */
 export function profilePath(profileId: string, kind: ProfileFileKind): string {
-  if (!profileId || typeof profileId !== 'string') {
-    throw new Error('profilePath: profileId is required (got ' + JSON.stringify(profileId) + ')');
-  }
-  // Guard against path traversal — profileId comes from data/profiles.json
-  // which we control, but it's good hygiene to reject anything that could
-  // escape the profiles dir.
-  if (profileId.includes('/') || profileId.includes('\\') || profileId.includes('..')) {
-    throw new Error('profilePath: invalid profileId (path-traversal attempt): ' + profileId);
-  }
-  const base = path.join(PROFILES_ROOT, profileId);
+  const userId = currentUserIdOrDefault();
+  return profilePathForUser(userId, profileId, kind);
+}
+
+/** Like `profilePath` but takes an explicit userId. Use this from background
+ *  jobs or cross-user maintenance code where AsyncLocalStorage isn't set. */
+export function profilePathForUser(
+  userId: string,
+  profileId: string,
+  kind: ProfileFileKind,
+): string {
+  validateUserId(userId);
+  validateProfileId(profileId);
+  const base = path.join(userProfilesRoot(userId), profileId);
   switch (kind) {
     case 'profile-dir':
       return base;
@@ -125,12 +184,19 @@ export function profilePath(profileId: string, kind: ProfileFileKind): string {
   }
 }
 
-/** Make sure the profile directory + its standard subdirs exist. Idempotent. */
+/** Make sure the profile directory + its standard subdirs exist for the
+ *  CURRENT user. Idempotent. */
 export function ensureProfileDirs(profileId: string): void {
-  fs.mkdirSync(profilePath(profileId, 'profile-dir'), { recursive: true });
-  fs.mkdirSync(profilePath(profileId, 'reports-dir'), { recursive: true });
-  fs.mkdirSync(profilePath(profileId, 'output-dir'), { recursive: true });
-  fs.mkdirSync(profilePath(profileId, 'interview-prep-dir'), { recursive: true });
+  const userId = currentUserIdOrDefault();
+  ensureProfileDirsForUser(userId, profileId);
+}
+
+/** Like `ensureProfileDirs` but takes an explicit userId. */
+export function ensureProfileDirsForUser(userId: string, profileId: string): void {
+  fs.mkdirSync(profilePathForUser(userId, profileId, 'profile-dir'), { recursive: true });
+  fs.mkdirSync(profilePathForUser(userId, profileId, 'reports-dir'), { recursive: true });
+  fs.mkdirSync(profilePathForUser(userId, profileId, 'output-dir'), { recursive: true });
+  fs.mkdirSync(profilePathForUser(userId, profileId, 'interview-prep-dir'), { recursive: true });
 }
 
 // D20 — `profileDirExists` removed: no caller. Use `fs.existsSync(profilePath(id, 'profile-dir'))`

@@ -3,6 +3,7 @@
  * the user's key works. Never echoes the key back to the client.
  */
 import { wrap, badRequest } from '$lib/server/api-helpers';
+import { requireOwner } from '$lib/server/auth-helpers';
 import { loadEnv } from '$lib/server/env';
 import { logEvent } from '$lib/server/events';
 import Anthropic from '@anthropic-ai/sdk';
@@ -122,17 +123,21 @@ const PROBES: Record<string, () => Promise<ProbeResult>> = {
   adzuna: probeAdzuna,
 };
 
-export const POST = wrap('settings-test', async ({ request }: any) => {
-  const body = await request.json().catch(() => null);
-  const provider = body?.provider as string | undefined;
-  if (!provider || !(provider in PROBES)) {
-    badRequest('expected { provider } to be one of: anthropic, gemini, adzuna');
-  }
-  const result = await PROBES[provider!]();
-  logEvent('settings', 'Tested ' + provider, {
-    level: result.ok ? 'success' : 'warn',
-    category: 'user',
-    message: result.message,
-  });
-  return result as unknown as Record<string, unknown>;
-});
+export const POST = wrap(
+  'settings-test',
+  async ({ request, locals }: { request: Request; locals: App.Locals }) => {
+    requireOwner(locals);
+    const body = await request.json().catch(() => null);
+    const provider = (body as { provider?: string } | null)?.provider;
+    if (!provider || !(provider in PROBES)) {
+      badRequest('expected { provider } to be one of: anthropic, gemini, adzuna');
+    }
+    const result = await PROBES[provider]();
+    logEvent('settings', 'Tested ' + provider, {
+      level: result.ok ? 'success' : 'warn',
+      category: 'user',
+      message: result.message,
+    });
+    return result as unknown as Record<string, unknown>;
+  },
+);

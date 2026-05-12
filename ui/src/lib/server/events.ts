@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import type { ActivityEvent, EventLevel, EventCategory } from '$lib/types';
 import { ROOT } from './files';
+import { maybeCurrentUserId, SYSTEM_USER_ID } from './user-context';
 
 const LOG_FILE = path.join(ROOT, 'data', 'activity.jsonl');
 const LOG_BACKUP = LOG_FILE + '.1';
@@ -177,6 +178,23 @@ class Bus extends EventEmitter {
     this.buf.push(ev);
     if (this.buf.length > MAX_BUFFER) this.buf.shift();
     this.appendToDisk(ev);
+    // Mirror to app.db.activity_events for indexed per-user queries. The
+    // JSONL stays the source of truth (cheap append, easy tail-tailing);
+    // the DB row enables future "show me my last 100 errors of source=X"
+    // queries without re-parsing megabytes of JSONL.
+    //
+    // Lazy-require so a missing better-sqlite3 binary at boot doesn't
+    // crash the event bus — events.ts MUST stay up even when the DB is
+    // broken because we use it to log DB errors.
+    if (ev.userId) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { dbWriteActivity } = require('./db-writers') as typeof import('./db-writers');
+        dbWriteActivity(ev);
+      } catch {
+        /* non-fatal */
+      }
+    }
     this.depth++;
     try {
       this.emit('event', ev);
@@ -187,6 +205,15 @@ class Bus extends EventEmitter {
 
   recent(): ActivityEvent[] {
     return [...this.buf];
+  }
+
+  /** Per-user feed: returns events tagged for this user PLUS broadcast events
+   *  (those with no userId). Used by /api/stream and the dashboard's
+   *  activity feed so users don't see each other's task output. */
+  recentForUser(userId: string): ActivityEvent[] {
+    return this.buf.filter(
+      (ev) => !ev.userId || ev.userId === userId || ev.userId === SYSTEM_USER_ID,
+    );
   }
 
   clear() {
@@ -248,8 +275,17 @@ export function logEvent(
     /** Profile slug if the event is per-profile (scan in profile X, oferta
      *  for a job in profile Y, etc.). Omit for shared-infra events. */
     profileId?: string;
+    /** Override user-id tagging — caller knows whose event this is. When
+     *  omitted, defaults to the AsyncLocalStorage current user (per
+     *  request) or SYSTEM_USER_ID outside a request. Pass `null` to
+     *  emit a broadcast event visible to every authenticated user. */
+    userId?: string | null;
   } = {},
 ): ActivityEvent {
+  const resolvedUserId =
+    opts.userId === null
+      ? undefined // broadcast — no userId tag
+      : (opts.userId ?? maybeCurrentUserId() ?? undefined);
   const ev: ActivityEvent = {
     id: crypto.randomBytes(6).toString('hex'),
     ts: Date.now(),
@@ -261,6 +297,7 @@ export function logEvent(
     link: opts.link,
     stack: opts.stack,
     profileId: opts.profileId,
+    userId: resolvedUserId && resolvedUserId !== SYSTEM_USER_ID ? resolvedUserId : undefined,
   };
   bus.emitEvent(ev);
   const prefix =
@@ -286,7 +323,12 @@ export function reportServerError(
   source: string,
   title: string,
   err: unknown,
-  opts: { category?: EventCategory; link?: string; profileId?: string } = {},
+  opts: {
+    category?: EventCategory;
+    link?: string;
+    profileId?: string;
+    userId?: string | null;
+  } = {},
 ): ActivityEvent {
   const isError = err instanceof Error;
   const message = isError
@@ -308,5 +350,6 @@ export function reportServerError(
     link: opts.link,
     stack,
     profileId: opts.profileId,
+    userId: opts.userId,
   });
 }
