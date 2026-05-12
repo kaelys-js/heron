@@ -34,6 +34,7 @@
  */
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { bearer } from 'better-auth/plugins';
 import { passkey } from '@better-auth/passkey';
 import crypto from 'node:crypto';
 import { eq, sql } from 'drizzle-orm';
@@ -177,6 +178,10 @@ export const auth = betterAuth({
     'http://localhost:*',
     'https://localhost:*',
     'capacitor://localhost',
+    // Custom URL scheme used by the iOS WebView (see capacitor.config.ts
+    // `ios.scheme: 'careerops'`). The trailing `*` covers any path.
+    'careerops://localhost',
+    'careerops://*',
     'http://*.ts.net',
     'https://*.ts.net',
   ],
@@ -198,6 +203,15 @@ export const auth = betterAuth({
       rpID: new URL(BETTER_AUTH_URL).hostname,
       origin: BETTER_AUTH_URL,
     }),
+    // bearer — adds Authorization-header session support alongside cookies.
+    // Required for the Capacitor WebView (origin `careerops://localhost`),
+    // where cookies set on the backend origin (`http://lan-ip:5173`) don't
+    // travel back to the WebView. After every sign-in/sign-up the response
+    // carries `Set-Auth-Token: <token>`; the client (auth-client.ts custom
+    // fetch) captures it, stores in Capacitor Preferences, and replays on
+    // every subsequent request as `Authorization: Bearer <token>`. Web
+    // browsers keep using cookies — both paths coexist transparently.
+    bearer(),
   ],
 
   session: {

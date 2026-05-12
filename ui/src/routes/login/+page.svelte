@@ -9,7 +9,7 @@
    * destination (`redirectTo` query param from the auth-guard middleware)
    * or '/' as a fallback.
    */
-  import { authClient } from '$lib/client/auth-client';
+  import { authClient, markLocallyAuthed } from '$lib/client/auth-client';
   import { Button } from '$lib/components/ui/button';
   import { KeyRound, Code, Ticket, AlertCircle } from '@lucide/svelte';
   import { goto } from '$app/navigation';
@@ -34,6 +34,12 @@
       if (result?.error) {
         error = result.error.message ?? 'Sign-in failed';
       } else {
+        // Mark localStorage flag so +layout.svelte's client-side gate
+        // (which runs on Capacitor where hooks.server.ts can't) treats
+        // subsequent visits as authenticated. The bearer token itself is
+        // already captured by auth-client.ts's customFetchImpl. Both
+        // signals get cleared in `clearLocalAuthState()` on sign-out.
+        markLocallyAuthed();
         await goto(data.redirectTo, { invalidateAll: true });
       }
     } catch (e) {
