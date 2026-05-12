@@ -1,6 +1,8 @@
 Several Issues (you have skills for doing proper work right?):
 DIRECTION: Atomic tasks. Verify after each atomic task. Re-check for anything missed and do a loop until nothing left.
 
+- How could CI have passed if I never ran pnpm setup:native? All those things would be missing for releases/etc?
+
 - Do a thorough review to confirm that this project will beat most if not all ATS tracking systems
 
 - Review Onboarding / Job Profiles / User Profiles Manually
