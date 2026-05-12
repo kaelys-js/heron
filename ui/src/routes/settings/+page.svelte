@@ -7,6 +7,7 @@
   import * as Card from '$lib/components/ui/card';
   import BackupsCard, { type BackupInfo } from '$lib/components/BackupsCard.svelte';
   import PushNotificationsToggle from '$lib/components/PushNotificationsToggle.svelte';
+  import ProfileSettingsCard from '$lib/components/ProfileSettingsCard.svelte';
   import { toast } from 'svelte-sonner';
   import { ApiError, api } from '$lib/api';
   import { ExternalLink, KeyRound, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, RotateCw, Sparkles, Activity } from '@lucide/svelte';
@@ -510,6 +511,11 @@
       <!-- Backups card — nightly auto + manual trigger + restore. Surfaced
            up here (above the LinkedIn / onboarding cards) because data loss
            is the highest-impact failure mode. -->
+      <!-- Profile + appearance card — avatar, display name, dark/light/system,
+           theme accent, in-app notification toggles. Per-machine for now;
+           multi-user support is explicitly out of scope. -->
+      <ProfileSettingsCard />
+
       <BackupsCard initialBackups={data.backups} initialConfig={data.backupConfig} />
 
       <!-- OS-level notifications + daily digest. Enable so high-priority

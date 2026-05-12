@@ -51,6 +51,11 @@ import './apply-queue.job';
 // Phase 6 maintenance jobs.
 import './backup.job';
 
+// Phase 7 interview-reminder daemon (15-min ticks via setInterval, not
+// the daily autopilot).
+import './interview-reminder.job';
+import { installInterviewReminderDaemon } from './interview-reminder.job';
+
 let installed = false;
 
 export function installAllJobs(): void {
@@ -125,6 +130,10 @@ export function installAllJobs(): void {
 
   // Start the fs watcher for batch tracker additions. Idempotent.
   startBatchWatcher();
+
+  // Phase 7: interview-reminder daemon — ticks every 15 min to fire
+  // T-30min and T-24h reminders for scheduled interviews.
+  installInterviewReminderDaemon();
 }
 
 export * from './types';

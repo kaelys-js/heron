@@ -1,11 +1,11 @@
 Several Issues (you have skills for doing proper work right?):
 
-- Profile
-  - Avatar
-  - Username
-  - Appearance (Dark/Light/System)
-  - Themes
-  - Notifications
+- Electron app/ios app/notifications: Full standard/best practices + automation for everything for dev/build/etc
+  - Electron (Should probably use capacitor + fastlane yes?)
+    - AppMenuBar
+    - MenuBar
+    - Notifications
+    - All Meta/etc
 
 - Multi-user + Profiles + Login/Logout (Full User Flow & Account Creation/Deletion). I'm sure you understand the perfect/entirety of what is needed
 - Review Onboarding / Job Profiles / User Profiles Manually
@@ -14,10 +14,3 @@ Several Issues (you have skills for doing proper work right?):
 - Review Entire UX And Hide Things That Should Be Under Advanced
 
 - Auto-Monitor Job Application Updates + Respond + Setup Interview Stages/etc...?
-
-- Electron app/ios app/notifications: Full standard/best practice + automation for everything for dev
-  - Electron (Should probably use capacitor + fastlane yes?)
-    - AppMenuBar
-    - MenuBar
-    - Notifications
-    - All Meta/etc
