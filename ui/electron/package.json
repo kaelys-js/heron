@@ -1,45 +1,41 @@
 {
   "name": "career-ops",
-  "description": "Career Ops desktop — Electron shell embedding the SvelteKit dashboard.",
   "version": "1.6.0",
   "private": true,
-  "license": "MIT",
-  "author": {
-    "name": "resist.js",
-    "email": "hello@resist.js",
-    "url": "https://resist.js"
-  },
-  "homepage": "https://career-ops.org",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/kaelys-js/career-ops",
-    "directory": "ui/electron"
-  },
-  "bugs": {
-    "url": "https://github.com/kaelys-js/career-ops/issues"
-  },
-  "engines": {
-    "node": "26.1.0",
-    "pnpm": "11.1.0"
-  },
-  "main": "build/src/index.js",
+  "description": "Career Ops desktop — Electron shell embedding the SvelteKit dashboard.",
   "keywords": [
     "capacitor",
     "electron",
     "career-ops",
     "desktop"
   ],
+  "homepage": "https://career-ops.org",
+  "bugs": {
+    "url": "https://github.com/kaelys-js/career-ops/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kaelys-js/career-ops",
+    "directory": "ui/electron"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "resist.js",
+    "email": "hello@resist.js",
+    "url": "https://resist.js"
+  },
+  "main": "build/src/index.js",
   "scripts": {
     "build": "tsgo -p tsconfig.json",
     "build:tsc": "tsc",
     "check": "tsgo --noEmit -p tsconfig.json",
-    "typecheck": "tsgo --noEmit -p tsconfig.json",
-    "electron:start-live": "node ./live-runner.js",
-    "electron:start": "pnpm run build && electron --inspect=5858 ./",
-    "electron:pack": "pnpm run build && electron-builder build --dir -c ./electron-builder.config.json",
+    "clean": "node ../../scripts/clean.mjs",
     "electron:make": "pnpm run build && electron-builder build -c ./electron-builder.config.json -p always",
     "electron:make:dev": "pnpm run build && electron-builder build -c ./electron-builder.config.json --mac dmg --publish never",
-    "clean": "node ../../scripts/clean.mjs"
+    "electron:pack": "pnpm run build && electron-builder build --dir -c ./electron-builder.config.json",
+    "electron:start": "pnpm run build && electron --inspect=5858 ./",
+    "electron:start-live": "node ./live-runner.js",
+    "typecheck": "tsgo --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "@capacitor-community/electron": "5.0.1",
@@ -56,5 +52,9 @@
     "electron": "39.8.10",
     "electron-builder": "26.8.1",
     "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": "26.1.0",
+    "pnpm": "11.1.0"
   }
 }

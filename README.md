@@ -84,13 +84,16 @@ First boot triggers the onboarding flow: passkey signup → upload CV → tweak 
 # stages GitHub Secrets for CI release builds.
 pnpm setup:native
 
-# Live dev (auto-reload):
-pnpm dev:desktop          # Electron shell
-pnpm dev:ios              # Xcode project + Capacitor sync
+# Live dev (boots simulator/emulator, builds, installs, launches, hot-reloads):
+pnpm dev:desktop          # Electron shell — macOS / Windows / Linux
+pnpm dev:ios              # iOS Simulator (boots newest iPhone, cap run ios)
+pnpm dev:android          # Android Emulator (boots newest AVD, cap run android)
+pnpm dev:apple-watch      # watchOS Simulator (xcodebuild + simctl install)
 
 # Production builds:
-pnpm build:desktop        # → ui/electron/dist/{DMG, exe, AppImage}
-pnpm build:ios            # → TestFlight via fastlane
+pnpm build:desktop        # → ui/electron/dist/{DMG, .exe, .AppImage, .deb}
+pnpm build:desktop:fast   # → single-arch DMG only (3-5 min vs full release)
+pnpm build:ios            # → TestFlight via fastlane (Watch app ships in same archive)
 ```
 
 ### 4. Verify everything is green
