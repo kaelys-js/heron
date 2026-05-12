@@ -630,6 +630,57 @@ contains(
   'app.html localStorage key matches brand',
 );
 
+// ── Phase 12 — Latest stack versions + best-practice config ────────
+section('Phase 12 — Latest stack versions + best-practice configs');
+{
+  const uiPkg = JSON.parse(readFileSync(join(ROOT, 'ui/package.json'), 'utf8'));
+  const deps = { ...(uiPkg.devDependencies ?? {}), ...(uiPkg.dependencies ?? {}) };
+  for (const pkg of [
+    'svelte',
+    '@sveltejs/kit',
+    '@sveltejs/vite-plugin-svelte',
+    '@sveltejs/adapter-node',
+    '@sveltejs/adapter-static',
+    'vite',
+    'typescript',
+    'svelte-check',
+    '@typescript/native-preview',
+    'prettier',
+    'prettier-plugin-svelte',
+  ]) {
+    if (deps[pkg]) ok(`${pkg} declared (${deps[pkg]})`);
+    else fail(`${pkg} missing from ui deps`);
+  }
+  if (!deps['@sveltejs/adapter-auto']) ok('adapter-auto removed (using node+static explicitly)');
+  else fail('adapter-auto still declared (should be removed)');
+}
+contains('ui/svelte.config.js', 'csrf:', 'CSRF protection configured');
+contains('ui/svelte.config.js', 'serviceWorker:', 'service worker explicitly disabled');
+contains('ui/svelte.config.js', 'alias:', 'path aliases configured');
+contains('ui/svelte.config.js', 'precompress: true', 'node adapter precompresses static assets');
+contains('ui/vite.config.ts', 'host: true', 'dev server listens on LAN');
+contains('ui/vite.config.ts', "target: 'es2022'", 'build target ES2022');
+contains('ui/vite.config.ts', 'sourcemap: true', 'production sourcemaps enabled');
+contains('ui/vite.config.ts', 'strictPort: true', 'strict port (5173) so backend-discovery works');
+contains('ui/tsconfig.json', '"strict": true', 'ui strict mode');
+contains('ui/electron/tsconfig.json', '"target": "ES2023"', 'electron target ES2023');
+contains(
+  'ui/electron/tsconfig.json',
+  '"forceConsistentCasingInFileNames"',
+  'electron forces consistent casing',
+);
+contains('ui/static/manifest.webmanifest', '/icons/', 'manifest references generated PNG icons');
+contains('ui/static/manifest.webmanifest', 'maskable', 'manifest has maskable icon (PWA install)');
+exists('ui/static/robots.txt', 'robots.txt');
+exists('ui/static/favicon.svg', 'favicon.svg');
+exists('ui/static/icon-mask.svg', 'mask icon for Safari pinned tab');
+exists('ui/static/icons/career-ops-192.png', 'PWA 192 icon');
+exists('ui/static/icons/career-ops-512.png', 'PWA 512 icon');
+exists(
+  'ui/src/lib/client/online-status.svelte.ts',
+  'online-status is .svelte.ts (uses Svelte 5 runes)',
+);
+
 // ── Phase 11 — Tooling (mise + lefthook + biome + turborepo) ────────
 section('Phase 11 — Tooling (mise + lefthook + biome + turborepo)');
 exists('.mise.toml', 'mise pin');

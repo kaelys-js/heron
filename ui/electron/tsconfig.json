@@ -4,15 +4,18 @@
   "compilerOptions": {
     "outDir": "./build",
     "importHelpers": true,
-    "target": "ES2020",
+    "target": "ES2023",
     "module": "Node16",
     "moduleResolution": "Node16",
     "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "typeRoots": ["./node_modules/@types"],
     "allowJs": true,
     "rootDir": ".",
     "skipLibCheck": true,
     "strict": false,
-    "resolveJsonModule": true
+    "noImplicitAny": false,
+    "resolveJsonModule": true,
+    "sourceMap": true
   }
 }

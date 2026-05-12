@@ -12,7 +12,7 @@
 
 import { toast } from 'svelte-sonner';
 import { BRAND_EVENTS } from '$lib/client/brand';
-import { onlineStore, OfflineError } from '$lib/client/online-status';
+import { onlineStore, OfflineError } from '$lib/client/online-status.svelte';
 
 export type ApiCallOpts = RequestInit & {
   successToast?: string | { title: string; description?: string };

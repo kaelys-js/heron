@@ -12,7 +12,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { fly, fade } from 'svelte/transition';
   import { WifiOff, Wifi, RotateCw } from '@lucide/svelte';
-  import { onlineStore } from '$lib/client/online-status';
+  import { onlineStore } from '$lib/client/online-status.svelte';
 
   type Stage = 'hidden' | 'offline' | 'recovered';
   let stage = $state<Stage>('hidden');
