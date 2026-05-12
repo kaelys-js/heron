@@ -16,7 +16,7 @@
   import { theme } from '$lib/theme.svelte';
   import { onMount, setContext } from 'svelte';
   import { installErrorReporter, setReporterBackend } from '$lib/client/error-reporter';
-  import { onlineStore } from '$lib/client/online-status';
+  import { onlineStore } from '$lib/client/online-status.svelte';
   import OfflineIndicator from '$lib/components/OfflineIndicator.svelte';
 
   onMount(() => {

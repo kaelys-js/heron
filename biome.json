@@ -24,7 +24,8 @@
       "!ui/electron/src/brand.ts",
       "!CHANGELOG.md",
       "!**/*.svelte",
-      "!**/*.css"
+      "!**/*.css",
+      "!ui/ios/App/App/Assets.xcassets/**"
     ]
   },
   "formatter": {

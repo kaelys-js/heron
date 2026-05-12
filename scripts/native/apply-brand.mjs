@@ -76,7 +76,9 @@ function writeIfChanged(path, content) {
   return true;
 }
 
-/** Read JSON, apply patch, write back. Returns true if file changed. */
+/** Read JSON, apply patch, write back. Returns true if file changed.
+ *  Runs biome format on the result so downstream `pnpm format:check`
+ *  doesn't flag apply-brand's output. */
 function patchJson(path, patcher) {
   const before = readFileSync(path, 'utf8');
   const json = JSON.parse(before);
@@ -84,6 +86,11 @@ function patchJson(path, patcher) {
   const after = JSON.stringify(json, null, 2) + '\n';
   if (before === after) return false;
   writeFileSync(path, after);
+  try {
+    execSync(`npx --no-install biome format --write "${path}"`, { stdio: 'pipe', cwd: ROOT });
+  } catch {
+    /* biome may not be installed yet — best effort */
+  }
   return true;
 }
 
@@ -311,6 +318,48 @@ function applyManifest(brand) {
     m.description = brand.tagline;
     m.theme_color = brand.colors.primary;
     m.background_color = brand.colors.darkBg;
+    // Rebuild icon list — keep SVG (resolution-independent) + every
+    // PWA-required PNG size we generate via the icon pipeline. PWA
+    // install on Chrome/Edge wants at least one 192×192 + one 512×512
+    // PNG icon; we ship 192/256/384/512 for maximum compatibility.
+    m.icons = [
+      {
+        src: '/favicon.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
+        purpose: 'any',
+      },
+      {
+        src: '/icon-mask.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
+        purpose: 'maskable monochrome',
+      },
+      {
+        src: `/icons/${brand.name}-192.png`,
+        sizes: '192x192',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      {
+        src: `/icons/${brand.name}-256.png`,
+        sizes: '256x256',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      {
+        src: `/icons/${brand.name}-384.png`,
+        sizes: '384x384',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      {
+        src: `/icons/${brand.name}-512.png`,
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'any maskable',
+      },
+    ];
   });
   // Post-process through biome so the formatter doesn't flag our output
   // on the next CI run. Best-effort; if biome isn't installed yet, the
