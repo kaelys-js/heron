@@ -19,9 +19,29 @@
 import { createAuthClient } from 'better-auth/svelte';
 import { passkeyClient } from '@better-auth/passkey/client';
 
+/**
+ * Better Auth validates `baseURL` synchronously and throws
+ *   "Invalid base URL: …. URL must include 'http://' or 'https://'"
+ * if it isn't an http(s) URL. In the Capacitor WebView our origin is
+ * `careerops://localhost`, which inferring from window.location.origin
+ * would supply. That throw becomes an unhandled promise rejection, the
+ * WebView treats the page as crashed, reloads, and we get a continuous
+ * reload loop (~9 reloads/sec).
+ *
+ * Substitute `http://localhost` whenever the origin isn't already http(s).
+ * The actual API calls don't use this baseURL — they route through the
+ * backend-discovery resolver in lib/client/backend-discovery.ts — so the
+ * placeholder is purely to keep better-auth's validator happy.
+ */
+function safeBaseURL(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  const origin = window.location.origin;
+  if (origin.startsWith('http://') || origin.startsWith('https://')) return origin;
+  return 'http://localhost';
+}
+
 export const authClient = createAuthClient({
-  // baseURL is inferred from window.location.origin in the browser, so
-  // we don't need to hard-code localhost vs Capacitor vs Electron.
+  baseURL: safeBaseURL(),
   plugins: [passkeyClient()],
 });
 

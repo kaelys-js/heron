@@ -84,31 +84,43 @@ const config = {
     //   api.anthropic.com      — first-party LLM connections.
     //   generativelanguage.googleapis.com — Gemini.
     //   *.ts.net               — Tailscale magic-DNS hostnames (LAN auth).
-    csp: {
-      mode: 'auto',
-      directives: {
-        'default-src': ["'self'"],
-        'script-src': ["'self'", "'unsafe-eval'", "'wasm-unsafe-eval'"],
-        'style-src': ["'self'", "'unsafe-inline'"], // Tailwind JIT inline styles
-        'img-src': ["'self'", 'data:', 'blob:', 'https:'],
-        'font-src': ["'self'", 'data:'],
-        'connect-src': [
-          "'self'",
-          'ws:',
-          'wss:',
-          'https://api.anthropic.com',
-          'https://generativelanguage.googleapis.com',
-          'https://*.ts.net',
-          'capacitor://localhost',
-          'https://localhost',
-        ],
-        'frame-ancestors': ["'none'"],
-        'form-action': ["'self'"],
-        'base-uri': ["'self'"],
-        'object-src': ["'none'"],
-        'upgrade-insecure-requests': true,
-      },
-    },
+    // CSP is OFF for the Capacitor static build. SvelteKit only hashes
+    // its own injected bootstrap inline script — custom inline scripts
+    // in app.html (theme bootstrap, speculationrules) do NOT get added
+    // to the hash list, so a strict script-src CSP blocks them, which
+    // in turn blocks the SvelteKit bootstrap from ever running and the
+    // WebView shows a blank white page forever. The Capacitor WebView's
+    // origin is the app bundle itself (careerops://localhost) — there's
+    // no third-party origin that can inject scripts, so CSP adds little
+    // defence in depth here. The adapter-node (server) build still gets
+    // strict CSP via a per-response header set in hooks.server.ts.
+    csp: CAPACITOR_BUILD
+      ? undefined
+      : {
+          mode: 'auto',
+          directives: {
+            'default-src': ["'self'"],
+            'script-src': ["'self'", "'unsafe-eval'", "'wasm-unsafe-eval'"],
+            'style-src': ["'self'", "'unsafe-inline'"], // Tailwind JIT inline styles
+            'img-src': ["'self'", 'data:', 'blob:', 'https:'],
+            'font-src': ["'self'", 'data:'],
+            'connect-src': [
+              "'self'",
+              'ws:',
+              'wss:',
+              'https://api.anthropic.com',
+              'https://generativelanguage.googleapis.com',
+              'https://*.ts.net',
+              'capacitor://localhost',
+              'https://localhost',
+            ],
+            'frame-ancestors': ["'none'"],
+            'form-action': ["'self'"],
+            'base-uri': ["'self'"],
+            'object-src': ["'none'"],
+            'upgrade-insecure-requests': true,
+          },
+        },
 
     // Service worker is OFF — career-ops doesn't ship one. Capacitor
     // WebView doesn't support service workers reliably on iOS anyway.

@@ -104,6 +104,25 @@ if (usesPodfile) {
 }
 
 step(6, 'Starting Vite dev server in background');
+// Kill any process still bound to :5173 from a previous dev:ios run —
+// otherwise vite errors with EADDRINUSE and the WebView ends up serving
+// a stale build. lsof + kill is the simplest portable check; macOS-only
+// is fine here since dev:ios is iOS-simulator-specific anyway.
+try {
+  const { execSync } = await import('node:child_process');
+  const pids = execSync('lsof -ti:5173 2>/dev/null || true', { encoding: 'utf8' })
+    .trim()
+    .split('\n')
+    .filter(Boolean);
+  if (pids.length > 0) {
+    info(`killing stale process(es) on :5173 → pid ${pids.join(', ')}`);
+    execSync(`kill -9 ${pids.join(' ')} 2>/dev/null || true`);
+    // brief pause to let the kernel release the socket
+    await new Promise((r) => setTimeout(r, 300));
+  }
+} catch {
+  /* non-fatal — vite will surface EADDRINUSE if it's still blocked */
+}
 const dev = spawn('pnpm', ['dev'], {
   cwd: UI,
   stdio: 'inherit',
