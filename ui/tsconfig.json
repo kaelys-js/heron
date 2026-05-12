@@ -1,15 +1,32 @@
 {
   "extends": "./.svelte-kit/tsconfig.json",
   "compilerOptions": {
-    "rewriteRelativeImportExtensions": true,
+    // ── Imports / module system ─────────────────────────────────────
+    // SvelteKit's generated tsconfig already sets verbatimModuleSyntax,
+    // isolatedModules, moduleResolution=bundler, target=esnext, noEmit.
+    // We add project-level checks on top.
+    "rewriteRelativeImportExtensions": true, // TS 5.7+ — keep `.ts` in source, rewrites to `.js` on emit
     "allowJs": true,
     "checkJs": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "sourceMap": true,
+
+    // ── Strict mode ─────────────────────────────────────────────────
+    // `strict: true` enables: alwaysStrict, noImplicitAny, noImplicitThis,
+    // strictBindCallApply, strictFunctionTypes, strictNullChecks,
+    // strictPropertyInitialization, useUnknownInCatchVariables.
     "strict": true,
+    // Extra checks beyond `strict` that the codebase already complies with.
+    // Stricter variants (noUncheckedIndexedAccess, noImplicitReturns,
+    // exactOptionalPropertyTypes) require a separate cleanup pass —
+    // tracked in TODO.md and Issues.
+    "noImplicitOverride": true, // require `override` keyword on inherited methods
+    "noFallthroughCasesInSwitch": true, // catches missing `break;` in switch cases
+    "forceConsistentCasingInFileNames": true, // Linux/macOS case-sensitive imports
+
+    // ── Module resolution ───────────────────────────────────────────
     "moduleResolution": "bundler"
   }
   // Path aliases are handled by https://svelte.dev/docs/kit/configuration#alias
