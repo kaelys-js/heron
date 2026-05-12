@@ -7,11 +7,14 @@ pnpm native                # menu of every native command
 pnpm setup:native          # one-time interactive setup (runs once, walks you through everything)
 
 pnpm dev                   # web only
-pnpm dev:desktop           # Electron window + HMR
-pnpm dev:ios               # iOS sim + dev server + Xcode opens
+pnpm dev:desktop           # Electron window + HMR (macOS / Windows / Linux)
+pnpm dev:ios               # iPhone simulator: boots, builds, installs, launches, HMR
+pnpm dev:android           # Android emulator: boots, builds, installs, launches, HMR
+pnpm dev:apple-watch       # Apple Watch simulator: xcodebuild + simctl install + launch
 
-pnpm build:desktop         # local DMG / .exe / .AppImage
-pnpm build:ios             # upload to TestFlight
+pnpm build:desktop         # local DMG / .exe / .AppImage / .deb (full release)
+pnpm build:desktop:fast    # single-arch DMG only (3-5 min)
+pnpm build:ios             # upload to TestFlight (Watch app ships in same archive)
 pnpm icons                 # regenerate all platform icons
 
 pnpm release patch         # bump version + tag + push → CI builds everything
