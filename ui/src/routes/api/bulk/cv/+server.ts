@@ -19,8 +19,13 @@ const MAX_BULK = 25;
 const MAX_WORKERS = 8;
 
 export const POST = wrap('bulk-cv', async ({ request }: { request: Request }) => {
-  const body = (await request.json().catch(() => null)) as { jobIds?: string[]; workers?: number } | null;
-  const ids = Array.isArray(body?.jobIds) ? body!.jobIds.filter((s): s is string => typeof s === 'string') : [];
+  const body = (await request.json().catch(() => null)) as {
+    jobIds?: string[];
+    workers?: number;
+  } | null;
+  const ids = Array.isArray(body?.jobIds)
+    ? body!.jobIds.filter((s): s is string => typeof s === 'string')
+    : [];
   if (ids.length === 0) badRequest('jobIds required (non-empty array)');
   if (ids.length > MAX_BULK) badRequest('At most ' + MAX_BULK + ' jobs per bulk run');
 
@@ -46,8 +51,14 @@ export const POST = wrap('bulk-cv', async ({ request }: { request: Request }) =>
       missing,
       workers,
       message:
-        'Generating ' + urls.length + ' tailored CVs in parallel · ' + workers + ' workers via batch-runner.sh. ' +
-        'Costs more per minute but ~' + Math.ceil(workers * 0.7) + 'x faster wall-clock.',
+        'Generating ' +
+        urls.length +
+        ' tailored CVs in parallel · ' +
+        workers +
+        ' workers via batch-runner.sh. ' +
+        'Costs more per minute but ~' +
+        Math.ceil(workers * 0.7) +
+        'x faster wall-clock.',
     };
   }
   // Fire and forget — orchestrator drives the activity feed. Outer catch
@@ -61,6 +72,9 @@ export const POST = wrap('bulk-cv', async ({ request }: { request: Request }) =>
     queued: urls.length,
     missing,
     workers: 1,
-    message: 'Generating ' + urls.length + ' tailored CVs in sequence. Watch the activity feed for per-job progress.',
+    message:
+      'Generating ' +
+      urls.length +
+      ' tailored CVs in sequence. Watch the activity feed for per-job progress.',
   };
 });

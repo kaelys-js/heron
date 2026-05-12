@@ -1,180 +1,194 @@
 <script lang="ts">
-  /**
-   * /queue — supervises the autonomous-apply pipeline. Sections:
-   *
-   *   ▸ Applying (live)         — script running, with step name
-   *   ▸ Queued                  — waiting on the drain (sorted by score)
-   *   ▸ Manual-apply-needed     — soft-failed, finish from Inbox
-   *
-   * Header counts: "today X/cap · M applying · N queued · K need review".
-   * Primary CTA: "Run drain now" → fires apply-queue-drain manually.
-   *
-   * The legacy "Send N applications" batch button is preserved (footer)
-   * for the non-autonomous flow where the user still wants the
-   * "open + mark + linkedin-auto" batch dispatch.
-   */
-  import Topbar from '$lib/components/Topbar.svelte';
-  import EmptyState from '$lib/components/EmptyState.svelte';
-  import JobCard from '$lib/components/JobCard.svelte';
-  import { Button } from '$lib/components/ui/button';
-  import {
-    Send, ListChecks, Loader2, Zap, Activity, Bell, Hourglass,
-    AlertTriangle, Info, ArrowUpRight, Network as Linkedin,
-  } from '@lucide/svelte';
-  import { ConfirmGate } from '$lib/confirm.svelte';
-  import { onDestroy } from 'svelte';
-  import { api, ApiError } from '$lib/api';
-  import { invalidateAll } from '$app/navigation';
-  import { toast } from 'svelte-sonner';
-  import { withMinDuration, cn } from '$lib/utils';
-  import type { Job } from '$lib/types';
-  import type { ApplyState } from '$lib/server/apply-state';
+/**
+ * /queue — supervises the autonomous-apply pipeline. Sections:
+ *
+ *   ▸ Applying (live)         — script running, with step name
+ *   ▸ Queued                  — waiting on the drain (sorted by score)
+ *   ▸ Manual-apply-needed     — soft-failed, finish from Inbox
+ *
+ * Header counts: "today X/cap · M applying · N queued · K need review".
+ * Primary CTA: "Run drain now" → fires apply-queue-drain manually.
+ *
+ * The legacy "Send N applications" batch button is preserved (footer)
+ * for the non-autonomous flow where the user still wants the
+ * "open + mark + linkedin-auto" batch dispatch.
+ */
+import Topbar from '$lib/components/Topbar.svelte';
+import EmptyState from '$lib/components/EmptyState.svelte';
+import JobCard from '$lib/components/JobCard.svelte';
+import { Button } from '$lib/components/ui/button';
+import {
+  Send,
+  ListChecks,
+  Loader2,
+  Zap,
+  Activity,
+  Bell,
+  Hourglass,
+  AlertTriangle,
+  Info,
+  ArrowUpRight,
+  Network as Linkedin,
+} from '@lucide/svelte';
+import { ConfirmGate } from '$lib/confirm.svelte';
+import { onDestroy } from 'svelte';
+import { api, ApiError } from '$lib/api';
+import { invalidateAll } from '$app/navigation';
+import { toast } from 'svelte-sonner';
+import { withMinDuration, cn } from '$lib/utils';
+import type { Job } from '$lib/types';
+import type { ApplyState } from '$lib/server/apply-state';
 
-  let { data }: {
-    data: {
-      queued: Job[];
-      applying: Job[];
-      manual: Job[];
-      profileId: string;
-      todayCount: number;
-      cap: number;
-      inFlight: Record<string, ApplyState>;
-    };
-  } = $props();
+let {
+  data,
+}: {
+  data: {
+    queued: Job[];
+    applying: Job[];
+    manual: Job[];
+    profileId: string;
+    todayCount: number;
+    cap: number;
+    inFlight: Record<string, ApplyState>;
+  };
+} = $props();
 
-  const confirm = new ConfirmGate();
-  onDestroy(() => confirm.destroy());
+const confirm = new ConfirmGate();
+onDestroy(() => confirm.destroy());
 
-  let drainBusy = $state(false);
-  let batchSendBusy = $state(false);
-  let cancelBusy = $state<string | null>(null);
-  let selected = $state(new Set<string>());
+let drainBusy = $state(false);
+let batchSendBusy = $state(false);
+let cancelBusy = $state<string | null>(null);
+let selected = $state(new Set<string>());
 
-  // Auto-select every queued job by default; user can untick rows.
-  // svelte-ignore state_referenced_locally
-  $effect(() => {
-    const next = new Set<string>();
-    for (const j of data.queued) next.add(j.id);
-    selected = next;
-  });
+// Auto-select every queued job by default; user can untick rows.
+// svelte-ignore state_referenced_locally
+$effect(() => {
+  const next = new Set<string>();
+  for (const j of data.queued) next.add(j.id);
+  selected = next;
+});
 
-  function toggleAll(check: boolean) {
-    const next = new Set<string>();
-    if (check) for (const j of data.queued) next.add(j.id);
-    selected = next;
-  }
+function toggleAll(check: boolean) {
+  const next = new Set<string>();
+  if (check) for (const j of data.queued) next.add(j.id);
+  selected = next;
+}
 
-  function toggleOne(id: string) {
-    const next = new Set(selected);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    selected = next;
-  }
+function toggleOne(id: string) {
+  const next = new Set(selected);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  selected = next;
+}
 
-  function portalBadge(url: string): { label: string; tint: string } {
-    if (/linkedin\.com/.test(url)) return { label: 'LinkedIn', tint: 'text-blue-300' };
-    if (/(?:job-)?boards(?:\.eu)?\.greenhouse\.io/.test(url)) return { label: 'Greenhouse', tint: 'text-emerald-300' };
-    if (/ashbyhq\.com/.test(url)) return { label: 'Ashby', tint: 'text-fuchsia-300' };
-    if (/lever\.co/.test(url)) return { label: 'Lever', tint: 'text-amber-300' };
-    if (/workable\.com/.test(url)) return { label: 'Workable', tint: 'text-cyan-300' };
-    if (/personio\./.test(url)) return { label: 'Personio', tint: 'text-pink-300' };
-    if (/smartrecruiters\.com/.test(url)) return { label: 'SmartRecruiters', tint: 'text-indigo-300' };
-    if (/recruitee\.com/.test(url)) return { label: 'Recruitee', tint: 'text-orange-300' };
-    if (/teamtailor\.com/.test(url)) return { label: 'Teamtailor', tint: 'text-rose-300' };
-    if (/myworkdayjobs\.com/.test(url)) return { label: 'Workday', tint: 'text-yellow-300' };
-    if (/indeed\.com/.test(url)) return { label: 'Indeed', tint: 'text-lime-300' };
-    return { label: 'Other', tint: 'text-zinc-400' };
-  }
+function portalBadge(url: string): { label: string; tint: string } {
+  if (/linkedin\.com/.test(url)) return { label: 'LinkedIn', tint: 'text-blue-300' };
+  if (/(?:job-)?boards(?:\.eu)?\.greenhouse\.io/.test(url))
+    return { label: 'Greenhouse', tint: 'text-emerald-300' };
+  if (/ashbyhq\.com/.test(url)) return { label: 'Ashby', tint: 'text-fuchsia-300' };
+  if (/lever\.co/.test(url)) return { label: 'Lever', tint: 'text-amber-300' };
+  if (/workable\.com/.test(url)) return { label: 'Workable', tint: 'text-cyan-300' };
+  if (/personio\./.test(url)) return { label: 'Personio', tint: 'text-pink-300' };
+  if (/smartrecruiters\.com/.test(url))
+    return { label: 'SmartRecruiters', tint: 'text-indigo-300' };
+  if (/recruitee\.com/.test(url)) return { label: 'Recruitee', tint: 'text-orange-300' };
+  if (/teamtailor\.com/.test(url)) return { label: 'Teamtailor', tint: 'text-rose-300' };
+  if (/myworkdayjobs\.com/.test(url)) return { label: 'Workday', tint: 'text-yellow-300' };
+  if (/indeed\.com/.test(url)) return { label: 'Indeed', tint: 'text-lime-300' };
+  return { label: 'Other', tint: 'text-zinc-400' };
+}
 
-  /** Fire apply-queue-drain manually via /api/agents/run. */
-  async function runDrain() {
-    if (drainBusy) return;
-    drainBusy = true;
-    try {
-      const r = await withMinDuration(
-        api.post<{ ok: boolean; message?: string }>(
-          '/api/agents/run',
-          { id: 'apply-queue-drain' },
-          { silent: true },
-        ),
-        400,
-      );
-      if (r.ok) {
-        toast.success('Drain started', {
-          description: 'apply-queue-drain is iterating the queue. Watch the bell + this page for progress.',
-          duration: 8_000,
-        });
-        await invalidateAll();
-      } else {
-        toast.error('Drain refused', { description: r.message ?? 'Job runner returned !ok' });
-      }
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Drain failed', {
-        description: err.message,
-        action: { label: 'Retry', onClick: () => runDrain() },
-      });
-    } finally {
-      drainBusy = false;
-    }
-  }
-
-  /** Revert a Queued job back to Scored so it stops getting drained. */
-  async function cancelQueue(job: Job) {
-    if (!job.url || cancelBusy) return;
-    cancelBusy = job.id;
-    try {
-      await api.post('/api/status', { url: job.url, newStatus: 'Scored' }, { silent: true });
-      toast.success('Removed from queue', {
-        description: (job.company ?? '?') + ' · ' + (job.role ?? '?') + ' — back to Scored.',
+/** Fire apply-queue-drain manually via /api/agents/run. */
+async function runDrain() {
+  if (drainBusy) return;
+  drainBusy = true;
+  try {
+    const r = await withMinDuration(
+      api.post<{ ok: boolean; message?: string }>(
+        '/api/agents/run',
+        { id: 'apply-queue-drain' },
+        { silent: true },
+      ),
+      400,
+    );
+    if (r.ok) {
+      toast.success('Drain started', {
+        description:
+          'apply-queue-drain is iterating the queue. Watch the bell + this page for progress.',
+        duration: 8_000,
       });
       await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Cancel failed', { description: err.message });
-    } finally {
-      cancelBusy = null;
+    } else {
+      toast.error('Drain refused', { description: r.message ?? 'Job runner returned !ok' });
     }
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Drain failed', {
+      description: err.message,
+      action: { label: 'Retry', onClick: () => runDrain() },
+    });
+  } finally {
+    drainBusy = false;
   }
+}
 
-  /** Legacy batch send — preserved for users without autonomous mode. */
-  async function sendAll() {
-    if (batchSendBusy || selected.size === 0) return;
-    if (!confirm.trigger('send-all')) return;
-    batchSendBusy = true;
-    try {
-      const ids = data.queued.filter((j) => selected.has(j.id)).map((j) => j.id);
-      const r = await withMinDuration(
-        api.post<{
-          ok: boolean;
-          linkedInQueued: number;
-          linkedInDeferred: number;
-          otherCount: number;
-          cap: number;
-          openInTabs: { id: string; url: string }[];
-          message: string;
-        }>('/api/queue/send', { jobIds: ids }, { silent: true }),
-        500,
-      );
-      r.openInTabs.forEach((t, i) =>
-        setTimeout(() => window.open(t.url, '_blank', 'noopener'), i * 300),
-      );
-      toast.success('Queue sent', { description: r.message, duration: 10_000 });
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Send failed', {
-        description: err.message + ' — nothing was applied. Retry to try again.',
-        action: { label: 'Retry', onClick: () => sendAll() },
-        duration: 12_000,
-      });
-    } finally {
-      batchSendBusy = false;
-    }
+/** Revert a Queued job back to Scored so it stops getting drained. */
+async function cancelQueue(job: Job) {
+  if (!job.url || cancelBusy) return;
+  cancelBusy = job.id;
+  try {
+    await api.post('/api/status', { url: job.url, newStatus: 'Scored' }, { silent: true });
+    toast.success('Removed from queue', {
+      description: (job.company ?? '?') + ' · ' + (job.role ?? '?') + ' — back to Scored.',
+    });
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Cancel failed', { description: err.message });
+  } finally {
+    cancelBusy = null;
   }
+}
 
-  let sendArmed = $derived(confirm.isArmed('send-all'));
-  let total = $derived(data.queued.length + data.applying.length + data.manual.length);
+/** Legacy batch send — preserved for users without autonomous mode. */
+async function sendAll() {
+  if (batchSendBusy || selected.size === 0) return;
+  if (!confirm.trigger('send-all')) return;
+  batchSendBusy = true;
+  try {
+    const ids = data.queued.filter((j) => selected.has(j.id)).map((j) => j.id);
+    const r = await withMinDuration(
+      api.post<{
+        ok: boolean;
+        linkedInQueued: number;
+        linkedInDeferred: number;
+        otherCount: number;
+        cap: number;
+        openInTabs: { id: string; url: string }[];
+        message: string;
+      }>('/api/queue/send', { jobIds: ids }, { silent: true }),
+      500,
+    );
+    r.openInTabs.forEach((t, i) =>
+      setTimeout(() => window.open(t.url, '_blank', 'noopener'), i * 300),
+    );
+    toast.success('Queue sent', { description: r.message, duration: 10_000 });
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Send failed', {
+      description: err.message + ' — nothing was applied. Retry to try again.',
+      action: { label: 'Retry', onClick: () => sendAll() },
+      duration: 12_000,
+    });
+  } finally {
+    batchSendBusy = false;
+  }
+}
+
+let sendArmed = $derived(confirm.isArmed('send-all'));
+let total = $derived(data.queued.length + data.applying.length + data.manual.length);
 </script>
 
 <div class="h-full overflow-y-auto">

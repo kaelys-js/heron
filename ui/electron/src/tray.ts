@@ -176,7 +176,10 @@ export class CareerOpsTray {
           },
         );
         req.on('error', () => resolve());
-        req.on('timeout', () => { req.destroy(); resolve(); });
+        req.on('timeout', () => {
+          req.destroy();
+          resolve();
+        });
         req.end();
       } catch {
         resolve();

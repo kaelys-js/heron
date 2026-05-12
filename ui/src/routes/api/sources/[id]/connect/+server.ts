@@ -119,15 +119,24 @@ function spawnPlaywrightLogin(portal: 'linkedin' | 'indeed'): Promise<void> {
 
     let stdoutBuf = '';
     let stderrBuf = '';
-    p.stdout?.on('data', (c: Buffer) => { stdoutBuf += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderrBuf += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdoutBuf += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderrBuf += c.toString();
+    });
 
     const timer = setTimeout(() => {
-      try { p.kill('SIGTERM'); } catch {}
+      try {
+        p.kill('SIGTERM');
+      } catch {}
       reject(new Error('Login timed out after 5 minutes'));
     }, 5 * 60_000);
 
-    p.on('error', (err) => { clearTimeout(timer); reject(err); });
+    p.on('error', (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
     p.on('close', (code) => {
       clearTimeout(timer);
       if (code === 0) return resolve();
@@ -141,7 +150,12 @@ function spawnPlaywrightLogin(portal: 'linkedin' | 'indeed'): Promise<void> {
  * One-shot IMAP login probe. Connects, selects mailbox, lists 1 message,
  * disconnects. Throws on auth failure or selector issues.
  */
-async function testImapConnection(host: string, user: string, password: string, mailbox: string): Promise<void> {
+async function testImapConnection(
+  host: string,
+  user: string,
+  password: string,
+  mailbox: string,
+): Promise<void> {
   // Lazy-load imapflow so the module isn't required at boot for users who
   // never connect Gmail.
   const { ImapFlow } = await import('imapflow');
@@ -162,7 +176,9 @@ async function testImapConnection(host: string, user: string, password: string, 
       lock.release();
     }
   } finally {
-    try { await client.logout(); } catch {}
+    try {
+      await client.logout();
+    } catch {}
   }
 }
 
@@ -194,7 +210,9 @@ async function testApiKey(provider: 'anthropic' | 'gemini' | 'adzuna'): Promise<
   }
   if (provider === 'gemini') {
     if (!env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not set');
-    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + env.GEMINI_API_KEY);
+    const r = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models?key=' + env.GEMINI_API_KEY,
+    );
     if (!r.ok) throw new Error('Gemini ' + r.status);
     return;
   }
@@ -202,8 +220,12 @@ async function testApiKey(provider: 'anthropic' | 'gemini' | 'adzuna'): Promise<
     if (!env.ADZUNA_APP_ID || !env.ADZUNA_APP_KEY) {
       throw new Error('ADZUNA_APP_ID and ADZUNA_APP_KEY required');
     }
-    const u = 'https://api.adzuna.com/v1/api/jobs/gb/search/1?app_id=' + env.ADZUNA_APP_ID +
-      '&app_key=' + env.ADZUNA_APP_KEY + '&results_per_page=1';
+    const u =
+      'https://api.adzuna.com/v1/api/jobs/gb/search/1?app_id=' +
+      env.ADZUNA_APP_ID +
+      '&app_key=' +
+      env.ADZUNA_APP_KEY +
+      '&results_per_page=1';
     const r = await fetch(u);
     if (!r.ok) throw new Error('Adzuna ' + r.status);
     return;

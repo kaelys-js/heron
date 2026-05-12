@@ -12,6 +12,7 @@
 
 import { toast } from 'svelte-sonner';
 import { BRAND_EVENTS } from '$lib/client/brand';
+import { onlineStore, OfflineError } from '$lib/client/online-status';
 
 export type ApiCallOpts = RequestInit & {
   successToast?: string | { title: string; description?: string };
@@ -50,6 +51,22 @@ type ResponseBody = { ok?: boolean; error?: ErrorEnvelope | string; message?: st
 
 export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Promise<T> {
   const { successToast, silent, inlineError, ...init } = opts;
+
+  // Offline short-circuit — option (a) per design: never speculatively fire
+  // mutations or reads when offline. The OfflineIndicator banner already
+  // tells the user; throwing OfflineError lets callers branch cleanly.
+  // Probe re-runs every 15s + on `window.online` event, so as soon as
+  // connectivity returns subsequent calls go through normally.
+  if (!onlineStore.online) {
+    if (!silent && !inlineError) {
+      toast.warning('Offline', {
+        description: 'Reconnect to send this request.',
+        duration: 4_000,
+      });
+    }
+    throw new OfflineError();
+  }
+
   let response: Response;
   try {
     response = await fetch(url, {

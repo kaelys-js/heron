@@ -1,53 +1,144 @@
 <script lang="ts">
-  /**
-   * /help/autonomous-apply — risk acknowledgment + reference for the
-   * autonomous-apply pipeline. Linked from the /profile autonomous-apply
-   * card and the AGENTS.md ethical-rule amendment.
-   *
-   * Sections:
-   *   1. What it does (3-sentence summary)
-   *   2. Pipeline diagram (Scored → Queued → Applying → Applied)
-   *   3. Portal coverage table (production vs stub)
-   *   4. Score gate + warmup days mechanics
-   *   5. Failure modes + how they surface in the Inbox
-   *   6. Risk acknowledgment (LinkedIn, anti-bot, generic cover-letter quality)
-   *   7. How to enable + how to cancel an in-flight queue
-   */
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import { Button } from '$lib/components/ui/button';
-  import {
-    Zap, ArrowRight, ArrowLeft, ShieldAlert, CheckCircle2, AlertCircle,
-    AlertTriangle, Hourglass, Loader2, Bell, ListChecks, ExternalLink,
-    FileBadge2, Briefcase, Activity, Info,
-  } from '@lucide/svelte';
+/**
+ * /help/autonomous-apply — risk acknowledgment + reference for the
+ * autonomous-apply pipeline. Linked from the /profile autonomous-apply
+ * card and the AGENTS.md ethical-rule amendment.
+ *
+ * Sections:
+ *   1. What it does (3-sentence summary)
+ *   2. Pipeline diagram (Scored → Queued → Applying → Applied)
+ *   3. Portal coverage table (production vs stub)
+ *   4. Score gate + warmup days mechanics
+ *   5. Failure modes + how they surface in the Inbox
+ *   6. Risk acknowledgment (LinkedIn, anti-bot, generic cover-letter quality)
+ *   7. How to enable + how to cancel an in-flight queue
+ */
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import { Button } from '$lib/components/ui/button';
+import {
+  Zap,
+  ArrowRight,
+  ArrowLeft,
+  ShieldAlert,
+  CheckCircle2,
+  AlertCircle,
+  AlertTriangle,
+  Hourglass,
+  Loader2,
+  Bell,
+  ListChecks,
+  ExternalLink,
+  FileBadge2,
+  Briefcase,
+  Activity,
+  Info,
+} from '@lucide/svelte';
 
-  type Portal = { id: string; label: string; status: 'production' | 'stub'; notes: string };
+type Portal = { id: string; label: string; status: 'production' | 'stub'; notes: string };
 
-  const PORTALS: Portal[] = [
-    { id: 'linkedin', label: 'LinkedIn', status: 'production', notes: 'Easy Apply automation. Uses your saved LinkedIn session (.playwright-linkedin/). Uploads cv-general.pdf — never the per-job tailored CV (recruiter red flag).' },
-    { id: 'greenhouse', label: 'Greenhouse', status: 'production', notes: 'Schema fetch from boards-api / job-boards-api. Handles intl-tel-input phone, react-select dropdowns, Google Places location, custom Q&A from your form-answers cache.' },
-    { id: 'ashby', label: 'Ashby', status: 'production', notes: 'Persistent context for Cloudflare warm-up. Single name field. Cascading structured location (country/region/city). RichText or file-upload cover letter depending on schema.' },
-    { id: 'lever', label: 'Lever', status: 'stub', notes: '3-4 days of work pending. Routes to apply-stub.py → ManualApplyNeeded.' },
-    { id: 'workable', label: 'Workable', status: 'stub', notes: '3-4 days of work pending.' },
-    { id: 'personio', label: 'Personio', status: 'stub', notes: 'DACH-specific quirks (German labels, GDPR consent). 3-4 days.' },
-    { id: 'smartrecruiters', label: 'SmartRecruiters', status: 'stub', notes: '3-4 days.' },
-    { id: 'recruitee', label: 'Recruitee', status: 'stub', notes: '3-4 days.' },
-    { id: 'teamtailor', label: 'Teamtailor', status: 'stub', notes: '3-4 days.' },
-    { id: 'indeed', label: 'Indeed', status: 'stub', notes: 'Aggressive anti-bot, needs careful pacing + persistent context. 5-7 days.' },
-    { id: 'workday', label: 'Workday', status: 'stub', notes: 'Every customer instance differs; needs per-instance form-schema heuristics. 7-10 days.' },
-  ];
+const PORTALS: Portal[] = [
+  {
+    id: 'linkedin',
+    label: 'LinkedIn',
+    status: 'production',
+    notes:
+      'Easy Apply automation. Uses your saved LinkedIn session (.playwright-linkedin/). Uploads cv-general.pdf — never the per-job tailored CV (recruiter red flag).',
+  },
+  {
+    id: 'greenhouse',
+    label: 'Greenhouse',
+    status: 'production',
+    notes:
+      'Schema fetch from boards-api / job-boards-api. Handles intl-tel-input phone, react-select dropdowns, Google Places location, custom Q&A from your form-answers cache.',
+  },
+  {
+    id: 'ashby',
+    label: 'Ashby',
+    status: 'production',
+    notes:
+      'Persistent context for Cloudflare warm-up. Single name field. Cascading structured location (country/region/city). RichText or file-upload cover letter depending on schema.',
+  },
+  {
+    id: 'lever',
+    label: 'Lever',
+    status: 'stub',
+    notes: '3-4 days of work pending. Routes to apply-stub.py → ManualApplyNeeded.',
+  },
+  { id: 'workable', label: 'Workable', status: 'stub', notes: '3-4 days of work pending.' },
+  {
+    id: 'personio',
+    label: 'Personio',
+    status: 'stub',
+    notes: 'DACH-specific quirks (German labels, GDPR consent). 3-4 days.',
+  },
+  { id: 'smartrecruiters', label: 'SmartRecruiters', status: 'stub', notes: '3-4 days.' },
+  { id: 'recruitee', label: 'Recruitee', status: 'stub', notes: '3-4 days.' },
+  { id: 'teamtailor', label: 'Teamtailor', status: 'stub', notes: '3-4 days.' },
+  {
+    id: 'indeed',
+    label: 'Indeed',
+    status: 'stub',
+    notes: 'Aggressive anti-bot, needs careful pacing + persistent context. 5-7 days.',
+  },
+  {
+    id: 'workday',
+    label: 'Workday',
+    status: 'stub',
+    notes: 'Every customer instance differs; needs per-instance form-schema heuristics. 7-10 days.',
+  },
+];
 
-  type FailureMode = { id: string; summary: string; trigger: string; fix: string };
-  const FAILURE_MODES: FailureMode[] = [
-    { id: 'stub', summary: 'Portal not yet automated', trigger: 'Job URL routes to one of the 8 stub portals (Lever, Workable, Personio, SmartRecruiters, Recruitee, Teamtailor, Workday, Indeed).', fix: 'Click "Open posting" in the Inbox. Walk the form by hand and use the form-answers cache from the per-job menu.' },
-    { id: 'captcha', summary: 'CAPTCHA detected', trigger: 'reCAPTCHA / hCaptcha / Cloudflare Turnstile rendered on the form. Most often after ~10 rapid Greenhouse submissions from the same persistent context.', fix: '"Resume in headed browser" — opens a headed Playwright session so you can solve the CAPTCHA. Then re-queue.' },
-    { id: 'anti-bot', summary: 'Cloudflare 403 / anti-bot block', trigger: 'Edge filter rejected our request fingerprint. Ashby is the most common culprit.', fix: 'Re-login to portal in headed mode so the persistent context cookies warm up.' },
-    { id: 'unknown-field', summary: 'Required form field has no answer', trigger: 'Schema-required question whose label doesn\'t match any cached answer (e.g. "Why this company?" custom prompt).', fix: 'Add the answer to your form-answers cache via the per-job menu, or fill it manually on the posting and mark Applied.' },
-    { id: 'upload-failed', summary: 'Resume / cover-letter upload failed', trigger: 'set_input_files() failed after retries — usually a stale tailored CV PDF that was generated but then deleted.', fix: 'Click "Regenerate CV" on the job\'s menu. Re-queue once the PDF lands.' },
-    { id: 'validation', summary: 'Submission rejected', trigger: 'Submit clicked, but the form validated and returned an error toast (missing field, wrong phone format, etc).', fix: 'Open posting, scroll to the validation error, fill manually, submit.' },
-    { id: 'error', summary: 'Script crashed', trigger: 'Selenium/Playwright threw — usually because a selector changed on the portal side.', fix: 'Open posting and finish by hand. If it persists, the adapter needs a selector update — open an issue.' },
-  ];
+type FailureMode = { id: string; summary: string; trigger: string; fix: string };
+const FAILURE_MODES: FailureMode[] = [
+  {
+    id: 'stub',
+    summary: 'Portal not yet automated',
+    trigger:
+      'Job URL routes to one of the 8 stub portals (Lever, Workable, Personio, SmartRecruiters, Recruitee, Teamtailor, Workday, Indeed).',
+    fix: 'Click "Open posting" in the Inbox. Walk the form by hand and use the form-answers cache from the per-job menu.',
+  },
+  {
+    id: 'captcha',
+    summary: 'CAPTCHA detected',
+    trigger:
+      'reCAPTCHA / hCaptcha / Cloudflare Turnstile rendered on the form. Most often after ~10 rapid Greenhouse submissions from the same persistent context.',
+    fix: '"Resume in headed browser" — opens a headed Playwright session so you can solve the CAPTCHA. Then re-queue.',
+  },
+  {
+    id: 'anti-bot',
+    summary: 'Cloudflare 403 / anti-bot block',
+    trigger: 'Edge filter rejected our request fingerprint. Ashby is the most common culprit.',
+    fix: 'Re-login to portal in headed mode so the persistent context cookies warm up.',
+  },
+  {
+    id: 'unknown-field',
+    summary: 'Required form field has no answer',
+    trigger:
+      'Schema-required question whose label doesn\'t match any cached answer (e.g. "Why this company?" custom prompt).',
+    fix: 'Add the answer to your form-answers cache via the per-job menu, or fill it manually on the posting and mark Applied.',
+  },
+  {
+    id: 'upload-failed',
+    summary: 'Resume / cover-letter upload failed',
+    trigger:
+      'set_input_files() failed after retries — usually a stale tailored CV PDF that was generated but then deleted.',
+    fix: 'Click "Regenerate CV" on the job\'s menu. Re-queue once the PDF lands.',
+  },
+  {
+    id: 'validation',
+    summary: 'Submission rejected',
+    trigger:
+      'Submit clicked, but the form validated and returned an error toast (missing field, wrong phone format, etc).',
+    fix: 'Open posting, scroll to the validation error, fill manually, submit.',
+  },
+  {
+    id: 'error',
+    summary: 'Script crashed',
+    trigger: 'Selenium/Playwright threw — usually because a selector changed on the portal side.',
+    fix: 'Open posting and finish by hand. If it persists, the adapter needs a selector update — open an issue.',
+  },
+];
 </script>
 
 <div class="h-full overflow-y-auto">

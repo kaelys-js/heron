@@ -1,12 +1,25 @@
 export type Status =
-  | 'New' | 'Scoring' | 'Scored' | 'Ready'
-  | 'Queued' | 'Applying' | 'Applied' | 'Screened'
+  | 'New'
+  | 'Scoring'
+  | 'Scored'
+  | 'Ready'
+  | 'Queued'
+  | 'Applying'
+  | 'Applied'
+  | 'Screened'
   // Interview sub-stages — finer-grained than the legacy 'Interview' bucket.
   // 'Interview' is preserved as a catch-all parent for back-compat with
   // existing applications.md rows; new flows should pick one of the specific
   // stages below.
-  | 'Interview' | 'PhoneScreen' | 'Technical' | 'Onsite' | 'TakeHome' | 'Final'
-  | 'Offer' | 'Rejected' | 'Closed'
+  | 'Interview'
+  | 'PhoneScreen'
+  | 'Technical'
+  | 'Onsite'
+  | 'TakeHome'
+  | 'Final'
+  | 'Offer'
+  | 'Rejected'
+  | 'Closed'
   | 'ManualApplyNeeded';
 
 /**
@@ -17,18 +30,24 @@ export type Status =
  * pipeline badge when it differs from the trivial fold.
  */
 export type ApplicationStatus =
-  | 'evaluated' | 'applied' | 'responded' | 'interview'
-  | 'offer' | 'rejected' | 'discarded' | 'skip';
+  | 'evaluated'
+  | 'applied'
+  | 'responded'
+  | 'interview'
+  | 'offer'
+  | 'rejected'
+  | 'discarded'
+  | 'skip';
 
 export const APPLICATION_STATUS_TINTS: Record<ApplicationStatus, string> = {
   evaluated: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30',
-  applied:   'bg-violet-500/10 text-violet-300 border-violet-500/30',
+  applied: 'bg-violet-500/10 text-violet-300 border-violet-500/30',
   responded: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
   interview: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
-  offer:     'bg-green-500/15 text-green-300 border-green-500/40',
-  rejected:  'bg-red-500/10 text-red-300 border-red-500/30',
+  offer: 'bg-green-500/15 text-green-300 border-green-500/40',
+  rejected: 'bg-red-500/10 text-red-300 border-red-500/30',
   discarded: 'bg-zinc-500/10 text-zinc-300 border-zinc-500/30',
-  skip:      'bg-zinc-500/5 text-zinc-500 border-zinc-500/20',
+  skip: 'bg-zinc-500/5 text-zinc-500 border-zinc-500/20',
 };
 
 export type BgRisk = 'LOW' | 'MEDIUM' | 'HIGH' | 'BLOCKED' | undefined;
@@ -76,47 +95,95 @@ export type Job = {
  *  scan-*.mjs files (see scan.mjs:316 etc). */
 export const SOURCE_LABELS: Record<string, { label: string; tint: string }> = {
   // ATS direct (scan.mjs)
-  'greenhouse-api':       { label: 'Greenhouse',     tint: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' },
-  'ashby-api':            { label: 'Ashby',          tint: 'bg-violet-500/10 text-violet-300 border-violet-500/30' },
-  'lever-api':            { label: 'Lever',          tint: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30' },
-  'workday-api':          { label: 'Workday',        tint: 'bg-orange-500/10 text-orange-300 border-orange-500/30' },
-  'smartrecruiters-api':  { label: 'SmartRecruiters', tint: 'bg-blue-500/10 text-blue-300 border-blue-500/30' },
-  'workable-api':         { label: 'Workable',       tint: 'bg-teal-500/10 text-teal-300 border-teal-500/30' },
-  'personio-api':         { label: 'Personio',       tint: 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/30' },
-  'recruitee-api':        { label: 'Recruitee',      tint: 'bg-pink-500/10 text-pink-300 border-pink-500/30' },
-  'teamtailor-api':       { label: 'Teamtailor',     tint: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30' },
+  'greenhouse-api': {
+    label: 'Greenhouse',
+    tint: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
+  },
+  'ashby-api': { label: 'Ashby', tint: 'bg-violet-500/10 text-violet-300 border-violet-500/30' },
+  'lever-api': { label: 'Lever', tint: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30' },
+  'workday-api': {
+    label: 'Workday',
+    tint: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
+  },
+  'smartrecruiters-api': {
+    label: 'SmartRecruiters',
+    tint: 'bg-blue-500/10 text-blue-300 border-blue-500/30',
+  },
+  'workable-api': { label: 'Workable', tint: 'bg-teal-500/10 text-teal-300 border-teal-500/30' },
+  'personio-api': {
+    label: 'Personio',
+    tint: 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/30',
+  },
+  'recruitee-api': { label: 'Recruitee', tint: 'bg-pink-500/10 text-pink-300 border-pink-500/30' },
+  'teamtailor-api': {
+    label: 'Teamtailor',
+    tint: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30',
+  },
   // Authenticated Playwright scrapers (your logged-in personalised feed)
-  'linkedin-authenticated': { label: 'LinkedIn (auth)', tint: 'bg-sky-500/15 text-sky-200 border-sky-500/50' },
-  'indeed-authenticated':   { label: 'Indeed (auth)',   tint: 'bg-blue-700/15 text-blue-200 border-blue-700/50' },
+  'linkedin-authenticated': {
+    label: 'LinkedIn (auth)',
+    tint: 'bg-sky-500/15 text-sky-200 border-sky-500/50',
+  },
+  'indeed-authenticated': {
+    label: 'Indeed (auth)',
+    tint: 'bg-blue-700/15 text-blue-200 border-blue-700/50',
+  },
   // Broad scan (scan-broad.py — JobSpy + free aggregators)
-  'linkedin':             { label: 'LinkedIn',       tint: 'bg-sky-500/10 text-sky-300 border-sky-500/30' },
-  'indeed':               { label: 'Indeed',         tint: 'bg-blue-700/10 text-blue-300 border-blue-700/30' },
-  'glassdoor':            { label: 'Glassdoor',      tint: 'bg-emerald-700/10 text-emerald-300 border-emerald-700/30' },
-  'ziprecruiter':         { label: 'ZipRecruiter',   tint: 'bg-zinc-500/10 text-zinc-300 border-zinc-500/30' },
-  'google':               { label: 'Google Jobs',    tint: 'bg-blue-500/10 text-blue-300 border-blue-500/30' },
-  'themuse':              { label: 'The Muse',       tint: 'bg-rose-500/10 text-rose-300 border-rose-500/30' },
-  'adzuna':               { label: 'Adzuna',         tint: 'bg-amber-500/10 text-amber-300 border-amber-500/30' },
-  'remoteok':             { label: 'RemoteOK',       tint: 'bg-purple-500/10 text-purple-300 border-purple-500/30' },
-  'wwr':                  { label: 'WeWorkRemotely', tint: 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/30' },
-  'hn':                   { label: 'HN Hiring',      tint: 'bg-orange-500/10 text-orange-300 border-orange-500/30' },
-  'yc':                   { label: 'YC startups',    tint: 'bg-orange-500/10 text-orange-300 border-orange-500/30' },
+  linkedin: { label: 'LinkedIn', tint: 'bg-sky-500/10 text-sky-300 border-sky-500/30' },
+  indeed: { label: 'Indeed', tint: 'bg-blue-700/10 text-blue-300 border-blue-700/30' },
+  glassdoor: {
+    label: 'Glassdoor',
+    tint: 'bg-emerald-700/10 text-emerald-300 border-emerald-700/30',
+  },
+  ziprecruiter: { label: 'ZipRecruiter', tint: 'bg-zinc-500/10 text-zinc-300 border-zinc-500/30' },
+  google: { label: 'Google Jobs', tint: 'bg-blue-500/10 text-blue-300 border-blue-500/30' },
+  themuse: { label: 'The Muse', tint: 'bg-rose-500/10 text-rose-300 border-rose-500/30' },
+  adzuna: { label: 'Adzuna', tint: 'bg-amber-500/10 text-amber-300 border-amber-500/30' },
+  remoteok: { label: 'RemoteOK', tint: 'bg-purple-500/10 text-purple-300 border-purple-500/30' },
+  wwr: {
+    label: 'WeWorkRemotely',
+    tint: 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/30',
+  },
+  hn: { label: 'HN Hiring', tint: 'bg-orange-500/10 text-orange-300 border-orange-500/30' },
+  yc: { label: 'YC startups', tint: 'bg-orange-500/10 text-orange-300 border-orange-500/30' },
   // Curated boards
-  'aijobs':               { label: 'AI Jobs',        tint: 'bg-amber-500/10 text-amber-300 border-amber-500/30' },
+  aijobs: { label: 'AI Jobs', tint: 'bg-amber-500/10 text-amber-300 border-amber-500/30' },
   // Email ingestion
-  'linkedin-alert-email': { label: 'LinkedIn alert', tint: 'bg-sky-500/10 text-sky-300 border-sky-500/30' },
-  'indeed-alert-email':   { label: 'Indeed alert',   tint: 'bg-blue-700/10 text-blue-300 border-blue-700/30' },
-  'email-digest':         { label: 'Email digest',   tint: 'bg-zinc-500/10 text-zinc-300 border-zinc-500/30' },
+  'linkedin-alert-email': {
+    label: 'LinkedIn alert',
+    tint: 'bg-sky-500/10 text-sky-300 border-sky-500/30',
+  },
+  'indeed-alert-email': {
+    label: 'Indeed alert',
+    tint: 'bg-blue-700/10 text-blue-300 border-blue-700/30',
+  },
+  'email-digest': {
+    label: 'Email digest',
+    tint: 'bg-zinc-500/10 text-zinc-300 border-zinc-500/30',
+  },
 };
 
 export const STATUS_ORDER: Status[] = [
-  'New', 'Scoring', 'Scored', 'Ready',
-  'Queued', 'Applying',
-  'Applied', 'Screened',
+  'New',
+  'Scoring',
+  'Scored',
+  'Ready',
+  'Queued',
+  'Applying',
+  'Applied',
+  'Screened',
   // Interview stages — ordered by typical progression. 'Interview' as a
   // generic bucket sits last so users with legacy data still see it grouped
   // but don't pick it for new flows.
-  'PhoneScreen', 'Technical', 'TakeHome', 'Onsite', 'Final', 'Interview',
-  'Offer', 'Rejected', 'Closed',
+  'PhoneScreen',
+  'Technical',
+  'TakeHome',
+  'Onsite',
+  'Final',
+  'Interview',
+  'Offer',
+  'Rejected',
+  'Closed',
   'ManualApplyNeeded',
 ];
 
@@ -266,7 +333,7 @@ export function tabLabel(t: TabFilter): string {
 }
 
 export type FilterState = {
-  minScore: number;       // 0 = no filter
+  minScore: number; // 0 = no filter
   bgRisk: Record<NonNullable<BgRisk>, boolean>;
   /** Each work mode key may be true (allowed) or false (excluded). All-true = no filter. */
   workMode: Record<WorkMode, boolean>;

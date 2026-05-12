@@ -1,132 +1,154 @@
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-  import { Badge } from '$lib/components/ui/badge';
-  import {
-    Users, Plus, Check, Trash2, Edit2, Loader2, Briefcase, ArrowRight,
-  } from '@lucide/svelte';
-  import { api, ApiError } from '$lib/api';
-  import { goto, invalidateAll } from '$app/navigation';
-  import { toast } from 'svelte-sonner';
-  import { cn, formatRelativeTime } from '$lib/utils';
-  import type { ProfileColor, ProfilesState, Profile } from '$lib/server/profiles';
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { Badge } from '$lib/components/ui/badge';
+import { Users, Plus, Check, Trash2, Edit2, Loader2, Briefcase, ArrowRight } from '@lucide/svelte';
+import { api, ApiError } from '$lib/api';
+import { goto, invalidateAll } from '$app/navigation';
+import { toast } from 'svelte-sonner';
+import { cn, formatRelativeTime } from '$lib/utils';
+import type { ProfileColor, ProfilesState, Profile } from '$lib/server/profiles';
 
-  // Inline the color list so we don't pull anything else from $lib/server.
-  const PROFILE_COLORS: ProfileColor[] = ['blue', 'emerald', 'violet', 'amber', 'rose', 'cyan', 'orange', 'pink'];
+// Inline the color list so we don't pull anything else from $lib/server.
+const PROFILE_COLORS: ProfileColor[] = [
+  'blue',
+  'emerald',
+  'violet',
+  'amber',
+  'rose',
+  'cyan',
+  'orange',
+  'pink',
+];
 
-  let { data }: {
-    data: {
-      state: ProfilesState;
-      stats: Record<string, { totalJobs: number; applied: number; reports: number }>;
-    };
-  } = $props();
+let {
+  data,
+}: {
+  data: {
+    state: ProfilesState;
+    stats: Record<string, { totalJobs: number; applied: number; reports: number }>;
+  };
+} = $props();
 
-  let busy = $state<Record<string, 'activate' | 'rename' | 'delete' | null>>({});
-  let editingId = $state<string | null>(null);
-  let editName = $state('');
-  let confirmDeleteId = $state<string | null>(null);
-  let confirmDeleteTyped = $state('');
+let busy = $state<Record<string, 'activate' | 'rename' | 'delete' | null>>({});
+let editingId = $state<string | null>(null);
+let editName = $state('');
+let confirmDeleteId = $state<string | null>(null);
+let confirmDeleteTyped = $state('');
 
-  function dot(color: string): string {
-    const map: Record<string, string> = {
-      blue: 'bg-blue-400', emerald: 'bg-emerald-400', violet: 'bg-violet-400',
-      amber: 'bg-amber-400', rose: 'bg-rose-400', cyan: 'bg-cyan-400',
-      orange: 'bg-orange-400', pink: 'bg-pink-400',
-    };
-    return map[color] ?? 'bg-zinc-400';
+function dot(color: string): string {
+  const map: Record<string, string> = {
+    blue: 'bg-blue-400',
+    emerald: 'bg-emerald-400',
+    violet: 'bg-violet-400',
+    amber: 'bg-amber-400',
+    rose: 'bg-rose-400',
+    cyan: 'bg-cyan-400',
+    orange: 'bg-orange-400',
+    pink: 'bg-pink-400',
+  };
+  return map[color] ?? 'bg-zinc-400';
+}
+function tintBorder(color: string): string {
+  const map: Record<string, string> = {
+    blue: 'border-blue-500/30',
+    emerald: 'border-emerald-500/30',
+    violet: 'border-violet-500/30',
+    amber: 'border-amber-500/30',
+    rose: 'border-rose-500/30',
+    cyan: 'border-cyan-500/30',
+    orange: 'border-orange-500/30',
+    pink: 'border-pink-500/30',
+  };
+  return map[color] ?? 'border-border/40';
+}
+
+async function makeActive(p: Profile) {
+  if (busy[p.id]) return;
+  busy = { ...busy, [p.id]: 'activate' };
+  try {
+    await api.post('/api/profiles/active', { id: p.id }, { silent: true });
+    toast.success('Active: ' + p.name);
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Switch failed', { description: err.message });
+  } finally {
+    busy = { ...busy, [p.id]: null };
   }
-  function tintBorder(color: string): string {
-    const map: Record<string, string> = {
-      blue: 'border-blue-500/30', emerald: 'border-emerald-500/30', violet: 'border-violet-500/30',
-      amber: 'border-amber-500/30', rose: 'border-rose-500/30', cyan: 'border-cyan-500/30',
-      orange: 'border-orange-500/30', pink: 'border-pink-500/30',
-    };
-    return map[color] ?? 'border-border/40';
-  }
+}
 
-  async function makeActive(p: Profile) {
-    if (busy[p.id]) return;
-    busy = { ...busy, [p.id]: 'activate' };
-    try {
-      await api.post('/api/profiles/active', { id: p.id }, { silent: true });
-      toast.success('Active: ' + p.name);
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Switch failed', { description: err.message });
-    } finally {
-      busy = { ...busy, [p.id]: null };
+function startRename(p: Profile) {
+  editingId = p.id;
+  editName = p.name;
+}
+
+async function commitRename(p: Profile) {
+  const trimmed = editName.trim();
+  if (!trimmed || trimmed === p.name) {
+    editingId = null;
+    return;
+  }
+  busy = { ...busy, [p.id]: 'rename' };
+  try {
+    const r = await fetch('/api/profiles/' + encodeURIComponent(p.id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: trimmed }),
+    });
+    if (!r.ok) {
+      const json = await r.json().catch(() => ({}));
+      throw new Error(json?.error?.message ?? 'rename failed');
     }
+    toast.success('Renamed to ' + trimmed);
+    editingId = null;
+    await invalidateAll();
+  } catch (e) {
+    toast.error('Rename failed', { description: e instanceof Error ? e.message : String(e) });
+  } finally {
+    busy = { ...busy, [p.id]: null };
   }
+}
 
-  function startRename(p: Profile) {
-    editingId = p.id;
-    editName = p.name;
+async function recolor(p: Profile, color: ProfileColor) {
+  try {
+    await fetch('/api/profiles/' + encodeURIComponent(p.id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ color }),
+    });
+    await invalidateAll();
+  } catch (e) {
+    toast.error('Recolor failed', { description: e instanceof Error ? e.message : String(e) });
   }
+}
 
-  async function commitRename(p: Profile) {
-    const trimmed = editName.trim();
-    if (!trimmed || trimmed === p.name) { editingId = null; return; }
-    busy = { ...busy, [p.id]: 'rename' };
-    try {
-      const r = await fetch('/api/profiles/' + encodeURIComponent(p.id), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: trimmed }),
-      });
-      if (!r.ok) {
-        const json = await r.json().catch(() => ({}));
-        throw new Error(json?.error?.message ?? 'rename failed');
-      }
-      toast.success('Renamed to ' + trimmed);
-      editingId = null;
-      await invalidateAll();
-    } catch (e) {
-      toast.error('Rename failed', { description: e instanceof Error ? e.message : String(e) });
-    } finally {
-      busy = { ...busy, [p.id]: null };
+async function commitDelete(p: Profile) {
+  if (confirmDeleteTyped !== 'DELETE') return;
+  busy = { ...busy, [p.id]: 'delete' };
+  try {
+    const r = await fetch('/api/profiles/' + encodeURIComponent(p.id), {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirm: 'DELETE' }),
+    });
+    if (!r.ok) {
+      const json = await r.json().catch(() => ({}));
+      throw new Error(json?.error?.message ?? 'delete failed');
     }
+    toast.success('Profile deleted', { description: p.name });
+    confirmDeleteId = null;
+    confirmDeleteTyped = '';
+    await invalidateAll();
+  } catch (e) {
+    toast.error('Delete failed', { description: e instanceof Error ? e.message : String(e) });
+  } finally {
+    busy = { ...busy, [p.id]: null };
   }
-
-  async function recolor(p: Profile, color: ProfileColor) {
-    try {
-      await fetch('/api/profiles/' + encodeURIComponent(p.id), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ color }),
-      });
-      await invalidateAll();
-    } catch (e) {
-      toast.error('Recolor failed', { description: e instanceof Error ? e.message : String(e) });
-    }
-  }
-
-  async function commitDelete(p: Profile) {
-    if (confirmDeleteTyped !== 'DELETE') return;
-    busy = { ...busy, [p.id]: 'delete' };
-    try {
-      const r = await fetch('/api/profiles/' + encodeURIComponent(p.id), {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirm: 'DELETE' }),
-      });
-      if (!r.ok) {
-        const json = await r.json().catch(() => ({}));
-        throw new Error(json?.error?.message ?? 'delete failed');
-      }
-      toast.success('Profile deleted', { description: p.name });
-      confirmDeleteId = null;
-      confirmDeleteTyped = '';
-      await invalidateAll();
-    } catch (e) {
-      toast.error('Delete failed', { description: e instanceof Error ? e.message : String(e) });
-    } finally {
-      busy = { ...busy, [p.id]: null };
-    }
-  }
+}
 </script>
 
 <div class="h-full overflow-y-auto">

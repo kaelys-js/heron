@@ -61,7 +61,7 @@ const SYSTEM_PROMPT =
   '- Lead bullets with a strong verb. Drop fluff ("responsible for", "tasked with").\n' +
   '- Keep original metrics verbatim — never round, never invent.\n' +
   '- If date range is "X yrs Y mos" without start/end, infer from the order if possible, ' +
-  'else write the source\'s wording verbatim.\n' +
+  "else write the source's wording verbatim.\n" +
   '- No emojis. No horizontal rules. Plain markdown headings + lists only.';
 
 export const POST = wrap('cv-from-linkedin', async ({ request }: { request: Request }) => {
@@ -75,15 +75,17 @@ export const POST = wrap('cv-from-linkedin', async ({ request }: { request: Requ
   // Cheap shape check up-front so the user gets a fast error before we
   // spawn Playwright. The python script does its own canonicalisation too.
   if (!/(linkedin\.com\/in\/[A-Za-z0-9_\-]+)/i.test(rawUrl)) {
-    badRequest('Not a LinkedIn /in/ profile URL — paste a link like https://www.linkedin.com/in/your-handle');
+    badRequest(
+      'Not a LinkedIn /in/ profile URL — paste a link like https://www.linkedin.com/in/your-handle',
+    );
   }
 
   // The extraction script needs the saved Playwright session. If LinkedIn
   // isn't connected, fail fast with a hint to /sources.
   if (!getSource('linkedin-auth').connected) {
     badRequest(
-      'LinkedIn is not connected. Connect it from /sources (or the wizard\'s Sources step) first — ' +
-      'we use your authenticated browser session to read the profile, since LinkedIn blocks public scraping.',
+      "LinkedIn is not connected. Connect it from /sources (or the wizard's Sources step) first — " +
+        'we use your authenticated browser session to read the profile, since LinkedIn blocks public scraping.',
     );
   }
 
@@ -106,7 +108,9 @@ export const POST = wrap('cv-from-linkedin', async ({ request }: { request: Requ
   }
 
   if (!extracted || extracted.length < 200) {
-    badRequest('Extracted text is suspiciously short — profile may be private or empty. Paste plain text instead.');
+    badRequest(
+      'Extracted text is suspiciously short — profile may be private or empty. Paste plain text instead.',
+    );
   }
 
   logEvent('cv-from-linkedin', 'LinkedIn profile extracted, converting via Claude', {
@@ -115,13 +119,22 @@ export const POST = wrap('cv-from-linkedin', async ({ request }: { request: Requ
   });
 
   const out = await complete(SYSTEM_PROMPT, extracted, { maxTokens: 8000, thinking: false });
-  const markdown = out.trim().replace(/^```(?:markdown|md)?\s*/i, '').replace(/\s*```$/, '').trim();
-  if (!markdown) badRequest('Claude returned an empty response — try again or paste plain text directly');
+  const markdown = out
+    .trim()
+    .replace(/^```(?:markdown|md)?\s*/i, '')
+    .replace(/\s*```$/, '')
+    .trim();
+  if (!markdown)
+    badRequest('Claude returned an empty response — try again or paste plain text directly');
 
   logEvent('cv-from-linkedin', 'LinkedIn CV import succeeded', {
     level: 'success',
     category: 'user',
-    message: extracted.length.toLocaleString() + ' chars in → ' + markdown.length.toLocaleString() + ' chars out',
+    message:
+      extracted.length.toLocaleString() +
+      ' chars in → ' +
+      markdown.length.toLocaleString() +
+      ' chars out',
   });
 
   return { markdown };
@@ -153,11 +166,16 @@ function spawnExtractScript(url: string): Promise<string> {
     });
 
     const timer = setTimeout(() => {
-      try { p.kill('SIGTERM'); } catch {}
+      try {
+        p.kill('SIGTERM');
+      } catch {}
       reject(new Error('Extraction timed out after 60s'));
     }, 60_000);
 
-    p.on('error', (err) => { clearTimeout(timer); reject(err); });
+    p.on('error', (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
     p.on('close', (code) => {
       clearTimeout(timer);
       if (code === 0) return resolve(stdoutBuf);
@@ -170,7 +188,7 @@ function spawnExtractScript(url: string): Promise<string> {
         4: 'profile is private or LinkedIn served an auth-wall',
         5: 'timed out fetching the profile page',
       };
-      const hint = map[code ?? -1] ?? ('exited ' + code);
+      const hint = map[code ?? -1] ?? 'exited ' + code;
       reject(new Error(hint + (tail ? ' · ' + tail : '')));
     });
   });

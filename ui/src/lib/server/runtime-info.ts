@@ -56,7 +56,10 @@ export type RuntimeReport = {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function readPackageJson(): { dependencies?: Record<string, string>; devDependencies?: Record<string, string> } {
+function readPackageJson(): {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+} {
   try {
     const txt = fs.readFileSync(path.join(ROOT, 'ui', 'package.json'), 'utf8');
     return JSON.parse(txt);
@@ -70,7 +73,15 @@ function readPackageJson(): { dependencies?: Record<string, string>; devDependen
   }
 }
 
-function detectPython(): { exists: boolean; version?: string; sitePackagesPath?: string; packagesCount?: number; hasJobspy: boolean; hasPlaywright: boolean; hasGoogleGenAI: boolean } {
+function detectPython(): {
+  exists: boolean;
+  version?: string;
+  sitePackagesPath?: string;
+  packagesCount?: number;
+  hasJobspy: boolean;
+  hasPlaywright: boolean;
+  hasGoogleGenAI: boolean;
+} {
   const venv = path.join(ROOT, '.venv');
   if (!fs.existsSync(venv)) {
     return { exists: false, hasJobspy: false, hasPlaywright: false, hasGoogleGenAI: false };
@@ -109,8 +120,14 @@ function detectPython(): { exists: boolean; version?: string; sitePackagesPath?:
       packagesCount = distInfos.length;
       const lower = items.map((n: string) => n.toLowerCase());
       hasJobspy = lower.some((n) => n.startsWith('python_jobspy') || n === 'jobspy');
-      hasPlaywright = lower.includes('playwright') || lower.some((n) => n.startsWith('playwright-'));
-      hasGoogleGenAI = lower.some((n) => n.includes('google_ai_generativelanguage') || n.includes('google_genai') || n.includes('google-generativeai'));
+      hasPlaywright =
+        lower.includes('playwright') || lower.some((n) => n.startsWith('playwright-'));
+      hasGoogleGenAI = lower.some(
+        (n) =>
+          n.includes('google_ai_generativelanguage') ||
+          n.includes('google_genai') ||
+          n.includes('google-generativeai'),
+      );
     } catch (e) {
       logEvent('runtime-info', 'Could not read site-packages', {
         level: 'warn',
@@ -120,7 +137,15 @@ function detectPython(): { exists: boolean; version?: string; sitePackagesPath?:
     }
   }
 
-  return { exists: true, version, sitePackagesPath, packagesCount, hasJobspy, hasPlaywright, hasGoogleGenAI };
+  return {
+    exists: true,
+    version,
+    sitePackagesPath,
+    packagesCount,
+    hasJobspy,
+    hasPlaywright,
+    hasGoogleGenAI,
+  };
 }
 
 function maskKey(v: string | undefined): string | undefined {
@@ -129,7 +154,11 @@ function maskKey(v: string | undefined): string | undefined {
   return '****' + v.slice(-4);
 }
 
-function eventsInWindow(predicate: (ev: ActivityEvent) => boolean): { last24h: number; lastUsedAt: number | null; lastError?: ActivityEvent } {
+function eventsInWindow(predicate: (ev: ActivityEvent) => boolean): {
+  last24h: number;
+  lastUsedAt: number | null;
+  lastError?: ActivityEvent;
+} {
   const cutoff = Date.now() - DAY_MS;
   let count = 0;
   let lastUsed: number | null = null;
@@ -163,7 +192,15 @@ export function buildRuntimeReport(): RuntimeReport {
     badge: process.version,
     details: [
       'SvelteKit ' + sk + ' · Svelte ' + svelte + ' · Vite ' + vite,
-      'PID ' + process.pid + ' · ' + process.platform + '/' + process.arch + ' · uptime ' + Math.round(process.uptime()) + 's',
+      'PID ' +
+        process.pid +
+        ' · ' +
+        process.platform +
+        '/' +
+        process.arch +
+        ' · uptime ' +
+        Math.round(process.uptime()) +
+        's',
     ],
     powers: [
       'Dashboard server (this UI)',
@@ -180,7 +217,9 @@ export function buildRuntimeReport(): RuntimeReport {
     : pythonRequiredOk
       ? 'healthy'
       : 'degraded';
-  const pythonUsage = eventsInWindow((ev) => ev.category === 'task' && ['scan', 'gemini', 'apply-linkedin'].includes(ev.source));
+  const pythonUsage = eventsInWindow(
+    (ev) => ev.category === 'task' && ['scan', 'gemini', 'apply-linkedin'].includes(ev.source),
+  );
   cards.push({
     id: 'python',
     name: 'Python venv',
@@ -189,12 +228,19 @@ export function buildRuntimeReport(): RuntimeReport {
     status: pythonStatus,
     badge: py.exists ? (py.version ?? 'detected') : 'missing',
     details: py.exists
-      ? [
+      ? ([
           (py.packagesCount ?? 0) + ' packages installed',
-          'jobspy ' + (py.hasJobspy ? '✓' : '✗') + ' · playwright ' + (py.hasPlaywright ? '✓' : '✗') + ' · google-genai ' + (py.hasGoogleGenAI ? '✓' : '✗'),
+          'jobspy ' +
+            (py.hasJobspy ? '✓' : '✗') +
+            ' · playwright ' +
+            (py.hasPlaywright ? '✓' : '✗') +
+            ' · google-genai ' +
+            (py.hasGoogleGenAI ? '✓' : '✗'),
           py.sitePackagesPath ? py.sitePackagesPath.replace(ROOT + '/', '') : '',
-        ].filter(Boolean) as string[]
-      : ['Run: python3 -m venv .venv && .venv/bin/pip install python-jobspy playwright google-generativeai'],
+        ].filter(Boolean) as string[])
+      : [
+          'Run: python3 -m venv .venv && .venv/bin/pip install python-jobspy playwright google-generativeai',
+        ],
     powers: [
       'Job scanning (scan-broad.py)',
       'Gemini first-pass scoring (gemini-first-pass.py)',
@@ -203,14 +249,23 @@ export function buildRuntimeReport(): RuntimeReport {
     usage: {
       last24h: pythonUsage.last24h,
       lastUsedAt: pythonUsage.lastUsedAt,
-      lastError: pythonUsage.lastError ? { ts: pythonUsage.lastError.ts, title: pythonUsage.lastError.title, message: pythonUsage.lastError.message } : undefined,
+      lastError: pythonUsage.lastError
+        ? {
+            ts: pythonUsage.lastError.ts,
+            title: pythonUsage.lastError.title,
+            message: pythonUsage.lastError.message,
+          }
+        : undefined,
     },
   });
 
   // ----- Anthropic Claude -----
   const anthropicConfigured = !!env.ANTHROPIC_API_KEY;
-  const anthropicUsage = eventsInWindow((ev) =>
-    ev.source === 'agent-chat' || ev.source === 'oferta' || (ev.source === 'settings' && ev.title.includes('anthropic'))
+  const anthropicUsage = eventsInWindow(
+    (ev) =>
+      ev.source === 'agent-chat' ||
+      ev.source === 'oferta' ||
+      (ev.source === 'settings' && ev.title.includes('anthropic')),
   );
   cards.push({
     id: 'anthropic',
@@ -231,7 +286,13 @@ export function buildRuntimeReport(): RuntimeReport {
     usage: {
       last24h: anthropicUsage.last24h,
       lastUsedAt: anthropicUsage.lastUsedAt,
-      lastError: anthropicUsage.lastError ? { ts: anthropicUsage.lastError.ts, title: anthropicUsage.lastError.title, message: anthropicUsage.lastError.message } : undefined,
+      lastError: anthropicUsage.lastError
+        ? {
+            ts: anthropicUsage.lastError.ts,
+            title: anthropicUsage.lastError.title,
+            message: anthropicUsage.lastError.message,
+          }
+        : undefined,
     },
     probable: 'anthropic',
     setupUrl: '/settings',
@@ -250,7 +311,9 @@ export function buildRuntimeReport(): RuntimeReport {
     badge: geminiConfigured ? maskKey(env.GEMINI_API_KEY) : 'no key',
     details: geminiConfigured
       ? ['Free-tier Flash (~1M tokens/day) · used for cheap title-based first-pass scoring']
-      : ['Free key. Without this, jobs land in pipeline unscored — manual Claude eval becomes the only path.'],
+      : [
+          'Free key. Without this, jobs land in pipeline unscored — manual Claude eval becomes the only path.',
+        ],
     powers: [
       'Cheap first-pass scoring of every pending job (~1 min for 800 jobs)',
       'Cuts Claude evaluation cost by triaging out obvious mismatches',
@@ -258,7 +321,13 @@ export function buildRuntimeReport(): RuntimeReport {
     usage: {
       last24h: geminiUsage.last24h,
       lastUsedAt: geminiUsage.lastUsedAt,
-      lastError: geminiUsage.lastError ? { ts: geminiUsage.lastError.ts, title: geminiUsage.lastError.title, message: geminiUsage.lastError.message } : undefined,
+      lastError: geminiUsage.lastError
+        ? {
+            ts: geminiUsage.lastError.ts,
+            title: geminiUsage.lastError.title,
+            message: geminiUsage.lastError.message,
+          }
+        : undefined,
     },
     probable: 'gemini',
     setupUrl: '/settings',

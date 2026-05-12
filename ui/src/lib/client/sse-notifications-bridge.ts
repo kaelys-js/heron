@@ -49,12 +49,15 @@ export function installNotificationsBridge(backendUrl: string): () => void {
     } catch {
       return;
     }
-    if (!event || (event.level !== 'warn' && event.level !== 'error' && event.level !== 'success')) {
+    if (
+      !event ||
+      (event.level !== 'warn' && event.level !== 'error' && event.level !== 'success')
+    ) {
       // We only surface non-info notifications by default. The user can
       // toggle info-level via ui-prefs.notifications.os.info.
       return;
     }
-    const tag = event.jobId ? `apply:${event.jobId}` : event.source ?? event.id;
+    const tag = event.jobId ? `apply:${event.jobId}` : (event.source ?? event.id);
     void notify({
       title: event.title ?? `${BRAND.displayName}: ${event.level}`,
       body: event.message ?? '',

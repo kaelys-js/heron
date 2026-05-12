@@ -3,17 +3,39 @@ name: Tests
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          fetch-depth: 0
+
+      # mise installs all tools pinned in .mise.toml (Node + pnpm + Ruby).
+      # Single source of truth → no version drift between local and CI.
+      - uses: jdx/mise-action@v2
+        with:
+          experimental: true
+
       - uses: actions/setup-go@v6
         with:
           go-version: '1.22'
-      - run: npm install
-      - run: node test-all.mjs --quick
+
+      - name: Install ui workspace deps
+        run: pnpm install --frozen-lockfile
+        working-directory: ui
+
+      - name: Install root deps
+        run: npm install --no-audit --no-fund
+
+      - name: Run quick test suite
+        run: node test-all.mjs --quick
+
+      - name: Format check (biome)
+        run: pnpm format:check
+
+      - name: Brand consistency
+        run: node verify-capacitor.mjs

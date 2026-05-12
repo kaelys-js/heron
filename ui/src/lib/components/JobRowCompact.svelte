@@ -1,75 +1,110 @@
 <script lang="ts">
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { MapPin, FileText, FileBadge2, Wifi, Building, Globe, DollarSign, ScrollText } from '@lucide/svelte';
-  import type { Job, WorkMode, Status } from '$lib/types';
-  import { BG_TINTS } from '$lib/types';
-  import { cn } from '$lib/utils';
-  import JobActions from './JobActions.svelte';
-  import SourceChip from './SourceChip.svelte';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import {
+  MapPin,
+  FileText,
+  FileBadge2,
+  Wifi,
+  Building,
+  Globe,
+  DollarSign,
+  ScrollText,
+} from '@lucide/svelte';
+import type { Job, WorkMode, Status } from '$lib/types';
+import { BG_TINTS } from '$lib/types';
+import { cn } from '$lib/utils';
+import JobActions from './JobActions.svelte';
+import SourceChip from './SourceChip.svelte';
 
-  /**
-   * `hideCompany` removes the company column — used inside CompanyGroup
-   * (where the section header already names the company). Frees up space
-   * for the role to be more legible.
-   */
-  let { job, hideCompany = false }: { job: Job; hideCompany?: boolean } = $props();
+/**
+ * `hideCompany` removes the company column — used inside CompanyGroup
+ * (where the section header already names the company). Frees up space
+ * for the role to be more legible.
+ */
+let { job, hideCompany = false }: { job: Job; hideCompany?: boolean } = $props();
 
-  let displayScore = $derived(job.score ?? job.geminiScore);
-  let isGemini = $derived(job.score == null && job.geminiScore != null);
-  let scoreClass = $derived(
-    displayScore == null ? 'text-muted-foreground/50'
-    : displayScore >= 4.5 ? 'text-emerald-300'
-    : displayScore >= 4   ? 'text-emerald-400/90'
-    : displayScore >= 3   ? 'text-amber-400/90'
-    : 'text-red-400/80'
-  );
-  let scoreVerdict = $derived.by(() => {
-    if (displayScore == null) return 'Not yet scored';
-    if (displayScore >= 4.5) return 'Strong fit · prioritize';
-    if (displayScore >= 4)   return 'Good fit · worth applying';
-    if (displayScore >= 3)   return 'Marginal · review the gaps';
-    return 'Low fit · skip unless special interest';
-  });
-  let statusDotClass = $derived(
-    job.status === 'Ready' ? 'bg-emerald-500'
-    : job.status === 'Applied' ? 'bg-violet-500'
-    : job.status === 'Interview' ? 'bg-orange-500'
-    : job.status === 'Offer' ? 'bg-green-500'
-    : job.status === 'Rejected' ? 'bg-red-500'
-    : job.status === 'Scored' ? 'bg-cyan-500'
-    : job.status === 'Scoring' ? 'bg-blue-500'
-    : 'bg-zinc-500'
-  );
+let displayScore = $derived(job.score ?? job.geminiScore);
+let isGemini = $derived(job.score == null && job.geminiScore != null);
+let scoreClass = $derived(
+  displayScore == null
+    ? 'text-muted-foreground/50'
+    : displayScore >= 4.5
+      ? 'text-emerald-300'
+      : displayScore >= 4
+        ? 'text-emerald-400/90'
+        : displayScore >= 3
+          ? 'text-amber-400/90'
+          : 'text-red-400/80',
+);
+let scoreVerdict = $derived.by(() => {
+  if (displayScore == null) return 'Not yet scored';
+  if (displayScore >= 4.5) return 'Strong fit · prioritize';
+  if (displayScore >= 4) return 'Good fit · worth applying';
+  if (displayScore >= 3) return 'Marginal · review the gaps';
+  return 'Low fit · skip unless special interest';
+});
+let statusDotClass = $derived(
+  job.status === 'Ready'
+    ? 'bg-emerald-500'
+    : job.status === 'Applied'
+      ? 'bg-violet-500'
+      : job.status === 'Interview'
+        ? 'bg-orange-500'
+        : job.status === 'Offer'
+          ? 'bg-green-500'
+          : job.status === 'Rejected'
+            ? 'bg-red-500'
+            : job.status === 'Scored'
+              ? 'bg-cyan-500'
+              : job.status === 'Scoring'
+                ? 'bg-blue-500'
+                : 'bg-zinc-500',
+);
 
-  const STATUS_HINT: Record<Status, string> = {
-    New: 'Just discovered — no score yet',
-    Scoring: 'Gemini is processing this job',
-    Scored: 'Has a Gemini score · review and promote to Ready',
-    Ready: 'Eval done · CV PDF ready · go apply',
-    Queued: 'Staged for batch send · review on /queue',
-    Applying: 'Autonomous-apply script running',
-    Applied: 'Application sent',
-    Screened: 'Recruiter responded',
-    PhoneScreen: 'Phone screen scheduled',
-    Technical: 'Technical interview',
-    TakeHome: 'Take-home in progress',
-    Onsite: 'Onsite / panel loop',
-    Final: 'Final round',
-    Interview: 'Active interview process',
-    Offer: 'Offer in hand · negotiate',
-    Rejected: 'Closed by company',
-    Closed: 'You skipped this one',
-    ManualApplyNeeded: 'Auto-apply blocked — finish by hand',
-  };
+const STATUS_HINT: Record<Status, string> = {
+  New: 'Just discovered — no score yet',
+  Scoring: 'Gemini is processing this job',
+  Scored: 'Has a Gemini score · review and promote to Ready',
+  Ready: 'Eval done · CV PDF ready · go apply',
+  Queued: 'Staged for batch send · review on /queue',
+  Applying: 'Autonomous-apply script running',
+  Applied: 'Application sent',
+  Screened: 'Recruiter responded',
+  PhoneScreen: 'Phone screen scheduled',
+  Technical: 'Technical interview',
+  TakeHome: 'Take-home in progress',
+  Onsite: 'Onsite / panel loop',
+  Final: 'Final round',
+  Interview: 'Active interview process',
+  Offer: 'Offer in hand · negotiate',
+  Rejected: 'Closed by company',
+  Closed: 'You skipped this one',
+  ManualApplyNeeded: 'Auto-apply blocked — finish by hand',
+};
 
-  const WORK_MODE: Record<WorkMode, { label: string; icon: any; tint: string; tip: string }> = {
-    remote:  { label: 'Remote',  icon: Wifi,     tint: 'text-emerald-300', tip: 'Fully remote' },
-    hybrid:  { label: 'Hybrid',  icon: Building, tint: 'text-amber-300',   tip: 'Hybrid — some office presence required' },
-    onsite:  { label: 'On-site', icon: Building, tint: 'text-red-300',     tip: 'On-site — must work from a specific location' },
-    unknown: { label: '—',       icon: Globe,    tint: 'text-muted-foreground/40', tip: 'Work mode not stated in posting' },
-  };
-  let wm = $derived(WORK_MODE[job.workMode ?? 'unknown']);
-  let WIcon = $derived(wm.icon);
+const WORK_MODE: Record<WorkMode, { label: string; icon: any; tint: string; tip: string }> = {
+  remote: { label: 'Remote', icon: Wifi, tint: 'text-emerald-300', tip: 'Fully remote' },
+  hybrid: {
+    label: 'Hybrid',
+    icon: Building,
+    tint: 'text-amber-300',
+    tip: 'Hybrid — some office presence required',
+  },
+  onsite: {
+    label: 'On-site',
+    icon: Building,
+    tint: 'text-red-300',
+    tip: 'On-site — must work from a specific location',
+  },
+  unknown: {
+    label: '—',
+    icon: Globe,
+    tint: 'text-muted-foreground/40',
+    tip: 'Work mode not stated in posting',
+  },
+};
+let wm = $derived(WORK_MODE[job.workMode ?? 'unknown']);
+let WIcon = $derived(wm.icon);
 </script>
 
 <!--

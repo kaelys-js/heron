@@ -1,0 +1,55 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "//": "Turborepo task graph. Caches outputs, runs tasks in parallel where possible, only re-runs what changed.",
+  "globalDependencies": [
+    "branding/brand.json",
+    "branding/logo.svg",
+    "package.json",
+    ".mise.toml",
+    "biome.json"
+  ],
+  "globalEnv": ["NODE_ENV", "CAPACITOR", "PUBLIC_CAPACITOR_BUILD", "APPLE_ID", "APPLE_TEAM_ID"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build", "brand"],
+      "outputs": ["build/**", ".svelte-kit/**", "dist/**"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md", "!**/*.test.ts"]
+    },
+    "build:static": {
+      "dependsOn": ["brand"],
+      "env": ["CAPACITOR", "PUBLIC_CAPACITOR_BUILD"],
+      "outputs": ["build/static/**"]
+    },
+    "brand": {
+      "cache": false,
+      "//": "apply-brand outputs span multiple workspaces (ui + ui/electron + ui/ios); turbo's workspace-relative output paths can't express that cleanly. cache:false avoids stale-cache bugs, and apply-brand is idempotent + fast (<1s) so re-running is cheap."
+    },
+    "check": {
+      "dependsOn": ["brand"],
+      "outputs": [],
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
+    "format": {
+      "cache": false
+    },
+    "format:check": {
+      "outputs": []
+    },
+    "verify": {
+      "dependsOn": ["brand"],
+      "outputs": []
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["brand"]
+    },
+    "lint": {
+      "outputs": []
+    },
+    "test": {
+      "outputs": [],
+      "dependsOn": ["^build"]
+    }
+  }
+}

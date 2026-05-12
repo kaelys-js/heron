@@ -1,199 +1,292 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-  import * as Popover from '$lib/components/ui/popover';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Switch } from '$lib/components/ui/switch';
-  import { Label } from '$lib/components/ui/label';
-  import {
-    Filter, ArrowDownUp, LayoutGrid, List, X, Search, ArrowDownWideNarrow, ArrowUpWideNarrow,
-    ArrowDownAZ, Clock, Layers, Rows3, Table2, Building2, Star, ShieldCheck, Wifi, Building,
-    Globe, FileText, FileBadge2, DollarSign, RotateCcw,
-  } from '@lucide/svelte';
-  import * as Sidebar from '$lib/components/ui/sidebar';
-  import NotificationsBell from './NotificationsBell.svelte';
-  import ConnectionBanner from './ConnectionBanner.svelte';
-  import TaskIndicator from './TaskIndicator.svelte';
-  import ThemeToggle from './ThemeToggle.svelte';
-  import CheckMark from './CheckMark.svelte';
-  import type { TabFilter, SortKey, ViewMode, FilterState, BgRisk, Status, WorkMode } from '$lib/types';
-  import { DEFAULT_FILTER, BG_TINTS, STATUS_ORDER, TAB_PRESETS, tabLabel, SOURCE_LABELS } from '$lib/types';
-  import { cn } from '$lib/utils';
-  import { APP_NAME, docTitle as buildDocTitle } from '$lib/config/branding';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import * as Popover from '$lib/components/ui/popover';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { Switch } from '$lib/components/ui/switch';
+import { Label } from '$lib/components/ui/label';
+import {
+  Filter,
+  ArrowDownUp,
+  LayoutGrid,
+  List,
+  X,
+  Search,
+  ArrowDownWideNarrow,
+  ArrowUpWideNarrow,
+  ArrowDownAZ,
+  Clock,
+  Layers,
+  Rows3,
+  Table2,
+  Building2,
+  Star,
+  ShieldCheck,
+  Wifi,
+  Building,
+  Globe,
+  FileText,
+  FileBadge2,
+  DollarSign,
+  RotateCcw,
+} from '@lucide/svelte';
+import * as Sidebar from '$lib/components/ui/sidebar';
+import NotificationsBell from './NotificationsBell.svelte';
+import ConnectionBanner from './ConnectionBanner.svelte';
+import TaskIndicator from './TaskIndicator.svelte';
+import ThemeToggle from './ThemeToggle.svelte';
+import CheckMark from './CheckMark.svelte';
+import type {
+  TabFilter,
+  SortKey,
+  ViewMode,
+  FilterState,
+  BgRisk,
+  Status,
+  WorkMode,
+} from '$lib/types';
+import {
+  DEFAULT_FILTER,
+  BG_TINTS,
+  STATUS_ORDER,
+  TAB_PRESETS,
+  tabLabel,
+  SOURCE_LABELS,
+} from '$lib/types';
+import { cn } from '$lib/utils';
+import { APP_NAME, docTitle as buildDocTitle } from '$lib/config/branding';
 
-  let {
-    title,
-    subtitle,
-    breadcrumb,
-    breadcrumbHref = '/',
-    showTabs = true,
-    /** Lighter alternative to `showTabs`: renders ONLY the Filter popover
-     *  in a minimal sub-bar, without the Tab/Sort/View dropdowns. Used by
-     *  pages like Inbox/Applied/Queue/Stats/Insights/Projects that benefit
-     *  from the filter but don't need the pipeline-specific board controls. */
-    showFilter = false,
-    activeTab = $bindable('all'),
-    sort = $bindable('score-desc'),
-    viewMode = $bindable('board'),
-    filter = $bindable(DEFAULT_FILTER),
-    onTabChange = (t: string) => {},
-  }: {
-    title: string;
-    subtitle?: string;
-    breadcrumb?: string;
-    breadcrumbHref?: string;
-    showTabs?: boolean;
-    showFilter?: boolean;
-    activeTab?: TabFilter;
-    sort?: SortKey;
-    viewMode?: ViewMode;
-    filter?: FilterState;
-    onTabChange?: (t: string) => void;
-  } = $props();
+let {
+  title,
+  subtitle,
+  breadcrumb,
+  breadcrumbHref = '/',
+  showTabs = true,
+  /** Lighter alternative to `showTabs`: renders ONLY the Filter popover
+   *  in a minimal sub-bar, without the Tab/Sort/View dropdowns. Used by
+   *  pages like Inbox/Applied/Queue/Stats/Insights/Projects that benefit
+   *  from the filter but don't need the pipeline-specific board controls. */
+  showFilter = false,
+  activeTab = $bindable('all'),
+  sort = $bindable('score-desc'),
+  viewMode = $bindable('board'),
+  filter = $bindable(DEFAULT_FILTER),
+  onTabChange = (t: string) => {},
+}: {
+  title: string;
+  subtitle?: string;
+  breadcrumb?: string;
+  breadcrumbHref?: string;
+  showTabs?: boolean;
+  showFilter?: boolean;
+  activeTab?: TabFilter;
+  sort?: SortKey;
+  viewMode?: ViewMode;
+  filter?: FilterState;
+  onTabChange?: (t: string) => void;
+} = $props();
 
-  // Default breadcrumb to the app name. Pages can override (e.g. "Pipeline" on job detail).
-  let crumb = $derived(breadcrumb ?? APP_NAME);
+// Default breadcrumb to the app name. Pages can override (e.g. "Pipeline" on job detail).
+let crumb = $derived(breadcrumb ?? APP_NAME);
 
-  // ---- Sort options ----
-  const SORTS: { key: SortKey; label: string; desc: string; icon: any }[] = [
-    { key: 'score-desc',  label: 'Score · high → low',  desc: 'Best fits first',                icon: ArrowDownWideNarrow },
-    { key: 'score-asc',   label: 'Score · low → high',  desc: 'Worst fits first (review skips)', icon: ArrowUpWideNarrow },
-    { key: 'date-desc',   label: 'Recently added',      desc: 'Newest in pipeline first',       icon: Clock },
-    { key: 'company-asc', label: 'Company · A → Z',     desc: 'Alphabetical by company name',   icon: ArrowDownAZ },
-  ];
-  let activeSort = $derived(SORTS.find((s) => s.key === sort) ?? SORTS[0]);
-  let sortShort = $derived(activeSort.label.split('·')[0].trim());
+// ---- Sort options ----
+const SORTS: { key: SortKey; label: string; desc: string; icon: any }[] = [
+  {
+    key: 'score-desc',
+    label: 'Score · high → low',
+    desc: 'Best fits first',
+    icon: ArrowDownWideNarrow,
+  },
+  {
+    key: 'score-asc',
+    label: 'Score · low → high',
+    desc: 'Worst fits first (review skips)',
+    icon: ArrowUpWideNarrow,
+  },
+  { key: 'date-desc', label: 'Recently added', desc: 'Newest in pipeline first', icon: Clock },
+  {
+    key: 'company-asc',
+    label: 'Company · A → Z',
+    desc: 'Alphabetical by company name',
+    icon: ArrowDownAZ,
+  },
+];
+let activeSort = $derived(SORTS.find((s) => s.key === sort) ?? SORTS[0]);
+let sortShort = $derived(activeSort.label.split('·')[0].trim());
 
-  // ---- View modes ----
-  const VIEWS: { key: ViewMode; label: string; icon: any; desc: string }[] = [
-    { key: 'board',      label: 'Board',         icon: LayoutGrid, desc: 'Kanban columns by status' },
-    { key: 'list',       label: 'List',          icon: List,       desc: 'Cards stacked vertically' },
-    { key: 'compact',    label: 'Compact',       icon: Rows3,      desc: 'One-line rows · denser' },
-    { key: 'table',      label: 'Table',         icon: Table2,     desc: 'Sortable spreadsheet' },
-    { key: 'by-company', label: 'By company',    icon: Building2,  desc: 'Grouped sections per company' },
-  ];
-  let activeView = $derived(VIEWS.find((v) => v.key === viewMode) ?? VIEWS[0]);
+// ---- View modes ----
+const VIEWS: { key: ViewMode; label: string; icon: any; desc: string }[] = [
+  { key: 'board', label: 'Board', icon: LayoutGrid, desc: 'Kanban columns by status' },
+  { key: 'list', label: 'List', icon: List, desc: 'Cards stacked vertically' },
+  { key: 'compact', label: 'Compact', icon: Rows3, desc: 'One-line rows · denser' },
+  { key: 'table', label: 'Table', icon: Table2, desc: 'Sortable spreadsheet' },
+  { key: 'by-company', label: 'By company', icon: Building2, desc: 'Grouped sections per company' },
+];
+let activeView = $derived(VIEWS.find((v) => v.key === viewMode) ?? VIEWS[0]);
 
-  // ---- Tab presets — descriptions shown in dropdown ----
-  const PRESET_DESC: Record<string, string> = {
-    all:     'Every status — no filtering by stage',
-    ready:   'Eval done · CV PDF generated · ready to send',
-    applied: 'Applied · Screened · Interview · Offer (active applications)',
+// ---- Tab presets — descriptions shown in dropdown ----
+const PRESET_DESC: Record<string, string> = {
+  all: 'Every status — no filtering by stage',
+  ready: 'Eval done · CV PDF generated · ready to send',
+  applied: 'Applied · Screened · Interview · Offer (active applications)',
+};
+
+const STATUS_HINT: Record<Status, string> = {
+  New: 'Just discovered — no score yet',
+  Scoring: 'Gemini is processing this job',
+  Scored: 'Has a Gemini score · review and promote',
+  Ready: 'Eval done · CV PDF ready · go apply',
+  Queued: 'CV + drafts ready · staged for batch send · review on /queue',
+  Applying: 'Autonomous-apply script running right now',
+  Applied: 'Application sent',
+  Screened: 'Recruiter responded',
+  PhoneScreen: 'Phone screen scheduled or in progress',
+  Technical: 'Technical interview · algos / system design / coding',
+  TakeHome: 'Take-home assignment in progress',
+  Onsite: 'Onsite / panel loop',
+  Final: 'Final round · hiring committee / VP / exec',
+  Interview: 'Active interview process (use sub-stages for finer tracking)',
+  Offer: 'Offer in hand · negotiate',
+  Rejected: 'Closed by company',
+  Closed: 'You skipped this one',
+  ManualApplyNeeded: 'Auto-apply blocked — finish by hand from Inbox',
+};
+
+const STATUS_DOTS: Record<Status, string> = {
+  New: 'bg-zinc-400',
+  Scoring: 'bg-blue-400',
+  Scored: 'bg-cyan-400',
+  Ready: 'bg-emerald-400',
+  Queued: 'bg-fuchsia-400',
+  Applying: 'bg-blue-400',
+  Applied: 'bg-violet-400',
+  Screened: 'bg-amber-400',
+  PhoneScreen: 'bg-amber-300',
+  Technical: 'bg-orange-400',
+  TakeHome: 'bg-yellow-400',
+  Onsite: 'bg-orange-500',
+  Final: 'bg-red-400',
+  Interview: 'bg-orange-400',
+  Offer: 'bg-green-400',
+  Rejected: 'bg-red-400',
+  Closed: 'bg-zinc-500',
+  ManualApplyNeeded: 'bg-amber-500',
+};
+
+let activeTabLabel = $derived(tabLabel(activeTab));
+
+function setTab(t: TabFilter) {
+  activeTab = t;
+  onTabChange(t);
+}
+
+// Tab title: "<Title> · <Breadcrumb> — APP_NAME". When breadcrumb === APP_NAME, drop it.
+let docTitle = $derived(
+  crumb && crumb !== title && crumb !== APP_NAME
+    ? buildDocTitle([title, crumb])
+    : buildDocTitle([title]),
+);
+
+// ---- Filter logic ----
+const SCORE_TIERS: { value: number; label: string; desc: string }[] = [
+  { value: 0, label: 'Any', desc: 'All scores' },
+  { value: 3, label: '3.0+', desc: 'Decent fit and up' },
+  { value: 4, label: '4.0+', desc: 'Standard cutoff' },
+  { value: 4.5, label: '4.5+', desc: 'Strong fits only' },
+];
+function setMinScore(v: number) {
+  filter = { ...filter, minScore: v };
+}
+
+const BG_KEYS: NonNullable<BgRisk>[] = ['LOW', 'MEDIUM', 'HIGH', 'BLOCKED'];
+const BG_DESC: Record<NonNullable<BgRisk>, string> = {
+  LOW: 'Small startups — BG check unlikely',
+  MEDIUM: 'Standard Checkr-grade screen',
+  HIGH: 'SOX/FINRA-grade — disclosure plan needed',
+  BLOCKED: 'Hard stop — explicit clearance required',
+};
+function toggleBg(k: NonNullable<BgRisk>) {
+  filter = { ...filter, bgRisk: { ...filter.bgRisk, [k]: !filter.bgRisk[k] } };
+}
+
+type WorkModeDef = { key: WorkMode; label: string; icon: any; tint: string };
+const WORK_MODES: WorkModeDef[] = [
+  {
+    key: 'remote',
+    label: 'Remote',
+    icon: Wifi,
+    tint: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/40',
+  },
+  {
+    key: 'hybrid',
+    label: 'Hybrid',
+    icon: Building,
+    tint: 'bg-amber-500/10 text-amber-300 border-amber-500/40',
+  },
+  {
+    key: 'onsite',
+    label: 'On-site',
+    icon: Building,
+    tint: 'bg-red-500/10 text-red-300 border-red-500/40',
+  },
+  {
+    key: 'unknown',
+    label: 'Unclear',
+    icon: Globe,
+    tint: 'bg-muted text-muted-foreground border-border',
+  },
+];
+function toggleWorkMode(k: WorkMode) {
+  filter = { ...filter, workMode: { ...filter.workMode, [k]: !filter.workMode[k] } };
+}
+
+// ---- Dirty / counts per filter section (for inline indicators) ----
+let scoreActive = $derived(filter.minScore > 0);
+let bgActive = $derived(BG_KEYS.some((k) => filter.bgRisk[k] !== DEFAULT_FILTER.bgRisk[k]));
+let workModeActive = $derived(
+  (['remote', 'hybrid', 'onsite', 'unknown'] as WorkMode[]).some(
+    (k) => filter.workMode[k] !== DEFAULT_FILTER.workMode[k],
+  ),
+);
+let extrasActive = $derived(filter.hasReport || filter.hasPdf || filter.hasSalary);
+let sourceActive = $derived(!!filter.source);
+
+let activeFilterCount = $derived(
+  [
+    scoreActive,
+    bgActive,
+    workModeActive,
+    extrasActive,
+    sourceActive,
+    !!filter.search.trim(),
+  ].filter(Boolean).length,
+);
+
+/** Source dropdown options, alphabetised by label so "All sources" stays
+ *  pinned at the top and the rest are easy to scan. */
+const SOURCE_OPTIONS = (() => {
+  const entries = Object.entries(SOURCE_LABELS).map(([id, meta]) => ({ id, label: meta.label }));
+  entries.sort((a, b) => a.label.localeCompare(b.label));
+  return entries;
+})();
+
+function clearFilter() {
+  filter = {
+    ...DEFAULT_FILTER,
+    bgRisk: { ...DEFAULT_FILTER.bgRisk },
+    workMode: { ...DEFAULT_FILTER.workMode },
   };
+}
 
-  const STATUS_HINT: Record<Status, string> = {
-    New: 'Just discovered — no score yet',
-    Scoring: 'Gemini is processing this job',
-    Scored: 'Has a Gemini score · review and promote',
-    Ready: 'Eval done · CV PDF ready · go apply',
-    Queued: 'CV + drafts ready · staged for batch send · review on /queue',
-    Applying: 'Autonomous-apply script running right now',
-    Applied: 'Application sent',
-    Screened: 'Recruiter responded',
-    PhoneScreen: 'Phone screen scheduled or in progress',
-    Technical: 'Technical interview · algos / system design / coding',
-    TakeHome: 'Take-home assignment in progress',
-    Onsite: 'Onsite / panel loop',
-    Final: 'Final round · hiring committee / VP / exec',
-    Interview: 'Active interview process (use sub-stages for finer tracking)',
-    Offer: 'Offer in hand · negotiate',
-    Rejected: 'Closed by company',
-    Closed: 'You skipped this one',
-    ManualApplyNeeded: 'Auto-apply blocked — finish by hand from Inbox',
-  };
-
-  const STATUS_DOTS: Record<Status, string> = {
-    New: 'bg-zinc-400',     Scoring: 'bg-blue-400',  Scored: 'bg-cyan-400',
-    Ready: 'bg-emerald-400', Queued: 'bg-fuchsia-400', Applying: 'bg-blue-400',
-    Applied: 'bg-violet-400', Screened: 'bg-amber-400',
-    PhoneScreen: 'bg-amber-300', Technical: 'bg-orange-400', TakeHome: 'bg-yellow-400',
-    Onsite: 'bg-orange-500', Final: 'bg-red-400',
-    Interview: 'bg-orange-400', Offer: 'bg-green-400', Rejected: 'bg-red-400', Closed: 'bg-zinc-500',
-    ManualApplyNeeded: 'bg-amber-500',
-  };
-
-  let activeTabLabel = $derived(tabLabel(activeTab));
-
-  function setTab(t: TabFilter) {
-    activeTab = t;
-    onTabChange(t);
-  }
-
-  // Tab title: "<Title> · <Breadcrumb> — APP_NAME". When breadcrumb === APP_NAME, drop it.
-  let docTitle = $derived(
-    crumb && crumb !== title && crumb !== APP_NAME
-      ? buildDocTitle([title, crumb])
-      : buildDocTitle([title])
-  );
-
-  // ---- Filter logic ----
-  const SCORE_TIERS: { value: number; label: string; desc: string }[] = [
-    { value: 0,   label: 'Any',   desc: 'All scores' },
-    { value: 3,   label: '3.0+', desc: 'Decent fit and up' },
-    { value: 4,   label: '4.0+', desc: 'Standard cutoff' },
-    { value: 4.5, label: '4.5+', desc: 'Strong fits only' },
-  ];
-  function setMinScore(v: number) {
-    filter = { ...filter, minScore: v };
-  }
-
-  const BG_KEYS: NonNullable<BgRisk>[] = ['LOW', 'MEDIUM', 'HIGH', 'BLOCKED'];
-  const BG_DESC: Record<NonNullable<BgRisk>, string> = {
-    LOW: 'Small startups — BG check unlikely',
-    MEDIUM: 'Standard Checkr-grade screen',
-    HIGH: 'SOX/FINRA-grade — disclosure plan needed',
-    BLOCKED: 'Hard stop — explicit clearance required',
-  };
-  function toggleBg(k: NonNullable<BgRisk>) {
-    filter = { ...filter, bgRisk: { ...filter.bgRisk, [k]: !filter.bgRisk[k] } };
-  }
-
-  type WorkModeDef = { key: WorkMode; label: string; icon: any; tint: string };
-  const WORK_MODES: WorkModeDef[] = [
-    { key: 'remote',  label: 'Remote',  icon: Wifi,     tint: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/40' },
-    { key: 'hybrid',  label: 'Hybrid',  icon: Building, tint: 'bg-amber-500/10 text-amber-300 border-amber-500/40' },
-    { key: 'onsite',  label: 'On-site', icon: Building, tint: 'bg-red-500/10 text-red-300 border-red-500/40' },
-    { key: 'unknown', label: 'Unclear', icon: Globe,    tint: 'bg-muted text-muted-foreground border-border' },
-  ];
-  function toggleWorkMode(k: WorkMode) {
-    filter = { ...filter, workMode: { ...filter.workMode, [k]: !filter.workMode[k] } };
-  }
-
-  // ---- Dirty / counts per filter section (for inline indicators) ----
-  let scoreActive   = $derived(filter.minScore > 0);
-  let bgActive      = $derived(BG_KEYS.some((k) => filter.bgRisk[k] !== DEFAULT_FILTER.bgRisk[k]));
-  let workModeActive = $derived((['remote','hybrid','onsite','unknown'] as WorkMode[]).some((k) => filter.workMode[k] !== DEFAULT_FILTER.workMode[k]));
-  let extrasActive  = $derived(filter.hasReport || filter.hasPdf || filter.hasSalary);
-  let sourceActive  = $derived(!!filter.source);
-
-  let activeFilterCount = $derived(
-    [scoreActive, bgActive, workModeActive, extrasActive, sourceActive, !!filter.search.trim()].filter(Boolean).length,
-  );
-
-  /** Source dropdown options, alphabetised by label so "All sources" stays
-   *  pinned at the top and the rest are easy to scan. */
-  const SOURCE_OPTIONS = (() => {
-    const entries = Object.entries(SOURCE_LABELS).map(([id, meta]) => ({ id, label: meta.label }));
-    entries.sort((a, b) => a.label.localeCompare(b.label));
-    return entries;
-  })();
-
-  function clearFilter() {
-    filter = {
-      ...DEFAULT_FILTER,
-      bgRisk: { ...DEFAULT_FILTER.bgRisk },
-      workMode: { ...DEFAULT_FILTER.workMode },
-    };
-  }
-
-  function resetSection(section: 'score' | 'bg' | 'workMode' | 'extras' | 'source') {
-    if (section === 'score') filter = { ...filter, minScore: 0 };
-    else if (section === 'bg') filter = { ...filter, bgRisk: { ...DEFAULT_FILTER.bgRisk } };
-    else if (section === 'workMode') filter = { ...filter, workMode: { ...DEFAULT_FILTER.workMode } };
-    else if (section === 'extras') filter = { ...filter, hasReport: false, hasPdf: false, hasSalary: false };
-    else if (section === 'source') filter = { ...filter, source: '' };
-  }
+function resetSection(section: 'score' | 'bg' | 'workMode' | 'extras' | 'source') {
+  if (section === 'score') filter = { ...filter, minScore: 0 };
+  else if (section === 'bg') filter = { ...filter, bgRisk: { ...DEFAULT_FILTER.bgRisk } };
+  else if (section === 'workMode') filter = { ...filter, workMode: { ...DEFAULT_FILTER.workMode } };
+  else if (section === 'extras')
+    filter = { ...filter, hasReport: false, hasPdf: false, hasSalary: false };
+  else if (section === 'source') filter = { ...filter, source: '' };
+}
 </script>
 
 <svelte:head>

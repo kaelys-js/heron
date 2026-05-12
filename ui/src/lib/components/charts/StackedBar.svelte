@@ -1,14 +1,14 @@
 <script lang="ts">
-  type Segment = { label: string; value: number; tint?: string };
-  let {
-    segments = [],
-    showLegend = true,
-  }: {
-    segments: Segment[];
-    showLegend?: boolean;
-  } = $props();
+type Segment = { label: string; value: number; tint?: string };
+let {
+  segments = [],
+  showLegend = true,
+}: {
+  segments: Segment[];
+  showLegend?: boolean;
+} = $props();
 
-  let total = $derived(segments.reduce((acc, s) => acc + s.value, 0) || 1);
+let total = $derived(segments.reduce((acc, s) => acc + s.value, 0) || 1);
 </script>
 
 <div class="space-y-2">

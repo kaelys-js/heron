@@ -1,67 +1,67 @@
 <script lang="ts">
-  import { Input } from '$lib/components/ui/input';
-  import { Button } from '$lib/components/ui/button';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { X, Plus } from '@lucide/svelte';
-  import { cn } from '$lib/utils';
-  import { ConfirmGate } from '$lib/confirm.svelte';
-  import { onDestroy } from 'svelte';
+import { Input } from '$lib/components/ui/input';
+import { Button } from '$lib/components/ui/button';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { X, Plus } from '@lucide/svelte';
+import { cn } from '$lib/utils';
+import { ConfirmGate } from '$lib/confirm.svelte';
+import { onDestroy } from 'svelte';
 
-  let {
-    items = $bindable([]),
-    placeholder = 'Add an item…',
-    emptyText = 'Nothing yet — add your first item below.',
-    onchange,
-    class: className,
-  }: {
-    items: string[];
-    placeholder?: string;
-    emptyText?: string;
-    onchange?: (next: string[]) => void;
-    class?: string;
-  } = $props();
+let {
+  items = $bindable([]),
+  placeholder = 'Add an item…',
+  emptyText = 'Nothing yet — add your first item below.',
+  onchange,
+  class: className,
+}: {
+  items: string[];
+  placeholder?: string;
+  emptyText?: string;
+  onchange?: (next: string[]) => void;
+  class?: string;
+} = $props();
 
-  let draft = $state('');
+let draft = $state('');
 
-  // One gate per editor instance — keys are chip-index strings so several
-  // chips can be in differing armed states without affecting each other.
-  // (Only one is ever armed at a time, but conceptually every X has its own
-  // confirm state.)
-  const confirm = new ConfirmGate();
-  onDestroy(() => confirm.destroy());
+// One gate per editor instance — keys are chip-index strings so several
+// chips can be in differing armed states without affecting each other.
+// (Only one is ever armed at a time, but conceptually every X has its own
+// confirm state.)
+const confirm = new ConfirmGate();
+onDestroy(() => confirm.destroy());
 
-  function commit(next: string[]) {
-    items = next;
-    onchange?.(next);
-  }
+function commit(next: string[]) {
+  items = next;
+  onchange?.(next);
+}
 
-  function add() {
-    const v = draft.trim();
-    if (!v) return;
-    if (items.includes(v)) {
-      draft = '';
-      return;
-    }
-    commit([...items, v]);
+function add() {
+  const v = draft.trim();
+  if (!v) return;
+  if (items.includes(v)) {
     draft = '';
+    return;
   }
+  commit([...items, v]);
+  draft = '';
+}
 
-  function remove(idx: number) {
-    if (!confirm.trigger('chip:' + idx)) return;
-    commit(items.filter((_, i) => i !== idx));
-  }
+function remove(idx: number) {
+  if (!confirm.trigger('chip:' + idx)) return;
+  commit(items.filter((_, i) => i !== idx));
+}
 
-  function onKey(e: KeyboardEvent) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      add();
-    } else if (e.key === 'Backspace' && draft === '' && items.length > 0) {
-      // Backspace on empty input is a known keyboard shortcut — single-action
-      // intent (the user is actively typing), so skip the confirm gate.
-      e.preventDefault();
-      commit(items.slice(0, -1));
-    }
+function onKey(e: KeyboardEvent) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    add();
+  } else if (e.key === 'Backspace' && draft === '' && items.length > 0) {
+    // Backspace on empty input is a known keyboard shortcut — single-action
+    // intent (the user is actively typing), so skip the confirm gate.
+    e.preventDefault();
+    commit(items.slice(0, -1));
   }
+}
 </script>
 
 <div class={cn('space-y-2', className)}>

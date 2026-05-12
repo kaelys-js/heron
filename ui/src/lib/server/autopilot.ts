@@ -12,7 +12,12 @@ import { ROOT } from './files';
 import { installBusListener, logEvent, reportServerError } from './events';
 import { listRunning, runScan, runGemini, runLinkedInApply, runAutoEval } from './orchestrator';
 import type { ActivityEvent } from '$lib/types';
-import { get as getJob, runById as runJobById, list as listJobs, isRunning as isJobRunning } from './jobs';
+import {
+  get as getJob,
+  runById as runJobById,
+  list as listJobs,
+  isRunning as isJobRunning,
+} from './jobs';
 import { readLastRun, writeLastRun } from './job-last-run';
 
 const CONFIG_PATH = path.join(ROOT, 'data', 'autopilot.json');
@@ -91,9 +96,9 @@ const DEFAULT_CONFIG: AutopilotConfig = {
       name: 'Daily job scan',
       description: 'Pull new postings from every configured job source every morning.',
       details: [
-        'Runs scan-broad.py against LinkedIn, Indeed, Glassdoor, ZipRecruiter, Google Jobs, The Muse, RemoteOK, We Work Remotely, HN Who\'s Hiring, and (if keys set) Adzuna.',
+        "Runs scan-broad.py against LinkedIn, Indeed, Glassdoor, ZipRecruiter, Google Jobs, The Muse, RemoteOK, We Work Remotely, HN Who's Hiring, and (if keys set) Adzuna.",
         'Title-filtered against your archetype — drops obvious mismatches before they hit the pipeline.',
-        'Dedupes against scan-history.tsv so the same posting isn\'t re-added.',
+        "Dedupes against scan-history.tsv so the same posting isn't re-added.",
         'Typical run: 3–5 minutes, finds 30–80 new postings.',
       ],
       taskLabel: 'scan-broad.py',
@@ -109,7 +114,7 @@ const DEFAULT_CONFIG: AutopilotConfig = {
         'Triggers gemini-first-pass.py whenever a scan completes successfully.',
         'Cheap (free Gemini Flash tier, ~1M tokens/day). Title-only first-pass — no JD content fetched.',
         'Outputs to data/gemini-scores.tsv. Top 30 unscored jobs by default; configurable via args.top.',
-        'Skipped automatically if GEMINI_API_KEY isn\'t set.',
+        "Skipped automatically if GEMINI_API_KEY isn't set.",
       ],
       taskLabel: 'gemini-first-pass.py',
       task: 'gemini',
@@ -120,7 +125,8 @@ const DEFAULT_CONFIG: AutopilotConfig = {
     {
       id: 'auto-eval-after-gemini',
       name: 'Auto deep-eval high-fit jobs',
-      description: 'After Gemini scoring, run a deep Claude evaluation + generate a tailored CV PDF for every job scoring ≥ Auto-evaluate score.',
+      description:
+        'After Gemini scoring, run a deep Claude evaluation + generate a tailored CV PDF for every job scoring ≥ Auto-evaluate score.',
       details: [
         'Triggers after every successful gemini-first-pass.py run.',
         'Picks up to N jobs (Max auto-evals / run) sorted by Gemini score, descending.',
@@ -138,7 +144,8 @@ const DEFAULT_CONFIG: AutopilotConfig = {
     {
       id: 'weekday-apply',
       name: 'Weekday apply-queue drain',
-      description: 'Drain the Queued apply queue on weekdays — runs the right portal adapter per job.',
+      description:
+        'Drain the Queued apply queue on weekdays — runs the right portal adapter per job.',
       details: [
         'Iterates jobs whose status is Queued, sorted by score (highest first).',
         'For each job: detects portal (LinkedIn / Greenhouse / Ashby production; others ManualApplyNeeded), regenerates CV + cover letter if missing, then dispatches apply-portal.py.',
@@ -170,7 +177,8 @@ const DEFAULT_CONFIG: AutopilotConfig = {
     {
       id: 'morning-digest',
       name: 'Morning digest',
-      description: 'Once-per-day 07:00 rollup so you know what to focus on today without opening the dashboard.',
+      description:
+        'Once-per-day 07:00 rollup so you know what to focus on today without opening the dashboard.',
       details: [
         'Aggregates the last 24h of activity: applications fired, queued jobs, interview-stage transitions, offers, rejections, follow-ups due, new pattern recommendations.',
         'Emits a single info-level activity event with a one-liner summary; the bell shows it.',
@@ -421,7 +429,10 @@ export function runScheduleNow(id: ScheduleId): { ok: boolean; message: string }
   const s = cfg.schedules.find((x) => x.id === id);
   if (!s) return { ok: false, message: 'Unknown schedule: ' + id };
   if (s.trigger.type === 'after') {
-    return { ok: false, message: 'This schedule runs only when its trigger event fires (' + s.trigger.task + ').' };
+    return {
+      ok: false,
+      message: 'This schedule runs only when its trigger event fires (' + s.trigger.task + ').',
+    };
   }
   runTask(s);
   return { ok: true, message: 'Triggered ' + s.name };
@@ -433,7 +444,10 @@ function onTaskCompleted(task: TaskName): void {
   for (const s of cfg.schedules) {
     if (!s.enabled) continue;
     if (s.trigger.type === 'after' && s.trigger.task === task) {
-      logEvent('autopilot', 'After-trigger: ' + s.name, { category: 'system', message: 'after ' + task });
+      logEvent('autopilot', 'After-trigger: ' + s.name, {
+        category: 'system',
+        message: 'after ' + task,
+      });
       runTask(s);
     }
   }
@@ -451,7 +465,11 @@ function trackResult(task: TaskName, success: boolean, message?: string): void {
     if (s.task !== task) return s;
     if (s.lastRunResult !== 'started') return s;
     dirty = true;
-    return { ...s, lastRunResult: (success ? 'success' : 'failure') as 'success' | 'failure', lastRunMessage: message };
+    return {
+      ...s,
+      lastRunResult: (success ? 'success' : 'failure') as 'success' | 'failure',
+      lastRunMessage: message,
+    };
   });
   if (dirty) writeConfig({ ...cfg, schedules: next });
 
@@ -491,7 +509,10 @@ export function startScheduler(): void {
     if (ev.level === 'success' && (ev.title === 'Task finished' || ev.title.endsWith('finished'))) {
       trackResult(task, true, ev.message);
       onTaskCompleted(task);
-    } else if (ev.level === 'error' && (ev.title === 'Task failed' || ev.title.endsWith('failed'))) {
+    } else if (
+      ev.level === 'error' &&
+      (ev.title === 'Task failed' || ev.title.endsWith('failed'))
+    ) {
       trackResult(task, false, ev.message);
     }
   });
@@ -563,7 +584,7 @@ function tick(): void {
       }
       const last = readLastRun(def.id);
       if (last && last.lastRunAt >= today) continue; // already fired today
-      if (isJobRunning(def.id)) continue;            // in-flight dedupe
+      if (isJobRunning(def.id)) continue; // in-flight dedupe
       runRegistryJob(def.id, def.label);
     }
   } catch (e) {
@@ -575,18 +596,20 @@ function tick(): void {
 function runRegistryJob(id: string, label: string): void {
   logEvent('autopilot', 'Triggering ' + label, { category: 'system', message: 'task=' + id });
   writeLastRun(id, { lastRunAt: Date.now(), lastRunResult: 'started' });
-  runJobById(id).then((r) => {
-    writeLastRun(id, {
-      lastRunAt: Date.now(),
-      lastRunResult: r.ok ? 'success' : 'failure',
-      lastRunMessage: r.ok ? r.message : r.error,
+  runJobById(id)
+    .then((r) => {
+      writeLastRun(id, {
+        lastRunAt: Date.now(),
+        lastRunResult: r.ok ? 'success' : 'failure',
+        lastRunMessage: r.ok ? r.message : r.error,
+      });
+    })
+    .catch((err) => {
+      writeLastRun(id, {
+        lastRunAt: Date.now(),
+        lastRunResult: 'failure',
+        lastRunMessage: err instanceof Error ? err.message : String(err),
+      });
+      reportServerError('autopilot', 'Registry job ' + id + ' threw', err, { category: 'system' });
     });
-  }).catch((err) => {
-    writeLastRun(id, {
-      lastRunAt: Date.now(),
-      lastRunResult: 'failure',
-      lastRunMessage: err instanceof Error ? err.message : String(err),
-    });
-    reportServerError('autopilot', 'Registry job ' + id + ' threw', err, { category: 'system' });
-  });
 }

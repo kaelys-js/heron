@@ -2,7 +2,12 @@ import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 // Re-export bits-ui helpers so shadcn-svelte v1 components can import them from $lib/utils.
-export type { WithElementRef, WithoutChild, WithoutChildren, WithoutChildrenOrChild } from 'bits-ui';
+export type {
+  WithElementRef,
+  WithoutChild,
+  WithoutChildren,
+  WithoutChildrenOrChild,
+} from 'bits-ui';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

@@ -1,123 +1,151 @@
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import * as Sheet from '$lib/components/ui/sheet';
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import {
-    Search, Copy, Check, BookOpen, Send, Inbox, Sparkles, Target, Mic, FileText,
-    Cog, X, ExternalLink, ChevronRight,
-  } from '@lucide/svelte';
-  import { marked } from 'marked';
-  import { toast } from 'svelte-sonner';
-  import { api, ApiError } from '$lib/api';
-  import { cn, withMinDuration } from '$lib/utils';
-  import type { Skill, SkillCategory } from '$lib/server/skills';
-  import EmptyState from '$lib/components/EmptyState.svelte';
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import * as Sheet from '$lib/components/ui/sheet';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import {
+  Search,
+  Copy,
+  Check,
+  BookOpen,
+  Send,
+  Inbox,
+  Sparkles,
+  Target,
+  Mic,
+  FileText,
+  Cog,
+  X,
+  ExternalLink,
+  ChevronRight,
+} from '@lucide/svelte';
+import { marked } from 'marked';
+import { toast } from 'svelte-sonner';
+import { api, ApiError } from '$lib/api';
+import { cn, withMinDuration } from '$lib/utils';
+import type { Skill, SkillCategory } from '$lib/server/skills';
+import EmptyState from '$lib/components/EmptyState.svelte';
 
-  let { data }: { data: { skills: Skill[] } } = $props();
+let { data }: { data: { skills: Skill[] } } = $props();
 
-  // svelte-ignore state_referenced_locally — server data seeds local state.
-  let allSkills = data.skills;
+// svelte-ignore state_referenced_locally — server data seeds local state.
+let allSkills = data.skills;
 
-  type CategoryFilter = 'all' | SkillCategory;
-  let activeCategory = $state<CategoryFilter>('all');
-  let search = $state('');
+type CategoryFilter = 'all' | SkillCategory;
+let activeCategory = $state<CategoryFilter>('all');
+let search = $state('');
 
-  type CategoryDef = { id: CategoryFilter; label: string; icon: any; tint: string };
-  const CATEGORIES: CategoryDef[] = [
-    { id: 'all',         label: 'All',         icon: BookOpen, tint: 'border-foreground' },
-    { id: 'evaluation',  label: 'Evaluation',  icon: Target,   tint: 'border-emerald-500/60' },
-    { id: 'application', label: 'Apply',       icon: Send,     tint: 'border-violet-500/60' },
-    { id: 'pipeline',    label: 'Pipeline',    icon: Inbox,    tint: 'border-blue-500/60' },
-    { id: 'interview',   label: 'Interview',   icon: Mic,      tint: 'border-amber-500/60' },
-    { id: 'output',      label: 'Output',      icon: FileText, tint: 'border-cyan-500/60' },
-  ];
+type CategoryDef = { id: CategoryFilter; label: string; icon: any; tint: string };
+const CATEGORIES: CategoryDef[] = [
+  { id: 'all', label: 'All', icon: BookOpen, tint: 'border-foreground' },
+  { id: 'evaluation', label: 'Evaluation', icon: Target, tint: 'border-emerald-500/60' },
+  { id: 'application', label: 'Apply', icon: Send, tint: 'border-violet-500/60' },
+  { id: 'pipeline', label: 'Pipeline', icon: Inbox, tint: 'border-blue-500/60' },
+  { id: 'interview', label: 'Interview', icon: Mic, tint: 'border-amber-500/60' },
+  { id: 'output', label: 'Output', icon: FileText, tint: 'border-cyan-500/60' },
+];
 
-  const CATEGORY_DOT: Record<SkillCategory, string> = {
-    evaluation: 'bg-emerald-500',
-    application: 'bg-violet-500',
-    pipeline: 'bg-blue-500',
-    interview: 'bg-amber-500',
-    output: 'bg-cyan-500',
-    system: 'bg-zinc-500',
+const CATEGORY_DOT: Record<SkillCategory, string> = {
+  evaluation: 'bg-emerald-500',
+  application: 'bg-violet-500',
+  pipeline: 'bg-blue-500',
+  interview: 'bg-amber-500',
+  output: 'bg-cyan-500',
+  system: 'bg-zinc-500',
+};
+const CATEGORY_LABEL: Record<SkillCategory, string> = {
+  evaluation: 'Evaluation',
+  application: 'Apply',
+  pipeline: 'Pipeline',
+  interview: 'Interview',
+  output: 'Output',
+  system: 'System',
+};
+
+let filtered = $derived.by(() => {
+  const q = search.trim().toLowerCase();
+  return allSkills.filter((s) => {
+    if (activeCategory !== 'all' && s.category !== activeCategory) return false;
+    if (!q) return true;
+    return (
+      s.title.toLowerCase().includes(q) ||
+      s.subtitle.toLowerCase().includes(q) ||
+      s.description.toLowerCase().includes(q) ||
+      s.id.toLowerCase().includes(q)
+    );
+  });
+});
+
+let grouped = $derived.by(() => {
+  const out: Record<SkillCategory, Skill[]> = {
+    evaluation: [],
+    application: [],
+    pipeline: [],
+    interview: [],
+    output: [],
+    system: [],
   };
-  const CATEGORY_LABEL: Record<SkillCategory, string> = {
-    evaluation: 'Evaluation',
-    application: 'Apply',
-    pipeline: 'Pipeline',
-    interview: 'Interview',
-    output: 'Output',
-    system: 'System',
-  };
+  for (const s of filtered) out[s.category].push(s);
+  return out;
+});
 
-  let filtered = $derived.by(() => {
-    const q = search.trim().toLowerCase();
-    return allSkills.filter((s) => {
-      if (activeCategory !== 'all' && s.category !== activeCategory) return false;
-      if (!q) return true;
-      return (
-        s.title.toLowerCase().includes(q) ||
-        s.subtitle.toLowerCase().includes(q) ||
-        s.description.toLowerCase().includes(q) ||
-        s.id.toLowerCase().includes(q)
-      );
-    });
-  });
+let countsByCategory = $derived.by(() => {
+  const out: Record<string, number> = { all: allSkills.length };
+  for (const s of allSkills) out[s.category] = (out[s.category] ?? 0) + 1;
+  return out;
+});
 
-  let grouped = $derived.by(() => {
-    const out: Record<SkillCategory, Skill[]> = {
-      evaluation: [], application: [], pipeline: [], interview: [], output: [], system: [],
-    };
-    for (const s of filtered) out[s.category].push(s);
-    return out;
-  });
+// ---- detail sheet state ----
+let openSkill = $state<Skill | null>(null);
+let bodyText = $state<string | null>(null);
+let bodyHtml = $derived(bodyText ? marked.parse(bodyText) : '');
+let bodyLoading = $state(false);
 
-  let countsByCategory = $derived.by(() => {
-    const out: Record<string, number> = { all: allSkills.length };
-    for (const s of allSkills) out[s.category] = (out[s.category] ?? 0) + 1;
-    return out;
-  });
-
-  // ---- detail sheet state ----
-  let openSkill = $state<Skill | null>(null);
-  let bodyText = $state<string | null>(null);
-  let bodyHtml = $derived(bodyText ? marked.parse(bodyText) : '');
-  let bodyLoading = $state(false);
-
-  async function openSheet(s: Skill) {
-    openSkill = s;
-    bodyText = null;
-    bodyLoading = true;
-    try {
-      const r = await withMinDuration(
-        api.get<{ id: string; body: string }>('/api/skills/' + encodeURIComponent(s.id), { silent: true }),
-        300,
-      );
-      bodyText = r.body;
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Failed to load skill: ' + err.message);
-      bodyText = '';
-    } finally {
-      bodyLoading = false;
-    }
+async function openSheet(s: Skill) {
+  openSkill = s;
+  bodyText = null;
+  bodyLoading = true;
+  try {
+    const r = await withMinDuration(
+      api.get<{ id: string; body: string }>('/api/skills/' + encodeURIComponent(s.id), {
+        silent: true,
+      }),
+      300,
+    );
+    bodyText = r.body;
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Failed to load skill: ' + err.message);
+    bodyText = '';
+  } finally {
+    bodyLoading = false;
   }
+}
 
-  let copiedKey = $state<string | null>(null);
-  async function copyText(text: string, key: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      copiedKey = key;
-      setTimeout(() => { if (copiedKey === key) copiedKey = null; }, 1500);
-      toast.success('Copied', { description: text.length > 60 ? text.slice(0, 60) + '…' : text });
-    } catch (e) {
-      toast.error('Copy failed', { description: 'Browser blocked clipboard access.' });
-    }
+let copiedKey = $state<string | null>(null);
+async function copyText(text: string, key: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    copiedKey = key;
+    setTimeout(() => {
+      if (copiedKey === key) copiedKey = null;
+    }, 1500);
+    toast.success('Copied', { description: text.length > 60 ? text.slice(0, 60) + '…' : text });
+  } catch (e) {
+    toast.error('Copy failed', { description: 'Browser blocked clipboard access.' });
   }
+}
 
-  // Order categories the way they appear in CATEGORIES (skip 'all')
-  const CATEGORY_ORDER: SkillCategory[] = ['evaluation', 'application', 'pipeline', 'interview', 'output', 'system'];
+// Order categories the way they appear in CATEGORIES (skip 'all')
+const CATEGORY_ORDER: SkillCategory[] = [
+  'evaluation',
+  'application',
+  'pipeline',
+  'interview',
+  'output',
+  'system',
+];
 </script>
 
 <div class="h-full overflow-y-auto">

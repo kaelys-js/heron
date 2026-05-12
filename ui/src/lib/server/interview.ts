@@ -21,7 +21,13 @@ function resolveId(profileId?: string): string {
 }
 
 function slugify(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'job';
+  return (
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 60) || 'job'
+  );
 }
 
 function persistedInterviewPath(profileId: string, jobId: string): string {
@@ -29,7 +35,10 @@ function persistedInterviewPath(profileId: string, jobId: string): string {
 }
 
 /** Read a previously persisted prep file for the named profile, if any. */
-export function readPersistedInterviewPrep(profileId: string | undefined, jobId: string): string | null;
+export function readPersistedInterviewPrep(
+  profileId: string | undefined,
+  jobId: string,
+): string | null;
 export function readPersistedInterviewPrep(jobId: string): string | null;
 export function readPersistedInterviewPrep(arg1: string | undefined, arg2?: string): string | null {
   // 2-arg: (profileId, jobId). 1-arg: (jobId).
@@ -40,7 +49,11 @@ export function readPersistedInterviewPrep(arg1: string | undefined, arg2?: stri
   const id = resolveId(profileId);
   const full = persistedInterviewPath(id, jobId);
   if (!fs.existsSync(full)) return null;
-  try { return fs.readFileSync(full, 'utf8'); } catch { return null; }
+  try {
+    return fs.readFileSync(full, 'utf8');
+  } catch {
+    return null;
+  }
 }
 
 export async function generateInterviewPrep(
@@ -54,10 +67,11 @@ export async function generateInterviewPrep(
   //   New:    (profileId, reportFile, archetypeOverride?, jobIdForPersist?)
   // Heuristic: report files end with .md and contain digits/slugs; profile
   // slugs don't end with .md. Plus the legacy 1-arg form omits the second.
-  const isNew = profileIdOrReportFile != null &&
-                !profileIdOrReportFile.endsWith('.md') &&
-                reportFileOrArchetype != null &&
-                reportFileOrArchetype.endsWith('.md');
+  const isNew =
+    profileIdOrReportFile != null &&
+    !profileIdOrReportFile.endsWith('.md') &&
+    reportFileOrArchetype != null &&
+    reportFileOrArchetype.endsWith('.md');
   const profileId = isNew ? profileIdOrReportFile : undefined;
   const reportFile = isNew ? reportFileOrArchetype! : profileIdOrReportFile;
   const archetypeOverride = isNew ? archetypeOrJobId : reportFileOrArchetype;
@@ -82,7 +96,10 @@ export async function generateInterviewPrep(
     if (fs.existsSync(dir)) {
       const samples: string[] = [];
       let used = 0;
-      for (const f of fs.readdirSync(dir).filter((n) => n.endsWith('.md')).sort()) {
+      for (const f of fs
+        .readdirSync(dir)
+        .filter((n) => n.endsWith('.md'))
+        .sort()) {
         if (used >= 3000) break;
         const body = readSafe(path.join(dir, f));
         const slice = body.slice(0, 1500);
@@ -91,11 +108,17 @@ export async function generateInterviewPrep(
       }
       writingSamples = samples.join('\n\n').slice(0, 3000);
     }
-  } catch { /* directory missing or unreadable — skip */ }
-  const sys = 'You are a senior interview-prep coach. Use the report (Block A/B/F) to produce a focused brief.\n\n' + (interviewPrepMode || 'Generate a comprehensive interview prep brief.');
+  } catch {
+    /* directory missing or unreadable — skip */
+  }
+  const sys =
+    'You are a senior interview-prep coach. Use the report (Block A/B/F) to produce a focused brief.\n\n' +
+    (interviewPrepMode || 'Generate a comprehensive interview prep brief.');
   const user =
-    '# Report\n' + reportContent +
-    '\n\n# CV\n' + cv.slice(0, 3000) +
+    '# Report\n' +
+    reportContent +
+    '\n\n# CV\n' +
+    cv.slice(0, 3000) +
     (storyBank ? '\n\n# Story bank (use these wherever a STAR fits)\n' + storyBank : '') +
     (articleDigest ? '\n\n# Article digest / proof points\n' + articleDigest : '') +
     (writingSamples ? '\n\n# Writing samples (match this voice)\n' + writingSamples : '') +
@@ -129,6 +152,13 @@ export async function generateNegotiationBrief(
   const profile = readSafe(profilePath(id, 'profile-yml'));
   const negMode = loadModeFile('negotiation.md', id);
   const sys = 'You are a senior compensation and negotiation coach.\n\n' + (negMode || '');
-  const user = '# Report\n' + reportContent + '\n\n# Profile\n' + profile + '\n\n# Offer\n' + offerDetails + '\n\nProduce: percentile table, leverage stance, draft email, 2 alternates, recruiter response handling.';
+  const user =
+    '# Report\n' +
+    reportContent +
+    '\n\n# Profile\n' +
+    profile +
+    '\n\n# Offer\n' +
+    offerDetails +
+    '\n\nProduce: percentile table, leverage stance, draft email, 2 alternates, recruiter response handling.';
   return complete(sys, user, { maxTokens: 16000, thinking: true });
 }

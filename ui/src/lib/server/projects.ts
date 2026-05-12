@@ -27,10 +27,24 @@ function projectsPath(profileId: string): string {
 }
 
 export type ProjectColor =
-  | 'emerald' | 'blue' | 'violet' | 'amber' | 'rose' | 'cyan' | 'orange' | 'pink';
+  | 'emerald'
+  | 'blue'
+  | 'violet'
+  | 'amber'
+  | 'rose'
+  | 'cyan'
+  | 'orange'
+  | 'pink';
 
 export const PROJECT_COLORS: ProjectColor[] = [
-  'emerald', 'blue', 'violet', 'amber', 'rose', 'cyan', 'orange', 'pink',
+  'emerald',
+  'blue',
+  'violet',
+  'amber',
+  'rose',
+  'cyan',
+  'orange',
+  'pink',
 ];
 
 export type Project = {
@@ -39,7 +53,7 @@ export type Project = {
   description: string;
   color: ProjectColor;
   filter: FilterState;
-  target: number;        // optional goal: target number of applications
+  target: number; // optional goal: target number of applications
   createdAt: number;
   updatedAt: number;
 };
@@ -47,12 +61,12 @@ export type Project = {
 export type ProjectStats = {
   total: number;
   byStatus: Record<Status, number>;
-  applied: number;       // Applied + Screened + Interview + Offer + Rejected
-  active: number;        // Applied + Screened + Interview + Offer (not rejected)
-  interview: number;     // Interview + Offer
+  applied: number; // Applied + Screened + Interview + Offer + Rejected
+  active: number; // Applied + Screened + Interview + Offer (not rejected)
+  interview: number; // Interview + Offer
   offer: number;
   rejected: number;
-  evaluated: number;     // jobs with reports
+  evaluated: number; // jobs with reports
   topCompanies: { name: string; count: number }[];
 };
 
@@ -116,7 +130,9 @@ function readRaw(profileId: string): Project[] {
     const raw = fs.readFileSync(p, 'utf8');
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter((p): p is Project => typeof p?.id === 'string' && typeof p?.name === 'string');
+    return parsed.filter(
+      (p): p is Project => typeof p?.id === 'string' && typeof p?.name === 'string',
+    );
   } catch {
     return [];
   }
@@ -144,7 +160,10 @@ export function getProject(arg1: string | undefined, arg2?: string): Project | n
 
 export function createProject(profileId: string | undefined, input: Partial<Project>): Project;
 export function createProject(input: Partial<Project>): Project;
-export function createProject(arg1: string | undefined | Partial<Project>, arg2?: Partial<Project>): Project {
+export function createProject(
+  arg1: string | undefined | Partial<Project>,
+  arg2?: Partial<Project>,
+): Project {
   const isLegacy = typeof arg1 !== 'string' && arg2 === undefined;
   const profileId = isLegacy ? undefined : (arg1 as string | undefined);
   const input = (isLegacy ? arg1 : arg2!) as Partial<Project>;
@@ -166,9 +185,17 @@ export function createProject(arg1: string | undefined | Partial<Project>, arg2?
   return project;
 }
 
-export function updateProject(profileId: string | undefined, id: string, patch: Partial<Project>): Project | null;
+export function updateProject(
+  profileId: string | undefined,
+  id: string,
+  patch: Partial<Project>,
+): Project | null;
 export function updateProject(id: string, patch: Partial<Project>): Project | null;
-export function updateProject(arg1: string | undefined, arg2: string | Partial<Project>, arg3?: Partial<Project>): Project | null {
+export function updateProject(
+  arg1: string | undefined,
+  arg2: string | Partial<Project>,
+  arg3?: Partial<Project>,
+): Project | null {
   const isLegacy = arg3 === undefined;
   const profileId = isLegacy ? undefined : arg1;
   const id = isLegacy ? (arg1 as string) : (arg2 as string);
@@ -184,7 +211,10 @@ export function updateProject(arg1: string | undefined, arg2: string | Partial<P
     createdAt: projects[idx].createdAt,
     updatedAt: Date.now(),
     filter: patch.filter ? normalizeFilter(patch.filter) : projects[idx].filter,
-    target: typeof patch.target === 'number' ? Math.max(0, Math.floor(patch.target)) : projects[idx].target,
+    target:
+      typeof patch.target === 'number'
+        ? Math.max(0, Math.floor(patch.target))
+        : projects[idx].target,
     name: (patch.name ?? projects[idx].name).trim() || projects[idx].name,
     description: (patch.description ?? projects[idx].description).trim(),
   };
@@ -208,7 +238,12 @@ export function deleteProject(arg1: string | undefined, arg2?: string): boolean 
 }
 
 function slugifyId(name: string, taken: Set<string>): string {
-  const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'project';
+  const base =
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 40) || 'project';
   let candidate = base;
   let i = 2;
   while (taken.has(candidate)) {
@@ -262,10 +297,13 @@ export function matchesProject(job: Job, project: Project): boolean {
 }
 
 export function computeStats(project: Project, jobs: Job[]): ProjectStats {
-  const byStatus = STATUS_ORDER.reduce<Record<Status, number>>((acc, s) => {
-    acc[s] = 0;
-    return acc;
-  }, {} as Record<Status, number>);
+  const byStatus = STATUS_ORDER.reduce<Record<Status, number>>(
+    (acc, s) => {
+      acc[s] = 0;
+      return acc;
+    },
+    {} as Record<Status, number>,
+  );
   const companyCounts = new Map<string, number>();
   let total = 0;
   let evaluated = 0;
@@ -278,7 +316,8 @@ export function computeStats(project: Project, jobs: Job[]): ProjectStats {
       companyCounts.set(job.company, (companyCounts.get(job.company) ?? 0) + 1);
     }
   }
-  const applied = byStatus.Applied + byStatus.Screened + byStatus.Interview + byStatus.Offer + byStatus.Rejected;
+  const applied =
+    byStatus.Applied + byStatus.Screened + byStatus.Interview + byStatus.Offer + byStatus.Rejected;
   const active = byStatus.Applied + byStatus.Screened + byStatus.Interview + byStatus.Offer;
   const interview = byStatus.Interview + byStatus.Offer;
   const offer = byStatus.Offer;
@@ -302,7 +341,8 @@ export function projectToPipelineQuery(project: Project): string {
     .filter(([, on]) => on)
     .map(([k]) => k);
   // Only set bg param if it diverges from the default (LOW+MEDIUM+HIGH on, BLOCKED off)
-  const isDefault = bg.length === 3 && bg.every((b) => b === 'LOW' || b === 'MEDIUM' || b === 'HIGH');
+  const isDefault =
+    bg.length === 3 && bg.every((b) => b === 'LOW' || b === 'MEDIUM' || b === 'HIGH');
   if (!isDefault) params.set('bg', bg.join(','));
   if (project.filter.hasPdf) params.set('pdf', '1');
   if (project.filter.hasReport) params.set('report', '1');
@@ -322,7 +362,12 @@ export function parseFilterFromUrl(url: URL): Partial<FilterState> {
   }
   const bg = url.searchParams.get('bg');
   if (bg != null) {
-    const allowed: Record<NonNullable<BgRisk>, boolean> = { LOW: false, MEDIUM: false, HIGH: false, BLOCKED: false };
+    const allowed: Record<NonNullable<BgRisk>, boolean> = {
+      LOW: false,
+      MEDIUM: false,
+      HIGH: false,
+      BLOCKED: false,
+    };
     for (const k of bg.split(',').map((x) => x.trim().toUpperCase())) {
       if (k === 'LOW' || k === 'MEDIUM' || k === 'HIGH' || k === 'BLOCKED') {
         allowed[k] = true;

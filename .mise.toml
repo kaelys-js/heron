@@ -1,0 +1,28 @@
+# mise — runtime version manager.
+#
+# Anyone with mise installed + shell-integrated will automatically get
+# the right Node/pnpm/Ruby versions when they `cd` into this repo.
+# No manual `nvm use`, no version drift between contributors.
+#
+# Install mise:    brew install mise
+# Activate shell:  echo 'eval "$(mise activate zsh)"' >> ~/.zshrc   # bash: ~/.bashrc
+# Apply versions:  mise install                                      # one-time, then auto
+#
+# To bump:         mise use node@latest        # pins to current latest in this file
+#                  mise use pnpm@latest
+#
+# CI uses `mise install` in the matrix — see .github/workflows/test.yml.
+
+[tools]
+node = "25.9.0"
+pnpm = "10.33.0"
+ruby = "3.2.0"   # for Fastlane
+
+[env]
+# Project-scoped env vars — applied when shell-activated mise enters this dir.
+COREPACK_ENABLE_STRICT = "0"     # mise manages pnpm, not corepack
+NODE_OPTIONS = "--enable-source-maps"
+
+[settings]
+# Faster install path — uses precompiled binaries when available
+experimental = true

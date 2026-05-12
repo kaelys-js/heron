@@ -31,9 +31,11 @@ import type { ActivityEvent, Job } from '$lib/types';
 function isToday(ts: number): boolean {
   const d = new Date(ts);
   const now = new Date();
-  return d.getFullYear() === now.getFullYear()
-    && d.getMonth() === now.getMonth()
-    && d.getDate() === now.getDate();
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  );
 }
 
 function todayCount(events: ActivityEvent[], match: (ev: ActivityEvent) => boolean): number {
@@ -53,16 +55,17 @@ async function runDailyDigest(): Promise<JobResult> {
     // Today's deltas (best-effort from activity feed — applications.md doesn't
     // store a "modified" timestamp per row, so we rely on the events the
     // dashboard emits for status flips.)
-    const appliedToday = todayCount(events, (ev) =>
-      ev.category === 'application' &&
-      /\bApplied\b/.test(ev.title + ' ' + (ev.message ?? ''))
+    const appliedToday = todayCount(
+      events,
+      (ev) =>
+        ev.category === 'application' && /\bApplied\b/.test(ev.title + ' ' + (ev.message ?? '')),
     );
-    const queuedToday = todayCount(events, (ev) =>
-      ev.source === 'auto-queue' &&
-      ev.title.toLowerCase().includes('queued')
+    const queuedToday = todayCount(
+      events,
+      (ev) => ev.source === 'auto-queue' && ev.title.toLowerCase().includes('queued'),
     );
     const rejectedToday = todayCount(events, (ev) =>
-      /\bRejected\b/.test(ev.title + ' ' + (ev.message ?? ''))
+      /\bRejected\b/.test(ev.title + ' ' + (ev.message ?? '')),
     );
     const errorsToday = todayCount(events, (ev) => ev.level === 'error');
 
@@ -81,18 +84,25 @@ async function runDailyDigest(): Promise<JobResult> {
 
     // Pattern detection issues (Phase 3.5 emits these as 'info' issues)
     const open = listOpenIssues();
-    const newPatterns = open.filter((i) =>
-      i.severity === 'info' && /pattern/i.test(i.summary)
+    const newPatterns = open.filter(
+      (i) => i.severity === 'info' && /pattern/i.test(i.summary),
     ).length;
 
     // Compose the one-liner
     const parts: string[] = [];
     parts.push(appliedToday + ' applied');
     if (queuedToday > 0) parts.push(queuedToday + ' queued');
-    if (interviews > 0) parts.push(interviews + ' active interview' + (interviews === 1 ? '' : 's'));
+    if (interviews > 0)
+      parts.push(interviews + ' active interview' + (interviews === 1 ? '' : 's'));
     if (offers > 0) parts.push(offers + ' offer' + (offers === 1 ? '' : 's'));
     if (followupsUrgent + followupsOverdue > 0) {
-      parts.push((followupsUrgent + followupsOverdue) + ' follow-up' + (followupsUrgent + followupsOverdue === 1 ? '' : 's') + ' due');
+      parts.push(
+        followupsUrgent +
+          followupsOverdue +
+          ' follow-up' +
+          (followupsUrgent + followupsOverdue === 1 ? '' : 's') +
+          ' due',
+      );
     }
     if (rejectedToday > 0) parts.push(rejectedToday + ' rejected');
     if (errorsToday > 0) parts.push(errorsToday + ' error' + (errorsToday === 1 ? '' : 's'));
@@ -110,7 +120,8 @@ async function runDailyDigest(): Promise<JobResult> {
     logEvent('daily-digest', isQuiet ? 'Today: nothing changed' : 'Today: ' + summary, {
       level: 'info',
       category: 'system',
-      message: 'Snapshot · queued=' + queued + ' · interviews=' + interviews + ' · offers=' + offers,
+      message:
+        'Snapshot · queued=' + queued + ' · interviews=' + interviews + ' · offers=' + offers,
     });
 
     return {
@@ -143,7 +154,8 @@ async function runDailyDigest(): Promise<JobResult> {
 register({
   id: 'daily-digest',
   label: 'Daily digest',
-  description: 'Morning rollup of applications, queued jobs, interviews, follow-ups, errors, and new patterns.',
+  description:
+    'Morning rollup of applications, queued jobs, interviews, follow-ups, errors, and new patterns.',
   category: 'insight',
   trigger: { type: 'daily', hour: 7, minute: 0 },
   allowManual: true,

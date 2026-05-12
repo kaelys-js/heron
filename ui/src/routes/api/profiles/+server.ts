@@ -8,7 +8,12 @@
  * pages write to its files.
  */
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { readProfiles, createProfile, type ProfileColor, PROFILE_COLORS } from '$lib/server/profiles';
+import {
+  readProfiles,
+  createProfile,
+  type ProfileColor,
+  PROFILE_COLORS,
+} from '$lib/server/profiles';
 import { ensureProfileDirs } from '$lib/server/profile-paths';
 import { logEvent } from '$lib/server/events';
 
@@ -21,9 +26,10 @@ export const POST = wrap('profiles-create', async ({ request }: { request: Reque
   if (!body || typeof body.name !== 'string' || !body.name.trim()) {
     badRequest('expected JSON body with { name: string, color?: string }');
   }
-  const color: ProfileColor = body.color && PROFILE_COLORS.includes(body.color as ProfileColor)
-    ? (body.color as ProfileColor)
-    : 'blue';
+  const color: ProfileColor =
+    body.color && PROFILE_COLORS.includes(body.color as ProfileColor)
+      ? (body.color as ProfileColor)
+      : 'blue';
   try {
     const profile = createProfile(body.name, color);
     ensureProfileDirs(profile.id);

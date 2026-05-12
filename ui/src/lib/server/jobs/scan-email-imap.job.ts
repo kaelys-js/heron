@@ -54,8 +54,12 @@ function runScanEmailImap(args?: JobArgs): Promise<JobResult> {
     });
 
     const p = spawn('node', cliArgs, { cwd: ROOT, env: { ...process.env } });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => {
       recordFailure('gmail-imap', err);
       logEvent('scan-email-imap', 'Failed to spawn scan-email-imap.mjs', {
@@ -92,7 +96,8 @@ function runScanEmailImap(args?: JobArgs): Promise<JobResult> {
 register({
   id: 'scan-email-imap',
   label: 'Gmail IMAP poll',
-  description: 'Polls Gmail every 30 min for LinkedIn / Indeed / digest job-alert emails. Marks processed messages as Seen.',
+  description:
+    'Polls Gmail every 30 min for LinkedIn / Indeed / digest job-alert emails. Marks processed messages as Seen.',
   category: 'discovery',
   trigger: { type: 'manual' }, // scheduling handled by the daemon below
   allowManual: true,
@@ -120,7 +125,9 @@ function tickOnce(): void {
 export function installImapPollerDaemon(): void {
   // Belt-and-braces idempotence: clear any prior handle on re-install.
   if (pollerHandle) {
-    try { clearInterval(pollerHandle); } catch {}
+    try {
+      clearInterval(pollerHandle);
+    } catch {}
     pollerHandle = null;
   }
   // Run a first poll 60s after boot (don't block boot itself), then

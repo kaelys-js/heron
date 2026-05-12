@@ -1,96 +1,109 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
-  import { notifications } from '$lib/notifications.svelte';
-  import { Button } from '$lib/components/ui/button';
-  import { Badge } from '$lib/components/ui/badge';
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { ScrollArea } from '$lib/components/ui/scroll-area';
-  import {
-    Bell, BellOff, AlertCircle, AlertTriangle, CheckCircle2, Info,
-    Trash2, CheckCheck,
-  } from '@lucide/svelte';
-  import { formatRelativeTime, cn } from '$lib/utils';
-  import type { ActivityEvent, EventLevel } from '$lib/types';
-  import EmptyState from './EmptyState.svelte';
-  import { BRAND_EVENTS } from '$lib/client/brand';
-  import { ConfirmGate } from '$lib/confirm.svelte';
+import { onMount, onDestroy } from 'svelte';
+import { notifications } from '$lib/notifications.svelte';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { ScrollArea } from '$lib/components/ui/scroll-area';
+import {
+  Bell,
+  BellOff,
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+  Info,
+  Trash2,
+  CheckCheck,
+} from '@lucide/svelte';
+import { formatRelativeTime, cn } from '$lib/utils';
+import type { ActivityEvent, EventLevel } from '$lib/types';
+import EmptyState from './EmptyState.svelte';
+import { BRAND_EVENTS } from '$lib/client/brand';
+import { ConfirmGate } from '$lib/confirm.svelte';
 
-  // Clear-feed is destructive (wipes the entire activity log). Same red
-  // double-click pattern as every other destructive action.
-  const confirmClear = new ConfirmGate();
-  function onClearClick(e: Event) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!confirmClear.trigger('clear')) return;
-    notifications.clear();
+// Clear-feed is destructive (wipes the entire activity log). Same red
+// double-click pattern as every other destructive action.
+const confirmClear = new ConfirmGate();
+function onClearClick(e: Event) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (!confirmClear.trigger('clear')) return;
+  notifications.clear();
+}
+let clearArmed = $derived(confirmClear.isArmed('clear'));
+
+let filter = $state<'all' | 'unread' | EventLevel>('all');
+let open = $state(false);
+
+function handleOpen() {
+  // Defer past the current event tick so bits-ui's outside-click detector
+  // doesn't see the toast click and immediately close us again.
+  setTimeout(() => {
+    filter = 'error';
+    open = true;
+  }, 0);
+}
+
+onMount(() => {
+  notifications.init();
+  if (typeof window !== 'undefined') {
+    window.addEventListener(BRAND_EVENTS.openNotifications, handleOpen);
   }
-  let clearArmed = $derived(confirmClear.isArmed('clear'));
-
-  let filter = $state<'all' | 'unread' | EventLevel>('all');
-  let open = $state(false);
-
-  function handleOpen() {
-    // Defer past the current event tick so bits-ui's outside-click detector
-    // doesn't see the toast click and immediately close us again.
-    setTimeout(() => {
-      filter = 'error';
-      open = true;
-    }, 0);
+});
+onDestroy(() => {
+  notifications.destroy();
+  confirmClear.destroy();
+  if (typeof window !== 'undefined') {
+    window.removeEventListener(BRAND_EVENTS.openNotifications, handleOpen);
   }
+});
 
-  onMount(() => {
-    notifications.init();
-    if (typeof window !== 'undefined') {
-      window.addEventListener(BRAND_EVENTS.openNotifications, handleOpen);
-    }
-  });
-  onDestroy(() => {
-    notifications.destroy();
-    confirmClear.destroy();
-    if (typeof window !== 'undefined') {
-      window.removeEventListener(BRAND_EVENTS.openNotifications, handleOpen);
-    }
-  });
+let visible = $derived.by(() => {
+  if (filter === 'all') return notifications.events;
+  if (filter === 'unread')
+    return notifications.events.filter((e) => notifications.unreadIds.has(e.id));
+  return notifications.events.filter((e) => e.level === filter);
+});
 
-  let visible = $derived.by(() => {
-    if (filter === 'all') return notifications.events;
-    if (filter === 'unread') return notifications.events.filter((e) => notifications.unreadIds.has(e.id));
-    return notifications.events.filter((e) => e.level === filter);
-  });
+let unreadCount = $derived(notifications.unreadIds.size);
 
-  let unreadCount = $derived(notifications.unreadIds.size);
+function levelIcon(level: EventLevel) {
+  return level === 'error'
+    ? AlertCircle
+    : level === 'warn'
+      ? AlertTriangle
+      : level === 'success'
+        ? CheckCircle2
+        : Info;
+}
+function levelColor(level: EventLevel) {
+  return level === 'error'
+    ? 'text-red-400'
+    : level === 'warn'
+      ? 'text-amber-400'
+      : level === 'success'
+        ? 'text-emerald-400'
+        : 'text-blue-400';
+}
 
-  function levelIcon(level: EventLevel) {
-    return level === 'error' ? AlertCircle
-      : level === 'warn' ? AlertTriangle
-      : level === 'success' ? CheckCircle2
-      : Info;
+const filters: { id: typeof filter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'unread', label: 'Unread' },
+  { id: 'error', label: 'Errors' },
+  { id: 'warn', label: 'Warn' },
+  { id: 'success', label: 'Success' },
+];
+
+let expandedId = $state<string | null>(null);
+function onItemClick(ev: ActivityEvent) {
+  notifications.markRead(ev.id);
+  if (ev.stack) {
+    expandedId = expandedId === ev.id ? null : ev.id;
+    return;
   }
-  function levelColor(level: EventLevel) {
-    return level === 'error' ? 'text-red-400'
-      : level === 'warn' ? 'text-amber-400'
-      : level === 'success' ? 'text-emerald-400'
-      : 'text-blue-400';
-  }
-
-  const filters: { id: typeof filter; label: string }[] = [
-    { id: 'all', label: 'All' },
-    { id: 'unread', label: 'Unread' },
-    { id: 'error', label: 'Errors' },
-    { id: 'warn', label: 'Warn' },
-    { id: 'success', label: 'Success' },
-  ];
-
-  let expandedId = $state<string | null>(null);
-  function onItemClick(ev: ActivityEvent) {
-    notifications.markRead(ev.id);
-    if (ev.stack) {
-      expandedId = expandedId === ev.id ? null : ev.id;
-      return;
-    }
-    if (ev.link) location.href = ev.link;
-  }
+  if (ev.link) location.href = ev.link;
+}
 </script>
 
 <DropdownMenu.Root bind:open>

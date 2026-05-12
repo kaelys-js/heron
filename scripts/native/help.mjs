@@ -43,8 +43,14 @@ const groups = [
   {
     title: 'Release (mostly automatic)',
     cmds: [
-      ['(auto)', 'Conventional Commit (feat:/fix:/...) on main → Release Please opens release PR → merge → CI builds + publishes'],
-      ['pnpm release patch', 'Manual override: 1.6.0 → 1.6.1 → tag → push (bypasses Release Please)'],
+      [
+        '(auto)',
+        'Conventional Commit (feat:/fix:/...) on main → Release Please opens release PR → merge → CI builds + publishes',
+      ],
+      [
+        'pnpm release patch',
+        'Manual override: 1.6.0 → 1.6.1 → tag → push (bypasses Release Please)',
+      ],
       ['pnpm release minor', 'Manual override: 1.6.0 → 1.7.0'],
       ['pnpm release major', 'Manual override: 1.6.0 → 2.0.0'],
     ],
@@ -77,6 +83,8 @@ console.log(`    ${have('brew')}  Homebrew`);
 
 const envFile = join(process.env.HOME || '', '.career-ops', 'native-env');
 const haveEnv = existsSync(envFile);
-console.log(`    ${haveEnv ? c.green('✓') : c.red('✗')}  Apple secrets configured  ${c.dim(envFile)}`);
+console.log(
+  `    ${haveEnv ? c.green('✓') : c.red('✗')}  Apple secrets configured  ${c.dim(envFile)}`,
+);
 
 console.log('');

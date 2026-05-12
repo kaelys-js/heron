@@ -32,7 +32,7 @@ export const TIMEZONES: Timezone[] = [
   { value: 'America/Halifax', label: 'Halifax · AST', offset: 'UTC-4' },
   { value: 'America/Santiago', label: 'Santiago · CLT', offset: 'UTC-4' },
   { value: 'America/Caracas', label: 'Caracas · VET', offset: 'UTC-4' },
-  { value: 'America/St_Johns', label: 'St. John\'s · NST', offset: 'UTC-3:30' },
+  { value: 'America/St_Johns', label: "St. John's · NST", offset: 'UTC-3:30' },
   { value: 'America/Sao_Paulo', label: 'São Paulo · BRT', offset: 'UTC-3' },
   { value: 'America/Buenos_Aires', label: 'Buenos Aires · ART', offset: 'UTC-3' },
   { value: 'America/Montevideo', label: 'Montevideo · UYT', offset: 'UTC-3' },

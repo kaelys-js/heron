@@ -38,9 +38,11 @@ const BAND_LABELS: Record<TimingBand, string> = {
 };
 
 const BAND_ADVICE: Record<TimingBand, string> = {
-  fresh: 'Day 1-3 applications convert 3-5× more than Day 7+. Highest-leverage time slot. Apply today.',
+  fresh:
+    'Day 1-3 applications convert 3-5× more than Day 7+. Highest-leverage time slot. Apply today.',
   good: 'Within the first week — still well-positioned. Apply by tomorrow at the latest.',
-  fading: 'Pipeline already filling. Tailor harder + lead with a strong narrative. Worth it but expect lower yield.',
+  fading:
+    'Pipeline already filling. Tailor harder + lead with a strong narrative. Worth it but expect lower yield.',
   late: 'Days 14+ — pipeline is closed in most cases. Apply only if extremely high-fit; better to skip and free up your daily cap for fresh listings.',
 };
 

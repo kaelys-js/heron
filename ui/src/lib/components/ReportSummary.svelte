@@ -1,110 +1,143 @@
 <script lang="ts">
-  import * as Card from '$lib/components/ui/card';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Badge } from '$lib/components/ui/badge';
-  import {
-    CheckCircle2, AlertTriangle, ShieldCheck, DollarSign, MapPin, Users, Wifi,
-    Building, Globe, Plane, Layers, Briefcase, Trophy, Info,
-  } from '@lucide/svelte';
-  import type { ReportSummary, WorkMode } from '$lib/server/report-summary';
-  import { BG_TINTS } from '$lib/types';
-  import { cn } from '$lib/utils';
-  import { cmd } from '$lib/config/branding';
+import * as Card from '$lib/components/ui/card';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { Badge } from '$lib/components/ui/badge';
+import {
+  CheckCircle2,
+  AlertTriangle,
+  ShieldCheck,
+  DollarSign,
+  MapPin,
+  Users,
+  Wifi,
+  Building,
+  Globe,
+  Plane,
+  Layers,
+  Briefcase,
+  Trophy,
+  Info,
+} from '@lucide/svelte';
+import type { ReportSummary, WorkMode } from '$lib/server/report-summary';
+import { BG_TINTS } from '$lib/types';
+import { cn } from '$lib/utils';
+import { cmd } from '$lib/config/branding';
 
-  let { summary }: { summary: ReportSummary } = $props();
+let { summary }: { summary: ReportSummary } = $props();
 
-  let scoreClass = $derived.by(() => {
-    if (summary.score == null) return 'border-border bg-muted text-muted-foreground';
-    if (summary.score >= 4.5) return 'border-emerald-500/50 bg-emerald-500/15 text-emerald-200';
-    if (summary.score >= 4) return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300';
-    if (summary.score >= 3) return 'border-amber-500/40 bg-amber-500/10 text-amber-300';
-    return 'border-red-500/40 bg-red-500/10 text-red-300';
-  });
+let scoreClass = $derived.by(() => {
+  if (summary.score == null) return 'border-border bg-muted text-muted-foreground';
+  if (summary.score >= 4.5) return 'border-emerald-500/50 bg-emerald-500/15 text-emerald-200';
+  if (summary.score >= 4) return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300';
+  if (summary.score >= 3) return 'border-amber-500/40 bg-amber-500/10 text-amber-300';
+  return 'border-red-500/40 bg-red-500/10 text-red-300';
+});
 
-  let scoreVerdict = $derived.by(() => {
-    if (summary.score == null) return { label: 'Unscored', desc: 'No deep evaluation yet — run ' + cmd('oferta') };
-    if (summary.score >= 4.5) return { label: 'Strong fit', desc: 'Prioritize this one' };
-    if (summary.score >= 4) return { label: 'Good fit', desc: 'Worth applying' };
-    if (summary.score >= 3) return { label: 'Marginal', desc: 'Review the gaps before deciding' };
-    return { label: 'Low fit', desc: 'Skip unless special interest' };
-  });
+let scoreVerdict = $derived.by(() => {
+  if (summary.score == null)
+    return { label: 'Unscored', desc: 'No deep evaluation yet — run ' + cmd('oferta') };
+  if (summary.score >= 4.5) return { label: 'Strong fit', desc: 'Prioritize this one' };
+  if (summary.score >= 4) return { label: 'Good fit', desc: 'Worth applying' };
+  if (summary.score >= 3) return { label: 'Marginal', desc: 'Review the gaps before deciding' };
+  return { label: 'Low fit', desc: 'Skip unless special interest' };
+});
 
-  // Work mode UI mapping
-  const WORK_MODE: Record<WorkMode, { label: string; icon: any; tint: string; tip: string }> = {
-    remote: { label: 'Remote', icon: Wifi, tint: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/40', tip: 'Fully remote — no required office presence' },
-    hybrid: { label: 'Hybrid', icon: Building, tint: 'text-amber-300 bg-amber-500/10 border-amber-500/40', tip: 'Hybrid — some office presence required' },
-    onsite: { label: 'On-site', icon: Building, tint: 'text-red-300 bg-red-500/10 border-red-500/40', tip: 'On-site — must work from a specific location' },
-    unknown: { label: 'Mode unclear', icon: Globe, tint: 'text-muted-foreground bg-muted border-border/50', tip: 'Work mode not explicitly stated in posting' },
-  };
+// Work mode UI mapping
+const WORK_MODE: Record<WorkMode, { label: string; icon: any; tint: string; tip: string }> = {
+  remote: {
+    label: 'Remote',
+    icon: Wifi,
+    tint: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/40',
+    tip: 'Fully remote — no required office presence',
+  },
+  hybrid: {
+    label: 'Hybrid',
+    icon: Building,
+    tint: 'text-amber-300 bg-amber-500/10 border-amber-500/40',
+    tip: 'Hybrid — some office presence required',
+  },
+  onsite: {
+    label: 'On-site',
+    icon: Building,
+    tint: 'text-red-300 bg-red-500/10 border-red-500/40',
+    tip: 'On-site — must work from a specific location',
+  },
+  unknown: {
+    label: 'Mode unclear',
+    icon: Globe,
+    tint: 'text-muted-foreground bg-muted border-border/50',
+    tip: 'Work mode not explicitly stated in posting',
+  },
+};
 
-  let isEmpty = $derived(
-    summary.score == null &&
+let isEmpty = $derived(
+  summary.score == null &&
     !summary.archetype &&
     !summary.tldr &&
     summary.strongMatches.length === 0 &&
     summary.gaps.length === 0,
-  );
+);
 
-  // Build the header chip set in priority order — only render chips with content
-  type Chip = { icon: any; label: string; value: string; tip: string; tint?: string };
-  let headerChips = $derived.by<Chip[]>(() => {
-    const chips: Chip[] = [];
-    if (summary.salary) {
-      chips.push({
-        icon: DollarSign,
-        label: 'Comp',
-        value: summary.salary,
-        tip: 'Salary / total comp range from the posting',
-        tint: 'text-emerald-300',
-      });
-    }
-    const wm = WORK_MODE[summary.workMode];
+// Build the header chip set in priority order — only render chips with content
+type Chip = { icon: any; label: string; value: string; tip: string; tint?: string };
+let headerChips = $derived.by<Chip[]>(() => {
+  const chips: Chip[] = [];
+  if (summary.salary) {
     chips.push({
-      icon: wm.icon,
-      label: 'Work mode',
-      value: wm.label,
-      tip: summary.workModeRaw ? wm.tip + ' · "' + summary.workModeRaw + '"' : wm.tip,
-      tint: wm.tint.split(' ')[0], // just the text color
+      icon: DollarSign,
+      label: 'Comp',
+      value: summary.salary,
+      tip: 'Salary / total comp range from the posting',
+      tint: 'text-emerald-300',
     });
-    if (summary.location) {
-      chips.push({
-        icon: MapPin,
-        label: 'Location',
-        value: summary.location,
-        tip: 'Posting location requirement',
-      });
-    }
-    if (summary.visa) {
-      chips.push({
-        icon: Plane,
-        label: 'Visa',
-        value: summary.visa,
-        tip: 'Work authorization / sponsorship requirements',
-      });
-    }
-    if (summary.bgRisk) {
-      chips.push({
-        icon: ShieldCheck,
-        label: 'BG risk',
-        value: summary.bgRisk,
-        tip: summary.bgNote || 'Background-check exposure for this employer',
-      });
-    }
-    return chips;
+  }
+  const wm = WORK_MODE[summary.workMode];
+  chips.push({
+    icon: wm.icon,
+    label: 'Work mode',
+    value: wm.label,
+    tip: summary.workModeRaw ? wm.tip + ' · "' + summary.workModeRaw + '"' : wm.tip,
+    tint: wm.tint.split(' ')[0], // just the text color
   });
+  if (summary.location) {
+    chips.push({
+      icon: MapPin,
+      label: 'Location',
+      value: summary.location,
+      tip: 'Posting location requirement',
+    });
+  }
+  if (summary.visa) {
+    chips.push({
+      icon: Plane,
+      label: 'Visa',
+      value: summary.visa,
+      tip: 'Work authorization / sponsorship requirements',
+    });
+  }
+  if (summary.bgRisk) {
+    chips.push({
+      icon: ShieldCheck,
+      label: 'BG risk',
+      value: summary.bgRisk,
+      tip: summary.bgNote || 'Background-check exposure for this employer',
+    });
+  }
+  return chips;
+});
 
-  // Secondary facts (rendered as compact key/value rows)
-  type Fact = { icon: any; label: string; value: string };
-  let facts = $derived.by<Fact[]>(() => {
-    const f: Fact[] = [];
-    if (summary.companyStage) f.push({ icon: Trophy, label: 'Stage', value: summary.companyStage });
-    if (summary.domain) f.push({ icon: Globe, label: 'Domain', value: summary.domain });
-    if (summary.function) f.push({ icon: Briefcase, label: 'Function', value: summary.function });
-    if (summary.seniority) f.push({ icon: Layers, label: 'Seniority', value: summary.seniority });
-    if (summary.teamSize) f.push({ icon: Users, label: 'Team', value: summary.teamSize });
-    if (summary.legitimacy) f.push({ icon: Info, label: 'Legitimacy', value: summary.legitimacy });
-    return f;
-  });
+// Secondary facts (rendered as compact key/value rows)
+type Fact = { icon: any; label: string; value: string };
+let facts = $derived.by<Fact[]>(() => {
+  const f: Fact[] = [];
+  if (summary.companyStage) f.push({ icon: Trophy, label: 'Stage', value: summary.companyStage });
+  if (summary.domain) f.push({ icon: Globe, label: 'Domain', value: summary.domain });
+  if (summary.function) f.push({ icon: Briefcase, label: 'Function', value: summary.function });
+  if (summary.seniority) f.push({ icon: Layers, label: 'Seniority', value: summary.seniority });
+  if (summary.teamSize) f.push({ icon: Users, label: 'Team', value: summary.teamSize });
+  if (summary.legitimacy) f.push({ icon: Info, label: 'Legitimacy', value: summary.legitimacy });
+  return f;
+});
 </script>
 
 {#if !isEmpty}

@@ -66,10 +66,18 @@ function normalizeStatus(raw) {
 
   // Already canonical (English, per states.yml) — just fix casing/bold
   const canonical = [
-    'Evaluated', 'Applied', 'Responded', 'Interview',
-    'Offer', 'Rejected', 'Discarded', 'SKIP',
+    'Evaluated',
+    'Applied',
+    'Responded',
+    'Interview',
+    'Offer',
+    'Rejected',
+    'Discarded',
+    'SKIP',
     // Autonomous-apply additions (round 4)
-    'Queued', 'Applying', 'ManualApplyNeeded',
+    'Queued',
+    'Applying',
+    'ManualApplyNeeded',
   ];
   for (const c of canonical) {
     if (lower === c.toLowerCase()) return { status: c };
@@ -77,7 +85,8 @@ function normalizeStatus(raw) {
 
   // Spanish aliases → English canonicals
   if (['evaluada'].includes(lower)) return { status: 'Evaluated' };
-  if (['aplicado', 'enviada', 'aplicada', 'applied', 'sent'].includes(lower)) return { status: 'Applied' };
+  if (['aplicado', 'enviada', 'aplicada', 'applied', 'sent'].includes(lower))
+    return { status: 'Applied' };
   if (['respondido'].includes(lower)) return { status: 'Responded' };
   if (['entrevista'].includes(lower)) return { status: 'Interview' };
   if (['oferta'].includes(lower)) return { status: 'Offer' };
@@ -110,7 +119,7 @@ for (let i = 0; i < lines.length; i++) {
   const line = lines[i];
   if (!line.startsWith('|')) continue;
 
-  const parts = line.split('|').map(s => s.trim());
+  const parts = line.split('|').map((s) => s.trim());
   // Schema detection per row — 12 cells (incl. empty leading/trailing) when
   // URL column is present, 11 cells when not. Column offsets shift by 1.
   //   9-col  (length 11): ['', '#', 'date', 'co', 'role', 'score', 'STATUS', 'pdf', 'report', 'notes', '']

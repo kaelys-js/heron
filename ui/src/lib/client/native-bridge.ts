@@ -29,7 +29,11 @@ type CareerOpsNativePlugin = {
   keychainRemove(opts: { key: string }): Promise<{ ok: boolean }>;
   indexJobs(opts: { jobs: JobIndexEntry[] }): Promise<{ ok: boolean; indexed: number }>;
   clearJobIndex(): Promise<{ ok: boolean }>;
-  setUserActivity(opts: { type: string; title: string; data: Record<string, unknown> }): Promise<{ ok: boolean }>;
+  setUserActivity(opts: {
+    type: string;
+    title: string;
+    data: Record<string, unknown>;
+  }): Promise<{ ok: boolean }>;
   drainNativeErrors(): Promise<{ errors: Array<Record<string, unknown>> }>;
 };
 
@@ -140,13 +144,35 @@ export async function clearJobIndex(): Promise<boolean> {
   }
 }
 
-export async function setUserActivity(type: string, title: string, data: Record<string, unknown>): Promise<boolean> {
+export async function setUserActivity(
+  type: string,
+  title: string,
+  data: Record<string, unknown>,
+): Promise<boolean> {
   if (!isIos()) return true;
   try {
     const res = await native.setUserActivity({ type, title, data });
     return res.ok;
   } catch {
     return false;
+  }
+}
+
+/** Subscribe to iOS native network-status changes (NWPathMonitor →
+ *  CareerOpsNativePlugin.notifyListeners). Returns a remover. */
+export function onNetStatusChange(handler: (online: boolean) => void): () => void {
+  if (!isIos()) return () => {};
+  try {
+    const sub = (native as any).addListener?.('netStatusChanged', (e: { online: boolean }) =>
+      handler(e.online),
+    );
+    return () => {
+      try {
+        sub?.remove?.();
+      } catch {}
+    };
+  } catch {
+    return () => {};
   }
 }
 

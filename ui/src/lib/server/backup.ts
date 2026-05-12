@@ -83,14 +83,14 @@ const EXCLUDE_PATTERNS = [
 export const DEFAULT_RETENTION_DAYS = 14;
 
 export type BackupInfo = {
-  id: string;            // ISO timestamp, also the filename stem
-  path: string;          // absolute path to the .tar.gz
-  metaPath: string;      // absolute path to the .meta.json sidecar
-  size: number;          // bytes
-  createdAt: number;     // ms epoch
-  fileCount?: number;    // from sidecar, undefined if missing
-  profiles?: string[];   // slugs included, undefined if sidecar missing
-  app?: string;          // app version (e.g. content of VERSION), undefined if missing
+  id: string; // ISO timestamp, also the filename stem
+  path: string; // absolute path to the .tar.gz
+  metaPath: string; // absolute path to the .meta.json sidecar
+  size: number; // bytes
+  createdAt: number; // ms epoch
+  fileCount?: number; // from sidecar, undefined if missing
+  profiles?: string[]; // slugs included, undefined if sidecar missing
+  app?: string; // app version (e.g. content of VERSION), undefined if missing
 };
 
 export type CreateBackupResult = {
@@ -123,9 +123,10 @@ export function readBackupConfig(): BackupConfig {
     if (!fs.existsSync(CONFIG_PATH)) return { retentionDays: DEFAULT_RETENTION_DAYS };
     const raw = fs.readFileSync(CONFIG_PATH, 'utf8');
     const parsed = JSON.parse(raw) as Partial<BackupConfig>;
-    const days = typeof parsed.retentionDays === 'number' && parsed.retentionDays > 0
-      ? parsed.retentionDays
-      : DEFAULT_RETENTION_DAYS;
+    const days =
+      typeof parsed.retentionDays === 'number' && parsed.retentionDays > 0
+        ? parsed.retentionDays
+        : DEFAULT_RETENTION_DAYS;
     return { retentionDays: days };
   } catch {
     return { retentionDays: DEFAULT_RETENTION_DAYS };
@@ -145,7 +146,10 @@ export function writeBackupConfig(next: BackupConfig): BackupConfig {
  *  Output shape: 2026-05-11T13-45-22Z. The "Z" preserves UTC intent,
  *  the dashes-where-colons-would-be keep it filesystem-friendly. */
 function timestampId(d: Date = new Date()): string {
-  return d.toISOString().replace(/[:.]/g, '-').replace(/-\d{3}Z$/, 'Z');
+  return d
+    .toISOString()
+    .replace(/[:.]/g, '-')
+    .replace(/-\d{3}Z$/, 'Z');
 }
 
 /** List which profile slugs the backup is going to capture. Used by the
@@ -155,7 +159,8 @@ function listProfileSlugs(): string[] {
   const dir = path.join(ROOT, 'data', 'profiles');
   try {
     if (!fs.existsSync(dir)) return [];
-    return fs.readdirSync(dir, { withFileTypes: true })
+    return fs
+      .readdirSync(dir, { withFileTypes: true })
       .filter((d) => d.isDirectory())
       .map((d) => d.name)
       .sort();
@@ -171,7 +176,11 @@ function countIncludedFiles(): number {
   const visit = (rel: string) => {
     const abs = path.join(ROOT, rel);
     let stat: fs.Stats;
-    try { stat = fs.statSync(abs); } catch { return; }
+    try {
+      stat = fs.statSync(abs);
+    } catch {
+      return;
+    }
     if (stat.isFile()) {
       count++;
       return;
@@ -186,7 +195,9 @@ function countIncludedFiles(): number {
         for (const entry of fs.readdirSync(abs)) {
           visit(rel + '/' + entry);
         }
-      } catch { /* permission etc */ }
+      } catch {
+        /* permission etc */
+      }
     }
   };
   for (const p of INCLUDE_PATHS) visit(p);
@@ -194,11 +205,14 @@ function countIncludedFiles(): number {
 }
 
 /** Write the sidecar metadata for a freshly-created tarball. */
-function writeSidecar(metaPath: string, payload: {
-  fileCount: number;
-  profiles: string[];
-  app?: string;
-}): void {
+function writeSidecar(
+  metaPath: string,
+  payload: {
+    fileCount: number;
+    profiles: string[];
+    app?: string;
+  },
+): void {
   fs.writeFileSync(metaPath, JSON.stringify(payload, null, 2) + '\n');
 }
 
@@ -221,9 +235,7 @@ export async function createBackup(): Promise<CreateBackupResult> {
 
   // Gather what we're including. Skip anything that's not on disk yet —
   // a fresh install may not have data/issues.jsonl yet.
-  const presentTargets = INCLUDE_PATHS.filter((p) =>
-    fs.existsSync(path.join(ROOT, p)),
-  );
+  const presentTargets = INCLUDE_PATHS.filter((p) => fs.existsSync(path.join(ROOT, p)));
   if (presentTargets.length === 0) {
     return { ok: false, error: 'No data files to back up' };
   }
@@ -239,7 +251,9 @@ export async function createBackup(): Promise<CreateBackupResult> {
   return new Promise<CreateBackupResult>((resolve) => {
     const child = spawn('tar', args, { cwd: ROOT });
     let stderr = '';
-    child.stderr.on('data', (b) => { stderr += b.toString(); });
+    child.stderr.on('data', (b) => {
+      stderr += b.toString();
+    });
     child.on('error', (err) => {
       reportServerError('backup', 'tar spawn failed', err, { category: 'system' });
       resolve({ ok: false, error: err.message });
@@ -247,8 +261,10 @@ export async function createBackup(): Promise<CreateBackupResult> {
     child.on('close', (code) => {
       if (code !== 0) {
         // Clean up the half-written tarball.
-        try { fs.unlinkSync(tarPath); } catch {}
-        const msg = stderr.split('\n').slice(0, 3).join(' | ') || ('tar exit ' + code);
+        try {
+          fs.unlinkSync(tarPath);
+        } catch {}
+        const msg = stderr.split('\n').slice(0, 3).join(' | ') || 'tar exit ' + code;
         logEvent('backup', 'Backup failed', {
           level: 'error',
           category: 'system',
@@ -258,7 +274,9 @@ export async function createBackup(): Promise<CreateBackupResult> {
         return;
       }
       let size = 0;
-      try { size = fs.statSync(tarPath).size; } catch {}
+      try {
+        size = fs.statSync(tarPath).size;
+      } catch {}
       writeSidecar(metaPath, { fileCount, profiles, app: readVersion() });
 
       // Prune old backups.
@@ -268,7 +286,8 @@ export async function createBackup(): Promise<CreateBackupResult> {
       logEvent('backup', 'Backup created · ' + id, {
         level: 'success',
         category: 'system',
-        message: `${fileCount} files · ${(size / 1024 / 1024).toFixed(1)} MB · ${durationS}s` +
+        message:
+          `${fileCount} files · ${(size / 1024 / 1024).toFixed(1)} MB · ${durationS}s` +
           (pruned > 0 ? ` · pruned ${pruned}` : ''),
       });
       resolve({ ok: true, id, path: tarPath, size, fileCount, profiles, pruned });
@@ -281,10 +300,16 @@ export async function createBackup(): Promise<CreateBackupResult> {
 export function listBackups(): BackupInfo[] {
   try {
     if (!fs.existsSync(BACKUPS_DIR)) return [];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
   const out: BackupInfo[] = [];
   let entries: string[] = [];
-  try { entries = fs.readdirSync(BACKUPS_DIR); } catch { return []; }
+  try {
+    entries = fs.readdirSync(BACKUPS_DIR);
+  } catch {
+    return [];
+  }
   for (const name of entries) {
     if (!name.endsWith('.tar.gz')) continue;
     const id = name.slice(0, -'.tar.gz'.length);
@@ -296,7 +321,9 @@ export function listBackups(): BackupInfo[] {
       const st = fs.statSync(tarPath);
       size = st.size;
       createdAt = st.mtimeMs;
-    } catch { continue; }
+    } catch {
+      continue;
+    }
     const info: BackupInfo = { id, path: tarPath, metaPath, size, createdAt };
     try {
       if (fs.existsSync(metaPath)) {
@@ -309,7 +336,9 @@ export function listBackups(): BackupInfo[] {
         info.profiles = parsed.profiles;
         info.app = parsed.app;
       }
-    } catch { /* sidecar missing or corrupt — still surface the tarball */ }
+    } catch {
+      /* sidecar missing or corrupt — still surface the tarball */
+    }
     out.push(info);
   }
   out.sort((a, b) => b.createdAt - a.createdAt);
@@ -327,8 +356,14 @@ export function getBackup(id: string): BackupInfo | null {
 export function deleteBackup(id: string): boolean {
   const info = getBackup(id);
   if (!info) return false;
-  try { fs.unlinkSync(info.path); } catch { return false; }
-  try { if (fs.existsSync(info.metaPath)) fs.unlinkSync(info.metaPath); } catch {}
+  try {
+    fs.unlinkSync(info.path);
+  } catch {
+    return false;
+  }
+  try {
+    if (fs.existsSync(info.metaPath)) fs.unlinkSync(info.metaPath);
+  } catch {}
   logEvent('backup', 'Backup deleted · ' + id, { level: 'info', category: 'system' });
   return true;
 }
@@ -355,7 +390,11 @@ export function pruneOldBackups(): number {
 
 /** Validate that a tarball is well-formed gzip + tar. Cheap to do — we
  *  list its contents without extracting. Returns true on valid. */
-export function verifyBackupIntegrity(id: string): { ok: boolean; entries?: number; error?: string } {
+export function verifyBackupIntegrity(id: string): {
+  ok: boolean;
+  entries?: number;
+  error?: string;
+} {
   const info = getBackup(id);
   if (!info) return { ok: false, error: 'not-found' };
   const r = spawnSync('tar', ['-tzf', info.path], { encoding: 'utf8' });
@@ -389,7 +428,9 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
   if (running.length > 0) {
     return {
       ok: false,
-      error: 'Cannot restore while tasks are running: ' + running.join(', ') +
+      error:
+        'Cannot restore while tasks are running: ' +
+        running.join(', ') +
         '. Wait for them to finish, then retry.',
     };
   }
@@ -404,14 +445,20 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
   const audit = path.join(BACKUPS_DIR, '.pre-restore-' + id);
 
   // Clean any stale staging dir from a previous failed attempt.
-  try { fs.rmSync(stage, { recursive: true, force: true }); } catch {}
-  try { fs.rmSync(audit, { recursive: true, force: true }); } catch {}
+  try {
+    fs.rmSync(stage, { recursive: true, force: true });
+  } catch {}
+  try {
+    fs.rmSync(audit, { recursive: true, force: true });
+  } catch {}
   fs.mkdirSync(stage, { recursive: true });
 
   // Extract into the staging dir.
   const extract = spawnSync('tar', ['-xzf', info.path, '-C', stage], { encoding: 'utf8' });
   if (extract.status !== 0) {
-    try { fs.rmSync(stage, { recursive: true, force: true }); } catch {}
+    try {
+      fs.rmSync(stage, { recursive: true, force: true });
+    } catch {}
     return { ok: false, error: 'tar -xzf failed: ' + (extract.stderr || '').slice(0, 200) };
   }
 
@@ -428,9 +475,16 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
       fs.cpSync(src, dst, { recursive: true });
     } catch (e) {
       // Audit copy failed — bail BEFORE touching live data.
-      try { fs.rmSync(stage, { recursive: true, force: true }); } catch {}
-      try { fs.rmSync(audit, { recursive: true, force: true }); } catch {}
-      return { ok: false, error: 'Audit snapshot failed: ' + (e instanceof Error ? e.message : String(e)) };
+      try {
+        fs.rmSync(stage, { recursive: true, force: true });
+      } catch {}
+      try {
+        fs.rmSync(audit, { recursive: true, force: true });
+      } catch {}
+      return {
+        ok: false,
+        error: 'Audit snapshot failed: ' + (e instanceof Error ? e.message : String(e)),
+      };
     }
   }
 
@@ -464,7 +518,9 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
           fs.cpSync(auditSrc, liveDst, { recursive: true });
         }
       } catch {}
-      try { fs.rmSync(stage, { recursive: true, force: true }); } catch {}
+      try {
+        fs.rmSync(stage, { recursive: true, force: true });
+      } catch {}
       return {
         ok: false,
         error: 'Restore failed at ' + rel + ': ' + (e instanceof Error ? e.message : String(e)),
@@ -473,7 +529,9 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
   }
 
   // Clean up staging (audit dir stays as the undo trail).
-  try { fs.rmSync(stage, { recursive: true, force: true }); } catch {}
+  try {
+    fs.rmSync(stage, { recursive: true, force: true });
+  } catch {}
 
   logEvent('backup', 'Restored from ' + id, {
     level: 'success',
@@ -486,7 +544,11 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
 function countFilesAt(p: string): number {
   let n = 0;
   let stat: fs.Stats;
-  try { stat = fs.statSync(p); } catch { return 0; }
+  try {
+    stat = fs.statSync(p);
+  } catch {
+    return 0;
+  }
   if (stat.isFile()) return 1;
   if (stat.isDirectory()) {
     try {

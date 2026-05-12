@@ -15,7 +15,10 @@
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import {
-  listAsks, logAsk, silentAsks, linkedInMutualsUrl,
+  listAsks,
+  logAsk,
+  silentAsks,
+  linkedInMutualsUrl,
   type ReferralAsk,
 } from '$lib/server/referrals';
 import { getActiveProfileId, getProfile } from '$lib/server/profiles';
@@ -63,7 +66,8 @@ export const PATCH = wrap('referrals', async ({ request, url }: { request: Reque
   }
   // Append a new row with the updated status — last-write-wins in listAsks.
   const existing = listAsks(profileId).find(
-    (a) => a.jobId === body.jobId && a.contactName.toLowerCase() === body.contactName!.toLowerCase(),
+    (a) =>
+      a.jobId === body.jobId && a.contactName.toLowerCase() === body.contactName!.toLowerCase(),
   );
   if (!existing) badRequest('Ask not found — POST first to log the initial ask');
   const ask: ReferralAsk = {

@@ -36,7 +36,8 @@ export const POST = wrap(
         logEvent('job-liveness', 'Could not auto-close after expired verdict', {
           level: 'warn',
           category: 'application',
-          message: (job.company || '?') + ' — ' + (err instanceof Error ? err.message : String(err)),
+          message:
+            (job.company || '?') + ' — ' + (err instanceof Error ? err.message : String(err)),
         });
       }
     }
@@ -44,7 +45,8 @@ export const POST = wrap(
       level: outcome.verdict === 'expired' ? 'warn' : 'info',
       category: 'system',
       message:
-        (job.company ? job.company + ' · ' : '') + outcome.url +
+        (job.company ? job.company + ' · ' : '') +
+        outcome.url +
         (outcome.reason ? ' · ' + outcome.reason : ''),
     });
     return {

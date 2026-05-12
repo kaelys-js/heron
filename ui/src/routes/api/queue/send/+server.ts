@@ -24,7 +24,9 @@ const MAX_BATCH = 50;
 
 export const POST = wrap('queue-send', async ({ request }: { request: Request }) => {
   const body = (await request.json().catch(() => null)) as { jobIds?: string[] } | null;
-  const ids = Array.isArray(body?.jobIds) ? body!.jobIds.filter((s): s is string => typeof s === 'string') : [];
+  const ids = Array.isArray(body?.jobIds)
+    ? body!.jobIds.filter((s): s is string => typeof s === 'string')
+    : [];
   if (ids.length === 0) badRequest('jobIds required (non-empty array)');
   if (ids.length > MAX_BATCH) badRequest('At most ' + MAX_BATCH + ' jobs per send');
 
@@ -76,7 +78,9 @@ export const POST = wrap('queue-send', async ({ request }: { request: Request })
 
   if (linkedInToSend.length > 0) {
     runBulkApply(linkedInToSend.map((g) => ({ url: g.url, isLinkedIn: true }))).catch((err) =>
-      reportServerError('queue-send', 'LinkedIn queue dispatch rejected', err, { category: 'task' }),
+      reportServerError('queue-send', 'LinkedIn queue dispatch rejected', err, {
+        category: 'task',
+      }),
     );
   }
 
@@ -88,8 +92,14 @@ export const POST = wrap('queue-send', async ({ request }: { request: Request })
     cap,
     openInTabs: others.map((g) => ({ id: g.id, url: g.url, company: g.company, role: g.role })),
     message:
-      (linkedInToSend.length > 0 ? 'Auto-applying ' + linkedInToSend.length + ' via LinkedIn. ' : '') +
-      (linkedIn.length - linkedInToSend.length > 0 ? '(' + (linkedIn.length - linkedInToSend.length) + ' deferred — daily cap.) ' : '') +
-      (others.length > 0 ? 'Marked ' + others.length + ' Applied · open postings in new tabs to finish.' : ''),
+      (linkedInToSend.length > 0
+        ? 'Auto-applying ' + linkedInToSend.length + ' via LinkedIn. '
+        : '') +
+      (linkedIn.length - linkedInToSend.length > 0
+        ? '(' + (linkedIn.length - linkedInToSend.length) + ' deferred — daily cap.) '
+        : '') +
+      (others.length > 0
+        ? 'Marked ' + others.length + ' Applied · open postings in new tabs to finish.'
+        : ''),
   };
 });

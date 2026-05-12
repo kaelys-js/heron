@@ -25,16 +25,16 @@ export type ReportSummary = {
   // Headline facts (rendered as a grid up top)
   salary: string;
   workMode: WorkMode;
-  workModeRaw: string;     // raw string from the report (used in tooltip)
-  location: string;        // explicit location field if present
-  visa: string;            // sponsorship / authorization summary
+  workModeRaw: string; // raw string from the report (used in tooltip)
+  location: string; // explicit location field if present
+  visa: string; // sponsorship / authorization summary
 
   // Company / role context
   domain: string;
   function: string;
   seniority: string;
   teamSize: string;
-  companyStage: string;    // "Series B", "Public", etc.
+  companyStage: string; // "Series B", "Public", etc.
 
   // Stack / requirements (top 6)
   stack: string[];
@@ -129,7 +129,12 @@ function classifyWorkMode(raw: string): WorkMode {
   // Negative signals first
   if (/\bon[\s-]?site\b|\bin[\s-]?office\b/.test(s)) return 'onsite';
   if (/\bhybrid\b|\d+\s*day(?:s)?\s*\/?\s*(?:per\s+)?week|\bhq\s*\d/.test(s)) return 'hybrid';
-  if (/\bfully\s*remote\b|\bremote[\s-]?(first|friendly|ok)\b|\bremote\b\s*[-—:].*\b(yes|available|ok|friendly)\b/.test(s)) return 'remote';
+  if (
+    /\bfully\s*remote\b|\bremote[\s-]?(first|friendly|ok)\b|\bremote\b\s*[-—:].*\b(yes|available|ok|friendly)\b/.test(
+      s,
+    )
+  )
+    return 'remote';
   if (/^yes\b|^remote\b|\bdistributed\b|\banywhere\b/.test(s)) return 'remote';
   if (/\bno\b|\bmust be (in|located|based) (in)?\s/.test(s)) return 'onsite';
   // If it just mentions a city, lean on-site/hybrid — pessimistic
@@ -156,16 +161,24 @@ function parseMatchTable(text: string): { strong: StrongMatch[]; gaps: Gap[]; st
     const line = lines[i].trim();
     if (!line.startsWith('|')) continue;
     if (!/[✅❌]/.test(line)) continue;
-    const cells = line.split('|').map((c) => c.trim()).filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
+    const cells = line
+      .split('|')
+      .map((c) => c.trim())
+      .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
     if (cells.length < 2) continue;
 
-    const requirement = cells[0].replace(/\*\*/g, '').replace(/`([^`]+)`/g, '$1').trim();
+    const requirement = cells[0]
+      .replace(/\*\*/g, '')
+      .replace(/`([^`]+)`/g, '$1')
+      .trim();
     const level = cells[1];
     const notes = (cells[3] ?? cells[2] ?? '').replace(/`([^`]+)`/g, '$1').trim();
     if (level.includes('✅')) {
       strong.push({ requirement, level: level.replace(/[✅\s]+/, '').trim() || 'Strong', notes });
       // Collect tech tokens for the stack tag list
-      const tokens = requirement.match(/\b(TypeScript|JavaScript|React|Node\.?js|Vue|Svelte|Python|Go(?:lang)?|Rust|Java|Kotlin|Ruby|PHP|C\+\+|C#|GraphQL|REST|gRPC|AWS|GCP|Azure|Cloudflare|Workers|Kubernetes|K8s|Docker|Terraform|Postgres|PostgreSQL|MySQL|MongoDB|Redis|Kafka|GraphQL|Next\.js|Nuxt|Astro|Vite|Webpack|Tailwind)\b/gi);
+      const tokens = requirement.match(
+        /\b(TypeScript|JavaScript|React|Node\.?js|Vue|Svelte|Python|Go(?:lang)?|Rust|Java|Kotlin|Ruby|PHP|C\+\+|C#|GraphQL|REST|gRPC|AWS|GCP|Azure|Cloudflare|Workers|Kubernetes|K8s|Docker|Terraform|Postgres|PostgreSQL|MySQL|MongoDB|Redis|Kafka|GraphQL|Next\.js|Nuxt|Astro|Vite|Webpack|Tailwind)\b/gi,
+      );
       if (tokens) for (const t of tokens) stack.add(t);
     } else if (level.includes('❌')) {
       gaps.push({ requirement, level: level.replace(/[❌\s]+/, '').trim() || 'Gap', notes });
@@ -179,8 +192,13 @@ function parseMatchTable(text: string): { strong: StrongMatch[]; gaps: Gap[]; st
 function parseVisa(text: string, table: Record<string, string>): string {
   // Common keys
   const fromTable =
-    table['visa'] ?? table['work authorization'] ?? table['authorization'] ??
-    table['sponsorship'] ?? table['work auth'] ?? table['visa status'] ?? '';
+    table['visa'] ??
+    table['work authorization'] ??
+    table['authorization'] ??
+    table['sponsorship'] ??
+    table['work auth'] ??
+    table['visa status'] ??
+    '';
   if (fromTable) return fromTable;
 
   // Heuristic: search lines mentioning visa/sponsorship
@@ -201,7 +219,9 @@ function parseVisa(text: string, table: Record<string, string>): string {
 function parseCompanyStage(text: string, table: Record<string, string>): string {
   const fromTable = table['stage'] ?? table['etapa'] ?? table['funding'] ?? '';
   if (fromTable) return fromTable;
-  const m = text.match(/Series\s+([A-K])(?!\w)|\b(public|publicly traded|seed|pre-seed|bootstrapped)\b/i);
+  const m = text.match(
+    /Series\s+([A-K])(?!\w)|\b(public|publicly traded|seed|pre-seed|bootstrapped)\b/i,
+  );
   if (m) return m[0];
   return '';
 }
@@ -218,8 +238,13 @@ export function parseReportSummary(markdown: string): ReportSummary {
 
   const tldr = parseTldr(table);
   const salary =
-    table['salary'] ?? table['salario'] ?? table['compensation'] ?? table['comp'] ??
-    table['salary range'] ?? table['target comp'] ?? '';
+    table['salary'] ??
+    table['salario'] ??
+    table['compensation'] ??
+    table['comp'] ??
+    table['salary range'] ??
+    table['target comp'] ??
+    '';
   const workModeRaw =
     table['remote'] ?? table['work mode'] ?? table['location policy'] ?? table['ubicación'] ?? '';
   const workMode = classifyWorkMode(workModeRaw);

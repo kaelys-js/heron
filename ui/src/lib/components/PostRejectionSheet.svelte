@@ -9,85 +9,87 @@
   the user changes status to Rejected.
 -->
 <script lang="ts">
-  import * as Sheet from '$lib/components/ui/sheet';
-  import { Button } from '$lib/components/ui/button';
-  import { Textarea } from '$lib/components/ui/textarea';
-  import { Label } from '$lib/components/ui/label';
-  import { CheckCircle2, AlertCircle, ThumbsDown, Loader2, BookOpen, Skull } from '@lucide/svelte';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import { onMount } from 'svelte';
-  import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
+import * as Sheet from '$lib/components/ui/sheet';
+import { Button } from '$lib/components/ui/button';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Label } from '$lib/components/ui/label';
+import { CheckCircle2, AlertCircle, ThumbsDown, Loader2, BookOpen, Skull } from '@lucide/svelte';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import { onMount } from 'svelte';
+import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 
-  const EVENT_NAME = `${BRAND_STORAGE_PREFIX}:post-rejection-prompt`;
+const EVENT_NAME = `${BRAND_STORAGE_PREFIX}:post-rejection-prompt`;
 
-  let open = $state(false);
-  let jobId = $state<string | null>(null);
-  let profileId = $state<string | null>(null);
-  let jobLabel = $state('');
-  let wentWell = $state('');
-  let surprised = $state('');
-  let wouldChange = $state('');
-  let busy = $state(false);
+let open = $state(false);
+let jobId = $state<string | null>(null);
+let profileId = $state<string | null>(null);
+let jobLabel = $state('');
+let wentWell = $state('');
+let surprised = $state('');
+let wouldChange = $state('');
+let busy = $state(false);
 
-  type PromptDetail = { jobId: string; jobLabel: string; profileId?: string };
+type PromptDetail = { jobId: string; jobLabel: string; profileId?: string };
 
-  function openFor(detail: PromptDetail) {
-    jobId = detail.jobId;
-    profileId = detail.profileId ?? null;
-    jobLabel = detail.jobLabel;
-    wentWell = '';
-    surprised = '';
-    wouldChange = '';
-    busy = false;
-    // 600ms delay so the status-update toast finishes settling before the
-    // sheet slides in — feels less jumpy.
-    setTimeout(() => { open = true; }, 600);
-  }
+function openFor(detail: PromptDetail) {
+  jobId = detail.jobId;
+  profileId = detail.profileId ?? null;
+  jobLabel = detail.jobLabel;
+  wentWell = '';
+  surprised = '';
+  wouldChange = '';
+  busy = false;
+  // 600ms delay so the status-update toast finishes settling before the
+  // sheet slides in — feels less jumpy.
+  setTimeout(() => {
+    open = true;
+  }, 600);
+}
 
-  function onWindowEvent(e: Event) {
-    const detail = (e as CustomEvent<PromptDetail>).detail;
-    if (!detail?.jobId) return;
-    openFor(detail);
-  }
+function onWindowEvent(e: Event) {
+  const detail = (e as CustomEvent<PromptDetail>).detail;
+  if (!detail?.jobId) return;
+  openFor(detail);
+}
 
-  onMount(() => {
-    if (typeof window === 'undefined') return;
-    window.addEventListener(EVENT_NAME, onWindowEvent);
-    return () => window.removeEventListener(EVENT_NAME, onWindowEvent);
-  });
+onMount(() => {
+  if (typeof window === 'undefined') return;
+  window.addEventListener(EVENT_NAME, onWindowEvent);
+  return () => window.removeEventListener(EVENT_NAME, onWindowEvent);
+});
 
-  async function submit() {
-    if (!jobId || busy) return;
-    busy = true;
-    try {
-      const pq = profileId ? '?profile=' + encodeURIComponent(profileId) : '';
-      const r = await api.post<{ ok: boolean; path: string; content: string; error?: string }>(
-        '/api/job/' + encodeURIComponent(jobId) + '/post-rejection' + pq,
-        { wentWell, surprised, wouldChange },
-        { silent: true },
-      );
-      if (!r.ok) throw new Error(r.error ?? 'Capture failed');
-      toast.success('Rejection learning saved', {
-        description: 'Appended to ' + r.path + ' — surfaced in future evaluations + interview prep.',
-        duration: 8_000,
-      });
-      open = false;
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Capture failed', {
-        description: err.message,
-        action: { label: 'Retry', onClick: () => submit() },
-        duration: 10_000,
-      });
-    } finally {
-      busy = false;
-    }
-  }
-
-  function skip() {
+async function submit() {
+  if (!jobId || busy) return;
+  busy = true;
+  try {
+    const pq = profileId ? '?profile=' + encodeURIComponent(profileId) : '';
+    const r = await api.post<{ ok: boolean; path: string; content: string; error?: string }>(
+      '/api/job/' + encodeURIComponent(jobId) + '/post-rejection' + pq,
+      { wentWell, surprised, wouldChange },
+      { silent: true },
+    );
+    if (!r.ok) throw new Error(r.error ?? 'Capture failed');
+    toast.success('Rejection learning saved', {
+      description: 'Appended to ' + r.path + ' — surfaced in future evaluations + interview prep.',
+      duration: 8_000,
+    });
     open = false;
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Capture failed', {
+      description: err.message,
+      action: { label: 'Retry', onClick: () => submit() },
+      duration: 10_000,
+    });
+  } finally {
+    busy = false;
   }
+}
+
+function skip() {
+  open = false;
+}
 </script>
 
 <Sheet.Root bind:open>

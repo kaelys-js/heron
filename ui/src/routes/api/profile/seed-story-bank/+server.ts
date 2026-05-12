@@ -35,9 +35,12 @@ function spawnSeed(profileId: string): Promise<{ stdout: string; stderr: string 
     let stdout = '';
     let stderr = '';
     const prompt = '/' + CLI_NAMESPACE + ' seed-story-bank';
-    try { swapProfileSymlinks(profileId); } catch (e) {
+    try {
+      swapProfileSymlinks(profileId);
+    } catch (e) {
       logEvent('seed-story-bank', 'Symlink swap failed', {
-        level: 'warn', category: 'application',
+        level: 'warn',
+        category: 'application',
         message: e instanceof Error ? e.message : String(e),
       });
     }
@@ -45,8 +48,12 @@ function spawnSeed(profileId: string): Promise<{ stdout: string; stderr: string 
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
@@ -58,7 +65,8 @@ function spawnSeed(profileId: string): Promise<{ stdout: string; stderr: string 
 export const POST = wrap('seed-story-bank', async ({ url }: { url: URL }) => {
   const profileId = resolveProfileId(url);
   logEvent('seed-story-bank', 'Seeding story bank from cv.md', {
-    level: 'info', category: 'application',
+    level: 'info',
+    category: 'application',
   });
 
   // story-bank.md is SHARED (not per-profile) per AGENTS.md, but the spawn
@@ -75,9 +83,13 @@ export const POST = wrap('seed-story-bank', async ({ url }: { url: URL }) => {
     const grew = afterSize > beforeSize;
 
     logEvent('seed-story-bank', 'Story bank seeded', {
-      level: 'success', category: 'application',
-      message: (seeded != null ? seeded + ' stories' : 'seeded') +
-        ' · file ' + (afterSize - beforeSize) + ' bytes larger',
+      level: 'success',
+      category: 'application',
+      message:
+        (seeded != null ? seeded + ' stories' : 'seeded') +
+        ' · file ' +
+        (afterSize - beforeSize) +
+        ' bytes larger',
     });
 
     return {
@@ -90,7 +102,9 @@ export const POST = wrap('seed-story-bank', async ({ url }: { url: URL }) => {
       grew,
     };
   } catch (err) {
-    reportServerError('seed-story-bank', 'Story bank seeding failed', err, { category: 'application' });
+    reportServerError('seed-story-bank', 'Story bank seeding failed', err, {
+      category: 'application',
+    });
     return {
       ok: false,
       error: err instanceof Error ? err.message : String(err),

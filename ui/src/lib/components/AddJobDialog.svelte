@@ -1,188 +1,239 @@
 <script lang="ts">
-  import * as Dialog from '$lib/components/ui/dialog';
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-  import {
-    ChevronDown, ExternalLink, Plus, Check, Sparkles, Globe, Send, ListTodo,
-    AlertCircle, Lightbulb, ArrowRight, Briefcase,
-  } from '@lucide/svelte';
-  import { onMount } from 'svelte';
-  import { api, ApiError } from '$lib/api';
-  import { invalidateAll } from '$app/navigation';
-  import { toast } from 'svelte-sonner';
-  import { cn, withMinDuration } from '$lib/utils';
-  import { globalActions } from '$lib/global-actions.svelte';
-  import { STATUS_ORDER, type Status } from '$lib/types';
-  import CheckMark from './CheckMark.svelte';
-  import { cmd } from '$lib/config/branding';
+import * as Dialog from '$lib/components/ui/dialog';
+import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import {
+  ChevronDown,
+  ExternalLink,
+  Plus,
+  Check,
+  Sparkles,
+  Globe,
+  Send,
+  ListTodo,
+  AlertCircle,
+  Lightbulb,
+  ArrowRight,
+  Briefcase,
+} from '@lucide/svelte';
+import { onMount } from 'svelte';
+import { api, ApiError } from '$lib/api';
+import { invalidateAll } from '$app/navigation';
+import { toast } from 'svelte-sonner';
+import { cn, withMinDuration } from '$lib/utils';
+import { globalActions } from '$lib/global-actions.svelte';
+import { STATUS_ORDER, type Status } from '$lib/types';
+import CheckMark from './CheckMark.svelte';
+import { cmd } from '$lib/config/branding';
 
-  let url = $state('');
-  let company = $state('');
-  let role = $state('');
-  let status = $state<Status>('Scored');
-  let busy = $state(false);
-  // Opt-in: when ticked + URL is on a known portal, fire a per-company scan
-  // alongside the per-URL save. Default off so the dialog stays cheap.
-  let alsoScanCompany = $state(false);
+let url = $state('');
+let company = $state('');
+let role = $state('');
+let status = $state<Status>('Scored');
+let busy = $state(false);
+// Opt-in: when ticked + URL is on a known portal, fire a per-company scan
+// alongside the per-URL save. Default off so the dialog stays cheap.
+let alsoScanCompany = $state(false);
 
-  // Reset on close
-  $effect(() => {
-    if (!globalActions.addJobOpen) {
-      url = '';
-      company = '';
-      role = '';
-      status = 'Scored';
-      busy = false;
-      alsoScanCompany = false;
-    }
-  });
-
-  // Press "N" anywhere to open
-  onMount(() => {
-    if (typeof window === 'undefined') return;
-    function onKey(e: KeyboardEvent) {
-      const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-      if (e.key === 'n' || e.key === 'N') {
-        e.preventDefault();
-        globalActions.openAddJob();
-      }
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  });
-
-  let canSubmit = $derived(url.trim().length > 0 && !busy);
-
-  // ---- URL auto-detection ----
-  type Detected = { source: string; company?: string };
-  let detected = $derived.by<Detected | null>(() => {
-    const u = url.trim();
-    if (!u) return null;
-    try {
-      const parsed = new URL(u);
-      const host = parsed.hostname.replace(/^www\./, '');
-      const pathSegs = parsed.pathname.split('/').filter(Boolean);
-
-      if (host.includes('greenhouse.io')) {
-        return { source: 'Greenhouse', company: titleCase(pathSegs[0]) };
-      }
-      if (host.includes('ashbyhq.com')) {
-        return { source: 'Ashby', company: titleCase(pathSegs[0]) };
-      }
-      if (host.includes('lever.co')) {
-        return { source: 'Lever', company: titleCase(pathSegs[0]) };
-      }
-      if (host.includes('linkedin.com')) {
-        return { source: 'LinkedIn (Easy Apply available)' };
-      }
-      if (host.includes('indeed.com')) {
-        return { source: 'Indeed' };
-      }
-      if (host.includes('glassdoor.com')) {
-        return { source: 'Glassdoor' };
-      }
-      if (host.includes('remoteok.com')) {
-        return { source: 'RemoteOK' };
-      }
-      if (host.includes('workatastartup') || host.includes('ycombinator')) {
-        return { source: 'YC Work at a Startup' };
-      }
-      if (host.includes('weworkremotely')) {
-        return { source: 'We Work Remotely' };
-      }
-      // Fallback: use the second-level domain as the source
-      const fallback = host.split('.').slice(-2, -1)[0];
-      return { source: fallback ? titleCase(fallback) : host };
-    } catch {
-      return null;
-    }
-  });
-
-  function titleCase(s?: string): string {
-    if (!s) return '';
-    return s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+// Reset on close
+$effect(() => {
+  if (!globalActions.addJobOpen) {
+    url = '';
+    company = '';
+    role = '';
+    status = 'Scored';
+    busy = false;
+    alsoScanCompany = false;
   }
+});
 
-  // Auto-fill company from detection on URL paste/change
-  $effect(() => {
-    const d = detected;
-    if (d?.company && !company) company = d.company;
-  });
+// Press "N" anywhere to open
+onMount(() => {
+  if (typeof window === 'undefined') return;
+  function onKey(e: KeyboardEvent) {
+    const t = e.target as HTMLElement | null;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    if (e.key === 'n' || e.key === 'N') {
+      e.preventDefault();
+      globalActions.openAddJob();
+    }
+  }
+  window.addEventListener('keydown', onKey);
+  return () => window.removeEventListener('keydown', onKey);
+});
 
-  async function submit() {
-    if (!canSubmit) return;
-    busy = true;
-    try {
-      const trimmedUrl = url.trim();
-      const trimmedCompany = company.trim();
-      const trimmedRole = role.trim();
-      await withMinDuration(
-        api.post('/api/status', {
+let canSubmit = $derived(url.trim().length > 0 && !busy);
+
+// ---- URL auto-detection ----
+type Detected = { source: string; company?: string };
+let detected = $derived.by<Detected | null>(() => {
+  const u = url.trim();
+  if (!u) return null;
+  try {
+    const parsed = new URL(u);
+    const host = parsed.hostname.replace(/^www\./, '');
+    const pathSegs = parsed.pathname.split('/').filter(Boolean);
+
+    if (host.includes('greenhouse.io')) {
+      return { source: 'Greenhouse', company: titleCase(pathSegs[0]) };
+    }
+    if (host.includes('ashbyhq.com')) {
+      return { source: 'Ashby', company: titleCase(pathSegs[0]) };
+    }
+    if (host.includes('lever.co')) {
+      return { source: 'Lever', company: titleCase(pathSegs[0]) };
+    }
+    if (host.includes('linkedin.com')) {
+      return { source: 'LinkedIn (Easy Apply available)' };
+    }
+    if (host.includes('indeed.com')) {
+      return { source: 'Indeed' };
+    }
+    if (host.includes('glassdoor.com')) {
+      return { source: 'Glassdoor' };
+    }
+    if (host.includes('remoteok.com')) {
+      return { source: 'RemoteOK' };
+    }
+    if (host.includes('workatastartup') || host.includes('ycombinator')) {
+      return { source: 'YC Work at a Startup' };
+    }
+    if (host.includes('weworkremotely')) {
+      return { source: 'We Work Remotely' };
+    }
+    // Fallback: use the second-level domain as the source
+    const fallback = host.split('.').slice(-2, -1)[0];
+    return { source: fallback ? titleCase(fallback) : host };
+  } catch {
+    return null;
+  }
+});
+
+function titleCase(s?: string): string {
+  if (!s) return '';
+  return s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// Auto-fill company from detection on URL paste/change
+$effect(() => {
+  const d = detected;
+  if (d?.company && !company) company = d.company;
+});
+
+async function submit() {
+  if (!canSubmit) return;
+  busy = true;
+  try {
+    const trimmedUrl = url.trim();
+    const trimmedCompany = company.trim();
+    const trimmedRole = role.trim();
+    await withMinDuration(
+      api.post(
+        '/api/status',
+        {
           url: trimmedUrl,
           newStatus: status,
           notes: trimmedCompany && trimmedRole ? trimmedCompany + ' · ' + trimmedRole : '',
-        }, { silent: true }),
-        500,
-      );
-      toast.success('Added to ' + status, {
-        description: trimmedCompany || trimmedUrl,
-      });
+        },
+        { silent: true },
+      ),
+      500,
+    );
+    toast.success('Added to ' + status, {
+      description: trimmedCompany || trimmedUrl,
+    });
 
-      // If the user opted in AND we have a company name to target, fire a
-      // per-company portal scan so the rest of that company's open roles
-      // land in the pipeline too. Fire-and-forget — the activity feed is
-      // the source of truth for completion.
-      if (alsoScanCompany && trimmedCompany) {
-        api.post('/api/scan/company', { company: trimmedCompany }, { silent: true })
-          .then(() => {
-            toast.info('Scanning all roles at ' + trimmedCompany, {
-              description: 'Watch the bell — auto-triage runs after.',
-              duration: 6_000,
-            });
-          })
-          .catch((e: unknown) => {
-            const err = e as ApiError;
-            toast.error('Per-company scan failed to start', {
-              description: err.message,
-            });
+    // If the user opted in AND we have a company name to target, fire a
+    // per-company portal scan so the rest of that company's open roles
+    // land in the pipeline too. Fire-and-forget — the activity feed is
+    // the source of truth for completion.
+    if (alsoScanCompany && trimmedCompany) {
+      api
+        .post('/api/scan/company', { company: trimmedCompany }, { silent: true })
+        .then(() => {
+          toast.info('Scanning all roles at ' + trimmedCompany, {
+            description: 'Watch the bell — auto-triage runs after.',
+            duration: 6_000,
           });
-      }
-
-      globalActions.closeAddJob();
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Failed to add', { description: err.message });
-    } finally {
-      busy = false;
+        })
+        .catch((e: unknown) => {
+          const err = e as ApiError;
+          toast.error('Per-company scan failed to start', {
+            description: err.message,
+          });
+        });
     }
+
+    globalActions.closeAddJob();
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Failed to add', { description: err.message });
+  } finally {
+    busy = false;
   }
+}
 
-  // Show the "also scan" opt-in only when we recognise the URL's portal
-  // (Greenhouse / Ashby / Lever) AND the company field is populated.
-  let canOfferCompanyScan = $derived.by(() => {
-    const d = detected;
-    if (!d) return false;
-    const portal = d.source.toLowerCase();
-    if (!['greenhouse', 'ashby', 'lever'].includes(portal)) return false;
-    return company.trim().length > 0;
-  });
+// Show the "also scan" opt-in only when we recognise the URL's portal
+// (Greenhouse / Ashby / Lever) AND the company field is populated.
+let canOfferCompanyScan = $derived.by(() => {
+  const d = detected;
+  if (!d) return false;
+  const portal = d.source.toLowerCase();
+  if (!['greenhouse', 'ashby', 'lever'].includes(portal)) return false;
+  return company.trim().length > 0;
+});
 
-  // ---- Status definitions for the visual picker ----
-  type StatusDef = { value: Status; label: string; desc: string; icon: any; tint: string };
-  const STATUS_DEFS: StatusDef[] = [
-    { value: 'New',       label: 'New',       desc: 'Just discovered — no score yet',                 icon: Sparkles, tint: 'text-zinc-400' },
-    { value: 'Scored',    label: 'Scored',    desc: 'Default — review and promote to Ready or Apply', icon: Globe,    tint: 'text-cyan-400' },
-    { value: 'Ready',     label: 'Ready',     desc: 'Eval done · CV PDF ready · go apply',            icon: ListTodo, tint: 'text-emerald-400' },
-    { value: 'Applied',   label: 'Applied',   desc: 'You already submitted — track follow-ups',       icon: Send,     tint: 'text-violet-400' },
-    { value: 'Interview', label: 'Interview', desc: 'In active interview process',                    icon: Briefcase, tint: 'text-orange-400' },
-    { value: 'Closed',    label: 'Closed',    desc: 'Skip — not pursuing',                            icon: AlertCircle, tint: 'text-zinc-500' },
-  ];
-  let activeStatusDef = $derived(STATUS_DEFS.find((s) => s.value === status) ?? STATUS_DEFS[1]);
+// ---- Status definitions for the visual picker ----
+type StatusDef = { value: Status; label: string; desc: string; icon: any; tint: string };
+const STATUS_DEFS: StatusDef[] = [
+  {
+    value: 'New',
+    label: 'New',
+    desc: 'Just discovered — no score yet',
+    icon: Sparkles,
+    tint: 'text-zinc-400',
+  },
+  {
+    value: 'Scored',
+    label: 'Scored',
+    desc: 'Default — review and promote to Ready or Apply',
+    icon: Globe,
+    tint: 'text-cyan-400',
+  },
+  {
+    value: 'Ready',
+    label: 'Ready',
+    desc: 'Eval done · CV PDF ready · go apply',
+    icon: ListTodo,
+    tint: 'text-emerald-400',
+  },
+  {
+    value: 'Applied',
+    label: 'Applied',
+    desc: 'You already submitted — track follow-ups',
+    icon: Send,
+    tint: 'text-violet-400',
+  },
+  {
+    value: 'Interview',
+    label: 'Interview',
+    desc: 'In active interview process',
+    icon: Briefcase,
+    tint: 'text-orange-400',
+  },
+  {
+    value: 'Closed',
+    label: 'Closed',
+    desc: 'Skip — not pursuing',
+    icon: AlertCircle,
+    tint: 'text-zinc-500',
+  },
+];
+let activeStatusDef = $derived(STATUS_DEFS.find((s) => s.value === status) ?? STATUS_DEFS[1]);
 </script>
 
 <Dialog.Root open={globalActions.addJobOpen} onOpenChange={(v: boolean) => (globalActions.addJobOpen = v)}>

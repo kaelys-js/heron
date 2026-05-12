@@ -46,7 +46,12 @@ for (const line of raw.split('\n')) {
   if (m) env[m[1]] = m[2].replace(/^['"]|['"]$/g, '');
 }
 ok(`loaded ${Object.keys(env).length} env vars`);
-for (const required of ['APPLE_ID', 'APPLE_TEAM_ID', 'APP_STORE_CONNECT_KEY_ID', 'APP_STORE_CONNECT_ISSUER_ID']) {
+for (const required of [
+  'APPLE_ID',
+  'APPLE_TEAM_ID',
+  'APP_STORE_CONNECT_KEY_ID',
+  'APP_STORE_CONNECT_ISSUER_ID',
+]) {
   if (!env[required]) {
     console.error(`Missing required env var: ${required}. Re-run pnpm setup:secrets.`);
     process.exit(1);

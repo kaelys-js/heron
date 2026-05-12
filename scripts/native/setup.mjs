@@ -26,8 +26,22 @@
  * re-prompts for values that are missing or stale.
  */
 import {
-  step, run, capture, which, ok, warn, fail, info, ask, confirm,
-  readState, writeState, openUrl, c, ROOT, UI,
+  step,
+  run,
+  capture,
+  which,
+  ok,
+  warn,
+  fail,
+  info,
+  ask,
+  confirm,
+  readState,
+  writeState,
+  openUrl,
+  c,
+  ROOT,
+  UI,
 } from './_lib.mjs';
 import { existsSync, writeFileSync, chmodSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -41,13 +55,19 @@ const state = readState();
 const envFile = join(process.env.HOME || '', '.career-ops', 'native-env');
 
 // ───────────────────────────────────────────────────────────────────
-step(-1, 'Activating git hooks (auto-applies brand on branding/ changes)');
+step(-1, 'Activating git hooks via lefthook');
 try {
   const { execSync } = await import('node:child_process');
-  execSync('git config core.hooksPath .githooks', { stdio: 'pipe', cwd: ROOT });
-  ok('git hooksPath → .githooks (pre-commit auto-applies brand)');
+  if (!which('lefthook')) {
+    info('Installing lefthook via brew…');
+    execSync('brew install lefthook', { stdio: 'inherit' });
+  }
+  execSync('lefthook install', { stdio: 'pipe', cwd: ROOT });
+  ok(
+    'lefthook installed → pre-commit (apply-brand + biome format + secret guard) + pre-push (svelte-check + verify-capacitor + verify-pipeline)',
+  );
 } catch (e) {
-  warn(`git hooks activation skipped: ${e.message}`);
+  warn(`lefthook activation skipped: ${e.message}`);
 }
 
 // ───────────────────────────────────────────────────────────────────
@@ -63,8 +83,10 @@ try {
 // ───────────────────────────────────────────────────────────────────
 step(1, 'Tooling check');
 const toolStatus = {
+  mise: which('mise'),
   gh: which('gh'),
   brew: which('brew'),
+  lefthook: which('lefthook'),
   xcodebuild: which('xcodebuild'),
   pod: which('pod'),
   bundle: which('bundle'),
@@ -86,6 +108,29 @@ if (!toolStatus.xcodebuild) {
   process.exit(1);
 }
 
+if (!toolStatus.mise) {
+  if (await confirm('Install mise now? (auto-manages Node/pnpm versions per .mise.toml)')) {
+    run('brew', ['install', 'mise']);
+    info('Add this to your shell config (~/.zshrc or ~/.bashrc):');
+    info('  eval "$(mise activate zsh)"   # zsh');
+    info('  eval "$(mise activate bash)"  # bash');
+    info('Then restart your shell and re-run this wizard.');
+  }
+} else {
+  // Auto-trust the repo so `mise current` works without a manual prompt.
+  run('mise', ['trust', ROOT], { allowFail: true });
+  run('mise', ['install'], { cwd: ROOT, allowFail: true });
+  ok('mise: versions installed from .mise.toml');
+}
+if (!toolStatus.lefthook) {
+  if (await confirm('Install lefthook now? (git hooks manager)')) {
+    run('brew', ['install', 'lefthook']);
+  }
+}
+if (toolStatus.lefthook || which('lefthook')) {
+  run('lefthook', ['install'], { cwd: ROOT, allowFail: true });
+  ok('lefthook: pre-commit + pre-push hooks installed');
+}
 if (!toolStatus.gh) {
   if (await confirm('Install gh CLI now?')) {
     run('brew', ['install', 'gh']);
@@ -119,7 +164,9 @@ if (!ghOk) {
 }
 
 // Verify repo + scopes
-const repo = capture('gh', ['repo', 'view', '--json', 'nameWithOwner', '-q', '.nameWithOwner'], { allowFail: true });
+const repo = capture('gh', ['repo', 'view', '--json', 'nameWithOwner', '-q', '.nameWithOwner'], {
+  allowFail: true,
+});
 if (!repo) {
   fail('Not in a GitHub-tracked repo OR gh repo view failed.');
   info('Run this from the career-ops repo root.');
@@ -132,29 +179,42 @@ step(3, 'Apple Developer identifiers');
 state.apple = state.apple || {};
 
 state.apple.APPLE_ID = await ask('Apple ID email', { default: state.apple.APPLE_ID });
-state.apple.APPLE_TEAM_ID = await ask('Apple Team ID (10 chars, from developer.apple.com → Membership)', { default: state.apple.APPLE_TEAM_ID });
+state.apple.APPLE_TEAM_ID = await ask(
+  'Apple Team ID (10 chars, from developer.apple.com → Membership)',
+  { default: state.apple.APPLE_TEAM_ID },
+);
 writeState(state);
 
 // ───────────────────────────────────────────────────────────────────
 step(4, 'App-specific password');
-if (state.apple.APPLE_APP_SPECIFIC_PASSWORD && await confirm('  Re-use stored value?', true)) {
+if (state.apple.APPLE_APP_SPECIFIC_PASSWORD && (await confirm('  Re-use stored value?', true))) {
   ok('using stored value');
 } else {
-  info('Generate one at https://appleid.apple.com → "Sign-In and Security" → "App-Specific Passwords".');
+  info(
+    'Generate one at https://appleid.apple.com → "Sign-In and Security" → "App-Specific Passwords".',
+  );
   info('Name it: "career-ops CI"');
   if (await confirm('  Open the page now?', true)) {
     openUrl('https://appleid.apple.com/account/manage');
   }
-  state.apple.APPLE_APP_SPECIFIC_PASSWORD = await ask('Paste the app-specific password', { hidden: true });
+  state.apple.APPLE_APP_SPECIFIC_PASSWORD = await ask('Paste the app-specific password', {
+    hidden: true,
+  });
   writeState(state);
 }
 
 // ───────────────────────────────────────────────────────────────────
 step(5, 'App Store Connect API key');
-if (state.apple.APP_STORE_CONNECT_KEY_ID && state.apple.APP_STORE_CONNECT_KEY && await confirm('  Re-use stored API key?', true)) {
+if (
+  state.apple.APP_STORE_CONNECT_KEY_ID &&
+  state.apple.APP_STORE_CONNECT_KEY &&
+  (await confirm('  Re-use stored API key?', true))
+) {
   ok('using stored API key');
 } else {
-  info('Create a key at https://appstoreconnect.apple.com → "Users and Access" → "Integrations" → "App Store Connect API" → "+"');
+  info(
+    'Create a key at https://appstoreconnect.apple.com → "Users and Access" → "Integrations" → "App Store Connect API" → "+"',
+  );
   info('Access: "App Manager". Name: "career-ops CI"');
   info('After clicking Generate, download the .p8 file IMMEDIATELY — Apple shows it only once.');
   if (await confirm('  Open App Store Connect?', true)) {
@@ -162,7 +222,13 @@ if (state.apple.APP_STORE_CONNECT_KEY_ID && state.apple.APP_STORE_CONNECT_KEY &&
   }
   state.apple.APP_STORE_CONNECT_KEY_ID = await ask('Key ID (10 chars)');
   state.apple.APP_STORE_CONNECT_ISSUER_ID = await ask('Issuer ID (UUID)');
-  const p8Path = await ask('Path to the downloaded .p8 file', { default: join(process.env.HOME || '', 'Downloads', `AuthKey_${state.apple.APP_STORE_CONNECT_KEY_ID}.p8`) });
+  const p8Path = await ask('Path to the downloaded .p8 file', {
+    default: join(
+      process.env.HOME || '',
+      'Downloads',
+      `AuthKey_${state.apple.APP_STORE_CONNECT_KEY_ID}.p8`,
+    ),
+  });
   if (!existsSync(p8Path)) {
     fail(`File not found: ${p8Path}`);
     process.exit(1);
@@ -174,7 +240,7 @@ if (state.apple.APP_STORE_CONNECT_KEY_ID && state.apple.APP_STORE_CONNECT_KEY &&
 
 // ───────────────────────────────────────────────────────────────────
 step(6, 'Mac code-signing certificate (.p12 export)');
-if (state.apple.MAC_CERTIFICATE && await confirm('  Re-use stored Mac cert?', true)) {
+if (state.apple.MAC_CERTIFICATE && (await confirm('  Re-use stored Mac cert?', true))) {
   ok('using stored cert');
 } else {
   info('Listing code-signing identities from your login keychain...');
@@ -186,7 +252,9 @@ if (state.apple.MAC_CERTIFICATE && await confirm('  Re-use stored Mac cert?', tr
     process.exit(1);
   }
   console.log(identities);
-  const developerIdLines = identities.split('\n').filter((l) => l.includes('Developer ID Application'));
+  const developerIdLines = identities
+    .split('\n')
+    .filter((l) => l.includes('Developer ID Application'));
   if (developerIdLines.length === 0) {
     fail('No "Developer ID Application" cert found in your keychain.');
     info('1. Go to https://developer.apple.com/account/resources/certificates/list');
@@ -216,17 +284,24 @@ if (state.apple.MAC_CERTIFICATE && await confirm('  Re-use stored Mac cert?', tr
   try {
     execSync(
       `security export -k login.keychain-db -t identities -f pkcs12 -P "${certPwd}" -o "${certP12}"`,
-      { stdio: 'inherit' }
+      { stdio: 'inherit' },
     );
     ok(`.p12 exported`);
   } catch {
     fail('export failed — see error above');
-    info('Fall back: open Keychain Access → My Certificates → right-click the Developer ID Application cert → Export → save as .p12 with the same password.');
+    info(
+      'Fall back: open Keychain Access → My Certificates → right-click the Developer ID Application cert → Export → save as .p12 with the same password.',
+    );
     const manualP12 = await ask('Path to manually-exported .p12');
-    if (!existsSync(manualP12)) { fail('not found'); process.exit(1); }
+    if (!existsSync(manualP12)) {
+      fail('not found');
+      process.exit(1);
+    }
     execSync(`cp "${manualP12}" "${certP12}"`);
   } finally {
-    try { execSync(`rm -f "${tmpPwdFile}"`); } catch {}
+    try {
+      execSync(`rm -f "${tmpPwdFile}"`);
+    } catch {}
   }
 
   state.apple.MAC_CERTIFICATE = capture('base64', ['-i', certP12]);
@@ -267,7 +342,10 @@ const secrets = {
   MAC_CERTIFICATE_PASSWORD: state.apple.MAC_CERTIFICATE_PASSWORD,
 };
 for (const [name, value] of Object.entries(secrets)) {
-  if (!value) { warn(`skipping ${name} — empty`); continue; }
+  if (!value) {
+    warn(`skipping ${name} — empty`);
+    continue;
+  }
   // `gh secret set NAME --body "value" --repo repo` — pipe via stdin for newlines.
   const proc = execSync(`gh secret set ${name} --repo ${repo}`, {
     input: value,
@@ -284,16 +362,25 @@ if (await confirm('  Enforce squash-merge-only on this repo? (recommended)', tru
   try {
     // Disable merge commits and rebase merges, enable squash only.
     capture('gh', [
-      'api', '-X', 'PATCH', `/repos/${repo}`,
-      '-f', 'allow_merge_commit=false',
-      '-f', 'allow_squash_merge=true',
-      '-f', 'allow_rebase_merge=false',
-      '-f', 'delete_branch_on_merge=true',
+      'api',
+      '-X',
+      'PATCH',
+      `/repos/${repo}`,
+      '-f',
+      'allow_merge_commit=false',
+      '-f',
+      'allow_squash_merge=true',
+      '-f',
+      'allow_rebase_merge=false',
+      '-f',
+      'delete_branch_on_merge=true',
     ]);
     ok('squash-merge enforced + auto-delete branch on merge');
   } catch (e) {
     warn(`couldn't update repo settings: ${e.message}`);
-    warn(`run manually: gh api -X PATCH /repos/${repo} -f allow_merge_commit=false -f allow_squash_merge=true -f allow_rebase_merge=false`);
+    warn(
+      `run manually: gh api -X PATCH /repos/${repo} -f allow_merge_commit=false -f allow_squash_merge=true -f allow_rebase_merge=false`,
+    );
   }
 }
 
@@ -309,7 +396,9 @@ if (existsSync(xcodegenScript)) {
     ok('Xcode targets added');
   }
 } else {
-  warn('xcodegen script not found — Widget/LiveActivity/ShareExt targets must be added manually in Xcode.');
+  warn(
+    'xcodegen script not found — Widget/LiveActivity/ShareExt targets must be added manually in Xcode.',
+  );
 }
 
 // ───────────────────────────────────────────────────────────────────

@@ -45,7 +45,9 @@ class ThemeStore {
     // Read persisted mode (the inline app.html script already applied the
     // class; we just read the same value into reactive state here).
     let stored: string | null = null;
-    try { stored = localStorage.getItem(STORAGE_KEY); } catch {}
+    try {
+      stored = localStorage.getItem(STORAGE_KEY);
+    } catch {}
     this.mode = stored === 'light' || stored === 'dark' ? stored : 'system';
     this.mql = window.matchMedia('(prefers-color-scheme: dark)');
     this.mqlHandler = () => {
@@ -68,7 +70,9 @@ class ThemeStore {
   set(mode: ThemeMode) {
     this.mode = mode;
     if (browser) {
-      try { localStorage.setItem(STORAGE_KEY, mode); } catch {}
+      try {
+        localStorage.setItem(STORAGE_KEY, mode);
+      } catch {}
     }
     this.apply(this.computeResolved());
   }

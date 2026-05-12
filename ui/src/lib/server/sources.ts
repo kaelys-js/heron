@@ -69,55 +69,62 @@ export const KNOWN_SOURCES: KnownSource[] = [
   {
     id: 'linkedin-auth',
     label: 'LinkedIn (authenticated)',
-    description: 'Headless Playwright using your saved LinkedIn session. Catches personalized recommendations + Easy Apply listings JobSpy can\'t see.',
+    description:
+      "Headless Playwright using your saved LinkedIn session. Catches personalized recommendations + Easy Apply listings JobSpy can't see.",
     authKind: 'playwright',
     required: false,
   },
   {
     id: 'indeed-auth',
     label: 'Indeed (authenticated)',
-    description: 'Same pattern as LinkedIn — your logged-in session, scraped headlessly. Captures captcha-walled results.',
+    description:
+      'Same pattern as LinkedIn — your logged-in session, scraped headlessly. Captures captcha-walled results.',
     authKind: 'playwright',
     required: false,
   },
   {
     id: 'gmail-imap',
     label: 'Gmail (IMAP)',
-    description: 'Real-time ingestion of LinkedIn / Indeed / HN job-alert emails. App-password auth, polled every 30 min.',
+    description:
+      'Real-time ingestion of LinkedIn / Indeed / HN job-alert emails. App-password auth, polled every 30 min.',
     authKind: 'imap',
     required: false,
   },
   {
     id: 'anthropic',
     label: 'Anthropic API',
-    description: 'Powers deep evaluations, agent chat, mock interviews, negotiation drafts. Required.',
+    description:
+      'Powers deep evaluations, agent chat, mock interviews, negotiation drafts. Required.',
     authKind: 'env-key',
     required: true,
   },
   {
     id: 'gemini',
     label: 'Gemini API',
-    description: 'Cheap first-pass scoring (free tier covers ~1M tokens/day). Optional but recommended.',
+    description:
+      'Cheap first-pass scoring (free tier covers ~1M tokens/day). Optional but recommended.',
     authKind: 'env-key',
     required: false,
   },
   {
     id: 'adzuna',
     label: 'Adzuna',
-    description: 'Optional aggregator. Adds Adzuna to JobSpy\'s sources when API key is set.',
+    description: "Optional aggregator. Adds Adzuna to JobSpy's sources when API key is set.",
     authKind: 'env-key',
     required: false,
   },
   {
     id: 'scan-portals',
-    label: 'ATS direct (Greenhouse / Ashby / Lever / Workday / SmartRecruiters / Workable / Personio / Recruitee / Teamtailor)',
+    label:
+      'ATS direct (Greenhouse / Ashby / Lever / Workday / SmartRecruiters / Workable / Personio / Recruitee / Teamtailor)',
     description: 'Direct API hits to companies in your portals.yml. Always on.',
     authKind: 'always-on',
     required: false,
   },
   {
     id: 'scan-broad',
-    label: 'JobSpy aggregators (LinkedIn / Indeed / Glassdoor / ZipRecruiter / Google Jobs / RemoteOK / WWR / HN / YC)',
+    label:
+      'JobSpy aggregators (LinkedIn / Indeed / Glassdoor / ZipRecruiter / Google Jobs / RemoteOK / WWR / HN / YC)',
     description: 'Broad scrape via JobSpy + free aggregator APIs. Always on.',
     authKind: 'always-on',
     required: false,
@@ -132,7 +139,9 @@ export const KNOWN_SOURCES: KnownSource[] = [
 ];
 
 function ensureDir() {
-  try { fs.mkdirSync(path.dirname(SOURCES_PATH), { recursive: true }); } catch {}
+  try {
+    fs.mkdirSync(path.dirname(SOURCES_PATH), { recursive: true });
+  } catch {}
 }
 
 /** Read the full state map. Returns {} on missing/parse-error so callers
@@ -165,7 +174,7 @@ export function updateSource(id: string, patch: Partial<SourceState>): SourceSta
   // explicit named keys *after* a spread that re-supplies them, so we put
   // defaults via the prev/patch chain and assert the result.
   const merged = {
-    ...{ connected: false, consecutiveFailures: 0 } as SourceState,
+    ...({ connected: false, consecutiveFailures: 0 } as SourceState),
     ...all[id],
     ...patch,
     metadata: { ...(all[id]?.metadata ?? {}), ...(patch.metadata ?? {}) },

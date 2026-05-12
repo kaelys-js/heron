@@ -283,6 +283,47 @@ Default modes are in `modes/` (English). Additional language-specific modes are 
 - **Dependabot** monitors npm, Go modules, and GitHub Actions for security updates
 - **Contributing process**: issue first → discussion → PR with linked issue → CI passes → maintainer review → merge
 
+### Tooling stack (mise + lefthook + biome + turborepo + pnpm)
+
+| Tool | Role | Config |
+|---|---|---|
+| **mise** | Auto-manages Node + pnpm + Ruby versions per directory | `.mise.toml` |
+| **pnpm** | Package manager + workspace orchestration | `package.json::packageManager`, `pnpm-workspace.yaml` |
+| **turbo** | Task graph + cache for `build` / `check` / `brand` across workspaces | `turbo.json` |
+| **biome** | Format-only (no linting — svelte-check covers that) | `biome.json` |
+| **lefthook** | Git hooks manager (pre-commit + pre-push) | `lefthook.yml` |
+
+**Hooks (lefthook):**
+
+- `pre-commit` (parallel):
+  - `apply-brand` — if any `branding/*` file is staged, re-runs apply-brand and re-stages all propagated files
+  - `biome-format` — formats staged `.ts/.tsx/.js/.mjs/.svelte/.json` in place
+  - `no-secrets` — regex-blocks Anthropic keys / GitHub PATs / AWS keys / private keys
+- `pre-push` (sequential):
+  - `svelte-check` — TypeScript + Svelte type-check
+  - `verify-capacitor` — brand + native consistency
+  - `verify-pipeline` — tracker hygiene
+
+Bypass with `--no-verify` if you must (don't).
+
+**Activation:**
+
+- `mise install` — applies `.mise.toml` (one-time per machine after `mise activate` is in your shell)
+- `pnpm install` — runs `lefthook install` via the `prepare` script
+- Setup wizard (`pnpm setup:native`) does both automatically
+
+**Daily commands:**
+
+| | |
+|---|---|
+| `pnpm dev` | turbo runs `vite dev` in `ui/` (auto-applies brand at startup via the vite plugin) |
+| `pnpm build` | turbo runs every workspace's build with task-graph parallelism + caching |
+| `pnpm format` | `biome format --write .` over the repo |
+| `pnpm format:check` | check-only, used by CI |
+| `pnpm check` | turbo runs `svelte-check` in all workspaces |
+
+CI uses `jdx/mise-action@v2` so the same versions install in GitHub runners as on your local machine.
+
 ### Branding — single source of truth
 
 `branding/brand.json` + `branding/logo.svg` are the **only** files you edit when rebranding (app name, bundle ID, URL scheme, colors, copyright, repo URL, permission descriptions, extension bundle suffixes). Running `pnpm brand:apply` propagates these into every consumer:

@@ -38,11 +38,12 @@ export async function load({ params, url }: { params: { id: string }; url: URL }
   //   2. embedded suffix on the id (from loadAllJobs('all'))
   //   3. active profile
   const queryProfile = url.searchParams.get('profile') ?? undefined;
-  const profileId = (queryProfile && getProfile(queryProfile))
-    ? queryProfile
-    : (profileHint && getProfile(profileHint))
-      ? profileHint
-      : getActiveProfileId();
+  const profileId =
+    queryProfile && getProfile(queryProfile)
+      ? queryProfile
+      : profileHint && getProfile(profileHint)
+        ? profileHint
+        : getActiveProfileId();
 
   // Single-profile lookup: load that profile's jobs and find by raw urlId.
   let jobs = loadAllJobs(profileId);

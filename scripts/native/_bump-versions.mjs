@@ -21,10 +21,7 @@ if (!/^\d+\.\d+\.\d+(?:-[\w.]+)?(?:\+[\w.]+)?$/.test(next || '')) {
   process.exit(1);
 }
 
-const FILES = [
-  join(ROOT, 'package.json'),
-  join(ROOT, 'ui', 'electron', 'package.json'),
-];
+const FILES = [join(ROOT, 'package.json'), join(ROOT, 'ui', 'electron', 'package.json')];
 
 for (const f of FILES) {
   const json = JSON.parse(readFileSync(f, 'utf8'));

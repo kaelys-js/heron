@@ -1,7 +1,13 @@
 import { loadAllJobs, groupByStatus } from '$lib/server/parsers';
 import { parseFilterFromUrl } from '$lib/server/projects';
 import { getActiveProfileId } from '$lib/server/profiles';
-import { STATUS_ORDER, DEFAULT_FILTER, type TabFilter, type Status, type FilterState } from '$lib/types';
+import {
+  STATUS_ORDER,
+  DEFAULT_FILTER,
+  type TabFilter,
+  type Status,
+  type FilterState,
+} from '$lib/types';
 
 const PRESETS = new Set<TabFilter>(['all', 'ready', 'applied']);
 

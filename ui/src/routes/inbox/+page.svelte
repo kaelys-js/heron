@@ -1,220 +1,252 @@
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Button } from '$lib/components/ui/button';
-  import { Badge } from '$lib/components/ui/badge';
-  import JobCard from '$lib/components/JobCard.svelte';
-  import Sparkline from '$lib/components/charts/Sparkline.svelte';
-  import EmptyState from '$lib/components/EmptyState.svelte';
-  import BulkActions from '$lib/components/BulkActions.svelte';
-  import {
-    Inbox as InboxIcon, Sparkles, Send, Search, Plus, ArrowRight, RefreshCw,
-    AlertCircle, AlertTriangle, Info, CheckCircle2, Clock, Zap, TrendingUp, TrendingDown,
-    Flame, Activity as ActivityIcon, Briefcase, Target, ListTodo, FileText,
-    KanbanSquare, ChevronRight, Globe, Bell,
-  } from '@lucide/svelte';
-  import { goto, invalidateAll } from '$app/navigation';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import { formatRelativeTime, cn, withMinDuration } from '$lib/utils';
-  import { globalActions } from '$lib/global-actions.svelte';
-  import type { ActivityEvent, EventLevel, Job, Status } from '$lib/types';
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import JobCard from '$lib/components/JobCard.svelte';
+import Sparkline from '$lib/components/charts/Sparkline.svelte';
+import EmptyState from '$lib/components/EmptyState.svelte';
+import BulkActions from '$lib/components/BulkActions.svelte';
+import {
+  Inbox as InboxIcon,
+  Sparkles,
+  Send,
+  Search,
+  Plus,
+  ArrowRight,
+  RefreshCw,
+  AlertCircle,
+  AlertTriangle,
+  Info,
+  CheckCircle2,
+  Clock,
+  Zap,
+  TrendingUp,
+  TrendingDown,
+  Flame,
+  Activity as ActivityIcon,
+  Briefcase,
+  Target,
+  ListTodo,
+  FileText,
+  KanbanSquare,
+  ChevronRight,
+  Globe,
+  Bell,
+} from '@lucide/svelte';
+import { goto, invalidateAll } from '$app/navigation';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import { formatRelativeTime, cn, withMinDuration } from '$lib/utils';
+import { globalActions } from '$lib/global-actions.svelte';
+import type { ActivityEvent, EventLevel, Job, Status } from '$lib/types';
 
-  type InboxAlert = {
-    id: string;
-    level: 'error' | 'warning' | 'info';
-    title: string;
-    message?: string;
-    actionLabel?: string;
-    actionUrl?: string;
-    actionTask?: 'scan' | 'gemini' | 'apply-linkedin';
-    actionPostUrl?: string;
+type InboxAlert = {
+  id: string;
+  level: 'error' | 'warning' | 'info';
+  title: string;
+  message?: string;
+  actionLabel?: string;
+  actionUrl?: string;
+  actionTask?: 'scan' | 'gemini' | 'apply-linkedin';
+  actionPostUrl?: string;
+};
+
+let {
+  data,
+}: {
+  data: {
+    profileId: string;
+    firstName: string;
+    nowISO: string;
+    upNext: Job[];
+    upNextTotal: number;
+    ready: Job[];
+    readyTotal: number;
+    inFlight: Job[];
+    inFlightTotal: number;
+    followUps: Job[];
+    followUpsTotal: number;
+    counts: { totalJobs: number; unscored: number; totalApps: number; activeCount: number };
+    velocity: { day: string; count: number }[];
+    last7: number;
+    prev7: number;
+    velocityDeltaPct: number | null;
+    topSources: { name: string; count: number }[];
+    activity: ActivityEvent[];
+    recentErrorsCount: number;
+    pipelineDaysAgo: number | null;
+    alerts: InboxAlert[];
+    applyIssues: Array<{
+      id: string;
+      severity: 'info' | 'warn' | 'error';
+      summary: string;
+      detail?: string;
+      fix?: { label: string; href: string };
+      jobId: string;
+      source: string;
+      ts: number;
+    }>;
+    inboundLeads: Array<{ sender: string; subject: string; ts: number }>;
+    followupsUrgent: { job: Job; entry: import('$lib/server/followup-cadence').FollowupEntry }[];
+    followupsOverdue: { job: Job; entry: import('$lib/server/followup-cadence').FollowupEntry }[];
+    followupsCadenceMeta: import('$lib/server/followup-cadence').FollowupCadence['metadata'] | null;
+    runtime: { hasAnthropic: boolean; hasGemini: boolean; runningTasks: string[] };
   };
+} = $props();
 
-  let { data }: {
-    data: {
-      profileId: string;
-      firstName: string;
-      nowISO: string;
-      upNext: Job[];
-      upNextTotal: number;
-      ready: Job[];
-      readyTotal: number;
-      inFlight: Job[];
-      inFlightTotal: number;
-      followUps: Job[];
-      followUpsTotal: number;
-      counts: { totalJobs: number; unscored: number; totalApps: number; activeCount: number };
-      velocity: { day: string; count: number }[];
-      last7: number;
-      prev7: number;
-      velocityDeltaPct: number | null;
-      topSources: { name: string; count: number }[];
-      activity: ActivityEvent[];
-      recentErrorsCount: number;
-      pipelineDaysAgo: number | null;
-      alerts: InboxAlert[];
-      applyIssues: Array<{
-        id: string;
-        severity: 'info' | 'warn' | 'error';
-        summary: string;
-        detail?: string;
-        fix?: { label: string; href: string };
-        jobId: string;
-        source: string;
-        ts: number;
-      }>;
-      inboundLeads: Array<{ sender: string; subject: string; ts: number }>;
-      followupsUrgent: { job: Job; entry: import('$lib/server/followup-cadence').FollowupEntry }[];
-      followupsOverdue: { job: Job; entry: import('$lib/server/followup-cadence').FollowupEntry }[];
-      followupsCadenceMeta: import('$lib/server/followup-cadence').FollowupCadence['metadata'] | null;
-      runtime: { hasAnthropic: boolean; hasGemini: boolean; runningTasks: string[] };
-    };
-  } = $props();
+let busyTask = $state<string | null>(null);
 
-  let busyTask = $state<string | null>(null);
-
-  async function runTask(task: 'scan' | 'gemini' | 'apply-linkedin', label: string) {
-    if (busyTask) return;
-    busyTask = task;
-    try {
-      const r = await withMinDuration(
-        api.post<{ ok: boolean }>('/api/run', { task }, { silent: true }),
-        500,
-      );
-      if (r.ok) toast.success(label + ' started', { description: 'Watch the activity feed for output.' });
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Failed to start ' + task, { description: err.message });
-    } finally {
-      busyTask = null;
-    }
+async function runTask(task: 'scan' | 'gemini' | 'apply-linkedin', label: string) {
+  if (busyTask) return;
+  busyTask = task;
+  try {
+    const r = await withMinDuration(
+      api.post<{ ok: boolean }>('/api/run', { task }, { silent: true }),
+      500,
+    );
+    if (r.ok)
+      toast.success(label + ' started', { description: 'Watch the activity feed for output.' });
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Failed to start ' + task, { description: err.message });
+  } finally {
+    busyTask = null;
   }
+}
 
-  let postingAlert = $state<string | null>(null);
+let postingAlert = $state<string | null>(null);
 
-  async function postAlertAction(a: InboxAlert) {
-    if (!a.actionPostUrl || postingAlert) return;
-    postingAlert = a.id;
-    try {
-      await api.post(a.actionPostUrl, {}, { silent: true });
-      toast.success(a.title.replace(/^Autopilot paused:?\s*/i, 'Autopilot resumed · '));
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Action failed', { description: err.message });
-    } finally {
-      postingAlert = null;
-    }
+async function postAlertAction(a: InboxAlert) {
+  if (!a.actionPostUrl || postingAlert) return;
+  postingAlert = a.id;
+  try {
+    await api.post(a.actionPostUrl, {}, { silent: true });
+    toast.success(a.title.replace(/^Autopilot paused:?\s*/i, 'Autopilot resumed · '));
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Action failed', { description: err.message });
+  } finally {
+    postingAlert = null;
   }
+}
 
-  function onAlertAction(a: InboxAlert) {
-    if (a.actionTask) {
-      runTask(a.actionTask, a.title);
-    } else if (a.actionPostUrl) {
-      postAlertAction(a);
-    } else if (a.actionUrl) {
-      goto(a.actionUrl);
-    }
+function onAlertAction(a: InboxAlert) {
+  if (a.actionTask) {
+    runTask(a.actionTask, a.title);
+  } else if (a.actionPostUrl) {
+    postAlertAction(a);
+  } else if (a.actionUrl) {
+    goto(a.actionUrl);
   }
+}
 
-  // ---- Apply-issue inline save-answer + re-queue ----
-  // When an apply:{jobId} issue's detail starts with "unknown-field:label1,label2",
-  // we parse out the missing question labels and let the user save an answer
-  // inline — POSTs to /api/profile/form-answers, then re-queues the job so
-  // the drain picks it up again on next run.
-  let expandedIssueId = $state<string | null>(null);
-  let savingAnswer = $state(false);
-  let requeueing = $state<string | null>(null);
-  // Map of "issueId/label" → typed answer (so each row keeps its own state)
-  let answerInputs = $state<Record<string, string>>({});
+// ---- Apply-issue inline save-answer + re-queue ----
+// When an apply:{jobId} issue's detail starts with "unknown-field:label1,label2",
+// we parse out the missing question labels and let the user save an answer
+// inline — POSTs to /api/profile/form-answers, then re-queues the job so
+// the drain picks it up again on next run.
+let expandedIssueId = $state<string | null>(null);
+let savingAnswer = $state(false);
+let requeueing = $state<string | null>(null);
+// Map of "issueId/label" → typed answer (so each row keeps its own state)
+let answerInputs = $state<Record<string, string>>({});
 
-  /** Parse the unknown-field labels out of an issue.detail body.
-   *  Format: "unknown-field:label1,label2,...\n\nPosting: <url>..." */
-  function parseUnknownFields(detail?: string): string[] {
-    if (!detail) return [];
-    const firstLine = detail.split('\n')[0] ?? '';
-    const m = /^unknown-field:(.+)$/.exec(firstLine.trim());
-    if (!m) return [];
-    return m[1].split(',').map((s) => s.trim()).filter(Boolean);
+/** Parse the unknown-field labels out of an issue.detail body.
+ *  Format: "unknown-field:label1,label2,...\n\nPosting: <url>..." */
+function parseUnknownFields(detail?: string): string[] {
+  if (!detail) return [];
+  const firstLine = detail.split('\n')[0] ?? '';
+  const m = /^unknown-field:(.+)$/.exec(firstLine.trim());
+  if (!m) return [];
+  return m[1]
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+async function saveAnswerForIssue(issueId: string, label: string) {
+  const key = issueId + '/' + label;
+  const answer = (answerInputs[key] ?? '').trim();
+  if (!answer || savingAnswer) return;
+  savingAnswer = true;
+  try {
+    await api.post('/api/profile/form-answers', { label, answer }, { silent: true });
+    toast.success('Answer saved · ' + label.slice(0, 50), {
+      description: 'Re-queue the job to apply again — the drain will use this answer next time.',
+      duration: 7_000,
+    });
+    // Clear the input.
+    answerInputs = { ...answerInputs, [key]: '' };
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Save failed', { description: err.message });
+  } finally {
+    savingAnswer = false;
   }
+}
 
-  async function saveAnswerForIssue(issueId: string, label: string) {
-    const key = issueId + '/' + label;
-    const answer = (answerInputs[key] ?? '').trim();
-    if (!answer || savingAnswer) return;
-    savingAnswer = true;
-    try {
-      await api.post(
-        '/api/profile/form-answers',
-        { label, answer },
-        { silent: true },
-      );
-      toast.success('Answer saved · ' + label.slice(0, 50), {
-        description: 'Re-queue the job to apply again — the drain will use this answer next time.',
-        duration: 7_000,
-      });
-      // Clear the input.
-      answerInputs = { ...answerInputs, [key]: '' };
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Save failed', { description: err.message });
-    } finally {
-      savingAnswer = false;
-    }
+async function requeueJob(jobId: string) {
+  if (requeueing) return;
+  requeueing = jobId;
+  try {
+    // Re-queue endpoint: POST /api/job/[id]/queue-apply forces a new
+    // Queued status. If the job is currently ManualApplyNeeded, that
+    // change lets apply-queue-drain pick it back up.
+    await api.post('/api/job/' + encodeURIComponent(jobId) + '/queue-apply', {}, { silent: true });
+    toast.success('Re-queued', {
+      description: 'Drain will pick it up on next run (or "Run drain now" on /queue).',
+    });
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Re-queue failed', { description: err.message });
+  } finally {
+    requeueing = null;
   }
+}
 
-  async function requeueJob(jobId: string) {
-    if (requeueing) return;
-    requeueing = jobId;
-    try {
-      // Re-queue endpoint: POST /api/job/[id]/queue-apply forces a new
-      // Queued status. If the job is currently ManualApplyNeeded, that
-      // change lets apply-queue-drain pick it back up.
-      await api.post('/api/job/' + encodeURIComponent(jobId) + '/queue-apply', {}, { silent: true });
-      toast.success('Re-queued', { description: 'Drain will pick it up on next run (or "Run drain now" on /queue).' });
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Re-queue failed', { description: err.message });
-    } finally {
-      requeueing = null;
-    }
-  }
+// ---- formatting helpers ----
+let weekday = $derived(new Date(data.nowISO).toLocaleDateString(undefined, { weekday: 'long' }));
+let dateStr = $derived(
+  new Date(data.nowISO).toLocaleDateString(undefined, {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }),
+);
+let velocityNumbers = $derived(data.velocity.map((v) => v.count));
 
-  // ---- formatting helpers ----
-  let weekday = $derived(new Date(data.nowISO).toLocaleDateString(undefined, { weekday: 'long' }));
-  let dateStr = $derived(new Date(data.nowISO).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }));
-  let velocityNumbers = $derived(data.velocity.map((v) => v.count));
+let alertLevelTint: Record<string, string> = {
+  error: 'border-red-500/40 bg-red-500/10 text-red-200',
+  warning: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
+  info: 'border-blue-500/30 bg-blue-500/5 text-blue-200',
+};
+function alertIcon(level: 'error' | 'warning' | 'info') {
+  return level === 'error' ? AlertCircle : level === 'warning' ? AlertTriangle : Info;
+}
 
-  let alertLevelTint: Record<string, string> = {
-    error: 'border-red-500/40 bg-red-500/10 text-red-200',
-    warning: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
-    info: 'border-blue-500/30 bg-blue-500/5 text-blue-200',
-  };
-  function alertIcon(level: 'error' | 'warning' | 'info') {
-    return level === 'error' ? AlertCircle
-      : level === 'warning' ? AlertTriangle
-      : Info;
-  }
+function levelDot(level: EventLevel): string {
+  return level === 'error'
+    ? 'bg-red-500'
+    : level === 'warn'
+      ? 'bg-amber-500'
+      : level === 'success'
+        ? 'bg-emerald-500'
+        : 'bg-blue-500';
+}
 
-  function levelDot(level: EventLevel): string {
-    return level === 'error' ? 'bg-red-500'
-      : level === 'warn' ? 'bg-amber-500'
-      : level === 'success' ? 'bg-emerald-500'
-      : 'bg-blue-500';
-  }
-
-  let greeting = $derived.by(() => {
-    const hour = new Date().getHours();
-    if (hour < 5) return 'Up late';
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    if (hour < 21) return 'Good evening';
-    return 'Burning the midnight oil';
-  });
+let greeting = $derived.by(() => {
+  const hour = new Date().getHours();
+  if (hour < 5) return 'Up late';
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  if (hour < 21) return 'Good evening';
+  return 'Burning the midnight oil';
+});
 </script>
 
 <div class="h-full overflow-y-auto">

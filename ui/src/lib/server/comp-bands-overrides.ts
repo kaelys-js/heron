@@ -44,7 +44,11 @@ export function readOverrides(profileId: string): Map<string, BandOverride> {
   const out = new Map<string, BandOverride>();
   if (!fs.existsSync(p)) return out;
   let txt = '';
-  try { txt = fs.readFileSync(p, 'utf8'); } catch { return out; }
+  try {
+    txt = fs.readFileSync(p, 'utf8');
+  } catch {
+    return out;
+  }
   for (const line of txt.split('\n')) {
     if (!line.trim()) continue;
     try {
@@ -55,7 +59,10 @@ export function readOverrides(profileId: string): Map<string, BandOverride> {
   return out;
 }
 
-export function writeOverride(profileId: string, override: Omit<BandOverride, 'updatedAt'>): BandOverride {
+export function writeOverride(
+  profileId: string,
+  override: Omit<BandOverride, 'updatedAt'>,
+): BandOverride {
   const row: BandOverride = { ...override, updatedAt: Date.now() };
   const p = overrideFilePath(profileId);
   fs.mkdirSync(path.dirname(p), { recursive: true });
@@ -69,7 +76,10 @@ export function deleteOverride(profileId: string, key: string): boolean {
   // Rewrite the file without the deleted key.
   const remaining = [...overrides.values()].filter((o) => o.key !== key);
   const p = overrideFilePath(profileId);
-  fs.writeFileSync(p, remaining.map((r) => JSON.stringify(r)).join('\n') + (remaining.length ? '\n' : ''));
+  fs.writeFileSync(
+    p,
+    remaining.map((r) => JSON.stringify(r)).join('\n') + (remaining.length ? '\n' : ''),
+  );
   return true;
 }
 
@@ -107,7 +117,10 @@ export function mergedBands(profileId: string): Record<string, CompBand> {
 
 /** Staleness check. Returns true when defaults are >6 months old AND
  *  the user has no overrides. Surfaces a yellow banner in the UI. */
-export function bandsAreStale(profileId: string, now: number = Date.now()): {
+export function bandsAreStale(
+  profileId: string,
+  now: number = Date.now(),
+): {
   stale: boolean;
   ageMonths: number;
   hasOverrides: boolean;
@@ -117,11 +130,12 @@ export function bandsAreStale(profileId: string, now: number = Date.now()): {
   const ageMonths = Math.floor(ageMs / (30 * 24 * 60 * 60 * 1000));
   const overrides = readOverrides(profileId);
   const newest = [...overrides.values()].reduce(
-    (max, o) => (o.updatedAt > max ? o.updatedAt : max), 0,
+    (max, o) => (o.updatedAt > max ? o.updatedAt : max),
+    0,
   );
   const hasOverrides = overrides.size > 0;
   // Stale = defaults > 6mo AND user hasn't updated their overrides in 6mo.
-  const overridesStale = newest > 0 ? (now - newest) > 6 * 30 * 24 * 60 * 60 * 1000 : true;
+  const overridesStale = newest > 0 ? now - newest > 6 * 30 * 24 * 60 * 60 * 1000 : true;
   return {
     stale: ageMonths >= 6 && (!hasOverrides || overridesStale),
     ageMonths,

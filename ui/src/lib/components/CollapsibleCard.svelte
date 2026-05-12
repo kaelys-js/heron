@@ -10,55 +10,59 @@
   height purely in CSS (no JS measurement, no layout thrash).
 -->
 <script lang="ts">
-  import { ChevronRight } from '@lucide/svelte';
-  import * as Card from '$lib/components/ui/card';
-  import type { Snippet } from 'svelte';
-  import { cn } from '$lib/utils';
-  import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
+import { ChevronRight } from '@lucide/svelte';
+import * as Card from '$lib/components/ui/card';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils';
+import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 
-  let {
-    title,
-    description,
-    icon,
-    storageKey,
-    defaultOpen = true,
-    headerActions,
-    children,
-    class: className = '',
-  }: {
-    title: string;
-    description?: string;
-    icon?: Snippet;
-    /** localStorage key suffix — namespaced under `career-ops:cc:`. */
-    storageKey: string;
-    defaultOpen?: boolean;
-    headerActions?: Snippet;
-    children: Snippet;
-    class?: string;
-  } = $props();
+let {
+  title,
+  description,
+  icon,
+  storageKey,
+  defaultOpen = true,
+  headerActions,
+  children,
+  class: className = '',
+}: {
+  title: string;
+  description?: string;
+  icon?: Snippet;
+  /** localStorage key suffix — namespaced under `career-ops:cc:`. */
+  storageKey: string;
+  defaultOpen?: boolean;
+  headerActions?: Snippet;
+  children: Snippet;
+  class?: string;
+} = $props();
 
-  const STORAGE_PREFIX = `${BRAND_STORAGE_PREFIX}:cc:`;
-  let fullKey = $derived(STORAGE_PREFIX + storageKey);
+const STORAGE_PREFIX = `${BRAND_STORAGE_PREFIX}:cc:`;
+let fullKey = $derived(STORAGE_PREFIX + storageKey);
 
-  function readInitial(): boolean {
-    if (typeof window === 'undefined') return defaultOpen;
-    try {
-      const raw = window.localStorage.getItem(STORAGE_PREFIX + storageKey);
-      if (raw === '0') return false;
-      if (raw === '1') return true;
-    } catch {}
-    return defaultOpen;
-  }
+function readInitial(): boolean {
+  if (typeof window === 'undefined') return defaultOpen;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_PREFIX + storageKey);
+    if (raw === '0') return false;
+    if (raw === '1') return true;
+  } catch {}
+  return defaultOpen;
+}
 
-  // svelte-ignore state_referenced_locally — initial seed only.
-  let open = $state(readInitial());
+// svelte-ignore state_referenced_locally — initial seed only.
+let open = $state(readInitial());
 
-  $effect(() => {
-    if (typeof window === 'undefined') return;
-    try { window.localStorage.setItem(fullKey, open ? '1' : '0'); } catch {}
-  });
+$effect(() => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(fullKey, open ? '1' : '0');
+  } catch {}
+});
 
-  function toggle() { open = !open; }
+function toggle() {
+  open = !open;
+}
 </script>
 
 <!--

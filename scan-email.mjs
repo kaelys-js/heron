@@ -37,8 +37,14 @@
  */
 
 import {
-  readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync,
-  readdirSync, renameSync, statSync,
+  readFileSync,
+  writeFileSync,
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  renameSync,
+  statSync,
 } from 'fs';
 import path from 'path';
 import { profilePath, ensureProfileDirs, profileFromArgv } from './lib-profiles.mjs';
@@ -128,7 +134,9 @@ function decodeQuotedPrintable(s) {
 function decodeBase64(s) {
   try {
     return Buffer.from(s.replace(/\s+/g, ''), 'base64').toString('utf8');
-  } catch { return s; }
+  } catch {
+    return s;
+  }
 }
 
 /** Pull URLs from a (potentially encoded) body. We don't need to fully
@@ -221,12 +229,19 @@ function parseIndeedAlert(rawMessage) {
 // hosts we already know how to score downstream.
 
 const KNOWN_JOB_HOSTS = [
-  'job-boards.greenhouse.io', 'job-boards.eu.greenhouse.io', 'boards.greenhouse.io',
-  'jobs.ashbyhq.com', 'jobs.lever.co', 'apply.workable.com',
-  'careers.smartrecruiters.com', 'jobs.smartrecruiters.com',
+  'job-boards.greenhouse.io',
+  'job-boards.eu.greenhouse.io',
+  'boards.greenhouse.io',
+  'jobs.ashbyhq.com',
+  'jobs.lever.co',
+  'apply.workable.com',
+  'careers.smartrecruiters.com',
+  'jobs.smartrecruiters.com',
   'myworkdayjobs.com',
-  'jobs.personio.com', 'jobs.personio.de',
-  'recruitee.com', 'teamtailor.com',
+  'jobs.personio.com',
+  'jobs.personio.de',
+  'recruitee.com',
+  'teamtailor.com',
   'hnrss.org',
 ];
 
@@ -236,7 +251,7 @@ function parseGenericDigest(rawMessage) {
   const out = [];
   const seen = new Set();
   for (const u of urls) {
-    if (!KNOWN_JOB_HOSTS.some(h => u.includes(h))) continue;
+    if (!KNOWN_JOB_HOSTS.some((h) => u.includes(h))) continue;
     if (seen.has(u)) continue;
     seen.add(u);
     out.push({
@@ -279,9 +294,9 @@ function appendToPipeline(offers) {
   let text = existsSync(PIPELINE_PATH) ? readFileSync(PIPELINE_PATH, 'utf-8') : '';
   const marker = '## Pendientes';
   const idx = text.indexOf(marker);
-  const block = offers.map(o =>
-    `- [ ] ${o.url} | ${o.company || '(unknown)'} | ${o.title || '(see email)'}`,
-  ).join('\n');
+  const block = offers
+    .map((o) => `- [ ] ${o.url} | ${o.company || '(unknown)'} | ${o.title || '(see email)'}`)
+    .join('\n');
   if (idx === -1) {
     const procIdx = text.indexOf('## Procesadas');
     const insertAt = procIdx === -1 ? text.length : procIdx;
@@ -299,9 +314,10 @@ function appendToScanHistory(offers, date) {
   if (!existsSync(SCAN_HISTORY_PATH)) {
     writeFileSync(SCAN_HISTORY_PATH, 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\n', 'utf-8');
   }
-  const lines = offers.map(o =>
-    `${o.url}\t${date}\t${o.source}\t${o.title || ''}\t${o.company || ''}\tadded`,
-  ).join('\n') + '\n';
+  const lines =
+    offers
+      .map((o) => `${o.url}\t${date}\t${o.source}\t${o.title || ''}\t${o.company || ''}\tadded`)
+      .join('\n') + '\n';
   appendFileSync(SCAN_HISTORY_PATH, lines, 'utf-8');
 }
 
@@ -328,9 +344,9 @@ async function main() {
       return;
     }
     mboxFiles = readdirSync(INBOX_DIR)
-      .filter(n => n.toLowerCase().endsWith('.mbox'))
-      .map(n => path.join(INBOX_DIR, n))
-      .filter(p => statSync(p).isFile());
+      .filter((n) => n.toLowerCase().endsWith('.mbox'))
+      .map((n) => path.join(INBOX_DIR, n))
+      .filter((p) => statSync(p).isFile());
   }
 
   if (mboxFiles.length === 0) {
@@ -358,7 +374,10 @@ async function main() {
       }
       if (!extracted) continue;
       for (const offer of extracted) {
-        if (seenUrls.has(offer.url)) { totalDupes++; continue; }
+        if (seenUrls.has(offer.url)) {
+          totalDupes++;
+          continue;
+        }
         seenUrls.add(offer.url);
         newOffers.push(offer);
       }

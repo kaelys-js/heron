@@ -15,17 +15,22 @@
     "serviceType": "_career-ops._tcp",
     "mdnsType": "career-ops",
     "spotlightDomain": "com.resistjs.careerops.jobs",
-    "userActivityTypes": [
-      "com.resistjs.careerops.job",
-      "com.resistjs.careerops.openJob"
-    ],
+    "userActivityTypes": ["com.resistjs.careerops.job", "com.resistjs.careerops.openJob"],
     "keychainService": "com.resistjs.careerops"
   },
 
   "extensions": {
     "widget": { "name": "CareerOpsWidget", "bundleSuffix": "widget", "deploymentMin": "16.0" },
-    "liveActivity": { "name": "CareerOpsLiveActivity", "bundleSuffix": "liveactivity", "deploymentMin": "16.1" },
-    "shareExtension": { "name": "CareerOpsShareExtension", "bundleSuffix": "share", "deploymentMin": "15.0" }
+    "liveActivity": {
+      "name": "CareerOpsLiveActivity",
+      "bundleSuffix": "liveactivity",
+      "deploymentMin": "16.1"
+    },
+    "shareExtension": {
+      "name": "CareerOpsShareExtension",
+      "bundleSuffix": "share",
+      "deploymentMin": "15.0"
+    }
   },
 
   "colors": {

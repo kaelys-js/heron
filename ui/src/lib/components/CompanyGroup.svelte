@@ -1,44 +1,44 @@
 <script lang="ts">
-  import { ChevronDown, Building2 } from '@lucide/svelte';
-  import JobRowCompact from './JobRowCompact.svelte';
-  import type { Job } from '$lib/types';
-  import { cn } from '$lib/utils';
+import { ChevronDown, Building2 } from '@lucide/svelte';
+import JobRowCompact from './JobRowCompact.svelte';
+import type { Job } from '$lib/types';
+import { cn } from '$lib/utils';
 
-  let {
-    company,
-    jobs,
-    /** Whether to default this group as expanded. Off by default (user requested collapsed). */
-    defaultOpen = false,
-  }: { company: string; jobs: Job[]; defaultOpen?: boolean } = $props();
+let {
+  company,
+  jobs,
+  /** Whether to default this group as expanded. Off by default (user requested collapsed). */
+  defaultOpen = false,
+}: { company: string; jobs: Job[]; defaultOpen?: boolean } = $props();
 
-  // svelte-ignore state_referenced_locally — initial seed only
-  let open = $state(defaultOpen);
+// svelte-ignore state_referenced_locally — initial seed only
+let open = $state(defaultOpen);
 
-  // Aggregate stats for the section header
-  let stats = $derived.by(() => {
-    let scored = 0;
-    let ready = 0;
-    let applied = 0;
-    let interview = 0;
-    let topScore: number | null = null;
-    for (const j of jobs) {
-      const s = j.score ?? j.geminiScore ?? null;
-      if (s != null && (topScore == null || s > topScore)) topScore = s;
-      if (j.score != null) scored++;
-      if (j.status === 'Ready') ready++;
-      if (j.status === 'Applied' || j.status === 'Screened') applied++;
-      if (j.status === 'Interview' || j.status === 'Offer') interview++;
-    }
-    return { scored, ready, applied, interview, topScore };
-  });
+// Aggregate stats for the section header
+let stats = $derived.by(() => {
+  let scored = 0;
+  let ready = 0;
+  let applied = 0;
+  let interview = 0;
+  let topScore: number | null = null;
+  for (const j of jobs) {
+    const s = j.score ?? j.geminiScore ?? null;
+    if (s != null && (topScore == null || s > topScore)) topScore = s;
+    if (j.score != null) scored++;
+    if (j.status === 'Ready') ready++;
+    if (j.status === 'Applied' || j.status === 'Screened') applied++;
+    if (j.status === 'Interview' || j.status === 'Offer') interview++;
+  }
+  return { scored, ready, applied, interview, topScore };
+});
 
-  let topScoreClass = $derived.by(() => {
-    if (stats.topScore == null) return 'text-muted-foreground/50';
-    if (stats.topScore >= 4.5) return 'text-emerald-300';
-    if (stats.topScore >= 4)   return 'text-emerald-400/90';
-    if (stats.topScore >= 3)   return 'text-amber-400/90';
-    return 'text-red-400/80';
-  });
+let topScoreClass = $derived.by(() => {
+  if (stats.topScore == null) return 'text-muted-foreground/50';
+  if (stats.topScore >= 4.5) return 'text-emerald-300';
+  if (stats.topScore >= 4) return 'text-emerald-400/90';
+  if (stats.topScore >= 3) return 'text-amber-400/90';
+  return 'text-red-400/80';
+});
 </script>
 
 <section class="rounded-md border border-border/40 bg-card overflow-hidden">

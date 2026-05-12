@@ -31,7 +31,7 @@ const INBOX_MBOX = path.join(ROOT, 'data', 'inbox-mbox');
 function inboxHasMbox(): boolean {
   try {
     if (!fs.existsSync(INBOX_MBOX)) return false;
-    return fs.readdirSync(INBOX_MBOX).some(n => n.toLowerCase().endsWith('.mbox'));
+    return fs.readdirSync(INBOX_MBOX).some((n) => n.toLowerCase().endsWith('.mbox'));
   } catch {
     return false;
   }
@@ -52,7 +52,7 @@ async function runScanAll(args?: JobArgs): Promise<JobResult> {
 
   const baseChildren: Array<string> = [];
   if (hasJob('scan-portals')) baseChildren.push('scan-portals');
-  if (hasJob('scan'))         baseChildren.push('scan');
+  if (hasJob('scan')) baseChildren.push('scan');
   if (hasJob('scan-curated')) baseChildren.push('scan-curated');
   // P9: skip the authenticated scrapers when their `consecutiveFailures`
   // counter is non-zero — re-firing into a dead session just produces more
@@ -66,7 +66,10 @@ async function runScanAll(args?: JobArgs): Promise<JobResult> {
       logEvent('scan-all', 'Skipping scan-linkedin-auth — recent failures', {
         level: 'warn',
         category: 'task',
-        message: 'consecutiveFailures=' + (s.consecutiveFailures ?? 0) + '. Re-login via /sources to clear.',
+        message:
+          'consecutiveFailures=' +
+          (s.consecutiveFailures ?? 0) +
+          '. Re-login via /sources to clear.',
       });
     }
   }
@@ -78,7 +81,10 @@ async function runScanAll(args?: JobArgs): Promise<JobResult> {
       logEvent('scan-all', 'Skipping scan-indeed-auth — recent failures', {
         level: 'warn',
         category: 'task',
-        message: 'consecutiveFailures=' + (s.consecutiveFailures ?? 0) + '. Re-login via /sources to clear.',
+        message:
+          'consecutiveFailures=' +
+          (s.consecutiveFailures ?? 0) +
+          '. Re-login via /sources to clear.',
       });
     }
   }
@@ -100,7 +106,10 @@ async function runScanAll(args?: JobArgs): Promise<JobResult> {
     level: 'info',
     category: 'task',
     message:
-      profiles.length + ' profile(s) × ' + baseChildren.length + ' scanner(s): ' +
+      profiles.length +
+      ' profile(s) × ' +
+      baseChildren.length +
+      ' scanner(s): ' +
       baseChildren.join(', '),
   });
 
@@ -110,17 +119,20 @@ async function runScanAll(args?: JobArgs): Promise<JobResult> {
   const results: ChildResult[] = [];
   for (const profile of profiles) {
     const profileArgs = { ...(args ?? {}), profileId: profile.id };
-    const settled = await Promise.allSettled(
-      baseChildren.map((id) => runById(id, profileArgs)),
-    );
+    const settled = await Promise.allSettled(baseChildren.map((id) => runById(id, profileArgs)));
     for (let i = 0; i < settled.length; i++) {
       const r = settled[i];
       if (r.status === 'fulfilled' && r.value.ok) {
         results.push({ id: baseChildren[i], profileId: profile.id, ok: true, meta: r.value.meta });
       } else {
-        const err = r.status === 'rejected'
-          ? (r.reason instanceof Error ? r.reason.message : String(r.reason))
-          : (r.value.ok === false ? r.value.error : 'unknown');
+        const err =
+          r.status === 'rejected'
+            ? r.reason instanceof Error
+              ? r.reason.message
+              : String(r.reason)
+            : r.value.ok === false
+              ? r.value.error
+              : 'unknown';
         results.push({ id: baseChildren[i], profileId: profile.id, ok: false, error: err });
       }
     }
@@ -143,7 +155,7 @@ async function runScanAll(args?: JobArgs): Promise<JobResult> {
   }
 
   logEvent('scan-all', 'Scan-all finished', {
-    level: failCount === 0 ? 'success' : (okCount > 0 ? 'warn' : 'error'),
+    level: failCount === 0 ? 'success' : okCount > 0 ? 'warn' : 'error',
     category: 'task',
     message: totalFound + ' total · ' + breakdown.join(' · '),
   });
@@ -153,13 +165,18 @@ async function runScanAll(args?: JobArgs): Promise<JobResult> {
   if (failCount < totalChildren) {
     return { ok: true, message, meta: { totalFound, okCount, failCount, breakdown } };
   }
-  return { ok: false, error: 'All scanners failed: ' + breakdown.join('; '), meta: { totalFound, okCount, failCount, breakdown } };
+  return {
+    ok: false,
+    error: 'All scanners failed: ' + breakdown.join('; '),
+    meta: { totalFound, okCount, failCount, breakdown },
+  };
 }
 
 register({
   id: 'scan-all',
   label: 'Scan all sources',
-  description: 'Fan-out across every active scanner (portals, broad, curated, email). Single entry point, single summary event, parallel.',
+  description:
+    'Fan-out across every active scanner (portals, broad, curated, email). Single entry point, single summary event, parallel.',
   category: 'discovery',
   // Daily 09:00 weekdays — same slot the broad scan used to occupy. The
   // child after-trigger chains (auto-triage etc) still fire as each child

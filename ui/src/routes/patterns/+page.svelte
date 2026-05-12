@@ -13,88 +13,99 @@
   and decides what to do.
 -->
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import { Button } from '$lib/components/ui/button';
-  import {
-    TrendingUp, CheckCircle2, AlertTriangle, Info, Loader2, FileText,
-    Sparkles, ChevronRight, Wrench,
-  } from '@lucide/svelte';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import { invalidateAll } from '$app/navigation';
-  import { cn } from '$lib/utils';
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import { Button } from '$lib/components/ui/button';
+import {
+  TrendingUp,
+  CheckCircle2,
+  AlertTriangle,
+  Info,
+  Loader2,
+  FileText,
+  Sparkles,
+  ChevronRight,
+  Wrench,
+} from '@lucide/svelte';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import { invalidateAll } from '$app/navigation';
+import { cn } from '$lib/utils';
 
-  type Suggestion = {
-    id: string;
-    action: string;
-    reasoning: string;
-    impact: 'high' | 'medium' | 'low';
-    op: string;
-    payload?: Record<string, unknown>;
-    targetFiles?: string[];
+type Suggestion = {
+  id: string;
+  action: string;
+  reasoning: string;
+  impact: 'high' | 'medium' | 'low';
+  op: string;
+  payload?: Record<string, unknown>;
+  targetFiles?: string[];
+};
+
+type Analysis = {
+  metadata?: { total?: number };
+  blockerAnalysis?: Array<{ blocker: string; frequency: number; percentage: number }>;
+  techStackGaps?: Array<{ skill: string; frequency: number }>;
+  scoreThreshold?: { recommended: number; reasoning: string };
+} | null;
+
+let {
+  data,
+}: {
+  data: {
+    profileId: string;
+    analysis: Analysis;
+    suggestions: Suggestion[];
   };
+} = $props();
 
-  type Analysis = {
-    metadata?: { total?: number };
-    blockerAnalysis?: Array<{ blocker: string; frequency: number; percentage: number }>;
-    techStackGaps?: Array<{ skill: string; frequency: number }>;
-    scoreThreshold?: { recommended: number; reasoning: string };
-  } | null;
+let applyingId = $state<string | null>(null);
+// Track which suggestions have been applied this session so the UI can
+// grey them out without a server-side persistent "applied" flag.
+let appliedIds = $state(new Set<string>());
 
-  let { data }: {
-    data: {
-      profileId: string;
-      analysis: Analysis;
-      suggestions: Suggestion[];
-    };
-  } = $props();
-
-  let applyingId = $state<string | null>(null);
-  // Track which suggestions have been applied this session so the UI can
-  // grey them out without a server-side persistent "applied" flag.
-  let appliedIds = $state(new Set<string>());
-
-  async function applyOne(s: Suggestion) {
-    if (applyingId) return;
-    if (s.op === 'manual') {
-      toast.info('Manual recommendation', {
-        description: 'Read the suggestion and edit the file yourself. ' +
-          (s.targetFiles?.[0] ?? ''),
+async function applyOne(s: Suggestion) {
+  if (applyingId) return;
+  if (s.op === 'manual') {
+    toast.info('Manual recommendation', {
+      description: 'Read the suggestion and edit the file yourself. ' + (s.targetFiles?.[0] ?? ''),
+    });
+    return;
+  }
+  applyingId = s.id;
+  try {
+    const r = await api.post<{
+      ok: boolean;
+      summary?: string;
+      changedFiles?: string[];
+      error?: string;
+    }>('/api/patterns/suggestions?profile=' + encodeURIComponent(data.profileId), s, {
+      silent: true,
+    });
+    if (r.ok) {
+      toast.success('Applied', {
+        description: r.summary + (r.changedFiles ? ' · ' + r.changedFiles.join(', ') : ''),
+        duration: 8_000,
       });
-      return;
+      appliedIds.add(s.id);
+      appliedIds = new Set(appliedIds);
+      await invalidateAll();
+    } else {
+      toast.error('Apply failed', { description: r.error ?? 'unknown' });
     }
-    applyingId = s.id;
-    try {
-      const r = await api.post<{ ok: boolean; summary?: string; changedFiles?: string[]; error?: string }>(
-        '/api/patterns/suggestions?profile=' + encodeURIComponent(data.profileId),
-        s,
-        { silent: true },
-      );
-      if (r.ok) {
-        toast.success('Applied', {
-          description: r.summary + (r.changedFiles ? ' · ' + r.changedFiles.join(', ') : ''),
-          duration: 8_000,
-        });
-        appliedIds.add(s.id);
-        appliedIds = new Set(appliedIds);
-        await invalidateAll();
-      } else {
-        toast.error('Apply failed', { description: r.error ?? 'unknown' });
-      }
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Apply failed', { description: err.message });
-    } finally {
-      applyingId = null;
-    }
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Apply failed', { description: err.message });
+  } finally {
+    applyingId = null;
   }
+}
 
-  function impactTint(i: string): string {
-    if (i === 'high') return 'border-red-500/40 bg-red-500/5 text-red-200';
-    if (i === 'medium') return 'border-amber-500/40 bg-amber-500/5 text-amber-200';
-    return 'border-blue-500/30 bg-blue-500/5 text-blue-200';
-  }
+function impactTint(i: string): string {
+  if (i === 'high') return 'border-red-500/40 bg-red-500/5 text-red-200';
+  if (i === 'medium') return 'border-amber-500/40 bg-amber-500/5 text-amber-200';
+  return 'border-blue-500/30 bg-blue-500/5 text-blue-200';
+}
 </script>
 
 <div class="h-full overflow-y-auto">

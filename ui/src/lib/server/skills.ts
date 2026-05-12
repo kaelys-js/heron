@@ -20,11 +20,11 @@ export type SkillCategory =
   | 'system';
 
 export type Skill = {
-  id: string;            // 'oferta'
-  name: string;          // 'oferta — Evaluación Completa A-G'
-  title: string;         // 'oferta'
-  subtitle: string;      // 'Evaluación Completa A-G'
-  description: string;   // first non-heading paragraph
+  id: string; // 'oferta'
+  name: string; // 'oferta — Evaluación Completa A-G'
+  title: string; // 'oferta'
+  subtitle: string; // 'Evaluación Completa A-G'
+  description: string; // first non-heading paragraph
   category: SkillCategory;
   emoji: string;
   /** Heuristic language inferred from the text body. */
@@ -32,7 +32,7 @@ export type Skill = {
   /** Concrete on-disk language directory: 'en' for top-level modes, otherwise
    *  the two-letter subdir code ('de', 'fr', 'ja', 'pt', 'ru', 'es'). */
   lang: 'en' | 'de' | 'fr' | 'ja' | 'pt' | 'ru' | 'es';
-  invocation: string;    // '/career-ops oferta'
+  invocation: string; // '/career-ops oferta'
   /** When relevant: list of inputs the user provides (parsed from the body) */
   inputs?: string[];
   /** path on disk so we can read full body on demand */
@@ -82,25 +82,55 @@ const CATEGORY: Record<string, SkillCategory> = {
   '_profile.template': 'system',
   // Localized modes use parallel ids — surfaces them with the right category
   // even though they live under modes/{lang}/.
-  angebot: 'evaluation',     // de: Stellenangebot
-  offre: 'evaluation',       // fr: offre d'emploi
-  kyujin: 'evaluation',      // ja: 求人
-  bewerben: 'application',   // de: bewerben
-  postuler: 'application',   // fr: postuler
-  oubo: 'application',       // ja: 応募
+  angebot: 'evaluation', // de: Stellenangebot
+  offre: 'evaluation', // fr: offre d'emploi
+  kyujin: 'evaluation', // ja: 求人
+  bewerben: 'application', // de: bewerben
+  postuler: 'application', // fr: postuler
+  oubo: 'application', // ja: 応募
 };
 
 const EMOJI: Record<string, string> = {
-  oferta: '🎯', ofertas: '⚖️', deep: '🔍', project: '🧪', training: '📚',
-  patterns: '📈', followup: '📨',
-  apply: '✉️', contacto: '🤝', 'cover-letter': '✉️', 'form-answers': '📝',
-  'post-rejection': '↩️', negotiation: '💬',
-  scan: '🔭', pipeline: '🔁', batch: '📦', tracker: '📋', 'auto-pipeline': '⚡',
-  'reference-prep': '👥', 'drill-feedback': '💻', 'linkedin-audit': '🔍', 'interview-prep': '🎤', 'mock-interview': '🎭', 'mock-interview-turn': '🗣️', 'interview-retro': '📝', 'pre-call-dossier': '📂', 'seed-story-bank': '🌱', 'tech-prep': '🧪', 'seed-form-answers': '📋',
-  pdf: '📄', latex: '📐',
-  _profile: '🪪', _shared: '🧩', '_profile.template': '🪪',
-  angebot: '🎯', offre: '🎯', kyujin: '🎯',
-  bewerben: '✉️', postuler: '✉️', oubo: '✉️',
+  oferta: '🎯',
+  ofertas: '⚖️',
+  deep: '🔍',
+  project: '🧪',
+  training: '📚',
+  patterns: '📈',
+  followup: '📨',
+  apply: '✉️',
+  contacto: '🤝',
+  'cover-letter': '✉️',
+  'form-answers': '📝',
+  'post-rejection': '↩️',
+  negotiation: '💬',
+  scan: '🔭',
+  pipeline: '🔁',
+  batch: '📦',
+  tracker: '📋',
+  'auto-pipeline': '⚡',
+  'reference-prep': '👥',
+  'drill-feedback': '💻',
+  'linkedin-audit': '🔍',
+  'interview-prep': '🎤',
+  'mock-interview': '🎭',
+  'mock-interview-turn': '🗣️',
+  'interview-retro': '📝',
+  'pre-call-dossier': '📂',
+  'seed-story-bank': '🌱',
+  'tech-prep': '🧪',
+  'seed-form-answers': '📋',
+  pdf: '📄',
+  latex: '📐',
+  _profile: '🪪',
+  _shared: '🧩',
+  '_profile.template': '🪪',
+  angebot: '🎯',
+  offre: '🎯',
+  kyujin: '🎯',
+  bewerben: '✉️',
+  postuler: '✉️',
+  oubo: '✉️',
 };
 
 function inferCategory(id: string): SkillCategory {
@@ -126,7 +156,9 @@ function parseDescription(text: string): string {
   for (const raw of lines) {
     const line = raw.trim();
     if (!started) {
-      if (line.startsWith('# ')) { started = true; }
+      if (line.startsWith('# ')) {
+        started = true;
+      }
       continue;
     }
     if (line === '') {
@@ -152,10 +184,11 @@ function parseInputs(text: string): string[] {
   for (let i = idx + 1; i < lines.length && out.length < 6; i++) {
     const line = lines[i].trim();
     if (line.startsWith('##')) break;
-    const m = line.match(/^[\d]+\.\s+\*\*(.+?)\*\*/) ??
-              line.match(/^[\d]+\.\s+(.+?)$/) ??
-              line.match(/^-\s+\*\*(.+?)\*\*/) ??
-              line.match(/^-\s+(.+?)$/);
+    const m =
+      line.match(/^[\d]+\.\s+\*\*(.+?)\*\*/) ??
+      line.match(/^[\d]+\.\s+(.+?)$/) ??
+      line.match(/^-\s+\*\*(.+?)\*\*/) ??
+      line.match(/^-\s+(.+?)$/);
     if (m) {
       const v = m[1].replace(/`([^`]+)`/g, '$1').trim();
       // Skip excessively long inputs (full sentences)
@@ -168,8 +201,12 @@ function parseInputs(text: string): string[] {
 function detectLanguage(text: string): 'en' | 'es' | 'mixed' {
   // Simple heuristic
   const sample = text.slice(0, 1500).toLowerCase();
-  const esWords = (sample.match(/\b(modo|para|cuando|qué|cómo|usuario|empresa|paso|sección)\b/g) ?? []).length;
-  const enWords = (sample.match(/\b(mode|when|user|company|step|section|inputs|outputs|run)\b/g) ?? []).length;
+  const esWords = (
+    sample.match(/\b(modo|para|cuando|qué|cómo|usuario|empresa|paso|sección)\b/g) ?? []
+  ).length;
+  const enWords = (
+    sample.match(/\b(mode|when|user|company|step|section|inputs|outputs|run)\b/g) ?? []
+  ).length;
   if (esWords > enWords + 2) return 'es';
   if (enWords > esWords + 2) return 'en';
   return 'mixed';
@@ -189,12 +226,7 @@ const LANG_SUBDIRS = new Set(['de', 'fr', 'ja', 'pt', 'ru', 'es']);
 export function listSkills(includeSystem = false): Skill[] {
   const skills: Skill[] = [];
 
-  const consumeFile = (
-    f: string,
-    dirAbs: string,
-    lang: Skill['lang'],
-    idPrefix: string,
-  ) => {
+  const consumeFile = (f: string, dirAbs: string, lang: Skill['lang'], idPrefix: string) => {
     const id = idPrefix + f.replace(/\.md$/, '');
     // Don't carry the prefix into category lookup — `de:angebot` should look
     // up `angebot` in CATEGORY.
@@ -203,7 +235,11 @@ export function listSkills(includeSystem = false): Skill[] {
     if (!includeSystem && category === 'system') return;
     const filePath = path.join(dirAbs, f);
     let stat;
-    try { stat = fs.statSync(filePath); } catch { return; }
+    try {
+      stat = fs.statSync(filePath);
+    } catch {
+      return;
+    }
     const text = readSafe(filePath);
     const { title, subtitle } = parseHeader(text);
     const description = parseDescription(text);
@@ -230,7 +266,11 @@ export function listSkills(includeSystem = false): Skill[] {
     for (const f of fs.readdirSync(MODES_DIR).sort()) {
       const full = path.join(MODES_DIR, f);
       let stat;
-      try { stat = fs.statSync(full); } catch { continue; }
+      try {
+        stat = fs.statSync(full);
+      } catch {
+        continue;
+      }
       if (stat.isFile() && f.endsWith('.md')) {
         consumeFile(f, MODES_DIR, 'en', '');
       } else if (stat.isDirectory() && LANG_SUBDIRS.has(f)) {
@@ -240,7 +280,9 @@ export function listSkills(includeSystem = false): Skill[] {
             if (!lf.endsWith('.md')) continue;
             consumeFile(lf, full, f as Skill['lang'], f + ':');
           }
-        } catch { /* unreadable lang dir — skip */ }
+        } catch {
+          /* unreadable lang dir — skip */
+        }
       }
     }
   } catch {

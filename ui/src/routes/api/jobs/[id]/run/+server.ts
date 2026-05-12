@@ -20,12 +20,16 @@ export const POST = wrap(
     const def = get(params.id);
     if (!def) badRequest('Unknown job: ' + params.id);
     if (!def!.allowManual) {
-      badRequest('Job ' + params.id + ' is not manually triggerable (trigger=' + def!.trigger.type + ')');
+      badRequest(
+        'Job ' + params.id + ' is not manually triggerable (trigger=' + def!.trigger.type + ')',
+      );
     }
     if (isRunning(params.id)) {
       badRequest('Job ' + params.id + ' is already running');
     }
-    const body = (await request.json().catch(() => ({}))) as { args?: Record<string, unknown> } | null;
+    const body = (await request.json().catch(() => ({}))) as {
+      args?: Record<string, unknown>;
+    } | null;
     const result = await runById(params.id, body?.args);
     // Note: don't double-write `ok` — wrap() injects it; the runById result
     // already includes its own ok. Strip it before merging so wrap's envelope

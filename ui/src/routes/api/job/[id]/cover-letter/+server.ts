@@ -26,7 +26,10 @@ import { CLI_NAMESPACE } from '$lib/config/branding';
  *  has its own set. The CV-pdf naming convention is `{n}-{slug}-{date}.pdf`
  *  (or with leading `cv-` prefix in some templates); the cover letter mode
  *  writes alongside as `{n}-{slug}-{date}-cover.md`. */
-function findCachedCover(profileId: string, reportFile?: string): { path: string; body: string } | null {
+function findCachedCover(
+  profileId: string,
+  reportFile?: string,
+): { path: string; body: string } | null {
   if (!reportFile) return null;
   const outputDir = profilePath(profileId, 'output-dir');
   // reportFile is e.g. "047-vercel-2026-05-05.md"
@@ -56,9 +59,12 @@ function spawnCoverLetter(url: string, profileId: string): Promise<{ path: strin
     let stdout = '';
     let stderr = '';
     const prompt = '/' + CLI_NAMESPACE + ' cover-letter ' + url;
-    try { swapProfileSymlinks(profileId); } catch (e) {
+    try {
+      swapProfileSymlinks(profileId);
+    } catch (e) {
       logEvent('cover-letter', 'Symlink swap failed — cover letter may read wrong profile', {
-        level: 'warn', category: 'application',
+        level: 'warn',
+        category: 'application',
         message: e instanceof Error ? e.message : String(e),
       });
     }
@@ -67,8 +73,12 @@ function spawnCoverLetter(url: string, profileId: string): Promise<{ path: strin
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) {
@@ -85,7 +95,8 @@ function spawnCoverLetter(url: string, profileId: string): Promise<{ path: strin
       } else {
         try {
           const cutoff = Date.now() - 60_000;
-          const files = fs.readdirSync(outputDir)
+          const files = fs
+            .readdirSync(outputDir)
             .filter((f) => f.endsWith('-cover.md'))
             .map((f) => ({ f, mtime: fs.statSync(path.join(outputDir, f)).mtimeMs }))
             .filter((x) => x.mtime >= cutoff)
@@ -94,7 +105,9 @@ function spawnCoverLetter(url: string, profileId: string): Promise<{ path: strin
         } catch {}
       }
       if (!coverPath || !fs.existsSync(coverPath)) {
-        reject(new Error('Cover letter generation produced no file. Stdout: ' + stdout.slice(0, 500)));
+        reject(
+          new Error('Cover letter generation produced no file. Stdout: ' + stdout.slice(0, 500)),
+        );
         return;
       }
       try {
@@ -107,36 +120,44 @@ function spawnCoverLetter(url: string, profileId: string): Promise<{ path: strin
   });
 }
 
-export const GET = wrap('cover-letter', async ({ params, url }: { params: { id: string }; url: URL }) => {
-  const resolved = resolveJobAndProfile(params.id, url);
-  if (!resolved) badRequest('Job not found: ' + params.id);
-  const { job, profileId } = resolved!;
-  const cached = findCachedCover(profileId, job.reportFile);
-  return { cached };
-});
+export const GET = wrap(
+  'cover-letter',
+  async ({ params, url }: { params: { id: string }; url: URL }) => {
+    const resolved = resolveJobAndProfile(params.id, url);
+    if (!resolved) badRequest('Job not found: ' + params.id);
+    const { job, profileId } = resolved!;
+    const cached = findCachedCover(profileId, job.reportFile);
+    return { cached };
+  },
+);
 
-export const POST = wrap('cover-letter', async ({ params, url }: { params: { id: string }; url: URL }) => {
-  const resolved = resolveJobAndProfile(params.id, url);
-  if (!resolved) badRequest('Job not found: ' + params.id);
-  const { job, profileId } = resolved!;
-  if (!job.url) badRequest('Job has no URL');
+export const POST = wrap(
+  'cover-letter',
+  async ({ params, url }: { params: { id: string }; url: URL }) => {
+    const resolved = resolveJobAndProfile(params.id, url);
+    if (!resolved) badRequest('Job not found: ' + params.id);
+    const { job, profileId } = resolved!;
+    if (!job.url) badRequest('Job has no URL');
 
-  logEvent('cover-letter', 'Drafting cover letter', {
-    level: 'info',
-    category: 'application',
-    message: (job.company || '?') + ' · ' + (job.role || '?'),
-  });
-
-  try {
-    const out = await spawnCoverLetter(job.url, profileId);
-    logEvent('cover-letter', 'Cover letter ready', {
-      level: 'success',
+    logEvent('cover-letter', 'Drafting cover letter', {
+      level: 'info',
       category: 'application',
-      message: out.path,
+      message: (job.company || '?') + ' · ' + (job.role || '?'),
     });
-    return { ok: true, path: out.path, body: out.body };
-  } catch (err) {
-    reportServerError('cover-letter', 'Cover letter draft failed', err, { category: 'application' });
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
-  }
-});
+
+    try {
+      const out = await spawnCoverLetter(job.url, profileId);
+      logEvent('cover-letter', 'Cover letter ready', {
+        level: 'success',
+        category: 'application',
+        message: out.path,
+      });
+      return { ok: true, path: out.path, body: out.body };
+    } catch (err) {
+      reportServerError('cover-letter', 'Cover letter draft failed', err, {
+        category: 'application',
+      });
+      return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  },
+);

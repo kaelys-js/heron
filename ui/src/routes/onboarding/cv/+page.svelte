@@ -1,33 +1,44 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-  import { FileText, ArrowRight, ArrowLeft, Loader2, Wand2, Info, ExternalLink, Globe } from '@lucide/svelte';
-  import { goto } from '$app/navigation';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import {
+  FileText,
+  ArrowRight,
+  ArrowLeft,
+  Loader2,
+  Wand2,
+  Info,
+  ExternalLink,
+  Globe,
+} from '@lucide/svelte';
+import { goto } from '$app/navigation';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
 
-  let { data }: { data: { profileId: string; existing: string; linkedinConnected: boolean; linkedinUrl: string } } = $props();
+let {
+  data,
+}: {
+  data: { profileId: string; existing: string; linkedinConnected: boolean; linkedinUrl: string };
+} = $props();
 
-  /** Profile query suffix used for every API call + navigation. */
-  let q = $derived('?profile=' + encodeURIComponent(data.profileId));
+/** Profile query suffix used for every API call + navigation. */
+let q = $derived('?profile=' + encodeURIComponent(data.profileId));
 
-  type Mode = 'markdown' | 'plain' | 'linkedin';
+type Mode = 'markdown' | 'plain' | 'linkedin';
 
-  // Default mode: markdown if a CV is already saved, else linkedin if
-  // connected (one-click flow), else plain text.
-  // svelte-ignore state_referenced_locally — initial seed only
-  let mode = $state<Mode>(
-    data.existing ? 'markdown' : (data.linkedinConnected ? 'linkedin' : 'plain'),
-  );
-  // svelte-ignore state_referenced_locally — initial seed only
-  let textArea = $state(data.existing);
-  // svelte-ignore state_referenced_locally — initial seed only
-  let linkedinUrl = $state(data.linkedinUrl);
-  let working = $state(false);
-  let workingLabel = $state('');
+// Default mode: markdown if a CV is already saved, else linkedin if
+// connected (one-click flow), else plain text.
+// svelte-ignore state_referenced_locally — initial seed only
+let mode = $state<Mode>(data.existing ? 'markdown' : data.linkedinConnected ? 'linkedin' : 'plain');
+// svelte-ignore state_referenced_locally — initial seed only
+let textArea = $state(data.existing);
+// svelte-ignore state_referenced_locally — initial seed only
+let linkedinUrl = $state(data.linkedinUrl);
+let working = $state(false);
+let workingLabel = $state('');
 
-  const MARKDOWN_PLACEHOLDER = `# Jane Doe
+const MARKDOWN_PLACEHOLDER = `# Jane Doe
 Senior Software Engineer · jane@example.com · +1 555 555 5555 · Vancouver, Canada · linkedin.com/in/jane
 
 ## Summary
@@ -50,7 +61,7 @@ Backend engineer with 8 years of experience…
 - **Infra:** AWS, Kubernetes, Postgres
 `;
 
-  const PLAIN_PLACEHOLDER = `Jane Doe
+const PLAIN_PLACEHOLDER = `Jane Doe
 Senior Software Engineer
 jane@example.com
 +1 555 555 5555
@@ -68,93 +79,93 @@ Built the analytics pipeline...
 Education: BSc Computer Science, UBC, 2016
 Skills: TypeScript, Python, Go, AWS, Kubernetes, Postgres`;
 
-  async function saveAndContinue() {
-    if (working) return;
-    let markdown = '';
+async function saveAndContinue() {
+  if (working) return;
+  let markdown = '';
 
-    // Validate per-mode and resolve a final markdown string before writing.
-    if (mode === 'linkedin') {
-      const url = linkedinUrl.trim();
-      if (!url) {
-        toast.error('LinkedIn URL required');
-        return;
-      }
-      if (!/linkedin\.com\/in\//i.test(url)) {
-        toast.error('Not a LinkedIn /in/ profile URL', {
-          description: 'Use a link like https://www.linkedin.com/in/your-handle',
-        });
-        return;
-      }
-      working = true;
-      try {
-        workingLabel = 'Reading LinkedIn profile…';
+  // Validate per-mode and resolve a final markdown string before writing.
+  if (mode === 'linkedin') {
+    const url = linkedinUrl.trim();
+    if (!url) {
+      toast.error('LinkedIn URL required');
+      return;
+    }
+    if (!/linkedin\.com\/in\//i.test(url)) {
+      toast.error('Not a LinkedIn /in/ profile URL', {
+        description: 'Use a link like https://www.linkedin.com/in/your-handle',
+      });
+      return;
+    }
+    working = true;
+    try {
+      workingLabel = 'Reading LinkedIn profile…';
+      const r = await api.post<{ markdown: string }>(
+        '/api/profile/cv-from-linkedin',
+        { url },
+        { silent: true },
+      );
+      markdown = r.markdown;
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Could not import from LinkedIn', { description: err.message });
+      working = false;
+      workingLabel = '';
+      return;
+    }
+  } else {
+    const text = textArea.trim();
+    if (!text) {
+      toast.error('Paste your CV first');
+      return;
+    }
+    if (text.length < 50) {
+      toast.error('That looks too short to be a CV');
+      return;
+    }
+    working = true;
+    markdown = text;
+    try {
+      if (mode === 'plain') {
+        workingLabel = 'Converting to markdown…';
         const r = await api.post<{ markdown: string }>(
-          '/api/profile/cv-from-linkedin',
-          { url },
+          '/api/profile/cv-from-text',
+          { text },
           { silent: true },
         );
         markdown = r.markdown;
-      } catch (e) {
-        const err = e as ApiError;
-        toast.error('Could not import from LinkedIn', { description: err.message });
-        working = false;
-        workingLabel = '';
-        return;
       }
-    } else {
-      const text = textArea.trim();
-      if (!text) {
-        toast.error('Paste your CV first');
-        return;
-      }
-      if (text.length < 50) {
-        toast.error('That looks too short to be a CV');
-        return;
-      }
-      working = true;
-      markdown = text;
-      try {
-        if (mode === 'plain') {
-          workingLabel = 'Converting to markdown…';
-          const r = await api.post<{ markdown: string }>(
-            '/api/profile/cv-from-text',
-            { text },
-            { silent: true },
-          );
-          markdown = r.markdown;
-        }
-      } catch (e) {
-        const err = e as ApiError;
-        toast.error('Could not convert', { description: err.message });
-        working = false;
-        workingLabel = '';
-        return;
-      }
-    }
-
-    try {
-      // Write cv.md.
-      workingLabel = 'Saving cv.md…';
-      await api.put('/api/profile/file/cv' + q, { content: markdown }, { silent: true });
-
-      // Auto-extract structured profile fields. Failure is non-fatal.
-      try {
-        workingLabel = 'Extracting profile fields…';
-        await api.post('/api/profile/reprocess' + q, {}, { silent: true });
-      } catch (e) {
-        console.warn('reprocess failed, continuing anyway:', e);
-      }
-
-      await api.post('/api/onboarding/step', { step: 'cv', action: 'complete' }, { silent: true });
-      toast.success('CV saved');
-      await goto('/onboarding/targeting' + q);
     } catch (e) {
       const err = e as ApiError;
-      toast.error('Could not save CV', { description: err.message });
+      toast.error('Could not convert', { description: err.message });
       working = false;
       workingLabel = '';
+      return;
     }
   }
+
+  try {
+    // Write cv.md.
+    workingLabel = 'Saving cv.md…';
+    await api.put('/api/profile/file/cv' + q, { content: markdown }, { silent: true });
+
+    // Auto-extract structured profile fields. Failure is non-fatal.
+    try {
+      workingLabel = 'Extracting profile fields…';
+      await api.post('/api/profile/reprocess' + q, {}, { silent: true });
+    } catch (e) {
+      console.warn('reprocess failed, continuing anyway:', e);
+    }
+
+    await api.post('/api/onboarding/step', { step: 'cv', action: 'complete' }, { silent: true });
+    toast.success('CV saved');
+    await goto('/onboarding/targeting' + q);
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Could not save CV', { description: err.message });
+    working = false;
+    workingLabel = '';
+  }
+}
 </script>
 
 <div class="space-y-6">

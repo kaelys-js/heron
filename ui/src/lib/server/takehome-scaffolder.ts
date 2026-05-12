@@ -40,7 +40,13 @@ export type TakeHomeState = {
 };
 
 function slugify(s: string): string {
-  return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'job';
+  return (
+    (s || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 50) || 'job'
+  );
 }
 
 function workingDir(profileId: string, company: string, role: string): string {
@@ -50,7 +56,11 @@ function workingDir(profileId: string, company: string, role: string): string {
   );
 }
 
-const README_TEMPLATE = (company: string, role: string, brief: string) => `# Take-home · ${company} · ${role}
+const README_TEMPLATE = (
+  company: string,
+  role: string,
+  brief: string,
+) => `# Take-home · ${company} · ${role}
 
 ## Brief (paste in full)
 
@@ -112,7 +122,10 @@ detect over-spend from code/commit timestamps anyway.)_
 - **Total: __ min** (budget was ___ min)
 `;
 
-const CHECKLIST_TEMPLATE = (company: string, role: string) => `# Submission checklist · ${company} · ${role}
+const CHECKLIST_TEMPLATE = (
+  company: string,
+  role: string,
+) => `# Submission checklist · ${company} · ${role}
 
 ## Before you submit
 
@@ -164,7 +177,10 @@ export function scaffoldTakeHome(input: {
   const createdFiles: string[] = [];
   const readmePath = path.join(dir, 'README.md');
   if (!fs.existsSync(readmePath)) {
-    fs.writeFileSync(readmePath, README_TEMPLATE(input.company, input.role, input.briefExcerpt ?? ''));
+    fs.writeFileSync(
+      readmePath,
+      README_TEMPLATE(input.company, input.role, input.briefExcerpt ?? ''),
+    );
     createdFiles.push(path.relative(ROOT, readmePath));
   }
   const checklistPath = path.join(dir, 'CHECKLIST.md');
@@ -195,11 +211,19 @@ export function scaffoldTakeHome(input: {
 }
 
 /** Read the state of an existing take-home scaffold. */
-export function readTakeHomeState(profileId: string, company: string, role: string): TakeHomeState | null {
+export function readTakeHomeState(
+  profileId: string,
+  company: string,
+  role: string,
+): TakeHomeState | null {
   const dir = workingDir(profileId, company, role);
   const statePath = path.join(dir, 'state.json');
   if (!fs.existsSync(statePath)) return null;
-  try { return JSON.parse(fs.readFileSync(statePath, 'utf8')) as TakeHomeState; } catch { return null; }
+  try {
+    return JSON.parse(fs.readFileSync(statePath, 'utf8')) as TakeHomeState;
+  } catch {
+    return null;
+  }
 }
 
 /** Update state (status, milestones, budget tweaks). */
@@ -217,7 +241,9 @@ export function updateTakeHomeState(
     const next: TakeHomeState = { ...cur, ...patch };
     fs.writeFileSync(statePath, JSON.stringify(next, null, 2) + '\n');
     return next;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 /** Find the take-home scaffold for a given job-id (look up via job's
@@ -231,5 +257,7 @@ export function findTakeHomeForJob(jobId: string): { state: TakeHomeState; dir: 
   try {
     const state = JSON.parse(fs.readFileSync(statePath, 'utf8')) as TakeHomeState;
     return { state, dir: path.relative(ROOT, dir) };
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }

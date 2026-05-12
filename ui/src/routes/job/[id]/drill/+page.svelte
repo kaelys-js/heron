@@ -15,118 +15,147 @@
   Cumulative feedback log on the right so you can iterate.
 -->
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import * as Tabs from '$lib/components/ui/tabs';
-  import { Button } from '$lib/components/ui/button';
-  import { Textarea } from '$lib/components/ui/textarea';
-  import { Label } from '$lib/components/ui/label';
-  import { Input } from '$lib/components/ui/input';
-  import {
-    Code, Network, MessageSquare, Loader2, Sparkles, ArrowLeft,
-    HelpCircle, CheckCircle2, AlertTriangle, Plus, X,
-  } from '@lucide/svelte';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import { cn } from '$lib/utils';
-  import type { Job } from '$lib/types';
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import * as Tabs from '$lib/components/ui/tabs';
+import { Button } from '$lib/components/ui/button';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Label } from '$lib/components/ui/label';
+import { Input } from '$lib/components/ui/input';
+import {
+  Code,
+  Network,
+  MessageSquare,
+  Loader2,
+  Sparkles,
+  ArrowLeft,
+  HelpCircle,
+  CheckCircle2,
+  AlertTriangle,
+  Plus,
+  X,
+} from '@lucide/svelte';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import { cn } from '$lib/utils';
+import type { Job } from '$lib/types';
 
-  let { data }: { data: { job: Job; profileId: string } } = $props();
+let { data }: { data: { job: Job; profileId: string } } = $props();
 
-  type Feedback = { working?: string; watch?: string; suggest?: string; question?: string; mode: 'code' | 'design' };
+type Feedback = {
+  working?: string;
+  watch?: string;
+  suggest?: string;
+  question?: string;
+  mode: 'code' | 'design';
+};
 
-  let activeTab = $state<'code' | 'design'>('code');
+let activeTab = $state<'code' | 'design'>('code');
 
-  // Code state
-  let codeProblem = $state('');
-  let codeText = $state('');
-  let codeFeedback = $state<Feedback[]>([]);
-  let codeBusy = $state(false);
+// Code state
+let codeProblem = $state('');
+let codeText = $state('');
+let codeFeedback = $state<Feedback[]>([]);
+let codeBusy = $state(false);
 
-  // Design state — nodes + edges JSON, plus SVG preview.
-  type Node = { id: string; label: string; x: number; y: number };
-  type Edge = { from: string; to: string; label?: string };
-  let designProblem = $state('');
-  let designNodes = $state<Node[]>([
-    { id: 'client', label: 'Client', x: 60, y: 80 },
-    { id: 'api', label: 'API', x: 240, y: 80 },
-    { id: 'db', label: 'DB', x: 420, y: 80 },
-  ]);
-  let designEdges = $state<Edge[]>([
-    { from: 'client', to: 'api', label: 'HTTPS' },
-    { from: 'api', to: 'db', label: 'SQL' },
-  ]);
-  let designFeedback = $state<Feedback[]>([]);
-  let designBusy = $state(false);
+// Design state — nodes + edges JSON, plus SVG preview.
+type Node = { id: string; label: string; x: number; y: number };
+type Edge = { from: string; to: string; label?: string };
+let designProblem = $state('');
+let designNodes = $state<Node[]>([
+  { id: 'client', label: 'Client', x: 60, y: 80 },
+  { id: 'api', label: 'API', x: 240, y: 80 },
+  { id: 'db', label: 'DB', x: 420, y: 80 },
+]);
+let designEdges = $state<Edge[]>([
+  { from: 'client', to: 'api', label: 'HTTPS' },
+  { from: 'api', to: 'db', label: 'SQL' },
+]);
+let designFeedback = $state<Feedback[]>([]);
+let designBusy = $state(false);
 
-  // Drag-to-move: stores the active drag offset.
-  let dragging = $state<{ id: string; ox: number; oy: number } | null>(null);
+// Drag-to-move: stores the active drag offset.
+let dragging = $state<{ id: string; ox: number; oy: number } | null>(null);
 
-  function nodeMouseDown(node: Node, e: MouseEvent) {
-    dragging = { id: node.id, ox: e.clientX - node.x, oy: e.clientY - node.y };
+function nodeMouseDown(node: Node, e: MouseEvent) {
+  dragging = { id: node.id, ox: e.clientX - node.x, oy: e.clientY - node.y };
+}
+function onSvgMouseMove(e: MouseEvent) {
+  if (!dragging) return;
+  const i = designNodes.findIndex((n) => n.id === dragging!.id);
+  if (i < 0) return;
+  designNodes[i] = { ...designNodes[i], x: e.clientX - dragging.ox, y: e.clientY - dragging.oy };
+  designNodes = [...designNodes];
+}
+function onSvgMouseUp() {
+  dragging = null;
+}
+
+function addNode() {
+  const id = 'n' + Date.now().toString(36);
+  designNodes = [...designNodes, { id, label: 'New', x: 100, y: 200 }];
+}
+function removeNode(id: string) {
+  designNodes = designNodes.filter((n) => n.id !== id);
+  designEdges = designEdges.filter((e) => e.from !== id && e.to !== id);
+}
+function addEdge() {
+  if (designNodes.length < 2) return;
+  designEdges = [...designEdges, { from: designNodes[0].id, to: designNodes[1].id, label: '' }];
+}
+function removeEdge(i: number) {
+  designEdges = designEdges.filter((_, idx) => idx !== i);
+}
+
+async function requestFeedback(mode: 'code' | 'design') {
+  const busy = mode === 'code' ? codeBusy : designBusy;
+  if (busy) return;
+  const problem = mode === 'code' ? codeProblem : designProblem;
+  if (!problem.trim()) {
+    toast.warning('Set the problem statement first');
+    return;
   }
-  function onSvgMouseMove(e: MouseEvent) {
-    if (!dragging) return;
-    const i = designNodes.findIndex((n) => n.id === dragging!.id);
-    if (i < 0) return;
-    designNodes[i] = { ...designNodes[i], x: e.clientX - dragging.ox, y: e.clientY - dragging.oy };
-    designNodes = [...designNodes];
+  let userInput = '';
+  if (mode === 'code') {
+    userInput = codeText;
+  } else {
+    userInput = JSON.stringify({ nodes: designNodes, edges: designEdges }, null, 2);
   }
-  function onSvgMouseUp() { dragging = null; }
-
-  function addNode() {
-    const id = 'n' + Date.now().toString(36);
-    designNodes = [...designNodes, { id, label: 'New', x: 100, y: 200 }];
-  }
-  function removeNode(id: string) {
-    designNodes = designNodes.filter((n) => n.id !== id);
-    designEdges = designEdges.filter((e) => e.from !== id && e.to !== id);
-  }
-  function addEdge() {
-    if (designNodes.length < 2) return;
-    designEdges = [...designEdges, { from: designNodes[0].id, to: designNodes[1].id, label: '' }];
-  }
-  function removeEdge(i: number) {
-    designEdges = designEdges.filter((_, idx) => idx !== i);
-  }
-
-  async function requestFeedback(mode: 'code' | 'design') {
-    const busy = mode === 'code' ? codeBusy : designBusy;
-    if (busy) return;
-    const problem = mode === 'code' ? codeProblem : designProblem;
-    if (!problem.trim()) {
-      toast.warning('Set the problem statement first');
+  const previousFeedback = (mode === 'code' ? codeFeedback : designFeedback).map((f) =>
+    [f.working, f.watch, f.suggest, f.question].filter(Boolean).join(' / '),
+  );
+  if (mode === 'code') codeBusy = true;
+  else designBusy = true;
+  try {
+    const r = await api.post<Feedback & { ok: boolean; error?: string }>(
+      '/api/job/' +
+        encodeURIComponent(data.job.id) +
+        '/drill?profile=' +
+        encodeURIComponent(data.profileId),
+      { mode, problem, userInput, previousFeedback },
+      { silent: true },
+    );
+    if (!r.ok) {
+      toast.error('Drill feedback failed', { description: r.error ?? 'unknown' });
       return;
     }
-    let userInput = '';
-    if (mode === 'code') {
-      userInput = codeText;
-    } else {
-      userInput = JSON.stringify({ nodes: designNodes, edges: designEdges }, null, 2);
-    }
-    const previousFeedback = (mode === 'code' ? codeFeedback : designFeedback)
-      .map((f) => [f.working, f.watch, f.suggest, f.question].filter(Boolean).join(' / '));
-    if (mode === 'code') codeBusy = true; else designBusy = true;
-    try {
-      const r = await api.post<Feedback & { ok: boolean; error?: string }>(
-        '/api/job/' + encodeURIComponent(data.job.id) + '/drill?profile=' + encodeURIComponent(data.profileId),
-        { mode, problem, userInput, previousFeedback },
-        { silent: true },
-      );
-      if (!r.ok) {
-        toast.error('Drill feedback failed', { description: r.error ?? 'unknown' });
-        return;
-      }
-      const entry: Feedback = { mode, working: r.working, watch: r.watch, suggest: r.suggest, question: r.question };
-      if (mode === 'code') codeFeedback = [...codeFeedback, entry];
-      else designFeedback = [...designFeedback, entry];
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Drill failed', { description: err.message });
-    } finally {
-      if (mode === 'code') codeBusy = false; else designBusy = false;
-    }
+    const entry: Feedback = {
+      mode,
+      working: r.working,
+      watch: r.watch,
+      suggest: r.suggest,
+      question: r.question,
+    };
+    if (mode === 'code') codeFeedback = [...codeFeedback, entry];
+    else designFeedback = [...designFeedback, entry];
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Drill failed', { description: err.message });
+  } finally {
+    if (mode === 'code') codeBusy = false;
+    else designBusy = false;
   }
+}
 </script>
 
 <div class="h-full overflow-y-auto">

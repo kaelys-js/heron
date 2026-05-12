@@ -1,108 +1,109 @@
 <script lang="ts">
-  import * as Command from '$lib/components/ui/command';
-  import { Briefcase, Loader2, Search, ArrowRight, FileText, Paperclip } from '@lucide/svelte';
-  import { goto } from '$app/navigation';
-  import { onMount } from 'svelte';
-  import { cn } from '$lib/utils';
-  import { globalActions } from '$lib/global-actions.svelte';
-  import { api } from '$lib/api';
-  import type { Status, BgRisk } from '$lib/types';
+import * as Command from '$lib/components/ui/command';
+import { Briefcase, Loader2, Search, ArrowRight, FileText, Paperclip } from '@lucide/svelte';
+import { goto } from '$app/navigation';
+import { onMount } from 'svelte';
+import { cn } from '$lib/utils';
+import { globalActions } from '$lib/global-actions.svelte';
+import { api } from '$lib/api';
+import type { Status, BgRisk } from '$lib/types';
 
-  type IndexedJob = {
-    id: string;
-    company: string;
-    role: string;
-    location: string;
-    status: Status;
-    score: number | null;
-    bgRisk: BgRisk;
-  };
+type IndexedJob = {
+  id: string;
+  company: string;
+  role: string;
+  location: string;
+  status: Status;
+  score: number | null;
+  bgRisk: BgRisk;
+};
 
-  let jobs = $state<IndexedJob[]>([]);
-  let loaded = $state(false);
-  let loading = $state(false);
-  let query = $state('');
+let jobs = $state<IndexedJob[]>([]);
+let loaded = $state(false);
+let loading = $state(false);
+let query = $state('');
 
-  // Lazy-load on first open
-  $effect(() => {
-    if (globalActions.searchOpen && !loaded && !loading) {
-      void load();
-    }
-  });
-
-  async function load() {
-    loading = true;
-    try {
-      // silent: search index failure shouldn't block the user from typing —
-      // the empty-state UI below makes the failure obvious.
-      const r = await api.get<{ jobs?: unknown[] }>('/api/search-index', { silent: true });
-      jobs = Array.isArray(r.jobs) ? (r.jobs as typeof jobs) : [];
-      loaded = true;
-    } catch {
-      jobs = [];
-    } finally {
-      loading = false;
-    }
+// Lazy-load on first open
+$effect(() => {
+  if (globalActions.searchOpen && !loaded && !loading) {
+    void load();
   }
+});
 
-  // Optional: command items by status section
-  let filtered = $derived.by(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) {
-      // Surface high-fit jobs when no query
-      return [...jobs]
-        .filter((j) => (j.score ?? 0) >= 4)
-        .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-        .slice(0, 20);
-    }
-    return jobs
-      .filter((j) =>
+async function load() {
+  loading = true;
+  try {
+    // silent: search index failure shouldn't block the user from typing —
+    // the empty-state UI below makes the failure obvious.
+    const r = await api.get<{ jobs?: unknown[] }>('/api/search-index', { silent: true });
+    jobs = Array.isArray(r.jobs) ? (r.jobs as typeof jobs) : [];
+    loaded = true;
+  } catch {
+    jobs = [];
+  } finally {
+    loading = false;
+  }
+}
+
+// Optional: command items by status section
+let filtered = $derived.by(() => {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    // Surface high-fit jobs when no query
+    return [...jobs]
+      .filter((j) => (j.score ?? 0) >= 4)
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+      .slice(0, 20);
+  }
+  return jobs
+    .filter(
+      (j) =>
         j.company.toLowerCase().includes(q) ||
         j.role.toLowerCase().includes(q) ||
         j.location.toLowerCase().includes(q),
-      )
-      .slice(0, 30);
-  });
+    )
+    .slice(0, 30);
+});
 
-  function selectJob(id: string) {
-    globalActions.closeSearch();
-    query = '';
-    void goto('/job/' + id);
-  }
+function selectJob(id: string) {
+  globalActions.closeSearch();
+  query = '';
+  void goto('/job/' + id);
+}
 
-  // Cmd/Ctrl+K to toggle
-  onMount(() => {
-    if (typeof window === 'undefined') return;
-    function onKey(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        globalActions.toggleSearch();
-      }
+// Cmd/Ctrl+K to toggle
+onMount(() => {
+  if (typeof window === 'undefined') return;
+  function onKey(e: KeyboardEvent) {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      globalActions.toggleSearch();
     }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  });
-
-  const STATUS_DOT: Record<string, string> = {
-    New: 'bg-zinc-400',
-    Scoring: 'bg-blue-400',
-    Scored: 'bg-cyan-400',
-    Ready: 'bg-emerald-400',
-    Applied: 'bg-violet-400',
-    Screened: 'bg-amber-400',
-    Interview: 'bg-orange-400',
-    Offer: 'bg-green-400',
-    Rejected: 'bg-red-400',
-    Closed: 'bg-zinc-500',
-  };
-
-  function scoreColor(s: number | null): string {
-    if (s == null) return 'text-muted-foreground/50';
-    if (s >= 4.5) return 'text-emerald-300';
-    if (s >= 4) return 'text-emerald-400/80';
-    if (s >= 3) return 'text-amber-400/80';
-    return 'text-red-400/80';
   }
+  window.addEventListener('keydown', onKey);
+  return () => window.removeEventListener('keydown', onKey);
+});
+
+const STATUS_DOT: Record<string, string> = {
+  New: 'bg-zinc-400',
+  Scoring: 'bg-blue-400',
+  Scored: 'bg-cyan-400',
+  Ready: 'bg-emerald-400',
+  Applied: 'bg-violet-400',
+  Screened: 'bg-amber-400',
+  Interview: 'bg-orange-400',
+  Offer: 'bg-green-400',
+  Rejected: 'bg-red-400',
+  Closed: 'bg-zinc-500',
+};
+
+function scoreColor(s: number | null): string {
+  if (s == null) return 'text-muted-foreground/50';
+  if (s >= 4.5) return 'text-emerald-300';
+  if (s >= 4) return 'text-emerald-400/80';
+  if (s >= 3) return 'text-amber-400/80';
+  return 'text-red-400/80';
+}
 </script>
 
 <Command.Dialog

@@ -52,7 +52,10 @@ function acquireLock(): void {
   while (true) {
     try {
       // O_CREAT|O_EXCL|O_WRONLY — atomically create-or-fail.
-      const fd = fs.openSync(LOCK_FILE, fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_WRONLY);
+      const fd = fs.openSync(
+        LOCK_FILE,
+        fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_WRONLY,
+      );
       fs.writeSync(fd, String(process.pid) + '@' + Date.now());
       fs.closeSync(fd);
       return;
@@ -67,19 +70,27 @@ function acquireLock(): void {
           fs.unlinkSync(LOCK_FILE);
           continue;
         }
-      } catch { /* file gone — loop and retry */ }
+      } catch {
+        /* file gone — loop and retry */
+      }
       if (Date.now() - start > LOCK_TIMEOUT_MS) {
         throw new Error('symlink-swap lock timeout after ' + LOCK_TIMEOUT_MS + 'ms');
       }
       // Sync sleep — this whole function is called sync from spawn sites.
       const deadline = Date.now() + LOCK_POLL_MS;
-      while (Date.now() < deadline) { /* spin */ }
+      while (Date.now() < deadline) {
+        /* spin */
+      }
     }
   }
 }
 
 function releaseLock(): void {
-  try { fs.unlinkSync(LOCK_FILE); } catch { /* already gone */ }
+  try {
+    fs.unlinkSync(LOCK_FILE);
+  } catch {
+    /* already gone */
+  }
 }
 
 type LegacyTarget = {
@@ -88,10 +99,10 @@ type LegacyTarget = {
 };
 
 const TARGETS: LegacyTarget[] = [
-  { legacyPath: path.join(ROOT, 'cv.md'),                 kind: 'cv-md' },
+  { legacyPath: path.join(ROOT, 'cv.md'), kind: 'cv-md' },
   { legacyPath: path.join(ROOT, 'config', 'profile.yml'), kind: 'profile-yml' },
-  { legacyPath: path.join(ROOT, 'portals.yml'),           kind: 'portals-yml' },
-  { legacyPath: path.join(ROOT, 'modes', '_profile.md'),  kind: 'profile-md' },
+  { legacyPath: path.join(ROOT, 'portals.yml'), kind: 'portals-yml' },
+  { legacyPath: path.join(ROOT, 'modes', '_profile.md'), kind: 'profile-md' },
 ];
 
 /**
@@ -119,7 +130,11 @@ function swapInner(profileId: string): void {
       // Inspect the existing legacy path. lstat so we don't follow the
       // symlink we may have created earlier.
       let stat: fs.Stats | null = null;
-      try { stat = fs.lstatSync(t.legacyPath); } catch { stat = null; }
+      try {
+        stat = fs.lstatSync(t.legacyPath);
+      } catch {
+        stat = null;
+      }
 
       if (stat) {
         if (stat.isSymbolicLink()) {
@@ -131,7 +146,9 @@ function swapInner(profileId: string): void {
           logEvent('profile-symlinks', 'Legacy path is a real file — skipping symlink', {
             level: 'warn',
             category: 'system',
-            message: t.legacyPath + ' (expected a symlink). Move the file into data/profiles/{slug}/ and re-run migration.',
+            message:
+              t.legacyPath +
+              ' (expected a symlink). Move the file into data/profiles/{slug}/ and re-run migration.',
           });
           continue;
         }

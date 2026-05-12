@@ -1,122 +1,134 @@
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import { Button } from '$lib/components/ui/button';
-  import {
-    Plug, Globe, Mail, Database, Briefcase, KeyRound, Power, RefreshCw,
-    AlertCircle, CheckCircle2, ArrowRight, ArrowLeft, Sparkles, ExternalLink,
-  } from '@lucide/svelte';
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import { Button } from '$lib/components/ui/button';
+import {
+  Plug,
+  Globe,
+  Mail,
+  Database,
+  Briefcase,
+  KeyRound,
+  Power,
+  RefreshCw,
+  AlertCircle,
+  CheckCircle2,
+  ArrowRight,
+  ArrowLeft,
+  Sparkles,
+  ExternalLink,
+} from '@lucide/svelte';
 
-  type SourceDoc = {
-    icon: any;
-    label: string;
-    type: 'authenticated' | 'imap' | 'env-key' | 'always-on';
-    pitch: string;
-    how: string[];
-    reconnect: string;
-    files: string[];
-  };
+type SourceDoc = {
+  icon: any;
+  label: string;
+  type: 'authenticated' | 'imap' | 'env-key' | 'always-on';
+  pitch: string;
+  how: string[];
+  reconnect: string;
+  files: string[];
+};
 
-  const SOURCES: SourceDoc[] = [
-    {
-      icon: Briefcase,
-      label: 'LinkedIn (authenticated)',
-      type: 'authenticated',
-      pitch:
-        'Scrapes your logged-in LinkedIn feed via a saved Playwright Chromium profile. Same view you\'d see scrolling LinkedIn yourself — full personalized feed, no API keys, no OAuth, ToS-clean for personal use.',
-      how: [
-        'Click Connect → headed Chromium opens',
-        'Log in normally (handle 2FA / captcha if prompted)',
-        'lib_playwright_auth.py polls /feed/ every 2s; once login is detected, the browser auto-closes',
-        'Cookies + session storage are saved to .playwright-linkedin/',
-        'Daily 09:15 weekday scan runs scan-linkedin-auth.py headless against the saved session',
-      ],
-      reconnect:
-        'LinkedIn typically expires sessions after ~30 days, or sooner if you log out elsewhere. The /sources card flips to red after 3 consecutive scrape failures. Click Connect again to re-authenticate — the browser remembers your account so it\'s usually 1 click.',
-      files: [
-        '.playwright-linkedin/ — Chromium user-data dir (cookies + storage)',
-        'scan-linkedin-auth.py — the scrape script',
-        'data/sources.json — connection state (consecutiveFailures, lastError)',
-      ],
-    },
-    {
-      icon: Globe,
-      label: 'Indeed (authenticated)',
-      type: 'authenticated',
-      pitch:
-        'Same architecture as LinkedIn, but for Indeed. Bypasses the captcha gate that public scrapers hit. Daily 09:30 weekday scan.',
-      how: [
-        'Click Connect → headed Chromium opens at secure.indeed.com/auth',
-        'Log in (Indeed accepts Google/Apple SSO; handle as you normally would)',
-        'Once /account stops redirecting to /signin, the browser closes',
-        'Daily scan runs scan-indeed-auth.py headless against the saved cookies',
-      ],
-      reconnect:
-        'If Indeed serves a "press and hold" captcha mid-scrape, the script exits cleanly with code 4 and the source flips to disconnected. You\'ll see "captcha — re-login on /sources" in the lastError. Click Connect again and Indeed will usually let you back in.',
-      files: [
-        '.playwright-indeed/ — Chromium user-data dir',
-        'scan-indeed-auth.py — the scrape script',
-      ],
-    },
-    {
-      icon: Mail,
-      label: 'Gmail (job alerts)',
-      type: 'imap',
-      pitch:
-        'Polls a Gmail label every 30 minutes via IMAP. Parses LinkedIn / Indeed / generic alert emails using the same parser registry as the local mbox path. Idempotent — processed messages are marked as Seen.',
-      how: [
-        'Enable 2-factor auth on your Google account (required for app passwords)',
-        'Generate an app password at myaccount.google.com/apppasswords (pick "Mail" + "Other → career-ops")',
-        'Optional: in Gmail, create a filter that auto-applies a label to LinkedIn/Indeed alert emails (e.g. "career-ops/job-alerts")',
-        'On /sources, fill the IMAP form (host, email, app password, label) and click Test & Save',
-        'A setInterval daemon in the dashboard polls every 30 min — no autopilot scheduler change needed',
-      ],
-      reconnect:
-        'IMAP errors (revoked app password, 2FA disabled, label renamed) auto-disconnect the source after 3 failures. Just re-fill the form and click Test & Save. Gmail-side: if you renamed your filter\'s label, update GMAIL_IMAP_LABEL.',
-      files: [
-        '.env (GMAIL_IMAP_HOST, GMAIL_IMAP_USER, GMAIL_IMAP_PASSWORD, GMAIL_IMAP_LABEL)',
-        'scan-email-imap.mjs — the polling script',
-      ],
-    },
-    {
-      icon: KeyRound,
-      label: 'API-key sources (Anthropic, Gemini, Adzuna)',
-      type: 'env-key',
-      pitch:
-        'Not a scanner per se — these are LLM + aggregator credentials the system uses elsewhere. Listed on /sources for completeness so you can probe each key without leaving the page.',
-      how: [
-        'Anthropic — required for deep evaluations and agent chat',
-        'Gemini — recommended for cheap first-pass scoring (free tier)',
-        'Adzuna — optional aggregator (adds Adzuna to JobSpy\'s portal list)',
-        'Click Test on the card → dashboard runs a real probe (1 token completion / 1 query) against the provider',
-      ],
-      reconnect:
-        'If your key gets revoked or rate-limited, the Test button surfaces the error. Click Configure to jump to /settings and rotate the key. The wizard\'s API-keys step does the same probes before letting you advance.',
-      files: ['.env (ANTHROPIC_API_KEY, GEMINI_API_KEY, ADZUNA_APP_ID, ADZUNA_APP_KEY)'],
-    },
-    {
-      icon: Database,
-      label: 'Always-on aggregators',
-      type: 'always-on',
-      pitch:
-        'These run every day regardless of /sources state. They don\'t need credentials and can\'t be "disconnected" — they\'re listed for completeness so you understand what\'s covered.',
-      how: [
-        'scan-portals (scan.mjs) — direct ATS APIs (Greenhouse, Ashby, Lever, Workday, SmartRecruiters, Workable, Personio, Recruitee, Teamtailor — 9 providers)',
-        'scan (scan-broad.py) — JobSpy + free aggregators (LinkedIn public, Glassdoor, RemoteOK, etc)',
-        'scan-curated (scan-curated.mjs) — niche AI/ML/Dev boards (ai-jobs.net, fwddeploy, etc)',
-      ],
-      reconnect:
-        'Nothing to reconnect. If one of them is failing, check the activity feed for the specific error. Most ATS-API failures are upstream (the ATS provider had a 503); they self-heal on the next run.',
-      files: ['scan.mjs, scan-broad.py, scan-curated.mjs'],
-    },
-  ];
+const SOURCES: SourceDoc[] = [
+  {
+    icon: Briefcase,
+    label: 'LinkedIn (authenticated)',
+    type: 'authenticated',
+    pitch:
+      "Scrapes your logged-in LinkedIn feed via a saved Playwright Chromium profile. Same view you'd see scrolling LinkedIn yourself — full personalized feed, no API keys, no OAuth, ToS-clean for personal use.",
+    how: [
+      'Click Connect → headed Chromium opens',
+      'Log in normally (handle 2FA / captcha if prompted)',
+      'lib_playwright_auth.py polls /feed/ every 2s; once login is detected, the browser auto-closes',
+      'Cookies + session storage are saved to .playwright-linkedin/',
+      'Daily 09:15 weekday scan runs scan-linkedin-auth.py headless against the saved session',
+    ],
+    reconnect:
+      "LinkedIn typically expires sessions after ~30 days, or sooner if you log out elsewhere. The /sources card flips to red after 3 consecutive scrape failures. Click Connect again to re-authenticate — the browser remembers your account so it's usually 1 click.",
+    files: [
+      '.playwright-linkedin/ — Chromium user-data dir (cookies + storage)',
+      'scan-linkedin-auth.py — the scrape script',
+      'data/sources.json — connection state (consecutiveFailures, lastError)',
+    ],
+  },
+  {
+    icon: Globe,
+    label: 'Indeed (authenticated)',
+    type: 'authenticated',
+    pitch:
+      'Same architecture as LinkedIn, but for Indeed. Bypasses the captcha gate that public scrapers hit. Daily 09:30 weekday scan.',
+    how: [
+      'Click Connect → headed Chromium opens at secure.indeed.com/auth',
+      'Log in (Indeed accepts Google/Apple SSO; handle as you normally would)',
+      'Once /account stops redirecting to /signin, the browser closes',
+      'Daily scan runs scan-indeed-auth.py headless against the saved cookies',
+    ],
+    reconnect:
+      'If Indeed serves a "press and hold" captcha mid-scrape, the script exits cleanly with code 4 and the source flips to disconnected. You\'ll see "captcha — re-login on /sources" in the lastError. Click Connect again and Indeed will usually let you back in.',
+    files: [
+      '.playwright-indeed/ — Chromium user-data dir',
+      'scan-indeed-auth.py — the scrape script',
+    ],
+  },
+  {
+    icon: Mail,
+    label: 'Gmail (job alerts)',
+    type: 'imap',
+    pitch:
+      'Polls a Gmail label every 30 minutes via IMAP. Parses LinkedIn / Indeed / generic alert emails using the same parser registry as the local mbox path. Idempotent — processed messages are marked as Seen.',
+    how: [
+      'Enable 2-factor auth on your Google account (required for app passwords)',
+      'Generate an app password at myaccount.google.com/apppasswords (pick "Mail" + "Other → career-ops")',
+      'Optional: in Gmail, create a filter that auto-applies a label to LinkedIn/Indeed alert emails (e.g. "career-ops/job-alerts")',
+      'On /sources, fill the IMAP form (host, email, app password, label) and click Test & Save',
+      'A setInterval daemon in the dashboard polls every 30 min — no autopilot scheduler change needed',
+    ],
+    reconnect:
+      "IMAP errors (revoked app password, 2FA disabled, label renamed) auto-disconnect the source after 3 failures. Just re-fill the form and click Test & Save. Gmail-side: if you renamed your filter's label, update GMAIL_IMAP_LABEL.",
+    files: [
+      '.env (GMAIL_IMAP_HOST, GMAIL_IMAP_USER, GMAIL_IMAP_PASSWORD, GMAIL_IMAP_LABEL)',
+      'scan-email-imap.mjs — the polling script',
+    ],
+  },
+  {
+    icon: KeyRound,
+    label: 'API-key sources (Anthropic, Gemini, Adzuna)',
+    type: 'env-key',
+    pitch:
+      'Not a scanner per se — these are LLM + aggregator credentials the system uses elsewhere. Listed on /sources for completeness so you can probe each key without leaving the page.',
+    how: [
+      'Anthropic — required for deep evaluations and agent chat',
+      'Gemini — recommended for cheap first-pass scoring (free tier)',
+      "Adzuna — optional aggregator (adds Adzuna to JobSpy's portal list)",
+      'Click Test on the card → dashboard runs a real probe (1 token completion / 1 query) against the provider',
+    ],
+    reconnect:
+      "If your key gets revoked or rate-limited, the Test button surfaces the error. Click Configure to jump to /settings and rotate the key. The wizard's API-keys step does the same probes before letting you advance.",
+    files: ['.env (ANTHROPIC_API_KEY, GEMINI_API_KEY, ADZUNA_APP_ID, ADZUNA_APP_KEY)'],
+  },
+  {
+    icon: Database,
+    label: 'Always-on aggregators',
+    type: 'always-on',
+    pitch:
+      "These run every day regardless of /sources state. They don't need credentials and can't be \"disconnected\" — they're listed for completeness so you understand what's covered.",
+    how: [
+      'scan-portals (scan.mjs) — direct ATS APIs (Greenhouse, Ashby, Lever, Workday, SmartRecruiters, Workable, Personio, Recruitee, Teamtailor — 9 providers)',
+      'scan (scan-broad.py) — JobSpy + free aggregators (LinkedIn public, Glassdoor, RemoteOK, etc)',
+      'scan-curated (scan-curated.mjs) — niche AI/ML/Dev boards (ai-jobs.net, fwddeploy, etc)',
+    ],
+    reconnect:
+      'Nothing to reconnect. If one of them is failing, check the activity feed for the specific error. Most ATS-API failures are upstream (the ATS provider had a 503); they self-heal on the next run.',
+    files: ['scan.mjs, scan-broad.py, scan-curated.mjs'],
+  },
+];
 
-  function tint(t: SourceDoc['type']): string {
-    if (t === 'authenticated') return 'border-blue-500/30 bg-blue-500/5';
-    if (t === 'imap')          return 'border-rose-500/30 bg-rose-500/5';
-    if (t === 'env-key')       return 'border-amber-500/30 bg-amber-500/5';
-    return 'border-emerald-500/30 bg-emerald-500/5';
-  }
+function tint(t: SourceDoc['type']): string {
+  if (t === 'authenticated') return 'border-blue-500/30 bg-blue-500/5';
+  if (t === 'imap') return 'border-rose-500/30 bg-rose-500/5';
+  if (t === 'env-key') return 'border-amber-500/30 bg-amber-500/5';
+  return 'border-emerald-500/30 bg-emerald-500/5';
+}
 </script>
 
 <div class="h-full overflow-y-auto">

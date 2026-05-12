@@ -10,54 +10,56 @@
   Offer / Rejected) — by then the timing is locked.
 -->
 <script lang="ts">
-  import * as Popover from '$lib/components/ui/popover';
-  import { Clock, ChevronDown, Zap, AlertTriangle } from '@lucide/svelte';
-  import { api } from '$lib/api';
-  import { onMount } from 'svelte';
-  import { cn } from '$lib/utils';
-  import type { Status } from '$lib/types';
+import * as Popover from '$lib/components/ui/popover';
+import { Clock, ChevronDown, Zap, AlertTriangle } from '@lucide/svelte';
+import { api } from '$lib/api';
+import { onMount } from 'svelte';
+import { cn } from '$lib/utils';
+import type { Status } from '$lib/types';
 
-  let {
-    jobId,
-    profileId,
-    status,
-  }: { jobId: string; profileId?: string; status: Status } = $props();
+let { jobId, profileId, status }: { jobId: string; profileId?: string; status: Status } = $props();
 
-  type Timing = {
-    ok: boolean;
-    firstSeen?: string | null;
-    daysSinceFirstSeen?: number | null;
-    band?: 'fresh' | 'good' | 'fading' | 'late';
-    label?: string;
-    advice?: string;
-  };
+type Timing = {
+  ok: boolean;
+  firstSeen?: string | null;
+  daysSinceFirstSeen?: number | null;
+  band?: 'fresh' | 'good' | 'fading' | 'late';
+  label?: string;
+  advice?: string;
+};
 
-  let timing = $state<Timing | null>(null);
-  let loading = $state(true);
+let timing = $state<Timing | null>(null);
+let loading = $state(true);
 
-  const APPLY_ELIGIBLE: Status[] = ['New', 'Scoring', 'Scored', 'Ready', 'Queued'];
-  let show = $derived(APPLY_ELIGIBLE.includes(status));
+const APPLY_ELIGIBLE: Status[] = ['New', 'Scoring', 'Scored', 'Ready', 'Queued'];
+let show = $derived(APPLY_ELIGIBLE.includes(status));
 
-  let tint = $derived.by(() => {
-    const b = timing?.band;
-    if (b === 'fresh') return 'border-emerald-500/50 bg-emerald-500/15 text-emerald-200';
-    if (b === 'good') return 'border-amber-400/40 bg-amber-400/10 text-amber-200';
-    if (b === 'fading') return 'border-orange-500/40 bg-orange-500/10 text-orange-200';
-    return 'border-red-500/40 bg-red-500/10 text-red-200';
-  });
+let tint = $derived.by(() => {
+  const b = timing?.band;
+  if (b === 'fresh') return 'border-emerald-500/50 bg-emerald-500/15 text-emerald-200';
+  if (b === 'good') return 'border-amber-400/40 bg-amber-400/10 text-amber-200';
+  if (b === 'fading') return 'border-orange-500/40 bg-orange-500/10 text-orange-200';
+  return 'border-red-500/40 bg-red-500/10 text-red-200';
+});
 
-  onMount(async () => {
-    if (!show) { loading = false; return; }
-    try {
-      const pq = profileId ? '?profile=' + encodeURIComponent(profileId) : '';
-      const r = await api.get<Timing>('/api/job/' + encodeURIComponent(jobId) + '/apply-timing' + pq, { silent: true });
-      timing = r;
-    } catch {
-      timing = null;
-    } finally {
-      loading = false;
-    }
-  });
+onMount(async () => {
+  if (!show) {
+    loading = false;
+    return;
+  }
+  try {
+    const pq = profileId ? '?profile=' + encodeURIComponent(profileId) : '';
+    const r = await api.get<Timing>(
+      '/api/job/' + encodeURIComponent(jobId) + '/apply-timing' + pq,
+      { silent: true },
+    );
+    timing = r;
+  } catch {
+    timing = null;
+  } finally {
+    loading = false;
+  }
+});
 </script>
 
 {#if show && !loading && timing?.ok && timing.band}

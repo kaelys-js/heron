@@ -8,14 +8,14 @@ import { getActiveProfileId, getProfile } from '$lib/server/profiles';
 
 export async function load({ url }: { url: URL }) {
   const queryProfile = url.searchParams.get('profile');
-  const profileId = (queryProfile && getProfile(queryProfile)) ? queryProfile : getActiveProfileId();
+  const profileId = queryProfile && getProfile(queryProfile) ? queryProfile : getActiveProfileId();
   const existing = readSiblingFile(profileId, 'cv') ?? '';
   const linkedinConnected = getSource('linkedin-auth').connected;
   const profile = readProfile(profileId);
   const linkedinUrl = profile.candidate?.linkedin
-    ? (profile.candidate.linkedin.startsWith('http')
+    ? profile.candidate.linkedin.startsWith('http')
       ? profile.candidate.linkedin
-      : 'https://www.' + profile.candidate.linkedin.replace(/^www\./, ''))
+      : 'https://www.' + profile.candidate.linkedin.replace(/^www\./, '')
     : '';
   return { profileId, existing, linkedinConnected, linkedinUrl };
 }

@@ -56,7 +56,9 @@ if (existsSync(envFile)) {
   }
   ok(`signing env loaded (${Object.keys(signingEnv).length} vars)`);
 } else {
-  info('no ~/.career-ops/native-env — building unsigned (Gatekeeper warning expected on first open)');
+  info(
+    'no ~/.career-ops/native-env — building unsigned (Gatekeeper warning expected on first open)',
+  );
 }
 
 step(8, 'electron-builder make');

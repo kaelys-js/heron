@@ -33,7 +33,10 @@ async function runCompileLatex(args?: JobArgs): Promise<JobResult> {
   if (!fs.existsSync(tex)) {
     return {
       ok: false,
-      error: 'No .tex source at ' + tex + '. Write one (templates/cv-template.tex is the reference) and re-run.',
+      error:
+        'No .tex source at ' +
+        tex +
+        '. Write one (templates/cv-template.tex is the reference) and re-run.',
     };
   }
 
@@ -49,8 +52,12 @@ async function runCompileLatex(args?: JobArgs): Promise<JobResult> {
     });
     let stdoutBuf = '';
     let stderrBuf = '';
-    p.stdout?.on('data', (c: Buffer) => { stdoutBuf += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderrBuf += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdoutBuf += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderrBuf += c.toString();
+    });
     p.on('error', (err) => {
       reportServerError('compile-latex', 'Failed to spawn node', err, { category: 'task' });
       resolve({ ok: false, error: err.message });
@@ -72,7 +79,10 @@ async function runCompileLatex(args?: JobArgs): Promise<JobResult> {
           category: 'task',
           message: 'exit ' + code + (tail ? ': ' + tail : ''),
         });
-        resolve({ ok: false, error: 'generate-latex.mjs exited ' + code + (tail ? ': ' + tail : '') });
+        resolve({
+          ok: false,
+          error: 'generate-latex.mjs exited ' + code + (tail ? ': ' + tail : ''),
+        });
       }
     });
   });
@@ -81,7 +91,8 @@ async function runCompileLatex(args?: JobArgs): Promise<JobResult> {
 register({
   id: 'compile-latex',
   label: 'Compile LaTeX CV',
-  description: 'Compile a hand-written .tex CV (from data/profiles/{slug}/output/cv.tex) to PDF. Requires tectonic or pdflatex on PATH.',
+  description:
+    'Compile a hand-written .tex CV (from data/profiles/{slug}/output/cv.tex) to PDF. Requires tectonic or pdflatex on PATH.',
   category: 'apply',
   trigger: { type: 'manual' },
   allowManual: true,

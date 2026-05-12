@@ -33,7 +33,7 @@ async function runInterviewReminder(): Promise<JobResult> {
         message:
           (entry.stage ? entry.stage + ' · ' : '') +
           (entry.format ? entry.format + ' · ' : '') +
-          'Open the job\'s dossier + comp-preflight before the call. ' +
+          "Open the job's dossier + comp-preflight before the call. " +
           (entry.interviewers && entry.interviewers.length > 0
             ? 'Interviewer(s): ' + entry.interviewers.map((i) => i.name).join(', ')
             : ''),
@@ -51,7 +51,7 @@ async function runInterviewReminder(): Promise<JobResult> {
         message:
           (entry.stage ? entry.stage + ' · ' : '') +
           new Date(entry.scheduledAt).toLocaleString() +
-          '. Generate the pre-call dossier today if you haven\'t; mock the stage tonight.',
+          ". Generate the pre-call dossier today if you haven't; mock the stage tonight.",
         link: '/job/' + encodeURIComponent(entry.jobId),
         profileId: p.id,
       });
@@ -62,7 +62,8 @@ async function runInterviewReminder(): Promise<JobResult> {
 
   return {
     ok: true,
-    message: 'Reminders fired: ' + firedThirtyMin + '× T-30min + ' + firedTwentyFourHour + '× T-24h',
+    message:
+      'Reminders fired: ' + firedThirtyMin + '× T-30min + ' + firedTwentyFourHour + '× T-24h',
     meta: { firedThirtyMin, firedTwentyFourHour },
   };
 }
@@ -91,7 +92,11 @@ export function installInterviewReminderDaemon(): void {
   installed = true;
   // Initial tick after a short delay (let server finish booting).
   setTimeout(() => {
-    runInterviewReminder().catch(() => { /* logged inside */ });
-    setInterval(() => { runInterviewReminder().catch(() => {}); }, TICK_MS);
+    runInterviewReminder().catch(() => {
+      /* logged inside */
+    });
+    setInterval(() => {
+      runInterviewReminder().catch(() => {});
+    }, TICK_MS);
   }, 30_000);
 }

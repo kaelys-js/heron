@@ -26,6 +26,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
     var bonjourBrowser: BonjourBrowser?
+    var networkMonitor: NetworkMonitor?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Start the Bonjour browser early so backend-discovery can
@@ -33,6 +34,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // the JS bridge reads.
         self.bonjourBrowser = BonjourBrowser(serviceType: Brand.serviceType)
         self.bonjourBrowser?.start()
+
+        // Start the OS-level path monitor and forward state changes into
+        // the WebView so online-status.ts has authoritative truth.
+        self.networkMonitor = NetworkMonitor.shared
+        self.networkMonitor?.start { online in
+            CareerOpsNativePlugin.notifyNetStatus(online: online)
+        }
 
         // Register for background fetch — minimum interval is iOS-decided.
         // Even when registered every-15-min, Apple may delay based on

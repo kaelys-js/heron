@@ -55,8 +55,9 @@ const RETRY_DELAY_MS = 1500;
 async function withRetry(label, fn) {
   let lastErr;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    try { return await fn(); }
-    catch (err) {
+    try {
+      return await fn();
+    } catch (err) {
       lastErr = err;
       const msg = err?.message || '';
       // Don't retry on 4xx — they're permanent (404, 401, 403, 422 etc).
@@ -64,7 +65,7 @@ async function withRetry(label, fn) {
       // Last attempt: rethrow.
       if (attempt === MAX_RETRIES) throw err;
       // Backoff (1.5s, 3s) — easy on the upstream.
-      await new Promise(r => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));
+      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));
     }
   }
   throw lastErr;
@@ -167,9 +168,7 @@ function detectApi(company) {
 
   // -- SmartRecruiters: careers.smartrecruiters.com/{company} or
   //    jobs.smartrecruiters.com/{company} --
-  const srMatch = url.match(
-    /https?:\/\/(?:careers|jobs)\.smartrecruiters\.com\/([^/?#]+)/,
-  );
+  const srMatch = url.match(/https?:\/\/(?:careers|jobs)\.smartrecruiters\.com\/([^/?#]+)/);
   if (srMatch) {
     return {
       type: 'smartrecruiters',
@@ -190,9 +189,7 @@ function detectApi(company) {
   }
 
   // -- Personio: {tenant}.jobs.personio.{com|de|eu} — XML feed --
-  const personioMatch = url.match(
-    /https?:\/\/([a-zA-Z0-9_-]+)\.jobs\.personio\.(com|de|eu)/,
-  );
+  const personioMatch = url.match(/https?:\/\/([a-zA-Z0-9_-]+)\.jobs\.personio\.(com|de|eu)/);
   if (personioMatch) {
     const [, tenant, tld] = personioMatch;
     return {
@@ -235,7 +232,7 @@ function detectApi(company) {
 
 function parseGreenhouse(json, companyName) {
   const jobs = json.jobs || [];
-  return jobs.map(j => ({
+  return jobs.map((j) => ({
     title: j.title || '',
     url: j.absolute_url || '',
     company: companyName,
@@ -245,7 +242,7 @@ function parseGreenhouse(json, companyName) {
 
 function parseAshby(json, companyName) {
   const jobs = json.jobs || [];
-  return jobs.map(j => ({
+  return jobs.map((j) => ({
     title: j.title || '',
     url: j.jobUrl || '',
     company: companyName,
@@ -255,7 +252,7 @@ function parseAshby(json, companyName) {
 
 function parseLever(json, companyName) {
   if (!Array.isArray(json)) return [];
-  return json.map(j => ({
+  return json.map((j) => ({
     title: j.text || '',
     url: j.hostedUrl || '',
     company: companyName,
@@ -269,8 +266,8 @@ function parseWorkday(json, companyName, meta) {
   const postings = json?.jobPostings || [];
   const { tenant, pod, site } = meta || {};
   return postings
-    .filter(p => p.title && p.externalPath)
-    .map(p => ({
+    .filter((p) => p.title && p.externalPath)
+    .map((p) => ({
       title: p.title,
       url: `https://${tenant}.${pod}.myworkdayjobs.com/${site}${p.externalPath}`,
       company: companyName,
@@ -284,8 +281,8 @@ function parseSmartRecruiters(json, companyName, meta) {
   const postings = json?.content || [];
   const slug = meta?.company_slug || companyName;
   return postings
-    .filter(p => p.name && p.id)
-    .map(p => {
+    .filter((p) => p.name && p.id)
+    .map((p) => {
       const loc = p.location || {};
       const locStr = [loc.city, loc.region, loc.country?.toUpperCase()].filter(Boolean).join(', ');
       return {
@@ -302,8 +299,8 @@ function parseSmartRecruiters(json, companyName, meta) {
 function parseWorkable(json, companyName) {
   const jobs = Array.isArray(json?.jobs) ? json.jobs : [];
   return jobs
-    .filter(j => j.title && j.url)
-    .map(j => {
+    .filter((j) => j.title && j.url)
+    .map((j) => {
       const loc = [j.city, j.state, j.country].filter(Boolean).join(', ');
       return {
         title: j.title,
@@ -328,15 +325,21 @@ function parsePersonio(xml, companyName, meta) {
     if (!id || !name) continue;
     // Decode the most common HTML entities Personio emits in <name>
     const title = name
-      .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"').replace(/&#039;/g, "'");
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#039;/g, "'");
     // Primary <office> appears OUTSIDE <additionalOffices>. Strip the
     // additionalOffices block first so the primary-office regex doesn't
     // accidentally grab the first nested <office>.
-    const additionalBlock = pos.match(/<additionalOffices>([\s\S]*?)<\/additionalOffices>/)?.[1] || '';
+    const additionalBlock =
+      pos.match(/<additionalOffices>([\s\S]*?)<\/additionalOffices>/)?.[1] || '';
     const trunk = pos.replace(/<additionalOffices>[\s\S]*?<\/additionalOffices>/, '');
     const primary = trunk.match(/<office>([\s\S]*?)<\/office>/)?.[1]?.trim();
-    const additional = [...additionalBlock.matchAll(/<office>([^<]+)<\/office>/g)].map(m => m[1].trim());
+    const additional = [...additionalBlock.matchAll(/<office>([^<]+)<\/office>/g)].map((m) =>
+      m[1].trim(),
+    );
     const offices = [primary, ...additional].filter(Boolean);
     const location = [...new Set(offices)].join(' · ');
     out.push({
@@ -354,8 +357,8 @@ function parsePersonio(xml, companyName, meta) {
 function parseRecruitee(json, companyName) {
   const offers = Array.isArray(json?.offers) ? json.offers : [];
   return offers
-    .filter(o => o.title && o.careers_url)
-    .map(o => {
+    .filter((o) => o.title && o.careers_url)
+    .map((o) => {
       const loc = [o.city, o.country].filter(Boolean).join(', ');
       return {
         title: o.title,
@@ -377,13 +380,14 @@ function parseTeamtailor(json, companyName, meta) {
   else if (Array.isArray(json?.jobs)) raw = json.jobs;
 
   return raw
-    .map(j => {
+    .map((j) => {
       // Modern JSON:API shape
       if (j.attributes) {
         return {
           title: j.attributes.title || '',
-          url: j.links?.['careersite-job-url'] ||
-               (slug && j.id ? `https://${slug}.teamtailor.com/jobs/${j.id}` : ''),
+          url:
+            j.links?.['careersite-job-url'] ||
+            (slug && j.id ? `https://${slug}.teamtailor.com/jobs/${j.id}` : ''),
           company: companyName,
           location: j.attributes.location || '',
         };
@@ -393,10 +397,10 @@ function parseTeamtailor(json, companyName, meta) {
         title: j.title || j.text || '',
         url: j.hostedUrl || j.ad_url || j.careers_url || '',
         company: companyName,
-        location: typeof j.location === 'string' ? j.location : (j.region || ''),
+        location: typeof j.location === 'string' ? j.location : j.region || '',
       };
     })
-    .filter(o => o.title && o.url);
+    .filter((o) => o.title && o.url);
 }
 
 const PARSERS = {
@@ -447,8 +451,11 @@ async function fetchOne(apiSpec) {
         const ct = res.headers.get('content-type') || '';
         if (ct.includes('json')) return { json: await res.json() };
         const txt = await res.text();
-        try { return { json: JSON.parse(txt) }; }
-        catch { return { text: txt }; }
+        try {
+          return { json: JSON.parse(txt) };
+        } catch {
+          return { text: txt };
+        }
       } finally {
         clearTimeout(timer);
       }
@@ -473,7 +480,8 @@ async function fetchOne(apiSpec) {
       if (!json) break;
       if (!combined) {
         combined = { ...json, content: [] };
-        if (Number.isFinite(json.totalFound) && json.totalFound > 0) totalFromFirst = json.totalFound;
+        if (Number.isFinite(json.totalFound) && json.totalFound > 0)
+          totalFromFirst = json.totalFound;
       }
       const pageContent = json.content || [];
       combined.content.push(...pageContent);
@@ -530,13 +538,13 @@ async function fetchJson(url) {
 // ── Title filter ────────────────────────────────────────────────────
 
 function buildTitleFilter(titleFilter) {
-  const positive = (titleFilter?.positive || []).map(k => k.toLowerCase());
-  const negative = (titleFilter?.negative || []).map(k => k.toLowerCase());
+  const positive = (titleFilter?.positive || []).map((k) => k.toLowerCase());
+  const negative = (titleFilter?.negative || []).map((k) => k.toLowerCase());
 
   return (title) => {
     const lower = title.toLowerCase();
-    const hasPositive = positive.length === 0 || positive.some(k => lower.includes(k));
-    const hasNegative = negative.some(k => lower.includes(k));
+    const hasPositive = positive.length === 0 || positive.some((k) => lower.includes(k));
+    const hasNegative = negative.some((k) => lower.includes(k));
     return hasPositive && !hasNegative;
   };
 }
@@ -549,7 +557,8 @@ function loadSeenUrls() {
   // scan-history.tsv
   if (existsSync(SCAN_HISTORY_PATH)) {
     const lines = readFileSync(SCAN_HISTORY_PATH, 'utf-8').split('\n');
-    for (const line of lines.slice(1)) { // skip header
+    for (const line of lines.slice(1)) {
+      // skip header
       const url = line.split('\t')[0];
       if (url) seen.add(url);
     }
@@ -604,9 +613,10 @@ function appendToPipeline(offers) {
     // No Pendientes section — append at end before Procesadas
     const procIdx = text.indexOf('## Procesadas');
     const insertAt = procIdx === -1 ? text.length : procIdx;
-    const block = `\n${marker}\n\n` + offers.map(o =>
-      `- [ ] ${o.url} | ${o.company} | ${o.title}`
-    ).join('\n') + '\n\n';
+    const block =
+      `\n${marker}\n\n` +
+      offers.map((o) => `- [ ] ${o.url} | ${o.company} | ${o.title}`).join('\n') +
+      '\n\n';
     text = text.slice(0, insertAt) + block + text.slice(insertAt);
   } else {
     // Find the end of existing Pendientes content (next ## or end)
@@ -614,9 +624,8 @@ function appendToPipeline(offers) {
     const nextSection = text.indexOf('\n## ', afterMarker);
     const insertAt = nextSection === -1 ? text.length : nextSection;
 
-    const block = '\n' + offers.map(o =>
-      `- [ ] ${o.url} | ${o.company} | ${o.title}`
-    ).join('\n') + '\n';
+    const block =
+      '\n' + offers.map((o) => `- [ ] ${o.url} | ${o.company} | ${o.title}`).join('\n') + '\n';
     text = text.slice(0, insertAt) + block + text.slice(insertAt);
   }
 
@@ -629,9 +638,10 @@ function appendToScanHistory(offers, date) {
     writeFileSync(SCAN_HISTORY_PATH, 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\n', 'utf-8');
   }
 
-  const lines = offers.map(o =>
-    `${o.url}\t${date}\t${o.source}\t${o.title}\t${o.company}\tadded`
-  ).join('\n') + '\n';
+  const lines =
+    offers
+      .map((o) => `${o.url}\t${date}\t${o.source}\t${o.title}\t${o.company}\tadded`)
+      .join('\n') + '\n';
 
   appendFileSync(SCAN_HISTORY_PATH, lines, 'utf-8');
 }
@@ -700,7 +710,9 @@ async function main() {
     const api = detectApi(fakeCompany);
     if (!api) {
       console.error(`✗ No ATS detected for ${probeUrl}`);
-      console.error('  Supported: Greenhouse, Ashby, Lever, Workday, SmartRecruiters, Workable, Personio, Recruitee, Teamtailor');
+      console.error(
+        '  Supported: Greenhouse, Ashby, Lever, Workday, SmartRecruiters, Workable, Personio, Recruitee, Teamtailor',
+      );
       process.exit(2);
     }
     console.log(`Detected ATS: ${api.type}`);
@@ -741,25 +753,27 @@ async function main() {
   //
   // Anything not listed defaults to enabled. The CLI --source flag still
   // works as before for one-off runs.
-  const sourceToggles = (config.sources && typeof config.sources === 'object') ? config.sources : {};
+  const sourceToggles = config.sources && typeof config.sources === 'object' ? config.sources : {};
   const isSourceEnabled = (type) => sourceToggles[type] !== false;
 
   // 2. Filter to enabled companies with detectable APIs (+ optional --source filter
   //    and per-source portals.yml toggles)
   const targets = companies
-    .filter(c => c.enabled !== false)
-    .filter(c => !filterCompany || c.name.toLowerCase().includes(filterCompany))
-    .map(c => ({ ...c, _api: detectApi(c) }))
-    .filter(c => c._api !== null)
-    .filter(c => !filterSource || c._api.type === filterSource)
-    .filter(c => isSourceEnabled(c._api.type));
+    .filter((c) => c.enabled !== false)
+    .filter((c) => !filterCompany || c.name.toLowerCase().includes(filterCompany))
+    .map((c) => ({ ...c, _api: detectApi(c) }))
+    .filter((c) => c._api !== null)
+    .filter((c) => !filterSource || c._api.type === filterSource)
+    .filter((c) => isSourceEnabled(c._api.type));
 
-  const skippedCount = companies.filter(c => c.enabled !== false).length - targets.length;
+  const skippedCount = companies.filter((c) => c.enabled !== false).length - targets.length;
   const sourcesSkipped = Object.entries(sourceToggles)
     .filter(([, v]) => v === false)
     .map(([k]) => k);
 
-  console.log(`Scanning ${targets.length} companies via API (${skippedCount} skipped — no API detected${sourcesSkipped.length ? ` or source disabled: ${sourcesSkipped.join(', ')}` : ''})`);
+  console.log(
+    `Scanning ${targets.length} companies via API (${skippedCount} skipped — no API detected${sourcesSkipped.length ? ` or source disabled: ${sourcesSkipped.join(', ')}` : ''})`,
+  );
   if (dryRun) console.log('(dry run — no files will be written)\n');
 
   // 3. Load dedup sets
@@ -774,7 +788,7 @@ async function main() {
   const newOffers = [];
   const errors = [];
 
-  const tasks = targets.map(company => async () => {
+  const tasks = targets.map((company) => async () => {
     const apiSpec = company._api;
     const { type, meta } = apiSpec;
     try {
@@ -850,7 +864,7 @@ async function main() {
   console.log('→ Share results and get help: https://discord.gg/8pRpHETxa4');
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error('Fatal:', err.message);
   process.exit(1);
 });

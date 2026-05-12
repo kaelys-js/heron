@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { page } from '$app/state';
-  import { goto } from '$app/navigation';
-  import { Button } from '$lib/components/ui/button';
-  import * as Card from '$lib/components/ui/card';
-  import { Briefcase as JobIcon, ArrowLeft, RotateCw } from '@lucide/svelte';
-  import { docTitle } from '$lib/config/branding';
+import { page } from '$app/state';
+import { goto } from '$app/navigation';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import { Briefcase as JobIcon, ArrowLeft, RotateCw } from '@lucide/svelte';
+import { docTitle } from '$lib/config/branding';
 
-  let status = $derived(page.status);
-  let err = $derived(page.error);
-  let isNotFound = $derived(status === 404);
+let status = $derived(page.status);
+let err = $derived(page.error);
+let isNotFound = $derived(status === 404);
 </script>
 
 <svelte:head>

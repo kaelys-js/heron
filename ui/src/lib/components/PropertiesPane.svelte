@@ -1,112 +1,158 @@
 <script lang="ts">
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Button } from '$lib/components/ui/button';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Separator } from '$lib/components/ui/separator';
-  import {
-    CircleDashed, Star, Folder, ShieldCheck, MapPin, Building2, Hash,
-    ChevronDown, Check, ExternalLink, Wifi, Building, Globe, FileBadge2, FileText, Copy,
-  } from '@lucide/svelte';
-  import CheckMark from './CheckMark.svelte';
-  import { toast } from 'svelte-sonner';
-  import type { Job, Status, WorkMode } from '$lib/types';
-  import { BG_TINTS, STATUS_ORDER } from '$lib/types';
-  import { cn } from '$lib/utils';
+import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import { Separator } from '$lib/components/ui/separator';
+import {
+  CircleDashed,
+  Star,
+  Folder,
+  ShieldCheck,
+  MapPin,
+  Building2,
+  Hash,
+  ChevronDown,
+  Check,
+  ExternalLink,
+  Wifi,
+  Building,
+  Globe,
+  FileBadge2,
+  FileText,
+  Copy,
+} from '@lucide/svelte';
+import CheckMark from './CheckMark.svelte';
+import { toast } from 'svelte-sonner';
+import type { Job, Status, WorkMode } from '$lib/types';
+import { BG_TINTS, STATUS_ORDER } from '$lib/types';
+import { cn } from '$lib/utils';
 
-  let { job, onStatusChange }: { job: Job; onStatusChange: (newStatus: string) => void } = $props();
+let { job, onStatusChange }: { job: Job; onStatusChange: (newStatus: string) => void } = $props();
 
-  let copyState = $state<'idle' | 'copied'>('idle');
-  async function copyUrl() {
-    if (!job.url) return;
-    try {
-      await navigator.clipboard.writeText(job.url);
-      copyState = 'copied';
-      toast.success('URL copied');
-      setTimeout(() => { copyState = 'idle'; }, 1500);
-    } catch {
-      toast.error('Copy failed', { description: 'Browser blocked clipboard access.' });
-    }
+let copyState = $state<'idle' | 'copied'>('idle');
+async function copyUrl() {
+  if (!job.url) return;
+  try {
+    await navigator.clipboard.writeText(job.url);
+    copyState = 'copied';
+    toast.success('URL copied');
+    setTimeout(() => {
+      copyState = 'idle';
+    }, 1500);
+  } catch {
+    toast.error('Copy failed', { description: 'Browser blocked clipboard access.' });
   }
+}
 
-  let scoreClass = $derived(
-    job.score == null ? 'bg-muted text-muted-foreground border-border'
-    : job.score >= 4 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
-    : job.score >= 3 ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
-    : 'bg-red-500/10 text-red-300 border-red-500/30'
-  );
+let scoreClass = $derived(
+  job.score == null
+    ? 'bg-muted text-muted-foreground border-border'
+    : job.score >= 4
+      ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
+      : job.score >= 3
+        ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
+        : 'bg-red-500/10 text-red-300 border-red-500/30',
+);
 
-  // Defensive hostname parse — never crash the page over a malformed URL
-  let hostname = $derived.by(() => {
-    if (!job.url) return '';
-    try { return new URL(job.url).hostname.replace(/^www\./, ''); }
-    catch { return job.url.length > 28 ? job.url.slice(0, 28) + '…' : job.url; }
-  });
+// Defensive hostname parse — never crash the page over a malformed URL
+let hostname = $derived.by(() => {
+  if (!job.url) return '';
+  try {
+    return new URL(job.url).hostname.replace(/^www\./, '');
+  } catch {
+    return job.url.length > 28 ? job.url.slice(0, 28) + '…' : job.url;
+  }
+});
 
-  const STATUS_DOTS: Record<Status, string> = {
-    New: 'bg-zinc-400',
-    Scoring: 'bg-blue-400',
-    Scored: 'bg-cyan-400',
-    Ready: 'bg-emerald-400',
-    Queued: 'bg-fuchsia-400',
-    Applying: 'bg-blue-400',
-    Applied: 'bg-violet-400',
-    Screened: 'bg-amber-400',
-    PhoneScreen: 'bg-amber-300',
-    Technical: 'bg-orange-400',
-    TakeHome: 'bg-yellow-400',
-    Onsite: 'bg-orange-500',
-    Final: 'bg-red-400',
-    Interview: 'bg-orange-400',
-    Offer: 'bg-green-400',
-    Rejected: 'bg-red-400',
-    Closed: 'bg-zinc-500',
-    ManualApplyNeeded: 'bg-amber-500',
-  };
-  const STATUS_HINT: Record<Status, string> = {
-    New: 'Just discovered',
-    Scoring: 'Gemini is processing',
-    Scored: 'Has a Gemini score',
-    Ready: 'Eval done · CV PDF ready · go apply',
-    Queued: 'Staged for batch send',
-    Applying: 'Auto-apply running',
-    Applied: 'Application sent',
-    Screened: 'Recruiter responded',
-    PhoneScreen: 'Phone screen scheduled',
-    Technical: 'Technical interview · algos / system design / coding',
-    TakeHome: 'Take-home assignment in progress',
-    Onsite: 'Onsite / panel loop',
-    Final: 'Final round · hiring committee',
-    Interview: 'Active interview process',
-    Offer: 'Offer in hand',
-    Rejected: 'Closed by company',
-    Closed: 'Closed by you',
-    ManualApplyNeeded: 'Auto-apply blocked — finish by hand',
-  };
+const STATUS_DOTS: Record<Status, string> = {
+  New: 'bg-zinc-400',
+  Scoring: 'bg-blue-400',
+  Scored: 'bg-cyan-400',
+  Ready: 'bg-emerald-400',
+  Queued: 'bg-fuchsia-400',
+  Applying: 'bg-blue-400',
+  Applied: 'bg-violet-400',
+  Screened: 'bg-amber-400',
+  PhoneScreen: 'bg-amber-300',
+  Technical: 'bg-orange-400',
+  TakeHome: 'bg-yellow-400',
+  Onsite: 'bg-orange-500',
+  Final: 'bg-red-400',
+  Interview: 'bg-orange-400',
+  Offer: 'bg-green-400',
+  Rejected: 'bg-red-400',
+  Closed: 'bg-zinc-500',
+  ManualApplyNeeded: 'bg-amber-500',
+};
+const STATUS_HINT: Record<Status, string> = {
+  New: 'Just discovered',
+  Scoring: 'Gemini is processing',
+  Scored: 'Has a Gemini score',
+  Ready: 'Eval done · CV PDF ready · go apply',
+  Queued: 'Staged for batch send',
+  Applying: 'Auto-apply running',
+  Applied: 'Application sent',
+  Screened: 'Recruiter responded',
+  PhoneScreen: 'Phone screen scheduled',
+  Technical: 'Technical interview · algos / system design / coding',
+  TakeHome: 'Take-home assignment in progress',
+  Onsite: 'Onsite / panel loop',
+  Final: 'Final round · hiring committee',
+  Interview: 'Active interview process',
+  Offer: 'Offer in hand',
+  Rejected: 'Closed by company',
+  Closed: 'Closed by you',
+  ManualApplyNeeded: 'Auto-apply blocked — finish by hand',
+};
 
-  // Work-mode visual + tip
-  const WORK_MODE_UI: Record<WorkMode, { label: string; icon: any; tint: string; tip: string }> = {
-    remote: { label: 'Remote', icon: Wifi, tint: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/40', tip: 'Fully remote' },
-    hybrid: { label: 'Hybrid', icon: Building, tint: 'text-amber-300 bg-amber-500/10 border-amber-500/40', tip: 'Hybrid — some office presence required' },
-    onsite: { label: 'On-site', icon: Building, tint: 'text-red-300 bg-red-500/10 border-red-500/40', tip: 'On-site — must work from a specific location' },
-    unknown: { label: 'Unclear', icon: Globe, tint: 'text-muted-foreground bg-muted border-border/50', tip: 'Work mode not explicitly stated' },
-  };
-  let workModeUi = $derived(WORK_MODE_UI[job.workMode ?? 'unknown']);
-  let WorkModeIcon = $derived(workModeUi.icon);
+// Work-mode visual + tip
+const WORK_MODE_UI: Record<WorkMode, { label: string; icon: any; tint: string; tip: string }> = {
+  remote: {
+    label: 'Remote',
+    icon: Wifi,
+    tint: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/40',
+    tip: 'Fully remote',
+  },
+  hybrid: {
+    label: 'Hybrid',
+    icon: Building,
+    tint: 'text-amber-300 bg-amber-500/10 border-amber-500/40',
+    tip: 'Hybrid — some office presence required',
+  },
+  onsite: {
+    label: 'On-site',
+    icon: Building,
+    tint: 'text-red-300 bg-red-500/10 border-red-500/40',
+    tip: 'On-site — must work from a specific location',
+  },
+  unknown: {
+    label: 'Unclear',
+    icon: Globe,
+    tint: 'text-muted-foreground bg-muted border-border/50',
+    tip: 'Work mode not explicitly stated',
+  },
+};
+let workModeUi = $derived(WORK_MODE_UI[job.workMode ?? 'unknown']);
+let WorkModeIcon = $derived(workModeUi.icon);
 
-  // ---- Property labels with explanatory tooltips ----
-  type PropDef = { key: string; label: string; icon: any; tip: string };
-  const PROP_TIPS: Record<string, string> = {
-    Status: 'Current pipeline stage. Drives which column the job appears in and which actions are available.',
-    Score: 'Fit score (0–5). Above 4 means a deep Claude evaluation thinks you are a strong fit; ~ prefix means Gemini first-pass only.',
-    'BG risk': 'Background-check exposure. LOW = small startup unlikely to deeply screen; MEDIUM = standard US/Canadian Checkr; HIGH = SOX/FINRA-grade; BLOCKED = explicit clearance/no-record requirement.',
-    Company: 'Company name extracted from the posting.',
-    Location: 'Location requirement from the posting (city/region or "Remote").',
-    'Work mode': 'Whether the role is fully remote, hybrid, or on-site. Inferred from the posting; tooltip shows the raw text.',
-    Source: 'The original job-posting URL. Click to open in a new tab.',
-    Report: 'Filename of the Claude-generated deep-evaluation report (in reports/).',
-    'CV PDF': 'A tailored CV PDF has been generated for this job (in output/).',
-  };
+// ---- Property labels with explanatory tooltips ----
+type PropDef = { key: string; label: string; icon: any; tip: string };
+const PROP_TIPS: Record<string, string> = {
+  Status:
+    'Current pipeline stage. Drives which column the job appears in and which actions are available.',
+  Score:
+    'Fit score (0–5). Above 4 means a deep Claude evaluation thinks you are a strong fit; ~ prefix means Gemini first-pass only.',
+  'BG risk':
+    'Background-check exposure. LOW = small startup unlikely to deeply screen; MEDIUM = standard US/Canadian Checkr; HIGH = SOX/FINRA-grade; BLOCKED = explicit clearance/no-record requirement.',
+  Company: 'Company name extracted from the posting.',
+  Location: 'Location requirement from the posting (city/region or "Remote").',
+  'Work mode':
+    'Whether the role is fully remote, hybrid, or on-site. Inferred from the posting; tooltip shows the raw text.',
+  Source: 'The original job-posting URL. Click to open in a new tab.',
+  Report: 'Filename of the Claude-generated deep-evaluation report (in reports/).',
+  'CV PDF': 'A tailored CV PDF has been generated for this job (in output/).',
+};
 </script>
 
 <aside class="w-72 flex-shrink-0 border-l bg-muted/10 overflow-y-auto">

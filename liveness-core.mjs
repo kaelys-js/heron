@@ -16,14 +16,9 @@ const HARD_EXPIRED_PATTERNS = [
   /offre (expirée|n'est plus disponible)/i,
 ];
 
-const LISTING_PAGE_PATTERNS = [
-  /\d+\s+jobs?\s+found/i,
-  /search for jobs page is loaded/i,
-];
+const LISTING_PAGE_PATTERNS = [/\d+\s+jobs?\s+found/i, /search for jobs page is loaded/i];
 
-const EXPIRED_URL_PATTERNS = [
-  /[?&]error=true/i,
-];
+const EXPIRED_URL_PATTERNS = [/[?&]error=true/i];
 
 const APPLY_PATTERNS = [
   /\bapply\b/i,
@@ -46,7 +41,12 @@ function hasApplyControl(controls = []) {
   return controls.some((control) => APPLY_PATTERNS.some((pattern) => pattern.test(control)));
 }
 
-export function classifyLiveness({ status = 0, finalUrl = '', bodyText = '', applyControls = [] } = {}) {
+export function classifyLiveness({
+  status = 0,
+  finalUrl = '',
+  bodyText = '',
+  applyControls = [],
+} = {}) {
   if (status === 404 || status === 410) {
     return { result: 'expired', reason: `HTTP ${status}` };
   }

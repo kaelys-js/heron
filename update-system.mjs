@@ -144,9 +144,10 @@ function gitStatusEntries() {
   const status = git('status', '--porcelain');
   if (!status) return [];
 
-  return status.split('\n')
+  return status
+    .split('\n')
     .filter(Boolean)
-    .map(line => ({
+    .map((line) => ({
       code: line.slice(0, 2),
       path: line.slice(3),
     }));
@@ -186,7 +187,7 @@ async function check() {
       fetch(RAW_VERSION_URL, { signal: controller.signal }),
       fetch(RELEASES_API, {
         headers: {
-          'Accept': 'application/vnd.github.v3+json',
+          Accept: 'application/vnd.github.v3+json',
           'User-Agent': 'career-ops-update-checker',
         },
         signal: controller.signal,
@@ -225,8 +226,7 @@ async function check() {
     // unparseable" — the latter shouldn't be silenced as offline since the
     // network is actually fine.
     const bothNetworkFailed =
-      versionResult.status !== 'fulfilled' &&
-      releaseResult.status !== 'fulfilled';
+      versionResult.status !== 'fulfilled' && releaseResult.status !== 'fulfilled';
     const status = bothNetworkFailed ? 'offline' : 'no-remote-version';
     console.log(JSON.stringify({ status, local }));
     return;
@@ -246,19 +246,21 @@ async function check() {
     return;
   }
 
-  console.log(JSON.stringify({
-    status: 'update-available',
-    local,
-    remote,
-    changelog: changelog.slice(0, 500),
-  }));
+  console.log(
+    JSON.stringify({
+      status: 'update-available',
+      local,
+      remote,
+      changelog: changelog.slice(0, 500),
+    }),
+  );
 }
 
 // ── APPLY ───────────────────────────────────────────────────────
 
 async function apply() {
   const local = localVersion();
-  const initialStatusPaths = new Set(gitStatusEntries().map(entry => entry.path));
+  const initialStatusPaths = new Set(gitStatusEntries().map((entry) => entry.path));
 
   // P12: honour the .update-dismissed flag here too — not just on check.
   // A user who explicitly dismissed an update shouldn't have it apply on
@@ -268,14 +270,18 @@ async function apply() {
   const dismissFile = join(ROOT, '.update-dismissed');
   const hasForce = process.argv.slice(3).includes('--force');
   if (existsSync(dismissFile) && !hasForce) {
-    console.error('Update was dismissed. Run with --force to apply anyway, or delete .update-dismissed to clear the flag.');
+    console.error(
+      'Update was dismissed. Run with --force to apply anyway, or delete .update-dismissed to clear the flag.',
+    );
     process.exit(2);
   }
 
   // Check for lock
   const lockFile = join(ROOT, '.update-lock');
   if (existsSync(lockFile)) {
-    console.error('Update already in progress (.update-lock exists). If stuck, delete it manually.');
+    console.error(
+      'Update already in progress (.update-lock exists). If stuck, delete it manually.',
+    );
     process.exit(1);
   }
 
@@ -370,7 +376,6 @@ async function apply() {
     console.log(`\nUpdate complete: v${local} → v${remote}`);
     console.log(`Updated ${updated.length} system paths.`);
     console.log(`Rollback available: node update-system.mjs rollback`);
-
   } finally {
     // Remove lock
     if (existsSync(lockFile)) unlinkSync(lockFile);
@@ -382,8 +387,16 @@ async function apply() {
 function rollback() {
   // Find most recent backup branch
   try {
-    const branches = git('for-each-ref', '--sort=-committerdate', '--format=%(refname:short)', 'refs/heads/backup-pre-update-*');
-    const branchList = branches.split('\n').map(b => b.trim()).filter(Boolean);
+    const branches = git(
+      'for-each-ref',
+      '--sort=-committerdate',
+      '--format=%(refname:short)',
+      'refs/heads/backup-pre-update-*',
+    );
+    const branchList = branches
+      .split('\n')
+      .map((b) => b.trim())
+      .filter(Boolean);
 
     if (branchList.length === 0) {
       console.error('No backup branches found. Nothing to rollback.');
@@ -417,7 +430,9 @@ function rollback() {
 
 function dismiss() {
   writeFileSync(join(ROOT, '.update-dismissed'), new Date().toISOString());
-  console.log('Update check dismissed. Run "node update-system.mjs check" or say "check for updates" to re-enable.');
+  console.log(
+    'Update check dismissed. Run "node update-system.mjs check" or say "check for updates" to re-enable.',
+  );
 }
 
 // ── MAIN ────────────────────────────────────────────────────────
@@ -425,10 +440,18 @@ function dismiss() {
 const cmd = process.argv[2] || 'check';
 
 switch (cmd) {
-  case 'check': await check(); break;
-  case 'apply': await apply(); break;
-  case 'rollback': rollback(); break;
-  case 'dismiss': dismiss(); break;
+  case 'check':
+    await check();
+    break;
+  case 'apply':
+    await apply();
+    break;
+  case 'rollback':
+    rollback();
+    break;
+  case 'dismiss':
+    dismiss();
+    break;
   default:
     console.log('Usage: node update-system.mjs [check|apply|rollback|dismiss]');
     process.exit(1);

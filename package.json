@@ -2,6 +2,7 @@
   "name": "career-ops",
   "version": "1.6.0",
   "description": "AI-powered job search pipeline",
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "doctor": "node doctor.mjs",
     "verify": "node verify-pipeline.mjs",
@@ -19,15 +20,22 @@
     "native": "node scripts/native/help.mjs",
     "setup:native": "node scripts/native/setup.mjs",
     "setup:secrets": "node scripts/native/setup.mjs",
-    "dev": "cd ui && pnpm dev",
+    "dev": "turbo dev --filter=ui",
     "dev:desktop": "node scripts/native/dev-desktop.mjs",
     "dev:ios": "node scripts/native/dev-ios.mjs",
+    "build": "turbo build",
+    "build:static": "turbo build:static",
     "build:desktop": "node scripts/native/build-desktop.mjs",
     "build:ios": "node scripts/native/build-ios-testflight.mjs",
     "icons": "node scripts/native/icons.mjs",
     "release": "node scripts/native/release.mjs",
     "brand:apply": "node scripts/native/apply-brand.mjs",
-    "verify:capacitor": "node verify-capacitor.mjs"
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "check": "turbo check",
+    "verify:capacitor": "node verify-capacitor.mjs",
+    "reset:data": "node scripts/reset-data.mjs",
+    "prepare": "lefthook install || true"
   },
   "keywords": [
     "ai",
@@ -48,5 +56,9 @@
     "dotenv": "^16.4.5",
     "js-yaml": "^4.1.1",
     "playwright": "^1.58.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "turbo": "^2.9.12"
   }
 }

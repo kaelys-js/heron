@@ -30,11 +30,11 @@ import { notify } from './notifications';
 
 export type ReportLevel = 'info' | 'warn' | 'error';
 export type ReportContext = {
-  source?: string;          // module / component / route that raised
-  jobId?: string;           // if relevant
-  route?: string;           // current url path
-  userAction?: string;      // what the user was doing
-  data?: Record<string, unknown>;  // extra diagnostic info
+  source?: string; // module / component / route that raised
+  jobId?: string; // if relevant
+  route?: string; // current url path
+  userAction?: string; // what the user was doing
+  data?: Record<string, unknown>; // extra diagnostic info
 };
 
 type QueuedReport = {
@@ -68,9 +68,10 @@ export function installErrorReporter(initialBackendUrl?: string): void {
   });
   // Unhandled promise rejections
   window.addEventListener('unhandledrejection', (e) => {
-    const reason = e.reason instanceof Error
-      ? e.reason
-      : new Error(typeof e.reason === 'string' ? e.reason : JSON.stringify(e.reason));
+    const reason =
+      e.reason instanceof Error
+        ? e.reason
+        : new Error(typeof e.reason === 'string' ? e.reason : JSON.stringify(e.reason));
     void reportError(reason, { source: 'unhandledrejection', route: location?.pathname });
   });
   // Electron main-process errors arrive via IPC channel `<brand>:main-error`
@@ -79,12 +80,17 @@ export function installErrorReporter(initialBackendUrl?: string): void {
   const w = window as any;
   if (w?.electronAPI?.on) {
     try {
-      w.electronAPI.on(`${BRAND.name}:main-error`, (payload: { message: string; stack?: string; source?: string }) => {
-        const err = new Error(payload.message);
-        if (payload.stack) err.stack = payload.stack;
-        void reportError(err, { source: payload.source ?? 'electron-main' });
-      });
-    } catch { /* preload not loaded yet */ }
+      w.electronAPI.on(
+        `${BRAND.name}:main-error`,
+        (payload: { message: string; stack?: string; source?: string }) => {
+          const err = new Error(payload.message);
+          if (payload.stack) err.stack = payload.stack;
+          void reportError(err, { source: payload.source ?? 'electron-main' });
+        },
+      );
+    } catch {
+      /* preload not loaded yet */
+    }
   }
   // Try to flush any leftover errors from a prior session
   void flushQueue();
@@ -96,8 +102,12 @@ export async function reportError(
   context: ReportContext = {},
   level: ReportLevel = 'error',
 ): Promise<void> {
-  const e = err instanceof Error ? err : new Error(typeof err === 'string' ? err : JSON.stringify(err));
-  const ctx = { ...context, route: context.route ?? (typeof location !== 'undefined' ? location.pathname : undefined) };
+  const e =
+    err instanceof Error ? err : new Error(typeof err === 'string' ? err : JSON.stringify(err));
+  const ctx = {
+    ...context,
+    route: context.route ?? (typeof location !== 'undefined' ? location.pathname : undefined),
+  };
 
   // 1. Console always
   console.error(`[${BRAND.name}:${level}]`, e, ctx);
@@ -109,7 +119,9 @@ export async function reportError(
         description: ctx.source ? `Source: ${ctx.source}` : undefined,
         duration: 8000,
       });
-    } catch { /* svelte-sonner not mounted yet */ }
+    } catch {
+      /* svelte-sonner not mounted yet */
+    }
   }
 
   const payload: QueuedReport = {
@@ -194,7 +206,9 @@ function queueLocally(payload: QueuedReport): void {
     // Cap queue at 50 entries — drop oldest
     if (queue.length > 50) queue.splice(0, queue.length - 50);
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
-  } catch { /* localStorage full / disabled */ }
+  } catch {
+    /* localStorage full / disabled */
+  }
 }
 
 async function flushQueue(): Promise<void> {
@@ -216,7 +230,9 @@ async function flushQueue(): Promise<void> {
         attempts: 0,
       });
     }
-  } catch { /* no native bridge available */ }
+  } catch {
+    /* no native bridge available */
+  }
 
   // Then the localStorage retry queue
   if (typeof localStorage === 'undefined') return;
@@ -224,7 +240,9 @@ async function flushQueue(): Promise<void> {
   try {
     const raw = localStorage.getItem(QUEUE_KEY);
     if (raw) queue = JSON.parse(raw);
-  } catch { return; }
+  } catch {
+    return;
+  }
   if (queue.length === 0) return;
 
   const remaining: QueuedReport[] = [];
@@ -237,7 +255,9 @@ async function flushQueue(): Promise<void> {
   try {
     if (remaining.length === 0) localStorage.removeItem(QUEUE_KEY);
     else localStorage.setItem(QUEUE_KEY, JSON.stringify(remaining));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 /** For unit-test injection. */

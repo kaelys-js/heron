@@ -37,7 +37,9 @@ async function runFollowupCadence(): Promise<JobResult> {
       meta: { ...meta },
     };
   } catch (err) {
-    reportServerError('followup-cadence', 'Cadence refresh failed', err, { category: 'application' });
+    reportServerError('followup-cadence', 'Cadence refresh failed', err, {
+      category: 'application',
+    });
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
 }

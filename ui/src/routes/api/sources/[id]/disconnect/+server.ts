@@ -30,7 +30,8 @@ export const POST = wrap('sources-disconnect', async ({ params }: { params: { id
     } catch (err) {
       // Surface the error but continue — state file reset is the primary effect.
       logEvent('sources', 'Could not remove ' + stateDir, {
-        level: 'warn', category: 'system',
+        level: 'warn',
+        category: 'system',
         message: err instanceof Error ? err.message : String(err),
       });
     }

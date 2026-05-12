@@ -7,7 +7,7 @@ import { getActiveProfileId, getProfile } from '$lib/server/profiles';
 
 export async function load({ url }: { url: URL }) {
   const queryProfile = url.searchParams.get('profile');
-  const profileId = (queryProfile && getProfile(queryProfile)) ? queryProfile : getActiveProfileId();
+  const profileId = queryProfile && getProfile(queryProfile) ? queryProfile : getActiveProfileId();
   const sources = listSourcesWithState();
   // True when at least one non-trivial source is already connected — used
   // to render an "Already connected from previous profile" hint on the 2nd+

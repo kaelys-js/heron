@@ -22,8 +22,21 @@
  *   6. Auto-update via electron-updater + GitHub Releases.
  */
 import type { CapacitorElectronConfig } from '@capacitor-community/electron';
-import { getCapacitorElectronConfig, setupElectronDeepLinking } from '@capacitor-community/electron';
-import { app, BrowserWindow, Menu, Notification, Tray, dialog, shell, ipcMain } from 'electron';
+import {
+  getCapacitorElectronConfig,
+  setupElectronDeepLinking,
+} from '@capacitor-community/electron';
+import {
+  app,
+  BrowserWindow,
+  Menu,
+  Notification,
+  Tray,
+  dialog,
+  shell,
+  ipcMain,
+  net,
+} from 'electron';
 import electronIsDev from 'electron-is-dev';
 import unhandled from 'electron-unhandled';
 import { autoUpdater } from 'electron-updater';
@@ -54,7 +67,9 @@ unhandled({
           source: 'electron-main',
         });
       }
-    } catch { /* swallow secondary errors */ }
+    } catch {
+      /* swallow secondary errors */
+    }
   },
   showDialog: false, // we route to the in-app Issues system instead
 });
@@ -102,12 +117,18 @@ function findFreePort(): Promise<number> {
 function probeHealth(url: string, timeoutMs = 1000): Promise<boolean> {
   return new Promise((resolve) => {
     const u = new URL('/api/health', url);
-    const req = httpRequest({ hostname: u.hostname, port: u.port, path: u.pathname, method: 'GET', timeout: timeoutMs }, (res) => {
-      resolve((res.statusCode ?? 0) >= 200 && res.statusCode! < 300);
-      res.resume();
-    });
+    const req = httpRequest(
+      { hostname: u.hostname, port: u.port, path: u.pathname, method: 'GET', timeout: timeoutMs },
+      (res) => {
+        resolve((res.statusCode ?? 0) >= 200 && res.statusCode! < 300);
+        res.resume();
+      },
+    );
     req.on('error', () => resolve(false));
-    req.on('timeout', () => { req.destroy(); resolve(false); });
+    req.on('timeout', () => {
+      req.destroy();
+      resolve(false);
+    });
     req.end();
   });
 }
@@ -136,13 +157,20 @@ async function startEmbeddedServer(): Promise<string | undefined> {
   }
   const buildEntry = path.join(__dirname, '..', '..', 'app', 'server', 'index.js');
   if (!existsSync(buildEntry)) {
-    console.warn(`[main] embedded server entry not found at ${buildEntry} — falling back to resolver discovery`);
+    console.warn(
+      `[main] embedded server entry not found at ${buildEntry} — falling back to resolver discovery`,
+    );
     return undefined;
   }
   const port = await findFreePort();
   state.serverPort = port;
   state.serverProcess = fork(buildEntry, [], {
-    env: { ...process.env, PORT: String(port), HOST: '127.0.0.1', ORIGIN: `http://127.0.0.1:${port}` },
+    env: {
+      ...process.env,
+      PORT: String(port),
+      HOST: '127.0.0.1',
+      ORIGIN: `http://127.0.0.1:${port}`,
+    },
     silent: false,
     stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
   });
@@ -150,7 +178,10 @@ async function startEmbeddedServer(): Promise<string | undefined> {
     console.warn(`[main] embedded server exited with code ${code}`);
     state.serverProcess = undefined;
     if (code !== 0 && state.mainWindow && !state.mainWindow.isDestroyed()) {
-      dialog.showErrorBox(`${BRAND.displayName} backend stopped`, `The embedded server exited unexpectedly (code ${code}). Restart the app.`);
+      dialog.showErrorBox(
+        `${BRAND.displayName} backend stopped`,
+        `The embedded server exited unexpectedly (code ${code}). Restart the app.`,
+      );
     }
   });
   const url = `http://127.0.0.1:${port}`;
@@ -213,23 +244,32 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
 
   // Inject embedded URL into the WebView via window.__CAREER_OPS__
   if (state.serverUrl && state.mainWindow) {
-    state.mainWindow.webContents.executeJavaScript(`window.__CAREER_OPS__ = { embeddedUrl: ${JSON.stringify(state.serverUrl)} };`).catch(() => {});
+    state.mainWindow.webContents
+      .executeJavaScript(
+        `window.__CAREER_OPS__ = { embeddedUrl: ${JSON.stringify(state.serverUrl)} };`,
+      )
+      .catch(() => {});
   }
 
   // 4. Full app menu
-  Menu.setApplicationMenu(buildAppMenu({
-    onPreferences: () => state.mainWindow?.webContents.loadURL((state.serverUrl ?? 'http://localhost:5173') + '/settings'),
-    onAbout: () => {
-      dialog.showMessageBox({
-        type: 'info',
-        title: `About ${BRAND.displayName}`,
-        message: BRAND.displayName,
-        detail: `Version: ${app.getVersion()}\nBundle: ${BRAND.bundleId}\nBackend: ${state.serverUrl ?? 'remote'}`,
-      });
-    },
-    onOpenDocs: () => shell.openExternal(BRAND.repoUrl),
-    onReportBug: () => shell.openExternal(`${BRAND.issuesUrl}/new`),
-  }));
+  Menu.setApplicationMenu(
+    buildAppMenu({
+      onPreferences: () =>
+        state.mainWindow?.webContents.loadURL(
+          (state.serverUrl ?? 'http://localhost:5173') + '/settings',
+        ),
+      onAbout: () => {
+        dialog.showMessageBox({
+          type: 'info',
+          title: `About ${BRAND.displayName}`,
+          message: BRAND.displayName,
+          detail: `Version: ${app.getVersion()}\nBundle: ${BRAND.bundleId}\nBackend: ${state.serverUrl ?? 'remote'}`,
+        });
+      },
+      onOpenDocs: () => shell.openExternal(BRAND.repoUrl),
+      onReportBug: () => shell.openExternal(`${BRAND.issuesUrl}/new`),
+    }),
+  );
 
   // 5. Tray
   state.tray = new CareerOpsTray({
@@ -244,6 +284,20 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
 
   // 6. Auto-update
   autoUpdater.checkForUpdatesAndNotify();
+
+  // 7. Network status monitoring — Electron exposes `net.online` as a
+  //    static getter that reflects Chromium's connectivity heuristic.
+  //    We poll it every 5s and push changes to the renderer; the
+  //    online-status store in the WebView listens for `<brand>:net-status`.
+  let lastOnline = net.isOnline();
+  setInterval(() => {
+    const now = net.isOnline();
+    if (now === lastOnline) return;
+    lastOnline = now;
+    try {
+      state.mainWindow?.webContents.send(`${BRAND.name}:net-status`, { online: now });
+    } catch {}
+  }, 5000);
 })();
 
 app.on('window-all-closed', () => {

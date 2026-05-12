@@ -26,36 +26,154 @@
 
 // Common stopwords we drop before scoring — these are noise for ATS matching.
 const STOPWORDS = new Set([
-  'a', 'an', 'and', 'are', 'as', 'at', 'be', 'been', 'being',
-  'but', 'by', 'do', 'does', 'doing', 'done', 'for', 'from',
-  'had', 'has', 'have', 'he', 'her', 'here', 'his', 'how', 'i',
-  'in', 'into', 'is', 'it', 'its', 'just', 'me', 'more', 'most',
-  'my', 'no', 'nor', 'not', 'of', 'on', 'once', 'one', 'only',
-  'or', 'other', 'our', 'out', 'over', 'own', 'same', 'she',
-  'should', 'so', 'some', 'such', 'than', 'that', 'the', 'their',
-  'them', 'then', 'there', 'these', 'they', 'this', 'those',
-  'through', 'to', 'too', 'up', 'us', 'very', 'was', 'we', 'were',
-  'what', 'when', 'where', 'which', 'who', 'why', 'will', 'with',
-  'you', 'your', 'about', 'after', 'again', 'against', 'all',
-  'also', 'any', 'because', 'before', 'below', 'between', 'both',
-  'can', 'could', 'down', 'during', 'each', 'few', 'further',
-  'if', 'off', 'or', 'so', 'such', 'until', 'upon', 'while',
+  'a',
+  'an',
+  'and',
+  'are',
+  'as',
+  'at',
+  'be',
+  'been',
+  'being',
+  'but',
+  'by',
+  'do',
+  'does',
+  'doing',
+  'done',
+  'for',
+  'from',
+  'had',
+  'has',
+  'have',
+  'he',
+  'her',
+  'here',
+  'his',
+  'how',
+  'i',
+  'in',
+  'into',
+  'is',
+  'it',
+  'its',
+  'just',
+  'me',
+  'more',
+  'most',
+  'my',
+  'no',
+  'nor',
+  'not',
+  'of',
+  'on',
+  'once',
+  'one',
+  'only',
+  'or',
+  'other',
+  'our',
+  'out',
+  'over',
+  'own',
+  'same',
+  'she',
+  'should',
+  'so',
+  'some',
+  'such',
+  'than',
+  'that',
+  'the',
+  'their',
+  'them',
+  'then',
+  'there',
+  'these',
+  'they',
+  'this',
+  'those',
+  'through',
+  'to',
+  'too',
+  'up',
+  'us',
+  'very',
+  'was',
+  'we',
+  'were',
+  'what',
+  'when',
+  'where',
+  'which',
+  'who',
+  'why',
+  'will',
+  'with',
+  'you',
+  'your',
+  'about',
+  'after',
+  'again',
+  'against',
+  'all',
+  'also',
+  'any',
+  'because',
+  'before',
+  'below',
+  'between',
+  'both',
+  'can',
+  'could',
+  'down',
+  'during',
+  'each',
+  'few',
+  'further',
+  'if',
+  'off',
+  'or',
+  'so',
+  'such',
+  'until',
+  'upon',
+  'while',
   // Job-board boilerplate noise.
-  'role', 'job', 'position', 'opportunity', 'team', 'company',
-  'work', 'working', 'experience', 'years', 'year', 'plus',
-  'including', 'include', 'preferred', 'required', 'requirement',
-  'requirements', 'must', 'looking', 'seeking',
+  'role',
+  'job',
+  'position',
+  'opportunity',
+  'team',
+  'company',
+  'work',
+  'working',
+  'experience',
+  'years',
+  'year',
+  'plus',
+  'including',
+  'include',
+  'preferred',
+  'required',
+  'requirement',
+  'requirements',
+  'must',
+  'looking',
+  'seeking',
 ]);
 
 /** Tokenize text to a lower-case set of non-stopword tokens. */
 function tokenize(text: string): string[] {
-  return (text || '')
-    .toLowerCase()
-    // Keep letters, digits, and a small set of in-word chars (+/./# for c++, c#, .NET).
-    .replace(/[^a-z0-9+#./\-\s]/g, ' ')
-    .split(/\s+/)
-    .map((t) => t.replace(/^[\-./]+|[\-./]+$/g, ''))
-    .filter((t) => t.length >= 2 && !STOPWORDS.has(t));
+  return (
+    (text || '')
+      .toLowerCase()
+      // Keep letters, digits, and a small set of in-word chars (+/./# for c++, c#, .NET).
+      .replace(/[^a-z0-9+#./\-\s]/g, ' ')
+      .split(/\s+/)
+      .map((t) => t.replace(/^[\-./]+|[\-./]+$/g, ''))
+      .filter((t) => t.length >= 2 && !STOPWORDS.has(t))
+  );
 }
 
 /** N-grams over a token array. n=2 returns "machine learning" style phrases. */
@@ -110,7 +228,9 @@ export function keywordMatch(jd: string, cv: string): KeywordMatchResult {
   const matchUnigram = (t: string) => cvTokenSet.has(t);
   const matchPhrase = (p: string) => cvNormalized.includes(p);
 
-  const w1 = 1, w2 = 2, w3 = 3;
+  const w1 = 1,
+    w2 = 2,
+    w3 = 3;
   let totalWeight = 0;
   let matchedWeight = 0;
   const matched: { term: string; weight: number }[] = [];
@@ -118,18 +238,24 @@ export function keywordMatch(jd: string, cv: string): KeywordMatchResult {
 
   for (const t of uni) {
     totalWeight += w1;
-    if (matchUnigram(t)) { matchedWeight += w1; matched.push({ term: t, weight: w1 }); }
-    else missing.push({ term: t, weight: w1 });
+    if (matchUnigram(t)) {
+      matchedWeight += w1;
+      matched.push({ term: t, weight: w1 });
+    } else missing.push({ term: t, weight: w1 });
   }
   for (const p of bi) {
     totalWeight += w2;
-    if (matchPhrase(p)) { matchedWeight += w2; matched.push({ term: p, weight: w2 }); }
-    else missing.push({ term: p, weight: w2 });
+    if (matchPhrase(p)) {
+      matchedWeight += w2;
+      matched.push({ term: p, weight: w2 });
+    } else missing.push({ term: p, weight: w2 });
   }
   for (const p of tri) {
     totalWeight += w3;
-    if (matchPhrase(p)) { matchedWeight += w3; matched.push({ term: p, weight: w3 }); }
-    else missing.push({ term: p, weight: w3 });
+    if (matchPhrase(p)) {
+      matchedWeight += w3;
+      matched.push({ term: p, weight: w3 });
+    } else missing.push({ term: p, weight: w3 });
   }
 
   const score = totalWeight === 0 ? 0 : Math.round((matchedWeight / totalWeight) * 100);

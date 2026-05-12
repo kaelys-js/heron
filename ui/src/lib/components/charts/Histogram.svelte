@@ -1,14 +1,19 @@
 <script lang="ts">
-  type Bucket = { label: string; value: number; tint?: string; sub?: { value: number; tint?: string; label?: string } };
-  let {
-    buckets = [],
-    height = 100,
-  }: {
-    buckets: Bucket[];
-    height?: number;
-  } = $props();
+type Bucket = {
+  label: string;
+  value: number;
+  tint?: string;
+  sub?: { value: number; tint?: string; label?: string };
+};
+let {
+  buckets = [],
+  height = 100,
+}: {
+  buckets: Bucket[];
+  height?: number;
+} = $props();
 
-  let max = $derived(Math.max(1, ...buckets.map((b) => b.value)));
+let max = $derived(Math.max(1, ...buckets.map((b) => b.value)));
 </script>
 
 <div class="flex items-end gap-2" style={'height: ' + height + 'px'}>

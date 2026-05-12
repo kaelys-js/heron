@@ -5,7 +5,14 @@
  */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { runScan, runGemini, runLinkedInApply, runLinkedInLogin, runAutoEval, listRunning } from '$lib/server/orchestrator';
+import {
+  runScan,
+  runGemini,
+  runLinkedInApply,
+  runLinkedInLogin,
+  runAutoEval,
+  listRunning,
+} from '$lib/server/orchestrator';
 import { runById, has as hasJob } from '$lib/server/jobs';
 import { reportServerError } from '$lib/server/events';
 
@@ -18,15 +25,25 @@ export const POST = wrap('run', async ({ request }: any) => {
   // Profile id can be passed two ways: as a top-level body field, or
   // nested under body.args for the registry path. Normalise here.
   const profileId =
-    typeof body?.profileId === 'string' ? body.profileId :
-    typeof args?.profileId === 'string' ? args.profileId :
-    undefined;
+    typeof body?.profileId === 'string'
+      ? body.profileId
+      : typeof args?.profileId === 'string'
+        ? args.profileId
+        : undefined;
   // Legacy hardcoded paths — preserved verbatim for backward compat.
   switch (task) {
-    case 'scan': runScan(profileId); return { running: listRunning() };
-    case 'gemini': runGemini(undefined, profileId); return { running: listRunning() };
-    case 'apply-linkedin': runLinkedInApply(!!autoSubmit, undefined, profileId); return { running: listRunning() };
-    case 'apply-linkedin-login': runLinkedInLogin(); return { running: listRunning() };
+    case 'scan':
+      runScan(profileId);
+      return { running: listRunning() };
+    case 'gemini':
+      runGemini(undefined, profileId);
+      return { running: listRunning() };
+    case 'apply-linkedin':
+      runLinkedInApply(!!autoSubmit, undefined, profileId);
+      return { running: listRunning() };
+    case 'apply-linkedin-login':
+      runLinkedInLogin();
+      return { running: listRunning() };
     case 'auto-eval':
       // Fire-and-forget — runAutoEval emits its own start/finish events.
       runAutoEval(profileId).catch((err) =>

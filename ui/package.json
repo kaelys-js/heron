@@ -7,10 +7,13 @@
     "dev": "vite dev",
     "go": "vite dev --open",
     "build": "vite build",
+    "build:static": "CAPACITOR=1 PUBLIC_CAPACITOR_BUILD=1 vite build",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "brand": "node ../scripts/native/apply-brand.mjs",
+    "verify": "cd .. && node verify-capacitor.mjs"
   },
   "devDependencies": {
     "@capacitor-community/electron": "^5.0.1",

@@ -26,7 +26,12 @@ type Reference = {
   themes?: string[];
 };
 
-function spawnRefPrep(args: { company: string; role: string; references: Reference[]; profileId: string }): Promise<{ stdout: string; stderr: string }> {
+function spawnRefPrep(args: {
+  company: string;
+  role: string;
+  references: Reference[];
+  profileId: string;
+}): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
@@ -36,13 +41,19 @@ function spawnRefPrep(args: { company: string; role: string; references: Referen
       references: args.references,
     };
     const prompt = '/' + CLI_NAMESPACE + ' reference-prep ' + JSON.stringify(promptInput);
-    try { swapProfileSymlinks(args.profileId); } catch {}
+    try {
+      swapProfileSymlinks(args.profileId);
+    } catch {}
     const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
       cwd: ROOT,
       env: { ...process.env, REFERENCE_PREP_INPUT: JSON.stringify(promptInput) },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
@@ -66,35 +77,42 @@ function parseRefStdout(stdout: string): { filesWritten?: number; paths?: string
   return out;
 }
 
-export const POST = wrap('reference-prep', async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
-  const resolved = resolveJobAndProfile(params.id, url);
-  if (!resolved) badRequest('Job not found: ' + params.id);
-  const { job, profileId } = resolved!;
-  const body = (await request.json().catch(() => ({}))) as { references?: Reference[] };
-  if (!Array.isArray(body?.references) || body.references.length === 0) {
-    badRequest('references array required (at least one)');
-  }
+export const POST = wrap(
+  'reference-prep',
+  async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
+    const resolved = resolveJobAndProfile(params.id, url);
+    if (!resolved) badRequest('Job not found: ' + params.id);
+    const { job, profileId } = resolved!;
+    const body = (await request.json().catch(() => ({}))) as { references?: Reference[] };
+    if (!Array.isArray(body?.references) || body.references.length === 0) {
+      badRequest('references array required (at least one)');
+    }
 
-  logEvent('reference-prep', 'Generating reference briefs', {
-    level: 'info', category: 'application',
-    message: (job.company || '?') + ' · ' + body.references!.length + ' references',
-  });
+    logEvent('reference-prep', 'Generating reference briefs', {
+      level: 'info',
+      category: 'application',
+      message: (job.company || '?') + ' · ' + body.references!.length + ' references',
+    });
 
-  try {
-    const { stdout } = await spawnRefPrep({
-      company: job.company ?? '',
-      role: job.role ?? '',
-      references: body.references!,
-      profileId,
-    });
-    const meta = parseRefStdout(stdout);
-    logEvent('reference-prep', 'Reference briefs ready', {
-      level: 'success', category: 'application',
-      message: (meta.filesWritten ?? 0) + ' briefs written',
-    });
-    return { ok: true, ...meta };
-  } catch (err) {
-    reportServerError('reference-prep', 'Reference-prep failed', err, { category: 'application' });
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
-  }
-});
+    try {
+      const { stdout } = await spawnRefPrep({
+        company: job.company ?? '',
+        role: job.role ?? '',
+        references: body.references!,
+        profileId,
+      });
+      const meta = parseRefStdout(stdout);
+      logEvent('reference-prep', 'Reference briefs ready', {
+        level: 'success',
+        category: 'application',
+        message: (meta.filesWritten ?? 0) + ' briefs written',
+      });
+      return { ok: true, ...meta };
+    } catch (err) {
+      reportServerError('reference-prep', 'Reference-prep failed', err, {
+        category: 'application',
+      });
+      return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  },
+);

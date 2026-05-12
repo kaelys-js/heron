@@ -12,9 +12,10 @@ import { runById } from '$lib/server/jobs';
 import { reportServerError } from '$lib/server/events';
 
 export const POST = wrap('bulk-liveness', async ({ request }: { request: Request }) => {
-  const body = (await request.json().catch(() => null)) as
-    | { scope?: 'stale' | 'all' | 'urls'; urls?: string[] }
-    | null;
+  const body = (await request.json().catch(() => null)) as {
+    scope?: 'stale' | 'all' | 'urls';
+    urls?: string[];
+  } | null;
   const args: Record<string, unknown> = {};
   if (body?.scope) {
     if (!['stale', 'all', 'urls'].includes(body.scope)) {

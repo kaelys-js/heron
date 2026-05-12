@@ -22,25 +22,24 @@ const CAPACITOR_BUILD = process.env.CAPACITOR === '1';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	compilerOptions: {
-		runes: ({ filename }) =>
-			filename.split(/[/\\]/).includes('node_modules') ? undefined : true,
-	},
-	kit: {
-		adapter: CAPACITOR_BUILD
-			? staticAdapter({
-				pages: 'build/static',
-				assets: 'build/static',
-				fallback: 'index.html',
-				precompress: false,
-				strict: false,
-			})
-			: nodeAdapter({
-				out: 'build',
-				precompress: false,
-				envPrefix: '',
-			}),
-	},
+  compilerOptions: {
+    runes: ({ filename }) => (filename.split(/[/\\]/).includes('node_modules') ? undefined : true),
+  },
+  kit: {
+    adapter: CAPACITOR_BUILD
+      ? staticAdapter({
+          pages: 'build/static',
+          assets: 'build/static',
+          fallback: 'index.html',
+          precompress: false,
+          strict: false,
+        })
+      : nodeAdapter({
+          out: 'build',
+          precompress: false,
+          envPrefix: '',
+        }),
+  },
 };
 
 export default config;

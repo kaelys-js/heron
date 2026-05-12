@@ -1,398 +1,514 @@
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Input } from '$lib/components/ui/input';
-  import { Textarea } from '$lib/components/ui/textarea';
-  import { Label } from '$lib/components/ui/label';
-  import { Button } from '$lib/components/ui/button';
-  import { Badge } from '$lib/components/ui/badge';
-  import ChipListEditor from '$lib/components/ChipListEditor.svelte';
-  import ProofPointEditor from '$lib/components/ProofPointEditor.svelte';
-  import CvManagerSheet from '$lib/components/CvManagerSheet.svelte';
-  import CollapsibleCard from '$lib/components/CollapsibleCard.svelte';
-  import RichTextarea from '$lib/components/RichTextarea.svelte';
-  import ResetProfileDialog from '$lib/components/ResetProfileDialog.svelte';
-  import ConfirmButton from '$lib/components/ConfirmButton.svelte';
-  import FormAnswersCard, { type FormAnswer } from '$lib/components/FormAnswersCard.svelte';
-  import ValidatedInput from '$lib/components/ValidatedInput.svelte';
-  import Combobox from '$lib/components/Combobox.svelte';
-  import {
-    validateEmail, validatePhone, validateLinkedIn, validateGitHub,
-    validateTwitter, validatePortfolio, validateUrl, type ValidationResult,
-  } from '$lib/validators';
-  import { COUNTRIES } from '$lib/data/countries';
-  import { statesForCountry } from '$lib/data/states';
-  import { CURRENCIES } from '$lib/data/currencies';
-  import { VISA_OPTIONS, ONSITE_OPTIONS } from '$lib/data/visa';
-  import { TIMEZONES } from '$lib/data/timezones';
-  import { TARGET_RANGE_OPTIONS, WALKAWAY_OPTIONS, LOCATION_FLEX_OPTIONS } from '$lib/data/comp';
-  import {
-    User, MapPin, Target as TargetIcon, Sparkles, DollarSign, ShieldAlert, FileText, Mic2,
-    AlertCircle, AlertTriangle, ChevronRight, ExternalLink, FileCode, Copy, Check, Eye, Pencil, ReplaceAll, Wand2, Trash2, Briefcase, Loader2,
-    RotateCw,
-  } from '@lucide/svelte';
-  import { api, ApiError } from '$lib/api';
-  import { invalidateAll } from '$app/navigation';
-  import { toast } from 'svelte-sonner';
-  import { cn, withMinDuration } from '$lib/utils';
-  import type { ProfileSnapshot, ProfileEdit } from '$lib/server/profile';
-  import type { GeneralCvStatus } from '$lib/server/cv-pdf';
-  // ConfirmGate import removed — the Discard button now uses ConfirmButton
-  // (which encapsulates the gate). Other places on this page that need the
-  // gate import directly should re-add this line as needed.
-  import { onDestroy, onMount } from 'svelte';
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { Input } from '$lib/components/ui/input';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Label } from '$lib/components/ui/label';
+import { Button } from '$lib/components/ui/button';
+import { Badge } from '$lib/components/ui/badge';
+import ChipListEditor from '$lib/components/ChipListEditor.svelte';
+import ProofPointEditor from '$lib/components/ProofPointEditor.svelte';
+import CvManagerSheet from '$lib/components/CvManagerSheet.svelte';
+import CollapsibleCard from '$lib/components/CollapsibleCard.svelte';
+import RichTextarea from '$lib/components/RichTextarea.svelte';
+import ResetProfileDialog from '$lib/components/ResetProfileDialog.svelte';
+import ConfirmButton from '$lib/components/ConfirmButton.svelte';
+import FormAnswersCard, { type FormAnswer } from '$lib/components/FormAnswersCard.svelte';
+import ValidatedInput from '$lib/components/ValidatedInput.svelte';
+import Combobox from '$lib/components/Combobox.svelte';
+import {
+  validateEmail,
+  validatePhone,
+  validateLinkedIn,
+  validateGitHub,
+  validateTwitter,
+  validatePortfolio,
+  validateUrl,
+  type ValidationResult,
+} from '$lib/validators';
+import { COUNTRIES } from '$lib/data/countries';
+import { statesForCountry } from '$lib/data/states';
+import { CURRENCIES } from '$lib/data/currencies';
+import { VISA_OPTIONS, ONSITE_OPTIONS } from '$lib/data/visa';
+import { TIMEZONES } from '$lib/data/timezones';
+import { TARGET_RANGE_OPTIONS, WALKAWAY_OPTIONS, LOCATION_FLEX_OPTIONS } from '$lib/data/comp';
+import {
+  User,
+  MapPin,
+  Target as TargetIcon,
+  Sparkles,
+  DollarSign,
+  ShieldAlert,
+  FileText,
+  Mic2,
+  AlertCircle,
+  AlertTriangle,
+  ChevronRight,
+  ExternalLink,
+  FileCode,
+  Copy,
+  Check,
+  Eye,
+  Pencil,
+  ReplaceAll,
+  Wand2,
+  Trash2,
+  Briefcase,
+  Loader2,
+  RotateCw,
+} from '@lucide/svelte';
+import { api, ApiError } from '$lib/api';
+import { invalidateAll } from '$app/navigation';
+import { toast } from 'svelte-sonner';
+import { cn, withMinDuration } from '$lib/utils';
+import type { ProfileSnapshot, ProfileEdit } from '$lib/server/profile';
+import type { GeneralCvStatus } from '$lib/server/cv-pdf';
+// ConfirmGate import removed — the Discard button now uses ConfirmButton
+// (which encapsulates the gate). Other places on this page that need the
+// gate import directly should re-add this line as needed.
+import { onDestroy, onMount } from 'svelte';
 
-  let { data }: {
-    data: {
-      profileId: string;
-      profile: ProfileSnapshot;
-      generalCv: GeneralCvStatus;
-      formAnswers: FormAnswer[];
-      formAnswersStats: { total: number; usedToday: number; lastUpdatedAt: number | null };
-    };
-  } = $props();
+let {
+  data,
+}: {
+  data: {
+    profileId: string;
+    profile: ProfileSnapshot;
+    generalCv: GeneralCvStatus;
+    formAnswers: FormAnswer[];
+    formAnswersStats: { total: number; usedToday: number; lastUpdatedAt: number | null };
+  };
+} = $props();
 
-  // Project a ProfileSnapshot down to JUST the editable ProfileEdit shape.
-  // Without this, structuredClone(data.profile) would seed `edit` with all
-  // the snapshot's read-only metadata (archetypes, files, exists) — and the
-  // dirty-comparison would always evaluate true because `edit` carried extra
-  // keys the right-hand side didn't. Symmetric snapshot fixes that.
-  function snapshotEdit(p: ProfileSnapshot): ProfileEdit {
-    return {
-      candidate: structuredClone(p.candidate ?? {}),
-      target_roles: structuredClone(p.target_roles ?? {}),
-      narrative: structuredClone(p.narrative ?? {}),
-      compensation: structuredClone(p.compensation ?? {}),
-      location: structuredClone(p.location ?? {}),
-      preferences: structuredClone(p.preferences ?? {}),
-      language: structuredClone(p.language ?? {}),
-      // Carry the automation block through so the autonomous-apply card
-      // can edit it in place. snapshotEdit was originally written before
-      // this block existed — including it now keeps the dirty-compare
-      // and PUT round-trip symmetric.
-      automation: structuredClone(p.automation ?? {}),
-    };
+// Project a ProfileSnapshot down to JUST the editable ProfileEdit shape.
+// Without this, structuredClone(data.profile) would seed `edit` with all
+// the snapshot's read-only metadata (archetypes, files, exists) — and the
+// dirty-comparison would always evaluate true because `edit` carried extra
+// keys the right-hand side didn't. Symmetric snapshot fixes that.
+function snapshotEdit(p: ProfileSnapshot): ProfileEdit {
+  return {
+    candidate: structuredClone(p.candidate ?? {}),
+    target_roles: structuredClone(p.target_roles ?? {}),
+    narrative: structuredClone(p.narrative ?? {}),
+    compensation: structuredClone(p.compensation ?? {}),
+    location: structuredClone(p.location ?? {}),
+    preferences: structuredClone(p.preferences ?? {}),
+    language: structuredClone(p.language ?? {}),
+    // Carry the automation block through so the autonomous-apply card
+    // can edit it in place. snapshotEdit was originally written before
+    // this block existed — including it now keeps the dirty-compare
+    // and PUT round-trip symmetric.
+    automation: structuredClone(p.automation ?? {}),
+  };
+}
+
+// CV manager sheet — opens with the appropriate tab based on which button the user clicks.
+type CvTab = 'view' | 'edit' | 'replace' | 'reprocess';
+let cvOpen = $state(false);
+let cvInitialTab = $state<CvTab>('view');
+// Reset dialog — type RESET to enable the destructive button.
+// initialScope lets the danger-zone "Clear jobs…" button open the dialog
+// pre-selected on the jobs scope, while the generic "Reset…" button
+// defaults to profile.
+let resetOpen = $state(false);
+let resetInitialScope = $state<'profile' | 'jobs' | 'everything'>('profile');
+
+// General-CV PDF generation state. The general CV is what gets uploaded
+// by LinkedIn Easy Apply (where consistency with the LinkedIn profile
+// matters); per-job tailored CVs continue to be used for non-LinkedIn
+// portals.
+// svelte-ignore state_referenced_locally — initial seed only
+let generalCv = $state<GeneralCvStatus>(data.generalCv);
+let generatingGeneralCv = $state(false);
+
+// Story bank state — refreshed on mount + after seeding.
+type StoryBankStats = {
+  exists: boolean;
+  storyCount: number;
+  lastUpdatedAt: number | null;
+  bytes?: number;
+};
+let storyBankStats = $state<StoryBankStats | null>(null);
+let seedingStoryBank = $state(false);
+
+async function refreshStoryBankStats() {
+  try {
+    const r = await api.get<StoryBankStats>('/api/profile/seed-story-bank', { silent: true });
+    storyBankStats = r;
+  } catch {
+    storyBankStats = { exists: false, storyCount: 0, lastUpdatedAt: null };
   }
+}
 
-  // CV manager sheet — opens with the appropriate tab based on which button the user clicks.
-  type CvTab = 'view' | 'edit' | 'replace' | 'reprocess';
-  let cvOpen = $state(false);
-  let cvInitialTab = $state<CvTab>('view');
-  // Reset dialog — type RESET to enable the destructive button.
-  // initialScope lets the danger-zone "Clear jobs…" button open the dialog
-  // pre-selected on the jobs scope, while the generic "Reset…" button
-  // defaults to profile.
-  let resetOpen = $state(false);
-  let resetInitialScope = $state<'profile' | 'jobs' | 'everything'>('profile');
-
-  // General-CV PDF generation state. The general CV is what gets uploaded
-  // by LinkedIn Easy Apply (where consistency with the LinkedIn profile
-  // matters); per-job tailored CVs continue to be used for non-LinkedIn
-  // portals.
-  // svelte-ignore state_referenced_locally — initial seed only
-  let generalCv = $state<GeneralCvStatus>(data.generalCv);
-  let generatingGeneralCv = $state(false);
-
-  // Story bank state — refreshed on mount + after seeding.
-  type StoryBankStats = { exists: boolean; storyCount: number; lastUpdatedAt: number | null; bytes?: number };
-  let storyBankStats = $state<StoryBankStats | null>(null);
-  let seedingStoryBank = $state(false);
-
-  async function refreshStoryBankStats() {
-    try {
-      const r = await api.get<StoryBankStats>('/api/profile/seed-story-bank', { silent: true });
-      storyBankStats = r;
-    } catch {
-      storyBankStats = { exists: false, storyCount: 0, lastUpdatedAt: null };
-    }
-  }
-
-  async function seedStoryBank() {
-    if (seedingStoryBank) return;
-    seedingStoryBank = true;
-    try {
-      const r = await withMinDuration(
-        api.post<{
-          ok: boolean;
-          seeded?: number;
-          grewBy?: number;
-          bankPath?: string;
-          summary?: string;
-          error?: string;
-        }>('/api/profile/seed-story-bank?profile=' + encodeURIComponent(data.profileId), {}, { silent: true }),
-        600,
-      );
-      if (r.ok) {
-        toast.success('Story bank seeded', {
-          description: (r.summary ?? 'OK') + ' · file grew by ' + (r.grewBy ?? 0) + ' bytes',
-          duration: 8_000,
-        });
-        await refreshStoryBankStats();
-      } else {
-        toast.error('Seeding failed', { description: r.error ?? 'unknown' });
-      }
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Seeding failed', { description: err.message });
-    } finally {
-      seedingStoryBank = false;
-    }
-  }
-
-  // Load story-bank stats on mount.
-  onMount(() => { refreshStoryBankStats(); });
-
-  /** Re-fetch the general-CV status from the dedicated endpoint. Used after
-   *  external mutations (CV manager replace / reprocess) or to check
-   *  whether a stale PDF flag has cleared without forcing a page reload. */
-  async function refetchGeneralCvStatus(): Promise<void> {
-    try {
-      const r = await api.get<GeneralCvStatus>(
-        '/api/profile/general-cv/status?profile=' + encodeURIComponent(data.profileId),
+async function seedStoryBank() {
+  if (seedingStoryBank) return;
+  seedingStoryBank = true;
+  try {
+    const r = await withMinDuration(
+      api.post<{
+        ok: boolean;
+        seeded?: number;
+        grewBy?: number;
+        bankPath?: string;
+        summary?: string;
+        error?: string;
+      }>(
+        '/api/profile/seed-story-bank?profile=' + encodeURIComponent(data.profileId),
+        {},
         { silent: true },
-      );
-      generalCv = r;
-    } catch { /* leave previous snapshot in place */ }
-  }
-
-  async function generateGeneralCvNow() {
-    if (generatingGeneralCv) return;
-    generatingGeneralCv = true;
-    try {
-      const r = await withMinDuration(
-        api.post<GeneralCvStatus & { pages?: number }>(
-          '/api/profile/general-cv/generate',
-          {},
-          { silent: true },
-        ),
-        500,
-      );
-      generalCv = r;
-      toast.success('General CV generated', {
-        description:
-          'output/cv-general.pdf · ' +
-          (r.bytes ? (r.bytes / 1024).toFixed(1) + ' KB' : '') +
-          (r.pages ? ' · ' + r.pages + ' page' + (r.pages === 1 ? '' : 's') : '') +
-          ' · this is what LinkedIn Easy Apply uploads from now on.',
+      ),
+      600,
+    );
+    if (r.ok) {
+      toast.success('Story bank seeded', {
+        description: (r.summary ?? 'OK') + ' · file grew by ' + (r.grewBy ?? 0) + ' bytes',
         duration: 8_000,
       });
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Generation failed', {
-        description: err.message,
-        action: { label: 'Retry', onClick: () => generateGeneralCvNow() },
-        duration: 14_000,
-      });
-    } finally {
-      generatingGeneralCv = false;
+      await refreshStoryBankStats();
+    } else {
+      toast.error('Seeding failed', { description: r.error ?? 'unknown' });
     }
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Seeding failed', { description: err.message });
+  } finally {
+    seedingStoryBank = false;
   }
+}
 
-  function fmtAge(ts: number): string {
-    const dt = Date.now() - ts;
-    if (dt < 60_000) return 'just now';
-    if (dt < 3_600_000) return Math.floor(dt / 60_000) + 'm ago';
-    if (dt < 86_400_000) return Math.floor(dt / 3_600_000) + 'h ago';
-    return Math.floor(dt / 86_400_000) + 'd ago';
+// Load story-bank stats on mount.
+onMount(() => {
+  refreshStoryBankStats();
+});
+
+/** Re-fetch the general-CV status from the dedicated endpoint. Used after
+ *  external mutations (CV manager replace / reprocess) or to check
+ *  whether a stale PDF flag has cleared without forcing a page reload. */
+async function refetchGeneralCvStatus(): Promise<void> {
+  try {
+    const r = await api.get<GeneralCvStatus>(
+      '/api/profile/general-cv/status?profile=' + encodeURIComponent(data.profileId),
+      { silent: true },
+    );
+    generalCv = r;
+  } catch {
+    /* leave previous snapshot in place */
   }
+}
 
-  function openCv(tab: CvTab) {
-    cvInitialTab = tab;
-    cvOpen = true;
-  }
-
-  /**
-   * Merge a Claude-extracted profile suggestion into the local edit state.
-   * Only fills empty fields by default — never clobbers something the user
-   * already typed. Marks the form dirty so the sticky Save bar appears.
-   */
-  function applyCvSuggestion(suggestion: {
-    candidate?: NonNullable<ProfileEdit['candidate']>;
-    narrative?: NonNullable<ProfileEdit['narrative']>;
-    location?: NonNullable<ProfileEdit['location']>;
-  }) {
-    const next: ProfileEdit = structuredClone(edit);
-    if (suggestion.candidate) {
-      const cur = next.candidate ?? {};
-      const proposed = suggestion.candidate;
-      next.candidate = {
-        full_name: cur.full_name?.trim() ? cur.full_name : (proposed.full_name ?? cur.full_name),
-        email: cur.email?.trim() ? cur.email : (proposed.email ?? cur.email),
-        phone: cur.phone?.trim() ? cur.phone : (proposed.phone ?? cur.phone),
-        location: cur.location?.trim() ? cur.location : (proposed.location ?? cur.location),
-        linkedin: cur.linkedin?.trim() ? cur.linkedin : (proposed.linkedin ?? cur.linkedin),
-        github: cur.github?.trim() ? cur.github : (proposed.github ?? cur.github),
-        portfolio_url: cur.portfolio_url?.trim() ? cur.portfolio_url : (proposed.portfolio_url ?? cur.portfolio_url),
-        twitter: cur.twitter?.trim() ? cur.twitter : (proposed.twitter ?? cur.twitter),
-      };
-    }
-    if (suggestion.narrative) {
-      const cur = next.narrative ?? {};
-      const proposed = suggestion.narrative;
-      next.narrative = {
-        headline: cur.headline?.trim() ? cur.headline : (proposed.headline ?? cur.headline),
-        exit_story: cur.exit_story?.trim() ? cur.exit_story : (proposed.exit_story ?? cur.exit_story),
-        superpowers: (cur.superpowers && cur.superpowers.length > 0) ? cur.superpowers : (proposed.superpowers ?? cur.superpowers ?? []),
-        proof_points: (cur.proof_points && cur.proof_points.length > 0) ? cur.proof_points : (proposed.proof_points ?? cur.proof_points ?? []),
-      };
-    }
-    if (suggestion.location) {
-      const cur = next.location ?? {};
-      const proposed = suggestion.location;
-      next.location = {
-        ...cur,
-        city: cur.city?.trim() ? cur.city : (proposed.city ?? cur.city),
-        province: cur.province?.trim() ? cur.province : (proposed.province ?? cur.province),
-        country: cur.country?.trim() ? cur.country : (proposed.country ?? cur.country),
-        timezone: cur.timezone?.trim() ? cur.timezone : (proposed.timezone ?? cur.timezone),
-      };
-    }
-    edit = next;
-  }
-
-  // svelte-ignore state_referenced_locally — server data seeds local mutable state.
-  let edit = $state<ProfileEdit>(snapshotEdit(data.profile));
-  let saving = $state(false);
-
-  // Both sides of the comparison go through the same projection so extra
-  // metadata never poisons the dirty check.
-  let dirty = $derived(JSON.stringify(edit) !== JSON.stringify(snapshotEdit(data.profile)));
-
-  async function save() {
-    if (!dirty || saving) return;
-    saving = true;
-    try {
-      await withMinDuration(
-        api.post('/api/profile', edit, { successToast: { title: 'Profile saved', description: 'config/profile.yml updated.' } }),
-        500,
-      );
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Failed to save profile', { description: err.message });
-    } finally {
-      saving = false;
-    }
-  }
-
-  // Discard throws away typed work. The ConfirmButton component below
-  // handles the double-click gate itself, so this function just performs
-  // the actual reset when the second click fires.
-  function discardImmediate() {
-    edit = snapshotEdit(data.profile);
-  }
-
-  // The Province/State combobox is contextual: structured list for US/CA/AU,
-  // free-text everywhere else. Recomputes whenever the user changes country.
-  let provinceItems = $derived(
-    statesForCountry(edit.location?.country ?? '').map((s) => ({
-      value: s.name,
-      label: s.name,
-      description: s.code,
-    })),
-  );
-
-  // ---- Form-wide validation rollup ----
-  // Each entry: { id, label, section, message }. Renders into the sticky
-  // banner at the top of the page, and each entry can be clicked to focus
-  // the field that owns it. The IDs match the input id= attributes added
-  // to each ValidatedInput so document.getElementById(id).focus() works.
-  type FieldError = { id: string; label: string; section: string; message: string };
-  let validationErrors = $derived.by<FieldError[]>(() => {
-    const out: FieldError[] = [];
-    for (const f of IDENTITY_FIELDS) {
-      const v = edit.candidate?.[f.key] ?? '';
-      if (f.required) {
-        if (!v.trim()) {
-          out.push({ id: 'profile-' + f.key, label: f.label, section: 'Identity', message: 'Required' });
-          continue;
-        }
-      }
-      if (v.trim() && f.validate) {
-        const r = f.validate(v);
-        if (!r.ok) out.push({ id: 'profile-' + f.key, label: f.label, section: 'Identity', message: r.message });
-      }
-    }
-    // Proof points: validate URL of each
-    const pps = edit.narrative?.proof_points ?? [];
-    pps.forEach((p, i) => {
-      if (p.url && p.url.trim()) {
-        const r = validateUrl(p.url);
-        if (!r.ok) {
-          out.push({
-            id: 'profile-proof-' + i,
-            label: 'Proof point #' + (i + 1) + (p.name ? ' (' + p.name + ')' : '') + ' · URL',
-            section: 'Narrative',
-            message: r.message,
-          });
-        }
-      }
+async function generateGeneralCvNow() {
+  if (generatingGeneralCv) return;
+  generatingGeneralCv = true;
+  try {
+    const r = await withMinDuration(
+      api.post<GeneralCvStatus & { pages?: number }>(
+        '/api/profile/general-cv/generate',
+        {},
+        { silent: true },
+      ),
+      500,
+    );
+    generalCv = r;
+    toast.success('General CV generated', {
+      description:
+        'output/cv-general.pdf · ' +
+        (r.bytes ? (r.bytes / 1024).toFixed(1) + ' KB' : '') +
+        (r.pages ? ' · ' + r.pages + ' page' + (r.pages === 1 ? '' : 's') : '') +
+        ' · this is what LinkedIn Easy Apply uploads from now on.',
+      duration: 8_000,
     });
-    return out;
-  });
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Generation failed', {
+      description: err.message,
+      action: { label: 'Retry', onClick: () => generateGeneralCvNow() },
+      duration: 14_000,
+    });
+  } finally {
+    generatingGeneralCv = false;
+  }
+}
 
-  /** Scroll-to + focus the field tied to a given error so the user can fix it. */
-  function jumpToError(id: string) {
-    if (typeof document === 'undefined') return;
-    const el = document.getElementById(id) as HTMLElement | null;
-    if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => {
-      const focusable = el as HTMLInputElement;
-      if (typeof focusable.focus === 'function') focusable.focus();
-    }, 250);
-  }
+function fmtAge(ts: number): string {
+  const dt = Date.now() - ts;
+  if (dt < 60_000) return 'just now';
+  if (dt < 3_600_000) return Math.floor(dt / 60_000) + 'm ago';
+  if (dt < 86_400_000) return Math.floor(dt / 3_600_000) + 'h ago';
+  return Math.floor(dt / 86_400_000) + 'd ago';
+}
 
-  // Update helpers — keep edit immutable so $derived recomputes
-  function patchCandidate(patch: Partial<NonNullable<ProfileEdit['candidate']>>) {
-    edit = { ...edit, candidate: { ...edit.candidate, ...patch } };
-  }
-  function patchNarrative(patch: Partial<NonNullable<ProfileEdit['narrative']>>) {
-    edit = { ...edit, narrative: { ...edit.narrative, ...patch } };
-  }
-  function patchComp(patch: Partial<NonNullable<ProfileEdit['compensation']>>) {
-    edit = { ...edit, compensation: { ...edit.compensation, ...patch } };
-  }
-  function patchLocation(patch: Partial<NonNullable<ProfileEdit['location']>>) {
-    edit = { ...edit, location: { ...edit.location, ...patch } };
-  }
+function openCv(tab: CvTab) {
+  cvInitialTab = tab;
+  cvOpen = true;
+}
 
-  let copiedKey = $state<string | null>(null);
-  async function copyText(text: string, key: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      copiedKey = key;
-      setTimeout(() => { if (copiedKey === key) copiedKey = null; }, 1500);
-    } catch {
-      toast.error('Copy failed');
+/**
+ * Merge a Claude-extracted profile suggestion into the local edit state.
+ * Only fills empty fields by default — never clobbers something the user
+ * already typed. Marks the form dirty so the sticky Save bar appears.
+ */
+function applyCvSuggestion(suggestion: {
+  candidate?: NonNullable<ProfileEdit['candidate']>;
+  narrative?: NonNullable<ProfileEdit['narrative']>;
+  location?: NonNullable<ProfileEdit['location']>;
+}) {
+  const next: ProfileEdit = structuredClone(edit);
+  if (suggestion.candidate) {
+    const cur = next.candidate ?? {};
+    const proposed = suggestion.candidate;
+    next.candidate = {
+      full_name: cur.full_name?.trim() ? cur.full_name : (proposed.full_name ?? cur.full_name),
+      email: cur.email?.trim() ? cur.email : (proposed.email ?? cur.email),
+      phone: cur.phone?.trim() ? cur.phone : (proposed.phone ?? cur.phone),
+      location: cur.location?.trim() ? cur.location : (proposed.location ?? cur.location),
+      linkedin: cur.linkedin?.trim() ? cur.linkedin : (proposed.linkedin ?? cur.linkedin),
+      github: cur.github?.trim() ? cur.github : (proposed.github ?? cur.github),
+      portfolio_url: cur.portfolio_url?.trim()
+        ? cur.portfolio_url
+        : (proposed.portfolio_url ?? cur.portfolio_url),
+      twitter: cur.twitter?.trim() ? cur.twitter : (proposed.twitter ?? cur.twitter),
+    };
+  }
+  if (suggestion.narrative) {
+    const cur = next.narrative ?? {};
+    const proposed = suggestion.narrative;
+    next.narrative = {
+      headline: cur.headline?.trim() ? cur.headline : (proposed.headline ?? cur.headline),
+      exit_story: cur.exit_story?.trim() ? cur.exit_story : (proposed.exit_story ?? cur.exit_story),
+      superpowers:
+        cur.superpowers && cur.superpowers.length > 0
+          ? cur.superpowers
+          : (proposed.superpowers ?? cur.superpowers ?? []),
+      proof_points:
+        cur.proof_points && cur.proof_points.length > 0
+          ? cur.proof_points
+          : (proposed.proof_points ?? cur.proof_points ?? []),
+    };
+  }
+  if (suggestion.location) {
+    const cur = next.location ?? {};
+    const proposed = suggestion.location;
+    next.location = {
+      ...cur,
+      city: cur.city?.trim() ? cur.city : (proposed.city ?? cur.city),
+      province: cur.province?.trim() ? cur.province : (proposed.province ?? cur.province),
+      country: cur.country?.trim() ? cur.country : (proposed.country ?? cur.country),
+      timezone: cur.timezone?.trim() ? cur.timezone : (proposed.timezone ?? cur.timezone),
+    };
+  }
+  edit = next;
+}
+
+// svelte-ignore state_referenced_locally — server data seeds local mutable state.
+let edit = $state<ProfileEdit>(snapshotEdit(data.profile));
+let saving = $state(false);
+
+// Both sides of the comparison go through the same projection so extra
+// metadata never poisons the dirty check.
+let dirty = $derived(JSON.stringify(edit) !== JSON.stringify(snapshotEdit(data.profile)));
+
+async function save() {
+  if (!dirty || saving) return;
+  saving = true;
+  try {
+    await withMinDuration(
+      api.post('/api/profile', edit, {
+        successToast: { title: 'Profile saved', description: 'config/profile.yml updated.' },
+      }),
+      500,
+    );
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Failed to save profile', { description: err.message });
+  } finally {
+    saving = false;
+  }
+}
+
+// Discard throws away typed work. The ConfirmButton component below
+// handles the double-click gate itself, so this function just performs
+// the actual reset when the second click fires.
+function discardImmediate() {
+  edit = snapshotEdit(data.profile);
+}
+
+// The Province/State combobox is contextual: structured list for US/CA/AU,
+// free-text everywhere else. Recomputes whenever the user changes country.
+let provinceItems = $derived(
+  statesForCountry(edit.location?.country ?? '').map((s) => ({
+    value: s.name,
+    label: s.name,
+    description: s.code,
+  })),
+);
+
+// ---- Form-wide validation rollup ----
+// Each entry: { id, label, section, message }. Renders into the sticky
+// banner at the top of the page, and each entry can be clicked to focus
+// the field that owns it. The IDs match the input id= attributes added
+// to each ValidatedInput so document.getElementById(id).focus() works.
+type FieldError = { id: string; label: string; section: string; message: string };
+let validationErrors = $derived.by<FieldError[]>(() => {
+  const out: FieldError[] = [];
+  for (const f of IDENTITY_FIELDS) {
+    const v = edit.candidate?.[f.key] ?? '';
+    if (f.required) {
+      if (!v.trim()) {
+        out.push({
+          id: 'profile-' + f.key,
+          label: f.label,
+          section: 'Identity',
+          message: 'Required',
+        });
+        continue;
+      }
+    }
+    if (v.trim() && f.validate) {
+      const r = f.validate(v);
+      if (!r.ok)
+        out.push({
+          id: 'profile-' + f.key,
+          label: f.label,
+          section: 'Identity',
+          message: r.message,
+        });
     }
   }
+  // Proof points: validate URL of each
+  const pps = edit.narrative?.proof_points ?? [];
+  pps.forEach((p, i) => {
+    if (p.url && p.url.trim()) {
+      const r = validateUrl(p.url);
+      if (!r.ok) {
+        out.push({
+          id: 'profile-proof-' + i,
+          label: 'Proof point #' + (i + 1) + (p.name ? ' (' + p.name + ')' : '') + ' · URL',
+          section: 'Narrative',
+          message: r.message,
+        });
+      }
+    }
+  });
+  return out;
+});
 
-  type FieldDef = {
-    key: keyof NonNullable<ProfileEdit['candidate']>;
-    label: string;
-    type?: 'text' | 'email' | 'tel' | 'url';
-    placeholder?: string;
-    span?: 1 | 2;
-    /** Optional one-line hint shown under the input. Use to disambiguate
-     *  fields whose purpose isn't obvious from the label alone. */
-    hint?: string;
-    /** Validator from $lib/validators. Empty/optional fields always pass. */
-    validate?: (v: string) => ValidationResult;
-    required?: boolean;
-  };
-  const IDENTITY_FIELDS: FieldDef[] = [
-    { key: 'full_name',    label: 'Full name',     placeholder: '[redacted-name]', hint: 'Exactly as it should appear on the CV header.', required: true },
-    { key: 'email',        label: 'Email',         type: 'email', placeholder: 'you@example.com', hint: 'Public contact email — recruiters reply here.', validate: validateEmail, required: true },
-    { key: 'phone',        label: 'Phone',         type: 'tel',   placeholder: '+1-555-0123', hint: 'Optional. Include country code if you\'re open to international calls.', validate: validatePhone },
-    { key: 'location',     label: 'Display location', placeholder: 'Vancouver, BC, Canada', hint: 'Free-form text for the CV header. The structured Location section below feeds visa + remote-fit analysis.' },
-    { key: 'linkedin',     label: 'LinkedIn',      placeholder: 'linkedin.com/in/you', hint: 'Bare URL works (no https://). Boosts credibility for tech roles.', validate: validateLinkedIn },
-    { key: 'github',       label: 'GitHub',        placeholder: 'github.com/you', hint: 'For engineering roles, this carries real weight if your repos are public.', validate: validateGitHub },
-    { key: 'portfolio_url', label: 'Portfolio',    type: 'url',   placeholder: 'https://you.dev', span: 2, hint: 'Project gallery, blog, or personal site. Surfaced in cover letters as "see <portfolio>".', validate: validatePortfolio },
-    { key: 'twitter',      label: 'Twitter / X',   placeholder: 'x.com/you', hint: 'Optional. Mostly relevant for DevRel / community-facing roles.', validate: validateTwitter },
-  ];
+/** Scroll-to + focus the field tied to a given error so the user can fix it. */
+function jumpToError(id: string) {
+  if (typeof document === 'undefined') return;
+  const el = document.getElementById(id) as HTMLElement | null;
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => {
+    const focusable = el as HTMLInputElement;
+    if (typeof focusable.focus === 'function') focusable.focus();
+  }, 250);
+}
+
+// Update helpers — keep edit immutable so $derived recomputes
+function patchCandidate(patch: Partial<NonNullable<ProfileEdit['candidate']>>) {
+  edit = { ...edit, candidate: { ...edit.candidate, ...patch } };
+}
+function patchNarrative(patch: Partial<NonNullable<ProfileEdit['narrative']>>) {
+  edit = { ...edit, narrative: { ...edit.narrative, ...patch } };
+}
+function patchComp(patch: Partial<NonNullable<ProfileEdit['compensation']>>) {
+  edit = { ...edit, compensation: { ...edit.compensation, ...patch } };
+}
+function patchLocation(patch: Partial<NonNullable<ProfileEdit['location']>>) {
+  edit = { ...edit, location: { ...edit.location, ...patch } };
+}
+
+let copiedKey = $state<string | null>(null);
+async function copyText(text: string, key: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    copiedKey = key;
+    setTimeout(() => {
+      if (copiedKey === key) copiedKey = null;
+    }, 1500);
+  } catch {
+    toast.error('Copy failed');
+  }
+}
+
+type FieldDef = {
+  key: keyof NonNullable<ProfileEdit['candidate']>;
+  label: string;
+  type?: 'text' | 'email' | 'tel' | 'url';
+  placeholder?: string;
+  span?: 1 | 2;
+  /** Optional one-line hint shown under the input. Use to disambiguate
+   *  fields whose purpose isn't obvious from the label alone. */
+  hint?: string;
+  /** Validator from $lib/validators. Empty/optional fields always pass. */
+  validate?: (v: string) => ValidationResult;
+  required?: boolean;
+};
+const IDENTITY_FIELDS: FieldDef[] = [
+  {
+    key: 'full_name',
+    label: 'Full name',
+    placeholder: '[redacted-name]',
+    hint: 'Exactly as it should appear on the CV header.',
+    required: true,
+  },
+  {
+    key: 'email',
+    label: 'Email',
+    type: 'email',
+    placeholder: 'you@example.com',
+    hint: 'Public contact email — recruiters reply here.',
+    validate: validateEmail,
+    required: true,
+  },
+  {
+    key: 'phone',
+    label: 'Phone',
+    type: 'tel',
+    placeholder: '+1-555-0123',
+    hint: "Optional. Include country code if you're open to international calls.",
+    validate: validatePhone,
+  },
+  {
+    key: 'location',
+    label: 'Display location',
+    placeholder: 'Vancouver, BC, Canada',
+    hint: 'Free-form text for the CV header. The structured Location section below feeds visa + remote-fit analysis.',
+  },
+  {
+    key: 'linkedin',
+    label: 'LinkedIn',
+    placeholder: 'linkedin.com/in/you',
+    hint: 'Bare URL works (no https://). Boosts credibility for tech roles.',
+    validate: validateLinkedIn,
+  },
+  {
+    key: 'github',
+    label: 'GitHub',
+    placeholder: 'github.com/you',
+    hint: 'For engineering roles, this carries real weight if your repos are public.',
+    validate: validateGitHub,
+  },
+  {
+    key: 'portfolio_url',
+    label: 'Portfolio',
+    type: 'url',
+    placeholder: 'https://you.dev',
+    span: 2,
+    hint: 'Project gallery, blog, or personal site. Surfaced in cover letters as "see <portfolio>".',
+    validate: validatePortfolio,
+  },
+  {
+    key: 'twitter',
+    label: 'Twitter / X',
+    placeholder: 'x.com/you',
+    hint: 'Optional. Mostly relevant for DevRel / community-facing roles.',
+    validate: validateTwitter,
+  },
+];
 </script>
 
 <div class="h-full overflow-y-auto">

@@ -59,7 +59,12 @@ export const POST = wrap('sources-test', async ({ params }: { params: { id: stri
       return { ok: false, error: err.message };
     }
     try {
-      await testImap(env.GMAIL_IMAP_HOST, env.GMAIL_IMAP_USER, env.GMAIL_IMAP_PASSWORD, env.GMAIL_IMAP_LABEL || 'INBOX');
+      await testImap(
+        env.GMAIL_IMAP_HOST,
+        env.GMAIL_IMAP_USER,
+        env.GMAIL_IMAP_PASSWORD,
+        env.GMAIL_IMAP_LABEL || 'INBOX',
+      );
       recordSuccess(id);
       return { ok: true, message: 'IMAP connection OK.' };
     } catch (err) {
@@ -114,7 +119,9 @@ export const POST = wrap('sources-test', async ({ params }: { params: { id: stri
  * Round-trip probe an API key. Mirrors `/api/settings/test` logic so
  * `/sources` Test agrees with what Settings reports.
  */
-async function probeApiKey(id: 'anthropic' | 'gemini' | 'adzuna'): Promise<{ ok: boolean; message: string }> {
+async function probeApiKey(
+  id: 'anthropic' | 'gemini' | 'adzuna',
+): Promise<{ ok: boolean; message: string }> {
   const env = readEnv();
   if (id === 'anthropic') {
     if (!env.ANTHROPIC_API_KEY) return { ok: false, message: 'ANTHROPIC_API_KEY not set' };
@@ -142,7 +149,9 @@ async function probeApiKey(id: 'anthropic' | 'gemini' | 'adzuna'): Promise<{ ok:
   if (id === 'gemini') {
     if (!env.GEMINI_API_KEY) return { ok: false, message: 'GEMINI_API_KEY not set' };
     try {
-      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + env.GEMINI_API_KEY);
+      const r = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models?key=' + env.GEMINI_API_KEY,
+      );
       if (r.ok) return { ok: true, message: 'Gemini key round-trip OK.' };
       return { ok: false, message: 'Gemini ' + r.status };
     } catch (e) {
@@ -154,8 +163,12 @@ async function probeApiKey(id: 'anthropic' | 'gemini' | 'adzuna'): Promise<{ ok:
     return { ok: false, message: 'ADZUNA_APP_ID + ADZUNA_APP_KEY not both set' };
   }
   try {
-    const u = 'https://api.adzuna.com/v1/api/jobs/gb/search/1?app_id=' + env.ADZUNA_APP_ID +
-      '&app_key=' + env.ADZUNA_APP_KEY + '&results_per_page=1';
+    const u =
+      'https://api.adzuna.com/v1/api/jobs/gb/search/1?app_id=' +
+      env.ADZUNA_APP_ID +
+      '&app_key=' +
+      env.ADZUNA_APP_KEY +
+      '&results_per_page=1';
     const r = await fetch(u);
     if (r.ok) return { ok: true, message: 'Adzuna key round-trip OK.' };
     return { ok: false, message: 'Adzuna ' + r.status };
@@ -165,17 +178,19 @@ async function probeApiKey(id: 'anthropic' | 'gemini' | 'adzuna'): Promise<{ ok:
 }
 
 /** Probe the underlying always-on scanner with --dry-run --probe. */
-function probeAlwaysOnScanner(id: 'scan-portals' | 'scan-broad' | 'scan-curated'): Promise<{ ok: boolean; message: string }> {
+function probeAlwaysOnScanner(
+  id: 'scan-portals' | 'scan-broad' | 'scan-curated',
+): Promise<{ ok: boolean; message: string }> {
   return new Promise((resolve) => {
     const script =
-      id === 'scan-portals' ? 'scan.mjs' :
-      id === 'scan-broad'   ? 'scan-broad.py' :
-                              'scan-curated.mjs';
+      id === 'scan-portals'
+        ? 'scan.mjs'
+        : id === 'scan-broad'
+          ? 'scan-broad.py'
+          : 'scan-curated.mjs';
     const isPython = script.endsWith('.py');
     const venvPython = path.join(ROOT, '.venv', 'bin', 'python');
-    const bin = isPython
-      ? (fs.existsSync(venvPython) ? venvPython : 'python3')
-      : 'node';
+    const bin = isPython ? (fs.existsSync(venvPython) ? venvPython : 'python3') : 'node';
     let stdout = '';
     let stderr = '';
     let p: import('node:child_process').ChildProcess;
@@ -185,10 +200,16 @@ function probeAlwaysOnScanner(id: 'scan-portals' | 'scan-broad' | 'scan-curated'
       resolve({ ok: false, message: e instanceof Error ? e.message : String(e) });
       return;
     }
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     const timer = setTimeout(() => {
-      try { p.kill('SIGTERM'); } catch {}
+      try {
+        p.kill('SIGTERM');
+      } catch {}
       resolve({ ok: false, message: id + ' probe timed out after 30s' });
     }, 30_000);
     p.on('error', (err: Error) => {
@@ -222,13 +243,22 @@ function spawnSessionCheck(portal: 'linkedin' | 'indeed'): Promise<void> {
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     const timer = setTimeout(() => {
-      try { p.kill('SIGTERM'); } catch {}
+      try {
+        p.kill('SIGTERM');
+      } catch {}
       reject(new Error('Session check timed out'));
     }, 30_000);
-    p.on('error', (err) => { clearTimeout(timer); reject(err); });
+    p.on('error', (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
     p.on('close', (code) => {
       clearTimeout(timer);
       if (code === 0) return resolve();
@@ -238,10 +268,17 @@ function spawnSessionCheck(portal: 'linkedin' | 'indeed'): Promise<void> {
   });
 }
 
-async function testImap(host: string, user: string, password: string, mailbox: string): Promise<void> {
+async function testImap(
+  host: string,
+  user: string,
+  password: string,
+  mailbox: string,
+): Promise<void> {
   const { ImapFlow } = await import('imapflow');
   const client = new ImapFlow({
-    host, port: 993, secure: true,
+    host,
+    port: 993,
+    secure: true,
     auth: { user, pass: password },
     logger: false,
   });
@@ -249,6 +286,8 @@ async function testImap(host: string, user: string, password: string, mailbox: s
     await client.connect();
     await client.status(mailbox, { messages: true });
   } finally {
-    try { await client.logout(); } catch {}
+    try {
+      await client.logout();
+    } catch {}
   }
 }
