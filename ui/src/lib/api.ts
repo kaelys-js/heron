@@ -13,6 +13,28 @@
 import { toast } from 'svelte-sonner';
 import { BRAND_EVENTS } from '$lib/client/brand';
 import { onlineStore, OfflineError } from '$lib/client/online-status.svelte';
+import { getApiBase } from '$lib/client/api-base';
+import { Preferences } from '@capacitor/preferences';
+
+/** Capacitor Preferences key — Set-Auth-Token from /api/auth/* responses
+ *  lives here so cross-origin native sessions persist across reloads. */
+const BEARER_KEY = 'career-ops:bearer-token';
+
+async function getBearerToken(): Promise<string | null> {
+  // Preferences first (Capacitor-backed Keychain on iOS, SharedPreferences
+  // on Android, localStorage on web). Falls back to plain localStorage so
+  // the very first call before Preferences resolves doesn't miss the token.
+  try {
+    const { value } = await Preferences.get({ key: BEARER_KEY });
+    if (value) return value;
+  } catch {
+    /* Preferences not available — fall through to localStorage */
+  }
+  if (typeof localStorage !== 'undefined') {
+    return localStorage.getItem(BEARER_KEY);
+  }
+  return null;
+}
 
 export type ApiCallOpts = RequestInit & {
   successToast?: string | { title: string; description?: string };
@@ -67,17 +89,52 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
     throw new OfflineError();
   }
 
+  // Resolve the API base. On web (any http(s) origin) this is '' and fetch
+  // keeps using a relative path. On Capacitor the backend-discovery
+  // resolver (mDNS / Tailscale / localhost) supplies the absolute URL so
+  // `/api/health` becomes `http://192.168.x.x:5173/api/health`.
+  let base = '';
+  try {
+    base = await getApiBase();
+  } catch (e: any) {
+    if (!silent && !inlineError) {
+      toast.error("Can't reach the backend", {
+        description: 'Backend discovery failed. Open settings to retry.',
+        duration: 10_000,
+      });
+    }
+    throw new ApiError(e?.message || 'Backend not found', {
+      status: 0,
+      code: 'BACKEND_NOT_FOUND',
+    });
+  }
+  const fullUrl = url.startsWith('http') ? url : base + url;
+
+  // Bearer token — set by better-auth's bearer plugin after sign-in. On
+  // web cookie-auth still works, so the Authorization header is a no-op
+  // there (the server reads whichever wins). On native it's the only
+  // session signal that survives the WebView's foreign origin.
+  const token = await getBearerToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...((init.headers as Record<string, string> | undefined) ?? {}),
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
   let response: Response;
   try {
-    response = await fetch(url, {
+    response = await fetch(fullUrl, {
       ...init,
-      headers: { 'Content-Type': 'application/json', ...(init.headers ?? {}) },
+      headers,
+      // `credentials: 'include'` so web keeps sending the cookie alongside
+      // the bearer token. Server picks whichever path matches.
+      credentials: 'include',
     });
   } catch (e: any) {
     const message = e?.message || 'Network request failed';
     if (!silent && !inlineError) {
       toast.error('Network error', {
-        description: url + ' — ' + message,
+        description: fullUrl + ' — ' + message,
         duration: 10_000,
       });
     }
