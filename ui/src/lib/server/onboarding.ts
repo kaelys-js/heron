@@ -27,6 +27,10 @@ import { readEnv } from './env';
 const STATE_PATH = path.join(ROOT, 'data', 'onboarding-state.json');
 
 export const STEPS = [
+  // Multi-user: pick the owner account (passkey / GitHub / invite code).
+  // This is the FIRST step because every per-user piece of data below
+  // needs a `user_id` to attach to.
+  'account',
   'welcome',
   'api-keys',
   'identity',

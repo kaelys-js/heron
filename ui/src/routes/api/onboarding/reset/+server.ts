@@ -1,15 +1,18 @@
 /**
- * POST /api/onboarding/reset
+ * POST /api/onboarding/reset — owner-only.
  *
- * Reset onboarding state so the wizard re-runs on next page load.
- * Does NOT delete cv.md, profile.yml, portals.yml, etc — just wipes
- * the state file. Used by the Settings page's "Re-run onboarding" button.
+ * Wipes the install's onboarding state file so the wizard re-runs on the
+ * next page load. Doesn't delete user content (cv.md, profile.yml, etc.)
+ * but the onboarding-state file is install-wide (data/onboarding-state.json),
+ * not per-user — so only the owner should be able to flip it.
  */
 import { wrap } from '$lib/server/api-helpers';
+import { requireOwner } from '$lib/server/auth-helpers';
 import { reset } from '$lib/server/onboarding';
 import { logEvent } from '$lib/server/events';
 
-export const POST = wrap('onboarding-reset', async () => {
+export const POST = wrap('onboarding-reset', async ({ locals }: { locals: App.Locals }) => {
+  requireOwner(locals);
   const state = reset();
   logEvent('onboarding', 'Onboarding state reset', {
     level: 'info',

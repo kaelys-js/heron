@@ -3,9 +3,10 @@
  * active profile's files via symlinks.
  *
  * Why this exists: the dashboard's TS server modules go through
- * profile-paths.ts and resolve `data/profiles/{id}/...` directly. But the
- * Claude Code CLI (spawned by runOferta) reads the system files at their
- * canonical legacy paths per the AGENTS.md / modes/oferta.md instructions:
+ * profile-paths.ts and resolve `data/users/{userId}/profiles/{slug}/...`
+ * directly. But the Claude Code CLI (spawned by runOferta) reads the
+ * system files at their canonical legacy paths per the AGENTS.md /
+ * modes/oferta.md instructions:
  *
  *   cv.md
  *   config/profile.yml
@@ -17,14 +18,15 @@
  * point at the ACTIVE profile's actual files. When the user switches
  * profiles or before a per-profile oferta spawn, we re-point the symlinks.
  *
- * Atomicity (F7): each swap unlinks + recreates the symlink. Concurrent
- * spawns for different profiles can race the swap, so this module uses a
- * named file-system lock at `data/.symlink-lock` to serialize swaps
- * across the process. The `running` map gates one oferta at a time, but
- * runOferta + runAutoEval use different task keys ('oferta' vs 'auto-eval')
- * AND runBulkOfertaParallel spawns multiple workers in parallel — without
- * the lock those paths can swap symlinks while another claude -p worker is
- * mid-read.
+ * MULTI-USER CAVEAT — these symlinks are GLOBAL. The repo only has one
+ * `cv.md` symlink, so concurrent CLI spawns for different users would race
+ * the swap. Until the CLI integration is reworked to pass paths via env
+ * variables, multi-user oferta is SERIALIZED through the named lock at
+ * `data/.symlink-lock`. Background jobs that don't depend on the legacy
+ * symlinks (everything in TS that uses profilePath()) keep their per-user
+ * isolation regardless.
+ *
+ * Atomicity: each swap unlinks + recreates the symlink under the lock.
  *
  * If the target legacy path is a REAL FILE (not a symlink), we DO NOT
  * touch it — the user may have run the migration partially or restored a
@@ -34,24 +36,20 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './files';
-import { profilePath } from './profile-paths';
+import { profilePathForUser, type ProfileFileKind } from './profile-paths';
+import { currentUserIdOrDefault } from './user-context';
 import { logEvent } from './events';
 
-/** Lock file path. Created via O_EXCL flag so two concurrent acquireLock
- *  calls produce exactly one winner. */
 const LOCK_FILE = path.join(ROOT, 'data', '.symlink-lock');
 const LOCK_TIMEOUT_MS = 30_000;
 const LOCK_POLL_MS = 50;
 
-/** Acquire a process-local advisory lock. Spin-waits up to LOCK_TIMEOUT_MS
- *  for a stale lock to age out. Returns once we hold it; throws on timeout. */
 function acquireLock(): void {
   fs.mkdirSync(path.dirname(LOCK_FILE), { recursive: true });
   const start = Date.now();
   // eslint-disable-next-line no-constant-condition
   while (true) {
     try {
-      // O_CREAT|O_EXCL|O_WRONLY — atomically create-or-fail.
       const fd = fs.openSync(
         LOCK_FILE,
         fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_WRONLY,
@@ -62,8 +60,6 @@ function acquireLock(): void {
     } catch (e) {
       const code = (e as NodeJS.ErrnoException).code;
       if (code !== 'EEXIST') throw e;
-      // Stale-lock detection — if the lock file is older than the timeout,
-      // assume the previous holder crashed and reclaim it.
       try {
         const stat = fs.statSync(LOCK_FILE);
         if (Date.now() - stat.mtimeMs > LOCK_TIMEOUT_MS) {
@@ -76,7 +72,6 @@ function acquireLock(): void {
       if (Date.now() - start > LOCK_TIMEOUT_MS) {
         throw new Error('symlink-swap lock timeout after ' + LOCK_TIMEOUT_MS + 'ms');
       }
-      // Sync sleep — this whole function is called sync from spawn sites.
       const deadline = Date.now() + LOCK_POLL_MS;
       while (Date.now() < deadline) {
         /* spin */
@@ -95,7 +90,7 @@ function releaseLock(): void {
 
 type LegacyTarget = {
   legacyPath: string;
-  kind: Parameters<typeof profilePath>[1];
+  kind: ProfileFileKind;
 };
 
 const TARGETS: LegacyTarget[] = [
@@ -107,28 +102,31 @@ const TARGETS: LegacyTarget[] = [
 
 /**
  * Point every legacy path at the named profile's corresponding file via
- * a symlink. Idempotent: if the symlink already points at the right
- * target, no-op. If the legacy path is a real file (not a symlink), skip
- * it and warn — we don't want to silently clobber the user's data.
+ * a symlink. The acting user is resolved from the AsyncLocalStorage
+ * context unless overridden via `swapProfileSymlinksForUser`.
  */
 export function swapProfileSymlinks(profileId: string): void {
+  swapProfileSymlinksForUser(currentUserIdOrDefault(), profileId);
+}
+
+/** Like `swapProfileSymlinks` but takes an explicit userId — used by
+ *  background jobs (autopilot tick, batch workers) that may need to
+ *  prepare the symlinks for a different user than the request actor. */
+export function swapProfileSymlinksForUser(userId: string, profileId: string): void {
   acquireLock();
   try {
-    swapInner(profileId);
+    swapInner(userId, profileId);
   } finally {
     releaseLock();
   }
 }
 
-function swapInner(profileId: string): void {
+function swapInner(userId: string, profileId: string): void {
   for (const t of TARGETS) {
-    const dst = profilePath(profileId, t.kind);
+    const dst = profilePathForUser(userId, profileId, t.kind);
     try {
-      // Make sure the directory exists for the legacy path (e.g. config/ for profile.yml).
       fs.mkdirSync(path.dirname(t.legacyPath), { recursive: true });
 
-      // Inspect the existing legacy path. lstat so we don't follow the
-      // symlink we may have created earlier.
       let stat: fs.Stats | null = null;
       try {
         stat = fs.lstatSync(t.legacyPath);
@@ -139,21 +137,23 @@ function swapInner(profileId: string): void {
       if (stat) {
         if (stat.isSymbolicLink()) {
           const current = fs.readlinkSync(t.legacyPath);
-          if (current === dst) continue; // already correct
+          // resolve symlink target relative to its directory so we can
+          // compare against the absolute `dst`.
+          const currentAbs = path.resolve(path.dirname(t.legacyPath), current);
+          if (currentAbs === dst) continue; // already correct
           fs.unlinkSync(t.legacyPath);
         } else {
-          // Real file or directory at the legacy path — don't touch it.
           logEvent('profile-symlinks', 'Legacy path is a real file — skipping symlink', {
             level: 'warn',
             category: 'system',
             message:
               t.legacyPath +
-              ' (expected a symlink). Move the file into data/profiles/{slug}/ and re-run migration.',
+              ' (expected a symlink). Move the file into data/users/{userId}/profiles/{slug}/ and re-run migration.',
           });
           continue;
         }
       }
-      // Create the symlink. Use a relative path so a repo move doesn't break it.
+      // Relative symlink so a repo move doesn't break it.
       const rel = path.relative(path.dirname(t.legacyPath), dst);
       fs.symlinkSync(rel, t.legacyPath);
     } catch (e) {

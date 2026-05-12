@@ -70,11 +70,27 @@ bun.lock
 # config/profile.yml / cv.md / portals.yml are gitignored.
 data/profiles/
 
+# Multi-user per-user content tree + the legacy-claim sentinel.
+data/users/
+
+# SQLite runtime state — auth.db has session cookies + passkey credentials,
+# app.db has every per-user profile/job/report/etc. Never commit.
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+
 # Autonomous-apply system runtime state.
 data/apply-state/
 
 # Daily backups (tar.gz snapshots — local-only by design).
 data/backups/
+
+# Per-user avatar uploads.
+data/avatars/
+
+# Per-user UI prefs (legacy single-user file; migrated into app.db).
+data/ui-prefs.json
 
 # Playwright persistent contexts — browser session data per portal.
 .playwright-*/

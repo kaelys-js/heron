@@ -1,14 +1,16 @@
 /**
- * POST /api/backup/run — manual backup trigger.
+ * POST /api/backup/run — manual backup trigger. Owner-only.
  *
- * Wraps backup.ts:createBackup(). Returns the same shape as the autopilot
- * job result so the UI's Backups card can render a single "created"
- * confirmation regardless of which path triggered the run.
+ * Backups capture install-wide state (every user's per-user tree, the
+ * auth.db, the app.db). Non-owners must not be able to trigger or read
+ * back the resulting tarball.
  */
 
 import { wrap } from '$lib/server/api-helpers';
+import { requireOwner } from '$lib/server/auth-helpers';
 import { createBackup } from '$lib/server/backup';
 
-export const POST = wrap('backup-run', async () => {
+export const POST = wrap('backup-run', async ({ locals }: { locals: App.Locals }) => {
+  requireOwner(locals);
   return await createBackup();
 });

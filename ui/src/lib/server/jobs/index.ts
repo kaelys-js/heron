@@ -56,6 +56,10 @@ import './backup.job';
 import './interview-reminder.job';
 import { installInterviewReminderDaemon } from './interview-reminder.job';
 
+// Multi-user lifecycle reaper — daily 04:00. Hard-deletes users past
+// their 30-day soft-delete grace window and prunes expired invite codes.
+import './lifecycle-reap.job';
+
 let installed = false;
 
 export function installAllJobs(): void {

@@ -29,91 +29,96 @@ import { wrap, badRequest } from '$lib/server/api-helpers';
 import { ROOT } from '$lib/server/files';
 import { recordSuccess, recordFailure, getSource } from '$lib/server/sources';
 import { readEnv } from '$lib/server/env';
+import { requireOwner } from '$lib/server/auth-helpers';
 
-export const POST = wrap('sources-test', async ({ params }: { params: { id: string } }) => {
-  const id = params.id;
+export const POST = wrap(
+  'sources-test',
+  async ({ params, locals }: { params: { id: string }; locals: App.Locals }) => {
+    requireOwner(locals);
+    const id = params.id;
 
-  if (id === 'linkedin-auth' || id === 'indeed-auth') {
-    const portal = id === 'linkedin-auth' ? 'linkedin' : 'indeed';
-    const stateDir = path.join(ROOT, '.playwright-' + portal);
-    if (!fs.existsSync(stateDir)) {
-      const err = new Error('No saved session — click Connect first.');
-      recordFailure(id, err);
-      return { ok: false, error: err.message };
-    }
-    try {
-      await spawnSessionCheck(portal);
-      recordSuccess(id);
-      return { ok: true, message: portal + ' session is alive.' };
-    } catch (err) {
-      recordFailure(id, err);
-      return { ok: false, error: err instanceof Error ? err.message : String(err) };
-    }
-  }
-
-  if (id === 'gmail-imap') {
-    const env = readEnv();
-    if (!env.GMAIL_IMAP_HOST || !env.GMAIL_IMAP_USER || !env.GMAIL_IMAP_PASSWORD) {
-      const err = new Error('Missing GMAIL_IMAP_* in .env — click Connect first.');
-      recordFailure(id, err);
-      return { ok: false, error: err.message };
-    }
-    try {
-      await testImap(
-        env.GMAIL_IMAP_HOST,
-        env.GMAIL_IMAP_USER,
-        env.GMAIL_IMAP_PASSWORD,
-        env.GMAIL_IMAP_LABEL || 'INBOX',
-      );
-      recordSuccess(id);
-      return { ok: true, message: 'IMAP connection OK.' };
-    } catch (err) {
-      recordFailure(id, err);
-      return { ok: false, error: err instanceof Error ? err.message : String(err) };
-    }
-  }
-
-  if (id === 'anthropic' || id === 'gemini' || id === 'adzuna') {
-    // Delegate to the same round-trip probe the /settings page uses, so a
-    // valid env var alone is no longer enough to pass Test (B13). Helper
-    // is shared via the testApiKey() function below.
-    try {
-      const r = await probeApiKey(id);
-      if (r.ok) {
-        recordSuccess(id);
-        return { ok: true, message: r.message };
+    if (id === 'linkedin-auth' || id === 'indeed-auth') {
+      const portal = id === 'linkedin-auth' ? 'linkedin' : 'indeed';
+      const stateDir = path.join(ROOT, '.playwright-' + portal);
+      if (!fs.existsSync(stateDir)) {
+        const err = new Error('No saved session — click Connect first.');
+        recordFailure(id, err);
+        return { ok: false, error: err.message };
       }
-      const err = new Error(r.message);
-      recordFailure(id, err);
-      return { ok: false, error: r.message };
-    } catch (err) {
-      recordFailure(id, err);
-      return { ok: false, error: err instanceof Error ? err.message : String(err) };
-    }
-  }
-
-  if (id === 'scan-portals' || id === 'scan-broad' || id === 'scan-curated') {
-    // Real probe of the always-on scanners (B12). Each script understands
-    // --dry-run + --probe (no pipeline writes; just exercise one provider).
-    try {
-      const r = await probeAlwaysOnScanner(id);
-      if (r.ok) {
+      try {
+        await spawnSessionCheck(portal);
         recordSuccess(id);
-        return { ok: true, message: r.message };
+        return { ok: true, message: portal + ' session is alive.' };
+      } catch (err) {
+        recordFailure(id, err);
+        return { ok: false, error: err instanceof Error ? err.message : String(err) };
       }
-      const err = new Error(r.message);
-      recordFailure(id, err);
-      return { ok: false, error: r.message };
-    } catch (err) {
-      recordFailure(id, err);
-      return { ok: false, error: err instanceof Error ? err.message : String(err) };
     }
-  }
 
-  // Unknown id — explicit "no probe available" rather than fake success.
-  const s = getSource(id);
-  return { ok: false, error: 'No probe available for source: ' + id, state: s };
-});
+    if (id === 'gmail-imap') {
+      const env = readEnv();
+      if (!env.GMAIL_IMAP_HOST || !env.GMAIL_IMAP_USER || !env.GMAIL_IMAP_PASSWORD) {
+        const err = new Error('Missing GMAIL_IMAP_* in .env — click Connect first.');
+        recordFailure(id, err);
+        return { ok: false, error: err.message };
+      }
+      try {
+        await testImap(
+          env.GMAIL_IMAP_HOST,
+          env.GMAIL_IMAP_USER,
+          env.GMAIL_IMAP_PASSWORD,
+          env.GMAIL_IMAP_LABEL || 'INBOX',
+        );
+        recordSuccess(id);
+        return { ok: true, message: 'IMAP connection OK.' };
+      } catch (err) {
+        recordFailure(id, err);
+        return { ok: false, error: err instanceof Error ? err.message : String(err) };
+      }
+    }
+
+    if (id === 'anthropic' || id === 'gemini' || id === 'adzuna') {
+      // Delegate to the same round-trip probe the /settings page uses, so a
+      // valid env var alone is no longer enough to pass Test (B13). Helper
+      // is shared via the testApiKey() function below.
+      try {
+        const r = await probeApiKey(id);
+        if (r.ok) {
+          recordSuccess(id);
+          return { ok: true, message: r.message };
+        }
+        const err = new Error(r.message);
+        recordFailure(id, err);
+        return { ok: false, error: r.message };
+      } catch (err) {
+        recordFailure(id, err);
+        return { ok: false, error: err instanceof Error ? err.message : String(err) };
+      }
+    }
+
+    if (id === 'scan-portals' || id === 'scan-broad' || id === 'scan-curated') {
+      // Real probe of the always-on scanners (B12). Each script understands
+      // --dry-run + --probe (no pipeline writes; just exercise one provider).
+      try {
+        const r = await probeAlwaysOnScanner(id);
+        if (r.ok) {
+          recordSuccess(id);
+          return { ok: true, message: r.message };
+        }
+        const err = new Error(r.message);
+        recordFailure(id, err);
+        return { ok: false, error: r.message };
+      } catch (err) {
+        recordFailure(id, err);
+        return { ok: false, error: err instanceof Error ? err.message : String(err) };
+      }
+    }
+
+    // Unknown id — explicit "no probe available" rather than fake success.
+    const s = getSource(id);
+    return { ok: false, error: 'No probe available for source: ' + id, state: s };
+  },
+);
 
 /**
  * Round-trip probe an API key. Mirrors `/api/settings/test` logic so
