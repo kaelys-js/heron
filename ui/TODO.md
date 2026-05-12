@@ -1,7 +1,7 @@
 Several Issues (you have skills for doing proper work right?):
 DIRECTION: Atomic tasks. Verify after each atomic task. Re-check for anything missed and do a loop until nothing left.
 
-- How could CI have passed if I never ran pnpm setup:native? All those things would be missing for releases/etc?
+- How could CI have passed if I never ran pnpm setup:native? All those things would be missing for releases/etc? Shouldn't this cause CI to fail? And even prevent pushing?
 
 - Do a thorough review to confirm that this project will beat most if not all ATS tracking systems
 
