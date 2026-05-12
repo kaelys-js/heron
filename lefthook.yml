@@ -66,6 +66,17 @@ pre-commit:
         git add {staged_files} 2>/dev/null || true
       stage_fixed: true
 
+    sort-package-json:
+      # Sorts package.json keys into a canonical order (name → version →
+      # scripts → deps → devDeps), and alphabetizes inner keys. Runs after
+      # biome-format above so biome's quote/indent fixes don't fight with
+      # the sort. Idempotent — silent when nothing changes.
+      glob: "**/package.json"
+      run: |
+        pnpm exec sort-package-json {staged_files} 2>/dev/null || true
+        git add {staged_files} 2>/dev/null || true
+      stage_fixed: true
+
     biome-format-check:
       # Read-only verification after auto-format. Fails if anything still
       # isn't formatted (e.g. a non-svelte file with weird quoting biome

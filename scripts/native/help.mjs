@@ -20,8 +20,10 @@ const groups = [
     title: 'Daily dev',
     cmds: [
       ['pnpm dev', 'Web only (Vite dev server)'],
-      ['pnpm dev:desktop', 'Electron window + HMR — UI changes hot-reload'],
-      ['pnpm dev:ios', 'iOS sim + dev server + Xcode opens'],
+      ['pnpm dev:desktop', 'Electron window + HMR (macOS / Windows / Linux)'],
+      ['pnpm dev:ios', 'iPhone sim: boot + build + install + launch + HMR'],
+      ['pnpm dev:android', 'Android emulator: boot + build + install + launch + HMR'],
+      ['pnpm dev:apple-watch', 'Apple Watch sim: xcodebuild + install + launch'],
     ],
   },
   {
@@ -35,8 +37,9 @@ const groups = [
   {
     title: 'Building locally',
     cmds: [
-      ['pnpm build:desktop', 'Local DMG / .exe / .AppImage in ui/electron/dist/'],
-      ['pnpm build:ios', 'Upload to TestFlight (one shot)'],
+      ['pnpm build:desktop', 'Local DMG / .exe / .AppImage / .deb (full release)'],
+      ['pnpm build:desktop:fast', 'Single-arch DMG only — 3-5 min vs full'],
+      ['pnpm build:ios', 'Upload to TestFlight (Watch ships in same archive)'],
       ['pnpm icons', 'Regenerate all platform icons (from branding/logo.svg)'],
     ],
   },
