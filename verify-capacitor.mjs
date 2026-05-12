@@ -843,7 +843,7 @@ contains('ui/vite.config.ts', "target: 'es2022'", 'build target ES2022');
 contains('ui/vite.config.ts', 'sourcemap: true', 'production sourcemaps enabled');
 contains('ui/vite.config.ts', 'strictPort: true', 'strict port (5173) so backend-discovery works');
 contains('ui/tsconfig.json', '"strict": true', 'ui strict mode');
-contains('ui/electron/tsconfig.json', '"target": "ES2023"', 'electron target ES2023');
+contains('ui/electron/tsconfig.json', '"target": "ES2024"', 'electron target ES2024');
 contains(
   'ui/electron/tsconfig.json',
   '"forceConsistentCasingInFileNames"',
@@ -864,8 +864,8 @@ exists(
 // ── Phase 11 — Tooling (mise + lefthook + biome + turborepo) ────────
 section('Phase 11 — Tooling (mise + lefthook + biome + turborepo)');
 exists('.mise.toml', 'mise pin');
-contains('.mise.toml', 'node = "25', 'node pinned to latest');
-contains('.mise.toml', 'pnpm = ', 'pnpm pinned');
+contains('.mise.toml', 'node  = "22', 'node pinned to Node 22 LTS');
+contains('.mise.toml', 'pnpm  = "11', 'pnpm pinned to v11');
 exists('lefthook.yml', 'lefthook config');
 contains('lefthook.yml', 'pre-commit:', 'pre-commit hooks');
 contains('lefthook.yml', 'pre-push:', 'pre-push hooks');
@@ -897,7 +897,7 @@ contains('turbo.json', '"build"', 'turbo has build task');
 contains('turbo.json', '"brand"', 'turbo has brand task');
 exists('pnpm-workspace.yaml', 'pnpm workspace');
 contains('pnpm-workspace.yaml', 'ui', 'workspace includes ui');
-jsonField('package.json', 'packageManager', 'pnpm@10.33.0', 'root pins pnpm version');
+jsonField('package.json', 'packageManager', 'pnpm@11.1.0', 'root pins pnpm version');
 contains('package.json', '"format"', 'root has format script');
 contains('package.json', '"format:check"', 'root has format:check script');
 contains('package.json', '"prepare"', 'root has prepare hook (lefthook install)');

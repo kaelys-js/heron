@@ -35,7 +35,11 @@ const config = {
    *  dark-mode theme so users don't see a white flash. */
   backgroundColor: '#0a0a0b',
   ios: {
-    scheme: 'capacitor',
+    // Custom URL scheme — matches CFBundleURLTypes in Info.plist so the
+    // WebView origin and deep-link scheme are the same. Default of
+    // `capacitor` would split origins and require the deep-link handler
+    // to bounce through `capacitor://localhost?deep=...`, adding latency.
+    scheme: 'careerops',
     contentInset: 'always',
     /** When true (Capacitor 8 default), the WebView refuses to navigate
      *  to domains not listed in Info.plist's WKAppBoundDomains. Our
@@ -78,8 +82,10 @@ const config = {
      *  Default in Capacitor 5+ is already `https`; explicit so future
      *  defaults can't surprise us. */
     androidScheme: 'https',
-    /** iOS WebView scheme — `capacitor` is the default same-origin host. */
-    iosScheme: 'capacitor',
+    /** iOS WebView scheme — `careerops` so WebView origin matches the
+     *  custom URL scheme used by deep links (CFBundleURLTypes in
+     *  Info.plist). Keeps everything same-origin. */
+    iosScheme: 'careerops',
   },
   plugins: {
     LocalNotifications: {

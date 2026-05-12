@@ -2,7 +2,7 @@
   "name": "career-ops",
   "version": "1.6.0",
   "description": "AI-powered job search pipeline",
-  "packageManager": "pnpm@10.33.0",
+  "packageManager": "pnpm@11.1.0",
   "scripts": {
     "doctor": "node doctor.mjs",
     "verify": "node verify-pipeline.mjs",
@@ -40,8 +40,8 @@
     "preinstall": "node scripts/ensure-pnpm.mjs"
   },
   "engines": {
-    "node": ">=20",
-    "pnpm": ">=10",
+    "node": ">=22.0.0",
+    "pnpm": ">=11.0.0",
     "npm": "please-use-pnpm",
     "yarn": "please-use-pnpm",
     "bun": "please-use-pnpm"
@@ -61,13 +61,13 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
-    "dotenv": "^16.4.5",
-    "js-yaml": "^4.1.1",
-    "playwright": "^1.58.1"
+    "@google/generative-ai": "0.24.1",
+    "dotenv": "16.6.1",
+    "js-yaml": "4.1.1",
+    "playwright": "1.59.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.15",
-    "turbo": "^2.9.12"
+    "@biomejs/biome": "2.4.15",
+    "turbo": "2.9.12"
   }
 }

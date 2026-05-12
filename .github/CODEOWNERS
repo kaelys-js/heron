@@ -1,0 +1,52 @@
+# GitHub CODEOWNERS — auto-assigns reviews for security-critical paths.
+#
+# Syntax: <pattern>  <@owner1> <@owner2> ...
+# First matching pattern wins (so place more-specific patterns later).
+#
+# Anyone in the "owner" team automatically receives a review request when
+# a PR touches a matching file. Combined with branch protection's
+# "require review from CODEOWNERS", this enforces that nobody (not even
+# the BDFL via squash-merge) can land a change to these paths without
+# explicit owner approval.
+
+# ── Catch-all — bdfl is the fallback reviewer ───────────────────────
+*                                @santifer
+
+# ── Repo-level governance + security ────────────────────────────────
+/AGENTS.md                       @santifer
+/CLAUDE.md                       @santifer
+/GOVERNANCE.md                   @santifer
+/SECURITY.md                     @santifer
+/CODE_OF_CONDUCT.md              @santifer
+/SUPPORT.md                      @santifer
+/LICENSE                         @santifer
+/.github/                        @santifer
+
+# ── Auth + multi-user (security-critical) ───────────────────────────
+/ui/src/lib/server/auth.ts                @santifer
+/ui/src/lib/server/db/auth-schema.ts      @santifer
+/ui/src/lib/server/db/migrate.ts          @santifer
+/ui/src/lib/server/user-context.ts        @santifer
+/ui/src/lib/server/profiles-db.ts         @santifer
+/ui/src/lib/server/profile-paths.ts       @santifer
+/ui/src/lib/server/ui-prefs.ts            @santifer
+/ui/src/lib/server/account-lifecycle.ts   @santifer
+/ui/src/hooks.server.ts                   @santifer
+
+# ── CI / release tooling ────────────────────────────────────────────
+/release-please-config.json     @santifer
+/.release-please-manifest.json  @santifer
+/turbo.json                     @santifer
+/.npmrc                         @santifer
+/.mise.toml                     @santifer
+/pnpm-workspace.yaml            @santifer
+/biome.json                     @santifer
+/lefthook.yml                   @santifer
+
+# ── Native config (signing + secrets paths) ─────────────────────────
+/ui/ios/App/fastlane/Fastfile        @santifer
+/ui/electron/electron-builder.config.json  @santifer
+
+# ── Branding (drives generated files in many places) ────────────────
+/branding/                       @santifer
+/scripts/native/apply-brand.mjs  @santifer

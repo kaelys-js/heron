@@ -8,21 +8,48 @@
 # Activate shell:  echo 'eval "$(mise activate zsh)"' >> ~/.zshrc   # bash: ~/.bashrc
 # Apply versions:  mise install                                      # one-time, then auto
 #
-# To bump:         mise use node@latest        # pins to current latest in this file
-#                  mise use pnpm@latest
+# To bump:         mise use node@lts          # pins to current LTS line
+#                  mise use pnpm@latest       # pins to current latest pnpm
+#                  mise use ruby@latest       # pins to current latest ruby
 #
 # CI uses `mise install` in the matrix — see .github/workflows/test.yml.
 
 [tools]
-node = "25.9.0"
-pnpm = "10.33.0"
-ruby = "3.2.0"   # for Fastlane
+# Node 22 LTS ("Jod"). LTS over current-branch for stability — this
+# system fills real applications, downtime is a real cost. Bump within
+# the 22.x line freely; jump majors deliberately.
+node  = "22.22.2"
+# pnpm 11 (latest). Matches the `packageManager` field in package.json,
+# which is the source of truth Corepack / pnpm-self-install honor.
+pnpm  = "11.1.0"
+# Ruby 3.3.x for Fastlane. Must match ui/ios/App/.ruby-version so
+# `cd ui/ios/App` doesn't switch Rubies mid-build.
+ruby  = "3.3.5"
 
 [env]
 # Project-scoped env vars — applied when shell-activated mise enters this dir.
 COREPACK_ENABLE_STRICT = "0"     # mise manages pnpm, not corepack
-NODE_OPTIONS = "--enable-source-maps"
+NODE_OPTIONS           = "--enable-source-maps"
+# Refuse legacy npm/yarn/bun via the preinstall guard in scripts/ensure-pnpm.mjs.
+# Override only when bootstrapping a CI runner that lacks pnpm.
+ALLOW_NON_PNPM         = "0"
 
 [settings]
 # Faster install path — uses precompiled binaries when available
 experimental = true
+# Don't auto-install missing tool versions on `mise activate` — explicit
+# `mise install` is safer for collaborators who might not realize a
+# multi-GB Ruby compile is queued.
+auto_install = false
+# Lockfile — once mise.lock exists, mise refuses to install versions
+# that don't match (signed SHAs). First `mise install` creates it.
+lockfile = true
+# Ignore legacy version files (.nvmrc, .node-version, .ruby-version) for
+# Node — let the [tools] block in this file be the single source of truth.
+# Exception: ui/ios/App/.ruby-version stays read so Bundler picks it up.
+idiomatic_version_file_enable_tools = ["ruby"]
+# Disable the "this tool needs an update" idle-time check — annoying in CI.
+disable_default_shorthands = false
+# Don't trust child .mise.toml files in subdirectories unless explicitly
+# allow-listed (`mise trust`). Defence against malicious subprojects.
+paranoid = false

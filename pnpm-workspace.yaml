@@ -10,14 +10,52 @@ packages:
   - "ui"
   - "ui/electron"
 
-# pnpm 10 refuses to run install-scripts for transitive deps by default
-# (supply-chain-attack mitigation). career-ops needs four native
-# packages to compile / unpack their bindings on install; everything
-# else is pure JS.
+# pnpm 11 replaces the old `onlyBuiltDependencies` array with `allowBuilds`,
+# an explicit map of package → boolean. `true` = run the package's
+# install/postinstall script; `false` = block it (default for unlisted).
 #
 # Don't add packages here without inspecting their install scripts.
-onlyBuiltDependencies:
-  - better-sqlite3
-  - sharp
-  - electron
-  - electron-winstaller   # transitive of electron-builder (Windows builds)
+# These five each need their script to land precompiled binaries OR
+# build native bindings on the user's host:
+#   • better-sqlite3   — compiles or downloads prebuilt SQLite + node binding
+#   • electron         — downloads + unpacks the Electron runtime
+#   • electron-winstaller — Windows installer bundler (transitive of electron-builder)
+#   • esbuild          — downloads the platform-specific binary
+#   • sharp            — downloads precompiled libvips binaries
+allowBuilds:
+  better-sqlite3: true
+  electron: true
+  electron-winstaller: true
+  esbuild: true
+  sharp: true
+
+# ── Transitive override pinning ─────────────────────────────────────
+# pnpm 11 reads `overrides` ONLY from pnpm-workspace.yaml in workspaces.
+# Documented at https://pnpm.io/settings#overrides — the `pnpm.overrides`
+# key in package.json is silently ignored when a workspace is present.
+#
+# Each entry below pins a specific transitive away from a known CVE.
+overrides:
+  # GHSA-67mh-4wv8-2f99 — esbuild dev server lets any website CORS-read
+  # the response. Patched in 0.25.0. @esbuild-kit/core-utils still pins
+  # 0.18.x; this forces all instances onto a safe version.
+  esbuild: ">=0.25.12"
+  # GHSA-pxg6-pf52-xh8x — cookie accepts out-of-bounds chars in name/path/
+  # domain (CRLF injection). Patched in 0.7.0. @sveltejs/kit 2.59.x still
+  # bundles 0.6.0.
+  cookie: ">=0.7.0"
+  # GHSA-f5x3-32g6-xq36, GHSA-3jfq-g458-7qm9, plus 3 sibling CVEs — tar
+  # path traversal / arbitrary write. Patched in 7.5.7.
+  tar: ">=7.5.7"
+  # GHSA-px2f-25qx-c2pq — @tootallnate/once is unmaintained and has an
+  # incorrect control flow advisory. Last published version was 1.x;
+  # forks bundle 2.x which is what agent-base now uses.
+  "@tootallnate/once": ">=2.0.0"
+
+# ── Peer dependency rules ──────────────────────────────────────────
+peerDependencyRules:
+  # Better Auth optionally peers on react/@types/react for its React SDK
+  # — we don't use that. Suppress the missing-peer warnings.
+  ignoreMissing:
+    - "@types/react"
+    - react

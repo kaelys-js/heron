@@ -1,0 +1,46 @@
+# EditorConfig — universal text-editor settings.
+# https://editorconfig.org
+#
+# Picked up automatically by VS Code, JetBrains, vim, emacs, Sublime,
+# nano, Xcode (via a plugin), and Android Studio. Matches the biome /
+# prettier configuration so the saved file already passes format-check.
+
+root = true
+
+[*]
+charset                  = utf-8
+indent_style             = space
+indent_size              = 2
+end_of_line              = lf
+insert_final_newline     = true
+trim_trailing_whitespace = true
+max_line_length          = 100
+
+# ── Languages that traditionally use tabs or wider indents ──────────
+[*.{md,mdx}]
+# Markdown trailing whitespace is meaningful (two spaces = <br>).
+trim_trailing_whitespace = false
+max_line_length          = off
+
+[Makefile]
+indent_style = tab
+
+[*.{go,proto}]
+indent_style = tab
+
+[*.{swift,kt,kts,gradle}]
+indent_size = 4
+
+[*.{py,rb}]
+indent_size = 4
+
+[*.{xml,plist,xcconfig,xcsettings,xcscheme,xcworkspacedata,pbxproj}]
+indent_size              = 4
+trim_trailing_whitespace = false
+
+# ── Files we never reformat ─────────────────────────────────────────
+[{*.lock,*.tsbuildinfo,*.snap,*.min.*,**/CHANGELOG.md,**/pnpm-lock.yaml,**/Gemfile.lock,**/Package.resolved}]
+indent_size              = unset
+indent_style             = unset
+trim_trailing_whitespace = false
+insert_final_newline     = unset
