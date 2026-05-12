@@ -41,6 +41,16 @@ const state = readState();
 const envFile = join(process.env.HOME || '', '.career-ops', 'native-env');
 
 // ───────────────────────────────────────────────────────────────────
+step(0, 'Applying brand');
+try {
+  const { execSync } = await import('node:child_process');
+  execSync(`node "${join(ROOT, 'scripts/native/apply-brand.mjs')}"`, { stdio: 'pipe' });
+  ok('branding propagated to every consumer (branding/brand.json → configs)');
+} catch (e) {
+  warn(`brand apply failed — continuing: ${e.message}`);
+}
+
+// ───────────────────────────────────────────────────────────────────
 step(1, 'Tooling check');
 const toolStatus = {
   gh: which('gh'),

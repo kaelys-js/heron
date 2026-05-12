@@ -31,7 +31,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Start the Bonjour browser early so backend-discovery can
         // hit a hot cache. Results are stored in a UserDefaults key
         // the JS bridge reads.
-        self.bonjourBrowser = BonjourBrowser(serviceType: "_career-ops._tcp")
+        self.bonjourBrowser = BonjourBrowser(serviceType: Brand.serviceType)
         self.bonjourBrowser?.start()
 
         // Register for background fetch — minimum interval is iOS-decided.

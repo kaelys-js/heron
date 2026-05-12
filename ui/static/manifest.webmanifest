@@ -1,14 +1,17 @@
 {
   "name": "career-ops",
   "short_name": "career-ops",
-  "description": "Local-first job search dashboard — pipeline, scoring, tailored CVs, and an AI agent for interviews and negotiation.",
+  "description": "AI-powered job search pipeline",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "theme_color": "#0a0a0c",
-  "background_color": "#0a0a0c",
-  "categories": ["productivity", "utilities"],
+  "theme_color": "#5b6cff",
+  "background_color": "#0a0a0b",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "/favicon.svg",

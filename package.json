@@ -1,7 +1,7 @@
 {
   "name": "career-ops",
   "version": "1.6.0",
-  "description": "AI-powered job search pipeline built on Claude Code",
+  "description": "AI-powered job search pipeline",
   "scripts": {
     "doctor": "node doctor.mjs",
     "verify": "node verify-pipeline.mjs",
@@ -26,6 +26,7 @@
     "build:ios": "node scripts/native/build-ios-testflight.mjs",
     "icons": "node scripts/native/icons.mjs",
     "release": "node scripts/native/release.mjs",
+    "brand:apply": "node scripts/native/apply-brand.mjs",
     "verify:capacitor": "node verify-capacitor.mjs"
   },
   "keywords": [
@@ -35,7 +36,7 @@
     "career",
     "automation"
   ],
-  "author": "Santiago Fernández de Valderrama <hi@santifer.io> (https://santifer.io)",
+  "author": "santifer <hi@santifer.io> (https://santifer.io)",
   "homepage": "https://santifer.io",
   "repository": {
     "type": "git",

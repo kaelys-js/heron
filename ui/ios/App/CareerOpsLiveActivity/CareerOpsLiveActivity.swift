@@ -61,7 +61,7 @@ struct CareerOpsInterviewLiveActivity: Widget {
                     HStack {
                         Text(context.state.role).font(.caption2).foregroundStyle(.secondary)
                         Spacer()
-                        Link(destination: URL(string: "careerops://job/\(context.attributes.jobId)")!) {
+                        Link(destination: URL(string: Brand.jobDeepLink(context.attributes.jobId))!) {
                             Text("Open prep").font(.caption.bold())
                         }
                     }

@@ -1,0 +1,71 @@
+{
+  "$comment": "Single source of truth for ALL branding. Edit this, run `pnpm brand:apply`, and every consumer (Capacitor configs, electron-builder, Info.plist, entitlements, web manifest, Swift constants, root package.json, README badges) is regenerated. Adding a new consumer? Add a function to scripts/native/apply-brand.mjs.",
+
+  "name": "career-ops",
+  "displayName": "career-ops",
+  "shortName": "career-ops",
+  "tagline": "AI-powered job search pipeline",
+  "description": "Track applications, generate tailored CVs, automate scans across 11 ATS portals.",
+  "keywords": ["ai", "job-search", "claude-code", "career", "automation"],
+
+  "identifiers": {
+    "bundleId": "com.resistjs.careerops",
+    "appGroup": "group.com.resistjs.careerops",
+    "urlScheme": "careerops",
+    "serviceType": "_career-ops._tcp",
+    "mdnsType": "career-ops",
+    "spotlightDomain": "com.resistjs.careerops.jobs",
+    "userActivityTypes": [
+      "com.resistjs.careerops.job",
+      "com.resistjs.careerops.openJob"
+    ],
+    "keychainService": "com.resistjs.careerops"
+  },
+
+  "extensions": {
+    "widget": { "name": "CareerOpsWidget", "bundleSuffix": "widget", "deploymentMin": "16.0" },
+    "liveActivity": { "name": "CareerOpsLiveActivity", "bundleSuffix": "liveactivity", "deploymentMin": "16.1" },
+    "shareExtension": { "name": "CareerOpsShareExtension", "bundleSuffix": "share", "deploymentMin": "15.0" }
+  },
+
+  "colors": {
+    "primary": "#5b6cff",
+    "accentEmeraldLight": "#34d399",
+    "accentEmeraldDark": "#10b981",
+    "darkBg": "#0a0a0b",
+    "darkSurface": "#18181b",
+    "lightOnDark": "#e4e4e7"
+  },
+
+  "iconSource": "branding/logo.svg",
+
+  "author": {
+    "name": "santifer",
+    "email": "hi@santifer.io",
+    "url": "https://santifer.io",
+    "githubHandle": "santifer"
+  },
+
+  "repo": {
+    "owner": "santifer",
+    "name": "career-ops",
+    "url": "https://github.com/santifer/career-ops",
+    "issues": "https://github.com/santifer/career-ops/issues",
+    "docs": "https://github.com/santifer/career-ops#readme"
+  },
+
+  "permissions": {
+    "localNetworkUsage": "career-ops uses local network discovery to find your desktop app on the same wifi.",
+    "faceIdUsage": "career-ops uses Face ID to protect sensitive screens like the negotiation playbook."
+  },
+
+  "copyright": "Copyright © 2026 santifer",
+  "license": "MIT",
+
+  "homepageUrl": "https://santifer.io",
+
+  "ai": {
+    "supportedCLIs": ["claude", "gemini", "codex", "copilot", "opencode", "qwen"],
+    "defaultCLI": "claude"
+  }
+}

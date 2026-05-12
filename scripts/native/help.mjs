@@ -25,11 +25,19 @@ const groups = [
     ],
   },
   {
+    title: 'Branding',
+    cmds: [
+      ['pnpm brand:apply', 'Propagate branding/brand.json into every config (idempotent)'],
+      ['edit branding/brand.json', 'Single source of truth for app name, bundle ID, colors, URLs'],
+      ['edit branding/logo.svg', 'Single source of truth for the icon'],
+    ],
+  },
+  {
     title: 'Building locally',
     cmds: [
       ['pnpm build:desktop', 'Local DMG / .exe / .AppImage in ui/electron/dist/'],
       ['pnpm build:ios', 'Upload to TestFlight (one shot)'],
-      ['pnpm icons', 'Regenerate all platform icons from ui/static/favicon.svg'],
+      ['pnpm icons', 'Regenerate all platform icons (from branding/logo.svg)'],
     ],
   },
   {

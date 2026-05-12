@@ -31,6 +31,7 @@
  * everything still works: localhost:5173 wins at step 2.
  */
 import { Preferences } from '@capacitor/preferences';
+import { BRAND } from './brand';
 
 export type BackendSource =
   | 'embedded'
@@ -59,7 +60,7 @@ export type ResolverOptions = {
   forceRefresh?: boolean;
 };
 
-const CACHE_KEY = 'career-ops:backend-resolved';
+const CACHE_KEY = `${BRAND.name}:backend-resolved`;
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 min
 const DEFAULT_PROBE_TIMEOUT = 1000;
 const DEV_FALLBACK = 'http://localhost:5173';
@@ -107,7 +108,7 @@ async function browseMdns(timeoutMs = 1500): Promise<string | null> {
   if (typeof w.__CAREER_OPS_MDNS_BROWSE__ === 'function') {
     try {
       const result = await Promise.race([
-        w.__CAREER_OPS_MDNS_BROWSE__('_career-ops._tcp'),
+        w.__CAREER_OPS_MDNS_BROWSE__(BRAND.serviceType),
         new Promise<null>((r) => setTimeout(() => r(null), timeoutMs)),
       ]);
       if (result && typeof result === 'string') return result;

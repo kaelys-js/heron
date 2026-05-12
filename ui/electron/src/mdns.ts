@@ -9,6 +9,7 @@
  * compatible.
  */
 import { app } from 'electron';
+import { BRAND } from './brand';
 
 type AdvertiseOptions = {
   name: string;
@@ -26,7 +27,7 @@ export function startMdnsAdvertise(opts: AdvertiseOptions): void {
     const instance = new Bonjour();
     advertiser = instance.publish({
       name: opts.name,
-      type: 'career-ops',
+      type: BRAND.mdnsType,
       protocol: 'tcp',
       port: opts.port,
       txt: {
@@ -34,7 +35,7 @@ export function startMdnsAdvertise(opts: AdvertiseOptions): void {
         platform: process.platform,
       },
     });
-    console.log(`[mdns] advertising career-ops on port ${opts.port}`);
+    console.log(`[mdns] advertising ${BRAND.name} on port ${opts.port}`);
   } catch (e) {
     console.warn('[mdns] failed to advertise — bonjour-service may be missing', e);
   }

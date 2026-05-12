@@ -17,6 +17,7 @@
  */
 import { App } from '@capacitor/app';
 import { goto } from '$app/navigation';
+import { BRAND } from './brand';
 
 let installed = false;
 
@@ -38,9 +39,12 @@ export function installDeepLinkHandler(): void {
 export function parseDeepLink(url: string): string | null {
   try {
     // The custom scheme strips through Capacitor's app plugin as a
-    // full URL. Parsing `careerops://job/abc` with new URL() requires
-    // we normalize to a parseable form.
-    const normalized = url.replace(/^careerops:\/\//, 'https://career-ops.local/');
+    // full URL. Parsing `${BRAND.urlScheme}://job/abc` with new URL()
+    // requires we normalize to a parseable form.
+    const schemePrefix = `${BRAND.urlScheme}://`;
+    const normalized = url.startsWith(schemePrefix)
+      ? 'https://career-ops.local/' + url.slice(schemePrefix.length)
+      : url;
     const u = new URL(normalized);
     const segments = u.pathname.split('/').filter(Boolean);
     if (segments.length === 0) return '/';

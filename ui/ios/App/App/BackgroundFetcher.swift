@@ -23,7 +23,7 @@ final class BackgroundFetcher {
             completion(.noData)
             return
         }
-        let lastSeen = UserDefaults.standard.double(forKey: "career-ops:last-seen-issue")
+        let lastSeen = UserDefaults.standard.double(forKey: Brand.DefaultsKey.lastSeenIssue)
         var components = URLComponents(string: backend + "/api/issues")!
         components.queryItems = [URLQueryItem(name: "since", value: String(Int64(lastSeen * 1000)))]
         guard let url = components.url else {
@@ -57,7 +57,7 @@ final class BackgroundFetcher {
                 }
             }
             if newest > lastSeen {
-                UserDefaults.standard.set(newest, forKey: "career-ops:last-seen-issue")
+                UserDefaults.standard.set(newest, forKey: Brand.DefaultsKey.lastSeenIssue)
             }
             completion(surfaced > 0 ? .newData : .noData)
         }
@@ -70,7 +70,7 @@ final class BackgroundFetcher {
         content.body = (issue["summary"] as? String) ?? ""
         content.sound = .default
         if let jobId = issue["jobId"] as? String {
-            content.userInfo = ["deepLink": "careerops://job/\(jobId)"]
+            content.userInfo = ["deepLink": Brand.jobDeepLink(jobId)]
         }
         let id = (issue["id"] as? String) ?? UUID().uuidString
         let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)
@@ -81,10 +81,10 @@ final class BackgroundFetcher {
         // Order mirrors lib/client/backend-discovery.ts. We can only
         // probe LAN + tailscale + production from native because the
         // WebView isn't running during background-fetch.
-        if let lan = UserDefaults.standard.string(forKey: "career-ops:lan-url") { return lan }
-        if let cached = UserDefaults.standard.string(forKey: "career-ops:backend-resolved-url") { return cached }
-        if let ts = UserDefaults.standard.string(forKey: "career-ops:tailscale-url") { return ts }
-        if let prod = UserDefaults.standard.string(forKey: "career-ops:production-url") { return prod }
+        if let lan = UserDefaults.standard.string(forKey: Brand.DefaultsKey.lanUrl) { return lan }
+        if let cached = UserDefaults.standard.string(forKey: Brand.DefaultsKey.backendResolvedUrl) { return cached }
+        if let ts = UserDefaults.standard.string(forKey: Brand.DefaultsKey.tailscaleUrl) { return ts }
+        if let prod = UserDefaults.standard.string(forKey: Brand.DefaultsKey.productionUrl) { return prod }
         return nil
     }
 }

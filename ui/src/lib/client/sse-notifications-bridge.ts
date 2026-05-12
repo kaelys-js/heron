@@ -24,6 +24,7 @@
  * teardown when the user reconfigures the backend.
  */
 import { notify, requestPermission } from './notifications';
+import { BRAND, jobDeepLink } from './brand';
 
 export type SseEvent = {
   id: string;
@@ -55,11 +56,11 @@ export function installNotificationsBridge(backendUrl: string): () => void {
     }
     const tag = event.jobId ? `apply:${event.jobId}` : event.source ?? event.id;
     void notify({
-      title: event.title ?? `career-ops: ${event.level}`,
+      title: event.title ?? `${BRAND.displayName}: ${event.level}`,
       body: event.message ?? '',
       tag,
       level: event.level,
-      deepLink: event.jobId ? `careerops://job/${event.jobId}` : undefined,
+      deepLink: event.jobId ? jobDeepLink(event.jobId) : undefined,
       onClick: () => {
         if (event.jobId && typeof window !== 'undefined') {
           window.location.href = `/job/${event.jobId}`;
