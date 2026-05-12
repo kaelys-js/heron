@@ -23,7 +23,11 @@ struct RootView: View {
             InboxPage()
         }
         .tabViewStyle(.page)
-        .containerBackground(.tint.gradient, for: .tabView)
+        // `.tint.gradient` was the goal, but TintShapeStyle doesn't
+        // expose `.gradient` (only concrete Colors do). Anchor to a
+        // brand-adjacent indigo so the gradient renders correctly on
+        // watchOS 10+; iOS 18 tint-on-watch will still recolor it.
+        .containerBackground(Color.indigo.gradient, for: .tabView)
     }
 }
 
@@ -33,7 +37,11 @@ private struct StatsPage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Today").font(.title3.bold())
-                CounterRow(label: "Queued", value: model.stats.queued, color: .tint)
+                // CounterRow.color expects a concrete `Color`. `.tint`
+                // resolves to `TintShapeStyle` in this context, not a
+                // Color value — use the same indigo we use for the
+                // container background to stay visually consistent.
+                CounterRow(label: "Queued", value: model.stats.queued, color: .indigo)
                 CounterRow(label: "Applied", value: model.stats.appliedToday, color: .green)
                 CounterRow(label: "Interviews", value: model.stats.upcomingInterviews, color: .orange)
                 if let synced = model.lastSyncAt {
