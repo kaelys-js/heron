@@ -192,8 +192,24 @@
       "inputs": ["verify-pipeline.mjs", "data/applications.md", "templates/states.yml"]
     },
 
+    "//#verify:versions": {
+      "outputs": [],
+      "inputs": [
+        "verify-versions.mjs",
+        ".mise.toml",
+        "package.json",
+        "ui/package.json",
+        "ui/electron/package.json"
+      ]
+    },
+
     "//#verify:all": {
-      "dependsOn": ["//#verify:capacitor", "//#verify:multi-user", "//#verify:pipeline"],
+      "dependsOn": [
+        "//#verify:capacitor",
+        "//#verify:multi-user",
+        "//#verify:pipeline",
+        "//#verify:versions"
+      ],
       "outputs": []
     }
   }
