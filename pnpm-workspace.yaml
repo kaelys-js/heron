@@ -9,3 +9,15 @@
 packages:
   - "ui"
   - "ui/electron"
+
+# pnpm 10 refuses to run install-scripts for transitive deps by default
+# (supply-chain-attack mitigation). career-ops needs four native
+# packages to compile / unpack their bindings on install; everything
+# else is pure JS.
+#
+# Don't add packages here without inspecting their install scripts.
+onlyBuiltDependencies:
+  - better-sqlite3
+  - sharp
+  - electron
+  - electron-winstaller   # transitive of electron-builder (Windows builds)

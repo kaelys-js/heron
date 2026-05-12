@@ -14,23 +14,38 @@ on:
     - cron: '0 9 1 */2 *'
   workflow_dispatch:
 
-permissions:
-  contents: read
+# Workflow-level default = nothing. The job needs contents:write to
+# push the tag that fires native-release.yml.
+permissions: {}
+
+concurrency:
+  group: testflight-keepalive
+  cancel-in-progress: false
 
 jobs:
   rebuild:
-    runs-on: macos-latest
+    # Tagging doesn't need macOS — pick the cheap runner. The actual
+    # build runs on macOS via native-release.yml after the tag push.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          # We push back with this token so persist-credentials must
+          # stay on (the default).
+          fetch-depth: 0
       - name: Bump build number + tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Bump the patch number with a -tf{date} suffix so the version
-          # number stays unique without polluting semver.
+          set -euo pipefail
           CURRENT=$(node -p "require('./ui/electron/package.json').version")
           DATE_TAG=$(date +%Y%m%d)
           NEW_TAG="v${CURRENT}-tf${DATE_TAG}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "$NEW_TAG" -m "TestFlight keepalive rebuild ${DATE_TAG}"
           git push origin "$NEW_TAG"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # The tag push triggers native-release.yml which runs build-ios.

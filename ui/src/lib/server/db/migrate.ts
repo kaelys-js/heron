@@ -15,7 +15,35 @@
  */
 import { authSqliteHandle, appSqliteHandle } from './index';
 
-const SCHEMA_VERSION = 1;
+/** Schema version. Bump when adding/removing tables.
+ *
+ *  v1 — Phase 1 initial schema (17 app.db tables including dead-on-arrival
+ *       jobs/applications/reports/cv_content/etc).
+ *  v2 — Trimmed app.db to 4 tables (profiles, activity_events, issues,
+ *       ui_prefs). All per-user content files stay on the filesystem under
+ *       data/users/{userId}/profiles/{slug}/... because the Claude CLI
+ *       reads them directly. The dropped-table-cleanup migration below
+ *       runs once when v1 → v2 is detected.
+ */
+const SCHEMA_VERSION = 2;
+
+/** Tables that existed in v1 but were dropped in v2. Listed so the
+ *  upgrade step can DROP them from existing installs. */
+const APP_DROPPED_IN_V2 = [
+  'jobs',
+  'applications',
+  'reports',
+  'scan_history',
+  'gemini_scores',
+  'form_answers',
+  'apply_state',
+  'comp_overrides',
+  'interview_schedule',
+  'cv_content',
+  'profile_yml_content',
+  'portals_yml_content',
+  'profile_md_content',
+];
 
 /** AUTH.DB tables — mirrors `auth-schema.ts`. */
 const AUTH_DDL = `
@@ -132,7 +160,18 @@ CREATE TABLE IF NOT EXISTS schema_meta (
 );
 `;
 
-/** APP.DB tables — mirrors `app-schema.ts`. */
+/** APP.DB tables — mirrors `app-schema.ts`.
+ *
+ *  Only the 4 tables the dashboard actually queries are defined:
+ *  profiles, activity_events, issues, ui_prefs. Per-user content files
+ *  (cv.md, profile.yml, portals.yml, _profile.md, applications.md,
+ *  pipeline.md, scan-history.tsv, gemini-scores.tsv, reports/, output/,
+ *  interview-prep/, form-answers-cache.jsonl, apply-state JSON,
+ *  comp-overrides JSON, interview-schedule.jsonl) live on the filesystem
+ *  under `data/users/{userId}/profiles/{slug}/...` because the Claude
+ *  CLI reads them directly per AGENTS.md. User separation is enforced
+ *  by the per-user path prefix; moving these into SQLite would break
+ *  the CLI integration. */
 const APP_DDL = `
 CREATE TABLE IF NOT EXISTS profiles (
   id TEXT PRIMARY KEY NOT NULL,
@@ -145,103 +184,6 @@ CREATE TABLE IF NOT EXISTS profiles (
   updated_at INTEGER NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS profiles_user_slug_uniq ON profiles(user_id, slug);
-
-CREATE TABLE IF NOT EXISTS jobs (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  profile_id TEXT NOT NULL,
-  company TEXT NOT NULL,
-  role TEXT NOT NULL,
-  url TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'New',
-  score REAL,
-  gemini_score REAL,
-  bg_risk TEXT,
-  work_mode TEXT,
-  location TEXT,
-  salary TEXT,
-  pdf_file TEXT,
-  report_file TEXT,
-  source TEXT,
-  pipeline_index INTEGER,
-  last_event INTEGER,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS jobs_user_id_idx ON jobs(user_id);
-CREATE INDEX IF NOT EXISTS jobs_profile_id_idx ON jobs(profile_id);
-
-CREATE TABLE IF NOT EXISTS applications (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  profile_id TEXT NOT NULL,
-  job_id TEXT NOT NULL,
-  status TEXT NOT NULL,
-  applied_at INTEGER,
-  notes TEXT,
-  created_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS applications_user_id_idx ON applications(user_id);
-CREATE INDEX IF NOT EXISTS applications_job_id_idx ON applications(job_id);
-
-CREATE TABLE IF NOT EXISTS reports (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  profile_id TEXT NOT NULL,
-  job_id TEXT NOT NULL,
-  content_md TEXT NOT NULL,
-  created_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS reports_user_id_idx ON reports(user_id);
-CREATE INDEX IF NOT EXISTS reports_job_id_idx ON reports(job_id);
-
-CREATE TABLE IF NOT EXISTS scan_history (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  profile_id TEXT NOT NULL,
-  url TEXT NOT NULL,
-  source TEXT NOT NULL,
-  scanned_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS scan_history_user_id_idx ON scan_history(user_id);
-
-CREATE TABLE IF NOT EXISTS gemini_scores (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  profile_id TEXT NOT NULL,
-  job_id TEXT NOT NULL,
-  score REAL NOT NULL,
-  rationale TEXT,
-  scored_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS gemini_scores_user_id_idx ON gemini_scores(user_id);
-
-CREATE TABLE IF NOT EXISTS form_answers (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  profile_id TEXT NOT NULL,
-  key TEXT NOT NULL,
-  label TEXT,
-  answer TEXT NOT NULL,
-  updated_at INTEGER NOT NULL,
-  use_count INTEGER NOT NULL DEFAULT 0
-);
-CREATE UNIQUE INDEX IF NOT EXISTS form_answers_user_profile_key_uniq ON form_answers(user_id, profile_id, key);
-
-CREATE TABLE IF NOT EXISTS apply_state (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  job_id TEXT NOT NULL,
-  url TEXT NOT NULL,
-  portal TEXT NOT NULL,
-  profile_id TEXT NOT NULL,
-  started_at INTEGER NOT NULL,
-  last_step TEXT,
-  step_history TEXT,
-  screenshot_path TEXT,
-  captured_at INTEGER
-);
-CREATE INDEX IF NOT EXISTS apply_state_user_id_idx ON apply_state(user_id);
 
 CREATE TABLE IF NOT EXISTS activity_events (
   id TEXT PRIMARY KEY NOT NULL,
@@ -286,66 +228,6 @@ CREATE TABLE IF NOT EXISTS ui_prefs (
   updated_at INTEGER NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS comp_overrides (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  key TEXT NOT NULL,
-  band TEXT NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE UNIQUE INDEX IF NOT EXISTS comp_overrides_user_key_uniq ON comp_overrides(user_id, key);
-
-CREATE TABLE IF NOT EXISTS interview_schedule (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  job_id TEXT NOT NULL,
-  scheduled_at INTEGER NOT NULL,
-  stage TEXT,
-  format TEXT,
-  interviewers TEXT,
-  notes TEXT,
-  reminders TEXT,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS interview_schedule_user_id_idx ON interview_schedule(user_id);
-
-CREATE TABLE IF NOT EXISTS cv_content (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  profile_id TEXT NOT NULL,
-  content_md TEXT NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE UNIQUE INDEX IF NOT EXISTS cv_content_user_profile_uniq ON cv_content(user_id, profile_id);
-
-CREATE TABLE IF NOT EXISTS profile_yml_content (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  profile_id TEXT NOT NULL,
-  content_yml TEXT NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE UNIQUE INDEX IF NOT EXISTS profile_yml_user_profile_uniq ON profile_yml_content(user_id, profile_id);
-
-CREATE TABLE IF NOT EXISTS portals_yml_content (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  profile_id TEXT NOT NULL,
-  content_yml TEXT NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE UNIQUE INDEX IF NOT EXISTS portals_yml_user_profile_uniq ON portals_yml_content(user_id, profile_id);
-
-CREATE TABLE IF NOT EXISTS profile_md_content (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  profile_id TEXT NOT NULL,
-  content_md TEXT NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE UNIQUE INDEX IF NOT EXISTS profile_md_user_profile_uniq ON profile_md_content(user_id, profile_id);
-
 CREATE TABLE IF NOT EXISTS schema_meta (
   key TEXT PRIMARY KEY NOT NULL,
   value TEXT NOT NULL
@@ -354,12 +236,45 @@ CREATE TABLE IF NOT EXISTS schema_meta (
 
 let migrated = false;
 
-/** Bootstrap both SQLite files. Idempotent — safe to call repeatedly. */
+function readVersion(handle: typeof authSqliteHandle): number {
+  try {
+    const row = handle.prepare("SELECT value FROM schema_meta WHERE key = 'version'").get() as
+      | { value?: string }
+      | undefined;
+    return row?.value ? parseInt(row.value, 10) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Bootstrap both SQLite files. Idempotent — safe to call repeatedly.
+ *
+ * On v1 → v2 upgrade, drops the 13 app.db tables that were defined but
+ * never written to in v1 (jobs, applications, reports, scan_history,
+ * gemini_scores, form_answers, apply_state, comp_overrides,
+ * interview_schedule, cv_content, profile_yml_content, portals_yml_content,
+ * profile_md_content). The per-user data those tables would have held
+ * already lives on the filesystem under data/users/{userId}/profiles/{slug}/.
+ */
 export function ensureSchema(): void {
   if (migrated) return;
   authSqliteHandle.exec(AUTH_DDL);
   appSqliteHandle.exec(APP_DDL);
-  // Record the version for future migrations.
+
+  // Drop tables that existed in v1 but were removed in v2. Pre-v2 installs
+  // never wrote any rows to these (they were aspirational), so DROP is
+  // safe — no user data is destroyed.
+  const appVersion = readVersion(appSqliteHandle);
+  if (appVersion < 2) {
+    for (const table of APP_DROPPED_IN_V2) {
+      try {
+        appSqliteHandle.exec(`DROP TABLE IF EXISTS ${table};`);
+      } catch {
+        /* table didn't exist — fine */
+      }
+    }
+  }
+
   authSqliteHandle
     .prepare("INSERT OR REPLACE INTO schema_meta(key, value) VALUES ('version', ?)")
     .run(String(SCHEMA_VERSION));

@@ -1,41 +1,77 @@
 name: Tests
 
+# Run on PR + every push to main. Concurrency cancels in-flight runs
+# for the same ref so rapid pushes don't burn CI minutes.
 on:
   pull_request:
     branches: [main]
   push:
     branches: [main]
 
+# Least-privilege: this workflow only reads source + writes statuses /
+# annotations. No release artefacts, no Pages, no packages.
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
+    name: Lint + typecheck + smoke (Ubuntu)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:
+          # Release-Please + commit-message inspection both need full
+          # history; the 5-second cost is worth it.
           fetch-depth: 0
+          # Don't persist the workflow token — defence in depth.
+          persist-credentials: false
 
-      # mise installs all tools pinned in .mise.toml (Node + pnpm + Ruby).
-      # Single source of truth → no version drift between local and CI.
+      # mise installs Node + pnpm + Ruby pinned in `.mise.toml`. Single
+      # source of truth; no risk of drift between local + CI versions.
       - uses: jdx/mise-action@v2
         with:
           experimental: true
+          # Cache mise's tool downloads + the active node_modules
+          # store path — drastically faster repeat runs.
+          cache: true
 
-      - uses: actions/setup-go@v6
+      # Cache pnpm's content-addressable store so repeat CI on the
+      # same lockfile is sub-second. `pnpm install --frozen-lockfile`
+      # then just symlinks from cache.
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
         with:
-          go-version: '1.22'
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
 
-      - name: Install ui workspace deps
+      # Root + workspace installs — pnpm honours pnpm-workspace.yaml and
+      # installs everything in one pass.
+      - name: Install dependencies (pnpm, frozen lockfile)
         run: pnpm install --frozen-lockfile
-        working-directory: ui
-
-      - name: Install root deps
-        run: npm install --no-audit --no-fund
 
       - name: Run quick test suite
         run: node test-all.mjs --quick
 
-      - name: Format check (biome)
+      - name: Format check (biome + prettier-svelte)
         run: pnpm format:check
 
       - name: Brand consistency
         run: node verify-capacitor.mjs
+
+      - name: Multi-user verifier
+        run: node verify-multi-user.mjs
+        env:
+          # The verifier writes to data/.env if BETTER_AUTH_SECRET is
+          # missing; CI sets a deterministic one so the test is
+          # reproducible.
+          BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-${{ github.run_id }}

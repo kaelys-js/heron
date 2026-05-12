@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Keychain Access Group for shared credentials between the main
+	     app and any extensions (Widget, Live Activity, Share Extension).
+	     The $(AppIdentifierPrefix) prefix is required by Apple. -->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.resistjs.careerops</string>
+	</array>
+
+	<!-- App Group — used by the Widget + Share Extension to read job data
+	     from the main app's container. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.resistjs.careerops</string>
+	</array>
+
+	<!-- aps-environment — when this value is "development" / "production",
+	     the device registers with APNS and `deviceToken` becomes available
+	     to the app. Capacitor's @capacitor/push-notifications plugin reads
+	     this token to identify the device for server-side push targeting.
+	     LOCAL notifications (UNUserNotificationCenter scheduled by the
+	     app itself) work WITHOUT this entitlement — only remote push
+	     needs it. -->
+	<key>aps-environment</key>
+	<string>development</string>
+
+	<!-- Background fetch + processing — career-ops uses BGAppRefreshTask
+	     to poll high-priority Issues when the WebView's SSE connection
+	     dropped. BGProcessingTask handles longer-running maintenance. -->
+	<key>com.apple.developer.background-tasks</key>
+	<array>
+		<string>com.resistjs.careerops.refresh</string>
+		<string>com.resistjs.careerops.maintenance</string>
+	</array>
+</dict>
+</plist>

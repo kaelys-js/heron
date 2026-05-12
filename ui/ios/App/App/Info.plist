@@ -28,9 +28,10 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<!-- arm64 only — armv7 (32-bit) hasn't shipped since the iPhone 5. -->
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
@@ -46,6 +47,19 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
+
+	<!-- iPad multitasking: don't force fullscreen (false = Split View +
+	     Slide Over + Stage Manager work). Capacitor uses a single Scene
+	     so we don't declare a SceneManifest; iOS's default single-scene
+	     behaviour is correct here. -->
+	<key>UIRequiresFullScreen</key>
+	<false/>
+
+	<!-- Stage Manager (iPadOS 16+) — opt in to the resizable window
+	     experience. Together with UIRequiresFullScreen=false this lets
+	     the user open career-ops alongside Mail / Calendar / Notes. -->
+	<key>UISupportsTrueScreenSizeOnMac</key>
 	<true/>
 
 	<!-- ===== career-ops customizations ===== -->

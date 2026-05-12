@@ -21,6 +21,10 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
 env:
   UPSTREAM_REPO: santifer/career-ops
   UPSTREAM_BRANCH: main
@@ -30,9 +34,10 @@ env:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout fork
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # full history so merge can resolve common ancestors
           fetch-depth: 0

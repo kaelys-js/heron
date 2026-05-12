@@ -82,13 +82,14 @@ Built by someone who used it to evaluate 740+ job offers, generate 100+ tailored
 ## Quick Start
 
 ```bash
-# 1. Clone and install
+# 1. Clone and install — pnpm is required (npm/yarn/bun are refused
+#    by the preinstall guard). Install pnpm with: brew install pnpm
 git clone https://github.com/santifer/career-ops.git
-cd career-ops && npm install
-npx playwright install chromium   # Required for PDF generation
+cd career-ops && pnpm install
+pnpm exec playwright install chromium   # Required for PDF generation
 
 # 2. Check setup
-npm run doctor                     # Validates all prerequisites
+pnpm run doctor                     # Validates all prerequisites
 
 # 3. Boot the dashboard once — the SvelteKit dashboard auto-creates
 #    data/profiles/default/ on first start and walks you through the
@@ -140,9 +141,11 @@ Career-ops supports [Gemini CLI](https://github.com/google-gemini/gemini-cli) na
 ### Option A — Native Gemini CLI (Recommended)
 
 ```bash
-# 1. Install Gemini CLI
-npm install -g @google/gemini-cli
-# or: npx @google/gemini-cli --version
+# 1. Install Gemini CLI (one of these — installing third-party CLIs
+#    globally falls outside the repo's pnpm-only guard).
+pnpm dlx @google/gemini-cli --version
+# or globally: pnpm add -g @google/gemini-cli   (recommended)
+# or:          brew install gemini-cli
 
 # 2. Authenticate (free — uses your Google account)
 gemini auth
@@ -169,12 +172,12 @@ cp .env.example .env
 # Edit .env → set GEMINI_API_KEY=your_key_here
 
 # 2. Install dependencies
-npm install
+pnpm install
 
 # 3. Evaluate a job description
 node gemini-eval.mjs "We are looking for a Senior AI Engineer..."
 node gemini-eval.mjs --file ./jds/my-job.txt
-npm run gemini:eval -- "JD text here"
+pnpm run gemini:eval -- "JD text here"
 ```
 
 > **Free tier:** Both options work without billing. Native CLI uses Google OAuth; the API script uses `gemini-2.0-flash` (15 RPM, 1M tokens/day free).

@@ -35,6 +35,42 @@ type CareerOpsNativePlugin = {
     data: Record<string, unknown>;
   }): Promise<{ ok: boolean }>;
   drainNativeErrors(): Promise<{ errors: Array<Record<string, unknown>> }>;
+  updateWidgets(opts: WidgetUpdate): Promise<{ ok: boolean }>;
+};
+
+export type WidgetUpdate = {
+  stats?: {
+    queued?: number;
+    appliedToday?: number;
+    upcomingInterviews?: number;
+  };
+  /** Pass null to clear the next-interview slot (no scheduled interview). */
+  nextInterview?: {
+    jobId: string;
+    company: string;
+    role: string;
+    stage: string;
+    scheduledAt: string; // ISO
+    interviewers: string[];
+  } | null;
+  /** Pass null to clear (nothing queued / scored). */
+  topApply?: {
+    jobId: string;
+    company: string;
+    role: string;
+    score: number;
+    compBand?: string;
+    location?: string;
+    portal?: string;
+  } | null;
+  /** Latest open issues (already filtered to the acting user). */
+  openIssues?: Array<{
+    id: string;
+    severity: 'info' | 'warn' | 'error';
+    source: string;
+    summary: string;
+    ts: number;
+  }>;
 };
 
 const native = registerPlugin<CareerOpsNativePlugin>('CareerOpsNative');
@@ -186,5 +222,28 @@ export async function drainNativeErrors(): Promise<Array<Record<string, unknown>
     return res.errors ?? [];
   } catch {
     return [];
+  }
+}
+
+/**
+ * Push fresh widget data into the App Group container and trigger a
+ * timeline reload. Call this whenever the dashboard state that powers
+ * a widget changes:
+ *
+ *   • after queue/applied/interviews counter changes → stats
+ *   • after schedule/cancel/reschedule interview → nextInterview
+ *   • after a new high-score job lands → topApply
+ *   • after issue added/resolved → openIssues
+ *
+ * Cheap to call repeatedly; the underlying UserDefaults write is
+ * microseconds and WidgetCenter coalesces reload requests.
+ */
+export async function updateWidgets(update: WidgetUpdate): Promise<boolean> {
+  if (!isIos()) return false;
+  try {
+    const res = await native.updateWidgets(update);
+    return res.ok;
+  } catch {
+    return false;
   }
 }

@@ -19,6 +19,7 @@
  * back if available).
  */
 import fs from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
@@ -27,6 +28,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
 const SVG = path.join(ROOT, 'ui/static/favicon.svg');
 const BUILD = path.join(__dirname, '_build');
+
+// Cache key — sha256 of the source SVG bytes. If it matches the cached
+// value, every output PNG is already up-to-date and the whole 80-render
+// pipeline can short-circuit. Set `--force` (or env ICONS_FORCE=1) to
+// override. Cache file: `native/icons/_build/.cache-hash`.
+const CACHE_KEY_FILE = path.join(BUILD, '.cache-hash');
 
 // Standard size matrix.
 const SIZES = [
@@ -97,10 +104,42 @@ async function renderAtSize(sharp, svg, size, outPath) {
     .toFile(outPath);
 }
 
+async function readCacheKey() {
+  try {
+    return (await fs.readFile(CACHE_KEY_FILE, 'utf8')).trim();
+  } catch {
+    return '';
+  }
+}
+
+async function writeCacheKey(key) {
+  try {
+    await fs.writeFile(CACHE_KEY_FILE, key + '\n');
+  } catch {
+    /* non-fatal */
+  }
+}
+
 async function main() {
   await ensureDirs();
-  const sharp = await loadSharp();
   const svgBuffer = await fs.readFile(SVG);
+
+  // Short-circuit when the source SVG hasn't changed. The cache key
+  // is `sha256(svg) + ":" + size-matrix-fingerprint` so changing either
+  // the source OR the matrix invalidates.
+  const force = process.argv.includes('--force') || process.env.ICONS_FORCE === '1';
+  const matrixKey = JSON.stringify({
+    sizes: SIZES,
+    ios: IOS_SLOTS.map((s) => `${s.name}:${s.size}@${s.scale}`),
+    icns: ICNS_SIZES,
+  });
+  const key = createHash('sha256').update(svgBuffer).update(matrixKey).digest('hex').slice(0, 16);
+  const prev = await readCacheKey();
+  if (!force && prev === key) {
+    console.log(`✓ Icons unchanged (cache=${key}) — skipping render`);
+    return;
+  }
+  const sharp = await loadSharp();
 
   console.log('Rendering raw sizes...');
   for (const s of SIZES) {
@@ -110,7 +149,13 @@ async function main() {
   console.log(`  ${SIZES.length} PNG sizes rendered`);
 
   // ---- iOS AppIcon.appiconset ----
-  console.log('Building iOS AppIcon.appiconset...');
+  // iOS 18 supports three "appearances" per app icon: light (default),
+  // dark (transparent background composited over the user's wallpaper),
+  // and tinted (monochrome icon that picks up the user's accent colour).
+  // For most apps the same artwork renders correctly in all three —
+  // tinted just gets desaturated by iOS. We register all three so the
+  // App Store reports "Full iOS 18 support" rather than "Light only".
+  console.log('Building iOS AppIcon.appiconset (light + dark + tinted)...');
   const iosDir = path.join(ROOT, 'ui/ios/App/App/Assets.xcassets/AppIcon.appiconset');
   await fs.mkdir(iosDir, { recursive: true });
   const iosContents = { images: [], info: { version: 1, author: 'xcode' } };
@@ -125,8 +170,26 @@ async function main() {
       filename: slot.name,
     });
   }
+  // iOS 18 dark + tinted entries — use the same 1024 marketing artwork
+  // for each appearance. Xcode auto-derives the smaller sizes from the
+  // 1024 source on devices that support per-appearance icons.
+  for (const appearance of ['dark', 'tinted']) {
+    const fname = `AppIcon-1024-${appearance}.png`;
+    await renderAtSize(sharp, svgBuffer, 1024, path.join(iosDir, fname));
+    iosContents.images.push({
+      idiom: 'universal',
+      platform: 'ios',
+      size: '1024x1024',
+      filename: fname,
+      appearances: [
+        appearance === 'dark'
+          ? { appearance: 'luminosity', value: 'dark' }
+          : { appearance: 'luminosity', value: 'tinted' },
+      ],
+    });
+  }
   await fs.writeFile(path.join(iosDir, 'Contents.json'), JSON.stringify(iosContents, null, 2));
-  console.log(`  ${IOS_SLOTS.length} iOS slots + Contents.json`);
+  console.log(`  ${IOS_SLOTS.length} iOS slots + dark + tinted + Contents.json`);
 
   // ---- Electron icons ----
   console.log('Building Electron icons...');
@@ -225,6 +288,56 @@ async function main() {
   }
   console.log('  4 web manifest sizes rendered');
 
+  // ---- watchOS icon ----
+  // The Watch target's AppIcon.appiconset expects a single 1024x1024
+  // image at `AppIcon-1024.png`. Xcode auto-derives the smaller sizes
+  // (24/27.5/29/33/40/44/50/51/54/86/98/108/117/129/172/196/216/234/258)
+  // from this master at build time.
+  const watchIconDir = path.join(
+    ROOT,
+    'ui/ios/App/CareerOpsWatch/Assets.xcassets/AppIcon.appiconset',
+  );
+  try {
+    const exists = await fs
+      .access(watchIconDir)
+      .then(() => true)
+      .catch(() => false);
+    if (exists) {
+      await renderAtSize(sharp, svgBuffer, 1024, path.join(watchIconDir, 'AppIcon-1024.png'));
+      console.log('  watchOS AppIcon-1024.png rendered');
+    }
+  } catch {
+    /* watch target not present yet — skip */
+  }
+
+  // ---- favicon.ico ----
+  // Browsers and some search engines request `/favicon.ico` even when
+  // a higher-resolution `<link rel="icon">` is declared. We ship a
+  // multi-size .ico (16/32/48) so legacy clients render correctly.
+  // ImageMagick if present, png-to-ico fallback otherwise.
+  console.log('Building /favicon.ico...');
+  const staticDir = path.join(ROOT, 'ui/static');
+  const faviconIco = path.join(staticDir, 'favicon.ico');
+  try {
+    execSync('which magick', { stdio: 'ignore' });
+    const inputs = [16, 32, 48].map((s) => path.join(BUILD, `${s}.png`)).join(' ');
+    execSync(`magick ${inputs} "${faviconIco}"`, { stdio: 'inherit' });
+    console.log('  favicon.ico generated (multi-size via ImageMagick)');
+  } catch {
+    // Fallback: write a single-size 32x32 PNG masquerading as .ico —
+    // browsers accept this gracefully. ImageMagick is the right way
+    // to build a true ICO container.
+    try {
+      await fs.copyFile(path.join(BUILD, '32.png'), faviconIco);
+      console.log(
+        '  favicon.ico generated (32x32 PNG fallback — install ImageMagick for multi-size)',
+      );
+    } catch (e) {
+      console.warn(`  favicon.ico fallback failed: ${e.message}`);
+    }
+  }
+
+  await writeCacheKey(key);
   console.log('\n✓ All icons generated');
 }
 

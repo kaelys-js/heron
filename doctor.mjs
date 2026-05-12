@@ -37,7 +37,7 @@ function checkDependencies() {
   return {
     pass: false,
     label: 'Dependencies not installed',
-    fix: 'Run: npm install',
+    fix: 'Run: pnpm install',
   };
 }
 
@@ -51,13 +51,13 @@ async function checkPlaywright() {
     return {
       pass: false,
       label: 'Playwright chromium not installed',
-      fix: 'Run: npx playwright install chromium',
+      fix: 'Run: pnpm exec playwright install chromium',
     };
   } catch {
     return {
       pass: false,
       label: 'Playwright chromium not installed',
-      fix: 'Run: npx playwright install chromium',
+      fix: 'Run: pnpm exec playwright install chromium',
     };
   }
 }

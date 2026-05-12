@@ -21,13 +21,15 @@
  *
  * Safe to re-run — idempotent. No-ops if the file already matches.
  */
-import { readFileSync, writeFileSync, existsSync, copyFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, copyFileSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const UI = join(ROOT, 'ui');
+const CACHE_FILE = join(ROOT, 'native', 'icons', '_build', '.apply-brand-cache');
 const BRAND_JSON = join(ROOT, 'branding', 'brand.json');
 const BRAND_LOGO = join(ROOT, 'branding', 'logo.svg');
 
@@ -87,7 +89,7 @@ function patchJson(path, patcher) {
   if (before === after) return false;
   writeFileSync(path, after);
   try {
-    execSync(`npx --no-install biome format --write "${path}"`, { stdio: 'pipe', cwd: ROOT });
+    execSync(`pnpm exec biome format --write "${path}"`, { stdio: 'pipe', cwd: ROOT });
   } catch {
     /* biome may not be installed yet — best effort */
   }
@@ -570,7 +572,7 @@ function applyManifest(brand) {
   // on the next CI run. Best-effort; if biome isn't installed yet, the
   // pre-commit hook will catch it anyway.
   try {
-    execSync(`npx biome format --write "${path}"`, { stdio: 'pipe', cwd: ROOT });
+    execSync(`pnpm exec biome format --write "${path}"`, { stdio: 'pipe', cwd: ROOT });
   } catch {}
   changed
     ? log.ok(`static/manifest.webmanifest`)
@@ -840,7 +842,58 @@ function regenerateIcons() {
 // Main
 // ───────────────────────────────────────────────────────────────────
 
+/** Hash of every file the apply step reads, so a no-op re-run can short-
+ *  circuit. Input set: brand.json + logo.svg + this script's own mtime
+ *  (covers behaviour changes that would invalidate the cache even when
+ *  the brand inputs are unchanged). */
+function computeApplyHash() {
+  const inputs = [
+    join(ROOT, 'branding', 'brand.json'),
+    join(ROOT, 'branding', 'logo.svg'),
+    fileURLToPath(import.meta.url), // this script
+    join(ROOT, 'native', 'icons', 'generate-icons.mjs'),
+  ];
+  const h = createHash('sha256');
+  for (const p of inputs) {
+    try {
+      h.update(p);
+      h.update('\0');
+      h.update(readFileSync(p));
+      h.update('\0');
+      h.update(String(statSync(p).mtimeMs));
+      h.update('\0');
+    } catch {
+      h.update('MISSING\0');
+    }
+  }
+  return h.digest('hex').slice(0, 16);
+}
+
+function shouldSkip() {
+  if (process.argv.includes('--force') || process.env.BRAND_APPLY_FORCE === '1') return false;
+  try {
+    const prev = readFileSync(CACHE_FILE, 'utf8').trim();
+    return prev === computeApplyHash();
+  } catch {
+    return false;
+  }
+}
+
+function recordApplied() {
+  try {
+    const fs = require('node:fs');
+    fs.mkdirSync(dirname(CACHE_FILE), { recursive: true });
+    writeFileSync(CACHE_FILE, computeApplyHash() + '\n');
+  } catch {
+    /* non-fatal */
+  }
+}
+
 function apply() {
+  if (shouldSkip()) {
+    console.log('✓ brand inputs unchanged — apply-brand short-circuited');
+    return;
+  }
   const brand = loadBrand();
   console.log(
     `Applying brand "${brand.name}" v${require('node:fs').existsSync(join(ROOT, 'package.json')) ? JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version : '?'}\n`,
@@ -888,6 +941,8 @@ function apply() {
   applyAGENTSMd(brand);
 
   regenerateIcons();
+
+  recordApplied();
 
   console.log(`\n${GREEN}✓${RESET} brand applied — every consumer reads from branding/brand.json`);
 }
