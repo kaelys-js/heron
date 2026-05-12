@@ -11,25 +11,30 @@
   import { Button } from '$lib/components/ui/button';
   import { AlertTriangle, RefreshCw } from '@lucide/svelte';
   import { reportClientError } from '$lib/notifications.svelte';
+  import { BRAND_EVENTS } from '$lib/client/brand';
   import { onNavigate } from '$app/navigation';
   import { APP_NAME, APP_DESCRIPTION } from '$lib/config/branding';
   import { theme } from '$lib/theme.svelte';
   import { onMount, setContext } from 'svelte';
+  import { goto } from '$app/navigation';
   import { installErrorReporter, setReporterBackend } from '$lib/client/error-reporter';
   import { onlineStore } from '$lib/client/online-status.svelte';
+  import { authClient } from '$lib/client/auth-client';
   import OfflineIndicator from '$lib/components/OfflineIndicator.svelte';
 
-  onMount(() => {
-    // Remove the boot-fallback "Loading career-ops…" UI from app.html now
-    // that SvelteKit has hydrated and the layout is mounted. If hydration
-    // never reached here (parse error, missing chunk, CSP block) the
-    // fallback stays visible with a Reload button — far better than a
-    // silent blank screen.
-    if (typeof document !== 'undefined') {
-      const bootFallback = document.getElementById('boot-fallback');
-      if (bootFallback) bootFallback.remove();
-    }
+  // Routes that don't require an authenticated session. Reaching any of
+  // these never triggers a redirect to /login.
+  const PUBLIC_ROUTES = ['/login', '/signup', '/help'];
 
+  function isPublicRoute(path: string): boolean {
+    return (
+      PUBLIC_ROUTES.includes(path) ||
+      PUBLIC_ROUTES.some((r) => path.startsWith(r + '/')) ||
+      path.startsWith('/onboarding')
+    );
+  }
+
+  onMount(() => {
     // Hydrate the theme store so OS-preference changes propagate at runtime.
     // The inline app.html script already applied the initial class — this
     // just lights up the reactive store.
@@ -47,23 +52,72 @@
       onlineStore.init(window.location.origin);
     }
 
-    // Dismiss the Capacitor native splash screen on iOS/Android once we've
-    // hydrated. capacitor.config.ts sets `launchAutoHide: false` so we own
-    // the dismiss timing — without this call the splash stays forever and
-    // the user never sees the app.
+    // Kick off backend discovery early so api-base.ts's cache is primed
+    // before any /api/* call. On web (any http(s) origin) this resolves
+    // instantly to ''. On Capacitor it runs the dev → mDNS → Tailscale →
+    // production probe ladder. We don't await — first /api/* call will
+    // wait on the same promise via api-base.ts's `resolving` deduplication.
+    void import('$lib/client/api-base').then(({ getApiBase }) =>
+      getApiBase()
+        .then((base) => {
+          if (base) setReporterBackend(base);
+        })
+        .catch(() => {
+          /* OfflineIndicator surfaces the failure */
+        }),
+    );
+
+    // Splash dismiss + boot-fallback removal — coordinate so the user sees
+    // a clean crossfade native-splash → boot-fallback → SvelteKit shell
+    // instead of three abrupt cuts. Two rAFs ensures the layout has
+    // painted at least one frame before we tell either layer to fade.
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        // Fade out the inline boot-fallback first (transition: opacity 250ms
+        // is set in app.html's inline style). data-hide="1" triggers the
+        // CSS rule that drops opacity to 0; remove the node 300ms later.
+        if (typeof document !== 'undefined') {
+          const bootFallback = document.getElementById('boot-fallback');
+          if (bootFallback) {
+            bootFallback.setAttribute('data-hide', '1');
+            setTimeout(() => bootFallback.remove(), 300);
+          }
+        }
+        // Dismiss the Capacitor native splash in the same frame, with a
+        // matched fadeOutDuration so the user perceives a single crossfade.
+        // 400ms gives the SvelteKit shell time to paint at least its
+        // sidebar + topbar chrome.
+        import('@capacitor/splash-screen')
+          .then(({ SplashScreen }) => SplashScreen.hide({ fadeOutDuration: 400 }))
+          .catch(() => {
+            /* not running native; nothing to dismiss */
+          });
+      }),
+    );
+
+    // Client-side auth gate. In adapter-node builds hooks.server.ts
+    // bounces unauthenticated users to /login before the page ever
+    // hydrates — but in adapter-static (Capacitor) hooks.server.ts
+    // doesn't run, so we have to gate here.
     //
-    // We don't gate on `'Capacitor' in window` because Capacitor 8 sometimes
-    // injects the global after the page's `DOMContentLoaded`, so onMount
-    // can race ahead of the global being defined. Always-call + catch is
-    // safer: on web the plugin's web shim is a no-op and the catch absorbs
-    // any module-resolution failure. fadeOutDuration: 250ms matches the
-    // SvelteKit hydration paint window so the user sees a smooth cross-fade
-    // instead of a hard cut.
-    import('@capacitor/splash-screen')
-      .then(({ SplashScreen }) => SplashScreen.hide({ fadeOutDuration: 250 }))
-      .catch(() => {
-        /* not running native; nothing to dismiss */
-      });
+    // Mechanism: a localStorage flag set by /login on successful sign-in
+    // (`career-ops:authed = "1"`) and cleared on sign-out. The actual
+    // network probe (authClient.getSession()) is unreliable in Capacitor
+    // mode because the backend isn't resolved at first-paint and the
+    // fetch can hang silently — racing against a timeout works for
+    // showing the redirect, but if the page-level `+page.svelte` calls
+    // queueMicrotask(goto('/inbox')) faster than the timeout, the gate's
+    // redirect can be overridden. The localStorage check is synchronous
+    // so it wins the race. PUBLIC_ROUTES + onboarding remain reachable.
+    if (
+      typeof window !== 'undefined' &&
+      !isPublicRoute(window.location.pathname) &&
+      !window.location.protocol.startsWith('http') &&
+      localStorage.getItem('career-ops:authed') !== '1'
+    ) {
+      const redirectTo = '/login?redirectTo=' + encodeURIComponent(window.location.pathname);
+      void goto(redirectTo, { replaceState: true });
+    }
   });
 
   let { children, data } = $props();
@@ -95,15 +149,31 @@
    * fall through to SvelteKit's default instant swap. The CSS animations live
    * in app.css under `::view-transition-{old,new}(root)` and respect
    * `prefers-reduced-motion`.
+   *
+   * Defensive: rapid taps can trigger nav-then-nav before the first
+   * transition finishes. Without `skipTransition()`, the browser fires
+   * an AbortError ("Old view transition aborted by new view transition")
+   * that surfaces as an unhandledrejection → red toast. Skip the in-flight
+   * one explicitly so the new transition starts clean.
    */
+  let inFlightTransition: { skipTransition?: () => void; finished?: Promise<void> } | null = null;
   onNavigate((navigation) => {
     if (typeof document === 'undefined') return;
     const sxt = (document as any).startViewTransition;
     if (typeof sxt !== 'function') return;
+    try {
+      inFlightTransition?.skipTransition?.();
+    } catch {
+      /* skipTransition is post-WAICG; older Chromium may lack it */
+    }
     return new Promise<void>((resolve) => {
-      sxt.call(document, async () => {
+      const t = sxt.call(document, async () => {
         resolve();
         await navigation.complete;
+      });
+      inFlightTransition = t;
+      t.finished?.finally?.(() => {
+        if (inFlightTransition === t) inFlightTransition = null;
       });
     });
   });
@@ -142,26 +212,79 @@
       <svelte:boundary onerror={handleBoundaryError}>
         {@render children?.()}
         {#snippet failed(error, reset)}
-          <div class="flex flex-col items-center justify-center min-h-[60vh] p-8 gap-3">
-            <div class="flex flex-col items-center gap-2 max-w-md text-center">
+          <!-- Page-level crash UI. Same visual language as ErrorBoundary
+               (the wrapper used by AgentChat / dialogs) so the user sees
+               a consistent failure surface across the app. Reload uses
+               location.reload() instead of location.assign('') so the
+               URL stays intact and the bug is reproducible. -->
+          <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 sm:p-8">
+            <div
+              class="relative w-full max-w-xl flex flex-col gap-4 p-6 rounded-xl border border-red-500/30 bg-gradient-to-br from-red-500/5 via-card to-card overflow-hidden"
+            >
               <div
-                class="size-10 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center"
-              >
-                <AlertTriangle class="size-5 text-red-400" />
+                class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/60 to-transparent"
+              ></div>
+              <div class="flex items-start gap-3">
+                <div
+                  class="size-10 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center flex-shrink-0"
+                >
+                  <AlertTriangle class="size-5 text-red-400" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h2 class="text-base font-semibold">This page crashed</h2>
+                  <p class="text-xs text-muted-foreground mt-0.5">
+                    <span
+                      class="font-mono text-[11px] text-red-300/80 bg-red-500/10 px-1.5 py-0.5 rounded mr-1"
+                    >
+                      {error instanceof Error ? error.constructor.name || 'Error' : typeof error}
+                    </span>
+                    The rest of the app keeps running. This was logged to the activity feed.
+                  </p>
+                </div>
               </div>
-              <h2 class="text-base font-semibold">This page crashed</h2>
-              <p class="text-sm text-muted-foreground">
-                {error instanceof Error ? error.message : String(error)}
-              </p>
-              <p class="text-xs text-muted-foreground/70">
-                The error was logged to the activity feed. The rest of the app keeps running.
-              </p>
-              <div class="flex items-center gap-2 mt-2">
+              <pre
+                class="text-xs font-mono leading-relaxed bg-muted/40 border border-border/50 rounded-md p-3 max-h-32 overflow-y-auto whitespace-pre-wrap break-words text-foreground/90">{error instanceof
+                Error
+                  ? error.message || String(error)
+                  : typeof error === 'string'
+                    ? error
+                    : JSON.stringify(error, null, 2)}</pre>
+              {#if error instanceof Error && error.stack}
+                <details class="group">
+                  <summary
+                    class="cursor-pointer text-[11px] text-muted-foreground hover:text-foreground transition-colors select-none flex items-center gap-1.5"
+                  >
+                    <span
+                      class="inline-block transition-transform group-open:rotate-90 text-muted-foreground/60"
+                      >▸</span
+                    >
+                    Stack trace
+                  </summary>
+                  <pre
+                    class="mt-2 p-3 text-[10px] font-mono leading-snug bg-muted/30 border border-border/40 rounded-md max-h-48 overflow-auto whitespace-pre-wrap break-all text-muted-foreground">{error.stack}</pre>
+                </details>
+              {/if}
+              <div class="flex flex-wrap items-center gap-2">
                 <Button variant="outline" size="sm" onclick={reset} class="h-8 gap-1.5">
-                  <RefreshCw class="size-3" /> Retry
+                  <RefreshCw class="size-3.5" /> Try again
                 </Button>
-                <Button variant="ghost" size="sm" onclick={() => location.reload()} class="h-8">
-                  Reload page
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onclick={() => location.reload()}
+                  class="h-8 gap-1.5"
+                >
+                  <RefreshCw class="size-3.5" /> Reload page
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  class="h-8 gap-1.5"
+                  onclick={() => {
+                    window.dispatchEvent(new CustomEvent(BRAND_EVENTS.openNotifications));
+                  }}
+                >
+                  Open activity log
                 </Button>
               </div>
             </div>

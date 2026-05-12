@@ -1,15 +1,31 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
-  import { AlertTriangle, RefreshCw } from '@lucide/svelte';
+  import { AlertTriangle, RefreshCw, FileText } from '@lucide/svelte';
   import type { Snippet } from 'svelte';
+  import { BRAND_EVENTS } from '$lib/client/brand';
 
   /**
-   * Generic <svelte:boundary> wrapper with a default "Try again" fail panel.
-   * Use anywhere a render error in a child component should NOT take down
-   * the rest of the page (agent chat, global dialogs, optional widgets).
+   * Generic <svelte:boundary> wrapper with a rich default fail panel.
    *
-   * Pass a `failedRender` snippet to fully customise the failure UI;
-   * leave it undefined to use the built-in panel.
+   * The previous version showed just an icon + one-line message + a
+   * "Try again" button. That made every render error look identical
+   * and trivial, but most of them aren't — a crash here is the user's
+   * one chance to see what went wrong. The expanded panel:
+   *   • shows the error TYPE (constructor.name) prominently
+   *   • formats the message in a code-styled monospace block
+   *   • exposes the stack trace behind a <details> disclosure
+   *   • offers both "Try again" (reset the boundary) and
+   *     "Open activity log" (open the notifications panel which
+   *     already has the error logged via reportError())
+   *
+   * The activity-log button dispatches BRAND_EVENTS.openNotifications,
+   * which NotificationsBell.svelte already listens for. No new wiring
+   * needed beyond emitting the event.
+   *
+   * Use anywhere a render error in a child component should NOT take
+   * down the rest of the page (agent chat, global dialogs, optional
+   * widgets). Pass `failedRender` to fully customise the failure UI;
+   * leave undefined for the built-in panel below.
    */
   let {
     title = 'Something went wrong',
@@ -22,6 +38,27 @@
     failedRender?: Snippet<[unknown, () => void]>;
     onretry?: () => void;
   } = $props();
+
+  function openActivityLog() {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(BRAND_EVENTS.openNotifications));
+    }
+  }
+
+  function errorType(err: unknown): string {
+    if (err instanceof Error) return err.constructor.name || 'Error';
+    return typeof err;
+  }
+
+  function errorMessage(err: unknown): string {
+    if (err instanceof Error) return err.message || String(err);
+    return typeof err === 'string' ? err : JSON.stringify(err, null, 2);
+  }
+
+  function errorStack(err: unknown): string | null {
+    if (err instanceof Error && err.stack) return err.stack;
+    return null;
+  }
 </script>
 
 <svelte:boundary>
@@ -31,24 +68,73 @@
       {@render failedRender(error, reset)}
     {:else}
       <div
-        class="flex flex-col items-center justify-center p-6 rounded-lg border border-red-500/30 bg-red-500/5 text-center gap-2"
+        class="relative flex flex-col gap-3 p-5 rounded-xl border border-red-500/30 bg-gradient-to-br from-red-500/5 via-card to-card overflow-hidden"
       >
-        <AlertTriangle class="size-6 text-red-400" />
-        <div class="text-sm font-medium text-red-300">{title}</div>
-        <div class="text-xs text-muted-foreground max-w-md">
-          {error instanceof Error ? error.message : String(error)}
+        <!-- Subtle red glow stripe at the top — signals "something failed"
+             without screaming. -->
+        <div
+          class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/60 to-transparent"
+        ></div>
+
+        <div class="flex items-start gap-3">
+          <div
+            class="size-10 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center flex-shrink-0"
+          >
+            <AlertTriangle class="size-5 text-red-400" />
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-base font-semibold text-foreground">{title}</h3>
+            <p class="text-xs text-muted-foreground mt-0.5">
+              <span
+                class="font-mono text-[11px] text-red-300/80 bg-red-500/10 px-1.5 py-0.5 rounded mr-1"
+                >{errorType(error)}</span
+              >
+              The rest of the app keeps running. This was logged to the activity feed.
+            </p>
+          </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          class="h-7 text-xs gap-1.5 mt-2"
-          onclick={() => {
-            onretry?.();
-            reset();
-          }}
-        >
-          <RefreshCw class="size-3" /> Try again
-        </Button>
+
+        <!-- Error message in a code-styled block. Wraps long lines so
+             the boundary doesn't horizontally scroll its parent. -->
+        <pre
+          class="text-xs font-mono leading-relaxed bg-muted/40 border border-border/50 rounded-md p-3 max-h-32 overflow-y-auto whitespace-pre-wrap break-words text-foreground/90">{errorMessage(
+            error,
+          )}</pre>
+
+        {#if errorStack(error)}
+          <details class="group">
+            <summary
+              class="cursor-pointer text-[11px] text-muted-foreground hover:text-foreground transition-colors select-none flex items-center gap-1.5"
+            >
+              <span
+                class="inline-block transition-transform group-open:rotate-90 text-muted-foreground/60"
+                >▸</span
+              >
+              Stack trace
+            </summary>
+            <pre
+              class="mt-2 p-3 text-[10px] font-mono leading-snug bg-muted/30 border border-border/40 rounded-md max-h-48 overflow-auto whitespace-pre-wrap break-all text-muted-foreground">{errorStack(
+                error,
+              )}</pre>
+          </details>
+        {/if}
+
+        <div class="flex items-center gap-2 mt-1">
+          <Button
+            variant="outline"
+            size="sm"
+            class="h-8 gap-1.5"
+            onclick={() => {
+              onretry?.();
+              reset();
+            }}
+          >
+            <RefreshCw class="size-3.5" /> Try again
+          </Button>
+          <Button variant="ghost" size="sm" class="h-8 gap-1.5" onclick={openActivityLog}>
+            <FileText class="size-3.5" /> Open activity log
+          </Button>
+        </div>
       </div>
     {/if}
   {/snippet}
