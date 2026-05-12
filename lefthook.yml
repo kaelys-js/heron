@@ -122,6 +122,12 @@ pre-push:
       # Cold ~12s, warm <100ms.
       run: pnpm exec turbo run check
     format-check:
+      # Note: this is the LAST-RESORT gate. The pre-commit hook auto-
+      # formats on write, and .github/workflows/format.yml runs `pnpm
+      # format` on every push to main and commits the fix back. By the
+      # time CI runs the format check, drift should be impossible.
+      # This hook stays so a `--no-verify` commit can't slip unformatted
+      # code into a push.
       run: pnpm format:check
     verify-all:
       # Brand + native + multi-user + pipeline verifiers — all turbo-cached.
