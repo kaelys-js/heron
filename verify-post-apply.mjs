@@ -340,6 +340,81 @@ checkContains(
 checkFileExists('modes/leadership-lookup.md', 'mode: leadership-lookup');
 checkFileExists('ui/src/routes/api/job/[id]/leadership/+server.ts', 'API /leadership');
 
+// ── Round 3: LinkedIn Reviewer+Fixer + Recruiter inbound + Psychometric ──
+// LinkedIn audit (Phase A)
+checkFileExists('linkedin-audit.py', 'linkedin-audit.py (Playwright scraper)');
+checkFileExists('ui/src/lib/server/linkedin-audit.ts', 'linkedin-audit.ts lib');
+checkContains('ui/src/lib/server/linkedin-audit.ts', 'classifySnapshot', 'classifySnapshot export');
+checkContains(
+  'ui/src/lib/server/linkedin-audit.ts',
+  'markFindingResolved',
+  'markFindingResolved export',
+);
+checkFileExists('ui/src/routes/api/linkedin/audit/+server.ts', 'API /linkedin/audit');
+checkFileExists('ui/src/routes/api/linkedin/audit/fix/+server.ts', 'API /linkedin/audit/fix');
+checkFileExists(
+  'ui/src/routes/api/linkedin/audit/rewrite/+server.ts',
+  'API /linkedin/audit/rewrite',
+);
+checkFileExists('modes/linkedin-rewrite.md', 'mode: linkedin-rewrite');
+checkFileExists('ui/src/routes/linkedin-audit/+page.svelte', 'page /linkedin-audit');
+checkFileExists('ui/src/lib/server/jobs/linkedin-audit.job.ts', 'job: linkedin-audit');
+checkContains(
+  'ui/src/lib/server/jobs/index.ts',
+  "import './linkedin-audit.job'",
+  'linkedin-audit job registered',
+);
+
+// Sidecar paths for round 3
+checkContains(
+  'ui/src/lib/server/profile-paths.ts',
+  "'linkedin-audit-json'",
+  'profile-paths: linkedin-audit-json kind',
+);
+checkContains(
+  'ui/src/lib/server/profile-paths.ts',
+  "'inbound-leads-jsonl'",
+  'profile-paths: inbound-leads-jsonl kind',
+);
+checkContains(
+  'ui/src/lib/server/profile-paths.ts',
+  "'inbound-threads-json'",
+  'profile-paths: inbound-threads-json kind',
+);
+
+// Recruiter inbound full automation (Phase B)
+checkFileExists('linkedin-dm-scraper.py', 'linkedin-dm-scraper.py');
+checkFileExists('ui/src/lib/server/inbound-leads.ts', 'inbound-leads.ts lib');
+checkContains('ui/src/lib/server/inbound-leads.ts', 'classifyInbound', 'classifyInbound export');
+checkContains(
+  'ui/src/lib/server/inbound-leads.ts',
+  'detectSilentRecruiters',
+  'detectSilentRecruiters export',
+);
+checkContains('ui/src/lib/server/inbound-leads.ts', 'extractJdUrl', 'extractJdUrl export');
+checkFileExists('ui/src/lib/server/jobs/linkedin-dm.job.ts', 'job: linkedin-dm');
+checkContains(
+  'ui/src/lib/server/jobs/index.ts',
+  "import './linkedin-dm.job'",
+  'linkedin-dm job registered',
+);
+checkFileExists('modes/recruiter-reply.md', 'mode: recruiter-reply');
+checkFileExists('ui/src/routes/api/inbound/leads/+server.ts', 'API /inbound/leads (list)');
+checkFileExists('ui/src/routes/api/inbound/leads/[id]/+server.ts', 'API /inbound/leads/[id]');
+checkFileExists(
+  'ui/src/routes/api/inbound/leads/[id]/reply/+server.ts',
+  'API /inbound/leads/[id]/reply',
+);
+checkFileExists('ui/src/routes/inbound/+page.svelte', 'page /inbound');
+checkFileExists('ui/src/routes/inbound/[id]/+page.svelte', 'page /inbound/[id]');
+
+// Psychometric test prep (Phase C)
+checkFileExists('modes/psychometric-prep.md', 'mode: psychometric-prep');
+checkFileExists(
+  'ui/src/routes/api/job/[id]/psychometric-prep/+server.ts',
+  'API /psychometric-prep',
+);
+
 // ── Summary ──────────────────────────────────────────────────────────
 const passed = checks.filter((c) => c.status === 'pass').length;
 const failed = checks.filter((c) => c.status === 'fail').length;
