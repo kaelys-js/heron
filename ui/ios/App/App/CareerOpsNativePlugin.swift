@@ -1,5 +1,6 @@
 import Foundation
 import Capacitor
+import WidgetKit
 
 /**
  * CareerOpsNativePlugin — Capacitor JS↔Swift bridge for native-only
@@ -35,6 +36,7 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "clearJobIndex", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setUserActivity", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "drainNativeErrors", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "updateWidgets", returnType: CAPPluginReturnPromise),
     ]
 
     @objc public func getLanUrl(_ call: CAPPluginCall) {
@@ -154,6 +156,77 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
             activity.isEligibleForPublicIndexing = false
             activity.becomeCurrent()
         }
+        call.resolve(["ok": true])
+    }
+
+    /**
+     * Push fresh widget data into the App Group UserDefaults and kick
+     * WidgetCenter to reload the timelines. Called whenever the
+     * dashboard updates stats / next interview / top apply / inbox.
+     *
+     * Body shape (every key optional — only the present keys are written):
+     *   stats: { queued, appliedToday, upcomingInterviews }
+     *   nextInterview: { jobId, company, role, stage, scheduledAt (ISO), interviewers[] } | null
+     *   topApply: { jobId, company, role, score, compBand, location, portal } | null
+     *   openIssues: [{ id, severity, source, summary, ts }]
+     */
+    @objc public func updateWidgets(_ call: CAPPluginCall) {
+        guard let defaults = UserDefaults(suiteName: Brand.appGroup) else {
+            call.reject("app-group-missing", "App Group not configured: \(Brand.appGroup)")
+            return
+        }
+
+        // stats — flat int keys (read by CareerOpsTimelineProvider).
+        if let stats = call.getObject("stats") {
+            if let queued = stats["queued"] as? Int {
+                defaults.set(queued, forKey: "stats:queued")
+            }
+            if let applied = stats["appliedToday"] as? Int {
+                defaults.set(applied, forKey: "stats:appliedToday")
+            }
+            if let interviews = stats["upcomingInterviews"] as? Int {
+                defaults.set(interviews, forKey: "stats:upcomingInterviews")
+            }
+        }
+
+        // nextInterview — JSON blob the widget decodes.
+        if let nextInterview = call.getObject("nextInterview") {
+            if let data = try? JSONSerialization.data(withJSONObject: nextInterview) {
+                defaults.set(data, forKey: "interview:next")
+            }
+        } else if call.options.keys.contains("nextInterview") {
+            // Explicit null clears the slot.
+            defaults.removeObject(forKey: "interview:next")
+        }
+
+        // topApply
+        if let topApply = call.getObject("topApply") {
+            if let data = try? JSONSerialization.data(withJSONObject: topApply) {
+                defaults.set(data, forKey: "topApply:next")
+            }
+        } else if call.options.keys.contains("topApply") {
+            defaults.removeObject(forKey: "topApply:next")
+        }
+
+        // openIssues — array of issue snapshots
+        if let openIssues = call.getArray("openIssues") {
+            if let data = try? JSONSerialization.data(withJSONObject: openIssues) {
+                defaults.set(data, forKey: "issues:open")
+            }
+        } else if call.options.keys.contains("openIssues") {
+            defaults.removeObject(forKey: "issues:open")
+        }
+
+        // Tell WidgetKit to reload every timeline. The widgets will
+        // re-render with the new defaults at the OS's next refresh tick.
+        if #available(iOS 14.0, *) {
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+
+        // Push the same payload to the paired Apple Watch (if any). The
+        // bridge is a no-op on iPad-without-paired-watch installs.
+        WatchSessionBridge.shared.send(call.options)
+
         call.resolve(["ok": true])
     }
 }

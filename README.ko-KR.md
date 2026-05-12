@@ -78,8 +78,8 @@ Career-ops는 에이전트 기반으로 작동합니다: Claude Code가 Playwrig
 ```bash
 # 1. 클론 및 설치
 git clone https://github.com/santifer/career-ops.git
-cd career-ops && npm install
-npx playwright install chromium   # PDF 렌더링을 위한 브라우저 엔진 설치
+cd career-ops && pnpm install
+pnpm exec playwright install chromium   # PDF 렌더링을 위한 브라우저 엔진 설치
 
 # 2. 설정 확인
 npm run doctor                     # 모든 사전 요구사항 및 환경 변수 검증

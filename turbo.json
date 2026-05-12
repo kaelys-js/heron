@@ -1,6 +1,5 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "//": "Turborepo task graph. Caches outputs, runs tasks in parallel where possible, only re-runs what changed.",
   "globalDependencies": [
     "branding/brand.json",
     "branding/logo.svg",
@@ -21,8 +20,37 @@
       "outputs": ["build/static/**"]
     },
     "brand": {
-      "cache": false,
-      "//": "apply-brand outputs span multiple workspaces (ui + ui/electron + ui/ios); turbo's workspace-relative output paths can't express that cleanly. cache:false avoids stale-cache bugs, and apply-brand is idempotent + fast (<1s) so re-running is cheap."
+      "inputs": [
+        "branding/brand.json",
+        "branding/logo.svg",
+        "scripts/native/apply-brand.mjs",
+        "native/icons/generate-icons.mjs"
+      ],
+      "outputs": [
+        "ui/src/lib/client/brand.ts",
+        "ui/electron/src/brand.ts",
+        "ui/static/manifest.webmanifest",
+        "ui/static/favicon.svg",
+        "ui/static/favicon.ico",
+        "ui/static/icons/**",
+        "ui/capacitor.config.ts",
+        "ui/electron/capacitor.config.ts",
+        "ui/electron/electron-builder.config.json",
+        "ui/electron/build/icon.*",
+        "ui/electron/build/icon-*.png",
+        "ui/ios/App/App/Info.plist",
+        "ui/ios/App/App/Brand.swift",
+        "ui/ios/App/App/Assets.xcassets/AppIcon.appiconset/**",
+        "ui/ios/App/CareerOpsWidget/Brand.swift",
+        "ui/ios/App/CareerOpsLiveActivity/Brand.swift",
+        "ui/ios/App/CareerOpsShareExtension/Brand.swift",
+        "ui/android/app/src/main/res/mipmap-*/**",
+        "ui/android/app/src/main/res/values/strings.xml",
+        "ui/ios/App/fastlane/Appfile",
+        "ui/ios/App/fastlane/Fastfile",
+        "scripts/native/add-xcode-targets.rb",
+        "native/icons/_build/**"
+      ]
     },
     "check": {
       "dependsOn": ["brand"],

@@ -168,4 +168,87 @@
   ::view-transition-new(root) {
     animation: none !important;
   }
+
+  /* Honour the system "Reduce Motion" preference globally.
+     Animations are still defined (so JS state stays correct) but the
+     timing collapses to "instant", which removes all visible motion. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High-contrast preference (Windows / macOS Display → Increase Contrast)
+   forces stronger borders, brighter focus rings, no faded text. */
+@media (prefers-contrast: more) {
+  :root {
+    --border: oklch(35% 0 0);
+    --ring: oklch(50% 0.2 270);
+    --muted-foreground: oklch(40% 0 0);
+  }
+  .dark {
+    --border: oklch(80% 0 0);
+    --ring: oklch(75% 0.2 270);
+    --muted-foreground: oklch(80% 0 0);
+  }
+  a,
+  button {
+    text-underline-offset: 3px;
+  }
+}
+
+/* Keyboard-only focus rings — pointer users keep the muted hover style,
+   keyboard users get the prominent ring. Tailwind already emits
+   `focus-visible:` on its primitives; this is the safety net for any
+   hand-rolled focusable element. */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring, 220 90% 60%));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Tap-highlight on iOS is the default greyish flash; we replace it with
+   transparent so the focus-visible ring above is the only feedback. */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Safe-area insets for iOS (Capacitor WebView). Pushes content out of
+   the notch / Dynamic Island and below the home indicator. */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+}
+
+/* Screen-reader-only utility used by app.html's skip-to-content link
+   AND by Svelte components that need an aria-label visually hidden. */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+.focus\:not-sr-only:focus {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0.5rem 1rem !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  clip: auto !important;
+  white-space: normal !important;
 }

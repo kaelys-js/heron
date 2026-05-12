@@ -107,8 +107,12 @@
     activeProfile={data?.activeProfile}
   />
   <Sidebar.Inset class="bg-card overflow-hidden">
-    <svelte:boundary onerror={handleBoundaryError}>
-      {@render children?.()}
+    <!-- `<main id="main-content">` is the target of app.html's
+         skip-to-content link. tabindex=-1 lets keyboard focus land here
+         after the skip link is activated. -->
+    <main id="main-content" tabindex="-1" class="contents">
+      <svelte:boundary onerror={handleBoundaryError}>
+        {@render children?.()}
       {#snippet failed(error, reset)}
         <div class="flex flex-col items-center justify-center min-h-[60vh] p-8 gap-3">
           <div class="flex flex-col items-center gap-2 max-w-md text-center">
@@ -134,8 +138,9 @@
             </div>
           </div>
         </div>
-      {/snippet}
-    </svelte:boundary>
+        {/snippet}
+      </svelte:boundary>
+    </main>
   </Sidebar.Inset>
 </Sidebar.Provider>
 

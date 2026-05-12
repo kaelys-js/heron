@@ -220,6 +220,19 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
 (async () => {
   await app.whenReady();
 
+  // Windows: bind toast notifications to the right app. Without an AUMID
+  // Windows shows toasts as "electron.exe" rather than career-ops.
+  // Must run BEFORE any new Notification() call.
+  if (process.platform === 'win32') {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { BRAND } = require('./brand') as typeof import('./brand');
+      app.setAppUserModelId(BRAND.bundleId);
+    } catch {
+      /* non-fatal — toasts still show, just with the wrong app label */
+    }
+  }
+
   // 1. Embedded server
   try {
     await startEmbeddedServer();
@@ -271,12 +284,34 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
     }),
   );
 
-  // 5. Tray
+  // 5. Tray (macOS Menu Bar / Windows / Linux system tray)
   state.tray = new CareerOpsTray({
     getBackendUrl: () => state.serverUrl ?? 'http://localhost:5173',
     onOpen: () => {
       state.mainWindow?.show();
       state.mainWindow?.focus();
+    },
+    // Per-section deep links: bring the window forward and navigate
+    // the WebView to the requested path. Falls back to "show" if the
+    // window doesn't exist yet.
+    onOpenPath: (subPath: string) => {
+      if (!state.mainWindow) return;
+      state.mainWindow.show();
+      state.mainWindow.focus();
+      const base = state.serverUrl ?? 'http://localhost:5173';
+      try {
+        const u = new URL(subPath, base);
+        void state.mainWindow.loadURL(u.toString());
+      } catch {
+        /* invalid subPath — leave the window where it was */
+      }
+    },
+    // When the user enables "Menu Bar Only", close-window must NOT quit
+    // (otherwise re-toggling has nothing to show). We track the choice
+    // and `window-all-closed` honours it below.
+    onSetDockVisible: (_visible: boolean) => {
+      /* state currently tracked in tray.ts; if we add behaviours that
+         depend on it elsewhere, surface via state.menuBarOnly = !_visible */
     },
     onQuit: () => app.quit(),
   });

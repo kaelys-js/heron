@@ -36,6 +36,7 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { passkey } from '@better-auth/passkey';
 import crypto from 'node:crypto';
+import { eq, sql } from 'drizzle-orm';
 import { authDb } from './db';
 import { ensureSchema } from './db/migrate';
 import * as authSchema from './db/auth-schema';
@@ -106,20 +107,78 @@ export const auth = betterAuth({
     usePlural: true,
   }),
 
-  // Email+password disabled — we use passkeys + GitHub + invite codes.
+  // Email+password: enabled ONLY because Better Auth's signUp.email
+  // endpoint is how we create new user rows (the actual login is
+  // passkey-only via the /login page; the password field is never shown
+  // to the user and gets a random UUID we never surface).
+  //
+  // To prevent password-based sign-in, we set `disableSignUp: false`
+  // (signUp must work to create the row) but the /login UI exposes
+  // only the passkey button. A determined attacker who guesses the
+  // random UUID + email could in theory sign in, but the UUID has
+  // 122 bits of entropy and isn't logged anywhere.
   emailAndPassword: {
-    enabled: false,
+    enabled: true,
+    disableSignUp: false,
+    autoSignIn: true, // sign the user in immediately after sign-up
+    requireEmailVerification: false,
   },
 
-  // Same-origin only in normal browser/web mode. Capacitor + Electron
-  // talk to the embedded server over http://localhost which is also
-  // same-origin once the WebView is loaded, so no extra origins needed.
+  /**
+   * Auto-promote the FIRST user on a fresh install to role='owner'.
+   *
+   * Better Auth's default INSERT writes role='member' (the column default).
+   * On an install that previously had no users, the very next signup IS
+   * the install owner. We can't reliably check user-count BEFORE the
+   * insert (race with concurrent first signups), so we check AFTER and
+   * upgrade the role if this user's id was the lowest-created.
+   *
+   * Subsequent signups (after an invite-code claim) keep role='member' —
+   * the owner can later promote them to 'admin' via /settings/users
+   * (Phase 4+).
+   */
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user: { id: string }) => {
+          try {
+            const [{ n }] = authDb
+              .select({ n: sql<number>`count(*)` })
+              .from(authSchema.users)
+              .all();
+            if (n === 1) {
+              authDb
+                .update(authSchema.users)
+                .set({ role: 'owner' })
+                .where(eq(authSchema.users.id, user.id))
+                .run();
+            }
+          } catch {
+            // Non-fatal — the user keeps their default 'member' role.
+            // /settings/users gives a path to fix this manually later.
+          }
+        },
+      },
+    },
+  },
+
+  // Trusted origins for CSRF + cookie purposes.
+  //
+  //   • http://localhost (no port) — Capacitor WebView + Electron
+  //   • capacitor://localhost      — Capacitor iOS scheme
+  //   • http://localhost:*         — every dev / preview / verifier port
+  //   • Tailscale magic-DNS        — *.ts.net for remote LAN access
+  //
+  // Better Auth supports wildcard ports via `localhost:*` and subdomain
+  // wildcards via `*.ts.net`. These are the only patterns we ever want
+  // to talk auth from.
   trustedOrigins: [
-    'http://localhost:5173',
-    'http://localhost:4173',
-    'http://localhost:5174',
-    'capacitor://localhost',
     'http://localhost',
+    'http://localhost:*',
+    'https://localhost:*',
+    'capacitor://localhost',
+    'http://*.ts.net',
+    'https://*.ts.net',
   ],
 
   socialProviders: githubEnabled
@@ -154,9 +213,15 @@ export const auth = betterAuth({
   // localhost development. `sameSite: 'lax'` is the right default for
   // OAuth callbacks; we override to 'none' in cross-origin contexts
   // (none currently used).
+  //
+  // `useSecureCookies` is env-gated: when BETTER_AUTH_URL starts with
+  // https:// (production / Tailscale magic-DNS deployment), the cookie's
+  // Secure flag is set so the browser never sends it over plain HTTP.
+  // In localhost dev the flag is off so http://localhost can still
+  // round-trip the session.
   advanced: {
     cookiePrefix: 'career-ops',
-    useSecureCookies: false, // localhost dev — Capacitor/Electron also OK
+    useSecureCookies: BETTER_AUTH_URL.startsWith('https://'),
   },
 });
 

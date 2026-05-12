@@ -113,7 +113,93 @@ const guard: Handle = async ({ event, resolve }) => {
 const withUserContext: Handle = ({ event, resolve }) =>
   runWithUser(event.locals.user?.id ?? SYSTEM_USER_ID, () => resolve(event));
 
-/** Sequence the handlers: populateAuth → guard → withUserContext → user handler. */
+/**
+ * Security response headers. Owasp Secure Headers + Mozilla
+ * Observatory recommendations:
+ *
+ *   X-Content-Type-Options: nosniff
+ *     Stops the browser MIME-sniffing CSS/JS into something more
+ *     dangerous. Free safety net.
+ *
+ *   X-Frame-Options: DENY
+ *     Refuse to be rendered in an iframe. We're never embedded as a
+ *     widget so DENY is safer than SAMEORIGIN.
+ *
+ *   Referrer-Policy: strict-origin-when-cross-origin
+ *     Sends origin only on cross-origin nav, full URL same-origin.
+ *
+ *   Permissions-Policy
+ *     Lock down APIs we never use (geolocation, payment, USB, …).
+ *     Microphone is allowed for the mock-interview voice capture.
+ *
+ *   Strict-Transport-Security
+ *     Only sent for HTTPS responses; tells browsers to upgrade future
+ *     requests. Skipped on localhost.
+ *
+ *   Cross-Origin-Opener-Policy: same-origin
+ *     Process isolation for window.opener — opens us up to
+ *     SharedArrayBuffer + high-precision timers safely.
+ *
+ *   Cross-Origin-Resource-Policy: same-site
+ *     Refuse cross-site embeds of our resources (icons, JS).
+ *
+ *   Content-Security-Policy
+ *     Tight on script-src/style-src + allows the API domains we
+ *     legitimately hit. `'unsafe-inline'` on style needs Tailwind's
+ *     JIT (CSS-in-JS for theme classes); we tighten to a hash later.
+ *
+ * Skip these for /api/auth/* because Better Auth's responses are pure
+ * JSON and don't need page-level headers — sending CSP there is just
+ * bytes-on-the-wire noise for IPC-style endpoints.
+ */
+const securityHeaders: Handle = async ({ event, resolve }) => {
+  const response = await resolve(event);
+  const url = event.url;
+  const isHttps = url.protocol === 'https:';
+  const headers = response.headers;
+  // Don't clobber if SvelteKit / the route already set these.
+  if (!headers.has('X-Content-Type-Options')) headers.set('X-Content-Type-Options', 'nosniff');
+  if (!headers.has('X-Frame-Options')) headers.set('X-Frame-Options', 'DENY');
+  if (!headers.has('Referrer-Policy'))
+    headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  if (!headers.has('Permissions-Policy')) {
+    headers.set(
+      'Permissions-Policy',
+      [
+        'accelerometer=()',
+        'autoplay=()',
+        'browsing-topics=()',
+        'camera=()',
+        'display-capture=()',
+        'encrypted-media=()',
+        'fullscreen=(self)',
+        'geolocation=()',
+        'gyroscope=()',
+        'hid=()',
+        'magnetometer=()',
+        'microphone=(self)', // mock interview voice
+        'midi=()',
+        'payment=()',
+        'picture-in-picture=()',
+        'publickey-credentials-get=(self)', // passkey sign-in
+        'screen-wake-lock=()',
+        'serial=()',
+        'usb=()',
+        'web-share=(self)',
+      ].join(', '),
+    );
+  }
+  if (!headers.has('Cross-Origin-Opener-Policy'))
+    headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+  if (!headers.has('Cross-Origin-Resource-Policy'))
+    headers.set('Cross-Origin-Resource-Policy', 'same-site');
+  if (isHttps && !headers.has('Strict-Transport-Security')) {
+    headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+  return response;
+};
+
+/** Sequence the handlers: populateAuth → guard → withUserContext → user handler → securityHeaders. */
 export const handle: Handle = async ({ event, resolve }) => {
   return populateAuth({
     event,
@@ -123,7 +209,11 @@ export const handle: Handle = async ({ event, resolve }) => {
         resolve: (e2) =>
           withUserContext({
             event: e2,
-            resolve: (e3) => resolve(e3),
+            resolve: (e3) =>
+              securityHeaders({
+                event: e3,
+                resolve: (e4) => resolve(e4),
+              }),
           }),
       }),
   });

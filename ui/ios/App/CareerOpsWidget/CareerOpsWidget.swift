@@ -83,10 +83,27 @@ struct CareerOpsWidgetEntryView: View {
             }.padding().widgetURL(URL(string: Brand.deepLink("pipeline")))
 
         case .accessoryCircular:
+            // Lock Screen (iOS 16+) + Apple Watch Smart Stack
+            // (watchOS 9+ surfaces iPhone Lock-Screen widgets here).
             ZStack {
                 Circle().strokeBorder(.tint, lineWidth: 2)
                 Text("\(entry.stats.queued)").font(.headline.bold())
             }
+
+        case .accessoryRectangular:
+            // Watch face complication slot (rectangular). Three lines
+            // of compact info — fits in the modular Smart Stack.
+            VStack(alignment: .leading, spacing: 1) {
+                Text("career-ops").font(.caption2).foregroundStyle(.tint)
+                Text("\(entry.stats.queued) queued · \(entry.stats.appliedToday) applied")
+                    .font(.caption.bold())
+                Text("\(entry.stats.upcomingInterviews) interview(s)")
+                    .font(.caption2).foregroundStyle(.secondary)
+            }
+
+        case .accessoryInline:
+            // Top-of-watch-face inline complication: single-line summary.
+            Text("⌛ \(entry.stats.upcomingInterviews) · ▶︎ \(entry.stats.queued)")
 
         default:
             Text("\(entry.stats.queued) queued")
@@ -105,7 +122,6 @@ struct StatBlock: View {
     }
 }
 
-@main
 struct CareerOpsWidget: Widget {
     let kind: String = "CareerOpsWidget"
 
@@ -115,6 +131,36 @@ struct CareerOpsWidget: Widget {
         }
         .configurationDisplayName("career-ops")
         .description("Today's pipeline at a glance.")
-        .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular])
+        .supportedFamilies([
+            .systemSmall,
+            .systemMedium,
+            // Lock Screen + Apple Watch Smart Stack (iOS 16+ / watchOS 9+).
+            // Watch users see the queue counter on their wrist without
+            // needing a standalone Watch app target.
+            .accessoryCircular,
+            .accessoryRectangular,
+            .accessoryInline,
+        ])
+    }
+}
+
+/**
+ * WidgetBundle entry point — register every widget the user can pick
+ * from the gallery in one place. iOS shows them as separate cards in
+ * the widget picker.
+ *
+ * The four widgets:
+ *   • CareerOpsWidget    — pipeline stats summary
+ *   • NextInterviewWidget — countdown to next interview
+ *   • TopApplyWidget     — highest-scoring queued job
+ *   • InboxIssuesWidget  — open issues needing user action
+ */
+@main
+struct CareerOpsWidgetBundle: WidgetBundle {
+    var body: some Widget {
+        CareerOpsWidget()
+        NextInterviewWidget()
+        TopApplyWidget()
+        InboxIssuesWidget()
     }
 }

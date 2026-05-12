@@ -247,10 +247,33 @@ export function saveAvatar(
 }
 
 export function readAvatar(): { buffer: Buffer; contentType: string } | null {
+  const userId = currentUserIdOrDefault();
+  if (userId === SYSTEM_USER_ID) return null;
   const prefs = readPrefs();
   if (!prefs.avatarPath) return null;
-  const full = path.join(ROOT, 'data', prefs.avatarPath);
+  // Defence-in-depth: the stored avatarPath MUST live under this user's
+  // avatar dir. Without this check, a poisoned `ui_prefs.avatar_path`
+  // (e.g. crafted via a stolen session before the schema lock-down
+  // landed) could read another user's avatar bytes. We enforce both:
+  //   (a) the path resolves under `data/avatars/{userId}/`
+  //   (b) the resolved real path doesn't escape via symlink
+  const expectedPrefix = 'avatars/' + userId + '/';
+  if (!prefs.avatarPath.startsWith(expectedPrefix)) return null;
+  const full = path.resolve(ROOT, 'data', prefs.avatarPath);
+  const userDir = path.resolve(ROOT, 'data', 'avatars', userId);
+  // Ensure `full` is INSIDE `userDir` after symlink resolution. We use
+  // realpath only if the file exists; otherwise fall back to the prefix
+  // check above (which catches the "no file but malicious path" case).
   if (!fs.existsSync(full)) return null;
+  let realFull: string;
+  let realDir: string;
+  try {
+    realFull = fs.realpathSync(full);
+    realDir = fs.realpathSync(userDir);
+  } catch {
+    return null;
+  }
+  if (!realFull.startsWith(realDir + path.sep) && realFull !== realDir) return null;
   const ext = path.extname(full).slice(1).toLowerCase();
   const contentType =
     ext === 'png'

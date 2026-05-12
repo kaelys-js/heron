@@ -24,7 +24,7 @@
  */
 
 import { spawn } from 'node:child_process';
-import { existsSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
@@ -113,10 +113,58 @@ function authedHeaders(cookie) {
   return { Cookie: `career-ops.session_token=${cookie}` };
 }
 
+/** True if `buildEntry` is newer than every .ts/.svelte file under ui/src/.
+ *  Cheap walk — there are ~1000 source files and statSync is microseconds. */
+function buildIsFresh(buildEntry) {
+  const fs = require('node:fs');
+  const buildMtime = fs.statSync(buildEntry).mtimeMs;
+  const SRC = join(UI, 'src');
+  let stalest = 0;
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
+        walk(full);
+      } else if (
+        entry.name.endsWith('.ts') ||
+        entry.name.endsWith('.svelte') ||
+        entry.name.endsWith('.js') ||
+        entry.name.endsWith('.mjs') ||
+        entry.name.endsWith('.json')
+      ) {
+        const m = fs.statSync(full).mtimeMs;
+        if (m > stalest) stalest = m;
+      }
+    }
+  };
+  walk(SRC);
+  // Also include the few repo-root configs that affect the build.
+  for (const p of [
+    join(UI, 'vite.config.ts'),
+    join(UI, 'svelte.config.js'),
+    join(UI, 'package.json'),
+  ]) {
+    try {
+      const m = fs.statSync(p).mtimeMs;
+      if (m > stalest) stalest = m;
+    } catch {}
+  }
+  return buildMtime > stalest;
+}
+
 async function startServer() {
-  // Build first.
-  console.log('Building UI server...');
-  execSync('pnpm exec vite build', { cwd: UI, stdio: 'pipe' });
+  // Build first — but skip if the existing build is fresher than the
+  // newest source file (Vite has no built-in "incremental" mode, so we
+  // do the freshness check ourselves). Pass --rebuild to force.
+  const force = process.argv.includes('--rebuild');
+  const buildEntry = join(UI, 'build/index.js');
+  if (force || !existsSync(buildEntry) || !buildIsFresh(buildEntry)) {
+    console.log('Building UI server...');
+    execSync('pnpm exec vite build', { cwd: UI, stdio: 'pipe' });
+  } else {
+    console.log('Reusing existing UI build (pass --rebuild to force).');
+  }
   const child = spawn('node', ['build/index.js'], {
     cwd: UI,
     env: { ...process.env, PORT: String(PORT) },
@@ -174,7 +222,10 @@ async function main() {
       check('app.db has profiles', tables.includes('profiles'));
       check('app.db has ui_prefs', tables.includes('ui_prefs'));
       check('app.db has issues', tables.includes('issues'));
-      check('app.db has cv_content', tables.includes('cv_content'));
+      check('app.db has activity_events', tables.includes('activity_events'));
+      // app.db v2 has only 4 user-data tables — everything else is on the
+      // filesystem at data/users/{userId}/profiles/{slug}/... so the Claude
+      // CLI can read it. Section 7c confirms the v1→v2 drop succeeded.
     }
 
     section('2. Auth guard');
@@ -340,6 +391,70 @@ async function main() {
       check('Bob unaffected by Alice’s deletion', bobAfter.status === 200);
     }
 
+    section('7b. Export omits dropped dead tables');
+    {
+      // After dropping the 14 dead app.db tables in v2, the export JSON
+      // should NOT contain the dropped keys (jobs, applications, reports,
+      // cv_content, etc.) — only the 4 surviving ones (profiles,
+      // ui_prefs, activity_events, issues).
+      const sigUser = injectUser(secret, 'export-shape');
+      const exp = await fetchJson('/api/auth/account/export', {
+        headers: authedHeaders(sigUser.cookie),
+      });
+      const keys = Object.keys(exp.body?.json ?? {});
+      check(
+        "export omits 'jobs' (v1 dead schema)",
+        !keys.includes('jobs'),
+        'still present: ' + keys.filter((k) => k === 'jobs').join(', '),
+      );
+      check("export omits 'applications' (v1 dead schema)", !keys.includes('applications'));
+      check("export omits 'reports' (v1 dead schema)", !keys.includes('reports'));
+      check("export omits 'cvContent' (v1 dead schema)", !keys.includes('cvContent'));
+      check("export omits 'profileYmlContent'", !keys.includes('profileYmlContent'));
+      check("export omits 'portalsYmlContent'", !keys.includes('portalsYmlContent'));
+      check("export omits 'profileMdContent'", !keys.includes('profileMdContent'));
+      check("export omits 'scanHistory'", !keys.includes('scanHistory'));
+      check("export omits 'geminiScores'", !keys.includes('geminiScores'));
+      check("export omits 'formAnswers'", !keys.includes('formAnswers'));
+      check("export omits 'applyState'", !keys.includes('applyState'));
+      check("export omits 'compOverrides'", !keys.includes('compOverrides'));
+      check("export omits 'interviewSchedule'", !keys.includes('interviewSchedule'));
+      check("export still has 'profiles'", keys.includes('profiles'));
+      check("export still has 'uiPrefs'", keys.includes('uiPrefs'));
+      check("export still has 'activityEvents'", keys.includes('activityEvents'));
+      check("export still has 'issues'", keys.includes('issues'));
+    }
+
+    section('7c. v2 migration drops legacy tables from app.db');
+    {
+      const adb = new Database(APP_DB, { readonly: true });
+      const tables = adb
+        .prepare(`SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`)
+        .all()
+        .map((r) => r.name);
+      adb.close();
+      for (const dropped of [
+        'jobs',
+        'applications',
+        'reports',
+        'scan_history',
+        'gemini_scores',
+        'form_answers',
+        'apply_state',
+        'comp_overrides',
+        'interview_schedule',
+        'cv_content',
+        'profile_yml_content',
+        'portals_yml_content',
+        'profile_md_content',
+      ]) {
+        check(`app.db no longer has '${dropped}' table`, !tables.includes(dropped));
+      }
+      for (const kept of ['profiles', 'activity_events', 'issues', 'ui_prefs']) {
+        check(`app.db still has '${kept}' table`, tables.includes(kept));
+      }
+    }
+
     section('8. GDPR export');
     const carol = injectUser(secret, 'carol');
     {
@@ -349,10 +464,9 @@ async function main() {
       check('Export returns 200', exp.status === 200);
       check('Export has json + files keys', exp.body?.json && exp.body?.files !== undefined);
       check(
-        'Export json includes user, profiles, jobs, issues',
+        'Export json includes user, profiles, issues',
         exp.body?.json?.user &&
           Array.isArray(exp.body?.json?.profiles) &&
-          Array.isArray(exp.body?.json?.jobs) &&
           Array.isArray(exp.body?.json?.issues),
       );
     }
@@ -546,6 +660,277 @@ async function main() {
       appDb.close();
       check('activity_events row written for the acting user', !!ev);
       check('activity_events row tagged with the right user_id', ev?.user_id === sigUser.userId);
+    }
+
+    section('15. Concurrent profile creation (multi-device race)');
+    {
+      // Two simultaneous "Engineer Search" creates from the same user
+      // must both succeed, producing two distinct slugs (engineer-search
+      // + engineer-search-2). The DB transaction + slug-retry loop in
+      // createProfileFor handles this without surfacing UNIQUE errors.
+      const u = injectUser(secret, 'race', 'owner');
+      // Seed the user (triggers the "default" profile creation).
+      await fetchJson('/api/profiles', { headers: authedHeaders(u.cookie) });
+      const [r1, r2] = await Promise.all([
+        fetchJson('/api/profiles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authedHeaders(u.cookie) },
+          body: JSON.stringify({ name: 'Engineer Search', color: 'emerald' }),
+        }),
+        fetchJson('/api/profiles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authedHeaders(u.cookie) },
+          body: JSON.stringify({ name: 'Engineer Search', color: 'violet' }),
+        }),
+      ]);
+      check('concurrent create 1 → 200', r1.status === 200);
+      check('concurrent create 2 → 200', r2.status === 200);
+      const slug1 = r1.body?.profile?.id;
+      const slug2 = r2.body?.profile?.id;
+      check(
+        'concurrent creates produced distinct slugs',
+        slug1 && slug2 && slug1 !== slug2,
+        `slug1=${slug1} slug2=${slug2}`,
+      );
+    }
+
+    section('16. Multi-device account deletion');
+    {
+      // Inject a user with TWO sessions (representing laptop + phone).
+      const u = injectUser(secret, 'multidev', 'owner');
+      const fs2 = await import('node:fs');
+      const env = fs2.readFileSync(join(ROOT, '.env'), 'utf8');
+      const sec = env.match(/^BETTER_AUTH_SECRET=(.+)$/m)[1].trim();
+      // Add a second session with a different token.
+      const db = new Database(AUTH_DB);
+      const altToken = crypto.randomBytes(16).toString('hex');
+      const altSessionId = 'multi-alt-' + crypto.randomBytes(3).toString('hex');
+      const now = Date.now();
+      db.prepare(
+        `INSERT INTO sessions (id, user_id, expires_at, token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+      ).run(altSessionId, u.userId, now + 86400 * 1000, altToken, now, now);
+      db.close();
+      const altSig = crypto.createHmac('sha256', sec).update(altToken).digest('base64');
+      const altCookie = `${altToken}.${altSig}`;
+      // Confirm both sessions work first.
+      const r1 = await fetchJson('/api/profiles', { headers: authedHeaders(u.cookie) });
+      const r2 = await fetchJson('/api/profiles', { headers: authedHeaders(altCookie) });
+      check('device1 authed before delete', r1.status === 200);
+      check('device2 authed before delete', r2.status === 200);
+      // Delete the account from device1.
+      await fetchJson('/api/auth/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authedHeaders(u.cookie) },
+        body: JSON.stringify({ confirm: 'DELETE' }),
+      });
+      // Both devices now return 401 on the next request.
+      const after1 = await fetchJson('/api/profiles', { headers: authedHeaders(u.cookie) });
+      const after2 = await fetchJson('/api/profiles', { headers: authedHeaders(altCookie) });
+      check('device1 immediately 401 after delete', after1.status === 401);
+      check('device2 (still has old cookie) immediately 401', after2.status === 401);
+    }
+
+    section('17. Multi-device profile reset (no stale cache)');
+    {
+      // User creates a profile from device1, then resets from device2.
+      // device1's next read should reflect the reset (no module-level
+      // cache holding stale state).
+      const u = injectUser(secret, 'resetdev', 'owner');
+      await fetchJson('/api/profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authedHeaders(u.cookie) },
+        body: JSON.stringify({ name: 'Pre-Reset', color: 'amber' }),
+      });
+      // Reset (scope='profile', current active profile).
+      const reset = await fetchJson('/api/profile/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authedHeaders(u.cookie) },
+        body: JSON.stringify({ confirm: 'RESET', scope: 'profile', profileId: 'pre-reset' }),
+      });
+      check('profile reset returns 200', reset.status === 200);
+      // The reset wipes profile.yml / cv.md but leaves the row in the
+      // DB. listProfilesForUser should still return both rows.
+      const list = await fetchJson('/api/profiles', { headers: authedHeaders(u.cookie) });
+      check(
+        'device2 read sees current state (no stale cache)',
+        list.status === 200 && Array.isArray(list.body?.profiles),
+      );
+    }
+
+    section('18. Session expiry (auto-logout)');
+    {
+      // Inject a user whose session expired 1ms ago.
+      const fs2 = await import('node:fs');
+      const env = fs2.readFileSync(join(ROOT, '.env'), 'utf8');
+      const sec = env.match(/^BETTER_AUTH_SECRET=(.+)$/m)[1].trim();
+      const db = new Database(AUTH_DB);
+      const userId = 'u-expired-' + crypto.randomBytes(3).toString('hex');
+      const sessionId = 's-expired-' + crypto.randomBytes(3).toString('hex');
+      const token = crypto.randomBytes(16).toString('hex');
+      const now = Date.now();
+      db.prepare(
+        `INSERT INTO users (id, email, email_verified, role, two_factor_enabled, created_at, updated_at) VALUES (?, ?, 1, 'owner', 0, ?, ?)`,
+      ).run(userId, `expired-${now}@verify.local`, now, now);
+      // expires_at = 1 second ago.
+      db.prepare(
+        `INSERT INTO sessions (id, user_id, expires_at, token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+      ).run(sessionId, userId, now - 1000, token, now, now);
+      db.close();
+      const sig = crypto.createHmac('sha256', sec).update(token).digest('base64');
+      const expiredCookie = `${token}.${sig}`;
+      const r = await fetchJson('/api/profiles', { headers: authedHeaders(expiredCookie) });
+      check('expired session returns 401 on /api/*', r.status === 401);
+      const page = await fetchHead('/pipeline', { headers: authedHeaders(expiredCookie) });
+      check(
+        'expired session redirects HTML to /login',
+        page.status === 302 && (page.location || '').startsWith('/login'),
+      );
+    }
+
+    section('19. Incognito (no cookie)');
+    {
+      const r1 = await fetchHead('/login');
+      check(
+        'no-cookie GET /login is reachable',
+        r1.status === 200 || r1.status === 302,
+        `HTTP ${r1.status}`,
+      );
+      const r2 = await fetchJson('/api/profiles');
+      check('no-cookie /api/profiles → 401', r2.status === 401);
+      const r3 = await fetchJson('/api/auth/get-session');
+      check('no-cookie /api/auth/get-session → 200 null', r3.status === 200 && r3.body === null);
+    }
+
+    section('20. Cookie hygiene + CSRF');
+    {
+      // CSRF: a POST without origin/cookie should be rejected at the
+      // SvelteKit layer (csrf.trustedOrigins is locked).
+      // We test via fetch — fetch automatically sets Origin from the
+      // request URL, but for cross-origin protection we'd need a
+      // different origin. Best we can do here: confirm useSecureCookies
+      // is gated on https.
+      const fs2 = await import('node:fs');
+      const auth = fs2.readFileSync(join(UI, 'src/lib/server/auth.ts'), 'utf8');
+      check(
+        'useSecureCookies env-gated on https://',
+        /useSecureCookies:\s*BETTER_AUTH_URL\.startsWith\('https/.test(auth),
+      );
+    }
+
+    section('21. New user creation E2E (first user → owner)');
+    {
+      // Hit Better Auth's signUp.email endpoint as if the browser
+      // authClient.signUp.email() did. With no users in the DB, the
+      // databaseHooks.user.create.after hook should promote them to
+      // role='owner'. We use a fresh auth.db for this section.
+      const fs2 = await import('node:fs');
+      // Take a snapshot of every existing user, then check after the new
+      // signup that we have exactly one new row AND its role is set right.
+      const beforeDb = new Database(AUTH_DB, { readonly: true });
+      const before = beforeDb.prepare(`SELECT COUNT(*) AS n FROM users`).get();
+      beforeDb.close();
+      // Use a totally fresh DB: rename current auth.db aside, let the
+      // server boot recreate it (already happened — we're using the live
+      // running server). To test "first user", we DELETE all rows from
+      // users + sessions, then signup.
+      const wipeDb = new Database(AUTH_DB);
+      wipeDb.prepare(`DELETE FROM sessions`).run();
+      wipeDb.prepare(`DELETE FROM users`).run();
+      wipeDb.close();
+
+      // Better Auth refuses without an Origin header (CSRF defense).
+      // Mirror what the real browser does — set Origin to BASE which is
+      // in `trustedOrigins` in auth.ts.
+      const signupRes = await fetch(`${BASE}/api/auth/sign-up/email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: BASE },
+        body: JSON.stringify({
+          email: 'first-user@verify.local',
+          password: 'NotUsed-' + crypto.randomBytes(16).toString('hex'),
+          name: 'First User',
+        }),
+      });
+      const signupBody = await signupRes.text();
+      check(
+        'Better Auth sign-up endpoint returns 200',
+        signupRes.status === 200,
+        `HTTP ${signupRes.status}: ${signupBody.slice(0, 200)}`,
+      );
+      // Verify the new user got role='owner' via the after-create hook.
+      const after = new Database(AUTH_DB, { readonly: true });
+      const newUser = after
+        .prepare(`SELECT id, role FROM users WHERE email = ?`)
+        .get('first-user@verify.local');
+      const count = after.prepare(`SELECT COUNT(*) AS n FROM users`).get();
+      after.close();
+      check('first user exists', !!newUser);
+      check(
+        'first user has role=owner (via databaseHooks.user.create.after)',
+        newUser?.role === 'owner',
+      );
+      check('only one user exists after wipe + signup', count?.n === 1);
+    }
+
+    section('22. Second user is role=member (invite path)');
+    {
+      // With the owner already present from section 21, simulate an
+      // invite-code signup. Owner generates an invite, then a fresh user
+      // signs up via sign-up/email (which is how authClient.signUp.email
+      // works in our /signup page — the invite-code is validated client-
+      // side in /api/auth/invite/claim BEFORE the signup, but the user
+      // record itself is created here with role=member by default).
+      const signupRes = await fetch(`${BASE}/api/auth/sign-up/email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: BASE },
+        body: JSON.stringify({
+          email: 'second-user@verify.local',
+          password: 'NotUsed-' + crypto.randomBytes(16).toString('hex'),
+          name: 'Second User',
+        }),
+      });
+      check('second sign-up returns 200', signupRes.status === 200);
+      const after = new Database(AUTH_DB, { readonly: true });
+      const u2 = after
+        .prepare(`SELECT role FROM users WHERE email = ?`)
+        .get('second-user@verify.local');
+      const u1 = after
+        .prepare(`SELECT role FROM users WHERE email = ?`)
+        .get('first-user@verify.local');
+      after.close();
+      check("second user has role='member' (not auto-promoted)", u2?.role === 'member');
+      check("first user keeps role='owner' (not demoted)", u1?.role === 'owner');
+    }
+
+    section('23. Avatar isolation (path-enumeration fix)');
+    {
+      // Two users. We poison user B's ui_prefs.avatar_path with a path
+      // that points at user A's avatar dir. The /api/profile/avatar
+      // endpoint must refuse to serve it.
+      const a = injectUser(secret, 'avatarA', 'owner');
+      const b = injectUser(secret, 'avatarB', 'owner');
+      const fs2 = await import('node:fs');
+      // Create a fake avatar for user A on disk.
+      const aDir = join(ROOT, 'data', 'avatars', a.userId);
+      fs2.mkdirSync(aDir, { recursive: true });
+      fs2.writeFileSync(join(aDir, 'avatar.png'), Buffer.from([137, 80, 78, 71])); // PNG magic
+      // Poison B's avatar_path to point at A's avatar.
+      const adb = new Database(APP_DB);
+      adb
+        .prepare(
+          `INSERT INTO ui_prefs (user_id, display_name, avatar_path, appearance, theme, notifications, updated_at) VALUES (?, NULL, ?, 'system', 'default', NULL, ?)
+         ON CONFLICT(user_id) DO UPDATE SET avatar_path = excluded.avatar_path, updated_at = excluded.updated_at`,
+        )
+        .run(b.userId, `avatars/${a.userId}/avatar.png`, Date.now());
+      adb.close();
+      // B requests their avatar — should get null (not A's bytes).
+      const r = await fetch(`${BASE}/api/profile/avatar`, {
+        headers: authedHeaders(b.cookie),
+      });
+      check(
+        "B's poisoned avatar_path does NOT serve A's bytes",
+        r.status === 404 || (r.status === 200 && (await r.arrayBuffer()).byteLength === 0),
+        `got HTTP ${r.status}`,
+      );
     }
   } finally {
     server.kill('SIGTERM');

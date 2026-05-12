@@ -34,25 +34,7 @@ import {
   backupCodes,
   inviteCodes,
 } from './db/auth-schema';
-import {
-  profiles,
-  jobs,
-  applications,
-  reports,
-  scanHistory,
-  geminiScores,
-  formAnswers,
-  applyState,
-  activityEvents,
-  issues,
-  uiPrefs,
-  compOverrides,
-  interviewSchedule,
-  cvContent,
-  profileYmlContent,
-  portalsYmlContent,
-  profileMdContent,
-} from './db/app-schema';
+import { profiles, activityEvents, issues, uiPrefs } from './db/app-schema';
 import crypto from 'node:crypto';
 
 const GRACE_DAYS = 30;
@@ -136,29 +118,11 @@ export function restoreUser(userId: string): boolean {
  *  (which skips the 30-day wait — useful for GDPR right-to-erasure
  *  requests when the user explicitly asks for immediate deletion). */
 export function hardDeleteUser(userId: string): void {
-  // 1. Wipe app.db rows. ORDER MATTERS because some tables reference others
-  //    in application code, but at the DB level they're independent (no FKs
-  //    across tables in app.db).
+  // 1. Wipe app.db rows. Other per-user data lives on the filesystem
+  //    under data/users/{userId}/profiles/{slug}/... — that's wiped in
+  //    step 2 below.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const userScopedTables: any[] = [
-    profileMdContent,
-    portalsYmlContent,
-    profileYmlContent,
-    cvContent,
-    interviewSchedule,
-    compOverrides,
-    uiPrefs,
-    issues,
-    activityEvents,
-    applyState,
-    formAnswers,
-    geminiScores,
-    scanHistory,
-    reports,
-    applications,
-    jobs,
-    profiles,
-  ];
+  const userScopedTables: any[] = [uiPrefs, issues, activityEvents, profiles];
   for (const table of userScopedTables) {
     try {
       appDb.delete(table).where(eq(table.userId, userId)).run();
@@ -238,22 +202,9 @@ export function buildExport(userId: string): { json: unknown; files: Record<stri
     userId,
     user: authDb.select().from(authUsers).where(eq(authUsers.id, userId)).get(),
     profiles: collect(profiles),
-    jobs: collect(jobs),
-    applications: collect(applications),
-    reports: collect(reports),
-    scanHistory: collect(scanHistory),
-    geminiScores: collect(geminiScores),
-    formAnswers: collect(formAnswers),
-    applyState: collect(applyState),
     activityEvents: collect(activityEvents),
     issues: collect(issues),
     uiPrefs: collect(uiPrefs),
-    compOverrides: collect(compOverrides),
-    interviewSchedule: collect(interviewSchedule),
-    cvContent: collect(cvContent),
-    profileYmlContent: collect(profileYmlContent),
-    portalsYmlContent: collect(portalsYmlContent),
-    profileMdContent: collect(profileMdContent),
     sessions: authDb.select().from(sessions).where(eq(sessions.userId, userId)).all(),
     passkeys: authDb.select().from(passkeys).where(eq(passkeys.userId, userId)).all(),
     accounts: authDb.select().from(accounts).where(eq(accounts.userId, userId)).all(),

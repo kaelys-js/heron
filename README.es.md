@@ -76,11 +76,11 @@ Construido por alguien que lo uso para evaluar 740+ ofertas, generar 100+ CVs pe
 ```bash
 # 1. Clonar e instalar
 git clone https://github.com/santifer/career-ops.git
-cd career-ops && npm install
-npx playwright install chromium   # Necesario para generar PDFs
+cd career-ops && pnpm install
+pnpm exec playwright install chromium   # Necesario para generar PDFs
 
 # 2. Verificar setup
-npm run doctor                     # Valida todos los prerequisitos
+pnpm run doctor                     # Valida todos los prerequisitos
 
 # 3. Configurar
 cp config/profile.example.yml config/profile.yml  # Editar con tus datos

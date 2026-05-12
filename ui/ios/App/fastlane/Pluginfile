@@ -1,0 +1,11 @@
+# Fastlane plugins.
+#
+# This file is read by the Gemfile so `bundle install` picks up every
+# plugin alongside Fastlane itself. Keep plugins minimal — every extra
+# gem extends CI install time.
+
+# Versioning helper — bumps Info.plist / xcconfig version + build numbers
+# consistently. Built-in but pinning the gem ensures CI uses the same.
+# gem 'fastlane-plugin-versioning'
+
+# Add additional plugins below as the build pipeline grows.
