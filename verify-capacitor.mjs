@@ -277,6 +277,58 @@ exists('scripts/native/apply-brand.mjs', 'brand propagator');
   jsonField('package.json', 'description', brand.tagline, 'root package.json description matches brand');
 }
 
+// ── Phase 10 — Error handling + LoadingState + auto-brand ──────────
+section('Phase 10 — Error handling + LoadingState + auto-brand pipeline');
+exists('ui/src/lib/client/error-reporter.ts', 'unified error reporter (client)');
+exists('ui/ios/App/App/ErrorReporter.swift', 'unified error reporter (iOS)');
+exists('ui/ios/App/CareerOpsWidget/ErrorReporter.swift', 'ErrorReporter synced to widget target');
+exists('ui/ios/App/CareerOpsLiveActivity/ErrorReporter.swift', 'ErrorReporter synced to liveactivity target');
+exists('ui/ios/App/CareerOpsShareExtension/ErrorReporter.swift', 'ErrorReporter synced to share-ext target');
+contains('ui/src/lib/client/error-reporter.ts', 'installErrorReporter', 'global handlers installer exported');
+contains('ui/src/lib/client/error-reporter.ts', '/api/issues', 'reports flow to shared Issues store');
+contains('ui/src/lib/client/error-reporter.ts', 'unhandledrejection', 'window unhandledrejection wired');
+contains('ui/src/lib/client/error-reporter.ts', 'main-error', 'electron main-process errors received via IPC');
+contains('ui/src/lib/client/error-reporter.ts', 'drainNativeErrors', 'iOS native errors drained via plugin');
+contains('ui/src/routes/+layout.svelte', 'installErrorReporter', 'reporter installed at app boot');
+contains('ui/src/routes/+error.svelte', 'reportError', '+error.svelte forwards to reporter');
+contains('ui/electron/src/index.ts', 'unhandledRejection', 'electron main-process rejections caught');
+contains('ui/electron/src/preload.ts', 'electronAPI', 'preload exposes electronAPI for renderer IPC');
+contains('ui/ios/App/App/ErrorReporter.swift', 'sharedDefaults', 'iOS reporter uses App Group store');
+contains('ui/ios/App/App/CareerOpsNativePlugin.swift', 'drainNativeErrors', 'iOS plugin exposes drainNativeErrors');
+contains('ui/ios/App/App/BonjourBrowser.swift', 'ErrorReporter.shared.report', 'BonjourBrowser reports errors');
+contains('ui/ios/App/App/BackgroundFetcher.swift', 'ErrorReporter.shared.report', 'BackgroundFetcher reports errors');
+contains('ui/ios/App/App/SpotlightIndexer.swift', 'ErrorReporter.shared.report', 'SpotlightIndexer reports errors');
+exists('ui/src/lib/components/LoadingState.svelte', 'standard LoadingState component');
+exists('ui/src/lib/components/BackendBootGuard.svelte', 'boot guard with LoadingState overlay');
+contains('ui/src/lib/components/LoadingState.svelte', "variant === 'overlay'", 'overlay variant');
+contains('ui/src/lib/components/LoadingState.svelte', "variant === 'skeleton'", 'skeleton variant');
+contains('ui/src/lib/components/BackendBootGuard.svelte', 'resolveBackend', 'boot guard awaits resolver');
+exists('ui/vite.config.ts', 'vite config exists');
+contains('ui/vite.config.ts', 'brandWatcherPlugin', 'vite auto-runs apply-brand');
+contains('ui/vite.config.ts', 'configResolved', 'apply-brand runs at startup');
+contains('ui/vite.config.ts', 'configureServer', 'apply-brand re-runs on branding/ change in dev');
+exists('.githooks/pre-commit', 'pre-commit hook for branding/ changes');
+contains('.githooks/pre-commit', 'apply-brand', 'pre-commit runs apply-brand');
+contains('scripts/native/setup.mjs', 'core.hooksPath', 'wizard activates git hooks');
+// Build/dev scripts auto-apply brand
+contains('scripts/native/build-desktop.mjs', 'apply-brand.mjs', 'build:desktop auto-applies brand');
+contains('scripts/native/build-ios-testflight.mjs', 'apply-brand.mjs', 'build:ios auto-applies brand');
+contains('scripts/native/dev-desktop.mjs', 'apply-brand.mjs', 'dev:desktop auto-applies brand');
+contains('scripts/native/dev-ios.mjs', 'apply-brand.mjs', 'dev:ios auto-applies brand');
+// Phase A: UX brand wiring
+contains('ui/src/lib/config/branding.ts', "from '$lib/client/brand'", 'legacy branding.ts re-exports from BRAND');
+contains('ui/src/lib/theme.svelte.ts', 'BRAND.name', 'theme store uses BRAND prefix');
+contains('ui/src/lib/sidebar-pins.svelte.ts', 'BRAND.name', 'sidebar-pins uses BRAND prefix');
+contains('ui/src/lib/api.ts', 'BRAND_EVENTS.openNotifications', 'api.ts uses BRAND_EVENTS');
+contains('ui/src/lib/notifications.svelte.ts', 'BRAND_EVENTS', 'notifications svelte.ts uses BRAND_EVENTS');
+contains('ui/src/lib/components/NotificationsBell.svelte', 'BRAND_EVENTS.openNotifications', 'NotificationsBell listener uses BRAND_EVENTS');
+contains('ui/src/lib/components/PushNotificationsToggle.svelte', 'BRAND_EVENTS.notify', 'PushNotificationsToggle listener uses BRAND_EVENTS');
+contains('ui/src/lib/client/native-bridge.ts', 'BRAND_STORAGE_PREFIX', 'native-bridge keychain fallback uses BRAND prefix');
+contains('ui/src/lib/client/brand.ts', 'BRAND_EVENTS', 'brand.ts exports BRAND_EVENTS');
+contains('ui/src/lib/client/brand.ts', 'BRAND_STORAGE_PREFIX', 'brand.ts exports BRAND_STORAGE_PREFIX');
+// app.html templating
+contains('ui/src/app.html', `${JSON.parse(readFileSync(join(ROOT, 'branding/brand.json'), 'utf8')).name}:theme`, 'app.html localStorage key matches brand');
+
 // ── Phase 8 — Release automation ───────────────────────────────────
 section('Phase 8 — Release automation (Conventional Commits → Release Please)');
 exists('release-please-config.json', 'Release Please config');

@@ -9,10 +9,11 @@
 import type { ActivityEvent } from '$lib/types';
 import { browser } from '$app/environment';
 import { toast } from 'svelte-sonner';
+import { BRAND_EVENTS } from '$lib/client/brand';
 
 function dispatchOpenNotifications(): void {
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('career-ops:open-notifications'));
+    window.dispatchEvent(new CustomEvent(BRAND_EVENTS.openNotifications));
   }
 }
 
@@ -163,7 +164,7 @@ class NotificationStore {
       // backfill/replay events don't trigger a barrage.
       if (typeof window !== 'undefined') {
         try {
-          window.dispatchEvent(new CustomEvent('career-ops:notify', {
+          window.dispatchEvent(new CustomEvent(BRAND_EVENTS.notify, {
             detail: {
               level: ev.level,
               title: ev.title,

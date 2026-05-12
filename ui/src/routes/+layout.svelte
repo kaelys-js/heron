@@ -15,12 +15,21 @@
   import { APP_NAME, APP_DESCRIPTION } from '$lib/config/branding';
   import { theme } from '$lib/theme.svelte';
   import { onMount, setContext } from 'svelte';
+  import { installErrorReporter, setReporterBackend } from '$lib/client/error-reporter';
 
   onMount(() => {
     // Hydrate the theme store so OS-preference changes propagate at runtime.
     // The inline app.html script already applied the initial class — this
     // just lights up the reactive store.
     theme.init();
+
+    // Install global error handlers (window.onerror + onunhandledrejection)
+    // and wire the reporter at the current origin. backend-discovery (the
+    // Capacitor resolver) updates this later via setReporterBackend when
+    // running native — but in plain web mode, location.origin is correct.
+    if (typeof window !== 'undefined') {
+      installErrorReporter(window.location.origin);
+    }
   });
 
   let { children, data } = $props();

@@ -6,7 +6,8 @@
  * in localStorage, so the sidebar respects the user's choices across reloads.
  */
 
-const STORAGE_KEY = 'career-ops:sidebar-pin-excluded';
+import { BRAND } from '$lib/client/brand';
+const STORAGE_KEY = `${BRAND.name}:sidebar-pin-excluded`;
 
 function readSet(): Set<string> {
   if (typeof window === 'undefined') return new Set();

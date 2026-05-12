@@ -34,12 +34,26 @@ export const BRAND = {
   },
 } as const;
 
-/** Build a careerops:// deep link for a job. */
+/** Build a custom-scheme deep link for a job. */
 export function jobDeepLink(jobId: string): string {
   return `${BRAND.urlScheme}://job/${jobId}`;
 }
 
-/** Build a careerops:// deep link for any in-app route. */
+/** Build a custom-scheme deep link for any in-app route. */
 export function deepLink(route: string): string {
   return `${BRAND.urlScheme}://${route.replace(/^\//, '')}`;
 }
+
+/** Brand-namespaced DOM event names. Use these on both sides of
+ * window.dispatchEvent + window.addEventListener — same source of
+ * truth means a rename can never split the listener from the
+ * dispatcher. */
+export const BRAND_EVENTS = {
+  openNotifications: `${BRAND.name}:open-notifications`,
+  notify: `${BRAND.name}:notify`,
+} as const;
+
+/** Brand-namespaced localStorage key prefix. Use as
+ * `${BRAND_STORAGE_PREFIX}:my-key` so user state for one
+ * brand can't collide with another fork on the same machine. */
+export const BRAND_STORAGE_PREFIX = BRAND.name;

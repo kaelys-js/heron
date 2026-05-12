@@ -11,6 +11,7 @@
  */
 
 import { toast } from 'svelte-sonner';
+import { BRAND_EVENTS } from '$lib/client/brand';
 
 export type ApiCallOpts = RequestInit & {
   successToast?: string | { title: string; description?: string };
@@ -40,7 +41,7 @@ export class ApiError extends Error {
 
 function dispatchOpenNotifications(): void {
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('career-ops:open-notifications'));
+    window.dispatchEvent(new CustomEvent(BRAND_EVENTS.openNotifications));
   }
 }
 

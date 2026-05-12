@@ -22,6 +22,7 @@
   import { Button } from '$lib/components/ui/button';
   import { Activity, Loader2 } from '@lucide/svelte';
   import { toast } from 'svelte-sonner';
+  import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 
   let { data }: { data: { jobs: Job[]; total: number; initialTab: TabFilter; initialFilter: FilterState; fromProject: string | null } } = $props();
   // svelte-ignore state_referenced_locally — server data seeds local mutable state on first render.
@@ -29,7 +30,7 @@
   let sort = $state<SortKey>('score-desc');
 
   // Persist viewMode to localStorage so the user's choice sticks across reloads
-  const VIEW_KEY = 'career-ops:pipeline-view';
+  const VIEW_KEY = `${BRAND_STORAGE_PREFIX}:pipeline-view`;
   function readViewMode(): ViewMode {
     if (typeof window === 'undefined') return 'board';
     try {

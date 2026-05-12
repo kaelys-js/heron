@@ -20,11 +20,14 @@
  */
 
 import { browser } from '$app/environment';
+import { BRAND } from '$lib/client/brand';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type ResolvedTheme = 'light' | 'dark';
 
-const STORAGE_KEY = 'career-ops:theme';
+// Namespaced per brand so a fork's user state doesn't clash with upstream.
+// Must match the inline bootstrap in app.html (which apply-brand keeps in sync).
+const STORAGE_KEY = `${BRAND.name}:theme`;
 
 class ThemeStore {
   // svelte-ignore state_referenced_locally

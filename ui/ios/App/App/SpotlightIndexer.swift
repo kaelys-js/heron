@@ -29,7 +29,12 @@ final class SpotlightIndexer {
         }
         CSSearchableIndex.default().indexSearchableItems(items) { error in
             if let error = error {
-                NSLog("[spotlight] index failed: \(error)")
+                ErrorReporter.shared.report(
+                    message: "Spotlight indexing failed: \(error.localizedDescription)",
+                    source: "SpotlightIndexer",
+                    level: "warn",
+                    context: ["itemCount": items.count]
+                )
             } else {
                 NSLog("[spotlight] indexed \(items.count) jobs")
             }
