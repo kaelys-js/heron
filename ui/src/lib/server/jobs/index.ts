@@ -51,6 +51,8 @@ import './apply-queue.job';
 // Phase 6 maintenance jobs.
 import './backup.job';
 import './auto-ghost.job';
+import './linkedin-audit.job';
+import './linkedin-dm.job';
 
 // Phase 7 interview-reminder daemon (15-min ticks via setInterval, not
 // the daily autopilot).

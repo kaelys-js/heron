@@ -71,6 +71,9 @@ export type ProfileFileKind =
   | 'stage-state-json' // job_id → {stageHistory, lastTouchAt, nextActionDue}
   | 'interviewers-json' // job_id → [{name, title, linkedin, scheduledAt, ...}]
   | 'offers-json' // job_id → {base, bonus, equity, benchmark, counter, ...}
+  | 'linkedin-audit-json' // latest scraped LinkedIn snapshot + findings
+  | 'inbound-leads-jsonl' // append-only log of inbound recruiter messages (email + LinkedIn DM)
+  | 'inbound-threads-json' // per-lead thread state machine (engaged / went-silent / closed)
   // Per-profile directories
   | 'profile-dir' // the root of this profile's content
   | 'reports-dir'
@@ -187,6 +190,12 @@ export function profilePathForUser(
       return path.join(base, 'interviewers.json');
     case 'offers-json':
       return path.join(base, 'offers.json');
+    case 'linkedin-audit-json':
+      return path.join(base, 'linkedin-audit.json');
+    case 'inbound-leads-jsonl':
+      return path.join(base, 'inbound-leads.jsonl');
+    case 'inbound-threads-json':
+      return path.join(base, 'inbound-threads.json');
     case 'reports-dir':
       return path.join(base, 'reports');
     case 'output-dir':
