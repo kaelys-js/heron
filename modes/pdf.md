@@ -19,11 +19,16 @@
 13. Lee `name` de `config/profile.yml` → normaliza a kebab-case lowercase (e.g. "John Doe" → "john-doe") → `{candidate}`
 14. Escribe HTML a `/tmp/cv-{candidate}-{company}.html`
 15. Ejecuta: `node generate-pdf.mjs /tmp/cv-{candidate}-{company}.html output/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf --format={letter|a4}`
-16. **Escribe ALSO el SOURCE markdown de la versión tailored** a `output/cv-{candidate}-{company}-{YYYY-MM-DD}.md` (sibling del .pdf).
+    - generate-pdf.mjs lee automáticamente los `<meta>` tags del template (author, subject, keywords, description) y los inyecta en el PDF Info dictionary. No hace falta pasar `--author=...` por CLI si el HTML los tiene.
+    - El PDF se genera con `tagged: true` (PDF/UA) por defecto — semantic structure tags que ayudan a ATS parsers y screen readers.
+16. **Valida la compatibilidad ATS**: `node ats-check.mjs output/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf`
+    - Score < 90% → revisar warnings, ajustar template/contenido, regenerar.
+    - El check verifica: metadata completa, unicode normalizado, section headers estándar, hyperlinks preservados, reading order, page count, file size, no embedded JS/forms/encryption.
+17. **Escribe ALSO el SOURCE markdown de la versión tailored** a `output/cv-{candidate}-{company}-{YYYY-MM-DD}.md` (sibling del .pdf).
     - Esto preserva el contenido tailored para análisis posterior (cv-variant-analysis correlaciona keywords inyectados con outcomes).
     - El .md debe contener TODAS las secciones del CV tailored — no es el HTML, es el markdown estructurado que el mode produjo en pasos 7-11.
     - Sin este sibling, /api/profile/cv-variants devuelve "Not enough data" aunque haya 50+ PDFs.
-17. Reporta: ruta del PDF, nº páginas, % cobertura de keywords
+18. Reporta: ruta del PDF, nº páginas, % cobertura de keywords, **ATS score**.
 
 ## Reglas ATS (parseo limpio)
 
@@ -74,6 +79,10 @@ Usar el template en `cv-template.html`. Reemplazar los placeholders `{{...}}` co
 | `{{LANG}}` | `en` o `es` |
 | `{{PAGE_WIDTH}}` | `8.5in` (letter) o `210mm` (A4) |
 | `{{NAME}}` | (from profile.yml) |
+| `{{ROLE_TITLE}}` | El role title exacto del JD (e.g. "Senior Software Engineer"). Aparece en el `<title>` del HTML y se convierte en el PDF Title metadata — recruiters file by this. |
+| `{{ROLE_AT_COMPANY}}` | `"<role> — <company>"` (e.g. "Senior Software Engineer — Acme Corp"). Se convierte en PDF Subject metadata — los ATS sortean por este campo. |
+| `{{KEYWORDS_CSV}}` | Lista comma-separated de los 15-20 keywords del JD (e.g. `"Python, TypeScript, RAG, MLOps, LangChain, …"`). Se convierte en PDF Keywords metadata — varios ATS indexan por este campo. |
+| `{{SUMMARY_DESCRIPTION}}` | Primera línea del Professional Summary (≤ 150 chars). Se convierte en PDF Description metadata. |
 | `{{PHONE}}` | (from profile.yml — include with its separator only when `profile.yml` has a non-empty `phone` value; omit both `<span>` and `<span class="separator">` otherwise) |
 | `{{EMAIL}}` | (from profile.yml) |
 | `{{LINKEDIN_URL}}` | [from profile.yml] |

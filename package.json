@@ -49,6 +49,7 @@
     "doctor": "node doctor.mjs",
     "doctor:native": "node scripts/native/doctor.mjs",
     "doctor:native:offline": "node scripts/native/doctor.mjs --no-remote",
+    "ats:check": "node ats-check.mjs",
     "verify": "node verify-pipeline.mjs",
     "verify:capacitor": "node verify-capacitor.mjs",
     "verify:multi-user": "node verify-multi-user.mjs",
