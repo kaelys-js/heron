@@ -33,12 +33,12 @@ const groups = [
     ],
   },
   {
-    title: 'Release (CI takes over)',
+    title: 'Release (mostly automatic)',
     cmds: [
-      ['pnpm release patch', '1.6.0 → 1.6.1 → tag → push → CI builds everything'],
-      ['pnpm release minor', '1.6.0 → 1.7.0'],
-      ['pnpm release major', '1.6.0 → 2.0.0'],
-      ['pnpm release 1.7.3', 'Explicit version'],
+      ['(auto)', 'Conventional Commit (feat:/fix:/...) on main → Release Please opens release PR → merge → CI builds + publishes'],
+      ['pnpm release patch', 'Manual override: 1.6.0 → 1.6.1 → tag → push (bypasses Release Please)'],
+      ['pnpm release minor', 'Manual override: 1.6.0 → 1.7.0'],
+      ['pnpm release major', 'Manual override: 1.6.0 → 2.0.0'],
     ],
   },
   {
