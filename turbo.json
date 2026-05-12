@@ -1,24 +1,46 @@
 {
   "$schema": "https://turborepo.com/schema.json",
+  "ui": "stream",
+
   "globalDependencies": [
     "branding/brand.json",
     "branding/logo.svg",
     "package.json",
     ".mise.toml",
-    "biome.json"
+    "biome.json",
+    "pnpm-workspace.yaml",
+    ".npmrc"
   ],
   "globalEnv": ["NODE_ENV", "CAPACITOR", "PUBLIC_CAPACITOR_BUILD", "APPLE_ID", "APPLE_TEAM_ID"],
+
   "tasks": {
     "build": {
       "dependsOn": ["^build", "brand"],
       "outputs": ["build/**", ".svelte-kit/**", "dist/**"],
-      "inputs": ["$TURBO_DEFAULT$", "!**/*.md", "!**/*.test.ts"]
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!**/*.md",
+        "!**/*.test.ts",
+        "!**/*.spec.ts",
+        "!**/CHANGELOG.md",
+        "!**/TODO.md"
+      ]
     },
+
     "build:static": {
       "dependsOn": ["brand"],
       "env": ["CAPACITOR", "PUBLIC_CAPACITOR_BUILD"],
-      "outputs": ["build/static/**"]
+      "outputs": ["build/static/**"],
+      "inputs": [
+        "src/**",
+        "static/**",
+        "svelte.config.js",
+        "vite.config.ts",
+        "tsconfig.json",
+        "package.json"
+      ]
     },
+
     "brand": {
       "inputs": [
         "branding/brand.json",
@@ -52,32 +74,127 @@
         "native/icons/_build/**"
       ]
     },
+
     "check": {
       "dependsOn": ["brand"],
       "outputs": [],
-      "inputs": ["$TURBO_DEFAULT$"]
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.svelte",
+        "src/**/*.js",
+        "src/**/*.mjs",
+        "src/**/*.d.ts",
+        "src/app.html",
+        "static/**",
+        "svelte.config.js",
+        "vite.config.ts",
+        "tsconfig.json",
+        ".svelte-kit/tsconfig.json",
+        "package.json"
+      ]
     },
+
     "format": {
       "cache": false
     },
+
     "format:check": {
-      "outputs": []
+      "outputs": [],
+      "inputs": [
+        "**/*.ts",
+        "**/*.tsx",
+        "**/*.js",
+        "**/*.mjs",
+        "**/*.cjs",
+        "**/*.svelte",
+        "**/*.json",
+        "**/*.jsonc",
+        "**/*.yaml",
+        "**/*.yml",
+        "biome.json",
+        "**/.prettierrc",
+        "**/.prettierrc.json",
+        ".prettierignore"
+      ]
     },
+
     "verify": {
       "dependsOn": ["brand"],
       "outputs": []
     },
+
     "dev": {
       "cache": false,
       "persistent": true,
       "dependsOn": ["brand"]
     },
+
     "lint": {
       "outputs": []
     },
+
     "test": {
       "outputs": [],
       "dependsOn": ["^build"]
+    },
+
+    "//#verify:capacitor": {
+      "outputs": [],
+      "inputs": [
+        "verify-capacitor.mjs",
+        "ui/capacitor.config.ts",
+        "ui/electron/capacitor.config.ts",
+        "ui/electron/electron-builder.config.json",
+        "ui/electron/build/**",
+        "ui/electron/package.json",
+        "ui/electron/src/**/*.ts",
+        "ui/package.json",
+        "ui/svelte.config.js",
+        "ui/static/**",
+        "ui/src/lib/client/brand.ts",
+        "ui/electron/src/brand.ts",
+        "ui/ios/App/App/Info.plist",
+        "ui/ios/App/App/*.swift",
+        "ui/ios/App/CareerOpsWidget/*.swift",
+        "ui/ios/App/CareerOpsLiveActivity/*.swift",
+        "ui/ios/App/CareerOpsShareExtension/*.swift",
+        "ui/ios/App/CareerOpsWatch/*.swift",
+        "ui/android/app/src/main/AndroidManifest.xml",
+        "ui/android/app/src/main/res/values/strings.xml",
+        ".mise.toml",
+        "lefthook.yml",
+        "biome.json",
+        "turbo.json",
+        "pnpm-workspace.yaml",
+        ".github/workflows/**",
+        "scripts/native/**",
+        "package.json"
+      ]
+    },
+
+    "//#verify:multi-user": {
+      "outputs": [],
+      "inputs": [
+        "verify-multi-user.mjs",
+        "ui/build/**",
+        "ui/src/lib/server/**",
+        "ui/src/hooks.server.ts",
+        "ui/src/routes/api/**",
+        "ui/package.json",
+        "package.json"
+      ],
+      "env": ["BETTER_AUTH_SECRET", "BETTER_AUTH_RATE_LIMIT"]
+    },
+
+    "//#verify:pipeline": {
+      "outputs": [],
+      "inputs": ["verify-pipeline.mjs", "data/applications.md", "templates/states.yml"]
+    },
+
+    "//#verify:all": {
+      "dependsOn": ["//#verify:capacitor", "//#verify:multi-user", "//#verify:pipeline"],
+      "outputs": []
     }
   }
 }
