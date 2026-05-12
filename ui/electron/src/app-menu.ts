@@ -5,6 +5,7 @@
  * Quit) because Apple's HIG mandates that pattern. Win/Linux skip it.
  */
 import { Menu, MenuItemConstructorOptions, shell, app } from 'electron';
+import { BRAND } from './brand';
 
 export type AppMenuHandlers = {
   onAbout: () => void;
@@ -135,7 +136,7 @@ export function buildAppMenu(h: AppMenuHandlers): Menu {
       { type: 'separator' },
       {
         label: 'View on GitHub',
-        click: () => shell.openExternal('https://github.com/santifer/career-ops'),
+        click: () => shell.openExternal(BRAND.repoUrl),
       },
       ...(isMac
         ? ([] as MenuItemConstructorOptions[])

@@ -65,6 +65,7 @@ modes/_profile.md
 .env.*
 !.env.example
 !.env.test
+!.env.act.example
 *.pem
 *.key
 *.p12

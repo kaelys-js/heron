@@ -23,9 +23,19 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
 
-const CANONICAL_REPO = 'https://github.com/santifer/career-ops.git';
-const RAW_VERSION_URL = 'https://raw.githubusercontent.com/santifer/career-ops/main/VERSION';
-const RELEASES_API = 'https://api.github.com/repos/santifer/career-ops/releases/latest';
+// Auto-updater points at the FORK (kaelys-js/career-ops), not upstream
+// santifer/career-ops, because this fork has diverged significantly
+// (multi-user, native apps, Better Auth, etc.) and pulling from upstream
+// would conflict on most modes/* files. To re-target upstream, override
+// via env vars: CAREER_OPS_UPDATE_REPO + CAREER_OPS_UPDATE_VERSION_URL.
+const CANONICAL_REPO =
+  process.env.CAREER_OPS_UPDATE_REPO || 'https://github.com/kaelys-js/career-ops.git';
+const RAW_VERSION_URL =
+  process.env.CAREER_OPS_UPDATE_VERSION_URL ||
+  'https://raw.githubusercontent.com/kaelys-js/career-ops/main/VERSION';
+const RELEASES_API =
+  process.env.CAREER_OPS_UPDATE_RELEASES_API ||
+  'https://api.github.com/repos/kaelys-js/career-ops/releases/latest';
 
 // System layer paths — ONLY these files get updated
 const SYSTEM_PATHS = [

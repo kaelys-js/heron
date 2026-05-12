@@ -66,10 +66,18 @@
   "iconSource": "branding/logo.svg",
 
   "author": {
+    "name": "resist.js",
+    "email": "hello@resist.js",
+    "url": "https://resist.js",
+    "githubHandle": "kaelys-js"
+  },
+
+  "originalAuthor": {
     "name": "santifer",
     "email": "hi@santifer.io",
     "url": "https://santifer.io",
-    "githubHandle": "santifer"
+    "githubHandle": "santifer",
+    "comment": "Original creator of the career-ops project — this fork builds on their work. Credited in CONTRIBUTORS.md and README upstream link. Do not remove."
   },
 
   "repo": {
@@ -93,7 +101,7 @@
     "userTrackingUsage": "Career Ops never tracks you. This prompt only appears because Apple requires it for any app that can render web content — we always respond with denied."
   },
 
-  "copyright": "© 2026 santifer. Licensed under the MIT License.",
+  "copyright": "© 2026 resist.js (original work © 2026 santifer). Licensed under the MIT License.",
   "license": "MIT",
 
   "homepageUrl": "https://career-ops.org",

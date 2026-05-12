@@ -1,0 +1,39 @@
+# act — local GitHub Actions runner.
+# https://github.com/nektos/act
+#
+# Why this file: pins the runner image to a known good ubuntu-latest
+# variant so local runs match GitHub's hosted runners byte-for-byte.
+# Without this, act defaults to `node:16-buster-slim` which is missing
+# half of what GitHub provides (sudo, apt, pre-installed actions).
+#
+# Image sizes (downloaded once, cached forever):
+#   micro:  ~200 MB  — node only, fails most workflows
+#   medium: ~500 MB  — node + common runtimes, fine for typecheck/test
+#   large:  ~20 GB   — full GitHub-hosted parity, slow first pull
+#                       (only needed for native-release, not for `Tests`)
+#
+# Default to medium so the daily `pnpm act:test` is fast.
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+
+# Pull policy: never re-pull images that are already local. Speeds up
+# repeat runs; bump explicitly with `act --pull` when an image upgrade
+# is needed.
+--pull=false
+
+# Reuse the same container between runs so the apt cache + pnpm store
+# from the previous run survives. Trade-off: leaks state between runs.
+# Disable per-run with `--rm` when you need a clean slate.
+--reuse
+
+# Use the local docker socket instead of starting docker-in-docker.
+--container-daemon-socket -
+
+# Load the .env.act file as workflow env (if it exists). Lets us pass
+# BETTER_AUTH_SECRET / mock APPLE_API_KEY / etc. locally without
+# polluting the shell. .env.act is gitignored.
+--env-file .env.act
+
+# Default to the M-series Apple Silicon build of the runner image so
+# the container's architecture matches the host (no rosetta translation
+# overhead). x86_64 hosts: comment this out, act auto-detects.
+--container-architecture linux/amd64
