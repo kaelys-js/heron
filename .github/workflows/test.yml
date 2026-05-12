@@ -101,6 +101,13 @@ jobs:
       - name: Quick test suite
         run: pnpm test:quick
 
+      # apply-brand regenerates the platform icons + propagated configs
+      # that verify-capacitor inspects. Icons + .icns + .ico + macOS
+      # entitlements live under ui/electron/build/ which is .gitignored,
+      # so CI must produce them before the verifier runs.
+      - name: Apply brand (generate icons + propagated configs)
+        run: pnpm brand:apply
+
       - name: Brand + native consistency
         run: pnpm verify:capacitor
 
