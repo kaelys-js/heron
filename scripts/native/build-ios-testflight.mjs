@@ -23,7 +23,11 @@ if (!which('xcodebuild')) {
   console.error('Xcode CLI tools not found — install Xcode from the App Store');
   process.exit(1);
 }
-if (!which('pod')) {
+// CocoaPods is only required when the iOS project ships a Podfile.
+// Capacitor 7+ uses Swift Package Manager by default — no Podfile, no
+// `pod install` needed. Detect + skip if not present.
+const usesPodfile = existsSync(join(iosDir, 'Podfile'));
+if (usesPodfile && !which('pod')) {
   warn('CocoaPods missing — installing now');
   run('brew', ['install', 'cocoapods'], { allowFail: true });
 }
