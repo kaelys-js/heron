@@ -6,8 +6,8 @@
   "private": true,
   "packageManager": "pnpm@11.1.0",
   "engines": {
-    "node": ">=26.0.0",
-    "pnpm": ">=11.0.0",
+    "node": "26.1.0",
+    "pnpm": "11.1.0",
     "npm": "please-use-pnpm",
     "yarn": "please-use-pnpm",
     "bun": "please-use-pnpm"
@@ -61,7 +61,8 @@
     "verify:capacitor": "node verify-capacitor.mjs",
     "verify:multi-user": "node verify-multi-user.mjs",
     "verify:pipeline": "node verify-pipeline.mjs",
-    "verify:all": "node verify-pipeline.mjs && node verify-capacitor.mjs && node verify-multi-user.mjs && node verify-post-apply.mjs",
+    "verify:versions": "node verify-versions.mjs",
+    "verify:all": "node verify-versions.mjs && node verify-pipeline.mjs && node verify-capacitor.mjs && node verify-multi-user.mjs && node verify-post-apply.mjs",
     "verify:cached": "turbo run //#verify:all",
     "verify:capacitor:cached": "turbo run //#verify:capacitor",
     "verify:multi-user:cached": "turbo run //#verify:multi-user",
