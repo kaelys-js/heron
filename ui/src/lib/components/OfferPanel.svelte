@@ -4,6 +4,7 @@
    * compute EV + close as accepted/declined.
    */
 
+  import { untrack } from 'svelte';
   import { Button } from '$lib/components/ui/button';
   import { Badge } from '$lib/components/ui/badge';
   import { invalidateAll } from '$app/navigation';
@@ -62,8 +63,11 @@
   // can edit them without props blowing the state away. Initial values are
   // captured ONCE on mount — subsequent prop changes won't update the form
   // (which is the right UX for an editor).
-  let initialOffer = offer;
-  let initialCurrent = offerCurrent;
+  //
+  // `untrack()` tells Svelte 5 this is intentional — otherwise it warns
+  // "This reference only captures the initial value" on every build.
+  const initialOffer = untrack(() => offer);
+  const initialCurrent = untrack(() => offerCurrent);
   let formCurrency = $state(initialOffer?.currency ?? 'USD');
   let formBase = $state(initialCurrent?.base ?? 0);
   let formBonus = $state(initialCurrent?.bonus ?? 0);
