@@ -21,6 +21,20 @@
   import { onlineStore } from '$lib/client/online-status.svelte';
   import { authClient } from '$lib/client/auth-client';
   import OfflineIndicator from '$lib/components/OfflineIndicator.svelte';
+  import { page } from '$app/state';
+
+  // Reactive auth flag — true ONLY when the user is on a private route
+  // AND has the local auth marker set. Used to gate the floating UI
+  // (AgentChat FAB, GlobalSearch, dialogs) so unauthenticated screens
+  // (/login, /signup, /help) never accidentally show app-shell controls.
+  // Updates live as the route changes so signing out hides the FAB
+  // immediately, and signing in reveals it on the very next navigation.
+  let pathname = $derived(page.url.pathname);
+  let isAuthed = $derived.by(() => {
+    if (typeof window === 'undefined') return false;
+    if (isPublicRoute(pathname)) return false;
+    return localStorage.getItem('career-ops:authed') === '1';
+  });
 
   // Routes that don't require an authenticated session. Reaching any of
   // these never triggers a redirect to /login.
@@ -353,23 +367,34 @@
   </Sidebar.Inset>
 </Sidebar.Provider>
 
-<!-- Agent chat + global dialogs use the shared ErrorBoundary so a render
-     error in any of them shows the standard "something went wrong" panel
-     with a Try-again button instead of silently swallowing the crash.
-     The chat error handler also logs to the activity feed via the
-     existing handleAgentError. -->
 <!-- Cross-platform offline banner. Sits above the layout chrome so it's
-     always the topmost element. -->
+     always the topmost element. Always visible (no auth gate) because
+     network state is relevant on /login too. -->
 <OfflineIndicator />
 
-<ErrorBoundary title="Agent chat crashed">
-  <AgentChat />
-</ErrorBoundary>
-<GlobalSearch />
-<ErrorBoundary title="Add-job dialog crashed">
-  <AddJobDialog />
-</ErrorBoundary>
-<ErrorBoundary title="Post-rejection sheet crashed">
-  <PostRejectionSheet />
-</ErrorBoundary>
+<!--
+  Auth-gated floating UI. AgentChat / GlobalSearch / AddJobDialog /
+  PostRejectionSheet all operate on user data (or trigger workflows
+  that mutate it). Rendering them on /login / /signup / /help leaks
+  the in-app shell to unauthenticated users AND is confusing UX (why
+  is there a "Chat with your agents" sparkle button on the sign-in
+  page?). isAuthed is reactive, so signing out from /settings hides
+  these immediately, and signing in reveals them on the very next
+  navigation.
+
+  ErrorBoundary stays around the AgentChat path so a render error in
+  the chat panel never takes down the rest of the auth-required app.
+-->
+{#if isAuthed}
+  <ErrorBoundary title="Agent chat crashed">
+    <AgentChat />
+  </ErrorBoundary>
+  <GlobalSearch />
+  <ErrorBoundary title="Add-job dialog crashed">
+    <AddJobDialog />
+  </ErrorBoundary>
+  <ErrorBoundary title="Post-rejection sheet crashed">
+    <PostRejectionSheet />
+  </ErrorBoundary>
+{/if}
 <Toaster />
