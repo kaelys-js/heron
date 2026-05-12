@@ -43,18 +43,44 @@
     <!-- Mobile / iOS -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="career-ops" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="format-detection" content="telephone=no" />
 
+    <!-- Windows Start tile (pinned PWA from Edge / IE) -->
+    <meta name="msapplication-TileColor" content="#5b6cff" />
+    <meta name="msapplication-TileImage" content="%sveltekit.assets%/icons/career-ops-256.png" />
+    <meta name="msapplication-config" content="none" />
+
     <!-- Icons + manifest -->
     <link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" type="image/png" sizes="192x192" href="%sveltekit.assets%/icons/career-ops-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="%sveltekit.assets%/icons/career-ops-512.png" />
     <link rel="apple-touch-icon" href="%sveltekit.assets%/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="%sveltekit.assets%/icons/career-ops-256.png" />
     <link rel="mask-icon" href="%sveltekit.assets%/favicon.svg" color="#10b981" />
     <link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
 
-    <!-- Open Graph (mostly inert since noindex, but kept for link previews if shared internally) -->
+    <!-- Open Graph (link previews when shared internally or via Tailscale link) -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="career-ops" />
+    <meta property="og:title" content="career-ops" />
     <meta property="og:description" content="AI-powered job search pipeline" />
+    <meta property="og:image" content="%sveltekit.assets%/icons/career-ops-512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content="career-ops" />
+
+    <!-- Twitter / X card (same image, summary card) -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="career-ops" />
+    <meta name="twitter:description" content="AI-powered job search pipeline" />
+    <meta name="twitter:image" content="%sveltekit.assets%/icons/career-ops-512.png" />
+
+    <!-- Author + copyright -->
+    <meta name="author" content="santifer" />
+    <meta name="copyright" content="Copyright © 2026 santifer" />
 
     %sveltekit.head%
   </head>

@@ -26,8 +26,10 @@
       "releaseType": "release"
     }
   ],
+  "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
   "mac": {
     "category": "public.app-category.productivity",
+    "minimumSystemVersion": "12.0",
     "target": [
       {
         "target": "dmg",
@@ -44,6 +46,7 @@
     "entitlements": "build/entitlements.mac.plist",
     "entitlementsInherit": "build/entitlements.mac.plist",
     "notarize": false,
+    "darkModeSupport": true,
     "extendInfo": {
       "CFBundleURLTypes": [
         {
@@ -51,48 +54,111 @@
           "CFBundleURLSchemes": ["careerops"]
         }
       ],
+      "LSApplicationCategoryType": "public.app-category.productivity",
+      "LSMinimumSystemVersion": "12.0",
       "NSLocalNetworkUsageDescription": "career-ops uses local network discovery to find your desktop app on the same wifi.",
-      "NSBonjourServices": ["_career-ops._tcp"]
+      "NSBonjourServices": ["_career-ops._tcp"],
+      "NSMicrophoneUsageDescription": "career-ops uses your microphone for mock interview voice recording.",
+      "NSCalendarsUsageDescription": "career-ops adds your interviews to Calendar when reminders are enabled.",
+      "NSHumanReadableCopyright": "Copyright © 2026 santifer",
+      "NSSupportsAutomaticTermination": true,
+      "NSSupportsSuddenTermination": true,
+      "NSAppleScriptEnabled": false,
+      "NSHighResolutionCapable": true
     }
   },
   "dmg": {
     "writeUpdateInfo": true,
-    "sign": false
+    "sign": false,
+    "title": "${productName} ${version}",
+    "contents": [
+      {
+        "x": 130,
+        "y": 220
+      },
+      {
+        "x": 410,
+        "y": 220,
+        "type": "link",
+        "path": "/Applications"
+      }
+    ]
   },
   "win": {
     "target": [
       {
         "target": "nsis",
-        "arch": ["x64"]
+        "arch": ["x64", "arm64"]
       }
     ],
     "icon": "build/icon.ico",
-    "verifyUpdateCodeSignature": false
+    "publisherName": "santifer",
+    "verifyUpdateCodeSignature": false,
+    "requestedExecutionLevel": "asInvoker"
   },
   "nsis": {
-    "allowElevation": true,
+    "allowElevation": false,
     "oneClick": false,
+    "perMachine": false,
     "allowToChangeInstallationDirectory": true,
-    "createDesktopShortcut": true
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "menuCategory": "Productivity",
+    "shortcutName": "career-ops",
+    "differentialPackage": true,
+    "deleteAppDataOnUninstall": false,
+    "displayLanguageSelector": false
+  },
+  "appx": {
+    "applicationId": "careerops",
+    "displayName": "career-ops",
+    "publisher": "CN=santifer",
+    "publisherDisplayName": "santifer",
+    "identityName": "santifer.careerops",
+    "backgroundColor": "#0a0a0b"
   },
   "linux": {
     "target": [
       {
         "target": "AppImage",
-        "arch": ["x64"]
+        "arch": ["x64", "arm64"]
       },
       {
         "target": "deb",
-        "arch": ["x64"]
+        "arch": ["x64", "arm64"]
       }
     ],
     "icon": "build/icon.png",
-    "category": "Office"
+    "category": "Office;Network;Development",
+    "synopsis": "AI-powered job search pipeline",
+    "description": "Track applications, generate tailored CVs, automate scans across 11 ATS portals.",
+    "maintainer": "santifer <hi@santifer.io>",
+    "vendor": "santifer",
+    "executableName": "career-ops",
+    "desktop": {
+      "entry": {
+        "Name": "career-ops",
+        "GenericName": "Job Search Pipeline",
+        "Comment": "AI-powered job search pipeline",
+        "Keywords": "career;jobs;ai;automation;applications;",
+        "MimeType": "x-scheme-handler/careerops;",
+        "StartupNotify": "true",
+        "StartupWMClass": "career-ops"
+      }
+    }
+  },
+  "deb": {
+    "depends": ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6", "xdg-utils"],
+    "priority": "optional"
+  },
+  "appImage": {
+    "license": "MIT"
   },
   "protocols": [
     {
       "name": "careerops",
-      "schemes": ["careerops"]
+      "schemes": ["careerops"],
+      "role": "Editor"
     }
   ]
 }
