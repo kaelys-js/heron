@@ -4,8 +4,8 @@
   "name": "career-ops",
   "displayName": "career-ops",
   "shortName": "career-ops",
-  "tagline": "AI-powered job search pipeline",
-  "description": "Track applications, generate tailored CVs, automate scans across 11 ATS portals.",
+  "tagline": "AI-powered, multi-user job search platform — SvelteKit + Capacitor + Better Auth + Drizzle + Anthropic + Gemini.",
+  "description": "Multi-user job search platform: scoring, CV generation, autonomous apply across 11 ATS portals, native apps on iOS/macOS/Windows/Linux/Android/Watch, passkey-only auth.",
   "keywords": ["ai", "job-search", "claude-code", "career", "automation"],
 
   "identifiers": {

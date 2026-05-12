@@ -1,53 +1,115 @@
-name: Bug Report
-description: Report a bug in career-ops
-labels: ["bug"]
+name: Bug report
+description: A bug in career-ops (CLI, dashboard, native app, scripts).
+title: "bug: "
+labels: ["bug", "needs-triage"]
 body:
-  - type: checkboxes
-    id: coc
+  - type: markdown
     attributes:
-      label: Code of Conduct
-      options:
-        - label: I agree to follow the [Code of Conduct](https://github.com/santifer/career-ops/blob/main/CODE_OF_CONDUCT.md)
-          required: true
+      value: |
+        Thanks for filing a bug. Skip ahead if you already know the section.
+
+        - **Security issue?** → Don't open a public issue. Use [GitHub Private Vulnerability Reporting](../../security/advisories/new) or email the address in SECURITY.md.
+        - **Setup / how-to question?** → Use [Discussions](../../discussions) or [Discord](https://discord.gg/8pRpHETxa4) instead — issues are for confirmed bugs.
+
   - type: checkboxes
-    id: search
+    id: preflight
     attributes:
-      label: Existing issues
+      label: Preflight
       options:
-        - label: I searched existing issues and this hasn't been reported yet
+        - label: I searched existing issues and this hasn't been reported.
           required: true
+        - label: I read the [Code of Conduct](../CODE_OF_CONDUCT.md).
+          required: true
+        - label: I'm on the latest career-ops version (`pnpm update:check`).
+          required: true
+
   - type: textarea
-    id: description
+    id: what
     attributes:
       label: What happened?
-      description: A clear description of the bug
+      description: One paragraph describing the bug.
     validations:
       required: true
+
   - type: textarea
     id: steps
     attributes:
       label: Steps to reproduce
-      description: How can we reproduce this?
+      description: Minimal, numbered, copy-pasteable.
+      placeholder: |
+        1. `pnpm dev`
+        2. Click "Apply now" on any LinkedIn job
+        3. ...
     validations:
       required: true
+
   - type: textarea
     id: expected
     attributes:
-      label: Expected behavior
-      description: What should have happened?
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Include error messages, stack traces, screenshots.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Where does it happen?
+      multiple: true
+      options:
+        - Web (dashboard)
+        - macOS desktop (Electron)
+        - Windows desktop (Electron)
+        - Linux desktop (Electron)
+        - iOS (Capacitor)
+        - Android (Capacitor)
+        - Apple Watch
+        - CLI scripts (.mjs)
+        - Other / not sure
+    validations:
+      required: true
+
   - type: input
     id: cli
     attributes:
-      label: CLI tool
-      placeholder: "e.g., Claude Code, OpenCode, Codex"
+      label: AI CLI tool
+      placeholder: "Claude Code 1.5 / OpenCode / Codex / Gemini-CLI / …"
+    validations:
+      required: true
+
   - type: input
     id: os
     attributes:
-      label: OS and Node.js version
-      placeholder: "e.g., macOS 15 / Node 20.11"
+      label: OS + version
+      placeholder: "macOS 15.2 / Windows 11 24H2 / Ubuntu 24.04 / iOS 18.2 …"
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: Node + pnpm
+      placeholder: "node v26.1.0 / pnpm 11.1.0"
+    validations:
+      required: true
+
   - type: textarea
     id: doctor
     attributes:
-      label: Output of npm run doctor
-      description: Paste the output here (helps us diagnose setup issues)
+      label: Output of `pnpm doctor`
+      description: Paste verbatim — helps diagnose setup drift.
+      render: shell
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Activity feed, console output, server logs. Redact personal data.
       render: shell

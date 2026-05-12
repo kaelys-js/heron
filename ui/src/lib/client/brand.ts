@@ -9,7 +9,7 @@
 export const BRAND = {
   name: "career-ops",
   displayName: "career-ops",
-  tagline: "AI-powered job search pipeline",
+  tagline: "AI-powered, multi-user job search platform — SvelteKit + Capacitor + Better Auth + Drizzle + Anthropic + Gemini.",
   bundleId: "com.resistjs.careerops",
   appGroup: "group.com.resistjs.careerops",
   urlScheme: "careerops",

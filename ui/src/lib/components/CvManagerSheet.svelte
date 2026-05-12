@@ -37,7 +37,7 @@
     Sparkles,
     RotateCcw,
   } from '@lucide/svelte';
-  import { marked } from 'marked';
+  import { renderMarkdown } from '$lib/client/safe-markdown';
   import { api, ApiError } from '$lib/api';
   import { toast } from 'svelte-sonner';
   import { invalidateAll } from '$app/navigation';
@@ -255,7 +255,7 @@
   }
 
   // ---- rendering helpers ----
-  let bodyHtml = $derived(body ? (marked.parse(body) as string) : '');
+  let bodyHtml = $derived(renderMarkdown(body));
 
   let copyState = $state<'idle' | 'copied'>('idle');
   async function copyBody() {

@@ -20,7 +20,7 @@
     ExternalLink,
     ChevronRight,
   } from '@lucide/svelte';
-  import { marked } from 'marked';
+  import { renderMarkdown } from '$lib/client/safe-markdown';
   import { toast } from 'svelte-sonner';
   import { api, ApiError } from '$lib/api';
   import { cn, withMinDuration } from '$lib/utils';
@@ -99,7 +99,7 @@
   // ---- detail sheet state ----
   let openSkill = $state<Skill | null>(null);
   let bodyText = $state<string | null>(null);
-  let bodyHtml = $derived(bodyText ? marked.parse(bodyText) : '');
+  let bodyHtml = $derived(renderMarkdown(bodyText));
   let bodyLoading = $state(false);
 
   async function openSheet(s: Skill) {

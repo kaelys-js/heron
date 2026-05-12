@@ -1,0 +1,24 @@
+{
+  "//": "Workspace recommendations. VS Code prompts to install on first open.",
+  "recommendations": [
+    "svelte.svelte-vscode",
+    "biomejs.biome",
+    "esbenp.prettier-vscode",
+    "evidence.sqltools-driver-sqlite",
+    "ms-vscode.vscode-typescript-next",
+    "github.vscode-pull-request-github",
+    "github.vscode-github-actions",
+    "tamasfe.even-better-toml",
+    "redhat.vscode-yaml",
+    "yzhang.markdown-all-in-one",
+    "editorconfig.editorconfig",
+    "dbaeumer.vscode-eslint",
+    "streetsidesoftware.code-spell-checker",
+    "wayou.vscode-todo-highlight",
+    "eamodio.gitlens",
+    "vivaxy.vscode-conventional-commits",
+    "ms-azuretools.vscode-docker",
+    "redhat.vscode-xml"
+  ],
+  "unwantedRecommendations": ["vscode.git", "dbaeumer.vscode-eslint"]
+}

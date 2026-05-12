@@ -1,11 +1,43 @@
 {
   "name": "career-ops",
   "version": "1.6.0",
-  "description": "AI-powered job search pipeline",
+  "description": "AI-powered, multi-user job search platform — SvelteKit + Capacitor + Better Auth + Drizzle + Anthropic + Gemini.",
+  "type": "module",
+  "private": true,
   "packageManager": "pnpm@11.1.0",
+  "engines": {
+    "node": ">=26.0.0",
+    "pnpm": ">=11.0.0",
+    "npm": "please-use-pnpm",
+    "yarn": "please-use-pnpm",
+    "bun": "please-use-pnpm"
+  },
+  "author": "santifer <hi@santifer.io> (https://santifer.io)",
+  "license": "MIT",
+  "homepage": "https://santifer.io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/santifer/career-ops"
+  },
+  "bugs": {
+    "url": "https://github.com/santifer/career-ops/issues"
+  },
+  "funding": "https://github.com/sponsors/santifer",
+  "keywords": [
+    "ai",
+    "job-search",
+    "claude-code",
+    "career",
+    "automation"
+  ],
   "scripts": {
     "doctor": "node doctor.mjs",
     "verify": "node verify-pipeline.mjs",
+    "verify:capacitor": "node verify-capacitor.mjs",
+    "verify:multi-user": "node verify-multi-user.mjs",
+    "verify:all": "node verify-pipeline.mjs && node verify-capacitor.mjs && node verify-multi-user.mjs",
+    "test": "node test-all.mjs",
+    "test:quick": "node test-all.mjs --quick",
     "normalize": "node normalize-statuses.mjs",
     "dedup": "node dedup-tracker.mjs",
     "merge": "node merge-tracker.mjs",
@@ -27,39 +59,24 @@
     "build:static": "turbo build:static",
     "build:desktop": "node scripts/native/build-desktop.mjs",
     "build:ios": "node scripts/native/build-ios-testflight.mjs",
+    "check": "turbo check",
+    "typecheck": "turbo check",
     "icons": "node scripts/native/icons.mjs",
     "release": "node scripts/native/release.mjs",
     "brand:apply": "node scripts/native/apply-brand.mjs",
     "format": "biome format --write . && pnpm -C ui exec prettier --write \"**/*.svelte\" --ignore-path ../.prettierignore",
     "format:check": "biome format . && pnpm -C ui exec prettier --check \"**/*.svelte\" --ignore-path ../.prettierignore",
     "format:svelte": "pnpm -C ui exec prettier --write \"**/*.svelte\" --ignore-path ../.prettierignore",
-    "check": "turbo check",
-    "verify:capacitor": "node verify-capacitor.mjs",
+    "lint": "pnpm format:check",
+    "lint:fix": "pnpm format",
+    "audit": "pnpm dlx pnpm@latest audit",
+    "outdated": "pnpm outdated -r",
+    "clean": "node scripts/clean.mjs",
+    "clean:cache": "pnpm dlx rimraf .turbo ui/.svelte-kit ui/build ui/electron/build ui/electron/dist",
     "reset:data": "node scripts/reset-data.mjs",
     "prepare": "lefthook install || true",
     "preinstall": "node scripts/ensure-pnpm.mjs"
   },
-  "engines": {
-    "node": ">=22.0.0",
-    "pnpm": ">=11.0.0",
-    "npm": "please-use-pnpm",
-    "yarn": "please-use-pnpm",
-    "bun": "please-use-pnpm"
-  },
-  "keywords": [
-    "ai",
-    "job-search",
-    "claude-code",
-    "career",
-    "automation"
-  ],
-  "author": "santifer <hi@santifer.io> (https://santifer.io)",
-  "homepage": "https://santifer.io",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/santifer/career-ops"
-  },
-  "license": "MIT",
   "dependencies": {
     "@google/generative-ai": "0.24.1",
     "dotenv": "16.6.1",

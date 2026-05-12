@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { marked } from 'marked';
+  import { renderMarkdown } from '$lib/client/safe-markdown';
   import Topbar from '$lib/components/Topbar.svelte';
   import PropertiesPane from '$lib/components/PropertiesPane.svelte';
   import ReportSummary from '$lib/components/ReportSummary.svelte';
@@ -41,7 +41,7 @@
     data,
   }: { data: { job: Job; report: string; summary: ReportSummaryT | null; profileId: string } } =
     $props();
-  let html = $derived(data.report ? marked.parse(data.report) : '');
+  let html = $derived(renderMarkdown(data.report));
   // Every per-job endpoint takes ?profile so it reads from the right
   // profile's interview-prep / output / reports dirs and swaps symlinks
   // before spawning Claude. Append this query to every /api/job/... call.
@@ -51,7 +51,7 @@
   let prepLoading = $state(false);
   let prepContent = $state('');
   let prepError = $state<string | null>(null);
-  let prepHtml = $derived(prepContent ? marked.parse(prepContent) : '');
+  let prepHtml = $derived(renderMarkdown(prepContent));
 
   let chatHistory = $state<{ role: 'user' | 'assistant'; content: string }[]>([]);
   let chatInput = $state('');
@@ -61,7 +61,7 @@
   let offerInput = $state('');
   let negotiationContent = $state('');
   let negotiationError = $state<string | null>(null);
-  let negotiationHtml = $derived(negotiationContent ? marked.parse(negotiationContent) : '');
+  let negotiationHtml = $derived(renderMarkdown(negotiationContent));
   let negotiationLoading = $state(false);
 
   let prepLoaded = $state(false);
@@ -275,7 +275,7 @@
   });
 
   let outreachContent = $derived(outreachByPersona[outreachPersona]);
-  let outreachHtml = $derived(outreachContent ? marked.parse(outreachContent) : '');
+  let outreachHtml = $derived(renderMarkdown(outreachContent));
 
   // ---- Cover letter tab state ----
   // One letter per job, persisted next to the tailored CV PDF in output/.
@@ -349,7 +349,7 @@
     }
   });
 
-  let coverHtml = $derived(coverContent ? marked.parse(coverContent) : '');
+  let coverHtml = $derived(renderMarkdown(coverContent));
 
   let linkedInSearchUrl = $derived(
     'https://www.linkedin.com/search/results/people/?keywords=' +

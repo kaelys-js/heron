@@ -27,19 +27,63 @@ import { AGENT_CLI } from '$lib/config/cli';
 type Question = { label: string; type?: string };
 type Answer = { label: string; value: string };
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Max-Age': '86400',
-};
+/**
+ * CORS for the bookmarklet — restricted to known ATS origins.
+ *
+ * Previously this endpoint used `Access-Control-Allow-Origin: *` which
+ * meant ANY website you visited could fire arbitrary form-answer
+ * generations against your local CLI. Now we echo the request Origin
+ * back only if it matches a known ATS host pattern (the bookmarklet
+ * only runs on these in practice).
+ *
+ * Wildcard fallback is removed — unknown origins receive no CORS
+ * headers, which the browser interprets as "cross-origin denied".
+ */
+const ATS_ORIGIN_PATTERNS: RegExp[] = [
+  /^https:\/\/[a-z0-9-]+\.greenhouse\.io$/i,
+  /^https:\/\/boards\.greenhouse\.io$/i,
+  /^https:\/\/job-boards\.greenhouse\.io$/i,
+  /^https:\/\/[a-z0-9-]+\.ashbyhq\.com$/i,
+  /^https:\/\/jobs\.ashbyhq\.com$/i,
+  /^https:\/\/jobs\.lever\.co$/i,
+  /^https:\/\/[a-z0-9-]+\.lever\.co$/i,
+  /^https:\/\/apply\.workable\.com$/i,
+  /^https:\/\/[a-z0-9-]+\.workable\.com$/i,
+  /^https:\/\/[a-z0-9-]+\.personio\.[a-z]+$/i,
+  /^https:\/\/(www\.)?smartrecruiters\.com$/i,
+  /^https:\/\/jobs\.smartrecruiters\.com$/i,
+  /^https:\/\/[a-z0-9-]+\.recruitee\.com$/i,
+  /^https:\/\/[a-z0-9-]+\.teamtailor\.com$/i,
+  /^https:\/\/[a-z0-9-]+\.myworkdayjobs\.com$/i,
+  /^https:\/\/(www\.)?indeed\.com$/i,
+  /^https:\/\/[a-z]{2}\.indeed\.com$/i,
+  /^https:\/\/(www\.)?linkedin\.com$/i,
+];
 
-export function OPTIONS(): Response {
-  return new Response(null, { status: 204, headers: CORS_HEADERS });
+function allowedOrigin(origin: string | null): string | null {
+  if (!origin) return null;
+  return ATS_ORIGIN_PATTERNS.some((re) => re.test(origin)) ? origin : null;
 }
 
-function withCors(res: Response): Response {
-  for (const [k, v] of Object.entries(CORS_HEADERS)) {
+function corsHeaders(origin: string | null): Record<string, string> {
+  const allowed = allowedOrigin(origin);
+  if (!allowed) return {};
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    Vary: 'Origin',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Max-Age': '86400',
+  };
+}
+
+export function OPTIONS({ request }: { request: Request }): Response {
+  const origin = request.headers.get('origin');
+  return new Response(null, { status: 204, headers: corsHeaders(origin) });
+}
+
+function withCors(res: Response, origin: string | null): Response {
+  for (const [k, v] of Object.entries(corsHeaders(origin))) {
     res.headers.set(k, v);
   }
   return res;
@@ -117,6 +161,15 @@ function extractAnswers(stdout: string, questions: Question[]): Answer[] {
 }
 
 export const POST = wrap('answer-form', async ({ request }: { request: Request }) => {
+  const origin = request.headers.get('origin');
+
+  // Reject requests from origins that aren't a known ATS. Browsers
+  // enforce this via CORS, but enforcing it here too catches
+  // server-to-server bypass attempts.
+  if (origin && !allowedOrigin(origin)) {
+    return errJson('origin not allowed', { status: 403 });
+  }
+
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== 'object') badRequest('expected JSON body');
 
@@ -128,6 +181,23 @@ export const POST = wrap('answer-form', async ({ request }: { request: Request }
 
   if (!url) badRequest('missing url');
   if (questions.length === 0) badRequest('missing questions');
+
+  // Defence-in-depth: cap questions per request so a hostile bookmarklet
+  // can't spawn a runaway CLI invocation with 10k bogus questions.
+  if (questions.length > 100) badRequest('too many questions (max 100)');
+
+  // Validate URL is to an actual ATS — prevents using this endpoint as
+  // a generic Anthropic CLI proxy.
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(url);
+  } catch {
+    badRequest('invalid url');
+    return; // unreachable; appeases TS narrow
+  }
+  if (parsedUrl.protocol !== 'https:' && parsedUrl.protocol !== 'http:') {
+    badRequest('url must be http(s)');
+  }
 
   const job = loadAllJobs().find((j) => j.url === url);
   if (!job) {
@@ -153,9 +223,12 @@ export const POST = wrap('answer-form', async ({ request }: { request: Request }
       category: 'application',
       message: answers.length + ' / ' + questions.length + ' fields',
     });
-    return withCors(json({ ok: true, answers, jobId: job?.id ?? null }));
+    return withCors(json({ ok: true, answers, jobId: job?.id ?? null }), origin);
   } catch (err) {
     reportServerError('answer-form', 'Answer generation failed', err, { category: 'application' });
-    return withCors(errJson(err instanceof Error ? err.message : String(err), { status: 500 }));
+    return withCors(
+      errJson(err instanceof Error ? err.message : String(err), { status: 500 }),
+      origin,
+    );
   }
 });
