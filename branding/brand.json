@@ -2,11 +2,32 @@
   "$comment": "Single source of truth for ALL branding. Edit this, run `pnpm brand:apply`, and every consumer (Capacitor configs, electron-builder, Info.plist, entitlements, web manifest, Swift constants, root package.json, README badges) is regenerated. Adding a new consumer? Add a function to scripts/native/apply-brand.mjs.",
 
   "name": "career-ops",
-  "displayName": "career-ops",
-  "shortName": "career-ops",
-  "tagline": "AI-powered, multi-user job search platform — SvelteKit + Capacitor + Better Auth + Drizzle + Anthropic + Gemini.",
-  "description": "Multi-user job search platform: scoring, CV generation, autonomous apply across 11 ATS portals, native apps on iOS/macOS/Windows/Linux/Android/Watch, passkey-only auth.",
-  "keywords": ["ai", "job-search", "claude-code", "career", "automation"],
+  "displayName": "Career Ops",
+  "shortName": "Career",
+  "tagline": "Run your job search like a product launch.",
+  "description": "Career Ops is an AI-powered job search platform: multi-user dashboard, autonomous apply across 11 ATS portals, tailored CVs and cover letters per role, interview prep, follow-up cadence, and offline-first native apps on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.",
+  "keywords": [
+    "ai-agent",
+    "anthropic",
+    "automation",
+    "better-auth",
+    "capacitor",
+    "career",
+    "claude",
+    "claude-code",
+    "drizzle-orm",
+    "electron",
+    "interview-prep",
+    "ios",
+    "job-search",
+    "open-source",
+    "passkey",
+    "resume",
+    "svelte",
+    "sveltekit",
+    "typescript",
+    "watchos"
+  ],
 
   "identifiers": {
     "bundleId": "com.resistjs.careerops",
@@ -52,22 +73,30 @@
   },
 
   "repo": {
-    "owner": "santifer",
+    "owner": "kaelys-js",
     "name": "career-ops",
-    "url": "https://github.com/santifer/career-ops",
-    "issues": "https://github.com/santifer/career-ops/issues",
-    "docs": "https://github.com/santifer/career-ops#readme"
+    "url": "https://github.com/kaelys-js/career-ops",
+    "issues": "https://github.com/kaelys-js/career-ops/issues",
+    "docs": "https://github.com/kaelys-js/career-ops#readme",
+    "upstream": "https://github.com/santifer/career-ops"
   },
 
   "permissions": {
-    "localNetworkUsage": "career-ops uses local network discovery to find your desktop app on the same wifi.",
-    "faceIdUsage": "career-ops uses Face ID to protect sensitive screens like the negotiation playbook."
+    "localNetworkUsage": "Career Ops uses local network discovery to find your desktop app on the same Wi-Fi network so your phone, watch, and laptop stay in sync without a cloud account.",
+    "faceIdUsage": "Career Ops uses Face ID to unlock sensitive screens — interview notes, negotiation playbooks, and offer comparisons — so a glance over your shoulder never leaks personal data.",
+    "cameraUsage": "Career Ops uses the camera so you can scan business cards from interviews directly into your contacts file.",
+    "microphoneUsage": "Career Ops uses the microphone for the mock-interview rehearsal mode — audio is processed on-device and never uploaded.",
+    "photoLibraryUsage": "Career Ops needs photo-library access to attach screenshots of job postings or reference letters to a job entry.",
+    "calendarsUsage": "Career Ops reads your calendar to surface upcoming interviews and to schedule follow-up reminders.",
+    "remindersUsage": "Career Ops creates reminders for follow-ups, application deadlines, and interview prep blocks.",
+    "contactsUsage": "Career Ops reads contacts so you can send outreach to recruiters and hiring managers you already know.",
+    "userTrackingUsage": "Career Ops never tracks you. This prompt only appears because Apple requires it for any app that can render web content — we always respond with denied."
   },
 
-  "copyright": "Copyright © 2026 santifer",
+  "copyright": "© 2026 santifer. Licensed under the MIT License.",
   "license": "MIT",
 
-  "homepageUrl": "https://santifer.io",
+  "homepageUrl": "https://career-ops.org",
 
   "ai": {
     "supportedCLIs": ["claude", "gemini", "codex", "copilot", "opencode", "qwen"],

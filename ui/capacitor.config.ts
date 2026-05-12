@@ -25,7 +25,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
  */
 const config = {
   appId: 'com.resistjs.careerops',
-  appName: 'career-ops',
+  appName: 'Career Ops',
   webDir: 'build/static',
   /** Append a marker so the dashboard server can tell native vs web
    *  hits apart in logs. {VERSION} is replaced at build time by

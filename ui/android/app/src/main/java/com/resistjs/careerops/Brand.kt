@@ -5,7 +5,7 @@ package com.resistjs.careerops
 
 object Brand {
     const val name = "career-ops"
-    const val displayName = "career-ops"
+    const val displayName = "Career Ops"
     const val bundleId = "com.resistjs.careerops"
     const val urlScheme = "careerops"
     const val serviceType = "_career-ops._tcp"

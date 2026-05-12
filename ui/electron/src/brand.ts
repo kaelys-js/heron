@@ -4,11 +4,11 @@
 /** Brand constants for the Electron main process. */
 export const BRAND = {
   name: "career-ops",
-  displayName: "career-ops",
+  displayName: "Career Ops",
   bundleId: "com.resistjs.careerops",
   urlScheme: "careerops",
   serviceType: "_career-ops._tcp",
   mdnsType: "career-ops",
-  repoUrl: "https://github.com/santifer/career-ops",
-  issuesUrl: "https://github.com/santifer/career-ops/issues",
+  repoUrl: "https://github.com/kaelys-js/career-ops",
+  issuesUrl: "https://github.com/kaelys-js/career-ops/issues",
 } as const;

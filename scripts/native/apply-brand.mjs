@@ -104,10 +104,14 @@ function applyRootPackageJson(brand) {
   const path = join(ROOT, 'package.json');
   const changed = patchJson(path, (p) => {
     p.name = brand.name;
-    p.description = brand.tagline;
+    // npm/pnpm convention: description is the long-form technical summary
+    // shown on the package detail page. The shorter `tagline` is reserved
+    // for marketing copy (Open Graph, Twitter cards, App Store subtitle).
+    p.description = brand.description;
     p.author = `${brand.author.name} <${brand.author.email}> (${brand.author.url})`;
     p.homepage = brand.homepageUrl ?? brand.repo.url;
     p.repository = { type: 'git', url: brand.repo.url };
+    p.bugs = { url: brand.repo.issues };
     p.license = brand.license;
     p.keywords = brand.keywords;
   });
@@ -122,9 +126,15 @@ function applyElectronPackageJson(brand) {
   }
   const changed = patchJson(path, (p) => {
     p.name = brand.name;
-    p.description = `${brand.displayName} desktop — ${brand.tagline}`;
-    p.author = { name: brand.author.name, email: brand.author.email };
-    p.repository = { type: 'git', url: brand.repo.url };
+    p.description = `${brand.displayName} desktop — Electron shell embedding the SvelteKit dashboard.`;
+    p.author = {
+      name: brand.author.name,
+      email: brand.author.email,
+      url: brand.author.url,
+    };
+    p.homepage = brand.homepageUrl ?? brand.repo.url;
+    p.repository = { type: 'git', url: brand.repo.url, directory: 'ui/electron' };
+    p.bugs = { url: brand.repo.issues };
     p.license = brand.license;
   });
   changed ? log.ok(`electron/package.json`) : log.skip(`electron/package.json — already current`);
@@ -376,6 +386,69 @@ function applyIosInfoPlist(brand) {
       /(<key>NSFaceIDUsageDescription<\/key>\s*\n\s*<string>)[^<]*(<\/string>)/,
       `$1${brand.permissions.faceIdUsage}$2`,
     ],
+    // NSCameraUsageDescription
+    ...(brand.permissions.cameraUsage
+      ? [
+          [
+            /(<key>NSCameraUsageDescription<\/key>\s*\n\s*<string>)[^<]*(<\/string>)/,
+            `$1${brand.permissions.cameraUsage}$2`,
+          ],
+        ]
+      : []),
+    // NSMicrophoneUsageDescription
+    ...(brand.permissions.microphoneUsage
+      ? [
+          [
+            /(<key>NSMicrophoneUsageDescription<\/key>\s*\n\s*<string>)[^<]*(<\/string>)/,
+            `$1${brand.permissions.microphoneUsage}$2`,
+          ],
+        ]
+      : []),
+    // NSPhotoLibraryUsageDescription
+    ...(brand.permissions.photoLibraryUsage
+      ? [
+          [
+            /(<key>NSPhotoLibraryUsageDescription<\/key>\s*\n\s*<string>)[^<]*(<\/string>)/,
+            `$1${brand.permissions.photoLibraryUsage}$2`,
+          ],
+        ]
+      : []),
+    // NSCalendarsUsageDescription
+    ...(brand.permissions.calendarsUsage
+      ? [
+          [
+            /(<key>NSCalendarsUsageDescription<\/key>\s*\n\s*<string>)[^<]*(<\/string>)/,
+            `$1${brand.permissions.calendarsUsage}$2`,
+          ],
+        ]
+      : []),
+    // NSRemindersUsageDescription
+    ...(brand.permissions.remindersUsage
+      ? [
+          [
+            /(<key>NSRemindersUsageDescription<\/key>\s*\n\s*<string>)[^<]*(<\/string>)/,
+            `$1${brand.permissions.remindersUsage}$2`,
+          ],
+        ]
+      : []),
+    // NSContactsUsageDescription
+    ...(brand.permissions.contactsUsage
+      ? [
+          [
+            /(<key>NSContactsUsageDescription<\/key>\s*\n\s*<string>)[^<]*(<\/string>)/,
+            `$1${brand.permissions.contactsUsage}$2`,
+          ],
+        ]
+      : []),
+    // NSUserTrackingUsageDescription
+    ...(brand.permissions.userTrackingUsage
+      ? [
+          [
+            /(<key>NSUserTrackingUsageDescription<\/key>\s*\n\s*<string>)[^<]*(<\/string>)/,
+            `$1${brand.permissions.userTrackingUsage}$2`,
+          ],
+        ]
+      : []),
     // NSBonjourServices first item
     [
       /(<key>NSBonjourServices<\/key>\s*\n\s*<array>\s*\n\s*<string>)[^<]*(<\/string>)/,

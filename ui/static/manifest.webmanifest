@@ -1,7 +1,7 @@
 {
-  "name": "career-ops",
-  "short_name": "career-ops",
-  "description": "AI-powered, multi-user job search platform — SvelteKit + Capacitor + Better Auth + Drizzle + Anthropic + Gemini.",
+  "name": "Career Ops",
+  "short_name": "Career",
+  "description": "Run your job search like a product launch.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
