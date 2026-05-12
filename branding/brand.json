@@ -63,6 +63,11 @@
     "lightOnDark": "#e4e4e7"
   },
 
+  "splash": {
+    "backgroundColor": "#0a0a0b",
+    "$comment": "Used by native/icons/generate-icons.mjs to fill the iOS Splash.imageset PNG canvas. Should match capacitor.config.ts → plugins.SplashScreen.backgroundColor so the launch-screen storyboard and the @capacitor/splash-screen overlay look identical."
+  },
+
   "iconSource": "branding/logo.svg",
 
   "author": {

@@ -270,6 +270,139 @@ main_target.build_configurations.each do |config|
   config.build_settings['CODE_SIGN_ENTITLEMENTS'] ||= 'App/App.entitlements'
 end
 
+# ── Apple Watch (CareerOpsWatch) target ─────────────────────────────
+# watchOS 10+ single-target SwiftUI app. The source files live at
+# ../CareerOpsWatch/ (CareerOpsWatchApp.swift, RootView.swift,
+# WatchModel.swift). Without registering this target, dev:apple-watch
+# can't build — and the user has to do the dance of "File → New →
+# Target → watchOS → App" through the Xcode UI, which is fragile and
+# manual. Idempotent: skips if a CareerOpsWatch target already exists.
+WATCH_NAME = 'CareerOpsWatch'
+# Source dir lives at ui/ios/App/CareerOpsWatch/ — same level as the
+# .xcodeproj (cwd), NOT one level up. The legacy EXTENSIONS loop above
+# uses `../#{name}` which resolves to ui/ios/ — those extension dirs
+# don't actually exist on disk, so that branch has been silently
+# skipped. The Watch target ships real source files so we get the path
+# right here.
+WATCH_SOURCE_DIR = File.expand_path(WATCH_NAME, Dir.pwd)
+WATCH_BUNDLE_ID = "#{bundle_root}.watchkitapp"
+WATCH_DEPLOY = '10.0'
+
+if project.targets.any? { |t| t.name == WATCH_NAME }
+  puts "✓ target #{WATCH_NAME} already exists — skipping"
+elsif !Dir.exist?(WATCH_SOURCE_DIR)
+  puts "✗ Watch source dir not found: #{WATCH_SOURCE_DIR} — skipping target creation"
+else
+  puts "▸ adding watchOS target #{WATCH_NAME}"
+
+  # `project.new_target` for watchOS requires platform :watchos. The
+  # xcodeproj gem (1.27+) supports this; older versions fail with
+  # "Unknown platform". `--gem-install xcodeproj plist --user-install`
+  # in the dev-ios wrapper keeps the gem fresh.
+  watch_target = project.new_target(
+    :application,
+    WATCH_NAME,
+    :watchos,
+    WATCH_DEPLOY,
+    project.products_group,
+    :swift
+  )
+
+  watch_target.build_configurations.each do |config|
+    config.build_settings.merge!(
+      'PRODUCT_BUNDLE_IDENTIFIER' => WATCH_BUNDLE_ID,
+      'PRODUCT_NAME' => WATCH_NAME,
+      'WATCHOS_DEPLOYMENT_TARGET' => WATCH_DEPLOY,
+      'SDKROOT' => 'watchos',
+      'SUPPORTED_PLATFORMS' => 'watchsimulator watchos',
+      'TARGETED_DEVICE_FAMILY' => '4',
+      'INFOPLIST_FILE' => "#{WATCH_NAME}/Info.plist",
+      'CODE_SIGN_ENTITLEMENTS' => "#{WATCH_NAME}/#{WATCH_NAME}.entitlements",
+      'CODE_SIGN_STYLE' => 'Automatic',
+      'SWIFT_VERSION' => '5.0',
+      'ENABLE_USER_SCRIPT_SANDBOXING' => 'NO',
+      'SKIP_INSTALL' => 'YES',
+      'GENERATE_INFOPLIST_FILE' => 'NO',
+      'ASSETCATALOG_COMPILER_APPICON_NAME' => 'AppIcon',
+      'CURRENT_PROJECT_VERSION' => '1',
+      'MARKETING_VERSION' => '1.0',
+    )
+    config.build_settings['DEVELOPMENT_TEAM'] = team_id if team_id
+  end
+
+  # Source files (Swift)
+  watch_group = project.main_group.find_subpath(WATCH_NAME, true)
+  watch_group.set_source_tree('<group>')
+  watch_group.path = WATCH_NAME
+  Dir.glob(File.join(WATCH_SOURCE_DIR, '*.swift')).sort.each do |file|
+    rel = File.basename(file)
+    file_ref = watch_group.new_file(rel)
+    watch_target.add_file_references([file_ref])
+    puts "    + #{WATCH_NAME}/#{rel}"
+  end
+
+  # Asset catalog
+  assets_path = File.join(WATCH_SOURCE_DIR, 'Assets.xcassets')
+  if Dir.exist?(assets_path)
+    assets_ref = watch_group.new_file('Assets.xcassets')
+    watch_target.add_resources([assets_ref])
+    puts "    + #{WATCH_NAME}/Assets.xcassets"
+  end
+
+  # Info.plist + entitlements get auto-registered via their build
+  # settings above; we still want them visible in the project navigator
+  # so devs can edit them. Add as file references without adding to
+  # the resources/compile phases.
+  ['Info.plist', "#{WATCH_NAME}.entitlements"].each do |fname|
+    next unless File.exist?(File.join(WATCH_SOURCE_DIR, fname))
+    next if watch_group.files.any? { |f| File.basename(f.path.to_s) == fname }
+    watch_group.new_file(fname)
+  end
+
+  # Embed the watch app inside the iPhone host app target. Without this
+  # the .app bundle ships without the watch app and there's nothing for
+  # the paired watch to discover. The build phase is "Embed Watch
+  # Content" — Xcode's symbolic dst_subfolder for watch is :wrapper +
+  # custom path `$(CONTENTS_FOLDER_PATH)/Watch`.
+  embed_phase = main_target.copy_files_build_phases.find { |p| p.name == 'Embed Watch Content' }
+  unless embed_phase
+    embed_phase = main_target.new_copy_files_build_phase('Embed Watch Content')
+    embed_phase.dst_subfolder_spec = '16' # wrapper
+    embed_phase.dst_path = '$(CONTENTS_FOLDER_PATH)/Watch'
+  end
+  unless embed_phase.files.any? { |bf| bf.file_ref == watch_target.product_reference }
+    bf = embed_phase.add_file_reference(watch_target.product_reference)
+    bf.settings = { 'ATTRIBUTES' => ['RemoveHeadersOnCopy'] }
+  end
+  main_target.add_dependency(watch_target)
+
+  # Shared scheme — without this, `xcodebuild -scheme CareerOpsWatch`
+  # errors "scheme not found" (Xcode only auto-generates user schemes
+  # on first open, which CI / dev:apple-watch can't rely on).
+  schemes_dir = File.join(PROJECT_PATH, 'xcshareddata', 'xcschemes')
+  FileUtils.mkdir_p(schemes_dir)
+  scheme = Xcodeproj::XCScheme.new
+  scheme.add_build_target(watch_target)
+  scheme.set_launch_target(watch_target)
+  scheme.save_as(PROJECT_PATH, WATCH_NAME, true)
+  puts "    + xcshareddata/xcschemes/#{WATCH_NAME}.xcscheme"
+
+  # Add App Group entitlement file if it doesn't exist (lets the watch
+  # read from the same shared container as the iPhone app).
+  watch_entitlements_path = File.join(WATCH_SOURCE_DIR, "#{WATCH_NAME}.entitlements")
+  unless File.exist?(watch_entitlements_path)
+    File.write(
+      watch_entitlements_path,
+      Plist::Emit.dump({
+        'com.apple.security.application-groups' => [app_group],
+      }),
+    )
+    puts "    + #{WATCH_NAME}/#{WATCH_NAME}.entitlements"
+  end
+
+  puts "  ✓ #{WATCH_NAME} added + embedded in App target + shared scheme created"
+end
+
 project.save
-puts "\n✓ All extension targets added. Re-run pod install in this directory."
-puts "  Then open App.xcworkspace in Xcode and verify the targets appear."
+puts "\n✓ Xcode targets up-to-date."
+puts "  Re-run `pnpm dev:ios` / `pnpm dev:apple-watch` to build with new targets."

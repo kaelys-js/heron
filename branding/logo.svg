@@ -2,27 +2,48 @@
   <!--
     career-ops master logo. Single source of truth. Edit here.
     `pnpm brand:apply` propagates this into:
-      - All platform icons (iOS appiconset, electron .icns/.ico, web manifest sizes)
+      - All platform icons (iOS appiconset, Splash.imageset, electron .icns/.ico, web manifest sizes)
       - ui/static/favicon.svg (web favicon)
       - electron tray icon
+
+    Design: an upward-trending growth chart with an arrow tip, on the
+    brand dark gradient. Reads as "career progression / product launch"
+    — matches the tagline ("Run your job search like a product launch")
+    and works at every size from 16×16 to 1024×1024 because every line
+    is at least 2 SVG units thick.
+
     Color palette is also declared in brand.json under `colors:`. Keep
     them in sync (the verifier checks).
   -->
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#18181b"/>
-      <stop offset="100%" stop-color="#0a0a0c"/>
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0a0a0b"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#34d399"/>
-      <stop offset="100%" stop-color="#10b981"/>
+    <linearGradient id="trend" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#5b6cff"/>
+      <stop offset="100%" stop-color="#a5b4fc"/>
     </linearGradient>
   </defs>
+
+  <!-- Rounded square background -->
   <rect width="32" height="32" rx="7" fill="url(#bg)"/>
-  <rect x="6.5" y="11" width="19" height="13.5" rx="2.5" fill="none" stroke="#e4e4e7" stroke-width="1.6"/>
-  <path d="M12 11v-1.5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2V11" fill="none" stroke="#e4e4e7" stroke-width="1.6" stroke-linecap="round"/>
-  <line x1="6.5" y1="17.5" x2="25.5" y2="17.5" stroke="#e4e4e7" stroke-width="1.2" opacity="0.55"/>
-  <rect x="14" y="16.4" width="4" height="2.2" rx="0.5" fill="url(#accent)"/>
-  <circle cx="24" cy="9" r="2.6" fill="url(#accent)"/>
-  <circle cx="24" cy="9" r="1" fill="#0a0a0c"/>
+
+  <!-- Three ascending bars (left to right, getting taller) — career progression -->
+  <rect x="6"  y="20" width="3" height="6"  rx="0.8" fill="#5b6cff" opacity="0.55"/>
+  <rect x="11" y="17" width="3" height="9"  rx="0.8" fill="#5b6cff" opacity="0.75"/>
+  <rect x="16" y="14" width="3" height="12" rx="0.8" fill="url(#trend)"/>
+
+  <!-- Upward arrow trailing from the tallest bar — the "launch" energy -->
+  <path d="M19.2 14 L25 8.2"
+        stroke="url(#trend)"
+        stroke-width="2.4"
+        stroke-linecap="round"
+        fill="none"/>
+  <path d="M21.5 8.2 L25 8.2 L25 11.7"
+        stroke="url(#trend)"
+        stroke-width="2.4"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none"/>
 </svg>
