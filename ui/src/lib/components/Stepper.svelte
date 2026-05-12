@@ -106,7 +106,7 @@
       aria-invalid={invalid}
     />
     {#if suffix}
-      <span class="absolute right-1.5 text-[10px] text-muted-foreground/70 pointer-events-none"
+      <span class="absolute right-1.5 text-[11px] text-muted-foreground/70 pointer-events-none"
         >{suffix}</span
       >
     {/if}

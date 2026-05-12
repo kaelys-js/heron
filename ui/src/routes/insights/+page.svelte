@@ -217,37 +217,37 @@
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div class="rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2.5">
                   <div
-                    class="text-[10px] uppercase tracking-wider text-emerald-300/80 flex items-center gap-1"
+                    class="text-[11px] uppercase tracking-wider text-emerald-300/80 flex items-center gap-1"
                   >
                     <CheckCircle2 class="size-3" /> Positive
                   </div>
                   <div class="text-lg font-semibold tabular-nums text-emerald-200 mt-0.5">
                     {fmtCount(outcomes.positive)}
                   </div>
-                  <div class="text-[10px] text-muted-foreground">Screened · Interview · Offer</div>
+                  <div class="text-[11px] text-muted-foreground">Screened · Interview · Offer</div>
                 </div>
                 <div class="rounded-md border border-red-500/30 bg-red-500/5 px-3 py-2.5">
-                  <div class="text-[10px] uppercase tracking-wider text-red-300/80">Negative</div>
+                  <div class="text-[11px] uppercase tracking-wider text-red-300/80">Negative</div>
                   <div class="text-lg font-semibold tabular-nums text-red-200 mt-0.5">
                     {fmtCount(outcomes.negative)}
                   </div>
-                  <div class="text-[10px] text-muted-foreground">Rejected after review</div>
+                  <div class="text-[11px] text-muted-foreground">Rejected after review</div>
                 </div>
                 <div class="rounded-md border border-zinc-500/30 bg-zinc-500/5 px-3 py-2.5">
-                  <div class="text-[10px] uppercase tracking-wider text-zinc-300/80">
+                  <div class="text-[11px] uppercase tracking-wider text-zinc-300/80">
                     Self-filtered
                   </div>
                   <div class="text-lg font-semibold tabular-nums text-zinc-200 mt-0.5">
                     {fmtCount(outcomes.self_filtered)}
                   </div>
-                  <div class="text-[10px] text-muted-foreground">Marked SKIP — never applied</div>
+                  <div class="text-[11px] text-muted-foreground">Marked SKIP — never applied</div>
                 </div>
                 <div class="rounded-md border border-blue-500/30 bg-blue-500/5 px-3 py-2.5">
-                  <div class="text-[10px] uppercase tracking-wider text-blue-300/80">Pending</div>
+                  <div class="text-[11px] uppercase tracking-wider text-blue-300/80">Pending</div>
                   <div class="text-lg font-semibold tabular-nums text-blue-200 mt-0.5">
                     {fmtCount(outcomes.pending)}
                   </div>
-                  <div class="text-[10px] text-muted-foreground">Applied — no answer yet</div>
+                  <div class="text-[11px] text-muted-foreground">Applied — no answer yet</div>
                 </div>
               </div>
             </Card.Content>
@@ -276,7 +276,7 @@
                     <p class="text-xs font-medium leading-relaxed flex-1">{rec.action}</p>
                     <span
                       class={cn(
-                        'text-[10px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border flex-shrink-0',
+                        'text-[11px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border flex-shrink-0',
                         impactBadge(rec.impact),
                       )}>{rec.impact}</span
                     >
@@ -558,7 +558,7 @@
           {/if}
         </div>
 
-        <p class="text-[10px] text-muted-foreground/60 text-center">
+        <p class="text-[11px] text-muted-foreground/60 text-center">
           Generated {p.metadata?.analysisDate ?? 'just now'} · cached for 10 minutes · click Refresh to
           recompute against the latest tracker.
         </p>

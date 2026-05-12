@@ -207,7 +207,7 @@
         />
         <p class="text-[11px] text-muted-foreground/80">
           A short name. The system derives a kebab-case slug for the filesystem path (e.g. "Software
-          Engineering" → <code class="font-mono text-[10px]">software-engineering</code>).
+          Engineering" → <code class="font-mono text-[11px]">software-engineering</code>).
         </p>
       </div>
 

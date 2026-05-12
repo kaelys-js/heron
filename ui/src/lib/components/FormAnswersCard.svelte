@@ -305,12 +305,12 @@
           {#if saving}<Loader2 class="size-3 animate-spin" />{:else}<Plus class="size-3" />{/if}
           Save answer
         </Button>
-        <span class="text-[10px] text-muted-foreground/70">Or pick a common one:</span>
+        <span class="text-[11px] text-muted-foreground/70">Or pick a common one:</span>
         {#each suggestedQuestions.slice(0, 6) as q}
           <button
             type="button"
             onclick={() => quickFill(q)}
-            class="text-[10px] px-1.5 py-0.5 rounded border border-border/40 text-muted-foreground hover:text-foreground hover:border-border transition-colors"
+            class="text-[11px] px-1.5 py-0.5 rounded border border-border/40 text-muted-foreground hover:text-foreground hover:border-border transition-colors"
             >{q}</button
           >
         {/each}
@@ -356,7 +356,7 @@
                 >
                   {row.answer}
                 </div>
-                <div class="text-[10px] text-muted-foreground/60 flex items-center gap-2">
+                <div class="text-[11px] text-muted-foreground/60 flex items-center gap-2">
                   <span class="font-mono">{row.key.slice(0, 40)}</span>
                   {#if row.useCount > 0}
                     <span>·</span>
@@ -390,7 +390,7 @@
       </div>
     {/if}
 
-    <p class="text-[10px] text-muted-foreground/60 leading-relaxed pt-1 border-t border-border/30">
+    <p class="text-[11px] text-muted-foreground/60 leading-relaxed pt-1 border-t border-border/30">
       Storage: <code class="font-mono">data/profiles/{profileId}/form-answers-cache.jsonl</code>.
       Question labels are normalized (lowercase, no punctuation, stripped of "the/a/an/please") so
       "Why this role?" and "why-this-role" hit the same cache slot.

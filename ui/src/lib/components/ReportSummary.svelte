@@ -179,7 +179,7 @@
       {#if summary.tldr}
         <div class="rounded-md border border-border/40 bg-muted/30 px-4 py-3">
           <div
-            class="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-medium mb-1.5"
+            class="text-[11px] uppercase tracking-wider text-muted-foreground/80 font-medium mb-1.5"
           >
             TL;DR
           </div>
@@ -201,7 +201,7 @@
                       class="flex flex-col gap-0.5 px-3 py-2 rounded-md border border-border/40 bg-muted/20 hover:bg-muted/40 transition-colors min-w-0"
                     >
                       <div
-                        class="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground/70"
+                        class="flex items-center gap-1 text-[11px] uppercase tracking-wider text-muted-foreground/70"
                       >
                         <ChIcon class="size-3" />
                         {chip.label}
@@ -211,7 +211,7 @@
                           <Badge
                             variant="outline"
                             class={cn(
-                              'text-[10px] uppercase font-mono h-4 px-1',
+                              'text-[11px] uppercase font-mono h-4 px-1',
                               BG_TINTS[summary.bgRisk!],
                             )}>{chip.value}</Badge
                           >
@@ -249,12 +249,12 @@
       <!-- ROW 5: Stack tags -->
       {#if summary.stack.length > 0}
         <div class="flex items-center gap-1.5 flex-wrap">
-          <span class="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-medium"
+          <span class="text-[11px] uppercase tracking-wider text-muted-foreground/80 font-medium"
             >Stack hits</span
           >
           {#each summary.stack as tech}
             <span
-              class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border/40"
+              class="text-[11px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border/40"
               >{tech}</span
             >
           {/each}
@@ -277,7 +277,7 @@
           {#if summary.strongMatches.length > 0}
             <div class="space-y-1.5">
               <div
-                class="text-[10px] uppercase tracking-wider text-emerald-400/80 font-medium flex items-center gap-1.5"
+                class="text-[11px] uppercase tracking-wider text-emerald-400/80 font-medium flex items-center gap-1.5"
               >
                 <CheckCircle2 class="size-3" />
                 Why you fit
@@ -295,7 +295,7 @@
           {#if summary.gaps.length > 0}
             <div class="space-y-1.5">
               <div
-                class="text-[10px] uppercase tracking-wider text-amber-400/80 font-medium flex items-center gap-1.5"
+                class="text-[11px] uppercase tracking-wider text-amber-400/80 font-medium flex items-center gap-1.5"
               >
                 <AlertTriangle class="size-3" />
                 Gaps to address

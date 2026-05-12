@@ -205,7 +205,7 @@
               class={cn('inline-flex items-center gap-1 w-20 flex-shrink-0 truncate', wm.tint)}
             >
               <WIcon class="size-3 flex-shrink-0" />
-              <span class="text-[10px] truncate">{wm.label}</span>
+              <span class="text-[11px] truncate">{wm.label}</span>
             </span>
           {/snippet}
         </Tooltip.Trigger>
@@ -235,7 +235,7 @@
             </Tooltip.Content>
           </Tooltip.Root>
         {:else}
-          <span class="text-muted-foreground/40 text-[10px]">—</span>
+          <span class="text-muted-foreground/40 text-[11px]">—</span>
         {/if}
       </span>
 
@@ -247,7 +247,7 @@
               {#snippet child({ props })}
                 <span
                   {...props}
-                  class="inline-flex items-center gap-0.5 text-[10px] text-emerald-400/85 cursor-help truncate"
+                  class="inline-flex items-center gap-0.5 text-[11px] text-emerald-400/85 cursor-help truncate"
                 >
                   <DollarSign class="size-2.5 flex-shrink-0" />
                   <span class="truncate">{job.salary}</span>
@@ -257,7 +257,7 @@
             <Tooltip.Content side="top" class="text-xs max-w-xs">{job.salary}</Tooltip.Content>
           </Tooltip.Root>
         {:else}
-          <span class="text-muted-foreground/40 text-[10px]">—</span>
+          <span class="text-muted-foreground/40 text-[11px]">—</span>
         {/if}
       </span>
 

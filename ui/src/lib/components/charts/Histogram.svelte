@@ -36,7 +36,7 @@
         </div>
       </div>
       <div
-        class="text-[10px] text-muted-foreground tabular-nums w-full text-center overflow-hidden whitespace-nowrap"
+        class="text-[11px] text-muted-foreground tabular-nums w-full text-center overflow-hidden whitespace-nowrap"
       >
         {b.label}
       </div>

@@ -470,7 +470,7 @@
               <Database class="size-3 text-muted-foreground/70" />
               <span class="text-[11px] font-medium">{src.label}</span>
             </div>
-            <p class="text-[10px] text-muted-foreground/80 leading-relaxed mt-0.5 line-clamp-2">
+            <p class="text-[11px] text-muted-foreground/80 leading-relaxed mt-0.5 line-clamp-2">
               {src.description}
             </p>
           </div>

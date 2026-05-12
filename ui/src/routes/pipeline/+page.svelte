@@ -340,7 +340,7 @@
         <!-- Header columns must EXACTLY match JobRowCompact's column widths/gaps to align -->
         <Tooltip.Provider delayDuration={300}>
           <div
-            class="flex items-center gap-3 px-3 h-7 text-[10px] uppercase tracking-wider text-muted-foreground/70 border-b border-border/40 bg-muted/30 border-l-2 border-l-transparent"
+            class="flex items-center gap-3 px-3 h-7 text-[11px] uppercase tracking-wider text-muted-foreground/70 border-b border-border/40 bg-muted/30 border-l-2 border-l-transparent"
           >
             <span class="size-1.5 flex-shrink-0"></span>
             <Tooltip.Root>

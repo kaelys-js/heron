@@ -97,7 +97,7 @@
     </Tooltip.Root>
   </Tooltip.Provider>
   <DropdownMenu.Content side="bottom" align="end" class="w-44">
-    <DropdownMenu.Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+    <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
       >Appearance</DropdownMenu.Label
     >
     {#each OPTIONS as o}
@@ -122,7 +122,7 @@
         />
         <div class="flex-1 min-w-0">
           <div class="text-xs font-medium">{o.label}</div>
-          <div class="text-[10px] text-muted-foreground/70 leading-tight">{o.desc}</div>
+          <div class="text-[11px] text-muted-foreground/70 leading-tight">{o.desc}</div>
         </div>
         <CheckMark {active} class="mt-0.5" />
       </DropdownMenu.Item>

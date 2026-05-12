@@ -751,7 +751,7 @@
         </Tooltip.Root>
       </Tooltip.Provider>
       <DropdownMenu.Content side="bottom" {align} class="w-72">
-        <DropdownMenu.Label class="text-[10px] uppercase tracking-wide text-muted-foreground">
+        <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground">
           Apply to this job
         </DropdownMenu.Label>
 
@@ -764,7 +764,7 @@
             <Linkedin class="size-3.5 mt-0.5 text-blue-400 flex-shrink-0" />
             <div class="flex-1 min-w-0">
               <div class="text-xs font-medium">LinkedIn Easy Apply</div>
-              <div class="text-[10px] text-muted-foreground/70 leading-tight">
+              <div class="text-[11px] text-muted-foreground/70 leading-tight">
                 Playwright fills + (optionally) submits. Watch the bell for progress.
               </div>
             </div>
@@ -777,7 +777,7 @@
              path uses the General CV PDF (cv-general.pdf) which is generated
              straight from cv.md with no per-job rewriting. -->
           <div
-            class="px-2 py-1.5 text-[10px] text-muted-foreground/80 leading-tight border-l-2 border-blue-500/40 ml-2 mr-2 my-1 bg-blue-500/5 rounded-sm"
+            class="px-2 py-1.5 text-[11px] text-muted-foreground/80 leading-tight border-l-2 border-blue-500/40 ml-2 mr-2 my-1 bg-blue-500/5 rounded-sm"
           >
             <div class="font-medium text-blue-200/90 mb-0.5">
               Uploads your General CV (not the per-job tailored one)
@@ -798,7 +798,7 @@
           </div>
         {:else}
           <div
-            class="px-2 py-1.5 text-[10px] text-muted-foreground/70 leading-tight border-l-2 border-amber-500/40 ml-2 mr-2 my-1 bg-amber-500/5 rounded-sm py-1.5 px-2"
+            class="px-2 py-1.5 text-[11px] text-muted-foreground/70 leading-tight border-l-2 border-amber-500/40 ml-2 mr-2 my-1 bg-amber-500/5 rounded-sm py-1.5 px-2"
           >
             Not a LinkedIn URL — Easy Apply automation isn't available. Use Open &amp; Mark Applied
             to walk through the posting yourself.
@@ -814,7 +814,7 @@
           <ArrowUpRight class="size-3.5 mt-0.5 text-violet-400 flex-shrink-0" />
           <div class="flex-1 min-w-0">
             <div class="text-xs font-medium">Open posting &amp; mark Applied</div>
-            <div class="text-[10px] text-muted-foreground/70 leading-tight">
+            <div class="text-[11px] text-muted-foreground/70 leading-tight">
               Opens the URL in a new tab and flips status. You finish the form by hand.
             </div>
           </div>
@@ -829,7 +829,7 @@
           <ClipboardCheck class="size-3.5 mt-0.5 text-emerald-400 flex-shrink-0" />
           <div class="flex-1 min-w-0">
             <div class="text-xs font-medium">Mark Applied (no open)</div>
-            <div class="text-[10px] text-muted-foreground/70 leading-tight">
+            <div class="text-[11px] text-muted-foreground/70 leading-tight">
               Status flip only — use when you applied elsewhere or want to skip.
             </div>
           </div>
@@ -837,7 +837,7 @@
         </DropdownMenu.Item>
 
         <DropdownMenu.Separator />
-        <div class="px-3 py-1.5 text-[10px] text-muted-foreground/60 leading-tight">
+        <div class="px-3 py-1.5 text-[11px] text-muted-foreground/60 leading-tight">
           Notifications: success/failure toasts pop here, the bell logs every event, and failed jobs
           surface a Retry button on the toast.
         </div>
@@ -884,12 +884,12 @@
         <Tooltip.Content side="top" class="text-xs max-w-xs">
           <div class="font-medium">Status: {job.status}</div>
           <div class="text-muted-foreground">{STATUS_HINT[job.status]}</div>
-          <div class="text-muted-foreground/70 mt-1 text-[10px]">Click to change</div>
+          <div class="text-muted-foreground/70 mt-1 text-[11px]">Click to change</div>
         </Tooltip.Content>
       </Tooltip.Root>
     </Tooltip.Provider>
     <DropdownMenu.Content side="bottom" {align} class="w-64 max-h-72 overflow-y-auto">
-      <DropdownMenu.Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+      <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
         >Change status</DropdownMenu.Label
       >
       {#each STATUS_ORDER as s}
@@ -901,7 +901,7 @@
           <span class={cn('size-1.5 rounded-full mt-1.5 flex-shrink-0', STATUS_DOTS[s])}></span>
           <div class="flex-1 min-w-0">
             <div class="text-xs font-medium">{s}</div>
-            <div class="text-[10px] text-muted-foreground/70 leading-tight">{STATUS_HINT[s]}</div>
+            <div class="text-[11px] text-muted-foreground/70 leading-tight">{STATUS_HINT[s]}</div>
           </div>
           <CheckMark active={s === job.status} class="mt-0.5" />
         </DropdownMenu.Item>
@@ -935,7 +935,7 @@
       </Tooltip.Root>
     </Tooltip.Provider>
     <DropdownMenu.Content side="bottom" {align} class="w-72">
-      <DropdownMenu.Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+      <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
         >Tools</DropdownMenu.Label
       >
 
@@ -954,7 +954,7 @@
           <div class="text-xs font-medium">
             {hasPdf ? 'Regenerate tailored CV' : 'Generate tailored CV'}
           </div>
-          <div class="text-[10px] text-muted-foreground/70 leading-tight">
+          <div class="text-[11px] text-muted-foreground/70 leading-tight">
             Spawns Claude oferta — produces a deep eval report + CV PDF. 1–3 min per job.
           </div>
         </div>
@@ -973,7 +973,7 @@
         {/if}
         <div class="flex-1 min-w-0">
           <div class="text-xs font-medium">Check if still open</div>
-          <div class="text-[10px] text-muted-foreground/70 leading-tight">
+          <div class="text-[11px] text-muted-foreground/70 leading-tight">
             Loads the URL with Playwright and looks for "expired" / "no longer accepting" markers.
             If the posting is gone, the row flips to Closed automatically.
           </div>
@@ -993,7 +993,7 @@
         {/if}
         <div class="flex-1 min-w-0">
           <div class="text-xs font-medium">Draft follow-up message</div>
-          <div class="text-[10px] text-muted-foreground/70 leading-tight">
+          <div class="text-[11px] text-muted-foreground/70 leading-tight">
             Spawns Claude to draft 2–3 message variants based on how long it's been since you
             applied. Picks tone (warm / direct / short) and references the contacts from your
             tracker.
@@ -1014,7 +1014,7 @@
         {/if}
         <div class="flex-1 min-w-0">
           <div class="text-xs font-medium">Pre-fill application answers</div>
-          <div class="text-[10px] text-muted-foreground/70 leading-tight">
+          <div class="text-[11px] text-muted-foreground/70 leading-tight">
             Drafts answers to the standard application-form questions ("why this role", "years of
             X", "salary expectations", "when can you start") so you can copy each one into a
             Greenhouse / Ashby / Lever portal instead of typing from scratch.
@@ -1039,7 +1039,7 @@
         {/if}
         <div class="flex-1 min-w-0">
           <div class="text-xs font-medium">Generate tech-prep plan</div>
-          <div class="text-[10px] text-muted-foreground/70 leading-tight">
+          <div class="text-[11px] text-muted-foreground/70 leading-tight">
             Per-company technical-interview prep: pipeline map, coding rounds with specific LeetCode
             problems, system-design topics (this company's actual debates), behavioral story
             mapping. ~1-2 min via Claude.
@@ -1058,7 +1058,7 @@
         <FileBadge2 class="size-3.5 mt-0.5 text-orange-300 flex-shrink-0" />
         <div class="flex-1 min-w-0">
           <div class="text-xs font-medium">Mock interview (voice)</div>
-          <div class="text-[10px] text-muted-foreground/70 leading-tight">
+          <div class="text-[11px] text-muted-foreground/70 leading-tight">
             Voice drill — Claude speaks the questions, listens to your spoken answer, scores each
             turn 1-5 with one-sentence feedback. Per-stage (recruiter / technical / onsite / final).
             Saves a transcript + session summary you can refine before the real interview.
@@ -1067,7 +1067,7 @@
       </DropdownMenu.Item>
 
       <DropdownMenu.Separator />
-      <DropdownMenu.Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+      <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
         >Open</DropdownMenu.Label
       >
 
@@ -1079,7 +1079,7 @@
           <ExternalLink class="size-3.5 mt-0.5 text-muted-foreground flex-shrink-0" />
           <div class="flex-1 min-w-0">
             <div class="text-xs">Open posting</div>
-            <div class="text-[10px] text-muted-foreground/70 leading-tight font-mono truncate">
+            <div class="text-[11px] text-muted-foreground/70 leading-tight font-mono truncate">
               {job.url}
             </div>
           </div>
@@ -1094,7 +1094,7 @@
           <FileText class="size-3.5 mt-0.5 text-blue-400 flex-shrink-0" />
           <div class="flex-1 min-w-0">
             <div class="text-xs">View deep evaluation</div>
-            <div class="text-[10px] text-muted-foreground/70 leading-tight">7-block A–G report</div>
+            <div class="text-[11px] text-muted-foreground/70 leading-tight">7-block A–G report</div>
           </div>
         </DropdownMenu.Item>
       {/if}
@@ -1107,7 +1107,7 @@
           <FileBadge2 class="size-3.5 mt-0.5 text-emerald-400 flex-shrink-0" />
           <div class="flex-1 min-w-0">
             <div class="text-xs">Open tailored CV PDF</div>
-            <div class="text-[10px] text-muted-foreground/70 leading-tight">{job.pdfFile}</div>
+            <div class="text-[11px] text-muted-foreground/70 leading-tight">{job.pdfFile}</div>
           </div>
         </DropdownMenu.Item>
       {/if}
@@ -1153,7 +1153,7 @@
     </Sheet.Header>
 
     <div class="flex items-center gap-2 px-5 py-3 border-b">
-      <span class="text-[10px] uppercase tracking-wider text-muted-foreground">Tone</span>
+      <span class="text-[11px] uppercase tracking-wider text-muted-foreground">Tone</span>
       <Button
         variant="outline"
         size="sm"
@@ -1193,7 +1193,7 @@
         <article class="prose prose-invert prose-sm max-w-none whitespace-pre-wrap font-sans">
           {followupDraft.content}
         </article>
-        <p class="mt-6 text-[10px] text-muted-foreground/60 font-mono">{followupDraft.path}</p>
+        <p class="mt-6 text-[11px] text-muted-foreground/60 font-mono">{followupDraft.path}</p>
       {/if}
     </div>
   </Sheet.Content>
@@ -1223,7 +1223,7 @@
     </Sheet.Header>
 
     <div class="flex items-center gap-2 px-5 py-3 border-b">
-      <span class="text-[10px] uppercase tracking-wider text-muted-foreground"
+      <span class="text-[11px] uppercase tracking-wider text-muted-foreground"
         >{formAnswerBlocks.length} questions</span
       >
       <div class="flex-1"></div>
@@ -1261,7 +1261,7 @@
               <Button
                 variant="ghost"
                 size="sm"
-                class="h-6 px-2 text-[10px] gap-1"
+                class="h-6 px-2 text-[11px] gap-1"
                 onclick={() => copyOneAnswer(block.body)}
               >
                 <Copy class="size-2.5" /> Copy
@@ -1273,7 +1273,7 @@
           </div>
         {/each}
         {#if formAnswersData.path}
-          <p class="text-[10px] text-muted-foreground/60 font-mono pt-2">{formAnswersData.path}</p>
+          <p class="text-[11px] text-muted-foreground/60 font-mono pt-2">{formAnswersData.path}</p>
         {/if}
       {:else if formAnswersData}
         <article class="prose prose-invert prose-sm max-w-none whitespace-pre-wrap font-sans">

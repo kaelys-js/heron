@@ -136,7 +136,7 @@
       <div class="flex flex-wrap gap-1 pt-1 border-t border-emerald-500/20">
         {#each data.summary.connectedLabels as label (label)}
           <span
-            class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300"
+            class="text-[11px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300"
             >{label}</span
           >
         {/each}
@@ -200,7 +200,7 @@
           <li>{line}</li>
         {/each}
       </ul>
-      <p class="text-[10px] text-emerald-200/70 pt-1 border-t border-emerald-500/20">
+      <p class="text-[11px] text-emerald-200/70 pt-1 border-t border-emerald-500/20">
         You can change any of this on /profile, /settings, or /autopilot.
       </p>
     </div>

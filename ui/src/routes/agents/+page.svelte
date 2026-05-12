@@ -166,7 +166,7 @@
                       {a.label}
                       {#if isBusy}
                         <span
-                          class="text-[10px] text-emerald-400 font-mono uppercase tracking-wider"
+                          class="text-[11px] text-emerald-400 font-mono uppercase tracking-wider"
                           >running</span
                         >
                       {/if}
@@ -201,7 +201,7 @@
                   </Tooltip.Content>
                 </Tooltip.Root>
                 <p
-                  class="text-[10px] text-muted-foreground/70 leading-relaxed flex items-center gap-2"
+                  class="text-[11px] text-muted-foreground/70 leading-relaxed flex items-center gap-2"
                 >
                   <span class="font-mono uppercase tracking-wider text-foreground/60"
                     >{a.category}</span

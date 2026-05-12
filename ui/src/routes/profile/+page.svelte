@@ -574,7 +574,7 @@
                 {validationErrors.length}
                 {validationErrors.length === 1 ? 'field needs' : 'fields need'} attention
               </div>
-              <p class="text-[10px] text-red-200/70 leading-relaxed mt-0.5">
+              <p class="text-[11px] text-red-200/70 leading-relaxed mt-0.5">
                 Saving will fail (or strip data) for fields below. Click a row to jump to it.
               </p>
             </div>
@@ -588,7 +588,7 @@
                   class="w-full flex items-center gap-2 px-3.5 py-2 text-left text-[11px] hover:bg-red-500/[0.06] transition-colors group/row"
                 >
                   <span
-                    class="text-[10px] uppercase tracking-wider font-mono text-red-300/80 w-20 flex-shrink-0"
+                    class="text-[11px] uppercase tracking-wider font-mono text-red-300/80 w-20 flex-shrink-0"
                     >{err.section}</span
                   >
                   <span class="text-red-100 font-medium truncate flex-1 min-w-0">{err.label}</span>
@@ -631,7 +631,7 @@
                 ariaLabel={f.label}
               />
               {#if f.hint}
-                <p class="text-[10px] text-muted-foreground/70 leading-relaxed">{f.hint}</p>
+                <p class="text-[11px] text-muted-foreground/70 leading-relaxed">{f.hint}</p>
               {/if}
             </div>
           {/each}
@@ -647,7 +647,7 @@
         {#snippet icon()}<MapPin class="size-3.5 text-muted-foreground" />{/snippet}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="space-y-1.5 md:col-span-2">
-            <p class="text-[10px] text-muted-foreground/70 leading-relaxed -mt-1">
+            <p class="text-[11px] text-muted-foreground/70 leading-relaxed -mt-1">
               These fields feed remote-fit analysis: a posting that requires a specific city or
               country mismatching yours gets flagged in the evaluation report. Timezone matters for
               "must overlap with US Pacific" type postings.
@@ -688,7 +688,7 @@
               />
             {/if}
             {#if edit.location?.country && provinceItems.length === 0}
-              <p class="text-[10px] text-muted-foreground/60 leading-tight">
+              <p class="text-[11px] text-muted-foreground/60 leading-tight">
                 No structured list for this country — type your region.
               </p>
             {/if}
@@ -718,7 +718,7 @@
               customLabel="Use custom timezone"
               ariaLabel="Timezone"
             />
-            <p class="text-[10px] text-muted-foreground/70 leading-tight">
+            <p class="text-[11px] text-muted-foreground/70 leading-tight">
               Stores the canonical IANA name (e.g. <code class="font-mono">America/Vancouver</code
               >). Used to assess overlap with US Pacific / Eastern hiring teams.
             </p>
@@ -738,7 +738,7 @@
               customLabel="Describe your status"
               ariaLabel="Visa status"
             />
-            <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+            <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
               Surfaced in the eligibility block of every evaluation report so you see upfront
               whether sponsorship would be needed. Pick the closest dropdown option, or "Other /
               custom" for nuanced situations.
@@ -759,7 +759,7 @@
               customLabel="Describe your availability"
               ariaLabel="On-site availability"
             />
-            <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+            <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
               Used by cover-letter drafts when a posting asks "can you come into the office N
               days/week?".
             </p>
@@ -777,7 +777,7 @@
         <div class="space-y-4">
           <div class="space-y-1.5">
             <Label class="text-xs">Primary roles</Label>
-            <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+            <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
               The job titles you'd actually take. Each posting is title-matched against this list
               during scoring, and the best match becomes the framing in cover letters ("I'm
               interested in this {'<role>'} role…").
@@ -795,7 +795,7 @@
             <div class="space-y-1.5 pt-3 border-t border-border/40">
               <Label class="text-xs flex items-center gap-2">
                 Archetypes
-                <span class="text-[10px] font-normal text-muted-foreground">read-only</span>
+                <span class="text-[11px] font-normal text-muted-foreground">read-only</span>
               </Label>
               <p class="text-[11px] text-muted-foreground leading-relaxed">
                 A higher-level role grouping (e.g. "Backend / Platform", "Founding Engineer") with a
@@ -806,7 +806,7 @@
               </p>
               <div class="flex flex-wrap gap-1.5 pt-1">
                 {#each data.profile.archetypes as a}
-                  <Badge variant="outline" class="text-[10px] h-5 px-1.5 font-normal">
+                  <Badge variant="outline" class="text-[11px] h-5 px-1.5 font-normal">
                     {a.name}
                     {#if a.fit}
                       <span class="ml-1 text-muted-foreground/70">· {a.fit}</span>
@@ -836,7 +836,7 @@
               placeholder="Senior Software Engineer — 10+ years TypeScript / React / Node / Cloud"
               class="h-9 text-sm"
             />
-            <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+            <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
               One line, surfaced as the summary on every CV PDF. Lead with seniority + stack so a
               recruiter knows the level + tech in 3 seconds.
             </p>
@@ -851,7 +851,7 @@
               maxRows={14}
               ariaLabel="Exit story"
             />
-            <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+            <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
               4–8 sentences: what you've shipped recently · what kind of work energizes you · what
               you're looking for next. Pulled into cover-letter openers and the "Tell me about
               yourself" answer in interview prep. Markdown OK (⌘B / ⌘I / ⌘K).
@@ -909,7 +909,7 @@
               customLabel="Use custom range"
               ariaLabel="Target compensation range"
             />
-            <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+            <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
               Where you'd realistically expect to land. Negotiation drafts use the upper bound as
               your "ask" and the lower as your "happy place." Brackets shown are USD tech baselines
               — use the custom option for non-USD or non-tech ranges.
@@ -930,7 +930,7 @@
               customLabel="Use custom code"
               ariaLabel="Currency"
             />
-            <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+            <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
               ISO 4217 code. Used to normalize offers across postings.
             </p>
           </div>
@@ -945,7 +945,7 @@
               customLabel="Use custom minimum"
               ariaLabel="Walk-away minimum"
             />
-            <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+            <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
               The number below which you'd say no. Offer-comparison flags any offer beneath this so
               you can decline cleanly.
             </p>
@@ -961,7 +961,7 @@
               customLabel="Describe your flexibility"
               ariaLabel="Location flexibility"
             />
-            <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+            <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
               How willing you are to commute or relocate. Surfaced in cover letters when the role
               asks "Are you open to relocation?".
             </p>
@@ -976,7 +976,7 @@
               maxRows={12}
               ariaLabel="Negotiation notes"
             />
-            <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+            <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
               Free-form notes that show up in the negotiation flow when an offer comes in. Equity
               preferences, "always ask for sign-on bonus", "won't accept stock-only", deal-breakers,
               learnings from past negotiations. Markdown OK.
@@ -998,7 +998,7 @@
               <span class="size-1.5 rounded-full bg-emerald-400"></span>
               Must have
             </Label>
-            <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+            <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
               Things you require. A posting that doesn't mention any of these gets a small score
               penalty; one that mentions all of them gets a boost. Use checkable tech / process
               keywords (e.g. "TypeScript", "remote-first").
@@ -1016,7 +1016,7 @@
               <span class="size-1.5 rounded-full bg-blue-400"></span>
               Strong plus
             </Label>
-            <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+            <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
               Things you'd like but don't require. Light boost when a posting mentions one — useful
               for tie-breaking between otherwise similar jobs.
             </p>
@@ -1033,7 +1033,7 @@
               <span class="size-1.5 rounded-full bg-red-400"></span>
               Hard no
             </Label>
-            <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+            <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
               Deal-breakers. A posting that matches a hard-no gets pushed to the bottom of the
               pipeline and flagged with a SKIP recommendation. Use industry / domain / tech filters
               that are visible in postings.
@@ -1075,7 +1075,7 @@
             <option value="modes/ru">Русский (modes/ru)</option>
             <option value="modes/es">Español (modes/es)</option>
           </select>
-          <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+          <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
             Saved to <code class="font-mono">profile.yml.language.modes_dir</code>. Picked up
             immediately by mock-interview, interview-prep, and negotiation flows; oferta + outreach
             use it once the symlink re-swap on next spawn lands. Missing translations gracefully
@@ -1162,7 +1162,7 @@
                   {(edit.automation?.min_score_to_apply ?? 4.0).toFixed(1)}
                 </span>
               </div>
-              <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+              <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
                 Jobs below this threshold land in <code class="font-mono">ManualApplyNeeded</code> even
                 when autonomous mode is on. Default 4.0 — recommended floor.
               </p>
@@ -1186,7 +1186,7 @@
                   };
                 }}
               />
-              <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+              <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
                 For the first N days after enabling, the per-profile cap is clamped to 5/day
                 regardless of the global "Max applies / day" setting. Limits LinkedIn shadowban risk
                 while you confirm the pipeline behaves as expected.
@@ -1229,7 +1229,7 @@
                   </label>
                 {/each}
               </div>
-              <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+              <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
                 Stub portals route to <code class="font-mono">apply-stub.py</code> which emits a
                 <code class="font-mono">ManualApplyNeeded</code> Issue. Production adapters land in future
                 releases; the queue stays useful as a "review later" inbox in the meantime.
@@ -1299,7 +1299,7 @@
               {/if}
             </span>
             {#if storyBankStats?.lastUpdatedAt}
-              <span class="text-[10px] text-muted-foreground/70">
+              <span class="text-[11px] text-muted-foreground/70">
                 last updated {new Date(storyBankStats.lastUpdatedAt).toLocaleDateString()}
               </span>
             {/if}
@@ -1342,14 +1342,14 @@
                 {#if data.profile.files.cv.exists}
                   <Badge
                     variant="outline"
-                    class="text-[10px] h-4 px-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                    class="text-[11px] h-4 px-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
                   >
                     {(data.profile.files.cv.size / 1024).toFixed(1)} KB
                   </Badge>
                 {:else}
                   <Badge
                     variant="outline"
-                    class="text-[10px] h-4 px-1 border-amber-500/40 bg-amber-500/10 text-amber-300"
+                    class="text-[11px] h-4 px-1 border-amber-500/40 bg-amber-500/10 text-amber-300"
                     >missing</Badge
                   >
                 {/if}
@@ -1360,7 +1360,7 @@
                 its skills. Edit / View / Replace it here, or run <strong>Reprocess</strong> to have Claude
                 re-extract identity + narrative from it into the form fields above.
               </p>
-              <code class="text-[10px] font-mono text-muted-foreground/70 mt-1 inline-block"
+              <code class="text-[11px] font-mono text-muted-foreground/70 mt-1 inline-block"
                 >{data.profile.files.cv.path}</code
               >
 
@@ -1491,37 +1491,37 @@
                 {#if generalCv.exists && !generalCv.outdated}
                   <Badge
                     variant="outline"
-                    class="text-[10px] h-4 px-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                    class="text-[11px] h-4 px-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
                   >
                     {(generalCv.bytes ?? 0) > 0
                       ? ((generalCv.bytes ?? 0) / 1024).toFixed(1) + ' KB'
                       : 'ready'}
                   </Badge>
                   {#if generalCv.generatedAt}
-                    <span class="text-[10px] text-muted-foreground/70"
+                    <span class="text-[11px] text-muted-foreground/70"
                       >generated {fmtAge(generalCv.generatedAt)}</span
                     >
                   {/if}
                 {:else if generalCv.exists && generalCv.outdated}
                   <Badge
                     variant="outline"
-                    class="text-[10px] h-4 px-1 border-amber-500/40 bg-amber-500/10 text-amber-300"
+                    class="text-[11px] h-4 px-1 border-amber-500/40 bg-amber-500/10 text-amber-300"
                   >
                     outdated
                   </Badge>
-                  <span class="text-[10px] text-amber-300/80"
+                  <span class="text-[11px] text-amber-300/80"
                     >cv.md was edited after the PDF was generated</span
                   >
                 {:else if generalCv.missingSource}
                   <Badge
                     variant="outline"
-                    class="text-[10px] h-4 px-1 border-amber-500/40 bg-amber-500/10 text-amber-300"
+                    class="text-[11px] h-4 px-1 border-amber-500/40 bg-amber-500/10 text-amber-300"
                     >cv.md missing</Badge
                   >
                 {:else}
                   <Badge
                     variant="outline"
-                    class="text-[10px] h-4 px-1 border-zinc-500/40 bg-zinc-500/10 text-muted-foreground"
+                    class="text-[11px] h-4 px-1 border-zinc-500/40 bg-zinc-500/10 text-muted-foreground"
                     >not generated</Badge
                   >
                 {/if}
@@ -1535,7 +1535,7 @@
                 with your LinkedIn profile. Per-job tailored CVs continue to be used for Greenhouse /
                 Ashby / Lever / Workday / etc.
               </p>
-              <code class="text-[10px] font-mono text-muted-foreground/70 mt-1 inline-block"
+              <code class="text-[11px] font-mono text-muted-foreground/70 mt-1 inline-block"
                 >{generalCv.path}</code
               >
 
@@ -1628,13 +1628,13 @@
               </Tooltip.Provider>
 
               {#if generalCv.missingSource}
-                <p class="text-[10px] text-amber-300/85 mt-2 leading-relaxed">
+                <p class="text-[11px] text-amber-300/85 mt-2 leading-relaxed">
                   Add your CV first (use the row above) — the general PDF can't be generated without <code
                     class="font-mono">cv.md</code
                   >.
                 </p>
               {:else if !generalCv.exists}
-                <p class="text-[10px] text-muted-foreground/80 mt-2 leading-relaxed">
+                <p class="text-[11px] text-muted-foreground/80 mt-2 leading-relaxed">
                   Until you generate this, LinkedIn Easy Apply will skip the resume-upload step
                   entirely (LinkedIn falls back to whatever resume you already have on file there,
                   or none).
@@ -1654,14 +1654,14 @@
                 {#if data.profile.files.profileMd.exists}
                   <Badge
                     variant="outline"
-                    class="text-[10px] h-4 px-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                    class="text-[11px] h-4 px-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
                   >
                     {(data.profile.files.profileMd.size / 1024).toFixed(1)} KB
                   </Badge>
                 {:else}
                   <Badge
                     variant="outline"
-                    class="text-[10px] h-4 px-1 border-amber-500/40 bg-amber-500/10 text-amber-300"
+                    class="text-[11px] h-4 px-1 border-amber-500/40 bg-amber-500/10 text-amber-300"
                     >missing</Badge
                   >
                 {/if}
@@ -1672,7 +1672,7 @@
                 ships from a template; whatever you put here stays here — system updates never
                 overwrite this file. Edit it directly in your editor of choice.
               </p>
-              <code class="text-[10px] font-mono text-muted-foreground/70 mt-1 inline-block"
+              <code class="text-[11px] font-mono text-muted-foreground/70 mt-1 inline-block"
                 >{data.profile.files.profileMd.path}</code
               >
             </div>

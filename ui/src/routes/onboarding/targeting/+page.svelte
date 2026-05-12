@@ -243,7 +243,7 @@
       <div class="flex flex-wrap gap-1.5">
         {#each positive as kw, i (kw + '-' + i)}
           <span
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-[10px]"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-[11px]"
           >
             {kw}
             <button
@@ -278,14 +278,14 @@
     <!-- Negative -->
     <div class="space-y-1.5">
       <Label class="text-xs"
-        >Negative keywords <span class="text-[10px] text-muted-foreground/70"
+        >Negative keywords <span class="text-[11px] text-muted-foreground/70"
           >(defaults shown — edit freely)</span
         ></Label
       >
       <div class="flex flex-wrap gap-1.5">
         {#each negative as kw, i (kw + '-' + i)}
           <span
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-500/10 border border-red-500/30 text-[10px]"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-500/10 border border-red-500/30 text-[11px]"
           >
             {kw}
             <button
@@ -364,7 +364,7 @@
       <div class="flex flex-wrap gap-1.5">
         {#each mustHave as p, i (p + '-' + i)}
           <span
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-[10px]"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-[11px]"
           >
             {p}
             <button
@@ -400,7 +400,7 @@
       <div class="flex flex-wrap gap-1.5">
         {#each strongPlus as p, i (p + '-' + i)}
           <span
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-[10px]"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-[11px]"
           >
             {p}
             <button
@@ -436,7 +436,7 @@
       <div class="flex flex-wrap gap-1.5">
         {#each hardNo as p, i (p + '-' + i)}
           <span
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-500/10 border border-red-500/30 text-[10px]"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-500/10 border border-red-500/30 text-[11px]"
           >
             {p}
             <button

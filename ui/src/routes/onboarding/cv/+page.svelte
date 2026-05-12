@@ -248,13 +248,13 @@ Skills: TypeScript, Python, Go, AWS, Kubernetes, Postgres`;
     <Info class="size-3.5 text-muted-foreground/80 mt-0.5 flex-shrink-0" />
     <p class="text-[11px] text-muted-foreground/90 leading-relaxed">
       {#if mode === 'markdown'}
-        Use standard sections: <code class="font-mono text-[10px]">## Summary</code>,
-        <code class="font-mono text-[10px]">## Experience</code>,
-        <code class="font-mono text-[10px]">## Projects</code>,
-        <code class="font-mono text-[10px]">## Education</code>,
-        <code class="font-mono text-[10px]">## Skills</code>. Bullet experience with
-        <code class="font-mono text-[10px]">-</code>. Use
-        <code class="font-mono text-[10px]">###</code> for each role.
+        Use standard sections: <code class="font-mono text-[11px]">## Summary</code>,
+        <code class="font-mono text-[11px]">## Experience</code>,
+        <code class="font-mono text-[11px]">## Projects</code>,
+        <code class="font-mono text-[11px]">## Education</code>,
+        <code class="font-mono text-[11px]">## Skills</code>. Bullet experience with
+        <code class="font-mono text-[11px]">-</code>. Use
+        <code class="font-mono text-[11px]">###</code> for each role.
       {:else if mode === 'plain'}
         Just paste — formatting doesn't matter. We'll structure it into standard sections. From a
         Word CV use Select All → Copy. From a PDF, use the Mac Preview text-export or paste from the
@@ -281,7 +281,7 @@ Skills: TypeScript, Python, Go, AWS, Kubernetes, Postgres`;
         class="text-sm font-mono"
         disabled={working}
       />
-      <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+      <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
         Pulls the profile via Playwright (using your saved LinkedIn cookies) and runs Claude over
         the result. Takes 10–30s. Reads only — never writes anything to LinkedIn.
       </p>
@@ -306,7 +306,7 @@ Skills: TypeScript, Python, Go, AWS, Kubernetes, Postgres`;
         class="w-full min-h-[400px] rounded-md border border-border/60 bg-background px-3 py-2 text-xs font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-y"
         disabled={working}
       ></textarea>
-      <div class="flex items-center justify-between text-[10px] text-muted-foreground/70">
+      <div class="flex items-center justify-between text-[11px] text-muted-foreground/70">
         <span>{textArea.length.toLocaleString()} chars</span>
         {#if data.existing && textArea === data.existing}
           <span>Loaded from existing cv.md — edit or replace</span>

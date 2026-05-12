@@ -150,7 +150,7 @@
               <div class="flex-1 min-w-0">
                 <div class="text-xs font-medium">{item.label}</div>
                 {#if item.description}
-                  <div class="text-[10px] text-muted-foreground/70 leading-tight">
+                  <div class="text-[11px] text-muted-foreground/70 leading-tight">
                     {item.description}
                   </div>
                 {/if}
@@ -170,7 +170,7 @@
               <Pencil class="size-3.5 mt-0.5 text-muted-foreground/60 flex-shrink-0" />
               <div class="flex-1 min-w-0">
                 <div class="text-xs font-medium">{customLabel}</div>
-                <div class="text-[10px] text-muted-foreground/70 leading-tight font-mono">
+                <div class="text-[11px] text-muted-foreground/70 leading-tight font-mono">
                   "{search}"
                 </div>
               </div>

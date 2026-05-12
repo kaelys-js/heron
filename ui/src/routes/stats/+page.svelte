@@ -269,7 +269,7 @@
           <Funnel stages={funnelStages} />
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-border">
             <div>
-              <div class="text-[10px] text-muted-foreground uppercase tracking-wide">
+              <div class="text-[11px] text-muted-foreground uppercase tracking-wide">
                 Scored / total
               </div>
               <div class="text-sm font-semibold tabular-nums">
@@ -277,7 +277,7 @@
               </div>
             </div>
             <div>
-              <div class="text-[10px] text-muted-foreground uppercase tracking-wide">
+              <div class="text-[11px] text-muted-foreground uppercase tracking-wide">
                 Ready / scored
               </div>
               <div class="text-sm font-semibold tabular-nums">
@@ -285,7 +285,7 @@
               </div>
             </div>
             <div>
-              <div class="text-[10px] text-muted-foreground uppercase tracking-wide">
+              <div class="text-[11px] text-muted-foreground uppercase tracking-wide">
                 Applied / ready
               </div>
               <div class="text-sm font-semibold tabular-nums">
@@ -293,7 +293,7 @@
               </div>
             </div>
             <div>
-              <div class="text-[10px] text-muted-foreground uppercase tracking-wide">
+              <div class="text-[11px] text-muted-foreground uppercase tracking-wide">
                 Interview / applied
               </div>
               <div class="text-sm font-semibold tabular-nums">
@@ -310,7 +310,7 @@
           <Card.Header class="pb-2">
             <Card.Title class="text-sm flex items-center gap-2">
               Scan history
-              <span class="text-[10px] font-mono text-muted-foreground/70">
+              <span class="text-[11px] font-mono text-muted-foreground/70">
                 {data.scanHistory.totalRuns} scan{data.scanHistory.totalRuns === 1 ? '' : 's'} ·
                 {data.scanHistory.totalAdded.toLocaleString()} new ·
                 {data.scanHistory.totalDuplicates.toLocaleString()} dup
@@ -337,14 +337,14 @@
                 </div>
               {/each}
             </div>
-            <div class="flex items-center justify-between text-[10px] text-muted-foreground/70">
+            <div class="flex items-center justify-between text-[11px] text-muted-foreground/70">
               <span class="font-mono">{data.scanHistory.recent.at(-1)?.date ?? ''}</span>
               <span class="font-mono">{data.scanHistory.recent[0]?.date ?? ''}</span>
             </div>
             {#if data.scanHistory.topPortals.length > 0}
               <div class="pt-2 border-t border-border/40 grid grid-cols-2 gap-3">
                 <div>
-                  <div class="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">
+                  <div class="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1">
                     Top portals
                   </div>
                   <ul class="space-y-0.5">
@@ -359,7 +359,7 @@
                   </ul>
                 </div>
                 <div>
-                  <div class="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">
+                  <div class="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1">
                     Top companies
                   </div>
                   <ul class="space-y-0.5">
@@ -500,7 +500,7 @@
                     ></div>
                   </div>
                   <div class="w-10 text-right text-xs font-medium tabular-nums">{s.count}</div>
-                  <div class="w-12 text-right text-[10px] text-muted-foreground tabular-nums">
+                  <div class="w-12 text-right text-[11px] text-muted-foreground tabular-nums">
                     {pct(s.rate)}
                   </div>
                 </div>
@@ -556,7 +556,7 @@
                   </div>
                   {#if j.bgRisk}
                     <span
-                      class={'text-[10px] font-mono uppercase px-1.5 py-0.5 rounded ' +
+                      class={'text-[11px] font-mono uppercase px-1.5 py-0.5 rounded ' +
                         (j.bgRisk === 'BLOCKED'
                           ? 'bg-red-700/80 text-red-100'
                           : j.bgRisk === 'HIGH'

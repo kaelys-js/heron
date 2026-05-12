@@ -52,13 +52,13 @@
   <div class="flex flex-wrap items-center gap-1.5">
     {#if stage.ghostedAt}
       <span
-        class="rounded border border-zinc-600/40 bg-zinc-700/15 px-1.5 py-0.5 text-[10px] text-zinc-300 border-dashed"
+        class="rounded border border-zinc-600/40 bg-zinc-700/15 px-1.5 py-0.5 text-[11px] text-zinc-300 border-dashed"
       >
         ghosted
       </span>
     {:else}
       <span
-        class="rounded border px-1.5 py-0.5 text-[10px] {staleTint(daysSince(stage.lastTouchAt))}"
+        class="rounded border px-1.5 py-0.5 text-[11px] {staleTint(daysSince(stage.lastTouchAt))}"
       >
         {daysSince(stage.lastTouchAt)}d quiet
       </span>
@@ -66,7 +66,7 @@
     {#if !compact && stage.nextActionDue}
       {@const hrs = hoursTo(stage.nextActionDue.dueAt)}
       <span
-        class="rounded border px-1.5 py-0.5 text-[10px] {dueTint(hrs)}"
+        class="rounded border px-1.5 py-0.5 text-[11px] {dueTint(hrs)}"
         title={stage.nextActionDue.note ?? stage.nextActionDue.kind}
       >
         {stage.nextActionDue.kind.replace('-', ' ')}

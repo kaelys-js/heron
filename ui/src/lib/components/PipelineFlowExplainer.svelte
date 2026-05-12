@@ -99,7 +99,7 @@
   >
     <Info class="size-3.5 text-muted-foreground/80 flex-shrink-0" />
     <span class="text-xs font-medium">How jobs move through your pipeline</span>
-    <span class="text-[10px] text-muted-foreground/60 hidden md:inline"
+    <span class="text-[11px] text-muted-foreground/60 hidden md:inline"
       >— click to {open ? 'hide' : 'show'} the state flow</span
     >
     <ChevronDown
@@ -141,7 +141,7 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-baseline gap-1.5 flex-wrap">
                   <span class="font-medium text-foreground">{row.status}</span>
-                  <span class="text-[10px] text-muted-foreground/60">· from {row.from}</span>
+                  <span class="text-[11px] text-muted-foreground/60">· from {row.from}</span>
                 </div>
                 <div class="text-muted-foreground">{row.trigger}</div>
               </div>

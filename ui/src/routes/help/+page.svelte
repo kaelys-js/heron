@@ -427,7 +427,7 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                   <span class="text-xs font-medium">{d.title}</span>
-                  <code class="text-[10px] font-mono text-muted-foreground/60">{d.href}</code>
+                  <code class="text-[11px] font-mono text-muted-foreground/60">{d.href}</code>
                 </div>
                 <p class="text-[11px] text-muted-foreground leading-relaxed mt-1">{d.blurb}</p>
               </div>
@@ -464,10 +464,10 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                   <span class="text-xs font-medium">{p.label}</span>
-                  <code class="text-[10px] font-mono text-muted-foreground/60">{p.href}</code>
+                  <code class="text-[11px] font-mono text-muted-foreground/60">{p.href}</code>
                 </div>
                 <p class="text-[11px] text-muted-foreground leading-relaxed mt-1">{p.purpose}</p>
-                <p class="text-[10px] text-muted-foreground/70 leading-relaxed mt-1 italic">
+                <p class="text-[11px] text-muted-foreground/70 leading-relaxed mt-1 italic">
                   When: {p.when}
                 </p>
               </div>
@@ -581,7 +581,7 @@
                 </Tooltip.Root>
                 <span
                   class={cn(
-                    'text-[10px] uppercase tracking-wider font-medium flex-shrink-0',
+                    'text-[11px] uppercase tracking-wider font-medium flex-shrink-0',
                     f.tier === 'user'
                       ? 'text-emerald-400/80'
                       : f.tier === 'output'

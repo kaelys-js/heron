@@ -491,7 +491,7 @@
                 <Tabs.Trigger value="interview-panel" class="text-xs h-8 px-3 whitespace-nowrap">
                   <Briefcase class="size-3.5 mr-1.5" /> Panel
                   {#if data.interviewers && data.interviewers.length > 0}
-                    <span class="ml-1.5 rounded bg-zinc-700/50 px-1 text-[10px]"
+                    <span class="ml-1.5 rounded bg-zinc-700/50 px-1 text-[11px]"
                       >{data.interviewers.length}</span
                     >
                   {/if}
@@ -499,7 +499,7 @@
                 <Tabs.Trigger value="offer-tab" class="text-xs h-8 px-3 whitespace-nowrap">
                   <DollarSign class="size-3.5 mr-1.5" /> Offer
                   {#if data.offer}
-                    <span class="ml-1.5 rounded bg-emerald-600/30 px-1 text-[10px]">●</span>
+                    <span class="ml-1.5 rounded bg-emerald-600/30 px-1 text-[11px]">●</span>
                   {/if}
                 </Tabs.Trigger>
               </Tabs.List>
@@ -575,7 +575,7 @@
               {:else}
                 <div class="space-y-4">
                   <div class="flex items-center gap-2">
-                    <span class="text-[10px] uppercase tracking-wider text-muted-foreground flex-1"
+                    <span class="text-[11px] uppercase tracking-wider text-muted-foreground flex-1"
                       >Persisted at <code class="font-mono">interview-prep/{data.job.id}.md</code
                       ></span
                     >
@@ -717,7 +717,7 @@
             <Tabs.Content value="outreach">
               <div class="space-y-4">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-[10px] uppercase tracking-wider text-muted-foreground"
+                  <span class="text-[11px] uppercase tracking-wider text-muted-foreground"
                     >Persona</span
                   >
                   <Button
@@ -784,7 +784,7 @@
                     {@html outreachHtml}
                   </article>
                   <div class="flex items-center gap-2 pt-2 border-t border-border/40">
-                    <span class="text-[10px] text-muted-foreground/70"
+                    <span class="text-[11px] text-muted-foreground/70"
                       >Find someone to message:</span
                     >
                     <a
@@ -864,11 +864,11 @@
                     <p class="text-[11px] text-muted-foreground/90 leading-relaxed">
                       Saved to
                       <code
-                        class="font-mono text-[10px] bg-background/60 px-1 py-0.5 rounded break-all"
+                        class="font-mono text-[11px] bg-background/60 px-1 py-0.5 rounded break-all"
                         >output/{coverPath ? coverPath.split('/').pop() : ''}</code
                       >. Read it once before you send — if a sentence sounds off, click Regenerate
                       (each run is fresh, not a refinement). Replace any
-                      <code class="font-mono text-[10px]">_TODO_</code> placeholders from your profile.yml
+                      <code class="font-mono text-[11px]">_TODO_</code> placeholders from your profile.yml
                       gaps before submitting.
                     </p>
                   </div>

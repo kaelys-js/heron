@@ -83,7 +83,7 @@
           <Target class="size-3 text-fuchsia-400" />
           JD ⇄ CV keyword overlap
         </div>
-        <p class="text-[10px] text-muted-foreground/80 leading-relaxed">
+        <p class="text-[11px] text-muted-foreground/80 leading-relaxed">
           {result.considered?.unigrams ?? 0} terms · {result.considered?.bigrams ?? 0} bigrams ·
           {result.considered?.trigrams ?? 0} trigrams scanned. Weighted 1× / 2× / 3× respectively.
         </p>
@@ -92,7 +92,7 @@
         {#if result.missing && result.missing.length > 0}
           <div>
             <div
-              class="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1"
+              class="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1"
             >
               <AlertTriangle class="size-3 text-amber-400" />
               Missing ({result.missing.length})
@@ -100,17 +100,17 @@
             <div class="flex flex-wrap gap-1">
               {#each result.missing.slice(0, 50) as term}
                 <span
-                  class="text-[10px] px-1.5 py-0.5 rounded border border-amber-500/30 bg-amber-500/5 text-amber-200"
+                  class="text-[11px] px-1.5 py-0.5 rounded border border-amber-500/30 bg-amber-500/5 text-amber-200"
                   >{term}</span
                 >
               {/each}
               {#if result.missing.length > 50}
-                <span class="text-[10px] text-muted-foreground"
+                <span class="text-[11px] text-muted-foreground"
                   >+{result.missing.length - 50} more</span
                 >
               {/if}
             </div>
-            <p class="text-[10px] text-muted-foreground/70 mt-1.5 leading-relaxed">
+            <p class="text-[11px] text-muted-foreground/70 mt-1.5 leading-relaxed">
               Consider weaving these into your CV — but only when true. Never fabricate experience.
               The strongest moves are usually the 2-3 word phrases at the top.
             </p>
@@ -119,7 +119,7 @@
         {#if result.matched && result.matched.length > 0}
           <div>
             <div
-              class="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1"
+              class="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1"
             >
               <CheckCircle2 class="size-3 text-emerald-400" />
               Matched ({result.matched.length})
@@ -127,12 +127,12 @@
             <div class="flex flex-wrap gap-1">
               {#each result.matched.slice(0, 40) as term}
                 <span
-                  class="text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/5 text-emerald-200"
+                  class="text-[11px] px-1.5 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/5 text-emerald-200"
                   >{term}</span
                 >
               {/each}
               {#if result.matched.length > 40}
-                <span class="text-[10px] text-muted-foreground"
+                <span class="text-[11px] text-muted-foreground"
                   >+{result.matched.length - 40} more</span
                 >
               {/if}

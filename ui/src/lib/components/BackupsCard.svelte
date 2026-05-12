@@ -220,7 +220,7 @@
     <Card.Description>
       Nightly snapshots of every profile dir (cv.md, profile.yml, applications.md, reports/,
       output/, interview-prep/) plus shared infra (autopilot.json, profiles.json, issues.jsonl,
-      story-bank.md). Excludes <code class="font-mono text-[10px]">.env</code> and browser sessions —
+      story-bank.md). Excludes <code class="font-mono text-[11px]">.env</code> and browser sessions —
       restore brings data back, not credentials.
     </Card.Description>
   </Card.Header>
@@ -272,7 +272,7 @@
             <CheckCircle2 class="size-3.5 text-emerald-400 flex-shrink-0" />
             <div class="flex-1 min-w-0">
               <div class="text-xs font-mono truncate">{b.id}</div>
-              <div class="text-[10px] text-muted-foreground/80 flex items-center gap-2 flex-wrap">
+              <div class="text-[11px] text-muted-foreground/80 flex items-center gap-2 flex-wrap">
                 <span>{formatRelativeTime(b.createdAt)}</span>
                 <span>·</span>
                 <span>{humanSize(b.size)}</span>
@@ -329,7 +329,7 @@
     <!-- Footnote -->
     <div class="rounded-md border border-border/40 bg-muted/10 px-3 py-2 flex items-start gap-2">
       <Info class="size-3 text-muted-foreground/60 mt-0.5 flex-shrink-0" />
-      <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+      <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
         Backups live under <code class="font-mono">data/backups/</code> on this machine — they're
         local-only. Add the dir to your Time Machine / rsync target for offsite redundancy.
         <code class="font-mono">.env</code> stays outside; back up your API keys manually.

@@ -58,7 +58,7 @@
     <span class="text-sm font-medium truncate flex-1 min-w-0">{company}</span>
 
     <!-- Quick stats row -->
-    <div class="flex items-center gap-3 text-[10px] text-muted-foreground/80 flex-shrink-0">
+    <div class="flex items-center gap-3 text-[11px] text-muted-foreground/80 flex-shrink-0">
       <span class="tabular-nums">
         <span class="text-foreground font-medium">{jobs.length}</span>
         {jobs.length === 1 ? 'role' : 'roles'}
@@ -94,7 +94,7 @@
       <div class="border-t border-border/40">
         <!-- Header for the rows inside this group (matches JobRowCompact column widths, minus Company) -->
         <div
-          class="flex items-center gap-3 px-3 h-7 text-[10px] uppercase tracking-wider text-muted-foreground/70 border-b border-border/30 bg-muted/20 border-l-2 border-l-transparent"
+          class="flex items-center gap-3 px-3 h-7 text-[11px] uppercase tracking-wider text-muted-foreground/70 border-b border-border/30 bg-muted/20 border-l-2 border-l-transparent"
         >
           <span class="size-1.5 flex-shrink-0"></span>
           <span class="w-8 flex-shrink-0 text-right">Score</span>

@@ -137,7 +137,7 @@
                     <span
                       {...props}
                       class={cn(
-                        'text-[10px] font-mono font-semibold border rounded px-1.5 py-0.5 flex-shrink-0 cursor-help',
+                        'text-[11px] font-mono font-semibold border rounded px-1.5 py-0.5 flex-shrink-0 cursor-help',
                         scoreClass,
                       )}
                     >
@@ -186,7 +186,7 @@
               {#snippet child({ props })}
                 <div
                   {...props}
-                  class="flex items-center gap-1 text-[10px] text-muted-foreground cursor-help"
+                  class="flex items-center gap-1 text-[11px] text-muted-foreground cursor-help"
                 >
                   <MapPin class="size-2.5" />
                   <span class="truncate max-w-[150px]">{job.location}</span>
@@ -205,7 +205,7 @@
                 <span
                   {...props}
                   class={cn(
-                    'inline-flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded border font-medium',
+                    'inline-flex items-center gap-0.5 text-[11px] px-1 py-0.5 rounded border font-medium',
                     workModeUi.tint,
                   )}
                 >
@@ -227,7 +227,7 @@
               <span
                 {...props}
                 class={cn(
-                  'inline-flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded border font-medium cursor-help',
+                  'inline-flex items-center gap-0.5 text-[11px] px-1 py-0.5 rounded border font-medium cursor-help',
                   job.salary
                     ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-300/90'
                     : 'bg-muted/40 border-border/40 text-muted-foreground/50',
@@ -252,7 +252,7 @@
                   {...props}
                   variant="outline"
                   class={cn(
-                    'text-[10px] h-4 px-1 font-mono uppercase border cursor-help',
+                    'text-[11px] h-4 px-1 font-mono uppercase border cursor-help',
                     APPLICATION_STATUS_TINTS[as],
                   )}
                 >
@@ -276,7 +276,7 @@
                   {...props}
                   variant="outline"
                   class={cn(
-                    'text-[10px] h-4 px-1 font-mono uppercase border cursor-help',
+                    'text-[11px] h-4 px-1 font-mono uppercase border cursor-help',
                     BG_TINTS[bg],
                   )}
                 >

@@ -128,7 +128,7 @@
             </Tooltip.Root>
           </Tooltip.Provider>
           <DropdownMenu.Content side="bottom" align="end" class="w-52">
-            <DropdownMenu.Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+            <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
               >{title} · {jobs.length}</DropdownMenu.Label
             >
             <DropdownMenu.Item onSelect={visibleCount >= jobs.length ? showLess : showAll}>

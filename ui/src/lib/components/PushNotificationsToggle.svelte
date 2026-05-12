@@ -198,7 +198,7 @@
     </div>
   {/if}
 
-  <p class="text-[10px] text-muted-foreground/70 leading-relaxed">
+  <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
     Uses the browser Notification API — fires when the dashboard tab is in the background.
     Local-only; no push server, no Web Push subscription. Daily digest runs every morning at 07:00
     via an autopilot job; that fires regardless of OS notification permission.

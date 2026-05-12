@@ -217,7 +217,7 @@
       <!-- ===== Section: Status & fit ===== -->
       <div class="space-y-2">
         <h3
-          class="text-[10px] font-semibold text-muted-foreground/80 uppercase tracking-wider flex items-center gap-1.5"
+          class="text-[11px] font-semibold text-muted-foreground/80 uppercase tracking-wider flex items-center gap-1.5"
         >
           <CircleDashed class="size-3" />
           Status &amp; fit
@@ -262,7 +262,7 @@
               </DropdownMenu.Trigger>
               <DropdownMenu.Content side="bottom" align="end" class="w-64">
                 <DropdownMenu.Label
-                  class="text-[10px] uppercase tracking-wide text-muted-foreground"
+                  class="text-[11px] uppercase tracking-wide text-muted-foreground"
                   >Change status</DropdownMenu.Label
                 >
                 {#each STATUS_ORDER as s}
@@ -275,7 +275,7 @@
                     ></span>
                     <div class="flex-1 min-w-0">
                       <div class="text-xs font-medium">{s}</div>
-                      <div class="text-[10px] text-muted-foreground/70 leading-tight">
+                      <div class="text-[11px] text-muted-foreground/70 leading-tight">
                         {STATUS_HINT[s]}
                       </div>
                     </div>
@@ -313,7 +313,7 @@
                   : '—'}
             </span>
             {#if job.score == null && job.geminiScore != null}
-              <span class="text-[10px] text-muted-foreground/60 ml-1">gemini</span>
+              <span class="text-[11px] text-muted-foreground/60 ml-1">gemini</span>
             {/if}
           </dd>
 
@@ -335,7 +335,7 @@
             {#if job.bgRisk}
               <Badge
                 variant="outline"
-                class={cn('text-[10px] uppercase font-mono h-5', BG_TINTS[job.bgRisk])}
+                class={cn('text-[11px] uppercase font-mono h-5', BG_TINTS[job.bgRisk])}
                 >{job.bgRisk}</Badge
               >
             {:else}
@@ -359,7 +359,7 @@
           </Tooltip.Root>
           <dd>
             {#if job.workMode && job.workMode !== 'unknown'}
-              <Badge variant="outline" class={cn('text-[10px] h-5 font-medium', workModeUi.tint)}>
+              <Badge variant="outline" class={cn('text-[11px] h-5 font-medium', workModeUi.tint)}>
                 {workModeUi.label}
               </Badge>
             {:else}
@@ -372,7 +372,7 @@
       <!-- ===== Section: Identity ===== -->
       <div class="space-y-2 pt-3 border-t border-border/30">
         <h3
-          class="text-[10px] font-semibold text-muted-foreground/80 uppercase tracking-wider flex items-center gap-1.5"
+          class="text-[11px] font-semibold text-muted-foreground/80 uppercase tracking-wider flex items-center gap-1.5"
         >
           <Building2 class="size-3" />
           Identity
@@ -456,7 +456,7 @@
       {#if job.reportFile || job.pdfFile}
         <div class="space-y-2 pt-3 border-t border-border/30">
           <h3
-            class="text-[10px] font-semibold text-muted-foreground/80 uppercase tracking-wider flex items-center gap-1.5"
+            class="text-[11px] font-semibold text-muted-foreground/80 uppercase tracking-wider flex items-center gap-1.5"
           >
             <FileText class="size-3" />
             Files
@@ -480,7 +480,7 @@
                 >
               </Tooltip.Root>
               <dd
-                class="truncate font-mono text-[10px] text-muted-foreground"
+                class="truncate font-mono text-[11px] text-muted-foreground"
                 title={job.reportFile}
               >
                 {job.reportFile}
@@ -517,7 +517,7 @@
     {#if job.notes}
       <div class="pt-3 border-t border-border/30">
         <h4
-          class="text-[10px] font-semibold text-muted-foreground/80 uppercase tracking-wider mb-1.5"
+          class="text-[11px] font-semibold text-muted-foreground/80 uppercase tracking-wider mb-1.5"
         >
           Notes
         </h4>

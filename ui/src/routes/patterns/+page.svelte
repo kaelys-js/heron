@@ -177,7 +177,7 @@
                   <div class="flex-1 min-w-0 space-y-1">
                     <div class="text-sm font-medium">{s.action}</div>
                     <p class="text-[11px] opacity-80 leading-relaxed">{s.reasoning}</p>
-                    <div class="flex items-center gap-2 text-[10px] opacity-70 flex-wrap">
+                    <div class="flex items-center gap-2 text-[11px] opacity-70 flex-wrap">
                       <span class="font-mono">impact: {s.impact}</span>
                       <span>·</span>
                       <span class="font-mono">{s.op}</span>
