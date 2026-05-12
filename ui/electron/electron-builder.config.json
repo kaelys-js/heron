@@ -1,0 +1,88 @@
+{
+  "appId": "com.resistjs.careerops",
+  "productName": "career-ops",
+  "copyright": "Copyright © 2026 santifer",
+  "directories": {
+    "buildResources": "build",
+    "output": "dist"
+  },
+  "files": [
+    "assets/**/*",
+    "build/**/*",
+    "capacitor.config.*",
+    "app/**/*"
+  ],
+  "extraResources": [
+    {
+      "from": "../build/index.js",
+      "to": "app/server/index.js"
+    },
+    {
+      "from": "../build",
+      "to": "app/server",
+      "filter": ["**/*", "!**/static/**"]
+    }
+  ],
+  "publish": [
+    {
+      "provider": "github",
+      "owner": "santifer",
+      "repo": "career-ops",
+      "releaseType": "release"
+    }
+  ],
+  "mac": {
+    "category": "public.app-category.productivity",
+    "target": [
+      { "target": "dmg", "arch": ["x64", "arm64"] },
+      { "target": "zip", "arch": ["x64", "arm64"] }
+    ],
+    "icon": "build/icon.icns",
+    "hardenedRuntime": true,
+    "gatekeeperAssess": false,
+    "entitlements": "build/entitlements.mac.plist",
+    "entitlementsInherit": "build/entitlements.mac.plist",
+    "notarize": false,
+    "extendInfo": {
+      "CFBundleURLTypes": [
+        {
+          "CFBundleURLName": "careerops",
+          "CFBundleURLSchemes": ["careerops"]
+        }
+      ],
+      "NSLocalNetworkUsageDescription": "career-ops uses local network discovery to find your iPhone app on the same wifi.",
+      "NSBonjourServices": ["_career-ops._tcp"]
+    }
+  },
+  "dmg": {
+    "writeUpdateInfo": true,
+    "sign": false
+  },
+  "win": {
+    "target": [
+      { "target": "nsis", "arch": ["x64"] }
+    ],
+    "icon": "build/icon.ico",
+    "verifyUpdateCodeSignature": false
+  },
+  "nsis": {
+    "allowElevation": true,
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true
+  },
+  "linux": {
+    "target": [
+      { "target": "AppImage", "arch": ["x64"] },
+      { "target": "deb", "arch": ["x64"] }
+    ],
+    "icon": "build/icon.png",
+    "category": "Office"
+  },
+  "protocols": [
+    {
+      "name": "careerops",
+      "schemes": ["careerops"]
+    }
+  ]
+}

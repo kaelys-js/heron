@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CAPACITOR_DEBUG</key>
+	<string>$(CAPACITOR_DEBUG)</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>career-ops</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>armv7</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
+
+	<!-- ===== career-ops customizations ===== -->
+
+	<!-- Custom URL scheme: careerops://job/abc opens the app. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.resistjs.careerops</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>careerops</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- Local network access — for mDNS Bonjour discovery of the desktop
+	     career-ops server on the same wifi. Without this string iOS shows
+	     a permission prompt with no explanation. -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>career-ops uses local network discovery to find your desktop app on the same wifi.</string>
+
+	<!-- Bonjour service types we want to browse for. iOS 14+ requires
+	     this allowlist to be declared up-front. -->
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_career-ops._tcp</string>
+	</array>
+
+	<!-- Background modes — keep SSE connection alive briefly when backgrounded,
+	     and allow background-fetch every 15min for high-priority Issues
+	     when SSE has dropped. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+
+	<!-- App Transport Security: allow http:// to local servers (Capacitor
+	     server cleartext = true mirrors this on the JS side). -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>localhost</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<!-- Tailscale magic-DNS hostnames are *.ts.net. -->
+			<key>ts.net</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+
+	<!-- Face ID usage description (Phase 3.6) -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>career-ops uses Face ID to protect sensitive screens like the negotiation playbook.</string>
+
+	<!-- Spotlight indexing description -->
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>com.resistjs.careerops.job</string>
+		<string>com.resistjs.careerops.openJob</string>
+	</array>
+</dict>
+</plist>

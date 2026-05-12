@@ -1,0 +1,94 @@
+# career-ops iOS — Fastlane lanes.
+#
+# `bundle exec fastlane beta` builds the app, signs it, and uploads to
+# TestFlight for internal-tester distribution. No App Store submission
+# (deliberately — the app is for personal use).
+#
+# Required secrets (env vars in CI, .env locally):
+#   APPLE_ID                 — Apple Developer account email
+#   APPLE_TEAM_ID            — found in developer.apple.com Membership
+#   APPLE_APP_SPECIFIC_PASSWORD  — created at appleid.apple.com (Sign-In and Security)
+#   FASTLANE_APPLE_API_KEY   — JSON file path (or contents) of an App Store Connect API key
+#
+# Signing strategy: match-style via App Store Connect API key. Doesn't
+# require committing certificates to a git repo — Fastlane downloads
+# them at build time from a separate cert repo (configured via match).
+# For first run, see SETUP-FASTLANE.md.
+
+default_platform(:ios)
+
+APP_IDENTIFIER = "com.resistjs.careerops"
+WORKSPACE = "App.xcworkspace"
+SCHEME = "App"
+
+platform :ios do
+  before_all do
+    setup_ci if is_ci
+  end
+
+  desc "Increment build number, sign, archive, upload to TestFlight"
+  lane :beta do
+    # Bump build number to current epoch — deterministic and always larger
+    # than any prior build.
+    increment_build_number(
+      xcodeproj: "App.xcodeproj",
+      build_number: Time.now.to_i.to_s
+    )
+
+    # Use App Store Connect API key auth (no Apple ID password required).
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_KEY"]
+    )
+
+    # Resolve signing — use a cert repo if MATCH_GIT_URL is set; otherwise
+    # fall back to in-keychain certs (works for local dev).
+    if ENV["MATCH_GIT_URL"]
+      match(
+        type: "appstore",
+        app_identifier: APP_IDENTIFIER,
+        git_url: ENV["MATCH_GIT_URL"],
+        api_key: api_key,
+        readonly: is_ci
+      )
+    end
+
+    build_app(
+      workspace: WORKSPACE,
+      scheme: SCHEME,
+      export_method: "app-store",
+      configuration: "Release",
+      clean: true
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true,
+      changelog: changelog_for_this_build,
+      distribute_external: false  # internal testers only
+    )
+  end
+
+  desc "Quick build without upload — for local smoke testing"
+  lane :build_only do
+    build_app(
+      workspace: WORKSPACE,
+      scheme: SCHEME,
+      configuration: "Debug",
+      export_method: "development",
+      skip_archive: true,
+      skip_codesigning: true
+    )
+  end
+
+  # Pull the last commit's message as TestFlight changelog. Falls back
+  # to a default if git isn't available (CI without a checkout).
+  def changelog_for_this_build
+    begin
+      sh("git log -1 --pretty=%B").strip
+    rescue
+      "career-ops automatic build (#{Time.now.utc.strftime('%Y-%m-%d')})"
+    end
+  end
+end

@@ -1,0 +1,183 @@
+# Cross-platform native builds — desktop (DMG / .exe / .AppImage) + iOS (TestFlight).
+#
+# Triggered by pushing a tag matching `v*.*.*`. Runs three jobs in
+# parallel: macOS, Windows, Linux. Each builds its own desktop format
+# and uploads the artifact to the GitHub release. A separate macOS-only
+# job builds + uploads the iOS TestFlight build via Fastlane.
+#
+# Secrets required (configure in GitHub repo settings → Secrets):
+#   APPLE_ID                 — Apple Developer account email
+#   APPLE_APP_SPECIFIC_PASSWORD — generated at appleid.apple.com
+#   APPLE_TEAM_ID            — found in developer.apple.com
+#   MAC_CERTIFICATE          — base64-encoded Developer ID Application .p12
+#   MAC_CERTIFICATE_PASSWORD — the .p12 export password
+#   IOS_CERTIFICATE          — base64-encoded Apple Distribution .p12
+#   IOS_CERTIFICATE_PASSWORD — the .p12 export password
+#   IOS_PROVISIONING_PROFILE — base64-encoded .mobileprovision
+#   FASTLANE_APPLE_API_KEY   — App Store Connect API key JSON
+#   GITHUB_TOKEN             — auto-provided by Actions
+name: native-release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+
+permissions:
+  contents: write    # upload release artifacts
+
+jobs:
+  build-desktop:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - name: Install ui deps
+        working-directory: ui
+        run: pnpm install --frozen-lockfile
+
+      - name: Build SvelteKit (Node adapter — embedded server entry)
+        working-directory: ui
+        run: pnpm build
+
+      - name: Build SvelteKit (static — WebView shell)
+        working-directory: ui
+        env:
+          CAPACITOR: '1'
+          PUBLIC_CAPACITOR_BUILD: '1'
+        run: pnpm build
+
+      - name: Generate icons
+        run: node native/icons/generate-icons.mjs
+
+      - name: Capacitor sync (electron)
+        working-directory: ui
+        run: pnpm exec cap sync electron
+
+      - name: Install electron deps
+        working-directory: ui/electron
+        run: npm install --no-audit --no-fund
+
+      - name: Compile electron TS
+        working-directory: ui/electron
+        run: npm run build
+
+      # macOS-only: import signing cert before electron-builder runs.
+      - name: Import macOS signing certs
+        if: matrix.os == 'macos-latest'
+        env:
+          MAC_CERTIFICATE: ${{ secrets.MAC_CERTIFICATE }}
+          MAC_CERTIFICATE_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ -n "$MAC_CERTIFICATE" ]; then
+            echo "$MAC_CERTIFICATE" | base64 --decode > /tmp/cert.p12
+            security create-keychain -p "" build.keychain
+            security default-keychain -s build.keychain
+            security unlock-keychain -p "" build.keychain
+            security import /tmp/cert.p12 -k build.keychain -P "$MAC_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+            security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+            echo "Signing cert imported"
+          else
+            echo "No signing cert — building unsigned (Gatekeeper warning expected)"
+          fi
+
+      - name: Run electron-builder (publishes to GitHub Release on tag)
+        working-directory: ui/electron
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: npm run electron:make
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: career-ops-${{ matrix.os }}
+          path: |
+            ui/electron/dist/*.dmg
+            ui/electron/dist/*.exe
+            ui/electron/dist/*.AppImage
+            ui/electron/dist/*.deb
+            ui/electron/dist/*.zip
+            ui/electron/dist/latest*.yml
+          if-no-files-found: warn
+
+  build-ios:
+    name: Build iOS (TestFlight)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Install ui deps
+        working-directory: ui
+        run: pnpm install --frozen-lockfile
+
+      - name: Build SvelteKit (static — WebView shell)
+        working-directory: ui
+        env:
+          CAPACITOR: '1'
+          PUBLIC_CAPACITOR_BUILD: '1'
+        run: pnpm build
+
+      - name: Generate icons
+        run: node native/icons/generate-icons.mjs
+
+      - name: Capacitor sync (ios)
+        working-directory: ui
+        run: pnpm exec cap sync ios
+
+      - name: Install Cocoapods
+        working-directory: ui/ios/App
+        run: pod install --repo-update
+
+      - name: Build + upload to TestFlight via Fastlane
+        working-directory: ui/ios/App
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          FASTLANE_APPLE_API_KEY: ${{ secrets.FASTLANE_APPLE_API_KEY }}
+        run: bundle exec fastlane beta
+
+  # Auto-rebuild + reupload to TestFlight every 60 days so the build
+  # doesn't expire. Runs at 09:00 UTC on the 1st of every other month.
+  ios-keepalive:
+    if: github.event_name == 'schedule'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trigger build-ios job via repository_dispatch
+        run: gh workflow run native-release.yml
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
