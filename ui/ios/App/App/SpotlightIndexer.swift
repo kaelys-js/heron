@@ -15,7 +15,7 @@ import MobileCoreServices
  */
 final class SpotlightIndexer {
     static let shared = SpotlightIndexer()
-    private let domainID = "com.resistjs.careerops.jobs"
+    private let domainID = Brand.spotlightDomain
 
     func reindex(jobs: [JobIndexEntry]) {
         let items: [CSSearchableItem] = jobs.map { job in

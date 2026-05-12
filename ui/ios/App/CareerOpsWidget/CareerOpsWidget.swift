@@ -51,7 +51,7 @@ struct CareerOpsTimelineProvider: TimelineProvider {
 
     private func readStats() -> CareerOpsStats {
         // App Group UserDefaults — shared with the main app target.
-        guard let defaults = UserDefaults(suiteName: "group.com.resistjs.careerops") else {
+        guard let defaults = UserDefaults(suiteName: Brand.appGroup) else {
             return CareerOpsStats(queued: 0, appliedToday: 0, upcomingInterviews: 0)
         }
         return CareerOpsStats(
@@ -73,14 +73,14 @@ struct CareerOpsWidgetEntryView: View {
                 Text("career-ops").font(.caption).foregroundStyle(.secondary)
                 Text("\(entry.stats.queued)").font(.system(size: 40, weight: .bold))
                 Text("queued").font(.caption2).foregroundStyle(.secondary)
-            }.padding().widgetURL(URL(string: "careerops://queue"))
+            }.padding().widgetURL(URL(string: Brand.deepLink("queue")))
 
         case .systemMedium:
             HStack(spacing: 16) {
                 StatBlock(label: "Queued", value: entry.stats.queued)
                 StatBlock(label: "Applied", value: entry.stats.appliedToday)
                 StatBlock(label: "Interviews", value: entry.stats.upcomingInterviews)
-            }.padding().widgetURL(URL(string: "careerops://pipeline"))
+            }.padding().widgetURL(URL(string: Brand.deepLink("pipeline")))
 
         case .accessoryCircular:
             ZStack {

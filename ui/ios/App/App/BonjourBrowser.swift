@@ -16,7 +16,7 @@ import Network
 final class BonjourBrowser {
     private let serviceType: String
     private var browser: NWBrowser?
-    private let queue = DispatchQueue(label: "com.resistjs.careerops.bonjour")
+    private let queue = DispatchQueue(label: "\(Brand.bundleId).bonjour")
 
     init(serviceType: String) {
         self.serviceType = serviceType
@@ -67,7 +67,7 @@ final class BonjourBrowser {
                         @unknown default: hostStr = "unknown"
                         }
                         let url = "http://\(hostStr):\(port.rawValue)"
-                        UserDefaults.standard.set(url, forKey: "career-ops:lan-url")
+                        UserDefaults.standard.set(url, forKey: Brand.DefaultsKey.lanUrl)
                         NSLog("[bonjour] resolved career-ops at \(url)")
                     }
                 }
