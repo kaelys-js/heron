@@ -67,56 +67,114 @@
         }),
     );
 
-    // Splash dismiss + boot-fallback removal — coordinate so the user sees
-    // a clean crossfade native-splash → boot-fallback → SvelteKit shell
-    // instead of three abrupt cuts. Two rAFs ensures the layout has
-    // painted at least one frame before we tell either layer to fade.
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        // Fade out the inline boot-fallback first (transition: opacity 250ms
-        // is set in app.html's inline style). data-hide="1" triggers the
-        // CSS rule that drops opacity to 0; remove the node 300ms later.
-        if (typeof document !== 'undefined') {
-          const bootFallback = document.getElementById('boot-fallback');
-          if (bootFallback) {
-            bootFallback.setAttribute('data-hide', '1');
-            setTimeout(() => bootFallback.remove(), 300);
+    // Splash dismiss + boot-fallback removal — coordinated handover so
+    // the user sees a clean sequence (native-splash → branded boot-
+    // fallback → SvelteKit shell) instead of three abrupt cuts.
+    //
+    // Minimum-visible-duration: the boot-fallback's icon entrance
+    // animation runs 200ms (dots delay) + 360ms (mark scale/fade) =
+    // ~560ms. Hydration on a hot WebView can finish in under 200ms,
+    // and ripping the fallback out at that point clips the entrance
+    // animation visible to the user. Enforce a floor of 700ms from the
+    // moment the layout mounts so the icon always lands cleanly before
+    // we start fading.
+    //
+    // Two-rAF wrapper inside the timer guarantees the SvelteKit shell
+    // has painted at least one frame BEFORE the fallback fades, so the
+    // crossfade is one continuous frame swap.
+    const BOOT_FALLBACK_MIN_MS = 700;
+    setTimeout(() => {
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          if (typeof document !== 'undefined') {
+            const bootFallback = document.getElementById('boot-fallback');
+            if (bootFallback) {
+              bootFallback.setAttribute('data-hide', '1');
+              setTimeout(() => bootFallback.remove(), 300);
+            }
           }
-        }
-        // Dismiss the Capacitor native splash in the same frame, with a
-        // matched fadeOutDuration so the user perceives a single crossfade.
-        // 400ms gives the SvelteKit shell time to paint at least its
-        // sidebar + topbar chrome.
-        import('@capacitor/splash-screen')
-          .then(({ SplashScreen }) => SplashScreen.hide({ fadeOutDuration: 400 }))
-          .catch(() => {
-            /* not running native; nothing to dismiss */
-          });
-      }),
-    );
+          // Native Capacitor splash — matched fadeOutDuration so the
+          // user perceives a single crossfade. 400ms covers the
+          // SvelteKit shell's first paint of sidebar + topbar chrome.
+          import('@capacitor/splash-screen')
+            .then(({ SplashScreen }) => SplashScreen.hide({ fadeOutDuration: 400 }))
+            .catch(() => {
+              /* not running native; nothing to dismiss */
+            });
+        }),
+      );
+    }, BOOT_FALLBACK_MIN_MS);
 
     // Client-side auth gate. In adapter-node builds hooks.server.ts
     // bounces unauthenticated users to /login before the page ever
     // hydrates — but in adapter-static (Capacitor) hooks.server.ts
     // doesn't run, so we have to gate here.
     //
-    // Mechanism: a localStorage flag set by /login on successful sign-in
-    // (`career-ops:authed = "1"`) and cleared on sign-out. The actual
-    // network probe (authClient.getSession()) is unreliable in Capacitor
-    // mode because the backend isn't resolved at first-paint and the
-    // fetch can hang silently — racing against a timeout works for
-    // showing the redirect, but if the page-level `+page.svelte` calls
-    // queueMicrotask(goto('/inbox')) faster than the timeout, the gate's
-    // redirect can be overridden. The localStorage check is synchronous
-    // so it wins the race. PUBLIC_ROUTES + onboarding remain reachable.
+    // Two-layer check:
+    //   1. SYNCHRONOUS — if there's no localStorage flag at all, redirect
+    //      immediately. Wins the race against +page.svelte's onMount
+    //      `goto('/inbox')`.
+    //   2. ASYNCHRONOUS — even WITH the flag, probe the real session via
+    //      authClient.getSession(). A stale flag (left over from a prior
+    //      install where data persisted across uninstall in WKWebView's
+    //      WebsiteData) would otherwise let unauthenticated users see the
+    //      app shell. If the probe returns no session, clear the flag and
+    //      redirect.
+    //
+    // PUBLIC_ROUTES + onboarding remain reachable in both layers.
     if (
       typeof window !== 'undefined' &&
       !isPublicRoute(window.location.pathname) &&
-      !window.location.protocol.startsWith('http') &&
-      localStorage.getItem('career-ops:authed') !== '1'
+      !window.location.protocol.startsWith('http')
     ) {
-      const redirectTo = '/login?redirectTo=' + encodeURIComponent(window.location.pathname);
-      void goto(redirectTo, { replaceState: true });
+      const path = window.location.pathname;
+      // Layer 1: sync flag check — bounce immediately if no flag.
+      if (localStorage.getItem('career-ops:authed') !== '1') {
+        // window.location.replace cancels every in-flight SvelteKit
+        // navigation, including the root +page.svelte's queueMicrotask
+        // goto('/inbox') that would otherwise win the race.
+        window.location.replace('/login?redirectTo=' + encodeURIComponent(path));
+      } else {
+        // Layer 2: async session probe. authClient.getSession() races
+        // through the customFetch which awaits backend resolution. Cap at
+        // 4s so an unreachable backend doesn't trap the user on a stale
+        // shell — that case falls back to "treat as unauthed".
+        const ctrl = new AbortController();
+        const probeTimeout = setTimeout(() => ctrl.abort(), 4000);
+        Promise.race([
+          authClient.getSession({ fetchOptions: { signal: ctrl.signal } }).then((r) => r),
+          new Promise<{ data: { user?: unknown } | null }>((resolve) =>
+            setTimeout(() => resolve({ data: null }), 4000),
+          ),
+        ])
+          .then((result) => {
+            clearTimeout(probeTimeout);
+            const user = (result as { data: { user?: unknown } | null })?.data?.user;
+            if (!user) {
+              // Real auth state says unauthenticated. Scrub the stale
+              // flag (incl. bearer token) so the layer-1 check catches it
+              // on the next page-load too.
+              localStorage.removeItem('career-ops:authed');
+              localStorage.removeItem('career-ops:bearer-token');
+              // Hard-navigate (window.location), NOT SvelteKit goto.
+              // The root +page.svelte enqueues `goto('/inbox')` in
+              // onMount via queueMicrotask. Two SvelteKit goto()s race
+              // and the last one wins — which is the wrong one. A
+              // direct location.replace() cancels every in-flight
+              // navigation and wins unconditionally.
+              window.location.replace('/login?redirectTo=' + encodeURIComponent(path));
+            }
+          })
+          .catch(() => {
+            // Probe failed (backend unreachable / aborted). Treat as
+            // unauthed so we never leave the user on a stranded app shell.
+            localStorage.removeItem('career-ops:authed');
+            localStorage.removeItem('career-ops:bearer-token');
+            void goto('/login?redirectTo=' + encodeURIComponent(path), {
+              replaceState: true,
+            });
+          });
+      }
     }
   });
 
