@@ -70,8 +70,13 @@
     \end{tabular*}\vspace{-7pt}
 }
 \newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{0pt}}
-\renewcommand\labelitemi{$\vcenter{\hbox{\tiny$\bullet$}}$}
-\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+% Bullet markers — use \textbullet rather than the math-mode
+% \vcenter{\hbox{\tiny$\bullet$}} hack the upstream template shipped with.
+% Some ATS parsers extract math-wrapped glyphs as garbage characters; plain
+% \textbullet is rendered the same visually but lives in the text layer as
+% U+2022, which pdftotext and every ATS handles cleanly.
+\renewcommand\labelitemi{\textbullet}
+\renewcommand\labelitemii{\textbullet}
 \newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.0in, label={}]}
 \newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
 \newcommand{\resumeItemListStart}{\begin{itemize}}

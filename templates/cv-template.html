@@ -3,7 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{NAME}} — CV</title>
+<title>{{NAME}} — {{ROLE_TITLE}}</title>
+<!--
+  PDF / ATS metadata. generate-pdf.mjs reads these <meta> tags and stamps
+  them into the PDF's Info dictionary, so:
+    • `pdfinfo` / Mac Preview / Adobe show the right Author + Subject
+    • Recruiter ATS systems that index PDF metadata pick up the keywords
+    • Screen-readers announce the document correctly
+  The pdf mode (modes/pdf.md) fills these placeholders with values
+  tailored to the job (Subject = role @ company, Keywords = JD keyword list).
+-->
+<meta name="author" content="{{NAME}}">
+<meta name="subject" content="{{ROLE_AT_COMPANY}}">
+<meta name="keywords" content="{{KEYWORDS_CSV}}">
+<meta name="description" content="{{SUMMARY_DESCRIPTION}}">
 <style>
   @font-face {
     font-family: 'Space Grotesk';

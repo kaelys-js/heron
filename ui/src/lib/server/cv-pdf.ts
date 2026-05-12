@@ -273,3 +273,52 @@ function spawnPdfRender(
 export function generalCvPath(profileId?: string): string {
   return paths(resolveId(profileId)).generalCvPdf;
 }
+
+/**
+ * Lint a generated PDF for ATS compatibility — non-blocking, just emits
+ * an activity event with the score so the dashboard can surface it.
+ *
+ * Returns { score, warnings, failures } so callers can decide whether
+ * to retry the render with different content. Score < 75% → fail soft +
+ * surface an Issue (the user should regenerate after fixing the JD
+ * keyword injection / section names).
+ */
+export function spawnAtsCheck(
+  pdfPath: string,
+): Promise<{ score: number; warnings: number; failures: number; raw: string }> {
+  return new Promise((resolve, reject) => {
+    const p = spawn('node', ['ats-check.mjs', pdfPath, '--json'], {
+      cwd: ROOT,
+      env: { ...process.env },
+    });
+    let stdoutBuf = '';
+    let stderrBuf = '';
+    p.stdout?.on('data', (c: Buffer) => {
+      stdoutBuf += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderrBuf += c.toString();
+    });
+    p.on('error', (err) => reject(err));
+    p.on('close', () => {
+      // ats-check exits non-zero when score is low — but we still want
+      // to parse its JSON output (it always emits it on stdout first).
+      try {
+        const json = JSON.parse(stdoutBuf);
+        resolve({
+          score: json.score ?? 0,
+          warnings: json.warnCount ?? 0,
+          failures: json.failCount ?? 0,
+          raw: stdoutBuf,
+        });
+      } catch {
+        reject(
+          new Error(
+            'ats-check.mjs produced non-JSON output: ' +
+              (stderrBuf.slice(-200) || stdoutBuf.slice(-200)),
+          ),
+        );
+      }
+    });
+  });
+}
