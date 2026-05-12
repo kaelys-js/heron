@@ -34,6 +34,7 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "indexJobs", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "clearJobIndex", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setUserActivity", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "drainNativeErrors", returnType: CAPPluginReturnPromise),
     ]
 
     @objc public func getLanUrl(_ call: CAPPluginCall) {
@@ -118,6 +119,13 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
     @objc public func clearJobIndex(_ call: CAPPluginCall) {
         SpotlightIndexer.shared.clear()
         call.resolve(["ok": true])
+    }
+
+    @objc public func drainNativeErrors(_ call: CAPPluginCall) {
+        // Read + clear the queue of native errors captured while the
+        // WebView wasn't able to forward them.
+        let errors = ErrorReporter.shared.drain()
+        call.resolve(["errors": errors])
     }
 
     @objc public func setUserActivity(_ call: CAPPluginCall) {

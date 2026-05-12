@@ -10,7 +10,7 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { step, run, which, ok, warn, info, UI } from './_lib.mjs';
+import { step, run, which, ok, warn, info, UI, ROOT } from './_lib.mjs';
 
 step(1, 'Preflight');
 if (!which('pnpm')) {
@@ -32,16 +32,19 @@ if (!existsSync(iosDir)) {
   process.exit(1);
 }
 
-step(2, 'Building static shell for Capacitor');
+step(2, 'Applying brand (idempotent — propagates branding/brand.json)');
+run('node', [join(ROOT, 'scripts/native/apply-brand.mjs')], { silent: true });
+
+step(3, 'Building static shell for Capacitor');
 run('pnpm', ['build'], {
   cwd: UI,
   env: { CAPACITOR: '1', PUBLIC_CAPACITOR_BUILD: '1' },
 });
 
-step(3, 'Syncing iOS project');
+step(4, 'Syncing iOS project');
 run('pnpm', ['exec', 'cap', 'sync', 'ios'], { cwd: UI });
 
-step(4, 'Installing Cocoapods');
+step(5, 'Installing Cocoapods');
 if (which('pod')) {
   run('pod', ['install', '--silent'], { cwd: iosDir, allowFail: true });
   ok('pods installed');
@@ -49,7 +52,7 @@ if (which('pod')) {
   warn('skipped — pod not on PATH');
 }
 
-step(5, 'Starting Vite dev server in background');
+step(6, 'Starting Vite dev server in background');
 const dev = spawn('pnpm', ['dev'], {
   cwd: UI,
   stdio: 'inherit',
@@ -58,7 +61,7 @@ const dev = spawn('pnpm', ['dev'], {
 });
 ok(`vite dev started (pid ${dev.pid}) — listening on localhost:5173`);
 
-step(6, 'Opening Xcode');
+step(7, 'Opening Xcode');
 const workspace = join(iosDir, 'App.xcworkspace');
 run('open', [workspace], { allowFail: true });
 ok('Xcode opened — press ⌘R to run');

@@ -18,11 +18,14 @@ if (!which('pnpm')) {
   process.exit(1);
 }
 
-step(2, 'Ensuring electron deps');
+step(2, 'Applying brand (idempotent — propagates branding/brand.json)');
+run('node', [join(ROOT, 'scripts/native/apply-brand.mjs')], { silent: true });
+
+step(3, 'Ensuring electron deps');
 const electronDir = join(UI, 'electron');
 run('npm', ['install', '--silent', '--no-audit', '--no-fund'], { cwd: electronDir, allowFail: true });
 
-step(3, 'Launching SvelteKit dev server + Electron in parallel');
+step(4, 'Launching SvelteKit dev server + Electron in parallel');
 console.log('  ' + '─'.repeat(60));
 console.log('  Press Ctrl+C to stop both.');
 console.log('  ' + '─'.repeat(60) + '\n');

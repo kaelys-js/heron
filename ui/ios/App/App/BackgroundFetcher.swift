@@ -34,7 +34,14 @@ final class BackgroundFetcher {
         req.setValue("application/json", forHTTPHeaderField: "Accept")
 
         let task = URLSession.shared.dataTask(with: req) { data, response, error in
-            if let _ = error { completion(.failed); return }
+            if let error = error {
+                ErrorReporter.shared.report(
+                    message: "background fetch network error: \(error.localizedDescription)",
+                    source: "BackgroundFetcher",
+                    level: "warn"
+                )
+                completion(.failed); return
+            }
             guard let http = response as? HTTPURLResponse, http.statusCode == 200,
                   let data = data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],

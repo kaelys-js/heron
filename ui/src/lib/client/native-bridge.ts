@@ -7,6 +7,10 @@
  * fallback.
  */
 import { Capacitor, registerPlugin } from '@capacitor/core';
+import { BRAND_STORAGE_PREFIX } from './brand';
+
+/** Web/desktop fallback prefix for keychain emulation via localStorage. */
+const KC_PREFIX = `${BRAND_STORAGE_PREFIX}:kc:`;
 
 export type JobIndexEntry = {
   id: string;
@@ -26,6 +30,7 @@ type CareerOpsNativePlugin = {
   indexJobs(opts: { jobs: JobIndexEntry[] }): Promise<{ ok: boolean; indexed: number }>;
   clearJobIndex(): Promise<{ ok: boolean }>;
   setUserActivity(opts: { type: string; title: string; data: Record<string, unknown> }): Promise<{ ok: boolean }>;
+  drainNativeErrors(): Promise<{ errors: Array<Record<string, unknown>> }>;
 };
 
 const native = registerPlugin<CareerOpsNativePlugin>('CareerOpsNative');
@@ -68,7 +73,7 @@ export async function keychainSet(key: string, value: string): Promise<boolean> 
   if (!isIos()) {
     // Fallback: store in IndexedDB or just-localStorage on web/desktop.
     try {
-      localStorage.setItem('career-ops:kc:' + key, value);
+      localStorage.setItem(KC_PREFIX + key, value);
       return true;
     } catch {
       return false;
@@ -85,7 +90,7 @@ export async function keychainSet(key: string, value: string): Promise<boolean> 
 export async function keychainGet(key: string): Promise<string | null> {
   if (!isIos()) {
     try {
-      return localStorage.getItem('career-ops:kc:' + key);
+      return localStorage.getItem(KC_PREFIX + key);
     } catch {
       return null;
     }
@@ -101,7 +106,7 @@ export async function keychainGet(key: string): Promise<string | null> {
 export async function keychainRemove(key: string): Promise<boolean> {
   if (!isIos()) {
     try {
-      localStorage.removeItem('career-ops:kc:' + key);
+      localStorage.removeItem(KC_PREFIX + key);
       return true;
     } catch {
       return false;
@@ -142,5 +147,18 @@ export async function setUserActivity(type: string, title: string, data: Record<
     return res.ok;
   } catch {
     return false;
+  }
+}
+
+/** Read + clear queued native iOS errors. Called by the error-reporter
+ *  during its flush cycle so iOS native errors land in /api/issues
+ *  through the same path web/desktop errors take. */
+export async function drainNativeErrors(): Promise<Array<Record<string, unknown>>> {
+  if (!isIos()) return [];
+  try {
+    const res = await native.drainNativeErrors();
+    return res.errors ?? [];
+  } catch {
+    return [];
   }
 }

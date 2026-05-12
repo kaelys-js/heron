@@ -40,6 +40,13 @@ final class BonjourBrowser {
         }
         browser.stateUpdateHandler = { state in
             NSLog("[bonjour] state: \(state)")
+            if case .failed(let err) = state {
+                ErrorReporter.shared.report(
+                    message: "Bonjour browse failed: \(err.localizedDescription)",
+                    source: "BonjourBrowser",
+                    level: "warn"
+                )
+            }
         }
         browser.start(queue: queue)
         self.browser = browser

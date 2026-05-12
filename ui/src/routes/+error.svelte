@@ -6,9 +6,23 @@
   import * as Card from '$lib/components/ui/card';
   import { ArrowLeft, Home, RotateCw, FileSearch, ServerCrash, WifiOff, Lock, ShieldAlert } from '@lucide/svelte';
   import { docTitle } from '$lib/config/branding';
+  import { reportError } from '$lib/client/error-reporter';
+  import { onMount } from 'svelte';
 
   let status = $derived(page.status);
   let err = $derived(page.error);
+
+  // Forward every error route to the unified reporter so it lands
+  // in the Issues store + activity feed + OS notification (rate-limited).
+  onMount(() => {
+    if (page.error) {
+      void reportError(page.error.message ?? 'Unknown route error', {
+        source: '+error.svelte',
+        route: page.url?.pathname,
+        data: { status: page.status },
+      });
+    }
+  });
 
   type ErrorPreset = {
     title: string;

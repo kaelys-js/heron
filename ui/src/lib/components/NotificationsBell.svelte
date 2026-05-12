@@ -13,6 +13,7 @@
   import { formatRelativeTime, cn } from '$lib/utils';
   import type { ActivityEvent, EventLevel } from '$lib/types';
   import EmptyState from './EmptyState.svelte';
+  import { BRAND_EVENTS } from '$lib/client/brand';
   import { ConfirmGate } from '$lib/confirm.svelte';
 
   // Clear-feed is destructive (wipes the entire activity log). Same red
@@ -41,14 +42,14 @@
   onMount(() => {
     notifications.init();
     if (typeof window !== 'undefined') {
-      window.addEventListener('career-ops:open-notifications', handleOpen);
+      window.addEventListener(BRAND_EVENTS.openNotifications, handleOpen);
     }
   });
   onDestroy(() => {
     notifications.destroy();
     confirmClear.destroy();
     if (typeof window !== 'undefined') {
-      window.removeEventListener('career-ops:open-notifications', handleOpen);
+      window.removeEventListener(BRAND_EVENTS.openNotifications, handleOpen);
     }
   });
 

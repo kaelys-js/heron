@@ -19,6 +19,7 @@
   import { Label } from '$lib/components/ui/label';
   import { onMount, onDestroy } from 'svelte';
   import { toast } from 'svelte-sonner';
+  import { BRAND_EVENTS, BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 
   type Permission = 'default' | 'granted' | 'denied' | 'unsupported';
 
@@ -28,7 +29,7 @@
 
   function loadPrefs() {
     if (typeof window === 'undefined') return;
-    const raw = window.localStorage.getItem('career-ops:push-prefs');
+    const raw = window.localStorage.getItem(`${BRAND_STORAGE_PREFIX}:push-prefs`);
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
@@ -38,7 +39,7 @@
   }
   function savePrefs() {
     if (typeof window === 'undefined') return;
-    window.localStorage.setItem('career-ops:push-prefs', JSON.stringify(enabledLevels));
+    window.localStorage.setItem(`${BRAND_STORAGE_PREFIX}:push-prefs`, JSON.stringify(enabledLevels));
   }
 
   function checkPermission(): Permission {
@@ -79,7 +80,7 @@
       new Notification('career-ops test', {
         body: 'OS-level notifications are working. You\'ll see these for high-priority events when the tab is in the background.',
         icon: '/favicon.ico',
-        tag: 'career-ops:test',
+        tag: `${BRAND_STORAGE_PREFIX}:test`,
       });
       toast.success('Test notification fired');
     } finally {
@@ -102,7 +103,7 @@
       new Notification('career-ops · ' + (ev.source ?? ''), {
         body: ev.title + (ev.message ? ' — ' + ev.message : ''),
         icon: '/favicon.ico',
-        tag: 'career-ops:' + (ev.source ?? 'evt'),
+        tag: `${BRAND_STORAGE_PREFIX}:` + (ev.source ?? 'evt'),
       });
     } catch { /* silently fail — Notification can throw if quota exceeded */ }
   }
@@ -111,12 +112,12 @@
     permission = checkPermission();
     loadPrefs();
     if (typeof window !== 'undefined') {
-      window.addEventListener('career-ops:notify', handleNotify);
+      window.addEventListener(BRAND_EVENTS.notify, handleNotify);
     }
   });
   onDestroy(() => {
     if (typeof window !== 'undefined') {
-      window.removeEventListener('career-ops:notify', handleNotify);
+      window.removeEventListener(BRAND_EVENTS.notify, handleNotify);
     }
   });
 

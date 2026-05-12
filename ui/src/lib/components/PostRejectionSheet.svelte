@@ -17,8 +17,9 @@
   import { api, ApiError } from '$lib/api';
   import { toast } from 'svelte-sonner';
   import { onMount } from 'svelte';
+  import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 
-  const EVENT_NAME = 'career-ops:post-rejection-prompt';
+  const EVENT_NAME = `${BRAND_STORAGE_PREFIX}:post-rejection-prompt`;
 
   let open = $state(false);
   let jobId = $state<string | null>(null);

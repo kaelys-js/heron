@@ -41,6 +41,16 @@ const state = readState();
 const envFile = join(process.env.HOME || '', '.career-ops', 'native-env');
 
 // ───────────────────────────────────────────────────────────────────
+step(-1, 'Activating git hooks (auto-applies brand on branding/ changes)');
+try {
+  const { execSync } = await import('node:child_process');
+  execSync('git config core.hooksPath .githooks', { stdio: 'pipe', cwd: ROOT });
+  ok('git hooksPath → .githooks (pre-commit auto-applies brand)');
+} catch (e) {
+  warn(`git hooks activation skipped: ${e.message}`);
+}
+
+// ───────────────────────────────────────────────────────────────────
 step(0, 'Applying brand');
 try {
   const { execSync } = await import('node:child_process');

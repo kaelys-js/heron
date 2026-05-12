@@ -14,6 +14,7 @@
   import * as Card from '$lib/components/ui/card';
   import type { Snippet } from 'svelte';
   import { cn } from '$lib/utils';
+  import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 
   let {
     title,
@@ -36,7 +37,7 @@
     class?: string;
   } = $props();
 
-  const STORAGE_PREFIX = 'career-ops:cc:';
+  const STORAGE_PREFIX = `${BRAND_STORAGE_PREFIX}:cc:`;
   let fullKey = $derived(STORAGE_PREFIX + storageKey);
 
   function readInitial(): boolean {

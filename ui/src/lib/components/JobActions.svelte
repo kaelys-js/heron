@@ -36,6 +36,7 @@
   import { withMinDuration, cn } from '$lib/utils';
   import type { Job, Status } from '$lib/types';
   import { STATUS_ORDER } from '$lib/types';
+  import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 
   type Size = 'row' | 'card' | 'hero';
   type ApplyMode = 'linkedin' | 'open-and-mark' | 'mark';
@@ -150,7 +151,7 @@
       // owns the 600ms delay so the success toast lands first.
       if (newStatus === 'Rejected' && typeof window !== 'undefined') {
         window.dispatchEvent(
-          new CustomEvent('career-ops:post-rejection-prompt', {
+          new CustomEvent(`${BRAND_STORAGE_PREFIX}:post-rejection-prompt`, {
             // Pass profileId so the sheet's POST appends to the right profile's
             // story bank (story-bank.md itself is shared, but the spawned
             // claude-cli reads the matching profile's CV + report).
