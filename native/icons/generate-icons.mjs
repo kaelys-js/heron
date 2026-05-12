@@ -135,9 +135,33 @@ async function main() {
   });
   const key = createHash('sha256').update(svgBuffer).update(matrixKey).digest('hex').slice(0, 16);
   const prev = await readCacheKey();
-  if (!force && prev === key) {
+  // Verify the canonical outputs still exist before trusting the cache.
+  // CI starts fresh: the cache key file may be missing OR the outputs
+  // may have been .gitignored, in which case we must re-render.
+  const canonicalOutputs = [
+    path.join(ROOT, 'ui/electron/build/icon.png'),
+    path.join(ROOT, 'ui/electron/build/icon.icns'),
+    path.join(ROOT, 'ui/electron/build/icon.ico'),
+    path.join(ROOT, 'ui/static/icons/career-ops-192.png'),
+    path.join(ROOT, 'ui/static/icons/career-ops-512.png'),
+    path.join(ROOT, 'ui/static/favicon.ico'),
+  ];
+  const outputsExist = await Promise.all(
+    canonicalOutputs.map(async (p) => {
+      try {
+        await fs.stat(p);
+        return true;
+      } catch {
+        return false;
+      }
+    }),
+  );
+  if (!force && prev === key && outputsExist.every(Boolean)) {
     console.log(`✓ Icons unchanged (cache=${key}) — skipping render`);
     return;
+  }
+  if (prev === key && !outputsExist.every(Boolean)) {
+    console.log(`◯ Icon cache hit but outputs missing on disk — re-rendering`);
   }
   const sharp = await loadSharp();
 
