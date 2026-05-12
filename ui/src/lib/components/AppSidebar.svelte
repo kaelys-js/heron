@@ -33,7 +33,7 @@
     Users as UsersIcon,
     LogOut,
   } from '@lucide/svelte';
-  import { authClient } from '$lib/client/auth-client';
+  import { authClient, clearLocalAuthState } from '$lib/client/auth-client';
   import { page } from '$app/state';
   import { goto, invalidateAll } from '$app/navigation';
   import { onMount, onDestroy } from 'svelte';
@@ -134,7 +134,10 @@
 </script>
 
 <Sidebar.Root collapsible="icon" variant="inset" class="app-shell-sidebar">
-  <Sidebar.Header>
+  <!-- `pt-safe` keeps the profile switcher button clear of the iOS notch
+       / Dynamic Island when the WebView origin is `careerops://`. On web
+       (no inset) env(safe-area-inset-top) evaluates to 0 so this is inert. -->
+  <Sidebar.Header class="pt-safe">
     <Sidebar.Menu>
       <Sidebar.MenuItem>
         <DropdownMenu.Root>
@@ -596,6 +599,12 @@
           class="text-muted-foreground"
           onclick={async () => {
             await authClient.signOut();
+            // Wipe BOTH the bearer token (native) and the
+            // `career-ops:authed` gate flag so the next page-load on iOS
+            // bounces correctly to /login. clearLocalAuthState() is a
+            // single source of truth so adding more local state never
+            // forgets to scrub anything on logout.
+            await clearLocalAuthState();
             await goto('/login', { invalidateAll: true });
           }}
         >

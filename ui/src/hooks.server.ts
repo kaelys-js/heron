@@ -123,6 +123,56 @@ const guard: Handle = async ({ event, resolve }) => {
 const withUserContext: Handle = ({ event, resolve }) =>
   runWithUser(event.locals.user?.id ?? SYSTEM_USER_ID, () => resolve(event));
 
+/** CORS handler — only path that lets the Capacitor WebView talk to the
+ *  backend. The WebView origin is `careerops://localhost`; without these
+ *  Access-Control-Allow-Origin echoes the browser preflight blocks the
+ *  request before it ever reaches the server. Web (same-origin) sees no
+ *  Origin header so this no-ops.
+ *
+ *  We deliberately allow `Authorization` so the bearer token added by
+ *  client/auth-client.ts's customFetch round-trips. `credentials: 'include'`
+ *  on the client requires `Access-Control-Allow-Credentials: true` here. */
+const ALLOWED_ORIGIN_PATTERNS: RegExp[] = [
+  /^https?:\/\/localhost(:\d+)?$/,
+  /^careerops:\/\//,
+  /^capacitor:\/\//,
+  /^https?:\/\/[^/]+\.ts\.net$/,
+];
+
+function isAllowedOrigin(origin: string | null): origin is string {
+  if (!origin) return false;
+  return ALLOWED_ORIGIN_PATTERNS.some((re) => re.test(origin));
+}
+
+const cors: Handle = async ({ event, resolve }) => {
+  const origin = event.request.headers.get('origin');
+  const allowed = isAllowedOrigin(origin);
+
+  // Preflight: short-circuit so SvelteKit doesn't try to route an OPTIONS
+  // method to a route that doesn't support it.
+  if (event.request.method === 'OPTIONS' && allowed) {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': origin!,
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Max-Age': '86400',
+        Vary: 'Origin',
+      },
+    });
+  }
+
+  const response = await resolve(event);
+  if (allowed) {
+    response.headers.set('Access-Control-Allow-Origin', origin!);
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    response.headers.set('Vary', 'Origin');
+  }
+  return response;
+};
+
 /**
  * Security response headers. Owasp Secure Headers + Mozilla
  * Observatory recommendations:
@@ -209,20 +259,26 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
   return response;
 };
 
-/** Sequence the handlers: populateAuth → guard → withUserContext → user handler → securityHeaders. */
+/** Sequence: cors (short-circuits OPTIONS) → populateAuth → guard
+ *  → withUserContext → securityHeaders → user handler. CORS runs first
+ *  so preflights don't even touch auth or per-user context. */
 export const handle: Handle = async ({ event, resolve }) => {
-  return populateAuth({
+  return cors({
     event,
-    resolve: (e1) =>
-      guard({
-        event: e1,
-        resolve: (e2) =>
-          withUserContext({
-            event: e2,
-            resolve: (e3) =>
-              securityHeaders({
-                event: e3,
-                resolve: (e4) => resolve(e4),
+    resolve: (e0) =>
+      populateAuth({
+        event: e0,
+        resolve: (e1) =>
+          guard({
+            event: e1,
+            resolve: (e2) =>
+              withUserContext({
+                event: e2,
+                resolve: (e3) =>
+                  securityHeaders({
+                    event: e3,
+                    resolve: (e4) => resolve(e4),
+                  }),
               }),
           }),
       }),
