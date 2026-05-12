@@ -18,6 +18,11 @@ export type Status =
   | 'TakeHome'
   | 'Final'
   | 'Offer'
+  // Post-offer stages — used by the negotiation + decision-support flows.
+  | 'Negotiating'
+  | 'Accepted'
+  | 'Declined'
+  | 'Ghosted'
   | 'Rejected'
   | 'Closed'
   | 'ManualApplyNeeded';
@@ -182,6 +187,10 @@ export const STATUS_ORDER: Status[] = [
   'Final',
   'Interview',
   'Offer',
+  'Negotiating',
+  'Accepted',
+  'Declined',
+  'Ghosted',
   'Rejected',
   'Closed',
   'ManualApplyNeeded',
@@ -206,6 +215,14 @@ export const STATUS_TINTS: Record<Status, string> = {
   Final: 'bg-red-400/15 text-red-200 border-red-400/50',
   Interview: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
   Offer: 'bg-green-500/15 text-green-300 border-green-500/40',
+  // Post-offer flow stages — green spectrum trending to neutral as the
+  // candidate moves from offer to outcome.
+  Negotiating: 'bg-lime-500/15 text-lime-200 border-lime-500/50',
+  Accepted: 'bg-emerald-500/25 text-emerald-100 border-emerald-500/60',
+  Declined: 'bg-zinc-600/15 text-zinc-300 border-zinc-600/40',
+  // Ghosted = grey-with-stroke; visually distinct from Rejected (which
+  // is bad-news-confirmed) vs Ghosted (no-news-treat-as-dead).
+  Ghosted: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/40 border-dashed',
   Rejected: 'bg-red-500/10 text-red-300 border-red-500/30',
   Closed: 'bg-zinc-500/5 text-zinc-500 border-zinc-500/20',
   // ManualApplyNeeded = amber with dashed border — action required.
@@ -234,6 +251,10 @@ export const STATUS_EMPTY_COPY: Record<Status, string> = {
   Final: 'No final-round / hiring-committee stages active.',
   Interview: 'No interviews in progress.',
   Offer: 'No offers in hand yet — keep going.',
+  Negotiating: 'No active negotiations.',
+  Accepted: 'No accepted offers yet.',
+  Declined: 'No declined offers.',
+  Ghosted: 'No ghosted applications (auto-ghost flags applies silent for 21d+).',
   Rejected: 'No rejections (or you haven\u2019t tracked them).',
   Closed: 'Nothing closed.',
   Applying: 'No applications in flight right now.',

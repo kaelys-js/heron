@@ -85,8 +85,13 @@ pre-commit:
 
     prettier-svelte-check:
       # Verification pass for .svelte files (mirrors biome-format-check).
+      # Run prettier from the repo ROOT (where .prettierrc.json + the
+      # ui workspace's prettier binary both resolve via npx) so the
+      # {staged_files} repo-relative paths (`ui/src/...`) match. The
+      # original `cd ui` form broke for new files because prettier
+      # resolved the paths against ui/, looking for `ui/ui/src/...`.
       glob: "*.svelte"
-      run: cd ui && pnpm exec prettier --check {staged_files} --ignore-path ../.prettierignore
+      run: pnpm -C ui exec prettier --check $(echo {staged_files} | sed 's|ui/||g') --ignore-path .prettierignore
 
     typecheck:
       # Type-check ui/ + ui/electron/ on every commit via turbo's per-

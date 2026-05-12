@@ -23,7 +23,13 @@
 import fs from 'node:fs';
 import { wrap } from '$lib/server/api-helpers';
 import { activePath } from '$lib/server/profile-paths';
-import { checkAts, checkResumeQuality, type QualityResult } from '$lib/server/quality-checks';
+import {
+  checkAts,
+  checkResumeQuality,
+  checkAiDetect,
+  type QualityResult,
+  type AiDetectResult,
+} from '$lib/server/quality-checks';
 import { logEvent } from '$lib/server/events';
 import { generalCvStatus } from '$lib/server/cv-pdf';
 
@@ -38,18 +44,17 @@ export const POST = wrap('cv-check', async () => {
     };
   }
 
-  // Run both checks in parallel. resume-quality is cheap (~50ms on a CV).
+  // Run three checks in parallel. resume-quality + ai-detect are cheap (~50ms each).
   // ats-check needs an existing PDF; if there isn't one yet, we skip it
-  // and the response just carries the resume-quality result.
+  // and the response just carries the resume-quality + ai-detect results.
   const status = generalCvStatus();
-  const tasks: Promise<QualityResult | null>[] = [checkResumeQuality(cvMd)];
-  if (status.exists) {
-    tasks.push(checkAts(status.path));
-  } else {
-    tasks.push(Promise.resolve(null));
-  }
+  const resumeTask: Promise<QualityResult | null> = checkResumeQuality(cvMd);
+  const atsTask: Promise<QualityResult | null> = status.exists
+    ? checkAts(status.path)
+    : Promise.resolve(null);
+  const aiDetectTask: Promise<AiDetectResult | null> = checkAiDetect(cvMd);
 
-  const [resume, ats] = await Promise.all(tasks);
+  const [resume, ats, aiDetect] = await Promise.all([resumeTask, atsTask, aiDetectTask]);
 
   // Log the scores so the activity feed shows them too.
   if (resume) {
@@ -66,6 +71,18 @@ export const POST = wrap('cv-check', async () => {
       message: ats.failSummary || `${ats.passCount}/${ats.total} ATS checks passed`,
     });
   }
+  if (aiDetect) {
+    logEvent('cv-check', `AI-detection risk ${aiDetect.aiScore}/100`, {
+      level: aiDetect.aiScore < 50 ? 'success' : aiDetect.aiScore < 75 ? 'warn' : 'error',
+      category: 'user',
+      message:
+        aiDetect.aiScore < 50
+          ? 'Reads like a human wrote it'
+          : aiDetect.aiScore < 75
+            ? 'Rewrite for more burstiness + rare-word variety'
+            : 'Modern AI detectors will flag this — significant rewrite needed',
+    });
+  }
 
   return {
     ok: true,
@@ -73,6 +90,8 @@ export const POST = wrap('cv-check', async () => {
     hasPdf: status.exists,
     atsScore: ats?.score,
     qualityScore: resume?.score,
+    aiDetectScore: aiDetect?.aiScore,
+    aiDetectSignals: aiDetect?.signals,
     atsFailSummary: ats?.failSummary,
     qualityFailSummary: resume?.failSummary,
     atsFailedChecks: ats?.checks.filter((c) => c.status === 'fail') ?? [],

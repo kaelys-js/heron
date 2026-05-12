@@ -94,6 +94,21 @@
       followupsCadenceMeta:
         | import('$lib/server/followup-cadence').FollowupCadence['metadata']
         | null;
+      postApplyCards: Array<{
+        id: string;
+        kind:
+          | 'thank-you-owed'
+          | 'follow-up-due'
+          | 'prep-block-recommended'
+          | 'offer-decision-due'
+          | 'ghosted-flagged'
+          | 'next-action-due';
+        jobId: string;
+        title: string;
+        description: string;
+        dueAt: number;
+        cta?: { label: string; href: string };
+      }>;
       runtime: { hasAnthropic: boolean; hasGemini: boolean; runningTasks: string[] };
     };
   } = $props();
@@ -747,6 +762,59 @@
               {/if}
             </div>
           {/each}
+        </section>
+      {/if}
+
+      <!-- ===================== POST-APPLY CARDS ===================== -->
+      <!--
+        Auto-derived "next action" cards from the JSON sidecars:
+          thank-you-owed       — interviewers from the last 48h with no thank-you-path
+          prep-block-recommended — upcoming interviews <5d away with no dossier
+          ghosted-flagged      — applications silent ≥21d
+          offer-decision-due   — offers with decisionDeadline within 72h
+          next-action-due      — explicit nextActionDue items from stage-state
+          follow-up-due        — followup cadence overdue (handled by separate section)
+
+        Each card has a single CTA that navigates the user to the right
+        anchor on the job page so the action is one click away.
+      -->
+      {#if data.postApplyCards && data.postApplyCards.length > 0}
+        <section class="space-y-2">
+          <h2
+            class="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"
+          >
+            <Bell class="size-3 text-cyan-400" />
+            Post-apply actions · {data.postApplyCards.length}
+          </h2>
+          <div class="space-y-1.5">
+            {#each data.postApplyCards as card (card.id)}
+              {@const tint =
+                card.kind === 'thank-you-owed'
+                  ? 'border-amber-500/40 bg-amber-500/5'
+                  : card.kind === 'prep-block-recommended'
+                    ? 'border-cyan-500/40 bg-cyan-500/5'
+                    : card.kind === 'ghosted-flagged'
+                      ? 'border-zinc-500/40 bg-zinc-500/5'
+                      : card.kind === 'offer-decision-due'
+                        ? 'border-orange-500/50 bg-orange-500/5'
+                        : 'border-violet-500/40 bg-violet-500/5'}
+              <a
+                href={card.cta?.href ?? `/job/${card.jobId}`}
+                class={cn(
+                  'flex items-start gap-3 px-3.5 py-2.5 rounded-md border transition-colors hover:bg-zinc-900/50',
+                  tint,
+                )}
+              >
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium">{card.title}</div>
+                  <div class="text-xs text-muted-foreground mt-0.5">{card.description}</div>
+                </div>
+                {#if card.cta}
+                  <span class="text-xs text-cyan-300 whitespace-nowrap">{card.cta.label} →</span>
+                {/if}
+              </a>
+            {/each}
+          </div>
         </section>
       {/if}
 

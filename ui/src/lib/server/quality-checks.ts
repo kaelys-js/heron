@@ -34,6 +34,18 @@ export type QualityResult = {
   failSummary: string;
 };
 
+/** Result shape from ai-detect-check.mjs. Independent of QualityResult
+ *  because it doesn't use the pass/warn/fail model — it reports a single
+ *  0-100 risk score with per-signal evidence. */
+export type AiDetectResult = {
+  /** 0-100 — higher = more LLM-like. Threshold: <50 = low risk, 50-74 =
+   *  medium (rewrite for burstiness), ≥75 = high (modern detectors will flag). */
+  aiScore: number;
+  wordCount: number;
+  sentences: number;
+  signals: Record<string, { value: number; evidence: string }>;
+};
+
 function runScript(scriptName: string, args: string[], timeoutMs = 30_000): Promise<QualityResult> {
   return new Promise((resolveP, rejectP) => {
     const p = spawn('node', [join(ROOT, scriptName), ...args, '--json'], {
@@ -142,7 +154,71 @@ function emptyResult(note: string): QualityResult {
   };
 }
 
-/** Sugar: run all three checks in parallel for a job's outputs (PDF + CV.md + cover.md). */
+/** Run ai-detect-check.mjs on a markdown file. Returns a 0-100 aiScore +
+ *  per-signal evidence. Independent of the pass/warn/fail QualityResult
+ *  shape because perplexity-burstiness output is fundamentally a single
+ *  composite score, not a checklist.
+ *
+ *  Threshold for surfacing:
+ *    <50  → low risk (no action)
+ *    50-74 → warn ("rewrite for more burstiness + rare-word variety")
+ *    ≥75   → error ("modern detectors will flag this CV/cover-letter")
+ */
+export function checkAiDetect(mdPath: string): Promise<AiDetectResult> {
+  return new Promise((resolveP) => {
+    const p = spawn('node', [join(ROOT, 'ai-detect-check.mjs'), mdPath, '--json'], {
+      cwd: ROOT,
+      env: { ...process.env },
+    });
+    let stdoutBuf = '';
+    let stderrBuf = '';
+    p.stdout?.on('data', (c: Buffer) => {
+      stdoutBuf += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderrBuf += c.toString();
+    });
+    const timer = setTimeout(() => {
+      try {
+        p.kill('SIGTERM');
+      } catch {}
+      reportServerError(
+        'quality-checks',
+        'ai-detect-check timeout',
+        new Error('ai-detect-check timed out after 15s'),
+      );
+      resolveP({ aiScore: 0, wordCount: 0, sentences: 0, signals: {} });
+    }, 15_000);
+    p.on('error', (err) => {
+      clearTimeout(timer);
+      reportServerError('quality-checks', 'ai-detect-check failed', err);
+      resolveP({ aiScore: 0, wordCount: 0, sentences: 0, signals: {} });
+    });
+    p.on('close', () => {
+      clearTimeout(timer);
+      try {
+        const parsed = JSON.parse(stdoutBuf);
+        resolveP({
+          aiScore: typeof parsed.aiScore === 'number' ? parsed.aiScore : 0,
+          wordCount: typeof parsed.wordCount === 'number' ? parsed.wordCount : 0,
+          sentences: typeof parsed.sentences === 'number' ? parsed.sentences : 0,
+          signals: parsed.signals ?? {},
+        });
+      } catch (e) {
+        reportServerError(
+          'quality-checks',
+          'ai-detect-check produced non-JSON output',
+          new Error(stderrBuf.slice(-200) || stdoutBuf.slice(-200)),
+        );
+        resolveP({ aiScore: 0, wordCount: 0, sentences: 0, signals: {} });
+      }
+    });
+  });
+}
+
+/** Sugar: run all four checks in parallel for a job's outputs (PDF + CV.md + cover.md).
+ *  Now includes the perplexity-burstiness AI detector — score the markdown
+ *  source (not the PDF) since the detector reads text. */
 export async function checkAll(opts: {
   pdfPath?: string;
   cvMdPath?: string;
@@ -153,19 +229,28 @@ export async function checkAll(opts: {
   ats?: QualityResult;
   resume?: QualityResult;
   cover?: QualityResult;
+  aiDetectResume?: AiDetectResult;
+  aiDetectCover?: AiDetectResult;
 }> {
   const tasks: Promise<unknown>[] = [];
   let ats: QualityResult | undefined;
   let resume: QualityResult | undefined;
   let cover: QualityResult | undefined;
+  let aiDetectResume: AiDetectResult | undefined;
+  let aiDetectCover: AiDetectResult | undefined;
   if (opts.pdfPath) tasks.push(checkAts(opts.pdfPath).then((r) => (ats = r)));
-  if (opts.cvMdPath) tasks.push(checkResumeQuality(opts.cvMdPath).then((r) => (resume = r)));
-  if (opts.coverMdPath)
+  if (opts.cvMdPath) {
+    tasks.push(checkResumeQuality(opts.cvMdPath).then((r) => (resume = r)));
+    tasks.push(checkAiDetect(opts.cvMdPath).then((r) => (aiDetectResume = r)));
+  }
+  if (opts.coverMdPath) {
     tasks.push(
       checkCoverLetter(opts.coverMdPath, { company: opts.company, role: opts.role }).then(
         (r) => (cover = r),
       ),
     );
+    tasks.push(checkAiDetect(opts.coverMdPath).then((r) => (aiDetectCover = r)));
+  }
   await Promise.all(tasks);
-  return { ats, resume, cover };
+  return { ats, resume, cover, aiDetectResume, aiDetectCover };
 }

@@ -21,7 +21,12 @@ import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { AGENT_CLI } from '$lib/config/cli';
 import { logEvent, reportServerError } from '$lib/server/events';
 import { CLI_NAMESPACE } from '$lib/config/branding';
-import { checkCoverLetter, type QualityResult } from '$lib/server/quality-checks';
+import {
+  checkCoverLetter,
+  checkAiDetect,
+  type QualityResult,
+  type AiDetectResult,
+} from '$lib/server/quality-checks';
 
 /** Cover letters live under {profile}/output/{stem}-cover.md so each profile
  *  has its own set. The CV-pdf naming convention is `{n}-{slug}-{date}.pdf`
@@ -154,21 +159,37 @@ export const POST = wrap(
         message: out.path,
       });
 
-      // Run cover-letter-check.mjs on the freshly-written file. The
-      // checker is read-only — it returns a score and a fail-summary;
-      // we surface that to the dashboard so the user can decide whether
-      // to regenerate or hand-edit. Non-blocking.
+      // Run cover-letter-check.mjs AND ai-detect-check.mjs on the freshly-
+      // written file in parallel. The checks are read-only — they return
+      // scores and fail-summaries we surface to the dashboard so the user
+      // can decide whether to regenerate or hand-edit. Non-blocking.
       let quality: QualityResult | undefined;
+      let aiDetect: AiDetectResult | undefined;
       try {
         const absCoverPath = path.isAbsolute(out.path) ? out.path : path.join(ROOT, out.path);
-        quality = await checkCoverLetter(absCoverPath, {
-          company: job.company,
-          role: job.role,
-        });
+        const [q, ai] = await Promise.all([
+          checkCoverLetter(absCoverPath, {
+            company: job.company,
+            role: job.role,
+          }),
+          checkAiDetect(absCoverPath),
+        ]);
+        quality = q;
+        aiDetect = ai;
         logEvent('cover-letter', `Quality score ${quality.score.toFixed(1)}%`, {
           level: quality.score === 100 ? 'success' : quality.score >= 80 ? 'info' : 'warn',
           category: 'application',
           message: quality.failSummary || `${quality.passCount}/${quality.total} checks passed`,
+        });
+        logEvent('cover-letter', `AI-detection risk ${aiDetect.aiScore}/100`, {
+          level: aiDetect.aiScore < 50 ? 'success' : aiDetect.aiScore < 75 ? 'warn' : 'error',
+          category: 'application',
+          message:
+            aiDetect.aiScore < 50
+              ? 'Reads human-written'
+              : aiDetect.aiScore < 75
+                ? 'Rewrite for variety'
+                : 'Modern detectors will flag — significant rewrite needed',
         });
       } catch (e) {
         // Quality check failures are non-fatal. Log + carry on.
@@ -177,7 +198,7 @@ export const POST = wrap(
         });
       }
 
-      return { ok: true, path: out.path, body: out.body, quality };
+      return { ok: true, path: out.path, body: out.body, quality, aiDetect };
     } catch (err) {
       reportServerError('cover-letter', 'Cover letter draft failed', err, {
         category: 'application',

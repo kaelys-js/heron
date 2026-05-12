@@ -13,6 +13,9 @@ import {
 } from '$lib/server/followup-cadence';
 import { listOpenIssues } from '$lib/server/issues';
 import { listLeads } from '$lib/server/email-reactor';
+import { findThankYousOwed, findUpcomingInterviews } from '$lib/server/interviewers';
+import { listAllStageState, listStaleJobs } from '$lib/server/stage-state';
+import { listActiveOffers } from '$lib/server/offers';
 import fs from 'node:fs';
 import type { Job, ActivityEvent, Status } from '$lib/types';
 
@@ -294,6 +297,97 @@ export async function load({ url }: { url: URL }) {
     }
   })();
 
+  // Post-apply pipeline cards — derived from the JSON sidecars on every
+  // request (no persistence). Six kinds: thank-you-owed, follow-up-due,
+  // prep-block-recommended, offer-decision-due, ghosted-flagged,
+  // next-action-due. See /api/inbox/cards for the same logic exposed as
+  // an endpoint (mobile + Watch consumers). Surface here as inline cards.
+  type PostApplyCard = {
+    id: string;
+    kind:
+      | 'thank-you-owed'
+      | 'follow-up-due'
+      | 'prep-block-recommended'
+      | 'offer-decision-due'
+      | 'ghosted-flagged'
+      | 'next-action-due';
+    jobId: string;
+    title: string;
+    description: string;
+    dueAt: number;
+    cta?: { label: string; href: string };
+  };
+  const postApplyCards: PostApplyCard[] = [];
+  const scopeId = profileId === 'all' ? getActiveProfileId() : profileId;
+  const now = Date.now();
+  try {
+    for (const { jobId, interviewer } of findThankYousOwed(scopeId)) {
+      if (!interviewer.scheduledAt) continue;
+      postApplyCards.push({
+        id: `thank-you:${jobId}:${interviewer.slug}`,
+        kind: 'thank-you-owed',
+        jobId,
+        title: `Thank-you owed: ${interviewer.name}`,
+        description: 'Send within 48h of the interview.',
+        dueAt: interviewer.scheduledAt + 48 * 60 * 60 * 1000,
+        cta: { label: 'Draft thank-you', href: `/job/${jobId}#thank-you-${interviewer.slug}` },
+      });
+    }
+    for (const { jobId, interviewer, daysAway } of findUpcomingInterviews(5, scopeId)) {
+      if (interviewer.dossierPath) continue;
+      postApplyCards.push({
+        id: `prep:${jobId}:${interviewer.slug}`,
+        kind: 'prep-block-recommended',
+        jobId,
+        title: `Prep ${interviewer.name} (${daysAway}d)`,
+        description: 'No dossier yet — run deep research.',
+        dueAt: interviewer.scheduledAt!,
+        cta: { label: 'Generate dossier', href: `/job/${jobId}#interviewer-${interviewer.slug}` },
+      });
+    }
+    for (const { jobId, daysSinceLastTouch } of listStaleJobs(21, scopeId)) {
+      postApplyCards.push({
+        id: `ghost:${jobId}`,
+        kind: 'ghosted-flagged',
+        jobId,
+        title: `Silent for ${daysSinceLastTouch}d`,
+        description: 'Mark Ghosted or send a final follow-up.',
+        dueAt: now,
+        cta: { label: 'Decide', href: `/job/${jobId}#followup` },
+      });
+    }
+    for (const offer of listActiveOffers(scopeId)) {
+      if (!offer.decisionDeadline) continue;
+      const ms = offer.decisionDeadline - now;
+      if (ms < 0 || ms > 72 * 60 * 60 * 1000) continue;
+      postApplyCards.push({
+        id: `offer-decide:${offer.jobId}`,
+        kind: 'offer-decision-due',
+        jobId: offer.jobId,
+        title: `Offer decision in ${Math.ceil(ms / (60 * 60 * 1000))}h`,
+        description: `Answer by ${new Date(offer.decisionDeadline).toLocaleString()}`,
+        dueAt: offer.decisionDeadline,
+        cta: { label: 'Open offer', href: `/job/${offer.jobId}#offer` },
+      });
+    }
+    const stage = listAllStageState(scopeId);
+    for (const [jobId, state] of Object.entries(stage)) {
+      if (!state.nextActionDue) continue;
+      postApplyCards.push({
+        id: `next:${jobId}:${state.nextActionDue.kind}`,
+        kind: 'next-action-due',
+        jobId,
+        title: `${state.nextActionDue.kind.replace('-', ' ')} due`,
+        description: state.nextActionDue.note ?? 'Manual action you scheduled.',
+        dueAt: state.nextActionDue.dueAt,
+        cta: { label: 'Open job', href: `/job/${jobId}` },
+      });
+    }
+  } catch {
+    /* keep Inbox usable on parse failures */
+  }
+  postApplyCards.sort((a, b) => a.dueAt - b.dueAt);
+
   return {
     profileId,
     firstName,
@@ -326,6 +420,7 @@ export async function load({ url }: { url: URL }) {
     followupsUrgent,
     followupsOverdue,
     followupsCadenceMeta,
+    postApplyCards,
     runtime: {
       hasAnthropic: !!env.ANTHROPIC_API_KEY,
       hasGemini: !!env.GEMINI_API_KEY,
