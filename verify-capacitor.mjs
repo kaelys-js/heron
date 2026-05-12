@@ -484,7 +484,7 @@ exists('scripts/native/apply-brand.mjs', 'brand propagator');
   jsonField(
     'package.json',
     'description',
-    brand.tagline,
+    brand.description,
     'root package.json description matches brand',
   );
 }

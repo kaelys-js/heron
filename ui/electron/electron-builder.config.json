@@ -1,7 +1,7 @@
 {
   "appId": "com.resistjs.careerops",
-  "productName": "career-ops",
-  "copyright": "Copyright © 2026 santifer",
+  "productName": "Career Ops",
+  "copyright": "© 2026 santifer. Licensed under the MIT License.",
   "directories": {
     "buildResources": "build",
     "output": "dist"
@@ -21,7 +21,7 @@
   "publish": [
     {
       "provider": "github",
-      "owner": "santifer",
+      "owner": "kaelys-js",
       "repo": "career-ops",
       "releaseType": "release"
     }
@@ -56,11 +56,11 @@
       ],
       "LSApplicationCategoryType": "public.app-category.productivity",
       "LSMinimumSystemVersion": "12.0",
-      "NSLocalNetworkUsageDescription": "career-ops uses local network discovery to find your desktop app on the same wifi.",
+      "NSLocalNetworkUsageDescription": "Career Ops uses local network discovery to find your desktop app on the same Wi-Fi network so your phone, watch, and laptop stay in sync without a cloud account.",
       "NSBonjourServices": ["_career-ops._tcp"],
       "NSMicrophoneUsageDescription": "career-ops uses your microphone for mock interview voice recording.",
       "NSCalendarsUsageDescription": "career-ops adds your interviews to Calendar when reminders are enabled.",
-      "NSHumanReadableCopyright": "Copyright © 2026 santifer",
+      "NSHumanReadableCopyright": "© 2026 santifer. Licensed under the MIT License.",
       "NSSupportsAutomaticTermination": true,
       "NSSupportsSuddenTermination": true,
       "NSAppleScriptEnabled": false,
@@ -104,14 +104,14 @@
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
     "menuCategory": "Productivity",
-    "shortcutName": "career-ops",
+    "shortcutName": "Career Ops",
     "differentialPackage": true,
     "deleteAppDataOnUninstall": false,
     "displayLanguageSelector": false
   },
   "appx": {
     "applicationId": "careerops",
-    "displayName": "career-ops",
+    "displayName": "Career Ops",
     "publisher": "CN=santifer",
     "publisherDisplayName": "santifer",
     "identityName": "santifer.careerops",
@@ -130,16 +130,16 @@
     ],
     "icon": "build/icon.png",
     "category": "Office;Network;Development",
-    "synopsis": "AI-powered, multi-user job search platform — SvelteKit + Capacitor + Better Auth + Drizzle + Anthropic + Gemini.",
-    "description": "Multi-user job search platform: scoring, CV generation, autonomous apply across 11 ATS portals, native apps on iOS/macOS/Windows/Linux/Android/Watch, passkey-only auth.",
+    "synopsis": "Run your job search like a product launch.",
+    "description": "Career Ops is an AI-powered job search platform: multi-user dashboard, autonomous apply across 11 ATS portals, tailored CVs and cover letters per role, interview prep, follow-up cadence, and offline-first native apps on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.",
     "maintainer": "santifer <hi@santifer.io>",
     "vendor": "santifer",
     "executableName": "career-ops",
     "desktop": {
       "entry": {
-        "Name": "career-ops",
+        "Name": "Career Ops",
         "GenericName": "Job Search Pipeline",
-        "Comment": "AI-powered, multi-user job search platform — SvelteKit + Capacitor + Better Auth + Drizzle + Anthropic + Gemini.",
+        "Comment": "Run your job search like a product launch.",
         "Keywords": "career;jobs;ai;automation;applications;",
         "MimeType": "x-scheme-handler/careerops;",
         "StartupNotify": "true",

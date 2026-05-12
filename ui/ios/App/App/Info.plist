@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>career-ops</string>
+	<string>Career Ops</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -81,7 +81,7 @@
 	     career-ops server on the same wifi. Without this string iOS shows
 	     a permission prompt with no explanation. -->
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>career-ops uses local network discovery to find your desktop app on the same wifi.</string>
+	<string>Career Ops uses local network discovery to find your desktop app on the same Wi-Fi network so your phone, watch, and laptop stay in sync without a cloud account.</string>
 
 	<!-- Bonjour service types we want to browse for. iOS 14+ requires
 	     this allowlist to be declared up-front. -->
@@ -125,7 +125,7 @@
 
 	<!-- Face ID usage description (Phase 3.6) -->
 	<key>NSFaceIDUsageDescription</key>
-	<string>career-ops uses Face ID to protect sensitive screens like the negotiation playbook.</string>
+	<string>Career Ops uses Face ID to unlock sensitive screens — interview notes, negotiation playbooks, and offer comparisons — so a glance over your shoulder never leaks personal data.</string>
 
 	<!-- Spotlight indexing description -->
 	<key>NSUserActivityTypes</key>
@@ -169,15 +169,15 @@
 	<!-- Mock-interview voice capture uses MediaRecorder which iOS WebView
 	     routes through the native mic permission. -->
 	<key>NSMicrophoneUsageDescription</key>
-	<string>career-ops uses your microphone for mock interview voice recording.</string>
+	<string>Career Ops uses the microphone for the mock-interview rehearsal mode — audio is processed on-device and never uploaded.</string>
 
 	<!-- Avatar upload via file picker — system asks for Photos access. -->
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>career-ops uses your photo library when you upload an avatar.</string>
+	<string>Career Ops needs photo-library access to attach screenshots of job postings or reference letters to a job entry.</string>
 
 	<!-- Calendar integration — interview reminders can write to Calendar
 	     when you've enabled it in settings. -->
 	<key>NSCalendarsUsageDescription</key>
-	<string>career-ops adds your interviews to Calendar when reminders are enabled.</string>
+	<string>Career Ops reads your calendar to surface upcoming interviews and to schedule follow-up reminders.</string>
 </dict>
 </plist>

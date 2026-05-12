@@ -1,7 +1,7 @@
 {
   "name": "career-ops",
   "version": "1.6.0",
-  "description": "AI-powered, multi-user job search platform — SvelteKit + Capacitor + Better Auth + Drizzle + Anthropic + Gemini.",
+  "description": "Career Ops is an AI-powered job search platform: multi-user dashboard, autonomous apply across 11 ATS portals, tailored CVs and cover letters per role, interview prep, follow-up cadence, and offline-first native apps on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.",
   "type": "module",
   "private": true,
   "packageManager": "pnpm@11.1.0",
@@ -14,21 +14,36 @@
   },
   "author": "santifer <hi@santifer.io> (https://santifer.io)",
   "license": "MIT",
-  "homepage": "https://santifer.io",
+  "homepage": "https://career-ops.org",
   "repository": {
     "type": "git",
-    "url": "https://github.com/santifer/career-ops"
+    "url": "https://github.com/kaelys-js/career-ops"
   },
   "bugs": {
-    "url": "https://github.com/santifer/career-ops/issues"
+    "url": "https://github.com/kaelys-js/career-ops/issues"
   },
   "funding": "https://github.com/sponsors/santifer",
   "keywords": [
-    "ai",
-    "job-search",
-    "claude-code",
+    "ai-agent",
+    "anthropic",
+    "automation",
+    "better-auth",
+    "capacitor",
     "career",
-    "automation"
+    "claude",
+    "claude-code",
+    "drizzle-orm",
+    "electron",
+    "interview-prep",
+    "ios",
+    "job-search",
+    "open-source",
+    "passkey",
+    "resume",
+    "svelte",
+    "sveltekit",
+    "typescript",
+    "watchos"
   ],
   "scripts": {
     "doctor": "node doctor.mjs",

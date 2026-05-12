@@ -5,7 +5,7 @@ import Foundation
 
 enum Brand {
     static let name = "career-ops"
-    static let displayName = "career-ops"
+    static let displayName = "Career Ops"
     static let bundleId = "com.resistjs.careerops"
     static let appGroup = "group.com.resistjs.careerops"
     static let urlScheme = "careerops"

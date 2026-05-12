@@ -1,20 +1,22 @@
 {
   "name": "career-ops",
-  "description": "career-ops desktop — AI-powered, multi-user job search platform — SvelteKit + Capacitor + Better Auth + Drizzle + Anthropic + Gemini.",
+  "description": "Career Ops desktop — Electron shell embedding the SvelteKit dashboard.",
   "version": "1.6.0",
   "private": true,
   "license": "MIT",
   "author": {
     "name": "santifer",
-    "email": "hi@santifer.io"
+    "email": "hi@santifer.io",
+    "url": "https://santifer.io"
   },
   "homepage": "https://career-ops.org",
   "repository": {
     "type": "git",
-    "url": "https://github.com/santifer/career-ops"
+    "url": "https://github.com/kaelys-js/career-ops",
+    "directory": "ui/electron"
   },
   "bugs": {
-    "url": "https://github.com/santifer/career-ops/issues"
+    "url": "https://github.com/kaelys-js/career-ops/issues"
   },
   "engines": {
     "node": ">=26.0.0",

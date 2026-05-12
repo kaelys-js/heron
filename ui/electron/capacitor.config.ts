@@ -15,7 +15,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
  */
 const config = {
   appId: 'com.resistjs.careerops',
-  appName: 'career-ops',
+  appName: 'Career Ops',
   webDir: 'build/static',
   ios: {
     scheme: 'careerops',

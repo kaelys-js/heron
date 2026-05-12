@@ -8,8 +8,8 @@
  */
 export const BRAND = {
   name: "career-ops",
-  displayName: "career-ops",
-  tagline: "AI-powered, multi-user job search platform — SvelteKit + Capacitor + Better Auth + Drizzle + Anthropic + Gemini.",
+  displayName: "Career Ops",
+  tagline: "Run your job search like a product launch.",
   bundleId: "com.resistjs.careerops",
   appGroup: "group.com.resistjs.careerops",
   urlScheme: "careerops",
@@ -26,11 +26,12 @@ export const BRAND = {
     "lightOnDark": "#e4e4e7"
   },
   repo: {
-    "owner": "santifer",
+    "owner": "kaelys-js",
     "name": "career-ops",
-    "url": "https://github.com/santifer/career-ops",
-    "issues": "https://github.com/santifer/career-ops/issues",
-    "docs": "https://github.com/santifer/career-ops#readme"
+    "url": "https://github.com/kaelys-js/career-ops",
+    "issues": "https://github.com/kaelys-js/career-ops/issues",
+    "docs": "https://github.com/kaelys-js/career-ops#readme",
+    "upstream": "https://github.com/santifer/career-ops"
   },
 } as const;
 
