@@ -20,6 +20,16 @@
   import OfflineIndicator from '$lib/components/OfflineIndicator.svelte';
 
   onMount(() => {
+    // Remove the boot-fallback "Loading career-ops…" UI from app.html now
+    // that SvelteKit has hydrated and the layout is mounted. If hydration
+    // never reached here (parse error, missing chunk, CSP block) the
+    // fallback stays visible with a Reload button — far better than a
+    // silent blank screen.
+    if (typeof document !== 'undefined') {
+      const bootFallback = document.getElementById('boot-fallback');
+      if (bootFallback) bootFallback.remove();
+    }
+
     // Hydrate the theme store so OS-preference changes propagate at runtime.
     // The inline app.html script already applied the initial class — this
     // just lights up the reactive store.
@@ -40,16 +50,20 @@
     // Dismiss the Capacitor native splash screen on iOS/Android once we've
     // hydrated. capacitor.config.ts sets `launchAutoHide: false` so we own
     // the dismiss timing — without this call the splash stays forever and
-    // the user never sees the app. Dynamically imported because the
-    // @capacitor/splash-screen plugin only resolves in native (the plain
-    // web build ignores the import — the catch handles that path).
-    if (typeof window !== 'undefined' && 'Capacitor' in window) {
-      import('@capacitor/splash-screen')
-        .then(({ SplashScreen }) => SplashScreen.hide())
-        .catch(() => {
-          /* not running native; nothing to dismiss */
-        });
-    }
+    // the user never sees the app.
+    //
+    // We don't gate on `'Capacitor' in window` because Capacitor 8 sometimes
+    // injects the global after the page's `DOMContentLoaded`, so onMount
+    // can race ahead of the global being defined. Always-call + catch is
+    // safer: on web the plugin's web shim is a no-op and the catch absorbs
+    // any module-resolution failure. fadeOutDuration: 250ms matches the
+    // SvelteKit hydration paint window so the user sees a smooth cross-fade
+    // instead of a hard cut.
+    import('@capacitor/splash-screen')
+      .then(({ SplashScreen }) => SplashScreen.hide({ fadeOutDuration: 250 }))
+      .catch(() => {
+        /* not running native; nothing to dismiss */
+      });
   });
 
   let { children, data } = $props();
