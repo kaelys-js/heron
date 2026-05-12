@@ -209,6 +209,31 @@ export const auth = betterAuth({
     },
   },
 
+  // Defense against brute-force / credential-stuffing on auth endpoints.
+  // Better Auth's built-in limiter sits in-memory; defaults are fine
+  // for a single-instance install. If you ever shard across processes
+  // pass a custom `storage` adapter that backs onto Redis or similar.
+  //
+  //   • window: rolling 60s
+  //   • max:    10 requests / window / IP for sensitive endpoints
+  //     (sign-in, sign-up, password reset, OAuth callback). Other
+  //     endpoints inherit the global default.
+  //   • The limiter applies per remote IP; behind Tailscale the IP is
+  //     the device's tailnet address (unique per user device).
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 60, // generous baseline; specific endpoints below tighten
+    customRules: {
+      '/sign-in/email': { window: 60, max: 5 },
+      '/sign-up/email': { window: 60, max: 5 },
+      '/sign-in/passkey': { window: 60, max: 10 },
+      '/sign-up/passkey': { window: 60, max: 10 },
+      '/forget-password': { window: 60, max: 3 },
+      '/reset-password': { window: 60, max: 3 },
+    },
+  },
+
   // Better Auth respects this list of advanced cookie attrs even in
   // localhost development. `sameSite: 'lax'` is the right default for
   // OAuth callbacks; we override to 'none' in cross-origin contexts

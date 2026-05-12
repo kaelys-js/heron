@@ -2,25 +2,44 @@
 # else. Even so, give prettier an ignore file so it never accidentally
 # touches unrelated content if the script is misconfigured.
 
+# ── Build outputs / caches ──────────────────────────────────────────
 node_modules/
 .svelte-kit/
 build/
 dist/
 .turbo/
+.vite/
 ui/electron/build/
 ui/electron/dist/
+ui/electron/app/
+**/_build/
+
+# ── Native build outputs ────────────────────────────────────────────
 ui/ios/App/Pods/
 ui/ios/App/App.xcodeproj/
 ui/ios/App/App/Assets.xcassets/
+ui/ios/App/build/
+ui/ios/App/DerivedData/
+ui/ios/App/output/
+ui/android/.gradle/
+ui/android/build/
+ui/android/app/build/
+ui/android/app/src/main/assets/
+
+# ── User-owned data ─────────────────────────────────────────────────
 data/
 reports/
 output/
 batch/
-**/_build/
-**/*.bak
-CHANGELOG.md
+jds/
 
-# Brand-generated files
+# ── Generated / vendored ────────────────────────────────────────────
+**/*.bak
+**/*.tsbuildinfo
+CHANGELOG.md
+pnpm-lock.yaml
+
+# ── Brand-generated files (auto-rewritten by apply-brand.mjs) ───────
 ui/ios/App/App/Brand.swift
 ui/ios/App/CareerOpsWidget/Brand.swift
 ui/ios/App/CareerOpsLiveActivity/Brand.swift
@@ -28,9 +47,9 @@ ui/ios/App/CareerOpsShareExtension/Brand.swift
 ui/src/lib/client/brand.ts
 ui/electron/src/brand.ts
 
-# Non-.svelte files — biome handles these. Prettier is invoked with --plugin
-# prettier-plugin-svelte but we still want a narrow scope. Globs below
-# tell prettier to skip everything that ISN'T svelte.
+# ── File-type allowlist (only Svelte goes through prettier) ─────────
+# Globs below tell prettier to skip everything that ISN'T .svelte —
+# Biome (faster, no AST cost) handles the rest.
 *.ts
 *.tsx
 *.js
@@ -39,7 +58,19 @@ ui/electron/src/brand.ts
 *.json
 *.jsonc
 *.md
+*.mdx
 *.yaml
 *.yml
 *.html
 *.css
+*.scss
+*.toml
+*.swift
+*.kt
+*.java
+*.py
+*.rb
+*.go
+*.sh
+*.bash
+*.zsh

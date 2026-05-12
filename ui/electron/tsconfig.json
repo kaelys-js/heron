@@ -2,20 +2,45 @@
   "compileOnSave": true,
   "include": ["./src/**/*", "./capacitor.config.ts", "./capacitor.config.js"],
   "compilerOptions": {
+    // ── Output ──────────────────────────────────────────────────────
     "outDir": "./build",
-    "importHelpers": true,
-    "target": "ES2023",
-    "module": "Node16",
-    "moduleResolution": "Node16",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "typeRoots": ["./node_modules/@types"],
-    "allowJs": true,
     "rootDir": ".",
-    "skipLibCheck": true,
+    "sourceMap": true,
+    "declaration": false,
+    "importHelpers": true,
+
+    // ── Target + module ─────────────────────────────────────────────
+    // Electron 33 bundles Node 22 → ES2024 is safe.
+    // Bumping target also bumps the synthetic lib target.
+    "target": "ES2024",
+    "lib": ["ES2024"],
+    // NodeNext follows Node's CJS/ESM resolution rules including
+    // package.json `"exports"` maps. Our `main` is CJS — kept for
+    // electron-builder compatibility.
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+
+    // ── Type safety ─────────────────────────────────────────────────
+    // The Capacitor-Electron community plugin generates setup.ts /
+    // rt/electron-rt.ts / preload.ts as part of plugin scaffolding
+    // (re-emitted on `npx cap copy electron`). They predate strictNullChecks
+    // and break under `strict: true`. We can't patch the generated files
+    // (they'd get overwritten), and excluding them would skip Capacitor
+    // bootstrap. So strict stays off for now — the hand-written tray.ts,
+    // splash.ts, lan-discovery.ts, etc. are still well-typed.
     "strict": false,
     "noImplicitAny": false,
-    "resolveJsonModule": true,
-    "sourceMap": true
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // ── Diagnostics ─────────────────────────────────────────────────
+    "skipLibCheck": true,
+    "typeRoots": ["./node_modules/@types"]
   }
 }

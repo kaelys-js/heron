@@ -65,6 +65,51 @@ const config = {
       trustedOrigins: [],
     },
 
+    // Content Security Policy — auto-generated hashes for inline <script>/
+    // <style> blocks SvelteKit emits. `mode: 'hash'` keeps strict-dynamic
+    // semantics (no `unsafe-inline`). For static-adapter builds the hashes
+    // are baked into <meta> tags in index.html; for adapter-node they're
+    // sent in a per-response CSP header.
+    //
+    // Source-list rationale:
+    //   'self'                 — first-party JS/CSS/fonts.
+    //   'unsafe-eval'          — Anthropic SDK's @anthropic-ai/sdk needs eval
+    //                            for streamed JSON-mode responses on web.
+    //                            Capacitor WebView blocks eval natively;
+    //                            this only matters on the Node adapter
+    //                            target.
+    //   data: blob:            — favicons, PDFs, generated thumbnails.
+    //   capacitor: https://localhost — iOS/Android WebView origins.
+    //   ws: wss:               — Vite HMR + Better Auth WebSocket.
+    //   api.anthropic.com      — first-party LLM connections.
+    //   generativelanguage.googleapis.com — Gemini.
+    //   *.ts.net               — Tailscale magic-DNS hostnames (LAN auth).
+    csp: {
+      mode: 'auto',
+      directives: {
+        'default-src': ["'self'"],
+        'script-src': ["'self'", "'unsafe-eval'", "'wasm-unsafe-eval'"],
+        'style-src': ["'self'", "'unsafe-inline'"], // Tailwind JIT inline styles
+        'img-src': ["'self'", 'data:', 'blob:', 'https:'],
+        'font-src': ["'self'", 'data:'],
+        'connect-src': [
+          "'self'",
+          'ws:',
+          'wss:',
+          'https://api.anthropic.com',
+          'https://generativelanguage.googleapis.com',
+          'https://*.ts.net',
+          'capacitor://localhost',
+          'https://localhost',
+        ],
+        'frame-ancestors': ["'none'"],
+        'form-action': ["'self'"],
+        'base-uri': ["'self'"],
+        'object-src': ["'none'"],
+        'upgrade-insecure-requests': true,
+      },
+    },
+
     // Service worker is OFF — career-ops doesn't ship one. Capacitor
     // WebView doesn't support service workers reliably on iOS anyway.
     serviceWorker: {

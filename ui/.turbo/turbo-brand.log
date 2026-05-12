@@ -1,5 +1,2 @@
-
-> ui@0.0.1 brand /Users/home/career-ops/ui
-> node ../scripts/native/apply-brand.mjs
-
+$ node ../scripts/native/apply-brand.mjs
 ✓ brand inputs unchanged — apply-brand short-circuited
