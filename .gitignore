@@ -7,8 +7,12 @@
 ui/.svelte-kit/
 ui/build/
 ui/electron/dist/
-ui/electron/build/
-ui/electron/build/icon-*.png
+# Electron build directory: ignore everything generated, KEEP the hand-edited
+# entitlements + electron-builder config (they're source, not artefacts).
+ui/electron/build/icon*
+ui/electron/build/capacitor.config.*
+!ui/electron/build/entitlements.mac.plist
+!ui/electron/build/entitlements.mas.plist
 native/icons/_build/
 *.tsbuildinfo
 
