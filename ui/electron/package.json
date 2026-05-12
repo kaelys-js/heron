@@ -52,6 +52,6 @@
     "@typescript/native-preview": "7.0.0-dev.20260511.1",
     "electron": "39.8.10",
     "electron-builder": "26.8.1",
-    "typescript": "5.9.3"
+    "typescript": "6.0.3"
   }
 }
