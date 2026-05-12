@@ -29,13 +29,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var networkMonitor: NetworkMonitor?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Keep CareerOpsNativePlugin from being dead-stripped by the
-        // Swift static linker. Capacitor 7+ auto-discovers plugins by
-        // looking up `@objc(...)`-decorated `CAPBridgedPlugin` classes
-        // via NSClassFromString — but with static linking, classes that
-        // aren't referenced from Swift code at compile time get dropped
-        // and the JS bridge reports "plugin is not implemented on ios".
-        // Touching the metatype here keeps the symbol in the binary.
+        // Keep custom App-target classes from being dead-stripped by the
+        // Swift static linker. Both classes are referenced ONLY by name
+        // (via Main.storyboard or NSClassFromString plugin lookup) — the
+        // optimizer has no compile-time Swift edge proving they're live,
+        // so it drops them, and at runtime UIKit / Capacitor fail silently:
+        //   • Missing CareerOpsBridgeViewController → storyboard fails to
+        //     instantiate the root VC → empty UIWindow → BLACK SCREEN.
+        //   • Missing CareerOpsNativePlugin → JS bridge reports
+        //     "CareerOpsNative plugin is not implemented on ios" and every
+        //     Bonjour / biometric / keychain / Spotlight / Handoff call
+        //     becomes a no-op.
+        // Touching the metatype here pins both symbols in the binary.
+        _ = CareerOpsBridgeViewController.self
         _ = CareerOpsNativePlugin.self
 
         // Start the Bonjour browser early so backend-discovery can

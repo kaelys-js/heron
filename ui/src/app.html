@@ -182,78 +182,257 @@
     <!-- Boot fallback — always-visible UI before SvelteKit hydrates.
          Visually matches the native Capacitor splash (same dark bg,
          same brand mark, same proportions) so the transition between
-         them feels like one continuous frame. When SvelteKit hydrates
-         and removes #boot-fallback in onMount, the fade is from one
-         dark surface to another — no white flash, no jump.
-         If hydration crashes (parse error, missing chunk, CSP block)
-         the fallback stays visible with a Reload button. A 5-second
-         timer flips the message to "Still loading…" so the user
-         always has a way out. -->
+         them feels like one continuous frame.
+
+         Design:
+         - No text. The brand mark + a subtle three-dot pulse carry the
+           "loading" meaning the way native iOS apps do.
+         - Icon fades + scales in (300ms, ease-out) so the hand-off from
+           the native splash feels alive instead of an instant cut.
+         - Soft drop-shadow under the icon for elevation against the
+           dark bg — Apple HIG-style "the icon is a floating object".
+         - The wrapping <div> has overflow: visible explicitly so the
+           drop-shadow + the bouncing dots are never clipped on narrower
+           devices (iPhone SE) where some prior implementations cropped
+           the right edge of the mark.
+
+         Failure handling: if hydration doesn't complete in 5s, flip to
+         a "Something went wrong" panel with Retry + a copy-diagnostics
+         button. The blank-screen guard in the script below also fires
+         if +layout.svelte's onMount NEVER tags the fallback for removal
+         (e.g. parse-error / missing-chunk / CSP block scenarios). -->
     <div
       id="boot-fallback"
-      style="position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 24px; background-color: #0a0a0b; color: #e4e4e7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; z-index: 9999; transition: opacity 250ms ease-out;"
+      style="position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 24px; background-color: #0a0a0b; color: #e4e4e7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; z-index: 9999; transition: opacity 300ms ease-out; overflow: visible;"
     >
-      <!-- 128×128 inline brand mark — mirror of branding/logo.svg. Keep
-           in sync if the master logo changes; the indigo→fuchsia gradient
-           IDs are scoped (`bfb-*`) so they don't collide with any other
-           inline SVG the app might mount during hydration. -->
-      <svg width="128" height="128" viewBox="0 0 1024 1024" aria-hidden="true">
-        <defs>
-          <linearGradient id="bfb-bg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#6366f1"/>
-            <stop offset="55%" stop-color="#8b5cf6"/>
-            <stop offset="100%" stop-color="#a855f7"/>
-          </linearGradient>
-        </defs>
-        <rect width="1024" height="1024" rx="232" fill="url(#bfb-bg)"/>
-        <rect x="0" y="0" width="1024" height="512" rx="232" fill="#ffffff" opacity="0.06"/>
-        <path d="M280 720 L520 480 L640 600 L800 440"
-              stroke="#ffffff" stroke-width="84"
-              stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <path d="M680 360 L800 360 L800 480"
-              stroke="#ffffff" stroke-width="84"
-              stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      </svg>
-      <!-- Thin gradient shimmer — replaces the generic spinner. Reads as
-           "actively loading" without the dated rotating-arc aesthetic.
-           bg-position animation is GPU-friendly so it stays smooth even
-           on a slow first paint. -->
-      <div style="width: 180px; height: 2px; border-radius: 1px; background: linear-gradient(90deg, transparent 0%, #8b5cf6 50%, transparent 100%); background-size: 200% 100%; animation: boot-shimmer 1.4s ease-in-out infinite;"></div>
-      <div id="boot-fallback-msg" style="font-size: 13px; color: #a1a1aa; letter-spacing: 0.02em;">
-        Loading…
-      </div>
-      <button
-        id="boot-fallback-retry"
-        type="button"
-        onclick="location.reload()"
-        style="display: none; padding: 10px 18px; border-radius: 8px; border: 1px solid #27272a; background-color: #18181b; color: #e4e4e7; font-size: 14px; cursor: pointer;"
+      <!-- Brand mark wrapper — drop-shadow filter lives here (not on the
+           SVG itself) so the gradient/path rendering stays crisp. The
+           wrapper has its own width/height so overflow rules don't clip
+           the soft shadow halo. -->
+      <div
+        id="boot-fallback-mark"
+        style="width: 128px; height: 128px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 8px 32px rgba(139, 92, 246, 0.35)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)); opacity: 0; transform: scale(0.92); animation: boot-mark-in 360ms cubic-bezier(0.16, 1, 0.3, 1) forwards;"
       >
-        Reload
-      </button>
+        <!-- 128×128 inline brand mark — mirror of branding/logo.svg.
+             The indigo→fuchsia gradient ID is scoped (`bfb-*`) so it
+             doesn't collide with any other inline SVG the app might
+             mount during hydration. -->
+        <svg
+          width="128"
+          height="128"
+          viewBox="0 0 1024 1024"
+          aria-hidden="true"
+          style="display: block;"
+        >
+          <defs>
+            <linearGradient id="bfb-bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#6366f1" />
+              <stop offset="55%" stop-color="#8b5cf6" />
+              <stop offset="100%" stop-color="#a855f7" />
+            </linearGradient>
+          </defs>
+          <rect width="1024" height="1024" rx="232" fill="url(#bfb-bg)" />
+          <rect x="0" y="0" width="1024" height="512" rx="232" fill="#ffffff" opacity="0.06" />
+          <path
+            d="M280 720 L520 480 L640 600 L800 440"
+            stroke="#ffffff"
+            stroke-width="84"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            fill="none"
+          />
+          <path
+            d="M680 360 L800 360 L800 480"
+            stroke="#ffffff"
+            stroke-width="84"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            fill="none"
+          />
+        </svg>
+      </div>
+
+      <!-- Three-dot pulse loading indicator — no text, very iOS-native.
+           Each dot fades in/out on a staggered cycle so the row reads
+           as a continuous progress signal without any spinning or
+           shimmering geometry. -->
+      <div
+        id="boot-fallback-dots"
+        style="display: flex; gap: 8px; align-items: center; opacity: 0; animation: boot-mark-in 400ms cubic-bezier(0.16, 1, 0.3, 1) 200ms forwards;"
+        aria-label="Loading"
+      >
+        <span
+          style="width: 7px; height: 7px; border-radius: 50%; background: #8b5cf6; animation: boot-dot 1.2s ease-in-out 0s infinite;"
+        ></span>
+        <span
+          style="width: 7px; height: 7px; border-radius: 50%; background: #8b5cf6; animation: boot-dot 1.2s ease-in-out 0.15s infinite;"
+        ></span>
+        <span
+          style="width: 7px; height: 7px; border-radius: 50%; background: #8b5cf6; animation: boot-dot 1.2s ease-in-out 0.3s infinite;"
+        ></span>
+      </div>
+
+      <!-- Error panel — hidden by default; the blank-screen guard below
+           reveals this after 5s of stalled hydration. Replaces the old
+           "Still loading…" text + Reload button with a richer UI that
+           includes Retry, a Copy diagnostics button (URL, UA, errors
+           captured by window.onerror) and a hint about what to try. -->
+      <div
+        id="boot-fallback-error"
+        style="display: none; flex-direction: column; align-items: center; gap: 12px; max-width: 320px; text-align: center; opacity: 0; transition: opacity 200ms ease-out;"
+      >
+        <div
+          style="font-size: 15px; font-weight: 600; color: #fafafa;"
+        >Something went wrong loading the app</div>
+        <div style="font-size: 13px; color: #a1a1aa; line-height: 1.5;">
+          The interface didn't finish loading. This is usually a network glitch — try again.
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 4px;">
+          <button
+            id="boot-fallback-retry"
+            type="button"
+            onclick="location.reload()"
+            style="padding: 8px 16px; border-radius: 8px; border: none; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;"
+          >
+            Try again
+          </button>
+          <button
+            id="boot-fallback-copy"
+            type="button"
+            style="padding: 8px 14px; border-radius: 8px; border: 1px solid #27272a; background-color: #18181b; color: #e4e4e7; font-size: 13px; cursor: pointer; font-family: inherit;"
+          >
+            Copy diagnostics
+          </button>
+        </div>
+      </div>
+
       <style>
-        @keyframes boot-shimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
+        /* Icon fade-in + scale-in for a modern iOS-app feel. */
+        @keyframes boot-mark-in {
+          from {
+            opacity: 0;
+            transform: scale(0.92);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
         }
-        /* When +layout.svelte removes the #boot-fallback element by setting
-           the `data-hide` attribute, fade it out gracefully instead of
-           cutting. The element is removed from the DOM shortly after the
-           transition ends. */
-        #boot-fallback[data-hide="1"] {
+        /* Staggered three-dot pulse — sized for high-DPI clarity. */
+        @keyframes boot-dot {
+          0%,
+          60%,
+          100% {
+            transform: scale(1);
+            opacity: 0.35;
+          }
+          30% {
+            transform: scale(1.4);
+            opacity: 1;
+          }
+        }
+        /* When +layout.svelte removes the #boot-fallback by tagging
+           data-hide, fade out gracefully and stop accepting taps. */
+        #boot-fallback[data-hide='1'] {
           opacity: 0;
           pointer-events: none;
+        }
+        /* Error state: hide the dots, swap the brand mark to a slightly
+           dimmer version, show the error panel. data-state="error" is set
+           by the 5-second guard below. */
+        #boot-fallback[data-state='error'] #boot-fallback-dots {
+          display: none;
+        }
+        #boot-fallback[data-state='error'] #boot-fallback-mark {
+          filter: drop-shadow(0 4px 16px rgba(239, 68, 68, 0.25))
+            drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+        #boot-fallback[data-state='error'] #boot-fallback-error {
+          display: flex;
+          opacity: 1;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          #boot-fallback-mark,
+          #boot-fallback-dots {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+          }
+          #boot-fallback-dots span {
+            animation: none !important;
+            opacity: 1 !important;
+          }
         }
       </style>
     </div>
     <script>
-      // After 5s, show the Reload button + flip message. If hydration
-      // succeeded by then, the whole #boot-fallback div is already gone.
-      setTimeout(function () {
-        var msg = document.getElementById('boot-fallback-msg');
-        var btn = document.getElementById('boot-fallback-retry');
-        if (msg) msg.textContent = "Still loading… something might be wrong.";
-        if (btn) btn.style.display = '';
-      }, 5000);
+      // Capture early errors so the diagnostics button has something
+      // useful to copy. The full error-reporter installs later in
+      // hydration — this is a lightweight bridge so failures BEFORE
+      // hydration get surfaced too.
+      (function () {
+        var captured = [];
+        window.addEventListener('error', function (e) {
+          captured.push({
+            type: 'error',
+            message: String(e.message || e.error || 'unknown'),
+            source: (e.filename || '') + ':' + (e.lineno || 0),
+          });
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          captured.push({
+            type: 'unhandledrejection',
+            message: String(e.reason && e.reason.message ? e.reason.message : e.reason),
+          });
+        });
+
+        // Blank-screen guard. After 5 seconds without successful
+        // hydration (which removes the fallback by setting data-hide),
+        // flip to the error state. The user always gets a way out
+        // instead of a frozen splash.
+        setTimeout(function () {
+          var el = document.getElementById('boot-fallback');
+          if (!el) return; // hydration succeeded, fallback already gone
+          if (el.getAttribute('data-hide') === '1') return; // fading out cleanly
+          el.setAttribute('data-state', 'error');
+        }, 5000);
+
+        // Wire up Copy diagnostics — assembles URL, UA, and any errors
+        // we captured, then writes them to the clipboard. Falls back to
+        // alert() if clipboard write fails (e.g. iOS WKWebView clipboard
+        // permission denied).
+        document.addEventListener('click', function (e) {
+          var target = e.target;
+          if (!target || target.id !== 'boot-fallback-copy') return;
+          var diag = [
+            'career-ops — boot diagnostics',
+            'time: ' + new Date().toISOString(),
+            'url: ' + location.href,
+            'ua: ' + navigator.userAgent,
+            'errors: ' + (captured.length === 0 ? 'none' : ''),
+          ];
+          for (var i = 0; i < captured.length; i++) {
+            diag.push('  - [' + captured[i].type + '] ' + captured[i].message);
+            if (captured[i].source) diag.push('    @ ' + captured[i].source);
+          }
+          var text = diag.join('\n');
+          try {
+            navigator.clipboard.writeText(text).then(
+              function () {
+                target.textContent = 'Copied ✓';
+                setTimeout(function () {
+                  target.textContent = 'Copy diagnostics';
+                }, 1800);
+              },
+              function () {
+                alert(text);
+              },
+            );
+          } catch (_) {
+            alert(text);
+          }
+        });
+      })();
     </script>
 
     <div style="display: contents">%sveltekit.body%</div>
