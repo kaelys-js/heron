@@ -567,7 +567,11 @@
   <Sidebar.Footer>
     <Sidebar.Menu>
       <Sidebar.MenuItem>
-        <Sidebar.MenuButton size="sm" isActive={isActive('/settings/users')} class="text-muted-foreground">
+        <Sidebar.MenuButton
+          size="sm"
+          isActive={isActive('/settings/users')}
+          class="text-muted-foreground"
+        >
           {#snippet child({ props })}
             <a href="/settings/users" {...props}>
               <UsersIcon class="size-4" />
