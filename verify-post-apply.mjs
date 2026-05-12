@@ -274,6 +274,72 @@ checkContains('ui/src/routes/job/[id]/+page.server.ts', 'getOffer', 'job-page lo
 // ── Stage API + transition logic ─────────────────────────────────────
 checkFileExists('ui/src/routes/api/job/[id]/stage/+server.ts', 'API /stage');
 
+// ── Round 2: 12 gap closures from the post-apply audit ──────────────
+// Gap A — Semantic-match scorer (CV ↔ JD vector similarity)
+checkFileExists('semantic-match.mjs', 'semantic-match.mjs (Gap A)');
+checkContains(
+  'ui/src/lib/server/quality-checks.ts',
+  'checkSemanticMatch',
+  'quality-checks: checkSemanticMatch wired',
+);
+checkContains('package.json', 'semantic:match', 'package.json semantic:match script');
+
+// Gap C — CV template variants
+checkFileExists('templates/cv-template-modern.html', 'cv-template-modern.html (Gap C)');
+checkFileExists('templates/cv-template-executive.html', 'cv-template-executive.html (Gap C)');
+checkContains('ui/src/lib/server/cv-pdf.ts', 'resolveTemplate', 'cv-pdf: resolveTemplate wired');
+
+// Gap D — Narrative-arc validator
+checkFileExists('narrative-arc.mjs', 'narrative-arc.mjs (Gap D)');
+checkContains(
+  'ui/src/lib/server/quality-checks.ts',
+  'checkNarrativeArc',
+  'quality-checks: checkNarrativeArc wired',
+);
+checkContains(
+  'ui/src/routes/api/profile/cv-check/+server.ts',
+  'checkNarrativeArc',
+  'cv-check integrates narrative-arc',
+);
+checkContains('package.json', 'narrative:check', 'package.json narrative:check script');
+
+// Gap F — Profile SEO (LinkedIn keyword-density optimiser)
+checkFileExists('profile-seo.mjs', 'profile-seo.mjs (Gap F)');
+checkFileExists('ui/src/routes/api/profile/seo/+server.ts', 'API /api/profile/seo (Gap F)');
+checkContains('package.json', 'profile:seo', 'package.json profile:seo script');
+
+// Role-dysfunction + remote-real
+checkFileExists('ui/src/lib/server/job-signals.ts', 'job-signals.ts');
+checkContains('ui/src/lib/server/job-signals.ts', 'dysfunctionSignal', 'dysfunctionSignal export');
+checkContains('ui/src/lib/server/job-signals.ts', 'remoteReality', 'remoteReality export');
+checkFileExists('ui/src/routes/api/job/[id]/signals/+server.ts', 'API /signals');
+
+// Reference-prep mode + endpoint
+checkFileExists('modes/reference-prep.md', 'mode: reference-prep');
+checkFileExists('ui/src/routes/api/job/[id]/reference-prep/+server.ts', 'API /reference-prep');
+
+// Fine-print extractor mode + endpoint
+checkFileExists('modes/offer-fine-print.md', 'mode: offer-fine-print');
+checkFileExists('ui/src/routes/api/job/[id]/offer/fine-print/+server.ts', 'API /offer/fine-print');
+
+// Counter-from-current evaluator
+checkFileExists('modes/counter-from-current.md', 'mode: counter-from-current');
+checkFileExists(
+  'ui/src/routes/api/job/[id]/counter-from-current/+server.ts',
+  'API /counter-from-current',
+);
+
+// EV-of-waiting (extension of offer/ev)
+checkContains(
+  'ui/src/routes/api/job/[id]/offer/ev/+server.ts',
+  'WaitInputs',
+  'offer/ev: EV-of-waiting wired',
+);
+
+// Founders/leadership extractor
+checkFileExists('modes/leadership-lookup.md', 'mode: leadership-lookup');
+checkFileExists('ui/src/routes/api/job/[id]/leadership/+server.ts', 'API /leadership');
+
 // ── Summary ──────────────────────────────────────────────────────────
 const passed = checks.filter((c) => c.status === 'pass').length;
 const failed = checks.filter((c) => c.status === 'fail').length;

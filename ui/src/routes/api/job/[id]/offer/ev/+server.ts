@@ -6,19 +6,23 @@
  *   • Benchmark (if attached) — median band
  *   • BATNA score (best alternative offer)
  *   • User-supplied subjective ratings (1-5):
- *     - growthFit         (how much will this role accelerate my career?)
- *     - teamFit           (how excited am I about the people?)
- *     - commuteFit        (location/remote fit)
- *     - missionFit        (do I believe in the product?)
- *     - workLifeBalance   (will this protect my time?)
+ *     - growthFit / teamFit / commuteFit / missionFit / workLifeBalance
+ *
+ * ALSO supports the EV-of-waiting extension:
+ *   • currentRoleTC (optional)   — if you have a current job, models
+ *     "do nothing, wait for offer B" as a third path
+ *   • waitDays (optional)        — how long you'd hold out for offer B
+ *   • waitProbability (optional) — 0-1 probability offer B actually
+ *     materialises in waitDays. Default 0.4 (calibrated to real data —
+ *     pipelines die ~60% of the time)
+ *   • offerBTcEstimate (optional) — expected TC of the alternative
  *
  * Returns:
- *   ev:       0-100 composite score
- *   verdict:  'strong-take' | 'take' | 'mixed' | 'pass'
- *   breakdown: each weighted input + its contribution
- *
- * Designed to surface tension between "the money is right" and "the
- * work isn't" — both can be visible at the same time.
+ *   ev:        0-100 composite score for THIS offer
+ *   verdict:   'strong-take' | 'take' | 'mixed' | 'pass'
+ *   breakdown: weighted inputs + contributions
+ *   waiting:   when waiting inputs supplied, the EV of holding out
+ *     (expected TC × P(B materialises) × time discount) vs taking now
  */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
@@ -31,6 +35,17 @@ type Subjective = {
   commuteFit?: number;
   missionFit?: number;
   workLifeBalance?: number;
+};
+
+type WaitInputs = {
+  /** What you make today at your current job (annual TC). */
+  currentRoleTC?: number;
+  /** How many days you'd wait for offer B. */
+  waitDays?: number;
+  /** P(offer B materialises in waitDays). Default 0.4. */
+  waitProbability?: number;
+  /** Expected TC of offer B if it lands. */
+  offerBTcEstimate?: number;
 };
 
 function clamp(n: number, lo: number, hi: number): number {
@@ -61,7 +76,7 @@ export const POST = wrap(
     if (!offer) badRequest('No offer to evaluate — POST /api/job/[id]/offer first');
     const cur = currentRound(offer!);
     if (!cur) badRequest('Offer has no rounds');
-    const body = (await request.json().catch(() => ({}))) as Subjective;
+    const body = (await request.json().catch(() => ({}))) as Subjective & WaitInputs;
     const subjective: Required<Subjective> = {
       growthFit: clamp(body.growthFit ?? 3, 1, 5),
       teamFit: clamp(body.teamFit ?? 3, 1, 5),
@@ -100,6 +115,55 @@ export const POST = wrap(
           : evClamped >= 40
             ? 'mixed'
             : 'pass';
+    // ── EV-of-waiting calculation ─────────────────────────────────
+    // Compare three paths over a 1-year horizon:
+    //   PATH_NOW:     accept this offer immediately
+    //   PATH_WAIT:    decline (or stall) this offer, hold out for B
+    //   PATH_STAY:    decline this offer, stay at current employer
+    //
+    // Each path has an expected 1-year TC. PATH_WAIT applies:
+    //   P(B materialises) × tc(B)
+    //     + (1 - P(B)) × tc(current, falling back to 0 if no current job)
+    //   - opportunity cost of the wait (days × tc(current or this offer) / 365)
+    //
+    // The waiting penalty captures the very real cost that holding out
+    // for a "maybe" offer means losing real money + delaying ramp.
+    let waiting: Record<string, unknown> | null = null;
+    if (typeof body.offerBTcEstimate === 'number' || typeof body.currentRoleTC === 'number') {
+      const pB = clamp(body.waitProbability ?? 0.4, 0, 1);
+      const waitDays = clamp(body.waitDays ?? 30, 0, 365);
+      const tcB = body.offerBTcEstimate ?? 0;
+      const tcCurrent = body.currentRoleTC ?? 0;
+      const evWaitTC = pB * tcB + (1 - pB) * tcCurrent;
+      const opportunityLoss = (waitDays / 365) * tc;
+      const pathNowYear1 = tc; // this offer for the full year
+      const pathWaitYear1 = evWaitTC - opportunityLoss;
+      const pathStayYear1 = tcCurrent;
+      const winner =
+        pathNowYear1 >= pathWaitYear1 && pathNowYear1 >= pathStayYear1
+          ? 'now'
+          : pathWaitYear1 >= pathStayYear1
+            ? 'wait'
+            : 'stay';
+      const deltaWaitNow = pathWaitYear1 - pathNowYear1;
+      waiting = {
+        pathNowYear1: Math.round(pathNowYear1),
+        pathWaitYear1: Math.round(pathWaitYear1),
+        pathStayYear1: Math.round(pathStayYear1),
+        winner,
+        deltaWaitMinusNow: Math.round(deltaWaitNow),
+        pB,
+        waitDays,
+        opportunityLoss: Math.round(opportunityLoss),
+        advice:
+          winner === 'now'
+            ? 'Take this offer now — the math favours it over waiting + over staying.'
+            : winner === 'wait'
+              ? 'Waiting has positive EV vs taking now, BUT only if your P(B) and tc(B) estimates are honest. Inflated estimates are how candidates lose offers.'
+              : 'Stay at current job — neither offer beats the status quo in 1-year EV. Worth re-examining why you started looking.',
+      };
+    }
+
     return {
       ok: true,
       ev: evClamped,
@@ -116,6 +180,7 @@ export const POST = wrap(
         subjective,
         subjectiveScore: Math.round(subjectiveScore),
       },
+      waiting,
     };
   },
 );

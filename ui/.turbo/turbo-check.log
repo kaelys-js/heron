@@ -6,4 +6,5 @@ $ svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --threshold error
 Loading svelte-check in workspace: /Users/home/career-ops/ui
 Getting Svelte diagnostics...
 
-svelte-check found 0 errors and 0 warnings
+====================================
+svelte-check found 0 errors and 2 warnings in 1 file

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="{{LANG}}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{NAME}} — {{ROLE_TITLE}}</title>
+<!--
+  Executive variant — single-column, serif headline, generous whitespace.
+
+  Designed for Director+ / VP / C-level roles where:
+    • Recruiters skim for trajectory + scale, not skills lists
+    • The narrative summary leads (3-4 sentences, not bullet-list)
+    • Each role gets a 1-line "scope" header (org size, P&L, etc.)
+    • No accent colour — pure black-on-white classic editorial feel
+    • Maximum ATS compatibility — single column, no images, semantic
+      HTML throughout
+-->
+<meta name="author" content="{{NAME}}">
+<meta name="subject" content="{{ROLE_AT_COMPANY}}">
+<meta name="keywords" content="{{KEYWORDS_CSV}}">
+<meta name="description" content="{{SUMMARY_DESCRIPTION}}">
+<style>
+  @font-face {
+    font-family: 'Source Serif';
+    src: url('./fonts/source-serif-latin.woff2') format('woff2');
+    font-weight: 300 700;
+    font-style: normal;
+    font-display: swap;
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+FEFF, U+FFFD;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family: 'Source Serif', Georgia, 'Times New Roman', serif;
+    font-size: 11px;
+    line-height: 1.55;
+    color: #1a1a1a;
+    background: #fff;
+  }
+  .page {
+    width: 100%;
+    max-width: {{PAGE_WIDTH}};
+    margin: 0 auto;
+    padding: 22mm 22mm 18mm;
+  }
+  .hero {
+    text-align: center;
+    padding-bottom: 6mm;
+    margin-bottom: 8mm;
+    border-bottom: 0.5px solid #1a1a1a;
+  }
+  .hero h1 {
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    line-height: 1.05;
+    margin-bottom: 2mm;
+  }
+  .hero .tagline {
+    font-style: italic;
+    color: #4a4a4a;
+    font-size: 12px;
+    margin-bottom: 3mm;
+  }
+  .hero .contact {
+    font-size: 10px;
+    color: #4a4a4a;
+    letter-spacing: 0.03em;
+  }
+  .hero .contact a { color: #1a1a1a; text-decoration: none; }
+  .hero .contact > * { margin: 0 2mm; }
+  .summary {
+    font-size: 11.5px;
+    line-height: 1.7;
+    text-align: justify;
+    margin-bottom: 8mm;
+    padding: 0 4mm;
+  }
+  h2.section {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-align: center;
+    margin: 6mm 0 4mm;
+    padding-bottom: 1.5mm;
+    border-bottom: 0.5px solid #1a1a1a;
+  }
+  .role { margin-bottom: 5mm; page-break-inside: avoid; }
+  .role-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5mm;
+  }
+  .role-title { font-size: 12.5px; font-weight: 600; }
+  .role-date { font-size: 10px; color: #4a4a4a; font-style: italic; }
+  .role-company {
+    font-size: 11px;
+    color: #4a4a4a;
+    font-style: italic;
+    margin-bottom: 1.5mm;
+  }
+  .role-scope {
+    font-size: 10px;
+    color: #4a4a4a;
+    margin-bottom: 1.5mm;
+    border-left: 1.5px solid #b0b0b0;
+    padding-left: 3mm;
+  }
+  .role ul { padding-left: 5mm; margin-top: 1mm; }
+  .role li { margin-bottom: 1mm; font-size: 10.5px; }
+  .skills, .education {
+    font-size: 10.5px;
+    line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <h1>{{NAME}}</h1>
+    <div class="tagline">{{ROLE_TITLE}}</div>
+    <div class="contact">
+      <span>{{EMAIL}}</span>·
+      <span>{{PHONE}}</span>·
+      <span>{{LOCATION}}</span>·
+      <a href="{{LINKEDIN_URL}}">{{LINKEDIN_HANDLE}}</a>
+    </div>
+  </header>
+
+  <section class="summary">{{SUMMARY_HTML}}</section>
+
+  <h2 class="section">Leadership Experience</h2>
+  {{EXPERIENCE_HTML}}
+
+  <h2 class="section">Selected Achievements</h2>
+  {{PROJECTS_HTML}}
+
+  <h2 class="section">Education &amp; Advisory</h2>
+  <div class="education">{{EDUCATION_HTML}}</div>
+
+  <h2 class="section">Areas of Expertise</h2>
+  <div class="skills">{{SKILLS_LIST_HTML}}</div>
+</div>
+</body>
+</html>
