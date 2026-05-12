@@ -43,15 +43,33 @@ const flags = {
   noRemote: process.argv.includes('--no-remote'),
 };
 
-const G = '\x1b[32m', Y = '\x1b[33m', R = '\x1b[31m', B = '\x1b[1m', N = '\x1b[0m', DIM = '\x1b[2m';
+const G = '\x1b[32m',
+  Y = '\x1b[33m',
+  R = '\x1b[31m',
+  B = '\x1b[1m',
+  N = '\x1b[0m',
+  DIM = '\x1b[2m';
 
 const results = { ok: [], warn: [], fail: [] };
 const log = {
-  ok: (m) => { results.ok.push(m); if (!flags.json) console.log(`  ${G}✓${N} ${m}`); },
-  warn: (m) => { results.warn.push(m); if (!flags.json) console.log(`  ${Y}⚠${N} ${m}`); },
-  fail: (m) => { results.fail.push(m); if (!flags.json) console.log(`  ${R}✗${N} ${m}`); },
-  step: (m) => { if (!flags.json) console.log(`\n${B}▸ ${m}${N}`); },
-  info: (m) => { if (!flags.json) console.log(`  ${DIM}· ${m}${N}`); },
+  ok: (m) => {
+    results.ok.push(m);
+    if (!flags.json) console.log(`  ${G}✓${N} ${m}`);
+  },
+  warn: (m) => {
+    results.warn.push(m);
+    if (!flags.json) console.log(`  ${Y}⚠${N} ${m}`);
+  },
+  fail: (m) => {
+    results.fail.push(m);
+    if (!flags.json) console.log(`  ${R}✗${N} ${m}`);
+  },
+  step: (m) => {
+    if (!flags.json) console.log(`\n${B}▸ ${m}${N}`);
+  },
+  info: (m) => {
+    if (!flags.json) console.log(`  ${DIM}· ${m}${N}`);
+  },
 };
 
 // ── 1. Local files (delegate to verify-capacitor) ──────────────────
