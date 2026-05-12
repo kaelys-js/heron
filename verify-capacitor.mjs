@@ -182,9 +182,41 @@ contains('ui/src/routes/api/stats/+server.ts', 'queued', 'returns queued count')
 // ── Phase 6 — verifier + docs ─────────────────────────────────────
 section('Phase 6 — Verifier + docs');
 exists('verify-capacitor.mjs', 'this verifier');
-// AGENTS.md + README + USAGE checks added by the docs phase, but we don't
-// fail if they're missing yet — these are last to land.
-if (existsSync(join(ROOT, 'USAGE-NATIVE.md'))) ok('USAGE-NATIVE.md present'); else warn('USAGE-NATIVE.md not yet written (docs phase pending)');
+exists('USAGE-NATIVE.md', 'native usage doc');
+exists('Makefile', 'Makefile with one-shot targets');
+contains('Makefile', 'dev-desktop:', 'Makefile dev-desktop target');
+contains('Makefile', 'release:', 'Makefile release target');
+
+// ── Phase 7 — one-shot scripts ────────────────────────────────────
+section('Phase 7 — One-shot scripts');
+const SCRIPTS = [
+  ['scripts/native/_lib.mjs', 'shared helpers'],
+  ['scripts/native/help.mjs', 'pnpm native menu'],
+  ['scripts/native/setup.mjs', 'interactive setup wizard'],
+  ['scripts/native/dev-desktop.mjs', 'one-shot dev:desktop'],
+  ['scripts/native/dev-ios.mjs', 'one-shot dev:ios'],
+  ['scripts/native/build-desktop.mjs', 'one-shot build:desktop'],
+  ['scripts/native/build-ios-testflight.mjs', 'one-shot build:ios'],
+  ['scripts/native/icons.mjs', 'one-shot icons regen'],
+  ['scripts/native/release.mjs', 'one-shot release'],
+  ['scripts/native/add-xcode-targets.rb', 'Ruby xcodeproj target adder'],
+];
+for (const [path, label] of SCRIPTS) exists(path, label);
+
+// Each .mjs script must parse cleanly under Node.
+import { spawnSync } from 'node:child_process';
+for (const [p] of SCRIPTS.filter(([f]) => f.endsWith('.mjs'))) {
+  const r = spawnSync('node', ['--check', join(ROOT, p)], { encoding: 'utf8' });
+  if (r.status === 0) ok(`${p} parses`);
+  else fail(`${p} parse error`, r.stderr.trim().slice(0, 200));
+}
+
+// root package.json wires every command
+const rootPkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+for (const cmd of ['native', 'setup:native', 'setup:secrets', 'dev:desktop', 'dev:ios', 'build:desktop', 'build:ios', 'icons', 'release', 'verify:capacitor']) {
+  if (rootPkg.scripts?.[cmd]) ok(`package.json script "${cmd}"`);
+  else fail(`package.json missing "${cmd}"`);
+}
 
 // ── Behavioral spot-checks (cheap and fast) ────────────────────────
 section('Behavioral spot-checks');
