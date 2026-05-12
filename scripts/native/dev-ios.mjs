@@ -23,9 +23,45 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { createConnection } from 'node:net';
+import os from 'node:os';
 import { step, run, capture, which, ok, warn, info, UI, ROOT } from './_lib.mjs';
 
 const iosDir = join(UI, 'ios', 'App');
+
+// --live: WebView loads from the Mac's LAN IP : Vite (true HMR on device +
+// simulator) instead of the bundled static build. The flag flows through
+// CAPACITOR_SERVER_URL, which capacitor.config.ts reads to set server.url;
+// `cap sync ios` then writes it into ios/App/App/capacitor.config.json so the
+// WebView fetches from Vite. Production `pnpm build:ios` must NEVER set this.
+const isLive = process.argv.includes('--live');
+
+/** Find a non-loopback IPv4 on a private LAN range (RFC 1918). */
+function getLanIp() {
+  for (const ifaces of Object.values(os.networkInterfaces())) {
+    for (const i of ifaces ?? []) {
+      if (
+        i.family === 'IPv4' &&
+        !i.internal &&
+        (i.address.startsWith('192.168.') ||
+          i.address.startsWith('10.') ||
+          /^172\.(1[6-9]|2[0-9]|3[01])\./.test(i.address))
+      ) {
+        return i.address;
+      }
+    }
+  }
+  return null;
+}
+
+const lanIp = isLive ? getLanIp() : null;
+if (isLive && !lanIp) {
+  console.error('--live: could not detect Mac LAN IP. Connect to wifi/ethernet first.');
+  process.exit(1);
+}
+const liveUrl = lanIp ? `http://${lanIp}:5173` : null;
+if (isLive) {
+  info(`live mode: WebView will load from ${liveUrl}`);
+}
 
 // Capacitor 7+ uses Swift Package Manager (Package.swift) by default,
 // not CocoaPods. Detect which one this project uses so we install the
@@ -56,14 +92,38 @@ if (!existsSync(iosDir)) {
 step(2, 'Applying brand (idempotent — propagates branding/brand.json)');
 run('node', [join(ROOT, 'scripts/native/apply-brand.mjs')], { silent: true });
 
-step(3, 'Building static shell for Capacitor');
-run('pnpm', ['build'], {
-  cwd: UI,
-  env: { CAPACITOR: '1', PUBLIC_CAPACITOR_BUILD: '1' },
-});
+if (isLive) {
+  step(3, 'Skipping static build (live mode — WebView points at Vite)');
+  info('  build/static is reused if present; cap sync still needs SOMETHING to copy');
+  // cap sync ios requires webDir to exist — produce a minimal placeholder if
+  // missing so the sync step doesn't error. The WebView never reads this dir
+  // in live mode (server.url overrides it).
+  const webDir = join(UI, 'build', 'static');
+  if (!existsSync(webDir)) {
+    info(
+      '  no prior build/static found — running a one-shot build so cap sync has something to copy',
+    );
+    run('pnpm', ['build'], {
+      cwd: UI,
+      env: { CAPACITOR: '1', PUBLIC_CAPACITOR_BUILD: '1' },
+    });
+  }
+} else {
+  step(3, 'Building static shell for Capacitor');
+  run('pnpm', ['build'], {
+    cwd: UI,
+    env: { CAPACITOR: '1', PUBLIC_CAPACITOR_BUILD: '1' },
+  });
+}
 
-step(4, 'Syncing iOS project');
-run('pnpm', ['exec', 'cap', 'sync', 'ios'], { cwd: UI });
+step(4, 'Syncing iOS project' + (isLive ? ` (server.url=${liveUrl})` : ''));
+run('pnpm', ['exec', 'cap', 'sync', 'ios'], {
+  cwd: UI,
+  // CAPACITOR_SERVER_URL is read by ui/capacitor.config.ts at sync time —
+  // present → server.url is written into ios/App/App/capacitor.config.json,
+  // absent → no server.url key (bundled static, what production wants).
+  env: isLive ? { CAPACITOR_SERVER_URL: liveUrl } : {},
+});
 
 // `cap add ios` only registered AppDelegate.swift with the App target.
 // Native features added later (BonjourBrowser, NetworkMonitor, Biometric,
@@ -247,32 +307,37 @@ if (targetUdid) {
 }
 
 if (!launched) {
-  // Fallback: open the project so the user can press ⌘R themselves.
-  // Prefer .xcworkspace if it exists (CocoaPods setup); else .xcodeproj
-  // (Swift Package Manager / Capacitor 7+ default).
-  const xcworkspace = join(iosDir, 'App.xcworkspace');
-  const xcodeproj = join(iosDir, 'App.xcodeproj');
-  const openTarget = existsSync(xcworkspace)
-    ? xcworkspace
-    : existsSync(xcodeproj)
-      ? xcodeproj
-      : null;
-  if (openTarget) {
-    info('opening Xcode — press ⌘R to run');
-    run('open', [openTarget], { allowFail: true });
-  } else {
-    warn('Neither App.xcworkspace nor App.xcodeproj found — open the project manually.');
+  // Hard-fail instead of silently opening Xcode. Opening Xcode hides the
+  // root cause (missing simulator runtime, stale DerivedData, etc.) and
+  // forces the user to debug via the Xcode UI dance — anti-goal for
+  // `pnpm dev:ios`, which should be one command + a working app.
+  console.error('');
+  console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.error('cap run ios failed');
+  console.error('');
+  console.error('Common causes + fixes:');
+  console.error('  • Missing simulator runtime: Xcode → Settings → Platforms → iOS');
+  console.error('  • Stale DerivedData: rm -rf ui/ios/DerivedData');
+  console.error('  • Signing issue: sudo xcode-select --reset');
+  console.error('  • Swift build error: scroll up — xcodebuild printed the failing line');
+  console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  try {
+    dev.kill('SIGTERM');
+  } catch {
+    /* dev server already exited */
   }
+  process.exit(1);
 }
 
 info('');
 info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-if (launched) {
-  info('App is running on the simulator. Edit Svelte files — the WebView');
-  info('hits localhost:5173 so changes hot-reload automatically.');
+info('App is running on the simulator.');
+if (isLive) {
+  info(`Live mode: WebView is loading ${liveUrl}`);
+  info('Editing Svelte files hot-reloads INSTANTLY via Vite HMR — no rebuild.');
 } else {
-  info('iOS simulator finds localhost:5173 automatically.');
-  info('Real device on same wifi finds your Mac via Bonjour.');
+  info('Bundled-static mode (no --live). The WebView loads from App.app/public.');
+  info('Edits to Svelte files require a rebuild. Pass --live for HMR.');
 }
 info('Press Ctrl+C in this terminal to stop the dev server.');
 info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

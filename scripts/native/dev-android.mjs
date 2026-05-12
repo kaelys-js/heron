@@ -26,9 +26,43 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { createConnection } from 'node:net';
+import os from 'node:os';
 import { step, run, capture, which, ok, warn, info, UI, ROOT } from './_lib.mjs';
 
 const androidDir = join(UI, 'android');
+
+// --live: WebView loads from the Mac's LAN IP : Vite (true HMR on real
+// devices on the same wifi) instead of the bundled static build. Emulators
+// don't need --live because adb reverse already tunnels localhost:5173 to
+// the host; but --live still works fine there (the URL is just absolute).
+const isLive = process.argv.includes('--live');
+
+function getLanIp() {
+  for (const ifaces of Object.values(os.networkInterfaces())) {
+    for (const i of ifaces ?? []) {
+      if (
+        i.family === 'IPv4' &&
+        !i.internal &&
+        (i.address.startsWith('192.168.') ||
+          i.address.startsWith('10.') ||
+          /^172\.(1[6-9]|2[0-9]|3[01])\./.test(i.address))
+      ) {
+        return i.address;
+      }
+    }
+  }
+  return null;
+}
+
+const lanIp = isLive ? getLanIp() : null;
+if (isLive && !lanIp) {
+  console.error('--live: could not detect Mac LAN IP. Connect to wifi/ethernet first.');
+  process.exit(1);
+}
+const liveUrl = lanIp ? `http://${lanIp}:5173` : null;
+if (isLive) {
+  info(`live mode: WebView will load from ${liveUrl}`);
+}
 
 step(1, 'Preflight');
 if (!which('pnpm')) {
@@ -80,14 +114,29 @@ ok(`ANDROID_HOME = ${sdkRoot}`);
 step(2, 'Applying brand (idempotent — propagates branding/brand.json)');
 run('node', [join(ROOT, 'scripts/native/apply-brand.mjs')], { silent: true });
 
-step(3, 'Building static shell for Capacitor');
-run('pnpm', ['build'], {
-  cwd: UI,
-  env: { CAPACITOR: '1', PUBLIC_CAPACITOR_BUILD: '1' },
-});
+if (isLive) {
+  step(3, 'Skipping static build (live mode — WebView points at Vite)');
+  const webDir = join(UI, 'build', 'static');
+  if (!existsSync(webDir)) {
+    info('  no prior build/static — running a one-shot build so cap sync has something to copy');
+    run('pnpm', ['build'], {
+      cwd: UI,
+      env: { CAPACITOR: '1', PUBLIC_CAPACITOR_BUILD: '1' },
+    });
+  }
+} else {
+  step(3, 'Building static shell for Capacitor');
+  run('pnpm', ['build'], {
+    cwd: UI,
+    env: { CAPACITOR: '1', PUBLIC_CAPACITOR_BUILD: '1' },
+  });
+}
 
-step(4, 'Syncing Android project');
-run('pnpm', ['exec', 'cap', 'sync', 'android'], { cwd: UI });
+step(4, 'Syncing Android project' + (isLive ? ` (server.url=${liveUrl})` : ''));
+run('pnpm', ['exec', 'cap', 'sync', 'android'], {
+  cwd: UI,
+  env: isLive ? { CAPACITOR_SERVER_URL: liveUrl } : {},
+});
 
 step(5, 'Starting Vite dev server in background');
 const dev = spawn('pnpm', ['dev'], {
@@ -253,9 +302,13 @@ if (!launched) {
 info('');
 info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 if (launched) {
-  info('App is running on the Android target. Edit Svelte files — the');
-  info('WebView hits localhost:5173 (forwarded via adb) so changes');
-  info('hot-reload automatically.');
+  if (isLive) {
+    info(`Live mode: WebView is loading ${liveUrl}`);
+    info('Editing Svelte files hot-reloads INSTANTLY via Vite HMR — no rebuild.');
+  } else {
+    info('App is running on the Android target. WebView hits localhost:5173');
+    info('(forwarded via adb) — emulator HMR works. Real device: pass --live.');
+  }
 } else {
   info('Vite is still serving on :5173 — bring up an Android target +');
   info('rerun cap run android manually.');
