@@ -61,7 +61,7 @@ jobs:
 
       # mise installs Node + pnpm versions pinned in .mise.toml so CI
       # uses the same versions developers run locally.
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@v4
         with:
           experimental: true
           cache: true
@@ -72,7 +72,7 @@ jobs:
         id: pnpm-store
         shell: bash
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -81,7 +81,7 @@ jobs:
 
       # Cache electron-builder's intermediate downloads (electron
       # binaries, app-builder, etc.) — saves ~2min per run.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: |
             ~/.cache/electron
@@ -152,7 +152,7 @@ jobs:
 
       - name: Upload artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: career-ops-${{ matrix.os }}
           path: |
@@ -176,7 +176,7 @@ jobs:
 
       # mise pins Node + pnpm + Ruby together so Fastlane uses the same
       # Ruby version we develop against locally.
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@v4
         with:
           experimental: true
           cache: true
@@ -186,7 +186,7 @@ jobs:
         id: pnpm-store
         shell: bash
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -195,7 +195,7 @@ jobs:
 
       # Capacitor 8 uses Swift Package Manager (no Cocoapods). Cache
       # Xcode's derived data + the SPM resolved-packages cache.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: |
             ~/Library/Developer/Xcode/DerivedData
