@@ -105,6 +105,29 @@ export default defineConfig({
     chunkSizeWarningLimit: 1500,
     // Vite 8 uses rolldown + oxc by default — fastest production builds.
     // Don't override `minify` (defaults to 'oxc' under rolldown).
+    rollupOptions: {
+      // Vite 8 / Rolldown uses `onLog` (level, log, defaultHandler) as the
+      // canonical hook; `onwarn` is the legacy Rollup name but isn't always
+      // routed through SvelteKit's adapter passes. `onLog` covers both
+      // bundler passes (client + server) reliably.
+      onLog(level, log, defaultHandler) {
+        // INEFFECTIVE_DYNAMIC_IMPORT — Rolldown flags `await import('./x')`
+        // when `x` is ALSO statically imported elsewhere. The dynamic
+        // imports in orchestrator.ts + apply-linkedin-login.job.ts are
+        // INTENTIONAL: they break the `orchestrator ↔ autopilot` circular
+        // dependency at module-init time. The warning is correct that no
+        // code-splitting happens, but the lazy evaluation still solves the
+        // cycle. Silencing here keeps the build output clean.
+        if (log.code === 'INEFFECTIVE_DYNAMIC_IMPORT') return;
+        // INVALID_ANNOTATION — third-party libs (notably @noble/ciphers,
+        // a transitive dep of better-auth) ship `@__NO_SIDE_EFFECTS__`
+        // JSDoc annotations in positions Rolldown can't preserve through
+        // tree-shaking. Not our code to fix; the comment gets stripped
+        // and the build still works.
+        if (log.code === 'INVALID_ANNOTATION') return;
+        defaultHandler(level, log);
+      },
+    },
   },
   optimizeDeps: {
     // Force-include heavy deps so vite pre-bundles them once on cold

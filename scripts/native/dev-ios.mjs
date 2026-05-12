@@ -65,6 +65,31 @@ run('pnpm', ['build'], {
 step(4, 'Syncing iOS project');
 run('pnpm', ['exec', 'cap', 'sync', 'ios'], { cwd: UI });
 
+// `cap add ios` only registered AppDelegate.swift with the App target.
+// Native features added later (BonjourBrowser, NetworkMonitor, Biometric,
+// KeychainStore, BackgroundFetcher, SpotlightIndexer, WatchSessionBridge,
+// CareerOpsNativePlugin, ErrorReporter, Brand) live in App/*.swift on disk
+// but aren't auto-added to the target. Without this step, xcodebuild
+// fails with "cannot find type 'BonjourBrowser' in scope" the moment
+// AppDelegate references them. The ruby script is idempotent — no-op
+// when the pbxproj is already up-to-date.
+step('4b', 'Ensuring App target includes all Swift sources');
+if (which('ruby') && which('gem')) {
+  // Both gems must be present for the script to load. --user-install
+  // writes to ~/.gem and never needs sudo; --no-document skips slow
+  // rdoc generation. allowFail so a flaky gem mirror doesn't kill dev.
+  run('gem', ['install', 'xcodeproj', 'plist', '--user-install', '--no-document'], {
+    silent: true,
+    allowFail: true,
+  });
+  run('ruby', [join(ROOT, 'scripts', 'native', 'add-xcode-targets.rb')], {
+    cwd: iosDir,
+    allowFail: true,
+  });
+} else {
+  warn('ruby/gem not on PATH — skipping App-target source sync');
+}
+
 if (usesPodfile) {
   step(5, 'Installing CocoaPods');
   if (which('pod')) {
@@ -181,10 +206,19 @@ step(8, 'Building + installing + launching on simulator');
 let launched = false;
 if (targetUdid) {
   // --no-sync because step 4 already ran cap sync ios.
-  const result = run('pnpm', ['exec', 'cap', 'run', 'ios', '--target', targetUdid, '--no-sync'], {
-    cwd: UI,
-    allowFail: true,
-  });
+  // --scheme App: Capacitor otherwise passes `ios.scheme` from
+  // capacitor.config.ts (e.g. `careerops`) as the xcodebuild scheme,
+  // which is wrong — that's the URL scheme, not the build scheme.
+  // The Xcode-generated build scheme is always named `App` (matches
+  // the target name) so we pin it explicitly.
+  const result = run(
+    'pnpm',
+    ['exec', 'cap', 'run', 'ios', '--target', targetUdid, '--scheme', 'App', '--no-sync'],
+    {
+      cwd: UI,
+      allowFail: true,
+    },
+  );
   if (result?.status === 0) {
     ok('app launched on simulator');
     launched = true;

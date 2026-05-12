@@ -21,6 +21,7 @@
 
 require 'xcodeproj'
 require 'fileutils'
+require 'plist'
 
 PROJECT_PATH = File.expand_path('App.xcodeproj', Dir.pwd)
 unless File.exist?(PROJECT_PATH)
@@ -80,6 +81,48 @@ EXTENSIONS = [
     deployment_min: '15.0',
   },
 ]
+
+# ── App-target Swift sources ────────────────────────────────────────
+# `cap add ios` only initializes the App target with AppDelegate.swift.
+# Native features we add later (BonjourBrowser, NetworkMonitor, Biometric,
+# KeychainStore, BackgroundFetcher, SpotlightIndexer, WatchSessionBridge,
+# CareerOpsNativePlugin, ErrorReporter, Brand) live in App/*.swift on disk
+# but aren't auto-added to the App target. Without this block xcodebuild
+# fails: "cannot find type 'BonjourBrowser' in scope". Walk App/*.swift
+# and ensure every file is in the App target's compile-sources phase.
+# Safe to re-run — checks for existing refs in both the group and the
+# build phase.
+app_sources_dir = File.expand_path('App', Dir.pwd)
+if Dir.exist?(app_sources_dir)
+  # NOTE: do NOT name this `app_group` — the outer scope's `app_group`
+  # string ('group.com.resistjs.careerops') is reused in the entitlements
+  # block below. Shadowing it with a PBXGroup object corrupts the
+  # entitlements file (the plist gem then Marshal-dumps the Ruby object
+  # into the <data> element).
+  app_files_group = project.main_group.find_subpath('App', true)
+  app_files_group.set_source_tree('<group>')
+  app_files_group.path = 'App'
+
+  sources_phase = main_target.source_build_phase
+  in_sources = sources_phase.files.map { |bf|
+    bf.file_ref ? File.basename(bf.file_ref.path.to_s) : nil
+  }.compact
+
+  added = 0
+  Dir.glob(File.join(app_sources_dir, '*.swift')).sort.each do |file|
+    rel = File.basename(file)
+    next if in_sources.include?(rel)
+
+    # Reuse an existing file reference if the group already has one;
+    # otherwise create it.
+    existing_ref = app_files_group.files.find { |f| File.basename(f.path.to_s) == rel }
+    file_ref = existing_ref || app_files_group.new_file(rel)
+    main_target.add_file_references([file_ref])
+    puts "    + App/#{rel} → App target sources"
+    added += 1
+  end
+  puts(added.zero? ? "✓ App target sources up-to-date" : "✓ added #{added} Swift file(s) to App target")
+end
 
 EXTENSIONS.each do |ext|
   if project.targets.any? { |t| t.name == ext[:name] }
@@ -186,18 +229,40 @@ EXTENSIONS.each do |ext|
   puts "  ✓ #{ext[:name]} added + linked to App target"
 end
 
-# Add App Group entitlement to the main App target too
+# Add App Group entitlement to the main App target too.
+# Use the `plist` gem to read (Xcodeproj::Plist.read_from_path silently
+# returns nil when the file has unfamiliar features like XML comments
+# or $(AppIdentifierPrefix) build-vars, which would cause us to OVERWRITE
+# the entitlements with an empty file and lose keychain/aps/background-
+# tasks entitlements. Quick + safe shortcut: if the raw text already
+# mentions the app_group string, do nothing.
 main_entitlements = File.expand_path('App/App.entitlements', Dir.pwd)
-existing_entitlements = nil
-if File.exist?(main_entitlements)
-  existing_entitlements = Xcodeproj::Plist.read_from_path(main_entitlements) rescue nil
-end
-existing_entitlements ||= {}
-existing_entitlements['com.apple.security.application-groups'] ||= []
-unless existing_entitlements['com.apple.security.application-groups'].include?(app_group)
-  existing_entitlements['com.apple.security.application-groups'] << app_group
-  File.write(main_entitlements, Plist::Emit.dump(existing_entitlements))
-  puts "✓ added #{app_group} to App.entitlements"
+if File.exist?(main_entitlements) && File.read(main_entitlements).include?(app_group)
+  puts "✓ #{app_group} already in App.entitlements"
+else
+  existing_entitlements = nil
+  if File.exist?(main_entitlements)
+    begin
+      existing_entitlements = Plist.parse_xml(File.read(main_entitlements))
+    rescue => e
+      puts "! could not parse App.entitlements (#{e.message}) — refusing to overwrite"
+      existing_entitlements = nil
+    end
+  end
+  if existing_entitlements
+    existing_entitlements['com.apple.security.application-groups'] ||= []
+    unless existing_entitlements['com.apple.security.application-groups'].include?(app_group)
+      existing_entitlements['com.apple.security.application-groups'] << app_group
+      File.write(main_entitlements, Plist::Emit.dump(existing_entitlements))
+      puts "✓ added #{app_group} to App.entitlements"
+    end
+  elsif !File.exist?(main_entitlements)
+    # No file at all — safe to create a fresh one.
+    File.write(main_entitlements, Plist::Emit.dump({
+      'com.apple.security.application-groups' => [app_group],
+    }))
+    puts "✓ created App.entitlements with #{app_group}"
+  end
 end
 
 # Make sure the main target's build settings reference the entitlements file

@@ -225,7 +225,17 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
 
         // Push the same payload to the paired Apple Watch (if any). The
         // bridge is a no-op on iPad-without-paired-watch installs.
-        WatchSessionBridge.shared.send(call.options)
+        // `call.options` is `[AnyHashable: Any]` (Capacitor's JSObject
+        // dictionary); WatchSessionBridge expects `[String: Any]`. Cast
+        // through Dictionary's `compactMapKeys`-style filter rather than
+        // a force-cast so any non-String keys are dropped silently.
+        let payload = Dictionary(uniqueKeysWithValues:
+            call.options.compactMap { key, value -> (String, Any)? in
+                guard let k = key as? String else { return nil }
+                return (k, value)
+            }
+        )
+        WatchSessionBridge.shared.send(payload)
 
         call.resolve(["ok": true])
     }
