@@ -1,0 +1,12 @@
+{
+  "activeId": "default",
+  "profiles": [
+    {
+      "id": "default",
+      "name": "Default",
+      "color": "blue",
+      "createdAt": 1778548653189,
+      "lastActiveAt": 1778548653189
+    }
+  ]
+}

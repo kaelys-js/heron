@@ -1,0 +1,36 @@
+# TestFlight builds expire after 90 days. This workflow runs on the 1st
+# of every other month at 09:00 UTC, triggering a fresh build that pushes
+# to TestFlight as a new version. Internal testers see it within minutes,
+# no Apple beta review.
+#
+# To override the cadence: edit the cron expression. Current setting
+# means rebuilds happen every ~60 days (well within the 90d expiry).
+name: testflight-keepalive
+
+on:
+  schedule:
+    # Every other month on the 1st at 09:00 UTC.
+    # cron: "minute hour day-of-month month day-of-week"
+    - cron: '0 9 1 */2 *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rebuild:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bump build number + tag
+        run: |
+          # Bump the patch number with a -tf{date} suffix so the version
+          # number stays unique without polluting semver.
+          CURRENT=$(node -p "require('./ui/electron/package.json').version")
+          DATE_TAG=$(date +%Y%m%d)
+          NEW_TAG="v${CURRENT}-tf${DATE_TAG}"
+          git tag -a "$NEW_TAG" -m "TestFlight keepalive rebuild ${DATE_TAG}"
+          git push origin "$NEW_TAG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # The tag push triggers native-release.yml which runs build-ios.
