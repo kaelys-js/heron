@@ -144,7 +144,13 @@ const SYSTEM_PROMPT =
   '- Do not invent dates, employers, metrics, or sections not present in cv.md.\n' +
   "- Keep the template's CSS, fonts, and class names exactly as given — only fill placeholders.";
 
-export type GenerateResult = GeneralCvStatus & { pages?: number };
+export type GenerateResult = GeneralCvStatus & {
+  pages?: number;
+  /** 0-100 ATS-compatibility score from ats-check.mjs (run on the PDF). */
+  atsScore?: number;
+  /** 0-100 resume-quality score from resume-quality.mjs (run on cv.md). */
+  qualityScore?: number;
+};
 
 /**
  * Run the full pipeline: cv.md + template → Claude → HTML → spawn
@@ -218,7 +224,39 @@ export async function generateGeneralCv(profileId?: string): Promise<GenerateRes
       (result.pages ? ' · ' + result.pages + 'p' : ''),
   });
 
-  return { ...generalCvStatus(id), pages: result.pages };
+  // Run the strict ATS + resume-quality checks on the freshly-rendered
+  // PDF + the source cv.md. Both are non-blocking — they surface scores
+  // via the activity feed so the user can decide whether to regenerate.
+  // The dashboard renders the fail-summary as actionable cards.
+  const { checkAts, checkResumeQuality } = await import('./quality-checks');
+  const [atsResult, resumeResult] = await Promise.all([
+    checkAts(generalCvPdf).catch(() => null),
+    checkResumeQuality(cvMd).catch(() => null),
+  ]);
+  if (atsResult) {
+    logEvent('cv-pdf', `ATS score ${atsResult.score.toFixed(1)}%`, {
+      level: atsResult.score === 100 ? 'success' : atsResult.score >= 80 ? 'info' : 'warn',
+      category: 'user',
+      message:
+        atsResult.failSummary || `${atsResult.passCount}/${atsResult.total} ATS checks passed`,
+    });
+  }
+  if (resumeResult) {
+    logEvent('cv-pdf', `Resume-quality score ${resumeResult.score.toFixed(1)}%`, {
+      level: resumeResult.score === 100 ? 'success' : resumeResult.score >= 85 ? 'info' : 'warn',
+      category: 'user',
+      message:
+        resumeResult.failSummary ||
+        `${resumeResult.passCount}/${resumeResult.total} quality checks passed`,
+    });
+  }
+
+  return {
+    ...generalCvStatus(id),
+    pages: result.pages,
+    atsScore: atsResult?.score,
+    qualityScore: resumeResult?.score,
+  };
 }
 
 function spawnPdfRender(

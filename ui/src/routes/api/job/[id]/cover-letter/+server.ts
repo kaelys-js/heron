@@ -21,6 +21,7 @@ import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { AGENT_CLI } from '$lib/config/cli';
 import { logEvent, reportServerError } from '$lib/server/events';
 import { CLI_NAMESPACE } from '$lib/config/branding';
+import { checkCoverLetter, type QualityResult } from '$lib/server/quality-checks';
 
 /** Cover letters live under {profile}/output/{stem}-cover.md so each profile
  *  has its own set. The CV-pdf naming convention is `{n}-{slug}-{date}.pdf`
@@ -152,7 +153,31 @@ export const POST = wrap(
         category: 'application',
         message: out.path,
       });
-      return { ok: true, path: out.path, body: out.body };
+
+      // Run cover-letter-check.mjs on the freshly-written file. The
+      // checker is read-only — it returns a score and a fail-summary;
+      // we surface that to the dashboard so the user can decide whether
+      // to regenerate or hand-edit. Non-blocking.
+      let quality: QualityResult | undefined;
+      try {
+        const absCoverPath = path.isAbsolute(out.path) ? out.path : path.join(ROOT, out.path);
+        quality = await checkCoverLetter(absCoverPath, {
+          company: job.company,
+          role: job.role,
+        });
+        logEvent('cover-letter', `Quality score ${quality.score.toFixed(1)}%`, {
+          level: quality.score === 100 ? 'success' : quality.score >= 80 ? 'info' : 'warn',
+          category: 'application',
+          message: quality.failSummary || `${quality.passCount}/${quality.total} checks passed`,
+        });
+      } catch (e) {
+        // Quality check failures are non-fatal. Log + carry on.
+        reportServerError('cover-letter', 'Quality check threw', e, {
+          category: 'application',
+        });
+      }
+
+      return { ok: true, path: out.path, body: out.body, quality };
     } catch (err) {
       reportServerError('cover-letter', 'Cover letter draft failed', err, {
         category: 'application',
