@@ -20,7 +20,7 @@ enum KeychainError: Error {
 
 final class KeychainStore {
     static let shared = KeychainStore()
-    private let service = "com.resistjs.careerops"
+    private let service = Brand.keychainService
 
     func set(_ value: String, forKey key: String) throws {
         let data = value.data(using: .utf8)!

@@ -1,10 +1,10 @@
 {
   "name": "career-ops",
   "version": "1.6.0",
-  "description": "career-ops desktop — AI job search pipeline",
+  "description": "career-ops desktop — AI-powered job search pipeline",
   "author": {
     "name": "santifer",
-    "email": "noreply@santifer.io"
+    "email": "hi@santifer.io"
   },
   "repository": {
     "type": "git",

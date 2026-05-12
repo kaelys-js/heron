@@ -70,8 +70,8 @@ class ShareViewController: SLComposeServiceViewController {
 
     private func postToCareerOps(url: URL, note: String?) async {
         // Read the resolved backend URL from the shared App Group.
-        guard let defaults = UserDefaults(suiteName: "group.com.resistjs.careerops"),
-              let backend = defaults.string(forKey: "career-ops:backend-resolved-url") else {
+        guard let defaults = UserDefaults(suiteName: Brand.appGroup),
+              let backend = defaults.string(forKey: Brand.DefaultsKey.backendResolvedUrl) else {
             NSLog("[share] no backend cached — cannot post URL")
             return
         }

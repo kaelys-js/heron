@@ -37,6 +37,7 @@ import { ElectronCapacitorApp, setupContentSecurityPolicy, setupReloadWatcher } 
 import { buildAppMenu } from './app-menu';
 import { CareerOpsTray } from './tray';
 import { startMdnsAdvertise } from './mdns';
+import { BRAND } from './brand';
 
 unhandled();
 
@@ -117,7 +118,7 @@ async function startEmbeddedServer(): Promise<string | undefined> {
     console.warn(`[main] embedded server exited with code ${code}`);
     state.serverProcess = undefined;
     if (code !== 0 && state.mainWindow && !state.mainWindow.isDestroyed()) {
-      dialog.showErrorBox('career-ops backend stopped', `The embedded server exited unexpectedly (code ${code}). Restart the app.`);
+      dialog.showErrorBox(`${BRAND.displayName} backend stopped`, `The embedded server exited unexpectedly (code ${code}). Restart the app.`);
     }
   });
   const url = `http://127.0.0.1:${port}`;
@@ -134,7 +135,7 @@ const myCapacitorApp = new ElectronCapacitorApp(capacitorFileConfig);
 
 if (capacitorFileConfig.electron?.deepLinkingEnabled) {
   setupElectronDeepLinking(myCapacitorApp, {
-    customProtocol: 'careerops',
+    customProtocol: BRAND.urlScheme,
   });
 }
 
@@ -143,8 +144,8 @@ if (electronIsDev) {
 }
 
 // ipcMain bridge — preload calls these to interact with the main process.
-ipcMain.handle('career-ops:get-server-url', () => state.serverUrl);
-ipcMain.handle('career-ops:show-notification', (_e, opts: { title: string; body: string }) => {
+ipcMain.handle(`${BRAND.name}:get-server-url`, () => state.serverUrl);
+ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; body: string }) => {
   if (Notification.isSupported()) {
     const n = new Notification({ title: opts.title, body: opts.body });
     n.show();
@@ -167,7 +168,7 @@ ipcMain.handle('career-ops:show-notification', (_e, opts: { title: string; body:
   // 2. mDNS advertise (only if we have an embedded server)
   if (state.serverPort) {
     try {
-      startMdnsAdvertise({ name: 'career-ops', port: state.serverPort });
+      startMdnsAdvertise({ name: BRAND.name, port: state.serverPort });
     } catch (e) {
       console.warn('[main] mDNS advertise failed', e);
     }
@@ -189,13 +190,13 @@ ipcMain.handle('career-ops:show-notification', (_e, opts: { title: string; body:
     onAbout: () => {
       dialog.showMessageBox({
         type: 'info',
-        title: 'About career-ops',
-        message: 'career-ops',
-        detail: `Version: ${app.getVersion()}\nBundle: com.resistjs.careerops\nBackend: ${state.serverUrl ?? 'remote'}`,
+        title: `About ${BRAND.displayName}`,
+        message: BRAND.displayName,
+        detail: `Version: ${app.getVersion()}\nBundle: ${BRAND.bundleId}\nBackend: ${state.serverUrl ?? 'remote'}`,
       });
     },
-    onOpenDocs: () => shell.openExternal('https://github.com/santifer/career-ops'),
-    onReportBug: () => shell.openExternal('https://github.com/santifer/career-ops/issues/new'),
+    onOpenDocs: () => shell.openExternal(BRAND.repoUrl),
+    onReportBug: () => shell.openExternal(`${BRAND.issuesUrl}/new`),
   }));
 
   // 5. Tray

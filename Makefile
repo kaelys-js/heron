@@ -13,7 +13,7 @@
 #   make icons         # regenerate all platform icons
 #   make release V=patch  # bump+tag+push (V can be patch/minor/major or x.y.z)
 
-.PHONY: help setup dev dev-desktop dev-ios build-desktop build-ios icons release verify
+.PHONY: help setup dev dev-desktop dev-ios build-desktop build-ios icons brand release verify
 
 help:
 	@node scripts/native/help.mjs
@@ -38,6 +38,9 @@ build-ios:
 
 icons:
 	@node scripts/native/icons.mjs
+
+brand:
+	@node scripts/native/apply-brand.mjs
 
 V ?= patch
 release:

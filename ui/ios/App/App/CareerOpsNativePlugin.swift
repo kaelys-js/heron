@@ -37,7 +37,7 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
     ]
 
     @objc public func getLanUrl(_ call: CAPPluginCall) {
-        let url = UserDefaults.standard.string(forKey: "career-ops:lan-url")
+        let url = UserDefaults.standard.string(forKey: Brand.DefaultsKey.lanUrl)
         call.resolve(["url": url as Any])
     }
 
@@ -121,7 +121,7 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc public func setUserActivity(_ call: CAPPluginCall) {
-        let type = call.getString("type") ?? "com.resistjs.careerops.openJob"
+        let type = call.getString("type") ?? Brand.openJobActivityType
         let title = call.getString("title") ?? "career-ops"
         let data = call.getObject("data") ?? JSObject()
         // NSUserActivity must be set on the main thread.

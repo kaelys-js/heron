@@ -283,6 +283,31 @@ Default modes are in `modes/` (English). Additional language-specific modes are 
 - **Dependabot** monitors npm, Go modules, and GitHub Actions for security updates
 - **Contributing process**: issue first → discussion → PR with linked issue → CI passes → maintainer review → merge
 
+### Branding — single source of truth
+
+`branding/brand.json` + `branding/logo.svg` are the **only** files you edit when rebranding (app name, bundle ID, URL scheme, colors, copyright, repo URL, permission descriptions, extension bundle suffixes). Running `pnpm brand:apply` propagates these into every consumer:
+
+| Consumer | What's regenerated |
+|---|---|
+| `package.json` (root + `ui/electron/`) | name, description, author, repo, license, keywords |
+| `ui/capacitor.config.ts` + `ui/electron/capacitor.config.ts` | appId, appName, URL scheme, splash colors |
+| `ui/electron/electron-builder.config.json` | appId, productName, copyright, CFBundleURLTypes, NSBonjourServices, GitHub publish target |
+| `ui/ios/App/App/Info.plist` | CFBundleDisplayName, URL scheme, Bonjour services, NSLocalNetworkUsageDescription, NSFaceIDUsageDescription, NSUserActivityTypes |
+| `ui/ios/App/App/Brand.swift` (generated) | Swift constants for every Swift file to import — `Brand.bundleId`, `Brand.urlScheme`, `Brand.serviceType`, `Brand.DefaultsKey.lanUrl`, `Brand.jobDeepLink(id)`, etc. Replicated into each extension target (`CareerOpsWidget/Brand.swift`, `CareerOpsLiveActivity/Brand.swift`, `CareerOpsShareExtension/Brand.swift`) because Xcode app-extension targets can't import from the host. |
+| `ui/src/lib/client/brand.ts` (generated) | TS constants — `BRAND.bundleId`, `BRAND.urlScheme`, `jobDeepLink(id)`, `deepLink(route)`. Web/Capacitor sources import from here. |
+| `ui/electron/src/brand.ts` (generated) | Same for the Electron main process. |
+| `ui/static/favicon.svg` | Copy of `branding/logo.svg` |
+| `ui/static/manifest.webmanifest` | name, short_name, description, theme_color, background_color |
+| `ui/ios/App/fastlane/{Appfile,Fastfile}` | app_identifier |
+| `scripts/native/add-xcode-targets.rb` | bundle_root, app_group constants |
+| **All platform icons** (calls `native/icons/generate-icons.mjs` at the end) | .icns / .ico / iOS appiconset / web manifest sizes |
+
+**Rules:**
+- Source code reads brand from generated `brand.ts` / `Brand.swift`. Never hardcode `com.resistjs.careerops`, `careerops://`, `_career-ops._tcp` in runtime code.
+- Comments / docstrings may reference literal values for documentation clarity (they don't affect runtime).
+- Verifier (Phase 9 in `verify-capacitor.mjs`) checks every consumer matches `brand.json` — drift fails CI.
+- Rebrand workflow: edit `branding/brand.json` → `pnpm brand:apply` → commit. All configs update in one shot.
+
 ### Release automation (Conventional Commits → Release Please → native-release)
 
 Releases are fully automated. You don't run a release command — you write commits in [Conventional Commits](https://www.conventionalcommits.org/) format and Release Please does the rest.

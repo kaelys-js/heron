@@ -112,7 +112,7 @@ exists('ui/electron/src/tray.ts', 'tray');
 contains('ui/electron/src/tray.ts', '/api/stats', 'tray polls stats');
 contains('ui/electron/src/tray.ts', '/api/autopilot/toggle', 'tray toggles autopilot');
 exists('ui/electron/src/mdns.ts', 'mDNS module');
-contains('ui/electron/src/mdns.ts', "type: 'career-ops'", 'service type set');
+contains('ui/electron/src/mdns.ts', 'BRAND.mdnsType', 'service type set (via BRAND)');
 exists('ui/electron/electron-builder.config.json', 'electron-builder config');
 jsonField('ui/electron/electron-builder.config.json', 'appId', 'com.resistjs.careerops', 'electron-builder appId');
 jsonField('ui/electron/electron-builder.config.json', 'mac.hardenedRuntime', true, 'hardened runtime enabled');
@@ -137,7 +137,7 @@ contains('ui/ios/App/App/AppDelegate.swift', 'BonjourBrowser', 'bonjour browser 
 contains('ui/ios/App/App/AppDelegate.swift', 'BackgroundFetcher.shared.fetch', 'background fetch handler');
 exists('ui/ios/App/App/BonjourBrowser.swift', 'BonjourBrowser');
 exists('ui/ios/App/App/BackgroundFetcher.swift', 'BackgroundFetcher');
-contains('ui/ios/App/App/BackgroundFetcher.swift', 'career-ops:last-seen-issue', 'lastSeen pointer tracked');
+contains('ui/ios/App/App/BackgroundFetcher.swift', 'Brand.DefaultsKey.lastSeenIssue', 'lastSeen pointer tracked (via Brand)');
 exists('ui/src/lib/client/deep-links.ts', 'deep-link handler');
 contains('ui/src/lib/client/deep-links.ts', 'careerops://', 'parses custom scheme');
 
@@ -173,7 +173,7 @@ exists('ui/ios/App/Gemfile', 'Gemfile');
 section('Phase 5 — Notification bridge + dev/prod parity');
 exists('ui/src/lib/client/sse-notifications-bridge.ts', 'SSE bridge');
 contains('ui/src/lib/client/sse-notifications-bridge.ts', '/api/notifications', 'reads notifications SSE');
-contains('ui/src/lib/client/sse-notifications-bridge.ts', 'careerops://job/', 'emits deepLink on tap');
+contains('ui/src/lib/client/sse-notifications-bridge.ts', 'jobDeepLink', 'emits deepLink on tap (via jobDeepLink)');
 exists('ui/src/lib/components/BackendPill.svelte', 'backend pill component');
 contains('ui/src/lib/components/BackendPill.svelte', 'pillLabel', 'uses pillLabel helper');
 exists('ui/src/routes/api/stats/+server.ts', '/api/stats endpoint');
@@ -216,6 +216,65 @@ const rootPkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
 for (const cmd of ['native', 'setup:native', 'setup:secrets', 'dev:desktop', 'dev:ios', 'build:desktop', 'build:ios', 'icons', 'release', 'verify:capacitor']) {
   if (rootPkg.scripts?.[cmd]) ok(`package.json script "${cmd}"`);
   else fail(`package.json missing "${cmd}"`);
+}
+
+// ── Phase 9 — Brand source of truth ────────────────────────────────
+section('Phase 9 — Brand single source of truth');
+exists('branding/brand.json', 'master brand metadata');
+exists('branding/logo.svg', 'master logo');
+exists('scripts/native/apply-brand.mjs', 'brand propagator');
+// Load brand and verify every consumer matches.
+{
+  const brand = JSON.parse(readFileSync(join(ROOT, 'branding/brand.json'), 'utf8'));
+  const bid = brand.identifiers.bundleId;
+  const scheme = brand.identifiers.urlScheme;
+  const svc = brand.identifiers.serviceType;
+  const display = brand.displayName;
+  // Consumers in order — each must reference the same values.
+  contains('ui/capacitor.config.ts', `appId: '${bid}'`, 'ui capacitor.config bundle id matches brand');
+  contains('ui/capacitor.config.ts', `appName: '${display}'`, 'ui capacitor.config display name matches brand');
+  contains('ui/capacitor.config.ts', `scheme: '${scheme}'`, 'ui capacitor.config urlScheme matches brand');
+  contains('ui/electron/capacitor.config.ts', `appId: '${bid}'`, 'electron capacitor.config bundle id matches brand');
+  contains('ui/electron/capacitor.config.ts', `customUrlScheme: '${scheme}'`, 'electron customUrlScheme matches brand');
+  jsonField('ui/electron/electron-builder.config.json', 'appId', bid, 'electron-builder appId matches brand');
+  jsonField('ui/electron/electron-builder.config.json', 'productName', display, 'electron-builder productName matches brand');
+  contains('ui/ios/App/App/Info.plist', `<string>${display}</string>`, 'iOS Info.plist CFBundleDisplayName matches brand');
+  contains('ui/ios/App/App/Info.plist', `<string>${scheme}</string>`, 'iOS Info.plist URL scheme matches brand');
+  contains('ui/ios/App/App/Info.plist', `<string>${svc}</string>`, 'iOS Info.plist Bonjour service matches brand');
+  exists('ui/ios/App/App/Brand.swift', 'generated Brand.swift (host app)');
+  exists('ui/ios/App/CareerOpsWidget/Brand.swift', 'generated Brand.swift (widget)');
+  exists('ui/ios/App/CareerOpsLiveActivity/Brand.swift', 'generated Brand.swift (live activity)');
+  exists('ui/ios/App/CareerOpsShareExtension/Brand.swift', 'generated Brand.swift (share ext)');
+  contains('ui/ios/App/App/Brand.swift', `bundleId = "${bid}"`, 'Brand.swift bundleId matches brand');
+  contains('ui/ios/App/App/Brand.swift', `urlScheme = "${scheme}"`, 'Brand.swift urlScheme matches brand');
+  contains('ui/ios/App/App/Brand.swift', `keychainService = "${brand.identifiers.keychainService}"`, 'Brand.swift keychainService matches brand');
+  contains('ui/ios/App/App/Brand.swift', 'enum DefaultsKey', 'Brand.swift exposes DefaultsKey namespace');
+  exists('ui/src/lib/client/brand.ts', 'generated brand.ts (client)');
+  exists('ui/electron/src/brand.ts', 'generated brand.ts (electron)');
+  contains('ui/src/lib/client/brand.ts', `bundleId: "${bid}"`, 'client brand.ts bundleId matches brand');
+  contains('ui/src/lib/client/brand.ts', `urlScheme: "${scheme}"`, 'client brand.ts urlScheme matches brand');
+  contains('ui/electron/src/brand.ts', `mdnsType: "${brand.identifiers.mdnsType}"`, 'electron brand.ts mdnsType matches brand');
+  // Consumers actually import from generated brand files (no hardcoded runtime strings)
+  contains('ui/src/lib/client/deep-links.ts', `from './brand'`, 'deep-links.ts imports BRAND');
+  contains('ui/src/lib/client/sse-notifications-bridge.ts', `from './brand'`, 'sse bridge imports BRAND');
+  contains('ui/src/lib/client/backend-discovery.ts', `from './brand'`, 'backend-discovery imports BRAND');
+  contains('ui/electron/src/index.ts', `from './brand'`, 'electron index.ts imports BRAND');
+  contains('ui/electron/src/mdns.ts', `from './brand'`, 'electron mdns.ts imports BRAND');
+  contains('ui/ios/App/App/KeychainStore.swift', 'Brand.keychainService', 'KeychainStore uses Brand.keychainService');
+  contains('ui/ios/App/App/SpotlightIndexer.swift', 'Brand.spotlightDomain', 'SpotlightIndexer uses Brand.spotlightDomain');
+  contains('ui/ios/App/App/AppDelegate.swift', 'Brand.serviceType', 'AppDelegate uses Brand.serviceType');
+  contains('ui/ios/App/App/BackgroundFetcher.swift', 'Brand.DefaultsKey.lanUrl', 'BackgroundFetcher uses Brand.DefaultsKey');
+  contains('ui/ios/App/CareerOpsWidget/CareerOpsWidget.swift', 'Brand.appGroup', 'Widget uses Brand.appGroup');
+  contains('ui/ios/App/CareerOpsShareExtension/ShareViewController.swift', 'Brand.appGroup', 'ShareExt uses Brand.appGroup');
+  exists('ui/static/manifest.webmanifest', 'web manifest exists');
+  jsonField('ui/static/manifest.webmanifest', 'name', display, 'web manifest name matches brand');
+  jsonField('ui/static/manifest.webmanifest', 'theme_color', brand.colors.primary, 'web manifest theme_color matches brand');
+  contains('ui/ios/App/fastlane/Appfile', `app_identifier("${bid}")`, 'Fastlane Appfile bundle id matches brand');
+  contains('ui/ios/App/fastlane/Fastfile', `APP_IDENTIFIER = "${bid}"`, 'Fastlane Fastfile bundle id matches brand');
+  contains('scripts/native/add-xcode-targets.rb', `bundle_root = '${bid}'`, 'xcode targets script bundle root matches brand');
+  contains('scripts/native/add-xcode-targets.rb', `app_group = '${brand.identifiers.appGroup}'`, 'xcode targets script app group matches brand');
+  jsonField('package.json', 'license', brand.license, 'root package.json license matches brand');
+  jsonField('package.json', 'description', brand.tagline, 'root package.json description matches brand');
 }
 
 // ── Phase 8 — Release automation ───────────────────────────────────
