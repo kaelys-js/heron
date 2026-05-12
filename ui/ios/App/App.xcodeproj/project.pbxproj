@@ -23,6 +23,7 @@
 		5C7BEACB7A09695AF511E256 /* SpotlightIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8126D767BB835DA855B58552 /* SpotlightIndexer.swift */; };
 		61B92C376B6A0BFDE5B3A999 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B04DDA8861B187894F3581C1 /* Assets.xcassets */; };
 		6BB0F8A01827A3FF34261489 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0864100E15B7E184D1F89EC5 /* KeychainStore.swift */; };
+		7AC0D36C2BBD93C60EFC3C4F /* CareerOpsBridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26631DCF28D85F99FB13A91E /* CareerOpsBridgeViewController.swift */; };
 		7DBFA4641E2729F109B35EF2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27884949441377C8C7559A26 /* Foundation.framework */; };
 		A8C93FC3E1C6E5089E3AA399 /* BiometricAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9012709D08A85C7A9CEB2C91 /* BiometricAuth.swift */; };
 		B1166C2AFCE9CB88941BA785 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7738EEBCC31A28A769071A /* RootView.swift */; };
@@ -59,6 +60,7 @@
 
 /* Begin PBXFileReference section */
 		0864100E15B7E184D1F89EC5 /* KeychainStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		26631DCF28D85F99FB13A91E /* CareerOpsBridgeViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CareerOpsBridgeViewController.swift; sourceTree = "<group>"; };
 		27884949441377C8C7559A26 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		2CE88770478FB968E108A903 /* CareerOpsNativePlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CareerOpsNativePlugin.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
@@ -171,6 +173,7 @@
 				DD18818E6F512F4FDB4E0E23 /* NetworkMonitor.swift */,
 				8126D767BB835DA855B58552 /* SpotlightIndexer.swift */,
 				51CD8E57475622C06A0B72CA /* WatchSessionBridge.swift */,
+				26631DCF28D85F99FB13A91E /* CareerOpsBridgeViewController.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -303,6 +306,7 @@
 				3521FD15CAEE97D1B1F89B14 /* NetworkMonitor.swift in Sources */,
 				5C7BEACB7A09695AF511E256 /* SpotlightIndexer.swift in Sources */,
 				3BCA8D89ECD906AE04F604E8 /* WatchSessionBridge.swift in Sources */,
+				7AC0D36C2BBD93C60EFC3C4F /* CareerOpsBridgeViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

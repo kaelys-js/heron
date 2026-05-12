@@ -29,6 +29,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var networkMonitor: NetworkMonitor?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Keep CareerOpsNativePlugin from being dead-stripped by the
+        // Swift static linker. Capacitor 7+ auto-discovers plugins by
+        // looking up `@objc(...)`-decorated `CAPBridgedPlugin` classes
+        // via NSClassFromString — but with static linking, classes that
+        // aren't referenced from Swift code at compile time get dropped
+        // and the JS bridge reports "plugin is not implemented on ios".
+        // Touching the metatype here keeps the symbol in the binary.
+        _ = CareerOpsNativePlugin.self
+
         // Start the Bonjour browser early so backend-discovery can
         // hit a hot cache. Results are stored in a UserDefaults key
         // the JS bridge reads.

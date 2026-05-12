@@ -42,15 +42,20 @@ const config = {
     scheme: 'careerops',
     contentInset: 'always',
     /** When true (Capacitor 8 default), the WebView refuses to navigate
-     *  to domains not listed in Info.plist's WKAppBoundDomains. Our
-     *  WebView only talks to localhost / Tailscale, so we keep this on
-     *  for defence-in-depth against XSS-driven exfil to external sites. */
-    limitsNavigationsToAppBoundDomains: true,
+     *  to domains not listed in Info.plist's WKAppBoundDomains.
+     *  WE EXPLICITLY DISABLE THIS: setting it true without a populated
+     *  WKAppBoundDomains array causes WebKit on iOS 26.4 to retry-loop
+     *  every blocked navigation, producing a constant white/dark flash
+     *  in the WebView (~12 reloads/sec, never paints the SvelteKit UI).
+     *  If we want to re-enable defence-in-depth XSS-exfil protection
+     *  later, we need to add WKAppBoundDomains to ui/ios/App/App/Info.plist
+     *  via apply-brand.mjs first. */
+    limitsNavigationsToAppBoundDomains: false,
     /** Allow the WebView's keyboard to behave like a native UITextField
      *  (auto-scroll on focus, predictive text bar). */
     preferredContentMode: 'mobile',
     /** Debug Inspector only in development builds — disable in CI. */
-    webContentsDebuggingEnabled: false,
+    webContentsDebuggingEnabled: true,
     /** Hide the legacy iOS swipe-back from the WebView since we have
      *  our own router-driven back button. */
     backgroundColor: '#0a0a0b',
@@ -94,7 +99,7 @@ const config = {
       sound: 'default',
     },
     SplashScreen: {
-      launchShowDuration: 1500,
+      launchShowDuration: 2000,
       backgroundColor: '#0a0a0b',
       showSpinner: false,
       /** Capacitor 5+ uses `androidScaleType` instead of the deprecated
@@ -105,10 +110,14 @@ const config = {
       iosSpinnerStyle: 'small',
       splashFullScreen: true,
       splashImmersive: true,
-      /** Don't auto-hide; we call `SplashScreen.hide()` from the
-       *  WebView once the dashboard finishes its first paint so users
-       *  never see a blank state. */
-      launchAutoHide: false,
+      /** Auto-hide after `launchShowDuration` ms so the splash never
+       *  outlives the WebView's first paint, even if the
+       *  @capacitor/splash-screen native plugin isn't bridged (SPM-built
+       *  Capacitor 7+ projects sometimes miss the Embed Frameworks step
+       *  so plugin calls like SplashScreen.hide() silently no-op). The
+       *  SvelteKit root layout still calls SplashScreen.hide() on
+       *  hydration as a belt-and-braces — whichever fires first wins. */
+      launchAutoHide: true,
     },
     StatusBar: {
       /** Match the WebView's status-bar tint to the theme so the
