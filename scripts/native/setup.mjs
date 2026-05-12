@@ -257,7 +257,28 @@ for (const [name, value] of Object.entries(secrets)) {
 }
 
 // ───────────────────────────────────────────────────────────────────
-step(9, 'Adding iOS Xcode extension targets (Widget / LiveActivity / ShareExt)');
+step(9, 'Repo settings (optional)');
+info('For automated releases (Conventional Commits → Release Please) to work cleanly,');
+info('GitHub should enforce squash-merge: every PR merge = one commit = one possible release.');
+if (await confirm('  Enforce squash-merge-only on this repo? (recommended)', true)) {
+  try {
+    // Disable merge commits and rebase merges, enable squash only.
+    capture('gh', [
+      'api', '-X', 'PATCH', `/repos/${repo}`,
+      '-f', 'allow_merge_commit=false',
+      '-f', 'allow_squash_merge=true',
+      '-f', 'allow_rebase_merge=false',
+      '-f', 'delete_branch_on_merge=true',
+    ]);
+    ok('squash-merge enforced + auto-delete branch on merge');
+  } catch (e) {
+    warn(`couldn't update repo settings: ${e.message}`);
+    warn(`run manually: gh api -X PATCH /repos/${repo} -f allow_merge_commit=false -f allow_squash_merge=true -f allow_rebase_merge=false`);
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────
+step(10, 'Adding iOS Xcode extension targets (Widget / LiveActivity / ShareExt)');
 const xcodegenScript = join(ROOT, 'scripts', 'native', 'add-xcode-targets.rb');
 if (existsSync(xcodegenScript)) {
   if (await confirm('  Add the 3 Xcode extension targets now?', true)) {
@@ -272,7 +293,7 @@ if (existsSync(xcodegenScript)) {
 }
 
 // ───────────────────────────────────────────────────────────────────
-step(10, 'Done');
+step(11, 'Done');
 console.log(c.green('\n✓ Setup complete.\n'));
 console.log(c.bold('Try one of these:'));
 console.log('  pnpm dev:desktop          — Electron with HMR');

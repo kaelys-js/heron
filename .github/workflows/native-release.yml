@@ -18,10 +18,22 @@
 #   GITHUB_TOKEN             — auto-provided by Actions
 name: native-release
 
+# Triggered three ways:
+#   1. Tag push (manual escape hatch — `pnpm release patch` still works).
+#   2. workflow_dispatch from the GitHub UI.
+#   3. workflow_call from release.yml after semantic-release cuts a new
+#      version. This is the primary path now — every commit to main with
+#      a `feat:` / `fix:` / breaking change automatically triggers a release.
 on:
   push:
     tags: ['v*.*.*']
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version tag to build (e.g. 1.7.0). Required when called.'
+        required: true
+        type: string
 
 permissions:
   contents: write    # upload release artifacts

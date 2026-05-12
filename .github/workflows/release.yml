@@ -1,17 +1,72 @@
-name: Release Please
+# release — automated semantic releases via Release Please.
+#
+# Flow:
+#
+#   1. Every push to main runs Release Please.
+#   2. Release Please reads commits since the last release and decides:
+#        feat: ...        → minor bump (1.6.0 → 1.7.0)
+#        fix: / perf: ... → patch bump (1.6.0 → 1.6.1)
+#        feat!: ...       → MAJOR bump (1.6.0 → 2.0.0)
+#        BREAKING CHANGE: → MAJOR (in commit body)
+#        chore: docs: refactor: test: ci: build: style: → no bump
+#   3. If there are bump-worthy commits, Release Please opens (or updates)
+#      a "release PR" that accumulates the changes + CHANGELOG entries.
+#      The PR sits there until you merge it — gives you a chance to review
+#      what's about to ship.
+#   4. When the release PR is merged: Release Please cuts the actual
+#      release — creates the git tag, the GitHub Release, the CHANGELOG
+#      commit, and emits a `releases_created: true` output.
+#   5. This workflow then triggers native-release.yml via workflow_call to
+#      build DMG / .exe / .AppImage / iOS TestFlight artifacts and attach
+#      them to the just-created GitHub Release.
+#
+# Manual override: `pnpm release patch` from the CLI still works — it
+# bypasses Release Please and pushes a tag directly. native-release.yml
+# picks up that tag via its `on: push: tags` trigger.
+name: release
+
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+
+# Avoid overlapping releases.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.rp.outputs.release_created }}
+      tag_name: ${{ steps.rp.outputs.tag_name }}
+      version: ${{ steps.rp.outputs.major }}.${{ steps.rp.outputs.minor }}.${{ steps.rp.outputs.patch }}
     steps:
       - uses: googleapis/release-please-action@v4
+        id: rp
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+          # GitHub auto-provided token works for opening release PRs and
+          # cutting releases. For triggering downstream workflows we use
+          # the workflow_call below, which inherits the same run context
+          # without needing a PAT.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  # When Release Please cuts a real release (i.e. the release PR was just
+  # merged), kick off the cross-platform build. workflow_call within the
+  # same run means we don't need a PAT — secrets: inherit forwards every
+  # repo secret (APPLE_*, MAC_CERTIFICATE_*, etc.) into the called workflow.
+  build-natives:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    uses: ./.github/workflows/native-release.yml
+    with:
+      version: ${{ needs.release-please.outputs.version }}
+    secrets: inherit
