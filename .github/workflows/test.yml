@@ -56,7 +56,7 @@ jobs:
       # mise installs Node + pnpm + Ruby pinned in `.mise.toml`. Single
       # source of truth; no risk of drift between local + CI versions.
       - name: Setup mise (Node + pnpm + Ruby)
-        uses: jdx/mise-action@v2
+        uses: jdx/mise-action@v4
         with:
           experimental: true
           # Cache mise's tool downloads — drastically faster repeat runs.
