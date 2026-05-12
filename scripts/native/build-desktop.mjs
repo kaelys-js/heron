@@ -12,8 +12,12 @@
  *   7. electron-builder make
  *
  * Output: ui/electron/dist/ with platform-appropriate artifacts.
- * On macOS: produces DMG (x64 + arm64). On Windows: NSIS .exe.
- * On Linux: AppImage + .deb.
+ * On macOS: produces DMG (current arch only by default).
+ * On Windows: NSIS .exe. On Linux: AppImage + .deb.
+ *
+ * Modes:
+ *   pnpm build:desktop          — release build (both archs + signing + publish)
+ *   pnpm build:desktop --fast   — single-arch DMG only, no publish (3-5 min)
  *
  * For SIGNED/notarized builds, set Apple secrets in env first (or run
  * `pnpm setup:secrets` which exports them to ~/.career-ops/native-env).
@@ -22,6 +26,7 @@ import { step, run, ok, info, ROOT, UI } from './_lib.mjs';
 import { join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 
+const FAST_MODE = process.argv.includes('--fast');
 const electronDir = join(UI, 'electron');
 
 step(1, 'Applying brand (icons + configs from branding/brand.json)');
@@ -61,8 +66,9 @@ if (existsSync(envFile)) {
   );
 }
 
-step(8, 'electron-builder make');
-run('npm', ['run', 'electron:make'], { cwd: electronDir, env: signingEnv });
+step(8, 'electron-builder make' + (FAST_MODE ? ' (fast: single-arch DMG only)' : ''));
+const makeScript = FAST_MODE ? 'electron:make:dev' : 'electron:make';
+run('npm', ['run', makeScript], { cwd: electronDir, env: signingEnv });
 
 step(9, 'Done');
 const distDir = join(electronDir, 'dist');
