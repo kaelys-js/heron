@@ -65,8 +65,15 @@ export function installNotificationsBridge(backendUrl: string): () => void {
       level: event.level,
       deepLink: event.jobId ? jobDeepLink(event.jobId) : undefined,
       onClick: () => {
-        if (event.jobId && typeof window !== 'undefined') {
-          window.location.href = `/job/${event.jobId}`;
+        // Defence-in-depth: jobId comes from server-sent events. If a
+        // malicious JD ever poisons the upstream event producer, restrict
+        // navigation to safe alphanumeric ids. Anything else stays put.
+        if (
+          event.jobId &&
+          typeof window !== 'undefined' &&
+          /^[a-zA-Z0-9_-]{1,64}$/.test(event.jobId)
+        ) {
+          window.location.href = `/job/${encodeURIComponent(event.jobId)}`;
         }
       },
     });

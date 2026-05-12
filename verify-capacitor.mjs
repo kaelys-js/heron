@@ -864,7 +864,7 @@ exists(
 // ── Phase 11 — Tooling (mise + lefthook + biome + turborepo) ────────
 section('Phase 11 — Tooling (mise + lefthook + biome + turborepo)');
 exists('.mise.toml', 'mise pin');
-contains('.mise.toml', 'node  = "22', 'node pinned to Node 22 LTS');
+contains('.mise.toml', 'node  = "26', 'node pinned to current line (latest)');
 contains('.mise.toml', 'pnpm  = "11', 'pnpm pinned to v11');
 exists('lefthook.yml', 'lefthook config');
 contains('lefthook.yml', 'pre-commit:', 'pre-commit hooks');

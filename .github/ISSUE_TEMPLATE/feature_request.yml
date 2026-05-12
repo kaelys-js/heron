@@ -1,47 +1,89 @@
-name: Feature Request
-description: Suggest a new feature or improvement
-labels: ["enhancement"]
+name: Feature request
+description: Suggest a new feature, capability, or enhancement.
+title: "feat: "
+labels: ["enhancement", "needs-triage"]
 body:
-  - type: checkboxes
-    id: coc
+  - type: markdown
     attributes:
-      label: Code of Conduct
-      options:
-        - label: I agree to follow the [Code of Conduct](https://github.com/santifer/career-ops/blob/main/CODE_OF_CONDUCT.md)
-          required: true
+      value: |
+        Thanks for the proposal. Big-picture ideas / brainstorming → [Discussions](../../discussions). This template is for **scoped, actionable** feature requests.
+
   - type: checkboxes
-    id: search
+    id: preflight
     attributes:
-      label: Existing issues
+      label: Preflight
       options:
-        - label: I searched existing issues and this hasn't been requested yet
+        - label: I searched existing issues + discussions and this hasn't been proposed.
           required: true
+        - label: I read the [Code of Conduct](../CODE_OF_CONDUCT.md).
+          required: true
+
   - type: textarea
     id: problem
     attributes:
       label: Problem
-      description: What problem does this solve? Why do you need this?
+      description: What user pain does this solve? Be concrete.
+      placeholder: "When I do X, I have to manually do Y because career-ops doesn't support Z."
     validations:
       required: true
+
   - type: textarea
     id: solution
     attributes:
       label: Proposed solution
-      description: How would you like this to work?
+      description: What should career-ops do? Sketch the UX, command, or flow.
     validations:
       required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Why is this better than working around it / using existing features?
+
   - type: dropdown
     id: area
     attributes:
       label: Area
+      multiple: true
       options:
-        - Evaluation / Scoring
-        - PDF Generation
-        - Portal Scanner
-        - Dashboard TUI
-        - Batch Processing
-        - Language / i18n
+        - Dashboard (SvelteKit)
+        - Native (iOS / Android / macOS / Windows / Linux)
+        - Apple Watch
+        - Widgets
+        - Scoring / Evaluation
+        - PDF / CV generation
+        - Portal scanner (Greenhouse / Ashby / Lever / Workday / …)
+        - LinkedIn Easy Apply
+        - Autonomous apply pipeline
+        - Multi-user / RBAC
+        - Notifications
+        - Localization / language modes
+        - Accessibility
+        - Developer experience / CI
         - Documentation
         - Other
     validations:
       required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Estimated scope
+      options:
+        - Tiny (≤ 1 day, single file)
+        - Small (1-3 days)
+        - Medium (1-2 weeks)
+        - Large (multi-week, architecture-level)
+        - Don't know
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: willing
+    attributes:
+      label: Are you willing to help?
+      options:
+        - label: I can submit a PR for this.
+        - label: I can test a PR for this.
+        - label: I can write docs / examples.
