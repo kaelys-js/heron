@@ -68,6 +68,8 @@ function normalizeStatus(raw) {
   const canonical = [
     'Evaluated', 'Applied', 'Responded', 'Interview',
     'Offer', 'Rejected', 'Discarded', 'SKIP',
+    // Autonomous-apply additions (round 4)
+    'Queued', 'Applying', 'ManualApplyNeeded',
   ];
   for (const c of canonical) {
     if (lower === c.toLowerCase()) return { status: c };
@@ -81,6 +83,12 @@ function normalizeStatus(raw) {
   if (['oferta'].includes(lower)) return { status: 'Offer' };
   if (['cerrada', 'descartada'].includes(lower)) return { status: 'Discarded' };
   if (['no aplicar', 'no_aplicar', 'skip'].includes(lower)) return { status: 'SKIP' };
+
+  // Legacy labels users typed before canonical names existed:
+  // READY-TO-APPLY / ready_to_apply / ready to apply → Queued (autonomous-apply)
+  if (['ready-to-apply', 'ready_to_apply', 'ready to apply', 'readytoapply'].includes(lower)) {
+    return { status: 'Queued' };
+  }
 
   // Unknown — flag it
   return { status: null, unknown: true };
@@ -96,54 +104,67 @@ const lines = content.split('\n');
 
 let changes = 0;
 let unknowns = [];
+let scoreFixes = 0;
 
 for (let i = 0; i < lines.length; i++) {
   const line = lines[i];
   if (!line.startsWith('|')) continue;
 
   const parts = line.split('|').map(s => s.trim());
-  // Format: ['', '#', 'fecha', 'empresa', 'rol', 'score', 'STATUS', 'pdf', 'report', 'notas', '']
-  if (parts.length < 9) continue;
+  // Schema detection per row — 12 cells (incl. empty leading/trailing) when
+  // URL column is present, 11 cells when not. Column offsets shift by 1.
+  //   9-col  (length 11): ['', '#', 'date', 'co', 'role', 'score', 'STATUS', 'pdf', 'report', 'notes', '']
+  //   10-col (length 12): ['', '#', 'date', 'co', 'role', 'URL', 'score', 'STATUS', 'pdf', 'report', 'notes', '']
+  if (parts.length < 11) continue;
   if (parts[1] === '#' || parts[1] === '---' || parts[1] === '') continue;
 
   const num = parseInt(parts[1]);
   if (isNaN(num)) continue;
 
-  const rawStatus = parts[6];
-  const result = normalizeStatus(rawStatus);
+  const off = parts.length >= 12 ? 1 : 0;
+  const SCORE = 5 + off;
+  const STATUS = 6 + off;
+  const NOTES = 9 + off;
 
+  const rawStatus = parts[STATUS];
+  const result = normalizeStatus(rawStatus);
+  let lineChanged = false;
+
+  // --- Status normalization ---
   if (result.unknown) {
     unknowns.push({ num, rawStatus, line: i + 1 });
-    continue;
-  }
-
-  if (result.status === rawStatus) continue; // Already canonical
-
-  // Apply change
-  const oldStatus = rawStatus;
-  parts[6] = result.status;
-
-  // Move DUPLICADO info to notes if needed
-  if (result.moveToNotes && parts[9]) {
-    const existing = parts[9] || '';
-    if (!existing.includes(result.moveToNotes)) {
-      parts[9] = result.moveToNotes + (existing ? '. ' + existing : '');
+  } else if (result.status !== rawStatus) {
+    const oldStatus = rawStatus;
+    parts[STATUS] = result.status;
+    if (result.moveToNotes) {
+      const existing = parts[NOTES] || '';
+      if (!existing.includes(result.moveToNotes)) {
+        parts[NOTES] = result.moveToNotes + (existing ? '. ' + existing : '');
+      }
     }
-  } else if (result.moveToNotes && !parts[9]) {
-    parts[9] = result.moveToNotes;
+    changes++;
+    lineChanged = true;
+    console.log(`#${num}: status "${oldStatus}" → "${result.status}"`);
   }
 
-  // Also strip bold from score field
-  if (parts[5]) {
-    parts[5] = parts[5].replace(/\*\*/g, '');
+  // --- Score normalization (bold strip + bare-number /5 suffix) ---
+  if (parts[SCORE]) {
+    const before = parts[SCORE];
+    let after = before.replace(/\*\*/g, '').trim();
+    // Append /5 to bare numbers like "4.3" → "4.3/5"
+    if (/^\d+\.?\d*$/.test(after)) after = after + '/5';
+    if (after !== before) {
+      parts[SCORE] = after;
+      scoreFixes++;
+      lineChanged = true;
+      console.log(`#${num}: score "${before}" → "${after}"`);
+    }
   }
 
-  // Reconstruct line
-  const newLine = '| ' + parts.slice(1, -1).join(' | ') + ' |';
-  lines[i] = newLine;
-  changes++;
-
-  console.log(`#${num}: "${oldStatus}" → "${result.status}"`);
+  if (lineChanged) {
+    const newLine = '| ' + parts.slice(1, -1).join(' | ') + ' |';
+    lines[i] = newLine;
+  }
 }
 
 if (unknowns.length > 0) {
@@ -153,9 +174,10 @@ if (unknowns.length > 0) {
   }
 }
 
-console.log(`\n📊 ${changes} statuses normalized`);
+console.log(`\n📊 ${changes} statuses normalized · ${scoreFixes} scores fixed`);
 
-if (!DRY_RUN && changes > 0) {
+const totalChanges = changes + scoreFixes;
+if (!DRY_RUN && totalChanges > 0) {
   // Backup first
   copyFileSync(APPS_FILE, APPS_FILE + '.bak');
   writeFileSync(APPS_FILE, lines.join('\n'));

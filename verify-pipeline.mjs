@@ -179,35 +179,31 @@ function checkScope(scope) {
   // --- Check 3: Report links ---
   // Report links in applications.md are written relative to the profile root
   // (e.g. `reports/123-foo-...md`), so resolve against `scope.reportsBase`.
-  // Missing reports are reported as WARN (not error): they represent user-
-  // data drift (deleted/moved/never-generated reports), not a code defect,
-  // and shouldn't block CI on a clean working tree.
+  // A report is considered "found" if it exists at the literal path OR in
+  // `reports/archive/` (the user archives old reports without rewriting the
+  // 100s of tracker rows). This treats archiving as a non-breaking operation.
   let brokenReports = 0;
   for (const e of entries) {
     const match = e.report.match(/\]\(([^)]+)\)/);
     if (!match) continue;
-    const reportPath = join(scope.reportsBase, match[1]);
-    if (!existsSync(reportPath)) {
-      warn(`[${scope.label}] #${e.num}: Report not found: ${match[1]}`);
-      brokenReports++;
-    }
+    const literalPath = join(scope.reportsBase, match[1]);
+    if (existsSync(literalPath)) continue;
+    // Try archive fallback: reports/foo.md → reports/archive/foo.md
+    const archivePath = match[1].replace(/^reports\//, 'reports/archive/');
+    if (existsSync(join(scope.reportsBase, archivePath))) continue;
+    error(`[${scope.label}] #${e.num}: Report not found: ${match[1]}`);
+    brokenReports++;
   }
   if (brokenReports === 0) ok(`[${scope.label}] All report links valid`);
 
   // --- Check 4: Score format ---
-  // Canonical: "X.X/5". Also tolerate bare "X.X" (user-data drift) as a
-  // WARN — it's a normalization gap, not a code defect.
   let badScores = 0;
   for (const e of entries) {
     const s = e.score.replace(/\*\*/g, '').trim();
-    if (s === 'N/A' || s === 'DUP') continue;
-    if (/^\d+\.?\d*\/5$/.test(s)) continue;
-    if (/^\d+\.?\d*$/.test(s)) {
-      warn(`[${scope.label}] #${e.num}: Score missing /5 suffix: "${e.score}"`);
-      continue;
+    if (!/^\d+\.?\d*\/5$/.test(s) && s !== 'N/A' && s !== 'DUP') {
+      error(`[${scope.label}] #${e.num}: Invalid score format: "${e.score}"`);
+      badScores++;
     }
-    error(`[${scope.label}] #${e.num}: Invalid score format: "${e.score}"`);
-    badScores++;
   }
   if (badScores === 0) ok(`[${scope.label}] All scores valid`);
 
