@@ -1,7 +1,8 @@
-
-> ui@0.0.1 check /Users/home/career-ops/ui
-> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
-
+..                                       | [WARN] Unsupported engine: wanted: {"node":">=26.0.0"} (current: {"node":"v25.9.0","pnpm":"11.1.0"})
+[WARN] Unsupported engine: wanted: {"node":">=26.0.0"} (current: {"node":"v25.9.0","pnpm":"11.1.0"})
+electron                                 | [WARN] Unsupported engine: wanted: {"node":">=26.0.0"} (current: {"node":"v25.9.0","pnpm":"11.1.0"})
+[WARN] Unsupported engine: wanted: {"node":">=26.0.0"} (current: {"node":"v25.9.0","pnpm":"11.1.0"})
+$ svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --threshold error
 Loading svelte-check in workspace: /Users/home/career-ops/ui
 Getting Svelte diagnostics...
 

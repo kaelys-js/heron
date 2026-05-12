@@ -91,11 +91,10 @@ jobs:
       - name: Format check (biome + prettier-svelte)
         run: pnpm format:check
 
-      - name: svelte-check (ui type-check)
-        run: pnpm -C ui exec svelte-check --tsconfig ./tsconfig.json --threshold error
-
-      - name: tsgo (electron type-check)
-        run: pnpm -C ui/electron exec tsgo --noEmit -p tsconfig.json
+      # svelte-check + tsgo via turbo. Cached by per-workspace input
+      # hash — CI's turbo cache step above restores hits from prior runs.
+      - name: Typecheck (svelte-check + tsgo, turbo-cached)
+        run: pnpm exec turbo run check
 
       # ── Behavioural checks ───────────────────────────────────────
       - name: Quick test suite
@@ -117,14 +116,13 @@ jobs:
       - name: Apply brand (generate icons + propagated configs)
         run: pnpm brand:apply
 
-      - name: Brand + native consistency
-        run: pnpm verify:capacitor
-
-      - name: Multi-user verifier
-        run: pnpm verify:multi-user
-
-      - name: Pipeline tracker hygiene
-        run: pnpm verify
+      # All three verifiers (capacitor + multi-user + pipeline) via the
+      # turbo //#verify:all root task. Cached by file-hash so PR pushes
+      # that don't touch the verifier's inputs return instantly.
+      - name: Verify (capacitor + multi-user + pipeline, turbo-cached)
+        env:
+          BETTER_AUTH_RATE_LIMIT: "off"
+        run: pnpm verify:cached
 
       # ── Build ────────────────────────────────────────────────────
       # Verifies adapter-node + electron + brand tasks all succeed.

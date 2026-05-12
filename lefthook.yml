@@ -88,20 +88,13 @@ pre-commit:
       glob: "*.svelte"
       run: cd ui && pnpm exec prettier --check {staged_files} --ignore-path ../.prettierignore
 
-    svelte-check:
-      # Type-check ui/ on every commit. The user-asked-for safety net —
-      # catches type errors before they reach pre-push / CI.
-      # Skipped when no Svelte/TS files in ui/ are staged (avoids the
-      # ~5s cost on docs-only commits).
-      glob: "ui/**/*.{svelte,ts,tsx,js,mjs}"
-      run: cd ui && pnpm exec svelte-check --tsconfig ./tsconfig.json --threshold error
-
-    tsgo-electron:
-      # Type-check ui/electron/ when its source changes. tsgo is the
-      # Rust-rewrite TypeScript compiler — ~10× faster than tsc, so this
-      # adds <1s to the commit path.
-      glob: "ui/electron/**/*.{ts,tsx,js,mjs}"
-      run: cd ui/electron && pnpm exec tsgo --noEmit -p tsconfig.json
+    typecheck:
+      # Type-check ui/ + ui/electron/ on every commit via turbo's per-
+      # workspace `check` task. Turbo caches by file hash so consecutive
+      # commits where source didn't change return instantly (FULL TURBO).
+      # Cold cost is ~12s; warm cost is <100ms.
+      glob: "{ui,ui/electron}/**/*.{svelte,ts,tsx,js,mjs}"
+      run: pnpm exec turbo run check
 
     no-secrets:
       # Cheap regex guard — block obvious secrets from being committed.
@@ -119,30 +112,24 @@ pre-commit:
 
 # ── pre-push ────────────────────────────────────────────────────────
 # Heavier gates that only fire on `git push`. CI re-runs all of these
-# but a green push means the PR will likely go green too.
+# but a green push means the PR will likely go green too. Every check
+# runs through turbo so warm pushes (no source change) finish in <1s.
 pre-push:
-  parallel: true # all 4 can run independently
+  parallel: true
   commands:
-    svelte-check:
-      # Full type-check (no glob filter — runs whole project).
-      run: cd ui && pnpm exec svelte-check --tsconfig ./tsconfig.json --threshold error
-    tsgo-electron:
-      run: cd ui/electron && pnpm exec tsgo --noEmit -p tsconfig.json
+    typecheck:
+      # svelte-check (ui) + tsgo (electron), turbo-cached.
+      # Cold ~12s, warm <100ms.
+      run: pnpm exec turbo run check
     format-check:
-      # Verify everything is formatted — both biome (non-svelte) + prettier (svelte).
       run: pnpm format:check
-    verify-capacitor:
-      # Brand + native consistency. Cheap (~1s).
-      run: node verify-capacitor.mjs
-    verify-multi-user:
-      # Multi-user behavioural verifier. ~30s — gated to pre-push only
-      # because it spins up a real server + does HTTP round-trips.
-      run: node verify-multi-user.mjs
+    verify-all:
+      # Brand + native + multi-user + pipeline verifiers — all turbo-cached.
+      # Cold ~5s, warm <200ms.
       env:
         BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-pre-push
-    verify-pipeline:
-      # Tracker hygiene.
-      run: node verify-pipeline.mjs
+        BETTER_AUTH_RATE_LIMIT: "off"
+      run: pnpm verify:cached
 
 # ── commit-msg (lightweight) ────────────────────────────────────────
 # Enforce Conventional Commits format (so release-please can generate
