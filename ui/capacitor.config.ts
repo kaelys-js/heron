@@ -78,6 +78,18 @@ const config = {
     splashScreenEnabled: true,
   },
   server: {
+    /**
+     * Live-reload mode — when scripts/native/dev-ios.mjs is run with
+     * `--live`, CAPACITOR_SERVER_URL is set to `http://<lan-ip>:5173` and
+     * passed through to `cap sync`. Capacitor writes it into the synced
+     * `capacitor.config.json`, so the WebView loads from Vite directly
+     * (true HMR on simulator + real device).
+     *
+     * PRODUCTION BUILDS MUST NEVER SET THIS. `pnpm build:ios` runs without
+     * the env var, the `url` key is absent, and the WebView falls back to
+     * the bundled static `App.app/public/index.html` as Capacitor intends.
+     */
+    ...(process.env.CAPACITOR_SERVER_URL ? { url: process.env.CAPACITOR_SERVER_URL } : {}),
     /** http://localhost is allowed for the LAN-discovery and embedded
      *  server case. Production deployments behind Tailscale magic-DNS
      *  use https:// automatically. */
@@ -99,7 +111,12 @@ const config = {
       sound: 'default',
     },
     SplashScreen: {
-      launchShowDuration: 2000,
+      // 3500ms gives slow first-paint hydration (cold launch on iOS, large
+      // app bundle) time to render before the splash auto-hides. Fast
+      // paths still trigger SplashScreen.hide() from +layout.svelte's
+      // onMount as soon as the SvelteKit shell is on screen; whichever
+      // fires first wins.
+      launchShowDuration: 3500,
       backgroundColor: '#0a0a0b',
       showSpinner: false,
       /** Capacitor 5+ uses `androidScaleType` instead of the deprecated
