@@ -18,7 +18,7 @@
       {#if pct > 0}
         <div
           class={(s.tint ?? 'bg-muted') +
-            ' flex items-center justify-center text-[10px] font-medium tabular-nums'}
+            ' flex items-center justify-center text-[11px] font-medium tabular-nums'}
           style={'width: ' + pct + '%'}
           title={s.label + ': ' + s.value + ' (' + pct.toFixed(1) + '%)'}
         >
@@ -28,7 +28,7 @@
     {/each}
   </div>
   {#if showLegend}
-    <div class="flex flex-wrap gap-x-3 gap-y-1 text-[10px]">
+    <div class="flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
       {#each segments as s}
         {@const pct = (s.value / total) * 100}
         <div class="flex items-center gap-1.5">

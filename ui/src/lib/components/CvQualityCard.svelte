@@ -197,7 +197,7 @@
             <Wand2 class="size-3 text-blue-400" /> Auto-fix with AI (preview)
           {/if}
         </Button>
-        <p class="text-[10px] text-muted-foreground mt-1.5">
+        <p class="text-[11px] text-muted-foreground mt-1.5">
           AI rewrites the CV preserving every fact, removing AI-detection patterns + clichés. The
           original is backed up to <code class="font-mono">cv.md.bak</code> before any change.
         </p>

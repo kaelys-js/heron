@@ -274,7 +274,7 @@
               <div class="flex-1 min-w-0">
                 <JobCard {job} />
                 {#if state}
-                  <div class="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <div class="mt-1.5 flex items-center gap-2 text-[11px] text-muted-foreground">
                     <span class={cn('font-mono', pb.tint)}>{pb.label}</span>
                     <span>·</span>
                     <span>step: {state.lastStep ?? '—'}</span>
@@ -326,7 +326,7 @@
               />
               <div class="flex-1 min-w-0">
                 <JobCard {job} />
-                <div class="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground">
+                <div class="mt-1.5 flex items-center gap-2 text-[11px] text-muted-foreground">
                   <span class={cn('font-mono', pb.tint)}>{pb.label}</span>
                   {#if job.profileId && job.profileId !== data.profileId && data.profileId !== 'all'}
                     <span>·</span>
@@ -377,7 +377,7 @@
               <Bell class="size-4 text-amber-400 mt-2 flex-shrink-0" />
               <div class="flex-1 min-w-0">
                 <JobCard {job} />
-                <div class="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground">
+                <div class="mt-1.5 flex items-center gap-2 text-[11px] text-muted-foreground">
                   <span class={cn('font-mono', pb.tint)}>{pb.label}</span>
                 </div>
               </div>
@@ -428,7 +428,7 @@
               {/if}
             </Button>
           </div>
-          <p class="text-[10px] text-muted-foreground/70 leading-relaxed pl-1">
+          <p class="text-[11px] text-muted-foreground/70 leading-relaxed pl-1">
             Use this when you want LinkedIn auto-apply + new-tab open for non-LinkedIn at the same
             time. Most users prefer "Run drain now" above — that respects your per-profile
             <code>autonomous_apply</code> opt-in.

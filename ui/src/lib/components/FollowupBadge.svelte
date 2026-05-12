@@ -79,7 +79,7 @@
           <span
             {...props}
             class={cn(
-              'inline-flex items-center gap-1 h-5 px-1.5 rounded border text-[10px] font-mono uppercase tracking-wider cursor-help',
+              'inline-flex items-center gap-1 h-5 px-1.5 rounded border text-[11px] font-mono uppercase tracking-wider cursor-help',
               TINT[entry.urgency],
               className,
             )}

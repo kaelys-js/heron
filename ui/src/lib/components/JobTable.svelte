@@ -170,7 +170,7 @@
   <div class="max-h-[calc(100vh-220px)] overflow-auto relative">
     <table class="w-full text-xs border-collapse">
       <thead
-        class="bg-muted/60 backdrop-blur-md text-[10px] uppercase tracking-wider text-muted-foreground sticky top-0 z-10"
+        class="bg-muted/60 backdrop-blur-md text-[11px] uppercase tracking-wider text-muted-foreground sticky top-0 z-10"
       >
         <tr class="border-b border-border/40">
           <Tooltip.Provider delayDuration={300}>
@@ -314,7 +314,7 @@
             <td class="px-3 py-1.5 align-middle">
               <span class={cn('inline-flex items-center gap-1', wm.tint)}>
                 <WIcon class="size-3" />
-                <span class="text-[10px]">{wm.label}</span>
+                <span class="text-[11px]">{wm.label}</span>
               </span>
             </td>
             <!-- BG -->
@@ -323,7 +323,7 @@
                 <Badge
                   variant="outline"
                   class={cn(
-                    'text-[10px] h-4 px-1 font-mono uppercase border',
+                    'text-[11px] h-4 px-1 font-mono uppercase border',
                     BG_TINTS[job.bgRisk],
                   )}
                 >

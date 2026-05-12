@@ -479,7 +479,7 @@
                 disabled={sessionActive && stage !== opt.id}
               >
                 <div class="text-xs font-medium">{opt.label}</div>
-                <div class="text-[10px] text-muted-foreground/80 leading-tight">{opt.blurb}</div>
+                <div class="text-[11px] text-muted-foreground/80 leading-tight">{opt.blurb}</div>
               </button>
             {/each}
           </div>
@@ -537,7 +537,7 @@
             <Card.Title class="text-sm flex items-center gap-2">
               <MessageSquare class="size-4 text-orange-400" />
               Question {history.length + 1}
-              {#if speaking}<span class="text-[10px] text-orange-300 animate-pulse">speaking…</span
+              {#if speaking}<span class="text-[11px] text-orange-300 animate-pulse">speaking…</span
                 >{/if}
             </Card.Title>
           </Card.Header>
@@ -590,7 +590,7 @@
                   {#if lastScore != null}
                     <span
                       class={cn(
-                        'font-mono px-1.5 py-0.5 rounded border text-[10px]',
+                        'font-mono px-1.5 py-0.5 rounded border text-[11px]',
                         lastScore >= 4
                           ? 'border-emerald-500/40 text-emerald-300 bg-emerald-500/10'
                           : lastScore >= 3
@@ -636,7 +636,7 @@
                   </div>
                 {/if}
                 {#if t.score != null || t.feedback}
-                  <div class="flex items-start gap-2 text-[10px]">
+                  <div class="flex items-start gap-2 text-[11px]">
                     {#if t.score != null}
                       <span
                         class={cn(
@@ -679,7 +679,7 @@
             </article>
             {#if endedTranscriptPath}
               <p
-                class="text-[10px] text-muted-foreground/70 font-mono pt-2 border-t border-border/30"
+                class="text-[11px] text-muted-foreground/70 font-mono pt-2 border-t border-border/30"
               >
                 Saved to {endedTranscriptPath}
               </p>

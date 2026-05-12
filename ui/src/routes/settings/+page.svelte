@@ -362,24 +362,24 @@
                     : 'border-emerald-500/30 bg-emerald-500/5',
                 )}
               >
-                <div class="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                <div class="text-[11px] uppercase tracking-wider text-muted-foreground/70">
                   Pipeline
                 </div>
                 <div class="text-sm font-medium">
                   {health.pipeline.exists ? (health.pipeline.stale ? 'Stale' : 'Fresh') : 'Missing'}
                 </div>
                 {#if health.lastScanAt}
-                  <div class="text-[10px] text-muted-foreground/80">
+                  <div class="text-[11px] text-muted-foreground/80">
                     Last update {sinceShort(health.lastScanAt)}
                   </div>
                 {/if}
               </div>
               <div class="rounded-md border border-border/40 bg-card px-3 py-2">
-                <div class="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                <div class="text-[11px] uppercase tracking-wider text-muted-foreground/70">
                   Reports
                 </div>
                 <div class="text-sm font-medium">{health.reports.count}</div>
-                <div class="text-[10px] text-muted-foreground/80">deep evaluations done</div>
+                <div class="text-[11px] text-muted-foreground/80">deep evaluations done</div>
               </div>
               <div
                 class={cn(
@@ -389,13 +389,13 @@
                     : 'border-amber-500/30 bg-amber-500/5',
                 )}
               >
-                <div class="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                <div class="text-[11px] uppercase tracking-wider text-muted-foreground/70">
                   Anthropic
                 </div>
                 <div class="text-sm font-medium">
                   {health.anthropic.keyConfigured ? 'Configured' : 'Missing'}
                 </div>
-                <div class="text-[10px] text-muted-foreground/80">ANTHROPIC_API_KEY in .env</div>
+                <div class="text-[11px] text-muted-foreground/80">ANTHROPIC_API_KEY in .env</div>
               </div>
               <div
                 class={cn(
@@ -405,20 +405,20 @@
                     : 'border-zinc-500/30 bg-zinc-500/5',
                 )}
               >
-                <div class="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                <div class="text-[11px] uppercase tracking-wider text-muted-foreground/70">
                   Gemini
                 </div>
                 <div class="text-sm font-medium">
                   {health.gemini.keyConfigured ? 'Configured' : 'Optional'}
                 </div>
-                <div class="text-[10px] text-muted-foreground/80">
+                <div class="text-[11px] text-muted-foreground/80">
                   {health.gemini.scoresExists ? 'scores.tsv present' : 'no scores yet'}
                 </div>
               </div>
               <div
                 class="rounded-md border border-border/40 bg-card px-3 py-2 col-span-2 md:col-span-1"
               >
-                <div class="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                <div class="text-[11px] uppercase tracking-wider text-muted-foreground/70">
                   Running
                 </div>
                 <div class="text-sm font-medium">
@@ -427,7 +427,7 @@
                     : health.runningTasks.length + ' task(s)'}
                 </div>
                 {#if health.runningTasks.length > 0}
-                  <div class="text-[10px] text-muted-foreground/80 truncate">
+                  <div class="text-[11px] text-muted-foreground/80 truncate">
                     {health.runningTasks.join(' · ')}
                   </div>
                 {/if}
@@ -466,14 +466,14 @@
                   {#if isConnected(f.key)}
                     <Badge
                       variant="outline"
-                      class="text-[10px] h-5 px-1.5 border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                      class="text-[11px] h-5 px-1.5 border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
                     >
                       <CheckCircle2 class="size-2.5 mr-0.5" /> connected
                     </Badge>
                   {:else if dirty}
                     <Badge
                       variant="outline"
-                      class="text-[10px] h-5 px-1.5 border-amber-500/40 bg-amber-500/10 text-amber-300"
+                      class="text-[11px] h-5 px-1.5 border-amber-500/40 bg-amber-500/10 text-amber-300"
                     >
                       unsaved
                     </Badge>

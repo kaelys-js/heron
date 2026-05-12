@@ -216,7 +216,7 @@
               <div class="text-[11.5px] space-y-1.5">
                 <div>
                   <span
-                    class="text-[10px] uppercase tracking-wider font-mono text-muted-foreground/80"
+                    class="text-[11px] uppercase tracking-wider font-mono text-muted-foreground/80"
                     >How it works</span
                   >
                   <ul
@@ -229,14 +229,14 @@
                 </div>
                 <div>
                   <span
-                    class="text-[10px] uppercase tracking-wider font-mono text-muted-foreground/80"
+                    class="text-[11px] uppercase tracking-wider font-mono text-muted-foreground/80"
                     >When to reconnect</span
                   >
                   <p class="mt-1 text-muted-foreground/90 leading-relaxed">{src.reconnect}</p>
                 </div>
                 <div>
                   <span
-                    class="text-[10px] uppercase tracking-wider font-mono text-muted-foreground/80"
+                    class="text-[11px] uppercase tracking-wider font-mono text-muted-foreground/80"
                     >Files involved</span
                   >
                   <ul
@@ -263,7 +263,7 @@
           <div class="space-y-2 text-[12px]">
             <div class="flex items-start gap-3">
               <span
-                class="text-[10px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-blue-500/40 bg-blue-500/10 text-blue-300 flex-shrink-0"
+                class="text-[11px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-blue-500/40 bg-blue-500/10 text-blue-300 flex-shrink-0"
               >
                 <Plug class="inline size-2.5 mr-0.5" /> Connect
               </span>
@@ -275,7 +275,7 @@
             </div>
             <div class="flex items-start gap-3">
               <span
-                class="text-[10px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 flex-shrink-0"
+                class="text-[11px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 flex-shrink-0"
               >
                 <RefreshCw class="inline size-2.5 mr-0.5" /> Test
               </span>
@@ -287,7 +287,7 @@
             </div>
             <div class="flex items-start gap-3">
               <span
-                class="text-[10px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-red-500/40 bg-red-500/10 text-red-300 flex-shrink-0"
+                class="text-[11px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-red-500/40 bg-red-500/10 text-red-300 flex-shrink-0"
               >
                 <Power class="inline size-2.5 mr-0.5" /> Disconnect
               </span>

@@ -262,7 +262,7 @@
               <h2 class="text-base font-semibold">Master switch</h2>
               <span
                 class={cn(
-                  'text-[10px] uppercase tracking-wider font-medium',
+                  'text-[11px] uppercase tracking-wider font-medium',
                   config.globalEnabled ? 'text-emerald-300' : 'text-zinc-400',
                 )}
               >
@@ -341,16 +341,16 @@
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
                     <h3 class="text-sm font-medium">{s.name}</h3>
-                    <span class="text-[10px] font-mono text-muted-foreground/70">{s.taskLabel}</span
+                    <span class="text-[11px] font-mono text-muted-foreground/70">{s.taskLabel}</span
                     >
                     {#if isAfter}
-                      <span class="text-[10px] uppercase tracking-wide text-muted-foreground/60"
+                      <span class="text-[11px] uppercase tracking-wide text-muted-foreground/60"
                         >event-triggered</span
                       >
                     {/if}
                     {#if s.lastRunResult === 'started'}
                       <span
-                        class="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-blue-300"
+                        class="inline-flex items-center gap-1 text-[11px] uppercase tracking-wide text-blue-300"
                       >
                         <Activity class="size-2.5 animate-pulse" /> running
                       </span>
@@ -437,7 +437,7 @@
                 <div class="pl-12 pt-3 border-t border-border/40 space-y-3">
                   <div class="flex items-center gap-3 flex-wrap">
                     <Label
-                      class="text-[10px] uppercase tracking-wider text-muted-foreground/80 w-20"
+                      class="text-[11px] uppercase tracking-wider text-muted-foreground/80 w-20"
                       >Time</Label
                     >
                     <TimePicker
@@ -449,7 +449,7 @@
 
                   <div class="flex items-start gap-3 flex-wrap">
                     <Label
-                      class="text-[10px] uppercase tracking-wider text-muted-foreground/80 w-20 mt-1.5"
+                      class="text-[11px] uppercase tracking-wider text-muted-foreground/80 w-20 mt-1.5"
                       >Days</Label
                     >
                     <div class="flex-1 space-y-2">
@@ -488,7 +488,7 @@
                                     onclick={() => toggleWeekday(s.id, day)}
                                     aria-label={(isOn ? 'Disable ' : 'Enable ') + WEEKDAY_FULL[day]}
                                     class={cn(
-                                      'size-7 text-[10px] rounded-md font-medium border transition-all',
+                                      'size-7 text-[11px] rounded-md font-medium border transition-all',
                                       isOn && !allDays
                                         ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40'
                                         : isOn && allDays
@@ -685,7 +685,7 @@
                   <div class="flex-1 min-w-0">
                     <div class="flex items-baseline gap-2">
                       <span class="font-medium overflow-hidden whitespace-nowrap">{ev.title}</span>
-                      <span class="text-[10px] text-muted-foreground ml-auto flex-shrink-0"
+                      <span class="text-[11px] text-muted-foreground ml-auto flex-shrink-0"
                         >{formatRelativeTime(ev.ts)}</span
                       >
                     </div>
@@ -697,7 +697,7 @@
                       </p>
                     {/if}
                     <div class="flex items-center gap-1.5 mt-0.5">
-                      <span class="text-[10px] text-muted-foreground/60 font-mono">{ev.source}</span
+                      <span class="text-[11px] text-muted-foreground/60 font-mono">{ev.source}</span
                       >
                     </div>
                   </div>

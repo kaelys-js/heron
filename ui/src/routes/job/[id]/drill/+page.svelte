@@ -367,7 +367,7 @@
                   <div class="space-y-1.5">
                     <div class="flex items-center justify-between">
                       <Label class="text-xs">Nodes</Label>
-                      <Button size="sm" variant="ghost" onclick={addNode} class="h-6 text-[10px]"
+                      <Button size="sm" variant="ghost" onclick={addNode} class="h-6 text-[11px]"
                         ><Plus class="size-3" /></Button
                       >
                     </div>
@@ -393,7 +393,7 @@
                   <div class="space-y-1.5">
                     <div class="flex items-center justify-between">
                       <Label class="text-xs">Edges</Label>
-                      <Button size="sm" variant="ghost" onclick={addEdge} class="h-6 text-[10px]"
+                      <Button size="sm" variant="ghost" onclick={addEdge} class="h-6 text-[11px]"
                         ><Plus class="size-3" /></Button
                       >
                     </div>
@@ -405,18 +405,18 @@
                             designEdges[i].from = (e.currentTarget as HTMLSelectElement).value;
                             designEdges = [...designEdges];
                           }}
-                          class="h-7 rounded text-[10px] border border-border/40 bg-card flex-1"
+                          class="h-7 rounded text-[11px] border border-border/40 bg-card flex-1"
                         >
                           {#each designNodes as n}<option value={n.id}>{n.label}</option>{/each}
                         </select>
-                        <span class="text-[10px] text-muted-foreground">→</span>
+                        <span class="text-[11px] text-muted-foreground">→</span>
                         <select
                           value={edge.to}
                           onchange={(e) => {
                             designEdges[i].to = (e.currentTarget as HTMLSelectElement).value;
                             designEdges = [...designEdges];
                           }}
-                          class="h-7 rounded text-[10px] border border-border/40 bg-card flex-1"
+                          class="h-7 rounded text-[11px] border border-border/40 bg-card flex-1"
                         >
                           {#each designNodes as n}<option value={n.id}>{n.label}</option>{/each}
                         </select>

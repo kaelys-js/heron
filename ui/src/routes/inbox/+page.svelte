@@ -313,7 +313,7 @@
                     <div class="text-2xl font-mono tabular-nums mt-1 text-emerald-200">
                       {data.upNextTotal}
                     </div>
-                    <div class="text-[10px] text-muted-foreground">≥4.0 awaiting eval</div>
+                    <div class="text-[11px] text-muted-foreground">≥4.0 awaiting eval</div>
                   </a>
                 {/snippet}
               </Tooltip.Trigger>
@@ -340,7 +340,7 @@
                     <div class="text-2xl font-mono tabular-nums mt-1 text-orange-200">
                       {data.inFlightTotal}
                     </div>
-                    <div class="text-[10px] text-muted-foreground">interview + offer</div>
+                    <div class="text-[11px] text-muted-foreground">interview + offer</div>
                   </a>
                 {/snippet}
               </Tooltip.Trigger>
@@ -367,7 +367,7 @@
                     <div class="text-2xl font-mono tabular-nums mt-1 text-violet-200">
                       {data.followUpsTotal}
                     </div>
-                    <div class="text-[10px] text-muted-foreground">applied / screened</div>
+                    <div class="text-[11px] text-muted-foreground">applied / screened</div>
                   </a>
                 {/snippet}
               </Tooltip.Trigger>
@@ -426,7 +426,7 @@
                         {data.pipelineDaysAgo}d
                       {/if}
                     </div>
-                    <div class="text-[10px] text-muted-foreground">
+                    <div class="text-[11px] text-muted-foreground">
                       {data.counts.totalJobs.toLocaleString()} jobs in pipeline
                     </div>
                   </div>
@@ -548,7 +548,7 @@
                     <Search class="size-3.5" />
                     Search
                     <kbd
-                      class="ml-1 text-[10px] font-mono text-muted-foreground/60 px-1 py-0.5 rounded border border-border/50"
+                      class="ml-1 text-[11px] font-mono text-muted-foreground/60 px-1 py-0.5 rounded border border-border/50"
                       >⌘K</kbd
                     >
                   </Button>
@@ -671,7 +671,7 @@
                       {issue.detail.split('\n').slice(0, 3).join('\n')}
                     </p>
                   {/if}
-                  <div class="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <div class="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
                     <span class="font-mono">{issue.source}</span>
                     <span>·</span>
                     <span>{formatRelativeTime(issue.ts)}</span>
@@ -735,7 +735,7 @@
                     </div>
                   {/each}
                   <div class="flex items-center justify-between pt-1 border-t border-amber-500/20">
-                    <p class="text-[10px] text-muted-foreground/80">
+                    <p class="text-[11px] text-muted-foreground/80">
                       Stored under your profile's form-answers cache.
                       <a
                         href={'/profile?profile=' +
@@ -841,7 +841,7 @@
                 <Sparkles class="size-4 mt-0.5 text-emerald-300 flex-shrink-0" />
                 <div class="flex-1 min-w-0">
                   <div class="text-sm font-medium truncate">{lead.subject}</div>
-                  <div class="text-[10px] text-muted-foreground flex items-center gap-2 mt-0.5">
+                  <div class="text-[11px] text-muted-foreground flex items-center gap-2 mt-0.5">
                     <span class="font-mono truncate">{lead.sender}</span>
                     <span>·</span>
                     <span>{formatRelativeTime(lead.ts)}</span>
@@ -862,7 +862,7 @@
             <header class="flex items-center gap-2">
               <Flame class="size-4 text-emerald-400" />
               <h2 class="text-sm font-semibold">Up next — evaluate these</h2>
-              <span class="text-[10px] text-muted-foreground tabular-nums"
+              <span class="text-[11px] text-muted-foreground tabular-nums"
                 >{data.upNextTotal} total</span
               >
               <div class="flex-1"></div>
@@ -919,7 +919,7 @@
               <header class="flex items-center gap-2">
                 <Send class="size-4 text-blue-400" />
                 <h2 class="text-sm font-semibold">Ready to apply</h2>
-                <span class="text-[10px] text-muted-foreground tabular-nums"
+                <span class="text-[11px] text-muted-foreground tabular-nums"
                   >{data.readyTotal} total</span
                 >
                 <div class="flex-1"></div>
@@ -961,7 +961,7 @@
               <header class="flex items-center gap-2">
                 <Target class="size-4 text-orange-400" />
                 <h2 class="text-sm font-semibold">In flight</h2>
-                <span class="text-[10px] text-muted-foreground tabular-nums"
+                <span class="text-[11px] text-muted-foreground tabular-nums"
                   >{data.inFlightTotal} total</span
                 >
               </header>
@@ -987,7 +987,7 @@
               <header class="flex items-center gap-2">
                 <Bell class="size-4 text-amber-400" />
                 <h2 class="text-sm font-semibold">Follow-ups due</h2>
-                <span class="text-[10px] text-muted-foreground tabular-nums">
+                <span class="text-[11px] text-muted-foreground tabular-nums">
                   {data.followupsUrgent.length + data.followupsOverdue.length} ready
                   {#if data.followupsCadenceMeta}
                     · {data.followupsCadenceMeta.actionable} active
@@ -1023,7 +1023,7 @@
               <header class="flex items-center gap-2">
                 <ListTodo class="size-4 text-violet-400" />
                 <h2 class="text-sm font-semibold">Active applications</h2>
-                <span class="text-[10px] text-muted-foreground tabular-nums"
+                <span class="text-[11px] text-muted-foreground tabular-nums"
                   >{data.followUpsTotal} total</span
                 >
                 <div class="flex-1"></div>
@@ -1082,13 +1082,13 @@
               <div class="flex items-end justify-between gap-2">
                 <div>
                   <div class="text-2xl font-semibold tabular-nums">{data.last7}</div>
-                  <div class="text-[10px] text-muted-foreground">applications · last 7d</div>
+                  <div class="text-[11px] text-muted-foreground">applications · last 7d</div>
                 </div>
                 {#if data.velocityDeltaPct != null}
                   <Badge
                     variant="outline"
                     class={cn(
-                      'h-5 text-[10px] gap-0.5',
+                      'h-5 text-[11px] gap-0.5',
                       data.velocityDeltaPct >= 0
                         ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
                         : 'border-red-500/40 bg-red-500/10 text-red-300',
@@ -1104,7 +1104,7 @@
               <div class="text-emerald-400">
                 <Sparkline data={velocityNumbers} width={300} height={48} />
               </div>
-              <div class="flex items-center justify-between text-[10px] text-muted-foreground">
+              <div class="flex items-center justify-between text-[11px] text-muted-foreground">
                 <span>vs prior 7d: {data.prev7}</span>
                 <a href="/stats" class="hover:text-foreground inline-flex items-center gap-0.5">
                   Stats
@@ -1131,7 +1131,7 @@
                     <div class="h-1 w-12 rounded-full bg-muted overflow-hidden">
                       <div class="h-full bg-foreground/40" style={'width: ' + pct + '%'}></div>
                     </div>
-                    <span class="text-[10px] tabular-nums text-muted-foreground w-8 text-right"
+                    <span class="text-[11px] tabular-nums text-muted-foreground w-8 text-right"
                       >{src.count}</span
                     >
                   </div>
@@ -1176,7 +1176,7 @@
                           <span class="font-medium overflow-hidden whitespace-nowrap"
                             >{ev.title}</span
                           >
-                          <span class="text-[10px] text-muted-foreground/70 ml-auto flex-shrink-0"
+                          <span class="text-[11px] text-muted-foreground/70 ml-auto flex-shrink-0"
                             >{formatRelativeTime(ev.ts)}</span
                           >
                         </div>
@@ -1214,14 +1214,14 @@
                   <span class={svc.on ? 'text-foreground' : 'text-muted-foreground/60'}
                     >{svc.label}</span
                   >
-                  <span class="text-[10px] text-muted-foreground/60 ml-auto"
+                  <span class="text-[11px] text-muted-foreground/60 ml-auto"
                     >{svc.on ? svc.role : 'not configured'}</span
                   >
                 </div>
               {/each}
               <a
                 href="/runtimes"
-                class="text-[10px] text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5 mt-1"
+                class="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5 mt-1"
               >
                 See full health report
                 <ChevronRight class="size-2.5" />

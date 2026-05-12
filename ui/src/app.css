@@ -238,6 +238,19 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* iOS HIG recommends a 44×44 pt minimum tap target (~44px in CSS px at
+   the default WebView density). Below 768px we floor every <button>
+   and link inside a menu/list to 40px height so taps don't miss.
+   Buttons with explicit h-* classes win the cascade via specificity
+   so this is a safety net for the size="sm" / size="icon" leaves. */
+@media (max-width: 768px) {
+  button:not(.no-tap-floor),
+  [role='button']:not(.no-tap-floor),
+  [role='menuitem']:not(.no-tap-floor) {
+    min-height: 40px;
+  }
+}
+
 /* Safe-area insets for iOS (Capacitor WebView).
    PHILOSOPHY: We do NOT apply insets to <body> because:
      1. The sidebar lives inside a `h-svh overflow-hidden` provider and
@@ -276,23 +289,31 @@ body {
   margin-bottom: env(safe-area-inset-bottom);
 }
 
-/* Body scroll lock on mobile. iOS Safari's elastic over-scroll moves the
-   whole document and pushes our sticky topbar (with the breadcrumbs)
-   off-screen. Lock html+body in place; per-page scroll containers
-   (`.h-full overflow-y-auto`) handle their own scrolling internally.
-   overscroll-behavior:none stops pull-to-refresh from yanking the layout. */
+/* iOS Safari's elastic over-scroll moves the whole document and pushes
+   our sticky topbar off-screen on rubber-band gestures. `overscroll-
+   behavior: none` cancels that without locking position — pages whose
+   root element doesn't have its own overflow-y still scroll naturally.
+
+   The Sidebar.Provider in +layout.svelte already wraps everything in
+   `h-svh overflow-hidden`, so the viewport-height contract is preserved
+   independently. We avoided the heavier `position: fixed` lock because
+   it breaks any page that scrolls via its own root rather than an
+   internal `.h-full.overflow-y-auto` container. */
 html,
 body {
   overscroll-behavior: none;
 }
+/* Capacitor only: iOS WebViews still rubber-band even with overscroll-
+   behavior set, because the WebView's own scroll view sits above the
+   document. The careerops:// scheme guarantees we're inside the
+   Capacitor WebView; the html.dark + custom URL detection in app.html's
+   inline script ensures this class is set early. For now, `touch-action:
+   pan-y` discourages horizontal pan gestures which trigger Safari's
+   navigation swipe in the WebView. */
 @media (max-width: 768px) {
   html,
   body {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
+    touch-action: pan-y;
   }
 }
 

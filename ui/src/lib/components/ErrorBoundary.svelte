@@ -113,7 +113,7 @@
               Stack trace
             </summary>
             <pre
-              class="mt-2 p-3 text-[10px] font-mono leading-snug bg-muted/30 border border-border/40 rounded-md max-h-48 overflow-auto whitespace-pre-wrap break-all text-muted-foreground">{errorStack(
+              class="mt-2 p-3 text-[11px] font-mono leading-snug bg-muted/30 border border-border/40 rounded-md max-h-48 overflow-auto whitespace-pre-wrap break-all text-muted-foreground">{errorStack(
                 error,
               )}</pre>
           </details>

@@ -241,7 +241,7 @@
       <div class="rounded-md border border-border/40 bg-card px-4 py-3 space-y-2">
         <div class="flex items-center justify-between">
           <Label for="gemini" class="text-sm font-medium"
-            >Gemini <span class="text-[10px] text-muted-foreground/70">(recommended)</span></Label
+            >Gemini <span class="text-[11px] text-muted-foreground/70">(recommended)</span></Label
           >
           <a
             href="https://aistudio.google.com/apikey"
@@ -292,7 +292,7 @@
       <!-- Adzuna — optional -->
       <details class="rounded-md border border-border/40 bg-card px-4 py-3 group">
         <summary class="cursor-pointer text-sm font-medium flex items-center justify-between">
-          Adzuna <span class="text-[10px] text-muted-foreground/70">(optional)</span>
+          Adzuna <span class="text-[11px] text-muted-foreground/70">(optional)</span>
         </summary>
         <div class="mt-3 space-y-2">
           <p class="text-[11px] text-muted-foreground">

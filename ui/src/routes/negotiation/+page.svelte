@@ -126,7 +126,7 @@
           </ol>
           <div class="pt-2 border-t border-amber-500/20">
             <h3
-              class="text-[10px] uppercase tracking-wider text-amber-300/80 flex items-center gap-1 mb-1"
+              class="text-[11px] uppercase tracking-wider text-amber-300/80 flex items-center gap-1 mb-1"
             >
               <AlertTriangle class="size-3" />
               Red flags that should make you WALK
@@ -196,7 +196,7 @@
                   {branch.response}
                 </p>
                 <div
-                  class="text-[10px] uppercase tracking-wider text-muted-foreground pt-1 flex items-center gap-1"
+                  class="text-[11px] uppercase tracking-wider text-muted-foreground pt-1 flex items-center gap-1"
                 >
                   <Sparkles class="size-2.5 text-amber-300" />
                   Why
@@ -205,7 +205,7 @@
                   {branch.rationale}
                 </p>
                 {#if branch.nextLikely}
-                  <p class="text-[10px] text-muted-foreground/70 pt-1">
+                  <p class="text-[11px] text-muted-foreground/70 pt-1">
                     Next likely: <button
                       type="button"
                       onclick={() => (activeBranch = branch.nextLikely!)}
@@ -235,7 +235,7 @@
         <Card.Content class="space-y-3">
           {#each asksByCategory as [category, items]}
             <div class="space-y-1">
-              <h3 class="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">
+              <h3 class="text-[11px] uppercase tracking-wider text-muted-foreground font-mono">
                 {category}
               </h3>
               {#each items as ask}
@@ -246,7 +246,7 @@
                   )}
                 >
                   <div class="flex items-start gap-2">
-                    <span class="text-[10px] font-mono uppercase opacity-70"
+                    <span class="text-[11px] font-mono uppercase opacity-70"
                       >{difficultyLabel(ask.difficulty)}</span
                     >
                     <p class="text-xs flex-1">{ask.ask}</p>
@@ -289,7 +289,7 @@
                   ></span
                 >
               </div>
-              <p class="text-[10px] text-muted-foreground/70 leading-relaxed">{band.notes}</p>
+              <p class="text-[11px] text-muted-foreground/70 leading-relaxed">{band.notes}</p>
             </div>
           {/each}
         </Card.Content>

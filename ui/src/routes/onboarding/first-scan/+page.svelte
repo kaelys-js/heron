@@ -228,7 +228,7 @@
                 {/if}
               </div>
               {#if s.message}
-                <p class="text-[10px] text-muted-foreground/80 truncate mt-0.5">{s.message}</p>
+                <p class="text-[11px] text-muted-foreground/80 truncate mt-0.5">{s.message}</p>
               {/if}
             </div>
           </div>

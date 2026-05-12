@@ -137,11 +137,11 @@
                   <Mail class="size-3.5 text-zinc-400" />
                 {/if}
                 <span class="font-medium truncate">{l.senderName || '(unknown sender)'}</span>
-                <span class="rounded border px-1.5 py-0.5 text-[10px] {kindTint(l.kind)}"
+                <span class="rounded border px-1.5 py-0.5 text-[11px] {kindTint(l.kind)}"
                   >{l.kind}</span
                 >
                 {#if l.thread?.state}
-                  <span class="rounded px-1.5 py-0.5 text-[10px] {stateTint(l.thread.state)}"
+                  <span class="rounded px-1.5 py-0.5 text-[11px] {stateTint(l.thread.state)}"
                     >{l.thread.state}</span
                   >
                 {/if}

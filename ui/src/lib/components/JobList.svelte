@@ -81,7 +81,7 @@
   <Tooltip.Provider delayDuration={300}>
     <!-- Header — every column has a tooltip explaining what it represents -->
     <div
-      class="grid grid-cols-[60px_minmax(220px,_3fr)_1fr_1fr_70px_70px_60px_minmax(140px,_1.2fr)_60px_100px] gap-3 px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground border-b font-medium bg-muted/20"
+      class="grid grid-cols-[60px_minmax(220px,_3fr)_1fr_1fr_70px_70px_60px_minmax(140px,_1.2fr)_60px_100px] gap-3 px-3 py-2 text-[11px] uppercase tracking-wider text-muted-foreground border-b font-medium bg-muted/20"
     >
       <Tooltip.Root>
         <Tooltip.Trigger>
@@ -189,7 +189,7 @@
                     <span
                       {...props}
                       class={cn(
-                        'text-[10px] font-mono font-semibold border rounded px-1.5 py-0.5 cursor-help',
+                        'text-[11px] font-mono font-semibold border rounded px-1.5 py-0.5 cursor-help',
                         scoreClass(score),
                       )}
                     >
@@ -236,7 +236,7 @@
                     {...props}
                     variant="outline"
                     class={cn(
-                      'text-[10px] uppercase font-mono border cursor-help',
+                      'text-[11px] uppercase font-mono border cursor-help',
                       STATUS_TINTS[job.status],
                     )}>{job.status}</Badge
                   >
@@ -255,7 +255,7 @@
                 {#snippet child({ props })}
                   <span
                     {...props}
-                    class={cn('inline-flex items-center gap-1 text-[10px] cursor-help', wm.tint)}
+                    class={cn('inline-flex items-center gap-1 text-[11px] cursor-help', wm.tint)}
                   >
                     <WIcon class="size-3" />
                     <span class="truncate">{wm.label}</span>
@@ -276,7 +276,7 @@
                     <Badge
                       {...props}
                       variant="outline"
-                      class={cn('text-[10px] uppercase font-mono border cursor-help', BG_TINTS[bg])}
+                      class={cn('text-[11px] uppercase font-mono border cursor-help', BG_TINTS[bg])}
                       >{bg}</Badge
                     >
                   {/snippet}

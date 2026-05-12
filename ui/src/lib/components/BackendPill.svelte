@@ -53,7 +53,7 @@
 {#if resolved}
   <a
     href="/settings/backend"
-    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-mono uppercase tracking-wide transition-colors {colorBySource[
+    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-mono uppercase tracking-wide transition-colors {colorBySource[
       resolved.source
     ]}"
     title="{describe(resolved)} · {resolved.url}"
@@ -63,7 +63,7 @@
   </a>
 {:else if isCapacitor}
   <span
-    class="inline-flex items-center gap-1.5 rounded-full border border-rose-500/40 bg-rose-500/20 px-2.5 py-0.5 text-[10px] font-mono uppercase tracking-wide text-rose-200"
+    class="inline-flex items-center gap-1.5 rounded-full border border-rose-500/40 bg-rose-500/20 px-2.5 py-0.5 text-[11px] font-mono uppercase tracking-wide text-rose-200"
   >
     OFFLINE
   </span>

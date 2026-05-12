@@ -249,7 +249,7 @@
                       !isExpanded && 'overflow-hidden whitespace-nowrap',
                     )}>{ev.title}</span
                   >
-                  <span class="text-[10px] text-muted-foreground flex-shrink-0 ml-auto">
+                  <span class="text-[11px] text-muted-foreground flex-shrink-0 ml-auto">
                     {formatRelativeTime(ev.ts)}
                   </span>
                 </div>
@@ -264,21 +264,21 @@
                   </p>
                 {/if}
                 <div class="flex items-center gap-2 mt-1">
-                  <span class="text-[10px] text-muted-foreground/70 font-mono">{ev.source}</span>
+                  <span class="text-[11px] text-muted-foreground/70 font-mono">{ev.source}</span>
                   <span
-                    class="text-[10px] px-1 py-0.5 rounded bg-muted text-muted-foreground capitalize"
+                    class="text-[11px] px-1 py-0.5 rounded bg-muted text-muted-foreground capitalize"
                   >
                     {ev.category}
                   </span>
                   {#if ev.stack}
-                    <span class="text-[10px] text-muted-foreground/60 ml-auto"
+                    <span class="text-[11px] text-muted-foreground/60 ml-auto"
                       >{isExpanded ? 'click to collapse' : 'click for stack'}</span
                     >
                   {/if}
                 </div>
                 {#if isExpanded && ev.stack}
                   <pre
-                    class="mt-2 p-2 text-[10px] font-mono leading-snug bg-muted/40 border border-border/40 rounded overflow-x-auto whitespace-pre-wrap break-all">{ev.stack}</pre>
+                    class="mt-2 p-2 text-[11px] font-mono leading-snug bg-muted/40 border border-border/40 rounded overflow-x-auto whitespace-pre-wrap break-all">{ev.stack}</pre>
                 {/if}
               </div>
             </button>

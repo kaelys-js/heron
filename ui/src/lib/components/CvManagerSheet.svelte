@@ -406,7 +406,7 @@
           </div>
         {:else}
           <div class="flex items-center justify-between gap-2 px-5 pb-2">
-            <div class="text-[10px] text-muted-foreground tabular-nums">
+            <div class="text-[11px] text-muted-foreground tabular-nums">
               {body.length.toLocaleString()} chars · {(body.length / 1024).toFixed(1)} KB
             </div>
             <div class="flex items-center gap-1">
@@ -472,14 +472,14 @@
           </div>
         {:else}
           <div class="flex items-center justify-between gap-2 px-5 pb-2">
-            <div class="text-[10px] text-muted-foreground">
+            <div class="text-[11px] text-muted-foreground">
               Edit markdown directly. Changes are saved to <code
                 class="font-mono text-foreground/80">cv.md</code
               >
               with a backup to <code class="font-mono text-foreground/80">cv.md.bak</code>.
             </div>
             {#if editDirty}
-              <div class="text-[10px] text-amber-300 font-mono tabular-nums">unsaved</div>
+              <div class="text-[11px] text-amber-300 font-mono tabular-nums">unsaved</div>
             {/if}
           </div>
           <div class="flex-1 overflow-hidden px-5">
@@ -542,7 +542,7 @@
           />
         </div>
         <div class="px-5 py-3 border-t bg-muted/20 flex items-center justify-between gap-2">
-          <div class="text-[10px] text-muted-foreground tabular-nums">
+          <div class="text-[11px] text-muted-foreground tabular-nums">
             {replaceDraft.length.toLocaleString()} chars
           </div>
           <div class="flex items-center gap-2">
@@ -622,13 +622,13 @@
               <AlertTriangle class="size-3.5 text-red-300 mt-0.5 flex-shrink-0" />
               <div class="text-red-200/90 flex-1">
                 <strong>Reprocess failed.</strong>
-                <div class="font-mono text-[10px] mt-1 break-all">{reprocessError}</div>
+                <div class="font-mono text-[11px] mt-1 break-all">{reprocessError}</div>
               </div>
             </div>
           {/if}
 
           {#if suggestion}
-            <div class="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
+            <div class="text-[11px] uppercase tracking-wider text-muted-foreground/70 font-medium">
               Proposed updates ({suggestionSummary.length} field{suggestionSummary.length === 1
                 ? ''
                 : 's'})
@@ -656,7 +656,7 @@
         </div>
 
         <div class="px-5 py-3 border-t bg-muted/20 flex items-center justify-between gap-2">
-          <div class="text-[10px] text-muted-foreground">
+          <div class="text-[11px] text-muted-foreground">
             {#if suggestion}
               Click Apply to merge into the form — nothing persists until Save Profile
             {:else}

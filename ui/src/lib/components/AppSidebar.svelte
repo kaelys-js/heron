@@ -211,7 +211,7 @@
             {/snippet}
           </DropdownMenu.Trigger>
           <DropdownMenu.Content side="right" align="start" class="w-64">
-            <DropdownMenu.Label class="text-[10px] uppercase tracking-wider text-muted-foreground">
+            <DropdownMenu.Label class="text-[11px] uppercase tracking-wider text-muted-foreground">
               Switch profile
             </DropdownMenu.Label>
             {#each profilesState?.profiles ?? [] as p (p.id)}
@@ -255,7 +255,7 @@
               <Search class="size-4" />
               <span>Search jobs…</span>
               <kbd
-                class="ml-auto text-[10px] font-mono text-muted-foreground/60 px-1 py-0.5 rounded border border-border/50"
+                class="ml-auto text-[11px] font-mono text-muted-foreground/60 px-1 py-0.5 rounded border border-border/50"
                 >⌘K</kbd
               >
             </Sidebar.MenuButton>
@@ -265,7 +265,7 @@
               <Plus class="size-4" />
               <span>Add job</span>
               <kbd
-                class="ml-auto text-[10px] font-mono text-muted-foreground/60 px-1 py-0.5 rounded border border-border/50"
+                class="ml-auto text-[11px] font-mono text-muted-foreground/60 px-1 py-0.5 rounded border border-border/50"
                 >N</kbd
               >
             </Sidebar.MenuButton>
@@ -285,7 +285,7 @@
                   <Inbox class="size-4" />
                   <span>Inbox</span>
                   {#if inboxCount > 0}
-                    <Badge variant="secondary" class="ml-auto h-5 px-1.5 text-[10px]"
+                    <Badge variant="secondary" class="ml-auto h-5 px-1.5 text-[11px]"
                       >{inboxCount}</Badge
                     >
                   {/if}
@@ -330,7 +330,7 @@
               </DropdownMenu.Trigger>
               <DropdownMenu.Content side="right" align="start" class="w-48">
                 <DropdownMenu.Label
-                  class="text-[10px] uppercase tracking-wide text-muted-foreground"
+                  class="text-[11px] uppercase tracking-wide text-muted-foreground"
                 >
                   Pinned ({visiblePins.length})
                 </DropdownMenu.Label>
@@ -350,7 +350,7 @@
                     >{unpinAllArmed ? 'Click again to confirm' : 'Unpin all'}</span
                   >
                   {#if unpinAllArmed}
-                    <span class="text-[10px] font-mono opacity-70">3s</span>
+                    <span class="text-[11px] font-mono opacity-70">3s</span>
                   {/if}
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
@@ -444,7 +444,7 @@
                     {#if queueCount > 0}
                       <Badge
                         variant="secondary"
-                        class="ml-auto h-5 px-1.5 text-[10px] border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-300"
+                        class="ml-auto h-5 px-1.5 text-[11px] border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-300"
                         >{queueCount}</Badge
                       >
                     {/if}

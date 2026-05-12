@@ -94,7 +94,7 @@
             <header class="flex items-baseline gap-2">
               <SIcon class={'size-4 ' + section.tint} />
               <h2 class="text-sm font-semibold">{section.label}</h2>
-              <span class="text-[10px] text-muted-foreground tabular-nums">{items.length}</span>
+              <span class="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
             </header>
             <p class="text-[11px] text-muted-foreground/80 leading-relaxed max-w-2xl">
               {section.description}

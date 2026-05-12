@@ -444,7 +444,7 @@
                     <Card.Title class="text-sm leading-tight overflow-hidden whitespace-nowrap"
                       >{p.name}</Card.Title
                     >
-                    <div class="text-[10px] text-muted-foreground mt-0.5">
+                    <div class="text-[11px] text-muted-foreground mt-0.5">
                       Updated {formatRelativeTime(p.updatedAt)}
                     </div>
                   </div>
@@ -496,7 +496,7 @@
                         <span class="flex-1"
                           >{armed ? 'Click again to confirm delete' : 'Delete'}</span
                         >
-                        {#if armed}<span class="text-[10px] font-mono opacity-70">3s</span>{/if}
+                        {#if armed}<span class="text-[11px] font-mono opacity-70">3s</span>{/if}
                       </DropdownMenu.Item>
                     </DropdownMenu.Content>
                   </DropdownMenu.Root>
@@ -513,14 +513,14 @@
                   <div class="flex flex-wrap gap-1">
                     {#each chips as c}
                       <span
-                        class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border/40"
+                        class="text-[11px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border/40"
                         >{c}</span
                       >
                     {/each}
                   </div>
                 {:else}
                   <span
-                    class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground/60 border border-border/40 self-start"
+                    class="text-[11px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground/60 border border-border/40 self-start"
                     >No filters</span
                   >
                 {/if}
@@ -573,7 +573,7 @@
 
                 {#if progress != null}
                   <div class="space-y-1">
-                    <div class="flex items-center justify-between text-[10px]">
+                    <div class="flex items-center justify-between text-[11px]">
                       <span class="text-muted-foreground flex items-center gap-1">
                         <Target class="size-2.5" /> Target
                       </span>
@@ -591,7 +591,7 @@
                 {/if}
 
                 {#if stats.topCompanies.length > 0}
-                  <div class="text-[10px] text-muted-foreground/80 leading-relaxed">
+                  <div class="text-[11px] text-muted-foreground/80 leading-relaxed">
                     <span class="text-muted-foreground/60">Top: </span>
                     {stats.topCompanies
                       .slice(0, 3)
@@ -734,7 +734,7 @@
                 type="button"
                 onclick={() => toggleBg(bg)}
                 class={cn(
-                  'h-7 px-2.5 text-[10px] font-mono uppercase rounded-md border transition-all',
+                  'h-7 px-2.5 text-[11px] font-mono uppercase rounded-md border transition-all',
                   on
                     ? bg === 'LOW'
                       ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
@@ -773,7 +773,7 @@
         <div class="flex items-center justify-between pt-1">
           <div>
             <Label for="ed-report" class="text-xs cursor-pointer">Has deep evaluation report</Label>
-            <p class="text-[10px] text-muted-foreground/70">
+            <p class="text-[11px] text-muted-foreground/70">
               Only jobs with a Claude eval in <code class="font-mono">reports/</code>
             </p>
           </div>
@@ -788,7 +788,7 @@
         <div class="flex items-center justify-between">
           <div>
             <Label for="ed-pdf" class="text-xs cursor-pointer">Has tailored CV PDF</Label>
-            <p class="text-[10px] text-muted-foreground/70">
+            <p class="text-[11px] text-muted-foreground/70">
               Only jobs with a generated PDF in <code class="font-mono">output/</code>
             </p>
           </div>
@@ -833,7 +833,7 @@
     <div class="px-6 py-3 border-t bg-muted/30">
       <div class="flex items-center justify-between gap-3">
         <div class="flex items-baseline gap-2 min-w-0">
-          <span class="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-medium"
+          <span class="text-[11px] uppercase tracking-wider text-muted-foreground/80 font-medium"
             >Matches</span
           >
           <span
@@ -846,13 +846,13 @@
           >
             {preview?.total ?? '—'}
           </span>
-          <span class="text-[10px] text-muted-foreground">
+          <span class="text-[11px] text-muted-foreground">
             {preview?.total === 1 ? 'job' : 'jobs'} in your pipeline
           </span>
         </div>
         {#if preview && preview.total > 0}
           <div
-            class="flex items-center gap-2 text-[10px] text-muted-foreground tabular-nums flex-shrink-0"
+            class="flex items-center gap-2 text-[11px] text-muted-foreground tabular-nums flex-shrink-0"
           >
             {#if preview.topScore != null}
               <span
@@ -872,7 +872,7 @@
             {/if}
           </div>
         {:else if preview && preview.total === 0}
-          <span class="text-[10px] text-amber-300/80">Filter is too narrow — no matches</span>
+          <span class="text-[11px] text-amber-300/80">Filter is too narrow — no matches</span>
         {/if}
       </div>
     </div>
