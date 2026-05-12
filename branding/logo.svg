@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <!--
     career-ops master logo. Single source of truth. Edit here.
     `pnpm brand:apply` propagates this into:
@@ -6,44 +6,50 @@
       - ui/static/favicon.svg (web favicon)
       - electron tray icon
 
-    Design: an upward-trending growth chart with an arrow tip, on the
-    brand dark gradient. Reads as "career progression / product launch"
-    — matches the tagline ("Run your job search like a product launch")
-    and works at every size from 16×16 to 1024×1024 because every line
-    is at least 2 SVG units thick.
+    Design notes:
+    - 1024×1024 canvas so every downstream size is a clean integer downscale.
+    - 232px corner radius matches iOS 18+ auto-mask "squircle" — the home
+      screen will round it correctly without halo artifacts.
+    - Background is a vibrant indigo→violet→fuchsia gradient. The previous
+      slate→black design read as "low-energy software"; this reads as
+      "launch / momentum".
+    - Single bold glyph: a rising zig-zag arrow. ~52% of canvas, ~16% inset
+      from every edge so the figure stays inside the safe area at small
+      sizes (16×16 favicon, 29×29 settings, etc.).
+    - White stroke at 84 units stays crisp from 16×16 through 1024×1024.
+      Thinner strokes look fine at 1024 but disappear at 22×22.
+    - Top half has a 6%-opacity white wash for a subtle glassy highlight,
+      mimicking modern Apple-style depth without requiring a real shadow
+      filter (which Capacitor's iconset generator sometimes flattens wrong).
 
     Color palette is also declared in brand.json under `colors:`. Keep
     them in sync (the verifier checks).
   -->
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#1e293b"/>
-      <stop offset="100%" stop-color="#0a0a0b"/>
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="55%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#a855f7"/>
     </linearGradient>
-    <linearGradient id="trend" x1="0" y1="1" x2="1" y2="0">
-      <stop offset="0%" stop-color="#5b6cff"/>
-      <stop offset="100%" stop-color="#a5b4fc"/>
+    <linearGradient id="arrow" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#ffffff"/>
     </linearGradient>
   </defs>
 
-  <!-- Rounded square background -->
-  <rect width="32" height="32" rx="7" fill="url(#bg)"/>
+  <!-- Squircle background -->
+  <rect width="1024" height="1024" rx="232" fill="url(#bg)"/>
 
-  <!-- Three ascending bars (left to right, getting taller) — career progression -->
-  <rect x="6"  y="20" width="3" height="6"  rx="0.8" fill="#5b6cff" opacity="0.55"/>
-  <rect x="11" y="17" width="3" height="9"  rx="0.8" fill="#5b6cff" opacity="0.75"/>
-  <rect x="16" y="14" width="3" height="12" rx="0.8" fill="url(#trend)"/>
+  <!-- Soft top-half highlight for depth (no filters — generators sometimes drop them) -->
+  <rect x="0" y="0" width="1024" height="512" rx="232" fill="#ffffff" opacity="0.06"/>
 
-  <!-- Upward arrow trailing from the tallest bar — the "launch" energy -->
-  <path d="M19.2 14 L25 8.2"
-        stroke="url(#trend)"
-        stroke-width="2.4"
-        stroke-linecap="round"
-        fill="none"/>
-  <path d="M21.5 8.2 L25 8.2 L25 11.7"
-        stroke="url(#trend)"
-        stroke-width="2.4"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        fill="none"/>
+  <!-- Bold rising zig-zag arrow — career trajectory -->
+  <path d="M280 720 L520 480 L640 600 L800 440"
+        stroke="url(#arrow)" stroke-width="84"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Arrow head — corner of the L, joins seamlessly to the zig-zag -->
+  <path d="M680 360 L800 360 L800 480"
+        stroke="url(#arrow)" stroke-width="84"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>
