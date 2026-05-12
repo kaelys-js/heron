@@ -83,7 +83,8 @@ async function fetchText(url, opts = {}) {
     try {
       const res = await fetch(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (career-ops-scanner; +https://github.com/kaelys-js/career-ops)',
+          'User-Agent':
+            'Mozilla/5.0 (career-ops-scanner; +https://github.com/kaelys-js/career-ops)',
           Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9',
           ...(opts.headers || {}),
         },
