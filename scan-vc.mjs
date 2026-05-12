@@ -60,7 +60,7 @@ async function fetchText(url, opts = {}) {
   try {
     const res = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (career-ops-scanner; +https://github.com/santifer/career-ops)',
+        'User-Agent': 'Mozilla/5.0 (career-ops-scanner; +https://github.com/kaelys-js/career-ops)',
         ...(opts.headers || {}),
       },
       signal: controller.signal,

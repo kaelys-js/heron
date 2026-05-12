@@ -130,6 +130,27 @@ pre-push:
         BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-pre-push
         BETTER_AUTH_RATE_LIMIT: "off"
       run: pnpm verify:cached
+    release-readiness:
+      # When pushing a release tag (v1.2.3 / v1.2.3-beta.1), gate on
+      # native-release readiness. This catches "I forgot to run
+      # setup:native" BEFORE the tag hits origin and burns 30min of CI
+      # trying to sign builds without secrets.
+      #
+      # The hook runs `git for-each-ref` over the refs being pushed.
+      # Empty match → pre-push is a branch push → skip the check.
+      # Non-empty → exec doctor:native, which queries `gh secret list`
+      # to verify every required secret exists.
+      #
+      # Override (for emergency tag-push when secrets are intentionally
+      # unset, e.g. during repo bootstrap): SKIP_LEFTHOOK=1 git push --tags
+      run: |
+        TAG_REFS=$(git for-each-ref --format='%(refname:short)' "refs/tags/v*" --no-merged "origin/$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)" 2>/dev/null | head -3)
+        if [ -z "$TAG_REFS" ]; then
+          exit 0  # not a release tag push
+        fi
+        echo "▸ Release tag(s) detected: $TAG_REFS"
+        echo "▸ Running doctor:native to verify CI can release..."
+        pnpm doctor:native
 
 # ── commit-msg (lightweight) ────────────────────────────────────────
 # Enforce Conventional Commits format (so release-please can generate
