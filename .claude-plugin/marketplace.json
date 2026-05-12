@@ -4,8 +4,8 @@
     "description": "AI job search command center — evaluate offers, generate CVs, scan portals, track applications"
   },
   "owner": {
-    "name": "santifer",
-    "url": "https://santifer.io"
+    "name": "resist.js",
+    "url": "https://resist.js"
   },
   "plugins": [
     {

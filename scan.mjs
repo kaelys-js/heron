@@ -431,7 +431,7 @@ async function fetchOne(apiSpec) {
   const method = spec.method || 'GET';
   const headers = {
     Accept: 'application/json',
-    'User-Agent': 'career-ops-scanner/1.0 (+https://github.com/santifer/career-ops)',
+    'User-Agent': 'career-ops-scanner/1.0 (+https://github.com/kaelys-js/career-ops)',
     ...(method !== 'GET' ? { 'Content-Type': 'application/json' } : {}),
     ...(spec.headers || {}),
   };

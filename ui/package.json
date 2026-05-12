@@ -1,6 +1,6 @@
 {
   "name": "ui",
-  "description": "career-ops SvelteKit dashboard — multi-user, multi-platform (web + iOS + Android + Electron).",
+  "description": "Career Ops SvelteKit dashboard — multi-user, multi-platform (web + iOS + Android + Electron).",
   "version": "1.6.0",
   "private": true,
   "type": "module",
@@ -8,11 +8,11 @@
   "homepage": "https://career-ops.org",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/santifer/career-ops.git",
+    "url": "https://github.com/kaelys-js/career-ops",
     "directory": "ui"
   },
   "bugs": {
-    "url": "https://github.com/santifer/career-ops/issues"
+    "url": "https://github.com/kaelys-js/career-ops/issues"
   },
   "engines": {
     "node": ">=26.0.0",

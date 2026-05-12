@@ -46,8 +46,52 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Fail-fast preflight: verify every required secret is configured BEFORE
+  # spending 30 minutes on a doomed iOS / desktop build that'll explode at
+  # the signing step. This is the CI mirror of `pnpm doctor:native`. If you
+  # see this job red, you forgot `pnpm setup:native`.
+  preflight:
+    name: Preflight — native-release secrets present
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Required secret check
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          MAC_CERTIFICATE: ${{ secrets.MAC_CERTIFICATE }}
+          MAC_CERTIFICATE_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+          IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          missing=()
+          for var in APPLE_TEAM_ID MAC_CERTIFICATE MAC_CERTIFICATE_PASSWORD \
+                     IOS_CERTIFICATE IOS_CERTIFICATE_PASSWORD IOS_PROVISIONING_PROFILE \
+                     APP_STORE_CONNECT_KEY_ID APP_STORE_CONNECT_ISSUER_ID APP_STORE_CONNECT_PRIVATE_KEY; do
+            if [ -z "${!var}" ]; then
+              missing+=("$var")
+            fi
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::native-release blocked — these secrets are missing:"
+            for m in "${missing[@]}"; do echo "::error::  • $m"; done
+            echo ""
+            echo "Fix locally:"
+            echo "  pnpm setup:native      # interactive wizard"
+            echo "  pnpm doctor:native     # verify"
+            echo ""
+            echo "Or configure manually at:"
+            echo "  https://github.com/${{ github.repository }}/settings/secrets/actions"
+            exit 1
+          fi
+          echo "✅ all required secrets present"
+
   build-desktop:
     name: Build ${{ matrix.os }}
+    needs: preflight
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:
@@ -167,6 +211,7 @@ jobs:
 
   build-ios:
     name: Build iOS (TestFlight)
+    needs: preflight
     runs-on: macos-latest
     timeout-minutes: 60
     steps:

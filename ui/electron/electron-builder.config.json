@@ -1,7 +1,7 @@
 {
   "appId": "com.resistjs.careerops",
   "productName": "Career Ops",
-  "copyright": "© 2026 santifer. Licensed under the MIT License.",
+  "copyright": "© 2026 resist.js (original work © 2026 santifer). Licensed under the MIT License.",
   "directories": {
     "buildResources": "build",
     "output": "dist"
@@ -60,7 +60,7 @@
       "NSBonjourServices": ["_career-ops._tcp"],
       "NSMicrophoneUsageDescription": "career-ops uses your microphone for mock interview voice recording.",
       "NSCalendarsUsageDescription": "career-ops adds your interviews to Calendar when reminders are enabled.",
-      "NSHumanReadableCopyright": "© 2026 santifer. Licensed under the MIT License.",
+      "NSHumanReadableCopyright": "© 2026 resist.js (original work © 2026 santifer). Licensed under the MIT License.",
       "NSSupportsAutomaticTermination": true,
       "NSSupportsSuddenTermination": true,
       "NSAppleScriptEnabled": false,
@@ -92,7 +92,7 @@
       }
     ],
     "icon": "build/icon.ico",
-    "publisherName": "santifer",
+    "publisherName": "resist.js",
     "verifyUpdateCodeSignature": false,
     "requestedExecutionLevel": "asInvoker"
   },
@@ -112,9 +112,9 @@
   "appx": {
     "applicationId": "careerops",
     "displayName": "Career Ops",
-    "publisher": "CN=santifer",
-    "publisherDisplayName": "santifer",
-    "identityName": "santifer.careerops",
+    "publisher": "CN=resist.js",
+    "publisherDisplayName": "resist.js",
+    "identityName": "resist.js.careerops",
     "backgroundColor": "#0a0a0b"
   },
   "linux": {
@@ -132,8 +132,8 @@
     "category": "Office;Network;Development",
     "synopsis": "Run your job search like a product launch.",
     "description": "Career Ops is an AI-powered job search platform: multi-user dashboard, autonomous apply across 11 ATS portals, tailored CVs and cover letters per role, interview prep, follow-up cadence, and offline-first native apps on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.",
-    "maintainer": "santifer <hi@santifer.io>",
-    "vendor": "santifer",
+    "maintainer": "resist.js <hello@resist.js>",
+    "vendor": "resist.js",
     "executableName": "career-ops",
     "desktop": {
       "entry": {
