@@ -6,6 +6,7 @@ build:ios
 build:desktop:fast
 dev:desktop
 
+- Make sure all xcode/ios project settings are following best practices as of now
 - Make sure all .json/etc have $schema where appropriate pinned to node_modules so schema is specific version if possible
 - Animate cleanly when changing between light/dark/system modes
 - Would it be trivial/easy to swap sqlite out for a different db? Is that neeeded at all? Any advantages?
