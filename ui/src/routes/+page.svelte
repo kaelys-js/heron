@@ -20,6 +20,21 @@
 
   onMount(() => {
     queueMicrotask(() => {
+      // Critical: on Capacitor (non-http origin) we MUST NOT redirect
+      // to /inbox without an auth check — the parent +layout.svelte's
+      // auth gate runs in onMount too and there's no guaranteed
+      // ordering between parent and child onMount. If our redirect to
+      // /inbox wins the race the user lands on an app shell they
+      // shouldn't see. Skip the inbox redirect when no auth flag is
+      // present; the layout will steer them to /login.
+      if (
+        typeof window !== 'undefined' &&
+        !window.location.protocol.startsWith('http') &&
+        localStorage.getItem('career-ops:authed') !== '1'
+      ) {
+        // Layout will handle the /login redirect — stay put.
+        return;
+      }
       const u = page.url;
       const search = u.search;
       if (
