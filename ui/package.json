@@ -62,7 +62,7 @@
     "svelte-sonner": "1.1.1",
     "tailwind-merge": "3.6.0",
     "tailwind-variants": "3.2.2",
-    "yaml": "2.8.4"
+    "yaml": "2.9.0"
   },
   "devDependencies": {
     "@capacitor-community/electron": "5.0.1",
