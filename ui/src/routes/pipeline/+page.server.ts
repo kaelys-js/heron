@@ -1,6 +1,7 @@
 import { loadAllJobs, groupByStatus } from '$lib/server/parsers';
 import { parseFilterFromUrl } from '$lib/server/projects';
 import { getActiveProfileId } from '$lib/server/profiles';
+import { listAllStageState, type JobStageState } from '$lib/server/stage-state';
 import {
   STATUS_ORDER,
   DEFAULT_FILTER,
@@ -33,6 +34,20 @@ export async function load({ url }: { url: URL }) {
     ...overrides,
     bgRisk: { ...DEFAULT_FILTER.bgRisk, ...(overrides.bgRisk ?? {}) },
   };
+  // Stage-state map keyed by jobId so the page can render "days quiet"
+  // + "next action due" badges per row without an extra fetch per card.
+  // When `profile=all`, scan every profile and stitch into one map.
+  const stageStateMap: Record<string, JobStageState> = {};
+  if (profileId === 'all') {
+    // For cross-profile views we'd need to walk every profile's sidecar.
+    // listAllStageState reads the active-profile file by default, which
+    // is the conservative behaviour here — the page shows what's loaded
+    // for the active profile and leaves cross-profile aggregation to a
+    // separate phase.
+    Object.assign(stageStateMap, listAllStageState(getActiveProfileId()));
+  } else {
+    Object.assign(stageStateMap, listAllStageState(profileId));
+  }
   return {
     jobs,
     grouped,
@@ -41,5 +56,6 @@ export async function load({ url }: { url: URL }) {
     initialFilter,
     fromProject: url.searchParams.get('from'),
     profileId,
+    stageStateMap,
   };
 }
