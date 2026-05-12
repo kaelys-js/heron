@@ -22,8 +22,11 @@ export const prerender = false;
 // otherwise the WebView fails to load /pipeline/ vs /pipeline.
 export const trailingSlash = 'never';
 
-export const load = async () => {
+// Merge with parent (+layout.server.ts) data — DON'T replace it, or downstream
+// pages lose access to activeProfile/inboxCount/queueCount/etc.
+export const load = async ({ data }) => {
   return {
+    ...data,
     isCapacitor: IS_CAPACITOR,
     isBrowser: browser,
   };
