@@ -1,141 +1,167 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-  import { Target, ArrowRight, ArrowLeft, Loader2, Plus, X } from '@lucide/svelte';
-  import { goto } from '$app/navigation';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { Target, ArrowRight, ArrowLeft, Loader2, Plus, X } from '@lucide/svelte';
+import { goto } from '$app/navigation';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
 
-  let { data }: {
-    data: {
-      profileId: string;
-      initial: {
-        target_roles: string[];
-        positive: string[];
-        negative: string[];
-        target_range: string;
-        currency: string;
-        minimum: string;
-        must_have: string[];
-        strong_plus: string[];
-        hard_no: string[];
-      };
-      bootstrappedFromTemplate: boolean;
+let {
+  data,
+}: {
+  data: {
+    profileId: string;
+    initial: {
+      target_roles: string[];
+      positive: string[];
+      negative: string[];
+      target_range: string;
+      currency: string;
+      minimum: string;
+      must_have: string[];
+      strong_plus: string[];
+      hard_no: string[];
     };
-  } = $props();
+    bootstrappedFromTemplate: boolean;
+  };
+} = $props();
 
-  /** Profile query suffix threaded through every API call + navigation. */
-  let q = $derived('?profile=' + encodeURIComponent(data.profileId));
+/** Profile query suffix threaded through every API call + navigation. */
+let q = $derived('?profile=' + encodeURIComponent(data.profileId));
 
-  // Each chip-list owns its own draft input + array. Local state, never cross-bound.
-  // svelte-ignore state_referenced_locally — initial seed only
-  let targetRoles = $state([...data.initial.target_roles]);
-  // svelte-ignore state_referenced_locally — initial seed only
-  let positive = $state([...data.initial.positive]);
-  // svelte-ignore state_referenced_locally — initial seed only
-  let negative = $state([...data.initial.negative]);
-  // svelte-ignore state_referenced_locally — initial seed only
-  let mustHave = $state([...data.initial.must_have]);
-  // svelte-ignore state_referenced_locally — initial seed only
-  let strongPlus = $state([...data.initial.strong_plus]);
-  // svelte-ignore state_referenced_locally — initial seed only
-  let hardNo = $state([...data.initial.hard_no]);
+// Each chip-list owns its own draft input + array. Local state, never cross-bound.
+// svelte-ignore state_referenced_locally — initial seed only
+let targetRoles = $state([...data.initial.target_roles]);
+// svelte-ignore state_referenced_locally — initial seed only
+let positive = $state([...data.initial.positive]);
+// svelte-ignore state_referenced_locally — initial seed only
+let negative = $state([...data.initial.negative]);
+// svelte-ignore state_referenced_locally — initial seed only
+let mustHave = $state([...data.initial.must_have]);
+// svelte-ignore state_referenced_locally — initial seed only
+let strongPlus = $state([...data.initial.strong_plus]);
+// svelte-ignore state_referenced_locally — initial seed only
+let hardNo = $state([...data.initial.hard_no]);
 
-  let draft = $state({ targetRoles: '', positive: '', negative: '', mustHave: '', strongPlus: '', hardNo: '' });
+let draft = $state({
+  targetRoles: '',
+  positive: '',
+  negative: '',
+  mustHave: '',
+  strongPlus: '',
+  hardNo: '',
+});
 
-  // svelte-ignore state_referenced_locally — initial seed only
-  let comp = $state({
-    target_range: data.initial.target_range,
-    currency: data.initial.currency || 'USD',
-    minimum: data.initial.minimum,
-  });
+// svelte-ignore state_referenced_locally — initial seed only
+let comp = $state({
+  target_range: data.initial.target_range,
+  currency: data.initial.currency || 'USD',
+  minimum: data.initial.minimum,
+});
 
-  let saving = $state(false);
+let saving = $state(false);
 
-  function addChip(list: 'targetRoles' | 'positive' | 'negative' | 'mustHave' | 'strongPlus' | 'hardNo') {
-    const v = draft[list].trim();
-    if (!v) return;
-    const arr =
-      list === 'targetRoles' ? targetRoles :
-      list === 'positive'    ? positive :
-      list === 'negative'    ? negative :
-      list === 'mustHave'    ? mustHave :
-      list === 'strongPlus'  ? strongPlus :
-                               hardNo;
-    if (arr.some((x) => x.toLowerCase() === v.toLowerCase())) {
-      draft[list] = '';
-      return;
-    }
-    if (list === 'targetRoles') targetRoles = [...targetRoles, v];
-    else if (list === 'positive') positive = [...positive, v];
-    else if (list === 'negative') negative = [...negative, v];
-    else if (list === 'mustHave') mustHave = [...mustHave, v];
-    else if (list === 'strongPlus') strongPlus = [...strongPlus, v];
-    else hardNo = [...hardNo, v];
+function addChip(
+  list: 'targetRoles' | 'positive' | 'negative' | 'mustHave' | 'strongPlus' | 'hardNo',
+) {
+  const v = draft[list].trim();
+  if (!v) return;
+  const arr =
+    list === 'targetRoles'
+      ? targetRoles
+      : list === 'positive'
+        ? positive
+        : list === 'negative'
+          ? negative
+          : list === 'mustHave'
+            ? mustHave
+            : list === 'strongPlus'
+              ? strongPlus
+              : hardNo;
+  if (arr.some((x) => x.toLowerCase() === v.toLowerCase())) {
     draft[list] = '';
+    return;
   }
+  if (list === 'targetRoles') targetRoles = [...targetRoles, v];
+  else if (list === 'positive') positive = [...positive, v];
+  else if (list === 'negative') negative = [...negative, v];
+  else if (list === 'mustHave') mustHave = [...mustHave, v];
+  else if (list === 'strongPlus') strongPlus = [...strongPlus, v];
+  else hardNo = [...hardNo, v];
+  draft[list] = '';
+}
 
-  function removeChip(list: 'targetRoles' | 'positive' | 'negative' | 'mustHave' | 'strongPlus' | 'hardNo', i: number) {
-    if (list === 'targetRoles') targetRoles = targetRoles.filter((_, idx) => idx !== i);
-    else if (list === 'positive') positive = positive.filter((_, idx) => idx !== i);
-    else if (list === 'negative') negative = negative.filter((_, idx) => idx !== i);
-    else if (list === 'mustHave') mustHave = mustHave.filter((_, idx) => idx !== i);
-    else if (list === 'strongPlus') strongPlus = strongPlus.filter((_, idx) => idx !== i);
-    else hardNo = hardNo.filter((_, idx) => idx !== i);
+function removeChip(
+  list: 'targetRoles' | 'positive' | 'negative' | 'mustHave' | 'strongPlus' | 'hardNo',
+  i: number,
+) {
+  if (list === 'targetRoles') targetRoles = targetRoles.filter((_, idx) => idx !== i);
+  else if (list === 'positive') positive = positive.filter((_, idx) => idx !== i);
+  else if (list === 'negative') negative = negative.filter((_, idx) => idx !== i);
+  else if (list === 'mustHave') mustHave = mustHave.filter((_, idx) => idx !== i);
+  else if (list === 'strongPlus') strongPlus = strongPlus.filter((_, idx) => idx !== i);
+  else hardNo = hardNo.filter((_, idx) => idx !== i);
+}
+
+function onKeyEnter(
+  e: KeyboardEvent,
+  list: 'targetRoles' | 'positive' | 'negative' | 'mustHave' | 'strongPlus' | 'hardNo',
+) {
+  if (e.key === 'Enter' || (e.key === ',' && draft[list].trim())) {
+    e.preventDefault();
+    addChip(list);
   }
+}
 
-  function onKeyEnter(e: KeyboardEvent, list: 'targetRoles' | 'positive' | 'negative' | 'mustHave' | 'strongPlus' | 'hardNo') {
-    if (e.key === 'Enter' || (e.key === ',' && draft[list].trim())) {
-      e.preventDefault();
-      addChip(list);
-    }
+async function saveAndContinue() {
+  if (saving) return;
+  if (targetRoles.length === 0) {
+    toast.error('Add at least one target role');
+    return;
   }
-
-  async function saveAndContinue() {
-    if (saving) return;
-    if (targetRoles.length === 0) {
-      toast.error('Add at least one target role');
-      return;
-    }
-    if (positive.length === 0) {
-      toast.error('Add at least one positive keyword');
-      return;
-    }
-    saving = true;
-    try {
-      // Profile patch: target_roles + compensation + preferences.
-      const profilePatch: Record<string, unknown> = {
-        target_roles: { primary: targetRoles },
-        compensation: stripEmpty({
-          target_range: comp.target_range,
-          currency: comp.currency,
-          minimum: comp.minimum,
-        }),
-        preferences: {
-          must_have: mustHave,
-          strong_plus: strongPlus,
-          hard_no: hardNo,
-        },
-      };
-      await api.post('/api/profile' + q, profilePatch, { silent: true });
-
-      // Portals patch: title_filter.positive + .negative (preserves rest).
-      await api.post('/api/portals/title-filter' + q, { positive, negative }, { silent: true });
-
-      await api.post('/api/onboarding/step', { step: 'targeting', action: 'complete' }, { silent: true });
-      toast.success('Targeting saved');
-      await goto('/onboarding/sources' + q);
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Could not save', { description: err.message });
-      saving = false;
-    }
+  if (positive.length === 0) {
+    toast.error('Add at least one positive keyword');
+    return;
   }
+  saving = true;
+  try {
+    // Profile patch: target_roles + compensation + preferences.
+    const profilePatch: Record<string, unknown> = {
+      target_roles: { primary: targetRoles },
+      compensation: stripEmpty({
+        target_range: comp.target_range,
+        currency: comp.currency,
+        minimum: comp.minimum,
+      }),
+      preferences: {
+        must_have: mustHave,
+        strong_plus: strongPlus,
+        hard_no: hardNo,
+      },
+    };
+    await api.post('/api/profile' + q, profilePatch, { silent: true });
 
-  function stripEmpty(o: Record<string, string>): Record<string, string> {
-    return Object.fromEntries(Object.entries(o).filter(([, v]) => v && v.trim()));
+    // Portals patch: title_filter.positive + .negative (preserves rest).
+    await api.post('/api/portals/title-filter' + q, { positive, negative }, { silent: true });
+
+    await api.post(
+      '/api/onboarding/step',
+      { step: 'targeting', action: 'complete' },
+      { silent: true },
+    );
+    toast.success('Targeting saved');
+    await goto('/onboarding/sources' + q);
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Could not save', { description: err.message });
+    saving = false;
   }
+}
+
+function stripEmpty(o: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(o).filter(([, v]) => v && v.trim()));
+}
 </script>
 
 <div class="space-y-6">

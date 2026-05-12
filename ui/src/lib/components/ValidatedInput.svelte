@@ -21,77 +21,75 @@
   `validateOn="input"` to show errors on every keystroke instead.
 -->
 <script lang="ts">
-  import { Input } from '$lib/components/ui/input';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { AlertCircle, Check } from '@lucide/svelte';
-  import { cn } from '$lib/utils';
-  import type { ValidationResult } from '$lib/validators';
+import { Input } from '$lib/components/ui/input';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { AlertCircle, Check } from '@lucide/svelte';
+import { cn } from '$lib/utils';
+import type { ValidationResult } from '$lib/validators';
 
-  let {
-    value = $bindable(''),
-    validate,
-    required = false,
-    placeholder,
-    type = 'text',
-    class: className = '',
-    /** When to surface validation errors. */
-    validateOn = 'blur' as 'blur' | 'input',
-    /** Render the inline error text under the input. */
-    inlineError = true,
-    disabled = false,
-    ariaLabel,
-    /** Mirror Input's oninput so callers using patch-style updates still work. */
-    oninput,
-    /** Stable id so a parent validation summary can focus this input on click. */
-    id,
-  }: {
-    value?: string;
-    validate?: (v: string) => ValidationResult;
-    required?: boolean;
-    placeholder?: string;
-    type?: string;
-    class?: string;
-    validateOn?: 'blur' | 'input';
-    inlineError?: boolean;
-    disabled?: boolean;
-    ariaLabel?: string;
-    oninput?: (e: Event) => void;
-    id?: string;
-  } = $props();
+let {
+  value = $bindable(''),
+  validate,
+  required = false,
+  placeholder,
+  type = 'text',
+  class: className = '',
+  /** When to surface validation errors. */
+  validateOn = 'blur' as 'blur' | 'input',
+  /** Render the inline error text under the input. */
+  inlineError = true,
+  disabled = false,
+  ariaLabel,
+  /** Mirror Input's oninput so callers using patch-style updates still work. */
+  oninput,
+  /** Stable id so a parent validation summary can focus this input on click. */
+  id,
+}: {
+  value?: string;
+  validate?: (v: string) => ValidationResult;
+  required?: boolean;
+  placeholder?: string;
+  type?: string;
+  class?: string;
+  validateOn?: 'blur' | 'input';
+  inlineError?: boolean;
+  disabled?: boolean;
+  ariaLabel?: string;
+  oninput?: (e: Event) => void;
+  id?: string;
+} = $props();
 
-  let touched = $state(false);
+let touched = $state(false);
 
-  /**
-   * The validation envelope. Combines required + custom validator and
-   * returns:
-   *   { state: 'idle' }      — empty, optional, or not yet touched
-   *   { state: 'valid' }     — non-empty and passes the validator
-   *   { state: 'invalid', message } — fails some check
-   */
-  type State = { state: 'idle' } | { state: 'valid' } | { state: 'invalid'; message: string };
+/**
+ * The validation envelope. Combines required + custom validator and
+ * returns:
+ *   { state: 'idle' }      — empty, optional, or not yet touched
+ *   { state: 'valid' }     — non-empty and passes the validator
+ *   { state: 'invalid', message } — fails some check
+ */
+type State = { state: 'idle' } | { state: 'valid' } | { state: 'invalid'; message: string };
 
-  let result = $derived.by<State>(() => {
-    const v = (value ?? '').trim();
-    if (required && !v) return { state: 'invalid', message: 'Required' };
-    if (!v) return { state: 'idle' };
-    if (validate) {
-      const r = validate(v);
-      if (!r.ok) return { state: 'invalid', message: r.message };
-    }
-    return { state: 'valid' };
-  });
+let result = $derived.by<State>(() => {
+  const v = (value ?? '').trim();
+  if (required && !v) return { state: 'invalid', message: 'Required' };
+  if (!v) return { state: 'idle' };
+  if (validate) {
+    const r = validate(v);
+    if (!r.ok) return { state: 'invalid', message: r.message };
+  }
+  return { state: 'valid' };
+});
 
-  let showError = $derived(
-    result.state === 'invalid' && (validateOn === 'input' || touched),
-  );
-  // Show the green check whenever the value passes the validator. We used to
-  // gate this on `touched` so a fresh field wouldn't show the check before
-  // the user interacted with it — but if the parent seeds the field with a
-  // valid value (typical on profile reload), the user expects to see the
-  // ✓ immediately. Errors still wait for blur (see showError) so a partial
-  // value mid-type doesn't surface "Required" prematurely.
-  let showOk = $derived(result.state === 'valid');
-  let errorMessage = $derived(result.state === 'invalid' ? result.message : '');
+let showError = $derived(result.state === 'invalid' && (validateOn === 'input' || touched));
+// Show the green check whenever the value passes the validator. We used to
+// gate this on `touched` so a fresh field wouldn't show the check before
+// the user interacted with it — but if the parent seeds the field with a
+// valid value (typical on profile reload), the user expects to see the
+// ✓ immediately. Errors still wait for blur (see showError) so a partial
+// value mid-type doesn't surface "Required" prematurely.
+let showOk = $derived(result.state === 'valid');
+let errorMessage = $derived(result.state === 'invalid' ? result.message : '');
 </script>
 
 <div class={cn('relative w-full', className)}>

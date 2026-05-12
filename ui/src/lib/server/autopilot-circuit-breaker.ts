@@ -73,7 +73,8 @@ function isProfileYamlError(ev: ActivityEvent): boolean {
   // and YAML/parse keywords.
   if (ev.source === 'profile' || ev.source === 'profile-yml') return true;
   const text = (ev.title + ' ' + (ev.message ?? '')).toLowerCase();
-  if (text.includes('profile.yml') && (text.includes('yaml') || text.includes('parse'))) return true;
+  if (text.includes('profile.yml') && (text.includes('yaml') || text.includes('parse')))
+    return true;
   return false;
 }
 
@@ -104,11 +105,10 @@ function checkPreflight(): void {
         );
       }
     } catch (e) {
-      trip(
-        'profile.yml could not be read',
-        e instanceof Error ? e.message : String(e),
-        { label: 'Open Profile', href: '/profile' },
-      );
+      trip('profile.yml could not be read', e instanceof Error ? e.message : String(e), {
+        label: 'Open Profile',
+        href: '/profile',
+      });
     }
   }
 }
@@ -135,7 +135,8 @@ function onEvent(ev: ActivityEvent): void {
   if (isProfileYamlError(ev)) {
     trip(
       'profile.yml failed to parse',
-      ev.message ?? 'YAML parser raised an error reading config/profile.yml. Fix the syntax and resume.',
+      ev.message ??
+        'YAML parser raised an error reading config/profile.yml. Fix the syntax and resume.',
       { label: 'Open Profile', href: '/profile' },
     );
     return;

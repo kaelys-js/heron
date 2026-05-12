@@ -20,9 +20,10 @@ function virtualSchedules(): Schedule[] {
     const t = s.trigger;
     if (t.type !== 'daily' && t.type !== 'weekly') continue;
     const last = readLastRun(s.id);
-    const triggerForSchedule = t.type === 'daily'
-      ? { type: 'daily' as const, hour: t.hour, minute: t.minute, weekdays: t.weekdays ?? [] }
-      : { type: 'weekly' as const, dayOfWeek: t.dayOfWeek, hour: t.hour, minute: t.minute };
+    const triggerForSchedule =
+      t.type === 'daily'
+        ? { type: 'daily' as const, hour: t.hour, minute: t.minute, weekdays: t.weekdays ?? [] }
+        : { type: 'weekly' as const, dayOfWeek: t.dayOfWeek, hour: t.hour, minute: t.minute };
     out.push({
       id: 'auto:' + s.id,
       name: s.label,
@@ -53,7 +54,10 @@ export async function load() {
   }, {});
   const history: ActivityEvent[] = bus
     .recent()
-    .filter((ev) => HISTORY_SOURCES.includes(ev.source) && (ev.category === 'task' || ev.category === 'system'))
+    .filter(
+      (ev) =>
+        HISTORY_SOURCES.includes(ev.source) && (ev.category === 'task' || ev.category === 'system'),
+    )
     .slice(-50)
     .reverse();
   return {

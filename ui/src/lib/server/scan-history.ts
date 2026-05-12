@@ -29,7 +29,7 @@ export type ScanRow = {
 
 export type DailyAggregate = {
   date: string;
-  added: number;     // status === 'added'
+  added: number; // status === 'added'
   duplicates: number; // anything else (most often 'duplicate')
   total: number;
 };
@@ -52,7 +52,11 @@ function readRowsForProfile(profileId: string): ScanRow[] {
   const historyPath = profilePath(profileId, 'scan-history');
   if (!fs.existsSync(historyPath)) return [];
   let text = '';
-  try { text = fs.readFileSync(historyPath, 'utf8'); } catch { return []; }
+  try {
+    text = fs.readFileSync(historyPath, 'utf8');
+  } catch {
+    return [];
+  }
   const lines = text.split('\n').slice(1); // skip header
   const out: ScanRow[] = [];
   for (const line of lines) {
@@ -107,9 +111,7 @@ export function readScanHistorySummary(profileId?: string): ScanHistorySummary {
     if (r.company) companyCounts.set(r.company, (companyCounts.get(r.company) ?? 0) + 1);
   }
 
-  const recent = [...byDate.values()]
-    .sort((a, b) => (a.date < b.date ? 1 : -1))
-    .slice(0, 30);
+  const recent = [...byDate.values()].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 30);
 
   return {
     totalRuns: byDate.size,

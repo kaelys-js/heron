@@ -33,13 +33,7 @@
 import { Preferences } from '@capacitor/preferences';
 import { BRAND } from './brand';
 
-export type BackendSource =
-  | 'embedded'
-  | 'dev'
-  | 'lan'
-  | 'tailscale'
-  | 'remote'
-  | 'manual';
+export type BackendSource = 'embedded' | 'dev' | 'lan' | 'tailscale' | 'remote' | 'manual';
 
 export type ResolvedBackend = {
   url: string;
@@ -167,7 +161,11 @@ export async function resolveBackend(opts: ResolverOptions = {}): Promise<Resolv
 
   // 1. Embedded (Electron prod).
   if (opts.embeddedUrl && (await probe(opts.embeddedUrl, probeTimeout))) {
-    const r: ResolvedBackend = { url: opts.embeddedUrl, source: 'embedded', resolvedAt: Date.now() };
+    const r: ResolvedBackend = {
+      url: opts.embeddedUrl,
+      source: 'embedded',
+      resolvedAt: Date.now(),
+    };
     await writeCache(r);
     return r;
   }
@@ -189,7 +187,9 @@ export async function resolveBackend(opts: ResolverOptions = {}): Promise<Resolv
 
   // 4. Tailscale.
   if (opts.tailscaleHost) {
-    const tsUrl = opts.tailscaleHost.startsWith('http') ? opts.tailscaleHost : `http://${opts.tailscaleHost}`;
+    const tsUrl = opts.tailscaleHost.startsWith('http')
+      ? opts.tailscaleHost
+      : `http://${opts.tailscaleHost}`;
     if (await probe(tsUrl, probeTimeout)) {
       const r: ResolvedBackend = { url: tsUrl, source: 'tailscale', resolvedAt: Date.now() };
       await writeCache(r);
@@ -199,7 +199,11 @@ export async function resolveBackend(opts: ResolverOptions = {}): Promise<Resolv
 
   // 5. Production / user-configured remote.
   if (opts.productionUrl && (await probe(opts.productionUrl, probeTimeout))) {
-    const r: ResolvedBackend = { url: opts.productionUrl, source: 'remote', resolvedAt: Date.now() };
+    const r: ResolvedBackend = {
+      url: opts.productionUrl,
+      source: 'remote',
+      resolvedAt: Date.now(),
+    };
     await writeCache(r);
     return r;
   }

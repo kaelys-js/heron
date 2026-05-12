@@ -46,15 +46,21 @@ function runScanCurated(args?: JobArgs): Promise<JobResult> {
       message: cliArgs.slice(1).join(' ') || 'all curated sources',
     });
     const p = spawn('node', cliArgs, { cwd: ROOT, env: { ...process.env } });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => {
       logEvent('scan-curated', 'scan-curated.mjs failed to spawn', {
         level: 'error',
         category: 'task',
         message: err.message,
       });
-      try { recordFailure('scan-curated', err); } catch {}
+      try {
+        recordFailure('scan-curated', err);
+      } catch {}
       resolve({ ok: false, error: err.message });
     });
     p.on('close', (code) => {
@@ -65,7 +71,9 @@ function runScanCurated(args?: JobArgs): Promise<JobResult> {
           category: 'task',
           message: 'exit ' + code + (stderr ? ' · ' + stderr.slice(0, 150) : ''),
         });
-        try { recordFailure('scan-curated', new Error('scan-curated.mjs exited ' + code)); } catch {}
+        try {
+          recordFailure('scan-curated', new Error('scan-curated.mjs exited ' + code));
+        } catch {}
         resolve({ ok: false, error: 'scan-curated.mjs exited ' + code });
         return;
       }
@@ -74,7 +82,9 @@ function runScanCurated(args?: JobArgs): Promise<JobResult> {
         category: 'task',
         message: found + ' new offers',
       });
-      try { recordSuccess('scan-curated'); } catch {}
+      try {
+        recordSuccess('scan-curated');
+      } catch {}
       resolve({ ok: true, message: found + ' new offers', meta: { found } });
     });
   });
@@ -83,7 +93,8 @@ function runScanCurated(args?: JobArgs): Promise<JobResult> {
 register({
   id: 'scan-curated',
   label: 'Curated boards scan',
-  description: 'AI Jobs + future niche boards. Free, HTML scrapes only — title-filtered before write.',
+  description:
+    'AI Jobs + future niche boards. Free, HTML scrapes only — title-filtered before write.',
   category: 'discovery',
   // 08:30 — 30 min after the portal scan so dedup catches the ATS rows first
   trigger: { type: 'daily', hour: 8, minute: 30, weekdays: [1, 2, 3, 4, 5] },

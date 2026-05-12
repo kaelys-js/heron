@@ -1,95 +1,115 @@
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import { Button } from '$lib/components/ui/button';
-  import {
-    Sparkles, KeyRound, User, FileText, Target, Plug, Search, Trophy, Users,
-    ArrowLeft, ArrowRight, RotateCw, CheckCircle2, AlertCircle, ExternalLink, Plus,
-  } from '@lucide/svelte';
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import { Button } from '$lib/components/ui/button';
+import {
+  Sparkles,
+  KeyRound,
+  User,
+  FileText,
+  Target,
+  Plug,
+  Search,
+  Trophy,
+  Users,
+  ArrowLeft,
+  ArrowRight,
+  RotateCw,
+  CheckCircle2,
+  AlertCircle,
+  ExternalLink,
+  Plus,
+} from '@lucide/svelte';
 
-  type Step = {
-    icon: any;
-    label: string;
-    href: string;
-    blurb: string;
-    writes: string[];
-    redo: string;
-  };
+type Step = {
+  icon: any;
+  label: string;
+  href: string;
+  blurb: string;
+  writes: string[];
+  redo: string;
+};
 
-  const STEPS: Step[] = [
-    {
-      icon: KeyRound,
-      label: 'API keys',
-      href: '/onboarding/api-keys',
-      blurb:
-        'Captures Anthropic (required) + Gemini (recommended) + Adzuna (optional). Keys are validated with a real probe before you can advance.',
-      writes: ['.env (ANTHROPIC_API_KEY, GEMINI_API_KEY, ADZUNA_*)'],
-      redo: 'Settings → API keys card. Same probes, same fields. No need to re-run the wizard.',
-    },
-    {
-      icon: User,
-      label: 'Identity',
-      href: '/onboarding/identity',
-      blurb:
-        'Captures name, email, location, work-auth, and optional links (LinkedIn, GitHub, portfolio). Drives CV signing, scraper search location, and the recruiter outreach mode.',
-      writes: ['data/profiles/{slug}/profile.yml (candidate.*, location.*)'],
-      redo: 'Profile page → Identity card. Or re-run the wizard via Settings → Reset onboarding.',
-    },
-    {
-      icon: FileText,
-      label: 'CV',
-      href: '/onboarding/cv',
-      blurb:
-        'Three options: paste markdown directly, paste plain text (Claude converts to canonical sections), or paste a LinkedIn URL (uses the authenticated LinkedIn session if connected). After save, runs Reprocess to extract structured profile fields automatically.',
-      writes: ['data/profiles/{slug}/cv.md', 'data/profiles/{slug}/profile.yml (auto-populated by Reprocess)'],
-      redo: 'Profile page → CV manager (View / Replace / Reprocess).',
-    },
-    {
-      icon: Target,
-      label: 'Targeting',
-      href: '/onboarding/targeting',
-      blurb:
-        'Target roles drive LinkedIn / Indeed search queries. Title-filter positive + negative keywords drive scan.mjs filtering. Compensation + hard preferences feed the deeper Claude evaluation.',
-      writes: [
-        'data/profiles/{slug}/profile.yml (target_roles, compensation, preferences)',
-        'data/profiles/{slug}/portals.yml (title_filter.positive, title_filter.negative)',
-        'data/profiles/{slug}/_profile.md (seeded from template if missing)',
-      ],
-      redo: 'Profile page → Targeting + preferences cards. Edit portals.yml directly for advanced search-query changes.',
-    },
-    {
-      icon: Plug,
-      label: 'Sources',
-      href: '/onboarding/sources',
-      blurb:
-        'Connect LinkedIn / Indeed (authenticated Playwright sessions for full personalized feeds) and Gmail (IMAP polling for real-time job-alert ingestion). Skippable — the always-on aggregators (ATS APIs, JobSpy, curated boards) run regardless.',
-      writes: [
-        '.playwright-linkedin/ (Chromium profile)',
-        '.playwright-indeed/ (Chromium profile)',
-        '.env (GMAIL_IMAP_*)',
-        'data/sources.json (connection state)',
-      ],
-      redo: 'Sources page (sidebar → Configure → Sources). Same Connect / Test / Disconnect actions.',
-    },
-    {
-      icon: Search,
-      label: 'First scan',
-      href: '/onboarding/first-scan',
-      blurb:
-        'Triggers the same daily scan-all fan-out that runs on schedule. Live SSE progress per child scanner. Skippable — the daily run will populate your inbox tomorrow either way.',
-      writes: ['data/profiles/{slug}/pipeline.md (new jobs)', 'data/profiles/{slug}/scan-history.tsv (dedup)'],
-      redo: 'Agents page → Run Scan. Or wait for the next daily 09:00 weekday run.',
-    },
-    {
-      icon: Trophy,
-      label: 'Done',
-      href: '/onboarding/done',
-      blurb:
-        'Marks onboarding complete. Future visits to the dashboard skip the wizard and land on /inbox directly.',
-      writes: ['data/onboarding-state.json (completed=true)'],
-      redo: 'Settings → Reset onboarding. Wipes the state file ONLY — your CV, profile, tracker, and reports are preserved.',
-    },
-  ];
+const STEPS: Step[] = [
+  {
+    icon: KeyRound,
+    label: 'API keys',
+    href: '/onboarding/api-keys',
+    blurb:
+      'Captures Anthropic (required) + Gemini (recommended) + Adzuna (optional). Keys are validated with a real probe before you can advance.',
+    writes: ['.env (ANTHROPIC_API_KEY, GEMINI_API_KEY, ADZUNA_*)'],
+    redo: 'Settings → API keys card. Same probes, same fields. No need to re-run the wizard.',
+  },
+  {
+    icon: User,
+    label: 'Identity',
+    href: '/onboarding/identity',
+    blurb:
+      'Captures name, email, location, work-auth, and optional links (LinkedIn, GitHub, portfolio). Drives CV signing, scraper search location, and the recruiter outreach mode.',
+    writes: ['data/profiles/{slug}/profile.yml (candidate.*, location.*)'],
+    redo: 'Profile page → Identity card. Or re-run the wizard via Settings → Reset onboarding.',
+  },
+  {
+    icon: FileText,
+    label: 'CV',
+    href: '/onboarding/cv',
+    blurb:
+      'Three options: paste markdown directly, paste plain text (Claude converts to canonical sections), or paste a LinkedIn URL (uses the authenticated LinkedIn session if connected). After save, runs Reprocess to extract structured profile fields automatically.',
+    writes: [
+      'data/profiles/{slug}/cv.md',
+      'data/profiles/{slug}/profile.yml (auto-populated by Reprocess)',
+    ],
+    redo: 'Profile page → CV manager (View / Replace / Reprocess).',
+  },
+  {
+    icon: Target,
+    label: 'Targeting',
+    href: '/onboarding/targeting',
+    blurb:
+      'Target roles drive LinkedIn / Indeed search queries. Title-filter positive + negative keywords drive scan.mjs filtering. Compensation + hard preferences feed the deeper Claude evaluation.',
+    writes: [
+      'data/profiles/{slug}/profile.yml (target_roles, compensation, preferences)',
+      'data/profiles/{slug}/portals.yml (title_filter.positive, title_filter.negative)',
+      'data/profiles/{slug}/_profile.md (seeded from template if missing)',
+    ],
+    redo: 'Profile page → Targeting + preferences cards. Edit portals.yml directly for advanced search-query changes.',
+  },
+  {
+    icon: Plug,
+    label: 'Sources',
+    href: '/onboarding/sources',
+    blurb:
+      'Connect LinkedIn / Indeed (authenticated Playwright sessions for full personalized feeds) and Gmail (IMAP polling for real-time job-alert ingestion). Skippable — the always-on aggregators (ATS APIs, JobSpy, curated boards) run regardless.',
+    writes: [
+      '.playwright-linkedin/ (Chromium profile)',
+      '.playwright-indeed/ (Chromium profile)',
+      '.env (GMAIL_IMAP_*)',
+      'data/sources.json (connection state)',
+    ],
+    redo: 'Sources page (sidebar → Configure → Sources). Same Connect / Test / Disconnect actions.',
+  },
+  {
+    icon: Search,
+    label: 'First scan',
+    href: '/onboarding/first-scan',
+    blurb:
+      'Triggers the same daily scan-all fan-out that runs on schedule. Live SSE progress per child scanner. Skippable — the daily run will populate your inbox tomorrow either way.',
+    writes: [
+      'data/profiles/{slug}/pipeline.md (new jobs)',
+      'data/profiles/{slug}/scan-history.tsv (dedup)',
+    ],
+    redo: 'Agents page → Run Scan. Or wait for the next daily 09:00 weekday run.',
+  },
+  {
+    icon: Trophy,
+    label: 'Done',
+    href: '/onboarding/done',
+    blurb:
+      'Marks onboarding complete. Future visits to the dashboard skip the wizard and land on /inbox directly.',
+    writes: ['data/onboarding-state.json (completed=true)'],
+    redo: 'Settings → Reset onboarding. Wipes the state file ONLY — your CV, profile, tracker, and reports are preserved.',
+  },
+];
 </script>
 
 <div class="h-full overflow-y-auto">

@@ -66,8 +66,12 @@ function runScanLinkedinAuth(args?: JobArgs): Promise<JobResult> {
     });
 
     const p = spawn(py, cliArgs, { cwd: ROOT, env: { ...process.env } });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => {
       recordFailure('linkedin-auth', err);
       logEvent('scan-linkedin-auth', 'Failed to spawn', {
@@ -81,9 +85,12 @@ function runScanLinkedinAuth(args?: JobArgs): Promise<JobResult> {
       const found = parseInt(stdout.match(FOUND_RE)?.[1] ?? '0', 10);
       if (code !== 0) {
         const tail = (stderr || stdout).slice(-300).trim();
-        const reason = code === 3 ? 'session expired'
-          : tail.toLowerCase().includes('captcha') ? 'captcha'
-          : 'exit ' + code;
+        const reason =
+          code === 3
+            ? 'session expired'
+            : tail.toLowerCase().includes('captcha')
+              ? 'captcha'
+              : 'exit ' + code;
         recordFailure('linkedin-auth', new Error(reason));
         logEvent('scan-linkedin-auth', 'Scrape failed · ' + reason, {
           level: 'error',
@@ -107,7 +114,8 @@ function runScanLinkedinAuth(args?: JobArgs): Promise<JobResult> {
 register({
   id: 'scan-linkedin-auth',
   label: 'LinkedIn (authenticated)',
-  description: 'Headless Playwright scrape using your saved LinkedIn session. Captures personalized recommendations + Easy Apply listings JobSpy can\'t see.',
+  description:
+    "Headless Playwright scrape using your saved LinkedIn session. Captures personalized recommendations + Easy Apply listings JobSpy can't see.",
   category: 'discovery',
   trigger: { type: 'daily', hour: 9, minute: 15, weekdays: [1, 2, 3, 4, 5] },
   allowManual: true,

@@ -21,16 +21,19 @@ function resolveProfileId(url: URL): string {
   return getActiveProfileId();
 }
 
-export const POST = wrap('availability-reply', async ({ request, url }: { request: Request; url: URL }) => {
-  const profileId = resolveProfileId(url);
-  const body = (await request.json().catch(() => ({}))) as {
-    recruiterFirstName?: string;
-    company?: string;
-    role?: string;
-    timezone?: string;
-  };
-  return draftAvailabilityReply({ profileId, ...body });
-});
+export const POST = wrap(
+  'availability-reply',
+  async ({ request, url }: { request: Request; url: URL }) => {
+    const profileId = resolveProfileId(url);
+    const body = (await request.json().catch(() => ({}))) as {
+      recruiterFirstName?: string;
+      company?: string;
+      role?: string;
+      timezone?: string;
+    };
+    return draftAvailabilityReply({ profileId, ...body });
+  },
+);
 
 export const GET = wrap('availability-reply', async ({ url }: { url: URL }) => {
   const profileId = resolveProfileId(url);

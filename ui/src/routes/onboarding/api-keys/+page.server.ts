@@ -7,7 +7,7 @@ import { getActiveProfileId, getProfile, listProfiles } from '$lib/server/profil
 
 export async function load({ url }: { url: URL }) {
   const queryProfile = url.searchParams.get('profile');
-  const profileId = (queryProfile && getProfile(queryProfile)) ? queryProfile : getActiveProfileId();
+  const profileId = queryProfile && getProfile(queryProfile) ? queryProfile : getActiveProfileId();
   const env = readEnv();
   // Required = Anthropic only (Gemini is recommended but not blocking).
   const hasRequiredKeys = !!env.ANTHROPIC_API_KEY;

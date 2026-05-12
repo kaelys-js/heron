@@ -124,11 +124,20 @@ function parseIndeed(from, body, encoding) {
 }
 
 const KNOWN_JOB_HOSTS = [
-  'job-boards.greenhouse.io', 'job-boards.eu.greenhouse.io', 'boards.greenhouse.io',
-  'jobs.ashbyhq.com', 'jobs.lever.co', 'apply.workable.com',
-  'careers.smartrecruiters.com', 'jobs.smartrecruiters.com',
-  'myworkdayjobs.com', 'jobs.personio.com', 'jobs.personio.de',
-  'recruitee.com', 'teamtailor.com', 'hnrss.org',
+  'job-boards.greenhouse.io',
+  'job-boards.eu.greenhouse.io',
+  'boards.greenhouse.io',
+  'jobs.ashbyhq.com',
+  'jobs.lever.co',
+  'apply.workable.com',
+  'careers.smartrecruiters.com',
+  'jobs.smartrecruiters.com',
+  'myworkdayjobs.com',
+  'jobs.personio.com',
+  'jobs.personio.de',
+  'recruitee.com',
+  'teamtailor.com',
+  'hnrss.org',
 ];
 
 function parseGeneric(from, body, encoding) {
@@ -190,9 +199,10 @@ function appendToScanHistory(offers, date) {
   if (!existsSync(SCAN_HISTORY)) {
     writeFileSync(SCAN_HISTORY, 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\n');
   }
-  const lines = offers
-    .map((o) => `${o.url}\t${date}\t${o.source}\t${o.title || ''}\t${o.company || ''}\tadded`)
-    .join('\n') + '\n';
+  const lines =
+    offers
+      .map((o) => `${o.url}\t${date}\t${o.source}\t${o.title || ''}\t${o.company || ''}\tadded`)
+      .join('\n') + '\n';
   appendFileSync(SCAN_HISTORY, lines);
 }
 
@@ -261,9 +271,7 @@ async function main() {
         // Decode the body once for the reactor path. The reactor classifier
         // pattern-matches against plain text; quoted-printable digests
         // would otherwise carry =\n line wraps that break phrase matches.
-        const decodedBody = /quoted-printable/i.test(encoding)
-          ? decodeQuotedPrintable(body)
-          : body;
+        const decodedBody = /quoted-printable/i.test(encoding) ? decodeQuotedPrintable(body) : body;
 
         let extracted = null;
         for (const parser of PARSERS) {
@@ -300,7 +308,11 @@ async function main() {
               method: 'POST',
               headers: { 'content-type': 'application/json' },
               body: JSON.stringify({
-                ts, from, subject, body: decodedBody.slice(0, 8000), messageId,
+                ts,
+                from,
+                subject,
+                body: decodedBody.slice(0, 8000),
+                messageId,
               }),
             });
             if (res.ok) {
@@ -330,7 +342,9 @@ async function main() {
       lock.release();
     }
   } finally {
-    try { await client.logout(); } catch {}
+    try {
+      await client.logout();
+    } catch {}
   }
 
   if (!dryRun && newOffers.length > 0) {
@@ -342,12 +356,16 @@ async function main() {
   // ── Summary (parsed by JobDef wrapper) ──
   console.log('');
   console.log('━'.repeat(45));
-  console.log(`Gmail IMAP — ${new Date().toISOString().slice(0, 10)} (${Math.round((Date.now() - startedAt) / 1000)}s)`);
+  console.log(
+    `Gmail IMAP — ${new Date().toISOString().slice(0, 10)} (${Math.round((Date.now() - startedAt) / 1000)}s)`,
+  );
   console.log('━'.repeat(45));
   console.log(`Messages processed: ${processedMessages}`);
   console.log(`Duplicates:         ${dupeCount}`);
   console.log(`New offers:         ${newOffers.length}`);
-  console.log(`Reactor classified: ${reactorClassified} (${reactorActed} actionable, ${reactorErrors} errors)`);
+  console.log(
+    `Reactor classified: ${reactorClassified} (${reactorActed} actionable, ${reactorErrors} errors)`,
+  );
   // Stable summary line for the orchestrator's regex.
   console.log(`Total jobs found: ${newOffers.length}`);
 

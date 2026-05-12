@@ -137,7 +137,12 @@ export function buildAppMenu(h: AppMenuHandlers): Menu {
         label: 'View on GitHub',
         click: () => shell.openExternal('https://github.com/santifer/career-ops'),
       },
-      ...(isMac ? ([] as MenuItemConstructorOptions[]) : ([{ type: 'separator' }, { label: `About career-ops ${app.getVersion()}`, click: h.onAbout }] as MenuItemConstructorOptions[])),
+      ...(isMac
+        ? ([] as MenuItemConstructorOptions[])
+        : ([
+            { type: 'separator' },
+            { label: `About career-ops ${app.getVersion()}`, click: h.onAbout },
+          ] as MenuItemConstructorOptions[])),
     ],
   });
 

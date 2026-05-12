@@ -10,7 +10,15 @@ import { AGENT_CLI } from '$lib/config/cli';
 
 loadEnv();
 
-type TaskName = 'scan' | 'gemini' | 'oferta' | 'pdf' | 'apply-linkedin' | 'bulk-cv' | 'bulk-apply' | 'auto-eval';
+type TaskName =
+  | 'scan'
+  | 'gemini'
+  | 'oferta'
+  | 'pdf'
+  | 'apply-linkedin'
+  | 'bulk-cv'
+  | 'bulk-apply'
+  | 'auto-eval';
 const running = new Map<TaskName, ChildProcess>();
 
 function venvPython(): string {
@@ -21,7 +29,9 @@ function venvPython(): string {
 
 // D14 — `isRunning` removed; callers consult `listRunning()` instead, and
 // the job registry has its own `isRunning(jobId)` for registered jobs.
-export function listRunning(): string[] { return [...running.keys()]; }
+export function listRunning(): string[] {
+  return [...running.keys()];
+}
 
 // =============================================================================
 // Spawn hardening — shared across every long-running task in this module.
@@ -43,14 +53,14 @@ export function listRunning(): string[] { return [...running.keys()]; }
  *  the parallel batch CV runner — 4h ceiling matches the documented user
  *  expectation. Override via `attachTimeout` if a caller knows better. */
 const TIMEOUT_MS: Record<TaskName, number> = {
-  scan: 30 * 60_000,           // 30 min
-  gemini: 15 * 60_000,         // 15 min
-  oferta: 10 * 60_000,         // 10 min — a single Claude oferta run
-  pdf: 5 * 60_000,             // 5 min
+  scan: 30 * 60_000, // 30 min
+  gemini: 15 * 60_000, // 15 min
+  oferta: 10 * 60_000, // 10 min — a single Claude oferta run
+  pdf: 5 * 60_000, // 5 min
   'apply-linkedin': 30 * 60_000, // 30 min — Playwright + login + apply
-  'bulk-cv': 4 * 60 * 60_000,  // 4h — covers the largest realistic batch
+  'bulk-cv': 4 * 60 * 60_000, // 4h — covers the largest realistic batch
   'bulk-apply': 2 * 60 * 60_000, // 2h
-  'auto-eval': 60 * 60_000,    // 60 min — up to 10 oferta runs × 3min + headroom
+  'auto-eval': 60 * 60_000, // 60 min — up to 10 oferta runs × 3min + headroom
 };
 
 const MAX_STDOUT_BUF = 1024 * 1024; // 1MB — see comment above
@@ -60,7 +70,11 @@ const MAX_LINES_PER_SEC = 100;
  * Attach stdout + stderr line-by-line forwarders that go through `logEvent`.
  * Replaces ~5 copy-pasted blocks across this file. Bounds memory + log volume.
  */
-function attachStdio(p: ChildProcess, taskName: TaskName, opts: { stderrLevel?: 'warn' | 'error' } = {}): void {
+function attachStdio(
+  p: ChildProcess,
+  taskName: TaskName,
+  opts: { stderrLevel?: 'warn' | 'error' } = {},
+): void {
   let stdoutBuf = '';
   const stderrLevel = opts.stderrLevel ?? 'warn';
   let windowStart = Date.now();
@@ -97,7 +111,10 @@ function attachStdio(p: ChildProcess, taskName: TaskName, opts: { stderrLevel?: 
     stdoutBuf += chunk.toString();
     if (stdoutBuf.length > MAX_STDOUT_BUF) {
       onLine(
-        stdoutBuf.slice(0, 200) + '… [truncated · no newline within ' + (MAX_STDOUT_BUF / 1024) + 'KB]',
+        stdoutBuf.slice(0, 200) +
+          '… [truncated · no newline within ' +
+          MAX_STDOUT_BUF / 1024 +
+          'KB]',
         'warn',
       );
       stdoutBuf = '';
@@ -129,10 +146,14 @@ function attachTimeout(p: ChildProcess, taskName: TaskName, ms: number): void {
       category: 'task',
       message: 'Killing after ' + Math.round(ms / 60_000) + ' min · ' + taskName,
     });
-    try { p.kill('SIGTERM'); } catch {}
+    try {
+      p.kill('SIGTERM');
+    } catch {}
     const hard = setTimeout(() => {
       if (p.exitCode !== null) return;
-      try { p.kill('SIGKILL'); } catch {}
+      try {
+        p.kill('SIGKILL');
+      } catch {}
     }, 5_000);
     p.once('close', () => clearTimeout(hard));
   }, ms);
@@ -155,7 +176,9 @@ function installChildCleanup(): void {
     for (const [, child] of running.entries()) {
       const c = child as ChildProcess | null;
       if (c && typeof c.kill === 'function' && c.exitCode === null) {
-        try { c.kill('SIGTERM'); } catch {}
+        try {
+          c.kill('SIGTERM');
+        } catch {}
       }
     }
     running.clear();
@@ -163,8 +186,14 @@ function installChildCleanup(): void {
   // 'beforeExit' fires when the loop empties; dev-server reloads also fire
   // SIGTERM/SIGINT depending on host. Cover all three.
   process.once('beforeExit', killAll);
-  process.once('SIGTERM', () => { killAll(); process.exit(0); });
-  process.once('SIGINT', () => { killAll(); process.exit(0); });
+  process.once('SIGTERM', () => {
+    killAll();
+    process.exit(0);
+  });
+  process.once('SIGINT', () => {
+    killAll();
+    process.exit(0);
+  });
 }
 
 /**
@@ -225,10 +254,16 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
         const { recordSuccess, recordFailure } = require('./sources') as typeof import('./sources');
         if (code === 0) recordSuccess('scan-broad');
         else if (code !== null) recordFailure('scan-broad', new Error('exit ' + code));
-      } catch { /* sources record best-effort */ }
+      } catch {
+        /* sources record best-effort */
+      }
     }
     if (code === 0) {
-      logEvent(name, 'Task finished', { level: 'success', category: 'task', message: 'Exit code 0 · ' + name });
+      logEvent(name, 'Task finished', {
+        level: 'success',
+        category: 'task',
+        message: 'Exit code 0 · ' + name,
+      });
     } else if (code === null) {
       // null = killed by signal (e.g. user reload during dev) — don't surface as error
       logEvent(name, 'Task interrupted', {
@@ -267,7 +302,12 @@ export function runGemini(top = 30, profileId?: string) {
     });
     return;
   }
-  start('gemini', venvPython(), ['gemini-first-pass.py', '--top', String(top), ...profileFlags(profileId)]);
+  start('gemini', venvPython(), [
+    'gemini-first-pass.py',
+    '--top',
+    String(top),
+    ...profileFlags(profileId),
+  ]);
 }
 
 /**
@@ -286,7 +326,12 @@ export function runPortalLogin(portal: 'linkedin' | 'indeed') {
   if (portal === 'linkedin') {
     start('apply-linkedin', venvPython(), ['linkedin-easy-apply.py', '--login']);
   } else {
-    start('apply-linkedin', venvPython(), ['lib_playwright_auth.py', '--portal', 'indeed', '--login']);
+    start('apply-linkedin', venvPython(), [
+      'lib_playwright_auth.py',
+      '--portal',
+      'indeed',
+      '--login',
+    ]);
   }
 }
 
@@ -314,11 +359,14 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
       logEvent('apply-linkedin', 'Apply cap reached for today', {
         level: 'warn',
         category: 'task',
-        message: 'today=' + todayCount() + ' · cap=' + cap + '. Adjust via /autopilot → Thresholds.',
+        message:
+          'today=' + todayCount() + ' · cap=' + cap + '. Adjust via /autopilot → Thresholds.',
       });
       return;
     }
-  } catch { /* non-fatal: fall through if autopilot module not ready (boot race) */ }
+  } catch {
+    /* non-fatal: fall through if autopilot module not ready (boot race) */
+  }
   const env = { ...process.env };
   if (autoSubmit) env.LINKEDIN_AUTO_SUBMIT = '1';
   // Surface up-front whether the general CV is missing for the targeted profile.
@@ -331,11 +379,15 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
     } else if (s.outdated) {
       cvNote = ' · NOTE: general CV is older than cv.md — regenerate from /profile';
     }
-  } catch { /* non-fatal */ }
+  } catch {
+    /* non-fatal */
+  }
   logEvent('apply-linkedin', 'LinkedIn Easy Apply started', {
     category: 'task',
-    message: (url ? 'single URL: ' + url : 'queue mode · autoSubmit=' + autoSubmit) +
-      (profileId ? ' · profile=' + profileId : '') + cvNote,
+    message:
+      (url ? 'single URL: ' + url : 'queue mode · autoSubmit=' + autoSubmit) +
+      (profileId ? ' · profile=' + profileId : '') +
+      cvNote,
   });
   const args = ['linkedin-easy-apply.py', ...profileFlags(profileId)];
   if (url) args.push('--url', url);
@@ -378,8 +430,10 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
         logEvent('apply-linkedin', 'LinkedIn apply finished', {
           level: 'success',
           category: 'task',
-          message: (url ? 'Applied: ' + url : 'Queue exhausted — see counts in /applied') +
-            ' · today=' + n,
+          message:
+            (url ? 'Applied: ' + url : 'Queue exhausted — see counts in /applied') +
+            ' · today=' +
+            n,
         });
       } catch {
         logEvent('apply-linkedin', 'LinkedIn apply finished', {
@@ -398,7 +452,10 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
       logEvent('apply-linkedin', 'LinkedIn apply failed', {
         level: 'error',
         category: 'task',
-        message: 'Exit code ' + code + ' — common causes: LinkedIn re-login required, rate-limit, captcha. Run "Re-login to LinkedIn" from Settings.',
+        message:
+          'Exit code ' +
+          code +
+          ' — common causes: LinkedIn re-login required, rate-limit, captcha. Run "Re-login to LinkedIn" from Settings.',
       });
     }
   });
@@ -428,7 +485,11 @@ export type OfertaResult = { ok: boolean; code: number | null };
  * The symlinks are atomic-swap on each call so a concurrent oferta for a
  * different profile is guaranteed to see consistent state.
  */
-export function runOferta(url: string, taskKey: TaskName = 'oferta', profileId?: string): Promise<OfertaResult> {
+export function runOferta(
+  url: string,
+  taskKey: TaskName = 'oferta',
+  profileId?: string,
+): Promise<OfertaResult> {
   return new Promise((resolve) => {
     if (running.has(taskKey)) {
       logEvent(taskKey, 'Generate CV already running', {
@@ -448,7 +509,8 @@ export function runOferta(url: string, taskKey: TaskName = 'oferta', profileId?:
     if (profileId) {
       try {
         // Lazy-require to avoid circular import.
-        const { swapProfileSymlinks } = require('./profile-symlinks') as typeof import('./profile-symlinks');
+        const { swapProfileSymlinks } =
+          require('./profile-symlinks') as typeof import('./profile-symlinks');
         swapProfileSymlinks(profileId);
       } catch (e) {
         logEvent(taskKey, 'Symlink swap failed — oferta may read wrong profile', {
@@ -502,7 +564,9 @@ export function runOferta(url: string, taskKey: TaskName = 'oferta', profileId?:
         category: 'task',
         message: ok
           ? 'Report + tailored CV PDF generated · ' + url
-          : 'Exit code ' + code + ' — review the spawned process output above. Common causes: rate limits, prompt errors, missing CV file.',
+          : 'Exit code ' +
+            code +
+            ' — review the spawned process output above. Common causes: rate limits, prompt errors, missing CV file.',
         profileId,
       });
       resolve({ ok, code });
@@ -542,7 +606,8 @@ export async function runBulkOfertaParallel(
   // aren't a risk here.
   if (profileId) {
     try {
-      const { swapProfileSymlinks } = require('./profile-symlinks') as typeof import('./profile-symlinks');
+      const { swapProfileSymlinks } =
+        require('./profile-symlinks') as typeof import('./profile-symlinks');
       swapProfileSymlinks(profileId);
     } catch (e) {
       logEvent('bulk-cv', 'Symlink swap failed — batch may read wrong profile', {
@@ -561,7 +626,7 @@ export async function runBulkOfertaParallel(
   const inputPath = path.join(ROOT, 'batch', 'batch-input.tsv');
   try {
     fs.mkdirSync(path.dirname(inputPath), { recursive: true });
-    const rows = urls.map((u, i) => (i + 1) + '\t' + u + '\t\t');
+    const rows = urls.map((u, i) => i + 1 + '\t' + u + '\t\t');
     fs.writeFileSync(inputPath, rows.join('\n') + '\n');
   } catch (err) {
     logEvent('bulk-cv', 'Failed to write batch-input.tsv', {
@@ -639,7 +704,8 @@ export async function runBulkOferta(
         message: urls[i],
       });
       const r = await runOferta(urls[i], 'oferta', profileId);
-      if (r.ok) ok++; else failed++;
+      if (r.ok) ok++;
+      else failed++;
     }
   } finally {
     running.delete('bulk-cv');
@@ -734,7 +800,13 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
   // For each profile, gather candidates up to the cap. Across profiles
   // we still respect the same cap — a single auto-eval run is the user's
   // budget for that timeslice, multi-profile or not.
-  type Candidate = { url: string; profileId: string; company: string; role: string; geminiScore: number };
+  type Candidate = {
+    url: string;
+    profileId: string;
+    company: string;
+    role: string;
+    geminiScore: number;
+  };
   const allCandidates: Candidate[] = [];
   for (const pid of profilesToRun) {
     const profileCandidates = loadAllJobs(pid)
@@ -760,8 +832,12 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
     logEvent('auto-eval', 'Auto-eval: nothing to do', {
       level: 'info',
       category: 'task',
-      message: 'No Scored jobs with geminiScore ≥ ' + threshold.toFixed(1) +
-        ' awaiting deep eval (across ' + profilesToRun.length + ' profile(s))',
+      message:
+        'No Scored jobs with geminiScore ≥ ' +
+        threshold.toFixed(1) +
+        ' awaiting deep eval (across ' +
+        profilesToRun.length +
+        ' profile(s))',
     });
     return { ok: true, evaluated: 0, skipped: 0, failed: 0 };
   }
@@ -770,8 +846,16 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
   running.set('auto-eval', null as unknown as ChildProcess);
   logEvent('auto-eval', 'Task started', {
     category: 'task',
-    message: 'Auto-eval started: ' + candidates.length + ' jobs (score ≥ ' +
-      threshold.toFixed(1) + ', cap ' + cap + ', profiles=' + profilesToRun.length + ')',
+    message:
+      'Auto-eval started: ' +
+      candidates.length +
+      ' jobs (score ≥ ' +
+      threshold.toFixed(1) +
+      ', cap ' +
+      cap +
+      ', profiles=' +
+      profilesToRun.length +
+      ')',
   });
 
   let evaluated = 0;
@@ -788,14 +872,30 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
       // manual eval / status flip mid-batch should remove the URL from
       // our queue automatically. Cheap — in-memory file reads.
       const fresh = loadAllJobs(job.profileId).find((j) => j.url === job.url);
-      if (!fresh) { skipped++; continue; }
-      if (fresh.reportFile) { skipped++; continue; }
-      if (fresh.status !== 'Scored') { skipped++; continue; }
+      if (!fresh) {
+        skipped++;
+        continue;
+      }
+      if (fresh.reportFile) {
+        skipped++;
+        continue;
+      }
+      if (fresh.status !== 'Scored') {
+        skipped++;
+        continue;
+      }
 
       logEvent('auto-eval', 'Auto-eval ' + (i + 1) + '/' + candidates.length, {
         category: 'task',
-        message: '[' + job.profileId + '] ' + job.company + ' · ' + job.role +
-          ' · score ' + job.geminiScore.toFixed(1),
+        message:
+          '[' +
+          job.profileId +
+          '] ' +
+          job.company +
+          ' · ' +
+          job.role +
+          ' · score ' +
+          job.geminiScore.toFixed(1),
       });
 
       const r = await runOferta(job.url, 'auto-eval', job.profileId);
@@ -810,8 +910,10 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
           logEvent('auto-eval', 'Auto-eval aborted: 3 consecutive failures', {
             level: 'warn',
             category: 'task',
-            message: 'Check Claude CLI availability + ANTHROPIC_API_KEY. ' +
-              evaluated + ' eval\'d before abort.',
+            message:
+              'Check Claude CLI availability + ANTHROPIC_API_KEY. ' +
+              evaluated +
+              " eval'd before abort.",
           });
           break;
         }
@@ -829,8 +931,16 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
   logEvent('auto-eval', ok ? 'Task finished' : 'Task failed', {
     level: ok ? 'success' : 'warn',
     category: 'task',
-    message: 'Auto-eval ' + (aborted ? 'aborted (' + aborted + ')' : 'finished') +
-      ': ' + evaluated + ' eval\'d · ' + skipped + ' skipped · ' + failed + ' failed',
+    message:
+      'Auto-eval ' +
+      (aborted ? 'aborted (' + aborted + ')' : 'finished') +
+      ': ' +
+      evaluated +
+      " eval'd · " +
+      skipped +
+      ' skipped · ' +
+      failed +
+      ' failed',
   });
 
   return { ok, evaluated, skipped, failed, aborted };
@@ -844,7 +954,12 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
 //     server-side state changes.
 // =============================================================================
 
-export type BulkApplyOutcome = { url: string; mode: 'linkedin' | 'mark'; ok: boolean; error?: string };
+export type BulkApplyOutcome = {
+  url: string;
+  mode: 'linkedin' | 'mark';
+  ok: boolean;
+  error?: string;
+};
 
 function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boolean }> {
   return new Promise((resolve) => {
@@ -864,7 +979,9 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boo
         resolve({ ok: false, capped: true });
         return;
       }
-    } catch { /* non-fatal */ }
+    } catch {
+      /* non-fatal */
+    }
 
     let p: ChildProcess;
     try {
@@ -890,9 +1007,7 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boo
       logEvent('apply-linkedin', 'Failed to spawn LinkedIn Easy Apply', {
         level: 'error',
         category: 'task',
-        message: isMissingBinary
-          ? 'Python or .venv missing. Set up venv first.'
-          : err.message,
+        message: isMissingBinary ? 'Python or .venv missing. Set up venv first.' : err.message,
       });
       resolve({ ok: false });
     });
@@ -909,16 +1024,21 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boo
       // subsequent iterations see the updated daily count.
       if (code === 0) {
         try {
-          const { bumpApplyCounter } = require('./apply-counter') as typeof import('./apply-counter');
+          const { bumpApplyCounter } =
+            require('./apply-counter') as typeof import('./apply-counter');
           bumpApplyCounter();
-        } catch { /* non-fatal */ }
+        } catch {
+          /* non-fatal */
+        }
       }
       resolve({ ok: code === 0 });
     });
   });
 }
 
-export async function runBulkApply(jobs: { url: string; isLinkedIn: boolean }[]): Promise<BulkApplyOutcome[]> {
+export async function runBulkApply(
+  jobs: { url: string; isLinkedIn: boolean }[],
+): Promise<BulkApplyOutcome[]> {
   if (running.has('bulk-apply')) {
     logEvent('bulk-apply', 'Bulk apply already running', { level: 'warn', category: 'task' });
     return [];
@@ -1011,12 +1131,18 @@ export function bootOnce() {
   const geminiExists = fs.existsSync(geminiPath);
   logEvent('boot', 'Server started', { category: 'system' });
   if (!pipelineExists || fs.statSync(pipelinePath).size < 200) {
-    logEvent('boot', 'Pipeline empty — running auto-scan', { category: 'system', message: 'Spawning scan-broad.py' });
+    logEvent('boot', 'Pipeline empty — running auto-scan', {
+      category: 'system',
+      message: 'Spawning scan-broad.py',
+    });
     runScan();
     return;
   }
   if (!geminiExists && process.env.GEMINI_API_KEY) {
-    logEvent('boot', 'Auto-scoring new pipeline', { category: 'system', message: 'Spawning gemini-first-pass.py' });
+    logEvent('boot', 'Auto-scoring new pipeline', {
+      category: 'system',
+      message: 'Spawning gemini-first-pass.py',
+    });
     runGemini(30);
     return;
   }
@@ -1028,5 +1154,9 @@ export function bootOnce() {
       link: '/settings',
     });
   }
-  logEvent('boot', 'Ready', { level: 'success', category: 'system', message: 'Pipeline + scores already populated' });
+  logEvent('boot', 'Ready', {
+    level: 'success',
+    category: 'system',
+    message: 'Pipeline + scores already populated',
+  });
 }

@@ -9,44 +9,55 @@
   / Applied with comp data they don't need yet).
 -->
 <script lang="ts">
-  import * as Popover from '$lib/components/ui/popover';
-  import { DollarSign, ChevronDown, AlertTriangle } from '@lucide/svelte';
-  import { api } from '$lib/api';
-  import { onMount } from 'svelte';
-  import type { Status } from '$lib/types';
+import * as Popover from '$lib/components/ui/popover';
+import { DollarSign, ChevronDown, AlertTriangle } from '@lucide/svelte';
+import { api } from '$lib/api';
+import { onMount } from 'svelte';
+import type { Status } from '$lib/types';
 
-  let {
-    jobId,
-    status,
-  }: { jobId: string; status: Status } = $props();
+let { jobId, status }: { jobId: string; status: Status } = $props();
 
-  type Preflight = {
-    ok: boolean;
-    ask?: string;
-    walkaway?: string;
-    currency?: string;
-    advice?: string;
-    warning?: string;
-    error?: string;
-  };
+type Preflight = {
+  ok: boolean;
+  ask?: string;
+  walkaway?: string;
+  currency?: string;
+  advice?: string;
+  warning?: string;
+  error?: string;
+};
 
-  let preflight = $state<Preflight | null>(null);
-  let loading = $state(true);
+let preflight = $state<Preflight | null>(null);
+let loading = $state(true);
 
-  const INTERVIEW_STAGES: Status[] = ['PhoneScreen', 'Technical', 'TakeHome', 'Onsite', 'Final', 'Interview', 'Screened'];
-  let show = $derived(INTERVIEW_STAGES.includes(status));
+const INTERVIEW_STAGES: Status[] = [
+  'PhoneScreen',
+  'Technical',
+  'TakeHome',
+  'Onsite',
+  'Final',
+  'Interview',
+  'Screened',
+];
+let show = $derived(INTERVIEW_STAGES.includes(status));
 
-  onMount(async () => {
-    if (!show) { loading = false; return; }
-    try {
-      const r = await api.get<Preflight>('/api/job/' + encodeURIComponent(jobId) + '/comp-preflight', { silent: true });
-      preflight = r;
-    } catch {
-      preflight = null;
-    } finally {
-      loading = false;
-    }
-  });
+onMount(async () => {
+  if (!show) {
+    loading = false;
+    return;
+  }
+  try {
+    const r = await api.get<Preflight>(
+      '/api/job/' + encodeURIComponent(jobId) + '/comp-preflight',
+      { silent: true },
+    );
+    preflight = r;
+  } catch {
+    preflight = null;
+  } finally {
+    loading = false;
+  }
+});
 </script>
 
 {#if show && !loading && preflight?.ok && preflight.ask}

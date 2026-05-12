@@ -26,7 +26,9 @@ type DossierInput = {
   interviewers: Array<{ name: string; role?: string; linkedinUrl?: string }>;
 };
 
-function spawnDossier(args: DossierInput & { company: string; role: string; profileId: string }): Promise<{ stdout: string; stderr: string }> {
+function spawnDossier(
+  args: DossierInput & { company: string; role: string; profileId: string },
+): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
@@ -37,13 +39,19 @@ function spawnDossier(args: DossierInput & { company: string; role: string; prof
       interviewers: args.interviewers,
     };
     const prompt = '/' + CLI_NAMESPACE + ' pre-call-dossier ' + JSON.stringify(promptInput);
-    try { swapProfileSymlinks(args.profileId); } catch {}
+    try {
+      swapProfileSymlinks(args.profileId);
+    } catch {}
     const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
       cwd: ROOT,
       env: { ...process.env, DOSSIER_INPUT: JSON.stringify(promptInput) },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
@@ -76,36 +84,44 @@ function parseDossierStdout(stdout: string): {
   };
 }
 
-export const POST = wrap('dossier', async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
-  const resolved = resolveJobAndProfile(params.id, url);
-  if (!resolved) badRequest('Job not found: ' + params.id);
-  const { job, profileId } = resolved!;
-  const body = (await request.json().catch(() => ({}))) as Partial<DossierInput>;
-  if (!body.stage) badRequest('stage required');
-  const interviewers = Array.isArray(body.interviewers) ? body.interviewers : [];
+export const POST = wrap(
+  'dossier',
+  async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
+    const resolved = resolveJobAndProfile(params.id, url);
+    if (!resolved) badRequest('Job not found: ' + params.id);
+    const { job, profileId } = resolved!;
+    const body = (await request.json().catch(() => ({}))) as Partial<DossierInput>;
+    if (!body.stage) badRequest('stage required');
+    const interviewers = Array.isArray(body.interviewers) ? body.interviewers : [];
 
-  logEvent('dossier', 'Generating pre-call dossier · ' + body.stage, {
-    level: 'info', category: 'application',
-    message: (job.company || '?') + ' · ' + interviewers.length + ' interviewers',
-  });
+    logEvent('dossier', 'Generating pre-call dossier · ' + body.stage, {
+      level: 'info',
+      category: 'application',
+      message: (job.company || '?') + ' · ' + interviewers.length + ' interviewers',
+    });
 
-  try {
-    const { stdout } = await spawnDossier({
-      company: job.company ?? '',
-      role: job.role ?? '',
-      stage: body.stage,
-      interviewers,
-      profileId,
-    });
-    const meta = parseDossierStdout(stdout);
-    logEvent('dossier', 'Dossier ready', {
-      level: 'success', category: 'application',
-      message: (meta.dossierPath ?? '') +
-        (meta.interviewersResearched ? ' · ' + meta.interviewersResearched + ' interviewers' : ''),
-    });
-    return { ok: true, ...meta };
-  } catch (err) {
-    reportServerError('dossier', 'Dossier generation failed', err, { category: 'application' });
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
-  }
-});
+    try {
+      const { stdout } = await spawnDossier({
+        company: job.company ?? '',
+        role: job.role ?? '',
+        stage: body.stage,
+        interviewers,
+        profileId,
+      });
+      const meta = parseDossierStdout(stdout);
+      logEvent('dossier', 'Dossier ready', {
+        level: 'success',
+        category: 'application',
+        message:
+          (meta.dossierPath ?? '') +
+          (meta.interviewersResearched
+            ? ' · ' + meta.interviewersResearched + ' interviewers'
+            : ''),
+      });
+      return { ok: true, ...meta };
+    } catch (err) {
+      reportServerError('dossier', 'Dossier generation failed', err, { category: 'application' });
+      return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  },
+);

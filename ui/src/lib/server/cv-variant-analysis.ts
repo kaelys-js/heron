@@ -54,11 +54,50 @@ export type CvVariantReport = {
 function topWords(text: string, n = 100): Map<string, number> {
   const counts = new Map<string, number>();
   // Lowercase, strip markdown punctuation, collapse whitespace, split.
-  const cleaned = text.toLowerCase().replace(/[^a-z0-9+#./\-\s]/g, ' ').split(/\s+/);
+  const cleaned = text
+    .toLowerCase()
+    .replace(/[^a-z0-9+#./\-\s]/g, ' ')
+    .split(/\s+/);
   const STOP = new Set([
-    'a','an','and','are','as','at','be','by','for','from','has','have','i','in','of',
-    'on','or','that','the','this','to','was','will','with','you','your','at','my','are',
-    'we','our','team','company','engineer','engineering','software','development','work','years',
+    'a',
+    'an',
+    'and',
+    'are',
+    'as',
+    'at',
+    'be',
+    'by',
+    'for',
+    'from',
+    'has',
+    'have',
+    'i',
+    'in',
+    'of',
+    'on',
+    'or',
+    'that',
+    'the',
+    'this',
+    'to',
+    'was',
+    'will',
+    'with',
+    'you',
+    'your',
+    'at',
+    'my',
+    'are',
+    'we',
+    'our',
+    'team',
+    'company',
+    'engineer',
+    'engineering',
+    'software',
+    'development',
+    'work',
+    'years',
   ]);
   for (const w of cleaned) {
     if (w.length < 3 || STOP.has(w)) continue;
@@ -72,7 +111,9 @@ function readGeneralCv(profileId: string): string {
   try {
     const p = profilePath(profileId, 'cv-md');
     return fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : '';
-  } catch { return ''; }
+  } catch {
+    return '';
+  }
 }
 
 function readTailoredPdfMarkdown(profileId: string, pdfFile: string): string {
@@ -95,20 +136,34 @@ function readTailoredPdfMarkdown(profileId: string, pdfFile: string): string {
 /** Diagnostic: count how many PDFs in the profile's output dir DO have
  *  the .md sibling. The CV-variant analysis page surfaces this so users
  *  understand WHY they might be seeing "not enough data." */
-export function preservationStats(profileId: string): { withMd: number; withoutMd: number; total: number } {
-  let withMd = 0, withoutMd = 0;
+export function preservationStats(profileId: string): {
+  withMd: number;
+  withoutMd: number;
+  total: number;
+} {
+  let withMd = 0,
+    withoutMd = 0;
   const out = { withMd: 0, withoutMd: 0, total: 0 };
   let outDir: string;
-  try { outDir = profilePath(profileId, 'output-dir'); } catch { return out; }
+  try {
+    outDir = profilePath(profileId, 'output-dir');
+  } catch {
+    return out;
+  }
   if (!fs.existsSync(outDir)) return out;
   let entries: string[];
-  try { entries = fs.readdirSync(outDir); } catch { return out; }
+  try {
+    entries = fs.readdirSync(outDir);
+  } catch {
+    return out;
+  }
   for (const f of entries) {
     if (!f.endsWith('.pdf')) continue;
     if (f.startsWith('cv-general')) continue;
     out.total++;
     const mdPath = path.join(outDir, f.replace(/\.pdf$/, '.md'));
-    if (fs.existsSync(mdPath)) withMd++; else withoutMd++;
+    if (fs.existsSync(mdPath)) withMd++;
+    else withoutMd++;
   }
   out.withMd = withMd;
   out.withoutMd = withoutMd;
@@ -124,7 +179,17 @@ function bucketScore(score: number | undefined): string {
   return '< 3.0';
 }
 
-const POSITIVE_STATUSES = new Set(['Applied', 'Screened', 'PhoneScreen', 'Technical', 'TakeHome', 'Onsite', 'Final', 'Interview', 'Offer']);
+const POSITIVE_STATUSES = new Set([
+  'Applied',
+  'Screened',
+  'PhoneScreen',
+  'Technical',
+  'TakeHome',
+  'Onsite',
+  'Final',
+  'Interview',
+  'Offer',
+]);
 const NEGATIVE_STATUSES = new Set(['Rejected', 'Closed']);
 
 /** Run the analysis for a profile. Pure-function, no LLM. */
@@ -160,14 +225,18 @@ export function analyzeCvVariants(profileId: string): CvVariantReport {
       if (cnt - baseCnt >= 2) injected.push(w);
     }
 
-    const outcome: 'positive' | 'negative' | 'pending' = (
-      POSITIVE_STATUSES.has(job.status) ? 'positive'
-      : NEGATIVE_STATUSES.has(job.status) ? 'negative'
-      : 'pending'
-    );
-    if (outcome === 'positive') { positiveCount++; lenSumPositive += tailored.length; }
-    else if (outcome === 'negative') { negativeCount++; lenSumNegative += tailored.length; }
-    else pendingCount++;
+    const outcome: 'positive' | 'negative' | 'pending' = POSITIVE_STATUSES.has(job.status)
+      ? 'positive'
+      : NEGATIVE_STATUSES.has(job.status)
+        ? 'negative'
+        : 'pending';
+    if (outcome === 'positive') {
+      positiveCount++;
+      lenSumPositive += tailored.length;
+    } else if (outcome === 'negative') {
+      negativeCount++;
+      lenSumNegative += tailored.length;
+    } else pendingCount++;
 
     for (const k of injected) {
       if (!keywordTallies.has(k)) keywordTallies.set(k, { keyword: k, positive: 0, negative: 0 });
@@ -185,14 +254,14 @@ export function analyzeCvVariants(profileId: string): CvVariantReport {
   // Winning keywords = positive > negative + minimum threshold.
   const winningKeywords = [...keywordTallies.values()]
     .filter((t) => t.positive >= 2 && t.positive > t.negative * 1.5)
-    .sort((a, b) => (b.positive - b.negative) - (a.positive - a.negative))
+    .sort((a, b) => b.positive - b.negative - (a.positive - a.negative))
     .slice(0, 10)
     .map((t) => ({ keyword: t.keyword, positiveCount: t.positive, negativeCount: t.negative }));
 
   // Underperforming = appears mostly in negative outcomes.
   const underperformingKeywords = [...keywordTallies.values()]
     .filter((t) => t.negative >= 2 && t.negative > t.positive * 1.5)
-    .sort((a, b) => (b.negative - b.positive) - (a.negative - a.positive))
+    .sort((a, b) => b.negative - b.positive - (a.negative - a.positive))
     .slice(0, 10)
     .map((t) => ({ keyword: t.keyword, positiveCount: t.positive, negativeCount: t.negative }));
 
@@ -201,7 +270,8 @@ export function analyzeCvVariants(profileId: string): CvVariantReport {
   let lengthFinding = 'Not enough data yet.';
   if (positiveCount >= 3 && negativeCount >= 3) {
     if (avgLengthPositive > avgLengthNegative * 1.1) {
-      lengthFinding = 'Longer tailored CVs convert MORE. The injected keywords + framing are adding value.';
+      lengthFinding =
+        'Longer tailored CVs convert MORE. The injected keywords + framing are adding value.';
     } else if (avgLengthNegative > avgLengthPositive * 1.1) {
       lengthFinding = 'Shorter tailored CVs convert MORE. You may be over-padding; tighten.';
     } else {
@@ -211,11 +281,23 @@ export function analyzeCvVariants(profileId: string): CvVariantReport {
 
   const scoreCorrelation = Object.entries(scoreBuckets)
     .map(([bucket, c]) => ({
-      bucket, positive: c.positive, negative: c.negative,
-      rate: (c.positive + c.negative) > 0 ? Math.round((c.positive / (c.positive + c.negative)) * 100) : 0,
+      bucket,
+      positive: c.positive,
+      negative: c.negative,
+      rate:
+        c.positive + c.negative > 0
+          ? Math.round((c.positive / (c.positive + c.negative)) * 100)
+          : 0,
     }))
     .sort((a, b) => {
-      const order: Record<string, number> = { '4.5+': 0, '4.0-4.4': 1, '3.5-3.9': 2, '3.0-3.4': 3, '< 3.0': 4, 'unscored': 5 };
+      const order: Record<string, number> = {
+        '4.5+': 0,
+        '4.0-4.4': 1,
+        '3.5-3.9': 2,
+        '3.0-3.4': 3,
+        '< 3.0': 4,
+        unscored: 5,
+      };
       return (order[a.bucket] ?? 99) - (order[b.bucket] ?? 99);
     });
 

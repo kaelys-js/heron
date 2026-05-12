@@ -32,17 +32,19 @@ const CACHE_FILENAME = 'form-answers-cache.jsonl';
 
 /** Mirror Python's normalize_question() in lib_apply.py — keep them in lockstep. */
 export function normalizeQuestion(label: string): string {
-  return (label || '')
-    .toLowerCase()
-    // Strip everything that isn't letters / digits / spaces.
-    .replace(/[^a-z0-9 ]+/g, ' ')
-    // Collapse whitespace.
-    .replace(/\s+/g, ' ')
-    .trim()
-    // Drop very generic noise words that don't change meaning.
-    .replace(/\b(a|an|the|please|kindly|do|you)\b/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return (
+    (label || '')
+      .toLowerCase()
+      // Strip everything that isn't letters / digits / spaces.
+      .replace(/[^a-z0-9 ]+/g, ' ')
+      // Collapse whitespace.
+      .replace(/\s+/g, ' ')
+      .trim()
+      // Drop very generic noise words that don't change meaning.
+      .replace(/\b(a|an|the|please|kindly|do|you)\b/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
 }
 
 export type FormAnswer = {
@@ -65,7 +67,11 @@ export function readCache(profileId: string): Map<string, FormAnswer> {
   const p = cachePath(profileId);
   if (!fs.existsSync(p)) return out;
   let txt = '';
-  try { txt = fs.readFileSync(p, 'utf8'); } catch { return out; }
+  try {
+    txt = fs.readFileSync(p, 'utf8');
+  } catch {
+    return out;
+  }
   for (const line of txt.split('\n')) {
     const trimmed = line.trim();
     if (!trimmed) continue;
@@ -154,7 +160,11 @@ export function deleteAnswer(profileId: string, key: string): boolean {
 }
 
 /** Stats for the UI badge: "23 saved answers, 5 used today". */
-export function cacheStats(profileId: string): { total: number; usedToday: number; lastUpdatedAt: number | null } {
+export function cacheStats(profileId: string): {
+  total: number;
+  usedToday: number;
+  lastUpdatedAt: number | null;
+} {
   const all = listAnswers(profileId);
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);

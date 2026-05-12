@@ -31,7 +31,13 @@ import { CLI_NAMESPACE } from '$lib/config/branding';
 import { AGENT_CLI } from '$lib/config/cli';
 
 function slugify(s: string): string {
-  return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'job';
+  return (
+    (s || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 60) || 'job'
+  );
 }
 
 function persistedPath(profileId: string, company: string, role: string): string {
@@ -41,7 +47,11 @@ function persistedPath(profileId: string, company: string, role: string): string
   );
 }
 
-function readCached(profileId: string, company: string, role: string): { path: string; body: string } | null {
+function readCached(
+  profileId: string,
+  company: string,
+  role: string,
+): { path: string; body: string } | null {
   const p = persistedPath(profileId, company, role);
   try {
     if (fs.existsSync(p)) {
@@ -71,14 +81,20 @@ function parseStdoutMeta(stdout: string): TechPrepMeta {
   return meta;
 }
 
-function spawnTechPrep(url: string, profileId: string): Promise<{ stdout: string; stderr: string }> {
+function spawnTechPrep(
+  url: string,
+  profileId: string,
+): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
     const prompt = '/' + CLI_NAMESPACE + ' tech-prep ' + url;
-    try { swapProfileSymlinks(profileId); } catch (e) {
+    try {
+      swapProfileSymlinks(profileId);
+    } catch (e) {
       logEvent('tech-prep', 'Symlink swap failed', {
-        level: 'warn', category: 'application',
+        level: 'warn',
+        category: 'application',
         message: e instanceof Error ? e.message : String(e),
       });
     }
@@ -86,8 +102,12 @@ function spawnTechPrep(url: string, profileId: string): Promise<{ stdout: string
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
@@ -96,68 +116,80 @@ function spawnTechPrep(url: string, profileId: string): Promise<{ stdout: string
   });
 }
 
-export const GET = wrap('tech-prep', async ({ params, url }: { params: { id: string }; url: URL }) => {
-  const resolved = resolveJobAndProfile(params.id, url);
-  if (!resolved) badRequest('Job not found: ' + params.id);
-  const { job, profileId } = resolved!;
-  return { cached: readCached(profileId, job.company ?? '', job.role ?? '') };
-});
+export const GET = wrap(
+  'tech-prep',
+  async ({ params, url }: { params: { id: string }; url: URL }) => {
+    const resolved = resolveJobAndProfile(params.id, url);
+    if (!resolved) badRequest('Job not found: ' + params.id);
+    const { job, profileId } = resolved!;
+    return { cached: readCached(profileId, job.company ?? '', job.role ?? '') };
+  },
+);
 
-export const POST = wrap('tech-prep', async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
-  const resolved = resolveJobAndProfile(params.id, url);
-  if (!resolved) badRequest('Job not found: ' + params.id);
-  const { job, profileId } = resolved!;
-  if (!job.url) badRequest('Job has no URL');
+export const POST = wrap(
+  'tech-prep',
+  async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
+    const resolved = resolveJobAndProfile(params.id, url);
+    if (!resolved) badRequest('Job not found: ' + params.id);
+    const { job, profileId } = resolved!;
+    if (!job.url) badRequest('Job has no URL');
 
-  // De-dup: if a tech-prep file already exists for this company+role and
-  // the caller didn't explicitly request regeneration, return the cached
-  // body. Used by the markStatus auto-fire path so a job that transitions
-  // PhoneScreen → Technical → Onsite doesn't regenerate three times.
-  const body = await request.json().catch(() => ({} as Record<string, unknown>));
-  const force = body && typeof body === 'object' && (body as { force?: boolean }).force === true;
-  if (!force) {
-    const cached = readCached(profileId, job.company ?? '', job.role ?? '');
-    if (cached) {
-      logEvent('tech-prep', 'Tech-prep cached — returning existing file', {
-        level: 'info', category: 'application',
-        message: cached.path,
-      });
-      return { ok: true, path: cached.path, body: cached.body, cached: true };
+    // De-dup: if a tech-prep file already exists for this company+role and
+    // the caller didn't explicitly request regeneration, return the cached
+    // body. Used by the markStatus auto-fire path so a job that transitions
+    // PhoneScreen → Technical → Onsite doesn't regenerate three times.
+    const body = await request.json().catch(() => ({}) as Record<string, unknown>);
+    const force = body && typeof body === 'object' && (body as { force?: boolean }).force === true;
+    if (!force) {
+      const cached = readCached(profileId, job.company ?? '', job.role ?? '');
+      if (cached) {
+        logEvent('tech-prep', 'Tech-prep cached — returning existing file', {
+          level: 'info',
+          category: 'application',
+          message: cached.path,
+        });
+        return { ok: true, path: cached.path, body: cached.body, cached: true };
+      }
     }
-  }
 
-  logEvent('tech-prep', 'Generating tech-prep plan', {
-    level: 'info', category: 'application',
-    message: (job.company || '?') + ' · ' + (job.role || '?'),
-  });
-
-  try {
-    const { stdout } = await spawnTechPrep(job.url, profileId);
-    const meta = parseStdoutMeta(stdout);
-    // Re-read the file (the mode writes it directly).
-    const cached = readCached(profileId, job.company ?? '', job.role ?? '');
-    if (!cached) {
-      // The mode might have written to a path we don't expect; fall back
-      // to persisting stdout so the user gets *something*.
-      const fallback = persistedPath(profileId, job.company ?? '', job.role ?? '');
-      fs.mkdirSync(path.dirname(fallback), { recursive: true });
-      fs.writeFileSync(fallback, stdout);
-    }
-    const result = readCached(profileId, job.company ?? '', job.role ?? '');
-    logEvent('tech-prep', 'Tech-prep ready', {
-      level: 'success', category: 'application',
-      message: (result?.path ?? 'unknown path') +
-        (meta.rounds ? ' · ' + meta.rounds + ' rounds' : '') +
-        (meta.hoursEstimated ? ' · ' + meta.hoursEstimated + 'h budget' : ''),
+    logEvent('tech-prep', 'Generating tech-prep plan', {
+      level: 'info',
+      category: 'application',
+      message: (job.company || '?') + ' · ' + (job.role || '?'),
     });
-    return {
-      ok: true,
-      path: result?.path,
-      body: result?.body,
-      meta,
-    };
-  } catch (err) {
-    reportServerError('tech-prep', 'Tech-prep generation failed', err, { category: 'application' });
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
-  }
-});
+
+    try {
+      const { stdout } = await spawnTechPrep(job.url, profileId);
+      const meta = parseStdoutMeta(stdout);
+      // Re-read the file (the mode writes it directly).
+      const cached = readCached(profileId, job.company ?? '', job.role ?? '');
+      if (!cached) {
+        // The mode might have written to a path we don't expect; fall back
+        // to persisting stdout so the user gets *something*.
+        const fallback = persistedPath(profileId, job.company ?? '', job.role ?? '');
+        fs.mkdirSync(path.dirname(fallback), { recursive: true });
+        fs.writeFileSync(fallback, stdout);
+      }
+      const result = readCached(profileId, job.company ?? '', job.role ?? '');
+      logEvent('tech-prep', 'Tech-prep ready', {
+        level: 'success',
+        category: 'application',
+        message:
+          (result?.path ?? 'unknown path') +
+          (meta.rounds ? ' · ' + meta.rounds + ' rounds' : '') +
+          (meta.hoursEstimated ? ' · ' + meta.hoursEstimated + 'h budget' : ''),
+      });
+      return {
+        ok: true,
+        path: result?.path,
+        body: result?.body,
+        meta,
+      };
+    } catch (err) {
+      reportServerError('tech-prep', 'Tech-prep generation failed', err, {
+        category: 'application',
+      });
+      return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  },
+);

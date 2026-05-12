@@ -95,7 +95,13 @@ export function markClosed(arg1: string | undefined, arg2?: string, arg3?: strin
   if (!updated) {
     const today = new Date().toISOString().slice(0, 10);
     const row =
-      '| - | ' + today + ' | (auto) | ' + url + ' | - | - | Closed | - | - | ' + (reason ?? 'auto-closed') + ' |';
+      '| - | ' +
+      today +
+      ' | (auto) | ' +
+      url +
+      ' | - | - | Closed | - | - | ' +
+      (reason ?? 'auto-closed') +
+      ' |';
     lines.push(row);
   }
   return writeApplicationsSafe('mark-closed', id, lines.join('\n'));
@@ -109,9 +115,19 @@ export function markClosed(arg1: string | undefined, arg2?: string, arg3?: strin
  * Appends a Notes-column tag when `note` is provided so audits can trace
  * where each automatic flip came from.
  */
-export function markStatus(profileId: string | undefined, url: string, newStatus: string, note?: string): boolean;
+export function markStatus(
+  profileId: string | undefined,
+  url: string,
+  newStatus: string,
+  note?: string,
+): boolean;
 export function markStatus(url: string, newStatus: string, note?: string): boolean;
-export function markStatus(arg1: string | undefined, arg2: string, arg3?: string, arg4?: string): boolean {
+export function markStatus(
+  arg1: string | undefined,
+  arg2: string,
+  arg3?: string,
+  arg4?: string,
+): boolean {
   // Legacy signature: (url, newStatus, note?). New: (profileId, url, newStatus, note?).
   // Heuristic: if arg1 looks like a URL, it's legacy. Profile slugs never
   // start with http and don't contain '://'.
@@ -144,7 +160,15 @@ export function markStatus(arg1: string | undefined, arg2: string, arg3?: string
   if (!updated) {
     const today = new Date().toISOString().slice(0, 10);
     const row =
-      '| - | ' + today + ' | (auto) | ' + url + ' | - | - | ' + newStatus + ' | - | - | ' + (note ?? 'auto') + ' |';
+      '| - | ' +
+      today +
+      ' | (auto) | ' +
+      url +
+      ' | - | - | ' +
+      newStatus +
+      ' | - | - | ' +
+      (note ?? 'auto') +
+      ' |';
     lines.push(row);
   }
   const writeOk = writeApplicationsSafe('mark-status', id, lines.join('\n'));
@@ -166,7 +190,14 @@ export function markStatus(arg1: string | undefined, arg2: string, arg3?: string
   return writeOk;
 }
 
-const INTERVIEW_STAGES = new Set(['PhoneScreen', 'Technical', 'TakeHome', 'Onsite', 'Final', 'Interview']);
+const INTERVIEW_STAGES = new Set([
+  'PhoneScreen',
+  'Technical',
+  'TakeHome',
+  'Onsite',
+  'Final',
+  'Interview',
+]);
 
 /** Fire tech-prep generation in the background when status moves into an
  *  interview stage. Best-effort: errors are swallowed. */
@@ -183,17 +214,24 @@ function maybeAutoFireTechPrep(profileId: string, url: string, newStatus: string
       if (!match) return;
       // Fire-and-forget HTTP call to our own tech-prep endpoint.
       const q = match.profileId ? '?profile=' + encodeURIComponent(match.profileId) : '';
-      const fetchUrl = 'http://127.0.0.1:5174/api/job/' + encodeURIComponent(match.id) + '/tech-prep' + q;
+      const fetchUrl =
+        'http://127.0.0.1:5174/api/job/' + encodeURIComponent(match.id) + '/tech-prep' + q;
       fetch(fetchUrl, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: '{}',
-      }).catch(() => { /* surfaced via tech-prep endpoint's own error path */ });
+      }).catch(() => {
+        /* surfaced via tech-prep endpoint's own error path */
+      });
       // Log the trigger so the user sees it in the bell.
       const { logEvent } = await import('./events');
       logEvent('auto-tech-prep', 'Tech-prep auto-triggered · ' + newStatus, {
-        level: 'info', category: 'application',
-        message: (match.company || '?') + ' · ' + (match.role || '?') +
+        level: 'info',
+        category: 'application',
+        message:
+          (match.company || '?') +
+          ' · ' +
+          (match.role || '?') +
           ' — runs in background, watch the bell for completion.',
         profileId: match.profileId,
       });
@@ -204,9 +242,19 @@ function maybeAutoFireTechPrep(profileId: string, url: string, newStatus: string
 }
 
 /** Flip the row matching `url` to status=Applied. Adds a row if none exists. */
-export function markApplied(profileId: string | undefined, url: string, company?: string, role?: string): boolean;
+export function markApplied(
+  profileId: string | undefined,
+  url: string,
+  company?: string,
+  role?: string,
+): boolean;
 export function markApplied(url: string, company?: string, role?: string): boolean;
-export function markApplied(arg1: string | undefined, arg2?: string, arg3?: string, arg4?: string): boolean {
+export function markApplied(
+  arg1: string | undefined,
+  arg2?: string,
+  arg3?: string,
+  arg4?: string,
+): boolean {
   const isLegacy = arg1 != null && (arg1.startsWith('http') || arg1.startsWith('local:'));
   const profileId = isLegacy ? undefined : arg1;
   const url = isLegacy ? arg1 : arg2!;
@@ -231,8 +279,15 @@ export function markApplied(arg1: string | undefined, arg2?: string, arg3?: stri
   if (!updated) {
     const today = new Date().toISOString().slice(0, 10);
     const row =
-      '| - | ' + today + ' | ' + (company || '(manual)') + ' | ' + (role || '') +
-      ' | ' + url + ' | - | Applied | - | - | manual mark |';
+      '| - | ' +
+      today +
+      ' | ' +
+      (company || '(manual)') +
+      ' | ' +
+      (role || '') +
+      ' | ' +
+      url +
+      ' | - | Applied | - | - | manual mark |';
     lines.push(row);
   }
   return writeApplicationsSafe('mark-applied', id, lines.join('\n'));

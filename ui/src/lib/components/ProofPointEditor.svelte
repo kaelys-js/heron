@@ -24,102 +24,109 @@
     * Move up/down buttons live in the header row, consistent with everywhere
 -->
 <script lang="ts">
-  import { Input } from '$lib/components/ui/input';
-  import { Button } from '$lib/components/ui/button';
-  import { Label } from '$lib/components/ui/label';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import RichTextarea from './RichTextarea.svelte';
-  import ValidatedInput from './ValidatedInput.svelte';
-  import {
-    X, Plus, ArrowUp, ArrowDown, TrendingUp, Link as LinkIcon, Trophy,
-    FileText, ChevronRight,
-  } from '@lucide/svelte';
-  import { cn } from '$lib/utils';
-  import { ConfirmGate } from '$lib/confirm.svelte';
-  import { validateUrl } from '$lib/validators';
-  import { onDestroy } from 'svelte';
+import { Input } from '$lib/components/ui/input';
+import { Button } from '$lib/components/ui/button';
+import { Label } from '$lib/components/ui/label';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import RichTextarea from './RichTextarea.svelte';
+import ValidatedInput from './ValidatedInput.svelte';
+import {
+  X,
+  Plus,
+  ArrowUp,
+  ArrowDown,
+  TrendingUp,
+  Link as LinkIcon,
+  Trophy,
+  FileText,
+  ChevronRight,
+} from '@lucide/svelte';
+import { cn } from '$lib/utils';
+import { ConfirmGate } from '$lib/confirm.svelte';
+import { validateUrl } from '$lib/validators';
+import { onDestroy } from 'svelte';
 
-  type ProofPoint = {
-    name: string;
-    hero_metric?: string;
-    url?: string;
-    description?: string;
-  };
+type ProofPoint = {
+  name: string;
+  hero_metric?: string;
+  url?: string;
+  description?: string;
+};
 
-  let {
-    items = $bindable<ProofPoint[]>([]),
-    onchange,
-    class: className,
-    /** Prefix used to generate stable DOM ids for the URL fields, so a parent
-     *  validation summary can focus a specific row. */
-    idPrefix,
-  }: {
-    items: ProofPoint[];
-    onchange?: (next: ProofPoint[]) => void;
-    class?: string;
-    idPrefix?: string;
-  } = $props();
+let {
+  items = $bindable<ProofPoint[]>([]),
+  onchange,
+  class: className,
+  /** Prefix used to generate stable DOM ids for the URL fields, so a parent
+   *  validation summary can focus a specific row. */
+  idPrefix,
+}: {
+  items: ProofPoint[];
+  onchange?: (next: ProofPoint[]) => void;
+  class?: string;
+  idPrefix?: string;
+} = $props();
 
-  const confirm = new ConfirmGate();
-  onDestroy(() => confirm.destroy());
+const confirm = new ConfirmGate();
+onDestroy(() => confirm.destroy());
 
-  // Per-row open/closed state — collapsed rows show only the header summary
-  // (index + name preview + remove). New rows default to OPEN so the user
-  // can fill them out immediately.
-  let openSet = $state<Set<number>>(new Set());
-  function toggleOpen(i: number) {
-    const next = new Set(openSet);
-    if (next.has(i)) next.delete(i);
-    else next.add(i);
-    openSet = next;
+// Per-row open/closed state — collapsed rows show only the header summary
+// (index + name preview + remove). New rows default to OPEN so the user
+// can fill them out immediately.
+let openSet = $state<Set<number>>(new Set());
+function toggleOpen(i: number) {
+  const next = new Set(openSet);
+  if (next.has(i)) next.delete(i);
+  else next.add(i);
+  openSet = next;
+}
+
+function commit(next: ProofPoint[]) {
+  items = next;
+  onchange?.(next);
+}
+
+function add() {
+  const nextIndex = items.length;
+  commit([...items, { name: '', hero_metric: '', url: '', description: '' }]);
+  // Auto-open the newly-added row
+  const next = new Set(openSet);
+  next.add(nextIndex);
+  openSet = next;
+}
+
+function update(i: number, patch: Partial<ProofPoint>) {
+  commit(items.map((it, j) => (i === j ? { ...it, ...patch } : it)));
+}
+
+function remove(i: number) {
+  if (!confirm.trigger('row:' + i)) return;
+  commit(items.filter((_, j) => j !== i));
+  // Shift open-state for items after the removed index
+  const shifted = new Set<number>();
+  for (const k of openSet) {
+    if (k < i) shifted.add(k);
+    else if (k > i) shifted.add(k - 1);
   }
+  openSet = shifted;
+}
 
-  function commit(next: ProofPoint[]) {
-    items = next;
-    onchange?.(next);
-  }
-
-  function add() {
-    const nextIndex = items.length;
-    commit([...items, { name: '', hero_metric: '', url: '', description: '' }]);
-    // Auto-open the newly-added row
-    const next = new Set(openSet);
-    next.add(nextIndex);
-    openSet = next;
-  }
-
-  function update(i: number, patch: Partial<ProofPoint>) {
-    commit(items.map((it, j) => (i === j ? { ...it, ...patch } : it)));
-  }
-
-  function remove(i: number) {
-    if (!confirm.trigger('row:' + i)) return;
-    commit(items.filter((_, j) => j !== i));
-    // Shift open-state for items after the removed index
-    const shifted = new Set<number>();
-    for (const k of openSet) {
-      if (k < i) shifted.add(k);
-      else if (k > i) shifted.add(k - 1);
-    }
-    openSet = shifted;
-  }
-
-  function move(i: number, dir: -1 | 1) {
-    const j = i + dir;
-    if (j < 0 || j >= items.length) return;
-    const next = items.slice();
-    [next[i], next[j]] = [next[j], next[i]];
-    commit(next);
-    // Move the open-state with the row
-    const wasIOpen = openSet.has(i);
-    const wasJOpen = openSet.has(j);
-    const shifted = new Set(openSet);
-    shifted.delete(i);
-    shifted.delete(j);
-    if (wasIOpen) shifted.add(j);
-    if (wasJOpen) shifted.add(i);
-    openSet = shifted;
-  }
+function move(i: number, dir: -1 | 1) {
+  const j = i + dir;
+  if (j < 0 || j >= items.length) return;
+  const next = items.slice();
+  [next[i], next[j]] = [next[j], next[i]];
+  commit(next);
+  // Move the open-state with the row
+  const wasIOpen = openSet.has(i);
+  const wasJOpen = openSet.has(j);
+  const shifted = new Set(openSet);
+  shifted.delete(i);
+  shifted.delete(j);
+  if (wasIOpen) shifted.add(j);
+  if (wasJOpen) shifted.add(i);
+  openSet = shifted;
+}
 </script>
 
 <div class={cn('space-y-3', className)}>

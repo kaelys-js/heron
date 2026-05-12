@@ -10,8 +10,11 @@ import { activePath, profilePath } from '$lib/server/profile-paths';
 import { listProfiles } from '$lib/server/profiles';
 
 function countDir(dir: string, ext: string): number {
-  try { return fs.readdirSync(dir).filter((f) => f.endsWith(ext)).length; }
-  catch { return 0; }
+  try {
+    return fs.readdirSync(dir).filter((f) => f.endsWith(ext)).length;
+  } catch {
+    return 0;
+  }
 }
 
 /** Count files across one or every profile's per-profile dir. */
@@ -48,7 +51,12 @@ function sourceOf(url: string): string {
   for (const p of SOURCE_PATTERNS) if (p.match.test(url)) return p.name;
   try {
     const h = new URL(url).hostname.replace(/^www\./, '');
-    return h.split('.').slice(-2, -1)[0]?.replace(/^./, (c) => c.toUpperCase()) || h;
+    return (
+      h
+        .split('.')
+        .slice(-2, -1)[0]
+        ?.replace(/^./, (c) => c.toUpperCase()) || h
+    );
   } catch {
     return 'Other';
   }
@@ -56,9 +64,10 @@ function sourceOf(url: string): string {
 
 function parseApplicationDates(profileId: string): string[] {
   // 'all' → sum dates across every profile's applications.md
-  const sources: string[] = profileId === 'all'
-    ? listProfiles().map((p) => profilePath(p.id, 'applications'))
-    : [profilePath(profileId, 'applications')];
+  const sources: string[] =
+    profileId === 'all'
+      ? listProfiles().map((p) => profilePath(p.id, 'applications'))
+      : [profilePath(profileId, 'applications')];
   const dates: string[] = [];
   for (const src of sources) {
     const txt = readSafe(src);
@@ -90,7 +99,7 @@ export async function load({ url }: { url: URL }) {
   // /stats is CROSS-PROFILE by default — comparing track performance is the
   // whole point. `?profile=<slug>` narrows to one profile for drill-down.
   const queryProfile = url.searchParams.get('profile');
-  const profileId = (queryProfile && queryProfile !== 'all') ? queryProfile : 'all';
+  const profileId = queryProfile && queryProfile !== 'all' ? queryProfile : 'all';
   const jobs: Job[] = loadAllJobs(profileId);
   const grouped = groupByStatus(jobs);
 
@@ -205,9 +214,10 @@ export async function load({ url }: { url: URL }) {
   // appear fresh).
   let pipelineStaleDays: number | null = null;
   try {
-    const pipelinePaths = profileId === 'all'
-      ? listProfiles().map((p) => profilePath(p.id, 'pipeline'))
-      : [profilePath(profileId, 'pipeline')];
+    const pipelinePaths =
+      profileId === 'all'
+        ? listProfiles().map((p) => profilePath(p.id, 'pipeline'))
+        : [profilePath(profileId, 'pipeline')];
     let mostRecent = 0;
     for (const p of pipelinePaths) {
       try {
@@ -223,11 +233,16 @@ export async function load({ url }: { url: URL }) {
   // Conversion rates
   const conversion = {
     scoredOfTotal: counts.total > 0 ? (counts.total - unscored) / counts.total : 0,
-    readyOfScored: counts.scored + counts.ready > 0 ? counts.ready / (counts.scored + counts.ready + applied) : 0,
+    readyOfScored:
+      counts.scored + counts.ready > 0
+        ? counts.ready / (counts.scored + counts.ready + applied)
+        : 0,
     appliedOfReady: applied + counts.ready > 0 ? applied / (applied + counts.ready) : 0,
-    interviewOfApplied: counts.applied + counts.screened + counts.interview + counts.offer > 0
-      ? (counts.interview + counts.offer) / (counts.applied + counts.screened + counts.interview + counts.offer + counts.rejected)
-      : 0,
+    interviewOfApplied:
+      counts.applied + counts.screened + counts.interview + counts.offer > 0
+        ? (counts.interview + counts.offer) /
+          (counts.applied + counts.screened + counts.interview + counts.offer + counts.rejected)
+        : 0,
     overallApplied: counts.total > 0 ? applied / counts.total : 0,
   };
 

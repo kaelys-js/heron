@@ -1,272 +1,329 @@
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import * as Sheet from '$lib/components/ui/sheet';
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Textarea } from '$lib/components/ui/textarea';
-  import { Label } from '$lib/components/ui/label';
-  import { Switch } from '$lib/components/ui/switch';
-  import Stepper from '$lib/components/Stepper.svelte';
-  import {
-    FolderKanban, Plus, MoreHorizontal, Pencil, Copy, Trash2, ArrowRight, Sparkles,
-    Search, X, Target, AlertCircle, Briefcase, Building2,
-  } from '@lucide/svelte';
-  import { api, ApiError } from '$lib/api';
-  import { invalidateAll, goto } from '$app/navigation';
-  import { toast } from 'svelte-sonner';
-  import { formatRelativeTime, cn, withMinDuration } from '$lib/utils';
-  import { DEFAULT_FILTER, type BgRisk, type FilterState } from '$lib/types';
-  import type { Project, ProjectColor, ProjectStats } from '$lib/server/projects';
-  import { ConfirmGate } from '$lib/confirm.svelte';
-  import { onDestroy } from 'svelte';
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import * as Sheet from '$lib/components/ui/sheet';
+import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Label } from '$lib/components/ui/label';
+import { Switch } from '$lib/components/ui/switch';
+import Stepper from '$lib/components/Stepper.svelte';
+import {
+  FolderKanban,
+  Plus,
+  MoreHorizontal,
+  Pencil,
+  Copy,
+  Trash2,
+  ArrowRight,
+  Sparkles,
+  Search,
+  X,
+  Target,
+  AlertCircle,
+  Briefcase,
+  Building2,
+} from '@lucide/svelte';
+import { api, ApiError } from '$lib/api';
+import { invalidateAll, goto } from '$app/navigation';
+import { toast } from 'svelte-sonner';
+import { formatRelativeTime, cn, withMinDuration } from '$lib/utils';
+import { DEFAULT_FILTER, type BgRisk, type FilterState } from '$lib/types';
+import type { Project, ProjectColor, ProjectStats } from '$lib/server/projects';
+import { ConfirmGate } from '$lib/confirm.svelte';
+import { onDestroy } from 'svelte';
 
-  let { data }: {
-    data: {
-      profileId: string;
-      projects: Project[];
-      stats: Record<string, ProjectStats>;
-      starters: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>[];
-      totalJobs: number;
-    };
-  } = $props();
-
-  // Profile-scoped projects endpoints — append ?profile=<slug> so writes
-  // land in the same profile the page is showing (avoids "I edited project
-  // foo while on Electrician, but it saved to Software").
-  let pq = $derived('?profile=' + encodeURIComponent(data.profileId));
-
-  const COLORS: ProjectColor[] = ['emerald', 'blue', 'violet', 'amber', 'rose', 'cyan', 'orange', 'pink'];
-
-  const COLOR_BG: Record<ProjectColor, string> = {
-    emerald: 'bg-emerald-500',
-    blue: 'bg-blue-500',
-    violet: 'bg-violet-500',
-    amber: 'bg-amber-500',
-    rose: 'bg-rose-500',
-    cyan: 'bg-cyan-500',
-    orange: 'bg-orange-500',
-    pink: 'bg-pink-500',
+let {
+  data,
+}: {
+  data: {
+    profileId: string;
+    projects: Project[];
+    stats: Record<string, ProjectStats>;
+    starters: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>[];
+    totalJobs: number;
   };
-  const COLOR_TINT: Record<ProjectColor, string> = {
-    emerald: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
-    blue: 'bg-blue-500/10 text-blue-300 border-blue-500/30',
-    violet: 'bg-violet-500/10 text-violet-300 border-violet-500/30',
-    amber: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
-    rose: 'bg-rose-500/10 text-rose-300 border-rose-500/30',
-    cyan: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30',
-    orange: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
-    pink: 'bg-pink-500/10 text-pink-300 border-pink-500/30',
-  };
-  const COLOR_BORDER_L: Record<ProjectColor, string> = {
-    emerald: 'border-l-emerald-500',
-    blue: 'border-l-blue-500',
-    violet: 'border-l-violet-500',
-    amber: 'border-l-amber-500',
-    rose: 'border-l-rose-500',
-    cyan: 'border-l-cyan-500',
-    orange: 'border-l-orange-500',
-    pink: 'border-l-pink-500',
-  };
+} = $props();
 
-  type EditorMode = 'create' | 'edit';
-  let editorOpen = $state(false);
-  let editorMode = $state<EditorMode>('create');
-  let editorBusy = $state(false);
-  let editor = $state<Project>(blankProject());
+// Profile-scoped projects endpoints — append ?profile=<slug> so writes
+// land in the same profile the page is showing (avoids "I edited project
+// foo while on Electrician, but it saved to Software").
+let pq = $derived('?profile=' + encodeURIComponent(data.profileId));
 
-  // ---- Live preview: how many jobs match the filter as the user edits ----
-  type PreviewStats = { total: number; ready: number; applied: number; interview: number; offer: number; topScore: number | null };
-  let preview = $state<PreviewStats | null>(null);
-  let previewLoading = $state(false);
-  let previewTimer: ReturnType<typeof setTimeout> | null = null;
+const COLORS: ProjectColor[] = [
+  'emerald',
+  'blue',
+  'violet',
+  'amber',
+  'rose',
+  'cyan',
+  'orange',
+  'pink',
+];
 
-  $effect(() => {
-    if (!editorOpen) {
-      preview = null;
-      return;
-    }
-    // capture filter snapshot to retrigger on changes
-    const _ = JSON.stringify(editor.filter);
-    if (previewTimer) clearTimeout(previewTimer);
-    previewLoading = true;
-    previewTimer = setTimeout(async () => {
-      try {
-        const r = await api.post<PreviewStats & { ok: boolean }>(
-          '/api/projects/preview' + pq,
-          { filter: editor.filter },
-          { silent: true },
-        );
-        preview = { total: r.total, ready: r.ready, applied: r.applied, interview: r.interview, offer: r.offer, topScore: r.topScore };
-      } catch {
-        preview = null;
-      } finally {
-        previewLoading = false;
-      }
-    }, 250);
-  });
+const COLOR_BG: Record<ProjectColor, string> = {
+  emerald: 'bg-emerald-500',
+  blue: 'bg-blue-500',
+  violet: 'bg-violet-500',
+  amber: 'bg-amber-500',
+  rose: 'bg-rose-500',
+  cyan: 'bg-cyan-500',
+  orange: 'bg-orange-500',
+  pink: 'bg-pink-500',
+};
+const COLOR_TINT: Record<ProjectColor, string> = {
+  emerald: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
+  blue: 'bg-blue-500/10 text-blue-300 border-blue-500/30',
+  violet: 'bg-violet-500/10 text-violet-300 border-violet-500/30',
+  amber: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
+  rose: 'bg-rose-500/10 text-rose-300 border-rose-500/30',
+  cyan: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30',
+  orange: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
+  pink: 'bg-pink-500/10 text-pink-300 border-pink-500/30',
+};
+const COLOR_BORDER_L: Record<ProjectColor, string> = {
+  emerald: 'border-l-emerald-500',
+  blue: 'border-l-blue-500',
+  violet: 'border-l-violet-500',
+  amber: 'border-l-amber-500',
+  rose: 'border-l-rose-500',
+  cyan: 'border-l-cyan-500',
+  orange: 'border-l-orange-500',
+  pink: 'border-l-pink-500',
+};
 
-  function blankProject(): Project {
-    const now = Date.now();
-    return {
-      id: '',
-      name: '',
-      description: '',
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      filter: { ...DEFAULT_FILTER, bgRisk: { ...DEFAULT_FILTER.bgRisk } },
-      target: 0,
-      createdAt: now,
-      updatedAt: now,
-    };
+type EditorMode = 'create' | 'edit';
+let editorOpen = $state(false);
+let editorMode = $state<EditorMode>('create');
+let editorBusy = $state(false);
+let editor = $state<Project>(blankProject());
+
+// ---- Live preview: how many jobs match the filter as the user edits ----
+type PreviewStats = {
+  total: number;
+  ready: number;
+  applied: number;
+  interview: number;
+  offer: number;
+  topScore: number | null;
+};
+let preview = $state<PreviewStats | null>(null);
+let previewLoading = $state(false);
+let previewTimer: ReturnType<typeof setTimeout> | null = null;
+
+$effect(() => {
+  if (!editorOpen) {
+    preview = null;
+    return;
   }
-
-  function openCreate(seed?: Partial<Project>) {
-    editorMode = 'create';
-    editor = {
-      ...blankProject(),
-      ...seed,
-      filter: seed?.filter
-        ? { ...seed.filter, bgRisk: { ...seed.filter.bgRisk } }
-        : blankProject().filter,
-    };
-    editorOpen = true;
-  }
-
-  function openEdit(p: Project) {
-    editorMode = 'edit';
-    editor = { ...p, filter: { ...p.filter, bgRisk: { ...p.filter.bgRisk } } };
-    editorOpen = true;
-  }
-
-  let canSave = $derived(editor.name.trim().length > 0);
-
-  async function saveEditor() {
-    if (!canSave || editorBusy) return;
-    editorBusy = true;
+  // capture filter snapshot to retrigger on changes
+  const _ = JSON.stringify(editor.filter);
+  if (previewTimer) clearTimeout(previewTimer);
+  previewLoading = true;
+  previewTimer = setTimeout(async () => {
     try {
-      const payload: Partial<Project> = {
-        name: editor.name,
-        description: editor.description,
-        color: editor.color,
-        filter: editor.filter,
-        target: editor.target,
+      const r = await api.post<PreviewStats & { ok: boolean }>(
+        '/api/projects/preview' + pq,
+        { filter: editor.filter },
+        { silent: true },
+      );
+      preview = {
+        total: r.total,
+        ready: r.ready,
+        applied: r.applied,
+        interview: r.interview,
+        offer: r.offer,
+        topScore: r.topScore,
       };
-      if (editorMode === 'create') {
-        await withMinDuration(
-          api.post<{ project: Project }>('/api/projects' + pq, payload, { silent: true }),
-          400,
-        );
-        toast.success('Project created', { description: editor.name });
-      } else {
-        await withMinDuration(
-          api.put<{ project: Project }>('/api/projects/' + encodeURIComponent(editor.id) + pq, payload, { silent: true }),
-          400,
-        );
-        toast.success('Project saved');
-      }
-      editorOpen = false;
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Failed to save project', { description: err.message });
+    } catch {
+      preview = null;
     } finally {
-      editorBusy = false;
+      previewLoading = false;
     }
-  }
+  }, 250);
+});
 
-  // ---- delete with double-click confirmation (shared ConfirmGate) ----
-  const confirmDelete = new ConfirmGate();
-  onDestroy(() => confirmDelete.destroy());
-  async function onDeleteClick(p: Project, e: Event) {
-    e.preventDefault();
-    if (!confirmDelete.trigger('delete:' + p.id)) return;
-    try {
-      await withMinDuration(api.delete('/api/projects/' + encodeURIComponent(p.id) + pq, { silent: true }), 400);
-      toast.success('Project deleted', { description: p.name });
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Failed to delete', { description: err.message });
-    }
-  }
+function blankProject(): Project {
+  const now = Date.now();
+  return {
+    id: '',
+    name: '',
+    description: '',
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    filter: { ...DEFAULT_FILTER, bgRisk: { ...DEFAULT_FILTER.bgRisk } },
+    target: 0,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
 
-  async function duplicateProject(p: Project) {
-    try {
+function openCreate(seed?: Partial<Project>) {
+  editorMode = 'create';
+  editor = {
+    ...blankProject(),
+    ...seed,
+    filter: seed?.filter
+      ? { ...seed.filter, bgRisk: { ...seed.filter.bgRisk } }
+      : blankProject().filter,
+  };
+  editorOpen = true;
+}
+
+function openEdit(p: Project) {
+  editorMode = 'edit';
+  editor = { ...p, filter: { ...p.filter, bgRisk: { ...p.filter.bgRisk } } };
+  editorOpen = true;
+}
+
+let canSave = $derived(editor.name.trim().length > 0);
+
+async function saveEditor() {
+  if (!canSave || editorBusy) return;
+  editorBusy = true;
+  try {
+    const payload: Partial<Project> = {
+      name: editor.name,
+      description: editor.description,
+      color: editor.color,
+      filter: editor.filter,
+      target: editor.target,
+    };
+    if (editorMode === 'create') {
       await withMinDuration(
-        api.post<{ project: Project }>(
-          '/api/projects' + pq,
-          {
-            name: p.name + ' (copy)',
-            description: p.description,
-            color: p.color,
-            filter: { ...p.filter, bgRisk: { ...p.filter.bgRisk } },
-            target: p.target,
-          },
+        api.post<{ project: Project }>('/api/projects' + pq, payload, { silent: true }),
+        400,
+      );
+      toast.success('Project created', { description: editor.name });
+    } else {
+      await withMinDuration(
+        api.put<{ project: Project }>(
+          '/api/projects/' + encodeURIComponent(editor.id) + pq,
+          payload,
           { silent: true },
         ),
         400,
       );
-      toast.success('Duplicated', { description: p.name });
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Failed to duplicate', { description: err.message });
+      toast.success('Project saved');
     }
+    editorOpen = false;
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Failed to save project', { description: err.message });
+  } finally {
+    editorBusy = false;
   }
+}
 
-  // ---- "Open in Pipeline" — build URL params and navigate ----
-  function projectUrl(p: Project): string {
-    const params = new URLSearchParams();
-    params.set('from', 'project:' + p.id);
-    if (p.filter.minScore > 0) params.set('score', String(p.filter.minScore));
-    const bg = (Object.entries(p.filter.bgRisk) as [NonNullable<BgRisk>, boolean][])
-      .filter(([, on]) => on).map(([k]) => k);
-    const isDefault = bg.length === 3 && !bg.includes('BLOCKED');
-    if (!isDefault) params.set('bg', bg.join(','));
-    if (p.filter.hasPdf) params.set('pdf', '1');
-    if (p.filter.hasReport) params.set('report', '1');
-    if (p.filter.search.trim()) params.set('search', p.filter.search.trim());
-    const qs = params.toString();
-    return '/pipeline' + (qs ? '?' + qs : '');
+// ---- delete with double-click confirmation (shared ConfirmGate) ----
+const confirmDelete = new ConfirmGate();
+onDestroy(() => confirmDelete.destroy());
+async function onDeleteClick(p: Project, e: Event) {
+  e.preventDefault();
+  if (!confirmDelete.trigger('delete:' + p.id)) return;
+  try {
+    await withMinDuration(
+      api.delete('/api/projects/' + encodeURIComponent(p.id) + pq, { silent: true }),
+      400,
+    );
+    toast.success('Project deleted', { description: p.name });
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Failed to delete', { description: err.message });
   }
+}
 
-  async function openInPipeline(p: Project) {
-    await goto(projectUrl(p));
+async function duplicateProject(p: Project) {
+  try {
+    await withMinDuration(
+      api.post<{ project: Project }>(
+        '/api/projects' + pq,
+        {
+          name: p.name + ' (copy)',
+          description: p.description,
+          color: p.color,
+          filter: { ...p.filter, bgRisk: { ...p.filter.bgRisk } },
+          target: p.target,
+        },
+        { silent: true },
+      ),
+      400,
+    );
+    toast.success('Duplicated', { description: p.name });
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Failed to duplicate', { description: err.message });
   }
+}
 
-  // ---- editor — filter helpers ----
-  const SCORE_TIERS = [
-    { label: 'Any', value: 0 },
-    { label: '3+',  value: 3 },
-    { label: '4+',  value: 4 },
-    { label: '4.5+', value: 4.5 },
-  ];
-  const BG_KEYS: NonNullable<BgRisk>[] = ['LOW', 'MEDIUM', 'HIGH', 'BLOCKED'];
+// ---- "Open in Pipeline" — build URL params and navigate ----
+function projectUrl(p: Project): string {
+  const params = new URLSearchParams();
+  params.set('from', 'project:' + p.id);
+  if (p.filter.minScore > 0) params.set('score', String(p.filter.minScore));
+  const bg = (Object.entries(p.filter.bgRisk) as [NonNullable<BgRisk>, boolean][])
+    .filter(([, on]) => on)
+    .map(([k]) => k);
+  const isDefault = bg.length === 3 && !bg.includes('BLOCKED');
+  if (!isDefault) params.set('bg', bg.join(','));
+  if (p.filter.hasPdf) params.set('pdf', '1');
+  if (p.filter.hasReport) params.set('report', '1');
+  if (p.filter.search.trim()) params.set('search', p.filter.search.trim());
+  const qs = params.toString();
+  return '/pipeline' + (qs ? '?' + qs : '');
+}
 
-  function setMinScore(v: number) {
-    editor = { ...editor, filter: { ...editor.filter, minScore: v } };
-  }
-  function toggleBg(k: NonNullable<BgRisk>) {
-    editor = { ...editor, filter: { ...editor.filter, bgRisk: { ...editor.filter.bgRisk, [k]: !editor.filter.bgRisk[k] } } };
-  }
+async function openInPipeline(p: Project) {
+  await goto(projectUrl(p));
+}
 
-  // Derived per-project chips for compact display
-  function filterChips(p: Project): string[] {
-    const chips: string[] = [];
-    const f = p.filter;
-    if (f.minScore > 0) chips.push('Score ≥ ' + (Number.isInteger(f.minScore) ? f.minScore.toFixed(0) : f.minScore.toFixed(1)));
-    const bgOn = (Object.entries(f.bgRisk) as [NonNullable<BgRisk>, boolean][]).filter(([, on]) => on).map(([k]) => k);
-    if (bgOn.length === 1) chips.push('BG ' + bgOn[0]);
-    else if (bgOn.length === 2) chips.push('BG ' + bgOn.join('+'));
-    else if (bgOn.length === 3 && !bgOn.includes('BLOCKED')) { /* default, skip */ }
-    else if (bgOn.length === 4) chips.push('BG any');
-    if (f.hasReport) chips.push('Has report');
-    if (f.hasPdf) chips.push('Has PDF');
-    if (f.search.trim()) chips.push('"' + f.search.trim() + '"');
-    return chips;
-  }
+// ---- editor — filter helpers ----
+const SCORE_TIERS = [
+  { label: 'Any', value: 0 },
+  { label: '3+', value: 3 },
+  { label: '4+', value: 4 },
+  { label: '4.5+', value: 4.5 },
+];
+const BG_KEYS: NonNullable<BgRisk>[] = ['LOW', 'MEDIUM', 'HIGH', 'BLOCKED'];
+
+function setMinScore(v: number) {
+  editor = { ...editor, filter: { ...editor.filter, minScore: v } };
+}
+function toggleBg(k: NonNullable<BgRisk>) {
+  editor = {
+    ...editor,
+    filter: {
+      ...editor.filter,
+      bgRisk: { ...editor.filter.bgRisk, [k]: !editor.filter.bgRisk[k] },
+    },
+  };
+}
+
+// Derived per-project chips for compact display
+function filterChips(p: Project): string[] {
+  const chips: string[] = [];
+  const f = p.filter;
+  if (f.minScore > 0)
+    chips.push(
+      'Score ≥ ' + (Number.isInteger(f.minScore) ? f.minScore.toFixed(0) : f.minScore.toFixed(1)),
+    );
+  const bgOn = (Object.entries(f.bgRisk) as [NonNullable<BgRisk>, boolean][])
+    .filter(([, on]) => on)
+    .map(([k]) => k);
+  if (bgOn.length === 1) chips.push('BG ' + bgOn[0]);
+  else if (bgOn.length === 2) chips.push('BG ' + bgOn.join('+'));
+  else if (bgOn.length === 3 && !bgOn.includes('BLOCKED')) {
+    /* default, skip */
+  } else if (bgOn.length === 4) chips.push('BG any');
+  if (f.hasReport) chips.push('Has report');
+  if (f.hasPdf) chips.push('Has PDF');
+  if (f.search.trim()) chips.push('"' + f.search.trim() + '"');
+  return chips;
+}
 </script>
 
 <div class="h-full overflow-y-auto">

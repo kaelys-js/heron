@@ -14,132 +14,144 @@
       pop-up blockers don't kill them all).
 -->
 <script lang="ts">
-  import * as Dialog from '$lib/components/ui/dialog';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Button } from '$lib/components/ui/button';
-  import {
-    Send, Wand2, Network as Linkedin, ArrowUpRight, FileBadge2, Loader2,
-    AlertTriangle, Info, Bell, ListChecks, Sparkles,
-  } from '@lucide/svelte';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import { invalidateAll } from '$app/navigation';
-  import { withMinDuration, cn } from '$lib/utils';
-  import type { Job } from '$lib/types';
+import * as Dialog from '$lib/components/ui/dialog';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { Button } from '$lib/components/ui/button';
+import {
+  Send,
+  Wand2,
+  Network as Linkedin,
+  ArrowUpRight,
+  FileBadge2,
+  Loader2,
+  AlertTriangle,
+  Info,
+  Bell,
+  ListChecks,
+  Sparkles,
+} from '@lucide/svelte';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import { invalidateAll } from '$app/navigation';
+import { withMinDuration, cn } from '$lib/utils';
+import type { Job } from '$lib/types';
 
-  let {
-    /** Jobs eligible for bulk Apply (typically status === 'Ready'). */
-    applyCandidates = [] as Job[],
-    /** Jobs that should get a tailored CV (typically scored ≥4 without a PDF). */
-    cvCandidates = [] as Job[],
-    /** Visual size — use 'compact' for inline placement in pipeline header,
+let {
+  /** Jobs eligible for bulk Apply (typically status === 'Ready'). */
+  applyCandidates = [] as Job[],
+  /** Jobs that should get a tailored CV (typically scored ≥4 without a PDF). */
+  cvCandidates = [] as Job[],
+  /** Visual size — use 'compact' for inline placement in pipeline header,
         'full' for the standalone Inbox bar. */
-    size = 'compact' as 'compact' | 'full',
-    /** Custom labels for the buttons (allows context-specific phrasing). */
-    applyLabel = 'Apply to all',
-    cvLabel = 'Generate tailored CVs',
-  }: {
-    applyCandidates?: Job[];
-    cvCandidates?: Job[];
-    size?: 'compact' | 'full';
-    applyLabel?: string;
-    cvLabel?: string;
-  } = $props();
+  size = 'compact' as 'compact' | 'full',
+  /** Custom labels for the buttons (allows context-specific phrasing). */
+  applyLabel = 'Apply to all',
+  cvLabel = 'Generate tailored CVs',
+}: {
+  applyCandidates?: Job[];
+  cvCandidates?: Job[];
+  size?: 'compact' | 'full';
+  applyLabel?: string;
+  cvLabel?: string;
+} = $props();
 
-  // ---------- bulk-apply derived counts ----------
-  let applyLinkedInCount = $derived(applyCandidates.filter((j) => /linkedin\.com/.test(j.url)).length);
-  let applyOtherCount = $derived(applyCandidates.length - applyLinkedInCount);
-  let applyTotal = $derived(applyCandidates.length);
+// ---------- bulk-apply derived counts ----------
+let applyLinkedInCount = $derived(
+  applyCandidates.filter((j) => /linkedin\.com/.test(j.url)).length,
+);
+let applyOtherCount = $derived(applyCandidates.length - applyLinkedInCount);
+let applyTotal = $derived(applyCandidates.length);
 
-  // ---------- bulk CV derived counts ----------
-  let cvAlreadyHave = $derived(cvCandidates.filter((j) => !!j.pdfFile).length);
-  let cvWillRun = $derived(cvCandidates.length);
+// ---------- bulk CV derived counts ----------
+let cvAlreadyHave = $derived(cvCandidates.filter((j) => !!j.pdfFile).length);
+let cvWillRun = $derived(cvCandidates.length);
 
-  let applyOpen = $state(false);
-  let cvOpen = $state(false);
-  let applyBusy = $state(false);
-  let cvBusy = $state(false);
+let applyOpen = $state(false);
+let cvOpen = $state(false);
+let applyBusy = $state(false);
+let cvBusy = $state(false);
 
-  // Open URLs in tabs with a 300ms stagger so pop-up blockers don't kill them.
-  function openTabsStaggered(urls: string[]) {
-    urls.forEach((u, i) => {
-      setTimeout(() => window.open(u, '_blank', 'noopener'), i * 300);
+// Open URLs in tabs with a 300ms stagger so pop-up blockers don't kill them.
+function openTabsStaggered(urls: string[]) {
+  urls.forEach((u, i) => {
+    setTimeout(() => window.open(u, '_blank', 'noopener'), i * 300);
+  });
+}
+
+async function submitApply() {
+  if (applyBusy || applyTotal === 0) return;
+  applyBusy = true;
+  try {
+    const ids = applyCandidates.map((j) => j.id);
+    const r = await withMinDuration(
+      api.post<{
+        ok: boolean;
+        linkedInCount: number;
+        otherCount: number;
+        openInTabs: { id: string; url: string; company: string; role: string }[];
+        message: string;
+      }>('/api/bulk/apply', { jobIds: ids }, { silent: true }),
+      500,
+    );
+    // Open non-LinkedIn URLs in new tabs (browser-side; server can't do this)
+    if (r.openInTabs.length > 0) {
+      openTabsStaggered(r.openInTabs.map((t) => t.url));
+    }
+    // Build a precise success line so the user knows exactly what happened.
+    const parts: string[] = [];
+    if (r.linkedInCount > 0) parts.push(r.linkedInCount + ' via LinkedIn (auto)');
+    if (r.otherCount > 0) parts.push(r.otherCount + ' marked Applied + tabs opened');
+    toast.success('Bulk apply running', {
+      description:
+        parts.join(' · ') +
+        ' · Per-job events stream to the bell (top-right). Final summary toast pops when LinkedIn finishes. Failed jobs surface a Retry button.',
+      duration: 10_000,
     });
+    applyOpen = false;
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Bulk apply failed to start', {
+      description:
+        err.message + ' — no jobs were applied. Open Settings if a key is missing, then retry.',
+      action: { label: 'Retry', onClick: () => submitApply() },
+      duration: 12_000,
+    });
+  } finally {
+    applyBusy = false;
   }
+}
 
-  async function submitApply() {
-    if (applyBusy || applyTotal === 0) return;
-    applyBusy = true;
-    try {
-      const ids = applyCandidates.map((j) => j.id);
-      const r = await withMinDuration(
-        api.post<{
-          ok: boolean;
-          linkedInCount: number;
-          otherCount: number;
-          openInTabs: { id: string; url: string; company: string; role: string }[];
-          message: string;
-        }>('/api/bulk/apply', { jobIds: ids }, { silent: true }),
-        500,
-      );
-      // Open non-LinkedIn URLs in new tabs (browser-side; server can't do this)
-      if (r.openInTabs.length > 0) {
-        openTabsStaggered(r.openInTabs.map((t) => t.url));
-      }
-      // Build a precise success line so the user knows exactly what happened.
-      const parts: string[] = [];
-      if (r.linkedInCount > 0) parts.push(r.linkedInCount + ' via LinkedIn (auto)');
-      if (r.otherCount > 0) parts.push(r.otherCount + ' marked Applied + tabs opened');
-      toast.success('Bulk apply running', {
-        description:
-          parts.join(' · ') +
-          ' · Per-job events stream to the bell (top-right). Final summary toast pops when LinkedIn finishes. Failed jobs surface a Retry button.',
-        duration: 10_000,
-      });
-      applyOpen = false;
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Bulk apply failed to start', {
-        description: err.message + ' — no jobs were applied. Open Settings if a key is missing, then retry.',
-        action: { label: 'Retry', onClick: () => submitApply() },
-        duration: 12_000,
-      });
-    } finally {
-      applyBusy = false;
-    }
+async function submitCv() {
+  if (cvBusy || cvWillRun === 0) return;
+  cvBusy = true;
+  try {
+    const ids = cvCandidates.map((j) => j.id);
+    const r = await withMinDuration(
+      api.post<{ ok: boolean; queued: number; message: string }>(
+        '/api/bulk/cv',
+        { jobIds: ids },
+        { silent: true },
+      ),
+      500,
+    );
+    toast.success('Bulk CV started · ' + r.queued + ' queued', {
+      description:
+        'Sequential — each job logs "Bulk CV n/N" to the bell, then "Generate CV finished" or "failed" with retry. Final summary: "X generated · Y failed".',
+      duration: 10_000,
+    });
+    cvOpen = false;
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Bulk CV failed to start', {
+      description: err.message + ' — Claude Code CLI must be on PATH and a session must be active.',
+      action: { label: 'Retry', onClick: () => submitCv() },
+      duration: 12_000,
+    });
+  } finally {
+    cvBusy = false;
   }
-
-  async function submitCv() {
-    if (cvBusy || cvWillRun === 0) return;
-    cvBusy = true;
-    try {
-      const ids = cvCandidates.map((j) => j.id);
-      const r = await withMinDuration(
-        api.post<{ ok: boolean; queued: number; message: string }>(
-          '/api/bulk/cv',
-          { jobIds: ids },
-          { silent: true },
-        ),
-        500,
-      );
-      toast.success('Bulk CV started · ' + r.queued + ' queued', {
-        description:
-          'Sequential — each job logs "Bulk CV n/N" to the bell, then "Generate CV finished" or "failed" with retry. Final summary: "X generated · Y failed".',
-        duration: 10_000,
-      });
-      cvOpen = false;
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Bulk CV failed to start', {
-        description: err.message + ' — Claude Code CLI must be on PATH and a session must be active.',
-        action: { label: 'Retry', onClick: () => submitCv() },
-        duration: 12_000,
-      });
-    } finally {
-      cvBusy = false;
-    }
-  }
+}
 </script>
 
 {#if applyTotal > 0 || cvWillRun > 0}

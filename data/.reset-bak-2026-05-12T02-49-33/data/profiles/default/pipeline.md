@@ -1,0 +1,1965 @@
+# Pipeline Inbox
+
+Pending job URLs to evaluate. New scanner finds get appended here.
+
+| Date Added | Company | Role | URL | Source | Status |
+|---|---|---|---|---|---|
+
+## Pendientes
+
+- [ ] https://job-boards.eu.greenhouse.io/parloa/jobs/4843556101 | Parloa | Software Engineer, GTM
+- [ ] https://job-boards.eu.greenhouse.io/parloa/jobs/4824273101 | Parloa | Staff/Principal Software Engineer
+- [ ] https://boards.greenhouse.io/faire/jobs/8437749002?gh_jid=8437749002 | Faire | Backend Engineer
+- [ ] https://boards.greenhouse.io/faire/jobs/8532124002?gh_jid=8532124002 | Faire | Senior Fullstack Ads Engineer
+- [ ] https://boards.greenhouse.io/faire/jobs/8465041002?gh_jid=8465041002 | Faire | Senior Growth Platform Engineer
+- [ ] https://boards.greenhouse.io/faire/jobs/8523771002?gh_jid=8523771002 | Faire | Staff Backend Engineer - Search FX (Discovery Experience)
+- [ ] https://jobs.ashbyhq.com/vapi/d270d613-30b8-4fdc-96e0-514993ca7a82 | Vapi | Member of Technical Staff, Backend
+- [ ] https://jobs.ashbyhq.com/vapi/295f5269-1bb5-4740-81fa-9716adc32ad5 | Vapi | Member of Technical Staff, Infrastructure
+- [ ] https://jobs.ashbyhq.com/vapi/8c4b886d-da0a-4895-b025-83e35a3ce756 | Vapi | Member of Technical Staff, Product
+- [ ] https://jobs.ashbyhq.com/deepgram/68372d7d-b7a9-439e-a0a7-76690576aba4 | Deepgram | Software Engineer - Deepgram for Restaurants
+- [ ] https://jobs.ashbyhq.com/deepgram/7c7064bb-2bf0-4f64-81cc-14afe79a15c1 | Deepgram | Backend Software Engineer - Engine Team (Voice Agent)
+- [ ] https://jobs.ashbyhq.com/deepgram/4a873ede-8555-42ae-9ddc-ac89afdd7278 | Deepgram | Software Engineer, Voice Agents / AI - Deepgram for Restaurants
+- [ ] https://jobs.ashbyhq.com/deepgram/378e83b4-28c0-4b4e-8cf0-9355712bd06d | Deepgram | Billing & Analytics Software Engineer
+- [ ] https://job-boards.eu.greenhouse.io/polyai/jobs/4658649101 | PolyAI | Senior Full Stack Engineer  (Must be based in UK)
+- [ ] https://job-boards.eu.greenhouse.io/polyai/jobs/4853250101 | PolyAI | Senior Platform Software Engineer
+- [ ] https://job-boards.greenhouse.io/humeai/jobs/5064248008 | Hume AI | Senior Platform Engineer
+- [ ] https://job-boards.greenhouse.io/airtable/jobs/8442397002 | Airtable | Software Engineer, Compute (8+ YOE)
+- [ ] https://job-boards.greenhouse.io/airtable/jobs/8124953002 | Airtable | Software Engineer, Data
+- [ ] https://job-boards.greenhouse.io/airtable/jobs/8400373002 | Airtable | Software Engineer, Infrastructure (4-8 YOE)
+- [ ] https://job-boards.greenhouse.io/airtable/jobs/8397618002 | Airtable | Software Engineer, Product Backend (8+ YOE)
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5704320004 | Vercel | Software Engineer, Agent
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5798406004 | Vercel | Software Engineer, AI Gateway
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5474915004 | Vercel | Software Engineer, AI SDK
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5430088004 | Vercel | Software Engineer, Backend
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5179639004 | Vercel | Software Engineer, CDN
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5473266004 | Vercel | Software Engineer, CDN Security
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5551619004 | Vercel | Software Engineer, Compute
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5808568004 | Vercel | Software Engineer, Dashboard
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5633880004 | Vercel | Software Engineer, Deployment Infrastructure
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5813134004 | Vercel | Software Engineer, Domains
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5613601004 | Vercel | Software Engineer, Growth
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5661583004 | Vercel | Software Engineer, Lua
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5798416004 | Vercel | Software Engineer, Workflows
+- [ ] https://job-boards.greenhouse.io/intercom/jobs/7820671 | Intercom | AI Infrastructure Engineer
+- [ ] https://job-boards.greenhouse.io/intercom/jobs/7274831 | Intercom | Senior Full Stack Engineer - Team Web
+- [ ] https://job-boards.greenhouse.io/intercom/jobs/5082494 | Intercom | Senior Software Engineer
+- [ ] https://job-boards.greenhouse.io/intercom/jobs/7371989 | Intercom | Software Engineer
+- [ ] https://jobs.ashbyhq.com/elevenlabs/5881bc5d-765a-430e-9d28-7d598a0e1a03 | ElevenLabs | Full-Stack Growth Engineer 
+- [ ] https://jobs.ashbyhq.com/elevenlabs/c7d59014-b918-4c15-ae33-79f5c9f2cf9f | ElevenLabs | Full-Stack Engineer (Back-End Leaning)
+- [ ] https://jobs.ashbyhq.com/elevenlabs/ada7cd2c-8b9f-4f19-a88b-7c2ca1be1fde | ElevenLabs | Full-Stack Engineer (Front-End Leaning)
+- [ ] https://jobs.ashbyhq.com/elevenlabs/6a530871-b6c6-4783-ac6b-69cc3b084192 | ElevenLabs | Full-Stack Engineer
+- [ ] https://jobs.ashbyhq.com/elevenlabs/f80d0420-b6e6-4110-940c-293f64b9761e | ElevenLabs | Compliance Engineer - North America
+- [ ] https://jobs.ashbyhq.com/elevenlabs/03cefd49-972f-45b2-b6c7-9a42d133af0c | ElevenLabs | Compliance Engineer - APAC
+- [ ] https://jobs.ashbyhq.com/elevenlabs/01d0899b-0e40-4af2-a859-5d21962666b1 | ElevenLabs | Infrastructure Engineer (Data & Automations)
+- [ ] https://jobs.ashbyhq.com/elevenlabs/f4cfa7cc-5973-473d-93c6-68115d9e887d | ElevenLabs | Compliance Engineer - EU
+- [ ] https://jobs.ashbyhq.com/lindy/de321403-4e9e-4d91-aa5d-1f84d770a4a6 | Lindy | Staff Software Engineer
+- [ ] https://jobs.ashbyhq.com/lindy/04718014-2104-4725-9c80-079b732b7db4 | Lindy | Full Stack Software Engineer
+- [ ] https://jobs.ashbyhq.com/decagon/90c40e13-345e-4855-944e-c8f6b462a78e | Decagon | Senior Software Engineer, Agents
+- [ ] https://jobs.ashbyhq.com/decagon/7a22482c-e2d4-45b6-b364-89b63189a4ae | Decagon | Senior Software Engineer, Infrastructure
+- [ ] https://jobs.ashbyhq.com/decagon/7df0a996-5a9f-496f-9f8b-c302983765b2 | Decagon | Staff Software Engineer, Agent Orchestration
+- [ ] https://jobs.ashbyhq.com/decagon/2351ca53-b7fd-4835-b967-4ae2b976b5b4 | Decagon | Staff Software Engineer, Voice Agent
+- [ ] https://jobs.ashbyhq.com/decagon/75f544ae-7838-4ffa-9e6b-33d7e2b6ea2b | Decagon | Senior Software Engineer, Agent Orchestration
+- [ ] https://jobs.ashbyhq.com/decagon/3014316c-545f-43ea-a7f5-7dd909bc34ff | Decagon | Staff Software Engineer, Infrastructure
+- [ ] https://jobs.ashbyhq.com/decagon/03f56b39-866b-41b7-a805-9cf2e16373b9 | Decagon | Senior Software Engineer, Enterprise Product
+- [ ] https://jobs.ashbyhq.com/decagon/f83f5c1d-a4d7-4c63-beb5-611c97a9e11d | Decagon | Staff Software Engineer, Enterprise Product
+- [ ] https://jobs.ashbyhq.com/decagon/491d67c4-b877-4ddc-895a-496eed6777ed | Decagon | Senior Software Engineer, Developer Platform
+- [ ] https://jobs.ashbyhq.com/sierra/b16462e4-ce32-4ce9-b788-0a8f0f096361 | Sierra | Software Engineer, Product
+- [ ] https://jobs.ashbyhq.com/sierra/d77487f9-bab3-44c6-be18-744e7125c8b3 | Sierra | Software Engineer, Platform
+- [ ] https://jobs.ashbyhq.com/sierra/b7d1dbcd-ca72-472f-b15e-5b4b0f886be0 | Sierra | Software Engineer, Agent
+- [ ] https://jobs.ashbyhq.com/sierra/b3829801-8e0b-4047-8cd8-8a51c87028fd | Sierra | Software Engineer, Agent Architecture
+- [ ] https://jobs.ashbyhq.com/sierra/f391b10c-7a4a-42b4-9887-dd32b31d6e4e | Sierra | Software Engineer, Frontend
+- [ ] https://jobs.ashbyhq.com/sierra/f4319197-e898-4756-a7f2-af884fe1e0c7 | Sierra | Software Engineer, Intelligence
+- [ ] https://jobs.ashbyhq.com/sierra/55e76105-7f8d-42e8-b1d1-120b7b83922e | Sierra | Software Engineer, Infrastructure
+- [ ] https://jobs.ashbyhq.com/sierra/9ebc3a79-82bf-478d-bd98-d473d41bdeaf | Sierra | Software Engineer, Agent (German speaking)
+- [ ] https://jobs.ashbyhq.com/sierra/9d9e7d4a-2a27-4f64-9b1f-d79c5d3f129a | Sierra | Software Engineer, Agent (French speaking)
+- [ ] https://jobs.ashbyhq.com/sierra/aadfc0a0-93f6-454b-9767-c24793fa3eff | Sierra | Software Engineer, Agent (Spanish speaking)
+- [ ] https://jobs.ashbyhq.com/sierra/0c892d11-9f19-4b8d-9c2b-409346c52b7a | Sierra | Software Engineer, Agent Data Platform
+- [ ] https://jobs.ashbyhq.com/sierra/3914e14a-2339-4d49-97e8-3a0de793cfb1 | Sierra | Software Engineer, Site Reliability (SRE)
+- [ ] https://jobs.ashbyhq.com/sierra/1bd9c1e7-a2aa-428d-9a31-1a4eed26391f | Sierra | Software Engineer, Voice
+- [ ] https://jobs.ashbyhq.com/sierra/2fdb200f-c5cf-420c-9997-5e5cea6e1e20 | Sierra | Software Engineer, Agent Builder
+- [ ] https://jobs.ashbyhq.com/sierra/6207b02d-d334-4000-b84e-2af779171838 | Sierra | Software Engineer, Agent (Italian speaking)
+- [ ] https://jobs.ashbyhq.com/sierra/ce463311-0c6c-43d9-ab79-dd751743104f | Sierra | Software Engineer, Agent (Arabic speaking)
+- [ ] https://jobs.ashbyhq.com/sierra/5ed4bbfa-1c27-4242-be7f-b8dc4ce8c25f | Sierra | Software Engineer, Insights
+- [ ] https://jobs.ashbyhq.com/sierra/201c6046-acb5-4fd4-a685-e993f34ec0d1 | Sierra | Software Engineer, Security
+- [ ] https://jobs.ashbyhq.com/sierra/fc6eaada-479c-4ff6-be79-7e267b9ed2b4 | Sierra | Software Engineer, Identity & Enterprise Platform
+- [ ] https://jobs.ashbyhq.com/sierra/eb3ee157-3d2a-412a-88a2-e2cfc5647a66 | Sierra | Software Engineer, Agent - Healthcare
+- [ ] https://jobs.ashbyhq.com/sierra/b8a89b9a-70a1-4e47-874c-41542d1bc60a | Sierra | Software Engineer, Agent (Korean Speaking)
+- [ ] https://jobs.ashbyhq.com/sierra/1162dcd2-b181-49d5-9316-342cd68acbed | Sierra | Software Engineer, Agent (Thai Speaking)
+- [ ] https://jobs.ashbyhq.com/sierra/a4541730-ae7f-4771-b3e9-7f9da6cc5d23 | Sierra | Software Engineer, Agent (Cantonese Speaking)
+- [ ] https://job-boards.greenhouse.io/arizeai/jobs/5396420004 | Arize AI | Senior AI Product Engineer, Fullstack
+- [ ] https://job-boards.greenhouse.io/arizeai/jobs/5970222004 | Arize AI | Senior DevOps Engineer, APJ
+- [ ] https://job-boards.greenhouse.io/runpod/jobs/4142227008 | RunPod | Senior Software Engineer (Cloud) 
+- [ ] https://job-boards.greenhouse.io/runpod/jobs/4108951008 | RunPod | Site Reliability Engineer
+- [ ] https://job-boards.greenhouse.io/runpod/jobs/4785681008 | RunPod | Software Engineer (Full-Stack) 
+- [ ] https://job-boards.greenhouse.io/runpod/jobs/5020167008 | RunPod | Sr Director of Software Engineering - Product & Platform Delivery
+- [ ] https://jobs.ashbyhq.com/zapier/3b141014-1d0f-426e-94e5-997b2cfd6ae8 | Zapier | Sr. Fullstack Engineer, Identity Platform
+- [ ] https://jobs.ashbyhq.com/zapier/6948a0e6-a580-4e9d-b109-20652d9a1507 | Zapier | Software Engineer — Release Engineering
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4654833005 | Glean | Lead Site Reliability Engineer
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4598386005 | Glean | Lead Software Engineer, Product Backend
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4616929005 | Glean | Software Engineer, Agentic Runtime 
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4501783005 | Glean | Software Engineer, AI Infrastructure
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4605446005 | Glean | Software Engineer, AI & Security
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4006731005 | Glean | Software Engineer, Backend
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4675862005 | Glean | Software Engineer, Billing & Revenue Platform
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4638008005 | Glean | Software Engineer, Context Platform
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4637208005 | Glean | Software Engineer, Data Foundations
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4614706005 | Glean | Software Engineer, Developer Productivity 
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4006733005 | Glean | Software Engineer, Frontend
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4006734005 | Glean | Software Engineer, Fullstack
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4659229005 | Glean | Software Engineer, Insights
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4636739005 | Glean | Software Engineer, Platform
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4436194005 | Glean | Software Engineer, Platform Security
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4428090005 | Glean | Software Engineer, Product Backend
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4388073005 | Glean | Tech Lead Manager
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4656281005 | Glean | Technical Lead, Billing & Revenue Platform
+- [ ] https://jobs.ashbyhq.com/pinecone/4ef4269b-94c4-4c7c-93ee-15a882caa767 | Pinecone | Senior/Staff Software Engineer, Database Team
+- [ ] https://jobs.ashbyhq.com/pinecone/7ef089cb-a721-4ad8-a6d0-c390e64991d2 | Pinecone | Senior/Staff Software Engineer, Search & Retrieval Infrastructure
+- [ ] https://jobs.ashbyhq.com/pinecone/773e953d-8f53-4313-93b4-35a553bad1cb | Pinecone | Senior/Staff Software Engineer, Experience Platform
+- [ ] https://jobs.ashbyhq.com/n8n/640d55b3-3603-42f4-a05b-90962768fd16 | n8n | Sr Cloud Engineer | NodeJS + TS/JS | Europe remote
+- [ ] https://jobs.ashbyhq.com/n8n/b36e40e4-19d8-4d7e-a9b2-bddc9a59a63e | n8n | Sr Cloud Engineer | Europe remote
+- [ ] https://jobs.ashbyhq.com/cohere/b9c8c98e-b0fa-43b6-93b0-fa780d956066 | Cohere | Software Engineer, Security
+- [ ] https://jobs.ashbyhq.com/cohere/d5cc437c-2397-4c1a-9d12-3a2bf64d98ea | Cohere | Member of Technical Staff, Search
+- [ ] https://jobs.ashbyhq.com/cohere/f931c326-4d16-44b3-812c-99378c60280f | Cohere | Member of Technical Staff, Next Generation Agents
+- [ ] https://jobs.ashbyhq.com/cohere/ea5662f4-c27e-475e-a502-4ad8015a2906 | Cohere | Senior/Staff Backend Engineer
+- [ ] https://jobs.ashbyhq.com/cohere/70a8dc77-ac84-4790-aff6-13b4dcd4554a | Cohere | Member of Technical Staff, Agent Code
+- [ ] https://jobs.ashbyhq.com/cohere/2786dc50-5662-461a-9946-a821ad42816f | Cohere | Software Engineer, Collect
+- [ ] https://jobs.ashbyhq.com/cohere/4b000aff-7c0f-45a0-b67d-cf0cb2ea16a6 | Cohere | Senior/Staff Full-Stack Engineer
+- [ ] https://jobs.ashbyhq.com/cohere/64fb905c-b3b4-4fcf-9e1c-a806c9c40068 | Cohere | Software Engineer, Search Applications
+- [ ] https://jobs.ashbyhq.com/cohere/a5bbd015-65a9-48a1-aab1-b266bdbc9905 | Cohere | Senior Software Engineer, Security Agents
+- [ ] https://jobs.ashbyhq.com/cohere/f5f727bc-9eab-4fcc-9fdd-92a9ce47c37c | Cohere | Full-Stack Software Engineer, Inference
+- [ ] https://jobs.ashbyhq.com/cohere/70664617-84f6-4ee8-a4f6-4037ebfda9db | Cohere | Senior Software Engineer, Agent Infrastructure
+- [ ] https://jobs.ashbyhq.com/langchain/afb91b9b-46d5-4c9d-aa84-a4f1a3f74263 | LangChain | Senior Frontend Engineer, AI Observability & Evals Platform 
+- [ ] https://jobs.ashbyhq.com/langchain/a03b3e54-495d-4960-aee7-0194a3cef57d | LangChain | Senior Fullstack Engineer,  AI Observability & Evals Platform 
+- [ ] https://jobs.ashbyhq.com/langchain/ddf92275-1cc3-49c0-9f25-e8ded43b07f6 | LangChain | FullStack Engineer,  AI Observability & Evals Platform (LangSmith)
+- [ ] https://jobs.ashbyhq.com/langchain/f07c1416-f126-4925-8606-5dd7c5a90f6f | LangChain | Senior Backend Software Engineer, AI Observability & Evals Platform (LangSmith)
+- [ ] https://jobs.ashbyhq.com/langchain/6f32998b-111c-447b-b593-2b64c7de245d | LangChain | Senior Backend Engineer, Enterprise Readiness & Identity
+- [ ] https://jobs.ashbyhq.com/langchain/c75915ba-a32b-4e17-873d-19b47564170d | LangChain | Fullstack Software Engineer, Applied AI
+- [ ] https://jobs.ashbyhq.com/langchain/e725293d-c27b-4a79-959d-19f5618f2f8e | LangChain | Developer Productivity
+- [ ] https://jobs.ashbyhq.com/langchain/7b4aad6c-db46-489d-8426-72217e2923f2 | LangChain | Senior Fullstack Engineer, Growth & Monetization
+- [ ] https://jobs.ashbyhq.com/langchain/cb61f821-d8c4-4ec5-940d-3fd83be63a5f | LangChain | Senior Backend Engineer, LangSmith Deployments
+- [ ] https://jobs.ashbyhq.com/klue/945251b8-ecf0-47da-a04c-e3697445e4a7 | Klue | Senior Software Engineer, AI (Agents)
+- [ ] https://jobs.ashbyhq.com/klue/2fdcccfe-6520-4536-a7f3-3acf79829784 | Klue | Senior Software Engineer, AI
+- [ ] https://jobs.ashbyhq.com/klue/98227b52-ff84-440e-a14c-5ad3888f1d10 | Klue | Software Engineer, AI
+- [ ] https://jobs.ashbyhq.com/bland/a3a383e0-9c15-4777-a95b-536cb8c1174c | Bland AI | Senior Infrastructure Engineer
+- [ ] https://jobs.ashbyhq.com/glacis-ai/feea2cb6-60db-4afa-8358-ba17d05d1cd5 | Glacis AI | Founding Software Engineer - Agentic AI (Remote)
+- [ ] https://jobs.ashbyhq.com/glacis-ai/796efc69-0c03-45d9-9f54-f3de7bbccde9 | Glacis AI | Founding Software Engineer - Agentic AI (On-site)
+- [ ] https://careers.hootsuite.com/job/?gh_jid=7582752 | Hootsuite | Intermediate Software Developer, DevOps
+- [ ] https://careers.hootsuite.com/job/?gh_jid=7741151 | Hootsuite | Senior Software Developer, DevOps
+- [ ] https://jobs.ashbyhq.com/attio/ecbad555-41d3-41d0-a38a-435cfac65576 | Attio | Engineering Lead
+- [ ] https://jobs.ashbyhq.com/attio/c05a61a4-ae7c-4d93-a920-08d60c7448ad | Attio | Senior Platform Engineer 
+- [ ] https://boomi.com/boomi-jobs/?gh_jid=5786933004 | Boomi | Principal Software Engineer - AI 
+- [ ] https://boomi.com/boomi-jobs/?gh_jid=5963664004 | Boomi | Principal Software Engineer- UK Based
+- [ ] https://boomi.com/boomi-jobs/?gh_jid=5789786004 | Boomi | Senior Principal Software Engineer
+- [ ] https://boomi.com/boomi-jobs/?gh_jid=5776784004 | Boomi | Senior Software Engineer
+- [ ] https://boomi.com/boomi-jobs/?gh_jid=5789784004 | Boomi | Senior Software Engineer (Vancouver Hybrid)
+- [ ] https://boomi.com/boomi-jobs/?gh_jid=5792761004 | Boomi | Software Principal Engineer - SRE, Production Engineer​ing
+- [ ] https://boomi.com/boomi-jobs/?gh_jid=5977511004 | Boomi | Systems Engineer/Platform Developer- EMEA Remote
+- [ ] https://jobs.ashbyhq.com/DeepL/b14178e6-7ad2-4195-8934-1f94503a4918 | DeepL | Senior Staff Software Engineer | API
+- [ ] https://jobs.ashbyhq.com/DeepL/4fe3ffe8-da25-4b84-addc-8dd06aba9e2e | DeepL | Senior Software Engineer | API
+- [ ] https://job-boards.greenhouse.io/blackforestlabs/jobs/4925659008 | Black Forest Labs | Member of Technical Staff - Infrastructure Engineer
+- [ ] https://job-boards.greenhouse.io/blackforestlabs/jobs/5019171008 | Black Forest Labs | Member of Technical Staff - Large Scale Data Infrastructure
+- [ ] https://getyourguide.careers/jobs/6687709?gh_jid=6687709 | GetYourGuide | Legal Trainee (Rechtsreferendar)
+- [ ] https://getyourguide.careers/jobs/7526177?gh_jid=7526177 | GetYourGuide | Senior Software Engineer (Backend focused)
+- [ ] https://getyourguide.careers/jobs/7518806?gh_jid=7518806 | GetYourGuide | Senior Software Engineer (Backend focused) - Supply 
+- [ ] https://getyourguide.careers/jobs/7234277?gh_jid=7234277 | GetYourGuide | Senior Software Engineer,  Developer Enablement
+- [ ] https://getyourguide.careers/jobs/7728364?gh_jid=7728364 | GetYourGuide | Senior Software Engineer - (Frontend)
+- [ ] https://getyourguide.careers/jobs/7641281?gh_jid=7641281 | GetYourGuide | Senior Software Engineer, Revenue Platform (Backend Focused) 
+- [ ] https://getyourguide.careers/jobs/7581804?gh_jid=7581804 | GetYourGuide | Senior Software Engineer, Search Platform
+- [ ] https://getyourguide.careers/jobs/7607497?gh_jid=7607497 | GetYourGuide | Senior Software Engineer, User Profiles (Backend Focused) 
+- [ ] https://getyourguide.careers/jobs/7768438?gh_jid=7768438 | GetYourGuide | Software Engineer,  Developer Enablement
+- [ ] https://job-boards.greenhouse.io/contentful/jobs/7557597 | Contentful | Fullstack Software Engineer (f/m/d)
+- [ ] https://job-boards.greenhouse.io/contentful/jobs/7875509 | Contentful | Full Stack Software Engineer III
+- [ ] https://job-boards.greenhouse.io/contentful/jobs/7753183 | Contentful | Senior Backend Engineer - AI Platform (f/m/d)
+- [ ] https://job-boards.greenhouse.io/contentful/jobs/7682062 | Contentful | Senior Platform Engineer (f/m/d)
+- [ ] https://job-boards.greenhouse.io/contentful/jobs/7760962 | Contentful | Senior Software Engineer - Backend & Infrastructure (f/m/d)
+- [ ] https://job-boards.greenhouse.io/celonis/jobs/7559335003?gh_jid=7559335003 | Celonis | Senior Software Engineer - Java
+- [ ] https://job-boards.greenhouse.io/celonis/jobs/7678804003?gh_jid=7678804003 | Celonis | Senior Software Engineer - Orchestration and Automation
+- [ ] https://job-boards.greenhouse.io/celonis/jobs/7712675003?gh_jid=7712675003 | Celonis | Senior Software Engineer - Provisioning and Licensing
+- [ ] https://jobs.ashbyhq.com/cradlebio/ae6e6352-28e5-4b2f-b1d9-da7da078f011 | Cradle | Backend Software Engineer, Python
+- [ ] https://careers.hellofresh.com/global/en/job/7408822?gh_jid=7408822 | HelloFresh | Backend Engineer, Consumer
+- [ ] https://careers.hellofresh.com/global/en/job/7653839?gh_jid=7653839 | HelloFresh | Backend Engineer, Growth Alliance(m/f/d)
+- [ ] https://careers.hellofresh.com/global/en/job/7824435?gh_jid=7824435 | HelloFresh | Backend Engineer, Operations Technology (all genders)
+- [ ] https://careers.hellofresh.com/global/en/job/7195929?gh_jid=7195929 | HelloFresh | Process Workers
+- [ ] https://careers.hellofresh.com/global/en/job/7618894?gh_jid=7618894 | HelloFresh | Senior Backend Engineer, Active Journey Alliance 
+- [ ] https://careers.hellofresh.com/global/en/job/7601774?gh_jid=7601774 | HelloFresh | Senior Backend Engineer, Cart 
+- [ ] https://careers.hellofresh.com/global/en/job/7858597?gh_jid=7858597 | HelloFresh | Senior Backend Engineer, Consumer 
+- [ ] https://careers.hellofresh.com/global/en/job/7757845?gh_jid=7757845 | HelloFresh | Senior Backend Engineer, Deliveries and Orders
+- [ ] https://careers.hellofresh.com/global/en/job/7758211?gh_jid=7758211 | HelloFresh | Senior Backend Engineer, Deliveries & Orders (f/m/x)
+- [ ] https://careers.hellofresh.com/global/en/job/7774546?gh_jid=7774546 | HelloFresh | Senior Backend Engineer, Finance Tech
+- [ ] https://careers.hellofresh.com/global/en/job/7668433?gh_jid=7668433 | HelloFresh | Senior Backend Engineer, Growth Alliance
+- [ ] https://careers.hellofresh.com/global/en/job/7618797?gh_jid=7618797 | HelloFresh | Senior Backend Engineer, Growth Alliance (f/m/x) 
+- [ ] https://careers.hellofresh.com/global/en/job/7404963?gh_jid=7404963 | HelloFresh | Senior Backend Engineer, Operations
+- [ ] https://careers.hellofresh.com/global/en/job/7864484?gh_jid=7864484 | HelloFresh | Senior Backend Engineer, Operations (f/m/x)
+- [ ] https://careers.hellofresh.com/global/en/job/7757846?gh_jid=7757846 | HelloFresh | Senior Backend Engineer - Plans Squad (f/m/x)
+- [ ] https://careers.hellofresh.com/global/en/job/7841257?gh_jid=7841257 | HelloFresh | Senior Frontend Engineer, Consumer Alliance (all genders) 
+- [ ] https://careers.hellofresh.com/global/en/job/7862395?gh_jid=7862395 | HelloFresh | Senior Frontend Engineer, Consumer Alliance (f/m/x) 
+- [ ] https://careers.hellofresh.com/global/en/job/7749527?gh_jid=7749527 | HelloFresh | Senior Frontend Engineer, Growth Alliance (f/m/x) 
+- [ ] https://careers.hellofresh.com/global/en/job/7696242?gh_jid=7696242 | HelloFresh | Senior Infrastructure Engineer, Intelligent Platforms 
+- [ ] https://careers.hellofresh.com/global/en/job/7845008?gh_jid=7845008 | HelloFresh | Staff Backend Engineer, Customer Value Optimisation
+- [ ] https://careers.hellofresh.com/global/en/job/7807207?gh_jid=7807207 | HelloFresh | Staff Backend Engineer, Plans Squad (f/m/x)
+- [ ] https://www.scandit.com/careers/job-description/?gh_jid=7393559 | Scandit | Software Engineering Summer Job 2026
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8455160002 | Wayve | Application Software Engineer
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8460441002 | Wayve | Application Software Engineer - Relocation to Tokyo
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8483723002 | Wayve | Cloud Infrastructure Engineer
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8454715002 | Wayve | Principal Application Software Engineer
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8478636002 | Wayve | Principal Application Software Engineer - Relocation to Tokyo
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8458272002 | Wayve | Senior Cloud Site Reliability Engineer
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8482674002 | Wayve | Senior Fullstack Engineer - 3D Rendering
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8482664002 | Wayve | Senior Fullstack Engineer - Data Enrichment 
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8436432002 | Wayve | Site Reliability Engineer
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8397803002 | Wayve | Software Developer, 
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8482671002 | Wayve | Staff Fullstack Engineer - Onboard Experience 
+- [ ] https://job-boards.greenhouse.io/isomorphiclabs/jobs/5584160004 | Isomorphic Labs | Cloud Platform Engineer 
+- [ ] https://job-boards.greenhouse.io/isomorphiclabs/jobs/5749782004 | Isomorphic Labs | Full Stack Engineer
+- [ ] https://job-boards.greenhouse.io/isomorphiclabs/jobs/5978596004 | Isomorphic Labs | Platform Engineer - Security
+- [ ] https://job-boards.greenhouse.io/isomorphiclabs/jobs/5539669004 | Isomorphic Labs | Senior Platform Engineer 
+- [ ] https://job-boards.greenhouse.io/isomorphiclabs/jobs/5561630004 | Isomorphic Labs | Software Engineer (Compute Infra), London
+- [ ] https://jobs.ashbyhq.com/synthesia/22a00ec6-ac40-4b87-97bc-a0f7bf724be7 | Synthesia | Software Engineer, Front End Leaning (Tech Lead level)
+- [ ] https://jobs.ashbyhq.com/synthesia/bf515974-3bab-46cb-85fd-5bacafcc1a91 | Synthesia | Software Engineer, Back End Leaning (Tech Lead Level)
+- [ ] https://jobs.ashbyhq.com/synthesia/36ffd056-0141-487e-8f6c-83b52c074f62 | Synthesia | Software Engineer (Principal level)
+- [ ] https://jobs.ashbyhq.com/synthesia/e1fedec8-ea12-4e7f-95e1-475b95dbd517 | Synthesia | Software Engineer, Front End Leaning (Accessibility)
+- [ ] https://jobs.ashbyhq.com/synthesia/2206efb1-b165-48e5-84cc-baace2a1f4e1 | Synthesia | Staff Software Engineer, Enterprise
+- [ ] https://jobs.ashbyhq.com/synthesia/713ae2ad-aad2-48c9-987a-0d409ae52b00 | Synthesia | Infrastructure Engineer
+- [ ] https://jobs.ashbyhq.com/synthesia/3f9d85f6-0750-400f-a129-6a0f8ab76476 | Synthesia | Staff Fullstack Engineer, Avatars
+- [ ] https://jobs.ashbyhq.com/synthesia/8a301daa-94db-431f-8385-ad00bb215eda | Synthesia | Staff Backend Engineer, Avatars
+- [ ] http://stability.ai/careers?gh_jid=4712821101 | Stability AI | Senior Backend Engineer
+- [ ] http://stability.ai/careers?gh_jid=4679992101 | Stability AI | Senior Site Reliability Engineer 
+- [ ] https://jobs.ashbyhq.com/causaly/b197dd4a-dded-4f35-ab09-3bf757b64d2a | Causaly | Senior Software Engineer
+- [ ] https://jobs.ashbyhq.com/faculty/59ee3a48-389a-48db-9c0d-ddaf34b78586 | Faculty | Lead Software Engineer
+- [ ] https://jobs.ashbyhq.com/faculty/6c9b3973-b841-434f-8e77-f6078b364549 | Faculty | Software Engineer 
+- [ ] https://jobs.ashbyhq.com/faculty/8fdd616b-5d50-4c2b-aeff-0d4e90073ce8 | Faculty | Senior Software Engineer
+- [ ] https://jobs.ashbyhq.com/faculty/91c88cf4-cf93-43da-8d02-01a4fc8d9da5 | Faculty | Software Engineer
+- [ ] https://jobs.ashbyhq.com/faculty/67645c5e-abe8-434f-8013-f13e82259e81 | Faculty | Full Stack Software Engineer 
+- [ ] https://jobs.ashbyhq.com/faculty/b3c14108-5b60-492c-834f-0c1a03b399ba | Faculty | Senior Full Stack Software Engineer
+- [ ] https://jobs.ashbyhq.com/faculty/671e4b18-fda2-4d86-b675-adba5ca16d3f | Faculty | Senior Cloud Engineer
+- [ ] https://jobs.ashbyhq.com/faculty/ffb24889-b115-4f6e-8d69-cc385b95dac7 | Faculty | Platform Engineer
+- [ ] https://jobs.ashbyhq.com/faculty/bc4c8367-bf20-4ddc-88f2-6252af73929b | Faculty | Senior Software Engineer 
+- [ ] https://jobs.ashbyhq.com/lovable/cfef6fe1-e0c9-4139-8618-b51bfb1dc683 | Lovable | Data Platform Engineer
+- [ ] https://jobs.ashbyhq.com/lovable/b9894757-c26b-4c5e-9ee8-3e18d9947fd6 | Lovable | Fullstack Product Engineer
+- [ ] https://jobs.ashbyhq.com/lovable/e27e931e-79f3-483a-b543-57e42633ac5c | Lovable | Fullstack Engineer - AI Code Security
+- [ ] https://jobs.ashbyhq.com/lovable/99f2854e-4937-4227-b96a-81269b5f871d | Lovable | Platform Engineer - Developer Experience
+- [ ] https://jobs.ashbyhq.com/lovable/920b4099-00bc-4d5e-9469-2c955ef3a662 | Lovable | Software Engineer - Infrastructure
+- [ ] https://jobs.ashbyhq.com/lovable/1f86955c-2748-4cd6-bd69-7e5c2c3fe465 | Lovable | FullStack Engineer - Product Security
+- [ ] https://jobs.ashbyhq.com/lovable/581951b9-537e-49d5-89fb-dd74cdf3256c | Lovable | Fullstack Growth Engineer
+- [ ] https://jobs.ashbyhq.com/lovable/0d76fa8d-4aaa-41e2-b5d8-d316648bdff8 | Lovable | Fullstack Engineer - Lovable Apps Platform Team
+- [ ] https://jobs.ashbyhq.com/legora/8f04eacb-b330-4166-8c88-a77c9cc4f46f | Legora | Platform Engineer
+- [ ] https://jobs.ashbyhq.com/legora/9a04bbd8-0583-48de-9606-431c01079b8b | Legora | Software Engineer 
+- [ ] https://jobs.ashbyhq.com/legora/f1ed20ac-add0-47f0-a6c5-2d6cf5149117 | Legora | Software Engineer
+- [ ] https://jobs.ashbyhq.com/legora/056d9fc6-431c-40b6-b6ff-3a147b23b5c8 | Legora | Senior Software Engineer 
+- [ ] https://jobs.ashbyhq.com/legora/e1b04e64-3eff-4583-b083-dcebc754f80a | Legora | Senior Backend Engineer 
+- [ ] https://jobs.ashbyhq.com/legora/9cbd8455-89f5-46c7-b7ad-9a6255c8ebb4 | Legora | Staff Software Engineer
+- [ ] https://jobs.ashbyhq.com/legora/83972c5d-af77-41bb-8c3e-a60760c16310 | Legora | Staff Software Engineer 
+- [ ] https://jobs.ashbyhq.com/legora/97784bc1-e75b-4da9-89e0-e6e61a6d7e06 | Legora | Platform Engineer 
+- [ ] https://jobs.ashbyhq.com/legora/3fcdc6ba-e35f-470e-823e-7c4563c933a2 | Legora | Senior Software Engineer
+- [ ] https://jobs.ashbyhq.com/legora/04f2f382-7760-4f42-a7da-f85ae8de8a62 | Legora | Senior Site Reliability Engineer 
+- [ ] https://jobs.ashbyhq.com/legora/f81a4b5e-7ef3-4946-a147-f6c0645e98ca | Legora | Software Engineer (AI Focus)
+- [ ] https://jobs.ashbyhq.com/legora/c6d79161-748c-43a4-a762-95826ed8847f | Legora | Site Reliability Engineer 
+- [ ] https://jobs.ashbyhq.com/legora/c7a8d50e-c7f9-4a65-984d-dfa9239335e7 | Legora | Staff Site Reliability Engineer 
+- [ ] https://jobs.ashbyhq.com/legora/e4ce19dc-e800-42cd-835f-dcc43b96d004 | Legora | Software Engineer - AI Enablement & Workplace Technology
+- [ ] https://jobs.ashbyhq.com/perplexity/043d6a58-87a1-4e3c-bf47-4dc351b94cf4 | Perplexity | Member of Technical Staff (Software Engineer, Monetization)
+- [ ] https://jobs.ashbyhq.com/perplexity/b932d73f-49f3-4367-8fa7-a22f760e55a3 | Perplexity | Member of Technical Staff (Cloud Security Engineer)
+- [ ] https://jobs.ashbyhq.com/perplexity/598e1f7d-b802-4de2-99ac-90eb2bc33315 | Perplexity | Member of Technical Staff (AI Infrastructure Engineer)
+- [ ] https://jobs.ashbyhq.com/perplexity/cdbf6ccb-2078-4499-b0a6-af8a04754eee | Perplexity | Member of Technical Staff (AI Security Engineer)
+- [ ] https://jobs.ashbyhq.com/perplexity/dd80ab52-34bd-42af-aa5e-6283b7e6c194 | Perplexity | Member of Technical Staff (Backend/Infrastructure Engineer, Search)
+- [ ] https://jobs.ashbyhq.com/perplexity/27aa1a14-bc59-4613-a65a-38598695076f | Perplexity | Member of Technical Staff (Search Engine Developer, Search Core)
+- [ ] https://jobs.ashbyhq.com/perplexity/94ccf41e-d3e1-41aa-9569-c3bcbffc4184 | Perplexity | Member of Technical Staff (Backend Software Engineer, Search Crawler)
+- [ ] https://jobs.ashbyhq.com/perplexity/3c656963-876a-458d-bca6-916a42a24c1a | Perplexity | Member of Technical Staff (Software Engineer, Applied AI)
+- [ ] https://jobs.ashbyhq.com/perplexity/8673866c-f624-4b58-b171-752cf003630e | Perplexity | Member of Technical Staff (Software Engineer, AI Platform)
+- [ ] https://jobs.ashbyhq.com/perplexity/9ac5e638-85f6-4308-bcd5-7dfe0a30a79b | Perplexity | Member of Technical Staff (Backend Software Engineer, API Platform)
+- [ ] https://jobs.ashbyhq.com/perplexity/6c9b3c71-85ba-47db-bce5-44fd9fa95d03 | Perplexity | Member of Technical Staff (Software Engineer, Security)
+- [ ] https://jobs.ashbyhq.com/perplexity/bc1a6878-8de9-48c2-a791-95b2f8f27261 | Perplexity | Member of Technical Staff (AI Software Engineer, Agents)
+- [ ] https://jobs.ashbyhq.com/perplexity/c03bf199-9faa-48a4-809d-095c72b06000 | Perplexity | Member of Technical Staff (Software Engineer, Acceleration)
+- [ ] https://jobs.ashbyhq.com/perplexity/2cef7831-6ed3-4663-aec4-57f79f08c95a | Perplexity | Member of Technical Staff (Software Engineer, Infrastructure)
+- [ ] https://jobs.ashbyhq.com/perplexity/7755eb0a-0f51-4286-b75e-591e44c741bc | Perplexity | Member of Technical Staff (Software Engineer, Data Flywheel)
+- [ ] https://jobs.ashbyhq.com/perplexity/2b5a9f9c-7cd5-4579-b7c2-69d09e0214c8 | Perplexity | Member of Technical Staff (Backend Software Engineer)
+- [ ] https://jobs.ashbyhq.com/perplexity/4c0ac8bb-55bf-4fb0-b7d7-36d69f55e6c8 | Perplexity | Member of Technical Staff (Software Engineer, Computer)
+- [ ] https://jobs.ashbyhq.com/claylabs/9b008b26-189b-45cf-83d8-fee117d32874 | Clay Labs | Software Engineer, Developer Experience (AI)
+- [ ] https://jobs.ashbyhq.com/claylabs/045ce27d-8693-4402-86f6-2f09932cc777 | Clay Labs | Software Engineer, Full Stack
+- [ ] https://jobs.ashbyhq.com/claylabs/67edc68a-a18e-4f49-98ec-e2ff08f5d701 | Clay Labs | Site Reliability Engineer
+- [ ] https://jobs.ashbyhq.com/claylabs/248aa0c7-034f-47d3-a57e-ce16736eeab6 | Clay Labs | Software Engineer, Backend
+- [ ] https://jobs.ashbyhq.com/claylabs/18a42bd0-5bff-4c8e-a403-fb79aad2c57b | Clay Labs | Software Engineer, Frontend
+- [ ] https://jobs.ashbyhq.com/claylabs/3940ea40-4c11-40f5-b710-d770c88d0f1b | Clay Labs | Software Engineer, Infrastructure
+- [ ] https://job-boards.eu.greenhouse.io/physicsx/jobs/4815591101 | PhysicsX | Frontend Software Engineer - Simulation Workbench
+- [ ] https://job-boards.eu.greenhouse.io/physicsx/jobs/4791010101 | PhysicsX | Principal Software Engineer - Engineering Applications
+- [ ] https://job-boards.eu.greenhouse.io/physicsx/jobs/4789290101 | PhysicsX | Senior Software Engineer - AI Workbench 
+- [ ] https://job-boards.eu.greenhouse.io/physicsx/jobs/4820418101 | PhysicsX | Senior Software Engineer - Core Services 
+- [ ] https://job-boards.eu.greenhouse.io/physicsx/jobs/4804144101 | PhysicsX | Senior Software Engineer - Platform Operations
+- [ ] https://job-boards.eu.greenhouse.io/physicsx/jobs/4804155101 | PhysicsX | Senior Software Engineer - Platform Runtime
+- [ ] https://job-boards.eu.greenhouse.io/physicsx/jobs/4804130101 | PhysicsX | Senior Software Engineer - SRE Core Infrastructure
+- [ ] https://jobs.ashbyhq.com/workos/cff5a16f-fd1c-4b64-9b66-8a8321122375 | WorkOS | Site Reliability Engineer
+- [ ] https://jobs.ashbyhq.com/workos/f2674bd8-3062-4cf8-98fb-72cb81dc5d39 | WorkOS | Software Engineer - Frontend
+- [ ] https://jobs.ashbyhq.com/workos/26a54ffa-9465-4d13-bc5f-db41a2bbe505 | WorkOS | Infrastructure Engineer
+- [ ] https://jobs.ashbyhq.com/workos/07a7d732-ac5d-4aab-b4bf-ee89951660c2 | WorkOS | Software Engineer - Productivity
+- [ ] https://jobs.ashbyhq.com/workos/b6c03b24-b4ee-4ee3-ac62-5e5718c502d4 | WorkOS | Developer Experience Engineer
+- [ ] https://jobs.ashbyhq.com/workos/5e650527-d8dd-413a-9cfb-d7d68143274b | WorkOS | Software Engineer - Applied AI
+- [ ] https://jobs.ashbyhq.com/supabase/2ed5e80d-438b-47a5-9efe-12d168b8de81 | Supabase | Software Engineer - Support Tooling (APAC/AMER)
+- [ ] https://jobs.ashbyhq.com/supabase/894139b0-cc52-4fe4-b84f-ab6660b517d0 | Supabase | Infrastructure Engineer - Observability (APAC)
+- [ ] https://jobs.ashbyhq.com/supabase/8a49c4b3-a48b-4d6a-9c3c-36943fcd0dfb | Supabase | Software Engineer - Supavisor
+- [ ] https://jobs.ashbyhq.com/supabase/847a7bd7-6b75-444a-aeda-d0b28a11c764 | Supabase | Platform Engineer - Multicloud
+- [ ] https://jobs.ashbyhq.com/supabase/bf3628f2-f6e8-414e-a3fd-2f5ff481b60c | Supabase | AWS Tech Lead - Platform Operations
+- [ ] https://jobs.ashbyhq.com/resend/06bd9cb2-d189-41b6-baf7-42bd5da9610f | Resend | Developer Experience Engineer 
+- [ ] https://job-boards.greenhouse.io/hightouch/jobs/5701750004 | Hightouch | Developer Productivity Engineer
+- [ ] https://job-boards.greenhouse.io/hightouch/jobs/4620430004 | Hightouch |  Full Stack Product Engineer
+- [ ] https://job-boards.greenhouse.io/hightouch/jobs/5542602004 | Hightouch | Software Engineer, AI Agents
+- [ ] https://job-boards.greenhouse.io/hightouch/jobs/5809895004 | Hightouch | Software Engineer - AI Productivity
+- [ ] https://job-boards.greenhouse.io/hightouch/jobs/5983891004 | Hightouch | Software Engineer, Control Plane
+- [ ] https://job-boards.greenhouse.io/hightouch/jobs/5983811004 | Hightouch | Software Engineer, Customer Studio Backend
+- [ ] https://job-boards.greenhouse.io/hightouch/jobs/4782632004 | Hightouch | Software Engineer, Distributed Systems
+- [ ] https://job-boards.greenhouse.io/hightouch/jobs/5983863004 | Hightouch | Software Engineer, Streaming Systems
+- [ ] https://job-boards.greenhouse.io/hightouch/jobs/5734303004 | Hightouch | Web Engineer 
+- [ ] https://jobs.ashbyhq.com/inngest/ae72d036-b98b-4abb-8454-a687870cf0ca | Inngest | Distributed Systems Engineer - Platform
+- [ ] https://job-boards.eu.greenhouse.io/amplemarket/jobs/4488062101 | Amplemarket | Frontend Software Engineer
+- [ ] https://job-boards.eu.greenhouse.io/amplemarket/jobs/4066973101 | Amplemarket | Fullstack Software Engineer
+- [ ] https://job-boards.eu.greenhouse.io/amplemarket/jobs/4066899101 | Amplemarket | Senior Backend Software Engineer
+- [ ] https://job-boards.eu.greenhouse.io/amplemarket/jobs/4066888101 | Amplemarket | Spontaneous Application - Infrastructure Engineer
+- [ ] https://job-boards.greenhouse.io/planetscale/jobs/4009938009 | PlanetScale | Software Engineer - Information Security
+- [ ] https://job-boards.greenhouse.io/planetscale/jobs/4036240009 | PlanetScale | Software Engineer - Infrastructure
+- [ ] https://jobs.lever.co/pigment/d41c13a1-9fa5-4d4e-8f50-d3c10852c8e0 | Pigment | Fullstack Software Engineer
+- [ ] https://jobs.lever.co/pigment/5afbde72-ff75-4841-9ab5-2a95decbc6f2 | Pigment | Senior Backend Software Engineer
+- [ ] https://jobs.lever.co/pigment/068f30f5-4343-4a85-ba52-a35ca2e2581f | Pigment | Senior Backend Software Engineer (UK)
+- [ ] https://jobs.lever.co/pigment/cb04a184-0756-461c-b4b3-58f779a82b09 | Pigment | Senior Frontend Engineer (UK)
+- [ ] https://jobs.lever.co/pigment/24e3e6d8-56a3-4917-acbe-ec85d0c8cf13 | Pigment | Senior Frontend Software Engineer
+- [ ] https://jobs.lever.co/pigment/d4f42533-dabb-49c5-9846-24abbb3f61d8 | Pigment | Senior Fullstack Software Engineer
+- [ ] https://jobs.lever.co/pigment/e95eaef9-a07b-4dc8-af33-0b59fd242ac9 | Pigment | Senior SRE
+- [ ] https://jobs.lever.co/mistral/aceffeba-c4e9-4b3b-adff-e7e78b986c5c | Mistral AI | Applied AI Engineer, Fullstack Software Engineer - EMEA
+- [ ] https://jobs.lever.co/mistral/3e51d533-1f2d-48e3-9a2b-33fc7e8b0c0c | Mistral AI | Applied AI Engineer, Senior/Staff Devops/SRE - EMEA
+- [ ] https://jobs.lever.co/mistral/5538042e-f157-4a2c-a9ee-e412de9ba761 | Mistral AI | Applied AI Engineer, Senior/Staff Fullstack Software Engineer - Singapore
+- [ ] https://jobs.lever.co/mistral/f76907fd-428a-4824-a1cf-8013974fde29 | Mistral AI | Mistral Cloud - Site Reliability Engineer
+- [ ] https://jobs.lever.co/mistral/6e16e4fa-a60b-4270-a815-06b0450fb597 | Mistral AI | Site Reliability Engineer
+- [ ] https://jobs.lever.co/mistral/b320e972-3ed8-4d02-acb1-37950812cdbc | Mistral AI | Site Reliability Engineer - NYC
+- [ ] https://jobs.lever.co/mistral/305432ef-27ac-4012-a893-a662813ac6e9 | Mistral AI | Software Engineer,  Frontend
+- [ ] https://jobs.lever.co/mistral/77b8339f-da37-4f38-b554-1d154f72ca8f | Mistral AI | Software Engineer, Backend (London)
+- [ ] https://jobs.lever.co/mistral/f2e8ba75-bf5a-4976-bb96-c5d3e0f99366 | Mistral AI | Software Engineer, Backend (New-York)
+- [ ] https://jobs.lever.co/mistral/e76d2957-2bf6-4d8f-90a2-29bf9a927823 | Mistral AI | Software Engineer, Backend (Paris)
+- [ ] https://jobs.lever.co/mistral/31364497-4081-454a-b50c-12d15daf6876 | Mistral AI | Software Engineer, Deployment Infrastructure
+- [ ] https://jobs.lever.co/mistral/c9e16eb0-0cb9-423d-8495-a96d10782622 | Mistral AI | Software Engineer, DevEx
+- [ ] https://jobs.lever.co/mistral/3eef7a1f-cd9d-430e-ac67-9d52534c346a | Mistral AI | Software Engineer, Enterprise Agents
+- [ ] https://jobs.lever.co/mistral/70d5293a-9183-40d9-874a-cc08a14d5de6 | Mistral AI | Software Engineer, Knowledge and Search
+- [ ] https://jobs.lever.co/spotify/66492688-d5b0-4cf8-b1a4-4a715157edd9 | Spotify | Backend Engineer  - Data Infrastructure
+- [ ] https://jobs.lever.co/spotify/32d6a16a-e0b8-4049-8221-077dc514af48 | Spotify | Backend Engineer - Core Infrastructure
+- [ ] https://jobs.lever.co/spotify/db6450c7-5017-4aa5-8a64-52e39f1ed525 | Spotify | Backend Engineer - Data Platform
+- [ ] https://jobs.lever.co/spotify/0f8f7921-bcb4-444c-8ceb-4d3fa6459493 | Spotify | Backend Engineer - Music
+- [ ] https://jobs.lever.co/spotify/f542541d-3427-41fd-b7da-bf272bd8b755 | Spotify | Backend Engineer - Personalization
+- [ ] https://jobs.lever.co/spotify/e8ef80ed-633f-45ec-a1fc-a55704241f64 | Spotify | Backend Engineer - Platform
+- [ ] https://jobs.lever.co/spotify/58860a10-4a0d-4a21-a495-1f3605b300c1 | Spotify | Backend Engineer - User Platform
+- [ ] https://jobs.lever.co/spotify/830106b6-0055-4003-bcaa-370648915622 | Spotify | Backend Engineer- Release
+- [ ] https://jobs.lever.co/spotify/52fe2b49-3c85-4479-b1db-2c5ab74cbcfc | Spotify | Backend Engineer, Music
+- [ ] https://jobs.lever.co/spotify/454e6013-78ca-4009-9ad4-7597f2045d0a | Spotify | Backend Engineer, Podcast
+- [ ] https://jobs.lever.co/spotify/74c04c1a-afe8-4616-be68-ae452daed595 | Spotify | Full Stack Engineer
+- [ ] https://jobs.lever.co/spotify/69524356-88f8-4a8e-b543-0198670e4ceb | Spotify | Full Stack Engineer - Podcast
+- [ ] https://jobs.lever.co/spotify/2d1f743f-9174-413f-b824-6e426082ebeb | Spotify | Fullstack Engineer - Generative UI Platform
+- [ ] https://jobs.lever.co/spotify/6b0128ab-edeb-494b-b747-25cb35af4b6a | Spotify | Senior Backend Engineer - Audiobooks
+- [ ] https://jobs.lever.co/spotify/88b0a5ea-65d8-4c0c-8d1f-c30989ea5c16 | Spotify | Senior Backend Engineer - Commerce Platform
+- [ ] https://jobs.lever.co/spotify/4ce74372-9d9f-4fa1-86a3-9c96158a03c5 | Spotify | Senior Backend Engineer - Experimentation Platform
+- [ ] https://jobs.lever.co/spotify/05c0fde5-9553-4b1a-95ea-2b46f0e670bb | Spotify | Senior Backend Engineer - Music
+- [ ] https://jobs.lever.co/spotify/ab6947fc-adc4-41db-ad11-8fae741ceff0 | Spotify | Senior Backend Engineer - Personalization
+- [ ] https://jobs.lever.co/spotify/2cd04b53-ecfc-4de1-8e12-eab125720520 | Spotify | Senior Backend Engineer - Subscriptions
+- [ ] https://jobs.lever.co/spotify/516a9281-8c72-45a3-a17e-81f792cfd14c | Spotify | Senior Full Stack Engineer - Audiobooks
+- [ ] https://jobs.lever.co/spotify/7aa8f2c1-eaa7-445a-a2ed-9e1be3ae2dd4 | Spotify | Senior Fullstack Engineer - Backstage Portal, Data Experience
+- [ ] https://jobs.lever.co/spotify/0c364c03-4f52-4cbc-9dd1-8e2524d269ab | Spotify | Senior Fullstack Engineer - Commerce Platform
+- [ ] https://jobs.lever.co/spotify/6fe64020-9ec1-4aed-a15c-1c32dcda6248 | Spotify | Senior Fullstack Engineer - Data Platform
+- [ ] https://jobs.lever.co/spotify/cefb269f-ec27-4e16-8d7d-43307a832591 | Spotify | Senior Fullstack Engineer – Generative UI Platform
+- [ ] https://jobs.lever.co/spotify/fdfe281d-889c-478a-8f27-c9bc36b2b0cf | Spotify | Senior Site Reliability Engineer
+- [ ] https://jobs.lever.co/spotify/ad5ef898-b800-4213-a63e-e39a97df9cfb | Spotify | Site Reliability Engineer - Backstage
+
+
+- [ ] https://boards.greenhouse.io/faire/jobs/8523826002?gh_jid=8523826002 | Faire | Staff Backend Engineer - Search FX (Discovery Experience)
+- [ ] https://job-boards.greenhouse.io/intercom/jobs/7824142 | Intercom | AI Infrastructure Engineer
+- [ ] https://job-boards.greenhouse.io/intercom/jobs/7276257 | Intercom | Senior Full Stack Engineer - Team Web
+- [ ] https://job-boards.greenhouse.io/arizeai/jobs/5970210004 | Arize AI | Senior DevOps Engineer, APJ
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4581643005 | Glean | Software Engineer, Backend
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5431123004 | Vercel | Software Engineer, Backend
+- [ ] https://boomi.com/boomi-jobs/?gh_jid=5784409004 | Boomi | Senior Software Engineer
+- [ ] https://jobs.ashbyhq.com/klue/ed50e681-1363-4141-ae60-bca17eba5f04 | Klue | Software Engineer, AI
+- [ ] https://jobs.ashbyhq.com/attio/d973504f-6cdd-4eaa-912d-b8e8dc8703d9 | Attio | Senior Platform Engineer 
+- [ ] https://jobs.ashbyhq.com/attio/12b5faed-50b9-4b7a-80e8-af17b621cbe2 | Attio | Engineering Lead
+- [ ] https://careers.hootsuite.com/job/?gh_jid=7717102 | Hootsuite | Intermediate Software Developer, DevOps
+- [ ] https://jobs.ashbyhq.com/decagon/dc7c3b51-5be0-4890-a481-5bb200df48eb | Decagon | Senior Software Engineer, Enterprise Product
+- [ ] https://jobs.ashbyhq.com/decagon/bb53080a-2945-4d39-9ef3-ef9a6fce6219 | Decagon | Staff Software Engineer, Agent Orchestration
+- [ ] https://jobs.ashbyhq.com/decagon/762ee436-6acc-4700-9927-0e73d6dc4123 | Decagon | Senior Software Engineer, Agent Orchestration
+- [ ] https://jobs.ashbyhq.com/decagon/a4796fbc-b45c-4e1b-b1d2-1a17c0b4fa7a | Decagon | Senior Software Engineer, Infrastructure
+- [ ] https://jobs.ashbyhq.com/decagon/52943ef2-e3ed-44d8-ab3f-17dd28d0376d | Decagon | Staff Software Engineer, Enterprise Product
+- [ ] https://jobs.ashbyhq.com/decagon/cd95c25c-fdb7-4816-8a31-6d75e86adbe0 | Decagon | Senior Software Engineer, Agents
+- [ ] https://careers.hellofresh.com/global/en/job/7731719?gh_jid=7731719 | HelloFresh | Senior Infrastructure Engineer, Intelligent Platforms 
+- [ ] https://job-boards.greenhouse.io/contentful/jobs/7557586 | Contentful | Fullstack Software Engineer (f/m/d)
+- [ ] https://job-boards.greenhouse.io/contentful/jobs/7776562 | Contentful | Senior Backend Engineer - AI Platform (f/m/d)
+- [ ] https://job-boards.greenhouse.io/contentful/jobs/7760966 | Contentful | Senior Software Engineer - Backend & Infrastructure (f/m/d)
+- [ ] https://jobs.lever.co/pigment/bf7cacad-0f52-4db4-88d4-ad7b22bd852e | Pigment | Senior Backend Software Engineer
+- [ ] https://jobs.ashbyhq.com/causaly/e8a169c8-687c-4562-be87-6ee7c87cdbfb | Causaly | Senior Software Engineer
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8431122002 | Wayve | Application Software Engineer
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8460447002 | Wayve | Application Software Engineer - Relocation to Tokyo
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8431121002 | Wayve | Principal Application Software Engineer
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8478640002 | Wayve | Principal Application Software Engineer - Relocation to Tokyo
+- [ ] https://jobs.lever.co/spotify/ee5064af-0116-4ef2-994a-cb8fed580290 | Spotify | Backend Engineer, Music
+- [ ] https://jobs.lever.co/spotify/4cf40d3f-0ba2-443a-9ed1-62f7cdccba7b | Spotify | Senior Backend Engineer - Music
+- [ ] https://jobs.lever.co/spotify/3b493d83-5f06-4483-af6f-f2c471fe06d8 | Spotify | Senior Backend Engineer - Subscriptions
+- [ ] https://jobs.ashbyhq.com/legora/b0dcbd44-38c5-46fc-aa9a-610fe881fc1c | Legora | Senior Backend Engineer 
+- [ ] https://jobs.ashbyhq.com/legora/2ec4729a-82e2-4e7b-90d9-c9afb8e941bb | Legora | Senior Software Engineer
+- [ ] https://jobs.ashbyhq.com/legora/a5d017d8-4180-4db3-8cae-3a7f9fa4976c | Legora | Senior Site Reliability Engineer 
+- [ ] https://jobs.ashbyhq.com/legora/5dbc669c-9af2-4430-ba23-fd02a77b259e | Legora | Site Reliability Engineer 
+- [ ] https://jobs.ashbyhq.com/perplexity/60deb376-51b5-46c6-9e17-55377a5ef34e | Perplexity | Member of Technical Staff (AI Infrastructure Engineer)
+- [ ] https://jobs.ashbyhq.com/pinecone/499ce77a-7ed0-462e-9efb-3e7dad6cd5ad | Pinecone | Senior/Staff Software Engineer, Search & Retrieval Infrastructure
+- [ ] https://jobs.ashbyhq.com/sierra/e9f5fdb6-91ee-4c55-9230-41ec8865650e | Sierra | Software Engineer, Agent
+- [ ] https://jobs.ashbyhq.com/faculty/bcf086b9-f8b5-491b-b9b9-73d8cd6e23e8 | Faculty | Lead Software Engineer
+- [ ] https://jobs.ashbyhq.com/faculty/d27529f9-f917-4924-adb2-304cb097bfb2 | Faculty | Full Stack Software Engineer 
+- [ ] https://jobs.ashbyhq.com/faculty/20821b8b-1d11-4550-9d71-2a30ed56024e | Faculty | Senior Software Engineer 
+- [ ] https://jobs.ashbyhq.com/faculty/6af81a14-8524-4697-b82e-f76efc8b264d | Faculty | Software Engineer 
+- [ ] https://jobs.ashbyhq.com/faculty/f1eddd06-ca92-4ad7-ad70-4ed15e41e366 | Faculty | Software Engineer
+
+- [ ] https://job-boards.greenhouse.io/intercom/jobs/7824137 | Intercom | AI Infrastructure Engineer
+- [ ] https://job-boards.greenhouse.io/intercom/jobs/7818585 | Intercom | Engineering Manager, AI Models Infrastructure
+- [ ] https://job-boards.greenhouse.io/intercom/jobs/7825825 | Intercom | Senior Engineering Manager, Fin AI Agent
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5125387008 | Anthropic | Analytics Data Engineering Manager, Product
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5197529008 | Anthropic | Data Scientist, Developer Productivity
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/4017331008 | Anthropic | Research Engineer, Knowledge Team
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5211297008 | Anthropic | Staff Infrastructure Engineer, Cluster Infrastructure
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5211305008 | Anthropic | Staff Software Engineer, Kubernetes Platform
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5211498008 | Anthropic | Staff Software Engineer, Node Infra
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4592324005 | Glean | Software Engineer, University Grad
+- [ ] https://job-boards.greenhouse.io/arizeai/jobs/5693219004 | Arize AI | Senior DevOps Engineer, APJ
+- [ ] https://jobs.ashbyhq.com/decagon/28366d07-ae89-428c-8593-1840591bfc18 | Decagon | Software Engineer, Agents
+- [ ] https://boomi.com/boomi-jobs/?gh_jid=5988509004 | Boomi | Full Stack Developer, Web Production
+- [ ] https://job-boards.greenhouse.io/later/jobs/8531693002 | Later | ML Infrastructure Engineer
+- [ ] https://jobs.lever.co/mistral/de237900-114c-4e39-aa19-671bb3201eee | Mistral AI | Applied AI, Fullstack Software Engineer, Critical and Sovereign Institutions, Paris
+- [ ] https://jobs.lever.co/mistral/cb2986cc-4768-40b9-9d67-e53d78b247dc | Mistral AI | Applied AI, Technical Lead, Forward Deployed AI Engineer - Abu Dhabi
+- [ ] https://jobs.lever.co/mistral/cf4616fc-977a-475c-bb2e-eb46a2c4a94f | Mistral AI | Software Engineer, New Grad
+- [ ] https://apply.workable.com/j/274C879D56 | Semios | Senior Site Reliability Engineer
+- [ ] https://job-boards.greenhouse.io/blackforestlabs/jobs/4132230008 | Black Forest Labs | Member of Technical Staff - ML Infrastructure Engineer
+- [ ] https://job-boards.greenhouse.io/contentful/jobs/7721454 | Contentful | Engineering Manager - Workflows (f/m/d)
+- [ ] https://job-boards.greenhouse.io/contentful/jobs/7905720 | Contentful | Full Stack Engineer - Analytics (f/m/d)
+- [ ] https://job-boards.greenhouse.io/contentful/jobs/7553930 | Contentful | Fullstack Software Engineer (f/m/d)
+- [ ] https://job-boards.greenhouse.io/contentful/jobs/7757968 | Contentful | Senior Software Engineer - Backend & Infrastructure (f/m/d)
+- [ ] https://job-boards.greenhouse.io/celonis/jobs/7695040003?gh_jid=7695040003 | Celonis | Senior Applied AI Solutions Architect - Process Intelligence
+- [ ] https://n26.com/en-eu/careers/positions/7656921?gh_jid=7656921 | N26 | Backend Engineer - Customer Risk Lifecycle
+- [ ] https://n26.com/en-eu/careers/positions/7656920?gh_jid=7656920 | N26 | Senior Backend Engineer - Customer Risk Lifecycle
+- [ ] https://n26.com/en-eu/careers/positions/7774526?gh_jid=7774526 | N26 | Senior Site Reliability Engineer - Access Team
+- [ ] https://n26.com/en-eu/careers/positions/7736314?gh_jid=7736314 | N26 | Site Reliability Engineer - Access Team
+- [ ] https://jobs.lever.co/qonto/1f945bad-2c45-4ac1-be06-a219dc9e1a93 | Qonto | Software Engineer (Engineering Efficiency) - remote friendly
+- [ ] https://careers.hellofresh.com/global/en/job/7894001?gh_jid=7894001 | HelloFresh | Engineering Manager, Conversions Tech (all genders)
+- [ ] https://careers.hellofresh.com/global/en/job/7884372?gh_jid=7884372 | HelloFresh | Senior Backend Engineer, Food Systems (al genders) 
+- [ ] https://www.scandit.com/careers/job-description/?gh_jid=7563161 | Scandit | Engineering Manager, Platform 
+- [ ] https://jobs.ashbyhq.com/lakera.ai/6a6d1d9b-c4f9-45a1-a0e5-96061ba5a30f | Lakera | Engineering Manager, Guard Foundations (Zürich)
+- [ ] https://jobs.ashbyhq.com/lakera.ai/96b74068-6e27-4e68-875c-14c9b2f0dd5f | Lakera | Engineering Manager, Detectors (Zürich) 
+- [ ] https://jobs.ashbyhq.com/lakera.ai/25b1cf59-fee8-4009-a36f-2b0b83b3cc56 | Lakera | Software Engineer, Agentic team
+- [ ] https://sumup.com/careers/positions/8518889002?gh_jid=8518889002 | SumUp | Senior Backend Engineer - Global Expansion
+- [ ] https://sumup.com/careers/positions/8429621002?gh_jid=8429621002 | SumUp | Senior Backend Engineer - Golang
+- [ ] https://sumup.com/careers/positions/8364210002?gh_jid=8364210002 | SumUp | Senior Data Platform Engineer
+- [ ] https://sumup.com/careers/positions/8537166002?gh_jid=8537166002 | SumUp | Senior Fullstack Engineer (NodeJs) 
+- [ ] https://apply.workable.com/j/922D2C6549 | Hugging Face | Cloud ML DevRel Engineer - EMEA remote
+- [ ] https://apply.workable.com/j/F24E2E5058 | Hugging Face | Cloud ML DevRel Engineer - US remote
+- [ ] https://job-boards.greenhouse.io/isomorphiclabs/jobs/5481701004 | Isomorphic Labs | Director of Engineering (ML Platform), London
+- [ ] https://job-boards.eu.greenhouse.io/physicsx/jobs/4861386101 | PhysicsX | DevOps Consultant 
+- [ ] https://job-boards.eu.greenhouse.io/physicsx/jobs/4860241101 | PhysicsX | Forward Deployed Software Engineer
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8460443002 | Wayve | Application Software Engineer - Relocation to Tokyo
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8478639002 | Wayve | Principal Application Software Engineer - Relocation to Tokyo
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8539648002 | Wayve | Principal Software Engineer, Robot Software
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8537458002 | Wayve | Staff Cloud SRE – AI/ML Platform & GPU Compute
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8540064002 | Wayve | Tech Lead / Manager - Trajectory Generation and Controls
+- [ ] https://jobs.ashbyhq.com/photoroom/80fc804b-7770-49b5-a665-58aafa8069cb | Photoroom | Senior Software Engineer (FastAPI & Async Python)
+- [ ] https://jobs.lever.co/spotify/805d36ed-624c-41d4-9eaa-6f4bff7f53e3 | Spotify | Backend Engineer - Ads Measurement
+- [ ] https://jobs.lever.co/spotify/52550fb5-79dc-4bb6-af24-5364a1af2c44 | Spotify | Engineering Manager - AI Fleet Management & Honk
+- [ ] https://jobs.lever.co/spotify/7296f4cc-e5d1-4d63-8d2c-ebf0d5f7a10a | Spotify | Engineering Manager - Core Infrastructure
+- [ ] https://jobs.lever.co/spotify/63aec906-826b-4fa4-b3eb-d3bbac43503f | Spotify | Fullstack Engineer II - Conversational Analytic
+- [ ] https://jobs.lever.co/spotify/c857c37d-9fdc-4103-82cc-f1d252c120c3 | Spotify | Senior Backend Engineer - Subscriptions
+- [ ] https://jobs.ashbyhq.com/perplexity/bf58f336-d644-4679-a771-69db80c7694f | Perplexity | Developer Relations Manager - Perplexity API Platform 
+- [ ] https://jobs.ashbyhq.com/resend/a95832a8-a2ab-4a63-8303-9989f1fc47d6 | Resend | Backend Engineer, Core Sending
+- [ ] https://jobs.ashbyhq.com/deepgram/f4632ab4-f20b-4c8b-96a1-b2b9595c189e | Deepgram | Senior Developer Advocate
+- [ ] https://jobs.ashbyhq.com/sierra/43e6eda7-6e46-43e8-82a5-6e5035f063bb | Sierra | Software Engineer, Agent
+- [ ] https://jobs.ashbyhq.com/sierra/23efd6e0-a64d-4421-b684-bbd44e5c752e | Sierra | Developer Relations Engineer
+- [ ] https://jobs.ashbyhq.com/faculty/b7190a53-1d91-4852-b2b9-e6eaa3e5d0ed | Faculty | Lead Software Engineer
+
+- [ ] https://job-boards.greenhouse.io/intercom/jobs/7784684 | Intercom | Engineering Manager, AI Models Infrastructure
+- [ ] https://job-boards.greenhouse.io/intercom/jobs/7825844 | Intercom | Senior Engineering Manager, Fin AI Agent
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5211241008 | Anthropic | Staff Software Engineer, Kubernetes Platform
+- [ ] https://jobs.ashbyhq.com/sierra/df431e56-56f5-42ed-bc62-7d6f7041bd27 | Sierra | Software Engineer, Agent
+- [ ] https://n26.com/en-eu/careers/positions/7768035?gh_jid=7768035 | N26 | Senior Site Reliability Engineer - Access Team
+- [ ] https://n26.com/en-eu/careers/positions/7735448?gh_jid=7735448 | N26 | Site Reliability Engineer - Access Team
+- [ ] https://www.scandit.com/careers/job-description/?gh_jid=7563158 | Scandit | Engineering Manager, Platform 
+- [ ] https://jobs.ashbyhq.com/faculty/043ba183-f468-4b8d-a61c-c536247c803e | Faculty | Lead Software Engineer
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8460271002 | Wayve | Application Software Engineer - Relocation to Tokyo
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8478637002 | Wayve | Principal Application Software Engineer - Relocation to Tokyo
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8540492002 | Wayve | Tech Lead / Manager - Trajectory Generation and Controls
+
+- [ ] https://jobs.ashbyhq.com/sierra/b89816c1-80b2-449b-b69e-2c261b8e9e23 | Sierra | Software Engineer, Agent
+- [ ] https://www.scandit.com/careers/job-description/?gh_jid=7552619 | Scandit | Engineering Manager, Platform 
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8460272002 | Wayve | Application Software Engineer - Relocation to Tokyo
+- [ ] https://wayve.firststage.co/jobs?gh_jid=8478638002 | Wayve | Principal Application Software Engineer - Relocation to Tokyo
+- [ ] https://jobs.ashbyhq.com/faculty/4aad6acf-ec5a-45f4-99d4-1a36966fdd06 | Faculty | Lead Software Engineer
+
+## JobSpy broad scan (455 new)
+
+- [ ] https://ca.indeed.com/viewjob?jk=23f5282f9cfa6ff0 | Remitly | Senior Full-Stack Engineer, Home and Explore | Burnaby, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=77d153649ec6cede | Electronic Arts | Software Engineer II - Front-End (EAX) | Vancouver, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=15aa105eab1d466c | Electronic Arts | Software Engineer II - Front-End (EAX) | Vancouver, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=8020c85b249d4ec2 | Amazon.com | Front-End Engineer II, Route 53 Console | Vancouver, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=47058cab39c93d8d | Amazon.com | Sr. Software Development Engineer, ASP Screen Experience | Vancouver, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=d6d7804d212e6e90 | RBC | Senior Full Stack Engineer | Vancouver, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=7da56a70241c42f5 | RBC | Senior Full Stack Mobile Developer - Mydoh | Vancouver, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=5c6bd8738c411871 | RBC | Senior Full Stack Engineer | Vancouver, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=37404dc5aac8645b | RBC | Senior Software Engineer I | Vancouver, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=65e7c45b05710c3b | Workday | Sr Software Development Engineer | Vancouver, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=70cd6cae87b8d4a7 | Rival Technologies | Senior Software Engineer | Vancouver, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=1026254408058fb4 | RBC | Senior Application Developer (Global Security) | Vancouver, BC, CA
+- [ ] https://www.linkedin.com/jobs/view/4299767586 | Agoda | Lead Software Engineer - Front End (Bangkok based, Relocation provided) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4399583667 | Workday | Sr Software Developer in Test (SDET) - Evisort | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4410277083 | Amazon | Sr. Software Development Engineer, ASP Screen Experience | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4408799885 | Agoda | Lead Software Engineer - iOS (Bangkok based, Relocation provided) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4395064619 | ScalePad | Senior Software Developer | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4409142095 | Rival Technologies | Senior Software Engineer | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4368778526 | Autodesk | Senior Software Developer | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4407662942 | Geotab | Senior Software Developer, Burnaby / Remote | Burnaby, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4407218385 | Workday | Sr Software Development Engineer | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4407090532 | Pillexa | Senior Software Engineer | Surrey, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4358088704 | Workday | Sr Software Development Engineer (Full Stack) - Evisort AI | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4377840631 | Microsoft | Senior Software Engineer -Front End Development | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4407008787 | ITC Infotech | Senior Web Application Developer | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4408290593 | Optum | Senior Software Engineer - Remote | Richmond, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4410777815 | Brex | Senior Software Engineer, Frontend | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4377295813 | Veeva Systems | Senior Software Engineer - Full Stack | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4409738940 | Topicflow | Senior Software Engineer | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4406814531 | Remitly | Senior Software Development Engineer, WARP | Burnaby, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4410721342 | Motion Recruitment | Software Architect | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4408484404 | myGwork - LGBTQ+ Business Community | Sr. Software Development Engineer, ASP Screen Experience | Vancouver, British Columbia, Canada
+- [ ] https://ca.indeed.com/viewjob?jk=1c0648c7eef302ca | Photonic | Senior Technical Lead, Government Programs | Coquitlam, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=042469ec2cc2272c | RBC | Senior Full Stack Developer | Vancouver, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=fa2d890b6258897b | RBC | Senior Data Engineer, GFT | Vancouver, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=08ce2df6b90f0bd7 | Asana | Senior Software Engineer, Account Management | Vancouver, BC, CA
+- [ ] https://www.linkedin.com/jobs/view/4299758999 | Agoda | Staff Software Engineer - Full Stack (Bangkok based, Relocation provided) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4409874387 | Agoda | Lead Software Engineer, Back End - L5 (Bangkok based - Relocation provided) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4409863563 | Agoda | Back End Lead Software Engineer - Accommodation/Flights/Supply/FinTech(Bangkok based - Relocation provided) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4408994054 | Best Buy Canada | Intermediate Frontend Developer | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4410257628 | Amazon Web Services (AWS) | Front-End Engineer II, Route 53 Console | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4410006873 | MatchBox Consulting Group | Fullstack Engineer | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4375559717 | Electronic Arts (EA) | Full Stack Web Developer (Next.js / TypeScript / Node.js) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4359555814 | Workday | Software Development Engineer (Full Stack) - Evisort AI | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4399303156 | Electronic Arts (EA) | Full-Stack Software Engineer I | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4409567837 | nesto | Frontend Developer | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4316110036 | Canaccord Genuity Group Inc. | Senior Full-stack Developer | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4407255062 | Electronic Arts (EA) | Backend Software Engineer II (Node.js) - EAX | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4409503643 | Push Operations | Full Stack Software Engineer - Platform | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4346044730 | Remarcable | Software Engineer (Full Stack) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4388163399 | Amazon Web Services (AWS) | Front-end Engineer III, AWS EventBridge | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4381981237 | Microsoft | Principal Software Engineer (Frontend/Full Stack) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4381966482 | Microsoft AI | Principal Software Engineer (Frontend/Full Stack) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4365277710 | Microsoft | Software Engineer II | Fullstack React | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4387405151 | Amazon | Front End Engineer, Chronicle Analytics | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4376475844 | Autodesk | Principal Full Stack Developer - Vancouver | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4407029509 | PRI Global | Senior Software Engineer – Backend (Java) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4381964545 | Microsoft AI | Principal Software Engineer (Frontend/Full Stack) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4408541666 | TMX Group | Full Stack Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4410763062 | Total Life | Full Stack Developer | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4408483300 | Lightspeed Commerce | Senior Full Stack Developer- (Go & React) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4402724926 | EviSmart™ | Lead Front End Engineer | Vancouver, British Columbia, Canada
+- [ ] https://ca.indeed.com/viewjob?jk=db49c91fd026758e | Flexy Group | Senior Software Engineer – Cyclos Platform (Digital Payments & Online Banking) | Lasalle, QC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=aa5fc70207f0c01e | Owner.com | Senior Software Engineer, Frontend (Quick Service) | CA
+- [ ] https://ca.indeed.com/viewjob?jk=602d9be702164c4d | VS Media Inc | Staff Engineer | BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=e39ae352faca15ea | Sophos Technology GmbH | Software Engineer | CA
+- [ ] https://ca.indeed.com/viewjob?jk=3ead0cadbb4ccb8f | Strong Links | Senior Software Developer | Toronto, ON, CA
+- [ ] https://ca.indeed.com/viewjob?jk=44144759cf77defd | ScriptRunner | Engineering Team Lead | Toronto, ON, CA
+- [ ] https://ca.indeed.com/viewjob?jk=91ecb93279f8f974 | Priceline.com | Development Manager (Java Full-Stack) | Toronto, ON, CA
+- [ ] https://ca.indeed.com/viewjob?jk=64d0d60076b2400b | Rival Technologies | Senior DevOps Engineer | Calgary, AB, CA
+- [ ] https://ca.indeed.com/viewjob?jk=7f0fd31729423d3f | Rival Technologies | Senior DevOps Engineer | Toronto, ON, CA
+- [ ] https://ca.indeed.com/viewjob?jk=d9d3319198d6281c | Rival Technologies | Senior DevOps Engineer | Montréal, QC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=7c75278ee3fac229 | IKS Health | Associate Director, AI Architect - Ontario, Canada (Remote) | Remote, CA
+- [ ] https://ca.indeed.com/viewjob?jk=80160291d4911979 | IKS Health | Director, Senior AI Engineer - Ontario, Canada (Remote) | Remote, CA
+- [ ] https://ca.indeed.com/viewjob?jk=d1213602944a34ad | Magnet Forensics | Technical Lead, Front End Technologies | CA
+- [ ] https://ca.indeed.com/viewjob?jk=1443b96435189cb2 | Toboggan Labs | Développeur·euse plateforme senior - Senior Platform Developer | Montréal, QC, CA
+- [ ] https://www.linkedin.com/jobs/view/4410297446 | Mysten Labs | Senior Software Engineer, TypeScript SDK | Toronto, Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4353672608 | DoiT | Senior Software Engineer - SELECT by DoiT | 
+- [ ] https://www.linkedin.com/jobs/view/4400615674 | StackAdapt | Senior Full Stack Software Engineer | Toronto, Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4407933926 | Sprout Family | Sr Software Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4368777566 | Autodesk | Senior Software Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4409422402 | BlueDot | Senior Front-End Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4400309784 | Chainlink Labs | Senior Software Engineer, CCIP | 
+- [ ] https://www.linkedin.com/jobs/view/4409460364 | Vena Solutions | Senior Software Developer in Test | 
+- [ ] https://www.linkedin.com/jobs/view/4378364427 | Motion (Creative Analytics) | Senior Software Engineer (Backend) | Kitchener, Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4376900180 | Kraken | Senior Software Engineer - React Native - Payments | 
+- [ ] https://www.linkedin.com/jobs/view/4386869825 | Affirm | Senior Software Engineer, Fullstack (Consumer Engineering) | Hamilton, Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4386867792 | Affirm | Senior Software Engineer, Fullstack (Consumer Engineering) | Oshawa, Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4386877385 | Affirm | Senior Software Engineer, Fullstack (Consumer Engineering) | Kitchener, Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4386868807 | Affirm | Senior Software Engineer, Fullstack (Consumer Engineering) | Victoria, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4408717303 | Laivly | Senior Full Stack Software Developer | Winnipeg, Manitoba, Canada
+- [ ] https://www.linkedin.com/jobs/view/4409043027 | Akraya, Inc. | Senior Software Engineer, Core Identity & Security : 26-01255 | Toronto, Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4378368403 | Motion (Creative Analytics) | Senior Software Engineer (Backend) | Toronto, Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4396376230 | Apryse | Senior Software Engineer (Web SDK Platform, Frontend) | Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4372591036 | Applied Systems Canada | Software Engineer / Sr Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4386882101 | Affirm | Senior Software Engineer, Fullstack (Consumer Engineering) | Toronto, Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4402839222 | Lightspeed Commerce | Senior Full Stack Software Developer (React.js focus) | Ottawa, Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4386867789 | Affirm | Senior Software Engineer, Fullstack (Consumer Engineering) | London, Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4408282924 | Motion (Creative Analytics) | Senior Software Engineer (Infrastructure) | Ottawa, Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4408292263 | Motion (Creative Analytics) | Senior Software Engineer (Infrastructure) | Montreal, Quebec, Canada
+- [ ] https://www.linkedin.com/jobs/view/4409712140 | Rocket Financial Inc | Senior Java Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4409050157 | Vertisystem (A MOURI Tech Company) | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4393043965 | eDynamic Learning | Principal Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4410711830 | Vertisystem (A MOURI Tech Company) | Senior Software Engineer in Core Identity | Greater Toronto Area, Canada
+- [ ] https://www.linkedin.com/jobs/view/4410911683 | Owner.com | Senior Software Engineer, Frontend (Quick Service) | 
+- [ ] https://www.linkedin.com/jobs/view/4409748191 | Hive.co | Senior Software Developer | Kitchener, Ontario, Canada
+- [ ] https://www.indeed.com/viewjob?jk=ff1ea12223b39d54 | Openkyber | Lead Backend Engineer (Python) | GA, US
+- [ ] https://www.indeed.com/viewjob?jk=b282d2a0423a823e | Waymo | Senior Frontend Engineer, Waymo for Business | Mountain View, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=15eb90498bcba242 | Terra Quantum | Senior Software Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=5c6d173b29bad95d | Radians | SENIOR AI ENGINEER (ONSITE ROLE) | Memphis, TN, US
+- [ ] https://www.indeed.com/viewjob?jk=d6f51dfeaed49375 | nan | Senior DevOps Software Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=0441e5a2f9112533 | Curative, Inc. | Software Engineer L2 | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=8f00758d5a40917c | Principal Financial Group | Senior Software Engineer II, Platform Modernization Technology Enablement | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=63f77259bf423ec5 | PowerSchool Group | Senior Software Engineer | Dallas, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=e9ff62e788263eac | UT Southwestern Medical Center | Senior Software Engineer, Innovation Hub | Dallas, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=5bd23b6ede339fe3 | Veristat | Senior AI Software Engineer | MA, US
+- [ ] https://www.indeed.com/viewjob?jk=42f62e85e6fe2818 | Capital One | Senior Lead Software Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=21b008de670530ad | ICF | Senior Software Engineer (Backend) - Remote | Reston, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=4c943e80adb40505 | GameChanger | Senior Backend Software Engineer, Subscriptions Enablement | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=83e1602f7821db4b | nan | Senior Software Engineer (Product) | Boston, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=2bedc9c681f070b5 | Esquire Deposition Solutions | AI Senior Engineer | Atlanta, GA, US
+- [ ] https://www.indeed.com/viewjob?jk=7b7e056353c84f59 | Tempus | Associate Director of Bioinformatics | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=1fdc30dabceb24fc | New Relic | Sr. Manager, Software Engineering - Logging UI | Portland, OR, US
+- [ ] https://www.indeed.com/viewjob?jk=33a971edeec7d05a | Cracker Barrel | Senior Fullstack Developer | Nashville, TN, US
+- [ ] https://www.indeed.com/viewjob?jk=0fcc7dda5d387b66 | Cox Automotive | Software Engineer I | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=c1eb192cbe5bf63e | Akina, Inc. | Software Engineer 2 - (Full Stack, JavaScript, React) | Fort Meade, MD, US
+- [ ] https://www.indeed.com/viewjob?jk=df56add9e7826875 | Toyota North America | Senior Software Engineer | Plano, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=f67a2073c38ea529 | Remitly | Senior Software Development Engineer, High Value Send | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=b876a3193fa30692 | General Motors (GM) | Senior Digital Twin Software Engineer | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=2869bf44c687201e | Guidehouse | Senior Full Stack Engineer, HR Applications | San Antonio, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=0f3f73e8b114eb5c | Waymo | Senior Frontend Engineer, Expansion Tooling | Mountain View, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=a89db083ea77019b | VTG Defense | Senior Software Engineer | Chantilly, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=5f977c2f5463e6d4 | Information Technology Senior Management Forum | Senior Lead Software Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=b922a076b3a6f44f | The Vitamin Shoppe | Engineer, Sr Software - Front End | Secaucus, NJ, US
+- [ ] https://www.indeed.com/viewjob?jk=0d2715d9d2734414 | Togetherwork | Sr. Software Engineer Frontend | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=2d9fd793f8a722de | nan | Software Engineer, Artificial Intelligence/LLM (Multiple Seniority Levels) | San Carlos, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=7e7a2e8fe9edcb40 | EagleView | Sr. Software Engineer | Rochester, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=2370038ffbe8acac | Handshake | Senior Software Engineer - Pay & Safety | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=28cab4deb1fcdb68 | Owner.com | Senior Software Engineer, Frontend (Quick Service) | US
+- [ ] https://www.indeed.com/viewjob?jk=28aca53de116cad0 | Accelerate Learning Inc. | Senior Software Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=8de7204869f5e66f | Parallax Advanced Research | Senior Software Engineer | Beavercreek, OH, US
+- [ ] https://www.indeed.com/viewjob?jk=bcc6fa1baccf83e5 | Blue Shield of California | Full Stack Engineer, Senior | Oakland, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=d0442f7986945f9f | Adobe | Senior Software Development Engineer | San Jose, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=70f45ea5097a8b02 | Victory Live | Principal Software Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=a1c259f0b00d1299 | Victory Live | Senior Software Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=d1d964fb7636758e | Schneider Electric | Senior Software Engineer, Full Stack | Louisville, KY, US
+- [ ] https://www.indeed.com/viewjob?jk=b63296ed823a211a | Kastle Systems | Senior Mobile App Developer | Falls Church, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=116321875e40c3c5 | Information Technology Senior Management Forum | Senior Lead Software Engineer, Full Stack | McLean, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=b5a431c3c133bc61 | nan | Engineer II - Full stack - Python/Django + Typescript on AWS (Mumbai) | IN, US
+- [ ] https://www.indeed.com/viewjob?jk=aac6489ebe8e9bc3 | Amazon.com | Senior Software Engineer, Enterprise Platform | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=e68b271f1508519e | Amazon.com | Senior Software Engineer, Enterprise Platform | Irvine, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=109d02f92226c3d7 | Amazon.com | Senior Software Engineer, Enterprise Platform | Seattle, WA, US
+- [ ] https://www.linkedin.com/jobs/view/4408452112 | Victory Live | Senior Software Engineer | Atlanta, GA
+- [ ] https://www.linkedin.com/jobs/view/4408940404 | BuildBuddy | Senior Software Engineer | Palo Alto, CA
+- [ ] https://www.linkedin.com/jobs/view/4408454178 | Victory Live | Principal Software Engineer | Atlanta, GA
+- [ ] https://www.linkedin.com/jobs/view/4408997614 | Jobgether | Senior Software Engineer, Product | 
+- [ ] https://www.linkedin.com/jobs/view/4410098476 | Corporation PSI Intl Inc | Sr Software Engineer I (Expansion - Integrations) | 
+- [ ] https://www.linkedin.com/jobs/view/4400840652 | CareMetx, LLC | Senior Software Engineer II | 
+- [ ] https://www.linkedin.com/jobs/view/4407960769 | Agiloft | Senior Software Engineer Full Stack | 
+- [ ] https://www.linkedin.com/jobs/view/4410251966 | Optro | Senior Software Engineer II, Platform UI (Remote) | 
+- [ ] https://www.linkedin.com/jobs/view/4409087470 | Vertisystem (A MOURI Tech Company) | Senior Software Engineer Core Identity | 
+- [ ] https://www.linkedin.com/jobs/view/4359655678 | Immuta | Sr. Software Engineer (Agentic Access) | 
+- [ ] https://www.linkedin.com/jobs/view/4398773344 | FranklinCovey | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4318509055 | Invert | Senior Software Engineer (North America) | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4321817515 | Kraken | Senior Software Engineer - Full-stack - Growth Product | 
+- [ ] https://www.linkedin.com/jobs/view/4408347703 | Mercor | Lead Software Engineer | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4370732491 | Meds.com | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4409571012 | Greenlight | Senior Software Engineer, Developer Experience | 
+- [ ] https://www.linkedin.com/jobs/view/4409818057 | Crosslake Technologies | Senior Software Engineer, Tooling | 
+- [ ] https://www.linkedin.com/jobs/view/4409826018 | Crosslake Technologies | Senior Software Engineer, Services | 
+- [ ] https://www.linkedin.com/jobs/view/4378083178 | Pinterest | Sr. SDET, tvScientific | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4409555345 | Pearl | Senior Agentic Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4359011742 | Dutchie | Senior Software Engineer, Ecommerce Clients | 
+- [ ] https://www.linkedin.com/jobs/view/4407239241 | Redfin | Sr. Software Developer - Platform Engineering (Hybrid or Remote) | Seattle, WA
+- [ ] https://www.linkedin.com/jobs/view/4407939484 | Stord | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4409448883 | Teamworks | Senior Software Engineer, Backend (Java) | 
+- [ ] https://www.linkedin.com/jobs/view/4343346403 | TeamSnap | Senior Software Engineer (BE/Fullstack) | 
+- [ ] https://www.linkedin.com/jobs/view/4400280635 | Verint | Sr. Engineer, Software | 
+- [ ] https://www.linkedin.com/jobs/view/4406726324 | Modern Classrooms Project | Senior Software Engineer | Washington, DC
+- [ ] https://www.linkedin.com/jobs/view/4408726062 | Forge | Senior Software Engineer I | Denver, CO
+- [ ] https://www.linkedin.com/jobs/view/4384785414 | SeatGeek | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4384862395 | Encamp | Senior Software Engineer | Indianapolis, IN
+- [ ] https://www.linkedin.com/jobs/view/4408764584 | Franklin Fitch | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4409053856 | Vetcove | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4372048022 | Homebound | Senior/Staff Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4357589732 | Keeper Security, Inc. | Senior Software Engineer, Autofill | 
+- [ ] https://www.linkedin.com/jobs/view/4409101552 | SewerAI | Senior Staff Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4407069124 | Terzo | Senior Software Engineer (Frontend) | 
+- [ ] https://www.linkedin.com/jobs/view/4408519806 | Teamworks | Senior Software Engineer, Full Stack (Node, React) | 
+- [ ] https://www.linkedin.com/jobs/view/4407048442 | Ponderosa Talent Group | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4407093517 | Zeektek | Senior Software Engineer (100% Remote) | 
+- [ ] https://www.linkedin.com/jobs/view/4407037992 | Prescryptive Health, Inc. | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4408507315 | Ascend Learning | Sr Software Engineer | Burlington, MA
+- [ ] https://www.linkedin.com/jobs/view/4346537586 | Pattern Data | Software Engineer (Senior-Staff) | 
+- [ ] https://www.linkedin.com/jobs/view/4409338513 | TherapyNotes, LLC | Senior Software Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4410902265 | BuildBuddy | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4410747954 | Worth AI | Senior Software Engineer | Tampa, FL
+- [ ] https://www.linkedin.com/jobs/view/4408834223 | Innervate (formerly RevJet) | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4399901465 | Signify Technology | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4401546849 | Vannevar | Senior Software Engineer, Fullstack (Mission Agents) | 
+- [ ] https://www.linkedin.com/jobs/view/4410901290 | Progressive Insurance | Senior Software Developer - Typescript | 
+- [ ] https://www.linkedin.com/jobs/view/4410590628 | Gotham Technology Group | Senior Application Developer | 
+- [ ] https://www.indeed.com/viewjob?jk=edf2effb08935b9f | Purple Squirrels Software LLC | Sr MERN engineer | Newark, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=2ae4c98d20b5c23a | PepsiCo | SWE & App Arch Sr. Principal Engineer | Plano, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=00c0ff3dafb54104 | CGI | Senior Full Stack Python Developer | Reston, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=4e2ad1a42d922265 | Asurion | Senior Software Engineer | Nashville, TN, US
+- [ ] https://www.indeed.com/viewjob?jk=fa88095166fbdb66 | Octopus Eagle | Senior Full Stack Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=47eb2ea7b790eb4d | Openkyber | Java Fullstack Engineer with AI | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=2f1ab4d27aa28464 | Openkyber | Senior GCP Kubernetes Engineer | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=b3456c1a3256bd25 | Walmart | (USA) Senior, Software Engineer | Bentonville, AR, US
+- [ ] https://www.indeed.com/viewjob?jk=b1c091b77ba59917 | Openkyber | Terraform MLOps Engineer | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=6b7d7bb7c5c0fbe2 | Addman | Sr. Full Stack Engineer | Fort Myers, FL, US
+- [ ] https://www.indeed.com/viewjob?jk=9973f3c99ce0efc1 | Stem Inc | Staff Software Engineer, Edge Development | Broomfield, CO, US
+- [ ] https://www.indeed.com/viewjob?jk=da5725a54920ff48 | Mattermost | US Defense Software Engineering Lead | Honolulu, HI, US
+- [ ] https://www.indeed.com/viewjob?jk=b7bd78f419e27b6d | Mattermost | US Defense Software Engineering Lead | Washington, DC, US
+- [ ] https://www.indeed.com/viewjob?jk=7bac0b206a23b570 | Mattermost | US Defense Software Engineering Lead | San Diego, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=d6b81e625ff353f9 | REVV | Senior Full Stack Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=cc09f02268b8e224 | Morningstar | Senior Software Engineer (Full-Stack Javascript) | Chicago, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=0af08d9d6f46bb82 | Asurion | Senior Software Engineer | Nashville, TN, US
+- [ ] https://www.indeed.com/viewjob?jk=5a90d350869dbc59 | Textron Aviation | Senior Software Engineer (Full-Stack, JavaScript) | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=9132118249c0b73f | DoorLoop | Senior Full Stack Engineer | Miami Beach, FL, US
+- [ ] https://www.indeed.com/viewjob?jk=89ee9ea3fd405574 | Traba | Senior Software Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=73d730532d5494d8 | Traba | Senior Software Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=9f009857c6368f4d | Wipfli | Senior AI Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=e6d8f0fa74069e3d | Shop My | Senior Full Stack Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=30e1948be295dcc1 | Openkyber | PingOne Cloud Engineer | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=2d2f794524fd07d4 | Verint Systems Inc. | Sr. Engineer, Software | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=a161126833549461 | Radar Labs | Senior / Staff Product Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=5e1181c17ad61b6c | Radar Labs | Senior / Staff QA Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=6046c3e8455d6d28 | Lockheed Martin | 1LMX Full Stack Engineer - Asc Early Career / Full Stack / Orlando, FL | Orlando, FL, US
+- [ ] https://www.indeed.com/viewjob?jk=9212d0f4a85d5c63 | General Motors (GM) | Staff Software Engineer - Digital eCommerce | Warren, MI, US
+- [ ] https://www.indeed.com/viewjob?jk=3ef6a865cb34af5a | nan | Senior Implementation Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=c08ea08f60cb4df0 | Openkyber | Senior Cloud Migration Engineer | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=1ce3a59e5ae5582a | Intuit | Manager 3, Software Engineering (Tax Product End to End) | San Diego, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=f14e3249cffd058b | nan | Senior Full Stack Engineer | Berkeley, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=273c51ba3cd15bcd | The Global Orphan Project | Senior Full Stack Engineer | Kansas City, MO, US
+- [ ] https://www.indeed.com/viewjob?jk=3b99915c2b81bed7 | Sharp HealthCare | Software Engineer III | San Diego, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=453410df7594b705 | BNY | Senior Vice President, Full-Stack Engineer | Jersey City, NJ, US
+- [ ] https://www.indeed.com/viewjob?jk=435aca51ca9b38e5 | Information Technology Senior Management Forum | Sr. Director, Software Engineering (Asset Intelligence) | McLean, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=6c8fa2e366bac49c | COVU | Staff Fullstack Engineer (Technical Lead – On-Site, West Hollywood, CA) | Los Angeles, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=ac79090ff3c599a2 | COVU | Senior Fullstack Engineer (On-Site, West Hollywood, CA) | Los Angeles, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=355f8fef9b283d5a | BNY | Vice President, Full-Stack Engineer II | Jersey City, NJ, US
+- [ ] https://www.linkedin.com/jobs/view/4410534076 | PlanIT Group, LLC | Software Engineer (Full Stack) | 
+- [ ] https://www.linkedin.com/jobs/view/4408936984 | PropelAuth | Fullstack Engineer | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4410286119 | Alignerr | Full Stack Developer | Seattle, WA
+- [ ] https://www.linkedin.com/jobs/view/4189936665 | Vanta | Senior Fullstack Software Engineer, GRC | 
+- [ ] https://www.linkedin.com/jobs/view/4407781306 | Factspan | Full Stack Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4410082956 | HTD Health | Senior Fullstack Developer (US) | New York, United States
+- [ ] https://www.linkedin.com/jobs/view/4309816021 | DataAnnotation | Full Stack Engineer | New Jersey, United States
+- [ ] https://www.linkedin.com/jobs/view/4309695917 | DataAnnotation | Full Stack Engineer | Illinois, United States
+- [ ] https://www.linkedin.com/jobs/view/4408915270 | MSH | Full Stack Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4309699515 | DataAnnotation | Full Stack Engineer | Texas, United States
+- [ ] https://www.linkedin.com/jobs/view/4378205251 | Signify Technology | Sr. Full-Stack Software Engineer | West Palm Beach, FL
+- [ ] https://www.linkedin.com/jobs/view/4325882220 | Dropbox | Staff Fullstack Software Engineer, Growth Monetization | 
+- [ ] https://www.linkedin.com/jobs/view/4309811159 | DataAnnotation | Full Stack Engineer | Massachusetts, United States
+- [ ] https://www.linkedin.com/jobs/view/4309810119 | DataAnnotation | Full Stack Engineer | Virginia, United States
+- [ ] https://www.linkedin.com/jobs/view/4338407465 | DataAnnotation | Web Developer/Designer | Florida, United States
+- [ ] https://www.linkedin.com/jobs/view/4309806059 | DataAnnotation | Back End Developer | Illinois, United States
+- [ ] https://www.linkedin.com/jobs/view/4338447638 | DataAnnotation | Web Developer/Designer | Virginia, United States
+- [ ] https://www.linkedin.com/jobs/view/4409560329 | Flex | Frontend Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4409570030 | Element | Full Stack Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4309802354 | DataAnnotation | Full Stack Engineer | North Carolina, United States
+- [ ] https://www.linkedin.com/jobs/view/4338387707 | DataAnnotation | Web Developer/Designer | Georgia, United States
+- [ ] https://www.linkedin.com/jobs/view/4346331652 | DataAnnotation | Web Developer/Designer | Iowa, United States
+- [ ] https://www.linkedin.com/jobs/view/4309803129 | DataAnnotation | Back End Developer | Colorado, United States
+- [ ] https://www.linkedin.com/jobs/view/4337813487 | ARB Interactive | Fullstack Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4407961017 | Great Value Hiring | Full Stack Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4337638534 | DataAnnotation | Web Developer/Designer | New York, United States
+- [ ] https://www.linkedin.com/jobs/view/4338327690 | DataAnnotation | Web Developer/Designer | Texas, United States
+- [ ] https://www.linkedin.com/jobs/view/4384269960 | Penn Mutual | Senior Software Engineer (Full Stack) | 
+- [ ] https://www.linkedin.com/jobs/view/4409019588 | Pagos Consultants | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4379211836 | Owner.com | Staff Software Engineer, Full-Stack | 
+- [ ] https://www.linkedin.com/jobs/view/4407397698 | TechClub Inc | Product, Platform & Enterprise Full Stack Sr/Staff Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4407660844 | SoHo Dragon | TypeScript / JavaScript + Windows Developer | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4407663118 | Consumidor Moderno | Desenvolvedor(a) Full Stack | Home, KS
+- [ ] https://www.linkedin.com/jobs/view/4338317980 | DataAnnotation | Web Developer/Designer | California, United States
+- [ ] https://www.linkedin.com/jobs/view/4407061058 | BNSF Railway | Product, Platform & Enterprise Full Stack Sr/Staff Software Engineer (Remote - US) | 
+- [ ] https://www.linkedin.com/jobs/view/4408578912 | Intellect Group | Full Stack Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4408544971 | Akraya, Inc. | Full-Stack Developer IV: 26-01242 | Nashville, TN
+- [ ] https://www.linkedin.com/jobs/view/4402336260 | Fortress Information Security | Senior Software Engineer (JavaScript) | 
+- [ ] https://www.linkedin.com/jobs/view/4410942634 | TriWest Healthcare Alliance | Application Developer Senior - Full Stack | Phoenix, AZ
+- [ ] https://www.linkedin.com/jobs/view/4407858185 | Underdog.io -Apply to top tech jobs in 60 seconds. A place where companies apply to you | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4410912028 | Flexton Inc. | Front end  Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4409357329 | Crystal Equation Corporation | Web Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4408411988 | Aurora | Fullstack Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4348233712 | Nourish | Senior Full Stack Engineer | New York, NY
+- [ ] https://www.indeed.com/viewjob?jk=6f9ad7c8c6b989c1 | Tata Consultancy Services (TCS) | Senior AI Engineer | Irvine, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=bc2036c5bfa0d344 | Document Crunch | Staff Software Engineer | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=039bac65ddb8c30e | PowerPay | Software Engineer - AI Augmented Development | Wayne, PA, US
+- [ ] https://www.indeed.com/viewjob?jk=46f0ef72919b7621 | Marathon TS | System Engineer (Full-Stack Developer) | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=57df58da8cab320e | Walmart | (USA) Senior, Software Engineer | Sunnyvale, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=7d5a63985baf7428 | Bumble | Senior Software Engineer | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=b82ea5b4fe98f044 | PayPal | Sr Software Engineer | Chicago, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=2bec7882b34f08c9 | Velvetech | Senior AI Data Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=41c4197be7a79e9a | LVT (LiveView Technologies) | Senior Mobile Backend Engineer | UT, US
+- [ ] https://www.indeed.com/viewjob?jk=b94df2ca7a0e3d19 | LVT (LiveView Technologies) | Software Engineer III | UT, US
+- [ ] https://www.indeed.com/viewjob?jk=5b4daad999348f29 | LVT (LiveView Technologies) | Senior Software Engineer | UT, US
+- [ ] https://www.indeed.com/viewjob?jk=9a80b68432db623b | Torq Consulting | Senior Consultant - Software Engineer | Plano, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=425960d35dd180f1 | LVT (LiveView Technologies) | Software Engineer III | American Fork, UT, US
+- [ ] https://www.indeed.com/viewjob?jk=634ccdf63a136c87 | Cribl | Sr Software Engineer, Cribl AI | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=c5267429af36c1bf | Openkyber | Senior GCP Kubernetes Engineer | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=97ed114531a4150b | Electronic Arts | Senior Software Engineer | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=4a0f1f121a834671 | PENNYMAC | AI Platform Engineer - Front End | Carrollton, TX, US
+- [ ] https://www.linkedin.com/jobs/view/4408181577 | Cars Commerce | Sr. Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4400719006 | Crossing Hurdles | Back End Developer - TypeScript & Go | $80/hr Remote | 
+- [ ] https://www.linkedin.com/jobs/view/4408955318 | FurtherAI | Software Engineer - Backend/Fullstack [India] | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4309694731 | DataAnnotation | Backend Software Engineer | New York, United States
+- [ ] https://www.linkedin.com/jobs/view/4309803111 | DataAnnotation | Backend Software Engineer | California, United States
+- [ ] https://www.linkedin.com/jobs/view/4309806066 | DataAnnotation | Back End Developer | California, United States
+- [ ] https://www.linkedin.com/jobs/view/4309800194 | DataAnnotation | Back End Developer | New Jersey, United States
+- [ ] https://www.linkedin.com/jobs/view/4409559323 | Flex | Backend Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4409413526 | SAIC | Sr. Systems Engineer (Full-Stack Developer) | Texas, United States
+- [ ] https://www.linkedin.com/jobs/view/4409495909 | Spotify | Backend Engineer - Music | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4407379495 | Crossing Hurdles | Back-End Developer | Remote | 
+- [ ] https://www.linkedin.com/jobs/view/4410951493 | Engine | Senior Software Engineer, Backend | Denver, CO
+- [ ] https://www.linkedin.com/jobs/view/4409751861 | ICF | Senior Software Engineer (Backend) - Remote | Reston, VA
+- [ ] https://www.linkedin.com/jobs/view/4410972594 | GameChanger | Senior Backend Software Engineer, Subscriptions Enablement | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4409755692 | Walter Bacon, Inc. | Staff Backend Software Engineer (node.js) | 
+- [ ] https://www.linkedin.com/jobs/view/4410981078 | GameChanger | Senior Backend Software Engineer, Subscriptions Enablement | 
+- [ ] https://www.indeed.com/viewjob?jk=27b76cdffc8936ed | Skylight | Senior or Staff Growth Engineer | US
+- [ ] https://www.indeed.com/viewjob?jk=ca1ded7c92f6b530 | Rippling | Senior Software Engineer, Frontend Full Stack - HR Product | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=58cf5305be56eee2 | Shipt | Senior Design Systems Engineer | Minneapolis, MN, US
+- [ ] https://www.indeed.com/viewjob?jk=241fdbf8b90095f5 | Revelation Pharma | Senior Full-Stack Product Engineer | US
+- [ ] https://www.indeed.com/viewjob?jk=2d46236dc627f01c | Aptive Environmental | Senior Software Engineer | Provo, UT, US
+- [ ] https://www.indeed.com/viewjob?jk=86e2d0d70ddebccd | BlackRock | Senior Full Stack Engineer - Aladdin Private Markets, Vice President | Atlanta, GA, US
+- [ ] https://www.indeed.com/viewjob?jk=debb6f8fa103e985 | Equilibrium Energy | Front-End Engineer (Senior/ Staff) | San Francisco Bay Area, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=1f6c58729585cf32 | NEOTAX | Senior Full-Stack Software Engineer | Palo Alto, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=1b73a92075dbb7b2 | nan | Design Engineer (Senior) | Washington, DC, US
+- [ ] https://www.indeed.com/viewjob?jk=64e1dd250cd35534 | Embrace | UI & SDK Web Engineer | US
+- [ ] https://www.indeed.com/viewjob?jk=4f72f1189ffbe339 | SailPoint Technologies | Lead Full Stack Engineer | US
+- [ ] https://www.indeed.com/viewjob?jk=fe807a1352916ef9 | Canopy Tax | Senior Full Stack Engineer | South Jordan, UT, US
+- [ ] https://www.indeed.com/viewjob?jk=e4c981b748529464 | Avride | Senior Frontend Engineer - Remote Assistance Systems | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=c23831328740596d | Walmart | Senior, Software Engineer | Sunnyvale, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=495d074984438f37 | Openkyber | Senior GCP Cloud Engineer | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=98dd63c3cb014007 | tvScientific | Sr. SDET, tvScientific | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=c0c6a168604f1afe | Dutchie | Senior Software Engineer, Ecommerce Clients | Remote, US
+- [ ] https://www.linkedin.com/jobs/view/4410503010 | Mysten Labs | Senior Frontend Engineer (Slush Wallet) | 
+- [ ] https://www.linkedin.com/jobs/view/4369995797 | Vannevar | Senior Frontend Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4402458735 | UMATR | Senior Frontend Engineer (React, Typescript, Next.js) | 
+- [ ] https://www.linkedin.com/jobs/view/4410221066 | CoverMyMeds | Senior Software Developer | Columbus, OH
+- [ ] https://www.linkedin.com/jobs/view/4408646358 | Jobgether | Senior Software Engineer - React Native - Payments | 
+- [ ] https://www.linkedin.com/jobs/view/4368857349 | Trumid | Senior UI Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4387717941 | AspenView Technology Partners | Senior Web Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4407218137 | Samsara | Senior Software Engineer, Full-Stack - Forms | 
+- [ ] https://www.linkedin.com/jobs/view/4308668628 | First Citizens Bank | Senior Front-End Engineer (Remote) | Raleigh, NC
+- [ ] https://www.linkedin.com/jobs/view/4357901381 | Keeper Security, Inc. | Senior Frontend Software Engineer, Admin Console (React) | 
+- [ ] https://www.linkedin.com/jobs/view/4368470318 | Close | Senior Software Engineer - Frontend/React (USA Only - 100% Remote) | 
+- [ ] https://www.linkedin.com/jobs/view/4408597288 | Extend | Senior Software Engineer II | 
+- [ ] https://www.linkedin.com/jobs/view/4387613411 | Sully.ai | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4367489581 | Equip | Senior Web Developer | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4401569940 | Bluehost | Senior Front-End Engineer (React) | 
+- [ ] https://www.linkedin.com/jobs/view/4410775490 | Engine | Senior Software Engineer, Frontend | Denver, CO
+- [ ] https://www.linkedin.com/jobs/view/4409385676 | NASCAR | Senior Web Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4410917452 | Owner.com | Senior Software Engineer, Frontend (Quick Service) | 
+- [ ] https://www.indeed.com/viewjob?jk=c23858cd0a4f235d | Daikin/Goodman Manufacturing | Sr. Director IT Cyber Security | Waller, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=01202f263670f0f2 | Daikin/Goodman Manufacturing | Cloud Director | Waller, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=594432753a0a53e5 | Enflexis Solutions | Senior Software Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=ac61b2ff6b2f0cb4 | gogetit | Senior Backend Engineer(Go) | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=d2b942f0acc2f15c | Westat | VMWare and SAN Engineer (Senior IT Analyst) - HYBRID | Bethesda, MD, US
+- [ ] https://www.indeed.com/viewjob?jk=eb662ffd20213f3b | Openkyber | Software Development (Python) | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=4672c61c343cfda9 | Openkyber | Threat Intelligence Automation Engineer | GA, US
+- [ ] https://www.indeed.com/viewjob?jk=2b2dc47e35450ce7 | Openkyber | Senior Backend Developer (Python) | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=71b4266b00d62a63 | Openkyber | Senior Software Engineer (Python) | GA, US
+- [ ] https://www.indeed.com/viewjob?jk=0bc1141188a8604a | Openkyber | FastAPI | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=0169d932abef6efa | Openkyber | Lead Backend Engineer (Python) | IL, US
+- [ ] https://www.indeed.com/viewjob?jk=550e29553f2a099b | Openkyber | FastAPI | VA, US
+- [ ] https://www.indeed.com/viewjob?jk=427f6933d7d21e16 | Openkyber | API Threat Intelligence Analyst | IL, US
+- [ ] https://www.indeed.com/viewjob?jk=70c76699683bf4a2 | Openkyber | Backend Software Engineer (Python) | TX, US
+- [ ] https://www.indeed.com/viewjob?jk=a484ce41664d06d3 | Openkyber | Senior API Engineer (Python) | IN, US
+- [ ] https://www.indeed.com/viewjob?jk=45974a79c5dfc2f4 | Openkyber | Senior Software Engineer (Python) | GA, US
+- [ ] https://www.indeed.com/viewjob?jk=d87d11bf767612ad | Openkyber | Backend (Python) | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=7c3aea38ad56ae33 | Openkyber | Senior API Engineer (Python) | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=5359acc18b186004 | Openkyber | API Threat Intelligence Analyst | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=aa2c850814f61f70 | Openkyber | Java Cloud-Native Developer | IL, US
+- [ ] https://www.indeed.com/viewjob?jk=7334cf9b108e4326 | Openkyber | Backend Technical Lead | OR, US
+- [ ] https://www.indeed.com/viewjob?jk=fe7c18e22adb3be0 | ThoughtSpot | Member of Technical Staff 2 | Mountain View, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=9e48f230269504a9 | Starbucks | cybersecurity engineer senior, threat detection and response | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=c0d94dfab5cc24af | Midland Credit Management | Senior Linux Engineer | Phoenix, AZ, US
+- [ ] https://www.indeed.com/viewjob?jk=6499ac929ff2c355 | City of Cleveland, OH | Airport Field Maintenance Manager | Cleveland, OH, US
+- [ ] https://www.indeed.com/viewjob?jk=a31884d887931a6d | AtkinsRéalis | Project Manager, Senior Marine Structural Engineer | Tampa, FL, US
+- [ ] https://www.indeed.com/viewjob?jk=ef41a567e3605bc6 | Humana | Senior Data Engineer | Dallas, TX, US
+- [ ] https://www.linkedin.com/jobs/view/4408961522 | Qcells North America | Senior Software Engineer - Azure | 
+- [ ] https://www.linkedin.com/jobs/view/4410295612 | SII Group USA | Senior Data Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4410258013 | Dahl Consulting | Senior Cloud Data Engineer / GCP Data Operations Engineer (Remote) | Brooklyn Park, MN
+- [ ] https://www.linkedin.com/jobs/view/4408109674 | DICK'S Sporting Goods | Sr. Systems Engineer - GRC Platforms (REMOTE) | 
+- [ ] https://www.linkedin.com/jobs/view/4408926395 | CRB Workforce | Senior Cloud Infrastructure Engineer | King of Prussia, PA
+- [ ] https://www.linkedin.com/jobs/view/4410048944 | Verint | Sr. Engineer, Software | 
+- [ ] https://www.linkedin.com/jobs/view/4342262218 | Addepar | Sr. Staff Software Engineer - Investment Data Platform | Mountain View, CA
+- [ ] https://www.linkedin.com/jobs/view/4387662091 | Instacart | Staff Software Engineer, Ads Data Platform | 
+- [ ] https://www.linkedin.com/jobs/view/4409147948 | Deep Sync | Senior Software AI Engineer (Agentic Platform) | Redmond, WA
+- [ ] https://www.linkedin.com/jobs/view/4407338764 | Jobgether | Senior Data Engineer, Knowledge Platform | 
+- [ ] https://www.linkedin.com/jobs/view/4407336481 | Jobgether | Senior Software Engineer, DevOps (Azure) | 
+- [ ] https://www.linkedin.com/jobs/view/4408721238 | SmithRx | Senior Software Engineer, Platform | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4384795274 | SeatGeek | Senior Software Engineer, Platform | 
+- [ ] https://www.linkedin.com/jobs/view/4406487349 | Valvoline Inc. | Senior Cloud Security Engineer | Kentucky, United States
+- [ ] https://www.linkedin.com/jobs/view/4407086500 | NVIDIA | Senior System Software Engineer, GeForce NOW Client Platforms | California, United States
+- [ ] https://www.linkedin.com/jobs/view/4316360726 | Walker & Dunlop | Senior Cloud and Software Development Security Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4407632216 | Optomi | Lead Engineer/Solution Architect (100% Remote- Hybrid/Azure Infrastructure) | Dallas, TX
+- [ ] https://www.linkedin.com/jobs/view/4408593079 | Block | Senior Software Engineer, Data Ingestion Platform | 
+- [ ] https://www.linkedin.com/jobs/view/4370148768 | Microsoft | Senior Software Engineer - Azure Storage | 
+- [ ] https://www.linkedin.com/jobs/view/4395485293 | NVIDIA | Senior DGX Cloud AI Infrastructure Software Engineer | Oregon, United States
+- [ ] https://www.linkedin.com/jobs/view/4395481336 | NVIDIA | Senior DGX Cloud AI Infrastructure Software Engineer | Washington, United States
+- [ ] https://www.linkedin.com/jobs/view/4407095013 | Dutchie | Senior Software Engineer, Point of Sale | 
+- [ ] https://www.linkedin.com/jobs/view/4389581964 | Three Pillars Recruiting | Senior Data Engineer - Profitable AI Programmatic Advertising Platform | 
+- [ ] https://www.linkedin.com/jobs/view/4410715762 | System One | Senior Azure Cloud Infrastructure Engineer | Bethesda, MD
+- [ ] https://www.linkedin.com/jobs/view/4410946023 | Paramount | Senior Lead Data Engineer, Content Engineering | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4408834334 | Jobgether | Sr Software Engineer - Basis Platform / DSP | 
+- [ ] https://www.linkedin.com/jobs/view/4410971454 | Accylerate | Senior Data Engineer (AWS Data Platform) | 
+- [ ] https://www.linkedin.com/jobs/view/4410067058 | Credence | Senior Cloud and Infrastructure Engineer - Technical Advisor | McLean, VA
+- [ ] https://www.indeed.com/viewjob?jk=b3f0a15992ad4ab2 | Sagent | Devops Engineer SR | Remote, US
+- [ ] https://www.linkedin.com/jobs/view/4377654426 | LangChain | Deployed Engineer (Dallas) | Dallas, TX
+- [ ] https://www.linkedin.com/jobs/view/4359826654 | Cloudflare | Professional Services Consultant | 
+- [ ] https://www.linkedin.com/jobs/view/4387744656 | LangChain | Deployed Engineer (Charlotte) | Charlotte, NC
+- [ ] https://www.linkedin.com/jobs/view/4369292210 | LangChain | Deployed Engineer (Austin) | Austin, TX
+- [ ] https://www.linkedin.com/jobs/view/4387740835 | LangChain | Deployed Engineer (Raleigh) | Raleigh, NC
+- [ ] https://www.linkedin.com/jobs/view/4399791038 | Cloudflare | Software Engineer, Growth | Atlanta, GA
+- [ ] https://www.indeed.com/viewjob?jk=ef89badc5bec2748 | nan | Founding Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=0f5932d64b0957cc | GEICO | Engineer II | Bethesda, MD, US
+- [ ] https://www.indeed.com/viewjob?jk=2ceb03c5c907b3df | Ambient Consulting | Founding Technical Staff, Product Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=4c4f29648db70655 | Ambient Consulting | Founding Technical Staff, Product Engineer | El Segundo, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=f349ac6f4487a0ff | Openkyber | AI Application Architect | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=d0ead07beecf3a5e | Tessera Labs | Software Engineer, Frontend | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=f324ee8b32e13b91 | nan | Software Engineer - Frontend | El Segundo, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=074ae86c44e6387e | Handshake | Senior Software Engineer, Handshake AI Enterprise | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=bf324cfa538365b5 | Pear VC | Founding AI Engineer - Manhattan Labs | Palo Alto, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=4cca15c735e4a8f0 | Traba | Software Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=dd60178521748f06 | Traba | Staff Software Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=58b25ea3db98d3dc | Traba | Staff Software Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=8c45a766ff4df35d | Didero | Staff Software Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=97ed50526e5ef711 | Fleetio | Senior Software Engineer, Integrations | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=8febbbc667994b26 | Fleetio | Senior Software Engineer, Strategic Reporting & Tools | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=e066e63a6cb12d35 | Fleetio | Senior Software Engineer, Growth | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=c5f16fc2e549580a | Gartner | Lead Software Engineer | Stamford, CT, US
+- [ ] https://www.indeed.com/viewjob?jk=433da464d5753942 | AXS | Sr. Software Architect | Los Angeles, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=0b9326aef32889f8 | AXS | Sr. Software Architect | Scottsdale, AZ, US
+- [ ] https://www.indeed.com/viewjob?jk=93897917c0fd0be8 | Information Technology Senior Management Forum | Sr. Distinguished Engineer, Card Acquisitions & Growth Platforms | McLean, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=6fb6b8375c504828 | Information Technology Senior Management Forum | Sr. Distinguished Engineer, Acquisitions Platform & SRE Foundations | McLean, VA, US
+- [ ] https://www.linkedin.com/jobs/view/4408655498 | Jobgether | Founding Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4407205819 | Railsware | Senior Software Engineer (Trading-Related Project) | 
+- [ ] https://www.linkedin.com/jobs/view/4369687213 | Fleetio | Senior Software Engineer, Integrations | 
+- [ ] https://www.linkedin.com/jobs/view/4408698288 | American Express | Sr Staff AI Engineering - Agentic AI | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4408322963 | Peerless | Founding Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4400630858 | Rex | Founding Product Engineer | Austin, Texas Metropolitan Area
+- [ ] https://www.linkedin.com/jobs/view/4409592696 | Qdrant | Developer Relations Engineer - San Francisco | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4407941852 | Monarch | GTM Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4399812977 | First Citizens Bank | Senior React Engineer (Remote TX, AZ, NC) | Phoenix, AZ
+- [ ] https://www.linkedin.com/jobs/view/4399817604 | First Citizens Bank | Senior React Engineer (Remote TX, AZ, NC) | Arizona, United States
+- [ ] https://www.linkedin.com/jobs/view/4399814917 | First Citizens Bank | Senior React Engineer (Remote TX, AZ, NC) | Texas, United States
+- [ ] https://www.linkedin.com/jobs/view/4408789534 | Versique Executive, Professional & Interim Recruiting | Senior Engineer (CMS) | Minneapolis, MN
+- [ ] https://www.linkedin.com/jobs/view/4387604822 | Sully.ai | Recruiting Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4386794064 | GitLab | Senior Fullstack Engineer (TypeScript), AI Engineering: Editor Extensions | Florida, United States
+- [ ] https://www.linkedin.com/jobs/view/4408514957 | Logixboard | Senior Engineer | Seattle, WA
+- [ ] https://www.linkedin.com/jobs/view/4377025335 | Fleetio | Senior Software Engineer, Strategic Reporting & Tools | 
+- [ ] https://www.linkedin.com/jobs/view/4409375005 | WellHive | Full Stack Developer - GRC Engineering | Melbourne, FL
+- [ ] https://www.linkedin.com/jobs/view/4409393684 | Jobs via Dice | Sr. Observability Engineer (NPM) | 
+
+## JobSpy broad scan (37 new)
+
+- [ ] https://www.linkedin.com/jobs/view/4380814050 | Teck Resources Limited | Senior Full-Stack Developer - Analytics (contract) | 
+- [ ] https://www.linkedin.com/jobs/view/4408293257 | Motion (Creative Analytics) | Senior Software Engineer (Infrastructure) | Kitchener, Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4361874232 | Kin Insurance | Senior Software Engineer, Back-End Focus | 
+- [ ] https://www.indeed.com/viewjob?jk=4a6f7a8083330c87 | Enflexis Solutions | Principal Engineer | Remote, US
+- [ ] https://www.linkedin.com/jobs/view/4407226768 | McGraw Hill | Sr Software Engineer, QE | 
+- [ ] https://www.linkedin.com/jobs/view/4309801374 | DataAnnotation | Full Stack Engineer | Pennsylvania, United States
+- [ ] https://www.linkedin.com/jobs/view/4318182754 | Chronosphere | Member of Technical Staff - Frontend - Developer Experience | 
+- [ ] https://www.linkedin.com/jobs/view/4397610334 | MissionStaff | React Native Developer | Florida, United States
+- [ ] https://www.linkedin.com/jobs/view/4407936709 | Envision Technology Solutions | React Native Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4408830995 | Crossing Hurdles | Frontend Engineer | Remote | 
+- [ ] https://www.linkedin.com/jobs/view/4408847981 | AgileGrid Solutions | React Js Developer | 
+- [ ] https://www.indeed.com/viewjob?jk=1e4b14f4a302f0cb | nan | Software Engineer II | Glendale, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=f18b529f93c9bf6b | FRACTAL | Senior Software Engineer, Platform API | Remote, US
+- [ ] https://www.linkedin.com/jobs/view/4410071965 | Stelvio Inc. | Senior Frontend Developer | Arizona, United States
+- [ ] https://www.linkedin.com/jobs/view/4409932012 | WellSync | Senior / Mid Frontend Software Engineer | 
+- [ ] https://www.indeed.com/viewjob?jk=20a98dbd937a4d76 | RLJ Lodging Trust | Corporate Engineer | Bethesda, MD, US
+- [ ] https://www.indeed.com/viewjob?jk=d4178fbcabe47c72 | Cigars International | Network Engineer - Senior | Bethlehem, PA, US
+- [ ] https://www.indeed.com/viewjob?jk=7081be81ae89a178 | Gemba Technical Consulting | Controls Engineer | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=e566364a47836365 | nan | Senior Principal, Ad Strategy & Operations | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=9f1b2454c6d1d03f | Amphenol | Senior Design Engineer | Endicott, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=581a08c18167d150 | Amphenol | Senior Design Engineer | Endicott, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=d7375da11f266a91 | EDB | Senior Consultant, Professional Services | Boston, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=4dce34bf19139e13 | Synchrony | VP – Data Architecture Governance | Stamford, CT, US
+- [ ] https://www.indeed.com/viewjob?jk=06dc08022fe8f3c9 | AutoDS | Senior Wordpress Full Stack Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=c25806736682cc44 | Alkami Technology | Sr. Data Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=337a6a958a069072 | APTEM | IT Operations & Security Manager | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=6e161372d931ff1e | GRAIL | Staff Network Engineer (Menlo Park, CA) #4765 | Menlo Park, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=4bf799d733e1c49e | Henny Penny | SR IT Business Analyst | Eaton, OH, US
+- [ ] https://www.indeed.com/viewjob?jk=21231ae0382db163 | Raytheon | Skillbridge - Data Transformation Manager | Tucson, AZ, US
+- [ ] https://www.indeed.com/viewjob?jk=7931d02a6d17fea1 | Raytheon | OT Sr Digital Factory Developer | McKinney, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=a6f6aa6a37da75f2 | Raytheon | Senior Platform Engineer (OnSite) | Richardson, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=9661901cf818cf6b | Crane Aerospace & Electronics | Power Electronics Engineer | Fort Walton Beach, FL, US
+- [ ] https://www.indeed.com/viewjob?jk=18b024ade3e28822 | SAIC | Comm Systems Engineer | Chantilly, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=471f2489025c08c9 | Micron Technology | Principal / Staff Reliability Engineer – Statistics & Data Science | Boise, ID, US
+- [ ] https://www.linkedin.com/jobs/view/4408981152 | Qcells North America | Staff Software Engineer - IAM (Platform Engineering) | 
+- [ ] https://www.linkedin.com/jobs/view/4410248340 | Reinsurance Group of America, Incorporated | Senior Threat Engineer | St Louis, MO
+- [ ] https://www.linkedin.com/jobs/view/4407093080 | IR | Principal DevSecOps Engineer - AI Infrastructure | 
+
+## scan-broad (2026-05-11, 977 new)
+
+- [ ] https://ca.indeed.com/viewjob?jk=a7d423cb8af0eb51 | TTT Studios | Senior Full Stack Developer | Vancouver, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=eb805fa57b14fdd4 | JOBBER | Manager, Software Engineering -SP Operations | Vancouver, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=e59ed50242260806 | Rivian and Volkswagen Group Technologies | Sr. Software Engineer - Consumer Platform | Vancouver, BC, CA
+- [ ] https://www.linkedin.com/jobs/view/4412343868 | Smile.io | Senior Software Engineer - APIs, Integrations, and External Developer Tooling | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4381198021 | Kabam | Senior Software Engineer (Backend) - Contract | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4403538416 | Dialpad | Sr. Software Engineer, Fullstack (Connect) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4403430718 | Microsoft | Senior Software Engineer -Fullstack | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4403148238 | Cover Genius | Senior Software Engineer | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4410479178 | SISA Energy | Lead Software Engineer | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4402691910 | RBC | Senior Software Developer, GFT | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4402693876 | RBC | Senior Software Developer, GFT | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4355315795 | Workday | Software Engineer III/Senior Software Engineer (Full Stack) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4377140109 | Remitly | Senior Software Development Engineer, Authentication | Burnaby, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4381115909 | TELUS | Senior Developer (AI/ML/Gen AI Solutions) | Burnaby, British Columbia, Canada
+- [ ] https://ca.indeed.com/viewjob?jk=659f259e984597ba | Asana | Senior Software Engineer, Payment Platform | Vancouver, BC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=b443dfc9fb30a0b7 | VersaFile Inc. | Software Engineer, New Grad - Full Stack (Remote) | Vancouver, BC, CA
+- [ ] https://www.linkedin.com/jobs/view/4410882657 | Clio | Senior Software Developer, Enterprise Systems | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4409616412 | Boomi | Full Stack Developer, Web Production (Vancouver) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4410880360 | Directive | AI Web Developer (Remote Canada) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4409207044 | Lightspeed Commerce | Senior Full Stack Developer- (Go & React) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4409979903 | Affinity | Senior Full Stack Developer (TypeScript / React / Node.js) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4408806938 | Remitly | Senior Full-Stack Engineer, Home and Explore | Burnaby, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4297752034 | Databricks | Senior Software Engineer - Fullstack | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4297747089 | Databricks | Staff Software Engineer - Fullstack | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4378430092 | Qualcomm | Camera Frontend Implementation Engineer | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4362982951 | Agoda | Staff Software Engineer - Front End AI (Bangkok based, Relocation provided) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4363642550 | Agoda | Staff Software Engineer - Full Stack AI (Bangkok based, Relocation provided) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4403438104 | Agoda | Principal Engineer, Back End (AI-powered Data Querying) (Bangkok based, Relocation provided) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4410057907 | Agoda | Principal Engineer, Back End (Data Engineer) (Bangkok based, Relocation provided) | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4403770850 | Appnovation | Senior Full-Stack Developer | Vancouver, British Columbia, Canada
+- [ ] https://www.linkedin.com/jobs/view/4412993612 | Fortinet | Staff Front-End Developer (Angular) | Burnaby, British Columbia, Canada
+- [ ] https://ca.indeed.com/viewjob?jk=78a181b5ba1c8e18 | Odola | Senior Software Engineer - AI Native Platform | Remote, CA
+- [ ] https://ca.indeed.com/viewjob?jk=1225b021b6691f88 | Fivetran | Senior Systems Engineer, R&D Business Systems | Toronto, ON, CA
+- [ ] https://ca.indeed.com/viewjob?jk=c0f727d588b084c6 | MEDFAR Solutions Cliniques | Full-Stack Software Developer (Healthcare - SaaS) | Montréal, QC, CA
+- [ ] https://ca.indeed.com/viewjob?jk=78fde89aeb570306 | CSC Generation | Lead Software Engineer (Team Lead) | Remote, CA
+- [ ] https://ca.indeed.com/viewjob?jk=ac513682f401003b | CARDATA | Senior Fullstack Software Engineer | Remote, CA
+- [ ] https://ca.indeed.com/viewjob?jk=875b02c9bee86535 | Okta | Senior Software Engineer | Toronto, ON, CA
+- [ ] https://ca.indeed.com/viewjob?jk=dc412266a55ea593 | Okta | Senior Software Engineer (Auth0) | Toronto, ON, CA
+- [ ] https://ca.indeed.com/viewjob?jk=8bfd0be09e700267 | Bayview Asset Management | Software Engineer | Toronto, ON, CA
+- [ ] https://ca.indeed.com/viewjob?jk=4f9eb1eb7ebdbec5 | OpenMined | Staff Software Engineer | CA
+- [ ] https://ca.indeed.com/viewjob?jk=bbb98b256ce6ca21 | Zensurance | Tech Lead (Remote First) | Toronto, ON, CA
+- [ ] https://ca.indeed.com/viewjob?jk=9ab7a6655617d5b2 | AssetWorks | Software Development Engineer in Test | Calgary, AB, CA
+- [ ] https://ca.indeed.com/viewjob?jk=007f91a6edd19f79 | Tempo Software | Senior Frontend Developer (Cloud) | Ireland, NS, CA
+- [ ] https://ca.indeed.com/viewjob?jk=2d45ea0a050aec08 | BMC Software | Visualization Engineer | Montréal, QC, CA
+- [ ] https://www.linkedin.com/jobs/view/4402313456 | Synctera | Sr. Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4402708141 | EBizCharge | Software Development Engineer in Test | 
+- [ ] https://www.linkedin.com/jobs/view/4412414363 | Owner.com | Senior Software Engineer, Mobile Platform - POS (Remote, Canada) | 
+- [ ] https://www.linkedin.com/jobs/view/4406110179 | Owner.com | Senior Software Engineer, Backend (Grader) | 
+- [ ] https://www.linkedin.com/jobs/view/4400469577 | McGraw Hill | Sr Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4362281750 | Kin Insurance | Senior Software Engineer, Back-End Focus | Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4411297665 | Alignerr | Senior Software Engineer — AI Code Ranking | Toronto, Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4411771046 | Practice Better | Senior Full Stack Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4410861145 | Agiloft | Senior Software Engineer Full Stack | 
+- [ ] https://www.linkedin.com/jobs/view/4409244236 | Mediafly | Senior Software Engineer, Professional Services | 
+- [ ] https://www.linkedin.com/jobs/view/4380745103 | Intelex Technologies ULC | Senior Software Engineer | Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4389914887 | CircleCI | Senior Software Engineer | Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4411660474 | GoTo | Senior Software Developer, Full Stack | Québec, Quebec, Canada
+- [ ] https://www.linkedin.com/jobs/view/4411805813 | Baselane | Senior Back-End Developer (Toronto) | Toronto, Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4411240107 | BIMM | Senior Full Stack Developer, Contract (2) | Toronto, Ontario, Canada
+- [ ] https://www.linkedin.com/jobs/view/4412919338 | Jobgether | Sr Software Engineer- Fullstack | 
+- [ ] https://www.linkedin.com/jobs/view/4412780674 | Cardata | Senior Full-Stack Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4412944471 | Applicantz | Sr SDET – AWS Serverless | 
+- [ ] https://www.linkedin.com/jobs/view/4341963962 | Tempo Software | Senior Backend Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4412680340 | Saatchi & Saatchi Canada | Senior Back-End AEM Developer | 
+- [ ] https://www.indeed.com/viewjob?jk=98a2e7e9949fa1f0 | nan | Software Engineer — Full-Stack, Workflows & Public Sector Applications | US
+- [ ] https://www.indeed.com/viewjob?jk=0ec6fb85dd76c411 | DNS Solutions Inc. | Senior Data Engineer (APIs for Data Platform) 100% REMOTE | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=d03880c35367c216 | Byrider | Cloud Developer | Carmel, IN, US
+- [ ] https://www.indeed.com/viewjob?jk=8e5e5d08332295b3 | Exostar | Senior Software Engineer | Herndon, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=a25e56312004bffb | Worldwide Equipment Sales | Senior Software Engineer | Minneapolis, MN, US
+- [ ] https://www.indeed.com/viewjob?jk=6342e3cf8e0af4d6 | American Express | Senior Staff Software Engineer - Ads, Offers, and Dining Technology | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=007519c31baf836b | Blue Origin | Senior Full-Stack Software Engineer - Operations Technology | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=143482a44af727b1 | Blue Origin | Senior Software Engineer - Operations Technology | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=6d4829ba6a2ae895 | Ironclad | Senior Staff Software Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=513106460f8c8040 | GE HealthCare | Senior Software Engineer | Waukesha, WI, US
+- [ ] https://www.indeed.com/viewjob?jk=bd2a650f29ef3a27 | Trivelta | Senior Frontend Software Engineer - Typescript | React | NextJS ( Remote) | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=bd88cab5a4568ada | EMIT Technologies, Inc. | Senior Full Stack Engineer - Industrial Data Platform | Denver, CO, US
+- [ ] https://www.indeed.com/viewjob?jk=ec303cbe44e37bfa | eClinical Solutions, LLC | Senior Software Engineer | Mansfield, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=2373564d6230ab1c | Esri | Product Engineer II – Web Services | Washington, DC, US
+- [ ] https://www.indeed.com/viewjob?jk=3d12088f88567ea8 | Esri | Product Engineer II – Web Services | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=ea1ae23ccc8ad065 | Esri | Sr. Product Engineer – Web Services | Washington, DC, US
+- [ ] https://www.indeed.com/viewjob?jk=dd95c9bf85975c9f | Esri | Sr. Product Engineer – Web Services | Washington, DC, US
+- [ ] https://www.indeed.com/viewjob?jk=4de3e6cea346017b | Esri | Sr. Product Engineer – Web Services | Redlands, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=8a5034c271c5b286 | Esri | Product Engineer II – Web Services | Redlands, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=af3c9e8e8e73c7e8 | Braze | Senior Staff Engineer | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=f115e05c9d83eae2 | Braze | Senior Staff Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=edc7179cff5b125e | Braze | Senior Staff Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=f86307e8a677ed2e | Braze | Senior Staff Engineer | Chicago, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=eb14ba4c3ad49df2 | Magnet Forensics | Senior Frontend Software Engineer, GKOS | US
+- [ ] https://www.indeed.com/viewjob?jk=9bc5a161fd693be3 | Flagship | Senior Software Engineer | Coppell, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=d87aebb13d822f48 | Cognizant | Senior Front-End Architect (Vue.js / TypeScript / GraphQL) | Boston, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=68fb2b3a10155d04 | CBIZ | Senior Full Stack AI Engineer | Philadelphia, PA, US
+- [ ] https://www.indeed.com/viewjob?jk=ff966deedaa22895 | Visa | Staff SW Engineer – Agentic AI Platform | Bellevue, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=4f184ef97853fe47 | State Street | Software Engineering & Development, AVP | Boston, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=c8519225dfb310b4 | MemberPress | AI Engineer | US
+- [ ] https://www.indeed.com/viewjob?jk=c6953702912b4338 | NetBrain Technologies. | Senior Software Engineer | Burlington, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=3ab556d19e4426c4 | Protolabs | Sr. Software Engineer—Catalog Domain | Maple Plain, MN, US
+- [ ] https://www.indeed.com/viewjob?jk=325530b3260ee669 | Tandem Diabetes Care, Inc. | Sr. Software Engineer I (Frontend - React) | Milan, MO, US
+- [ ] https://www.indeed.com/viewjob?jk=7d2b68f4852aab83 | CoStar Group | Matterport - Senior Software Engineer, SDK | Sunnyvale, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=f7267fcf8ed8a40a | Trivelta | Senior Frontend Software Engineer - Typescript | React | NextJS ( Remote) | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=4e6e1ed79b7842f5 | Timberland | Principal Engineer, Agentic AI | Greensboro, NC, US
+- [ ] https://www.indeed.com/viewjob?jk=36c37d3476e3d4a7 | Timberland | Principal Engineer, Agentic AI | Denver, CO, US
+- [ ] https://www.indeed.com/viewjob?jk=69f8b67d957cd467 | Intapp | Software Engineer - Front End (React) | Palo Alto, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=bd142a6a03f8bba0 | CentralReach | Senior Software Engineer | Holmdel, NJ, US
+- [ ] https://www.indeed.com/viewjob?jk=de7b7f57a9dcbd42 | University of Maryland University College | ARLIS Full Stack Software Engineer | College Park, MD, US
+- [ ] https://www.indeed.com/viewjob?jk=bee217629b7a8897 | Spotify | Software Engineer, Platform Infrastructure | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=4c49f347401f46f2 | Renesas | Sr. Software Development Engineer | Los Angeles, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=82ca21c3119e4e98 | Renesas | Sr. Software Development Engineer | Los Angeles, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=ac26bd7758318b4f | Renesas | Sr. Software Development Engineer | Los Angeles, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=8218c7d70b5f4953 | Renesas | Sr. Software Development Engineer | Los Angeles, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=213bef440b83dddd | Renesas | Sr. QA Engineer | Los Angeles, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=e2bb2de4f62560f1 | Very LLC | Senior Software Engineer (Python) - Contract (1099) | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=4ff9c5f258d04aaa | GEICO | Senior Engineer | Bethesda, MD, US
+- [ ] https://www.indeed.com/viewjob?jk=410c7062135208be | GEICO | Senior Engineer | Palo Alto, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=226e6e6131c495c1 | Sigma Computing | Senior Software Engineer - Frontend | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=d7381fb9b6c584c7 | Sigma Computing | Senior Software Engineer - Frontend | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=af19e9a4dcaf9a15 | Sigma Computing | Senior Software Engineer - Fullstack | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=358ea22ad3663ab1 | Apple | Design Engineer - App Store & Games Product Design Team | Cupertino, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=3a730f64812b2d07 | Apple | Senior Fullstack Software Engineer - Apple TV Sports | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=6d0d3f0e671eca1f | Openkyber | Software Development (Python) | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=c572e92f87a5b7a6 | Openkyber | Software Development (Python) | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=555cfa78b8983e6a | Apple | Senior Backend Software Engineer, Platform Engineering, Services Data Science & Analytics | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=ee300a92094493ab | Apple | Software Engineer, Ai & Data Platforms | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=26a2ccd67453826f | Apple | Senior Software Engineer, Applied AI, Tools & Infrastructure | San Diego, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=d6b2759b3534873f | Apple | Senior Frontend Software Engineer, Platform Engineering, Services Data Science & Analytics | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=c2da298e1b4f711c | Apple | Sr. Full-Stack Engineer, App Store | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=0bc6caa79fbf3029 | Apple | Senior Software Engineer | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=be01acc4824dea6c | Apple | Senior Frontend Web Platform Engineer - Apple Services Engineering | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=308c2c2f92c5556e | Apple | Sr. Software Engineer - Front End - iCloud | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=f3c4854a5c224ed7 | Apple | Senior Software Engineer - Full Stack (Node.js/TypeScript/functional) | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=b06b3efdbc6ec1bf | Apple | Senior Software Engineer-Apple Music | San Francisco Bay Area, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=1db394022d522b52 | Apple | Sr Software Engineer (Agentic AI), AI & Data Platforms | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=b7a96b29362e7fbd | Apple | Senior Software Engineer: Agentic Systems, Instructional Products | Cupertino, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=d5d74f9183225d5e | Apple | Senior Software Engineer | Cupertino, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=ccdc231dddff9a42 | Apple | Senior Software Engineer | Sunnyvale, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=c273d163ac5a85b7 | Apple | Senior Software Engineer | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=03f70a9d8ef6b7d2 | Apple | Senior Full-Stack Engineer - Web Platforms for ML Inference | Cupertino, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=498f2b6ecea5a1f5 | Apple | Senior Software Engineer - Tech Lead, Data Solutions & Initiatives | Cupertino, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=b31ebdd283e99388 | Apple | Senior Software Engineer - Tech Lead, Data Solutions & Initiatives | Cupertino, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=05670f86931e2e26 | Apple | Principal Software Engineer, Retail Foundations | Sunnyvale, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=27492eb52a1ea249 | Apple | Devops Engineer- Agents | Cupertino, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=3556afa8ec7a7c14 | nan | Sr. Software Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=640ad2341149d2bc | Openkyber | API Threat Intelligence Analyst | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=9dade81365b6563f | Orion Advisor Technology | Senior Staff Engineer | Omaha, NE, US
+- [ ] https://www.indeed.com/viewjob?jk=1e558146d5bc7947 | GEICO | Distinguished Engineer | Palo Alto, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=6ddb293aa1487550 | KlearNow | Senior AI Engineer | CA, US
+- [ ] https://www.indeed.com/viewjob?jk=ffaa98384834f1f2 | nan | Senior Cloud Software Engineer (Full-Stack) | Anchorage, AK, US
+- [ ] https://www.indeed.com/viewjob?jk=b28db6e42d1a6c3a | Handshake | Software Engineer, Agentic Infrastructure | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=c1b3a9b1efa360b2 | Handshake | Senior Software Engineer, Agentic Infrastructure | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=95e4c36fb89d92a4 | CVS Health | Senior Web Developer | CT, US
+- [ ] https://www.indeed.com/viewjob?jk=01c5e4ae58b8bd21 | Cargill | Sr . Software Engineer - FullStack | Wayzata, MN, US
+- [ ] https://www.indeed.com/viewjob?jk=3f03adde7253fda6 | Cargill | Sr . Software Engineer - FullStack | Atlanta, GA, US
+- [ ] https://www.indeed.com/viewjob?jk=3a1eea3b935fcd9c | The Walt Disney Company | Senior Software Engineer, Emerging Technology | Burbank, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=1d0648c7ad5968ac | GEICO | Staff Engineer – Vulnerability Management Automation (Platform and Tools - VMs) | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=dd065d677285180f | GEICO | Staff Engineer – Vulnerability Management Automation (Platform and Tools - VMs) | Palo Alto, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=e27fbe672183f8de | GEICO | Staff Engineer – Vulnerability Management Automation (Platform and Tools - VMs) | Dallas, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=21dc2219b81842de | GEICO | Staff Engineer – Vulnerability Management Automation (Platform and Tools - VMs) | Bethesda, MD, US
+- [ ] https://www.indeed.com/viewjob?jk=9193a7b914f4dc3c | Disqo | Principal GTM Engineer | Los Angeles, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=2422a6649c1527cf | RealWork Labs | Senior Software Engineer | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=f242f09dbc0e1b1c | nan | Senior Software Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=0d331dc712e96d7b | US Pharmacopeial Convention | Team Lead, Software Engineering | Rockville, MD, US
+- [ ] https://www.indeed.com/viewjob?jk=13f8615771552dae | Echo360 | Senior / Staff Full Stack Engineer | CA, US
+- [ ] https://www.indeed.com/viewjob?jk=5319b01e8c5c54de | Echo360 | Senior / Staff Full Stack Engineer | AZ, US
+- [ ] https://www.indeed.com/viewjob?jk=a6b394d4e4973a9a | Echo360 | Senior / Staff Full Stack Engineer | TX, US
+- [ ] https://www.indeed.com/viewjob?jk=e80223143df91f78 | TheGuarantors | Staff Software Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=0b85ee1445d06a2c | Scientific Research Corporation | Sr Software Test Engineer | Huntsville, AL, US
+- [ ] https://www.indeed.com/viewjob?jk=aad713e36e2ffa5b | Lakeview Loan Servicing | Lead Backend Engineer, AI Platform | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=3b96db3a1155baab | Lakeview Loan Servicing | Lead Product Engineer | Coral Gables, FL, US
+- [ ] https://www.indeed.com/viewjob?jk=0ca4e5259bf3d9d9 | Bloom Equity Partners | Senior Software Engineer | Dallas, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=d029d40be9d4f0cf | Luminize | Software Engineer II - Node.js / TypeScript | San Diego, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=c5b4f138722ffeea | keep Company | Full-Stack Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=8e9c99f4aa061643 | Speridian Technologies | Staff Software Engineer - Full Stack | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=d58d54dd75a9d7d0 | BAE Systems USA | Senior Software Engineer | Suitland, MD, US
+- [ ] https://www.indeed.com/viewjob?jk=c63211f8f4eb21ae | Augustine Institute | Sr Software Engineer - Backend | Florissant, MO, US
+- [ ] https://www.indeed.com/viewjob?jk=4520775655359d01 | PayPal | Sr Software Engineer | San Jose, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=77730c6ce13c51e0 | PayPal | Software Engineer | San Jose, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=a4e5e5caed19144a | Okta | Senior Software Engineer, AI | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=c6056d31894e3c7f | Airwallex | Senior Software Engineer, DevX | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=df2dc71927a4e1af | Remitly | Senior AI Software Engineer, High Value Send | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=ac8609be5f77d755 | Information Technology Senior Management Forum | Senior Staff Generative AI Engineer - VP | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=28b0a23fa1105fa7 | GitHub | Senior Software Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=800563b370b48401 | shine systems | Journeyman Palantir Foundry Analyst | Washington, DC, US
+- [ ] https://www.indeed.com/viewjob?jk=b314e6a4ad3e4810 | Cribl | Sr Software Engineer, Cribl AI | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=4cde0addac86462a | Clearwater Analytics (CWAN) | Sr. Software Development Engineer | Boise, ID, US
+- [ ] https://www.indeed.com/viewjob?jk=2b2869683c9a0bf5 | Amplitude | Senior Software Engineer, Product Adoption | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=e637d94e1024b6a8 | First Citizens Bank | Senior Fullstack Engineer (Remote AZ, NC and TX) | Raleigh, NC, US
+- [ ] https://www.indeed.com/viewjob?jk=e78a12d16bb19914 | Western & Southern Financial Group | Senior Contact Center Engineer (Architect) | Cincinnati, OH, US
+- [ ] https://www.indeed.com/viewjob?jk=0134d9bbb72e0c81 | CENSYS | Senior Backend Engineer, SOC & Threat Hunting | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=40d47e8a85fc47b0 | Adobe | Senior Staff Full Stack Engineer - Agent Platform, Firefly Boards | San Jose, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=0a123a8235948a7e | American Express | Sr Software Engineer II - Global Commercial Services | FL, US
+- [ ] https://www.indeed.com/viewjob?jk=48f1657c967fb8e4 | Luminize | Senior Software Engineer (WMS) | San Diego, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=68ed67a232926d6a | RDI Technologies, Inc. | Senior Platform Engineer, Delivery & Reliability | Knoxville, TN, US
+- [ ] https://www.indeed.com/viewjob?jk=58fe1722e4dbca11 | Equifax | Software Engineer Specialist | Alpharetta, GA, US
+- [ ] https://www.indeed.com/viewjob?jk=b20c6bc4148a444a | Further | Senior Software Developer | Dallas, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=f8c1d68e54c43536 | PayPal | Sr Software Engineer | San Jose, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=9f5fb9215df56f12 | Copeland | Senior Software Engineer (Cloud Native, React/Node.js) | Kennesaw, GA, US
+- [ ] https://www.indeed.com/viewjob?jk=37baf4e5b250c67d | Fidelity Investments | Principal Software Engineer | Smithfield, RI, US
+- [ ] https://www.indeed.com/viewjob?jk=0dbb3f6852d4a3ef | Fidelity Investments | Principal Software Engineer | Westlake, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=5321472eb7b0c96e | Capgemini | Lead TypeScript Backend Architect | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=8646886f6d8480d5 | Walmart | Senior, Software Engineer - SDET | Denver, CO, US
+- [ ] https://www.indeed.com/viewjob?jk=afb06a3f10e79d24 | DAT Solutions | Senior Software Engineer | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=81035a7ee8717107 | LINEVISION | Senior Software Engineer | Boston, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=969e62a2c5e2af9a | Amplitude | Senior Software Engineer - SDK | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=8a7d9aca749843d0 | Parsons | Software Engineer - TS w/ SCI eligibility | Colorado Springs, CO, US
+- [ ] https://www.indeed.com/viewjob?jk=ec124696cb5626ec | nan | Senior Software Engineer, Applied AI | US
+- [ ] https://www.indeed.com/viewjob?jk=23a94ad39c7ec6bf | 8th Light | Senior Software Engineer (Chicago, Atlanta, Boston) | Chicago, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=51ce18d20cc7ade7 | Wells Fargo | Software Engineer in Cybersecurity (contract) | Charlotte, NC, US
+- [ ] https://www.indeed.com/viewjob?jk=0f043f03f8ecf627 | Everforth ECS | Senior Cloud Software Engineer (AWS/AI) | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=5e237cc7a888d024 | JPMorganChase | Sr. Lead Software Engineer - Java/React/SpringBoot/SQL/AWS | Jersey City, NJ, US
+- [ ] https://www.indeed.com/viewjob?jk=a62ee8be5b900781 | CENSYS | Senior Backend Engineer, SaaS Platform | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=d8d82b431fda5693 | Saronic Technologies | Senior Full Stack Engineer | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=381d7c89737513ad | Openkyber | Senior DevOps Engineer (Kubernetes) | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=aa9573b38c50ff93 | GitHub | Senior Software Engineer | US
+- [ ] https://www.indeed.com/viewjob?jk=1d688d2d219d9641 | nan | Senior Software Engineer - Autonomy Interface | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=8f1ed9b36f5154a9 | Sonar | Full-Stack Engineer | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=87210e57e2bd93e1 | Openkyber | Senior Kubernetes Engineer | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=7527087982f2d1b0 | Openkyber | Senior DevOps Engineer (Kubernetes) | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=b2031bedc50a4555 | JPMorganChase | Senior Lead Security Engineer, AI | Columbus, OH, US
+- [ ] https://www.indeed.com/viewjob?jk=e5554617fee28d38 | CyberArk | Senior Software Engineer – Control Plane & Data Platform - hybrid | US
+- [ ] https://www.indeed.com/viewjob?jk=e41d867ebd8f8f92 | GEICO | Senior Engineer - Partner Platform | Palo Alto, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=f4c3d106f279fc30 | GEICO | Senior Engineer - Partner Platform | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=9e80d4b3d0ae2819 | Marriott International | Senior Software Engineer- GraphQL Engineering | Bethesda, MD, US
+- [ ] https://www.indeed.com/viewjob?jk=02347743d563bd0a | Chewy | Staff Software Engineer - Vet Care | Bellevue, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=da289ab6ba3fe4fc | Information Technology Senior Management Forum | Senior Lead Software Engineer | Chicago, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=febceb101c117b18 | Fidelity TalentSource | Full Stack Engineer | Durham, NC, US
+- [ ] https://www.indeed.com/viewjob?jk=c99872b882696a0b | Credo | Senior Application Engineer | San Jose, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=a00c6df2acb90b04 | CoBank | Senior Software Engineer, Full Stack | Greenwood Village, CO, US
+- [ ] https://www.indeed.com/viewjob?jk=d96f2395abc7b373 | PowerSchool Group | Software Engineer | Dallas, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=fed653aec24910be | Altumint | Senior AWS Developer | Lanham, MD, US
+- [ ] https://www.indeed.com/viewjob?jk=6b5e0670b50c844b | Capital One | Sr Lead Software Engineer, Full Stack - Shopping (Remote-Eligible) | McLean, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=5f6c7b79c6f5094f | Capital One | Sr. Lead Software Engineer, Full Stack | Chicago, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=28188a1ecba1239a | Capital One | Senior Lead Software Engineer | Chicago, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=b81aaf913bae8631 | Capital One | Senior Lead Software Engineer, Full Stack | Chicago, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=a088b5535f033d23 | Northrop Grumman | Software Engineer - Level 4 | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=f51624772e458af1 | Amazon Web Services | Front-End Engineer III , Optimization Console | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=9dca196b7923e2e8 | AXCEND | Senior Software Developer (Chromatography Data Systems & Instrumentation) | Lehi, UT, US
+- [ ] https://www.indeed.com/viewjob?jk=302b0226cf301ff5 | Fuze Health | Senior Technical Program Manager - FuzeRx | TX, US
+- [ ] https://www.indeed.com/viewjob?jk=4dea59415b7f36c6 | Amazon.com | Senior Software Engineer, Enterprise Platform | Irvine, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=9725f928c9800ca7 | Amazon.com | Senior Software Engineer, Enterprise Platform | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=1d7fbaa2ed1751d6 | Amazon.com | Senior Software Engineer, Enterprise Platform | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=7dd9d64b4ea5c51e | Liberty Mutual Insurance | Manager, Engineering | Indianapolis, IN, US
+- [ ] https://www.indeed.com/viewjob?jk=486a73406c444624 | Liberty Mutual Insurance | Manager, Engineering | Boston, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=d4c9e34e3524243f | Liberty Mutual Insurance | Manager, Engineering | Columbus, OH, US
+- [ ] https://www.indeed.com/viewjob?jk=e121b3be82cf03d8 | Liberty Mutual Insurance | Manager, Engineering | Plano, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=08a9fea9179da71c | Liberty Mutual Insurance | Manager, Engineering | Portsmouth, NH, US
+- [ ] https://www.linkedin.com/jobs/view/4382312215 | Paylocity | Senior Engineer Software(core platforms) | 
+- [ ] https://www.linkedin.com/jobs/view/4393147377 | Cars Commerce | Lead Software Engineer (Frontend) | 
+- [ ] https://www.linkedin.com/jobs/view/4411921219 | Tandem Diabetes Care | Sr. Software Engineer I (Frontend - React) | 
+- [ ] https://www.linkedin.com/jobs/view/4403504804 | Labcorp | Senior Software Engineer, Clinical CMS | North Carolina, United States
+- [ ] https://www.linkedin.com/jobs/view/4412413418 | Owner.com | Senior Software Engineer, Mobile Platform - POS (Remote, United States) | 
+- [ ] https://www.linkedin.com/jobs/view/4372122318 | Attentive | Senior Software Engineer, Streaming | 
+- [ ] https://www.linkedin.com/jobs/view/4390054232 | Netflix | Senior Software Engineer, Design Tooling | 
+- [ ] https://www.linkedin.com/jobs/view/4403405316 | Tines | Senior Software Engineer - Full-stack | New York, United States
+- [ ] https://www.linkedin.com/jobs/view/4403199365 | Tines | Senior Software Engineer - Full-stack | Georgia, United States
+- [ ] https://www.linkedin.com/jobs/view/4403417097 | Tines | Senior Software Engineer - Full-stack | Maryland, United States
+- [ ] https://www.linkedin.com/jobs/view/4411327082 | Praia Health | Sr. Software Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4403404301 | Tines | Senior Software Engineer - Full-stack | Florida, United States
+- [ ] https://www.linkedin.com/jobs/view/4403196507 | Tines | Senior Software Engineer - Full-stack | Washington, DC
+- [ ] https://www.linkedin.com/jobs/view/4403414142 | Tines | Senior Software Engineer - Full-stack | Ohio, United States
+- [ ] https://www.linkedin.com/jobs/view/4412167959 | SeatGeek | Senior Software Engineer, Fullstack | 
+- [ ] https://www.linkedin.com/jobs/view/4412113381 | TherapyNotes, LLC | Senior Software Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4411701591 | Flex | Senior Software Engineer, Fullstack | 
+- [ ] https://www.linkedin.com/jobs/view/4411862861 | Jobgether | Senior/Staff Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4411866736 | HireQ Talent | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4412452227 | Infinite Computer Solutions | Senior Software Engineer | New Jersey, United States
+- [ ] https://www.linkedin.com/jobs/view/4380730910 | Intelex Technologies ULC | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4411719081 | Flex | Senior Software Engineer, Fullstack (Risk Engineering) | 
+- [ ] https://www.linkedin.com/jobs/view/4411791298 | BAE Systems, Inc. | Senior Software Engineer | Suitland, MD
+- [ ] https://www.linkedin.com/jobs/view/4412150358 | GitHub | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4411850390 | Alignerr | Senior Software Engineer – AI Quality Analyst | 
+- [ ] https://www.linkedin.com/jobs/view/4411704408 | Commerce | Lead Software Engineer - Scala | Austin, TX
+- [ ] https://www.linkedin.com/jobs/view/4412156859 | The Grace Hopper Program at Fullstack Academy | Senior Full Stack Product Engineer | Boston, MA
+- [ ] https://www.linkedin.com/jobs/view/4412177872 | First Citizens Bank | Senior Fullstack Engineer (Remote AZ, NC and TX) | Raleigh, NC
+- [ ] https://www.linkedin.com/jobs/view/4412183735 | First Citizens Bank | Senior Fullstack Engineer (Remote AZ, NC and TX) | Raleigh, NC
+- [ ] https://www.linkedin.com/jobs/view/4412404207 | Mainstay | Senior Software Engineer, Applied AI | 
+- [ ] https://www.linkedin.com/jobs/view/4412182761 | First Citizens Bank | Senior Fullstack Engineer (Remote AZ, NC and TX) | Phoenix, AZ
+- [ ] https://www.linkedin.com/jobs/view/4411729026 | Censys | Senior Backend Engineer, SaaS Platform | Canada, KY
+- [ ] https://www.linkedin.com/jobs/view/4411682893 | Forma | Senior Software Engineer | California, United States
+- [ ] https://www.linkedin.com/jobs/view/4411835203 | Salvo Health | Senior Software Engineer | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4410496984 | American Logistics | Sr. Fullstack Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4379607347 | Garner Health | Senior Software Engineer | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4409603544 | RapidSOS | Senior Software Engineer, Full-Stack | New York, United States
+- [ ] https://www.linkedin.com/jobs/view/4409234483 | Mediafly | Senior Software Engineer, Professional Services | 
+- [ ] https://www.linkedin.com/jobs/view/4410863518 | Valerian Technology | Lead Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4411624492 | NTT DATA North America | Senior AI Engineer - Remote | Dallas, TX
+- [ ] https://www.linkedin.com/jobs/view/4409253462 | Jobot | Software Engineer | Arlington, VA
+- [ ] https://www.linkedin.com/jobs/view/4411275963 | PlayOn Sports | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4410407134 | Lyra Health | Sr. Software Engineer - Full Stack | 
+- [ ] https://www.linkedin.com/jobs/view/4411271008 | Bath & Body Works | Senior Applications Developer | Columbus, OH
+- [ ] https://www.linkedin.com/jobs/view/4411266846 | Guild | Senior Software Engineer II | 
+- [ ] https://www.linkedin.com/jobs/view/4411215605 | ZONTAL | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4409219098 | LogicGate | Sr. Software Engineer: Frontend | 
+- [ ] https://www.linkedin.com/jobs/view/4411273040 | OpenMined | Staff Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4411239208 | Webflow | Senior Staff Software Engineer, Distributed Systems | 
+- [ ] https://www.linkedin.com/jobs/view/4370196866 | Smarter Technologies | Senior Software Engineer, Full Stack | 
+- [ ] https://www.linkedin.com/jobs/view/4410709043 | eStaffing Inc. | Senior Software Developer | Pennsylvania, United States
+- [ ] https://www.linkedin.com/jobs/view/4402485341 | Array | Senior Svelte Software Engineer | Denver, CO
+- [ ] https://www.linkedin.com/jobs/view/4410523124 | Marriott International | Principal Software Engineer (Guest Communications Platform) | Bethesda, MD
+- [ ] https://www.linkedin.com/jobs/view/4338289801 | Airbnb | Senior Software Engineer, Quality Platform | 
+- [ ] https://www.linkedin.com/jobs/view/4413125605 | Weave Talent Partners | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4413116228 | CentralReach | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4412770114 | Jobgether | Senior Software Engineer (Python) | 
+- [ ] https://www.linkedin.com/jobs/view/4413133128 | Magnet Forensics | Senior Frontend Software Engineer, GKOS | 
+- [ ] https://www.linkedin.com/jobs/view/4413169045 | Motion Recruitment | Senior Software Engineer / React and Python | Arlington, VA
+- [ ] https://www.linkedin.com/jobs/view/4413058954 | Ladders | Principal Software Engineer, Backend | 
+- [ ] https://www.indeed.com/viewjob?jk=d8a18c8567d7d763 | Adobe | Senior Software Development Engineer | San Jose, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=cdb858ec3f842ac6 | Robert Moreno | Ai full-stack engineer | Scottsdale, AZ, US
+- [ ] https://www.indeed.com/viewjob?jk=74f3191cc3d47286 | Asurion | Full-Stack Senior Software Engineer | Sterling, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=76cc99ea288f1d8d | Ecolab | Principal Software Engineer | Naperville, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=3185733bdee72ca6 | Ecolab | Principal Software Engineer | Naperville, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=af8a440a035fb220 | Apple | Senior / Staff Software Engineer, Apple Cloud AI Platform | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=a080e5ab41341fc1 | Apple | Sr Software Engineer, Employee Experience & Productivity | Culver City, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=825deefabcc66614 | Apple | Senior Full Stack Engineer, Enterprise Technology Services | Elk Grove, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=8a89eb52ee62363e | SRS Distribution | Senior Application Developer | McKinney, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=1fd2d6b1091422c6 | GovCIO | Technical Lead (Remote) | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=14be7814e2eaa08f | Nabis | Senior Software Enineer | Kansas City, MO, US
+- [ ] https://www.indeed.com/viewjob?jk=bd4af80ff3bf9649 | Amplitude | Senior Software Engineer (Experiment) | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=96306aa5fb1c0b90 | Columbia Threadneedle Investments | Java/Python Senior Software Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=298abab73629ce7b | Openkyber | Lead Platform Engineer | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=d40333fe6a0ebeb0 | Otairo.ai | Senior AI Solution Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=810e1265effe363a | Intellibus Ventures LLC | Full Stack Engineer – Distributed Systems (Node.js / React) | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=fa6da299c9ce7ac7 | Intellibus | Staff Software Engineer – Event-Driven Architecture | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=71b6aea24949e2a6 | Truist | Lead AI Full-Stack Developer | Charlotte, NC, US
+- [ ] https://www.indeed.com/viewjob?jk=e7f94905611a028e | NAVEX | Staff Software Engineer | Lake Oswego, OR, US
+- [ ] https://www.indeed.com/viewjob?jk=4a955667e8d09f30 | NAVEX | Staff Software Engineer | Charlotte, NC, US
+- [ ] https://www.indeed.com/viewjob?jk=ca8dbb6dc6c76f9f | Pella | Principal Software Engineer | Urbandale, IA, US
+- [ ] https://www.indeed.com/viewjob?jk=35bee00fc4ccb280 | Visa | Software Engineer Sr. Consultant , Fullstack/GenAI Engineering | Ashburn, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=49900349f2a0e468 | Asurion | Staff Software Engineer | Sterling, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=6d3c972870ab3e7c | Hewlett Packard Enterprise | HPE | Senior Full Stack Software Engineer (Network) | San Jose, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=42ad2fa51e447a44 | nan | Principal Full-Stack Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=24945f1ae06d1c1d | StackBlitz | Lead Front-End Engineer (UI/UX) | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=aab4fd0ef6df8b97 | Seamless | Lead Growth Engineer | US
+- [ ] https://www.indeed.com/viewjob?jk=170b4ff4478d1f2c | nan | Jr/Mid/Senior/Staff Software Engineer, Applications | Boston, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=defb31d39e040105 | Openkyber | Staff AI Engineer | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=fcdb6f657dbb30a5 | Openkyber | Staff AI Engineer | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=b60c70f59b566921 | Lockheed Martin | Full-Stack Applications Engineer Sr - Level 3 | Marietta, GA, US
+- [ ] https://www.indeed.com/viewjob?jk=e77a815147c6fd05 | Caribou Thunder | Full Stack Developer | Newport News, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=7d1ee3050397b940 | Rivian and Volkswagen Group Technologies | Sr Software Engineer, Fullstack (Developer Productivity) | Palo Alto, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=68c700567606c4e9 | Rivian and Volkswagen Group Technologies | Sr. Software Engineer, Full-Stack (Factory Systems) | Palo Alto, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=e91b48d20dd3fb37 | allwhere | Senior Full Stack Engineer | New York, NY, US
+- [ ] https://www.linkedin.com/jobs/view/4309699468 | DataAnnotation | Full Stack Developer | Indiana, United States
+- [ ] https://www.linkedin.com/jobs/view/4309804313 | DataAnnotation | Full Stack Engineer | Hawaii, United States
+- [ ] https://www.linkedin.com/jobs/view/4309694937 | DataAnnotation | Full Stack Engineer | Montana, United States
+- [ ] https://www.linkedin.com/jobs/view/4412582475 | Confidential | Full Stack Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4402779957 | Ad Hoc LLC | Temporary Staff Software Engineer - Full Stack / SRE (Remote) | 
+- [ ] https://www.linkedin.com/jobs/view/4412419547 | YO IT Consulting | Frontend Developer - Remote | Chicago, IL
+- [ ] https://www.linkedin.com/jobs/view/4412430030 | YO IT Consulting | Frontend Developer - Remote | New York, United States
+- [ ] https://www.linkedin.com/jobs/view/4412425113 | YO IT Consulting | Frontend Developer - Remote | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4412421444 | YO IT Consulting | Frontend Developer - Remote | Washington, United States
+- [ ] https://www.linkedin.com/jobs/view/4412417647 | YO IT Consulting | Frontend Developer - Remote | Dallas, TX
+- [ ] https://www.linkedin.com/jobs/view/4412410969 | YO IT Consulting | Frontend Developer - Remote | Seattle, WA
+- [ ] https://www.linkedin.com/jobs/view/4412423281 | YO IT Consulting | Frontend Developer - Remote | Dallas, TX
+- [ ] https://www.linkedin.com/jobs/view/4412418527 | YO IT Consulting | Frontend Developer - Remote | Austin, CO
+- [ ] https://www.linkedin.com/jobs/view/4412421451 | YO IT Consulting | Frontend Developer - Remote | Boston, MA
+- [ ] https://www.linkedin.com/jobs/view/4402706432 | CodeGeniusRecruit | Full Stack Engineer | Remote | 
+- [ ] https://www.linkedin.com/jobs/view/4309815035 | DataAnnotation | Full Stack Developer | Arkansas, United States
+- [ ] https://www.linkedin.com/jobs/view/4309805304 | DataAnnotation | Full Stack Developer | Iowa, United States
+- [ ] https://www.linkedin.com/jobs/view/4412432012 | YO IT Consulting | Full Stack Developer - Remote | Houston, TX
+- [ ] https://www.linkedin.com/jobs/view/4309801172 | DataAnnotation | Back End Developer | Washington, DC
+- [ ] https://www.linkedin.com/jobs/view/4309699503 | DataAnnotation | Full Stack Engineer | Connecticut, United States
+- [ ] https://www.linkedin.com/jobs/view/4309693780 | DataAnnotation | Back End Developer | North Dakota, United States
+- [ ] https://www.linkedin.com/jobs/view/4264906418 | ClickHouse | Full Stack Software Engineer - Control Plane | 
+- [ ] https://www.linkedin.com/jobs/view/4403500102 | Chamber | Staff / Principal Full Stack Engineer | Washington, DC
+- [ ] https://www.linkedin.com/jobs/view/4412133895 | Impiricus | Senior Software Engineer (Full-stack) | 
+- [ ] https://www.linkedin.com/jobs/view/4405895959 | Owner.com | Senior Software Engineer, Full-Stack (Agents) | 
+- [ ] https://www.linkedin.com/jobs/view/4405134770 | YO HR Consultancy | Frontend Developer - Remote | 
+- [ ] https://www.linkedin.com/jobs/view/4309812160 | DataAnnotation | Full Stack Developer | Oregon, United States
+- [ ] https://www.linkedin.com/jobs/view/4309808255 | DataAnnotation | Full Stack Developer | Missouri, United States
+- [ ] https://www.linkedin.com/jobs/view/4411341125 | Mercor | Full Stack Developer | Upto $120/hr | 
+- [ ] https://www.linkedin.com/jobs/view/4309808034 | DataAnnotation | Back End Developer | Ohio, United States
+- [ ] https://www.linkedin.com/jobs/view/4309690973 | DataAnnotation | Full Stack Engineer | North Dakota, United States
+- [ ] https://www.linkedin.com/jobs/view/4412171811 | Akraya, Inc. | HubSpot Web Developer : 26-01331 | California, United States
+- [ ] https://www.linkedin.com/jobs/view/4411330171 | Mercor | Full Stack Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4411384696 | AllOne Health | AI Full Stack Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4364980261 | Rithum | Senior Fullstack Software Engineer - JavaScript / TypeScript | 
+- [ ] https://www.linkedin.com/jobs/view/4411635728 | Optum | Senior Full Stack Software Engineer | Minnetonka, MN
+- [ ] https://www.linkedin.com/jobs/view/4380086276 | Spatial Front, Inc | Senior Full-Stack Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4411822001 | Engine | Staff Software Engineer, Fullstack (Groups Shopping Team) | Denver, CO
+- [ ] https://www.linkedin.com/jobs/view/4403774396 | Go Offer | Frontend Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4309810175 | DataAnnotation | Full Stack Developer | Pennsylvania, United States
+- [ ] https://www.linkedin.com/jobs/view/4309809191 | DataAnnotation | Full Stack Developer | Ohio, United States
+- [ ] https://www.linkedin.com/jobs/view/4309695989 | DataAnnotation | Full Stack Developer | Nevada, United States
+- [ ] https://www.linkedin.com/jobs/view/4309808175 | DataAnnotation | Full Stack Developer | Michigan, United States
+- [ ] https://www.linkedin.com/jobs/view/4309808213 | DataAnnotation | Full Stack Engineer | Oklahoma, United States
+- [ ] https://www.linkedin.com/jobs/view/4309688947 | DataAnnotation | Back End Developer | Kentucky, United States
+- [ ] https://www.linkedin.com/jobs/view/4309699498 | DataAnnotation | Full Stack Engineer | South Dakota, United States
+- [ ] https://www.linkedin.com/jobs/view/4379959781 | Bubble | Staff Full Stack Engineer, Mobile Platform | 
+- [ ] https://www.linkedin.com/jobs/view/4411431750 | Accylerate | Full Stack Engineer, Data Analytics | 
+- [ ] https://www.linkedin.com/jobs/view/4402613037 | Booz Allen Hamilton | Full Stack Mission Essential System Developer | McLean, VA
+- [ ] https://www.linkedin.com/jobs/view/4402609064 | Booz Allen Hamilton | Full Stack Mission Essential System Developer | Chantilly, VA
+- [ ] https://www.linkedin.com/jobs/view/4388461580 | Talkiatry | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4409953264 | Envision Technology Solutions | React Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4410995130 | HireTalent - Staffing & Recruiting Firm | Frontend Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4309806233 | DataAnnotation | Full Stack Developer | Mississippi, United States
+- [ ] https://www.linkedin.com/jobs/view/4309697711 | DataAnnotation | Full Stack Engineer | Utah, United States
+- [ ] https://www.linkedin.com/jobs/view/4410986402 | TSP Global Group | Full Stack Developer (React.js + Node.js) – Remote | 
+- [ ] https://www.linkedin.com/jobs/view/4402084978 | Booz Allen Hamilton | Front End Software Engineer | Chantilly, VA
+- [ ] https://www.linkedin.com/jobs/view/4410941761 | Life360 | Staff Backend Engineer (AI Native), Family AI Lab | 
+- [ ] https://www.linkedin.com/jobs/view/4410577979 | Pozent Corporation | Senior Full Stack Engineer | Coal City, IN
+- [ ] https://www.linkedin.com/jobs/view/4400734066 | Crossing Hurdles | Backend Engineer (TypeScript & Rust) | Remote | 
+- [ ] https://www.linkedin.com/jobs/view/4413033506 | Insight Global | Senior Software Engineer (Full Stack) | 
+- [ ] https://www.linkedin.com/jobs/view/4413141168 | RemoteHunter | Senior Software Engineer (Full Stack) | 
+- [ ] https://www.linkedin.com/jobs/view/4412976237 | Motion (Creative Analytics) | Senior Software Engineer (Backend) | 
+- [ ] https://www.linkedin.com/jobs/view/4412705894 | Very | Senior Software Engineer (Python) - Contract (1099) | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4412972959 | HireTalent - Staffing & Recruiting Firm | Frontend Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4412726726 | Crossing Hurdles | Full Stack Developer | $80/hr Remote | 
+- [ ] https://www.linkedin.com/jobs/view/4412916336 | SMARTFOX | Full Stack Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4412986479 | Antal International | Full Stack Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4412634042 | Lynton | Full Stack AI Engineer | Denver, CO
+- [ ] https://www.linkedin.com/jobs/view/4412581931 | YO IT Consulting | Full Stack Developer - Remote | North Carolina, United States
+- [ ] https://www.linkedin.com/jobs/view/4412701144 | YO IT Consulting | Full Stack Developer - Remote | Texas, United States
+- [ ] https://www.linkedin.com/jobs/view/4323320742 | Hopper | Senior Full-Stack Ads Engineer - HTS Media Services | Boston, MA
+- [ ] https://www.linkedin.com/jobs/view/4338367607 | DataAnnotation | Web Developer/Designer | Kansas, United States
+- [ ] https://www.linkedin.com/jobs/view/4413215539 | Alignerr | Frontend JavaScript Developer | Seattle, WA
+- [ ] https://www.linkedin.com/jobs/view/4413149270 | RemoteHunter | Full Stack Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4412775814 | Jobs via Dice | Senior Fullstack Engineer (Remote AZ, NC and TX) | Dallas, TX
+- [ ] https://www.linkedin.com/jobs/view/4412945770 | Jobs via Dice | Senior Full Stack React/Node.js Developer (SQL & Data Analytics) | 
+- [ ] https://www.linkedin.com/jobs/view/4412781506 | Jobs via Dice | Senior Fullstack Engineer (Remote AZ, NC and TX) | Raleigh, NC
+- [ ] https://www.linkedin.com/jobs/view/4413170022 | Charles River Associates | Associate Principal/Full Stack Developer (Forensic Services practice) | Oakland, CA
+- [ ] https://www.linkedin.com/jobs/view/4412778596 | Jobs via Dice | Senior Fullstack Engineer (Remote AZ, NC and TX) | Phoenix, AZ
+- [ ] https://www.linkedin.com/jobs/view/4412767966 | Jobs via Dice | Senior Fullstack Engineer (Remote AZ, NC and TX) | Raleigh, NC
+- [ ] https://www.linkedin.com/jobs/view/4413152763 | Charles River Associates | Associate Principal/Full Stack Developer (Forensic Services practice) | New York, NY
+- [ ] https://www.indeed.com/viewjob?jk=b343f1ff7efc98c1 | FCT | Senior Software Engineer | Santa Ana, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=9736ba6473e4804f | Teton Ridge | Senior Software Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=d5f7aa9808e3bc85 | Bank of America | Senior Engineer - Payments Modernization | Charlotte, NC, US
+- [ ] https://www.indeed.com/viewjob?jk=c5b0bb707b2b1f37 | Flairdeck Consulting | Senior Backend Engineer – Platform (Ruby or Node.js) | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=c4f7c834d35f7d97 | Flairdeck Consulting | Staff Back-End Engineer (Platform) (Ruby/Node) | Manhattan, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=f67d8d029604a63e | Navan | Senior Site Reliability Engineer | Dallas, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=d34578ddc24426b1 | Openkyber | Kubernetes Administrator | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=b5fdd75037ffb15a | Openkyber | Lead Platform Engineer | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=ac95da7be87c0a79 | TForce Logistics Inc. | Senior Software Engineer | Dallas, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=2bf7e0b35f8ea7b1 | C-4 Analytics | Senior Data Engineer (HYBRID) | Wakefield, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=9951ac7d2a6406c8 | ReadyOn | Backend Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=1a91b4a9a6476c6e | CrowdStrike | Sr. Software Engineer - Falcon Fusion Product (Hybrid) | Sunnyvale, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=1febfbe512a25ee0 | Openkyber | Senior LLM Engineer | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=573de63d3acc764d | Openkyber | Senior AI Engineer | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=329d51563f360e42 | StackBlitz | Lead Full Stack Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=52cd2825e17099d5 | Paramount Streaming | Senior Software Engineer | Burbank, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=69b50d987d0590ed | icapital | Senior Backend Engineer - Senior Vice President | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=1148fc74427b7d8d | icapital | Backend Engineer - Vice President / Senior Vice President | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=8c0701516d95b44d | Openkyber | Senior AI Engineer | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=9a49d69c1887b38e | Openkyber | Java Fullstack Engineer with AI | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=41506061e08a6c6b | Chewy | Software Engineer III | Boston, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=b5f05c8dd67fcf30 | Chewy | Software Engineer III | Plantation, FL, US
+- [ ] https://www.indeed.com/viewjob?jk=a33e6e37234bb097 | Avalara | Senior Software Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=8d8af1b6f83c18be | PayPal | Sr Software Engineer | San Jose, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=34b738ddfb1a643c | Boston Children's Hospital | Senior Full Stack Software Engineer | Boston, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=5ae6425a0c61b7b4 | Alloy | Senior Software Engineer, Platform | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=455942618556199a | Alloy | Senior Software Engineer, Advance | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=6c0471ebb109340c | aqua it | Backend Developers (Jr-Sr) | St. Louis, MO, US
+- [ ] https://www.indeed.com/viewjob?jk=a187f2902caf8640 | FlightSafety International | Software Engineer (IT) | Fort Worth, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=4f1d887d28de9ce1 | HubSpot | Senior AI Engineer (AIMS Martek) | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=7ef3dd717fe3b47a | HubSpot | Senior AI Engineer (AIMS Martek) | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=21daf22bbd2e931c | HubSpot | AI Engineer (AIMS Martek) | Los Angeles, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=8e76d75d932909a0 | HubSpot | Senior AI Engineer (AIMS Martek) | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=f913892d63499061 | HubSpot | Senior AI Engineer (AIMS Martek) | Boston, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=fe2c7c68d61e5bd7 | HubSpot | AI Engineer (AIMS Martek) | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=01ed7d5a25eb1cc5 | HubSpot | Senior AI Engineer (AIMS Martek) | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=6a1c0bdeee2ee1ec | HubSpot | AI Engineer (AIMS Martek) | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=d2386cee1a9ea922 | HubSpot | AI Engineer (AIMS Martek) | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=06e9685308e22788 | HubSpot | AI Engineer (AIMS Martek) | Boston, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=d7b52c488dc9036a | HubSpot | AI Engineer (AIMS Martek) | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=3a11d937ef0c562e | HubSpot | Senior AI Engineer (AIMS Martek) | Los Angeles, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=909cc1e632a4146a | HubSpot | AI Engineer (AIMS Martek) | Dallas, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=ed87bf68d6a5980f | HubSpot | Senior AI Engineer (AIMS Martek) | Dallas, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=0ea1da18459b8d49 | Trellis Technologies | Senior Backend Engineer, Conversational AI | US
+- [ ] https://www.indeed.com/viewjob?jk=c4d534ab5a9fa2ef | GrowthZone | Lead Software Engineer, Full Stack | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=3b5eb3373fa7f6b2 | DataAxxis | Senior Backend Engineer/Architect | US
+- [ ] https://www.indeed.com/viewjob?jk=1e6e3060940d2c69 | Blockskye | Principal Architect | Boston, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=2e43689e50f299ed | Blockskye | Senior Full-Stack Engineer (Node.js, AI) | Boston, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=278d913f98758715 | Rocket | Senior Software Developer, Platform Engineering | Seattle, WA, US
+- [ ] https://www.linkedin.com/jobs/view/4309695719 | DataAnnotation | Backend Software Engineer | Michigan, United States
+- [ ] https://www.linkedin.com/jobs/view/4309816013 | DataAnnotation | Full Stack Developer | West Virginia, United States
+- [ ] https://www.linkedin.com/jobs/view/4412374936 | Tanaq Technical Services | Senior Cloud Software Engineer (Full-Stack) | Anchorage, AK
+- [ ] https://www.linkedin.com/jobs/view/4309805257 | DataAnnotation | Full Stack Engineer | South Carolina, United States
+- [ ] https://www.linkedin.com/jobs/view/4309809217 | DataAnnotation | Full Stack Engineer | Missouri, United States
+- [ ] https://www.linkedin.com/jobs/view/4371556362 | BNSF Railway | Product, Platform & Enterprise Full Stack Software Engineer II (Remote - US) | 
+- [ ] https://www.linkedin.com/jobs/view/4309690845 | DataAnnotation | Back End Developer | Vermont, United States
+- [ ] https://www.linkedin.com/jobs/view/4309808023 | DataAnnotation | Back End Developer | Kansas, United States
+- [ ] https://www.linkedin.com/jobs/view/4309695778 | DataAnnotation | Backend Software Engineer | Alaska, United States
+- [ ] https://www.linkedin.com/jobs/view/4309801348 | DataAnnotation | Full Stack Developer | North Carolina, United States
+- [ ] https://www.linkedin.com/jobs/view/4309697688 | DataAnnotation | Full Stack Developer | Connecticut, United States
+- [ ] https://www.linkedin.com/jobs/view/4309697504 | DataAnnotation | Backend Software Engineer | Mississippi, United States
+- [ ] https://www.linkedin.com/jobs/view/4309693906 | DataAnnotation | Full Stack Developer | Vermont, United States
+- [ ] https://www.linkedin.com/jobs/view/4412419549 | YO IT Consulting | Full Stack Developer - Remote | 
+- [ ] https://www.linkedin.com/jobs/view/4309694749 | DataAnnotation | Backend Software Engineer | Alabama, United States
+- [ ] https://www.linkedin.com/jobs/view/4309801318 | DataAnnotation | Full Stack Engineer | Minnesota, United States
+- [ ] https://www.linkedin.com/jobs/view/4309693962 | DataAnnotation | Full Stack Engineer | Arizona, United States
+- [ ] https://www.linkedin.com/jobs/view/4400430767 | Fictiv | Senior Software Engineer (West Coast) | Oakland, CA
+- [ ] https://www.linkedin.com/jobs/view/4318894185 | Cohere | Senior/Staff Full-Stack Engineer | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4309686991 | DataAnnotation | Back End Developer | Indiana, United States
+- [ ] https://www.linkedin.com/jobs/view/4309805047 | DataAnnotation | Back End Developer | Iowa, United States
+- [ ] https://www.linkedin.com/jobs/view/4309809021 | DataAnnotation | Back End Developer | Maryland, United States
+- [ ] https://www.linkedin.com/jobs/view/4309686993 | DataAnnotation | Backend Software Engineer | Nevada, United States
+- [ ] https://www.linkedin.com/jobs/view/4309699314 | DataAnnotation | Backend Software Engineer | Iowa, United States
+- [ ] https://www.linkedin.com/jobs/view/4309699451 | DataAnnotation | Full Stack Developer | Washington, United States
+- [ ] https://www.linkedin.com/jobs/view/4309816016 | DataAnnotation | Full Stack Developer | Nebraska, United States
+- [ ] https://www.linkedin.com/jobs/view/4411807767 | Guidehouse | Full Stack Engineer (Cleared) | Chicago, IL
+- [ ] https://www.linkedin.com/jobs/view/4404807247 | Mindlance | Lead Full Stack Platform Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4411824246 | Guidehouse | Full Stack Engineer (Cleared) | Fort Collins, CO
+- [ ] https://www.linkedin.com/jobs/view/4411810713 | Guidehouse | Full Stack Engineer (Cleared) | McLean, VA
+- [ ] https://www.linkedin.com/jobs/view/4370473123 | OnePay | Full Stack Software Engineer, Banking | 
+- [ ] https://www.linkedin.com/jobs/view/4410472864 | CodeGeniusRecruit | Senior Backend Engineer - Remote | 
+- [ ] https://www.linkedin.com/jobs/view/4309807099 | DataAnnotation | Back End Developer | Idaho, United States
+- [ ] https://www.linkedin.com/jobs/view/4309692803 | DataAnnotation | Back End Developer | Wyoming, United States
+- [ ] https://www.linkedin.com/jobs/view/4309807056 | DataAnnotation | Backend Software Engineer | Ohio, United States
+- [ ] https://www.linkedin.com/jobs/view/4309689957 | DataAnnotation | Backend Software Engineer | Utah, United States
+- [ ] https://www.linkedin.com/jobs/view/4309695819 | DataAnnotation | Back End Developer | Nebraska, United States
+- [ ] https://www.linkedin.com/jobs/view/4309812093 | DataAnnotation | Full Stack Developer | Florida, United States
+- [ ] https://www.linkedin.com/jobs/view/4309695796 | DataAnnotation | Backend Software Engineer | Oregon, United States
+- [ ] https://www.linkedin.com/jobs/view/4309690806 | DataAnnotation | Backend Software Engineer | Minnesota, United States
+- [ ] https://www.linkedin.com/jobs/view/4309804096 | DataAnnotation | Backend Software Engineer | Arkansas, United States
+- [ ] https://www.linkedin.com/jobs/view/4309809237 | DataAnnotation | Full Stack Developer | Tennessee, United States
+- [ ] https://www.linkedin.com/jobs/view/4309694887 | DataAnnotation | Full Stack Engineer | Washington, DC
+- [ ] https://www.linkedin.com/jobs/view/4286182704 | Trojan Trading | Staff Backend Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4409976217 | Piper Companies | Senior Software Engineer (Data Platform) | 
+- [ ] https://www.linkedin.com/jobs/view/4411277887 | Crosslake Technologies | Full Stack Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4411276670 | Kforce Inc | Full Stack JavaScript Developer | Madison, WI
+- [ ] https://www.linkedin.com/jobs/view/4408479387 | Go Up Job | Desenvolvedor FullStack Pleno | Home, KS
+- [ ] https://www.linkedin.com/jobs/view/4408937581 | GoGoGrandparent | Backend Engineer | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4354871582 | Day One Partners | Senior Backend Engineer | Node.js | 
+- [ ] https://www.linkedin.com/jobs/view/4409738870 | SAN R&D Business Solutions | Backend Developer (Volunteer - Unpaid) | 
+- [ ] https://www.linkedin.com/jobs/view/4412935204 | TalentRemedy | Sr. Systems Engineer (Full-Stack Developer) | 
+- [ ] https://www.linkedin.com/jobs/view/4401754405 | Nxt Level | Senior Software Engineers (LLM Workflows) | 
+- [ ] https://www.linkedin.com/jobs/view/4412745323 | Jobgether | Senior Backend Developer | Israel, OH
+- [ ] https://www.linkedin.com/jobs/view/4412692570 | Stealth Startup | Backend Developer [33004] | Boston, MA
+- [ ] https://www.linkedin.com/jobs/view/4412732347 | Jobgether | Backend Engineer - Wallets | 
+- [ ] https://www.linkedin.com/jobs/view/4410551927 | Underdog.io -Apply to top tech jobs in 60 seconds. A place where companies apply to you | Back End Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4412943674 | Apetan Consulting LLC | Google Cloud Platform Full Stack Engineer/Remote | 
+- [ ] https://www.linkedin.com/jobs/view/4413093394 | Sphere | Senior Backend / Integrations &amp; Monitoring Engineer (Cloud, APIs, AI) | North Miami Beach, FL
+- [ ] https://www.linkedin.com/jobs/view/4388460037 | Progressive Leasing | Full Stack Engineer – Agentic Platform & MCP Integrations (Remote) | Ohio, United States
+- [ ] https://www.indeed.com/viewjob?jk=e4d964d12a4dae58 | nan | Senior Front-End Engineer — AI Assessment Platform | US
+- [ ] https://www.indeed.com/viewjob?jk=44521a49197bbf9c | Apple | Backend/Fullstack Engineer, Creativity Apps | San Diego, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=345540ee62da7a7d | Apple | Senior Frontend Engineer, Annotation Tools | Sunnyvale, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=74265bfaafd92830 | ｎｏｏｎ | Lead/Staff Frontend Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=06af41eed368b02e | Rysun labs | Senior QA Automation Engineer | US
+- [ ] https://www.indeed.com/viewjob?jk=787c50692bf9663c | Capgemini | Senior Web Developer | Atlanta, GA, US
+- [ ] https://www.indeed.com/viewjob?jk=97cf888a72ff8c87 | Renew home | Senior Engineer, Test and Automation (Remote, US) | US
+- [ ] https://www.indeed.com/viewjob?jk=b4cd2c7424af6680 | Trivelta | Senior Software Engineer - Typescript | React | Nextjs ( REMOTE) | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=b75f24349b9c30e5 | Urban sky | Staff Software Engineer | Denver, CO, US
+- [ ] https://www.indeed.com/viewjob?jk=12e982a3d4956a8a | ReadyOn | Frontend Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=72a18455c61b4805 | UDig | Associate Consultant, Software Engineering | Nashville, TN, US
+- [ ] https://www.indeed.com/viewjob?jk=ca3c7f384c1d9b5e | UDig | Associate Consultant, Software Engineering | Richmond, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=b5f28bebdad97958 | TopStep | Senior Software Engineer - Full Stack | US
+- [ ] https://www.indeed.com/viewjob?jk=8ee92c449daa2015 | TopStep | Senior Fullstack Engineer (Payments) | US
+- [ ] https://www.indeed.com/viewjob?jk=45ddf5fce5ad4b64 | solo.io | Senior Software Engineer (Fullstack) | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=cd7a15812091e38e | Ginkgo BioWorks | Senior Software Engineer, Full Stack | Boston, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=4caae5a3c5d2294b | Arize AI | Senior AI Product Engineer, Fullstack | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=a04c243c10296cd6 | Arize AI | Senior Open Source Design Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=ae1e1f7163f979d5 | nan | Senior Product Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=5c6352e6589be89b | Foresite Labs | Senior Software Engineer (5+ years) | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=a832d3657c3c43e2 | Future | Staff Product Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=78a0273596338e20 | McMaster-Carr Supply Company | Senior Software Engineer | Chicago, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=38e9be301c1f2e13 | McMaster-Carr Supply Company | Lead Software Engineer | Chicago, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=d0dbae5762e89d31 | CharterUp | Senior Software Engineer - Frontend | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=71d54ee3197b525a | Mesa Labs | Senior Software Development Engineer | Lakewood, CO, US
+- [ ] https://www.indeed.com/viewjob?jk=724d0d8443bffbcf | Factored | Senior Full-Stack Engineer (Python & React) | US
+- [ ] https://www.indeed.com/viewjob?jk=1bec7d356e403179 | Salvo Health | Senior Software Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=b6fd6aa0d46e49b5 | UniGroup | Software Engineer | St. Louis, MO, US
+- [ ] https://www.indeed.com/viewjob?jk=572813ab8a1edad1 | Phonely | Full Stack Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=f5048aada307543c | PressW | Senior Applied AI Engineer | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=55b8ca71a47ef6c8 | Quantcast | Software Engineer (Full Stack) | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=ec0fb9de584cea60 | GoFan | Senior Software Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=3f6d729c4274fa8e | EarnIn | Senior Full Stack Engineer | Mountain View, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=ee972b70d1501630 | DAT Solutions | Senior Software Engineer, Frontend | Denver, CO, US
+- [ ] https://www.indeed.com/viewjob?jk=7a94ae156e128a47 | Openkyber | AWS API Engineer | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=8e08ab8a32df4c44 | nan | Senior Full Stack Software Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=120a020d4fa7e530 | A2Z Sync | Principal Engineer | Denver, CO, US
+- [ ] https://www.indeed.com/viewjob?jk=832c242a79d7c6ab | Shutterfly | Senior Software Engineer I (Frontend) | Tempe, AZ, US
+- [ ] https://www.indeed.com/viewjob?jk=7a9601bcb03fa3d4 | Shutterfly | Senior Software Engineer I (Frontend) | Fort Mill, SC, US
+- [ ] https://www.indeed.com/viewjob?jk=f4cac4e72751cc67 | Zetier | Senior Frontend UI/UX Engineer | Arlington, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=0d1fbc865dae4249 | DPR Construction | Sr. Front End React Developer | Nashville, TN, US
+- [ ] https://www.linkedin.com/jobs/view/4371569184 | Hopper | Sr Front-end Engineer - HTS Stays & Packages (100% Remote - USA) | Los Angeles, CA
+- [ ] https://www.linkedin.com/jobs/view/4371561266 | Hopper | Sr Front-end Engineer - HTS Stays & Packages (100% Remote - USA) | Boston, MA
+- [ ] https://www.linkedin.com/jobs/view/4371559313 | Hopper | Sr Front-end Engineer - HTS Stays & Packages (100% Remote - USA) | Austin, TX
+- [ ] https://www.linkedin.com/jobs/view/4371565201 | Hopper | Sr Front-end Engineer - HTS Stays & Packages (100% Remote - USA) | Miami, FL
+- [ ] https://www.linkedin.com/jobs/view/4412394030 | Tanaq Technical Services | Senior Front-end Developer (React.js, HTML, CSS) | Anchorage, AK
+- [ ] https://www.linkedin.com/jobs/view/4371552672 | Hopper | Sr Front-end Engineer - HTS Stays & Packages (100% Remote - USA) | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4371556400 | Hopper | Sr Front-end Engineer - HTS Stays & Packages (100% Remote - USA) | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4371487682 | Oscilar | Sr./Staff Frontend Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4371555384 | Hopper | Sr Front-end Engineer - HTS Stays & Packages (100% Remote - USA) | Seattle, WA
+- [ ] https://www.linkedin.com/jobs/view/4371571158 | Hopper | Sr Front-end Engineer - HTS Stays & Packages (100% Remote - USA) | Chicago, IL
+- [ ] https://www.linkedin.com/jobs/view/4371574132 | Hopper | Sr Front-end Engineer - HTS Stays & Packages (100% Remote - USA) | Washington, DC
+- [ ] https://www.linkedin.com/jobs/view/4365387268 | PandaDoc | Senior Web Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4382138636 | Thrive Market | Senior Software Engineer, Fullstack | Los Angeles, CA
+- [ ] https://www.linkedin.com/jobs/view/4411794012 | Copeland | Senior Software Engineer (Cloud Native, React/Node.js) | Kennesaw, GA
+- [ ] https://www.linkedin.com/jobs/view/4408687915 | Confidential Jobs | Senior Software Engineer (Python, Typescript) | 
+- [ ] https://www.linkedin.com/jobs/view/4412127744 | Flexday AI | Full-Stack Developer (Python & React) (India) | 
+- [ ] https://www.linkedin.com/jobs/view/4409998571 | Cloud Packets | Senior Frontend Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4411653620 | Corelight | Senior UI Engineer | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4400789904 | Optimal Dynamics | Senior Frontend Developer | 
+- [ ] https://www.linkedin.com/jobs/view/4411275965 | Svitla Systems, Inc. | SENIOR FRONTEND ENGINEER (React/ Next.js) | 
+- [ ] https://www.linkedin.com/jobs/view/4410945020 | Paramount | Senior Software Engineer, AI Products & Agents | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4398854623 | OP | Sr. Front End Web/Mobile Web Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4400718694 | Crossing Hurdles | Full-Stack Engineer (Python / TypeScript) | Remote | 
+- [ ] https://www.linkedin.com/jobs/view/4412685144 | Sundayy | Front End Engineer, Sr. (React) | 
+- [ ] https://www.linkedin.com/jobs/view/4362346647 | Great Minds | Senior Web Developer | Washington, DC
+- [ ] https://www.linkedin.com/jobs/view/4412976229 | Motion (Creative Analytics) | Senior Software Engineer (Infrastructure) | 
+- [ ] https://www.indeed.com/viewjob?jk=2fb5ac246a4fc925 | Liquid Church | AVL Systems Engineer | Parsippany-Troy Hills, NJ, US
+- [ ] https://www.indeed.com/viewjob?jk=b2c00fed7956addd | Mercury Insurance Company | Lead Technical Product Manager | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=a1e49c8a5af555f9 | Intercontinental Exchange | Senior Software Development Engineer in Test | Atlanta, GA, US
+- [ ] https://www.indeed.com/viewjob?jk=66e3d5fb36f4d489 | Gallup | Senior Data Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=bceb84d690c01431 | GovCIO | Front-end Developer (Angular) | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=1c406603c03a89f2 | GovCIO | Back-end Developer (Java - Spring-Boot) | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=87a4fc2dff992dd5 | LVT (LiveView Technologies) | Senior Software Engineer II | American Fork, UT, US
+- [ ] https://www.indeed.com/viewjob?jk=393ef9108f3ebaa8 | Anduril | Senior Manager, Software Engineering | Costa Mesa, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=3f1af728545cefab | TELUS Digital | Senior Technical Product Lead | Columbus, OH, US
+- [ ] https://www.indeed.com/viewjob?jk=c24cb680344c6639 | TELUS Digital | Senior Technical Product Lead | Durham, NC, US
+- [ ] https://www.indeed.com/viewjob?jk=4d96c86be153ddf0 | TELUS Digital | Senior Technical Product Lead | Boston, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=8d68f264a99255a5 | TELUS Digital | Senior Technical Product Lead | Charlottesville, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=e329adf0944e0e1e | Lincoln Property Company | Building Engineer | Washington, DC, US
+- [ ] https://www.indeed.com/viewjob?jk=5c6cd36733a502e6 | Lemartec | Senior Project Manager | Lubbock, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=f70b70ab2e2d8714 | MasTec Inc | Senior Project Manager | Lubbock, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=3ad13b87eac68b71 | nan | Senior DevSecOps Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=3fb2c0deb86004e8 | Storable | Data Engineer II | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=70cf81a93ee7ae14 | Elevance Health | Senior Cloud Platform Engineer | Atlanta, GA, US
+- [ ] https://www.indeed.com/viewjob?jk=1f5e0df0ff0f2609 | Elevance Health | Engineer Senior | Chicago, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=77877fb281fef6bd | CRUSOE | Director of Environmental, Health, and Safety (EHS) Programs and Systems | Denver, CO, US
+- [ ] https://www.indeed.com/viewjob?jk=e5e44fa547dca15e | K Health | Senior DevOps Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=ff8a78bab8bfe506 | PlayStation | Software Development Engineer in Test Contractor (SDET Contractor) | San Mateo, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=a97756a216093872 | OpusClip | Senior Software Engineer, Fullstack | Mountain View, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=2091cab20f259340 | Blockstream | Senior Financial Analyst | Los Angeles, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=a8f52b7af2ce28a8 | EPIC Kids | Senior Software Engineer, Infrastructure | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=62ef7a5e77561f32 | Alignment Healthcare | Senior Software Engineer (Hybrid) | Orange, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=bdf496f163e28003 | Mike Albert Leasing, Inc | Principle Engineer | Cincinnati, OH, US
+- [ ] https://www.indeed.com/viewjob?jk=fcb2d1979b0efac1 | Mercari | Sr. Software Engineer, Backend | Palo Alto, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=12e471f407b19da8 | BeyondTrust | Sr Software Development Engineer | US
+- [ ] https://www.indeed.com/viewjob?jk=f854090fbaab98b2 | Velocity, A Managed Solutions Company | Senior Network Engineer - (Route/Switch & Security) | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=fafde1f55cc88e7a | Lumotive, LLC | Senior Member of Technical Staff, Electrical Engineer | Redmond, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=3d3d24d3399d0363 | Wolters Kluwer | Senior Product Software Engineer | Babylon, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=4c28c50c2aaf3c0d | Roblox | Principal Frontend Engineer, Co-Experience | San Mateo, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=118c3ef956a7ae2e | nan | Infrastructure & Capital Projects - Sourcing Specialist, ANS | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=c38243c3dcdfc880 | nan | Infrastructure & Capital Projects - Sourcing Specialist, ANS | San Diego, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=9bccd3cd57b68e4a | nan | Infrastructure & Capital Projects - Sourcing Specialist, ANS | Los Angeles, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=dd42b867218e551f | FinQuery | Sr. AI Engineer | Atlanta, GA, US
+- [ ] https://www.indeed.com/viewjob?jk=4919b0c789d6941d | Chenega Corporation | Information Systems Security Engineer Sr. | Reston, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=1e946f43c0ce5053 | Joby Aviation | Senior Autonomy Data Infrastructure and Analytics Software Engineer | Santa Cruz, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=10e5cff1df90dd51 | Anavation | Lead Systems Engineer | Reston, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=3faf621905912246 | Decisive Point Consulting | Senior Software Systems Engineer (VHA) | US
+- [ ] https://www.indeed.com/viewjob?jk=1d0af75a599e16ae | Decisive Point Consulting | Senior Software Tester (VHA) | US
+- [ ] https://www.indeed.com/viewjob?jk=ba9f31ebefd94dcf | CoStar Group | Debt Solutions - Senior Software Engineer | San Diego, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=1eee43b589d652c2 | CrowdStrike | Sr. Director, Cloud & Network Infrastructure (Remote) | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=f1084d2f4f7254d8 | Lucent Health Solutions | Data Engineer- Hybrid- Nashville TN | Nashville, TN, US
+- [ ] https://www.indeed.com/viewjob?jk=f9f8560397a694aa | EMCO Technologies | NETWORK TECHNICIAN | Edwards, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=15f87af01216520f | Eli Lilly | Scientist/Sr. Scientist - Protein Engineering | San Diego, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=132ca456e2a00d3b | JLL | Senior Commissioning Engineer | Richmond, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=506eeb40297010ad | JLL | Sr. Reliability Engineer | Atlanta, GA, US
+- [ ] https://www.indeed.com/viewjob?jk=571cfa20cf41fe27 | Quantum Computing | Senior PIC Engineer (Test) | Hoboken, NJ, US
+- [ ] https://www.indeed.com/viewjob?jk=330b9e38a8ac2085 | Quantum Computing | Mechanical Engineer | Hoboken, NJ, US
+- [ ] https://www.indeed.com/viewjob?jk=2d876a6f6dab058d | Quantum Computing | Senior Industrial Engineer-Automation | Tempe, AZ, US
+- [ ] https://www.indeed.com/viewjob?jk=f32c0f0a439ee9f4 | Adobe | Sr Product Designer, Lightroom Mobile Growth | CA, US
+- [ ] https://www.indeed.com/viewjob?jk=54eab8223dfb2dc1 | WesBanco Bank, Inc. | Lead Engineer - Productivity Platforms - Infrastructure | Bowie, MD, US
+- [ ] https://www.indeed.com/viewjob?jk=c366ef987d366305 | WesBanco Bank, Inc. | Lead Engineer - Productivity Platforms - Infrastructure | Defiance, OH, US
+- [ ] https://www.indeed.com/viewjob?jk=15fca9b212121f56 | Everforth ECS | ServiceNow Engineer SME | Fairfax, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=f1296c5c3e982906 | Everforth ECS | Knowledge Manager | Fairfax, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=e5da4e9b660c4b1f | Everforth ECS | ACAS Vulnerability Assessment Lead SME | Fairfax, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=f313083f736e77f4 | Everforth ECS | Senior Data Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=9fac5cbca48a7ea9 | Everforth ECS | Cloud Security Lead SME | Fairfax, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=1cc9816260890594 | Blue Origin | Senior Software Engineer - Operations Technology Platform | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=7ce56003b7fddb33 | FIS | Architect Lead, Public Cloud Infrastructure | Jacksonville, FL, US
+- [ ] https://www.indeed.com/viewjob?jk=98810c4a1b416d61 | FIS | Engineer Senior Lead, Cloud Infrastructure | Atlanta, GA, US
+- [ ] https://www.indeed.com/viewjob?jk=96f301d222e06d81 | Evertz Microsystems Limited | Broadcast Engineer, Burbank, California | Burbank, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=4d92e7feddc0749d | AeroVironment | Customer Service Systems Engineer, Sr. | OR, US
+- [ ] https://www.indeed.com/viewjob?jk=fad121e0657e349a | Intel Corporation | General Manager, Intel Wireless Solutions | Hillsboro, OR, US
+- [ ] https://www.indeed.com/viewjob?jk=e56229e27f5c6fd1 | Equifax | Senior Applied AI Engineer | Alpharetta, GA, US
+- [ ] https://www.indeed.com/viewjob?jk=439b6c092a80eb48 | Barry Wehmiller Companies Inc | Senior Process Engineer – Sterile Fill-Finish | US
+- [ ] https://www.indeed.com/viewjob?jk=0f1df3e0ee29922c | LTIMindtree | Senior Specialist - Data Engineering | Cincinnati, OH, US
+- [ ] https://www.indeed.com/viewjob?jk=b02f733fabcf9fde | Eaton | Senior Design Engineer | Worcester, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=cad423c7df369656 | Eaton | Chief Engineer | Golden, CO, US
+- [ ] https://www.indeed.com/viewjob?jk=6cf497703b65cb21 | Eaton | Chief Engineer | Menomonee Falls, WI, US
+- [ ] https://www.indeed.com/viewjob?jk=11903a2b1ae8fc08 | Eaton | Chief Engineer | Raleigh, NC, US
+- [ ] https://www.indeed.com/viewjob?jk=5fcbcde6c667bee0 | EverFi | Senior Data Product Manager | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=88e66f14dd79d058 | nan | Systems Engineer (Senior) | San Diego, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=56027d7dc7b63f37 | In-Telecom | MSP Escalation (L2) Technician | Arlington, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=90cd5b0cc526ee2f | Desteia | Finance and Operations Manager | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=e10e8e632f6106ac | nan | Quality Manager | Cameron, LA, US
+- [ ] https://www.indeed.com/viewjob?jk=6c1244fa99c88f8b | MIO Partners | Lead Engineer, Market Data New | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=20ec81d48ecd9666 | Imperative Systems, LLC | Design Engineer | Springfield, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=6aa881a961deead9 | U.S. Bank | Senior Business Solution Architect | Tempe, AZ, US
+- [ ] https://www.indeed.com/viewjob?jk=ae5ff94e09d949dd | nan | Lead Engineer – Power Systems Design | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=074b870d3fdaa270 | nan | Lead Engineer – Power Systems Design | Parsons, KS, US
+- [ ] https://www.indeed.com/viewjob?jk=f3ca746b46edc67f | Trivelta | Senior Backend Software Engineer - Python | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=3bf9362eab7b5c92 | CVS Health | Staff Observability Platform Engineer (SRE) | Richardson, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=799dbe5bc89dac29 | Phizenix | IAM Implementer / Architect | Dallas, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=d63529e2e07c65ec | Humana | Senior Business Intelligence Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=6fe2d848980f615c | Verista | 6263 - Sr. CSV Engineer / Sr. Validation Engineer | King of Prussia, PA, US
+- [ ] https://www.indeed.com/viewjob?jk=bcc41aca1d79073c | eBay | Staff Software Engineer | Bellevue, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=b43116cb1c7fa77d | RSM | Business Analysis Capability Leader | Chicago, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=fc24e22716f50622 | Next Gen Software Solutions | Senior Snowflake Data Architect | Jersey City, NJ – 4 Days onsite role | Fulltime | Jersey City, NJ, US
+- [ ] https://www.indeed.com/viewjob?jk=d78f7dfc4d597bbd | Sherwin-Williams | Senior AEM Engineer / Administrator | Cleveland, OH, US
+- [ ] https://www.indeed.com/viewjob?jk=7b5e9d542dac1b09 | T. Rowe Price | Sr. AI Software Engineer (Hybrid- Baltimore) | Baltimore, MD, US
+- [ ] https://www.indeed.com/viewjob?jk=db4163423d361a2d | T. Rowe Price | Lead AI Software Engineer- (Hybrid NYC) | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=08610764aac35b69 | Xometry | Staff Technical Program Manager | Waltham, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=1d0c7b1d4bc33620 | Xometry | Staff Technical Program Manager | North Bethesda, MD, US
+- [ ] https://www.indeed.com/viewjob?jk=485cc55a10ce3f40 | Xometry | Staff Technical Program Manager | North Bethesda, MD, US
+- [ ] https://www.indeed.com/viewjob?jk=4f10681bcdb51d20 | SHI International | Associate DevOps Engineer | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=b9024365f4e303b1 | SHI International | Sr. IT Engineer - Cloud | Somerset, NJ, US
+- [ ] https://www.indeed.com/viewjob?jk=5fb8730a71dfcedf | Kaseya | IT - Helpdesk Engineer | Miami, FL, US
+- [ ] https://www.indeed.com/viewjob?jk=4783378cdbe5a7c0 | Alamar Biosciences | Sr. Mechanical Engineer | Fremont, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=42af7078822e8424 | Chenega Corporation | Information Systems Security Engineer Sr. | Reston, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=b99c8706c46043ad | nan | Director of Applications, Digital Workday Ecosystem | Somerville, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=543baacd1715cb5c | Omnidian | Senior Commercial Solar Performance Analyst | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=f59f49ba8212d12e | NCR Atleos | Senior Software Engineer – ATM Platforms & Deployment | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=23db9323d69806d4 | Roblox | Senior Software Engineer - Marketplace | San Mateo, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=d8a40e7a49cebd49 | Centurion Health | Azure DevOps Engineer III (Principle) | Sterling, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=f46bf3503e77adf3 | Centurion Health | Azure DevOps Engineer | Sterling, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=d1165d49b3e906ea | Roblox | Senior Software Engineer - Marketplace | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=dad10db281f98e1a | Roblox | Senior Software Engineer - Marketplace | San Jose, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=eff1e2d070b822f8 | ONENERGY | Principal Systems Engineer, R&D | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=52bd02496660ebe4 | Summit Behavioral Healthcare | Director of Business Intelligence - Healthcare | Franklin, TN, US
+- [ ] https://www.indeed.com/viewjob?jk=6346f3ffeb8c988c | Joby Aviation | Senior Autonomy Data Infrastructure and Analytics Software Engineer | Santa Cruz, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=39faa8b54e419589 | Camping World | Sr. Manager, Renewal Lifecycle | Chicago, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=0255eea9732272ac | Meta | Senior Principal, Commercial Legal AI | Washington, DC, US
+- [ ] https://www.indeed.com/viewjob?jk=c0e9545d929ad655 | Meta | Senior Principal, Commercial Legal AI | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=e98f4f5ec2422719 | Meta | Senior Principal, Commercial Legal AI | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=74dc2231ec3c2b32 | Meta | Senior Principal, Commercial Legal AI | Seattle, WA, US
+- [ ] https://www.indeed.com/viewjob?jk=b558665f4af1013b | Meta | Senior Principal, Commercial Legal AI | Menlo Park, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=2b7e87d718948169 | Meta | Senior Principal, Commercial Legal AI | Chicago, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=dd6d3cdb2ec78e90 | Meta | Senior Principal, Commercial Legal AI | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=3890b2049d66a41c | Lockheed Martin | Integration, Test & Evaluation Sr. Stf Engineer, JASSM (Orlando, FL) | Orlando, FL, US
+- [ ] https://www.indeed.com/viewjob?jk=40b6e607cd6203fc | Lockheed Martin | Cyber Software Engineer Senior Staff – DSP | King of Prussia, PA, US
+- [ ] https://www.indeed.com/viewjob?jk=b357ba648ab0c70b | Lockheed Martin | Power Electronics Engineer | Liverpool, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=bfcbd1dadfeb17ef | Lockheed Martin | Cyber Software Engineer Senior Staff – DSP | Raleigh, NC, US
+- [ ] https://www.indeed.com/viewjob?jk=4a46a45862da526c | Lockheed Martin | Senior Software Engineer - Radar Control & Signal Processing | Moorestown, NJ, US
+- [ ] https://www.indeed.com/viewjob?jk=cdb80d2d549376e5 | Lockheed Martin | Systems Engineer - Systems Integration, Mid-Career | Littleton, CO, US
+- [ ] https://www.indeed.com/viewjob?jk=6f7cda566b72c66c | Lockheed Martin | Windows & Linux Systems Administrator Staff | Fort Meade, MD, US
+- [ ] https://www.indeed.com/viewjob?jk=940a9de19d6d0b96 | Lockheed Martin | Stf, Dev Sec Ops Engr | Herndon, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=f1f6c75568cc8d3c | Lockheed Martin | Industrial Engineer Sr (Level 3) | Grand Prairie, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=f68725e0c26f0f06 | Lockheed Martin | Systems Integration Test & Evaluation Engineer, Sr. Staff - Dallas, TX | Grand Prairie, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=5ea78ff31e4a7b16 | nan | Engineer, Senior Project | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=27c7780a1b7fb89f | nan | Engineer, Senior Electric | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=ac03b35c02086239 | nan | Senior Instrument & Controls Engineer | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=8222b271ee191279 | nan | Engineer, Senior Yard Mechanical | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=f3e0fe660d35c199 | nan | Senior Process Engineer | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=dafb1ee48c34737c | nan | Inspector, Senior Environmental | Cameron, LA, US
+- [ ] https://www.indeed.com/viewjob?jk=b570c09fe25b0898 | nan | Engineer, Senior Telecom | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=5500eedd6db3c496 | nan | Senior Process Safety Engineer | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=e21cafe4265a697b | nan | Senior Project Engineer | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=336bfe063e39e1a2 | nan | Engineer, Senior Piping | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=5811e1b61348dd98 | nan | Senior Rotating Equipment Engineer | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=bd18204acb3e53ee | nan | VP, Fundamentals & Analytics | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=d2f5364cac7bcfd0 | nan | Manager, Construction | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=a9be451d3d6f97a7 | nan | Manager, Operations | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=ef369b9d4f03cbec | nan | Vice President Supply Chain | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=239c04e9faa8b29e | nan | VP, Project Services | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=6d4993301d491cda | nan | Sr. Advisor, FERC/Regulatory | Houston, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=cf7fda4c5a052c92 | Scanline VFX | Senior Software Engineer, Houdini/Platform | Los Angeles, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=1741696de0743c78 | CACI International | Senior ServiceNow Software Development Engineer (Risk & Security) | Chantilly, VA, US
+- [ ] https://www.linkedin.com/jobs/view/4363991877 | Machinify | Senior Software Engineer (Data Platform) | 
+- [ ] https://www.linkedin.com/jobs/view/4412330581 | Betwixt | Senior Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4380649435 | Hopper | Senior Site Reliability Engineer, Platform & Cloud FinOps (100% Remote - USA Central & EST) | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4403056672 | Microsoft | Parent | Sr. Software Engineer - Azure Storage | 
+- [ ] https://www.linkedin.com/jobs/view/4372120465 | Attentive | Staff Software Engineer, Cloud FinOps | 
+- [ ] https://www.linkedin.com/jobs/view/4371558320 | BNSF Railway | Product, Platform & Enterprise Front End Software Engineer II (Remote - US) | 
+- [ ] https://www.linkedin.com/jobs/view/4380207778 | UST | Senior AI Platform Engineer | Chicago, IL
+- [ ] https://www.linkedin.com/jobs/view/4389255388 | Zscaler | Staff Site Reliability Engineer - Federal | Crystal City, VA
+- [ ] https://www.linkedin.com/jobs/view/4381917105 | Airbnb | Senior Software Engineer,Trust Platform | 
+- [ ] https://www.linkedin.com/jobs/view/4391940397 | HackerOne | Senior Software Engineer, Platform | Seattle, WA
+- [ ] https://www.linkedin.com/jobs/view/4380640751 | Hopper | Senior Site Reliability Engineer, Platform & Cloud FinOps (100% Remote - USA Central & EST) | Chicago, IL
+- [ ] https://www.linkedin.com/jobs/view/4411739453 | CVS Health | Senior Software Development Engineer | Sacramento, CA
+- [ ] https://www.linkedin.com/jobs/view/4403503751 | 1Password | Senior Security Engineer, Vulnerability Management | 
+- [ ] https://www.linkedin.com/jobs/view/4343128980 | Envestnet | Senior DevOps Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4392773078 | Dayforce | DevOps Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4319051675 | Ford Motor Company | Customer Identity Platform Engineer | Dearborn, MI
+- [ ] https://www.linkedin.com/jobs/view/4402241559 | Collins Aerospace | Principal Platform Engineer - Connected Aviation (Remote) | Phoenix, AZ
+- [ ] https://www.linkedin.com/jobs/view/4395732364 | Weedmaps | Site Reliability Engineer (Remote) | Austin, TX
+- [ ] https://www.linkedin.com/jobs/view/4380823071 | Dayforce | Cloud Observability Engineer Lead | 
+- [ ] https://www.linkedin.com/jobs/view/4391794522 | Vannevar | Software Engineer, Backend (Collection Platform) | 
+- [ ] https://www.linkedin.com/jobs/view/4412429641 | Viasat | Core-Platform Software Engineer | Englewood, CO
+- [ ] https://www.linkedin.com/jobs/view/4402787196 | Affirm | Software Engineer II, Machine Learning (Feature Platform) | Dallas, TX
+- [ ] https://www.linkedin.com/jobs/view/4358869734 | UST | Validation DevOps Engineer | Redmond, WA
+- [ ] https://www.linkedin.com/jobs/view/4381686242 | Cedar | Sr. Data Engineer (Data Platforms) | 
+- [ ] https://www.linkedin.com/jobs/view/4411343741 | Jobgether | Senior Software Engineer, DevOps/Infrastructure | 
+- [ ] https://www.linkedin.com/jobs/view/4412176173 | Reddit, Inc. | Senior Software Engineer, Compute Platform | 
+- [ ] https://www.linkedin.com/jobs/view/4391952000 | HackerOne | Senior Software Engineer, Platform | Boston, MA
+- [ ] https://www.linkedin.com/jobs/view/4391951047 | HackerOne | Senior Software Engineer, Platform | Washington, DC
+- [ ] https://www.linkedin.com/jobs/view/4390748311 | Reddit, Inc. | Senior Software Engineer, GenAI Platform | 
+- [ ] https://www.linkedin.com/jobs/view/4400452898 | Oracle | Senior Software Development Engineer, AI Data Platform | 
+- [ ] https://www.linkedin.com/jobs/view/4411750559 | Intellibus | Senior Data Engineer – AWS & Kafka | Herndon, VA
+- [ ] https://www.linkedin.com/jobs/view/4412143390 | Flexday AI | Cloud Architect/Developer (India) | 
+- [ ] https://www.linkedin.com/jobs/view/4400463623 | Oracle | Principal Software Development Engineer - AI Data Platform | 
+- [ ] https://www.linkedin.com/jobs/view/4380644632 | Hopper | Senior Site Reliability Engineer, Platform & Cloud FinOps (100% Remote - USA Central & EST) | Boston, MA
+- [ ] https://www.linkedin.com/jobs/view/4400473505 | Oracle | Principal Software Development Engineer - AI Data Platform | 
+- [ ] https://www.linkedin.com/jobs/view/4411824792 | Pinterest | Staff Software Engineer, Batch Processing Platform | Seattle, WA
+- [ ] https://www.linkedin.com/jobs/view/4410862859 | Confidential Company | Senior Software Engineer, Billing/Payment Platform | 
+- [ ] https://www.linkedin.com/jobs/view/4408007677 | Owner.com | Senior Software Engineer, Backend (Orders Platform) | 
+- [ ] https://www.linkedin.com/jobs/view/4402134554 | AHEAD | Senior Technical Consultant - Data & Analytics | 
+- [ ] https://www.linkedin.com/jobs/view/4411705664 | EXL | Lead Cloud Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4412105139 | Q-Free | DevOps Engineer | Virginia, United States
+- [ ] https://www.linkedin.com/jobs/view/4412101709 | Qdrant | Senior Software Engineer - Cloud Platform Infrastructure (Americas) | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4411389278 | Saragossa | Senior Cloud Engineer - PE-Backed Professional Services Business - $165,000-$205,000 | Texas, United States
+- [ ] https://www.linkedin.com/jobs/view/4371260090 | Peach | Site Reliability Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4374648293 | Ro | Staff Cloud Security Engineer | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4411772772 | Optum | AWS Cloud Site Reliability Engineer | Basking Ridge, NJ
+- [ ] https://www.linkedin.com/jobs/view/4410841532 | HealthMark Group | Senior Software Engineer - AWS | 
+- [ ] https://www.linkedin.com/jobs/view/4253565957 | Yahoo | Sr. Backend Data Engineer - Streaming Data Platform, Yahoo! Mail | 
+- [ ] https://www.linkedin.com/jobs/view/4409998647 | NVIDIA | Senior System Software Engineer, Cloud Services - GeForce Now | Washington, United States
+- [ ] https://www.linkedin.com/jobs/view/4364995259 | Blue River Technology | Principal Software Engineer, ML & Robotics Platform | 
+- [ ] https://www.linkedin.com/jobs/view/4411634771 | Optum | Principal Software Engineer/SRE - Remote | Eden Prairie, MN
+- [ ] https://www.linkedin.com/jobs/view/4409611317 | BridgePhase | Platform Engineer | San Antonio, TX
+- [ ] https://www.linkedin.com/jobs/view/4402533476 | Holman | Senior Cloud Engineer III | 
+- [ ] https://www.linkedin.com/jobs/view/4400141934 | Netflix | Distributed Systems Engineer 5 - Cloud Gateway | 
+- [ ] https://www.linkedin.com/jobs/view/4405361234 | Go Offer | DevOps Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4399991138 | Precision eControl | Senior DevOps Engineer | Cincinnati, OH
+- [ ] https://www.linkedin.com/jobs/view/4389831952 | Three Pillars Recruiting | Senior Software Engineer - Profitable AI Programmatic Advertising Platform | 
+- [ ] https://www.linkedin.com/jobs/view/4411405411 | Alignerr | Data Platform Engineer (Python) | Seattle, WA
+- [ ] https://www.linkedin.com/jobs/view/4410834088 | Lorven Technologies Inc. | AWS Data Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4410441268 | SJE Inc. | Senior Cloud Engineer - IoT Data Plane | Birmingham, AL
+- [ ] https://www.linkedin.com/jobs/view/4411664869 | Maximus | Assoc SW Engineer - Java, Spring Boot, AWS | 
+- [ ] https://www.linkedin.com/jobs/view/4399822023 | Optimus - People. Solutions. Delivered. | Quant Technology Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4390806394 | SentinelOne | Senior Software Engineer - C++ Linux & Cloud Workload Security | 
+- [ ] https://www.linkedin.com/jobs/view/4397603010 | CDW | Senior Windows Engineer / AWS Workspaces | 
+- [ ] https://www.linkedin.com/jobs/view/4399926301 | Chainguard | Senior Software Engineer (Libraries Platform) | 
+- [ ] https://www.linkedin.com/jobs/view/4409742242 | Summit Group Solutions, LLC | Senior Infrastructure Engineer - AI Performance | 
+- [ ] https://www.linkedin.com/jobs/view/4410908560 | Principal Financial Group | Senior Software Engineer II, Platform Modernization Technology Enablement | Des Moines, IA
+- [ ] https://www.linkedin.com/jobs/view/4409936935 | Nue.io | Senior Software Engineer, NetSuite Integrations | Canada, NC
+- [ ] https://www.linkedin.com/jobs/view/4361816158 | Prestige Staffing | Senior Security Analyst | Durham, NC
+- [ ] https://www.linkedin.com/jobs/view/4409910699 | Quanata | Cloud Enablement Engineer [Remote-US] | 
+- [ ] https://www.linkedin.com/jobs/view/4409611526 | Security Journey | Senior Platform Engineer | Apex, NC
+- [ ] https://www.linkedin.com/jobs/view/4409213263 | Solomon Page | Cloud Infrastructure & Operations Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4411255666 | TrendAI | DevOps Platform Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4408890565 | Lendistry | Cloud Operations Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4408899801 | Huntingridge Solutions | Senior DevOps Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4410917712 | Alignerr | Data Platform Engineer (Python) | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4412724244 | SmithRx | Staff Software Engineer, AI, Platform | Austin, TX
+- [ ] https://www.linkedin.com/jobs/view/4408895525 | Lendistry | Cloud Operations Engineer | Pennsylvania, United States
+- [ ] https://www.linkedin.com/jobs/view/4408887622 | Lendistry | Cloud Operations Engineer | North Carolina, United States
+- [ ] https://www.linkedin.com/jobs/view/4408889566 | Lendistry | Cloud Operations Engineer | Seattle, WA
+- [ ] https://www.linkedin.com/jobs/view/4399557980 | Circle | Lead Security Engineer, Detection & Response (Data Platform) | 
+- [ ] https://www.linkedin.com/jobs/view/4399563884 | Circle | Lead Security Engineer, Detection & Response (Data Platform) | 
+- [ ] https://www.linkedin.com/jobs/view/4399568800 | Circle | Lead Security Engineer, Detection & Response (Data Platform) | 
+- [ ] https://www.linkedin.com/jobs/view/4399554973 | Circle | Lead Security Engineer, Detection & Response (Data Platform) | 
+- [ ] https://www.linkedin.com/jobs/view/4399567871 | Circle | Lead Security Engineer, Detection & Response (Data Platform) | 
+- [ ] https://www.linkedin.com/jobs/view/4389264182 | Envestnet | Platform Engineer II | 
+- [ ] https://www.linkedin.com/jobs/view/4410766072 | Atem Corp | Lead AI Engineer - AWS Platform | California, United States
+- [ ] https://www.linkedin.com/jobs/view/4408431865 | Ivanti | Associate Site Reliability Engineer | Georgiana, AL
+- [ ] https://www.linkedin.com/jobs/view/4409704062 | Travel + Leisure Co. | Senior DevOps Application Engineer | Florida, United States
+- [ ] https://www.linkedin.com/jobs/view/4410552466 | CopilotIQ | DevOps Engineer (EST only) | 
+- [ ] https://www.linkedin.com/jobs/view/4408168805 | Cube | Staff DevOps Engineer | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4401534875 | A Place for Mom | Staff DevOps Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4410501148 | Harmonia Holdings Group, LLC | Cybersecurity Implementation Engineer (Prisma Cloud) | Washington, DC
+- [ ] https://www.linkedin.com/jobs/view/4413063321 | Avance Consulting | Senior Azure API Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4321342136 | Healthmap Solutions | Senior Data Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4402733891 | Business Centric Technology | Principal Platform Software Engineer | Carrollton, TX
+- [ ] https://www.linkedin.com/jobs/view/4413186221 | NVIDIA | Senior Software Engineer, Distributed Systems Engineer - DGX Cloud | Raleigh, NC
+- [ ] https://www.linkedin.com/jobs/view/4413184238 | NVIDIA | Senior Software Engineer, Distributed Systems Engineer - DGX Cloud | Texas, United States
+- [ ] https://www.linkedin.com/jobs/view/4409498902 | Fabric | Senior Site Reliability Engineer | New York, United States
+- [ ] https://www.linkedin.com/jobs/view/4412969384 | GuidePoint Security | Senior Cloud Security Engineer (Hybrid/Multi-Cloud) | Falls Church, VA
+- [ ] https://www.linkedin.com/jobs/view/4413180444 | Cloudera | Staff Software Engineer - Apache Spark | Washington, United States
+- [ ] https://www.linkedin.com/jobs/view/4412958191 | Chooch AI | Software Engineer - Web/ML Dev Ops | San Mateo, CA
+- [ ] https://www.linkedin.com/jobs/view/4413047658 | BrothersTech | Cloud Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4412948460 | ComplyAuto | DevOps Engineer | Washington, DC
+- [ ] https://www.linkedin.com/jobs/view/4413063057 | CyberSheath | Cloud Operations Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4412765807 | Verve For Advertisers | Senior Platform Engineer (Remote / Contract) | 
+- [ ] https://www.linkedin.com/jobs/view/4412981199 | Storm2 | Senior DevOps Engineer | New York, United States
+- [ ] https://www.linkedin.com/jobs/view/4410115072 | Lendistry | Cloud Operations Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4413035416 | Donnelly & Moore Corporation | AWS Cloud Engineer (remote) | Bethpage, NY
+- [ ] https://www.linkedin.com/jobs/view/4401297241 | Pantheon | Staff Software Engineer - Collaborative Web Platform | Austin, TX
+- [ ] https://www.linkedin.com/jobs/view/4413106054 | SkyTECH Staffing Solutions | Site Reliability Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4413147514 | Red Oak Technologies | Cloud Data Protection Security Engineer – Netskope (DLP & CASB SME) | 
+- [ ] https://www.linkedin.com/jobs/view/4413172189 | FullStack | Senior AWS DevOps Engineer - Remote - USA | Houston, TX
+- [ ] https://www.linkedin.com/jobs/view/4412955286 | Jobs via Dice | Staff Platform Engineer – Workflow Orchestration (Temporal) | 
+- [ ] https://www.linkedin.com/jobs/view/4410765850 | AMISEQ | Site Reliability Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4413158564 | FullStack | Senior AWS DevOps Engineer - Remote - USA | Oklahoma City, OK
+- [ ] https://www.linkedin.com/jobs/view/4413156646 | FullStack | Senior AWS DevOps Engineer - Remote - USA | Dover, DE
+- [ ] https://www.linkedin.com/jobs/view/4412954286 | Jobs via Dice | Staff Platform Engineer – Workflow Orchestration (Temporal) | 
+- [ ] https://www.linkedin.com/jobs/view/4412945776 | Jobs via Dice | Azure Data Engineer - ADF/PostgreSQL/Power BI | 
+- [ ] https://www.linkedin.com/jobs/view/4412952355 | Jobs via Dice | Cloud Integration Test Engineer | 
+- [ ] https://www.indeed.com/viewjob?jk=f5ba591df219c710 | Fingerprint | Manager of Cloud Platform Engineering | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=36c475fc75e49664 | Paradigm, Inc | Principal Infrastructure Engineer | Virginia Beach, VA, US
+- [ ] https://www.indeed.com/viewjob?jk=50735fb06550ed8d | Arizona State University | Lead Website Development Engineer | Mesa, AZ, US
+- [ ] https://www.indeed.com/viewjob?jk=744c7eb16a44dfd7 | DASi LLC | Senior Software Engineer | Doral, FL, US
+- [ ] https://www.linkedin.com/jobs/view/4411651427 | Transcend Staffing Solutions LLC. a 100% Women Owned Minority Staffing Firm! | CDN Engineer | Dallas, TX
+- [ ] https://www.linkedin.com/jobs/view/4410837928 | uShip | Software Engineer | Texas, United States
+- [ ] https://www.linkedin.com/jobs/view/4408873485 | Unstuck Engine | Senior Claude Code Engineer (Pure Equity + Claude Max on us) | Los Angeles, CA
+- [ ] https://www.indeed.com/viewjob?jk=b1338c391be117f5 | Cocoon Financial Services | Software Engineer → | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=102de2a4bff314d8 | Openkyber | Senior API Engineer (Python) | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=ba5160055a348b4c | Octozi | Founding Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=0e211b16826b0aef | Bosch Building Technologies | Product Development Engineer | Walnut Creek, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=297fe6d25f276f42 | nan | Founding Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=60e098f250310455 | Fitnext | Founding Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=e9b31cc1edc6286e | Further | Solution Architect | Dallas, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=c2fff93e9f1e0bbd | PUMP | Frontend Engineer | San Francisco, CA, US
+- [ ] https://www.indeed.com/viewjob?jk=970ab5a363158d63 | Openkyber | ML Infrastructure Architect | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=1a3d26b0ef44290d | Openkyber | Java Fullstack Engineer with AI | AK, US
+- [ ] https://www.indeed.com/viewjob?jk=6f23645071e2be47 | Gartner | Lead Software Engineer (Conference Navigator) | Irving, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=16d19412828a50d9 | nan | Senior Founding Engineer | New York, NY, US
+- [ ] https://www.indeed.com/viewjob?jk=86e3ec489d2bde34 | Devoted Health | Principal Software Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=c3086da73a50e7dd | Check | Software Engineer | Remote, US
+- [ ] https://www.indeed.com/viewjob?jk=9b558558781b4636 | Steer | Principal Full Stack Engineer | Miami, FL, US
+- [ ] https://www.indeed.com/viewjob?jk=1d037b7c0216eef0 | Steer | Principal Full Stack Engineer | Raleigh, NC, US
+- [ ] https://www.indeed.com/viewjob?jk=56c238ddc879e224 | Steer | Principal Full Stack Engineer | Atlanta, GA, US
+- [ ] https://www.indeed.com/viewjob?jk=4edb9c78550c30f6 | Steer | Principal Full Stack Engineer | Boston, MA, US
+- [ ] https://www.indeed.com/viewjob?jk=b73174ad0f462560 | Steer | Principal Full Stack Engineer | Chicago, IL, US
+- [ ] https://www.indeed.com/viewjob?jk=9843d16c0f20b744 | Steer | Principal Full Stack Engineer | Austin, TX, US
+- [ ] https://www.indeed.com/viewjob?jk=4a3013b338b1b400 | Symbolica AI | Lead Frontend Engineer (UX & Product) | San Francisco, CA, US
+- [ ] https://www.linkedin.com/jobs/view/4412606929 | Reval | Founding Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4412391491 | American Express | Staff AI Engineering - Agentic AI | Palo Alto, CA
+- [ ] https://www.linkedin.com/jobs/view/4412602180 | American Express | Senior AI Engineer I - Agentic AI | Palo Alto, CA
+- [ ] https://www.linkedin.com/jobs/view/4412606112 | American Express | Staff AI Engineering - Agentic AI | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4412399251 | American Express | Senior AI Engineer I - Agentic AI | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4412605140 | American Express | Senior AI Engineer I - Agentic AI | Sunrise, FL
+- [ ] https://www.linkedin.com/jobs/view/4412604176 | American Express | Director - AI Engineering - Agentic AI | New York, NY
+- [ ] https://www.linkedin.com/jobs/view/4412390557 | American Express | Director - AI Engineering - Agentic AI | Palo Alto, CA
+- [ ] https://www.linkedin.com/jobs/view/4412338528 | Betwixt | AI Agent Architect & Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4412603165 | American Express | Director - AI Engineering - Agentic AI | Sunrise, FL
+- [ ] https://www.linkedin.com/jobs/view/4412387981 | American Express | Staff AI Engineering - Agentic AI | Phoenix, AZ
+- [ ] https://www.linkedin.com/jobs/view/4412391492 | American Express | Senior AI Engineer I - Agentic AI | Phoenix, AZ
+- [ ] https://www.linkedin.com/jobs/view/4412310829 | ChatGPT Jobs | Developer Relations Engineer - San Francisco | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4412179566 | Nero | Founding Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4411701270 | Rise Technical | Founding Engineer | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4410834893 | Jack & Jill | Founding Engineer ($120k-$150k + Equity) at VC-backed AI security startup | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4410403022 | Devoted Health | Principal Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4408866223 | Steer | Principal Full Stack Engineer | Raleigh, NC
+- [ ] https://www.linkedin.com/jobs/view/4409991640 | Rocket Money | Senior Engineer, Developer Experience | 
+- [ ] https://www.linkedin.com/jobs/view/4406615306 | Splink | Founding Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4411246137 | Replit | Senior DevEx Engineer | Foster City, CA
+- [ ] https://www.linkedin.com/jobs/view/4411245128 | Replit | Staff DevEx Engineer | Foster City, CA
+- [ ] https://www.linkedin.com/jobs/view/4413045870 | Protege AI | Founding Software Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4413168972 | P3 Cost Analysts | Lead Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4362572287 | Elicit | Evaluation Engineer | Oakland, CA
+- [ ] https://www.linkedin.com/jobs/view/4412971018 | Strategic Employment Partners (SEP) | Founding Engineer | 
+- [ ] https://www.linkedin.com/jobs/view/4412994080 | Strategic Employment Partners (SEP) | Founding Software Engineer | San Francisco, CA
+- [ ] https://www.linkedin.com/jobs/view/4347881930 | Stainless | Product Engineer | San Francisco, CA
+- [ ] https://remoteOK.com/remote-jobs/remote-senior-software-engineer-i-clariti-cloud-inc-1131527 | Clariti Cloud, Inc. | Senior Software Engineer I | Canada
+- [ ] https://remoteOK.com/remote-jobs/remote-senior-manager-government-industry-affairs-operations-vgw-1131518 | VGW | Senior Manager Government & Industry Affairs Operations | Maryland
+- [ ] https://remoteOK.com/remote-jobs/remote-analytics-engineer-civitech-1131512 | Civitech | Analytics Engineer | Austin, TX or Remote
+- [ ] https://remoteOK.com/remote-jobs/remote-tech-lead-zensurance-1131509 | Zensurance | Tech Lead | Toronto, ON
+- [ ] https://remoteOK.com/remote-jobs/remote-senior-software-engineer-cast-ai-1131507 | Cast AI | Senior Software Engineer | Remote
+- [ ] https://remoteOK.com/remote-jobs/remote-senior-data-engineer-valon-mortgage-1131504 | Valon Mortgage | Senior Data Engineer | Remote
+- [ ] https://remoteOK.com/remote-jobs/remote-principal-data-engineer-extend-1131491 | Extend | Principal Data Engineer | Remote
+- [ ] https://remoteOK.com/remote-jobs/remote-cloud-enablement-engineer-us-quanata-1131488 | Quanata | Cloud Enablement Engineer US | Remote-US
+- [ ] https://remoteOK.com/remote-jobs/remote-senior-veritas-ediscovery-platform-engineer-contact-government-services-llc-1131484 | Contact Government Services, LLC | Senior Veritas eDiscovery Platform Engineer | Remote
+- [ ] https://remoteOK.com/remote-jobs/remote-senior-software-engineer-prove-1131482 | Prove | Senior Software Engineer | United States
+- [ ] https://remoteOK.com/remote-jobs/remote-technical-writer-product-engineer-thermal-works-1131481 | Thermal Works | Technical Writer & Product Engineer | United States
+- [ ] https://remoteOK.com/remote-jobs/remote-senior-backend-engineer-akuity-1131479 | Akuity | Senior Backend Engineer | Remote
+- [ ] https://remoteOK.com/remote-jobs/remote-software-development-engineer-backend-highlevel-1131472 | HighLevel | Software Development Engineer Backend | India
+- [ ] https://remoteOK.com/remote-jobs/remote-software-engineer-ii-precision-aq-1131470 | Precision AQ | Software Engineer II | India
+- [ ] https://remoteOK.com/remote-jobs/remote-senior-platform-engineer-saas-group-1131468 | saas.group | Senior Platform Engineer | Remote, Europe
+- [ ] https://remoteOK.com/remote-jobs/remote-business-analyst-contact-government-services-llc-1131467 | Contact Government Services, LLC | Business Analyst | Remote
+- [ ] https://remoteOK.com/remote-jobs/remote-lead-ai-engineer-technical-architect-bold-business-1131461 | Bold Business | Lead AI Engineer & Technical Architect | India, Latin America, Philippines
+- [ ] https://remoteOK.com/remote-jobs/remote-software-engineer-showroom-higharc-1131457 | Higharc | Software Engineer Showroom | Remote
+- [ ] https://remoteOK.com/remote-jobs/remote-senior-director-fulfillment-operations-shipbob-inc-1131451 | ShipBob, Inc. | Senior Director Fulfillment Operations | United States
+- [ ] https://remoteOK.com/remote-jobs/remote-social-media-growth-lead-black-amp-white-zebra-1131434 | Black &amp; White Zebra | Social Media Growth Lead | Remote
+- [ ] https://weworkremotely.com/remote-jobs/stellar-ai-senior-software-engineer | Stellar AI | Senior Software Engineer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/close-senior-software-engineer-backend-python-usa-only-100-remote-1 | Close | Senior Software Engineer - Backend/Python - USA Only (100% Remote) | Remote
+- [ ] https://weworkremotely.com/remote-jobs/vercel-senior-product-security-engineer | Vercel | Senior Product Security Engineer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/toast-senior-enterprise-process-engineer | Toast | Senior Enterprise Process Engineer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/vanta-senior-software-engineer-design-systems | Vanta | Senior Software Engineer, Design Systems | Remote
+- [ ] https://weworkremotely.com/remote-jobs/wallarm-senior-devops-engineer-node | Wallarm | Senior DevOps Engineer - Node | Remote
+- [ ] https://weworkremotely.com/remote-jobs/veriff-senior-software-engineer-product-platform | Veriff | Senior Software Engineer (Product Platform) | Remote
+- [ ] https://weworkremotely.com/remote-jobs/hitachi-vantara-corporation-lead-full-stack-developer-ui-ux | Hitachi Vantara Corporation | Lead Full Stack Developer (UI/UX) | Remote
+- [ ] https://weworkremotely.com/remote-jobs/lemon-io-senior-full-stack-symfony-developer | Lemon.io | Senior Full-stack Symfony Developer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/walter-senior-fullstack-engineer-ruby-react | WALTER | Senior Fullstack Engineer (Ruby+React) | Remote
+- [ ] https://weworkremotely.com/remote-jobs/walter-full-stack-engineering-lead | WALTER | Full-Stack Engineering Lead | Remote
+- [ ] https://weworkremotely.com/remote-jobs/m3usa-senior-full-stack-developer | M3usa | Senior Full Stack Developer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/dropbox-staff-fullstack-product-software-engineer-dash | Dropbox | Staff Fullstack Product Software Engineer, Dash | Remote
+- [ ] https://weworkremotely.com/remote-jobs/hitachi-digital-services-lead-full-stack-developer-ui-ux | Hitachi Digital Services | Lead Full Stack Developer (UI/UX) | Remote
+- [ ] https://weworkremotely.com/remote-jobs/raspberry-ai-senior-product-engineer | Raspberry AI | Senior Product Engineer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/the-flex-senior-product-engineer | The Flex | Senior Product Engineer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/visualis-senior-full-stack-developer | Visualis | Senior Full Stack Developer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/updater-lead-devops-engineer | Updater | Lead DevOps Engineer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/emerchantpay-senior-devops-engineer | Emerchantpay | Senior DevOps Engineer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/age-of-learning-senior-devops-engineer | Age Of Learning | Senior DevOps Engineer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/spectrum-it-recruitment-senior-devops-engineer | Spectrum It Recruitment | Senior DevOps Engineer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/cooper-lomaz-recruitment-senior-devops-engineer | Cooper Lomaz Recruitment | Senior DevOps Engineer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/anthill-senior-full-stack-developer | Anthill | Senior Full Stack Developer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/infinity-founding-product-engineering-lead-radiance | Infinity | Founding Product & Engineering Lead - Radiance | Remote
+- [ ] https://weworkremotely.com/remote-jobs/lemon-io-senior-full-stack-developer-8 | Lemon.io | Senior Full-stack Developer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/engagedmd-staff-software-engineer | EngagedMD | Staff Software Engineer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/a-team-senior-independent-software-developer-90-170-hr | A.Team | Senior Independent Software Developer ($90-$170/hr) | Remote
+- [ ] https://weworkremotely.com/remote-jobs/storetasker-senior-shopify-developer-remote-flexible-3 | Storetasker | Senior Shopify Developer (Remote + Flexible) | Remote
+- [ ] https://weworkremotely.com/remote-jobs/praia-health-senior-backend-engineer | Praia Health | Senior Backend Engineer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/urban-legend-backend-engineer-mid-senior | Urban Legend | BACKEND ENGINEER (MID–SENIOR) | Remote
+- [ ] https://weworkremotely.com/remote-jobs/stripe-senior-backend-engineer | Stripe | Senior Backend Engineer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/cue-senior-software-engineer | Cue | Senior Software Engineer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/sanctuary-computer-senior-frontend-developer-2 | Sanctuary Computer | Senior Frontend Developer | Remote
+- [ ] https://weworkremotely.com/remote-jobs/notion-staff-frontend-engineer | Notion | Staff Frontend Engineer | Remote

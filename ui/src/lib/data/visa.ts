@@ -28,7 +28,8 @@ export const VISA_OPTIONS: VisaOption[] = [
   {
     value: 'Work permit (open)',
     label: 'Work permit · open',
-    description: 'Open / employer-agnostic work permit (e.g. CA Open Work Permit, UK Skilled Worker).',
+    description:
+      'Open / employer-agnostic work permit (e.g. CA Open Work Permit, UK Skilled Worker).',
   },
   {
     value: 'Work permit (employer-tied)',
@@ -63,12 +64,13 @@ export const VISA_OPTIONS: VisaOption[] = [
   {
     value: 'Requires sponsorship',
     label: 'Requires sponsorship',
-    description: 'Need the employer to sponsor a visa — only apply to roles that explicitly support this.',
+    description:
+      'Need the employer to sponsor a visa — only apply to roles that explicitly support this.',
   },
   {
     value: 'Other / custom',
     label: 'Other / custom (type your own)',
-    description: 'Your situation isn\'t in the list — describe it in plain English.',
+    description: "Your situation isn't in the list — describe it in plain English.",
   },
 ];
 
@@ -87,7 +89,7 @@ export const ONSITE_OPTIONS: OnSiteOption[] = [
   {
     value: 'Fully remote',
     label: 'Fully remote',
-    description: 'Won\'t come in. Open to occasional offsites + travel only.',
+    description: "Won't come in. Open to occasional offsites + travel only.",
   },
   {
     value: 'Remote-first, occasional travel',

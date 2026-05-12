@@ -12,7 +12,7 @@ export async function load({ url }: { url: URL }) {
   // profileId returns the LAST-COMPUTED snapshot. Force=1 spawns a fresh
   // analysis scoped to the selected profile.
   const queryProfile = url.searchParams.get('profile');
-  const profileId = (queryProfile && queryProfile !== 'all') ? queryProfile : undefined;
+  const profileId = queryProfile && queryProfile !== 'all' ? queryProfile : undefined;
   let patterns: Awaited<ReturnType<typeof getPatterns>> | null = null;
   let loadError: string | null = null;
   try {

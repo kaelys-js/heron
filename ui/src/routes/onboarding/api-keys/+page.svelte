@@ -1,117 +1,132 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-  import { KeyRound, ArrowRight, ExternalLink, CheckCircle2, AlertCircle, Loader2 } from '@lucide/svelte';
-  import { goto } from '$app/navigation';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import {
+  KeyRound,
+  ArrowRight,
+  ExternalLink,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+} from '@lucide/svelte';
+import { goto } from '$app/navigation';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
 
-  let { data }: {
-    data: {
-      profileId: string;
-      masked: Record<string, string>;
-      hasRequiredKeys: boolean;
-      isAdditionalProfile: boolean;
-    };
-  } = $props();
-  let q = $derived('?profile=' + encodeURIComponent(data.profileId));
+let {
+  data,
+}: {
+  data: {
+    profileId: string;
+    masked: Record<string, string>;
+    hasRequiredKeys: boolean;
+    isAdditionalProfile: boolean;
+  };
+} = $props();
+let q = $derived('?profile=' + encodeURIComponent(data.profileId));
 
-  /** When the user is onboarding their 2nd+ profile AND all required API
-   *  keys are already configured (carried over from the first profile),
-   *  this step is essentially a no-op. We surface a "Keys already
-   *  configured — continue" path that skips ahead. The user can still
-   *  expand and edit if they want different keys for this profile,
-   *  but defaults to one click forward. */
-  let canSkipApiKeys = $derived(data.isAdditionalProfile && data.hasRequiredKeys);
-  let expanded = $state(false);
+/** When the user is onboarding their 2nd+ profile AND all required API
+ *  keys are already configured (carried over from the first profile),
+ *  this step is essentially a no-op. We surface a "Keys already
+ *  configured — continue" path that skips ahead. The user can still
+ *  expand and edit if they want different keys for this profile,
+ *  but defaults to one click forward. */
+let canSkipApiKeys = $derived(data.isAdditionalProfile && data.hasRequiredKeys);
+let expanded = $state(false);
 
-  async function skipApiKeys() {
-    if (saving) return;
-    saving = true;
-    try {
-      await api.post('/api/onboarding/step', { step: 'api-keys', action: 'skip' }, { silent: true });
-      await goto('/onboarding/identity' + q);
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Could not advance', { description: err.message });
+async function skipApiKeys() {
+  if (saving) return;
+  saving = true;
+  try {
+    await api.post('/api/onboarding/step', { step: 'api-keys', action: 'skip' }, { silent: true });
+    await goto('/onboarding/identity' + q);
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Could not advance', { description: err.message });
+    saving = false;
+  }
+}
+
+// Pre-populate empty fields; if a key is already masked (****abcd), we
+// keep that as the placeholder and let the user choose to replace it.
+let pending = $state<Record<string, string>>({});
+let probing = $state<Record<string, boolean>>({});
+let probeResult = $state<Record<string, { ok: boolean; message: string } | null>>({
+  anthropic: null,
+  gemini: null,
+  adzuna: null,
+});
+let saving = $state(false);
+
+function isSet(key: string): boolean {
+  return !!data.masked[key] && data.masked[key].startsWith('****');
+}
+
+async function probe(provider: 'anthropic' | 'gemini' | 'adzuna') {
+  if (probing[provider]) return;
+  probing = { ...probing, [provider]: true };
+  try {
+    const r = await api.post<{ ok: boolean; provider: string; message: string }>(
+      '/api/settings/test',
+      { provider },
+      { silent: true },
+    );
+    probeResult = { ...probeResult, [provider]: { ok: r.ok, message: r.message } };
+  } catch (e) {
+    const err = e as ApiError;
+    probeResult = { ...probeResult, [provider]: { ok: false, message: err.message } };
+  } finally {
+    probing = { ...probing, [provider]: false };
+  }
+}
+
+async function saveAndContinue() {
+  if (saving) return;
+  // Anthropic is required. Either it's already set OR we're saving a new value.
+  const anthropicEffective =
+    pending.ANTHROPIC_API_KEY || (isSet('ANTHROPIC_API_KEY') ? '****' : '');
+  if (!anthropicEffective) {
+    toast.error('Anthropic API key required', {
+      description:
+        'Used for deep job evaluations + agent chat. Get one free at console.anthropic.com.',
+    });
+    return;
+  }
+  saving = true;
+  try {
+    // Filter out empty strings + masked sentinel values; pass only real new keys.
+    const updates: Record<string, string> = {};
+    for (const [k, v] of Object.entries(pending)) {
+      if (v && !v.startsWith('****')) updates[k] = v;
+    }
+    if (Object.keys(updates).length > 0) {
+      await api.post('/api/settings', updates, { silent: true });
+    }
+    // Probe the now-effective Anthropic key one last time before advancing.
+    const r = await api.post<{ ok: boolean; message: string }>(
+      '/api/settings/test',
+      { provider: 'anthropic' },
+      { silent: true },
+    );
+    if (!r.ok) {
+      toast.error('Anthropic key invalid', { description: r.message });
       saving = false;
-    }
-  }
-
-  // Pre-populate empty fields; if a key is already masked (****abcd), we
-  // keep that as the placeholder and let the user choose to replace it.
-  let pending = $state<Record<string, string>>({});
-  let probing = $state<Record<string, boolean>>({});
-  let probeResult = $state<Record<string, { ok: boolean; message: string } | null>>({
-    anthropic: null,
-    gemini: null,
-    adzuna: null,
-  });
-  let saving = $state(false);
-
-  function isSet(key: string): boolean {
-    return !!data.masked[key] && data.masked[key].startsWith('****');
-  }
-
-  async function probe(provider: 'anthropic' | 'gemini' | 'adzuna') {
-    if (probing[provider]) return;
-    probing = { ...probing, [provider]: true };
-    try {
-      const r = await api.post<{ ok: boolean; provider: string; message: string }>(
-        '/api/settings/test',
-        { provider },
-        { silent: true },
-      );
-      probeResult = { ...probeResult, [provider]: { ok: r.ok, message: r.message } };
-    } catch (e) {
-      const err = e as ApiError;
-      probeResult = { ...probeResult, [provider]: { ok: false, message: err.message } };
-    } finally {
-      probing = { ...probing, [provider]: false };
-    }
-  }
-
-  async function saveAndContinue() {
-    if (saving) return;
-    // Anthropic is required. Either it's already set OR we're saving a new value.
-    const anthropicEffective = pending.ANTHROPIC_API_KEY || (isSet('ANTHROPIC_API_KEY') ? '****' : '');
-    if (!anthropicEffective) {
-      toast.error('Anthropic API key required', {
-        description: 'Used for deep job evaluations + agent chat. Get one free at console.anthropic.com.',
-      });
       return;
     }
-    saving = true;
-    try {
-      // Filter out empty strings + masked sentinel values; pass only real new keys.
-      const updates: Record<string, string> = {};
-      for (const [k, v] of Object.entries(pending)) {
-        if (v && !v.startsWith('****')) updates[k] = v;
-      }
-      if (Object.keys(updates).length > 0) {
-        await api.post('/api/settings', updates, { silent: true });
-      }
-      // Probe the now-effective Anthropic key one last time before advancing.
-      const r = await api.post<{ ok: boolean; message: string }>(
-        '/api/settings/test',
-        { provider: 'anthropic' },
-        { silent: true },
-      );
-      if (!r.ok) {
-        toast.error('Anthropic key invalid', { description: r.message });
-        saving = false;
-        return;
-      }
-      await api.post('/api/onboarding/step', { step: 'api-keys', action: 'complete' }, { silent: true });
-      toast.success('API keys verified');
-      await goto('/onboarding/identity' + q);
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Could not save', { description: err.message });
-      saving = false;
-    }
+    await api.post(
+      '/api/onboarding/step',
+      { step: 'api-keys', action: 'complete' },
+      { silent: true },
+    );
+    toast.success('API keys verified');
+    await goto('/onboarding/identity' + q);
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Could not save', { description: err.message });
+    saving = false;
   }
+}
 </script>
 
 <div class="space-y-6">

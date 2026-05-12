@@ -25,8 +25,8 @@ const KINDS = {
   'profile-md': '_profile.md',
   'portals-yml': 'portals.yml',
   'article-digest': 'article-digest.md',
-  'pipeline': 'pipeline.md',
-  'applications': 'applications.md',
+  pipeline: 'pipeline.md',
+  applications: 'applications.md',
   'scan-history': 'scan-history.tsv',
   'gemini-scores': 'gemini-scores.tsv',
   'follow-ups': 'follow-ups.md',
@@ -41,7 +41,12 @@ export function readProfiles() {
   try {
     const text = fs.readFileSync(PROFILES_JSON, 'utf8');
     const parsed = JSON.parse(text);
-    if (parsed && typeof parsed === 'object' && 'activeId' in parsed && Array.isArray(parsed.profiles)) {
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      'activeId' in parsed &&
+      Array.isArray(parsed.profiles)
+    ) {
       return parsed;
     }
   } catch {
@@ -58,7 +63,9 @@ export function getActiveProfileId() {
 }
 
 export function listProfileIds() {
-  return readProfiles().profiles.map((p) => p.id).filter(Boolean);
+  return readProfiles()
+    .profiles.map((p) => p.id)
+    .filter(Boolean);
 }
 
 export function profilePath(profileId, kind) {
@@ -92,7 +99,9 @@ export function resolveProfileArg(value) {
   if (value == null) return getActiveProfileId();
   const known = listProfileIds();
   if (!known.includes(value)) {
-    console.error(`ERROR: unknown profile ${JSON.stringify(value)}. Known: ${JSON.stringify(known)}`);
+    console.error(
+      `ERROR: unknown profile ${JSON.stringify(value)}. Known: ${JSON.stringify(known)}`,
+    );
     process.exit(2);
   }
   return value;

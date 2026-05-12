@@ -36,12 +36,18 @@ export type StyleSample = {
 export function styleSamples(profileId: string, limit = 3): StyleSample[] {
   const out: StyleSample[] = [];
   let outDir: string;
-  try { outDir = profilePath(profileId, 'output-dir'); }
-  catch { return out; }
+  try {
+    outDir = profilePath(profileId, 'output-dir');
+  } catch {
+    return out;
+  }
   if (!fs.existsSync(outDir)) return out;
   let entries: string[];
-  try { entries = fs.readdirSync(outDir); }
-  catch { return out; }
+  try {
+    entries = fs.readdirSync(outDir);
+  } catch {
+    return out;
+  }
 
   // Cover letters live as {n}-{slug}-{date}-cover.md
   const coverFiles = entries.filter((f) => /-cover\.md$/.test(f));
@@ -49,7 +55,7 @@ export function styleSamples(profileId: string, limit = 3): StyleSample[] {
 
   const jobs = loadAllJobs(profileId);
   // Index jobs by their PDF filename → easier to correlate with cover letter.
-  const jobByCover = new Map<string, typeof jobs[number]>();
+  const jobByCover = new Map<string, (typeof jobs)[number]>();
   for (const j of jobs) {
     if (!j.pdfFile) continue;
     const stem = path.basename(j.pdfFile).replace(/\.pdf$/, '');
@@ -61,14 +67,26 @@ export function styleSamples(profileId: string, limit = 3): StyleSample[] {
     const full = path.join(outDir, f);
     const job = jobByCover.get(f);
     if (!job) continue;
-    const high = ['Applied', 'Screened', 'Interview', 'PhoneScreen', 'Technical', 'TakeHome', 'Onsite', 'Final', 'Offer'];
+    const high = [
+      'Applied',
+      'Screened',
+      'Interview',
+      'PhoneScreen',
+      'Technical',
+      'TakeHome',
+      'Onsite',
+      'Final',
+      'Offer',
+    ];
     if (!high.includes(job.status)) continue;
     let body = '';
     let mtime = 0;
     try {
       body = fs.readFileSync(full, 'utf8');
       mtime = fs.statSync(full).mtimeMs;
-    } catch { continue; }
+    } catch {
+      continue;
+    }
     if (!body.trim()) continue;
     out.push({
       jobId: job.id,
@@ -91,13 +109,28 @@ export function styleSamples(profileId: string, limit = 3): StyleSample[] {
 export function buildStyleReferenceBlock(profileId: string): string {
   const samples = styleSamples(profileId, 3);
   if (samples.length === 0) return '';
-  const intro = '\n\n## STYLE REFERENCES (the user\'s prior accepted cover letters)\n\n' +
+  const intro =
+    "\n\n## STYLE REFERENCES (the user's prior accepted cover letters)\n\n" +
     'Match these in tone, sentence length, opening style, and voice. The user has previously\n' +
     'sent these and they reflect what works for them — do NOT replicate the situational content,\n' +
     'replicate the STYLE.\n\n';
-  return intro + samples.map((s, i) =>
-    '### Sample ' + (i + 1) + ' (' + s.company + ' — ' + s.role + ')\n\n```\n' + s.body + '\n```\n'
-  ).join('\n');
+  return (
+    intro +
+    samples
+      .map(
+        (s, i) =>
+          '### Sample ' +
+          (i + 1) +
+          ' (' +
+          s.company +
+          ' — ' +
+          s.role +
+          ')\n\n```\n' +
+          s.body +
+          '\n```\n',
+      )
+      .join('\n')
+  );
 }
 
 /** Reference path for the per-profile style cache that callers can use

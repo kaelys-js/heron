@@ -1,71 +1,105 @@
 <script lang="ts">
-  import { getContext } from 'svelte';
-  import { Badge } from '$lib/components/ui/badge';
-  import * as Card from '$lib/components/ui/card';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { MapPin, FileText, FileBadge2, Wifi, Building, Globe, DollarSign } from '@lucide/svelte';
-  import type { Job, WorkMode } from '$lib/types';
-  import { BG_TINTS, APPLICATION_STATUS_TINTS } from '$lib/types';
-  import { cn } from '$lib/utils';
-  import JobActions from './JobActions.svelte';
+import { getContext } from 'svelte';
+import { Badge } from '$lib/components/ui/badge';
+import * as Card from '$lib/components/ui/card';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { MapPin, FileText, FileBadge2, Wifi, Building, Globe, DollarSign } from '@lucide/svelte';
+import type { Job, WorkMode } from '$lib/types';
+import { BG_TINTS, APPLICATION_STATUS_TINTS } from '$lib/types';
+import { cn } from '$lib/utils';
+import JobActions from './JobActions.svelte';
 
-  /**
-   * Optional `activeProfileId` prop overrides the layout-context value (used
-   * in tests). Normally the active profile id flows down via Svelte context
-   * from `+layout.svelte` so every JobCard auto-decides whether to render
-   * a "from profile" chip without per-callsite prop drilling.
-   */
-  let { job, activeProfileId }: { job: Job; activeProfileId?: string } = $props();
-  const activeCtx = getContext<{ id: string | undefined } | undefined>('activeProfile');
-  let resolvedActiveId = $derived(activeProfileId ?? activeCtx?.id);
+/**
+ * Optional `activeProfileId` prop overrides the layout-context value (used
+ * in tests). Normally the active profile id flows down via Svelte context
+ * from `+layout.svelte` so every JobCard auto-decides whether to render
+ * a "from profile" chip without per-callsite prop drilling.
+ */
+let { job, activeProfileId }: { job: Job; activeProfileId?: string } = $props();
+const activeCtx = getContext<{ id: string | undefined } | undefined>('activeProfile');
+let resolvedActiveId = $derived(activeProfileId ?? activeCtx?.id);
 
-  let showProfileBadge = $derived(
-    job.profileId && resolvedActiveId && job.profileId !== resolvedActiveId,
-  );
+let showProfileBadge = $derived(
+  job.profileId && resolvedActiveId && job.profileId !== resolvedActiveId,
+);
 
-  function profileDot(): string {
-    // Color is hashed from the profile slug for stable visual identity
-    // without requiring the list view to know each profile's saved color.
-    const slug = job.profileId ?? '';
-    let h = 0;
-    for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) | 0;
-    const colors = ['bg-blue-400', 'bg-emerald-400', 'bg-violet-400', 'bg-amber-400',
-                    'bg-rose-400', 'bg-cyan-400', 'bg-orange-400', 'bg-pink-400'];
-    return colors[Math.abs(h) % colors.length];
-  }
+function profileDot(): string {
+  // Color is hashed from the profile slug for stable visual identity
+  // without requiring the list view to know each profile's saved color.
+  const slug = job.profileId ?? '';
+  let h = 0;
+  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) | 0;
+  const colors = [
+    'bg-blue-400',
+    'bg-emerald-400',
+    'bg-violet-400',
+    'bg-amber-400',
+    'bg-rose-400',
+    'bg-cyan-400',
+    'bg-orange-400',
+    'bg-pink-400',
+  ];
+  return colors[Math.abs(h) % colors.length];
+}
 
-  let displayScore = $derived(job.score ?? job.geminiScore);
-  let isGemini = $derived(job.score == null && job.geminiScore != null);
-  let scoreClass = $derived(
-    displayScore == null ? 'bg-muted text-muted-foreground border-border'
-    : displayScore >= 4.0 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
-    : displayScore >= 3.0 ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
-    : 'bg-red-500/10 text-red-300 border-red-500/30'
-  );
-  let scoreVerdict = $derived.by(() => {
-    if (displayScore == null) return 'Not yet scored';
-    if (displayScore >= 4.5) return 'Strong fit · prioritize';
-    if (displayScore >= 4)   return 'Good fit · worth applying';
-    if (displayScore >= 3)   return 'Marginal · review the gaps';
-    return 'Low fit · skip unless special interest';
-  });
-  let statusDotClass = $derived(
-    job.status === 'Ready' ? 'bg-emerald-500'
-    : job.status === 'Applied' ? 'bg-violet-500'
-    : job.status === 'Interview' ? 'bg-orange-500'
-    : job.status === 'Offer' ? 'bg-green-500'
-    : job.status === 'Rejected' ? 'bg-red-500'
-    : job.status === 'Scored' ? 'bg-cyan-500'
-    : 'bg-zinc-500'
-  );
+let displayScore = $derived(job.score ?? job.geminiScore);
+let isGemini = $derived(job.score == null && job.geminiScore != null);
+let scoreClass = $derived(
+  displayScore == null
+    ? 'bg-muted text-muted-foreground border-border'
+    : displayScore >= 4.0
+      ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
+      : displayScore >= 3.0
+        ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
+        : 'bg-red-500/10 text-red-300 border-red-500/30',
+);
+let scoreVerdict = $derived.by(() => {
+  if (displayScore == null) return 'Not yet scored';
+  if (displayScore >= 4.5) return 'Strong fit · prioritize';
+  if (displayScore >= 4) return 'Good fit · worth applying';
+  if (displayScore >= 3) return 'Marginal · review the gaps';
+  return 'Low fit · skip unless special interest';
+});
+let statusDotClass = $derived(
+  job.status === 'Ready'
+    ? 'bg-emerald-500'
+    : job.status === 'Applied'
+      ? 'bg-violet-500'
+      : job.status === 'Interview'
+        ? 'bg-orange-500'
+        : job.status === 'Offer'
+          ? 'bg-green-500'
+          : job.status === 'Rejected'
+            ? 'bg-red-500'
+            : job.status === 'Scored'
+              ? 'bg-cyan-500'
+              : 'bg-zinc-500',
+);
 
-  const WORK_MODE_UI: Record<WorkMode, { label: string; icon: any; tint: string; tip: string }> = {
-    remote: { label: 'Remote', icon: Wifi, tint: 'text-emerald-300 border-emerald-500/40', tip: 'Fully remote' },
-    hybrid: { label: 'Hybrid', icon: Building, tint: 'text-amber-300 border-amber-500/40', tip: 'Hybrid' },
-    onsite: { label: 'On-site', icon: Building, tint: 'text-red-300 border-red-500/40', tip: 'On-site' },
-    unknown: { label: '', icon: Globe, tint: '', tip: '' },
-  };
-  let workModeUi = $derived(job.workMode && job.workMode !== 'unknown' ? WORK_MODE_UI[job.workMode] : null);
+const WORK_MODE_UI: Record<WorkMode, { label: string; icon: any; tint: string; tip: string }> = {
+  remote: {
+    label: 'Remote',
+    icon: Wifi,
+    tint: 'text-emerald-300 border-emerald-500/40',
+    tip: 'Fully remote',
+  },
+  hybrid: {
+    label: 'Hybrid',
+    icon: Building,
+    tint: 'text-amber-300 border-amber-500/40',
+    tip: 'Hybrid',
+  },
+  onsite: {
+    label: 'On-site',
+    icon: Building,
+    tint: 'text-red-300 border-red-500/40',
+    tip: 'On-site',
+  },
+  unknown: { label: '', icon: Globe, tint: '', tip: '' },
+};
+let workModeUi = $derived(
+  job.workMode && job.workMode !== 'unknown' ? WORK_MODE_UI[job.workMode] : null,
+);
 </script>
 
 <!--

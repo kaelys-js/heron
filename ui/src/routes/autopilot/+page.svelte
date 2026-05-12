@@ -1,215 +1,230 @@
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import { Button } from '$lib/components/ui/button';
-  import { Switch } from '$lib/components/ui/switch';
-  import { Label } from '$lib/components/ui/label';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import TimePicker from '$lib/components/TimePicker.svelte';
-  import Stepper from '$lib/components/Stepper.svelte';
-  import {
-    Play, Power, AlertCircle, Clock, History, Search, Zap, Send, Sparkles,
-    Activity, Calendar, AlertTriangle, CheckCircle2, Info, ChevronDown,
-  } from '@lucide/svelte';
-  import { api, ApiError } from '$lib/api';
-  import { invalidateAll } from '$app/navigation';
-  import { toast } from 'svelte-sonner';
-  import { formatRelativeTime, cn, withMinDuration } from '$lib/utils';
-  import type {
-    AutopilotConfig, Schedule, ScheduleId, DailyTrigger,
-  } from '$lib/server/autopilot';
-  import type { ActivityEvent } from '$lib/types';
-  import EmptyState from '$lib/components/EmptyState.svelte';
-  import { ConfirmGate } from '$lib/confirm.svelte';
-  import { onDestroy } from 'svelte';
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import { Button } from '$lib/components/ui/button';
+import { Switch } from '$lib/components/ui/switch';
+import { Label } from '$lib/components/ui/label';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import TimePicker from '$lib/components/TimePicker.svelte';
+import Stepper from '$lib/components/Stepper.svelte';
+import {
+  Play,
+  Power,
+  AlertCircle,
+  Clock,
+  History,
+  Search,
+  Zap,
+  Send,
+  Sparkles,
+  Activity,
+  Calendar,
+  AlertTriangle,
+  CheckCircle2,
+  Info,
+  ChevronDown,
+} from '@lucide/svelte';
+import { api, ApiError } from '$lib/api';
+import { invalidateAll } from '$app/navigation';
+import { toast } from 'svelte-sonner';
+import { formatRelativeTime, cn, withMinDuration } from '$lib/utils';
+import type { AutopilotConfig, Schedule, ScheduleId, DailyTrigger } from '$lib/server/autopilot';
+import type { ActivityEvent } from '$lib/types';
+import EmptyState from '$lib/components/EmptyState.svelte';
+import { ConfirmGate } from '$lib/confirm.svelte';
+import { onDestroy } from 'svelte';
 
-  // Discard throws away in-progress edits — same red double-click confirm
-  // pattern as the rest of the app.
-  const confirmDiscard = new ConfirmGate();
-  onDestroy(() => confirmDiscard.destroy());
+// Discard throws away in-progress edits — same red double-click confirm
+// pattern as the rest of the app.
+const confirmDiscard = new ConfirmGate();
+onDestroy(() => confirmDiscard.destroy());
 
-  let { data }: {
-    data: {
-      config: AutopilotConfig;
-      nextRunByScheduleId: Record<string, number | null>;
-      history: ActivityEvent[];
-    };
-  } = $props();
-
-  // svelte-ignore state_referenced_locally — data.config seeds local mutable state; saved back via /api.
-  let config = $state<AutopilotConfig>(structuredClone(data.config));
-  let saving = $state(false);
-  let runningId = $state<string | null>(null);
-  let expandedDetails = $state<Set<string>>(new Set());
-
-  let dirty = $derived(JSON.stringify(config) !== JSON.stringify(data.config));
-
-  const TASK_ICONS: Record<string, any> = {
-    scan: Search,
-    gemini: Sparkles,
-    'apply-linkedin': Send,
+let {
+  data,
+}: {
+  data: {
+    config: AutopilotConfig;
+    nextRunByScheduleId: Record<string, number | null>;
+    history: ActivityEvent[];
   };
+} = $props();
 
-  const WEEKDAY_LABELS = ['Su', 'M', 'Tu', 'W', 'Th', 'F', 'Sa'];
-  const WEEKDAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+// svelte-ignore state_referenced_locally — data.config seeds local mutable state; saved back via /api.
+let config = $state<AutopilotConfig>(structuredClone(data.config));
+let saving = $state(false);
+let runningId = $state<string | null>(null);
+let expandedDetails = $state<Set<string>>(new Set());
 
-  function fmtSchedule(s: Schedule): string {
-    if (s.trigger.type === 'after') {
-      return 'When ' + s.trigger.task + ' completes';
-    }
-    if (s.trigger.type === 'weekly') {
-      const t = s.trigger;
-      return WEEKDAY_FULL[t.dayOfWeek] + ' at ' + formatTimeLabel(t.hour, t.minute);
-    }
+let dirty = $derived(JSON.stringify(config) !== JSON.stringify(data.config));
+
+const TASK_ICONS: Record<string, any> = {
+  scan: Search,
+  gemini: Sparkles,
+  'apply-linkedin': Send,
+};
+
+const WEEKDAY_LABELS = ['Su', 'M', 'Tu', 'W', 'Th', 'F', 'Sa'];
+const WEEKDAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+function fmtSchedule(s: Schedule): string {
+  if (s.trigger.type === 'after') {
+    return 'When ' + s.trigger.task + ' completes';
+  }
+  if (s.trigger.type === 'weekly') {
     const t = s.trigger;
-    const time = formatTimeLabel(t.hour, t.minute);
-    const days: number[] = t.weekdays;
-    if (days.length === 0) return 'Every day at ' + time;
-    if (days.length === 7) return 'Every day at ' + time;
-    if (
-      days.length === 5 &&
-      days.every((d: number) => [1, 2, 3, 4, 5].includes(d))
-    ) return 'Weekdays at ' + time;
-    if (
-      days.length === 2 &&
-      days.every((d: number) => [0, 6].includes(d))
-    ) return 'Weekends at ' + time;
-    return days.map((d: number) => WEEKDAY_LABELS[d]).join(' · ') + ' at ' + time;
+    return WEEKDAY_FULL[t.dayOfWeek] + ' at ' + formatTimeLabel(t.hour, t.minute);
   }
+  const t = s.trigger;
+  const time = formatTimeLabel(t.hour, t.minute);
+  const days: number[] = t.weekdays;
+  if (days.length === 0) return 'Every day at ' + time;
+  if (days.length === 7) return 'Every day at ' + time;
+  if (days.length === 5 && days.every((d: number) => [1, 2, 3, 4, 5].includes(d)))
+    return 'Weekdays at ' + time;
+  if (days.length === 2 && days.every((d: number) => [0, 6].includes(d)))
+    return 'Weekends at ' + time;
+  return days.map((d: number) => WEEKDAY_LABELS[d]).join(' · ') + ' at ' + time;
+}
 
-  function formatTimeLabel(h: number, m: number): string {
-    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    return h12 + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+function formatTimeLabel(h: number, m: number): string {
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  return h12 + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+}
+
+function fmtCountdown(ts: number): string {
+  const ms = ts - Date.now();
+  if (ms < 0) return 'overdue';
+  const min = Math.floor(ms / 60000);
+  if (min < 1) return 'in <1m';
+  if (min < 60) return 'in ' + min + 'm';
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return 'in ' + hr + 'h ' + (min % 60) + 'm';
+  const d = Math.floor(hr / 24);
+  return 'in ' + d + 'd ' + (hr % 24) + 'h';
+}
+
+function updateSchedule(id: ScheduleId, patch: Partial<Schedule>) {
+  config = {
+    ...config,
+    schedules: config.schedules.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+  };
+}
+
+function setTime(id: ScheduleId, hour: number, minute: number) {
+  const s = config.schedules.find((x) => x.id === id);
+  if (!s || s.trigger.type !== 'daily') return;
+  updateSchedule(id, { trigger: { ...s.trigger, hour, minute } });
+}
+
+function toggleWeekday(id: ScheduleId, day: number) {
+  const s = config.schedules.find((x) => x.id === id);
+  if (!s || s.trigger.type !== 'daily') return;
+  const days = new Set(s.trigger.weekdays);
+  if (days.has(day)) days.delete(day);
+  else days.add(day);
+  updateSchedule(id, { trigger: { ...s.trigger, weekdays: [...days].sort() } });
+}
+
+function setWeekdayPreset(id: ScheduleId, preset: 'every' | 'weekdays' | 'weekends') {
+  const map = { every: [], weekdays: [1, 2, 3, 4, 5], weekends: [0, 6] };
+  const s = config.schedules.find((x) => x.id === id);
+  if (!s || s.trigger.type !== 'daily') return;
+  updateSchedule(id, { trigger: { ...s.trigger, weekdays: map[preset] } });
+}
+
+function isWeekdayPresetActive(s: Schedule, preset: 'every' | 'weekdays' | 'weekends'): boolean {
+  if (s.trigger.type !== 'daily') return false;
+  const w = s.trigger.weekdays;
+  if (preset === 'every') return w.length === 0 || w.length === 7;
+  if (preset === 'weekdays') return w.length === 5 && w.every((d) => [1, 2, 3, 4, 5].includes(d));
+  if (preset === 'weekends') return w.length === 2 && w.every((d) => [0, 6].includes(d));
+  return false;
+}
+
+function toggleDetails(id: string) {
+  const next = new Set(expandedDetails);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  expandedDetails = next;
+}
+
+async function save() {
+  if (!dirty || saving) return;
+  saving = true;
+  try {
+    await withMinDuration(
+      (async () => {
+        await api.post('/api/autopilot', config, {
+          successToast: { title: 'Autopilot saved', description: 'Schedules updated.' },
+        });
+        await invalidateAll();
+      })(),
+      500,
+    );
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Failed to save', { description: err.message });
+  } finally {
+    saving = false;
   }
+}
 
-  function fmtCountdown(ts: number): string {
-    const ms = ts - Date.now();
-    if (ms < 0) return 'overdue';
-    const min = Math.floor(ms / 60000);
-    if (min < 1) return 'in <1m';
-    if (min < 60) return 'in ' + min + 'm';
-    const hr = Math.floor(min / 60);
-    if (hr < 24) return 'in ' + hr + 'h ' + (min % 60) + 'm';
-    const d = Math.floor(hr / 24);
-    return 'in ' + d + 'd ' + (hr % 24) + 'h';
+let discardArmed = $derived(confirmDiscard.isArmed('discard'));
+function discard() {
+  if (!confirmDiscard.trigger('discard')) return;
+  config = structuredClone(data.config);
+}
+
+async function runNow(id: ScheduleId) {
+  if (runningId) return;
+  runningId = id;
+  try {
+    const r = await withMinDuration(
+      api.post<{ ok: boolean; message: string }>('/api/autopilot/run', { id }, { silent: true }),
+      450,
+    );
+    if (r.ok) toast.success(r.message);
+    else toast.error(r.message);
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error(err.message);
+  } finally {
+    runningId = null;
   }
+}
 
-  function updateSchedule(id: ScheduleId, patch: Partial<Schedule>) {
-    config = {
-      ...config,
-      schedules: config.schedules.map((s) => (s.id === id ? { ...s, ...patch } : s)),
-    };
-  }
-
-  function setTime(id: ScheduleId, hour: number, minute: number) {
+let enabledCount = $derived(config.schedules.filter((s) => s.enabled).length);
+let scheduledNext = $derived.by(() => {
+  let earliest: { id: string; ts: number } | null = null;
+  for (const [id, ts] of Object.entries(data.nextRunByScheduleId)) {
+    if (ts == null) continue;
     const s = config.schedules.find((x) => x.id === id);
-    if (!s || s.trigger.type !== 'daily') return;
-    updateSchedule(id, { trigger: { ...s.trigger, hour, minute } });
+    if (!s?.enabled) continue;
+    if (!earliest || ts < earliest.ts) earliest = { id, ts };
   }
+  return earliest;
+});
 
-  function toggleWeekday(id: ScheduleId, day: number) {
-    const s = config.schedules.find((x) => x.id === id);
-    if (!s || s.trigger.type !== 'daily') return;
-    const days = new Set(s.trigger.weekdays);
-    if (days.has(day)) days.delete(day);
-    else days.add(day);
-    updateSchedule(id, { trigger: { ...s.trigger, weekdays: [...days].sort() } });
-  }
-
-  function setWeekdayPreset(id: ScheduleId, preset: 'every' | 'weekdays' | 'weekends') {
-    const map = { every: [], weekdays: [1, 2, 3, 4, 5], weekends: [0, 6] };
-    const s = config.schedules.find((x) => x.id === id);
-    if (!s || s.trigger.type !== 'daily') return;
-    updateSchedule(id, { trigger: { ...s.trigger, weekdays: map[preset] } });
-  }
-
-  function isWeekdayPresetActive(s: Schedule, preset: 'every' | 'weekdays' | 'weekends'): boolean {
-    if (s.trigger.type !== 'daily') return false;
-    const w = s.trigger.weekdays;
-    if (preset === 'every') return w.length === 0 || w.length === 7;
-    if (preset === 'weekdays') return w.length === 5 && w.every((d) => [1, 2, 3, 4, 5].includes(d));
-    if (preset === 'weekends') return w.length === 2 && w.every((d) => [0, 6].includes(d));
-    return false;
-  }
-
-  function toggleDetails(id: string) {
-    const next = new Set(expandedDetails);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    expandedDetails = next;
-  }
-
-  async function save() {
-    if (!dirty || saving) return;
-    saving = true;
-    try {
-      await withMinDuration(
-        (async () => {
-          await api.post('/api/autopilot', config, {
-            successToast: { title: 'Autopilot saved', description: 'Schedules updated.' },
-          });
-          await invalidateAll();
-        })(),
-        500,
-      );
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Failed to save', { description: err.message });
-    } finally {
-      saving = false;
-    }
-  }
-
-  let discardArmed = $derived(confirmDiscard.isArmed('discard'));
-  function discard() {
-    if (!confirmDiscard.trigger('discard')) return;
-    config = structuredClone(data.config);
-  }
-
-  async function runNow(id: ScheduleId) {
-    if (runningId) return;
-    runningId = id;
-    try {
-      const r = await withMinDuration(
-        api.post<{ ok: boolean; message: string }>('/api/autopilot/run', { id }, { silent: true }),
-        450,
-      );
-      if (r.ok) toast.success(r.message);
-      else toast.error(r.message);
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error(err.message);
-    } finally {
-      runningId = null;
-    }
-  }
-
-  let enabledCount = $derived(config.schedules.filter((s) => s.enabled).length);
-  let scheduledNext = $derived.by(() => {
-    let earliest: { id: string; ts: number } | null = null;
-    for (const [id, ts] of Object.entries(data.nextRunByScheduleId)) {
-      if (ts == null) continue;
-      const s = config.schedules.find((x) => x.id === id);
-      if (!s?.enabled) continue;
-      if (!earliest || ts < earliest.ts) earliest = { id, ts };
-    }
-    return earliest;
-  });
-
-  function levelDot(level: ActivityEvent['level']): string {
-    return level === 'error' ? 'bg-red-500'
-      : level === 'warn' ? 'bg-amber-500'
-      : level === 'success' ? 'bg-emerald-500'
-      : 'bg-blue-500';
-  }
-  function levelIcon(level: ActivityEvent['level']) {
-    return level === 'error' ? AlertTriangle
-      : level === 'warn' ? AlertCircle
-      : level === 'success' ? CheckCircle2
-      : Info;
-  }
+function levelDot(level: ActivityEvent['level']): string {
+  return level === 'error'
+    ? 'bg-red-500'
+    : level === 'warn'
+      ? 'bg-amber-500'
+      : level === 'success'
+        ? 'bg-emerald-500'
+        : 'bg-blue-500';
+}
+function levelIcon(level: ActivityEvent['level']) {
+  return level === 'error'
+    ? AlertTriangle
+    : level === 'warn'
+      ? AlertCircle
+      : level === 'success'
+        ? CheckCircle2
+        : Info;
+}
 </script>
 
 <div class="h-full overflow-y-auto">

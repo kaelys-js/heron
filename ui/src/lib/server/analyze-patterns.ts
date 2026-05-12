@@ -151,8 +151,12 @@ function spawnAnalyze(profileId?: string): Promise<PatternsResult> {
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) {
@@ -163,13 +167,21 @@ function spawnAnalyze(profileId?: string): Promise<PatternsResult> {
         const parsed = JSON.parse(stdout) as PatternsResult;
         resolve({ ...parsed, generatedAt: Date.now() });
       } catch (err) {
-        reject(new Error('Failed to parse analyze-patterns JSON: ' + (err instanceof Error ? err.message : String(err))));
+        reject(
+          new Error(
+            'Failed to parse analyze-patterns JSON: ' +
+              (err instanceof Error ? err.message : String(err)),
+          ),
+        );
       }
     });
   });
 }
 
-export async function getPatterns(opts?: { force?: boolean; profileId?: string }): Promise<PatternsResult> {
+export async function getPatterns(opts?: {
+  force?: boolean;
+  profileId?: string;
+}): Promise<PatternsResult> {
   if (!opts?.force) {
     const cached = readCache();
     if (cached) return cached;

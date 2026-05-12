@@ -1,27 +1,27 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/button';
-  import { AlertTriangle, RefreshCw } from '@lucide/svelte';
-  import type { Snippet } from 'svelte';
+import { Button } from '$lib/components/ui/button';
+import { AlertTriangle, RefreshCw } from '@lucide/svelte';
+import type { Snippet } from 'svelte';
 
-  /**
-   * Generic <svelte:boundary> wrapper with a default "Try again" fail panel.
-   * Use anywhere a render error in a child component should NOT take down
-   * the rest of the page (agent chat, global dialogs, optional widgets).
-   *
-   * Pass a `failedRender` snippet to fully customise the failure UI;
-   * leave it undefined to use the built-in panel.
-   */
-  let {
-    title = 'Something went wrong',
-    children,
-    failedRender,
-    onretry,
-  }: {
-    title?: string;
-    children?: Snippet;
-    failedRender?: Snippet<[unknown, () => void]>;
-    onretry?: () => void;
-  } = $props();
+/**
+ * Generic <svelte:boundary> wrapper with a default "Try again" fail panel.
+ * Use anywhere a render error in a child component should NOT take down
+ * the rest of the page (agent chat, global dialogs, optional widgets).
+ *
+ * Pass a `failedRender` snippet to fully customise the failure UI;
+ * leave it undefined to use the built-in panel.
+ */
+let {
+  title = 'Something went wrong',
+  children,
+  failedRender,
+  onretry,
+}: {
+  title?: string;
+  children?: Snippet;
+  failedRender?: Snippet<[unknown, () => void]>;
+  onretry?: () => void;
+} = $props();
 </script>
 
 <svelte:boundary>

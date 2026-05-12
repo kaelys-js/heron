@@ -29,7 +29,11 @@ import { AGENT_CLI } from '$lib/config/cli';
 
 function fireAndForgetSeedFormAnswers(profileId: string): void {
   try {
-    try { swapProfileSymlinks(profileId); } catch { /* surfaced elsewhere */ }
+    try {
+      swapProfileSymlinks(profileId);
+    } catch {
+      /* surfaced elsewhere */
+    }
     const prompt = '/' + CLI_NAMESPACE + ' seed-form-answers';
     const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
       cwd: ROOT,
@@ -39,11 +43,13 @@ function fireAndForgetSeedFormAnswers(profileId: string): void {
     });
     p.unref();
     logEvent('seed-form-answers', 'Background seed fired from onboarding complete', {
-      level: 'info', category: 'application',
+      level: 'info',
+      category: 'application',
     });
   } catch (err) {
     logEvent('seed-form-answers', 'Failed to fire background seed', {
-      level: 'warn', category: 'application',
+      level: 'warn',
+      category: 'application',
       message: err instanceof Error ? err.message : String(err),
     });
   }
@@ -66,7 +72,9 @@ export const POST = wrap('onboarding-complete', async ({ request }: { request: R
   if (!skip) {
     try {
       fireAndForgetSeedFormAnswers(getActiveProfileId());
-    } catch { /* logged inside */ }
+    } catch {
+      /* logged inside */
+    }
   }
 
   return { state };

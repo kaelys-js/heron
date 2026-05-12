@@ -61,13 +61,14 @@ const RETRY_DELAY_MS = 1500;
 async function withRetry(label, fn) {
   let lastErr;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    try { return await fn(); }
-    catch (err) {
+    try {
+      return await fn();
+    } catch (err) {
       lastErr = err;
       const msg = err?.message || '';
       if (/HTTP 4\d\d/.test(msg)) throw err;
       if (attempt === MAX_RETRIES) throw err;
-      await new Promise(r => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));
+      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));
     }
   }
   throw lastErr;
@@ -118,11 +119,14 @@ async function scanAiJobs({ pages = DEFAULT_MAX_PAGES } = {}) {
   for (let page = 1; page <= pages; page++) {
     const url = page === 1 ? 'https://aijobs.net/' : `https://aijobs.net/?page=${page}`;
     let html;
-    try { html = await fetchText(url); } catch (e) {
+    try {
+      html = await fetchText(url);
+    } catch (e) {
       console.error(`  aijobs page ${page}: ${e.message}`);
       break;
     }
-    const anchorRe = /<a\s+class="[^"]*stretched-link[^"]*"\s+href="(\/job\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+    const anchorRe =
+      /<a\s+class="[^"]*stretched-link[^"]*"\s+href="(\/job\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
     let m;
     let onPage = 0;
     while ((m = anchorRe.exec(html)) !== null) {
@@ -137,8 +141,8 @@ async function scanAiJobs({ pages = DEFAULT_MAX_PAGES } = {}) {
       // multi-location dupes onto one canonical entry.
       const employerIdMatch = href.match(/-id(\d+)-/i);
       const employerId = employerIdMatch?.[1];
-      const dedupeKey = (employerId ? 'eid:' + employerId + ':' : 'href:' + href + ':') +
-        inner.toLowerCase();
+      const dedupeKey =
+        (employerId ? 'eid:' + employerId + ':' : 'href:' + href + ':') + inner.toLowerCase();
       if (seen.has(dedupeKey)) continue;
       seen.add(dedupeKey);
       out.push({
@@ -150,7 +154,7 @@ async function scanAiJobs({ pages = DEFAULT_MAX_PAGES } = {}) {
       onPage++;
     }
     if (onPage === 0) break;
-    await new Promise(r => setTimeout(r, 800)); // be polite
+    await new Promise((r) => setTimeout(r, 800)); // be polite
   }
   return out;
 }
@@ -179,12 +183,12 @@ const SOURCES = {
 // ── Title filter (mirror scan.mjs) ──────────────────────────────────
 
 function buildTitleFilter(titleFilter) {
-  const positive = (titleFilter?.positive || []).map(k => k.toLowerCase());
-  const negative = (titleFilter?.negative || []).map(k => k.toLowerCase());
+  const positive = (titleFilter?.positive || []).map((k) => k.toLowerCase());
+  const negative = (titleFilter?.negative || []).map((k) => k.toLowerCase());
   return (title) => {
     const lower = title.toLowerCase();
-    const hasPositive = positive.length === 0 || positive.some(k => lower.includes(k));
-    const hasNegative = negative.some(k => lower.includes(k));
+    const hasPositive = positive.length === 0 || positive.some((k) => lower.includes(k));
+    const hasNegative = negative.some((k) => lower.includes(k));
     return hasPositive && !hasNegative;
   };
 }
@@ -225,17 +229,17 @@ function appendToPipeline(offers) {
   if (idx === -1) {
     const procIdx = text.indexOf('## Procesadas');
     const insertAt = procIdx === -1 ? text.length : procIdx;
-    const block = `\n${marker}\n\n` + offers.map(o =>
-      `- [ ] ${o.url} | ${o.company} | ${o.title}`,
-    ).join('\n') + '\n\n';
+    const block =
+      `\n${marker}\n\n` +
+      offers.map((o) => `- [ ] ${o.url} | ${o.company} | ${o.title}`).join('\n') +
+      '\n\n';
     text = text.slice(0, insertAt) + block + text.slice(insertAt);
   } else {
     const afterMarker = idx + marker.length;
     const nextSection = text.indexOf('\n## ', afterMarker);
     const insertAt = nextSection === -1 ? text.length : nextSection;
-    const block = '\n' + offers.map(o =>
-      `- [ ] ${o.url} | ${o.company} | ${o.title}`,
-    ).join('\n') + '\n';
+    const block =
+      '\n' + offers.map((o) => `- [ ] ${o.url} | ${o.company} | ${o.title}`).join('\n') + '\n';
     text = text.slice(0, insertAt) + block + text.slice(insertAt);
   }
   writeFileSync(PIPELINE_PATH, text, 'utf-8');
@@ -245,9 +249,10 @@ function appendToScanHistory(offers, date) {
   if (!existsSync(SCAN_HISTORY_PATH)) {
     writeFileSync(SCAN_HISTORY_PATH, 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\n', 'utf-8');
   }
-  const lines = offers.map(o =>
-    `${o.url}\t${date}\t${o.source}\t${o.title}\t${o.company}\tadded`,
-  ).join('\n') + '\n';
+  const lines =
+    offers
+      .map((o) => `${o.url}\t${date}\t${o.source}\t${o.title}\t${o.company}\tadded`)
+      .join('\n') + '\n';
   appendFileSync(SCAN_HISTORY_PATH, lines, 'utf-8');
 }
 
@@ -260,7 +265,10 @@ async function main() {
   const sourceFlag = args.indexOf('--source');
   const filterSource = sourceFlag !== -1 ? args[sourceFlag + 1]?.toLowerCase() : null;
   const pagesFlag = args.indexOf('--pages');
-  const pages = pagesFlag !== -1 ? Math.max(1, Math.min(20, parseInt(args[pagesFlag + 1], 10) || DEFAULT_MAX_PAGES)) : DEFAULT_MAX_PAGES;
+  const pages =
+    pagesFlag !== -1
+      ? Math.max(1, Math.min(20, parseInt(args[pagesFlag + 1], 10) || DEFAULT_MAX_PAGES))
+      : DEFAULT_MAX_PAGES;
 
   // /sources Test button (B12) — connectivity probe. Hit aijobs.net's
   // search page and confirm a 200 response. Exits 0/non-zero.
@@ -287,7 +295,9 @@ async function main() {
     try {
       const config = parseYaml(readFileSync(PORTALS_PATH, 'utf-8'));
       titleFilter = buildTitleFilter(config.title_filter);
-    } catch { /* missing/malformed — fall through with no-op filter */ }
+    } catch {
+      /* missing/malformed — fall through with no-op filter */
+    }
   }
 
   const seenUrls = loadSeenUrls();
@@ -306,8 +316,14 @@ async function main() {
       const jobs = await def.run({ pages });
       totalFound += jobs.length;
       for (const job of jobs) {
-        if (!titleFilter(job.title)) { totalFiltered++; continue; }
-        if (seenUrls.has(job.url)) { totalDupes++; continue; }
+        if (!titleFilter(job.title)) {
+          totalFiltered++;
+          continue;
+        }
+        if (seenUrls.has(job.url)) {
+          totalDupes++;
+          continue;
+        }
         seenUrls.add(job.url);
         newOffers.push({ ...job, source: id });
       }

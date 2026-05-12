@@ -27,7 +27,9 @@ type DrillInput = {
   previousFeedback?: string[];
 };
 
-function spawnDrill(args: DrillInput & { profileId: string }): Promise<{ stdout: string; stderr: string }> {
+function spawnDrill(
+  args: DrillInput & { profileId: string },
+): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
@@ -38,13 +40,19 @@ function spawnDrill(args: DrillInput & { profileId: string }): Promise<{ stdout:
       previousFeedback: (args.previousFeedback ?? []).slice(-5),
     };
     const prompt = '/' + CLI_NAMESPACE + ' drill-feedback ' + JSON.stringify(promptInput);
-    try { swapProfileSymlinks(args.profileId); } catch {}
+    try {
+      swapProfileSymlinks(args.profileId);
+    } catch {}
     const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
       cwd: ROOT,
       env: { ...process.env, DRILL_INPUT: JSON.stringify(promptInput) },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
@@ -71,30 +79,35 @@ function parseDrillOutput(stdout: string): {
   };
 }
 
-export const POST = wrap('drill', async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
-  const resolved = resolveJobAndProfile(params.id, url);
-  if (!resolved) badRequest('Job not found: ' + params.id);
-  const { profileId } = resolved!;
-  const body = (await request.json().catch(() => ({}))) as Partial<DrillInput>;
-  if (!body.mode || (body.mode !== 'code' && body.mode !== 'design')) badRequest('mode must be code|design');
-  if (!body.problem) badRequest('problem required');
-  if (typeof body.userInput !== 'string') badRequest('userInput required');
+export const POST = wrap(
+  'drill',
+  async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
+    const resolved = resolveJobAndProfile(params.id, url);
+    if (!resolved) badRequest('Job not found: ' + params.id);
+    const { profileId } = resolved!;
+    const body = (await request.json().catch(() => ({}))) as Partial<DrillInput>;
+    if (!body.mode || (body.mode !== 'code' && body.mode !== 'design'))
+      badRequest('mode must be code|design');
+    if (!body.problem) badRequest('problem required');
+    if (typeof body.userInput !== 'string') badRequest('userInput required');
 
-  logEvent('drill', 'Drill feedback request · ' + body.mode, {
-    level: 'info', category: 'application',
-  });
-
-  try {
-    const { stdout } = await spawnDrill({
-      mode: body.mode,
-      problem: body.problem,
-      userInput: body.userInput,
-      previousFeedback: body.previousFeedback ?? [],
-      profileId,
+    logEvent('drill', 'Drill feedback request · ' + body.mode, {
+      level: 'info',
+      category: 'application',
     });
-    return { ok: true, ...parseDrillOutput(stdout) };
-  } catch (err) {
-    reportServerError('drill', 'Drill spawn failed', err, { category: 'application' });
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
-  }
-});
+
+    try {
+      const { stdout } = await spawnDrill({
+        mode: body.mode,
+        problem: body.problem,
+        userInput: body.userInput,
+        previousFeedback: body.previousFeedback ?? [],
+        profileId,
+      });
+      return { ok: true, ...parseDrillOutput(stdout) };
+    } catch (err) {
+      reportServerError('drill', 'Drill spawn failed', err, { category: 'application' });
+      return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  },
+);

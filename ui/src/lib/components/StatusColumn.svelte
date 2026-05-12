@@ -1,90 +1,99 @@
 <script lang="ts">
-  import JobCard from './JobCard.svelte';
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-  import * as Dialog from '$lib/components/ui/dialog';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { MoreHorizontal, Plus, ChevronDown } from '@lucide/svelte';
-  import type { Job, Status } from '$lib/types';
-  import { STATUS_EMPTY_COPY } from '$lib/types';
-  import { cn } from '$lib/utils';
-  import { api } from '$lib/api';
-  import { invalidateAll } from '$app/navigation';
-  import EmptyState from './EmptyState.svelte';
+import JobCard from './JobCard.svelte';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import * as Dialog from '$lib/components/ui/dialog';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { MoreHorizontal, Plus, ChevronDown } from '@lucide/svelte';
+import type { Job, Status } from '$lib/types';
+import { STATUS_EMPTY_COPY } from '$lib/types';
+import { cn } from '$lib/utils';
+import { api } from '$lib/api';
+import { invalidateAll } from '$app/navigation';
+import EmptyState from './EmptyState.svelte';
 
-  let { title, jobs = [], tint = '' }: {
-    title: Status | string;
-    jobs?: Job[];
-    tint?: string;
-  } = $props();
+let {
+  title,
+  jobs = [],
+  tint = '',
+}: {
+  title: Status | string;
+  jobs?: Job[];
+  tint?: string;
+} = $props();
 
-  const PAGE_SIZE = 25;
-  let visibleCount = $state(PAGE_SIZE);
+const PAGE_SIZE = 25;
+let visibleCount = $state(PAGE_SIZE);
 
-  // Reset pagination when the underlying job list shrinks below current view
-  $effect(() => {
-    if (jobs.length < visibleCount && visibleCount > PAGE_SIZE) {
-      visibleCount = PAGE_SIZE;
-    }
-  });
-
-  let displayed = $derived(jobs.slice(0, visibleCount));
-  let hidden = $derived(Math.max(0, jobs.length - visibleCount));
-
-  let addOpen = $state(false);
-  let addUrl = $state('');
-  let addCompany = $state('');
-  let addRole = $state('');
-  let adding = $state(false);
-
-  const statusDotMap: Record<string, string> = {
-    New: 'bg-zinc-400',
-    Scoring: 'bg-blue-400',
-    Scored: 'bg-cyan-400',
-    Ready: 'bg-emerald-400',
-    Applied: 'bg-violet-400',
-    Screened: 'bg-amber-400',
-    Interview: 'bg-orange-400',
-    Offer: 'bg-green-400',
-    Rejected: 'bg-red-400',
-    Closed: 'bg-zinc-500',
-  };
-
-  let emptyCopy = $derived(STATUS_EMPTY_COPY[title as Status] ?? 'Nothing here yet.');
-
-  async function addManual() {
-    if (!addUrl.trim() || adding) return;
-    adding = true;
-    try {
-      await api.post('/api/status', {
-        url: addUrl.trim(),
-        newStatus: title,
-        notes: addCompany.trim() && addRole.trim() ? `${addCompany.trim()} · ${addRole.trim()}` : '',
-      }, {
-        successToast: { title: 'Added', description: `${addCompany.trim() || 'Job'} → ${title}` },
-      });
-      addOpen = false;
-      addUrl = '';
-      addCompany = '';
-      addRole = '';
-      await invalidateAll();
-    } finally {
-      adding = false;
-    }
-  }
-
-  function showMore() {
-    visibleCount = Math.min(jobs.length, visibleCount + PAGE_SIZE);
-  }
-
-  function showAll() {
-    visibleCount = jobs.length;
-  }
-
-  function showLess() {
+// Reset pagination when the underlying job list shrinks below current view
+$effect(() => {
+  if (jobs.length < visibleCount && visibleCount > PAGE_SIZE) {
     visibleCount = PAGE_SIZE;
   }
+});
+
+let displayed = $derived(jobs.slice(0, visibleCount));
+let hidden = $derived(Math.max(0, jobs.length - visibleCount));
+
+let addOpen = $state(false);
+let addUrl = $state('');
+let addCompany = $state('');
+let addRole = $state('');
+let adding = $state(false);
+
+const statusDotMap: Record<string, string> = {
+  New: 'bg-zinc-400',
+  Scoring: 'bg-blue-400',
+  Scored: 'bg-cyan-400',
+  Ready: 'bg-emerald-400',
+  Applied: 'bg-violet-400',
+  Screened: 'bg-amber-400',
+  Interview: 'bg-orange-400',
+  Offer: 'bg-green-400',
+  Rejected: 'bg-red-400',
+  Closed: 'bg-zinc-500',
+};
+
+let emptyCopy = $derived(STATUS_EMPTY_COPY[title as Status] ?? 'Nothing here yet.');
+
+async function addManual() {
+  if (!addUrl.trim() || adding) return;
+  adding = true;
+  try {
+    await api.post(
+      '/api/status',
+      {
+        url: addUrl.trim(),
+        newStatus: title,
+        notes:
+          addCompany.trim() && addRole.trim() ? `${addCompany.trim()} · ${addRole.trim()}` : '',
+      },
+      {
+        successToast: { title: 'Added', description: `${addCompany.trim() || 'Job'} → ${title}` },
+      },
+    );
+    addOpen = false;
+    addUrl = '';
+    addCompany = '';
+    addRole = '';
+    await invalidateAll();
+  } finally {
+    adding = false;
+  }
+}
+
+function showMore() {
+  visibleCount = Math.min(jobs.length, visibleCount + PAGE_SIZE);
+}
+
+function showAll() {
+  visibleCount = jobs.length;
+}
+
+function showLess() {
+  visibleCount = PAGE_SIZE;
+}
 </script>
 
 <div class={cn('flex flex-col rounded-lg border bg-muted/20 min-h-[280px]', tint)}>

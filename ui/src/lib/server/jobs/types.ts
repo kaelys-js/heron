@@ -11,12 +11,12 @@
 
 /** Categories drive the UI grouping on Autopilot / Agents pages. */
 export type JobCategory =
-  | 'discovery'   // scans + portal pulls
-  | 'evaluation'  // gemini / oferta / batch
-  | 'apply'       // linkedin apply, bulk apply
-  | 'hygiene'     // normalize, dedup, verify, liveness, auto-triage
-  | 'insight'     // pattern analysis, follow-up cadence, daily digest
-  | 'system';     // boot, scheduler, circuit-breaker
+  | 'discovery' // scans + portal pulls
+  | 'evaluation' // gemini / oferta / batch
+  | 'apply' // linkedin apply, bulk apply
+  | 'hygiene' // normalize, dedup, verify, liveness, auto-triage
+  | 'insight' // pattern analysis, follow-up cadence, daily digest
+  | 'system'; // boot, scheduler, circuit-breaker
 
 /** When a job runs autonomously. Manual-only jobs use `manual`. */
 export type ScheduleTrigger =
@@ -67,4 +67,7 @@ export type JobDef = {
 };
 
 /** Public-facing summary the registry serializes to JSON for `/api/jobs`. */
-export type JobSummary = Pick<JobDef, 'id' | 'label' | 'description' | 'category' | 'trigger' | 'allowManual'>;
+export type JobSummary = Pick<
+  JobDef,
+  'id' | 'label' | 'description' | 'category' | 'trigger' | 'allowManual'
+>;

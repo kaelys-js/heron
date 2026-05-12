@@ -33,7 +33,9 @@ export function modesDirFor(profileId?: string): string {
       if (!trimmed) return 'modes';
       return VALID_LANG_DIRS.has(trimmed) ? 'modes/' + trimmed : 'modes';
     }
-  } catch { /* fall through */ }
+  } catch {
+    /* fall through */
+  }
   return 'modes';
 }
 

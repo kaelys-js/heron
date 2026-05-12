@@ -12,7 +12,13 @@
  */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { listAnswers, saveAnswer, deleteAnswer, normalizeQuestion, cacheStats } from '$lib/server/form-answers-cache';
+import {
+  listAnswers,
+  saveAnswer,
+  deleteAnswer,
+  normalizeQuestion,
+  cacheStats,
+} from '$lib/server/form-answers-cache';
 import { getActiveProfileId } from '$lib/server/profiles';
 
 function resolveProfileId(url: URL): string {
@@ -30,16 +36,19 @@ export const GET = wrap('form-answers-cache', async ({ url }: { url: URL }) => {
   };
 });
 
-export const POST = wrap('form-answers-cache', async ({ request, url }: { request: Request; url: URL }) => {
-  const profileId = resolveProfileId(url);
-  const body = await request.json().catch(() => ({}));
-  const label = typeof body?.label === 'string' ? body.label : '';
-  const answer = typeof body?.answer === 'string' ? body.answer : '';
-  if (!label.trim()) badRequest('label required');
-  if (!answer.trim()) badRequest('answer required');
-  const row = saveAnswer(profileId, label, answer);
-  return { ok: true, row };
-});
+export const POST = wrap(
+  'form-answers-cache',
+  async ({ request, url }: { request: Request; url: URL }) => {
+    const profileId = resolveProfileId(url);
+    const body = await request.json().catch(() => ({}));
+    const label = typeof body?.label === 'string' ? body.label : '';
+    const answer = typeof body?.answer === 'string' ? body.answer : '';
+    if (!label.trim()) badRequest('label required');
+    if (!answer.trim()) badRequest('answer required');
+    const row = saveAnswer(profileId, label, answer);
+    return { ok: true, row };
+  },
+);
 
 export const DELETE = wrap('form-answers-cache', async ({ url }: { url: URL }) => {
   // The shared api.delete client doesn't ship a body, so we accept `key`

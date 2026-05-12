@@ -30,7 +30,9 @@ type RetroInput = {
   outcome: 'advanced' | 'rejected' | 'pending';
 };
 
-function spawnRetro(args: RetroInput & { company: string; role: string; profileId: string }): Promise<{ stdout: string; stderr: string }> {
+function spawnRetro(
+  args: RetroInput & { company: string; role: string; profileId: string },
+): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
@@ -42,13 +44,21 @@ function spawnRetro(args: RetroInput & { company: string; role: string; profileI
       outcome: args.outcome,
     };
     const prompt = '/' + CLI_NAMESPACE + ' interview-retro ' + JSON.stringify(promptInput);
-    try { swapProfileSymlinks(args.profileId); } catch { /* logged elsewhere */ }
+    try {
+      swapProfileSymlinks(args.profileId);
+    } catch {
+      /* logged elsewhere */
+    }
     const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
       cwd: ROOT,
       env: { ...process.env, INTERVIEW_RETRO_INPUT: JSON.stringify(promptInput) },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
@@ -57,7 +67,11 @@ function spawnRetro(args: RetroInput & { company: string; role: string; profileI
   });
 }
 
-function parseStdout(stdout: string): { retroPath?: string; storiesAdded?: number; weakAreasLogged?: number } {
+function parseStdout(stdout: string): {
+  retroPath?: string;
+  storiesAdded?: number;
+  weakAreasLogged?: number;
+} {
   const out: { retroPath?: string; storiesAdded?: number; weakAreasLogged?: number } = {};
   const pm = /RETRO_PATH:\s*(\S+)/.exec(stdout);
   if (pm) out.retroPath = pm[1];
@@ -68,51 +82,60 @@ function parseStdout(stdout: string): { retroPath?: string; storiesAdded?: numbe
   return out;
 }
 
-export const POST = wrap('interview-retro', async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
-  const resolved = resolveJobAndProfile(params.id, url);
-  if (!resolved) badRequest('Job not found: ' + params.id);
-  const { job, profileId } = resolved!;
-  const body = (await request.json().catch(() => ({}))) as Partial<RetroInput>;
-  if (!body.stage) badRequest('stage required');
-  if (!body.notes || typeof body.notes !== 'string' || !body.notes.trim()) badRequest('notes required');
-  if (!body.outcome) badRequest('outcome required');
+export const POST = wrap(
+  'interview-retro',
+  async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
+    const resolved = resolveJobAndProfile(params.id, url);
+    if (!resolved) badRequest('Job not found: ' + params.id);
+    const { job, profileId } = resolved!;
+    const body = (await request.json().catch(() => ({}))) as Partial<RetroInput>;
+    if (!body.stage) badRequest('stage required');
+    if (!body.notes || typeof body.notes !== 'string' || !body.notes.trim())
+      badRequest('notes required');
+    if (!body.outcome) badRequest('outcome required');
 
-  logEvent('interview-retro', 'Generating retro · ' + body.stage, {
-    level: 'info', category: 'application',
-    message: (job.company || '?') + ' · ' + (job.role || '?'),
-  });
-
-  try {
-    const { stdout } = await spawnRetro({
-      company: job.company ?? '',
-      role: job.role ?? '',
-      stage: body.stage,
-      notes: body.notes,
-      outcome: body.outcome,
-      profileId,
+    logEvent('interview-retro', 'Generating retro · ' + body.stage, {
+      level: 'info',
+      category: 'application',
+      message: (job.company || '?') + ' · ' + (job.role || '?'),
     });
-    const meta = parseStdout(stdout);
 
-    // Confirm the bank actually grew by re-reading file size before/after.
-    let bankGrewBy = 0;
     try {
-      const bankPath = path.join(ROOT, 'interview-prep', 'story-bank.md');
-      if (fs.existsSync(bankPath)) {
-        // We can't easily measure delta without prior size; just report size now.
-        bankGrewBy = fs.statSync(bankPath).size;
-      }
-    } catch {}
+      const { stdout } = await spawnRetro({
+        company: job.company ?? '',
+        role: job.role ?? '',
+        stage: body.stage,
+        notes: body.notes,
+        outcome: body.outcome,
+        profileId,
+      });
+      const meta = parseStdout(stdout);
 
-    logEvent('interview-retro', 'Retro ready', {
-      level: 'success', category: 'application',
-      message: (meta.retroPath ?? '') +
-        (meta.storiesAdded ? ' · ' + meta.storiesAdded + ' new stories' : '') +
-        (meta.weakAreasLogged ? ' · ' + meta.weakAreasLogged + ' weak areas' : ''),
-    });
+      // Confirm the bank actually grew by re-reading file size before/after.
+      let bankGrewBy = 0;
+      try {
+        const bankPath = path.join(ROOT, 'interview-prep', 'story-bank.md');
+        if (fs.existsSync(bankPath)) {
+          // We can't easily measure delta without prior size; just report size now.
+          bankGrewBy = fs.statSync(bankPath).size;
+        }
+      } catch {}
 
-    return { ok: true, ...meta, bankSizeBytes: bankGrewBy };
-  } catch (err) {
-    reportServerError('interview-retro', 'Retro generation failed', err, { category: 'application' });
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
-  }
-});
+      logEvent('interview-retro', 'Retro ready', {
+        level: 'success',
+        category: 'application',
+        message:
+          (meta.retroPath ?? '') +
+          (meta.storiesAdded ? ' · ' + meta.storiesAdded + ' new stories' : '') +
+          (meta.weakAreasLogged ? ' · ' + meta.weakAreasLogged + ' weak areas' : ''),
+      });
+
+      return { ok: true, ...meta, bankSizeBytes: bankGrewBy };
+    } catch (err) {
+      reportServerError('interview-retro', 'Retro generation failed', err, {
+        category: 'application',
+      });
+      return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  },
+);

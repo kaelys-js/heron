@@ -1,84 +1,90 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-  import { User, ArrowRight, ArrowLeft, Loader2 } from '@lucide/svelte';
-  import { goto } from '$app/navigation';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import { onMount } from 'svelte';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { User, ArrowRight, ArrowLeft, Loader2 } from '@lucide/svelte';
+import { goto } from '$app/navigation';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import { onMount } from 'svelte';
 
-  let { data }: { data: { initial: Record<string, string>; profileId: string } } = $props();
+let { data }: { data: { initial: Record<string, string>; profileId: string } } = $props();
 
-  /** Query suffix that threads the active wizard profile through every
-   *  cross-route API call + Continue link. Without this, adding a second
-   *  profile would write to whatever happens to be active at submit time. */
-  let q = $derived('?profile=' + encodeURIComponent(data.profileId));
+/** Query suffix that threads the active wizard profile through every
+ *  cross-route API call + Continue link. Without this, adding a second
+ *  profile would write to whatever happens to be active at submit time. */
+let q = $derived('?profile=' + encodeURIComponent(data.profileId));
 
-  // svelte-ignore state_referenced_locally — initial seed only
-  let form = $state({ ...data.initial });
-  let saving = $state(false);
+// svelte-ignore state_referenced_locally — initial seed only
+let form = $state({ ...data.initial });
+let saving = $state(false);
 
-  // Auto-detect timezone on first mount if the user hasn't filled it in.
-  onMount(() => {
-    if (!form.timezone) {
-      try {
-        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        if (tz) form = { ...form, timezone: tz };
-      } catch { /* not supported in this runtime */ }
-    }
-  });
-
-  function isEmail(s: string): boolean {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
-  }
-
-  async function saveAndContinue() {
-    if (saving) return;
-    if (!form.full_name.trim()) {
-      toast.error('Full name required');
-      return;
-    }
-    if (!form.email.trim() || !isEmail(form.email)) {
-      toast.error('Valid email required');
-      return;
-    }
-    saving = true;
+// Auto-detect timezone on first mount if the user hasn't filled it in.
+onMount(() => {
+  if (!form.timezone) {
     try {
-      // Translate flat form fields into the nested ProfileEdit shape that
-      // /api/profile expects. Empty strings are filtered out so we don't
-      // overwrite existing values with empties when the user resumes.
-      const patch: Record<string, unknown> = {
-        candidate: stripEmpty({
-          full_name: form.full_name,
-          email: form.email,
-          phone: form.phone,
-          linkedin: form.linkedin,
-          github: form.github,
-          portfolio_url: form.portfolio_url,
-        }),
-        location: stripEmpty({
-          city: form.location_city,
-          country: form.location_country,
-          province: form.location_province,
-          timezone: form.timezone,
-          visa_status: form.visa_status,
-        }),
-      };
-      await api.post('/api/profile' + q, patch, { silent: true });
-      await api.post('/api/onboarding/step', { step: 'identity', action: 'complete' }, { silent: true });
-      toast.success('Identity saved');
-      await goto('/onboarding/cv' + q);
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Could not save', { description: err.message });
-      saving = false;
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz) form = { ...form, timezone: tz };
+    } catch {
+      /* not supported in this runtime */
     }
   }
+});
 
-  function stripEmpty(o: Record<string, string>): Record<string, string> {
-    return Object.fromEntries(Object.entries(o).filter(([, v]) => v && v.trim()));
+function isEmail(s: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
+}
+
+async function saveAndContinue() {
+  if (saving) return;
+  if (!form.full_name.trim()) {
+    toast.error('Full name required');
+    return;
   }
+  if (!form.email.trim() || !isEmail(form.email)) {
+    toast.error('Valid email required');
+    return;
+  }
+  saving = true;
+  try {
+    // Translate flat form fields into the nested ProfileEdit shape that
+    // /api/profile expects. Empty strings are filtered out so we don't
+    // overwrite existing values with empties when the user resumes.
+    const patch: Record<string, unknown> = {
+      candidate: stripEmpty({
+        full_name: form.full_name,
+        email: form.email,
+        phone: form.phone,
+        linkedin: form.linkedin,
+        github: form.github,
+        portfolio_url: form.portfolio_url,
+      }),
+      location: stripEmpty({
+        city: form.location_city,
+        country: form.location_country,
+        province: form.location_province,
+        timezone: form.timezone,
+        visa_status: form.visa_status,
+      }),
+    };
+    await api.post('/api/profile' + q, patch, { silent: true });
+    await api.post(
+      '/api/onboarding/step',
+      { step: 'identity', action: 'complete' },
+      { silent: true },
+    );
+    toast.success('Identity saved');
+    await goto('/onboarding/cv' + q);
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Could not save', { description: err.message });
+    saving = false;
+  }
+}
+
+function stripEmpty(o: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(o).filter(([, v]) => v && v.trim()));
+}
 </script>
 
 <div class="space-y-6">

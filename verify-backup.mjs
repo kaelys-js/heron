@@ -68,40 +68,104 @@ exists('ui/src/lib/components/BackupsCard.svelte', 'BackupsCard component');
 
 section('Structural — wiring');
 
-fileContains('ui/src/lib/server/jobs/index.ts', "import './backup.job'", 'job registered in index.ts');
-fileContains('ui/src/lib/server/autopilot.ts', "id: 'daily-backup'", 'daily-backup in DEFAULT_CONFIG');
+fileContains(
+  'ui/src/lib/server/jobs/index.ts',
+  "import './backup.job'",
+  'job registered in index.ts',
+);
+fileContains(
+  'ui/src/lib/server/autopilot.ts',
+  "id: 'daily-backup'",
+  'daily-backup in DEFAULT_CONFIG',
+);
 fileContains('ui/src/lib/server/autopilot.ts', "task: 'daily-backup'", 'daily-backup task wired');
 fileContains('ui/src/lib/server/autopilot.ts', 'hour: 2, minute: 0', 'daily-backup runs at 02:00');
-fileContains('ui/src/routes/settings/+page.server.ts', 'listBackups', 'settings loader pulls listBackups');
-fileContains('ui/src/routes/settings/+page.svelte', '<BackupsCard', 'settings page renders BackupsCard');
+fileContains(
+  'ui/src/routes/settings/+page.server.ts',
+  'listBackups',
+  'settings loader pulls listBackups',
+);
+fileContains(
+  'ui/src/routes/settings/+page.svelte',
+  '<BackupsCard',
+  'settings page renders BackupsCard',
+);
 
 section('Structural — backup.ts internals');
 
-fileContains('ui/src/lib/server/backup.ts', 'export async function createBackup', 'createBackup exported');
+fileContains(
+  'ui/src/lib/server/backup.ts',
+  'export async function createBackup',
+  'createBackup exported',
+);
 fileContains('ui/src/lib/server/backup.ts', 'export function listBackups', 'listBackups exported');
-fileContains('ui/src/lib/server/backup.ts', 'export async function restoreBackup', 'restoreBackup exported');
-fileContains('ui/src/lib/server/backup.ts', 'export function pruneOldBackups', 'pruneOldBackups exported');
-fileContains('ui/src/lib/server/backup.ts', 'export function deleteBackup', 'deleteBackup exported');
-fileContains('ui/src/lib/server/backup.ts', 'export function verifyBackupIntegrity', 'verifyBackupIntegrity exported');
+fileContains(
+  'ui/src/lib/server/backup.ts',
+  'export async function restoreBackup',
+  'restoreBackup exported',
+);
+fileContains(
+  'ui/src/lib/server/backup.ts',
+  'export function pruneOldBackups',
+  'pruneOldBackups exported',
+);
+fileContains(
+  'ui/src/lib/server/backup.ts',
+  'export function deleteBackup',
+  'deleteBackup exported',
+);
+fileContains(
+  'ui/src/lib/server/backup.ts',
+  'export function verifyBackupIntegrity',
+  'verifyBackupIntegrity exported',
+);
 fileContains('ui/src/lib/server/backup.ts', "'.env'", 'excludes .env (scope a)');
 fileContains('ui/src/lib/server/backup.ts', "'node_modules'", 'excludes node_modules');
 fileContains('ui/src/lib/server/backup.ts', "'.playwright-*'", 'excludes .playwright-*');
-fileContains('ui/src/lib/server/backup.ts', "'data/backups'", 'excludes data/backups (recursion guard)');
-fileContains('ui/src/lib/server/backup.ts', "'data/apply-state'", 'excludes data/apply-state (transient)');
+fileContains(
+  'ui/src/lib/server/backup.ts',
+  "'data/backups'",
+  'excludes data/backups (recursion guard)',
+);
+fileContains(
+  'ui/src/lib/server/backup.ts',
+  "'data/apply-state'",
+  'excludes data/apply-state (transient)',
+);
 fileContains('ui/src/lib/server/backup.ts', "'data/profiles'", 'includes data/profiles');
 fileContains('ui/src/lib/server/backup.ts', "'data/profiles.json'", 'includes data/profiles.json');
 fileContains('ui/src/lib/server/backup.ts', "'data/issues.jsonl'", 'includes data/issues.jsonl');
 fileContains('ui/src/lib/server/backup.ts', 'listRunning()', 'restore checks listRunning()');
-fileContains('ui/src/lib/server/backup.ts', 'verifyBackupIntegrity', 'restore verifies integrity first');
+fileContains(
+  'ui/src/lib/server/backup.ts',
+  'verifyBackupIntegrity',
+  'restore verifies integrity first',
+);
 fileContains('ui/src/lib/server/backup.ts', '.pre-restore-', 'restore saves audit copy');
 fileContains('ui/src/lib/server/backup.ts', 'DEFAULT_RETENTION_DAYS', 'retention is configurable');
 
 section('Structural — UI');
 
-fileContains('ui/src/lib/components/BackupsCard.svelte', 'Back up now', 'BackupsCard has "Back up now" button');
-fileContains('ui/src/lib/components/BackupsCard.svelte', 'doRestore', 'BackupsCard has restore handler');
-fileContains('ui/src/lib/components/BackupsCard.svelte', 'RESTORE', 'BackupsCard requires typed "RESTORE" confirm');
-fileContains('ui/src/lib/components/BackupsCard.svelte', 'retentionDays', 'BackupsCard exposes retention input');
+fileContains(
+  'ui/src/lib/components/BackupsCard.svelte',
+  'Back up now',
+  'BackupsCard has "Back up now" button',
+);
+fileContains(
+  'ui/src/lib/components/BackupsCard.svelte',
+  'doRestore',
+  'BackupsCard has restore handler',
+);
+fileContains(
+  'ui/src/lib/components/BackupsCard.svelte',
+  'RESTORE',
+  'BackupsCard requires typed "RESTORE" confirm',
+);
+fileContains(
+  'ui/src/lib/components/BackupsCard.svelte',
+  'retentionDays',
+  'BackupsCard exposes retention input',
+);
 
 // ─── Behavioral round-trip ─────────────────────────────────────
 section('Behavioral — round-trip create → tamper → restore');
@@ -114,7 +178,9 @@ const FAKE_FILE = path.join(FAKE_DIR, 'verify-marker.txt');
 const FAKE_BACKUP_PREFIX = 'verify-roundtrip-';
 
 function cleanup() {
-  try { fs.rmSync(FAKE_DIR, { recursive: true, force: true }); } catch {}
+  try {
+    fs.rmSync(FAKE_DIR, { recursive: true, force: true });
+  } catch {}
   // Don't remove user's other backups. Only our test-created ones.
   try {
     const backupsDir = path.join(ROOT, 'data', 'backups');
@@ -122,13 +188,18 @@ function cleanup() {
     for (const entry of fs.readdirSync(backupsDir)) {
       if (entry.startsWith('.pre-restore-') || entry.startsWith('.restore-')) {
         // Audit + staging dirs from previous runs; nuke them.
-        try { fs.rmSync(path.join(backupsDir, entry), { recursive: true, force: true }); } catch {}
+        try {
+          fs.rmSync(path.join(backupsDir, entry), { recursive: true, force: true });
+        } catch {}
       }
     }
   } catch {}
 }
 process.on('exit', cleanup);
-process.on('SIGINT', () => { cleanup(); process.exit(130); });
+process.on('SIGINT', () => {
+  cleanup();
+  process.exit(130);
+});
 
 try {
   fs.mkdirSync(FAKE_DIR, { recursive: true });
@@ -143,13 +214,16 @@ try {
   fs.mkdirSync(backupsDir, { recursive: true });
   const tarPath = path.join(backupsDir, backupId + '.tar.gz');
 
-  const tarArgs = ['-czf', tarPath,
+  const tarArgs = [
+    '-czf',
+    tarPath,
     '--exclude=.env',
     '--exclude=node_modules',
     '--exclude=.playwright-*',
     '--exclude=data/backups',
     '--exclude=data/apply-state',
-    '-C', ROOT,
+    '-C',
+    ROOT,
     'data/profiles/' + FAKE_PROFILE,
   ];
   const tarResult = spawnSync('tar', tarArgs, { encoding: 'utf8' });
@@ -177,7 +251,9 @@ try {
 
   // Restore (mirror restoreBackup's tar extraction).
   const stageDir = path.join(backupsDir, '.restore-' + backupId);
-  try { fs.rmSync(stageDir, { recursive: true, force: true }); } catch {}
+  try {
+    fs.rmSync(stageDir, { recursive: true, force: true });
+  } catch {}
   fs.mkdirSync(stageDir, { recursive: true });
   const extract = spawnSync('tar', ['-xzf', tarPath, '-C', stageDir], { encoding: 'utf8' });
   if (extract.status === 0) {
@@ -200,12 +276,22 @@ try {
   if (restored === ORIGINAL) {
     ok('Round-trip step 6: marker file content matches original after restore');
   } else {
-    bad('Restored content does not match original (expected "' + ORIGINAL + '", got "' + restored + '")');
+    bad(
+      'Restored content does not match original (expected "' +
+        ORIGINAL +
+        '", got "' +
+        restored +
+        '")',
+    );
   }
 
   // Clean up the test tarball + staging.
-  try { fs.unlinkSync(tarPath); } catch {}
-  try { fs.rmSync(stageDir, { recursive: true, force: true }); } catch {}
+  try {
+    fs.unlinkSync(tarPath);
+  } catch {}
+  try {
+    fs.rmSync(stageDir, { recursive: true, force: true });
+  } catch {}
   ok('Round-trip cleanup: test artifacts removed');
 } catch (e) {
   bad('Round-trip error: ' + (e instanceof Error ? e.message : String(e)));
@@ -218,8 +304,16 @@ section('Behavioral — config defaults');
 // Node script that imports backup.ts via the TypeScript-aware shim.
 // Cheaper: just verify the file contains the right defaults via string
 // match — true API smoke would need the dev server running.
-fileContains('ui/src/lib/server/backup.ts', 'DEFAULT_RETENTION_DAYS = 14', 'retention default is 14 days');
-fileContains('ui/src/lib/server/backup.ts', 'Math.max(1, Math.min(365', 'retention clamped to [1, 365]');
+fileContains(
+  'ui/src/lib/server/backup.ts',
+  'DEFAULT_RETENTION_DAYS = 14',
+  'retention default is 14 days',
+);
+fileContains(
+  'ui/src/lib/server/backup.ts',
+  'Math.max(1, Math.min(365',
+  'retention clamped to [1, 365]',
+);
 
 // ─── Summary ────────────────────────────────────────────────────
 if (JSON_MODE) {
@@ -229,7 +323,15 @@ if (JSON_MODE) {
   if (failed === 0) {
     console.log('\x1b[32m✓\x1b[0m All ' + passed + ' checks passed.');
   } else {
-    console.log('\x1b[31m✗\x1b[0m ' + failed + ' failed · ' + passed + ' passed (total ' + (passed + failed) + ').');
+    console.log(
+      '\x1b[31m✗\x1b[0m ' +
+        failed +
+        ' failed · ' +
+        passed +
+        ' passed (total ' +
+        (passed + failed) +
+        ').',
+    );
   }
 }
 process.exit(failed === 0 ? 0 : 1);

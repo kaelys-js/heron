@@ -20,322 +20,391 @@
   text-input. We detect that on mount and toggle the UI.
 -->
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import { Button } from '$lib/components/ui/button';
-  import { Textarea } from '$lib/components/ui/textarea';
-  import { Label } from '$lib/components/ui/label';
-  import {
-    Mic, MicOff, Volume2, VolumeX, Play, StopCircle, Loader2,
-    MessageSquare, ArrowLeft, AlertCircle, CheckCircle2, FileText,
-  } from '@lucide/svelte';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import { onMount, onDestroy } from 'svelte';
-  import { cn } from '$lib/utils';
-  import type { Job } from '$lib/types';
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import { Button } from '$lib/components/ui/button';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Label } from '$lib/components/ui/label';
+import {
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  Play,
+  StopCircle,
+  Loader2,
+  MessageSquare,
+  ArrowLeft,
+  AlertCircle,
+  CheckCircle2,
+  FileText,
+} from '@lucide/svelte';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import { onMount, onDestroy } from 'svelte';
+import { cn } from '$lib/utils';
+import type { Job } from '$lib/types';
 
-  let { data }: { data: { job: Job; profileId: string } } = $props();
+let { data }: { data: { job: Job; profileId: string } } = $props();
 
-  type Stage = 'PhoneScreen' | 'Technical' | 'TakeHome' | 'Onsite' | 'Final';
-  type Turn = { question: string; answer: string; score?: number | null; feedback?: string; audioUrl?: string };
+type Stage = 'PhoneScreen' | 'Technical' | 'TakeHome' | 'Onsite' | 'Final';
+type Turn = {
+  question: string;
+  answer: string;
+  score?: number | null;
+  feedback?: string;
+  audioUrl?: string;
+};
 
-  // MediaRecorder state — capture the user's audio per turn so they can
-  // replay themselves and HEAR what they sound like. Browser-side only;
-  // never uploaded. Blob URLs are revoked on session end / unmount.
-  let mediaStream: MediaStream | null = null;
-  let mediaRecorder: MediaRecorder | null = null;
-  let mediaChunks: Blob[] = [];
-  let recording = $state(false);
-  let recordingSupported = $state(false);
-  let currentAudioUrl = $state<string | undefined>(undefined);
-  // Track every blob URL we create so we can revoke them on unmount.
-  let blobUrlsToRevoke: string[] = [];
+// MediaRecorder state — capture the user's audio per turn so they can
+// replay themselves and HEAR what they sound like. Browser-side only;
+// never uploaded. Blob URLs are revoked on session end / unmount.
+let mediaStream: MediaStream | null = null;
+let mediaRecorder: MediaRecorder | null = null;
+let mediaChunks: Blob[] = [];
+let recording = $state(false);
+let recordingSupported = $state(false);
+let currentAudioUrl = $state<string | undefined>(undefined);
+// Track every blob URL we create so we can revoke them on unmount.
+let blobUrlsToRevoke: string[] = [];
 
-  let stage = $state<Stage>('PhoneScreen');
-  // Panel mode (#10) — auto-enables when stage is Onsite, since that's
-  // the typical panel format. User can also force it on for other stages.
-  let panelMode = $state(false);
-  $effect(() => { if (stage === 'Onsite') panelMode = true; });
-  let history = $state<Turn[]>([]);
-  let currentQuestion = $state<string>('');
-  let currentAnswer = $state<string>('');
-  let lastFeedback = $state<string | undefined>(undefined);
-  let lastScore = $state<number | null>(null);
+let stage = $state<Stage>('PhoneScreen');
+// Panel mode (#10) — auto-enables when stage is Onsite, since that's
+// the typical panel format. User can also force it on for other stages.
+let panelMode = $state(false);
+$effect(() => {
+  if (stage === 'Onsite') panelMode = true;
+});
+let history = $state<Turn[]>([]);
+let currentQuestion = $state<string>('');
+let currentAnswer = $state<string>('');
+let lastFeedback = $state<string | undefined>(undefined);
+let lastScore = $state<number | null>(null);
 
-  // Recognition + synthesis state.
-  let recognitionSupported = $state(false);
-  let synthesisSupported = $state(false);
-  let listening = $state(false);
-  let speaking = $state(false);
-  let muted = $state(false);
-  let recognition: any = null;
-  let sessionActive = $state(false);
-  let waitingForServer = $state(false);
+// Recognition + synthesis state.
+let recognitionSupported = $state(false);
+let synthesisSupported = $state(false);
+let listening = $state(false);
+let speaking = $state(false);
+let muted = $state(false);
+let recognition: any = null;
+let sessionActive = $state(false);
+let waitingForServer = $state(false);
 
-  // Session metadata.
-  let startedAt = $state<number>(0);
-  let endedTranscriptPath = $state<string | undefined>(undefined);
-  let endedSummary = $state<string | undefined>(undefined);
+// Session metadata.
+let startedAt = $state<number>(0);
+let endedTranscriptPath = $state<string | undefined>(undefined);
+let endedSummary = $state<string | undefined>(undefined);
 
-  onMount(() => {
-    if (typeof window !== 'undefined') {
-      const SR = (window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }).SpeechRecognition
-        || (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
-      recognitionSupported = !!SR;
-      synthesisSupported = 'speechSynthesis' in window;
-      // MediaRecorder check — capturing audio for playback.
-      recordingSupported = 'MediaRecorder' in window && !!navigator.mediaDevices;
-      if (recognitionSupported) {
-        // @ts-expect-error - vendor-specific class
-        recognition = new SR();
-        recognition.lang = 'en-US';
-        recognition.interimResults = true;
-        recognition.continuous = true;
-        recognition.onresult = (event: any) => {
-          let interim = '';
-          let final = '';
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
-            if (event.results[i].isFinal) final += transcript;
-            else interim += transcript;
-          }
-          if (final) currentAnswer = (currentAnswer + ' ' + final).trim();
-          // For interim, append visually; but don't persist until final.
-          if (interim) {
-            // Show interim by suffixing temporarily — when next final arrives
-            // it overwrites with the final version of those words.
-          }
-        };
-        recognition.onerror = (e: any) => {
-          listening = false;
-          if (e?.error !== 'no-speech') {
-            toast.warning('Speech recognition error', { description: e?.error ?? 'unknown' });
-          }
-        };
-        recognition.onend = () => { listening = false; };
-      }
-    }
-  });
-
-  onDestroy(() => {
-    try { recognition?.abort(); } catch {}
-    try { window.speechSynthesis?.cancel(); } catch {}
-    // Stop + release mic + revoke every Blob URL we ever created so the
-    // browser doesn't leak memory across long sessions.
-    try { mediaRecorder?.stop(); } catch {}
-    if (mediaStream) {
-      for (const t of mediaStream.getTracks()) {
-        try { t.stop(); } catch {}
-      }
-      mediaStream = null;
-    }
-    const allUrls = [...blobUrlsToRevoke];
-    if (currentAudioUrl) allUrls.push(currentAudioUrl);
-    for (const t of history) if (t.audioUrl) allUrls.push(t.audioUrl);
-    for (const u of allUrls) {
-      try { URL.revokeObjectURL(u); } catch {}
-    }
-  });
-
-  function speak(text: string) {
-    if (muted || !synthesisSupported) return;
-    try {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.rate = 1.0;
-      u.pitch = 1.0;
-      u.onstart = () => { speaking = true; };
-      u.onend = () => { speaking = false; };
-      u.onerror = () => { speaking = false; };
-      window.speechSynthesis.speak(u);
-    } catch { /* silent */ }
-  }
-
-  /** Acquire mic (once per session). Returns true if we got it. */
-  async function ensureMicStream(): Promise<boolean> {
-    if (!recordingSupported) return false;
-    if (mediaStream) return true;
-    try {
-      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      return true;
-    } catch {
-      // User denied or no mic. Recognition still works via the existing
-      // Web Speech path even without recording.
-      recordingSupported = false;
-      return false;
-    }
-  }
-
-  /** Start capturing audio for this turn. Chunks land in mediaChunks;
-   *  on stop we build a single Blob URL the user can play back. */
-  async function startRecording() {
-    if (recording) return;
-    if (!await ensureMicStream()) return;
-    try {
-      mediaChunks = [];
-      mediaRecorder = new MediaRecorder(mediaStream!);
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) mediaChunks.push(e.data);
+onMount(() => {
+  if (typeof window !== 'undefined') {
+    const SR =
+      (window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown })
+        .SpeechRecognition ||
+      (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
+    recognitionSupported = !!SR;
+    synthesisSupported = 'speechSynthesis' in window;
+    // MediaRecorder check — capturing audio for playback.
+    recordingSupported = 'MediaRecorder' in window && !!navigator.mediaDevices;
+    if (recognitionSupported) {
+      // @ts-expect-error - vendor-specific class
+      recognition = new SR();
+      recognition.lang = 'en-US';
+      recognition.interimResults = true;
+      recognition.continuous = true;
+      recognition.onresult = (event: any) => {
+        let interim = '';
+        let final = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) final += transcript;
+          else interim += transcript;
+        }
+        if (final) currentAnswer = (currentAnswer + ' ' + final).trim();
+        // For interim, append visually; but don't persist until final.
+        if (interim) {
+          // Show interim by suffixing temporarily — when next final arrives
+          // it overwrites with the final version of those words.
+        }
       };
-      mediaRecorder.onstop = () => {
-        if (mediaChunks.length === 0) return;
-        const blob = new Blob(mediaChunks, { type: 'audio/webm' });
-        const url = URL.createObjectURL(blob);
-        // Replace prior turn-in-progress audio. Old URLs get queued for
-        // revoke on unmount (we keep them addressable for the history list).
-        if (currentAudioUrl) blobUrlsToRevoke.push(currentAudioUrl);
-        currentAudioUrl = url;
+      recognition.onerror = (e: any) => {
+        listening = false;
+        if (e?.error !== 'no-speech') {
+          toast.warning('Speech recognition error', { description: e?.error ?? 'unknown' });
+        }
       };
-      mediaRecorder.start();
-      recording = true;
-    } catch {
-      recording = false;
+      recognition.onend = () => {
+        listening = false;
+      };
     }
   }
+});
 
-  function stopRecording() {
-    if (!recording || !mediaRecorder) return;
-    try { mediaRecorder.stop(); } catch {}
+onDestroy(() => {
+  try {
+    recognition?.abort();
+  } catch {}
+  try {
+    window.speechSynthesis?.cancel();
+  } catch {}
+  // Stop + release mic + revoke every Blob URL we ever created so the
+  // browser doesn't leak memory across long sessions.
+  try {
+    mediaRecorder?.stop();
+  } catch {}
+  if (mediaStream) {
+    for (const t of mediaStream.getTracks()) {
+      try {
+        t.stop();
+      } catch {}
+    }
+    mediaStream = null;
+  }
+  const allUrls = [...blobUrlsToRevoke];
+  if (currentAudioUrl) allUrls.push(currentAudioUrl);
+  for (const t of history) if (t.audioUrl) allUrls.push(t.audioUrl);
+  for (const u of allUrls) {
+    try {
+      URL.revokeObjectURL(u);
+    } catch {}
+  }
+});
+
+function speak(text: string) {
+  if (muted || !synthesisSupported) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 1.0;
+    u.pitch = 1.0;
+    u.onstart = () => {
+      speaking = true;
+    };
+    u.onend = () => {
+      speaking = false;
+    };
+    u.onerror = () => {
+      speaking = false;
+    };
+    window.speechSynthesis.speak(u);
+  } catch {
+    /* silent */
+  }
+}
+
+/** Acquire mic (once per session). Returns true if we got it. */
+async function ensureMicStream(): Promise<boolean> {
+  if (!recordingSupported) return false;
+  if (mediaStream) return true;
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    return true;
+  } catch {
+    // User denied or no mic. Recognition still works via the existing
+    // Web Speech path even without recording.
+    recordingSupported = false;
+    return false;
+  }
+}
+
+/** Start capturing audio for this turn. Chunks land in mediaChunks;
+ *  on stop we build a single Blob URL the user can play back. */
+async function startRecording() {
+  if (recording) return;
+  if (!(await ensureMicStream())) return;
+  try {
+    mediaChunks = [];
+    mediaRecorder = new MediaRecorder(mediaStream!);
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) mediaChunks.push(e.data);
+    };
+    mediaRecorder.onstop = () => {
+      if (mediaChunks.length === 0) return;
+      const blob = new Blob(mediaChunks, { type: 'audio/webm' });
+      const url = URL.createObjectURL(blob);
+      // Replace prior turn-in-progress audio. Old URLs get queued for
+      // revoke on unmount (we keep them addressable for the history list).
+      if (currentAudioUrl) blobUrlsToRevoke.push(currentAudioUrl);
+      currentAudioUrl = url;
+    };
+    mediaRecorder.start();
+    recording = true;
+  } catch {
     recording = false;
   }
+}
 
-  async function startListening() {
-    if (!recognition || listening) return;
-    try {
-      recognition.start();
-      listening = true;
-      // Also begin recording so the user can replay their own audio.
-      await startRecording();
-    } catch { /* already-started errors */ }
-  }
-  function stopListening() {
-    if (!recognition || !listening) return;
-    try { recognition.stop(); } catch {}
-    stopRecording();
-    listening = false;
-  }
+function stopRecording() {
+  if (!recording || !mediaRecorder) return;
+  try {
+    mediaRecorder.stop();
+  } catch {}
+  recording = false;
+}
 
-  /** Begin a fresh session. */
-  async function beginSession() {
-    if (sessionActive) return;
-    history = [];
-    currentAnswer = '';
-    currentQuestion = '';
-    lastFeedback = undefined;
-    lastScore = null;
-    endedTranscriptPath = undefined;
-    endedSummary = undefined;
-    startedAt = Date.now();
-    sessionActive = true;
-    await advanceTurn(''); // empty latestAnswer → server treats as first turn
+async function startListening() {
+  if (!recognition || listening) return;
+  try {
+    recognition.start();
+    listening = true;
+    // Also begin recording so the user can replay their own audio.
+    await startRecording();
+  } catch {
+    /* already-started errors */
   }
+}
+function stopListening() {
+  if (!recognition || !listening) return;
+  try {
+    recognition.stop();
+  } catch {}
+  stopRecording();
+  listening = false;
+}
 
-  /** Send the user's latest answer + receive the next question. */
-  async function advanceTurn(latestAnswer: string) {
-    if (!data.job?.id) return;
-    waitingForServer = true;
-    stopListening();
-    try {
-      const r = await api.post<{
-        ok: boolean;
-        score?: number | null;
-        feedback?: string;
-        nextQuestion?: string;
-        questionRationale?: string;
-        error?: string;
-      }>('/api/job/' + encodeURIComponent(data.job.id) + '/mock-turn?profile=' + encodeURIComponent(data.profileId), {
+/** Begin a fresh session. */
+async function beginSession() {
+  if (sessionActive) return;
+  history = [];
+  currentAnswer = '';
+  currentQuestion = '';
+  lastFeedback = undefined;
+  lastScore = null;
+  endedTranscriptPath = undefined;
+  endedSummary = undefined;
+  startedAt = Date.now();
+  sessionActive = true;
+  await advanceTurn(''); // empty latestAnswer → server treats as first turn
+}
+
+/** Send the user's latest answer + receive the next question. */
+async function advanceTurn(latestAnswer: string) {
+  if (!data.job?.id) return;
+  waitingForServer = true;
+  stopListening();
+  try {
+    const r = await api.post<{
+      ok: boolean;
+      score?: number | null;
+      feedback?: string;
+      nextQuestion?: string;
+      questionRationale?: string;
+      error?: string;
+    }>(
+      '/api/job/' +
+        encodeURIComponent(data.job.id) +
+        '/mock-turn?profile=' +
+        encodeURIComponent(data.profileId),
+      {
         stage,
         history,
         latestAnswer,
         endSession: false,
         startedAt,
         panelMode,
-      }, { silent: true });
-      if (!r.ok) {
-        toast.error('Turn failed', { description: r.error ?? 'unknown' });
-        return;
-      }
-      // Persist the previous turn (if there was one) with its score +
-      // any captured audio. The audio Blob URL stays addressable for the
-      // life of the page; cleanup happens on onDestroy.
-      if (currentQuestion && latestAnswer) {
-        history = [...history, {
+      },
+      { silent: true },
+    );
+    if (!r.ok) {
+      toast.error('Turn failed', { description: r.error ?? 'unknown' });
+      return;
+    }
+    // Persist the previous turn (if there was one) with its score +
+    // any captured audio. The audio Blob URL stays addressable for the
+    // life of the page; cleanup happens on onDestroy.
+    if (currentQuestion && latestAnswer) {
+      history = [
+        ...history,
+        {
           question: currentQuestion,
           answer: latestAnswer,
           score: r.score ?? null,
           feedback: r.feedback,
           audioUrl: currentAudioUrl,
-        }];
-      }
-      // Reset the per-turn audio pointer so the next turn captures fresh.
-      currentAudioUrl = undefined;
-      lastScore = r.score ?? null;
-      lastFeedback = r.feedback;
-      currentQuestion = r.nextQuestion ?? '';
-      currentAnswer = '';
-      if (currentQuestion) speak(currentQuestion);
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Turn failed', { description: err.message });
-    } finally {
-      waitingForServer = false;
+        },
+      ];
     }
+    // Reset the per-turn audio pointer so the next turn captures fresh.
+    currentAudioUrl = undefined;
+    lastScore = r.score ?? null;
+    lastFeedback = r.feedback;
+    currentQuestion = r.nextQuestion ?? '';
+    currentAnswer = '';
+    if (currentQuestion) speak(currentQuestion);
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Turn failed', { description: err.message });
+  } finally {
+    waitingForServer = false;
   }
+}
 
-  async function submitAnswer() {
-    if (!currentAnswer.trim() || waitingForServer) return;
-    await advanceTurn(currentAnswer);
-  }
+async function submitAnswer() {
+  if (!currentAnswer.trim() || waitingForServer) return;
+  await advanceTurn(currentAnswer);
+}
 
-  async function endSession() {
-    if (!sessionActive || !data.job?.id) return;
-    stopListening();
-    try { window.speechSynthesis?.cancel(); } catch {}
-    waitingForServer = true;
-    try {
-      // If there's an in-flight answer, count it.
-      const lastAnswer = currentAnswer.trim();
-      const finalHistory = lastAnswer && currentQuestion
+async function endSession() {
+  if (!sessionActive || !data.job?.id) return;
+  stopListening();
+  try {
+    window.speechSynthesis?.cancel();
+  } catch {}
+  waitingForServer = true;
+  try {
+    // If there's an in-flight answer, count it.
+    const lastAnswer = currentAnswer.trim();
+    const finalHistory =
+      lastAnswer && currentQuestion
         ? [...history, { question: currentQuestion, answer: lastAnswer, score: null }]
         : history;
-      const r = await api.post<{
-        ok: boolean;
-        endSession?: boolean;
-        transcriptPath?: string;
-        summary?: string;
-        error?: string;
-      }>('/api/job/' + encodeURIComponent(data.job.id) + '/mock-turn?profile=' + encodeURIComponent(data.profileId), {
+    const r = await api.post<{
+      ok: boolean;
+      endSession?: boolean;
+      transcriptPath?: string;
+      summary?: string;
+      error?: string;
+    }>(
+      '/api/job/' +
+        encodeURIComponent(data.job.id) +
+        '/mock-turn?profile=' +
+        encodeURIComponent(data.profileId),
+      {
         stage,
         history: finalHistory,
         latestAnswer: '',
         endSession: true,
         startedAt,
         panelMode,
-      }, { silent: true });
-      if (r.ok) {
-        endedTranscriptPath = r.transcriptPath;
-        endedSummary = r.summary;
-        toast.success('Session ended', { description: 'Transcript saved to ' + (r.transcriptPath ?? ''), duration: 10_000 });
-      } else {
-        toast.error('Could not end session', { description: r.error ?? 'unknown' });
-      }
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Could not end session', { description: err.message });
-    } finally {
-      sessionActive = false;
-      waitingForServer = false;
+      },
+      { silent: true },
+    );
+    if (r.ok) {
+      endedTranscriptPath = r.transcriptPath;
+      endedSummary = r.summary;
+      toast.success('Session ended', {
+        description: 'Transcript saved to ' + (r.transcriptPath ?? ''),
+        duration: 10_000,
+      });
+    } else {
+      toast.error('Could not end session', { description: r.error ?? 'unknown' });
     }
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Could not end session', { description: err.message });
+  } finally {
+    sessionActive = false;
+    waitingForServer = false;
   }
+}
 
-  let stageOptions: Array<{ id: Stage; label: string; blurb: string }> = [
-    { id: 'PhoneScreen', label: 'Phone screen', blurb: 'Recruiter / HR · soft, logistics, fit' },
-    { id: 'Technical', label: 'Technical', blurb: 'Live coding / system design / API design' },
-    { id: 'TakeHome', label: 'Take-home retro', blurb: 'Walk through tradeoffs' },
-    { id: 'Onsite', label: 'Onsite / panel', blurb: 'Mixed: behavioral + technical + collab' },
-    { id: 'Final', label: 'Final / exec', blurb: 'Hiring committee, VP, big-picture' },
-  ];
+let stageOptions: Array<{ id: Stage; label: string; blurb: string }> = [
+  { id: 'PhoneScreen', label: 'Phone screen', blurb: 'Recruiter / HR · soft, logistics, fit' },
+  { id: 'Technical', label: 'Technical', blurb: 'Live coding / system design / API design' },
+  { id: 'TakeHome', label: 'Take-home retro', blurb: 'Walk through tradeoffs' },
+  { id: 'Onsite', label: 'Onsite / panel', blurb: 'Mixed: behavioral + technical + collab' },
+  { id: 'Final', label: 'Final / exec', blurb: 'Hiring committee, VP, big-picture' },
+];
 </script>
 
 <div class="h-full overflow-y-auto">

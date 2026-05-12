@@ -38,7 +38,11 @@ export function reportClientError(
       : typeof err === 'string'
         ? err
         : (() => {
-            try { return JSON.stringify(err); } catch { return String(err); }
+            try {
+              return JSON.stringify(err);
+            } catch {
+              return String(err);
+            }
           })());
   const stack = isError && err.stack ? err.stack.slice(0, 2000) : undefined;
 
@@ -98,7 +102,9 @@ class NotificationStore {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
-    try { this.es?.close(); } catch {}
+    try {
+      this.es?.close();
+    } catch {}
     this.es = new EventSource('/api/stream');
     this.connected = 'connecting';
     this.es.onopen = () => {
@@ -136,7 +142,11 @@ class NotificationStore {
       const r = await fetch('/api/run');
       if (!r.ok) return;
       const data = await r.json();
-      const list = Array.isArray(data?.running) ? data.running : (Array.isArray(data?.data?.running) ? data.data.running : []);
+      const list = Array.isArray(data?.running)
+        ? data.running
+        : Array.isArray(data?.data?.running)
+          ? data.data.running
+          : [];
       this.runningTasks = list;
     } catch {}
   }
@@ -164,14 +174,16 @@ class NotificationStore {
       // backfill/replay events don't trigger a barrage.
       if (typeof window !== 'undefined') {
         try {
-          window.dispatchEvent(new CustomEvent(BRAND_EVENTS.notify, {
-            detail: {
-              level: ev.level,
-              title: ev.title,
-              message: ev.message,
-              source: ev.source,
-            },
-          }));
+          window.dispatchEvent(
+            new CustomEvent(BRAND_EVENTS.notify, {
+              detail: {
+                level: ev.level,
+                title: ev.title,
+                message: ev.message,
+                source: ev.source,
+              },
+            }),
+          );
         } catch {}
       }
     }
@@ -188,8 +200,7 @@ class NotificationStore {
           onClick: () => dispatchOpenNotifications(),
         },
       });
-    }
-    else if (ev.level === 'warn') toast.warning(ev.title, { description: desc });
+    } else if (ev.level === 'warn') toast.warning(ev.title, { description: desc });
     else if (ev.level === 'success') toast.success(ev.title, { description: desc });
   }
 

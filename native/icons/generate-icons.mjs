@@ -29,7 +29,10 @@ const SVG = path.join(ROOT, 'ui/static/favicon.svg');
 const BUILD = path.join(__dirname, '_build');
 
 // Standard size matrix.
-const SIZES = [16, 20, 24, 29, 32, 40, 48, 50, 57, 58, 60, 64, 72, 76, 80, 87, 96, 100, 114, 120, 128, 144, 152, 167, 180, 192, 256, 384, 512, 1024];
+const SIZES = [
+  16, 20, 24, 29, 32, 40, 48, 50, 57, 58, 60, 64, 72, 76, 80, 87, 96, 100, 114, 120, 128, 144, 152,
+  167, 180, 192, 256, 384, 512, 1024,
+];
 
 // Per-platform target slots.
 const IOS_SLOTS = [
@@ -71,10 +74,7 @@ async function loadSharp() {
   // sharp is installed inside ui/node_modules. Try the direct path first
   // (when this script is invoked from any cwd), then fall back to the
   // unqualified import for when it's run from ui/.
-  const candidates = [
-    path.join(ROOT, 'ui/node_modules/sharp/lib/index.js'),
-    'sharp',
-  ];
+  const candidates = [path.join(ROOT, 'ui/node_modules/sharp/lib/index.js'), 'sharp'];
   for (const c of candidates) {
     try {
       const mod = await import(c);
@@ -88,7 +88,13 @@ async function loadSharp() {
 }
 
 async function renderAtSize(sharp, svg, size, outPath) {
-  await sharp(svg).resize(Math.round(size), Math.round(size), { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toFile(outPath);
+  await sharp(svg)
+    .resize(Math.round(size), Math.round(size), {
+      fit: 'contain',
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
+    .png()
+    .toFile(outPath);
 }
 
 async function main() {
@@ -150,7 +156,9 @@ async function main() {
     for (const { size, name } of icnsMatrix) {
       await renderAtSize(sharp, svgBuffer, size, path.join(iconset, name));
     }
-    execSync(`iconutil -c icns "${iconset}" -o "${path.join(electronBuild, 'icon.icns')}"`, { stdio: 'inherit' });
+    execSync(`iconutil -c icns "${iconset}" -o "${path.join(electronBuild, 'icon.icns')}"`, {
+      stdio: 'inherit',
+    });
     await fs.rm(iconset, { recursive: true });
     console.log('  icon.icns generated');
   } catch {
@@ -165,7 +173,9 @@ async function main() {
     execSync(`magick ${inputs} "${path.join(electronBuild, 'icon.ico')}"`, { stdio: 'inherit' });
     console.log('  icon.ico generated');
   } catch {
-    console.warn('  ImageMagick (magick) not found — skipping icon.ico (Windows builds will fall back to .png)');
+    console.warn(
+      '  ImageMagick (magick) not found — skipping icon.ico (Windows builds will fall back to .png)',
+    );
   }
 
   // ---- Web manifest icons ----

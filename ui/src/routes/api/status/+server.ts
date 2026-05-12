@@ -19,7 +19,8 @@ export const POST = wrap('status', async ({ request }: any) => {
   try {
     text = fs.readFileSync(activePath('applications'), 'utf8');
   } catch {
-    text = '# Applications Tracker\n\n| # | Date | Company | Role | URL | Score | Status | PDF | Report | Notes |\n|---|------|---------|------|-----|-------|--------|-----|--------|-------|\n';
+    text =
+      '# Applications Tracker\n\n| # | Date | Company | Role | URL | Score | Status | PDF | Report | Notes |\n|---|------|---------|------|-----|-------|--------|-----|--------|-------|\n';
   }
 
   const lines = text.split('\n');
@@ -33,14 +34,25 @@ export const POST = wrap('status', async ({ request }: any) => {
         if (notes && cells.length > 9) cells[9] = ' ' + notes + ' ';
         lines[i] = cells.join('|');
         updated = true;
-        if (cells.length > 4) companyRole = (cells[3]?.trim() || '') + ' · ' + (cells[4]?.trim() || '');
+        if (cells.length > 4)
+          companyRole = (cells[3]?.trim() || '') + ' · ' + (cells[4]?.trim() || '');
       }
       break;
     }
   }
   if (!updated) {
     const today = new Date().toISOString().slice(0, 10);
-    lines.push('| - | ' + today + ' | (manual) | ' + url + ' | - | ' + newStatus + ' | - | - | ' + (notes ?? '') + ' |');
+    lines.push(
+      '| - | ' +
+        today +
+        ' | (manual) | ' +
+        url +
+        ' | - | ' +
+        newStatus +
+        ' | - | - | ' +
+        (notes ?? '') +
+        ' |',
+    );
   }
   try {
     fs.writeFileSync(activePath('applications'), lines.join('\n'));

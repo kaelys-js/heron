@@ -14,7 +14,8 @@ import { logEvent } from '../events';
 register({
   id: 'apply-linkedin-login',
   label: 'LinkedIn login',
-  description: 'Opens LinkedIn in a Playwright browser window so you can sign in. The session is saved at .playwright-linkedin/ and reused for scans + Easy Apply.',
+  description:
+    'Opens LinkedIn in a Playwright browser window so you can sign in. The session is saved at .playwright-linkedin/ and reused for scans + Easy Apply.',
   category: 'apply',
   trigger: { type: 'manual' },
   allowManual: true,
@@ -27,7 +28,10 @@ register({
         category: 'task',
         message: 'Sign in to LinkedIn in the Playwright browser; session saves automatically.',
       });
-      return { ok: true, message: 'LinkedIn login window opened — sign in in the Playwright browser.' };
+      return {
+        ok: true,
+        message: 'LinkedIn login window opened — sign in in the Playwright browser.',
+      };
     } catch (err) {
       return { ok: false, error: err instanceof Error ? err.message : String(err) };
     }

@@ -39,20 +39,34 @@ function venvPython(): string {
 }
 
 function extractLinkedInText(linkedinUrl: string): { ok: boolean; text?: string; error?: string } {
-  const r = spawnSync(venvPython(), [
-    path.join(ROOT, 'extract-linkedin-profile.py'),
-    '--url', linkedinUrl,
-  ], { cwd: ROOT, encoding: 'utf8', timeout: 60_000 });
+  const r = spawnSync(
+    venvPython(),
+    [path.join(ROOT, 'extract-linkedin-profile.py'), '--url', linkedinUrl],
+    { cwd: ROOT, encoding: 'utf8', timeout: 60_000 },
+  );
   if (r.status !== 0) {
     const stderr = (r.stderr || '').slice(0, 300);
-    if (r.status === 3) return { ok: false, error: 'LinkedIn session not connected — run linkedin-easy-apply.py --login from /sources' };
-    if (r.status === 4) return { ok: false, error: 'Auth-wall hit — session may have expired, re-login from /sources' };
+    if (r.status === 3)
+      return {
+        ok: false,
+        error: 'LinkedIn session not connected — run linkedin-easy-apply.py --login from /sources',
+      };
+    if (r.status === 4)
+      return {
+        ok: false,
+        error: 'Auth-wall hit — session may have expired, re-login from /sources',
+      };
     return { ok: false, error: 'extract failed (exit ' + r.status + '): ' + stderr };
   }
   return { ok: true, text: r.stdout };
 }
 
-function spawnAudit(args: { profileId: string; linkedinText: string; cv: string; targetRoles: string[] }): Promise<{ stdout: string; stderr: string }> {
+function spawnAudit(args: {
+  profileId: string;
+  linkedinText: string;
+  cv: string;
+  targetRoles: string[];
+}): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
@@ -62,7 +76,9 @@ function spawnAudit(args: { profileId: string; linkedinText: string; cv: string;
       targetRoles: args.targetRoles,
     };
     const prompt = '/' + CLI_NAMESPACE + ' linkedin-audit';
-    try { swapProfileSymlinks(args.profileId); } catch {}
+    try {
+      swapProfileSymlinks(args.profileId);
+    } catch {}
     const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
       cwd: ROOT,
       env: {
@@ -71,8 +87,12 @@ function spawnAudit(args: { profileId: string; linkedinText: string; cv: string;
         LINKEDIN_PROFILE_TEXT: args.linkedinText,
       },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
@@ -113,7 +133,9 @@ export const GET = wrap('linkedin-audit', async ({ url }: { url: URL }) => {
   const profileId = resolveProfileId(url);
   const dir = profilePath(profileId, 'profile-dir');
   if (!fs.existsSync(dir)) return { exists: false };
-  const entries = fs.readdirSync(dir).filter((f) => f.startsWith('linkedin-audit-') && f.endsWith('.md'));
+  const entries = fs
+    .readdirSync(dir)
+    .filter((f) => f.startsWith('linkedin-audit-') && f.endsWith('.md'));
   if (entries.length === 0) return { exists: false };
   entries.sort();
   const newest = entries[entries.length - 1];
@@ -127,47 +149,60 @@ export const GET = wrap('linkedin-audit', async ({ url }: { url: URL }) => {
   };
 });
 
-export const POST = wrap('linkedin-audit', async ({ url, request }: { url: URL; request: Request }) => {
-  const profileId = resolveProfileId(url);
-  const body = (await request.json().catch(() => ({}))) as { linkedinUrl?: string };
-  if (!body.linkedinUrl) badRequest('linkedinUrl required');
+export const POST = wrap(
+  'linkedin-audit',
+  async ({ url, request }: { url: URL; request: Request }) => {
+    const profileId = resolveProfileId(url);
+    const body = (await request.json().catch(() => ({}))) as { linkedinUrl?: string };
+    if (!body.linkedinUrl) badRequest('linkedinUrl required');
 
-  logEvent('linkedin-audit', 'Starting audit', {
-    level: 'info', category: 'application',
-    message: body.linkedinUrl!,
-  });
-
-  try {
-    // Phase 1: extract profile text.
-    const ext = extractLinkedInText(body.linkedinUrl!);
-    if (!ext.ok) return { ok: false, error: ext.error };
-
-    // Phase 2: read cv.md + targetRoles from profile.
-    const cvPath = profilePath(profileId, 'cv-md');
-    const cv = fs.existsSync(cvPath) ? fs.readFileSync(cvPath, 'utf8') : '';
-    if (!cv) return { ok: false, error: 'cv.md not found — onboarding not complete' };
-    const profile = readProfile(profileId) as unknown as {
-      target_roles?: { primary?: string[]; archetypes?: Array<{ name: string }> };
-    };
-    const targetRoles: string[] = [
-      ...(profile?.target_roles?.primary ?? []),
-      ...(profile?.target_roles?.archetypes ?? []).map((a) => a.name),
-    ];
-
-    const { stdout } = await spawnAudit({
-      profileId, linkedinText: ext.text!, cv, targetRoles,
-    });
-    const meta = parseAuditStdout(stdout);
-
-    logEvent('linkedin-audit', 'Audit complete', {
-      level: 'success', category: 'application',
-      message: 'Score ' + (meta.recruiterVisibilityScore ?? '?') + '/10' +
-        ' · ' + (meta.suggestedEdits ?? '?') + ' suggested edits',
+    logEvent('linkedin-audit', 'Starting audit', {
+      level: 'info',
+      category: 'application',
+      message: body.linkedinUrl!,
     });
 
-    return { ok: true, ...meta };
-  } catch (err) {
-    reportServerError('linkedin-audit', 'Audit failed', err, { category: 'application' });
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
-  }
-});
+    try {
+      // Phase 1: extract profile text.
+      const ext = extractLinkedInText(body.linkedinUrl!);
+      if (!ext.ok) return { ok: false, error: ext.error };
+
+      // Phase 2: read cv.md + targetRoles from profile.
+      const cvPath = profilePath(profileId, 'cv-md');
+      const cv = fs.existsSync(cvPath) ? fs.readFileSync(cvPath, 'utf8') : '';
+      if (!cv) return { ok: false, error: 'cv.md not found — onboarding not complete' };
+      const profile = readProfile(profileId) as unknown as {
+        target_roles?: { primary?: string[]; archetypes?: Array<{ name: string }> };
+      };
+      const targetRoles: string[] = [
+        ...(profile?.target_roles?.primary ?? []),
+        ...(profile?.target_roles?.archetypes ?? []).map((a) => a.name),
+      ];
+
+      const { stdout } = await spawnAudit({
+        profileId,
+        linkedinText: ext.text!,
+        cv,
+        targetRoles,
+      });
+      const meta = parseAuditStdout(stdout);
+
+      logEvent('linkedin-audit', 'Audit complete', {
+        level: 'success',
+        category: 'application',
+        message:
+          'Score ' +
+          (meta.recruiterVisibilityScore ?? '?') +
+          '/10' +
+          ' · ' +
+          (meta.suggestedEdits ?? '?') +
+          ' suggested edits',
+      });
+
+      return { ok: true, ...meta };
+    } catch (err) {
+      reportServerError('linkedin-audit', 'Audit failed', err, { category: 'application' });
+      return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  },
+);

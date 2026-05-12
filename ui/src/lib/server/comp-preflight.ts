@@ -61,7 +61,8 @@ export function compPreflightForJob(jobId: string): CompPreflight | null {
       ask: '(set comp.target_range in profile.yml)',
       walkaway: '(set comp.minimum in profile.yml)',
       currency,
-      advice: 'You haven\'t set a target_range or minimum yet — recruiters will set the anchor for you, which loses negotiating leverage. Fill these in on /profile → Compensation before the call.',
+      advice:
+        "You haven't set a target_range or minimum yet — recruiters will set the anchor for you, which loses negotiating leverage. Fill these in on /profile → Compensation before the call.",
       warning: 'No target_range or minimum set in profile.yml',
     };
   }
@@ -74,7 +75,7 @@ export function compPreflightForJob(jobId: string): CompPreflight | null {
     walkaway: walkawayLine,
     currency,
     advice: [
-      'Anchor with the TOP of your target_range, not the middle. Say it with confidence and don\'t justify the number.',
+      "Anchor with the TOP of your target_range, not the middle. Say it with confidence and don't justify the number.",
       'Never disclose your current salary. If pushed: "I\'d rather discuss the value of THIS role than benchmark against my current."',
       'Tie your ask to scope and impact, not years of experience. "Senior engineers shipping production X are typically in this band" beats "I have N years."',
     ].join(' '),

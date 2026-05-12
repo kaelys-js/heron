@@ -1,62 +1,76 @@
 <script lang="ts">
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Badge } from '$lib/components/ui/badge';
-  import {
-    DollarSign, Wifi, Building, Globe, ScrollText, FileBadge2, Inbox,
-  } from '@lucide/svelte';
-  import EmptyState from './EmptyState.svelte';
-  import JobActions from './JobActions.svelte';
-  import type { Job, WorkMode, Status } from '$lib/types';
-  import { BG_TINTS, STATUS_TINTS } from '$lib/types';
-  import { cn } from '$lib/utils';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { Badge } from '$lib/components/ui/badge';
+import { DollarSign, Wifi, Building, Globe, ScrollText, FileBadge2, Inbox } from '@lucide/svelte';
+import EmptyState from './EmptyState.svelte';
+import JobActions from './JobActions.svelte';
+import type { Job, WorkMode, Status } from '$lib/types';
+import { BG_TINTS, STATUS_TINTS } from '$lib/types';
+import { cn } from '$lib/utils';
 
-  // Single grid template — header and rows must stay in lock-step.
-  const GRID_TEMPLATE = '60px_minmax(220px,_3fr)_1fr_1fr_70px_70px_60px_minmax(140px,_1.2fr)_60px_100px';
+// Single grid template — header and rows must stay in lock-step.
+const GRID_TEMPLATE =
+  '60px_minmax(220px,_3fr)_1fr_1fr_70px_70px_60px_minmax(140px,_1.2fr)_60px_100px';
 
-  let { jobs, prevVisibleCount = 0 }: { jobs: Job[]; prevVisibleCount?: number } = $props();
+let { jobs, prevVisibleCount = 0 }: { jobs: Job[]; prevVisibleCount?: number } = $props();
 
-  function scoreClass(s?: number) {
-    if (s == null) return 'bg-muted text-muted-foreground border-border';
-    if (s >= 4.5) return 'bg-emerald-500/15 text-emerald-200 border-emerald-500/40';
-    if (s >= 4)   return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40';
-    if (s >= 3)   return 'bg-amber-500/15 text-amber-300 border-amber-500/40';
-    return 'bg-red-500/10 text-red-300 border-red-500/30';
-  }
-  function scoreVerdict(s?: number) {
-    if (s == null) return 'Not yet scored';
-    if (s >= 4.5) return 'Strong fit · prioritize';
-    if (s >= 4)   return 'Good fit · worth applying';
-    if (s >= 3)   return 'Marginal · review the gaps';
-    return 'Low fit · skip unless special interest';
-  }
+function scoreClass(s?: number) {
+  if (s == null) return 'bg-muted text-muted-foreground border-border';
+  if (s >= 4.5) return 'bg-emerald-500/15 text-emerald-200 border-emerald-500/40';
+  if (s >= 4) return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40';
+  if (s >= 3) return 'bg-amber-500/15 text-amber-300 border-amber-500/40';
+  return 'bg-red-500/10 text-red-300 border-red-500/30';
+}
+function scoreVerdict(s?: number) {
+  if (s == null) return 'Not yet scored';
+  if (s >= 4.5) return 'Strong fit · prioritize';
+  if (s >= 4) return 'Good fit · worth applying';
+  if (s >= 3) return 'Marginal · review the gaps';
+  return 'Low fit · skip unless special interest';
+}
 
-  const STATUS_HINT: Record<Status, string> = {
-    New: 'Just discovered — no score yet',
-    Scoring: 'Gemini is processing this job',
-    Scored: 'Has a Gemini score · review and promote',
-    Ready: 'Eval done · CV PDF ready · go apply',
-    Queued: 'Staged for batch send · review on /queue',
-    Applying: 'Autonomous-apply script running',
-    Applied: 'Application sent',
-    Screened: 'Recruiter responded',
-    PhoneScreen: 'Phone screen scheduled',
-    Technical: 'Technical interview · algos / system design / coding',
-    TakeHome: 'Take-home assignment in progress',
-    Onsite: 'Onsite / panel loop',
-    Final: 'Final round · hiring committee',
-    Interview: 'Active interview process',
-    Offer: 'Offer in hand · negotiate',
-    Rejected: 'Closed by company',
-    Closed: 'You skipped this one',
-    ManualApplyNeeded: 'Auto-apply blocked — finish by hand',
-  };
+const STATUS_HINT: Record<Status, string> = {
+  New: 'Just discovered — no score yet',
+  Scoring: 'Gemini is processing this job',
+  Scored: 'Has a Gemini score · review and promote',
+  Ready: 'Eval done · CV PDF ready · go apply',
+  Queued: 'Staged for batch send · review on /queue',
+  Applying: 'Autonomous-apply script running',
+  Applied: 'Application sent',
+  Screened: 'Recruiter responded',
+  PhoneScreen: 'Phone screen scheduled',
+  Technical: 'Technical interview · algos / system design / coding',
+  TakeHome: 'Take-home assignment in progress',
+  Onsite: 'Onsite / panel loop',
+  Final: 'Final round · hiring committee',
+  Interview: 'Active interview process',
+  Offer: 'Offer in hand · negotiate',
+  Rejected: 'Closed by company',
+  Closed: 'You skipped this one',
+  ManualApplyNeeded: 'Auto-apply blocked — finish by hand',
+};
 
-  const WORK_MODE: Record<WorkMode, { label: string; icon: any; tint: string; tip: string }> = {
-    remote:  { label: 'Remote',  icon: Wifi,     tint: 'text-emerald-300', tip: 'Fully remote' },
-    hybrid:  { label: 'Hybrid',  icon: Building, tint: 'text-amber-300',   tip: 'Hybrid — some office presence required' },
-    onsite:  { label: 'On-site', icon: Building, tint: 'text-red-300',     tip: 'On-site — must work from a specific location' },
-    unknown: { label: '—',       icon: Globe,    tint: 'text-muted-foreground/50', tip: 'Work mode not stated in posting' },
-  };
+const WORK_MODE: Record<WorkMode, { label: string; icon: any; tint: string; tip: string }> = {
+  remote: { label: 'Remote', icon: Wifi, tint: 'text-emerald-300', tip: 'Fully remote' },
+  hybrid: {
+    label: 'Hybrid',
+    icon: Building,
+    tint: 'text-amber-300',
+    tip: 'Hybrid — some office presence required',
+  },
+  onsite: {
+    label: 'On-site',
+    icon: Building,
+    tint: 'text-red-300',
+    tip: 'On-site — must work from a specific location',
+  },
+  unknown: {
+    label: '—',
+    icon: Globe,
+    tint: 'text-muted-foreground/50',
+    tip: 'Work mode not stated in posting',
+  },
+};
 </script>
 
 <div class="border rounded-lg overflow-hidden bg-muted/10">

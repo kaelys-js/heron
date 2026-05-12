@@ -1,346 +1,367 @@
 <script lang="ts">
-  import { marked } from 'marked';
-  import Topbar from '$lib/components/Topbar.svelte';
-  import PropertiesPane from '$lib/components/PropertiesPane.svelte';
-  import ReportSummary from '$lib/components/ReportSummary.svelte';
-  import * as Tabs from '$lib/components/ui/tabs';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Button } from '$lib/components/ui/button';
-  import { Textarea } from '$lib/components/ui/textarea';
-  import { Separator } from '$lib/components/ui/separator';
-  import EmptyState from '$lib/components/EmptyState.svelte';
-  import ErrorState from '$lib/components/ErrorState.svelte';
-  import JobActions from '$lib/components/JobActions.svelte';
-  import KeywordMatchBadge from '$lib/components/KeywordMatchBadge.svelte';
-  import CompPreflightBadge from '$lib/components/CompPreflightBadge.svelte';
-  import ApplyTimingBadge from '$lib/components/ApplyTimingBadge.svelte';
-  import PdfPreviewPanel from '$lib/components/PdfPreviewPanel.svelte';
-  import {
-    Send, MessageSquare, DollarSign, Briefcase, ScrollText,
-    ChevronDown, FileText, Network as Linkedin, Loader2, Copy, ExternalLink,
-    Mail, RefreshCw,
-  } from '@lucide/svelte';
-  import { invalidateAll } from '$app/navigation';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import type { Job } from '$lib/types';
-  import type { ReportSummary as ReportSummaryT } from '$lib/server/report-summary';
-  import { cmd } from '$lib/config/branding';
+import { marked } from 'marked';
+import Topbar from '$lib/components/Topbar.svelte';
+import PropertiesPane from '$lib/components/PropertiesPane.svelte';
+import ReportSummary from '$lib/components/ReportSummary.svelte';
+import * as Tabs from '$lib/components/ui/tabs';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { Button } from '$lib/components/ui/button';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Separator } from '$lib/components/ui/separator';
+import EmptyState from '$lib/components/EmptyState.svelte';
+import ErrorState from '$lib/components/ErrorState.svelte';
+import JobActions from '$lib/components/JobActions.svelte';
+import KeywordMatchBadge from '$lib/components/KeywordMatchBadge.svelte';
+import CompPreflightBadge from '$lib/components/CompPreflightBadge.svelte';
+import ApplyTimingBadge from '$lib/components/ApplyTimingBadge.svelte';
+import PdfPreviewPanel from '$lib/components/PdfPreviewPanel.svelte';
+import {
+  Send,
+  MessageSquare,
+  DollarSign,
+  Briefcase,
+  ScrollText,
+  ChevronDown,
+  FileText,
+  Network as Linkedin,
+  Loader2,
+  Copy,
+  ExternalLink,
+  Mail,
+  RefreshCw,
+} from '@lucide/svelte';
+import { invalidateAll } from '$app/navigation';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import type { Job } from '$lib/types';
+import type { ReportSummary as ReportSummaryT } from '$lib/server/report-summary';
+import { cmd } from '$lib/config/branding';
 
-  let { data }: { data: { job: Job; report: string; summary: ReportSummaryT | null; profileId: string } } = $props();
-  let html = $derived(data.report ? marked.parse(data.report) : '');
-  // Every per-job endpoint takes ?profile so it reads from the right
-  // profile's interview-prep / output / reports dirs and swaps symlinks
-  // before spawning Claude. Append this query to every /api/job/... call.
-  let pq = $derived('?profile=' + encodeURIComponent(data.profileId));
-  let activeTab = $state('overview');
+let {
+  data,
+}: { data: { job: Job; report: string; summary: ReportSummaryT | null; profileId: string } } =
+  $props();
+let html = $derived(data.report ? marked.parse(data.report) : '');
+// Every per-job endpoint takes ?profile so it reads from the right
+// profile's interview-prep / output / reports dirs and swaps symlinks
+// before spawning Claude. Append this query to every /api/job/... call.
+let pq = $derived('?profile=' + encodeURIComponent(data.profileId));
+let activeTab = $state('overview');
 
-  let prepLoading = $state(false);
-  let prepContent = $state('');
-  let prepError = $state<string | null>(null);
-  let prepHtml = $derived(prepContent ? marked.parse(prepContent) : '');
+let prepLoading = $state(false);
+let prepContent = $state('');
+let prepError = $state<string | null>(null);
+let prepHtml = $derived(prepContent ? marked.parse(prepContent) : '');
 
-  let chatHistory = $state<{ role: 'user' | 'assistant'; content: string }[]>([]);
-  let chatInput = $state('');
-  let chatLoading = $state(false);
-  let chatPersona = $state('Hiring Manager');
+let chatHistory = $state<{ role: 'user' | 'assistant'; content: string }[]>([]);
+let chatInput = $state('');
+let chatLoading = $state(false);
+let chatPersona = $state('Hiring Manager');
 
-  let offerInput = $state('');
-  let negotiationContent = $state('');
-  let negotiationError = $state<string | null>(null);
-  let negotiationHtml = $derived(negotiationContent ? marked.parse(negotiationContent) : '');
-  let negotiationLoading = $state(false);
+let offerInput = $state('');
+let negotiationContent = $state('');
+let negotiationError = $state<string | null>(null);
+let negotiationHtml = $derived(negotiationContent ? marked.parse(negotiationContent) : '');
+let negotiationLoading = $state(false);
 
+let prepLoaded = $state(false);
 
-  let prepLoaded = $state(false);
-
-  /** Try the persisted file first; only spawn a fresh generation if missing. */
-  async function ensurePrepLoaded() {
-    if (prepLoaded || !data.job?.id) return;
-    prepLoaded = true;
-    try {
-      const r = await api.get<{ exists: boolean; content?: string }>(
-        '/api/job/' + encodeURIComponent(data.job.id) + '/interview-prep' + pq,
-        { silent: true },
-      );
-      if (r.exists && r.content) prepContent = r.content;
-    } catch {
-      // 404 or no report yet — leave empty so the user can hit Generate
-    }
+/** Try the persisted file first; only spawn a fresh generation if missing. */
+async function ensurePrepLoaded() {
+  if (prepLoaded || !data.job?.id) return;
+  prepLoaded = true;
+  try {
+    const r = await api.get<{ exists: boolean; content?: string }>(
+      '/api/job/' + encodeURIComponent(data.job.id) + '/interview-prep' + pq,
+      { silent: true },
+    );
+    if (r.exists && r.content) prepContent = r.content;
+  } catch {
+    // 404 or no report yet — leave empty so the user can hit Generate
   }
+}
 
-  async function loadPrep() {
-    if (!data.job?.reportFile || !data.job?.id) return;
-    prepLoading = true;
-    prepError = null;
-    try {
-      const r = await api.post<{ ok: boolean; content?: string; error?: string }>(
-        '/api/job/' + encodeURIComponent(data.job.id) + '/interview-prep' + pq,
-        {},
-        { silent: true },
-      );
-      if (r.ok && r.content) {
-        prepContent = r.content;
-      } else {
-        prepError = r.error ?? 'Generation failed';
-      }
-    } catch (e) {
-      prepError = (e as ApiError).message ?? 'Network error';
-    } finally {
-      prepLoading = false;
+async function loadPrep() {
+  if (!data.job?.reportFile || !data.job?.id) return;
+  prepLoading = true;
+  prepError = null;
+  try {
+    const r = await api.post<{ ok: boolean; content?: string; error?: string }>(
+      '/api/job/' + encodeURIComponent(data.job.id) + '/interview-prep' + pq,
+      {},
+      { silent: true },
+    );
+    if (r.ok && r.content) {
+      prepContent = r.content;
+    } else {
+      prepError = r.error ?? 'Generation failed';
     }
+  } catch (e) {
+    prepError = (e as ApiError).message ?? 'Network error';
+  } finally {
+    prepLoading = false;
   }
+}
 
-  async function startMock() {
-    if (!data.job?.reportFile) return;
-    chatHistory = [];
-    chatLoading = true;
-    try {
-      // api.post auto-toasts network errors; keep `silent: true` here
-      // because the chat UI itself surfaces the error inline below.
-      // Pass ?profile so the report + CV are read from the right profile
-      // (the job page's loader resolves it and exposes data.profileId).
-      const r = await api.post<{ reply: string }>(
-        '/api/mock-interview?profile=' + encodeURIComponent(data.profileId),
-        { reportFile: data.job.reportFile, history: [], persona: chatPersona },
-        { silent: true },
-      );
-      chatHistory = [{ role: 'assistant', content: r.reply }];
-    } catch (e) {
-      const msg = e instanceof ApiError ? e.message : (e as Error).message ?? 'Network error';
-      chatHistory = [{ role: 'assistant', content: '⚠️ ' + msg }];
-    } finally {
-      chatLoading = false;
-    }
+async function startMock() {
+  if (!data.job?.reportFile) return;
+  chatHistory = [];
+  chatLoading = true;
+  try {
+    // api.post auto-toasts network errors; keep `silent: true` here
+    // because the chat UI itself surfaces the error inline below.
+    // Pass ?profile so the report + CV are read from the right profile
+    // (the job page's loader resolves it and exposes data.profileId).
+    const r = await api.post<{ reply: string }>(
+      '/api/mock-interview?profile=' + encodeURIComponent(data.profileId),
+      { reportFile: data.job.reportFile, history: [], persona: chatPersona },
+      { silent: true },
+    );
+    chatHistory = [{ role: 'assistant', content: r.reply }];
+  } catch (e) {
+    const msg = e instanceof ApiError ? e.message : ((e as Error).message ?? 'Network error');
+    chatHistory = [{ role: 'assistant', content: '⚠️ ' + msg }];
+  } finally {
+    chatLoading = false;
   }
+}
 
-  async function sendChat() {
-    if (!chatInput.trim() || chatLoading || !data.job?.reportFile) return;
-    const msg = chatInput.trim();
-    chatInput = '';
-    const newHistory = [...chatHistory, { role: 'user' as const, content: msg }];
-    chatHistory = newHistory;
-    chatLoading = true;
-    try {
-      const r = await api.post<{ reply: string }>(
-        '/api/mock-interview?profile=' + encodeURIComponent(data.profileId),
-        { reportFile: data.job.reportFile, history: newHistory, persona: chatPersona },
-        { silent: true },
-      );
-      chatHistory = [...newHistory, { role: 'assistant', content: r.reply }];
-    } catch (e) {
-      const msg = e instanceof ApiError ? e.message : (e as Error).message ?? 'Network error';
-      chatHistory = [...newHistory, { role: 'assistant', content: '⚠️ ' + msg }];
-    } finally {
-      chatLoading = false;
-    }
+async function sendChat() {
+  if (!chatInput.trim() || chatLoading || !data.job?.reportFile) return;
+  const msg = chatInput.trim();
+  chatInput = '';
+  const newHistory = [...chatHistory, { role: 'user' as const, content: msg }];
+  chatHistory = newHistory;
+  chatLoading = true;
+  try {
+    const r = await api.post<{ reply: string }>(
+      '/api/mock-interview?profile=' + encodeURIComponent(data.profileId),
+      { reportFile: data.job.reportFile, history: newHistory, persona: chatPersona },
+      { silent: true },
+    );
+    chatHistory = [...newHistory, { role: 'assistant', content: r.reply }];
+  } catch (e) {
+    const msg = e instanceof ApiError ? e.message : ((e as Error).message ?? 'Network error');
+    chatHistory = [...newHistory, { role: 'assistant', content: '⚠️ ' + msg }];
+  } finally {
+    chatLoading = false;
   }
+}
 
-  async function getNegotiation() {
-    if (!data.job?.reportFile || !offerInput.trim()) return;
-    negotiationLoading = true;
-    negotiationError = null;
-    try {
-      // Pass ?profile so /api/negotiation reads the right profile's report.
-      const r = await api.post<{ content: string }>(
-        '/api/negotiation?profile=' + encodeURIComponent(data.profileId),
-        { reportFile: data.job.reportFile, offer: offerInput },
-        { inlineError: true },
-      );
-      negotiationContent = r.content;
-    } catch (e) {
-      negotiationError = e instanceof ApiError
+async function getNegotiation() {
+  if (!data.job?.reportFile || !offerInput.trim()) return;
+  negotiationLoading = true;
+  negotiationError = null;
+  try {
+    // Pass ?profile so /api/negotiation reads the right profile's report.
+    const r = await api.post<{ content: string }>(
+      '/api/negotiation?profile=' + encodeURIComponent(data.profileId),
+      { reportFile: data.job.reportFile, offer: offerInput },
+      { inlineError: true },
+    );
+    negotiationContent = r.content;
+  } catch (e) {
+    negotiationError =
+      e instanceof ApiError
         ? (e.message ?? 'Generation failed')
-        : (e as Error).message ?? 'Network error';
-    } finally {
-      negotiationLoading = false;
-    }
+        : ((e as Error).message ?? 'Network error');
+  } finally {
+    negotiationLoading = false;
   }
+}
 
-  // Status / Apply / Generate CV are all handled inside <JobActions /> now.
-  // PropertiesPane keeps its own status dropdown for the right-rail UX, so we
-  // still expose a thin updateStatus wrapper here for that callback.
-  async function updateStatus(newStatus: string) {
-    if (!data.job?.url) return;
-    try {
-      await api.post('/api/status', { url: data.job.url, newStatus }, { silent: true });
-      toast.success('Status → ' + newStatus);
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Status update failed', { description: err.message });
-    }
+// Status / Apply / Generate CV are all handled inside <JobActions /> now.
+// PropertiesPane keeps its own status dropdown for the right-rail UX, so we
+// still expose a thin updateStatus wrapper here for that callback.
+async function updateStatus(newStatus: string) {
+  if (!data.job?.url) return;
+  try {
+    await api.post('/api/status', { url: data.job.url, newStatus }, { silent: true });
+    toast.success('Status → ' + newStatus);
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Status update failed', { description: err.message });
   }
+}
 
-  // ---- Outreach tab state ----
-  // Three personas, each independently spawnable + persisted. The cached
-  // endpoint primes the UI with anything previously generated so a reload
-  // doesn't lose work.
-  type Persona = 'hiring-manager' | 'recruiter' | 'peer';
-  let outreachPersona = $state<Persona>('hiring-manager');
-  let outreachByPersona = $state<Record<Persona, string>>({
-    'hiring-manager': '',
-    recruiter: '',
-    peer: '',
-  });
-  let outreachBusy = $state(false);
-  let outreachLoaded = $state(false);
+// ---- Outreach tab state ----
+// Three personas, each independently spawnable + persisted. The cached
+// endpoint primes the UI with anything previously generated so a reload
+// doesn't lose work.
+type Persona = 'hiring-manager' | 'recruiter' | 'peer';
+let outreachPersona = $state<Persona>('hiring-manager');
+let outreachByPersona = $state<Record<Persona, string>>({
+  'hiring-manager': '',
+  recruiter: '',
+  peer: '',
+});
+let outreachBusy = $state(false);
+let outreachLoaded = $state(false);
 
-  async function loadCachedOutreach() {
-    if (outreachLoaded || !data.job?.id) return;
-    outreachLoaded = true;
-    try {
-      const r = await api.get<{ variants: { persona: Persona; content: string }[] }>(
-        '/api/job/' + encodeURIComponent(data.job.id) + '/outreach/cached' + pq,
-        { silent: true },
-      );
-      const next = { ...outreachByPersona };
-      for (const v of r.variants) next[v.persona] = v.content;
-      outreachByPersona = next;
-    } catch {
-      // 404 / parse failure → just leave empty; user clicks Generate to populate
-    }
+async function loadCachedOutreach() {
+  if (outreachLoaded || !data.job?.id) return;
+  outreachLoaded = true;
+  try {
+    const r = await api.get<{ variants: { persona: Persona; content: string }[] }>(
+      '/api/job/' + encodeURIComponent(data.job.id) + '/outreach/cached' + pq,
+      { silent: true },
+    );
+    const next = { ...outreachByPersona };
+    for (const v of r.variants) next[v.persona] = v.content;
+    outreachByPersona = next;
+  } catch {
+    // 404 / parse failure → just leave empty; user clicks Generate to populate
   }
+}
 
-  async function generateOutreach() {
-    if (!data.job?.id || outreachBusy) return;
-    outreachBusy = true;
-    try {
-      const r = await api.post<{ ok: boolean; persona: Persona; path: string; content: string; error?: string }>(
-        '/api/job/' + encodeURIComponent(data.job.id) + '/outreach' + pq,
-        { persona: outreachPersona },
-        { silent: true },
-      );
-      if (!r.ok) throw new Error(r.error ?? 'Outreach generation failed');
-      outreachByPersona = { ...outreachByPersona, [outreachPersona]: r.content };
-      toast.success('Outreach drafted', {
-        description: '3 variants ready · pick a tone and copy into LinkedIn / email.',
-        duration: 6_000,
-      });
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Outreach failed', {
-        description: err.message + ' — Claude Code CLI must be on PATH.',
-        action: { label: 'Retry', onClick: () => generateOutreach() },
-        duration: 12_000,
-      });
-    } finally {
-      outreachBusy = false;
-    }
+async function generateOutreach() {
+  if (!data.job?.id || outreachBusy) return;
+  outreachBusy = true;
+  try {
+    const r = await api.post<{
+      ok: boolean;
+      persona: Persona;
+      path: string;
+      content: string;
+      error?: string;
+    }>(
+      '/api/job/' + encodeURIComponent(data.job.id) + '/outreach' + pq,
+      { persona: outreachPersona },
+      { silent: true },
+    );
+    if (!r.ok) throw new Error(r.error ?? 'Outreach generation failed');
+    outreachByPersona = { ...outreachByPersona, [outreachPersona]: r.content };
+    toast.success('Outreach drafted', {
+      description: '3 variants ready · pick a tone and copy into LinkedIn / email.',
+      duration: 6_000,
+    });
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Outreach failed', {
+      description: err.message + ' — Claude Code CLI must be on PATH.',
+      action: { label: 'Retry', onClick: () => generateOutreach() },
+      duration: 12_000,
+    });
+  } finally {
+    outreachBusy = false;
   }
+}
 
-  async function copyOutreach() {
-    const content = outreachByPersona[outreachPersona];
-    if (!content) return;
-    try {
-      await navigator.clipboard.writeText(content);
-      toast.success('Outreach copied');
-    } catch {
-      toast.error('Copy failed', { description: 'Browser blocked clipboard access.' });
-    }
+async function copyOutreach() {
+  const content = outreachByPersona[outreachPersona];
+  if (!content) return;
+  try {
+    await navigator.clipboard.writeText(content);
+    toast.success('Outreach copied');
+  } catch {
+    toast.error('Copy failed', { description: 'Browser blocked clipboard access.' });
   }
+}
 
-  // Lazy-load cached drafts the first time the user opens the Outreach tab.
-  $effect(() => {
-    if (activeTab === 'outreach') {
-      void loadCachedOutreach();
-    }
-  });
-
-  // Same lazy-load pattern for the Interview Prep tab — pulls the persisted
-  // brief if one exists (auto-fired by the bus listener on status→Interview).
-  $effect(() => {
-    if (activeTab === 'prep') {
-      void ensurePrepLoaded();
-    }
-  });
-
-  let outreachContent = $derived(outreachByPersona[outreachPersona]);
-  let outreachHtml = $derived(outreachContent ? marked.parse(outreachContent) : '');
-
-  // ---- Cover letter tab state ----
-  // One letter per job, persisted next to the tailored CV PDF in output/.
-  // Lazy-loads on first tab open; "Regenerate" overwrites the file.
-  let coverContent = $state('');
-  let coverPath = $state('');
-  let coverBusy = $state(false);
-  let coverLoaded = $state(false);
-  let coverError = $state<string | null>(null);
-
-  async function loadCachedCover() {
-    if (coverLoaded || !data.job?.id) return;
-    coverLoaded = true;
-    try {
-      const r = await api.get<{ cached: { path: string; body: string } | null }>(
-        '/api/job/' + encodeURIComponent(data.job.id) + '/cover-letter' + pq,
-        { silent: true },
-      );
-      if (r.cached) {
-        coverContent = r.cached.body;
-        coverPath = r.cached.path;
-      }
-    } catch {
-      // 404 → leave empty; user clicks Generate
-    }
+// Lazy-load cached drafts the first time the user opens the Outreach tab.
+$effect(() => {
+  if (activeTab === 'outreach') {
+    void loadCachedOutreach();
   }
+});
 
-  async function generateCover() {
-    if (!data.job?.id || coverBusy) return;
-    coverBusy = true;
-    coverError = null;
-    try {
-      const r = await api.post<{ ok: boolean; path?: string; body?: string; error?: string }>(
-        '/api/job/' + encodeURIComponent(data.job.id) + '/cover-letter' + pq,
-        {},
-        { silent: true },
-      );
-      if (!r.ok) throw new Error(r.error ?? 'Cover letter generation failed');
-      coverContent = r.body ?? '';
-      coverPath = r.path ?? '';
-      toast.success('Cover letter ready', {
-        description: 'Saved to ' + (r.path ?? 'output/'),
-        duration: 6_000,
-      });
-    } catch (e) {
-      const err = e as ApiError;
-      coverError = err.message;
-      toast.error('Cover letter failed', {
-        description: err.message + ' — Claude Code CLI must be on PATH.',
-        action: { label: 'Retry', onClick: () => generateCover() },
-        duration: 12_000,
-      });
-    } finally {
-      coverBusy = false;
-    }
+// Same lazy-load pattern for the Interview Prep tab — pulls the persisted
+// brief if one exists (auto-fired by the bus listener on status→Interview).
+$effect(() => {
+  if (activeTab === 'prep') {
+    void ensurePrepLoaded();
   }
+});
 
-  async function copyCover() {
-    if (!coverContent) return;
-    try {
-      await navigator.clipboard.writeText(coverContent);
-      toast.success('Cover letter copied');
-    } catch {
-      toast.error('Copy failed', { description: 'Browser blocked clipboard access.' });
+let outreachContent = $derived(outreachByPersona[outreachPersona]);
+let outreachHtml = $derived(outreachContent ? marked.parse(outreachContent) : '');
+
+// ---- Cover letter tab state ----
+// One letter per job, persisted next to the tailored CV PDF in output/.
+// Lazy-loads on first tab open; "Regenerate" overwrites the file.
+let coverContent = $state('');
+let coverPath = $state('');
+let coverBusy = $state(false);
+let coverLoaded = $state(false);
+let coverError = $state<string | null>(null);
+
+async function loadCachedCover() {
+  if (coverLoaded || !data.job?.id) return;
+  coverLoaded = true;
+  try {
+    const r = await api.get<{ cached: { path: string; body: string } | null }>(
+      '/api/job/' + encodeURIComponent(data.job.id) + '/cover-letter' + pq,
+      { silent: true },
+    );
+    if (r.cached) {
+      coverContent = r.cached.body;
+      coverPath = r.cached.path;
     }
+  } catch {
+    // 404 → leave empty; user clicks Generate
   }
+}
 
-  $effect(() => {
-    if (activeTab === 'cover-letter') {
-      void loadCachedCover();
-    }
-  });
+async function generateCover() {
+  if (!data.job?.id || coverBusy) return;
+  coverBusy = true;
+  coverError = null;
+  try {
+    const r = await api.post<{ ok: boolean; path?: string; body?: string; error?: string }>(
+      '/api/job/' + encodeURIComponent(data.job.id) + '/cover-letter' + pq,
+      {},
+      { silent: true },
+    );
+    if (!r.ok) throw new Error(r.error ?? 'Cover letter generation failed');
+    coverContent = r.body ?? '';
+    coverPath = r.path ?? '';
+    toast.success('Cover letter ready', {
+      description: 'Saved to ' + (r.path ?? 'output/'),
+      duration: 6_000,
+    });
+  } catch (e) {
+    const err = e as ApiError;
+    coverError = err.message;
+    toast.error('Cover letter failed', {
+      description: err.message + ' — Claude Code CLI must be on PATH.',
+      action: { label: 'Retry', onClick: () => generateCover() },
+      duration: 12_000,
+    });
+  } finally {
+    coverBusy = false;
+  }
+}
 
-  let coverHtml = $derived(coverContent ? marked.parse(coverContent) : '');
+async function copyCover() {
+  if (!coverContent) return;
+  try {
+    await navigator.clipboard.writeText(coverContent);
+    toast.success('Cover letter copied');
+  } catch {
+    toast.error('Copy failed', { description: 'Browser blocked clipboard access.' });
+  }
+}
 
-  let linkedInSearchUrl = $derived(
-    'https://www.linkedin.com/search/results/people/?keywords=' +
-      encodeURIComponent(
-        (data.job?.company ? data.job.company + ' ' : '') +
-        (outreachPersona === 'hiring-manager' ? 'engineering manager' :
-         outreachPersona === 'recruiter' ? 'recruiter' :
-         (data.job?.role ?? '')),
-      ),
-  );
+$effect(() => {
+  if (activeTab === 'cover-letter') {
+    void loadCachedCover();
+  }
+});
+
+let coverHtml = $derived(coverContent ? marked.parse(coverContent) : '');
+
+let linkedInSearchUrl = $derived(
+  'https://www.linkedin.com/search/results/people/?keywords=' +
+    encodeURIComponent(
+      (data.job?.company ? data.job.company + ' ' : '') +
+        (outreachPersona === 'hiring-manager'
+          ? 'engineering manager'
+          : outreachPersona === 'recruiter'
+            ? 'recruiter'
+            : (data.job?.role ?? '')),
+    ),
+);
 </script>
 
 <div class="h-full overflow-y-auto">

@@ -5,14 +5,31 @@ import { readPortals } from '$lib/server/portals';
 import { getActiveProfileId, getProfile } from '$lib/server/profiles';
 
 const DEFAULT_NEGATIVE = [
-  'Junior', 'Intern', '.NET', 'Java ', 'iOS', 'Android', 'PHP', 'Ruby',
-  'Embedded', 'Firmware', 'FPGA', 'ASIC', 'Blockchain', 'Web3', 'Crypto',
-  'Salesforce Admin', 'SAP ', 'Oracle EBS', 'Mainframe', 'COBOL',
+  'Junior',
+  'Intern',
+  '.NET',
+  'Java ',
+  'iOS',
+  'Android',
+  'PHP',
+  'Ruby',
+  'Embedded',
+  'Firmware',
+  'FPGA',
+  'ASIC',
+  'Blockchain',
+  'Web3',
+  'Crypto',
+  'Salesforce Admin',
+  'SAP ',
+  'Oracle EBS',
+  'Mainframe',
+  'COBOL',
 ];
 
 export async function load({ url }: { url: URL }) {
   const queryProfile = url.searchParams.get('profile');
-  const profileId = (queryProfile && getProfile(queryProfile)) ? queryProfile : getActiveProfileId();
+  const profileId = queryProfile && getProfile(queryProfile) ? queryProfile : getActiveProfileId();
   const profile = readProfile(profileId);
   const portals = readPortals(profileId);
   const tf = portals.title_filter;

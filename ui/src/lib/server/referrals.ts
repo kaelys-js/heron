@@ -42,7 +42,11 @@ export function listAsks(profileId: string): ReferralAsk[] {
   const p = asksFile(profileId);
   if (!fs.existsSync(p)) return [];
   let txt = '';
-  try { txt = fs.readFileSync(p, 'utf8'); } catch { return []; }
+  try {
+    txt = fs.readFileSync(p, 'utf8');
+  } catch {
+    return [];
+  }
   // Last-write-wins on (jobId, contactName) key.
   const map = new Map<string, ReferralAsk>();
   for (const line of txt.split('\n')) {
@@ -71,7 +75,7 @@ export function linkedInMutualsUrl(company: string): string {
   // or company name — passing the name works; LinkedIn auto-resolves.
   const params = new URLSearchParams({
     keywords: company,
-    network: 'F',          // 1st-degree only
+    network: 'F', // 1st-degree only
     origin: 'GLOBAL_SEARCH_HEADER',
   });
   return 'https://www.linkedin.com/search/results/people/?' + params.toString();

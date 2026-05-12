@@ -11,203 +11,211 @@
   will have wildly different stock answers per identity.
 -->
 <script lang="ts">
-  import * as Card from '$lib/components/ui/card';
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Textarea } from '$lib/components/ui/textarea';
-  import { Label } from '$lib/components/ui/label';
-  import { Plus, Trash2, Save, Loader2, Edit3, Info, MessageSquare, Sparkles } from '@lucide/svelte';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import { formatRelativeTime, cn, withMinDuration } from '$lib/utils';
+import * as Card from '$lib/components/ui/card';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Textarea } from '$lib/components/ui/textarea';
+import { Label } from '$lib/components/ui/label';
+import { Plus, Trash2, Save, Loader2, Edit3, Info, MessageSquare, Sparkles } from '@lucide/svelte';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import { formatRelativeTime, cn, withMinDuration } from '$lib/utils';
 
-  export type FormAnswer = {
-    key: string;
-    label: string;
-    answer: string;
-    updatedAt: number;
-    useCount: number;
-  };
+export type FormAnswer = {
+  key: string;
+  label: string;
+  answer: string;
+  updatedAt: number;
+  useCount: number;
+};
 
-  let {
-    profileId,
-    initialAnswers = [],
-    initialStats = { total: 0, usedToday: 0, lastUpdatedAt: null as number | null },
-  }: {
-    profileId: string;
-    initialAnswers?: FormAnswer[];
-    initialStats?: { total: number; usedToday: number; lastUpdatedAt: number | null };
-  } = $props();
+let {
+  profileId,
+  initialAnswers = [],
+  initialStats = { total: 0, usedToday: 0, lastUpdatedAt: null as number | null },
+}: {
+  profileId: string;
+  initialAnswers?: FormAnswer[];
+  initialStats?: { total: number; usedToday: number; lastUpdatedAt: number | null };
+} = $props();
 
-  // svelte-ignore state_referenced_locally
-  let answers = $state<FormAnswer[]>(initialAnswers);
-  // svelte-ignore state_referenced_locally
-  let stats = $state(initialStats);
+// svelte-ignore state_referenced_locally
+let answers = $state<FormAnswer[]>(initialAnswers);
+// svelte-ignore state_referenced_locally
+let stats = $state(initialStats);
 
-  // Add-new form state.
-  let newLabel = $state('');
-  let newAnswer = $state('');
-  let saving = $state(false);
+// Add-new form state.
+let newLabel = $state('');
+let newAnswer = $state('');
+let saving = $state(false);
 
-  // Background seed-from-CV state. Spawns the seed-form-answers Claude
-  // mode which reads cv.md + profile.yml and writes ~15-25 cache rows.
-  let seedingFromCv = $state(false);
+// Background seed-from-CV state. Spawns the seed-form-answers Claude
+// mode which reads cv.md + profile.yml and writes ~15-25 cache rows.
+let seedingFromCv = $state(false);
 
-  // Edit-in-place state.
-  let editingKey = $state<string | null>(null);
-  let editLabel = $state('');
-  let editAnswer = $state('');
+// Edit-in-place state.
+let editingKey = $state<string | null>(null);
+let editLabel = $state('');
+let editAnswer = $state('');
 
-  let suggestedQuestions = [
-    'Notice period (weeks)',
-    'Desired salary',
-    'Visa / work authorization status',
-    'Years of experience with TypeScript',
-    'Years of experience with React',
-    'Years of experience with Node.js',
-    'Why this company?',
-    'Why this role?',
-    'When can you start?',
-    'Are you authorized to work in this country?',
-    'Will you now or in the future require visa sponsorship?',
-    'How did you hear about us?',
-  ];
+let suggestedQuestions = [
+  'Notice period (weeks)',
+  'Desired salary',
+  'Visa / work authorization status',
+  'Years of experience with TypeScript',
+  'Years of experience with React',
+  'Years of experience with Node.js',
+  'Why this company?',
+  'Why this role?',
+  'When can you start?',
+  'Are you authorized to work in this country?',
+  'Will you now or in the future require visa sponsorship?',
+  'How did you hear about us?',
+];
 
-  async function refresh() {
-    try {
-      const r = await api.get<{
-        profileId: string;
-        answers: FormAnswer[];
-        stats: { total: number; usedToday: number; lastUpdatedAt: number | null };
-      }>('/api/profile/form-answers?profile=' + encodeURIComponent(profileId), { silent: true });
-      answers = r.answers;
-      stats = r.stats;
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Refresh failed', { description: err.message });
-    }
+async function refresh() {
+  try {
+    const r = await api.get<{
+      profileId: string;
+      answers: FormAnswer[];
+      stats: { total: number; usedToday: number; lastUpdatedAt: number | null };
+    }>('/api/profile/form-answers?profile=' + encodeURIComponent(profileId), { silent: true });
+    answers = r.answers;
+    stats = r.stats;
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Refresh failed', { description: err.message });
   }
+}
 
-  /**
-   * Trigger the seed-form-answers Claude mode. Reads cv.md + profile.yml
-   * and writes ~15-25 high-confidence cache rows (identity, work auth,
-   * comp, behavioral templates, per-archetype YoE). Eliminates the
-   * cold-cache dead-end that hits every first-time autonomous-apply user.
-   */
-  async function seedFromCv() {
-    if (seedingFromCv) return;
-    seedingFromCv = true;
-    try {
-      const r = await withMinDuration(
-        api.post<{
-          ok: boolean;
-          rowsWritten?: number;
-          rowsActuallyAdded?: number;
-          error?: string;
-        }>('/api/profile/seed-form-answers?profile=' + encodeURIComponent(profileId), {}, { silent: true }),
-        600,
-      );
-      if (r.ok) {
-        toast.success('Seeded from CV', {
-          description: '+' + (r.rowsActuallyAdded ?? r.rowsWritten ?? 0) +
-            ' new answers (existing entries left untouched). 30-60s via Claude.',
-          duration: 8_000,
-        });
-        await refresh();
-      } else {
-        toast.error('Seed failed', { description: r.error ?? 'unknown' });
-      }
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Seed failed', { description: err.message });
-    } finally {
-      seedingFromCv = false;
-    }
-  }
-
-  async function saveNew() {
-    if (saving) return;
-    if (!newLabel.trim() || !newAnswer.trim()) return;
-    saving = true;
-    try {
-      await api.post(
-        '/api/profile/form-answers?profile=' + encodeURIComponent(profileId),
-        { label: newLabel, answer: newAnswer },
+/**
+ * Trigger the seed-form-answers Claude mode. Reads cv.md + profile.yml
+ * and writes ~15-25 high-confidence cache rows (identity, work auth,
+ * comp, behavioral templates, per-archetype YoE). Eliminates the
+ * cold-cache dead-end that hits every first-time autonomous-apply user.
+ */
+async function seedFromCv() {
+  if (seedingFromCv) return;
+  seedingFromCv = true;
+  try {
+    const r = await withMinDuration(
+      api.post<{
+        ok: boolean;
+        rowsWritten?: number;
+        rowsActuallyAdded?: number;
+        error?: string;
+      }>(
+        '/api/profile/seed-form-answers?profile=' + encodeURIComponent(profileId),
+        {},
         { silent: true },
-      );
-      toast.success('Answer saved', { description: newLabel.slice(0, 60) });
-      newLabel = '';
-      newAnswer = '';
+      ),
+      600,
+    );
+    if (r.ok) {
+      toast.success('Seeded from CV', {
+        description:
+          '+' +
+          (r.rowsActuallyAdded ?? r.rowsWritten ?? 0) +
+          ' new answers (existing entries left untouched). 30-60s via Claude.',
+        duration: 8_000,
+      });
       await refresh();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Save failed', { description: err.message });
-    } finally {
-      saving = false;
+    } else {
+      toast.error('Seed failed', { description: r.error ?? 'unknown' });
     }
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Seed failed', { description: err.message });
+  } finally {
+    seedingFromCv = false;
   }
+}
 
-  function startEdit(row: FormAnswer) {
-    editingKey = row.key;
-    editLabel = row.label;
-    editAnswer = row.answer;
+async function saveNew() {
+  if (saving) return;
+  if (!newLabel.trim() || !newAnswer.trim()) return;
+  saving = true;
+  try {
+    await api.post(
+      '/api/profile/form-answers?profile=' + encodeURIComponent(profileId),
+      { label: newLabel, answer: newAnswer },
+      { silent: true },
+    );
+    toast.success('Answer saved', { description: newLabel.slice(0, 60) });
+    newLabel = '';
+    newAnswer = '';
+    await refresh();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Save failed', { description: err.message });
+  } finally {
+    saving = false;
   }
+}
 
-  function cancelEdit() {
-    editingKey = null;
-    editLabel = '';
-    editAnswer = '';
-  }
+function startEdit(row: FormAnswer) {
+  editingKey = row.key;
+  editLabel = row.label;
+  editAnswer = row.answer;
+}
 
-  async function saveEdit() {
-    if (!editingKey || saving) return;
-    saving = true;
-    try {
-      await api.post(
-        '/api/profile/form-answers?profile=' + encodeURIComponent(profileId),
-        { label: editLabel, answer: editAnswer },
-        { silent: true },
-      );
-      toast.success('Answer updated');
-      cancelEdit();
-      await refresh();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Save failed', { description: err.message });
-    } finally {
-      saving = false;
-    }
-  }
+function cancelEdit() {
+  editingKey = null;
+  editLabel = '';
+  editAnswer = '';
+}
 
-  async function deleteOne(row: FormAnswer) {
-    if (saving) return;
-    saving = true;
-    try {
-      // DELETE with body isn't in the shared api helper, so we pass key
-      // as a URL parameter — matches the endpoint's expectations.
-      await api.delete(
-        '/api/profile/form-answers?profile=' + encodeURIComponent(profileId) +
-          '&key=' + encodeURIComponent(row.key),
-        { silent: true },
-      );
-      toast.success('Answer deleted');
-      await refresh();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Delete failed', { description: err.message });
-    } finally {
-      saving = false;
-    }
+async function saveEdit() {
+  if (!editingKey || saving) return;
+  saving = true;
+  try {
+    await api.post(
+      '/api/profile/form-answers?profile=' + encodeURIComponent(profileId),
+      { label: editLabel, answer: editAnswer },
+      { silent: true },
+    );
+    toast.success('Answer updated');
+    cancelEdit();
+    await refresh();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Save failed', { description: err.message });
+  } finally {
+    saving = false;
   }
+}
 
-  function quickFill(suggestion: string) {
-    newLabel = suggestion;
-    // Move focus to the answer textarea so the user can just type.
-    requestAnimationFrame(() => {
-      const ta = document.getElementById('new-answer-textarea') as HTMLTextAreaElement | null;
-      ta?.focus();
-    });
+async function deleteOne(row: FormAnswer) {
+  if (saving) return;
+  saving = true;
+  try {
+    // DELETE with body isn't in the shared api helper, so we pass key
+    // as a URL parameter — matches the endpoint's expectations.
+    await api.delete(
+      '/api/profile/form-answers?profile=' +
+        encodeURIComponent(profileId) +
+        '&key=' +
+        encodeURIComponent(row.key),
+      { silent: true },
+    );
+    toast.success('Answer deleted');
+    await refresh();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Delete failed', { description: err.message });
+  } finally {
+    saving = false;
   }
+}
+
+function quickFill(suggestion: string) {
+  newLabel = suggestion;
+  // Move focus to the answer textarea so the user can just type.
+  requestAnimationFrame(() => {
+    const ta = document.getElementById('new-answer-textarea') as HTMLTextAreaElement | null;
+    ta?.focus();
+  });
+}
 </script>
 
 <Card.Root>

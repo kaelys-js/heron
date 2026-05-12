@@ -96,7 +96,8 @@ function collectUrls(scope: 'stale' | 'all'): string[] {
     const code = (e as NodeJS.ErrnoException).code;
     if (code !== 'ENOENT') {
       logEvent('liveness', 'Could not read pipeline.md', {
-        level: 'warn', category: 'system',
+        level: 'warn',
+        category: 'system',
         message: code + ': ' + (e instanceof Error ? e.message : String(e)),
       });
     }
@@ -124,7 +125,8 @@ function collectUrls(scope: 'stale' | 'all'): string[] {
     const code = (e as NodeJS.ErrnoException).code;
     if (code !== 'ENOENT') {
       logEvent('liveness', 'Could not read applications.md', {
-        level: 'warn', category: 'system',
+        level: 'warn',
+        category: 'system',
         message: code + ': ' + (e instanceof Error ? e.message : String(e)),
       });
     }
@@ -135,14 +137,21 @@ function collectUrls(scope: 'stale' | 'all'): string[] {
 /** Run check-liveness.mjs against an explicit URL list. */
 function runLivenessSubprocess(urls: string[]): Promise<Outcome[]> {
   return new Promise((resolve) => {
-    if (urls.length === 0) { resolve([]); return; }
+    if (urls.length === 0) {
+      resolve([]);
+      return;
+    }
     let stdout = '';
     const p = spawn('node', ['check-liveness.mjs', ...urls], {
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', () => { /* swallow */ });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', () => {
+      /* swallow */
+    });
     p.on('error', (err) => {
       logEvent('liveness', 'check-liveness.mjs failed to spawn', {
         level: 'error',
@@ -174,7 +183,7 @@ async function runLivenessSweep(args?: JobArgs): Promise<JobResult> {
   if (Array.isArray(args?.urls)) {
     urls = (args!.urls as string[]).filter((u) => typeof u === 'string');
   } else {
-    const scope = (args?.scope === 'all') ? 'all' : 'stale';
+    const scope = args?.scope === 'all' ? 'all' : 'stale';
     urls = collectUrls(scope as 'stale' | 'all');
   }
   if (urls.length === 0) {
@@ -202,7 +211,8 @@ async function runLivenessSweep(args?: JobArgs): Promise<JobResult> {
         // markClosed has its own internal error logging via reportServerError,
         // but the throw shouldn't blow up the sweep loop. Log once and move on.
         logEvent('liveness', 'Could not mark URL closed', {
-          level: 'warn', category: 'application',
+          level: 'warn',
+          category: 'application',
           message: o.url + ' — ' + (err instanceof Error ? err.message : String(err)),
         });
       }
@@ -222,9 +232,12 @@ async function runLivenessSweep(args?: JobArgs): Promise<JobResult> {
     level: 'success',
     category: 'system',
     message:
-      outcomes.length + ' checked · ' +
-      expired + ' expired → Closed · ' +
-      uncertain + ' uncertain (Inbox)',
+      outcomes.length +
+      ' checked · ' +
+      expired +
+      ' expired → Closed · ' +
+      uncertain +
+      ' uncertain (Inbox)',
   });
   return {
     ok: true,
@@ -236,7 +249,8 @@ async function runLivenessSweep(args?: JobArgs): Promise<JobResult> {
 register({
   id: 'liveness',
   label: 'Liveness sweep',
-  description: 'Walks pipeline URLs through Playwright; auto-closes expired postings, flags uncertain ones.',
+  description:
+    'Walks pipeline URLs through Playwright; auto-closes expired postings, flags uncertain ones.',
   category: 'hygiene',
   trigger: { type: 'weekly', dayOfWeek: 1, hour: 6, minute: 0 },
   allowManual: true,

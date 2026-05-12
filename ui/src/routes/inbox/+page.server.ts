@@ -6,7 +6,11 @@ import { readSafe } from '$lib/server/files';
 import { activePath, profilePath } from '$lib/server/profile-paths';
 import { getActiveProfileId } from '$lib/server/profiles';
 import { readProfile } from '$lib/server/profile';
-import { getFollowupCadence, findEntryByCompanyRole, type FollowupEntry } from '$lib/server/followup-cadence';
+import {
+  getFollowupCadence,
+  findEntryByCompanyRole,
+  type FollowupEntry,
+} from '$lib/server/followup-cadence';
 import { listOpenIssues } from '$lib/server/issues';
 import { listLeads } from '$lib/server/email-reactor';
 import fs from 'node:fs';
@@ -78,22 +82,26 @@ export async function load({ url }: { url: URL }) {
   // Pipeline freshness
   let pipelineMtime: number | null = null;
   try {
-    const pipelinePath = profileId && profileId !== 'all'
-      ? profilePath(profileId, 'pipeline')
-      : activePath('pipeline');
+    const pipelinePath =
+      profileId && profileId !== 'all'
+        ? profilePath(profileId, 'pipeline')
+        : activePath('pipeline');
     pipelineMtime = fs.statSync(pipelinePath).mtimeMs;
   } catch {}
   const pipelineDaysAgo = pipelineMtime ? Math.floor((Date.now() - pipelineMtime) / DAY_MS) : null;
 
   // Sort helper
-  const byScore = (a: Job, b: Job) => (b.score ?? b.geminiScore ?? -1) - (a.score ?? a.geminiScore ?? -1);
+  const byScore = (a: Job, b: Job) =>
+    (b.score ?? b.geminiScore ?? -1) - (a.score ?? a.geminiScore ?? -1);
 
   // Section: jobs ≥ 4 awaiting deep evaluation (Scored/New, no report)
   const upNext = jobs
     .filter((j) => (j.score ?? j.geminiScore ?? 0) >= 4 && !j.reportFile)
     .sort(byScore)
     .slice(0, 6);
-  const upNextTotal = jobs.filter((j) => (j.score ?? j.geminiScore ?? 0) >= 4 && !j.reportFile).length;
+  const upNextTotal = jobs.filter(
+    (j) => (j.score ?? j.geminiScore ?? 0) >= 4 && !j.reportFile,
+  ).length;
 
   // Section: jobs in Ready
   const ready = jobs
@@ -113,7 +121,9 @@ export async function load({ url }: { url: URL }) {
     .filter((j) => j.status === 'Applied' || j.status === 'Screened')
     .sort(byScore)
     .slice(0, 6);
-  const followUpsTotal = jobs.filter((j) => j.status === 'Applied' || j.status === 'Screened').length;
+  const followUpsTotal = jobs.filter(
+    (j) => j.status === 'Applied' || j.status === 'Screened',
+  ).length;
 
   // Counts
   const unscored = jobs.filter((j) => !j.score && !j.geminiScore).length;
@@ -158,7 +168,8 @@ export async function load({ url }: { url: URL }) {
   const recentErrorsCount = recent.filter(
     (ev) => ev.level === 'error' && Date.now() - ev.ts < DAY_MS,
   ).length;
-  const lastError = [...recent].reverse().find((ev) => ev.level === 'error' && Date.now() - ev.ts < DAY_MS) ?? null;
+  const lastError =
+    [...recent].reverse().find((ev) => ev.level === 'error' && Date.now() - ev.ts < DAY_MS) ?? null;
 
   // Alerts
   const alerts: InboxAlert[] = [];
@@ -219,7 +230,8 @@ export async function load({ url }: { url: URL }) {
       id: 'no-anthropic',
       level: 'info',
       title: 'Anthropic key not set',
-      message: 'Required for deep evaluations, agent chat, mock interviews, and negotiation drafts.',
+      message:
+        'Required for deep evaluations, agent chat, mock interviews, and negotiation drafts.',
       actionLabel: 'Add key',
       actionUrl: '/settings',
     });
@@ -229,7 +241,7 @@ export async function load({ url }: { url: URL }) {
       id: 'no-gemini',
       level: 'info',
       title: 'Gemini key not set',
-      message: "Free tier covers ~1M tokens/day — required for cheap first-pass scoring.",
+      message: 'Free tier covers ~1M tokens/day — required for cheap first-pass scoring.',
       actionLabel: 'Add key',
       actionUrl: '/settings',
     });
@@ -250,11 +262,14 @@ export async function load({ url }: { url: URL }) {
   // missing Node), the page renders without the urgent-followups section.
   let followupsUrgent: { job: Job; entry: FollowupEntry }[] = [];
   let followupsOverdue: { job: Job; entry: FollowupEntry }[] = [];
-  let followupsCadenceMeta: Awaited<ReturnType<typeof getFollowupCadence>>['metadata'] | null = null;
+  let followupsCadenceMeta: Awaited<ReturnType<typeof getFollowupCadence>>['metadata'] | null =
+    null;
   try {
     const cadence = await getFollowupCadence();
     followupsCadenceMeta = cadence.metadata;
-    const activeJobs = jobs.filter((j) => ['Applied', 'Screened', 'Interview', 'Offer'].includes(j.status));
+    const activeJobs = jobs.filter((j) =>
+      ['Applied', 'Screened', 'Interview', 'Offer'].includes(j.status),
+    );
     for (const j of activeJobs) {
       const entry = findEntryByCompanyRole(cadence, j.company, j.role);
       if (!entry) continue;
@@ -272,7 +287,11 @@ export async function load({ url }: { url: URL }) {
   // `recruiter-reach-out` (no prior tracker match). Highest-converting
   // channel historically; surface up.
   const leads = (() => {
-    try { return listLeads().slice(0, 10); } catch { return []; }
+    try {
+      return listLeads().slice(0, 10);
+    } catch {
+      return [];
+    }
   })();
 
   return {

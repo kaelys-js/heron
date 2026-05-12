@@ -1,131 +1,155 @@
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-  import {
-    Plug, CheckCircle2, AlertCircle, Loader2, Globe, Mail, Key, Database,
-    Power, RefreshCw, ExternalLink,
-  } from '@lucide/svelte';
-  import { api, ApiError } from '$lib/api';
-  import { invalidateAll } from '$app/navigation';
-  import { toast } from 'svelte-sonner';
-  import { withMinDuration, cn, formatRelativeTime } from '$lib/utils';
-  import type { KnownSource, SourceState } from '$lib/server/sources';
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import {
+  Plug,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Globe,
+  Mail,
+  Key,
+  Database,
+  Power,
+  RefreshCw,
+  ExternalLink,
+} from '@lucide/svelte';
+import { api, ApiError } from '$lib/api';
+import { invalidateAll } from '$app/navigation';
+import { toast } from 'svelte-sonner';
+import { withMinDuration, cn, formatRelativeTime } from '$lib/utils';
+import type { KnownSource, SourceState } from '$lib/server/sources';
 
-  type Row = KnownSource & {
-    state: SourceState;
-    pulls: { last7d: number; total: number };
-  };
+type Row = KnownSource & {
+  state: SourceState;
+  pulls: { last7d: number; total: number };
+};
 
-  let { data }: { data: { sources: Row[] } } = $props();
+let { data }: { data: { sources: Row[] } } = $props();
 
-  let busy = $state<Record<string, 'connect' | 'test' | 'disconnect' | null>>({});
+let busy = $state<Record<string, 'connect' | 'test' | 'disconnect' | null>>({});
 
-  // Gmail-specific form state — only used by the gmail-imap card
-  let gmailForm = $state({
-    host: 'imap.gmail.com',
-    user: '',
-    password: '',
-    label: 'INBOX',
-  });
+// Gmail-specific form state — only used by the gmail-imap card
+let gmailForm = $state({
+  host: 'imap.gmail.com',
+  user: '',
+  password: '',
+  label: 'INBOX',
+});
 
-  function statusTint(state: SourceState): string {
-    if (state.connected && state.consecutiveFailures === 0) return 'border-emerald-500/40 bg-emerald-500/5';
-    if (state.connected) return 'border-amber-500/40 bg-amber-500/5';
-    if (state.consecutiveFailures > 0) return 'border-red-500/40 bg-red-500/5';
-    return 'border-border/40 bg-card';
+function statusTint(state: SourceState): string {
+  if (state.connected && state.consecutiveFailures === 0)
+    return 'border-emerald-500/40 bg-emerald-500/5';
+  if (state.connected) return 'border-amber-500/40 bg-amber-500/5';
+  if (state.consecutiveFailures > 0) return 'border-red-500/40 bg-red-500/5';
+  return 'border-border/40 bg-card';
+}
+
+function statusLabel(state: SourceState): { dot: string; text: string } {
+  if (state.connected && state.consecutiveFailures === 0) {
+    const ago = state.lastSuccessfulPullAt
+      ? formatRelativeTime(state.lastSuccessfulPullAt) + ' ago'
+      : '';
+    return { dot: 'bg-emerald-500', text: 'Connected' + (ago ? ' · last pull ' + ago : '') };
   }
-
-  function statusLabel(state: SourceState): { dot: string; text: string } {
-    if (state.connected && state.consecutiveFailures === 0) {
-      const ago = state.lastSuccessfulPullAt
-        ? formatRelativeTime(state.lastSuccessfulPullAt) + ' ago'
-        : '';
-      return { dot: 'bg-emerald-500', text: 'Connected' + (ago ? ' · last pull ' + ago : '') };
-    }
-    if (state.connected) {
-      return { dot: 'bg-amber-500', text: 'Connected · ' + state.consecutiveFailures + ' recent failure' + (state.consecutiveFailures === 1 ? '' : 's') };
-    }
-    if (state.consecutiveFailures > 0) {
-      return { dot: 'bg-red-500', text: 'Disconnected — ' + (state.lastError ?? 'failed ' + state.consecutiveFailures + 'x') };
-    }
-    return { dot: 'bg-zinc-500', text: 'Not connected' };
+  if (state.connected) {
+    return {
+      dot: 'bg-amber-500',
+      text:
+        'Connected · ' +
+        state.consecutiveFailures +
+        ' recent failure' +
+        (state.consecutiveFailures === 1 ? '' : 's'),
+    };
   }
-
-  function authIcon(kind: KnownSource['authKind']) {
-    if (kind === 'playwright') return Globe;
-    if (kind === 'imap') return Mail;
-    if (kind === 'env-key') return Key;
-    return Database;
+  if (state.consecutiveFailures > 0) {
+    return {
+      dot: 'bg-red-500',
+      text: 'Disconnected — ' + (state.lastError ?? 'failed ' + state.consecutiveFailures + 'x'),
+    };
   }
+  return { dot: 'bg-zinc-500', text: 'Not connected' };
+}
 
-  async function connectSource(row: Row) {
-    if (busy[row.id]) return;
-    busy = { ...busy, [row.id]: 'connect' };
-    try {
-      const body: Record<string, unknown> = {};
-      if (row.id === 'gmail-imap') Object.assign(body, gmailForm);
-      const r = await withMinDuration(
-        api.post<{ ok: boolean; message?: string }>(
-          '/api/sources/' + encodeURIComponent(row.id) + '/connect',
-          body,
-          { silent: true },
-        ),
-        500,
-      );
-      toast.success(row.label + ' connected', { description: r.message });
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Connect failed', {
-        description: err.message,
-        action: { label: 'Retry', onClick: () => connectSource(row) },
-        duration: 12_000,
-      });
-    } finally {
-      busy = { ...busy, [row.id]: null };
-    }
-  }
+function authIcon(kind: KnownSource['authKind']) {
+  if (kind === 'playwright') return Globe;
+  if (kind === 'imap') return Mail;
+  if (kind === 'env-key') return Key;
+  return Database;
+}
 
-  async function testSource(row: Row) {
-    if (busy[row.id]) return;
-    busy = { ...busy, [row.id]: 'test' };
-    try {
-      const r = await withMinDuration(
-        api.post<{ ok: boolean; message?: string }>(
-          '/api/sources/' + encodeURIComponent(row.id) + '/test',
-          {},
-          { silent: true },
-        ),
-        300,
-      );
-      toast.success(row.label + ' OK', { description: r.message ?? 'Probe succeeded.' });
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Test failed', { description: err.message, duration: 8_000 });
-    } finally {
-      busy = { ...busy, [row.id]: null };
-    }
+async function connectSource(row: Row) {
+  if (busy[row.id]) return;
+  busy = { ...busy, [row.id]: 'connect' };
+  try {
+    const body: Record<string, unknown> = {};
+    if (row.id === 'gmail-imap') Object.assign(body, gmailForm);
+    const r = await withMinDuration(
+      api.post<{ ok: boolean; message?: string }>(
+        '/api/sources/' + encodeURIComponent(row.id) + '/connect',
+        body,
+        { silent: true },
+      ),
+      500,
+    );
+    toast.success(row.label + ' connected', { description: r.message });
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Connect failed', {
+      description: err.message,
+      action: { label: 'Retry', onClick: () => connectSource(row) },
+      duration: 12_000,
+    });
+  } finally {
+    busy = { ...busy, [row.id]: null };
   }
+}
 
-  async function disconnectSource(row: Row) {
-    if (busy[row.id]) return;
-    if (!confirm('Disconnect ' + row.label + '? You\'ll need to re-authenticate.')) return;
-    busy = { ...busy, [row.id]: 'disconnect' };
-    try {
-      await api.post('/api/sources/' + encodeURIComponent(row.id) + '/disconnect', {}, { silent: true });
-      toast.info(row.label + ' disconnected');
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Disconnect failed', { description: err.message });
-    } finally {
-      busy = { ...busy, [row.id]: null };
-    }
+async function testSource(row: Row) {
+  if (busy[row.id]) return;
+  busy = { ...busy, [row.id]: 'test' };
+  try {
+    const r = await withMinDuration(
+      api.post<{ ok: boolean; message?: string }>(
+        '/api/sources/' + encodeURIComponent(row.id) + '/test',
+        {},
+        { silent: true },
+      ),
+      300,
+    );
+    toast.success(row.label + ' OK', { description: r.message ?? 'Probe succeeded.' });
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Test failed', { description: err.message, duration: 8_000 });
+  } finally {
+    busy = { ...busy, [row.id]: null };
   }
+}
+
+async function disconnectSource(row: Row) {
+  if (busy[row.id]) return;
+  if (!confirm('Disconnect ' + row.label + "? You'll need to re-authenticate.")) return;
+  busy = { ...busy, [row.id]: 'disconnect' };
+  try {
+    await api.post(
+      '/api/sources/' + encodeURIComponent(row.id) + '/disconnect',
+      {},
+      { silent: true },
+    );
+    toast.info(row.label + ' disconnected');
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Disconnect failed', { description: err.message });
+  } finally {
+    busy = { ...busy, [row.id]: null };
+  }
+}
 </script>
 
 <div class="h-full overflow-y-auto">

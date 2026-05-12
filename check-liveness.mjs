@@ -31,7 +31,9 @@ async function checkUrl(page, url) {
     const bodyText = await page.evaluate(() => document.body?.innerText ?? '');
     const applyControls = await page.evaluate(() => {
       const candidates = Array.from(
-        document.querySelectorAll('a, button, input[type="submit"], input[type="button"], [role="button"]')
+        document.querySelectorAll(
+          'a, button, input[type="submit"], input[type="button"], [role="button"]',
+        ),
       );
 
       return candidates
@@ -43,7 +45,9 @@ async function checkUrl(page, url) {
           if (style.display === 'none' || style.visibility === 'hidden') return false;
           if (!element.getClientRects().length) return false;
 
-          return Array.from(element.getClientRects()).some((rect) => rect.width > 0 && rect.height > 0);
+          return Array.from(element.getClientRects()).some(
+            (rect) => rect.width > 0 && rect.height > 0,
+          );
         })
         .map((element) => {
           const label = [
@@ -63,7 +67,6 @@ async function checkUrl(page, url) {
     });
 
     return classifyLiveness({ status, finalUrl, bodyText, applyControls });
-
   } catch (err) {
     return { result: 'expired', reason: `navigation error: ${err.message.split('\n')[0]}` };
   }
@@ -81,7 +84,10 @@ async function main() {
   let urls;
   if (args[0] === '--file') {
     const text = await readFile(args[1], 'utf-8');
-    urls = text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+    urls = text
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith('#'));
   } else {
     urls = args;
   }
@@ -91,7 +97,9 @@ async function main() {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
 
-  let active = 0, expired = 0, uncertain = 0;
+  let active = 0,
+    expired = 0,
+    uncertain = 0;
 
   // Sequential — project rule: never Playwright in parallel
   for (const url of urls) {
@@ -110,7 +118,7 @@ async function main() {
   if (expired > 0 || uncertain > 0) process.exit(1);
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error('Fatal:', err.message);
   process.exit(1);
 });

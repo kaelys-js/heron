@@ -56,7 +56,10 @@ function resolveId(profileId?: string): string {
 
 /** Load the YAML doc preferring the user's per-profile portals.yml, falling
  *  back to the bundled template. Returns `null` when neither exists. */
-function readDoc(profileId?: string): { doc: Record<string, unknown> | null; source: PortalsSnapshot['source'] } {
+function readDoc(profileId?: string): {
+  doc: Record<string, unknown> | null;
+  source: PortalsSnapshot['source'];
+} {
   const id = resolveId(profileId);
   const portalsPath = profilePath(id, 'portals-yml');
   if (fs.existsSync(portalsPath)) {

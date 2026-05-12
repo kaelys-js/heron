@@ -58,8 +58,11 @@ export type DetectResult = {
 export function detectPortal(url: string): DetectResult {
   if (!url) return { portal: 'unknown' };
   let u: URL;
-  try { u = new URL(url); }
-  catch { return { portal: 'unknown' }; }
+  try {
+    u = new URL(url);
+  } catch {
+    return { portal: 'unknown' };
+  }
 
   const h = u.hostname.toLowerCase();
   const p = u.pathname;

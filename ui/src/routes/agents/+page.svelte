@@ -1,118 +1,137 @@
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import { Button } from '$lib/components/ui/button';
-  import * as Card from '$lib/components/ui/card';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import ActivityFeed from '$lib/components/ActivityFeed.svelte';
-  import {
-    Sparkles, Send, Globe, Loader2, Activity as ActivityIcon, FileCheck2,
-    AlertOctagon, Shuffle, Compass, ClipboardList, Mail, ScanSearch, Brain,
-  } from '@lucide/svelte';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import { invalidateAll } from '$app/navigation';
-  import { withMinDuration } from '$lib/utils';
-  import { notifications } from '$lib/notifications.svelte';
-  import type { JobSummary } from '$lib/server/jobs/types';
+import Topbar from '$lib/components/Topbar.svelte';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import ActivityFeed from '$lib/components/ActivityFeed.svelte';
+import {
+  Sparkles,
+  Send,
+  Globe,
+  Loader2,
+  Activity as ActivityIcon,
+  FileCheck2,
+  AlertOctagon,
+  Shuffle,
+  Compass,
+  ClipboardList,
+  Mail,
+  ScanSearch,
+  Brain,
+} from '@lucide/svelte';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import { invalidateAll } from '$app/navigation';
+import { withMinDuration } from '$lib/utils';
+import { notifications } from '$lib/notifications.svelte';
+import type { JobSummary } from '$lib/server/jobs/types';
 
-  let { data }: { data: { agents: JobSummary[] } } = $props();
+let { data }: { data: { agents: JobSummary[] } } = $props();
 
-  let busy = $state<string | null>(null);
+let busy = $state<string | null>(null);
 
-  /** Map category → lucide icon (visual grouping). */
-  function iconFor(category: JobSummary['category']): typeof Globe {
-    switch (category) {
-      case 'discovery':  return Globe;
-      case 'evaluation': return Sparkles;
-      case 'apply':      return Send;
-      case 'hygiene':    return Shuffle;
-      case 'insight':    return Brain;
-      case 'system':     return AlertOctagon;
-    }
+/** Map category → lucide icon (visual grouping). */
+function iconFor(category: JobSummary['category']): typeof Globe {
+  switch (category) {
+    case 'discovery':
+      return Globe;
+    case 'evaluation':
+      return Sparkles;
+    case 'apply':
+      return Send;
+    case 'hygiene':
+      return Shuffle;
+    case 'insight':
+      return Brain;
+    case 'system':
+      return AlertOctagon;
   }
+}
 
-  /** Format the trigger as a short label. */
-  function triggerLabel(t: JobSummary['trigger']): string {
-    if (t.type === 'manual') return 'Manual only';
-    if (t.type === 'daily') {
-      const time = String(t.hour).padStart(2, '0') + ':' + String(t.minute).padStart(2, '0');
-      const days = !t.weekdays || t.weekdays.length === 0
+/** Format the trigger as a short label. */
+function triggerLabel(t: JobSummary['trigger']): string {
+  if (t.type === 'manual') return 'Manual only';
+  if (t.type === 'daily') {
+    const time = String(t.hour).padStart(2, '0') + ':' + String(t.minute).padStart(2, '0');
+    const days =
+      !t.weekdays || t.weekdays.length === 0
         ? 'every day'
         : t.weekdays.length === 5 && t.weekdays.every((d) => [1, 2, 3, 4, 5].includes(d))
           ? 'weekdays'
           : t.weekdays.length + ' days/wk';
-      return 'Daily ' + days + ' @ ' + time;
-    }
-    if (t.type === 'weekly') {
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const time = String(t.hour).padStart(2, '0') + ':' + String(t.minute).padStart(2, '0');
-      return 'Weekly ' + days[t.dayOfWeek] + ' @ ' + time;
-    }
-    if (t.type === 'after') {
-      return 'After ' + t.tasks.join(', ');
-    }
-    return '';
+    return 'Daily ' + days + ' @ ' + time;
   }
+  if (t.type === 'weekly') {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const time = String(t.hour).padStart(2, '0') + ':' + String(t.minute).padStart(2, '0');
+    return 'Weekly ' + days[t.dayOfWeek] + ' @ ' + time;
+  }
+  if (t.type === 'after') {
+    return 'After ' + t.tasks.join(', ');
+  }
+  return '';
+}
 
-  /**
-   * POST /api/jobs/[id]/run — the generic registry-driven trigger.
-   * Falls back to /api/run for the legacy 4 task ids that orchestrator
-   * still handles in its switch (scan, gemini, apply-linkedin, auto-eval)
-   * so the busy state in `notifications.runningTasks` keeps working.
-   */
-  async function trigger(jobId: string, label: string) {
-    if (busy) return;
-    busy = jobId;
-    const legacyIds = new Set(['scan', 'gemini', 'apply-linkedin', 'auto-eval']);
-    try {
-      if (legacyIds.has(jobId)) {
-        // Legacy path keeps the running-tasks indicator in sync.
-        const r = await withMinDuration(
-          api.post<{ running: string[] }>('/api/run', { task: jobId }, { silent: true }),
-          500,
-        );
-        const wasAlreadyRunning = (r.running ?? []).includes(jobId);
-        if (wasAlreadyRunning) {
-          toast.info(label + ' is already running', {
-            description: 'Watch the activity feed below — a completion toast will pop when it finishes.',
-          });
-        } else {
-          toast.success(label + ' started', {
-            description: 'Streaming output below. The bell (top-right) will pop when it completes.',
-          });
-        }
+/**
+ * POST /api/jobs/[id]/run — the generic registry-driven trigger.
+ * Falls back to /api/run for the legacy 4 task ids that orchestrator
+ * still handles in its switch (scan, gemini, apply-linkedin, auto-eval)
+ * so the busy state in `notifications.runningTasks` keeps working.
+ */
+async function trigger(jobId: string, label: string) {
+  if (busy) return;
+  busy = jobId;
+  const legacyIds = new Set(['scan', 'gemini', 'apply-linkedin', 'auto-eval']);
+  try {
+    if (legacyIds.has(jobId)) {
+      // Legacy path keeps the running-tasks indicator in sync.
+      const r = await withMinDuration(
+        api.post<{ running: string[] }>('/api/run', { task: jobId }, { silent: true }),
+        500,
+      );
+      const wasAlreadyRunning = (r.running ?? []).includes(jobId);
+      if (wasAlreadyRunning) {
+        toast.info(label + ' is already running', {
+          description:
+            'Watch the activity feed below — a completion toast will pop when it finishes.',
+        });
       } else {
-        const r = await withMinDuration(
-          api.post<{ jobId: string; success: boolean; message?: string; error?: string }>(
-            '/api/jobs/' + encodeURIComponent(jobId) + '/run',
-            {},
-            { silent: true },
-          ),
-          500,
-        );
-        if (r.success) {
-          toast.success(label + ' finished', {
-            description: r.message ?? 'See the activity feed for details.',
-          });
-        } else {
-          toast.error(label + ' failed', {
-            description: r.error ?? 'Unknown error',
-          });
-        }
+        toast.success(label + ' started', {
+          description: 'Streaming output below. The bell (top-right) will pop when it completes.',
+        });
       }
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Failed to start ' + label, {
-        description: err.message,
-        action: { label: 'Retry', onClick: () => trigger(jobId, label) },
-      });
-    } finally {
-      busy = null;
+    } else {
+      const r = await withMinDuration(
+        api.post<{ jobId: string; success: boolean; message?: string; error?: string }>(
+          '/api/jobs/' + encodeURIComponent(jobId) + '/run',
+          {},
+          { silent: true },
+        ),
+        500,
+      );
+      if (r.success) {
+        toast.success(label + ' finished', {
+          description: r.message ?? 'See the activity feed for details.',
+        });
+      } else {
+        toast.error(label + ' failed', {
+          description: r.error ?? 'Unknown error',
+        });
+      }
     }
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Failed to start ' + label, {
+      description: err.message,
+      action: { label: 'Retry', onClick: () => trigger(jobId, label) },
+    });
+  } finally {
+    busy = null;
   }
+}
 
-  let runningSet = $derived(new Set(notifications.runningTasks));
+let runningSet = $derived(new Set(notifications.runningTasks));
 </script>
 
 <div class="h-full overflow-y-auto">

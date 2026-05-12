@@ -31,10 +31,24 @@ import { ROOT } from './files';
 const PROFILES_PATH = path.join(ROOT, 'data', 'profiles.json');
 
 export type ProfileColor =
-  | 'blue' | 'emerald' | 'violet' | 'amber' | 'rose' | 'cyan' | 'orange' | 'pink';
+  | 'blue'
+  | 'emerald'
+  | 'violet'
+  | 'amber'
+  | 'rose'
+  | 'cyan'
+  | 'orange'
+  | 'pink';
 
 export const PROFILE_COLORS: ProfileColor[] = [
-  'blue', 'emerald', 'violet', 'amber', 'rose', 'cyan', 'orange', 'pink',
+  'blue',
+  'emerald',
+  'violet',
+  'amber',
+  'rose',
+  'cyan',
+  'orange',
+  'pink',
 ];
 
 export type Profile = {
@@ -111,9 +125,7 @@ export function setActiveProfileId(id: string): ProfilesState {
   }
   const next: ProfilesState = {
     activeId: id,
-    profiles: state.profiles.map((p) =>
-      p.id === id ? { ...p, lastActiveAt: Date.now() } : p,
-    ),
+    profiles: state.profiles.map((p) => (p.id === id ? { ...p, lastActiveAt: Date.now() } : p)),
   };
   writeProfiles(next);
   return next;

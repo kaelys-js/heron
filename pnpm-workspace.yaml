@@ -1,0 +1,11 @@
+# pnpm workspace — turborepo + lefthook expect this layout.
+#
+# Why workspaces here? Strictly we don't need them (ui/ and ui/electron/
+# aren't separately published), but turbo's task graph and pnpm's
+# hoisted node_modules cache work better when the relationship is
+# explicit. Plus this lets `pnpm -r ...` run a command across all
+# packages.
+
+packages:
+  - "ui"
+  - "ui/electron"

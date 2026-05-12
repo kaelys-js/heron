@@ -59,7 +59,9 @@ function effectiveCap(profileId: string, baseCap: number): number {
       // During warmup: cap at 5/day regardless of the global setting.
       return Math.min(baseCap, 5);
     }
-  } catch { /* fall through */ }
+  } catch {
+    /* fall through */
+  }
   return baseCap;
 }
 
@@ -84,7 +86,9 @@ function preflightProfile(job: Job, portal: SupportedPortal): string | null {
     if (score < minScore) return 'score ' + score.toFixed(1) + ' < min ' + minScore;
     const enabled = a.enabled_portals ?? ['linkedin', 'greenhouse', 'ashby'];
     if (!enabled.includes(portal)) return 'portal ' + portal + ' not in enabled_portals';
-  } catch { /* allow */ }
+  } catch {
+    /* allow */
+  }
   return null;
 }
 
@@ -125,13 +129,19 @@ async function ensureAssembly(job: Job): Promise<boolean> {
 
 /** Dispatch the per-portal Python script. Streams APPLY_STEP / APPLY_RESULT
  *  lines to the activity feed + apply-state file. */
-function dispatchApply(job: Job, portal: SupportedPortal): Promise<{ status: 'applied' | 'manual-apply-needed' | 'error'; detail?: string }> {
+function dispatchApply(
+  job: Job,
+  portal: SupportedPortal,
+): Promise<{ status: 'applied' | 'manual-apply-needed' | 'error'; detail?: string }> {
   return new Promise((resolve) => {
     const args = [APPLY_PORTAL_SCRIPT, '--url', job.url, '--job-id', job.id];
     if (job.profileId) args.push('--profile', job.profileId);
     if (typeof job.score === 'number') args.push('--score', String(job.score));
 
-    let lastResult: { status: 'applied' | 'manual-apply-needed' | 'error'; detail?: string } | null = null;
+    let lastResult: {
+      status: 'applied' | 'manual-apply-needed' | 'error';
+      detail?: string;
+    } | null = null;
     let p;
     try {
       p = spawn(venvPython(), args, { cwd: ROOT, env: { ...process.env } });
@@ -151,7 +161,9 @@ function dispatchApply(job: Job, portal: SupportedPortal): Promise<{ status: 'ap
         // Parse the canonical protocol.
         if (line.startsWith('APPLY_STEP:')) {
           const step = line.slice('APPLY_STEP:'.length).trim();
-          try { appendStep(job.id, step); } catch {}
+          try {
+            appendStep(job.id, step);
+          } catch {}
           logEvent('apply-' + portal, 'step: ' + step, {
             level: 'info',
             category: 'application',
@@ -196,7 +208,8 @@ function dispatchApply(job: Job, portal: SupportedPortal): Promise<{ status: 'ap
       }
       // Fall back to exit code if the script didn't emit APPLY_RESULT.
       if (code === 0) resolve({ status: 'applied' });
-      else if (code === 1) resolve({ status: 'manual-apply-needed', detail: 'unknown (no APPLY_RESULT line)' });
+      else if (code === 1)
+        resolve({ status: 'manual-apply-needed', detail: 'unknown (no APPLY_RESULT line)' });
       else resolve({ status: 'error', detail: 'exit ' + code });
     });
   });
@@ -232,7 +245,14 @@ async function runApplyQueueDrain(_args?: JobArgs): Promise<JobResult> {
       logEvent('apply-queue', 'Cap reached — stopping drain', {
         level: 'warn',
         category: 'application',
-        message: 'today=' + todayCount() + ' · cap=' + cap + ' (' + (allJobs.length - processed) + ' jobs remain queued)',
+        message:
+          'today=' +
+          todayCount() +
+          ' · cap=' +
+          cap +
+          ' (' +
+          (allJobs.length - processed) +
+          ' jobs remain queued)',
       });
       break;
     }
@@ -307,8 +327,20 @@ async function runApplyQueueDrain(_args?: JobArgs): Promise<JobResult> {
       // exit 1 without calling it — defensive double-emit is OK because the
       // Issue dedupeKey absorbs the duplicate.
       const reason = (result.detail ?? 'unknown').split(':')[0] as
-        | 'captcha' | 'anti-bot' | 'unknown-field' | 'upload-failed' | 'validation' | 'stub';
-      const knownModes: Array<typeof reason> = ['captcha', 'anti-bot', 'unknown-field', 'upload-failed', 'validation', 'stub'];
+        | 'captcha'
+        | 'anti-bot'
+        | 'unknown-field'
+        | 'upload-failed'
+        | 'validation'
+        | 'stub';
+      const knownModes: Array<typeof reason> = [
+        'captcha',
+        'anti-bot',
+        'unknown-field',
+        'upload-failed',
+        'validation',
+        'stub',
+      ];
       const mode = knownModes.includes(reason) ? reason : 'stub';
       reportApplyFailure({
         jobId: job.id,
@@ -337,8 +369,14 @@ async function runApplyQueueDrain(_args?: JobArgs): Promise<JobResult> {
   }
 
   const summary =
-    'Processed ' + processed + ' · applied ' + applied +
-    ' · manual ' + manualNeeded + ' · errors ' + errored +
+    'Processed ' +
+    processed +
+    ' · applied ' +
+    applied +
+    ' · manual ' +
+    manualNeeded +
+    ' · errors ' +
+    errored +
     (skipped > 0 ? ' · skipped ' + skipped : '');
   logEvent('apply-queue', 'Drain finished · ' + summary, {
     level: errored > 0 ? 'warn' : 'success',
@@ -354,7 +392,8 @@ async function runApplyQueueDrain(_args?: JobArgs): Promise<JobResult> {
 register({
   id: 'apply-queue-drain',
   label: 'Apply queue drain',
-  description: 'Iterates Queued jobs, runs the right portal adapter, paced by maxAppliesPerDay. Replaces the legacy weekday-apply schedule.',
+  description:
+    'Iterates Queued jobs, runs the right portal adapter, paced by maxAppliesPerDay. Replaces the legacy weekday-apply schedule.',
   category: 'apply',
   trigger: { type: 'daily', hour: 10, minute: 30, weekdays: [1, 2, 3, 4, 5] },
   allowManual: true,

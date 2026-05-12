@@ -23,8 +23,14 @@ export type EnvVars = {
 };
 
 const KEYS: (keyof EnvVars)[] = [
-  'GEMINI_API_KEY', 'ANTHROPIC_API_KEY', 'ADZUNA_APP_ID', 'ADZUNA_APP_KEY',
-  'GMAIL_IMAP_HOST', 'GMAIL_IMAP_USER', 'GMAIL_IMAP_PASSWORD', 'GMAIL_IMAP_LABEL',
+  'GEMINI_API_KEY',
+  'ANTHROPIC_API_KEY',
+  'ADZUNA_APP_ID',
+  'ADZUNA_APP_KEY',
+  'GMAIL_IMAP_HOST',
+  'GMAIL_IMAP_USER',
+  'GMAIL_IMAP_PASSWORD',
+  'GMAIL_IMAP_LABEL',
 ];
 
 export function readEnv(): EnvVars {
@@ -66,6 +72,9 @@ export function writeEnv(updates: Partial<EnvVars>) {
       delete process.env[k];
     }
   }
-  const out = Object.entries(existing).map(([k, v]) => k + '=' + v).join('\n') + '\n';
+  const out =
+    Object.entries(existing)
+      .map(([k, v]) => k + '=' + v)
+      .join('\n') + '\n';
   fs.writeFileSync(ENV_FILE, out);
 }

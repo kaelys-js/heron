@@ -8,57 +8,54 @@
   (only if true, never fabricated).
 -->
 <script lang="ts">
-  import * as Popover from '$lib/components/ui/popover';
-  import { Target, ChevronDown, AlertTriangle, CheckCircle2 } from '@lucide/svelte';
-  import { api } from '$lib/api';
-  import { onMount } from 'svelte';
-  import { cn } from '$lib/utils';
+import * as Popover from '$lib/components/ui/popover';
+import { Target, ChevronDown, AlertTriangle, CheckCircle2 } from '@lucide/svelte';
+import { api } from '$lib/api';
+import { onMount } from 'svelte';
+import { cn } from '$lib/utils';
 
-  let {
-    jobId,
-    profileId,
-  }: { jobId: string; profileId?: string } = $props();
+let { jobId, profileId }: { jobId: string; profileId?: string } = $props();
 
-  type MatchResult = {
-    hasReport: boolean;
-    score: number | null;
-    matched: string[] | null;
-    missing: string[] | null;
-    considered: { unigrams: number; bigrams: number; trigrams: number } | null;
-  };
+type MatchResult = {
+  hasReport: boolean;
+  score: number | null;
+  matched: string[] | null;
+  missing: string[] | null;
+  considered: { unigrams: number; bigrams: number; trigrams: number } | null;
+};
 
-  let result = $state<MatchResult | null>(null);
-  let loading = $state(true);
+let result = $state<MatchResult | null>(null);
+let loading = $state(true);
 
-  let scoreTint = $derived.by(() => {
-    const s = result?.score ?? 0;
-    if (s >= 80) return 'text-emerald-300 border-emerald-500/40 bg-emerald-500/10';
-    if (s >= 60) return 'text-amber-300 border-amber-500/40 bg-amber-500/10';
-    return 'text-red-300 border-red-500/40 bg-red-500/10';
-  });
+let scoreTint = $derived.by(() => {
+  const s = result?.score ?? 0;
+  if (s >= 80) return 'text-emerald-300 border-emerald-500/40 bg-emerald-500/10';
+  if (s >= 60) return 'text-amber-300 border-amber-500/40 bg-amber-500/10';
+  return 'text-red-300 border-red-500/40 bg-red-500/10';
+});
 
-  let bandLabel = $derived.by(() => {
-    const s = result?.score ?? 0;
-    if (s >= 80) return 'Strong';
-    if (s >= 60) return 'Decent';
-    if (s >= 40) return 'Thin';
-    return 'Weak';
-  });
+let bandLabel = $derived.by(() => {
+  const s = result?.score ?? 0;
+  if (s >= 80) return 'Strong';
+  if (s >= 60) return 'Decent';
+  if (s >= 40) return 'Thin';
+  return 'Weak';
+});
 
-  onMount(async () => {
-    try {
-      const pq = profileId ? '?profile=' + encodeURIComponent(profileId) : '';
-      const r = await api.get<MatchResult>(
-        '/api/job/' + encodeURIComponent(jobId) + '/keyword-match' + pq,
-        { silent: true },
-      );
-      result = r;
-    } catch {
-      result = null;
-    } finally {
-      loading = false;
-    }
-  });
+onMount(async () => {
+  try {
+    const pq = profileId ? '?profile=' + encodeURIComponent(profileId) : '';
+    const r = await api.get<MatchResult>(
+      '/api/job/' + encodeURIComponent(jobId) + '/keyword-match' + pq,
+      { silent: true },
+    );
+    result = r;
+  } catch {
+    result = null;
+  } finally {
+    loading = false;
+  }
+});
 </script>
 
 {#if !loading && result?.hasReport && result.score != null}

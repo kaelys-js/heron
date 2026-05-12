@@ -65,7 +65,8 @@ export function validatePhone(v: string): ValidationResult {
   const digits = t.replace(/[^\d]/g, '');
   if (digits.length < 7) return fail('Too short — phone numbers are at least 7 digits');
   if (digits.length > 15) return fail('Too long — E.164 max is 15 digits');
-  if (!/^\+?[\d\s\-().]+$/.test(t)) return fail('Use only digits, spaces, dashes, dots, parens, and an optional leading +');
+  if (!/^\+?[\d\s\-().]+$/.test(t))
+    return fail('Use only digits, spaces, dashes, dots, parens, and an optional leading +');
   return OK;
 }
 
@@ -88,7 +89,11 @@ function normaliseUrl(v: string): string | null {
 function tryParseUrl(v: string): URL | null {
   const norm = normaliseUrl(v);
   if (!norm) return null;
-  try { return new URL(norm); } catch { return null; }
+  try {
+    return new URL(norm);
+  } catch {
+    return null;
+  }
 }
 
 // ---- Generic URL ------------------------------------------------------
@@ -119,18 +124,30 @@ function makeHostValidator(allowedSuffixes: string[], displayName: string, examp
     const u = tryParseUrl(v);
     if (!u) return fail("Doesn't look like a URL — try " + exampleHint);
     const host = u.hostname.toLowerCase().replace(/^www\./, '');
-    const matched = allowedSuffixes.some((suffix) => host === suffix || host.endsWith('.' + suffix));
+    const matched = allowedSuffixes.some(
+      (suffix) => host === suffix || host.endsWith('.' + suffix),
+    );
     if (!matched) {
-      return fail('Expected a ' + displayName + ' URL — host should be ' + allowedSuffixes.join(' or '));
+      return fail(
+        'Expected a ' + displayName + ' URL — host should be ' + allowedSuffixes.join(' or '),
+      );
     }
     return OK;
   };
 }
 
-export const validateLinkedIn = makeHostValidator(['linkedin.com'], 'LinkedIn', 'linkedin.com/in/your-handle');
+export const validateLinkedIn = makeHostValidator(
+  ['linkedin.com'],
+  'LinkedIn',
+  'linkedin.com/in/your-handle',
+);
 export const validateGitHub = makeHostValidator(['github.com'], 'GitHub', 'github.com/your-handle');
 /** Twitter accepts both X and Twitter domains since the rebrand stuck weirdly. */
-export const validateTwitter = makeHostValidator(['twitter.com', 'x.com'], 'Twitter / X', 'x.com/your-handle');
+export const validateTwitter = makeHostValidator(
+  ['twitter.com', 'x.com'],
+  'Twitter / X',
+  'x.com/your-handle',
+);
 
 /**
  * Portfolio is permissive — any valid URL is fine since people host on

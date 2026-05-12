@@ -16,283 +16,332 @@
   also logged server-side so the bell shows an audit entry per change.
 -->
 <script lang="ts">
-  import * as Sheet from '$lib/components/ui/sheet';
-  import * as Tabs from '$lib/components/ui/tabs';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Button } from '$lib/components/ui/button';
-  import { Textarea } from '$lib/components/ui/textarea';
-  import {
-    Eye, Pencil, ReplaceAll, Wand2, FileText, AlertTriangle, Loader2,
-    Save, Download, Copy, Check, Info, Sparkles, RotateCcw,
-  } from '@lucide/svelte';
-  import { marked } from 'marked';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import { invalidateAll } from '$app/navigation';
-  import { withMinDuration, cn } from '$lib/utils';
-  import type { ProfileEdit } from '$lib/server/profile';
-  import { ConfirmGate } from '$lib/confirm.svelte';
-  import { onDestroy } from 'svelte';
+import * as Sheet from '$lib/components/ui/sheet';
+import * as Tabs from '$lib/components/ui/tabs';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { Button } from '$lib/components/ui/button';
+import { Textarea } from '$lib/components/ui/textarea';
+import {
+  Eye,
+  Pencil,
+  ReplaceAll,
+  Wand2,
+  FileText,
+  AlertTriangle,
+  Loader2,
+  Save,
+  Download,
+  Copy,
+  Check,
+  Info,
+  Sparkles,
+  RotateCcw,
+} from '@lucide/svelte';
+import { marked } from 'marked';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import { invalidateAll } from '$app/navigation';
+import { withMinDuration, cn } from '$lib/utils';
+import type { ProfileEdit } from '$lib/server/profile';
+import { ConfirmGate } from '$lib/confirm.svelte';
+import { onDestroy } from 'svelte';
 
-  type Tab = 'view' | 'edit' | 'replace' | 'reprocess';
-  type Suggestion = {
-    candidate?: NonNullable<ProfileEdit['candidate']>;
-    narrative?: NonNullable<ProfileEdit['narrative']>;
-    location?: NonNullable<ProfileEdit['location']>;
-  };
+type Tab = 'view' | 'edit' | 'replace' | 'reprocess';
+type Suggestion = {
+  candidate?: NonNullable<ProfileEdit['candidate']>;
+  narrative?: NonNullable<ProfileEdit['narrative']>;
+  location?: NonNullable<ProfileEdit['location']>;
+};
 
-  let {
-    open = $bindable(false),
-    initialTab = 'view' as Tab,
-    onApplySuggestion,
-  }: {
-    open?: boolean;
-    initialTab?: Tab;
-    /** Parent merges this into its local ProfileEdit state and marks the form dirty. */
-    onApplySuggestion?: (suggestion: Suggestion) => void;
-  } = $props();
+let {
+  open = $bindable(false),
+  initialTab = 'view' as Tab,
+  onApplySuggestion,
+}: {
+  open?: boolean;
+  initialTab?: Tab;
+  /** Parent merges this into its local ProfileEdit state and marks the form dirty. */
+  onApplySuggestion?: (suggestion: Suggestion) => void;
+} = $props();
 
-  // svelte-ignore state_referenced_locally — `initialTab` is the seed only;
-  // the $effect below resyncs whenever the sheet re-opens.
-  let activeTab = $state<Tab>(initialTab);
+// svelte-ignore state_referenced_locally — `initialTab` is the seed only;
+// the $effect below resyncs whenever the sheet re-opens.
+let activeTab = $state<Tab>(initialTab);
 
-  // ---- shared state ----
-  let body = $state('');               // current cv.md content
-  let bodyLoading = $state(false);
-  let bodyError = $state<string | null>(null);
+// ---- shared state ----
+let body = $state(''); // current cv.md content
+let bodyLoading = $state(false);
+let bodyError = $state<string | null>(null);
 
-  // edit mode (in-place editor with own discard confirm)
-  let editDraft = $state('');
-  let editBusy = $state(false);
-  let editDirty = $derived(editDraft !== body);
-  const confirmEditDiscard = new ConfirmGate();
-  onDestroy(() => confirmEditDiscard.destroy());
-  let editDiscardArmed = $derived(confirmEditDiscard.isArmed('edit-discard'));
-  function discardEdit() {
-    if (!confirmEditDiscard.trigger('edit-discard')) return;
-    editDraft = body;
-  }
+// edit mode (in-place editor with own discard confirm)
+let editDraft = $state('');
+let editBusy = $state(false);
+let editDirty = $derived(editDraft !== body);
+const confirmEditDiscard = new ConfirmGate();
+onDestroy(() => confirmEditDiscard.destroy());
+let editDiscardArmed = $derived(confirmEditDiscard.isArmed('edit-discard'));
+function discardEdit() {
+  if (!confirmEditDiscard.trigger('edit-discard')) return;
+  editDraft = body;
+}
 
-  // replace mode (confirm via shared ConfirmGate so it matches every other
-  // destructive action in the app)
-  let replaceDraft = $state('');
-  let replaceBusy = $state(false);
-  const confirmReplace = new ConfirmGate();
-  onDestroy(() => confirmReplace.destroy());
-  let replaceArmed = $derived(confirmReplace.isArmed('replace'));
+// replace mode (confirm via shared ConfirmGate so it matches every other
+// destructive action in the app)
+let replaceDraft = $state('');
+let replaceBusy = $state(false);
+const confirmReplace = new ConfirmGate();
+onDestroy(() => confirmReplace.destroy());
+let replaceArmed = $derived(confirmReplace.isArmed('replace'));
 
-  // reprocess mode
-  let reprocessBusy = $state(false);
-  let suggestion = $state<Suggestion | null>(null);
-  let reprocessError = $state<string | null>(null);
-  const confirmReprocessDiscard = new ConfirmGate();
-  onDestroy(() => confirmReprocessDiscard.destroy());
-  let reprocessDiscardArmed = $derived(confirmReprocessDiscard.isArmed('reprocess-discard'));
-  function discardSuggestion() {
-    if (!confirmReprocessDiscard.trigger('reprocess-discard')) return;
-    suggestion = null;
-  }
+// reprocess mode
+let reprocessBusy = $state(false);
+let suggestion = $state<Suggestion | null>(null);
+let reprocessError = $state<string | null>(null);
+const confirmReprocessDiscard = new ConfirmGate();
+onDestroy(() => confirmReprocessDiscard.destroy());
+let reprocessDiscardArmed = $derived(confirmReprocessDiscard.isArmed('reprocess-discard'));
+function discardSuggestion() {
+  if (!confirmReprocessDiscard.trigger('reprocess-discard')) return;
+  suggestion = null;
+}
 
-  // Reset everything when the sheet closes; reload body on every open.
-  $effect(() => {
-    if (open) {
-      activeTab = initialTab;
-      void loadBody();
-    } else {
-      // Defer reset to next tick so the close animation doesn't flash empty content
-      setTimeout(() => {
-        body = '';
-        editDraft = '';
-        replaceDraft = '';
-        confirmReplace.disarm();
-        suggestion = null;
-        bodyError = null;
-        reprocessError = null;
-      }, 250);
-    }
-  });
-
-  async function loadBody() {
-    bodyLoading = true;
-    bodyError = null;
-    try {
-      const r = await api.get<{ body: string }>('/api/profile/file/cv', { silent: true });
-      body = r.body;
-      editDraft = r.body;
-    } catch (e) {
-      const err = e as ApiError;
-      bodyError = err.message;
-      // Don't toast — bodyError renders inline
-    } finally {
-      bodyLoading = false;
-    }
-  }
-
-  async function saveEdit() {
-    if (!editDirty || editBusy) return;
-    editBusy = true;
-    try {
-      const r = await withMinDuration(
-        api.put<{ bytes: number; backedUp: boolean }>(
-          '/api/profile/file/cv',
-          { content: editDraft },
-          { silent: true },
-        ),
-        500,
-      );
-      body = editDraft;
-      toast.success('CV saved', {
-        description:
-          (r.bytes / 1024).toFixed(1) + ' KB written' +
-          (r.backedUp ? ' · previous version backed up to cv.md.bak' : '') +
-          '. Run Reprocess if you want to refresh the profile fields.',
-        duration: 6_000,
-      });
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('CV save failed', {
-        description: err.message + ' — your edits are still in this textarea, retry to save.',
-        action: { label: 'Retry', onClick: () => saveEdit() },
-        duration: 12_000,
-      });
-    } finally {
-      editBusy = false;
-    }
-  }
-
-  async function submitReplace() {
-    if (replaceBusy || !replaceDraft.trim()) return;
-    if (!confirmReplace.trigger('replace')) return;
-    replaceBusy = true;
-    try {
-      const r = await withMinDuration(
-        api.put<{ bytes: number; backedUp: boolean }>(
-          '/api/profile/file/cv',
-          { content: replaceDraft },
-          { silent: true },
-        ),
-        500,
-      );
-      body = replaceDraft;
-      editDraft = replaceDraft;
+// Reset everything when the sheet closes; reload body on every open.
+$effect(() => {
+  if (open) {
+    activeTab = initialTab;
+    void loadBody();
+  } else {
+    // Defer reset to next tick so the close animation doesn't flash empty content
+    setTimeout(() => {
+      body = '';
+      editDraft = '';
       replaceDraft = '';
-      toast.success('CV replaced', {
-        description:
-          (r.bytes / 1024).toFixed(1) + ' KB written' +
-          (r.backedUp ? ' · previous version safe in cv.md.bak' : '') +
-          '. Switch to Reprocess to extract profile fields from the new CV.',
-        duration: 8_000,
-        action: { label: 'Reprocess now', onClick: () => (activeTab = 'reprocess') },
-      });
-      activeTab = 'view';
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('CV replace failed', {
-        description: err.message + ' — your pasted content is still in the textarea, retry to save.',
-        action: { label: 'Retry', onClick: () => submitReplace() },
-        duration: 12_000,
-      });
-    } finally {
-      replaceBusy = false;
-    }
+      confirmReplace.disarm();
+      suggestion = null;
+      bodyError = null;
+      reprocessError = null;
+    }, 250);
   }
+});
 
-  async function runReprocess() {
-    if (reprocessBusy) return;
-    reprocessBusy = true;
-    reprocessError = null;
-    suggestion = null;
-    try {
-      const r = await withMinDuration(
-        api.post<{ suggestion: Suggestion }>('/api/profile/reprocess', {}, { silent: true }),
-        800,
-      );
-      suggestion = r.suggestion;
-      toast.success('CV reprocessed', {
-        description: 'Review the proposed fields below and click "Apply suggestions" to merge them into the form. Nothing is saved until you Save Profile.',
-        duration: 8_000,
-      });
-    } catch (e) {
-      const err = e as ApiError;
-      reprocessError = err.message;
-      toast.error('Reprocess failed', {
-        description: err.message + ' — Anthropic key required (Settings).',
-        action: { label: 'Retry', onClick: () => runReprocess() },
-        duration: 12_000,
-      });
-    } finally {
-      reprocessBusy = false;
-    }
+async function loadBody() {
+  bodyLoading = true;
+  bodyError = null;
+  try {
+    const r = await api.get<{ body: string }>('/api/profile/file/cv', { silent: true });
+    body = r.body;
+    editDraft = r.body;
+  } catch (e) {
+    const err = e as ApiError;
+    bodyError = err.message;
+    // Don't toast — bodyError renders inline
+  } finally {
+    bodyLoading = false;
   }
+}
 
-  function applySuggestionToParent() {
-    if (!suggestion || !onApplySuggestion) return;
-    onApplySuggestion(suggestion);
-    toast.success('Suggestions applied to form', {
-      description: 'Review the highlighted fields on the Profile page, then click Save Profile to persist.',
+async function saveEdit() {
+  if (!editDirty || editBusy) return;
+  editBusy = true;
+  try {
+    const r = await withMinDuration(
+      api.put<{ bytes: number; backedUp: boolean }>(
+        '/api/profile/file/cv',
+        { content: editDraft },
+        { silent: true },
+      ),
+      500,
+    );
+    body = editDraft;
+    toast.success('CV saved', {
+      description:
+        (r.bytes / 1024).toFixed(1) +
+        ' KB written' +
+        (r.backedUp ? ' · previous version backed up to cv.md.bak' : '') +
+        '. Run Reprocess if you want to refresh the profile fields.',
       duration: 6_000,
     });
-    open = false;
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('CV save failed', {
+      description: err.message + ' — your edits are still in this textarea, retry to save.',
+      action: { label: 'Retry', onClick: () => saveEdit() },
+      duration: 12_000,
+    });
+  } finally {
+    editBusy = false;
   }
+}
 
-  // ---- rendering helpers ----
-  let bodyHtml = $derived(body ? (marked.parse(body) as string) : '');
-
-  let copyState = $state<'idle' | 'copied'>('idle');
-  async function copyBody() {
-    if (!body) return;
-    try {
-      await navigator.clipboard.writeText(body);
-      copyState = 'copied';
-      toast.success('CV copied to clipboard');
-      setTimeout(() => { copyState = 'idle'; }, 1500);
-    } catch {
-      toast.error('Copy failed', { description: 'Browser blocked clipboard access.' });
-    }
+async function submitReplace() {
+  if (replaceBusy || !replaceDraft.trim()) return;
+  if (!confirmReplace.trigger('replace')) return;
+  replaceBusy = true;
+  try {
+    const r = await withMinDuration(
+      api.put<{ bytes: number; backedUp: boolean }>(
+        '/api/profile/file/cv',
+        { content: replaceDraft },
+        { silent: true },
+      ),
+      500,
+    );
+    body = replaceDraft;
+    editDraft = replaceDraft;
+    replaceDraft = '';
+    toast.success('CV replaced', {
+      description:
+        (r.bytes / 1024).toFixed(1) +
+        ' KB written' +
+        (r.backedUp ? ' · previous version safe in cv.md.bak' : '') +
+        '. Switch to Reprocess to extract profile fields from the new CV.',
+      duration: 8_000,
+      action: { label: 'Reprocess now', onClick: () => (activeTab = 'reprocess') },
+    });
+    activeTab = 'view';
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('CV replace failed', {
+      description: err.message + ' — your pasted content is still in the textarea, retry to save.',
+      action: { label: 'Retry', onClick: () => submitReplace() },
+      duration: 12_000,
+    });
+  } finally {
+    replaceBusy = false;
   }
+}
 
-  function downloadBody() {
-    if (!body) return;
-    const blob = new Blob([body], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'cv.md';
-    a.click();
-    URL.revokeObjectURL(url);
+async function runReprocess() {
+  if (reprocessBusy) return;
+  reprocessBusy = true;
+  reprocessError = null;
+  suggestion = null;
+  try {
+    const r = await withMinDuration(
+      api.post<{ suggestion: Suggestion }>('/api/profile/reprocess', {}, { silent: true }),
+      800,
+    );
+    suggestion = r.suggestion;
+    toast.success('CV reprocessed', {
+      description:
+        'Review the proposed fields below and click "Apply suggestions" to merge them into the form. Nothing is saved until you Save Profile.',
+      duration: 8_000,
+    });
+  } catch (e) {
+    const err = e as ApiError;
+    reprocessError = err.message;
+    toast.error('Reprocess failed', {
+      description: err.message + ' — Anthropic key required (Settings).',
+      action: { label: 'Retry', onClick: () => runReprocess() },
+      duration: 12_000,
+    });
+  } finally {
+    reprocessBusy = false;
   }
+}
 
-  // Suggestion field summary (count + sample) for the Reprocess tab
-  let suggestionSummary = $derived.by<{ label: string; sample: string }[]>(() => {
-    if (!suggestion) return [];
-    const out: { label: string; sample: string }[] = [];
-    if (suggestion.candidate?.full_name) out.push({ label: 'Full name', sample: suggestion.candidate.full_name });
-    if (suggestion.candidate?.email) out.push({ label: 'Email', sample: suggestion.candidate.email });
-    if (suggestion.candidate?.phone) out.push({ label: 'Phone', sample: suggestion.candidate.phone });
-    if (suggestion.candidate?.linkedin) out.push({ label: 'LinkedIn', sample: suggestion.candidate.linkedin });
-    if (suggestion.candidate?.github) out.push({ label: 'GitHub', sample: suggestion.candidate.github });
-    if (suggestion.candidate?.portfolio_url) out.push({ label: 'Portfolio', sample: suggestion.candidate.portfolio_url });
-    if (suggestion.narrative?.headline) out.push({ label: 'Headline', sample: suggestion.narrative.headline });
-    if (suggestion.narrative?.exit_story) {
-      const story = suggestion.narrative.exit_story;
-      out.push({ label: 'Exit story', sample: story.length > 120 ? story.slice(0, 120) + '…' : story });
-    }
-    if (suggestion.narrative?.superpowers?.length) {
-      out.push({ label: 'Superpowers', sample: suggestion.narrative.superpowers.slice(0, 3).join(' · ') + (suggestion.narrative.superpowers.length > 3 ? ` (+${suggestion.narrative.superpowers.length - 3})` : '') });
-    }
-    if (suggestion.narrative?.proof_points?.length) {
-      out.push({
-        label: 'Proof points',
-        sample: suggestion.narrative.proof_points.slice(0, 2).map((p) => p.name).join(' · ') + (suggestion.narrative.proof_points.length > 2 ? ` (+${suggestion.narrative.proof_points.length - 2})` : ''),
-      });
-    }
-    if (suggestion.location?.city || suggestion.location?.country) {
-      out.push({ label: 'Location', sample: [suggestion.location?.city, suggestion.location?.province, suggestion.location?.country].filter(Boolean).join(', ') });
-    }
-    return out;
+function applySuggestionToParent() {
+  if (!suggestion || !onApplySuggestion) return;
+  onApplySuggestion(suggestion);
+  toast.success('Suggestions applied to form', {
+    description:
+      'Review the highlighted fields on the Profile page, then click Save Profile to persist.',
+    duration: 6_000,
   });
+  open = false;
+}
+
+// ---- rendering helpers ----
+let bodyHtml = $derived(body ? (marked.parse(body) as string) : '');
+
+let copyState = $state<'idle' | 'copied'>('idle');
+async function copyBody() {
+  if (!body) return;
+  try {
+    await navigator.clipboard.writeText(body);
+    copyState = 'copied';
+    toast.success('CV copied to clipboard');
+    setTimeout(() => {
+      copyState = 'idle';
+    }, 1500);
+  } catch {
+    toast.error('Copy failed', { description: 'Browser blocked clipboard access.' });
+  }
+}
+
+function downloadBody() {
+  if (!body) return;
+  const blob = new Blob([body], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'cv.md';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Suggestion field summary (count + sample) for the Reprocess tab
+let suggestionSummary = $derived.by<{ label: string; sample: string }[]>(() => {
+  if (!suggestion) return [];
+  const out: { label: string; sample: string }[] = [];
+  if (suggestion.candidate?.full_name)
+    out.push({ label: 'Full name', sample: suggestion.candidate.full_name });
+  if (suggestion.candidate?.email) out.push({ label: 'Email', sample: suggestion.candidate.email });
+  if (suggestion.candidate?.phone) out.push({ label: 'Phone', sample: suggestion.candidate.phone });
+  if (suggestion.candidate?.linkedin)
+    out.push({ label: 'LinkedIn', sample: suggestion.candidate.linkedin });
+  if (suggestion.candidate?.github)
+    out.push({ label: 'GitHub', sample: suggestion.candidate.github });
+  if (suggestion.candidate?.portfolio_url)
+    out.push({ label: 'Portfolio', sample: suggestion.candidate.portfolio_url });
+  if (suggestion.narrative?.headline)
+    out.push({ label: 'Headline', sample: suggestion.narrative.headline });
+  if (suggestion.narrative?.exit_story) {
+    const story = suggestion.narrative.exit_story;
+    out.push({
+      label: 'Exit story',
+      sample: story.length > 120 ? story.slice(0, 120) + '…' : story,
+    });
+  }
+  if (suggestion.narrative?.superpowers?.length) {
+    out.push({
+      label: 'Superpowers',
+      sample:
+        suggestion.narrative.superpowers.slice(0, 3).join(' · ') +
+        (suggestion.narrative.superpowers.length > 3
+          ? ` (+${suggestion.narrative.superpowers.length - 3})`
+          : ''),
+    });
+  }
+  if (suggestion.narrative?.proof_points?.length) {
+    out.push({
+      label: 'Proof points',
+      sample:
+        suggestion.narrative.proof_points
+          .slice(0, 2)
+          .map((p) => p.name)
+          .join(' · ') +
+        (suggestion.narrative.proof_points.length > 2
+          ? ` (+${suggestion.narrative.proof_points.length - 2})`
+          : ''),
+    });
+  }
+  if (suggestion.location?.city || suggestion.location?.country) {
+    out.push({
+      label: 'Location',
+      sample: [
+        suggestion.location?.city,
+        suggestion.location?.province,
+        suggestion.location?.country,
+      ]
+        .filter(Boolean)
+        .join(', '),
+    });
+  }
+  return out;
+});
 </script>
 
 <Sheet.Root bind:open>

@@ -1,0 +1,1 @@
+{"id":"045d1883aa16","ts":1778552193899,"severity":"error","source":"autopilot","summary":"Autopilot paused: cv.md is missing","detail":"The autopilot needs your CV to generate tailored applications. Add cv.md via /profile.","fix":{"label":"Onboarding guide","href":"/help"},"dedupeKey":"autopilot-circuit-breaker"}

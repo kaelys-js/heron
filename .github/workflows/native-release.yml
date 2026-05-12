@@ -49,14 +49,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      # mise installs Node + pnpm versions pinned in .mise.toml.
+      # Single source of truth across local dev + CI.
+      - uses: jdx/mise-action@v2
         with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 10
+          experimental: true
 
       - name: Install ui deps
         working-directory: ui

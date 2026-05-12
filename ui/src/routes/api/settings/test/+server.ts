@@ -20,7 +20,11 @@ async function probeAnthropic(): Promise<ProbeResult> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return { provider: 'anthropic', ok: false, message: 'No key configured' };
   if (!key.startsWith('sk-ant-')) {
-    return { provider: 'anthropic', ok: false, message: 'Key format looks wrong (expected sk-ant-…)' };
+    return {
+      provider: 'anthropic',
+      ok: false,
+      message: 'Key format looks wrong (expected sk-ant-…)',
+    };
   }
   try {
     const client = new Anthropic({ apiKey: key });
@@ -52,7 +56,8 @@ async function probeGemini(): Promise<ProbeResult> {
     return { provider: 'gemini', ok: false, message: 'Key format looks wrong (expected AIza…)' };
   }
   try {
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(key);
+    const url =
+      'https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(key);
     const r = await fetch(url, { method: 'GET' });
     if (!r.ok) {
       const body = await r.text().catch(() => '');
@@ -83,7 +88,12 @@ async function probeAdzuna(): Promise<ProbeResult> {
     return { provider: 'adzuna', ok: false, message: 'Both APP_ID and APP_KEY are required' };
   }
   try {
-    const url = 'https://api.adzuna.com/v1/api/jobs/ca/search/1?app_id=' + encodeURIComponent(id) + '&app_key=' + encodeURIComponent(key) + '&results_per_page=1&content-type=application/json';
+    const url =
+      'https://api.adzuna.com/v1/api/jobs/ca/search/1?app_id=' +
+      encodeURIComponent(id) +
+      '&app_key=' +
+      encodeURIComponent(key) +
+      '&results_per_page=1&content-type=application/json';
     const r = await fetch(url);
     if (!r.ok) {
       const body = await r.text().catch(() => '');

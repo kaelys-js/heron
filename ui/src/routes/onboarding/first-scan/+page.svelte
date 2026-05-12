@@ -1,160 +1,175 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/button';
-  import { Search, ArrowRight, ArrowLeft, Loader2, CheckCircle2, AlertCircle, Play, Circle } from '@lucide/svelte';
-  import { goto } from '$app/navigation';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import { onMount, onDestroy } from 'svelte';
-  import { cn } from '$lib/utils';
-  import type { ActivityEvent } from '$lib/types';
+import { Button } from '$lib/components/ui/button';
+import {
+  Search,
+  ArrowRight,
+  ArrowLeft,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  Play,
+  Circle,
+} from '@lucide/svelte';
+import { goto } from '$app/navigation';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import { onMount, onDestroy } from 'svelte';
+import { cn } from '$lib/utils';
+import type { ActivityEvent } from '$lib/types';
 
-  let { data }: {
-    data: {
-      children: { id: string; label: string; alwaysOn?: boolean; source?: string }[];
-      profileId: string;
-    };
-  } = $props();
-  let q = $derived('?profile=' + encodeURIComponent(data.profileId));
+let {
+  data,
+}: {
+  data: {
+    children: { id: string; label: string; alwaysOn?: boolean; source?: string }[];
+    profileId: string;
+  };
+} = $props();
+let q = $derived('?profile=' + encodeURIComponent(data.profileId));
 
-  type ChildStatus = 'pending' | 'running' | 'success' | 'error';
+type ChildStatus = 'pending' | 'running' | 'success' | 'error';
 
-  // Track each child scanner's state. The keys are job ids matching the
-  // `source` field of activity events. Initialised from props, which is fine
-  // during $state() construction.
-  // svelte-ignore state_referenced_locally — initial seed only
-  let statuses = $state<Record<string, { status: ChildStatus; message?: string; found?: number }>>(
-    Object.fromEntries(data.children.map((c) => [c.id, { status: 'pending' as const }])),
-  );
+// Track each child scanner's state. The keys are job ids matching the
+// `source` field of activity events. Initialised from props, which is fine
+// during $state() construction.
+// svelte-ignore state_referenced_locally — initial seed only
+let statuses = $state<Record<string, { status: ChildStatus; message?: string; found?: number }>>(
+  Object.fromEntries(data.children.map((c) => [c.id, { status: 'pending' as const }])),
+);
 
-  let started = $state(false);
-  let finished = $state(false);
-  let scanAllFound = $state(0);
-  let startedAt = $state<number | null>(null);
-  let elapsedSec = $state(0);
-  let elapsedTimer: ReturnType<typeof setInterval> | null = null;
-  let eventSource: EventSource | null = null;
+let started = $state(false);
+let finished = $state(false);
+let scanAllFound = $state(0);
+let startedAt = $state<number | null>(null);
+let elapsedSec = $state(0);
+let elapsedTimer: ReturnType<typeof setInterval> | null = null;
+let eventSource: EventSource | null = null;
 
-  // Match an activity event to one of our child rows. Events come in with
-  // source = the JobDef id (e.g. 'scan-portals', 'scan-linkedin-auth').
-  function isChildEvent(ev: ActivityEvent): boolean {
-    return data.children.some((c) => c.id === ev.source);
-  }
+// Match an activity event to one of our child rows. Events come in with
+// source = the JobDef id (e.g. 'scan-portals', 'scan-linkedin-auth').
+function isChildEvent(ev: ActivityEvent): boolean {
+  return data.children.some((c) => c.id === ev.source);
+}
 
-  function applyEvent(ev: ActivityEvent): void {
-    if (ev.source === 'scan-all') {
-      // Top-level fan-out events.
-      if (ev.title.includes('dispatched')) {
-        // No state change — children will report their own start events.
-        return;
-      }
-      if (ev.title.includes('finished')) {
-        finished = true;
-        // Parse total from message: "{N} total · {breakdown}"
-        const m = ev.message?.match(/^(\d+) total/);
-        if (m) scanAllFound = Number(m[1]);
-      }
+function applyEvent(ev: ActivityEvent): void {
+  if (ev.source === 'scan-all') {
+    // Top-level fan-out events.
+    if (ev.title.includes('dispatched')) {
+      // No state change — children will report their own start events.
       return;
     }
-    if (!isChildEvent(ev)) return;
-    const id = ev.source;
-    const prev = statuses[id] ?? { status: 'pending' };
-    if (ev.level === 'success') {
-      // Try to extract a "Total jobs found: N" or "Found N" count from msg.
-      const m = ev.message?.match(/(\d+)\s+(?:jobs?|new offers|total|found)/i);
-      const found = m ? Number(m[1]) : prev.found;
-      statuses = { ...statuses, [id]: { status: 'success', message: ev.message ?? ev.title, found } };
-    } else if (ev.level === 'error') {
-      statuses = { ...statuses, [id]: { status: 'error', message: ev.message ?? ev.title } };
-    } else if (ev.level === 'warn') {
-      // Treat warns like running unless we've already succeeded; surface the message.
-      if (prev.status === 'success' || prev.status === 'error') return;
-      statuses = { ...statuses, [id]: { status: 'running', message: ev.message ?? ev.title } };
-    } else {
-      // info — running
-      if (prev.status === 'success' || prev.status === 'error') return;
-      statuses = { ...statuses, [id]: { status: 'running', message: ev.message ?? ev.title } };
+    if (ev.title.includes('finished')) {
+      finished = true;
+      // Parse total from message: "{N} total · {breakdown}"
+      const m = ev.message?.match(/^(\d+) total/);
+      if (m) scanAllFound = Number(m[1]);
     }
+    return;
   }
-
-  async function startScan() {
-    if (started) return;
-    started = true;
-    startedAt = Date.now();
-    elapsedTimer = setInterval(() => {
-      if (startedAt) elapsedSec = Math.round((Date.now() - startedAt) / 1000);
-    }, 500);
-    try {
-      // Fire and forget — the SSE stream tells us when each child finishes.
-      // Pass profileId in the body so the scan-all fan-out targets this
-      // profile only (not every profile in the system).
-      await api.post('/api/run', { task: 'scan-all', args: { profileId: data.profileId } }, { silent: true });
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Could not start scan', { description: err.message });
-      started = false;
-      if (elapsedTimer) {
-        clearInterval(elapsedTimer);
-        elapsedTimer = null;
-      }
-    }
+  if (!isChildEvent(ev)) return;
+  const id = ev.source;
+  const prev = statuses[id] ?? { status: 'pending' };
+  if (ev.level === 'success') {
+    // Try to extract a "Total jobs found: N" or "Found N" count from msg.
+    const m = ev.message?.match(/(\d+)\s+(?:jobs?|new offers|total|found)/i);
+    const found = m ? Number(m[1]) : prev.found;
+    statuses = { ...statuses, [id]: { status: 'success', message: ev.message ?? ev.title, found } };
+  } else if (ev.level === 'error') {
+    statuses = { ...statuses, [id]: { status: 'error', message: ev.message ?? ev.title } };
+  } else if (ev.level === 'warn') {
+    // Treat warns like running unless we've already succeeded; surface the message.
+    if (prev.status === 'success' || prev.status === 'error') return;
+    statuses = { ...statuses, [id]: { status: 'running', message: ev.message ?? ev.title } };
+  } else {
+    // info — running
+    if (prev.status === 'success' || prev.status === 'error') return;
+    statuses = { ...statuses, [id]: { status: 'running', message: ev.message ?? ev.title } };
   }
+}
 
-  async function continueOn(action: 'complete' | 'skip') {
-    try {
-      await api.post('/api/onboarding/step', { step: 'first-scan', action }, { silent: true });
-      await goto('/onboarding/done' + q);
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Could not advance', { description: err.message });
-    }
-  }
-
-  onMount(() => {
-    eventSource = new EventSource('/api/stream');
-    eventSource.onmessage = (e) => {
-      try {
-        const ev = JSON.parse(e.data) as ActivityEvent;
-        applyEvent(ev);
-      } catch {
-        // ignore
-      }
-    };
-    eventSource.onerror = () => {
-      // Browser EventSource auto-retries; nothing to do here.
-    };
-  });
-
-  onDestroy(() => {
-    if (eventSource) {
-      eventSource.close();
-      eventSource = null;
-    }
+async function startScan() {
+  if (started) return;
+  started = true;
+  startedAt = Date.now();
+  elapsedTimer = setInterval(() => {
+    if (startedAt) elapsedSec = Math.round((Date.now() - startedAt) / 1000);
+  }, 500);
+  try {
+    // Fire and forget — the SSE stream tells us when each child finishes.
+    // Pass profileId in the body so the scan-all fan-out targets this
+    // profile only (not every profile in the system).
+    await api.post(
+      '/api/run',
+      { task: 'scan-all', args: { profileId: data.profileId } },
+      { silent: true },
+    );
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Could not start scan', { description: err.message });
+    started = false;
     if (elapsedTimer) {
       clearInterval(elapsedTimer);
       elapsedTimer = null;
     }
-  });
-
-  function statusIcon(s: ChildStatus) {
-    if (s === 'pending') return Circle;
-    if (s === 'running') return Loader2;
-    if (s === 'success') return CheckCircle2;
-    return AlertCircle;
   }
+}
 
-  function statusTint(s: ChildStatus): string {
-    if (s === 'pending') return 'text-muted-foreground/50';
-    if (s === 'running') return 'text-blue-400 animate-spin';
-    if (s === 'success') return 'text-emerald-400';
-    return 'text-red-400';
+async function continueOn(action: 'complete' | 'skip') {
+  try {
+    await api.post('/api/onboarding/step', { step: 'first-scan', action }, { silent: true });
+    await goto('/onboarding/done' + q);
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Could not advance', { description: err.message });
   }
+}
 
-  function rowTint(s: ChildStatus): string {
-    if (s === 'success') return 'border-emerald-500/30 bg-emerald-500/5';
-    if (s === 'error')   return 'border-red-500/30 bg-red-500/5';
-    if (s === 'running') return 'border-blue-500/30 bg-blue-500/5';
-    return 'border-border/40 bg-card';
+onMount(() => {
+  eventSource = new EventSource('/api/stream');
+  eventSource.onmessage = (e) => {
+    try {
+      const ev = JSON.parse(e.data) as ActivityEvent;
+      applyEvent(ev);
+    } catch {
+      // ignore
+    }
+  };
+  eventSource.onerror = () => {
+    // Browser EventSource auto-retries; nothing to do here.
+  };
+});
+
+onDestroy(() => {
+  if (eventSource) {
+    eventSource.close();
+    eventSource = null;
   }
+  if (elapsedTimer) {
+    clearInterval(elapsedTimer);
+    elapsedTimer = null;
+  }
+});
+
+function statusIcon(s: ChildStatus) {
+  if (s === 'pending') return Circle;
+  if (s === 'running') return Loader2;
+  if (s === 'success') return CheckCircle2;
+  return AlertCircle;
+}
+
+function statusTint(s: ChildStatus): string {
+  if (s === 'pending') return 'text-muted-foreground/50';
+  if (s === 'running') return 'text-blue-400 animate-spin';
+  if (s === 'success') return 'text-emerald-400';
+  return 'text-red-400';
+}
+
+function rowTint(s: ChildStatus): string {
+  if (s === 'success') return 'border-emerald-500/30 bg-emerald-500/5';
+  if (s === 'error') return 'border-red-500/30 bg-red-500/5';
+  if (s === 'running') return 'border-blue-500/30 bg-blue-500/5';
+  return 'border-border/40 bg-card';
+}
 </script>
 
 <div class="space-y-6">

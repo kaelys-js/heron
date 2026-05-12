@@ -57,7 +57,9 @@ export const GET = async ({ request }: { request: Request }) => {
         closed = true;
         bus.off('event', handler);
         clearInterval(beat);
-        try { controller.close(); } catch {}
+        try {
+          controller.close();
+        } catch {}
       });
     },
   });

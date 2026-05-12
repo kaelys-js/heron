@@ -28,14 +28,28 @@ const VALID_PERSONAS = ['hiring-manager', 'recruiter', 'peer'] as const;
 type Persona = (typeof VALID_PERSONAS)[number];
 
 function slugify(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'job';
+  return (
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 60) || 'job'
+  );
 }
 
 function persistedPath(profileId: string, jobId: string, persona: Persona): string {
-  return path.join(profilePath(profileId, 'interview-prep-dir'), slugify(jobId) + '-outreach-' + persona + '.md');
+  return path.join(
+    profilePath(profileId, 'interview-prep-dir'),
+    slugify(jobId) + '-outreach-' + persona + '.md',
+  );
 }
 
-function spawnContacto(url: string, persona: Persona, jobId: string, profileId: string): Promise<string> {
+function spawnContacto(
+  url: string,
+  persona: Persona,
+  jobId: string,
+  profileId: string,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
@@ -56,8 +70,12 @@ function spawnContacto(url: string, persona: Persona, jobId: string, profileId: 
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) {

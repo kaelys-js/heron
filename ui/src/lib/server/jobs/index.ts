@@ -72,13 +72,15 @@ export function installAllJobs(): void {
     // a user who only sees the dashboard knows their data wasn't migrated.
     // Don't let a migration error kill boot — fall through to default state.
     // Use a dynamic import to avoid a circular dependency with the bus.
-    import('../events').then(({ reportServerError }) => {
-      reportServerError('migrate', 'Multi-profile migration failed', e, {
-        category: 'system',
+    import('../events')
+      .then(({ reportServerError }) => {
+        reportServerError('migrate', 'Multi-profile migration failed', e, {
+          category: 'system',
+        });
+      })
+      .catch(() => {
+        console.error('[boot] profile migration failed:', e);
       });
-    }).catch(() => {
-      console.error('[boot] profile migration failed:', e);
-    });
   }
 
   // Legacy tasks — preserve the exact ids used in /api/run today so
@@ -86,7 +88,8 @@ export function installAllJobs(): void {
   register({
     id: 'scan',
     label: 'Portal scanner (broad)',
-    description: 'JobSpy + multi-source scrape (LinkedIn / Indeed / Greenhouse / Ashby / Lever / The Muse / HN / RemoteOK / WWR).',
+    description:
+      'JobSpy + multi-source scrape (LinkedIn / Indeed / Greenhouse / Ashby / Lever / The Muse / HN / RemoteOK / WWR).',
     category: 'discovery',
     trigger: { type: 'manual' },
     allowManual: true,
@@ -99,7 +102,8 @@ export function installAllJobs(): void {
   register({
     id: 'gemini',
     label: 'Gemini first-pass scoring',
-    description: 'Title + company filter via Gemini Flash. Cheap first-pass over every pending job.',
+    description:
+      'Title + company filter via Gemini Flash. Cheap first-pass over every pending job.',
     category: 'evaluation',
     trigger: { type: 'manual' },
     allowManual: true,
@@ -113,7 +117,8 @@ export function installAllJobs(): void {
   register({
     id: 'apply-linkedin',
     label: 'LinkedIn Easy Apply',
-    description: 'Auto-fills LinkedIn applications via Playwright. Stops at Submit unless LINKEDIN_AUTO_SUBMIT=1.',
+    description:
+      'Auto-fills LinkedIn applications via Playwright. Stops at Submit unless LINKEDIN_AUTO_SUBMIT=1.',
     category: 'apply',
     trigger: { type: 'manual' },
     allowManual: true,

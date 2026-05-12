@@ -22,7 +22,9 @@ export const POST = wrap('settings', async ({ request }: any) => {
   } catch (e: any) {
     throw new Error('failed to write .env: ' + (e?.message ?? String(e)));
   }
-  const changedKeys = Object.keys(updates).filter((k) => updates[k] && !String(updates[k]).startsWith('****'));
+  const changedKeys = Object.keys(updates).filter(
+    (k) => updates[k] && !String(updates[k]).startsWith('****'),
+  );
   logEvent('settings', 'Settings updated', {
     level: 'success',
     category: 'user',

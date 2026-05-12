@@ -55,12 +55,18 @@ function runScanIndeedAuth(args?: JobArgs): Promise<JobResult> {
     });
 
     const p = spawn(py, cliArgs, { cwd: ROOT, env: { ...process.env } });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => {
       recordFailure('indeed-auth', err);
       logEvent('scan-indeed-auth', 'Failed to spawn', {
-        level: 'error', category: 'task', message: err.message,
+        level: 'error',
+        category: 'task',
+        message: err.message,
       });
       resolve({ ok: false, error: err.message });
     });
@@ -68,19 +74,26 @@ function runScanIndeedAuth(args?: JobArgs): Promise<JobResult> {
       const found = parseInt(stdout.match(FOUND_RE)?.[1] ?? '0', 10);
       if (code !== 0) {
         const tail = (stderr || stdout).slice(-300).trim();
-        const reason = code === 3 ? 'session expired'
-          : code === 4 ? 'captcha — re-login on /sources'
-          : 'exit ' + code;
+        const reason =
+          code === 3
+            ? 'session expired'
+            : code === 4
+              ? 'captcha — re-login on /sources'
+              : 'exit ' + code;
         recordFailure('indeed-auth', new Error(reason));
         logEvent('scan-indeed-auth', 'Scrape failed · ' + reason, {
-          level: 'error', category: 'task', message: tail || 'no stderr',
+          level: 'error',
+          category: 'task',
+          message: tail || 'no stderr',
         });
         resolve({ ok: false, error: reason });
         return;
       }
       recordSuccess('indeed-auth');
       logEvent('scan-indeed-auth', 'Scrape finished · ' + found + ' new', {
-        level: 'success', category: 'task', message: 'Authenticated session healthy',
+        level: 'success',
+        category: 'task',
+        message: 'Authenticated session healthy',
       });
       resolve({ ok: true, message: found + ' new offers', meta: { found } });
     });

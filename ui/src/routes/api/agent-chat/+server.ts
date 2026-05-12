@@ -27,10 +27,33 @@ export const POST = wrap('agent-chat', async ({ request }: { request: Request })
   let recentReports = '';
   try {
     const files: string[] = fs.readdirSync(activePath('reports-dir'));
-    recentReports = files.filter((f: string) => f.endsWith('.md')).sort().slice(-5).join(', ');
+    recentReports = files
+      .filter((f: string) => f.endsWith('.md'))
+      .sort()
+      .slice(-5)
+      .join(', ');
   } catch {}
   const ns = '/' + CLI_NAMESPACE;
-  const sys = 'You are an autonomous job-search assistant for a senior software engineer. You have access to:\n- Their CV (cv.md)\n- Their profile (config/profile.yml)\n- Available ' + APP_NAME + ' modes: ' + modeList + '\n- Recent A-G reports: ' + recentReports + '\n\nKeep responses concise. When suggesting actions, name the specific ' + APP_NAME + ' slash command (' + ns + ' scan, ' + ns + ' oferta, etc.).\n\n# CV\n' + cv.slice(0, 2500) + '\n\n# Profile\n' + profile.slice(0, 2000);
-  const reply = await chat(sys, history ?? [], { model: model || 'claude-sonnet-4-6', maxTokens: 1500 });
+  const sys =
+    'You are an autonomous job-search assistant for a senior software engineer. You have access to:\n- Their CV (cv.md)\n- Their profile (config/profile.yml)\n- Available ' +
+    APP_NAME +
+    ' modes: ' +
+    modeList +
+    '\n- Recent A-G reports: ' +
+    recentReports +
+    '\n\nKeep responses concise. When suggesting actions, name the specific ' +
+    APP_NAME +
+    ' slash command (' +
+    ns +
+    ' scan, ' +
+    ns +
+    ' oferta, etc.).\n\n# CV\n' +
+    cv.slice(0, 2500) +
+    '\n\n# Profile\n' +
+    profile.slice(0, 2000);
+  const reply = await chat(sys, history ?? [], {
+    model: model || 'claude-sonnet-4-6',
+    maxTokens: 1500,
+  });
   return { reply };
 });

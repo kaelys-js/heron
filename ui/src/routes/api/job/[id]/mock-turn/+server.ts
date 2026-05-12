@@ -29,7 +29,13 @@ type Turn = { question: string; answer: string; score?: number | null };
 type Stage = 'PhoneScreen' | 'Technical' | 'TakeHome' | 'Onsite' | 'Final';
 
 function slugify(s: string): string {
-  return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'job';
+  return (
+    (s || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 60) || 'job'
+  );
 }
 
 function spawnMockTurn(args: {
@@ -61,13 +67,21 @@ function spawnMockTurn(args: {
       panelMode: !!args.panelMode,
     };
     const prompt = '/' + CLI_NAMESPACE + ' mock-interview-turn ' + JSON.stringify(promptInput);
-    try { swapProfileSymlinks(args.profileId); } catch { /* logged elsewhere */ }
+    try {
+      swapProfileSymlinks(args.profileId);
+    } catch {
+      /* logged elsewhere */
+    }
     const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
       cwd: ROOT,
       env: { ...process.env, MOCK_TURN_INPUT: JSON.stringify(promptInput) },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
@@ -104,11 +118,30 @@ function parseTurnOutput(stdout: string): {
   };
 }
 
-function saveTranscript(profileId: string, company: string, role: string, payload: {
-  stage: Stage; history: Turn[]; summary?: string; startedAt: number;
-}): string {
-  const ts = new Date(payload.startedAt).toISOString().replace(/[:.]/g, '-').replace(/-\d{3}Z$/, 'Z');
-  const filename = slugify(company) + '-' + slugify(role) + '-mock-' + payload.stage.toLowerCase() + '-' + ts + '.md';
+function saveTranscript(
+  profileId: string,
+  company: string,
+  role: string,
+  payload: {
+    stage: Stage;
+    history: Turn[];
+    summary?: string;
+    startedAt: number;
+  },
+): string {
+  const ts = new Date(payload.startedAt)
+    .toISOString()
+    .replace(/[:.]/g, '-')
+    .replace(/-\d{3}Z$/, 'Z');
+  const filename =
+    slugify(company) +
+    '-' +
+    slugify(role) +
+    '-mock-' +
+    payload.stage.toLowerCase() +
+    '-' +
+    ts +
+    '.md';
   const dest = path.join(profilePath(profileId, 'interview-prep-dir'), filename);
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   let md = '# Mock Interview · ' + company + ' · ' + role + ' · ' + payload.stage + '\n\n';
@@ -126,53 +159,65 @@ function saveTranscript(profileId: string, company: string, role: string, payloa
   return path.relative(ROOT, dest);
 }
 
-export const POST = wrap('mock-turn', async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
-  const resolved = resolveJobAndProfile(params.id, url);
-  if (!resolved) badRequest('Job not found: ' + params.id);
-  const { job, profileId } = resolved!;
+export const POST = wrap(
+  'mock-turn',
+  async ({ params, url, request }: { params: { id: string }; url: URL; request: Request }) => {
+    const resolved = resolveJobAndProfile(params.id, url);
+    if (!resolved) badRequest('Job not found: ' + params.id);
+    const { job, profileId } = resolved!;
 
-  const body = await request.json().catch(() => ({}));
-  const stage = (body?.stage as Stage) || 'PhoneScreen';
-  const history = Array.isArray(body?.history) ? (body.history as Turn[]) : [];
-  const latestAnswer = typeof body?.latestAnswer === 'string' ? body.latestAnswer : '';
-  const endSession = !!body?.endSession;
-  const startedAt = typeof body?.startedAt === 'number' ? body.startedAt : Date.now();
-  const panelMode = !!body?.panelMode;
+    const body = await request.json().catch(() => ({}));
+    const stage = (body?.stage as Stage) || 'PhoneScreen';
+    const history = Array.isArray(body?.history) ? (body.history as Turn[]) : [];
+    const latestAnswer = typeof body?.latestAnswer === 'string' ? body.latestAnswer : '';
+    const endSession = !!body?.endSession;
+    const startedAt = typeof body?.startedAt === 'number' ? body.startedAt : Date.now();
+    const panelMode = !!body?.panelMode;
 
-  try {
-    const { stdout } = await spawnMockTurn({
-      company: job.company || '?',
-      role: job.role || '?',
-      stage, history, latestAnswer, endSession, panelMode,
-      profileId,
-    });
-    const parsed = parseTurnOutput(stdout);
-
-    if (endSession) {
-      // Persist the full transcript on session end.
-      const savedPath = saveTranscript(profileId, job.company ?? '', job.role ?? '', {
-        stage, history, summary: parsed.sessionSummary, startedAt,
+    try {
+      const { stdout } = await spawnMockTurn({
+        company: job.company || '?',
+        role: job.role || '?',
+        stage,
+        history,
+        latestAnswer,
+        endSession,
+        panelMode,
+        profileId,
       });
-      logEvent('mock-interview', 'Session ended · transcript saved', {
-        level: 'success', category: 'application',
-        message: savedPath,
-      });
+      const parsed = parseTurnOutput(stdout);
+
+      if (endSession) {
+        // Persist the full transcript on session end.
+        const savedPath = saveTranscript(profileId, job.company ?? '', job.role ?? '', {
+          stage,
+          history,
+          summary: parsed.sessionSummary,
+          startedAt,
+        });
+        logEvent('mock-interview', 'Session ended · transcript saved', {
+          level: 'success',
+          category: 'application',
+          message: savedPath,
+        });
+        return {
+          ok: true,
+          endSession: true,
+          transcriptPath: savedPath,
+          summary: parsed.sessionSummary,
+        };
+      }
+
       return {
-        ok: true, endSession: true,
-        transcriptPath: savedPath,
-        summary: parsed.sessionSummary,
+        ok: true,
+        score: parsed.score,
+        feedback: parsed.feedback,
+        nextQuestion: parsed.nextQuestion,
+        questionRationale: parsed.questionRationale,
       };
+    } catch (err) {
+      reportServerError('mock-turn', 'Mock-turn spawn failed', err, { category: 'application' });
+      return { ok: false, error: err instanceof Error ? err.message : String(err) };
     }
-
-    return {
-      ok: true,
-      score: parsed.score,
-      feedback: parsed.feedback,
-      nextQuestion: parsed.nextQuestion,
-      questionRationale: parsed.questionRationale,
-    };
-  } catch (err) {
-    reportServerError('mock-turn', 'Mock-turn spawn failed', err, { category: 'application' });
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
-  }
-});
+  },
+);

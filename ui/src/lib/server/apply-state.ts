@@ -27,11 +27,11 @@ const DIR = path.join(ROOT, 'data', 'apply-state');
 export type ApplyState = {
   jobId: string;
   url: string;
-  portal: string;          // 'linkedin' | 'greenhouse' | 'ashby' | 'lever' | ... | 'unknown'
+  portal: string; // 'linkedin' | 'greenhouse' | 'ashby' | 'lever' | ... | 'unknown'
   profileId: string;
-  startedAt: number;       // unix ms
-  lastStep: string;        // most recent step name (e.g. 'filled_resume')
-  stepHistory: string[];   // every step in order
+  startedAt: number; // unix ms
+  lastStep: string; // most recent step name (e.g. 'filled_resume')
+  stepHistory: string[]; // every step in order
   /** Screenshot path (relative to ROOT) saved when a failure mode is hit.
    *  Used by the Inbox Issue CTA to show what the script was looking at. */
   screenshotPath?: string;
@@ -66,7 +66,10 @@ export function readApplyState(jobId: string): ApplyState | null {
 
 export function writeApplyState(state: ApplyState): void {
   ensureDir();
-  fs.writeFileSync(statePath(state.jobId), JSON.stringify({ ...state, capturedAt: Date.now() }, null, 2) + '\n');
+  fs.writeFileSync(
+    statePath(state.jobId),
+    JSON.stringify({ ...state, capturedAt: Date.now() }, null, 2) + '\n',
+  );
 }
 
 /** Append a step to the history of an existing state file. No-op when no
@@ -83,7 +86,9 @@ export function appendStep(jobId: string, step: string): void {
 
 export function clearApplyState(jobId: string): void {
   const p = statePath(jobId);
-  try { if (fs.existsSync(p)) fs.unlinkSync(p); } catch {}
+  try {
+    if (fs.existsSync(p)) fs.unlinkSync(p);
+  } catch {}
 }
 
 /** Return every in-flight apply (one per `data/apply-state/*.json`).
@@ -97,9 +102,13 @@ export function listInFlight(): ApplyState[] {
       try {
         const parsed = JSON.parse(fs.readFileSync(path.join(DIR, f), 'utf8'));
         if (parsed && typeof parsed === 'object') out.push(parsed as ApplyState);
-      } catch { /* skip unreadable */ }
+      } catch {
+        /* skip unreadable */
+      }
     }
-  } catch { /* dir missing */ }
+  } catch {
+    /* dir missing */
+  }
   return out;
 }
 

@@ -56,22 +56,22 @@ function buildMoveSpecs(): MoveSpec[] {
   const dst = (k: Parameters<typeof profilePath>[1]) => profilePath(DEFAULT_PROFILE_ID, k);
   return [
     // Top-level user content
-    { kind: 'file', src: path.join(ROOT, 'cv.md'),                       dst: dst('cv-md') },
-    { kind: 'file', src: path.join(ROOT, 'config', 'profile.yml'),       dst: dst('profile-yml') },
-    { kind: 'file', src: path.join(ROOT, 'portals.yml'),                 dst: dst('portals-yml') },
-    { kind: 'file', src: path.join(ROOT, 'modes', '_profile.md'),        dst: dst('profile-md') },
-    { kind: 'file', src: path.join(ROOT, 'article-digest.md'),           dst: dst('article-digest') },
+    { kind: 'file', src: path.join(ROOT, 'cv.md'), dst: dst('cv-md') },
+    { kind: 'file', src: path.join(ROOT, 'config', 'profile.yml'), dst: dst('profile-yml') },
+    { kind: 'file', src: path.join(ROOT, 'portals.yml'), dst: dst('portals-yml') },
+    { kind: 'file', src: path.join(ROOT, 'modes', '_profile.md'), dst: dst('profile-md') },
+    { kind: 'file', src: path.join(ROOT, 'article-digest.md'), dst: dst('article-digest') },
     // Per-profile data
-    { kind: 'file', src: path.join(ROOT, 'data', 'pipeline.md'),         dst: dst('pipeline') },
-    { kind: 'file', src: path.join(ROOT, 'data', 'applications.md'),     dst: dst('applications') },
-    { kind: 'file', src: path.join(ROOT, 'data', 'scan-history.tsv'),    dst: dst('scan-history') },
-    { kind: 'file', src: path.join(ROOT, 'data', 'gemini-scores.tsv'),   dst: dst('gemini-scores') },
-    { kind: 'file', src: path.join(ROOT, 'data', 'follow-ups.md'),       dst: dst('follow-ups') },
-    { kind: 'file', src: path.join(ROOT, 'data', 'projects.json'),       dst: dst('projects-json') },
+    { kind: 'file', src: path.join(ROOT, 'data', 'pipeline.md'), dst: dst('pipeline') },
+    { kind: 'file', src: path.join(ROOT, 'data', 'applications.md'), dst: dst('applications') },
+    { kind: 'file', src: path.join(ROOT, 'data', 'scan-history.tsv'), dst: dst('scan-history') },
+    { kind: 'file', src: path.join(ROOT, 'data', 'gemini-scores.tsv'), dst: dst('gemini-scores') },
+    { kind: 'file', src: path.join(ROOT, 'data', 'follow-ups.md'), dst: dst('follow-ups') },
+    { kind: 'file', src: path.join(ROOT, 'data', 'projects.json'), dst: dst('projects-json') },
     // Per-profile directories — move CONTENTS not the directory itself
     // (so .gitkeep / system-managed entries stay where they are).
-    { kind: 'dir-contents', src: path.join(ROOT, 'reports'),       dst: dst('reports-dir') },
-    { kind: 'dir-contents', src: path.join(ROOT, 'output'),        dst: dst('output-dir') },
+    { kind: 'dir-contents', src: path.join(ROOT, 'reports'), dst: dst('reports-dir') },
+    { kind: 'dir-contents', src: path.join(ROOT, 'output'), dst: dst('output-dir') },
     // interview-prep needs the story-bank.md exception — it's shared,
     // not per-profile, so we leave it where it is.
     {
@@ -238,10 +238,14 @@ export function migrateToMultiProfile(): { migrated: boolean; result?: MoveResul
       level: result.errors.length > 0 ? 'warn' : 'success',
       category: 'system',
       message:
-        result.moved.length + ' moved · ' +
-        result.backedUp.length + ' .bak files written · ' +
-        result.skipped.length + ' missing (skipped) · ' +
-        result.errors.length + ' errors',
+        result.moved.length +
+        ' moved · ' +
+        result.backedUp.length +
+        ' .bak files written · ' +
+        result.skipped.length +
+        ' missing (skipped) · ' +
+        result.errors.length +
+        ' errors',
     },
   );
 

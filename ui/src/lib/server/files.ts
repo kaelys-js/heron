@@ -20,11 +20,18 @@ export const MODES_DIR = path.join(ROOT, 'modes');
 export const ENV_FILE = path.join(ROOT, '.env');
 
 export function readSafe(p: string): string {
-  try { return fs.readFileSync(p, 'utf8'); } catch { return ''; }
+  try {
+    return fs.readFileSync(p, 'utf8');
+  } catch {
+    return '';
+  }
 }
 
 /** modes/ contents — system layer, shared, NOT per-profile. */
 export function listModes(): string[] {
-  try { return fs.readdirSync(MODES_DIR).filter((f: string) => f.endsWith('.md')); }
-  catch { return []; }
+  try {
+    return fs.readdirSync(MODES_DIR).filter((f: string) => f.endsWith('.md'));
+  } catch {
+    return [];
+  }
 }

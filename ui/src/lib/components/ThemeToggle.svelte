@@ -7,26 +7,26 @@
   smooth state change rather than an icon swap.
 -->
 <script lang="ts">
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Button } from '$lib/components/ui/button';
-  import { Sun, Moon, Monitor } from '@lucide/svelte';
-  import CheckMark from './CheckMark.svelte';
-  import { theme, type ThemeMode } from '$lib/theme.svelte';
-  import { cn } from '$lib/utils';
+import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { Button } from '$lib/components/ui/button';
+import { Sun, Moon, Monitor } from '@lucide/svelte';
+import CheckMark from './CheckMark.svelte';
+import { theme, type ThemeMode } from '$lib/theme.svelte';
+import { cn } from '$lib/utils';
 
-  type Option = { value: ThemeMode; label: string; desc: string; icon: any };
-  const OPTIONS: Option[] = [
-    { value: 'light', label: 'Light', desc: 'Always light', icon: Sun },
-    { value: 'dark', label: 'Dark', desc: 'Always dark', icon: Moon },
-    { value: 'system', label: 'System', desc: 'Follow OS preference', icon: Monitor },
-  ];
+type Option = { value: ThemeMode; label: string; desc: string; icon: any };
+const OPTIONS: Option[] = [
+  { value: 'light', label: 'Light', desc: 'Always light', icon: Sun },
+  { value: 'dark', label: 'Dark', desc: 'Always dark', icon: Moon },
+  { value: 'system', label: 'System', desc: 'Follow OS preference', icon: Monitor },
+];
 
-  // Pick the trigger icon based on what's RESOLVED so the user sees the
-  // current actual state, not just their stored preference.
-  let TriggerIcon = $derived(
-    theme.mode === 'system' ? Monitor : (theme.resolved === 'light' ? Sun : Moon),
-  );
+// Pick the trigger icon based on what's RESOLVED so the user sees the
+// current actual state, not just their stored preference.
+let TriggerIcon = $derived(
+  theme.mode === 'system' ? Monitor : theme.resolved === 'light' ? Sun : Moon,
+);
 </script>
 
 <DropdownMenu.Root>

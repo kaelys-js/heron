@@ -74,7 +74,9 @@ function spawnCadence(profileId?: string): Promise<FollowupCadence> {
       try {
         const { getActiveProfileId } = require('./profiles') as typeof import('./profiles');
         resolvedProfileId = getActiveProfileId();
-      } catch { /* leave undefined; script will default to active */ }
+      } catch {
+        /* leave undefined; script will default to active */
+      }
     }
     const args = ['followup-cadence.mjs'];
     if (resolvedProfileId) args.push('--profile', resolvedProfileId);
@@ -82,8 +84,12 @@ function spawnCadence(profileId?: string): Promise<FollowupCadence> {
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) {
@@ -94,7 +100,12 @@ function spawnCadence(profileId?: string): Promise<FollowupCadence> {
         const parsed = JSON.parse(stdout) as Omit<FollowupCadence, 'generatedAt'>;
         resolve({ ...parsed, generatedAt: Date.now() });
       } catch (err) {
-        reject(new Error('Failed to parse followup-cadence JSON: ' + (err instanceof Error ? err.message : String(err))));
+        reject(
+          new Error(
+            'Failed to parse followup-cadence JSON: ' +
+              (err instanceof Error ? err.message : String(err)),
+          ),
+        );
       }
     });
   });
@@ -128,7 +139,10 @@ function writeCache(cadence: FollowupCadence): void {
  *
  * `force=true` skips the cache (used by the daily Autopilot job).
  */
-export async function getFollowupCadence(opts?: { force?: boolean; profileId?: string }): Promise<FollowupCadence> {
+export async function getFollowupCadence(opts?: {
+  force?: boolean;
+  profileId?: string;
+}): Promise<FollowupCadence> {
   if (!opts?.force) {
     const cached = readCache();
     if (cached) return cached;
@@ -148,9 +162,7 @@ export function findEntryByCompanyRole(
   if (!c) return null;
   return (
     cadence.entries.find(
-      (e) =>
-        e.company.trim().toLowerCase() === c &&
-        e.role.trim().toLowerCase() === r,
+      (e) => e.company.trim().toLowerCase() === c && e.role.trim().toLowerCase() === r,
     ) ??
     cadence.entries.find((e) => e.company.trim().toLowerCase() === c) ??
     null

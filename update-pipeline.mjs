@@ -61,7 +61,9 @@ for (const e of sortedSkipped) {
   n += 1;
   // Escape | in role/company/notes.
   const safe = (s) => s.replace(/\|/g, '\\|').trim();
-  newRows.push(`| ${n} | ${today} | ${safe(e.company)} | ${safe(e.role)} | — | SKIP | ❌ | — | ${safe(e.reason)} |`);
+  newRows.push(
+    `| ${n} | ${today} | ${safe(e.company)} | ${safe(e.role)} | — | SKIP | ❌ | — | ${safe(e.reason)} |`,
+  );
 }
 
 // Append directly to file (after existing content, ensuring trailing newline).

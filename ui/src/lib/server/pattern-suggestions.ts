@@ -106,7 +106,14 @@ export function listSuggestions(profileId?: string): {
         impact: rec.impact,
         op: 'portals-add-negative-keyword',
         payload: {
-          keywords: ['US only', 'US-only', 'United States only', 'US citizen', 'US residency', 'no visa'],
+          keywords: [
+            'US only',
+            'US-only',
+            'United States only',
+            'US citizen',
+            'US residency',
+            'no visa',
+          ],
         },
         targetFiles: [profileFilePath(profileId, 'portals')],
       });
@@ -151,7 +158,10 @@ export function listSuggestions(profileId?: string): {
         reasoning: rec.reasoning,
         impact: rec.impact,
         op: 'profile-flag-archetype-strong',
-        payload: { archetype: archStrongMatch[1], conversionRate: parseInt(archStrongMatch[2], 10) },
+        payload: {
+          archetype: archStrongMatch[1],
+          conversionRate: parseInt(archStrongMatch[2], 10),
+        },
         targetFiles: [profileFilePath(profileId, 'profile-md')],
       });
       return;
@@ -171,7 +181,11 @@ export function listSuggestions(profileId?: string): {
     }
     // Fallback: surface as manual (user reads + decides)
     suggestions.push({
-      id, action: rec.action, reasoning: rec.reasoning, impact: rec.impact, op: 'manual',
+      id,
+      action: rec.action,
+      reasoning: rec.reasoning,
+      impact: rec.impact,
+      op: 'manual',
     });
   });
 
@@ -242,8 +256,20 @@ export function applySuggestion(
         const before = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : '';
         const isStrong = s.op === 'profile-flag-archetype-strong';
         const tag = isStrong ? 'STRONG-FIT' : 'AVOID';
-        const note = '<!-- Pattern-analyzer ' + new Date().toISOString().slice(0, 10) + ': [' + tag + '] "' + archetype + '"' +
-          (s.payload?.conversionRate != null ? ' (' + s.payload.conversionRate + '% conversion)' : '') + ' — ' + s.reasoning + ' -->';
+        const note =
+          '<!-- Pattern-analyzer ' +
+          new Date().toISOString().slice(0, 10) +
+          ': [' +
+          tag +
+          '] "' +
+          archetype +
+          '"' +
+          (s.payload?.conversionRate != null
+            ? ' (' + s.payload.conversionRate + '% conversion)'
+            : '') +
+          ' — ' +
+          s.reasoning +
+          ' -->';
         const after = before + (before.endsWith('\n') ? '' : '\n') + '\n' + note + '\n';
         fs.writeFileSync(target + '.bak', before);
         fs.writeFileSync(target, after);
@@ -268,7 +294,10 @@ export function applySuggestion(
 
 /** Resolve which per-profile file a kind targets. Falls back to repo-root
  *  legacy paths when no profileId is given. */
-function profileFilePath(profileId: string | undefined, kind: 'portals' | 'profile-yml' | 'profile-md'): string {
+function profileFilePath(
+  profileId: string | undefined,
+  kind: 'portals' | 'profile-yml' | 'profile-md',
+): string {
   if (profileId) {
     if (kind === 'portals') return profilePath(profileId, 'portals-yml');
     if (kind === 'profile-yml') return profilePath(profileId, 'profile-yml');
@@ -284,7 +313,8 @@ function profileFilePath(profileId: string | undefined, kind: 'portals' | 'profi
 // Used in logging when an apply succeeds.
 export function logSuggestionApplied(s: StructuredSuggestion, summary: string): void {
   logEvent('pattern-suggestions', 'Applied · ' + s.op, {
-    level: 'success', category: 'system',
+    level: 'success',
+    category: 'system',
     message: summary,
   });
 }

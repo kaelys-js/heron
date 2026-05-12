@@ -32,7 +32,7 @@ export async function load({ url }: { url: URL }) {
 
   // Highest-fit first — drain processes in this order, so the UI should
   // mirror it.
-  const byScore = (a: typeof all[number], b: typeof all[number]) =>
+  const byScore = (a: (typeof all)[number], b: (typeof all)[number]) =>
     (b.score ?? b.geminiScore ?? 0) - (a.score ?? a.geminiScore ?? 0);
   queued.sort(byScore);
   applying.sort(byScore);

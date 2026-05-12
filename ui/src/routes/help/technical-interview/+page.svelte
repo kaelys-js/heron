@@ -1,20 +1,29 @@
 <script lang="ts">
-  /**
-   * /help/technical-interview — guide to the tech-prep workflow.
-   *
-   * Tells the user:
-   *   - When to run "Generate tech-prep plan" (any interview stage)
-   *   - What it produces (file location, sections)
-   *   - How to combine with story-bank + mock-interview modes
-   *   - The 3-resource learning paths for the most common round types
-   */
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import { Button } from '$lib/components/ui/button';
-  import {
-    Sparkles, Code, Network, MessageSquare, ArrowLeft, ArrowRight,
-    ExternalLink, Target, Clock, BookOpen, Mic2,
-  } from '@lucide/svelte';
+/**
+ * /help/technical-interview — guide to the tech-prep workflow.
+ *
+ * Tells the user:
+ *   - When to run "Generate tech-prep plan" (any interview stage)
+ *   - What it produces (file location, sections)
+ *   - How to combine with story-bank + mock-interview modes
+ *   - The 3-resource learning paths for the most common round types
+ */
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import { Button } from '$lib/components/ui/button';
+import {
+  Sparkles,
+  Code,
+  Network,
+  MessageSquare,
+  ArrowLeft,
+  ArrowRight,
+  ExternalLink,
+  Target,
+  Clock,
+  BookOpen,
+  Mic2,
+} from '@lucide/svelte';
 </script>
 
 <div class="h-full overflow-y-auto">

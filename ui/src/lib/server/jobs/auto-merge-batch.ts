@@ -56,7 +56,11 @@ function runMergeTracker(reason: string): Promise<JobResult> {
       return;
     }
     if (pendingTsvCount() === 0) {
-      resolve({ ok: true, message: 'No pending additions', meta: { added: 0, updated: 0, skipped: 0 } });
+      resolve({
+        ok: true,
+        message: 'No pending additions',
+        meta: { added: 0, updated: 0, skipped: 0 },
+      });
       return;
     }
     mergeInFlight = true;
@@ -66,8 +70,12 @@ function runMergeTracker(reason: string): Promise<JobResult> {
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err: Error) => {
       mergeInFlight = false;
       logEvent('batch-merge', 'merge-tracker failed to spawn', {

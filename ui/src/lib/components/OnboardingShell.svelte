@@ -10,48 +10,52 @@
   don't have to know the order themselves.
 -->
 <script lang="ts">
-  import { CheckCircle2, Circle, ArrowRight, Sparkles } from '@lucide/svelte';
-  import { cn } from '$lib/utils';
-  import { APP_NAME } from '$lib/config/branding';
+import { CheckCircle2, Circle, ArrowRight, Sparkles } from '@lucide/svelte';
+import { cn } from '$lib/utils';
+import { APP_NAME } from '$lib/config/branding';
 
-  type StepStatus = 'complete' | 'skipped' | 'current' | 'pending';
-  type StepRow = { step: string; status: StepStatus };
+type StepStatus = 'complete' | 'skipped' | 'current' | 'pending';
+type StepRow = { step: string; status: StepStatus };
 
-  let { progress, current, children }: {
-    progress: StepRow[];
-    current: string;
-    children: import('svelte').Snippet;
-  } = $props();
+let {
+  progress,
+  current,
+  children,
+}: {
+  progress: StepRow[];
+  current: string;
+  children: import('svelte').Snippet;
+} = $props();
 
-  const STEP_LABELS: Record<string, string> = {
-    welcome: 'Welcome',
-    'api-keys': 'API keys',
-    identity: 'Identity',
-    cv: 'CV',
-    targeting: 'Targeting',
-    sources: 'Sources',
-    'first-scan': 'First scan',
-    done: 'Done',
-  };
+const STEP_LABELS: Record<string, string> = {
+  welcome: 'Welcome',
+  'api-keys': 'API keys',
+  identity: 'Identity',
+  cv: 'CV',
+  targeting: 'Targeting',
+  sources: 'Sources',
+  'first-scan': 'First scan',
+  done: 'Done',
+};
 
-  const STEP_HREFS: Record<string, string> = {
-    welcome: '/onboarding',
-    'api-keys': '/onboarding/api-keys',
-    identity: '/onboarding/identity',
-    cv: '/onboarding/cv',
-    targeting: '/onboarding/targeting',
-    sources: '/onboarding/sources',
-    'first-scan': '/onboarding/first-scan',
-    done: '/onboarding/done',
-  };
+const STEP_HREFS: Record<string, string> = {
+  welcome: '/onboarding',
+  'api-keys': '/onboarding/api-keys',
+  identity: '/onboarding/identity',
+  cv: '/onboarding/cv',
+  targeting: '/onboarding/targeting',
+  sources: '/onboarding/sources',
+  'first-scan': '/onboarding/first-scan',
+  done: '/onboarding/done',
+};
 
-  // Show "current" tint on the active step regardless of what state.json says.
-  let visible = $derived(
-    progress.map((p) => ({
-      ...p,
-      status: p.step === current ? ('current' as StepStatus) : p.status,
-    })),
-  );
+// Show "current" tint on the active step regardless of what state.json says.
+let visible = $derived(
+  progress.map((p) => ({
+    ...p,
+    status: p.step === current ? ('current' as StepStatus) : p.status,
+  })),
+);
 </script>
 
 <div class="min-h-screen flex bg-background text-foreground">
