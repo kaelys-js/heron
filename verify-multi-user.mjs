@@ -103,10 +103,20 @@ function deleteSession(userId) {
 }
 
 function readSecret() {
-  const env = readFileSync(join(ROOT, '.env'), 'utf8');
-  const m = env.match(/^BETTER_AUTH_SECRET=(.+)$/m);
-  if (!m) throw new Error('BETTER_AUTH_SECRET not found in .env');
-  return m[1].trim();
+  // In CI we set BETTER_AUTH_SECRET as an env var (no .env file on the runner).
+  // Locally the dashboard auto-writes .env on first boot.
+  if (process.env.BETTER_AUTH_SECRET) return process.env.BETTER_AUTH_SECRET;
+  try {
+    const env = readFileSync(join(ROOT, '.env'), 'utf8');
+    const m = env.match(/^BETTER_AUTH_SECRET=(.+)$/m);
+    if (m) return m[1].trim();
+  } catch {
+    /* no .env */
+  }
+  throw new Error(
+    'BETTER_AUTH_SECRET not set (neither in process.env nor in .env). ' +
+      'CI: set BETTER_AUTH_SECRET in the workflow env. Local: run the dashboard once to auto-generate .env.',
+  );
 }
 
 function authedHeaders(cookie) {
@@ -167,7 +177,15 @@ async function startServer() {
   }
   const child = spawn('node', ['build/index.js'], {
     cwd: UI,
-    env: { ...process.env, PORT: String(PORT) },
+    env: {
+      ...process.env,
+      PORT: String(PORT),
+      // Disable the Better Auth rate limiter — the verifier makes ~100+
+      // sequential auth-cookie requests in tight loops which would
+      // false-positive trigger the per-IP 60req/min cap. Production
+      // limits are reinstated when this var is unset.
+      BETTER_AUTH_RATE_LIMIT: 'off',
+    },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   // Wait for "Listening on" line.
@@ -698,9 +716,7 @@ async function main() {
     {
       // Inject a user with TWO sessions (representing laptop + phone).
       const u = injectUser(secret, 'multidev', 'owner');
-      const fs2 = await import('node:fs');
-      const env = fs2.readFileSync(join(ROOT, '.env'), 'utf8');
-      const sec = env.match(/^BETTER_AUTH_SECRET=(.+)$/m)[1].trim();
+      const sec = readSecret();
       // Add a second session with a different token.
       const db = new Database(AUTH_DB);
       const altToken = crypto.randomBytes(16).toString('hex');
@@ -760,9 +776,7 @@ async function main() {
     section('18. Session expiry (auto-logout)');
     {
       // Inject a user whose session expired 1ms ago.
-      const fs2 = await import('node:fs');
-      const env = fs2.readFileSync(join(ROOT, '.env'), 'utf8');
-      const sec = env.match(/^BETTER_AUTH_SECRET=(.+)$/m)[1].trim();
+      const sec = readSecret();
       const db = new Database(AUTH_DB);
       const userId = 'u-expired-' + crypto.randomBytes(3).toString('hex');
       const sessionId = 's-expired-' + crypto.randomBytes(3).toString('hex');

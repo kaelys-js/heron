@@ -221,9 +221,12 @@ export const auth = betterAuth({
   //   • The limiter applies per remote IP; behind Tailscale the IP is
   //     the device's tailnet address (unique per user device).
   rateLimit: {
-    enabled: true,
+    // Disable in CI / test envs so verify-multi-user can fire its 100+
+    // sequential auth-cookie requests without false-positive 429s.
+    // Production limits still apply when BETTER_AUTH_RATE_LIMIT isn't 'off'.
+    enabled: process.env.BETTER_AUTH_RATE_LIMIT !== 'off',
     window: 60,
-    max: 60, // generous baseline; specific endpoints below tighten
+    max: 60,
     customRules: {
       '/sign-in/email': { window: 60, max: 5 },
       '/sign-up/email': { window: 60, max: 5 },
