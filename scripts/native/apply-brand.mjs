@@ -169,7 +169,7 @@ function applyElectronBuilderConfig(brand) {
     cfg.appId = brand.identifiers.bundleId;
     cfg.productName = brand.displayName;
     cfg.copyright = brand.copyright;
-    // Mac URL scheme registration
+    // Mac URL scheme + every templated extendInfo field
     if (cfg.mac?.extendInfo) {
       cfg.mac.extendInfo.CFBundleURLTypes = [
         {
@@ -179,8 +179,41 @@ function applyElectronBuilderConfig(brand) {
       ];
       cfg.mac.extendInfo.NSLocalNetworkUsageDescription = brand.permissions.localNetworkUsage;
       cfg.mac.extendInfo.NSBonjourServices = [brand.identifiers.serviceType];
+      cfg.mac.extendInfo.NSHumanReadableCopyright = brand.copyright;
     }
-    cfg.protocols = [{ name: brand.identifiers.urlScheme, schemes: [brand.identifiers.urlScheme] }];
+    // Windows publisher + NSIS shortcut metadata
+    if (cfg.win) {
+      cfg.win.publisherName = brand.author.name;
+    }
+    if (cfg.nsis) {
+      cfg.nsis.shortcutName = brand.displayName;
+    }
+    // Linux .desktop + deb metadata
+    if (cfg.linux) {
+      cfg.linux.synopsis = brand.tagline;
+      cfg.linux.description = brand.description;
+      cfg.linux.maintainer = `${brand.author.name} <${brand.author.email}>`;
+      cfg.linux.vendor = brand.author.name;
+      cfg.linux.executableName = brand.name;
+      if (cfg.linux.desktop?.entry) {
+        cfg.linux.desktop.entry.Name = brand.displayName;
+        cfg.linux.desktop.entry.Comment = brand.tagline;
+        cfg.linux.desktop.entry.MimeType = `x-scheme-handler/${brand.identifiers.urlScheme};`;
+        cfg.linux.desktop.entry.StartupWMClass = brand.name;
+      }
+    }
+    // AppX (Microsoft Store / sideload)
+    if (cfg.appx) {
+      cfg.appx.applicationId = brand.identifiers.urlScheme;
+      cfg.appx.displayName = brand.displayName;
+      cfg.appx.publisher = `CN=${brand.author.name}`;
+      cfg.appx.publisherDisplayName = brand.author.name;
+      cfg.appx.identityName = `${brand.author.name}.${brand.name}`.replace(/[^a-z0-9.]/gi, '');
+      cfg.appx.backgroundColor = brand.colors.darkBg;
+    }
+    cfg.protocols = [
+      { name: brand.identifiers.urlScheme, schemes: [brand.identifiers.urlScheme], role: 'Editor' },
+    ];
     // Publish target
     if (Array.isArray(cfg.publish)) {
       for (const p of cfg.publish) {
@@ -194,6 +227,118 @@ function applyElectronBuilderConfig(brand) {
   changed
     ? log.ok(`electron-builder.config.json`)
     : log.skip(`electron-builder.config.json — already current`);
+}
+
+function applyAndroidStrings(brand) {
+  const path = join(UI, 'android', 'app', 'src', 'main', 'res', 'values', 'strings.xml');
+  if (!existsSync(path)) {
+    log.skip(`android/strings.xml — missing (run cap add android first)`);
+    return;
+  }
+  const body = [
+    `<?xml version='1.0' encoding='utf-8'?>`,
+    `<resources>`,
+    `    <string name="app_name">${brand.displayName}</string>`,
+    `    <string name="title_activity_main">${brand.displayName}</string>`,
+    `    <string name="package_name">${brand.identifiers.bundleId}</string>`,
+    `    <string name="custom_url_scheme">${brand.identifiers.urlScheme}</string>`,
+    `</resources>`,
+    ``,
+  ].join('\n');
+  const changed = writeIfChanged(path, body);
+  changed ? log.ok(`android/strings.xml`) : log.skip(`android/strings.xml — already current`);
+}
+
+function applyAndroidManifest(brand) {
+  const path = join(UI, 'android', 'app', 'src', 'main', 'AndroidManifest.xml');
+  if (!existsSync(path)) {
+    log.skip(`AndroidManifest.xml — missing`);
+    return;
+  }
+  // The manifest itself uses ${applicationId} placeholders that Gradle
+  // resolves at build time, but the `android:scheme="careerops"` literal
+  // is what we patch when the brand renames.
+  let body = readFileSync(path, 'utf8');
+  const next = body.replace(/(android:scheme=")[^"]*(")/g, `$1${brand.identifiers.urlScheme}$2`);
+  if (next !== body) {
+    writeFileSync(path, next);
+    log.ok(`AndroidManifest.xml`);
+  } else {
+    log.skip(`AndroidManifest.xml — already current`);
+  }
+}
+
+function applyAndroidBuildGradle(brand) {
+  // app/build.gradle has the applicationId — capacitor.config.json's appId
+  // is also surfaced into Gradle via cap sync. We patch the applicationId
+  // explicitly here for renames.
+  const path = join(UI, 'android', 'app', 'build.gradle');
+  if (!existsSync(path)) {
+    log.skip(`android/app/build.gradle — missing`);
+    return;
+  }
+  let body = readFileSync(path, 'utf8');
+  const next = body.replace(
+    /applicationId\s+"[^"]*"/,
+    `applicationId "${brand.identifiers.bundleId}"`,
+  );
+  if (next !== body) {
+    writeFileSync(path, next);
+    log.ok(`android/app/build.gradle`);
+  } else {
+    log.skip(`android/app/build.gradle — already current`);
+  }
+}
+
+function applyAndroidKotlinBrand(brand) {
+  // Kotlin-side counterpart of Brand.swift / brand.ts. Lives at the
+  // standard Android source root.
+  const pkgDir = brand.identifiers.bundleId.split('.').join('/');
+  const path = join(UI, 'android', 'app', 'src', 'main', 'java', pkgDir, 'Brand.kt');
+  // The Capacitor scaffold uses the bundle id as the package path. Verify
+  // it exists; if not, fall back to a generic location.
+  const dir = dirname(path);
+  if (!existsSync(dir)) {
+    // Scaffold may not have created it yet — best effort
+    log.skip(`Brand.kt — pkg dir missing (run cap sync android)`);
+    return;
+  }
+  const body = [
+    `// AUTO-GENERATED by scripts/native/apply-brand.mjs — do not edit.`,
+    `// Edit branding/brand.json and run \`pnpm brand:apply\`.`,
+    ``,
+    `package ${brand.identifiers.bundleId}`,
+    ``,
+    `object Brand {`,
+    `    const val name = "${brand.name}"`,
+    `    const val displayName = "${brand.displayName}"`,
+    `    const val bundleId = "${brand.identifiers.bundleId}"`,
+    `    const val urlScheme = "${brand.identifiers.urlScheme}"`,
+    `    const val serviceType = "${brand.identifiers.serviceType}"`,
+    `    const val keychainService = "${brand.identifiers.keychainService}"`,
+    ``,
+    `    /** SharedPreferences keys — brand-namespaced for fork-safety. */`,
+    `    object PrefsKey {`,
+    `        const val lanUrl = "\${name}:lan-url"`,
+    `        const val backendResolvedUrl = "\${name}:backend-resolved-url"`,
+    `        const val tailscaleUrl = "\${name}:tailscale-url"`,
+    `        const val productionUrl = "\${name}:production-url"`,
+    `        const val lastSeenIssue = "\${name}:last-seen-issue"`,
+    `        const val errorQueue = "\${name}:error-queue-native"`,
+    `        const val online = "\${name}:online"`,
+    `    }`,
+    ``,
+    `    /** Build a custom-scheme deep link. */`,
+    `    fun deepLink(route: String): String {`,
+    `        val trimmed = if (route.startsWith("/")) route.substring(1) else route`,
+    `        return "\${urlScheme}://\${trimmed}"`,
+    `    }`,
+    `    fun jobDeepLink(jobId: String): String = "\${urlScheme}://job/\${jobId}"`,
+    `}`,
+    ``,
+  ].join('\n');
+  const changed = writeIfChanged(path, body);
+  changed ? log.ok(`android Brand.kt`) : log.skip(`android Brand.kt — already current`);
 }
 
 function applyIosInfoPlist(brand) {
@@ -292,8 +437,21 @@ function applyAppHtml(brand) {
     [/'[^']*:theme'/, `'${brand.name}:theme'`],
     // Mask icon color (Safari pinned-tab) — use the brand accent
     [/(rel="mask-icon"[^>]*color=")[^"]*(")/, `$1${brand.colors.accentEmeraldDark}$2`],
-    // og:description
+    // og:description / og:title / og:site_name
     [/(og:description"\s+content=")[^"]*(")/, `$1${brand.tagline}$2`],
+    [/(og:site_name"\s+content=")[^"]*(")/, `$1${brand.displayName}$2`],
+    [/(og:title"\s+content=")[^"]*(")/, `$1${brand.displayName}$2`],
+    [/(og:image:alt"\s+content=")[^"]*(")/, `$1${brand.displayName}$2`],
+    // twitter:title / twitter:description
+    [/(twitter:title"\s+content=")[^"]*(")/, `$1${brand.displayName}$2`],
+    [/(twitter:description"\s+content=")[^"]*(")/, `$1${brand.tagline}$2`],
+    // apple-mobile-web-app-title
+    [/(apple-mobile-web-app-title"\s+content=")[^"]*(")/, `$1${brand.displayName}$2`],
+    // msapplication-TileColor
+    [/(msapplication-TileColor"\s+content=")[^"]*(")/, `$1${brand.colors.primary}$2`],
+    // author + copyright
+    [/(name="author"\s+content=")[^"]*(")/, `$1${brand.author.name}$2`],
+    [/(name="copyright"\s+content=")[^"]*(")/, `$1${brand.copyright}$2`],
   ];
   for (const [re, val] of subs) {
     const next = body.replace(re, val);
@@ -318,6 +476,53 @@ function applyManifest(brand) {
     m.description = brand.tagline;
     m.theme_color = brand.colors.primary;
     m.background_color = brand.colors.darkBg;
+    // Stable identity — Chrome PWA install treats this as the app's ID.
+    // Changing it later prompts a reinstall, so derive from brand id.
+    m.id = `/?source=pwa&app=${brand.name}`;
+    // display_override — 'window-controls-overlay' lets Chrome PWAs draw
+    // a custom titlebar; fall back to standalone if unsupported.
+    m.display_override = ['window-controls-overlay', 'standalone'];
+    // App shortcuts (right-click PWA icon in dock/start, or 3D-Touch on iOS).
+    m.shortcuts = [
+      {
+        name: 'Pipeline',
+        short_name: 'Pipeline',
+        description: 'Open the job pipeline',
+        url: '/pipeline',
+        icons: [{ src: `/icons/${brand.name}-192.png`, sizes: '192x192' }],
+      },
+      {
+        name: 'Inbox',
+        short_name: 'Inbox',
+        description: 'Open the issues inbox',
+        url: '/inbox',
+        icons: [{ src: `/icons/${brand.name}-192.png`, sizes: '192x192' }],
+      },
+      {
+        name: 'Queue',
+        short_name: 'Queue',
+        description: 'Open the apply queue',
+        url: '/queue',
+        icons: [{ src: `/icons/${brand.name}-192.png`, sizes: '192x192' }],
+      },
+      {
+        name: 'Settings',
+        short_name: 'Settings',
+        description: 'Open settings',
+        url: '/settings',
+        icons: [{ src: `/icons/${brand.name}-192.png`, sizes: '192x192' }],
+      },
+    ];
+    // Categories — Chrome surfaces these in PWA discovery.
+    m.categories = ['productivity', 'utilities', 'business'];
+    // Protocol handler — lets `careerops://` register at PWA install time
+    // on Chrome/Edge so links open the PWA instead of the browser.
+    m.protocol_handlers = [
+      {
+        protocol: `web+${brand.identifiers.urlScheme}`,
+        url: '/?url=%s',
+      },
+    ];
     // Rebuild icon list — keep SVG (resolution-independent) + every
     // PWA-required PNG size we generate via the icon pipeline. PWA
     // install on Chrome/Edge wants at least one 192×192 + one 512×512
@@ -660,6 +865,12 @@ function apply() {
   applyIosInfoPlist(brand);
   applySwiftConstants(brand);
   syncSharedSwift(brand);
+
+  log.step('Android');
+  applyAndroidStrings(brand);
+  applyAndroidManifest(brand);
+  applyAndroidBuildGradle(brand);
+  applyAndroidKotlinBrand(brand);
 
   log.step('Web manifest + favicon + app.html');
   applyFavicon(brand);
