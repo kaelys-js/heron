@@ -92,6 +92,15 @@ bun.lockb
 # Files stay on disk as actual backups — just never committed.
 *.bak
 *.bak.*
+# resetProfile()'s timestamped snapshot dirs — created automatically
+# before any destructive `pnpm reset:data` run. These contain WHOLE
+# user profiles (CVs, applications, reports, form-answer caches with
+# real emails). NEVER commit. The pattern matches both flavours the
+# dashboard has emitted historically.
+data/.reset-bak-*/
+data/.reset-bak-*
+**/.reset-bak-*/
+**/.reset-bak-*
 
 # ── Per-profile user data ───────────────────────────────────────────
 # Dashboard manages this on boot; same reason config/profile.yml /

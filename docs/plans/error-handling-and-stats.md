@@ -7,7 +7,8 @@
 **Goal**: Add comprehensive error handling/surfacing across server + client and replace the bare-numbers Stats page with a proper analytics dashboard.
 **Architecture**: Centralized error envelope (`{ ok: true, ... }` / `{ ok: false, error: { message, code?, details? } }`). All endpoints wrapped via shared helper. Client `apiCall<T>` parses envelope and dispatches a `career-ops:open-notifications` event for "Details" toast actions. Stats charts are pure SVG/div (no chart library).
 
-User: [redacted-email] — explicit "yes to everything" on the proposed changelog 2026-05-07.
+<!-- Maintainer pre-approved the proposed changelog 2026-05-07. -->
+
 
 Each task is atomic: implement → verify → next.
 
