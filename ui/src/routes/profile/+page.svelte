@@ -11,6 +11,7 @@
   import ProofPointEditor from '$lib/components/ProofPointEditor.svelte';
   import CvManagerSheet from '$lib/components/CvManagerSheet.svelte';
   import CollapsibleCard from '$lib/components/CollapsibleCard.svelte';
+  import CvQualityCard from '$lib/components/CvQualityCard.svelte';
   import RichTextarea from '$lib/components/RichTextarea.svelte';
   import ResetProfileDialog from '$lib/components/ResetProfileDialog.svelte';
   import ConfirmButton from '$lib/components/ConfirmButton.svelte';
@@ -1691,6 +1692,12 @@
           </div>
         </div>
       </CollapsibleCard>
+
+      <!-- ============ CV QUALITY GATE ============ -->
+      <!-- Strict ATS + AI-detection lint with one-click auto-fix. Runs
+           on mount; user can re-check anytime. Auto-fix preserves every
+           fact, rewrites style, backs up original to cv.md.bak. -->
+      <CvQualityCard onCvUpdated={refetchGeneralCvStatus} />
 
       <!-- ============ DANGER ZONE ============ -->
       <CollapsibleCard

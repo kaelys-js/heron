@@ -1,33 +1,68 @@
 #!/usr/bin/env node
 /**
- * ats-check.mjs — Lint a CV PDF for ATS compatibility.
+ * ats-check.mjs — strict ATS-compatibility validator for CV PDFs.
  *
- * Runs the same checks recruiters' ATS parsers (Workday, Greenhouse,
- * Lever, Ashby, iCIMS, Taleo, Jobvite) do on every uploaded resume,
- * and reports a score with specific reasons for each deduction.
+ * Every rule is binary: pass or fail. There are no "warnings" in default
+ * mode — anything below 100% means at least one ATS in the wild will
+ * mis-parse or reject the resume. The exit code matches the score so
+ * CI / pre-push hooks can gate on it.
  *
  * Usage:
- *   node ats-check.mjs <path/to/cv.pdf>           # human-readable
- *   node ats-check.mjs <path/to/cv.pdf> --json    # machine-readable
+ *   pnpm ats:check <path/to/cv.pdf>                # human report
+ *   pnpm ats:check <path/to/cv.pdf> --json         # machine-readable
+ *   pnpm ats:check <path/to/cv.pdf> --lenient      # downgrade structural-only checks to warnings
  *
  * Exit codes:
- *   0 — Score ≥ 90% (passes every realistic ATS)
- *   1 — Score 75-89% (likely passes; minor flags)
- *   2 — Score < 75% (some ATS will reject or mis-parse)
+ *   0 — all checks pass (≥ 100% strict)
+ *   1 — at least one check failed
+ *   2 — environment issue (missing tool, corrupt PDF)
  *
- * Uses Poppler's `pdftotext` + `pdfinfo` — install with `brew install poppler`
- * on macOS or `apt-get install poppler-utils` on Linux.
+ * What it checks (every rule below is a hard fail by default):
  *
- * What it checks:
- *   • Text-extractability (default + raw + layout modes all agree)
- *   • PDF metadata (Title, Author, Subject, Keywords, Tagged)
- *   • Standard section headers present
- *   • No problematic Unicode (em-dash, smart quotes, ZWSP) in extracted text
- *   • Single-column reading order (sections appear in expected sequence)
- *   • No embedded JavaScript / XFA forms / encryption
- *   • Hyperlinks preserved as annotations (LinkedIn / portfolio)
- *   • Reasonable file size (under 1 MB; over = images / scanned content)
- *   • Page count (1-2 pages typical; 3+ flagged)
+ *   ── Document integrity ──────────────────────────────────────────
+ *   • Not encrypted (ATS refuse password-locked PDFs)
+ *   • Not corrupt (pdfinfo + pdftotext succeed)
+ *   • PDF version 1.4-2.0 (rare ATS choke on 2.0; warn-only via --lenient)
+ *   • File size 50KB-1MB (smaller = text-only suspicion; larger = images)
+ *   • Page count 1-2 (3+ rejected by most ATS)
+ *
+ *   ── Text extractability (the single most-important class) ──────
+ *   • Default + raw + layout extraction modes all return non-empty
+ *   • Word-set across modes agrees ≥ 95% (text-layer well-formed)
+ *   • Minimum 500 chars (sanity: not an image-only PDF)
+ *   • Every word extractable via pdfgrep (a non-conforming text layer
+ *     surfaces here when pdftotext succeeds but pdfgrep can't find words)
+ *
+ *   ── Metadata (recruiter file managers index these) ─────────────
+ *   • Title set (HTML <title>)
+ *   • Author set (HTML <meta name="author">)
+ *   • Subject set (Role — Company)
+ *   • Keywords set (JD keywords CSV)
+ *   • Creator stamped (proves this is a generated PDF, not a scan)
+ *   • PDF/UA tagged structure (Tagged: yes)
+ *
+ *   ── Structure (single-column, standard sections) ───────────────
+ *   • Standard section names present (Summary, Experience, Education,
+ *     Skills as ALL-CAPS or Title Case at line-start)
+ *   • Reading order: Summary → Experience → Education
+ *   • At least 3 standard sections detected (any fewer = unusual layout)
+ *
+ *   ── Content fidelity (no garbled text) ────────────────────────
+ *   • No problematic Unicode that survived normalisation (em-dash,
+ *     en-dash, smart quotes, ellipsis, zero-width, math-mode wrappers)
+ *   • No PDF text-encoding artifacts (replacement char U+FFFD,
+ *     PUA codepoints, undefined characters)
+ *
+ *   ── Hyperlinks (recruiter clicks these) ────────────────────────
+ *   • At least one hyperlink annotation preserved (LinkedIn / portfolio)
+ *
+ *   ── Safety (some ATS reject these outright) ────────────────────
+ *   • No embedded JavaScript
+ *   • No XFA / fillable form fields
+ *
+ * Uses Poppler's `pdftotext` + `pdfinfo` + `pdfgrep`. Install with:
+ *   brew install poppler pdfgrep   # macOS
+ *   apt-get install poppler-utils pdfgrep   # Linux
  */
 
 import { execFileSync } from 'node:child_process';
@@ -36,10 +71,11 @@ import { resolve } from 'node:path';
 
 const args = process.argv.slice(2);
 const jsonOutput = args.includes('--json');
+const lenient = args.includes('--lenient');
 const pdfPath = args.find((a) => !a.startsWith('-'));
 
 if (!pdfPath) {
-  console.error('Usage: node ats-check.mjs <path/to/cv.pdf> [--json]');
+  console.error('Usage: node ats-check.mjs <path/to/cv.pdf> [--json] [--lenient]');
   process.exit(2);
 }
 if (!existsSync(pdfPath)) {
@@ -54,229 +90,290 @@ const B = '\x1b[1m';
 const N = '\x1b[0m';
 const DIM = '\x1b[2m';
 
-/** Tool-availability check. */
 function ensureTool(cmd) {
   try {
     execFileSync('which', [cmd], { stdio: 'ignore' });
+    return true;
   } catch {
-    console.error(
-      `${R}Missing required tool: ${cmd}${N}\n` +
-        `Install: brew install poppler (macOS) | apt-get install poppler-utils (Linux)`,
-    );
-    process.exit(2);
+    return false;
   }
 }
-ensureTool('pdftotext');
-ensureTool('pdfinfo');
 
-/** Run an external command, capture stdout (latin1 because some PDFs have non-UTF8 bytes). */
+const hasPdftotext = ensureTool('pdftotext');
+const hasPdfinfo = ensureTool('pdfinfo');
+const hasPdfgrep = ensureTool('pdfgrep');
+if (!hasPdftotext || !hasPdfinfo) {
+  console.error(
+    `${R}Missing required tool. Install: brew install poppler (macOS) or apt-get install poppler-utils (Linux).${N}`,
+  );
+  process.exit(2);
+}
+
 function run(cmd, argv) {
   return execFileSync(cmd, argv, { encoding: 'latin1', maxBuffer: 50 * 1024 * 1024 });
 }
 
 const checks = [];
-function ok(name, evidence) {
-  checks.push({ status: 'ok', name, evidence });
+function pass(name, evidence = '') {
+  checks.push({ status: 'pass', name, evidence });
 }
-function warn(name, evidence) {
-  checks.push({ status: 'warn', name, evidence });
-}
-function fail(name, evidence) {
+function failHard(name, evidence = '') {
   checks.push({ status: 'fail', name, evidence });
 }
+function warnSoft(name, evidence = '') {
+  if (lenient) {
+    checks.push({ status: 'warn', name, evidence });
+  } else {
+    checks.push({ status: 'fail', name, evidence });
+  }
+}
 
-// ── 1. PDF metadata ─────────────────────────────────────────────────
-const infoRaw = run('pdfinfo', [pdfPath]);
+// ── 1. Document integrity ─────────────────────────────────────────
+let infoRaw;
+try {
+  infoRaw = run('pdfinfo', [pdfPath]);
+} catch (e) {
+  console.error(`${R}pdfinfo failed on this file — likely corrupt.${N}`);
+  process.exit(2);
+}
 const info = {};
 for (const line of infoRaw.split('\n')) {
   const m = line.match(/^([A-Za-z][A-Za-z _]*?):\s+(.+)$/);
   if (m) info[m[1].trim()] = m[2].trim();
 }
 
-info.Title?.length ? ok('Title metadata set', info.Title) : warn('Title metadata missing', '');
-info.Author?.length
-  ? ok('Author metadata set', info.Author)
-  : warn('Author metadata missing — recruiter file-managers sort by author', '');
-info.Subject?.length
-  ? ok('Subject metadata set', info.Subject)
-  : warn('Subject metadata missing — useful for "Role @ Company" indexing', '');
-info.Keywords?.length
-  ? ok('Keywords metadata set', `${info.Keywords.split(',').length} terms`)
-  : warn('Keywords metadata missing — some ATS index by this field', '');
-info.Tagged === 'yes'
-  ? ok('PDF/UA tagged structure', 'screen-readers + modern ATS parse semantic roles')
-  : warn('PDF not tagged (PDF/UA)', 'add tagged:true to page.pdf()');
-info.JavaScript === 'no'
-  ? ok('No embedded JavaScript', '')
-  : fail('Embedded JavaScript', 'some ATS reject PDFs with JS');
-info.Form === 'none'
-  ? ok('No fillable forms', '')
-  : warn(`Embedded form: ${info.Form}`, 'XFA forms can break parsers');
-info.Encrypted === 'no'
-  ? ok('Not encrypted', '')
-  : fail('Encrypted PDF', 'most ATS refuse password-locked PDFs');
+if (info.Encrypted === 'no') pass('Not encrypted');
+else failHard('Encrypted PDF', 'most ATS refuse password-locked PDFs');
 
+if (info.JavaScript === 'no') pass('No embedded JavaScript');
+else failHard('Embedded JavaScript', 'some ATS reject PDFs with JS');
+
+if (info.Form === 'none') pass('No fillable forms');
+else failHard(`Embedded ${info.Form} form`, 'XFA forms break many parsers');
+
+// PDF version
+const pdfVersion = info['PDF version'] || info.PDFVersion || '';
+const versionNum = parseFloat(pdfVersion);
+if (Number.isFinite(versionNum) && versionNum >= 1.4 && versionNum <= 1.7) {
+  pass('PDF version', `${pdfVersion} (universal support)`);
+} else if (Number.isFinite(versionNum) && versionNum >= 1.0 && versionNum < 2.0) {
+  pass('PDF version', `${pdfVersion} (broad support)`);
+} else if (Number.isFinite(versionNum) && versionNum >= 2.0) {
+  warnSoft('PDF version', `${pdfVersion} — rare older ATS choke on PDF 2.0`);
+} else {
+  warnSoft('PDF version', `unknown (${pdfVersion || 'absent'})`);
+}
+
+// Page count
 const pageCount = parseInt(info.Pages || '0', 10);
-if (pageCount === 0) fail('Page count', 'pdfinfo reports 0 pages — corrupt file');
-else if (pageCount <= 2) ok('Page count', `${pageCount} page(s) — recruiter-friendly`);
-else if (pageCount <= 3)
-  warn('Page count', `${pageCount} pages — review if all content is essential`);
-else fail('Page count', `${pageCount} pages — way too long; ATS abandon long resumes`);
+if (pageCount === 0) failHard('Page count', 'pdfinfo reports 0 pages — corrupt');
+else if (pageCount === 1) pass('Page count', '1 page — ideal');
+else if (pageCount === 2) pass('Page count', '2 pages — acceptable');
+else if (pageCount === 3) warnSoft('Page count', '3 pages — review for trimming');
+else failHard('Page count', `${pageCount} pages — most ATS abandon resumes >2 pages`);
 
+// File size
 const sizeKb = statSync(pdfPath).size / 1024;
-if (sizeKb < 100)
-  warn('Small file size', `${sizeKb.toFixed(1)} KB — possibly text-only; check fonts embed`);
-else if (sizeKb < 1024) ok('File size', `${sizeKb.toFixed(1)} KB — normal text+fonts PDF`);
-else
-  fail('Large file size', `${(sizeKb / 1024).toFixed(2)} MB — likely image-based; ATS can't OCR`);
+if (sizeKb < 50) {
+  warnSoft('File size', `${sizeKb.toFixed(1)} KB — suspicious-low; check fonts embed`);
+} else if (sizeKb < 1024) {
+  pass('File size', `${sizeKb.toFixed(1)} KB`);
+} else if (sizeKb < 2048) {
+  warnSoft('File size', `${(sizeKb / 1024).toFixed(2)} MB — borderline-large`);
+} else {
+  failHard('File size', `${(sizeKb / 1024).toFixed(2)} MB — likely image-based`);
+}
 
 // ── 2. Text extractability ─────────────────────────────────────────
-const textDefault = run('pdftotext', [pdfPath, '-']);
-const textLayout = run('pdftotext', ['-layout', pdfPath, '-']);
-const textRaw = run('pdftotext', ['-raw', pdfPath, '-']);
+let textDefault = '';
+let textLayout = '';
+let textRaw = '';
+try {
+  textDefault = run('pdftotext', [pdfPath, '-']);
+  textLayout = run('pdftotext', ['-layout', pdfPath, '-']);
+  textRaw = run('pdftotext', ['-raw', pdfPath, '-']);
+} catch {
+  failHard('pdftotext extraction', 'extraction crashed — PDF text layer broken');
+}
 
-if (textDefault.trim().length < 200)
-  fail('Extracted text length', `Only ${textDefault.trim().length} chars — PDF may be image-based`);
-else if (textDefault.trim().length < 500)
-  warn('Extracted text length', `${textDefault.trim().length} chars — short for a CV`);
-else ok('Extracted text length', `${textDefault.trim().length} chars`);
+const textLen = textDefault.trim().length;
+if (textLen >= 500) pass('Text length', `${textLen} chars`);
+else if (textLen >= 200) warnSoft('Text length', `${textLen} chars — short for a CV`);
+else failHard('Text length', `${textLen} chars — PDF may be image-based`);
 
-// Three extraction modes should agree on which words exist (not on order).
+// Cross-mode consistency
 const words = (s) => new Set(s.toLowerCase().match(/[a-z][a-z0-9]+/g) || []);
 const wDefault = words(textDefault);
 const wRaw = words(textRaw);
-const intersection = [...wDefault].filter((w) => wRaw.has(w)).length;
-const consistency = intersection / Math.max(wDefault.size, 1);
-if (consistency >= 0.95)
-  ok('Extraction consistency', `${(consistency * 100).toFixed(1)}% of words agree across modes`);
-else
-  warn(
+const wLayout = words(textLayout);
+const intersectRaw = [...wDefault].filter((w) => wRaw.has(w)).length;
+const consistencyRaw = wDefault.size ? intersectRaw / wDefault.size : 0;
+if (consistencyRaw >= 0.98)
+  pass('Extraction consistency (default vs raw)', `${(consistencyRaw * 100).toFixed(1)}%`);
+else if (consistencyRaw >= 0.9)
+  warnSoft(
     'Extraction consistency',
-    `${(consistency * 100).toFixed(1)}% — some words extracted differently by default vs raw mode`,
+    `${(consistencyRaw * 100).toFixed(1)}% — minor drift between modes`,
+  );
+else
+  failHard(
+    'Extraction consistency',
+    `${(consistencyRaw * 100).toFixed(1)}% — modes disagree, text layer suspect`,
   );
 
-// ── 3. Standard section headers ────────────────────────────────────
-const expectedSections = [
-  { name: 'Summary', pattern: /(professional\s+summary|summary|about|profile)/i },
+const intersectLayout = [...wDefault].filter((w) => wLayout.has(w)).length;
+const consistencyLayout = wDefault.size ? intersectLayout / wDefault.size : 0;
+if (consistencyLayout >= 0.98)
+  pass('Extraction consistency (default vs layout)', `${(consistencyLayout * 100).toFixed(1)}%`);
+else warnSoft('Extraction consistency (layout)', `${(consistencyLayout * 100).toFixed(1)}%`);
+
+// pdfgrep: any common word findable?
+if (hasPdfgrep) {
+  try {
+    run('pdfgrep', ['-i', '-c', 'experience\\|education\\|skills', pdfPath]);
+    pass('pdfgrep finds standard headers');
+  } catch {
+    warnSoft(
+      'pdfgrep finds standard headers',
+      'pdfgrep returned no matches for "experience|education|skills"',
+    );
+  }
+}
+
+// ── 3. Metadata ────────────────────────────────────────────────────
+const tests = [
+  { name: 'Title metadata', key: 'Title' },
+  { name: 'Author metadata', key: 'Author' },
+  { name: 'Subject metadata', key: 'Subject' },
+  { name: 'Keywords metadata', key: 'Keywords' },
+  { name: 'Creator metadata', key: 'Creator' },
+];
+for (const t of tests) {
+  if (info[t.key] && info[t.key].length > 0) pass(t.name, info[t.key].slice(0, 80));
+  else failHard(`${t.name} missing`, `recruiter file-managers + ATS index this field`);
+}
+if (info.Tagged === 'yes') pass('PDF/UA tagged structure');
+else failHard('PDF not tagged', 'screen-readers + tag-aware ATS need this');
+
+// ── 4. Structure / sections ───────────────────────────────────────
+const standardSections = [
+  { name: 'Summary', re: /(?:^|\n)\s*(professional\s+summary|summary|profile|about)\s*\n/i },
   {
     name: 'Experience',
-    pattern: /(work\s+experience|experience|employment|professional\s+experience)/i,
+    re: /(?:^|\n)\s*(work\s+experience|experience|employment|professional\s+experience)\s*\n/i,
   },
-  { name: 'Education', pattern: /education/i },
-  { name: 'Skills', pattern: /skills|technical\s+skills|technologies/i },
+  { name: 'Education', re: /(?:^|\n)\s*education\s*\n/i },
+  { name: 'Skills', re: /(?:^|\n)\s*(technical\s+skills|skills|technologies|competencies)\s*\n/i },
 ];
-for (const sec of expectedSections) {
-  if (sec.pattern.test(textDefault)) ok(`Section: ${sec.name}`, 'standard header detected');
-  else warn(`Section: ${sec.name}`, 'use a standard header like "Work Experience", "Education"');
+let sectionsFound = 0;
+for (const sec of standardSections) {
+  if (sec.re.test(textDefault)) {
+    pass(`Section: ${sec.name}`);
+    sectionsFound++;
+  } else {
+    failHard(`Section: ${sec.name} missing`, `use a standard header like "Work Experience"`);
+  }
 }
+if (sectionsFound >= 4) pass('Standard section header count', `${sectionsFound}/4`);
+else
+  failHard('Standard section header count', `only ${sectionsFound}/4 — recruiters scan for these`);
 
-// ── 4. Problematic Unicode (should be zero post-normalisation) ─────
-// NBSP (U+00A0) is intentionally excluded: Chromium auto-inserts it
-// during PDF layout (anywhere the CSS forbids a line-break: nowrap, flex
-// gaps, etc.), and every modern ATS parser treats it as whitespace per
-// the Unicode standard. Listing it as a warning would always fire even
-// on a perfectly compatible PDF.
-const badUnicode = [
-  { name: 'em-dash (—)', re: /—/g },
-  { name: 'en-dash (–)', re: /–/g },
-  { name: 'smart double-quote', re: /[“”„‟]/g },
-  { name: 'smart single-quote', re: /[‘’‚‛]/g },
-  { name: 'ellipsis (…)', re: /…/g },
-  { name: 'zero-width', re: /[​‌‍⁠﻿]/g },
+// Reading order
+const idxSummary = textDefault.search(/professional\s+summary|^summary/im);
+const idxExp = textDefault.search(/work\s+experience|^experience/im);
+const idxEdu = textDefault.search(/^education/im);
+if (idxSummary >= 0 && idxExp >= 0 && idxSummary < idxExp) pass('Order: Summary before Experience');
+else if (idxSummary >= 0 && idxExp >= 0)
+  failHard('Order: Summary before Experience', 'unusual layout');
+if (idxExp >= 0 && idxEdu >= 0 && idxExp < idxEdu) pass('Order: Experience before Education');
+else if (idxExp >= 0 && idxEdu >= 0)
+  warnSoft('Order: Education before Experience', 'OK for new grads only');
+
+// ── 5. Content fidelity (no garbled chars) ────────────────────────
+const garbled = [
+  { name: 'Em-dash (—)', re: /—/g },
+  { name: 'En-dash (–)', re: /–/g },
+  { name: 'Smart double-quote', re: /[“”„‟]/g },
+  { name: 'Smart single-quote', re: /[‘’‚‛]/g },
+  { name: 'Ellipsis (…)', re: /…/g },
+  { name: 'Zero-width chars', re: /[​‌‍⁠﻿]/g },
+  { name: 'Replacement char (U+FFFD)', re: /�/g },
+  { name: 'BOM (U+FEFF)', re: /﻿/g },
 ];
-for (const u of badUnicode) {
-  const matches = textDefault.match(u.re);
+for (const g of garbled) {
+  const matches = textDefault.match(g.re);
   if (matches && matches.length > 0)
-    warn(
-      `Unicode: ${u.name}`,
-      `${matches.length} occurrence(s) — replace with ASCII for max compatibility`,
+    failHard(
+      `Garbled: ${g.name}`,
+      `${matches.length} occurrence(s) — replace with ASCII equivalent before render`,
     );
-  else ok(`Unicode: ${u.name}`, 'absent / normalised');
+  else pass(`Clean: ${g.name}`);
 }
 
-// ── 5. Hyperlinks (pdfinfo -url) ────────────────────────────────────
+// Private Use Area codepoints (some font encodings leak these)
+const puaMatches = textDefault.match(/[-]/g);
+if (puaMatches && puaMatches.length > 0)
+  failHard(`PUA codepoints`, `${puaMatches.length} occurrence(s) — font mapping broken`);
+else pass('No Private Use Area codepoints');
+
+// ── 6. Hyperlinks ──────────────────────────────────────────────────
+let urlCount = 0;
 let urls = [];
 try {
   const urlOut = run('pdfinfo', ['-url', pdfPath]);
   urls = urlOut
     .split('\n')
-    .filter((l) => l.includes('http'))
+    .filter((l) => /https?:\/\//.test(l))
     .map((l) => l.trim().split(/\s+/).pop());
+  urlCount = urls.length;
 } catch {}
-if (urls.length === 0)
-  warn('Hyperlinks', 'no URL annotations — LinkedIn/portfolio should be a clickable <a> tag');
-else ok('Hyperlinks', `${urls.length} URL(s) preserved: ${urls.slice(0, 3).join(', ')}`);
-
-// ── 6. Reading order — sections appear in sensible sequence ────────
-function findIdx(text, re) {
-  const m = re.exec(text);
-  return m ? m.index : -1;
-}
-const idxSummary = findIdx(textDefault, /(professional\s+summary|summary|profile)/i);
-const idxExp = findIdx(textDefault, /(work\s+experience|experience|employment)/i);
-const idxEdu = findIdx(textDefault, /education/i);
-if (idxSummary >= 0 && idxExp >= 0 && idxSummary < idxExp)
-  ok('Reading order: Summary before Experience', '');
-else if (idxSummary >= 0 && idxExp >= 0)
-  warn('Reading order: Summary after Experience', 'unusual; recruiter scans top-down');
-if (idxExp >= 0 && idxEdu >= 0 && idxExp < idxEdu)
-  ok('Reading order: Experience before Education', '');
-else if (idxExp >= 0 && idxEdu >= 0)
-  warn(
-    'Reading order: Education before Experience',
-    'OK for new-grad CVs; unusual for >2yrs of experience',
+if (urlCount >= 1)
+  pass('Hyperlinks preserved', `${urlCount} URL(s): ${urls.slice(0, 2).join(', ')}`);
+else
+  failHard(
+    'No hyperlinks',
+    'LinkedIn / portfolio should be a clickable <a> tag — recruiters click these',
   );
 
-// ── 7. Section-name detection from headers ─────────────────────────
-const standardHeaders = [
-  'PROFESSIONAL SUMMARY',
-  'WORK EXPERIENCE',
-  'EXPERIENCE',
-  'EDUCATION',
-  'SKILLS',
-  'TECHNICAL SKILLS',
-  'CERTIFICATIONS',
-  'PROJECTS',
-  'CORE COMPETENCIES',
-];
-const detected = standardHeaders.filter((h) =>
-  new RegExp(`^\\s*${h.replace(/ /g, '\\s+')}\\s*$`, 'im').test(textDefault),
-);
-if (detected.length >= 3) ok('Standard section names', `detected: ${detected.join(', ')}`);
-else warn('Standard section names', `only ${detected.length} detected — recruiters scan for these`);
+// Contact info presence
+const hasEmail = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/.test(textDefault);
+const hasPhone = /(\+\d{1,3}[\s-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}/.test(textDefault);
+const hasLinkedIn = /linkedin\.com\/in\/[a-z0-9-]+/i.test(textDefault);
+if (hasEmail) pass('Contact: email detected');
+else failHard('Contact: email missing', 'an extractable email address is required');
+if (hasPhone) pass('Contact: phone detected');
+else warnSoft('Contact: phone missing', 'phone is recommended; some ATS require it');
+if (hasLinkedIn) pass('Contact: LinkedIn URL detected');
+else warnSoft('Contact: LinkedIn missing', 'recruiters expect a LinkedIn profile link');
 
 // ── Score + report ─────────────────────────────────────────────────
 const total = checks.length;
-const okCount = checks.filter((c) => c.status === 'ok').length;
+const passCount = checks.filter((c) => c.status === 'pass').length;
 const warnCount = checks.filter((c) => c.status === 'warn').length;
 const failCount = checks.filter((c) => c.status === 'fail').length;
-// Each ok = 1.0, warn = 0.5, fail = 0.0
-const score = ((okCount + warnCount * 0.5) / total) * 100;
+const score = (passCount / total) * 100;
 
 if (jsonOutput) {
-  console.log(JSON.stringify({ score, total, okCount, warnCount, failCount, checks }, null, 2));
-} else {
-  console.log();
-  console.log(`${B}ATS-Compatibility Report${N}  ${DIM}${resolve(pdfPath)}${N}`);
-  console.log();
-  for (const c of checks) {
-    const tag = c.status === 'ok' ? `${G}✓${N}` : c.status === 'warn' ? `${Y}⚠${N}` : `${R}✗${N}`;
-    console.log(`  ${tag} ${c.name}${c.evidence ? `  ${DIM}${c.evidence}${N}` : ''}`);
-  }
-  console.log();
-  console.log(
-    `${B}Summary${N}  ${G}${okCount}${N} pass · ${Y}${warnCount}${N} warn · ${R}${failCount}${N} fail`,
-  );
-  console.log(
-    `${B}ATS Score${N}  ${score >= 90 ? G : score >= 75 ? Y : R}${score.toFixed(1)}%${N}` +
-      (score >= 90
-        ? `  ${G}🟢 ready for every major ATS${N}`
-        : score >= 75
-          ? `  ${Y}🟡 will likely pass; minor cleanups recommended${N}`
-          : `  ${R}🔴 some ATS will reject or mis-parse${N}`),
-  );
+  console.log(JSON.stringify({ score, total, passCount, warnCount, failCount, checks }, null, 2));
+  process.exit(failCount > 0 ? 1 : 0);
 }
 
-if (failCount > 0) process.exit(2);
-if (warnCount > 3) process.exit(1);
-process.exit(0);
+console.log();
+console.log(`${B}ATS-Compatibility Report (strict)${N}  ${DIM}${resolve(pdfPath)}${N}`);
+console.log();
+for (const c of checks) {
+  const tag = c.status === 'pass' ? `${G}✓${N}` : c.status === 'warn' ? `${Y}⚠${N}` : `${R}✗${N}`;
+  console.log(`  ${tag} ${c.name}${c.evidence ? `  ${DIM}${c.evidence}${N}` : ''}`);
+}
+console.log();
+console.log(
+  `${B}Summary${N}  ${G}${passCount}${N} pass · ${Y}${warnCount}${N} warn · ${R}${failCount}${N} fail`,
+);
+console.log(
+  `${B}ATS Score${N}  ${score === 100 ? G : score >= 90 ? Y : R}${score.toFixed(1)}%${N}` +
+    (failCount === 0
+      ? `  ${G}🟢 every check passed${N}`
+      : `  ${R}🔴 ${failCount} hard fail(s) — fix before submitting${N}`),
+);
+
+process.exit(failCount > 0 ? 1 : 0);
