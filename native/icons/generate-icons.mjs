@@ -265,16 +265,30 @@ async function main() {
     );
   }
 
-  // .ico (Windows) — needs ImageMagick or png2ico
-  try {
-    execSync('which magick', { stdio: 'ignore' });
-    const sizes = [16, 24, 32, 48, 64, 128, 256];
-    const inputs = sizes.map((s) => path.join(BUILD, `${s}.png`)).join(' ');
-    execSync(`magick ${inputs} "${path.join(electronBuild, 'icon.ico')}"`, { stdio: 'inherit' });
-    console.log('  icon.ico generated');
-  } catch {
+  // .ico (Windows) — ImageMagick v7 ships `magick`; Ubuntu 24.04 still
+  // ships v6 with `convert`. Both produce identical .ico output for our
+  // input set; the v6 syntax is `convert inputs output`.
+  const icoPath = path.join(electronBuild, 'icon.ico');
+  const sizes = [16, 24, 32, 48, 64, 128, 256];
+  const inputs = sizes.map((s) => `"${path.join(BUILD, `${s}.png`)}"`).join(' ');
+  const magickBin = (() => {
+    for (const cmd of ['magick', 'convert']) {
+      try {
+        execSync(`which ${cmd}`, { stdio: 'ignore' });
+        return cmd;
+      } catch {
+        /* try next */
+      }
+    }
+    return null;
+  })();
+  if (magickBin) {
+    execSync(`${magickBin} ${inputs} "${icoPath}"`, { stdio: 'inherit' });
+    console.log(`  icon.ico generated (${magickBin})`);
+  } else {
     console.warn(
-      '  ImageMagick (magick) not found — skipping icon.ico (Windows builds will fall back to .png)',
+      '  ImageMagick (magick / convert) not found — skipping icon.ico (Windows builds will fall back to .png).' +
+        '\n    Install: macOS `brew install imagemagick`; Linux `apt-get install imagemagick`',
     );
   }
 
