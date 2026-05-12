@@ -1,161 +1,161 @@
 <script lang="ts">
-import * as Tooltip from '$lib/components/ui/tooltip';
-import { Badge } from '$lib/components/ui/badge';
-import {
-  ChevronDown,
-  ChevronUp,
-  Wifi,
-  Building,
-  Globe,
-  FileText,
-  FileBadge2,
-  ScrollText,
-  Inbox,
-} from '@lucide/svelte';
-import EmptyState from './EmptyState.svelte';
-import JobActions from './JobActions.svelte';
-import type { Job, WorkMode, Status } from '$lib/types';
-import { BG_TINTS } from '$lib/types';
-import { cn } from '$lib/utils';
+  import * as Tooltip from '$lib/components/ui/tooltip';
+  import { Badge } from '$lib/components/ui/badge';
+  import {
+    ChevronDown,
+    ChevronUp,
+    Wifi,
+    Building,
+    Globe,
+    FileText,
+    FileBadge2,
+    ScrollText,
+    Inbox,
+  } from '@lucide/svelte';
+  import EmptyState from './EmptyState.svelte';
+  import JobActions from './JobActions.svelte';
+  import type { Job, WorkMode, Status } from '$lib/types';
+  import { BG_TINTS } from '$lib/types';
+  import { cn } from '$lib/utils';
 
-let { jobs = [], prevVisibleCount = 0 }: { jobs: Job[]; prevVisibleCount?: number } = $props();
+  let { jobs = [], prevVisibleCount = 0 }: { jobs: Job[]; prevVisibleCount?: number } = $props();
 
-type SortField =
-  | 'score'
-  | 'company'
-  | 'role'
-  | 'status'
-  | 'location'
-  | 'workMode'
-  | 'bgRisk'
-  | 'salary';
-let sortField = $state<SortField>('score');
-let sortDir = $state<'asc' | 'desc'>('desc');
+  type SortField =
+    | 'score'
+    | 'company'
+    | 'role'
+    | 'status'
+    | 'location'
+    | 'workMode'
+    | 'bgRisk'
+    | 'salary';
+  let sortField = $state<SortField>('score');
+  let sortDir = $state<'asc' | 'desc'>('desc');
 
-function toggleSort(f: SortField) {
-  if (sortField === f) {
-    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-  } else {
-    sortField = f;
-    sortDir = f === 'score' ? 'desc' : 'asc';
-  }
-}
-
-let sorted = $derived.by(() => {
-  const arr = [...jobs];
-  const dir = sortDir === 'asc' ? 1 : -1;
-  arr.sort((a, b) => {
-    let av: any;
-    let bv: any;
-    switch (sortField) {
-      case 'score':
-        av = a.score ?? a.geminiScore ?? -1;
-        bv = b.score ?? b.geminiScore ?? -1;
-        break;
-      default:
-        av = (a as any)[sortField] ?? '';
-        bv = (b as any)[sortField] ?? '';
-        break;
+  function toggleSort(f: SortField) {
+    if (sortField === f) {
+      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortField = f;
+      sortDir = f === 'score' ? 'desc' : 'asc';
     }
-    if (av < bv) return -1 * dir;
-    if (av > bv) return 1 * dir;
-    return 0;
+  }
+
+  let sorted = $derived.by(() => {
+    const arr = [...jobs];
+    const dir = sortDir === 'asc' ? 1 : -1;
+    arr.sort((a, b) => {
+      let av: any;
+      let bv: any;
+      switch (sortField) {
+        case 'score':
+          av = a.score ?? a.geminiScore ?? -1;
+          bv = b.score ?? b.geminiScore ?? -1;
+          break;
+        default:
+          av = (a as any)[sortField] ?? '';
+          bv = (b as any)[sortField] ?? '';
+          break;
+      }
+      if (av < bv) return -1 * dir;
+      if (av > bv) return 1 * dir;
+      return 0;
+    });
+    return arr;
   });
-  return arr;
-});
 
-const WORK_MODE: Record<WorkMode, { label: string; icon: any; tint: string }> = {
-  remote: { label: 'Remote', icon: Wifi, tint: 'text-emerald-300' },
-  hybrid: { label: 'Hybrid', icon: Building, tint: 'text-amber-300' },
-  onsite: { label: 'On-site', icon: Building, tint: 'text-red-300' },
-  unknown: { label: '—', icon: Globe, tint: 'text-muted-foreground/50' },
-};
+  const WORK_MODE: Record<WorkMode, { label: string; icon: any; tint: string }> = {
+    remote: { label: 'Remote', icon: Wifi, tint: 'text-emerald-300' },
+    hybrid: { label: 'Hybrid', icon: Building, tint: 'text-amber-300' },
+    onsite: { label: 'On-site', icon: Building, tint: 'text-red-300' },
+    unknown: { label: '—', icon: Globe, tint: 'text-muted-foreground/50' },
+  };
 
-const STATUS_HINT: Record<Status, string> = {
-  New: 'Just discovered — no score yet',
-  Scoring: 'Gemini is processing',
-  Scored: 'Has a Gemini score',
-  Ready: 'Eval done · CV PDF ready',
-  Queued: 'Staged for batch send',
-  Applying: 'Auto-apply running',
-  Applied: 'Application sent',
-  Screened: 'Recruiter responded',
-  PhoneScreen: 'Phone screen',
-  Technical: 'Technical interview',
-  TakeHome: 'Take-home',
-  Onsite: 'Onsite / panel',
-  Final: 'Final round',
-  Interview: 'Active interview',
-  Offer: 'Offer in hand',
-  Rejected: 'Closed by company',
-  Closed: 'You skipped',
-  ManualApplyNeeded: 'Auto-apply blocked — finish by hand',
-};
+  const STATUS_HINT: Record<Status, string> = {
+    New: 'Just discovered — no score yet',
+    Scoring: 'Gemini is processing',
+    Scored: 'Has a Gemini score',
+    Ready: 'Eval done · CV PDF ready',
+    Queued: 'Staged for batch send',
+    Applying: 'Auto-apply running',
+    Applied: 'Application sent',
+    Screened: 'Recruiter responded',
+    PhoneScreen: 'Phone screen',
+    Technical: 'Technical interview',
+    TakeHome: 'Take-home',
+    Onsite: 'Onsite / panel',
+    Final: 'Final round',
+    Interview: 'Active interview',
+    Offer: 'Offer in hand',
+    Rejected: 'Closed by company',
+    Closed: 'You skipped',
+    ManualApplyNeeded: 'Auto-apply blocked — finish by hand',
+  };
 
-function statusDot(status: string): string {
-  return status === 'Ready'
-    ? 'bg-emerald-500'
-    : status === 'Applied'
-      ? 'bg-violet-500'
-      : status === 'Interview'
-        ? 'bg-orange-500'
-        : status === 'Offer'
-          ? 'bg-green-500'
-          : status === 'Rejected'
-            ? 'bg-red-500'
-            : status === 'Scored'
-              ? 'bg-cyan-500'
-              : status === 'Scoring'
-                ? 'bg-blue-500'
-                : 'bg-zinc-500';
-}
+  function statusDot(status: string): string {
+    return status === 'Ready'
+      ? 'bg-emerald-500'
+      : status === 'Applied'
+        ? 'bg-violet-500'
+        : status === 'Interview'
+          ? 'bg-orange-500'
+          : status === 'Offer'
+            ? 'bg-green-500'
+            : status === 'Rejected'
+              ? 'bg-red-500'
+              : status === 'Scored'
+                ? 'bg-cyan-500'
+                : status === 'Scoring'
+                  ? 'bg-blue-500'
+                  : 'bg-zinc-500';
+  }
 
-function scoreColor(s: number | null | undefined): string {
-  if (s == null) return 'text-muted-foreground/50';
-  if (s >= 4.5) return 'text-emerald-300';
-  if (s >= 4) return 'text-emerald-400/90';
-  if (s >= 3) return 'text-amber-400/90';
-  return 'text-red-400/80';
-}
+  function scoreColor(s: number | null | undefined): string {
+    if (s == null) return 'text-muted-foreground/50';
+    if (s >= 4.5) return 'text-emerald-300';
+    if (s >= 4) return 'text-emerald-400/90';
+    if (s >= 3) return 'text-amber-400/90';
+    return 'text-red-400/80';
+  }
 
-type ColDef = {
-  field: SortField;
-  label: string;
-  align?: 'left' | 'right';
-  class?: string;
-  tip?: string;
-};
-const COLS: ColDef[] = [
-  {
-    field: 'status',
-    label: 'Status',
-    class: 'w-28',
-    tip: 'Pipeline stage — hover the dot for definition',
-  },
-  {
-    field: 'score',
-    label: 'Score',
-    align: 'right',
-    class: 'w-14',
-    tip: 'Fit score 0–5 (deep eval), or ~ Gemini first-pass',
-  },
-  { field: 'role', label: 'Role', class: 'min-w-[260px]' },
-  { field: 'company', label: 'Company', class: 'w-40' },
-  { field: 'location', label: 'Location', class: 'w-40' },
-  {
-    field: 'workMode',
-    label: 'Work mode',
-    class: 'w-28',
-    tip: 'Remote / Hybrid / On-site (parsed from JD)',
-  },
-  { field: 'bgRisk', label: 'BG', class: 'w-16', tip: 'Background-check risk tier' },
-  {
-    field: 'salary',
-    label: 'Salary',
-    class: 'w-44',
-    tip: 'Comp range from the posting (when stated)',
-  },
-];
+  type ColDef = {
+    field: SortField;
+    label: string;
+    align?: 'left' | 'right';
+    class?: string;
+    tip?: string;
+  };
+  const COLS: ColDef[] = [
+    {
+      field: 'status',
+      label: 'Status',
+      class: 'w-28',
+      tip: 'Pipeline stage — hover the dot for definition',
+    },
+    {
+      field: 'score',
+      label: 'Score',
+      align: 'right',
+      class: 'w-14',
+      tip: 'Fit score 0–5 (deep eval), or ~ Gemini first-pass',
+    },
+    { field: 'role', label: 'Role', class: 'min-w-[260px]' },
+    { field: 'company', label: 'Company', class: 'w-40' },
+    { field: 'location', label: 'Location', class: 'w-40' },
+    {
+      field: 'workMode',
+      label: 'Work mode',
+      class: 'w-28',
+      tip: 'Remote / Hybrid / On-site (parsed from JD)',
+    },
+    { field: 'bgRisk', label: 'BG', class: 'w-16', tip: 'Background-check risk tier' },
+    {
+      field: 'salary',
+      label: 'Salary',
+      class: 'w-44',
+      tip: 'Comp range from the posting (when stated)',
+    },
+  ];
 </script>
 
 <!--
@@ -165,11 +165,19 @@ const COLS: ColDef[] = [
 <div class="rounded-md border border-border/40 overflow-hidden">
   <div class="max-h-[calc(100vh-220px)] overflow-auto relative">
     <table class="w-full text-xs border-collapse">
-      <thead class="bg-muted/60 backdrop-blur-md text-[10px] uppercase tracking-wider text-muted-foreground sticky top-0 z-10">
+      <thead
+        class="bg-muted/60 backdrop-blur-md text-[10px] uppercase tracking-wider text-muted-foreground sticky top-0 z-10"
+      >
         <tr class="border-b border-border/40">
           <Tooltip.Provider delayDuration={300}>
             {#each COLS as c}
-              <th class={cn('px-3 py-2 font-medium text-left whitespace-nowrap bg-muted/60 backdrop-blur-md', c.class, c.align === 'right' && 'text-right')}>
+              <th
+                class={cn(
+                  'px-3 py-2 font-medium text-left whitespace-nowrap bg-muted/60 backdrop-blur-md',
+                  c.class,
+                  c.align === 'right' && 'text-right',
+                )}
+              >
                 {#if c.tip}
                   <Tooltip.Root>
                     <Tooltip.Trigger>
@@ -182,12 +190,15 @@ const COLS: ColDef[] = [
                         >
                           <span>{c.label}</span>
                           {#if sortField === c.field}
-                            {#if sortDir === 'asc'}<ChevronUp class="size-3" />{:else}<ChevronDown class="size-3" />{/if}
+                            {#if sortDir === 'asc'}<ChevronUp class="size-3" />{:else}<ChevronDown
+                                class="size-3"
+                              />{/if}
                           {/if}
                         </button>
                       {/snippet}
                     </Tooltip.Trigger>
-                    <Tooltip.Content side="bottom" class="text-xs max-w-xs">{c.tip}</Tooltip.Content>
+                    <Tooltip.Content side="bottom" class="text-xs max-w-xs">{c.tip}</Tooltip.Content
+                    >
                   </Tooltip.Root>
                 {:else}
                   <button
@@ -197,30 +208,40 @@ const COLS: ColDef[] = [
                   >
                     <span>{c.label}</span>
                     {#if sortField === c.field}
-                      {#if sortDir === 'asc'}<ChevronUp class="size-3" />{:else}<ChevronDown class="size-3" />{/if}
+                      {#if sortDir === 'asc'}<ChevronUp class="size-3" />{:else}<ChevronDown
+                          class="size-3"
+                        />{/if}
                     {/if}
                   </button>
                 {/if}
               </th>
             {/each}
-            <th class="w-16 px-2 py-2 font-medium text-right whitespace-nowrap bg-muted/60 backdrop-blur-md">
+            <th
+              class="w-16 px-2 py-2 font-medium text-right whitespace-nowrap bg-muted/60 backdrop-blur-md"
+            >
               <Tooltip.Root>
                 <Tooltip.Trigger>
                   {#snippet child({ props })}
                     <span {...props} class="cursor-help">Files</span>
                   {/snippet}
                 </Tooltip.Trigger>
-                <Tooltip.Content side="bottom" class="text-xs">Has report / Has tailored CV PDF</Tooltip.Content>
+                <Tooltip.Content side="bottom" class="text-xs"
+                  >Has report / Has tailored CV PDF</Tooltip.Content
+                >
               </Tooltip.Root>
             </th>
-            <th class="w-28 px-2 py-2 font-medium text-right whitespace-nowrap bg-muted/60 backdrop-blur-md">
+            <th
+              class="w-28 px-2 py-2 font-medium text-right whitespace-nowrap bg-muted/60 backdrop-blur-md"
+            >
               <Tooltip.Root>
                 <Tooltip.Trigger>
                   {#snippet child({ props })}
                     <span {...props} class="cursor-help">Actions</span>
                   {/snippet}
                 </Tooltip.Trigger>
-                <Tooltip.Content side="bottom" class="text-xs">Apply · change status · generate CV</Tooltip.Content>
+                <Tooltip.Content side="bottom" class="text-xs"
+                  >Apply · change status · generate CV</Tooltip.Content
+                >
               </Tooltip.Root>
             </th>
           </Tooltip.Provider>
@@ -232,28 +253,43 @@ const COLS: ColDef[] = [
           {@const WIcon = wm.icon}
           {@const score = job.score ?? job.geminiScore ?? null}
           {@const isNew = idx >= prevVisibleCount}
-          <tr class={cn(
-            'border-b border-border/30 hover:bg-accent/30 transition-colors group/row last:border-b-0',
-            isNew && 'animate-in fade-in slide-in-from-bottom-2 duration-300'
-          )}>
+          <tr
+            class={cn(
+              'border-b border-border/30 hover:bg-accent/30 transition-colors group/row last:border-b-0',
+              isNew && 'animate-in fade-in slide-in-from-bottom-2 duration-300',
+            )}
+          >
             <!-- Status -->
             <td class="px-3 py-1.5 align-middle">
               <Tooltip.Provider delayDuration={300}>
                 <Tooltip.Root>
                   <Tooltip.Trigger>
                     {#snippet child({ props })}
-                      <a {...props} href={'/job/' + job.id} class="inline-flex items-center gap-1.5">
-                        <span class={cn('size-1.5 rounded-full flex-shrink-0', statusDot(job.status))}></span>
+                      <a
+                        {...props}
+                        href={'/job/' + job.id}
+                        class="inline-flex items-center gap-1.5"
+                      >
+                        <span
+                          class={cn('size-1.5 rounded-full flex-shrink-0', statusDot(job.status))}
+                        ></span>
                         <span class="text-[11px] font-medium">{job.status}</span>
                       </a>
                     {/snippet}
                   </Tooltip.Trigger>
-                  <Tooltip.Content side="right" class="text-xs max-w-xs">{STATUS_HINT[job.status]}</Tooltip.Content>
+                  <Tooltip.Content side="right" class="text-xs max-w-xs"
+                    >{STATUS_HINT[job.status]}</Tooltip.Content
+                  >
                 </Tooltip.Root>
               </Tooltip.Provider>
             </td>
             <!-- Score -->
-            <td class={cn('px-3 py-1.5 align-middle text-right font-mono tabular-nums', scoreColor(score))}>
+            <td
+              class={cn(
+                'px-3 py-1.5 align-middle text-right font-mono tabular-nums',
+                scoreColor(score),
+              )}
+            >
               {score != null ? score.toFixed(1) : '—'}
             </td>
             <!-- Role -->
@@ -263,9 +299,13 @@ const COLS: ColDef[] = [
               </a>
             </td>
             <!-- Company -->
-            <td class="px-3 py-1.5 align-middle text-muted-foreground truncate max-w-[160px]">{job.company}</td>
+            <td class="px-3 py-1.5 align-middle text-muted-foreground truncate max-w-[160px]"
+              >{job.company}</td
+            >
             <!-- Location -->
-            <td class="px-3 py-1.5 align-middle text-muted-foreground/80 truncate max-w-[160px]">{job.location || '—'}</td>
+            <td class="px-3 py-1.5 align-middle text-muted-foreground/80 truncate max-w-[160px]"
+              >{job.location || '—'}</td
+            >
             <!-- Work mode -->
             <td class="px-3 py-1.5 align-middle">
               <span class={cn('inline-flex items-center gap-1', wm.tint)}>
@@ -276,7 +316,13 @@ const COLS: ColDef[] = [
             <!-- BG -->
             <td class="px-3 py-1.5 align-middle">
               {#if job.bgRisk}
-                <Badge variant="outline" class={cn('text-[10px] h-4 px-1 font-mono uppercase border', BG_TINTS[job.bgRisk])}>
+                <Badge
+                  variant="outline"
+                  class={cn(
+                    'text-[10px] h-4 px-1 font-mono uppercase border',
+                    BG_TINTS[job.bgRisk],
+                  )}
+                >
                   {job.bgRisk}
                 </Badge>
               {:else}
@@ -293,7 +339,9 @@ const COLS: ColDef[] = [
                         <span {...props} class="cursor-help">{job.salary}</span>
                       {/snippet}
                     </Tooltip.Trigger>
-                    <Tooltip.Content side="top" class="text-xs max-w-xs">{job.salary}</Tooltip.Content>
+                    <Tooltip.Content side="top" class="text-xs max-w-xs"
+                      >{job.salary}</Tooltip.Content
+                    >
                   </Tooltip.Root>
                 </Tooltip.Provider>
               {:else}
@@ -307,17 +355,25 @@ const COLS: ColDef[] = [
                   {#if job.reportFile}
                     <Tooltip.Root>
                       <Tooltip.Trigger>
-                        {#snippet child({ props })}<span {...props}><ScrollText class="size-3" /></span>{/snippet}
+                        {#snippet child({ props })}<span {...props}
+                            ><ScrollText class="size-3" /></span
+                          >{/snippet}
                       </Tooltip.Trigger>
-                      <Tooltip.Content side="top" class="text-xs">Has deep evaluation report</Tooltip.Content>
+                      <Tooltip.Content side="top" class="text-xs"
+                        >Has deep evaluation report</Tooltip.Content
+                      >
                     </Tooltip.Root>
                   {/if}
                   {#if job.pdfFile}
                     <Tooltip.Root>
                       <Tooltip.Trigger>
-                        {#snippet child({ props })}<span {...props} class="text-emerald-400/60"><FileBadge2 class="size-3" /></span>{/snippet}
+                        {#snippet child({ props })}<span {...props} class="text-emerald-400/60"
+                            ><FileBadge2 class="size-3" /></span
+                          >{/snippet}
                       </Tooltip.Trigger>
-                      <Tooltip.Content side="top" class="text-xs">Tailored CV PDF generated</Tooltip.Content>
+                      <Tooltip.Content side="top" class="text-xs"
+                        >Tailored CV PDF generated</Tooltip.Content
+                      >
                     </Tooltip.Root>
                   {/if}
                 </span>

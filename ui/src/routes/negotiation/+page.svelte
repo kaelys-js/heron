@@ -16,70 +16,70 @@
   no time for a 60-second LLM round-trip.
 -->
 <script lang="ts">
-import Topbar from '$lib/components/Topbar.svelte';
-import * as Card from '$lib/components/ui/card';
-import { Button } from '$lib/components/ui/button';
-import {
-  DollarSign,
-  MessageSquare,
-  CheckSquare,
-  TrendingUp,
-  AlertTriangle,
-  ArrowRight,
-  ShieldAlert,
-  BookOpen,
-  ListChecks,
-  Sparkles,
-} from '@lucide/svelte';
-import { cn } from '$lib/utils';
+  import Topbar from '$lib/components/Topbar.svelte';
+  import * as Card from '$lib/components/ui/card';
+  import { Button } from '$lib/components/ui/button';
+  import {
+    DollarSign,
+    MessageSquare,
+    CheckSquare,
+    TrendingUp,
+    AlertTriangle,
+    ArrowRight,
+    ShieldAlert,
+    BookOpen,
+    ListChecks,
+    Sparkles,
+  } from '@lucide/svelte';
+  import { cn } from '$lib/utils';
 
-type Branch = { trigger: string; response: string; rationale: string; nextLikely?: string };
-type NonCompAsk = { category: string; ask: string; why: string; difficulty: 1 | 2 | 3 };
-type CompBand = { band: string; base: [number, number]; total: [number, number]; notes: string };
+  type Branch = { trigger: string; response: string; rationale: string; nextLikely?: string };
+  type NonCompAsk = { category: string; ask: string; why: string; difficulty: 1 | 2 | 3 };
+  type CompBand = { band: string; base: [number, number]; total: [number, number]; notes: string };
 
-let {
-  data,
-}: {
-  data: {
-    playbook: {
-      decisionTree: Record<string, Branch[]>;
-      nonCompAsks: NonCompAsk[];
-      dontAcceptVerbally: { title: string; steps: string[]; redFlags: string[] };
-      tierBands: Record<string, CompBand>;
+  let {
+    data,
+  }: {
+    data: {
+      playbook: {
+        decisionTree: Record<string, Branch[]>;
+        nonCompAsks: NonCompAsk[];
+        dontAcceptVerbally: { title: string; steps: string[]; redFlags: string[] };
+        tierBands: Record<string, CompBand>;
+      };
     };
-  };
-} = $props();
+  } = $props();
 
-// Decision-tree current section. Default to verbal-offer (entry point).
-let activeBranch = $state('verbal-offer');
-let branchKeys = $derived(Object.keys(data.playbook.decisionTree));
+  // Decision-tree current section. Default to verbal-offer (entry point).
+  let activeBranch = $state('verbal-offer');
+  let branchKeys = $derived(Object.keys(data.playbook.decisionTree));
 
-function fmtMoney(n: number): string {
-  if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1) + 'M';
-  if (n >= 1000) return '$' + Math.round(n / 1000) + 'K';
-  return '$' + n;
-}
-
-function difficultyTint(d: 1 | 2 | 3): string {
-  if (d === 1) return 'border-emerald-500/40 bg-emerald-500/5 text-emerald-200';
-  if (d === 2) return 'border-amber-500/40 bg-amber-500/5 text-amber-200';
-  return 'border-red-500/40 bg-red-500/5 text-red-200';
-}
-function difficultyLabel(d: 1 | 2 | 3): string {
-  if (d === 1) return 'easy';
-  if (d === 2) return 'medium';
-  return 'hard';
-}
-
-// Group non-comp asks by category for cleaner rendering.
-let asksByCategory = $derived.by(() => {
-  const m = new Map<string, NonCompAsk[]>();
-  for (const a of data.playbook.nonCompAsks) {
-    if (!m.has(a.category)) m.set(a.category, []);
-    m.get(a.category)!.push(a);
+  function fmtMoney(n: number): string {
+    if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1) + 'M';
+    if (n >= 1000) return '$' + Math.round(n / 1000) + 'K';
+    return '$' + n;
   }
-  return [...m.entries()];
-});
+
+  function difficultyTint(d: 1 | 2 | 3): string {
+    if (d === 1) return 'border-emerald-500/40 bg-emerald-500/5 text-emerald-200';
+    if (d === 2) return 'border-amber-500/40 bg-amber-500/5 text-amber-200';
+    return 'border-red-500/40 bg-red-500/5 text-red-200';
+  }
+  function difficultyLabel(d: 1 | 2 | 3): string {
+    if (d === 1) return 'easy';
+    if (d === 2) return 'medium';
+    return 'hard';
+  }
+
+  // Group non-comp asks by category for cleaner rendering.
+  let asksByCategory = $derived.by(() => {
+    const m = new Map<string, NonCompAsk[]>();
+    for (const a of data.playbook.nonCompAsks) {
+      if (!m.has(a.category)) m.set(a.category, []);
+      m.get(a.category)!.push(a);
+    }
+    return [...m.entries()];
+  });
 </script>
 
 <div class="h-full overflow-y-auto">
@@ -90,7 +90,9 @@ let asksByCategory = $derived.by(() => {
       <!-- Hero -->
       <div class="space-y-2">
         <div class="flex items-center gap-3">
-          <div class="size-10 rounded-lg bg-emerald-500/10 ring-1 ring-emerald-500/40 flex items-center justify-center">
+          <div
+            class="size-10 rounded-lg bg-emerald-500/10 ring-1 ring-emerald-500/40 flex items-center justify-center"
+          >
             <DollarSign class="size-5 text-emerald-400" />
           </div>
           <h1 class="text-2xl font-semibold tracking-tight">Negotiation playbook</h1>
@@ -98,8 +100,8 @@ let asksByCategory = $derived.by(() => {
         <p class="text-sm text-muted-foreground leading-relaxed">
           Read this BEFORE the verbal-offer call. Most candidates leave 10-30% on the table here
           because the conversation moves fast and they haven't pre-loaded responses. Four sections
-          below cover the do-not-screw-up checklist, an if-they-say-X-you-say-Y decision tree,
-          a non-comp asks checklist, and rough tier-comp bands for sanity check.
+          below cover the do-not-screw-up checklist, an if-they-say-X-you-say-Y decision tree, a
+          non-comp asks checklist, and rough tier-comp bands for sanity check.
         </p>
         <div class="flex items-center gap-2 pt-1">
           <Button variant="outline" size="sm" href="/comp-eval" class="gap-1.5">
@@ -123,7 +125,9 @@ let asksByCategory = $derived.by(() => {
             {/each}
           </ol>
           <div class="pt-2 border-t border-amber-500/20">
-            <h3 class="text-[10px] uppercase tracking-wider text-amber-300/80 flex items-center gap-1 mb-1">
+            <h3
+              class="text-[10px] uppercase tracking-wider text-amber-300/80 flex items-center gap-1 mb-1"
+            >
               <AlertTriangle class="size-3" />
               Red flags that should make you WALK
             </h3>
@@ -144,9 +148,8 @@ let asksByCategory = $derived.by(() => {
             If they say X, you say Y
           </Card.Title>
           <Card.Description class="text-xs">
-            Scripts for the most common moves the other side will make. Pick the situation,
-            read the response + rationale. Adapt wording to your voice — the STRUCTURE is the
-            value.
+            Scripts for the most common moves the other side will make. Pick the situation, read the
+            response + rationale. Adapt wording to your voice — the STRUCTURE is the value.
           </Card.Description>
         </Card.Header>
         <Card.Content class="space-y-3">
@@ -155,47 +158,60 @@ let asksByCategory = $derived.by(() => {
             {#each branchKeys as key}
               <button
                 type="button"
-                onclick={() => activeBranch = key}
+                onclick={() => (activeBranch = key)}
                 class={cn(
                   'px-2 py-1 rounded text-[11px] font-mono border transition',
                   activeBranch === key
                     ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-100'
                     : 'border-border/40 bg-card text-muted-foreground hover:border-border',
-                )}
-              >{key}</button>
+                )}>{key}</button
+              >
             {/each}
           </div>
 
           <!-- Active branch -->
           <div class="space-y-2">
-            {#each (data.playbook.decisionTree[activeBranch] ?? []) as branch, i (i)}
+            {#each data.playbook.decisionTree[activeBranch] ?? [] as branch, i (i)}
               <div class="rounded-md border border-border/40 bg-card px-3 py-2.5 space-y-1.5">
-                <div class="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <div
+                  class="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1"
+                >
                   <ArrowRight class="size-3 text-red-300" />
                   They say
                 </div>
-                <p class="text-xs italic text-red-200/90 leading-relaxed pl-4 border-l-2 border-red-500/30">
+                <p
+                  class="text-xs italic text-red-200/90 leading-relaxed pl-4 border-l-2 border-red-500/30"
+                >
                   "{branch.trigger}"
                 </p>
-                <div class="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 pt-1">
+                <div
+                  class="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 pt-1"
+                >
                   <ArrowRight class="size-3 text-emerald-300" />
                   You say
                 </div>
-                <p class="text-xs text-emerald-100/95 leading-relaxed pl-4 border-l-2 border-emerald-500/30">
+                <p
+                  class="text-xs text-emerald-100/95 leading-relaxed pl-4 border-l-2 border-emerald-500/30"
+                >
                   {branch.response}
                 </p>
-                <div class="text-[10px] uppercase tracking-wider text-muted-foreground pt-1 flex items-center gap-1">
+                <div
+                  class="text-[10px] uppercase tracking-wider text-muted-foreground pt-1 flex items-center gap-1"
+                >
                   <Sparkles class="size-2.5 text-amber-300" />
                   Why
                 </div>
-                <p class="text-[11px] text-muted-foreground leading-relaxed pl-4">{branch.rationale}</p>
+                <p class="text-[11px] text-muted-foreground leading-relaxed pl-4">
+                  {branch.rationale}
+                </p>
                 {#if branch.nextLikely}
                   <p class="text-[10px] text-muted-foreground/70 pt-1">
                     Next likely: <button
                       type="button"
-                      onclick={() => activeBranch = branch.nextLikely!}
+                      onclick={() => (activeBranch = branch.nextLikely!)}
                       class="font-mono underline underline-offset-2 hover:text-foreground"
-                    >{branch.nextLikely}</button>
+                      >{branch.nextLikely}</button
+                    >
                   </p>
                 {/if}
               </div>
@@ -212,18 +228,27 @@ let asksByCategory = $derived.by(() => {
             Non-comp asks · the levers most candidates forget
           </Card.Title>
           <Card.Description class="text-xs">
-            When base is locked, these are the wins. Each is tagged by difficulty
-            (easy = usually yes if you ask, hard = needs serious leverage).
+            When base is locked, these are the wins. Each is tagged by difficulty (easy = usually
+            yes if you ask, hard = needs serious leverage).
           </Card.Description>
         </Card.Header>
         <Card.Content class="space-y-3">
           {#each asksByCategory as [category, items]}
             <div class="space-y-1">
-              <h3 class="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">{category}</h3>
+              <h3 class="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">
+                {category}
+              </h3>
               {#each items as ask}
-                <div class={cn('rounded-md border px-3 py-2 space-y-0.5', difficultyTint(ask.difficulty))}>
+                <div
+                  class={cn(
+                    'rounded-md border px-3 py-2 space-y-0.5',
+                    difficultyTint(ask.difficulty),
+                  )}
+                >
                   <div class="flex items-start gap-2">
-                    <span class="text-[10px] font-mono uppercase opacity-70">{difficultyLabel(ask.difficulty)}</span>
+                    <span class="text-[10px] font-mono uppercase opacity-70"
+                      >{difficultyLabel(ask.difficulty)}</span
+                    >
                     <p class="text-xs flex-1">{ask.ask}</p>
                   </div>
                   <p class="text-[11px] opacity-80 pl-12 leading-relaxed">{ask.why}</p>
@@ -243,8 +268,8 @@ let asksByCategory = $derived.by(() => {
           </Card.Title>
           <Card.Description class="text-xs">
             Rough sanity-check ranges by company tier (US, 2024-2025). Refine via
-            <a href="https://levels.fyi" target="_blank" class="underline">levels.fyi</a> for the
-            specific company × role × location.
+            <a href="https://levels.fyi" target="_blank" class="underline">levels.fyi</a> for the specific
+            company × role × location.
           </Card.Description>
         </Card.Header>
         <Card.Content class="space-y-2">
@@ -252,9 +277,17 @@ let asksByCategory = $derived.by(() => {
             <div class="rounded-md border border-border/40 bg-card px-3 py-2 space-y-0.5">
               <div class="text-xs font-medium">{band.band}</div>
               <div class="text-[11px] text-muted-foreground flex items-center gap-3 flex-wrap">
-                <span>Base <span class="font-mono text-foreground">{fmtMoney(band.base[0])}-{fmtMoney(band.base[1])}</span></span>
+                <span
+                  >Base <span class="font-mono text-foreground"
+                    >{fmtMoney(band.base[0])}-{fmtMoney(band.base[1])}</span
+                  ></span
+                >
                 <span>·</span>
-                <span>Total <span class="font-mono text-foreground">{fmtMoney(band.total[0])}-{fmtMoney(band.total[1])}</span></span>
+                <span
+                  >Total <span class="font-mono text-foreground"
+                    >{fmtMoney(band.total[0])}-{fmtMoney(band.total[1])}</span
+                  ></span
+                >
               </div>
               <p class="text-[10px] text-muted-foreground/70 leading-relaxed">{band.notes}</p>
             </div>
@@ -268,7 +301,8 @@ let asksByCategory = $derived.by(() => {
         <p class="text-[11px] text-muted-foreground/80 leading-relaxed">
           For a per-job tailored brief (rather than the generic playbook), use the job detail page's
           "Negotiation brief" action — it spawns Claude with cv.md + report + offer specifics. This
-          playbook covers the conversation structure that no LLM call can reliably produce in real-time.
+          playbook covers the conversation structure that no LLM call can reliably produce in
+          real-time.
         </p>
       </div>
     </div>

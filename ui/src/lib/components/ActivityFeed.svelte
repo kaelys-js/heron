@@ -1,48 +1,48 @@
 <script lang="ts">
-import { onMount } from 'svelte';
-import { Avatar, AvatarFallback } from '$lib/components/ui/avatar';
-import { ScrollArea } from '$lib/components/ui/scroll-area';
-import { AlertCircle, CheckCircle2, Info, AlertTriangle, Activity } from '@lucide/svelte';
-import { formatRelativeTime } from '$lib/utils';
-import type { ActivityEvent } from '$lib/types';
-import { cn } from '$lib/utils';
-import EmptyState from './EmptyState.svelte';
+  import { onMount } from 'svelte';
+  import { Avatar, AvatarFallback } from '$lib/components/ui/avatar';
+  import { ScrollArea } from '$lib/components/ui/scroll-area';
+  import { AlertCircle, CheckCircle2, Info, AlertTriangle, Activity } from '@lucide/svelte';
+  import { formatRelativeTime } from '$lib/utils';
+  import type { ActivityEvent } from '$lib/types';
+  import { cn } from '$lib/utils';
+  import EmptyState from './EmptyState.svelte';
 
-let { events: initialEvents = [] }: { events?: ActivityEvent[] } = $props();
-let events = $state<ActivityEvent[]>([]);
-$effect(() => {
-  events = [...initialEvents];
-});
+  let { events: initialEvents = [] }: { events?: ActivityEvent[] } = $props();
+  let events = $state<ActivityEvent[]>([]);
+  $effect(() => {
+    events = [...initialEvents];
+  });
 
-onMount(() => {
-  const es = new EventSource('/api/stream');
-  es.onmessage = (e) => {
-    try {
-      const ev = JSON.parse(e.data);
-      events = [ev, ...events].slice(0, 200);
-    } catch {}
-  };
-  return () => es.close();
-});
+  onMount(() => {
+    const es = new EventSource('/api/stream');
+    es.onmessage = (e) => {
+      try {
+        const ev = JSON.parse(e.data);
+        events = [ev, ...events].slice(0, 200);
+      } catch {}
+    };
+    return () => es.close();
+  });
 
-function levelIcon(level: string) {
-  return level === 'error'
-    ? AlertCircle
-    : level === 'warn'
-      ? AlertTriangle
-      : level === 'success'
-        ? CheckCircle2
-        : Info;
-}
-function levelColor(level: string) {
-  return level === 'error'
-    ? 'text-red-400'
-    : level === 'warn'
-      ? 'text-amber-400'
-      : level === 'success'
-        ? 'text-emerald-400'
-        : 'text-muted-foreground';
-}
+  function levelIcon(level: string) {
+    return level === 'error'
+      ? AlertCircle
+      : level === 'warn'
+        ? AlertTriangle
+        : level === 'success'
+          ? CheckCircle2
+          : Info;
+  }
+  function levelColor(level: string) {
+    return level === 'error'
+      ? 'text-red-400'
+      : level === 'warn'
+        ? 'text-amber-400'
+        : level === 'success'
+          ? 'text-emerald-400'
+          : 'text-muted-foreground';
+  }
 </script>
 
 <div class="flex flex-col gap-2">
@@ -67,7 +67,8 @@ function levelColor(level: string) {
             </div>
             <p class={cn('text-xs leading-snug mt-0.5 break-words', levelColor(ev.level))}>
               <Icon class="inline size-3 mr-1 -mt-0.5" />
-              {ev.title}{#if ev.message} — {ev.message}{/if}
+              {ev.title}{#if ev.message}
+                — {ev.message}{/if}
             </p>
           </div>
         </div>

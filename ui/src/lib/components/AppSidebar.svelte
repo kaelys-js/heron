@@ -1,131 +1,133 @@
 <script lang="ts">
-import * as Sidebar from '$lib/components/ui/sidebar';
-import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import * as Tooltip from '$lib/components/ui/tooltip';
-import { Badge } from '$lib/components/ui/badge';
-import { Button } from '$lib/components/ui/button';
-import CollapsibleGroup from './CollapsibleGroup.svelte';
-import {
-  Inbox,
-  ListTodo,
-  Pin,
-  KanbanSquare,
-  FolderKanban,
-  PlayCircle,
-  Bot,
-  ListChecks,
-  Cpu,
-  Wrench,
-  Settings as SettingsIcon,
-  ChevronsUpDown,
-  Search,
-  Plus,
-  HelpCircle,
-  BarChart3,
-  MoreHorizontal,
-  Star,
-  Trash2,
-  User,
-  Lightbulb,
-  Plug,
-  Check,
-  Cog,
-} from '@lucide/svelte';
-import { page } from '$app/state';
-import { goto, invalidateAll } from '$app/navigation';
-import { onMount, onDestroy } from 'svelte';
-import { pinStore } from '$lib/sidebar-pins.svelte';
-import { globalActions } from '$lib/global-actions.svelte';
-import { cn } from '$lib/utils';
-import { APP_NAME } from '$lib/config/branding';
-import { ConfirmGate } from '$lib/confirm.svelte';
-import { api, ApiError } from '$lib/api';
-import { toast } from 'svelte-sonner';
-import type { Profile, ProfilesState } from '$lib/server/profiles';
+  import * as Sidebar from '$lib/components/ui/sidebar';
+  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+  import * as Tooltip from '$lib/components/ui/tooltip';
+  import { Badge } from '$lib/components/ui/badge';
+  import { Button } from '$lib/components/ui/button';
+  import CollapsibleGroup from './CollapsibleGroup.svelte';
+  import {
+    Inbox,
+    ListTodo,
+    Pin,
+    KanbanSquare,
+    FolderKanban,
+    PlayCircle,
+    Bot,
+    ListChecks,
+    Cpu,
+    Wrench,
+    Settings as SettingsIcon,
+    ChevronsUpDown,
+    Search,
+    Plus,
+    HelpCircle,
+    BarChart3,
+    MoreHorizontal,
+    Star,
+    Trash2,
+    User,
+    Lightbulb,
+    Plug,
+    Check,
+    Cog,
+  } from '@lucide/svelte';
+  import { page } from '$app/state';
+  import { goto, invalidateAll } from '$app/navigation';
+  import { onMount, onDestroy } from 'svelte';
+  import { pinStore } from '$lib/sidebar-pins.svelte';
+  import { globalActions } from '$lib/global-actions.svelte';
+  import { cn } from '$lib/utils';
+  import { APP_NAME } from '$lib/config/branding';
+  import { ConfirmGate } from '$lib/confirm.svelte';
+  import { api, ApiError } from '$lib/api';
+  import { toast } from 'svelte-sonner';
+  import type { Profile, ProfilesState } from '$lib/server/profiles';
 
-type PinnedJob = { id: string; company: string; role: string };
-let {
-  inboxCount = 0,
-  queueCount = 0,
-  pinnedJobs = [],
-  profilesState,
-  activeProfile,
-}: {
-  inboxCount?: number;
-  queueCount?: number;
-  pinnedJobs?: PinnedJob[];
-  profilesState?: ProfilesState;
-  activeProfile?: Profile;
-} = $props();
+  type PinnedJob = { id: string; company: string; role: string };
+  let {
+    inboxCount = 0,
+    queueCount = 0,
+    pinnedJobs = [],
+    profilesState,
+    activeProfile,
+  }: {
+    inboxCount?: number;
+    queueCount?: number;
+    pinnedJobs?: PinnedJob[];
+    profilesState?: ProfilesState;
+    activeProfile?: Profile;
+  } = $props();
 
-let pathname = $derived(page.url.pathname);
-let isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
+  let pathname = $derived(page.url.pathname);
+  let isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
 
-// Profile switcher. The dropdown renders one item per profile + "Add new"
-// + "Manage profiles". Clicking a profile flips the active-id on the
-// server and invalidates so every route reloads against the new profile.
-let switching = $state(false);
-async function switchActiveProfile(id: string) {
-  if (switching || id === activeProfile?.id) return;
-  switching = true;
-  try {
-    await api.post('/api/profiles/active', { id }, { silent: true });
-    toast.success('Switched to ' + (profilesState?.profiles.find((p) => p.id === id)?.name ?? id));
-    await invalidateAll();
-  } catch (e) {
-    const err = e as ApiError;
-    toast.error('Could not switch profile', { description: err.message });
-  } finally {
-    switching = false;
+  // Profile switcher. The dropdown renders one item per profile + "Add new"
+  // + "Manage profiles". Clicking a profile flips the active-id on the
+  // server and invalidates so every route reloads against the new profile.
+  let switching = $state(false);
+  async function switchActiveProfile(id: string) {
+    if (switching || id === activeProfile?.id) return;
+    switching = true;
+    try {
+      await api.post('/api/profiles/active', { id }, { silent: true });
+      toast.success(
+        'Switched to ' + (profilesState?.profiles.find((p) => p.id === id)?.name ?? id),
+      );
+      await invalidateAll();
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Could not switch profile', { description: err.message });
+    } finally {
+      switching = false;
+    }
   }
-}
 
-/** Map ProfileColor → Tailwind dot class. */
-function profileDot(color: string): string {
-  const map: Record<string, string> = {
-    blue: 'bg-blue-400',
-    emerald: 'bg-emerald-400',
-    violet: 'bg-violet-400',
-    amber: 'bg-amber-400',
-    rose: 'bg-rose-400',
-    cyan: 'bg-cyan-400',
-    orange: 'bg-orange-400',
-    pink: 'bg-pink-400',
-  };
-  return map[color] ?? 'bg-zinc-400';
-}
+  /** Map ProfileColor → Tailwind dot class. */
+  function profileDot(color: string): string {
+    const map: Record<string, string> = {
+      blue: 'bg-blue-400',
+      emerald: 'bg-emerald-400',
+      violet: 'bg-violet-400',
+      amber: 'bg-amber-400',
+      rose: 'bg-rose-400',
+      cyan: 'bg-cyan-400',
+      orange: 'bg-orange-400',
+      pink: 'bg-pink-400',
+    };
+    return map[color] ?? 'bg-zinc-400';
+  }
 
-onMount(() => {
-  pinStore.init();
-});
+  onMount(() => {
+    pinStore.init();
+  });
 
-let visiblePins = $derived(pinnedJobs.filter((j) => !pinStore.isExcluded(j.id)));
+  let visiblePins = $derived(pinnedJobs.filter((j) => !pinStore.isExcluded(j.id)));
 
-// Single gate guards both per-job unpin AND "unpin all" so the user always
-// gets the same red double-click pattern across the sidebar.
-const confirm = new ConfirmGate();
-onDestroy(() => confirm.destroy());
-let pinnedMenuOpen = $state(false);
+  // Single gate guards both per-job unpin AND "unpin all" so the user always
+  // gets the same red double-click pattern across the sidebar.
+  const confirm = new ConfirmGate();
+  onDestroy(() => confirm.destroy());
+  let pinnedMenuOpen = $state(false);
 
-function onUnpinAllClick(e: Event) {
-  e.preventDefault();
-  if (!confirm.trigger('unpin-all')) return;
-  pinStore.unpinAll(visiblePins.map((j) => j.id));
-  pinnedMenuOpen = false;
-}
+  function onUnpinAllClick(e: Event) {
+    e.preventDefault();
+    if (!confirm.trigger('unpin-all')) return;
+    pinStore.unpinAll(visiblePins.map((j) => j.id));
+    pinnedMenuOpen = false;
+  }
 
-function onMenuOpenChange(v: boolean) {
-  pinnedMenuOpen = v;
-  // Closing the menu cancels any pending unpin-all confirm
-  if (!v && confirm.isArmed('unpin-all')) confirm.disarm();
-}
+  function onMenuOpenChange(v: boolean) {
+    pinnedMenuOpen = v;
+    // Closing the menu cancels any pending unpin-all confirm
+    if (!v && confirm.isArmed('unpin-all')) confirm.disarm();
+  }
 
-function unpinOne(id: string, e: Event) {
-  e.preventDefault();
-  e.stopPropagation();
-  if (!confirm.trigger('unpin:' + id)) return;
-  pinStore.unpin(id);
-}
+  function unpinOne(id: string, e: Event) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm.trigger('unpin:' + id)) return;
+    pinStore.unpin(id);
+  }
 </script>
 
 <Sidebar.Root collapsible="icon" variant="inset" class="app-shell-sidebar">
@@ -136,19 +138,62 @@ function unpinOne(id: string, e: Event) {
           <DropdownMenu.Trigger>
             {#snippet child({ props })}
               <Sidebar.MenuButton {...props} size="lg" class="data-[state=open]:bg-sidebar-accent">
-                <div class="relative flex aspect-square size-8 items-center justify-center rounded-lg bg-zinc-900 ring-1 ring-zinc-800 overflow-hidden">
+                <div
+                  class="relative flex aspect-square size-8 items-center justify-center rounded-lg bg-zinc-900 ring-1 ring-zinc-800 overflow-hidden"
+                >
                   <svg viewBox="0 0 32 32" class="size-5" aria-hidden="true">
-                    <rect x="6.5" y="11" width="19" height="13.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6" class="text-zinc-200"/>
-                    <path d="M12 11v-1.5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2V11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" class="text-zinc-200"/>
-                    <line x1="6.5" y1="17.5" x2="25.5" y2="17.5" stroke="currentColor" stroke-width="1.2" opacity="0.55" class="text-zinc-200"/>
-                    <rect x="14" y="16.4" width="4" height="2.2" rx="0.5" fill="currentColor" class="text-emerald-400"/>
+                    <rect
+                      x="6.5"
+                      y="11"
+                      width="19"
+                      height="13.5"
+                      rx="2.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      class="text-zinc-200"
+                    />
+                    <path
+                      d="M12 11v-1.5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2V11"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      class="text-zinc-200"
+                    />
+                    <line
+                      x1="6.5"
+                      y1="17.5"
+                      x2="25.5"
+                      y2="17.5"
+                      stroke="currentColor"
+                      stroke-width="1.2"
+                      opacity="0.55"
+                      class="text-zinc-200"
+                    />
+                    <rect
+                      x="14"
+                      y="16.4"
+                      width="4"
+                      height="2.2"
+                      rx="0.5"
+                      fill="currentColor"
+                      class="text-emerald-400"
+                    />
                   </svg>
                   {#if activeProfile}
-                    <span class={cn('absolute top-0.5 right-0.5 size-1.5 rounded-full ring-2 ring-zinc-900', profileDot(activeProfile.color))}></span>
+                    <span
+                      class={cn(
+                        'absolute top-0.5 right-0.5 size-1.5 rounded-full ring-2 ring-zinc-900',
+                        profileDot(activeProfile.color),
+                      )}
+                    ></span>
                   {/if}
                 </div>
                 <div class="flex flex-col gap-0.5 leading-none flex-1 text-left min-w-0">
-                  <span class="font-semibold text-sm truncate">{activeProfile?.name ?? APP_NAME}</span>
+                  <span class="font-semibold text-sm truncate"
+                    >{activeProfile?.name ?? APP_NAME}</span
+                  >
                   <span class="text-xs text-muted-foreground truncate">
                     {profilesState && profilesState.profiles.length > 1
                       ? profilesState.profiles.length + ' profiles'
@@ -197,17 +242,26 @@ function unpinOne(id: string, e: Event) {
       <Sidebar.GroupContent>
         <Sidebar.Menu>
           <Sidebar.MenuItem>
-            <Sidebar.MenuButton onclick={() => globalActions.openSearch()} class="text-muted-foreground">
+            <Sidebar.MenuButton
+              onclick={() => globalActions.openSearch()}
+              class="text-muted-foreground"
+            >
               <Search class="size-4" />
               <span>Search jobs…</span>
-              <kbd class="ml-auto text-[10px] font-mono text-muted-foreground/60 px-1 py-0.5 rounded border border-border/50">⌘K</kbd>
+              <kbd
+                class="ml-auto text-[10px] font-mono text-muted-foreground/60 px-1 py-0.5 rounded border border-border/50"
+                >⌘K</kbd
+              >
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
             <Sidebar.MenuButton onclick={() => globalActions.openAddJob()}>
               <Plus class="size-4" />
               <span>Add job</span>
-              <kbd class="ml-auto text-[10px] font-mono text-muted-foreground/60 px-1 py-0.5 rounded border border-border/50">N</kbd>
+              <kbd
+                class="ml-auto text-[10px] font-mono text-muted-foreground/60 px-1 py-0.5 rounded border border-border/50"
+                >N</kbd
+              >
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
         </Sidebar.Menu>
@@ -225,7 +279,9 @@ function unpinOne(id: string, e: Event) {
                   <Inbox class="size-4" />
                   <span>Inbox</span>
                   {#if inboxCount > 0}
-                    <Badge variant="secondary" class="ml-auto h-5 px-1.5 text-[10px]">{inboxCount}</Badge>
+                    <Badge variant="secondary" class="ml-auto h-5 px-1.5 text-[10px]"
+                      >{inboxCount}</Badge
+                    >
                   {/if}
                 </a>
               {/snippet}
@@ -255,13 +311,21 @@ function unpinOne(id: string, e: Event) {
             <DropdownMenu.Root bind:open={pinnedMenuOpen} onOpenChange={onMenuOpenChange}>
               <DropdownMenu.Trigger>
                 {#snippet child({ props })}
-                  <Button {...props} variant="ghost" size="icon" class="size-5" aria-label="Pinned actions">
+                  <Button
+                    {...props}
+                    variant="ghost"
+                    size="icon"
+                    class="size-5"
+                    aria-label="Pinned actions"
+                  >
                     <MoreHorizontal class="size-3" />
                   </Button>
                 {/snippet}
               </DropdownMenu.Trigger>
               <DropdownMenu.Content side="right" align="start" class="w-48">
-                <DropdownMenu.Label class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                <DropdownMenu.Label
+                  class="text-[10px] uppercase tracking-wide text-muted-foreground"
+                >
                   Pinned ({visiblePins.length})
                 </DropdownMenu.Label>
                 {@const unpinAllArmed = confirm.isArmed('unpin-all')}
@@ -272,11 +336,13 @@ function unpinOne(id: string, e: Event) {
                     'gap-2 cursor-pointer transition-colors',
                     unpinAllArmed
                       ? 'bg-red-500/15 text-red-400 focus:bg-red-500/20 focus:text-red-300 animate-pulse'
-                      : 'text-red-400 focus:bg-red-500/10 focus:text-red-300'
+                      : 'text-red-400 focus:bg-red-500/10 focus:text-red-300',
                   )}
                 >
                   <Trash2 class="size-3.5" />
-                  <span class="flex-1">{unpinAllArmed ? 'Click again to confirm' : 'Unpin all'}</span>
+                  <span class="flex-1"
+                    >{unpinAllArmed ? 'Click again to confirm' : 'Unpin all'}</span
+                  >
                   {#if unpinAllArmed}
                     <span class="text-[10px] font-mono opacity-70">3s</span>
                   {/if}
@@ -294,7 +360,11 @@ function unpinOne(id: string, e: Event) {
                     <Tooltip.Root>
                       <Tooltip.Trigger>
                         {#snippet child({ props: tipProps })}
-                          <Sidebar.MenuButton size="sm" isActive={isActive('/job/' + job.id)} class="text-xs pr-7">
+                          <Sidebar.MenuButton
+                            size="sm"
+                            isActive={isActive('/job/' + job.id)}
+                            class="text-xs pr-7"
+                          >
                             {#snippet child({ props })}
                               <a href={'/job/' + job.id} {...props} {...tipProps}>
                                 <div class="size-2 rounded-full bg-emerald-500 flex-shrink-0"></div>
@@ -318,7 +388,9 @@ function unpinOne(id: string, e: Event) {
                             {...props}
                             type="button"
                             onclick={(e) => unpinOne(job.id, e)}
-                            aria-label={armedThis ? 'Click again to unpin ' + job.company : 'Unpin ' + job.company}
+                            aria-label={armedThis
+                              ? 'Click again to unpin ' + job.company
+                              : 'Unpin ' + job.company}
                             class={cn(
                               'absolute right-1 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center rounded transition-all',
                               armedThis
@@ -364,7 +436,11 @@ function unpinOne(id: string, e: Event) {
                     <ListChecks class="size-4" />
                     <span>Queue</span>
                     {#if queueCount > 0}
-                      <Badge variant="secondary" class="ml-auto h-5 px-1.5 text-[10px] border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-300">{queueCount}</Badge>
+                      <Badge
+                        variant="secondary"
+                        class="ml-auto h-5 px-1.5 text-[10px] border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-300"
+                        >{queueCount}</Badge
+                      >
                     {/if}
                   </a>
                 {/snippet}

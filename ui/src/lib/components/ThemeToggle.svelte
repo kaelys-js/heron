@@ -7,26 +7,26 @@
   smooth state change rather than an icon swap.
 -->
 <script lang="ts">
-import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-import * as Tooltip from '$lib/components/ui/tooltip';
-import { Button } from '$lib/components/ui/button';
-import { Sun, Moon, Monitor } from '@lucide/svelte';
-import CheckMark from './CheckMark.svelte';
-import { theme, type ThemeMode } from '$lib/theme.svelte';
-import { cn } from '$lib/utils';
+  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+  import * as Tooltip from '$lib/components/ui/tooltip';
+  import { Button } from '$lib/components/ui/button';
+  import { Sun, Moon, Monitor } from '@lucide/svelte';
+  import CheckMark from './CheckMark.svelte';
+  import { theme, type ThemeMode } from '$lib/theme.svelte';
+  import { cn } from '$lib/utils';
 
-type Option = { value: ThemeMode; label: string; desc: string; icon: any };
-const OPTIONS: Option[] = [
-  { value: 'light', label: 'Light', desc: 'Always light', icon: Sun },
-  { value: 'dark', label: 'Dark', desc: 'Always dark', icon: Moon },
-  { value: 'system', label: 'System', desc: 'Follow OS preference', icon: Monitor },
-];
+  type Option = { value: ThemeMode; label: string; desc: string; icon: any };
+  const OPTIONS: Option[] = [
+    { value: 'light', label: 'Light', desc: 'Always light', icon: Sun },
+    { value: 'dark', label: 'Dark', desc: 'Always dark', icon: Moon },
+    { value: 'system', label: 'System', desc: 'Follow OS preference', icon: Monitor },
+  ];
 
-// Pick the trigger icon based on what's RESOLVED so the user sees the
-// current actual state, not just their stored preference.
-let TriggerIcon = $derived(
-  theme.mode === 'system' ? Monitor : theme.resolved === 'light' ? Sun : Moon,
-);
+  // Pick the trigger icon based on what's RESOLVED so the user sees the
+  // current actual state, not just their stored preference.
+  let TriggerIcon = $derived(
+    theme.mode === 'system' ? Monitor : theme.resolved === 'light' ? Sun : Moon,
+  );
 </script>
 
 <DropdownMenu.Root>
@@ -90,12 +90,16 @@ let TriggerIcon = $derived(
         {/snippet}
       </Tooltip.Trigger>
       <Tooltip.Content side="bottom" class="text-xs">
-        Theme: <span class="font-medium">{theme.mode === 'system' ? 'System (' + theme.resolved + ')' : theme.mode}</span>
+        Theme: <span class="font-medium"
+          >{theme.mode === 'system' ? 'System (' + theme.resolved + ')' : theme.mode}</span
+        >
       </Tooltip.Content>
     </Tooltip.Root>
   </Tooltip.Provider>
   <DropdownMenu.Content side="bottom" align="end" class="w-44">
-    <DropdownMenu.Label class="text-[10px] uppercase tracking-wide text-muted-foreground">Appearance</DropdownMenu.Label>
+    <DropdownMenu.Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+      >Appearance</DropdownMenu.Label
+    >
     {#each OPTIONS as o}
       {@const Icon = o.icon}
       {@const active = theme.mode === o.value}
@@ -108,7 +112,11 @@ let TriggerIcon = $derived(
           class={cn(
             'size-3.5 mt-0.5 flex-shrink-0 transition-colors',
             active
-              ? (o.value === 'light' ? 'text-amber-300' : o.value === 'dark' ? 'text-blue-300' : 'text-foreground')
+              ? o.value === 'light'
+                ? 'text-amber-300'
+                : o.value === 'dark'
+                  ? 'text-blue-300'
+                  : 'text-foreground'
               : 'text-muted-foreground',
           )}
         />

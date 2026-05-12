@@ -8,54 +8,54 @@
   (only if true, never fabricated).
 -->
 <script lang="ts">
-import * as Popover from '$lib/components/ui/popover';
-import { Target, ChevronDown, AlertTriangle, CheckCircle2 } from '@lucide/svelte';
-import { api } from '$lib/api';
-import { onMount } from 'svelte';
-import { cn } from '$lib/utils';
+  import * as Popover from '$lib/components/ui/popover';
+  import { Target, ChevronDown, AlertTriangle, CheckCircle2 } from '@lucide/svelte';
+  import { api } from '$lib/api';
+  import { onMount } from 'svelte';
+  import { cn } from '$lib/utils';
 
-let { jobId, profileId }: { jobId: string; profileId?: string } = $props();
+  let { jobId, profileId }: { jobId: string; profileId?: string } = $props();
 
-type MatchResult = {
-  hasReport: boolean;
-  score: number | null;
-  matched: string[] | null;
-  missing: string[] | null;
-  considered: { unigrams: number; bigrams: number; trigrams: number } | null;
-};
+  type MatchResult = {
+    hasReport: boolean;
+    score: number | null;
+    matched: string[] | null;
+    missing: string[] | null;
+    considered: { unigrams: number; bigrams: number; trigrams: number } | null;
+  };
 
-let result = $state<MatchResult | null>(null);
-let loading = $state(true);
+  let result = $state<MatchResult | null>(null);
+  let loading = $state(true);
 
-let scoreTint = $derived.by(() => {
-  const s = result?.score ?? 0;
-  if (s >= 80) return 'text-emerald-300 border-emerald-500/40 bg-emerald-500/10';
-  if (s >= 60) return 'text-amber-300 border-amber-500/40 bg-amber-500/10';
-  return 'text-red-300 border-red-500/40 bg-red-500/10';
-});
+  let scoreTint = $derived.by(() => {
+    const s = result?.score ?? 0;
+    if (s >= 80) return 'text-emerald-300 border-emerald-500/40 bg-emerald-500/10';
+    if (s >= 60) return 'text-amber-300 border-amber-500/40 bg-amber-500/10';
+    return 'text-red-300 border-red-500/40 bg-red-500/10';
+  });
 
-let bandLabel = $derived.by(() => {
-  const s = result?.score ?? 0;
-  if (s >= 80) return 'Strong';
-  if (s >= 60) return 'Decent';
-  if (s >= 40) return 'Thin';
-  return 'Weak';
-});
+  let bandLabel = $derived.by(() => {
+    const s = result?.score ?? 0;
+    if (s >= 80) return 'Strong';
+    if (s >= 60) return 'Decent';
+    if (s >= 40) return 'Thin';
+    return 'Weak';
+  });
 
-onMount(async () => {
-  try {
-    const pq = profileId ? '?profile=' + encodeURIComponent(profileId) : '';
-    const r = await api.get<MatchResult>(
-      '/api/job/' + encodeURIComponent(jobId) + '/keyword-match' + pq,
-      { silent: true },
-    );
-    result = r;
-  } catch {
-    result = null;
-  } finally {
-    loading = false;
-  }
-});
+  onMount(async () => {
+    try {
+      const pq = profileId ? '?profile=' + encodeURIComponent(profileId) : '';
+      const r = await api.get<MatchResult>(
+        '/api/job/' + encodeURIComponent(jobId) + '/keyword-match' + pq,
+        { silent: true },
+      );
+      result = r;
+    } catch {
+      result = null;
+    } finally {
+      loading = false;
+    }
+  });
 </script>
 
 {#if !loading && result?.hasReport && result.score != null}
@@ -91,16 +91,23 @@ onMount(async () => {
       <div class="max-h-80 overflow-y-auto p-3 space-y-3">
         {#if result.missing && result.missing.length > 0}
           <div>
-            <div class="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1">
+            <div
+              class="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1"
+            >
               <AlertTriangle class="size-3 text-amber-400" />
               Missing ({result.missing.length})
             </div>
             <div class="flex flex-wrap gap-1">
               {#each result.missing.slice(0, 50) as term}
-                <span class="text-[10px] px-1.5 py-0.5 rounded border border-amber-500/30 bg-amber-500/5 text-amber-200">{term}</span>
+                <span
+                  class="text-[10px] px-1.5 py-0.5 rounded border border-amber-500/30 bg-amber-500/5 text-amber-200"
+                  >{term}</span
+                >
               {/each}
               {#if result.missing.length > 50}
-                <span class="text-[10px] text-muted-foreground">+{result.missing.length - 50} more</span>
+                <span class="text-[10px] text-muted-foreground"
+                  >+{result.missing.length - 50} more</span
+                >
               {/if}
             </div>
             <p class="text-[10px] text-muted-foreground/70 mt-1.5 leading-relaxed">
@@ -111,16 +118,23 @@ onMount(async () => {
         {/if}
         {#if result.matched && result.matched.length > 0}
           <div>
-            <div class="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1">
+            <div
+              class="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-1"
+            >
               <CheckCircle2 class="size-3 text-emerald-400" />
               Matched ({result.matched.length})
             </div>
             <div class="flex flex-wrap gap-1">
               {#each result.matched.slice(0, 40) as term}
-                <span class="text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/5 text-emerald-200">{term}</span>
+                <span
+                  class="text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/5 text-emerald-200"
+                  >{term}</span
+                >
               {/each}
               {#if result.matched.length > 40}
-                <span class="text-[10px] text-muted-foreground">+{result.matched.length - 40} more</span>
+                <span class="text-[10px] text-muted-foreground"
+                  >+{result.matched.length - 40} more</span
+                >
               {/if}
             </div>
           </div>
