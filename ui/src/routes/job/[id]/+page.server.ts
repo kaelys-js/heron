@@ -19,6 +19,9 @@ import { readSafe } from '$lib/server/files';
 import { profilePath } from '$lib/server/profile-paths';
 import { getActiveProfileId, getProfile, listProfiles } from '$lib/server/profiles';
 import { parseReportSummary } from '$lib/server/report-summary';
+import { getStageState } from '$lib/server/stage-state';
+import { listInterviewers } from '$lib/server/interviewers';
+import { getOffer, currentRound, annualisedTc, batnaScore } from '$lib/server/offers';
 import { error } from '@sveltejs/kit';
 
 function splitId(rawId: string): { urlId: string; profileHint?: string } {
@@ -69,5 +72,27 @@ export async function load({ params, url }: { params: { id: string }; url: URL }
     ? readSafe(path.join(profilePath(resolvedProfileId, 'reports-dir'), job.reportFile))
     : '';
   const summary = report ? parseReportSummary(report) : null;
-  return { job, report, summary, profileId: resolvedProfileId };
+
+  // Post-apply pipeline data — sidecars per job (stage history, interview
+  // panel, offer rounds). Each is read-only; null when absent. These power
+  // the new tabs on the job page (interviewers / offer / negotiation /
+  // ready-gate). Cheap reads — sidecars are < 5KB each in practice.
+  const stage = getStageState(job.id, resolvedProfileId) ?? null;
+  const interviewers = listInterviewers(job.id, resolvedProfileId);
+  const offer = getOffer(job.id, resolvedProfileId) ?? null;
+  const offerCurrent = offer ? (currentRound(offer) ?? null) : null;
+  const offerTc = offerCurrent ? annualisedTc(offerCurrent) : 0;
+  const offerBatna = offer ? batnaScore(job.id, resolvedProfileId) : 0;
+  return {
+    job,
+    report,
+    summary,
+    profileId: resolvedProfileId,
+    stage,
+    interviewers,
+    offer,
+    offerCurrent,
+    offerTc,
+    offerBatna,
+  };
 }

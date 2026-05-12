@@ -65,6 +65,12 @@ export type ProfileFileKind =
   | 'gemini-scores'
   | 'follow-ups'
   | 'projects-json'
+  // Stage-tracking sidecars (Phase I — post-apply pipeline).
+  // Stored as JSON per-profile because applications.md is a markdown
+  // file with fixed columns — we'd break backward-compat by widening it.
+  | 'stage-state-json' // job_id → {stageHistory, lastTouchAt, nextActionDue}
+  | 'interviewers-json' // job_id → [{name, title, linkedin, scheduledAt, ...}]
+  | 'offers-json' // job_id → {base, bonus, equity, benchmark, counter, ...}
   // Per-profile directories
   | 'profile-dir' // the root of this profile's content
   | 'reports-dir'
@@ -175,6 +181,12 @@ export function profilePathForUser(
       return path.join(base, 'follow-ups.md');
     case 'projects-json':
       return path.join(base, 'projects.json');
+    case 'stage-state-json':
+      return path.join(base, 'stage-state.json');
+    case 'interviewers-json':
+      return path.join(base, 'interviewers.json');
+    case 'offers-json':
+      return path.join(base, 'offers.json');
     case 'reports-dir':
       return path.join(base, 'reports');
     case 'output-dir':

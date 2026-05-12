@@ -15,6 +15,9 @@
   import CompPreflightBadge from '$lib/components/CompPreflightBadge.svelte';
   import ApplyTimingBadge from '$lib/components/ApplyTimingBadge.svelte';
   import PdfPreviewPanel from '$lib/components/PdfPreviewPanel.svelte';
+  import InterviewerPanel from '$lib/components/InterviewerPanel.svelte';
+  import OfferPanel from '$lib/components/OfferPanel.svelte';
+  import JobStageBadge from '$lib/components/JobStageBadge.svelte';
   import {
     Send,
     MessageSquare,
@@ -39,8 +42,20 @@
 
   let {
     data,
-  }: { data: { job: Job; report: string; summary: ReportSummaryT | null; profileId: string } } =
-    $props();
+  }: {
+    data: {
+      job: Job;
+      report: string;
+      summary: ReportSummaryT | null;
+      profileId: string;
+      stage: import('$lib/server/stage-state').JobStageState | null;
+      interviewers: import('$lib/server/interviewers').Interviewer[];
+      offer: import('$lib/server/offers').OfferRecord | null;
+      offerCurrent: import('$lib/server/offers').OfferRound | null;
+      offerTc: number;
+      offerBatna: number;
+    };
+  } = $props();
   let html = $derived(renderMarkdown(data.report));
   // Every per-job endpoint takes ?profile so it reads from the right
   // profile's interview-prep / output / reports dirs and swaps symlinks
@@ -473,8 +488,28 @@
                 <Tabs.Trigger value="cover-letter" class="text-xs h-8 px-3 whitespace-nowrap">
                   <Mail class="size-3.5 mr-1.5" /> Cover letter
                 </Tabs.Trigger>
+                <Tabs.Trigger value="interview-panel" class="text-xs h-8 px-3 whitespace-nowrap">
+                  <Briefcase class="size-3.5 mr-1.5" /> Panel
+                  {#if data.interviewers && data.interviewers.length > 0}
+                    <span class="ml-1.5 rounded bg-zinc-700/50 px-1 text-[10px]"
+                      >{data.interviewers.length}</span
+                    >
+                  {/if}
+                </Tabs.Trigger>
+                <Tabs.Trigger value="offer-tab" class="text-xs h-8 px-3 whitespace-nowrap">
+                  <DollarSign class="size-3.5 mr-1.5" /> Offer
+                  {#if data.offer}
+                    <span class="ml-1.5 rounded bg-emerald-600/30 px-1 text-[10px]">●</span>
+                  {/if}
+                </Tabs.Trigger>
               </Tabs.List>
             </div>
+
+            {#if data.stage}
+              <div class="mb-2">
+                <JobStageBadge stage={data.stage} />
+              </div>
+            {/if}
 
             <Tabs.Content value="overview">
               {#if data.report}
@@ -914,6 +949,25 @@
                   </div>
                 {/if}
               </div>
+            </Tabs.Content>
+
+            <Tabs.Content value="interview-panel">
+              <InterviewerPanel
+                jobId={data.job.id}
+                profileId={data.profileId}
+                interviewers={data.interviewers}
+              />
+            </Tabs.Content>
+
+            <Tabs.Content value="offer-tab">
+              <OfferPanel
+                jobId={data.job.id}
+                profileId={data.profileId}
+                offer={data.offer}
+                offerCurrent={data.offerCurrent}
+                offerTc={data.offerTc}
+                offerBatna={data.offerBatna}
+              />
             </Tabs.Content>
           </Tabs.Root>
         {:else}

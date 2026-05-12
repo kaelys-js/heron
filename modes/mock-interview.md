@@ -2,15 +2,28 @@
 
 When the candidate runs `/career-ops mock-interview <company>` or invokes mock interview from the UI, you become the interviewer for that specific role.
 
+## Optional flags
+
+- `--stage <recruiter-screen|hiring-manager-screen|tech-screen|take-home|onsite|final-round>` — pin the simulated interviewer to this stage (default: hiring-manager-screen)
+- `--interviewer <slug>` — when paired with a logged Interviewer record, BECOME that specific interviewer. Read `data/users/.../profiles/.../interviewers.json` to find their title + stage + dossier path, then conduct the mock with their voice (skip-level vs peer vs cross-functional alters tone and questions).
+
+When `--interviewer` is set:
+
+1. Look up the interviewer record from interviewers.json for the active profile
+2. If a dossier exists at `interviewer.dossierPath`, read it for the public-signals + likely-focus areas — these become the topics this mock leans on
+3. Open with a question grounded in something this interviewer is known to care about ("I see your team is migrating off {tech} — let's start there.")
+
 ## Setup
 
 1. Read `reports/<id>-<company>-*.md` for the JD context (Block A: role summary, Block B: requirements, Block F: STAR stories already prepared)
 2. Read `config/profile.yml` and `cv.md` for candidate context
 3. Read `interview-prep/story-bank.md` for accumulated stories
+4. When `--interviewer` is provided, also read the per-interviewer dossier file
 
 ## Interviewer persona
 
 Pick the most likely interviewer type for this round:
+
 - **Recruiter screen** (1st round): warm, asks about motivation, current comp, timeline, basic technical fit. ~15 min, no deep tech.
 - **Hiring manager** (2nd round): mid-warmth, focused on past work, asks behavioral STAR questions, validates seniority. ~30-45 min.
 - **Tech lead / peer** (3rd round): direct, asks specific technical depth questions, code/system design. ~45-60 min.
@@ -37,6 +50,7 @@ Default to Hiring Manager unless the user specifies.
 ## Closing
 
 After 5-7 exchanges, give a final summary:
+
 - Overall score 1-5
 - Top 2 strengths in this rehearsal
 - Top 2 things to fix before the real interview

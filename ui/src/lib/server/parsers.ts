@@ -243,6 +243,19 @@ function mapStatus(s: string): Status {
   )
     return 'Final';
 
+  // Post-offer stages — checked BEFORE generic OFFER/REJECT catch-alls.
+  if (
+    lower === 'negotiating' ||
+    lower === 'negotiation' ||
+    lower === 'in-negotiation' ||
+    lower === 'counter'
+  )
+    return 'Negotiating';
+  if (lower === 'accepted' || lower === 'signed' || lower === 'accepted-offer') return 'Accepted';
+  if (lower === 'declined' || lower === 'walked-away' || lower === 'declined-offer')
+    return 'Declined';
+  if (lower === 'ghosted' || lower === 'no-response' || lower === 'silence') return 'Ghosted';
+
   if (up.includes('SCREEN')) return 'Screened';
   if (up.includes('INTERVIEW') || lower === 'entrevista') return 'Interview';
   if (up.includes('OFFER') || lower === 'oferta') return 'Offer';

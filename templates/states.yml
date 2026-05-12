@@ -67,8 +67,33 @@ states:
   - id: offer
     label: Offer
     aliases: [oferta]
-    description: Offer received
+    description: Offer received (verbal or written)
     dashboard_group: offer
+
+  # Post-offer stages — used by negotiation + decision-support flows.
+  - id: negotiating
+    label: Negotiating
+    aliases: [negotiation, in-negotiation, counter]
+    description: Counter-offer in flight; awaiting recruiter response
+    dashboard_group: offer
+
+  - id: accepted
+    label: Accepted
+    aliases: [signed, accepted-offer]
+    description: Offer accepted; resignation in flight
+    dashboard_group: offer
+
+  - id: declined
+    label: Declined
+    aliases: [walked-away, declined-offer]
+    description: Offer declined by candidate (different path from Rejected)
+    dashboard_group: discarded
+
+  - id: ghosted
+    label: Ghosted
+    aliases: [no-response, silence]
+    description: 21+ days without recruiter contact after most-recent touch
+    dashboard_group: rejected
 
   - id: rejected
     label: Rejected

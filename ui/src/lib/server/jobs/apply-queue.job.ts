@@ -89,6 +89,54 @@ function preflightProfile(job: Job, portal: SupportedPortal): string | null {
   } catch {
     /* allow */
   }
+  // Visa / work-auth gate — short-circuit the apply if the JD requires
+  // sponsorship the user doesn't have, OR the role is in a country the
+  // user hasn't opted to relocate to. Same checks as /api/job/[id]/visa-check;
+  // implemented here inline to keep the dispatcher self-contained.
+  const visa = preflightVisa(job, profileId);
+  if (visa) return visa;
+  return null;
+}
+
+/** Visa preflight — mirrors /api/job/[id]/visa-check but inline so the
+ *  dispatcher doesn't need an HTTP call. Returns a block reason string
+ *  ('visa: no-sponsorship') or null when the apply may proceed. */
+function preflightVisa(job: Job, profileId: string): string | null {
+  let profileYml: string;
+  try {
+    profileYml = fs.readFileSync(profilePath(profileId, 'profile-yml'), 'utf8');
+  } catch {
+    return null; // no profile.yml — can't decide; allow
+  }
+  const statusMatch = profileYml.match(/^\s*status:\s*"?([a-z0-9-]+)"?/im);
+  const status = statusMatch ? statusMatch[1] : 'unknown';
+  if (status === 'us-citizen' || status === 'us-permanent-resident') return null;
+  const reportText = job.reportFile
+    ? (() => {
+        try {
+          return fs.readFileSync(
+            path.join(profilePath(profileId, 'reports-dir'), job.reportFile!),
+            'utf8',
+          );
+        } catch {
+          return '';
+        }
+      })()
+    : '';
+  const haystack = (job.role + ' ' + job.location + ' ' + reportText).toLowerCase();
+  const noSponsor =
+    /no\s+sponsorship|cannot\s+sponsor|do\s+not\s+(?:offer|provide)\s+sponsorship|without\s+sponsorship|must\s+be\s+authori[sz]ed|us\s+citizen(?:ship)?\s+required/i.test(
+      haystack,
+    );
+  const willSponsor =
+    /visa\s+sponsorship\s+available|will(?:ing)?\s+to\s+sponsor|h-?1b\s+sponsorship|sponsorship\s+offered/i.test(
+      haystack,
+    );
+  const needsSponsorship =
+    status === 'h1b-needed' || status === 'h1b-transfer' || status === 'other-need-sponsorship';
+  if (needsSponsorship && noSponsor && !willSponsor) {
+    return 'visa: JD says no sponsorship';
+  }
   return null;
 }
 
