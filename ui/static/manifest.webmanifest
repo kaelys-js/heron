@@ -8,7 +8,7 @@
   "orientation": "any",
   "theme_color": "#5b6cff",
   "background_color": "#0a0a0b",
-  "categories": ["productivity", "utilities"],
+  "categories": ["productivity", "utilities", "business"],
   "icons": [
     {
       "src": "/favicon.svg",
@@ -45,6 +45,64 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "id": "/?source=pwa&app=career-ops",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "shortcuts": [
+    {
+      "name": "Pipeline",
+      "short_name": "Pipeline",
+      "description": "Open the job pipeline",
+      "url": "/pipeline",
+      "icons": [
+        {
+          "src": "/icons/career-ops-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Inbox",
+      "short_name": "Inbox",
+      "description": "Open the issues inbox",
+      "url": "/inbox",
+      "icons": [
+        {
+          "src": "/icons/career-ops-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Queue",
+      "short_name": "Queue",
+      "description": "Open the apply queue",
+      "url": "/queue",
+      "icons": [
+        {
+          "src": "/icons/career-ops-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "short_name": "Settings",
+      "description": "Open settings",
+      "url": "/settings",
+      "icons": [
+        {
+          "src": "/icons/career-ops-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+careerops",
+      "url": "/?url=%s"
     }
   ]
 }

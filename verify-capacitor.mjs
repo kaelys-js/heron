@@ -630,6 +630,186 @@ contains(
   'app.html localStorage key matches brand',
 );
 
+// ── Phase 13 — Platform meta completeness (web + iOS + macOS + Win + Linux + Android) ──
+section('Phase 13 — Platform meta completeness');
+// Web / PWA
+contains('ui/src/app.html', 'twitter:card', 'web has twitter card meta');
+contains('ui/src/app.html', 'og:image', 'web has og:image');
+contains('ui/src/app.html', 'msapplication-TileColor', 'web has Windows Tile meta');
+contains('ui/src/app.html', 'apple-mobile-web-app-title', 'apple-mobile-web-app-title');
+contains('ui/static/manifest.webmanifest', '"shortcuts"', 'manifest has app shortcuts');
+contains('ui/static/manifest.webmanifest', '"display_override"', 'manifest has display_override');
+contains(
+  'ui/static/manifest.webmanifest',
+  '"protocol_handlers"',
+  'manifest registers protocol handler',
+);
+contains('ui/static/manifest.webmanifest', '"id"', 'manifest has stable id');
+// iOS Info.plist
+contains('ui/ios/App/App/Info.plist', 'LSApplicationCategoryType', 'iOS LSApplicationCategoryType');
+contains(
+  'ui/ios/App/App/Info.plist',
+  'ITSAppUsesNonExemptEncryption',
+  'iOS export-compliance flag',
+);
+contains(
+  'ui/ios/App/App/Info.plist',
+  'UIApplicationSupportsIndirectInputEvents',
+  'iOS trackpad support',
+);
+contains(
+  'ui/ios/App/App/Info.plist',
+  'CADisableMinimumFrameDurationOnPhone',
+  'iOS ProMotion 120Hz',
+);
+contains('ui/ios/App/App/Info.plist', 'NSHumanReadableCopyright', 'iOS copyright');
+contains(
+  'ui/ios/App/App/Info.plist',
+  'NSMicrophoneUsageDescription',
+  'iOS microphone permission text',
+);
+contains(
+  'ui/ios/App/App/Info.plist',
+  'NSPhotoLibraryUsageDescription',
+  'iOS photo library permission text',
+);
+contains(
+  'ui/ios/App/App/Info.plist',
+  'NSCalendarsUsageDescription',
+  'iOS calendar permission text',
+);
+// macOS / electron-builder mac
+jsonField(
+  'ui/electron/electron-builder.config.json',
+  'mac.minimumSystemVersion',
+  '12.0',
+  'macOS minimumSystemVersion floor',
+);
+contains(
+  'ui/electron/electron-builder.config.json',
+  '"LSApplicationCategoryType"',
+  'macOS LSApplicationCategoryType in extendInfo',
+);
+contains(
+  'ui/electron/electron-builder.config.json',
+  '"NSHumanReadableCopyright"',
+  'macOS copyright in extendInfo',
+);
+contains(
+  'ui/electron/electron-builder.config.json',
+  '"NSMicrophoneUsageDescription"',
+  'macOS microphone permission',
+);
+contains(
+  'ui/electron/electron-builder.config.json',
+  '"darkModeSupport": true',
+  'macOS dark mode declared',
+);
+// Windows
+contains('ui/electron/electron-builder.config.json', '"publisherName"', 'Windows publisherName');
+contains(
+  'ui/electron/electron-builder.config.json',
+  '"createStartMenuShortcut": true',
+  'Windows Start menu shortcut',
+);
+contains(
+  'ui/electron/electron-builder.config.json',
+  '"perMachine": false',
+  'Windows per-user install (no admin)',
+);
+contains(
+  'ui/electron/electron-builder.config.json',
+  '"differentialPackage": true',
+  'Windows differential update support',
+);
+// Linux
+contains('ui/electron/electron-builder.config.json', '"synopsis"', 'Linux .desktop synopsis');
+contains('ui/electron/electron-builder.config.json', '"maintainer"', 'Linux .deb maintainer');
+contains(
+  'ui/electron/electron-builder.config.json',
+  '"MimeType"',
+  'Linux .desktop URL scheme registered as MimeType',
+);
+// Android
+exists('ui/android/app/src/main/AndroidManifest.xml', 'Android manifest');
+exists('ui/android/app/src/main/res/values/strings.xml', 'Android strings.xml');
+exists(
+  'ui/android/app/src/main/java/com/resistjs/careerops/Brand.kt',
+  'Android Brand.kt (generated)',
+);
+exists(
+  'ui/android/app/src/main/java/com/resistjs/careerops/ErrorReporter.kt',
+  'Android ErrorReporter.kt',
+);
+exists(
+  'ui/android/app/src/main/java/com/resistjs/careerops/NetworkMonitor.kt',
+  'Android NetworkMonitor.kt',
+);
+exists(
+  'ui/android/app/src/main/java/com/resistjs/careerops/CareerOpsNativePlugin.kt',
+  'Android CareerOpsNativePlugin.kt',
+);
+contains(
+  'ui/android/app/src/main/AndroidManifest.xml',
+  'android:scheme="careerops"',
+  'Android deep-link intent filter',
+);
+contains(
+  'ui/android/app/src/main/AndroidManifest.xml',
+  'android.intent.action.SEND',
+  'Android share intent filter',
+);
+contains(
+  'ui/android/app/src/main/AndroidManifest.xml',
+  'POST_NOTIFICATIONS',
+  'Android 13+ notifications permission',
+);
+contains(
+  'ui/android/app/src/main/AndroidManifest.xml',
+  'RECORD_AUDIO',
+  'Android microphone permission',
+);
+contains(
+  'ui/android/app/src/main/AndroidManifest.xml',
+  'USE_BIOMETRIC',
+  'Android biometric permission',
+);
+contains(
+  'ui/android/app/src/main/AndroidManifest.xml',
+  'CHANGE_WIFI_MULTICAST_STATE',
+  'Android multicast permission (mDNS)',
+);
+contains(
+  'ui/android/app/src/main/java/com/resistjs/careerops/Brand.kt',
+  'object PrefsKey',
+  'Android Brand.PrefsKey namespace',
+);
+contains(
+  'ui/android/app/src/main/java/com/resistjs/careerops/ErrorReporter.kt',
+  'fun drain',
+  'Android ErrorReporter.drain exposed',
+);
+contains(
+  'ui/android/app/src/main/java/com/resistjs/careerops/CareerOpsNativePlugin.kt',
+  'fun drainNativeErrors',
+  'Android plugin exposes drainNativeErrors',
+);
+contains(
+  'ui/android/app/src/main/java/com/resistjs/careerops/CareerOpsNativePlugin.kt',
+  'notifyNetStatus',
+  'Android plugin forwards net status',
+);
+contains(
+  'ui/android/app/src/main/java/com/resistjs/careerops/MainActivity.java',
+  'registerPlugin(CareerOpsNativePlugin.class)',
+  'Android MainActivity registers native plugin',
+);
+exists('ui/android/app/src/main/res/mipmap-mdpi/ic_launcher.png', 'Android mdpi launcher icon');
+exists(
+  'ui/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png',
+  'Android xxxhdpi launcher icon',
+);
+
 // ── Phase 12 — Latest stack versions + best-practice config ────────
 section('Phase 12 — Latest stack versions + best-practice configs');
 {

@@ -73,6 +73,9 @@ importers:
       '@capacitor-community/electron':
         specifier: ^5.0.1
         version: 5.0.1
+      '@capacitor/android':
+        specifier: ^8.3.3
+        version: 8.3.3(@capacitor/core@8.3.3)
       '@capacitor/app':
         specifier: ^8.1.0
         version: 8.1.0(@capacitor/core@8.3.3)
@@ -278,6 +281,11 @@ packages:
 
   '@capacitor-community/electron@5.0.1':
     resolution: {integrity: sha512-4/x12ycTq0Kq8JIn/BmIBdFVP5Cqw8iA6SU6YfFjmONfjW3OELwsB3zwLxOwAjLxnjyCMOBHl4ci9E5jLgZgAQ==}
+
+  '@capacitor/android@8.3.3':
+    resolution: {integrity: sha512-Km7/voqtWVrN+qDHktoYb7DIliW+eakglH4jyT7C0dxODW/gDrMi19yC0ATNM2+rtaj3e2i46pgZ3A5UCa+44Q==}
+    peerDependencies:
+      '@capacitor/core': ^8.3.0
 
   '@capacitor/app@8.1.0':
     resolution: {integrity: sha512-MlmttTOWHDedr/G4SrhNRxsXMqY+R75S4MM4eIgzsgCzOYhb/MpCkA5Q3nuOCfL1oHm26xjUzqZ5aupbOwdfYg==}
@@ -3013,6 +3021,10 @@ snapshots:
       ora: 5.4.1
     transitivePeerDependencies:
       - supports-color
+
+  '@capacitor/android@8.3.3(@capacitor/core@8.3.3)':
+    dependencies:
+      '@capacitor/core': 8.3.3
 
   '@capacitor/app@8.1.0(@capacitor/core@8.3.3)':
     dependencies:

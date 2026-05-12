@@ -178,6 +178,45 @@ async function main() {
     );
   }
 
+  // ---- Android mipmap icons ----
+  // Android uses density-suffixed dirs: mipmap-mdpi (1x = 48), -hdpi (1.5x = 72),
+  // -xhdpi (2x = 96), -xxhdpi (3x = 144), -xxxhdpi (4x = 192).
+  // For each density we ship: ic_launcher (square), ic_launcher_round (round),
+  // ic_launcher_foreground (adaptive icon foreground — full color, square).
+  const androidRoot = path.join(ROOT, 'ui/android/app/src/main/res');
+  if (
+    await fs
+      .access(androidRoot)
+      .then(() => true)
+      .catch(() => false)
+  ) {
+    console.log('Building Android mipmap icons...');
+    const ANDROID_DENSITIES = [
+      { dir: 'mipmap-mdpi', size: 48 },
+      { dir: 'mipmap-hdpi', size: 72 },
+      { dir: 'mipmap-xhdpi', size: 96 },
+      { dir: 'mipmap-xxhdpi', size: 144 },
+      { dir: 'mipmap-xxxhdpi', size: 192 },
+    ];
+    for (const d of ANDROID_DENSITIES) {
+      const ddir = path.join(androidRoot, d.dir);
+      await fs.mkdir(ddir, { recursive: true });
+      await renderAtSize(sharp, svgBuffer, d.size, path.join(ddir, 'ic_launcher.png'));
+      await renderAtSize(sharp, svgBuffer, d.size, path.join(ddir, 'ic_launcher_round.png'));
+      // Adaptive icon foreground — Android letterboxes/masks it, so render
+      // at 108dp×108dp at the appropriate density. The safe zone is 66dp
+      // centered, so we render the full SVG at the safe size and inset.
+      const adaptiveSize = Math.round((d.size * 108) / 48);
+      await renderAtSize(
+        sharp,
+        svgBuffer,
+        adaptiveSize,
+        path.join(ddir, 'ic_launcher_foreground.png'),
+      );
+    }
+    console.log(`  Android mipmap × ${ANDROID_DENSITIES.length} densities (×3 variants each)`);
+  }
+
   // ---- Web manifest icons ----
   console.log('Building web manifest icons...');
   const webDir = path.join(ROOT, 'ui/static/icons');
