@@ -1,55 +1,74 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <!--
-    career-ops master logo. Single source of truth. Edit here.
+    career-ops master logo. Single source of truth.
     `pnpm brand:apply` propagates this into:
       - All platform icons (iOS appiconset, Splash.imageset, electron .icns/.ico, web manifest sizes)
       - ui/static/favicon.svg (web favicon)
       - electron tray icon
 
-    Design notes:
-    - 1024×1024 canvas so every downstream size is a clean integer downscale.
-    - 232px corner radius matches iOS 18+ auto-mask "squircle" — the home
-      screen will round it correctly without halo artifacts.
-    - Background is a vibrant indigo→violet→fuchsia gradient. The previous
-      slate→black design read as "low-energy software"; this reads as
-      "launch / momentum".
-    - Single bold glyph: a rising zig-zag arrow. ~52% of canvas, ~16% inset
-      from every edge so the figure stays inside the safe area at small
-      sizes (16×16 favicon, 29×29 settings, etc.).
-    - White stroke at 84 units stays crisp from 16×16 through 1024×1024.
-      Thinner strokes look fine at 1024 but disappear at 22×22.
-    - Top half has a 6%-opacity white wash for a subtle glassy highlight,
-      mimicking modern Apple-style depth without requiring a real shadow
-      filter (which Capacitor's iconset generator sometimes flattens wrong).
+    Design:
+    - Inner glyph is Lucide Icons' `rocket` (ISC License, attribution
+      below). Picked because the brand tagline is "Run your job search
+      like a product launch" — the rocket reads instantly across every
+      size from 16×16 favicon to 1024×1024 store listing.
+    - The 24×24 Lucide path is scaled 26.667× and placed at (192,192)
+      so the glyph sits in the centre 640×640 area with a clean 192px
+      safe-area margin on every side (the iOS auto-mask squircle clips
+      the outer 50px or so, this stays well within the visible region).
+    - 1024×1024 canvas with rx=232 matches Apple's iOS 18+ home-screen
+      auto-mask radius so the icon never gets a halo from a custom
+      corner shape mismatched against the OS clip.
+    - Indigo→violet→fuchsia gradient (#6366f1 → #8b5cf6 → #a855f7) reads
+      as energetic / launch-energy without straying into "kids' app"
+      pastel territory.
+    - Soft top-half white wash (6% opacity) gives glass-like depth.
+    - Stroke width 1.8 in 24-unit space scales to 48 visual units in
+      the 1024 canvas — thick enough to stay crisp at 16×16 favicon.
 
-    Color palette is also declared in brand.json under `colors:`. Keep
-    them in sync (the verifier checks).
+    Attribution:
+    - Rocket glyph: Lucide Icons (https://lucide.dev), ISC License.
+      Copyright (c) 2024 Lucide Contributors. Originally derived from
+      Feather Icons (https://feathericons.com), MIT License.
+
+    Editing:
+    - To change the glyph, browse https://lucide.dev/icons and paste a
+      different icon's path set into the <g transform="…"> block below.
+      Keep stroke-width 1.8 + the same fill/stroke attributes so the
+      design feels consistent with the rest of the Lucide-based UI.
   -->
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#6366f1"/>
-      <stop offset="55%" stop-color="#8b5cf6"/>
-      <stop offset="100%" stop-color="#a855f7"/>
-    </linearGradient>
-    <linearGradient id="arrow" x1="0" y1="1" x2="1" y2="0">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
-      <stop offset="100%" stop-color="#ffffff"/>
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="55%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#a855f7" />
     </linearGradient>
   </defs>
 
-  <!-- Squircle background -->
-  <rect width="1024" height="1024" rx="232" fill="url(#bg)"/>
+  <!-- Squircle background (matches iOS auto-mask) -->
+  <rect width="1024" height="1024" rx="232" fill="url(#bg)" />
 
-  <!-- Soft top-half highlight for depth (no filters — generators sometimes drop them) -->
-  <rect x="0" y="0" width="1024" height="512" rx="232" fill="#ffffff" opacity="0.06"/>
+  <!-- Soft top highlight — glass depth without a filter (icon generators
+       sometimes flatten filters; we keep this safe). -->
+  <rect x="0" y="0" width="1024" height="512" rx="232" fill="#ffffff" opacity="0.06" />
 
-  <!-- Bold rising zig-zag arrow — career trajectory -->
-  <path d="M280 720 L520 480 L640 600 L800 440"
-        stroke="url(#arrow)" stroke-width="84"
-        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-
-  <!-- Arrow head — corner of the L, joins seamlessly to the zig-zag -->
-  <path d="M680 360 L800 360 L800 480"
-        stroke="url(#arrow)" stroke-width="84"
-        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Lucide `rocket` glyph, scaled 26.667× from 24×24 to fill the
+       640×640 inner area with 192px margins. Paths copied verbatim
+       from lucide.dev/icons/rocket. -->
+  <g
+    transform="translate(192,192) scale(26.667)"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="1.8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+    <path
+      d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09"
+    />
+    <path
+      d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z"
+    />
+    <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" />
+  </g>
 </svg>

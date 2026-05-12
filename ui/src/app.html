@@ -214,9 +214,8 @@
         style="width: 128px; height: 128px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 8px 32px rgba(139, 92, 246, 0.35)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)); opacity: 0; transform: scale(0.92); animation: boot-mark-in 360ms cubic-bezier(0.16, 1, 0.3, 1) forwards;"
       >
         <!-- 128×128 inline brand mark — mirror of branding/logo.svg.
-             The indigo→fuchsia gradient ID is scoped (`bfb-*`) so it
-             doesn't collide with any other inline SVG the app might
-             mount during hydration. -->
+             Lucide `rocket` glyph (ISC License). Gradient ID is scoped
+             (`bfb-*`) so it doesn't collide with any other inline SVG. -->
         <svg
           width="128"
           height="128"
@@ -233,22 +232,23 @@
           </defs>
           <rect width="1024" height="1024" rx="232" fill="url(#bfb-bg)" />
           <rect x="0" y="0" width="1024" height="512" rx="232" fill="#ffffff" opacity="0.06" />
-          <path
-            d="M280 720 L520 480 L640 600 L800 440"
+          <g
+            transform="translate(192,192) scale(26.667)"
+            fill="none"
             stroke="#ffffff"
-            stroke-width="84"
+            stroke-width="1.8"
             stroke-linecap="round"
             stroke-linejoin="round"
-            fill="none"
-          />
-          <path
-            d="M680 360 L800 360 L800 480"
-            stroke="#ffffff"
-            stroke-width="84"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            fill="none"
-          />
+          >
+            <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+            <path
+              d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09"
+            />
+            <path
+              d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z"
+            />
+            <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" />
+          </g>
         </svg>
       </div>
 

@@ -23,5 +23,26 @@ class CareerOpsBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
         bridge?.registerPluginInstance(CareerOpsNativePlugin())
+        // Trace the resolved load URL so we can tell from the simulator
+        // log whether `server.url` in capacitor.config.json actually
+        // surfaced as the WebView's appStartServerURL. CAPLog is silent
+        // unless `loggingBehavior` is set to debug/production, but
+        // NSLog always shows up in `xcrun simctl spawn booted log show`.
+        let serverURL = bridge?.config.serverURL.absoluteString ?? "nil"
+        let localURL = bridge?.config.localURL.absoluteString ?? "nil"
+        let startURL = bridge?.config.appStartServerURL.absoluteString ?? "nil"
+        NSLog(
+            "[CareerOps] capacitorDidLoad serverURL=%@ localURL=%@ startURL=%@",
+            serverURL, localURL, startURL
+        )
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        if let url = webView?.url?.absoluteString {
+            NSLog("[CareerOps] viewDidAppear webView.url=%@", url)
+        } else {
+            NSLog("[CareerOps] viewDidAppear webView.url=nil")
+        }
     }
 }
