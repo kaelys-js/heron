@@ -345,37 +345,66 @@ export function createProfileFor(
   if (!trimmed) throw new Error('Profile name is required');
   if (trimmed.length > 60) throw new Error('Profile name is too long (max 60 chars)');
   maybeMigrateLegacy(userId);
-  const slug = uniqueSlug(userId, slugFromName(trimmed));
+  const base = slugFromName(trimmed);
   const now = nowMs();
   const id = newId();
-  // New profiles become active by default — mirrors the legacy behaviour.
-  appDb
-    .update(profiles)
-    .set({ isActive: false, updatedAt: now })
-    .where(eq(profiles.userId, userId))
-    .run();
-  appDb
-    .insert(profiles)
-    .values({
-      id,
-      userId,
-      slug,
-      name: trimmed,
-      color,
-      isActive: true,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .run();
-  return {
-    id,
-    slug,
-    name: trimmed,
-    color,
-    isActive: true,
-    createdAt: now,
-    updatedAt: now,
-  };
+
+  // Race-safe slug resolution: two simultaneous "Engineer Search" creates
+  // (e.g. user's laptop + phone) could both compute "engineer-search" and
+  // hit the UNIQUE constraint. We retry inside a transaction-like loop
+  // that re-derives the slug after each conflict. SQLite's WAL serializes
+  // writes, so each iteration sees the latest state.
+  const MAX_ATTEMPTS = 8;
+  let lastErr: unknown = null;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const slug = uniqueSlug(userId, base);
+    try {
+      // Demote any existing active profile + insert the new one in a
+      // single transaction so the activeProfile invariant ("exactly one
+      // row with is_active=1 per user_id") holds across crashes.
+      appDb.transaction((tx) => {
+        tx.update(profiles)
+          .set({ isActive: false, updatedAt: now })
+          .where(eq(profiles.userId, userId))
+          .run();
+        tx.insert(profiles)
+          .values({
+            id,
+            userId,
+            slug,
+            name: trimmed,
+            color,
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .run();
+      });
+      return {
+        id,
+        slug,
+        name: trimmed,
+        color,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      };
+    } catch (e) {
+      lastErr = e;
+      const msg = e instanceof Error ? e.message : String(e);
+      // Only retry on UNIQUE conflict — anything else (FK / disk full /
+      // permission) should surface to the caller.
+      if (!/UNIQUE/i.test(msg) && !/constraint/i.test(msg)) throw e;
+      // Loop: uniqueSlug() will read the now-newer state and append
+      // -2/-3/... until it finds a free slot.
+    }
+  }
+  throw new Error(
+    'Could not allocate a unique profile slug after ' +
+      MAX_ATTEMPTS +
+      ' attempts. Last error: ' +
+      (lastErr instanceof Error ? lastErr.message : String(lastErr)),
+  );
 }
 
 export function renameProfileFor(userId: string, slug: string, name: string): DbProfile {

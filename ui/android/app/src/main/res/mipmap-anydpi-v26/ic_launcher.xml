@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Adaptive icon (Android 8+) + themed icon (Android 13+).
+
+  • <background> + <foreground>: classic adaptive-icon layers. The
+    launcher composites them inside its preferred shape (circle on
+    Pixel, squircle on Samsung, etc.).
+  • <monochrome>: Android 13+ uses this single-channel artwork when
+    the user enables "Themed icons" in Wallpaper & style. The launcher
+    tints it with the wallpaper accent colour. Reusing the foreground
+    as the monochrome source works because our foreground is a single
+    flat shape on a transparent canvas.
+-->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@color/ic_launcher_background"/>
     <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+    <monochrome android:drawable="@mipmap/ic_launcher_foreground"/>
 </adaptive-icon>

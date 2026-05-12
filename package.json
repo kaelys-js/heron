@@ -36,7 +36,15 @@
     "check": "turbo check",
     "verify:capacitor": "node verify-capacitor.mjs",
     "reset:data": "node scripts/reset-data.mjs",
-    "prepare": "lefthook install || true"
+    "prepare": "lefthook install || true",
+    "preinstall": "node scripts/ensure-pnpm.mjs"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10",
+    "npm": "please-use-pnpm",
+    "yarn": "please-use-pnpm",
+    "bun": "please-use-pnpm"
   },
   "keywords": [
     "ai",

@@ -1,6 +1,18 @@
 source "https://rubygems.org"
 
-gem "fastlane"
+# Pin Ruby so local dev and CI use the same major. `bundler-cache: true`
+# in CI honours `.ruby-version`; locally `rbenv` / `asdf` / `mise` all
+# pick it up too.
+ruby "~> 3.3"
+
+# Fastlane — bump major version when a new Fastlane release is verified
+# against this Fastfile. Pinned to the current major to avoid silent
+# breakage from upstream API changes.
+gem "fastlane", "~> 2.226"
+
+# Cocoapods is also used by the build pipeline; pinning it here means
+# `bundle exec pod install` uses the same version on every machine.
+gem "cocoapods", "~> 1.16"
 
 plugins_path = File.join(File.dirname(__FILE__), 'fastlane', 'Pluginfile')
 eval_gemfile(plugins_path) if File.exist?(plugins_path)

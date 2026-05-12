@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -15,9 +15,12 @@
         try {
           var stored = localStorage.getItem('career-ops:theme');
           var mode = stored === 'light' || stored === 'dark' ? stored : 'system';
-          var resolved = mode === 'system'
-            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-            : mode;
+          var resolved =
+            mode === 'system'
+              ? window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+              : mode;
           var root = document.documentElement;
           if (resolved === 'dark') root.classList.add('dark');
           else root.classList.remove('dark');
@@ -33,35 +36,62 @@
 
     <!-- Don't index this — local-only dashboard -->
     <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="googlebot" content="noindex, nofollow" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
 
-    <!-- Theme + color scheme -->
+    <!-- Theme + color scheme — `theme-color` per scheme so iOS / Android
+         status bars and Chrome's toolbar pick the right tint. -->
     <meta name="theme-color" content="#0f0f12" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)" />
     <meta name="color-scheme" content="dark light" />
 
-    <!-- Mobile / iOS -->
+    <!-- PWA / installable web app — modern + legacy keys for cross-browser
+         pin-to-Home support. `application-name` shows under the icon on
+         Windows Start when the user pins the PWA from Edge. -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="career-ops" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="format-detection" content="telephone=no" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="application-name" content="career-ops" />
+    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
 
     <!-- Windows Start tile (pinned PWA from Edge / IE) -->
     <meta name="msapplication-TileColor" content="#5b6cff" />
-    <meta name="msapplication-TileImage" content="%sveltekit.assets%/icons/career-ops-256.png" />
+    <meta
+      name="msapplication-TileImage"
+      content="%sveltekit.assets%/icons/career-ops-256.png"
+    />
     <meta name="msapplication-config" content="none" />
 
-    <!-- Icons + manifest -->
-    <link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />
-    <link rel="icon" type="image/png" sizes="192x192" href="%sveltekit.assets%/icons/career-ops-192.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="%sveltekit.assets%/icons/career-ops-512.png" />
+    <!-- Icons + manifest. Order matters: more-specific first (browser
+         picks the first matching type/size). favicon.ico is included as
+         a legacy fallback for older browsers and email-client previews. -->
+    <link rel="icon" type="image/svg+xml" href="%sveltekit.assets%/favicon.svg" />
+    <link rel="icon" type="image/x-icon" sizes="48x48" href="%sveltekit.assets%/favicon.ico" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="%sveltekit.assets%/icons/career-ops-192.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="512x512"
+      href="%sveltekit.assets%/icons/career-ops-512.png"
+    />
     <link rel="apple-touch-icon" href="%sveltekit.assets%/favicon.svg" />
-    <link rel="apple-touch-icon" sizes="180x180" href="%sveltekit.assets%/icons/career-ops-256.png" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="%sveltekit.assets%/icons/career-ops-256.png"
+    />
+    <!-- Safari pinned-tab + macOS Reading List (monochrome silhouette). -->
     <link rel="mask-icon" href="%sveltekit.assets%/favicon.svg" color="#10b981" />
     <link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
 
-    <!-- Open Graph (link previews when shared internally or via Tailscale link) -->
+    <!-- Open Graph — link previews when shared internally or via
+         Tailscale magic-DNS. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="career-ops" />
     <meta property="og:title" content="career-ops" />
@@ -71,8 +101,9 @@
     <meta property="og:image:height" content="512" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:alt" content="career-ops" />
+    <meta property="og:locale" content="en_US" />
 
-    <!-- Twitter / X card (same image, summary card) -->
+    <!-- Twitter / X card (summary, same image). -->
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="career-ops" />
     <meta name="twitter:description" content="AI-powered job search pipeline" />
@@ -82,9 +113,44 @@
     <meta name="author" content="santifer" />
     <meta name="copyright" content="Copyright © 2026 santifer" />
 
+    <!-- View Transitions API — opt in to same-origin transitions so
+         page navigations get the cross-fade animation in Chrome 111+ /
+         Safari 18+. Pair with `view-transition-name` in CSS. -->
+    <meta name="view-transition" content="same-origin" />
+
+    <!-- Speculation Rules — prerender same-origin links on hover/touch
+         start so they paint instantly. Chrome 121+ honours this; older
+         browsers ignore it. -->
+    <script type="speculationrules">
+      {
+        "prerender": [
+          {
+            "where": { "href_matches": "/*" },
+            "eagerness": "moderate"
+          }
+        ]
+      }
+    </script>
+
+    <!-- Anthropic + Gemini are HOT external endpoints — preconnect saves
+         the TLS handshake on first call. Falls back gracefully when the
+         user disabled those providers. -->
+    <link rel="preconnect" href="https://api.anthropic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://api.anthropic.com" />
+    <link rel="preconnect" href="https://generativelanguage.googleapis.com" crossorigin />
+    <link rel="dns-prefetch" href="https://generativelanguage.googleapis.com" />
+
     %sveltekit.head%
   </head>
   <body data-sveltekit-preload-data="hover" class="bg-background text-foreground antialiased">
+    <!-- Skip-to-content link for keyboard + screen-reader users. Hidden
+         visually until focused; brings focus straight to <main>. -->
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
+    >
+      Skip to main content
+    </a>
     <div style="display: contents">%sveltekit.body%</div>
   </body>
 </html>

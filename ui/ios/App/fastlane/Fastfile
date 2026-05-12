@@ -4,16 +4,20 @@
 # TestFlight for internal-tester distribution. No App Store submission
 # (deliberately — the app is for personal use).
 #
-# Required secrets (env vars in CI, .env locally):
-#   APPLE_ID                 — Apple Developer account email
-#   APPLE_TEAM_ID            — found in developer.apple.com Membership
-#   APPLE_APP_SPECIFIC_PASSWORD  — created at appleid.apple.com (Sign-In and Security)
-#   FASTLANE_APPLE_API_KEY   — JSON file path (or contents) of an App Store Connect API key
+# Authentication uses App Store Connect API keys (the modern, 2FA-safe
+# approach). Legacy Apple-ID + app-specific-password is NOT used.
 #
-# Signing strategy: match-style via App Store Connect API key. Doesn't
-# require committing certificates to a git repo — Fastlane downloads
-# them at build time from a separate cert repo (configured via match).
-# For first run, see SETUP-FASTLANE.md.
+# Required secrets (env vars in CI, .env locally):
+#   APPLE_TEAM_ID                       — found in developer.apple.com Membership
+#   APP_STORE_CONNECT_API_KEY_ID        — 10-char key ID from App Store Connect → Users → Keys
+#   APP_STORE_CONNECT_API_ISSUER_ID     — UUID issuer ID from the same page
+#   APP_STORE_CONNECT_API_KEY           — full .p8 file contents (base64 or raw)
+#
+# Optional (only when using `match` for cert distribution):
+#   MATCH_GIT_URL                       — private repo holding signed certs / profiles
+#   MATCH_PASSWORD                      — encryption password for the match repo
+#
+# For first-run setup, see SETUP-FASTLANE.md.
 
 default_platform(:ios)
 
@@ -21,52 +25,77 @@ APP_IDENTIFIER = "com.resistjs.careerops"
 WORKSPACE = "App.xcworkspace"
 SCHEME = "App"
 
+# Fastlane defaults that affect every lane.
+ENV["FASTLANE_OPT_OUT_USAGE"] = "1"           # don't phone home
+ENV["FASTLANE_HIDE_CHANGELOG"] = "1"
+ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "120"
+
 platform :ios do
   before_all do
     setup_ci if is_ci
+    # Pin Xcode for CI consistency. Uncomment when the build runs on a
+    # macOS image that ships multiple Xcode versions.
+    # xcode_select("/Applications/Xcode_16.app") if is_ci
   end
 
-  desc "Increment build number, sign, archive, upload to TestFlight"
-  lane :beta do
-    # Bump build number to current epoch — deterministic and always larger
-    # than any prior build.
-    increment_build_number(
-      xcodeproj: "App.xcodeproj",
-      build_number: Time.now.to_i.to_s
+  desc "Construct the App Store Connect API key (used by every lane below)"
+  private_lane :asc_key do
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY"],
+      duration: 1200,    # seconds; ASC max is 1200
+      in_house: false
     )
+  end
 
-    # Use App Store Connect API key auth (no Apple ID password required).
-    api_key = app_store_connect_api_key(
-      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
-      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-      key_content: ENV["APP_STORE_CONNECT_KEY"]
-    )
-
-    # Resolve signing — use a cert repo if MATCH_GIT_URL is set; otherwise
-    # fall back to in-keychain certs (works for local dev).
+  desc "Resolve signing: use match if a cert-repo is configured, else local keychain"
+  private_lane :sign do |options|
+    api_key = options[:api_key]
     if ENV["MATCH_GIT_URL"]
       match(
         type: "appstore",
         app_identifier: APP_IDENTIFIER,
         git_url: ENV["MATCH_GIT_URL"],
         api_key: api_key,
-        readonly: is_ci
+        readonly: is_ci,
+        force_for_new_devices: false
       )
     end
+  end
+
+  desc "Build + sign + upload to TestFlight"
+  lane :beta do
+    # Bump build number to current epoch — deterministic and always larger
+    # than any prior build. Override with EXACT_BUILD_NUMBER when the
+    # caller wants a stable suffix (testflight-keepalive uses this).
+    new_build = ENV["EXACT_BUILD_NUMBER"] || Time.now.to_i.to_s
+    increment_build_number(
+      xcodeproj: "App.xcodeproj",
+      build_number: new_build
+    )
+
+    api_key = asc_key
+    sign(api_key: api_key)
 
     build_app(
       workspace: WORKSPACE,
       scheme: SCHEME,
       export_method: "app-store",
       configuration: "Release",
-      clean: true
+      clean: true,
+      output_directory: "fastlane/builds",
+      output_name: "career-ops-#{Time.now.utc.strftime('%Y%m%d%H%M%S')}.ipa",
+      include_symbols: true,
+      include_bitcode: false   # Apple deprecated bitcode in Xcode 14
     )
 
     upload_to_testflight(
       api_key: api_key,
       skip_waiting_for_build_processing: true,
       changelog: changelog_for_this_build,
-      distribute_external: false  # internal testers only
+      distribute_external: false,           # internal testers only
+      reject_build_waiting_for_review: false
     )
   end
 
@@ -78,17 +107,34 @@ platform :ios do
       configuration: "Debug",
       export_method: "development",
       skip_archive: true,
-      skip_codesigning: true
+      skip_codesigning: true,
+      output_directory: "fastlane/builds"
     )
   end
 
-  # Pull the last commit's message as TestFlight changelog. Falls back
-  # to a default if git isn't available (CI without a checkout).
+  desc "Sync provisioning profiles from the match repo (read-only on CI)"
+  lane :sync_profiles do
+    api_key = asc_key
+    sign(api_key: api_key)
+  end
+
+  # Pull the last commit's message as TestFlight changelog. Truncates to
+  # 4000 chars (the App Store Connect limit). Falls back to a default
+  # if git isn't available.
   def changelog_for_this_build
     begin
-      sh("git log -1 --pretty=%B").strip
+      msg = sh("git log -1 --pretty=%B").strip
+      msg.length > 4000 ? msg[0...3997] + "..." : msg
     rescue
       "career-ops automatic build (#{Time.now.utc.strftime('%Y-%m-%d')})"
+    end
+  end
+
+  error do |lane, exception|
+    UI.error("Fastlane lane '#{lane}' failed: #{exception.message}")
+    if is_ci
+      # GitHub Actions annotation so the failure surfaces in the PR view.
+      puts "::error title=Fastlane (#{lane}) failed::#{exception.message}"
     end
   end
 end

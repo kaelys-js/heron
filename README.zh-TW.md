@@ -80,11 +80,11 @@ career-ops 具有代理能力：Claude Code 透過 Playwright 瀏覽求職頁面
 ```bash
 # 1. 複製並安裝
 git clone https://github.com/santifer/career-ops.git
-cd career-ops && npm install
-npx playwright install chromium   # PDF 生成所需
+cd career-ops && pnpm install
+pnpm exec playwright install chromium   # PDF 生成所需
 
 # 2. 檢查設定
-npm run doctor                     # 驗證所有必要條件
+pnpm run doctor                     # 驗證所有必要條件
 
 # 3. 設定檔
 cp config/profile.example.yml config/profile.yml  # 填入你的個人資訊
