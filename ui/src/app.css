@@ -119,9 +119,27 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Base font-size. 16px keeps the desktop scale familiar; the mobile
+     breakpoint drops to 15px because iPhone Pro Max viewport is narrower
+     than the Mac at the same physical type-height, and Apple HIG-style
+     legibility wants the larger rem unit. Tailwind's `text-xs`/`text-sm`/
+     `text-base` scale off this — every "size" goes up proportionally. */
+  html {
+    font-size: 16px;
+  }
+  @media (max-width: 480px) {
+    html {
+      font-size: 15px;
+    }
+  }
   body {
     @apply bg-background text-foreground;
     font-feature-settings: 'rlig' 1, 'calt' 1, 'cv11' 1;
+    /* 15px (= 0.9375rem at 16px root) instead of Tailwind's default 16px
+       so the app feels tighter without going below iOS HIG's 11pt floor
+       (~14.6px CSS px). Line-height 1.5 keeps reading comfortable. */
+    font-size: 0.9375rem;
+    line-height: 1.5;
   }
 }
 
@@ -220,13 +238,62 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Safe-area insets for iOS (Capacitor WebView). Pushes content out of
-   the notch / Dynamic Island and below the home indicator. */
+/* Safe-area insets for iOS (Capacitor WebView).
+   PHILOSOPHY: We do NOT apply insets to <body> because:
+     1. The sidebar lives inside a `h-svh overflow-hidden` provider and
+        gets clipped if body padding pushes it down.
+     2. The topbar is `sticky top-0` and needs to know its own offset,
+        not inherit one from body.
+     3. Some pages (login, full-screen flows) want to ignore safe areas
+        entirely.
+   Instead, components that need it apply `.pt-safe` / `.pb-safe` / etc.
+   selectively (see AppSidebar.svelte's Sidebar.Header, page scroll
+   containers, the AgentChat FAB). Landscape notch is handled by
+   horizontal padding on body only. */
 body {
-  padding-top: env(safe-area-inset-top);
   padding-right: env(safe-area-inset-right);
-  padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
+}
+
+/* Reusable safe-area utilities. Tailwind v4 doesn't ship these by
+   default; small handful of components consume them. */
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pl-safe {
+  padding-left: env(safe-area-inset-left);
+}
+.pr-safe {
+  padding-right: env(safe-area-inset-right);
+}
+.mt-safe {
+  margin-top: env(safe-area-inset-top);
+}
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+
+/* Body scroll lock on mobile. iOS Safari's elastic over-scroll moves the
+   whole document and pushes our sticky topbar (with the breadcrumbs)
+   off-screen. Lock html+body in place; per-page scroll containers
+   (`.h-full overflow-y-auto`) handle their own scrolling internally.
+   overscroll-behavior:none stops pull-to-refresh from yanking the layout. */
+html,
+body {
+  overscroll-behavior: none;
+}
+@media (max-width: 768px) {
+  html,
+  body {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
 }
 
 /* Screen-reader-only utility used by app.html's skip-to-content link

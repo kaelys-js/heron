@@ -72,6 +72,14 @@ export function installErrorReporter(initialBackendUrl?: string): void {
       e.reason instanceof Error
         ? e.reason
         : new Error(typeof e.reason === 'string' ? e.reason : JSON.stringify(e.reason));
+    if (isBenignRejection(reason)) {
+      // Still log to the console for debugging, but don't toast or queue —
+      // these are spec-defined "you navigated faster than the animation
+      // finished" notices, not real errors.
+      console.debug('[benign]', reason.message);
+      e.preventDefault();
+      return;
+    }
     void reportError(reason, { source: 'unhandledrejection', route: location?.pathname });
   });
   // Electron main-process errors arrive via IPC channel `<brand>:main-error`
@@ -161,6 +169,26 @@ export function reportWarning(err: unknown, context?: ReportContext): Promise<vo
 /** Convenience wrapper for info-level diagnostics. */
 export function reportInfo(message: string, context?: ReportContext): Promise<void> {
   return reportError(new Error(message), context, 'info');
+}
+
+/**
+ * Some thrown values reach `unhandledrejection` even though they're
+ * spec-defined "this is fine" notices — most notably the view-transition
+ * AbortError that fires when the user navigates faster than the current
+ * crossfade can finish. We surface those to console (debugging is still
+ * useful) but skip the user-visible toast + issue-store entry. Add new
+ * patterns here only when you're CERTAIN the rejection is benign for the
+ * user.
+ */
+function isBenignRejection(err: Error): boolean {
+  const msg = err.message ?? '';
+  // View Transitions API spec: "Aborted by new transition" / "skipped
+  // because the document changed". Chromium / Safari word it slightly
+  // differently so we match on the unique substrings.
+  if (/old view transition.*aborted/i.test(msg)) return true;
+  if (/view transition.*skipped/i.test(msg)) return true;
+  if (/view transition.*new view transition/i.test(msg)) return true;
+  return false;
 }
 
 // ───────────────────────────────────────────────────────────────────
