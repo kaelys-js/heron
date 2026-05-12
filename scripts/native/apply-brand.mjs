@@ -312,6 +312,12 @@ function applyManifest(brand) {
     m.theme_color = brand.colors.primary;
     m.background_color = brand.colors.darkBg;
   });
+  // Post-process through biome so the formatter doesn't flag our output
+  // on the next CI run. Best-effort; if biome isn't installed yet, the
+  // pre-commit hook will catch it anyway.
+  try {
+    execSync(`npx biome format --write "${path}"`, { stdio: 'pipe', cwd: ROOT });
+  } catch {}
   changed
     ? log.ok(`static/manifest.webmanifest`)
     : log.skip(`manifest.webmanifest — already current`);

@@ -646,6 +646,21 @@ contains('lefthook.yml', 'verify-capacitor', 'pre-push verify-capacitor');
 exists('biome.json', 'biome config');
 jsonField('biome.json', 'formatter.enabled', true, 'biome formatter enabled');
 jsonField('biome.json', 'linter.enabled', false, 'biome linter disabled (formatting only)');
+contains('biome.json', '"!**/*.svelte"', 'biome excludes .svelte (delegated to prettier)');
+contains('biome.json', '"!**/*.css"', 'biome excludes .css (Tailwind directives)');
+exists('.prettierrc.json', 'prettier config (svelte only)');
+exists('.prettierignore', 'prettier ignore');
+contains('.prettierrc.json', 'prettier-plugin-svelte', 'prettier svelte plugin');
+contains('.prettierignore', '*.ts', 'prettier ignores .ts (biome handles)');
+contains('lefthook.yml', 'prettier-svelte', 'pre-commit runs prettier on .svelte');
+// TypeScript Go port
+contains('ui/package.json', '@typescript/native-preview', 'ui uses tsgo (TS Go port)');
+contains('ui/electron/package.json', '@typescript/native-preview', 'electron uses tsgo');
+contains('ui/package.json', '"typecheck"', 'ui has tsgo typecheck script');
+contains('ui/electron/package.json', 'tsgo', 'electron builds with tsgo');
+// .gitignore covers caches
+contains('.gitignore', '.turbo/', '.turbo cache gitignored');
+contains('.gitignore', '_build/', 'icon _build/ gitignored');
 exists('turbo.json', 'turbo config');
 contains('turbo.json', '"build"', 'turbo has build task');
 contains('turbo.json', '"brand"', 'turbo has brand task');

@@ -19,68 +19,68 @@
   "(custom)" hint.
 -->
 <script lang="ts">
-import * as Popover from '$lib/components/ui/popover';
-import * as Command from '$lib/components/ui/command';
-import { Button } from '$lib/components/ui/button';
-import { Check, ChevronsUpDown, Pencil } from '@lucide/svelte';
-import { cn } from '$lib/utils';
+  import * as Popover from '$lib/components/ui/popover';
+  import * as Command from '$lib/components/ui/command';
+  import { Button } from '$lib/components/ui/button';
+  import { Check, ChevronsUpDown, Pencil } from '@lucide/svelte';
+  import { cn } from '$lib/utils';
 
-type Item = { value: string; label: string; description?: string };
+  type Item = { value: string; label: string; description?: string };
 
-let {
-  items = [] as Item[],
-  value = $bindable(''),
-  onchange,
-  placeholder = 'Select…',
-  searchPlaceholder = 'Search…',
-  emptyText = 'No matches',
-  allowCustom = true,
-  customLabel = 'Use as custom',
-  disabled = false,
-  class: className = '',
-  ariaLabel,
-  /** Optional value-formatter for the trigger label when no item matches. */
-  formatCustom,
-}: {
-  items?: Item[];
-  value?: string;
-  onchange?: (v: string) => void;
-  placeholder?: string;
-  searchPlaceholder?: string;
-  emptyText?: string;
-  allowCustom?: boolean;
-  customLabel?: string;
-  disabled?: boolean;
-  class?: string;
-  ariaLabel?: string;
-  formatCustom?: (v: string) => string;
-} = $props();
+  let {
+    items = [] as Item[],
+    value = $bindable(''),
+    onchange,
+    placeholder = 'Select…',
+    searchPlaceholder = 'Search…',
+    emptyText = 'No matches',
+    allowCustom = true,
+    customLabel = 'Use as custom',
+    disabled = false,
+    class: className = '',
+    ariaLabel,
+    /** Optional value-formatter for the trigger label when no item matches. */
+    formatCustom,
+  }: {
+    items?: Item[];
+    value?: string;
+    onchange?: (v: string) => void;
+    placeholder?: string;
+    searchPlaceholder?: string;
+    emptyText?: string;
+    allowCustom?: boolean;
+    customLabel?: string;
+    disabled?: boolean;
+    class?: string;
+    ariaLabel?: string;
+    formatCustom?: (v: string) => string;
+  } = $props();
 
-let open = $state(false);
-let search = $state('');
+  let open = $state(false);
+  let search = $state('');
 
-// Find the selected item's display label, OR fall back to "<raw> (custom)".
-let selectedItem = $derived(
-  items.find((i) => i.value.toLowerCase() === (value ?? '').toLowerCase()),
-);
-let displayLabel = $derived.by(() => {
-  if (selectedItem) return selectedItem.label;
-  if (value && value.trim()) return formatCustom ? formatCustom(value) : value;
-  return '';
-});
+  // Find the selected item's display label, OR fall back to "<raw> (custom)".
+  let selectedItem = $derived(
+    items.find((i) => i.value.toLowerCase() === (value ?? '').toLowerCase()),
+  );
+  let displayLabel = $derived.by(() => {
+    if (selectedItem) return selectedItem.label;
+    if (value && value.trim()) return formatCustom ? formatCustom(value) : value;
+    return '';
+  });
 
-function commit(v: string) {
-  value = v;
-  onchange?.(v);
-  open = false;
-  search = '';
-}
+  function commit(v: string) {
+    value = v;
+    onchange?.(v);
+    open = false;
+    search = '';
+  }
 
-function onCustomSubmit() {
-  const v = search.trim();
-  if (!v || !allowCustom) return;
-  commit(v);
-}
+  function onCustomSubmit() {
+    const v = search.trim();
+    if (!v || !allowCustom) return;
+    commit(v);
+  }
 </script>
 
 <Popover.Root bind:open>
@@ -141,16 +141,27 @@ function onCustomSubmit() {
               onSelect={() => commit(item.value)}
               class="gap-2 items-start py-1.5"
             >
-              <Check class={cn('size-3.5 mt-0.5 flex-shrink-0', active ? 'opacity-100 text-emerald-400' : 'opacity-0')} />
+              <Check
+                class={cn(
+                  'size-3.5 mt-0.5 flex-shrink-0',
+                  active ? 'opacity-100 text-emerald-400' : 'opacity-0',
+                )}
+              />
               <div class="flex-1 min-w-0">
                 <div class="text-xs font-medium">{item.label}</div>
                 {#if item.description}
-                  <div class="text-[10px] text-muted-foreground/70 leading-tight">{item.description}</div>
+                  <div class="text-[10px] text-muted-foreground/70 leading-tight">
+                    {item.description}
+                  </div>
                 {/if}
               </div>
             </Command.Item>
           {/each}
-          {#if allowCustom && search.trim() && !items.some((i) => i.label.toLowerCase().includes(search.toLowerCase()) || i.value.toLowerCase().includes(search.toLowerCase()))}
+          {#if allowCustom && search.trim() && !items.some((i) => i.label
+                  .toLowerCase()
+                  .includes(search.toLowerCase()) || i.value
+                  .toLowerCase()
+                  .includes(search.toLowerCase()))}
             <Command.Item
               value={'__custom__' + search}
               onSelect={onCustomSubmit}
@@ -159,7 +170,9 @@ function onCustomSubmit() {
               <Pencil class="size-3.5 mt-0.5 text-muted-foreground/60 flex-shrink-0" />
               <div class="flex-1 min-w-0">
                 <div class="text-xs font-medium">{customLabel}</div>
-                <div class="text-[10px] text-muted-foreground/70 leading-tight font-mono">"{search}"</div>
+                <div class="text-[10px] text-muted-foreground/70 leading-tight font-mono">
+                  "{search}"
+                </div>
               </div>
             </Command.Item>
           {/if}

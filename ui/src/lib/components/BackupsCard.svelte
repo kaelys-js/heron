@@ -16,193 +16,199 @@
     - The server-side also refuses if listRunning() is non-empty.
 -->
 <script lang="ts">
-import * as Card from '$lib/components/ui/card';
-import { Button } from '$lib/components/ui/button';
-import { Input } from '$lib/components/ui/input';
-import { Label } from '$lib/components/ui/label';
-import * as Dialog from '$lib/components/ui/dialog';
-import {
-  Archive,
-  Download,
-  Trash2,
-  RotateCcw,
-  Loader2,
-  AlertTriangle,
-  Info,
-  CheckCircle2,
-  RefreshCw,
-} from '@lucide/svelte';
-import { api, ApiError } from '$lib/api';
-import { toast } from 'svelte-sonner';
-import { invalidateAll } from '$app/navigation';
-import { formatRelativeTime, cn, withMinDuration } from '$lib/utils';
+  import * as Card from '$lib/components/ui/card';
+  import { Button } from '$lib/components/ui/button';
+  import { Input } from '$lib/components/ui/input';
+  import { Label } from '$lib/components/ui/label';
+  import * as Dialog from '$lib/components/ui/dialog';
+  import {
+    Archive,
+    Download,
+    Trash2,
+    RotateCcw,
+    Loader2,
+    AlertTriangle,
+    Info,
+    CheckCircle2,
+    RefreshCw,
+  } from '@lucide/svelte';
+  import { api, ApiError } from '$lib/api';
+  import { toast } from 'svelte-sonner';
+  import { invalidateAll } from '$app/navigation';
+  import { formatRelativeTime, cn, withMinDuration } from '$lib/utils';
 
-export type BackupInfo = {
-  id: string;
-  path: string;
-  metaPath: string;
-  size: number;
-  createdAt: number;
-  fileCount?: number;
-  profiles?: string[];
-  app?: string;
-};
+  export type BackupInfo = {
+    id: string;
+    path: string;
+    metaPath: string;
+    size: number;
+    createdAt: number;
+    fileCount?: number;
+    profiles?: string[];
+    app?: string;
+  };
 
-let {
-  initialBackups = [],
-  initialConfig = { retentionDays: 14 },
-}: {
-  initialBackups?: BackupInfo[];
-  initialConfig?: { retentionDays: number };
-} = $props();
+  let {
+    initialBackups = [],
+    initialConfig = { retentionDays: 14 },
+  }: {
+    initialBackups?: BackupInfo[];
+    initialConfig?: { retentionDays: number };
+  } = $props();
 
-// svelte-ignore state_referenced_locally — initial seed; user actions update.
-let backups = $state<BackupInfo[]>(initialBackups);
-// svelte-ignore state_referenced_locally — initial seed.
-let retentionDays = $state<number>(initialConfig.retentionDays);
+  // svelte-ignore state_referenced_locally — initial seed; user actions update.
+  let backups = $state<BackupInfo[]>(initialBackups);
+  // svelte-ignore state_referenced_locally — initial seed.
+  let retentionDays = $state<number>(initialConfig.retentionDays);
 
-let busyBackup = $state(false);
-let busyDelete = $state<string | null>(null);
-let restoreTarget = $state<BackupInfo | null>(null);
-let restoreConfirmInput = $state('');
-let restoreInFlight = $state(false);
+  let busyBackup = $state(false);
+  let busyDelete = $state<string | null>(null);
+  let restoreTarget = $state<BackupInfo | null>(null);
+  let restoreConfirmInput = $state('');
+  let restoreInFlight = $state(false);
 
-// Retention save state — debounced via a small timer so typing doesn't
-// hit the endpoint on every keystroke.
-let retentionSaveTimer: ReturnType<typeof setTimeout> | null = null;
-let retentionSaving = $state(false);
+  // Retention save state — debounced via a small timer so typing doesn't
+  // hit the endpoint on every keystroke.
+  let retentionSaveTimer: ReturnType<typeof setTimeout> | null = null;
+  let retentionSaving = $state(false);
 
-// Refresh helper — pulls latest list + config from /api/backup/list.
-async function refresh() {
-  try {
-    const r = await api.get<{ backups: BackupInfo[]; config: { retentionDays: number } }>(
-      '/api/backup/list',
-      { silent: true },
-    );
-    backups = r.backups;
-    retentionDays = r.config.retentionDays;
-  } catch (e) {
-    const err = e as ApiError;
-    toast.error('Failed to refresh backup list', { description: err.message });
+  // Refresh helper — pulls latest list + config from /api/backup/list.
+  async function refresh() {
+    try {
+      const r = await api.get<{ backups: BackupInfo[]; config: { retentionDays: number } }>(
+        '/api/backup/list',
+        { silent: true },
+      );
+      backups = r.backups;
+      retentionDays = r.config.retentionDays;
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Failed to refresh backup list', { description: err.message });
+    }
   }
-}
 
-async function backupNow() {
-  if (busyBackup) return;
-  busyBackup = true;
-  try {
-    const r = await withMinDuration(
-      api.post<{
+  async function backupNow() {
+    if (busyBackup) return;
+    busyBackup = true;
+    try {
+      const r = await withMinDuration(
+        api.post<{
+          ok: boolean;
+          id?: string;
+          size?: number;
+          fileCount?: number;
+          pruned?: number;
+          error?: string;
+        }>('/api/backup/run', {}, { silent: true }),
+        600,
+      );
+      if (r.ok) {
+        const mb = ((r.size ?? 0) / 1024 / 1024).toFixed(1);
+        toast.success('Backup created · ' + (r.id ?? ''), {
+          description:
+            `${r.fileCount ?? '?'} files · ${mb} MB` +
+            (r.pruned ? ` · pruned ${r.pruned} old` : ''),
+          duration: 6_000,
+        });
+        await refresh();
+        await invalidateAll();
+      } else {
+        toast.error('Backup failed', { description: r.error ?? 'unknown error' });
+      }
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Backup failed', { description: err.message });
+    } finally {
+      busyBackup = false;
+    }
+  }
+
+  async function deleteOne(b: BackupInfo) {
+    if (busyDelete) return;
+    busyDelete = b.id;
+    try {
+      await api.delete('/api/backup/' + encodeURIComponent(b.id), { silent: true });
+      toast.success('Backup deleted', { description: b.id });
+      await refresh();
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Delete failed', { description: err.message });
+    } finally {
+      busyDelete = null;
+    }
+  }
+
+  function downloadOne(b: BackupInfo) {
+    // Open the download URL in a new window — the server sets
+    // Content-Disposition so the browser saves it instead of navigating.
+    window.open('/api/backup/' + encodeURIComponent(b.id), '_blank');
+  }
+
+  function openRestoreDialog(b: BackupInfo) {
+    restoreTarget = b;
+    restoreConfirmInput = '';
+  }
+
+  async function doRestore() {
+    if (!restoreTarget || restoreInFlight) return;
+    if (restoreConfirmInput.trim().toUpperCase() !== 'RESTORE') return;
+    restoreInFlight = true;
+    try {
+      const r = await api.post<{
         ok: boolean;
         id?: string;
-        size?: number;
-        fileCount?: number;
-        pruned?: number;
+        restoredFiles?: number;
         error?: string;
-      }>('/api/backup/run', {}, { silent: true }),
-      600,
-    );
-    if (r.ok) {
-      const mb = ((r.size ?? 0) / 1024 / 1024).toFixed(1);
-      toast.success('Backup created · ' + (r.id ?? ''), {
-        description:
-          `${r.fileCount ?? '?'} files · ${mb} MB` + (r.pruned ? ` · pruned ${r.pruned} old` : ''),
-        duration: 6_000,
-      });
-      await refresh();
-      await invalidateAll();
-    } else {
-      toast.error('Backup failed', { description: r.error ?? 'unknown error' });
+      }>('/api/backup/restore', { id: restoreTarget.id }, { silent: true });
+      if (r.ok) {
+        toast.success('Restored from ' + (r.id ?? ''), {
+          description:
+            (r.restoredFiles ?? 0) + ' files restored. The dashboard may need a refresh.',
+          duration: 8_000,
+        });
+        restoreTarget = null;
+        await invalidateAll();
+      } else {
+        toast.error('Restore failed', {
+          description: r.error ?? 'unknown error',
+          duration: 10_000,
+        });
+      }
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Restore failed', { description: err.message, duration: 10_000 });
+    } finally {
+      restoreInFlight = false;
     }
-  } catch (e) {
-    const err = e as ApiError;
-    toast.error('Backup failed', { description: err.message });
-  } finally {
-    busyBackup = false;
   }
-}
 
-async function deleteOne(b: BackupInfo) {
-  if (busyDelete) return;
-  busyDelete = b.id;
-  try {
-    await api.delete('/api/backup/' + encodeURIComponent(b.id), { silent: true });
-    toast.success('Backup deleted', { description: b.id });
-    await refresh();
-  } catch (e) {
-    const err = e as ApiError;
-    toast.error('Delete failed', { description: err.message });
-  } finally {
-    busyDelete = null;
+  function onRetentionInput(e: Event) {
+    const v = parseInt((e.currentTarget as HTMLInputElement).value, 10);
+    if (!Number.isFinite(v)) return;
+    retentionDays = v;
+    if (retentionSaveTimer) clearTimeout(retentionSaveTimer);
+    retentionSaveTimer = setTimeout(() => saveRetention(), 600);
   }
-}
 
-function downloadOne(b: BackupInfo) {
-  // Open the download URL in a new window — the server sets
-  // Content-Disposition so the browser saves it instead of navigating.
-  window.open('/api/backup/' + encodeURIComponent(b.id), '_blank');
-}
-
-function openRestoreDialog(b: BackupInfo) {
-  restoreTarget = b;
-  restoreConfirmInput = '';
-}
-
-async function doRestore() {
-  if (!restoreTarget || restoreInFlight) return;
-  if (restoreConfirmInput.trim().toUpperCase() !== 'RESTORE') return;
-  restoreInFlight = true;
-  try {
-    const r = await api.post<{ ok: boolean; id?: string; restoredFiles?: number; error?: string }>(
-      '/api/backup/restore',
-      { id: restoreTarget.id },
-      { silent: true },
-    );
-    if (r.ok) {
-      toast.success('Restored from ' + (r.id ?? ''), {
-        description: (r.restoredFiles ?? 0) + ' files restored. The dashboard may need a refresh.',
-        duration: 8_000,
-      });
-      restoreTarget = null;
-      await invalidateAll();
-    } else {
-      toast.error('Restore failed', { description: r.error ?? 'unknown error', duration: 10_000 });
+  async function saveRetention() {
+    retentionSaving = true;
+    try {
+      await api.put('/api/backup/config', { retentionDays }, { silent: true });
+      toast.success('Retention saved · ' + retentionDays + ' days');
+    } catch (e) {
+      const err = e as ApiError;
+      toast.error('Save failed', { description: err.message });
+    } finally {
+      retentionSaving = false;
     }
-  } catch (e) {
-    const err = e as ApiError;
-    toast.error('Restore failed', { description: err.message, duration: 10_000 });
-  } finally {
-    restoreInFlight = false;
   }
-}
 
-function onRetentionInput(e: Event) {
-  const v = parseInt((e.currentTarget as HTMLInputElement).value, 10);
-  if (!Number.isFinite(v)) return;
-  retentionDays = v;
-  if (retentionSaveTimer) clearTimeout(retentionSaveTimer);
-  retentionSaveTimer = setTimeout(() => saveRetention(), 600);
-}
-
-async function saveRetention() {
-  retentionSaving = true;
-  try {
-    await api.put('/api/backup/config', { retentionDays }, { silent: true });
-    toast.success('Retention saved · ' + retentionDays + ' days');
-  } catch (e) {
-    const err = e as ApiError;
-    toast.error('Save failed', { description: err.message });
-  } finally {
-    retentionSaving = false;
+  function humanSize(n: number): string {
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    if (n < 1024 * 1024 * 1024) return (n / 1024 / 1024).toFixed(1) + ' MB';
+    return (n / 1024 / 1024 / 1024).toFixed(1) + ' GB';
   }
-}
-
-function humanSize(n: number): string {
-  if (n < 1024) return n + ' B';
-  if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
-  if (n < 1024 * 1024 * 1024) return (n / 1024 / 1024).toFixed(1) + ' MB';
-  return (n / 1024 / 1024 / 1024).toFixed(1) + ' GB';
-}
 </script>
 
 <Card.Root>
@@ -212,15 +218,17 @@ function humanSize(n: number): string {
       Backups
     </Card.Title>
     <Card.Description>
-      Nightly snapshots of every profile dir (cv.md, profile.yml, applications.md, reports/, output/,
-      interview-prep/) plus shared infra (autopilot.json, profiles.json, issues.jsonl, story-bank.md).
-      Excludes <code class="font-mono text-[10px]">.env</code> and browser sessions — restore brings
-      data back, not credentials.
+      Nightly snapshots of every profile dir (cv.md, profile.yml, applications.md, reports/,
+      output/, interview-prep/) plus shared infra (autopilot.json, profiles.json, issues.jsonl,
+      story-bank.md). Excludes <code class="font-mono text-[10px]">.env</code> and browser sessions —
+      restore brings data back, not credentials.
     </Card.Description>
   </Card.Header>
   <Card.Content class="space-y-4">
     <!-- Controls -->
-    <div class="flex items-center gap-3 flex-wrap rounded-md border border-border/40 bg-muted/20 px-3 py-2.5">
+    <div
+      class="flex items-center gap-3 flex-wrap rounded-md border border-border/40 bg-muted/20 px-3 py-2.5"
+    >
       <Button onclick={backupNow} disabled={busyBackup} size="sm" class="gap-1.5">
         {#if busyBackup}
           <Loader2 class="size-3.5 animate-spin" /> Creating…
@@ -253,7 +261,8 @@ function humanSize(n: number): string {
       <div class="rounded-md border border-dashed border-border/40 px-3 py-6 text-center">
         <Info class="size-5 text-muted-foreground/60 mx-auto mb-1" />
         <p class="text-xs text-muted-foreground">
-          No backups yet. The autopilot runs nightly at 02:00, or click "Back up now" above to make one.
+          No backups yet. The autopilot runs nightly at 02:00, or click "Back up now" above to make
+          one.
         </p>
       </div>
     {:else}
@@ -330,7 +339,12 @@ function humanSize(n: number): string {
 </Card.Root>
 
 <!-- Restore confirmation dialog -->
-<Dialog.Root open={restoreTarget !== null} onOpenChange={(v: boolean) => { if (!v) restoreTarget = null; }}>
+<Dialog.Root
+  open={restoreTarget !== null}
+  onOpenChange={(v: boolean) => {
+    if (!v) restoreTarget = null;
+  }}
+>
   <Dialog.Content class="sm:max-w-md">
     <Dialog.Header>
       <Dialog.Title class="flex items-center gap-2">
@@ -338,7 +352,8 @@ function humanSize(n: number): string {
         Restore from backup?
       </Dialog.Title>
       <Dialog.Description class="space-y-2 pt-2">
-        This will <strong>overwrite</strong> every profile dir + shared infra file with the snapshot from
+        This will <strong>overwrite</strong> every profile dir + shared infra file with the snapshot
+        from
         <code class="font-mono text-foreground">{restoreTarget?.id ?? ''}</code>.
       </Dialog.Description>
     </Dialog.Header>
@@ -350,7 +365,9 @@ function humanSize(n: number): string {
         </p>
       {/if}
       <p>
-        Current state is saved to <code class="font-mono">.pre-restore-{restoreTarget?.id ?? ''}/</code>
+        Current state is saved to <code class="font-mono"
+          >.pre-restore-{restoreTarget?.id ?? ''}/</code
+        >
         inside the backups dir so you can roll back manually if needed.
       </p>
       <p class="text-amber-200">

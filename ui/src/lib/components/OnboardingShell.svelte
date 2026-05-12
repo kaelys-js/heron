@@ -10,59 +10,61 @@
   don't have to know the order themselves.
 -->
 <script lang="ts">
-import { CheckCircle2, Circle, ArrowRight, Sparkles } from '@lucide/svelte';
-import { cn } from '$lib/utils';
-import { APP_NAME } from '$lib/config/branding';
+  import { CheckCircle2, Circle, ArrowRight, Sparkles } from '@lucide/svelte';
+  import { cn } from '$lib/utils';
+  import { APP_NAME } from '$lib/config/branding';
 
-type StepStatus = 'complete' | 'skipped' | 'current' | 'pending';
-type StepRow = { step: string; status: StepStatus };
+  type StepStatus = 'complete' | 'skipped' | 'current' | 'pending';
+  type StepRow = { step: string; status: StepStatus };
 
-let {
-  progress,
-  current,
-  children,
-}: {
-  progress: StepRow[];
-  current: string;
-  children: import('svelte').Snippet;
-} = $props();
+  let {
+    progress,
+    current,
+    children,
+  }: {
+    progress: StepRow[];
+    current: string;
+    children: import('svelte').Snippet;
+  } = $props();
 
-const STEP_LABELS: Record<string, string> = {
-  welcome: 'Welcome',
-  'api-keys': 'API keys',
-  identity: 'Identity',
-  cv: 'CV',
-  targeting: 'Targeting',
-  sources: 'Sources',
-  'first-scan': 'First scan',
-  done: 'Done',
-};
+  const STEP_LABELS: Record<string, string> = {
+    welcome: 'Welcome',
+    'api-keys': 'API keys',
+    identity: 'Identity',
+    cv: 'CV',
+    targeting: 'Targeting',
+    sources: 'Sources',
+    'first-scan': 'First scan',
+    done: 'Done',
+  };
 
-const STEP_HREFS: Record<string, string> = {
-  welcome: '/onboarding',
-  'api-keys': '/onboarding/api-keys',
-  identity: '/onboarding/identity',
-  cv: '/onboarding/cv',
-  targeting: '/onboarding/targeting',
-  sources: '/onboarding/sources',
-  'first-scan': '/onboarding/first-scan',
-  done: '/onboarding/done',
-};
+  const STEP_HREFS: Record<string, string> = {
+    welcome: '/onboarding',
+    'api-keys': '/onboarding/api-keys',
+    identity: '/onboarding/identity',
+    cv: '/onboarding/cv',
+    targeting: '/onboarding/targeting',
+    sources: '/onboarding/sources',
+    'first-scan': '/onboarding/first-scan',
+    done: '/onboarding/done',
+  };
 
-// Show "current" tint on the active step regardless of what state.json says.
-let visible = $derived(
-  progress.map((p) => ({
-    ...p,
-    status: p.step === current ? ('current' as StepStatus) : p.status,
-  })),
-);
+  // Show "current" tint on the active step regardless of what state.json says.
+  let visible = $derived(
+    progress.map((p) => ({
+      ...p,
+      status: p.step === current ? ('current' as StepStatus) : p.status,
+    })),
+  );
 </script>
 
 <div class="min-h-screen flex bg-background text-foreground">
   <!-- Sidebar -->
   <aside class="w-64 border-r border-border/40 bg-muted/10 flex flex-col p-5 gap-4">
     <div class="flex items-center gap-2 mb-2">
-      <div class="size-8 rounded-md bg-fuchsia-500/15 ring-1 ring-fuchsia-500/40 flex items-center justify-center">
+      <div
+        class="size-8 rounded-md bg-fuchsia-500/15 ring-1 ring-fuchsia-500/40 flex items-center justify-center"
+      >
         <Sparkles class="size-4 text-fuchsia-300" />
       </div>
       <div>
@@ -80,11 +82,13 @@ let visible = $derived(
         {@const isSkipped = row.status === 'skipped'}
         {@const clickable = isComplete || isCurrent || isSkipped}
         <a
-          href={href}
+          {href}
           class={cn(
             'flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs transition-colors',
             isCurrent && 'bg-fuchsia-500/15 text-fuchsia-200',
-            isComplete && !isCurrent && 'text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+            isComplete &&
+              !isCurrent &&
+              'text-muted-foreground hover:bg-muted/40 hover:text-foreground',
             isSkipped && !isCurrent && 'text-amber-400/80 hover:bg-muted/40',
             row.status === 'pending' && 'text-muted-foreground/40 pointer-events-none',
           )}
@@ -108,8 +112,11 @@ let visible = $derived(
 
     <div class="flex-1"></div>
 
-    <div class="text-[10px] text-muted-foreground/60 leading-relaxed border-t border-border/40 pt-3">
-      Estimated time: 5–10 minutes. You can come back to any completed step from this sidebar — your work is auto-saved as you go.
+    <div
+      class="text-[10px] text-muted-foreground/60 leading-relaxed border-t border-border/40 pt-3"
+    >
+      Estimated time: 5–10 minutes. You can come back to any completed step from this sidebar — your
+      work is auto-saved as you go.
     </div>
   </aside>
 

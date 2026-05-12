@@ -11,31 +11,31 @@
   the re-render cost when the user re-opens.
 -->
 <script lang="ts">
-import { Button } from '$lib/components/ui/button';
-import * as Tooltip from '$lib/components/ui/tooltip';
-import { ChevronRight, FileBadge2, Download, ExternalLink } from '@lucide/svelte';
-import { cn } from '$lib/utils';
+  import { Button } from '$lib/components/ui/button';
+  import * as Tooltip from '$lib/components/ui/tooltip';
+  import { ChevronRight, FileBadge2, Download, ExternalLink } from '@lucide/svelte';
+  import { cn } from '$lib/utils';
 
-let {
-  jobId,
-  pdfFile,
-  profileId,
-  defaultOpen = true,
-  class: className = '',
-}: {
-  jobId: string;
-  pdfFile: string;
-  /** When set, appended as `?profile=<slug>` so the PDF endpoint reads
-   *  from the right profile's output dir. Omit to default to active. */
-  profileId?: string;
-  defaultOpen?: boolean;
-  class?: string;
-} = $props();
+  let {
+    jobId,
+    pdfFile,
+    profileId,
+    defaultOpen = true,
+    class: className = '',
+  }: {
+    jobId: string;
+    pdfFile: string;
+    /** When set, appended as `?profile=<slug>` so the PDF endpoint reads
+     *  from the right profile's output dir. Omit to default to active. */
+    profileId?: string;
+    defaultOpen?: boolean;
+    class?: string;
+  } = $props();
 
-// svelte-ignore state_referenced_locally — initial seed only.
-let open = $state(defaultOpen);
-let pq = $derived(profileId ? '?profile=' + encodeURIComponent(profileId) : '');
-let pdfUrl = $derived('/api/job/' + encodeURIComponent(jobId) + '/pdf' + pq);
+  // svelte-ignore state_referenced_locally — initial seed only.
+  let open = $state(defaultOpen);
+  let pq = $derived(profileId ? '?profile=' + encodeURIComponent(profileId) : '');
+  let pdfUrl = $derived('/api/job/' + encodeURIComponent(jobId) + '/pdf' + pq);
 </script>
 
 <div class={cn('rounded-md border border-border/40 bg-card overflow-hidden', className)}>

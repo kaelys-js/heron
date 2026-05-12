@@ -24,109 +24,109 @@
     * Move up/down buttons live in the header row, consistent with everywhere
 -->
 <script lang="ts">
-import { Input } from '$lib/components/ui/input';
-import { Button } from '$lib/components/ui/button';
-import { Label } from '$lib/components/ui/label';
-import * as Tooltip from '$lib/components/ui/tooltip';
-import RichTextarea from './RichTextarea.svelte';
-import ValidatedInput from './ValidatedInput.svelte';
-import {
-  X,
-  Plus,
-  ArrowUp,
-  ArrowDown,
-  TrendingUp,
-  Link as LinkIcon,
-  Trophy,
-  FileText,
-  ChevronRight,
-} from '@lucide/svelte';
-import { cn } from '$lib/utils';
-import { ConfirmGate } from '$lib/confirm.svelte';
-import { validateUrl } from '$lib/validators';
-import { onDestroy } from 'svelte';
+  import { Input } from '$lib/components/ui/input';
+  import { Button } from '$lib/components/ui/button';
+  import { Label } from '$lib/components/ui/label';
+  import * as Tooltip from '$lib/components/ui/tooltip';
+  import RichTextarea from './RichTextarea.svelte';
+  import ValidatedInput from './ValidatedInput.svelte';
+  import {
+    X,
+    Plus,
+    ArrowUp,
+    ArrowDown,
+    TrendingUp,
+    Link as LinkIcon,
+    Trophy,
+    FileText,
+    ChevronRight,
+  } from '@lucide/svelte';
+  import { cn } from '$lib/utils';
+  import { ConfirmGate } from '$lib/confirm.svelte';
+  import { validateUrl } from '$lib/validators';
+  import { onDestroy } from 'svelte';
 
-type ProofPoint = {
-  name: string;
-  hero_metric?: string;
-  url?: string;
-  description?: string;
-};
+  type ProofPoint = {
+    name: string;
+    hero_metric?: string;
+    url?: string;
+    description?: string;
+  };
 
-let {
-  items = $bindable<ProofPoint[]>([]),
-  onchange,
-  class: className,
-  /** Prefix used to generate stable DOM ids for the URL fields, so a parent
-   *  validation summary can focus a specific row. */
-  idPrefix,
-}: {
-  items: ProofPoint[];
-  onchange?: (next: ProofPoint[]) => void;
-  class?: string;
-  idPrefix?: string;
-} = $props();
+  let {
+    items = $bindable<ProofPoint[]>([]),
+    onchange,
+    class: className,
+    /** Prefix used to generate stable DOM ids for the URL fields, so a parent
+     *  validation summary can focus a specific row. */
+    idPrefix,
+  }: {
+    items: ProofPoint[];
+    onchange?: (next: ProofPoint[]) => void;
+    class?: string;
+    idPrefix?: string;
+  } = $props();
 
-const confirm = new ConfirmGate();
-onDestroy(() => confirm.destroy());
+  const confirm = new ConfirmGate();
+  onDestroy(() => confirm.destroy());
 
-// Per-row open/closed state — collapsed rows show only the header summary
-// (index + name preview + remove). New rows default to OPEN so the user
-// can fill them out immediately.
-let openSet = $state<Set<number>>(new Set());
-function toggleOpen(i: number) {
-  const next = new Set(openSet);
-  if (next.has(i)) next.delete(i);
-  else next.add(i);
-  openSet = next;
-}
-
-function commit(next: ProofPoint[]) {
-  items = next;
-  onchange?.(next);
-}
-
-function add() {
-  const nextIndex = items.length;
-  commit([...items, { name: '', hero_metric: '', url: '', description: '' }]);
-  // Auto-open the newly-added row
-  const next = new Set(openSet);
-  next.add(nextIndex);
-  openSet = next;
-}
-
-function update(i: number, patch: Partial<ProofPoint>) {
-  commit(items.map((it, j) => (i === j ? { ...it, ...patch } : it)));
-}
-
-function remove(i: number) {
-  if (!confirm.trigger('row:' + i)) return;
-  commit(items.filter((_, j) => j !== i));
-  // Shift open-state for items after the removed index
-  const shifted = new Set<number>();
-  for (const k of openSet) {
-    if (k < i) shifted.add(k);
-    else if (k > i) shifted.add(k - 1);
+  // Per-row open/closed state — collapsed rows show only the header summary
+  // (index + name preview + remove). New rows default to OPEN so the user
+  // can fill them out immediately.
+  let openSet = $state<Set<number>>(new Set());
+  function toggleOpen(i: number) {
+    const next = new Set(openSet);
+    if (next.has(i)) next.delete(i);
+    else next.add(i);
+    openSet = next;
   }
-  openSet = shifted;
-}
 
-function move(i: number, dir: -1 | 1) {
-  const j = i + dir;
-  if (j < 0 || j >= items.length) return;
-  const next = items.slice();
-  [next[i], next[j]] = [next[j], next[i]];
-  commit(next);
-  // Move the open-state with the row
-  const wasIOpen = openSet.has(i);
-  const wasJOpen = openSet.has(j);
-  const shifted = new Set(openSet);
-  shifted.delete(i);
-  shifted.delete(j);
-  if (wasIOpen) shifted.add(j);
-  if (wasJOpen) shifted.add(i);
-  openSet = shifted;
-}
+  function commit(next: ProofPoint[]) {
+    items = next;
+    onchange?.(next);
+  }
+
+  function add() {
+    const nextIndex = items.length;
+    commit([...items, { name: '', hero_metric: '', url: '', description: '' }]);
+    // Auto-open the newly-added row
+    const next = new Set(openSet);
+    next.add(nextIndex);
+    openSet = next;
+  }
+
+  function update(i: number, patch: Partial<ProofPoint>) {
+    commit(items.map((it, j) => (i === j ? { ...it, ...patch } : it)));
+  }
+
+  function remove(i: number) {
+    if (!confirm.trigger('row:' + i)) return;
+    commit(items.filter((_, j) => j !== i));
+    // Shift open-state for items after the removed index
+    const shifted = new Set<number>();
+    for (const k of openSet) {
+      if (k < i) shifted.add(k);
+      else if (k > i) shifted.add(k - 1);
+    }
+    openSet = shifted;
+  }
+
+  function move(i: number, dir: -1 | 1) {
+    const j = i + dir;
+    if (j < 0 || j >= items.length) return;
+    const next = items.slice();
+    [next[i], next[j]] = [next[j], next[i]];
+    commit(next);
+    // Move the open-state with the row
+    const wasIOpen = openSet.has(i);
+    const wasJOpen = openSet.has(j);
+    const shifted = new Set(openSet);
+    shifted.delete(i);
+    shifted.delete(j);
+    if (wasIOpen) shifted.add(j);
+    if (wasJOpen) shifted.add(i);
+    openSet = shifted;
+  }
 </script>
 
 <div class={cn('space-y-3', className)}>
@@ -134,7 +134,9 @@ function move(i: number, dir: -1 | 1) {
     <div class="rounded-md border border-dashed border-border/50 bg-muted/10 px-4 py-6 text-center">
       <Trophy class="size-5 text-muted-foreground/40 mx-auto mb-2" />
       <p class="text-xs text-muted-foreground/80">No proof points yet</p>
-      <p class="text-[10px] text-muted-foreground/60 mt-0.5">Add concrete projects, articles, or wins below.</p>
+      <p class="text-[10px] text-muted-foreground/60 mt-0.5">
+        Add concrete projects, articles, or wins below.
+      </p>
     </div>
   {/if}
 
@@ -167,19 +169,33 @@ function move(i: number, dir: -1 | 1) {
           aria-label={isOpen ? 'Collapse proof point ' + (i + 1) : 'Expand proof point ' + (i + 1)}
           class="size-5 flex items-center justify-center rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 transition-colors flex-shrink-0"
         >
-          <ChevronRight class={cn('size-3 transition-transform duration-200 ease-out', isOpen && 'rotate-90')} />
+          <ChevronRight
+            class={cn('size-3 transition-transform duration-200 ease-out', isOpen && 'rotate-90')}
+          />
         </button>
-        <span class="text-[10px] font-mono font-semibold text-muted-foreground/60 tabular-nums w-7">#{(i + 1).toString().padStart(2, '0')}</span>
+        <span class="text-[10px] font-mono font-semibold text-muted-foreground/60 tabular-nums w-7"
+          >#{(i + 1).toString().padStart(2, '0')}</span
+        >
         {#if !isOpen}
           <!-- Collapsed: show name + hero metric inline so the user can scan -->
-          <span class={cn('text-xs truncate flex-1 min-w-0', p.name ? 'font-medium' : 'italic text-muted-foreground/50')}>
+          <span
+            class={cn(
+              'text-xs truncate flex-1 min-w-0',
+              p.name ? 'font-medium' : 'italic text-muted-foreground/50',
+            )}
+          >
             {p.name || 'Untitled proof point'}
           </span>
           {#if p.hero_metric}
-            <span class="text-[10px] font-mono text-emerald-400/80 truncate max-w-[40%]">· {p.hero_metric}</span>
+            <span class="text-[10px] font-mono text-emerald-400/80 truncate max-w-[40%]"
+              >· {p.hero_metric}</span
+            >
           {/if}
         {:else}
-          <span class="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium flex-1">Proof point</span>
+          <span
+            class="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium flex-1"
+            >Proof point</span
+          >
         {/if}
         <Tooltip.Provider delayDuration={250}>
           <div class="flex items-center gap-0.5">
@@ -235,7 +251,10 @@ function move(i: number, dir: -1 | 1) {
                         ? 'text-red-300 bg-red-500/15 hover:bg-red-500/25 ring-1 ring-red-500/40 animate-pulse'
                         : 'text-muted-foreground hover:text-red-300 hover:bg-red-500/10',
                     )}
-                    onclick={(e) => { e.preventDefault(); remove(i); }}
+                    onclick={(e) => {
+                      e.preventDefault();
+                      remove(i);
+                    }}
                     aria-label={armed ? 'Click again to remove proof point' : 'Remove proof point'}
                   >
                     <X class="size-3.5" />
@@ -264,12 +283,15 @@ function move(i: number, dir: -1 | 1) {
           <div class="px-4 pb-4 pt-1 space-y-3 border-t border-border/30">
             <!-- Name (full-width prominent) -->
             <div class="space-y-1.5 pt-2">
-              <Label class="text-[10px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5">
+              <Label
+                class="text-[10px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5"
+              >
                 <Trophy class="size-2.5" /> Name
               </Label>
               <Input
                 value={p.name}
-                oninput={(e: Event) => update(i, { name: (e.currentTarget as HTMLInputElement).value })}
+                oninput={(e: Event) =>
+                  update(i, { name: (e.currentTarget as HTMLInputElement).value })}
                 placeholder="Enzuzo: Real-time consent analytics"
                 class="h-9 text-sm font-medium"
               />
@@ -278,12 +300,15 @@ function move(i: number, dir: -1 | 1) {
             <!-- Hero metric + URL side by side -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div class="space-y-1.5">
-                <Label class="text-[10px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5">
+                <Label
+                  class="text-[10px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5"
+                >
                   <TrendingUp class="size-2.5" /> Hero metric
                 </Label>
                 <Input
                   value={p.hero_metric ?? ''}
-                  oninput={(e: Event) => update(i, { hero_metric: (e.currentTarget as HTMLInputElement).value })}
+                  oninput={(e: Event) =>
+                    update(i, { hero_metric: (e.currentTarget as HTMLInputElement).value })}
                   placeholder="90% faster CI/CD · 3x throughput"
                   class="h-9 text-xs font-mono"
                 />
@@ -292,14 +317,18 @@ function move(i: number, dir: -1 | 1) {
                 </p>
               </div>
               <div class="space-y-1.5">
-                <Label class="text-[10px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5">
-                  <LinkIcon class="size-2.5" /> URL <span class="opacity-50 normal-case font-normal tracking-normal">(optional)</span>
+                <Label
+                  class="text-[10px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5"
+                >
+                  <LinkIcon class="size-2.5" /> URL
+                  <span class="opacity-50 normal-case font-normal tracking-normal">(optional)</span>
                 </Label>
                 <ValidatedInput
                   id={idPrefix ? idPrefix + '-' + i : undefined}
                   type="url"
                   value={p.url ?? ''}
-                  oninput={(e: Event) => update(i, { url: (e.currentTarget as HTMLInputElement).value })}
+                  oninput={(e: Event) =>
+                    update(i, { url: (e.currentTarget as HTMLInputElement).value })}
                   placeholder="https://example.com/case-study"
                   validate={validateUrl}
                   class="font-mono"
@@ -313,9 +342,13 @@ function move(i: number, dir: -1 | 1) {
 
             <!-- Description — RichTextarea -->
             <div class="space-y-1.5">
-              <Label class="text-[10px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5">
+              <Label
+                class="text-[10px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5"
+              >
                 <FileText class="size-2.5" /> Description
-                <span class="opacity-50 normal-case font-normal tracking-normal">(optional · supports **bold**, _italic_, [links](url))</span>
+                <span class="opacity-50 normal-case font-normal tracking-normal"
+                  >(optional · supports **bold**, _italic_, [links](url))</span
+                >
               </Label>
               <RichTextarea
                 value={p.description ?? ''}

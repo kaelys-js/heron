@@ -9,44 +9,44 @@
   after a 1s success flash.
 -->
 <script lang="ts">
-import { onMount, onDestroy } from 'svelte';
-import { fly, fade } from 'svelte/transition';
-import { WifiOff, Wifi, RotateCw } from '@lucide/svelte';
-import { onlineStore } from '$lib/client/online-status';
+  import { onMount, onDestroy } from 'svelte';
+  import { fly, fade } from 'svelte/transition';
+  import { WifiOff, Wifi, RotateCw } from '@lucide/svelte';
+  import { onlineStore } from '$lib/client/online-status';
 
-type Stage = 'hidden' | 'offline' | 'recovered';
-let stage = $state<Stage>('hidden');
-let recoveredTimer: ReturnType<typeof setTimeout> | null = null;
-let unsub: (() => void) | null = null;
+  type Stage = 'hidden' | 'offline' | 'recovered';
+  let stage = $state<Stage>('hidden');
+  let recoveredTimer: ReturnType<typeof setTimeout> | null = null;
+  let unsub: (() => void) | null = null;
 
-onMount(() => {
-  // Seed from current store state
-  stage = onlineStore.online ? 'hidden' : 'offline';
-  unsub = onlineStore.addListener((online) => {
-    if (recoveredTimer) {
-      clearTimeout(recoveredTimer);
-      recoveredTimer = null;
-    }
-    if (!online) {
-      stage = 'offline';
-    } else {
-      // Show a 1s "back online" flash, then hide
-      stage = 'recovered';
-      recoveredTimer = setTimeout(() => {
-        stage = 'hidden';
-      }, 1500);
-    }
+  onMount(() => {
+    // Seed from current store state
+    stage = onlineStore.online ? 'hidden' : 'offline';
+    unsub = onlineStore.addListener((online) => {
+      if (recoveredTimer) {
+        clearTimeout(recoveredTimer);
+        recoveredTimer = null;
+      }
+      if (!online) {
+        stage = 'offline';
+      } else {
+        // Show a 1s "back online" flash, then hide
+        stage = 'recovered';
+        recoveredTimer = setTimeout(() => {
+          stage = 'hidden';
+        }, 1500);
+      }
+    });
   });
-});
 
-onDestroy(() => {
-  if (recoveredTimer) clearTimeout(recoveredTimer);
-  unsub?.();
-});
+  onDestroy(() => {
+    if (recoveredTimer) clearTimeout(recoveredTimer);
+    unsub?.();
+  });
 
-function retry() {
-  void onlineStore.refresh();
-}
+  function retry() {
+    void onlineStore.refresh();
+  }
 </script>
 
 {#if stage === 'offline'}
