@@ -3,6 +3,7 @@ import { reportServerError } from '$lib/server/events';
 import { auth } from '$lib/server/auth';
 import { runWithUser, SYSTEM_USER_ID } from '$lib/server/user-context';
 import { json, redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
+import { building } from '$app/environment';
 
 bootOnce();
 
@@ -93,8 +94,17 @@ const populateAuth: Handle = async ({ event, resolve }) => {
   return resolve(event);
 };
 
-/** Route guard: 401 for unauthenticated API hits, redirect for HTML page hits. */
+/** Route guard: 401 for unauthenticated API hits, redirect for HTML page hits.
+ *
+ *  Skipped entirely during adapter-static fallback generation: the build
+ *  phase invokes this handler with no session cookie to render the SPA
+ *  fallback page; without this short-circuit the guard would throw a 302
+ *  to /login and adapter-static would error with "Could not create a
+ *  fallback page — failed with status 302", aborting `pnpm build:desktop`
+ *  + `pnpm dev:ios` + `pnpm build:ios`.
+ */
 const guard: Handle = async ({ event, resolve }) => {
+  if (building) return resolve(event);
   const path = event.url.pathname;
   if (isPublicPath(path)) return resolve(event);
   if (event.locals.user) return resolve(event);
