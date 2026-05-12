@@ -946,6 +946,116 @@ async function main() {
         `got HTTP ${r.status}`,
       );
     }
+
+    section('24. Cookie attributes — HttpOnly + SameSite=Lax + Path');
+    {
+      // Sign up a fresh user via Better Auth and inspect the Set-Cookie
+      // header. The session cookie MUST have HttpOnly, SameSite=Lax, and
+      // Path=/. Secure depends on BETTER_AUTH_URL (env-gating tested by
+      // section 20).
+      //
+      // Origin: BASE — SvelteKit's CSRF check requires the Origin header
+      // to match the request URL's origin OR to be absent. The verifier
+      // runs against localhost; explicitly setting Origin to BASE makes
+      // the CSRF check pass (same origin).
+      const email = 'cookies-' + crypto.randomBytes(3).toString('hex') + '@verify.local';
+      const res = await fetch(`${BASE}/api/auth/sign-up/email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: BASE },
+        body: JSON.stringify({ email, password: 'CookiesTest!1234567890', name: 'Cookies' }),
+      });
+      const setCookieArr =
+        typeof res.headers.getSetCookie === 'function'
+          ? res.headers.getSetCookie()
+          : [res.headers.get('set-cookie') ?? ''];
+      const sessionCookie =
+        setCookieArr.find((c) => c.startsWith('career-ops.session_token=')) ?? '';
+      check('session Set-Cookie header present', sessionCookie.length > 0);
+      check('cookie has HttpOnly', /HttpOnly/i.test(sessionCookie));
+      check('cookie has SameSite=Lax', /SameSite=Lax/i.test(sessionCookie));
+      check('cookie has Path=/', /Path=\//.test(sessionCookie));
+      // On http://localhost, Secure must NOT be present (would break dev).
+      check(
+        'cookie has no Secure on plain HTTP',
+        !/(?:^|;\s*)Secure(?:\s*;|\s*$)/i.test(sessionCookie),
+      );
+    }
+
+    section('25. Rate limit gating + custom rules');
+    {
+      // Source-level shape check. Per-endpoint rules + env-gated enable.
+      const fs2 = await import('node:fs');
+      const auth = fs2.readFileSync(join(UI, 'src/lib/server/auth.ts'), 'utf8');
+      check('rateLimit block present', /rateLimit:\s*\{/.test(auth));
+      check(
+        'rateLimit gated on env (BETTER_AUTH_RATE_LIMIT !== "off")',
+        /enabled:\s*process\.env\.BETTER_AUTH_RATE_LIMIT\s*!==\s*['"]off['"]/.test(auth),
+      );
+      check(
+        'sign-in/email custom rule exists',
+        /['"]\/sign-in\/email['"]:\s*\{\s*window:/.test(auth),
+      );
+      check(
+        'sign-in/passkey custom rule exists',
+        /['"]\/sign-in\/passkey['"]:\s*\{\s*window:/.test(auth),
+      );
+    }
+
+    section('26. Session invalidated when user row deleted');
+    {
+      // Inject user A. Verify A's cookie works. Then DELETE A from the
+      // auth.db. The foreign-key cascade on sessions.user_id should
+      // remove A's session row, so any further request with A's cookie
+      // 401s — Better Auth can't resolve a session without a user row.
+      const u = injectUser(secret, 'invalidate', 'owner');
+      const ok = await fetchJson('/api/profiles', { headers: authedHeaders(u.cookie) });
+      check('A authed before delete', ok.status === 200);
+      const adb = new Database(AUTH_DB);
+      adb.pragma('foreign_keys = ON');
+      adb.prepare('DELETE FROM users WHERE id = ?').run(u.userId);
+      adb.close();
+      const gone = await fetchJson('/api/profiles', { headers: authedHeaders(u.cookie) });
+      check('A 401 after user row deleted', gone.status === 401);
+    }
+
+    section('27. Cross-user IDOR (?profile=other-user-slug)');
+    {
+      // Two users. Both create a profile with the SAME slug. User B
+      // tries to fetch A's data via ?profile=<slug>. The user-context
+      // scope should reject — B only sees B's data, even though the
+      // slug exists in both namespaces.
+      const a = injectUser(secret, 'idor-a', 'owner');
+      const b = injectUser(secret, 'idor-b', 'owner');
+      // Both create a profile with name → slug 'shared'.
+      await fetchJson('/api/profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authedHeaders(a.cookie) },
+        body: JSON.stringify({ name: 'shared', color: 'amber' }),
+      });
+      await fetchJson('/api/profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authedHeaders(b.cookie) },
+        body: JSON.stringify({ name: 'shared', color: 'amber' }),
+      });
+      // A writes an applications row to their 'shared' profile.
+      const fs2 = await import('node:fs');
+      const aDir = join(ROOT, 'data', 'users', a.userId, 'profiles', 'shared');
+      fs2.mkdirSync(aDir, { recursive: true });
+      fs2.writeFileSync(
+        join(aDir, 'applications.md'),
+        '# Applications\n\n| # | Date | Company | Role | Status | Score | PDF | Report | Notes |\n|---|------|---------|------|--------|-------|-----|--------|-------|\n| 1 | 2026-05-12 | A-PRIVATE-CO | hidden-role | Applied | 5.0/5 | ❌ | [1](#) | confidential |\n',
+      );
+      // B asks for /api/applications?profile=shared (the slug A also owns).
+      const r = await fetchJson('/api/applications?profile=shared', {
+        headers: authedHeaders(b.cookie),
+      });
+      const bodyText = JSON.stringify(r.body ?? {});
+      check(
+        "B cannot read A's data via ?profile=shared (slug exists in both namespaces)",
+        !bodyText.includes('A-PRIVATE-CO') && !bodyText.includes('hidden-role'),
+        `leaked: ${bodyText.slice(0, 200)}`,
+      );
+    }
   } finally {
     server.kill('SIGTERM');
   }

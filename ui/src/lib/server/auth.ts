@@ -238,18 +238,41 @@ export const auth = betterAuth({
   },
 
   // Better Auth respects this list of advanced cookie attrs even in
-  // localhost development. `sameSite: 'lax'` is the right default for
-  // OAuth callbacks; we override to 'none' in cross-origin contexts
-  // (none currently used).
+  // localhost development.
   //
-  // `useSecureCookies` is env-gated: when BETTER_AUTH_URL starts with
+  // useSecureCookies is env-gated: when BETTER_AUTH_URL starts with
   // https:// (production / Tailscale magic-DNS deployment), the cookie's
   // Secure flag is set so the browser never sends it over plain HTTP.
   // In localhost dev the flag is off so http://localhost can still
   // round-trip the session.
+  //
+  // crossSubDomainCookies stays off — career-ops is single-origin
+  // (no shared cookie across `app.example.com` / `api.example.com`).
+  // Leaving it off is defence-in-depth: a hijacked sibling sub-domain
+  // can't read or replay the session cookie.
+  //
+  // cookieAttributes spells out every attribute explicitly rather than
+  // relying on Better Auth defaults, so a future version that changes
+  // defaults can't silently weaken our cookie security.
   advanced: {
     cookiePrefix: 'career-ops',
     useSecureCookies: BETTER_AUTH_URL.startsWith('https://'),
+    crossSubDomainCookies: { enabled: false },
+    cookies: {
+      session_token: {
+        attributes: {
+          httpOnly: true,
+          // SameSite=Lax — Set-Cookie travels on top-level navigation
+          // (OAuth callback redirects need this) but blocked on cross-
+          // site fetch / iframe. Strict would break GitHub OAuth callback.
+          sameSite: 'lax',
+          // Secure — only set when running over HTTPS. The dev shell
+          // (http://localhost) keeps it off so cookies round-trip locally.
+          secure: BETTER_AUTH_URL.startsWith('https://'),
+          path: '/',
+        },
+      },
+    },
   },
 });
 
