@@ -18,8 +18,8 @@ importers:
         specifier: 0.24.1
         version: 0.24.1
       dotenv:
-        specifier: 16.6.1
-        version: 16.6.1
+        specifier: 17.4.2
+        version: 17.4.2
       js-yaml:
         specifier: 4.1.1
         version: 4.1.1
