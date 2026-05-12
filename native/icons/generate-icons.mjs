@@ -198,9 +198,28 @@ async function main() {
   await renderAtSize(sharp, svgBuffer, 256, path.join(electronBuild, 'icon-256.png'));
   await renderAtSize(sharp, svgBuffer, 1024, path.join(electronBuild, 'icon-1024.png'));
 
-  // .icns (macOS) — only if iconutil exists
-  try {
-    execSync('which iconutil', { stdio: 'ignore' });
+  // .icns (macOS) — prefer iconutil (macOS-native, best output) and fall
+  // back to png2icns (libicns, available on Linux CI via icnsutils).
+  // Both produce the same wire format; iconutil's output is just a hair
+  // smaller because it deduplicates @1x/@2x pairs.
+  const icnsPath = path.join(electronBuild, 'icon.icns');
+  const hasIconutil = (() => {
+    try {
+      execSync('which iconutil', { stdio: 'ignore' });
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+  const hasPng2icns = (() => {
+    try {
+      execSync('which png2icns', { stdio: 'ignore' });
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+  if (hasIconutil) {
     const iconset = path.join(electronBuild, 'icon.iconset');
     await fs.rm(iconset, { recursive: true, force: true });
     await fs.mkdir(iconset, { recursive: true });
@@ -219,13 +238,31 @@ async function main() {
     for (const { size, name } of icnsMatrix) {
       await renderAtSize(sharp, svgBuffer, size, path.join(iconset, name));
     }
-    execSync(`iconutil -c icns "${iconset}" -o "${path.join(electronBuild, 'icon.icns')}"`, {
+    execSync(`iconutil -c icns "${iconset}" -o "${icnsPath}"`, { stdio: 'inherit' });
+    await fs.rm(iconset, { recursive: true });
+    console.log('  icon.icns generated (iconutil)');
+  } else if (hasPng2icns) {
+    // png2icns expects discrete PNGs at icon-size boundaries.
+    const sizes = [16, 32, 48, 128, 256, 512, 1024];
+    const tmpDir = path.join(electronBuild, 'icon.tmp');
+    await fs.rm(tmpDir, { recursive: true, force: true });
+    await fs.mkdir(tmpDir, { recursive: true });
+    const tmpFiles = [];
+    for (const s of sizes) {
+      const p = path.join(tmpDir, `icon_${s}.png`);
+      await renderAtSize(sharp, svgBuffer, s, p);
+      tmpFiles.push(p);
+    }
+    execSync(`png2icns "${icnsPath}" ${tmpFiles.map((f) => `"${f}"`).join(' ')}`, {
       stdio: 'inherit',
     });
-    await fs.rm(iconset, { recursive: true });
-    console.log('  icon.icns generated');
-  } catch {
-    console.warn('  iconutil not found — skipping icon.icns (Mac builds will fall back to .png)');
+    await fs.rm(tmpDir, { recursive: true });
+    console.log('  icon.icns generated (png2icns / libicns)');
+  } else {
+    console.warn(
+      '  Neither iconutil nor png2icns found — skipping icon.icns (Mac builds will fall back to .png).' +
+        '\n    Install: macOS ships iconutil; Linux: apt-get install icnsutils',
+    );
   }
 
   // .ico (Windows) — needs ImageMagick or png2ico

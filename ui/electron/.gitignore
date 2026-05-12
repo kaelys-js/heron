@@ -3,6 +3,13 @@
 # And the CLI then renames it
 app
 node_modules
-build
+# Generated outputs only — the entitlements.{mac,mas}.plist files in
+# build/ are hand-edited source config, kept tracked via the root
+# .gitignore negation rules.
+build/src/
+build/lib/
+build/types/
+build/icon*
+build/capacitor.config.*
 dist
 logs

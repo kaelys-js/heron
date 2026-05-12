@@ -35,6 +35,13 @@ jobs:
       BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-${{ github.run_id }}
       # Tell tools to use coloured output even when piped.
       FORCE_COLOR: "3"
+      # GitHub Actions runners deprecated Node 20 (Sept 2026); v24 becomes
+      # the default Jun 2026. Opt every JS-based action (actions/cache@v4,
+      # jdx/mise-action@v2, etc.) into Node 24 NOW so we get the security
+      # patches + skip the deprecation banner. This is the Node that runs
+      # the ACTION ITSELF — separate from the Node we install via mise to
+      # run our application code (Node 26.1.0).
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
       - name: Checkout
@@ -102,9 +109,18 @@ jobs:
         run: pnpm test:quick
 
       # apply-brand regenerates the platform icons + propagated configs
-      # that verify-capacitor inspects. Icons + .icns + .ico + macOS
-      # entitlements live under ui/electron/build/ which is .gitignored,
-      # so CI must produce them before the verifier runs.
+      # that verify-capacitor inspects. Icons (.png/.icns/.ico) live
+      # under ui/electron/build/ which is .gitignored, so CI must
+      # produce them before the verifier runs.
+      #
+      # Tooling on Ubuntu runners:
+      #   • imagemagick → `magick` command for .ico
+      #   • icnsutils   → `png2icns` for .icns (replaces macOS-only iconutil)
+      # The icon generator (native/icons/generate-icons.mjs) detects
+      # which tool is available and falls back gracefully.
+      - name: Install icon-generation toolchain (Linux only)
+        run: sudo apt-get update && sudo apt-get install -y imagemagick icnsutils
+
       - name: Apply brand (generate icons + propagated configs)
         run: pnpm brand:apply
 
