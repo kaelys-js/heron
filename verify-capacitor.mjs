@@ -218,6 +218,23 @@ for (const cmd of ['native', 'setup:native', 'setup:secrets', 'dev:desktop', 'de
   else fail(`package.json missing "${cmd}"`);
 }
 
+// ── Phase 8 — Release automation ───────────────────────────────────
+section('Phase 8 — Release automation (Conventional Commits → Release Please)');
+exists('release-please-config.json', 'Release Please config');
+exists('.release-please-manifest.json', 'Release Please manifest (current version)');
+exists('.github/workflows/release.yml', 'release workflow');
+contains('release-please-config.json', '"ui/electron/package.json"', 'bumps ui/electron alongside root');
+contains('release-please-config.json', '"section": "✨ Features"', 'feat changelog section');
+contains('release-please-config.json', '"section": "🐛 Bug Fixes"', 'fix changelog section');
+contains('.github/workflows/release.yml', 'release-please-action', 'Release Please action');
+contains('.github/workflows/release.yml', 'uses: ./.github/workflows/native-release.yml', 'workflow_call to native-release');
+contains('.github/workflows/release.yml', 'secrets: inherit', 'secrets forwarded to called workflow');
+contains('.github/workflows/native-release.yml', 'workflow_call:', 'native-release supports workflow_call');
+contains('.github/workflows/native-release.yml', 'version:', 'native-release accepts version input');
+contains('AGENTS.md', 'Conventional Commits', 'commit convention documented');
+contains('AGENTS.md', 'Release Please', 'Release Please flow documented');
+exists('scripts/native/_bump-versions.mjs', 'bump script (manual override)');
+
 // ── Behavioral spot-checks (cheap and fast) ────────────────────────
 section('Behavioral spot-checks');
 // Parser test for deep-links — inline the same logic to assert it works

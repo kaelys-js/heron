@@ -279,9 +279,37 @@ Default modes are in `modes/` (English). Additional language-specific modes are 
 ## CI/CD and Quality
 
 - **GitHub Actions** run on every PR: `test-all.mjs` (63+ checks), auto-labeler (risk-based: 🔴 core-architecture, ⚠️ agent-behavior, 📄 docs), welcome bot for first-time contributors
-- **Branch protection** on `main`: status checks must pass before merge. No direct pushes to main (except admin bypass).
+- **Branch protection** on `main`: status checks must pass before merge. No direct pushes to main (except admin bypass). Squash-merge required so every merge = one Conventional commit.
 - **Dependabot** monitors npm, Go modules, and GitHub Actions for security updates
 - **Contributing process**: issue first → discussion → PR with linked issue → CI passes → maintainer review → merge
+
+### Release automation (Conventional Commits → Release Please → native-release)
+
+Releases are fully automated. You don't run a release command — you write commits in [Conventional Commits](https://www.conventionalcommits.org/) format and Release Please does the rest.
+
+**Commit prefix → bump rule:**
+
+| Prefix | Bump | Example |
+|---|---|---|
+| `feat: ...` | minor (1.6.0 → 1.7.0) | `feat: add LinkedIn audit mode` |
+| `fix: ...` | patch (1.6.0 → 1.6.1) | `fix: handle empty pipeline gracefully` |
+| `perf: ...` | patch | `perf: cache /api/stats response` |
+| `feat!: ...` OR `BREAKING CHANGE:` in body | major (1.6.0 → 2.0.0) | `feat!: drop adapter-auto` |
+| `chore:` `docs:` `refactor:` `test:` `ci:` `build:` `style:` | **no release** | `chore: bump deps` |
+
+**Flow:**
+
+1. You merge a PR to `main` (squash-merge, one Conventional commit).
+2. Release Please runs on every push, accumulates the commits in a long-lived "release PR" titled `chore(main): release X.Y.Z`.
+3. When you're ready to ship, you merge that release PR.
+4. Release Please cuts the actual release: tags `vX.Y.Z`, generates `CHANGELOG.md`, bumps `package.json` + `ui/electron/package.json`, creates GitHub Release.
+5. `release.yml` then triggers `native-release.yml` via `workflow_call`, which builds DMG/exe/AppImage + uploads to TestFlight, attaching everything to the GitHub Release.
+
+**Manual override:** `pnpm release patch` (or `minor`/`major`/`x.y.z`) still works for emergencies. It bypasses Release Please and pushes a tag directly. `native-release.yml`'s `on: push: tags` trigger picks it up.
+
+**Commit author guidance:** when in doubt about whether a change deserves a release, use `chore:` (no release). To force-include a tweak in the next release without bumping, use `chore: ... [skip-release-only]` — Release Please will include the line in the changelog under "Chore" but won't bump the version.
+
+Source of truth: `release-please-config.json`, `.github/workflows/release.yml`, `.github/workflows/native-release.yml`.
 
 ## Community and Governance
 
