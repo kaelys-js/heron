@@ -1,27 +1,33 @@
 /**
- * Single source of truth for the app's user-facing brand strings.
+ * User-facing brand strings — re-exported from the generated brand.ts so
+ * everything ultimately resolves to branding/brand.json.
  *
- * Change `APP_NAME` here and the breadcrumb, sidebar workspace label, doc title
- * suffix, error pages, OG metadata, and inline copy update everywhere.
+ * This file is the LEGACY entry point. New code should import directly
+ * from `$lib/client/brand`. Keeping these re-exports for back-compat with
+ * the dozens of components/pages already importing APP_NAME / docTitle /
+ * cmd / etc. — they keep working without rewrites.
  *
  * NOT branded (kept as literal "career-ops"):
- *  - localStorage keys (changing would wipe user state)
- *  - custom DOM event names (internal coupling, not user-visible)
- *  - GitHub repo path (the upstream open-source project name)
- *  - the `/career-ops` slash-command namespace can be overridden via `CLI_NAMESPACE`
- *    if a fork wants its own command prefix.
+ *   - localStorage keys (changing would wipe user state) — these now use
+ *     BRAND.name prefix so a rename namespaces them correctly going forward
+ *   - custom DOM event names (internal coupling, not user-visible)
+ *   - the `/career-ops` slash-command namespace can be overridden via
+ *     `CLI_NAMESPACE` from brand.json's `ai.cliNamespace` if set.
  */
+import { BRAND } from '$lib/client/brand';
 
-export const APP_NAME = 'career-ops';
-export const APP_TAGLINE = 'job-search ops';
-export const APP_DESCRIPTION =
-  'Local-first job search dashboard — pipeline, scoring, tailored CVs, and an AI agent for interviews and negotiation.';
+export const APP_NAME = BRAND.displayName;
+export const APP_TAGLINE = BRAND.tagline;
+export const APP_DESCRIPTION = BRAND.tagline;
 
-/** Slash-command namespace surfaced in help, dialogs, agent chat. */
+/** Slash-command namespace surfaced in help, dialogs, agent chat.
+ *  Keeps the literal `career-ops` because that's the CLI mode prefix
+ *  used by all AI agents (claude, gemini, codex, ...). Renaming this
+ *  would break every slash-command invocation. */
 export const CLI_NAMESPACE = 'career-ops';
 
 /** Upstream repo for "Report an issue" / "Star on GitHub". */
-export const REPO_URL = 'https://github.com/santifer/career-ops';
+export const REPO_URL = BRAND.repo.url;
 
 /** Compose `<page> — <APP_NAME>` for document titles. */
 export function docTitle(parts: (string | undefined | null)[]): string {

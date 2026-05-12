@@ -53,14 +53,14 @@ for (const required of ['APPLE_ID', 'APPLE_TEAM_ID', 'APP_STORE_CONNECT_KEY_ID',
   }
 }
 
-step(3, 'Building SvelteKit (static — WebView shell)');
+step(3, 'Applying brand (icons + configs from branding/brand.json)');
+run('node', [join(ROOT, 'scripts/native/apply-brand.mjs')]);
+
+step(4, 'Building SvelteKit (static — WebView shell)');
 run('pnpm', ['build'], {
   cwd: UI,
   env: { CAPACITOR: '1', PUBLIC_CAPACITOR_BUILD: '1' },
 });
-
-step(4, 'Regenerating icons');
-run('node', [join(ROOT, 'native', 'icons', 'generate-icons.mjs')]);
 
 step(5, 'Syncing iOS');
 run('pnpm', ['exec', 'cap', 'sync', 'ios'], { cwd: UI });

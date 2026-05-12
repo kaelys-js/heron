@@ -3,9 +3,10 @@
   import { cn } from '$lib/utils';
   import type { Status } from '$lib/types';
   import { cmd } from '$lib/config/branding';
+  import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 
   let { storageKey = 'pipeline-flow-help' }: { storageKey?: string } = $props();
-  let fullKey = $derived('career-ops:' + storageKey);
+  let fullKey = $derived(`${BRAND_STORAGE_PREFIX}:` + storageKey);
 
   function readInitial(key: string): boolean {
     if (typeof window === 'undefined') return false;
@@ -16,7 +17,7 @@
     return false;
   }
   // svelte-ignore state_referenced_locally — initial seed only
-  let open = $state(readInitial('career-ops:' + storageKey));
+  let open = $state(readInitial(`${BRAND_STORAGE_PREFIX}:` + storageKey));
   $effect(() => {
     if (typeof window === 'undefined') return;
     try { window.localStorage.setItem(fullKey, open ? '1' : '0'); } catch {}

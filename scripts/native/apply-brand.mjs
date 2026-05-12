@@ -228,6 +228,31 @@ function applyFavicon(brand) {
   log.ok(`static/favicon.svg ← branding/logo.svg`);
 }
 
+function applyAppHtml(brand) {
+  // app.html runs an INLINE script before SvelteKit hydrates (theme
+  // bootstrap to avoid light-mode flash). That script can't import TS
+  // modules, so the brand-derived values are baked in at build time
+  // here. Brand changes → re-run apply-brand → app.html updates.
+  const path = join(UI, 'src', 'app.html');
+  if (!existsSync(path)) { log.skip(`app.html — missing`); return; }
+  let body = readFileSync(path, 'utf8');
+  let changed = false;
+  const subs = [
+    // localStorage:<brand>:theme key — must match what theme.svelte.ts writes
+    [/'[^']*:theme'/, `'${brand.name}:theme'`],
+    // Mask icon color (Safari pinned-tab) — use the brand accent
+    [/(rel="mask-icon"[^>]*color=")[^"]*(")/, `$1${brand.colors.accentEmeraldDark}$2`],
+    // og:description
+    [/(og:description"\s+content=")[^"]*(")/, `$1${brand.tagline}$2`],
+  ];
+  for (const [re, val] of subs) {
+    const next = body.replace(re, val);
+    if (next !== body) { body = next; changed = true; }
+  }
+  if (changed) writeFileSync(path, body);
+  changed ? log.ok(`app.html`) : log.skip(`app.html — already current`);
+}
+
 function applyManifest(brand) {
   const path = join(UI, 'static', 'manifest.webmanifest');
   if (!existsSync(path)) { log.skip(`manifest.webmanifest — missing`); return; }
@@ -312,15 +337,29 @@ function applyClientBrandTs(brand) {
     `  repo: ${JSON.stringify(brand.repo, null, 2).replace(/\n/g, '\n  ')},`,
     `} as const;`,
     ``,
-    `/** Build a careerops:// deep link for a job. */`,
+    `/** Build a custom-scheme deep link for a job. */`,
     `export function jobDeepLink(jobId: string): string {`,
     `  return \`\${BRAND.urlScheme}://job/\${jobId}\`;`,
     `}`,
     ``,
-    `/** Build a careerops:// deep link for any in-app route. */`,
+    `/** Build a custom-scheme deep link for any in-app route. */`,
     `export function deepLink(route: string): string {`,
     `  return \`\${BRAND.urlScheme}://\${route.replace(/^\\//, '')}\`;`,
     `}`,
+    ``,
+    `/** Brand-namespaced DOM event names. Use these on both sides of`,
+    ` * window.dispatchEvent + window.addEventListener — same source of`,
+    ` * truth means a rename can never split the listener from the`,
+    ` * dispatcher. */`,
+    `export const BRAND_EVENTS = {`,
+    `  openNotifications: \`\${BRAND.name}:open-notifications\`,`,
+    `  notify: \`\${BRAND.name}:notify\`,`,
+    `} as const;`,
+    ``,
+    `/** Brand-namespaced localStorage key prefix. Use as`,
+    ` * \`\${BRAND_STORAGE_PREFIX}:my-key\` so user state for one`,
+    ` * brand can't collide with another fork on the same machine. */`,
+    `export const BRAND_STORAGE_PREFIX = BRAND.name;`,
     ``,
   ].join('\n');
   const changed = writeIfChanged(path, body);
@@ -350,6 +389,28 @@ function applyElectronBrandTs(brand) {
   ].join('\n');
   const changed = writeIfChanged(path, body);
   changed ? log.ok(`electron/src/brand.ts (generated)`) : log.skip(`electron/src/brand.ts — already current`);
+}
+
+function syncSharedSwift(brand) {
+  // Files in ui/ios/App/App/ that need to exist in every extension target
+  // too (because Xcode app-extension targets can't import from the host).
+  // ErrorReporter.swift is the canonical example — same source, 4 copies.
+  const sharedFiles = ['ErrorReporter.swift'];
+  const targets = ['CareerOpsWidget', 'CareerOpsLiveActivity', 'CareerOpsShareExtension'];
+  for (const f of sharedFiles) {
+    const src = join(UI, 'ios', 'App', 'App', f);
+    if (!existsSync(src)) continue;
+    const srcContent = readFileSync(src, 'utf8');
+    let copied = 0;
+    for (const tgt of targets) {
+      const tgtDir = join(UI, 'ios', 'App', tgt);
+      if (!existsSync(tgtDir)) continue;
+      const dst = join(tgtDir, f);
+      if (writeIfChanged(dst, srcContent)) copied++;
+    }
+    if (copied > 0) log.ok(`synced ${f} → ${copied} extension target(s)`);
+    else log.skip(`${f} — all extension copies current`);
+  }
 }
 
 function applySwiftConstants(brand) {
@@ -464,10 +525,12 @@ function apply() {
   log.step('iOS');
   applyIosInfoPlist(brand);
   applySwiftConstants(brand);
+  syncSharedSwift(brand);
 
-  log.step('Web manifest + favicon');
+  log.step('Web manifest + favicon + app.html');
   applyFavicon(brand);
   applyManifest(brand);
+  applyAppHtml(brand);
 
   log.step('Fastlane');
   applyFastlaneAppfile(brand);

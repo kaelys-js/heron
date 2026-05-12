@@ -2,6 +2,7 @@
   import { ChevronRight } from '@lucide/svelte';
   import type { Snippet } from 'svelte';
   import { cn } from '$lib/utils';
+  import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 
   let {
     label,
@@ -19,7 +20,7 @@
     children: Snippet;
   } = $props();
 
-  let fullKey = $derived('career-ops:sidebar-group:' + storageKey);
+  let fullKey = $derived(`${BRAND_STORAGE_PREFIX}:sidebar-group:` + storageKey);
 
   function readInitial(key: string): boolean {
     if (typeof window === 'undefined') return defaultOpen;
@@ -32,7 +33,7 @@
   }
 
   // svelte-ignore state_referenced_locally — initial seed only; `open` becomes the source of truth.
-  let open = $state(readInitial('career-ops:sidebar-group:' + storageKey));
+  let open = $state(readInitial(`${BRAND_STORAGE_PREFIX}:sidebar-group:` + storageKey));
 
   $effect(() => {
     if (typeof window === 'undefined') return;

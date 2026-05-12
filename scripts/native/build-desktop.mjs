@@ -24,17 +24,17 @@ import { existsSync, readFileSync } from 'node:fs';
 
 const electronDir = join(UI, 'electron');
 
-step(1, 'Building SvelteKit (node adapter — embedded server)');
+step(1, 'Applying brand (icons + configs from branding/brand.json)');
+run('node', [join(ROOT, 'scripts/native/apply-brand.mjs')]);
+
+step(2, 'Building SvelteKit (node adapter — embedded server)');
 run('pnpm', ['build'], { cwd: UI });
 
-step(2, 'Building SvelteKit (static — WebView shell)');
+step(3, 'Building SvelteKit (static — WebView shell)');
 run('pnpm', ['build'], {
   cwd: UI,
   env: { CAPACITOR: '1', PUBLIC_CAPACITOR_BUILD: '1' },
 });
-
-step(3, 'Generating icons');
-run('node', [join(ROOT, 'native', 'icons', 'generate-icons.mjs')]);
 
 step(4, 'Syncing Capacitor → Electron');
 run('pnpm', ['exec', 'cap', 'sync', 'electron'], { cwd: UI });

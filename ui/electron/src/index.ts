@@ -39,7 +39,39 @@ import { CareerOpsTray } from './tray';
 import { startMdnsAdvertise } from './mdns';
 import { BRAND } from './brand';
 
-unhandled();
+unhandled({
+  logger: (e: Error) => {
+    // Forward unhandled main-process errors to the renderer via IPC so
+    // the SvelteKit error-reporter funnels them into the same Issues
+    // store everything else uses. Falls back to console if no window.
+    console.error('[main:unhandled]', e);
+    try {
+      const win = state.mainWindow;
+      if (win && !win.isDestroyed()) {
+        win.webContents.send(`${BRAND.name}:main-error`, {
+          message: e?.message ?? String(e),
+          stack: e?.stack,
+          source: 'electron-main',
+        });
+      }
+    } catch { /* swallow secondary errors */ }
+  },
+  showDialog: false, // we route to the in-app Issues system instead
+});
+
+// Catch promise rejections in the main process too (electron-unhandled
+// only covers uncaught exceptions by default).
+process.on('unhandledRejection', (reason) => {
+  const err = reason instanceof Error ? reason : new Error(String(reason));
+  console.error('[main:unhandledRejection]', err);
+  try {
+    state.mainWindow?.webContents.send(`${BRAND.name}:main-error`, {
+      message: err.message,
+      stack: err.stack,
+      source: 'electron-main-rejection',
+    });
+  } catch {}
+});
 
 const capacitorFileConfig: CapacitorElectronConfig = getCapacitorElectronConfig();
 
