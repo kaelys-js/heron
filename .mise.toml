@@ -51,8 +51,6 @@ lockfile = true
 # Node — let the [tools] block in this file be the single source of truth.
 # Exception: ui/ios/App/.ruby-version stays read so Bundler picks it up.
 idiomatic_version_file_enable_tools = ["ruby"]
-# Disable the "this tool needs an update" idle-time check — annoying in CI.
-disable_default_shorthands = false
 # Don't trust child .mise.toml files in subdirectories unless explicitly
 # allow-listed (`mise trust`). Defence against malicious subprojects.
 paranoid = false
