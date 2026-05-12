@@ -46,6 +46,42 @@ export type AiDetectResult = {
   signals: Record<string, { value: number; evidence: string }>;
 };
 
+/** Result shape from semantic-match.mjs. Composite 0-100; higher = better
+ *  CV↔JD alignment per semantic-embedding ATS tools (Eightfold etc.). */
+export type SemanticMatchResult = {
+  composite: number;
+  tfIdfScore: number;
+  bigramScore: number;
+  conceptScore: number;
+  conceptMatches: { concept: string; jdMatches: number; cvMatches: number }[];
+  /** Concept buckets the JD cares about that the CV never engages with. */
+  gaps: string[];
+  cvWordCount: number;
+  jdWordCount: number;
+};
+
+/** Result shape from narrative-arc.mjs. Surfaces career-story red flags
+ *  a human reviewer or recruiter would notice: gap years, sub-9-month
+ *  stints, role-level regression, unexplained industry pivots. */
+export type NarrativeResult = {
+  /** 0-100 composite. 80+ = clean career narrative; 50-79 = some questions
+   *  to address in cover letter / summary; <50 = significant rewrite. */
+  score: number;
+  findings: {
+    kind:
+      | 'gap-year'
+      | 'short-stint'
+      | 'level-regression'
+      | 'industry-pivot'
+      | 'tenure-thin'
+      | 'no-progression'
+      | 'ok';
+    severity: 'info' | 'warn' | 'error';
+    detail: string;
+    period?: string;
+  }[];
+};
+
 function runScript(scriptName: string, args: string[], timeoutMs = 30_000): Promise<QualityResult> {
   return new Promise((resolveP, rejectP) => {
     const p = spawn('node', [join(ROOT, scriptName), ...args, '--json'], {
@@ -211,6 +247,143 @@ export function checkAiDetect(mdPath: string): Promise<AiDetectResult> {
           new Error(stderrBuf.slice(-200) || stdoutBuf.slice(-200)),
         );
         resolveP({ aiScore: 0, wordCount: 0, sentences: 0, signals: {} });
+      }
+    });
+  });
+}
+
+/** Run semantic-match.mjs against a CV + JD pair. Returns the composite
+ *  + per-signal breakdown so the dashboard can surface "concepts the JD
+ *  cares about that your CV is silent on". */
+export function checkSemanticMatch(cvPath: string, jdPath: string): Promise<SemanticMatchResult> {
+  return new Promise((resolveP) => {
+    const p = spawn('node', [join(ROOT, 'semantic-match.mjs'), cvPath, jdPath, '--json'], {
+      cwd: ROOT,
+      env: { ...process.env },
+    });
+    let stdoutBuf = '';
+    let stderrBuf = '';
+    p.stdout?.on('data', (c: Buffer) => {
+      stdoutBuf += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderrBuf += c.toString();
+    });
+    const timer = setTimeout(() => {
+      try {
+        p.kill('SIGTERM');
+      } catch {}
+      reportServerError(
+        'quality-checks',
+        'semantic-match timeout',
+        new Error('semantic-match timed out after 15s'),
+      );
+      resolveP({
+        composite: 0,
+        tfIdfScore: 0,
+        bigramScore: 0,
+        conceptScore: 0,
+        conceptMatches: [],
+        gaps: [],
+        cvWordCount: 0,
+        jdWordCount: 0,
+      });
+    }, 15_000);
+    p.on('error', (err) => {
+      clearTimeout(timer);
+      reportServerError('quality-checks', 'semantic-match failed', err);
+      resolveP({
+        composite: 0,
+        tfIdfScore: 0,
+        bigramScore: 0,
+        conceptScore: 0,
+        conceptMatches: [],
+        gaps: [],
+        cvWordCount: 0,
+        jdWordCount: 0,
+      });
+    });
+    p.on('close', () => {
+      clearTimeout(timer);
+      try {
+        const parsed = JSON.parse(stdoutBuf);
+        resolveP({
+          composite: parsed.composite ?? 0,
+          tfIdfScore: parsed.tfIdfScore ?? 0,
+          bigramScore: parsed.bigramScore ?? 0,
+          conceptScore: parsed.conceptScore ?? 0,
+          conceptMatches: parsed.conceptMatches ?? [],
+          gaps: parsed.gaps ?? [],
+          cvWordCount: parsed.cvWordCount ?? 0,
+          jdWordCount: parsed.jdWordCount ?? 0,
+        });
+      } catch {
+        reportServerError(
+          'quality-checks',
+          'semantic-match produced non-JSON output',
+          new Error(stderrBuf.slice(-200) || stdoutBuf.slice(-200)),
+        );
+        resolveP({
+          composite: 0,
+          tfIdfScore: 0,
+          bigramScore: 0,
+          conceptScore: 0,
+          conceptMatches: [],
+          gaps: [],
+          cvWordCount: 0,
+          jdWordCount: 0,
+        });
+      }
+    });
+  });
+}
+
+/** Run narrative-arc.mjs against a CV markdown. */
+export function checkNarrativeArc(cvPath: string): Promise<NarrativeResult> {
+  return new Promise((resolveP) => {
+    const p = spawn('node', [join(ROOT, 'narrative-arc.mjs'), cvPath, '--json'], {
+      cwd: ROOT,
+      env: { ...process.env },
+    });
+    let stdoutBuf = '';
+    let stderrBuf = '';
+    p.stdout?.on('data', (c: Buffer) => {
+      stdoutBuf += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderrBuf += c.toString();
+    });
+    const timer = setTimeout(() => {
+      try {
+        p.kill('SIGTERM');
+      } catch {}
+      reportServerError(
+        'quality-checks',
+        'narrative-arc timeout',
+        new Error('narrative-arc timed out after 10s'),
+      );
+      resolveP({ score: 0, findings: [] });
+    }, 10_000);
+    p.on('error', (err) => {
+      clearTimeout(timer);
+      reportServerError('quality-checks', 'narrative-arc failed', err);
+      resolveP({ score: 0, findings: [] });
+    });
+    p.on('close', () => {
+      clearTimeout(timer);
+      try {
+        const parsed = JSON.parse(stdoutBuf);
+        resolveP({
+          score: parsed.score ?? 0,
+          findings: parsed.findings ?? [],
+        });
+      } catch {
+        reportServerError(
+          'quality-checks',
+          'narrative-arc produced non-JSON output',
+          new Error(stderrBuf.slice(-200) || stdoutBuf.slice(-200)),
+        );
+        resolveP({ score: 0, findings: [] });
       }
     });
   });

@@ -38,6 +38,32 @@ import { getActiveProfileId } from './profiles';
 /** System-layer template — shared, never per-profile. */
 const CV_TEMPLATE_HTML = path.join(ROOT, 'templates', 'cv-template.html');
 
+/** Picks a template variant based on either an explicit override or the
+ *  profile's `cv_template` field. Falls back to the classic ATS-safe
+ *  template if the requested variant doesn't exist on disk. */
+function resolveTemplate(explicitName?: string, profileId?: string): string {
+  const named =
+    explicitName ||
+    (() => {
+      try {
+        // Best-effort: read profile.yml's cv_template field. We avoid pulling
+        // a YAML parser into this server file — only need one key.
+        if (!profileId) return undefined;
+        const pPath = path.join(ROOT, 'data', 'profiles', profileId, 'profile.yml');
+        if (!fs.existsSync(pPath)) return undefined;
+        const text = fs.readFileSync(pPath, 'utf8');
+        const m = text.match(/^\s*cv_template:\s*"?([a-z0-9-]+)"?/im);
+        return m ? m[1] : undefined;
+      } catch {
+        return undefined;
+      }
+    })();
+  if (!named || named === 'classic' || named === 'default') return CV_TEMPLATE_HTML;
+  const variant = path.join(ROOT, 'templates', 'cv-template-' + named + '.html');
+  if (fs.existsSync(variant)) return variant;
+  return CV_TEMPLATE_HTML;
+}
+
 function resolveId(profileId?: string): string {
   return profileId ?? getActiveProfileId();
 }
@@ -165,7 +191,8 @@ export async function generateGeneralCv(profileId?: string): Promise<GenerateRes
   if (!fs.existsSync(cvMd)) {
     throw new Error('cv.md is missing — paste your CV first via Profile → CV manager.');
   }
-  if (!fs.existsSync(CV_TEMPLATE_HTML)) {
+  const templatePath = resolveTemplate(undefined, id);
+  if (!fs.existsSync(templatePath)) {
     throw new Error('templates/cv-template.html is missing — your install may be incomplete.');
   }
 
@@ -173,7 +200,7 @@ export async function generateGeneralCv(profileId?: string): Promise<GenerateRes
   if (cvText.trim().length < 100) {
     throw new Error('cv.md looks too short to be a CV (under 100 chars). Update it first.');
   }
-  const template = readSafe(CV_TEMPLATE_HTML);
+  const template = readSafe(templatePath);
   if (!template) throw new Error('cv-template.html is empty — re-clone the repo to restore it.');
 
   fs.mkdirSync(outputDir, { recursive: true });
