@@ -10,7 +10,7 @@
  */
 
 import { wrap } from '$lib/server/api-helpers';
-import { analyzeCvVariants } from '$lib/server/cv-variant-analysis';
+import { analyzeCvVariants, preservationStats } from '$lib/server/cv-variant-analysis';
 import { getActiveProfileId, getProfile } from '$lib/server/profiles';
 
 function resolveProfileId(url: URL): string {
@@ -21,5 +21,10 @@ function resolveProfileId(url: URL): string {
 
 export const GET = wrap('cv-variant-analysis', async ({ url }: { url: URL }) => {
   const profileId = resolveProfileId(url);
-  return analyzeCvVariants(profileId);
+  // Surface .md-sibling preservation stats — explains "not enough data"
+  // when most PDFs are pre-update and lack their .md source.
+  return {
+    ...analyzeCvVariants(profileId),
+    preservation: preservationStats(profileId),
+  };
 });

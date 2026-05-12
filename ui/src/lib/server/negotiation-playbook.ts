@@ -196,7 +196,13 @@ export type CompBand = {
   notes: string;
 };
 
-export const TIER_COMP_BANDS: Record<string, CompBand> = {
+/** Version tag for the baked-in defaults — used by the staleness
+ *  warning in comp-bands-overrides.ts. Bump whenever the numbers below
+ *  are updated. */
+export const TIER_COMP_BANDS_VERSION = '2024-2025';
+export const TIER_COMP_BANDS_LAST_UPDATED_MS = Date.parse('2025-01-15T00:00:00Z');
+
+export const DEFAULT_TIER_COMP_BANDS: Record<string, CompBand> = {
   'faang-senior': {
     band: 'FAANG / FAANG-adjacent Senior (L5)',
     base: [180_000, 250_000],
@@ -234,6 +240,9 @@ export const TIER_COMP_BANDS: Record<string, CompBand> = {
     notes: 'Remote bands compress geographic spread. GitLab, Buffer, Doist publish theirs publicly.',
   },
 };
+
+/** Back-compat alias for callers using the original name. Same data. */
+export const TIER_COMP_BANDS: Record<string, CompBand> = DEFAULT_TIER_COMP_BANDS;
 
 // ── Public assembler ──────────────────────────────────────────────
 

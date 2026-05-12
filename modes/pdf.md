@@ -19,7 +19,11 @@
 13. Lee `name` de `config/profile.yml` → normaliza a kebab-case lowercase (e.g. "John Doe" → "john-doe") → `{candidate}`
 14. Escribe HTML a `/tmp/cv-{candidate}-{company}.html`
 15. Ejecuta: `node generate-pdf.mjs /tmp/cv-{candidate}-{company}.html output/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf --format={letter|a4}`
-15. Reporta: ruta del PDF, nº páginas, % cobertura de keywords
+16. **Escribe ALSO el SOURCE markdown de la versión tailored** a `output/cv-{candidate}-{company}-{YYYY-MM-DD}.md` (sibling del .pdf).
+    - Esto preserva el contenido tailored para análisis posterior (cv-variant-analysis correlaciona keywords inyectados con outcomes).
+    - El .md debe contener TODAS las secciones del CV tailored — no es el HTML, es el markdown estructurado que el mode produjo en pasos 7-11.
+    - Sin este sibling, /api/profile/cv-variants devuelve "Not enough data" aunque haya 50+ PDFs.
+17. Reporta: ruta del PDF, nº páginas, % cobertura de keywords
 
 ## Reglas ATS (parseo limpio)
 

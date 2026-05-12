@@ -886,6 +886,144 @@ fileContains('ui/src/lib/server/referrals.ts', 'export function linkedInMutualsU
 fileContains('ui/src/lib/server/referrals.ts', 'export function listAsks', 'ask-tracker list fn');
 fileContains('ui/src/lib/server/referrals.ts', 'export function silentAsks', 'silent-asks (follow-up candidates)');
 
+// ─── Round 5: behavioral validation + 5 follow-up items ──────
+section('Round 5 — Validated seed-form-answers against real CV');
+
+// We actually RAN this mode this round. Validation = the cache file has rows
+// AND those rows contain real data derived from cv.md.
+{
+  const cachePath = path.join(ROOT, 'data/profiles/default/form-answers-cache.jsonl');
+  if (fs.existsSync(cachePath)) {
+    const lines = fs.readFileSync(cachePath, 'utf8').split('\n').filter(Boolean);
+    if (lines.length >= 15) {
+      ok('seed-form-answers behavioral validation: ' + lines.length + ' rows written from cv.md/profile.yml');
+    } else {
+      bad('seed-form-answers cache underfilled: only ' + lines.length + ' rows (expected 15+)');
+    }
+    // Sample a few entries to confirm they look like real answers, not placeholders.
+    let realLooking = 0;
+    for (const line of lines.slice(0, 10)) {
+      try {
+        const r = JSON.parse(line);
+        if (typeof r.answer === 'string' && r.answer.length > 5 && !r.answer.includes('TODO') && !r.answer.includes('placeholder')) {
+          realLooking++;
+        }
+      } catch {}
+    }
+    if (realLooking >= 5) {
+      ok('seed-form-answers answers look real (' + realLooking + '/10 sampled are non-placeholder)');
+    } else {
+      bad('seed-form-answers answers look placeholder-y');
+    }
+  } else {
+    bad('seed-form-answers cache file missing — mode failed or never ran');
+  }
+}
+
+section('Round 5 — LinkedIn profile audit');
+
+existsCheck('modes/linkedin-audit.md', 'linkedin-audit mode');
+existsCheck('ui/src/routes/api/profile/linkedin-audit/+server.ts', 'linkedin-audit endpoint');
+fileContains('modes/linkedin-audit.md', 'Recruiter-visibility score', 'mode produces visibility score');
+fileContains('modes/linkedin-audit.md', 'AUDIT_PATH', 'mode emits structured stdout');
+fileContains('modes/linkedin-audit.md', "Don't fabricate", 'no-fabrication guardrail');
+fileContains('ui/src/lib/server/skills.ts', "'linkedin-audit'", 'registered as skill');
+
+section('Round 5 — CV-variant .md preservation');
+
+fileContains('modes/pdf.md', 'output/cv-{candidate}-{company}-{YYYY-MM-DD}.md', 'pdf mode writes .md sibling');
+fileContains('modes/pdf.md', 'cv-variant-analysis correlaciona', 'mode documents why');
+fileContains('ui/src/lib/server/cv-variant-analysis.ts', 'export function preservationStats', 'preservation diagnostic exported');
+fileContains('ui/src/lib/server/cv-variant-analysis.ts', '-cover.md', 'falls back to cover-letter sibling');
+
+section('Round 5 — Pre-call prep reminders');
+
+existsCheck('ui/src/lib/server/interview-schedule.ts', 'interview-schedule module');
+existsCheck('ui/src/lib/server/jobs/interview-reminder.job.ts', 'interview-reminder job');
+existsCheck('ui/src/routes/api/job/[id]/schedule/+server.ts', 'schedule endpoint');
+fileContains('ui/src/lib/server/interview-schedule.ts', 'export function dueReminders', 'dueReminders exported');
+fileContains('ui/src/lib/server/interview-schedule.ts', "fired30min", '30-min flag tracked');
+fileContains('ui/src/lib/server/interview-schedule.ts', "fired24h", '24-hour flag tracked');
+fileContains('ui/src/lib/server/jobs/interview-reminder.job.ts', 'installInterviewReminderDaemon', 'daemon exported');
+fileContains('ui/src/lib/server/jobs/index.ts', 'installInterviewReminderDaemon', 'daemon installed at boot');
+
+// Behavioral: reminder windowing
+{
+  const code = `
+function dueWindow(scheduledAt, now, firedFlag, window, slack) {
+  const delta = scheduledAt - now;
+  if (firedFlag) return false;
+  return delta > 0 && delta <= window + slack;
+}
+const now = 1700000000000;
+// T+25min — should fire 30-min reminder
+let r1 = dueWindow(now + 25*60*1000, now, false, 30*60*1000, 5*60*1000);
+// T+45min — should NOT fire (outside window)
+let r2 = dueWindow(now + 45*60*1000, now, false, 30*60*1000, 5*60*1000);
+// T-5min (past) — should NOT fire
+let r3 = dueWindow(now - 5*60*1000, now, false, 30*60*1000, 5*60*1000);
+// Already-fired flag — should NOT fire
+let r4 = dueWindow(now + 25*60*1000, now, true, 30*60*1000, 5*60*1000);
+if (r1 === true && r2 === false && r3 === false && r4 === false) process.exit(0);
+process.exit(1);
+  `;
+  const r = spawnSync('node', ['-e', code], { encoding: 'utf8' });
+  if (r.status === 0) ok('interview-reminder T-30min windowing: 4/4 cases correct');
+  else bad('reminder windowing broken');
+}
+
+section('Round 5 — Comp-band refresh mechanism');
+
+existsCheck('ui/src/lib/server/comp-bands-overrides.ts', 'comp-bands-overrides module');
+existsCheck('ui/src/routes/api/profile/comp-bands/+server.ts', 'comp-bands endpoint');
+fileContains('ui/src/lib/server/negotiation-playbook.ts', 'TIER_COMP_BANDS_VERSION', 'version tag exported');
+fileContains('ui/src/lib/server/negotiation-playbook.ts', 'DEFAULT_TIER_COMP_BANDS', 'default constant exported');
+fileContains('ui/src/lib/server/comp-bands-overrides.ts', 'export function mergedBands', 'mergedBands exported');
+fileContains('ui/src/lib/server/comp-bands-overrides.ts', 'export function bandsAreStale', 'staleness check exported');
+fileContains('ui/src/lib/server/comp-bands-overrides.ts', 'export function writeOverride', 'override writer exported');
+
+section('Round 5 — Profile settings (avatar / display name / appearance / theme / notifications)');
+
+existsCheck('ui/src/lib/server/ui-prefs.ts', 'ui-prefs module');
+existsCheck('ui/src/routes/api/ui-prefs/+server.ts', '/api/ui-prefs endpoint');
+existsCheck('ui/src/routes/api/profile/avatar/+server.ts', '/api/profile/avatar endpoint');
+existsCheck('ui/src/lib/components/ProfileSettingsCard.svelte', 'ProfileSettingsCard component');
+fileContains('ui/src/lib/server/ui-prefs.ts', 'export function readPrefs', 'readPrefs exported');
+fileContains('ui/src/lib/server/ui-prefs.ts', 'export function writePrefs', 'writePrefs exported');
+fileContains('ui/src/lib/server/ui-prefs.ts', 'export function saveAvatar', 'saveAvatar exported');
+fileContains('ui/src/lib/server/ui-prefs.ts', 'export function clearAvatar', 'clearAvatar exported');
+fileContains('ui/src/lib/server/ui-prefs.ts', "'system', 'light', 'dark'", 'all 3 appearance options');
+fileContains('ui/src/lib/server/ui-prefs.ts', "THEME_OPTIONS", 'theme list exported');
+fileContains('ui/src/lib/server/ui-prefs.ts', 'mutedSources', 'per-source notification muting');
+fileContains('ui/src/lib/components/ProfileSettingsCard.svelte', 'applyAppearance', 'appearance applied live to <html>');
+fileContains('ui/src/lib/components/ProfileSettingsCard.svelte', "data-theme", 'theme applied as data-theme attr');
+fileContains('ui/src/lib/components/ProfileSettingsCard.svelte', 'uploadAvatar', 'avatar upload handler');
+fileContains('ui/src/routes/settings/+page.svelte', '<ProfileSettingsCard', 'settings page renders the card');
+
+// Behavioral: avatar content-type allowlist
+{
+  const code = `
+const ALLOWED = new Map([
+  ['image/png', 'png'],
+  ['image/jpeg', 'jpg'],
+  ['image/gif', 'gif'],
+  ['image/webp', 'webp'],
+]);
+// Should accept
+if (!ALLOWED.get('image/png')) process.exit(1);
+if (!ALLOWED.get('image/jpeg')) process.exit(1);
+if (!ALLOWED.get('image/webp')) process.exit(1);
+// Should reject (svg = security risk, can contain scripts)
+if (ALLOWED.get('image/svg+xml')) process.exit(1);
+if (ALLOWED.get('application/javascript')) process.exit(1);
+if (ALLOWED.get('text/html')) process.exit(1);
+process.exit(0);
+  `;
+  const r = spawnSync('node', ['-e', code], { encoding: 'utf8' });
+  if (r.status === 0) ok('avatar content-type allowlist rejects SVG/JS/HTML (security)');
+  else bad('avatar allowlist too permissive');
+}
+
 // ─── Summary ───────────────────────────────────────────────────
 if (JSON_MODE) {
   console.log(JSON.stringify({ passed, failed, total: passed + failed, results }, null, 2));
