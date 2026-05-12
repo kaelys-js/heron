@@ -1,8 +1,14 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Setup Help / How-to Questions
+  - name: Security vulnerability (PRIVATE)
+    url: https://github.com/kaelys-js/career-ops/security/advisories/new
+    about: ⚠️ NEVER report security issues here publicly. Use GitHub Private Vulnerability Reporting instead.
+  - name: Setup / how-to question
     url: https://discord.gg/8pRpHETxa4
-    about: For setup help and general questions, ask in Discord instead of opening an issue.
+    about: Faster than opening an issue. Real humans, real-time.
   - name: GitHub Discussions
-    url: https://github.com/santifer/career-ops/discussions
-    about: For ideas, Q&A, and community conversations.
+    url: https://github.com/kaelys-js/career-ops/discussions
+    about: Ideas, Q&A, show-and-tell, community conversations.
+  - name: Documentation
+    url: https://github.com/kaelys-js/career-ops#readme
+    about: Read the README before opening an issue — your question might already be answered.

@@ -7,23 +7,38 @@ on:
     branches: [main]
   push:
     branches: [main]
+  workflow_dispatch: # manual re-run
 
 # Least-privilege: this workflow only reads source + writes statuses /
 # annotations. No release artefacts, no Pages, no packages.
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
     name: Lint + typecheck + smoke (Ubuntu)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    env:
+      # Skip interactive prompts in CI.
+      CI: "true"
+      # Deterministic seed for the multi-user verifier.
+      BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-${{ github.run_id }}
+      # Tell tools to use coloured output even when piped.
+      FORCE_COLOR: "3"
+
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v6
         with:
           # Release-Please + commit-message inspection both need full
           # history; the 5-second cost is worth it.
@@ -33,11 +48,11 @@ jobs:
 
       # mise installs Node + pnpm + Ruby pinned in `.mise.toml`. Single
       # source of truth; no risk of drift between local + CI versions.
-      - uses: jdx/mise-action@v2
+      - name: Setup mise (Node + pnpm + Ruby)
+        uses: jdx/mise-action@v2
         with:
           experimental: true
-          # Cache mise's tool downloads + the active node_modules
-          # store path — drastically faster repeat runs.
+          # Cache mise's tool downloads — drastically faster repeat runs.
           cache: true
 
       # Cache pnpm's content-addressable store so repeat CI on the
@@ -45,33 +60,66 @@ jobs:
       # then just symlinks from cache.
       - name: Resolve pnpm store path
         id: pnpm-store
-        shell: bash
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             pnpm-store-${{ runner.os }}-
 
+      - name: Cache turbo
+        uses: actions/cache@v4
+        with:
+          path: |
+            .turbo
+            ui/.turbo
+            ui/electron/.turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
       # Root + workspace installs — pnpm honours pnpm-workspace.yaml and
-      # installs everything in one pass.
-      - name: Install dependencies (pnpm, frozen lockfile)
+      # installs everything in one pass. --frozen-lockfile fails if
+      # pnpm-lock.yaml is stale — forcing PRs to commit lockfile changes.
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run quick test suite
-        run: node test-all.mjs --quick
-
+      # ── Static checks (fast, fail-fast) ──────────────────────────
       - name: Format check (biome + prettier-svelte)
         run: pnpm format:check
 
-      - name: Brand consistency
-        run: node verify-capacitor.mjs
+      - name: svelte-check (ui type-check)
+        run: pnpm -C ui exec svelte-check --tsconfig ./tsconfig.json --threshold error
+
+      - name: tsgo (electron type-check)
+        run: pnpm -C ui/electron exec tsgo --noEmit -p tsconfig.json
+
+      # ── Behavioural checks ───────────────────────────────────────
+      - name: Quick test suite
+        run: pnpm test:quick
+
+      - name: Brand + native consistency
+        run: pnpm verify:capacitor
 
       - name: Multi-user verifier
-        run: node verify-multi-user.mjs
-        env:
-          # The verifier writes to data/.env if BETTER_AUTH_SECRET is
-          # missing; CI sets a deterministic one so the test is
-          # reproducible.
-          BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-${{ github.run_id }}
+        run: pnpm verify:multi-user
+
+      - name: Pipeline tracker hygiene
+        run: pnpm verify
+
+      # ── Build ────────────────────────────────────────────────────
+      # Verifies adapter-node + electron + brand tasks all succeed.
+      # Cached via turbo so repeat runs on green PRs are ~5s.
+      - name: Build (turbo)
+        run: pnpm build
+
+      # ── Audit ────────────────────────────────────────────────────
+      # `pnpm audit` exits non-zero on moderate-or-worse via .npmrc.
+      # If a new CVE lands upstream, this job goes red so we see it
+      # before users do.
+      - name: Security audit (pnpm)
+        run: pnpm audit --audit-level moderate
+        continue-on-error: false

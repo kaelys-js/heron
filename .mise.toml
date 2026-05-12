@@ -15,10 +15,13 @@
 # CI uses `mise install` in the matrix — see .github/workflows/test.yml.
 
 [tools]
-# Node 22 LTS ("Jod"). LTS over current-branch for stability — this
-# system fills real applications, downtime is a real cost. Bump within
-# the 22.x line freely; jump majors deliberately.
-node  = "22.22.2"
+# Node — pinned to the absolute latest "current" line release.
+# Rationale: the user explicitly asked for latest, not LTS. Trade-off
+# accepted is shorter support windows (~6 months per major) for access
+# to the newest V8 / runtime features. Bump via `mise use node@latest`
+# and run the verification gauntlet (svelte-check, build, verify-*) before
+# committing.
+node  = "26.1.0"
 # pnpm 11 (latest). Matches the `packageManager` field in package.json,
 # which is the source of truth Corepack / pnpm-self-install honor.
 pnpm  = "11.1.0"

@@ -10,43 +10,43 @@
 # explicit owner approval.
 
 # ── Catch-all — bdfl is the fallback reviewer ───────────────────────
-*                                @santifer
+*                                @kaelys-js
 
 # ── Repo-level governance + security ────────────────────────────────
-/AGENTS.md                       @santifer
-/CLAUDE.md                       @santifer
-/GOVERNANCE.md                   @santifer
-/SECURITY.md                     @santifer
-/CODE_OF_CONDUCT.md              @santifer
-/SUPPORT.md                      @santifer
-/LICENSE                         @santifer
-/.github/                        @santifer
+/AGENTS.md                       @kaelys-js
+/CLAUDE.md                       @kaelys-js
+/GOVERNANCE.md                   @kaelys-js
+/SECURITY.md                     @kaelys-js
+/CODE_OF_CONDUCT.md              @kaelys-js
+/SUPPORT.md                      @kaelys-js
+/LICENSE                         @kaelys-js
+/.github/                        @kaelys-js
 
 # ── Auth + multi-user (security-critical) ───────────────────────────
-/ui/src/lib/server/auth.ts                @santifer
-/ui/src/lib/server/db/auth-schema.ts      @santifer
-/ui/src/lib/server/db/migrate.ts          @santifer
-/ui/src/lib/server/user-context.ts        @santifer
-/ui/src/lib/server/profiles-db.ts         @santifer
-/ui/src/lib/server/profile-paths.ts       @santifer
-/ui/src/lib/server/ui-prefs.ts            @santifer
-/ui/src/lib/server/account-lifecycle.ts   @santifer
-/ui/src/hooks.server.ts                   @santifer
+/ui/src/lib/server/auth.ts                @kaelys-js
+/ui/src/lib/server/db/auth-schema.ts      @kaelys-js
+/ui/src/lib/server/db/migrate.ts          @kaelys-js
+/ui/src/lib/server/user-context.ts        @kaelys-js
+/ui/src/lib/server/profiles-db.ts         @kaelys-js
+/ui/src/lib/server/profile-paths.ts       @kaelys-js
+/ui/src/lib/server/ui-prefs.ts            @kaelys-js
+/ui/src/lib/server/account-lifecycle.ts   @kaelys-js
+/ui/src/hooks.server.ts                   @kaelys-js
 
 # ── CI / release tooling ────────────────────────────────────────────
-/release-please-config.json     @santifer
-/.release-please-manifest.json  @santifer
-/turbo.json                     @santifer
-/.npmrc                         @santifer
-/.mise.toml                     @santifer
-/pnpm-workspace.yaml            @santifer
-/biome.json                     @santifer
-/lefthook.yml                   @santifer
+/release-please-config.json     @kaelys-js
+/.release-please-manifest.json  @kaelys-js
+/turbo.json                     @kaelys-js
+/.npmrc                         @kaelys-js
+/.mise.toml                     @kaelys-js
+/pnpm-workspace.yaml            @kaelys-js
+/biome.json                     @kaelys-js
+/lefthook.yml                   @kaelys-js
 
 # ── Native config (signing + secrets paths) ─────────────────────────
-/ui/ios/App/fastlane/Fastfile        @santifer
-/ui/electron/electron-builder.config.json  @santifer
+/ui/ios/App/fastlane/Fastfile        @kaelys-js
+/ui/electron/electron-builder.config.json  @kaelys-js
 
 # ── Branding (drives generated files in many places) ────────────────
-/branding/                       @santifer
-/scripts/native/apply-brand.mjs  @santifer
+/branding/                       @kaelys-js
+/scripts/native/apply-brand.mjs  @kaelys-js

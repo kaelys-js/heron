@@ -1,3 +1,10 @@
 {
-  "recommendations": ["svelte.svelte-vscode"]
+  "//": "ui-workspace extensions (in addition to repo-root ../.vscode/extensions.json)",
+  "recommendations": [
+    "svelte.svelte-vscode",
+    "biomejs.biome",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.vscode-typescript-next"
+  ]
 }

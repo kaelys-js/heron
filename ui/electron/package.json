@@ -1,28 +1,42 @@
 {
   "name": "career-ops",
+  "description": "career-ops desktop — AI-powered, multi-user job search platform — SvelteKit + Capacitor + Better Auth + Drizzle + Anthropic + Gemini.",
   "version": "1.6.0",
-  "description": "career-ops desktop — AI-powered job search pipeline",
+  "private": true,
+  "license": "MIT",
   "author": {
     "name": "santifer",
     "email": "hi@santifer.io"
   },
+  "homepage": "https://career-ops.org",
   "repository": {
     "type": "git",
     "url": "https://github.com/santifer/career-ops"
   },
-  "license": "MIT",
-  "main": "build/src/index.js",
+  "bugs": {
+    "url": "https://github.com/santifer/career-ops/issues"
+  },
   "engines": {
-    "node": ">=22.0.0",
+    "node": ">=26.0.0",
     "pnpm": ">=11.0.0"
   },
+  "main": "build/src/index.js",
+  "keywords": [
+    "capacitor",
+    "electron",
+    "career-ops",
+    "desktop"
+  ],
   "scripts": {
     "build": "tsgo -p tsconfig.json",
     "build:tsc": "tsc",
+    "check": "tsgo --noEmit -p tsconfig.json",
+    "typecheck": "tsgo --noEmit -p tsconfig.json",
     "electron:start-live": "node ./live-runner.js",
     "electron:start": "pnpm run build && electron --inspect=5858 ./",
     "electron:pack": "pnpm run build && electron-builder build --dir -c ./electron-builder.config.json",
-    "electron:make": "pnpm run build && electron-builder build -c ./electron-builder.config.json -p always"
+    "electron:make": "pnpm run build && electron-builder build -c ./electron-builder.config.json -p always",
+    "clean": "node ../../scripts/clean.mjs"
   },
   "dependencies": {
     "@capacitor-community/electron": "5.0.1",
@@ -39,9 +53,5 @@
     "electron": "39.8.10",
     "electron-builder": "26.8.1",
     "typescript": "5.9.3"
-  },
-  "keywords": [
-    "capacitor",
-    "electron"
-  ]
+  }
 }

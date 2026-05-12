@@ -8,16 +8,21 @@
 # YAML-driven (vs scripts), no Node dependency for the hook runtime itself,
 # and `lefthook run <name>` lets you trigger any hook manually for debugging.
 
-# Skip rules — applied to every hook
-# (`rebase` is a common reason to want to skip checks)
+# Skip rules — applied to every hook (`rebase` is a common reason to skip checks)
 skip_output:
   - meta
   - success
   - skips
 
+# Bypass the entire hook suite with: SKIP_LEFTHOOK=1 git commit ...
+# Use sparingly — CI re-runs everything anyway.
+
+# ── pre-commit ──────────────────────────────────────────────────────
+# Fast checks that gate every commit (~1-2s total on warm cache).
+# Type-level + behaviour checks are deferred to pre-push (slower, runs
+# fewer times).
 pre-commit:
   parallel: true
-  # Skip during rebase / merge / amend operations
   skip:
     - rebase
     - merge
@@ -25,7 +30,7 @@ pre-commit:
     apply-brand:
       # Runs when any branding/ file is staged, then re-stages the
       # propagated artifacts so the commit captures everything atomically.
-      glob: 'branding/*'
+      glob: "branding/*"
       run: |
         node scripts/native/apply-brand.mjs > /dev/null 2>&1
         git add \
@@ -55,46 +60,113 @@ pre-commit:
     biome-format:
       # Formats non-svelte staged source files via Biome (fast Rust formatter).
       # Linting is intentionally NOT run — svelte-check covers type-level issues.
-      glob: '*.{ts,tsx,js,mjs,cjs,json}'
+      glob: "*.{ts,tsx,js,mjs,cjs,json,jsonc,yaml,yml}"
       run: |
-        npx --no-install biome format --write {staged_files} 2>/dev/null || true
+        pnpm exec biome format --write {staged_files} 2>/dev/null || true
         git add {staged_files} 2>/dev/null || true
       stage_fixed: true
+
+    biome-format-check:
+      # Read-only verification after auto-format. Fails if anything still
+      # isn't formatted (e.g. a non-svelte file with weird quoting biome
+      # can't fix automatically). This is the hard gate.
+      glob: "*.{ts,tsx,js,mjs,cjs,json,jsonc,yaml,yml}"
+      run: pnpm exec biome format {staged_files}
 
     prettier-svelte:
       # Biome doesn't support .svelte yet (as of 2026-05). Run prettier
       # with prettier-plugin-svelte for those files only — style matches
       # biome.json so .ts and .svelte feel identical.
-      glob: '*.svelte'
+      glob: "*.svelte"
       run: |
-        cd ui && npx --no-install prettier --write {staged_files} --ignore-path ../.prettierignore 2>/dev/null || true
+        cd ui && pnpm exec prettier --write {staged_files} --ignore-path ../.prettierignore 2>/dev/null || true
         cd .. && git add {staged_files} 2>/dev/null || true
       stage_fixed: true
 
+    prettier-svelte-check:
+      # Verification pass for .svelte files (mirrors biome-format-check).
+      glob: "*.svelte"
+      run: cd ui && pnpm exec prettier --check {staged_files} --ignore-path ../.prettierignore
+
+    svelte-check:
+      # Type-check ui/ on every commit. The user-asked-for safety net —
+      # catches type errors before they reach pre-push / CI.
+      # Skipped when no Svelte/TS files in ui/ are staged (avoids the
+      # ~5s cost on docs-only commits).
+      glob: "ui/**/*.{svelte,ts,tsx,js,mjs}"
+      run: cd ui && pnpm exec svelte-check --tsconfig ./tsconfig.json --threshold error
+
+    tsgo-electron:
+      # Type-check ui/electron/ when its source changes. tsgo is the
+      # Rust-rewrite TypeScript compiler — ~10× faster than tsc, so this
+      # adds <1s to the commit path.
+      glob: "ui/electron/**/*.{ts,tsx,js,mjs}"
+      run: cd ui/electron && pnpm exec tsgo --noEmit -p tsconfig.json
+
     no-secrets:
       # Cheap regex guard — block obvious secrets from being committed.
-      glob: '*.{ts,tsx,js,mjs,svelte,json,yaml,yml,md,env,mjs}'
+      # Patterns: Anthropic API keys, GitHub PATs (classic + fine-grained),
+      # AWS access keys, OpenAI keys, Google API keys, generic PEM blocks,
+      # Stripe live keys, Slack bot tokens.
+      glob: "*.{ts,tsx,js,mjs,cjs,svelte,json,yaml,yml,md,env,toml,sh,py,rb}"
       run: |
-        if grep -lE '(sk-[A-Za-z0-9]{32,}|ghp_[A-Za-z0-9]{36}|AKIA[0-9A-Z]{16}|-----BEGIN (RSA |EC )?PRIVATE KEY-----)' {staged_files} 2>/dev/null; then
-          echo "✗ Secret pattern detected in staged files (Anthropic key / GitHub PAT / AWS key / private key)"
-          echo "  If this is a false positive, run: git commit --no-verify"
+        if grep -lE '(sk-ant-[A-Za-z0-9-]{40,}|sk-[A-Za-z0-9]{32,}|ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{82}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|xoxb-[0-9]{10,}-[0-9]{10,}-[A-Za-z0-9]{20,}|sk_live_[A-Za-z0-9]{20,}|-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----)' {staged_files} 2>/dev/null; then
+          echo "✗ Secret pattern detected in staged files"
+          echo "  Patterns checked: Anthropic / OpenAI / GitHub PAT / GitHub fine-grained PAT / AWS / Google / Slack / Stripe / PEM"
+          echo "  If this is a false positive, run: SKIP_LEFTHOOK=1 git commit ..."
           exit 1
         fi
 
+# ── pre-push ────────────────────────────────────────────────────────
+# Heavier gates that only fire on `git push`. CI re-runs all of these
+# but a green push means the PR will likely go green too.
 pre-push:
-  parallel: false  # sequential — check fast things first
+  parallel: true # all 4 can run independently
   commands:
     svelte-check:
-      # Type-check before push so we never push a broken main.
-      run: |
-        cd ui && pnpm exec svelte-check --threshold warning
+      # Full type-check (no glob filter — runs whole project).
+      run: cd ui && pnpm exec svelte-check --tsconfig ./tsconfig.json --threshold error
+    tsgo-electron:
+      run: cd ui/electron && pnpm exec tsgo --noEmit -p tsconfig.json
+    format-check:
+      # Verify everything is formatted — both biome (non-svelte) + prettier (svelte).
+      run: pnpm format:check
     verify-capacitor:
-      # Full brand/native verifier.
+      # Brand + native consistency. Cheap (~1s).
       run: node verify-capacitor.mjs
+    verify-multi-user:
+      # Multi-user behavioural verifier. ~30s — gated to pre-push only
+      # because it spins up a real server + does HTTP round-trips.
+      run: node verify-multi-user.mjs
+      env:
+        BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-pre-push
     verify-pipeline:
       # Tracker hygiene.
       run: node verify-pipeline.mjs
 
+# ── commit-msg (lightweight) ────────────────────────────────────────
+# Enforce Conventional Commits format (so release-please can generate
+# the changelog without manual curation).
+commit-msg:
+  commands:
+    conventional:
+      run: |
+        msg=$(cat {1})
+        # Allow merge commits + revert commits + release-please commits + fixup commits.
+        if echo "$msg" | grep -qE '^(Merge|Revert|fixup!|squash!|chore\(main\): release)'; then
+          exit 0
+        fi
+        if ! echo "$msg" | grep -qE '^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z0-9_-]+\))?!?: .{1,72}'; then
+          echo "✗ Commit message doesn't follow Conventional Commits."
+          echo "  Format: type(scope)!: subject  (max 72 chars on subject line)"
+          echo "  Types:  feat fix chore docs style refactor perf test build ci revert"
+          echo "  Example: feat(scan): add Workable ATS adapter"
+          echo "  Bypass:  SKIP_LEFTHOOK=1 git commit ..."
+          exit 1
+        fi
+
+# ── Manual invocation ───────────────────────────────────────────────
 # Run individual checks via:
-#   lefthook run pre-commit --commands apply-brand
-#   lefthook run pre-push
+#   lefthook run pre-commit
+#   lefthook run pre-commit --commands svelte-check
+#   lefthook run pre-push --commands verify-multi-user

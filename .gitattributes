@@ -1,0 +1,171 @@
+# .gitattributes — per-path text/binary + EOL + diff/merge behaviour.
+#
+# Goals:
+#   • Deterministic line endings across macOS / Linux / Windows.
+#   • Better diffs for languages git doesn't understand by default.
+#   • Mark generated / vendored paths so they don't show up in stats
+#     (linguist) and don't dirty diffs.
+#
+# Reference: https://git-scm.com/docs/gitattributes
+# Note: .gitattributes does NOT support inline comments (# only at line start).
+
+# ── Default: detect text, normalize to LF on commit ─────────────────
+* text=auto eol=lf
+
+# ── Shell scripts always LF (executable on POSIX) ───────────────────
+*.sh         text eol=lf
+*.bash       text eol=lf
+*.zsh        text eol=lf
+
+# ── Windows-specific files force CRLF ───────────────────────────────
+*.bat        text eol=crlf
+*.cmd        text eol=crlf
+*.ps1        text eol=crlf
+*.psm1       text eol=crlf
+
+# ── Source code with per-language diff hints ────────────────────────
+*.ts         text diff=typescript
+*.tsx        text diff=typescript
+*.js         text
+*.mjs        text
+*.cjs        text
+*.jsx        text
+*.svelte     text linguist-language=Svelte
+*.json       text
+*.jsonc      text
+*.json5      text
+*.yaml       text
+*.yml        text
+*.toml       text
+*.md         text diff=markdown
+*.mdx        text diff=markdown
+*.html       text diff=html
+*.css        text diff=css
+*.scss       text diff=css
+
+# ── Native ──────────────────────────────────────────────────────────
+*.swift      text diff=swift
+*.kt         text
+*.java       text diff=java
+*.py         text diff=python
+*.rb         text diff=ruby
+*.go         text diff=golang
+*.rs         text diff=rust
+*.c          text diff=c
+*.h          text diff=c
+*.cpp        text diff=cpp
+*.m          text diff=objc
+
+# ── SVG is XML, so diffable ────────────────────────────────────────
+*.svg        text
+
+# ── Binary: never touch line endings, never try to merge ────────────
+*.png        binary
+*.jpg        binary
+*.jpeg       binary
+*.gif        binary
+*.webp       binary
+*.ico        binary
+*.icns       binary
+*.pdf        binary
+*.zip        binary
+*.tar        binary
+*.tar.gz     binary
+*.gz         binary
+*.7z         binary
+*.dmg        binary
+*.exe        binary
+*.app        binary
+*.dylib      binary
+*.so         binary
+*.dll        binary
+*.lib        binary
+*.a          binary
+*.framework  binary
+*.bundle     binary
+*.jar        binary
+*.aar        binary
+*.apk        binary
+*.aab        binary
+*.ipa        binary
+*.AppImage   binary
+*.snap       binary
+*.deb        binary
+*.rpm        binary
+*.pkg        binary
+*.mp3        binary
+*.mp4        binary
+*.mov        binary
+*.webm       binary
+*.wav        binary
+*.ogg        binary
+*.woff       binary
+*.woff2      binary
+*.ttf        binary
+*.eot        binary
+*.otf        binary
+
+# ── Lockfiles — generated, never merge by hand ──────────────────────
+pnpm-lock.yaml           text linguist-generated merge=ours
+package-lock.json        text linguist-generated merge=ours
+yarn.lock                text linguist-generated merge=ours
+Gemfile.lock             text linguist-generated merge=ours
+Package.resolved         text linguist-generated merge=ours
+
+# ── Generated files — excluded from linguist stats + diffs ──────────
+CHANGELOG.md                                          linguist-generated
+ui/.svelte-kit/**                                     linguist-generated
+ui/build/**                                           linguist-generated
+ui/electron/build/**                                  linguist-generated
+ui/electron/dist/**                                   linguist-generated
+ui/electron/app/**                                    linguist-generated
+ui/static/icons/*.png                                 linguist-generated
+ui/static/favicon.ico                                 linguist-generated
+ui/static/apple-touch-icon*.png                       linguist-generated
+ui/ios/App/App/Brand.swift                            linguist-generated
+ui/ios/App/CareerOpsWidget/Brand.swift                linguist-generated
+ui/ios/App/CareerOpsLiveActivity/Brand.swift          linguist-generated
+ui/ios/App/CareerOpsShareExtension/Brand.swift        linguist-generated
+ui/ios/App/CareerOpsWatch/Assets.xcassets/**          linguist-generated
+ui/ios/App/App/Assets.xcassets/**                     linguist-generated
+ui/src/lib/client/brand.ts                            linguist-generated
+ui/electron/src/brand.ts                              linguist-generated
+
+# ── Vendored / 3rd-party — excluded from linguist stats ────────────
+node_modules/**                                       linguist-vendored
+ui/ios/App/Pods/**                                    linguist-vendored
+ui/android/.gradle/**                                 linguist-vendored
+.venv/**                                              linguist-vendored
+venv/**                                               linguist-vendored
+
+# ── Documentation override — count docs as docs ────────────────────
+docs/**                                               linguist-documentation
+*.md                                                  linguist-documentation
+
+# ── Xcode project files — opt out of merge, they conflict horribly ─
+*.pbxproj         text -merge
+*.xcworkspacedata text -merge
+*.xcscheme        text -merge
+*.xcsettings      text -merge
+*.plist           text -merge
+*.entitlements    text -merge
+
+# ── Export-ignore — files NOT included in `git archive` ────────────
+.github/                  export-ignore
+.husky/                   export-ignore
+.vscode/                  export-ignore
+.idea/                    export-ignore
+.gitignore                export-ignore
+.gitattributes            export-ignore
+.editorconfig             export-ignore
+.mise.toml                export-ignore
+.npmrc                    export-ignore
+.prettierignore           export-ignore
+biome.json                export-ignore
+lefthook.yml              export-ignore
+turbo.json                export-ignore
+test-all.mjs              export-ignore
+verify-*.mjs              export-ignore
+batch/                    export-ignore
+data/                     export-ignore
+.playwright-*/            export-ignore

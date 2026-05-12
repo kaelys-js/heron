@@ -137,7 +137,26 @@ export async function openExternal(url: string): Promise<void> {
 // App Launcher — open mailto:, tel:, system settings URLs.
 // ──────────────────────────────────────────────────────────────────────
 
+/** Open an external URL. On native, hands off to the OS via the Capacitor
+ *  AppLauncher plugin. On web, navigates the current window.
+ *
+ *  Security: refuses non-http(s)/mailto/tel URLs to prevent javascript:
+ *  / data: / file: URI exploitation if a call site ever forwards user input
+ *  unchecked. Returns false rather than throwing so callers can fall back. */
+const ALLOWED_LAUNCH_SCHEMES = new Set(['http:', 'https:', 'mailto:', 'tel:']);
 export async function launchUrl(url: string): Promise<boolean> {
+  let parsed: URL;
+  try {
+    parsed = new URL(
+      url,
+      typeof window !== 'undefined' ? window.location.href : 'http://localhost',
+    );
+  } catch {
+    return false;
+  }
+  if (!ALLOWED_LAUNCH_SCHEMES.has(parsed.protocol)) {
+    return false;
+  }
   if (isNative()) {
     try {
       const { AppLauncher } = await import('@capacitor/app-launcher');
@@ -149,7 +168,7 @@ export async function launchUrl(url: string): Promise<boolean> {
       return false;
     }
   }
-  window.location.href = url;
+  window.location.href = parsed.toString();
   return true;
 }
 
