@@ -269,7 +269,7 @@
               href={url}
               target="_blank"
               rel="noopener"
-              class="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+              class="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
             >
               Open <ExternalLink class="size-2.5" />
             </a>
@@ -294,7 +294,7 @@
             {/if}
           </div>
         {:else if !url.trim()}
-          <p class="text-[10px] text-muted-foreground/70">
+          <p class="text-[11px] text-muted-foreground/70">
             Paste a URL — we'll auto-detect the source and pre-fill the company name.
           </p>
         {/if}
@@ -305,12 +305,12 @@
         <div class="space-y-1.5">
           <Label class="text-xs">Role title</Label>
           <Input bind:value={role} placeholder="Senior Backend Engineer" class="h-9 text-sm" />
-          <p class="text-[10px] text-muted-foreground/70">Shown on cards and in your tracker.</p>
+          <p class="text-[11px] text-muted-foreground/70">Shown on cards and in your tracker.</p>
         </div>
         <div class="space-y-1.5">
           <Label class="text-xs">Company</Label>
           <Input bind:value={company} placeholder="Acme" class="h-9 text-sm" />
-          <p class="text-[10px] text-muted-foreground/70">Auto-filled when we recognize the URL.</p>
+          <p class="text-[11px] text-muted-foreground/70">Auto-filled when we recognize the URL.</p>
         </div>
       </div>
 
@@ -330,7 +330,7 @@
           />
           <div class="flex-1 min-w-0">
             <div class="text-xs font-medium">Also pull every other open role at {company}</div>
-            <p class="text-[10px] text-muted-foreground/70 mt-0.5 leading-relaxed">
+            <p class="text-[11px] text-muted-foreground/70 mt-0.5 leading-relaxed">
               Fires a zero-token portal scan against {detected?.source ?? 'this portal'} for {company}
               after this URL is saved. ~30s, free, auto-triage runs after.
             </p>
@@ -375,14 +375,14 @@
                 <Icon class={cn('size-3.5 mt-0.5 flex-shrink-0', s.tint)} />
                 <div class="flex-1 min-w-0">
                   <div class="text-xs font-medium">{s.label}</div>
-                  <div class="text-[10px] text-muted-foreground/70 leading-tight">{s.desc}</div>
+                  <div class="text-[11px] text-muted-foreground/70 leading-tight">{s.desc}</div>
                 </div>
                 <CheckMark active={status === s.value} class="mt-0.5" />
               </DropdownMenu.Item>
             {/each}
           </DropdownMenu.Content>
         </DropdownMenu.Root>
-        <p class="text-[10px] text-muted-foreground/70">
+        <p class="text-[11px] text-muted-foreground/70">
           Most jobs start in <span class="font-mono text-foreground">Scored</span> so you can triage
           them; switch to <span class="font-mono text-foreground">Applied</span> if you've already submitted.
         </p>
@@ -394,7 +394,7 @@
           <Lightbulb class="size-3.5 text-amber-400/90 mt-0.5 flex-shrink-0" />
           <div class="space-y-1 min-w-0">
             <div class="text-[11px] font-medium">What happens next</div>
-            <p class="text-[10px] text-muted-foreground/80 leading-relaxed">
+            <p class="text-[11px] text-muted-foreground/80 leading-relaxed">
               The job lands in your pipeline. From the job detail page you can run a deep evaluation
               (<code class="font-mono text-foreground/80">{cmd('oferta')}</code>), generate a
               tailored CV PDF, and apply — manually, via LinkedIn Easy Apply, or via Open &amp; Mark

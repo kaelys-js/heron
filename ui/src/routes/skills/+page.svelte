@@ -200,7 +200,7 @@
               <span>{cat.label}</span>
               <span
                 class={cn(
-                  'text-[10px] tabular-nums',
+                  'text-[11px] tabular-nums',
                   active ? 'opacity-70' : 'text-muted-foreground/60',
                 )}>{count}</span
               >
@@ -231,7 +231,7 @@
                   >
                     {CATEGORY_LABEL[cat]}
                   </h2>
-                  <span class="text-[10px] text-muted-foreground/60 tabular-nums"
+                  <span class="text-[11px] text-muted-foreground/60 tabular-nums"
                     >{items.length}</span
                   >
                 </div>
@@ -282,7 +282,7 @@
                             </p>
                           {/if}
                           <div class="flex items-center gap-2 mt-2">
-                            <code class="text-[10px] font-mono text-muted-foreground/70 truncate"
+                            <code class="text-[11px] font-mono text-muted-foreground/70 truncate"
                               >{s.invocation}</code
                             >
                           </div>
@@ -297,7 +297,7 @@
         </div>
       {/if}
 
-      <p class="text-[10px] text-muted-foreground/50 text-center pt-4">
+      <p class="text-[11px] text-muted-foreground/50 text-center pt-4">
         Skills live as markdown files in <code class="font-mono">modes/</code>. Edit any of them to
         customize the prompt; the dashboard hot-reloads on next page load.
       </p>
@@ -330,19 +330,19 @@
             <div class="flex items-center gap-2 mt-2 flex-wrap">
               <span
                 class={cn(
-                  'inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-medium',
+                  'inline-flex items-center gap-1 text-[11px] uppercase tracking-wider font-medium',
                 )}
               >
                 <span class={cn('size-1.5 rounded-full', CATEGORY_DOT[s.category])}></span>
                 <span class="text-muted-foreground">{CATEGORY_LABEL[s.category]}</span>
               </span>
-              <span class="text-[10px] text-muted-foreground/60">·</span>
-              <span class="text-[10px] text-muted-foreground/60 tabular-nums"
+              <span class="text-[11px] text-muted-foreground/60">·</span>
+              <span class="text-[11px] text-muted-foreground/60 tabular-nums"
                 >{(s.bytes / 1024).toFixed(1)} KB</span
               >
               {#if s.language === 'es'}
-                <span class="text-[10px] text-muted-foreground/60">·</span>
-                <span class="text-[10px] text-muted-foreground/70 font-mono uppercase">Spanish</span
+                <span class="text-[11px] text-muted-foreground/60">·</span>
+                <span class="text-[11px] text-muted-foreground/70 font-mono uppercase">Spanish</span
                 >
               {/if}
             </div>
@@ -354,10 +354,10 @@
         <!-- Run this skill — large, prominent block -->
         <div class="space-y-2">
           <div class="flex items-baseline justify-between gap-2">
-            <div class="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-medium">
+            <div class="text-[11px] uppercase tracking-wider text-muted-foreground/80 font-medium">
               Run this skill
             </div>
-            <span class="text-[10px] text-muted-foreground/60"
+            <span class="text-[11px] text-muted-foreground/60"
               >⌘ + paste in Claude Code, or terminal</span
             >
           </div>
@@ -382,7 +382,7 @@
               </Button>
             </div>
             <div
-              class="px-3 py-1.5 border-t border-border/40 bg-card/40 flex items-center gap-2 text-[10px] text-muted-foreground/80"
+              class="px-3 py-1.5 border-t border-border/40 bg-card/40 flex items-center gap-2 text-[11px] text-muted-foreground/80"
             >
               <span>From terminal:</span>
               <code class="font-mono text-foreground/80">claude {s.id}</code>
@@ -406,7 +406,7 @@
         {#if s.inputs && s.inputs.length > 0}
           <div>
             <div
-              class="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-medium mb-1.5"
+              class="text-[11px] uppercase tracking-wider text-muted-foreground/80 font-medium mb-1.5"
             >
               Inputs you'll be asked for
             </div>
@@ -439,7 +439,7 @@
       </div>
 
       <div class="px-6 py-3 border-t flex items-center justify-between bg-muted/20">
-        <div class="text-[10px] text-muted-foreground/70 font-mono truncate">
+        <div class="text-[11px] text-muted-foreground/70 font-mono truncate">
           modes/{s.id}.md
         </div>
         <Button

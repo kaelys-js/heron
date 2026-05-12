@@ -123,7 +123,7 @@
           placeholder="The application got read · the recruiter responded fast · I liked my CV bullets…"
           class="text-sm min-h-[72px]"
         />
-        <p class="text-[10px] text-muted-foreground/70 leading-tight">
+        <p class="text-[11px] text-muted-foreground/70 leading-tight">
           Even a rejected app usually has SOMETHING you'd reuse — keep it for next time.
         </p>
       </div>
@@ -138,7 +138,7 @@
           placeholder="They wanted Rust experience that wasn't in the JD · the recruiter ghosted after asking about salary expectations…"
           class="text-sm min-h-[72px]"
         />
-        <p class="text-[10px] text-muted-foreground/70 leading-tight">
+        <p class="text-[11px] text-muted-foreground/70 leading-tight">
           Anything that wasn't in the JD or was different from your expectation.
         </p>
       </div>
@@ -153,7 +153,7 @@
           placeholder="Different proof point in the cover letter · fewer applications, more research per app · reach out to a peer first…"
           class="text-sm min-h-[72px]"
         />
-        <p class="text-[10px] text-muted-foreground/70 leading-tight">
+        <p class="text-[11px] text-muted-foreground/70 leading-tight">
           A specific lever you'd pull next time. Vague is OK; specific is better.
         </p>
       </div>

@@ -25,7 +25,7 @@
           {s.count.toLocaleString()}
         </div>
       </div>
-      <div class="w-14 text-[10px] text-right shrink-0">
+      <div class="w-14 text-[11px] text-right shrink-0">
         {#if drop != null && drop > 0}
           <span class="text-red-400">−{drop}%</span>
         {:else if drop != null && drop < 0}

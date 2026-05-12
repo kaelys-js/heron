@@ -255,7 +255,7 @@
               <div class="text-[11px] space-y-1">
                 <div class="flex items-start gap-2">
                   <span
-                    class="text-[10px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 flex-shrink-0"
+                    class="text-[11px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 flex-shrink-0"
                     >writes</span
                   >
                   <ul class="text-muted-foreground/90 space-y-0.5">
@@ -266,7 +266,7 @@
                 </div>
                 <div class="flex items-start gap-2">
                   <span
-                    class="text-[10px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-blue-500/40 bg-blue-500/10 text-blue-300 flex-shrink-0"
+                    class="text-[11px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-blue-500/40 bg-blue-500/10 text-blue-300 flex-shrink-0"
                     >redo</span
                   >
                   <p class="text-muted-foreground/90 leading-relaxed">{step.redo}</p>

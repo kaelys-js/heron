@@ -70,7 +70,7 @@
   </Popover.Trigger>
   <Popover.Content side="bottom" align="start" class="w-[280px] p-0">
     <div class="p-3 border-b">
-      <div class="text-[10px] uppercase tracking-wide text-muted-foreground mb-1.5">
+      <div class="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5">
         Quick presets
       </div>
       <div class="grid grid-cols-4 gap-1">
@@ -92,7 +92,7 @@
 
     <div class="grid grid-cols-2 divide-x">
       <div>
-        <div class="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+        <div class="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wide text-muted-foreground">
           Hour
         </div>
         <div class="max-h-48 overflow-y-auto px-1.5 pb-1.5">
@@ -114,7 +114,7 @@
         </div>
       </div>
       <div>
-        <div class="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+        <div class="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wide text-muted-foreground">
           Minute
         </div>
         <div class="max-h-48 overflow-y-auto px-1.5 pb-1.5">

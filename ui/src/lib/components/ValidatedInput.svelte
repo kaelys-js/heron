@@ -143,7 +143,7 @@
   {/if}
 
   {#if showError && inlineError}
-    <p class="text-[10px] text-red-300/90 leading-tight mt-1 flex items-center gap-1">
+    <p class="text-[11px] text-red-300/90 leading-tight mt-1 flex items-center gap-1">
       <AlertCircle class="size-2.5 flex-shrink-0" />
       {errorMessage}
     </p>

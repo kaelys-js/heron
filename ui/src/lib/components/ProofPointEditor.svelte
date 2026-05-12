@@ -134,7 +134,7 @@
     <div class="rounded-md border border-dashed border-border/50 bg-muted/10 px-4 py-6 text-center">
       <Trophy class="size-5 text-muted-foreground/40 mx-auto mb-2" />
       <p class="text-xs text-muted-foreground/80">No proof points yet</p>
-      <p class="text-[10px] text-muted-foreground/60 mt-0.5">
+      <p class="text-[11px] text-muted-foreground/60 mt-0.5">
         Add concrete projects, articles, or wins below.
       </p>
     </div>
@@ -173,7 +173,7 @@
             class={cn('size-3 transition-transform duration-200 ease-out', isOpen && 'rotate-90')}
           />
         </button>
-        <span class="text-[10px] font-mono font-semibold text-muted-foreground/60 tabular-nums w-7"
+        <span class="text-[11px] font-mono font-semibold text-muted-foreground/60 tabular-nums w-7"
           >#{(i + 1).toString().padStart(2, '0')}</span
         >
         {#if !isOpen}
@@ -187,13 +187,13 @@
             {p.name || 'Untitled proof point'}
           </span>
           {#if p.hero_metric}
-            <span class="text-[10px] font-mono text-emerald-400/80 truncate max-w-[40%]"
+            <span class="text-[11px] font-mono text-emerald-400/80 truncate max-w-[40%]"
               >· {p.hero_metric}</span
             >
           {/if}
         {:else}
           <span
-            class="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium flex-1"
+            class="text-[11px] uppercase tracking-wider text-muted-foreground/60 font-medium flex-1"
             >Proof point</span
           >
         {/if}
@@ -284,7 +284,7 @@
             <!-- Name (full-width prominent) -->
             <div class="space-y-1.5 pt-2">
               <Label
-                class="text-[10px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5"
+                class="text-[11px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5"
               >
                 <Trophy class="size-2.5" /> Name
               </Label>
@@ -301,7 +301,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div class="space-y-1.5">
                 <Label
-                  class="text-[10px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5"
+                  class="text-[11px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5"
                 >
                   <TrendingUp class="size-2.5" /> Hero metric
                 </Label>
@@ -312,13 +312,13 @@
                   placeholder="90% faster CI/CD · 3x throughput"
                   class="h-9 text-xs font-mono"
                 />
-                <p class="text-[10px] text-muted-foreground/60 leading-tight">
+                <p class="text-[11px] text-muted-foreground/60 leading-tight">
                   One concrete number with units, not a vibe ("scaled significantly" → drop it).
                 </p>
               </div>
               <div class="space-y-1.5">
                 <Label
-                  class="text-[10px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5"
+                  class="text-[11px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5"
                 >
                   <LinkIcon class="size-2.5" /> URL
                   <span class="opacity-50 normal-case font-normal tracking-normal">(optional)</span>
@@ -334,7 +334,7 @@
                   class="font-mono"
                   ariaLabel="Proof point URL"
                 />
-                <p class="text-[10px] text-muted-foreground/60 leading-tight">
+                <p class="text-[11px] text-muted-foreground/60 leading-tight">
                   Case study, blog post, or live demo — anything a reader can verify.
                 </p>
               </div>
@@ -343,7 +343,7 @@
             <!-- Description — RichTextarea -->
             <div class="space-y-1.5">
               <Label
-                class="text-[10px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5"
+                class="text-[11px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5"
               >
                 <FileText class="size-2.5" /> Description
                 <span class="opacity-50 normal-case font-normal tracking-normal"

@@ -213,7 +213,7 @@
   {#if showCounter}
     <div
       class={cn(
-        'absolute bottom-1.5 right-2 flex items-center gap-2 text-[10px] font-mono tabular-nums pointer-events-none transition-opacity',
+        'absolute bottom-1.5 right-2 flex items-center gap-2 text-[11px] font-mono tabular-nums pointer-events-none transition-opacity',
         focused ? 'text-muted-foreground' : 'text-muted-foreground/40',
       )}
     >

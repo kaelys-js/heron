@@ -152,7 +152,7 @@
             >
           </div>
           <div class="text-2xl font-mono tabular-nums mt-1 text-emerald-200">{stats.healthy}</div>
-          <div class="text-[10px] text-muted-foreground">of {stats.total} components</div>
+          <div class="text-[11px] text-muted-foreground">of {stats.total} components</div>
         </div>
         <div
           class={cn(
@@ -179,7 +179,7 @@
           >
             {stats.issues}
           </div>
-          <div class="text-[10px] text-muted-foreground">degraded or down</div>
+          <div class="text-[11px] text-muted-foreground">degraded or down</div>
         </div>
         <div class="rounded-lg border border-zinc-500/30 bg-zinc-500/5 px-4 py-3">
           <div class="flex items-center gap-2">
@@ -189,7 +189,7 @@
             >
           </div>
           <div class="text-2xl font-mono tabular-nums mt-1 text-zinc-200">{stats.unconfigured}</div>
-          <div class="text-[10px] text-muted-foreground">awaiting config</div>
+          <div class="text-[11px] text-muted-foreground">awaiting config</div>
         </div>
         <div class="rounded-lg border border-blue-500/30 bg-blue-500/5 px-4 py-3">
           <div class="flex items-center gap-2">
@@ -206,7 +206,7 @@
           <div class="text-2xl font-mono tabular-nums mt-1 text-blue-200">
             {data.report.summary.runningTasks.length}
           </div>
-          <div class="text-[10px] text-muted-foreground overflow-hidden whitespace-nowrap">
+          <div class="text-[11px] text-muted-foreground overflow-hidden whitespace-nowrap">
             {data.report.summary.runningTasks.length === 0
               ? 'no active tasks'
               : data.report.summary.runningTasks.join(' · ')}
@@ -235,12 +235,12 @@
                   <div class="flex items-center gap-2 flex-wrap">
                     <Card.Title class="text-sm leading-tight">{c.name}</Card.Title>
                     {#if c.required}
-                      <span class="text-[10px] font-medium text-red-400/90 uppercase tracking-wide"
+                      <span class="text-[11px] font-medium text-red-400/90 uppercase tracking-wide"
                         >required</span
                       >
                     {:else}
                       <span
-                        class="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wide"
+                        class="text-[11px] font-medium text-muted-foreground/60 uppercase tracking-wide"
                         >optional</span
                       >
                     {/if}
@@ -268,7 +268,7 @@
               {/if}
 
               <div class="space-y-1">
-                <p class="text-[10px] uppercase tracking-wide text-muted-foreground/70">Powers</p>
+                <p class="text-[11px] uppercase tracking-wide text-muted-foreground/70">Powers</p>
                 <ul class="text-xs space-y-0.5">
                   {#each c.powers as feature}
                     <li class="flex items-start gap-1.5">
@@ -285,7 +285,7 @@
                     <span class="font-mono tabular-nums text-foreground">{c.usage.last24h}</span>
                     <span class="text-muted-foreground"> calls · 24h</span>
                   </div>
-                  <div class="text-[10px] text-muted-foreground">
+                  <div class="text-[11px] text-muted-foreground">
                     {c.usage.lastUsedAt
                       ? 'last ' + formatRelativeTime(c.usage.lastUsedAt)
                       : 'no recent calls'}
@@ -352,7 +352,7 @@
         {/each}
       </div>
 
-      <p class="text-[10px] text-muted-foreground/60 text-right">
+      <p class="text-[11px] text-muted-foreground/60 text-right">
         Generated {formatRelativeTime(data.report.generatedAt)}
       </p>
     </div>

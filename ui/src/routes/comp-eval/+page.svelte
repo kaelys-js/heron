@@ -268,7 +268,7 @@
                   bind:value={offer.equityDiscountPct}
                   class="h-9 text-sm"
                 />
-                <p class="text-[10px] text-muted-foreground/70">
+                <p class="text-[11px] text-muted-foreground/70">
                   How much less you value paper vs cash. 30% is a reasonable default for pre-IPO.
                 </p>
               </div>
@@ -281,7 +281,7 @@
                   bind:value={offer.discountRatePct}
                   class="h-9 text-sm"
                 />
-                <p class="text-[10px] text-muted-foreground/70">
+                <p class="text-[11px] text-muted-foreground/70">
                   Time-value of money. 5% ≈ savings rate.
                 </p>
               </div>
@@ -370,34 +370,34 @@
           <Card.Content class="space-y-4">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div class="rounded-md border border-border/40 bg-card px-3 py-2">
-                <div class="text-[10px] uppercase tracking-wider text-muted-foreground">
+                <div class="text-[11px] uppercase tracking-wider text-muted-foreground">
                   Year 1 cash
                 </div>
                 <div class="text-lg font-mono font-semibold">{fmt(result.year1Cash)}</div>
-                <div class="text-[10px] text-muted-foreground/70">no equity</div>
+                <div class="text-[11px] text-muted-foreground/70">no equity</div>
               </div>
               <div class="rounded-md border border-border/40 bg-card px-3 py-2">
-                <div class="text-[10px] uppercase tracking-wider text-muted-foreground">
+                <div class="text-[11px] uppercase tracking-wider text-muted-foreground">
                   4-year total
                 </div>
                 <div class="text-lg font-mono font-semibold">{fmt(result.fourYearNominal)}</div>
-                <div class="text-[10px] text-muted-foreground/70">nominal</div>
+                <div class="text-[11px] text-muted-foreground/70">nominal</div>
               </div>
               <div class="rounded-md border border-border/40 bg-card px-3 py-2">
-                <div class="text-[10px] uppercase tracking-wider text-muted-foreground">
+                <div class="text-[11px] uppercase tracking-wider text-muted-foreground">
                   4-yr discounted
                 </div>
                 <div class="text-lg font-mono font-semibold">{fmt(result.fourYearDiscounted)}</div>
-                <div class="text-[10px] text-muted-foreground/70">
+                <div class="text-[11px] text-muted-foreground/70">
                   @ {offer.discountRatePct}%/yr
                 </div>
               </div>
               <div class="rounded-md border border-border/40 bg-card px-3 py-2">
-                <div class="text-[10px] uppercase tracking-wider text-muted-foreground">
+                <div class="text-[11px] uppercase tracking-wider text-muted-foreground">
                   Equity NPV
                 </div>
                 <div class="text-lg font-mono font-semibold">{fmt(result.equityNpv)}</div>
-                <div class="text-[10px] text-muted-foreground/70">risk + discount</div>
+                <div class="text-[11px] text-muted-foreground/70">risk + discount</div>
               </div>
             </div>
 

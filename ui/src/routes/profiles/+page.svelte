@@ -231,11 +231,11 @@
                   {:else}
                     <div class="flex items-center gap-2 flex-wrap">
                       <h3 class="text-sm font-semibold">{p.name}</h3>
-                      <code class="text-[10px] font-mono text-muted-foreground/70">{p.id}</code>
+                      <code class="text-[11px] font-mono text-muted-foreground/70">{p.id}</code>
                       {#if isActive}
                         <Badge
                           variant="outline"
-                          class="text-[10px] h-4 px-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                          class="text-[11px] h-4 px-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
                         >
                           <Check class="size-2.5 mr-0.5" /> active
                         </Badge>
@@ -322,7 +322,7 @@
                     autopilot) is preserved.
                   </p>
                   <div class="flex items-center gap-2">
-                    <Label class="text-[10px]">Type DELETE to confirm:</Label>
+                    <Label class="text-[11px]">Type DELETE to confirm:</Label>
                     <Input
                       bind:value={confirmDeleteTyped}
                       class="h-7 text-xs font-mono w-32"

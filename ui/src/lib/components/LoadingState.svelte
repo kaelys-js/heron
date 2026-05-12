@@ -69,7 +69,7 @@
           ></div>
         </div>
       {/if}
-      <p class="text-[10px] uppercase tracking-wider text-muted-foreground">
+      <p class="text-[11px] uppercase tracking-wider text-muted-foreground">
         {BRAND.displayName}
       </p>
     </div>

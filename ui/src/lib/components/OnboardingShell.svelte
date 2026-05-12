@@ -69,7 +69,7 @@
       </div>
       <div>
         <div class="text-sm font-semibold">{APP_NAME}</div>
-        <div class="text-[10px] text-muted-foreground">First-time setup</div>
+        <div class="text-[11px] text-muted-foreground">First-time setup</div>
       </div>
     </div>
 
@@ -113,7 +113,7 @@
     <div class="flex-1"></div>
 
     <div
-      class="text-[10px] text-muted-foreground/60 leading-relaxed border-t border-border/40 pt-3"
+      class="text-[11px] text-muted-foreground/60 leading-relaxed border-t border-border/40 pt-3"
     >
       Estimated time: 5–10 minutes. You can come back to any completed step from this sidebar — your
       work is auto-saved as you go.

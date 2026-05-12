@@ -210,7 +210,7 @@
 
               <div class="flex items-center gap-1.5 flex-shrink-0">
                 {#if row.authKind === 'always-on'}
-                  <span class="text-[10px] text-emerald-400 inline-flex items-center gap-1">
+                  <span class="text-[11px] text-emerald-400 inline-flex items-center gap-1">
                     <CheckCircle2 class="size-3" /> Active
                   </span>
                 {:else if row.authKind === 'env-key'}
@@ -325,7 +325,7 @@
                     />
                   </div>
                 </div>
-                <p class="text-[10px] text-muted-foreground/80 mt-2 leading-relaxed">
+                <p class="text-[11px] text-muted-foreground/80 mt-2 leading-relaxed">
                   Gmail requires a 16-character app password (not your regular password). Generate
                   one at
                   <a

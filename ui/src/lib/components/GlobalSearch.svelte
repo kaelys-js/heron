@@ -168,7 +168,7 @@
               </div>
             </div>
             <span
-              class="text-[10px] uppercase tracking-wider text-muted-foreground/70 flex-shrink-0"
+              class="text-[11px] uppercase tracking-wider text-muted-foreground/70 flex-shrink-0"
               >{j.status}</span
             >
             <ArrowRight class="size-3.5 text-muted-foreground/40 flex-shrink-0" />
@@ -187,7 +187,7 @@
       >
         <FileText class="size-4" />
         <span class="flex-1">Add a job by URL…</span>
-        <span class="text-[10px] text-muted-foreground">N</span>
+        <span class="text-[11px] text-muted-foreground">N</span>
       </Command.Item>
       <Command.Item
         onSelect={() => {

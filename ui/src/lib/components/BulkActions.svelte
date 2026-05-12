@@ -182,7 +182,7 @@
               >
                 <Send class="size-3.5" />
                 <span>{applyLabel}</span>
-                <span class="text-[10px] opacity-80 font-mono">{applyTotal}</span>
+                <span class="text-[11px] opacity-80 font-mono">{applyTotal}</span>
               </Button>
             {/snippet}
           </Tooltip.Trigger>
@@ -209,7 +209,7 @@
               >
                 <Wand2 class="size-3.5" />
                 <span>{cvLabel}</span>
-                <span class="text-[10px] opacity-80 font-mono">{cvWillRun}</span>
+                <span class="text-[11px] opacity-80 font-mono">{cvWillRun}</span>
               </Button>
             {/snippet}
           </Tooltip.Trigger>
@@ -261,7 +261,7 @@
         <div class="flex-1 min-w-0 space-y-1">
           <div class="flex items-baseline gap-2">
             <span class="text-sm font-medium">{applyLinkedInCount} LinkedIn Easy Apply</span>
-            <span class="text-[10px] text-muted-foreground/70">automated</span>
+            <span class="text-[11px] text-muted-foreground/70">automated</span>
           </div>
           <p class="text-[11px] text-muted-foreground/80 leading-relaxed">
             Playwright fills these in headed mode — you can watch and click Submit yourself. They
@@ -289,7 +289,7 @@
           <div class="flex items-baseline gap-2">
             <span class="text-sm font-medium">{applyOtherCount} non-LinkedIn — Open &amp; Mark</span
             >
-            <span class="text-[10px] text-muted-foreground/70">manual fill</span>
+            <span class="text-[11px] text-muted-foreground/70">manual fill</span>
           </div>
           <p class="text-[11px] text-muted-foreground/80 leading-relaxed">
             We open each posting in a new tab (300ms stagger so your browser doesn't block) and flip
@@ -304,7 +304,7 @@
         <div class="flex-1 min-w-0 space-y-1">
           <div class="text-[11px] font-medium">How you'll be notified</div>
           <ul
-            class="text-[10px] text-muted-foreground/80 leading-relaxed space-y-0.5 list-disc list-inside"
+            class="text-[11px] text-muted-foreground/80 leading-relaxed space-y-0.5 list-disc list-inside"
           >
             <li>Activity feed (bell, top-right) gets a "Bulk apply ↦" event per job.</li>
             <li>Toast pops with the per-step outcome.</li>
@@ -323,7 +323,7 @@
           class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 flex items-start gap-2"
         >
           <AlertTriangle class="size-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
-          <p class="text-[10px] text-amber-200/90 leading-relaxed">
+          <p class="text-[11px] text-amber-200/90 leading-relaxed">
             Browsers may block more than ~5 simultaneous tab opens. If you see fewer tabs than
             expected, allow pop-ups for this site and re-run for the missing rows.
           </p>
@@ -383,7 +383,7 @@
           <li>Tailored CV PDF in <span class="font-mono">output/</span></li>
           <li>Status auto-promoted to Ready</li>
         </ul>
-        <p class="text-[10px] text-muted-foreground/70 pt-1">
+        <p class="text-[11px] text-muted-foreground/70 pt-1">
           Roughly 1–3 minutes per job. {cvWillRun} jobs → estimated {Math.max(
             1,
             Math.ceil(cvWillRun * 1.5),
@@ -396,7 +396,7 @@
           class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 flex items-start gap-2"
         >
           <AlertTriangle class="size-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
-          <p class="text-[10px] text-amber-200/90 leading-relaxed">
+          <p class="text-[11px] text-amber-200/90 leading-relaxed">
             {cvAlreadyHave} of these already have a CV PDF. Running again will regenerate them.
           </p>
         </div>
@@ -408,7 +408,7 @@
         <div class="flex-1 min-w-0 space-y-1">
           <div class="text-[11px] font-medium">How you'll be notified</div>
           <ul
-            class="text-[10px] text-muted-foreground/80 leading-relaxed space-y-0.5 list-disc list-inside"
+            class="text-[11px] text-muted-foreground/80 leading-relaxed space-y-0.5 list-disc list-inside"
           >
             <li>Each job logs a "Bulk CV n/N" event to the activity feed.</li>
             <li>
@@ -423,7 +423,7 @@
 
       <div class="rounded-md border border-border/40 bg-muted/20 p-3 flex items-start gap-2">
         <Info class="size-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
-        <p class="text-[10px] text-muted-foreground/80 leading-relaxed">
+        <p class="text-[11px] text-muted-foreground/80 leading-relaxed">
           Requires <span class="font-mono text-foreground">claude</span> on PATH and an active session.
           If you use a different CLI (Gemini / Codex / OpenCode), the orchestrator may not pick it up
           — pin Claude Code for this feature.

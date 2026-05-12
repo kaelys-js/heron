@@ -225,7 +225,7 @@
                 )}
               >
                 {s.label}
-                {#if active}<span class="ml-2 text-[10px] uppercase tracking-wider opacity-70"
+                {#if active}<span class="ml-2 text-[11px] uppercase tracking-wider opacity-70"
                     >selected</span
                   >{/if}
               </div>
@@ -261,7 +261,7 @@
             class="rounded border border-emerald-500/30 bg-emerald-500/5 p-2 mt-2 flex items-start gap-2"
           >
             <Check class="size-3 text-emerald-300 mt-0.5 flex-shrink-0" />
-            <p class="text-[10px] text-emerald-200/85 leading-relaxed">
+            <p class="text-[11px] text-emerald-200/85 leading-relaxed">
               Kept: applications.md, pipeline.md, projects, reports/, output/, activity feed, .env /
               API keys, sources.
             </p>
@@ -309,7 +309,7 @@
             class="rounded border border-emerald-500/30 bg-emerald-500/5 p-2 mt-2 flex items-start gap-2"
           >
             <Check class="size-3 text-emerald-300 mt-0.5 flex-shrink-0" />
-            <p class="text-[10px] text-emerald-200/85 leading-relaxed">
+            <p class="text-[11px] text-emerald-200/85 leading-relaxed">
               Kept: <code class="font-mono">profile.yml</code>,
               <code class="font-mono">cv.md</code>,
               <code class="font-mono">modes/_profile.md</code>,
@@ -363,7 +363,7 @@
             class="rounded border border-emerald-500/30 bg-emerald-500/5 p-2 mt-2 flex items-start gap-2"
           >
             <Check class="size-3 text-emerald-300 mt-0.5 flex-shrink-0" />
-            <p class="text-[10px] text-emerald-200/85 leading-relaxed">
+            <p class="text-[11px] text-emerald-200/85 leading-relaxed">
               Kept: <code class="font-mono">.env</code> (API keys), Python
               <code class="font-mono">.venv</code>, source code, connected Playwright sessions,
               <code class="font-mono">data/sources.json</code>,

@@ -101,8 +101,15 @@ const config = {
     androidScheme: 'https',
     /** iOS WebView scheme — `careerops` so WebView origin matches the
      *  custom URL scheme used by deep links (CFBundleURLTypes in
-     *  Info.plist). Keeps everything same-origin. */
-    iosScheme: 'careerops',
+     *  Info.plist). Keeps everything same-origin.
+     *
+     * IMPORTANT — In live-reload mode the WebView origin becomes the
+     * server.url's scheme (http://lan-ip), so we drop iosScheme here. If
+     * we kept `careerops`, Capacitor's URLSchemeHandler intercepts navigation
+     * requests for that scheme and the WebView never paints anything from
+     * the dev server. Production builds (no env var) keep careerops:// so
+     * deep-link return-paths work same-origin. */
+    ...(process.env.CAPACITOR_SERVER_URL ? {} : { iosScheme: 'careerops' }),
   },
   plugins: {
     LocalNotifications: {

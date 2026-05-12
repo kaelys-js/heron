@@ -181,7 +181,7 @@
           <div class="flex items-start justify-between gap-3">
             <div class="flex-1">
               <div class="flex items-center gap-2">
-                <span class="rounded border px-2 py-0.5 text-[10px] uppercase {sevTint(f.severity)}"
+                <span class="rounded border px-2 py-0.5 text-[11px] uppercase {sevTint(f.severity)}"
                   >{f.severity}</span
                 >
                 <Badge variant="outline" class="text-xs">{f.category}</Badge>

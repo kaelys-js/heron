@@ -56,14 +56,14 @@
         {@const Icon = levelIcon(ev.level)}
         <div class="flex gap-2.5 text-sm">
           <Avatar class="size-6 mt-0.5 flex-shrink-0">
-            <AvatarFallback class="bg-muted text-[10px] uppercase">
+            <AvatarFallback class="bg-muted text-[11px] uppercase">
               {ev.source.slice(0, 2)}
             </AvatarFallback>
           </Avatar>
           <div class="flex-1 min-w-0">
             <div class="flex items-baseline gap-2">
               <span class="text-xs font-medium">{ev.source}</span>
-              <span class="text-[10px] text-muted-foreground">{formatRelativeTime(ev.ts)}</span>
+              <span class="text-[11px] text-muted-foreground">{formatRelativeTime(ev.ts)}</span>
             </div>
             <p class={cn('text-xs leading-snug mt-0.5 break-words', levelColor(ev.level))}>
               <Icon class="inline size-3 mr-1 -mt-0.5" />

@@ -365,7 +365,7 @@
             align="start"
             class="w-72 max-h-[70vh] overflow-y-auto"
           >
-            <DropdownMenu.Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+            <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
               >Presets</DropdownMenu.Label
             >
             {#each TAB_PRESETS as p}
@@ -376,7 +376,7 @@
               >
                 <div class="flex-1 min-w-0">
                   <div class="text-xs font-medium">{p.label}</div>
-                  <div class="text-[10px] text-muted-foreground/70 leading-tight">
+                  <div class="text-[11px] text-muted-foreground/70 leading-tight">
                     {PRESET_DESC[p.value] ?? ''}
                   </div>
                 </div>
@@ -385,7 +385,7 @@
             {/each}
 
             <DropdownMenu.Separator />
-            <DropdownMenu.Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+            <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
               >Single column</DropdownMenu.Label
             >
             {#each STATUS_ORDER as s}
@@ -399,7 +399,7 @@
                 ></span>
                 <div class="flex-1 min-w-0">
                   <div class="text-xs font-medium">{s}</div>
-                  <div class="text-[10px] text-muted-foreground/70 leading-tight">
+                  <div class="text-[11px] text-muted-foreground/70 leading-tight">
                     {STATUS_HINT[s]}
                   </div>
                 </div>
@@ -449,7 +449,7 @@
                 Filter
                 {#if activeFilterCount > 0}
                   <span
-                    class="text-[10px] font-mono tabular-nums px-1 py-0 rounded bg-orange-500/20 text-orange-300 border border-orange-500/40"
+                    class="text-[11px] font-mono tabular-nums px-1 py-0 rounded bg-orange-500/20 text-orange-300 border border-orange-500/40"
                   >
                     {activeFilterCount}
                   </span>
@@ -469,7 +469,7 @@
               <div class="flex items-baseline gap-2">
                 <span class="text-sm font-semibold">Filters</span>
                 {#if activeFilterCount > 0}
-                  <span class="text-[10px] text-muted-foreground tabular-nums">
+                  <span class="text-[11px] text-muted-foreground tabular-nums">
                     {activeFilterCount}
                     {activeFilterCount === 1 ? 'active' : 'active'}
                   </span>
@@ -500,7 +500,7 @@
                     />
                     Minimum score
                     {#if scoreActive}
-                      <span class="text-[10px] text-amber-400/80 font-mono">≥{filter.minScore}</span
+                      <span class="text-[11px] text-amber-400/80 font-mono">≥{filter.minScore}</span
                       >
                     {/if}
                   </Label>
@@ -508,7 +508,7 @@
                     <button
                       type="button"
                       onclick={() => resetSection('score')}
-                      class="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                      class="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                       >reset</button
                     >
                   {/if}
@@ -558,12 +558,12 @@
                     <button
                       type="button"
                       onclick={() => resetSection('workMode')}
-                      class="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                      class="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                       >reset</button
                     >
                   {/if}
                 </header>
-                <p class="text-[10px] text-muted-foreground/70">
+                <p class="text-[11px] text-muted-foreground/70">
                   Toggle off to exclude that mode from the pipeline.
                 </p>
                 <div class="grid grid-cols-2 gap-1.5">
@@ -601,12 +601,12 @@
                     <button
                       type="button"
                       onclick={() => resetSection('bg')}
-                      class="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                      class="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                       >reset</button
                     >
                   {/if}
                 </header>
-                <p class="text-[10px] text-muted-foreground/70">
+                <p class="text-[11px] text-muted-foreground/70">
                   Default excludes BLOCKED jobs. Toggle others off to narrow further.
                 </p>
                 <div class="space-y-1">
@@ -622,10 +622,10 @@
                           : 'bg-transparent border-border/40 text-muted-foreground/50 hover:border-border hover:text-muted-foreground',
                       )}
                     >
-                      <span class="font-mono uppercase tracking-wider text-[10px] w-16 text-left"
+                      <span class="font-mono uppercase tracking-wider text-[11px] w-16 text-left"
                         >{bg}</span
                       >
-                      <span class="text-[10px] flex-1 text-left opacity-80 leading-tight"
+                      <span class="text-[11px] flex-1 text-left opacity-80 leading-tight"
                         >{BG_DESC[bg]}</span
                       >
                       <CheckMark active={on} />
@@ -650,7 +650,7 @@
                     <button
                       type="button"
                       onclick={() => resetSection('extras')}
-                      class="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                      class="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                       >reset</button
                     >
                   {/if}
@@ -666,7 +666,7 @@
                       <FileText class="size-3.5 text-muted-foreground/70" />
                       <div>
                         <div>Has deep evaluation report</div>
-                        <div class="text-[10px] text-muted-foreground/60">
+                        <div class="text-[11px] text-muted-foreground/60">
                           Claude oferta has been run
                         </div>
                       </div>
@@ -687,7 +687,7 @@
                       <FileBadge2 class="size-3.5 text-muted-foreground/70" />
                       <div>
                         <div>Has tailored CV PDF</div>
-                        <div class="text-[10px] text-muted-foreground/60">Ready to send</div>
+                        <div class="text-[11px] text-muted-foreground/60">Ready to send</div>
                       </div>
                     </Label>
                     <Switch
@@ -706,7 +706,7 @@
                       <DollarSign class="size-3.5 text-muted-foreground/70" />
                       <div>
                         <div>Has salary disclosed</div>
-                        <div class="text-[10px] text-muted-foreground/60">
+                        <div class="text-[11px] text-muted-foreground/60">
                           Comp range parsed from posting
                         </div>
                       </div>
@@ -736,12 +736,12 @@
                     <button
                       type="button"
                       onclick={() => resetSection('source')}
-                      class="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                      class="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                       >reset</button
                     >
                   {/if}
                 </header>
-                <p class="text-[10px] text-muted-foreground/70">
+                <p class="text-[11px] text-muted-foreground/70">
                   Limit to one scanner — useful when you want to spot-check what's coming out of a
                   specific source.
                 </p>
@@ -772,7 +772,7 @@
             {/snippet}
           </DropdownMenu.Trigger>
           <DropdownMenu.Content side="bottom" align="end" class="w-72">
-            <DropdownMenu.Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+            <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
               >Sort by</DropdownMenu.Label
             >
             {#each SORTS as s}
@@ -785,7 +785,7 @@
                 <Icon class="size-3.5 mt-0.5 text-muted-foreground flex-shrink-0" />
                 <div class="flex-1 min-w-0">
                   <div class="text-xs font-medium">{s.label}</div>
-                  <div class="text-[10px] text-muted-foreground/70 leading-tight">{s.desc}</div>
+                  <div class="text-[11px] text-muted-foreground/70 leading-tight">{s.desc}</div>
                 </div>
                 <CheckMark active={sort === s.key} class="mt-0.5" />
               </DropdownMenu.Item>
@@ -806,7 +806,7 @@
             {/snippet}
           </DropdownMenu.Trigger>
           <DropdownMenu.Content side="bottom" align="end" class="w-64">
-            <DropdownMenu.Label class="text-[10px] uppercase tracking-wide text-muted-foreground"
+            <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
               >View as</DropdownMenu.Label
             >
             {#each VIEWS as v}
@@ -819,7 +819,7 @@
                 <VIcon class="size-3.5 mt-0.5 text-muted-foreground flex-shrink-0" />
                 <div class="flex-1 min-w-0">
                   <div class="text-xs font-medium">{v.label}</div>
-                  <div class="text-[10px] text-muted-foreground/70 leading-tight">{v.desc}</div>
+                  <div class="text-[11px] text-muted-foreground/70 leading-tight">{v.desc}</div>
                 </div>
                 <CheckMark active={viewMode === v.key} class="mt-0.5" />
               </DropdownMenu.Item>
@@ -846,7 +846,7 @@
               Filter
               {#if activeFilterCount > 0}
                 <span
-                  class="text-[10px] font-mono tabular-nums px-1 py-0 rounded bg-orange-500/20 text-orange-300 border border-orange-500/40"
+                  class="text-[11px] font-mono tabular-nums px-1 py-0 rounded bg-orange-500/20 text-orange-300 border border-orange-500/40"
                 >
                   {activeFilterCount}
                 </span>
@@ -868,7 +868,7 @@
             <div class="flex items-baseline gap-2">
               <span class="text-sm font-semibold">Filters</span>
               {#if activeFilterCount > 0}
-                <span class="text-[10px] text-muted-foreground tabular-nums">
+                <span class="text-[11px] text-muted-foreground tabular-nums">
                   {activeFilterCount} active
                 </span>
               {/if}
@@ -904,7 +904,7 @@
                   })}
                 class="w-full"
               />
-              <div class="text-[10px] text-muted-foreground tabular-nums">
+              <div class="text-[11px] text-muted-foreground tabular-nums">
                 ≥ {filter.minScore.toFixed(1)}
               </div>
             </div>

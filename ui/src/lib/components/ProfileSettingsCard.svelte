@@ -312,7 +312,7 @@
               type="button"
               onclick={() => patchPrefs({ theme: theme as Theme })}
               class={cn(
-                'rounded-md border p-2 flex flex-col items-center gap-1 text-[10px] transition',
+                'rounded-md border p-2 flex flex-col items-center gap-1 text-[11px] transition',
                 prefs.theme === theme
                   ? 'border-fuchsia-500/60 bg-fuchsia-500/10 text-fuchsia-100'
                   : 'border-border/40 bg-card hover:border-border text-muted-foreground',
@@ -323,7 +323,7 @@
             </button>
           {/each}
         </div>
-        <p class="text-[10px] text-muted-foreground/70">
+        <p class="text-[11px] text-muted-foreground/70">
           Drives <code class="font-mono">data-theme</code> attribute on the document. CSS variables key
           off it.
         </p>
@@ -356,7 +356,7 @@
             </label>
           {/each}
         </div>
-        <p class="text-[10px] text-muted-foreground/70 pt-1">
+        <p class="text-[11px] text-muted-foreground/70 pt-1">
           OS-level notifications (when the dashboard tab is in the background) are handled
           separately in the "Notifications" card above — they require browser permission.
         </p>

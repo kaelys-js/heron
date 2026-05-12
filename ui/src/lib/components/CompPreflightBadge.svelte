@@ -86,7 +86,7 @@
           class="rounded border border-amber-500/40 bg-amber-500/5 px-2 py-1 flex items-start gap-1.5"
         >
           <AlertTriangle class="size-3 text-amber-400 mt-0.5 flex-shrink-0" />
-          <p class="text-[10px] text-amber-200/90 leading-relaxed">{preflight.warning}</p>
+          <p class="text-[11px] text-amber-200/90 leading-relaxed">{preflight.warning}</p>
         </div>
       {/if}
       <div class="space-y-1 text-xs">
@@ -98,7 +98,7 @@
           <span class="text-muted-foreground w-16">WALKAWAY:</span>
           <span class="font-mono text-amber-200">{preflight.walkaway}</span>
         </div>
-        <div class="text-[10px] text-muted-foreground/70 pt-1">Currency: {preflight.currency}</div>
+        <div class="text-[11px] text-muted-foreground/70 pt-1">Currency: {preflight.currency}</div>
       </div>
       <p
         class="text-[11px] text-muted-foreground/90 leading-relaxed pt-1 border-t border-border/30"

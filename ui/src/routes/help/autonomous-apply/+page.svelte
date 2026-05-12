@@ -294,8 +294,8 @@
                   {p.label}
                   <span
                     class={p.status === 'production'
-                      ? 'text-[10px] uppercase tracking-wider text-emerald-300/80'
-                      : 'text-[10px] uppercase tracking-wider text-amber-300/80'}
+                      ? 'text-[11px] uppercase tracking-wider text-emerald-300/80'
+                      : 'text-[11px] uppercase tracking-wider text-amber-300/80'}
                   >
                     {p.status}
                   </span>
@@ -362,7 +362,7 @@
                 <AlertTriangle class="size-3.5 text-amber-400 flex-shrink-0" />
                 {f.summary}
                 <span
-                  class="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-mono"
+                  class="text-[11px] uppercase tracking-wider text-muted-foreground/60 font-mono"
                   >{f.id}</span
                 >
               </div>
