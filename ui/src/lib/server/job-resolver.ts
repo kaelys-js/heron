@@ -37,9 +37,11 @@ export function resolveJobAndProfile(rawId: string, url?: URL): JobWithProfile |
 
   // Precedence: explicit query > id suffix > active profile.
   const preferredProfile =
-    (queryProfile && getProfile(queryProfile)) ? queryProfile :
-    (profileHint && getProfile(profileHint)) ? profileHint :
-    getActiveProfileId();
+    queryProfile && getProfile(queryProfile)
+      ? queryProfile
+      : profileHint && getProfile(profileHint)
+        ? profileHint
+        : getActiveProfileId();
 
   // Look in the preferred profile first.
   const preferred = loadAllJobs(preferredProfile);

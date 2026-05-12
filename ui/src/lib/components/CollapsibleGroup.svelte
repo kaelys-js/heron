@@ -1,48 +1,50 @@
 <script lang="ts">
-  import { ChevronRight } from '@lucide/svelte';
-  import type { Snippet } from 'svelte';
-  import { cn } from '$lib/utils';
-  import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
+import { ChevronRight } from '@lucide/svelte';
+import type { Snippet } from 'svelte';
+import { cn } from '$lib/utils';
+import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 
-  let {
-    label,
-    icon,
-    storageKey,
-    defaultOpen = true,
-    actions,
-    children,
-  }: {
-    label: string;
-    icon?: Snippet;
-    storageKey: string;
-    defaultOpen?: boolean;
-    actions?: Snippet;
-    children: Snippet;
-  } = $props();
+let {
+  label,
+  icon,
+  storageKey,
+  defaultOpen = true,
+  actions,
+  children,
+}: {
+  label: string;
+  icon?: Snippet;
+  storageKey: string;
+  defaultOpen?: boolean;
+  actions?: Snippet;
+  children: Snippet;
+} = $props();
 
-  let fullKey = $derived(`${BRAND_STORAGE_PREFIX}:sidebar-group:` + storageKey);
+let fullKey = $derived(`${BRAND_STORAGE_PREFIX}:sidebar-group:` + storageKey);
 
-  function readInitial(key: string): boolean {
-    if (typeof window === 'undefined') return defaultOpen;
-    try {
-      const raw = window.localStorage.getItem(key);
-      if (raw === '0') return false;
-      if (raw === '1') return true;
-    } catch {}
-    return defaultOpen;
-  }
+function readInitial(key: string): boolean {
+  if (typeof window === 'undefined') return defaultOpen;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (raw === '0') return false;
+    if (raw === '1') return true;
+  } catch {}
+  return defaultOpen;
+}
 
-  // svelte-ignore state_referenced_locally — initial seed only; `open` becomes the source of truth.
-  let open = $state(readInitial(`${BRAND_STORAGE_PREFIX}:sidebar-group:` + storageKey));
+// svelte-ignore state_referenced_locally — initial seed only; `open` becomes the source of truth.
+let open = $state(readInitial(`${BRAND_STORAGE_PREFIX}:sidebar-group:` + storageKey));
 
-  $effect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      window.localStorage.setItem(fullKey, open ? '1' : '0');
-    } catch {}
-  });
+$effect(() => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(fullKey, open ? '1' : '0');
+  } catch {}
+});
 
-  function toggle() { open = !open; }
+function toggle() {
+  open = !open;
+}
 </script>
 
 <div class="flex flex-col" data-state={open ? 'open' : 'closed'}>

@@ -1,110 +1,173 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-  import { Sparkles, KeyRound, User, FileText, Target, Plug, Search, Trophy, ArrowRight, Plus, Loader2 } from '@lucide/svelte';
-  import { goto } from '$app/navigation';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import { cn } from '$lib/utils';
-  import type { Profile, ProfileColor } from '$lib/server/profiles';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import {
+  Sparkles,
+  KeyRound,
+  User,
+  FileText,
+  Target,
+  Plug,
+  Search,
+  Trophy,
+  ArrowRight,
+  Plus,
+  Loader2,
+} from '@lucide/svelte';
+import { goto } from '$app/navigation';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import { cn } from '$lib/utils';
+import type { Profile, ProfileColor } from '$lib/server/profiles';
 
-  const PROFILE_COLORS: ProfileColor[] = ['blue', 'emerald', 'violet', 'amber', 'rose', 'cyan', 'orange', 'pink'];
+const PROFILE_COLORS: ProfileColor[] = [
+  'blue',
+  'emerald',
+  'violet',
+  'amber',
+  'rose',
+  'cyan',
+  'orange',
+  'pink',
+];
 
-  let { data }: {
-    data: {
-      state: import('$lib/server/onboarding').OnboardingState;
-      progress: { step: string; status: 'complete' | 'skipped' | 'current' | 'pending' }[];
-      profileId?: string;
-      isNewProfile: boolean;
-      profiles: Profile[];
-    };
-  } = $props();
+let {
+  data,
+}: {
+  data: {
+    state: import('$lib/server/onboarding').OnboardingState;
+    progress: { step: string; status: 'complete' | 'skipped' | 'current' | 'pending' }[];
+    profileId?: string;
+    isNewProfile: boolean;
+    profiles: Profile[];
+  };
+} = $props();
 
-  let resuming = $derived(data.state.completedSteps.length > 0 && !data.state.completed);
-  let isNewProfile = $derived(data.isNewProfile && !data.profileId);
-  let hasMultipleProfiles = $derived(data.profiles.length >= 1);
+let resuming = $derived(data.state.completedSteps.length > 0 && !data.state.completed);
+let isNewProfile = $derived(data.isNewProfile && !data.profileId);
+let hasMultipleProfiles = $derived(data.profiles.length >= 1);
 
-  // New-profile creation state (only used when isNewProfile === true)
-  let newName = $state('');
-  let newColor = $state<ProfileColor>('blue');
-  let creating = $state(false);
+// New-profile creation state (only used when isNewProfile === true)
+let newName = $state('');
+let newColor = $state<ProfileColor>('blue');
+let creating = $state(false);
 
-  const STEPS = [
-    { icon: KeyRound, label: 'API keys',  blurb: 'Anthropic + Gemini (free tier OK). Shared across profiles.',         href: '/onboarding/api-keys' },
-    { icon: User,     label: 'Identity',  blurb: 'Name, email, location, work auth — per profile.',                    href: '/onboarding/identity' },
-    { icon: FileText, label: 'CV',        blurb: 'Paste your CV — we\'ll convert it to markdown if needed.',           href: '/onboarding/cv' },
-    { icon: Target,   label: 'Targeting', blurb: 'Target roles, keywords, salary, hard preferences — per profile.',    href: '/onboarding/targeting' },
-    { icon: Plug,     label: 'Sources',   blurb: 'Connect LinkedIn / Indeed / Gmail. Shared across profiles.',         href: '/onboarding/sources' },
-    { icon: Search,   label: 'First scan', blurb: 'Find jobs across every connected source — usually 1–3 minutes.',    href: '/onboarding/first-scan' },
-  ];
+const STEPS = [
+  {
+    icon: KeyRound,
+    label: 'API keys',
+    blurb: 'Anthropic + Gemini (free tier OK). Shared across profiles.',
+    href: '/onboarding/api-keys',
+  },
+  {
+    icon: User,
+    label: 'Identity',
+    blurb: 'Name, email, location, work auth — per profile.',
+    href: '/onboarding/identity',
+  },
+  {
+    icon: FileText,
+    label: 'CV',
+    blurb: "Paste your CV — we'll convert it to markdown if needed.",
+    href: '/onboarding/cv',
+  },
+  {
+    icon: Target,
+    label: 'Targeting',
+    blurb: 'Target roles, keywords, salary, hard preferences — per profile.',
+    href: '/onboarding/targeting',
+  },
+  {
+    icon: Plug,
+    label: 'Sources',
+    blurb: 'Connect LinkedIn / Indeed / Gmail. Shared across profiles.',
+    href: '/onboarding/sources',
+  },
+  {
+    icon: Search,
+    label: 'First scan',
+    blurb: 'Find jobs across every connected source — usually 1–3 minutes.',
+    href: '/onboarding/first-scan',
+  },
+];
 
-  let busy = $state(false);
+let busy = $state(false);
 
-  /** Dot color helper for the color picker. */
-  function dot(c: string): string {
-    const map: Record<string, string> = {
-      blue: 'bg-blue-400', emerald: 'bg-emerald-400', violet: 'bg-violet-400',
-      amber: 'bg-amber-400', rose: 'bg-rose-400', cyan: 'bg-cyan-400',
-      orange: 'bg-orange-400', pink: 'bg-pink-400',
-    };
-    return map[c] ?? 'bg-zinc-400';
+/** Dot color helper for the color picker. */
+function dot(c: string): string {
+  const map: Record<string, string> = {
+    blue: 'bg-blue-400',
+    emerald: 'bg-emerald-400',
+    violet: 'bg-violet-400',
+    amber: 'bg-amber-400',
+    rose: 'bg-rose-400',
+    cyan: 'bg-cyan-400',
+    orange: 'bg-orange-400',
+    pink: 'bg-pink-400',
+  };
+  return map[c] ?? 'bg-zinc-400';
+}
+
+async function createAndContinue() {
+  const trimmed = newName.trim();
+  if (!trimmed) {
+    toast.error('Profile name required');
+    return;
   }
-
-  async function createAndContinue() {
-    const trimmed = newName.trim();
-    if (!trimmed) {
-      toast.error('Profile name required');
-      return;
+  if (creating) return;
+  creating = true;
+  try {
+    // POST to /api/profiles/active doesn't create — we need a CREATE
+    // endpoint. Since /api/profiles supports POST creation? Let me use
+    // the profiles.ts createProfile via a dedicated POST.
+    const r = await fetch('/api/profiles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: trimmed, color: newColor }),
+    });
+    if (!r.ok) {
+      const json = await r.json().catch(() => ({}));
+      throw new Error(json?.error?.message ?? 'create failed');
     }
-    if (creating) return;
-    creating = true;
-    try {
-      // POST to /api/profiles/active doesn't create — we need a CREATE
-      // endpoint. Since /api/profiles supports POST creation? Let me use
-      // the profiles.ts createProfile via a dedicated POST.
-      const r = await fetch('/api/profiles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: trimmed, color: newColor }),
-      });
-      if (!r.ok) {
-        const json = await r.json().catch(() => ({}));
-        throw new Error(json?.error?.message ?? 'create failed');
-      }
-      const created = await r.json();
-      const newId = created?.profile?.id;
-      if (!newId) throw new Error('server did not return a profile id');
-      toast.success('Profile created: ' + trimmed);
-      // Onboarding-state should reset for the new profile run.
-      await api.post('/api/onboarding/reset', {}, { silent: true });
-      await goto('/onboarding/api-keys?profile=' + encodeURIComponent(newId));
-    } catch (e) {
-      const err = e as Error;
-      toast.error('Could not create profile', { description: err.message });
-      creating = false;
-    }
+    const created = await r.json();
+    const newId = created?.profile?.id;
+    if (!newId) throw new Error('server did not return a profile id');
+    toast.success('Profile created: ' + trimmed);
+    // Onboarding-state should reset for the new profile run.
+    await api.post('/api/onboarding/reset', {}, { silent: true });
+    await goto('/onboarding/api-keys?profile=' + encodeURIComponent(newId));
+  } catch (e) {
+    const err = e as Error;
+    toast.error('Could not create profile', { description: err.message });
+    creating = false;
   }
+}
 
-  async function skipAdvanced() {
-    if (!confirm('Skip onboarding? This marks setup complete without populating cv.md / profile.yml. Only do this if you\'ve set everything up by hand already.')) return;
-    busy = true;
-    try {
-      await api.post('/api/onboarding/complete', { skip: true }, { silent: true });
-      toast.info('Onboarding skipped — you can re-run it from /settings');
-      await goto('/inbox');
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Could not skip', { description: err.message });
-      busy = false;
-    }
+async function skipAdvanced() {
+  if (
+    !confirm(
+      "Skip onboarding? This marks setup complete without populating cv.md / profile.yml. Only do this if you've set everything up by hand already.",
+    )
+  )
+    return;
+  busy = true;
+  try {
+    await api.post('/api/onboarding/complete', { skip: true }, { silent: true });
+    toast.info('Onboarding skipped — you can re-run it from /settings');
+    await goto('/inbox');
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Could not skip', { description: err.message });
+    busy = false;
   }
+}
 
-  function continueHref(): string {
-    const baseStep = resuming ? (data.state.currentStep ?? 'api-keys') : 'api-keys';
-    const q = data.profileId ? '?profile=' + encodeURIComponent(data.profileId) : '';
-    return '/onboarding/' + baseStep + q;
-  }
+function continueHref(): string {
+  const baseStep = resuming ? (data.state.currentStep ?? 'api-keys') : 'api-keys';
+  const q = data.profileId ? '?profile=' + encodeURIComponent(data.profileId) : '';
+  return '/onboarding/' + baseStep + q;
+}
 </script>
 
 <div class="space-y-6">

@@ -43,7 +43,7 @@ type Suggestion = {
 };
 
 const SYSTEM_PROMPT =
-  'You are extracting structured profile data from a candidate\'s CV.\n\n' +
+  "You are extracting structured profile data from a candidate's CV.\n\n" +
   'Return STRICT JSON matching this schema (omit a field entirely if you cannot derive it from the CV):\n' +
   '{\n' +
   '  "candidate": { "full_name": string, "email": string, "phone": string, "location": string, "linkedin": string, "github": string, "portfolio_url": string, "twitter": string },\n' +
@@ -78,7 +78,11 @@ export const POST = wrap('profile-reprocess', async ({ url }: { url: URL }) => {
   const text = await complete(SYSTEM_PROMPT, cv, { maxTokens: 4000, thinking: false });
 
   // Strip code fences if Claude added them despite the instruction.
-  const json = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  const json = text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/, '')
+    .trim();
   let suggestion: Suggestion;
   try {
     suggestion = JSON.parse(json);
@@ -88,7 +92,9 @@ export const POST = wrap('profile-reprocess', async ({ url }: { url: URL }) => {
       category: 'user',
       message: (e instanceof Error ? e.message : 'unknown') + ' · raw=' + text.slice(0, 200),
     });
-    badRequest('Failed to parse extracted profile JSON. Try again or edit profile fields manually.');
+    badRequest(
+      'Failed to parse extracted profile JSON. Try again or edit profile fields manually.',
+    );
   }
 
   // Build a human-readable summary of which fields the suggestion populates,
@@ -101,8 +107,10 @@ export const POST = wrap('profile-reprocess', async ({ url }: { url: URL }) => {
   }
   if (suggestion.narrative?.headline) populated.push('headline');
   if (suggestion.narrative?.exit_story) populated.push('exit story');
-  if (suggestion.narrative?.superpowers?.length) populated.push(suggestion.narrative.superpowers.length + ' superpowers');
-  if (suggestion.narrative?.proof_points?.length) populated.push(suggestion.narrative.proof_points.length + ' proof points');
+  if (suggestion.narrative?.superpowers?.length)
+    populated.push(suggestion.narrative.superpowers.length + ' superpowers');
+  if (suggestion.narrative?.proof_points?.length)
+    populated.push(suggestion.narrative.proof_points.length + ' proof points');
   if (suggestion.location?.city || suggestion.location?.country) populated.push('location');
 
   logEvent('profile-reprocess', 'CV reprocessing finished', {

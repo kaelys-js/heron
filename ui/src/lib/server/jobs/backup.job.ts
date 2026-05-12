@@ -19,12 +19,17 @@ import type { JobResult } from './types';
 async function runBackup(): Promise<JobResult> {
   const r = await createBackup();
   if (!r.ok) {
-    return { ok: false, error: r.error ?? 'Backup failed', meta: r as unknown as Record<string, unknown> };
+    return {
+      ok: false,
+      error: r.error ?? 'Backup failed',
+      meta: r as unknown as Record<string, unknown>,
+    };
   }
   const sizeMb = ((r.size ?? 0) / 1024 / 1024).toFixed(1);
   return {
     ok: true,
-    message: `Backup ${r.id} · ${r.fileCount} files · ${sizeMb} MB` +
+    message:
+      `Backup ${r.id} · ${r.fileCount} files · ${sizeMb} MB` +
       (r.pruned ? ` · pruned ${r.pruned}` : ''),
     meta: r as unknown as Record<string, unknown>,
   };
@@ -33,7 +38,8 @@ async function runBackup(): Promise<JobResult> {
 register({
   id: 'daily-backup',
   label: 'Daily backup',
-  description: 'Snapshot user data (profiles, tracker, reports, output) to data/backups/. Excludes .env, node_modules, .playwright-*. Pruning is retention-day based.',
+  description:
+    'Snapshot user data (profiles, tracker, reports, output) to data/backups/. Excludes .env, node_modules, .playwright-*. Pruning is retention-day based.',
   // 'hygiene' is the closest existing JobCategory — backup is maintenance
   // adjacent to normalize/dedup/verify which also live under that label.
   category: 'hygiene',

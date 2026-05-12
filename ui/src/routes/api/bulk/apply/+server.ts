@@ -23,7 +23,9 @@ type Group = { id: string; url: string; company: string; role: string; isLinkedI
 
 export const POST = wrap('bulk-apply', async ({ request }: { request: Request }) => {
   const body = (await request.json().catch(() => null)) as { jobIds?: string[] } | null;
-  const ids = Array.isArray(body?.jobIds) ? body!.jobIds.filter((s): s is string => typeof s === 'string') : [];
+  const ids = Array.isArray(body?.jobIds)
+    ? body!.jobIds.filter((s): s is string => typeof s === 'string')
+    : [];
   if (ids.length === 0) badRequest('jobIds required (non-empty array)');
   if (ids.length > MAX_BULK) badRequest('At most ' + MAX_BULK + ' jobs per bulk run');
 
@@ -32,7 +34,10 @@ export const POST = wrap('bulk-apply', async ({ request }: { request: Request })
   const missing: string[] = [];
   for (const id of ids) {
     const j = jobs.find((x) => x.id === id);
-    if (!j?.url) { missing.push(id); continue; }
+    if (!j?.url) {
+      missing.push(id);
+      continue;
+    }
     groups.push({
       id: j.id,
       url: j.url,
@@ -84,6 +89,8 @@ export const POST = wrap('bulk-apply', async ({ request }: { request: Request })
     openInTabs: others.map((g) => ({ id: g.id, url: g.url, company: g.company, role: g.role })),
     message:
       (linkedIn.length > 0 ? 'Auto-applying ' + linkedIn.length + ' via LinkedIn. ' : '') +
-      (others.length > 0 ? 'Marked ' + others.length + ' Applied · open postings in new tabs to finish.' : ''),
+      (others.length > 0
+        ? 'Marked ' + others.length + ' Applied · open postings in new tabs to finish.'
+        : ''),
   };
 });

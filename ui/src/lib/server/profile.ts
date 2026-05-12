@@ -147,9 +147,11 @@ export function readProfile(profileId?: string): ProfileSnapshot {
   const candidate = (doc.candidate ?? {}) as ProfileEdit['candidate'] & Record<string, unknown>;
   const target_roles = (doc.target_roles ?? {}) as Record<string, unknown>;
   const narrative = (doc.narrative ?? {}) as ProfileEdit['narrative'] & Record<string, unknown>;
-  const compensation = (doc.compensation ?? {}) as ProfileEdit['compensation'] & Record<string, unknown>;
+  const compensation = (doc.compensation ?? {}) as ProfileEdit['compensation'] &
+    Record<string, unknown>;
   const location = (doc.location ?? {}) as ProfileEdit['location'] & Record<string, unknown>;
-  const preferences = (doc.preferences ?? {}) as ProfileEdit['preferences'] & Record<string, unknown>;
+  const preferences = (doc.preferences ?? {}) as ProfileEdit['preferences'] &
+    Record<string, unknown>;
   const language = (doc.language ?? {}) as { modes_dir?: string };
   const automation = (doc.automation ?? {}) as {
     autonomous_apply?: boolean;
@@ -168,7 +170,12 @@ export function readProfile(profileId?: string): ProfileSnapshot {
     : [];
 
   const proofPointsRaw = Array.isArray(narrative.proof_points)
-    ? (narrative.proof_points as { name?: string; hero_metric?: string; url?: string; description?: string }[])
+    ? (narrative.proof_points as {
+        name?: string;
+        hero_metric?: string;
+        url?: string;
+        description?: string;
+      }[])
     : [];
 
   const profilePathYml = profilePath(id, 'profile-yml');
@@ -217,7 +224,9 @@ export function readProfile(profileId?: string): ProfileSnapshot {
     },
     preferences: {
       must_have: Array.isArray(preferences.must_have) ? (preferences.must_have as string[]) : [],
-      strong_plus: Array.isArray(preferences.strong_plus) ? (preferences.strong_plus as string[]) : [],
+      strong_plus: Array.isArray(preferences.strong_plus)
+        ? (preferences.strong_plus as string[])
+        : [],
       hard_no: Array.isArray(preferences.hard_no) ? (preferences.hard_no as string[]) : [],
     },
     language: {
@@ -226,7 +235,8 @@ export function readProfile(profileId?: string): ProfileSnapshot {
     automation: {
       autonomous_apply: automation.autonomous_apply === true,
       warmup_days: typeof automation.warmup_days === 'number' ? automation.warmup_days : 7,
-      min_score_to_apply: typeof automation.min_score_to_apply === 'number' ? automation.min_score_to_apply : 4.0,
+      min_score_to_apply:
+        typeof automation.min_score_to_apply === 'number' ? automation.min_score_to_apply : 4.0,
       enabled_portals: Array.isArray(automation.enabled_portals)
         ? (automation.enabled_portals as string[])
         : ['linkedin', 'greenhouse', 'ashby'],
@@ -250,7 +260,10 @@ export function readProfile(profileId?: string): ProfileSnapshot {
 export function writeProfile(profileId: string | undefined, edit: ProfileEdit): ProfileSnapshot;
 // Back-compat overload: callers that don't pass profileId pass edit as first arg.
 export function writeProfile(edit: ProfileEdit): ProfileSnapshot;
-export function writeProfile(arg1: string | ProfileEdit | undefined, arg2?: ProfileEdit): ProfileSnapshot {
+export function writeProfile(
+  arg1: string | ProfileEdit | undefined,
+  arg2?: ProfileEdit,
+): ProfileSnapshot {
   const profileId = typeof arg1 === 'string' ? arg1 : undefined;
   const edit = (typeof arg1 === 'string' ? arg2 : arg1) ?? {};
   const id = resolveId(profileId);
@@ -267,7 +280,10 @@ export function writeProfile(arg1: string | ProfileEdit | undefined, arg2?: Prof
     return out as T;
   };
 
-  doc.candidate = merge((doc.candidate as Record<string, unknown>) ?? {}, edit.candidate as Record<string, unknown>);
+  doc.candidate = merge(
+    (doc.candidate as Record<string, unknown>) ?? {},
+    edit.candidate as Record<string, unknown>,
+  );
   if (edit.target_roles) {
     const tr = (doc.target_roles as Record<string, unknown>) ?? {};
     if (edit.target_roles.primary !== undefined) tr.primary = edit.target_roles.primary;
@@ -282,8 +298,14 @@ export function writeProfile(arg1: string | ProfileEdit | undefined, arg2?: Prof
     if (e.proof_points !== undefined) n.proof_points = e.proof_points;
     doc.narrative = n;
   }
-  doc.compensation = merge((doc.compensation as Record<string, unknown>) ?? {}, edit.compensation as Record<string, unknown>);
-  doc.location = merge((doc.location as Record<string, unknown>) ?? {}, edit.location as Record<string, unknown>);
+  doc.compensation = merge(
+    (doc.compensation as Record<string, unknown>) ?? {},
+    edit.compensation as Record<string, unknown>,
+  );
+  doc.location = merge(
+    (doc.location as Record<string, unknown>) ?? {},
+    edit.location as Record<string, unknown>,
+  );
   if (edit.preferences) {
     const p = (doc.preferences as Record<string, unknown>) ?? {};
     if (edit.preferences.must_have !== undefined) p.must_have = edit.preferences.must_have;
@@ -299,10 +321,13 @@ export function writeProfile(arg1: string | ProfileEdit | undefined, arg2?: Prof
   if (edit.automation) {
     const a = (doc.automation as Record<string, unknown>) ?? {};
     const before = a.autonomous_apply === true;
-    if (edit.automation.autonomous_apply !== undefined) a.autonomous_apply = edit.automation.autonomous_apply;
+    if (edit.automation.autonomous_apply !== undefined)
+      a.autonomous_apply = edit.automation.autonomous_apply;
     if (edit.automation.warmup_days !== undefined) a.warmup_days = edit.automation.warmup_days;
-    if (edit.automation.min_score_to_apply !== undefined) a.min_score_to_apply = edit.automation.min_score_to_apply;
-    if (edit.automation.enabled_portals !== undefined) a.enabled_portals = edit.automation.enabled_portals;
+    if (edit.automation.min_score_to_apply !== undefined)
+      a.min_score_to_apply = edit.automation.min_score_to_apply;
+    if (edit.automation.enabled_portals !== undefined)
+      a.enabled_portals = edit.automation.enabled_portals;
     // Stamp enabled_at when flipping false → true so the warmup window starts ticking.
     if (!before && edit.automation.autonomous_apply === true) a.enabled_at = Date.now();
     doc.automation = a;
@@ -314,9 +339,15 @@ export function writeProfile(arg1: string | ProfileEdit | undefined, arg2?: Prof
 }
 
 /** Read companion files (modes/_profile.md, cv.md) for preview in the UI. */
-export function readSiblingFile(profileId: string | undefined, name: 'profileMd' | 'cv'): string | null;
+export function readSiblingFile(
+  profileId: string | undefined,
+  name: 'profileMd' | 'cv',
+): string | null;
 export function readSiblingFile(name: 'profileMd' | 'cv'): string | null;
-export function readSiblingFile(arg1: string | undefined | 'profileMd' | 'cv', arg2?: 'profileMd' | 'cv'): string | null {
+export function readSiblingFile(
+  arg1: string | undefined | 'profileMd' | 'cv',
+  arg2?: 'profileMd' | 'cv',
+): string | null {
   // Disambiguate the overloads. The legacy signature passes 'profileMd'/'cv' as
   // the first arg; the new signature passes a profile id.
   let profileId: string | undefined;
@@ -373,7 +404,12 @@ export function readSiblingFile(arg1: string | undefined | 'profileMd' | 'cv', a
  * Returns: { resetFiles, backups, scope, profileId }
  */
 export type ResetScope = 'profile' | 'jobs' | 'everything';
-export type ResetResult = { resetFiles: string[]; backups: string[]; scope: ResetScope; profileId: string };
+export type ResetResult = {
+  resetFiles: string[];
+  backups: string[];
+  scope: ResetScope;
+  profileId: string;
+};
 
 function backupTo(p: string, backups: string[]): void {
   if (!fs.existsSync(p)) return;
@@ -418,7 +454,8 @@ function emptyDir(dir: string, resetFiles: string[], displayName: string, exclud
       } catch (e) {
         // Backup failure is non-fatal — still attempt the delete.
         logEvent('reset-profile', 'Could not back up ' + name, {
-          level: 'warn', category: 'application',
+          level: 'warn',
+          category: 'application',
           message: displayName + ' — ' + (e instanceof Error ? e.message : String(e)),
         });
       }
@@ -430,7 +467,8 @@ function emptyDir(dir: string, resetFiles: string[], displayName: string, exclud
         // Log per-file failure at warn — user expects "reset" to clear and
         // a partial reset is misleading without a signal.
         logEvent('reset-profile', 'Could not remove ' + name, {
-          level: 'warn', category: 'application',
+          level: 'warn',
+          category: 'application',
           message: displayName + ' — ' + (e instanceof Error ? e.message : String(e)),
         });
       }
@@ -438,13 +476,15 @@ function emptyDir(dir: string, resetFiles: string[], displayName: string, exclud
     if (removed > 0) resetFiles.push(displayName + ' (' + removed + ' files)');
     if (failed > 0) {
       logEvent('reset-profile', 'Partial reset of ' + displayName, {
-        level: 'warn', category: 'application',
+        level: 'warn',
+        category: 'application',
         message: removed + ' removed · ' + failed + ' failed (see warnings above)',
       });
     }
   } catch (e) {
     logEvent('reset-profile', 'Could not enumerate ' + displayName, {
-      level: 'warn', category: 'application',
+      level: 'warn',
+      category: 'application',
       message: e instanceof Error ? e.message : String(e),
     });
   }
@@ -459,7 +499,8 @@ function backupAndDelete(p: string, resetFiles: string[], backups: string[]): vo
     resetFiles.push(path.relative(ROOT, p));
   } catch (e) {
     logEvent('reset-profile', 'Could not delete ' + path.basename(p), {
-      level: 'warn', category: 'application',
+      level: 'warn',
+      category: 'application',
       message: e instanceof Error ? e.message : String(e),
     });
   }
@@ -468,8 +509,7 @@ function backupAndDelete(p: string, resetFiles: string[], backups: string[]): vo
 export function resetProfile(profileId: string | undefined, scope?: ResetScope): ResetResult;
 export function resetProfile(scope?: ResetScope): ResetResult;
 export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): ResetResult {
-  const isFirstArgScope =
-    arg1 === 'profile' || arg1 === 'jobs' || arg1 === 'everything';
+  const isFirstArgScope = arg1 === 'profile' || arg1 === 'jobs' || arg1 === 'everything';
   const profileId = isFirstArgScope ? undefined : (arg1 as string | undefined);
   const scope: ResetScope = isFirstArgScope ? (arg1 as ResetScope) : (arg2 ?? 'profile');
   const id = resolveId(profileId);
@@ -545,7 +585,12 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
   // migration (it stays at the shared top-level path), but a future per-profile
   // story-bank.md could exist; preserve it under 'jobs' scope to be safe.
   if (scope === 'jobs') {
-    emptyDir(INTERVIEW_PREP_DIR, resetFiles, path.relative(ROOT, INTERVIEW_PREP_DIR) + '/', new Set(['story-bank.md']));
+    emptyDir(
+      INTERVIEW_PREP_DIR,
+      resetFiles,
+      path.relative(ROOT, INTERVIEW_PREP_DIR) + '/',
+      new Set(['story-bank.md']),
+    );
   } else {
     emptyDir(INTERVIEW_PREP_DIR, resetFiles, path.relative(ROOT, INTERVIEW_PREP_DIR) + '/');
   }
@@ -574,7 +619,8 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
     backupTo(AUTOPILOT_JSON, backups);
     try {
       // Lazy-require to avoid circular imports.
-      const { readConfig: _read, writeConfig } = require('./autopilot') as typeof import('./autopilot');
+      const { readConfig: _read, writeConfig } =
+        require('./autopilot') as typeof import('./autopilot');
       void _read;
       // Force-write the static defaults by deleting and triggering a fresh read.
       // Simpler: just delete; next readConfig() seeds DEFAULT_CONFIG automatically.
@@ -585,7 +631,8 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
       resetFiles.push(path.relative(ROOT, AUTOPILOT_JSON));
     } catch (e) {
       logEvent('reset-profile', 'Could not reset autopilot.json', {
-        level: 'warn', category: 'application',
+        level: 'warn',
+        category: 'application',
         message: e instanceof Error ? e.message : String(e),
       });
     }
@@ -600,7 +647,8 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
       resetFiles.push(path.relative(ROOT, ACTIVITY_JSONL));
     } catch (e) {
       logEvent('reset-profile', 'Could not truncate activity.jsonl', {
-        level: 'warn', category: 'application',
+        level: 'warn',
+        category: 'application',
         message: e instanceof Error ? e.message : String(e),
       });
     }
@@ -619,7 +667,11 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
  * recovered manually. The user does not lose their old CV silently.
  */
 export type WriteResult = { bytes: number; backedUp: boolean; backupPath: string | null };
-export function writeSiblingFile(profileId: string | undefined, name: 'profileMd' | 'cv', content: string): WriteResult;
+export function writeSiblingFile(
+  profileId: string | undefined,
+  name: 'profileMd' | 'cv',
+  content: string,
+): WriteResult;
 export function writeSiblingFile(name: 'profileMd' | 'cv', content: string): WriteResult;
 export function writeSiblingFile(
   arg1: string | undefined | 'profileMd' | 'cv',

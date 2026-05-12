@@ -15,7 +15,11 @@ const ALLOWED_CHANNELS = new Set([
 
 contextBridge.exposeInMainWorld('electronAPI', {
   on(channel: string, handler: (...args: any[]) => void) {
-    if (!channel.endsWith(':main-error') && !ALLOWED_CHANNELS.has(channel)) {
+    if (
+      !channel.endsWith(':main-error') &&
+      !channel.endsWith(':net-status') &&
+      !ALLOWED_CHANNELS.has(channel)
+    ) {
       console.warn(`[preload] refused to listen on channel "${channel}"`);
       return () => {};
     }

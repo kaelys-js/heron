@@ -40,23 +40,35 @@ function spawnPostRejection(url: string, notes: Notes, profileId: string): Promi
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
-    const args = ['-p',
-      '/' + CLI_NAMESPACE + ' post-rejection ' + url +
-      ' --notes ' + JSON.stringify(JSON.stringify(notes)),
+    const args = [
+      '-p',
+      '/' +
+        CLI_NAMESPACE +
+        ' post-rejection ' +
+        url +
+        ' --notes ' +
+        JSON.stringify(JSON.stringify(notes)),
       '--dangerously-skip-permissions',
     ];
     // Swap symlinks so the slash-command reads this job's profile data
     // (CV, profile.yml, applications.md, the report file) and not the
     // currently-active profile's.
-    try { swapProfileSymlinks(profileId); } catch (e) {
+    try {
+      swapProfileSymlinks(profileId);
+    } catch (e) {
       logEvent('post-rejection', 'Symlink swap failed — capture may read wrong profile', {
-        level: 'warn', category: 'application',
+        level: 'warn',
+        category: 'application',
         message: e instanceof Error ? e.message : String(e),
       });
     }
     const p = spawn(AGENT_CLI, args, { cwd: ROOT, env: { ...process.env } });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) {

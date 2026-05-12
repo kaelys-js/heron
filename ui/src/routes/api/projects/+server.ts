@@ -26,7 +26,15 @@ export const POST = wrap('projects', async ({ request, url }: { request: Request
   logEvent('projects', 'Project created: ' + project.name, {
     level: 'info',
     category: 'user',
-    message: 'id=' + project.id + ' · color=' + project.color + ' · target=' + project.target + ' · profile=' + profileId,
+    message:
+      'id=' +
+      project.id +
+      ' · color=' +
+      project.color +
+      ' · target=' +
+      project.target +
+      ' · profile=' +
+      profileId,
   });
   return { project };
 });

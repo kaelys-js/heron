@@ -58,7 +58,9 @@ const ZERO_STATE: OnboardingState = {
 };
 
 function ensureDir() {
-  try { fs.mkdirSync(path.dirname(STATE_PATH), { recursive: true }); } catch {}
+  try {
+    fs.mkdirSync(path.dirname(STATE_PATH), { recursive: true });
+  } catch {}
 }
 
 export function readOnboarding(): OnboardingState {
@@ -74,7 +76,9 @@ export function readOnboarding(): OnboardingState {
       skippedSteps: Array.isArray(parsed.skippedSteps) ? parsed.skippedSteps : [],
     };
   } catch (e) {
-    reportServerError('onboarding', 'Failed to read onboarding-state.json', e, { category: 'system' });
+    reportServerError('onboarding', 'Failed to read onboarding-state.json', e, {
+      category: 'system',
+    });
     return { ...ZERO_STATE };
   }
 }
@@ -84,7 +88,9 @@ function writeOnboarding(state: OnboardingState): OnboardingState {
   try {
     fs.writeFileSync(STATE_PATH, JSON.stringify(state, null, 2) + '\n');
   } catch (e) {
-    reportServerError('onboarding', 'Failed to write onboarding-state.json', e, { category: 'system' });
+    reportServerError('onboarding', 'Failed to write onboarding-state.json', e, {
+      category: 'system',
+    });
   }
   return state;
 }
@@ -143,10 +149,10 @@ export function isFreshInstall(): boolean {
   // Required files for any career-ops workflow to function. Each one would
   // cause a downstream feature to silently fail (or 500) if missing.
   const requiredFiles = [
-    activePath('cv-md'),       // cv.md — read by oferta + every CV-tailoring path
+    activePath('cv-md'), // cv.md — read by oferta + every CV-tailoring path
     activePath('profile-yml'), // profile.yml — every personalization read
     activePath('portals-yml'), // tracker company list + title filter
-    activePath('profile-md'),  // user-customisable mode fragment (per-profile)
+    activePath('profile-md'), // user-customisable mode fragment (per-profile)
   ];
   for (const p of requiredFiles) {
     if (!fs.existsSync(p)) return true;
@@ -162,7 +168,10 @@ export function isFreshInstall(): boolean {
 
 /** Helper for the wizard's progress sidebar — returns step → status map
  *  in canonical order. */
-export function progressSummary(): Array<{ step: OnboardingStep; status: 'complete' | 'skipped' | 'current' | 'pending' }> {
+export function progressSummary(): Array<{
+  step: OnboardingStep;
+  status: 'complete' | 'skipped' | 'current' | 'pending';
+}> {
   const state = readOnboarding();
   return STEPS.map((step) => {
     if (state.completedSteps.includes(step)) return { step, status: 'complete' as const };

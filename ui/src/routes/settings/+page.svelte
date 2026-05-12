@@ -1,286 +1,317 @@
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-  import { Badge } from '$lib/components/ui/badge';
-  import * as Card from '$lib/components/ui/card';
-  import BackupsCard, { type BackupInfo } from '$lib/components/BackupsCard.svelte';
-  import PushNotificationsToggle from '$lib/components/PushNotificationsToggle.svelte';
-  import ProfileSettingsCard from '$lib/components/ProfileSettingsCard.svelte';
-  import { toast } from 'svelte-sonner';
-  import { ApiError, api } from '$lib/api';
-  import { ExternalLink, KeyRound, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, RotateCw, Sparkles, Activity } from '@lucide/svelte';
-  import { cn } from '$lib/utils';
-  import { onMount } from 'svelte';
+import Topbar from '$lib/components/Topbar.svelte';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import { Badge } from '$lib/components/ui/badge';
+import * as Card from '$lib/components/ui/card';
+import BackupsCard, { type BackupInfo } from '$lib/components/BackupsCard.svelte';
+import PushNotificationsToggle from '$lib/components/PushNotificationsToggle.svelte';
+import ProfileSettingsCard from '$lib/components/ProfileSettingsCard.svelte';
+import { toast } from 'svelte-sonner';
+import { ApiError, api } from '$lib/api';
+import {
+  ExternalLink,
+  KeyRound,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Eye,
+  EyeOff,
+  RotateCw,
+  Sparkles,
+  Activity,
+} from '@lucide/svelte';
+import { cn } from '$lib/utils';
+import { onMount } from 'svelte';
 
-  /** Compact "Nm/Nh/Nd ago" formatter for the health card. */
-  function sinceShort(ts: number): string {
-    const dt = Date.now() - ts;
-    if (dt < 60_000) return 'just now';
-    if (dt < 3600_000) return Math.floor(dt / 60_000) + 'm ago';
-    if (dt < 86_400_000) return Math.floor(dt / 3600_000) + 'h ago';
-    return Math.floor(dt / 86_400_000) + 'd ago';
+/** Compact "Nm/Nh/Nd ago" formatter for the health card. */
+function sinceShort(ts: number): string {
+  const dt = Date.now() - ts;
+  if (dt < 60_000) return 'just now';
+  if (dt < 3600_000) return Math.floor(dt / 60_000) + 'm ago';
+  if (dt < 86_400_000) return Math.floor(dt / 3600_000) + 'h ago';
+  return Math.floor(dt / 86_400_000) + 'd ago';
+}
+
+// /api/health snapshot — surfaced at the top so the user sees pipeline
+// freshness + key configuration without leaving Settings. Refreshes on
+// mount only; click Refresh to re-poll.
+type HealthSnapshot = {
+  pipeline: { exists: boolean; size?: number; mtime?: number; stale: boolean };
+  reports: { count: number };
+  gemini: { scoresExists: boolean; keyConfigured: boolean };
+  anthropic: { keyConfigured: boolean };
+  runningTasks: string[];
+  lastScanAt: number | null;
+};
+let health = $state<HealthSnapshot | null>(null);
+let healthLoading = $state(false);
+async function refreshHealth() {
+  healthLoading = true;
+  try {
+    health = await api.get<HealthSnapshot>('/api/health', { silent: true });
+  } catch {
+    /* leave previous snapshot in place */
+  } finally {
+    healthLoading = false;
   }
+}
+onMount(() => {
+  void refreshHealth();
+});
 
-  // /api/health snapshot — surfaced at the top so the user sees pipeline
-  // freshness + key configuration without leaving Settings. Refreshes on
-  // mount only; click Refresh to re-poll.
-  type HealthSnapshot = {
-    pipeline: { exists: boolean; size?: number; mtime?: number; stale: boolean };
-    reports: { count: number };
-    gemini: { scoresExists: boolean; keyConfigured: boolean };
-    anthropic: { keyConfigured: boolean };
-    runningTasks: string[];
-    lastScanAt: number | null;
+let {
+  data,
+}: {
+  data: {
+    env: Record<string, string>;
+    backups: BackupInfo[];
+    backupConfig: { retentionDays: number };
   };
-  let health = $state<HealthSnapshot | null>(null);
-  let healthLoading = $state(false);
-  async function refreshHealth() {
-    healthLoading = true;
-    try {
-      health = await api.get<HealthSnapshot>('/api/health', { silent: true });
-    } catch { /* leave previous snapshot in place */ }
-    finally { healthLoading = false; }
+} = $props();
+
+type ProviderKey = 'ANTHROPIC_API_KEY' | 'GEMINI_API_KEY' | 'ADZUNA_APP_ID' | 'ADZUNA_APP_KEY';
+
+// svelte-ignore state_referenced_locally — `data.env` is intentionally the seed; env takes over after save.
+let env = $state<Record<string, string>>({ ...data.env });
+let pending = $state<Record<string, string>>({});
+let revealed = $state<Record<string, boolean>>({});
+let saving = $state(false);
+
+type ProbeOutcome = { ok: boolean; message: string; ts: number };
+let probes = $state<Record<string, ProbeOutcome | null>>({
+  anthropic: null,
+  gemini: null,
+  adzuna: null,
+});
+let probing = $state<Record<string, boolean>>({
+  anthropic: false,
+  gemini: false,
+  adzuna: false,
+});
+
+type Field = {
+  key: ProviderKey;
+  label: string;
+  placeholder: string;
+  help: string;
+  signupUrl?: string;
+  signupLabel?: string;
+  pattern?: RegExp;
+  patternHint?: string;
+  provider?: 'anthropic' | 'gemini' | 'adzuna';
+};
+
+const fields: Field[] = [
+  {
+    key: 'ANTHROPIC_API_KEY',
+    label: 'Anthropic',
+    placeholder: 'sk-ant-api03-…',
+    help: 'Powers Claude — used for deep job evaluations, the agent chat, mock interviews, interview prep, and negotiation drafts.',
+    signupUrl: 'https://console.anthropic.com/settings/keys',
+    signupLabel: 'Get a key',
+    pattern: /^sk-ant-(api03|admin01)-/,
+    patternHint: 'Should start with sk-ant-api03-',
+    provider: 'anthropic',
+  },
+  {
+    key: 'GEMINI_API_KEY',
+    label: 'Gemini',
+    placeholder: 'AIza…',
+    help: 'Free tier covers ~1M tokens/day. Used to score job listings before deeper Claude evaluation — keeps costs low.',
+    signupUrl: 'https://aistudio.google.com/apikey',
+    signupLabel: 'Free key',
+    pattern: /^AIza[A-Za-z0-9_\-]{30,}$/,
+    patternHint: 'Should start with AIza and be 39+ chars',
+    provider: 'gemini',
+  },
+  {
+    key: 'ADZUNA_APP_ID',
+    label: 'Adzuna App ID',
+    placeholder: 'a1b2c3d4',
+    help: 'Optional. Adds Adzuna to your job sources alongside LinkedIn, Indeed, Greenhouse, and Ashby.',
+    signupUrl: 'https://developer.adzuna.com',
+    signupLabel: 'Sign up',
+    pattern: /^[a-f0-9]{8}$/i,
+    patternHint: '8 hex characters',
+    provider: 'adzuna',
+  },
+  {
+    key: 'ADZUNA_APP_KEY',
+    label: 'Adzuna App Key',
+    placeholder: '0123456789abcdef0123456789abcdef',
+    help: '',
+    pattern: /^[a-f0-9]{32}$/i,
+    patternHint: '32 hex characters',
+  },
+];
+
+function isMasked(key: string): boolean {
+  const v = env[key];
+  return !!v && v.startsWith('****');
+}
+
+function isConnected(key: string): boolean {
+  return isMasked(key) && pending[key] == null;
+}
+
+function dirtyValue(key: string): string | null {
+  const p = pending[key];
+  if (p == null) return null;
+  return p;
+}
+
+function isDirty(key: string): boolean {
+  return pending[key] != null && pending[key] !== '';
+}
+
+function fieldValidation(f: Field): { ok: boolean; message: string } | null {
+  const value = pending[f.key];
+  if (value == null || value === '') return null;
+  if (f.pattern && !f.pattern.test(value)) {
+    return { ok: false, message: f.patternHint ?? 'Invalid format' };
   }
-  onMount(() => { void refreshHealth(); });
+  return { ok: true, message: 'Looks good' };
+}
 
-  let { data }: {
-    data: {
-      env: Record<string, string>;
-      backups: BackupInfo[];
-      backupConfig: { retentionDays: number };
-    };
-  } = $props();
+function setField(key: string, value: string) {
+  pending = { ...pending, [key]: value };
+}
 
-  type ProviderKey = 'ANTHROPIC_API_KEY' | 'GEMINI_API_KEY' | 'ADZUNA_APP_ID' | 'ADZUNA_APP_KEY';
+function clearField(key: string) {
+  const next = { ...pending };
+  delete next[key];
+  pending = next;
+}
 
-  // svelte-ignore state_referenced_locally — `data.env` is intentionally the seed; env takes over after save.
-  let env = $state<Record<string, string>>({ ...data.env });
-  let pending = $state<Record<string, string>>({});
-  let revealed = $state<Record<string, boolean>>({});
-  let saving = $state(false);
+function toggleReveal(key: string) {
+  revealed = { ...revealed, [key]: !revealed[key] };
+}
 
-  type ProbeOutcome = { ok: boolean; message: string; ts: number };
-  let probes = $state<Record<string, ProbeOutcome | null>>({
-    anthropic: null,
-    gemini: null,
-    adzuna: null,
-  });
-  let probing = $state<Record<string, boolean>>({
-    anthropic: false,
-    gemini: false,
-    adzuna: false,
-  });
+let dirtyCount = $derived(Object.values(pending).filter((v) => v && !v.startsWith('****')).length);
+let canSave = $derived(
+  dirtyCount > 0 &&
+    fields.every((f) => {
+      const v = fieldValidation(f);
+      return v == null || v.ok;
+    }),
+);
 
-  type Field = {
-    key: ProviderKey;
-    label: string;
-    placeholder: string;
-    help: string;
-    signupUrl?: string;
-    signupLabel?: string;
-    pattern?: RegExp;
-    patternHint?: string;
-    provider?: 'anthropic' | 'gemini' | 'adzuna';
-  };
-
-  const fields: Field[] = [
-    {
-      key: 'ANTHROPIC_API_KEY',
-      label: 'Anthropic',
-      placeholder: 'sk-ant-api03-…',
-      help: 'Powers Claude — used for deep job evaluations, the agent chat, mock interviews, interview prep, and negotiation drafts.',
-      signupUrl: 'https://console.anthropic.com/settings/keys',
-      signupLabel: 'Get a key',
-      pattern: /^sk-ant-(api03|admin01)-/,
-      patternHint: 'Should start with sk-ant-api03-',
-      provider: 'anthropic',
-    },
-    {
-      key: 'GEMINI_API_KEY',
-      label: 'Gemini',
-      placeholder: 'AIza…',
-      help: 'Free tier covers ~1M tokens/day. Used to score job listings before deeper Claude evaluation — keeps costs low.',
-      signupUrl: 'https://aistudio.google.com/apikey',
-      signupLabel: 'Free key',
-      pattern: /^AIza[A-Za-z0-9_\-]{30,}$/,
-      patternHint: 'Should start with AIza and be 39+ chars',
-      provider: 'gemini',
-    },
-    {
-      key: 'ADZUNA_APP_ID',
-      label: 'Adzuna App ID',
-      placeholder: 'a1b2c3d4',
-      help: 'Optional. Adds Adzuna to your job sources alongside LinkedIn, Indeed, Greenhouse, and Ashby.',
-      signupUrl: 'https://developer.adzuna.com',
-      signupLabel: 'Sign up',
-      pattern: /^[a-f0-9]{8}$/i,
-      patternHint: '8 hex characters',
-      provider: 'adzuna',
-    },
-    {
-      key: 'ADZUNA_APP_KEY',
-      label: 'Adzuna App Key',
-      placeholder: '0123456789abcdef0123456789abcdef',
-      help: '',
-      pattern: /^[a-f0-9]{32}$/i,
-      patternHint: '32 hex characters',
-    },
-  ];
-
-  function isMasked(key: string): boolean {
-    const v = env[key];
-    return !!v && v.startsWith('****');
-  }
-
-  function isConnected(key: string): boolean {
-    return isMasked(key) && pending[key] == null;
-  }
-
-  function dirtyValue(key: string): string | null {
-    const p = pending[key];
-    if (p == null) return null;
-    return p;
-  }
-
-  function isDirty(key: string): boolean {
-    return pending[key] != null && pending[key] !== '';
-  }
-
-  function fieldValidation(f: Field): { ok: boolean; message: string } | null {
-    const value = pending[f.key];
-    if (value == null || value === '') return null;
-    if (f.pattern && !f.pattern.test(value)) {
-      return { ok: false, message: f.patternHint ?? 'Invalid format' };
-    }
-    return { ok: true, message: 'Looks good' };
-  }
-
-  function setField(key: string, value: string) {
-    pending = { ...pending, [key]: value };
-  }
-
-  function clearField(key: string) {
-    const next = { ...pending };
-    delete next[key];
-    pending = next;
-  }
-
-  function toggleReveal(key: string) {
-    revealed = { ...revealed, [key]: !revealed[key] };
-  }
-
-  let dirtyCount = $derived(Object.values(pending).filter((v) => v && !v.startsWith('****')).length);
-  let canSave = $derived(dirtyCount > 0 && fields.every((f) => {
-    const v = fieldValidation(f);
-    return v == null || v.ok;
-  }));
-
-  async function save() {
-    if (!canSave || saving) return;
-    saving = true;
-    try {
-      const r = await api.post<{ current: Record<string, string> }>('/api/settings', pending, {
-        successToast: { title: 'Settings saved', description: 'Active immediately — no restart needed.' },
-        inlineError: true,
-      });
-      env = { ...r.current };
-      pending = {};
-      revealed = {};
-      probes = { anthropic: null, gemini: null, adzuna: null };
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Failed to save settings', {
-        description: err.message,
-        duration: 10_000,
-      });
-    } finally {
-      saving = false;
-    }
-  }
-
-  async function probe(provider: 'anthropic' | 'gemini' | 'adzuna') {
-    if (probing[provider]) return;
-    probing = { ...probing, [provider]: true };
-    try {
-      const r = await api.post<{ ok: boolean; provider: string; message: string }>(
-        '/api/settings/test',
-        { provider },
-        { silent: true },
-      );
-      probes = { ...probes, [provider]: { ok: r.ok, message: r.message, ts: Date.now() } };
-    } catch (e) {
-      const err = e as ApiError;
-      probes = {
-        ...probes,
-        [provider]: { ok: false, message: err.message ?? 'Test failed', ts: Date.now() },
-      };
-    } finally {
-      probing = { ...probing, [provider]: false };
-    }
-  }
-
-  // Bookmarklet wrapper. Loads /bookmarklet.js from the dashboard at click
-  // time so updates ship without users having to re-drag the bookmark. The
-  // wrapper hard-codes the host so the bookmarklet knows where to POST when
-  // it's running on a third-party domain (greenhouse.io, ashbyhq.com, etc.).
-  let bookmarkletHref = $derived.by(() => {
-    if (typeof window === 'undefined') return '#';
-    const host = window.location.origin;
-    const code =
-      "(function(){window.__CAREER_OPS_HOST__='" + host + "';" +
-      "var s=document.createElement('script');" +
-      "s.src='" + host + "/bookmarklet.js?t='+Date.now();" +
-      "document.body.appendChild(s);})();";
-    return 'javascript:' + encodeURIComponent(code);
-  });
-
-  async function linkedinLogin() {
-    toast.info('Opening LinkedIn…', {
-      description: 'A headed browser window will open. Log in, then close it — the cookies persist.',
+async function save() {
+  if (!canSave || saving) return;
+  saving = true;
+  try {
+    const r = await api.post<{ current: Record<string, string> }>('/api/settings', pending, {
+      successToast: {
+        title: 'Settings saved',
+        description: 'Active immediately — no restart needed.',
+      },
+      inlineError: true,
     });
-    try {
-      await api.post('/api/run', { task: 'apply-linkedin-login' }, { silent: true });
-      toast.success('LinkedIn login launched', {
-        description: 'Watch the activity feed for browser-side events. Login is saved automatically.',
-      });
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Failed to launch LinkedIn login', {
-        description: err.message + ' — Playwright must be installed in the .venv.',
-        action: { label: 'Retry', onClick: () => linkedinLogin() },
-      });
-    }
+    env = { ...r.current };
+    pending = {};
+    revealed = {};
+    probes = { anthropic: null, gemini: null, adzuna: null };
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Failed to save settings', {
+      description: err.message,
+      duration: 10_000,
+    });
+  } finally {
+    saving = false;
   }
+}
 
-  let resettingOnboarding = $state(false);
-  async function resetOnboarding() {
-    if (resettingOnboarding) return;
-    if (!confirm(
-      'Re-run onboarding? This wipes the wizard\'s state file ONLY — your CV, profile, ' +
-      'tracker, and reports are NOT touched. The wizard will run again on your next page load.',
-    )) return;
-    resettingOnboarding = true;
-    try {
-      await api.post('/api/onboarding/reset', {}, { silent: true });
-      toast.success('Onboarding reset', {
-        description: 'The wizard will run again on next page load. Your data is intact.',
-      });
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Could not reset', { description: err.message });
-    } finally {
-      resettingOnboarding = false;
-    }
+async function probe(provider: 'anthropic' | 'gemini' | 'adzuna') {
+  if (probing[provider]) return;
+  probing = { ...probing, [provider]: true };
+  try {
+    const r = await api.post<{ ok: boolean; provider: string; message: string }>(
+      '/api/settings/test',
+      { provider },
+      { silent: true },
+    );
+    probes = { ...probes, [provider]: { ok: r.ok, message: r.message, ts: Date.now() } };
+  } catch (e) {
+    const err = e as ApiError;
+    probes = {
+      ...probes,
+      [provider]: { ok: false, message: err.message ?? 'Test failed', ts: Date.now() },
+    };
+  } finally {
+    probing = { ...probing, [provider]: false };
   }
+}
 
-  function fmtRelative(ts: number): string {
-    const dt = Date.now() - ts;
-    if (dt < 5_000) return 'just now';
-    if (dt < 60_000) return Math.floor(dt / 1000) + 's ago';
-    return Math.floor(dt / 60_000) + 'm ago';
+// Bookmarklet wrapper. Loads /bookmarklet.js from the dashboard at click
+// time so updates ship without users having to re-drag the bookmark. The
+// wrapper hard-codes the host so the bookmarklet knows where to POST when
+// it's running on a third-party domain (greenhouse.io, ashbyhq.com, etc.).
+let bookmarkletHref = $derived.by(() => {
+  if (typeof window === 'undefined') return '#';
+  const host = window.location.origin;
+  const code =
+    "(function(){window.__CAREER_OPS_HOST__='" +
+    host +
+    "';" +
+    "var s=document.createElement('script');" +
+    "s.src='" +
+    host +
+    "/bookmarklet.js?t='+Date.now();" +
+    'document.body.appendChild(s);})();';
+  return 'javascript:' + encodeURIComponent(code);
+});
+
+async function linkedinLogin() {
+  toast.info('Opening LinkedIn…', {
+    description: 'A headed browser window will open. Log in, then close it — the cookies persist.',
+  });
+  try {
+    await api.post('/api/run', { task: 'apply-linkedin-login' }, { silent: true });
+    toast.success('LinkedIn login launched', {
+      description: 'Watch the activity feed for browser-side events. Login is saved automatically.',
+    });
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Failed to launch LinkedIn login', {
+      description: err.message + ' — Playwright must be installed in the .venv.',
+      action: { label: 'Retry', onClick: () => linkedinLogin() },
+    });
   }
+}
+
+let resettingOnboarding = $state(false);
+async function resetOnboarding() {
+  if (resettingOnboarding) return;
+  if (
+    !confirm(
+      "Re-run onboarding? This wipes the wizard's state file ONLY — your CV, profile, " +
+        'tracker, and reports are NOT touched. The wizard will run again on your next page load.',
+    )
+  )
+    return;
+  resettingOnboarding = true;
+  try {
+    await api.post('/api/onboarding/reset', {}, { silent: true });
+    toast.success('Onboarding reset', {
+      description: 'The wizard will run again on next page load. Your data is intact.',
+    });
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Could not reset', { description: err.message });
+  } finally {
+    resettingOnboarding = false;
+  }
+}
+
+function fmtRelative(ts: number): string {
+  const dt = Date.now() - ts;
+  if (dt < 5_000) return 'just now';
+  if (dt < 60_000) return Math.floor(dt / 1000) + 's ago';
+  return Math.floor(dt / 60_000) + 'm ago';
+}
 </script>
 
 <div class="h-full overflow-y-auto">

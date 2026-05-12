@@ -34,9 +34,12 @@ function spawnSeed(profileId: string): Promise<{ stdout: string; stderr: string 
     let stdout = '';
     let stderr = '';
     const prompt = '/' + CLI_NAMESPACE + ' seed-form-answers';
-    try { swapProfileSymlinks(profileId); } catch (e) {
+    try {
+      swapProfileSymlinks(profileId);
+    } catch (e) {
       logEvent('seed-form-answers', 'Symlink swap failed', {
-        level: 'warn', category: 'application',
+        level: 'warn',
+        category: 'application',
         message: e instanceof Error ? e.message : String(e),
       });
     }
@@ -44,8 +47,12 @@ function spawnSeed(profileId: string): Promise<{ stdout: string; stderr: string 
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
@@ -92,7 +99,8 @@ export const POST = wrap('seed-form-answers', async ({ url }: { url: URL }) => {
   const statsBefore = cacheStats(profileId);
 
   logEvent('seed-form-answers', 'Seeding form-answers cache', {
-    level: 'info', category: 'application',
+    level: 'info',
+    category: 'application',
     message: profileId,
   });
 
@@ -103,7 +111,8 @@ export const POST = wrap('seed-form-answers', async ({ url }: { url: URL }) => {
     const actualDelta = statsAfter.total - statsBefore.total;
 
     logEvent('seed-form-answers', 'Cache seeded', {
-      level: 'success', category: 'application',
+      level: 'success',
+      category: 'application',
       message: `+${actualDelta} rows (claim: ${meta.rowsWritten ?? '?'}); total now ${statsAfter.total}`,
     });
 

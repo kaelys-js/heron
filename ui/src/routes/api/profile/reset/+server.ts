@@ -37,70 +37,82 @@ const VALID_SCOPES = new Set<ResetScope>(['profile', 'jobs', 'everything']);
 
 const ONBOARDING_STATE = path.join(ROOT, 'data', 'onboarding-state.json');
 
-export const POST = wrap('profile-reset', async ({ request, url }: { request: Request; url: URL }) => {
-  const body = (await request.json().catch(() => null)) as {
-    confirm?: string;
-    scope?: string;
-    profileId?: string;
-    resetOnboarding?: boolean;
-  } | null;
-  if (!body || body.confirm !== 'RESET') {
-    badRequest('Profile reset requires { confirm: "RESET" } in the body — type the word RESET in the dialog to enable the button.');
-  }
-  const requested = body.scope as ResetScope | undefined;
-  const scope: ResetScope = requested && VALID_SCOPES.has(requested) ? requested : 'profile';
-
-  // SAFETY: the body or URL can name an explicit target profile. If the user
-  // is viewing /profile?profile=B and clicks reset, this MUST wipe B not the
-  // currently-active profile A. Body field wins over query so the
-  // ResetProfileDialog (which already knows the profile from data) can pass
-  // it through unambiguously.
-  const queryProfile = url.searchParams.get('profile') ?? undefined;
-  const explicit = body.profileId || queryProfile;
-  const profileId = (explicit && getProfile(explicit)) ? explicit : getActiveProfileId();
-
-  const result = resetProfile(profileId, scope);
-
-  // Optional onboarding-state reset. The dialog exposes a checkbox; the
-  // 'everything' scope force-on it. State file is shared infrastructure, so
-  // it's backed up to .bak before deletion.
-  const resetOnboarding = body.resetOnboarding === true || scope === 'everything';
-  if (resetOnboarding && fs.existsSync(ONBOARDING_STATE)) {
-    try {
-      fs.copyFileSync(ONBOARDING_STATE, ONBOARDING_STATE + '.bak');
-      result.backups.push(ONBOARDING_STATE + '.bak');
-    } catch { /* non-fatal */ }
-    try {
-      fs.unlinkSync(ONBOARDING_STATE);
-      result.resetFiles.push(path.relative(ROOT, ONBOARDING_STATE));
-    } catch (e) {
-      logEvent('profile-reset', 'Could not delete onboarding-state.json', {
-        level: 'warn',
-        category: 'application',
-        message: e instanceof Error ? e.message : String(e),
-      });
+export const POST = wrap(
+  'profile-reset',
+  async ({ request, url }: { request: Request; url: URL }) => {
+    const body = (await request.json().catch(() => null)) as {
+      confirm?: string;
+      scope?: string;
+      profileId?: string;
+      resetOnboarding?: boolean;
+    } | null;
+    if (!body || body.confirm !== 'RESET') {
+      badRequest(
+        'Profile reset requires { confirm: "RESET" } in the body — type the word RESET in the dialog to enable the button.',
+      );
     }
-  }
+    const requested = body.scope as ResetScope | undefined;
+    const scope: ResetScope = requested && VALID_SCOPES.has(requested) ? requested : 'profile';
 
-  const titles: Record<ResetScope, string> = {
-    profile: 'Profile reset to first-run state',
-    jobs: 'Jobs data wiped',
-    everything: 'Profile + tracker reset to first-run state',
-  };
-  const summaries: Record<ResetScope, string> = {
-    profile: 'Tracker, reports, and projects were preserved.',
-    jobs: 'Profile, CV, targeting, and connected sources were preserved.',
-    everything: 'Pipeline, applications, reports, projects, autopilot, activity feed, and story bank all wiped (with .bak siblings).',
-  };
+    // SAFETY: the body or URL can name an explicit target profile. If the user
+    // is viewing /profile?profile=B and clicks reset, this MUST wipe B not the
+    // currently-active profile A. Body field wins over query so the
+    // ResetProfileDialog (which already knows the profile from data) can pass
+    // it through unambiguously.
+    const queryProfile = url.searchParams.get('profile') ?? undefined;
+    const explicit = body.profileId || queryProfile;
+    const profileId = explicit && getProfile(explicit) ? explicit : getActiveProfileId();
 
-  logEvent('profile-reset', titles[scope] + ' · ' + profileId, {
-    level: 'warn',
-    category: 'user',
-    message:
-      'profile=' + profileId + ' · ' +
-      result.resetFiles.length + ' file(s) reset · ' +
-      result.backups.length + ' backup(s) at .bak. ' +
-      summaries[scope],
-  });
-  return result;
-});
+    const result = resetProfile(profileId, scope);
+
+    // Optional onboarding-state reset. The dialog exposes a checkbox; the
+    // 'everything' scope force-on it. State file is shared infrastructure, so
+    // it's backed up to .bak before deletion.
+    const resetOnboarding = body.resetOnboarding === true || scope === 'everything';
+    if (resetOnboarding && fs.existsSync(ONBOARDING_STATE)) {
+      try {
+        fs.copyFileSync(ONBOARDING_STATE, ONBOARDING_STATE + '.bak');
+        result.backups.push(ONBOARDING_STATE + '.bak');
+      } catch {
+        /* non-fatal */
+      }
+      try {
+        fs.unlinkSync(ONBOARDING_STATE);
+        result.resetFiles.push(path.relative(ROOT, ONBOARDING_STATE));
+      } catch (e) {
+        logEvent('profile-reset', 'Could not delete onboarding-state.json', {
+          level: 'warn',
+          category: 'application',
+          message: e instanceof Error ? e.message : String(e),
+        });
+      }
+    }
+
+    const titles: Record<ResetScope, string> = {
+      profile: 'Profile reset to first-run state',
+      jobs: 'Jobs data wiped',
+      everything: 'Profile + tracker reset to first-run state',
+    };
+    const summaries: Record<ResetScope, string> = {
+      profile: 'Tracker, reports, and projects were preserved.',
+      jobs: 'Profile, CV, targeting, and connected sources were preserved.',
+      everything:
+        'Pipeline, applications, reports, projects, autopilot, activity feed, and story bank all wiped (with .bak siblings).',
+    };
+
+    logEvent('profile-reset', titles[scope] + ' · ' + profileId, {
+      level: 'warn',
+      category: 'user',
+      message:
+        'profile=' +
+        profileId +
+        ' · ' +
+        result.resetFiles.length +
+        ' file(s) reset · ' +
+        result.backups.length +
+        ' backup(s) at .bak. ' +
+        summaries[scope],
+    });
+    return result;
+  },
+);

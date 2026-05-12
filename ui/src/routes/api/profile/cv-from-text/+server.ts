@@ -46,7 +46,7 @@ const SYSTEM_PROMPT =
   '- Convert bullet-y prose into actual `-` bullets. Each bullet on its own line.\n' +
   '- Lead with the strongest verb + outcome. Drop fluff ("responsible for", "tasked with").\n' +
   '- Keep the original metrics verbatim — never round, never invent.\n' +
-  '- If a date range is implied but unclear, write the source\'s wording verbatim instead of guessing.\n' +
+  "- If a date range is implied but unclear, write the source's wording verbatim instead of guessing.\n" +
   '- If contact details are missing leave the header line as just the name + headline.\n' +
   '- No emojis, no horizontal rules, no tables. Plain markdown headings + lists only.';
 
@@ -68,13 +68,22 @@ export const POST = wrap('cv-from-text', async ({ request }: { request: Request 
   const out = await complete(SYSTEM_PROMPT, text, { maxTokens: 8000, thinking: false });
 
   // Strip code fences if Claude added them despite the instruction.
-  const markdown = out.trim().replace(/^```(?:markdown|md)?\s*/i, '').replace(/\s*```$/, '').trim();
-  if (!markdown) badRequest('Claude returned an empty response — try again or paste markdown directly');
+  const markdown = out
+    .trim()
+    .replace(/^```(?:markdown|md)?\s*/i, '')
+    .replace(/\s*```$/, '')
+    .trim();
+  if (!markdown)
+    badRequest('Claude returned an empty response — try again or paste markdown directly');
 
   logEvent('cv-from-text', 'Plain-text CV converted', {
     level: 'success',
     category: 'user',
-    message: text.length.toLocaleString() + ' chars in → ' + markdown.length.toLocaleString() + ' chars out',
+    message:
+      text.length.toLocaleString() +
+      ' chars in → ' +
+      markdown.length.toLocaleString() +
+      ' chars out',
   });
 
   return { markdown };

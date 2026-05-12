@@ -24,14 +24,28 @@ let passed = 0;
 let failed = 0;
 let warnings = 0;
 
-function pass(msg) { console.log(`  ✅ ${msg}`); passed++; }
-function fail(msg) { console.log(`  ❌ ${msg}`); failed++; }
-function warn(msg) { console.log(`  ⚠️  ${msg}`); warnings++; }
+function pass(msg) {
+  console.log(`  ✅ ${msg}`);
+  passed++;
+}
+function fail(msg) {
+  console.log(`  ❌ ${msg}`);
+  failed++;
+}
+function warn(msg) {
+  console.log(`  ⚠️  ${msg}`);
+  warnings++;
+}
 
 function run(cmd, args = [], opts = {}) {
   try {
     if (Array.isArray(args) && args.length > 0) {
-      return execFileSync(cmd, args, { cwd: ROOT, encoding: 'utf-8', timeout: 30000, ...opts }).trim();
+      return execFileSync(cmd, args, {
+        cwd: ROOT,
+        encoding: 'utf-8',
+        timeout: 30000,
+        ...opts,
+      }).trim();
     }
     return execSync(cmd, { cwd: ROOT, encoding: 'utf-8', timeout: 30000, ...opts }).trim();
   } catch (e) {
@@ -39,8 +53,12 @@ function run(cmd, args = [], opts = {}) {
   }
 }
 
-function fileExists(path) { return existsSync(join(ROOT, path)); }
-function readFile(path) { return readFileSync(join(ROOT, path), 'utf-8'); }
+function fileExists(path) {
+  return existsSync(join(ROOT, path));
+}
+function readFile(path) {
+  return readFileSync(join(ROOT, path), 'utf-8');
+}
 
 console.log('\n🧪 career-ops test suite\n');
 
@@ -48,7 +66,7 @@ console.log('\n🧪 career-ops test suite\n');
 
 console.log('1. Syntax checks');
 
-const mjsFiles = readdirSync(ROOT).filter(f => f.endsWith('.mjs'));
+const mjsFiles = readdirSync(ROOT).filter((f) => f.endsWith('.mjs'));
 for (const f of mjsFiles) {
   const result = run('node', ['--check', f]);
   if (result !== null) {
@@ -116,7 +134,8 @@ try {
   }
 
   const closedMycareersfuture = classifyLiveness({
-    finalUrl: 'https://www.mycareersfuture.gov.sg/job/engineering/senior-staff-embedded-software-engineer',
+    finalUrl:
+      'https://www.mycareersfuture.gov.sg/job/engineering/senior-staff-embedded-software-engineer',
     bodyText: [
       'Senior Staff Embedded Software Engineer',
       'MaxLinear Asia Singapore Private Limited',
@@ -157,10 +176,16 @@ console.log('\n5. Data contract validation');
 
 // Check system files exist
 const systemFiles = [
-  'CLAUDE.md', 'VERSION', 'DATA_CONTRACT.md',
-  'modes/_shared.md', 'modes/_profile.template.md',
-  'modes/oferta.md', 'modes/pdf.md', 'modes/scan.md',
-  'templates/states.yml', 'templates/cv-template.html',
+  'CLAUDE.md',
+  'VERSION',
+  'DATA_CONTRACT.md',
+  'modes/_shared.md',
+  'modes/_profile.template.md',
+  'modes/oferta.md',
+  'modes/pdf.md',
+  'modes/scan.md',
+  'templates/states.yml',
+  'templates/cv-template.html',
   '.claude/skills/career-ops/SKILL.md',
 ];
 
@@ -173,9 +198,7 @@ for (const f of systemFiles) {
 }
 
 // Check user files are NOT tracked (gitignored)
-const userFiles = [
-  'config/profile.yml', 'modes/_profile.md', 'portals.yml',
-];
+const userFiles = ['config/profile.yml', 'modes/_profile.md', 'portals.yml'];
 for (const f of userFiles) {
   const tracked = run('git', ['ls-files', f]);
   if (tracked === '') {
@@ -192,20 +215,40 @@ for (const f of userFiles) {
 console.log('\n6. Personal data leak check');
 
 const leakPatterns = [
-  'Santiago', 'santifer.io', 'Santifer iRepair', 'Zinkee', 'ALMAS',
-  'hi@santifer.io', '688921377', '/Users/santifer/',
+  'Santiago',
+  'santifer.io',
+  'Santifer iRepair',
+  'Zinkee',
+  'ALMAS',
+  'hi@santifer.io',
+  '688921377',
+  '/Users/santifer/',
 ];
 
 const scanExtensions = ['md', 'yml', 'html', 'mjs', 'sh', 'go', 'json'];
 const allowedFiles = [
   // English README + localized translations (all legitimately credit Santiago)
-  'README.md', 'README.es.md', 'README.ja.md', 'README.ko-KR.md',
-  'README.pt-BR.md', 'README.ru.md',
+  'README.md',
+  'README.es.md',
+  'README.ja.md',
+  'README.ko-KR.md',
+  'README.pt-BR.md',
+  'README.ru.md',
   // Standard project files
-  'LICENSE', 'CITATION.cff', 'CONTRIBUTING.md',
-  'package.json', '.github/FUNDING.yml', 'CLAUDE.md', 'AGENTS.md', 'go.mod', 'test-all.mjs',
+  'LICENSE',
+  'CITATION.cff',
+  'CONTRIBUTING.md',
+  'package.json',
+  '.github/FUNDING.yml',
+  'CLAUDE.md',
+  'AGENTS.md',
+  'go.mod',
+  'test-all.mjs',
   // Community / governance files (added in v1.3.0, all legitimately reference the maintainer)
-  'CODE_OF_CONDUCT.md', 'GOVERNANCE.md', 'SECURITY.md', 'SUPPORT.md',
+  'CODE_OF_CONDUCT.md',
+  'GOVERNANCE.md',
+  'SECURITY.md',
+  'SUPPORT.md',
   '.github/SECURITY.md',
   // Dashboard credit string
   'dashboard/internal/ui/screens/pipeline.go',
@@ -216,17 +259,15 @@ const allowedFiles = [
 // untracked files (debate artifacts, AI tool scratch, local plans/) and
 // gitignored files can't trigger false positives because they were never
 // going to reach a commit anyway.
-const grepPathspec = scanExtensions.map(e => `'*.${e}'`).join(' ');
+const grepPathspec = scanExtensions.map((e) => `'*.${e}'`).join(' ');
 
 let leakFound = false;
 for (const pattern of leakPatterns) {
-  const result = run(
-    `git grep -n "${pattern}" -- ${grepPathspec} 2>/dev/null`
-  );
+  const result = run(`git grep -n "${pattern}" -- ${grepPathspec} 2>/dev/null`);
   if (result) {
     for (const line of result.split('\n')) {
       const file = line.split(':')[0];
-      if (allowedFiles.some(a => file.includes(a))) continue;
+      if (allowedFiles.some((a) => file.includes(a))) continue;
       if (file.includes('dashboard/go.mod')) continue;
       warn(`Possible personal data in ${file}: "${pattern}"`);
       leakFound = true;
@@ -244,7 +285,7 @@ console.log('\n7. Absolute path check');
 // Same git grep approach: only scans tracked files. Untracked AI tool
 // outputs, local debate artifacts, etc. can't false-positive here.
 const absPathResult = run(
-  `git grep -n "/Users/" -- '*.mjs' '*.sh' '*.md' '*.go' '*.yml' 2>/dev/null | grep -v README.md | grep -v LICENSE | grep -v CLAUDE.md | grep -v test-all.mjs`
+  `git grep -n "/Users/" -- '*.mjs' '*.sh' '*.md' '*.go' '*.yml' 2>/dev/null | grep -v README.md | grep -v LICENSE | grep -v CLAUDE.md | grep -v test-all.mjs`,
 );
 if (!absPathResult) {
   pass('No absolute paths in code files');
@@ -259,9 +300,21 @@ if (!absPathResult) {
 console.log('\n8. Mode file integrity');
 
 const expectedModes = [
-  '_shared.md', '_profile.template.md', 'oferta.md', 'pdf.md', 'scan.md',
-  'batch.md', 'apply.md', 'auto-pipeline.md', 'contacto.md', 'deep.md',
-  'ofertas.md', 'pipeline.md', 'project.md', 'tracker.md', 'training.md',
+  '_shared.md',
+  '_profile.template.md',
+  'oferta.md',
+  'pdf.md',
+  'scan.md',
+  'batch.md',
+  'apply.md',
+  'auto-pipeline.md',
+  'contacto.md',
+  'deep.md',
+  'ofertas.md',
+  'pipeline.md',
+  'project.md',
+  'tracker.md',
+  'training.md',
 ];
 
 for (const mode of expectedModes) {
@@ -286,9 +339,14 @@ console.log('\n9. AGENTS.md integrity');
 
 const agents = readFile('AGENTS.md');
 const requiredSections = [
-  'Data Contract', 'Update Check', 'Ethical Use',
-  'Offer Verification', 'Canonical States', 'TSV Format',
-  'First Run', 'Onboarding',
+  'Data Contract',
+  'Update Check',
+  'Ethical Use',
+  'Offer Verification',
+  'Canonical States',
+  'TSV Format',
+  'First Run',
+  'Onboarding',
 ];
 
 for (const section of requiredSections) {

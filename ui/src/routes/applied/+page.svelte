@@ -1,63 +1,68 @@
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import JobCard from '$lib/components/JobCard.svelte';
-  import EmptyState from '$lib/components/EmptyState.svelte';
-  import FollowupBadge from '$lib/components/FollowupBadge.svelte';
-  import { Send, Bell, Clock, Hourglass, Snowflake } from '@lucide/svelte';
-  let { data } = $props();
+import Topbar from '$lib/components/Topbar.svelte';
+import JobCard from '$lib/components/JobCard.svelte';
+import EmptyState from '$lib/components/EmptyState.svelte';
+import FollowupBadge from '$lib/components/FollowupBadge.svelte';
+import { Send, Bell, Clock, Hourglass, Snowflake } from '@lucide/svelte';
+let { data } = $props();
 
-  // Group active jobs by follow-up urgency so the user reads the right
-  // bucket first. Jobs without a cadence entry fall into 'other'.
-  type Bucket = 'urgent' | 'overdue' | 'waiting' | 'cold' | 'other';
-  let groups = $derived.by(() => {
-    const out: Record<Bucket, typeof data.jobs> = {
-      urgent: [], overdue: [], waiting: [], cold: [], other: [],
-    };
-    for (const j of data.jobs) {
-      const entry = data.followups[j.id];
-      const bucket: Bucket = entry ? entry.urgency : 'other';
-      out[bucket].push(j);
-    }
-    return out;
-  });
+// Group active jobs by follow-up urgency so the user reads the right
+// bucket first. Jobs without a cadence entry fall into 'other'.
+type Bucket = 'urgent' | 'overdue' | 'waiting' | 'cold' | 'other';
+let groups = $derived.by(() => {
+  const out: Record<Bucket, typeof data.jobs> = {
+    urgent: [],
+    overdue: [],
+    waiting: [],
+    cold: [],
+    other: [],
+  };
+  for (const j of data.jobs) {
+    const entry = data.followups[j.id];
+    const bucket: Bucket = entry ? entry.urgency : 'other';
+    out[bucket].push(j);
+  }
+  return out;
+});
 
-  const SECTIONS: { key: Bucket; label: string; icon: any; tint: string; description: string }[] = [
-    {
-      key: 'urgent',
-      label: 'Follow up today',
-      icon: Bell,
-      tint: 'text-red-400',
-      description: 'These have hit the recommended cadence — nudge now or risk going cold.',
-    },
-    {
-      key: 'overdue',
-      label: 'Overdue',
-      icon: Clock,
-      tint: 'text-amber-400',
-      description: 'Past the cadence window. Send a follow-up today; if no response in 5d move to cold.',
-    },
-    {
-      key: 'waiting',
-      label: 'Waiting',
-      icon: Hourglass,
-      tint: 'text-blue-400',
-      description: 'In the cadence sweet spot. Resist nudging too early.',
-    },
-    {
-      key: 'cold',
-      label: 'Cold',
-      icon: Snowflake,
-      tint: 'text-zinc-400',
-      description: 'Past the cadence + no response. Close these out and free up mental space.',
-    },
-    {
-      key: 'other',
-      label: 'Other active',
-      icon: Send,
-      tint: 'text-emerald-400',
-      description: 'In flight; no cadence advice yet (very recently applied).',
-    },
-  ];
+const SECTIONS: { key: Bucket; label: string; icon: any; tint: string; description: string }[] = [
+  {
+    key: 'urgent',
+    label: 'Follow up today',
+    icon: Bell,
+    tint: 'text-red-400',
+    description: 'These have hit the recommended cadence — nudge now or risk going cold.',
+  },
+  {
+    key: 'overdue',
+    label: 'Overdue',
+    icon: Clock,
+    tint: 'text-amber-400',
+    description:
+      'Past the cadence window. Send a follow-up today; if no response in 5d move to cold.',
+  },
+  {
+    key: 'waiting',
+    label: 'Waiting',
+    icon: Hourglass,
+    tint: 'text-blue-400',
+    description: 'In the cadence sweet spot. Resist nudging too early.',
+  },
+  {
+    key: 'cold',
+    label: 'Cold',
+    icon: Snowflake,
+    tint: 'text-zinc-400',
+    description: 'Past the cadence + no response. Close these out and free up mental space.',
+  },
+  {
+    key: 'other',
+    label: 'Other active',
+    icon: Send,
+    tint: 'text-emerald-400',
+    description: 'In flight; no cadence advice yet (very recently applied).',
+  },
+];
 </script>
 
 <div class="h-full overflow-y-auto">

@@ -67,33 +67,71 @@ mkdirSync(join(CAREER_OPS, 'data'), { recursive: true });
 for (const s of SCOPES) mkdirSync(join(s.reportsBase, 'reports'), { recursive: true });
 
 const CANONICAL_STATUSES = [
-  'evaluated', 'applied', 'responded', 'interview',
-  'offer', 'rejected', 'discarded', 'skip',
+  'evaluated',
+  'applied',
+  'responded',
+  'interview',
+  'offer',
+  'rejected',
+  'discarded',
+  'skip',
   // Autonomous-apply additions.
-  'queued', 'applying', 'manual-apply-needed', 'manualapplyneeded',
+  'queued',
+  'applying',
+  'manual-apply-needed',
+  'manualapplyneeded',
   // Interview sub-stages (#4 punch-list item).
-  'phonescreen', 'technical', 'takehome', 'onsite', 'final',
+  'phonescreen',
+  'technical',
+  'takehome',
+  'onsite',
+  'final',
 ];
 
 const ALIASES = {
-  'evaluada': 'evaluated', 'condicional': 'evaluated', 'hold': 'evaluated', 'evaluar': 'evaluated', 'verificar': 'evaluated',
-  'aplicado': 'applied', 'enviada': 'applied', 'aplicada': 'applied', 'applied': 'applied', 'sent': 'applied',
-  'respondido': 'responded',
-  'entrevista': 'interview',
-  'oferta': 'offer',
-  'rechazado': 'rejected', 'rechazada': 'rejected',
-  'descartado': 'discarded', 'descartada': 'discarded', 'cerrada': 'discarded', 'cancelada': 'discarded',
-  'no aplicar': 'skip', 'no_aplicar': 'skip', 'monitor': 'skip', 'geo blocker': 'skip',
+  evaluada: 'evaluated',
+  condicional: 'evaluated',
+  hold: 'evaluated',
+  evaluar: 'evaluated',
+  verificar: 'evaluated',
+  aplicado: 'applied',
+  enviada: 'applied',
+  aplicada: 'applied',
+  applied: 'applied',
+  sent: 'applied',
+  respondido: 'responded',
+  entrevista: 'interview',
+  oferta: 'offer',
+  rechazado: 'rejected',
+  rechazada: 'rejected',
+  descartado: 'discarded',
+  descartada: 'discarded',
+  cerrada: 'discarded',
+  cancelada: 'discarded',
+  'no aplicar': 'skip',
+  no_aplicar: 'skip',
+  monitor: 'skip',
+  'geo blocker': 'skip',
   // Round-5: legacy/pre-canonical labels still in user-owned applications.md.
-  'ready-to-apply': 'queued', 'ready_to_apply': 'queued', 'ready to apply': 'queued',
+  'ready-to-apply': 'queued',
+  ready_to_apply: 'queued',
+  'ready to apply': 'queued',
 };
 
 let errors = 0;
 let warnings = 0;
 
-function error(msg) { console.log(`❌ ${msg}`); errors++; }
-function warn(msg) { console.log(`⚠️  ${msg}`); warnings++; }
-function ok(msg) { console.log(`✅ ${msg}`); }
+function error(msg) {
+  console.log(`❌ ${msg}`);
+  errors++;
+}
+function warn(msg) {
+  console.log(`⚠️  ${msg}`);
+  warnings++;
+}
+function ok(msg) {
+  console.log(`✅ ${msg}`);
+}
 
 /**
  * Run all per-entry + per-row checks against a single scope (one profile, or
@@ -123,10 +161,15 @@ function checkScope(scope) {
     // 12-column rows include URL; 11-column rows don't.
     const off = parts.length >= 12 ? 1 : 0;
     entries.push({
-      num, date: parts[2], company: parts[3], role: parts[4],
+      num,
+      date: parts[2],
+      company: parts[3],
+      role: parts[4],
       url: off ? parts[5] : '',
-      score: parts[5 + off], status: parts[6 + off],
-      pdf: parts[7 + off], report: parts[8 + off],
+      score: parts[5 + off],
+      status: parts[6 + off],
+      pdf: parts[7 + off],
+      report: parts[8 + off],
       notes: parts[9 + off] || '',
     });
   }
@@ -153,7 +196,9 @@ function checkScope(scope) {
 
     // Check for dates in status
     if (/\d{4}-\d{2}-\d{2}/.test(e.status)) {
-      error(`[${scope.label}] #${e.num}: Status contains date: "${e.status}" — dates go in date column`);
+      error(
+        `[${scope.label}] #${e.num}: Status contains date: "${e.status}" — dates go in date column`,
+      );
       badStatuses++;
     }
   }
@@ -163,14 +208,18 @@ function checkScope(scope) {
   const companyRoleMap = new Map();
   let dupes = 0;
   for (const e of entries) {
-    const key = e.company.toLowerCase().replace(/[^a-z0-9]/g, '') + '::' +
+    const key =
+      e.company.toLowerCase().replace(/[^a-z0-9]/g, '') +
+      '::' +
       e.role.toLowerCase().replace(/[^a-z0-9 ]/g, '');
     if (!companyRoleMap.has(key)) companyRoleMap.set(key, []);
     companyRoleMap.get(key).push(e);
   }
   for (const [_key, group] of companyRoleMap) {
     if (group.length > 1) {
-      warn(`[${scope.label}] Possible duplicates: ${group.map((e) => `#${e.num}`).join(', ')} (${group[0].company} — ${group[0].role})`);
+      warn(
+        `[${scope.label}] Possible duplicates: ${group.map((e) => `#${e.num}`).join(', ')} (${group[0].company} — ${group[0].role})`,
+      );
       dupes++;
     }
   }
@@ -245,7 +294,7 @@ if (totalEntries === 0 && SCOPES.length === 1 && !existsSync(SCOPES[0].appsFile)
 // --- Check 6: Pending TSVs — workspace-wide (batch/ is shared infra) ---
 let pendingTsvs = 0;
 if (existsSync(ADDITIONS_DIR)) {
-  const files = readdirSync(ADDITIONS_DIR).filter(f => f.endsWith('.tsv'));
+  const files = readdirSync(ADDITIONS_DIR).filter((f) => f.endsWith('.tsv'));
   pendingTsvs = files.length;
   if (pendingTsvs > 0) {
     warn(`${pendingTsvs} pending TSVs in tracker-additions/ (not merged)`);

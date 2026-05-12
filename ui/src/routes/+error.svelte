@@ -1,58 +1,105 @@
 <script lang="ts">
-  import { page } from '$app/state';
-  import { goto, invalidateAll } from '$app/navigation';
-  import { dev } from '$app/environment';
-  import { Button } from '$lib/components/ui/button';
-  import * as Card from '$lib/components/ui/card';
-  import { ArrowLeft, Home, RotateCw, FileSearch, ServerCrash, WifiOff, Lock, ShieldAlert } from '@lucide/svelte';
-  import { docTitle } from '$lib/config/branding';
-  import { reportError } from '$lib/client/error-reporter';
-  import { onMount } from 'svelte';
+import { page } from '$app/state';
+import { goto, invalidateAll } from '$app/navigation';
+import { dev } from '$app/environment';
+import { Button } from '$lib/components/ui/button';
+import * as Card from '$lib/components/ui/card';
+import {
+  ArrowLeft,
+  Home,
+  RotateCw,
+  FileSearch,
+  ServerCrash,
+  WifiOff,
+  Lock,
+  ShieldAlert,
+} from '@lucide/svelte';
+import { docTitle } from '$lib/config/branding';
+import { reportError } from '$lib/client/error-reporter';
+import { onMount } from 'svelte';
 
-  let status = $derived(page.status);
-  let err = $derived(page.error);
+let status = $derived(page.status);
+let err = $derived(page.error);
 
-  // Forward every error route to the unified reporter so it lands
-  // in the Issues store + activity feed + OS notification (rate-limited).
-  onMount(() => {
-    if (page.error) {
-      void reportError(page.error.message ?? 'Unknown route error', {
-        source: '+error.svelte',
-        route: page.url?.pathname,
-        data: { status: page.status },
-      });
-    }
-  });
+// Forward every error route to the unified reporter so it lands
+// in the Issues store + activity feed + OS notification (rate-limited).
+onMount(() => {
+  if (page.error) {
+    void reportError(page.error.message ?? 'Unknown route error', {
+      source: '+error.svelte',
+      route: page.url?.pathname,
+      data: { status: page.status },
+    });
+  }
+});
 
-  type ErrorPreset = {
-    title: string;
-    description: string;
-    icon: any;
-    accent: string;
-  };
+type ErrorPreset = {
+  title: string;
+  description: string;
+  icon: any;
+  accent: string;
+};
 
-  const presets: Record<number, ErrorPreset> = {
-    400: { title: "Bad request", description: "The request didn't pass server-side validation.", icon: ShieldAlert, accent: 'text-amber-400' },
-    401: { title: "Not authorized", description: "You need to sign in to access this.", icon: Lock, accent: 'text-amber-400' },
-    403: { title: "Forbidden", description: "You don't have permission to view this resource.", icon: Lock, accent: 'text-red-400' },
-    404: { title: "Not found", description: "This page or job doesn't exist — it may have been moved, deleted, or the URL is wrong.", icon: FileSearch, accent: 'text-muted-foreground' },
-    500: { title: "Server error", description: "Something broke on our end. The error has been logged.", icon: ServerCrash, accent: 'text-red-400' },
-    502: { title: "Bad gateway", description: "Upstream service didn't respond correctly.", icon: ServerCrash, accent: 'text-red-400' },
-    503: { title: "Service unavailable", description: "The server is temporarily unavailable. Try again in a moment.", icon: WifiOff, accent: 'text-amber-400' },
-  };
-
-  let preset = $derived(presets[status] ?? {
-    title: "Something went wrong",
-    description: "An unexpected error occurred.",
+const presets: Record<number, ErrorPreset> = {
+  400: {
+    title: 'Bad request',
+    description: "The request didn't pass server-side validation.",
+    icon: ShieldAlert,
+    accent: 'text-amber-400',
+  },
+  401: {
+    title: 'Not authorized',
+    description: 'You need to sign in to access this.',
+    icon: Lock,
+    accent: 'text-amber-400',
+  },
+  403: {
+    title: 'Forbidden',
+    description: "You don't have permission to view this resource.",
+    icon: Lock,
+    accent: 'text-red-400',
+  },
+  404: {
+    title: 'Not found',
+    description:
+      "This page or job doesn't exist — it may have been moved, deleted, or the URL is wrong.",
+    icon: FileSearch,
+    accent: 'text-muted-foreground',
+  },
+  500: {
+    title: 'Server error',
+    description: 'Something broke on our end. The error has been logged.',
     icon: ServerCrash,
     accent: 'text-red-400',
-  });
+  },
+  502: {
+    title: 'Bad gateway',
+    description: "Upstream service didn't respond correctly.",
+    icon: ServerCrash,
+    accent: 'text-red-400',
+  },
+  503: {
+    title: 'Service unavailable',
+    description: 'The server is temporarily unavailable. Try again in a moment.',
+    icon: WifiOff,
+    accent: 'text-amber-400',
+  },
+};
 
-  let Icon = $derived(preset.icon);
+let preset = $derived(
+  presets[status] ?? {
+    title: 'Something went wrong',
+    description: 'An unexpected error occurred.',
+    icon: ServerCrash,
+    accent: 'text-red-400',
+  },
+);
 
-  async function retry() {
-    await invalidateAll();
-  }
+let Icon = $derived(preset.icon);
+
+async function retry() {
+  await invalidateAll();
+}
 </script>
 
 <svelte:head>

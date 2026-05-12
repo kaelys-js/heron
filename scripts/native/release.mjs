@@ -51,7 +51,10 @@ info(`${current} → ${c.green(next)}`);
 
 step(3, 'Confirming');
 const ok2 = await confirm(`Release v${next}?`, true);
-if (!ok2) { fail('Aborted.'); process.exit(0); }
+if (!ok2) {
+  fail('Aborted.');
+  process.exit(0);
+}
 
 step(4, 'Bumping package.json files');
 rootPkg.version = next;

@@ -36,8 +36,12 @@ function runScanVc(args?: JobArgs): Promise<JobResult> {
       message: cliArgs.slice(1).join(' ') || 'all VC sources',
     });
     const p = spawn('node', cliArgs, { cwd: ROOT, env: { ...process.env } });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => {
       logEvent('scan-vc', 'scan-vc.mjs failed to spawn', {
         level: 'error',
@@ -70,7 +74,8 @@ function runScanVc(args?: JobArgs): Promise<JobResult> {
 register({
   id: 'scan-vc',
   label: 'VC portfolio discovery',
-  description: 'a16z + Sequoia portfolio companies as a candidates TSV. Manual review before adding to portals.yml.',
+  description:
+    'a16z + Sequoia portfolio companies as a candidates TSV. Manual review before adding to portals.yml.',
   category: 'discovery',
   trigger: { type: 'weekly', dayOfWeek: 1, hour: 7, minute: 0 },
   allowManual: true,

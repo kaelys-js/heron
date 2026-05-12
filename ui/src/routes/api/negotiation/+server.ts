@@ -12,11 +12,19 @@ export const POST = async ({ request, url }) => {
   const profileId = queryProfile && getProfile(queryProfile) ? queryProfile : getActiveProfileId();
   try {
     const md = await generateNegotiationBrief(profileId, reportFile, offer);
-    logEvent('negotiation', 'Negotiation brief ready', { level: 'success', category: 'task', message: reportFile });
+    logEvent('negotiation', 'Negotiation brief ready', {
+      level: 'success',
+      category: 'task',
+      message: reportFile,
+    });
     return json({ ok: true, content: md });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    logEvent('negotiation', 'Negotiation brief failed', { level: 'error', category: 'task', message: msg });
+    logEvent('negotiation', 'Negotiation brief failed', {
+      level: 'error',
+      category: 'task',
+      message: msg,
+    });
     return json({ ok: false, error: msg }, { status: 500 });
   }
 };

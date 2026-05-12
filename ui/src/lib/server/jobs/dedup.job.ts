@@ -27,8 +27,12 @@ function runDedupTracker(): Promise<JobResult> {
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', () => { /* swallow */ });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', () => {
+      /* swallow */
+    });
     p.on('error', (err: Error) => {
       logEvent('dedup-tracker', 'Dedup failed to spawn', {
         level: 'error',

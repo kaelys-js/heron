@@ -19,108 +19,144 @@
   except .env / .venv / source code is fair game in 'everything' mode.
 -->
 <script lang="ts">
-  import * as Dialog from '$lib/components/ui/dialog';
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-  import {
-    AlertTriangle, Trash2, Loader2, Check, FileWarning, Info, ShieldAlert, Flame, Briefcase,
-  } from '@lucide/svelte';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import { invalidateAll } from '$app/navigation';
-  import { withMinDuration, cn } from '$lib/utils';
+import * as Dialog from '$lib/components/ui/dialog';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import {
+  AlertTriangle,
+  Trash2,
+  Loader2,
+  Check,
+  FileWarning,
+  Info,
+  ShieldAlert,
+  Flame,
+  Briefcase,
+} from '@lucide/svelte';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import { invalidateAll } from '$app/navigation';
+import { withMinDuration, cn } from '$lib/utils';
 
-  type Scope = 'profile' | 'jobs' | 'everything';
+type Scope = 'profile' | 'jobs' | 'everything';
 
-  let {
-    open = $bindable(false),
-    initialScope = 'profile',
-    profileId,
-  }: { open?: boolean; initialScope?: Scope; profileId?: string } = $props();
+let {
+  open = $bindable(false),
+  initialScope = 'profile',
+  profileId,
+}: { open?: boolean; initialScope?: Scope; profileId?: string } = $props();
 
-  const REQUIRED_PHRASE = 'RESET';
-  let typed = $state('');
-  let busy = $state(false);
-  // svelte-ignore state_referenced_locally — initial seed only
-  let scope = $state<Scope>(initialScope);
-  // Force-on (and disabled) when scope is 'everything', user-toggleable
-  // otherwise. Resetting onboarding wipes `data/onboarding-state.json` so
-  // the next dashboard load lands on the wizard.
-  let alsoOnboarding = $state(false);
+const REQUIRED_PHRASE = 'RESET';
+let typed = $state('');
+let busy = $state(false);
+// svelte-ignore state_referenced_locally — initial seed only
+let scope = $state<Scope>(initialScope);
+// Force-on (and disabled) when scope is 'everything', user-toggleable
+// otherwise. Resetting onboarding wipes `data/onboarding-state.json` so
+// the next dashboard load lands on the wizard.
+let alsoOnboarding = $state(false);
 
-  let confirmed = $derived(typed.trim().toUpperCase() === REQUIRED_PHRASE);
-  let onboardingChecked = $derived(scope === 'everything' || alsoOnboarding);
+let confirmed = $derived(typed.trim().toUpperCase() === REQUIRED_PHRASE);
+let onboardingChecked = $derived(scope === 'everything' || alsoOnboarding);
 
-  // Wipe local state every time the dialog re-opens so a previously-armed
-  // RESET doesn't survive a cancel. The initial scope is honoured per-open
-  // so a "Clear jobs data" button can land directly on the jobs scope.
-  $effect(() => {
-    if (open) {
-      typed = '';
-      scope = initialScope;
-      alsoOnboarding = false;
-    }
-  });
-
-  async function submit() {
-    if (!confirmed || busy) return;
-    busy = true;
-    try {
-      // CRITICAL: target the profile the dialog was opened FROM, not the
-      // currently-active one. Otherwise opening /profile?profile=B and
-      // clicking reset wipes profile A. Body field wins server-side over
-      // the URL query so it's unambiguous.
-      const r = await withMinDuration(
-        api.post<{ resetFiles: string[]; backups: string[]; scope: Scope; profileId: string }>(
-          '/api/profile/reset',
-          {
-            confirm: REQUIRED_PHRASE,
-            scope,
-            profileId,
-            resetOnboarding: onboardingChecked,
-          },
-          { silent: true },
-        ),
-        500,
-      );
-      const headlines: Record<Scope, string> = {
-        profile: 'Profile reset',
-        jobs: 'Jobs data wiped',
-        everything: 'Tracker + profile reset',
-      };
-      const tails: Record<Scope, string> = {
-        profile: 'Tracker / reports / projects are still intact. Reload to re-onboard.',
-        jobs: 'Profile, CV, targeting, and connected sources are preserved.',
-        everything: 'Pipeline, applications, reports, projects, and activity feed are wiped. Reload to start onboarding.',
-      };
-      toast.success(headlines[scope], {
-        description:
-          r.resetFiles.length + ' file(s) reset · ' +
-          r.backups.length + ' backup(s) saved alongside (.bak). ' +
-          tails[scope],
-        duration: 14_000,
-      });
-      open = false;
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Reset failed', {
-        description: err.message + ' — nothing was wiped. Check Settings if a backend dependency is missing.',
-        action: { label: 'Retry', onClick: () => submit() },
-        duration: 14_000,
-      });
-    } finally {
-      busy = false;
-    }
+// Wipe local state every time the dialog re-opens so a previously-armed
+// RESET doesn't survive a cancel. The initial scope is honoured per-open
+// so a "Clear jobs data" button can land directly on the jobs scope.
+$effect(() => {
+  if (open) {
+    typed = '';
+    scope = initialScope;
+    alsoOnboarding = false;
   }
+});
 
-  // Three-mode card config — keeps the JSX simple
-  const SCOPES: { value: Scope; label: string; icon: any; sub: string; tone: 'amber' | 'orange' | 'red' }[] = [
-    { value: 'profile',     label: 'Profile only',    icon: ShieldAlert, sub: 'profile.yml + cv.md + _profile.md',           tone: 'amber'  },
-    { value: 'jobs',        label: 'Jobs data only',  icon: Briefcase,   sub: 'tracker, reports, PDFs — keep profile/CV',    tone: 'orange' },
-    { value: 'everything',  label: 'Everything',      icon: Flame,       sub: 'profile + entire tracker + configs',          tone: 'red'    },
-  ];
+async function submit() {
+  if (!confirmed || busy) return;
+  busy = true;
+  try {
+    // CRITICAL: target the profile the dialog was opened FROM, not the
+    // currently-active one. Otherwise opening /profile?profile=B and
+    // clicking reset wipes profile A. Body field wins server-side over
+    // the URL query so it's unambiguous.
+    const r = await withMinDuration(
+      api.post<{ resetFiles: string[]; backups: string[]; scope: Scope; profileId: string }>(
+        '/api/profile/reset',
+        {
+          confirm: REQUIRED_PHRASE,
+          scope,
+          profileId,
+          resetOnboarding: onboardingChecked,
+        },
+        { silent: true },
+      ),
+      500,
+    );
+    const headlines: Record<Scope, string> = {
+      profile: 'Profile reset',
+      jobs: 'Jobs data wiped',
+      everything: 'Tracker + profile reset',
+    };
+    const tails: Record<Scope, string> = {
+      profile: 'Tracker / reports / projects are still intact. Reload to re-onboard.',
+      jobs: 'Profile, CV, targeting, and connected sources are preserved.',
+      everything:
+        'Pipeline, applications, reports, projects, and activity feed are wiped. Reload to start onboarding.',
+    };
+    toast.success(headlines[scope], {
+      description:
+        r.resetFiles.length +
+        ' file(s) reset · ' +
+        r.backups.length +
+        ' backup(s) saved alongside (.bak). ' +
+        tails[scope],
+      duration: 14_000,
+    });
+    open = false;
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Reset failed', {
+      description:
+        err.message + ' — nothing was wiped. Check Settings if a backend dependency is missing.',
+      action: { label: 'Retry', onClick: () => submit() },
+      duration: 14_000,
+    });
+  } finally {
+    busy = false;
+  }
+}
+
+// Three-mode card config — keeps the JSX simple
+const SCOPES: {
+  value: Scope;
+  label: string;
+  icon: any;
+  sub: string;
+  tone: 'amber' | 'orange' | 'red';
+}[] = [
+  {
+    value: 'profile',
+    label: 'Profile only',
+    icon: ShieldAlert,
+    sub: 'profile.yml + cv.md + _profile.md',
+    tone: 'amber',
+  },
+  {
+    value: 'jobs',
+    label: 'Jobs data only',
+    icon: Briefcase,
+    sub: 'tracker, reports, PDFs — keep profile/CV',
+    tone: 'orange',
+  },
+  {
+    value: 'everything',
+    label: 'Everything',
+    icon: Flame,
+    sub: 'profile + entire tracker + configs',
+    tone: 'red',
+  },
+];
 </script>
 
 <Dialog.Root bind:open>

@@ -1,86 +1,97 @@
 <script lang="ts">
-  import { onMount, tick } from 'svelte';
-  import { fade, fly } from 'svelte/transition';
-  import { quintOut } from 'svelte/easing';
-  import { Button } from '$lib/components/ui/button';
-  import { Textarea } from '$lib/components/ui/textarea';
-  import * as Card from '$lib/components/ui/card';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-  import { Sparkles, Maximize2, Minimize2, Minus, ArrowUp, Plus, ChevronsUpDown } from '@lucide/svelte';
-  import { cn } from '$lib/utils';
+import { onMount, tick } from 'svelte';
+import { fade, fly } from 'svelte/transition';
+import { quintOut } from 'svelte/easing';
+import { Button } from '$lib/components/ui/button';
+import { Textarea } from '$lib/components/ui/textarea';
+import * as Card from '$lib/components/ui/card';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import {
+  Sparkles,
+  Maximize2,
+  Minimize2,
+  Minus,
+  ArrowUp,
+  Plus,
+  ChevronsUpDown,
+} from '@lucide/svelte';
+import { cn } from '$lib/utils';
 
-  type ChatState = 'collapsed' | 'compact' | 'fullscreen';
-  let chatState: ChatState = $state('collapsed');
-  let history: { role: 'user' | 'assistant'; content: string }[] = $state([]);
-  let input = $state('');
-  let loading = $state(false);
-  let textareaEl: HTMLTextAreaElement | null = $state(null);
-  let scrollEl: HTMLDivElement | null = $state(null);
+type ChatState = 'collapsed' | 'compact' | 'fullscreen';
+let chatState: ChatState = $state('collapsed');
+let history: { role: 'user' | 'assistant'; content: string }[] = $state([]);
+let input = $state('');
+let loading = $state(false);
+let textareaEl: HTMLTextAreaElement | null = $state(null);
+let scrollEl: HTMLDivElement | null = $state(null);
 
-  // Latest models (Opus 4.7 / Sonnet 4.6 / Haiku 4.5)
-  const MODELS = [
-    { id: 'claude-sonnet-4-6', label: 'Sonnet 4.6', tag: 'balanced' },
-    { id: 'claude-opus-4-7', label: 'Opus 4.7', tag: 'most capable' },
-    { id: 'claude-haiku-4-5', label: 'Haiku 4.5', tag: 'fastest' },
-  ];
-  let selectedModel = $state(MODELS[0]);
+// Latest models (Opus 4.7 / Sonnet 4.6 / Haiku 4.5)
+const MODELS = [
+  { id: 'claude-sonnet-4-6', label: 'Sonnet 4.6', tag: 'balanced' },
+  { id: 'claude-opus-4-7', label: 'Opus 4.7', tag: 'most capable' },
+  { id: 'claude-haiku-4-5', label: 'Haiku 4.5', tag: 'fastest' },
+];
+let selectedModel = $state(MODELS[0]);
 
-  async function expand(toState: ChatState = 'compact') {
-    chatState = toState;
-    await tick();
-    textareaEl?.focus();
-  }
+async function expand(toState: ChatState = 'compact') {
+  chatState = toState;
+  await tick();
+  textareaEl?.focus();
+}
 
-  function collapse() {
-    chatState = 'collapsed';
-  }
+function collapse() {
+  chatState = 'collapsed';
+}
 
-  function toggleFullscreen() {
-    chatState = chatState === 'fullscreen' ? 'compact' : 'fullscreen';
-  }
+function toggleFullscreen() {
+  chatState = chatState === 'fullscreen' ? 'compact' : 'fullscreen';
+}
 
-  function newChat() {
-    history = [];
-    input = '';
-    textareaEl?.focus();
-  }
+function newChat() {
+  history = [];
+  input = '';
+  textareaEl?.focus();
+}
 
-  async function send() {
-    if (!input.trim() || loading) return;
-    const msg = input.trim();
-    input = '';
-    history = [...history, { role: 'user', content: msg }];
-    loading = true;
+async function send() {
+  if (!input.trim() || loading) return;
+  const msg = input.trim();
+  input = '';
+  history = [...history, { role: 'user', content: msg }];
+  loading = true;
+  await tick();
+  scrollEl?.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
+  try {
+    const r = await fetch('/api/agent-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ history, model: selectedModel.id }),
+    });
+    const j = await r.json();
+    history = [
+      ...history,
+      { role: 'assistant', content: j.ok ? j.reply : '⚠ ' + (j.error || 'error') },
+    ];
+  } catch (e: any) {
+    history = [...history, { role: 'assistant', content: '⚠ ' + e.message }];
+  } finally {
+    loading = false;
     await tick();
     scrollEl?.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
-    try {
-      const r = await fetch('/api/agent-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ history, model: selectedModel.id }),
-      });
-      const j = await r.json();
-      history = [...history, { role: 'assistant', content: j.ok ? j.reply : '⚠ ' + (j.error || 'error') }];
-    } catch (e: any) {
-      history = [...history, { role: 'assistant', content: '⚠ ' + e.message }];
-    } finally {
-      loading = false;
-      await tick();
-      scrollEl?.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
-    }
   }
+}
 
-  function handleKey(e: KeyboardEvent) {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      send();
-    }
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      collapse();
-    }
+function handleKey(e: KeyboardEvent) {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault();
+    send();
   }
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    collapse();
+  }
+}
 </script>
 
 <Tooltip.Provider delayDuration={200}>

@@ -92,7 +92,11 @@ export function runParallel(cmds) {
         remaining--;
         if (code !== 0 && !failed) {
           failed = true;
-          children.forEach((c) => { try { c.kill('SIGTERM'); } catch {} });
+          children.forEach((c) => {
+            try {
+              c.kill('SIGTERM');
+            } catch {}
+          });
           reject(new Error(`${label ?? cmd} exited ${code}`));
         }
         if (remaining === 0 && !failed) resolve();
@@ -101,7 +105,11 @@ export function runParallel(cmds) {
     });
     // Ctrl+C: relay to all children.
     process.on('SIGINT', () => {
-      children.forEach((c) => { try { c.kill('SIGTERM'); } catch {} });
+      children.forEach((c) => {
+        try {
+          c.kill('SIGTERM');
+        } catch {}
+      });
     });
   });
 }
@@ -154,7 +162,10 @@ export async function ask(prompt, { hidden = false, default: def } = {}) {
           process.stdin.setRawMode?.(false);
           process.exit(130);
         } else if (s === '' || s === '\b') {
-          if (buf.length > 0) { buf.pop(); process.stdout.write('\b \b'); }
+          if (buf.length > 0) {
+            buf.pop();
+            process.stdout.write('\b \b');
+          }
         } else {
           buf.push(s);
           process.stdout.write('*');
@@ -182,7 +193,11 @@ export async function confirm(prompt, defaultYes = true) {
 const STATE_DIR = join(process.env.HOME || '', '.career-ops');
 const STATE_FILE = join(STATE_DIR, 'native-state.json');
 export function readState() {
-  try { return JSON.parse(readFileSync(STATE_FILE, 'utf8')); } catch { return {}; }
+  try {
+    return JSON.parse(readFileSync(STATE_FILE, 'utf8'));
+  } catch {
+    return {};
+  }
 }
 export function writeState(state) {
   try {

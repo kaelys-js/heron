@@ -24,7 +24,9 @@ import type { Issue } from '$lib/types';
 const ISSUES_PATH = path.join(ROOT, 'data', 'issues.jsonl');
 
 function ensureDir() {
-  try { fs.mkdirSync(path.dirname(ISSUES_PATH), { recursive: true }); } catch {}
+  try {
+    fs.mkdirSync(path.dirname(ISSUES_PATH), { recursive: true });
+  } catch {}
 }
 
 function readAll(): Issue[] {
@@ -47,7 +49,10 @@ function readAll(): Issue[] {
 
 function writeAll(issues: Issue[]): void {
   ensureDir();
-  fs.writeFileSync(ISSUES_PATH, issues.map((i) => JSON.stringify(i)).join('\n') + (issues.length ? '\n' : ''));
+  fs.writeFileSync(
+    ISSUES_PATH,
+    issues.map((i) => JSON.stringify(i)).join('\n') + (issues.length ? '\n' : ''),
+  );
 }
 
 function appendOne(issue: Issue): void {
@@ -87,10 +92,7 @@ export function reportIssue(input: {
   const all = readAll();
   let replaced = false;
   const filtered = all.map((existing) => {
-    if (
-      existing.dedupeKey === input.dedupeKey &&
-      !existing.resolvedAt
-    ) {
+    if (existing.dedupeKey === input.dedupeKey && !existing.resolvedAt) {
       replaced = true;
       // Keep the previously assigned id so consumers' bookmarks survive.
       return { ...next, id: existing.id };

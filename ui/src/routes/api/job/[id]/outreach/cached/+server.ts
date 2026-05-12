@@ -19,29 +19,38 @@ import { resolveJobAndProfile } from '$lib/server/job-resolver';
 const PERSONAS = ['hiring-manager', 'recruiter', 'peer'] as const;
 
 function slugify(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'job';
+  return (
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 60) || 'job'
+  );
 }
 
-export const GET = wrap('outreach-cached', async ({ params, url }: { params: { id: string }; url: URL }) => {
-  const resolved = resolveJobAndProfile(params.id, url);
-  if (!resolved) badRequest('Job not found: ' + params.id);
-  const { job, profileId } = resolved!;
-  const slug = slugify(job.id);
-  const prepDir = profilePath(profileId, 'interview-prep-dir');
-  const variants: { persona: string; content: string; path: string }[] = [];
-  for (const persona of PERSONAS) {
-    const full = path.join(prepDir, slug + '-outreach-' + persona + '.md');
-    if (fs.existsSync(full)) {
-      try {
-        variants.push({
-          persona,
-          content: fs.readFileSync(full, 'utf8'),
-          path: path.relative(ROOT, full),
-        });
-      } catch {
-        // skip unreadable file
+export const GET = wrap(
+  'outreach-cached',
+  async ({ params, url }: { params: { id: string }; url: URL }) => {
+    const resolved = resolveJobAndProfile(params.id, url);
+    if (!resolved) badRequest('Job not found: ' + params.id);
+    const { job, profileId } = resolved!;
+    const slug = slugify(job.id);
+    const prepDir = profilePath(profileId, 'interview-prep-dir');
+    const variants: { persona: string; content: string; path: string }[] = [];
+    for (const persona of PERSONAS) {
+      const full = path.join(prepDir, slug + '-outreach-' + persona + '.md');
+      if (fs.existsSync(full)) {
+        try {
+          variants.push({
+            persona,
+            content: fs.readFileSync(full, 'utf8'),
+            path: path.relative(ROOT, full),
+          });
+        } catch {
+          // skip unreadable file
+        }
       }
     }
-  }
-  return { variants };
-});
+    return { variants };
+  },
+);

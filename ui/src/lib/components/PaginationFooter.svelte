@@ -1,30 +1,30 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/button';
-  import { ChevronDown, ChevronUp } from '@lucide/svelte';
-  import { cn } from '$lib/utils';
+import { Button } from '$lib/components/ui/button';
+import { ChevronDown, ChevronUp } from '@lucide/svelte';
+import { cn } from '$lib/utils';
 
-  /**
-   * Footer used by Compact / List / Table views to limit how many jobs render initially
-   * (so the page stays snappy at 800+ rows). Default page is 25 jobs; users can show
-   * more incrementally or expand to all.
-   */
-  let {
-    total,
-    visible = $bindable(0),
-    pageSize = 25,
-    label = 'jobs',
-    class: className,
-  }: {
-    total: number;
-    visible: number;
-    pageSize?: number;
-    label?: string;
-    class?: string;
-  } = $props();
+/**
+ * Footer used by Compact / List / Table views to limit how many jobs render initially
+ * (so the page stays snappy at 800+ rows). Default page is 25 jobs; users can show
+ * more incrementally or expand to all.
+ */
+let {
+  total,
+  visible = $bindable(0),
+  pageSize = 25,
+  label = 'jobs',
+  class: className,
+}: {
+  total: number;
+  visible: number;
+  pageSize?: number;
+  label?: string;
+  class?: string;
+} = $props();
 
-  let hidden = $derived(Math.max(0, total - visible));
-  let allShown = $derived(visible >= total);
-  let nextChunk = $derived(Math.min(pageSize, hidden));
+let hidden = $derived(Math.max(0, total - visible));
+let allShown = $derived(visible >= total);
+let nextChunk = $derived(Math.min(pageSize, hidden));
 </script>
 
 {#if total > pageSize}

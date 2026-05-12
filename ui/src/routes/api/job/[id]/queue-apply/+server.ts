@@ -56,7 +56,10 @@ export const POST = wrap(
       return {
         ok: false,
         capped: true,
-        message: 'Daily apply cap (' + cap + ') reached. Try again tomorrow or raise the cap on /autopilot.',
+        message:
+          'Daily apply cap (' +
+          cap +
+          ') reached. Try again tomorrow or raise the cap on /autopilot.',
       };
     }
 
@@ -85,7 +88,8 @@ export const POST = wrap(
       ok: true,
       status: 'Queued',
       portal,
-      message: 'Queued — the apply-queue drain will pick it up at its next run (or run it manually from /agents).',
+      message:
+        'Queued — the apply-queue drain will pick it up at its next run (or run it manually from /agents).',
     };
   },
 );

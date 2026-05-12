@@ -16,60 +16,70 @@
   no time for a 60-second LLM round-trip.
 -->
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import { Button } from '$lib/components/ui/button';
-  import {
-    DollarSign, MessageSquare, CheckSquare, TrendingUp, AlertTriangle,
-    ArrowRight, ShieldAlert, BookOpen, ListChecks, Sparkles,
-  } from '@lucide/svelte';
-  import { cn } from '$lib/utils';
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import { Button } from '$lib/components/ui/button';
+import {
+  DollarSign,
+  MessageSquare,
+  CheckSquare,
+  TrendingUp,
+  AlertTriangle,
+  ArrowRight,
+  ShieldAlert,
+  BookOpen,
+  ListChecks,
+  Sparkles,
+} from '@lucide/svelte';
+import { cn } from '$lib/utils';
 
-  type Branch = { trigger: string; response: string; rationale: string; nextLikely?: string };
-  type NonCompAsk = { category: string; ask: string; why: string; difficulty: 1 | 2 | 3 };
-  type CompBand = { band: string; base: [number, number]; total: [number, number]; notes: string };
+type Branch = { trigger: string; response: string; rationale: string; nextLikely?: string };
+type NonCompAsk = { category: string; ask: string; why: string; difficulty: 1 | 2 | 3 };
+type CompBand = { band: string; base: [number, number]; total: [number, number]; notes: string };
 
-  let { data }: {
-    data: {
-      playbook: {
-        decisionTree: Record<string, Branch[]>;
-        nonCompAsks: NonCompAsk[];
-        dontAcceptVerbally: { title: string; steps: string[]; redFlags: string[] };
-        tierBands: Record<string, CompBand>;
-      };
+let {
+  data,
+}: {
+  data: {
+    playbook: {
+      decisionTree: Record<string, Branch[]>;
+      nonCompAsks: NonCompAsk[];
+      dontAcceptVerbally: { title: string; steps: string[]; redFlags: string[] };
+      tierBands: Record<string, CompBand>;
     };
-  } = $props();
+  };
+} = $props();
 
-  // Decision-tree current section. Default to verbal-offer (entry point).
-  let activeBranch = $state('verbal-offer');
-  let branchKeys = $derived(Object.keys(data.playbook.decisionTree));
+// Decision-tree current section. Default to verbal-offer (entry point).
+let activeBranch = $state('verbal-offer');
+let branchKeys = $derived(Object.keys(data.playbook.decisionTree));
 
-  function fmtMoney(n: number): string {
-    if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1) + 'M';
-    if (n >= 1000) return '$' + Math.round(n / 1000) + 'K';
-    return '$' + n;
+function fmtMoney(n: number): string {
+  if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1000) return '$' + Math.round(n / 1000) + 'K';
+  return '$' + n;
+}
+
+function difficultyTint(d: 1 | 2 | 3): string {
+  if (d === 1) return 'border-emerald-500/40 bg-emerald-500/5 text-emerald-200';
+  if (d === 2) return 'border-amber-500/40 bg-amber-500/5 text-amber-200';
+  return 'border-red-500/40 bg-red-500/5 text-red-200';
+}
+function difficultyLabel(d: 1 | 2 | 3): string {
+  if (d === 1) return 'easy';
+  if (d === 2) return 'medium';
+  return 'hard';
+}
+
+// Group non-comp asks by category for cleaner rendering.
+let asksByCategory = $derived.by(() => {
+  const m = new Map<string, NonCompAsk[]>();
+  for (const a of data.playbook.nonCompAsks) {
+    if (!m.has(a.category)) m.set(a.category, []);
+    m.get(a.category)!.push(a);
   }
-
-  function difficultyTint(d: 1 | 2 | 3): string {
-    if (d === 1) return 'border-emerald-500/40 bg-emerald-500/5 text-emerald-200';
-    if (d === 2) return 'border-amber-500/40 bg-amber-500/5 text-amber-200';
-    return 'border-red-500/40 bg-red-500/5 text-red-200';
-  }
-  function difficultyLabel(d: 1 | 2 | 3): string {
-    if (d === 1) return 'easy';
-    if (d === 2) return 'medium';
-    return 'hard';
-  }
-
-  // Group non-comp asks by category for cleaner rendering.
-  let asksByCategory = $derived.by(() => {
-    const m = new Map<string, NonCompAsk[]>();
-    for (const a of data.playbook.nonCompAsks) {
-      if (!m.has(a.category)) m.set(a.category, []);
-      m.get(a.category)!.push(a);
-    }
-    return [...m.entries()];
-  });
+  return [...m.entries()];
+});
 </script>
 
 <div class="h-full overflow-y-auto">

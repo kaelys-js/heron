@@ -120,7 +120,7 @@ function vestedFraction(y: number, vesting: VestingSchedule): number {
 
 /** Discounted-cash-flow factor at the END of year `y`. Default 5% / yr. */
 function dcfFactor(y: number, discountRatePct: number): number {
-  return 1 / Math.pow(1 + (discountRatePct / 100), y);
+  return 1 / Math.pow(1 + discountRatePct / 100, y);
 }
 
 /** Equity grant value at year y, with growth + risk discount applied (in
@@ -133,7 +133,7 @@ function equityNominalValue(
 ): number {
   // Compound growth: many people assume flat (growthRatePct=0). 5-15% is
   // reasonable for pre-IPO at a strong company.
-  const grown = baseGrant * Math.pow(1 + (growthRatePct / 100), y);
+  const grown = baseGrant * Math.pow(1 + growthRatePct / 100, y);
   // Risk discount applied IMMEDIATELY (treat paper as worth less than cash).
   const risked = grown * (1 - equityDiscountPct / 100);
   return Math.max(0, risked);

@@ -1,109 +1,161 @@
 <script lang="ts">
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Badge } from '$lib/components/ui/badge';
-  import { ChevronDown, ChevronUp, Wifi, Building, Globe, FileText, FileBadge2, ScrollText, Inbox } from '@lucide/svelte';
-  import EmptyState from './EmptyState.svelte';
-  import JobActions from './JobActions.svelte';
-  import type { Job, WorkMode, Status } from '$lib/types';
-  import { BG_TINTS } from '$lib/types';
-  import { cn } from '$lib/utils';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { Badge } from '$lib/components/ui/badge';
+import {
+  ChevronDown,
+  ChevronUp,
+  Wifi,
+  Building,
+  Globe,
+  FileText,
+  FileBadge2,
+  ScrollText,
+  Inbox,
+} from '@lucide/svelte';
+import EmptyState from './EmptyState.svelte';
+import JobActions from './JobActions.svelte';
+import type { Job, WorkMode, Status } from '$lib/types';
+import { BG_TINTS } from '$lib/types';
+import { cn } from '$lib/utils';
 
-  let { jobs = [], prevVisibleCount = 0 }: { jobs: Job[]; prevVisibleCount?: number } = $props();
+let { jobs = [], prevVisibleCount = 0 }: { jobs: Job[]; prevVisibleCount?: number } = $props();
 
-  type SortField = 'score' | 'company' | 'role' | 'status' | 'location' | 'workMode' | 'bgRisk' | 'salary';
-  let sortField = $state<SortField>('score');
-  let sortDir = $state<'asc' | 'desc'>('desc');
+type SortField =
+  | 'score'
+  | 'company'
+  | 'role'
+  | 'status'
+  | 'location'
+  | 'workMode'
+  | 'bgRisk'
+  | 'salary';
+let sortField = $state<SortField>('score');
+let sortDir = $state<'asc' | 'desc'>('desc');
 
-  function toggleSort(f: SortField) {
-    if (sortField === f) {
-      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-    } else {
-      sortField = f;
-      sortDir = f === 'score' ? 'desc' : 'asc';
+function toggleSort(f: SortField) {
+  if (sortField === f) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortField = f;
+    sortDir = f === 'score' ? 'desc' : 'asc';
+  }
+}
+
+let sorted = $derived.by(() => {
+  const arr = [...jobs];
+  const dir = sortDir === 'asc' ? 1 : -1;
+  arr.sort((a, b) => {
+    let av: any;
+    let bv: any;
+    switch (sortField) {
+      case 'score':
+        av = a.score ?? a.geminiScore ?? -1;
+        bv = b.score ?? b.geminiScore ?? -1;
+        break;
+      default:
+        av = (a as any)[sortField] ?? '';
+        bv = (b as any)[sortField] ?? '';
+        break;
     }
-  }
-
-  let sorted = $derived.by(() => {
-    const arr = [...jobs];
-    const dir = sortDir === 'asc' ? 1 : -1;
-    arr.sort((a, b) => {
-      let av: any;
-      let bv: any;
-      switch (sortField) {
-        case 'score':
-          av = a.score ?? a.geminiScore ?? -1;
-          bv = b.score ?? b.geminiScore ?? -1;
-          break;
-        default:
-          av = (a as any)[sortField] ?? '';
-          bv = (b as any)[sortField] ?? '';
-          break;
-      }
-      if (av < bv) return -1 * dir;
-      if (av > bv) return 1 * dir;
-      return 0;
-    });
-    return arr;
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
   });
+  return arr;
+});
 
-  const WORK_MODE: Record<WorkMode, { label: string; icon: any; tint: string }> = {
-    remote:  { label: 'Remote',  icon: Wifi,     tint: 'text-emerald-300' },
-    hybrid:  { label: 'Hybrid',  icon: Building, tint: 'text-amber-300' },
-    onsite:  { label: 'On-site', icon: Building, tint: 'text-red-300' },
-    unknown: { label: '—',       icon: Globe,    tint: 'text-muted-foreground/50' },
-  };
+const WORK_MODE: Record<WorkMode, { label: string; icon: any; tint: string }> = {
+  remote: { label: 'Remote', icon: Wifi, tint: 'text-emerald-300' },
+  hybrid: { label: 'Hybrid', icon: Building, tint: 'text-amber-300' },
+  onsite: { label: 'On-site', icon: Building, tint: 'text-red-300' },
+  unknown: { label: '—', icon: Globe, tint: 'text-muted-foreground/50' },
+};
 
-  const STATUS_HINT: Record<Status, string> = {
-    New: 'Just discovered — no score yet',
-    Scoring: 'Gemini is processing',
-    Scored: 'Has a Gemini score',
-    Ready: 'Eval done · CV PDF ready',
-    Queued: 'Staged for batch send',
-    Applying: 'Auto-apply running',
-    Applied: 'Application sent',
-    Screened: 'Recruiter responded',
-    PhoneScreen: 'Phone screen',
-    Technical: 'Technical interview',
-    TakeHome: 'Take-home',
-    Onsite: 'Onsite / panel',
-    Final: 'Final round',
-    Interview: 'Active interview',
-    Offer: 'Offer in hand',
-    Rejected: 'Closed by company',
-    Closed: 'You skipped',
-    ManualApplyNeeded: 'Auto-apply blocked — finish by hand',
-  };
+const STATUS_HINT: Record<Status, string> = {
+  New: 'Just discovered — no score yet',
+  Scoring: 'Gemini is processing',
+  Scored: 'Has a Gemini score',
+  Ready: 'Eval done · CV PDF ready',
+  Queued: 'Staged for batch send',
+  Applying: 'Auto-apply running',
+  Applied: 'Application sent',
+  Screened: 'Recruiter responded',
+  PhoneScreen: 'Phone screen',
+  Technical: 'Technical interview',
+  TakeHome: 'Take-home',
+  Onsite: 'Onsite / panel',
+  Final: 'Final round',
+  Interview: 'Active interview',
+  Offer: 'Offer in hand',
+  Rejected: 'Closed by company',
+  Closed: 'You skipped',
+  ManualApplyNeeded: 'Auto-apply blocked — finish by hand',
+};
 
-  function statusDot(status: string): string {
-    return status === 'Ready' ? 'bg-emerald-500'
-      : status === 'Applied' ? 'bg-violet-500'
-      : status === 'Interview' ? 'bg-orange-500'
-      : status === 'Offer' ? 'bg-green-500'
-      : status === 'Rejected' ? 'bg-red-500'
-      : status === 'Scored' ? 'bg-cyan-500'
-      : status === 'Scoring' ? 'bg-blue-500'
-      : 'bg-zinc-500';
-  }
+function statusDot(status: string): string {
+  return status === 'Ready'
+    ? 'bg-emerald-500'
+    : status === 'Applied'
+      ? 'bg-violet-500'
+      : status === 'Interview'
+        ? 'bg-orange-500'
+        : status === 'Offer'
+          ? 'bg-green-500'
+          : status === 'Rejected'
+            ? 'bg-red-500'
+            : status === 'Scored'
+              ? 'bg-cyan-500'
+              : status === 'Scoring'
+                ? 'bg-blue-500'
+                : 'bg-zinc-500';
+}
 
-  function scoreColor(s: number | null | undefined): string {
-    if (s == null) return 'text-muted-foreground/50';
-    if (s >= 4.5) return 'text-emerald-300';
-    if (s >= 4)   return 'text-emerald-400/90';
-    if (s >= 3)   return 'text-amber-400/90';
-    return 'text-red-400/80';
-  }
+function scoreColor(s: number | null | undefined): string {
+  if (s == null) return 'text-muted-foreground/50';
+  if (s >= 4.5) return 'text-emerald-300';
+  if (s >= 4) return 'text-emerald-400/90';
+  if (s >= 3) return 'text-amber-400/90';
+  return 'text-red-400/80';
+}
 
-  type ColDef = { field: SortField; label: string; align?: 'left' | 'right'; class?: string; tip?: string };
-  const COLS: ColDef[] = [
-    { field: 'status',   label: 'Status',    class: 'w-28', tip: 'Pipeline stage — hover the dot for definition' },
-    { field: 'score',    label: 'Score',     align: 'right', class: 'w-14', tip: 'Fit score 0–5 (deep eval), or ~ Gemini first-pass' },
-    { field: 'role',     label: 'Role',      class: 'min-w-[260px]' },
-    { field: 'company',  label: 'Company',   class: 'w-40' },
-    { field: 'location', label: 'Location',  class: 'w-40' },
-    { field: 'workMode', label: 'Work mode', class: 'w-28', tip: 'Remote / Hybrid / On-site (parsed from JD)' },
-    { field: 'bgRisk',   label: 'BG',        class: 'w-16', tip: 'Background-check risk tier' },
-    { field: 'salary',   label: 'Salary',    class: 'w-44', tip: 'Comp range from the posting (when stated)' },
-  ];
+type ColDef = {
+  field: SortField;
+  label: string;
+  align?: 'left' | 'right';
+  class?: string;
+  tip?: string;
+};
+const COLS: ColDef[] = [
+  {
+    field: 'status',
+    label: 'Status',
+    class: 'w-28',
+    tip: 'Pipeline stage — hover the dot for definition',
+  },
+  {
+    field: 'score',
+    label: 'Score',
+    align: 'right',
+    class: 'w-14',
+    tip: 'Fit score 0–5 (deep eval), or ~ Gemini first-pass',
+  },
+  { field: 'role', label: 'Role', class: 'min-w-[260px]' },
+  { field: 'company', label: 'Company', class: 'w-40' },
+  { field: 'location', label: 'Location', class: 'w-40' },
+  {
+    field: 'workMode',
+    label: 'Work mode',
+    class: 'w-28',
+    tip: 'Remote / Hybrid / On-site (parsed from JD)',
+  },
+  { field: 'bgRisk', label: 'BG', class: 'w-16', tip: 'Background-check risk tier' },
+  {
+    field: 'salary',
+    label: 'Salary',
+    class: 'w-44',
+    tip: 'Comp range from the posting (when stated)',
+  },
+];
 </script>
 
 <!--

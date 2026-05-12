@@ -39,23 +39,23 @@ export type ApplyFailureMode =
   | 'error';
 
 const SUMMARY_PREFIX: Record<ApplyFailureMode, string> = {
-  'stub':           'Apply manually',
-  'captcha':        'CAPTCHA blocked apply',
-  'anti-bot':       'Bot-protection blocked apply',
-  'unknown-field':  'Unknown form field — needs answer',
-  'upload-failed':  'Resume upload failed',
-  'validation':     'Submission rejected',
-  'error':          'Apply script crashed',
+  stub: 'Apply manually',
+  captcha: 'CAPTCHA blocked apply',
+  'anti-bot': 'Bot-protection blocked apply',
+  'unknown-field': 'Unknown form field — needs answer',
+  'upload-failed': 'Resume upload failed',
+  validation: 'Submission rejected',
+  error: 'Apply script crashed',
 };
 
 const FIX_LABELS: Record<ApplyFailureMode, string> = {
-  'stub':           'Open posting',
-  'captcha':        'Resume in browser',
-  'anti-bot':       'Re-login to portal',
-  'unknown-field':  'Open posting',
-  'upload-failed':  'Regenerate CV',
-  'validation':     'Open posting',
-  'error':          'Open posting',
+  stub: 'Open posting',
+  captcha: 'Resume in browser',
+  'anti-bot': 'Re-login to portal',
+  'unknown-field': 'Open posting',
+  'upload-failed': 'Regenerate CV',
+  validation: 'Open posting',
+  error: 'Open posting',
 };
 
 export type ReportApplyFailureInput = {
@@ -91,14 +91,17 @@ export function reportApplyFailure(input: ReportApplyFailureInput): void {
 
   // 1. Issue with stable dedupeKey so retries don't multiply rows in Inbox.
   const summary =
-    SUMMARY_PREFIX[mode] + ' · ' +
-    (company || '?') + (role ? ' — ' + role : '') +
+    SUMMARY_PREFIX[mode] +
+    ' · ' +
+    (company || '?') +
+    (role ? ' — ' + role : '') +
     (portal !== 'unknown' ? ' (' + portal + ')' : '');
   const detailBody =
     (detail ? detail + '\n\n' : '') +
     (url ? 'Posting: ' + url + '\n' : '') +
     (screenshotPath ? 'Screenshot: ' + screenshotPath + '\n' : '') +
-    'Job ID: ' + jobId;
+    'Job ID: ' +
+    jobId;
 
   reportIssue({
     severity: mode === 'error' ? 'error' : 'warn',
@@ -112,7 +115,12 @@ export function reportApplyFailure(input: ReportApplyFailureInput): void {
   // 2. Flip status to ManualApplyNeeded in applications.md.
   if (url) {
     try {
-      markStatus(profileId, url, 'ManualApplyNeeded', 'Auto-apply: ' + mode + (detail ? ' — ' + detail : ''));
+      markStatus(
+        profileId,
+        url,
+        'ManualApplyNeeded',
+        'Auto-apply: ' + mode + (detail ? ' — ' + detail : ''),
+      );
     } catch (e) {
       // markStatus reports its own server error; we don't double-log.
       void e;

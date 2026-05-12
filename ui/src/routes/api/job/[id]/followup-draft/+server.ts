@@ -25,7 +25,13 @@ import { CLI_NAMESPACE } from '$lib/config/branding';
 import { AGENT_CLI } from '$lib/config/cli';
 
 function slugify(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'job';
+  return (
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 60) || 'job'
+  );
 }
 
 function persist(profileId: string, jobId: string, body: string): string {
@@ -37,14 +43,22 @@ function persist(profileId: string, jobId: string, body: string): string {
   return path.relative(ROOT, fullPath);
 }
 
-function spawnFollowup(url: string, tone: string, jobId: string, profileId: string): Promise<string> {
+function spawnFollowup(
+  url: string,
+  tone: string,
+  jobId: string,
+  profileId: string,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
     const prompt = '/' + CLI_NAMESPACE + ' followup ' + url + ' --tone ' + tone;
-    try { swapProfileSymlinks(profileId); } catch (e) {
+    try {
+      swapProfileSymlinks(profileId);
+    } catch (e) {
       logEvent('followup-draft', 'Symlink swap failed — followup may read wrong profile', {
-        level: 'warn', category: 'application',
+        level: 'warn',
+        category: 'application',
         message: e instanceof Error ? e.message : String(e),
       });
     }
@@ -52,8 +66,12 @@ function spawnFollowup(url: string, tone: string, jobId: string, profileId: stri
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) {

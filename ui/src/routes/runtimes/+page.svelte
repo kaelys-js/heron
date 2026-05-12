@@ -1,102 +1,115 @@
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import { Button } from '$lib/components/ui/button';
-  import { toast } from 'svelte-sonner';
-  import { api, ApiError } from '$lib/api';
-  import { invalidateAll } from '$app/navigation';
-  import { formatRelativeTime, cn, withMinDuration } from '$lib/utils';
-  import {
-    Cpu, Box, Sparkles, Zap, Briefcase, CheckCircle2, AlertCircle, AlertTriangle,
-    XCircle, RotateCw, Loader2, ExternalLink, Activity, Wrench,
-  } from '@lucide/svelte';
-  import type { RuntimeCard, RuntimeStatus } from '$lib/server/runtime-info';
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import { Button } from '$lib/components/ui/button';
+import { toast } from 'svelte-sonner';
+import { api, ApiError } from '$lib/api';
+import { invalidateAll } from '$app/navigation';
+import { formatRelativeTime, cn, withMinDuration } from '$lib/utils';
+import {
+  Cpu,
+  Box,
+  Sparkles,
+  Zap,
+  Briefcase,
+  CheckCircle2,
+  AlertCircle,
+  AlertTriangle,
+  XCircle,
+  RotateCw,
+  Loader2,
+  ExternalLink,
+  Activity,
+  Wrench,
+} from '@lucide/svelte';
+import type { RuntimeCard, RuntimeStatus } from '$lib/server/runtime-info';
 
-  let { data }: { data: { report: { generatedAt: number; summary: any; cards: RuntimeCard[] } } } = $props();
+let { data }: { data: { report: { generatedAt: number; summary: any; cards: RuntimeCard[] } } } =
+  $props();
 
-  const ICON_MAP: Record<string, any> = {
-    node: Cpu,
-    python: Box,
-    anthropic: Sparkles,
-    gemini: Zap,
-    adzuna: Briefcase,
-  };
+const ICON_MAP: Record<string, any> = {
+  node: Cpu,
+  python: Box,
+  anthropic: Sparkles,
+  gemini: Zap,
+  adzuna: Briefcase,
+};
 
-  const STATUS_DOT: Record<RuntimeStatus, string> = {
-    healthy: 'bg-emerald-500',
-    degraded: 'bg-amber-500',
-    down: 'bg-red-500',
-    unconfigured: 'bg-zinc-500',
-  };
-  const STATUS_RING: Record<RuntimeStatus, string> = {
-    healthy: 'ring-emerald-500/30 bg-emerald-500/10 text-emerald-300',
-    degraded: 'ring-amber-500/30 bg-amber-500/10 text-amber-300',
-    down: 'ring-red-500/30 bg-red-500/10 text-red-300',
-    unconfigured: 'ring-zinc-500/30 bg-zinc-500/10 text-zinc-400',
-  };
-  const STATUS_BORDER: Record<RuntimeStatus, string> = {
-    healthy: 'border-l-emerald-500/60',
-    degraded: 'border-l-amber-500/60',
-    down: 'border-l-red-500/60',
-    unconfigured: 'border-l-zinc-700',
-  };
-  const STATUS_LABEL: Record<RuntimeStatus, string> = {
-    healthy: 'Healthy',
-    degraded: 'Degraded',
-    down: 'Not running',
-    unconfigured: 'Not configured',
-  };
+const STATUS_DOT: Record<RuntimeStatus, string> = {
+  healthy: 'bg-emerald-500',
+  degraded: 'bg-amber-500',
+  down: 'bg-red-500',
+  unconfigured: 'bg-zinc-500',
+};
+const STATUS_RING: Record<RuntimeStatus, string> = {
+  healthy: 'ring-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+  degraded: 'ring-amber-500/30 bg-amber-500/10 text-amber-300',
+  down: 'ring-red-500/30 bg-red-500/10 text-red-300',
+  unconfigured: 'ring-zinc-500/30 bg-zinc-500/10 text-zinc-400',
+};
+const STATUS_BORDER: Record<RuntimeStatus, string> = {
+  healthy: 'border-l-emerald-500/60',
+  degraded: 'border-l-amber-500/60',
+  down: 'border-l-red-500/60',
+  unconfigured: 'border-l-zinc-700',
+};
+const STATUS_LABEL: Record<RuntimeStatus, string> = {
+  healthy: 'Healthy',
+  degraded: 'Degraded',
+  down: 'Not running',
+  unconfigured: 'Not configured',
+};
 
-  let probing = $state<Record<string, boolean>>({});
-  let refreshing = $state(false);
+let probing = $state<Record<string, boolean>>({});
+let refreshing = $state(false);
 
-  async function probeIntegration(cardId: string, provider: 'anthropic' | 'gemini' | 'adzuna') {
-    if (probing[cardId]) return;
-    probing = { ...probing, [cardId]: true };
-    try {
-      const r = await withMinDuration(
-        api.post<{ ok: boolean; provider: string; message: string }>(
-          '/api/settings/test',
-          { provider },
-          { silent: true },
-        ),
-        500,
-      );
-      if (r.ok) toast.success(provider + ': ' + r.message);
-      else toast.error(provider + ': ' + r.message, { duration: 8_000 });
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error(provider + ': ' + err.message);
-    } finally {
-      probing = { ...probing, [cardId]: false };
-    }
+async function probeIntegration(cardId: string, provider: 'anthropic' | 'gemini' | 'adzuna') {
+  if (probing[cardId]) return;
+  probing = { ...probing, [cardId]: true };
+  try {
+    const r = await withMinDuration(
+      api.post<{ ok: boolean; provider: string; message: string }>(
+        '/api/settings/test',
+        { provider },
+        { silent: true },
+      ),
+      500,
+    );
+    if (r.ok) toast.success(provider + ': ' + r.message);
+    else toast.error(provider + ': ' + r.message, { duration: 8_000 });
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error(provider + ': ' + err.message);
+  } finally {
+    probing = { ...probing, [cardId]: false };
   }
+}
 
-  async function refresh() {
-    if (refreshing) return;
-    refreshing = true;
-    try {
-      await withMinDuration(invalidateAll(), 450);
-      toast.success('Refreshed', {
-        description: 'All probes re-run · ' + formatRelativeTime(Date.now()),
-        duration: 2_000,
-      });
-    } finally {
-      refreshing = false;
-    }
+async function refresh() {
+  if (refreshing) return;
+  refreshing = true;
+  try {
+    await withMinDuration(invalidateAll(), 450);
+    toast.success('Refreshed', {
+      description: 'All probes re-run · ' + formatRelativeTime(Date.now()),
+      duration: 2_000,
+    });
+  } finally {
+    refreshing = false;
   }
+}
 
-  // Aggregate stats
-  let stats = $derived.by(() => {
-    const cards = data.report.cards;
-    return {
-      total: cards.length,
-      required: cards.filter((c) => c.required).length,
-      healthy: cards.filter((c) => c.status === 'healthy').length,
-      issues: cards.filter((c) => c.status === 'degraded' || c.status === 'down').length,
-      unconfigured: cards.filter((c) => c.status === 'unconfigured').length,
-    };
-  });
+// Aggregate stats
+let stats = $derived.by(() => {
+  const cards = data.report.cards;
+  return {
+    total: cards.length,
+    required: cards.filter((c) => c.required).length,
+    healthy: cards.filter((c) => c.status === 'healthy').length,
+    issues: cards.filter((c) => c.status === 'degraded' || c.status === 'down').length,
+    unconfigured: cards.filter((c) => c.status === 'unconfigured').length,
+  };
+});
 </script>
 
 <div class="h-full overflow-y-auto">

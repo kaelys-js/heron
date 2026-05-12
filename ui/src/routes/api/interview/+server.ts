@@ -24,13 +24,24 @@ export const POST = async ({ request, url }) => {
   const queryProfile = url.searchParams.get('profile');
   const profileId = queryProfile && getProfile(queryProfile) ? queryProfile : getActiveProfileId();
   try {
-    logEvent('interview', 'Generating interview prep', { category: 'task', message: reportFile + ' · profile=' + profileId });
+    logEvent('interview', 'Generating interview prep', {
+      category: 'task',
+      message: reportFile + ' · profile=' + profileId,
+    });
     const md = await generateInterviewPrep(profileId, reportFile, archetype);
-    logEvent('interview', 'Interview prep ready', { level: 'success', category: 'task', message: reportFile });
+    logEvent('interview', 'Interview prep ready', {
+      level: 'success',
+      category: 'task',
+      message: reportFile,
+    });
     return json({ ok: true, content: md, profileId });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    logEvent('interview', 'Interview prep failed', { level: 'error', category: 'task', message: msg });
+    logEvent('interview', 'Interview prep failed', {
+      level: 'error',
+      category: 'task',
+      message: msg,
+    });
     return json({ ok: false, error: msg }, { status: 500 });
   }
 };

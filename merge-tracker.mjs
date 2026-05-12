@@ -34,10 +34,22 @@ mkdirSync(join(CAREER_OPS, 'data'), { recursive: true });
 mkdirSync(ADDITIONS_DIR, { recursive: true });
 
 // Canonical states and aliases
-const CANONICAL_STATES = ['Evaluated', 'Applied', 'Responded', 'Interview', 'Offer', 'Rejected', 'Discarded', 'SKIP'];
+const CANONICAL_STATES = [
+  'Evaluated',
+  'Applied',
+  'Responded',
+  'Interview',
+  'Offer',
+  'Rejected',
+  'Discarded',
+  'SKIP',
+];
 
 function validateStatus(status) {
-  const clean = status.replace(/\*\*/g, '').replace(/\s+\d{4}-\d{2}-\d{2}.*$/, '').trim();
+  const clean = status
+    .replace(/\*\*/g, '')
+    .replace(/\s+\d{4}-\d{2}-\d{2}.*$/, '')
+    .trim();
   const lower = clean.toLowerCase();
 
   for (const valid of CANONICAL_STATES) {
@@ -47,14 +59,29 @@ function validateStatus(status) {
   // Aliases
   const aliases = {
     // Spanish → English
-    'evaluada': 'Evaluated', 'condicional': 'Evaluated', 'hold': 'Evaluated', 'evaluar': 'Evaluated', 'verificar': 'Evaluated',
-    'aplicado': 'Applied', 'enviada': 'Applied', 'aplicada': 'Applied', 'applied': 'Applied', 'sent': 'Applied',
-    'respondido': 'Responded',
-    'entrevista': 'Interview',
-    'oferta': 'Offer',
-    'rechazado': 'Rejected', 'rechazada': 'Rejected',
-    'descartado': 'Discarded', 'descartada': 'Discarded', 'cerrada': 'Discarded', 'cancelada': 'Discarded',
-    'no aplicar': 'SKIP', 'no_aplicar': 'SKIP', 'skip': 'SKIP', 'monitor': 'SKIP',
+    evaluada: 'Evaluated',
+    condicional: 'Evaluated',
+    hold: 'Evaluated',
+    evaluar: 'Evaluated',
+    verificar: 'Evaluated',
+    aplicado: 'Applied',
+    enviada: 'Applied',
+    aplicada: 'Applied',
+    applied: 'Applied',
+    sent: 'Applied',
+    respondido: 'Responded',
+    entrevista: 'Interview',
+    oferta: 'Offer',
+    rechazado: 'Rejected',
+    rechazada: 'Rejected',
+    descartado: 'Discarded',
+    descartada: 'Discarded',
+    cerrada: 'Discarded',
+    cancelada: 'Discarded',
+    'no aplicar': 'SKIP',
+    no_aplicar: 'SKIP',
+    skip: 'SKIP',
+    monitor: 'SKIP',
     'geo blocker': 'SKIP',
   };
 
@@ -75,23 +102,88 @@ function normalizeCompany(name) {
 // Includes seniority, work-mode, contract, and common locations.
 const ROLE_STOPWORDS = new Set([
   // seniority / level
-  'junior', 'mid', 'middle', 'senior', 'staff', 'principal', 'lead', 'head',
-  'chief', 'associate', 'intern', 'entry', 'level',
+  'junior',
+  'mid',
+  'middle',
+  'senior',
+  'staff',
+  'principal',
+  'lead',
+  'head',
+  'chief',
+  'associate',
+  'intern',
+  'entry',
+  'level',
   // contract / mode
-  'remote', 'hybrid', 'onsite', 'contract', 'contractor', 'freelance',
-  'fulltime', 'parttime', 'permanent', 'temporary', 'intern', 'internship',
+  'remote',
+  'hybrid',
+  'onsite',
+  'contract',
+  'contractor',
+  'freelance',
+  'fulltime',
+  'parttime',
+  'permanent',
+  'temporary',
+  'intern',
+  'internship',
   // generic job words
-  'role', 'position', 'opportunity', 'team', 'based',
+  'role',
+  'position',
+  'opportunity',
+  'team',
+  'based',
   // very common locations (extend in portals.yml later if needed)
-  'bangalore', 'bengaluru', 'mumbai', 'delhi', 'hyderabad', 'pune', 'chennai',
-  'london', 'berlin', 'paris', 'madrid', 'barcelona', 'amsterdam', 'dublin',
-  'york', 'francisco', 'seattle', 'boston', 'austin', 'chicago', 'toronto',
-  'tokyo', 'singapore', 'sydney', 'melbourne', 'lisbon', 'warsaw',
+  'bangalore',
+  'bengaluru',
+  'mumbai',
+  'delhi',
+  'hyderabad',
+  'pune',
+  'chennai',
+  'london',
+  'berlin',
+  'paris',
+  'madrid',
+  'barcelona',
+  'amsterdam',
+  'dublin',
+  'york',
+  'francisco',
+  'seattle',
+  'boston',
+  'austin',
+  'chicago',
+  'toronto',
+  'tokyo',
+  'singapore',
+  'sydney',
+  'melbourne',
+  'lisbon',
+  'warsaw',
   // regions / countries
-  'europe', 'emea', 'apac', 'latam', 'americas', 'india', 'spain', 'germany',
-  'france', 'italy', 'canada', 'brazil', 'mexico', 'japan',
+  'europe',
+  'emea',
+  'apac',
+  'latam',
+  'americas',
+  'india',
+  'spain',
+  'germany',
+  'france',
+  'italy',
+  'canada',
+  'brazil',
+  'mexico',
+  'japan',
   // prepositions leaking through length filter
-  'with', 'from', 'into', 'over', 'this', 'that',
+  'with',
+  'from',
+  'into',
+  'over',
+  'this',
+  'that',
 ]);
 
 function roleTokens(s) {
@@ -99,7 +191,7 @@ function roleTokens(s) {
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
-    .filter(w => w.length > 3 && !ROLE_STOPWORDS.has(w));
+    .filter((w) => w.length > 3 && !ROLE_STOPWORDS.has(w));
 }
 
 function roleFuzzyMatch(a, b) {
@@ -108,7 +200,7 @@ function roleFuzzyMatch(a, b) {
   if (wordsA.length === 0 || wordsB.length === 0) return false;
 
   const setB = new Set(wordsB);
-  const overlap = wordsA.filter(w => setB.has(w)).length;
+  const overlap = wordsA.filter((w) => setB.has(w)).length;
   if (overlap === 0) return false;
 
   // Jaccard-style ratio on content tokens. Two roles are "the same" only
@@ -131,14 +223,21 @@ function parseScore(s) {
 }
 
 function parseAppLine(line) {
-  const parts = line.split('|').map(s => s.trim());
+  const parts = line.split('|').map((s) => s.trim());
   if (parts.length < 9) return null;
   const num = parseInt(parts[1]);
   if (isNaN(num) || num === 0) return null;
   return {
-    num, date: parts[2], company: parts[3], role: parts[4],
-    score: parts[5], status: parts[6], pdf: parts[7], report: parts[8],
-    notes: parts[9] || '', raw: line,
+    num,
+    date: parts[2],
+    company: parts[3],
+    role: parts[4],
+    score: parts[5],
+    status: parts[6],
+    pdf: parts[7],
+    report: parts[8],
+    notes: parts[9] || '',
+    raw: line,
   };
 }
 
@@ -155,7 +254,10 @@ function parseTsvContent(content, filename) {
 
   // Detect pipe-delimited (markdown table row)
   if (content.startsWith('|')) {
-    parts = content.split('|').map(s => s.trim()).filter(Boolean);
+    parts = content
+      .split('|')
+      .map((s) => s.trim())
+      .filter(Boolean);
     if (parts.length < 8) {
       console.warn(`⚠️  Skipping malformed pipe-delimited ${filename}: ${parts.length} fields`);
       return null;
@@ -186,22 +288,32 @@ function parseTsvContent(content, filename) {
     const col5 = parts[5].trim();
     const col4LooksLikeScore = /^\d+\.?\d*\/5$/.test(col4) || col4 === 'N/A' || col4 === 'DUP';
     const col5LooksLikeScore = /^\d+\.?\d*\/5$/.test(col5) || col5 === 'N/A' || col5 === 'DUP';
-    const col4LooksLikeStatus = /^(evaluated|applied|responded|interview|offer|rejected|discarded|skip|evaluada|aplicado|respondido|entrevista|oferta|rechazado|descartado|no aplicar|cerrada|duplicado|repost|condicional|hold|monitor)/i.test(col4);
-    const col5LooksLikeStatus = /^(evaluated|applied|responded|interview|offer|rejected|discarded|skip|evaluada|aplicado|respondido|entrevista|oferta|rechazado|descartado|no aplicar|cerrada|duplicado|repost|condicional|hold|monitor)/i.test(col5);
+    const col4LooksLikeStatus =
+      /^(evaluated|applied|responded|interview|offer|rejected|discarded|skip|evaluada|aplicado|respondido|entrevista|oferta|rechazado|descartado|no aplicar|cerrada|duplicado|repost|condicional|hold|monitor)/i.test(
+        col4,
+      );
+    const col5LooksLikeStatus =
+      /^(evaluated|applied|responded|interview|offer|rejected|discarded|skip|evaluada|aplicado|respondido|entrevista|oferta|rechazado|descartado|no aplicar|cerrada|duplicado|repost|condicional|hold|monitor)/i.test(
+        col5,
+      );
 
     let statusCol, scoreCol;
     if (col4LooksLikeStatus && !col4LooksLikeScore) {
       // Standard format: col4=status, col5=score
-      statusCol = col4; scoreCol = col5;
+      statusCol = col4;
+      scoreCol = col5;
     } else if (col4LooksLikeScore && col5LooksLikeStatus) {
       // Swapped format: col4=score, col5=status
-      statusCol = col5; scoreCol = col4;
+      statusCol = col5;
+      scoreCol = col4;
     } else if (col5LooksLikeScore && !col4LooksLikeScore) {
       // col5 is definitely score → col4 must be status
-      statusCol = col4; scoreCol = col5;
+      statusCol = col4;
+      scoreCol = col5;
     } else {
       // Default: standard format (status before score)
-      statusCol = col4; scoreCol = col5;
+      statusCol = col4;
+      scoreCol = col5;
     }
 
     addition = {
@@ -255,7 +367,7 @@ if (!existsSync(ADDITIONS_DIR)) {
   process.exit(0);
 }
 
-const tsvFiles = readdirSync(ADDITIONS_DIR).filter(f => f.endsWith('.tsv'));
+const tsvFiles = readdirSync(ADDITIONS_DIR).filter((f) => f.endsWith('.tsv'));
 if (tsvFiles.length === 0) {
   console.log('✅ No pending additions to merge.');
   process.exit(0);
@@ -278,7 +390,10 @@ const newLines = [];
 for (const file of tsvFiles) {
   const content = readFileSync(join(ADDITIONS_DIR, file), 'utf-8').trim();
   const addition = parseTsvContent(content, file);
-  if (!addition) { skipped++; continue; }
+  if (!addition) {
+    skipped++;
+    continue;
+  }
 
   // Check for duplicate by:
   // 1. Exact report number match
@@ -288,7 +403,7 @@ for (const file of tsvFiles) {
 
   if (reportNum) {
     // Check if this report number already exists
-    duplicate = existingApps.find(app => {
+    duplicate = existingApps.find((app) => {
       const existingReportNum = extractReportNum(app.report);
       return existingReportNum === reportNum;
     });
@@ -296,13 +411,13 @@ for (const file of tsvFiles) {
 
   if (!duplicate) {
     // Exact entry number match
-    duplicate = existingApps.find(app => app.num === addition.num);
+    duplicate = existingApps.find((app) => app.num === addition.num);
   }
 
   if (!duplicate) {
     // Company + role fuzzy match
     const normCompany = normalizeCompany(addition.company);
-    duplicate = existingApps.find(app => {
+    duplicate = existingApps.find((app) => {
       if (normalizeCompany(app.company) !== normCompany) return false;
       return roleFuzzyMatch(addition.role, app.role);
     });
@@ -313,7 +428,9 @@ for (const file of tsvFiles) {
     const oldScore = parseScore(duplicate.score);
 
     if (newScore > oldScore) {
-      console.log(`🔄 Update: #${duplicate.num} ${addition.company} — ${addition.role} (${oldScore}→${newScore})`);
+      console.log(
+        `🔄 Update: #${duplicate.num} ${addition.company} — ${addition.role} (${oldScore}→${newScore})`,
+      );
       const lineIdx = appLines.indexOf(duplicate.raw);
       if (lineIdx >= 0) {
         const updatedLine = `| ${duplicate.num} | ${addition.date} | ${addition.company} | ${addition.role} | ${addition.score} | ${duplicate.status} | ${duplicate.pdf} | ${addition.report} | Re-eval ${addition.date} (${oldScore}→${newScore}). ${addition.notes} |`;
@@ -321,7 +438,9 @@ for (const file of tsvFiles) {
         updated++;
       }
     } else {
-      console.log(`⏭️  Skip: ${addition.company} — ${addition.role} (existing #${duplicate.num} ${oldScore} >= new ${newScore})`);
+      console.log(
+        `⏭️  Skip: ${addition.company} — ${addition.role} (existing #${duplicate.num} ${oldScore} >= new ${newScore})`,
+      );
       skipped++;
     }
   } else {

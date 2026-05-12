@@ -40,13 +40,13 @@ const ROOT = dirname(fileURLToPath(import.meta.url));
 
 const PATHS = {
   // Primary evaluation logic lives in these two mode files
-  shared:   join(ROOT, 'modes', '_shared.md'),
-  oferta:   join(ROOT, 'modes', 'oferta.md'),
+  shared: join(ROOT, 'modes', '_shared.md'),
+  oferta: join(ROOT, 'modes', 'oferta.md'),
   // Canonical skill path referenced in Issue #344
   evaluate: join(ROOT, '.claude', 'skills', 'career-ops', 'SKILL.md'),
-  cv:       join(ROOT, 'cv.md'),
-  reports:  join(ROOT, 'reports'),
-  tracker:  join(ROOT, 'data', 'applications.md'),
+  cv: join(ROOT, 'cv.md'),
+  reports: join(ROOT, 'reports'),
+  tracker: join(ROOT, 'data', 'applications.md'),
 };
 
 // ---------------------------------------------------------------------------
@@ -141,9 +141,9 @@ function readFile(path, label) {
 function nextReportNumber() {
   if (!existsSync(PATHS.reports)) return '001';
   const files = readdirSync(PATHS.reports)
-    .filter(f => /^\d{3}-/.test(f))
-    .map(f => parseInt(f.slice(0, 3)))
-    .filter(n => !isNaN(n));
+    .filter((f) => /^\d{3}-/.test(f))
+    .map((f) => parseInt(f.slice(0, 3)))
+    .filter((n) => !isNaN(n));
   if (files.length === 0) return '001';
   return String(Math.max(...files) + 1).padStart(3, '0');
 }
@@ -152,7 +152,9 @@ function nextReportNumber() {
 let readdirSync;
 try {
   ({ readdirSync } = await import('fs'));
-} catch { /* already imported above via named exports */ }
+} catch {
+  /* already imported above via named exports */
+}
 // Use named import fallback
 if (!readdirSync) {
   readdirSync = (await import('fs')).readdirSync;
@@ -163,9 +165,9 @@ if (!readdirSync) {
 // ---------------------------------------------------------------------------
 console.log('\n📂  Loading context files...');
 
-const sharedContext  = readFile(PATHS.shared,   'modes/_shared.md');
-const ofertaLogic    = readFile(PATHS.oferta,   'modes/oferta.md');
-const cvContent      = readFile(PATHS.cv,       'cv.md');
+const sharedContext = readFile(PATHS.shared, 'modes/_shared.md');
+const ofertaLogic = readFile(PATHS.oferta, 'modes/oferta.md');
+const cvContent = readFile(PATHS.cv, 'cv.md');
 
 // ---------------------------------------------------------------------------
 // Build the system prompt (mirrors the Claude skill router logic)
@@ -218,7 +220,7 @@ const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({
   model: modelName,
   generationConfig: {
-    temperature: 0.4,      // deterministic enough for structured evaluation
+    temperature: 0.4, // deterministic enough for structured evaluation
     maxOutputTokens: 8192, // full 7-block evaluation
   },
 });
@@ -251,14 +253,12 @@ console.log(evaluationText);
 // ---------------------------------------------------------------------------
 // Parse score summary
 // ---------------------------------------------------------------------------
-const summaryMatch = evaluationText.match(
-  /---SCORE_SUMMARY---\s*([\s\S]*?)---END_SUMMARY---/
-);
+const summaryMatch = evaluationText.match(/---SCORE_SUMMARY---\s*([\s\S]*?)---END_SUMMARY---/);
 
-let company    = 'unknown';
-let role       = 'unknown';
-let score      = '?';
-let archetype  = 'unknown';
+let company = 'unknown';
+let role = 'unknown';
+let score = '?';
+let archetype = 'unknown';
 let legitimacy = 'unknown';
 
 if (summaryMatch) {
@@ -267,10 +267,10 @@ if (summaryMatch) {
     const m = block.match(new RegExp(`${key}:\\s*(.+)`));
     return m ? m[1].trim() : 'unknown';
   };
-  company    = extract('COMPANY');
-  role       = extract('ROLE');
-  score      = extract('SCORE');
-  archetype  = extract('ARCHETYPE');
+  company = extract('COMPANY');
+  role = extract('ROLE');
+  score = extract('SCORE');
+  archetype = extract('ARCHETYPE');
   legitimacy = extract('LEGITIMACY');
 }
 
@@ -283,11 +283,14 @@ if (saveReport) {
       mkdirSync(PATHS.reports, { recursive: true });
     }
 
-    const num         = nextReportNumber();
-    const today       = new Date().toISOString().split('T')[0];
-    const companySlug = company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    const filename    = `${num}-${companySlug}-${today}.md`;
-    const reportPath  = join(PATHS.reports, filename);
+    const num = nextReportNumber();
+    const today = new Date().toISOString().split('T')[0];
+    const companySlug = company
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    const filename = `${num}-${companySlug}-${today}.md`;
+    const reportPath = join(PATHS.reports, filename);
 
     const reportContent = `# Evaluation: ${company} — ${role}
 
@@ -308,7 +311,9 @@ ${evaluationText.replace(/---SCORE_SUMMARY---[\s\S]*?---END_SUMMARY---/, '').tri
 
     // Append tracker entry reminder
     console.log(`\n📊  Tracker entry (add to data/applications.md):`);
-    console.log(`    | ${num} | ${today} | ${company} | ${role} | ${score} | Evaluada | ❌ | [${num}](reports/${filename}) |`);
+    console.log(
+      `    | ${num} | ${today} | ${company} | ${role} | ${score} | Evaluada | ❌ | [${num}](reports/${filename}) |`,
+    );
   } catch (err) {
     console.warn(`⚠️   Could not save report: ${err.message}`);
   }

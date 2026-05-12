@@ -5,7 +5,7 @@ import { logEvent } from '$lib/server/events';
 const VALID_IDS: ScheduleId[] = ['daily-scan', 'auto-gemini-after-scan', 'weekday-apply'];
 
 export const POST = wrap('autopilot-run', async ({ request }: { request: Request }) => {
-  const body = await request.json().catch(() => null) as { id?: string };
+  const body = (await request.json().catch(() => null)) as { id?: string };
   const id = body?.id;
   if (!id || !VALID_IDS.includes(id as ScheduleId)) {
     badRequest('expected { id } where id is one of: ' + VALID_IDS.join(', '));

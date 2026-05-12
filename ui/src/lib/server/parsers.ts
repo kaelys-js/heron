@@ -23,7 +23,10 @@ function resolveId(profileId?: string): string {
 function listReportsFor(profileId: string): string[] {
   const dir = profilePath(profileId, 'reports-dir');
   try {
-    return fs.readdirSync(dir).filter((f: string) => f.endsWith('.md')).sort();
+    return fs
+      .readdirSync(dir)
+      .filter((f: string) => f.endsWith('.md'))
+      .sort();
   } catch {
     return [];
   }
@@ -52,7 +55,9 @@ function loadSourceMap(profileId: string): Record<string, string> {
       if (!url || !portal) continue;
       if (!(url in out)) out[url] = portal;
     }
-  } catch { /* tolerate */ }
+  } catch {
+    /* tolerate */
+  }
   return out;
 }
 
@@ -88,7 +93,9 @@ export function parsePipeline(profileId?: string): Job[] {
   return out;
 }
 
-export function parseGeminiScores(profileId?: string): Record<string, { score: number; reason: string }> {
+export function parseGeminiScores(
+  profileId?: string,
+): Record<string, { score: number; reason: string }> {
   const id = resolveId(profileId);
   const text = readSafe(profilePath(id, 'gemini-scores'));
   if (!text) return {};
@@ -145,7 +152,10 @@ export function parseApplications(
       // pipeline "Closed" but mean different things to the user).
       applicationStatus: extractApplicationStatus(status),
       pdfFile: pdf && pdf !== '—' && !pdf.includes('regen') ? pdf : undefined,
-      reportFile: report && report !== '—' ? path.basename((report.match(/\(([^)]+)\)/) || ['', report])[1]) : undefined,
+      reportFile:
+        report && report !== '—'
+          ? path.basename((report.match(/\(([^)]+)\)/) || ['', report])[1])
+          : undefined,
       notes,
     };
   }
@@ -173,9 +183,12 @@ function mapStatus(s: string): Status {
   if (lower === 'queued') return 'Queued';
   if (lower === 'applying' || up.includes('APPLYING')) return 'Applying';
   if (
-    lower === 'manualapplyneeded' || lower === 'manual-apply-needed' || lower === 'manual apply needed' ||
+    lower === 'manualapplyneeded' ||
+    lower === 'manual-apply-needed' ||
+    lower === 'manual apply needed' ||
     up.includes('MANUALAPPLYNEEDED')
-  ) return 'ManualApplyNeeded';
+  )
+    return 'ManualApplyNeeded';
 
   // Pipeline-stage substring matches (legacy heuristic).
   if (up.includes('READY')) return 'Ready';
@@ -183,34 +196,78 @@ function mapStatus(s: string): Status {
   // Interview sub-stages — checked BEFORE the generic 'screen'/'interview'
   // catch-alls so "Phone Screen" → PhoneScreen and "Tech Interview" →
   // Technical instead of getting flattened to the legacy bucket.
-  if (lower === 'phonescreen' || lower.includes('phone screen') || lower.includes('phone-screen') ||
-      lower === 'phone' || lower.includes('hr screen') || lower.includes('recruiter screen')) return 'PhoneScreen';
-  if (lower === 'technical' || lower.includes('tech screen') || lower.includes('tech interview') ||
-      lower.includes('technical interview') || lower.includes('coding interview') ||
-      lower === 'tech') return 'Technical';
-  if (lower === 'takehome' || lower.includes('take-home') || lower.includes('take home') ||
-      lower.includes('coding test') || lower.includes('coding challenge')) return 'TakeHome';
-  if (lower === 'onsite' || lower.includes('on-site') || lower.includes('on site') ||
-      lower.includes('virtual onsite') || lower === 'panel' || lower === 'super day' ||
-      lower === 'loop') return 'Onsite';
-  if (lower === 'final' || lower.includes('final round') || lower === 'exec' || lower === 'vp' ||
-      lower.includes('hiring committee') || lower.includes('hiring manager final') ||
-      lower === 'leadership') return 'Final';
+  if (
+    lower === 'phonescreen' ||
+    lower.includes('phone screen') ||
+    lower.includes('phone-screen') ||
+    lower === 'phone' ||
+    lower.includes('hr screen') ||
+    lower.includes('recruiter screen')
+  )
+    return 'PhoneScreen';
+  if (
+    lower === 'technical' ||
+    lower.includes('tech screen') ||
+    lower.includes('tech interview') ||
+    lower.includes('technical interview') ||
+    lower.includes('coding interview') ||
+    lower === 'tech'
+  )
+    return 'Technical';
+  if (
+    lower === 'takehome' ||
+    lower.includes('take-home') ||
+    lower.includes('take home') ||
+    lower.includes('coding test') ||
+    lower.includes('coding challenge')
+  )
+    return 'TakeHome';
+  if (
+    lower === 'onsite' ||
+    lower.includes('on-site') ||
+    lower.includes('on site') ||
+    lower.includes('virtual onsite') ||
+    lower === 'panel' ||
+    lower === 'super day' ||
+    lower === 'loop'
+  )
+    return 'Onsite';
+  if (
+    lower === 'final' ||
+    lower.includes('final round') ||
+    lower === 'exec' ||
+    lower === 'vp' ||
+    lower.includes('hiring committee') ||
+    lower.includes('hiring manager final') ||
+    lower === 'leadership'
+  )
+    return 'Final';
 
   if (up.includes('SCREEN')) return 'Screened';
   if (up.includes('INTERVIEW') || lower === 'entrevista') return 'Interview';
   if (up.includes('OFFER') || lower === 'oferta') return 'Offer';
   if (up.includes('REJECT') || lower === 'rechazado' || lower === 'rechazada') return 'Rejected';
-  if (up.includes('APPLIED') || ['aplicado', 'enviada', 'aplicada', 'sent'].includes(lower)) return 'Applied';
+  if (up.includes('APPLIED') || ['aplicado', 'enviada', 'aplicada', 'sent'].includes(lower))
+    return 'Applied';
 
   // states.yml canonical + Spanish aliases mapped onto pipeline.
   if (lower === 'responded' || lower === 'respondido') return 'Screened';
-  if (lower === 'discarded' || ['descartado', 'descartada', 'cerrada', 'cancelada'].includes(lower)) return 'Closed';
+  if (lower === 'discarded' || ['descartado', 'descartada', 'cerrada', 'cancelada'].includes(lower))
+    return 'Closed';
   if (
-    up.includes('CLOSE') || up.includes('SKIP') ||
-    lower === 'no aplicar' || lower === 'no_aplicar' || lower === 'monitor' || lower === 'geo blocker'
-  ) return 'Closed';
-  if (lower === 'evaluated' || ['evaluada', 'condicional', 'hold', 'evaluar', 'verificar'].includes(lower)) return 'Scored';
+    up.includes('CLOSE') ||
+    up.includes('SKIP') ||
+    lower === 'no aplicar' ||
+    lower === 'no_aplicar' ||
+    lower === 'monitor' ||
+    lower === 'geo blocker'
+  )
+    return 'Closed';
+  if (
+    lower === 'evaluated' ||
+    ['evaluada', 'condicional', 'hold', 'evaluar', 'verificar'].includes(lower)
+  )
+    return 'Scored';
 
   return 'Scored';
 }
@@ -233,7 +290,8 @@ function extractApplicationStatus(s: string): import('$lib/types').ApplicationSt
   if (lower === 'discarded') return 'discarded';
   if (lower === 'skip') return 'skip';
   // Spanish + legacy aliases (mirror verify-pipeline.mjs:ALIASES).
-  if (['evaluada', 'condicional', 'hold', 'evaluar', 'verificar'].includes(lower)) return 'evaluated';
+  if (['evaluada', 'condicional', 'hold', 'evaluar', 'verificar'].includes(lower))
+    return 'evaluated';
   if (['aplicado', 'enviada', 'aplicada', 'sent'].includes(lower)) return 'applied';
   if (lower === 'respondido') return 'responded';
   if (lower === 'entrevista') return 'interview';
@@ -249,17 +307,26 @@ function classifyWorkMode(raw: string): WorkMode {
   const s = raw.toLowerCase();
   if (/\bon[\s-]?site\b|\bin[\s-]?office\b/.test(s)) return 'onsite';
   if (/\bhybrid\b|\d+\s*day(?:s)?\s*\/?\s*(?:per\s+)?week|\bhq\s*\d/.test(s)) return 'hybrid';
-  if (/\bfully\s*remote\b|\bremote[\s-]?(first|friendly|ok)\b|\bdistributed\b|\banywhere\b/.test(s)) return 'remote';
+  if (/\bfully\s*remote\b|\bremote[\s-]?(first|friendly|ok)\b|\bdistributed\b|\banywhere\b/.test(s))
+    return 'remote';
   if (/^yes\b|^remote\b/.test(s)) return 'remote';
   if (/\bno\b|\bmust be (in|located|based) (in)?\s/.test(s)) return 'onsite';
   if (/\b(based in|located in)\s+[A-Z]/.test(raw)) return 'hybrid';
   return 'unknown';
 }
 
-export function indexReports(profileId?: string): Record<string, { file: string; score?: number; bgRisk?: BgRisk; workMode?: WorkMode; salary?: string }> {
+export function indexReports(
+  profileId?: string,
+): Record<
+  string,
+  { file: string; score?: number; bgRisk?: BgRisk; workMode?: WorkMode; salary?: string }
+> {
   const id = resolveId(profileId);
   const reportsDir = profilePath(id, 'reports-dir');
-  const out: Record<string, { file: string; score?: number; bgRisk?: BgRisk; workMode?: WorkMode; salary?: string }> = {};
+  const out: Record<
+    string,
+    { file: string; score?: number; bgRisk?: BgRisk; workMode?: WorkMode; salary?: string }
+  > = {};
 
   for (const file of listReportsFor(id)) {
     const text = readSafe(path.join(reportsDir, file));
@@ -267,7 +334,9 @@ export function indexReports(profileId?: string): Record<string, { file: string;
     if (!urlMatch) continue;
     const jobIdStr = urlId(urlMatch[1]);
     const scoreMatch = /\*\*Score:\*\*\s*([0-9.]+)/.exec(text);
-    const bgMatch = /\*\*Background Check Risk:\*\*\s*(LOW|MEDIUM|HIGH|HARD STOP|BLOCKED)/.exec(text);
+    const bgMatch = /\*\*Background Check Risk:\*\*\s*(LOW|MEDIUM|HIGH|HARD STOP|BLOCKED)/.exec(
+      text,
+    );
     const score = scoreMatch ? parseFloat(scoreMatch[1]) : undefined;
     let bg: BgRisk = undefined;
     if (bgMatch) {

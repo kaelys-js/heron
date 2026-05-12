@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { notifications } from '$lib/notifications.svelte';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Loader2 } from '@lucide/svelte';
+import { notifications } from '$lib/notifications.svelte';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { Loader2 } from '@lucide/svelte';
 
-  const TASK_LABEL: Record<string, string> = {
-    'scan': 'Scanning jobs',
-    'gemini': 'Gemini scoring',
-    'apply-linkedin': 'LinkedIn apply',
-    'oferta': 'Deep eval',
-    'pdf': 'PDF tailoring',
-  };
+const TASK_LABEL: Record<string, string> = {
+  scan: 'Scanning jobs',
+  gemini: 'Gemini scoring',
+  'apply-linkedin': 'LinkedIn apply',
+  oferta: 'Deep eval',
+  pdf: 'PDF tailoring',
+};
 
-  let labels = $derived(notifications.runningTasks.map((t) => TASK_LABEL[t] ?? t));
-  let count = $derived(labels.length);
+let labels = $derived(notifications.runningTasks.map((t) => TASK_LABEL[t] ?? t));
+let count = $derived(labels.length);
 </script>
 
 {#if count > 0}

@@ -13,176 +13,186 @@
   view here.
 -->
 <script lang="ts">
-  import * as Card from '$lib/components/ui/card';
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-  import {
-    User, Sun, Moon, Monitor, Palette, Bell, BellOff, Upload, Trash2,
-    Loader2, CheckCircle2, AlertCircle,
-  } from '@lucide/svelte';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import { onMount } from 'svelte';
-  import { cn } from '$lib/utils';
+import * as Card from '$lib/components/ui/card';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import {
+  User,
+  Sun,
+  Moon,
+  Monitor,
+  Palette,
+  Bell,
+  BellOff,
+  Upload,
+  Trash2,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+} from '@lucide/svelte';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import { onMount } from 'svelte';
+import { cn } from '$lib/utils';
 
-  type Appearance = 'system' | 'light' | 'dark';
-  type Theme = 'default' | 'fuchsia' | 'emerald' | 'amber' | 'blue' | 'rose';
+type Appearance = 'system' | 'light' | 'dark';
+type Theme = 'default' | 'fuchsia' | 'emerald' | 'amber' | 'blue' | 'rose';
 
-  type Notifications = {
-    os: { error: boolean; warn: boolean; success: boolean; info: boolean };
-    toast: { error: boolean; warn: boolean; success: boolean; info: boolean };
-    mutedSources: string[];
-  };
+type Notifications = {
+  os: { error: boolean; warn: boolean; success: boolean; info: boolean };
+  toast: { error: boolean; warn: boolean; success: boolean; info: boolean };
+  mutedSources: string[];
+};
 
-  type UiPrefs = {
-    displayName?: string;
-    avatarPath?: string;
-    appearance: Appearance;
-    theme: Theme;
-    notifications: Notifications;
-  };
+type UiPrefs = {
+  displayName?: string;
+  avatarPath?: string;
+  appearance: Appearance;
+  theme: Theme;
+  notifications: Notifications;
+};
 
-  let prefs = $state<UiPrefs>({
-    appearance: 'system',
-    theme: 'default',
-    notifications: {
-      os: { error: true, warn: true, success: true, info: false },
-      toast: { error: true, warn: true, success: true, info: true },
-      mutedSources: [],
-    },
-  });
+let prefs = $state<UiPrefs>({
+  appearance: 'system',
+  theme: 'default',
+  notifications: {
+    os: { error: true, warn: true, success: true, info: false },
+    toast: { error: true, warn: true, success: true, info: true },
+    mutedSources: [],
+  },
+});
 
-  let loading = $state(true);
-  let savingDisplayName = $state(false);
-  let uploadingAvatar = $state(false);
-  let displayNameDraft = $state('');
-  // Cache-bust avatar URL when re-uploaded.
-  let avatarVersion = $state(0);
-  let fileInput = $state<HTMLInputElement | null>(null);
+let loading = $state(true);
+let savingDisplayName = $state(false);
+let uploadingAvatar = $state(false);
+let displayNameDraft = $state('');
+// Cache-bust avatar URL when re-uploaded.
+let avatarVersion = $state(0);
+let fileInput = $state<HTMLInputElement | null>(null);
 
-  onMount(async () => {
-    try {
-      const r = await api.get<UiPrefs>('/api/ui-prefs', { silent: true });
-      prefs = r;
-      displayNameDraft = r.displayName ?? '';
-      applyAppearance(r.appearance);
-      applyTheme(r.theme);
-    } catch (e) {
-      // Defaults are fine; nothing to surface.
-      void e;
-    } finally {
-      loading = false;
-    }
-  });
-
-  /** Apply appearance to the document. Re-fires whenever the toggle changes
-   *  so it's live without a page reload. */
-  function applyAppearance(a: Appearance) {
-    if (typeof document === 'undefined') return;
-    const root = document.documentElement;
-    if (a === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      root.classList.toggle('dark', prefersDark);
-      root.classList.toggle('light', !prefersDark);
-    } else {
-      root.classList.toggle('dark', a === 'dark');
-      root.classList.toggle('light', a === 'light');
-    }
+onMount(async () => {
+  try {
+    const r = await api.get<UiPrefs>('/api/ui-prefs', { silent: true });
+    prefs = r;
+    displayNameDraft = r.displayName ?? '';
+    applyAppearance(r.appearance);
+    applyTheme(r.theme);
+  } catch (e) {
+    // Defaults are fine; nothing to surface.
+    void e;
+  } finally {
+    loading = false;
   }
-  function applyTheme(t: Theme) {
-    if (typeof document === 'undefined') return;
-    document.documentElement.setAttribute('data-theme', t);
-  }
+});
 
-  async function patchPrefs(patch: Partial<UiPrefs>) {
-    try {
-      // The shared api helper doesn't have PATCH; fetch directly.
-      const r = await fetch('/api/ui-prefs', {
-        method: 'PATCH',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(patch),
-      });
-      if (!r.ok) throw new Error('PATCH failed: ' + r.status);
-      const next = await r.json() as UiPrefs;
-      prefs = next;
-      if (patch.appearance) applyAppearance(next.appearance);
-      if (patch.theme) applyTheme(next.theme);
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Save failed', { description: err.message });
+/** Apply appearance to the document. Re-fires whenever the toggle changes
+ *  so it's live without a page reload. */
+function applyAppearance(a: Appearance) {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  if (a === 'system') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    root.classList.toggle('dark', prefersDark);
+    root.classList.toggle('light', !prefersDark);
+  } else {
+    root.classList.toggle('dark', a === 'dark');
+    root.classList.toggle('light', a === 'light');
+  }
+}
+function applyTheme(t: Theme) {
+  if (typeof document === 'undefined') return;
+  document.documentElement.setAttribute('data-theme', t);
+}
+
+async function patchPrefs(patch: Partial<UiPrefs>) {
+  try {
+    // The shared api helper doesn't have PATCH; fetch directly.
+    const r = await fetch('/api/ui-prefs', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(patch),
+    });
+    if (!r.ok) throw new Error('PATCH failed: ' + r.status);
+    const next = (await r.json()) as UiPrefs;
+    prefs = next;
+    if (patch.appearance) applyAppearance(next.appearance);
+    if (patch.theme) applyTheme(next.theme);
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Save failed', { description: err.message });
+  }
+}
+
+async function saveDisplayName() {
+  if (savingDisplayName) return;
+  savingDisplayName = true;
+  try {
+    await patchPrefs({ displayName: displayNameDraft.trim() || undefined });
+    toast.success('Display name saved');
+  } finally {
+    savingDisplayName = false;
+  }
+}
+
+async function uploadAvatar(file: File) {
+  if (uploadingAvatar) return;
+  uploadingAvatar = true;
+  try {
+    const fd = new FormData();
+    fd.append('avatar', file);
+    const r = await fetch('/api/profile/avatar', { method: 'POST', body: fd });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      toast.error('Upload failed', { description: (j as { error?: string }).error ?? 'unknown' });
+      return;
     }
-  }
-
-  async function saveDisplayName() {
-    if (savingDisplayName) return;
-    savingDisplayName = true;
-    try {
-      await patchPrefs({ displayName: displayNameDraft.trim() || undefined });
-      toast.success('Display name saved');
-    } finally {
-      savingDisplayName = false;
-    }
-  }
-
-  async function uploadAvatar(file: File) {
-    if (uploadingAvatar) return;
-    uploadingAvatar = true;
-    try {
-      const fd = new FormData();
-      fd.append('avatar', file);
-      const r = await fetch('/api/profile/avatar', { method: 'POST', body: fd });
-      if (!r.ok) {
-        const j = await r.json().catch(() => ({}));
-        toast.error('Upload failed', { description: (j as { error?: string }).error ?? 'unknown' });
-        return;
-      }
-      const j = await r.json() as { ok: boolean; path?: string };
-      if (j.ok) {
-        // Reload prefs to pick up the new avatarPath.
-        const next = await api.get<UiPrefs>('/api/ui-prefs', { silent: true });
-        prefs = next;
-        avatarVersion = Date.now();
-        toast.success('Avatar uploaded');
-      }
-    } catch (e) {
-      toast.error('Upload failed', { description: (e as Error).message });
-    } finally {
-      uploadingAvatar = false;
-    }
-  }
-
-  async function removeAvatar() {
-    try {
-      await api.delete('/api/profile/avatar', { silent: true });
+    const j = (await r.json()) as { ok: boolean; path?: string };
+    if (j.ok) {
+      // Reload prefs to pick up the new avatarPath.
       const next = await api.get<UiPrefs>('/api/ui-prefs', { silent: true });
       prefs = next;
       avatarVersion = Date.now();
-      toast.success('Avatar removed');
-    } catch (e) {
-      toast.error('Remove failed', { description: (e as Error).message });
+      toast.success('Avatar uploaded');
     }
+  } catch (e) {
+    toast.error('Upload failed', { description: (e as Error).message });
+  } finally {
+    uploadingAvatar = false;
   }
+}
 
-  function avatarSrc(): string {
-    return '/api/profile/avatar?v=' + avatarVersion;
+async function removeAvatar() {
+  try {
+    await api.delete('/api/profile/avatar', { silent: true });
+    const next = await api.get<UiPrefs>('/api/ui-prefs', { silent: true });
+    prefs = next;
+    avatarVersion = Date.now();
+    toast.success('Avatar removed');
+  } catch (e) {
+    toast.error('Remove failed', { description: (e as Error).message });
   }
+}
 
-  function initials(name?: string): string {
-    if (!name) return '?';
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    return name.slice(0, 2).toUpperCase();
-  }
+function avatarSrc(): string {
+  return '/api/profile/avatar?v=' + avatarVersion;
+}
 
-  const THEME_TINTS: Record<Theme, string> = {
-    default: 'bg-slate-500',
-    fuchsia: 'bg-fuchsia-500',
-    emerald: 'bg-emerald-500',
-    amber: 'bg-amber-500',
-    blue: 'bg-blue-500',
-    rose: 'bg-rose-500',
-  };
+function initials(name?: string): string {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
+const THEME_TINTS: Record<Theme, string> = {
+  default: 'bg-slate-500',
+  fuchsia: 'bg-fuchsia-500',
+  emerald: 'bg-emerald-500',
+  amber: 'bg-amber-500',
+  blue: 'bg-blue-500',
+  rose: 'bg-rose-500',
+};
 </script>
 
 <Card.Root>

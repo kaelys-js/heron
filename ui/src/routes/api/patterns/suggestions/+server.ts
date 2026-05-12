@@ -13,7 +13,9 @@
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import {
-  listSuggestions, applySuggestion, logSuggestionApplied,
+  listSuggestions,
+  applySuggestion,
+  logSuggestionApplied,
   type StructuredSuggestion,
 } from '$lib/server/pattern-suggestions';
 import { getActiveProfileId, getProfile } from '$lib/server/profiles';
@@ -34,13 +36,16 @@ export const GET = wrap('pattern-suggestions', async ({ url }: { url: URL }) => 
   };
 });
 
-export const POST = wrap('pattern-suggestions', async ({ request, url }: { request: Request; url: URL }) => {
-  const profileId = resolveProfileId(url);
-  const body = (await request.json().catch(() => ({}))) as Partial<StructuredSuggestion>;
-  if (!body?.op) badRequest('op required');
-  const result = applySuggestion(body as StructuredSuggestion, profileId);
-  if (result.ok) {
-    logSuggestionApplied(body as StructuredSuggestion, result.summary ?? '');
-  }
-  return result;
-});
+export const POST = wrap(
+  'pattern-suggestions',
+  async ({ request, url }: { request: Request; url: URL }) => {
+    const profileId = resolveProfileId(url);
+    const body = (await request.json().catch(() => ({}))) as Partial<StructuredSuggestion>;
+    if (!body?.op) badRequest('op required');
+    const result = applySuggestion(body as StructuredSuggestion, profileId);
+    if (result.ok) {
+      logSuggestionApplied(body as StructuredSuggestion, result.summary ?? '');
+    }
+    return result;
+  },
+);

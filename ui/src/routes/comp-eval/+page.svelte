@@ -11,132 +11,151 @@
   ceiling" negotiation conversation.
 -->
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-  import {
-    DollarSign, Calculator, TrendingUp, ArrowLeftRight, ChevronDown,
-    Info, Sparkles,
-  } from '@lucide/svelte';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import { cn } from '$lib/utils';
-  import { onMount } from 'svelte';
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import {
+  DollarSign,
+  Calculator,
+  TrendingUp,
+  ArrowLeftRight,
+  ChevronDown,
+  Info,
+  Sparkles,
+} from '@lucide/svelte';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import { cn } from '$lib/utils';
+import { onMount } from 'svelte';
 
-  type EquityType = 'rsu-public' | 'rsu-private' | 'iso' | 'nso' | 'pre-ipo-rsu' | 'none';
+type EquityType = 'rsu-public' | 'rsu-private' | 'iso' | 'nso' | 'pre-ipo-rsu' | 'none';
 
-  type OfferInput = {
-    base: number;
-    signingBonus?: number;
-    annualBonusTarget?: number;
-    equity?: {
-      type: EquityType;
-      grantValueToday: number;
-      strikePerShare?: number;
-      growthRatePct?: number;
-    };
-    benefitsAnnualValue?: number;
-    equityDiscountPct?: number;
-    discountRatePct?: number;
+type OfferInput = {
+  base: number;
+  signingBonus?: number;
+  annualBonusTarget?: number;
+  equity?: {
+    type: EquityType;
+    grantValueToday: number;
+    strikePerShare?: number;
+    growthRatePct?: number;
   };
+  benefitsAnnualValue?: number;
+  equityDiscountPct?: number;
+  discountRatePct?: number;
+};
 
-  type YearBreakdown = {
-    year: 1 | 2 | 3 | 4;
-    base: number;
-    bonus: number;
-    signing: number;
-    equityVested: number;
-    benefits: number;
-    total: number;
-  };
+type YearBreakdown = {
+  year: 1 | 2 | 3 | 4;
+  base: number;
+  bonus: number;
+  signing: number;
+  equityVested: number;
+  benefits: number;
+  total: number;
+};
 
-  type OfferEvaluation = {
-    perYear: YearBreakdown[];
-    year1Cash: number;
-    fourYearNominal: number;
-    fourYearDiscounted: number;
-    equityNpv: number;
-    effectiveAnnual: number;
-  };
+type OfferEvaluation = {
+  perYear: YearBreakdown[];
+  year1Cash: number;
+  fourYearNominal: number;
+  fourYearDiscounted: number;
+  equityNpv: number;
+  effectiveAnnual: number;
+};
 
-  // Default values targeting a typical Senior-IC US tech offer.
-  let offer = $state<OfferInput>({
-    base: 200000,
-    signingBonus: 25000,
-    annualBonusTarget: 30000,
-    equity: {
-      type: 'rsu-public',
-      grantValueToday: 300000,
-      growthRatePct: 0,
-    },
-    benefitsAnnualValue: 15000,
-    equityDiscountPct: 30,
-    discountRatePct: 5,
-  });
+// Default values targeting a typical Senior-IC US tech offer.
+let offer = $state<OfferInput>({
+  base: 200000,
+  signingBonus: 25000,
+  annualBonusTarget: 30000,
+  equity: {
+    type: 'rsu-public',
+    grantValueToday: 300000,
+    growthRatePct: 0,
+  },
+  benefitsAnnualValue: 15000,
+  equityDiscountPct: 30,
+  discountRatePct: 5,
+});
 
-  let result = $state<OfferEvaluation | null>(null);
-  let computing = $state(false);
-  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+let result = $state<OfferEvaluation | null>(null);
+let computing = $state(false);
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-  // Compare mode
-  let compareMode = $state(false);
-  let offerB = $state<OfferInput>({ ...offer, base: 220000 });
-  let comparison = $state<{
-    preferred: 'a' | 'b' | 'tied';
-    metric: string;
-    delta: number;
-    a: OfferEvaluation;
-    b: OfferEvaluation;
-  } | null>(null);
+// Compare mode
+let compareMode = $state(false);
+let offerB = $state<OfferInput>({ ...offer, base: 220000 });
+let comparison = $state<{
+  preferred: 'a' | 'b' | 'tied';
+  metric: string;
+  delta: number;
+  a: OfferEvaluation;
+  b: OfferEvaluation;
+} | null>(null);
 
-  function fmt(n: number): string {
-    if (!Number.isFinite(n)) return '$0';
-    const sign = n < 0 ? '-' : '';
-    return sign + '$' + Math.abs(Math.round(n)).toLocaleString();
-  }
+function fmt(n: number): string {
+  if (!Number.isFinite(n)) return '$0';
+  const sign = n < 0 ? '-' : '';
+  return sign + '$' + Math.abs(Math.round(n)).toLocaleString();
+}
 
-  async function compute() {
-    if (computing) return;
-    computing = true;
-    try {
-      if (compareMode) {
-        const r = await api.post<typeof comparison>('/api/comp-eval', { compare: true, a: offer, b: offerB }, { silent: true });
-        comparison = r;
-        result = r?.a ?? null;
-      } else {
-        const r = await api.post<OfferEvaluation>('/api/comp-eval', offer, { silent: true });
-        result = r;
-        comparison = null;
-      }
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Eval failed', { description: err.message });
-    } finally {
-      computing = false;
-    }
-  }
-
-  function debouncedCompute() {
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(compute, 400);
-  }
-
-  // Re-compute on any input change.
-  $effect(() => {
-    // Re-read state to register reactivity.
-    void offer.base; void offer.signingBonus; void offer.annualBonusTarget;
-    void offer.equity?.grantValueToday; void offer.equity?.growthRatePct; void offer.equity?.type;
-    void offer.benefitsAnnualValue; void offer.equityDiscountPct; void offer.discountRatePct;
+async function compute() {
+  if (computing) return;
+  computing = true;
+  try {
     if (compareMode) {
-      void offerB.base; void offerB.signingBonus; void offerB.annualBonusTarget;
-      void offerB.equity?.grantValueToday;
+      const r = await api.post<typeof comparison>(
+        '/api/comp-eval',
+        { compare: true, a: offer, b: offerB },
+        { silent: true },
+      );
+      comparison = r;
+      result = r?.a ?? null;
+    } else {
+      const r = await api.post<OfferEvaluation>('/api/comp-eval', offer, { silent: true });
+      result = r;
+      comparison = null;
     }
-    debouncedCompute();
-  });
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Eval failed', { description: err.message });
+  } finally {
+    computing = false;
+  }
+}
 
-  onMount(() => { compute(); });
+function debouncedCompute() {
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(compute, 400);
+}
+
+// Re-compute on any input change.
+$effect(() => {
+  // Re-read state to register reactivity.
+  void offer.base;
+  void offer.signingBonus;
+  void offer.annualBonusTarget;
+  void offer.equity?.grantValueToday;
+  void offer.equity?.growthRatePct;
+  void offer.equity?.type;
+  void offer.benefitsAnnualValue;
+  void offer.equityDiscountPct;
+  void offer.discountRatePct;
+  if (compareMode) {
+    void offerB.base;
+    void offerB.signingBonus;
+    void offerB.annualBonusTarget;
+    void offerB.equity?.grantValueToday;
+  }
+  debouncedCompute();
+});
+
+onMount(() => {
+  compute();
+});
 </script>
 
 <div class="h-full overflow-y-auto">

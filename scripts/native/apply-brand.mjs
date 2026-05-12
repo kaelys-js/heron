@@ -48,7 +48,17 @@ const log = {
 function loadBrand() {
   if (!existsSync(BRAND_JSON)) throw new Error(`brand.json missing at ${BRAND_JSON}`);
   const brand = JSON.parse(readFileSync(BRAND_JSON, 'utf8'));
-  const required = ['name', 'displayName', 'description', 'identifiers.bundleId', 'identifiers.urlScheme', 'identifiers.serviceType', 'colors.primary', 'author.email', 'repo.url'];
+  const required = [
+    'name',
+    'displayName',
+    'description',
+    'identifiers.bundleId',
+    'identifiers.urlScheme',
+    'identifiers.serviceType',
+    'colors.primary',
+    'author.email',
+    'repo.url',
+  ];
   for (const key of required) {
     const val = key.split('.').reduce((acc, k) => acc?.[k], brand);
     if (!val) throw new Error(`brand.json missing required field: ${key}`);
@@ -97,7 +107,10 @@ function applyRootPackageJson(brand) {
 
 function applyElectronPackageJson(brand) {
   const path = join(UI, 'electron', 'package.json');
-  if (!existsSync(path)) { log.skip(`electron/package.json — missing (run cap add electron first)`); return; }
+  if (!existsSync(path)) {
+    log.skip(`electron/package.json — missing (run cap add electron first)`);
+    return;
+  }
   const changed = patchJson(path, (p) => {
     p.name = brand.name;
     p.description = `${brand.displayName} desktop — ${brand.tagline}`;
@@ -109,7 +122,10 @@ function applyElectronPackageJson(brand) {
 }
 
 function applyCapacitorConfig(brand, path) {
-  if (!existsSync(path)) { log.skip(`${path} — missing`); return; }
+  if (!existsSync(path)) {
+    log.skip(`${path} — missing`);
+    return;
+  }
   // The config is TypeScript with comments and types — surgically edit
   // the appId / appName / scheme / customUrlScheme via regex rather
   // than parse-and-reserialize.
@@ -125,25 +141,35 @@ function applyCapacitorConfig(brand, path) {
   let changed = false;
   for (const [re, val] of replacements) {
     const next = body.replace(re, val);
-    if (next !== body) { body = next; changed = true; }
+    if (next !== body) {
+      body = next;
+      changed = true;
+    }
   }
   if (changed) writeFileSync(path, body);
-  changed ? log.ok(path.replace(ROOT, '.')) : log.skip(`${path.replace(ROOT, '.')} — already current`);
+  changed
+    ? log.ok(path.replace(ROOT, '.'))
+    : log.skip(`${path.replace(ROOT, '.')} — already current`);
 }
 
 function applyElectronBuilderConfig(brand) {
   const path = join(UI, 'electron', 'electron-builder.config.json');
-  if (!existsSync(path)) { log.skip(`electron-builder.config.json — missing`); return; }
+  if (!existsSync(path)) {
+    log.skip(`electron-builder.config.json — missing`);
+    return;
+  }
   const changed = patchJson(path, (cfg) => {
     cfg.appId = brand.identifiers.bundleId;
     cfg.productName = brand.displayName;
     cfg.copyright = brand.copyright;
     // Mac URL scheme registration
     if (cfg.mac?.extendInfo) {
-      cfg.mac.extendInfo.CFBundleURLTypes = [{
-        CFBundleURLName: brand.identifiers.urlScheme,
-        CFBundleURLSchemes: [brand.identifiers.urlScheme],
-      }];
+      cfg.mac.extendInfo.CFBundleURLTypes = [
+        {
+          CFBundleURLName: brand.identifiers.urlScheme,
+          CFBundleURLSchemes: [brand.identifiers.urlScheme],
+        },
+      ];
       cfg.mac.extendInfo.NSLocalNetworkUsageDescription = brand.permissions.localNetworkUsage;
       cfg.mac.extendInfo.NSBonjourServices = [brand.identifiers.serviceType];
     }
@@ -158,12 +184,17 @@ function applyElectronBuilderConfig(brand) {
       }
     }
   });
-  changed ? log.ok(`electron-builder.config.json`) : log.skip(`electron-builder.config.json — already current`);
+  changed
+    ? log.ok(`electron-builder.config.json`)
+    : log.skip(`electron-builder.config.json — already current`);
 }
 
 function applyIosInfoPlist(brand) {
   const path = join(UI, 'ios', 'App', 'App', 'Info.plist');
-  if (!existsSync(path)) { log.skip(`Info.plist — missing (run cap add ios first)`); return; }
+  if (!existsSync(path)) {
+    log.skip(`Info.plist — missing (run cap add ios first)`);
+    return;
+  }
   let body = readFileSync(path, 'utf8');
   const subs = [
     // CFBundleDisplayName
@@ -200,16 +231,22 @@ function applyIosInfoPlist(brand) {
   let changed = false;
   for (const [re, val] of subs) {
     const next = body.replace(re, val);
-    if (next !== body) { body = next; changed = true; }
+    if (next !== body) {
+      body = next;
+      changed = true;
+    }
   }
   // NSUserActivityTypes array — rebuild from brand.identifiers.userActivityTypes
   const uatPattern = /(<key>NSUserActivityTypes<\/key>\s*\n\s*<array>)([\s\S]*?)(<\/array>)/;
   if (uatPattern.test(body)) {
-    const items = brand.identifiers.userActivityTypes
-      .map((t) => `\n\t\t<string>${t}</string>`)
-      .join('') + '\n\t';
+    const items =
+      brand.identifiers.userActivityTypes.map((t) => `\n\t\t<string>${t}</string>`).join('') +
+      '\n\t';
     const next = body.replace(uatPattern, `$1${items}$3`);
-    if (next !== body) { body = next; changed = true; }
+    if (next !== body) {
+      body = next;
+      changed = true;
+    }
   }
   if (changed) writeFileSync(path, body);
   changed ? log.ok(`Info.plist`) : log.skip(`Info.plist — already current`);
@@ -218,7 +255,10 @@ function applyIosInfoPlist(brand) {
 function applyFavicon(brand) {
   const dest = join(UI, 'static', 'favicon.svg');
   const src = BRAND_LOGO;
-  if (!existsSync(src)) { log.warn(`logo.svg missing — skipping favicon copy`); return; }
+  if (!existsSync(src)) {
+    log.warn(`logo.svg missing — skipping favicon copy`);
+    return;
+  }
   const srcContent = readFileSync(src, 'utf8');
   if (existsSync(dest) && readFileSync(dest, 'utf8') === srcContent) {
     log.skip(`static/favicon.svg — already current`);
@@ -234,7 +274,10 @@ function applyAppHtml(brand) {
   // modules, so the brand-derived values are baked in at build time
   // here. Brand changes → re-run apply-brand → app.html updates.
   const path = join(UI, 'src', 'app.html');
-  if (!existsSync(path)) { log.skip(`app.html — missing`); return; }
+  if (!existsSync(path)) {
+    log.skip(`app.html — missing`);
+    return;
+  }
   let body = readFileSync(path, 'utf8');
   let changed = false;
   const subs = [
@@ -247,7 +290,10 @@ function applyAppHtml(brand) {
   ];
   for (const [re, val] of subs) {
     const next = body.replace(re, val);
-    if (next !== body) { body = next; changed = true; }
+    if (next !== body) {
+      body = next;
+      changed = true;
+    }
   }
   if (changed) writeFileSync(path, body);
   changed ? log.ok(`app.html`) : log.skip(`app.html — already current`);
@@ -255,7 +301,10 @@ function applyAppHtml(brand) {
 
 function applyManifest(brand) {
   const path = join(UI, 'static', 'manifest.webmanifest');
-  if (!existsSync(path)) { log.skip(`manifest.webmanifest — missing`); return; }
+  if (!existsSync(path)) {
+    log.skip(`manifest.webmanifest — missing`);
+    return;
+  }
   const changed = patchJson(path, (m) => {
     m.name = brand.displayName;
     m.short_name = brand.shortName;
@@ -263,37 +312,52 @@ function applyManifest(brand) {
     m.theme_color = brand.colors.primary;
     m.background_color = brand.colors.darkBg;
   });
-  changed ? log.ok(`static/manifest.webmanifest`) : log.skip(`manifest.webmanifest — already current`);
+  changed
+    ? log.ok(`static/manifest.webmanifest`)
+    : log.skip(`manifest.webmanifest — already current`);
 }
 
 function applyFastlaneAppfile(brand) {
   const path = join(UI, 'ios', 'App', 'fastlane', 'Appfile');
-  if (!existsSync(path)) { log.skip(`Appfile — missing`); return; }
+  if (!existsSync(path)) {
+    log.skip(`Appfile — missing`);
+    return;
+  }
   let body = readFileSync(path, 'utf8');
   const next = body.replace(
     /app_identifier\("[^"]*"\)/,
-    `app_identifier("${brand.identifiers.bundleId}")`
+    `app_identifier("${brand.identifiers.bundleId}")`,
   );
-  if (next !== body) { writeFileSync(path, next); log.ok(`Appfile`); }
-  else log.skip(`Appfile — already current`);
+  if (next !== body) {
+    writeFileSync(path, next);
+    log.ok(`Appfile`);
+  } else log.skip(`Appfile — already current`);
 }
 
 function applyFastfile(brand) {
   const path = join(UI, 'ios', 'App', 'fastlane', 'Fastfile');
-  if (!existsSync(path)) { log.skip(`Fastfile — missing`); return; }
+  if (!existsSync(path)) {
+    log.skip(`Fastfile — missing`);
+    return;
+  }
   let body = readFileSync(path, 'utf8');
   const next = body.replace(
     /APP_IDENTIFIER\s*=\s*"[^"]*"/,
-    `APP_IDENTIFIER = "${brand.identifiers.bundleId}"`
+    `APP_IDENTIFIER = "${brand.identifiers.bundleId}"`,
   );
-  if (next !== body) { writeFileSync(path, next); log.ok(`Fastfile`); }
-  else log.skip(`Fastfile — already current`);
+  if (next !== body) {
+    writeFileSync(path, next);
+    log.ok(`Fastfile`);
+  } else log.skip(`Fastfile — already current`);
 }
 
 function applyAddXcodeTargets(brand) {
   // Bake the bundle root + app group into the ruby script.
   const path = join(ROOT, 'scripts', 'native', 'add-xcode-targets.rb');
-  if (!existsSync(path)) { log.skip(`add-xcode-targets.rb — missing`); return; }
+  if (!existsSync(path)) {
+    log.skip(`add-xcode-targets.rb — missing`);
+    return;
+  }
   let body = readFileSync(path, 'utf8');
   let changed = false;
   const subs = [
@@ -302,7 +366,10 @@ function applyAddXcodeTargets(brand) {
   ];
   for (const [re, val] of subs) {
     const next = body.replace(re, val);
-    if (next !== body) { body = next; changed = true; }
+    if (next !== body) {
+      body = next;
+      changed = true;
+    }
   }
   if (changed) writeFileSync(path, body);
   changed ? log.ok(`add-xcode-targets.rb`) : log.skip(`add-xcode-targets.rb — already current`);
@@ -363,7 +430,9 @@ function applyClientBrandTs(brand) {
     ``,
   ].join('\n');
   const changed = writeIfChanged(path, body);
-  changed ? log.ok(`lib/client/brand.ts (generated)`) : log.skip(`lib/client/brand.ts — already current`);
+  changed
+    ? log.ok(`lib/client/brand.ts (generated)`)
+    : log.skip(`lib/client/brand.ts — already current`);
 }
 
 function applyElectronBrandTs(brand) {
@@ -388,7 +457,9 @@ function applyElectronBrandTs(brand) {
     ``,
   ].join('\n');
   const changed = writeIfChanged(path, body);
-  changed ? log.ok(`electron/src/brand.ts (generated)`) : log.skip(`electron/src/brand.ts — already current`);
+  changed
+    ? log.ok(`electron/src/brand.ts (generated)`)
+    : log.skip(`electron/src/brand.ts — already current`);
 }
 
 function syncSharedSwift(brand) {
@@ -425,8 +496,9 @@ function applySwiftConstants(brand) {
     join(UI, 'ios', 'App', 'CareerOpsLiveActivity', 'Brand.swift'),
     join(UI, 'ios', 'App', 'CareerOpsShareExtension', 'Brand.swift'),
   ];
-  const openJobActivity = brand.identifiers.userActivityTypes.find((t) => t.endsWith('.openJob'))
-    ?? `${brand.identifiers.bundleId}.openJob`;
+  const openJobActivity =
+    brand.identifiers.userActivityTypes.find((t) => t.endsWith('.openJob')) ??
+    `${brand.identifiers.bundleId}.openJob`;
   const body = [
     `// AUTO-GENERATED by scripts/native/apply-brand.mjs — do not edit.`,
     `// Edit branding/brand.json and run \`pnpm brand:apply\`.`,
@@ -470,7 +542,9 @@ function applySwiftConstants(brand) {
     if (!existsSync(dirname(p))) continue; // extension dirs may not exist on fresh installs
     if (writeIfChanged(p, body)) anyChanged = true;
   }
-  anyChanged ? log.ok(`Brand.swift × ${paths.filter((p) => existsSync(p)).length} (app + extensions)`) : log.skip(`Brand.swift — already current`);
+  anyChanged
+    ? log.ok(`Brand.swift × ${paths.filter((p) => existsSync(p)).length} (app + extensions)`)
+    : log.skip(`Brand.swift — already current`);
 }
 
 function applyAGENTSMd(brand) {
@@ -478,7 +552,10 @@ function applyAGENTSMd(brand) {
   // are brand-derived; rest is task content. We update only the explicit
   // brand strings using narrow patterns.
   const path = join(ROOT, 'AGENTS.md');
-  if (!existsSync(path)) { log.skip(`AGENTS.md — missing`); return; }
+  if (!existsSync(path)) {
+    log.skip(`AGENTS.md — missing`);
+    return;
+  }
   // No-op for now — most AGENTS.md content is project guidance, not brand.
   // The brand-derived strings inside it (com.resistjs.careerops, careerops://)
   // are inline references in prose, not template fields. Verifier will
@@ -505,7 +582,9 @@ function regenerateIcons() {
 
 function apply() {
   const brand = loadBrand();
-  console.log(`Applying brand "${brand.name}" v${require('node:fs').existsSync(join(ROOT, 'package.json')) ? JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version : '?'}\n`);
+  console.log(
+    `Applying brand "${brand.name}" v${require('node:fs').existsSync(join(ROOT, 'package.json')) ? JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version : '?'}\n`,
+  );
 
   log.step('package.json files');
   applyRootPackageJson(brand);

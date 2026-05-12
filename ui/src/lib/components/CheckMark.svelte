@@ -1,15 +1,12 @@
 <script lang="ts">
-  import { Check } from '@lucide/svelte';
-  import { cn } from '$lib/utils';
+import { Check } from '@lucide/svelte';
+import { cn } from '$lib/utils';
 
-  /**
-   * A checkmark that animates in/out (opacity + scale) when its `active` prop flips.
-   * Reserves layout space even when inactive so dropdown rows don't reflow on toggle.
-   */
-  let {
-    active = false,
-    class: className = '',
-  }: { active?: boolean; class?: string } = $props();
+/**
+ * A checkmark that animates in/out (opacity + scale) when its `active` prop flips.
+ * Reserves layout space even when inactive so dropdown rows don't reflow on toggle.
+ */
+let { active = false, class: className = '' }: { active?: boolean; class?: string } = $props();
 </script>
 
 <span

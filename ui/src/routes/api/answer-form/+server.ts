@@ -51,15 +51,22 @@ function spawnAnswers(url: string, portal: string, questions: Question[]): Promi
     let stderr = '';
     const payload = JSON.stringify({ url, portal, questions }, null, 2);
     const prompt =
-      '/' + CLI_NAMESPACE + ' form-answers ' + url +
+      '/' +
+      CLI_NAMESPACE +
+      ' form-answers ' +
+      url +
       ' --bookmarklet --json-output' +
       ' (questions piped via stdin as JSON)';
     const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.stdin?.write(payload);
     p.stdin?.end();
     p.on('error', (err) => reject(err));
@@ -95,10 +102,12 @@ function extractAnswers(stdout: string, questions: Question[]): Answer[] {
     try {
       const parsed = JSON.parse(objMatch[0]);
       if (parsed && typeof parsed === 'object') {
-        return questions.map((q) => ({
-          label: q.label,
-          value: String((parsed as Record<string, unknown>)[q.label] ?? ''),
-        })).filter((a) => a.value !== '');
+        return questions
+          .map((q) => ({
+            label: q.label,
+            value: String((parsed as Record<string, unknown>)[q.label] ?? ''),
+          }))
+          .filter((a) => a.value !== '');
       }
     } catch {}
   }

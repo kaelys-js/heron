@@ -58,7 +58,8 @@ export function wrap<E = any>(source: string, handler: Handler<E>): Handler<E> {
       return okJson((result ?? {}) as object);
     } catch (e: any) {
       const url = event?.url?.pathname ?? '?';
-      const looksHttp = isHttpError(e) || (e && typeof e === 'object' && 'status' in e && 'body' in e);
+      const looksHttp =
+        isHttpError(e) || (e && typeof e === 'object' && 'status' in e && 'body' in e);
       if (looksHttp) {
         const status: number = e.status ?? 500;
         const body = (e.body ?? {}) as { message?: string; code?: string; details?: unknown };

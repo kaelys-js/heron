@@ -23,7 +23,6 @@ const APPS_FILE = existsSync(profilePath(PROFILE_ID, 'applications'))
   : join(CAREER_OPS, 'applications.md'); // legacy fallback
 const FOLLOWUPS_FILE = profilePath(PROFILE_ID, 'follow-ups');
 
-
 // --- CLI args ---
 const args = process.argv.slice(2);
 const summaryMode = args.includes('--summary');
@@ -43,24 +42,40 @@ const CADENCE = {
 
 // --- Status normalization (mirrors verify-pipeline.mjs) ---
 const ALIASES = {
-  'evaluada': 'evaluated', 'condicional': 'evaluated', 'hold': 'evaluated',
-  'evaluar': 'evaluated', 'verificar': 'evaluated',
-  'aplicado': 'applied', 'enviada': 'applied', 'aplicada': 'applied',
-  'applied': 'applied', 'sent': 'applied',
-  'respondido': 'responded',
-  'entrevista': 'interview',
-  'oferta': 'offer',
-  'rechazado': 'rejected', 'rechazada': 'rejected',
-  'descartado': 'discarded', 'descartada': 'discarded',
-  'cerrada': 'discarded', 'cancelada': 'discarded',
-  'no aplicar': 'skip', 'no_aplicar': 'skip', 'monitor': 'skip', 'geo blocker': 'skip',
+  evaluada: 'evaluated',
+  condicional: 'evaluated',
+  hold: 'evaluated',
+  evaluar: 'evaluated',
+  verificar: 'evaluated',
+  aplicado: 'applied',
+  enviada: 'applied',
+  aplicada: 'applied',
+  applied: 'applied',
+  sent: 'applied',
+  respondido: 'responded',
+  entrevista: 'interview',
+  oferta: 'offer',
+  rechazado: 'rejected',
+  rechazada: 'rejected',
+  descartado: 'discarded',
+  descartada: 'discarded',
+  cerrada: 'discarded',
+  cancelada: 'discarded',
+  'no aplicar': 'skip',
+  no_aplicar: 'skip',
+  monitor: 'skip',
+  'geo blocker': 'skip',
 };
 
 const ACTIONABLE_STATUSES = ['applied', 'responded', 'interview'];
 
 function normalizeStatus(raw) {
-  const clean = raw.replace(/\*\*/g, '').trim().toLowerCase()
-    .replace(/\s+\d{4}-\d{2}-\d{2}.*$/, '').trim();
+  const clean = raw
+    .replace(/\*\*/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+\d{4}-\d{2}-\d{2}.*$/, '')
+    .trim();
   return ALIASES[clean] || clean;
 }
 
@@ -91,13 +106,19 @@ function parseTracker() {
   const entries = [];
   for (const line of content.split('\n')) {
     if (!line.startsWith('|')) continue;
-    const parts = line.split('|').map(s => s.trim());
+    const parts = line.split('|').map((s) => s.trim());
     if (parts.length < 9) continue;
     const num = parseInt(parts[1]);
     if (isNaN(num)) continue;
     entries.push({
-      num, date: parts[2], company: parts[3], role: parts[4],
-      score: parts[5], status: parts[6], pdf: parts[7], report: parts[8],
+      num,
+      date: parts[2],
+      company: parts[3],
+      role: parts[4],
+      score: parts[5],
+      status: parts[6],
+      pdf: parts[7],
+      report: parts[8],
       notes: parts[9] || '',
     });
   }
@@ -111,7 +132,7 @@ function parseFollowups() {
   const entries = [];
   for (const line of content.split('\n')) {
     if (!line.startsWith('|')) continue;
-    const parts = line.split('|').map(s => s.trim());
+    const parts = line.split('|').map((s) => s.trim());
     if (parts.length < 8) continue;
     const num = parseInt(parts[1]);
     if (isNaN(num)) continue;
@@ -139,7 +160,9 @@ function extractContacts(notes) {
     // Try to extract name before email: "Emailed Name at" or "contact: Name"
     let name = null;
     const beforeEmail = notes.substring(0, notes.indexOf(email));
-    const nameMatch = beforeEmail.match(/(?:Emailed|emailed|contact[:\s]+|to\s+)([A-Z][a-z]+ ?[A-Z]?[a-z]*)\s*(?:at|@|$)/i);
+    const nameMatch = beforeEmail.match(
+      /(?:Emailed|emailed|contact[:\s]+|to\s+)([A-Z][a-z]+ ?[A-Z]?[a-z]*)\s*(?:at|@|$)/i,
+    );
     if (nameMatch) name = nameMatch[1].trim();
     contacts.push({ email, name });
   }
@@ -159,7 +182,12 @@ function computeUrgency(status, daysSinceApp, daysSinceLastFollowup, followupCou
   if (status === 'applied') {
     if (followupCount >= CADENCE.applied_max_followups) return 'cold';
     if (followupCount === 0 && daysSinceApp >= CADENCE.applied_first) return 'overdue';
-    if (followupCount > 0 && daysSinceLastFollowup !== null && daysSinceLastFollowup >= CADENCE.applied_subsequent) return 'overdue';
+    if (
+      followupCount > 0 &&
+      daysSinceLastFollowup !== null &&
+      daysSinceLastFollowup >= CADENCE.applied_subsequent
+    )
+      return 'overdue';
     return 'waiting';
   }
   if (status === 'responded') {
@@ -233,7 +261,12 @@ function analyze() {
     }
 
     const urgency = computeUrgency(normalized, daysSinceApp, daysSinceLastFollowup, followupCount);
-    const nextFollowupDate = computeNextFollowupDate(normalized, app.date, lastFollowupDate, followupCount);
+    const nextFollowupDate = computeNextFollowupDate(
+      normalized,
+      app.date,
+      lastFollowupDate,
+      followupCount,
+    );
     const nextDate = nextFollowupDate ? parseDate(nextFollowupDate) : null;
     const daysUntilNext = nextDate ? daysBetween(now, nextDate) : null;
 
@@ -264,7 +297,7 @@ function analyze() {
   entries.sort((a, b) => (urgencyOrder[a.urgency] ?? 9) - (urgencyOrder[b.urgency] ?? 9));
 
   const filtered = overdueOnly
-    ? entries.filter(e => e.urgency === 'overdue' || e.urgency === 'urgent')
+    ? entries.filter((e) => e.urgency === 'overdue' || e.urgency === 'urgent')
     : entries;
 
   return {
@@ -272,10 +305,10 @@ function analyze() {
       analysisDate: now.toISOString().split('T')[0],
       totalTracked: apps.length,
       actionable: entries.length,
-      overdue: entries.filter(e => e.urgency === 'overdue').length,
-      urgent: entries.filter(e => e.urgency === 'urgent').length,
-      cold: entries.filter(e => e.urgency === 'cold').length,
-      waiting: entries.filter(e => e.urgency === 'waiting').length,
+      overdue: entries.filter((e) => e.urgency === 'overdue').length,
+      urgent: entries.filter((e) => e.urgency === 'urgent').length,
+      cold: entries.filter((e) => e.urgency === 'cold').length,
+      waiting: entries.filter((e) => e.urgency === 'waiting').length,
     },
     entries: filtered,
     cadenceConfig: CADENCE,
@@ -303,10 +336,22 @@ function printSummary(result) {
 
   // Status summary
   const urgencyIcon = { urgent: 'URGENT', overdue: 'OVERDUE', waiting: 'waiting', cold: 'COLD' };
-  console.log(`  ${metadata.urgent} urgent | ${metadata.overdue} overdue | ${metadata.waiting} waiting | ${metadata.cold} cold\n`);
+  console.log(
+    `  ${metadata.urgent} urgent | ${metadata.overdue} overdue | ${metadata.waiting} waiting | ${metadata.cold} cold\n`,
+  );
 
   // Table header
-  console.log('  ' + '#'.padEnd(5) + 'Company'.padEnd(16) + 'Status'.padEnd(12) + 'Days'.padEnd(6) + 'F/U'.padEnd(5) + 'Next'.padEnd(13) + 'Urgency'.padEnd(10) + 'Contact');
+  console.log(
+    '  ' +
+      '#'.padEnd(5) +
+      'Company'.padEnd(16) +
+      'Status'.padEnd(12) +
+      'Days'.padEnd(6) +
+      'F/U'.padEnd(5) +
+      'Next'.padEnd(13) +
+      'Urgency'.padEnd(10) +
+      'Contact',
+  );
   console.log('  ' + '-'.repeat(80));
 
   for (const e of entries) {
@@ -315,14 +360,14 @@ function printSummary(result) {
     const contactStr = e.contacts.length > 0 ? e.contacts[0].email : '-';
     console.log(
       '  ' +
-      String(e.num).padEnd(5) +
-      e.company.substring(0, 15).padEnd(16) +
-      e.status.padEnd(12) +
-      String(e.daysSinceApplication).padEnd(6) +
-      String(e.followupCount).padEnd(5) +
-      nextStr.padEnd(13) +
-      urgLabel.padEnd(10) +
-      contactStr
+        String(e.num).padEnd(5) +
+        e.company.substring(0, 15).padEnd(16) +
+        e.status.padEnd(12) +
+        String(e.daysSinceApplication).padEnd(6) +
+        String(e.followupCount).padEnd(5) +
+        nextStr.padEnd(13) +
+        urgLabel.padEnd(10) +
+        contactStr,
     );
   }
 

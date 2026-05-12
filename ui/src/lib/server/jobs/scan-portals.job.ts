@@ -42,15 +42,23 @@ function runScanPortals(args?: JobArgs): Promise<JobResult> {
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => {
       logEvent('scan-portals', 'scan.mjs failed to spawn', {
         level: 'error',
         category: 'task',
         message: err.message,
       });
-      try { recordFailure('scan-portals', err); } catch { /* sources record best-effort */ }
+      try {
+        recordFailure('scan-portals', err);
+      } catch {
+        /* sources record best-effort */
+      }
       resolve({ ok: false, error: err.message });
     });
     p.on('close', (code) => {
@@ -61,7 +69,9 @@ function runScanPortals(args?: JobArgs): Promise<JobResult> {
           category: 'task',
           message: 'exit ' + code + (stderr ? ' · ' + stderr.slice(0, 150) : ''),
         });
-        try { recordFailure('scan-portals', new Error('scan.mjs exited ' + code)); } catch {}
+        try {
+          recordFailure('scan-portals', new Error('scan.mjs exited ' + code));
+        } catch {}
         resolve({ ok: false, error: 'scan.mjs exited ' + code });
         return;
       }
@@ -70,7 +80,9 @@ function runScanPortals(args?: JobArgs): Promise<JobResult> {
         category: 'task',
         message: found + ' jobs found',
       });
-      try { recordSuccess('scan-portals'); } catch {}
+      try {
+        recordSuccess('scan-portals');
+      } catch {}
       resolve({ ok: true, message: found + ' jobs found', meta: { found } });
     });
   });
@@ -79,7 +91,8 @@ function runScanPortals(args?: JobArgs): Promise<JobResult> {
 register({
   id: 'scan-portals',
   label: 'Portal scan (zero-token)',
-  description: 'Direct Greenhouse / Ashby / Lever / Workable API hits — free, ~30s, complements the broad scan.',
+  description:
+    'Direct Greenhouse / Ashby / Lever / Workable API hits — free, ~30s, complements the broad scan.',
   category: 'discovery',
   trigger: { type: 'daily', hour: 8, minute: 0, weekdays: [1, 2, 3, 4, 5] },
   allowManual: true,

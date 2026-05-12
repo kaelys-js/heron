@@ -25,11 +25,20 @@ import { AGENT_CLI } from '$lib/config/cli';
 import { saveAnswer } from '$lib/server/form-answers-cache';
 
 function slugify(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'job';
+  return (
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 60) || 'job'
+  );
 }
 
 function persistedPath(profileId: string, jobId: string): string {
-  return path.join(profilePath(profileId, 'interview-prep-dir'), slugify(jobId) + '-form-answers.md');
+  return path.join(
+    profilePath(profileId, 'interview-prep-dir'),
+    slugify(jobId) + '-form-answers.md',
+  );
 }
 
 function readCached(profileId: string, jobId: string): { path: string; body: string } | null {
@@ -42,14 +51,21 @@ function readCached(profileId: string, jobId: string): { path: string; body: str
   return null;
 }
 
-function spawnFormAnswers(url: string, jobId: string, profileId: string): Promise<{ path: string; body: string }> {
+function spawnFormAnswers(
+  url: string,
+  jobId: string,
+  profileId: string,
+): Promise<{ path: string; body: string }> {
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
     const prompt = '/' + CLI_NAMESPACE + ' form-answers ' + url;
-    try { swapProfileSymlinks(profileId); } catch (e) {
+    try {
+      swapProfileSymlinks(profileId);
+    } catch (e) {
       logEvent('form-answers', 'Symlink swap failed — form-answers may read wrong profile', {
-        level: 'warn', category: 'application',
+        level: 'warn',
+        category: 'application',
         message: e instanceof Error ? e.message : String(e),
       });
     }
@@ -57,8 +73,12 @@ function spawnFormAnswers(url: string, jobId: string, profileId: string): Promis
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => reject(err));
     p.on('close', (code) => {
       if (code !== 0) {
@@ -75,7 +95,9 @@ function spawnFormAnswers(url: string, jobId: string, profileId: string): Promis
           fs.writeFileSync(fullPath, stdout);
         }
         if (!fs.existsSync(fullPath)) {
-          reject(new Error('Form-answers generation produced no file. Stdout: ' + stdout.slice(0, 500)));
+          reject(
+            new Error('Form-answers generation produced no file. Stdout: ' + stdout.slice(0, 500)),
+          );
           return;
         }
         const body = fs.readFileSync(fullPath, 'utf8');
@@ -87,50 +109,57 @@ function spawnFormAnswers(url: string, jobId: string, profileId: string): Promis
   });
 }
 
-export const GET = wrap('form-answers', async ({ params, url }: { params: { id: string }; url: URL }) => {
-  const resolved = resolveJobAndProfile(params.id, url);
-  if (!resolved) badRequest('Job not found: ' + params.id);
-  const { job, profileId } = resolved!;
-  return { cached: readCached(profileId, job.id) };
-});
+export const GET = wrap(
+  'form-answers',
+  async ({ params, url }: { params: { id: string }; url: URL }) => {
+    const resolved = resolveJobAndProfile(params.id, url);
+    if (!resolved) badRequest('Job not found: ' + params.id);
+    const { job, profileId } = resolved!;
+    return { cached: readCached(profileId, job.id) };
+  },
+);
 
-export const POST = wrap('form-answers', async ({ params, url }: { params: { id: string }; url: URL }) => {
-  const resolved = resolveJobAndProfile(params.id, url);
-  if (!resolved) badRequest('Job not found: ' + params.id);
-  const { job, profileId } = resolved!;
-  if (!job.url) badRequest('Job has no URL');
+export const POST = wrap(
+  'form-answers',
+  async ({ params, url }: { params: { id: string }; url: URL }) => {
+    const resolved = resolveJobAndProfile(params.id, url);
+    if (!resolved) badRequest('Job not found: ' + params.id);
+    const { job, profileId } = resolved!;
+    if (!job.url) badRequest('Job has no URL');
 
-  logEvent('form-answers', 'Generating form answers', {
-    level: 'info',
-    category: 'application',
-    message: (job.company || '?') + ' · ' + (job.role || '?'),
-  });
-
-  try {
-    const out = await spawnFormAnswers(job.url, job.id, profileId);
-    // Auto-seed the per-question cache from the markdown's "## {question}"
-    // headings — each Q+A pair becomes a persistent cache entry the future
-    // apply-greenhouse / apply-ashby runs can look up.
-    let seeded = 0;
-    try {
-      seeded = seedCacheFromMarkdown(profileId, out.body);
-    } catch (e) {
-      logEvent('form-answers', 'Cache auto-seed failed', {
-        level: 'warn', category: 'application',
-        message: e instanceof Error ? e.message : String(e),
-      });
-    }
-    logEvent('form-answers', 'Form answers ready', {
-      level: 'success',
+    logEvent('form-answers', 'Generating form answers', {
+      level: 'info',
       category: 'application',
-      message: out.path + (seeded ? ' · seeded ' + seeded + ' cache entries' : ''),
+      message: (job.company || '?') + ' · ' + (job.role || '?'),
     });
-    return { ok: true, path: out.path, body: out.body, seeded };
-  } catch (err) {
-    reportServerError('form-answers', 'Form answers failed', err, { category: 'application' });
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
-  }
-});
+
+    try {
+      const out = await spawnFormAnswers(job.url, job.id, profileId);
+      // Auto-seed the per-question cache from the markdown's "## {question}"
+      // headings — each Q+A pair becomes a persistent cache entry the future
+      // apply-greenhouse / apply-ashby runs can look up.
+      let seeded = 0;
+      try {
+        seeded = seedCacheFromMarkdown(profileId, out.body);
+      } catch (e) {
+        logEvent('form-answers', 'Cache auto-seed failed', {
+          level: 'warn',
+          category: 'application',
+          message: e instanceof Error ? e.message : String(e),
+        });
+      }
+      logEvent('form-answers', 'Form answers ready', {
+        level: 'success',
+        category: 'application',
+        message: out.path + (seeded ? ' · seeded ' + seeded + ' cache entries' : ''),
+      });
+      return { ok: true, path: out.path, body: out.body, seeded };
+    } catch (err) {
+      reportServerError('form-answers', 'Form answers failed', err, { category: 'application' });
+      return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  },
+);
 
 /** Parse a form-answers.md (Claude output) into Q+A pairs and persist each
  *  into the per-question cache. The mode writes "## {question}" headings

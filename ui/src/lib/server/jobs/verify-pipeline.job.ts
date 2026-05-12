@@ -57,8 +57,12 @@ function runVerifyPipeline(): Promise<JobResult> {
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err: Error) => {
       logEvent('verify-pipeline', 'verify-pipeline.mjs failed to spawn', {
         level: 'error',
@@ -81,13 +85,17 @@ function runVerifyPipeline(): Promise<JobResult> {
         const warnCount = items.length - errCount;
         const severity: 'error' | 'warn' = errCount > 0 ? 'error' : 'warn';
         const summary =
-          cls + ' (' +
+          cls +
+          ' (' +
           (errCount > 0 ? errCount + ' error' + (errCount === 1 ? '' : 's') : '') +
           (errCount > 0 && warnCount > 0 ? ' · ' : '') +
           (warnCount > 0 ? warnCount + ' warning' + (warnCount === 1 ? '' : 's') : '') +
           ')';
-        const detail = items.slice(0, 50).map((i) => '- ' + i.line).join('\n') +
-          (items.length > 50 ? '\n\n…and ' + (items.length - 50) + ' more.' : '');
+        const detail =
+          items
+            .slice(0, 50)
+            .map((i) => '- ' + i.line)
+            .join('\n') + (items.length > 50 ? '\n\n…and ' + (items.length - 50) + ' more.' : '');
         reportIssue({
           severity,
           source: 'verify-pipeline',
@@ -108,7 +116,14 @@ function runVerifyPipeline(): Promise<JobResult> {
       } else {
         logEvent(
           'verify-pipeline',
-          'Pipeline issues: ' + errors + ' error' + (errors === 1 ? '' : 's') + ' · ' + warnings + ' warning' + (warnings === 1 ? '' : 's'),
+          'Pipeline issues: ' +
+            errors +
+            ' error' +
+            (errors === 1 ? '' : 's') +
+            ' · ' +
+            warnings +
+            ' warning' +
+            (warnings === 1 ? '' : 's'),
           {
             level: errors > 0 ? 'warn' : 'info',
             category: 'system',
@@ -134,7 +149,8 @@ function runVerifyPipeline(): Promise<JobResult> {
 register({
   id: 'verify-pipeline',
   label: 'Pipeline integrity check',
-  description: 'Validates statuses, dedupes, and report links across applications.md. Surfaces problems via the issue stream.',
+  description:
+    'Validates statuses, dedupes, and report links across applications.md. Surfaces problems via the issue stream.',
   category: 'hygiene',
   trigger: { type: 'daily', hour: 4, minute: 0 },
   allowManual: true,

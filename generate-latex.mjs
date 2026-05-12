@@ -25,11 +25,7 @@ const REQUIRED_SECTIONS = [
   '\\\\section{Technical Skills}',
 ];
 
-const REQUIRED_COMMANDS = [
-  '\\\\resumeSubheading',
-  '\\\\resumeItem',
-  '\\\\resumeProjectHeading',
-];
+const REQUIRED_COMMANDS = ['\\\\resumeSubheading', '\\\\resumeItem', '\\\\resumeProjectHeading'];
 
 async function main() {
   const inputPath = process.argv[2];
@@ -137,12 +133,15 @@ async function main() {
       execFileSync(candidate, ['--version'], { stdio: 'pipe' });
       engine = candidate;
       break;
-    } catch { /* not found */ }
+    } catch {
+      /* not found */
+    }
   }
 
   if (!engine) {
     report.compiled = false;
-    report.compileError = 'No LaTeX engine found. Install tectonic (brew install tectonic) or pdflatex.';
+    report.compileError =
+      'No LaTeX engine found. Install tectonic (brew install tectonic) or pdflatex.';
     console.log(JSON.stringify(report, null, 2));
     process.exit(1);
   }
@@ -187,11 +186,13 @@ async function main() {
     let latexError = err.message;
     try {
       const log = await readFile(logPath, 'utf-8');
-      const errorLines = log.split('\n').filter(l => l.startsWith('!'));
+      const errorLines = log.split('\n').filter((l) => l.startsWith('!'));
       if (errorLines.length > 0) {
         latexError = errorLines.join('\n');
       }
-    } catch { /* no log file */ }
+    } catch {
+      /* no log file */
+    }
 
     report.compiled = false;
     report.compileError = latexError;

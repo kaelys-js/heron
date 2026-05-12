@@ -54,7 +54,7 @@ export type ProfileFileKind =
   // Top-level user content
   | 'cv-md'
   | 'profile-yml'
-  | 'profile-md'              // per-profile copy of modes/_profile.md
+  | 'profile-md' // per-profile copy of modes/_profile.md
   | 'portals-yml'
   | 'article-digest'
   // Per-profile tracker / scanner / scoring data
@@ -65,7 +65,7 @@ export type ProfileFileKind =
   | 'follow-ups'
   | 'projects-json'
   // Per-profile directories
-  | 'profile-dir'              // the root of this profile's content
+  | 'profile-dir' // the root of this profile's content
   | 'reports-dir'
   | 'output-dir'
   | 'interview-prep-dir';
@@ -92,21 +92,36 @@ export function profilePath(profileId: string, kind: ProfileFileKind): string {
   }
   const base = path.join(PROFILES_ROOT, profileId);
   switch (kind) {
-    case 'profile-dir':         return base;
-    case 'cv-md':               return path.join(base, 'cv.md');
-    case 'profile-yml':         return path.join(base, 'profile.yml');
-    case 'profile-md':          return path.join(base, '_profile.md');
-    case 'portals-yml':         return path.join(base, 'portals.yml');
-    case 'article-digest':      return path.join(base, 'article-digest.md');
-    case 'pipeline':            return path.join(base, 'pipeline.md');
-    case 'applications':        return path.join(base, 'applications.md');
-    case 'scan-history':        return path.join(base, 'scan-history.tsv');
-    case 'gemini-scores':       return path.join(base, 'gemini-scores.tsv');
-    case 'follow-ups':          return path.join(base, 'follow-ups.md');
-    case 'projects-json':       return path.join(base, 'projects.json');
-    case 'reports-dir':         return path.join(base, 'reports');
-    case 'output-dir':          return path.join(base, 'output');
-    case 'interview-prep-dir':  return path.join(base, 'interview-prep');
+    case 'profile-dir':
+      return base;
+    case 'cv-md':
+      return path.join(base, 'cv.md');
+    case 'profile-yml':
+      return path.join(base, 'profile.yml');
+    case 'profile-md':
+      return path.join(base, '_profile.md');
+    case 'portals-yml':
+      return path.join(base, 'portals.yml');
+    case 'article-digest':
+      return path.join(base, 'article-digest.md');
+    case 'pipeline':
+      return path.join(base, 'pipeline.md');
+    case 'applications':
+      return path.join(base, 'applications.md');
+    case 'scan-history':
+      return path.join(base, 'scan-history.tsv');
+    case 'gemini-scores':
+      return path.join(base, 'gemini-scores.tsv');
+    case 'follow-ups':
+      return path.join(base, 'follow-ups.md');
+    case 'projects-json':
+      return path.join(base, 'projects.json');
+    case 'reports-dir':
+      return path.join(base, 'reports');
+    case 'output-dir':
+      return path.join(base, 'output');
+    case 'interview-prep-dir':
+      return path.join(base, 'interview-prep');
   }
 }
 

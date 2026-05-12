@@ -95,8 +95,12 @@ class Bus extends EventEmitter {
       if (size <= MAX_LOG_BYTES) return;
       // Move the current log out of the way; the next append re-creates it.
       // Replace any existing .1 (we keep only one backup to bound disk use).
-      try { if (fs.existsSync(LOG_BACKUP)) fs.unlinkSync(LOG_BACKUP); } catch {}
-      try { fs.renameSync(LOG_FILE, LOG_BACKUP); } catch {}
+      try {
+        if (fs.existsSync(LOG_BACKUP)) fs.unlinkSync(LOG_BACKUP);
+      } catch {}
+      try {
+        fs.renameSync(LOG_FILE, LOG_BACKUP);
+      } catch {}
       // Drop a rotation breadcrumb without going through logEvent (avoid
       // recursion if rotation fails repeatedly).
       try {
@@ -109,7 +113,8 @@ class Bus extends EventEmitter {
             category: 'system',
             source: 'events',
             title: 'Activity log rotated',
-            message: 'previous file moved to activity.jsonl.1 (' + Math.round(size / 1024 / 1024) + 'MB)',
+            message:
+              'previous file moved to activity.jsonl.1 (' + Math.round(size / 1024 / 1024) + 'MB)',
           }) + '\n',
         );
       } catch {}
@@ -153,7 +158,11 @@ class Bus extends EventEmitter {
         if (this.buf.length > MAX_BUFFER) this.buf.shift();
         this.appendToDisk(note);
         this.depth++;
-        try { this.emit('event', note); } finally { this.depth--; }
+        try {
+          this.emit('event', note);
+        } finally {
+          this.depth--;
+        }
       } else {
         this.windowStart = now;
         this.windowCount = 0;
@@ -169,7 +178,11 @@ class Bus extends EventEmitter {
     if (this.buf.length > MAX_BUFFER) this.buf.shift();
     this.appendToDisk(ev);
     this.depth++;
-    try { this.emit('event', ev); } finally { this.depth--; }
+    try {
+      this.emit('event', ev);
+    } finally {
+      this.depth--;
+    }
   }
 
   recent(): ActivityEvent[] {
@@ -235,7 +248,7 @@ export function logEvent(
     /** Profile slug if the event is per-profile (scan in profile X, oferta
      *  for a job in profile Y, etc.). Omit for shared-infra events. */
     profileId?: string;
-  } = {}
+  } = {},
 ): ActivityEvent {
   const ev: ActivityEvent = {
     id: crypto.randomBytes(6).toString('hex'),
@@ -250,7 +263,8 @@ export function logEvent(
     profileId: opts.profileId,
   };
   bus.emitEvent(ev);
-  const prefix = ev.level === 'error' ? '✗' : ev.level === 'warn' ? '⚠' : ev.level === 'success' ? '✓' : 'ℹ';
+  const prefix =
+    ev.level === 'error' ? '✗' : ev.level === 'warn' ? '⚠' : ev.level === 'success' ? '✓' : 'ℹ';
   const head = prefix + ' [' + source + '] ' + title + (opts.message ? ' — ' + opts.message : '');
   // safeConsole swallows EPIPE/EBADF from intercepted-console extensions —
   // see comment at the top of this file.
@@ -275,9 +289,17 @@ export function reportServerError(
   opts: { category?: EventCategory; link?: string; profileId?: string } = {},
 ): ActivityEvent {
   const isError = err instanceof Error;
-  const message = isError ? err.message : typeof err === 'string' ? err : (() => {
-    try { return JSON.stringify(err); } catch { return String(err); }
-  })();
+  const message = isError
+    ? err.message
+    : typeof err === 'string'
+      ? err
+      : (() => {
+          try {
+            return JSON.stringify(err);
+          } catch {
+            return String(err);
+          }
+        })();
   const stack = isError && err.stack ? err.stack.slice(0, 2000) : undefined;
   return logEvent(source, title, {
     level: 'error',

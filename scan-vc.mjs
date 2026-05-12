@@ -90,7 +90,13 @@ async function discoverA16z() {
   let arrEnd = arrStart;
   for (let i = arrStart; i < html.length; i++) {
     if (html[i] === '[') depth++;
-    if (html[i] === ']') { depth--; if (depth === 0) { arrEnd = i; break; } }
+    if (html[i] === ']') {
+      depth--;
+      if (depth === 0) {
+        arrEnd = i;
+        break;
+      }
+    }
   }
   if (depth !== 0) throw new Error('a16z portfolio: unbalanced brackets in companies array');
 
@@ -122,7 +128,8 @@ async function discoverA16z() {
 
 async function discoverSequoia() {
   const html = await fetchText('https://www.sequoiacap.com/our-companies/');
-  const rowRe = /<tr aria-expanded="false"[\s\S]*?<th scope="row"[^>]*class="company-listing__cell-wide company-listing__head">([^<]+)<\/th>\s*<td[^>]*class="company-listing__cell-wide company-listing__text[^"]*"[^>]*>([^<]*)<\/td>/g;
+  const rowRe =
+    /<tr aria-expanded="false"[\s\S]*?<th scope="row"[^>]*class="company-listing__cell-wide company-listing__head">([^<]+)<\/th>\s*<td[^>]*class="company-listing__cell-wide company-listing__text[^"]*"[^>]*>([^<]*)<\/td>/g;
   const out = [];
   let m;
   while ((m = rowRe.exec(html)) !== null) {
@@ -173,9 +180,7 @@ async function main() {
     console.log(`Pulling ${def.name} (${id})…`);
     try {
       const rows = await def.run();
-      const fresh = rows.filter(
-        r => !tracked.has(r.company.toLowerCase().replace(/\s+/g, '')),
-      );
+      const fresh = rows.filter((r) => !tracked.has(r.company.toLowerCase().replace(/\s+/g, '')));
       console.log(`  → ${rows.length} companies; ${fresh.length} new (vs portals.yml)`);
       allRows.push(...fresh);
     } catch (err) {
@@ -206,7 +211,9 @@ async function main() {
   }
 
   if (deduped.length === 0) {
-    console.log('\n(No new candidates — portals.yml already covers your visible portfolio companies.)');
+    console.log(
+      '\n(No new candidates — portals.yml already covers your visible portfolio companies.)',
+    );
     return;
   }
 
@@ -220,19 +227,24 @@ async function main() {
   }
 
   const header = 'source\tcompany\twebsite\tcareers_url_guess\tstage_or_description\tstatus\n';
-  const body = deduped
-    .map(r => [
-      r.source,
-      r.company,
-      r.website || '',
-      r.careers_url_guess || '',
-      r.stage || r.description || '',
-      'pending-review',
-    ].join('\t'))
-    .join('\n') + '\n';
+  const body =
+    deduped
+      .map((r) =>
+        [
+          r.source,
+          r.company,
+          r.website || '',
+          r.careers_url_guess || '',
+          r.stage || r.description || '',
+          'pending-review',
+        ].join('\t'),
+      )
+      .join('\n') + '\n';
   writeFileSync(outPath, header + body, 'utf-8');
   console.log(`\nWrote ${outPath}`);
-  console.log(`Review the TSV; companies you want to track go into portals.yml as new tracked_companies entries.`);
+  console.log(
+    `Review the TSV; companies you want to track go into portals.yml as new tracked_companies entries.`,
+  );
 }
 
 main().catch((err) => {

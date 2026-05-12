@@ -19,8 +19,11 @@ function stat(p: string): { exists: boolean; size?: number; mtime?: number } {
 }
 
 function countReports(dir: string): number {
-  try { return fs.readdirSync(dir).filter((f) => f.endsWith('.md')).length; }
-  catch { return 0; }
+  try {
+    return fs.readdirSync(dir).filter((f) => f.endsWith('.md')).length;
+  } catch {
+    return 0;
+  }
 }
 
 export const GET = wrap('health', async () => {

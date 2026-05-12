@@ -6,12 +6,7 @@
     "buildResources": "build",
     "output": "dist"
   },
-  "files": [
-    "assets/**/*",
-    "build/**/*",
-    "capacitor.config.*",
-    "app/**/*"
-  ],
+  "files": ["assets/**/*", "build/**/*", "capacitor.config.*", "app/**/*"],
   "extraResources": [
     {
       "from": "../build/index.js",
@@ -20,10 +15,7 @@
     {
       "from": "../build",
       "to": "app/server",
-      "filter": [
-        "**/*",
-        "!**/static/**"
-      ]
+      "filter": ["**/*", "!**/static/**"]
     }
   ],
   "publish": [
@@ -39,17 +31,11 @@
     "target": [
       {
         "target": "dmg",
-        "arch": [
-          "x64",
-          "arm64"
-        ]
+        "arch": ["x64", "arm64"]
       },
       {
         "target": "zip",
-        "arch": [
-          "x64",
-          "arm64"
-        ]
+        "arch": ["x64", "arm64"]
       }
     ],
     "icon": "build/icon.icns",
@@ -62,15 +48,11 @@
       "CFBundleURLTypes": [
         {
           "CFBundleURLName": "careerops",
-          "CFBundleURLSchemes": [
-            "careerops"
-          ]
+          "CFBundleURLSchemes": ["careerops"]
         }
       ],
       "NSLocalNetworkUsageDescription": "career-ops uses local network discovery to find your desktop app on the same wifi.",
-      "NSBonjourServices": [
-        "_career-ops._tcp"
-      ]
+      "NSBonjourServices": ["_career-ops._tcp"]
     }
   },
   "dmg": {
@@ -81,9 +63,7 @@
     "target": [
       {
         "target": "nsis",
-        "arch": [
-          "x64"
-        ]
+        "arch": ["x64"]
       }
     ],
     "icon": "build/icon.ico",
@@ -99,15 +79,11 @@
     "target": [
       {
         "target": "AppImage",
-        "arch": [
-          "x64"
-        ]
+        "arch": ["x64"]
       },
       {
         "target": "deb",
-        "arch": [
-          "x64"
-        ]
+        "arch": ["x64"]
       }
     ],
     "icon": "build/icon.png",
@@ -116,9 +92,7 @@
   "protocols": [
     {
       "name": "careerops",
-      "schemes": [
-        "careerops"
-      ]
+      "schemes": ["careerops"]
     }
   ]
 }

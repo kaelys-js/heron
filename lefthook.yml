@@ -1,0 +1,91 @@
+# Lefthook — git hooks manager.
+#
+# Run hooks in parallel, skip on rebase/merge, share config across the team.
+# Activate: `lefthook install` (the setup wizard does this automatically;
+# pnpm install postinstall does it too).
+#
+# Why over husky / native .githooks: parallel runs, declarative skip rules,
+# YAML-driven (vs scripts), no Node dependency for the hook runtime itself,
+# and `lefthook run <name>` lets you trigger any hook manually for debugging.
+
+# Skip rules — applied to every hook
+# (`rebase` is a common reason to want to skip checks)
+skip_output:
+  - meta
+  - success
+  - skips
+
+pre-commit:
+  parallel: true
+  # Skip during rebase / merge / amend operations
+  skip:
+    - rebase
+    - merge
+  commands:
+    apply-brand:
+      # Runs when any branding/ file is staged, then re-stages the
+      # propagated artifacts so the commit captures everything atomically.
+      glob: 'branding/*'
+      run: |
+        node scripts/native/apply-brand.mjs > /dev/null 2>&1
+        git add \
+          package.json \
+          ui/electron/package.json \
+          ui/capacitor.config.ts \
+          ui/electron/capacitor.config.ts \
+          ui/electron/electron-builder.config.json \
+          ui/ios/App/App/Info.plist \
+          ui/ios/App/App/Brand.swift \
+          ui/ios/App/CareerOpsWidget/Brand.swift \
+          ui/ios/App/CareerOpsLiveActivity/Brand.swift \
+          ui/ios/App/CareerOpsShareExtension/Brand.swift \
+          ui/ios/App/App/ErrorReporter.swift \
+          ui/ios/App/CareerOpsWidget/ErrorReporter.swift \
+          ui/ios/App/CareerOpsLiveActivity/ErrorReporter.swift \
+          ui/ios/App/CareerOpsShareExtension/ErrorReporter.swift \
+          ui/src/lib/client/brand.ts \
+          ui/electron/src/brand.ts \
+          ui/static/favicon.svg \
+          ui/static/manifest.webmanifest \
+          ui/src/app.html \
+          ui/ios/App/fastlane/Appfile \
+          ui/ios/App/fastlane/Fastfile \
+          scripts/native/add-xcode-targets.rb 2>/dev/null || true
+
+    biome-format:
+      # Formats staged source files in place, then re-stages.
+      # Linting is intentionally NOT run here — biome formatting only,
+      # per the policy decision in branding/brand.json era.
+      glob: '*.{ts,tsx,js,mjs,svelte,json}'
+      run: |
+        npx --no-install biome format --write {staged_files} 2>/dev/null || true
+        git add {staged_files} 2>/dev/null || true
+      stage_fixed: true
+
+    no-secrets:
+      # Cheap regex guard — block obvious secrets from being committed.
+      glob: '*.{ts,tsx,js,mjs,svelte,json,yaml,yml,md,env,mjs}'
+      run: |
+        if grep -lE '(sk-[A-Za-z0-9]{32,}|ghp_[A-Za-z0-9]{36}|AKIA[0-9A-Z]{16}|-----BEGIN (RSA |EC )?PRIVATE KEY-----)' {staged_files} 2>/dev/null; then
+          echo "✗ Secret pattern detected in staged files (Anthropic key / GitHub PAT / AWS key / private key)"
+          echo "  If this is a false positive, run: git commit --no-verify"
+          exit 1
+        fi
+
+pre-push:
+  parallel: false  # sequential — check fast things first
+  commands:
+    svelte-check:
+      # Type-check before push so we never push a broken main.
+      run: |
+        cd ui && pnpm exec svelte-check --threshold warning
+    verify-capacitor:
+      # Full brand/native verifier.
+      run: node verify-capacitor.mjs
+    verify-pipeline:
+      # Tracker hygiene.
+      run: node verify-pipeline.mjs
+
+# Run individual checks via:
+#   lefthook run pre-commit --commands apply-brand
+#   lefthook run pre-push

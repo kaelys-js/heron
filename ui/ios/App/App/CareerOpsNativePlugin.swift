@@ -121,6 +121,18 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
         call.resolve(["ok": true])
     }
 
+    /// Static notifier — AppDelegate calls this when NetworkMonitor sees a
+    /// path-state change. We push the bool down to the WebView via the
+    /// plugin's notifyListeners mechanism. online-status.ts in JS converts
+    /// this to a `<brand>:net-status` window event.
+    static var pluginInstance: CareerOpsNativePlugin?
+    public override func load() {
+        CareerOpsNativePlugin.pluginInstance = self
+    }
+    static func notifyNetStatus(online: Bool) {
+        pluginInstance?.notifyListeners("netStatusChanged", data: ["online": online])
+    }
+
     @objc public func drainNativeErrors(_ call: CAPPluginCall) {
         // Read + clear the queue of native errors captured while the
         // WebView wasn't able to forward them.

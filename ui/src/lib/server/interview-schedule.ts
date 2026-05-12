@@ -50,7 +50,11 @@ export function listSchedule(profileId: string): ScheduleEntry[] {
   const p = scheduleFile(profileId);
   if (!fs.existsSync(p)) return [];
   let txt = '';
-  try { txt = fs.readFileSync(p, 'utf8'); } catch { return []; }
+  try {
+    txt = fs.readFileSync(p, 'utf8');
+  } catch {
+    return [];
+  }
   const map = new Map<string, ScheduleEntry>();
   for (const line of txt.split('\n')) {
     if (!line.trim()) continue;
@@ -66,7 +70,10 @@ export function getSchedule(profileId: string, jobId: string): ScheduleEntry | n
   return listSchedule(profileId).find((e) => e.jobId === jobId) ?? null;
 }
 
-export function setSchedule(profileId: string, entry: Omit<ScheduleEntry, 'setAt' | 'reminders'>): ScheduleEntry {
+export function setSchedule(
+  profileId: string,
+  entry: Omit<ScheduleEntry, 'setAt' | 'reminders'>,
+): ScheduleEntry {
   const existing = getSchedule(profileId, entry.jobId);
   const next: ScheduleEntry = {
     ...entry,
@@ -95,7 +102,10 @@ export function markReminderFired(profileId: string, jobId: string, which: '24h'
  *  in the T-30min window (T+0 to T-30min, fired30min=false) and the
  *  T-24h window (T-23h to T-25h, fired24h=false). The reminder-job
  *  ticks every 15min and calls this. */
-export function dueReminders(profileId: string, now: number = Date.now()): {
+export function dueReminders(
+  profileId: string,
+  now: number = Date.now(),
+): {
   thirtyMin: ScheduleEntry[];
   twentyFourHour: ScheduleEntry[];
 } {
@@ -124,7 +134,5 @@ export function upcomingForDigest(profileId: string, now: number = Date.now()): 
   const startOfDay = new Date(now);
   startOfDay.setHours(0, 0, 0, 0);
   const cutoff = startOfDay.getTime() + 24 * 60 * 60 * 1000;
-  return listSchedule(profileId).filter(
-    (e) => e.scheduledAt >= now && e.scheduledAt <= cutoff,
-  );
+  return listSchedule(profileId).filter((e) => e.scheduledAt >= now && e.scheduledAt <= cutoff);
 }

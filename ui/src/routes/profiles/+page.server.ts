@@ -14,7 +14,13 @@ export async function load() {
     const jobs = loadAllJobs(p.id);
     const applied = jobs.filter((j) => {
       const s = j.status;
-      return s === 'Applied' || s === 'Screened' || s === 'Interview' || s === 'Offer' || s === 'Rejected';
+      return (
+        s === 'Applied' ||
+        s === 'Screened' ||
+        s === 'Interview' ||
+        s === 'Offer' ||
+        s === 'Rejected'
+      );
     }).length;
     const reports = jobs.filter((j) => !!j.reportFile).length;
     stats[p.id] = { totalJobs: jobs.length, applied, reports };

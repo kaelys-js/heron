@@ -23,7 +23,10 @@ run('node', [join(ROOT, 'scripts/native/apply-brand.mjs')], { silent: true });
 
 step(3, 'Ensuring electron deps');
 const electronDir = join(UI, 'electron');
-run('npm', ['install', '--silent', '--no-audit', '--no-fund'], { cwd: electronDir, allowFail: true });
+run('npm', ['install', '--silent', '--no-audit', '--no-fund'], {
+  cwd: electronDir,
+  allowFail: true,
+});
 
 step(4, 'Launching SvelteKit dev server + Electron in parallel');
 console.log('  ' + '─'.repeat(60));

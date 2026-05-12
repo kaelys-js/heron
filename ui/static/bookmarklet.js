@@ -27,14 +27,21 @@
     var el = document.createElement('div');
     el.textContent = msg;
     el.style.cssText = [
-      'position:fixed', 'right:16px', 'bottom:16px',
-      'padding:10px 14px', 'border-radius:8px', 'font:13px/1.4 system-ui',
-      'color:#fff', 'z-index:2147483647',
+      'position:fixed',
+      'right:16px',
+      'bottom:16px',
+      'padding:10px 14px',
+      'border-radius:8px',
+      'font:13px/1.4 system-ui',
+      'color:#fff',
+      'z-index:2147483647',
       'background:' + (kind === 'error' ? '#dc2626' : kind === 'warn' ? '#d97706' : '#16a34a'),
       'box-shadow:0 6px 16px rgba(0,0,0,0.25)',
     ].join(';');
     document.body.appendChild(el);
-    setTimeout(function () { el.remove(); }, 5500);
+    setTimeout(function () {
+      el.remove();
+    }, 5500);
   }
 
   function detectPortal() {
@@ -50,7 +57,7 @@
   function scrapeQuestions() {
     var out = [];
     var fields = document.querySelectorAll(
-      'textarea, input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="url"], select'
+      'textarea, input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="url"], select',
     );
     fields.forEach(function (f) {
       // Skip hidden / disabled fields
@@ -71,7 +78,9 @@
           var clone = parent.cloneNode(true);
           // Strip the field itself from the clone before reading text
           var inputs = clone.querySelectorAll('input, textarea, select');
-          inputs.forEach(function (i) { i.remove(); });
+          inputs.forEach(function (i) {
+            i.remove();
+          });
           label = clone.textContent.trim();
         }
       }
@@ -84,12 +93,18 @@
       }
       if (!label) return; // skip unlabelled fields — we can't match them
 
-      var type = f.tagName.toLowerCase() === 'textarea' ? 'long-text' :
-                 f.tagName.toLowerCase() === 'select' ? 'select' :
-                 (f.type === 'email' ? 'email' :
-                  f.type === 'tel' ? 'phone' :
-                  f.type === 'number' ? 'number' :
-                  'short-text');
+      var type =
+        f.tagName.toLowerCase() === 'textarea'
+          ? 'long-text'
+          : f.tagName.toLowerCase() === 'select'
+            ? 'select'
+            : f.type === 'email'
+              ? 'email'
+              : f.type === 'tel'
+                ? 'phone'
+                : f.type === 'number'
+                  ? 'number'
+                  : 'short-text';
       out.push({ label: label.slice(0, 200), type: type, ref: f });
     });
     return out;
@@ -111,7 +126,7 @@
     }
     var setter = Object.getOwnPropertyDescriptor(
       tag === 'textarea' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype,
-      'value'
+      'value',
     ).set;
     setter.call(el, value);
     el.dispatchEvent(new Event('input', { bubbles: true }));
@@ -120,7 +135,10 @@
   }
 
   function normalize(s) {
-    return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    return (s || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
   }
 
   async function run() {
@@ -136,16 +154,25 @@
     }
     toast('career-ops: filling ' + questions.length + ' fields…', 'info');
 
-    var payloadQuestions = questions.map(function (q) { return { label: q.label, type: q.type }; });
+    var payloadQuestions = questions.map(function (q) {
+      return { label: q.label, type: q.type };
+    });
     try {
       var res = await fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: window.location.href, portal: portal, questions: payloadQuestions }),
+        body: JSON.stringify({
+          url: window.location.href,
+          portal: portal,
+          questions: payloadQuestions,
+        }),
       });
       if (!res.ok) {
         var msg = 'HTTP ' + res.status;
-        try { var e = await res.json(); msg = (e && e.error && e.error.message) || msg; } catch (_) {}
+        try {
+          var e = await res.json();
+          msg = (e && e.error && e.error.message) || msg;
+        } catch (_) {}
         toast('career-ops: ' + msg, 'error');
         return;
       }
@@ -157,7 +184,9 @@
       // Fill answers — map by normalized label
       var answers = data.answers || [];
       var byLabel = {};
-      answers.forEach(function (a) { byLabel[normalize(a.label)] = a.value; });
+      answers.forEach(function (a) {
+        byLabel[normalize(a.label)] = a.value;
+      });
       var filled = 0;
       questions.forEach(function (q) {
         var v = byLabel[normalize(q.label)];
@@ -166,11 +195,25 @@
         }
       });
       var missed = questions.length - filled;
-      toast('career-ops: filled ' + filled + ' of ' + questions.length + ' fields' +
-        (missed ? ' · ' + missed + ' skipped' : '') + '. Review and click Submit.', filled > 0 ? 'info' : 'warn');
+      toast(
+        'career-ops: filled ' +
+          filled +
+          ' of ' +
+          questions.length +
+          ' fields' +
+          (missed ? ' · ' + missed + ' skipped' : '') +
+          '. Review and click Submit.',
+        filled > 0 ? 'info' : 'warn',
+      );
     } catch (e) {
-      toast('career-ops: ' + (e && e.message ? e.message : 'request failed') +
-        '. Is the dashboard running on ' + DASHBOARD + '?', 'error');
+      toast(
+        'career-ops: ' +
+          (e && e.message ? e.message : 'request failed') +
+          '. Is the dashboard running on ' +
+          DASHBOARD +
+          '?',
+        'error',
+      );
     }
   }
 

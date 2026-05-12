@@ -33,8 +33,11 @@ export type AvailabilityReply = {
 /** Helper: format a Date in the user's timezone with day+time. */
 function fmtSlot(d: Date, tz: string | undefined): string {
   const opts: Intl.DateTimeFormatOptions = {
-    weekday: 'long', month: 'short', day: 'numeric',
-    hour: 'numeric', minute: '2-digit',
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
     timeZone: tz || 'UTC',
     timeZoneName: 'short',
   };
@@ -114,9 +117,9 @@ export function draftAvailabilityReply(input: {
   const day1Slots = slotsForDay(days[0], startHour, endHour);
   const day2Slots = slotsForDay(days[1], startHour, endHour);
   const day3Slots = slotsForDay(days[2], startHour, endHour);
-  candidates.push(day1Slots[0]);  // morning
-  candidates.push(day2Slots[1]);  // midpoint
-  candidates.push(day3Slots[2]);  // afternoon
+  candidates.push(day1Slots[0]); // morning
+  candidates.push(day2Slots[1]); // midpoint
+  candidates.push(day3Slots[2]); // afternoon
 
   const slots: AvailabilitySlot[] = candidates.map((d) => ({
     startIso: d.toISOString(),
@@ -124,9 +127,8 @@ export function draftAvailabilityReply(input: {
   }));
 
   const recruiter = input.recruiterFirstName?.trim() || 'there';
-  const ctxPhrase = input.role && input.company
-    ? `the ${input.role} role at ${input.company}`
-    : 'the role';
+  const ctxPhrase =
+    input.role && input.company ? `the ${input.role} role at ${input.company}` : 'the role';
 
   const body = [
     `Hi ${recruiter},`,

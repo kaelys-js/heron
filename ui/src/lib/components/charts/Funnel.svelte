@@ -1,8 +1,8 @@
 <script lang="ts">
-  type Stage = { label: string; count: number; tint?: string; href?: string };
-  let { stages = [] }: { stages: Stage[] } = $props();
+type Stage = { label: string; count: number; tint?: string; href?: string };
+let { stages = [] }: { stages: Stage[] } = $props();
 
-  let max = $derived(Math.max(1, ...stages.map((s) => s.count)));
+let max = $derived(Math.max(1, ...stages.map((s) => s.count)));
 </script>
 
 <div class="space-y-1">

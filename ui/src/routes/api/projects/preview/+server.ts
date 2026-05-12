@@ -11,48 +11,52 @@ import { DEFAULT_FILTER, type FilterState, type Status } from '$lib/types';
 
 type PreviewBody = { filter?: Partial<FilterState> };
 
-export const POST = wrap('projects-preview', async ({ request, url }: { request: Request; url: URL }) => {
-  const body = (await request.json().catch(() => null)) as PreviewBody | null;
-  const filter: FilterState = {
-    ...DEFAULT_FILTER,
-    ...body?.filter,
-    bgRisk: { ...DEFAULT_FILTER.bgRisk, ...(body?.filter?.bgRisk ?? {}) },
-    workMode: { ...DEFAULT_FILTER.workMode, ...(body?.filter?.workMode ?? {}) },
-  };
-  if (!body) badRequest('expected JSON body with { filter }');
+export const POST = wrap(
+  'projects-preview',
+  async ({ request, url }: { request: Request; url: URL }) => {
+    const body = (await request.json().catch(() => null)) as PreviewBody | null;
+    const filter: FilterState = {
+      ...DEFAULT_FILTER,
+      ...body?.filter,
+      bgRisk: { ...DEFAULT_FILTER.bgRisk, ...(body?.filter?.bgRisk ?? {}) },
+      workMode: { ...DEFAULT_FILTER.workMode, ...(body?.filter?.workMode ?? {}) },
+    };
+    if (!body) badRequest('expected JSON body with { filter }');
 
-  // Preview against the same profile the editor is scoped to (so the count
-  // matches what `?profile=<slug>` would actually show on /pipeline).
-  const queryProfile = url.searchParams.get('profile');
-  const profileId = queryProfile && getProfile(queryProfile) ? queryProfile : getActiveProfileId();
-  const jobs = loadAllJobs(profileId);
-  // Build a fake project for the matcher to consume
-  const fakeProject = {
-    id: '_preview',
-    name: '_preview',
-    description: '',
-    color: 'emerald' as const,
-    filter,
-    target: 0,
-    createdAt: 0,
-    updatedAt: 0,
-  };
-  let total = 0;
-  let ready = 0;
-  let applied = 0;
-  let interview = 0;
-  let offer = 0;
-  let topScore: number | null = null;
-  for (const j of jobs) {
-    if (!matchesProject(j, fakeProject)) continue;
-    total++;
-    const s = j.score ?? j.geminiScore ?? null;
-    if (s != null && (topScore == null || s > topScore)) topScore = s;
-    const st: Status = j.status;
-    if (st === 'Ready') ready++;
-    else if (st === 'Applied' || st === 'Screened') applied++;
-    else if (st === 'Interview') interview++;
-    else if (st === 'Offer') offer++;
-  }
-  return { total, ready, applied, interview, offer, topScore };
-});
+    // Preview against the same profile the editor is scoped to (so the count
+    // matches what `?profile=<slug>` would actually show on /pipeline).
+    const queryProfile = url.searchParams.get('profile');
+    const profileId =
+      queryProfile && getProfile(queryProfile) ? queryProfile : getActiveProfileId();
+    const jobs = loadAllJobs(profileId);
+    // Build a fake project for the matcher to consume
+    const fakeProject = {
+      id: '_preview',
+      name: '_preview',
+      description: '',
+      color: 'emerald' as const,
+      filter,
+      target: 0,
+      createdAt: 0,
+      updatedAt: 0,
+    };
+    let total = 0;
+    let ready = 0;
+    let applied = 0;
+    let interview = 0;
+    let offer = 0;
+    let topScore: number | null = null;
+    for (const j of jobs) {
+      if (!matchesProject(j, fakeProject)) continue;
+      total++;
+      const s = j.score ?? j.geminiScore ?? null;
+      if (s != null && (topScore == null || s > topScore)) topScore = s;
+      const st: Status = j.status;
+      if (st === 'Ready') ready++;
+      else if (st === 'Applied' || st === 'Screened') applied++;
+      else if (st === 'Interview') interview++;
+      else if (st === 'Offer') offer++;
+    }
+    return { total, ready, applied, interview, offer, topScore };
+  },
+);

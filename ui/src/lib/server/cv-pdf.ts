@@ -88,7 +88,9 @@ export function generalCvStatus(profileId?: string): GeneralCvStatus {
     cvLastModified: cvStat?.mtimeMs,
     // Outdated when cv.md was edited after the PDF was generated. We compare
     // by 1s buckets so a same-second double-write doesn't flag as outdated.
-    outdated: cvStat ? Math.floor(cvStat.mtimeMs / 1000) > Math.floor(pdfStat.mtimeMs / 1000) : false,
+    outdated: cvStat
+      ? Math.floor(cvStat.mtimeMs / 1000) > Math.floor(pdfStat.mtimeMs / 1000)
+      : false,
     missingSource,
   };
 }
@@ -108,7 +110,7 @@ const SYSTEM_PROMPT =
   '    {{PORTFOLIO_URL}}     — full https URL\n' +
   '    {{PORTFOLIO_DISPLAY}} — human label like "github.com/jane"\n' +
   '  Document chrome:\n' +
-  '    {{LANG}}              — IETF tag (en, de, fr, ja, etc.) — derive from CV\'s primary language\n' +
+  "    {{LANG}}              — IETF tag (en, de, fr, ja, etc.) — derive from CV's primary language\n" +
   '    {{PAGE_WIDTH}}        — "8.5in" for letter sizes (use this default unless CV is clearly EU/A4 oriented; then use "210mm")\n' +
   '  Sections (each pair is heading label + body HTML):\n' +
   '    {{SECTION_SUMMARY}}      → "Summary" / localized\n' +
@@ -136,11 +138,11 @@ const SYSTEM_PROMPT =
   '- For {{SKILLS}}: <ul><li><strong>{Category}:</strong> a, b, c</li>...</ul>\n' +
   '- IF a section has no content in cv.md (e.g. no Projects), set BOTH the heading AND body placeholder to empty string ("") so the rendered HTML has no orphan section title.\n\n' +
   'CRITICAL CONTENT RULES:\n' +
-  '- This is a GENERAL CV — do NOT tailor it to any specific job, do NOT reorder bullets to emphasize particular skills, do NOT inject keywords that aren\'t already in cv.md. Match the cv.md content as faithfully as possible.\n' +
+  "- This is a GENERAL CV — do NOT tailor it to any specific job, do NOT reorder bullets to emphasize particular skills, do NOT inject keywords that aren't already in cv.md. Match the cv.md content as faithfully as possible.\n" +
   '- Preserve every role and every metric verbatim.\n' +
-  '- HTML-escape any < > & in the user\'s text.\n' +
+  "- HTML-escape any < > & in the user's text.\n" +
   '- Do not invent dates, employers, metrics, or sections not present in cv.md.\n' +
-  '- Keep the template\'s CSS, fonts, and class names exactly as given — only fill placeholders.';
+  "- Keep the template's CSS, fonts, and class names exactly as given — only fill placeholders.";
 
 export type GenerateResult = GeneralCvStatus & { pages?: number };
 
@@ -173,19 +175,32 @@ export async function generateGeneralCv(profileId?: string): Promise<GenerateRes
 
   logEvent('cv-pdf', 'Generating general CV PDF', {
     category: 'user',
-    message: cvText.length.toLocaleString() + ' chars in cv.md · model=claude-opus-4-7 · profile=' + id,
+    message:
+      cvText.length.toLocaleString() + ' chars in cv.md · model=claude-opus-4-7 · profile=' + id,
   });
 
   const userMessage = cvText + '\n\n===HTML TEMPLATE===\n\n' + template;
   const html = await complete(SYSTEM_PROMPT, userMessage, { maxTokens: 32000, thinking: false });
 
-  const cleanHtml = html.trim().replace(/^```(?:html)?\s*/i, '').replace(/\s*```$/, '').trim();
+  const cleanHtml = html
+    .trim()
+    .replace(/^```(?:html)?\s*/i, '')
+    .replace(/\s*```$/, '')
+    .trim();
   if (!cleanHtml.startsWith('<!DOCTYPE') && !cleanHtml.startsWith('<html')) {
-    throw new Error('Claude did not return a valid HTML document (no <!DOCTYPE>). Try regenerating.');
+    throw new Error(
+      'Claude did not return a valid HTML document (no <!DOCTYPE>). Try regenerating.',
+    );
   }
   const leftover = cleanHtml.match(/\{\{[A-Z_]+\}\}/g);
   if (leftover && leftover.length > 0) {
-    throw new Error('Claude left ' + leftover.length + ' placeholders unfilled (' + leftover.slice(0, 4).join(', ') + '…). Try regenerating.');
+    throw new Error(
+      'Claude left ' +
+        leftover.length +
+        ' placeholders unfilled (' +
+        leftover.slice(0, 4).join(', ') +
+        '…). Try regenerating.',
+    );
   }
 
   fs.writeFileSync(generalCvHtml, cleanHtml);
@@ -196,14 +211,20 @@ export async function generateGeneralCv(profileId?: string): Promise<GenerateRes
     level: 'success',
     category: 'user',
     message:
-      path.relative(ROOT, generalCvPdf) + ' · ' + (result.bytes / 1024).toFixed(1) + ' KB' +
+      path.relative(ROOT, generalCvPdf) +
+      ' · ' +
+      (result.bytes / 1024).toFixed(1) +
+      ' KB' +
       (result.pages ? ' · ' + result.pages + 'p' : ''),
   });
 
   return { ...generalCvStatus(id), pages: result.pages };
 }
 
-function spawnPdfRender(htmlPath: string, pdfPath: string): Promise<{ bytes: number; pages?: number }> {
+function spawnPdfRender(
+  htmlPath: string,
+  pdfPath: string,
+): Promise<{ bytes: number; pages?: number }> {
   return new Promise((resolve, reject) => {
     const p = spawn('node', ['generate-pdf.mjs', htmlPath, pdfPath, '--format=letter'], {
       cwd: ROOT,
@@ -211,15 +232,24 @@ function spawnPdfRender(htmlPath: string, pdfPath: string): Promise<{ bytes: num
     });
     let stdoutBuf = '';
     let stderrBuf = '';
-    p.stdout?.on('data', (c: Buffer) => { stdoutBuf += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderrBuf += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdoutBuf += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderrBuf += c.toString();
+    });
 
     const timer = setTimeout(() => {
-      try { p.kill('SIGTERM'); } catch {}
+      try {
+        p.kill('SIGTERM');
+      } catch {}
       reject(new Error('PDF render timed out after 90s'));
     }, 90_000);
 
-    p.on('error', (err) => { clearTimeout(timer); reject(err); });
+    p.on('error', (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
     p.on('close', (code) => {
       clearTimeout(timer);
       if (code !== 0) {

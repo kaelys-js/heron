@@ -6,7 +6,7 @@ import { getActiveProfileId, getProfile } from '$lib/server/profiles';
 
 export async function load({ url }: { url: URL }) {
   const queryProfile = url.searchParams.get('profile');
-  const profileId = (queryProfile && getProfile(queryProfile)) ? queryProfile : getActiveProfileId();
+  const profileId = queryProfile && getProfile(queryProfile) ? queryProfile : getActiveProfileId();
   const snapshot = readProfile(profileId);
   const c = snapshot.candidate ?? {};
   const loc = snapshot.location ?? {};

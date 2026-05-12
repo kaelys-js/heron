@@ -1,0 +1,59 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
+  "files": {
+    "includes": [
+      "**/*",
+      "!**/node_modules/**",
+      "!**/.svelte-kit/**",
+      "!**/build/**",
+      "!**/dist/**",
+      "!**/.turbo/**",
+      "!ui/electron/build/**",
+      "!ui/ios/App/Pods/**",
+      "!ui/ios/App/App.xcodeproj/**",
+      "!**/*.bak",
+      "!data/**",
+      "!reports/**",
+      "!output/**",
+      "!batch/**",
+      "!ui/ios/App/App/Brand.swift",
+      "!ui/ios/App/CareerOpsWidget/Brand.swift",
+      "!ui/ios/App/CareerOpsLiveActivity/Brand.swift",
+      "!ui/ios/App/CareerOpsShareExtension/Brand.swift",
+      "!ui/src/lib/client/brand.ts",
+      "!ui/electron/src/brand.ts",
+      "!CHANGELOG.md"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "lineEnding": "lf",
+    "formatWithErrors": false
+  },
+  "linter": {
+    "enabled": false
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "all",
+      "semicolons": "always",
+      "arrowParentheses": "always",
+      "bracketSpacing": true,
+      "bracketSameLine": false
+    }
+  },
+  "json": {
+    "formatter": {
+      "trailingCommas": "none"
+    }
+  },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  }
+}

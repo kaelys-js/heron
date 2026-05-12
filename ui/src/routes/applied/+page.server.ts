@@ -6,7 +6,11 @@
 
 import { loadAllJobs } from '$lib/server/parsers';
 import { getActiveProfileId } from '$lib/server/profiles';
-import { getFollowupCadence, findEntryByCompanyRole, type FollowupEntry } from '$lib/server/followup-cadence';
+import {
+  getFollowupCadence,
+  findEntryByCompanyRole,
+  type FollowupEntry,
+} from '$lib/server/followup-cadence';
 import type { Status } from '$lib/types';
 
 const ACTIVE: Status[] = ['Applied', 'Screened', 'Interview', 'Offer'];

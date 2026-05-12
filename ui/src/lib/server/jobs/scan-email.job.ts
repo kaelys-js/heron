@@ -43,8 +43,12 @@ function runScanEmail(args?: JobArgs): Promise<JobResult> {
       message: cliArgs.slice(1).join(' ') || 'data/inbox-mbox/',
     });
     const p = spawn('node', cliArgs, { cwd: ROOT, env: { ...process.env } });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', (c: Buffer) => { stderr += c.toString(); });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', (c: Buffer) => {
+      stderr += c.toString();
+    });
     p.on('error', (err) => {
       logEvent('scan-email', 'scan-email.mjs failed to spawn', {
         level: 'error',
@@ -77,7 +81,8 @@ function runScanEmail(args?: JobArgs): Promise<JobResult> {
 register({
   id: 'scan-email',
   label: 'Email-alert ingestion (mbox)',
-  description: 'Parses LinkedIn / Indeed job-alert emails from a Google Takeout mbox. Drop the file in data/inbox-mbox/ and run.',
+  description:
+    'Parses LinkedIn / Indeed job-alert emails from a Google Takeout mbox. Drop the file in data/inbox-mbox/ and run.',
   category: 'discovery',
   trigger: { type: 'manual' },
   allowManual: true,

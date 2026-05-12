@@ -1,111 +1,131 @@
 <script lang="ts">
-  import * as Sidebar from '$lib/components/ui/sidebar';
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Button } from '$lib/components/ui/button';
-  import CollapsibleGroup from './CollapsibleGroup.svelte';
-  import {
-    Inbox, ListTodo, Pin, KanbanSquare, FolderKanban, PlayCircle, Bot, ListChecks,
-    Cpu, Wrench, Settings as SettingsIcon, ChevronsUpDown, Search, Plus,
-    HelpCircle, BarChart3, MoreHorizontal, Star, Trash2, User, Lightbulb,
-    Plug, Check, Cog,
-  } from '@lucide/svelte';
-  import { page } from '$app/state';
-  import { goto, invalidateAll } from '$app/navigation';
-  import { onMount, onDestroy } from 'svelte';
-  import { pinStore } from '$lib/sidebar-pins.svelte';
-  import { globalActions } from '$lib/global-actions.svelte';
-  import { cn } from '$lib/utils';
-  import { APP_NAME } from '$lib/config/branding';
-  import { ConfirmGate } from '$lib/confirm.svelte';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import type { Profile, ProfilesState } from '$lib/server/profiles';
+import * as Sidebar from '$lib/components/ui/sidebar';
+import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { Badge } from '$lib/components/ui/badge';
+import { Button } from '$lib/components/ui/button';
+import CollapsibleGroup from './CollapsibleGroup.svelte';
+import {
+  Inbox,
+  ListTodo,
+  Pin,
+  KanbanSquare,
+  FolderKanban,
+  PlayCircle,
+  Bot,
+  ListChecks,
+  Cpu,
+  Wrench,
+  Settings as SettingsIcon,
+  ChevronsUpDown,
+  Search,
+  Plus,
+  HelpCircle,
+  BarChart3,
+  MoreHorizontal,
+  Star,
+  Trash2,
+  User,
+  Lightbulb,
+  Plug,
+  Check,
+  Cog,
+} from '@lucide/svelte';
+import { page } from '$app/state';
+import { goto, invalidateAll } from '$app/navigation';
+import { onMount, onDestroy } from 'svelte';
+import { pinStore } from '$lib/sidebar-pins.svelte';
+import { globalActions } from '$lib/global-actions.svelte';
+import { cn } from '$lib/utils';
+import { APP_NAME } from '$lib/config/branding';
+import { ConfirmGate } from '$lib/confirm.svelte';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import type { Profile, ProfilesState } from '$lib/server/profiles';
 
-  type PinnedJob = { id: string; company: string; role: string };
-  let {
-    inboxCount = 0,
-    queueCount = 0,
-    pinnedJobs = [],
-    profilesState,
-    activeProfile,
-  }: {
-    inboxCount?: number;
-    queueCount?: number;
-    pinnedJobs?: PinnedJob[];
-    profilesState?: ProfilesState;
-    activeProfile?: Profile;
-  } = $props();
+type PinnedJob = { id: string; company: string; role: string };
+let {
+  inboxCount = 0,
+  queueCount = 0,
+  pinnedJobs = [],
+  profilesState,
+  activeProfile,
+}: {
+  inboxCount?: number;
+  queueCount?: number;
+  pinnedJobs?: PinnedJob[];
+  profilesState?: ProfilesState;
+  activeProfile?: Profile;
+} = $props();
 
-  let pathname = $derived(page.url.pathname);
-  let isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
+let pathname = $derived(page.url.pathname);
+let isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
 
-  // Profile switcher. The dropdown renders one item per profile + "Add new"
-  // + "Manage profiles". Clicking a profile flips the active-id on the
-  // server and invalidates so every route reloads against the new profile.
-  let switching = $state(false);
-  async function switchActiveProfile(id: string) {
-    if (switching || id === activeProfile?.id) return;
-    switching = true;
-    try {
-      await api.post('/api/profiles/active', { id }, { silent: true });
-      toast.success('Switched to ' + (profilesState?.profiles.find((p) => p.id === id)?.name ?? id));
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Could not switch profile', { description: err.message });
-    } finally {
-      switching = false;
-    }
+// Profile switcher. The dropdown renders one item per profile + "Add new"
+// + "Manage profiles". Clicking a profile flips the active-id on the
+// server and invalidates so every route reloads against the new profile.
+let switching = $state(false);
+async function switchActiveProfile(id: string) {
+  if (switching || id === activeProfile?.id) return;
+  switching = true;
+  try {
+    await api.post('/api/profiles/active', { id }, { silent: true });
+    toast.success('Switched to ' + (profilesState?.profiles.find((p) => p.id === id)?.name ?? id));
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Could not switch profile', { description: err.message });
+  } finally {
+    switching = false;
   }
+}
 
-  /** Map ProfileColor → Tailwind dot class. */
-  function profileDot(color: string): string {
-    const map: Record<string, string> = {
-      blue:    'bg-blue-400',
-      emerald: 'bg-emerald-400',
-      violet:  'bg-violet-400',
-      amber:   'bg-amber-400',
-      rose:    'bg-rose-400',
-      cyan:    'bg-cyan-400',
-      orange:  'bg-orange-400',
-      pink:    'bg-pink-400',
-    };
-    return map[color] ?? 'bg-zinc-400';
-  }
+/** Map ProfileColor → Tailwind dot class. */
+function profileDot(color: string): string {
+  const map: Record<string, string> = {
+    blue: 'bg-blue-400',
+    emerald: 'bg-emerald-400',
+    violet: 'bg-violet-400',
+    amber: 'bg-amber-400',
+    rose: 'bg-rose-400',
+    cyan: 'bg-cyan-400',
+    orange: 'bg-orange-400',
+    pink: 'bg-pink-400',
+  };
+  return map[color] ?? 'bg-zinc-400';
+}
 
-  onMount(() => {
-    pinStore.init();
-  });
+onMount(() => {
+  pinStore.init();
+});
 
-  let visiblePins = $derived(pinnedJobs.filter((j) => !pinStore.isExcluded(j.id)));
+let visiblePins = $derived(pinnedJobs.filter((j) => !pinStore.isExcluded(j.id)));
 
-  // Single gate guards both per-job unpin AND "unpin all" so the user always
-  // gets the same red double-click pattern across the sidebar.
-  const confirm = new ConfirmGate();
-  onDestroy(() => confirm.destroy());
-  let pinnedMenuOpen = $state(false);
+// Single gate guards both per-job unpin AND "unpin all" so the user always
+// gets the same red double-click pattern across the sidebar.
+const confirm = new ConfirmGate();
+onDestroy(() => confirm.destroy());
+let pinnedMenuOpen = $state(false);
 
-  function onUnpinAllClick(e: Event) {
-    e.preventDefault();
-    if (!confirm.trigger('unpin-all')) return;
-    pinStore.unpinAll(visiblePins.map((j) => j.id));
-    pinnedMenuOpen = false;
-  }
+function onUnpinAllClick(e: Event) {
+  e.preventDefault();
+  if (!confirm.trigger('unpin-all')) return;
+  pinStore.unpinAll(visiblePins.map((j) => j.id));
+  pinnedMenuOpen = false;
+}
 
-  function onMenuOpenChange(v: boolean) {
-    pinnedMenuOpen = v;
-    // Closing the menu cancels any pending unpin-all confirm
-    if (!v && confirm.isArmed('unpin-all')) confirm.disarm();
-  }
+function onMenuOpenChange(v: boolean) {
+  pinnedMenuOpen = v;
+  // Closing the menu cancels any pending unpin-all confirm
+  if (!v && confirm.isArmed('unpin-all')) confirm.disarm();
+}
 
-  function unpinOne(id: string, e: Event) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!confirm.trigger('unpin:' + id)) return;
-    pinStore.unpin(id);
-  }
+function unpinOne(id: string, e: Event) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (!confirm.trigger('unpin:' + id)) return;
+  pinStore.unpin(id);
+}
 </script>
 
 <Sidebar.Root collapsible="icon" variant="inset" class="app-shell-sidebar">

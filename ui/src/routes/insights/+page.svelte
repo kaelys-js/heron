@@ -1,119 +1,144 @@
 <script lang="ts">
-  import Topbar from '$lib/components/Topbar.svelte';
-  import * as Card from '$lib/components/ui/card';
-  import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Button } from '$lib/components/ui/button';
-  import EmptyState from '$lib/components/EmptyState.svelte';
-  import ErrorState from '$lib/components/ErrorState.svelte';
-  import {
-    Lightbulb, RefreshCw, TrendingUp, TrendingDown, AlertTriangle,
-    Target, Building2, Globe, Loader2, Sparkles, Activity, CheckCircle2,
-  } from '@lucide/svelte';
-  import { api, ApiError } from '$lib/api';
-  import { invalidateAll } from '$app/navigation';
-  import { toast } from 'svelte-sonner';
-  import { withMinDuration, cn } from '$lib/utils';
-  import type { PatternsResult, Recommendation, ArchetypeRow, RemotePolicyRow, CompanySizeRow } from '$lib/server/analyze-patterns';
+import Topbar from '$lib/components/Topbar.svelte';
+import * as Card from '$lib/components/ui/card';
+import * as Tooltip from '$lib/components/ui/tooltip';
+import { Button } from '$lib/components/ui/button';
+import EmptyState from '$lib/components/EmptyState.svelte';
+import ErrorState from '$lib/components/ErrorState.svelte';
+import {
+  Lightbulb,
+  RefreshCw,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  Target,
+  Building2,
+  Globe,
+  Loader2,
+  Sparkles,
+  Activity,
+  CheckCircle2,
+} from '@lucide/svelte';
+import { api, ApiError } from '$lib/api';
+import { invalidateAll } from '$app/navigation';
+import { toast } from 'svelte-sonner';
+import { withMinDuration, cn } from '$lib/utils';
+import type {
+  PatternsResult,
+  Recommendation,
+  ArchetypeRow,
+  RemotePolicyRow,
+  CompanySizeRow,
+} from '$lib/server/analyze-patterns';
 
-  let { data }: { data: { patterns: PatternsResult | null; loadError: string | null } } = $props();
+let { data }: { data: { patterns: PatternsResult | null; loadError: string | null } } = $props();
 
-  let refreshing = $state(false);
-  async function refresh() {
-    if (refreshing) return;
-    refreshing = true;
-    try {
-      await withMinDuration(api.get('/api/insights/patterns?fresh=1', { silent: true }), 600);
-      await invalidateAll();
-      toast.success('Insights refreshed', {
-        description: 'Latest data pulled from applications.md and reports/.',
-      });
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Refresh failed', { description: err.message, action: { label: 'Retry', onClick: () => refresh() } });
-    } finally {
-      refreshing = false;
-    }
+let refreshing = $state(false);
+async function refresh() {
+  if (refreshing) return;
+  refreshing = true;
+  try {
+    await withMinDuration(api.get('/api/insights/patterns?fresh=1', { silent: true }), 600);
+    await invalidateAll();
+    toast.success('Insights refreshed', {
+      description: 'Latest data pulled from applications.md and reports/.',
+    });
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Refresh failed', {
+      description: err.message,
+      action: { label: 'Retry', onClick: () => refresh() },
+    });
+  } finally {
+    refreshing = false;
   }
+}
 
-  let p = $derived(data.patterns);
-  let total = $derived(p?.metadata?.total ?? 0);
-  let outcomes = $derived(p?.metadata?.byOutcome);
-  let finishedOutcomes = $derived(
-    (outcomes?.positive ?? 0) + (outcomes?.negative ?? 0) + (outcomes?.self_filtered ?? 0),
-  );
+let p = $derived(data.patterns);
+let total = $derived(p?.metadata?.total ?? 0);
+let outcomes = $derived(p?.metadata?.byOutcome);
+let finishedOutcomes = $derived(
+  (outcomes?.positive ?? 0) + (outcomes?.negative ?? 0) + (outcomes?.self_filtered ?? 0),
+);
 
-  // ---- Subtitle / date range — guard against missing dates ----
-  let dateRangeLabel = $derived.by(() => {
-    const m = p?.metadata;
-    if (!m) return '';
-    const from = m.dateRange?.from;
-    const to = m.dateRange?.to;
-    if (!from && !to) return m.total + ' apps';
-    if (from && to && from !== to) return m.total + ' apps · ' + from + ' → ' + to;
-    return m.total + ' apps · ' + (from ?? to ?? '');
-  });
+// ---- Subtitle / date range — guard against missing dates ----
+let dateRangeLabel = $derived.by(() => {
+  const m = p?.metadata;
+  if (!m) return '';
+  const from = m.dateRange?.from;
+  const to = m.dateRange?.to;
+  if (!from && !to) return m.total + ' apps';
+  if (from && to && from !== to) return m.total + ' apps · ' + from + ' → ' + to;
+  return m.total + ' apps · ' + (from ?? to ?? '');
+});
 
-  // ---- Sorted views over the array shapes the script returns ----
-  let archetypeRows = $derived<ArchetypeRow[]>(
-    (p?.archetypeBreakdown ?? []).slice().sort((a, b) => b.total - a.total),
-  );
-  let remoteRows = $derived<RemotePolicyRow[]>(
-    (p?.remotePolicy ?? []).slice().sort((a, b) => b.total - a.total),
-  );
-  let companySizeRows = $derived<CompanySizeRow[]>(
-    (p?.companySizeBreakdown ?? []).slice().sort((a, b) => b.total - a.total),
-  );
+// ---- Sorted views over the array shapes the script returns ----
+let archetypeRows = $derived<ArchetypeRow[]>(
+  (p?.archetypeBreakdown ?? []).slice().sort((a, b) => b.total - a.total),
+);
+let remoteRows = $derived<RemotePolicyRow[]>(
+  (p?.remotePolicy ?? []).slice().sort((a, b) => b.total - a.total),
+);
+let companySizeRows = $derived<CompanySizeRow[]>(
+  (p?.companySizeBreakdown ?? []).slice().sort((a, b) => b.total - a.total),
+);
 
-  // ---- Funnel — order known stage names first, then anything else by count desc ----
-  // Script's funnel mixes status labels (evaluated, skip, discarded) with score
-  // buckets (4.3, 3.5/5, etc); show the recognised statuses first so the chart
-  // reads as a real funnel, then dump the rest.
-  const KNOWN_STAGES = ['evaluated', 'skip', 'pending', 'applied', 'screened', 'interview', 'offer', 'rejected', 'discarded'];
-  let funnelRows = $derived.by(() => {
-    const f = p?.funnel ?? {};
-    const entries = Object.entries(f);
-    const known = KNOWN_STAGES
-      .map((k) => [k, f[k] ?? 0] as const)
-      .filter(([, v]) => v > 0);
-    const others = entries
-      .filter(([k]) => !KNOWN_STAGES.includes(k))
-      .sort((a, b) => b[1] - a[1]);
-    return [...known, ...others];
-  });
-  let funnelTotal = $derived(funnelRows.reduce((acc, [, v]) => acc + v, 0));
+// ---- Funnel — order known stage names first, then anything else by count desc ----
+// Script's funnel mixes status labels (evaluated, skip, discarded) with score
+// buckets (4.3, 3.5/5, etc); show the recognised statuses first so the chart
+// reads as a real funnel, then dump the rest.
+const KNOWN_STAGES = [
+  'evaluated',
+  'skip',
+  'pending',
+  'applied',
+  'screened',
+  'interview',
+  'offer',
+  'rejected',
+  'discarded',
+];
+let funnelRows = $derived.by(() => {
+  const f = p?.funnel ?? {};
+  const entries = Object.entries(f);
+  const known = KNOWN_STAGES.map((k) => [k, f[k] ?? 0] as const).filter(([, v]) => v > 0);
+  const others = entries.filter(([k]) => !KNOWN_STAGES.includes(k)).sort((a, b) => b[1] - a[1]);
+  return [...known, ...others];
+});
+let funnelTotal = $derived(funnelRows.reduce((acc, [, v]) => acc + v, 0));
 
-  // ---- Formatting helpers — defensive against missing fields ----
-  /** conversionRate from script is already 0-100 (integer). NEVER multiply
-   *  it by 100 again. Returns "0%" when undefined/NaN to avoid "NaN%". */
-  function fmtRate(r: number | undefined | null): string {
-    if (typeof r !== 'number' || !Number.isFinite(r)) return '0%';
-    return Math.round(r) + '%';
-  }
-  /** Bar width as a 0-100 percentage from a 0-100 conversion rate. Defensive. */
-  function rateWidth(r: number | undefined | null): number {
-    if (typeof r !== 'number' || !Number.isFinite(r)) return 0;
-    return Math.max(0, Math.min(100, r));
-  }
-  function fmtScore(n: number | undefined | null): string {
-    if (typeof n !== 'number' || !Number.isFinite(n)) return '–';
-    return n.toFixed(1);
-  }
-  function fmtCount(n: number | undefined | null): string {
-    if (typeof n !== 'number' || !Number.isFinite(n)) return '0';
-    return n.toLocaleString();
-  }
-  /** Tint a conversion rate (0-100) — green at high, amber middling, red low. */
-  function rateTint(r: number): string {
-    if (r >= 30) return 'bg-emerald-500/40';
-    if (r >= 15) return 'bg-amber-500/40';
-    if (r > 0) return 'bg-red-500/40';
-    return 'bg-zinc-500/30';
-  }
-  function impactBadge(impact: Recommendation['impact']): string {
-    if (impact === 'high') return 'bg-red-500/15 text-red-300 border-red-500/40';
-    if (impact === 'medium') return 'bg-amber-500/15 text-amber-300 border-amber-500/40';
-    return 'bg-zinc-500/15 text-zinc-300 border-zinc-500/40';
-  }
+// ---- Formatting helpers — defensive against missing fields ----
+/** conversionRate from script is already 0-100 (integer). NEVER multiply
+ *  it by 100 again. Returns "0%" when undefined/NaN to avoid "NaN%". */
+function fmtRate(r: number | undefined | null): string {
+  if (typeof r !== 'number' || !Number.isFinite(r)) return '0%';
+  return Math.round(r) + '%';
+}
+/** Bar width as a 0-100 percentage from a 0-100 conversion rate. Defensive. */
+function rateWidth(r: number | undefined | null): number {
+  if (typeof r !== 'number' || !Number.isFinite(r)) return 0;
+  return Math.max(0, Math.min(100, r));
+}
+function fmtScore(n: number | undefined | null): string {
+  if (typeof n !== 'number' || !Number.isFinite(n)) return '–';
+  return n.toFixed(1);
+}
+function fmtCount(n: number | undefined | null): string {
+  if (typeof n !== 'number' || !Number.isFinite(n)) return '0';
+  return n.toLocaleString();
+}
+/** Tint a conversion rate (0-100) — green at high, amber middling, red low. */
+function rateTint(r: number): string {
+  if (r >= 30) return 'bg-emerald-500/40';
+  if (r >= 15) return 'bg-amber-500/40';
+  if (r > 0) return 'bg-red-500/40';
+  return 'bg-zinc-500/30';
+}
+function impactBadge(impact: Recommendation['impact']): string {
+  if (impact === 'high') return 'bg-red-500/15 text-red-300 border-red-500/40';
+  if (impact === 'medium') return 'bg-amber-500/15 text-amber-300 border-amber-500/40';
+  return 'bg-zinc-500/15 text-zinc-300 border-zinc-500/40';
+}
 </script>
 
 <div class="h-full overflow-y-auto">

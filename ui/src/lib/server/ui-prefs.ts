@@ -113,7 +113,10 @@ export function writePrefs(patch: Partial<UiPrefs>): UiPrefs {
 /** Avatar upload — store under data/avatars/. Returns the relative path
  *  the UI references. We accept a buffer + content-type; the caller
  *  enforces size limits + sanitizes filename. */
-export function saveAvatar(buffer: Buffer, contentType: string): { ok: boolean; path?: string; error?: string } {
+export function saveAvatar(
+  buffer: Buffer,
+  contentType: string,
+): { ok: boolean; path?: string; error?: string } {
   const ALLOWED = new Map([
     ['image/png', 'png'],
     ['image/jpeg', 'jpg'],
@@ -133,7 +136,9 @@ export function saveAvatar(buffer: Buffer, contentType: string): { ok: boolean; 
     if (otherExt === ext) continue;
     const other = path.join(AVATAR_DIR, 'avatar.' + otherExt);
     if (fs.existsSync(other)) {
-      try { fs.unlinkSync(other); } catch {}
+      try {
+        fs.unlinkSync(other);
+      } catch {}
     }
   }
   // Save the path into ui-prefs.json.
@@ -149,10 +154,13 @@ export function readAvatar(): { buffer: Buffer; contentType: string } | null {
   if (!fs.existsSync(full)) return null;
   const ext = path.extname(full).slice(1).toLowerCase();
   const contentType =
-    ext === 'png' ? 'image/png' :
-    ext === 'gif' ? 'image/gif' :
-    ext === 'webp' ? 'image/webp' :
-    'image/jpeg';
+    ext === 'png'
+      ? 'image/png'
+      : ext === 'gif'
+        ? 'image/gif'
+        : ext === 'webp'
+          ? 'image/webp'
+          : 'image/jpeg';
   return { buffer: fs.readFileSync(full), contentType };
 }
 
@@ -161,7 +169,9 @@ export function clearAvatar(): void {
   const prefs = readPrefs();
   if (prefs.avatarPath) {
     const full = path.join(ROOT, 'data', prefs.avatarPath);
-    try { fs.unlinkSync(full); } catch {}
+    try {
+      fs.unlinkSync(full);
+    } catch {}
   }
   writePrefs({ avatarPath: undefined });
 }

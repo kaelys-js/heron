@@ -60,7 +60,12 @@ export function list(): JobDef[] {
 /** Stripped-down summaries for /api/jobs (no `run` function leaked to client). */
 export function listSummaries(): JobSummary[] {
   return list().map(({ id, label, description, category, trigger, allowManual }) => ({
-    id, label, description, category, trigger, allowManual,
+    id,
+    label,
+    description,
+    category,
+    trigger,
+    allowManual,
   }));
 }
 

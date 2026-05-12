@@ -1,121 +1,145 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-  import {
-    Plug, CheckCircle2, ArrowRight, ArrowLeft, Loader2, Globe, Mail, Briefcase,
-    AlertCircle, Power, ExternalLink, ChevronDown, Database,
-  } from '@lucide/svelte';
-  import { goto, invalidateAll } from '$app/navigation';
-  import { api, ApiError } from '$lib/api';
-  import { toast } from 'svelte-sonner';
-  import { withMinDuration, cn, formatRelativeTime } from '$lib/utils';
-  import type { KnownSource, SourceState } from '$lib/server/sources';
+import { Button } from '$lib/components/ui/button';
+import { Input } from '$lib/components/ui/input';
+import { Label } from '$lib/components/ui/label';
+import {
+  Plug,
+  CheckCircle2,
+  ArrowRight,
+  ArrowLeft,
+  Loader2,
+  Globe,
+  Mail,
+  Briefcase,
+  AlertCircle,
+  Power,
+  ExternalLink,
+  ChevronDown,
+  Database,
+} from '@lucide/svelte';
+import { goto, invalidateAll } from '$app/navigation';
+import { api, ApiError } from '$lib/api';
+import { toast } from 'svelte-sonner';
+import { withMinDuration, cn, formatRelativeTime } from '$lib/utils';
+import type { KnownSource, SourceState } from '$lib/server/sources';
 
-  type Row = KnownSource & { state: SourceState };
+type Row = KnownSource & { state: SourceState };
 
-  let { data }: { data: { sources: Row[]; profileId: string; anyConnected: boolean } } = $props();
-  let q = $derived('?profile=' + encodeURIComponent(data.profileId));
+let { data }: { data: { sources: Row[]; profileId: string; anyConnected: boolean } } = $props();
+let q = $derived('?profile=' + encodeURIComponent(data.profileId));
 
-  let busy = $state<Record<string, 'connect' | 'test' | 'disconnect' | null>>({});
+let busy = $state<Record<string, 'connect' | 'test' | 'disconnect' | null>>({});
 
-  let gmailForm = $state({
-    host: 'imap.gmail.com',
-    user: '',
-    password: '',
-    label: 'INBOX',
-  });
-  let appPasswordHelp = $state(false);
-  let advancing = $state(false);
+let gmailForm = $state({
+  host: 'imap.gmail.com',
+  user: '',
+  password: '',
+  label: 'INBOX',
+});
+let appPasswordHelp = $state(false);
+let advancing = $state(false);
 
-  // Slice the source list into the three pitches the onboarding step makes.
-  let linkedin = $derived(data.sources.find((s) => s.id === 'linkedin-auth'));
-  let indeed = $derived(data.sources.find((s) => s.id === 'indeed-auth'));
-  let gmail = $derived(data.sources.find((s) => s.id === 'gmail-imap'));
-  let alwaysOn = $derived(data.sources.filter((s) => s.authKind === 'always-on'));
-  let connectedCount = $derived(
-    [linkedin, indeed, gmail].filter((s) => s?.state.connected).length,
-  );
+// Slice the source list into the three pitches the onboarding step makes.
+let linkedin = $derived(data.sources.find((s) => s.id === 'linkedin-auth'));
+let indeed = $derived(data.sources.find((s) => s.id === 'indeed-auth'));
+let gmail = $derived(data.sources.find((s) => s.id === 'gmail-imap'));
+let alwaysOn = $derived(data.sources.filter((s) => s.authKind === 'always-on'));
+let connectedCount = $derived([linkedin, indeed, gmail].filter((s) => s?.state.connected).length);
 
-  function statusTint(state: SourceState): string {
-    if (state.connected && state.consecutiveFailures === 0) return 'border-emerald-500/40 bg-emerald-500/5';
-    if (state.connected) return 'border-amber-500/40 bg-amber-500/5';
-    if (state.consecutiveFailures > 0) return 'border-red-500/40 bg-red-500/5';
-    return 'border-border/40 bg-card';
+function statusTint(state: SourceState): string {
+  if (state.connected && state.consecutiveFailures === 0)
+    return 'border-emerald-500/40 bg-emerald-500/5';
+  if (state.connected) return 'border-amber-500/40 bg-amber-500/5';
+  if (state.consecutiveFailures > 0) return 'border-red-500/40 bg-red-500/5';
+  return 'border-border/40 bg-card';
+}
+
+function statusLabel(state: SourceState): { dot: string; text: string } {
+  if (state.connected && state.consecutiveFailures === 0) {
+    const ago = state.lastSuccessfulPullAt
+      ? formatRelativeTime(state.lastSuccessfulPullAt) + ' ago'
+      : '';
+    return { dot: 'bg-emerald-500', text: 'Connected' + (ago ? ' · last pull ' + ago : '') };
   }
-
-  function statusLabel(state: SourceState): { dot: string; text: string } {
-    if (state.connected && state.consecutiveFailures === 0) {
-      const ago = state.lastSuccessfulPullAt
-        ? formatRelativeTime(state.lastSuccessfulPullAt) + ' ago'
-        : '';
-      return { dot: 'bg-emerald-500', text: 'Connected' + (ago ? ' · last pull ' + ago : '') };
-    }
-    if (state.connected) {
-      return { dot: 'bg-amber-500', text: 'Connected · ' + state.consecutiveFailures + ' recent failure' + (state.consecutiveFailures === 1 ? '' : 's') };
-    }
-    if (state.consecutiveFailures > 0) {
-      return { dot: 'bg-red-500', text: 'Disconnected — ' + (state.lastError ?? 'failed ' + state.consecutiveFailures + 'x') };
-    }
-    return { dot: 'bg-zinc-500', text: 'Not connected' };
+  if (state.connected) {
+    return {
+      dot: 'bg-amber-500',
+      text:
+        'Connected · ' +
+        state.consecutiveFailures +
+        ' recent failure' +
+        (state.consecutiveFailures === 1 ? '' : 's'),
+    };
   }
-
-  async function connectSource(row: Row) {
-    if (busy[row.id]) return;
-    busy = { ...busy, [row.id]: 'connect' };
-    try {
-      const body: Record<string, unknown> = {};
-      if (row.id === 'gmail-imap') Object.assign(body, gmailForm);
-      const r = await withMinDuration(
-        api.post<{ ok: boolean; message?: string }>(
-          '/api/sources/' + encodeURIComponent(row.id) + '/connect',
-          body,
-          { silent: true },
-        ),
-        500,
-      );
-      toast.success(row.label + ' connected', { description: r.message });
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Connect failed', {
-        description: err.message,
-        action: { label: 'Retry', onClick: () => connectSource(row) },
-        duration: 12_000,
-      });
-    } finally {
-      busy = { ...busy, [row.id]: null };
-    }
+  if (state.consecutiveFailures > 0) {
+    return {
+      dot: 'bg-red-500',
+      text: 'Disconnected — ' + (state.lastError ?? 'failed ' + state.consecutiveFailures + 'x'),
+    };
   }
+  return { dot: 'bg-zinc-500', text: 'Not connected' };
+}
 
-  async function disconnectSource(row: Row) {
-    if (busy[row.id]) return;
-    if (!confirm('Disconnect ' + row.label + '? You\'ll need to re-authenticate.')) return;
-    busy = { ...busy, [row.id]: 'disconnect' };
-    try {
-      await api.post('/api/sources/' + encodeURIComponent(row.id) + '/disconnect', {}, { silent: true });
-      toast.info(row.label + ' disconnected');
-      await invalidateAll();
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Disconnect failed', { description: err.message });
-    } finally {
-      busy = { ...busy, [row.id]: null };
-    }
+async function connectSource(row: Row) {
+  if (busy[row.id]) return;
+  busy = { ...busy, [row.id]: 'connect' };
+  try {
+    const body: Record<string, unknown> = {};
+    if (row.id === 'gmail-imap') Object.assign(body, gmailForm);
+    const r = await withMinDuration(
+      api.post<{ ok: boolean; message?: string }>(
+        '/api/sources/' + encodeURIComponent(row.id) + '/connect',
+        body,
+        { silent: true },
+      ),
+      500,
+    );
+    toast.success(row.label + ' connected', { description: r.message });
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Connect failed', {
+      description: err.message,
+      action: { label: 'Retry', onClick: () => connectSource(row) },
+      duration: 12_000,
+    });
+  } finally {
+    busy = { ...busy, [row.id]: null };
   }
+}
 
-  async function continueToScan(action: 'complete' | 'skip') {
-    if (advancing) return;
-    advancing = true;
-    try {
-      await api.post('/api/onboarding/step', { step: 'sources', action }, { silent: true });
-      await goto('/onboarding/first-scan' + q);
-    } catch (e) {
-      const err = e as ApiError;
-      toast.error('Could not advance', { description: err.message });
-      advancing = false;
-    }
+async function disconnectSource(row: Row) {
+  if (busy[row.id]) return;
+  if (!confirm('Disconnect ' + row.label + "? You'll need to re-authenticate.")) return;
+  busy = { ...busy, [row.id]: 'disconnect' };
+  try {
+    await api.post(
+      '/api/sources/' + encodeURIComponent(row.id) + '/disconnect',
+      {},
+      { silent: true },
+    );
+    toast.info(row.label + ' disconnected');
+    await invalidateAll();
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Disconnect failed', { description: err.message });
+  } finally {
+    busy = { ...busy, [row.id]: null };
   }
+}
+
+async function continueToScan(action: 'complete' | 'skip') {
+  if (advancing) return;
+  advancing = true;
+  try {
+    await api.post('/api/onboarding/step', { step: 'sources', action }, { silent: true });
+    await goto('/onboarding/first-scan' + q);
+  } catch (e) {
+    const err = e as ApiError;
+    toast.error('Could not advance', { description: err.message });
+    advancing = false;
+  }
+}
 </script>
 
 <div class="space-y-6">

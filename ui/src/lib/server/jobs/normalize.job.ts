@@ -29,8 +29,12 @@ function runNormalize(): Promise<JobResult> {
       cwd: ROOT,
       env: { ...process.env },
     });
-    p.stdout?.on('data', (c: Buffer) => { stdout += c.toString(); });
-    p.stderr?.on('data', () => { /* swallow — non-fatal */ });
+    p.stdout?.on('data', (c: Buffer) => {
+      stdout += c.toString();
+    });
+    p.stderr?.on('data', () => {
+      /* swallow — non-fatal */
+    });
     p.on('error', (err: Error) => {
       logEvent('normalize', 'Normalize failed to spawn', {
         level: 'error',
@@ -62,7 +66,8 @@ function runNormalize(): Promise<JobResult> {
 register({
   id: 'normalize',
   label: 'Status normalization',
-  description: 'Silent hygiene sweep that maps non-canonical statuses (DUPLICADO, etc.) to canonical ones.',
+  description:
+    'Silent hygiene sweep that maps non-canonical statuses (DUPLICADO, etc.) to canonical ones.',
   category: 'hygiene',
   trigger: { type: 'after', tasks: ['status', 'batch-merge', 'boot'] },
   allowManual: true,

@@ -68,7 +68,9 @@ export function clearLastRun(jobId: string): void {
 export function clearAllLastRuns(): void {
   if (fs.existsSync(PATH)) {
     // Back up before wiping so reset is recoverable.
-    try { fs.copyFileSync(PATH, PATH + '.bak'); } catch {}
+    try {
+      fs.copyFileSync(PATH, PATH + '.bak');
+    } catch {}
     fs.unlinkSync(PATH);
   }
 }
