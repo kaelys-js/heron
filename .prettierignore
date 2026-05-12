@@ -1,0 +1,45 @@
+# Prettier only formats .svelte files in career-ops. Biome handles everything
+# else. Even so, give prettier an ignore file so it never accidentally
+# touches unrelated content if the script is misconfigured.
+
+node_modules/
+.svelte-kit/
+build/
+dist/
+.turbo/
+ui/electron/build/
+ui/electron/dist/
+ui/ios/App/Pods/
+ui/ios/App/App.xcodeproj/
+ui/ios/App/App/Assets.xcassets/
+data/
+reports/
+output/
+batch/
+**/_build/
+**/*.bak
+CHANGELOG.md
+
+# Brand-generated files
+ui/ios/App/App/Brand.swift
+ui/ios/App/CareerOpsWidget/Brand.swift
+ui/ios/App/CareerOpsLiveActivity/Brand.swift
+ui/ios/App/CareerOpsShareExtension/Brand.swift
+ui/src/lib/client/brand.ts
+ui/electron/src/brand.ts
+
+# Non-.svelte files — biome handles these. Prettier is invoked with --plugin
+# prettier-plugin-svelte but we still want a narrow scope. Globs below
+# tell prettier to skip everything that ISN'T svelte.
+*.ts
+*.tsx
+*.js
+*.mjs
+*.cjs
+*.json
+*.jsonc
+*.md
+*.yaml
+*.yml
+*.html
+*.css

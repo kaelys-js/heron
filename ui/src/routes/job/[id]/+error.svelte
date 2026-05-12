@@ -1,14 +1,14 @@
 <script lang="ts">
-import { page } from '$app/state';
-import { goto } from '$app/navigation';
-import { Button } from '$lib/components/ui/button';
-import * as Card from '$lib/components/ui/card';
-import { Briefcase as JobIcon, ArrowLeft, RotateCw } from '@lucide/svelte';
-import { docTitle } from '$lib/config/branding';
+  import { page } from '$app/state';
+  import { goto } from '$app/navigation';
+  import { Button } from '$lib/components/ui/button';
+  import * as Card from '$lib/components/ui/card';
+  import { Briefcase as JobIcon, ArrowLeft, RotateCw } from '@lucide/svelte';
+  import { docTitle } from '$lib/config/branding';
 
-let status = $derived(page.status);
-let err = $derived(page.error);
-let isNotFound = $derived(status === 404);
+  let status = $derived(page.status);
+  let err = $derived(page.error);
+  let isNotFound = $derived(status === 404);
 </script>
 
 <svelte:head>
@@ -28,7 +28,8 @@ let isNotFound = $derived(status === 404);
           </Card.Title>
           <Card.Description class="mt-1.5 leading-relaxed">
             {#if isNotFound}
-              The job ID in the URL doesn't match anything in your pipeline. It may have been removed, archived, or the link is stale.
+              The job ID in the URL doesn't match anything in your pipeline. It may have been
+              removed, archived, or the link is stale.
             {:else}
               {err?.message || 'Something went wrong while loading this job.'}
             {/if}
@@ -37,9 +38,7 @@ let isNotFound = $derived(status === 404);
       </div>
     </Card.Header>
     <Card.Footer class="gap-2">
-      <Button onclick={() => goto('/')} class="gap-1.5">
-        Back to pipeline
-      </Button>
+      <Button onclick={() => goto('/')} class="gap-1.5">Back to pipeline</Button>
       <Button variant="ghost" onclick={() => history.back()} class="gap-1.5 text-muted-foreground">
         <ArrowLeft class="size-3.5" />
         Back

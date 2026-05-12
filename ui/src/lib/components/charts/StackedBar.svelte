@@ -1,14 +1,14 @@
 <script lang="ts">
-type Segment = { label: string; value: number; tint?: string };
-let {
-  segments = [],
-  showLegend = true,
-}: {
-  segments: Segment[];
-  showLegend?: boolean;
-} = $props();
+  type Segment = { label: string; value: number; tint?: string };
+  let {
+    segments = [],
+    showLegend = true,
+  }: {
+    segments: Segment[];
+    showLegend?: boolean;
+  } = $props();
 
-let total = $derived(segments.reduce((acc, s) => acc + s.value, 0) || 1);
+  let total = $derived(segments.reduce((acc, s) => acc + s.value, 0) || 1);
 </script>
 
 <div class="space-y-2">
@@ -17,7 +17,8 @@ let total = $derived(segments.reduce((acc, s) => acc + s.value, 0) || 1);
       {@const pct = (s.value / total) * 100}
       {#if pct > 0}
         <div
-          class={(s.tint ?? 'bg-muted') + ' flex items-center justify-center text-[10px] font-medium tabular-nums'}
+          class={(s.tint ?? 'bg-muted') +
+            ' flex items-center justify-center text-[10px] font-medium tabular-nums'}
           style={'width: ' + pct + '%'}
           title={s.label + ': ' + s.value + ' (' + pct.toFixed(1) + '%)'}
         >

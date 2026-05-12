@@ -9,55 +9,55 @@
   / Applied with comp data they don't need yet).
 -->
 <script lang="ts">
-import * as Popover from '$lib/components/ui/popover';
-import { DollarSign, ChevronDown, AlertTriangle } from '@lucide/svelte';
-import { api } from '$lib/api';
-import { onMount } from 'svelte';
-import type { Status } from '$lib/types';
+  import * as Popover from '$lib/components/ui/popover';
+  import { DollarSign, ChevronDown, AlertTriangle } from '@lucide/svelte';
+  import { api } from '$lib/api';
+  import { onMount } from 'svelte';
+  import type { Status } from '$lib/types';
 
-let { jobId, status }: { jobId: string; status: Status } = $props();
+  let { jobId, status }: { jobId: string; status: Status } = $props();
 
-type Preflight = {
-  ok: boolean;
-  ask?: string;
-  walkaway?: string;
-  currency?: string;
-  advice?: string;
-  warning?: string;
-  error?: string;
-};
+  type Preflight = {
+    ok: boolean;
+    ask?: string;
+    walkaway?: string;
+    currency?: string;
+    advice?: string;
+    warning?: string;
+    error?: string;
+  };
 
-let preflight = $state<Preflight | null>(null);
-let loading = $state(true);
+  let preflight = $state<Preflight | null>(null);
+  let loading = $state(true);
 
-const INTERVIEW_STAGES: Status[] = [
-  'PhoneScreen',
-  'Technical',
-  'TakeHome',
-  'Onsite',
-  'Final',
-  'Interview',
-  'Screened',
-];
-let show = $derived(INTERVIEW_STAGES.includes(status));
+  const INTERVIEW_STAGES: Status[] = [
+    'PhoneScreen',
+    'Technical',
+    'TakeHome',
+    'Onsite',
+    'Final',
+    'Interview',
+    'Screened',
+  ];
+  let show = $derived(INTERVIEW_STAGES.includes(status));
 
-onMount(async () => {
-  if (!show) {
-    loading = false;
-    return;
-  }
-  try {
-    const r = await api.get<Preflight>(
-      '/api/job/' + encodeURIComponent(jobId) + '/comp-preflight',
-      { silent: true },
-    );
-    preflight = r;
-  } catch {
-    preflight = null;
-  } finally {
-    loading = false;
-  }
-});
+  onMount(async () => {
+    if (!show) {
+      loading = false;
+      return;
+    }
+    try {
+      const r = await api.get<Preflight>(
+        '/api/job/' + encodeURIComponent(jobId) + '/comp-preflight',
+        { silent: true },
+      );
+      preflight = r;
+    } catch {
+      preflight = null;
+    } finally {
+      loading = false;
+    }
+  });
 </script>
 
 {#if show && !loading && preflight?.ok && preflight.ask}
@@ -82,7 +82,9 @@ onMount(async () => {
         Before the call · comp pre-flight
       </div>
       {#if preflight.warning}
-        <div class="rounded border border-amber-500/40 bg-amber-500/5 px-2 py-1 flex items-start gap-1.5">
+        <div
+          class="rounded border border-amber-500/40 bg-amber-500/5 px-2 py-1 flex items-start gap-1.5"
+        >
           <AlertTriangle class="size-3 text-amber-400 mt-0.5 flex-shrink-0" />
           <p class="text-[10px] text-amber-200/90 leading-relaxed">{preflight.warning}</p>
         </div>
@@ -98,7 +100,9 @@ onMount(async () => {
         </div>
         <div class="text-[10px] text-muted-foreground/70 pt-1">Currency: {preflight.currency}</div>
       </div>
-      <p class="text-[11px] text-muted-foreground/90 leading-relaxed pt-1 border-t border-border/30">
+      <p
+        class="text-[11px] text-muted-foreground/90 leading-relaxed pt-1 border-t border-border/30"
+      >
         {preflight.advice}
       </p>
     </Popover.Content>

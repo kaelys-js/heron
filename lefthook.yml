@@ -53,13 +53,22 @@ pre-commit:
           scripts/native/add-xcode-targets.rb 2>/dev/null || true
 
     biome-format:
-      # Formats staged source files in place, then re-stages.
-      # Linting is intentionally NOT run here — biome formatting only,
-      # per the policy decision in branding/brand.json era.
-      glob: '*.{ts,tsx,js,mjs,svelte,json}'
+      # Formats non-svelte staged source files via Biome (fast Rust formatter).
+      # Linting is intentionally NOT run — svelte-check covers type-level issues.
+      glob: '*.{ts,tsx,js,mjs,cjs,json}'
       run: |
         npx --no-install biome format --write {staged_files} 2>/dev/null || true
         git add {staged_files} 2>/dev/null || true
+      stage_fixed: true
+
+    prettier-svelte:
+      # Biome doesn't support .svelte yet (as of 2026-05). Run prettier
+      # with prettier-plugin-svelte for those files only — style matches
+      # biome.json so .ts and .svelte feel identical.
+      glob: '*.svelte'
+      run: |
+        cd ui && npx --no-install prettier --write {staged_files} --ignore-path ../.prettierignore 2>/dev/null || true
+        cd .. && git add {staged_files} 2>/dev/null || true
       stage_fixed: true
 
     no-secrets:

@@ -1,3 +1,13 @@
+# Build / tooling caches — deterministic outputs, never commit.
+.turbo/
+**/.turbo/
+**/.cache/
+ui/.svelte-kit/
+ui/build/
+ui/electron/dist/
+ui/electron/build/icon-*.png
+native/icons/_build/
+
 # Personal data (user fills these)
 cv.md
 data/applications.md

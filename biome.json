@@ -22,7 +22,9 @@
       "!ui/ios/App/CareerOpsShareExtension/Brand.swift",
       "!ui/src/lib/client/brand.ts",
       "!ui/electron/src/brand.ts",
-      "!CHANGELOG.md"
+      "!CHANGELOG.md",
+      "!**/*.svelte",
+      "!**/*.css"
     ]
   },
   "formatter": {

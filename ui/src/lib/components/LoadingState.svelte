@@ -14,29 +14,29 @@
   instead of a blank white screen.
 -->
 <script lang="ts">
-import { Loader2 } from '@lucide/svelte';
-import { fade } from 'svelte/transition';
-import { BRAND } from '$lib/client/brand';
+  import { Loader2 } from '@lucide/svelte';
+  import { fade } from 'svelte/transition';
+  import { BRAND } from '$lib/client/brand';
 
-type Variant = 'inline' | 'block' | 'overlay' | 'skeleton';
+  type Variant = 'inline' | 'block' | 'overlay' | 'skeleton';
 
-let {
-  variant = 'block' as Variant,
-  message = 'Loading…',
-  sub,
-  progress, // 0..1 number → renders a progress bar
-  rows = 3, // skeleton variant: number of rows
-  size = 'md' as 'sm' | 'md' | 'lg',
-} = $props<{
-  variant?: Variant;
-  message?: string;
-  sub?: string;
-  progress?: number | null;
-  rows?: number;
-  size?: 'sm' | 'md' | 'lg';
-}>();
+  let {
+    variant = 'block' as Variant,
+    message = 'Loading…',
+    sub,
+    progress, // 0..1 number → renders a progress bar
+    rows = 3, // skeleton variant: number of rows
+    size = 'md' as 'sm' | 'md' | 'lg',
+  } = $props<{
+    variant?: Variant;
+    message?: string;
+    sub?: string;
+    progress?: number | null;
+    rows?: number;
+    size?: 'sm' | 'md' | 'lg';
+  }>();
 
-const iconClass = $derived(size === 'sm' ? 'size-4' : size === 'lg' ? 'size-12' : 'size-8');
+  const iconClass = $derived(size === 'sm' ? 'size-4' : size === 'lg' ? 'size-12' : 'size-8');
 </script>
 
 {#if variant === 'inline'}
@@ -51,7 +51,9 @@ const iconClass = $derived(size === 'sm' ? 'size-4' : size === 'lg' ? 'size-12' 
     role="status"
     aria-live="polite"
   >
-    <div class="flex flex-col items-center gap-3 rounded-2xl border border-border/40 bg-card px-8 py-6 shadow-lg">
+    <div
+      class="flex flex-col items-center gap-3 rounded-2xl border border-border/40 bg-card px-8 py-6 shadow-lg"
+    >
       <Loader2 class="size-10 animate-spin text-primary" />
       <div class="text-center">
         <p class="font-medium text-foreground">{message}</p>
