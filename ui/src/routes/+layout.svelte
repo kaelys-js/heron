@@ -113,31 +113,31 @@
     <main id="main-content" tabindex="-1" class="contents">
       <svelte:boundary onerror={handleBoundaryError}>
         {@render children?.()}
-      {#snippet failed(error, reset)}
-        <div class="flex flex-col items-center justify-center min-h-[60vh] p-8 gap-3">
-          <div class="flex flex-col items-center gap-2 max-w-md text-center">
-            <div
-              class="size-10 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center"
-            >
-              <AlertTriangle class="size-5 text-red-400" />
-            </div>
-            <h2 class="text-base font-semibold">This page crashed</h2>
-            <p class="text-sm text-muted-foreground">
-              {error instanceof Error ? error.message : String(error)}
-            </p>
-            <p class="text-xs text-muted-foreground/70">
-              The error was logged to the activity feed. The rest of the app keeps running.
-            </p>
-            <div class="flex items-center gap-2 mt-2">
-              <Button variant="outline" size="sm" onclick={reset} class="h-8 gap-1.5">
-                <RefreshCw class="size-3" /> Retry
-              </Button>
-              <Button variant="ghost" size="sm" onclick={() => location.reload()} class="h-8">
-                Reload page
-              </Button>
+        {#snippet failed(error, reset)}
+          <div class="flex flex-col items-center justify-center min-h-[60vh] p-8 gap-3">
+            <div class="flex flex-col items-center gap-2 max-w-md text-center">
+              <div
+                class="size-10 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center"
+              >
+                <AlertTriangle class="size-5 text-red-400" />
+              </div>
+              <h2 class="text-base font-semibold">This page crashed</h2>
+              <p class="text-sm text-muted-foreground">
+                {error instanceof Error ? error.message : String(error)}
+              </p>
+              <p class="text-xs text-muted-foreground/70">
+                The error was logged to the activity feed. The rest of the app keeps running.
+              </p>
+              <div class="flex items-center gap-2 mt-2">
+                <Button variant="outline" size="sm" onclick={reset} class="h-8 gap-1.5">
+                  <RefreshCw class="size-3" /> Retry
+                </Button>
+                <Button variant="ghost" size="sm" onclick={() => location.reload()} class="h-8">
+                  Reload page
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
         {/snippet}
       </svelte:boundary>
     </main>

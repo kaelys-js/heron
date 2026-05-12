@@ -152,12 +152,7 @@
               <p class="text-xs text-muted-foreground">{fmtClaim(inv)}</p>
             </div>
             {#if !inv.claimedByUserId && inv.expiresAt > Date.now()}
-              <Button
-                onclick={() => copyCode(inv.code)}
-                size="sm"
-                variant="ghost"
-                class="gap-2"
-              >
+              <Button onclick={() => copyCode(inv.code)} size="sm" variant="ghost" class="gap-2">
                 <Copy class="h-4 w-4" />
                 {copied === inv.code ? 'Copied!' : 'Copy'}
               </Button>

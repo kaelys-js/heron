@@ -80,11 +80,7 @@
   {/if}
 
   <div class="grid w-full gap-3">
-    <Button
-      onclick={signInWithPasskey}
-      disabled={busy}
-      class="justify-start gap-3"
-    >
+    <Button onclick={signInWithPasskey} disabled={busy} class="justify-start gap-3">
       <KeyRound class="h-4 w-4" />
       Sign in with passkey
     </Button>
