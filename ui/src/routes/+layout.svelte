@@ -36,6 +36,20 @@
       // funnel through one boolean — OfflineIndicator + api.ts subscribe.
       onlineStore.init(window.location.origin);
     }
+
+    // Dismiss the Capacitor native splash screen on iOS/Android once we've
+    // hydrated. capacitor.config.ts sets `launchAutoHide: false` so we own
+    // the dismiss timing — without this call the splash stays forever and
+    // the user never sees the app. Dynamically imported because the
+    // @capacitor/splash-screen plugin only resolves in native (the plain
+    // web build ignores the import — the catch handles that path).
+    if (typeof window !== 'undefined' && 'Capacitor' in window) {
+      import('@capacitor/splash-screen')
+        .then(({ SplashScreen }) => SplashScreen.hide())
+        .catch(() => {
+          /* not running native; nothing to dismiss */
+        });
+    }
   });
 
   let { children, data } = $props();

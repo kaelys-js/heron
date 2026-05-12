@@ -145,6 +145,7 @@ async function main() {
     path.join(ROOT, 'ui/static/icons/career-ops-192.png'),
     path.join(ROOT, 'ui/static/icons/career-ops-512.png'),
     path.join(ROOT, 'ui/static/favicon.ico'),
+    path.join(ROOT, 'ui/ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732.png'),
   ];
   const outputsExist = await Promise.all(
     canonicalOutputs.map(async (p) => {
@@ -214,6 +215,71 @@ async function main() {
   }
   await fs.writeFile(path.join(iosDir, 'Contents.json'), JSON.stringify(iosContents, null, 2));
   console.log(`  ${IOS_SLOTS.length} iOS slots + dark + tinted + Contents.json`);
+
+  // ---- iOS Splash.imageset (LaunchScreen + @capacitor/splash-screen) ----
+  // Without this, the iOS app ships the Capacitor default X logo from
+  // Capacitor's project template. We render a 2732×2732 image with the
+  // brand logo at ~26% size, centered on the splash background colour from
+  // brand.json. Used for both the static LaunchScreen.storyboard AND the
+  // post-launch @capacitor/splash-screen overlay (which the SvelteKit
+  // root layout calls SplashScreen.hide() to dismiss on first paint).
+  console.log('Building iOS Splash.imageset...');
+  const splashDir = path.join(ROOT, 'ui/ios/App/App/Assets.xcassets/Splash.imageset');
+  await fs.mkdir(splashDir, { recursive: true });
+  const splashSize = 2732;
+  const logoSize = Math.round(splashSize * 0.26); // ~700px logo on the 2732 canvas
+  const brandPath = path.join(ROOT, 'branding/brand.json');
+  let splashBg = '#0a0a0b';
+  try {
+    const brand = JSON.parse(await fs.readFile(brandPath, 'utf8'));
+    splashBg = brand.splash?.backgroundColor ?? brand.colors?.background ?? splashBg;
+  } catch {
+    /* brand.json missing — keep default */
+  }
+  // sharp accepts hex as `{r,g,b}` only after parsing, so feed the hex
+  // directly via the `background` shortcut on `extend`.
+  const logoBuffer = await sharp(svgBuffer)
+    .resize(logoSize, logoSize, {
+      fit: 'contain',
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
+    .png()
+    .toBuffer();
+  const splashBuffer = await sharp({
+    create: {
+      width: splashSize,
+      height: splashSize,
+      channels: 4,
+      background: splashBg,
+    },
+  })
+    .composite([{ input: logoBuffer, gravity: 'center' }])
+    .png()
+    .toBuffer();
+  // iOS expects three @1x/@2x/@3x variants under the same imageset; we
+  // render the same 2732 image for all three (iOS scales down for older
+  // devices; the launch screen storyboard pins the image to the safe
+  // area, so over-resolution is fine).
+  for (const name of ['splash-2732x2732.png', 'splash-2732x2732-1.png', 'splash-2732x2732-2.png']) {
+    await fs.writeFile(path.join(splashDir, name), splashBuffer);
+  }
+  // Contents.json — preserve the @1x/@2x/@3x mapping Capacitor wrote.
+  await fs.writeFile(
+    path.join(splashDir, 'Contents.json'),
+    JSON.stringify(
+      {
+        images: [
+          { idiom: 'universal', filename: 'splash-2732x2732-2.png', scale: '1x' },
+          { idiom: 'universal', filename: 'splash-2732x2732-1.png', scale: '2x' },
+          { idiom: 'universal', filename: 'splash-2732x2732.png', scale: '3x' },
+        ],
+        info: { version: 1, author: 'xcode' },
+      },
+      null,
+      2,
+    ),
+  );
+  console.log(`  Splash.imageset rendered (${splashSize}×${splashSize}, bg=${splashBg})`);
 
   // ---- Electron icons ----
   console.log('Building Electron icons...');

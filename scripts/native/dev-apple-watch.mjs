@@ -100,14 +100,27 @@ if (!watchTargetRegistered) {
 ok('CareerOpsWatch is registered');
 
 step(5, 'Picking a watchOS simulator target');
-/** Reuse a booted watch sim if any; else boot the newest Apple Watch. */
+/** Tier function — Ultra beats Series 11 beats Series 10, etc. */
+const watchTier = (name) => {
+  const m = name.match(/Apple Watch (Series|Ultra)\s*(\d+)?/i);
+  if (!m) return -1;
+  return m[1].toLowerCase() === 'ultra' ? 1000 : parseInt(m[2] ?? '0', 10);
+};
+
+/**
+ * Reuse a booted watch sim if any; else boot an existing-but-shutdown
+ * sim; else CREATE one from the newest installed watch device type +
+ * runtime (Xcode ships device-types but doesn't create sim instances
+ * by default — first run after Xcode install needs the create step).
+ */
 function pickWatchSim() {
-  const out = capture('xcrun', ['simctl', 'list', 'devices', '-j'], {
+  const devicesJson = capture('xcrun', ['simctl', 'list', 'devices', '-j'], {
     allowFail: true,
   });
-  const parsed = JSON.parse(out);
+  const devices = JSON.parse(devicesJson);
+
   // 1. Already-booted watch wins.
-  for (const [runtime, list] of Object.entries(parsed.devices || {})) {
+  for (const [runtime, list] of Object.entries(devices.devices || {})) {
     if (!runtime.toLowerCase().includes('watch')) continue;
     for (const d of list) {
       if (d.state === 'Booted') {
@@ -116,32 +129,148 @@ function pickWatchSim() {
       }
     }
   }
-  // 2. Boot the newest available watch.
-  const candidates = [];
-  for (const [runtime, list] of Object.entries(parsed.devices || {})) {
+
+  // 2. Existing shutdown watch sims — boot the newest.
+  const existing = [];
+  for (const [runtime, list] of Object.entries(devices.devices || {})) {
     if (!runtime.toLowerCase().includes('watch')) continue;
     for (const d of list) {
       if (!d.isAvailable) continue;
-      const m = d.name.match(/Apple Watch (Series|Ultra)\s*(\d+)?/i);
-      if (!m) continue;
-      const series = m[1].toLowerCase() === 'ultra' ? 100 : parseInt(m[2] ?? '0', 10);
-      candidates.push({ ...d, series });
+      const tier = watchTier(d.name);
+      if (tier < 0) continue;
+      existing.push({ ...d, tier });
     }
   }
-  if (candidates.length === 0) {
-    warn('No watchOS simulators available.');
-    warn(
-      'Install one via Xcode → Settings → Platforms → watchOS, then create a sim in Device Manager.',
+  if (existing.length > 0) {
+    existing.sort((a, b) => b.tier - a.tier);
+    const pick = existing[0];
+    info(`booting existing sim: ${pick.name}…`);
+    run('xcrun', ['simctl', 'boot', pick.udid], { allowFail: true });
+    run('open', ['-a', 'Simulator'], { allowFail: true });
+    ok(`booted ${pick.name}`);
+    return pick.udid;
+  }
+
+  // 3. No sim instances — create one from the newest device-type + runtime.
+  info('no watch sims exist — creating one from installed device types');
+  let typesJson, runtimesJson;
+  try {
+    typesJson = JSON.parse(
+      capture('xcrun', ['simctl', 'list', 'devicetypes', '-j'], { allowFail: true }),
     );
+    runtimesJson = JSON.parse(
+      capture('xcrun', ['simctl', 'list', 'runtimes', '-j'], { allowFail: true }),
+    );
+  } catch (err) {
+    warn(`could not list watch types/runtimes: ${err.message}`);
     return null;
   }
-  candidates.sort((a, b) => b.series - a.series);
-  const pick = candidates[0];
-  info(`booting ${pick.name}…`);
-  run('xcrun', ['simctl', 'boot', pick.udid], { allowFail: true });
+
+  const watchTypes = (typesJson.devicetypes || [])
+    .filter((t) => t.identifier?.includes('Apple-Watch') && watchTier(t.name) >= 0)
+    .map((t) => ({ ...t, tier: watchTier(t.name) }))
+    .sort((a, b) => b.tier - a.tier);
+  const watchRuntimes = (runtimesJson.runtimes || [])
+    .filter((r) => r.isAvailable && r.platform === 'watchOS')
+    .sort((a, b) => {
+      // Newest runtime first — version is "10.4" / "11.2" etc.
+      const va = (a.version ?? '').split('.').map(Number);
+      const vb = (b.version ?? '').split('.').map(Number);
+      for (let i = 0; i < Math.max(va.length, vb.length); i++) {
+        const d = (vb[i] ?? 0) - (va[i] ?? 0);
+        if (d) return d;
+      }
+      return 0;
+    });
+
+  // Watch device types ship with Xcode but the watchOS RUNTIME is a
+  // separate ~5GB download. If types exist but runtime doesn't, kick off
+  // `xcodebuild -downloadPlatform watchOS` which is the modern (Xcode 15+)
+  // headless equivalent of clicking Xcode → Settings → Platforms → watchOS
+  // → GET. Runs in foreground so the user sees the download progress; on
+  // first run this takes 5-15 min depending on network. allowFail because
+  // download requires Apple ID auth in some configurations — if it can't
+  // download silently we fall through to the helpful error below.
+  if (watchTypes.length > 0 && watchRuntimes.length === 0) {
+    info('watch device types are installed but no watchOS runtime exists.');
+    info('Downloading watchOS runtime via `xcodebuild -downloadPlatform watchOS`…');
+    info('This is a ~5GB one-time download — expect 5-15 min on first run.');
+    const dl = run('xcodebuild', ['-downloadPlatform', 'watchOS'], {
+      allowFail: true,
+    });
+    if (dl?.status === 0) {
+      ok('watchOS runtime downloaded — re-scanning available runtimes');
+      // Re-parse runtimes after download.
+      try {
+        runtimesJson = JSON.parse(
+          capture('xcrun', ['simctl', 'list', 'runtimes', '-j'], { allowFail: true }),
+        );
+        watchRuntimes.length = 0;
+        for (const r of runtimesJson.runtimes || []) {
+          if (r.isAvailable && r.platform === 'watchOS') {
+            watchRuntimes.push(r);
+          }
+        }
+        watchRuntimes.sort((a, b) => {
+          const va = (a.version ?? '').split('.').map(Number);
+          const vb = (b.version ?? '').split('.').map(Number);
+          for (let i = 0; i < Math.max(va.length, vb.length); i++) {
+            const d = (vb[i] ?? 0) - (va[i] ?? 0);
+            if (d) return d;
+          }
+          return 0;
+        });
+      } catch {
+        /* fall through to error path */
+      }
+    } else {
+      warn(`xcodebuild -downloadPlatform exited ${dl?.status} — manual install needed`);
+    }
+  }
+
+  if (watchTypes.length === 0 || watchRuntimes.length === 0) {
+    warn(
+      `no watch device types (${watchTypes.length}) or runtimes (${watchRuntimes.length}) installed.`,
+    );
+    warn('Install manually:');
+    warn('  open -a Xcode and go to Settings → Platforms → watchOS → Get');
+    warn('  OR run: xcodebuild -downloadPlatform watchOS');
+    warn('  (~5GB download; may require Apple ID auth)');
+    return null;
+  }
+
+  const type = watchTypes[0];
+  const runtime = watchRuntimes[0];
+  const simName = `${type.name} (career-ops auto-created)`;
+  info(`creating sim: "${simName}" · type=${type.identifier} · runtime=${runtime.identifier}`);
+  const result = run('xcrun', ['simctl', 'create', simName, type.identifier, runtime.identifier], {
+    allowFail: true,
+  });
+  if (result?.status !== 0) {
+    warn(`simctl create failed (exit ${result?.status}) — see above`);
+    return null;
+  }
+  // Refresh the device list so we can find the new UDID by name.
+  const after = JSON.parse(capture('xcrun', ['simctl', 'list', 'devices', '-j']));
+  let newUdid = null;
+  for (const list of Object.values(after.devices || {})) {
+    for (const d of list) {
+      if (d.name === simName) {
+        newUdid = d.udid;
+        break;
+      }
+    }
+    if (newUdid) break;
+  }
+  if (!newUdid) {
+    warn('created sim but could not find its UDID — `xcrun simctl list devices` manually');
+    return null;
+  }
+  info(`booting newly-created sim: ${simName}…`);
+  run('xcrun', ['simctl', 'boot', newUdid], { allowFail: true });
   run('open', ['-a', 'Simulator'], { allowFail: true });
-  ok(`booted ${pick.name}`);
-  return pick.udid;
+  ok(`booted ${simName}`);
+  return newUdid;
 }
 
 const watchUdid = pickWatchSim();

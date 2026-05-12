@@ -12,6 +12,7 @@
 		3521FD15CAEE97D1B1F89B14 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18818E6F512F4FDB4E0E23 /* NetworkMonitor.swift */; };
 		39AE56D8D333DCE81A16A6D5 /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CA1675A1757C18B2FF09E0 /* ErrorReporter.swift */; };
 		3BCA8D89ECD906AE04F604E8 /* WatchSessionBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51CD8E57475622C06A0B72CA /* WatchSessionBridge.swift */; };
+		3EC41BCD48A909DCE62A32C7 /* CareerOpsWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 45A788CFF48FB162CF58655F /* CareerOpsWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
@@ -20,19 +21,51 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		5C7BEACB7A09695AF511E256 /* SpotlightIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8126D767BB835DA855B58552 /* SpotlightIndexer.swift */; };
+		61B92C376B6A0BFDE5B3A999 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B04DDA8861B187894F3581C1 /* Assets.xcassets */; };
 		6BB0F8A01827A3FF34261489 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0864100E15B7E184D1F89EC5 /* KeychainStore.swift */; };
+		7DBFA4641E2729F109B35EF2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27884949441377C8C7559A26 /* Foundation.framework */; };
 		A8C93FC3E1C6E5089E3AA399 /* BiometricAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9012709D08A85C7A9CEB2C91 /* BiometricAuth.swift */; };
+		B1166C2AFCE9CB88941BA785 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7738EEBCC31A28A769071A /* RootView.swift */; };
+		C362913F0191FC3C677CCE21 /* WatchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 604BE1F005FDB069FF3F1985 /* WatchModel.swift */; };
 		F1F394828835CCEEBB9D625C /* BonjourBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DA0F3C2FA120D4A573F42DD /* BonjourBrowser.swift */; };
 		F7767B589F14995F442A2D97 /* BackgroundFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2CB39CFF5FD8265A4264E6 /* BackgroundFetcher.swift */; };
 		FB144018EF447333F7EC2B37 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C73C9434A8B33AAD827E716 /* Brand.swift */; };
+		FEDC0D7E63F105A7E9D216B8 /* CareerOpsWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B6989861C5B4F1B0CDA0EC /* CareerOpsWatchApp.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		9173A2D5BF002BBA23F8E63A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B9F6220DFC7E8DBB5676EA3F;
+			remoteInfo = CareerOpsWatch;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		0E59F8CFC53D48EA6C430480 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				3EC41BCD48A909DCE62A32C7 /* CareerOpsWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		0864100E15B7E184D1F89EC5 /* KeychainStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		27884949441377C8C7559A26 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		2CE88770478FB968E108A903 /* CareerOpsNativePlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CareerOpsNativePlugin.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
+		39BFEFD4AB09C83E133FF2AC /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		3C73C9434A8B33AAD827E716 /* Brand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
 		3DA0F3C2FA120D4A573F42DD /* BonjourBrowser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BonjourBrowser.swift; sourceTree = "<group>"; };
+		45A788CFF48FB162CF58655F /* CareerOpsWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CareerOpsWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -42,15 +75,28 @@
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		51CD8E57475622C06A0B72CA /* WatchSessionBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSessionBridge.swift; sourceTree = "<group>"; };
+		604BE1F005FDB069FF3F1985 /* WatchModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchModel.swift; sourceTree = "<group>"; };
 		67CA1675A1757C18B2FF09E0 /* ErrorReporter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ErrorReporter.swift; sourceTree = "<group>"; };
 		8126D767BB835DA855B58552 /* SpotlightIndexer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SpotlightIndexer.swift; sourceTree = "<group>"; };
+		8D7738EEBCC31A28A769071A /* RootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		9012709D08A85C7A9CEB2C91 /* BiometricAuth.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BiometricAuth.swift; sourceTree = "<group>"; };
+		939AF9DEAE52F3A5D09A7C5A /* CareerOpsWatch.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = CareerOpsWatch.entitlements; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		B04DDA8861B187894F3581C1 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		DB2CB39CFF5FD8265A4264E6 /* BackgroundFetcher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackgroundFetcher.swift; sourceTree = "<group>"; };
 		DD18818E6F512F4FDB4E0E23 /* NetworkMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		F4B6989861C5B4F1B0CDA0EC /* CareerOpsWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CareerOpsWatchApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		20A80612CF00D8ABA3368D35 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7DBFA4641E2729F109B35EF2 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3011FED79650016851F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -62,12 +108,36 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1653866B61025599CDC07813 /* CareerOpsWatch */ = {
+			isa = PBXGroup;
+			children = (
+				F4B6989861C5B4F1B0CDA0EC /* CareerOpsWatchApp.swift */,
+				8D7738EEBCC31A28A769071A /* RootView.swift */,
+				604BE1F005FDB069FF3F1985 /* WatchModel.swift */,
+				B04DDA8861B187894F3581C1 /* Assets.xcassets */,
+				39BFEFD4AB09C83E133FF2AC /* Info.plist */,
+				939AF9DEAE52F3A5D09A7C5A /* CareerOpsWatch.entitlements */,
+			);
+			name = CareerOpsWatch;
+			path = CareerOpsWatch;
+			sourceTree = "<group>";
+		};
+		232370DDDB48A6D31A4A3979 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				D99AEA55A4EA093281BD5E41 /* watchOS */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
 				504EC3051FED79650016851F /* Products */,
+				232370DDDB48A6D31A4A3979 /* Frameworks */,
+				1653866B61025599CDC07813 /* CareerOpsWatch */,
 			);
 			sourceTree = "<group>";
 		};
@@ -75,6 +145,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				45A788CFF48FB162CF58655F /* CareerOpsWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -104,6 +175,14 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		D99AEA55A4EA093281BD5E41 /* watchOS */ = {
+			isa = PBXGroup;
+			children = (
+				27884949441377C8C7559A26 /* Foundation.framework */,
+			);
+			name = watchOS;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -114,10 +193,12 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
+				0E59F8CFC53D48EA6C430480 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				B69F1AF5210D34339CE1BD0E /* PBXTargetDependency */,
 			);
 			name = App;
 			packageProductDependencies = (
@@ -125,6 +206,23 @@
 			);
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B9F6220DFC7E8DBB5676EA3F /* CareerOpsWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AE6AE94044207BD70AC41749 /* Build configuration list for PBXNativeTarget "CareerOpsWatch" */;
+			buildPhases = (
+				7DA5C407F977890EBE30DA2F /* Sources */,
+				20A80612CF00D8ABA3368D35 /* Frameworks */,
+				721D28F8C60291C87C3B0588 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CareerOpsWatch;
+			productName = CareerOpsWatch;
+			productReference = 45A788CFF48FB162CF58655F /* CareerOpsWatch.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -160,6 +258,7 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				B9F6220DFC7E8DBB5676EA3F /* CareerOpsWatch */,
 			);
 		};
 /* End PBXProject section */
@@ -175,6 +274,14 @@
 				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		721D28F8C60291C87C3B0588 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				61B92C376B6A0BFDE5B3A999 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -199,7 +306,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7DA5C407F977890EBE30DA2F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FEDC0D7E63F105A7E9D216B8 /* CareerOpsWatchApp.swift in Sources */,
+				B1166C2AFCE9CB88941BA785 /* RootView.swift in Sources */,
+				C362913F0191FC3C677CCE21 /* WatchModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B69F1AF5210D34339CE1BD0E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = CareerOpsWatch;
+			target = B9F6220DFC7E8DBB5676EA3F /* CareerOpsWatch */;
+			targetProxy = 9173A2D5BF002BBA23F8E63A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -376,6 +502,55 @@
 			};
 			name = Release;
 		};
+		6B8390BDACB43B8CE74836C4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = CareerOpsWatch/CareerOpsWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CareerOpsWatch/Info.plist;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.watchkitapp;
+				PRODUCT_NAME = CareerOpsWatch;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchsimulator watchos";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		D110C9DBC43F73AEFFEDEE83 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = CareerOpsWatch/CareerOpsWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CareerOpsWatch/Info.plist;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.watchkitapp;
+				PRODUCT_NAME = CareerOpsWatch;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchsimulator watchos";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -393,6 +568,15 @@
 			buildConfigurations = (
 				504EC3171FED79650016851F /* Debug */,
 				504EC3181FED79650016851F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AE6AE94044207BD70AC41749 /* Build configuration list for PBXNativeTarget "CareerOpsWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D110C9DBC43F73AEFFEDEE83 /* Release */,
+				6B8390BDACB43B8CE74836C4 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
