@@ -23,10 +23,24 @@ import { ROOT } from '$lib/server/files';
 import { recordSuccess, recordFailure } from '$lib/server/sources';
 import { logEvent, reportServerError } from '$lib/server/events';
 import { writeEnv, readEnv } from '$lib/server/env';
+import { requireOwner } from '$lib/server/auth-helpers';
 
 export const POST = wrap(
   'sources-connect',
-  async ({ params, request }: { params: { id: string }; request: Request }) => {
+  async ({
+    params,
+    request,
+    locals,
+  }: {
+    params: { id: string };
+    request: Request;
+    locals: App.Locals;
+  }) => {
+    // Sources expose install-wide credentials (Anthropic/Gemini API keys,
+    // shared Playwright sessions, Gmail IMAP). Only the owner can
+    // change them; members must not be able to overwrite the install's
+    // billing-attached API keys or take over the LinkedIn cookie jar.
+    requireOwner(locals);
     const id = params.id;
     const body = await request.json().catch(() => ({}));
 

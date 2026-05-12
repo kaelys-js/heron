@@ -30,7 +30,10 @@
     Plug,
     Check,
     Cog,
+    Users as UsersIcon,
+    LogOut,
   } from '@lucide/svelte';
+  import { authClient } from '$lib/client/auth-client';
   import { page } from '$app/state';
   import { goto, invalidateAll } from '$app/navigation';
   import { onMount, onDestroy } from 'svelte';
@@ -564,6 +567,16 @@
   <Sidebar.Footer>
     <Sidebar.Menu>
       <Sidebar.MenuItem>
+        <Sidebar.MenuButton size="sm" isActive={isActive('/settings/users')} class="text-muted-foreground">
+          {#snippet child({ props })}
+            <a href="/settings/users" {...props}>
+              <UsersIcon class="size-4" />
+              <span>Users & invites</span>
+            </a>
+          {/snippet}
+        </Sidebar.MenuButton>
+      </Sidebar.MenuItem>
+      <Sidebar.MenuItem>
         <Sidebar.MenuButton size="sm" isActive={isActive('/help')} class="text-muted-foreground">
           {#snippet child({ props })}
             <a href="/help" {...props}>
@@ -571,6 +584,19 @@
               <span>Help</span>
             </a>
           {/snippet}
+        </Sidebar.MenuButton>
+      </Sidebar.MenuItem>
+      <Sidebar.MenuItem>
+        <Sidebar.MenuButton
+          size="sm"
+          class="text-muted-foreground"
+          onclick={async () => {
+            await authClient.signOut();
+            await goto('/login', { invalidateAll: true });
+          }}
+        >
+          <LogOut class="size-4" />
+          <span>Sign out</span>
         </Sidebar.MenuButton>
       </Sidebar.MenuItem>
     </Sidebar.Menu>

@@ -1,19 +1,31 @@
 /**
  * Backup + restore module.
  *
- * What's backed up (scope = "user data only"):
- *   data/profiles/                — every profile dir (cv.md, profile.yml,
- *                                   _profile.md, portals.yml, applications.md,
- *                                   pipeline.md, scan-history.tsv,
- *                                   gemini-scores.tsv, follow-ups.md,
- *                                   reports/, output/, interview-prep/)
- *   data/profiles.json            — active-profile pointer + profile list
- *   data/sources.json             — scanner config (across profiles)
- *   data/autopilot.json           — schedule + thresholds
- *   data/issues.jsonl             — open issues (Inbox)
- *   data/activity.jsonl           — activity feed (small + useful)
- *   data/onboarding-state.json    — onboarding progress
- *   interview-prep/story-bank.md  — shared STAR+R bank
+ * Multi-user: backups now capture EVERY user's data tree (not just the
+ * legacy `data/profiles/`) plus both SQLite files. The owner is the only
+ * person who can trigger a backup, and a restore overwrites everything.
+ *
+ * What's backed up:
+ *   data/users/                   — every user's content tree:
+ *                                   data/users/{userId}/profiles/{slug}/{cv.md,
+ *                                   profile.yml, _profile.md, portals.yml,
+ *                                   applications.md, pipeline.md,
+ *                                   scan-history.tsv, gemini-scores.tsv,
+ *                                   follow-ups.md, reports/, output/,
+ *                                   interview-prep/}
+ *   data/users/.legacy-claimed    — which user inherited legacy single-user data
+ *   data/profiles/                — legacy single-user content (still
+ *                                   populated until full DB migration lands;
+ *                                   captured for safety)
+ *   data/profiles.json            — legacy active-profile pointer
+ *   data/auth.db                  — every user + session + passkey
+ *   data/app.db                   — every per-user app row
+ *   data/sources.json             — scanner config (install-wide)
+ *   data/autopilot.json           — schedule + thresholds (install-wide)
+ *   data/issues.jsonl             — open issues (per-user filtered at read time)
+ *   data/activity.jsonl           — activity feed (per-user filtered)
+ *   data/onboarding-state.json    — onboarding progress (install-wide)
+ *   interview-prep/story-bank.md  — shared STAR+R bank (install-wide)
  *
  * What's NOT backed up:
  *   .env                          — credentials (deliberate; scope (a))
@@ -22,6 +34,7 @@
  *   .git/                         — version control
  *   data/backups/                 — recursion guard
  *   data/apply-state/             — transient runtime state
+ *   data/*.db-{wal,shm,journal}   — SQLite runtime journals
  *   ui/build/, ui/.svelte-kit/    — build artifacts
  *
  * Storage layout:
@@ -56,8 +69,15 @@ const BACKUPS_DIR = path.join(ROOT, 'data', 'backups');
 // missing entries are skipped silently (fresh installs may not have
 // all files yet).
 const INCLUDE_PATHS = [
+  // Multi-user trees (new layout).
+  'data/users',
+  'data/auth.db',
+  'data/app.db',
+  // Legacy single-user layout (preserved until full DB migration lands so
+  // pre-multi-user installs can still be backed up & restored).
   'data/profiles',
   'data/profiles.json',
+  // Install-wide shared infra.
   'data/sources.json',
   'data/autopilot.json',
   'data/issues.jsonl',
@@ -75,6 +95,12 @@ const EXCLUDE_PATTERNS = [
   '.git',
   'data/backups',
   'data/apply-state',
+  // SQLite runtime journals — restoring these without the main db file
+  // is catastrophic. The db file itself IS included; the wal/shm get
+  // recreated on next open.
+  '*.db-wal',
+  '*.db-shm',
+  '*.db-journal',
   'ui/build',
   'ui/.svelte-kit',
 ];
@@ -152,21 +178,33 @@ function timestampId(d: Date = new Date()): string {
     .replace(/-\d{3}Z$/, 'Z');
 }
 
-/** List which profile slugs the backup is going to capture. Used by the
- *  metadata sidecar so the restore confirmation can show "these 2 profiles
- *  will be overwritten" before the destructive action. */
-function listProfileSlugs(): string[] {
-  const dir = path.join(ROOT, 'data', 'profiles');
+/** Inventory of what the backup is going to capture. Used by the
+ *  metadata sidecar so the restore confirmation can show "these 3 users
+ *  with 5 profiles will be overwritten" before the destructive action. */
+function listBackupInventory(): { users: string[]; legacyProfiles: string[] } {
+  const users: string[] = [];
+  const legacyProfiles: string[] = [];
+  // Multi-user: data/users/{userId}/profiles/{slug}/...
+  const usersRoot = path.join(ROOT, 'data', 'users');
   try {
-    if (!fs.existsSync(dir)) return [];
-    return fs
-      .readdirSync(dir, { withFileTypes: true })
-      .filter((d) => d.isDirectory())
-      .map((d) => d.name)
-      .sort();
-  } catch {
-    return [];
-  }
+    if (fs.existsSync(usersRoot)) {
+      for (const entry of fs.readdirSync(usersRoot, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+        if (entry.name.startsWith('.')) continue;
+        users.push(entry.name);
+      }
+    }
+  } catch {}
+  // Legacy single-user: data/profiles/{slug}/...
+  const legacyRoot = path.join(ROOT, 'data', 'profiles');
+  try {
+    if (fs.existsSync(legacyRoot)) {
+      for (const entry of fs.readdirSync(legacyRoot, { withFileTypes: true })) {
+        if (entry.isDirectory()) legacyProfiles.push(entry.name);
+      }
+    }
+  } catch {}
+  return { users: users.sort(), legacyProfiles: legacyProfiles.sort() };
 }
 
 /** Count files that will actually go into the tarball. Used for the
@@ -210,6 +248,12 @@ function writeSidecar(
   payload: {
     fileCount: number;
     profiles: string[];
+    /** New: every user id captured in the tarball. */
+    users?: string[];
+    /** New: schema versions of the captured SQLite DBs, used by the
+     *  restore UI to warn if it's restoring an older snapshot than the
+     *  current install schema. */
+    schemaVersions?: { auth?: number; app?: number };
     app?: string;
   },
 ): void {
@@ -222,6 +266,36 @@ function readVersion(): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+/** Snapshot the on-disk schema_version rows from both SQLite DBs. We use
+ *  the singleton handles from db/index.ts which are already open under
+ *  WAL mode — the read is sub-millisecond and doesn't block writers. */
+function readSchemaVersions(): { auth?: number; app?: number } {
+  const out: { auth?: number; app?: number } = {};
+  try {
+    // Local import so this module doesn't pull the SQLite singleton at
+    // load time (some test paths spin up backup.ts before db/ is ready).
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const dbMod = require('./db') as typeof import('./db');
+    const handles: Array<['auth' | 'app', typeof dbMod.authSqliteHandle]> = [
+      ['auth', dbMod.authSqliteHandle],
+      ['app', dbMod.appSqliteHandle],
+    ];
+    for (const [key, handle] of handles) {
+      try {
+        const row = handle.prepare("SELECT value FROM schema_meta WHERE key = 'version'").get() as
+          | { value?: string }
+          | undefined;
+        if (row?.value) out[key] = parseInt(row.value, 10);
+      } catch {
+        /* tables may not exist yet on a fresh install — non-fatal */
+      }
+    }
+  } catch {
+    /* db module not loadable in this context — non-fatal */
+  }
+  return out;
 }
 
 /** Create a new tarball under data/backups/. Returns the result + prunes
@@ -244,7 +318,8 @@ export async function createBackup(): Promise<CreateBackupResult> {
   for (const pat of EXCLUDE_PATTERNS) args.push('--exclude=' + pat);
   args.push('-C', ROOT, ...presentTargets);
 
-  const profiles = listProfileSlugs();
+  const inventory = listBackupInventory();
+  const profiles = [...inventory.legacyProfiles]; // sidecar back-compat field
   const fileCount = countIncludedFiles();
   const startedAt = Date.now();
 
@@ -277,7 +352,13 @@ export async function createBackup(): Promise<CreateBackupResult> {
       try {
         size = fs.statSync(tarPath).size;
       } catch {}
-      writeSidecar(metaPath, { fileCount, profiles, app: readVersion() });
+      writeSidecar(metaPath, {
+        fileCount,
+        profiles,
+        users: inventory.users,
+        schemaVersions: readSchemaVersions(),
+        app: readVersion(),
+      });
 
       // Prune old backups.
       const pruned = pruneOldBackups();

@@ -1,38 +1,61 @@
 """
-lib_profiles.py — Shared profile-path helpers for Python scanners.
+lib_profiles.py — Shared user+profile-path helpers for Python scripts.
 
-Mirrors the SvelteKit `lib/server/profile-paths.ts` API. Every Python
-scanner / scoring / apply script imports this to resolve per-profile
-file paths.
+Mirrors the SvelteKit `lib/server/profile-paths.ts` and `lib-profiles.mjs`
+APIs. Every Python scanner / scoring / apply script imports this to
+resolve per-user, per-profile file paths.
+
+MULTI-USER LAYOUT:
+
+    data/users/{user_id}/profiles/{slug}/cv.md
+    data/users/{user_id}/profiles/{slug}/profile.yml
+    data/users/{user_id}/profiles/{slug}/portals.yml
+    data/users/{user_id}/profiles/{slug}/applications.md
+    …
+
+LEGACY SINGLE-USER LAYOUT (still works for pre-multi-user installs):
+
+    data/profiles/{slug}/cv.md
+    …
+
+Scripts get the user id from the dashboard via either:
+  * --user <userId>            CLI flag (preferred)
+  * CAREER_OPS_USER_ID env var (set by the orchestrator when it spawns)
+
+When neither is set, lib_profiles falls back to the legacy `data/profiles/`
+root. This lets old single-user workflows keep working.
 
 Usage:
 
     from lib_profiles import (
-        get_active_profile_id, profile_path, ensure_profile_dirs,
-        resolve_profile_arg,
+        resolve_user_arg, resolve_profile_arg, profile_path,
     )
 
-    # In argparse setup:
-    parser.add_argument('--profile', default=None,
-                        help='Profile slug; defaults to active profile.')
+    parser.add_argument('--profile', default=None)
+    parser.add_argument('--user', default=None)
     args = parser.parse_args()
 
-    pid = resolve_profile_arg(args.profile)
-    cv_md = profile_path(pid, 'cv-md')
-
-The single source of truth for which profile is "active" is
-`data/profiles.json` written by the dashboard's profiles.ts module.
+    user_id = resolve_user_arg(args.user)
+    profile_id = resolve_profile_arg(args.profile)
+    cv_md = profile_path(profile_id, 'cv-md', user_id=user_id)
 """
 
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 PROFILES_JSON = ROOT / "data" / "profiles.json"
-PROFILES_ROOT = ROOT / "data" / "profiles"
+LEGACY_PROFILES_ROOT = ROOT / "data" / "profiles"
+USERS_ROOT = ROOT / "data" / "users"
+
+# Mirror of SYSTEM_USER_ID in user-context.ts. When the script is invoked
+# without --user (legacy single-user mode), this is what `resolve_user_arg`
+# returns, and `_user_profiles_root` maps it back to LEGACY_PROFILES_ROOT.
+SYSTEM_USER_ID = "__system__"
 
 # Mirror of ProfileFileKind in profile-paths.ts. Keep in sync.
 PROFILE_FILE_KINDS = {
@@ -53,6 +76,14 @@ PROFILE_FILE_KINDS = {
     "output-dir": "output",
     "interview-prep-dir": "interview-prep",
 }
+
+
+def _user_profiles_root(user_id: str) -> Path:
+    """Where this user's profile tree lives. SYSTEM_USER_ID maps to the
+    legacy `data/profiles/` root so single-user mode still works."""
+    if user_id == SYSTEM_USER_ID:
+        return LEGACY_PROFILES_ROOT
+    return USERS_ROOT / user_id / "profiles"
 
 
 def read_profiles() -> dict:
@@ -78,25 +109,41 @@ def list_profile_ids() -> list[str]:
     return [p["id"] for p in read_profiles().get("profiles", []) if "id" in p]
 
 
-def profile_path(profile_id: str, kind: str) -> Path:
-    """Resolve a per-profile file/dir path. Mirrors profile-paths.ts."""
+def profile_path(profile_id: str, kind: str, *, user_id: str = SYSTEM_USER_ID) -> Path:
+    """Resolve a per-user, per-profile file/dir path. Mirrors profile-paths.ts."""
     if not profile_id or not isinstance(profile_id, str):
         raise ValueError(f"profile_path: profile_id required (got {profile_id!r})")
     if "/" in profile_id or "\\" in profile_id or ".." in profile_id:
-        raise ValueError(f"profile_path: invalid profile_id (path traversal): {profile_id!r}")
+        raise ValueError(
+            f"profile_path: invalid profile_id (path traversal): {profile_id!r}"
+        )
+    if not user_id or not isinstance(user_id, str):
+        raise ValueError(f"profile_path: user_id required (got {user_id!r})")
+    if "/" in user_id or "\\" in user_id or ".." in user_id:
+        raise ValueError(f"profile_path: invalid user_id (path traversal): {user_id!r}")
     if kind not in PROFILE_FILE_KINDS:
-        raise ValueError(f"profile_path: unknown kind {kind!r}. Valid: {sorted(PROFILE_FILE_KINDS)}")
-    base = PROFILES_ROOT / profile_id
+        raise ValueError(
+            f"profile_path: unknown kind {kind!r}. Valid: {sorted(PROFILE_FILE_KINDS)}"
+        )
+    base = _user_profiles_root(user_id) / profile_id
     rel = PROFILE_FILE_KINDS[kind]
     return base if rel == "" else base / rel
 
 
-def ensure_profile_dirs(profile_id: str) -> None:
+def ensure_profile_dirs(profile_id: str, *, user_id: str = SYSTEM_USER_ID) -> None:
     """Make sure the profile directory + standard subdirs exist. Idempotent."""
-    profile_path(profile_id, "profile-dir").mkdir(parents=True, exist_ok=True)
-    profile_path(profile_id, "reports-dir").mkdir(parents=True, exist_ok=True)
-    profile_path(profile_id, "output-dir").mkdir(parents=True, exist_ok=True)
-    profile_path(profile_id, "interview-prep-dir").mkdir(parents=True, exist_ok=True)
+    profile_path(profile_id, "profile-dir", user_id=user_id).mkdir(
+        parents=True, exist_ok=True
+    )
+    profile_path(profile_id, "reports-dir", user_id=user_id).mkdir(
+        parents=True, exist_ok=True
+    )
+    profile_path(profile_id, "output-dir", user_id=user_id).mkdir(
+        parents=True, exist_ok=True
+    )
+    profile_path(profile_id, "interview-prep-dir", user_id=user_id).mkdir(
+        parents=True, exist_ok=True
+    )
 
 
 def resolve_profile_arg(value: str | None) -> str:
@@ -110,5 +157,21 @@ def resolve_profile_arg(value: str | None) -> str:
             f"ERROR: unknown profile {value!r}. Known: {known}",
             file=sys.stderr,
         )
+        sys.exit(2)
+    return value
+
+
+def resolve_user_arg(value: str | None = None) -> str:
+    """Resolve a CLI --user arg or CAREER_OPS_USER_ID env var. Returns
+    SYSTEM_USER_ID when neither is set (legacy single-user fallback)."""
+    if value is None:
+        value = os.environ.get("CAREER_OPS_USER_ID")
+    if not value:
+        return SYSTEM_USER_ID
+    if not isinstance(value, str):
+        print(f"ERROR: --user must be a string, got {type(value)}", file=sys.stderr)
+        sys.exit(2)
+    if "/" in value or "\\" in value or ".." in value:
+        print(f"ERROR: --user has invalid characters: {value!r}", file=sys.stderr)
         sys.exit(2)
     return value

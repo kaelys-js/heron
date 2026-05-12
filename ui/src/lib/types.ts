@@ -253,6 +253,11 @@ export type ActivityEvent = {
   message?: string;
   link?: string;
   read?: boolean;
+  /** User id this event belongs to (multi-user isolation). Omitted for
+   *  truly system-wide events like server start, migration runs, etc.
+   *  When omitted, every authenticated user sees the event in their
+   *  feed (it's broadcast). */
+  userId?: string;
   /** Profile slug this event originated in (when the event is profile-scoped).
    *  Cross-profile events (autopilot tick, IMAP daemon, migration) omit this
    *  so the activity feed can distinguish "shared infra" from "this profile". */
@@ -286,6 +291,9 @@ export type Issue = {
   /** Resolution timestamp. Resolved issues stay in the file (audit trail) but
    *  drop off the open-list. */
   resolvedAt?: number;
+  /** User this issue belongs to. Omitted for system-wide issues (server
+   *  start, migration, etc.) that every authenticated user should see. */
+  userId?: string;
 };
 
 export type SortKey = 'score-desc' | 'score-asc' | 'date-desc' | 'company-asc';

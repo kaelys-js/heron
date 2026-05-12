@@ -182,8 +182,17 @@ function legacyLayoutDetected(): boolean {
 }
 
 /**
- * Run the migration if needed. Safe to call on every boot — exits early
- * when profiles.json already exists AND no legacy files remain.
+ * Run the legacy single-user → multi-profile migration if needed. Safe to
+ * call on every boot — exits early when profiles.json already exists AND
+ * no legacy files remain.
+ *
+ * Multi-user note: this only handles the pre-multi-user → single-default-
+ * profile migration. The legacy data ends up under `data/profiles/default/`.
+ * Once a real user account is created, `profiles-db.ts:maybeMigrateLegacy()`
+ * copies that tree into `data/users/{ownerUserId}/profiles/default/` (the
+ * "first user inherits" pattern). This function on its own never creates
+ * per-user data — it only sets up the legacy single-user tree as a staging
+ * area for the first signup to inherit.
  */
 export function migrateToMultiProfile(): { migrated: boolean; result?: MoveResult } {
   const profilesJsonExists = fs.existsSync(PROFILES_JSON);
@@ -198,6 +207,10 @@ export function migrateToMultiProfile(): { migrated: boolean; result?: MoveResul
   //  - Partially-migrated install (profiles.json exists but legacy files
   //    leaked back somehow — unusual but the recursive backup-and-move
   //    handles it idempotently)
+  // ensureProfileDirs() with no user context falls back to SYSTEM_USER_ID,
+  // which `userProfilesRoot` maps back to the legacy `data/profiles/` root.
+  // That's the right place for the migration to land — `profiles-db.ts`
+  // copies from there into a real user's tree on first signup.
   ensureProfileDirs(DEFAULT_PROFILE_ID);
 
   const result: MoveResult = { moved: [], backedUp: [], skipped: [], errors: [] };

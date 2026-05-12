@@ -1,35 +1,29 @@
 /**
- * Reset of the user's profile and/or the job-search tracker.
+ * Reset of the user's profile and/or the job-search tracker (DANGER ZONE).
  *
- * Body: { confirm: 'RESET'; scope?: 'profile' | 'jobs' | 'everything' }
- *   scope='profile'    (default) — wipes profile.yml + cv.md + modes/_profile.md
- *                                   for the target profile only. Tracker /
- *                                   pipeline / sources / reports / shared
- *                                   infra PRESERVED.
- *   scope='jobs'                 — wipes the target profile's job-search
- *                                   artifacts (applications, pipeline, scan
- *                                   history, gemini scores, reports, output
- *                                   PDFs, follow-ups, interview-prep company
- *                                   files). Profile + CV + targeting + shared
- *                                   infra PRESERVED.
- *   scope='everything'           — strict superset: everything in 'profile'
- *                                   AND 'jobs', plus this profile's
- *                                   projects.json AND shared infrastructure
- *                                   (autopilot.json reset to defaults,
- *                                   activity.jsonl truncated, job-last-run.json
- *                                   deleted, apply-counter.json deleted,
- *                                   interview-prep/story-bank.md deleted).
+ * RBAC:
+ *   • `scope='profile'` and `scope='jobs'` — per-user. Members can reset
+ *     THEIR OWN profile or job data. We verify ownership: the profileId
+ *     must belong to `locals.user.id` or we return 403.
+ *   • `scope='everything'` — strictly destructive: blows away install-wide
+ *     shared infra (autopilot.json, activity.jsonl, story-bank.md,
+ *     onboarding-state.json, apply-counter.json). OWNER-ONLY — a member
+ *     resetting "everything" would wipe other users' data.
  *
- * All modes back up every modified file to `<path>.bak` before overwriting
- * so the user can recover by hand. The endpoint NEVER touches the user's
- * .env (API keys), .venv (Python deps), or source code.
+ * Body: { confirm: 'RESET'; scope?: 'profile' | 'jobs' | 'everything'; profileId?: string }
+ *
+ * All modes back up every modified file to `<path>.bak` before overwriting.
+ * The endpoint NEVER touches .env (API keys), .venv (Python deps), or
+ * source code.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { error } from '@sveltejs/kit';
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resetProfile, type ResetScope } from '$lib/server/profile';
-import { getActiveProfileId, getProfile } from '$lib/server/profiles';
+import { getActiveProfile, getProfileBySlug } from '$lib/server/profiles-db';
+import { requireUserId, requireOwner } from '$lib/server/auth-helpers';
 import { ROOT } from '$lib/server/files';
 import { logEvent } from '$lib/server/events';
 
@@ -39,7 +33,8 @@ const ONBOARDING_STATE = path.join(ROOT, 'data', 'onboarding-state.json');
 
 export const POST = wrap(
   'profile-reset',
-  async ({ request, url }: { request: Request; url: URL }) => {
+  async ({ request, url, locals }: { request: Request; url: URL; locals: App.Locals }) => {
+    const userId = requireUserId(locals);
     const body = (await request.json().catch(() => null)) as {
       confirm?: string;
       scope?: string;
@@ -54,22 +49,35 @@ export const POST = wrap(
     const requested = body.scope as ResetScope | undefined;
     const scope: ResetScope = requested && VALID_SCOPES.has(requested) ? requested : 'profile';
 
-    // SAFETY: the body or URL can name an explicit target profile. If the user
-    // is viewing /profile?profile=B and clicks reset, this MUST wipe B not the
-    // currently-active profile A. Body field wins over query so the
-    // ResetProfileDialog (which already knows the profile from data) can pass
-    // it through unambiguously.
+    // `everything` wipes shared infra — strictly owner-only.
+    if (scope === 'everything') {
+      requireOwner(locals);
+    }
+
+    // Resolve the target profile + verify it belongs to the acting user.
     const queryProfile = url.searchParams.get('profile') ?? undefined;
     const explicit = body.profileId || queryProfile;
-    const profileId = explicit && getProfile(explicit) ? explicit : getActiveProfileId();
+    let profileSlug: string;
+    if (explicit && getProfileBySlug(userId, explicit)) {
+      profileSlug = explicit;
+    } else if (!explicit) {
+      profileSlug = getActiveProfile(userId)?.slug ?? 'default';
+    } else {
+      // Explicit slug was given but doesn't exist under this user. Either it
+      // belongs to someone else or it's stale — either way refuse rather
+      // than silently retargeting their default.
+      throw error(403, `Profile "${explicit}" does not belong to you`);
+    }
 
-    const result = resetProfile(profileId, scope);
+    const result = resetProfile(profileSlug, scope);
 
     // Optional onboarding-state reset. The dialog exposes a checkbox; the
-    // 'everything' scope force-on it. State file is shared infrastructure, so
-    // it's backed up to .bak before deletion.
+    // 'everything' scope force-on it (owner gate already passed). State
+    // file is shared infrastructure.
     const resetOnboarding = body.resetOnboarding === true || scope === 'everything';
     if (resetOnboarding && fs.existsSync(ONBOARDING_STATE)) {
+      // Onboarding reset is shared-state — owner-only.
+      requireOwner(locals);
       try {
         fs.copyFileSync(ONBOARDING_STATE, ONBOARDING_STATE + '.bak');
         result.backups.push(ONBOARDING_STATE + '.bak');
@@ -100,12 +108,12 @@ export const POST = wrap(
         'Pipeline, applications, reports, projects, autopilot, activity feed, and story bank all wiped (with .bak siblings).',
     };
 
-    logEvent('profile-reset', titles[scope] + ' · ' + profileId, {
+    logEvent('profile-reset', titles[scope] + ' · ' + profileSlug, {
       level: 'warn',
       category: 'user',
       message:
         'profile=' +
-        profileId +
+        profileSlug +
         ' · ' +
         result.resetFiles.length +
         ' file(s) reset · ' +
