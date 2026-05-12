@@ -76,14 +76,43 @@ function readGeneralCv(profileId: string): string {
 }
 
 function readTailoredPdfMarkdown(profileId: string, pdfFile: string): string {
-  // The tailored CV is generated as markdown then rendered to PDF.
-  // The markdown sibling lives next to the PDF if it was saved.
+  // The tailored CV is generated as markdown then rendered to PDF. As of
+  // pdf-mode update, the markdown sibling lives next to the PDF. For PDFs
+  // generated BEFORE that update, we fall back to: (a) the HTML in /tmp
+  // (often deleted), (b) the cover-letter sibling (less precise but
+  // still useful for keyword tracking).
   try {
     const p = path.join(ROOT, pdfFile);
     const mdPath = p.replace(/\.pdf$/, '.md');
     if (fs.existsSync(mdPath)) return fs.readFileSync(mdPath, 'utf8');
+    // Fallback: the cover-letter sibling often has the same JD keywords.
+    const coverPath = p.replace(/\.pdf$/, '-cover.md');
+    if (fs.existsSync(coverPath)) return fs.readFileSync(coverPath, 'utf8');
   } catch {}
   return '';
+}
+
+/** Diagnostic: count how many PDFs in the profile's output dir DO have
+ *  the .md sibling. The CV-variant analysis page surfaces this so users
+ *  understand WHY they might be seeing "not enough data." */
+export function preservationStats(profileId: string): { withMd: number; withoutMd: number; total: number } {
+  let withMd = 0, withoutMd = 0;
+  const out = { withMd: 0, withoutMd: 0, total: 0 };
+  let outDir: string;
+  try { outDir = profilePath(profileId, 'output-dir'); } catch { return out; }
+  if (!fs.existsSync(outDir)) return out;
+  let entries: string[];
+  try { entries = fs.readdirSync(outDir); } catch { return out; }
+  for (const f of entries) {
+    if (!f.endsWith('.pdf')) continue;
+    if (f.startsWith('cv-general')) continue;
+    out.total++;
+    const mdPath = path.join(outDir, f.replace(/\.pdf$/, '.md'));
+    if (fs.existsSync(mdPath)) withMd++; else withoutMd++;
+  }
+  out.withMd = withMd;
+  out.withoutMd = withoutMd;
+  return out;
 }
 
 function bucketScore(score: number | undefined): string {

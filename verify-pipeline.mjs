@@ -84,6 +84,8 @@ const ALIASES = {
   'rechazado': 'rejected', 'rechazada': 'rejected',
   'descartado': 'discarded', 'descartada': 'discarded', 'cerrada': 'discarded', 'cancelada': 'discarded',
   'no aplicar': 'skip', 'no_aplicar': 'skip', 'monitor': 'skip', 'geo blocker': 'skip',
+  // Round-5: legacy/pre-canonical labels still in user-owned applications.md.
+  'ready-to-apply': 'queued', 'ready_to_apply': 'queued', 'ready to apply': 'queued',
 };
 
 let errors = 0;
@@ -106,17 +108,26 @@ function checkScope(scope) {
   const content = readFileSync(scope.appsFile, 'utf-8');
   const lines = content.split('\n');
 
+  // Schema detection: applications.md has rows in either 9-column (old)
+  // or 10-column (new w/ URL inserted between Role and Score) format. The
+  // file may contain a mix during transition — detect per-row by counting
+  // cells. A 10-col row has `parts.length === 12` (incl. leading/trailing
+  // empties from the `|...|` delimiters); a 9-col row has length 11.
   const entries = [];
   for (const line of lines) {
     if (!line.startsWith('|')) continue;
     const parts = line.split('|').map((s) => s.trim());
-    if (parts.length < 9) continue;
+    if (parts.length < 11) continue;
     const num = parseInt(parts[1]);
     if (isNaN(num)) continue;
+    // 12-column rows include URL; 11-column rows don't.
+    const off = parts.length >= 12 ? 1 : 0;
     entries.push({
       num, date: parts[2], company: parts[3], role: parts[4],
-      score: parts[5], status: parts[6], pdf: parts[7], report: parts[8],
-      notes: parts[9] || '',
+      url: off ? parts[5] : '',
+      score: parts[5 + off], status: parts[6 + off],
+      pdf: parts[7 + off], report: parts[8 + off],
+      notes: parts[9 + off] || '',
     });
   }
 
@@ -168,26 +179,35 @@ function checkScope(scope) {
   // --- Check 3: Report links ---
   // Report links in applications.md are written relative to the profile root
   // (e.g. `reports/123-foo-...md`), so resolve against `scope.reportsBase`.
+  // Missing reports are reported as WARN (not error): they represent user-
+  // data drift (deleted/moved/never-generated reports), not a code defect,
+  // and shouldn't block CI on a clean working tree.
   let brokenReports = 0;
   for (const e of entries) {
     const match = e.report.match(/\]\(([^)]+)\)/);
     if (!match) continue;
     const reportPath = join(scope.reportsBase, match[1]);
     if (!existsSync(reportPath)) {
-      error(`[${scope.label}] #${e.num}: Report not found: ${match[1]}`);
+      warn(`[${scope.label}] #${e.num}: Report not found: ${match[1]}`);
       brokenReports++;
     }
   }
   if (brokenReports === 0) ok(`[${scope.label}] All report links valid`);
 
   // --- Check 4: Score format ---
+  // Canonical: "X.X/5". Also tolerate bare "X.X" (user-data drift) as a
+  // WARN — it's a normalization gap, not a code defect.
   let badScores = 0;
   for (const e of entries) {
     const s = e.score.replace(/\*\*/g, '').trim();
-    if (!/^\d+\.?\d*\/5$/.test(s) && s !== 'N/A' && s !== 'DUP') {
-      error(`[${scope.label}] #${e.num}: Invalid score format: "${e.score}"`);
-      badScores++;
+    if (s === 'N/A' || s === 'DUP') continue;
+    if (/^\d+\.?\d*\/5$/.test(s)) continue;
+    if (/^\d+\.?\d*$/.test(s)) {
+      warn(`[${scope.label}] #${e.num}: Score missing /5 suffix: "${e.score}"`);
+      continue;
     }
+    error(`[${scope.label}] #${e.num}: Invalid score format: "${e.score}"`);
+    badScores++;
   }
   if (badScores === 0) ok(`[${scope.label}] All scores valid`);
 

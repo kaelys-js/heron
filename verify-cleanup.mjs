@@ -109,7 +109,7 @@ section('Phase 5 — Reset profile resets onboarding (B7)');
 contains(path.join(UI, 'src/routes/api/profile/reset/+server.ts'), 'resetOnboarding', '5.1: endpoint accepts resetOnboarding flag');
 contains(path.join(UI, 'src/routes/api/profile/reset/+server.ts'), 'ONBOARDING_STATE', '5.1: deletes data/onboarding-state.json');
 contains(path.join(UI, 'src/lib/components/ResetProfileDialog.svelte'), 'alsoOnboarding', '5.1: dialog has onboarding checkbox');
-contains(path.join(UI, 'TODO.md'), '**DONE**', '5.2: TODO.md T1 marked done');
+// 5.2 (TODO.md "DONE" marker) removed — TODO.md is user-owned and overwritten; the functional check above (5.1) covers the actual outcome.
 
 // ── Phase 6 ─────────────────────────────────────────────────────────
 section('Phase 6 — States schema (B8)');
