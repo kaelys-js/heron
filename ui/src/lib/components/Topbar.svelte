@@ -313,7 +313,10 @@
   `app-shell-topbar` opts this element out of the page-content view transition
   (see app.css) so the topbar stays put while only the content below fades.
 -->
-<div class="app-shell-topbar sticky top-0 z-30 flex flex-col bg-card/85 backdrop-blur-md">
+<!-- `pt-safe` on the sticky wrapper means the topbar's first row sits below
+     the iOS notch / Dynamic Island. The negative-margin on the header
+     would have pulled it back UP under the notch; we want it pushed DOWN. -->
+<div class="app-shell-topbar pt-safe sticky top-0 z-30 flex flex-col bg-card/85 backdrop-blur-md">
   <header class="flex h-14 items-center gap-3 border-b px-4">
     <Sidebar.Trigger class="-ml-1" />
     <div class="flex items-center gap-2 text-sm flex-1 min-w-0">
