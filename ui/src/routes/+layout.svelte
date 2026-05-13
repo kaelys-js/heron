@@ -118,12 +118,20 @@
     // perception beat, then fades to the app cleanly.
     //
     // BOOT_FALLBACK_MIN_MS is the minimum delay from layout-mount to
-    // splash-hide. Hydration on a hot WebView finishes in <200ms so
-    // 300ms is plenty to ensure rendering has settled (vs the previous
-    // 700ms which felt sluggish on cold launches).
-    const BOOT_FALLBACK_MIN_MS = 300;
-    const SPLASH_FADE_MS = 180; // iOS-native quick crossfade
-    const BOOT_PERCEPTION_MS = 500; // user briefly sees boot-fallback alone
+    // splash-hide. Measured: on a cold WKWebView launch in production
+    // mode, the WebView takes ~900-1100ms to FULLY paint the boot-
+    // fallback's bloom gradient + glow filter — even though hydration
+    // itself finishes in <200ms. Hiding the splash sooner means the
+    // user sees a black "gap" while the WebView is still compositing.
+    // 1100ms covers the slow path; the splash shares the same
+    // #0a0a0b bg as the boot-fallback, so this just feels like a
+    // longer brand-dark splash rather than a delay.
+    const BOOT_FALLBACK_MIN_MS = 1100;
+    // Instant splash hide — the boot-fallback's bg is IDENTICAL to the
+    // splash's bg (both #0a0a0b, both already painted), so a fade-out
+    // is just visual noise. 0ms = immediate cut, invisible to the eye.
+    const SPLASH_FADE_MS = 0;
+    const BOOT_PERCEPTION_MS = 400; // user briefly sees boot-fallback alone
     setTimeout(() => {
       requestAnimationFrame(() =>
         requestAnimationFrame(async () => {
