@@ -36,6 +36,25 @@
     return localStorage.getItem('career-ops:authed') === '1';
   });
 
+  // Auth screens (login / signup) are full-viewport centered cards with
+  // NO scrollable content. iOS WKWebView still rubber-band-scrolls and
+  // allows text selection on them by default, which makes them feel
+  // un-app-like. We add a `.auth-screen` body class on those routes and
+  // app.css locks body overflow + user-select. Other public routes
+  // (/help, /onboarding) keep normal scroll behaviour because their
+  // content is long and selectable text is useful (read articles, copy
+  // codes, etc.).
+  let isAuthScreen = $derived(
+    pathname === '/login' ||
+      pathname === '/signup' ||
+      pathname.startsWith('/login/') ||
+      pathname.startsWith('/signup/'),
+  );
+  $effect(() => {
+    if (typeof document === 'undefined') return;
+    document.body.classList.toggle('auth-screen', isAuthScreen);
+  });
+
   // Routes that don't require an authenticated session. Reaching any of
   // these never triggers a redirect to /login.
   const PUBLIC_ROUTES = ['/login', '/signup', '/help'];
@@ -81,25 +100,53 @@
         }),
     );
 
-    // Splash dismiss + boot-fallback removal — coordinated handover so
-    // the user sees a clean sequence (native-splash → branded boot-
-    // fallback → SvelteKit shell) instead of three abrupt cuts.
+    // Splash dismiss + boot-fallback removal — SEQUENCED handover so
+    // the user sees three distinct, clean phases instead of overlapping
+    // fades:
     //
-    // Minimum-visible-duration: the boot-fallback's icon entrance
-    // animation runs 200ms (dots delay) + 360ms (mark scale/fade) =
-    // ~560ms. Hydration on a hot WebView can finish in under 200ms,
-    // and ripping the fallback out at that point clips the entrance
-    // animation visible to the user. Enforce a floor of 700ms from the
-    // moment the layout mounts so the icon always lands cleanly before
-    // we start fading.
+    //   1. native-splash visible (iOS LaunchScreen, painted by the OS)
+    //   2. SHORT crossfade to boot-fallback (same bg, same icon, no jump)
+    //   3. branded boot-fallback alone, with dots animating
+    //   4. boot-fallback fades to reveal SvelteKit shell
     //
-    // Two-rAF wrapper inside the timer guarantees the SvelteKit shell
-    // has painted at least one frame BEFORE the fallback fades, so the
-    // crossfade is one continuous frame swap.
-    const BOOT_FALLBACK_MIN_MS = 700;
+    // Why sequenced rather than simultaneous: the previous version
+    // fired SplashScreen.hide + setAttribute('data-hide','1') in the
+    // SAME rAF, so the native splash AND the boot-fallback faded out
+    // in parallel — the user briefly saw BOTH at half-opacity, which
+    // reads as a hesitation / "gap". Sequencing them means the splash
+    // hands off to a SOLID boot-fallback, the boot stays solid for a
+    // perception beat, then fades to the app cleanly.
+    //
+    // BOOT_FALLBACK_MIN_MS is the minimum delay from layout-mount to
+    // splash-hide. Hydration on a hot WebView finishes in <200ms so
+    // 300ms is plenty to ensure rendering has settled (vs the previous
+    // 700ms which felt sluggish on cold launches).
+    const BOOT_FALLBACK_MIN_MS = 300;
+    const SPLASH_FADE_MS = 180; // iOS-native quick crossfade
+    const BOOT_PERCEPTION_MS = 500; // user briefly sees boot-fallback alone
     setTimeout(() => {
       requestAnimationFrame(() =>
-        requestAnimationFrame(() => {
+        requestAnimationFrame(async () => {
+          // Phase 1: hide the native splash. Quick crossfade — the
+          // boot-fallback is already painted underneath with an IDENTICAL
+          // bg + icon, so this is a visually invisible cut.
+          try {
+            const { SplashScreen } = await import('@capacitor/splash-screen');
+            await SplashScreen.hide({ fadeOutDuration: SPLASH_FADE_MS });
+          } catch {
+            /* not running native; nothing to dismiss */
+          }
+
+          // Phase 2: wait for the splash fade to finish + a perception
+          // beat. During this window the boot-fallback is the ONLY thing
+          // on screen, dots animating, identity continuous from the
+          // splash. Skipping this would make the splash feel like it
+          // cuts straight to the app, hiding our branded loading state.
+          await new Promise((r) => setTimeout(r, SPLASH_FADE_MS + BOOT_PERCEPTION_MS));
+
+          // Phase 3: fade out the boot-fallback. Its CSS `transition:
+          // opacity 300ms ease-out` does the visual work; we remove the
+          // node 300ms later so it stops blocking pointer events.
           if (typeof document !== 'undefined') {
             const bootFallback = document.getElementById('boot-fallback');
             if (bootFallback) {
@@ -107,14 +154,6 @@
               setTimeout(() => bootFallback.remove(), 300);
             }
           }
-          // Native Capacitor splash — matched fadeOutDuration so the
-          // user perceives a single crossfade. 400ms covers the
-          // SvelteKit shell's first paint of sidebar + topbar chrome.
-          import('@capacitor/splash-screen')
-            .then(({ SplashScreen }) => SplashScreen.hide({ fadeOutDuration: 400 }))
-            .catch(() => {
-              /* not running native; nothing to dismiss */
-            });
         }),
       );
     }, BOOT_FALLBACK_MIN_MS);

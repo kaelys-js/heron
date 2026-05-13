@@ -27,6 +27,13 @@ final class WatchModel: NSObject, ObservableObject, WCSessionDelegate {
     @Published var openIssues: [IssueSnapshot] = []
     @Published var lastSyncAt: Date?
     @Published var isReachable: Bool = false
+    /// Watch app's auth gate. TRUE means the paired iPhone has an active
+    /// Better-Auth session AND has pushed at least one widget update to
+    /// the App Group (via CareerOpsNativePlugin.updateWidgets, which now
+    /// stamps `auth:isAuthenticated` into the same defaults the Watch
+    /// reads). Default FALSE — first-launch / signed-out / never-paired
+    /// Watches show a "Sign in on iPhone" gate instead of empty data.
+    @Published var isAuthenticated: Bool = false
 
     private let appGroupId = "group.com.resistjs.careerops"
 
@@ -119,6 +126,29 @@ final class WatchModel: NSObject, ObservableObject, WCSessionDelegate {
     // MARK: - Data merge
 
     func applyPayload(_ payload: [String: Any]) {
+        // Auth state — iPhone explicitly pushes `authenticated: true`
+        // after a successful sign-in (and `false` after sign-out). Treat
+        // ANY widget push from the iPhone as proof of an active iPhone
+        // session unless `authenticated` is explicitly false, because the
+        // iPhone-side plugin only calls updateWidgets when an
+        // authenticated route has data to show.
+        if let auth = payload["authenticated"] as? Bool {
+            isAuthenticated = auth
+            // Scrub local data when the iPhone reports signed-out so a
+            // screenshot of the Watch face never leaks queue / interview
+            // info after the user signed out on the phone.
+            if !auth {
+                stats = .empty
+                nextInterview = nil
+                topApply = nil
+                openIssues = []
+            }
+        } else {
+            // No explicit flag → infer from data presence. Receiving a
+            // payload at all means the iPhone is paired + the iPhone-side
+            // app is running an authenticated session.
+            isAuthenticated = true
+        }
         if let s = payload["stats"] as? [String: Int] {
             stats = Stats(
                 queued: s["queued"] ?? stats.queued,
@@ -146,6 +176,10 @@ final class WatchModel: NSObject, ObservableObject, WCSessionDelegate {
 
     private func loadFromDefaults() {
         guard let defaults = UserDefaults(suiteName: appGroupId) else { return }
+        // Auth gate — defaults to FALSE so a fresh-installed Watch app
+        // (no data ever pushed) shows the sign-in gate immediately rather
+        // than an empty Stats(0, 0, 0) page that looks like a working app.
+        isAuthenticated = defaults.bool(forKey: "auth:isAuthenticated")
         stats = Stats(
             queued: defaults.integer(forKey: "stats:queued"),
             appliedToday: defaults.integer(forKey: "stats:appliedToday"),
@@ -167,6 +201,7 @@ final class WatchModel: NSObject, ObservableObject, WCSessionDelegate {
 
     private func persistToDefaults() {
         guard let defaults = UserDefaults(suiteName: appGroupId) else { return }
+        defaults.set(isAuthenticated, forKey: "auth:isAuthenticated")
         defaults.set(stats.queued, forKey: "stats:queued")
         defaults.set(stats.appliedToday, forKey: "stats:appliedToday")
         defaults.set(stats.upcomingInterviews, forKey: "stats:upcomingInterviews")

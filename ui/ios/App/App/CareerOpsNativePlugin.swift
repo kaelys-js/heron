@@ -176,6 +176,37 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
 
+        // Auth gate — JS clients pass `authenticated: bool` so the Watch
+        // app + iPhone widgets know whether to display data or show a
+        // sign-in prompt. Default TRUE because the legacy callers (pre-
+        // gate) only call this method when an authenticated route has
+        // data ready; explicit `false` from sign-out clears everything.
+        let authenticated = call.getBool("authenticated") ?? true
+        defaults.set(authenticated, forKey: "auth:isAuthenticated")
+        if !authenticated {
+            // Sign-out path: scrub every cached widget/Watch key so a
+            // screenshot of the Watch or a Smart Stack peek never leaks
+            // the previous user's queue / interview info.
+            for key in [
+                "stats:queued",
+                "stats:appliedToday",
+                "stats:upcomingInterviews",
+                "interview:next",
+                "topApply:next",
+                "issues:open",
+            ] {
+                defaults.removeObject(forKey: key)
+            }
+            if #available(iOS 14.0, *) {
+                WidgetCenter.shared.reloadAllTimelines()
+            }
+            // Push the cleared state to the Watch so its UI flips to
+            // the sign-in gate immediately.
+            WatchSessionBridge.shared.send(["authenticated": false])
+            call.resolve(["ok": true])
+            return
+        }
+
         // stats — flat int keys (read by CareerOpsTimelineProvider).
         if let stats = call.getObject("stats") {
             if let queued = stats["queued"] as? Int {

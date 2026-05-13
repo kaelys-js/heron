@@ -435,6 +435,39 @@ body {
   }
 }
 
+/* Auth screens (/login, /signup) — full-viewport centered cards with
+ * NO scrollable content. We lock body overflow and disable text
+ * selection so they feel like modern iOS app screens rather than
+ * scrollable web pages.
+ *
+ * +layout.svelte's $effect toggles `body.auth-screen` based on the
+ * current route. On private routes the class is removed and body
+ * returns to its normal scrollable/selectable state.
+ *
+ * We deliberately do NOT use `position: fixed` on body here — that
+ * broke SvelteKit hydration once (interaction with the CSP-blocked-
+ * inline-scripts bug). `overflow: hidden; height: 100svh` is enough
+ * to kill the rubber-band on iOS WKWebView because there's no
+ * scrollable overflow for it to chain against. */
+body.auth-screen {
+  overflow: hidden;
+  height: 100svh;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+/* Inputs INSIDE the auth screen are the one exception — users have to
+ * be able to caret-position to fix typos in the invite code / email
+ * fields. Re-enable selection on form fields only. */
+body.auth-screen input,
+body.auth-screen textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 /* Screen-reader-only utility used by app.html's skip-to-content link
    AND by Svelte components that need an aria-label visually hidden. */
 .sr-only {
