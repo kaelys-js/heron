@@ -24,6 +24,16 @@ import nodeAdapter from '@sveltejs/adapter-node';
 import staticAdapter from '@sveltejs/adapter-static';
 
 const CAPACITOR_BUILD = process.env.CAPACITOR === '1';
+// Vite dev server (`pnpm dev`, `pnpm dev:ios --live`, etc.) — disables
+// CSP because SvelteKit's `mode: 'auto'` only nonces its OWN injected
+// bootstrap script and leaves custom inline scripts in app.html (theme
+// bootstrap, the boot-fallback's blank-screen guard + safety-net,
+// Console Ninja's IDE bridge, speculationrules) unsigned, which causes
+// the browser to refuse to execute them. The Capacitor WebView in
+// --live mode loads from Vite, so it inherits this CSP and the WebView
+// renders the SSR'd HTML but never hydrates — the login screen never
+// appears. Production node builds keep strict CSP.
+const DEV_MODE = process.env.NODE_ENV !== 'production';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -94,33 +104,34 @@ const config = {
     // no third-party origin that can inject scripts, so CSP adds little
     // defence in depth here. The adapter-node (server) build still gets
     // strict CSP via a per-response header set in hooks.server.ts.
-    csp: CAPACITOR_BUILD
-      ? undefined
-      : {
-          mode: 'auto',
-          directives: {
-            'default-src': ["'self'"],
-            'script-src': ["'self'", "'unsafe-eval'", "'wasm-unsafe-eval'"],
-            'style-src': ["'self'", "'unsafe-inline'"], // Tailwind JIT inline styles
-            'img-src': ["'self'", 'data:', 'blob:', 'https:'],
-            'font-src': ["'self'", 'data:'],
-            'connect-src': [
-              "'self'",
-              'ws:',
-              'wss:',
-              'https://api.anthropic.com',
-              'https://generativelanguage.googleapis.com',
-              'https://*.ts.net',
-              'capacitor://localhost',
-              'https://localhost',
-            ],
-            'frame-ancestors': ["'none'"],
-            'form-action': ["'self'"],
-            'base-uri': ["'self'"],
-            'object-src': ["'none'"],
-            'upgrade-insecure-requests': true,
+    csp:
+      CAPACITOR_BUILD || DEV_MODE
+        ? undefined
+        : {
+            mode: 'auto',
+            directives: {
+              'default-src': ["'self'"],
+              'script-src': ["'self'", "'unsafe-eval'", "'wasm-unsafe-eval'"],
+              'style-src': ["'self'", "'unsafe-inline'"], // Tailwind JIT inline styles
+              'img-src': ["'self'", 'data:', 'blob:', 'https:'],
+              'font-src': ["'self'", 'data:'],
+              'connect-src': [
+                "'self'",
+                'ws:',
+                'wss:',
+                'https://api.anthropic.com',
+                'https://generativelanguage.googleapis.com',
+                'https://*.ts.net',
+                'capacitor://localhost',
+                'https://localhost',
+              ],
+              'frame-ancestors': ["'none'"],
+              'form-action': ["'self'"],
+              'base-uri': ["'self'"],
+              'object-src': ["'none'"],
+              'upgrade-insecure-requests': true,
+            },
           },
-        },
 
     // Service worker is OFF — career-ops doesn't ship one. Capacitor
     // WebView doesn't support service workers reliably on iOS anyway.
