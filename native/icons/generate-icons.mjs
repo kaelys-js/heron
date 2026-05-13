@@ -227,7 +227,15 @@ async function main() {
   const splashDir = path.join(ROOT, 'ui/ios/App/App/Assets.xcassets/Splash.imageset');
   await fs.mkdir(splashDir, { recursive: true });
   const splashSize = 2732;
-  const logoSize = Math.round(splashSize * 0.26); // ~700px logo on the 2732 canvas
+  // Logo proportion = 0.11 of the 2732 canvas. With LaunchScreen.storyboard's
+  // scaleAspectFill content mode this gives a ~105pt rendered icon on iPhone
+  // 17 Pro Max (956pt screen × 0.11 = 105pt — modern-iOS-app sized, in the
+  // Notion / Things / Spotify range of 100–130pt). The boot-fallback in
+  // app.html mirrors this with `max(11vh, 11vw)`, so the iOS native splash
+  // and the SvelteKit boot-fallback render the icon at the SAME pixel size
+  // / position. Bumping or shrinking this value REQUIRES updating the 11vh
+  // in app.html too. */
+  const logoSize = Math.round(splashSize * 0.11); // ~300px logo on the 2732 canvas
   const brandPath = path.join(ROOT, 'branding/brand.json');
   let splashBg = '#0a0a0b';
   try {
@@ -236,24 +244,71 @@ async function main() {
   } catch {
     /* brand.json missing — keep default */
   }
-  // sharp accepts hex as `{r,g,b}` only after parsing, so feed the hex
-  // directly via the `background` shortcut on `extend`.
-  const logoBuffer = await sharp(svgBuffer)
-    .resize(logoSize, logoSize, {
-      fit: 'contain',
-      background: { r: 0, g: 0, b: 0, alpha: 0 },
-    })
-    .png()
-    .toBuffer();
-  const splashBuffer = await sharp({
-    create: {
-      width: splashSize,
-      height: splashSize,
-      channels: 4,
-      background: splashBg,
-    },
-  })
-    .composite([{ input: logoBuffer, gravity: 'center' }])
+
+  // Build the entire splash as a SINGLE composite SVG, then rasterise.
+  // Doing it inline (rather than compositing PNG layers via sharp) means
+  // the icon's glow is computed by an SVG filter that operates on the
+  // icon's ALPHA channel — i.e. the silhouette only. This is critical
+  // for visual quality: blurring the colored icon (the rocket strokes
+  // + the purple squircle gradient) creates an ugly ghost-rocket bleed
+  // visible behind the crisp icon. Blurring just the alpha gives a
+  // clean soft-edged halo of the squircle's outline, tinted purple
+  // via `feFlood`. Matches the CSS `filter: drop-shadow(0 0 56px ...)`
+  // on the boot-fallback so the cross-fade between the iOS native
+  // splash and the SvelteKit boot-fallback is visually seamless.
+  //
+  // Pieces:
+  //   1. Two stacked radial gradients for the brand bloom (center +
+  //      top accent). Match exactly the `background: radial-gradient(...)`
+  //      stacks in app.html.
+  //   2. `iconGlow` filter: feGaussianBlur on SourceAlpha → feFlood
+  //      purple → feComposite to mask → feMerge halo behind original.
+  //   3. The brand SVG inlined (read favicon.svg, extract inner content,
+  //      embed scaled to `logoSize` and centered). favicon.svg already
+  //      contains its own `<defs id="bg">` gradient for the squircle —
+  //      the id is a different namespace than our wrapper's gradient ids
+  //      so they don't collide.
+  const logoSvgText = await fs.readFile(SVG, 'utf8');
+  const logoInner = logoSvgText.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>[\s\S]*$/, '');
+
+  const fullSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${splashSize}" height="${splashSize}" viewBox="0 0 ${splashSize} ${splashSize}">
+    <defs>
+      <radialGradient id="centerBloom" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+        <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.30" />
+        <stop offset="32%" stop-color="#6366f1" stop-opacity="0.16" />
+        <stop offset="56%" stop-color="#a855f7" stop-opacity="0.07" />
+        <stop offset="78%" stop-color="${splashBg}" stop-opacity="0" />
+      </radialGradient>
+      <radialGradient id="topBloom" cx="50%" cy="0%" r="60%" fx="50%" fy="0%">
+        <stop offset="0%" stop-color="#a855f7" stop-opacity="0.12" />
+        <stop offset="60%" stop-color="${splashBg}" stop-opacity="0" />
+      </radialGradient>
+      <filter id="iconGlow" x="-30%" y="-30%" width="160%" height="160%">
+        <!-- Tight, subtle alpha-glow: blur the icon silhouette only
+             (no colour bleed from the squircle gradient), flood it with
+             brand purple at low opacity, and merge BEHIND the crisp icon.
+             stdDeviation tuned to match the CSS drop-shadow 0 0 32px
+             on the boot-fallback in app.html — both produce a soft
+             20-25pt aura around the icon outline on iPhone 17 Pro Max. -->
+        <feGaussianBlur in="SourceAlpha" stdDeviation="${Math.round(logoSize * 0.1)}" result="blur"/>
+        <feFlood flood-color="#8b5cf6" flood-opacity="0.45" result="purple"/>
+        <feComposite in="purple" in2="blur" operator="in" result="halo"/>
+        <feMerge>
+          <feMergeNode in="halo"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+    <rect width="100%" height="100%" fill="${splashBg}"/>
+    <rect width="100%" height="100%" fill="url(#centerBloom)"/>
+    <rect width="100%" height="100%" fill="url(#topBloom)"/>
+    <g transform="translate(${(splashSize - logoSize) / 2}, ${(splashSize - logoSize) / 2}) scale(${logoSize / 1024})" filter="url(#iconGlow)">
+      ${logoInner}
+    </g>
+  </svg>`;
+
+  const splashBuffer = await sharp(Buffer.from(fullSvg))
+    .resize(splashSize, splashSize, { fit: 'cover' })
     .png()
     .toBuffer();
   // iOS expects three @1x/@2x/@3x variants under the same imageset; we

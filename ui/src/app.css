@@ -251,6 +251,124 @@
   }
 }
 
+/* ----------------------------------------------------------------
+ * iOS-native sizing system (touch devices only — `pointer: coarse`).
+ *
+ * Why this exists as a single block rather than per-component edits:
+ * the codebase has ~268 instances of `text-[11px]` and dozens of
+ * `h-7` / `h-8` / `size-8` buttons across Topbar, Sidebar, Inbox,
+ * dashboards. Editing each one would be 30+ files of churn AND would
+ * regress the desktop layout (where the denser sizes are intentional).
+ *
+ * Instead: layer iOS HIG conformance ON TOP via media-query overrides
+ * keyed on `pointer: coarse`. Touch devices (iPhone, iPad, Android
+ * phone+tablet, Capacitor WebView) get:
+ *   - Body text 17pt (iOS SF Pro Text regular)
+ *   - Arbitrary text-[9..12px] promoted to ≥13px (HIG 11pt floor +
+ *     legibility headroom)
+ *   - Tailwind text-xs / text-sm / text-base bumped one notch
+ *   - Button + input min-height = 44pt (HIG hard minimum)
+ *   - Card padding +4px so cards breathe
+ *   - Input font-size ≥16px so iOS Safari skips zoom-on-focus
+ *
+ * Desktop (pointer: fine) is unchanged. Editing this block is the
+ * single lever for app-wide iOS sizing tuning.
+ *
+ * IMPORTANT: every override here is keyed off the class as Tailwind
+ * EMITS it. Tailwind v4 emits `.text-\[11px\]` for arbitrary values
+ * with bracket escapes — that's why the selectors below look "ugly".
+ * ---------------------------------------------------------------- */
+@media (pointer: coarse) {
+  /* Root + body — SF Pro Text regular is 17pt; we match that for the
+     base reading size. Line-height 1.45 keeps line spacing iOS-natural
+     (a touch tighter than Material's 1.5). */
+  body {
+    font-size: 1.0625rem; /* 17px */
+    line-height: 1.45;
+  }
+
+  /* Tailwind canonical text utilities — each climbs one rung so the
+     visual hierarchy is preserved (xs < sm < base < lg) while the
+     baseline ends at iOS-readable. */
+  .text-xs {
+    font-size: 0.8125rem !important; /* 13px from 12px */
+    line-height: 1.35 !important;
+  }
+  .text-sm {
+    font-size: 0.9375rem !important; /* 15px from 14px */
+    line-height: 1.4 !important;
+  }
+  .text-base {
+    font-size: 1.0625rem !important; /* 17px from 16px */
+    line-height: 1.45 !important;
+  }
+
+  /* Arbitrary sub-13px text used heavily in dense dashboards (stat
+     labels, badge counters, metadata rows, kbd hints, footnotes) —
+     promote them all to ≥13px. iOS HIG 11pt = 11px minimum legible
+     at arm's length; 13px gives comfortable headroom. */
+  .text-\[9px\] {
+    font-size: 0.75rem !important; /* 9px  → 12px */
+  }
+  .text-\[10px\] {
+    font-size: 0.8125rem !important; /* 10px → 13px */
+  }
+  .text-\[11px\] {
+    font-size: 0.8125rem !important; /* 11px → 13px */
+  }
+  .text-\[12px\] {
+    font-size: 0.875rem !important; /* 12px → 14px */
+  }
+
+  /* Touch targets — bump the 40px floor to iOS HIG's 44pt hard
+     minimum. The `[data-slot='button']` selectors below are scoped
+     to our Button component so utility-classed elements elsewhere
+     keep their authored heights (e.g. timeline pills). */
+  button:not(.no-tap-floor),
+  [role='button']:not(.no-tap-floor),
+  [role='menuitem']:not(.no-tap-floor) {
+    min-height: 44px;
+  }
+
+  /* Per-size-variant floors. Both `.h-N` (rectangular sizes) and
+     `.size-N` (square icon sizes) get a min-height bump to 44pt —
+     iOS HIG's hard minimum tap target. Width stays untouched so
+     dense icon rails (Topbar) keep their grid; only the height grows.
+     Selector specificity matters here: `[data-slot='button'].h-7`
+     beats the generic `button` selector above, so we have to repeat
+     the 44px floor explicitly rather than relying on cascade. */
+  [data-slot='button'].h-6,
+  [data-slot='button'].h-7,
+  [data-slot='button'].h-8,
+  [data-slot='button'].h-9,
+  [data-slot='button'].size-6,
+  [data-slot='button'].size-7,
+  [data-slot='button'].size-8,
+  [data-slot='button'].size-9 {
+    min-height: 44px;
+  }
+
+  /* Form fields — match iOS HIG 44pt height AND 16px+ font-size
+     (the latter prevents WKWebView's auto-zoom-on-focus, which is a
+     classic iOS web-app gotcha that crops the field above the
+     keyboard). */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    min-height: 44px;
+    font-size: 1.0625rem; /* 17px — well above the 16px zoom threshold */
+  }
+
+  /* Card chrome — bump horizontal padding from 16px → 20px so card
+     content has iOS-comfortable inset. Vertical stays for now (cards
+     are usually tall enough that 16px reads fine). */
+  [data-slot='card-content'],
+  [data-slot='card-header'] {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
+
 /* Safe-area insets for iOS (Capacitor WebView).
    PHILOSOPHY: We do NOT apply insets to <body> because:
      1. The sidebar lives inside a `h-svh overflow-hidden` provider and

@@ -180,45 +180,79 @@
       Skip to main content
     </a>
     <!-- Boot fallback — always-visible UI before SvelteKit hydrates.
-         Visually matches the native Capacitor splash (same dark bg,
-         same brand mark, same proportions) so the transition between
-         them feels like one continuous frame.
+         Visually MATCHES the native iOS splash (Splash.imageset, rendered
+         by LaunchScreen.storyboard with scaleAspectFill) so the hand-off
+         between them is a zero-jump fade.
+
+         Sizing parity:
+         - Splash PNG: 2732×2732, icon at 19% of canvas (~519px source).
+         - LaunchScreen.storyboard uses scaleAspectFill — on iPhone 17
+           Pro Max (440×956pt) the image scales by 0.350, putting the
+           icon at ~182pt on screen.
+         - Our boot-fallback icon is sized as `min(19vh, 19vw, 240px)`
+           which on iPhone 17 Pro Max evaluates to ~182pt → identical
+           to the splash. iPad / iPhone SE track the same proportions.
 
          Design:
-         - No text. The brand mark + a subtle three-dot pulse carry the
-           "loading" meaning the way native iOS apps do.
-         - Icon fades + scales in (300ms, ease-out) so the hand-off from
-           the native splash feels alive instead of an instant cut.
-         - Soft drop-shadow under the icon for elevation against the
-           dark bg — Apple HIG-style "the icon is a floating object".
-         - The wrapping <div> has overflow: visible explicitly so the
-           drop-shadow + the bouncing dots are never clipped on narrower
-           devices (iPhone SE) where some prior implementations cropped
-           the right edge of the mark.
+         - No halo, no shadow, no text on first paint. Splash PNG has
+           none of those, so adding them would create a visible jump
+           during the cross-fade. The halo + dots fade IN ~600ms after
+           the splash hides (i.e. once the fallback is the only thing
+           on screen and the user already perceives the transition as
+           complete).
+         - Background: #0a0a0b — matches brand.json splash.backgroundColor
+           and ios.backgroundColor in capacitor.config.ts.
 
-         Failure handling: if hydration doesn't complete in 5s, flip to
-         a "Something went wrong" panel with Retry + a copy-diagnostics
-         button. The blank-screen guard in the script below also fires
-         if +layout.svelte's onMount NEVER tags the fallback for removal
-         (e.g. parse-error / missing-chunk / CSP block scenarios). -->
+         Failure handling: if hydration doesn't complete within 3500ms
+         (just past the native launchShowDuration so the timing lines
+         up), flip to a "Something went wrong" panel. The error copy is
+         dev-aware: when the WebView is loaded from a Vite-style origin
+         (:5173 / :5174 / a LAN-IP host) the message points the user at
+         `pnpm dev` instead of generic "network glitch" copy. -->
     <div
       id="boot-fallback"
-      style="position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 24px; background-color: #0a0a0b; color: #e4e4e7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; z-index: 9999; transition: opacity 300ms ease-out; overflow: visible;"
+      style="position: fixed; inset: 0; padding: 24px; color: #e4e4e7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; z-index: 9999; transition: opacity 300ms ease-out; overflow: hidden; touch-action: none; overscroll-behavior: contain;
+             -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+             /* Brand-bloom background — single radial gradient centered on
+                screen, mirroring the SVG bloom baked into Splash.imageset.
+                Sits on the same #0a0a0b base so iOS native splash → SvelteKit
+                boot-fallback → login bloom is one continuous visual identity
+                across all three layers. Works at any resolution because
+                radial-gradient is a vector primitive. */
+             background:
+               radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.30) 0%, rgba(99, 102, 241, 0.16) 32%, rgba(168, 85, 247, 0.07) 56%, transparent 78%),
+               radial-gradient(ellipse at 50% 0%, rgba(168, 85, 247, 0.12) 0%, transparent 60%),
+               #0a0a0b;"
     >
-      <!-- Brand mark wrapper — drop-shadow filter lives here (not on the
-           SVG itself) so the gradient/path rendering stays crisp. The
-           wrapper has its own width/height so overflow rules don't clip
-           the soft shadow halo. -->
+      <!-- Brand mark wrapper — ABSOLUTELY POSITIONED at TRUE viewport center.
+           This is critical for vertical-alignment parity with the native
+           splash: Splash.imageset PNG is 2732² with the icon at exact image
+           center, rendered via scaleAspectFill, so the icon's center == screen
+           center. A flex column layout (icon + dots) would centre the COMBINED
+           stack, shifting the icon up by ~half the dots-gap-bonus, breaking
+           the splash → boot crossfade. We instead position the icon
+           absolutely at 50%/50% and position the dots absolutely BELOW so
+           they don't move the icon.
+           Size: clamp(80px, max(11vh, 11vw), 200px) — mirrors the splash
+           PNG's 11% canvas proportion under scaleAspectFill on every device
+           (iPhone SE → iPad Pro, portrait and landscape).
+           Glow is a subtle, always-on multi-layer drop-shadow tuned to
+           match the SVG-filter halo baked into the splash PNG. -->
       <div
         id="boot-fallback-mark"
-        style="width: 128px; height: 128px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 8px 32px rgba(139, 92, 246, 0.35)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)); opacity: 0; transform: scale(0.92); animation: boot-mark-in 360ms cubic-bezier(0.16, 1, 0.3, 1) forwards;"
+        style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+               width: clamp(80px, max(11vh, 11vw), 200px); height: clamp(80px, max(11vh, 11vw), 200px); display: flex; align-items: center; justify-content: center;
+               filter: drop-shadow(0 0 32px rgba(139, 92, 246, 0.45))
+                       drop-shadow(0 8px 20px rgba(139, 92, 246, 0.22))
+                       drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));"
       >
-        <!-- 128×128 inline brand mark — mirror of branding/logo.svg.
+        <!-- Inline brand mark — mirror of branding/logo.svg.
              Lucide `rocket` glyph (ISC License). Gradient ID is scoped
-             (`bfb-*`) so it doesn't collide with any other inline SVG. -->
+             (`bfb-*`) so it doesn't collide with any other inline SVG.
+             width=100%/height=100% so it scales with the wrapper. -->
         <svg
-          width="128"
-          height="128"
+          width="100%"
+          height="100%"
           viewBox="0 0 1024 1024"
           aria-hidden="true"
           style="display: block;"
@@ -252,13 +286,19 @@
         </svg>
       </div>
 
-      <!-- Three-dot pulse loading indicator — no text, very iOS-native.
-           Each dot fades in/out on a staggered cycle so the row reads
-           as a continuous progress signal without any spinning or
-           shimmering geometry. -->
+      <!-- Three-dot pulse loading indicator — positioned ABSOLUTELY below
+           the icon (28px gap), NOT in a flex column with it. See the
+           boot-fallback-mark comment above for the reason: keeping the
+           icon at true viewport center is non-negotiable for splash↔boot
+           crossfade parity. Fades in 700ms after the native splash
+           dissolve so the visible cross-fade window only shows the icon
+           (matches the splash PNG exactly). -->
       <div
         id="boot-fallback-dots"
-        style="display: flex; gap: 8px; align-items: center; opacity: 0; animation: boot-mark-in 400ms cubic-bezier(0.16, 1, 0.3, 1) 200ms forwards;"
+        style="position: absolute; left: 50%; top: 50%;
+               transform: translate(-50%, calc(0.5 * clamp(80px, max(11vh, 11vw), 200px) + 28px));
+               display: flex; gap: 8px; align-items: center; opacity: 0;
+               animation: boot-fade-in 400ms cubic-bezier(0.16, 1, 0.3, 1) 700ms forwards;"
         aria-label="Loading"
       >
         <span
@@ -272,34 +312,40 @@
         ></span>
       </div>
 
-      <!-- Error panel — hidden by default; the blank-screen guard below
-           reveals this after 5s of stalled hydration. Replaces the old
-           "Still loading…" text + Reload button with a richer UI that
-           includes Retry, a Copy diagnostics button (URL, UA, errors
-           captured by window.onerror) and a hint about what to try. -->
+      <!-- Error panel — absolutely positioned so it sits at viewport
+           center when the blank-screen guard reveals it (data-state="error").
+           Title/body are filled at runtime by the guard so the copy can be
+           dev-aware. -->
       <div
         id="boot-fallback-error"
-        style="display: none; flex-direction: column; align-items: center; gap: 12px; max-width: 320px; text-align: center; opacity: 0; transition: opacity 200ms ease-out;"
+        style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+               display: none; flex-direction: column; align-items: center; gap: 14px;
+               max-width: 340px; width: calc(100% - 48px); text-align: center;
+               opacity: 0; transition: opacity 200ms ease-out;"
       >
         <div
-          style="font-size: 15px; font-weight: 600; color: #fafafa;"
+          id="boot-fallback-error-title"
+          style="font-size: 17px; font-weight: 600; color: #fafafa; line-height: 1.35;"
         >Something went wrong loading the app</div>
-        <div style="font-size: 13px; color: #a1a1aa; line-height: 1.5;">
+        <div
+          id="boot-fallback-error-body"
+          style="font-size: 14px; color: #a1a1aa; line-height: 1.5;"
+        >
           The interface didn't finish loading. This is usually a network glitch — try again.
         </div>
-        <div style="display: flex; gap: 8px; margin-top: 4px;">
+        <div style="display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; justify-content: center;">
           <button
             id="boot-fallback-retry"
             type="button"
             onclick="location.reload()"
-            style="padding: 8px 16px; border-radius: 8px; border: none; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;"
+            style="padding: 10px 18px; border-radius: 10px; border: none; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; min-height: 44px;"
           >
             Try again
           </button>
           <button
             id="boot-fallback-copy"
             type="button"
-            style="padding: 8px 14px; border-radius: 8px; border: 1px solid #27272a; background-color: #18181b; color: #e4e4e7; font-size: 13px; cursor: pointer; font-family: inherit;"
+            style="padding: 10px 16px; border-radius: 10px; border: 1px solid #27272a; background-color: #18181b; color: #e4e4e7; font-size: 14px; cursor: pointer; font-family: inherit; min-height: 44px;"
           >
             Copy diagnostics
           </button>
@@ -307,16 +353,35 @@
       </div>
 
       <style>
-        /* Icon fade-in + scale-in for a modern iOS-app feel. */
-        @keyframes boot-mark-in {
-          from {
-            opacity: 0;
-            transform: scale(0.92);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
+        /* Boot-fallback scroll-lock is handled INLINE on the element
+           itself (touch-action: none + overscroll-behavior: contain).
+           We deliberately do NOT force body { position: fixed } here:
+           that broke SvelteKit hydration in iOS WKWebView because the
+           Svelte runtime expects the body to keep its default static
+           positioning. Since #boot-fallback is itself position:fixed
+           covering the full viewport, the user can't visually see any
+           body scrolling underneath it anyway. When SvelteKit removes
+           the fallback, body returns to its normal scrollable state
+           with zero CSS thrash. */
+        /* Force user-select: none on EVERY descendant of the boot-fallback.
+           iOS WKWebView allows long-press text selection on SVGs and divs
+           even when the parent has user-select: none, because the property
+           doesn't fully inherit through some replaced-content elements
+           (notably <svg>). Belt-and-braces: target every descendant +
+           include -webkit-touch-callout: none to suppress the iOS magnifier
+           on long-press. */
+        #boot-fallback,
+        #boot-fallback * {
+          -webkit-user-select: none !important;
+          -moz-user-select: none !important;
+          -ms-user-select: none !important;
+          user-select: none !important;
+          -webkit-touch-callout: none !important;
+        }
+        /* Plain opacity fade-in for late-arriving accents (dots). */
+        @keyframes boot-fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         /* Staggered three-dot pulse — sized for high-DPI clarity. */
         @keyframes boot-dot {
@@ -337,9 +402,9 @@
           opacity: 0;
           pointer-events: none;
         }
-        /* Error state: hide the dots, swap the brand mark to a slightly
-           dimmer version, show the error panel. data-state="error" is set
-           by the 5-second guard below. */
+        /* Error state: hide the dots, swap the brand mark to a dimmer
+           red-tinted shadow, show the error panel. data-state="error"
+           is set by the blank-screen guard. */
         #boot-fallback[data-state='error'] #boot-fallback-dots {
           display: none;
         }
@@ -386,16 +451,59 @@
           });
         });
 
-        // Blank-screen guard. After 5 seconds without successful
+        // Blank-screen guard. After 3.5 seconds without successful
         // hydration (which removes the fallback by setting data-hide),
         // flip to the error state. The user always gets a way out
-        // instead of a frozen splash.
+        // instead of a frozen splash. 3.5s lines up with the native
+        // launchShowDuration so the timing feels intentional rather than
+        // arbitrary.
+        //
+        // Copy is dev-aware: when we're loaded from a Vite-style origin
+        // (port 5173/5174 or a LAN IP) we tell the user to check the
+        // dev server. Production builds keep the generic copy.
         setTimeout(function () {
           var el = document.getElementById('boot-fallback');
           if (!el) return; // hydration succeeded, fallback already gone
           if (el.getAttribute('data-hide') === '1') return; // fading out cleanly
+          var host = location.host || '';
+          var isDevOrigin =
+            /:5173$|:5174$/.test(host) ||
+            /^192\.168\./.test(host) ||
+            /^10\./.test(host) ||
+            /^172\.(1[6-9]|2[0-9]|3[01])\./.test(host) ||
+            /^localhost(:|$)/.test(host);
+          var title = document.getElementById('boot-fallback-error-title');
+          var body = document.getElementById('boot-fallback-error-body');
+          if (isDevOrigin) {
+            if (title) title.textContent = "Dev server didn't respond";
+            if (body) body.innerHTML =
+              "We couldn't reach <code style=\"background:#27272a;padding:1px 6px;border-radius:4px;font-size:12px;\">" +
+              host + "</code>. Start Vite with <code style=\"background:#27272a;padding:1px 6px;border-radius:4px;font-size:12px;\">pnpm dev</code> (or relaunch with <code style=\"background:#27272a;padding:1px 6px;border-radius:4px;font-size:12px;\">pnpm dev:ios --live</code>) and tap Try again.";
+          } else {
+            if (title) title.textContent = "Something went wrong loading the app";
+            if (body) body.textContent =
+              "The interface didn't finish loading. This is usually a network glitch — try again.";
+          }
           el.setAttribute('data-state', 'error');
-        }, 5000);
+        }, 3500);
+
+        // Hard safety-net: 8 seconds after the page loads, REMOVE the
+        // boot-fallback entirely no matter what. This guarantees that
+        // even if SvelteKit hydration silently fails AND the dev-aware
+        // error guard above somehow doesn't fire, the user is NEVER
+        // trapped on a frozen splash. The SSR-rendered SvelteKit content
+        // underneath becomes visible and the user can interact with it
+        // (the login form, in the unauth case). 8s is well past every
+        // realistic hydration window for this app (~1-2s cold).
+        setTimeout(function () {
+          var el = document.getElementById('boot-fallback');
+          if (!el) return;
+          // Tag a marker so post-mortem inspection knows the safety-net
+          // kicked in (rather than the planned 700ms onMount removal).
+          el.setAttribute('data-safety-net', '1');
+          el.setAttribute('data-hide', '1');
+          setTimeout(function () { el.remove(); }, 300);
+        }, 8000);
 
         // Wire up Copy diagnostics — assembles URL, UA, and any errors
         // we captured, then writes them to the clipboard. Falls back to

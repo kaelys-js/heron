@@ -23,6 +23,63 @@
   let busy = $state(false);
   let error = $state<string | null>(null);
 
+  /**
+   * Translate raw passkey/WebAuthn errors into copy a non-engineer can act
+   * on. Better-auth surfaces things like "Auth cancelled" / "NotAllowedError"
+   * / "The operation either timed out or was not allowed" — none of which
+   * tell the user what to do next. The mapper below covers every error code
+   * a browser or Capacitor WebView can emit during a passkey sign-in, plus
+   * a sane default for anything we haven't seen yet.
+   *
+   * The biggest source of mysterious "Auth cancelled" errors is a first-
+   * time user pressing "Sign in with passkey" before they've ever created
+   * one — the platform throws NotAllowedError because there's no credential
+   * to choose. We catch that and redirect them to the invite-code flow.
+   */
+  function friendlyAuthError(raw: unknown): string {
+    const msg =
+      raw instanceof Error
+        ? raw.message
+        : typeof raw === 'string'
+          ? raw
+          : raw && typeof raw === 'object' && 'message' in raw
+            ? String((raw as { message: unknown }).message ?? '')
+            : '';
+    const name =
+      raw instanceof Error
+        ? raw.name
+        : raw && typeof raw === 'object' && 'name' in raw
+          ? String((raw as { name: unknown }).name ?? '')
+          : '';
+    const haystack = (name + ' ' + msg).toLowerCase();
+
+    if (
+      haystack.includes('cancel') ||
+      haystack.includes('aborted') ||
+      haystack.includes('notallowed') ||
+      haystack.includes('timeout') ||
+      haystack.includes('timed out') ||
+      haystack.includes('not allowed')
+    ) {
+      // The user dismissed the system prompt, or there's no passkey
+      // registered for this site on this device. Either way, point them
+      // to the invite-code flow which is the only path that actually
+      // creates one.
+      return "No passkey found on this device. If you're new, use an invite code below to set one up — then this button works.";
+    }
+    if (haystack.includes('not supported') || haystack.includes('unsupported')) {
+      return 'Passkeys are not supported on this device or browser. Try Safari (iOS) or a recent Chrome / Firefox.';
+    }
+    if (haystack.includes('network') || haystack.includes('fetch')) {
+      return "Couldn't reach the sign-in server. Check your connection and try again.";
+    }
+    if (haystack.includes('invalid state') || haystack.includes('invalidstate')) {
+      return 'A passkey is already registered for this device — try signing in again, or remove and re-create it from Settings.';
+    }
+    if (!msg) return 'Sign-in failed for an unknown reason. Try again.';
+    return msg;
+  }
+
   async function signInWithPasskey() {
     busy = true;
     error = null;
@@ -31,13 +88,13 @@
         autoFill: false,
       });
       if (result?.error) {
-        error = result.error.message ?? 'Sign-in failed';
+        error = friendlyAuthError(result.error);
       } else {
         markLocallyAuthed();
         await goto(data.redirectTo, { invalidateAll: true });
       }
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e);
+      error = friendlyAuthError(e);
     } finally {
       busy = false;
     }
@@ -52,7 +109,10 @@
         callbackURL: data.redirectTo,
       });
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e);
+      // Same friendly mapper as passkey — OAuth surfaces network /
+      // cancellation errors identically and the user benefits from
+      // consistent copy.
+      error = friendlyAuthError(e);
       busy = false;
     }
   }
@@ -178,18 +238,35 @@
         </Button>
       {/if}
 
-      <!-- Invite link — secondary, ghost-styled, sits at the bottom of
-           the card so first-time visitors see it without it competing
-           with the primary sign-in. -->
-      <a
+      <!-- Divider above the invite-code button if GitHub isn't enabled
+           (GitHub's "or" divider doesn't render, so the invite CTA
+           would otherwise sit immediately under the passkey button
+           with no breathing room). -->
+      {#if !data.githubEnabled}
+        <div
+          class="my-4 flex items-center gap-3 text-[11px] uppercase tracking-wider text-muted-foreground/60"
+        >
+          <span class="h-px flex-1 bg-border/60"></span>
+          new here?
+          <span class="h-px flex-1 bg-border/60"></span>
+        </div>
+      {/if}
+
+      <!-- Invite-code button — peer to the passkey + GitHub buttons,
+           same outline-button visual so the action stack reads as a
+           coherent list of sign-in options rather than "primary CTA +
+           hidden text link". For first-time users this IS the primary
+           path; we just don't visually outrank the passkey since
+           returning users are the more common case. -->
+      <Button
         href="/signup"
-        class="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-md text-sm text-muted-foreground hover:text-foreground transition-colors"
-        class:pointer-events-none={busy}
-        class:opacity-50={busy}
+        variant="outline"
+        disabled={busy}
+        class={`h-12 w-full justify-center gap-2 border-border/60 bg-background/40 font-medium ${data.githubEnabled ? 'mt-3' : 'mt-0'}`}
       >
         <Ticket class="size-4" />
-        I have an invite code
-      </a>
+        Set up with invite code
+      </Button>
     </div>
 
     <!-- Reassurance / trust signal. Modern apps include this — it
@@ -201,11 +278,5 @@
       <ShieldCheck class="size-3.5" />
       <span>Passkeys, end-to-end. No passwords stored.</span>
     </div>
-
-    <!-- First-time hint — small, easily ignored if irrelevant. -->
-    <p class="mt-6 text-center text-xs text-muted-foreground/70 leading-relaxed">
-      First time here? Ask the owner of this install for an invite code
-      <span class="text-muted-foreground">— check Settings → Users.</span>
-    </p>
   </div>
 </main>
