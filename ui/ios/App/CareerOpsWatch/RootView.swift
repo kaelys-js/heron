@@ -16,18 +16,59 @@ struct RootView: View {
     @EnvironmentObject var model: WatchModel
 
     var body: some View {
-        TabView {
-            StatsPage()
-            NextInterviewPage()
-            TopApplyPage()
-            InboxPage()
+        Group {
+            if model.isAuthenticated {
+                TabView {
+                    StatsPage()
+                    NextInterviewPage()
+                    TopApplyPage()
+                    InboxPage()
+                }
+                .tabViewStyle(.page)
+            } else {
+                // No authenticated iPhone session yet — show a clean
+                // gate prompting the user to open the iPhone app to
+                // sign in. Avoids confusing the user with empty stats
+                // (0, 0, 0) that look like real data.
+                SignInGate()
+            }
         }
-        .tabViewStyle(.page)
         // `.tint.gradient` was the goal, but TintShapeStyle doesn't
         // expose `.gradient` (only concrete Colors do). Anchor to a
         // brand-adjacent indigo so the gradient renders correctly on
         // watchOS 10+; iOS 18 tint-on-watch will still recolor it.
         .containerBackground(Color.indigo.gradient, for: .tabView)
+    }
+}
+
+/**
+ * SignInGate — shown on the Watch when the paired iPhone hasn't
+ * pushed an authenticated-state widget update yet.
+ *
+ * The Watch app is a peripheral display for the iPhone — it never
+ * authenticates directly. So the gate just tells the user where to
+ * sign in (the companion iPhone app) and surfaces the brand mark
+ * so the screen doesn't feel broken.
+ */
+private struct SignInGate: View {
+    var body: some View {
+        VStack(spacing: 10) {
+            // Brand mark — system iPhone glyph instead of inlining the
+            // rocket SVG because watchOS SF Symbols compose more cleanly
+            // with the system tint than a custom shape would.
+            Image(systemName: "iphone.gen3.radiowaves.left.and.right")
+                .font(.system(size: 32, weight: .regular))
+                .foregroundStyle(.tint)
+            Text("Sign in on iPhone")
+                .font(.headline)
+                .multilineTextAlignment(.center)
+            Text("Open Career Ops on your iPhone to set up. Your stats will sync here.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 8)
+        }
+        .padding(.vertical, 12)
     }
 }
 

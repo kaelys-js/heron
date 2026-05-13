@@ -153,9 +153,17 @@ EXTENSIONS.each do |ext|
     config.build_settings['INFOPLIST_FILE'] = "#{ext[:source_dir]}/Info.plist"
     config.build_settings['CODE_SIGN_STYLE'] = 'Automatic'
     config.build_settings['DEVELOPMENT_TEAM'] = team_id if team_id
-    config.build_settings['SWIFT_VERSION'] = '5.0'
+    # SWIFT_VERSION 5.9 keeps parity with the main App target's modern
+    # toolchain (Xcode 15+ default). 5.0 is the floor; 5.9 unlocks
+    # parameter packs + macro support without breaking any older
+    # extensions.
+    config.build_settings['SWIFT_VERSION'] = '5.9'
     config.build_settings['CODE_SIGN_ENTITLEMENTS'] = "#{ext[:source_dir]}/#{ext[:source_dir]}.entitlements"
-    config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+    # ENABLE_USER_SCRIPT_SANDBOXING = YES is the Xcode 15+ best-practice
+    # default — sandboxes shell scripts run in build phases so a stray
+    # `rm -rf $DERIVED_DATA` in a third-party run-script phase can't
+    # nuke user files outside the project tree.
+    config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'YES'
     config.build_settings['SKIP_INSTALL'] = 'YES'
   end
 
@@ -319,8 +327,12 @@ else
       'INFOPLIST_FILE' => "#{WATCH_NAME}/Info.plist",
       'CODE_SIGN_ENTITLEMENTS' => "#{WATCH_NAME}/#{WATCH_NAME}.entitlements",
       'CODE_SIGN_STYLE' => 'Automatic',
-      'SWIFT_VERSION' => '5.0',
-      'ENABLE_USER_SCRIPT_SANDBOXING' => 'NO',
+      # 5.9 matches the main App target so the same toolchain compiles
+      # both. 5.0 was Xcode 13's default; 5.9 ships with Xcode 15.
+      'SWIFT_VERSION' => '5.9',
+      # Xcode 15+ default — sandbox build-phase scripts. See the
+      # extension-target version of this comment above for context.
+      'ENABLE_USER_SCRIPT_SANDBOXING' => 'YES',
       'SKIP_INSTALL' => 'YES',
       'GENERATE_INFOPLIST_FILE' => 'NO',
       'ASSETCATALOG_COMPILER_APPICON_NAME' => 'AppIcon',
