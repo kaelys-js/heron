@@ -229,3 +229,4 @@ venv/
 .claude/settings.local.json
 .claude/memory/
 career-dashboard
+.claude/scheduled_tasks.lock
