@@ -97,6 +97,7 @@
     "bits-ui": "2.18.1",
     "drizzle-kit": "0.31.10",
     "fake-indexeddb": "^6.2.5",
+    "fast-check": "^4.8.0",
     "jsdom": "^29.1.1",
     "marked": "18.0.3",
     "msw": "^2.14.6",
