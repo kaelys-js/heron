@@ -96,7 +96,6 @@
       })();
     </script>
 
-
     <meta name="generator" content="SvelteKit" />
 
     <!-- Don't index this — local-only dashboard -->
@@ -104,9 +103,23 @@
     <meta name="googlebot" content="noindex, nofollow" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
 
+    <!-- General description + keywords. Even with robots noindex, the
+         description shows up in bookmark tooltips, tab previews, and
+         PWA-manifest scrapers (Windows Start, Chromebook). Pulled from
+         branding/brand.json via apply-brand — edit brand.json, then
+         run `pnpm brand:apply`; do NOT edit these literals directly. -->
+    <meta
+      name="description"
+      content="Career Ops is an AI-powered job search platform: multi-user dashboard, autonomous apply across 11 ATS portals, tailored CVs and cover letters per role, interview prep, follow-up cadence, and offline-first native apps on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch."
+    />
+    <meta
+      name="keywords"
+      content="ai-agent, anthropic, automation, better-auth, capacitor, career, claude, claude-code, drizzle-orm, electron, interview-prep, ios, job-search, open-source, passkey, resume, svelte, sveltekit, typescript, watchos"
+    />
+
     <!-- Theme + color scheme — `theme-color` per scheme so iOS / Android
          status bars and Chrome's toolbar pick the right tint. -->
-    <meta name="theme-color" content="#0f0f12" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#0a0a0b" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)" />
     <meta name="color-scheme" content="dark light" />
 
@@ -117,15 +130,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Career Ops" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="application-name" content="career-ops" />
+    <meta name="application-name" content="Career Ops" />
     <meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
 
     <!-- Windows Start tile (pinned PWA from Edge / IE) -->
     <meta name="msapplication-TileColor" content="#5b6cff" />
-    <meta
-      name="msapplication-TileImage"
-      content="%sveltekit.assets%/icons/career-ops-256.png"
-    />
+    <meta name="msapplication-TileImage" content="%sveltekit.assets%/icons/career-ops-256.png" />
     <meta name="msapplication-config" content="none" />
 
     <!-- Icons + manifest. Order matters: more-specific first (browser
@@ -176,7 +186,10 @@
 
     <!-- Author + copyright -->
     <meta name="author" content="resist.js" />
-    <meta name="copyright" content="© 2026 resist.js (original work © 2026 santifer). Licensed under the MIT License." />
+    <meta
+      name="copyright"
+      content="© 2026 resist.js (original work © 2026 santifer). Licensed under the MIT License."
+    />
 
     <!-- View Transitions API — opt in to same-origin transitions so
          page navigations get the cross-fade animation in Chrome 111+ /
@@ -248,18 +261,36 @@
          `pnpm dev` instead of generic "network glitch" copy. -->
     <div
       id="boot-fallback"
-      style="position: fixed; inset: 0; padding: 24px; color: #e4e4e7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; z-index: 9999; transition: opacity 300ms ease-out; overflow: hidden; touch-action: none; overscroll-behavior: contain;
-             -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
-             /* Brand-bloom background — single radial gradient centered on
+      style="
+        position: fixed;
+        inset: 0;
+        padding: 24px;
+        color: #e4e4e7;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        z-index: 9999;
+        transition: opacity 300ms ease-out;
+        overflow: hidden;
+        touch-action: none;
+        overscroll-behavior: contain;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        /* Brand-bloom background — single radial gradient centered on
                 screen, mirroring the SVG bloom baked into Splash.imageset.
                 Sits on the same #0a0a0b base so iOS native splash → SvelteKit
                 boot-fallback → login bloom is one continuous visual identity
                 across all three layers. Works at any resolution because
                 radial-gradient is a vector primitive. */
-             background:
-               radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.30) 0%, rgba(99, 102, 241, 0.16) 32%, rgba(168, 85, 247, 0.07) 56%, transparent 78%),
-               radial-gradient(ellipse at 50% 0%, rgba(168, 85, 247, 0.12) 0%, transparent 60%),
-               #0a0a0b;"
+        background:
+          radial-gradient(
+            circle at 50% 50%,
+            rgba(139, 92, 246, 0.3) 0%,
+            rgba(99, 102, 241, 0.16) 32%,
+            rgba(168, 85, 247, 0.07) 56%,
+            transparent 78%
+          ),
+          radial-gradient(ellipse at 50% 0%, rgba(168, 85, 247, 0.12) 0%, transparent 60%), #0a0a0b;
+      "
     >
       <!-- Brand mark wrapper — ABSOLUTELY POSITIONED at TRUE viewport center.
            This is critical for vertical-alignment parity with the native
@@ -277,11 +308,20 @@
            match the SVG-filter halo baked into the splash PNG. -->
       <div
         id="boot-fallback-mark"
-        style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-               width: clamp(80px, max(11vh, 11vw), 200px); height: clamp(80px, max(11vh, 11vw), 200px); display: flex; align-items: center; justify-content: center;
-               filter: drop-shadow(0 0 32px rgba(139, 92, 246, 0.45))
-                       drop-shadow(0 8px 20px rgba(139, 92, 246, 0.22))
-                       drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));"
+        style="
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          width: clamp(80px, max(11vh, 11vw), 200px);
+          height: clamp(80px, max(11vh, 11vw), 200px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          filter: drop-shadow(0 0 32px rgba(139, 92, 246, 0.45))
+            drop-shadow(0 8px 20px rgba(139, 92, 246, 0.22))
+            drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        "
       >
         <!-- Inline brand mark — mirror of branding/logo.svg.
              Lucide `rocket` glyph (ISC License). Gradient ID is scoped
@@ -292,7 +332,7 @@
           height="100%"
           viewBox="0 0 1024 1024"
           aria-hidden="true"
-          style="display: block;"
+          style="display: block"
         >
           <defs>
             <linearGradient id="bfb-bg" x1="0" y1="0" x2="1" y2="1">
@@ -332,20 +372,20 @@
            position. Fades in 700ms after the splash dissolve. -->
       <div
         id="boot-fallback-dots"
-        style="position: absolute; left: 50%; top: 50%;
-               transform: translate(-50%, calc(0.5 * clamp(80px, max(11vh, 11vw), 200px) + 32px));
-               width: 32px; height: 32px; opacity: 0;
-               animation: boot-fade-in 400ms cubic-bezier(0.16, 1, 0.3, 1) 700ms forwards;"
+        style="
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, calc(0.5 * clamp(80px, max(11vh, 11vw), 200px) + 32px));
+          width: 32px;
+          height: 32px;
+          opacity: 0;
+          animation: boot-fade-in 400ms cubic-bezier(0.16, 1, 0.3, 1) 700ms forwards;
+        "
         aria-label="Loading"
         role="progressbar"
       >
-        <svg
-          width="32"
-          height="32"
-          viewBox="0 0 32 32"
-          aria-hidden="true"
-          style="display: block;"
-        >
+        <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" style="display: block">
           <defs>
             <linearGradient id="bfb-spin" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stop-color="#a855f7" stop-opacity="0.15" />
@@ -355,7 +395,14 @@
           </defs>
           <!-- Faint track ring so the arc reads as "progress" against
                a defined orbit, not a floating line. -->
-          <circle cx="16" cy="16" r="12.5" fill="none" stroke="rgba(139,92,246,0.12)" stroke-width="2.5" />
+          <circle
+            cx="16"
+            cy="16"
+            r="12.5"
+            fill="none"
+            stroke="rgba(139,92,246,0.12)"
+            stroke-width="2.5"
+          />
           <!-- Spinning arc — stroke-dasharray makes ~210° of the
                circumference visible; the rest is the gap. The
                `boot-spin` keyframes rotate it around the center. -->
@@ -368,7 +415,10 @@
             stroke-width="2.5"
             stroke-linecap="round"
             stroke-dasharray="46 78"
-            style="animation: boot-spin 0.9s cubic-bezier(0.65, 0.05, 0.36, 1) infinite; transform-origin: 16px 16px;"
+            style="
+              animation: boot-spin 0.9s cubic-bezier(0.65, 0.05, 0.36, 1) infinite;
+              transform-origin: 16px 16px;
+            "
           />
         </svg>
       </div>
@@ -379,34 +429,76 @@
            dev-aware. -->
       <div
         id="boot-fallback-error"
-        style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-               display: none; flex-direction: column; align-items: center; gap: 14px;
-               max-width: 340px; width: calc(100% - 48px); text-align: center;
-               opacity: 0; transition: opacity 200ms ease-out;"
+        style="
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          display: none;
+          flex-direction: column;
+          align-items: center;
+          gap: 14px;
+          max-width: 340px;
+          width: calc(100% - 48px);
+          text-align: center;
+          opacity: 0;
+          transition: opacity 200ms ease-out;
+        "
       >
         <div
           id="boot-fallback-error-title"
-          style="font-size: 17px; font-weight: 600; color: #fafafa; line-height: 1.35;"
-        >Something went wrong loading the app</div>
+          style="font-size: 17px; font-weight: 600; color: #fafafa; line-height: 1.35"
+        >
+          Something went wrong loading the app
+        </div>
         <div
           id="boot-fallback-error-body"
-          style="font-size: 14px; color: #a1a1aa; line-height: 1.5;"
+          style="font-size: 14px; color: #a1a1aa; line-height: 1.5"
         >
           The interface didn't finish loading. This is usually a network glitch — try again.
         </div>
-        <div style="display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; justify-content: center;">
+        <div
+          style="
+            display: flex;
+            gap: 10px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+          "
+        >
           <button
             id="boot-fallback-retry"
             type="button"
             onclick="location.reload()"
-            style="padding: 10px 18px; border-radius: 10px; border: none; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; min-height: 44px;"
+            style="
+              padding: 10px 18px;
+              border-radius: 10px;
+              border: none;
+              background: linear-gradient(135deg, #6366f1, #8b5cf6);
+              color: white;
+              font-size: 15px;
+              font-weight: 600;
+              cursor: pointer;
+              font-family: inherit;
+              min-height: 44px;
+            "
           >
             Try again
           </button>
           <button
             id="boot-fallback-copy"
             type="button"
-            style="padding: 10px 16px; border-radius: 10px; border: 1px solid #27272a; background-color: #18181b; color: #e4e4e7; font-size: 14px; cursor: pointer; font-family: inherit; min-height: 44px;"
+            style="
+              padding: 10px 16px;
+              border-radius: 10px;
+              border: 1px solid #27272a;
+              background-color: #18181b;
+              color: #e4e4e7;
+              font-size: 14px;
+              cursor: pointer;
+              font-family: inherit;
+              min-height: 44px;
+            "
           >
             Copy diagnostics
           </button>
@@ -441,15 +533,23 @@
         }
         /* Plain opacity fade-in for late-arriving accents (spinner). */
         @keyframes boot-fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
         }
         /* Orbital spinner — rotates the arc around the circle's center.
            cubic-bezier easing gives a subtle accelerate/decelerate that
            reads more "alive" than pure linear. */
         @keyframes boot-spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
         }
         /* When +layout.svelte removes the #boot-fallback by tagging
            data-hide, fade out gracefully and stop accepting taps. */
@@ -531,13 +631,16 @@
           var body = document.getElementById('boot-fallback-error-body');
           if (isDevOrigin) {
             if (title) title.textContent = "Dev server didn't respond";
-            if (body) body.innerHTML =
-              "We couldn't reach <code style=\"background:#27272a;padding:1px 6px;border-radius:4px;font-size:12px;\">" +
-              host + "</code>. Start Vite with <code style=\"background:#27272a;padding:1px 6px;border-radius:4px;font-size:12px;\">pnpm dev</code> (or relaunch with <code style=\"background:#27272a;padding:1px 6px;border-radius:4px;font-size:12px;\">pnpm dev:ios --live</code>) and tap Try again.";
+            if (body)
+              body.innerHTML =
+                'We couldn\'t reach <code style="background:#27272a;padding:1px 6px;border-radius:4px;font-size:12px;">' +
+                host +
+                '</code>. Start Vite with <code style="background:#27272a;padding:1px 6px;border-radius:4px;font-size:12px;">pnpm dev</code> (or relaunch with <code style="background:#27272a;padding:1px 6px;border-radius:4px;font-size:12px;">pnpm dev:ios --live</code>) and tap Try again.';
           } else {
-            if (title) title.textContent = "Something went wrong loading the app";
-            if (body) body.textContent =
-              "The interface didn't finish loading. This is usually a network glitch — try again.";
+            if (title) title.textContent = 'Something went wrong loading the app';
+            if (body)
+              body.textContent =
+                "The interface didn't finish loading. This is usually a network glitch — try again.";
           }
           el.setAttribute('data-state', 'error');
         }, 3500);
@@ -557,7 +660,9 @@
           // kicked in (rather than the planned 700ms onMount removal).
           el.setAttribute('data-safety-net', '1');
           el.setAttribute('data-hide', '1');
-          setTimeout(function () { el.remove(); }, 300);
+          setTimeout(function () {
+            el.remove();
+          }, 300);
         }, 8000);
 
         // Wire up Copy diagnostics — assembles URL, UA, and any errors

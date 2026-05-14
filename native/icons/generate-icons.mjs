@@ -19,6 +19,7 @@
  * back if available).
  */
 import fs from 'node:fs/promises';
+import { readFileSync as fsReadFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,6 +29,26 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
 const SVG = path.join(ROOT, 'ui/static/favicon.svg');
 const BUILD = path.join(__dirname, '_build');
+
+// Read brand.json so the web-manifest filenames track the brand name.
+// Previously hardcoded `career-ops-${size}.png`; if the user renamed the
+// brand to e.g. "myapp" the generator would still write
+// `career-ops-192.png` and app.html / manifest.webmanifest would
+// reference the wrong filenames. Reading from brand.json keeps the
+// generated filename in sync with whatever apply-brand.mjs propagated
+// into app.html (single source of truth: branding/brand.json).
+const BRAND_NAME = (() => {
+  try {
+    const brand = JSON.parse(fsReadFileSync(path.join(ROOT, 'branding', 'brand.json'), 'utf8'));
+    return brand.name || 'icon';
+  } catch {
+    // Generator runs in CI with `node native/icons/generate-icons.mjs`
+    // (no apply-brand wrapper). If brand.json is missing, fall back to
+    // a brand-agnostic "icon" prefix rather than throwing — the
+    // manifest just needs SOME consistent filenames.
+    return 'icon';
+  }
+})();
 
 // Cache key — sha256 of the source SVG bytes. If it matches the cached
 // value, every output PNG is already up-to-date and the whole 80-render
@@ -142,8 +163,12 @@ async function main() {
     path.join(ROOT, 'ui/electron/build/icon.png'),
     path.join(ROOT, 'ui/electron/build/icon.icns'),
     path.join(ROOT, 'ui/electron/build/icon.ico'),
-    path.join(ROOT, 'ui/static/icons/career-ops-192.png'),
-    path.join(ROOT, 'ui/static/icons/career-ops-512.png'),
+    // Web-manifest icons use brand.name as the filename prefix so a
+    // rebrand (BRAND.name change) auto-updates the filenames. See
+    // applyManifest in apply-brand.mjs for the consumer side that
+    // points at the same filenames.
+    path.join(ROOT, `ui/static/icons/${BRAND_NAME}-192.png`),
+    path.join(ROOT, `ui/static/icons/${BRAND_NAME}-512.png`),
     path.join(ROOT, 'ui/static/favicon.ico'),
     path.join(ROOT, 'ui/ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732.png'),
   ];
@@ -477,12 +502,15 @@ async function main() {
   }
 
   // ---- Web manifest icons ----
+  // Filenames use BRAND_NAME (loaded from branding/brand.json) so a
+  // rebrand auto-updates every reference: app.html, manifest.webmanifest,
+  // canonicalOutputs above. Single source of truth for the filename.
   console.log('Building web manifest icons...');
   const webDir = path.join(ROOT, 'ui/static/icons');
   for (const s of [192, 256, 384, 512]) {
-    await renderAtSize(sharp, svgBuffer, s, path.join(webDir, `career-ops-${s}.png`));
+    await renderAtSize(sharp, svgBuffer, s, path.join(webDir, `${BRAND_NAME}-${s}.png`));
   }
-  console.log('  4 web manifest sizes rendered');
+  console.log(`  4 web manifest sizes rendered (prefix=${BRAND_NAME})`);
 
   // ---- watchOS icon ----
   // The Watch target's AppIcon.appiconset expects a single 1024x1024

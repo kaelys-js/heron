@@ -411,6 +411,32 @@ html.theme-swap::view-transition-new(app-topbar) {
   }
 }
 
+/* Tooltips on hover-less devices.
+ *
+ * iOS HIG: tooltips don't exist on touch — there's no hover state to
+ * trigger them, and bits-ui's TooltipProvider falls back to firing
+ * them on first-tap (with the actual button action firing on second
+ * tap). That's the classic anti-pattern: a tap-target needs TWO taps
+ * to do its job, which on iOS reads as a broken button.
+ *
+ * The fix: hide tooltip content entirely on `(hover: none)` devices.
+ * The button still works (single tap triggers its onclick); the
+ * tooltip just never renders. We deliberately use `display: none`
+ * (not `visibility: hidden`) so bits-ui's positioning + focus-trap
+ * machinery doesn't run at all on these devices.
+ *
+ * `(hover: none)` is the modern CSS media query for touch-only
+ * devices. Apple's WebKit emits it correctly for iPhone, iPad in
+ * touch mode, and the Capacitor WebView. A Bluetooth-mouse-paired
+ * iPad reports `(hover: hover)` and gets tooltips back — correct
+ * behaviour for that case.
+ */
+@media (hover: none) {
+  [data-slot='tooltip-content'] {
+    display: none !important;
+  }
+}
+
 /* Safe-area insets for iOS (Capacitor WebView).
    PHILOSOPHY: We do NOT apply insets to <body> because:
      1. The sidebar lives inside a `h-svh overflow-hidden` provider and
