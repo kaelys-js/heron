@@ -651,9 +651,9 @@ export function runOferta(
  * tradeoff. Writes batch/batch-input.tsv from the URL list, kicks off the
  * shell script, and streams output to the activity feed.
  *
- * Returns a coarse summary; per-job tracker rows are merged in by the fs
- * watcher (Phase 1.3) once batch-runner.sh writes its tracker-additions/
- * TSVs.
+ * Returns a coarse summary; per-job tracker rows are merged in by the
+ * auto-merge fs watcher (`auto-merge-batch.ts`) once batch-runner.sh
+ * writes its tracker-additions/ TSVs.
  */
 export async function runBulkOfertaParallel(
   urls: string[],

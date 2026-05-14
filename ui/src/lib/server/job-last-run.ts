@@ -7,7 +7,7 @@
  * Storage: `data/job-last-run.json`. Shared across profiles — the
  * registry id is the key (no profile suffix).
  *
- * Used by `autopilot.ts:tick()` (Phase 2) to dedupe today-firing of
+ * Used by `autopilot.ts:tick()` to dedupe today-firing of
  * registry-declared schedules, and by `autopilot.ts:trackResult()` to
  * flip lastRunResult success/failure after the job exits.
  */
@@ -64,7 +64,7 @@ export function clearLastRun(jobId: string): void {
   writeAll(all);
 }
 
-/** Wipe every entry — used by reset 'everything' (Phase 4). */
+/** Wipe every entry — used by the reset-everything danger-zone action. */
 export function clearAllLastRuns(): void {
   if (fs.existsSync(PATH)) {
     // Back up before wiping so reset is recoverable. Best-effort —

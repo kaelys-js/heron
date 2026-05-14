@@ -286,8 +286,8 @@ export async function announceForAccessibility(value: string): Promise<void> {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Push notifications — APNS on iOS, FCM on Android. Wire to Better Auth
-// session so per-user push targeting works (Phase 4+ feature).
+// Push notifications — APNS on iOS, FCM on Android. Token registration
+// is tied to the Better Auth session so per-user push targeting works.
 // ──────────────────────────────────────────────────────────────────────
 
 export async function registerPushNotifications(): Promise<string | null> {

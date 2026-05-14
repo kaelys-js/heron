@@ -45,9 +45,9 @@ export const POST = wrap(
     const body = await request.json().catch(() => ({}));
 
     if (id === 'linkedin-auth' || id === 'indeed-auth') {
-      // Both share the python wrapper. The script accepts --login + --portal
-      // (added in Phase 2.1's refactor). For now we route LinkedIn through
-      // the existing entry point and Indeed through the new one.
+      // Both portals share the python wrapper (`lib_playwright_auth.py`)
+      // which accepts --login + --portal. Route by id; the wrapper
+      // handles the rest.
       const portal = id === 'linkedin-auth' ? 'linkedin' : 'indeed';
       try {
         await spawnPlaywrightLogin(portal);

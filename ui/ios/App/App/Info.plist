@@ -123,7 +123,7 @@
 		</dict>
 	</dict>
 
-	<!-- Face ID usage description (Phase 3.6) -->
+	<!-- Face ID usage description (BiometricAuth flow). -->
 	<key>NSFaceIDUsageDescription</key>
 	<string>Career Ops uses Face ID to unlock sensitive screens — interview notes, negotiation playbooks, and offer comparisons — so a glance over your shoulder never leaks personal data.</string>
 

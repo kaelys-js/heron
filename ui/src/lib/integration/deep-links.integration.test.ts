@@ -1,5 +1,5 @@
 /**
- * Integration replacement for `verify-deep-links.mjs` (Phase 5).
+ * Deep-link integration tests.
  *
  * Asserts:
  *   • BRAND.urlScheme === "careerops" (locked from brand.json)

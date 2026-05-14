@@ -38,13 +38,12 @@ function inboxHasMbox(): boolean {
 }
 
 async function runScanAll(args?: JobArgs): Promise<JobResult> {
-  // Fan-out across every profile × every active scanner.
-  //
-  // Phase 4: scan-all now iterates profiles. Each profile gets the same
-  // set of child scanners; each child receives the profile slug so its
-  // output lands in data/profiles/{slug}/. Profiles run SEQUENTIALLY to
-  // avoid hammering rate limits when a user has 3+ profiles (each scanner
-  // would otherwise fire 3 concurrent LinkedIn/Indeed sessions).
+  // Fan-out across every profile × every active scanner. Each profile
+  // gets the same set of child scanners; each child receives the profile
+  // slug so its output lands in data/profiles/{slug}/. Profiles run
+  // SEQUENTIALLY to avoid hammering rate limits when a user has 3+
+  // profiles (each scanner would otherwise fire 3 concurrent
+  // LinkedIn/Indeed sessions).
   //
   // Within a profile, scanners run in PARALLEL (existing behavior preserved).
   const { listProfiles } = await import('../profiles');

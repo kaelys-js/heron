@@ -436,7 +436,7 @@ merge_tracker() {
   echo ""
   echo "=== Verifying pipeline integrity ==="
   # Pipeline integrity is now covered by the integration test suite
-  # (replaced verify-pipeline.mjs in Phase 5 of the testing migration).
+  # (covered by the pipeline.integration vitest project).
   (cd "$PROJECT_DIR" && pnpm exec vitest run -- pipeline.integration --silent) ||
     echo "⚠️  Verification found issues (see above)"
 }

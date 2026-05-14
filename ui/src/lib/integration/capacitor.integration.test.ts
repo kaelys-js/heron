@@ -1,11 +1,12 @@
 /**
- * Integration replacement for `verify-capacitor.mjs` (Phase 5).
+ * Capacitor / native-brand integration tests.
  *
- * The legacy verifier (~989 LOC) does brand-consistency across every
- * Capacitor consumer: iOS Info.plist, AndroidManifest, Brand.swift,
- * brand.ts, manifest.webmanifest, electron-builder, fastlane Appfile,
- * favicon, etc. We spawn it as the parity oracle PLUS hardcoded checks
- * on the highest-signal invariants.
+ * Brand-consistency assertions across every Capacitor consumer:
+ *   iOS Info.plist, AndroidManifest, Brand.swift, brand.ts,
+ *   manifest.webmanifest, electron-builder, fastlane Appfile, favicon.
+ *
+ * Any drift between branding/brand.json and a downstream consumer fails
+ * here — keeps every rebrand atomic.
  */
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';

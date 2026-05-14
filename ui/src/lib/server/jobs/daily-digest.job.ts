@@ -82,7 +82,8 @@ async function runDailyDigest(): Promise<JobResult> {
       // tolerated — digest stays useful without cadence
     }
 
-    // Pattern detection issues (Phase 3.5 emits these as 'info' issues)
+    // Pattern detection emits 'info' issues with a "pattern" keyword
+    // in the summary — surface count in the digest line.
     const open = listOpenIssues();
     const newPatterns = open.filter(
       (i) => i.severity === 'info' && /pattern/i.test(i.summary),

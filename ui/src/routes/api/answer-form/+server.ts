@@ -1,5 +1,5 @@
 /**
- * Answer-form endpoint for the bookmarklet (Path B of Phase 4.6).
+ * Answer-form endpoint for the form-fill bookmarklet.
  *
  * The browser-side bookmarklet runs on Greenhouse / Ashby / Lever job pages,
  * scrapes labelled fields, and POSTs them here. We:

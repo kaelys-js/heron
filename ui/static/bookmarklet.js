@@ -1,5 +1,5 @@
 /**
- * career-ops form-fill bookmarklet — Path B of Phase 4.6.
+ * career-ops form-fill bookmarklet.
  *
  * Drag the wrapper link from /settings to your bookmarks bar. While viewing
  * a Greenhouse / Ashby / Lever job application, click the bookmark. The

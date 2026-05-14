@@ -1,16 +1,15 @@
 /**
  * Pipeline integrity verification — silent + on-demand.
  *
- * Was originally a thin wrapper around `verify-pipeline.mjs`. After
- * Phase 5 of the testing migration that verifier was deleted; we now
- * run the equivalent checks in-process, in pure TS, against the active
- * profile's applications.md. Same issue-stream semantics (one issue per
- * problem class with a stable dedupeKey).
+ * Runs in-process, in pure TS, against the active profile's
+ * applications.md. Emits one issue per problem class with a stable
+ * dedupeKey, so repeat detections refresh the existing row rather
+ * than spamming.
  *
- * We run nightly at 04:00 and also expose a manual run via the Agents
- * page (and the equivalent `POST /api/jobs/verify-pipeline/run`). Output
- * is parsed into the issue stream so the user only sees a notification
- * when something is actually broken.
+ * Schedule: nightly at 04:00. Manual run via the Agents page and via
+ * `POST /api/jobs/verify-pipeline/run`. Output is parsed into the
+ * issue stream so the user only sees a notification when something
+ * is actually broken.
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';

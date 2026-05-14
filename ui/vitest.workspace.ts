@@ -63,10 +63,12 @@ export default defineConfig({
       },
 
       // ── ui-component ───────────────────────────────────────────────
-      // Real browser. Vitest 4 derives `environment: 'browser'` from
-      // `browser.enabled: true` — setting both errors out.
-      // Chromium is the default; WebKit added later (Phase 2.21) for
-      // bits-ui Sheet drag-gesture coverage.
+      // Real-browser component tests. Vitest 4 derives
+      // `environment: 'browser'` from `browser.enabled: true` — setting
+      // both errors out. We run both Chromium and WebKit so any test
+      // that exercises pointer-event gestures (bits-ui Sheet drag, etc.)
+      // catches Safari/iOS-specific quirks the same day a regression
+      // lands.
       {
         extends: './vitest.config.ts',
         test: {
@@ -74,30 +76,24 @@ export default defineConfig({
           include: ['src/**/*.component.test.ts', 'src/**/*.svelte.test.ts'],
           browser: {
             enabled: true,
-            // CRITICAL: Vitest 4's default `headless` is `process.env.CI`
-            // — locally that's `undefined` → falsy → window opens. The
-            // playwright() factory's `headless` option does NOT propagate
-            // to this top-level setting; it has to be set HERE on the
-            // browser config. Default to headless always; opt in to a
-            // visible window with `BROWSER_HEAD=1 pnpm test`.
+            // Vitest 4's default `headless` is `process.env.CI` — locally
+            // that's undefined → falsy → window opens. The playwright()
+            // factory's `headless` option does NOT propagate to this
+            // top-level setting; it has to be set HERE on the browser
+            // config. Default to headless always; opt in to a visible
+            // window with `BROWSER_HEAD=1 pnpm test`.
             headless: !process.env.BROWSER_HEAD,
             // Vitest 4 takes a provider factory, not a string. The
             // `playwright()` factory from @vitest/browser-playwright
-            // returns a provider instance configured with the launch
-            // options below.
+            // returns a provider instance.
             provider: playwright({
               // Headless config is read from the parent `browser.headless`
               // above (see node_modules/@vitest/browser-playwright/dist/
-              // index.js:871 — `headless: options.headless`). This
-              // launchOptions block is for additional Playwright launch
-              // args; keep empty until a test needs one.
+              // index.js — `headless: options.headless`). launchOptions
+              // is reserved for additional Playwright args.
               launchOptions: {},
             }),
-            instances: [
-              { browser: 'chromium' },
-              // WebKit added in Phase 2.21 once Sheet-drag tests need it.
-              // { browser: 'webkit' },
-            ],
+            instances: [{ browser: 'chromium' }, { browser: 'webkit' }],
             // Vitest 4 + Playwright provider talks to the browser over a
             // local websocket; the default port works fine on a dev box,
             // but pin one so CI parallelism doesn't collide.
@@ -118,7 +114,10 @@ export default defineConfig({
       },
 
       // ── ui-integration ─────────────────────────────────────────────
-      // Reserved for Phase 5 verifier rewrites. Empty for now.
+      // Structural + integration assertions that touch real files at
+      // repo root (apply / backup / capacitor / cleanup / deep-links /
+      // multi-user / pipeline / post-apply / toolchain-versions, plus
+      // the vitest-config regression guard).
       {
         extends: './vitest.config.ts',
         test: {

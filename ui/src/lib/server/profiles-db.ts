@@ -14,8 +14,8 @@
  * AND the legacy `data/profiles.json` file still exists, we COPY (don't
  * move) the legacy rows under this user. The owner user (the first
  * account created) inherits the legacy data. Other users start empty.
- * A second migration step in Phase 6 deletes the legacy file once every
- * caller is verified to use this module.
+ * A follow-up migration step will eventually delete the legacy file
+ * once every caller is verified to use this module.
  *
  * Why "first user inherits legacy"? Single-user installs had no notion of
  * ownership — there's only ever been one user's data. Making the owner

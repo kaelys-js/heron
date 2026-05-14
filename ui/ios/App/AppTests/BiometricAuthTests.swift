@@ -1,15 +1,15 @@
 //
+@testable import App
+import LocalAuthentication
+
 // BiometricAuthTests — shape tests for the biometric-authentication
-// helper. Full happy-path / cancel / lockout coverage needs an LAContext
-// stub that doesn't run on a CI sim; those land in Phase 8 as integration
-// tests under AppUITests.
+// helper. Happy-path / cancel / lockout coverage that requires a real
+// LAContext lives in AppUITests/LoginUITests under XCUIDevice's biometric
+// stub; this file covers the no-biometrics + error-path branches.
 //
 import XCTest
-import LocalAuthentication
-@testable import App
 
 final class BiometricAuthTests: XCTestCase {
-
     func testCanEvaluateNeverThrowsOnUnsupportedDevice() {
         // On a sim without biometric capability, canEvaluatePolicy returns
         // false but doesn't throw.

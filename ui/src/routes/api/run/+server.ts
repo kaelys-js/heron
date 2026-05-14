@@ -51,9 +51,10 @@ export const POST = wrap('run', async ({ request }: any) => {
       );
       return { running: listRunning() };
   }
-  // Pluggable path — any registered job id (Phase 2+ scan-portals, etc.).
-  // Job's internal try/catch normalises throws to {ok: false, error}; this
-  // outer .catch covers the unlikely case the promise itself rejects.
+  // Pluggable path — any registered job id (scan-portals, dedup,
+  // normalize, etc.). Each job's internal try/catch normalises throws
+  // to {ok: false, error}; this outer .catch covers the unlikely case
+  // the promise itself rejects.
   if (hasJob(task)) {
     runById(task, body?.args ?? {}).catch((err) =>
       reportServerError('run', 'Background job ' + task + ' rejected', err, {

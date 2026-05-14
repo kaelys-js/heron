@@ -395,7 +395,7 @@ export function readSiblingFile(
  * Shared files NEVER touched by ANY scope:
  *   data/issues.jsonl       ← open-issues feed (driver: liveness, integrity)
  *   data/sources.json       ← source connection state
- *   data/onboarding-state.json  ← wizard state (Phase 5 handles this separately)
+ *   data/onboarding-state.json  ← wizard state (reset separately by the onboarding flow)
  *   data/profiles.json      ← profile registry
  *   data/followup-cache.json + patterns-cache.json ← derived caches
  *   .env, .venv, .playwright-<portal> dirs, node_modules, .git, source code

@@ -104,6 +104,4 @@ register({
   run: runScanPortals,
 });
 
-// Re-export for use by /api/scan/company (Phase 2.2 — calls runScanPortals
-// with { company } arg).
-// D24 — `runScanPortals` was only used by the registry; export removed.
+// (Re-export removed — runScanPortals is only used by the registry above.)

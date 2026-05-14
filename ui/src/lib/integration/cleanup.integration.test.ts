@@ -1,11 +1,11 @@
 /**
- * Integration replacement for `verify-cleanup.mjs` (Phase 5).
+ * Cleanup-invariant integration tests.
  *
- * The legacy verifier covers the B+D+F+P cleanup plan steps —
- * dead-code / inlined-modules / removed exports / preserved invariants
- * across a checklist that's grown over multiple cleanup phases. We
- * spawn it as a parity oracle and add a handful of stable structural
- * checks that don't require knowing every step's name.
+ * Stable structural assertions that catch dev-artefact regressions
+ * (stray `.DS_Store` commits, `test-tmp-*` dirs, broken `.mjs` scripts
+ * at repo root, dependencies pointing at `file://` or `git+...` URLs).
+ * Granular per-module dead-code checks live in the per-module
+ * lib/server/*.test.ts suite.
  */
 
 import { execSync } from 'node:child_process';

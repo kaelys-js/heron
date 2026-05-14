@@ -78,7 +78,7 @@ into the most natural pipeline stage:
 | discarded | Closed |
 | skip | Closed |
 
-In addition (added in Phase 6 of the B+D+F+P cleanup), `Job` objects
+In addition, `Job` objects
 carry a separate `applicationStatus?: 'evaluated' | ...` field parsed
 straight from the row. The `JobCard.svelte` and job detail page render
 this as a **secondary chip** alongside the primary Pipeline badge so

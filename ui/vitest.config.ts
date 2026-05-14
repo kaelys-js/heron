@@ -53,11 +53,10 @@ export default defineConfig({
     // Stop after the first hung file. Keeps CI fast on a real freeze.
     testTimeout: 10_000,
     hookTimeout: 10_000,
-    // During early phases many projects/files will have 0 cases until we
-    // author them. We want exit 0 in that state so `pnpm test` is green
-    // and the coverage gate (which fires AFTER all files run) is the
-    // real signal. Once Phase 2 lands and every project has cases, this
-    // is harmless — a forgotten test still surfaces as a coverage drop.
+    // Exit 0 when a project happens to have 0 cases (e.g. when running
+    // a single integration test via `pnpm test -- pipeline.integration`).
+    // The coverage gate is the real failure signal; a forgotten test
+    // file surfaces as a coverage drop, not a vitest failure.
     passWithNoTests: true,
     // Reporter set by command-line; default reporter is good for local.
     coverage: {
@@ -90,10 +89,9 @@ export default defineConfig({
         perFile: true,
         autoUpdate: false,
       },
-      // V8's branch counting includes implicit `?? undefined` chains that
-      // exaggerate the denominator. Until we ship Phase 2, accept a
-      // slightly more lenient branch threshold via the per-project
-      // override below.
+      // V8's branch counting includes implicit `?? undefined` chains
+      // that exaggerate the denominator — that's why branches: 65 sits
+      // lower than the other thresholds.
     },
   },
 });
