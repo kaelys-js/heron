@@ -302,7 +302,7 @@ function extractApplicationStatus(s: string): import('$lib/types').ApplicationSt
   if (lower === 'rejected') return 'rejected';
   if (lower === 'discarded') return 'discarded';
   if (lower === 'skip') return 'skip';
-  // Spanish + legacy aliases (mirror verify-pipeline.mjs:ALIASES).
+  // Spanish + legacy aliases (mirror normalize-statuses.mjs aliases).
   if (['evaluada', 'condicional', 'hold', 'evaluar', 'verificar'].includes(lower))
     return 'evaluated';
   if (['aplicado', 'enviada', 'aplicada', 'sent'].includes(lower)) return 'applied';

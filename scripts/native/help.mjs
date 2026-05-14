@@ -61,7 +61,7 @@ const groups = [
   {
     title: 'Diagnostics',
     cmds: [
-      ['node verify-capacitor.mjs', '90-check sanity verifier'],
+      ['pnpm test -- capacitor.integration', 'brand + native consistency tests'],
       ['pnpm doctor', 'Existing project health check'],
     ],
   },

@@ -164,8 +164,6 @@ docs/**                                               linguist-documentation
 biome.json                export-ignore
 lefthook.yml              export-ignore
 turbo.json                export-ignore
-test-all.mjs              export-ignore
-verify-*.mjs              export-ignore
 batch/                    export-ignore
 data/                     export-ignore
 .playwright-*/            export-ignore

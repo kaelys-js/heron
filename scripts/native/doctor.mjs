@@ -5,8 +5,8 @@
  *
  * Three layers:
  *   1. LOCAL files exist (entitlements plist, Info.plist, Fastfile,
- *      Brand.swift, etc.) — covered by verify-capacitor.mjs which we
- *      delegate to for completeness.
+ *      Brand.swift, etc.) — covered by the capacitor.integration test
+ *      suite which we delegate to for completeness.
  *   2. LOCAL env file (~/.career-ops/native-env) populated by
  *      `pnpm setup:native`. Optional — only needed if you want to
  *      run iOS / Mac builds from your laptop.
@@ -72,12 +72,19 @@ const log = {
   },
 };
 
-// ── 1. Local files (delegate to verify-capacitor) ──────────────────
+// ── 1. Local files (delegate to capacitor.integration test) ────────
 log.step('Native readiness — local config');
 {
-  const r = spawnSync('node', ['verify-capacitor.mjs'], { cwd: ROOT, encoding: 'utf8' });
-  if (r.status === 0) log.ok('verify-capacitor.mjs green — all branded files in place');
-  else log.fail('verify-capacitor.mjs failed — run `pnpm verify:capacitor` to see what');
+  // Capacitor brand-consistency is asserted by ui/src/lib/integration/
+  // capacitor.integration.test.ts (replaced verify-capacitor.mjs in
+  // Phase 5 of the testing migration).
+  const r = spawnSync(
+    'pnpm',
+    ['exec', 'vitest', 'run', '--', 'capacitor.integration', '--silent'],
+    { cwd: ROOT, encoding: 'utf8' },
+  );
+  if (r.status === 0) log.ok('capacitor.integration green — all branded files in place');
+  else log.fail('capacitor.integration failed — run `pnpm test capacitor.integration` to see what');
 }
 
 // ── 2. Local credentials file ──────────────────────────────────────

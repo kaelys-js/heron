@@ -32,7 +32,7 @@
     "test:watch": "vitest --config vitest.workspace.ts",
     "typecheck": "tsgo --noEmit -p tsconfig.json",
     "typecheck:watch": "tsgo --noEmit -p tsconfig.json --watch",
-    "verify": "node ../verify-capacitor.mjs"
+    "verify": "vitest --config vitest.workspace.ts run -- capacitor.integration"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.95.1",

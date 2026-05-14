@@ -156,8 +156,8 @@ EXTENSIONS.each do |ext|
   # Extension target sources live at `ui/ios/App/<Name>/` — same level
   # as the main App/ folder. (Earlier versions of this script used
   # `../<Name>` and silently skipped on every run; consistent with
-  # turbo.json + biome.json + verify-capacitor.mjs which all use the
-  # `App/<Name>/` layout.)
+  # turbo.json + biome.json + capacitor.integration.test.ts which all
+  # use the `App/<Name>/` layout.)
   source_dir_abs = File.expand_path(ext[:source_dir], Dir.pwd)
   unless Dir.exist?(source_dir_abs)
     puts "✗ source dir not found: #{source_dir_abs}"

@@ -34,7 +34,7 @@ const MIN_THRESHOLD =
       : parseInt(args[minThresholdIdx + 1])
     : 5;
 
-// --- Status normalization (mirrors verify-pipeline.mjs) ---
+// --- Status normalization (mirrors normalize-statuses.mjs ALIASES) ---
 const ALIASES = {
   evaluada: 'evaluated',
   condicional: 'evaluated',

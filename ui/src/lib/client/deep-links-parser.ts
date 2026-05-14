@@ -6,7 +6,7 @@
  *   • App.addListener('appUrlOpen') subscription
  *   • goto() + window.dispatchEvent dispatch
  *   • Capacitor + SvelteKit imports that don't load in a bare Node
- *     environment (which is what `verify-deep-links.mjs` runs)
+ *     environment (which is what `deep-links.integration.test.ts` runs)
  *
  * Keeping this file dependency-free is a contract: do NOT add any
  * imports here other than from `./brand` (which is itself an
@@ -22,7 +22,7 @@ import { BRAND, BRAND_EVENTS } from './brand';
  * Unknown routes fall through to '/' so a typo'd link still opens the
  * dashboard rather than silently doing nothing.
  *
- * Contract verified by `verify-deep-links.mjs`.
+ * Contract verified by `ui/src/lib/integration/deep-links.integration.test.ts`.
  */
 export function parseDeepLink(url: string): string | null {
   try {

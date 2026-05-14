@@ -40,7 +40,7 @@ const CADENCE = {
   interview_thankyou: 1,
 };
 
-// --- Status normalization (mirrors verify-pipeline.mjs) ---
+// --- Status normalization (mirrors normalize-statuses.mjs ALIASES) ---
 const ALIASES = {
   evaluada: 'evaluated',
   condicional: 'evaluated',

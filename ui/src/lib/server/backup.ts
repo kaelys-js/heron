@@ -762,7 +762,7 @@ function countFilesAt(p: string): number {
   return n;
 }
 
-/** Just for the verifier — exported so verify-backup.mjs can probe it. */
+/** Exposed so backup.integration.test.ts can probe the include set. */
 export function _internal_includePaths(): readonly string[] {
   return INCLUDE_PATHS;
 }

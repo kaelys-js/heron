@@ -4,7 +4,7 @@
  *
  * Tests confirm the helpers compose correctly + the re-exports resolve
  * to non-empty strings. Drift from brand.json gets caught by the brand
- * apply pipeline (verify-capacitor.mjs in Phase 5); these tests only
+ * apply pipeline (capacitor.integration.test.ts in Phase 5); these tests only
  * exercise the helper logic.
  */
 import { describe, expect, it } from 'vitest';

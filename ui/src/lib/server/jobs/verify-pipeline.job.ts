@@ -1,147 +1,222 @@
 /**
  * Pipeline integrity verification — silent + on-demand.
  *
- * Wraps `verify-pipeline.mjs` (text output today). We run nightly at 04:00
- * and also expose a manual run via the Agents page (and the equivalent
- * `POST /api/jobs/verify-pipeline/run`). Output is parsed into the issue
- * stream so the user only sees a notification when something is actually
- * broken.
+ * Was originally a thin wrapper around `verify-pipeline.mjs`. After
+ * Phase 5 of the testing migration that verifier was deleted; we now
+ * run the equivalent checks in-process, in pure TS, against the active
+ * profile's applications.md. Same issue-stream semantics (one issue per
+ * problem class with a stable dedupeKey).
  *
- * Issue strategy: ONE issue per problem class with a stable dedupeKey, so
- * repeat detections refresh the existing row rather than spamming. Closing
- * an issue (resolveIssue) lets it re-appear next sweep if the data is still
- * broken — that's the desired "won't go away until you actually fix it"
- * behaviour.
+ * We run nightly at 04:00 and also expose a manual run via the Agents
+ * page (and the equivalent `POST /api/jobs/verify-pipeline/run`). Output
+ * is parsed into the issue stream so the user only sees a notification
+ * when something is actually broken.
  */
-
-import { spawn } from 'node:child_process';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { ROOT } from '../files';
 import { logEvent } from '../events';
 import { reportIssue } from '../issues';
 import { register } from './registry';
 import type { JobResult } from './types';
 
-const SUMMARY_RE = /Pipeline Health:\s*(\d+)\s+errors?,\s*(\d+)\s+warnings?/i;
+type Finding = { severity: 'error' | 'warn'; cls: string; line: string };
 
-type Finding = { severity: 'error' | 'warn'; line: string };
+// Canonical statuses per templates/states.yml. Kept inline to avoid a
+// YAML parser dep just for this list; tested by templates.test.ts to
+// stay in sync with the canonical file.
+const CANONICAL_STATUSES = new Set([
+  'Evaluated',
+  'Applied',
+  'Responded',
+  'Interview',
+  'Offer',
+  'Rejected',
+  'Discarded',
+  'SKIP',
+]);
 
-function parseFindings(stdout: string): Finding[] {
-  const out: Finding[] = [];
-  for (const raw of stdout.split('\n')) {
-    const line = raw.trim();
-    if (line.startsWith('❌')) out.push({ severity: 'error', line: line.replace(/^❌\s*/, '') });
-    else if (line.startsWith('⚠️')) out.push({ severity: 'warn', line: line.replace(/^⚠️\s*/, '') });
+function loadActiveProfileTracker(): { path: string; body: string } | null {
+  // Prefer the active-profile applications.md; fall back to the legacy
+  // top-level applications.md if the multi-profile layout isn't in use.
+  const profilesJson = join(ROOT, 'data/profiles.json');
+  if (existsSync(profilesJson)) {
+    try {
+      const state = JSON.parse(readFileSync(profilesJson, 'utf8'));
+      const active = state?.activeId;
+      if (active) {
+        const p = join(ROOT, `data/profiles/${active}/applications.md`);
+        if (existsSync(p)) return { path: p, body: readFileSync(p, 'utf8') };
+      }
+    } catch {
+      // fall through
+    }
   }
-  return out;
+  const legacy = join(ROOT, 'data/applications.md');
+  if (existsSync(legacy)) return { path: legacy, body: readFileSync(legacy, 'utf8') };
+  return null;
 }
 
-/** Group findings by their leading "<problem class>:" prefix or first 5 words. */
-function classify(findings: Finding[]): Map<string, Finding[]> {
-  const groups = new Map<string, Finding[]>();
-  for (const f of findings) {
-    // Strip the "#NUM:" prefix and use the next token as the class
-    const stripped = f.line.replace(/^#\d+:\s*/, '');
-    const m = stripped.match(/^([^:]+):/);
-    const cls = (m ? m[1] : stripped.split(/\s+/).slice(0, 4).join(' ')).trim();
-    if (!groups.has(cls)) groups.set(cls, []);
-    groups.get(cls)!.push(f);
-  }
-  return groups;
+function parseRows(body: string): { rowIdx: number; cols: string[] }[] {
+  // Markdown tables: header + separator + rows. Skip the first two
+  // pipe-rows (header + separator) and ignore blank lines.
+  const rows: { rowIdx: number; cols: string[] }[] = [];
+  let pipeRowsSeen = 0;
+  body.split('\n').forEach((raw, i) => {
+    const line = raw.trimEnd();
+    if (!line.startsWith('|')) return;
+    pipeRowsSeen += 1;
+    if (pipeRowsSeen <= 2) return; // header + separator
+    const cols = line
+      .slice(1) // strip leading |
+      .replace(/\|\s*$/, '') // strip trailing |
+      .split('|')
+      .map((c) => c.trim());
+    rows.push({ rowIdx: i + 1, cols });
+  });
+  return rows;
 }
 
 function runVerifyPipeline(): Promise<JobResult> {
   return new Promise((resolve) => {
-    let stdout = '';
-    let stderr = '';
-    const p = spawn('node', ['verify-pipeline.mjs'], {
-      cwd: ROOT,
-      env: { ...process.env },
-    });
-    p.stdout?.on('data', (c: Buffer) => {
-      stdout += c.toString();
-    });
-    p.stderr?.on('data', (c: Buffer) => {
-      stderr += c.toString();
-    });
-    p.on('error', (err: Error) => {
-      logEvent('verify-pipeline', 'verify-pipeline.mjs failed to spawn', {
-        level: 'error',
+    const findings: Finding[] = [];
+    const tracker = loadActiveProfileTracker();
+    if (!tracker) {
+      logEvent('verify-pipeline', 'No applications.md found — skipping', {
+        level: 'info',
         category: 'system',
-        message: err.message,
+        message: 'No tracker exists yet',
       });
-      resolve({ ok: false, error: err.message });
+      resolve({ ok: true, message: 'No tracker yet', meta: { errors: 0, warnings: 0 } });
+      return;
+    }
+
+    const rows = parseRows(tracker.body);
+
+    // Check 1 — canonical statuses
+    const seen = new Map<string, number[]>();
+    rows.forEach(({ rowIdx, cols }) => {
+      if (cols.length < 6) {
+        findings.push({
+          severity: 'warn',
+          cls: 'Malformed row',
+          line: `row ${rowIdx}: only ${cols.length} columns (expected ≥ 6)`,
+        });
+        return;
+      }
+      const company = cols[2];
+      const role = cols[3];
+      const status = cols[5]; // applications.md column order: # | Date | Company | Role | Score | Status | …
+      if (status && !CANONICAL_STATUSES.has(status)) {
+        findings.push({
+          severity: 'warn',
+          cls: 'Non-canonical status',
+          line: `row ${rowIdx}: "${status}" not in templates/states.yml`,
+        });
+      }
+      const dedupKey = `${(company || '').toLowerCase()}|${(role || '').toLowerCase()}`;
+      const existing = seen.get(dedupKey);
+      if (existing) existing.push(rowIdx);
+      else seen.set(dedupKey, [rowIdx]);
     });
-    p.on('close', (code: number | null) => {
-      const m = stdout.match(SUMMARY_RE);
-      const errors = m ? parseInt(m[1], 10) : 0;
-      const warnings = m ? parseInt(m[2], 10) : 0;
-      const findings = parseFindings(stdout);
-      const groups = classify(findings);
 
-      // Emit one issue per problem class. dedupeKey = source+class so repeat
-      // sweeps refresh the same row rather than appending.
-      for (const [cls, items] of groups) {
-        const errCount = items.filter((i) => i.severity === 'error').length;
-        const warnCount = items.length - errCount;
-        const severity: 'error' | 'warn' = errCount > 0 ? 'error' : 'warn';
-        const summary =
-          cls +
-          ' (' +
-          (errCount > 0 ? errCount + ' error' + (errCount === 1 ? '' : 's') : '') +
-          (errCount > 0 && warnCount > 0 ? ' · ' : '') +
-          (warnCount > 0 ? warnCount + ' warning' + (warnCount === 1 ? '' : 's') : '') +
-          ')';
-        const detail =
-          items
-            .slice(0, 50)
-            .map((i) => '- ' + i.line)
-            .join('\n') + (items.length > 50 ? '\n\n…and ' + (items.length - 50) + ' more.' : '');
-        reportIssue({
-          severity,
-          source: 'verify-pipeline',
-          summary,
-          detail,
-          fix: { label: 'Open Settings → Maintenance', href: '/settings#maintenance' },
-          dedupeKey: 'verify-pipeline:' + cls.toLowerCase().replace(/\s+/g, '-'),
+    // Check 2 — duplicates
+    for (const [key, idxs] of seen) {
+      if (idxs.length > 1) {
+        findings.push({
+          severity: 'warn',
+          cls: 'Duplicate company+role',
+          line: `${key}: rows ${idxs.join(', ')}`,
         });
       }
+    }
 
-      // Activity feed: silent if all-clear; warn level otherwise.
-      if (errors === 0 && warnings === 0) {
-        logEvent('verify-pipeline', 'Pipeline integrity OK', {
-          level: 'info',
+    // Check 3 — unmerged TSVs in batch/tracker-additions/
+    const tsvDir = join(ROOT, 'batch/tracker-additions');
+    if (existsSync(tsvDir)) {
+      try {
+        // Use fs.readdirSync via Node — kept in this scope to keep the
+        // import surface small.
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const fs = require('node:fs') as typeof import('node:fs');
+        const pending = fs.readdirSync(tsvDir).filter((f: string) => f.endsWith('.tsv'));
+        if (pending.length > 0) {
+          findings.push({
+            severity: 'warn',
+            cls: 'Unmerged tracker TSVs',
+            line: `${pending.length} pending — run \`node merge-tracker.mjs\``,
+          });
+        }
+      } catch {
+        // ignore — non-fatal
+      }
+    }
+
+    // Group findings by class — one issue per class with stable dedupeKey.
+    const groups = new Map<string, Finding[]>();
+    for (const f of findings) {
+      if (!groups.has(f.cls)) groups.set(f.cls, []);
+      groups.get(f.cls)!.push(f);
+    }
+
+    for (const [cls, items] of groups) {
+      const errCount = items.filter((i) => i.severity === 'error').length;
+      const warnCount = items.length - errCount;
+      const severity: 'error' | 'warn' = errCount > 0 ? 'error' : 'warn';
+      const summary =
+        cls +
+        ' (' +
+        (errCount > 0 ? errCount + ' error' + (errCount === 1 ? '' : 's') : '') +
+        (errCount > 0 && warnCount > 0 ? ' · ' : '') +
+        (warnCount > 0 ? warnCount + ' warning' + (warnCount === 1 ? '' : 's') : '') +
+        ')';
+      const detail =
+        items
+          .slice(0, 50)
+          .map((i) => '- ' + i.line)
+          .join('\n') + (items.length > 50 ? '\n\n…and ' + (items.length - 50) + ' more.' : '');
+      reportIssue({
+        severity,
+        source: 'verify-pipeline',
+        summary,
+        detail,
+        fix: { label: 'Open Settings → Maintenance', href: '/settings#maintenance' },
+        dedupeKey: 'verify-pipeline:' + cls.toLowerCase().replace(/\s+/g, '-'),
+      });
+    }
+
+    const errors = findings.filter((f) => f.severity === 'error').length;
+    const warnings = findings.length - errors;
+
+    if (errors === 0 && warnings === 0) {
+      logEvent('verify-pipeline', 'Pipeline integrity OK', {
+        level: 'info',
+        category: 'system',
+        message: 'No issues found',
+      });
+    } else {
+      logEvent(
+        'verify-pipeline',
+        'Pipeline issues: ' +
+          errors +
+          ' error' +
+          (errors === 1 ? '' : 's') +
+          ' · ' +
+          warnings +
+          ' warning' +
+          (warnings === 1 ? '' : 's'),
+        {
+          level: errors > 0 ? 'warn' : 'info',
           category: 'system',
-          message: 'No issues found',
-        });
-      } else {
-        logEvent(
-          'verify-pipeline',
-          'Pipeline issues: ' +
-            errors +
-            ' error' +
-            (errors === 1 ? '' : 's') +
-            ' · ' +
-            warnings +
-            ' warning' +
-            (warnings === 1 ? '' : 's'),
-          {
-            level: errors > 0 ? 'warn' : 'info',
-            category: 'system',
-            message: 'See Inbox · Maintenance for details',
-          },
-        );
-      }
-      // Exit code is non-zero when issues found — we treat that as "ran
-      // successfully and reported", not as a failure of the job itself.
-      if (code === null && stderr.trim()) {
-        resolve({ ok: false, error: 'verify-pipeline killed: ' + stderr.slice(0, 200) });
-      } else {
-        resolve({
-          ok: true,
-          message: 'Verified · ' + errors + ' errors / ' + warnings + ' warnings',
-          meta: { errors, warnings, exitCode: code, stderr: stderr.slice(0, 500) },
-        });
-      }
+          message: 'See Inbox · Maintenance for details',
+        },
+      );
+    }
+
+    resolve({
+      ok: true,
+      message: 'Verified · ' + errors + ' errors / ' + warnings + ' warnings',
+      meta: { errors, warnings, trackerPath: tracker.path },
     });
   });
 }

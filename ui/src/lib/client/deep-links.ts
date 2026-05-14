@@ -35,7 +35,7 @@ import { parseDeepLink } from './deep-links-parser';
 // Re-export so the existing API surface stays stable. Callers can import
 // either `parseDeepLink` or `handleDeepLink` from `./deep-links` exactly
 // as before — the parser just physically lives in a sibling module so
-// `verify-deep-links.mjs` can exercise it in plain Node.
+// `deep-links.integration.test.ts` can exercise it in plain Node.
 export { parseDeepLink } from './deep-links-parser';
 
 let installed = false;
@@ -78,5 +78,5 @@ export function handleDeepLink(url: string): void {
 
 // parseDeepLink is exported above. See ./deep-links-parser.ts for the
 // implementation + contract. Keep both modules in sync — adding a new
-// route here means adding a row to verify-deep-links.mjs's CASES table
-// in the same commit so regressions surface immediately in CI.
+// route here means adding a case to deep-links.integration.test.ts in
+// the same commit so regressions surface immediately in CI.
