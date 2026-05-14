@@ -14,9 +14,9 @@ import { isNull } from 'drizzle-orm';
  *     generated.
  *   • Owners and admins: see every active user on the install.
  *
- * The page itself doesn't expose promotion/demotion controls yet (Phase 4+);
- * for now this is a read-only "household roster". The crucial property
- * is that members can't enumerate other users' emails.
+ * The page is a read-only "household roster" today — promotion /
+ * demotion happens via the role-management API endpoints. The crucial
+ * property is that members can't enumerate other users' emails.
  */
 export async function load({ locals }: { locals: App.Locals }) {
   const userId = requireUserId(locals);

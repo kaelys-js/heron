@@ -1,15 +1,13 @@
 /**
- * Integration replacement for `verify-pipeline.mjs` (Phase 5).
+ * Pipeline-integrity integration tests.
  *
- * Asserts pipeline integrity:
+ * Asserts:
  *   • canonical statuses (per templates/states.yml)
  *   • no duplicate company+role
  *   • report links resolve
  *   • score format X.X/5 or N/A or DUP
  *   • no pending TSVs in batch/tracker-additions/
  *   • states.yml itself is well-formed
- *
- * Spawns the legacy verifier as the parity oracle.
  */
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';

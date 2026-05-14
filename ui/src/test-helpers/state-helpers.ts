@@ -41,7 +41,7 @@ export async function resetConfirmGates(): Promise<void> {
 
 /** Tiny helper: invoke `mod.<key>()` if present, no-op otherwise.
  *  Module-singleton stores are dynamic-imported so this stays safe
- *  even when the module isn't compiled yet (e.g. early Phase 1). */
+ *  even when the module doesn't yet export the expected reset hook. */
 function callIfPresent(mod: object, key: string): void {
   const fn = (mod as unknown as Record<string, unknown>)[key];
   if (typeof fn === 'function') {

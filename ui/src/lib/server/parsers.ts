@@ -178,8 +178,8 @@ function mapStatus(s: string): Status {
   const up = s.toUpperCase().trim();
   const lower = s.toLowerCase().trim();
 
-  // Autonomous-apply states (Phase 0.3 of autonomous-apply plan).
-  // These come from the apply-queue drain writing back to applications.md.
+  // Autonomous-apply states — produced by the apply-queue drain
+  // writing back to applications.md.
   if (lower === 'queued') return 'Queued';
   if (lower === 'applying' || up.includes('APPLYING')) return 'Applying';
   if (
@@ -402,7 +402,7 @@ export function loadAllJobs(profileId?: string): Job[] {
   }
   const id = resolveId(profileId);
   const jobs = loadJobsForProfile(id);
-  // Stamp profileId on every job for single-profile callers too — Phase 6+
+  // Stamp profileId on every job for single-profile callers too — the
   // UI uses this to decide whether to render a profile chip on each row.
   for (const j of jobs) j.profileId = id;
   return jobs;

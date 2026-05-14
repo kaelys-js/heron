@@ -490,7 +490,7 @@ if (VERIFY && !DRY_RUN) {
   console.log('\n--- Running verification ---');
   try {
     // Pipeline integrity is now covered by the integration test
-    // (replaces verify-pipeline.mjs deleted in Phase 5 of the testing migration).
+    // (pipeline integrity is covered by the pipeline.integration vitest project).
     execFileSync('pnpm', ['exec', 'vitest', 'run', '--', 'pipeline.integration'], {
       stdio: 'inherit',
       cwd: CAREER_OPS,

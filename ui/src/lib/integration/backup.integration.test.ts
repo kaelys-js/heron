@@ -1,15 +1,14 @@
 /**
- * Integration replacement for `verify-backup.mjs` (Phase 5).
+ * Backup + restore integration tests.
  *
- * Asserts the backup + restore system is wired:
- *   • Server module exists at lib/server/backup.ts
- *   • API endpoints exist for create/list/restore
+ * Structural assertions:
+ *   • Server module exists at lib/server/backup.ts with the expected
+ *     exported surface
+ *   • API endpoints exist for create / list / restore
  *   • Backup directory structure conventions
- *   • Parity with legacy verifier (spawn + exit 0)
  *
- * Round-trip behavioural tests are deferred to Phase 8 (they need a
- * sandboxed profile dir + significant setup; the legacy verifier covers
- * them today via spawn so parity is preserved).
+ * Round-trip behavioural coverage (write → read → assert content) lives
+ * in lib/server/backup.test.ts, which uses a tmpdir-scoped profile.
  */
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';

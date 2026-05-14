@@ -1,13 +1,9 @@
 /**
- * Integration replacement for `verify-versions.mjs` (Phase 5).
+ * Toolchain-version integration tests.
  *
  * Asserts every place that pins Node / pnpm / Ruby matches `.mise.toml`
  * exactly. Runs in the `ui-integration` Vitest project (env=node,
  * 120s timeout — these touch real files at repo root).
- *
- * Parity contract: every check that verify-versions.mjs makes is
- * covered as a Vitest case below. Verifier `.mjs` files stay in repo
- * until Phase 6 deletion — both should pass/fail in lockstep.
  */
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';

@@ -2,8 +2,9 @@
   import { Button } from '$lib/components/ui/button';
   import { KeyRound, Code, Ticket } from '@lucide/svelte';
   import { BRAND } from '$lib/client/brand';
-  // Lucide's "github" icon was deprecated; use a generic Code icon for
-  // the GitHub OAuth CTA instead. Phase 3 can swap in an SVG mark.
+  // Lucide's "github" icon was deprecated; use a generic Code icon
+  // for the GitHub OAuth CTA. (Swap in an SVG mark if a branded
+  // GitHub logo is required for compliance.)
 
   let { data } = $props<{
     data: { isFirstUser: boolean; githubEnabled: boolean };

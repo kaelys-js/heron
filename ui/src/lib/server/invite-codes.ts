@@ -8,8 +8,8 @@
  * pairing). Codes expire after 30 minutes and are single-use.
  *
  * Generation: cryptographically random 6 digits (10^6 = 1M space). With
- * a 30-minute TTL and rate-limited attempts (Phase 4 — currently none),
- * brute force is impractical for a low-traffic local server.
+ * a 30-minute TTL, brute force is impractical for a low-traffic local
+ * server (rate-limited attempts can be layered in when needed).
  *
  * Storage: app.db is the right home if we had jobs to do per-user-id,
  * but invite codes belong in auth.db's `invite_codes` table — they're

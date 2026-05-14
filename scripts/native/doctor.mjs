@@ -75,9 +75,8 @@ const log = {
 // ── 1. Local files (delegate to capacitor.integration test) ────────
 log.step('Native readiness — local config');
 {
-  // Capacitor brand-consistency is asserted by ui/src/lib/integration/
-  // capacitor.integration.test.ts (replaced verify-capacitor.mjs in
-  // Phase 5 of the testing migration).
+  // Capacitor brand-consistency is asserted by
+  // ui/src/lib/integration/capacitor.integration.test.ts.
   const r = spawnSync(
     'pnpm',
     ['exec', 'vitest', 'run', '--', 'capacitor.integration', '--silent'],

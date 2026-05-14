@@ -24,9 +24,9 @@ and runs in the right environment:
 |---|---|---|---|
 | `ui-unit` | jsdom | `src/lib/**/*.test.ts` (excl server/components) | Fast pure-logic + state-store tests |
 | `ui-server` | node | `src/lib/server/**/*.test.ts`, `src/routes/api/**/*.test.ts`, `src/hooks.server.test.ts` | Server modules + endpoints (no jsdom) |
-| `ui-component` | browser (Playwright/Chromium) | `src/**/*.component.test.ts`, `src/**/*.svelte.test.ts` | Real DOM for responsive-matchMedia behaviour |
+| `ui-component` | browser (Playwright — Chromium + WebKit, headless by default) | `src/**/*.component.test.ts`, `src/**/*.svelte.test.ts` | Real DOM for responsive-matchMedia behaviour |
 | `ui-routes` | jsdom | `src/routes/**/*.test.ts` excl `api/*` | Page-level smoke |
-| `ui-integration` | node | `src/lib/integration/**/*.integration.test.ts` | Verifier-script rewrites (Phase 5+) |
+| `ui-integration` | node | `src/lib/integration/**/*.integration.test.ts` | Structural assertions across repo files (apply / backup / capacitor / cleanup / deep-links / multi-user / pipeline / post-apply / versions) |
 
 Naming convention:
 
@@ -229,9 +229,10 @@ speedup). Bypass for emergencies: `SKIP_LEFTHOOK=1 git push`.
 `coverage` (downstream) summarises the two flagged Codecov uploads. The
 Codecov action handles PR comments per-flag.
 
-`ios` job self-gates with a guard step: if `ui/ios/App/AppTests` does
-not exist, the job no-ops to green. This lets branch protection on
-`main` require `ios` even before Phase 3 fills in all the test code.
+`ios` job runs Fastlane `test_ci`, which spawns `xcodebuild test` over
+the 4 test targets (`AppTests`, `AppUITests`, `WidgetTests`, `WatchTests`)
+on the macos-15 runner with Xcode 16. xcov produces a Cobertura report
+consumed by the `ios`-flagged Codecov upload step.
 
 ## Troubleshooting
 

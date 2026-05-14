@@ -1,7 +1,7 @@
 /**
- * fs-fixtures — temporary-directory helpers for verifier-rewrite tests
- * (Phase 5) and any other case that wants to spawn a faux `data/`
- * tree, run a check against it, then tear it down.
+ * fs-fixtures — temporary-directory helpers for integration tests
+ * that want to spawn a faux `data/` tree, run a check against it,
+ * then tear it down.
  *
  * The standard pattern:
  *

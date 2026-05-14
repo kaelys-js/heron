@@ -147,8 +147,7 @@ export const auth = betterAuth({
    * upgrade the role if this user's id was the lowest-created.
    *
    * Subsequent signups (after an invite-code claim) keep role='member' —
-   * the owner can later promote them to 'admin' via /settings/users
-   * (Phase 4+).
+   * the owner can promote them to 'admin' via /settings/users.
    */
   databaseHooks: {
     user: {

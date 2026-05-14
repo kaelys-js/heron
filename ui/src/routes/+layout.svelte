@@ -195,7 +195,7 @@
 
     (async () => {
       await waitForBootFallbackPaint();
-      // Phase 1: hide the native splash. The boot-fallback is NOW
+      // Step 1: hide the native splash. The boot-fallback is NOW
       // confirmed painted underneath, so this hand-off is invisible
       // even on slow devices.
       try {
@@ -204,9 +204,9 @@
       } catch {
         /* not running native; nothing to dismiss */
       }
-      // Phase 2: perception beat where boot-fallback is the only thing.
+      // Step 2: perception beat where boot-fallback is the only thing.
       await new Promise((r) => setTimeout(r, SPLASH_FADE_MS + BOOT_PERCEPTION_MS));
-      // Phase 3: fade out the boot-fallback.
+      // Step 3: fade out the boot-fallback.
       if (typeof document !== 'undefined') {
         const bootFallback = document.getElementById('boot-fallback');
         if (bootFallback) {

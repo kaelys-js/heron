@@ -48,9 +48,8 @@ describe('useIsMobile — matchMedia integration (smoke only)', () => {
   // Outside a Svelte component lifecycle (raw vitest unit context),
   // onMount callbacks don't fire — so the store stays at its initial
   // `{value: false}` regardless of `setMobileViewport()`. End-to-end
-  // matchMedia reactivity is tested in the component project
-  // (Phase 2.21 — ResponsiveAction* tests run in a real browser where
-  // the hook mounts inside an actual component).
+  // matchMedia reactivity is tested in the ui-component project where
+  // the hook mounts inside a real component running in real Chromium.
   beforeEach(() => {
     setMobileViewport(false);
   });

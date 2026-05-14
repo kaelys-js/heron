@@ -2,13 +2,14 @@
  * Job registry barrel — importing this module triggers registration of
  * every known job. Called from `bootOnce()` in orchestrator.ts.
  *
- * Order matters only for visibility (the registry is a Map keyed by id, so
- * later registrations of the same id overwrite earlier ones). Legacy tasks
- * are wired here directly to avoid circular imports between orchestrator
- * and registry.
+ * Order matters only for visibility (the registry is a Map keyed by id,
+ * so later registrations of the same id overwrite earlier ones). Legacy
+ * tasks are wired here directly to avoid circular imports between
+ * orchestrator and registry.
  *
- * Phase 1+ tasks (normalize, dedup, liveness, etc.) will live in their
- * own `*.job.ts` files imported below as we build them.
+ * Each job's `*.job.ts` module self-registers on import; the imports
+ * below MUST stay even though they look unused — tree-shaking would
+ * otherwise drop them and the job wouldn't exist at runtime.
  */
 
 import { register, installAfterListener } from './registry';
@@ -16,15 +17,14 @@ import { runScan, runGemini, runLinkedInApply } from '../orchestrator';
 import { startBatchWatcher } from './auto-merge-batch';
 import { migrateToMultiProfile } from '../profile-migrate';
 
-// Phase 1 hygiene jobs — importing each module triggers its register() call.
-// These imports MUST stay; tree-shaking would skip them otherwise.
+// Hygiene — keep applications.md canonical, dedup, validate URLs.
 import './normalize.job';
 import './dedup.job';
 import './verify-pipeline.job';
 import './liveness.job';
 import './auto-triage.job';
 
-// Phase 2 discovery jobs.
+// Discovery — portal scrapes + curated feeds + email/IMAP intake.
 import './scan-portals.job';
 import './scan-curated.job';
 import './scan-vc.job';
@@ -34,28 +34,28 @@ import './scan-linkedin-auth.job';
 import './scan-indeed-auth.job';
 import './scan-all.job';
 
-// Phase 3 insight jobs.
+// Insight — follow-up cadence calculator + auto-interview-prep.
 import './followup-cadence.job';
 import './auto-interview-prep';
 
-// Phase 4 auto-apply pipeline jobs.
+// Auto-apply pipeline — queue, digest, LinkedIn warmup, LaTeX render.
 import './auto-queue';
 import './daily-digest.job';
 import './apply-linkedin-login.job';
 import './compile-latex.job';
 import '../autopilot-circuit-breaker';
 
-// Phase 5 autonomous-apply system.
+// Autonomous-apply system — drains the queue when conditions hold.
 import './apply-queue.job';
 
-// Phase 6 maintenance jobs.
+// Maintenance — backups, auto-ghost, LinkedIn audit + DM.
 import './backup.job';
 import './auto-ghost.job';
 import './linkedin-audit.job';
 import './linkedin-dm.job';
 
-// Phase 7 interview-reminder daemon (15-min ticks via setInterval, not
-// the daily autopilot).
+// Interview-reminder daemon — ticks every 15 min via setInterval (not
+// the daily autopilot) so T-30min and T-24h reminders fire on time.
 import './interview-reminder.job';
 import { installInterviewReminderDaemon } from './interview-reminder.job';
 
@@ -143,8 +143,8 @@ export function installAllJobs(): void {
   // Start the fs watcher for batch tracker additions. Idempotent.
   startBatchWatcher();
 
-  // Phase 7: interview-reminder daemon — ticks every 15 min to fire
-  // T-30min and T-24h reminders for scheduled interviews.
+  // Interview-reminder daemon — ticks every 15 min to fire T-30min
+  // and T-24h reminders for scheduled interviews.
   installInterviewReminderDaemon();
 }
 

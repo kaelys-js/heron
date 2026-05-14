@@ -163,11 +163,11 @@ export const POST = wrap(
     });
 
     try {
-      // Phase 1: extract profile text.
+      // Step 1: extract profile text.
       const ext = extractLinkedInText(body.linkedinUrl!);
       if (!ext.ok) return { ok: false, error: ext.error };
 
-      // Phase 2: read cv.md + targetRoles from profile.
+      // Step 2: read cv.md + targetRoles from profile.
       const cvPath = profilePath(profileId, 'cv-md');
       const cv = fs.existsSync(cvPath) ? fs.readFileSync(cvPath, 'utf8') : '';
       if (!cv) return { ok: false, error: 'cv.md not found — onboarding not complete' };

@@ -7,7 +7,7 @@ All scripts live in the project root as `.mjs` modules and are exposed via `npm 
 | Command | Script | Purpose |
 |---------|--------|---------|
 | `npm run doctor` | `doctor.mjs` | Validate setup prerequisites |
-| `pnpm test -- pipeline.integration` | `ui/src/lib/integration/pipeline.integration.test.ts` | Check pipeline data integrity (replaced verify-pipeline.mjs in Phase 5) |
+| `pnpm test -- pipeline.integration` | `ui/src/lib/integration/pipeline.integration.test.ts` | Check pipeline data integrity |
 | `npm run normalize` | `normalize-statuses.mjs` | Fix non-canonical statuses |
 | `npm run dedup` | `dedup-tracker.mjs` | Remove duplicate tracker entries |
 | `npm run merge` | `merge-tracker.mjs` | Merge batch TSVs into applications.md |

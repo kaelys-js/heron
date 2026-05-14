@@ -1,12 +1,11 @@
 /**
- * Integration replacement for `verify-apply.mjs` (Phase 5).
+ * Apply pipeline integration tests.
  *
- * The legacy verifier (~1766 LOC) exercises every portal adapter
- * (LinkedIn / Greenhouse / Ashby / Lever / Workday / etc.) end-to-end.
- * Full rewrite to Vitest needs portal mocks + Playwright fixtures —
- * Phase 8 work.
- *
- * For now: parity oracle + structural assertions on the apply pipeline.
+ * Structural assertions on the apply-dispatcher + per-portal adapters
+ * (LinkedIn / Greenhouse / Ashby / Lever / Workday / etc.) — code-surface
+ * checks that the right exports + entry points + per-portal handler
+ * tables exist. End-to-end portal-mocked behavioural runs are covered
+ * by the per-adapter unit tests in lib/server/apply-*.test.ts.
  */
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';

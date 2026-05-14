@@ -196,8 +196,8 @@ beforeAll(async () => {
     server = setupServer(...handlers);
     server.listen();
   } catch {
-    // test-helpers/msw-handlers doesn't exist yet during Phase 1 bootstrap;
-    // tests that need MSW will add their own server in beforeEach.
+    // If `test-helpers/msw-handlers` isn't compiled yet (cold cache),
+    // tests that need MSW spin up their own server in beforeEach.
   }
 });
 

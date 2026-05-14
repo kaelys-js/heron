@@ -7,7 +7,7 @@
  *
  * Triggers (match the `source` field of upstream success events):
  *   - 'status'      — every /api/status POST emits a success event
- *   - 'batch-merge' — emitted by the auto-merge fs watcher (Phase 1.3)
+ *   - 'batch-merge' — emitted by the auto-merge fs watcher (`auto-merge-batch.ts`)
  *   - 'boot'        — emitted by bootOnce when the dev server is fully up
  *
  * Activity feed: silent unless ≥1 row was actually changed. The script's

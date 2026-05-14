@@ -150,10 +150,9 @@ jobs:
   # ─────────────────────────────────────────────────────────────────
   # iOS — Fastlane test_ci on macOS-15 (Xcode 16, Swift 5.9+)
   # ─────────────────────────────────────────────────────────────────
-  # Skipped until Phase 3 lands the iOS test targets. We define the job
-  # now so branch protection can be configured ahead of the test bundles
-  # actually existing — the `if:` guard below short-circuits to a green
-  # exit until the AppTests target exists.
+  # Runs XCTest + XCUITest + snapshot tests across AppTests, AppUITests,
+  # WidgetTests, WatchTests. xcov produces a Cobertura report consumed by
+  # the codecov upload step below (separate `ios` flag from the `ts` flag).
   ios:
     name: iOS — XCTest + XCUITest + Snapshot
     runs-on: macos-15
@@ -178,23 +177,11 @@ jobs:
           experimental: true
           cache: true
 
-      - name: Check for iOS test targets
-        id: ios-targets
-        run: |
-          if [ -d "ui/ios/App/AppTests" ]; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::iOS test targets not yet created — skipping iOS job. Run Phase 3 of the testing migration to populate AppTests/AppUITests/WidgetTests/WatchTests."
-          fi
-
       - name: Resolve pnpm store path
-        if: steps.ios-targets.outputs.exists == 'true'
         id: pnpm-store
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
-        if: steps.ios-targets.outputs.exists == 'true'
         uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
@@ -203,7 +190,6 @@ jobs:
             pnpm-store-${{ runner.os }}-
 
       - name: Cache Xcode DerivedData
-        if: steps.ios-targets.outputs.exists == 'true'
         uses: actions/cache@v5
         with:
           path: ~/Library/Developer/Xcode/DerivedData
@@ -212,7 +198,6 @@ jobs:
             derived-data-${{ runner.os }}-
 
       - name: Cache SPM
-        if: steps.ios-targets.outputs.exists == 'true'
         uses: actions/cache@v5
         with:
           path: ~/Library/Caches/org.swift.swiftpm
@@ -221,38 +206,31 @@ jobs:
             spm-${{ runner.os }}-
 
       - name: Install dependencies
-        if: steps.ios-targets.outputs.exists == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Install SwiftLint + SwiftFormat (Brewfile)
-        if: steps.ios-targets.outputs.exists == 'true'
         run: |
           brew install swiftlint swiftformat || true
 
       - name: SwiftLint (strict)
-        if: steps.ios-targets.outputs.exists == 'true'
         run: swiftlint --strict ui/ios/App
 
       - name: Apply brand
-        if: steps.ios-targets.outputs.exists == 'true'
         run: pnpm brand:apply
 
       - name: Capacitor sync iOS
-        if: steps.ios-targets.outputs.exists == 'true'
         run: pnpm --filter ui exec cap sync ios
 
       - name: Bundle install (Fastlane gems)
-        if: steps.ios-targets.outputs.exists == 'true'
         working-directory: ui/ios/App
         run: bundle install --jobs 4 --retry 3
 
       - name: Fastlane test_ci (XCTest + XCUITest)
-        if: steps.ios-targets.outputs.exists == 'true'
         working-directory: ui/ios/App
         run: bundle exec fastlane test_ci
 
       - name: Upload xcresult bundle
-        if: steps.ios-targets.outputs.exists == 'true' && always()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: xcresult-bundle
@@ -260,7 +238,7 @@ jobs:
           retention-days: 14
 
       - name: Upload coverage to Codecov (ios flag)
-        if: steps.ios-targets.outputs.exists == 'true' && always() && hashFiles('ui/ios/App/fastlane/coverage/cobertura.xml') != ''
+        if: always() && hashFiles('ui/ios/App/fastlane/coverage/cobertura.xml') != ''
         uses: codecov/codecov-action@v5
         with:
           files: ui/ios/App/fastlane/coverage/cobertura.xml

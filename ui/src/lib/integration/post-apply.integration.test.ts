@@ -1,13 +1,13 @@
 /**
- * Integration replacement for `verify-post-apply.mjs` (Phase 5).
+ * Post-apply pipeline integration tests.
  *
- * The legacy verifier runs ~80 checks across the post-apply pipeline
- * (interviewers / offers / comparison / funnel / calendar / reality /
- * referrals / visa / team-rep / cross-link / ready-gate / first-90-days /
- * resignation / EV / mode markdown / inbox cards / auto-ghost cron /
- * ai-detect integration). Rather than re-author all 80 checks one-by-one
- * we spawn the legacy verifier as the parity oracle PLUS check the
- * critical-path endpoints + mode files exist.
+ * Structural assertions across the post-apply surface: interviewers,
+ * offers, comparison, funnel, calendar, reality, referrals, visa,
+ * team-rep, cross-link, ready-gate, first-90-days, resignation, EV,
+ * mode markdown, inbox cards, auto-ghost cron, ai-detect integration.
+ *
+ * We check critical-path endpoints + mode files exist; per-flow
+ * behavioural tests live in their per-module suites.
  */
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';

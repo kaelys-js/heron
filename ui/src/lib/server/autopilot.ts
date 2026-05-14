@@ -315,9 +315,10 @@ async function runTask(s: Schedule): Promise<void> {
   logEvent('autopilot', 'Triggering ' + s.name, { category: 'system', message: 'task=' + s.task });
   patchSchedule(s.id, { lastRunAt: Date.now(), lastRunResult: 'started' });
 
-  // Pluggable path: any registered job (legacy 3 + every Phase 1+ hygiene job)
-  // can be invoked by id. Falls back to the legacy direct calls only if the
-  // registry hasn't been installed yet (boot race).
+  // Pluggable path: any registered job (the legacy 3 + every hygiene /
+  // discovery / insight / apply / maintenance job) can be invoked by id.
+  // Falls back to the legacy direct calls only if the registry hasn't
+  // been installed yet (boot race).
   const def = getJob(s.task);
   if (def) {
     await runJobById(s.task, s.args ?? {});

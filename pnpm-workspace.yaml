@@ -22,10 +22,12 @@ packages:
 #   • electron-winstaller — Windows installer bundler (transitive of electron-builder)
 #   • esbuild          — downloads the platform-specific binary
 #   • sharp            — downloads precompiled libvips binaries
-#   • msw              — postinstall is a CLI welcome message; we copy the
-#                        browser-mode Service Worker ourselves via
-#                        `pnpm exec msw init ui/static --no-save` in a
-#                        future Phase 2 task. Block the auto-run.
+#   • msw              — postinstall is a CLI welcome message. The
+#                        browser-mode Service Worker is already shipped
+#                        at ui/static/mockServiceWorker.js. Refresh it
+#                        after a major msw bump with
+#                        `pnpm exec msw init ui/static --no-save`.
+#                        Block the welcome-noise auto-run.
 allowBuilds:
   better-sqlite3: true
   electron: true

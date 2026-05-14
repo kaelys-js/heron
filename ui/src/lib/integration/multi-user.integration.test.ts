@@ -1,14 +1,12 @@
 /**
- * Integration replacement for `verify-multi-user.mjs` (Phase 5).
+ * Multi-user integration tests.
  *
- * The legacy verifier (~1105 LOC) spawns a SvelteKit preview server,
- * exercises the auth flow + per-user data isolation, and asserts every
- * route enforces the right user-context boundaries.
- *
- * Rewriting all 1105 LOC as Vitest cases is Phase 8 work (it needs a
- * sandbox SQLite + Playwright passkey simulation). For now: spawn the
- * legacy verifier as the parity oracle PLUS structural assertions on
- * the multi-user code surface.
+ * Structural assertions on the multi-user code surface — auth helpers,
+ * user-context plumbing through every API route, per-user data
+ * isolation conventions. The deeper end-to-end auth-flow / passkey
+ * coverage lives in lib/server/auth.test.ts + the routes/api/*.test.ts
+ * suite which exercise the SvelteKit handlers with a sandboxed SQLite
+ * + a mocked WebAuthn ceremony.
  */
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';

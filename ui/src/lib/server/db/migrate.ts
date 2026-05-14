@@ -2,10 +2,9 @@
  * db/migrate — first-boot schema bootstrap.
  *
  * career-ops doesn't ship a drizzle-kit-generated migration folder yet —
- * the schemas are still being iterated. For Phase 1 we use idempotent
- * CREATE TABLE IF NOT EXISTS statements derived from the Drizzle schema
- * objects. This is safe to run on every startup and is fast (~1ms when
- * tables already exist).
+ * the schemas are still being iterated. We use idempotent CREATE TABLE
+ * IF NOT EXISTS statements derived from the Drizzle schema objects.
+ * Safe to run on every startup and fast (~1ms when tables already exist).
  *
  * When the schema stabilises we switch to drizzle-kit migrations.
  * Until then, ANY schema change requires:
@@ -17,7 +16,7 @@ import { authSqliteHandle, appSqliteHandle } from './index';
 
 /** Schema version. Bump when adding/removing tables.
  *
- *  v1 — Phase 1 initial schema (17 app.db tables including dead-on-arrival
+ *  v1 — initial schema (17 app.db tables including dead-on-arrival
  *       jobs/applications/reports/cv_content/etc).
  *  v2 — Trimmed app.db to 4 tables (profiles, activity_events, issues,
  *       ui_prefs). All per-user content files stay on the filesystem under

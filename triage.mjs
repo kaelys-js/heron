@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Phase 1 triage: classify pipeline URLs by company + role title only.
+// Pipeline triage: classify pipeline URLs by company + role title only.
 // Output: pipeline-survivors.tsv, pipeline-skipped.tsv, plus rewritten pipeline.md
 // and appended Skipped rows in applications.md.
 

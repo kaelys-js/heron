@@ -561,8 +561,9 @@ TEST_TARGETS = [
     host: "App",
     deployment_min: "15.0",
     placeholder: <<~SWIFT,
-      // AppTests — XCTest unit tests for the App target. Real cases live
-      // in BrandTests.swift, KeychainStoreTests.swift, etc. (Phase 3.3+).
+      // AppTests — XCTest unit tests for the App target. The smoke case
+      // here just exercises the host-bundle wiring; the real coverage
+      // lives in BrandTests.swift, KeychainStoreTests.swift, etc.
       import XCTest
       @testable import App
 

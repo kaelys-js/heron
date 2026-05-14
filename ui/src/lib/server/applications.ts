@@ -108,7 +108,7 @@ export function markClosed(arg1: string | undefined, arg2?: string, arg3?: strin
 }
 
 /**
- * Generic row-status flip. Used by Phase 4 auto-queue + by any caller that
+ * Generic row-status flip. Used by auto-queue + by any caller that
  * needs an arbitrary status (markApplied / markClosed are the canonical
  * shortcuts for 'Applied' / 'Closed' specifically).
  *
