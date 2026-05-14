@@ -88,10 +88,31 @@ pre-commit:
       # Biome doesn't support .svelte yet (as of 2026-05). Run prettier
       # with prettier-plugin-svelte for those files only — style matches
       # biome.json so .ts and .svelte feel identical.
+      #
+      # PRE-FIX BUG (caught during the verification-loop commit that
+      # introduced this comment): the previous form did `cd ui` then
+      # passed {staged_files} verbatim — but lefthook always interpolates
+      # {staged_files} as repo-relative paths (`ui/src/...`). From inside
+      # `ui/` those resolved to `ui/ui/src/...` which doesn't exist, so
+      # prettier silently no-op'd (because of `|| true`), the file stayed
+      # unformatted, and the prettier-svelte-check verification pass
+      # below caught it and failed the commit. Net effect: every commit
+      # touching a .svelte file required a manual `pnpm exec prettier
+      # --write` BEFORE staging — which defeats the whole point of an
+      # auto-format hook.
+      #
+      # The fix mirrors prettier-svelte-check below: run from the repo
+      # root with `pnpm -C ui` and strip the leading `ui/` from each
+      # path via awk (anchored to ^ui/ so paths with `ui/` in the
+      # middle, e.g. `ui/src/lib/components/ui/sonner/sonner.svelte`,
+      # stay intact). `--write` makes the formatting authoritative;
+      # the subsequent `git add` re-stages the formatted versions
+      # and `stage_fixed: true` confirms lefthook reuses them.
       glob: "*.svelte"
       run: |
-        cd ui && pnpm exec prettier --write {staged_files} --ignore-path ../.prettierignore 2>/dev/null || true
-        cd .. && git add {staged_files} 2>/dev/null || true
+        FILES=$(echo {staged_files} | awk '{for(i=1;i<=NF;i++){sub(/^ui\//,"",$i);printf "%s ",$i}}')
+        pnpm -C ui exec prettier --write $FILES --ignore-path .prettierignore 2>/dev/null || true
+        git add {staged_files} 2>/dev/null || true
       stage_fixed: true
 
     prettier-svelte-check:
