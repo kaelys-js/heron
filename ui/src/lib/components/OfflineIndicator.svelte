@@ -15,7 +15,10 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { fly, fade } from 'svelte/transition';
-  import { WifiOff, Wifi, RotateCw, Server, AlertCircle } from '@lucide/svelte';
+  // Lucide icon imports removed — the pills now use a colored dot
+  // (1.5px-radius circle styled inline) as the status indicator
+  // instead of Lucide glyphs. Avoids the cluttered "wifi icon +
+  // text + retry icon" look the previous design had.
   import { onlineStore } from '$lib/client/online-status.svelte';
   import {
     onBackendStatusChange,
@@ -122,72 +125,101 @@
 </script>
 
 {#if stage === 'offline'}
+  <!--
+    Network / backend status pills — minimal, professional, modern.
+    Design:
+      • Tiny floating pill at top center. No full-width banner; no
+        inline "Retry" label or arrow icon (the previous ↻ read
+        cluttered and old-fashioned).
+      • Error states are entirely clickable BUTTONS — the whole pill
+        IS the retry surface. Modern iOS pattern: status indicators
+        like Slack's "Connecting" or Apple's network status pill have
+        no inline button glyph; the affordance comes from how the
+        pill changes when you tap it.
+      • Active state SCALES + brightens (subtle: scale-95) so the
+        tap registers tactically. Spec keyword: `active:` Tailwind
+        state, no transition spinner — kept calm, not flashy.
+      • Copy describes the SPECIFIC failure: "Disconnected · Tap to
+        retry" beats "Your Mac is offline" (vague — which Mac?
+        offline how?). Connecting state says "Connecting" — single
+        word, universally understood, no anthropomorphising the
+        server.
+      • Wrapper is pointer-events: none so it never blocks taps on
+        content underneath; only the pill itself receives clicks.
+  -->
   <div
     role="status"
     aria-live="polite"
-    class="fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-3 border-b border-amber-500/30 bg-amber-500/15 px-3 py-1.5 text-sm text-amber-100 backdrop-blur-sm pt-safe"
-    transition:fly={{ y: -40, duration: 200 }}
+    class="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center pt-safe"
+    transition:fly={{ y: -20, duration: 200 }}
   >
-    <WifiOff class="size-4" />
-    <span><strong>Offline.</strong> Changes won't save until the connection returns.</span>
-    {#if onlineStore.reason}
-      <span class="text-xs text-amber-200/70">({onlineStore.reason})</span>
-    {/if}
     <button
       type="button"
       onclick={retry}
-      class="inline-flex items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-xs hover:bg-amber-500/20"
+      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/15 px-3 py-1 text-[11px] font-medium text-amber-100 backdrop-blur-md transition-all duration-150 hover:bg-amber-500/25 active:scale-[0.97] active:bg-amber-500/35"
+      aria-label="Offline — tap to retry"
     >
-      <RotateCw class="size-3" />
-      Retry
+      <span class="size-1.5 rounded-full bg-amber-400/90"></span>
+      Offline · Tap to retry
     </button>
   </div>
 {:else if stage === 'recovered'}
   <div
     role="status"
     aria-live="polite"
-    class="fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-2 border-b border-emerald-500/30 bg-emerald-500/15 px-3 py-1.5 text-sm text-emerald-100 pt-safe"
+    class="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center pt-safe"
     transition:fade={{ duration: 200 }}
   >
-    <Wifi class="size-4" />
-    <span>Back online.</span>
+    <div
+      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-[11px] font-medium text-emerald-100 backdrop-blur-md"
+    >
+      <span class="size-1.5 rounded-full bg-emerald-400/90"></span>
+      Online
+    </div>
   </div>
 {:else if showBackendBadge && backend.state === 'resolving'}
   <div
     role="status"
     aria-live="polite"
-    class="fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-2 border-b border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs text-blue-100 pt-safe"
+    class="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center pt-safe"
     transition:fade={{ duration: 200 }}
   >
-    <Server class="size-3.5 animate-pulse" />
-    <span>Looking for backend…</span>
+    <div
+      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/15 px-3 py-1 text-[11px] font-medium text-blue-100 backdrop-blur-md"
+    >
+      <span class="size-1.5 animate-pulse rounded-full bg-blue-400/90"></span>
+      Connecting
+    </div>
   </div>
 {:else if showBackendBadge && backend.state === 'error'}
   <div
     role="status"
     aria-live="polite"
-    class="fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-3 border-b border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs text-red-100 pt-safe"
-    transition:fly={{ y: -40, duration: 200 }}
+    class="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center pt-safe"
+    transition:fly={{ y: -20, duration: 200 }}
   >
-    <AlertCircle class="size-3.5" />
-    <span><strong>Can't find backend.</strong> Make sure your Mac/server is on this network.</span>
     <button
       type="button"
       onclick={retryBackend}
-      class="inline-flex items-center gap-1 rounded border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-xs hover:bg-red-500/20"
+      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/15 px-3 py-1 text-[11px] font-medium text-red-100 backdrop-blur-md transition-all duration-150 hover:bg-red-500/25 active:scale-[0.97] active:bg-red-500/35"
+      aria-label="Disconnected from server — tap to retry"
     >
-      <RotateCw class="size-3" />
-      Retry
+      <span class="size-1.5 rounded-full bg-red-400/90"></span>
+      Disconnected · Tap to retry
     </button>
   </div>
 {:else if showBackendBadge && backend.state === 'resolved'}
   <div
     role="status"
     aria-live="polite"
-    class="fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-2 border-b border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs text-emerald-100 pt-safe"
+    class="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center pt-safe"
     transition:fade={{ duration: 200 }}
   >
-    <Server class="size-3.5" />
-    <span>Connected · <strong>{pillLabel(backend.source)}</strong></span>
+    <div
+      class="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-[11px] font-medium text-emerald-100 backdrop-blur-md"
+    >
+      <span class="size-1.5 rounded-full bg-emerald-400/90"></span>
+      Connected · {pillLabel(backend.source)}
+    </div>
   </div>
 {/if}

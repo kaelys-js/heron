@@ -15,6 +15,12 @@
   import { KeyRound, Ticket, AlertCircle, ShieldCheck } from '@lucide/svelte';
   import { goto } from '$app/navigation';
   import { APP_NAME } from '$lib/config/branding';
+  // `slide` animates height + opacity together, so the error banner
+  // grows DOWN from zero-height instead of popping fully formed into
+  // existence — eliminates the layout jump when the banner first
+  // appears (or disappears on success).
+  import { slide } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
 
   let { data } = $props<{
     data: { githubEnabled: boolean; redirectTo: string };
@@ -64,25 +70,30 @@
       // The user dismissed the system prompt, or there's no passkey
       // registered for this site on this device. Either way, point them
       // to the invite-code flow which is the only path that actually
-      // creates one.
-      return "No passkey found on this device. If you're new, use an invite code below to set one up — then this button works.";
+      // creates one. Short, action-oriented copy.
+      return 'No passkey on this device yet. Set one up below with an invite code.';
     }
     if (haystack.includes('not supported') || haystack.includes('unsupported')) {
-      return 'Passkeys are not supported on this device or browser. Try Safari (iOS) or a recent Chrome / Firefox.';
+      return "This device doesn't support passkeys.";
     }
     if (haystack.includes('network') || haystack.includes('fetch')) {
-      return "Couldn't reach the sign-in server. Check your connection and try again.";
+      return "Couldn't reach the server. Check your connection.";
     }
     if (haystack.includes('invalid state') || haystack.includes('invalidstate')) {
-      return 'A passkey is already registered for this device — try signing in again, or remove and re-create it from Settings.';
+      return 'This passkey is already set up — try signing in again.';
     }
-    if (!msg) return 'Sign-in failed for an unknown reason. Try again.';
+    if (!msg) return 'Sign-in failed. Try again.';
     return msg;
   }
 
   async function signInWithPasskey() {
     busy = true;
-    error = null;
+    // Don't clear `error = null` here — that causes the inline banner
+    // to unmount, then remount with the (same) message on the next
+    // failed attempt, jumping the layout. We only clear on SUCCESS;
+    // on retry-and-fail the existing banner just stays put with the
+    // new copy. If the new error is identical to the previous one,
+    // Svelte detects no change and the DOM doesn't even update.
     try {
       const result = await authClient.signIn.passkey({
         autoFill: false,
@@ -90,6 +101,7 @@
       if (result?.error) {
         error = friendlyAuthError(result.error);
       } else {
+        error = null;
         markLocallyAuthed();
         await goto(data.redirectTo, { invalidateAll: true });
       }
@@ -102,12 +114,14 @@
 
   async function signInWithGitHub() {
     busy = true;
-    error = null;
+    // Same rationale as signInWithPasskey — keep the previous error
+    // visible until we know the new attempt outcome.
     try {
       await authClient.signIn.social({
         provider: 'github',
         callbackURL: data.redirectTo,
       });
+      error = null;
     } catch (e) {
       // Same friendly mapper as passkey — OAuth surfaces network /
       // cancellation errors identically and the user benefits from
@@ -183,12 +197,27 @@
     <!-- Error surface — appears above the form so it's the first thing
          the user reads on retry. -->
     {#if error}
+      <!--
+        Icon alignment: render as an INLINE element with
+        `vertical-align: middle` inside the same `<p>` as the message
+        text, NOT as a separate flex item. This delegates alignment
+        to the browser's typography engine — `align-middle` aligns
+        the icon's vertical center to the text's x-height center,
+        which is what the eye reads as "centered with the text".
+        Tracks font / line-height changes without magic-number
+        margins. Icon stays on the first line; lines 2+ wrap to the
+        start of the container — the standard pattern for an inline
+        icon next to multi-line text.
+      -->
       <div
-        class="mt-6 flex w-full items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200"
+        class="mt-6 w-full overflow-hidden rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200"
         role="alert"
+        transition:slide={{ duration: 220, easing: cubicOut }}
       >
-        <AlertCircle class="mt-0.5 size-4 flex-shrink-0" />
-        <span class="leading-relaxed">{error}</span>
+        <p class="leading-relaxed">
+          <AlertCircle class="mr-2 inline-block size-4 align-middle" />
+          {error}
+        </p>
       </div>
     {/if}
 
@@ -271,12 +300,15 @@
 
     <!-- Reassurance / trust signal. Modern apps include this — it
          answers the unspoken "is this safe?" question right at the
-         decision point. -->
+         decision point. Copy describes the SECURITY MODEL accurately
+         (passkey private key never leaves the device) without
+         marketing-speak like "end-to-end" which is properly a term
+         for E2E encryption and not what passkeys actually are. -->
     <div
       class="mt-6 flex items-center gap-2 rounded-full bg-emerald-500/8 px-3 py-1.5 text-[11px] text-emerald-300/80"
     >
       <ShieldCheck class="size-3.5" />
-      <span>Passkeys, end-to-end. No passwords stored.</span>
+      <span>Private by design · Your device is the key</span>
     </div>
   </div>
 </main>

@@ -436,23 +436,34 @@ body {
 }
 
 /* Auth screens (/login, /signup) — full-viewport centered cards with
- * NO scrollable content. We lock body overflow and disable text
- * selection so they feel like modern iOS app screens rather than
- * scrollable web pages.
+ * NO scrollable content. We hard-pin the body so iOS WKWebView's
+ * UIScrollView can't rubber-band scroll the page; the user
+ * previously reported being able to drag the whole /login + /signup
+ * page despite `overflow: hidden`. The reason: WKWebView's outer
+ * scroll view sits ABOVE the document, so CSS overflow rules on
+ * body don't stop it. Pinning body with `position: fixed; inset: 0`
+ * removes the WebView's scrollable area entirely — no content for
+ * the scroll view to chain against, no rubber-band.
  *
  * +layout.svelte's $effect toggles `body.auth-screen` based on the
- * current route. On private routes the class is removed and body
- * returns to its normal scrollable/selectable state.
+ * current route. On private routes (Inbox, Pipeline, etc.) the
+ * class is removed and body returns to its normal flow so the app
+ * shell scrolls naturally.
  *
- * We deliberately do NOT use `position: fixed` on body here — that
- * broke SvelteKit hydration once (interaction with the CSP-blocked-
- * inline-scripts bug). `overflow: hidden; height: 100svh` is enough
- * to kill the rubber-band on iOS WKWebView because there's no
- * scrollable overflow for it to chain against. */
+ * Why position:fixed is safe here (previously we worried it broke
+ * SvelteKit hydration): the regression was actually CSP blocking
+ * inline scripts (fixed separately in svelte.config.js by disabling
+ * CSP in dev mode). With CSP off, SvelteKit hydrates fine with body
+ * fixed.
+ */
 body.auth-screen {
+  position: fixed;
+  inset: 0;
   overflow: hidden;
+  width: 100%;
   height: 100svh;
   overscroll-behavior: none;
+  touch-action: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -461,11 +472,24 @@ body.auth-screen {
 }
 /* Inputs INSIDE the auth screen are the one exception — users have to
  * be able to caret-position to fix typos in the invite code / email
- * fields. Re-enable selection on form fields only. */
+ * fields. Re-enable selection on form fields only. `touch-action:
+ * manipulation` lets taps through (so caret positioning works) while
+ * keeping pan/zoom disabled. */
 body.auth-screen input,
 body.auth-screen textarea {
   -webkit-user-select: text;
   user-select: text;
+  touch-action: manipulation;
+}
+/* Buttons + links inside the auth screen also need `touch-action:
+ * manipulation` — `none` on body prevents iOS from delivering tap
+ * gestures to children unless they explicitly opt back in. Without
+ * this, the passkey button, GitHub button, invite-code button and
+ * Back link wouldn't respond. */
+body.auth-screen button,
+body.auth-screen a,
+body.auth-screen [role='button'] {
+  touch-action: manipulation;
 }
 
 /* Screen-reader-only utility used by app.html's skip-to-content link

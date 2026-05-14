@@ -5,7 +5,27 @@ import { runWithUser, SYSTEM_USER_ID } from '$lib/server/user-context';
 import { json, redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
 import { building } from '$app/environment';
 
-bootOnce();
+// bootOnce() runs at module-load time (top of hooks.server.ts, BEFORE
+// any request handler). If it throws, SvelteKit's module-init fails
+// and EVERY request gets the bare "500 | Internal Error" HTML —
+// bypassing our +error.svelte. Wrap defensively: log the failure but
+// let the module finish loading so handlers (including +error.svelte
+// for any first-request failure) can still render. Routes that need
+// the orchestrator's outputs (scan results, agent scores, etc.) will
+// surface their OWN errors via +error.svelte; the rest of the app
+// stays reachable.
+try {
+  bootOnce();
+} catch (err) {
+  // Defer to reportServerError if it's available; fall through to
+  // console.error as a hard last-resort so it's at least visible in
+  // dev-ios.mjs logs.
+  try {
+    reportServerError('boot', 'bootOnce failed', err);
+  } catch {
+    console.error('[hooks.server] bootOnce crashed at module load:', err);
+  }
+}
 
 // Catch process-level crashes so they don't disappear silently.
 // Don't process.exit — let the dev server keep going for the next request.
@@ -122,6 +142,83 @@ const guard: Handle = async ({ event, resolve }) => {
  *  guard above already blocked them from reaching anything per-user. */
 const withUserContext: Handle = ({ event, resolve }) =>
   runWithUser(event.locals.user?.id ?? SYSTEM_USER_ID, () => resolve(event));
+
+/** Signup gate — defense-in-depth so the invite-code requirement can't
+ *  be bypassed by hand-crafting a POST to better-auth's signup endpoint
+ *  directly. The /signup UI page already gates this for honest users,
+ *  but the underlying `/api/auth/sign-up/email` route is part of
+ *  better-auth and accepts any well-formed body, so without this guard
+ *  anyone with LAN access (e.g. a shared Tailscale install) could
+ *  create a `member` account.
+ *
+ *  Policy:
+ *    • If users.count === 0 → first signup is OPEN (becomes the
+ *      workspace owner via auth.ts's create.after hook).
+ *    • If users.count >  0 → the request MUST carry a valid, unclaimed
+ *      `x-invite-code` header. We CONSUME the invite at this point
+ *      (delete the row) so the same code can't be replayed even within
+ *      its 30-minute TTL — single-use is enforced at the API boundary,
+ *      not just by the UI calling /api/auth/invite/claim earlier.
+ *
+ *  The /signup +page.svelte stashes the validated code in
+ *  auth-client.ts's `_pendingInviteCode` slot before invoking
+ *  authClient.signUp.email; customFetch attaches it as the header.
+ */
+const signupGate: Handle = async ({ event, resolve }) => {
+  const path = event.url.pathname;
+  if (!path.startsWith('/api/auth/sign-up/')) return resolve(event);
+
+  // Lazy-import to avoid pulling the auth DB into adapter-static's
+  // build graph (the auth-DB import path bottoms out at better-sqlite3
+  // which adapter-static refuses to bundle).
+  const { authDb } = await import('$lib/server/db');
+  const { users } = await import('$lib/server/db/auth-schema');
+  const { sql, eq, and, isNull, gt } = await import('drizzle-orm');
+  const { inviteCodes } = await import('$lib/server/db/auth-schema');
+
+  const [{ n }] = authDb.select({ n: sql<number>`count(*)` }).from(users).all();
+  if (n === 0) return resolve(event); // first-user path — open
+
+  const code = event.request.headers.get('x-invite-code')?.trim();
+  if (!code || !/^\d{6}$/.test(code)) {
+    return json(
+      {
+        ok: false,
+        error: 'invite-required',
+        message:
+          'Signing up requires a valid 6-digit invite code from an existing workspace owner.',
+      },
+      { status: 403 },
+    );
+  }
+
+  // Atomic single-use check: find the matching row (unclaimed +
+  // unexpired) and DELETE it. If the delete returns 0 rows, the code
+  // was already consumed in a parallel request — reject.
+  const row = authDb
+    .select()
+    .from(inviteCodes)
+    .where(
+      and(
+        eq(inviteCodes.code, code),
+        isNull(inviteCodes.claimedByUserId),
+        gt(inviteCodes.expiresAt, new Date()),
+      ),
+    )
+    .get();
+  if (!row) {
+    return json(
+      {
+        ok: false,
+        error: 'invite-invalid',
+        message: 'Invite code is unknown, expired, or already used.',
+      },
+      { status: 403 },
+    );
+  }
+  authDb.delete(inviteCodes).where(eq(inviteCodes.id, row.id)).run();
+  return resolve(event);
+};
 
 /** CORS handler — only path that lets the Capacitor WebView talk to the
  *  backend. The WebView origin is `careerops://localhost`; without these
@@ -272,12 +369,16 @@ export const handle: Handle = async ({ event, resolve }) => {
           guard({
             event: e1,
             resolve: (e2) =>
-              withUserContext({
+              signupGate({
                 event: e2,
                 resolve: (e3) =>
-                  securityHeaders({
+                  withUserContext({
                     event: e3,
-                    resolve: (e4) => resolve(e4),
+                    resolve: (e4) =>
+                      securityHeaders({
+                        event: e4,
+                        resolve: (e5) => resolve(e5),
+                      }),
                   }),
               }),
           }),

@@ -57,6 +57,18 @@ function safeBaseURL(): string | undefined {
  *      sign-in responses; replay as Authorization on every subsequent
  *      auth call so `useSession()` etc. work).
  */
+/** One-shot invite-code slot. The /signup page sets this BEFORE
+ *  invoking authClient.signUp.email, customFetch reads it on the
+ *  next /api/auth/sign-up/* call and attaches the `x-invite-code`
+ *  header so the server-side `signupGate` in hooks.server.ts can
+ *  enforce single-use redemption. After consumption (one signup
+ *  call), the slot is cleared so a stale code can't leak into a
+ *  subsequent unrelated request. */
+let _pendingInviteCode: string | null = null;
+export function setPendingInviteCode(code: string | null): void {
+  _pendingInviteCode = code;
+}
+
 async function customFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const base = await getApiBase().catch(() => '');
   const rawUrl =
@@ -82,6 +94,14 @@ async function customFetch(input: RequestInfo | URL, init?: RequestInit): Promis
   const headers = new Headers(init?.headers);
   if (token && !headers.has('Authorization')) {
     headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  // Attach the pending invite code on signup requests so the
+  // server-side signupGate can enforce single-use redemption.
+  // Clear the slot after attaching so the code never replays.
+  if (_pendingInviteCode && rawUrl.includes('/api/auth/sign-up/')) {
+    headers.set('x-invite-code', _pendingInviteCode);
+    _pendingInviteCode = null;
   }
 
   const res = await fetch(fullUrl, {

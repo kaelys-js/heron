@@ -76,3 +76,27 @@ struct CareerOpsInterviewLiveActivity: Widget {
         }
     }
 }
+
+/*
+ * WidgetBundle entry point. WidgetKit extension targets are binaries
+ * that MUST declare an `@main` symbol or the produced .appex has no
+ * runtime entry point — iOS's installer then rejects the bundle with
+ * "Invalid placeholder attributes / Failed to create app extension
+ * placeholder", since its probe can't read widget configurations
+ * from an entry-less binary.
+ *
+ * Apple's recommended pattern is actually one WidgetBundle in the
+ * main CareerOpsWidget extension containing all widgets + live
+ * activities. This project ships them as SEPARATE extension targets
+ * (CareerOpsWidget vs CareerOpsLiveActivity) because Live Activities
+ * require iOS 16.1 while regular widgets only need 14.0 — keeping
+ * them split lets the widget extension support older iPhones. Each
+ * separate extension needs its own @main.
+ */
+@available(iOS 16.1, *)
+@main
+struct CareerOpsLiveActivityBundle: WidgetBundle {
+    var body: some Widget {
+        CareerOpsInterviewLiveActivity()
+    }
+}

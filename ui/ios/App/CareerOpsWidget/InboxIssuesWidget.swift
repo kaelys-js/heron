@@ -65,7 +65,14 @@ struct InboxIssuesWidgetView: View {
                 }
                 Text("\(entry.issues.count)")
                     .font(.system(size: 40, weight: .bold, design: .rounded))
-                    .foregroundStyle(entry.issues.isEmpty ? .secondary : .orange)
+                    // Explicit `Color` on both branches so Swift's ternary
+                    // type-inference doesn't fail trying to unify
+                    // `HierarchicalShapeStyle.secondary` with `Color.orange`
+                    // — `.foregroundStyle` accepts any ShapeStyle, but the
+                    // branches MUST resolve to the same type before being
+                    // passed in. Color conforms to ShapeStyle, so this
+                    // works.
+                    .foregroundStyle(entry.issues.isEmpty ? Color.secondary : Color.orange)
                 if let first = entry.issues.first {
                     Text(first.summary).font(.caption2)
                         .foregroundStyle(.secondary).lineLimit(2)
@@ -83,7 +90,7 @@ struct InboxIssuesWidgetView: View {
                     Text("Inbox").font(.headline)
                     Spacer()
                     Text("\(entry.issues.count)").font(.headline.bold())
-                        .foregroundStyle(entry.issues.isEmpty ? .secondary : .orange)
+                        .foregroundStyle(entry.issues.isEmpty ? Color.secondary : Color.orange)
                 }
                 Divider()
                 ForEach(entry.issues.prefix(3), id: \.id) { issue in
@@ -109,7 +116,7 @@ struct InboxIssuesWidgetView: View {
                     Text("Inbox").font(.title3.bold())
                     Spacer()
                     Text("\(entry.issues.count)").font(.title3.bold())
-                        .foregroundStyle(entry.issues.isEmpty ? .secondary : .orange)
+                        .foregroundStyle(entry.issues.isEmpty ? Color.secondary : Color.orange)
                 }
                 Divider()
                 ForEach(entry.issues.prefix(5), id: \.id) { issue in
