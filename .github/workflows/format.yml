@@ -88,6 +88,8 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          git commit -m "style: auto-format (${{ steps.drift.outputs.files }} file$([ ${{ steps.drift.outputs.files }} -gt 1 ] && echo s)) [skip ci]" \
+          FILES='${{ steps.drift.outputs.files }}'
+          SUFFIX=$([ "$FILES" -gt 1 ] && echo s)
+          git commit -m "style: auto-format ($FILES file$SUFFIX) [skip ci]" \
                      -m "Automated commit by .github/workflows/format.yml — runs \`pnpm format\` and pushes the result so format-check in Tests can't fail on drift."
           git push origin HEAD:${{ github.ref_name }}
