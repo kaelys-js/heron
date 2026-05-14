@@ -159,7 +159,7 @@ pre-commit:
       # in Rust, ~100× faster than black + flake8 combined.
       glob: "*.py"
       run: |
-        command -v ruff >/dev/null 2>&1 || { echo "skip: ruff not installed (brew install ruff)"; exit 0; }
+        command -v ruff >/dev/null 2>&1 || { echo "skip: ruff not installed (mise install)"; exit 0; }
         ruff format {staged_files} 2>/dev/null || true
         ruff check --fix {staged_files} 2>/dev/null || true
         git add {staged_files} 2>/dev/null || true
@@ -193,7 +193,7 @@ pre-commit:
       # Kotlin linter + formatter. Installed via brew/sdkman.
       glob: "*.kt"
       run: |
-        command -v ktlint >/dev/null 2>&1 || { echo "skip: ktlint not installed (brew install ktlint)"; exit 0; }
+        command -v ktlint >/dev/null 2>&1 || { echo "skip: ktlint not installed (mise install)"; exit 0; }
         ktlint --format {staged_files} 2>/dev/null || true
         git add {staged_files} 2>/dev/null || true
       stage_fixed: true
@@ -210,7 +210,7 @@ pre-commit:
       # touch (force-cast, force-try, line length, etc.).
       glob: "*.swift"
       run: |
-        command -v swiftformat >/dev/null 2>&1 || { echo "skip: swiftformat not installed (brew install swiftformat)"; exit 0; }
+        command -v swiftformat >/dev/null 2>&1 || { echo "skip: swiftformat not installed (mise install)"; exit 0; }
         swiftformat --quiet {staged_files} 2>/dev/null || true
         git add {staged_files} 2>/dev/null || true
       stage_fixed: true
@@ -220,14 +220,14 @@ pre-commit:
       # contributors can iterate. CI is the authoritative bar.
       glob: "*.swift"
       run: |
-        command -v swiftlint >/dev/null 2>&1 || { echo "skip: swiftlint not installed (brew install swiftlint)"; exit 0; }
+        command -v swiftlint >/dev/null 2>&1 || { echo "skip: swiftlint not installed (mise install)"; exit 0; }
         swiftlint --quiet --no-cache {staged_files} || true
 
     shfmt:
       # POSIX shell formatter (also handles bash). Indent: 2 spaces.
       glob: "*.{sh,bash}"
       run: |
-        command -v shfmt >/dev/null 2>&1 || { echo "skip: shfmt not installed (brew install shfmt)"; exit 0; }
+        command -v shfmt >/dev/null 2>&1 || { echo "skip: shfmt not installed (mise install)"; exit 0; }
         shfmt -w -i 2 -ci {staged_files} 2>/dev/null || true
         git add {staged_files} 2>/dev/null || true
       stage_fixed: true
@@ -239,12 +239,13 @@ pre-commit:
         shfmt -d -i 2 -ci {staged_files} >/dev/null
 
     rufo:
-      # Ruby formatter (rufo). Installed via mise-managed gem:
-      # `mise exec -- gem install rufo`.
+      # Ruby formatter. Pinned in the root Gemfile so `bundle exec rufo`
+      # uses the same version on every machine (mise installs Ruby, then
+      # `bundle install` resolves the gem against it).
       glob: "*.rb"
       run: |
-        command -v rufo >/dev/null 2>&1 || { echo "skip: rufo not installed (mise exec -- gem install rufo)"; exit 0; }
-        rufo {staged_files} 2>/dev/null || true
+        command -v bundle >/dev/null 2>&1 || { echo "skip: bundler not on PATH (run mise install)"; exit 0; }
+        bundle exec rufo {staged_files} 2>/dev/null || true
         git add {staged_files} 2>/dev/null || true
       stage_fixed: true
 
@@ -261,7 +262,7 @@ pre-commit:
       # job-needs cycles. Runs only when a workflow file is staged.
       glob: ".github/workflows/*.{yml,yaml}"
       run: |
-        command -v actionlint >/dev/null 2>&1 || { echo "skip: actionlint not installed (brew install actionlint)"; exit 0; }
+        command -v actionlint >/dev/null 2>&1 || { echo "skip: actionlint not installed (mise install)"; exit 0; }
         actionlint {staged_files}
 
     no-secrets:
