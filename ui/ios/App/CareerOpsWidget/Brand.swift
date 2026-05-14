@@ -22,6 +22,12 @@ enum Brand {
         static let tailscaleUrl = "\(Brand.name):tailscale-url"
         static let productionUrl = "\(Brand.name):production-url"
         static let lastSeenIssue = "\(Brand.name):last-seen-issue"
+        /// Bearer token mirrored from the WebView into App Group
+        /// UserDefaults so the Share Extension can attach
+        /// Authorization: Bearer <token> on its POSTs. Set by
+        /// CareerOpsNativePlugin.setSharedBearerToken; cleared on
+        /// sign-out.
+        static let bearerToken = "\(Brand.name):bearer-token"
     }
 
     /// Build a custom-scheme deep link.

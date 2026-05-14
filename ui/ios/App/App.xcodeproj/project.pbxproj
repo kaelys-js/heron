@@ -7,12 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		018755B151CEBD7D1B320FAB /* WidgetAuthGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3176B0165C26166B17F7F403 /* WidgetAuthGate.swift */; };
 		1384E818E0B0BB9C24B3712A /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13A4B88F10BE222B3E1F1BCB /* ErrorReporter.swift */; };
 		1410FAC7E621519DCCAA554E /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FD7C6838A42199F3A5357F9 /* Brand.swift */; };
 		1A1E6B6C4CFE57F9BB79B986 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 527F4909548255C904FEC97F /* Brand.swift */; };
 		282B8FCC6D1B1FB06EA462D7 /* CareerOpsNativePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE88770478FB968E108A903 /* CareerOpsNativePlugin.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
-		32B67DD0B4C66A2E1DE827F1 /* CareerOpsShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C05A76F56281A0EFD15DAD02 /* CareerOpsShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		3521FD15CAEE97D1B1F89B14 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18818E6F512F4FDB4E0E23 /* NetworkMonitor.swift */; };
 		372E82A1545BDF1E9CDBE18F /* CareerOpsLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61F7E4F675384A34CE49A942 /* CareerOpsLiveActivity.swift */; };
 		39AE56D8D333DCE81A16A6D5 /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CA1675A1757C18B2FF09E0 /* ErrorReporter.swift */; };
@@ -35,9 +35,10 @@
 		7623847E565D6D406BE4999D /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6FF0483296BD7B4DF03552B /* ErrorReporter.swift */; };
 		7AC0D36C2BBD93C60EFC3C4F /* CareerOpsBridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26631DCF28D85F99FB13A91E /* CareerOpsBridgeViewController.swift */; };
 		7DBFA4641E2729F109B35EF2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27884949441377C8C7559A26 /* Foundation.framework */; };
-		A1244B73B15B966C36802DFE /* CareerOpsLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A2BA497A7735FA0C55C2F3F4 /* CareerOpsLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		831FC47FC25E534932F44983 /* CareerOpsWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B4B54803324B7A34A4644CE6 /* CareerOpsWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8972AD29C0863CD353148A7D /* CareerOpsShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C05A76F56281A0EFD15DAD02 /* CareerOpsShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		968981862855C560524B5F23 /* CareerOpsLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A2BA497A7735FA0C55C2F3F4 /* CareerOpsLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A17A18173DACDECD9ECF0E6A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB936BF2B6B11D3A31B7859C /* Foundation.framework */; };
-		A1B00DBA1C9C6D8DE2255FE7 /* CareerOpsWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B4B54803324B7A34A4644CE6 /* CareerOpsWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A8C93FC3E1C6E5089E3AA399 /* BiometricAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9012709D08A85C7A9CEB2C91 /* BiometricAuth.swift */; };
 		B1166C2AFCE9CB88941BA785 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7738EEBCC31A28A769071A /* RootView.swift */; };
 		C362913F0191FC3C677CCE21 /* WatchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 604BE1F005FDB069FF3F1985 /* WatchModel.swift */; };
@@ -101,9 +102,9 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				A1B00DBA1C9C6D8DE2255FE7 /* CareerOpsWidget.appex in Embed Foundation Extensions */,
-				A1244B73B15B966C36802DFE /* CareerOpsLiveActivity.appex in Embed Foundation Extensions */,
-				32B67DD0B4C66A2E1DE827F1 /* CareerOpsShareExtension.appex in Embed Foundation Extensions */,
+				831FC47FC25E534932F44983 /* CareerOpsWidget.appex in Embed Foundation Extensions */,
+				968981862855C560524B5F23 /* CareerOpsLiveActivity.appex in Embed Foundation Extensions */,
+				8972AD29C0863CD353148A7D /* CareerOpsShareExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -120,6 +121,7 @@
 		2CE88770478FB968E108A903 /* CareerOpsNativePlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CareerOpsNativePlugin.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		31513D0E4528E2BF567E770E /* ErrorReporter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ErrorReporter.swift; sourceTree = "<group>"; };
+		3176B0165C26166B17F7F403 /* WidgetAuthGate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetAuthGate.swift; sourceTree = "<group>"; };
 		39BFEFD4AB09C83E133FF2AC /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		3C73C9434A8B33AAD827E716 /* Brand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
 		3DA0F3C2FA120D4A573F42DD /* BonjourBrowser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BonjourBrowser.swift; sourceTree = "<group>"; };
@@ -305,6 +307,7 @@
 				559AF47C7C7A75A0218312AA /* InboxIssuesWidget.swift */,
 				C85AA568F77B851EEABF69F5 /* Brand.swift */,
 				C6FF0483296BD7B4DF03552B /* ErrorReporter.swift */,
+				3176B0165C26166B17F7F403 /* WidgetAuthGate.swift */,
 			);
 			name = CareerOpsWidget;
 			path = CareerOpsWidget;
@@ -533,6 +536,7 @@
 				5C10E71DF4CB6EA4C40FF156 /* InboxIssuesWidget.swift in Sources */,
 				6FDE5093301DB8CE45AC70E9 /* Brand.swift in Sources */,
 				7623847E565D6D406BE4999D /* ErrorReporter.swift in Sources */,
+				018755B151CEBD7D1B320FAB /* WidgetAuthGate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
