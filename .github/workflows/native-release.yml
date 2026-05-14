@@ -212,8 +212,12 @@ jobs:
   build-ios:
     name: Build iOS (TestFlight)
     needs: preflight
-    runs-on: macos-latest
+    runs-on: macos-15
     timeout-minutes: 60
+    env:
+      # Pinned Xcode version — keeps Swift toolchain consistent with
+      # .mise.toml + test.yml's `ios` job. Bump in lockstep.
+      DEVELOPER_DIR: /Applications/Xcode_16.app/Contents/Developer
     steps:
       - uses: actions/checkout@v6
         with:
