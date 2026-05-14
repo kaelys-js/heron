@@ -35,6 +35,9 @@
     "electron:pack": "pnpm run build && electron-builder build --dir -c ./electron-builder.config.json",
     "electron:start": "pnpm run build && electron --inspect=5858 ./",
     "electron:start-live": "node ./live-runner.js",
+    "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests",
+    "test:watch": "vitest",
     "typecheck": "tsgo --noEmit -p tsconfig.json"
   },
   "dependencies": {
@@ -49,9 +52,11 @@
   },
   "devDependencies": {
     "@typescript/native-preview": "7.0.0-dev.20260511.1",
+    "@vitest/coverage-v8": "^4.1.6",
     "electron": "39.8.10",
     "electron-builder": "26.8.1",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "^4.1.6"
   },
   "engines": {
     "node": "26.1.0",

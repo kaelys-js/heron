@@ -96,8 +96,14 @@
     "setup:native": "node scripts/native/setup.mjs",
     "setup:secrets": "node scripts/native/setup.mjs",
     "sync-check": "node cv-sync-check.mjs",
-    "test": "node test-all.mjs",
-    "test:quick": "node test-all.mjs --quick",
+    "test": "turbo test",
+    "test:coverage": "turbo test:coverage",
+    "test:ios": "cd ui/ios/App && bundle exec fastlane test",
+    "test:ios:ci": "cd ui/ios/App && bundle exec fastlane test_ci",
+    "test:legacy": "node test-all.mjs",
+    "test:legacy:quick": "node test-all.mjs --quick",
+    "test:ui": "turbo test:ui",
+    "test:watch": "turbo test:watch --parallel",
     "typecheck": "turbo check",
     "update": "node update-system.mjs apply",
     "update:check": "node update-system.mjs check",
@@ -121,8 +127,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
+    "@vitest/coverage-v8": "^4.1.6",
     "sort-package-json": "3.6.1",
-    "turbo": "2.9.12"
+    "turbo": "2.9.12",
+    "vitest": "^4.1.6"
   },
   "packageManager": "pnpm@11.1.0",
   "engines": {
