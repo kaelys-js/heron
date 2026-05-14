@@ -1,5 +1,5 @@
 import { bootOnce } from '$lib/server/orchestrator';
-import { reportServerError } from '$lib/server/events';
+import { reportServerError, logEvent } from '$lib/server/events';
 import { auth } from '$lib/server/auth';
 import { runWithUser, SYSTEM_USER_ID } from '$lib/server/user-context';
 import { json, redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
@@ -142,6 +142,35 @@ const guard: Handle = async ({ event, resolve }) => {
  *  guard above already blocked them from reaching anything per-user. */
 const withUserContext: Handle = ({ event, resolve }) =>
   runWithUser(event.locals.user?.id ?? SYSTEM_USER_ID, () => resolve(event));
+
+/** Auth lifecycle observer — emits `logEvent` for sign-out events so the
+ *  activity feed has a complete audit trail (sign-up + sign-in are logged
+ *  from `auth.ts` databaseHooks; only sign-out has to be observed here
+ *  because Better Auth's `session.delete` hook isn't reliably surfaced
+ *  on every code path — explicit logout, session-expiry, manual delete
+ *  from /settings/users, etc.).
+ *
+ *  We capture the user BEFORE resolving (post-resolution the session has
+ *  been destroyed). Only log if the response was a 2xx — failed sign-out
+ *  attempts are 4xx/5xx and would be misleading audit entries. */
+const authLifecycleObserver: Handle = async ({ event, resolve }) => {
+  const path = event.url.pathname;
+  if (path !== '/api/auth/sign-out' && !path.startsWith('/api/auth/sign-out/')) {
+    return resolve(event);
+  }
+  const userId = event.locals.user?.id;
+  const userLabel = event.locals.user?.email || event.locals.user?.name || userId;
+  const response = await resolve(event);
+  if (userId && response.status >= 200 && response.status < 300) {
+    logEvent('auth', 'Sign-out', {
+      level: 'info',
+      category: 'user',
+      userId,
+      message: userLabel,
+    });
+  }
+  return response;
+};
 
 /** Signup gate — defense-in-depth so the invite-code requirement can't
  *  be bypassed by hand-crafting a POST to better-auth's signup endpoint
@@ -366,18 +395,22 @@ export const handle: Handle = async ({ event, resolve }) => {
       populateAuth({
         event: e0,
         resolve: (e1) =>
-          guard({
+          authLifecycleObserver({
             event: e1,
             resolve: (e2) =>
-              signupGate({
+              guard({
                 event: e2,
                 resolve: (e3) =>
-                  withUserContext({
+                  signupGate({
                     event: e3,
                     resolve: (e4) =>
-                      securityHeaders({
+                      withUserContext({
                         event: e4,
-                        resolve: (e5) => resolve(e5),
+                        resolve: (e5) =>
+                          securityHeaders({
+                            event: e5,
+                            resolve: (e6) => resolve(e6),
+                          }),
                       }),
                   }),
               }),

@@ -49,7 +49,11 @@ class OnlineStore {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) this.online = raw === '1';
-    } catch {}
+    } catch {
+      // localStorage denied (Safari private mode, iframe sandbox).
+      // Cold boot will start with default `online: true` and the first
+      // probe will correct it within ~PROBE_INTERVAL_MS.
+    }
 
     // navigator.onLine — fast but flaky
     window.addEventListener('online', () => this.update(true, 'navigator'));
@@ -81,7 +85,10 @@ class OnlineStore {
         w.electronAPI.on(`${BRAND.name}:net-status`, (payload: { online: boolean }) => {
           this.update(payload.online, 'native');
         });
-      } catch {}
+      } catch {
+        // Electron preload bridge missing the `on` method (older
+        // build). Fall back to navigator + probe only — no crash.
+      }
     }
   }
 
@@ -147,11 +154,20 @@ class OnlineStore {
     if (online) this.lastOk = Date.now();
     try {
       localStorage.setItem(STORAGE_KEY, online ? '1' : '0');
-    } catch {}
+    } catch {
+      // localStorage denied — runtime state is still authoritative,
+      // we just don't restore on next cold boot.
+    }
     for (const fn of this.listeners) {
       try {
         fn(online);
-      } catch {}
+      } catch (e) {
+        // Listener crashed — don't let one broken subscriber take down
+        // the whole notification fan-out. Log to console (we're in the
+        // client lib so no logEvent).
+        // eslint-disable-next-line no-console
+        console.error('[online-status] listener threw:', e);
+      }
     }
     // Fire a DOM event so any code listening (e.g. queued fetch in api.ts)
     // can react without importing this module directly.

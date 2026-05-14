@@ -64,7 +64,10 @@ const ZERO_STATE: OnboardingState = {
 function ensureDir() {
   try {
     fs.mkdirSync(path.dirname(STATE_PATH), { recursive: true });
-  } catch {}
+  } catch {
+    // mkdir recursive only fails for permission/IO. Subsequent file
+    // writes will surface the real error with the actual op name.
+  }
 }
 
 export function readOnboarding(): OnboardingState {

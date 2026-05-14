@@ -54,7 +54,11 @@ export function readOverrides(profileId: string): Map<string, BandOverride> {
     try {
       const row = JSON.parse(line) as BandOverride;
       if (row.key) out.set(row.key, row);
-    } catch {}
+    } catch {
+      // Corrupt line from a partial write — skip and continue loading
+      // the rest of the override map. The full row will be rewritten
+      // on the next writeOverride() call.
+    }
   }
   return out;
 }

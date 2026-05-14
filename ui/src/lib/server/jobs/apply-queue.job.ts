@@ -211,7 +211,11 @@ function dispatchApply(
           const step = line.slice('APPLY_STEP:'.length).trim();
           try {
             appendStep(job.id, step);
-          } catch {}
+          } catch {
+            // appendStep already surfaces its own errors via logEvent
+            // — swallow here so a state-file IO issue doesn't crash the
+            // protocol parser.
+          }
           logEvent('apply-' + portal, 'step: ' + step, {
             level: 'info',
             category: 'application',

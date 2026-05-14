@@ -55,7 +55,9 @@ export function listAsks(profileId: string): ReferralAsk[] {
       const r = JSON.parse(line) as ReferralAsk;
       const key = r.jobId + '|' + r.contactName.toLowerCase();
       map.set(key, r);
-    } catch {}
+    } catch {
+      // Corrupt line from a partial write — skip and continue loading.
+    }
   }
   return [...map.values()].sort((a, b) => b.askedAt - a.askedAt);
 }

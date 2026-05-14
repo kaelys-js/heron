@@ -217,7 +217,9 @@ export function checkAiDetect(mdPath: string): Promise<AiDetectResult> {
     const timer = setTimeout(() => {
       try {
         p.kill('SIGTERM');
-      } catch {}
+      } catch {
+        /* process already exited — kill races with the close event */
+      }
       reportServerError(
         'quality-checks',
         'ai-detect-check timeout',
@@ -272,7 +274,9 @@ export function checkSemanticMatch(cvPath: string, jdPath: string): Promise<Sema
     const timer = setTimeout(() => {
       try {
         p.kill('SIGTERM');
-      } catch {}
+      } catch {
+        /* process already exited — kill races with the close event */
+      }
       reportServerError(
         'quality-checks',
         'semantic-match timeout',
@@ -356,7 +360,9 @@ export function checkNarrativeArc(cvPath: string): Promise<NarrativeResult> {
     const timer = setTimeout(() => {
       try {
         p.kill('SIGTERM');
-      } catch {}
+      } catch {
+        /* process already exited — kill races with the close event */
+      }
       reportServerError(
         'quality-checks',
         'narrative-arc timeout',

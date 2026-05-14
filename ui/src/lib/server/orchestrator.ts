@@ -149,12 +149,16 @@ function attachTimeout(p: ChildProcess, taskName: TaskName, ms: number): void {
     });
     try {
       p.kill('SIGTERM');
-    } catch {}
+    } catch {
+      /* process already exited — kill races with the close event */
+    }
     const hard = setTimeout(() => {
       if (p.exitCode !== null) return;
       try {
         p.kill('SIGKILL');
-      } catch {}
+      } catch {
+        /* process already exited — kill races with the close event */
+      }
     }, 5_000);
     p.once('close', () => clearTimeout(hard));
   }, ms);
@@ -179,7 +183,9 @@ function installChildCleanup(): void {
       if (c && typeof c.kill === 'function' && c.exitCode === null) {
         try {
           c.kill('SIGTERM');
-        } catch {}
+        } catch {
+          /* child already dead between exitCode check + kill call */
+        }
       }
     }
     running.clear();
@@ -268,8 +274,13 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
         const { recordSuccess, recordFailure } = require('./sources') as typeof import('./sources');
         if (code === 0) recordSuccess('scan-broad');
         else if (code !== null) recordFailure('scan-broad', new Error('exit ' + code));
-      } catch {
-        /* sources record best-effort */
+      } catch (e) {
+        // sources record best-effort — log but don't fail the close handler.
+        logEvent(name, 'Could not update sources counter for scan-broad', {
+          level: 'warn',
+          category: 'task',
+          message: e instanceof Error ? e.message : String(e),
+        });
       }
     }
     if (code === 0) {
@@ -378,8 +389,16 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
       });
       return;
     }
-  } catch {
-    /* non-fatal: fall through if autopilot module not ready (boot race) */
+  } catch (e) {
+    // Non-fatal: fall through if autopilot/apply-counter modules aren't
+    // loadable yet (boot race during HMR). Without the cap check the
+    // user might exceed their daily apply target — worth logging so the
+    // operator notices the regression if it keeps recurring.
+    logEvent('apply-linkedin', 'Apply-cap check skipped (modules not ready)', {
+      level: 'warn',
+      category: 'task',
+      message: e instanceof Error ? e.message : String(e),
+    });
   }
   const env = { ...process.env };
   if (autoSubmit) env.LINKEDIN_AUTO_SUBMIT = '1';
@@ -400,8 +419,16 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
     } else if (s.outdated) {
       cvNote = ' · NOTE: general CV is older than cv.md — regenerate from /profile';
     }
-  } catch {
-    /* non-fatal */
+  } catch (e) {
+    // Non-fatal: cv-pdf module not ready or generalCvStatus threw.
+    // The user won't see the upfront warning but the apply will still
+    // proceed (worst case: the worker reports the missing CV itself).
+    logEvent('apply-linkedin', 'CV status pre-check failed', {
+      level: 'warn',
+      category: 'task',
+      message: e instanceof Error ? e.message : String(e),
+      profileId,
+    });
   }
   logEvent('apply-linkedin', 'LinkedIn Easy Apply started', {
     category: 'task',
@@ -456,7 +483,14 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
             ' · today=' +
             n,
         });
-      } catch {
+      } catch (e) {
+        // Counter bump failed — apply still succeeded so we surface success,
+        // but warn so the operator knows the daily-cap accounting is off.
+        logEvent('apply-linkedin', 'Apply counter bump failed', {
+          level: 'warn',
+          category: 'task',
+          message: e instanceof Error ? e.message : String(e),
+        });
         logEvent('apply-linkedin', 'LinkedIn apply finished', {
           level: 'success',
           category: 'task',
@@ -1010,8 +1044,14 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boo
         resolve({ ok: false, capped: true });
         return;
       }
-    } catch {
-      /* non-fatal */
+    } catch (e) {
+      // Non-fatal — bulk apply proceeds without the cap check. Warn so
+      // operator notices the regression if it keeps recurring.
+      logEvent('apply-linkedin', 'Bulk apply cap-check skipped (modules not ready)', {
+        level: 'warn',
+        category: 'task',
+        message: e instanceof Error ? e.message : String(e),
+      });
     }
 
     let p: ChildProcess;
@@ -1058,8 +1098,14 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boo
           const { bumpApplyCounter } =
             require('./apply-counter') as typeof import('./apply-counter');
           bumpApplyCounter();
-        } catch {
-          /* non-fatal */
+        } catch (e) {
+          // Non-fatal — apply succeeded, but the bulk caller's
+          // subsequent iterations won't see the updated daily count.
+          logEvent('apply-linkedin', 'Per-job apply counter bump failed', {
+            level: 'warn',
+            category: 'task',
+            message: 'url=' + url + ' · ' + (e instanceof Error ? e.message : String(e)),
+          });
         }
       }
       resolve({ ok: code === 0 });

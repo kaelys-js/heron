@@ -141,7 +141,10 @@ async function writeCache(r: ResolvedBackend): Promise<void> {
 export async function clearBackendCache(): Promise<void> {
   try {
     await Preferences.remove({ key: CACHE_KEY });
-  } catch {}
+  } catch {
+    // Preferences API not available (web — no Capacitor) or the key
+    // didn't exist. Either way, the cache is effectively cleared.
+  }
 }
 
 /**

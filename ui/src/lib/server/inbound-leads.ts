@@ -132,9 +132,14 @@ export function listLeads(profileId?: string): InboundLead[] {
       if (!line.trim()) continue;
       try {
         out.push(JSON.parse(line) as InboundLead);
-      } catch {}
+      } catch {
+        // Corrupt line from a partial write — skip and keep loading.
+      }
     }
-  } catch {}
+  } catch {
+    // File read failure — degrade to empty list rather than crash.
+    // The /api/inbound endpoint surfaces this as an empty inbox.
+  }
   return out.sort((a, b) => b.arrivedAt - a.arrivedAt);
 }
 
@@ -176,7 +181,10 @@ export function attachDraftPath(leadId: string, draftPath: string, profileId?: s
   if (fs.existsSync(draftMapPath)) {
     try {
       map = JSON.parse(fs.readFileSync(draftMapPath, 'utf8'));
-    } catch {}
+    } catch {
+      // Corrupt JSON — start with an empty map; the new entry will
+      // overwrite the bad file on the writeFileSync below.
+    }
   }
   map[leadId] = draftPath;
   fs.writeFileSync(draftMapPath, JSON.stringify(map, null, 2));

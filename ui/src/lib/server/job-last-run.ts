@@ -67,10 +67,14 @@ export function clearLastRun(jobId: string): void {
 /** Wipe every entry — used by reset 'everything' (Phase 4). */
 export function clearAllLastRuns(): void {
   if (fs.existsSync(PATH)) {
-    // Back up before wiping so reset is recoverable.
+    // Back up before wiping so reset is recoverable. Best-effort —
+    // if the .bak copy fails we still proceed with the unlink rather
+    // than block the reset flow on a permissions issue.
     try {
       fs.copyFileSync(PATH, PATH + '.bak');
-    } catch {}
+    } catch {
+      // .bak copy failed — reset proceeds without recoverable backup.
+    }
     fs.unlinkSync(PATH);
   }
 }

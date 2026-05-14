@@ -31,7 +31,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { ROOT, readSafe } from './files';
 import { complete } from './ai';
-import { logEvent } from './events';
+import { logEvent, reportServerError } from './events';
 import { profilePath, ensureProfileDirs } from './profile-paths';
 import { getActiveProfileId } from './profiles';
 
@@ -54,7 +54,15 @@ function resolveTemplate(explicitName?: string, profileId?: string): string {
         const text = fs.readFileSync(pPath, 'utf8');
         const m = text.match(/^\s*cv_template:\s*"?([a-z0-9-]+)"?/im);
         return m ? m[1] : undefined;
-      } catch {
+      } catch (e) {
+        // profile.yml unreadable — silently fall back to the classic template.
+        // Non-fatal but surface so users can debug missing customization.
+        logEvent('cv-pdf', 'Could not read profile.yml for cv_template field', {
+          level: 'warn',
+          category: 'user',
+          profileId,
+          message: e instanceof Error ? e.message : String(e),
+        });
         return undefined;
       }
     })();
@@ -256,9 +264,26 @@ export async function generateGeneralCv(profileId?: string): Promise<GenerateRes
   // via the activity feed so the user can decide whether to regenerate.
   // The dashboard renders the fail-summary as actionable cards.
   const { checkAts, checkResumeQuality } = await import('./quality-checks');
+  // .catch(() => null) is safe here because checkAts / checkResumeQuality
+  // already call reportServerError on their internal failures — the null
+  // just means "no score badge for this run" rather than a missed event.
   const [atsResult, resumeResult] = await Promise.all([
-    checkAts(generalCvPdf).catch(() => null),
-    checkResumeQuality(cvMd).catch(() => null),
+    checkAts(generalCvPdf).catch((e) => {
+      reportServerError('cv-pdf', 'checkAts threw before quality-checks could handle it', e, {
+        category: 'user',
+        profileId: id,
+      });
+      return null;
+    }),
+    checkResumeQuality(cvMd).catch((e) => {
+      reportServerError(
+        'cv-pdf',
+        'checkResumeQuality threw before quality-checks could handle it',
+        e,
+        { category: 'user', profileId: id },
+      );
+      return null;
+    }),
   ]);
   if (atsResult) {
     logEvent('cv-pdf', `ATS score ${atsResult.score.toFixed(1)}%`, {
@@ -307,7 +332,9 @@ function spawnPdfRender(
     const timer = setTimeout(() => {
       try {
         p.kill('SIGTERM');
-      } catch {}
+      } catch {
+        /* process already exited — kill races with the close event */
+      }
       reject(new Error('PDF render timed out after 90s'));
     }, 90_000);
 

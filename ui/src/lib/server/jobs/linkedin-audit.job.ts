@@ -44,7 +44,9 @@ function runScraper(): Promise<{ stdout: string; code: number }> {
     const timer = setTimeout(() => {
       try {
         p.kill('SIGTERM');
-      } catch {}
+      } catch {
+        /* process already exited — kill races with the close event */
+      }
       resolveP({ stdout, code: 124 });
     }, TIMEOUT_MS);
     p.on('error', () => {

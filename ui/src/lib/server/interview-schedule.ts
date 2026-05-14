@@ -61,7 +61,9 @@ export function listSchedule(profileId: string): ScheduleEntry[] {
     try {
       const e = JSON.parse(line) as ScheduleEntry;
       if (e.jobId) map.set(e.jobId, e);
-    } catch {}
+    } catch {
+      // Corrupt line from a partial write — skip and continue loading.
+    }
   }
   return [...map.values()].sort((a, b) => a.scheduledAt - b.scheduledAt);
 }

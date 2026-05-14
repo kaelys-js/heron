@@ -129,7 +129,10 @@ function readTailoredPdfMarkdown(profileId: string, pdfFile: string): string {
     // Fallback: the cover-letter sibling often has the same JD keywords.
     const coverPath = p.replace(/\.pdf$/, '-cover.md');
     if (fs.existsSync(coverPath)) return fs.readFileSync(coverPath, 'utf8');
-  } catch {}
+  } catch {
+    // Sibling .md read failure — fall through to empty, caller treats it
+    // as a "no source markdown available" signal and skips that PDF.
+  }
   return '';
 }
 

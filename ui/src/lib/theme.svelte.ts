@@ -90,12 +90,54 @@ class ThemeStore {
   }
 
   private apply(next: ResolvedTheme) {
+    // No-op if the resolved theme didn't actually change (e.g. user
+    // toggled from 'system' to 'dark' while system was already dark).
+    // Avoids running the view-transition for nothing.
+    const wasSame = this.resolved === next;
     this.resolved = next;
     if (!browser) return;
-    const root = document.documentElement;
-    if (next === 'dark') root.classList.add('dark');
-    else root.classList.remove('dark');
-    root.style.colorScheme = next;
+
+    const swap = () => {
+      const root = document.documentElement;
+      if (next === 'dark') root.classList.add('dark');
+      else root.classList.remove('dark');
+      root.style.colorScheme = next;
+    };
+
+    if (wasSame) {
+      swap();
+      return;
+    }
+
+    // Modern theme-swap animation via the View Transitions API
+    // (Chrome 111+, Safari 18+, iOS WKWebView 18+). The browser
+    // captures a full-viewport snapshot, applies the DOM change
+    // inside the callback, then crossfades the new state over the
+    // old — single-shot GPU-composited transition, no per-element
+    // CSS transitions, no FOUC. CSS keyframes attached to the
+    // ::view-transition pseudo-elements live in app.css.
+    //
+    // Honour `prefers-reduced-motion` — users with vestibular
+    // disorders explicitly opt out of crossfades.
+    const reduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const doc = document as Document & {
+      startViewTransition?: (cb: () => void | Promise<void>) => { finished: Promise<void> };
+    };
+    if (!reduced && typeof doc.startViewTransition === 'function') {
+      // `theme-swap` flag class scopes the view-transition CSS
+      // overrides in app.css so the sidebar + topbar crossfade too
+      // (during navigation they snap instead — see view-transition
+      // section in app.css). The flag is removed when the transition
+      // completes OR if the browser cancels.
+      const root = document.documentElement;
+      root.classList.add('theme-swap');
+      const t = doc.startViewTransition(swap);
+      t.finished.finally(() => root.classList.remove('theme-swap'));
+    } else {
+      swap();
+    }
   }
 }
 

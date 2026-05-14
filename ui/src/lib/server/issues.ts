@@ -33,7 +33,10 @@ const ISSUES_PATH = path.join(ROOT, 'data', 'issues.jsonl');
 function ensureDir() {
   try {
     fs.mkdirSync(path.dirname(ISSUES_PATH), { recursive: true });
-  } catch {}
+  } catch {
+    // mkdir recursive only fails for permission / IO issues — write
+    // attempts below will surface those concretely with the real op name.
+  }
 }
 
 function readAll(): Issue[] {
@@ -46,10 +49,19 @@ function readAll(): Issue[] {
       try {
         const ev = JSON.parse(line) as Issue;
         if (ev.id && ev.ts) out.push(ev);
-      } catch {}
+      } catch {
+        // Truncated JSON line (crash mid-write) — drop and keep loading.
+        // Re-entering logEvent from issues.ts could loop if log+issue
+        // both write at the same time, so we skip silently.
+      }
     }
     return out;
-  } catch {
+  } catch (e) {
+    // File read failed — return empty rather than throwing so callers
+    // (UI badges, /api/issues) degrade gracefully. Mirror to console
+    // since logEvent would also try to read this file.
+    // eslint-disable-next-line no-console
+    console.error('[issues] readAll failed:', e instanceof Error ? e.message : String(e));
     return [];
   }
 }
@@ -112,8 +124,16 @@ export function reportIssue(input: {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { dbWriteIssue } = require('./db-writers') as typeof import('./db-writers');
       dbWriteIssue(next);
-    } catch {
-      /* non-fatal */
+    } catch (e) {
+      // app.db mirror failed — JSONL is still the source of truth so
+      // listOpenIssues() still works. Surface via console so the operator
+      // notices index drift, but don't call reportServerError (that would
+      // attempt a fresh issue write and could recurse).
+      // eslint-disable-next-line no-console
+      console.error(
+        '[issues] dbWriteIssue mirror failed:',
+        e instanceof Error ? e.message : String(e),
+      );
     }
     return next;
   }
@@ -194,8 +214,13 @@ export function resolveIssue(id: string): Issue | null {
       const { dbResolveIssue } = require('./db-writers') as typeof import('./db-writers');
       dbResolveIssue(f.userId, f.id, f.resolvedAt ?? Date.now());
     }
-  } catch {
-    /* non-fatal */
+  } catch (e) {
+    // app.db mirror failed — JSONL is still authoritative.
+    // eslint-disable-next-line no-console
+    console.error(
+      '[issues] dbResolveIssue mirror failed:',
+      e instanceof Error ? e.message : String(e),
+    );
   }
   return found;
 }

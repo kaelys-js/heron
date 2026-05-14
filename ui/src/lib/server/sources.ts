@@ -141,7 +141,10 @@ export const KNOWN_SOURCES: KnownSource[] = [
 function ensureDir() {
   try {
     fs.mkdirSync(path.dirname(SOURCES_PATH), { recursive: true });
-  } catch {}
+  } catch {
+    // mkdir recursive only fails on permission/IO; subsequent file
+    // writes surface the real error with the actual op name.
+  }
 }
 
 /** Read the full state map. Returns {} on missing/parse-error so callers

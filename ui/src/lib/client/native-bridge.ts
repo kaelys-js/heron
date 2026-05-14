@@ -205,9 +205,14 @@ export function onNetStatusChange(handler: (online: boolean) => void): () => voi
     return () => {
       try {
         sub?.remove?.();
-      } catch {}
+      } catch {
+        // Subscription already removed or Capacitor not present — no-op
+        // on cleanup is safe.
+      }
     };
   } catch {
+    // Capacitor native bridge unavailable (web/desktop). Return a no-op
+    // unsubscriber so callers can always invoke it.
     return () => {};
   }
 }

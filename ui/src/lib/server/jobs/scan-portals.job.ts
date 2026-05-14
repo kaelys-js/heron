@@ -71,7 +71,10 @@ function runScanPortals(args?: JobArgs): Promise<JobResult> {
         });
         try {
           recordFailure('scan-portals', new Error('scan.mjs exited ' + code));
-        } catch {}
+        } catch {
+          // sources counter best-effort — the outer logEvent above
+          // already surfaced the scan failure to the user.
+        }
         resolve({ ok: false, error: 'scan.mjs exited ' + code });
         return;
       }
@@ -82,7 +85,9 @@ function runScanPortals(args?: JobArgs): Promise<JobResult> {
       });
       try {
         recordSuccess('scan-portals');
-      } catch {}
+      } catch {
+        // sources counter best-effort — scan success is already logged.
+      }
       resolve({ ok: true, message: found + ' jobs found', meta: { found } });
     });
   });

@@ -42,6 +42,7 @@ import { authDb } from './db';
 import { ensureSchema } from './db/migrate';
 import * as authSchema from './db/auth-schema';
 import { writeEnv } from './env';
+import { logEvent, reportServerError } from './events';
 
 // Run the idempotent DDL bootstrap before Better Auth touches the DB.
 ensureSchema();
@@ -56,8 +57,15 @@ function getOrCreateSecret(): string {
     // writeEnv() ignores keys it doesn't know about — fall back to
     // appending directly so the value persists.
     persistSecretToEnv(secret);
-  } catch {
-    /* read-only filesystem or similar — secret stays in-memory for this run. */
+  } catch (e) {
+    // Read-only filesystem or similar — the secret will stay in-memory
+    // for this run, which means every restart re-generates and every
+    // session is invalidated. Surface it so the operator knows.
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[auth] Could not persist BETTER_AUTH_SECRET to .env; sessions will not survive restart:',
+      e instanceof Error ? e.message : String(e),
+    );
   }
   return secret;
 }
@@ -141,7 +149,8 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        after: async (user: { id: string }) => {
+        after: async (user: { id: string; email?: string; name?: string }) => {
+          let promotedToOwner = false;
           try {
             const [{ n }] = authDb
               .select({ n: sql<number>`count(*)` })
@@ -153,11 +162,38 @@ export const auth = betterAuth({
                 .set({ role: 'owner' })
                 .where(eq(authSchema.users.id, user.id))
                 .run();
+              promotedToOwner = true;
             }
-          } catch {
+          } catch (e) {
             // Non-fatal — the user keeps their default 'member' role.
             // /settings/users gives a path to fix this manually later.
+            // Surface so we can audit when owner-promotion misfires.
+            reportServerError('auth', 'Owner auto-promotion failed', e, {
+              category: 'user',
+              userId: user.id,
+            });
           }
+          logEvent('auth', 'User created' + (promotedToOwner ? ' (owner)' : ''), {
+            level: 'info',
+            category: 'user',
+            userId: user.id,
+            message: user.email || user.name || user.id,
+          });
+        },
+      },
+    },
+    session: {
+      create: {
+        after: async (session) => {
+          // Sign-in events. Better Auth creates a session after a
+          // successful passkey/email/OAuth completion, so this single
+          // hook covers every auth path.
+          logEvent('auth', 'Sign-in', {
+            level: 'info',
+            category: 'user',
+            userId: session.userId,
+            message: session.ipAddress ? 'ip=' + session.ipAddress : undefined,
+          });
         },
       },
     },
