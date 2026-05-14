@@ -168,6 +168,15 @@ pre-push:
       # svelte-check (ui) + tsgo (electron), turbo-cached.
       # Cold ~12s, warm <100ms.
       run: pnpm exec turbo run check
+    vitest:
+      # Run the full Vitest matrix (ui-unit + ui-server + ui-component +
+      # ui-routes + ui-integration + electron) via turbo. Cold ~30s on
+      # a warm pnpm-store; warm (FULL TURBO cache hit) <100ms. iOS tests
+      # are NOT in pre-push — they're CI-only because the simulator
+      # bootstrap dwarfs the speedup turbo would give us.
+      #
+      # Bypass for the rare emergency push: `SKIP_LEFTHOOK=1 git push`.
+      run: pnpm exec turbo run test
     format-check:
       # Note: this is the LAST-RESORT gate. The pre-commit hook auto-
       # formats on write, and .github/workflows/format.yml runs `pnpm

@@ -135,8 +135,55 @@
     },
 
     "test": {
-      "outputs": [],
-      "dependsOn": ["^build"]
+      "dependsOn": ["brand"],
+      "outputs": ["coverage/**", ".vitest-cache/**"],
+      "inputs": [
+        "src/**",
+        "static/**",
+        "vite.config.ts",
+        "vitest.config.ts",
+        "vitest.workspace.ts",
+        "tsconfig.json",
+        "package.json"
+      ]
+    },
+
+    "test:coverage": {
+      "dependsOn": ["test"],
+      "outputs": ["coverage/**"],
+      "inputs": [
+        "src/**",
+        "static/**",
+        "vite.config.ts",
+        "vitest.config.ts",
+        "vitest.workspace.ts",
+        "tsconfig.json",
+        "package.json"
+      ]
+    },
+
+    "test:ui": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["brand"]
+    },
+
+    "test:watch": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["brand"]
+    },
+
+    "//#test:ios": {
+      "outputs": ["ui/ios/App/fastlane/test_output/**", "ui/ios/App/fastlane/coverage/**"],
+      "inputs": [
+        "ui/ios/App/**/*.swift",
+        "ui/ios/App/**/Info.plist",
+        "ui/ios/App/**/*.entitlements",
+        "ui/ios/App/App.xcodeproj/project.pbxproj",
+        "ui/ios/App/fastlane/Fastfile",
+        "ui/ios/App/Gemfile.lock"
+      ]
     },
 
     "//#verify:capacitor": {
