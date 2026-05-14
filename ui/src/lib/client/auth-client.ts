@@ -24,6 +24,7 @@ import { createAuthClient } from 'better-auth/svelte';
 import { passkeyClient } from '@better-auth/passkey/client';
 import { Preferences } from '@capacitor/preferences';
 import { getApiBase } from './api-base';
+import { setSharedBearerToken } from './native-bridge';
 
 const BEARER_KEY = 'career-ops:bearer-token';
 
@@ -129,6 +130,11 @@ async function customFetch(input: RequestInfo | URL, init?: RequestInit): Promis
       // Both signals get cleared together in `clearLocalAuthState()`.
       localStorage.setItem('career-ops:authed', '1');
     }
+    // Mirror into App Group UserDefaults so the Share Extension can
+    // attach Authorization headers when it POSTs shared URLs. The
+    // extension can't read Capacitor Preferences (different sandbox)
+    // so the App Group is the only path. No-op on web/desktop.
+    void setSharedBearerToken(setToken);
   }
 
   return res;
@@ -154,6 +160,10 @@ export async function clearLocalAuthState(): Promise<void> {
     localStorage.removeItem(BEARER_KEY);
     localStorage.removeItem('career-ops:authed');
   }
+  // Also scrub the App Group mirror so the Share Extension can't
+  // accidentally authenticate a post-sign-out share with the previous
+  // session's token. No-op on web/desktop.
+  void setSharedBearerToken(null);
 }
 
 export function markLocallyAuthed(): void {

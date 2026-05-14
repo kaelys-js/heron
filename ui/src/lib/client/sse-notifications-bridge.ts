@@ -24,7 +24,28 @@
  * teardown when the user reconfigures the backend.
  */
 import { notify, requestPermission } from './notifications';
-import { BRAND, jobDeepLink } from './brand';
+import { BRAND, BRAND_EVENTS, jobDeepLink } from './brand';
+
+/**
+ * Sources that, when an event comes in for them, mean a widget surface
+ * needs to refresh. These match the activity-feed event source tags
+ * that touch widget data:
+ *
+ *   • apply-state, apply-linkedin, apply-greenhouse → topApply + stats
+ *   • interview-schedule, interview-reminder → nextInterview + stats
+ *   • scan, scan-portals, scan-curated → topApply (new high-scorers)
+ *                                       + stats (queued count changes)
+ *   • issue, issues → openIssues (Inbox widget)
+ *
+ * Substring match — events use prefixes like `apply-linkedin` /
+ * `scan-broad` so we test for the root tag.
+ */
+const WIDGET_RELEVANT_SOURCES = ['apply', 'interview', 'scan', 'issue'];
+
+function shouldRefreshWidgets(source?: string): boolean {
+  if (!source) return false;
+  return WIDGET_RELEVANT_SOURCES.some((tag) => source.startsWith(tag));
+}
 
 export type SseEvent = {
   id: string;
@@ -49,10 +70,17 @@ export function installNotificationsBridge(backendUrl: string): () => void {
     } catch {
       return;
     }
-    if (
-      !event ||
-      (event.level !== 'warn' && event.level !== 'error' && event.level !== 'success')
-    ) {
+    if (!event) return;
+    // Fire a widget-stale event whenever the activity feed reports
+    // something that changes widget data — even for info-level events.
+    // The +layout.svelte boot path listens for this and re-fetches
+    // /api/widgets/snapshot, then pushes to the iPhone-side plugin.
+    // Without this listener, widgets only refreshed on cold boot +
+    // app-resume, missing every in-session state change.
+    if (shouldRefreshWidgets(event.source) && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(`${BRAND_EVENTS.notify}:widgets-stale`));
+    }
+    if (event.level !== 'warn' && event.level !== 'error' && event.level !== 'success') {
       // We only surface non-info notifications by default. The user can
       // toggle info-level via ui-prefs.notifications.os.info.
       return;

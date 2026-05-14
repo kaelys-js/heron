@@ -37,6 +37,19 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "setUserActivity", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "drainNativeErrors", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "updateWidgets", returnType: CAPPluginReturnPromise),
+        // Bearer-token mirror for the Share Extension. The extension runs
+        // in its own sandboxed process and CANNOT read Capacitor
+        // Preferences (different security scope) — we stash the latest
+        // token in App Group UserDefaults via this method so the
+        // ShareViewController can attach Authorization headers when it
+        // POSTs shared URLs.
+        CAPPluginMethod(name: "setSharedBearerToken", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "clearSharedBearerToken", returnType: CAPPluginReturnPromise),
+        // Backend-URL mirror — the extension needs to know where to POST.
+        // The WebView already calls resolveBackend() on cold boot; this
+        // lets the JS side push the resolved URL into the App Group so
+        // the extension reads the same value.
+        CAPPluginMethod(name: "setSharedBackendUrl", returnType: CAPPluginReturnPromise),
     ]
 
     @objc public func getLanUrl(_ call: CAPPluginCall) {
@@ -133,6 +146,69 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
     }
     static func notifyNetStatus(online: Bool) {
         pluginInstance?.notifyListeners("netStatusChanged", data: ["online": online])
+    }
+
+    /**
+     * Mirror the current bearer token into App Group UserDefaults so the
+     * Share Extension can attach `Authorization: Bearer <token>` to its
+     * POSTs. The extension is its own process — it can't read Capacitor
+     * Preferences directly, but App Group defaults are visible to both
+     * the host app + every extension target sharing the group.
+     *
+     * Called from JS on every set-auth-token capture (auth-client.ts'
+     * customFetch). Idempotent — overwriting with the same value is
+     * cheap. Pass an empty string or null to clear.
+     */
+    @objc public func setSharedBearerToken(_ call: CAPPluginCall) {
+        guard let defaults = UserDefaults(suiteName: Brand.appGroup) else {
+            call.reject("app-group-missing", "App Group not configured: \(Brand.appGroup)")
+            return
+        }
+        let token = call.getString("token") ?? ""
+        if token.isEmpty {
+            defaults.removeObject(forKey: Brand.DefaultsKey.bearerToken)
+        } else {
+            defaults.set(token, forKey: Brand.DefaultsKey.bearerToken)
+        }
+        call.resolve(["ok": true])
+    }
+
+    /**
+     * Clear the shared bearer token — explicit sign-out path. Splitting
+     * this from setSharedBearerToken("") lets the JS side call it on the
+     * sign-out flow without having to construct an empty-string payload,
+     * and gives the operator a clearer audit-log line.
+     */
+    @objc public func clearSharedBearerToken(_ call: CAPPluginCall) {
+        guard let defaults = UserDefaults(suiteName: Brand.appGroup) else {
+            call.reject("app-group-missing", "App Group not configured: \(Brand.appGroup)")
+            return
+        }
+        defaults.removeObject(forKey: Brand.DefaultsKey.bearerToken)
+        call.resolve(["ok": true])
+    }
+
+    /**
+     * Mirror the resolved backend URL into App Group UserDefaults so the
+     * Share Extension knows where to POST. The WebView's backend-discovery
+     * already resolves this on cold boot; the JS side calls this once the
+     * resolution succeeds.
+     *
+     * Stored under `Brand.DefaultsKey.backendResolvedUrl` which is the
+     * same key the Share Extension already reads. Idempotent.
+     */
+    @objc public func setSharedBackendUrl(_ call: CAPPluginCall) {
+        guard let defaults = UserDefaults(suiteName: Brand.appGroup) else {
+            call.reject("app-group-missing", "App Group not configured: \(Brand.appGroup)")
+            return
+        }
+        let url = call.getString("url") ?? ""
+        if url.isEmpty {
+            defaults.removeObject(forKey: Brand.DefaultsKey.backendResolvedUrl)
+        } else {
+            defaults.set(url, forKey: Brand.DefaultsKey.backendResolvedUrl)
+        }
+        call.resolve(["ok": true])
     }
 
     @objc public func drainNativeErrors(_ call: CAPPluginCall) {

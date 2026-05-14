@@ -36,9 +36,28 @@ type CareerOpsNativePlugin = {
   }): Promise<{ ok: boolean }>;
   drainNativeErrors(): Promise<{ errors: Array<Record<string, unknown>> }>;
   updateWidgets(opts: WidgetUpdate): Promise<{ ok: boolean }>;
+  setSharedBearerToken(opts: { token: string }): Promise<{ ok: boolean }>;
+  clearSharedBearerToken(): Promise<{ ok: boolean }>;
+  setSharedBackendUrl(opts: { url: string }): Promise<{ ok: boolean }>;
 };
 
 export type WidgetUpdate = {
+  /** Auth gate visible to every iPhone widget + the Watch.
+   *
+   *   • `true`  → widgets render real data (stats, nextInterview, topApply,
+   *               openIssues). Passing this without data is fine — widgets
+   *               just show the empty placeholder.
+   *   • `false` → CareerOpsNativePlugin.updateWidgets scrubs every cached
+   *               key from App Group UserDefaults and the Watch flips
+   *               to its SignInGate immediately. Use this on sign-out so
+   *               a screenshot of the home screen or Lock Screen never
+   *               leaks the previous user's queue to the next person to
+   *               pick up the phone.
+   *
+   * If omitted (legacy callers), the plugin defaults to `true`, which
+   * matches the existing behaviour pre-gate.
+   */
+  authenticated?: boolean;
   stats?: {
     queued?: number;
     appliedToday?: number;
@@ -75,7 +94,12 @@ export type WidgetUpdate = {
 
 const native = registerPlugin<CareerOpsNativePlugin>('CareerOpsNative');
 
-function isIos(): boolean {
+/**
+ * Runtime platform check. Exported so the layout boot path can skip the
+ * widget snapshot fetch entirely on web/desktop — there's no plugin to
+ * call there, and the GET round-trip would just be wasted cycles.
+ */
+export function isIos(): boolean {
   return Capacitor.getPlatform() === 'ios';
 }
 
@@ -247,6 +271,44 @@ export async function updateWidgets(update: WidgetUpdate): Promise<boolean> {
   if (!isIos()) return false;
   try {
     const res = await native.updateWidgets(update);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Mirror the current bearer token into App Group UserDefaults so the
+ * Share Extension can read it on its next POST. Without this, the
+ * extension lands at /api/pipeline as an unauthenticated request and
+ * the URL is dropped silently.
+ *
+ * Called from auth-client.ts's customFetch every time a `set-auth-token`
+ * header is captured (sign-in / sign-up flows). No-op on web/desktop.
+ */
+export async function setSharedBearerToken(token: string | null): Promise<boolean> {
+  if (!isIos()) return false;
+  try {
+    if (token === null || token === '') {
+      const res = await native.clearSharedBearerToken();
+      return res.ok;
+    }
+    const res = await native.setSharedBearerToken({ token });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Mirror the resolved backend URL into App Group UserDefaults so the
+ * Share Extension knows where to POST. Called once on cold boot after
+ * backend-discovery resolves.
+ */
+export async function setSharedBackendUrl(url: string | null): Promise<boolean> {
+  if (!isIos()) return false;
+  try {
+    const res = await native.setSharedBackendUrl({ url: url ?? '' });
     return res.ok;
   } catch {
     return false;

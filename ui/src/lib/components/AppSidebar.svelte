@@ -34,6 +34,7 @@
     LogOut,
   } from '@lucide/svelte';
   import { authClient, clearLocalAuthState } from '$lib/client/auth-client';
+  import { clearAllPending } from '$lib/client/notifications';
   import { page } from '$app/state';
   import { goto, invalidateAll } from '$app/navigation';
   import { onMount, onDestroy } from 'svelte';
@@ -605,6 +606,14 @@
             // single source of truth so adding more local state never
             // forgets to scrub anything on logout.
             await clearLocalAuthState();
+            // Drain pending + delivered iOS notifications. Without this
+            // a "Scan complete · 3 new offers" notification scheduled
+            // while user A was signed in could fire (or already be
+            // visible in the notification center) after user B signs
+            // in, deep-linking them to data they no longer have access
+            // to. clearAllPending no-ops on web/desktop so the same
+            // call is safe everywhere.
+            await clearAllPending();
             await goto('/login', { invalidateAll: true });
           }}
         >

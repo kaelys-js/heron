@@ -38,40 +38,79 @@ struct CareerOpsInterviewAttributes: ActivityAttributes {
 struct CareerOpsInterviewLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: CareerOpsInterviewAttributes.self) { context in
-            // Lock-screen / banner UI
-            VStack(alignment: .leading) {
-                HStack {
-                    Text(context.state.company).font(.headline)
+            // Lock-screen / banner UI. The brand-indigo low-opacity tint
+            // matches the iPhone widgets' BrandBackground recipe so the
+            // whole iOS surface reads as one cohesive Career Ops experience
+            // instead of the previous heavy black bar.
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Image(systemName: "calendar.badge.clock")
+                        .font(.caption.bold())
+                        .foregroundStyle(.tint)
+                    Text("NEXT INTERVIEW")
+                        .font(.caption2.bold())
+                        .foregroundStyle(.secondary)
+                        .tracking(0.5)
                     Spacer()
-                    Text(context.state.stage).font(.caption).foregroundStyle(.secondary)
+                    Text(context.state.stage)
+                        .font(.caption2.bold())
+                        .foregroundStyle(.tint)
                 }
-                Text(context.state.role).font(.subheadline)
-                Text("In \(context.state.scheduledAt, style: .timer)")
-                    .font(.system(size: 28, weight: .bold))
-            }.padding().activityBackgroundTint(Color.black.opacity(0.85))
+                HStack(alignment: .firstTextBaseline) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(context.state.company).font(.headline)
+                        Text(context.state.role).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                    Spacer()
+                    Text(context.state.scheduledAt, style: .timer)
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundStyle(.tint)
+                        .lineLimit(1)
+                }
+            }
+            .padding()
+            .activityBackgroundTint(Color.indigo.opacity(0.35))
+            .activitySystemActionForegroundColor(Color.white)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Text(context.state.company).font(.caption.bold())
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(context.state.company).font(.caption.bold())
+                        Text(context.state.stage).font(.caption2).foregroundStyle(.secondary)
+                    }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(context.state.scheduledAt, style: .timer).font(.caption.monospacedDigit())
+                    VStack(alignment: .trailing, spacing: 1) {
+                        Text("In").font(.caption2).foregroundStyle(.secondary)
+                        Text(context.state.scheduledAt, style: .timer)
+                            .font(.caption.monospacedDigit().bold())
+                            .foregroundStyle(.tint)
+                    }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     HStack {
-                        Text(context.state.role).font(.caption2).foregroundStyle(.secondary)
+                        Text(context.state.role).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
                         Spacer()
-                        Link(destination: URL(string: Brand.jobDeepLink(context.attributes.jobId))!) {
-                            Text("Open prep").font(.caption.bold())
+                        Link(destination: URL(string: Brand.deepLink("interview-prep/\(context.attributes.jobId)"))!) {
+                            HStack(spacing: 4) {
+                                Text("Open prep").font(.caption.bold())
+                                Image(systemName: "arrow.up.right")
+                                    .font(.caption2.bold())
+                            }
+                            .foregroundStyle(.tint)
                         }
                     }
                 }
             } compactLeading: {
-                Image(systemName: "hourglass")
+                Image(systemName: "calendar.badge.clock")
+                    .foregroundStyle(.tint)
             } compactTrailing: {
-                Text(context.state.scheduledAt, style: .timer).font(.caption.monospacedDigit())
+                Text(context.state.scheduledAt, style: .timer)
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.tint)
             } minimal: {
-                Image(systemName: "hourglass")
+                Image(systemName: "calendar.badge.clock")
+                    .foregroundStyle(.tint)
             }
         }
     }
