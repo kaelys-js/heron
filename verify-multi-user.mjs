@@ -889,13 +889,31 @@ async function main() {
     {
       // With the owner already present from section 21, simulate an
       // invite-code signup. Owner generates an invite, then a fresh user
-      // signs up via sign-up/email (which is how authClient.signUp.email
-      // works in our /signup page — the invite-code is validated client-
-      // side in /api/auth/invite/claim BEFORE the signup, but the user
-      // record itself is created here with role=member by default).
+      // signs up via sign-up/email. As of the signupGate handler in
+      // hooks.server.ts, the /api/auth/sign-up/* endpoint requires a
+      // valid `x-invite-code` header once users.count > 0 — atomically
+      // consumed (single-use redemption). The owner-issued code below
+      // is what `authClient.signUp.email` would attach via the customFetch
+      // pendingInviteCode slot in lib/client/auth-client.ts.
+      const ownerForInvite = injectUser(secret, 'invite-issuer', 'owner');
+      const inviteCreate = await fetchJson('/api/auth/invite/create', {
+        method: 'POST',
+        headers: authedHeaders(ownerForInvite.cookie),
+      });
+      const inviteCode = inviteCreate.body?.code;
+      check(
+        'owner issued invite for second-user signup',
+        typeof inviteCode === 'string' && /^\d{6}$/.test(inviteCode),
+        'got: ' + JSON.stringify(inviteCreate.body).slice(0, 200),
+      );
       const signupRes = await fetch(`${BASE}/api/auth/sign-up/email`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Origin: BASE },
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: BASE,
+          // signupGate validates this header + atomically deletes the row.
+          'x-invite-code': inviteCode ?? '',
+        },
         body: JSON.stringify({
           email: 'second-user@verify.local',
           password: 'NotUsed-' + crypto.randomBytes(16).toString('hex'),
@@ -958,10 +976,23 @@ async function main() {
       // to match the request URL's origin OR to be absent. The verifier
       // runs against localhost; explicitly setting Origin to BASE makes
       // the CSRF check pass (same origin).
+      //
+      // x-invite-code — signupGate (hooks.server.ts) requires this header
+      // once users.count > 0. Issue a fresh invite first and attach.
+      const ownerForCookieTest = injectUser(secret, 'cookie-issuer', 'owner');
+      const cookieInvite = await fetchJson('/api/auth/invite/create', {
+        method: 'POST',
+        headers: authedHeaders(ownerForCookieTest.cookie),
+      });
+      const cookieInviteCode = cookieInvite.body?.code ?? '';
       const email = 'cookies-' + crypto.randomBytes(3).toString('hex') + '@verify.local';
       const res = await fetch(`${BASE}/api/auth/sign-up/email`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Origin: BASE },
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: BASE,
+          'x-invite-code': cookieInviteCode,
+        },
         body: JSON.stringify({ email, password: 'CookiesTest!1234567890', name: 'Cookies' }),
       });
       const setCookieArr =
