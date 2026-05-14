@@ -69,8 +69,12 @@ describe('Hardcoded scheme leaks (forbidden outside generated files)', () => {
   // constants are the only place the literal is allowed in CODE; comments
   // referencing the literal for documentation purposes are fine.
   it('no "careerops://" in EXECUTABLE svelte/ts source (excluding comments + generated + tests)', () => {
+    // Test files (*.test.ts / *.spec.ts) are explicitly allowed to use
+    // the literal — they pin behaviour to the current scheme rather than
+    // to BRAND, which catches incidental drift if BRAND.urlScheme silently
+    // changes. We grep test files OUT in the shell filter below.
     const out = execSync(
-      `grep -rn 'careerops://' ui/src --include='*.svelte' --include='*.ts' --exclude-dir=node_modules --exclude-dir=.svelte-kit --exclude-dir=integration || true`,
+      `grep -rn 'careerops://' ui/src --include='*.svelte' --include='*.ts' --exclude='*.test.ts' --exclude='*.spec.ts' --exclude-dir=node_modules --exclude-dir=.svelte-kit --exclude-dir=integration || true`,
       { cwd: REPO_ROOT, encoding: 'utf8' },
     );
     const allowedPaths = [
