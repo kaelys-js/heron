@@ -77,14 +77,39 @@ USAGE
 # Parse arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --parallel) PARALLEL="$2"; shift 2 ;;
-    --dry-run) DRY_RUN=true; shift ;;
-    --retry-failed) RETRY_FAILED=true; shift ;;
-    --start-from) START_FROM="$2"; shift 2 ;;
-    --max-retries) MAX_RETRIES="$2"; shift 2 ;;
-    --min-score) MIN_SCORE="$2"; shift 2 ;;
-    -h|--help) usage; exit 0 ;;
-    *) echo "Unknown option: $1"; usage; exit 1 ;;
+    --parallel)
+      PARALLEL="$2"
+      shift 2
+      ;;
+    --dry-run)
+      DRY_RUN=true
+      shift
+      ;;
+    --retry-failed)
+      RETRY_FAILED=true
+      shift
+      ;;
+    --start-from)
+      START_FROM="$2"
+      shift 2
+      ;;
+    --max-retries)
+      MAX_RETRIES="$2"
+      shift 2
+      ;;
+    --min-score)
+      MIN_SCORE="$2"
+      shift 2
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1"
+      usage
+      exit 1
+      ;;
   esac
 done
 
@@ -102,7 +127,7 @@ acquire_lock() {
       rm -f "$LOCK_FILE"
     fi
   fi
-  echo "$MAIN_PID" > "$LOCK_FILE"
+  echo "$MAIN_PID" >"$LOCK_FILE"
 }
 
 release_lock() {
@@ -137,7 +162,7 @@ check_prerequisites() {
 # Initialize state file if it doesn't exist
 init_state() {
   if [[ ! -f "$STATE_FILE" ]]; then
-    printf 'id\turl\tstatus\tstarted_at\tcompleted_at\treport_num\tscore\terror\tretries\n' > "$STATE_FILE"
+    printf 'id\turl\tstatus\tstarted_at\tcompleted_at\treport_num\tscore\terror\tretries\n' >"$STATE_FILE"
   fi
 }
 
@@ -147,7 +172,7 @@ acquire_state_lock() {
 
   while true; do
     if mkdir "$STATE_LOCK_DIR" 2>/dev/null; then
-      if printf '%s\n' "${BASHPID:-$$}" > "$STATE_LOCK_PID_FILE"; then
+      if printf '%s\n' "${BASHPID:-$$}" >"$STATE_LOCK_PID_FILE"; then
         return 0
       fi
       rm -f "$STATE_LOCK_PID_FILE" 2>/dev/null || true
@@ -173,7 +198,7 @@ acquire_state_lock() {
       fi
     fi
 
-    if (( waited >= max_waits )); then
+    if ((waited >= max_waits)); then
       echo "ERROR: Timed out waiting for state lock at $STATE_LOCK_DIR"
       echo "If no batch-runner worker is active, remove the stale lock directory."
       return 1
@@ -238,7 +263,7 @@ next_report_num_unlocked() {
       basename=$(basename "$f")
       local num="${basename%%-*}"
       num=$((10#$num)) # Remove leading zeros for arithmetic
-      if (( num > max_num )); then
+      if ((num > max_num)); then
         max_num=$num
       fi
     done
@@ -248,10 +273,10 @@ next_report_num_unlocked() {
     while IFS=$'\t' read -r _ _ _ _ _ rnum _ _ _; do
       [[ "$rnum" == "report_num" || "$rnum" == "-" || -z "$rnum" ]] && continue
       local n=$((10#$rnum))
-      if (( n > max_num )); then
+      if ((n > max_num)); then
         max_num=$n
       fi
-    done < "$STATE_FILE"
+    done <"$STATE_FILE"
   fi
   printf '%03d' $((max_num + 1))
 }
@@ -269,24 +294,24 @@ update_state_unlocked() {
   local found=false
 
   # Write header
-  head -1 "$STATE_FILE" > "$tmp"
+  head -1 "$STATE_FILE" >"$tmp"
 
   # Process existing lines
   while IFS=$'\t' read -r sid surl sstatus sstarted scompleted sreport sscore serror sretries; do
-    [[ "$sid" == "id" ]] && continue  # skip header
+    [[ "$sid" == "id" ]] && continue # skip header
     if [[ "$sid" == "$id" ]]; then
       printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-        "$id" "$url" "$status" "$started" "$completed" "$report_num" "$score" "$error" "$retries" >> "$tmp"
+        "$id" "$url" "$status" "$started" "$completed" "$report_num" "$score" "$error" "$retries" >>"$tmp"
       found=true
     else
       printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-        "$sid" "$surl" "$sstatus" "$sstarted" "$scompleted" "$sreport" "$sscore" "$serror" "$sretries" >> "$tmp"
+        "$sid" "$surl" "$sstatus" "$sstarted" "$scompleted" "$sreport" "$sscore" "$serror" "$sretries" >>"$tmp"
     fi
-  done < "$STATE_FILE"
+  done <"$STATE_FILE"
 
   if [[ "$found" == "false" ]]; then
     printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-      "$id" "$url" "$status" "$started" "$completed" "$report_num" "$score" "$error" "$retries" >> "$tmp"
+      "$id" "$url" "$status" "$started" "$completed" "$report_num" "$score" "$error" "$retries" >>"$tmp"
   fi
 
   mv "$tmp" "$STATE_FILE"
@@ -355,7 +380,7 @@ process_offer() {
     -e "s|{{REPORT_NUM}}|${esc_report_num}|g" \
     -e "s|{{DATE}}|${esc_date}|g" \
     -e "s|{{ID}}|${esc_id}|g" \
-    "$PROMPT_FILE" > "$resolved_prompt"
+    "$PROMPT_FILE" >"$resolved_prompt"
 
   # Launch $AGENT_CLI -p worker. --model sonnet + --dangerously-skip-permissions
   # + --append-system-prompt-file are Claude-Code-specific; other CLIs need
@@ -366,7 +391,7 @@ process_offer() {
     --dangerously-skip-permissions \
     --append-system-prompt-file "$resolved_prompt" \
     "$prompt" \
-    > "$log_file" 2>&1 || exit_code=$?
+    >"$log_file" 2>&1 || exit_code=$?
 
   # Cleanup resolved prompt
   rm -f "$resolved_prompt"
@@ -378,14 +403,14 @@ process_offer() {
     # Try to extract score from worker output
     local score="-"
     local score_match
-   score_match=$(sed -nE 's/.*"score":[[:space:]]*([0-9.]+).*/\1/p' "$log_file" 2>/dev/null | head -1 || true)
+    score_match=$(sed -nE 's/.*"score":[[:space:]]*([0-9.]+).*/\1/p' "$log_file" 2>/dev/null | head -1 || true)
     if [[ -n "$score_match" ]]; then
       score="$score_match"
     fi
 
     # Check min-score gate
-    if [[ "$score" != "-" && -n "$score" ]] && (( $(echo "$MIN_SCORE > 0" | bc -l) )); then
-      if (( $(echo "$score < $MIN_SCORE" | bc -l) )); then
+    if [[ "$score" != "-" && -n "$score" ]] && (($(echo "$MIN_SCORE > 0" | bc -l))); then
+      if (($(echo "$score < $MIN_SCORE" | bc -l))); then
         update_state "$id" "$url" "skipped" "$started_at" "$completed_at" "$report_num" "$score" "below-min-score" "$retries"
         echo "    ⏭️  Skipped (score: $score < min-score: $MIN_SCORE)"
         continue
@@ -410,7 +435,10 @@ merge_tracker() {
   node "$PROJECT_DIR/merge-tracker.mjs"
   echo ""
   echo "=== Verifying pipeline integrity ==="
-  node "$PROJECT_DIR/verify-pipeline.mjs" || echo "⚠️  Verification found issues (see above)"
+  # Pipeline integrity is now covered by the integration test suite
+  # (replaced verify-pipeline.mjs in Phase 5 of the testing migration).
+  (cd "$PROJECT_DIR" && pnpm exec vitest run -- pipeline.integration --silent) ||
+    echo "⚠️  Verification found issues (see above)"
 }
 
 # Print summary
@@ -430,7 +458,8 @@ print_summary() {
     [[ "$sid" == "id" ]] && continue
     total=$((total + 1))
     case "$sstatus" in
-      completed) completed=$((completed + 1))
+      completed)
+        completed=$((completed + 1))
         if [[ "$sscore" != "-" && -n "$sscore" ]]; then
           score_sum=$(echo "$score_sum + $sscore" | bc 2>/dev/null || echo "$score_sum")
           score_count=$((score_count + 1))
@@ -439,11 +468,11 @@ print_summary() {
       failed) failed=$((failed + 1)) ;;
       *) pending=$((pending + 1)) ;;
     esac
-  done < "$STATE_FILE"
+  done <"$STATE_FILE"
 
   echo "Total: $total | Completed: $completed | Failed: $failed | Pending: $pending"
 
-  if (( score_count > 0 )); then
+  if ((score_count > 0)); then
     local avg
     avg=$(echo "scale=1; $score_sum / $score_count" | bc 2>/dev/null || echo "N/A")
     echo "Average score: $avg/5 ($score_count scored)"
@@ -465,7 +494,7 @@ main() {
   total_input=$(tail -n +2 "$INPUT_FILE" | grep -c '[^[:space:]]' 2>/dev/null || true)
   total_input="${total_input:-0}"
 
-  if (( total_input == 0 )); then
+  if ((total_input == 0)); then
     echo "No offers in $INPUT_FILE. Add offers first."
     exit 0
   fi
@@ -482,14 +511,14 @@ main() {
   local -a pending_notes=()
 
   while IFS=$'\t' read -r id url source notes; do
-    [[ "$id" == "id" ]] && continue  # skip header
+    [[ "$id" == "id" ]] && continue # skip header
     [[ -z "$id" || -z "$url" ]] && continue
 
     # Guard against non-numeric id values
     [[ "$id" =~ ^[0-9]+$ ]] || continue
 
     # Skip if before start-from
-    if (( id < START_FROM )); then
+    if ((id < START_FROM)); then
       continue
     fi
 
@@ -504,7 +533,7 @@ main() {
       # Check retry limit
       local retries
       retries=$(get_retries "$id")
-      if (( retries >= MAX_RETRIES )); then
+      if ((retries >= MAX_RETRIES)); then
         echo "SKIP #$id: max retries ($MAX_RETRIES) reached"
         continue
       fi
@@ -517,7 +546,7 @@ main() {
       if [[ "$status" == "failed" ]]; then
         local retries
         retries=$(get_retries "$id")
-        if (( retries >= MAX_RETRIES )); then
+        if ((retries >= MAX_RETRIES)); then
           echo "SKIP #$id: failed and max retries reached (use --retry-failed to force)"
           continue
         fi
@@ -528,11 +557,11 @@ main() {
     pending_urls+=("$url")
     pending_sources+=("$source")
     pending_notes+=("$notes")
-  done < "$INPUT_FILE"
+  done <"$INPUT_FILE"
 
   local pending_count=${#pending_ids[@]}
 
-  if (( pending_count == 0 )); then
+  if ((pending_count == 0)); then
     echo "No offers to process."
     print_summary
     exit 0
@@ -555,7 +584,7 @@ main() {
   fi
 
   # Process offers
-  if (( PARALLEL <= 1 )); then
+  if ((PARALLEL <= 1)); then
     # Sequential processing
     for i in "${!pending_ids[@]}"; do
       process_offer "${pending_ids[$i]}" "${pending_urls[$i]}" "${pending_sources[$i]}" "${pending_notes[$i]}"
@@ -568,7 +597,7 @@ main() {
 
     for i in "${!pending_ids[@]}"; do
       # Wait if we're at parallel limit
-      while (( running >= PARALLEL )); do
+      while ((running >= PARALLEL)); do
         # Wait for any child to finish
         for j in "${!pids[@]}"; do
           if ! kill -0 "${pids[$j]}" 2>/dev/null; then

@@ -47,4 +47,4 @@ release:
 	@node scripts/native/release.mjs $(V)
 
 verify:
-	@node verify-capacitor.mjs
+	@pnpm test

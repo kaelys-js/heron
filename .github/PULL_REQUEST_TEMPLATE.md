@@ -37,9 +37,9 @@
 - [ ] `pnpm install` clean
 - [ ] `pnpm check` (svelte-check + tsgo) passes — 0 errors / 0 warnings
 - [ ] `pnpm build` succeeds
-- [ ] `node test-all.mjs` passes
-- [ ] `node verify-capacitor.mjs` green
-- [ ] `node verify-multi-user.mjs` green (if you touched anything in `ui/src/lib/server/`)
+- [ ] `pnpm test` passes (Vitest matrix — unit + server + component + routes + integration)
+- [ ] `pnpm test:coverage` ≥ 70% lines / 65% branches (TS) — see Codecov PR comment
+- [ ] `pnpm test:ios` passes (if iOS native code touched; CI macos-15 runner)
 - [ ] Manual smoke: <describe your manual test path>
 
 ## Checklist

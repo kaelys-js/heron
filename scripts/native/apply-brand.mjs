@@ -17,7 +17,7 @@
  * Each consumer is its own function below. Adding a new consumer:
  *   1. Add a function `applyXxx(brand)`
  *   2. Call it from the main `apply()` at the bottom
- *   3. Add a check in verify-capacitor.mjs Phase 9
+ *   3. Add a check in ui/src/lib/integration/capacitor.integration.test.ts
  *
  * Safe to re-run — idempotent. No-ops if the file already matches.
  */

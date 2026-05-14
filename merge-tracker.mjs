@@ -489,7 +489,12 @@ if (DRY_RUN) console.log('(dry-run — no changes written)');
 if (VERIFY && !DRY_RUN) {
   console.log('\n--- Running verification ---');
   try {
-    execFileSync('node', [join(CAREER_OPS, 'verify-pipeline.mjs')], { stdio: 'inherit' });
+    // Pipeline integrity is now covered by the integration test
+    // (replaces verify-pipeline.mjs deleted in Phase 5 of the testing migration).
+    execFileSync('pnpm', ['exec', 'vitest', 'run', '--', 'pipeline.integration'], {
+      stdio: 'inherit',
+      cwd: CAREER_OPS,
+    });
   } catch (e) {
     process.exit(1);
   }

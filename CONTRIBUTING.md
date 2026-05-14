@@ -58,7 +58,9 @@ PRs without a corresponding issue may be closed if they don't align with the pro
 ```bash
 # Scripts
 pnpm run doctor               # Setup validation
-node verify-pipeline.mjs     # Health check
+pnpm test                     # Full Vitest matrix (unit + server + component + routes + integration)
+pnpm test:coverage            # Coverage report (≥70% TS / ≥60% iOS gates)
+pnpm test:ios                 # iOS XCTest + XCUITest (needs Mac + Xcode)
 node cv-sync-check.mjs        # Config check
 
 # Dashboard

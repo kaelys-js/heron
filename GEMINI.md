@@ -113,6 +113,6 @@ If `modes/_profile.md` is missing, copy from `modes/_profile.template.md` silent
 ## Pipeline Integrity
 
 1. **NEVER edit applications.md to ADD new entries** — Write TSV in `batch/tracker-additions/` and `node merge-tracker.mjs` handles the merge.
-2. Run `node verify-pipeline.mjs` to check health.
+2. Run `pnpm test -- pipeline.integration` (or trigger the `verify-pipeline` job from the Agents page) to check health.
 3. All reports MUST include `**URL:**` and `**Legitimacy:**` in the header.
 4. All statuses MUST be canonical (see `templates/states.yml`).

@@ -75,7 +75,7 @@ A `DEV / PROD / LAN / TAILSCALE / REMOTE` pill in the topbar shows the live sour
 |---|---|
 | Run a command | `pnpm native` — print all options + current status |
 | Add a new one-shot script | `scripts/native/_lib.mjs` for the helpers, then mirror an existing script |
-| Debug a build failure | `node verify-capacitor.mjs` (90 sanity checks) |
+| Debug a build failure | `pnpm test -- capacitor.integration` (brand + native consistency checks) |
 | Understand resolver | `ui/src/lib/client/backend-discovery.ts` |
 | Understand notification routing | `ui/src/lib/client/sse-notifications-bridge.ts` |
 | Tweak the AppMenuBar | `ui/electron/src/app-menu.ts` |
