@@ -2,6 +2,11 @@
  * test-setup.ts — runs ONCE per test file BEFORE any test in it.
  *
  * Provides:
+ *   • DB isolation: routes auth.db + app.db to a tmpdir so no test
+ *     ever writes to the developer's real data/auth.db. This prevents
+ *     the "ghost first-user" bug where prior test signups left rows
+ *     in users.users and a fresh-clone user could no longer be
+ *     promoted to owner.
  *   • testing-library/jest-dom matchers (`toBeInTheDocument`, etc.)
  *   • MSW server lifecycle (`beforeAll`/`afterEach`/`afterAll`)
  *   • matchMedia polyfill for jsdom — defaults to desktop. Per-test
@@ -18,6 +23,25 @@
  */
 import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
+
+// ── DB isolation — MUST run before any server module is imported ────
+// db/index.ts checks process.env.VITEST + process.env.CAREER_OPS_DATA_DIR
+// at module-load time. Setting CAREER_OPS_DATA_DIR here is belt-and-
+// braces: db/index.ts already auto-routes to a tmpdir when VITEST=true,
+// but if some other ENV strips that var we still want isolation. The
+// directory is per-process so parallel test workers don't collide.
+// Browser-mode workers don't expose `process` — guard with typeof.
+if (typeof process !== 'undefined' && process.env && !process.env.CAREER_OPS_DATA_DIR) {
+  // Lazy-import node:os/fs/path. They only resolve in the node-env
+  // projects (ui-server, ui-integration). The browser-mode worker
+  // skips this branch entirely via the typeof-process guard above.
+  const os = require('node:os') as typeof import('node:os');
+  const fs = require('node:fs') as typeof import('node:fs');
+  const path = require('node:path') as typeof import('node:path');
+  const tmp = path.join(os.tmpdir(), `career-ops-test-${process.pid}`);
+  fs.mkdirSync(tmp, { recursive: true });
+  process.env.CAREER_OPS_DATA_DIR = tmp;
+}
 
 // ── IndexedDB shim (jsdom doesn't ship one) ────────────────────────
 // Wrapped in try/catch — browser mode already has IDB; importing
