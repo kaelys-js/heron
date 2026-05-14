@@ -125,29 +125,57 @@ if Dir.exist?(app_sources_dir)
 end
 
 EXTENSIONS.each do |ext|
-  if project.targets.any? { |t| t.name == ext[:name] }
-    puts "✓ target #{ext[:name]} already exists — skipping"
-    next
-  end
-
-  source_dir_abs = File.expand_path("../#{ext[:source_dir]}", Dir.pwd)
+  # Extension target sources live at `ui/ios/App/<Name>/` — same level
+  # as the main App/ folder. (Earlier versions of this script used
+  # `../<Name>` and silently skipped on every run; consistent with
+  # turbo.json + biome.json + verify-capacitor.mjs which all use the
+  # `App/<Name>/` layout.)
+  source_dir_abs = File.expand_path(ext[:source_dir], Dir.pwd)
   unless Dir.exist?(source_dir_abs)
     puts "✗ source dir not found: #{source_dir_abs}"
     next
   end
 
-  puts "▸ adding target #{ext[:name]}"
-  target = project.new_target(
-    :app_extension,
-    ext[:name],
-    :ios,
-    ext[:deployment_min],
-    project.products_group,
-    :swift
-  )
+  # IDEMPOTENCY MODEL — find existing target, REPAIR it; only create
+  # if missing. Earlier this loop just `next`-ed on existing targets,
+  # which masked broken state: the three extension targets were
+  # already in project.pbxproj from a stale Xcode-edited run with
+  # EMPTY PRODUCT_NAME (the xcodeproj gem doesn't set it automatically
+  # for :app_extension), so xcodebuild emitted them as `.appex` (no
+  # filename) — duplicate output paths, build aborts. Repair runs on
+  # every script invocation: ensures PRODUCT_NAME, INFOPLIST_FILE,
+  # bundle id, signing settings are always correct, even if a previous
+  # author hand-edited the pbxproj or an older script version omitted
+  # them.
+  existing_target = project.targets.find { |t| t.name == ext[:name] }
+  target =
+    if existing_target
+      puts "▸ repairing target #{ext[:name]}"
+      existing_target
+    else
+      puts "▸ adding target #{ext[:name]}"
+      project.new_target(
+        :app_extension,
+        ext[:name],
+        :ios,
+        ext[:deployment_min],
+        project.products_group,
+        :swift
+      )
+    end
 
-  # Bundle ID
+  # Build settings — set EVERY time, overriding whatever was there.
+  # This is critical for repairing the previously-broken state where
+  # `PRODUCT_NAME` was empty (xcodebuild then emitted `.appex` with
+  # no filename → duplicate-output errors → BUILD FAILED).
   target.build_configurations.each do |config|
+    # PRODUCT_NAME — the binary basename. MUST be non-empty or every
+    # build-output path collapses to just `.appex`. xcodeproj gem's
+    # `new_target` doesn't auto-set this for :app_extension; the
+    # default `$(TARGET_NAME)` only kicks in if the build settings
+    # don't override. Hand-edited / older script-produced projects
+    # often have PRODUCT_NAME = "" which silently wedges xcodebuild.
+    config.build_settings['PRODUCT_NAME'] = ext[:name]
     config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = "#{bundle_root}.#{ext[:bundle_suffix]}"
     config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = ext[:deployment_min]
     config.build_settings['INFOPLIST_FILE'] = "#{ext[:source_dir]}/Info.plist"
@@ -165,6 +193,19 @@ EXTENSIONS.each do |ext|
     # nuke user files outside the project tree.
     config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'YES'
     config.build_settings['SKIP_INSTALL'] = 'YES'
+    # CURRENT_PROJECT_VERSION + MARKETING_VERSION MUST resolve to
+    # non-empty strings or the extension's Info.plist will ship
+    # `CFBundleVersion = ""` (because the source plist uses
+    # `$(CURRENT_PROJECT_VERSION)` placeholder expansion). iOS's
+    # installer then rejects the .appex with error code 17:
+    # "bundleVersion must be set in placeholder attributes for an app
+    # extension placeholder" — which surfaces to the user as the
+    # vague "Invalid placeholder attributes" deploy failure. Match
+    # the main App target's defaults (1 / 1.0) so versions stay in
+    # lockstep across host + extensions; the brand pipeline
+    # (apply-brand.mjs) bumps both via MARKETING_VERSION at release.
+    config.build_settings['CURRENT_PROJECT_VERSION'] = '1'
+    config.build_settings['MARKETING_VERSION'] = '1.0'
   end
 
   # Add Swift sources from the source dir
@@ -172,9 +213,20 @@ EXTENSIONS.each do |ext|
   group.set_source_tree('<group>')
   group.path = ext[:source_dir]
   swift_files = Dir.glob(File.join(source_dir_abs, '*.swift'))
+  # Dedupe: only add Swift files NOT already in this target's
+  # sources build phase. Re-running the script on a project that
+  # already has these targets (existing_target path) would otherwise
+  # double-list every file → "duplicate output file" for every
+  # compiled .o, then the link step collides on `.swiftmodule`.
+  sources_phase = target.source_build_phase
+  already_compiled = sources_phase.files.map { |bf|
+    bf.file_ref ? File.basename(bf.file_ref.path.to_s) : nil
+  }.compact
   swift_files.each do |file|
     rel = File.basename(file)
-    file_ref = group.new_file(rel)
+    next if already_compiled.include?(rel)
+    existing_ref = group.files.find { |f| File.basename(f.path.to_s) == rel }
+    file_ref = existing_ref || group.new_file(rel)
     target.add_file_references([file_ref])
     puts "    + #{rel}"
   end
@@ -225,15 +277,33 @@ EXTENSIONS.each do |ext|
     puts "    + #{File.basename(entitlements_path)}"
   end
 
-  # Embed the extension in the host app target
+  # Embed the extension in the host app target.
+  # Step 1: PURGE stale embed entries. Previous script versions added
+  # a new entry every run, leaving multiples; if you also hand-edited
+  # the project in Xcode the dupes can point at different
+  # product_references that all build to the same `.appex`. Walk the
+  # phase and drop any entry whose file_ref name (or path) matches
+  # this extension. After purge there are zero entries for this ext.
   embed_phase = main_target.copy_files_build_phases.find { |p| p.name == 'Embed Foundation Extensions' }
   embed_phase ||= main_target.new_copy_files_build_phase('Embed Foundation Extensions')
   embed_phase.symbol_dst_subfolder_spec = :plug_ins
+  ext_basename = "#{ext[:name]}.appex"
+  embed_phase.files.dup.each do |bf|
+    next unless bf.file_ref
+    fr_name = bf.file_ref.path.to_s
+    fr_display = bf.file_ref.display_name.to_s rescue ''
+    if fr_name == ext_basename || fr_display == ext_basename || fr_name == '.appex'
+      embed_phase.remove_build_file(bf)
+    end
+  end
+  # Step 2: Add exactly one fresh entry pointing at the (now-repaired
+  # PRODUCT_NAME) target's product reference.
   build_file = embed_phase.add_file_reference(target.product_reference)
   build_file.settings = { 'ATTRIBUTES' => ['RemoveHeadersOnCopy'] }
 
-  # Add explicit dependency
-  main_target.add_dependency(target)
+  # Add explicit dependency (idempotent — add_dependency dedupes
+  # against existing PBXTargetDependency entries internally).
+  main_target.add_dependency(target) unless main_target.dependencies.any? { |d| d.target == target }
   puts "  ✓ #{ext[:name]} added + linked to App target"
 end
 
