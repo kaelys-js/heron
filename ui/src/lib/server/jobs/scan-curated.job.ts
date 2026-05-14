@@ -60,7 +60,9 @@ function runScanCurated(args?: JobArgs): Promise<JobResult> {
       });
       try {
         recordFailure('scan-curated', err);
-      } catch {}
+      } catch {
+        // sources counter best-effort — failure is already logged above.
+      }
       resolve({ ok: false, error: err.message });
     });
     p.on('close', (code) => {
@@ -73,7 +75,9 @@ function runScanCurated(args?: JobArgs): Promise<JobResult> {
         });
         try {
           recordFailure('scan-curated', new Error('scan-curated.mjs exited ' + code));
-        } catch {}
+        } catch {
+          // sources counter best-effort — failure is already logged above.
+        }
         resolve({ ok: false, error: 'scan-curated.mjs exited ' + code });
         return;
       }
@@ -84,7 +88,9 @@ function runScanCurated(args?: JobArgs): Promise<JobResult> {
       });
       try {
         recordSuccess('scan-curated');
-      } catch {}
+      } catch {
+        // sources counter best-effort — success is already logged above.
+      }
       resolve({ ok: true, message: found + ' new offers', meta: { found } });
     });
   });

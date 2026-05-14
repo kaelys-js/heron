@@ -127,7 +127,9 @@ export function installImapPollerDaemon(): void {
   if (pollerHandle) {
     try {
       clearInterval(pollerHandle);
-    } catch {}
+    } catch {
+      // Already cleared or handle no longer valid — no-op on idempotent reinstall.
+    }
     pollerHandle = null;
   }
   // Run a first poll 60s after boot (don't block boot itself), then

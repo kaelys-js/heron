@@ -134,7 +134,10 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: 'rlig' 1, 'calt' 1, 'cv11' 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1,
+      'cv11' 1;
     /* 15px (= 0.9375rem at 16px root) instead of Tailwind's default 16px
        so the app feels tighter without going below iOS HIG's 11pt floor
        (~14.6px CSS px). Line-height 1.5 keeps reading comfortable. */
@@ -155,11 +158,29 @@
  * Old fades out fast (90ms) so the fresh route can paint quickly; new fades
  * in slightly slower (200ms after a 90ms hold) for a calm hand-off.
  */
-.app-shell-sidebar { view-transition-name: app-sidebar; }
-.app-shell-topbar  { view-transition-name: app-topbar;  }
+.app-shell-sidebar {
+  view-transition-name: app-sidebar;
+}
+.app-shell-topbar {
+  view-transition-name: app-topbar;
+}
 
-@keyframes view-fade-in { from { opacity: 0 } to { opacity: 1 } }
-@keyframes view-fade-out { from { opacity: 1 } to { opacity: 0 } }
+@keyframes view-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes view-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
 
 ::view-transition-old(root) {
   animation: 90ms cubic-bezier(0.4, 0, 1, 1) both view-fade-out;
@@ -179,6 +200,27 @@
 ::view-transition-new(app-topbar) {
   animation: none !important;
   mix-blend-mode: normal;
+}
+
+/*
+ * Theme-swap override — when the user toggles light/dark/system,
+ * theme.svelte.ts wraps the class change in `document.startViewTransition`
+ * AND adds `html.theme-swap` for the duration of the transition. Here
+ * we RE-ENABLE the sidebar/topbar crossfade (they'd otherwise snap and
+ * the user would see two halves of the page flip at different times),
+ * and we slow root + chrome to a single coordinated 260ms ease so the
+ * whole viewport crossfades as one surface. Falls back automatically
+ * on `prefers-reduced-motion: reduce` via the @media block below.
+ */
+html.theme-swap::view-transition-old(root),
+html.theme-swap::view-transition-old(app-sidebar),
+html.theme-swap::view-transition-old(app-topbar) {
+  animation: 260ms ease-out both view-fade-out !important;
+}
+html.theme-swap::view-transition-new(root),
+html.theme-swap::view-transition-new(app-sidebar),
+html.theme-swap::view-transition-new(app-topbar) {
+  animation: 260ms ease-out both view-fade-in !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

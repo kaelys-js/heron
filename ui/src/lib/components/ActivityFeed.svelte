@@ -20,7 +20,13 @@
       try {
         const ev = JSON.parse(e.data);
         events = [ev, ...events].slice(0, 200);
-      } catch {}
+      } catch (err) {
+        // Malformed SSE payload — skip rather than crash the feed.
+        // Server-side already logs every event before broadcasting, so
+        // we don't lose audit trail by dropping a bad parse here.
+        // eslint-disable-next-line no-console
+        console.warn('[ActivityFeed] dropped malformed event:', err);
+      }
     };
     return () => es.close();
   });

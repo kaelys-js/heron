@@ -79,7 +79,11 @@ function readFirstSeen(profileId: string, url: string): string | null {
       const fs = cells[1];
       if (/^\d{4}-\d{2}-\d{2}$/.test(fs)) return fs;
     }
-  } catch {}
+  } catch {
+    // scan-history.tsv read failure — return null so the UI degrades to
+    // "unknown timing" rather than crashing. Caller falls back to neutral
+    // classification.
+  }
   return null;
 }
 

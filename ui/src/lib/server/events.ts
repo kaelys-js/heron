@@ -82,7 +82,11 @@ class Bus extends EventEmitter {
         try {
           const ev = JSON.parse(line);
           if (ev.id && ev.ts) this.buf.push(ev);
-        } catch {}
+        } catch {
+          // Truncated final line from a crash mid-write — skip and continue
+          // loading the rest of the buffer. Logging here would re-enter
+          // the load path, so we drop silently by design.
+        }
       }
     } catch (e) {
       safeConsole('error', '[events] failed to load', e);
@@ -98,10 +102,17 @@ class Bus extends EventEmitter {
       // Replace any existing .1 (we keep only one backup to bound disk use).
       try {
         if (fs.existsSync(LOG_BACKUP)) fs.unlinkSync(LOG_BACKUP);
-      } catch {}
+      } catch {
+        // Old backup unlink failed (EBUSY on Windows, EACCES on shared
+        // volumes). Rotation is best-effort — the rename below will fail
+        // too in that case and the outer catch will surface it.
+      }
       try {
         fs.renameSync(LOG_FILE, LOG_BACKUP);
-      } catch {}
+      } catch {
+        // Rename failed. Outer catch logs nothing because re-entering
+        // logEvent from inside rotation would loop forever.
+      }
       // Drop a rotation breadcrumb without going through logEvent (avoid
       // recursion if rotation fails repeatedly).
       try {
@@ -118,9 +129,13 @@ class Bus extends EventEmitter {
               'previous file moved to activity.jsonl.1 (' + Math.round(size / 1024 / 1024) + 'MB)',
           }) + '\n',
         );
-      } catch {}
+      } catch {
+        // Rotation breadcrumb write failed — the next regular append
+        // will recreate LOG_FILE. We can't re-enter logEvent from here.
+      }
     } catch {
-      // Rotation is best-effort — never let it crash the caller.
+      // Rotation is best-effort — never let it crash the caller, and
+      // never re-enter logEvent from rotation code.
     }
   }
 

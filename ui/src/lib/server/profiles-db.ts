@@ -50,12 +50,19 @@ function copyDirSync(src: string, dst: string): void {
         // If symlink copy fails (e.g. target invalid), fall back to file copy.
         try {
           fs.copyFileSync(s, d);
-        } catch {}
+        } catch {
+          // Both symlink+file-copy failed for this entry — skip and let
+          // the upstream migrator surface a more specific error if the
+          // resulting profile dir is missing critical files.
+        }
       }
     } else if (entry.isFile()) {
       try {
         fs.copyFileSync(s, d);
-      } catch {}
+      } catch {
+        // Single file copy failed — skip and let the caller verify the
+        // copied tree afterwards.
+      }
     }
   }
 }

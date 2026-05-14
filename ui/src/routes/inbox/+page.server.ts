@@ -90,7 +90,10 @@ export async function load({ url }: { url: URL }) {
         ? profilePath(profileId, 'pipeline')
         : activePath('pipeline');
     pipelineMtime = fs.statSync(pipelinePath).mtimeMs;
-  } catch {}
+  } catch {
+    // No pipeline file yet (fresh install) — leave mtime null, the
+    // "Last scan" badge just won't render.
+  }
   const pipelineDaysAgo = pipelineMtime ? Math.floor((Date.now() - pipelineMtime) / DAY_MS) : null;
 
   // Sort helper
@@ -158,7 +161,10 @@ export async function load({ url }: { url: URL }) {
       else if (host.includes('weworkremotely')) src = 'WeWorkRemotely';
       else if (host.includes('hnrss') || host.includes('news.ycombinator')) src = 'HN Hiring';
       else src = host.split('.').slice(-2, -1)[0] ?? 'Other';
-    } catch {}
+    } catch {
+      // URL constructor threw on a malformed job URL — keep the default
+      // 'Other' bucket so the source breakdown still renders.
+    }
     sourceCounts.set(src, (sourceCounts.get(src) ?? 0) + 1);
   }
   const topSources = [...sourceCounts.entries()]

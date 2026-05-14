@@ -238,7 +238,12 @@ export function saveAvatar(
     if (fs.existsSync(other)) {
       try {
         fs.unlinkSync(other);
-      } catch {}
+      } catch {
+        // Stale avatar variant unlink failed — non-fatal, the new variant
+        // is already written so reads will pick it up. Storage drift is
+        // bounded (max 1 stale file per user) and the next upload will
+        // try again.
+      }
     }
   }
   const relPath = 'avatars/' + userId + '/' + filename;
@@ -292,7 +297,10 @@ export function clearAvatar(): void {
     const full = path.join(ROOT, 'data', prefs.avatarPath);
     try {
       fs.unlinkSync(full);
-    } catch {}
+    } catch {
+      // File already gone or permissions issue — proceed with the
+      // pref clear anyway so the UI shows no avatar.
+    }
   }
   writePrefs({ avatarPath: undefined });
 }

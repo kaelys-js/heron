@@ -154,7 +154,13 @@ export function readBackupConfig(): BackupConfig {
         ? parsed.retentionDays
         : DEFAULT_RETENTION_DAYS;
     return { retentionDays: days };
-  } catch {
+  } catch (e) {
+    // Config corrupted but recoverable — fall back to defaults but surface
+    // the corruption so the user knows their retention preference isn't
+    // being honored.
+    reportServerError('backup', 'Backup config corrupt — using defaults', e, {
+      category: 'system',
+    });
     return { retentionDays: DEFAULT_RETENTION_DAYS };
   }
 }
@@ -194,7 +200,13 @@ function listBackupInventory(): { users: string[]; legacyProfiles: string[] } {
         users.push(entry.name);
       }
     }
-  } catch {}
+  } catch (e) {
+    // readdir failure on a dir we just confirmed exists means EACCES or
+    // EIO — backup will succeed with empty inventory which is misleading.
+    reportServerError('backup', 'Could not enumerate users dir for inventory', e, {
+      category: 'system',
+    });
+  }
   // Legacy single-user: data/profiles/{slug}/...
   const legacyRoot = path.join(ROOT, 'data', 'profiles');
   try {
@@ -203,7 +215,11 @@ function listBackupInventory(): { users: string[]; legacyProfiles: string[] } {
         if (entry.isDirectory()) legacyProfiles.push(entry.name);
       }
     }
-  } catch {}
+  } catch (e) {
+    reportServerError('backup', 'Could not enumerate legacy profiles dir for inventory', e, {
+      category: 'system',
+    });
+  }
   return { users: users.sort(), legacyProfiles: legacyProfiles.sort() };
 }
 
@@ -338,7 +354,18 @@ export async function createBackup(): Promise<CreateBackupResult> {
         // Clean up the half-written tarball.
         try {
           fs.unlinkSync(tarPath);
-        } catch {}
+        } catch (cleanupErr) {
+          // Failed-tarball debris on disk is non-fatal but worth surfacing
+          // so the user knows their backups dir may have orphan files.
+          logEvent('backup', 'Could not clean up half-written tarball', {
+            level: 'warn',
+            category: 'system',
+            message:
+              tarPath +
+              ': ' +
+              (cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)),
+          });
+        }
         const msg = stderr.split('\n').slice(0, 3).join(' | ') || 'tar exit ' + code;
         logEvent('backup', 'Backup failed', {
           level: 'error',
@@ -351,7 +378,15 @@ export async function createBackup(): Promise<CreateBackupResult> {
       let size = 0;
       try {
         size = fs.statSync(tarPath).size;
-      } catch {}
+      } catch (e) {
+        // We just produced this file; stat failing here means something
+        // racy happened (another process unlinked it?). Surface it.
+        logEvent('backup', 'Tarball stat failed after successful tar exit', {
+          level: 'warn',
+          category: 'system',
+          message: tarPath + ': ' + (e instanceof Error ? e.message : String(e)),
+        });
+      }
       writeSidecar(metaPath, {
         fileCount,
         profiles,
@@ -417,8 +452,15 @@ export function listBackups(): BackupInfo[] {
         info.profiles = parsed.profiles;
         info.app = parsed.app;
       }
-    } catch {
-      /* sidecar missing or corrupt — still surface the tarball */
+    } catch (e) {
+      // Sidecar corrupt — we still surface the tarball so the user can
+      // restore from it (tarball integrity is checked at restore time),
+      // but flag the broken sidecar so they know the metadata is stale.
+      logEvent('backup', 'Backup sidecar unreadable · ' + id, {
+        level: 'warn',
+        category: 'system',
+        message: e instanceof Error ? e.message : String(e),
+      });
     }
     out.push(info);
   }
@@ -439,12 +481,22 @@ export function deleteBackup(id: string): boolean {
   if (!info) return false;
   try {
     fs.unlinkSync(info.path);
-  } catch {
+  } catch (e) {
+    reportServerError('backup', 'Backup delete failed · ' + id, e, { category: 'system' });
     return false;
   }
   try {
     if (fs.existsSync(info.metaPath)) fs.unlinkSync(info.metaPath);
-  } catch {}
+  } catch (e) {
+    // Orphan sidecar — the tarball is gone but we couldn't drop the
+    // metadata. listBackups() will skip it (no .tar.gz to pair with) but
+    // the user will see leftover .meta.json files in the dir.
+    logEvent('backup', 'Backup sidecar unlink failed · ' + id, {
+      level: 'warn',
+      category: 'system',
+      message: e instanceof Error ? e.message : String(e),
+    });
+  }
   logEvent('backup', 'Backup deleted · ' + id, { level: 'info', category: 'system' });
   return true;
 }
@@ -525,13 +577,27 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
   const stage = path.join(BACKUPS_DIR, '.restore-' + id);
   const audit = path.join(BACKUPS_DIR, '.pre-restore-' + id);
 
-  // Clean any stale staging dir from a previous failed attempt.
+  // Clean any stale staging dir from a previous failed attempt. force:true
+  // already swallows ENOENT, so this catch only fires on real EACCES/EIO —
+  // worth surfacing since it'll cause the subsequent mkdir to fail too.
   try {
     fs.rmSync(stage, { recursive: true, force: true });
-  } catch {}
+  } catch (e) {
+    logEvent('backup', 'Could not clean stale staging dir', {
+      level: 'warn',
+      category: 'system',
+      message: stage + ': ' + (e instanceof Error ? e.message : String(e)),
+    });
+  }
   try {
     fs.rmSync(audit, { recursive: true, force: true });
-  } catch {}
+  } catch (e) {
+    logEvent('backup', 'Could not clean stale audit dir', {
+      level: 'warn',
+      category: 'system',
+      message: audit + ': ' + (e instanceof Error ? e.message : String(e)),
+    });
+  }
   fs.mkdirSync(stage, { recursive: true });
 
   // Extract into the staging dir.
@@ -539,8 +605,20 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
   if (extract.status !== 0) {
     try {
       fs.rmSync(stage, { recursive: true, force: true });
-    } catch {}
-    return { ok: false, error: 'tar -xzf failed: ' + (extract.stderr || '').slice(0, 200) };
+    } catch (e) {
+      logEvent('backup', 'Could not clean staging dir after extract failure', {
+        level: 'warn',
+        category: 'system',
+        message: stage + ': ' + (e instanceof Error ? e.message : String(e)),
+      });
+    }
+    const tarErr = 'tar -xzf failed: ' + (extract.stderr || '').slice(0, 200);
+    logEvent('backup', 'Restore extract failed · ' + id, {
+      level: 'error',
+      category: 'system',
+      message: tarErr,
+    });
+    return { ok: false, error: tarErr };
   }
 
   // Snapshot the live versions of each include-path into the audit dir
@@ -556,12 +634,29 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
       fs.cpSync(src, dst, { recursive: true });
     } catch (e) {
       // Audit copy failed — bail BEFORE touching live data.
+      reportServerError('backup', 'Audit snapshot failed during restore · ' + id, e, {
+        category: 'system',
+      });
       try {
         fs.rmSync(stage, { recursive: true, force: true });
-      } catch {}
+      } catch (cleanupErr) {
+        logEvent('backup', 'Could not clean staging dir after audit failure', {
+          level: 'warn',
+          category: 'system',
+          message:
+            stage + ': ' + (cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)),
+        });
+      }
       try {
         fs.rmSync(audit, { recursive: true, force: true });
-      } catch {}
+      } catch (cleanupErr) {
+        logEvent('backup', 'Could not clean audit dir after audit failure', {
+          level: 'warn',
+          category: 'system',
+          message:
+            audit + ': ' + (cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)),
+        });
+      }
       return {
         ok: false,
         error: 'Audit snapshot failed: ' + (e instanceof Error ? e.message : String(e)),
@@ -598,10 +693,27 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
           fs.rmSync(liveDst, { recursive: true, force: true });
           fs.cpSync(auditSrc, liveDst, { recursive: true });
         }
-      } catch {}
+      } catch (rollbackErr) {
+        // Rollback failed — user is in a half-restored state. This is the
+        // worst possible outcome; surface it as an error event so they
+        // know to inspect data/backups/.pre-restore-{id}/ manually.
+        reportServerError(
+          'backup',
+          'Rollback from audit failed at ' + rel + ' · MANUAL RECOVERY NEEDED',
+          rollbackErr,
+          { category: 'system' },
+        );
+      }
       try {
         fs.rmSync(stage, { recursive: true, force: true });
-      } catch {}
+      } catch (cleanupErr) {
+        logEvent('backup', 'Could not clean staging dir after rollback', {
+          level: 'warn',
+          category: 'system',
+          message:
+            stage + ': ' + (cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)),
+        });
+      }
       return {
         ok: false,
         error: 'Restore failed at ' + rel + ': ' + (e instanceof Error ? e.message : String(e)),
@@ -612,7 +724,15 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
   // Clean up staging (audit dir stays as the undo trail).
   try {
     fs.rmSync(stage, { recursive: true, force: true });
-  } catch {}
+  } catch (e) {
+    // Successful restore but couldn't clean the staging dir — non-fatal
+    // (next restore will rm -rf it first), just surfaced for visibility.
+    logEvent('backup', 'Could not clean staging dir after successful restore', {
+      level: 'warn',
+      category: 'system',
+      message: stage + ': ' + (e instanceof Error ? e.message : String(e)),
+    });
+  }
 
   logEvent('backup', 'Restored from ' + id, {
     level: 'success',
@@ -634,7 +754,10 @@ function countFilesAt(p: string): number {
   if (stat.isDirectory()) {
     try {
       for (const entry of fs.readdirSync(p)) n += countFilesAt(path.join(p, entry));
-    } catch {}
+    } catch {
+      // readdir failure on a stat-confirmed dir is EACCES/EIO — we just
+      // skip the subtree so file count is slightly under-reported.
+    }
   }
   return n;
 }

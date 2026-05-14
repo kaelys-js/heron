@@ -150,7 +150,10 @@ export function startBatchWatcher(): void {
   // Boot-time catch-up
   try {
     fs.mkdirSync(ADDITIONS_DIR, { recursive: true });
-  } catch {}
+  } catch {
+    // mkdir recursive only fails on permission/IO — the watch attempt
+    // below will surface the real error if the dir is unusable.
+  }
   if (pendingTsvCount() > 0) {
     scheduleMerge('boot-catchup');
   }
