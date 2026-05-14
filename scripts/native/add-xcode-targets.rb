@@ -512,6 +512,166 @@ else
   puts "  ✓ #{WATCH_NAME} added + embedded in App target + shared scheme created"
 end
 
+# ──────────────────────────────────────────────────────────────────
+# Test targets — AppTests / AppUITests / WidgetTests / WatchTests.
+#
+# Added separately from the source-target loop above because:
+#   • Their product_type is com.apple.product-type.bundle.unit-test (or
+#     .bundle.ui-testing for UI tests) — different lifecycle than app/
+#     widget targets, no Info.plist NSExtension key needed.
+#   • Each test target needs a TEST_HOST + BUNDLE_LOADER setting pointing
+#     at the host app/widget so XCTest can inject into it.
+#   • Test sources land under ui/ios/App/{AppTests,AppUITests,...}/ which
+#     this loop creates if missing (with a placeholder .swift file so
+#     `xcodebuild test` doesn't error "no source files").
+#
+# Idempotent — re-runs are no-ops if every test target already exists.
+TEST_TARGETS = [
+  {
+    name: 'AppTests',
+    bundle_suffix: 'tests',
+    type: 'com.apple.product-type.bundle.unit-test',
+    host: 'App',
+    deployment_min: '15.0',
+    placeholder: <<~SWIFT,
+      // AppTests — XCTest unit tests for the App target. Real cases live
+      // in BrandTests.swift, KeychainStoreTests.swift, etc. (Phase 3.3+).
+      import XCTest
+      @testable import App
+
+      final class AppTestsSmoke: XCTestCase {
+        func testHostBundleAvailable() {
+          XCTAssertNotNil(Bundle.main.bundleIdentifier)
+        }
+      }
+    SWIFT
+  },
+  {
+    name: 'AppUITests',
+    bundle_suffix: 'uitests',
+    type: 'com.apple.product-type.bundle.ui-testing',
+    host: 'App',
+    deployment_min: '15.0',
+    placeholder: <<~SWIFT,
+      // AppUITests — XCUITest end-to-end tests. Drives a real simulator
+      // running the app. Real cases land in ColdLaunchUITests.swift,
+      // SidebarUITests.swift, NotificationsBellUITests.swift, etc.
+      import XCTest
+
+      final class AppUITestsSmoke: XCTestCase {
+        func testLaunchApp() throws {
+          let app = XCUIApplication()
+          app.launch()
+          XCTAssertTrue(app.state == .runningForeground || app.state == .runningBackground)
+        }
+      }
+    SWIFT
+  },
+  {
+    name: 'WidgetTests',
+    bundle_suffix: 'widgettests',
+    type: 'com.apple.product-type.bundle.unit-test',
+    host: 'CareerOpsWidget',
+    deployment_min: '16.0',
+    placeholder: <<~SWIFT,
+      // WidgetTests — XCTest unit tests for the CareerOpsWidget extension
+      // target. Real cases live in WidgetAuthGateTests.swift,
+      // NextInterviewWidgetTests.swift, snapshot tests, etc.
+      import XCTest
+
+      final class WidgetTestsSmoke: XCTestCase {
+        func testHostBundleAvailable() {
+          XCTAssertNotNil(Bundle.main.bundleIdentifier)
+        }
+      }
+    SWIFT
+  },
+  {
+    name: 'WatchTests',
+    bundle_suffix: 'watchtests',
+    type: 'com.apple.product-type.bundle.unit-test',
+    host: 'CareerOpsWatch',
+    deployment_min: '15.0',
+    sdk: 'watchos',
+    placeholder: <<~SWIFT,
+      // WatchTests — XCTest unit tests for the CareerOpsWatch target.
+      // Real cases live in WatchModelTests.swift, RootViewTests.swift
+      // (ViewInspector), snapshot tests, etc.
+      import XCTest
+
+      final class WatchTestsSmoke: XCTestCase {
+        func testHostBundleAvailable() {
+          XCTAssertNotNil(Bundle.main.bundleIdentifier)
+        }
+      }
+    SWIFT
+  },
+]
+
+TEST_TARGETS.each do |t|
+  if project.targets.any? { |x| x.name == t[:name] }
+    puts "= #{t[:name]} already present — skipping"
+    next
+  end
+
+  source_dir = File.expand_path(t[:name], File.dirname(PROJECT_PATH))
+  FileUtils.mkdir_p(source_dir)
+  placeholder_path = File.join(source_dir, "#{t[:name]}Smoke.swift")
+  unless File.exist?(placeholder_path)
+    File.write(placeholder_path, t[:placeholder])
+    puts "    + #{t[:name]}/#{File.basename(placeholder_path)} (placeholder)"
+  end
+
+  host_target = project.targets.find { |x| x.name == t[:host] }
+  unless host_target
+    puts "✗ host target #{t[:host]} not found — skipping #{t[:name]}"
+    next
+  end
+
+  bundle_id = "#{bundle_root}.#{t[:bundle_suffix]}"
+  is_watch = t[:sdk] == 'watchos'
+  platform = is_watch ? :watchos : :ios
+
+  new_target = project.new_target(:bundle, t[:name], platform, t[:deployment_min])
+  new_target.product_type = t[:type]
+  new_target.build_configurations.each do |bc|
+    bc.build_settings.merge!(
+      'PRODUCT_BUNDLE_IDENTIFIER' => bundle_id,
+      "#{is_watch ? 'WATCHOS' : 'IPHONEOS'}_DEPLOYMENT_TARGET" => t[:deployment_min],
+      'SWIFT_VERSION' => '5.0',
+      'CODE_SIGN_STYLE' => 'Automatic',
+      'INFOPLIST_KEY_CFBundleDisplayName' => t[:name],
+      'GENERATE_INFOPLIST_FILE' => 'YES',
+      'TEST_HOST' => "$(BUILT_PRODUCTS_DIR)/#{t[:host]}.app/#{t[:host]}",
+      'BUNDLE_LOADER' => "$(TEST_HOST)",
+      'TARGETED_DEVICE_FAMILY' => is_watch ? '4' : '1,2',
+    )
+    bc.build_settings['DEVELOPMENT_TEAM'] = team_id if team_id
+  end
+
+  # Wire the placeholder source into the target.
+  ref = project.main_group.find_subpath(t[:name], true)
+  ref.set_source_tree('<group>')
+  file_ref = ref.new_reference(File.basename(placeholder_path))
+  new_target.add_file_references([file_ref])
+
+  # Test targets DEPEND ON their host so xcodebuild builds the host
+  # first. UI tests also need the target-application setting.
+  new_target.add_dependency(host_target)
+
+  # Shared scheme so `xcodebuild test -scheme <Name>` works in CI.
+  schemes_dir = File.join(PROJECT_PATH, 'xcshareddata', 'xcschemes')
+  FileUtils.mkdir_p(schemes_dir)
+  scheme = Xcodeproj::XCScheme.new
+  scheme.add_build_target(new_target)
+  scheme.add_test_target(new_target)
+  scheme.save_as(PROJECT_PATH, t[:name], true)
+  puts "    + xcshareddata/xcschemes/#{t[:name]}.xcscheme"
+
+  puts "  ✓ #{t[:name]} added (host=#{t[:host]}, bundle=#{bundle_id}, deploy=#{t[:deployment_min]})"
+end
+
 project.save
 puts "\n✓ Xcode targets up-to-date."
 puts "  Re-run `pnpm dev:ios` / `pnpm dev:apple-watch` to build with new targets."
+puts "  Run `bundle exec fastlane test_ci` to run the iOS test suite."
