@@ -34,6 +34,44 @@ try {
   // browser mode + already-shimmed envs both no-op here
 }
 
+// ── localStorage polyfill (jsdom v29 quirk) ────────────────────────
+// jsdom 29's built-in localStorage prints a "no valid path" warning
+// AND (under certain Vitest configurations) returns an object missing
+// `getItem`/`setItem`. Polyfill unconditionally — cheap, deterministic,
+// makes tests independent of the jsdom config. Real browsers (component
+// project) skip this branch.
+if (typeof window !== 'undefined') {
+  const __localBacking = new Map<string, string>();
+  const __sessionBacking = new Map<string, string>();
+  const makeStorage = (backing: Map<string, string>): Storage => ({
+    get length() {
+      return backing.size;
+    },
+    clear: () => backing.clear(),
+    getItem: (k: string) => backing.get(k) ?? null,
+    key: (i: number) => Array.from(backing.keys())[i] ?? null,
+    removeItem: (k: string) => {
+      backing.delete(k);
+    },
+    setItem: (k: string, v: string) => {
+      backing.set(k, String(v));
+    },
+  });
+  const real = typeof window.localStorage?.getItem === 'function';
+  if (!real) {
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      writable: true,
+      value: makeStorage(__localBacking),
+    });
+    Object.defineProperty(window, 'sessionStorage', {
+      configurable: true,
+      writable: true,
+      value: makeStorage(__sessionBacking),
+    });
+  }
+}
+
 // ── matchMedia polyfill (jsdom only) ───────────────────────────────
 // Real browsers (component project) already have this; the guard
 // prevents us from re-defining the property on `window`.
