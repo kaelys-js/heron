@@ -20,7 +20,7 @@
  * script falls back to `open App.xcodeproj` so you can debug in Xcode UI.
  */
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, watch as fsWatch } from 'node:fs';
 import { join } from 'node:path';
 import { createConnection } from 'node:net';
 import os from 'node:os';
@@ -339,8 +339,118 @@ if (isLive) {
   info('Bundled-static mode (no --live). The WebView loads from App.app/public.');
   info('Edits to Svelte files require a rebuild. Pass --live for HMR.');
 }
+
+// Swift "HMR" — auto rebuild + reinstall when any *.swift file changes.
+// Pure Swift is compiled, so there's no JS-style live-patch possible;
+// the best we can do is detect file changes, run the same xcodebuild +
+// install + launch the cold-boot path used, and relaunch the app
+// automatically. End-to-end cycle on a warm cache: ~10-25s depending
+// on how much of the dependency graph changes.
+//
+// Default ON in --live mode (the active-iteration mode); user can
+// opt out with --no-swift-watch if rebuilds are expensive on their
+// machine. Default OFF in bundled-static mode where the user is
+// likely doing a one-shot deploy.
+const swiftWatchOptIn = !process.argv.includes('--no-swift-watch');
+const swiftWatchEnabled = isLive && swiftWatchOptIn;
+if (swiftWatchEnabled) {
+  info('Swift HMR: editing .swift files auto-rebuilds + reinstalls (10-25s).');
+} else if (isLive) {
+  info('Swift HMR disabled (--no-swift-watch).');
+}
 info('Press Ctrl+C in this terminal to stop the dev server.');
 info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+/**
+ * Swift HMR machinery — recursive fs.watch over every Xcode target's
+ * source dir, debounced to coalesce burst saves (Xcode + Cursor both
+ * write multiple times per "save"). On change, runs the same cap-run
+ * pipeline used at cold-boot. Output streams to stdout so the user
+ * sees compiler errors in real time.
+ *
+ * Why fs.watch + recursive instead of chokidar / fswatch:
+ *   - fs.watch's `recursive: true` is supported on macOS + Windows
+ *     (Linux ignores it, falls back to per-dir; not relevant here
+ *     since iOS dev is Mac-only).
+ *   - Zero extra dependencies — the whole watcher fits in ~40 lines.
+ *
+ * Race avoidance: only ONE rebuild runs at a time. If a save fires
+ * during an in-flight rebuild, we queue a "rebuild needed" flag and
+ * fire one final rebuild after the current one completes (coalescing
+ * multiple bursts into a single re-run instead of a per-save backlog).
+ */
+function installSwiftWatcher(targetUdid) {
+  if (!swiftWatchEnabled) return;
+  const watchRoots = [
+    join(iosDir, 'App'),
+    join(iosDir, 'CareerOpsWidget'),
+    join(iosDir, 'CareerOpsLiveActivity'),
+    join(iosDir, 'CareerOpsShareExtension'),
+    join(iosDir, 'CareerOpsWatch'),
+  ].filter(existsSync);
+
+  let debounceTimer = null;
+
+  function rebuildOnce(triggerFile) {
+    info('');
+    info(`🔁 Swift change: ${triggerFile.replace(ROOT, '')}`);
+    info('   rebuilding + reinstalling…');
+    const started = Date.now();
+    try {
+      // Same command the cold-boot path runs at step 8 — `cap run ios`
+      // wraps xcodebuild + simctl install + simctl launch. --no-sync
+      // skips the cap-sync step (we already synced at boot; only Swift
+      // changed, not the WebView bundle).
+      //
+      // NOTE: run() is synchronous (spawnSync). Node's event loop is
+      // frozen for the duration of the build (~10-25s). File events
+      // that arrive during that window queue at the OS level; when
+      // we return, the watcher fires once per queued save and the
+      // debounce coalesces them into ONE follow-up rebuild. That's
+      // the "tail-call" behaviour the user wants — keep editing and
+      // the final state is what ends up on device.
+      const result = run(
+        'pnpm',
+        ['exec', 'cap', 'run', 'ios', '--target', targetUdid, '--scheme', 'App', '--no-sync'],
+        { cwd: UI, allowFail: true },
+      );
+      const elapsed = ((Date.now() - started) / 1000).toFixed(1);
+      if (result?.status === 0) {
+        ok(`Swift rebuild complete (${elapsed}s)`);
+      } else {
+        warn(
+          `Swift rebuild failed (exit ${result?.status}, ${elapsed}s) — check xcodebuild output above`,
+        );
+      }
+    } catch (err) {
+      warn(`Swift rebuild crashed: ${err?.message ?? err}`);
+    }
+  }
+
+  function scheduleRebuild(file) {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      debounceTimer = null;
+      rebuildOnce(file);
+    }, 500);
+  }
+
+  for (const root of watchRoots) {
+    try {
+      const watcher = fsWatch(root, { recursive: true }, (_eventType, filename) => {
+        if (!filename || !filename.endsWith('.swift')) return;
+        scheduleRebuild(join(root, filename));
+      });
+      // unref() so the watcher doesn't keep the event loop alive on its
+      // own — the script ends when SIGINT/etc fires, not when watchers
+      // see no more events.
+      watcher.unref?.();
+    } catch (err) {
+      warn(`Swift watcher could not attach to ${root}: ${err?.message ?? err}`);
+    }
+  }
+}
+installSwiftWatcher(targetUdid);
 
 // Relay terminate signals to the dev (vite) child so vite doesn't get
 // orphaned when this script dies. Pre-fix only SIGINT (Ctrl+C) was
