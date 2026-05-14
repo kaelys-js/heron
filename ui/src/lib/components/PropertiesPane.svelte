@@ -1,6 +1,8 @@
 <script lang="ts">
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import * as Tooltip from '$lib/components/ui/tooltip';
+  import ResponsiveActionMenu from './ResponsiveActionMenu.svelte';
+  import ResponsiveActionItem from './ResponsiveActionItem.svelte';
+  import ResponsiveActionLabel from './ResponsiveActionLabel.svelte';
   import { Button } from '$lib/components/ui/button';
   import { Badge } from '$lib/components/ui/badge';
   import { Separator } from '$lib/components/ui/separator';
@@ -22,7 +24,6 @@
     FileText,
     Copy,
   } from '@lucide/svelte';
-  import CheckMark from './CheckMark.svelte';
   import { toast } from 'svelte-sonner';
   import type { Job, Status, WorkMode } from '$lib/types';
   import { BG_TINTS, STATUS_ORDER } from '$lib/types';
@@ -238,52 +239,48 @@
             >
           </Tooltip.Root>
           <dd>
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger>
-                {#snippet child({ props })}
-                  <Button
-                    {...props}
-                    variant="outline"
-                    size="sm"
-                    class="h-7 px-2 text-xs w-full justify-between font-normal border-border/40"
-                  >
-                    <span class="flex items-center gap-1.5 min-w-0">
-                      <span
-                        class={cn(
-                          'size-1.5 rounded-full flex-shrink-0',
-                          STATUS_DOTS[job.status as Status],
-                        )}
-                      ></span>
-                      <span class="truncate">{job.status}</span>
-                    </span>
-                    <ChevronDown class="size-3 text-muted-foreground flex-shrink-0" />
-                  </Button>
-                {/snippet}
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Content side="bottom" align="end" class="w-64">
-                <DropdownMenu.Label
-                  class="text-[11px] uppercase tracking-wide text-muted-foreground"
-                  >Change status</DropdownMenu.Label
+            <ResponsiveActionMenu
+              title="Change status"
+              description="Move this job to a different pipeline stage."
+              align="end"
+              desktopWidth="w-64"
+            >
+              {#snippet trigger({ props })}
+                <Button
+                  {...props}
+                  variant="outline"
+                  size="sm"
+                  class="h-7 px-2 text-xs w-full justify-between font-normal border-border/40"
                 >
+                  <span class="flex items-center gap-1.5 min-w-0">
+                    <span
+                      class={cn(
+                        'size-1.5 rounded-full flex-shrink-0',
+                        STATUS_DOTS[job.status as Status],
+                      )}
+                    ></span>
+                    <span class="truncate">{job.status}</span>
+                  </span>
+                  <ChevronDown class="size-3 text-muted-foreground flex-shrink-0" />
+                </Button>
+              {/snippet}
+              {#snippet items()}
+                <ResponsiveActionLabel>Change status</ResponsiveActionLabel>
                 {#each STATUS_ORDER as s}
-                  <DropdownMenu.Item
+                  <ResponsiveActionItem
                     onSelect={() => onStatusChange(s)}
                     closeOnSelect={false}
-                    class="gap-2 items-start py-1.5"
+                    active={s === job.status}
+                    description={STATUS_HINT[s]}
                   >
-                    <span class={cn('size-1.5 rounded-full mt-1.5 flex-shrink-0', STATUS_DOTS[s])}
-                    ></span>
-                    <div class="flex-1 min-w-0">
-                      <div class="text-xs font-medium">{s}</div>
-                      <div class="text-[11px] text-muted-foreground/70 leading-tight">
-                        {STATUS_HINT[s]}
-                      </div>
-                    </div>
-                    <CheckMark active={s === job.status} class="mt-0.5" />
-                  </DropdownMenu.Item>
+                    {#snippet leading()}
+                      <span class={cn('size-2 rounded-full flex-shrink-0', STATUS_DOTS[s])}></span>
+                    {/snippet}
+                    {s}
+                  </ResponsiveActionItem>
                 {/each}
-              </DropdownMenu.Content>
-            </DropdownMenu.Root>
+              {/snippet}
+            </ResponsiveActionMenu>
           </dd>
 
           <!-- Score -->

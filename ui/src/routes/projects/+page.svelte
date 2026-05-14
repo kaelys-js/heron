@@ -2,8 +2,10 @@
   import Topbar from '$lib/components/Topbar.svelte';
   import * as Card from '$lib/components/ui/card';
   import * as Sheet from '$lib/components/ui/sheet';
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import * as Tooltip from '$lib/components/ui/tooltip';
+  import ResponsiveActionMenu from '$lib/components/ResponsiveActionMenu.svelte';
+  import ResponsiveActionItem from '$lib/components/ResponsiveActionItem.svelte';
+  import ResponsiveActionSeparator from '$lib/components/ResponsiveActionSeparator.svelte';
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import { Textarea } from '$lib/components/ui/textarea';
@@ -448,58 +450,48 @@
                       Updated {formatRelativeTime(p.updatedAt)}
                     </div>
                   </div>
-                  <DropdownMenu.Root>
-                    <Tooltip.Provider delayDuration={250}>
-                      <Tooltip.Root>
-                        <Tooltip.Trigger>
-                          {#snippet child({ props: tipProps })}
-                            <DropdownMenu.Trigger>
-                              {#snippet child({ props: ddProps })}
-                                <Button
-                                  {...tipProps}
-                                  {...ddProps}
-                                  variant="ghost"
-                                  size="icon"
-                                  class="size-7 -mr-1 -mt-1 flex-shrink-0"
-                                  aria-label="Project actions"
-                                >
-                                  <MoreHorizontal class="size-3.5" />
-                                </Button>
-                              {/snippet}
-                            </DropdownMenu.Trigger>
-                          {/snippet}
-                        </Tooltip.Trigger>
-                        <Tooltip.Content side="left" class="text-xs"
-                          >Edit, duplicate, or delete</Tooltip.Content
-                        >
-                      </Tooltip.Root>
-                    </Tooltip.Provider>
-                    <DropdownMenu.Content side="bottom" align="end" class="w-44">
-                      <DropdownMenu.Item onSelect={() => openEdit(p)} class="gap-2">
-                        <Pencil class="size-3.5" /> Edit
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Item onSelect={() => duplicateProject(p)} class="gap-2">
-                        <Copy class="size-3.5" /> Duplicate
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Separator />
-                      <DropdownMenu.Item
-                        onSelect={(e: Event) => onDeleteClick(p, e)}
-                        closeOnSelect={false}
-                        class={cn(
-                          'gap-2',
-                          armed
-                            ? 'bg-red-500/15 text-red-400 focus:bg-red-500/20 focus:text-red-300 animate-pulse'
-                            : 'text-red-400 focus:bg-red-500/10 focus:text-red-300',
-                        )}
+                  <ResponsiveActionMenu
+                    title="Project actions"
+                    description={p.name}
+                    align="end"
+                    desktopWidth="w-44"
+                    tooltipSide="left"
+                    tooltipDelay={250}
+                  >
+                    {#snippet trigger({ props })}
+                      <Button
+                        {...props}
+                        variant="ghost"
+                        size="icon"
+                        class="size-7 -mr-1 -mt-1 flex-shrink-0"
+                        aria-label="Project actions"
                       >
-                        <Trash2 class="size-3.5" />
-                        <span class="flex-1"
-                          >{armed ? 'Click again to confirm delete' : 'Delete'}</span
-                        >
-                        {#if armed}<span class="text-[11px] font-mono opacity-70">3s</span>{/if}
-                      </DropdownMenu.Item>
-                    </DropdownMenu.Content>
-                  </DropdownMenu.Root>
+                        <MoreHorizontal class="size-3.5" />
+                      </Button>
+                    {/snippet}
+                    {#snippet tooltip()}Edit, duplicate, or delete{/snippet}
+                    {#snippet items()}
+                      <ResponsiveActionItem onSelect={() => openEdit(p)} icon={Pencil}>
+                        Edit
+                      </ResponsiveActionItem>
+                      <ResponsiveActionItem onSelect={() => duplicateProject(p)} icon={Copy}>
+                        Duplicate
+                      </ResponsiveActionItem>
+                      <ResponsiveActionSeparator />
+                      <ResponsiveActionItem
+                        onSelect={() => onDeleteClick(p, new Event('click'))}
+                        closeOnSelect={false}
+                        danger
+                        icon={Trash2}
+                        class={armed ? 'bg-red-500/15 animate-pulse' : ''}
+                      >
+                        {armed ? 'Click again to confirm delete' : 'Delete'}
+                        {#snippet trailing()}
+                          {#if armed}<span class="text-[11px] font-mono opacity-70">3s</span>{/if}
+                        {/snippet}
+                      </ResponsiveActionItem>
+                    {/snippet}
+                  </ResponsiveActionMenu>
                 </div>
               </Card.Header>
               <Card.Content class="space-y-3 pt-0 flex-1 flex flex-col">

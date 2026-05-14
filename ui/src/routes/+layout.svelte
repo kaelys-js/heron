@@ -21,6 +21,7 @@
   import { onlineStore } from '$lib/client/online-status.svelte';
   import { authClient } from '$lib/client/auth-client';
   import OfflineIndicator from '$lib/components/OfflineIndicator.svelte';
+  import BackendUnreachableOverlay from '$lib/components/BackendUnreachableOverlay.svelte';
   import { page } from '$app/state';
   import { updateWidgets, isIos, setSharedBackendUrl } from '$lib/client/native-bridge';
   import { apiCall } from '$lib/api';
@@ -605,6 +606,15 @@
      always the topmost element. Always visible (no auth gate) because
      network state is relevant on /login too. -->
 <OfflineIndicator />
+
+<!--
+  Full-screen "backend unreachable" overlay. Shows when /api/health has
+  failed for > 4s — a HARD signal that the app can't function at all
+  (vs OfflineIndicator's small pill which only signals "this might be
+  intermittent"). Auth-state independent: a broken backend matters on
+  /login too. Self-dismisses when the server comes back.
+-->
+<BackendUnreachableOverlay />
 
 <!--
   Auth-gated floating UI. AgentChat / GlobalSearch / AddJobDialog /

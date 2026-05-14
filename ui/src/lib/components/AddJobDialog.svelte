@@ -1,8 +1,9 @@
 <script lang="ts">
   import * as Dialog from '$lib/components/ui/dialog';
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import * as Tooltip from '$lib/components/ui/tooltip';
   import { Button } from '$lib/components/ui/button';
+  import ResponsiveActionMenu from './ResponsiveActionMenu.svelte';
+  import ResponsiveActionItem from './ResponsiveActionItem.svelte';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
   import {
@@ -26,7 +27,6 @@
   import { cn, withMinDuration } from '$lib/utils';
   import { globalActions } from '$lib/global-actions.svelte';
   import { STATUS_ORDER, type Status } from '$lib/types';
-  import CheckMark from './CheckMark.svelte';
   import { cmd } from '$lib/config/branding';
 
   let url = $state('');
@@ -341,47 +341,43 @@
       <!-- Status with rich descriptions -->
       <div class="space-y-1.5">
         <Label class="text-xs">Initial status</Label>
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger>
-            {#snippet child({ props })}
-              {@const Icon = activeStatusDef.icon}
-              <Button
-                {...props}
-                variant="outline"
-                class="w-full h-9 justify-between text-sm font-normal"
-              >
-                <span class="flex items-center gap-2 min-w-0">
-                  <Icon class={cn('size-3.5 flex-shrink-0', activeStatusDef.tint)} />
-                  <span class="font-medium">{activeStatusDef.label}</span>
-                  <span class="text-muted-foreground/70 text-xs truncate"
-                    >— {activeStatusDef.desc}</span
-                  >
-                </span>
-                <ChevronDown class="size-3.5 text-muted-foreground flex-shrink-0" />
-              </Button>
-            {/snippet}
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content
-            align="start"
-            class="w-[var(--bits-dropdown-menu-anchor-width)] max-h-72 overflow-y-auto"
-          >
+        <ResponsiveActionMenu
+          title="Initial status"
+          description="Where this job lands in the pipeline."
+          align="start"
+          desktopWidth="w-[var(--bits-dropdown-menu-anchor-width)] max-h-72 overflow-y-auto"
+        >
+          {#snippet trigger({ props })}
+            {@const Icon = activeStatusDef.icon}
+            <Button
+              {...props}
+              variant="outline"
+              class="w-full h-9 justify-between text-sm font-normal"
+            >
+              <span class="flex items-center gap-2 min-w-0">
+                <Icon class={cn('size-3.5 flex-shrink-0', activeStatusDef.tint)} />
+                <span class="font-medium">{activeStatusDef.label}</span>
+                <span class="text-muted-foreground/70 text-xs truncate"
+                  >— {activeStatusDef.desc}</span
+                >
+              </span>
+              <ChevronDown class="size-3.5 text-muted-foreground flex-shrink-0" />
+            </Button>
+          {/snippet}
+          {#snippet items()}
             {#each STATUS_DEFS as s}
-              {@const Icon = s.icon}
-              <DropdownMenu.Item
+              <ResponsiveActionItem
                 onSelect={() => (status = s.value)}
                 closeOnSelect={false}
-                class="gap-2 items-start py-1.5"
+                active={status === s.value}
+                icon={s.icon}
+                description={s.desc}
               >
-                <Icon class={cn('size-3.5 mt-0.5 flex-shrink-0', s.tint)} />
-                <div class="flex-1 min-w-0">
-                  <div class="text-xs font-medium">{s.label}</div>
-                  <div class="text-[11px] text-muted-foreground/70 leading-tight">{s.desc}</div>
-                </div>
-                <CheckMark active={status === s.value} class="mt-0.5" />
-              </DropdownMenu.Item>
+                {s.label}
+              </ResponsiveActionItem>
             {/each}
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
+          {/snippet}
+        </ResponsiveActionMenu>
         <p class="text-[11px] text-muted-foreground/70">
           Most jobs start in <span class="font-mono text-foreground">Scored</span> so you can triage
           them; switch to <span class="font-mono text-foreground">Applied</span> if you've already submitted.

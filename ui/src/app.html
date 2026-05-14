@@ -616,6 +616,15 @@
         // Copy is dev-aware: when we're loaded from a Vite-style origin
         // (port 5173/5174 or a LAN IP) we tell the user to check the
         // dev server. Production builds keep the generic copy.
+        // Tightened from 3500ms to 2500ms. The previous value was tuned
+        // to match Capacitor's launchShowDuration but in practice it
+        // left users staring at a frozen spinner for almost 4 seconds
+        // when the dev/backend server was unreachable. 2.5s is past the
+        // 99th-percentile cold hydration window (~1.2s on a slow iPhone)
+        // and well below the 4s "is this app broken?" threshold users
+        // start to feel anxiety at. The 8s hard-removal safety-net
+        // below still catches the edge case where hydration succeeded
+        // but the boot-fallback dismiss callback never ran.
         setTimeout(function () {
           var el = document.getElementById('boot-fallback');
           if (!el) return; // hydration succeeded, fallback already gone
@@ -630,20 +639,20 @@
           var title = document.getElementById('boot-fallback-error-title');
           var body = document.getElementById('boot-fallback-error-body');
           if (isDevOrigin) {
-            if (title) title.textContent = "Dev server didn't respond";
+            if (title) title.textContent = "Can't reach the dev server";
             if (body)
               body.innerHTML =
-                'We couldn\'t reach <code style="background:#27272a;padding:1px 6px;border-radius:4px;font-size:12px;">' +
+                'Couldn\'t connect to <code style="background:#27272a;padding:1px 6px;border-radius:4px;font-size:12px;">' +
                 host +
-                '</code>. Start Vite with <code style="background:#27272a;padding:1px 6px;border-radius:4px;font-size:12px;">pnpm dev</code> (or relaunch with <code style="background:#27272a;padding:1px 6px;border-radius:4px;font-size:12px;">pnpm dev:ios --live</code>) and tap Try again.';
+                '</code>. Make sure Vite is running (<code style="background:#27272a;padding:1px 6px;border-radius:4px;font-size:12px;">pnpm dev</code> or <code style="background:#27272a;padding:1px 6px;border-radius:4px;font-size:12px;">pnpm dev:ios --live</code>) and tap Try again.';
           } else {
-            if (title) title.textContent = 'Something went wrong loading the app';
+            if (title) title.textContent = "Can't reach the server";
             if (body)
               body.textContent =
-                "The interface didn't finish loading. This is usually a network glitch — try again.";
+                "The app couldn't connect to the backend. Check your network or try again — the issue may be temporary.";
           }
           el.setAttribute('data-state', 'error');
-        }, 3500);
+        }, 2500);
 
         // Hard safety-net: 8 seconds after the page loads, REMOVE the
         // boot-fallback entirely no matter what. This guarantees that

@@ -1,10 +1,13 @@
 <script lang="ts">
   import * as Sidebar from '$lib/components/ui/sidebar';
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import * as Tooltip from '$lib/components/ui/tooltip';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
   import CollapsibleGroup from './CollapsibleGroup.svelte';
+  import ResponsiveActionMenu from './ResponsiveActionMenu.svelte';
+  import ResponsiveActionItem from './ResponsiveActionItem.svelte';
+  import ResponsiveActionLabel from './ResponsiveActionLabel.svelte';
+  import ResponsiveActionSeparator from './ResponsiveActionSeparator.svelte';
   import {
     Inbox,
     ListTodo,
@@ -141,104 +144,102 @@
   <Sidebar.Header class="pt-safe">
     <Sidebar.Menu>
       <Sidebar.MenuItem>
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger>
-            {#snippet child({ props })}
-              <Sidebar.MenuButton {...props} size="lg" class="data-[state=open]:bg-sidebar-accent">
-                <div
-                  class="relative flex aspect-square size-8 items-center justify-center rounded-lg bg-zinc-900 ring-1 ring-zinc-800 overflow-hidden"
+        <ResponsiveActionMenu
+          title="Profiles"
+          description="Switch career tracks or manage them."
+          align="start"
+          desktopWidth="w-64"
+        >
+          {#snippet trigger({ props })}
+            <Sidebar.MenuButton {...props} size="lg" class="data-[state=open]:bg-sidebar-accent">
+              <div
+                class="relative flex aspect-square size-8 items-center justify-center rounded-lg bg-zinc-900 ring-1 ring-zinc-800 overflow-hidden"
+              >
+                <svg viewBox="0 0 32 32" class="size-5" aria-hidden="true">
+                  <rect
+                    x="6.5"
+                    y="11"
+                    width="19"
+                    height="13.5"
+                    rx="2.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    class="text-zinc-200"
+                  />
+                  <path
+                    d="M12 11v-1.5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2V11"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    class="text-zinc-200"
+                  />
+                  <line
+                    x1="6.5"
+                    y1="17.5"
+                    x2="25.5"
+                    y2="17.5"
+                    stroke="currentColor"
+                    stroke-width="1.2"
+                    opacity="0.55"
+                    class="text-zinc-200"
+                  />
+                  <rect
+                    x="14"
+                    y="16.4"
+                    width="4"
+                    height="2.2"
+                    rx="0.5"
+                    fill="currentColor"
+                    class="text-emerald-400"
+                  />
+                </svg>
+                {#if activeProfile}
+                  <span
+                    class={cn(
+                      'absolute top-0.5 right-0.5 size-1.5 rounded-full ring-2 ring-zinc-900',
+                      profileDot(activeProfile.color),
+                    )}
+                  ></span>
+                {/if}
+              </div>
+              <div class="flex flex-col gap-0.5 leading-none flex-1 text-left min-w-0">
+                <span class="font-semibold text-sm truncate">{activeProfile?.name ?? APP_NAME}</span
                 >
-                  <svg viewBox="0 0 32 32" class="size-5" aria-hidden="true">
-                    <rect
-                      x="6.5"
-                      y="11"
-                      width="19"
-                      height="13.5"
-                      rx="2.5"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.6"
-                      class="text-zinc-200"
-                    />
-                    <path
-                      d="M12 11v-1.5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2V11"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.6"
-                      stroke-linecap="round"
-                      class="text-zinc-200"
-                    />
-                    <line
-                      x1="6.5"
-                      y1="17.5"
-                      x2="25.5"
-                      y2="17.5"
-                      stroke="currentColor"
-                      stroke-width="1.2"
-                      opacity="0.55"
-                      class="text-zinc-200"
-                    />
-                    <rect
-                      x="14"
-                      y="16.4"
-                      width="4"
-                      height="2.2"
-                      rx="0.5"
-                      fill="currentColor"
-                      class="text-emerald-400"
-                    />
-                  </svg>
-                  {#if activeProfile}
-                    <span
-                      class={cn(
-                        'absolute top-0.5 right-0.5 size-1.5 rounded-full ring-2 ring-zinc-900',
-                        profileDot(activeProfile.color),
-                      )}
-                    ></span>
-                  {/if}
-                </div>
-                <div class="flex flex-col gap-0.5 leading-none flex-1 text-left min-w-0">
-                  <span class="font-semibold text-sm truncate"
-                    >{activeProfile?.name ?? APP_NAME}</span
-                  >
-                  <span class="text-xs text-muted-foreground truncate">
-                    {profilesState && profilesState.profiles.length > 1
-                      ? profilesState.profiles.length + ' profiles'
-                      : 'Active profile'}
-                  </span>
-                </div>
-                <ChevronsUpDown class="ml-auto size-4" />
-              </Sidebar.MenuButton>
-            {/snippet}
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content side="right" align="start" class="w-64">
-            <DropdownMenu.Label class="text-[11px] uppercase tracking-wider text-muted-foreground">
-              Switch profile
-            </DropdownMenu.Label>
+                <span class="text-xs text-muted-foreground truncate">
+                  {profilesState && profilesState.profiles.length > 1
+                    ? profilesState.profiles.length + ' profiles'
+                    : 'Active profile'}
+                </span>
+              </div>
+              <ChevronsUpDown class="ml-auto size-4" />
+            </Sidebar.MenuButton>
+          {/snippet}
+          {#snippet items()}
+            <ResponsiveActionLabel>Switch profile</ResponsiveActionLabel>
             {#each profilesState?.profiles ?? [] as p (p.id)}
-              <DropdownMenu.Item
+              <ResponsiveActionItem
                 onSelect={() => switchActiveProfile(p.id)}
                 disabled={switching}
-                class="gap-2"
+                active={p.id === activeProfile?.id}
               >
-                <span class={cn('size-2 rounded-full flex-shrink-0', profileDot(p.color))}></span>
-                <span class="flex-1 truncate">{p.name}</span>
-                {#if p.id === activeProfile?.id}
-                  <Check class="size-3.5 text-emerald-400 flex-shrink-0" />
-                {/if}
-              </DropdownMenu.Item>
+                {#snippet leading()}
+                  <span class={cn('size-2.5 rounded-full flex-shrink-0', profileDot(p.color))}
+                  ></span>
+                {/snippet}
+                {p.name}
+              </ResponsiveActionItem>
             {/each}
-            <DropdownMenu.Separator />
-            <DropdownMenu.Item onSelect={() => goto('/onboarding?new=1')} class="gap-2 text-xs">
-              <Plus class="size-3.5" />
+            <ResponsiveActionSeparator />
+            <ResponsiveActionItem onSelect={() => goto('/onboarding?new=1')} icon={Plus}>
               Add new profile
-            </DropdownMenu.Item>
-            <DropdownMenu.Item onSelect={() => goto('/profiles')} class="gap-2 text-xs">
-              <Cog class="size-3.5" />
+            </ResponsiveActionItem>
+            <ResponsiveActionItem onSelect={() => goto('/profiles')} icon={Cog}>
               Manage profiles
-            </DropdownMenu.Item>
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
+            </ResponsiveActionItem>
+          {/snippet}
+        </ResponsiveActionMenu>
       </Sidebar.MenuItem>
     </Sidebar.Menu>
   </Sidebar.Header>
@@ -315,47 +316,40 @@
             <Pin class="size-3 flex-shrink-0" />
           {/snippet}
           {#snippet actions()}
-            <DropdownMenu.Root bind:open={pinnedMenuOpen} onOpenChange={onMenuOpenChange}>
-              <DropdownMenu.Trigger>
-                {#snippet child({ props })}
-                  <Button
-                    {...props}
-                    variant="ghost"
-                    size="icon"
-                    class="size-5"
-                    aria-label="Pinned actions"
-                  >
-                    <MoreHorizontal class="size-3" />
-                  </Button>
-                {/snippet}
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Content side="right" align="start" class="w-48">
-                <DropdownMenu.Label
-                  class="text-[11px] uppercase tracking-wide text-muted-foreground"
+            {@const unpinAllArmed = confirm.isArmed('unpin-all')}
+            <ResponsiveActionMenu
+              bind:open={pinnedMenuOpen}
+              title="Pinned ({visiblePins.length})"
+              align="start"
+              desktopWidth="w-48"
+            >
+              {#snippet trigger({ props })}
+                <Button
+                  {...props}
+                  variant="ghost"
+                  size="icon"
+                  class="size-5"
+                  aria-label="Pinned actions"
                 >
-                  Pinned ({visiblePins.length})
-                </DropdownMenu.Label>
-                {@const unpinAllArmed = confirm.isArmed('unpin-all')}
-                <DropdownMenu.Item
-                  onSelect={(e: Event) => onUnpinAllClick(e)}
-                  closeOnSelect={false}
-                  class={cn(
-                    'gap-2 cursor-pointer transition-colors',
-                    unpinAllArmed
-                      ? 'bg-red-500/15 text-red-400 focus:bg-red-500/20 focus:text-red-300 animate-pulse'
-                      : 'text-red-400 focus:bg-red-500/10 focus:text-red-300',
-                  )}
+                  <MoreHorizontal class="size-3" />
+                </Button>
+              {/snippet}
+              {#snippet items()}
+                <ResponsiveActionItem
+                  onSelect={() => onUnpinAllClick(new Event('click'))}
+                  icon={Trash2}
+                  danger
+                  class={unpinAllArmed ? 'animate-pulse bg-red-500/15' : ''}
                 >
-                  <Trash2 class="size-3.5" />
-                  <span class="flex-1"
-                    >{unpinAllArmed ? 'Click again to confirm' : 'Unpin all'}</span
-                  >
-                  {#if unpinAllArmed}
-                    <span class="text-[11px] font-mono opacity-70">3s</span>
-                  {/if}
-                </DropdownMenu.Item>
-              </DropdownMenu.Content>
-            </DropdownMenu.Root>
+                  {unpinAllArmed ? 'Click again to confirm' : 'Unpin all'}
+                  {#snippet trailing()}
+                    {#if unpinAllArmed}
+                      <span class="text-[11px] font-mono opacity-70">3s</span>
+                    {/if}
+                  {/snippet}
+                </ResponsiveActionItem>
+              {/snippet}
+            </ResponsiveActionMenu>
           {/snippet}
 
           <Sidebar.GroupContent>

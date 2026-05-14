@@ -1,11 +1,14 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import * as Popover from '$lib/components/ui/popover';
   import * as Tooltip from '$lib/components/ui/tooltip';
   import { Switch } from '$lib/components/ui/switch';
   import { Label } from '$lib/components/ui/label';
+  import ResponsiveActionMenu from './ResponsiveActionMenu.svelte';
+  import ResponsiveActionItem from './ResponsiveActionItem.svelte';
+  import ResponsiveActionLabel from './ResponsiveActionLabel.svelte';
+  import ResponsiveActionSeparator from './ResponsiveActionSeparator.svelte';
   import {
     Filter,
     ArrowDownUp,
@@ -345,69 +348,55 @@
     <div class="flex items-center justify-between border-b px-4 py-2 gap-2 flex-wrap">
       <div class="flex items-center gap-2 flex-1 min-w-0">
         <!-- TAB DROPDOWN -->
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger>
-            {#snippet child({ props })}
-              <Button
-                {...props}
-                variant="outline"
-                size="sm"
-                class="h-8 gap-1.5 text-xs min-w-[110px] justify-start"
-              >
-                <Layers class="size-3.5" />
-                <span class="text-muted-foreground">Tab:</span>
-                <span class="text-foreground font-medium truncate">{activeTabLabel}</span>
-              </Button>
-            {/snippet}
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content
-            side="bottom"
-            align="start"
-            class="w-72 max-h-[70vh] overflow-y-auto"
-          >
-            <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
-              >Presets</DropdownMenu.Label
+        <ResponsiveActionMenu
+          title="Tab"
+          description="Filter the board by status preset or single column."
+          align="start"
+          desktopWidth="w-72 max-h-[70vh] overflow-y-auto"
+        >
+          {#snippet trigger({ props })}
+            <Button
+              {...props}
+              variant="outline"
+              size="sm"
+              class="h-8 gap-1.5 text-xs min-w-[110px] justify-start"
             >
+              <Layers class="size-3.5" />
+              <span class="text-muted-foreground">Tab:</span>
+              <span class="text-foreground font-medium truncate">{activeTabLabel}</span>
+            </Button>
+          {/snippet}
+          {#snippet items()}
+            <ResponsiveActionLabel>Presets</ResponsiveActionLabel>
             {#each TAB_PRESETS as p}
-              <DropdownMenu.Item
+              <ResponsiveActionItem
                 onSelect={() => setTab(p.value)}
                 closeOnSelect={false}
-                class="gap-2 items-start py-2"
+                active={activeTab === p.value}
+                description={PRESET_DESC[p.value] ?? ''}
               >
-                <div class="flex-1 min-w-0">
-                  <div class="text-xs font-medium">{p.label}</div>
-                  <div class="text-[11px] text-muted-foreground/70 leading-tight">
-                    {PRESET_DESC[p.value] ?? ''}
-                  </div>
-                </div>
-                <CheckMark active={activeTab === p.value} class="mt-0.5" />
-              </DropdownMenu.Item>
+                {p.label}
+              </ResponsiveActionItem>
             {/each}
 
-            <DropdownMenu.Separator />
-            <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
-              >Single column</DropdownMenu.Label
-            >
+            <ResponsiveActionSeparator />
+            <ResponsiveActionLabel>Single column</ResponsiveActionLabel>
             {#each STATUS_ORDER as s}
               {@const v = ('s:' + s) as TabFilter}
-              <DropdownMenu.Item
+              <ResponsiveActionItem
                 onSelect={() => setTab(v)}
                 closeOnSelect={false}
-                class="gap-2 items-start py-1.5"
+                active={activeTab === v}
+                description={STATUS_HINT[s]}
               >
-                <span class={cn('size-1.5 rounded-full mt-1.5 flex-shrink-0', STATUS_DOTS[s])}
-                ></span>
-                <div class="flex-1 min-w-0">
-                  <div class="text-xs font-medium">{s}</div>
-                  <div class="text-[11px] text-muted-foreground/70 leading-tight">
-                    {STATUS_HINT[s]}
-                  </div>
-                </div>
-                <CheckMark active={activeTab === v} class="mt-0.5" />
-              </DropdownMenu.Item>
+                {#snippet leading()}
+                  <span class={cn('size-2 rounded-full flex-shrink-0', STATUS_DOTS[s])}></span>
+                {/snippet}
+                {s}
+              </ResponsiveActionItem>
             {/each}
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
+          {/snippet}
+        </ResponsiveActionMenu>
 
         <!-- SEARCH -->
         <div class="relative max-w-xs flex-1">
@@ -761,71 +750,65 @@
         </Popover.Root>
 
         <!-- SORT -->
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger>
-            {#snippet child({ props })}
-              <Button {...props} variant="ghost" size="sm" class="h-8 gap-1.5 text-xs">
-                <ArrowDownUp class="size-3.5" />
-                <span class="hidden sm:inline text-muted-foreground">Sort:</span>
-                <span class="text-foreground">{sortShort}</span>
-              </Button>
-            {/snippet}
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content side="bottom" align="end" class="w-72">
-            <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
-              >Sort by</DropdownMenu.Label
-            >
+        <ResponsiveActionMenu
+          title="Sort"
+          description="How jobs are ordered inside each column."
+          align="end"
+          desktopWidth="w-72"
+        >
+          {#snippet trigger({ props })}
+            <Button {...props} variant="ghost" size="sm" class="h-8 gap-1.5 text-xs">
+              <ArrowDownUp class="size-3.5" />
+              <span class="hidden sm:inline text-muted-foreground">Sort:</span>
+              <span class="text-foreground">{sortShort}</span>
+            </Button>
+          {/snippet}
+          {#snippet items()}
+            <ResponsiveActionLabel>Sort by</ResponsiveActionLabel>
             {#each SORTS as s}
-              {@const Icon = s.icon}
-              <DropdownMenu.Item
+              <ResponsiveActionItem
                 onSelect={() => (sort = s.key)}
                 closeOnSelect={false}
-                class="gap-2 items-start py-1.5"
+                active={sort === s.key}
+                icon={s.icon}
+                description={s.desc}
               >
-                <Icon class="size-3.5 mt-0.5 text-muted-foreground flex-shrink-0" />
-                <div class="flex-1 min-w-0">
-                  <div class="text-xs font-medium">{s.label}</div>
-                  <div class="text-[11px] text-muted-foreground/70 leading-tight">{s.desc}</div>
-                </div>
-                <CheckMark active={sort === s.key} class="mt-0.5" />
-              </DropdownMenu.Item>
+                {s.label}
+              </ResponsiveActionItem>
             {/each}
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
+          {/snippet}
+        </ResponsiveActionMenu>
 
         <!-- VIEW MODE -->
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger>
-            {#snippet child({ props })}
-              {@const ActiveIcon = activeView.icon}
-              <Button {...props} variant="ghost" size="sm" class="h-8 gap-1.5 text-xs">
-                <ActiveIcon class="size-3.5" />
-                <span class="hidden sm:inline text-muted-foreground">View:</span>
-                <span class="text-foreground">{activeView.label}</span>
-              </Button>
-            {/snippet}
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content side="bottom" align="end" class="w-64">
-            <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
-              >View as</DropdownMenu.Label
-            >
+        <ResponsiveActionMenu
+          title="View"
+          description="Switch between Kanban, List, Compact, Table, or grouped views."
+          align="end"
+          desktopWidth="w-64"
+        >
+          {#snippet trigger({ props })}
+            {@const ActiveIcon = activeView.icon}
+            <Button {...props} variant="ghost" size="sm" class="h-8 gap-1.5 text-xs">
+              <ActiveIcon class="size-3.5" />
+              <span class="hidden sm:inline text-muted-foreground">View:</span>
+              <span class="text-foreground">{activeView.label}</span>
+            </Button>
+          {/snippet}
+          {#snippet items()}
+            <ResponsiveActionLabel>View as</ResponsiveActionLabel>
             {#each VIEWS as v}
-              {@const VIcon = v.icon}
-              <DropdownMenu.Item
+              <ResponsiveActionItem
                 onSelect={() => (viewMode = v.key)}
                 closeOnSelect={false}
-                class="gap-2 items-start py-1.5"
+                active={viewMode === v.key}
+                icon={v.icon}
+                description={v.desc}
               >
-                <VIcon class="size-3.5 mt-0.5 text-muted-foreground flex-shrink-0" />
-                <div class="flex-1 min-w-0">
-                  <div class="text-xs font-medium">{v.label}</div>
-                  <div class="text-[11px] text-muted-foreground/70 leading-tight">{v.desc}</div>
-                </div>
-                <CheckMark active={viewMode === v.key} class="mt-0.5" />
-              </DropdownMenu.Item>
+                {v.label}
+              </ResponsiveActionItem>
             {/each}
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
+          {/snippet}
+        </ResponsiveActionMenu>
       </div>
     </div>
   {:else if showFilter}
