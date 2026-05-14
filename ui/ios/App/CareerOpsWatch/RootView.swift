@@ -108,20 +108,23 @@ private struct StatsPage: View {
                 // Three Counter cards in a vertical stack — more compact
                 // than the previous one-row-per-stat layout AND each card
                 // is tappable to deep-link the phone to the relevant view.
+                // Deep links use Brand.deepLink so a rebrand in
+                // branding/brand.json (urlScheme rename) updates every
+                // tap target on the Watch in one shot.
                 StatCard(
                     icon: "tray", label: "Queued",
                     value: model.stats.queued, color: .indigo,
-                    deepLink: "careerops://queue"
+                    deepLink: Brand.deepLink("queue")
                 )
                 StatCard(
                     icon: "checkmark.circle.fill", label: "Applied today",
                     value: model.stats.appliedToday, color: .green,
-                    deepLink: "careerops://applied"
+                    deepLink: Brand.deepLink("applied")
                 )
                 StatCard(
                     icon: "calendar", label: "Interviews this week",
                     value: model.stats.upcomingInterviews, color: .orange,
-                    deepLink: "careerops://pipeline"
+                    deepLink: Brand.deepLink("pipeline")
                 )
                 if let synced = model.lastSyncAt {
                     Text("Synced \(synced, style: .relative)")
@@ -131,7 +134,7 @@ private struct StatsPage: View {
             }
             .padding(.horizontal, 4)
         }
-        .navigationTitle("Career Ops")
+        .navigationTitle(Brand.displayName)
     }
 }
 
@@ -207,7 +210,7 @@ private struct NextInterviewPage: View {
                         // Open the interview-prep tab on the iPhone. The
                         // deep link is parsed by deep-links-parser.ts on
                         // the phone side which routes to /job/{id}/interview-prep.
-                        openOnPhone("careerops://interview-prep/\(i.jobId)")
+                        openOnPhone(Brand.deepLink("interview-prep/\(i.jobId)"))
                     } label: {
                         Label("Open prep on iPhone", systemImage: "iphone.and.arrow.forward")
                     }
@@ -270,7 +273,7 @@ private struct TopApplyPage: View {
                         }
                     }
                     Button {
-                        openOnPhone("careerops://job/\(c.jobId)")
+                        openOnPhone(Brand.jobDeepLink(c.jobId))
                     } label: {
                         Label("Open on iPhone", systemImage: "iphone.and.arrow.forward")
                     }
@@ -319,7 +322,7 @@ private struct InboxPage: View {
                             // there — surfacing per-issue deep links from
                             // the Watch would need richer routing (issue
                             // ids in URLs) which we don't expose yet.
-                            openOnPhone("careerops://inbox")
+                            openOnPhone(Brand.deepLink("inbox"))
                         } label: {
                             VStack(alignment: .leading, spacing: 2) {
                                 HStack(spacing: 4) {

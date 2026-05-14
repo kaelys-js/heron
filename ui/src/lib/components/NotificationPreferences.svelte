@@ -21,12 +21,16 @@
   import { Label } from '$lib/components/ui/label';
   import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
-  import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
+  import { BRAND_STORAGE_KEYS } from '$lib/client/brand';
   import { clearAllPending, isInQuietHours, type QuietHours } from '$lib/client/notifications';
   import { Capacitor } from '@capacitor/core';
   import { setSharedQuietHours } from '$lib/client/native-bridge';
 
-  const STORAGE_KEY = `${BRAND_STORAGE_PREFIX}:quiet-hours`;
+  // Sourced from the centralised brand-storage map. Single source of
+  // truth means the BackgroundFetcher (Swift) and this UI can never
+  // drift on the same key — they read what's literally stored under
+  // `BRAND.name:quiet-hours` regardless of any future rename.
+  const STORAGE_KEY = BRAND_STORAGE_KEYS.quietHours;
   // Default: no quiet hours. Users opt in explicitly so we don't silently
   // suppress notifications they were expecting.
   const DEFAULT: QuietHours = { enabled: false, startHour: 22, endHour: 7 };

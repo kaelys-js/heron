@@ -19,7 +19,7 @@
   import { Label } from '$lib/components/ui/label';
   import { onMount, onDestroy } from 'svelte';
   import { toast } from 'svelte-sonner';
-  import { BRAND, BRAND_EVENTS, BRAND_STORAGE_PREFIX } from '$lib/client/brand';
+  import { BRAND, BRAND_EVENTS, BRAND_STORAGE_PREFIX, BRAND_STORAGE_KEYS } from '$lib/client/brand';
 
   type Permission = 'default' | 'granted' | 'denied' | 'unsupported';
 
@@ -29,7 +29,7 @@
 
   function loadPrefs() {
     if (typeof window === 'undefined') return;
-    const raw = window.localStorage.getItem(`${BRAND_STORAGE_PREFIX}:push-prefs`);
+    const raw = window.localStorage.getItem(BRAND_STORAGE_KEYS.pushPrefs);
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
@@ -39,10 +39,7 @@
   }
   function savePrefs() {
     if (typeof window === 'undefined') return;
-    window.localStorage.setItem(
-      `${BRAND_STORAGE_PREFIX}:push-prefs`,
-      JSON.stringify(enabledLevels),
-    );
+    window.localStorage.setItem(BRAND_STORAGE_KEYS.pushPrefs, JSON.stringify(enabledLevels));
   }
 
   function checkPermission(): Permission {

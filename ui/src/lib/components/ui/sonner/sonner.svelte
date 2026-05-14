@@ -18,7 +18,23 @@
   richColors
   toastOptions={{
     classes: {
-      toast: 'group/toast border shadow-lg',
+      // Shared close-button geometry — applied to every variant so the
+      // close X is a perfect circle (was reading as an oval because the
+      // svelte-sonner default leaves both the button AND the SVG to
+      // inherit Tailwind preflight reset, which can collapse line-height
+      // and make the 20×20 box render at ~20×16 on some DPRs). Forcing
+      // square box + square SVG + no padding nails the geometry.
+      toast:
+        'group/toast border shadow-lg ' +
+        '[&_[data-close-button]]:!size-6 ' +
+        '[&_[data-close-button]]:!p-0 ' +
+        '[&_[data-close-button]]:!rounded-full ' +
+        '[&_[data-close-button]]:!flex ' +
+        '[&_[data-close-button]]:!items-center ' +
+        '[&_[data-close-button]]:!justify-center ' +
+        '[&_[data-close-button]>svg]:!size-3.5 ' +
+        '[&_[data-close-button]>svg]:!aspect-square ' +
+        '[&_[data-close-button]>svg]:!shrink-0',
       error:
         '!bg-red-950/90 !border-red-500/60 !text-red-50 !shadow-[0_4px_24px_-4px_rgba(239,68,68,0.35)] [&_[data-icon]]:!text-red-300 [&_[data-description]]:!text-red-200/85 [&_[data-close-button]]:!bg-red-900 [&_[data-close-button]]:!border-red-500/60 [&_[data-close-button]]:!text-red-100 [&_[data-button]]:!bg-red-500/30 [&_[data-button]]:!text-red-50 [&_[data-button]]:!border-red-400/40',
       warning:

@@ -17,7 +17,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import { BRAND } from '$lib/client/brand';
+  import { BRAND, BRAND_STORAGE_KEYS } from '$lib/client/brand';
 
   onMount(() => {
     queueMicrotask(() => {
@@ -31,7 +31,7 @@
       if (
         typeof window !== 'undefined' &&
         !window.location.protocol.startsWith('http') &&
-        localStorage.getItem('career-ops:authed') !== '1'
+        localStorage.getItem(BRAND_STORAGE_KEYS.authed) !== '1'
       ) {
         // Layout will handle the /login redirect — stay put.
         return;

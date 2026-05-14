@@ -23,6 +23,7 @@
  */
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { BRAND_STORAGE_KEYS } from './brand';
 
 export type NotifyLevel = 'info' | 'success' | 'warn' | 'error';
 
@@ -257,12 +258,11 @@ export function isInQuietHours(prefs: QuietHours, now: Date = new Date()): boole
 function isInQuietHoursFromStorage(): boolean {
   if (typeof localStorage === 'undefined') return false;
   try {
-    // Keep this key in sync with NotificationPreferences.svelte. We
-    // can't import BRAND_STORAGE_PREFIX from `./brand` because this
-    // file is in the same client directory and the cycle adds bundle
-    // weight. Hardcoded literal is fine — a brand rename runs the
-    // verifier which would flag this.
-    const raw = localStorage.getItem('career-ops:quiet-hours');
+    // Sourced from BRAND_STORAGE_KEYS — matches what
+    // NotificationPreferences.svelte writes. Centralising the key here
+    // means a brand rename retargets read + write together; previously
+    // this was a hardcoded literal that would drift on rebrand.
+    const raw = localStorage.getItem(BRAND_STORAGE_KEYS.quietHours);
     if (!raw) return false;
     const parsed = JSON.parse(raw) as QuietHours;
     return isInQuietHours(parsed);

@@ -784,6 +784,36 @@ function applyClientBrandTs(brand) {
     ` * brand can't collide with another fork on the same machine. */`,
     `export const BRAND_STORAGE_PREFIX = BRAND.name;`,
     ``,
+    `/** Named localStorage keys used across the app. Centralised so a`,
+    ` * rebrand (BRAND.name change) automatically retargets every read`,
+    ` * + write. Use these constants instead of typing literal`,
+    ` * '\${BRAND.name}:authed' strings around the codebase — keeps the`,
+    ` * key names in one searchable place AND eliminates the drift`,
+    ` * where one site reads 'career-ops:authed' and another writes`,
+    ` * 'careerops:authed' or similar. */`,
+    `export const BRAND_STORAGE_KEYS = {`,
+    `  /** '1' iff the user has a live local-auth marker — used by the`,
+    `   * layout boot path for the sync-bounce-to-/login race. */`,
+    `  authed: \`\${BRAND.name}:authed\`,`,
+    `  /** Bearer token captured from better-auth's Set-Auth-Token`,
+    `   * header. Required for the Capacitor WebView (cookies don't`,
+    `   * cross from careerops:// to http://) and mirrored into App`,
+    `   * Group for the Share Extension. */`,
+    `  bearerToken: \`\${BRAND.name}:bearer-token\`,`,
+    `  /** User-chosen theme ('light' | 'dark' | 'system'). Read by`,
+    `   * app.html's inline bootstrap script for FOUC-free initial paint. */`,
+    `  theme: \`\${BRAND.name}:theme\`,`,
+    `  /** Quiet-hours preference JSON ({enabled, startHour, endHour}). */`,
+    `  quietHours: \`\${BRAND.name}:quiet-hours\`,`,
+    `  /** Per-component collapse/expand state — namespaced under the`,
+    `   * brand prefix so CollapsibleCard / CollapsibleGroup / similar`,
+    `   * never collide with unrelated apps on the same origin. */`,
+    `  collapseCardPrefix: \`\${BRAND.name}:cc\`,`,
+    `  collapseGroupPrefix: \`\${BRAND.name}:cg\`,`,
+    `  /** Push-notifications opt-in level prefs (Notification API). */`,
+    `  pushPrefs: \`\${BRAND.name}:push-prefs\`,`,
+    `} as const;`,
+    ``,
   ].join('\n');
   const changed = writeIfChanged(path, body);
   changed
@@ -846,11 +876,20 @@ function applySwiftConstants(brand) {
   // Same content is emitted into every extension dir so each Xcode
   // target's source pool includes Brand without cross-target imports
   // (Swift module-system limitation in Xcode app-extension targets).
+  // Every Xcode target that compiles Swift needs its own Brand.swift —
+  // Xcode app-extension AND watchOS-app targets can't import constants
+  // from the host (Swift module system limitation). One source-of-truth
+  // template, N copies, one place to edit (branding/brand.json).
   const paths = [
     join(UI, 'ios', 'App', 'App', 'Brand.swift'),
     join(UI, 'ios', 'App', 'CareerOpsWidget', 'Brand.swift'),
     join(UI, 'ios', 'App', 'CareerOpsLiveActivity', 'Brand.swift'),
     join(UI, 'ios', 'App', 'CareerOpsShareExtension', 'Brand.swift'),
+    // CareerOpsWatch is a separate watchOS target. Without this copy
+    // the Watch had to hardcode "group.com.resistjs.careerops" and
+    // "careerops://queue" everywhere — a rebrand drift waiting to
+    // happen. The Watch's Brand.swift mirrors the host's verbatim.
+    join(UI, 'ios', 'App', 'CareerOpsWatch', 'Brand.swift'),
   ];
   const openJobActivity =
     brand.identifiers.userActivityTypes.find((t) => t.endsWith('.openJob')) ??
