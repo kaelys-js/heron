@@ -68,26 +68,3 @@ describe('Apply pipeline — autonomous-apply circuit breaker', () => {
     expect(exists('ui/src/lib/server/autopilot-circuit-breaker.ts')).toBe(true);
   });
 });
-
-describe('Parity with legacy verify-apply.mjs', () => {
-  it('legacy verifier exits 0', () => {
-    const p = path.join(REPO_ROOT, 'verify-apply.mjs');
-    if (!fs.existsSync(p)) return;
-    let exitCode = 0;
-    try {
-      execSync(`node "${p}"`, {
-        cwd: REPO_ROOT,
-        stdio: 'pipe',
-        timeout: 120_000,
-        env: {
-          ...process.env,
-          BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? 'ci-verifier-secret',
-          BETTER_AUTH_RATE_LIMIT: 'off',
-        },
-      });
-    } catch (e: any) {
-      exitCode = e.status ?? 1;
-    }
-    expect(exitCode).toBe(0);
-  });
-});

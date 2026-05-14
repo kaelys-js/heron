@@ -1,0 +1,75 @@
+default_platform(:android)
+
+# Career Ops Android — Fastlane lanes for Play Store distribution.
+#
+# Required env vars (set via repo secrets in CI):
+#   PLAY_STORE_JSON_KEY              — base64-decoded path to a Google
+#                                       Play service-account JSON file
+#                                       with "Release manager" role.
+#   PLAY_STORE_PACKAGE_NAME          — com.resistjs.careerops (matches
+#                                       applicationId in build.gradle).
+#   ANDROID_KEYSTORE_BASE64          — base64-encoded careerops-release
+#                                       .keystore. CI decodes + writes to
+#                                       ui/android/.
+#   ANDROID_KEYSTORE_PASSWORD        — password for the keystore.
+#   ANDROID_KEY_ALIAS                — usually "careerops".
+#   ANDROID_KEY_PASSWORD             — password for the key.
+
+PACKAGE_NAME = "com.resistjs.careerops"
+
+platform :android do
+  before_all do
+    setup_ci if is_ci
+  end
+
+  desc "Build a signed release AAB ready for Play Store upload"
+  lane :build_aab do
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      project_dir: "../"
+    )
+  end
+
+  desc "Upload AAB to Play Store internal track (auto-promoted via console)"
+  lane :internal do
+    build_aab
+    upload_to_play_store(
+      package_name: PACKAGE_NAME,
+      track: "internal",
+      release_status: "draft",
+      skip_upload_apk: true,
+      skip_upload_metadata: false,
+      skip_upload_changelogs: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false,
+      metadata_path: "metadata"
+    )
+  end
+
+  desc "Promote latest internal build to production"
+  lane :production do
+    upload_to_play_store(
+      package_name: PACKAGE_NAME,
+      track: "internal",
+      track_promote_to: "production",
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_metadata: true
+    )
+  end
+
+  desc "Upload only the Play Store listing (metadata + screenshots, no AAB)"
+  lane :upload_metadata do
+    upload_to_play_store(
+      package_name: PACKAGE_NAME,
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_changelogs: false,
+      skip_upload_metadata: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false,
+      metadata_path: "metadata"
+    )
+  end
+end

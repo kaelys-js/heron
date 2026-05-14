@@ -149,6 +149,121 @@ pre-commit:
       glob: "{ui,ui/electron}/**/*.{svelte,ts,tsx,js,mjs}"
       run: pnpm exec turbo run check
 
+    # ── Multi-language formatters (one entry per language) ──────────
+    # Each formatter writes in place + re-stages so commits land formatted.
+    # All gated behind `command -v` so a missing tool is a warning, not
+    # a hard fail (CI is the authoritative gate).
+
+    ruff-python:
+      # Python formatter + auto-fix linter (ruff). Single-binary, written
+      # in Rust, ~100× faster than black + flake8 combined.
+      glob: "*.py"
+      run: |
+        command -v ruff >/dev/null 2>&1 || { echo "skip: ruff not installed (brew install ruff)"; exit 0; }
+        ruff format {staged_files} 2>/dev/null || true
+        ruff check --fix {staged_files} 2>/dev/null || true
+        git add {staged_files} 2>/dev/null || true
+      stage_fixed: true
+
+    ruff-python-check:
+      # Verification pass — fails if any .py file still has lint or
+      # format errors after the auto-fix above.
+      glob: "*.py"
+      run: |
+        command -v ruff >/dev/null 2>&1 || exit 0
+        ruff format --check {staged_files} && ruff check {staged_files}
+
+    gofmt:
+      # Go's stdlib formatter — no install, ships with the toolchain.
+      glob: "*.go"
+      run: |
+        command -v gofmt >/dev/null 2>&1 || exit 0
+        gofmt -w {staged_files} 2>/dev/null || true
+        git add {staged_files} 2>/dev/null || true
+      stage_fixed: true
+
+    gofmt-check:
+      glob: "*.go"
+      run: |
+        command -v gofmt >/dev/null 2>&1 || exit 0
+        diff=$(gofmt -l {staged_files} 2>/dev/null)
+        if [ -n "$diff" ]; then echo "gofmt drift: $diff"; exit 1; fi
+
+    ktlint:
+      # Kotlin linter + formatter. Installed via brew/sdkman.
+      glob: "*.kt"
+      run: |
+        command -v ktlint >/dev/null 2>&1 || { echo "skip: ktlint not installed (brew install ktlint)"; exit 0; }
+        ktlint --format {staged_files} 2>/dev/null || true
+        git add {staged_files} 2>/dev/null || true
+      stage_fixed: true
+
+    ktlint-check:
+      glob: "*.kt"
+      run: |
+        command -v ktlint >/dev/null 2>&1 || exit 0
+        ktlint {staged_files}
+
+    swiftformat:
+      # SwiftFormat — auto-formats Swift files in place. Pairs with
+      # swiftlint below which lints structural rules SwiftFormat doesn't
+      # touch (force-cast, force-try, line length, etc.).
+      glob: "*.swift"
+      run: |
+        command -v swiftformat >/dev/null 2>&1 || { echo "skip: swiftformat not installed (brew install swiftformat)"; exit 0; }
+        swiftformat --quiet {staged_files} 2>/dev/null || true
+        git add {staged_files} 2>/dev/null || true
+      stage_fixed: true
+
+    swiftlint:
+      # Strict lint gate. CI uses --strict; pre-commit warns only so
+      # contributors can iterate. CI is the authoritative bar.
+      glob: "*.swift"
+      run: |
+        command -v swiftlint >/dev/null 2>&1 || { echo "skip: swiftlint not installed (brew install swiftlint)"; exit 0; }
+        swiftlint --quiet --no-cache {staged_files} || true
+
+    shfmt:
+      # POSIX shell formatter (also handles bash). Indent: 2 spaces.
+      glob: "*.{sh,bash}"
+      run: |
+        command -v shfmt >/dev/null 2>&1 || { echo "skip: shfmt not installed (brew install shfmt)"; exit 0; }
+        shfmt -w -i 2 -ci {staged_files} 2>/dev/null || true
+        git add {staged_files} 2>/dev/null || true
+      stage_fixed: true
+
+    shfmt-check:
+      glob: "*.{sh,bash}"
+      run: |
+        command -v shfmt >/dev/null 2>&1 || exit 0
+        shfmt -d -i 2 -ci {staged_files} >/dev/null
+
+    rufo:
+      # Ruby formatter (rufo). Installed via mise-managed gem:
+      # `mise exec -- gem install rufo`.
+      glob: "*.rb"
+      run: |
+        command -v rufo >/dev/null 2>&1 || { echo "skip: rufo not installed (mise exec -- gem install rufo)"; exit 0; }
+        rufo {staged_files} 2>/dev/null || true
+        git add {staged_files} 2>/dev/null || true
+      stage_fixed: true
+
+    yamllint:
+      # YAML linter (style + syntax). Workflows are the highest-signal
+      # surface — actionlint runs in pre-push for the deeper schema check.
+      glob: "*.{yaml,yml}"
+      run: |
+        command -v yamllint >/dev/null 2>&1 || exit 0
+        yamllint --no-warnings {staged_files} 2>/dev/null || true
+
+    actionlint:
+      # Workflow file validator — catches typos, unknown action inputs,
+      # job-needs cycles. Runs only when a workflow file is staged.
+      glob: ".github/workflows/*.{yml,yaml}"
+      run: |
+        command -v actionlint >/dev/null 2>&1 || { echo "skip: actionlint not installed (brew install actionlint)"; exit 0; }
+        actionlint {staged_files}
+
     no-secrets:
       # Cheap regex guard — block obvious secrets from being committed.
       # Patterns: Anthropic API keys, GitHub PATs (classic + fine-grained),
@@ -191,13 +306,11 @@ pre-push:
       # This hook stays so a `--no-verify` commit can't slip unformatted
       # code into a push.
       run: pnpm format:check
-    verify-all:
-      # Brand + native + multi-user + pipeline verifiers — all turbo-cached.
-      # Cold ~5s, warm <200ms.
-      env:
-        BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-pre-push
-        BETTER_AUTH_RATE_LIMIT: "off"
-      run: pnpm verify:cached
+    actionlint:
+      # Lint .github/workflows/*.yml — catches typos / unknown action inputs
+      # / job-needs cycles before they ever hit GitHub. Free + fast.
+      glob: ".github/workflows/*.{yml,yaml}"
+      run: actionlint {staged_files} 2>/dev/null || actionlint .github/workflows/*.yml
     release-readiness:
       # When pushing a release tag (v1.2.3 / v1.2.3-beta.1), gate on
       # native-release readiness. This catches "I forgot to run

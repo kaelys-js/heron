@@ -110,6 +110,44 @@
   "license": "MIT",
 
   "homepageUrl": "https://career-ops.org",
+  "supportEmail": "hello@resist.js",
+  "privacyPolicyUrl": "https://career-ops.org/privacy",
+  "termsOfServiceUrl": "https://career-ops.org/terms",
+  "marketingUrl": "https://career-ops.org",
+
+  "store": {
+    "appStore": {
+      "subtitle": "AI job-search command center",
+      "primaryCategory": "PRODUCTIVITY",
+      "secondaryCategory": "BUSINESS",
+      "contentRating": "4+",
+      "reviewerNotes": "Career Ops is a personal job-search productivity tool. The app reads job postings the user pastes, drafts tailored CVs/cover letters locally, and tracks application status in a local SQLite database. No personal data leaves the device unless the user explicitly signs in with their own LLM API key (Anthropic / OpenAI / Google). Demo account: not applicable — the app is single-user / self-hosted by design.",
+      "demoAccount": null,
+      "exportComplianceUsesEncryption": true,
+      "exportComplianceEncryptionExempt": true,
+      "exportComplianceContainsThirdPartyCryptography": false,
+      "exportComplianceAvailableOnFrenchStore": true,
+      "promotionalText": "Run your job search like a product launch — local-first, multi-platform, AI-tailored.",
+      "marketingText": "Tailor CVs, scan portals, track applications, prep interviews. All in one offline-first dashboard."
+    },
+    "playStore": {
+      "shortDescription": "AI-powered job-search command center. Local-first, offline, private.",
+      "fullDescription": "Career Ops is a personal job-search productivity tool. Tailor CVs and cover letters per role with on-device LLMs, scan 11+ job portals (LinkedIn, Greenhouse, Ashby, Lever, Workday, …), track every application in a local SQLite database, and prep interviews with mock-question + STAR-story drills. Data stays on your device unless you sign in with your own LLM API key. Open-source, MIT-licensed.",
+      "category": "PRODUCTIVITY",
+      "contentRating": "Everyone",
+      "containsAds": false,
+      "inAppPurchases": false,
+      "targetAudience": "Adult"
+    },
+    "macAppStore": {
+      "primaryCategory": "public.app-category.productivity",
+      "secondaryCategory": "public.app-category.business"
+    },
+    "microsoftStore": {
+      "category": "Productivity",
+      "subcategory": "Personal finance"
+    }
+  },
 
   "ai": {
     "supportedCLIs": ["claude", "gemini", "codex", "copilot", "opencode", "qwen"],

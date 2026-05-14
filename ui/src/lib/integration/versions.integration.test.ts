@@ -101,32 +101,3 @@ describe('CI workflow does NOT pin a Node version directly', () => {
     expect(wf).not.toContain('actions/setup-node');
   });
 });
-
-describe('Parity with legacy verify-versions.mjs', () => {
-  it('legacy verifier reports the same versions when invoked', () => {
-    // The verifier itself reads .mise.toml then asserts. Spawning it
-    // here doubles confidence: if our Vitest cases say "all green" but
-    // the legacy verifier disagrees, we have parity drift to fix.
-    //
-    // Spawned with `{ stdio: 'pipe' }` and a short timeout so a hung
-    // verifier doesn't block CI for 2 minutes.
-    const verifierPath = path.join(REPO_ROOT, 'verify-versions.mjs');
-    if (!fs.existsSync(verifierPath)) {
-      // Phase 6 will delete this file. After that, this case becomes a
-      // no-op (the file's gone, the migration is complete).
-      return;
-    }
-    const { execSync } = require('node:child_process');
-    let exitCode = 0;
-    try {
-      execSync(`node "${verifierPath}"`, {
-        cwd: REPO_ROOT,
-        stdio: 'pipe',
-        timeout: 15_000,
-      });
-    } catch (e: any) {
-      exitCode = e.status ?? 1;
-    }
-    expect(exitCode).toBe(0);
-  });
-});

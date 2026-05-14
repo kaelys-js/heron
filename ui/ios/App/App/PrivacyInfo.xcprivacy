@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PrivacyInfo.xcprivacy — Apple privacy manifest.
+
+  REQUIRED by App Store since May 1, 2024 for every iOS app + third-party
+  SDK. Apple builds a "Privacy Nutrition Label" from this file plus each
+  embedded SDK's manifest. Wrong / missing declarations → App Store
+  Connect rejects the build.
+
+  ── What we declare here ─────────────────────────────────────────────
+
+  NSPrivacyTracking — false. Career Ops never tracks users across apps
+  or websites. No ad networks, no IDFA collection, no third-party
+  analytics SDKs.
+
+  NSPrivacyCollectedDataTypes — what data leaves the device:
+    • Email (only if the user signs in with passkey + email)
+    • Crash data (only if the user enables reporting in settings)
+  No advertising data, no purchase history, no contacts, no location.
+
+  NSPrivacyAccessedAPITypes — Apple-restricted "required reason" APIs:
+    • UserDefaults — for app preferences (theme, last LAN URL, …).
+      Reason: CA92.1 — Access info from same app, per docs.
+    • File timestamps — read for backup metadata.
+      Reason: C617.1 — Inside the app's container, per docs.
+    • Disk space — read to warn the user before generating large
+      PDFs / video transcripts of mock-interview replays.
+      Reason: 85F4.1 — Display info to user about device storage.
+    • System boot time — read to schedule background fetches.
+      Reason: 35F9.1 — Measure time since boot for telemetry inside
+      the app's process only.
+
+  When adding a new dependency that includes a `PrivacyInfo.xcprivacy`,
+  re-check this file: if the dep declares NSPrivacyAccessedAPITypes we
+  don't, the App Store rejects the upload.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>NSPrivacyTracking</key>
+    <false/>
+
+    <key>NSPrivacyTrackingDomains</key>
+    <array/>
+
+    <key>NSPrivacyCollectedDataTypes</key>
+    <array>
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeEmailAddress</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <true/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+                <string>NSPrivacyCollectedDataTypePurposeAuthentication</string>
+            </array>
+        </dict>
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeCrashData</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+                <string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+            </array>
+        </dict>
+    </array>
+
+    <key>NSPrivacyAccessedAPITypes</key>
+    <array>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>CA92.1</string>
+            </array>
+        </dict>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>C617.1</string>
+            </array>
+        </dict>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryDiskSpace</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>85F4.1</string>
+            </array>
+        </dict>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategorySystemBootTime</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>35F9.1</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>

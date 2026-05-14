@@ -1,0 +1,50 @@
+---
+# yamllint config — repo-wide.
+# We use yamllint as a syntax / structure gate, not a strict 80-col style
+# linter. Workflow YAMLs and lefthook.yml have inline shell commands +
+# heredocs that are routinely > 80 chars; forcing 80-col reflow would
+# either fragment shell snippets across line continuations or push us to
+# disable yamllint per-file. Bumping line-length to 200 keeps the
+# high-signal checks (indentation, key order, truthy, empty values) on
+# while letting CI/lefthook lines stay readable.
+
+extends: default
+
+rules:
+  line-length:
+    # 400 chars allows the secret-pattern regex in lefthook.yml's no-secrets
+    # hook to live on one line (alternation of 9 regex patterns; can't be
+    # folded without breaking `grep -E`).
+    max: 400
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+  comments:
+    # Allow `#text` and `# text` — both common in workflows.
+    require-starting-space: false
+    min-spaces-from-content: 1
+  comments-indentation: disable
+  document-start: disable
+  truthy:
+    # GH workflows use `on:` which yamllint flags as truthy.
+    allowed-values: ['true', 'false', 'on', 'off']
+    check-keys: false
+  braces:
+    max-spaces-inside: 1
+  brackets:
+    max-spaces-inside: 1
+
+ignore: |
+  node_modules/
+  ui/node_modules/
+  ui/electron/node_modules/
+  .svelte-kit/
+  ui/.svelte-kit/
+  build/
+  dist/
+  coverage/
+  ui/coverage/
+  ui/build/
+  ui/dist/
+  ui/ios/App/Pods/
+  data/profiles/
+  pnpm-lock.yaml

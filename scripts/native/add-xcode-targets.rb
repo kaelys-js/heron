@@ -19,11 +19,12 @@
 #
 # Safe to re-run — checks if a target already exists before adding.
 
-require 'xcodeproj'
-require 'fileutils'
-require 'plist'
+require "xcodeproj"
+require "fileutils"
+require "plist"
+require "set"
 
-PROJECT_PATH = File.expand_path('App.xcodeproj', Dir.pwd)
+PROJECT_PATH = File.expand_path("App.xcodeproj", Dir.pwd)
 unless File.exist?(PROJECT_PATH)
   puts "✗ App.xcodeproj not found in #{Dir.pwd}"
   puts "  Run this from ui/ios/App/"
@@ -31,54 +32,81 @@ unless File.exist?(PROJECT_PATH)
 end
 
 project = Xcodeproj::Project.open(PROJECT_PATH)
-main_target = project.targets.find { |t| t.name == 'App' }
+main_target = project.targets.find { |t| t.name == "App" }
 unless main_target
   puts "✗ Main 'App' target not found in #{PROJECT_PATH}"
   exit 1
 end
 puts "✓ opened #{PROJECT_PATH}"
 
-deployment_target = main_target.build_configurations.first.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] || '15.0'
-team_id = main_target.build_configurations.first.build_settings['DEVELOPMENT_TEAM']
-app_group = 'group.com.resistjs.careerops'
-bundle_root = 'com.resistjs.careerops'
+deployment_target = main_target.build_configurations.first.build_settings["IPHONEOS_DEPLOYMENT_TARGET"] || "15.0"
+team_id = main_target.build_configurations.first.build_settings["DEVELOPMENT_TEAM"]
+app_group = "group.com.resistjs.careerops"
+bundle_root = "com.resistjs.careerops"
+
+# ── PrivacyInfo.xcprivacy — Apple privacy manifest, required for App
+# Store submission since May 2024. Must be in the App target's Copy
+# Bundle Resources phase so it ships inside the .app bundle.
+privacy_manifest_path = File.expand_path("App/PrivacyInfo.xcprivacy", File.dirname(PROJECT_PATH))
+if File.exist?(privacy_manifest_path)
+  app_group_ref = project.main_group.find_subpath("App", true)
+  app_group_ref.set_source_tree("<group>")
+  privacy_basename = "PrivacyInfo.xcprivacy"
+
+  already_referenced = app_group_ref.files.any? { |f| f.path == privacy_basename }
+  unless already_referenced
+    file_ref = app_group_ref.new_reference(privacy_basename)
+    resources_phase = main_target.resources_build_phase
+    resources_phase.add_file_reference(file_ref)
+    puts "✓ added App/PrivacyInfo.xcprivacy to App target's Copy Bundle Resources"
+  else
+    # Even if file_ref exists, make sure it's in the resources phase.
+    resources_phase = main_target.resources_build_phase
+    file_ref = app_group_ref.files.find { |f| f.path == privacy_basename }
+    in_resources = resources_phase.files.any? { |bf| bf.file_ref == file_ref }
+    unless in_resources
+      resources_phase.add_file_reference(file_ref)
+      puts "✓ App/PrivacyInfo.xcprivacy re-attached to App target's Copy Bundle Resources"
+    end
+  end
+end
 
 EXTENSIONS = [
   {
-    name: 'CareerOpsWidget',
-    bundle_suffix: 'widget',
-    type: 'com.apple.product-type.app-extension',
-    extension_point: 'com.apple.widgetkit-extension',
-    source_dir: 'CareerOpsWidget',
+    name: "CareerOpsWidget",
+    bundle_suffix: "widget",
+    type: "com.apple.product-type.app-extension",
+    extension_point: "com.apple.widgetkit-extension",
+    source_dir: "CareerOpsWidget",
     info_plist_extra: {},
-    deployment_min: '16.0', # WidgetKit modern features need 16+
+    deployment_min: "16.0", # WidgetKit modern features need 16+
   },
   {
-    name: 'CareerOpsLiveActivity',
-    bundle_suffix: 'liveactivity',
-    type: 'com.apple.product-type.app-extension',
-    extension_point: 'com.apple.widgetkit-extension',
-    source_dir: 'CareerOpsLiveActivity',
+    name: "CareerOpsLiveActivity",
+    bundle_suffix: "liveactivity",
+    type: "com.apple.product-type.app-extension",
+    extension_point: "com.apple.widgetkit-extension",
+    source_dir: "CareerOpsLiveActivity",
     info_plist_extra: {
-      'NSSupportsLiveActivities' => true,
+      "NSSupportsLiveActivities" => true,
     },
-    deployment_min: '16.1',
+    deployment_min: "16.1",
   },
   {
-    name: 'CareerOpsShareExtension',
-    bundle_suffix: 'share',
-    type: 'com.apple.product-type.app-extension',
-    extension_point: 'com.apple.share-services',
-    source_dir: 'CareerOpsShareExtension',
+    name: "CareerOpsShareExtension",
+    bundle_suffix: "share",
+    type: "com.apple.product-type.app-extension",
+    extension_point: "com.apple.share-services",
+    source_dir: "CareerOpsShareExtension",
     info_plist_extra: {
-      'NSExtensionAttributes' => {
-        'NSExtensionActivationRule' => {
-          'NSExtensionActivationSupportsWebURLWithMaxCount' => 1,
-          'NSExtensionActivationSupportsWebPageWithMaxCount' => 1,
+      "NSExtensionAttributes" => {
+        "NSExtensionActivationRule" => {
+          "NSExtensionActivationSupportsWebURLWithMaxCount" => 1,
+          "NSExtensionActivationSupportsWebPageWithMaxCount" => 1,
         },
       },
     },
-    deployment_min: '15.0',
+    deployment_min: "15.0",
   },
 ]
 
@@ -92,16 +120,16 @@ EXTENSIONS = [
 # and ensure every file is in the App target's compile-sources phase.
 # Safe to re-run — checks for existing refs in both the group and the
 # build phase.
-app_sources_dir = File.expand_path('App', Dir.pwd)
+app_sources_dir = File.expand_path("App", Dir.pwd)
 if Dir.exist?(app_sources_dir)
   # NOTE: do NOT name this `app_group` — the outer scope's `app_group`
   # string ('group.com.resistjs.careerops') is reused in the entitlements
   # block below. Shadowing it with a PBXGroup object corrupts the
   # entitlements file (the plist gem then Marshal-dumps the Ruby object
   # into the <data> element).
-  app_files_group = project.main_group.find_subpath('App', true)
-  app_files_group.set_source_tree('<group>')
-  app_files_group.path = 'App'
+  app_files_group = project.main_group.find_subpath("App", true)
+  app_files_group.set_source_tree("<group>")
+  app_files_group.path = "App"
 
   sources_phase = main_target.source_build_phase
   in_sources = sources_phase.files.map { |bf|
@@ -109,7 +137,7 @@ if Dir.exist?(app_sources_dir)
   }.compact
 
   added = 0
-  Dir.glob(File.join(app_sources_dir, '*.swift')).sort.each do |file|
+  Dir.glob(File.join(app_sources_dir, "*.swift")).sort.each do |file|
     rel = File.basename(file)
     next if in_sources.include?(rel)
 
@@ -148,8 +176,7 @@ EXTENSIONS.each do |ext|
   # author hand-edited the pbxproj or an older script version omitted
   # them.
   existing_target = project.targets.find { |t| t.name == ext[:name] }
-  target =
-    if existing_target
+  target = if existing_target
       puts "▸ repairing target #{ext[:name]}"
       existing_target
     else
@@ -175,24 +202,24 @@ EXTENSIONS.each do |ext|
     # default `$(TARGET_NAME)` only kicks in if the build settings
     # don't override. Hand-edited / older script-produced projects
     # often have PRODUCT_NAME = "" which silently wedges xcodebuild.
-    config.build_settings['PRODUCT_NAME'] = ext[:name]
-    config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = "#{bundle_root}.#{ext[:bundle_suffix]}"
-    config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = ext[:deployment_min]
-    config.build_settings['INFOPLIST_FILE'] = "#{ext[:source_dir]}/Info.plist"
-    config.build_settings['CODE_SIGN_STYLE'] = 'Automatic'
-    config.build_settings['DEVELOPMENT_TEAM'] = team_id if team_id
+    config.build_settings["PRODUCT_NAME"] = ext[:name]
+    config.build_settings["PRODUCT_BUNDLE_IDENTIFIER"] = "#{bundle_root}.#{ext[:bundle_suffix]}"
+    config.build_settings["IPHONEOS_DEPLOYMENT_TARGET"] = ext[:deployment_min]
+    config.build_settings["INFOPLIST_FILE"] = "#{ext[:source_dir]}/Info.plist"
+    config.build_settings["CODE_SIGN_STYLE"] = "Automatic"
+    config.build_settings["DEVELOPMENT_TEAM"] = team_id if team_id
     # SWIFT_VERSION 5.9 keeps parity with the main App target's modern
     # toolchain (Xcode 15+ default). 5.0 is the floor; 5.9 unlocks
     # parameter packs + macro support without breaking any older
     # extensions.
-    config.build_settings['SWIFT_VERSION'] = '5.9'
-    config.build_settings['CODE_SIGN_ENTITLEMENTS'] = "#{ext[:source_dir]}/#{ext[:source_dir]}.entitlements"
+    config.build_settings["SWIFT_VERSION"] = "5.9"
+    config.build_settings["CODE_SIGN_ENTITLEMENTS"] = "#{ext[:source_dir]}/#{ext[:source_dir]}.entitlements"
     # ENABLE_USER_SCRIPT_SANDBOXING = YES is the Xcode 15+ best-practice
     # default — sandboxes shell scripts run in build phases so a stray
     # `rm -rf $DERIVED_DATA` in a third-party run-script phase can't
     # nuke user files outside the project tree.
-    config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'YES'
-    config.build_settings['SKIP_INSTALL'] = 'YES'
+    config.build_settings["ENABLE_USER_SCRIPT_SANDBOXING"] = "YES"
+    config.build_settings["SKIP_INSTALL"] = "YES"
     # CURRENT_PROJECT_VERSION + MARKETING_VERSION MUST resolve to
     # non-empty strings or the extension's Info.plist will ship
     # `CFBundleVersion = ""` (because the source plist uses
@@ -204,15 +231,15 @@ EXTENSIONS.each do |ext|
     # the main App target's defaults (1 / 1.0) so versions stay in
     # lockstep across host + extensions; the brand pipeline
     # (apply-brand.mjs) bumps both via MARKETING_VERSION at release.
-    config.build_settings['CURRENT_PROJECT_VERSION'] = '1'
-    config.build_settings['MARKETING_VERSION'] = '1.0'
+    config.build_settings["CURRENT_PROJECT_VERSION"] = "1"
+    config.build_settings["MARKETING_VERSION"] = "1.0"
   end
 
   # Add Swift sources from the source dir
   group = project.main_group.find_subpath(ext[:source_dir], true)
-  group.set_source_tree('<group>')
+  group.set_source_tree("<group>")
   group.path = ext[:source_dir]
-  swift_files = Dir.glob(File.join(source_dir_abs, '*.swift'))
+  swift_files = Dir.glob(File.join(source_dir_abs, "*.swift"))
   # Dedupe: only add Swift files NOT already in this target's
   # sources build phase. Re-running the script on a project that
   # already has these targets (existing_target path) would otherwise
@@ -232,30 +259,30 @@ EXTENSIONS.each do |ext|
   end
 
   # Generate Info.plist for the target
-  plist_path = File.join(source_dir_abs, 'Info.plist')
+  plist_path = File.join(source_dir_abs, "Info.plist")
   unless File.exist?(plist_path)
     info_plist = {
-      'CFBundleDevelopmentRegion' => '$(DEVELOPMENT_LANGUAGE)',
-      'CFBundleDisplayName' => ext[:name],
-      'CFBundleExecutable' => '$(EXECUTABLE_NAME)',
-      'CFBundleIdentifier' => '$(PRODUCT_BUNDLE_IDENTIFIER)',
-      'CFBundleInfoDictionaryVersion' => '6.0',
-      'CFBundleName' => '$(PRODUCT_NAME)',
-      'CFBundlePackageType' => '$(PRODUCT_BUNDLE_PACKAGE_TYPE)',
-      'CFBundleShortVersionString' => '$(MARKETING_VERSION)',
-      'CFBundleVersion' => '$(CURRENT_PROJECT_VERSION)',
-      'NSExtension' => {
-        'NSExtensionPointIdentifier' => ext[:extension_point],
+      "CFBundleDevelopmentRegion" => "$(DEVELOPMENT_LANGUAGE)",
+      "CFBundleDisplayName" => ext[:name],
+      "CFBundleExecutable" => "$(EXECUTABLE_NAME)",
+      "CFBundleIdentifier" => "$(PRODUCT_BUNDLE_IDENTIFIER)",
+      "CFBundleInfoDictionaryVersion" => "6.0",
+      "CFBundleName" => "$(PRODUCT_NAME)",
+      "CFBundlePackageType" => "$(PRODUCT_BUNDLE_PACKAGE_TYPE)",
+      "CFBundleShortVersionString" => "$(MARKETING_VERSION)",
+      "CFBundleVersion" => "$(CURRENT_PROJECT_VERSION)",
+      "NSExtension" => {
+        "NSExtensionPointIdentifier" => ext[:extension_point],
       },
     }
     # ShareExtension also needs principal class.
-    if ext[:bundle_suffix] == 'share'
-      info_plist['NSExtension']['NSExtensionPrincipalClass'] = '$(PRODUCT_MODULE_NAME).ShareViewController'
+    if ext[:bundle_suffix] == "share"
+      info_plist["NSExtension"]["NSExtensionPrincipalClass"] = "$(PRODUCT_MODULE_NAME).ShareViewController"
     end
     # Merge extra fields
     ext[:info_plist_extra].each { |k, v|
-      if info_plist['NSExtension'] && k == 'NSExtensionAttributes'
-        info_plist['NSExtension']['NSExtensionAttributes'] = v
+      if info_plist["NSExtension"] && k == "NSExtensionAttributes"
+        info_plist["NSExtension"]["NSExtensionAttributes"] = v
       else
         info_plist[k] = v
       end
@@ -268,10 +295,10 @@ EXTENSIONS.each do |ext|
   entitlements_path = File.join(source_dir_abs, "#{ext[:source_dir]}.entitlements")
   unless File.exist?(entitlements_path)
     entitlements = {
-      'com.apple.security.application-groups' => [app_group],
+      "com.apple.security.application-groups" => [app_group],
     }
-    if ext[:bundle_suffix] == 'liveactivity'
-      entitlements['com.apple.developer.live-activities'] = true
+    if ext[:bundle_suffix] == "liveactivity"
+      entitlements["com.apple.developer.live-activities"] = true
     end
     File.write(entitlements_path, Plist::Emit.dump(entitlements))
     puts "    + #{File.basename(entitlements_path)}"
@@ -284,22 +311,22 @@ EXTENSIONS.each do |ext|
   # product_references that all build to the same `.appex`. Walk the
   # phase and drop any entry whose file_ref name (or path) matches
   # this extension. After purge there are zero entries for this ext.
-  embed_phase = main_target.copy_files_build_phases.find { |p| p.name == 'Embed Foundation Extensions' }
-  embed_phase ||= main_target.new_copy_files_build_phase('Embed Foundation Extensions')
+  embed_phase = main_target.copy_files_build_phases.find { |p| p.name == "Embed Foundation Extensions" }
+  embed_phase ||= main_target.new_copy_files_build_phase("Embed Foundation Extensions")
   embed_phase.symbol_dst_subfolder_spec = :plug_ins
   ext_basename = "#{ext[:name]}.appex"
   embed_phase.files.dup.each do |bf|
     next unless bf.file_ref
     fr_name = bf.file_ref.path.to_s
-    fr_display = bf.file_ref.display_name.to_s rescue ''
-    if fr_name == ext_basename || fr_display == ext_basename || fr_name == '.appex'
+    fr_display = bf.file_ref.display_name.to_s rescue ""
+    if fr_name == ext_basename || fr_display == ext_basename || fr_name == ".appex"
       embed_phase.remove_build_file(bf)
     end
   end
   # Step 2: Add exactly one fresh entry pointing at the (now-repaired
   # PRODUCT_NAME) target's product reference.
   build_file = embed_phase.add_file_reference(target.product_reference)
-  build_file.settings = { 'ATTRIBUTES' => ['RemoveHeadersOnCopy'] }
+  build_file.settings = { "ATTRIBUTES" => ["RemoveHeadersOnCopy"] }
 
   # Add explicit dependency (idempotent — add_dependency dedupes
   # against existing PBXTargetDependency entries internally).
@@ -314,7 +341,7 @@ end
 # the entitlements with an empty file and lose keychain/aps/background-
 # tasks entitlements. Quick + safe shortcut: if the raw text already
 # mentions the app_group string, do nothing.
-main_entitlements = File.expand_path('App/App.entitlements', Dir.pwd)
+main_entitlements = File.expand_path("App/App.entitlements", Dir.pwd)
 if File.exist?(main_entitlements) && File.read(main_entitlements).include?(app_group)
   puts "✓ #{app_group} already in App.entitlements"
 else
@@ -328,16 +355,16 @@ else
     end
   end
   if existing_entitlements
-    existing_entitlements['com.apple.security.application-groups'] ||= []
-    unless existing_entitlements['com.apple.security.application-groups'].include?(app_group)
-      existing_entitlements['com.apple.security.application-groups'] << app_group
+    existing_entitlements["com.apple.security.application-groups"] ||= []
+    unless existing_entitlements["com.apple.security.application-groups"].include?(app_group)
+      existing_entitlements["com.apple.security.application-groups"] << app_group
       File.write(main_entitlements, Plist::Emit.dump(existing_entitlements))
       puts "✓ added #{app_group} to App.entitlements"
     end
   elsif !File.exist?(main_entitlements)
     # No file at all — safe to create a fresh one.
     File.write(main_entitlements, Plist::Emit.dump({
-      'com.apple.security.application-groups' => [app_group],
+      "com.apple.security.application-groups" => [app_group],
     }))
     puts "✓ created App.entitlements with #{app_group}"
   end
@@ -345,7 +372,7 @@ end
 
 # Make sure the main target's build settings reference the entitlements file
 main_target.build_configurations.each do |config|
-  config.build_settings['CODE_SIGN_ENTITLEMENTS'] ||= 'App/App.entitlements'
+  config.build_settings["CODE_SIGN_ENTITLEMENTS"] ||= "App/App.entitlements"
 end
 
 # ── Apple Watch (CareerOpsWatch) target ─────────────────────────────
@@ -355,7 +382,7 @@ end
 # can't build — and the user has to do the dance of "File → New →
 # Target → watchOS → App" through the Xcode UI, which is fragile and
 # manual. Idempotent: skips if a CareerOpsWatch target already exists.
-WATCH_NAME = 'CareerOpsWatch'
+WATCH_NAME = "CareerOpsWatch"
 # Source dir lives at ui/ios/App/CareerOpsWatch/ — same level as the
 # .xcodeproj (cwd), NOT one level up. The legacy EXTENSIONS loop above
 # uses `../#{name}` which resolves to ui/ios/ — those extension dirs
@@ -364,7 +391,7 @@ WATCH_NAME = 'CareerOpsWatch'
 # right here.
 WATCH_SOURCE_DIR = File.expand_path(WATCH_NAME, Dir.pwd)
 WATCH_BUNDLE_ID = "#{bundle_root}.watchkitapp"
-WATCH_DEPLOY = '10.0'
+WATCH_DEPLOY = "10.0"
 
 if project.targets.any? { |t| t.name == WATCH_NAME }
   # Repair path: target exists, but new Swift files (e.g. Brand.swift
@@ -374,14 +401,14 @@ if project.targets.any? { |t| t.name == WATCH_NAME }
   # Watch-side code couldn't use `Brand.displayName` etc.
   watch_target = project.targets.find { |t| t.name == WATCH_NAME }
   watch_group = project.main_group.find_subpath(WATCH_NAME, true)
-  watch_group.set_source_tree('<group>')
+  watch_group.set_source_tree("<group>")
   watch_group.path = WATCH_NAME
   watch_sources_phase = watch_target.source_build_phase
   already_compiled = watch_sources_phase.files.map { |bf|
     bf.file_ref ? File.basename(bf.file_ref.path.to_s) : nil
   }.compact
   added_to_watch = 0
-  Dir.glob(File.join(WATCH_SOURCE_DIR, '*.swift')).sort.each do |file|
+  Dir.glob(File.join(WATCH_SOURCE_DIR, "*.swift")).sort.each do |file|
     rel = File.basename(file)
     next if already_compiled.include?(rel)
     existing_ref = watch_group.files.find { |f| File.basename(f.path.to_s) == rel }
@@ -415,35 +442,35 @@ else
 
   watch_target.build_configurations.each do |config|
     config.build_settings.merge!(
-      'PRODUCT_BUNDLE_IDENTIFIER' => WATCH_BUNDLE_ID,
-      'PRODUCT_NAME' => WATCH_NAME,
-      'WATCHOS_DEPLOYMENT_TARGET' => WATCH_DEPLOY,
-      'SDKROOT' => 'watchos',
-      'SUPPORTED_PLATFORMS' => 'watchsimulator watchos',
-      'TARGETED_DEVICE_FAMILY' => '4',
-      'INFOPLIST_FILE' => "#{WATCH_NAME}/Info.plist",
-      'CODE_SIGN_ENTITLEMENTS' => "#{WATCH_NAME}/#{WATCH_NAME}.entitlements",
-      'CODE_SIGN_STYLE' => 'Automatic',
+      "PRODUCT_BUNDLE_IDENTIFIER" => WATCH_BUNDLE_ID,
+      "PRODUCT_NAME" => WATCH_NAME,
+      "WATCHOS_DEPLOYMENT_TARGET" => WATCH_DEPLOY,
+      "SDKROOT" => "watchos",
+      "SUPPORTED_PLATFORMS" => "watchsimulator watchos",
+      "TARGETED_DEVICE_FAMILY" => "4",
+      "INFOPLIST_FILE" => "#{WATCH_NAME}/Info.plist",
+      "CODE_SIGN_ENTITLEMENTS" => "#{WATCH_NAME}/#{WATCH_NAME}.entitlements",
+      "CODE_SIGN_STYLE" => "Automatic",
       # 5.9 matches the main App target so the same toolchain compiles
       # both. 5.0 was Xcode 13's default; 5.9 ships with Xcode 15.
-      'SWIFT_VERSION' => '5.9',
+      "SWIFT_VERSION" => "5.9",
       # Xcode 15+ default — sandbox build-phase scripts. See the
       # extension-target version of this comment above for context.
-      'ENABLE_USER_SCRIPT_SANDBOXING' => 'YES',
-      'SKIP_INSTALL' => 'YES',
-      'GENERATE_INFOPLIST_FILE' => 'NO',
-      'ASSETCATALOG_COMPILER_APPICON_NAME' => 'AppIcon',
-      'CURRENT_PROJECT_VERSION' => '1',
-      'MARKETING_VERSION' => '1.0',
+      "ENABLE_USER_SCRIPT_SANDBOXING" => "YES",
+      "SKIP_INSTALL" => "YES",
+      "GENERATE_INFOPLIST_FILE" => "NO",
+      "ASSETCATALOG_COMPILER_APPICON_NAME" => "AppIcon",
+      "CURRENT_PROJECT_VERSION" => "1",
+      "MARKETING_VERSION" => "1.0",
     )
-    config.build_settings['DEVELOPMENT_TEAM'] = team_id if team_id
+    config.build_settings["DEVELOPMENT_TEAM"] = team_id if team_id
   end
 
   # Source files (Swift)
   watch_group = project.main_group.find_subpath(WATCH_NAME, true)
-  watch_group.set_source_tree('<group>')
+  watch_group.set_source_tree("<group>")
   watch_group.path = WATCH_NAME
-  Dir.glob(File.join(WATCH_SOURCE_DIR, '*.swift')).sort.each do |file|
+  Dir.glob(File.join(WATCH_SOURCE_DIR, "*.swift")).sort.each do |file|
     rel = File.basename(file)
     file_ref = watch_group.new_file(rel)
     watch_target.add_file_references([file_ref])
@@ -451,9 +478,9 @@ else
   end
 
   # Asset catalog
-  assets_path = File.join(WATCH_SOURCE_DIR, 'Assets.xcassets')
+  assets_path = File.join(WATCH_SOURCE_DIR, "Assets.xcassets")
   if Dir.exist?(assets_path)
-    assets_ref = watch_group.new_file('Assets.xcassets')
+    assets_ref = watch_group.new_file("Assets.xcassets")
     watch_target.add_resources([assets_ref])
     puts "    + #{WATCH_NAME}/Assets.xcassets"
   end
@@ -462,7 +489,7 @@ else
   # settings above; we still want them visible in the project navigator
   # so devs can edit them. Add as file references without adding to
   # the resources/compile phases.
-  ['Info.plist', "#{WATCH_NAME}.entitlements"].each do |fname|
+  ["Info.plist", "#{WATCH_NAME}.entitlements"].each do |fname|
     next unless File.exist?(File.join(WATCH_SOURCE_DIR, fname))
     next if watch_group.files.any? { |f| File.basename(f.path.to_s) == fname }
     watch_group.new_file(fname)
@@ -473,22 +500,22 @@ else
   # the paired watch to discover. The build phase is "Embed Watch
   # Content" — Xcode's symbolic dst_subfolder for watch is :wrapper +
   # custom path `$(CONTENTS_FOLDER_PATH)/Watch`.
-  embed_phase = main_target.copy_files_build_phases.find { |p| p.name == 'Embed Watch Content' }
+  embed_phase = main_target.copy_files_build_phases.find { |p| p.name == "Embed Watch Content" }
   unless embed_phase
-    embed_phase = main_target.new_copy_files_build_phase('Embed Watch Content')
-    embed_phase.dst_subfolder_spec = '16' # wrapper
-    embed_phase.dst_path = '$(CONTENTS_FOLDER_PATH)/Watch'
+    embed_phase = main_target.new_copy_files_build_phase("Embed Watch Content")
+    embed_phase.dst_subfolder_spec = "16" # wrapper
+    embed_phase.dst_path = "$(CONTENTS_FOLDER_PATH)/Watch"
   end
   unless embed_phase.files.any? { |bf| bf.file_ref == watch_target.product_reference }
     bf = embed_phase.add_file_reference(watch_target.product_reference)
-    bf.settings = { 'ATTRIBUTES' => ['RemoveHeadersOnCopy'] }
+    bf.settings = { "ATTRIBUTES" => ["RemoveHeadersOnCopy"] }
   end
   main_target.add_dependency(watch_target)
 
   # Shared scheme — without this, `xcodebuild -scheme CareerOpsWatch`
   # errors "scheme not found" (Xcode only auto-generates user schemes
   # on first open, which CI / dev:apple-watch can't rely on).
-  schemes_dir = File.join(PROJECT_PATH, 'xcshareddata', 'xcschemes')
+  schemes_dir = File.join(PROJECT_PATH, "xcshareddata", "xcschemes")
   FileUtils.mkdir_p(schemes_dir)
   scheme = Xcodeproj::XCScheme.new
   scheme.add_build_target(watch_target)
@@ -503,7 +530,7 @@ else
     File.write(
       watch_entitlements_path,
       Plist::Emit.dump({
-        'com.apple.security.application-groups' => [app_group],
+        "com.apple.security.application-groups" => [app_group],
       }),
     )
     puts "    + #{WATCH_NAME}/#{WATCH_NAME}.entitlements"
@@ -528,11 +555,11 @@ end
 # Idempotent — re-runs are no-ops if every test target already exists.
 TEST_TARGETS = [
   {
-    name: 'AppTests',
-    bundle_suffix: 'tests',
-    type: 'com.apple.product-type.bundle.unit-test',
-    host: 'App',
-    deployment_min: '15.0',
+    name: "AppTests",
+    bundle_suffix: "tests",
+    type: "com.apple.product-type.bundle.unit-test",
+    host: "App",
+    deployment_min: "15.0",
     placeholder: <<~SWIFT,
       // AppTests — XCTest unit tests for the App target. Real cases live
       // in BrandTests.swift, KeychainStoreTests.swift, etc. (Phase 3.3+).
@@ -547,11 +574,11 @@ TEST_TARGETS = [
     SWIFT
   },
   {
-    name: 'AppUITests',
-    bundle_suffix: 'uitests',
-    type: 'com.apple.product-type.bundle.ui-testing',
-    host: 'App',
-    deployment_min: '15.0',
+    name: "AppUITests",
+    bundle_suffix: "uitests",
+    type: "com.apple.product-type.bundle.ui-testing",
+    host: "App",
+    deployment_min: "15.0",
     placeholder: <<~SWIFT,
       // AppUITests — XCUITest end-to-end tests. Drives a real simulator
       // running the app. Real cases land in ColdLaunchUITests.swift,
@@ -568,11 +595,11 @@ TEST_TARGETS = [
     SWIFT
   },
   {
-    name: 'WidgetTests',
-    bundle_suffix: 'widgettests',
-    type: 'com.apple.product-type.bundle.unit-test',
-    host: 'CareerOpsWidget',
-    deployment_min: '16.0',
+    name: "WidgetTests",
+    bundle_suffix: "widgettests",
+    type: "com.apple.product-type.bundle.unit-test",
+    host: "CareerOpsWidget",
+    deployment_min: "16.0",
     placeholder: <<~SWIFT,
       // WidgetTests — XCTest unit tests for the CareerOpsWidget extension
       // target. Real cases live in WidgetAuthGateTests.swift,
@@ -587,12 +614,12 @@ TEST_TARGETS = [
     SWIFT
   },
   {
-    name: 'WatchTests',
-    bundle_suffix: 'watchtests',
-    type: 'com.apple.product-type.bundle.unit-test',
-    host: 'CareerOpsWatch',
-    deployment_min: '15.0',
-    sdk: 'watchos',
+    name: "WatchTests",
+    bundle_suffix: "watchtests",
+    type: "com.apple.product-type.bundle.unit-test",
+    host: "CareerOpsWatch",
+    deployment_min: "15.0",
+    sdk: "watchos",
     placeholder: <<~SWIFT,
       // WatchTests — XCTest unit tests for the CareerOpsWatch target.
       // Real cases live in WatchModelTests.swift, RootViewTests.swift
@@ -609,11 +636,6 @@ TEST_TARGETS = [
 ]
 
 TEST_TARGETS.each do |t|
-  if project.targets.any? { |x| x.name == t[:name] }
-    puts "= #{t[:name]} already present — skipping"
-    next
-  end
-
   source_dir = File.expand_path(t[:name], File.dirname(PROJECT_PATH))
   FileUtils.mkdir_p(source_dir)
   placeholder_path = File.join(source_dir, "#{t[:name]}Smoke.swift")
@@ -629,46 +651,68 @@ TEST_TARGETS.each do |t|
   end
 
   bundle_id = "#{bundle_root}.#{t[:bundle_suffix]}"
-  is_watch = t[:sdk] == 'watchos'
+  is_watch = t[:sdk] == "watchos"
   platform = is_watch ? :watchos : :ios
 
-  new_target = project.new_target(:bundle, t[:name], platform, t[:deployment_min])
-  new_target.product_type = t[:type]
-  new_target.build_configurations.each do |bc|
-    bc.build_settings.merge!(
-      'PRODUCT_BUNDLE_IDENTIFIER' => bundle_id,
-      "#{is_watch ? 'WATCHOS' : 'IPHONEOS'}_DEPLOYMENT_TARGET" => t[:deployment_min],
-      'SWIFT_VERSION' => '5.0',
-      'CODE_SIGN_STYLE' => 'Automatic',
-      'INFOPLIST_KEY_CFBundleDisplayName' => t[:name],
-      'GENERATE_INFOPLIST_FILE' => 'YES',
-      'TEST_HOST' => "$(BUILT_PRODUCTS_DIR)/#{t[:host]}.app/#{t[:host]}",
-      'BUNDLE_LOADER' => "$(TEST_HOST)",
-      'TARGETED_DEVICE_FAMILY' => is_watch ? '4' : '1,2',
-    )
-    bc.build_settings['DEVELOPMENT_TEAM'] = team_id if team_id
+  existing = project.targets.find { |x| x.name == t[:name] }
+  if existing
+    new_target = existing
+    puts "= #{t[:name]} target exists — syncing sources"
+  else
+    new_target = project.new_target(:bundle, t[:name], platform, t[:deployment_min])
+    new_target.product_type = t[:type]
+    new_target.build_configurations.each do |bc|
+      bc.build_settings.merge!(
+        "PRODUCT_BUNDLE_IDENTIFIER" => bundle_id,
+        "#{is_watch ? "WATCHOS" : "IPHONEOS"}_DEPLOYMENT_TARGET" => t[:deployment_min],
+        "SWIFT_VERSION" => "5.0",
+        "CODE_SIGN_STYLE" => "Automatic",
+        "INFOPLIST_KEY_CFBundleDisplayName" => t[:name],
+        "GENERATE_INFOPLIST_FILE" => "YES",
+        "TEST_HOST" => "$(BUILT_PRODUCTS_DIR)/#{t[:host]}.app/#{t[:host]}",
+        "BUNDLE_LOADER" => "$(TEST_HOST)",
+        "TARGETED_DEVICE_FAMILY" => is_watch ? "4" : "1,2",
+      )
+      bc.build_settings["DEVELOPMENT_TEAM"] = team_id if team_id
+    end
+    new_target.add_dependency(host_target)
+    puts "  ✓ #{t[:name]} created (host=#{t[:host]}, bundle=#{bundle_id}, deploy=#{t[:deployment_min]})"
   end
 
-  # Wire the placeholder source into the target.
+  # Wire every .swift file in the test target dir into the target.
+  # Re-runs are safe: existing references are de-duped by path.
   ref = project.main_group.find_subpath(t[:name], true)
-  ref.set_source_tree('<group>')
-  file_ref = ref.new_reference(File.basename(placeholder_path))
-  new_target.add_file_references([file_ref])
+  ref.set_source_tree("<group>")
+  existing_paths = ref.files.map(&:path).to_set
 
-  # Test targets DEPEND ON their host so xcodebuild builds the host
-  # first. UI tests also need the target-application setting.
-  new_target.add_dependency(host_target)
+  # Also dedupe against the build phase — Xcode tracks "Compile Sources"
+  # separately from file refs and re-runs could double-add otherwise.
+  sources_phase = new_target.source_build_phase
+  sources_in_phase = sources_phase.files.map { |bf| bf.file_ref&.path }.compact.to_set
+
+  Dir.glob(File.join(source_dir, "*.swift")).sort.each do |swift_file|
+    basename = File.basename(swift_file)
+    if existing_paths.include?(basename)
+      next if sources_in_phase.include?(basename)
+      file_ref = ref.files.find { |f| f.path == basename }
+    else
+      file_ref = ref.new_reference(basename)
+      puts "    + #{t[:name]}/#{basename}"
+    end
+    new_target.add_file_references([file_ref]) unless sources_in_phase.include?(basename)
+  end
 
   # Shared scheme so `xcodebuild test -scheme <Name>` works in CI.
-  schemes_dir = File.join(PROJECT_PATH, 'xcshareddata', 'xcschemes')
+  schemes_dir = File.join(PROJECT_PATH, "xcshareddata", "xcschemes")
   FileUtils.mkdir_p(schemes_dir)
-  scheme = Xcodeproj::XCScheme.new
-  scheme.add_build_target(new_target)
-  scheme.add_test_target(new_target)
-  scheme.save_as(PROJECT_PATH, t[:name], true)
-  puts "    + xcshareddata/xcschemes/#{t[:name]}.xcscheme"
-
-  puts "  ✓ #{t[:name]} added (host=#{t[:host]}, bundle=#{bundle_id}, deploy=#{t[:deployment_min]})"
+  scheme_path = File.join(schemes_dir, "#{t[:name]}.xcscheme")
+  unless File.exist?(scheme_path)
+    scheme = Xcodeproj::XCScheme.new
+    scheme.add_build_target(new_target)
+    scheme.add_test_target(new_target)
+    scheme.save_as(PROJECT_PATH, t[:name], true)
+    puts "    + xcshareddata/xcschemes/#{t[:name]}.xcscheme"
+  end
 end
 
 project.save
