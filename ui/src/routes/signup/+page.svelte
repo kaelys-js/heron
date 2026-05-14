@@ -16,13 +16,17 @@
    * have an obvious escape hatch. Better Auth's passkey plugin handles
    * the actual WebAuthn ceremony; on success we redirect to /onboarding.
    */
-  import { authClient } from '$lib/client/auth-client';
+  import { authClient, setPendingInviteCode } from '$lib/client/auth-client';
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
   import { KeyRound, AlertCircle, ChevronLeft, ShieldCheck } from '@lucide/svelte';
   import { goto } from '$app/navigation';
   import { APP_NAME } from '$lib/config/branding';
+  // Smooth height animation when the error banner mounts/unmounts —
+  // see /login for rationale.
+  import { slide } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
 
   let { data } = $props<{
     data: { isFirstUser: boolean; githubEnabled: boolean };
@@ -80,7 +84,10 @@
   }
 
   async function createAccount() {
-    error = null;
+    // Don't clear `error = null` here — see /login's signInWithPasskey
+    // for the rationale. Clearing it causes the inline error banner to
+    // unmount and remount on each click, jumping the layout. Cleared
+    // only on the SUCCESS path (after the goto to /onboarding).
     if (!name.trim()) {
       error = 'Please enter your name.';
       return;
@@ -98,6 +105,10 @@
     try {
       // For non-first users, validate the invite code first so we don't
       // create a half-baked account before realising the code is bad.
+      // This is the UX check; the SERVER also enforces single-use
+      // redemption in hooks.server.ts's signupGate, so even if the user
+      // somehow skips this validation the actual signup POST will be
+      // rejected without a valid header.
       if (!data.isFirstUser) {
         const claim = await fetch('/api/auth/invite/claim', {
           method: 'POST',
@@ -110,6 +121,11 @@
           busy = false;
           return;
         }
+        // Stash the code so customFetch attaches it as `x-invite-code`
+        // on the immediately-following authClient.signUp.email call.
+        // The slot is single-use (cleared after attach) so a stale
+        // code can never leak into an unrelated request.
+        setPendingInviteCode(inviteCode.trim());
       }
 
       // Create the account via passkey. Better Auth's plugin will:
@@ -139,6 +155,8 @@
         return;
       }
 
+      // Success path — clear any stale error before navigating away.
+      error = null;
       await goto('/onboarding', { invalidateAll: true });
     } catch (e) {
       error = friendlyError(e);
@@ -166,18 +184,21 @@
       radial-gradient(36rem 28rem at 0% 100%, rgba(168, 85, 247, 0.12), transparent 60%);"
   ></div>
 
-  <!-- Top-left BACK button — fixed, always-visible escape hatch. Tapping
-       returns the user to /login (the only realistic place they came
-       from). Position uses pt-safe so the chevron clears the notch on
-       iPhones with Dynamic Island. -->
-  <a
-    href="/login"
-    aria-label="Back to sign in"
-    class="absolute left-3 top-3 z-20 inline-flex items-center gap-1 rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground pt-safe"
-  >
-    <ChevronLeft class="size-4" />
-    Back
-  </a>
+  <!-- Top-left BACK button — fixed escape hatch back to /login.
+       HIDDEN in first-user mode because there's nowhere to go back
+       to: /login would just redirect right back here (server sees
+       users.count === 0). Showing a Back button that reloads the
+       same page is a UX dead-end. -->
+  {#if !data.isFirstUser}
+    <a
+      href="/login"
+      aria-label="Back to sign in"
+      class="absolute left-3 top-3 z-20 inline-flex items-center gap-1 rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground pt-safe"
+    >
+      <ChevronLeft class="size-4" />
+      Back
+    </a>
+  {/if}
 
   <div class="relative z-10 flex w-full max-w-sm flex-col items-center">
     <!-- Brand mark hero — same SVG composition as /login so the brand
@@ -230,12 +251,21 @@
     </p>
 
     {#if error}
+      <!--
+        Inline icon with `vertical-align: middle` rather than flex +
+        wrapper math — see /login for the full rationale. The icon's
+        vertical position tracks the text's x-height center
+        naturally, no magic margins.
+      -->
       <div
-        class="mt-6 flex w-full items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200"
+        class="mt-6 w-full overflow-hidden rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200"
         role="alert"
+        transition:slide={{ duration: 220, easing: cubicOut }}
       >
-        <AlertCircle class="mt-0.5 size-4 flex-shrink-0" />
-        <span class="leading-relaxed">{error}</span>
+        <p class="leading-relaxed">
+          <AlertCircle class="mr-2 inline-block size-4 align-middle" />
+          {error}
+        </p>
       </div>
     {/if}
 
@@ -255,12 +285,20 @@
             <Label for="invite" class="text-xs uppercase tracking-wide text-muted-foreground"
               >Invite code</Label
             >
+            <!--
+              `pattern={'\\d{6}'}` is wrapped in a JS string expression
+              because Svelte parses `{...}` inside attribute values as a
+              JS expression — the bare HTML5 pattern `\d{6}` would
+              interpolate `{6}` to the number 6, emitting the broken
+              attribute `pattern="\d6"` that rejects every input
+              including the legitimate 6-digit code.
+            -->
             <Input
               id="invite"
               bind:value={inviteCode}
               maxlength={6}
               inputmode="numeric"
-              pattern="\d{6}"
+              pattern={'\\d{6}'}
               placeholder="123456"
               autocomplete="one-time-code"
               disabled={busy}
@@ -309,19 +347,26 @@
       </div>
     </form>
 
-    <!-- Trust reassurance — matches /login -->
+    <!-- Trust reassurance — matches /login. Describes the actual
+         security model (passkey private key never leaves the device)
+         instead of using "end-to-end" jargon. -->
     <div
       class="mt-6 flex items-center gap-2 rounded-full bg-emerald-500/8 px-3 py-1.5 text-[11px] text-emerald-300/80"
     >
       <ShieldCheck class="size-3.5" />
-      <span>Passkeys, end-to-end. No passwords stored.</span>
+      <span>Private by design · Your device is the key</span>
     </div>
 
     <!-- Secondary navigation: already-have-account link sits at the
-         bottom so it doesn't compete with the primary action above. -->
-    <p class="mt-6 text-xs text-muted-foreground">
-      Already have an account?
-      <a href="/login" class="text-foreground underline-offset-4 hover:underline">Sign in</a>
-    </p>
+         bottom so it doesn't compete with the primary action above.
+         HIDDEN in first-user mode — by definition NO account exists
+         yet, so prompting "Already have an account? Sign in" is
+         nonsensical and would just dump the user back at /signup. -->
+    {#if !data.isFirstUser}
+      <p class="mt-6 text-xs text-muted-foreground">
+        Already have an account?
+        <a href="/login" class="text-foreground underline-offset-4 hover:underline">Sign in</a>
+      </p>
+    {/if}
   </div>
 </main>

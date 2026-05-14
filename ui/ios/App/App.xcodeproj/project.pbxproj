@@ -7,9 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1384E818E0B0BB9C24B3712A /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13A4B88F10BE222B3E1F1BCB /* ErrorReporter.swift */; };
+		1410FAC7E621519DCCAA554E /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FD7C6838A42199F3A5357F9 /* Brand.swift */; };
+		1A1E6B6C4CFE57F9BB79B986 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 527F4909548255C904FEC97F /* Brand.swift */; };
 		282B8FCC6D1B1FB06EA462D7 /* CareerOpsNativePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE88770478FB968E108A903 /* CareerOpsNativePlugin.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
+		32B67DD0B4C66A2E1DE827F1 /* CareerOpsShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C05A76F56281A0EFD15DAD02 /* CareerOpsShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		3521FD15CAEE97D1B1F89B14 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18818E6F512F4FDB4E0E23 /* NetworkMonitor.swift */; };
+		372E82A1545BDF1E9CDBE18F /* CareerOpsLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61F7E4F675384A34CE49A942 /* CareerOpsLiveActivity.swift */; };
 		39AE56D8D333DCE81A16A6D5 /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CA1675A1757C18B2FF09E0 /* ErrorReporter.swift */; };
 		3BCA8D89ECD906AE04F604E8 /* WatchSessionBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51CD8E57475622C06A0B72CA /* WatchSessionBridge.swift */; };
 		3EC41BCD48A909DCE62A32C7 /* CareerOpsWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 45A788CFF48FB162CF58655F /* CareerOpsWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -20,27 +25,61 @@
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
+		5832F85B1A07FC4585ED0944 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB936BF2B6B11D3A31B7859C /* Foundation.framework */; };
+		5C10E71DF4CB6EA4C40FF156 /* InboxIssuesWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 559AF47C7C7A75A0218312AA /* InboxIssuesWidget.swift */; };
 		5C7BEACB7A09695AF511E256 /* SpotlightIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8126D767BB835DA855B58552 /* SpotlightIndexer.swift */; };
 		61B92C376B6A0BFDE5B3A999 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B04DDA8861B187894F3581C1 /* Assets.xcassets */; };
 		6BB0F8A01827A3FF34261489 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0864100E15B7E184D1F89EC5 /* KeychainStore.swift */; };
+		6FDE5093301DB8CE45AC70E9 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85AA568F77B851EEABF69F5 /* Brand.swift */; };
+		72F610D6F09C4E4101EBDCED /* NextInterviewWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29AFA3C1756697C1450E03AC /* NextInterviewWidget.swift */; };
+		7623847E565D6D406BE4999D /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6FF0483296BD7B4DF03552B /* ErrorReporter.swift */; };
 		7AC0D36C2BBD93C60EFC3C4F /* CareerOpsBridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26631DCF28D85F99FB13A91E /* CareerOpsBridgeViewController.swift */; };
 		7DBFA4641E2729F109B35EF2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27884949441377C8C7559A26 /* Foundation.framework */; };
+		A1244B73B15B966C36802DFE /* CareerOpsLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A2BA497A7735FA0C55C2F3F4 /* CareerOpsLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A17A18173DACDECD9ECF0E6A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB936BF2B6B11D3A31B7859C /* Foundation.framework */; };
+		A1B00DBA1C9C6D8DE2255FE7 /* CareerOpsWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B4B54803324B7A34A4644CE6 /* CareerOpsWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A8C93FC3E1C6E5089E3AA399 /* BiometricAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9012709D08A85C7A9CEB2C91 /* BiometricAuth.swift */; };
 		B1166C2AFCE9CB88941BA785 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7738EEBCC31A28A769071A /* RootView.swift */; };
 		C362913F0191FC3C677CCE21 /* WatchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 604BE1F005FDB069FF3F1985 /* WatchModel.swift */; };
+		DB9888B9A6B6413600F13C3D /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31513D0E4528E2BF567E770E /* ErrorReporter.swift */; };
+		DD736F2150095034A1A5D70A /* CareerOpsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B536A0A3EB877FABCC9B18D3 /* CareerOpsWidget.swift */; };
+		F1E4AF21110F4A7FF4ED8647 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB936BF2B6B11D3A31B7859C /* Foundation.framework */; };
 		F1F394828835CCEEBB9D625C /* BonjourBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DA0F3C2FA120D4A573F42DD /* BonjourBrowser.swift */; };
 		F7767B589F14995F442A2D97 /* BackgroundFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2CB39CFF5FD8265A4264E6 /* BackgroundFetcher.swift */; };
 		FB144018EF447333F7EC2B37 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C73C9434A8B33AAD827E716 /* Brand.swift */; };
 		FEDC0D7E63F105A7E9D216B8 /* CareerOpsWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B6989861C5B4F1B0CDA0EC /* CareerOpsWatchApp.swift */; };
+		FF24E0EAF3EB998992F290D6 /* TopApplyWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07E05E7932775592D5BE6108 /* TopApplyWidget.swift */; };
+		FF4D01143FCAC7E73E98408A /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 725697F6C88065D295E18F63 /* ShareViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		013A769FE09DB32203EEF36A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5A04383019EDAD2FAE1F9F7A;
+			remoteInfo = CareerOpsWidget;
+		};
 		9173A2D5BF002BBA23F8E63A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = B9F6220DFC7E8DBB5676EA3F;
 			remoteInfo = CareerOpsWatch;
+		};
+		B9A45D7EA44F64F1757016CF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 28FD4AC421AE696E07E4B285;
+			remoteInfo = CareerOpsShareExtension;
+		};
+		FC8A9D421F7E3957593C9302 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CCB5315836B1FF3237625C1E;
+			remoteInfo = CareerOpsLiveActivity;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -56,14 +95,31 @@
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A03C74D4E6F22BB05D210344 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A1B00DBA1C9C6D8DE2255FE7 /* CareerOpsWidget.appex in Embed Foundation Extensions */,
+				A1244B73B15B966C36802DFE /* CareerOpsLiveActivity.appex in Embed Foundation Extensions */,
+				32B67DD0B4C66A2E1DE827F1 /* CareerOpsShareExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		07E05E7932775592D5BE6108 /* TopApplyWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TopApplyWidget.swift; sourceTree = "<group>"; };
 		0864100E15B7E184D1F89EC5 /* KeychainStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		13A4B88F10BE222B3E1F1BCB /* ErrorReporter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ErrorReporter.swift; sourceTree = "<group>"; };
 		26631DCF28D85F99FB13A91E /* CareerOpsBridgeViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CareerOpsBridgeViewController.swift; sourceTree = "<group>"; };
 		27884949441377C8C7559A26 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		29AFA3C1756697C1450E03AC /* NextInterviewWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NextInterviewWidget.swift; sourceTree = "<group>"; };
 		2CE88770478FB968E108A903 /* CareerOpsNativePlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CareerOpsNativePlugin.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
+		31513D0E4528E2BF567E770E /* ErrorReporter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ErrorReporter.swift; sourceTree = "<group>"; };
 		39BFEFD4AB09C83E133FF2AC /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		3C73C9434A8B33AAD827E716 /* Brand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
 		3DA0F3C2FA120D4A573F42DD /* BonjourBrowser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BonjourBrowser.swift; sourceTree = "<group>"; };
@@ -77,14 +133,26 @@
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		51CD8E57475622C06A0B72CA /* WatchSessionBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSessionBridge.swift; sourceTree = "<group>"; };
+		527F4909548255C904FEC97F /* Brand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
+		559AF47C7C7A75A0218312AA /* InboxIssuesWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InboxIssuesWidget.swift; sourceTree = "<group>"; };
 		604BE1F005FDB069FF3F1985 /* WatchModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchModel.swift; sourceTree = "<group>"; };
+		61F7E4F675384A34CE49A942 /* CareerOpsLiveActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CareerOpsLiveActivity.swift; sourceTree = "<group>"; };
 		67CA1675A1757C18B2FF09E0 /* ErrorReporter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ErrorReporter.swift; sourceTree = "<group>"; };
+		725697F6C88065D295E18F63 /* ShareViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		8126D767BB835DA855B58552 /* SpotlightIndexer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SpotlightIndexer.swift; sourceTree = "<group>"; };
 		8D7738EEBCC31A28A769071A /* RootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		9012709D08A85C7A9CEB2C91 /* BiometricAuth.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BiometricAuth.swift; sourceTree = "<group>"; };
 		939AF9DEAE52F3A5D09A7C5A /* CareerOpsWatch.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = CareerOpsWatch.entitlements; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		9FD7C6838A42199F3A5357F9 /* Brand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
+		A2BA497A7735FA0C55C2F3F4 /* CareerOpsLiveActivity.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CareerOpsLiveActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B04DDA8861B187894F3581C1 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B4B54803324B7A34A4644CE6 /* CareerOpsWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CareerOpsWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B536A0A3EB877FABCC9B18D3 /* CareerOpsWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CareerOpsWidget.swift; sourceTree = "<group>"; };
+		C05A76F56281A0EFD15DAD02 /* CareerOpsShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CareerOpsShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C6FF0483296BD7B4DF03552B /* ErrorReporter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ErrorReporter.swift; sourceTree = "<group>"; };
+		C85AA568F77B851EEABF69F5 /* Brand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
+		CB936BF2B6B11D3A31B7859C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		DB2CB39CFF5FD8265A4264E6 /* BackgroundFetcher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackgroundFetcher.swift; sourceTree = "<group>"; };
 		DD18818E6F512F4FDB4E0E23 /* NetworkMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		F4B6989861C5B4F1B0CDA0EC /* CareerOpsWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CareerOpsWatchApp.swift; sourceTree = "<group>"; };
@@ -107,9 +175,44 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B188DFEB303DAD27227C807D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A17A18173DACDECD9ECF0E6A /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CCCBF717092DD11658B3982F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5832F85B1A07FC4585ED0944 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D830F5D6B33CF0FA0277D90B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F1E4AF21110F4A7FF4ED8647 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0DCE31D4689FC015BE598274 /* CareerOpsShareExtension */ = {
+			isa = PBXGroup;
+			children = (
+				725697F6C88065D295E18F63 /* ShareViewController.swift */,
+				527F4909548255C904FEC97F /* Brand.swift */,
+				31513D0E4528E2BF567E770E /* ErrorReporter.swift */,
+			);
+			name = CareerOpsShareExtension;
+			path = CareerOpsShareExtension;
+			sourceTree = "<group>";
+		};
 		1653866B61025599CDC07813 /* CareerOpsWatch */ = {
 			isa = PBXGroup;
 			children = (
@@ -128,6 +231,7 @@
 			isa = PBXGroup;
 			children = (
 				D99AEA55A4EA093281BD5E41 /* watchOS */,
+				EDB8A354F93C6457E2A3B486 /* iOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -140,6 +244,9 @@
 				504EC3051FED79650016851F /* Products */,
 				232370DDDB48A6D31A4A3979 /* Frameworks */,
 				1653866B61025599CDC07813 /* CareerOpsWatch */,
+				ED4496DB991AB2F69C697C84 /* CareerOpsWidget */,
+				FC0BB833616F3628C13021F2 /* CareerOpsLiveActivity */,
+				0DCE31D4689FC015BE598274 /* CareerOpsShareExtension */,
 			);
 			sourceTree = "<group>";
 		};
@@ -148,6 +255,9 @@
 			children = (
 				504EC3041FED79650016851F /* App.app */,
 				45A788CFF48FB162CF58655F /* CareerOpsWatch.app */,
+				B4B54803324B7A34A4644CE6 /* CareerOpsWidget.appex */,
+				A2BA497A7735FA0C55C2F3F4 /* CareerOpsLiveActivity.appex */,
+				C05A76F56281A0EFD15DAD02 /* CareerOpsShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -186,9 +296,59 @@
 			name = watchOS;
 			sourceTree = "<group>";
 		};
+		ED4496DB991AB2F69C697C84 /* CareerOpsWidget */ = {
+			isa = PBXGroup;
+			children = (
+				29AFA3C1756697C1450E03AC /* NextInterviewWidget.swift */,
+				07E05E7932775592D5BE6108 /* TopApplyWidget.swift */,
+				B536A0A3EB877FABCC9B18D3 /* CareerOpsWidget.swift */,
+				559AF47C7C7A75A0218312AA /* InboxIssuesWidget.swift */,
+				C85AA568F77B851EEABF69F5 /* Brand.swift */,
+				C6FF0483296BD7B4DF03552B /* ErrorReporter.swift */,
+			);
+			name = CareerOpsWidget;
+			path = CareerOpsWidget;
+			sourceTree = "<group>";
+		};
+		EDB8A354F93C6457E2A3B486 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				CB936BF2B6B11D3A31B7859C /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		FC0BB833616F3628C13021F2 /* CareerOpsLiveActivity */ = {
+			isa = PBXGroup;
+			children = (
+				61F7E4F675384A34CE49A942 /* CareerOpsLiveActivity.swift */,
+				9FD7C6838A42199F3A5357F9 /* Brand.swift */,
+				13A4B88F10BE222B3E1F1BCB /* ErrorReporter.swift */,
+			);
+			name = CareerOpsLiveActivity;
+			path = CareerOpsLiveActivity;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		28FD4AC421AE696E07E4B285 /* CareerOpsShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A33CF9A2C6670D738110D8F4 /* Build configuration list for PBXNativeTarget "CareerOpsShareExtension" */;
+			buildPhases = (
+				DCD9C0605308BEB88FDB11B6 /* Sources */,
+				CCCBF717092DD11658B3982F /* Frameworks */,
+				E3A3DAC7D02BD8E6BA7A306C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CareerOpsShareExtension;
+			productName = CareerOpsShareExtension;
+			productReference = C05A76F56281A0EFD15DAD02 /* CareerOpsShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		504EC3031FED79650016851F /* App */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 504EC3161FED79650016851F /* Build configuration list for PBXNativeTarget "App" */;
@@ -197,11 +357,15 @@
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
 				0E59F8CFC53D48EA6C430480 /* Embed Watch Content */,
+				A03C74D4E6F22BB05D210344 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				B69F1AF5210D34339CE1BD0E /* PBXTargetDependency */,
+				123417F9FD23A9C909F79A12 /* PBXTargetDependency */,
+				E1DEBB673CC8CE3AAEF10E2F /* PBXTargetDependency */,
+				2F511F0189B4634F55435D9F /* PBXTargetDependency */,
 			);
 			name = App;
 			packageProductDependencies = (
@@ -210,6 +374,23 @@
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
+		};
+		5A04383019EDAD2FAE1F9F7A /* CareerOpsWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4A4AAD74547FF2E4D137E979 /* Build configuration list for PBXNativeTarget "CareerOpsWidget" */;
+			buildPhases = (
+				495D99F2021D67E773AE7DC7 /* Sources */,
+				D830F5D6B33CF0FA0277D90B /* Frameworks */,
+				CDB43E17BE7C60A4F0164BE1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CareerOpsWidget;
+			productName = CareerOpsWidget;
+			productReference = B4B54803324B7A34A4644CE6 /* CareerOpsWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 		B9F6220DFC7E8DBB5676EA3F /* CareerOpsWatch */ = {
 			isa = PBXNativeTarget;
@@ -227,6 +408,23 @@
 			productName = CareerOpsWatch;
 			productReference = 45A788CFF48FB162CF58655F /* CareerOpsWatch.app */;
 			productType = "com.apple.product-type.application";
+		};
+		CCB5315836B1FF3237625C1E /* CareerOpsLiveActivity */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B67BB17D2186A32842DFBA01 /* Build configuration list for PBXNativeTarget "CareerOpsLiveActivity" */;
+			buildPhases = (
+				352F0BCBB253B9704381F3B8 /* Sources */,
+				B188DFEB303DAD27227C807D /* Frameworks */,
+				3CF6F90B0D9471870F060CA9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CareerOpsLiveActivity;
+			productName = CareerOpsLiveActivity;
+			productReference = A2BA497A7735FA0C55C2F3F4 /* CareerOpsLiveActivity.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -262,11 +460,21 @@
 			targets = (
 				504EC3031FED79650016851F /* App */,
 				B9F6220DFC7E8DBB5676EA3F /* CareerOpsWatch */,
+				5A04383019EDAD2FAE1F9F7A /* CareerOpsWidget */,
+				CCB5315836B1FF3237625C1E /* CareerOpsLiveActivity */,
+				28FD4AC421AE696E07E4B285 /* CareerOpsShareExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		3CF6F90B0D9471870F060CA9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3021FED79650016851F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -288,9 +496,46 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CDB43E17BE7C60A4F0164BE1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E3A3DAC7D02BD8E6BA7A306C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		352F0BCBB253B9704381F3B8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				372E82A1545BDF1E9CDBE18F /* CareerOpsLiveActivity.swift in Sources */,
+				1410FAC7E621519DCCAA554E /* Brand.swift in Sources */,
+				1384E818E0B0BB9C24B3712A /* ErrorReporter.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		495D99F2021D67E773AE7DC7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				72F610D6F09C4E4101EBDCED /* NextInterviewWidget.swift in Sources */,
+				FF24E0EAF3EB998992F290D6 /* TopApplyWidget.swift in Sources */,
+				DD736F2150095034A1A5D70A /* CareerOpsWidget.swift in Sources */,
+				5C10E71DF4CB6EA4C40FF156 /* InboxIssuesWidget.swift in Sources */,
+				6FDE5093301DB8CE45AC70E9 /* Brand.swift in Sources */,
+				7623847E565D6D406BE4999D /* ErrorReporter.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3001FED79650016851F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -320,14 +565,42 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DCD9C0605308BEB88FDB11B6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FF4D01143FCAC7E73E98408A /* ShareViewController.swift in Sources */,
+				1A1E6B6C4CFE57F9BB79B986 /* Brand.swift in Sources */,
+				DB9888B9A6B6413600F13C3D /* ErrorReporter.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		123417F9FD23A9C909F79A12 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = CareerOpsWidget;
+			target = 5A04383019EDAD2FAE1F9F7A /* CareerOpsWidget */;
+			targetProxy = 013A769FE09DB32203EEF36A /* PBXContainerItemProxy */;
+		};
+		2F511F0189B4634F55435D9F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = CareerOpsShareExtension;
+			target = 28FD4AC421AE696E07E4B285 /* CareerOpsShareExtension */;
+			targetProxy = B9A45D7EA44F64F1757016CF /* PBXContainerItemProxy */;
+		};
 		B69F1AF5210D34339CE1BD0E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = CareerOpsWatch;
 			target = B9F6220DFC7E8DBB5676EA3F /* CareerOpsWatch */;
 			targetProxy = 9173A2D5BF002BBA23F8E63A /* PBXContainerItemProxy */;
+		};
+		E1DEBB673CC8CE3AAEF10E2F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = CareerOpsLiveActivity;
+			target = CCB5315836B1FF3237625C1E /* CareerOpsLiveActivity */;
+			targetProxy = FC8A9D421F7E3957593C9302 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -351,6 +624,46 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		241F39C140F19C7CDF17CA2D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = CareerOpsWidget/CareerOpsWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				INFOPLIST_FILE = CareerOpsWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.widget;
+				PRODUCT_NAME = CareerOpsWidget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.9;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		4C9C2BA615BA89D55A07F512 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = CareerOpsShareExtension/CareerOpsShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				INFOPLIST_FILE = CareerOpsShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.share;
+				PRODUCT_NAME = CareerOpsShareExtension;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.9;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		504EC3141FED79650016851F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 958DCC722DB07C7200EA8C5F /* debug.xcconfig */;
@@ -506,6 +819,45 @@
 			};
 			name = Release;
 		};
+		5F163B468EFFF86E401E3D8C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = CareerOpsShareExtension/CareerOpsShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				INFOPLIST_FILE = CareerOpsShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.share;
+				PRODUCT_NAME = CareerOpsShareExtension;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		6A3386744C0606E3AE740249 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = CareerOpsLiveActivity/CareerOpsLiveActivity.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				INFOPLIST_FILE = CareerOpsLiveActivity/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.liveactivity;
+				PRODUCT_NAME = CareerOpsLiveActivity;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.9;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		6B8390BDACB43B8CE74836C4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -527,6 +879,44 @@
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = 4;
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		ABCD9D27CFD17D62B595A638 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = CareerOpsWidget/CareerOpsWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				INFOPLIST_FILE = CareerOpsWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.widget;
+				PRODUCT_NAME = CareerOpsWidget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		B516AC9D69DB752277E34931 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = CareerOpsLiveActivity/CareerOpsLiveActivity.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				INFOPLIST_FILE = CareerOpsLiveActivity/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.liveactivity;
+				PRODUCT_NAME = CareerOpsLiveActivity;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.9;
 			};
 			name = Debug;
 		};
@@ -558,6 +948,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		4A4AAD74547FF2E4D137E979 /* Build configuration list for PBXNativeTarget "CareerOpsWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				241F39C140F19C7CDF17CA2D /* Release */,
+				ABCD9D27CFD17D62B595A638 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		504EC2FF1FED79650016851F /* Build configuration list for PBXProject "App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -576,11 +975,29 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		A33CF9A2C6670D738110D8F4 /* Build configuration list for PBXNativeTarget "CareerOpsShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C9C2BA615BA89D55A07F512 /* Release */,
+				5F163B468EFFF86E401E3D8C /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		AE6AE94044207BD70AC41749 /* Build configuration list for PBXNativeTarget "CareerOpsWatch" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D110C9DBC43F73AEFFEDEE83 /* Release */,
 				6B8390BDACB43B8CE74836C4 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B67BB17D2186A32842DFBA01 /* Build configuration list for PBXNativeTarget "CareerOpsLiveActivity" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6A3386744C0606E3AE740249 /* Release */,
+				B516AC9D69DB752277E34931 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -34,6 +34,7 @@ import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import readline from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
+import { execSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -89,6 +90,20 @@ const SHARED_DATA_FILES = [
   'autopilot.json',
   'ui-prefs.json',
   'profiles.json', // forces fresh boot migration
+  // SQLite databases — wiping these is the ONLY way to reset the
+  // first-user owner-onboarding flow. auth.db holds users / sessions /
+  // passkeys / invite codes; app.db holds every per-user job /
+  // application / interview row. Both are auto-recreated empty by
+  // `new Database(path)` in src/lib/server/db/index.ts on the next
+  // request. Sidecar journal files (-shm, -wal) are also nuked below
+  // via the per-file glob loop so SQLite doesn't replay a stale WAL
+  // on the next boot.
+  'auth.db',
+  'auth.db-shm',
+  'auth.db-wal',
+  'app.db',
+  'app.db-shm',
+  'app.db-wal',
 ];
 
 /** Top-level data/ subdirs wiped on full reset. */
@@ -184,12 +199,51 @@ function listToDelete() {
   return items;
 }
 
+/**
+ * Detect a running dev server (pnpm dev, dev:ios --live, etc.) by
+ * probing :5173. If found, refuse to proceed — the server's open
+ * SQLite handles would prevent the .db files from cleanly reseting,
+ * leaving a zombie state (file deleted but inode still held, new
+ * writes to "phantom" file, fresh `new Database()` opens an empty
+ * 0-byte file with no schema, /login → /signup loop fails).
+ *
+ * The user must kill the dev server first, run reset, then restart.
+ */
+function detectRunningDevServer() {
+  try {
+    // `lsof -ti :5173` returns matching pids, one per line; empty if none.
+    const out = execSync('lsof -ti :5173 2>/dev/null', { encoding: 'utf8' }).trim();
+    if (!out) return [];
+    return out
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  } catch {
+    // lsof not available or no listeners — proceed.
+    return [];
+  }
+}
+
 async function main() {
   console.log(color(BOLD, '\ncareer-ops reset-data\n'));
   console.log(color(DIM, 'Wipes ALL user data (CV, profile, applications, reports, etc.) so'));
   console.log(color(DIM, 'the next launch fires onboarding from scratch.'));
   console.log(color(DIM, `PRESERVED: ${PER_PROFILE_KEEP.join(', ')} (job sources).`));
   console.log(color(DIM, `BACKUP:    everything copied to data/.reset-bak-<timestamp>/ first.\n`));
+
+  // Sanity check: refuse if a dev server is holding open the DB files.
+  // Otherwise the .db inodes stay alive in the server's process and
+  // the reset leaves a zombie (auth.db at 0 bytes, schema missing).
+  const liveServers = detectRunningDevServer();
+  if (liveServers.length > 0 && !skipConfirm) {
+    console.log(color(RED, '✗ Dev server is running (pids: ' + liveServers.join(', ') + ')'));
+    console.log(color(DIM, '  Open SQLite connections would zombie the .db reset.'));
+    console.log(color(DIM, '  Kill it first:'));
+    console.log(color(DIM, '    pkill -f "dev-ios.mjs"; pkill -f "vite dev"'));
+    console.log(color(DIM, '  Then re-run pnpm reset-data.'));
+    console.log(color(DIM, '  (Override with --yes if you understand the risk.)'));
+    process.exit(2);
+  }
 
   const items = listToDelete();
   if (items.length === 0) {

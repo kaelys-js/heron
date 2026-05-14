@@ -7,6 +7,7 @@ import { logEvent } from './events';
 import { loadEnv } from './env';
 import { CLI_NAMESPACE } from '$lib/config/branding';
 import { AGENT_CLI } from '$lib/config/cli';
+import { maybeCurrentUserId, SYSTEM_USER_ID } from './user-context';
 
 loadEnv();
 
@@ -220,9 +221,6 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
   // and lib-profiles.mjs honor `CAREER_OPS_USER_ID` as a fallback for the
   // `--user` CLI flag, so even scripts that don't yet accept the flag
   // pick up the right user's data tree automatically.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { maybeCurrentUserId, SYSTEM_USER_ID } =
-    require('./user-context') as typeof import('./user-context');
   const ctxUserId = maybeCurrentUserId();
   const envWithUser: NodeJS.ProcessEnv = { ...process.env };
   if (ctxUserId && ctxUserId !== SYSTEM_USER_ID) {
@@ -1163,12 +1161,28 @@ export function bootOnce() {
   const pipelineExists = fs.existsSync(pipelinePath);
   const geminiExists = fs.existsSync(geminiPath);
   logEvent('boot', 'Server started', { category: 'system' });
+  // CRITICAL: every spawn-y / IO-y branch below is wrapped in
+  // try/catch so a failure can NEVER bubble out of bootOnce(). This
+  // function runs at the TOP of hooks.server.ts (line 8 — outside
+  // any handler), so any uncaught error crashes the whole hooks
+  // module — and SvelteKit responds with the bare "500 | Internal
+  // Error" white page that bypasses our +error.svelte entirely. Even
+  // when the user is just trying to load /login, a stray scan-spawn
+  // failure here would lock them out. Log and continue instead.
   if (!pipelineExists || fs.statSync(pipelinePath).size < 200) {
     logEvent('boot', 'Pipeline empty — running auto-scan', {
       category: 'system',
       message: 'Spawning scan-broad.py',
     });
-    runScan();
+    try {
+      runScan();
+    } catch (e) {
+      logEvent('boot', 'Auto-scan failed (continuing)', {
+        level: 'warn',
+        category: 'system',
+        message: e instanceof Error ? e.message : String(e),
+      });
+    }
     return;
   }
   if (!geminiExists && process.env.GEMINI_API_KEY) {
@@ -1176,7 +1190,15 @@ export function bootOnce() {
       category: 'system',
       message: 'Spawning gemini-first-pass.py',
     });
-    runGemini(30);
+    try {
+      runGemini(30);
+    } catch (e) {
+      logEvent('boot', 'Auto-score failed (continuing)', {
+        level: 'warn',
+        category: 'system',
+        message: e instanceof Error ? e.message : String(e),
+      });
+    }
     return;
   }
   if (!process.env.GEMINI_API_KEY && !geminiExists) {
