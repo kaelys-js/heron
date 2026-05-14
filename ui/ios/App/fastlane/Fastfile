@@ -118,6 +118,50 @@ platform :ios do
     sign(api_key: api_key)
   end
 
+  desc "Run iOS unit + UI tests across a matrix of simulators"
+  lane :test do
+    run_tests(
+      workspace: WORKSPACE,
+      scheme: SCHEME,
+      devices: [
+        "iPhone 17 Pro Max",
+        "iPad Pro 13-inch (M4)",
+        "Apple Watch Ultra 2 (49mm)",
+      ],
+      code_coverage: true,
+      result_bundle: true,
+      fail_build: true,
+      xcargs: "-skipPackagePluginValidation -skipMacroValidation",
+      output_directory: "fastlane/test_output"
+    )
+  end
+
+  desc "Run iOS tests for CI (single sim, xcresult + xcov + cobertura)"
+  lane :test_ci do
+    setup_ci if is_ci
+    run_tests(
+      workspace: WORKSPACE,
+      scheme: SCHEME,
+      devices: ["iPhone 17 Pro Max"],
+      code_coverage: true,
+      result_bundle: true,
+      fail_build: true,
+      xcargs: "-skipPackagePluginValidation -skipMacroValidation",
+      output_directory: "fastlane/test_output"
+    )
+    # xcov reads the xcresult bundle and emits an HTML report + cobertura
+    # XML for Codecov. Threshold 60% — the iOS coverage floor agreed in
+    # the plan. Drop below → xcov returns non-zero → CI red.
+    xcov(
+      workspace: WORKSPACE,
+      scheme: SCHEME,
+      output_directory: "fastlane/coverage",
+      minimum_coverage_percentage: 60.0,
+      include_test_targets: false,
+      ignore_file_path: "../../../.xcovignore"
+    )
+  end
+
   # Pull the last commit's message as TestFlight changelog. Truncates to
   # 4000 chars (the App Store Connect limit). Falls back to a default
   # if git isn't available.

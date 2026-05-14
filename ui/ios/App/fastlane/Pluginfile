@@ -8,4 +8,8 @@
 # consistently. Built-in but pinning the gem ensures CI uses the same.
 # gem 'fastlane-plugin-versioning'
 
+# xcov — code-coverage report generator. Reads the xcresult bundle from
+# run_tests, emits HTML for humans and cobertura.xml for Codecov.
+gem 'fastlane-plugin-xcov'
+
 # Add additional plugins below as the build pipeline grows.

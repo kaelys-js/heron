@@ -1,0 +1,11 @@
+# Brewfile — Homebrew packages required for iOS dev + CI.
+#
+# Local: `brew bundle` to install.
+# CI:    test.yml's `ios` job installs swiftlint + swiftformat explicitly.
+#
+# Keep this list minimal — every brew install adds CI cold-start time.
+
+brew 'swiftlint'      # Strict-mode lint gate (lefthook pre-commit + CI)
+brew 'swiftformat'    # Auto-format on commit (lefthook pre-commit)
+
+# Add more brews here as the iOS toolchain grows.
