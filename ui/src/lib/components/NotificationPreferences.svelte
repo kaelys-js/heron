@@ -24,6 +24,7 @@
   import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
   import { clearAllPending, isInQuietHours, type QuietHours } from '$lib/client/notifications';
   import { Capacitor } from '@capacitor/core';
+  import { setSharedQuietHours } from '$lib/client/native-bridge';
 
   const STORAGE_KEY = `${BRAND_STORAGE_PREFIX}:quiet-hours`;
   // Default: no quiet hours. Users opt in explicitly so we don't silently
@@ -61,6 +62,12 @@
     } catch {
       // Corrupt prefs — keep defaults.
     }
+    // Initial App Group mirror — without this the BackgroundFetcher
+    // would read no prefs on first boot and never enforce quiet hours
+    // until the user opened this settings page once. Pushing on mount
+    // means the very first background fetch already honours the user's
+    // preference (or the default of "disabled").
+    void setSharedQuietHours(JSON.stringify(prefs));
   });
 
   function save() {
@@ -71,6 +78,14 @@
       // localStorage denied (Safari private mode) — runtime state
       // still works for this session.
     }
+    // Mirror into App Group UserDefaults so the BackgroundFetcher
+    // (an extension-like background task that runs OUTSIDE the
+    // WebView's localStorage scope) can honour quiet hours when
+    // deciding whether to deliver a warn-level notification at 3am.
+    // No-op on web/desktop. We pass the FULL prefs as JSON so the
+    // Swift side can decode the same shape — handles the cross-
+    // midnight window logic identically in both languages.
+    void setSharedQuietHours(JSON.stringify(prefs));
   }
 
   function toggleEnabled() {

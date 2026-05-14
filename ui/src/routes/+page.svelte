@@ -17,6 +17,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
+  import { BRAND } from '$lib/client/brand';
 
   onMount(() => {
     queueMicrotask(() => {
@@ -58,5 +59,5 @@
   class="flex min-h-screen items-center justify-center bg-background text-zinc-500"
   data-debug="root-page"
 >
-  <p class="text-sm">Loading career-ops…</p>
+  <p class="text-sm">Loading {BRAND.displayName}…</p>
 </div>

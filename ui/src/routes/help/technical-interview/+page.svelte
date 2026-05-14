@@ -42,7 +42,7 @@
           <h1 class="text-2xl font-semibold tracking-tight">Technical interview prep</h1>
         </div>
         <p class="text-sm text-muted-foreground leading-relaxed">
-          The career-ops technical-interview workflow combines three modes: <strong
+          The Career Ops technical-interview workflow combines three modes: <strong
             >tech-prep</strong
           >
           (company-specific plan), <strong>mock-interview</strong> (live drill), and

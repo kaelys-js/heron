@@ -212,7 +212,7 @@ export async function resolveBackend(opts: ResolverOptions = {}): Promise<Resolv
   }
 
   throw new BackendNotFoundError(
-    'No career-ops backend found. Tried: embedded, localhost:5173, mDNS LAN, Tailscale, production.',
+    `No ${BRAND.displayName} backend found. Tried: embedded, localhost:5173, mDNS LAN, Tailscale, production.`,
   );
 }
 

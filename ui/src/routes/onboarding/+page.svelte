@@ -19,6 +19,7 @@
   import { api, ApiError } from '$lib/api';
   import { toast } from 'svelte-sonner';
   import { cn } from '$lib/utils';
+  import { BRAND } from '$lib/client/brand';
   import type { Profile, ProfileColor } from '$lib/server/profiles';
 
   const PROFILE_COLORS: ProfileColor[] = [
@@ -174,7 +175,7 @@
   <header class="space-y-2">
     <h1 class="text-2xl font-semibold tracking-tight flex items-center gap-2">
       <Sparkles class="size-6 text-fuchsia-400" />
-      {isNewProfile ? 'Add a new profile' : 'Welcome to career-ops'}
+      {isNewProfile ? 'Add a new profile' : `Welcome to ${BRAND.displayName}`}
     </h1>
     <p class="text-sm text-muted-foreground leading-relaxed max-w-xl">
       {#if isNewProfile}

@@ -50,6 +50,12 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
         // lets the JS side push the resolved URL into the App Group so
         // the extension reads the same value.
         CAPPluginMethod(name: "setSharedBackendUrl", returnType: CAPPluginReturnPromise),
+        // Quiet-hours mirror so BackgroundFetcher.swift can honour the
+        // user's window when deciding whether to fire a 3am warn-level
+        // notification. The WebView writes localStorage; this method
+        // copies the JSON into App Group UserDefaults where the
+        // background process can read it.
+        CAPPluginMethod(name: "setSharedQuietHours", returnType: CAPPluginReturnPromise),
     ]
 
     @objc public func getLanUrl(_ call: CAPPluginCall) {
@@ -62,7 +68,11 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc public func biometricAuth(_ call: CAPPluginCall) {
-        let reason = call.getString("reason") ?? "Unlock career-ops"
+        // The reason string is what iOS shows beneath the Face ID /
+        // Touch ID prompt ("App wants to use Face ID to ..."). Falling
+        // back to the brand display name keeps the prompt readable
+        // instead of leaking the lowercase technical name.
+        let reason = call.getString("reason") ?? "Unlock \(Brand.displayName)"
         BiometricAuth.shared.requestAuth(reason: reason) { result in
             switch result {
             case .success: call.resolve(["ok": true])
@@ -211,6 +221,31 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
         call.resolve(["ok": true])
     }
 
+    /**
+     * Quiet-hours preference mirror. The JS NotificationPreferences
+     * component persists a `{enabled, startHour, endHour}` JSON blob to
+     * localStorage; we copy it (verbatim) into App Group UserDefaults
+     * so BackgroundFetcher.swift can decode the same shape and apply
+     * the same window logic when deciding whether to deliver a warn-
+     * level notification at 3am.
+     *
+     * Key namespaced by brand name so a rename moves the data cleanly.
+     */
+    @objc public func setSharedQuietHours(_ call: CAPPluginCall) {
+        guard let defaults = UserDefaults(suiteName: Brand.appGroup) else {
+            call.reject("app-group-missing", "App Group not configured: \(Brand.appGroup)")
+            return
+        }
+        let json = call.getString("json") ?? ""
+        let key = "\(Brand.name):quiet-hours"
+        if json.isEmpty {
+            defaults.removeObject(forKey: key)
+        } else {
+            defaults.set(json, forKey: key)
+        }
+        call.resolve(["ok": true])
+    }
+
     @objc public func drainNativeErrors(_ call: CAPPluginCall) {
         // Read + clear the queue of native errors captured while the
         // WebView wasn't able to forward them.
@@ -220,7 +255,10 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc public func setUserActivity(_ call: CAPPluginCall) {
         let type = call.getString("type") ?? Brand.openJobActivityType
-        let title = call.getString("title") ?? "career-ops"
+        // NSUserActivity.title shows up in Handoff banners on macOS and
+        // other paired devices ("Continue Career Ops from iPhone").
+        // Brand display name beats the lowercase technical name.
+        let title = call.getString("title") ?? Brand.displayName
         let data = call.getObject("data") ?? JSObject()
         // NSUserActivity must be set on the main thread.
         DispatchQueue.main.async {

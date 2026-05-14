@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		018755B151CEBD7D1B320FAB /* WidgetAuthGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3176B0165C26166B17F7F403 /* WidgetAuthGate.swift */; };
+		02EDF06A3FB19E5265DDBD2C /* CareerOpsLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A2BA497A7735FA0C55C2F3F4 /* CareerOpsLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1384E818E0B0BB9C24B3712A /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13A4B88F10BE222B3E1F1BCB /* ErrorReporter.swift */; };
 		1410FAC7E621519DCCAA554E /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FD7C6838A42199F3A5357F9 /* Brand.swift */; };
 		1A1E6B6C4CFE57F9BB79B986 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 527F4909548255C904FEC97F /* Brand.swift */; };
@@ -28,6 +29,7 @@
 		5832F85B1A07FC4585ED0944 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB936BF2B6B11D3A31B7859C /* Foundation.framework */; };
 		5C10E71DF4CB6EA4C40FF156 /* InboxIssuesWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 559AF47C7C7A75A0218312AA /* InboxIssuesWidget.swift */; };
 		5C7BEACB7A09695AF511E256 /* SpotlightIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8126D767BB835DA855B58552 /* SpotlightIndexer.swift */; };
+		60AC4FEDE5C06427744E407E /* CareerOpsShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C05A76F56281A0EFD15DAD02 /* CareerOpsShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		61B92C376B6A0BFDE5B3A999 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B04DDA8861B187894F3581C1 /* Assets.xcassets */; };
 		6BB0F8A01827A3FF34261489 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0864100E15B7E184D1F89EC5 /* KeychainStore.swift */; };
 		6FDE5093301DB8CE45AC70E9 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85AA568F77B851EEABF69F5 /* Brand.swift */; };
@@ -35,13 +37,11 @@
 		7623847E565D6D406BE4999D /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6FF0483296BD7B4DF03552B /* ErrorReporter.swift */; };
 		7AC0D36C2BBD93C60EFC3C4F /* CareerOpsBridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26631DCF28D85F99FB13A91E /* CareerOpsBridgeViewController.swift */; };
 		7DBFA4641E2729F109B35EF2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27884949441377C8C7559A26 /* Foundation.framework */; };
-		831FC47FC25E534932F44983 /* CareerOpsWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B4B54803324B7A34A4644CE6 /* CareerOpsWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		8972AD29C0863CD353148A7D /* CareerOpsShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C05A76F56281A0EFD15DAD02 /* CareerOpsShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		968981862855C560524B5F23 /* CareerOpsLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A2BA497A7735FA0C55C2F3F4 /* CareerOpsLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A17A18173DACDECD9ECF0E6A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB936BF2B6B11D3A31B7859C /* Foundation.framework */; };
 		A8C93FC3E1C6E5089E3AA399 /* BiometricAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9012709D08A85C7A9CEB2C91 /* BiometricAuth.swift */; };
 		B1166C2AFCE9CB88941BA785 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7738EEBCC31A28A769071A /* RootView.swift */; };
 		C362913F0191FC3C677CCE21 /* WatchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 604BE1F005FDB069FF3F1985 /* WatchModel.swift */; };
+		CCCF6BA0B8F73F83C87A0FBB /* CareerOpsWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B4B54803324B7A34A4644CE6 /* CareerOpsWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		DB9888B9A6B6413600F13C3D /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31513D0E4528E2BF567E770E /* ErrorReporter.swift */; };
 		DD736F2150095034A1A5D70A /* CareerOpsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B536A0A3EB877FABCC9B18D3 /* CareerOpsWidget.swift */; };
 		F1E4AF21110F4A7FF4ED8647 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB936BF2B6B11D3A31B7859C /* Foundation.framework */; };
@@ -102,9 +102,9 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				831FC47FC25E534932F44983 /* CareerOpsWidget.appex in Embed Foundation Extensions */,
-				968981862855C560524B5F23 /* CareerOpsLiveActivity.appex in Embed Foundation Extensions */,
-				8972AD29C0863CD353148A7D /* CareerOpsShareExtension.appex in Embed Foundation Extensions */,
+				CCCF6BA0B8F73F83C87A0FBB /* CareerOpsWidget.appex in Embed Foundation Extensions */,
+				02EDF06A3FB19E5265DDBD2C /* CareerOpsLiveActivity.appex in Embed Foundation Extensions */,
+				60AC4FEDE5C06427744E407E /* CareerOpsShareExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;

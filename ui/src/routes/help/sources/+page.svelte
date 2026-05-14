@@ -78,8 +78,8 @@
         'Polls a Gmail label every 30 minutes via IMAP. Parses LinkedIn / Indeed / generic alert emails using the same parser registry as the local mbox path. Idempotent — processed messages are marked as Seen.',
       how: [
         'Enable 2-factor auth on your Google account (required for app passwords)',
-        'Generate an app password at myaccount.google.com/apppasswords (pick "Mail" + "Other → career-ops")',
-        'Optional: in Gmail, create a filter that auto-applies a label to LinkedIn/Indeed alert emails (e.g. "career-ops/job-alerts")',
+        'Generate an app password at myaccount.google.com/apppasswords (pick "Mail" + "Other → Career Ops")',
+        'Optional: in Gmail, create a filter that auto-applies a label to LinkedIn/Indeed alert emails (e.g. "Career Ops/job-alerts")',
         'On /sources, fill the IMAP form (host, email, app password, label) and click Test & Save',
         'A setInterval daemon in the dashboard polls every 30 min — no autopilot scheduler change needed',
       ],
