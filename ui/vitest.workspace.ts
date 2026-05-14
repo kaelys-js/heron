@@ -74,14 +74,24 @@ export default defineConfig({
           include: ['src/**/*.component.test.ts', 'src/**/*.svelte.test.ts'],
           browser: {
             enabled: true,
+            // CRITICAL: Vitest 4's default `headless` is `process.env.CI`
+            // — locally that's `undefined` → falsy → window opens. The
+            // playwright() factory's `headless` option does NOT propagate
+            // to this top-level setting; it has to be set HERE on the
+            // browser config. Default to headless always; opt in to a
+            // visible window with `BROWSER_HEAD=1 pnpm test`.
+            headless: !process.env.BROWSER_HEAD,
             // Vitest 4 takes a provider factory, not a string. The
             // `playwright()` factory from @vitest/browser-playwright
             // returns a provider instance configured with the launch
             // options below.
             provider: playwright({
-              // Headless in CI + local; flip via `BROWSER_HEAD=1 pnpm test`
-              // for visual debugging.
-              headless: !process.env.BROWSER_HEAD,
+              // Headless config is read from the parent `browser.headless`
+              // above (see node_modules/@vitest/browser-playwright/dist/
+              // index.js:871 — `headless: options.headless`). This
+              // launchOptions block is for additional Playwright launch
+              // args; keep empty until a test needs one.
+              launchOptions: {},
             }),
             instances: [
               { browser: 'chromium' },
