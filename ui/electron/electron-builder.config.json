@@ -39,6 +39,10 @@
       {
         "target": "zip",
         "arch": ["x64", "arm64"]
+      },
+      {
+        "target": "mas",
+        "arch": ["x64", "arm64"]
       }
     ],
     "icon": "build/icon.icns",
@@ -46,7 +50,7 @@
     "gatekeeperAssess": false,
     "entitlements": "build/entitlements.mac.plist",
     "entitlementsInherit": "build/entitlements.mac.plist",
-    "notarize": false,
+    "notarize": true,
     "darkModeSupport": true,
     "extendInfo": {
       "CFBundleURLTypes": [
@@ -68,9 +72,18 @@
       "NSHighResolutionCapable": true
     }
   },
+  "mas": {
+    "category": "public.app-category.productivity",
+    "icon": "build/icon.icns",
+    "entitlements": "build/entitlements.mas.plist",
+    "entitlementsInherit": "build/entitlements.mas.inherit.plist",
+    "provisioningProfile": "build/embedded.provisionprofile",
+    "darkModeSupport": true,
+    "hardenedRuntime": true
+  },
   "dmg": {
     "writeUpdateInfo": true,
-    "sign": false,
+    "sign": true,
     "title": "${productName} ${version}",
     "contents": [
       {
@@ -90,12 +103,22 @@
       {
         "target": "nsis",
         "arch": ["x64", "arm64"]
+      },
+      {
+        "target": "appx",
+        "arch": ["x64", "arm64"]
       }
     ],
     "icon": "build/icon.ico",
     "publisherName": "resist.js",
-    "verifyUpdateCodeSignature": false,
-    "requestedExecutionLevel": "asInvoker"
+    "verifyUpdateCodeSignature": true,
+    "requestedExecutionLevel": "asInvoker",
+    "signtoolOptions": {
+      "signingHashAlgorithms": ["sha256"],
+      "publisherName": "resist.js",
+      "rfc3161TimeStampServer": "http://timestamp.digicert.com",
+      "timeStampServer": "http://timestamp.digicert.com"
+    }
   },
   "nsis": {
     "allowElevation": false,

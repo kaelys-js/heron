@@ -99,6 +99,45 @@ platform :ios do
     )
   end
 
+  desc "Upload App Store metadata + screenshots without rebuilding the IPA"
+  lane :upload_metadata do
+    # `deliver` reads fastlane/metadata/* (name, subtitle, description,
+    # keywords, marketing/privacy/support URLs, review notes, category)
+    # and fastlane/screenshots/* (per-locale, per-device-class). Skipping
+    # ipa + binary upload because this lane is for content-only changes
+    # — the next `beta` lane will pick up a fresh build with the same
+    # metadata attached.
+    api_key = asc_key
+    upload_to_app_store(
+      api_key: api_key,
+      skip_binary_upload: true,
+      skip_screenshots: false,
+      force: true,        # don't open Preview.app on screenshots
+      precheck_include_in_app_purchases: false,
+      submit_for_review: false,
+      automatic_release: false,
+      metadata_path: "fastlane/metadata",
+      screenshots_path: "fastlane/screenshots"
+    )
+  end
+
+  desc "Generate App Store screenshots for every device-class via XCUItest snapshot lane"
+  lane :screenshots do
+    capture_screenshots(
+      scheme: "AppUITests",
+      devices: [
+        "iPhone 17 Pro Max",         # 6.9" (was 6.7")
+        "iPhone 17 Pro",             # 6.3"
+        "iPad Pro 13-inch (M4)",     # 13"
+        "iPad Pro 11-inch (M4)",     # 11"
+      ],
+      languages: ["en-US"],
+      reinstall_app: true,
+      app_identifier: APP_IDENTIFIER,
+      output_directory: "fastlane/screenshots"
+    )
+  end
+
   desc "Quick build without upload — for local smoke testing"
   lane :build_only do
     build_app(

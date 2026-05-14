@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  entitlements.mas.plist — Mac App Store sandbox entitlements.
+
+  Apple's review process REQUIRES sandbox (com.apple.security.app-sandbox
+  = true). That's the fundamental difference from the DMG/direct-download
+  build (entitlements.mac.plist) which keeps the sandbox off because we
+  need Playwright + the embedded Node child-process to spawn freely.
+
+  Limitation: the MAS build CANNOT spawn arbitrary subprocess (Playwright,
+  Claude CLI). The MAS variant therefore ships in a degraded "read-only"
+  mode — it can read application data, run the dashboard UI, but cannot
+  run autonomous-apply / scan / oferta. Users who want the full feature
+  set download the DMG instead. We document this clearly in the App
+  Store description ("light edition for catalog discovery").
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>com.apple.security.app-sandbox</key>
+  <true/>
+  <!-- V8 JIT — required for Electron. -->
+  <key>com.apple.security.cs.allow-jit</key>
+  <true/>
+  <!-- Outbound network — connect to user's self-hosted backend. -->
+  <key>com.apple.security.network.client</key>
+  <true/>
+  <!-- File-picker reads (drag-and-drop CV imports, .env imports). -->
+  <key>com.apple.security.files.user-selected.read-only</key>
+  <true/>
+  <!-- App Group for sharing with the iOS bridge (when run on a Mac with
+       the iOS app sideloaded via Catalyst — future-proofing). -->
+  <key>com.apple.security.application-groups</key>
+  <array>
+    <string>group.com.resistjs.careerops</string>
+  </array>
+</dict>
+</plist>

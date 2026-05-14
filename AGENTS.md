@@ -278,7 +278,7 @@ Default modes are in `modes/` (English). Additional language-specific modes are 
 
 ## CI/CD and Quality
 
-- **GitHub Actions** run on every PR: `test-all.mjs` (63+ checks), auto-labeler (risk-based: 🔴 core-architecture, ⚠️ agent-behavior, 📄 docs), welcome bot for first-time contributors
+- **GitHub Actions** run on every PR: `pnpm test` (Vitest matrix, 1500+ cases), `pnpm test:ios:ci` (Fastlane test_ci → xcov), auto-labeler (risk-based: 🔴 core-architecture, ⚠️ agent-behavior, 📄 docs), welcome bot for first-time contributors
 - **Branch protection** on `main`: status checks must pass before merge. No direct pushes to main (except admin bypass). Squash-merge required so every merge = one Conventional commit.
 - **Dependabot** monitors npm, Go modules, and GitHub Actions for security updates
 - **Contributing process**: issue first → discussion → PR with linked issue → CI passes → maintainer review → merge
@@ -300,9 +300,10 @@ Default modes are in `modes/` (English). Additional language-specific modes are 
   - `biome-format` — formats staged `.ts/.tsx/.js/.mjs/.svelte/.json` in place
   - `no-secrets` — regex-blocks Anthropic keys / GitHub PATs / AWS keys / private keys
 - `pre-push` (sequential):
-  - `svelte-check` — TypeScript + Svelte type-check
-  - `verify-capacitor` — brand + native consistency
-  - `verify-pipeline` — tracker hygiene
+  - `typecheck` — svelte-check + tsgo, turbo-cached
+  - `vitest` — full Vitest matrix (unit + server + browser-mode + integration + electron) via turbo
+  - `format-check` — biome + prettier
+  - `release-readiness` — gated when a release tag is being pushed
 
 Bypass with `--no-verify` if you must (don't).
 
@@ -346,7 +347,7 @@ CI uses `jdx/mise-action@v2` so the same versions install in GitHub runners as o
 **Rules:**
 - Source code reads brand from generated `brand.ts` / `Brand.swift`. Never hardcode `com.resistjs.careerops`, `careerops://`, `_career-ops._tcp` in runtime code.
 - Comments / docstrings may reference literal values for documentation clarity (they don't affect runtime).
-- Verifier (Phase 9 in `verify-capacitor.mjs`) checks every consumer matches `brand.json` — drift fails CI.
+- Vitest's `capacitor.integration.test.ts` checks every consumer matches `brand.json` — drift fails CI.
 - Rebrand workflow: edit `branding/brand.json` → `pnpm brand:apply` → commit. All configs update in one shot.
 
 ### Release automation (Conventional Commits → Release Please → native-release)
@@ -466,7 +467,7 @@ Write one TSV file per evaluation to `batch/tracker-additions/{num}-{company-slu
 2. **YES you can edit applications.md to UPDATE status/notes of existing entries.**
 3. All reports MUST include `**URL:**` in the header (between Score and PDF). Include `**Legitimacy:** {tier}` (see Block G in `modes/oferta.md`).
 4. All statuses MUST be canonical (see `templates/states.yml`).
-5. Health check: `node verify-pipeline.mjs`
+5. Health check: `pnpm test --filter=ui-integration` (pipeline.integration.test.ts validates this)
 6. Normalize statuses: `node normalize-statuses.mjs`
 7. Dedup: `node dedup-tracker.mjs`
 

@@ -117,22 +117,30 @@ describe('Brand TS exports', () => {
   });
 });
 
-describe('Parity with legacy verify-capacitor.mjs', () => {
-  // KNOWN: verify-capacitor.mjs currently reports 3 pre-existing drift
-  // failures (deep-links.ts BRAND import, theme store BRAND.name needle,
-  // deep-link parser branches). These predate the testing-migration plan
-  // and aren't this work's scope — flagged as a separate cleanup. The
-  // legacy verifier will be DELETED in Phase 6 once Vitest covers the
-  // structural checks above, so we skip the parity oracle here.
-  it.skip('legacy verifier exits 0 (skipped — known pre-existing 3 failures)', () => {
-    const p = path.join(REPO_ROOT, 'verify-capacitor.mjs');
-    if (!fs.existsSync(p)) return;
-    let exitCode = 0;
-    try {
-      execSync(`node "${p}"`, { cwd: REPO_ROOT, stdio: 'pipe', timeout: 60_000 });
-    } catch (e: any) {
-      exitCode = e.status ?? 1;
+describe('Capacitor — replaces obsolete verify-capacitor.mjs checks', () => {
+  // The legacy verifier had 3 stale needles pointing at the pre-split
+  // deep-links.ts. After deep-links.ts → {deep-links.ts +
+  // deep-links-parser.ts}, those needles moved. Below: the same intent
+  // expressed against the current layout, no spawn needed.
+
+  it('deep-link parser imports BRAND from generated brand.ts', () => {
+    const parser = 'ui/src/lib/client/deep-links-parser.ts';
+    if (!exists(parser)) return;
+    expect(readFile(parser)).toMatch(/from\s+['"]\.\/brand['"]/);
+  });
+
+  it('theme store uses BRAND prefix in storage key', () => {
+    const ts = 'ui/src/lib/theme.svelte.ts';
+    if (!exists(ts)) return;
+    expect(readFile(ts)).toMatch(/BRAND_STORAGE_KEYS|BRAND\.name/);
+  });
+
+  it('deep-link parser handles every documented route branch', () => {
+    const parser = 'ui/src/lib/client/deep-links-parser.ts';
+    if (!exists(parser)) return;
+    const src = readFile(parser);
+    for (const route of ['job', 'inbox', 'pipeline', 'queue', 'applied']) {
+      expect(src, `parser missing branch for "${route}"`).toContain(route);
     }
-    expect(exitCode).toBe(0);
   });
 });

@@ -8,10 +8,11 @@
  *   • TS code uses BRAND.urlScheme — no hardcoded "careerops://" leaks
  *     outside the generated brand.ts files
  */
-import { describe, expect, it } from 'vitest';
+
+import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { describe, expect, it } from 'vitest';
 
 const REPO_ROOT = path.resolve(__dirname, '../../../..');
 
@@ -99,19 +100,5 @@ describe('Hardcoded scheme leaks (forbidden outside generated files)', () => {
         return true;
       });
     expect(offending).toEqual([]);
-  });
-});
-
-describe('Parity with legacy verify-deep-links.mjs', () => {
-  it('legacy verifier exits 0', () => {
-    const p = path.join(REPO_ROOT, 'verify-deep-links.mjs');
-    if (!fs.existsSync(p)) return;
-    let exitCode = 0;
-    try {
-      execSync(`node "${p}"`, { cwd: REPO_ROOT, stdio: 'pipe', timeout: 15_000 });
-    } catch (e: any) {
-      exitCode = e.status ?? 1;
-    }
-    expect(exitCode).toBe(0);
   });
 });

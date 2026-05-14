@@ -69,24 +69,6 @@ describe('batch/tracker-additions/ should be empty', () => {
   });
 });
 
-describe('Parity with legacy verify-pipeline.mjs', () => {
-  it('legacy verifier exits 0 against the current repo state', () => {
-    const p = path.join(REPO_ROOT, 'verify-pipeline.mjs');
-    if (!fs.existsSync(p)) return;
-    let exitCode = 0;
-    try {
-      execSync(`node "${p}"`, {
-        cwd: REPO_ROOT,
-        stdio: 'pipe',
-        timeout: 30_000,
-      });
-    } catch (e: any) {
-      exitCode = e.status ?? 1;
-    }
-    expect(exitCode).toBe(0);
-  });
-});
-
 describe('Status format hygiene', () => {
   it('applications.md (if present) uses pipe-delimited table format', () => {
     const apps = path.join(REPO_ROOT, 'data/applications.md');
