@@ -11,7 +11,7 @@
   import { Button } from '$lib/components/ui/button';
   import { AlertTriangle, RefreshCw } from '@lucide/svelte';
   import { reportClientError } from '$lib/notifications.svelte';
-  import { BRAND_EVENTS } from '$lib/client/brand';
+  import { BRAND_EVENTS, BRAND_STORAGE_KEYS } from '$lib/client/brand';
   import { onNavigate } from '$app/navigation';
   import { APP_NAME, APP_DESCRIPTION } from '$lib/config/branding';
   import { theme } from '$lib/theme.svelte';
@@ -27,6 +27,7 @@
   import { installDeepLinkHandler, handleDeepLink } from '$lib/client/deep-links';
   import { onNotificationTap } from '$lib/client/notifications';
   import { installNotificationsBridge } from '$lib/client/sse-notifications-bridge';
+  import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 
   // Reactive auth flag — true ONLY when the user is on a private route
   // AND has the local auth marker set. Used to gate the floating UI
@@ -38,7 +39,7 @@
   let isAuthed = $derived.by(() => {
     if (typeof window === 'undefined') return false;
     if (isPublicRoute(pathname)) return false;
-    return localStorage.getItem('career-ops:authed') === '1';
+    return localStorage.getItem(BRAND_STORAGE_KEYS.authed) === '1';
   });
 
   // Auth screens (login / signup) are full-viewport centered cards with
@@ -139,54 +140,80 @@
     // hands off to a SOLID boot-fallback, the boot stays solid for a
     // perception beat, then fades to the app cleanly.
     //
-    // BOOT_FALLBACK_MIN_MS is the minimum delay from layout-mount to
-    // splash-hide. Measured: on a cold WKWebView launch in production
-    // mode, the WebView takes ~900-1100ms to FULLY paint the boot-
-    // fallback's bloom gradient + glow filter — even though hydration
-    // itself finishes in <200ms. Hiding the splash sooner means the
-    // user sees a black "gap" while the WebView is still compositing.
-    // 1100ms covers the slow path; the splash shares the same
-    // #0a0a0b bg as the boot-fallback, so this just feels like a
-    // longer brand-dark splash rather than a delay.
-    const BOOT_FALLBACK_MIN_MS = 1100;
-    // Instant splash hide — the boot-fallback's bg is IDENTICAL to the
-    // splash's bg (both #0a0a0b, both already painted), so a fade-out
-    // is just visual noise. 0ms = immediate cut, invisible to the eye.
+    // Paint-confirmed splash dismiss. Previously the splash hid on a
+    // fixed 1100ms timer regardless of whether the boot-fallback had
+    // actually committed pixels yet — on slow devices the splash
+    // disappeared into a black gap before the WebView had painted the
+    // bloom gradient, then the boot-fallback flashed in afterwards.
+    // The fix waits for THREE paint confirmations before dismissing:
+    //
+    //   1. document.readyState === 'interactive' or later (DOM parsed)
+    //   2. The boot-fallback element exists AND its computed background
+    //      has been resolved (not the white default)
+    //   3. Two consecutive requestAnimationFrame callbacks have fired
+    //      AFTER condition 2, proving the browser composited at least
+    //      one frame with the boot-fallback's full styling
+    //
+    // We still floor at MIN_PRE_PAINT_MS so the splash always shows
+    // long enough to register visually (Apple's HIG: ≥ 500ms). We
+    // ceiling at MAX_PRE_PAINT_MS as a safety net so a broken WebView
+    // can't trap the user behind a stuck splash forever.
+    const BOOT_FALLBACK_MIN_PAINT_MS = 600;
+    const BOOT_FALLBACK_MAX_WAIT_MS = 4000;
     const SPLASH_FADE_MS = 0;
-    const BOOT_PERCEPTION_MS = 400; // user briefly sees boot-fallback alone
-    setTimeout(() => {
-      requestAnimationFrame(() =>
-        requestAnimationFrame(async () => {
-          // Phase 1: hide the native splash. Quick crossfade — the
-          // boot-fallback is already painted underneath with an IDENTICAL
-          // bg + icon, so this is a visually invisible cut.
-          try {
-            const { SplashScreen } = await import('@capacitor/splash-screen');
-            await SplashScreen.hide({ fadeOutDuration: SPLASH_FADE_MS });
-          } catch {
-            /* not running native; nothing to dismiss */
-          }
+    const BOOT_PERCEPTION_MS = 400;
 
-          // Phase 2: wait for the splash fade to finish + a perception
-          // beat. During this window the boot-fallback is the ONLY thing
-          // on screen, dots animating, identity continuous from the
-          // splash. Skipping this would make the splash feel like it
-          // cuts straight to the app, hiding our branded loading state.
-          await new Promise((r) => setTimeout(r, SPLASH_FADE_MS + BOOT_PERCEPTION_MS));
+    const splashStartedAt = performance.now();
+    async function waitForBootFallbackPaint(): Promise<void> {
+      const deadline = splashStartedAt + BOOT_FALLBACK_MAX_WAIT_MS;
+      // Spin in rAF until the boot-fallback is in the DOM with its
+      // bloom-gradient background actually computed. getComputedStyle
+      // returns rgba(0,0,0,0) for un-styled elements; we look for the
+      // brand-dark base (`rgb(10, 10, 11)`) OR any non-default value
+      // confirming styling has been applied.
+      while (performance.now() < deadline) {
+        const el = document.getElementById('boot-fallback');
+        if (el) {
+          const bg = getComputedStyle(el).backgroundImage;
+          // The boot-fallback uses `background: radial-gradient(...) #0a0a0b`
+          // → computed `background-image` includes `radial-gradient`.
+          if (bg && bg !== 'none') break;
+        }
+        await new Promise<void>((r) => requestAnimationFrame(() => r()));
+      }
+      // Two more rAFs so the gradient + glow have actually composited.
+      await new Promise<void>((r) => requestAnimationFrame(() => r()));
+      await new Promise<void>((r) => requestAnimationFrame(() => r()));
+      // Floor — the splash always shows ≥ MIN_PAINT_MS even on a
+      // hot-cache device that paints instantly.
+      const elapsed = performance.now() - splashStartedAt;
+      if (elapsed < BOOT_FALLBACK_MIN_PAINT_MS) {
+        await new Promise((r) => setTimeout(r, BOOT_FALLBACK_MIN_PAINT_MS - elapsed));
+      }
+    }
 
-          // Phase 3: fade out the boot-fallback. Its CSS `transition:
-          // opacity 300ms ease-out` does the visual work; we remove the
-          // node 300ms later so it stops blocking pointer events.
-          if (typeof document !== 'undefined') {
-            const bootFallback = document.getElementById('boot-fallback');
-            if (bootFallback) {
-              bootFallback.setAttribute('data-hide', '1');
-              setTimeout(() => bootFallback.remove(), 300);
-            }
-          }
-        }),
-      );
-    }, BOOT_FALLBACK_MIN_MS);
+    (async () => {
+      await waitForBootFallbackPaint();
+      // Phase 1: hide the native splash. The boot-fallback is NOW
+      // confirmed painted underneath, so this hand-off is invisible
+      // even on slow devices.
+      try {
+        const { SplashScreen } = await import('@capacitor/splash-screen');
+        await SplashScreen.hide({ fadeOutDuration: SPLASH_FADE_MS });
+      } catch {
+        /* not running native; nothing to dismiss */
+      }
+      // Phase 2: perception beat where boot-fallback is the only thing.
+      await new Promise((r) => setTimeout(r, SPLASH_FADE_MS + BOOT_PERCEPTION_MS));
+      // Phase 3: fade out the boot-fallback.
+      if (typeof document !== 'undefined') {
+        const bootFallback = document.getElementById('boot-fallback');
+        if (bootFallback) {
+          bootFallback.setAttribute('data-hide', '1');
+          setTimeout(() => bootFallback.remove(), 300);
+        }
+      }
+    })();
 
     // Deep-link routing — the OS hands us `careerops://` URLs whenever
     // the user taps a widget, Live Activity, or Share Extension success
@@ -234,7 +261,7 @@
       // sign-in gate immediately.
       if (
         typeof localStorage === 'undefined' ||
-        localStorage.getItem('career-ops:authed') !== '1'
+        localStorage.getItem(BRAND_STORAGE_KEYS.authed) !== '1'
       ) {
         await updateWidgets({ authenticated: false });
         return;
@@ -330,7 +357,7 @@
     ) {
       const path = window.location.pathname;
       // Layer 1: sync flag check — bounce immediately if no flag.
-      if (localStorage.getItem('career-ops:authed') !== '1') {
+      if (localStorage.getItem(BRAND_STORAGE_KEYS.authed) !== '1') {
         // window.location.replace cancels every in-flight SvelteKit
         // navigation, including the root +page.svelte's queueMicrotask
         // goto('/inbox') that would otherwise win the race.
@@ -355,8 +382,8 @@
               // Real auth state says unauthenticated. Scrub the stale
               // flag (incl. bearer token) so the layer-1 check catches it
               // on the next page-load too.
-              localStorage.removeItem('career-ops:authed');
-              localStorage.removeItem('career-ops:bearer-token');
+              localStorage.removeItem(BRAND_STORAGE_KEYS.authed);
+              localStorage.removeItem(BRAND_STORAGE_KEYS.bearerToken);
               // Hard-navigate (window.location), NOT SvelteKit goto.
               // The root +page.svelte enqueues `goto('/inbox')` in
               // onMount via queueMicrotask. Two SvelteKit goto()s race
@@ -369,8 +396,8 @@
           .catch(() => {
             // Probe failed (backend unreachable / aborted). Treat as
             // unauthed so we never leave the user on a stranded app shell.
-            localStorage.removeItem('career-ops:authed');
-            localStorage.removeItem('career-ops:bearer-token');
+            localStorage.removeItem(BRAND_STORAGE_KEYS.authed);
+            localStorage.removeItem(BRAND_STORAGE_KEYS.bearerToken);
             void goto('/login?redirectTo=' + encodeURIComponent(path), {
               replaceState: true,
             });
@@ -603,5 +630,20 @@
   <ErrorBoundary title="Post-rejection sheet crashed">
     <PostRejectionSheet />
   </ErrorBoundary>
+{:else}
+  <!--
+    Unauthed pages (/login, /signup, /help, /onboarding) get a floating
+    theme toggle at top-right so the user can pick light/dark/system
+    before signing in. The authed Topbar already has one — this is the
+    parity for everywhere else. Positioned with viewport-aware safe-area
+    insets so it never collides with the iOS notch or the Dynamic
+    Island. Z-50 keeps it above auth-screen content but below toasts
+    (z-9999 sonner default).
+  -->
+  <div
+    class="fixed top-[max(0.5rem,env(safe-area-inset-top))] right-[max(0.5rem,env(safe-area-inset-right))] z-50"
+  >
+    <ThemeToggle />
+  </div>
 {/if}
 <Toaster />

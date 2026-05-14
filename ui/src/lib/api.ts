@@ -15,10 +15,13 @@ import { BRAND_EVENTS } from '$lib/client/brand';
 import { onlineStore, OfflineError } from '$lib/client/online-status.svelte';
 import { getApiBase } from '$lib/client/api-base';
 import { Preferences } from '@capacitor/preferences';
+import { BRAND_STORAGE_KEYS } from '$lib/client/brand';
 
-/** Capacitor Preferences key — Set-Auth-Token from /api/auth/* responses
- *  lives here so cross-origin native sessions persist across reloads. */
-const BEARER_KEY = 'career-ops:bearer-token';
+/** Capacitor Preferences + localStorage key for the bearer token —
+ *  Set-Auth-Token from /api/auth/* responses lives here so cross-
+ *  origin native sessions persist across reloads. Pulled from
+ *  BRAND_STORAGE_KEYS so the key tracks brand renames. */
+const BEARER_KEY = BRAND_STORAGE_KEYS.bearerToken;
 
 async function getBearerToken(): Promise<string | null> {
   // Preferences first (Capacitor-backed Keychain on iOS, SharedPreferences

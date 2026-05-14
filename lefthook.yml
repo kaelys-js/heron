@@ -101,8 +101,18 @@ pre-commit:
       # {staged_files} repo-relative paths (`ui/src/...`) match. The
       # original `cd ui` form broke for new files because prettier
       # resolved the paths against ui/, looking for `ui/ui/src/...`.
+      #
+      # The sed strips the leading `ui/` from every file in the
+      # space-separated list so prettier (run with -C ui) sees the
+      # paths relative to its workspace root. CRITICAL: the leading
+      # token must be `^ui/` or ` ui/` (boundary-anchored), NOT a
+      # plain `ui/` with /g. Plain /g would mangle paths that have
+      # `ui/` in the MIDDLE — e.g. `ui/src/lib/components/ui/sonner/...`
+      # collapses to `src/lib/components/sonner/...` which prettier
+      # can't find. We use awk to map per-token so the anchoring is
+      # unambiguous regardless of how many `ui/`s appear in the path.
       glob: "*.svelte"
-      run: pnpm -C ui exec prettier --check $(echo {staged_files} | sed 's|ui/||g') --ignore-path .prettierignore
+      run: pnpm -C ui exec prettier --check $(echo {staged_files} | awk '{for(i=1;i<=NF;i++){sub(/^ui\//,"",$i);printf "%s ",$i}}') --ignore-path .prettierignore
 
     typecheck:
       # Type-check ui/ + ui/electron/ on every commit via turbo's per-

@@ -25,8 +25,13 @@ import { passkeyClient } from '@better-auth/passkey/client';
 import { Preferences } from '@capacitor/preferences';
 import { getApiBase } from './api-base';
 import { setSharedBearerToken } from './native-bridge';
+import { BRAND_STORAGE_KEYS } from './brand';
 
-const BEARER_KEY = 'career-ops:bearer-token';
+// Pulled from the centralised brand-storage map so a brand rename
+// retargets every read + write in one place. Was previously hardcoded
+// `'career-ops:bearer-token'` which would drift on rebrand.
+const BEARER_KEY = BRAND_STORAGE_KEYS.bearerToken;
+const AUTHED_KEY = BRAND_STORAGE_KEYS.authed;
 
 /**
  * Better Auth validates `baseURL` synchronously and throws
@@ -128,7 +133,7 @@ async function customFetch(input: RequestInfo | URL, init?: RequestInit): Promis
       // +layout.svelte's localStorage check is the only auth gate (the
       // server-side hooks.server.ts doesn't run for adapter-static).
       // Both signals get cleared together in `clearLocalAuthState()`.
-      localStorage.setItem('career-ops:authed', '1');
+      localStorage.setItem(AUTHED_KEY, '1');
     }
     // Mirror into App Group UserDefaults so the Share Extension can
     // attach Authorization headers when it POSTs shared URLs. The
@@ -158,7 +163,7 @@ export async function clearLocalAuthState(): Promise<void> {
   }
   if (typeof localStorage !== 'undefined') {
     localStorage.removeItem(BEARER_KEY);
-    localStorage.removeItem('career-ops:authed');
+    localStorage.removeItem(AUTHED_KEY);
   }
   // Also scrub the App Group mirror so the Share Extension can't
   // accidentally authenticate a post-sign-out share with the previous

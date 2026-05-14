@@ -43,6 +43,7 @@ import { ensureSchema } from './db/migrate';
 import * as authSchema from './db/auth-schema';
 import { writeEnv } from './env';
 import { logEvent, reportServerError } from './events';
+import { BRAND } from '$lib/client/brand';
 
 // Run the idempotent DDL bootstrap before Better Auth touches the DB.
 ensureSchema();
@@ -104,7 +105,10 @@ const drizzleSchema = {
 };
 
 export const auth = betterAuth({
-  appName: 'career-ops',
+  // Sourced from BRAND so a rebrand in branding/brand.json propagates
+  // automatically. Previously hardcoded "career-ops" which would
+  // silently drift on rename.
+  appName: BRAND.name,
   secret: BETTER_AUTH_SECRET,
   baseURL: BETTER_AUTH_URL,
 
@@ -214,10 +218,11 @@ export const auth = betterAuth({
     'http://localhost:*',
     'https://localhost:*',
     'capacitor://localhost',
-    // Custom URL scheme used by the iOS WebView (see capacitor.config.ts
-    // `ios.scheme: 'careerops'`). The trailing `*` covers any path.
-    'careerops://localhost',
-    'careerops://*',
+    // Custom URL scheme used by the iOS WebView. Pulled from BRAND so
+    // a urlScheme rename in branding/brand.json doesn't silently lock
+    // the iOS WebView out of better-auth's CSRF allow-list.
+    `${BRAND.urlScheme}://localhost`,
+    `${BRAND.urlScheme}://*`,
     'http://*.ts.net',
     'https://*.ts.net',
   ],
@@ -234,10 +239,10 @@ export const auth = betterAuth({
   plugins: [
     passkey({
       // rpName is the user-facing "Relying Party Name" shown in the
-      // iOS / browser passkey dialogs ("Sign in to Career Ops with
-      // your passkey"). Brand display name beats the lowercase
-      // technical slug here.
-      rpName: 'Career Ops',
+      // iOS / browser passkey dialogs ("Sign in to <brand> with your
+      // passkey"). Pulled from BRAND so it tracks the display-name
+      // rebrand in branding/brand.json automatically.
+      rpName: BRAND.displayName,
       // rpID is the host (no port, no protocol). Same for dev + prod
       // because everything runs on localhost or the user's LAN IP.
       rpID: new URL(BETTER_AUTH_URL).hostname,
@@ -309,7 +314,12 @@ export const auth = betterAuth({
   // relying on Better Auth defaults, so a future version that changes
   // defaults can't silently weaken our cookie security.
   advanced: {
-    cookiePrefix: 'career-ops',
+    // Cookie names will be prefixed by this — for `career-ops` the
+    // session cookie becomes `career-ops.session_token`. Pulled from
+    // BRAND so the cookie name tracks the brand rename. NOTE: changing
+    // this invalidates existing sessions across all clients — a
+    // rebrand will sign every user out (intended; clean break).
+    cookiePrefix: BRAND.name,
     useSecureCookies: BETTER_AUTH_URL.startsWith('https://'),
     crossSubDomainCookies: { enabled: false },
     cookies: {

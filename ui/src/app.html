@@ -1,5 +1,19 @@
 <!doctype html>
-<html lang="en">
+<!--
+  Initial `class="dark"` is the FOUC fix. Without it:
+    1. Page loads with no class → Tailwind's :root vars (light) win
+    2. Inline script below runs, adds `.dark` for dark-mode users
+    3. Tailwind re-resolves → bg flips from light → dark
+  Net effect: a visible LIGHT flash before the dark theme settles, most
+  obvious on cold-launch when localStorage / matchMedia take longer.
+  Shipping the class in the HTML byte-stream means the very first
+  composited frame already has the dark variables applied. The inline
+  bootstrap script below downgrades to light when the user has
+  explicitly chosen 'light' (rare path), so the only flash users see
+  is dark → light, which is much less jarring than light → dark on a
+  dark-first brand.
+-->
+<html lang="en" class="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -9,6 +23,18 @@
          or on reload. The theme-bootstrap script below flips to light for
          users who chose light explicitly. -->
     <style>
+      /* Pre-Tailwind paint defaults. Since <html> ships with class="dark"
+         (FOUC fix), the dark values are the first-paint values for every
+         user. The `:not(.dark)` override applies once the inline script
+         has removed `.dark` for explicit-light users — that happens
+         BEFORE first paint because the script is synchronous in <head>.
+
+         The `!important` on the body background is intentional: Tailwind
+         compiles `body { @apply bg-background; }` which would otherwise
+         override these values once the CSS chunk loads. The variable
+         (and therefore Tailwind's resolved value) is correct by then,
+         but locking the literal here guarantees ZERO flash even if the
+         Tailwind chunk takes an extra paint to land. */
       html,
       body {
         background-color: #0a0a0b;
@@ -24,18 +50,26 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
-      html.light,
-      html.light body {
+      html:not(.dark),
+      html:not(.dark) body {
         background-color: #fafaf9;
         color: #18181b;
       }
     </style>
 
     <!--
-      Theme bootstrap — applied BEFORE Svelte hydrates to avoid the dreaded
-      light-mode flash. Reads localStorage:career-ops:theme ('light'|'dark'|'system')
-      and falls back to system preference. Mirrors the runtime store in
-      src/lib/theme.svelte.ts; keep these in sync.
+      Theme bootstrap — runs BEFORE the body parses so the dark class
+      is finalised before paint. `<html>` ships with `class="dark"`
+      already (see comment above the html tag), so:
+        • dark / system-dark users → no class change, no flash
+        • light / system-light users → script REMOVES .dark before any
+          CSS chunk has loaded, so the first composited frame is light
+      The try/catch falls back to leaving `.dark` in place if anything
+      throws (localStorage denied, matchMedia missing), which is the
+      safer default for a dark-first brand.
+
+      Mirrors the runtime store in src/lib/theme.svelte.ts — keep these
+      two scripts in sync.
     -->
     <script>
       (function () {
@@ -49,12 +83,15 @@
                 : 'light'
               : mode;
           var root = document.documentElement;
-          if (resolved === 'dark') root.classList.add('dark');
-          else root.classList.remove('dark');
-          // Hint to forms and scrollbars
+          // root already has `class="dark"` from the static HTML. Remove
+          // it only when the user has explicitly chosen light (or system
+          // resolves to light); otherwise leave it as-is to avoid the
+          // FOUC pre-fix used to cause.
+          if (resolved === 'light') root.classList.remove('dark');
+          else root.classList.add('dark');
           root.style.colorScheme = resolved;
         } catch (e) {
-          document.documentElement.classList.add('dark');
+          /* fall back to the pre-applied .dark class (dark-first default) */
         }
       })();
     </script>

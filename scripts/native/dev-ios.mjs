@@ -342,10 +342,42 @@ if (isLive) {
 info('Press Ctrl+C in this terminal to stop the dev server.');
 info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-// Relay Ctrl+C to the dev server.
-process.on('SIGINT', () => {
-  dev.kill('SIGTERM');
-  process.exit(0);
-});
+// Relay terminate signals to the dev (vite) child so vite doesn't get
+// orphaned when this script dies. Pre-fix only SIGINT (Ctrl+C) was
+// handled — if the parent shell sent SIGTERM, SIGHUP, or the user
+// closed the terminal, vite kept running as a zombie. Three signal
+// channels cover every common kill path:
+//
+//   • SIGINT  — Ctrl+C (most common)
+//   • SIGTERM — `kill <pid>` / parent-process kill (e.g. when the
+//               background-task wrapper dies)
+//   • SIGHUP  — terminal window closed
+//
+// We also escalate to SIGKILL after a 5s grace period so a stuck vite
+// can't keep us alive indefinitely. exit(0) so other tooling reading
+// our exit code doesn't think we crashed.
+function shutdown(signal) {
+  info(`received ${signal} — stopping dev server`);
+  try {
+    dev.kill('SIGTERM');
+  } catch {
+    /* already gone */
+  }
+  // Escalate if vite ignores SIGTERM (it usually doesn't, but just in case).
+  const hardKill = setTimeout(() => {
+    try {
+      dev.kill('SIGKILL');
+    } catch {
+      /* race with natural exit */
+    }
+  }, 5_000);
+  dev.once('exit', () => {
+    clearTimeout(hardKill);
+    process.exit(0);
+  });
+}
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGHUP', () => shutdown('SIGHUP'));
 // Wait on the dev server.
 await new Promise((resolve) => dev.on('exit', resolve));

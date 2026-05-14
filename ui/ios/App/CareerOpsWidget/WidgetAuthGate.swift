@@ -84,6 +84,77 @@ struct BrandBackground: View {
 }
 
 /**
+ * BrandMark — miniature reproduction of the app icon for use inside
+ * widget content (auth gate, branded headers). Renders the same
+ * indigo→violet→purple gradient rounded-rect from branding/logo.svg
+ * with the rocket glyph centred on top.
+ *
+ * Why not just use the SF Symbol `paperplane.fill` or similar:
+ *   Generic SF Symbols don't say "this is YOUR app" the way the brand
+ *   mark does. The previous gate used `lock.shield.fill` which read as
+ *   a generic security warning, not a friendly "open Career Ops to
+ *   continue" affordance. Reproducing the actual app icon makes the
+ *   gate visually identical to the icon the user just installed.
+ *
+ * Why not load the AppIcon image directly:
+ *   WidgetKit extensions can't access the host app's AppIcon — the
+ *   image lives in the host's asset catalog, not the extension's. We
+ *   could ship a duplicate but that means two places to update. SwiftUI
+ *   reproduction stays in sync with branding/logo.svg via the same
+ *   indigo/violet/purple constants the inline app.html uses.
+ *
+ * Sizing: the rounded-rect occupies the full frame; callers control
+ * the outer size with `.frame(width:height:)`.
+ */
+struct BrandMark: View {
+    var body: some View {
+        ZStack {
+            // Backing rounded rect with the brand gradient. Corner
+            // radius is ~22% of the side, matching the iOS-style
+            // squircle that branding/logo.svg uses (232 of 1024).
+            GeometryReader { geo in
+                let size = min(geo.size.width, geo.size.height)
+                RoundedRectangle(cornerRadius: size * 0.226, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.388, green: 0.400, blue: 0.945),   // #6366f1
+                                Color(red: 0.545, green: 0.361, blue: 0.965),   // #8b5cf6
+                                Color(red: 0.659, green: 0.333, blue: 0.969)    // #a855f7
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    // Top-half subtle white wash for depth, matches the
+                    // ".06 white opacity rect" in branding/logo.svg.
+                    .overlay(
+                        RoundedRectangle(cornerRadius: size * 0.226, style: .continuous)
+                            .fill(Color.white.opacity(0.06))
+                            .frame(height: size / 2)
+                            .frame(maxHeight: .infinity, alignment: .top)
+                            .clipShape(RoundedRectangle(cornerRadius: size * 0.226, style: .continuous))
+                    )
+                    // Rocket glyph centred on top. Uses SF Symbol
+                    // `paperplane.fill` rotated — closest stock symbol
+                    // to the lucide rocket shape used in branding/logo.svg.
+                    // Apple ships `figure.fall.forward` style rockets
+                    // only from iOS 17; we use a more compatible glyph.
+                    .overlay(
+                        Image(systemName: "paperplane.fill")
+                            .font(.system(size: size * 0.42, weight: .medium))
+                            .foregroundStyle(.white)
+                            .rotationEffect(.degrees(-45))
+                            .offset(x: -size * 0.02, y: 0)
+                    )
+            }
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .shadow(color: .indigo.opacity(0.35), radius: 12, x: 0, y: 6)
+    }
+}
+
+/**
  * View extension that applies the brand container background only on iOS
  * 17+, where `.containerBackground(for: .widget)` is the Apple-blessed
  * API. On iOS 14-16 the modifier is unavailable and we fall through to
@@ -150,47 +221,82 @@ extension WidgetHeader where Trailing == EmptyView {
     }
 }
 
+/**
+ * WidgetSignInGate — branded "tap to sign in" placeholder rendered by
+ * every widget when the user isn't authenticated on the host app.
+ *
+ * Design priorities:
+ *   1. **Device-agnostic copy**: the widget can be on iPhone OR iPad,
+ *      and the same binary runs on both. "Sign in on iPhone" was wrong
+ *      on iPad and truncated to "Sign in on iP…" on small widgets even
+ *      on iPhone. We replaced it with "Tap to sign in" everywhere —
+ *      short, fits the small widget without truncation, and accurate
+ *      regardless of the device the user is looking at.
+ *   2. **Branded mark, not a lock**: the previous gate used
+ *      `lock.shield.fill` which read as a security warning. The brand
+ *      mark (matching the app icon the user just installed) reads as
+ *      "open YOUR app" which is the actual action we want.
+ *   3. **No truncation on systemSmall**: typography sized so headline
+ *      fits in one line at the small-widget width (≈155 pt on iPhone).
+ *      The supporting line is shown only on systemMedium+ where there
+ *      is room.
+ */
 struct WidgetSignInGate: View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
         switch family {
         case .accessoryCircular:
-            // Lock Screen circular — tiny canvas, just the lock glyph.
+            // Lock Screen circular — tiny canvas. Mini brand mark
+            // (smaller corner radius works at this size) over the
+            // accessory background.
             ZStack {
                 AccessoryWidgetBackground()
-                Image(systemName: "lock.shield.fill")
+                Image(systemName: "paperplane.fill")
                     .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.tint)
+                    .rotationEffect(.degrees(-45))
             }
         case .accessoryInline:
-            Text("Sign in on iPhone")
+            Label("Tap to sign in", systemImage: "paperplane.fill")
         case .accessoryRectangular:
             HStack(spacing: 6) {
-                Image(systemName: "lock.shield.fill")
+                Image(systemName: "paperplane.fill")
                     .foregroundStyle(.tint)
+                    .rotationEffect(.degrees(-45))
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("Career Ops").font(.caption2.bold()).foregroundStyle(.tint)
-                    Text("Sign in on iPhone").font(.caption).lineLimit(1)
+                    Text(Brand.displayName)
+                        .font(.caption2.bold())
+                        .foregroundStyle(.tint)
+                    Text("Tap to sign in")
+                        .font(.caption)
+                        .lineLimit(1)
                 }
             }
         default:
             // systemSmall / systemMedium / systemLarge — full card.
-            VStack(spacing: 8) {
-                Image(systemName: "lock.shield.fill")
-                    .font(.system(size: family == .systemLarge ? 44 : 32, weight: .regular))
-                    .foregroundStyle(.tint)
-                Text("Career Ops")
-                    .font(family == .systemSmall ? .caption.bold() : .subheadline.bold())
+            VStack(spacing: family == .systemSmall ? 6 : 10) {
+                BrandMark()
+                    .frame(
+                        width: family == .systemLarge ? 64 : family == .systemMedium ? 56 : 44,
+                        height: family == .systemLarge ? 64 : family == .systemMedium ? 56 : 44
+                    )
+                Text(Brand.displayName)
+                    .font(.caption2.bold())
                     .foregroundStyle(.secondary)
-                Text("Sign in on iPhone")
+                    .tracking(0.5)
+                Text("Tap to sign in")
                     .font(family == .systemSmall ? .footnote.bold() : .headline)
                     .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.8)
+                    .lineLimit(1)
                 if family != .systemSmall {
                     Text("Open the app to see your pipeline.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 4)
+                        .lineLimit(2)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
