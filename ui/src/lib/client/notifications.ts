@@ -97,6 +97,11 @@ export async function notify(opts: NotifyOptions): Promise<boolean> {
   const granted = await requestPermission();
   if (!granted) return false;
 
+  // Quiet-hours gate. Errors always go through — a failed apply /
+  // autopilot crash is exactly the kind of thing a user would want
+  // to hear about even at 3am. Info/warn/success respect the window.
+  if (opts.level !== 'error' && isInQuietHoursFromStorage()) return false;
+
   const platform = Capacitor.getPlatform();
 
   if (platform === 'ios') {
@@ -113,7 +118,10 @@ export async function notify(opts: NotifyOptions): Promise<boolean> {
             schedule: { at: new Date(Date.now() + 100) }, // fire ~immediately
             extra: opts.deepLink ? { deepLink: opts.deepLink } : undefined,
             sound: opts.level === 'error' ? 'default' : undefined,
-            smallIcon: 'ic_stat_career_ops',
+            // Note: `smallIcon` is an Android drawable name; on iOS the
+            // notification automatically inherits the app icon, so we
+            // deliberately omit it here. Leaving an Android key in
+            // place on iOS was a no-op but read as a bug at code review.
           },
         ],
       });
@@ -164,8 +172,15 @@ function tagToId(tag: string): number {
 
 /**
  * Drop all pending iOS notifications — used by the "muted" toggle in
- * settings. Web/Electron have no equivalent (Notification API can't
- * un-show already-displayed notifications).
+ * settings AND the sign-out path so a notification scheduled while
+ * user A was signed in doesn't fire after user B signs in. Web/Electron
+ * have no equivalent (Notification API can't un-show already-displayed
+ * notifications).
+ *
+ * Also clears any DELIVERED notifications still sitting in the iOS
+ * notification center so a user opening the app fresh doesn't see
+ * stale "Scan complete · 3 new offers" taps that would deep-link them
+ * to data they no longer have access to.
  */
 export async function clearAllPending(): Promise<void> {
   if (Capacitor.getPlatform() === 'ios') {
@@ -174,7 +189,85 @@ export async function clearAllPending(): Promise<void> {
       if (list.notifications.length > 0) {
         await LocalNotifications.cancel({ notifications: list.notifications });
       }
-    } catch {}
+    } catch {
+      // LocalNotifications plugin not available — extension target or
+      // permission denied. Either way there's nothing to drain.
+    }
+    try {
+      // Delivered notifications API was added in @capacitor/local-notifications
+      // v6; guard with a runtime check so older bundles don't throw.
+      const ln = LocalNotifications as unknown as {
+        getDeliveredNotifications?: () => Promise<{ notifications: Array<{ id: number }> }>;
+        removeDeliveredNotifications?: (opts: {
+          notifications: Array<{ id: number }>;
+        }) => Promise<void>;
+      };
+      if (ln.getDeliveredNotifications && ln.removeDeliveredNotifications) {
+        const delivered = await ln.getDeliveredNotifications();
+        if (delivered.notifications.length > 0) {
+          await ln.removeDeliveredNotifications({ notifications: delivered.notifications });
+        }
+      }
+    } catch {
+      // Same fallback as pending — non-fatal.
+    }
+  }
+}
+
+/**
+ * Quiet-hours preference shape — stored in ui-prefs.json. Times are
+ * 24-hour clock numbers (e.g. 22 = 10pm, 7 = 7am). When `enabled` is
+ * false the gate always passes. When `start === end` quiet hours
+ * never apply (zero-length window).
+ *
+ * Window semantics: a window like (22, 7) means "from 22:00 until
+ * 07:00 the next morning" — spans midnight. (8, 18) means "from 08:00
+ * until 18:00 same day" — does not span midnight.
+ */
+export type QuietHours = {
+  enabled: boolean;
+  startHour: number; // 0-23
+  endHour: number; // 0-23
+};
+
+/**
+ * True when the current local time falls within the user's quiet-hours
+ * window. Callers should bypass `notify()` for non-critical levels
+ * during this window. Critical (`error`) notifications always go
+ * through — a failed apply / autopilot crash shouldn't be silenced.
+ */
+export function isInQuietHours(prefs: QuietHours, now: Date = new Date()): boolean {
+  if (!prefs.enabled) return false;
+  if (prefs.startHour === prefs.endHour) return false;
+  const hour = now.getHours();
+  if (prefs.startHour < prefs.endHour) {
+    // Same-day window — e.g. (8, 18) means 08:00-17:59.
+    return hour >= prefs.startHour && hour < prefs.endHour;
+  }
+  // Cross-midnight window — e.g. (22, 7) means 22:00-23:59 OR 00:00-06:59.
+  return hour >= prefs.startHour || hour < prefs.endHour;
+}
+
+/**
+ * Internal helper used by `notify()` — reads the localStorage-backed
+ * prefs and evaluates the window. Falls back to "not in quiet hours"
+ * if storage is denied or the prefs blob is corrupt, so a broken
+ * settings page can never silently silence the user.
+ */
+function isInQuietHoursFromStorage(): boolean {
+  if (typeof localStorage === 'undefined') return false;
+  try {
+    // Keep this key in sync with NotificationPreferences.svelte. We
+    // can't import BRAND_STORAGE_PREFIX from `./brand` because this
+    // file is in the same client directory and the cycle adds bundle
+    // weight. Hardcoded literal is fine — a brand rename runs the
+    // verifier which would flag this.
+    const raw = localStorage.getItem('career-ops:quiet-hours');
+    if (!raw) return false;
+    const parsed = JSON.parse(raw) as QuietHours;
+    return isInQuietHours(parsed);
+  } catch {
+    return false;
   }
 }
 

@@ -7,6 +7,7 @@
   import * as Card from '$lib/components/ui/card';
   import BackupsCard, { type BackupInfo } from '$lib/components/BackupsCard.svelte';
   import PushNotificationsToggle from '$lib/components/PushNotificationsToggle.svelte';
+  import NotificationPreferences from '$lib/components/NotificationPreferences.svelte';
   import ProfileSettingsCard from '$lib/components/ProfileSettingsCard.svelte';
   import { toast } from 'svelte-sonner';
   import { ApiError, api } from '$lib/api';
@@ -630,8 +631,14 @@
             offers received). The daily digest at 07:00 summarizes what to focus on.
           </Card.Description>
         </Card.Header>
-        <Card.Content>
+        <Card.Content class="space-y-4">
           <PushNotificationsToggle />
+          <!-- Quiet hours + native clear-all. Separates the on-device
+               controls (when to ping, how to wipe the center) from the
+               browser-permission-and-level toggle above. -->
+          <div class="pt-3 border-t border-border/40">
+            <NotificationPreferences />
+          </div>
         </Card.Content>
       </Card.Root>
 

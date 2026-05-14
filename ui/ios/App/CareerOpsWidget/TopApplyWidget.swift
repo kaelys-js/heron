@@ -27,21 +27,42 @@ struct TopApplyCandidate: Codable {
 struct TopApplyEntry: TimelineEntry {
     let date: Date
     let candidate: TopApplyCandidate?
+    /// Auth gate — see WidgetAuthGate.swift for the full contract.
+    let authenticated: Bool
 }
 
 struct TopApplyProvider: TimelineProvider {
     typealias Entry = TopApplyEntry
 
     func placeholder(in context: Context) -> TopApplyEntry {
-        TopApplyEntry(date: Date(), candidate: nil)
+        // Gallery preview — synthetic candidate so the gallery thumbnail
+        // shows what the widget DOES, not a sign-in CTA.
+        let preview = TopApplyCandidate(
+            jobId: "preview",
+            company: "Anthropic",
+            role: "Head of Applied AI",
+            score: 4.7,
+            compBand: "$240k–$320k",
+            location: "Remote · US",
+            portal: "Greenhouse"
+        )
+        return TopApplyEntry(date: Date(), candidate: preview, authenticated: true)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TopApplyEntry) -> Void) {
-        completion(TopApplyEntry(date: Date(), candidate: read()))
+        completion(TopApplyEntry(
+            date: Date(),
+            candidate: read(),
+            authenticated: WidgetAuth.isAuthenticated()
+        ))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<TopApplyEntry>) -> Void) {
-        let entry = TopApplyEntry(date: Date(), candidate: read())
+        let entry = TopApplyEntry(
+            date: Date(),
+            candidate: read(),
+            authenticated: WidgetAuth.isAuthenticated()
+        )
         // 15min refresh — fast enough to feel current, slow enough to
         // respect the 40-budget Apple gives widgets per day.
         let next = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
@@ -60,11 +81,17 @@ struct TopApplyWidgetView: View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        if let c = entry.candidate {
-            content(c)
-        } else {
-            empty
+        Group {
+            if !entry.authenticated {
+                WidgetSignInGate()
+                    .widgetURL(URL(string: Brand.deepLink("login")))
+            } else if let c = entry.candidate {
+                content(c)
+            } else {
+                empty
+            }
         }
+        .brandContainerBackground()
     }
 
     @ViewBuilder
@@ -72,47 +99,110 @@ struct TopApplyWidgetView: View {
         switch family {
         case .systemSmall:
             VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(c.company).font(.headline).lineLimit(1)
-                    Spacer()
+                WidgetHeader(icon: "star.fill", label: "Top to Apply") {
                     ScoreBadge(score: c.score)
                 }
-                Text(c.role).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                Text(c.company).font(.subheadline.bold()).lineLimit(1)
+                Text(c.role).font(.caption2).foregroundStyle(.secondary).lineLimit(2)
                 Spacer(minLength: 0)
                 if let band = c.compBand {
-                    Text(band).font(.caption2).foregroundStyle(.tint)
+                    Text(band).font(.caption2.bold()).foregroundStyle(.tint).lineLimit(1)
                 }
                 if let loc = c.location {
                     Text(loc).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .padding()
             .widgetURL(URL(string: Brand.jobDeepLink(c.jobId)))
 
         case .systemMedium:
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(c.company).font(.headline)
-                        if let portal = c.portal {
-                            Text(portal).font(.caption2).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 6) {
+                WidgetHeader(icon: "star.fill", label: "Top to Apply") {
+                    if let portal = c.portal {
+                        Text(portal.capitalized)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(c.company).font(.headline).lineLimit(1)
+                        Text(c.role).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                        if let band = c.compBand {
+                            Text(band).font(.caption.bold()).foregroundStyle(.tint)
+                        }
+                        if let loc = c.location {
+                            Text(loc).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
                         }
                     }
-                    Text(c.role).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
-                    Spacer(minLength: 0)
-                    if let band = c.compBand {
-                        Text(band).font(.caption.bold()).foregroundStyle(.tint)
+                    Spacer()
+                    VStack(spacing: 4) {
+                        ScoreBadge(score: c.score, size: .large)
+                        HStack(spacing: 2) {
+                            Image(systemName: "arrow.up.right")
+                                .font(.caption2.bold())
+                            Text("Apply").font(.caption2.bold())
+                        }
+                        .foregroundStyle(.tint)
                     }
-                    if let loc = c.location {
-                        Text(loc).font(.caption2).foregroundStyle(.secondary)
-                    }
-                }
-                Spacer()
-                VStack {
-                    ScoreBadge(score: c.score, size: .large)
-                    Text("Apply").font(.caption.bold()).foregroundStyle(.tint)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding()
+            .widgetURL(URL(string: Brand.jobDeepLink(c.jobId)))
+
+        case .systemLarge:
+            // Large variant — surfaces the SINGLE top candidate at the top
+            // with full details, then a list of up-to-2 runner-ups below
+            // (read from App Group "topApply:runnerUps" key if present —
+            // a future enhancement; for now we just show the top candidate
+            // in a roomier layout with full comp + portal + Apply CTA).
+            VStack(alignment: .leading, spacing: 10) {
+                WidgetHeader(icon: "star.fill", label: "Top to Apply") {
+                    if let portal = c.portal {
+                        Text(portal.capitalized)
+                            .font(.caption2.bold())
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(c.company).font(.title2.bold()).lineLimit(1)
+                        Text(c.role).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                    }
+                    Spacer()
+                    ScoreBadge(score: c.score, size: .large)
+                }
+                Divider()
+                VStack(alignment: .leading, spacing: 4) {
+                    if let band = c.compBand {
+                        HStack(spacing: 6) {
+                            Image(systemName: "dollarsign.circle.fill")
+                                .foregroundStyle(.tint)
+                            Text(band).font(.subheadline.bold())
+                        }
+                    }
+                    if let loc = c.location {
+                        HStack(spacing: 6) {
+                            Image(systemName: "mappin.and.ellipse")
+                                .foregroundStyle(.secondary)
+                            Text(loc).font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                Spacer(minLength: 0)
+                HStack {
+                    Spacer()
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.up.right.circle.fill")
+                            .font(.subheadline)
+                        Text("Tap to apply").font(.caption.bold())
+                    }
+                    .foregroundStyle(.tint)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .padding()
             .widgetURL(URL(string: Brand.jobDeepLink(c.jobId)))
 
@@ -139,11 +229,15 @@ struct TopApplyWidgetView: View {
     }
 
     private var empty: some View {
-        VStack(spacing: 4) {
-            Image(systemName: "tray").font(.title2).foregroundStyle(.secondary)
-            Text("No jobs ready to apply")
-                .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
-        }.padding()
+        VStack(spacing: 6) {
+            Image(systemName: "checkmark.circle").font(.title2).foregroundStyle(.tint)
+            Text("All caught up")
+                .font(.subheadline.bold()).multilineTextAlignment(.center)
+            Text("Run a scan to find more").font(.caption)
+                .foregroundStyle(.secondary).multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
 }
 
@@ -176,11 +270,16 @@ struct TopApplyWidget: Widget {
         StaticConfiguration(kind: kind, provider: TopApplyProvider()) { entry in
             TopApplyWidgetView(entry: entry)
         }
-        .configurationDisplayName("Top job to apply")
-        .description("The highest-scoring job currently queued for you to apply to.")
+        .configurationDisplayName("Top to Apply")
+        .description("Your highest-scoring queued job — one tap to start applying.")
         .supportedFamilies([
             .systemSmall,
             .systemMedium,
+            // .systemLarge added in Task 4 — gives users a roomier
+            // single-candidate view with full comp + location + Apply
+            // CTA, matching how Apple's Reminders / Mail render their
+            // large variants vs the squeezed medium.
+            .systemLarge,
             .accessoryRectangular,
             .accessoryInline,
         ])

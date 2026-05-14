@@ -25,21 +25,43 @@ struct IssueSnapshot: Codable {
 struct InboxEntry: TimelineEntry {
     let date: Date
     let issues: [IssueSnapshot]
+    /// Auth gate — see WidgetAuthGate.swift for the full contract.
+    let authenticated: Bool
 }
 
 struct InboxProvider: TimelineProvider {
     typealias Entry = InboxEntry
 
     func placeholder(in context: Context) -> InboxEntry {
-        InboxEntry(date: Date(), issues: [])
+        // Gallery preview — show authenticated with a sample issue so
+        // the widget gallery thumbnail isn't a sign-in CTA.
+        InboxEntry(
+            date: Date(),
+            issues: [IssueSnapshot(
+                id: "preview",
+                severity: "warn",
+                source: "apply-linkedin",
+                summary: "CAPTCHA blocked an apply — finish by hand",
+                ts: Date().timeIntervalSince1970 * 1000
+            )],
+            authenticated: true
+        )
     }
 
     func getSnapshot(in context: Context, completion: @escaping (InboxEntry) -> Void) {
-        completion(InboxEntry(date: Date(), issues: read()))
+        completion(InboxEntry(
+            date: Date(),
+            issues: read(),
+            authenticated: WidgetAuth.isAuthenticated()
+        ))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<InboxEntry>) -> Void) {
-        let entry = InboxEntry(date: Date(), issues: read())
+        let entry = InboxEntry(
+            date: Date(),
+            issues: read(),
+            authenticated: WidgetAuth.isAuthenticated()
+        )
         let next = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
         completion(Timeline(entries: [entry], policy: .after(next)))
     }
@@ -56,89 +78,113 @@ struct InboxIssuesWidgetView: View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
+        Group {
+            if !entry.authenticated {
+                WidgetSignInGate()
+                    .widgetURL(URL(string: Brand.deepLink("login")))
+            } else {
+                content
+            }
+        }
+        .brandContainerBackground()
+    }
+
+    @ViewBuilder
+    private var content: some View {
         switch family {
         case .systemSmall:
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 4) {
-                    Image(systemName: "tray.full").font(.callout)
-                    Text("Inbox").font(.subheadline.bold())
+            VStack(alignment: .leading, spacing: 6) {
+                WidgetHeader(icon: "tray.full", label: "Inbox") {
+                    if !entry.issues.isEmpty {
+                        Text("\(entry.issues.count)")
+                            .font(.caption.bold())
+                            .foregroundStyle(.orange)
+                    }
                 }
+                Spacer(minLength: 0)
                 Text("\(entry.issues.count)")
-                    .font(.system(size: 40, weight: .bold, design: .rounded))
-                    // Explicit `Color` on both branches so Swift's ternary
-                    // type-inference doesn't fail trying to unify
-                    // `HierarchicalShapeStyle.secondary` with `Color.orange`
-                    // — `.foregroundStyle` accepts any ShapeStyle, but the
-                    // branches MUST resolve to the same type before being
-                    // passed in. Color conforms to ShapeStyle, so this
-                    // works.
+                    .font(.system(size: 42, weight: .bold, design: .rounded))
                     .foregroundStyle(entry.issues.isEmpty ? Color.secondary : Color.orange)
                 if let first = entry.issues.first {
                     Text(first.summary).font(.caption2)
                         .foregroundStyle(.secondary).lineLimit(2)
                 } else {
-                    Text("All clear").font(.caption2).foregroundStyle(.secondary)
+                    Text("Nothing needs attention")
+                        .font(.caption2).foregroundStyle(.secondary)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .padding()
             .widgetURL(URL(string: Brand.deepLink("inbox")))
 
         case .systemMedium:
             VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Image(systemName: "tray.full")
-                    Text("Inbox").font(.headline)
-                    Spacer()
-                    Text("\(entry.issues.count)").font(.headline.bold())
+                WidgetHeader(icon: "tray.full", label: "Inbox") {
+                    Text("\(entry.issues.count)")
+                        .font(.caption.bold())
                         .foregroundStyle(entry.issues.isEmpty ? Color.secondary : Color.orange)
                 }
-                Divider()
-                ForEach(entry.issues.prefix(3), id: \.id) { issue in
-                    HStack(spacing: 6) {
-                        Image(systemName: severityIcon(issue.severity))
-                            .foregroundStyle(severityColor(issue.severity))
-                            .font(.caption2)
-                        Text(issue.summary).font(.caption).lineLimit(1)
+                if entry.issues.isEmpty {
+                    Spacer(minLength: 0)
+                    Text("Nothing needs attention")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    Spacer(minLength: 0)
+                } else {
+                    ForEach(entry.issues.prefix(3), id: \.id) { issue in
+                        HStack(spacing: 6) {
+                            Image(systemName: severityIcon(issue.severity))
+                                .foregroundStyle(severityColor(issue.severity))
+                                .font(.caption2)
+                            Text(issue.summary).font(.caption).lineLimit(1)
+                            Spacer(minLength: 0)
+                        }
                     }
                 }
-                if entry.issues.isEmpty {
-                    Text("Nothing needs attention").font(.caption)
-                        .foregroundStyle(.secondary)
-                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .padding()
             .widgetURL(URL(string: Brand.deepLink("inbox")))
 
         case .systemLarge:
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Image(systemName: "tray.full")
-                    Text("Inbox").font(.title3.bold())
-                    Spacer()
-                    Text("\(entry.issues.count)").font(.title3.bold())
+            VStack(alignment: .leading, spacing: 8) {
+                WidgetHeader(icon: "tray.full", label: "Inbox") {
+                    Text("\(entry.issues.count)")
+                        .font(.subheadline.bold())
                         .foregroundStyle(entry.issues.isEmpty ? Color.secondary : Color.orange)
                 }
-                Divider()
-                ForEach(entry.issues.prefix(5), id: \.id) { issue in
-                    VStack(alignment: .leading, spacing: 1) {
-                        HStack(spacing: 6) {
-                            Image(systemName: severityIcon(issue.severity))
-                                .foregroundStyle(severityColor(issue.severity))
-                                .font(.caption)
-                            Text(issue.source).font(.caption2.bold())
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                        }
-                        Text(issue.summary).font(.caption).lineLimit(2)
-                    }
-                    .padding(.vertical, 2)
-                }
                 if entry.issues.isEmpty {
-                    Text("All clear — nothing in the Inbox.").font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 0)
+                    VStack(spacing: 6) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.title)
+                            .foregroundStyle(.tint)
+                        Text("All clear")
+                            .font(.headline)
+                        Text("Nothing in the Inbox right now.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    Spacer(minLength: 0)
+                } else {
+                    ForEach(entry.issues.prefix(5), id: \.id) { issue in
+                        VStack(alignment: .leading, spacing: 1) {
+                            HStack(spacing: 6) {
+                                Image(systemName: severityIcon(issue.severity))
+                                    .foregroundStyle(severityColor(issue.severity))
+                                    .font(.caption)
+                                Text(issue.source).font(.caption2.bold())
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                            }
+                            Text(issue.summary).font(.caption).lineLimit(2)
+                        }
+                        .padding(.vertical, 2)
+                    }
+                    Spacer(minLength: 0)
                 }
-                Spacer(minLength: 0)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .padding()
             .widgetURL(URL(string: Brand.deepLink("inbox")))
 
@@ -189,8 +235,8 @@ struct InboxIssuesWidget: Widget {
         StaticConfiguration(kind: kind, provider: InboxProvider()) { entry in
             InboxIssuesWidgetView(entry: entry)
         }
-        .configurationDisplayName("Inbox issues")
-        .description("Open issues that need your attention — captcha-blocked applies, custom Q&A, more.")
+        .configurationDisplayName("Inbox")
+        .description("Anything that needs your attention before an apply can finish.")
         .supportedFamilies([
             .systemSmall,
             .systemMedium,

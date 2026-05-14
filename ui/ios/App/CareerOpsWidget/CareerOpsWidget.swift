@@ -29,21 +29,44 @@ struct CareerOpsStats: Codable {
 struct CareerOpsEntry: TimelineEntry {
     let date: Date
     let stats: CareerOpsStats
+    /// Auth gate — when false, the widget renders WidgetSignInGate instead
+    /// of the stats. Read at TimelineProvider time from App Group defaults
+    /// so the gate flips immediately when the iPhone main app pushes
+    /// `{ authenticated: false }` on sign-out.
+    let authenticated: Bool
 }
 
 struct CareerOpsTimelineProvider: TimelineProvider {
     typealias Entry = CareerOpsEntry
 
     func placeholder(in context: Context) -> CareerOpsEntry {
-        CareerOpsEntry(date: Date(), stats: CareerOpsStats(queued: 0, appliedToday: 0, upcomingInterviews: 0))
+        // Placeholder is rendered before the timeline is ready (widget
+        // gallery thumbnails + the snapshot before getTimeline returns).
+        // Show a populated-looking preview so users picking the widget
+        // from the gallery understand what it does — but mark it
+        // authenticated so the placeholder doesn't accidentally tell
+        // the user to sign in.
+        CareerOpsEntry(
+            date: Date(),
+            stats: CareerOpsStats(queued: 3, appliedToday: 1, upcomingInterviews: 2),
+            authenticated: true
+        )
     }
 
     func getSnapshot(in context: Context, completion: @escaping (CareerOpsEntry) -> Void) {
-        completion(CareerOpsEntry(date: Date(), stats: readStats()))
+        completion(CareerOpsEntry(
+            date: Date(),
+            stats: readStats(),
+            authenticated: WidgetAuth.isAuthenticated()
+        ))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<CareerOpsEntry>) -> Void) {
-        let entry = CareerOpsEntry(date: Date(), stats: readStats())
+        let entry = CareerOpsEntry(
+            date: Date(),
+            stats: readStats(),
+            authenticated: WidgetAuth.isAuthenticated()
+        )
         // Refresh in 15min. Apple decides when this actually runs.
         let next = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
         completion(Timeline(entries: [entry], policy: .after(next)))
@@ -67,20 +90,55 @@ struct CareerOpsWidgetEntryView: View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
+        // Signed-out users see the gate everywhere. The gate is itself a
+        // tap target — `widgetURL` is set on the whole bundle by each
+        // widget below, so taps on the gate land at `careerops://login`.
+        Group {
+            if !entry.authenticated {
+                WidgetSignInGate()
+                    .widgetURL(URL(string: Brand.deepLink("login")))
+            } else {
+                content
+            }
+        }
+        // `containerBackground` (iOS 17+) is the Apple-recommended way
+        // to set widget backgrounds — older systems fall through to the
+        // system default. We use a subtle brand-indigo gradient so the
+        // Career Ops widgets read as a coordinated set in the user's
+        // home screen rather than four unrelated white cards.
+        .brandContainerBackground()
+    }
+
+    @ViewBuilder
+    private var content: some View {
         switch family {
         case .systemSmall:
             VStack(alignment: .leading, spacing: 4) {
-                Text("career-ops").font(.caption).foregroundStyle(.secondary)
-                Text("\(entry.stats.queued)").font(.system(size: 40, weight: .bold))
-                Text("queued").font(.caption2).foregroundStyle(.secondary)
-            }.padding().widgetURL(URL(string: Brand.deepLink("queue")))
+                WidgetHeader(icon: "tray", label: "Queue")
+                Spacer(minLength: 0)
+                Text("\(entry.stats.queued)")
+                    .font(.system(size: 44, weight: .bold, design: .rounded))
+                    .foregroundStyle(.tint)
+                Text(entry.stats.queued == 1 ? "job queued" : "jobs queued")
+                    .font(.caption2).foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding()
+            .widgetURL(URL(string: Brand.deepLink("queue")))
 
         case .systemMedium:
-            HStack(spacing: 16) {
-                StatBlock(label: "Queued", value: entry.stats.queued)
-                StatBlock(label: "Applied", value: entry.stats.appliedToday)
-                StatBlock(label: "Interviews", value: entry.stats.upcomingInterviews)
-            }.padding().widgetURL(URL(string: Brand.deepLink("pipeline")))
+            VStack(alignment: .leading, spacing: 8) {
+                WidgetHeader(icon: "chart.bar.fill", label: "Pipeline")
+                Spacer(minLength: 0)
+                HStack(spacing: 16) {
+                    StatBlock(label: "Queued", value: entry.stats.queued, accent: .indigo)
+                    StatBlock(label: "Applied", value: entry.stats.appliedToday, accent: .green)
+                    StatBlock(label: "Interviews", value: entry.stats.upcomingInterviews, accent: .orange)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding()
+            .widgetURL(URL(string: Brand.deepLink("pipeline")))
 
         case .accessoryCircular:
             // Lock Screen (iOS 16+) + Apple Watch Smart Stack
@@ -94,7 +152,7 @@ struct CareerOpsWidgetEntryView: View {
             // Watch face complication slot (rectangular). Three lines
             // of compact info — fits in the modular Smart Stack.
             VStack(alignment: .leading, spacing: 1) {
-                Text("career-ops").font(.caption2).foregroundStyle(.tint)
+                Text(Brand.displayName).font(.caption2).foregroundStyle(.tint)
                 Text("\(entry.stats.queued) queued · \(entry.stats.appliedToday) applied")
                     .font(.caption.bold())
                 Text("\(entry.stats.upcomingInterviews) interview(s)")
@@ -111,13 +169,24 @@ struct CareerOpsWidgetEntryView: View {
     }
 }
 
+/**
+ * StatBlock — number + label pair used by the medium Pipeline widget.
+ *
+ * The accent color tints just the numeric value so the label row stays
+ * neutral grey (preserves the visual ladder: header → big number →
+ * label). A `nil` value collapses to "—" so the empty state still
+ * shows three blocks (consistent layout) instead of three "0"s.
+ */
 struct StatBlock: View {
     let label: String
     let value: Int
+    var accent: Color = .indigo
     var body: some View {
-        VStack {
-            Text("\(value)").font(.system(size: 28, weight: .bold))
-            Text(label).font(.caption).foregroundStyle(.secondary)
+        VStack(spacing: 2) {
+            Text("\(value)")
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundStyle(accent)
+            Text(label).font(.caption2).foregroundStyle(.secondary)
         }.frame(maxWidth: .infinity)
     }
 }
@@ -129,8 +198,12 @@ struct CareerOpsWidget: Widget {
         StaticConfiguration(kind: kind, provider: CareerOpsTimelineProvider()) { entry in
             CareerOpsWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("career-ops")
-        .description("Today's pipeline at a glance.")
+        // Widget-gallery label + subtitle. These are what the user reads
+        // when picking the widget — should describe what it DOES, not
+        // restate the app name (which is already the section header
+        // grouping all our widgets in the gallery).
+        .configurationDisplayName("Pipeline")
+        .description("Queue, applies today, and upcoming interviews — at a glance.")
         .supportedFamilies([
             .systemSmall,
             .systemMedium,

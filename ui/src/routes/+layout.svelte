@@ -22,6 +22,11 @@
   import { authClient } from '$lib/client/auth-client';
   import OfflineIndicator from '$lib/components/OfflineIndicator.svelte';
   import { page } from '$app/state';
+  import { updateWidgets, isIos, setSharedBackendUrl } from '$lib/client/native-bridge';
+  import { apiCall } from '$lib/api';
+  import { installDeepLinkHandler, handleDeepLink } from '$lib/client/deep-links';
+  import { onNotificationTap } from '$lib/client/notifications';
+  import { installNotificationsBridge } from '$lib/client/sse-notifications-bridge';
 
   // Reactive auth flag — true ONLY when the user is on a private route
   // AND has the local auth marker set. Used to gate the floating UI
@@ -90,10 +95,27 @@
     // instantly to ''. On Capacitor it runs the dev → mDNS → Tailscale →
     // production probe ladder. We don't await — first /api/* call will
     // wait on the same promise via api-base.ts's `resolving` deduplication.
+    // Track the SSE bridge teardown so we can stop it on cleanup.
+    let stopNotificationsBridge: (() => void) | null = null;
+
     void import('$lib/client/api-base').then(({ getApiBase }) =>
       getApiBase()
         .then((base) => {
           if (base) setReporterBackend(base);
+          // Mirror the resolved backend URL into App Group UserDefaults so
+          // the Share Extension knows where to POST. No-op on web/desktop.
+          // Even an empty base on web is mirrored as '' which clears any
+          // stale value from a prior native session.
+          void setSharedBackendUrl(base || null);
+          // Install the SSE → notification + widget-stale bridge. The
+          // bridge listens to /api/notifications, fires OS notifications
+          // for warn/error/success events AND dispatches a widget-stale
+          // CustomEvent on every event with a widget-relevant source
+          // (apply-*, interview-*, scan-*, issue*). Widget refresh
+          // listener was installed below.
+          if (base || typeof window !== 'undefined') {
+            stopNotificationsBridge = installNotificationsBridge(base || window.location.origin);
+          }
         })
         .catch(() => {
           /* OfflineIndicator surfaces the failure */
@@ -166,6 +188,107 @@
       );
     }, BOOT_FALLBACK_MIN_MS);
 
+    // Deep-link routing — the OS hands us `careerops://` URLs whenever
+    // the user taps a widget, Live Activity, or Share Extension success
+    // callback. Without this, every tap drops the user at the dashboard
+    // root regardless of what they tapped. Capacitor's @capacitor/app
+    // plugin is the source; deep-links.ts parses + routes.
+    installDeepLinkHandler();
+
+    // Local-notification taps. Notifications scheduled via the unified
+    // notify() API stash a `careerops://` deep link in `extra.deepLink`;
+    // when the user taps, this listener resolves + navigates. Without
+    // it the app opens to the root on tap (no context).
+    const removeNotificationListener = onNotificationTap((deepLink) => {
+      handleDeepLink(deepLink);
+    });
+
+    // iOS Home Screen / Lock Screen / Watch widget refresh pipeline.
+    //
+    // The widgets read App Group UserDefaults that ONLY the iPhone main
+    // app can write to (Apple's sandbox model — extension targets can
+    // read, but it's the host app's job to feed). Without this fetch,
+    // every widget renders the empty / "Sign in on iPhone" placeholder
+    // forever, even for an authenticated user with a populated queue.
+    //
+    // Refresh strategy:
+    //   • Cold boot: fetch + push immediately after the auth probe wins.
+    //   • While the app is foregrounded: SSE-driven (Task 9). The
+    //     activity-feed bus already notifies on every relevant event;
+    //     sse-notifications-bridge listens and re-fetches.
+    //   • App resumes from background: visibilitychange listener
+    //     re-fetches so the user sees fresh data when they pull the app
+    //     up. iOS itself coalesces widget refreshes to ~15min cycles, so
+    //     we can't update faster than that on the widget surface, but
+    //     a fresh App Group write means the NEXT cycle has fresh data.
+    //
+    // The `isIos()` short-circuit keeps web + desktop bundles from
+    // wasting a fetch on a no-op call to a Capacitor plugin that
+    // doesn't exist.
+    async function refreshWidgetSnapshot() {
+      if (typeof window === 'undefined' || !isIos()) return;
+      try {
+        const snap = await apiCall<{
+          ok: boolean;
+          authenticated: boolean;
+          stats: { queued: number; appliedToday: number; upcomingInterviews: number };
+          nextInterview: unknown | null;
+          topApply: unknown | null;
+          openIssues: unknown[];
+        }>('/api/widgets/snapshot');
+        if (!snap?.ok) return;
+        await updateWidgets({
+          authenticated: true,
+          stats: snap.stats,
+          nextInterview: snap.nextInterview as never,
+          topApply: snap.topApply as never,
+          openIssues: snap.openIssues as never,
+        });
+      } catch {
+        // 401 = unauthenticated → updateWidgets({ authenticated: false })
+        // is pushed from the sign-out path below. Other errors fall
+        // through silently; the widgets keep their last-known good
+        // state (App Group UserDefaults persist across launches).
+      }
+    }
+
+    // Initial push. Fire-and-forget — don't block layout hydration.
+    void refreshWidgetSnapshot();
+
+    // Re-fetch on resume so a user backgrounding the app for hours and
+    // returning sees fresh data immediately rather than waiting on the
+    // next 15-min OS tick.
+    const onVisible = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        void refreshWidgetSnapshot();
+      }
+    };
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisible);
+    }
+    // Listen for the brand-internal refresh event — Task 9's SSE bridge
+    // dispatches it whenever the activity feed reports a widget-relevant
+    // event (apply state change, interview scheduled, issue added). The
+    // bridge can't import `updateWidgets` directly without pulling
+    // Capacitor into every page bundle, so we use a DOM CustomEvent as
+    // the decoupling boundary.
+    const onRefresh = () => void refreshWidgetSnapshot();
+    if (typeof window !== 'undefined') {
+      window.addEventListener(`${BRAND_EVENTS.notify}:widgets-stale`, onRefresh);
+    }
+
+    // Cleanup — onMount returns a teardown so HMR doesn't pile listeners.
+    const teardown = () => {
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisible);
+      }
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(`${BRAND_EVENTS.notify}:widgets-stale`, onRefresh);
+      }
+      removeNotificationListener();
+      stopNotificationsBridge?.();
+    };
+
     // Client-side auth gate. In adapter-node builds hooks.server.ts
     // bounces unauthenticated users to /login before the page ever
     // hydrates — but in adapter-static (Capacitor) hooks.server.ts
@@ -236,6 +359,26 @@
             });
           });
       }
+    }
+
+    return teardown;
+  });
+
+  // Sign-out detector — when the `career-ops:authed` flag flips from set
+  // to absent (the sign-out button in AppSidebar.svelte clears it), push
+  // `{ authenticated: false }` so the iPhone widgets + Watch immediately
+  // flip to the gate state. Without this, the widgets would keep their
+  // last data on screen until the next 15-min refresh tick — leaking the
+  // previous user's queue / interview info to anyone who picks up the phone.
+  $effect(() => {
+    if (typeof window === 'undefined' || !isIos()) return;
+    // Track the flag's value so we only push when it transitions out of '1'.
+    // Reading inside the effect makes Svelte track localStorage misses too,
+    // but localStorage isn't a Svelte signal — so we also poll on the
+    // existing 'storage' event (fires on cross-tab change) + the layout's
+    // isAuthed derived (which re-evaluates on every nav).
+    if (!isAuthed) {
+      void updateWidgets({ authenticated: false });
     }
   });
 

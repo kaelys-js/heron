@@ -19,7 +19,7 @@
   import { Label } from '$lib/components/ui/label';
   import { onMount, onDestroy } from 'svelte';
   import { toast } from 'svelte-sonner';
-  import { BRAND_EVENTS, BRAND_STORAGE_PREFIX } from '$lib/client/brand';
+  import { BRAND, BRAND_EVENTS, BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 
   type Permission = 'default' | 'granted' | 'denied' | 'unsupported';
 
@@ -88,7 +88,7 @@
         toast.error('Grant permission first');
         return;
       }
-      new Notification('career-ops test', {
+      new Notification(`${BRAND.displayName} · Test`, {
         body: "OS-level notifications are working. You'll see these for high-priority events when the tab is in the background.",
         icon: '/favicon.ico',
         tag: `${BRAND_STORAGE_PREFIX}:test`,
@@ -118,7 +118,12 @@
     if (!ev) return;
     if (!enabledLevels[ev.level as keyof typeof enabledLevels]) return;
     try {
-      new Notification('career-ops · ' + (ev.source ?? ''), {
+      // Title format: "Career Ops · <source>" — leading display name
+      // keeps it identifiable in the OS notification tray when many
+      // apps are stacked. Empty source falls through to bare display
+      // name rather than a trailing " · " separator with nothing after.
+      const sourceSuffix = ev.source ? ' · ' + ev.source : '';
+      new Notification(BRAND.displayName + sourceSuffix, {
         body: ev.title + (ev.message ? ' — ' + ev.message : ''),
         icon: '/favicon.ico',
         tag: `${BRAND_STORAGE_PREFIX}:` + (ev.source ?? 'evt'),

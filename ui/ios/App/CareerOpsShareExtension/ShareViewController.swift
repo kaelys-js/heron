@@ -28,10 +28,62 @@ class ShareViewController: SLComposeServiceViewController {
 
     override func didSelectPost() {
         Task { @MainActor in
-            if let url = await extractUrl() {
-                await postToCareerOps(url: url, note: self.contentText)
+            guard let url = await extractUrl() else {
+                // No URL in the share payload (user shared a photo or
+                // bare text). Complete silently — Compose sheet already
+                // had its built-in cancel button.
+                self.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+                return
             }
+            let outcome = await postToCareerOps(url: url, note: self.contentText)
+            await showOutcome(outcome)
             self.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+        }
+    }
+
+    /// Result of the POST so the UI feedback path knows which alert /
+    /// haptic to show. We deliberately distinguish `unauthenticated`
+    /// from `failed` because the recovery path is different — user
+    /// must sign in on the iPhone vs. retry the share later.
+    enum ShareOutcome {
+        case success
+        case unauthenticated  // 401 / no token → user must sign in on iPhone
+        case unreachable      // No backend URL cached, or timeout
+        case failed(Int)      // Other non-2xx HTTP status
+    }
+
+    /// Surface the outcome as a UIAlertController so the user knows
+    /// whether their tap on "Post" actually did anything. Without
+    /// this, the share sheet just disappears silently and the user
+    /// has no way to know if the URL landed in their Inbox.
+    @MainActor
+    private func showOutcome(_ outcome: ShareOutcome) async {
+        let title: String
+        let message: String
+        switch outcome {
+        case .success:
+            // For success we use the system success haptic instead of
+            // a modal alert — feels native (matches Apple's Reminders
+            // share extension) and doesn't add a tap the user must
+            // dismiss.
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            return
+        case .unauthenticated:
+            title = "Sign in on Career Ops first"
+            message = "Open the Career Ops app on this iPhone, sign in, then try sharing again."
+        case .unreachable:
+            title = "Career Ops backend unreachable"
+            message = "Open the Career Ops app once to discover your backend, then retry sharing."
+        case .failed(let status):
+            title = "Couldn't save the link"
+            message = "Server responded with HTTP \(status). Try again, or check the activity log inside the app."
+        }
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+                continuation.resume()
+            })
+            self.present(alert, animated: true)
         }
     }
 
@@ -68,26 +120,54 @@ class ShareViewController: SLComposeServiceViewController {
         }
     }
 
-    private func postToCareerOps(url: URL, note: String?) async {
-        // Read the resolved backend URL from the shared App Group.
+    private func postToCareerOps(url: URL, note: String?) async -> ShareOutcome {
+        // Read the resolved backend URL + bearer token from the shared
+        // App Group. The iPhone main app mirrors both whenever they
+        // change (see CareerOpsNativePlugin.setSharedBackendUrl /
+        // setSharedBearerToken). If either is missing the user hasn't
+        // opened + signed in to the host app yet.
         guard let defaults = UserDefaults(suiteName: Brand.appGroup),
               let backend = defaults.string(forKey: Brand.DefaultsKey.backendResolvedUrl) else {
             NSLog("[share] no backend cached — cannot post URL")
-            return
+            return .unreachable
         }
-        guard let apiUrl = URL(string: backend + "/api/pipeline") else { return }
+        guard let apiUrl = URL(string: backend + "/api/pipeline") else {
+            return .unreachable
+        }
+        let token = defaults.string(forKey: Brand.DefaultsKey.bearerToken)
+        if token == nil || token?.isEmpty == true {
+            // No token → server will 401. Short-circuit so the user
+            // gets a clear "Sign in first" message instead of a
+            // generic HTTP error.
+            NSLog("[share] no bearer token cached — user must sign in first")
+            return .unauthenticated
+        }
         var req = URLRequest(url: apiUrl, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 8)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue("Bearer \(token!)", forHTTPHeaderField: "Authorization")
         let payload: [String: Any] = ["url": url.absoluteString, "note": note ?? "", "source": "ios-share"]
         req.httpBody = try? JSONSerialization.data(withJSONObject: payload)
 
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            let task = URLSession.shared.dataTask(with: req) { _, response, _ in
-                if let http = response as? HTTPURLResponse {
-                    NSLog("[share] posted, status=\(http.statusCode)")
+        return await withCheckedContinuation { (continuation: CheckedContinuation<ShareOutcome, Never>) in
+            let task = URLSession.shared.dataTask(with: req) { _, response, error in
+                if let error = error {
+                    NSLog("[share] network error: \(error.localizedDescription)")
+                    continuation.resume(returning: .unreachable)
+                    return
                 }
-                continuation.resume()
+                guard let http = response as? HTTPURLResponse else {
+                    continuation.resume(returning: .unreachable)
+                    return
+                }
+                NSLog("[share] posted, status=\(http.statusCode)")
+                if (200..<300).contains(http.statusCode) {
+                    continuation.resume(returning: .success)
+                } else if http.statusCode == 401 {
+                    continuation.resume(returning: .unauthenticated)
+                } else {
+                    continuation.resume(returning: .failed(http.statusCode))
+                }
             }
             task.resume()
         }
