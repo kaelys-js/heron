@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
   import { KeyRound, Code, Ticket } from '@lucide/svelte';
+  import { BRAND } from '$lib/client/brand';
   // Lucide's "github" icon was deprecated; use a generic Code icon for
   // the GitHub OAuth CTA instead. Phase 3 can swap in an SVG mark.
 
@@ -10,12 +11,12 @@
 </script>
 
 <svelte:head>
-  <title>Welcome — career-ops</title>
+  <title>Welcome — {BRAND.displayName}</title>
 </svelte:head>
 
 <main class="mx-auto flex min-h-screen max-w-xl flex-col justify-center p-8">
   <header class="mb-8">
-    <h1 class="text-3xl font-semibold tracking-tight">Welcome to career-ops</h1>
+    <h1 class="text-3xl font-semibold tracking-tight">Welcome to {BRAND.displayName}</h1>
     <p class="mt-2 text-sm text-muted-foreground">
       {#if data.isFirstUser}
         The first account you create becomes the owner of this install. You can invite others later

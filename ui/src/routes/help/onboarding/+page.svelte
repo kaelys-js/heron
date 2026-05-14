@@ -133,7 +133,7 @@
             class="underline underline-offset-2 hover:text-foreground">/onboarding</a
           >
           walks a fresh install through 7 steps in 5–10 minutes. Onboarding is also how you ADD A NEW
-          PROFILE — career-ops supports multiple distinct career tracks per install (e.g. Software Engineering
+          PROFILE — Career Ops supports multiple distinct career tracks per install (e.g. Software Engineering
           + Electrician), and each track gets its own walk-through so the CV / targeting / first-scan
           are scoped to that profile. By the end you have keys configured, identity captured, CV imported,
           target roles + filters set, sources connected, and a first scan complete. This page documents
@@ -332,7 +332,7 @@
               modes won't work.
             </li>
             <li>
-              Skip <em>is</em> safe if you cloned an existing setup (dotfiles, prior career-ops install)
+              Skip <em>is</em> safe if you cloned an existing setup (dotfiles, prior Career Ops install)
               and want to dismiss the redirect.
             </li>
           </ul>

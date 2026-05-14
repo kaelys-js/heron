@@ -3,6 +3,7 @@
   import { Plus, Copy, X, Users as UsersIcon } from '@lucide/svelte';
   import { authClient } from '$lib/client/auth-client';
   import { goto, invalidateAll } from '$app/navigation';
+  import { BRAND } from '$lib/client/brand';
 
   let { data } = $props<{
     data: {
@@ -80,7 +81,7 @@
 </script>
 
 <svelte:head>
-  <title>Users — career-ops</title>
+  <title>Users — {BRAND.displayName}</title>
 </svelte:head>
 
 <main class="mx-auto max-w-3xl space-y-8 p-8">

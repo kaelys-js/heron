@@ -227,7 +227,24 @@
     // doesn't exist.
     async function refreshWidgetSnapshot() {
       if (typeof window === 'undefined' || !isIos()) return;
+      // Skip the fetch on auth screens — the route guard would return
+      // 401 and the error-reporter would surface a misleading red toast
+      // ("401 · /api/widgets/snapshot") on the login page. We push
+      // `{ authenticated: false }` instead so the widgets flip to the
+      // sign-in gate immediately.
+      if (
+        typeof localStorage === 'undefined' ||
+        localStorage.getItem('career-ops:authed') !== '1'
+      ) {
+        await updateWidgets({ authenticated: false });
+        return;
+      }
       try {
+        // `silent: true` so an unauth race or backend hiccup doesn't
+        // surface a red toast — widget refresh is a background concern;
+        // failures should NOT pop UI in the user's face. We'd rather the
+        // user see stale widget data than a "401 · /api/widgets/snapshot"
+        // toast on the login screen.
         const snap = await apiCall<{
           ok: boolean;
           authenticated: boolean;
@@ -235,7 +252,7 @@
           nextInterview: unknown | null;
           topApply: unknown | null;
           openIssues: unknown[];
-        }>('/api/widgets/snapshot');
+        }>('/api/widgets/snapshot', { silent: true });
         if (!snap?.ok) return;
         await updateWidgets({
           authenticated: true,

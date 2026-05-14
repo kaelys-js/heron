@@ -705,7 +705,7 @@
               class="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-200 hover:bg-fuchsia-500/20 transition-colors"
               onclick={(e: MouseEvent) => e.preventDefault()}
             >
-              📎 career-ops fill
+              📎 Career Ops fill
             </a>
             <span class="text-[11px] text-muted-foreground">↑ Drag this to your bookmarks bar</span>
           </div>

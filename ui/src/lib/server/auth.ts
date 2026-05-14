@@ -233,7 +233,11 @@ export const auth = betterAuth({
 
   plugins: [
     passkey({
-      rpName: 'career-ops',
+      // rpName is the user-facing "Relying Party Name" shown in the
+      // iOS / browser passkey dialogs ("Sign in to Career Ops with
+      // your passkey"). Brand display name beats the lowercase
+      // technical slug here.
+      rpName: 'Career Ops',
       // rpID is the host (no port, no protocol). Same for dev + prod
       // because everything runs on localhost or the user's LAN IP.
       rpID: new URL(BETTER_AUTH_URL).hostname,

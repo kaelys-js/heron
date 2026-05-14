@@ -16,6 +16,7 @@
   import { Capacitor } from '@capacitor/core';
   import { resolveBackend, type ResolvedBackend, pillLabel } from '$lib/client/backend-discovery';
   import { setReporterBackend, reportWarning } from '$lib/client/error-reporter';
+  import { BRAND } from '$lib/client/brand';
   import LoadingState from './LoadingState.svelte';
 
   let { children } = $props<{ children?: import('svelte').Snippet }>();
@@ -39,7 +40,7 @@
       setReporterBackend(location.origin);
       return;
     }
-    state = { kind: 'resolving', phase: 'Looking for your career-ops server…' };
+    state = { kind: 'resolving', phase: `Looking for your ${BRAND.displayName} server…` };
     try {
       const w = globalThis as any;
       const embedded = w?.__CAREER_OPS__?.embeddedUrl;

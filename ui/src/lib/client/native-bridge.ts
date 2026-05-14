@@ -39,6 +39,7 @@ type CareerOpsNativePlugin = {
   setSharedBearerToken(opts: { token: string }): Promise<{ ok: boolean }>;
   clearSharedBearerToken(): Promise<{ ok: boolean }>;
   setSharedBackendUrl(opts: { url: string }): Promise<{ ok: boolean }>;
+  setSharedQuietHours(opts: { json: string }): Promise<{ ok: boolean }>;
 };
 
 export type WidgetUpdate = {
@@ -309,6 +310,26 @@ export async function setSharedBackendUrl(url: string | null): Promise<boolean> 
   if (!isIos()) return false;
   try {
     const res = await native.setSharedBackendUrl({ url: url ?? '' });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Mirror the user's quiet-hours preference into App Group UserDefaults
+ * so the BackgroundFetcher (Swift, runs outside the WebView's
+ * localStorage scope) can honour the same window when deciding whether
+ * to surface a warn-level notification at 3am.
+ *
+ * Passed as a serialized JSON string of the QuietHours shape — same
+ * payload localStorage holds, so the Swift side decodes the same shape
+ * and runs the same cross-midnight window logic.
+ */
+export async function setSharedQuietHours(json: string): Promise<boolean> {
+  if (!isIos()) return false;
+  try {
+    const res = await native.setSharedQuietHours({ json });
     return res.ok;
   } catch {
     return false;
