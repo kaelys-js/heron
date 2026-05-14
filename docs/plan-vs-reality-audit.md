@@ -38,12 +38,12 @@ The earlier `docs/phase9-final-verification.md` claimed "47 atomic tasks complet
 | 2.12 | `lib/theme.svelte.ts` | ≥ 8 | `theme.test.ts` + dense | ✅ |
 | 2.13 | `lib/config/branding.ts`, `lib/config/cli.ts` | ≥ 16 | `branding.test.ts` + dense + `cli.test.ts` | ✅ |
 | 2.14 | `lib/hooks/use-is-mobile.svelte.ts` | ≥ 8 | `use-is-mobile.test.ts` | ✅ |
-| 2.15 | server batch 1 (auth, profiles, job-resolver, keyword-match, followup-cadence) | ≥ 75 | Only `keyword-match.test.ts` | ❌ **4 of 5 missing** |
-| 2.16 | server batch 2 (apply-dispatcher, apply-failures, apply-counter, quality-checks, cv-pdf, interview-schedule) | ≥ 60 | `apply-failures.*`, `apply-counter.*` | ❌ **4 of 6 missing** |
-| 2.17 | server batch 3 (portals, scan-history, linkedin-audit, email-reactor, orchestrator, comp-benchmark, ui-prefs, api-helpers, auth-helpers, projects) | ≥ 80 | `api-helpers.*`, `auth-helpers.*`, `audit-log.*`, `apply-timing.*` | ❌ **7 of 10 missing** |
-| 2.18 | `hooks.server.ts` | ≥ 18 | None | ❌ **ENTIRE FILE MISSING** |
-| 2.19 | routes/api batch 1 (read endpoints) | ≥ 55 across 11 endpoints | **0 test files exist under `ui/src/routes/api/**`** | ❌ **ALL 11 MISSING** |
-| 2.20 | routes/api batch 2 (mutation endpoints) | ≥ 65 across 11+ endpoints | **0 test files** | ❌ **ALL 11+ MISSING** |
+| 2.15 | server batch 1 (auth, profiles, job-resolver, keyword-match, followup-cadence) | ≥ 75 | All 5 covered (auth.test.ts 25 + profiles.test.ts 19 + job-resolver.test.ts 11 + keyword-match.test.ts + followup-cadence.test.ts 17) | ✅ |
+| 2.16 | server batch 2 (apply-dispatcher, apply-failures, apply-counter, quality-checks, cv-pdf, interview-schedule) | ≥ 60 | All 6 covered (apply-dispatcher.test.ts 26 + apply-failures.* + apply-counter.* + quality-checks.test.ts 15 + cv-pdf.test.ts 8 + interview-schedule.test.ts 18) | ✅ |
+| 2.17 | server batch 3 (portals, scan-history, linkedin-audit, email-reactor, orchestrator, comp-benchmark, ui-prefs, api-helpers, auth-helpers, projects) | ≥ 80 | 8 of 10 covered (portals 15 + scan-history 12 + linkedin-audit 17 + comp-benchmark 14 + ui-prefs 18 + api-helpers + auth-helpers + projects 24). **email-reactor + orchestrator still pending** | ⚠️ |
+| 2.18 | `hooks.server.ts` | ≥ 18 | hooks.server.test.ts — 28 cases (full middleware chain) | ✅ |
+| 2.19 | routes/api batch 1 (read endpoints) | ≥ 55 across 11 endpoints | 9 endpoints covered (health 11 + stats 7 + settings 10 + notifications 4 + projects 8 + autopilot 5 + notifications/clear 3 + onboarding/step 6 + issues 7). **~15 endpoints still pending** | ⚠️ |
+| 2.20 | routes/api batch 2 (mutation endpoints) | ≥ 65 across 11+ endpoints | Covered with the above (settings POST, projects POST, autopilot POST, onboarding/step POST, issues POST/DELETE, notifications/clear POST). **~10 endpoints still pending** | ⚠️ |
 | 2.21 | ResponsiveAction* primitives | ≥ 35 | None (4 component files unauthored) | ❌ |
 | 2.22 | NotificationsBell | ≥ 18 | None | ❌ |
 | 2.23 | Topbar | ≥ 22 | None | ❌ |
