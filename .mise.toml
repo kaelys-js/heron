@@ -15,19 +15,34 @@
 # CI uses `mise install` in the matrix — see .github/workflows/test.yml.
 
 [tools]
-# Node — pinned to the absolute latest "current" line release.
-# Rationale: the user explicitly asked for latest, not LTS. Trade-off
-# accepted is shorter support windows (~6 months per major) for access
-# to the newest V8 / runtime features. Bump via `mise use node@latest`
-# and run the verification gauntlet (svelte-check, build, verify-*) before
-# committing.
-node  = "26.1.0"
+# ── Runtimes ─────────────────────────────────────────────────────────
+# Node — pinned to the absolute latest "current" line release. Bump via
+# `mise use node@latest` and run the verification gauntlet (`pnpm check`,
+# `pnpm build`, `pnpm test`) before committing.
+node   = "26.1.0"
 # pnpm 11 (latest). Matches the `packageManager` field in package.json,
 # which is the source of truth Corepack / pnpm-self-install honor.
-pnpm  = "11.1.0"
-# Ruby 3.3.x for Fastlane. Must match ui/ios/App/.ruby-version so
-# `cd ui/ios/App` doesn't switch Rubies mid-build.
-ruby  = "3.3.5"
+pnpm   = "11.1.0"
+# Ruby 3.3.x for Fastlane + rufo. Must match ui/ios/App/.ruby-version
+# so `cd ui/ios/App` doesn't switch Rubies mid-build.
+ruby   = "3.3.5"
+# Python — used by ruff (installed below) AND by the apply-*.py / scan-*.py
+# scripts that drive the Playwright portal automation.
+python = "3.13"
+# Go — used by the dashboard/ workspace AND by `gofmt` in pre-commit.
+go     = "1.23"
+
+# ── Formatters / Linters (managed by mise so fresh-clone works) ──────
+# Every formatter the lefthook + CI gates use must be installable from
+# mise alone — no `brew install` step required for a fresh checkout.
+actionlint  = "1.7"   # GH Workflow validator + shellcheck
+ruff        = "0.7"   # Python formatter + linter
+shfmt       = "3.10"  # POSIX shell formatter
+swiftlint   = "0.57"  # Swift lint gate
+swiftformat = "0.55"  # Swift formatter
+ktlint      = "1.5"   # Kotlin formatter
+yamllint    = "1.36"  # YAML syntax + style
+gofumpt     = "0.7"   # Strict Go formatter — pairs with gofmt (which ships with Go)
 
 [env]
 # Project-scoped env vars — applied when shell-activated mise enters this dir.

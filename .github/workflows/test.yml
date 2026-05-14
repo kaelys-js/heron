@@ -269,34 +269,19 @@ jobs:
           experimental: true
           cache: true
 
-      # actionlint — workflow YAML schema + shellcheck on `run:` blocks.
-      - name: Install actionlint
-        run: |
-          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-          sudo mv ./actionlint /usr/local/bin/
+      # All formatters are pinned in .mise.toml and installed by the
+      # mise setup step above (`jdx/mise-action@v4` with experimental +
+      # cache enabled). No per-tool curl / pip / gem / apt install needed
+      # — fresh-clone reproducibility is the whole point of mise.
 
       - name: actionlint .github/workflows/*.yml
         run: actionlint -color
 
-      # Python — ruff handles both format + lint. Inputs are passed
-      # through xargs so shellcheck's word-splitting warnings don't trip.
-      - name: Install ruff
-        run: pip install --user ruff
-
       - name: ruff format --check
-        run: |
-          git ls-files '*.py' | xargs -r "${HOME}/.local/bin/ruff" format --check
+        run: git ls-files '*.py' | xargs -r ruff format --check
 
       - name: ruff check (lint)
-        run: |
-          git ls-files '*.py' | xargs -r "${HOME}/.local/bin/ruff" check
-
-      # Go — stdlib gofmt.
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: 'stable'
-          cache: false
+        run: git ls-files '*.py' | xargs -r ruff check
 
       - name: gofmt check
         run: |
@@ -307,19 +292,8 @@ jobs:
             exit 1
           fi
 
-      # Kotlin — ktlint.
-      - name: Install ktlint
-        run: |
-          curl -fsSL -o /usr/local/bin/ktlint \
-            https://github.com/pinterest/ktlint/releases/latest/download/ktlint
-          chmod +x /usr/local/bin/ktlint
-
       - name: ktlint
         run: git ls-files '*.kt' | xargs -r ktlint
-
-      # Shell — shfmt.
-      - name: Install shfmt + shellcheck
-        run: sudo apt-get update && sudo apt-get install -y shfmt shellcheck
 
       - name: shfmt check (2-space indent)
         run: |
@@ -330,20 +304,14 @@ jobs:
             exit 1
           fi
 
-      # Ruby — rufo.
-      - name: Install rufo
-        run: gem install --no-document rufo
+      - name: Install root Gemfile (rufo)
+        run: bundle install
 
       - name: rufo --check
-        run: git ls-files '*.rb' | xargs -r rufo -c
-
-      # YAML — yamllint.
-      - name: Install yamllint
-        run: pip install --user yamllint
+        run: git ls-files '*.rb' | xargs -r bundle exec rufo -c
 
       - name: yamllint
-        run: |
-          git ls-files '*.yml' '*.yaml' | xargs -r "${HOME}/.local/bin/yamllint" --no-warnings
+        run: git ls-files '*.yml' '*.yaml' | xargs -r yamllint --no-warnings
 
   # ─────────────────────────────────────────────────────────────────
   # Security audit
