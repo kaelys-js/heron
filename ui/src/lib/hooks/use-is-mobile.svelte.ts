@@ -1,5 +1,5 @@
 /**
- * useIsMobile — shared reactive matchMedia hook.
+ * useIsMobile — singleton reactive matchMedia hook.
  *
  * iOS HIG + Apple HIG: anything ≤ 768pt-wide is a "phone-shaped" context
  * and deserves bottom-sheet / drawer chrome instead of desktop-style
@@ -7,43 +7,53 @@
  * boundary is the same one used by `md:` utility classes throughout the
  * app — flip with viewport rotation on iPad and the layout follows.
  *
- * Returns a Svelte 5 rune-backed `$state` value the component reads as
- * a normal property; matchMedia subscription is set up on mount and
- * torn down on unmount via the returned cleanup function (idiomatic
- * Svelte 5 `onMount` shape).
+ * CRITICAL: this is a MODULE-LEVEL singleton, NOT per-component.
+ * Pre-fix every call to `useIsMobile()` created a fresh `$state` that
+ * mounted its own matchMedia listener. ResponsiveActionMenu (parent) +
+ * ResponsiveActionItem (child) each called the hook, got separate
+ * stores, and the stores updated independently on mount. During the
+ * brief window between the parent flipping to mobile and the child
+ * doing the same, the child rendered <DropdownMenu.Item> inside a
+ * parent that had already switched to <Sheet.Content> — bits-ui then
+ * threw "ContextMenu.Content not found" because the Menu context was
+ * not in scope. The fix is one shared store, one matchMedia listener,
+ * and every component reads from the same source so flips are atomic.
  *
  * Use:
  *   import { useIsMobile } from '$lib/hooks/use-is-mobile.svelte';
  *   const isMobile = useIsMobile();
- *   // template:
  *   {#if isMobile.value} ...mobile UI... {:else} ...desktop UI... {/if}
- *
- * Why a hook instead of inlining matchMedia in every component:
- *   The same matchMedia query was duplicated across AgentChat.svelte,
- *   ResponsiveActionMenu, future components, etc. — easy to drift on
- *   the breakpoint, easy to forget the cleanup. Single hook = single
- *   source of truth = one place to change the breakpoint if Apple HIG
- *   ever updates it.
  */
 import { onMount } from 'svelte';
 
 const BREAKPOINT_QUERY = '(max-width: 768px)';
 
+// Module-scoped singleton store. First-paint default false (no
+// matchMedia on the server). The first component that mounts attaches
+// the matchMedia listener; subsequent mounts no-op the listener setup
+// but share the same store value.
+const sharedStore = $state({ value: false });
+let listenerAttached = false;
+let mediaQuery: MediaQueryList | null = null;
+
+function attachListener() {
+  if (listenerAttached || typeof window === 'undefined') return;
+  listenerAttached = true;
+  mediaQuery = window.matchMedia(BREAKPOINT_QUERY);
+  sharedStore.value = mediaQuery.matches;
+  const onChange = (e: MediaQueryListEvent) => {
+    sharedStore.value = e.matches;
+  };
+  mediaQuery.addEventListener('change', onChange);
+  // We deliberately don't tear down the listener — the singleton lives
+  // for the page lifetime. matchMedia listeners are O(1) and the page
+  // unload cleans them up automatically. Adding teardown would mean
+  // ref-counting consumers, which is complexity for no gain.
+}
+
 export function useIsMobile() {
-  // svelte-ignore state_referenced_locally — initial seed; matchMedia
-  // listener updates the value on mount.
-  const store = $state({ value: false });
-
   onMount(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia(BREAKPOINT_QUERY);
-    store.value = mq.matches;
-    const onChange = (e: MediaQueryListEvent) => {
-      store.value = e.matches;
-    };
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
+    attachListener();
   });
-
-  return store;
+  return sharedStore;
 }

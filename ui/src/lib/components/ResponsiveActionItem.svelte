@@ -25,25 +25,45 @@
 
   type Props = {
     onSelect: () => void;
+    /** Lucide-style icon component. Renders in a tinted square tile on
+     *  mobile, inline on desktop. Mutually-exclusive with `leading`. */
     icon?: any;
+    /** Custom leading snippet — use for things that aren't a single
+     *  icon (profile-color dots, avatars, multi-element badges). Takes
+     *  precedence over `icon` if both are provided. */
+    leading?: Snippet;
+    /** Optional trailing snippet for things like meta counts, status
+     *  badges, kbd shortcut hints. Rendered after the label, before
+     *  the active-checkmark. */
+    trailing?: Snippet;
     active?: boolean;
     danger?: boolean;
+    disabled?: boolean;
     class?: string;
     children: Snippet;
     /** Optional secondary line shown beneath the primary label.
      *  Useful on mobile rows where there's room; rendered as
      *  muted-text on the desktop dropdown too. */
     description?: string;
+    /** When false, picking this item does NOT dismiss the parent
+     *  menu/sheet. Useful for toggle-style menus where the user
+     *  wants to preview multiple options without re-opening
+     *  (e.g. Tab/Sort/View dropdowns on the pipeline page). */
+    closeOnSelect?: boolean;
   };
 
   let {
     onSelect,
     icon: Icon,
+    leading,
+    trailing,
     active = false,
     danger = false,
+    disabled = false,
     class: className,
     children,
     description,
+    closeOnSelect = true,
   }: Props = $props();
 
   const isMobile = useIsMobile();
@@ -57,16 +77,20 @@
   <button
     type="button"
     onclick={onSelect}
+    {disabled}
     class={cn(
       'group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors',
       'min-h-[44px]', // iOS HIG minimum tap target
       'hover:bg-muted/60 active:bg-muted/80 active:scale-[0.98]',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
+      'disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100',
       danger && 'text-red-400 hover:bg-red-500/10 active:bg-red-500/15',
       className,
     )}
   >
-    {#if Icon}
+    {#if leading}
+      {@render leading()}
+    {:else if Icon}
       <span
         class={cn(
           'flex size-9 items-center justify-center rounded-lg flex-shrink-0',
@@ -86,6 +110,9 @@
         </span>
       {/if}
     </span>
+    {#if trailing}
+      {@render trailing()}
+    {/if}
     {#if active}
       <CheckMark class="size-4 flex-shrink-0 text-tint" />
     {/if}
@@ -97,6 +124,8 @@
     check + danger tint conventions so the visual language matches.
   -->
   <DropdownMenu.Item
+    {disabled}
+    {closeOnSelect}
     class={cn(
       'gap-2.5 cursor-pointer',
       danger && 'text-red-400 focus:bg-red-500/10 focus:text-red-300',
@@ -104,7 +133,9 @@
     )}
     {onSelect}
   >
-    {#if Icon}
+    {#if leading}
+      {@render leading()}
+    {:else if Icon}
       <Icon class="size-4 flex-shrink-0" />
     {/if}
     <span class="flex-1 min-w-0">
@@ -113,6 +144,9 @@
         <span class="block text-xs text-muted-foreground leading-tight">{description}</span>
       {/if}
     </span>
+    {#if trailing}
+      {@render trailing()}
+    {/if}
     {#if active}
       <CheckMark class="ml-auto size-3.5 flex-shrink-0 text-tint" />
     {/if}

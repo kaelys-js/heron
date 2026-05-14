@@ -1,0 +1,225 @@
+<!--
+  BackendUnreachableOverlay — full-screen blocker shown when the API
+  backend has been unreachable for more than RECONNECT_GRACE_MS.
+
+  Why it exists separately from OfflineIndicator:
+    OfflineIndicator is a SMALL pill at the top of the viewport — easy
+    to miss, and the rest of the app behind it sits in a half-broken
+    state with empty data + spurious 401/500 toasts. When the backend
+    is fundamentally unreachable (dev server stopped, Tailscale
+    dropped, LAN moved), the user needs a HARD signal + a retry
+    affordance, not a status pill they may not see.
+
+  When it shows:
+    • online-status reports `online: false` AND the failure has
+      persisted longer than RECONNECT_GRACE_MS (default 4s — short
+      enough to feel responsive, long enough to ride out the typical
+      WiFi flap or slow API call without nagging the user).
+    • The probe re-checks every PROBE_INTERVAL_MS while the overlay is
+      visible. As soon as health comes back, the overlay fades out.
+
+  Visual:
+    Matches the boot-fallback / error.html design language so a user
+    who saw the loading screen and then hits this overlay perceives
+    one continuous "we're trying to reach the server" narrative.
+    Brand bloom background + rocket mark + status copy + Retry button.
+
+  Tap Retry → calls `onlineStore.refresh()` + `resetApiBase()` so both
+  the navigator.onLine probe AND the backend-discovery cache get
+  cleared and re-probed. If the server is back, the overlay
+  disappears within ~500ms (one probe cycle).
+-->
+<script lang="ts">
+  import { onlineStore } from '$lib/client/online-status.svelte';
+  import { resetApiBase, getApiBase } from '$lib/client/api-base';
+  import { Button } from '$lib/components/ui/button';
+  import { onMount, onDestroy } from 'svelte';
+  import { fade } from 'svelte/transition';
+  import { BRAND } from '$lib/client/brand';
+
+  // After 4s of being offline we consider the backend "unreachable" and
+  // show the overlay. Shorter than this would nag during normal WiFi
+  // flaps; longer would leave the user staring at empty UI.
+  const RECONNECT_GRACE_MS = 4_000;
+  // Once the overlay is up, probe every 2s. Faster would heat the radio
+  // on a flaky network for no benefit (the probe is async; user perceives
+  // the same UX at 2s vs 1s).
+  const PROBE_INTERVAL_MS = 2_000;
+
+  let visible = $state(false);
+  let retrying = $state(false);
+  let offlineSince: number | null = null;
+  let graceTimer: ReturnType<typeof setTimeout> | null = null;
+  let probeInterval: ReturnType<typeof setInterval> | null = null;
+  let unsub: (() => void) | null = null;
+
+  function showOverlay() {
+    visible = true;
+    // Set up the recurring probe so we know when to disappear.
+    if (probeInterval) clearInterval(probeInterval);
+    probeInterval = setInterval(() => {
+      void onlineStore.refresh();
+    }, PROBE_INTERVAL_MS);
+  }
+
+  function hideOverlay() {
+    visible = false;
+    if (probeInterval) {
+      clearInterval(probeInterval);
+      probeInterval = null;
+    }
+  }
+
+  onMount(() => {
+    // Track online → offline transitions. On going offline, start the
+    // grace window. On coming back online, cancel the window and hide.
+    unsub = onlineStore.addListener((online) => {
+      if (online) {
+        offlineSince = null;
+        if (graceTimer) {
+          clearTimeout(graceTimer);
+          graceTimer = null;
+        }
+        hideOverlay();
+      } else {
+        if (offlineSince === null) {
+          offlineSince = Date.now();
+          graceTimer = setTimeout(() => {
+            // Only show if STILL offline after the grace window.
+            if (!onlineStore.online) showOverlay();
+          }, RECONNECT_GRACE_MS);
+        }
+      }
+    });
+    // If we mount already offline (e.g. backgrounded the app and came
+    // back to a dead server), start the grace window immediately.
+    if (!onlineStore.online) {
+      offlineSince = Date.now();
+      graceTimer = setTimeout(() => {
+        if (!onlineStore.online) showOverlay();
+      }, RECONNECT_GRACE_MS);
+    }
+  });
+
+  onDestroy(() => {
+    if (graceTimer) clearTimeout(graceTimer);
+    if (probeInterval) clearInterval(probeInterval);
+    unsub?.();
+  });
+
+  async function retry() {
+    if (retrying) return;
+    retrying = true;
+    try {
+      // Reset BOTH backend-discovery (re-probes LAN / Tailscale / etc)
+      // AND online-status (re-probes /api/health). Either may have a
+      // stale cached result.
+      resetApiBase();
+      await getApiBase().catch(() => {
+        /* error state handled via the listener */
+      });
+      await onlineStore.refresh();
+    } finally {
+      // Give the user a visible "I tried" beat even if the probe was
+      // instantaneous — feels more responsive than the button snapping
+      // back to "Try again" before they let go.
+      setTimeout(() => {
+        retrying = false;
+      }, 600);
+    }
+  }
+</script>
+
+{#if visible}
+  <!--
+    Full-screen overlay. z-[100] sits above toasts (z-50) but below the
+    boot-fallback (z-9999, which is gone by the time this mounts) so
+    the user can't accidentally double-stack two error UIs.
+  -->
+  <div
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="backend-unreachable-title"
+    class="fixed inset-0 z-[100] flex items-center justify-center p-6"
+    transition:fade={{ duration: 200 }}
+  >
+    <!-- Backdrop with brand bloom — matches boot-fallback for visual
+         continuity (user feels they're in one "still loading" state). -->
+    <div
+      aria-hidden="true"
+      class="absolute inset-0 bg-[#0a0a0b]/95 backdrop-blur-md"
+      style="background:
+        radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.20) 0%, rgba(99, 102, 241, 0.10) 32%, rgba(168, 85, 247, 0.05) 56%, transparent 78%),
+        rgba(10, 10, 11, 0.95);"
+    ></div>
+
+    <!-- Card -->
+    <div
+      class="relative w-full max-w-sm flex flex-col items-center gap-4 rounded-2xl border border-white/10 bg-zinc-900/80 p-8 text-center shadow-[0_24px_64px_-12px_rgba(0,0,0,0.6)] backdrop-blur-lg"
+    >
+      <!-- Brand mark — same rocket from logo.svg, scaled down. Drop
+           shadow matches boot-fallback's halo. -->
+      <div
+        class="size-16 drop-shadow-[0_0_24px_rgba(139,92,246,0.35)] drop-shadow-[0_6px_16px_rgba(139,92,246,0.2)]"
+      >
+        <svg viewBox="0 0 1024 1024" aria-hidden="true" class="block size-full">
+          <defs>
+            <linearGradient id="bu-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#6366f1" />
+              <stop offset="55%" stop-color="#8b5cf6" />
+              <stop offset="100%" stop-color="#a855f7" />
+            </linearGradient>
+          </defs>
+          <rect width="1024" height="1024" rx="232" fill="url(#bu-grad)" />
+          <rect x="0" y="0" width="1024" height="512" rx="232" fill="#ffffff" opacity="0.06" />
+          <g
+            transform="translate(192,192) scale(26.667)"
+            fill="none"
+            stroke="#ffffff"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+            <path
+              d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09"
+            />
+            <path
+              d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z"
+            />
+            <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" />
+          </g>
+        </svg>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <div class="text-[11px] font-semibold uppercase tracking-wider text-red-300">
+          Disconnected
+        </div>
+        <h2 id="backend-unreachable-title" class="text-lg font-semibold tracking-tight">
+          Can't reach {BRAND.displayName}
+        </h2>
+      </div>
+
+      <p class="text-sm leading-relaxed text-muted-foreground">
+        We're not getting a response from the server. This usually clears up on its own — your
+        latest data is safe.
+      </p>
+
+      <Button onclick={retry} disabled={retrying} class="mt-2 w-full gap-2" size="lg">
+        {#if retrying}
+          <span
+            class="inline-block size-3.5 animate-spin rounded-full border-2 border-current border-r-transparent"
+          ></span>
+          Reconnecting…
+        {:else}
+          Try again
+        {/if}
+      </Button>
+
+      <p class="text-[11px] text-muted-foreground/70">
+        We'll keep checking in the background and dismiss this when the server comes back.
+      </p>
+    </div>
+  </div>
+{/if}

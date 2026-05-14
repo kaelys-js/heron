@@ -2,9 +2,11 @@
   import JobCard from './JobCard.svelte';
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import * as Dialog from '$lib/components/ui/dialog';
   import * as Tooltip from '$lib/components/ui/tooltip';
+  import ResponsiveActionMenu from './ResponsiveActionMenu.svelte';
+  import ResponsiveActionItem from './ResponsiveActionItem.svelte';
+  import ResponsiveActionLabel from './ResponsiveActionLabel.svelte';
   import { MoreHorizontal, Plus, ChevronDown } from '@lucide/svelte';
   import type { Job, Status } from '$lib/types';
   import { STATUS_EMPTY_COPY } from '$lib/types';
@@ -103,39 +105,33 @@
     <span class="text-xs text-muted-foreground tabular-nums">{jobs.length}</span>
     <div class="ml-auto flex items-center gap-0.5">
       {#if jobs.length > PAGE_SIZE}
-        <DropdownMenu.Root>
-          <Tooltip.Provider delayDuration={250}>
-            <Tooltip.Root>
-              <Tooltip.Trigger>
-                {#snippet child({ props: tipProps })}
-                  <DropdownMenu.Trigger>
-                    {#snippet child({ props: ddProps })}
-                      <Button
-                        {...tipProps}
-                        {...ddProps}
-                        variant="ghost"
-                        size="icon"
-                        class="h-6 w-6"
-                        aria-label="Column options"
-                      >
-                        <MoreHorizontal class="size-3" />
-                      </Button>
-                    {/snippet}
-                  </DropdownMenu.Trigger>
-                {/snippet}
-              </Tooltip.Trigger>
-              <Tooltip.Content side="bottom" class="text-xs">Show all / collapse</Tooltip.Content>
-            </Tooltip.Root>
-          </Tooltip.Provider>
-          <DropdownMenu.Content side="bottom" align="end" class="w-52">
-            <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
-              >{title} · {jobs.length}</DropdownMenu.Label
+        <ResponsiveActionMenu
+          title="{title} column"
+          description="Manage how many jobs are visible in this column."
+          align="end"
+          desktopWidth="w-52"
+          tooltipSide="bottom"
+          tooltipDelay={250}
+        >
+          {#snippet trigger({ props })}
+            <Button
+              {...props}
+              variant="ghost"
+              size="icon"
+              class="h-6 w-6"
+              aria-label="Column options"
             >
-            <DropdownMenu.Item onSelect={visibleCount >= jobs.length ? showLess : showAll}>
+              <MoreHorizontal class="size-3" />
+            </Button>
+          {/snippet}
+          {#snippet tooltip()}Show all / collapse{/snippet}
+          {#snippet items()}
+            <ResponsiveActionLabel>{title} · {jobs.length}</ResponsiveActionLabel>
+            <ResponsiveActionItem onSelect={visibleCount >= jobs.length ? showLess : showAll}>
               {visibleCount >= jobs.length ? 'Collapse to ' + PAGE_SIZE : 'Show all ' + jobs.length}
-            </DropdownMenu.Item>
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
+            </ResponsiveActionItem>
+          {/snippet}
+        </ResponsiveActionMenu>
       {/if}
       <Tooltip.Provider delayDuration={200}>
         <Tooltip.Root>

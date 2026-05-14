@@ -5,7 +5,8 @@
   import { Textarea } from '$lib/components/ui/textarea';
   import * as Sheet from '$lib/components/ui/sheet';
   import * as Tooltip from '$lib/components/ui/tooltip';
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+  import ResponsiveActionMenu from './ResponsiveActionMenu.svelte';
+  import ResponsiveActionItem from './ResponsiveActionItem.svelte';
   import { Sparkles, Maximize2, Minimize2, ArrowUp, Plus, ChevronsUpDown } from '@lucide/svelte';
   import { cn } from '$lib/utils';
 
@@ -319,37 +320,36 @@
           </div>
         </div>
         <div class="flex items-center gap-2 px-3 pb-2">
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger>
-              {#snippet child({ props })}
-                <button
-                  {...props}
-                  class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors h-6 px-2 rounded hover:bg-muted/60"
-                >
-                  <span class="size-1.5 rounded-full bg-emerald-500"></span>
-                  <span>{selectedModel.label}</span>
-                  <ChevronsUpDown class="size-3" />
-                </button>
-              {/snippet}
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content side="top" align="start" class="w-52">
-              <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
-                >Model</DropdownMenu.Label
+          <ResponsiveActionMenu
+            title="Model"
+            description="Pick the model that drives this chat."
+            align="start"
+            desktopWidth="w-52"
+          >
+            {#snippet trigger({ props })}
+              <button
+                {...props}
+                class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors h-6 px-2 rounded hover:bg-muted/60"
               >
+                <span class="size-1.5 rounded-full bg-emerald-500"></span>
+                <span>{selectedModel.label}</span>
+                <ChevronsUpDown class="size-3" />
+              </button>
+            {/snippet}
+            {#snippet items()}
               {#each MODELS as m}
-                <DropdownMenu.Item
+                <ResponsiveActionItem
                   onSelect={() => (selectedModel = m)}
-                  class={cn(
-                    'flex items-center justify-between gap-2 cursor-pointer',
-                    selectedModel.id === m.id && 'bg-accent',
-                  )}
+                  active={selectedModel.id === m.id}
                 >
-                  <span class="text-sm">{m.label}</span>
-                  <span class="text-[11px] text-muted-foreground">{m.tag}</span>
-                </DropdownMenu.Item>
+                  {m.label}
+                  {#snippet trailing()}
+                    <span class="text-[11px] text-muted-foreground">{m.tag}</span>
+                  {/snippet}
+                </ResponsiveActionItem>
               {/each}
-            </DropdownMenu.Content>
-          </DropdownMenu.Root>
+            {/snippet}
+          </ResponsiveActionMenu>
         </div>
       </div>
     </Sheet.Content>

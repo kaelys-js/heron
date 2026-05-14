@@ -19,10 +19,13 @@
     * size="hero"   — full labelled buttons (job detail page)
 -->
 <script lang="ts">
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import * as Tooltip from '$lib/components/ui/tooltip';
   import * as Sheet from '$lib/components/ui/sheet';
   import { Button } from '$lib/components/ui/button';
+  import ResponsiveActionMenu from './ResponsiveActionMenu.svelte';
+  import ResponsiveActionItem from './ResponsiveActionItem.svelte';
+  import ResponsiveActionLabel from './ResponsiveActionLabel.svelte';
+  import ResponsiveActionSeparator from './ResponsiveActionSeparator.svelte';
   import {
     ChevronDown,
     MoreHorizontal,
@@ -42,7 +45,6 @@
     Bell,
     Zap,
   } from '@lucide/svelte';
-  import CheckMark from './CheckMark.svelte';
   import { api, ApiError } from '$lib/api';
   import { toast } from 'svelte-sonner';
   import { invalidateAll } from '$app/navigation';
@@ -597,10 +599,12 @@
     Two shapes, switched by profile.automation.autonomous_apply:
 
       autonomousMode ON  → single "Queue apply" button (POST /queue-apply)
-      autonomousMode OFF → 3-mode dropdown (LinkedIn / Open & Mark / Mark)
+      autonomousMode OFF → 3-mode ResponsiveActionMenu (LinkedIn / Open & Mark / Mark)
 
-    Both share the bits-ui Tooltip + DropdownMenu nesting pattern when
-    the dropdown is shown.
+    The autonomous shape still uses bits-ui Tooltip directly because it's
+    a single-action button (no menu); the multi-mode shape uses
+    ResponsiveActionMenu which renders as a bottom-sheet on mobile and
+    a dropdown-with-tooltip on desktop in one component.
   -->
   {#if autonomousMode && !isApplied}
     <!-- ───── Autonomous: single Queue Apply button ───── -->
@@ -684,92 +688,77 @@
       </Tooltip.Root>
     </Tooltip.Provider>
   {:else}
-    <DropdownMenu.Root>
-      <Tooltip.Provider delayDuration={300}>
-        <Tooltip.Root>
-          <Tooltip.Trigger>
-            {#snippet child({ props: tipProps })}
-              <DropdownMenu.Trigger>
-                {#snippet child({ props: ddProps })}
-                  {#if size === 'hero'}
-                    <Button
-                      {...tipProps}
-                      {...ddProps}
-                      variant={isApplied ? 'outline' : 'default'}
-                      size="sm"
-                      class="h-9 gap-1.5"
-                      disabled={!!applyBusy}
-                    >
-                      {#if applyBusy}
-                        <Loader2 class="size-3.5 animate-spin" />
-                        <span>Applying…</span>
-                      {:else if isApplied}
-                        <ClipboardCheck class="size-3.5 text-emerald-400" />
-                        <span>Apply again</span>
-                        <ChevronDown class="size-3 opacity-60" />
-                      {:else}
-                        <Send class="size-3.5" />
-                        <span>Apply</span>
-                        <ChevronDown class="size-3 opacity-60" />
-                      {/if}
-                    </Button>
-                  {:else}
-                    <Button
-                      {...tipProps}
-                      {...ddProps}
-                      variant="ghost"
-                      size="icon"
-                      class={cn(
-                        size === 'card' ? 'size-7' : 'size-7',
-                        isApplied && 'text-emerald-400',
-                      )}
-                      disabled={!!applyBusy}
-                      aria-label="Apply"
-                    >
-                      {#if applyBusy}
-                        <Loader2 class="size-3.5 animate-spin" />
-                      {:else if isApplied}
-                        <ClipboardCheck class="size-3.5" />
-                      {:else}
-                        <Send class="size-3.5" />
-                      {/if}
-                    </Button>
-                  {/if}
-                {/snippet}
-              </DropdownMenu.Trigger>
-            {/snippet}
-          </Tooltip.Trigger>
-          <Tooltip.Content side="top" class="text-xs max-w-xs">
-            {#if isApplied}
-              Already marked Applied — open menu to apply again or change status.
-            {:else if isLinkedIn}
-              Apply via LinkedIn Easy Apply (auto), or open posting and mark applied.
+    <ResponsiveActionMenu
+      title="Apply to this job"
+      description={isLinkedIn
+        ? 'LinkedIn Easy Apply (auto), open the posting and mark applied, or status-flip only.'
+        : 'Open the posting and mark applied, or status-flip only.'}
+      align={align as 'start' | 'end' | 'center'}
+      desktopWidth="w-72"
+    >
+      {#snippet trigger({ props })}
+        {#if size === 'hero'}
+          <Button
+            {...props}
+            variant={isApplied ? 'outline' : 'default'}
+            size="sm"
+            class="h-9 gap-1.5"
+            disabled={!!applyBusy}
+          >
+            {#if applyBusy}
+              <Loader2 class="size-3.5 animate-spin" />
+              <span>Applying…</span>
+            {:else if isApplied}
+              <ClipboardCheck class="size-3.5 text-emerald-400" />
+              <span>Apply again</span>
+              <ChevronDown class="size-3 opacity-60" />
             {:else}
-              Open the posting in a new tab and mark applied.
+              <Send class="size-3.5" />
+              <span>Apply</span>
+              <ChevronDown class="size-3 opacity-60" />
             {/if}
-          </Tooltip.Content>
-        </Tooltip.Root>
-      </Tooltip.Provider>
-      <DropdownMenu.Content side="bottom" {align} class="w-72">
-        <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground">
-          Apply to this job
-        </DropdownMenu.Label>
-
+          </Button>
+        {:else}
+          <Button
+            {...props}
+            variant="ghost"
+            size="icon"
+            class={cn(size === 'card' ? 'size-7' : 'size-7', isApplied && 'text-emerald-400')}
+            disabled={!!applyBusy}
+            aria-label="Apply"
+          >
+            {#if applyBusy}
+              <Loader2 class="size-3.5 animate-spin" />
+            {:else if isApplied}
+              <ClipboardCheck class="size-3.5" />
+            {:else}
+              <Send class="size-3.5" />
+            {/if}
+          </Button>
+        {/if}
+      {/snippet}
+      {#snippet tooltip()}
+        {#if isApplied}
+          Already marked Applied — open menu to apply again or change status.
+        {:else if isLinkedIn}
+          Apply via LinkedIn Easy Apply (auto), or open posting and mark applied.
+        {:else}
+          Open the posting in a new tab and mark applied.
+        {/if}
+      {/snippet}
+      {#snippet items()}
         {#if isLinkedIn}
-          <DropdownMenu.Item
+          <ResponsiveActionItem
             onSelect={() => apply('linkedin')}
             closeOnSelect={false}
-            class="gap-2 items-start py-2"
+            icon={Linkedin}
+            description="Playwright fills + (optionally) submits. Watch the bell for progress."
           >
-            <Linkedin class="size-3.5 mt-0.5 text-blue-400 flex-shrink-0" />
-            <div class="flex-1 min-w-0">
-              <div class="text-xs font-medium">LinkedIn Easy Apply</div>
-              <div class="text-[11px] text-muted-foreground/70 leading-tight">
-                Playwright fills + (optionally) submits. Watch the bell for progress.
-              </div>
-            </div>
-            {#if applyBusy === 'linkedin'}<Loader2 class="size-3 animate-spin mt-1" />{/if}
-          </DropdownMenu.Item>
+            LinkedIn Easy Apply
+            {#snippet trailing()}
+              {#if applyBusy === 'linkedin'}<Loader2 class="size-3 animate-spin" />{/if}
+            {/snippet}
+          </ResponsiveActionItem>
 
           <!-- Why we don't tailor the resume for LinkedIn — recruiters see your
              LinkedIn profile and the uploaded resume side-by-side. A tailored
@@ -805,328 +794,216 @@
           </div>
         {/if}
 
-        <DropdownMenu.Item
+        <ResponsiveActionItem
           onSelect={() => apply('open-and-mark')}
           closeOnSelect={false}
-          class="gap-2 items-start py-2"
           disabled={!job.url}
+          icon={ArrowUpRight}
+          description="Opens the URL in a new tab and flips status. You finish the form by hand."
         >
-          <ArrowUpRight class="size-3.5 mt-0.5 text-violet-400 flex-shrink-0" />
-          <div class="flex-1 min-w-0">
-            <div class="text-xs font-medium">Open posting &amp; mark Applied</div>
-            <div class="text-[11px] text-muted-foreground/70 leading-tight">
-              Opens the URL in a new tab and flips status. You finish the form by hand.
-            </div>
-          </div>
-          {#if applyBusy === 'open-and-mark'}<Loader2 class="size-3 animate-spin mt-1" />{/if}
-        </DropdownMenu.Item>
+          Open posting &amp; mark Applied
+          {#snippet trailing()}
+            {#if applyBusy === 'open-and-mark'}<Loader2 class="size-3 animate-spin" />{/if}
+          {/snippet}
+        </ResponsiveActionItem>
 
-        <DropdownMenu.Item
+        <ResponsiveActionItem
           onSelect={() => apply('mark')}
           closeOnSelect={false}
-          class="gap-2 items-start py-2"
+          icon={ClipboardCheck}
+          description="Status flip only — use when you applied elsewhere or want to skip."
         >
-          <ClipboardCheck class="size-3.5 mt-0.5 text-emerald-400 flex-shrink-0" />
-          <div class="flex-1 min-w-0">
-            <div class="text-xs font-medium">Mark Applied (no open)</div>
-            <div class="text-[11px] text-muted-foreground/70 leading-tight">
-              Status flip only — use when you applied elsewhere or want to skip.
-            </div>
-          </div>
-          {#if applyBusy === 'mark'}<Loader2 class="size-3 animate-spin mt-1" />{/if}
-        </DropdownMenu.Item>
+          Mark Applied (no open)
+          {#snippet trailing()}
+            {#if applyBusy === 'mark'}<Loader2 class="size-3 animate-spin" />{/if}
+          {/snippet}
+        </ResponsiveActionItem>
 
-        <DropdownMenu.Separator />
+        <ResponsiveActionSeparator />
         <div class="px-3 py-1.5 text-[11px] text-muted-foreground/60 leading-tight">
           Notifications: success/failure toasts pop here, the bell logs every event, and failed jobs
           surface a Retry button on the toast.
         </div>
-      </DropdownMenu.Content>
-    </DropdownMenu.Root>
+      {/snippet}
+    </ResponsiveActionMenu>
   {/if}
 
   <!-- ============ STATUS DROPDOWN ============ -->
-  <DropdownMenu.Root>
-    <Tooltip.Provider delayDuration={300}>
-      <Tooltip.Root>
-        <Tooltip.Trigger>
-          {#snippet child({ props: tipProps })}
-            <DropdownMenu.Trigger>
-              {#snippet child({ props: ddProps })}
-                {#if size === 'hero'}
-                  <Button
-                    {...tipProps}
-                    {...ddProps}
-                    variant="outline"
-                    size="sm"
-                    class="h-9 gap-1.5"
-                  >
-                    <span class={cn('size-1.5 rounded-full', STATUS_DOTS[job.status])}></span>
-                    <span class="text-xs">{job.status}</span>
-                    <ChevronDown class="size-3 opacity-60" />
-                  </Button>
-                {:else}
-                  <Button
-                    {...tipProps}
-                    {...ddProps}
-                    variant="ghost"
-                    size="icon"
-                    class="size-7"
-                    aria-label="Change status"
-                  >
-                    <span class={cn('size-2 rounded-full', STATUS_DOTS[job.status])}></span>
-                  </Button>
-                {/if}
-              {/snippet}
-            </DropdownMenu.Trigger>
-          {/snippet}
-        </Tooltip.Trigger>
-        <Tooltip.Content side="top" class="text-xs max-w-xs">
-          <div class="font-medium">Status: {job.status}</div>
-          <div class="text-muted-foreground">{STATUS_HINT[job.status]}</div>
-          <div class="text-muted-foreground/70 mt-1 text-[11px]">Click to change</div>
-        </Tooltip.Content>
-      </Tooltip.Root>
-    </Tooltip.Provider>
-    <DropdownMenu.Content side="bottom" {align} class="w-64 max-h-72 overflow-y-auto">
-      <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
-        >Change status</DropdownMenu.Label
-      >
+  <ResponsiveActionMenu
+    title="Change status"
+    description="Move this job to a different pipeline stage."
+    align={align as 'start' | 'end' | 'center'}
+    desktopWidth="w-64 max-h-72 overflow-y-auto"
+  >
+    {#snippet trigger({ props })}
+      {#if size === 'hero'}
+        <Button {...props} variant="outline" size="sm" class="h-9 gap-1.5">
+          <span class={cn('size-1.5 rounded-full', STATUS_DOTS[job.status])}></span>
+          <span class="text-xs">{job.status}</span>
+          <ChevronDown class="size-3 opacity-60" />
+        </Button>
+      {:else}
+        <Button {...props} variant="ghost" size="icon" class="size-7" aria-label="Change status">
+          <span class={cn('size-2 rounded-full', STATUS_DOTS[job.status])}></span>
+        </Button>
+      {/if}
+    {/snippet}
+    {#snippet tooltip()}
+      <div class="font-medium">Status: {job.status}</div>
+      <div class="text-muted-foreground">{STATUS_HINT[job.status]}</div>
+      <div class="text-muted-foreground/70 mt-1 text-[11px]">Click to change</div>
+    {/snippet}
+    {#snippet items()}
+      <ResponsiveActionLabel>Change status</ResponsiveActionLabel>
       {#each STATUS_ORDER as s}
-        <DropdownMenu.Item
+        <ResponsiveActionItem
           onSelect={() => changeStatus(s)}
           closeOnSelect={false}
-          class="gap-2 items-start py-1.5"
+          active={s === job.status}
+          description={STATUS_HINT[s]}
         >
-          <span class={cn('size-1.5 rounded-full mt-1.5 flex-shrink-0', STATUS_DOTS[s])}></span>
-          <div class="flex-1 min-w-0">
-            <div class="text-xs font-medium">{s}</div>
-            <div class="text-[11px] text-muted-foreground/70 leading-tight">{STATUS_HINT[s]}</div>
-          </div>
-          <CheckMark active={s === job.status} class="mt-0.5" />
-        </DropdownMenu.Item>
+          {#snippet leading()}
+            <span class={cn('size-2 rounded-full flex-shrink-0', STATUS_DOTS[s])}></span>
+          {/snippet}
+          {s}
+        </ResponsiveActionItem>
       {/each}
-    </DropdownMenu.Content>
-  </DropdownMenu.Root>
+    {/snippet}
+  </ResponsiveActionMenu>
 
   <!-- ============ MORE / OVERFLOW ============ -->
-  <DropdownMenu.Root>
-    <Tooltip.Provider delayDuration={300}>
-      <Tooltip.Root>
-        <Tooltip.Trigger>
-          {#snippet child({ props: tipProps })}
-            <DropdownMenu.Trigger>
-              {#snippet child({ props: ddProps })}
-                <Button
-                  {...tipProps}
-                  {...ddProps}
-                  variant="ghost"
-                  size="icon"
-                  class={cn(size === 'hero' ? 'size-9' : 'size-7')}
-                  aria-label="More actions"
-                >
-                  <MoreHorizontal class="size-3.5" />
-                </Button>
-              {/snippet}
-            </DropdownMenu.Trigger>
-          {/snippet}
-        </Tooltip.Trigger>
-        <Tooltip.Content side="top" class="text-xs">More actions</Tooltip.Content>
-      </Tooltip.Root>
-    </Tooltip.Provider>
-    <DropdownMenu.Content side="bottom" {align} class="w-72">
-      <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
-        >Tools</DropdownMenu.Label
+  <ResponsiveActionMenu
+    title="More actions"
+    description="Tailored CV, follow-up drafts, tech-prep, mock interview, links."
+    align={align as 'start' | 'end' | 'center'}
+    desktopWidth="w-72"
+  >
+    {#snippet trigger({ props })}
+      <Button
+        {...props}
+        variant="ghost"
+        size="icon"
+        class={cn(size === 'hero' ? 'size-9' : 'size-7')}
+        aria-label="More actions"
       >
+        <MoreHorizontal class="size-3.5" />
+      </Button>
+    {/snippet}
+    {#snippet tooltip()}More actions{/snippet}
+    {#snippet items()}
+      <ResponsiveActionLabel>Tools</ResponsiveActionLabel>
 
-      <DropdownMenu.Item
+      <ResponsiveActionItem
         onSelect={generateCv}
         closeOnSelect={false}
-        class="gap-2 items-start py-2"
         disabled={!job.url || cvBusy}
+        icon={cvBusy ? Loader2 : Wand2}
+        description="Spawns Claude oferta — produces a deep eval report + CV PDF. 1–3 min per job."
       >
-        {#if cvBusy}
-          <Loader2 class="size-3.5 mt-0.5 animate-spin flex-shrink-0" />
-        {:else}
-          <Wand2 class="size-3.5 mt-0.5 text-amber-400 flex-shrink-0" />
-        {/if}
-        <div class="flex-1 min-w-0">
-          <div class="text-xs font-medium">
-            {hasPdf ? 'Regenerate tailored CV' : 'Generate tailored CV'}
-          </div>
-          <div class="text-[11px] text-muted-foreground/70 leading-tight">
-            Spawns Claude oferta — produces a deep eval report + CV PDF. 1–3 min per job.
-          </div>
-        </div>
-      </DropdownMenu.Item>
+        {hasPdf ? 'Regenerate tailored CV' : 'Generate tailored CV'}
+      </ResponsiveActionItem>
 
-      <DropdownMenu.Item
+      <ResponsiveActionItem
         onSelect={checkLiveness}
         closeOnSelect={false}
-        class="gap-2 items-start py-2"
         disabled={!job.url || livenessBusy}
+        icon={livenessBusy ? Loader2 : Activity}
+        description={'Loads the URL with Playwright and looks for "expired" / "no longer accepting" markers. If the posting is gone, the row flips to Closed automatically.'}
       >
-        {#if livenessBusy}
-          <Loader2 class="size-3.5 mt-0.5 animate-spin flex-shrink-0" />
-        {:else}
-          <Activity class="size-3.5 mt-0.5 text-blue-400 flex-shrink-0" />
-        {/if}
-        <div class="flex-1 min-w-0">
-          <div class="text-xs font-medium">Check if still open</div>
-          <div class="text-[11px] text-muted-foreground/70 leading-tight">
-            Loads the URL with Playwright and looks for "expired" / "no longer accepting" markers.
-            If the posting is gone, the row flips to Closed automatically.
-          </div>
-        </div>
-      </DropdownMenu.Item>
+        Check if still open
+      </ResponsiveActionItem>
 
-      <DropdownMenu.Item
+      <ResponsiveActionItem
         onSelect={() => draftFollowup('warm')}
         closeOnSelect={false}
-        class="gap-2 items-start py-2"
         disabled={!job.url || followupBusy}
+        icon={followupBusy ? Loader2 : Bell}
+        description="Spawns Claude to draft 2–3 message variants based on how long it's been since you applied. Picks tone (warm / direct / short) and references the contacts from your tracker."
       >
-        {#if followupBusy}
-          <Loader2 class="size-3.5 mt-0.5 animate-spin flex-shrink-0" />
-        {:else}
-          <Bell class="size-3.5 mt-0.5 text-amber-400 flex-shrink-0" />
-        {/if}
-        <div class="flex-1 min-w-0">
-          <div class="text-xs font-medium">Draft follow-up message</div>
-          <div class="text-[11px] text-muted-foreground/70 leading-tight">
-            Spawns Claude to draft 2–3 message variants based on how long it's been since you
-            applied. Picks tone (warm / direct / short) and references the contacts from your
-            tracker.
-          </div>
-        </div>
-      </DropdownMenu.Item>
+        Draft follow-up message
+      </ResponsiveActionItem>
 
-      <DropdownMenu.Item
+      <ResponsiveActionItem
         onSelect={openFormAnswers}
         closeOnSelect={false}
-        class="gap-2 items-start py-2"
         disabled={!job.url || formAnswersBusy}
+        icon={formAnswersBusy ? Loader2 : ClipboardCheck}
+        description={'Drafts answers to the standard application-form questions ("why this role", "years of X", "salary expectations", "when can you start") so you can copy each one into a Greenhouse / Ashby / Lever portal instead of typing from scratch.'}
       >
-        {#if formAnswersBusy}
-          <Loader2 class="size-3.5 mt-0.5 animate-spin flex-shrink-0" />
-        {:else}
-          <ClipboardCheck class="size-3.5 mt-0.5 text-fuchsia-400 flex-shrink-0" />
-        {/if}
-        <div class="flex-1 min-w-0">
-          <div class="text-xs font-medium">Pre-fill application answers</div>
-          <div class="text-[11px] text-muted-foreground/70 leading-tight">
-            Drafts answers to the standard application-form questions ("why this role", "years of
-            X", "salary expectations", "when can you start") so you can copy each one into a
-            Greenhouse / Ashby / Lever portal instead of typing from scratch.
-          </div>
-        </div>
-      </DropdownMenu.Item>
+        Pre-fill application answers
+      </ResponsiveActionItem>
 
       <!-- Tech-prep — produces a focused technical-interview prep plan
            with budgeted hours, specific LeetCode problems, system-design
            topics, and behavioral story mapping. Useful once a job hits
            any interview stage (PhoneScreen / Technical / Onsite / Final). -->
-      <DropdownMenu.Item
+      <ResponsiveActionItem
         onSelect={generateTechPrep}
         closeOnSelect={false}
-        class="gap-2 items-start py-2"
         disabled={!job.url || techPrepBusy}
+        icon={techPrepBusy ? Loader2 : Sparkles}
+        description="Per-company technical-interview prep: pipeline map, coding rounds with specific LeetCode problems, system-design topics (this company's actual debates), behavioral story mapping. ~1-2 min via Claude."
       >
-        {#if techPrepBusy}
-          <Loader2 class="size-3.5 mt-0.5 animate-spin flex-shrink-0" />
-        {:else}
-          <Sparkles class="size-3.5 mt-0.5 text-orange-300 flex-shrink-0" />
-        {/if}
-        <div class="flex-1 min-w-0">
-          <div class="text-xs font-medium">Generate tech-prep plan</div>
-          <div class="text-[11px] text-muted-foreground/70 leading-tight">
-            Per-company technical-interview prep: pipeline map, coding rounds with specific LeetCode
-            problems, system-design topics (this company's actual debates), behavioral story
-            mapping. ~1-2 min via Claude.
-          </div>
-        </div>
-      </DropdownMenu.Item>
+        Generate tech-prep plan
+      </ResponsiveActionItem>
 
       <!-- Mock interview — voice-driven drill. Browser STT + TTS.
            Per-stage prompts (recruiter / technical / onsite / final);
            each turn scored 1-5 with feedback; transcript saved on end. -->
-      <DropdownMenu.Item
+      <ResponsiveActionItem
         onSelect={() => location.assign('/job/' + job.id + '/mock' + pq)}
-        class="gap-2 items-start py-2"
         disabled={!job.url}
+        icon={FileBadge2}
+        description="Voice drill — Claude speaks the questions, listens to your spoken answer, scores each turn 1-5 with one-sentence feedback. Per-stage (recruiter / technical / onsite / final). Saves a transcript + session summary you can refine before the real interview."
       >
-        <FileBadge2 class="size-3.5 mt-0.5 text-orange-300 flex-shrink-0" />
-        <div class="flex-1 min-w-0">
-          <div class="text-xs font-medium">Mock interview (voice)</div>
-          <div class="text-[11px] text-muted-foreground/70 leading-tight">
-            Voice drill — Claude speaks the questions, listens to your spoken answer, scores each
-            turn 1-5 with one-sentence feedback. Per-stage (recruiter / technical / onsite / final).
-            Saves a transcript + session summary you can refine before the real interview.
-          </div>
-        </div>
-      </DropdownMenu.Item>
+        Mock interview (voice)
+      </ResponsiveActionItem>
 
-      <DropdownMenu.Separator />
-      <DropdownMenu.Label class="text-[11px] uppercase tracking-wide text-muted-foreground"
-        >Open</DropdownMenu.Label
-      >
+      <ResponsiveActionSeparator />
+      <ResponsiveActionLabel>Open</ResponsiveActionLabel>
 
       {#if job.url}
-        <DropdownMenu.Item
+        <ResponsiveActionItem
           onSelect={() => window.open(job.url, '_blank', 'noopener')}
-          class="gap-2 items-start py-1.5"
+          icon={ExternalLink}
+          description={job.url}
         >
-          <ExternalLink class="size-3.5 mt-0.5 text-muted-foreground flex-shrink-0" />
-          <div class="flex-1 min-w-0">
-            <div class="text-xs">Open posting</div>
-            <div class="text-[11px] text-muted-foreground/70 leading-tight font-mono truncate">
-              {job.url}
-            </div>
-          </div>
-        </DropdownMenu.Item>
+          Open posting
+        </ResponsiveActionItem>
       {/if}
 
       {#if hasReport}
-        <DropdownMenu.Item
+        <ResponsiveActionItem
           onSelect={() => location.assign('/job/' + job.id + '#report')}
-          class="gap-2 items-start py-1.5"
+          icon={FileText}
+          description="7-block A–G report"
         >
-          <FileText class="size-3.5 mt-0.5 text-blue-400 flex-shrink-0" />
-          <div class="flex-1 min-w-0">
-            <div class="text-xs">View deep evaluation</div>
-            <div class="text-[11px] text-muted-foreground/70 leading-tight">7-block A–G report</div>
-          </div>
-        </DropdownMenu.Item>
+          View deep evaluation
+        </ResponsiveActionItem>
       {/if}
 
       {#if hasPdf}
-        <DropdownMenu.Item
+        <ResponsiveActionItem
           onSelect={() => window.open('/api/job/' + job.id + '/pdf' + pq, '_blank', 'noopener')}
-          class="gap-2 items-start py-1.5"
+          icon={FileBadge2}
+          description={job.pdfFile}
         >
-          <FileBadge2 class="size-3.5 mt-0.5 text-emerald-400 flex-shrink-0" />
-          <div class="flex-1 min-w-0">
-            <div class="text-xs">Open tailored CV PDF</div>
-            <div class="text-[11px] text-muted-foreground/70 leading-tight">{job.pdfFile}</div>
-          </div>
-        </DropdownMenu.Item>
+          Open tailored CV PDF
+        </ResponsiveActionItem>
       {/if}
 
-      <DropdownMenu.Separator />
+      <ResponsiveActionSeparator />
 
-      <DropdownMenu.Item
+      <ResponsiveActionItem
         onSelect={copyUrl}
         closeOnSelect={false}
-        class="gap-2 items-start py-1.5"
         disabled={!job.url}
+        icon={Copy}
       >
-        <Copy class="size-3.5 mt-0.5 text-muted-foreground flex-shrink-0" />
-        <div class="flex-1 min-w-0">
-          <div class="text-xs">Copy URL</div>
-        </div>
-      </DropdownMenu.Item>
-    </DropdownMenu.Content>
-  </DropdownMenu.Root>
+        Copy URL
+      </ResponsiveActionItem>
+    {/snippet}
+  </ResponsiveActionMenu>
 </div>
 
 <!--

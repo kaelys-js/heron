@@ -38,6 +38,7 @@
 <script lang="ts">
   import * as Sheet from '$lib/components/ui/sheet';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+  import * as Tooltip from '$lib/components/ui/tooltip';
   import { useIsMobile } from '$lib/hooks/use-is-mobile.svelte';
   import type { Snippet } from 'svelte';
   import { cn } from '$lib/utils';
@@ -63,6 +64,18 @@
     /** Items snippet — same markup works for both desktop dropdown
      *  AND mobile sheet. Use ResponsiveActionItem inside. */
     items: Snippet;
+    /** Optional tooltip content shown on hover of the trigger on
+     *  desktop. Hidden on mobile (no hover; long-press tooltips are
+     *  the wrong UX). Useful when the trigger is icon-only and needs
+     *  a hint, or when the menu's state-of-the-world differs from
+     *  the button label (e.g. "Already applied — open to apply again"). */
+    tooltip?: Snippet;
+    /** Tooltip side anchor. Defaults to "top" which is the usual
+     *  Apple-style placement above the trigger button. */
+    tooltipSide?: 'top' | 'right' | 'bottom' | 'left';
+    /** Tooltip delay in ms. Defaults to 300 — short enough for
+     *  power users, long enough not to flash on quick mouseover. */
+    tooltipDelay?: number;
     class?: string;
   };
 
@@ -74,6 +87,9 @@
     desktopWidth = 'w-56',
     trigger,
     items,
+    tooltip,
+    tooltipSide = 'top',
+    tooltipDelay = 300,
     class: className,
   }: Props = $props();
 
@@ -133,13 +149,38 @@
     Desktop path — popover/dropdown.
     The bits-ui DropdownMenu handles positioning, keyboard nav, and
     click-outside dismiss. We just inject the trigger + items.
+
+    When a `tooltip` snippet is provided, the trigger is double-wrapped
+    in Tooltip.Trigger so that hovering shows a hint AND clicking opens
+    the menu. The trigger button must spread BOTH `tipProps` and
+    `ddProps` (which are merged here before being handed to the trigger
+    snippet via `props`).
   -->
   <DropdownMenu.Root bind:open>
-    <DropdownMenu.Trigger>
-      {#snippet child({ props })}
-        {@render trigger({ props })}
-      {/snippet}
-    </DropdownMenu.Trigger>
+    {#if tooltip}
+      <Tooltip.Provider delayDuration={tooltipDelay}>
+        <Tooltip.Root>
+          <Tooltip.Trigger>
+            {#snippet child({ props: tipProps })}
+              <DropdownMenu.Trigger>
+                {#snippet child({ props: ddProps })}
+                  {@render trigger({ props: { ...tipProps, ...ddProps } })}
+                {/snippet}
+              </DropdownMenu.Trigger>
+            {/snippet}
+          </Tooltip.Trigger>
+          <Tooltip.Content side={tooltipSide} class="text-xs max-w-xs">
+            {@render tooltip()}
+          </Tooltip.Content>
+        </Tooltip.Root>
+      </Tooltip.Provider>
+    {:else}
+      <DropdownMenu.Trigger>
+        {#snippet child({ props })}
+          {@render trigger({ props })}
+        {/snippet}
+      </DropdownMenu.Trigger>
+    {/if}
     <DropdownMenu.Content {align} class={cn(desktopWidth, className)}>
       {#if title}
         <DropdownMenu.Label class="flex flex-col gap-0.5 pb-2">
