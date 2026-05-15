@@ -39,7 +39,7 @@ external tool (multi-profile sync, off-platform tracking, batch
 import/export) that needs to interpret an applications.md row.
 
 Used by:
-- `pipeline.integration.test.ts` + the `verify-pipeline` job to validate canonical-state-only rows.
+- `pipeline.integration.test.ts` validates canonical-state-only rows on every push (replaced the legacy `verify-pipeline.mjs` script).
 - `normalize-statuses.mjs` to clean up legacy Spanish / mixed-case writes.
 - `merge-tracker.mjs` and `dedup-tracker.mjs` for CLI-side state semantics.
 

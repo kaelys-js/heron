@@ -56,10 +56,10 @@ Onboarding flow runs once: upload your CV → fill out `profile.yml` answers →
 ## 3. Verify everything works
 
 ```sh
-pnpm verify:cached          # all verifiers, turbo-cached (~5s cold, <200ms warm)
+pnpm test                   # full Vitest matrix (~30s warm, ~90s cold)
 ```
 
-Should print `verify-pipeline green · verify-capacitor green (344/0) · verify-multi-user green (138/0)`.
+Should print `Tests N passed (N)` across 123+ test files (unit + server + browser-mode + integration + electron). The integration suite replaces the legacy verify-pipeline / verify-capacitor / verify-multi-user scripts.
 
 If anything's red, see [Troubleshooting](#troubleshooting).
 
