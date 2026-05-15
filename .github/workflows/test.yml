@@ -340,6 +340,12 @@ jobs:
         # every ubuntu-latest + macOS runner. No schema validation, just
         # "does this parse as XML".
         run: bash scripts/system/validate-xml.sh
+
+      - name: dotenv-linter (.env.example templates)
+        # Catches duplicate keys / leading-space typos / quote
+        # inconsistency in the tracked .env*.example templates. The
+        # real .env is gitignored and never linted.
+        run: pnpm validate:dotenv
         # JSON-schema validation + format-sync run in the ts job (need
         # node_modules for the ajv + jsonc-parser devDeps).
 

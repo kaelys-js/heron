@@ -41,6 +41,10 @@ swiftformat = "0.55" # Swift formatter
 ktlint = "1.5"       # Kotlin formatter
 yamllint = "1.36"    # YAML syntax + style
 taplo = "0.10"       # TOML formatter + linter (pyproject.toml + .mise.toml)
+# dotenv-linter — installed via ubi (universal binary installer) because
+# there's no native mise plugin. Lints .env*.example template files for
+# duplicate keys / leading-space typos / quote inconsistency.
+"ubi:dotenv-linter/dotenv-linter" = "4.0.0"
 
 [env]
 # Project-scoped env vars — applied when shell-activated mise enters this dir.

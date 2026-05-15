@@ -281,6 +281,18 @@ pre-commit:
       glob: "*.{svg,storyboard}"
       run: bash scripts/system/validate-xml.sh
 
+    dotenv-lint:
+      # dotenv-linter (Rust, mise-installed via ubi). Catches duplicate
+      # keys, leading-space typos, quote inconsistency, etc. in the
+      # tracked .env.example + .env.act.example templates. The real
+      # .env is gitignored and never linted.
+      # --ignore-checks UnorderedKey: env vars are grouped by feature in
+      # these templates, not alphabetically. Other rules stay enabled.
+      glob: ".env*.example"
+      run: |
+        command -v dotenv-linter >/dev/null 2>&1 || { echo "skip: dotenv-linter not installed (mise install)"; exit 0; }
+        dotenv-linter check --ignore-checks UnorderedKey --skip-updates {staged_files}
+
     taplo:
       # TOML formatter — pyproject.toml + .mise.toml. taplo is the
       # canonical Rust-based formatter (the TOML equivalent of biome).

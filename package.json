@@ -105,6 +105,7 @@
     "typecheck": "turbo check",
     "update": "node scripts/system/update-system.mjs apply",
     "update:check": "node scripts/system/update-system.mjs check",
+    "validate:dotenv": "dotenv-linter check --ignore-checks UnorderedKey --skip-updates .env.example .env.act.example",
     "validate:format-sync": "node scripts/system/validate-format-config-sync.mjs",
     "validate:json-schemas": "node scripts/system/validate-json-schemas.mjs",
     "validate:plists": "python3 scripts/system/validate-plists.py",
