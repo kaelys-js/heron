@@ -29,7 +29,7 @@
     "build": "tsgo -p tsconfig.json",
     "build:tsc": "tsc",
     "check": "tsgo --noEmit -p tsconfig.json",
-    "clean": "node ../../scripts/clean.mjs",
+    "clean": "node ../../scripts/system/clean.mjs",
     "electron:make": "pnpm run build && electron-builder build -c ./electron-builder.config.json -p always",
     "electron:make:dev": "pnpm run build && electron-builder build -c ./electron-builder.config.json --mac dmg --publish never",
     "electron:pack": "pnpm run build && electron-builder build --dir -c ./electron-builder.config.json",

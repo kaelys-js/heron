@@ -170,16 +170,15 @@ career-ops/
 │   └── logo.svg                 # SINGLE SOURCE OF TRUTH for all icons
 │
 ├── scripts/
-│   ├── clean.mjs, reset-data.mjs, ensure-pnpm.mjs, ensure-native-bindings.mjs
 │   ├── apply/                   # apply-portal.py dispatcher + 13 per-portal adapters + lib_apply + lib_portal
 │   ├── scan/                    # scan.mjs + scan-broad.py + scan-{vc,curated,email,email-imap}.mjs + scan-{indeed,linkedin}-auth.py + gemini-first-pass.py
 │   ├── cv/                      # generate-pdf.mjs + generate-latex.mjs + ats-check.mjs + ai-detect-check.mjs
 │   ├── quality/                 # resume-quality + cover-letter-check + ai-detect + semantic-match + narrative-arc + cv-sync-check + profile-seo
 │   ├── tracker/                 # merge-tracker + dedup-tracker + normalize-statuses + analyze-patterns + followup-cadence
 │   ├── linkedin/                # linkedin-audit.py + linkedin-dm-scraper.py + extract-linkedin-profile.py
-│   ├── system/                  # doctor + check-liveness + liveness-core + update-system + update-pipeline + triage + build-batch-input + gemini-eval
+│   ├── system/                  # doctor + check-liveness + liveness-core + update-system + update-pipeline + triage + build-batch-input + gemini-eval + clean + ensure-pnpm + reset-data
 │   ├── lib/                     # lib-profiles.mjs + lib_profiles.py + lib_playwright_auth.py (cross-domain)
-│   └── native/                  # apply-brand, setup, doctor, build, dev wizards
+│   └── native/                  # apply-brand, setup, doctor, build, dev wizards, ensure-native-bindings
 │       └── icons/               # generate-icons.mjs + _build/ cache
 │
 ├── modes/                       # AI skill modes (oferta, apply, scan, batch, … + de/fr/ja/pt/ru/)
