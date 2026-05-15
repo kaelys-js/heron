@@ -299,7 +299,10 @@ jobs:
         run: bundle install
 
       - name: rufo --check
-        run: git ls-files '*.rb' | xargs -r bundle exec rufo -c
+        # Covers .rb source files AND the extensionless Gemfile at root +
+        # ui/ios/App/. Gemfile.lock is auto-generated; the '*Gemfile' glob
+        # naturally excludes anything ending in .lock.
+        run: git ls-files '*.rb' '*Gemfile' | xargs -r bundle exec rufo -c
 
       - name: yamllint
         run: git ls-files '*.yml' '*.yaml' | xargs -r yamllint --no-warnings
