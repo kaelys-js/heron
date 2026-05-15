@@ -99,9 +99,9 @@ pnpm build:ios            # → TestFlight via fastlane (Watch app ships in same
 ### 4. Verify everything is green
 
 ```sh
-pnpm verify:cached        # all 3 verifiers, turbo-cached, <200ms on warm
-pnpm doctor:native        # checks GitHub Secrets configured for release
-pnpm act:test             # runs the Tests workflow in a local docker container
+pnpm test                  # full Vitest matrix (~30s on a warm cache)
+pnpm doctor:native         # checks GitHub Secrets configured for release
+pnpm act:test              # runs the Tests workflow in a local docker container
 ```
 
 ---
@@ -255,7 +255,7 @@ So your phone, watch, and laptop reconcile to whichever instance is reachable, w
 pnpm dev                    # SvelteKit dev server (vite + HMR)
 pnpm check                  # svelte-check + tsgo (electron), turbo-cached
 pnpm format                 # biome + prettier-svelte, in-place
-pnpm verify:cached          # all verifiers, sub-second on warm cache
+pnpm test                   # full Vitest matrix (unit + server + browser-mode + integration + electron)
 pnpm act:test               # run the Tests workflow locally via docker
 ```
 
@@ -271,7 +271,7 @@ pnpm act:test               # run the Tests workflow locally via docker
 
 On push:
 
-- All of the above + `verify:cached` (capacitor + multi-user + pipeline)
+- All of the above + the full Vitest matrix (`turbo run test --filter=ui --filter=electron`)
 - `release-readiness` — if pushing a `v*.*.*` tag, runs `pnpm doctor:native` to verify GitHub Secrets exist before the tag hits origin
 
 Bypass any hook with `SKIP_LEFTHOOK=1`. (Don't.)
@@ -362,23 +362,25 @@ pnpm release 1.7.0-beta.1   # exact
 
 Three layers of verification, all turbo-cached:
 
-| Command | What it checks | Cold | Warm |
-|---|---|---|---|
-| `pnpm verify` | Tracker hygiene (applications.md is valid + deduped) | 0.4s | 30ms |
-| `pnpm verify:capacitor` | 344 checks: brand propagation, Info.plist + entitlements, native icons, iOS targets, electron-builder config, lefthook hooks, GitHub workflows | 1.2s | 30ms |
-| `pnpm verify:multi-user` | 138 behavioural tests across 27 sections: auth guard, RBAC (owner/admin/member), profile isolation, GDPR export, hard-delete, audit log, session expiry, IDOR, cookie attributes, rate-limit shape, avatar isolation | 2.5s | 90ms |
-| `pnpm verify:cached` | All three above, parallel | 5.1s | 131ms (FULL TURBO) |
-| `pnpm doctor:native` | GitHub Secrets configured for native-release | ~3s | n/a |
+| Command | What it checks | Wall time |
+|---|---|---|
+| `pnpm test` | Full Vitest matrix — unit + server + browser-mode (Chromium + WebKit) + integration + electron | ~30s warm, ~90s cold |
+| `pnpm test --filter=ui-integration` | Integration suite only — pipeline-data hygiene, capacitor brand propagation, multi-user RBAC + IDOR + GDPR + auth flows | ~10s |
+| `pnpm test:coverage` | Same matrix + V8 coverage report (70% lines / 65% branches floor) | ~45s |
+| `pnpm test:ios` | Fastlane test_ci on macOS — XCTest + XCUITest + WidgetTests + WatchTests | ~15min |
+| `pnpm exec svelte-check` | Type/template diagnostics across ui/ | ~17s |
+| `pnpm doctor:native` | GitHub Secrets configured for native-release | ~3s |
 
-### Verifier failure → fix flow
+### Test-failure → fix flow
 
 ```sh
-pnpm verify:cached                  # red? read the failure, fix, re-run
-pnpm verify:multi-user:cached       # focus on auth/segregation issues
-pnpm verify:capacitor:cached        # focus on brand/native issues
+pnpm test                                   # red? read the failure, fix, re-run
+pnpm test --filter=ui-integration           # focus on integration (replaces legacy verify-pipeline + verify-multi-user)
+pnpm test --filter=ui-unit                  # focus on pure-function unit tests
+pnpm test:watch                             # interactive watcher for the file you're working on
 ```
 
-If `verify:capacitor` complains about missing icons → run `pnpm brand:apply` (regenerates `.icns`, `.ico`, all PWA + iOS + Android icon sets).
+If a brand-propagation test (`capacitor.integration.test.ts`) complains about missing icons → run `pnpm brand:apply` (regenerates `.icns`, `.ico`, all PWA + iOS + Android icon sets).
 
 ---
 
@@ -388,10 +390,10 @@ If `verify:capacitor` complains about missing icons → run `pnpm brand:apply` (
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| `test.yml` | PR + push to main | Format check + svelte-check + tsgo + verify:cached + build + pnpm audit |
+| `test.yml` | PR + push to main | Format check + svelte-check + tsgo + full Vitest matrix + build + pnpm audit |
 | `native-release.yml` | tag push / dispatch / call | **preflight** (secret check) → desktop builds × 3 OS in parallel → iOS via fastlane |
 | `release.yml` | push to main | release-please PR accumulation + cut |
-| `codeql.yml` | PR + push + weekly | CodeQL on javascript-typescript + go |
+| `codeql.yml` | PR + push + weekly | CodeQL on javascript-typescript |
 | `dependency-review.yml` | PR | Block PRs that add vulnerable deps |
 | `sbom.yml` | release | Anchore SBOM attached to release artefacts |
 | `labeler.yml` | PR | Auto-label based on changed paths |

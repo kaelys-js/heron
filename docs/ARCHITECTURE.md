@@ -94,7 +94,7 @@ Scripts maintain data consistency:
 | Script | Purpose |
 |--------|---------|
 | `merge-tracker.mjs` | Merges batch TSV additions into applications.md |
-| `pipeline.integration.test.ts` | Health check (run via `pnpm test -- pipeline.integration` or the `verify-pipeline` nightly job): statuses, duplicates, links |
+| `pipeline.integration.test.ts` | Health check on every push: canonical statuses, duplicates, report links. Run locally with `pnpm test --filter=ui-integration`. |
 | `dedup-tracker.mjs` | Removes duplicate entries by company+role |
 | `normalize-statuses.mjs` | Maps status aliases to canonical values |
 | `cv-sync-check.mjs` | Validates setup consistency |
