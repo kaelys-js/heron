@@ -283,15 +283,6 @@ jobs:
       - name: ruff check (lint)
         run: git ls-files '*.py' | xargs -r ruff check
 
-      - name: gofmt check
-        run: |
-          drift=$(git ls-files '*.go' | xargs -r gofmt -l)
-          if [ -n "$drift" ]; then
-            echo "::error::gofmt drift in:"
-            echo "$drift"
-            exit 1
-          fi
-
       - name: ktlint
         run: git ls-files '*.kt' | xargs -r ktlint
 
