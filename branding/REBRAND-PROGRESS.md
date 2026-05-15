@@ -41,8 +41,8 @@ These are non-negotiable. Compaction MUST NOT lose these.
 | 3 | Typography (Fraunces + Inter + IBM Plex Mono) | ✓ done | `e6f6dfc` | `branding/TYPOGRAPHY.md` |
 | 4 | Wordmark SVG (4 variants) | ✓ done | `e1ead03` | `branding/WORDMARK.md` + `branding/assets/wordmark-*.svg` |
 | 5 | Mascot brief + placeholder SVG | ✓ done | `fb8edc0` | `branding/MASCOT.md` + `branding/assets/mark-placeholder.svg` |
-| 6 | Voice & tone guide (20 phrases + 10 anti-patterns) | **next** | — | Will land in `branding/VOICE.md` |
-| 7 | README banner copy | pending | — | Will land in `README.md` (replace top section) |
+| 6 | Voice & tone guide (20 phrases + 10 anti-patterns) | ✓ done | `9af2e73` | `branding/VOICE.md` |
+| 7 | README banner copy | **next** | — | Will land in `README.md` (replace top section) |
 | 8 | Social card spec (HTML/CSS 1200×630 OG) | pending | — | `branding/assets/social-card.html` + spec section |
 | 9 | brand.json update + apply-brand dry-run | **DESTRUCTIVE GATE** | — | Renames career-ops → heron across ~30 files. Explicit user approval required before run. |
 | 10 | apply-brand commit + SvelteKit UI wiring | pending | — | Color tokens into `ui/src/app.css`; font files self-hosted; component sweep for hardcoded colors |
@@ -221,7 +221,10 @@ verification → move on. Never batch tasks.
 
 ## Latest update
 
-- 2026-05-15 — Tasks 1–5 complete. About to start Task 6 (voice & tone
-  guide). The user requested this progress file specifically to survive
-  conversation compaction. After Task 6 completes, update this file:
-  Task 6 row → done + commit hash.
+- 2026-05-15 — Tasks 1–6 complete. Task 7 (README banner) is next.
+  Latest commits: `5af9092` (this progress file), `9af2e73` (VOICE.md).
+  VOICE.md operationalizes the six voice principles from BRAND.md with
+  20 example phrases by context + 10 anti-patterns + micro-rules +
+  worked rewrites + an implementation-notes section for the Task 9
+  sweep over components / modes / error-message constants / README /
+  App Store description.
