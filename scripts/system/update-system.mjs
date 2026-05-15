@@ -23,19 +23,45 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
 
-// Auto-updater points at the FORK (kaelys-js/career-ops), not upstream
-// santifer/career-ops, because this fork has diverged significantly
-// (multi-user, native apps, Better Auth, etc.) and pulling from upstream
-// would conflict on most modes/* files. To re-target upstream, override
-// via env vars: CAREER_OPS_UPDATE_REPO + CAREER_OPS_UPDATE_VERSION_URL.
-const CANONICAL_REPO =
-  process.env.CAREER_OPS_UPDATE_REPO || 'https://github.com/kaelys-js/career-ops.git';
+// Read the brand.json repo coordinates at runtime so a rebrand doesn't
+// leave the auto-updater pinned at the prior fork. brand.json lives at
+// repo-root/branding/; this file is at scripts/system/ so back up two.
+const REPO_ROOT = join(__dirname, '..', '..');
+const BRAND = (() => {
+  try {
+    return JSON.parse(readFileSync(join(REPO_ROOT, 'branding', 'brand.json'), 'utf8'));
+  } catch {
+    // brand.json missing — fallback to the historical default so updates
+    // still work on a corrupt install.
+    return {
+      name: 'career-ops',
+      repo: {
+        owner: 'kaelys-js',
+        name: 'career-ops',
+        url: 'https://github.com/kaelys-js/career-ops',
+      },
+    };
+  }
+})();
+const BRAND_REPO_URL = BRAND.repo?.url || `https://github.com/kaelys-js/${BRAND.name}`;
+const BRAND_REPO_PATH = (() => {
+  // owner/name from repo.url like https://github.com/owner/name(.git)?
+  const m = String(BRAND_REPO_URL).match(/github\.com\/([^/]+)\/([^/.]+)/);
+  return m ? `${m[1]}/${m[2]}` : `kaelys-js/${BRAND.name}`;
+})();
+
+// Auto-updater points at the brand-configured fork; this fork has
+// diverged from any upstream (multi-user, native apps, Better Auth) so
+// pulling from a different repo would conflict on most modes/* files.
+// To re-target a different repo, set CAREER_OPS_UPDATE_REPO +
+// CAREER_OPS_UPDATE_VERSION_URL env vars OR edit branding/brand.json.
+const CANONICAL_REPO = process.env.CAREER_OPS_UPDATE_REPO || `${BRAND_REPO_URL}.git`;
 const RAW_VERSION_URL =
   process.env.CAREER_OPS_UPDATE_VERSION_URL ||
-  'https://raw.githubusercontent.com/kaelys-js/career-ops/main/VERSION';
+  `https://raw.githubusercontent.com/${BRAND_REPO_PATH}/main/VERSION`;
 const RELEASES_API =
   process.env.CAREER_OPS_UPDATE_RELEASES_API ||
-  'https://api.github.com/repos/kaelys-js/career-ops/releases/latest';
+  `https://api.github.com/repos/${BRAND_REPO_PATH}/releases/latest`;
 
 // System layer paths — ONLY these files get updated
 const SYSTEM_PATHS = [
@@ -191,7 +217,7 @@ async function check() {
       fetch(RELEASES_API, {
         headers: {
           Accept: 'application/vnd.github.v3+json',
-          'User-Agent': 'career-ops-update-checker',
+          'User-Agent': `${BRAND.name}-update-checker`,
         },
         signal: controller.signal,
       }),
