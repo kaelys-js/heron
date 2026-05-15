@@ -107,6 +107,7 @@
     "update:check": "node scripts/system/update-system.mjs check",
     "validate:format-sync": "node scripts/system/validate-format-config-sync.mjs",
     "validate:json-schemas": "node scripts/system/validate-json-schemas.mjs",
+    "validate:plists": "python3 scripts/system/validate-plists.py",
     "verify": "turbo test"
   },
   "dependencies": {

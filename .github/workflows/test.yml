@@ -328,8 +328,14 @@ jobs:
         # TOML formatter (pyproject.toml + .mise.toml). taplo is pinned in
         # .mise.toml so mise installs the same version locally + in CI.
         run: git ls-files '*.toml' | xargs -r taplo format --check
-        # JSON-schema validation runs in the ts job (needs node_modules
-        # for the ajv + jsonc-parser devDeps + local schema files).
+
+      - name: Validate Apple plists
+        # Python stdlib plistlib parses every .plist / .entitlements /
+        # .xcprivacy under the repo. Catches malformed iOS configs that
+        # would otherwise blow up xcodebuild on the ios CI runner.
+        run: python3 scripts/system/validate-plists.py
+        # JSON-schema validation + format-sync run in the ts job (need
+        # node_modules for the ajv + jsonc-parser devDeps).
 
   # ─────────────────────────────────────────────────────────────────
   # Security audit
