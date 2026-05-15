@@ -188,9 +188,28 @@ export async function confirm(prompt, defaultYes = true) {
   return /^y(es)?$/i.test(a.trim());
 }
 
+/** Read the brand name from branding/brand.json. Used to derive
+ *  user-facing names (state dirs, banners) so a rebrand doesn't
+ *  leave stale "career-ops" strings scattered through native scripts. */
+function brandName() {
+  try {
+    const brand = JSON.parse(
+      readFileSync(join(__dirname, '..', '..', 'branding', 'brand.json'), 'utf8'),
+    );
+    return brand.name || 'career-ops';
+  } catch {
+    return 'career-ops';
+  }
+}
+
+/** Per-user state dir for native build secrets (Apple cert env, etc.).
+ *  Lives at ~/.{brand.name}/ so a rebrand redirects cleanly. */
+export const NATIVE_STATE_DIR = join(process.env.HOME || '', '.' + brandName());
+export const NATIVE_ENV_FILE = join(NATIVE_STATE_DIR, 'native-env');
+
 /** Stash a small bit of state across script invocations (avoid re-prompting
- *  for things the user just typed). Stored at ~/.career-ops/native-state.json. */
-const STATE_DIR = join(process.env.HOME || '', '.career-ops');
+ *  for things the user just typed). Stored at ~/.{brand.name}/native-state.json. */
+const STATE_DIR = NATIVE_STATE_DIR;
 const STATE_FILE = join(STATE_DIR, 'native-state.json');
 export function readState() {
   try {

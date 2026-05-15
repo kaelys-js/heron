@@ -12,7 +12,7 @@
  * On success: build appears in TestFlight within ~5min, internal testers
  * see it immediately (no Apple beta review).
  */
-import { step, run, which, ok, warn, info, UI, ROOT } from './_lib.mjs';
+import { step, run, which, ok, warn, info, UI, ROOT, NATIVE_ENV_FILE } from './_lib.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -37,7 +37,7 @@ if (!which('bundle')) {
 }
 
 step(2, 'Loading signing env');
-const envFile = join(process.env.HOME || '', '.career-ops', 'native-env');
+const envFile = NATIVE_ENV_FILE;
 let env = {};
 if (!existsSync(envFile)) {
   console.error('No Apple Developer secrets found.');

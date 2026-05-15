@@ -22,7 +22,7 @@
  * For SIGNED/notarized builds, set Apple secrets in env first (or run
  * `pnpm setup:secrets` which exports them to ~/.career-ops/native-env).
  */
-import { step, run, ok, info, ROOT, UI } from './_lib.mjs';
+import { step, run, ok, info, ROOT, UI, NATIVE_ENV_FILE } from './_lib.mjs';
 import { join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 
@@ -51,7 +51,7 @@ step(6, 'Compiling Electron TypeScript');
 run('npm', ['run', 'build'], { cwd: electronDir });
 
 step(7, 'Source signing env from ~/.career-ops/native-env');
-const envFile = join(process.env.HOME || '', '.career-ops', 'native-env');
+const envFile = NATIVE_ENV_FILE;
 let signingEnv = {};
 if (existsSync(envFile)) {
   const raw = readFileSync(envFile, 'utf8');

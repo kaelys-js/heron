@@ -234,7 +234,8 @@ def main():
             f"  {score:5} | {j['company'][:30]:30s} | {j['role'][:60]:60s} | {s.get('reason', '')[:80]}"
         )
     print(
-        f"\nNext: review {SCORES_TSV.name}, pick top jobs, then in Claude Code: /career-ops oferta <url>"
+        f"\nNext: review {SCORES_TSV.name}, open the dashboard inbox, and run an evaluation"
+        f" on the top scorers."
     )
 
 
