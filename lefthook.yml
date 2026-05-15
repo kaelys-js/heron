@@ -322,6 +322,16 @@ pre-commit:
       glob: "{package.json,**/package.json,.mise.toml}"
       run: pnpm validate:exact-versions
 
+    oxlint:
+      # oxlint — Rust-based JS/TS linter (50-100x faster than ESLint).
+      # All rules currently OFF (see .oxlintrc.jsonc header for why).
+      # Runs anyway to:
+      #   - catch parse failures in any .js/.ts/.jsx/.tsx/.mjs/.cjs
+      #   - keep the lint-pipeline plumbing alive for incremental rollout
+      # Cost: ~50 ms full-repo. No reason to scope to staged files.
+      glob: "*.{js,jsx,mjs,cjs,ts,tsx}"
+      run: pnpm lint:oxlint
+
     taplo:
       # TOML formatter — pyproject.toml + .mise.toml. taplo is the
       # canonical Rust-based formatter (the TOML equivalent of biome).

@@ -1,0 +1,60 @@
+// oxlint config — Rust-based JS/TS linter (50-100x faster than ESLint).
+//
+// Status: all rules INTENTIONALLY off. This file exists so the lint
+// infrastructure is wired (lefthook + CI), but no rule fires today.
+// Flipping a rule on later = a one-line PR.
+//
+// Why install + wire it but disable everything? Three reasons:
+//   1. Catches parse failures cheaply (oxlint is FAST, < 100 ms even at
+//      full-repo scale) — a syntax error in .ts/.svelte still surfaces.
+//   2. The hook + CI plumbing is the hard part; turning on rules is
+//      incremental once the gate exists.
+//   3. Future-proofs against the day biome's lint half goes stale —
+//      oxlint maintains independent rule coverage (typescript, unicorn,
+//      oxc, jsx-a11y, react, vitest, jest, n, promise, ...).
+//
+// How to enable a rule: change the value in `rules` from absent to
+// `"warn"` or `"error"`. Run `pnpm exec oxlint --rules` to see every
+// available rule organised by plugin.
+//
+// Docs: https://oxc.rs/docs/guide/usage/linter
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  // Turn EVERY category off. Oxlint enables `correctness` by default
+  // (~57 rules at error severity). The user's directive is "wire it
+  // up but disable all rules for now" — so we silence categories
+  // explicitly. `rules: {}` alone does NOT do this; it only overrides
+  // per-rule settings, and unset rules fall back to the category
+  // default. Setting every known category to "off" inverts that.
+  "categories": {
+    "correctness": "off",
+    "suspicious": "off",
+    "pedantic": "off",
+    "perf": "off",
+    "restriction": "off",
+    "style": "off",
+    "nursery": "off"
+  },
+  "plugins": [],
+  "rules": {},
+  "ignorePatterns": [
+    "node_modules/**",
+    "**/node_modules/**",
+    ".svelte-kit/**",
+    "**/.svelte-kit/**",
+    "build/**",
+    "**/build/**",
+    "dist/**",
+    "**/dist/**",
+    ".turbo/**",
+    "coverage/**",
+    "**/coverage/**",
+    "data/**",
+    "reports/**",
+    "output/**",
+    "ui/electron/app/**",
+    "ui/ios/App/Pods/**",
+    "ui/android/build/**",
+    "**/*.bak"
+  ]
+}
