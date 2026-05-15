@@ -45,7 +45,7 @@
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import path from 'node:path';
-import { profilePath, ensureProfileDirs, profileFromArgv } from './lib-profiles.mjs';
+import { profilePath, ensureProfileDirs, profileFromArgv } from '../lib/lib-profiles.mjs';
 
 const FETCH_TIMEOUT_MS = 15_000;
 const PROFILE_ID = profileFromArgv();

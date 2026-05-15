@@ -36,7 +36,7 @@
 
 import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from 'fs';
 import yaml from 'js-yaml';
-import { profilePath, ensureProfileDirs, profileFromArgv } from './lib-profiles.mjs';
+import { profilePath, ensureProfileDirs, profileFromArgv } from '../lib/lib-profiles.mjs';
 const parseYaml = yaml.load;
 
 const PROFILE_ID = profileFromArgv();

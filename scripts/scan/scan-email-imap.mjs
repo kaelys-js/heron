@@ -29,7 +29,7 @@ import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } fr
 import path from 'path';
 import dotenv from 'dotenv';
 import { ImapFlow } from 'imapflow';
-import { profilePath, ensureProfileDirs, profileFromArgv } from './lib-profiles.mjs';
+import { profilePath, ensureProfileDirs, profileFromArgv } from '../lib/lib-profiles.mjs';
 
 const ROOT = path.resolve(process.cwd());
 const ENV_FILE = path.join(ROOT, '.env');

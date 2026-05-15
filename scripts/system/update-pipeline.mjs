@@ -5,7 +5,7 @@
 // - Skipped entries also append rows to data/applications.md as `SKIP`.
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { profilePath, ensureProfileDirs, profileFromArgv } from './lib-profiles.mjs';
+import { profilePath, ensureProfileDirs, profileFromArgv } from '../lib/lib-profiles.mjs';
 
 const PROFILE_ID = profileFromArgv();
 ensureProfileDirs(PROFILE_ID);

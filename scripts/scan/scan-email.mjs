@@ -47,7 +47,7 @@ import {
   statSync,
 } from 'fs';
 import path from 'path';
-import { profilePath, ensureProfileDirs, profileFromArgv } from './lib-profiles.mjs';
+import { profilePath, ensureProfileDirs, profileFromArgv } from '../lib/lib-profiles.mjs';
 
 // Mbox inbox is shared (drop emails here from any client) — output is
 // per-profile.

@@ -8,7 +8,7 @@
 // profile the batch belongs to.
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { profileFromArgv } from './lib-profiles.mjs';
+import { profileFromArgv } from '../lib/lib-profiles.mjs';
 
 const PROFILE_ID = profileFromArgv();
 

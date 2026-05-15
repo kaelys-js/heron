@@ -4,7 +4,7 @@
 // and appended Skipped rows in applications.md.
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { profilePath, ensureProfileDirs, profileFromArgv } from './lib-profiles.mjs';
+import { profilePath, ensureProfileDirs, profileFromArgv } from '../lib/lib-profiles.mjs';
 
 const PROFILE_ID = profileFromArgv();
 ensureProfileDirs(PROFILE_ID);
