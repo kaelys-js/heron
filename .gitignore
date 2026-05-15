@@ -42,10 +42,17 @@ data/onboarding-state.json
 # removed it from the index. Treat the same as the other data/*.json
 # runtime files above.
 data/profiles.json
-reports/*.md
-!reports/.gitkeep
-output/*
-!output/.gitkeep
+# Repo-root user dirs (reports/, output/, jds/, writing-samples/,
+# interview-prep/) are now COMPATIBILITY SYMLINKS into the active
+# profile dir under data/users/{uid}/profiles/{slug}/... (or
+# data/profiles/{slug}/... in legacy single-user mode). The dashboard
+# creates them on-demand via profile-symlinks.ts. We don't track
+# them — the symlinks regenerate per session.
+reports
+output
+jds
+interview-prep
+writing-samples
 batch/logs/*
 !batch/logs/.gitkeep
 batch/batch-state.tsv
@@ -58,12 +65,6 @@ batch/tracker-additions/**/*.tsv
 # rebuild on every invocation so there's no value in version control.
 batch/pipeline-skipped.tsv
 batch/pipeline-survivors.tsv
-jds/*
-!jds/.gitkeep
-
-# ── Writing samples (user's personal files — never committed) ───────
-writing-samples/*
-!writing-samples/README.md
 
 # ── User config and customization (never auto-updated) ──────────────
 config/profile.yml
