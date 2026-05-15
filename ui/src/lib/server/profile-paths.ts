@@ -236,13 +236,20 @@ export function userSharedPath(kind: UserSharedFileKind): string {
   return userSharedPathForUser(currentUserIdOrDefault(), kind);
 }
 
-/** Like `userSharedPath` but takes an explicit userId. */
+/** Like `userSharedPath` but takes an explicit userId.
+ *
+ *  Path: data/users/{userId}/profiles/_shared/{file}  (multi-user)
+ *    or: data/profiles/_shared/{file}                 (legacy single-user)
+ *
+ *  The "_shared" dir lives INSIDE the profiles/ tree (sibling to each
+ *  real profile dir) so the layout reads as: "every dir under profiles/
+ *  is either a real profile or the _shared escape-hatch". */
 export function userSharedPathForUser(userId: string, kind: UserSharedFileKind): string {
   validateUserId(userId);
   const base =
     userId === SYSTEM_USER_ID
       ? path.join(PROFILES_ROOT, '_shared')
-      : path.join(USERS_ROOT, userId, '_shared');
+      : path.join(USERS_ROOT, userId, 'profiles', '_shared');
   switch (kind) {
     case 'story-bank':
       return path.join(base, 'story-bank.md');
