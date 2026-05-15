@@ -9,7 +9,7 @@
  *   • ui/electron/build/            (electron tsgo output)
  *   • ui/electron/dist/             (electron-builder output)
  *   • ui/electron/app/              (capacitor-community/electron sync output)
- *   • native/icons/_build/          (icon generator cache)
+ *   • scripts/native/icons/_build/  (icon generator cache)
  *
  * Does NOT remove:
  *   • node_modules/                 — use `pnpm dlx rimraf node_modules` if needed
@@ -34,7 +34,7 @@ const TARGETS = [
   'ui/electron/dist',
   'ui/electron/app',
   'ui/electron/.turbo',
-  'native/icons/_build',
+  'scripts/native/icons/_build',
 ];
 
 const GREEN = '\x1b[32m';
