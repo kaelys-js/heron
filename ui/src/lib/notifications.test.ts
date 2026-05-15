@@ -6,6 +6,7 @@
  * Error funnel, fireToast level routing.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BRAND_EVENTS } from '$lib/client/brand';
 
 const toastCalls = { error: [] as any[], warning: [] as any[], success: [] as any[] };
 vi.mock('svelte-sonner', () => ({
@@ -95,20 +96,20 @@ describe('notifications.add', () => {
   it('autoToast dispatches a career-ops:notify CustomEvent', () => {
     const fired: any[] = [];
     const h = (e: Event) => fired.push((e as CustomEvent).detail);
-    window.addEventListener('career-ops:notify', h);
+    window.addEventListener(BRAND_EVENTS.notify, h);
     notifications.add(makeEvent({ id: 'cev', level: 'error', title: 'Err' }), { autoToast: true });
     expect(fired.length).toBe(1);
     expect(fired[0].level).toBe('error');
-    window.removeEventListener('career-ops:notify', h);
+    window.removeEventListener(BRAND_EVENTS.notify, h);
   });
 
   it('does NOT dispatch career-ops:notify when autoToast is false', () => {
     const fired: any[] = [];
     const h = (e: Event) => fired.push(e);
-    window.addEventListener('career-ops:notify', h);
+    window.addEventListener(BRAND_EVENTS.notify, h);
     notifications.add(makeEvent({ id: 'silent' }));
     expect(fired.length).toBe(0);
-    window.removeEventListener('career-ops:notify', h);
+    window.removeEventListener(BRAND_EVENTS.notify, h);
   });
 });
 

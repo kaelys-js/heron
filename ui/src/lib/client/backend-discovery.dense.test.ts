@@ -2,6 +2,7 @@
  * lib/client/backend-discovery — dense source + URL scenarios.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 
 const prefsBacking = new Map<string, string>();
 vi.mock('@capacitor/preferences', () => ({
@@ -81,15 +82,15 @@ describe('clearBackendCache — every cache state', () => {
   });
 
   it('present key — clears', async () => {
-    prefsBacking.set('career-ops:backend-resolved', '{}');
+    prefsBacking.set(`${BRAND_STORAGE_PREFIX}:backend-resolved`, '{}');
     await clearBackendCache();
-    expect(prefsBacking.get('career-ops:backend-resolved')).toBeUndefined();
+    expect(prefsBacking.get(`${BRAND_STORAGE_PREFIX}:backend-resolved`)).toBeUndefined();
   });
 
   it.each([1, 5, 10])('called %i times — idempotent', async (n) => {
-    prefsBacking.set('career-ops:backend-resolved', '{}');
+    prefsBacking.set(`${BRAND_STORAGE_PREFIX}:backend-resolved`, '{}');
     for (let i = 0; i < n; i++) await clearBackendCache();
-    expect(prefsBacking.get('career-ops:backend-resolved')).toBeUndefined();
+    expect(prefsBacking.get(`${BRAND_STORAGE_PREFIX}:backend-resolved`)).toBeUndefined();
   });
 });
 

@@ -9,9 +9,10 @@
  *   • Empty / missing key starts empty
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 import { pinStore } from './sidebar-pins.svelte';
 
-const KEY = 'career-ops:sidebar-pin-excluded';
+const KEY = `${BRAND_STORAGE_PREFIX}:sidebar-pin-excluded`;
 
 describe('pinStore', () => {
   beforeEach(() => {
