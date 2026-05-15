@@ -15,7 +15,7 @@
 // Edit:   add/remove rules below, then dry-run with `pnpm validate:markdown`
 //         to see the impact across the repo.
 {
-  "$schema": "https://raw.githubusercontent.com/DavidAnson/markdownlint/main/schema/markdownlint-config-schema.json",
+  "$schema": "https://raw.githubusercontent.com/DavidAnson/markdownlint-cli2/main/schema/markdownlint-cli2-config-schema.json",
   "config": {
     // ── Disabled: STYLE rules (would surface 100s of cosmetic issues) ──
     "MD001": false, // heading-increment (## then #### is fine in our docs)

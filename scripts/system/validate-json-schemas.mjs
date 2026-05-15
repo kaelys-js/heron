@@ -262,17 +262,22 @@ async function main() {
     // they're harmless (ajv ignores unknown formats by default) but
     // make the CI log noisy.
     const silentLogger = { log: () => {}, warn: () => {}, error: console.error };
+    // compileAsync requires loadSchema to handle remote $refs. The cli2
+    // markdownlint schema $refs the markdownlint schema, which Ajv can't
+    // resolve without help. We re-use our own loadSchema so caching +
+    // pkg: shortcut + cross-mirror lookup all keep working.
     const ajv = new (isDraft2020 ? Ajv2020 : Ajv)({
       strict: false,
       allErrors: true,
       validateFormats: true,
       logger: silentLogger,
+      loadSchema: (uri) => loadSchema(uri),
     });
     addFormats(ajv);
 
     let validate;
     try {
-      validate = ajv.compile(schema);
+      validate = await ajv.compileAsync(schema);
     } catch (e) {
       console.log(`  · ${path}  (schema compile failed: ${e.message}) — skipping`);
       continue;
