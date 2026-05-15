@@ -316,10 +316,12 @@
               {#if confirmDeleteId === p.id}
                 <div class="mt-3 p-3 rounded-md border border-red-500/30 bg-red-500/5 space-y-2">
                   <p class="text-[11px] text-red-200/90 leading-relaxed">
-                    Deleting <strong>{p.name}</strong> removes its entire
-                    <code class="font-mono">data/profiles/{p.id}/</code>
-                    directory — every job, every report, every PDF. Shared infrastructure (.env, sessions,
-                    autopilot) is preserved.
+                    Deleting <strong>{p.name}</strong> removes its entire profile directory (the
+                    active user's <code class="font-mono">profiles/{p.id}/</code>, i.e.
+                    <code class="font-mono">data/users/&lcub;uid&rcub;/profiles/{p.id}/</code> — or
+                    <code class="font-mono">data/profiles/{p.id}/</code> in legacy single-user installs)
+                    — every job, every report, every PDF. Shared infrastructure (.env, sessions, autopilot)
+                    is preserved.
                   </p>
                   <div class="flex items-center gap-2">
                     <Label class="text-[11px]">Type DELETE to confirm:</Label>

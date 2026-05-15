@@ -340,8 +340,13 @@
               reports, PDFs, follow-ups, interview-prep)
             </li>
             <li>
-              <code class="font-mono">data/profiles/&lcub;slug&rcub;/projects.json</code> → deleted (saved
-              filter profiles)
+              The active user's <code class="font-mono"
+                >profiles/&lcub;slug&rcub;/projects.json</code
+              >
+              (<code class="font-mono"
+                >data/users/&lcub;uid&rcub;/profiles/&lcub;slug&rcub;/projects.json</code
+              >, or <code class="font-mono">data/profiles/&lcub;slug&rcub;/projects.json</code> in legacy
+              single-user installs) → deleted (saved filter profiles)
             </li>
             <li>
               <code class="font-mono">data/autopilot.json</code> → reset to defaults (recurring schedule

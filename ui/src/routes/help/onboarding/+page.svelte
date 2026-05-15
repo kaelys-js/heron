@@ -46,7 +46,9 @@
       href: '/onboarding/identity',
       blurb:
         'Captures name, email, location, work-auth, and optional links (LinkedIn, GitHub, portfolio). Drives CV signing, scraper search location, and the recruiter outreach mode.',
-      writes: ['data/profiles/{slug}/profile.yml (candidate.*, location.*)'],
+      writes: [
+        "active user's profiles/{slug}/profile.yml (candidate.*, location.*) — data/users/{uid}/profiles/{slug}/profile.yml, or data/profiles/{slug}/profile.yml in legacy single-user installs",
+      ],
       redo: 'Profile page → Identity card. Or re-run the wizard via Settings → Reset onboarding.',
     },
     {
@@ -56,8 +58,8 @@
       blurb:
         'Three options: paste markdown directly, paste plain text (Claude converts to canonical sections), or paste a LinkedIn URL (uses the authenticated LinkedIn session if connected). After save, runs Reprocess to extract structured profile fields automatically.',
       writes: [
-        'data/profiles/{slug}/cv.md',
-        'data/profiles/{slug}/profile.yml (auto-populated by Reprocess)',
+        "active user's profiles/{slug}/cv.md (data/users/{uid}/profiles/{slug}/cv.md, or data/profiles/{slug}/cv.md in legacy single-user installs)",
+        "active user's profiles/{slug}/profile.yml (auto-populated by Reprocess)",
       ],
       redo: 'Profile page → CV manager (View / Replace / Reprocess).',
     },
@@ -68,9 +70,9 @@
       blurb:
         'Target roles drive LinkedIn / Indeed search queries. Title-filter positive + negative keywords drive scan.mjs filtering. Compensation + hard preferences feed the deeper Claude evaluation.',
       writes: [
-        'data/profiles/{slug}/profile.yml (target_roles, compensation, preferences)',
-        'data/profiles/{slug}/portals.yml (title_filter.positive, title_filter.negative)',
-        'data/profiles/{slug}/_profile.md (seeded from template if missing)',
+        "active user's profiles/{slug}/profile.yml (target_roles, compensation, preferences) — under data/users/{uid}/profiles/{slug}/, or data/profiles/{slug}/ in legacy single-user installs",
+        "active user's profiles/{slug}/portals.yml (title_filter.positive, title_filter.negative)",
+        "active user's profiles/{slug}/_profile.md (seeded from template if missing)",
       ],
       redo: 'Profile page → Targeting + preferences cards. Edit portals.yml directly for advanced search-query changes.',
     },
@@ -95,8 +97,8 @@
       blurb:
         'Triggers the same daily scan-all fan-out that runs on schedule. Live SSE progress per child scanner. Skippable — the daily run will populate your inbox tomorrow either way.',
       writes: [
-        'data/profiles/{slug}/pipeline.md (new jobs)',
-        'data/profiles/{slug}/scan-history.tsv (dedup)',
+        "active user's profiles/{slug}/pipeline.md (new jobs) — data/users/{uid}/profiles/{slug}/pipeline.md, or data/profiles/{slug}/pipeline.md in legacy single-user installs",
+        "active user's profiles/{slug}/scan-history.tsv (dedup)",
       ],
       redo: 'Agents page → Run Scan. Or wait for the next daily 09:00 weekday run.',
     },
@@ -160,7 +162,11 @@
             launched the wizard with no <code class="font-mono">?new=1</code> param). The target
             profile's slug is threaded through every step page via
             <code class="font-mono">?profile=&lt;slug&gt;</code>, so all the CV / identity /
-            targeting writes land in <code class="font-mono">data/profiles/&lt;slug&gt;/</code>.
+            targeting writes land in the active user's
+            <code class="font-mono">profiles/&lt;slug&gt;/</code> dir (<code class="font-mono"
+              >data/users/&lt;uid&gt;/profiles/&lt;slug&gt;/</code
+            >, or
+            <code class="font-mono">data/profiles/&lt;slug&gt;/</code> in legacy single-user installs).
           </p>
           <p class="text-[12px] text-muted-foreground/90 leading-relaxed">
             <strong>Adding a profile later</strong> — click the profile switcher in the sidebar,

@@ -59,8 +59,10 @@ export const POST = async ({ request, url }) => {
   const { reportFile, history, persona, jobId } = await request.json();
   if (!reportFile) throw error(400, 'reportFile required');
   // Profile resolution: caller can pass ?profile=<slug>; else fall back to active.
-  // The report file is per-profile (lives under data/profiles/{id}/reports/) — so
-  // is the CV, since each profile has its own narrative + experience pitch.
+  // The report file is per-user-per-profile (lives under
+  // `data/users/{uid}/profiles/{id}/reports/`, or `data/profiles/{id}/reports/`
+  // in legacy single-user installs) — so is the CV, since each profile has its
+  // own narrative + experience pitch.
   const queryProfile = url.searchParams.get('profile');
   const profileId = queryProfile && getProfile(queryProfile) ? queryProfile : getActiveProfileId();
   const report = readSafe(path.join(profilePath(profileId, 'reports-dir'), reportFile));

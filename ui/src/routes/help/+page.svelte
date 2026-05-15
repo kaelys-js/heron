@@ -230,56 +230,65 @@
   ];
 
   type FileDef = { path: string; purpose: string; tier: 'user' | 'system' | 'output' };
-  // Multi-profile layout: per-profile content lives under data/profiles/{slug}/.
-  // The repo-root paths (cv.md, config/profile.yml, portals.yml, modes/_profile.md)
-  // are SYMLINKS into the active profile's dir — the Claude CLI reads them at
-  // their canonical paths, the dashboard swaps the symlinks when you switch
-  // profiles. See /help/onboarding for the full multi-profile primer.
+  // Multi-profile layout: per-profile content lives under
+  // data/users/{uid}/profiles/{slug}/ (or data/profiles/{slug}/ in legacy
+  // single-user installs). Mode prompts reference per-profile files via
+  // __TOKEN__ placeholders that the dashboard's spawnAgentWithMode() resolves
+  // to fully-qualified absolute paths at spawn time, so the AI CLI always
+  // sees the active profile's data. See /help/onboarding for the full
+  // multi-profile primer.
   const FILES: FileDef[] = [
     {
-      path: 'data/profiles/{slug}/profile.yml',
+      path: 'data/users/{uid}/profiles/{slug}/profile.yml',
       purpose:
-        'Per-profile identity + narrative + comp. config/profile.yml symlinks to the active one.',
+        'Per-user per-profile identity + narrative + comp. (Legacy single-user installs use data/profiles/{slug}/profile.yml.)',
       tier: 'user',
     },
     {
-      path: 'data/profiles/{slug}/cv.md',
-      purpose: 'Per-profile canonical CV. cv.md at repo root symlinks to the active profile.',
+      path: 'data/users/{uid}/profiles/{slug}/cv.md',
+      purpose:
+        'Per-user per-profile canonical CV. The active profile is selected via data/profiles.json. (Legacy single-user installs use data/profiles/{slug}/cv.md.)',
       tier: 'user',
     },
     {
-      path: 'data/profiles/{slug}/_profile.md',
-      purpose: 'Per-profile BG-check policy + archetype + language overrides. NEVER auto-updated.',
+      path: 'data/users/{uid}/profiles/{slug}/_profile.md',
+      purpose:
+        'Per-user per-profile BG-check policy + archetype + language overrides. NEVER auto-updated. (Legacy single-user installs use data/profiles/{slug}/_profile.md.)',
       tier: 'user',
     },
     {
-      path: 'data/profiles/{slug}/pipeline.md',
-      purpose: 'Per-profile inbox of pending job URLs (auto-appended by scanner).',
+      path: 'data/users/{uid}/profiles/{slug}/pipeline.md',
+      purpose:
+        'Per-user per-profile inbox of pending job URLs (auto-appended by scanner). (Legacy: data/profiles/{slug}/pipeline.md.)',
       tier: 'system',
     },
     {
-      path: 'data/profiles/{slug}/applications.md',
-      purpose: 'Per-profile application tracker — every evaluated job, with status and notes.',
+      path: 'data/users/{uid}/profiles/{slug}/applications.md',
+      purpose:
+        'Per-user per-profile application tracker — every evaluated job, with status and notes. (Legacy: data/profiles/{slug}/applications.md.)',
       tier: 'system',
     },
     {
-      path: 'data/profiles/{slug}/gemini-scores.tsv',
-      purpose: 'Per-profile Gemini first-pass scores per URL.',
+      path: 'data/users/{uid}/profiles/{slug}/gemini-scores.tsv',
+      purpose:
+        'Per-user per-profile Gemini first-pass scores per URL. (Legacy: data/profiles/{slug}/gemini-scores.tsv.)',
       tier: 'system',
     },
     {
-      path: 'data/profiles/{slug}/projects.json',
-      purpose: 'Per-profile saved filter views (Projects page).',
+      path: 'data/users/{uid}/profiles/{slug}/projects.json',
+      purpose:
+        'Per-user per-profile saved filter views (Projects page). (Legacy: data/profiles/{slug}/projects.json.)',
       tier: 'system',
     },
     {
-      path: 'data/profiles/{slug}/reports/{n}-{slug}-{date}.md',
-      purpose: 'Per-profile deep Claude evaluation reports.',
+      path: 'data/users/{uid}/profiles/{slug}/reports/{n}-{slug}-{date}.md',
+      purpose:
+        'Per-user per-profile deep Claude evaluation reports. (Legacy: data/profiles/{slug}/reports/.)',
       tier: 'output',
     },
     {
-      path: 'data/profiles/{slug}/output/{n}-{slug}-{date}.pdf',
-      purpose: 'Per-profile tailored CV PDFs.',
+      path: 'data/users/{uid}/profiles/{slug}/output/{n}-{slug}-{date}.pdf',
+      purpose: 'Per-user per-profile tailored CV PDFs. (Legacy: data/profiles/{slug}/output/.)',
       tier: 'output',
     },
     {
