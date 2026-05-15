@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Heron mark - PLACEHOLDER silhouette.
+
+  This is a hand-built SVG approximation of the heron mark spec'd in
+  branding/MASCOT.md. It is intentionally crude (approximate
+  proportions, no editorial-illustration refinement) and exists so the
+  repo has something at the expected file path during development.
+
+  Replace before press with:
+    - Claude Design output (see MASCOT.md production prompt)
+    - or a human illustrator following the same brief
+
+  When the real mascot lands, save it as:
+    assets/mark-slate.svg   (Heron Slate body, white eye)
+    assets/mark-light.svg   (warm-white body, slate eye)
+    assets/mark-dawn.svg    (Heron Slate body, Dawn-gold eye)
+
+  Then delete this placeholder file.
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 120 160"
+  role="img"
+  aria-label="Heron"
+>
+  <title>Heron</title>
+
+  <!-- Body (compact teardrop) -->
+  <ellipse cx="55" cy="95" rx="28" ry="14" fill="#4a5b6d" />
+
+  <!-- Neck (S-curve from body up to head) -->
+  <path
+    d="M 68 84 C 76 60, 58 45, 64 25"
+    stroke="#4a5b6d"
+    stroke-width="6"
+    stroke-linecap="round"
+    fill="none"
+  />
+
+  <!-- Head -->
+  <ellipse cx="68" cy="22" rx="9" ry="6" fill="#4a5b6d" />
+
+  <!-- Beak (sharp triangle pointing right, slightly forward) -->
+  <path d="M 77 21 L 105 23 L 77 25 Z" fill="#4a5b6d" />
+
+  <!-- Eye (single light dot, focal point of attention) -->
+  <circle cx="71" cy="20" r="1.2" fill="#fffefa" />
+
+  <!-- Legs (long thin strokes down, slightly diverging) -->
+  <line
+    x1="48"
+    y1="108"
+    x2="46"
+    y2="150"
+    stroke="#4a5b6d"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  />
+  <line
+    x1="62"
+    y1="108"
+    x2="64"
+    y2="150"
+    stroke="#4a5b6d"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  />
+
+  <!-- Foot terminators (subtle horizontal lines) -->
+  <line
+    x1="42"
+    y1="150"
+    x2="50"
+    y2="150"
+    stroke="#4a5b6d"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  />
+  <line
+    x1="60"
+    y1="150"
+    x2="68"
+    y2="150"
+    stroke="#4a5b6d"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  />
+</svg>
