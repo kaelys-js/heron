@@ -127,6 +127,13 @@ pnpm act:test             # runs the Tests workflow in a local docker container
 
 ```
 career-ops/
+├── README.md                    # ← you are here
+├── CHANGELOG.md                 # Release-Please-managed
+├── AGENTS.md                    # Runtime brief for any agent-skill-standard CLI
+├── CLAUDE.md                    # 2-line pointer → AGENTS.md
+├── GEMINI.md                    # Gemini-specific slash-command table + pointer
+├── LICENSE
+│
 ├── ui/                          # SvelteKit dashboard (workspace)
 │   ├── src/
 │   │   ├── routes/              # Pages + API endpoints (file-based routing)
@@ -139,20 +146,52 @@ career-ops/
 │   ├── ios/                     # Capacitor iOS app + Watch + 3 extensions
 │   ├── android/                 # Capacitor Android app
 │   └── electron/                # Capacitor-Electron shell (workspace)
+│
+├── .github/                     # Community profile + 11 workflows
+│   ├── CODE_OF_CONDUCT.md
+│   ├── CONTRIBUTING.md
+│   ├── SECURITY.md
+│   ├── SUPPORT.md
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   ├── ISSUE_TEMPLATE/
+│   └── workflows/
+│
+├── docs/                        # All long-form documentation
+│   ├── ARCHITECTURE.md          # System diagram + flows
+│   ├── SETUP.md, TESTING.md, WATCH.md, SCRIPTS.md, …
+│   ├── DATA_CONTRACT.md         # System vs user layer rules
+│   ├── GOVERNANCE.md            # BDFL + contributor ladder
+│   ├── CONTRIBUTORS.md, LEGAL_DISCLAIMER.md, TRADEMARK.md
+│   ├── native.md, prettier.md
+│   └── archive/                 # Finished plan snapshots
+│
 ├── branding/
 │   ├── brand.json               # SINGLE SOURCE OF TRUTH for all branding
 │   └── logo.svg                 # SINGLE SOURCE OF TRUTH for all icons
-├── scripts/native/              # apply-brand, setup, doctor, build, dev wizards
-├── modes/                       # AI skill modes (oferta, apply, scan, batch, …)
-├── templates/                   # CV/cover-letter HTML + LaTeX templates
+│
+├── scripts/
+│   ├── clean.mjs, reset-data.mjs, ensure-pnpm.mjs, ensure-native-bindings.mjs
+│   └── native/                  # apply-brand, setup, doctor, build, dev wizards
+│       └── icons/               # generate-icons.mjs + _build/ cache
+│
+├── modes/                       # AI skill modes (oferta, apply, scan, batch, … + de/fr/ja/pt/ru/)
+├── templates/                   # CV HTML + LaTeX templates, states.yml, portals.example.yml, fonts/
+├── batch/                       # Headless batch evaluation runner
+├── examples/                    # Sample CVs, profile.example.yml, sample-report.md, dual-track/
+├── writing-samples/             # User's portfolio writing (per-profile, gitignored content)
+│
 ├── data/                        # Per-user runtime state (gitignored)
 │   ├── auth.db                  # Sessions, passkeys, invites, audit log
 │   ├── app.db                   # Profiles, activity, issues, ui_prefs
 │   └── users/{userId}/profiles/{slug}/   # Per-user content tree
-├── .github/workflows/           # 11 workflows — see CI section below
-├── .mise.toml                   # Pinned Node 26.1.0 + pnpm 11.1.0 + Ruby 3.3.5
+│
+├── interview-prep/, output/, reports/, jds/   # Runtime symlink targets (managed by dashboard)
+├── config/                      # User profile.yml (gitignored, auto-created by symlink mgr)
+│
+├── *.mjs / *.py                 # ~49 root-level CLI scripts spawned by ui/ and turbo
+├── .mise.toml                   # Pinned Node 26.1.0 + pnpm 11.1.0 + Ruby 3.3.5 + Python 3.13
 ├── pnpm-workspace.yaml          # Workspace + allowBuilds + overrides
-├── turbo.json                   # Cache config for build / check / verify:*
+├── turbo.json                   # Cache config for build / check / test
 ├── lefthook.yml                 # Pre-commit + pre-push hooks
 └── biome.json                   # Format-only config (no linting — svelte-check covers it)
 ```
