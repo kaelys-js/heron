@@ -346,6 +346,11 @@ jobs:
         # inconsistency in the tracked .env*.example templates. The
         # real .env is gitignored and never linted.
         run: pnpm validate:dotenv
+
+      - name: Tiny-config syntax (.gitattributes / .npmrc / .actrc / LICENSE / robots.txt)
+        # Regex-driven sanity passes for the small static config files
+        # no formatter/linter ecosystem owns.
+        run: pnpm validate:tiny-configs
         # JSON-schema validation + format-sync run in the ts job (need
         # node_modules for the ajv + jsonc-parser devDeps).
 
