@@ -136,6 +136,14 @@ jobs:
         # disabled — see the file header for the full rule rationale.
         run: pnpm validate:markdown
 
+      - name: Exact-version pins (no ^ / ~ / partial versions)
+        # Rejects any non-exact version spec anywhere version specifiers
+        # can hide: package.json (root + every workspace) + .mise.toml
+        # [tools]. Exact pinning + lockfile = reproducible builds + a
+        # supply-chain attack via malicious-publish can't escalate to a
+        # new prod build without an explicit version-bump PR.
+        run: pnpm validate:exact-versions
+
       - name: Typecheck (svelte-check + tsgo, turbo-cached)
         run: pnpm exec turbo run check
 
