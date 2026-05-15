@@ -4,7 +4,7 @@
  * POST { jobIds: string[]; workers?: number }
  *   workers=1 (default) → sequential via runBulkOferta (one claude -p at a time)
  *   workers>1           → parallel via runBulkOfertaParallel which dispatches
- *                          batch/batch-runner.sh --parallel N
+ *                          scripts/batch/batch-runner.sh --parallel N
  *
  * The dialog explains the cost/speed tradeoff before submission. We bound
  * the queue to 25 jobs to keep things sane.

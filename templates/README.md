@@ -6,6 +6,7 @@ System-layer template files used by career-ops scripts and modes. These files ar
 
 | File | Used By | Purpose |
 |------|---------|---------|
+| `batch-prompt.md` | `scripts/batch/batch-runner.sh`, `orchestrator.ts` | Batch worker prompt template (workers receive this as a system prompt) |
 | `cv-template.html` | `generate-pdf.mjs` | HTML/CSS template for ATS-optimized CV PDFs |
 | `cv-template.tex` | `generate-latex.mjs` | LaTeX/Overleaf template for ATS-optimized CV PDFs |
 | `portals.example.yml` | Onboarding | Example portal scanner configuration (copy to `portals.yml` to activate) |
@@ -18,7 +19,7 @@ The HTML template rendered by Playwright into PDF. Uses placeholder tokens (`{{N
 
 **Design:** Space Grotesk headings + DM Sans body, single-column ATS-safe layout, self-hosted fonts from `templates/fonts/`.
 
-**Customization:** Edit this file to change colors, spacing, or section order. The placeholder tokens are documented in `batch/batch-prompt.md` under "Template placeholders."
+**Customization:** Edit this file to change colors, spacing, or section order. The placeholder tokens are documented in `templates/batch-prompt.md` under "Template placeholders."
 
 ### cv-template.tex
 

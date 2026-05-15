@@ -1,8 +1,9 @@
 /**
  * Auto-merge batch additions — fs watcher.
  *
- * The batch runner (`batch/batch-runner.sh`) writes one TSV per evaluated
- * job into `batch/tracker-additions/`. Today the user must run
+ * The batch runner (`scripts/batch/batch-runner.sh`) writes one TSV per
+ * evaluated job into the active profile's `batch/tracker-additions/`.
+ * Today the user must run
  * `node merge-tracker.mjs` by hand. This watcher does it automatically,
  * debouncing so multiple TSVs landing in quick succession trigger only one
  * merge-tracker invocation.
@@ -197,7 +198,8 @@ export function startBatchWatcher(): void {
 register({
   id: 'merge-batch',
   label: 'Merge batch additions',
-  description: 'Manually trigger merge-tracker.mjs against batch/tracker-additions/ TSVs.',
+  description:
+    "Manually trigger merge-tracker.mjs against the active profile's batch/tracker-additions/ TSVs.",
   category: 'hygiene',
   trigger: { type: 'manual' },
   allowManual: true,

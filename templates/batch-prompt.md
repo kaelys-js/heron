@@ -336,7 +336,7 @@ node generate-pdf.mjs \
 
 ### Paso 5 — Tracker Line
 
-Escribir una línea TSV a:
+Escribir una línea TSV en el `batch/tracker-additions/` del perfil activo (la orquestación de la dashboard lo resuelve por usuario+perfil):
 ```text
 batch/tracker-additions/{{ID}}.tsv
 ```

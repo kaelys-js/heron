@@ -10,7 +10,7 @@
  *                              (survivors.tsv + pipeline-skipped.tsv)
  *   2. update-pipeline.mjs  — applies `[!] reason` markers in pipeline.md
  *                              and appends SKIP rows to applications.md
- *   3. build-batch-input.mjs — writes batch/batch-input.tsv from survivors
+ *   3. build-batch-input.mjs — writes <profile>/batch/batch-input.tsv from survivors
  *
  * Trigger: after-event on 'scan' and 'scan-portals' (when 2.1 lands). Also
  * registered for manual invocation so power users can dry-run after editing

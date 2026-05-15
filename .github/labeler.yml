@@ -29,7 +29,7 @@
   - changed-files:
       - any-glob-to-any-file:
           - "*.mjs"
-          - batch/**
+          - scripts/**
 
 "📄 docs":
   - changed-files:

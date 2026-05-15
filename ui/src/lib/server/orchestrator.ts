@@ -621,11 +621,11 @@ export function runOferta(
 // =============================================================================
 
 /**
- * Parallel bulk-CV — wraps batch/batch-runner.sh which orchestrates N
+ * Parallel bulk-CV — wraps scripts/batch/batch-runner.sh which orchestrates N
  * concurrent `claude -p` workers. Faster than the sequential `runBulkOferta`
  * but consumes more Anthropic credits in parallel; the dialog explains the
- * tradeoff. Writes batch/batch-input.tsv from the URL list, kicks off the
- * shell script, and streams output to the activity feed.
+ * tradeoff. Writes <profile>/batch/batch-input.tsv from the URL list, kicks off
+ * the shell script, and streams output to the activity feed.
  *
  * Returns a coarse summary; per-job tracker rows are merged in by the
  * auto-merge fs watcher (`auto-merge-batch.ts`) once batch-runner.sh
@@ -657,7 +657,7 @@ export async function runBulkOfertaParallel(
     const realizedPrompt = realizeModePromptForUser(
       userId,
       resolvedProfileId,
-      path.join(ROOT, 'batch', 'batch-prompt.md'),
+      path.join(ROOT, 'templates', 'batch-prompt.md'),
     );
     batchPromptTempFile = path.join(
       require('node:os').tmpdir(),
@@ -674,7 +674,7 @@ export async function runBulkOfertaParallel(
   }
 
   // Build the batch-input.tsv from the URL list. Format expected by
-  // batch-runner.sh (per `batch/batch-runner.sh` parsing):
+  // batch-runner.sh (per `scripts/batch/batch-runner.sh` parsing):
   //   <num>\t<url>\t<company>\t<role>
   // We don't know company/role here from the URL alone — leave blank, the
   // worker prompt fills them in. Path is per-profile post-Option-D.
@@ -704,13 +704,13 @@ export async function runBulkOfertaParallel(
 
   let p: ChildProcess;
   try {
-    p = spawn('bash', ['batch/batch-runner.sh', '--parallel', String(w)], {
+    p = spawn('bash', ['scripts/batch/batch-runner.sh', '--parallel', String(w)], {
       cwd: ROOT,
       env: {
         ...process.env,
         // Tell batch-runner.sh to use the pre-resolved prompt (tokens
         // expanded against the active profile) instead of reading
-        // batch/batch-prompt.md literally.
+        // templates/batch-prompt.md literally.
         ...(batchPromptTempFile ? { BATCH_PROMPT_FILE: batchPromptTempFile } : {}),
         // Forward the active profile slug + per-profile batch dir so
         // the runner reads/writes state at the right user's location.

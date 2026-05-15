@@ -58,7 +58,7 @@ is exercised by `ui/src/lib/integration/pipeline.integration.test.ts`, which
 validates `data/applications.md` against the same rules the legacy
 `verify-pipeline.mjs` used: canonical statuses (per `templates/states.yml`),
 no duplicate company+role pairs, all report links point to existing files,
-score format, row format, no pending TSVs in `batch/tracker-additions/`, and
+score format, row format, no pending TSVs in any profile's `batch/tracker-additions/`, and
 no markdown bold in scores.
 
 ```bash
@@ -108,7 +108,7 @@ Creates a `.bak` backup before writing.
 
 ## merge
 
-Merges batch tracker additions (`batch/tracker-additions/*.tsv`) into
+Merges batch tracker additions (`<profile>/batch/tracker-additions/*.tsv`) into
 `applications.md`. Handles 9-column TSV, 8-column TSV, and pipe-delimited
 markdown formats. Detects duplicates by report number, entry number, and
 company+role fuzzy match. Higher-scored re-evaluations update existing entries
@@ -120,7 +120,7 @@ pnpm merge -- --dry-run    # preview without writing
 pnpm merge -- --verify     # merge then run pipeline integrity tests
 ```
 
-Processed TSVs are moved to `batch/tracker-additions/merged/`.
+Processed TSVs are moved to `<profile>/batch/tracker-additions/merged/`.
 
 **Exit codes:** `0` success, `1` verification errors (with `--verify`).
 
@@ -147,7 +147,7 @@ pnpm pdf -- input.html output.pdf --format=a4        # A4 (default)
 
 Validates that the career-ops setup is internally consistent: `cv.md` exists
 and is not too short, `config/profile.yml` exists with required fields, no
-hardcoded metrics in `modes/_shared.md` or `batch/batch-prompt.md`, and
+hardcoded metrics in `modes/_shared.md` or `templates/batch-prompt.md`, and
 `article-digest.md` freshness (warns if older than 30 days).
 
 ```bash

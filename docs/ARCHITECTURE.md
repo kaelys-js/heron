@@ -49,7 +49,7 @@
 5. **Score**: Weighted average across 10 dimensions (1-5)
 6. **Report**: Save as `reports/{num}-{company}-{date}.md`
 7. **PDF**: Generate ATS-optimized CV (`scripts/cv/generate-pdf.mjs`)
-8. **Track**: Write TSV to `batch/tracker-additions/`, auto-merged
+8. **Track**: Write TSV to the active profile's `batch/tracker-additions/`, auto-merged
 
 ## Batch Processing
 
@@ -85,7 +85,7 @@ templates/cv-template.html → PDF generation template
 
 - Reports: `{###}-{company-slug}-{YYYY-MM-DD}.md` (3-digit zero-padded)
 - PDFs: `cv-candidate-{company-slug}-{YYYY-MM-DD}.pdf`
-- Tracker TSVs: `batch/tracker-additions/{id}.tsv`
+- Tracker TSVs: `<profile>/batch/tracker-additions/{id}.tsv` (per-profile, under the active user)
 
 ## Pipeline Integrity
 

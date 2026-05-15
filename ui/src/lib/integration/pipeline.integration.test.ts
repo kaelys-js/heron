@@ -6,7 +6,8 @@
  *   • no duplicate company+role
  *   • report links resolve
  *   • score format X.X/5 or N/A or DUP
- *   • no pending TSVs in batch/tracker-additions/
+ *   • no pending TSVs in any profile's batch/tracker-additions/
+ *     (per-profile post-multi-user — was repo-root batch/tracker-additions/)
  *   • states.yml itself is well-formed
  */
 import { describe, expect, it } from 'vitest';
@@ -54,16 +55,41 @@ describe('data/profiles structure', () => {
   });
 });
 
-describe('batch/tracker-additions/ should be empty', () => {
-  // Pending TSVs in the additions dir are unmerged — the verifier
-  // surfaces this so users don't lose evals to forgotten merges.
-  it('no .tsv pending in batch/tracker-additions/ root', () => {
-    const dir = path.join(REPO_ROOT, 'batch/tracker-additions');
-    if (!fs.existsSync(dir)) return;
-    const files = fs.readdirSync(dir).filter((f) => f.endsWith('.tsv'));
-    // Empty array OR every entry should already be moved under merged/ or
-    // archived/ subdirs (which the verifier accepts).
-    expect(files.length).toBe(0);
+describe('per-profile batch/tracker-additions/ should be empty', () => {
+  // Pending TSVs are unmerged — surfacing this so users don't lose
+  // evals to forgotten merges. Walks every profile under
+  // data/profiles/{slug}/ and data/users/{uid}/profiles/{slug}/.
+  function profileRoots(): string[] {
+    const roots: string[] = [];
+    const legacyRoot = path.join(REPO_ROOT, 'data/profiles');
+    if (fs.existsSync(legacyRoot)) {
+      for (const slug of fs.readdirSync(legacyRoot)) {
+        const full = path.join(legacyRoot, slug);
+        if (fs.statSync(full).isDirectory()) roots.push(full);
+      }
+    }
+    const usersRoot = path.join(REPO_ROOT, 'data/users');
+    if (fs.existsSync(usersRoot)) {
+      for (const uid of fs.readdirSync(usersRoot)) {
+        const userProfiles = path.join(usersRoot, uid, 'profiles');
+        if (!fs.existsSync(userProfiles)) continue;
+        for (const slug of fs.readdirSync(userProfiles)) {
+          const full = path.join(userProfiles, slug);
+          if (fs.statSync(full).isDirectory()) roots.push(full);
+        }
+      }
+    }
+    return roots;
+  }
+
+  it('no .tsv pending in any profile root', () => {
+    for (const root of profileRoots()) {
+      const dir = path.join(root, 'batch/tracker-additions');
+      if (!fs.existsSync(dir)) continue;
+      const files = fs.readdirSync(dir).filter((f) => f.endsWith('.tsv'));
+      // Empty array OR every entry already moved under merged/archived/.
+      expect(files.length, `pending TSVs in ${dir}`).toBe(0);
+    }
   });
 });
 
