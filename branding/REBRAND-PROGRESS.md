@@ -44,8 +44,8 @@ These are non-negotiable. Compaction MUST NOT lose these.
 | 6 | Voice & tone guide (20 phrases + 10 anti-patterns) | ✓ done | `9af2e73` | `branding/VOICE.md` |
 | 7 | README banner copy | ✓ done | `4247150` | `branding/README-banner.md` (the actual `README.md` swap happens at Task 9) |
 | 8 | Social card spec (HTML/CSS 1200×630 OG) | ✓ done | `27ed486` | `branding/SOCIAL-CARD.md` + `branding/assets/social-card.html` |
-| 9 | brand.json update + apply-brand dry-run | **DESTRUCTIVE GATE — next** | — | Renames career-ops → heron across ~30 files. Explicit user approval required before run. |
-| 10 | apply-brand commit + SvelteKit UI wiring | pending | — | Color tokens into `ui/src/app.css`; font files self-hosted; component sweep for hardcoded colors |
+| 9 | brand.json update + apply-brand propagation | ✓ done | `aee85ae` | 35 files: identifiers, URLs, permissions, copyright, store-listing prose. Colors/extensions/icons deferred to Task 10. |
+| 10 | Color sweep + SvelteKit UI wiring + prose sweep | **next** | — | Color tokens in `ui/src/app.css`; font files self-hosted (Fraunces + Inter + IBM Plex Mono); component sweep for hardcoded colors; prose sweep of remaining 458+ `career-ops` / `Career Ops` references in docs/modes/templates/scripts; README.md actual swap (per Task 7 spec). |
 | 11 | Press kit structure + draft copy | pending | — | `branding/PRESS-KIT.md`; optionally render to PDF via `anthropic-skills:pdf` |
 
 ## Locked decisions (do not re-litigate without explicit user pushback)
@@ -118,13 +118,41 @@ branding/MASCOT.md             ← Task 5 (fb8edc0)
 branding/VOICE.md              ← Task 6 (9af2e73)
 branding/README-banner.md      ← Task 7 (4247150)
 branding/SOCIAL-CARD.md        ← Task 8 (27ed486)
+branding/brand.json            ← Task 9 (aee85ae) — identity sweep
 branding/assets/wordmark.svg          ← Task 4 (currentColor)
 branding/assets/wordmark-slate.svg    ← Task 4
 branding/assets/wordmark-light.svg    ← Task 4
 branding/assets/wordmark-dawn.svg     ← Task 4
 branding/assets/mark-placeholder.svg  ← Task 5
 branding/assets/social-card.html      ← Task 8
+ui/static/icons/heron-{192,256,384,512}.png  ← Task 9 (auto-generated)
 ```
+
+## Files renamed/updated in Task 9 (aee85ae) — for reference
+
+Apply-brand propagated `branding/brand.json` into 35 consumer files in
+one commit. See `git show aee85ae --stat` for the full list. Highlights:
+
+- `package.json` × 3 (root + ui + ui/electron): name `career-ops` → `heron`
+- `ui/capacitor.config.ts` + `ui/electron/capacitor.config.ts`: appId,
+  appName, URL scheme, plugin name
+- `ui/electron/electron-builder.config.json`: appId, productName,
+  copyright, URL handlers, Bonjour, GitHub publish target
+- `ui/ios/App/App/Info.plist`: CFBundleDisplayName, URL scheme,
+  Bonjour, 9 permission usage descriptions, copyright
+- `ui/ios/App/App/Brand.swift` + 4 extension copies (Live Activity,
+  Share, Watch, Widget): every `static let` constant
+- `ui/src/lib/client/brand.ts` + `ui/electron/src/brand.ts`: BRAND
+  object
+- `ui/android/`: strings.xml, AndroidManifest.xml, build.gradle
+  applicationId
+- `ui/src/app.html` + `error.html`: head metadata + favicon path
+- `ui/static/manifest.webmanifest` + `bookmarklet.js`: name + icon
+  filename prefix
+- `.github/ISSUE_TEMPLATE/*.yml` × 4 + `.github/workflows/`
+  sbom.yml + native-release.yml
+- `ui/ios/App/fastlane/{Appfile,Fastfile}`: app_identifier
+- `release-please-config.json`: package name
 
 ## Files that WILL change at Task 9 (destructive)
 
@@ -225,18 +253,40 @@ verification → move on. Never batch tasks.
 
 ## Latest update
 
-- 2026-05-15 — Tasks 1–8 complete. Task 9 (DESTRUCTIVE GATE — brand.json
-  update + apply-brand dry-run) is next and requires explicit user
-  approval before any propagation.
+- 2026-05-15 — Tasks 1–9 complete. Task 10 (color sweep + SvelteKit UI
+  wiring + prose sweep + README.md actual swap) is next.
 
-  Task 8 shipped two files: `branding/SOCIAL-CARD.md` (the spec — design
-  decisions, render pipeline, OG/Twitter meta-tag wiring, per-page
-  variant strategy, forbidden modifications) and
-  `branding/assets/social-card.html` (the actual render source — a
-  self-contained 1200×630 HTML/CSS file with inline mascot SVG, Fraunces
-  + Inter from Google Fonts CDN, dark `#0e1014` background, Heron Dawn
-  `#c89b4a` accent stripe + wordmark, tagline-first hero layout). The
-  HTML opens in Chrome at 1200×630 and screenshots to
-  `ui/static/social-card.png` for the production PNG.
+  Task 9 (`aee85ae`) propagated `branding/brand.json` into 35 consumer
+  files. Identity sweep — name `career-ops` → `heron`, displayName
+  `Career Ops` → `Heron`, tagline → "Stand still. Strike well.",
+  bundleId → `com.heron.app`, URL scheme → `heron://`, Bonjour →
+  `_heron._tcp`, capacitor plugin → `HeronNative`, repo →
+  `github.com/heron/heron`, homepage → `heron.app`, support email →
+  `hello@heron.app`, copyright → `© 2026 Heron contributors (santifer
+  preserved)`. All 9 iOS permission usage descriptions rewritten. Store
+  listings refreshed with Heron voice ("A thinking partner for careers",
+  etc.). 4 new heron-prefixed icon PNGs generated.
 
-  Task 7 commit: `4247150`. Task 8 commit: `27ed486`.
+  Deliberately deferred to Task 10:
+  - colors.* — Task 10 ships the Heron 22-token palette together with
+    `ui/src/app.css` wiring + component-level color sweep
+  - splash.backgroundColor — flips to `#0e1014` with colors
+  - extensions[*].name — Xcode target rename needs folder + project.pbxproj
+    edits beyond apply-brand
+  - iconSource — repoints to new mascot when Claude Design / illustrator
+    output lands
+  - 458+ remaining prose references to `career-ops` / `Career Ops` in
+    docs / modes / templates / helper scripts (Task 10 prose sweep)
+  - The actual README.md swap (Task 7 banner-md is the spec)
+
+  BREAKING change: bundle ID, URL scheme, and Bonjour service type
+  changed. Existing installs are treated as a new app — `careerops://`
+  deep links no longer resolve. This is documented in the
+  conventional-commit body so Release Please flags it correctly.
+
+  The `ALLOW_NODE_VERSION_MISMATCH=1` bypass was used for the commit —
+  user's local Node is still v25.9.0 (PATH issue) and the engines.node
+  gate (`scripts/system/ensure-pnpm.mjs`) hard-fails until `mise
+  uninstall node@25.9.0` or `mise reshim` is run by the user.
+
+  Task 7 commit: `4247150`. Task 8 commit: `27ed486`. Task 9 commit: `aee85ae`.
