@@ -293,6 +293,14 @@ pre-commit:
         command -v dotenv-linter >/dev/null 2>&1 || { echo "skip: dotenv-linter not installed (mise install)"; exit 0; }
         dotenv-linter check --ignore-checks UnorderedKey --skip-updates {staged_files}
 
+    tiny-configs:
+      # Syntax checks for the small static config files no formatter /
+      # linter ecosystem owns: .gitattributes, .npmrc, .actrc, LICENSE,
+      # robots.txt. Each gets a regex-driven sanity pass — catches
+      # truncated lines, typo'd directives, missing MIT-template phrases.
+      glob: "{.gitattributes,.npmrc,.actrc,LICENSE,**/robots.txt}"
+      run: pnpm validate:tiny-configs
+
     taplo:
       # TOML formatter — pyproject.toml + .mise.toml. taplo is the
       # canonical Rust-based formatter (the TOML equivalent of biome).
