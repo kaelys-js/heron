@@ -9,6 +9,7 @@ System-layer template files used by career-ops scripts and modes. These files ar
 | `cv-template.html` | `generate-pdf.mjs` | HTML/CSS template for ATS-optimized CV PDFs |
 | `cv-template.tex` | `generate-latex.mjs` | LaTeX/Overleaf template for ATS-optimized CV PDFs |
 | `portals.example.yml` | Onboarding | Example portal scanner configuration (copy to `portals.yml` to activate) |
+| `profile.example.yml` | Onboarding, `profile.ts`, `autopilot-circuit-breaker.ts`, `cv-sync-check.mjs`, `doctor.mjs` | Example user profile (copy to `config/profile.yml` to activate) |
 | `states.yml` | `pipeline.integration.test.ts`, `normalize-statuses.mjs`, `merge-tracker.mjs` | Canonical application states and their aliases |
 
 ### cv-template.html

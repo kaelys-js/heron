@@ -71,7 +71,7 @@ function checkCv() {
     label: 'cv.md not found',
     fix: [
       'Create cv.md in the project root with your CV in markdown',
-      'See examples/ for reference CVs',
+      'See docs/examples/ for reference CVs',
     ],
   };
 }
@@ -84,7 +84,7 @@ function checkProfile() {
     pass: false,
     label: 'config/profile.yml not found',
     fix: [
-      'Run: cp examples/profile.example.yml config/profile.yml',
+      'Run: cp templates/profile.example.yml config/profile.yml',
       'Then edit it with your details',
     ],
   };

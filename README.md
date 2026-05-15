@@ -182,9 +182,8 @@ career-ops/
 │       └── icons/               # generate-icons.mjs + _build/ cache
 │
 ├── modes/                       # AI skill modes (oferta, apply, scan, batch, … + de/fr/ja/pt/ru/)
-├── templates/                   # CV HTML + LaTeX templates, states.yml, portals.example.yml, fonts/
-├── batch/                       # Headless batch evaluation runner
-├── examples/                    # Sample CVs, profile.example.yml, sample-report.md, dual-track/
+├── templates/                   # CV HTML + LaTeX templates, states.yml, portals.example.yml, profile.example.yml, fonts/, batch-prompt.md
+├── docs/examples/               # Sample CVs, sample-report.md, dual-track/ (documentation only)
 ├── writing-samples/             # User's portfolio writing (per-profile, gitignored content)
 │
 ├── data/                        # Per-user runtime state (gitignored)
