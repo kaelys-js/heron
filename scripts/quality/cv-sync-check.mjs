@@ -11,19 +11,34 @@
  */
 
 import { readFileSync, existsSync, statSync } from 'fs';
-import { join, dirname } from 'path';
+import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
+import {
+  profilePath as resolveProfilePath,
+  profileFromArgv,
+  userFromArgv,
+} from '../lib/lib-profiles.mjs';
 
+// __dirname here is scripts/quality/; the repo root is two levels up.
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const projectRoot = __dirname;
+const projectRoot = resolve(__dirname, '..', '..');
+
+// Per-user per-profile paths. cv.md + profile.yml + article-digest.md
+// all live under the active profile of the active user (CAREER_OPS_USER_ID
+// env or --user flag). Legacy single-user installs resolve to
+// data/profiles/{slug}/ via the SYSTEM_USER_ID sentinel.
+const USER_ID = userFromArgv();
+const PROFILE_ID = profileFromArgv();
+const cvPath = resolveProfilePath(PROFILE_ID, 'cv-md', USER_ID);
+const profileYmlPath = resolveProfilePath(PROFILE_ID, 'profile-yml', USER_ID);
+const digestPath = resolveProfilePath(PROFILE_ID, 'article-digest', USER_ID);
 
 const warnings = [];
 const errors = [];
 
 // 1. Check cv.md exists
-const cvPath = join(projectRoot, 'cv.md');
 if (!existsSync(cvPath)) {
-  errors.push('cv.md not found in project root. Create it with your CV in markdown format.');
+  errors.push(`cv.md not found for profile=${PROFILE_ID}. Create it at ${cvPath}.`);
 } else {
   const cvContent = readFileSync(cvPath, 'utf-8');
   if (cvContent.trim().length < 100) {
@@ -32,23 +47,22 @@ if (!existsSync(cvPath)) {
 }
 
 // 2. Check profile.yml exists
-const profilePath = join(projectRoot, 'config', 'profile.yml');
-if (!existsSync(profilePath)) {
+if (!existsSync(profileYmlPath)) {
   errors.push(
-    'config/profile.yml not found. Copy from templates/profile.example.yml and fill in your details.',
+    `profile.yml not found for profile=${PROFILE_ID} at ${profileYmlPath}. Copy from templates/profile.example.yml and fill in your details.`,
   );
 } else {
-  const profileContent = readFileSync(profilePath, 'utf-8');
+  const profileContent = readFileSync(profileYmlPath, 'utf-8');
   const requiredFields = ['full_name', 'email', 'location'];
   for (const field of requiredFields) {
     if (!profileContent.includes(field) || profileContent.includes(`"Jane Smith"`)) {
-      warnings.push(`config/profile.yml may still have example data. Check field: ${field}`);
+      warnings.push(`profile.yml may still have example data. Check field: ${field}`);
       break;
     }
   }
 }
 
-// 3. Check for hardcoded metrics in prompt files
+// 3. Check for hardcoded metrics in prompt files (system-layer, not per-profile)
 const filesToCheck = [
   { path: join(projectRoot, 'modes', '_shared.md'), name: '_shared.md' },
   { path: join(projectRoot, 'templates', 'batch-prompt.md'), name: 'batch-prompt.md' },
@@ -81,8 +95,7 @@ for (const { path, name } of filesToCheck) {
   }
 }
 
-// 4. Check article-digest.md freshness
-const digestPath = join(projectRoot, 'article-digest.md');
+// 4. Check article-digest.md freshness (per-user per-profile, resolved above)
 if (existsSync(digestPath)) {
   const stats = statSync(digestPath);
   const daysSinceModified = (Date.now() - stats.mtimeMs) / (1000 * 60 * 60 * 24);

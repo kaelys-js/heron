@@ -7,10 +7,11 @@
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { profileFromArgv, profilePath } from '../lib/lib-profiles.mjs';
+import { profileFromArgv, profilePath, userFromArgv } from '../lib/lib-profiles.mjs';
 
+const USER_ID = userFromArgv();
 const PROFILE_ID = profileFromArgv();
-const BATCH_DIR = profilePath(PROFILE_ID, 'batch-dir');
+const BATCH_DIR = profilePath(PROFILE_ID, 'batch-dir', USER_ID);
 mkdirSync(BATCH_DIR, { recursive: true });
 
 const SURVIVORS_PATH = join(BATCH_DIR, 'pipeline-survivors.tsv');

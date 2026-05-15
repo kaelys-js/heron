@@ -30,19 +30,26 @@
 
 import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from 'fs';
 import yaml from 'js-yaml';
-import { profilePath, ensureProfileDirs, profileFromArgv } from '../lib/lib-profiles.mjs';
+import {
+  profilePath,
+  ensureProfileDirs,
+  profileFromArgv,
+  userFromArgv,
+} from '../lib/lib-profiles.mjs';
 const parseYaml = yaml.load;
 
-// ── Config — per-profile paths ─────────────────────────────────────
-// Resolve --profile <slug> from argv (defaults to active profile in
-// data/profiles.json). All scanner output goes to that profile's dir.
+// ── Config — per-user per-profile paths ────────────────────────────
+// Resolve --user / --profile (or CAREER_OPS_USER_ID / CAREER_OPS_PROFILE_ID
+// env vars set by the orchestrator). Multi-user installs land at
+// data/users/{uid}/profiles/{slug}/; legacy single-user at data/profiles/{slug}/.
+const USER_ID = userFromArgv();
 const PROFILE_ID = profileFromArgv();
-ensureProfileDirs(PROFILE_ID);
+ensureProfileDirs(PROFILE_ID, USER_ID);
 
-const PORTALS_PATH = profilePath(PROFILE_ID, 'portals-yml');
-const SCAN_HISTORY_PATH = profilePath(PROFILE_ID, 'scan-history');
-const PIPELINE_PATH = profilePath(PROFILE_ID, 'pipeline');
-const APPLICATIONS_PATH = profilePath(PROFILE_ID, 'applications');
+const PORTALS_PATH = profilePath(PROFILE_ID, 'portals-yml', USER_ID);
+const SCAN_HISTORY_PATH = profilePath(PROFILE_ID, 'scan-history', USER_ID);
+const PIPELINE_PATH = profilePath(PROFILE_ID, 'pipeline', USER_ID);
+const APPLICATIONS_PATH = profilePath(PROFILE_ID, 'applications', USER_ID);
 
 const CONCURRENCY = 10;
 const FETCH_TIMEOUT_MS = 10_000;

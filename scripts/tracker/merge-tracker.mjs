@@ -18,14 +18,15 @@ import { readFileSync, writeFileSync, readdirSync, mkdirSync, renameSync, exists
 import { join, basename, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { execFileSync } from 'child_process';
-import { profileFromArgv, profilePath } from '../lib/lib-profiles.mjs';
+import { profileFromArgv, profilePath, userFromArgv } from '../lib/lib-profiles.mjs';
 
-// Paths derived from the active (or --profile-overridden) slug.
-// Post-Option-C: applications.md + tracker-additions/ live PER-PROFILE
-// under data/profiles/{slug}/, not at repo root.
+// Paths derived from the active (or --profile-overridden) slug + active
+// user. Multi-user: data/users/{uid}/profiles/{slug}/. Legacy single-user:
+// data/profiles/{slug}/ (via SYSTEM_USER_ID sentinel when no --user/env).
+const USER_ID = userFromArgv();
 const PROFILE_ID = profileFromArgv();
-const APPS_FILE = profilePath(PROFILE_ID, 'applications');
-const BATCH_DIR = profilePath(PROFILE_ID, 'batch-dir');
+const APPS_FILE = profilePath(PROFILE_ID, 'applications', USER_ID);
+const BATCH_DIR = profilePath(PROFILE_ID, 'batch-dir', USER_ID);
 const ADDITIONS_DIR = join(BATCH_DIR, 'tracker-additions');
 const MERGED_DIR = join(ADDITIONS_DIR, 'merged');
 const DRY_RUN = process.argv.includes('--dry-run');

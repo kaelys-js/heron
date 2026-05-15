@@ -58,7 +58,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 USER_DATA_DIR = USER_DATA_DIRS["linkedin"]  # backward-compat alias
 
-from lib_profiles import resolve_profile_arg, profile_path, ensure_profile_dirs
+from lib_profiles import resolve_profile_arg, resolve_user_arg, profile_path, ensure_profile_dirs
 
 # Shared apply helpers — anti-bot cadence, CAPTCHA detection, state file,
 # canonical APPLY_RESULT emission. The autonomous-apply dispatcher
@@ -411,12 +411,13 @@ def main():
     )
     args = parser.parse_args()
 
+    user_id = resolve_user_arg()
     profile_id = resolve_profile_arg(args.profile)
-    ensure_profile_dirs(profile_id)
-    PROFILE_YML = profile_path(profile_id, "profile-yml")
-    APPLICATIONS_MD = profile_path(profile_id, "applications")
-    PIPELINE_MD = profile_path(profile_id, "pipeline")
-    profile_general_cv = profile_path(profile_id, "output-dir") / "cv-general.pdf"
+    ensure_profile_dirs(profile_id, user_id=user_id)
+    PROFILE_YML = profile_path(profile_id, "profile-yml", user_id=user_id)
+    APPLICATIONS_MD = profile_path(profile_id, "applications", user_id=user_id)
+    PIPELINE_MD = profile_path(profile_id, "pipeline", user_id=user_id)
+    profile_general_cv = profile_path(profile_id, "output-dir", user_id=user_id) / "cv-general.pdf"
 
     # Dispatcher mode — toggled when apply-portal.py passes --job-id. From
     # this point onward emit_step() (and other helpers) emit APPLY_STEP

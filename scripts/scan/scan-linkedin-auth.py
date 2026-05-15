@@ -63,7 +63,7 @@ ROOT = Path(__file__).resolve().parent
 REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
-from lib_profiles import resolve_profile_arg, profile_path, ensure_profile_dirs
+from lib_profiles import resolve_profile_arg, resolve_user_arg, profile_path, ensure_profile_dirs
 
 # Per-profile paths are set inside main() once --profile is parsed.
 # Placeholders for module-level type annotations; real values land later.
@@ -324,13 +324,14 @@ def main():
     )
     args = parser.parse_args()
 
+    user_id = resolve_user_arg()
     profile_id = resolve_profile_arg(args.profile)
-    ensure_profile_dirs(profile_id)
-    PROFILE_YML = profile_path(profile_id, "profile-yml")
-    PORTALS_YML = profile_path(profile_id, "portals-yml")
-    PIPELINE_MD = profile_path(profile_id, "pipeline")
-    APPLICATIONS_MD = profile_path(profile_id, "applications")
-    SCAN_HISTORY_TSV = profile_path(profile_id, "scan-history")
+    ensure_profile_dirs(profile_id, user_id=user_id)
+    PROFILE_YML = profile_path(profile_id, "profile-yml", user_id=user_id)
+    PORTALS_YML = profile_path(profile_id, "portals-yml", user_id=user_id)
+    PIPELINE_MD = profile_path(profile_id, "pipeline", user_id=user_id)
+    APPLICATIONS_MD = profile_path(profile_id, "applications", user_id=user_id)
+    SCAN_HISTORY_TSV = profile_path(profile_id, "scan-history", user_id=user_id)
 
     udd = USER_DATA_DIRS["linkedin"]
     if not udd.exists():

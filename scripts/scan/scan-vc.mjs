@@ -45,14 +45,20 @@
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import path from 'node:path';
-import { profilePath, ensureProfileDirs, profileFromArgv } from '../lib/lib-profiles.mjs';
+import {
+  profilePath,
+  ensureProfileDirs,
+  profileFromArgv,
+  userFromArgv,
+} from '../lib/lib-profiles.mjs';
 
 const FETCH_TIMEOUT_MS = 15_000;
+const USER_ID = userFromArgv();
 const PROFILE_ID = profileFromArgv();
-ensureProfileDirs(PROFILE_ID);
-const PROFILE_DIR = profilePath(PROFILE_ID, 'profile-dir');
+ensureProfileDirs(PROFILE_ID, USER_ID);
+const PROFILE_DIR = profilePath(PROFILE_ID, 'profile-dir', USER_ID);
 const VC_DIR = PROFILE_DIR; // VC candidates land in the active profile's dir
-const PORTALS_PATH = profilePath(PROFILE_ID, 'portals-yml');
+const PORTALS_PATH = profilePath(PROFILE_ID, 'portals-yml', USER_ID);
 
 async function fetchText(url, opts = {}) {
   const controller = new AbortController();
