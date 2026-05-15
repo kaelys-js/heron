@@ -1,108 +1,62 @@
 <div align="center">
 
-# Career Ops
+<img src="branding/assets/wordmark-slate.svg" alt="Heron" width="180" />
 
-**Run your job search like a product launch.**
+# Heron
 
-[![Tests](https://github.com/kaelys-js/career-ops/actions/workflows/test.yml/badge.svg)](https://github.com/kaelys-js/career-ops/actions/workflows/test.yml)
-[![CodeQL](https://github.com/kaelys-js/career-ops/actions/workflows/codeql.yml/badge.svg)](https://github.com/kaelys-js/career-ops/actions/workflows/codeql.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![pnpm](https://img.shields.io/badge/pnpm-11.1.0-F69220?logo=pnpm&logoColor=white)](https://pnpm.io)
-[![Node](https://img.shields.io/badge/node-%E2%89%A526.1.0-339933?logo=node.js&logoColor=white)](https://nodejs.org)
-[![SvelteKit](https://img.shields.io/badge/SvelteKit-2.59-FF3E00?logo=svelte&logoColor=white)](https://kit.svelte.dev)
-[![Capacitor](https://img.shields.io/badge/Capacitor-8.3-119EFF?logo=capacitor&logoColor=white)](https://capacitorjs.com)
-[![Electron](https://img.shields.io/badge/Electron-39.8-47848F?logo=electron&logoColor=white)](https://electronjs.org)
-[![Better Auth](https://img.shields.io/badge/Better_Auth-1.6-000)](https://www.better-auth.com)
+**Stand still. Strike well.**
 
-**Multi-user · self-hosted · runs on every platform you own.**
+A thinking partner for career transitions. Patient, precise, local-first.
 
-[Quickstart](#quickstart) ·
-[What's in the box](#whats-in-the-box) ·
-[Architecture](#architecture) ·
-[Development](#development) ·
-[Releasing](#releasing) ·
-[Acknowledgements](#acknowledgements)
+[![Build](https://github.com/heron/heron/actions/workflows/test.yml/badge.svg)](https://github.com/heron/heron/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/github/v/release/heron/heron)](https://github.com/heron/heron/releases)
+
+[Get started](docs/SETUP.md) · [Documentation](docs/) · [Architecture](docs/ARCHITECTURE.md) · [Discord](https://discord.gg/8pRpHETxa4)
 
 </div>
 
 ---
 
-## What Career Ops is
+## What is Heron?
 
-A self-hosted job-search platform that does the boring stuff while you sleep:
+The heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes — once, precisely, and the work is done.
 
-- **Evaluates offers** — A-G scoring (role match, CV match, level strategy, comp, personalisation, interview prep, posting legitimacy)
-- **Tailors CVs** — generates one PDF per job, keyword-injected, kept under 2 pages
-- **Scans portals** — Greenhouse, Ashby, Lever, Workable, Personio, SmartRecruiters, Recruitee, Teamtailor, Workday, Indeed, LinkedIn — zero token cost on portal scrape (direct API hits)
-- **Drafts everything** — cover letters, outreach DMs, interview prep briefs, negotiation scripts, follow-up cadence
-- **Autonomous-applies** (opt-in, per profile) — fills LinkedIn Easy Apply / Greenhouse / Ashby forms, falls back to `ManualApplyNeeded` Issues on CAPTCHA / unknown questions / anti-bot
-- **Surfaces issues** — every silent failure becomes an actionable Inbox card with a one-click fix CTA
+This is the wrong era for spray-and-pray job searches. Recruiters' attention is finite. So is yours. Heron is a thinking partner for people in career transition who'd rather make one excellent move than fifty mediocre ones.
 
-**Multi-user from day one.** Better Auth + passkeys + per-user data segregation. Run one instance for yourself, share it with your partner, or self-host for a few friends — every user gets their own profiles, applications, CVs, and inbox.
+It runs entirely on your machine. Your data is yours.
 
-**Cross-platform native.** SvelteKit dashboard wrapped via Capacitor 8 for iOS / Android, Electron 39 for macOS / Windows / Linux, plus a watchOS companion + 4 iOS widgets.
+## What it does
 
-> [!IMPORTANT]
-> Career Ops is a **filter**, not a spray-and-pray cannon. The default policy blocks autonomous-applies below score 4.0/5 and caps daily applies. You'll send fewer applications, not more.
+- **Pipeline tracking** — every opportunity in one place; status, score, comp, notes
+- **A–F evaluation** — six-block analysis per role: role fit, CV match, level strategy, comp research, CV personalization plan, interview prep
+- **CV generation** — ATS-optimized PDFs (HTML + LaTeX templates), tailored per role
+- **Portal scanning** — 11 ATSes (Greenhouse / Ashby / Lever / LinkedIn / Indeed / Workday / Recruitee / SmartRecruiters / Workable / Personio / Teamtailor)
+- **Recruiter inbound** — email classifier that flags offers, confirms interviews, and reacts to rejections
+- **Interview prep** — STAR+R stories generated from your real work; mock interviews; comp negotiation
+- **Autonomous apply** *(opt-in, score-gated, off by default)* — Heron defers to you on the moves that matter
+- **Multi-user, multi-profile** — two humans share one install, fully segregated; one human runs engineer + instructor profiles, fully segregated
+- **AI-agnostic** — swappable CLI (Claude / Gemini / Codex / OpenCode / Qwen). No vendor lock-in.
 
----
+## Why local-first
 
-## Quickstart
+Your CV, application history, scoring data, recruiter emails, interview prep — all of it stays on your disk. No cloud aggregator. The AI runs locally or against an API key you own; the data never leaves your machine.
 
-> [!NOTE]
-> **Prerequisites** (you only need these once):
-> - **mise** — runtime manager (`brew install mise` or [install guide](https://mise.jdx.dev/getting-started.html))
-> - **git**, **gh**, **docker** — typical macOS dev kit (Linux + WSL work too)
-> - **An AI CLI** — [Claude Code](https://docs.claude.com/en/docs/claude-code/quickstart) is the default; OpenCode / Gemini / Codex / Qwen / Copilot all work via `AGENT_CLI=<bin>`
+If a hosted tier emerges in the future, the open-source local-first version stays maintained and supported. That's the whole posture.
 
-### 1. Clone + set up
+## Quick start
 
-```sh
-gh repo clone kaelys-js/career-ops
-cd career-ops
-
-# mise installs the exact Node + pnpm + Ruby versions this repo expects
-mise install
-
-# Install workspace deps (pnpm only — npm/yarn/bun are refused by preinstall guard)
-pnpm install
+```bash
+git clone https://github.com/heron/heron.git
+cd heron
+mise install              # auto-installs Node 26 + pnpm 11 + Ruby 3.3 + Python 3.13
+pnpm install              # one-shot install across workspaces
+pnpm setup:native         # generates Heron-branded native apps (optional)
+pnpm dev                  # SvelteKit dashboard at localhost:5173
 ```
 
-### 2. Run the dashboard
-
-```sh
-pnpm dev
-# → http://localhost:5173
-```
-
-First boot triggers the onboarding flow: passkey signup → upload CV → tweak profile YAML → start scanning.
-
-### 3. Optional: native apps
-
-```sh
-# One-shot interactive wizard — sets up Apple credentials, generates icons,
-# stages GitHub Secrets for CI release builds.
-pnpm setup:native
-
-# Live dev (boots simulator/emulator, builds, installs, launches, hot-reloads):
-pnpm dev:desktop          # Electron shell — macOS / Windows / Linux
-pnpm dev:ios              # iOS Simulator (boots newest iPhone, cap run ios)
-pnpm dev:android          # Android Emulator (boots newest AVD, cap run android)
-pnpm dev:apple-watch      # watchOS Simulator (xcodebuild + simctl install)
-
-# Production builds:
-pnpm build:desktop        # → ui/electron/dist/{DMG, .exe, .AppImage, .deb}
-pnpm build:desktop:fast   # → single-arch DMG only (3-5 min vs full release)
-pnpm build:ios            # → TestFlight via fastlane (Watch app ships in same archive)
-```
-
-### 4. Verify everything is green
-
-```sh
-pnpm test                  # full Vitest matrix (~30s on a warm cache)
-pnpm doctor:native         # checks GitHub Secrets configured for release
-pnpm act:test              # runs the Tests workflow in a local docker container
-```
+See [`docs/SETUP.md`](docs/SETUP.md) for the long form, including
+Capacitor builds for iOS / Android and the Electron desktop wrapper.
 
 ---
 

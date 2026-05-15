@@ -30,19 +30,19 @@ separately.
 ````markdown
 <div align="center">
 
-  <img src="branding/assets/lockup-stacked-slate.svg" alt="Heron" width="180" />
+<img src="branding/assets/wordmark-slate.svg" alt="Heron" width="180" />
 
-  # Heron
+# Heron
 
-  **Stand still. Strike well.**
+**Stand still. Strike well.**
 
-  A thinking partner for career transitions. Patient, precise, local-first.
+A thinking partner for career transitions. Patient, precise, local-first.
 
-  [![Build](https://github.com/heron/heron/actions/workflows/test.yml/badge.svg)](https://github.com/heron/heron/actions/workflows/test.yml)
-  [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-  [![Version](https://img.shields.io/github/v/release/heron/heron)](https://github.com/heron/heron/releases)
+[![Build](https://github.com/heron/heron/actions/workflows/test.yml/badge.svg)](https://github.com/heron/heron/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/github/v/release/heron/heron)](https://github.com/heron/heron/releases)
 
-  [Get started](docs/SETUP.md) · [Documentation](docs/) · [Architecture](docs/ARCHITECTURE.md) · [Discord](https://discord.gg/8pRpHETxa4)
+[Get started](docs/SETUP.md) · [Documentation](docs/) · [Architecture](docs/ARCHITECTURE.md) · [Discord](https://discord.gg/8pRpHETxa4)
 
 </div>
 
@@ -91,18 +91,19 @@ Capacitor builds for iOS / Android and the Electron desktop wrapper.
 
 ## Rationale per element
 
-### Stacked-lockup image
+### Wordmark image (lockup TBD)
 
-Centered, ~180px wide. Stacked variant (mascot above wordmark) because
-it's a hero context, not a header context. Slate version because the
-GitHub README renders against a light-ish surface in light mode and a
-darker surface in dark mode — slate sits well against both.
+Centered, ~180px wide. The shipped README currently uses
+`branding/assets/wordmark-slate.svg` (the wordmark-only variant)
+because the stacked lockup (mascot above wordmark) doesn't exist yet —
+it lands when the real mascot does (Claude Design or illustrator
+output). At that point swap the `<img>` line to
+`branding/assets/lockup-stacked-slate.svg` and the banner gains the
+mark visual without any other structural change.
 
-Until the real mascot lands, the asset path
-(`branding/assets/lockup-stacked-slate.svg`) is a forward-reference. At
-Task 9 the file gets created and this link starts resolving. If the
-README ships before the lockup SVG exists, swap the `<img>` line for
-the wordmark-only variant: `branding/assets/wordmark-slate.svg`.
+Slate version because the GitHub README renders against a light-ish
+surface in light mode and a darker surface in dark mode — slate sits
+well against both.
 
 ### Tagline + sub-line
 
