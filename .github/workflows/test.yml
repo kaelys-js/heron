@@ -128,6 +128,14 @@ jobs:
         # belt-and-braces full-repo check.
         run: pnpm validate:format-sync
 
+      - name: markdownlint (relaxed config — real bugs only)
+        # markdownlint-cli2 across every .md file with the relaxed config
+        # in .markdownlint-cli2.jsonc. Catches bare URLs, malformed
+        # tables, missing alt text, broken links, etc. Style rules
+        # (line length / heading style / list bullets) are intentionally
+        # disabled — see the file header for the full rule rationale.
+        run: pnpm validate:markdown
+
       - name: Typecheck (svelte-check + tsgo, turbo-cached)
         run: pnpm exec turbo run check
 
