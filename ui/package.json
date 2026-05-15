@@ -21,7 +21,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --threshold error",
     "check:warn": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --threshold warning",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "clean": "node ../scripts/clean.mjs",
+    "clean": "node ../scripts/system/clean.mjs",
     "dev": "vite dev",
     "go": "vite dev --open",
     "prepare": "svelte-kit sync || echo ''",

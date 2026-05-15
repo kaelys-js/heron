@@ -27,7 +27,7 @@ const ua = process.env.npm_config_user_agent || '';
 const tool = ua.split('/')[0]; // 'pnpm' | 'npm' | 'yarn' | 'bun' | …
 
 // pnpm is the only allowed tool. Empty UA usually means direct invocation
-// (e.g. `node scripts/ensure-pnpm.mjs`) — we allow that.
+// (e.g. `node scripts/system/ensure-pnpm.mjs`) — we allow that.
 if (!tool || tool === 'pnpm') {
   process.exit(0);
 }
