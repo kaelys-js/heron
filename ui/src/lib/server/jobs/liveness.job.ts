@@ -142,7 +142,7 @@ function runLivenessSubprocess(urls: string[]): Promise<Outcome[]> {
       return;
     }
     let stdout = '';
-    const p = spawn('node', ['check-liveness.mjs', ...urls], {
+    const p = spawn('node', ['scripts/system/check-liveness.mjs', ...urls], {
       cwd: ROOT,
       env: { ...process.env },
     });

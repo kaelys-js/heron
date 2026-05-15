@@ -32,7 +32,7 @@ Gemini-specific fork of any mode.
 
 ## Gemini-specific helper
 
-- `gemini-eval.mjs` — standalone Gemini API evaluator that does NOT require the
+- `scripts/system/gemini-eval.mjs` — standalone Gemini API evaluator that does NOT require the
   Gemini CLI. Useful in CI or as a one-off scoring pass without launching an
   interactive session.
 

@@ -314,7 +314,7 @@ function profileFlags(profileId?: string): string[] {
 }
 
 export function runScan(profileId?: string) {
-  start('scan', venvPython(), ['scan-broad.py', ...profileFlags(profileId)]);
+  start('scan', venvPython(), ['scripts/scan/scan-broad.py', ...profileFlags(profileId)]);
 }
 
 export function runGemini(top = 30, profileId?: string) {
@@ -328,7 +328,7 @@ export function runGemini(top = 30, profileId?: string) {
     return;
   }
   start('gemini', venvPython(), [
-    'gemini-first-pass.py',
+    'scripts/scan/gemini-first-pass.py',
     '--top',
     String(top),
     ...profileFlags(profileId),
@@ -349,10 +349,10 @@ export function runPortalLogin(portal: 'linkedin' | 'indeed') {
   // Login is profile-agnostic — it writes the Playwright session to a
   // shared dir (.playwright-<portal>/) that all profiles use.
   if (portal === 'linkedin') {
-    start('apply-linkedin', venvPython(), ['linkedin-easy-apply.py', '--login']);
+    start('apply-linkedin', venvPython(), ['scripts/apply/linkedin-easy-apply.py', '--login']);
   } else {
     start('apply-linkedin', venvPython(), [
-      'lib_playwright_auth.py',
+      'scripts/lib/lib_playwright_auth.py',
       '--portal',
       'indeed',
       '--login',
@@ -437,7 +437,7 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
       (profileId ? ' · profile=' + profileId : '') +
       cvNote,
   });
-  const args = ['linkedin-easy-apply.py', ...profileFlags(profileId)];
+  const args = ['scripts/apply/linkedin-easy-apply.py', ...profileFlags(profileId)];
   if (url) args.push('--url', url);
   let p: ChildProcess;
   try {
@@ -1056,7 +1056,7 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boo
 
     let p: ChildProcess;
     try {
-      p = spawn(venvPython(), ['linkedin-easy-apply.py', '--url', url], {
+      p = spawn(venvPython(), ['scripts/apply/linkedin-easy-apply.py', '--url', url], {
         cwd: ROOT,
         env: { ...process.env },
       });

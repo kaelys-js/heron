@@ -39,7 +39,7 @@ import { logEvent, reportServerError } from '../events';
 import type { JobArgs, JobResult } from './types';
 import type { Job } from '$lib/types';
 
-const APPLY_PORTAL_SCRIPT = path.join(ROOT, 'apply-portal.py');
+const APPLY_PORTAL_SCRIPT = path.join(ROOT, 'scripts/apply/apply-portal.py');
 
 function venvPython(): string {
   const candidate = path.join(ROOT, '.venv', 'bin', 'python');

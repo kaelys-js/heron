@@ -27,6 +27,7 @@ The stub adapter is deliberately invoked in-process via subprocess too —
 keeping ONE dispatch path means there's no special-case branch to forget
 when a portal graduates from stub to production.
 """
+
 from __future__ import annotations
 import argparse
 import os
@@ -41,11 +42,20 @@ sys.path.insert(0, str(ROOT))
 from lib_apply import detect_portal, write_apply_state, emit_result  # noqa: E402
 
 PRODUCTION_PORTALS = {
-    "linkedin", "greenhouse", "ashby", "lever", "workday",
+    "linkedin",
+    "greenhouse",
+    "ashby",
+    "lever",
+    "workday",
     # Second-round graduations — heuristic-quality where instance-specific,
     # selector-stable on the common case. Each adapter is 50-80 lines on
     # top of the shared lib_portal.PortalConfig scaffold.
-    "workable", "personio", "smartrecruiters", "recruitee", "teamtailor", "indeed",
+    "workable",
+    "personio",
+    "smartrecruiters",
+    "recruitee",
+    "teamtailor",
+    "indeed",
 }
 # Only 'unknown' remains as a stub now. Listed explicitly so a typo in
 # an adapter filename doesn't get silently masked.
@@ -66,10 +76,16 @@ def main() -> int:
     ap.add_argument("--job-id", required=True, dest="job_id")
     ap.add_argument("--profile", default=None)
     ap.add_argument("--score", default=None)
-    ap.add_argument("--headed", action="store_true",
-                    help="Run the adapter with a visible browser window (for debugging or CAPTCHA fall-through).")
-    ap.add_argument("--dry-run", action="store_true",
-                    help="Fill the form but stop before Submit. Useful for adapter smoke tests.")
+    ap.add_argument(
+        "--headed",
+        action="store_true",
+        help="Run the adapter with a visible browser window (for debugging or CAPTCHA fall-through).",
+    )
+    ap.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Fill the form but stop before Submit. Useful for adapter smoke tests.",
+    )
     args = ap.parse_args()
 
     # Detect portal first — emit APPLY_STEP so the caller's parser sees us
@@ -104,9 +120,12 @@ def main() -> int:
     # Build the child argv. We pass through every relevant arg so each
     # adapter has uniform access — adapters can ignore flags they don't use.
     cmd = [
-        sys.executable, str(script),
-        "--url", args.url,
-        "--job-id", args.job_id,
+        sys.executable,
+        str(script),
+        "--url",
+        args.url,
+        "--job-id",
+        args.job_id,
     ]
     if args.profile:
         cmd += ["--profile", args.profile]
@@ -138,7 +157,11 @@ def main() -> int:
         # Treat unknown exit codes as system errors. Don't double-emit
         # APPLY_RESULT if the adapter already wrote one — the caller's
         # parser keeps the last value.
-        print(f"[dispatch] adapter exited with unexpected code {rc}", file=sys.stderr, flush=True)
+        print(
+            f"[dispatch] adapter exited with unexpected code {rc}",
+            file=sys.stderr,
+            flush=True,
+        )
         return emit_result("error", f"exit-{rc}")
 
     return rc

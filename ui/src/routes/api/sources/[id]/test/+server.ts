@@ -189,10 +189,10 @@ function probeAlwaysOnScanner(
   return new Promise((resolve) => {
     const script =
       id === 'scan-portals'
-        ? 'scan.mjs'
+        ? 'scripts/scan/scan.mjs'
         : id === 'scan-broad'
-          ? 'scan-broad.py'
-          : 'scan-curated.mjs';
+          ? 'scripts/scan/scan-broad.py'
+          : 'scripts/scan/scan-curated.mjs';
     const isPython = script.endsWith('.py');
     const venvPython = path.join(ROOT, '.venv', 'bin', 'python');
     const bin = isPython ? (fs.existsSync(venvPython) ? venvPython : 'python3') : 'node';
@@ -244,10 +244,14 @@ function spawnSessionCheck(portal: 'linkedin' | 'indeed'): Promise<void> {
     // a single --check-session flag (exit 0 = logged in, 1 = not).
     let stdout = '';
     let stderr = '';
-    const p = spawn(py, ['lib_playwright_auth.py', '--portal', portal, '--check-session'], {
-      cwd: ROOT,
-      env: { ...process.env },
-    });
+    const p = spawn(
+      py,
+      ['scripts/lib/lib_playwright_auth.py', '--portal', portal, '--check-session'],
+      {
+        cwd: ROOT,
+        env: { ...process.env },
+      },
+    );
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
     });

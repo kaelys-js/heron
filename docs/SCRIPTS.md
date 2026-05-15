@@ -1,24 +1,35 @@
 # Scripts Reference
 
-All scripts live in the project root as `.mjs` modules and are exposed via
-`pnpm <name>` (which delegates to the `package.json` `scripts` block).
+All scripts live under `scripts/{apply,scan,cv,quality,tracker,linkedin,system,lib,native}/`
+and are exposed via `pnpm <name>` (which delegates to the `package.json` `scripts`
+block). The eight subdirs group by domain so you can find the right tool by topic:
+
+- `scripts/apply/` — autonomous-apply portal adapters (apply-portal.py + 13 adapters)
+- `scripts/scan/` — portal/email scanners (scan.mjs, scan-broad.py, …)
+- `scripts/cv/` — PDF/LaTeX generation (generate-pdf.mjs, generate-latex.mjs, ats-check.mjs)
+- `scripts/quality/` — CV / cover-letter quality gates (resume-quality.mjs, …)
+- `scripts/tracker/` — applications.md hygiene (merge, dedup, normalize, analyze)
+- `scripts/linkedin/` — LinkedIn auxiliary (audit, DM scraper, profile extract)
+- `scripts/system/` — repo plumbing (doctor, check-liveness, update-system, …)
+- `scripts/lib/` — cross-domain shared libs (lib_profiles, lib_playwright_auth, lib-profiles.mjs)
+- `scripts/native/` — native build/dev/setup wizards (apply-brand, icons, doctor, …)
 
 ## Quick reference
 
 | Command | Script | Purpose |
 |---|---|---|
-| `pnpm doctor` | `doctor.mjs` | Validate setup prerequisites |
+| `pnpm doctor` | `scripts/system/doctor.mjs` | Validate setup prerequisites |
 | `pnpm verify` | `turbo test` | Full Vitest matrix (includes pipeline-integrity tests) |
-| `pnpm normalize` | `normalize-statuses.mjs` | Fix non-canonical statuses |
-| `pnpm dedup` | `dedup-tracker.mjs` | Remove duplicate tracker entries |
-| `pnpm merge` | `merge-tracker.mjs` | Merge batch TSVs into applications.md |
-| `pnpm pdf` | `generate-pdf.mjs` | Convert HTML to ATS-optimized PDF |
-| `pnpm sync-check` | `cv-sync-check.mjs` | Validate CV/profile consistency |
-| `pnpm update:check` | `update-system.mjs check` | Check for upstream updates |
-| `pnpm update` | `update-system.mjs apply` | Apply upstream update |
-| `pnpm rollback` | `update-system.mjs rollback` | Rollback last update |
-| `pnpm liveness` | `check-liveness.mjs` | Test if job URLs are still active |
-| `pnpm scan` | `scan.mjs` | Zero-token portal scanner |
+| `pnpm normalize` | `scripts/tracker/normalize-statuses.mjs` | Fix non-canonical statuses |
+| `pnpm dedup` | `scripts/tracker/dedup-tracker.mjs` | Remove duplicate tracker entries |
+| `pnpm merge` | `scripts/tracker/merge-tracker.mjs` | Merge batch TSVs into applications.md |
+| `pnpm pdf` | `scripts/cv/generate-pdf.mjs` | Convert HTML to ATS-optimized PDF |
+| `pnpm sync-check` | `scripts/quality/cv-sync-check.mjs` | Validate CV/profile consistency |
+| `pnpm update:check` | `scripts/system/update-system.mjs check` | Check for upstream updates |
+| `pnpm update` | `scripts/system/update-system.mjs apply` | Apply upstream update |
+| `pnpm rollback` | `scripts/system/update-system.mjs rollback` | Rollback last update |
+| `pnpm liveness` | `scripts/system/check-liveness.mjs` | Test if job URLs are still active |
+| `pnpm scan` | `scripts/scan/scan.mjs` | Zero-token portal scanner |
 
 The full canonical list of scripts is `package.json` → `scripts`.
 

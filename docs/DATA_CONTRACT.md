@@ -49,7 +49,7 @@ These files contain your personal data, customizations, and work product. Update
 | `interview-prep/story-bank.md` | Accumulated STAR+R stories (shared — stories transcend tracks) |
 | `writing-samples/*` | Personal writing samples for style calibration |
 | `jds/*` | Saved job descriptions |
-| `data/inbox-mbox/*` | Local mbox drops for scan-email.mjs (shared drop-box) |
+| `data/inbox-mbox/*` | Local mbox drops for scripts/scan/scan-email.mjs (shared drop-box) |
 | `.env` | API keys + IMAP credentials |
 | `data/profiles.json` | Profile registry + active selection |
 | `data/sources.json` | Source connection state |
@@ -86,13 +86,18 @@ These files contain system logic, scripts, templates, and instructions that impr
 | `modes/ru/*` | Russian language modes |
 | `CLAUDE.md` | Agent instructions |
 | `AGENTS.md` | Codex instructions |
-| `*.mjs` | Utility scripts |
-| `*.py` | Utility scripts |
-| `lib-profiles.mjs`, `lib_profiles.py` | Shared profile-path helpers |
+| `scripts/apply/*` | Autonomous-apply portal adapters (apply-portal.py + per-portal scripts + lib_apply.py + lib_portal.py) |
+| `scripts/scan/*` | Portal + email scanners |
+| `scripts/cv/*` | PDF + LaTeX generation, ATS-check |
+| `scripts/quality/*` | CV / cover-letter / resume quality gates |
+| `scripts/tracker/*` | applications.md hygiene (merge / dedup / normalize / patterns) |
+| `scripts/linkedin/*` | LinkedIn auxiliary (audit, DM scraper, profile extract) |
+| `scripts/system/*` | Repo plumbing (doctor, check-liveness, update-system, gemini-eval, …) |
+| `scripts/lib/*` | Cross-domain shared libs (lib-profiles.mjs, lib_profiles.py, lib_playwright_auth.py) |
+| `scripts/native/*` | Native build / dev / setup wizards |
 | `batch/batch-prompt.md` | Batch worker prompt |
 | `batch/batch-runner.sh` | Batch orchestrator |
-| `templates/*` | Base templates (including `cv-template.html`, `portals.example.yml`) |
-| `fonts/*` | Self-hosted fonts |
+| `templates/*` | Base templates (including `cv-template.html`, `portals.example.yml`, `fonts/`) |
 | `.claude/skills/*` | Skill definitions |
 | `docs/*` | Documentation |
 | `VERSION` | Current version number |
@@ -112,8 +117,8 @@ If you upgrade from a pre-multi-profile install (cv.md / config/profile.yml / po
 
 If you're writing a new utility script that needs per-profile paths:
 
-- **Node/MJS**: import from `lib-profiles.mjs` — use `profilePath(profileId, kind)` and `profileFromArgv()` to add a `--profile <slug>` CLI flag.
-- **Python**: import from `lib_profiles.py` — same API.
+- **Node/MJS**: import from `scripts/lib/lib-profiles.mjs` — use `profilePath(profileId, kind)` and `profileFromArgv()` to add a `--profile <slug>` CLI flag.
+- **Python**: import from `scripts/lib/lib_profiles.py` — same API.
 - **Dashboard (TypeScript)**: import from `$lib/server/profile-paths.ts` — use `profilePath(id, kind)` for explicit profile, `activePath(kind)` when you just want the active one.
 
 ## Status vocabularies

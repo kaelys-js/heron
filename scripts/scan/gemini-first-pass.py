@@ -39,13 +39,16 @@ except ImportError:
 
 
 ROOT = Path(__file__).parent
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 from lib_profiles import resolve_profile_arg, profile_path, ensure_profile_dirs
 
 # Per-profile; set in main() after --profile is resolved. Placeholders so
 # module-level imports + type-checkers don't choke.
-PIPELINE: Path = ROOT / "data" / "profiles" / "default" / "pipeline.md"
-SCORES_TSV: Path = ROOT / "data" / "profiles" / "default" / "gemini-scores.tsv"
-CV_MD: Path = ROOT / "data" / "profiles" / "default" / "cv.md"
+PIPELINE: Path = REPO_ROOT / "data" / "profiles" / "default" / "pipeline.md"
+SCORES_TSV: Path = REPO_ROOT / "data" / "profiles" / "default" / "gemini-scores.tsv"
+CV_MD: Path = REPO_ROOT / "data" / "profiles" / "default" / "cv.md"
 
 API_KEY = os.environ.get("GEMINI_API_KEY")
 if not API_KEY:
@@ -117,13 +120,15 @@ def parse_pipeline():
         m = line_pat.match(line.strip())
         if not m:
             continue
-        rows.append({
-            "id": len(rows) + 1,
-            "url": m.group(1).strip(),
-            "company": m.group(2).strip(),
-            "role": m.group(3).strip(),
-            "location": (m.group(4) or "").strip(),
-        })
+        rows.append(
+            {
+                "id": len(rows) + 1,
+                "url": m.group(1).strip(),
+                "company": m.group(2).strip(),
+                "role": m.group(3).strip(),
+                "location": (m.group(4) or "").strip(),
+            }
+        )
     return rows
 
 
@@ -131,7 +136,9 @@ def score_batch(jobs_batch, cv_summary):
     """Send a batch of jobs to Gemini, return list of {id, score, reason}."""
     job_lines = []
     for j in jobs_batch:
-        job_lines.append(f"id={j['id']} | company: {j['company']} | role: {j['role']} | location: {j['location']}")
+        job_lines.append(
+            f"id={j['id']} | company: {j['company']} | role: {j['role']} | location: {j['location']}"
+        )
     payload = SYSTEM_PROMPT.format(cv_summary=cv_summary) + "\n".join(job_lines)
 
     try:
@@ -160,8 +167,11 @@ def main():
     parser.add_argument("--top", type=int, default=30, help="Top N to print at end")
     parser.add_argument("--batch-size", type=int, default=40, help="Jobs per Gemini request")
     parser.add_argument("--delay", type=float, default=1.5, help="Sec between batches (rate limit)")
-    parser.add_argument("--profile", default=None,
-                        help="Profile slug (defaults to active profile in data/profiles.json).")
+    parser.add_argument(
+        "--profile",
+        default=None,
+        help="Profile slug (defaults to active profile in data/profiles.json).",
+    )
     args = parser.parse_args()
 
     profile_id = resolve_profile_arg(args.profile)
@@ -180,11 +190,15 @@ def main():
     print(f"CV summary: {len(cv_summary)} chars\n")
 
     all_scores = {}  # id -> {score, reason}
-    batches = [jobs[i:i + args.batch_size] for i in range(0, len(jobs), args.batch_size)]
+    batches = [jobs[i : i + args.batch_size] for i in range(0, len(jobs), args.batch_size)]
     print(f"Scoring in {len(batches)} batches of {args.batch_size}\n")
 
     for bi, batch in enumerate(batches, 1):
-        print(f"[batch {bi:3d}/{len(batches)}] sending {len(batch)} jobs...", end=" ", flush=True)
+        print(
+            f"[batch {bi:3d}/{len(batches)}] sending {len(batch)} jobs...",
+            end=" ",
+            flush=True,
+        )
         results = score_batch(batch, cv_summary)
         for r in results:
             all_scores[r["id"]] = {"score": r["score"], "reason": r.get("reason", "")}
@@ -197,18 +211,31 @@ def main():
         f.write("id\tscore\turl\tcompany\trole\tlocation\treason\n")
         for j in jobs:
             s = all_scores.get(j["id"], {"score": "", "reason": "(no score)"})
-            f.write(f"{j['id']}\t{s['score']}\t{j['url']}\t{j['company']}\t{j['role']}\t{j['location']}\t{s['reason']}\n")
+            f.write(
+                f"{j['id']}\t{s['score']}\t{j['url']}\t{j['company']}\t{j['role']}\t{j['location']}\t{s['reason']}\n"
+            )
     print(f"\nWrote {SCORES_TSV}")
 
     # Print top N
     ranked = sorted(
-        [(all_scores.get(j["id"], {"score": 0})["score"] or 0, j, all_scores.get(j["id"], {})) for j in jobs],
+        [
+            (
+                all_scores.get(j["id"], {"score": 0})["score"] or 0,
+                j,
+                all_scores.get(j["id"], {}),
+            )
+            for j in jobs
+        ],
         key=lambda t: -float(t[0]) if t[0] else 0,
     )
     print(f"\n=== TOP {args.top} BY GEMINI SCORE ===\n")
-    for score, j, s in ranked[:args.top]:
-        print(f"  {score:5} | {j['company'][:30]:30s} | {j['role'][:60]:60s} | {s.get('reason', '')[:80]}")
-    print(f"\nNext: review {SCORES_TSV.name}, pick top jobs, then in Claude Code: /career-ops oferta <url>")
+    for score, j, s in ranked[: args.top]:
+        print(
+            f"  {score:5} | {j['company'][:30]:30s} | {j['role'][:60]:60s} | {s.get('reason', '')[:80]}"
+        )
+    print(
+        f"\nNext: review {SCORES_TSV.name}, pick top jobs, then in Claude Code: /career-ops oferta <url>"
+    )
 
 
 if __name__ == "__main__":

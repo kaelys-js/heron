@@ -316,7 +316,7 @@ function spawnPdfRender(
   pdfPath: string,
 ): Promise<{ bytes: number; pages?: number }> {
   return new Promise((resolve, reject) => {
-    const p = spawn('node', ['generate-pdf.mjs', htmlPath, pdfPath, '--format=letter'], {
+    const p = spawn('node', ['scripts/cv/generate-pdf.mjs', htmlPath, pdfPath, '--format=letter'], {
       cwd: ROOT,
       env: { ...process.env },
     });
@@ -379,7 +379,7 @@ export function spawnAtsCheck(
   pdfPath: string,
 ): Promise<{ score: number; warnings: number; failures: number; raw: string }> {
   return new Promise((resolve, reject) => {
-    const p = spawn('node', ['ats-check.mjs', pdfPath, '--json'], {
+    const p = spawn('node', ['scripts/cv/ats-check.mjs', pdfPath, '--json'], {
       cwd: ROOT,
       env: { ...process.env },
     });

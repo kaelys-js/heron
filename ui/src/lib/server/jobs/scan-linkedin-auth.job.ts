@@ -45,7 +45,7 @@ function runScanLinkedinAuth(args?: JobArgs): Promise<JobResult> {
     const venvPython = path.join(ROOT, '.venv', 'bin', 'python');
     const py = fs.existsSync(venvPython) ? venvPython : 'python3';
 
-    const cliArgs = ['scan-linkedin-auth.py'];
+    const cliArgs = ['scripts/scan/scan-linkedin-auth.py'];
     if (typeof args?.profileId === 'string' && args.profileId.trim()) {
       cliArgs.push('--profile', args.profileId.trim());
     }

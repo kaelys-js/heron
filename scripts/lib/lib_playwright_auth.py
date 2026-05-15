@@ -40,7 +40,6 @@ constants.
 
 from __future__ import annotations
 
-import os
 import sys
 import time
 import random
@@ -49,24 +48,33 @@ from pathlib import Path
 from typing import Iterator, Literal
 
 try:
-    from playwright.sync_api import sync_playwright, BrowserContext, Page, TimeoutError as PlaywrightTimeout
+    from playwright.sync_api import (
+        sync_playwright,
+        BrowserContext,
+        Page,
+        TimeoutError as PlaywrightTimeout,
+    )
 except ImportError:
-    print("ERROR: playwright not installed. Run:\n  .venv/bin/pip install playwright && .venv/bin/python -m playwright install chromium", file=sys.stderr)
+    print(
+        "ERROR: playwright not installed. Run:\n  .venv/bin/pip install playwright && .venv/bin/python -m playwright install chromium",
+        file=sys.stderr,
+    )
     sys.exit(1)
 
 
 ROOT = Path(__file__).resolve().parent
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 
 # One persistent Chromium profile per portal. State (cookies, localStorage,
 # cache) lives inside these dirs — wiping the dir disconnects the user.
 USER_DATA_DIRS: dict[str, Path] = {
-    "linkedin": ROOT / ".playwright-linkedin",
-    "indeed": ROOT / ".playwright-indeed",
+    "linkedin": REPO_ROOT / ".playwright-linkedin",
+    "indeed": REPO_ROOT / ".playwright-indeed",
 }
 
 # Public so callers can reuse for `--check-session` etc.
-LOGIN_TIMEOUT_S = 5 * 60       # 5 min for the user to complete the headed login
-PROBE_TIMEOUT_MS = 15_000      # navigation timeouts during is_logged_in_* probes
+LOGIN_TIMEOUT_S = 5 * 60  # 5 min for the user to complete the headed login
+PROBE_TIMEOUT_MS = 15_000  # navigation timeouts during is_logged_in_* probes
 
 
 def _user_data_dir(portal: str) -> Path:
@@ -77,7 +85,9 @@ def _user_data_dir(portal: str) -> Path:
 
 
 @contextmanager
-def launch_persistent(portal: Literal["linkedin", "indeed"], headed: bool = False) -> Iterator[BrowserContext]:
+def launch_persistent(
+    portal: Literal["linkedin", "indeed"], headed: bool = False
+) -> Iterator[BrowserContext]:
     """
     Launch a Chromium persistent context for `portal`. Yields a
     BrowserContext that the caller uses to open pages. Cleans up on exit.
@@ -126,7 +136,11 @@ def is_logged_in_linkedin(page: Page) -> bool:
     LinkedIn redirects unauthenticated users to /authwall, /login, or
     /signup; logged-in users stay on /feed."""
     try:
-        page.goto("https://www.linkedin.com/feed/", timeout=PROBE_TIMEOUT_MS, wait_until="domcontentloaded")
+        page.goto(
+            "https://www.linkedin.com/feed/",
+            timeout=PROBE_TIMEOUT_MS,
+            wait_until="domcontentloaded",
+        )
     except PlaywrightTimeout:
         return False
     url = page.url.lower()
@@ -139,7 +153,11 @@ def is_logged_in_indeed(page: Page) -> bool:
     """Navigate to /account and infer login state. Indeed redirects
     unauthenticated users to secure.indeed.com/auth or /account/login."""
     try:
-        page.goto("https://www.indeed.com/account", timeout=PROBE_TIMEOUT_MS, wait_until="domcontentloaded")
+        page.goto(
+            "https://www.indeed.com/account",
+            timeout=PROBE_TIMEOUT_MS,
+            wait_until="domcontentloaded",
+        )
     except PlaywrightTimeout:
         return False
     url = page.url.lower()
@@ -164,7 +182,10 @@ def login_interactive(portal: Literal["linkedin", "indeed"]) -> bool:
     }[portal]
     is_logged_in = is_logged_in_linkedin if portal == "linkedin" else is_logged_in_indeed
 
-    print(f"[lib_playwright_auth] Opening browser for {portal} login… complete it on screen.", file=sys.stderr)
+    print(
+        f"[lib_playwright_auth] Opening browser for {portal} login… complete it on screen.",
+        file=sys.stderr,
+    )
     with launch_persistent(portal, headed=True) as ctx:
         page = ctx.new_page()
         try:
@@ -181,14 +202,20 @@ def login_interactive(portal: Literal["linkedin", "indeed"]) -> bool:
                 if is_logged_in(page):
                     # Give cookies an extra moment to settle before context close.
                     time.sleep(2)
-                    print(f"[lib_playwright_auth] {portal} login confirmed.", file=sys.stderr)
+                    print(
+                        f"[lib_playwright_auth] {portal} login confirmed.",
+                        file=sys.stderr,
+                    )
                     return True
             except Exception:
                 # Page may navigate during login (LinkedIn does); polling can
                 # race with that. Just re-check on the next iteration.
                 continue
 
-    print(f"[lib_playwright_auth] {portal} login timed out — closing browser.", file=sys.stderr)
+    print(
+        f"[lib_playwright_auth] {portal} login timed out — closing browser.",
+        file=sys.stderr,
+    )
     return False
 
 
@@ -209,11 +236,20 @@ def check_session(portal: Literal["linkedin", "indeed"]) -> bool:
 # /api/sources/[id]/{connect,test} endpoints + as a debugging helper).
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--portal", choices=["linkedin", "indeed"], required=True)
     grp = parser.add_mutually_exclusive_group(required=True)
-    grp.add_argument("--login", action="store_true", help="Open headed browser, wait for login, save session")
-    grp.add_argument("--check-session", action="store_true", help="Headless probe — exits 0 if logged in, 1 otherwise")
+    grp.add_argument(
+        "--login",
+        action="store_true",
+        help="Open headed browser, wait for login, save session",
+    )
+    grp.add_argument(
+        "--check-session",
+        action="store_true",
+        help="Headless probe — exits 0 if logged in, 1 otherwise",
+    )
     args = parser.parse_args()
 
     if args.login:

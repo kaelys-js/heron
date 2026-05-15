@@ -143,7 +143,7 @@ function runScript(scriptName: string, args: string[], timeoutMs = 30_000): Prom
 export function checkAts(pdfPath: string, opts?: { lenient?: boolean }): Promise<QualityResult> {
   const args = [pdfPath];
   if (opts?.lenient) args.push('--lenient');
-  return runScript('ats-check.mjs', args).catch((err) => {
+  return runScript('scripts/cv/ats-check.mjs', args).catch((err) => {
     reportServerError('quality-checks', 'ats-check failed', err);
     return emptyResult('ats-check threw — see activity log');
   });
@@ -156,7 +156,7 @@ export function checkResumeQuality(
 ): Promise<QualityResult> {
   const args = [mdPath];
   if (opts?.lenient) args.push('--lenient');
-  return runScript('resume-quality.mjs', args).catch((err) => {
+  return runScript('scripts/quality/resume-quality.mjs', args).catch((err) => {
     reportServerError('quality-checks', 'resume-quality failed', err);
     return emptyResult('resume-quality threw — see activity log');
   });
@@ -171,7 +171,7 @@ export function checkCoverLetter(
   if (opts?.company) args.push(`--company=${opts.company}`);
   if (opts?.role) args.push(`--role=${opts.role}`);
   if (opts?.lenient) args.push('--lenient');
-  return runScript('cover-letter-check.mjs', args).catch((err) => {
+  return runScript('scripts/quality/cover-letter-check.mjs', args).catch((err) => {
     reportServerError('quality-checks', 'cover-letter-check failed', err);
     return emptyResult('cover-letter-check threw — see activity log');
   });
@@ -202,7 +202,7 @@ function emptyResult(note: string): QualityResult {
  */
 export function checkAiDetect(mdPath: string): Promise<AiDetectResult> {
   return new Promise((resolveP) => {
-    const p = spawn('node', [join(ROOT, 'ai-detect-check.mjs'), mdPath, '--json'], {
+    const p = spawn('node', [join(ROOT, 'scripts/cv/ai-detect-check.mjs'), mdPath, '--json'], {
       cwd: ROOT,
       env: { ...process.env },
     });
@@ -259,10 +259,14 @@ export function checkAiDetect(mdPath: string): Promise<AiDetectResult> {
  *  cares about that your CV is silent on". */
 export function checkSemanticMatch(cvPath: string, jdPath: string): Promise<SemanticMatchResult> {
   return new Promise((resolveP) => {
-    const p = spawn('node', [join(ROOT, 'semantic-match.mjs'), cvPath, jdPath, '--json'], {
-      cwd: ROOT,
-      env: { ...process.env },
-    });
+    const p = spawn(
+      'node',
+      [join(ROOT, 'scripts/quality/semantic-match.mjs'), cvPath, jdPath, '--json'],
+      {
+        cwd: ROOT,
+        env: { ...process.env },
+      },
+    );
     let stdoutBuf = '';
     let stderrBuf = '';
     p.stdout?.on('data', (c: Buffer) => {
@@ -345,7 +349,7 @@ export function checkSemanticMatch(cvPath: string, jdPath: string): Promise<Sema
 /** Run narrative-arc.mjs against a CV markdown. */
 export function checkNarrativeArc(cvPath: string): Promise<NarrativeResult> {
   return new Promise((resolveP) => {
-    const p = spawn('node', [join(ROOT, 'narrative-arc.mjs'), cvPath, '--json'], {
+    const p = spawn('node', [join(ROOT, 'scripts/quality/narrative-arc.mjs'), cvPath, '--json'], {
       cwd: ROOT,
       env: { ...process.env },
     });

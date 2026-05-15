@@ -40,7 +40,7 @@ function runScraper(headed: boolean): Promise<{ stdout: string; stderr: string; 
   return new Promise((resolveP, reject) => {
     let stdout = '';
     let stderr = '';
-    const args = [path.join(ROOT, 'linkedin-audit.py'), '--json'];
+    const args = [path.join(ROOT, 'scripts/linkedin/linkedin-audit.py'), '--json'];
     if (headed) args.push('--headed');
     const p = spawn(pythonBin(), args, {
       cwd: ROOT,

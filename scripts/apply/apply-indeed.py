@@ -18,9 +18,12 @@ Realistic expectation: succeeds on Easy-Apply-only Indeed listings when
 the user has a warmed-up session. Falls back to ManualApplyNeeded on
 external redirects and on anti-bot challenges.
 """
+
 from pathlib import Path
 import sys
+
 ROOT = Path(__file__).parent
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
 
 from lib_portal import PortalConfig, adapter_main  # noqa: E402
@@ -28,8 +31,8 @@ from lib_portal import PortalConfig, adapter_main  # noqa: E402
 
 def indeed_config() -> PortalConfig:
     return PortalConfig(
-        portal_id='indeed',
-        user_data_dir=ROOT / '.playwright-indeed',
+        portal_id="indeed",
+        user_data_dir=REPO_ROOT / ".playwright-indeed",
         first_name_selectors=[
             'input[id*="firstName"]',
             'input[name="firstName"]',
@@ -67,23 +70,23 @@ def indeed_config() -> PortalConfig:
         cookie_dismiss_selectors=[
             'button:has-text("Accept all cookies")',
             'button:has-text("Accept Cookies")',
-            '#onetrust-accept-btn-handler',
+            "#onetrust-accept-btn-handler",
         ],
         initial_apply_selectors=[
             'button:has-text("Apply now")',
             'a:has-text("Apply now")',
             'button[id*="applyButton"]',
-            '#indeedApplyButton',
+            "#indeedApplyButton",
         ],
         already_applied_markers=[
-            'applied to this job',
-            'you previously applied',
-            'application already sent',
+            "applied to this job",
+            "you previously applied",
+            "application already sent",
         ],
         confirmation_markers=[
-            'your application has been submitted',
-            'thank you for applying',
-            'application sent',
+            "your application has been submitted",
+            "thank you for applying",
+            "application sent",
         ],
         # Indeed's Easy Apply is a multi-step wizard (résumé → questions
         # → review → submit). Walk it.
@@ -92,5 +95,5 @@ def indeed_config() -> PortalConfig:
     )
 
 
-if __name__ == '__main__':
-    sys.exit(adapter_main(indeed_config, 'Indeed autonomous apply adapter (Easy Apply paths only)'))
+if __name__ == "__main__":
+    sys.exit(adapter_main(indeed_config, "Indeed autonomous apply adapter (Easy Apply paths only)"))

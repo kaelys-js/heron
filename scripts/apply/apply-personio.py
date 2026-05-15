@@ -14,9 +14,12 @@ Quirks:
     The /apply form is on the same domain.
   - Resume upload accepts PDF only.
 """
+
 from pathlib import Path
 import sys
+
 ROOT = Path(__file__).parent
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
 
 from lib_portal import PortalConfig, adapter_main  # noqa: E402
@@ -24,8 +27,8 @@ from lib_portal import PortalConfig, adapter_main  # noqa: E402
 
 def personio_config() -> PortalConfig:
     return PortalConfig(
-        portal_id='personio',
-        user_data_dir=ROOT / '.playwright-personio',
+        portal_id="personio",
+        user_data_dir=REPO_ROOT / ".playwright-personio",
         first_name_selectors=[
             'input[name*="first_name"]',
             'input[name*="firstName"]',
@@ -64,17 +67,17 @@ def personio_config() -> PortalConfig:
             '[data-testid="uc-accept-all-button"]',
         ],
         already_applied_markers=[
-            'bewerbung wurde bereits eingereicht',
-            'application already submitted',
+            "bewerbung wurde bereits eingereicht",
+            "application already submitted",
         ],
         confirmation_markers=[
-            'vielen dank',
-            'bewerbung erfolgreich',
-            'application submitted',
+            "vielen dank",
+            "bewerbung erfolgreich",
+            "application submitted",
         ],
         multipage=False,
     )
 
 
-if __name__ == '__main__':
-    sys.exit(adapter_main(personio_config, 'Personio autonomous apply adapter (DACH)'))
+if __name__ == "__main__":
+    sys.exit(adapter_main(personio_config, "Personio autonomous apply adapter (DACH)"))

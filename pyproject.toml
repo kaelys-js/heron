@@ -1,0 +1,37 @@
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = [".venv", "node_modules", "data", "scripts/native/icons/_build"]
+
+[tool.ruff.lint]
+# Conservative rule set. Auto-fix is OFF for unused-imports/vars so ruff's
+# --fix mode doesn't strip load-bearing code (e.g. sys.path manipulation
+# that has to run BEFORE a `from lib_X import ...` cross-dir import).
+select = [
+  "E",   # pycodestyle errors
+  "F",   # pyflakes (unused imports/vars — see `unfixable` below)
+  "W",   # pycodestyle warnings
+  "I",   # isort (import ordering)
+]
+unfixable = ["F401", "F841"]
+
+[tool.ruff.lint.per-file-ignores]
+# scripts/{apply,scan,linkedin}/*.py:
+#   E402 — module-level imports may appear AFTER sys.path manipulation.
+#          The pattern is deliberate; see DATA_CONTRACT.md
+#          "Resolving paths in scripts".
+#   I001 — don't reorder imports inside files that mix sys.path tweaks
+#          with library imports; load order matters.
+#   F401 — some files import names from playwright/jobspy for re-export
+#          or for type-checking; not all are statically used.
+#   F841 — pre-existing unused-locals in scraper code.
+#   E501 / E741 — pre-existing style warnings inherited from upstream;
+#                 these scripts predate the lint gate.
+"scripts/apply/*.py" = ["E402", "I001", "F401", "F841", "E501", "E741"]
+"scripts/scan/*.py" = ["E402", "I001", "F401", "F841", "E501", "E741"]
+"scripts/linkedin/*.py" = ["E402", "I001", "F401", "F841", "E501", "E741"]
+"scripts/lib/*.py" = ["I001", "E501", "E741"]
+
+[tool.ruff.format]
+line-ending = "lf"
+quote-style = "double"

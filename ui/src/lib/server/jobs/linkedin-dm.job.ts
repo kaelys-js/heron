@@ -40,10 +40,14 @@ function pythonBin(): string {
 function runScraper(): Promise<{ stdout: string; code: number }> {
   return new Promise((resolveP) => {
     let stdout = '';
-    const p = spawn(pythonBin(), [path.join(ROOT, 'linkedin-dm-scraper.py'), '--json'], {
-      cwd: ROOT,
-      env: { ...process.env },
-    });
+    const p = spawn(
+      pythonBin(),
+      [path.join(ROOT, 'scripts/linkedin/linkedin-dm-scraper.py'), '--json'],
+      {
+        cwd: ROOT,
+        env: { ...process.env },
+      },
+    );
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
     });

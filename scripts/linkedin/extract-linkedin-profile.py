@@ -37,6 +37,11 @@ from __future__ import annotations
 import argparse
 import sys
 import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent  # scripts/linkedin/
+REPO_ROOT = ROOT.parent.parent  # repo root
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 
 try:
     from playwright.sync_api import TimeoutError as PlaywrightTimeout
@@ -62,7 +67,7 @@ def normalise_url(raw: str) -> str:
         s = s.split("://", 1)[1]
     # Drop any leading www.
     if s.startswith("www."):
-        s = s[len("www."):]
+        s = s[len("www.") :]
     if not s.startswith("linkedin.com/in/"):
         raise ValueError(f"not a LinkedIn /in/ profile URL: {raw!r}")
     # Drop query / fragment

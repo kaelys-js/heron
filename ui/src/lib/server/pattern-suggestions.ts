@@ -70,7 +70,7 @@ export type StructuredSuggestion = {
 };
 
 function spawnAnalyzer(): PatternAnalysis | null {
-  const r = spawnSync('node', ['analyze-patterns.mjs'], {
+  const r = spawnSync('node', ['scripts/tracker/analyze-patterns.mjs'], {
     cwd: ROOT,
     encoding: 'utf8',
     timeout: 20_000,

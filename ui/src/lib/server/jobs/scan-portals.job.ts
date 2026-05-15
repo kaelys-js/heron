@@ -22,7 +22,7 @@ const FOUND_RE = /Total jobs found:\s+(\d+)/i;
 
 function runScanPortals(args?: JobArgs): Promise<JobResult> {
   return new Promise((resolve) => {
-    const cliArgs = ['scan.mjs'];
+    const cliArgs = ['scripts/scan/scan.mjs'];
     if (typeof args?.profileId === 'string' && args.profileId.trim()) {
       cliArgs.push('--profile', args.profileId.trim());
     }

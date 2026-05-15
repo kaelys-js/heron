@@ -48,9 +48,10 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-PROFILES_JSON = ROOT / "data" / "profiles.json"
-LEGACY_PROFILES_ROOT = ROOT / "data" / "profiles"
-USERS_ROOT = ROOT / "data" / "users"
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
+PROFILES_JSON = REPO_ROOT / "data" / "profiles.json"
+LEGACY_PROFILES_ROOT = REPO_ROOT / "data" / "profiles"
+USERS_ROOT = REPO_ROOT / "data" / "users"
 
 # Mirror of SYSTEM_USER_ID in user-context.ts. When the script is invoked
 # without --user (legacy single-user mode), this is what `resolve_user_arg`
@@ -114,9 +115,7 @@ def profile_path(profile_id: str, kind: str, *, user_id: str = SYSTEM_USER_ID) -
     if not profile_id or not isinstance(profile_id, str):
         raise ValueError(f"profile_path: profile_id required (got {profile_id!r})")
     if "/" in profile_id or "\\" in profile_id or ".." in profile_id:
-        raise ValueError(
-            f"profile_path: invalid profile_id (path traversal): {profile_id!r}"
-        )
+        raise ValueError(f"profile_path: invalid profile_id (path traversal): {profile_id!r}")
     if not user_id or not isinstance(user_id, str):
         raise ValueError(f"profile_path: user_id required (got {user_id!r})")
     if "/" in user_id or "\\" in user_id or ".." in user_id:
@@ -132,15 +131,9 @@ def profile_path(profile_id: str, kind: str, *, user_id: str = SYSTEM_USER_ID) -
 
 def ensure_profile_dirs(profile_id: str, *, user_id: str = SYSTEM_USER_ID) -> None:
     """Make sure the profile directory + standard subdirs exist. Idempotent."""
-    profile_path(profile_id, "profile-dir", user_id=user_id).mkdir(
-        parents=True, exist_ok=True
-    )
-    profile_path(profile_id, "reports-dir", user_id=user_id).mkdir(
-        parents=True, exist_ok=True
-    )
-    profile_path(profile_id, "output-dir", user_id=user_id).mkdir(
-        parents=True, exist_ok=True
-    )
+    profile_path(profile_id, "profile-dir", user_id=user_id).mkdir(parents=True, exist_ok=True)
+    profile_path(profile_id, "reports-dir", user_id=user_id).mkdir(parents=True, exist_ok=True)
+    profile_path(profile_id, "output-dir", user_id=user_id).mkdir(parents=True, exist_ok=True)
     profile_path(profile_id, "interview-prep-dir", user_id=user_id).mkdir(
         parents=True, exist_ok=True
     )

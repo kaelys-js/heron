@@ -34,8 +34,9 @@ from typing import Optional
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).parent
-APPLY_STATE_DIR = ROOT / "data" / "apply-state"
-PROFILES_DIR = ROOT / "data" / "profiles"
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
+APPLY_STATE_DIR = REPO_ROOT / "data" / "apply-state"
+PROFILES_DIR = REPO_ROOT / "data" / "profiles"
 
 
 # ── Form-answers cache ─────────────────────────────────────────────
@@ -45,6 +46,7 @@ PROFILES_DIR = ROOT / "data" / "profiles"
 #
 # File: data/profiles/{slug}/form-answers-cache.jsonl
 # Each line: {"key", "label", "answer", "updatedAt", "useCount"}
+
 
 def normalize_question(label: str) -> str:
     """Mirror TS-side normalizeQuestion(). Lowercase, strip punctuation,
@@ -100,6 +102,7 @@ def lookup_answer(profile_id: Optional[str], label: str) -> Optional[str]:
 
 # ── Human-cadence input helpers ────────────────────────────────────
 
+
 def human_type(locator, text: str) -> None:
     """Type into a Playwright Locator with 50-150ms/char jitter so the
     timing pattern doesn't match a default headless fill. Pauses are
@@ -133,7 +136,9 @@ def human_click(page, locator) -> None:
 
 # ── Anti-bot / blocked-page detection ─────────────────────────────
 
-CaptchaKind = Optional[str]  # 'recaptcha' | 'hcaptcha' | 'turnstile' | 'cloudflare-block' | 'email-code' | None
+CaptchaKind = Optional[
+    str
+]  # 'recaptcha' | 'hcaptcha' | 'turnstile' | 'cloudflare-block' | 'email-code' | None
 
 
 def detect_captcha(page) -> CaptchaKind:
@@ -190,6 +195,7 @@ def detect_already_applied(page) -> bool:
 
 # ── File upload ─────────────────────────────────────────────────────
 
+
 def upload_file(input_locator, path: str, retries: int = 2) -> bool:
     """Wraps set_input_files with retry on transient errors. Returns True
     on success. Logs reason on failure so the dispatcher's stdout-parser
@@ -206,11 +212,15 @@ def upload_file(input_locator, path: str, retries: int = 2) -> bool:
             last_err = e
             if attempt < retries:
                 time.sleep(0.8 + attempt * 0.7)
-    print(f"  [upload_file] failed after {retries + 1} attempts: {last_err}", file=sys.stderr)
+    print(
+        f"  [upload_file] failed after {retries + 1} attempts: {last_err}",
+        file=sys.stderr,
+    )
     return False
 
 
 # ── react-select handling ───────────────────────────────────────────
+
 
 def fill_react_select(page, label_text: str, value: str) -> bool:
     """Greenhouse + Ashby + most modern ATS use react-select for ALL
@@ -243,6 +253,7 @@ def fill_react_select(page, label_text: str, value: str) -> bool:
 
 
 # ── State file (JSON) ───────────────────────────────────────────────
+
 
 def _state_path(job_id: str) -> Path:
     safe = re.sub(r"[^a-zA-Z0-9_\-:]", "", job_id) or "unknown"
@@ -296,7 +307,7 @@ def screenshot_for_issue(page, job_id: str) -> Optional[str]:
         safe = re.sub(r"[^a-zA-Z0-9_\-:]", "", job_id) or "unknown"
         out = APPLY_STATE_DIR / f"{safe}.png"
         page.screenshot(path=str(out), full_page=False)
-        return str(out.relative_to(ROOT))
+        return str(out.relative_to(REPO_ROOT))
     except Exception as e:
         print(f"  [screenshot_for_issue] failed: {e}", file=sys.stderr)
         return None
@@ -322,16 +333,29 @@ def screenshot_for_issue(page, job_id: str) -> Optional[str]:
 
 EEO_LABEL_PATTERNS = [
     # Race / ethnicity
-    "race", "ethnicity", "ethnic", "hispanic", "latino",
+    "race",
+    "ethnicity",
+    "ethnic",
+    "hispanic",
+    "latino",
     # Gender / sex
-    "gender", "sex", "are you male", "male or female",
+    "gender",
+    "sex",
+    "are you male",
+    "male or female",
     # Disability
-    "disability", "disabled",
+    "disability",
+    "disabled",
     # Veteran status
-    "veteran", "military",
+    "veteran",
+    "military",
     # Generic "voluntary self-identification"
-    "voluntary self-id", "voluntary self id", "voluntary disclosure",
-    "self-identification", "self identification", "demographic",
+    "voluntary self-id",
+    "voluntary self id",
+    "voluntary disclosure",
+    "self-identification",
+    "self identification",
+    "demographic",
 ]
 
 EEO_DECLINE_OPTIONS = [
@@ -406,6 +430,7 @@ def auto_decline_eeo(page, label: str) -> bool:
 # ── URL → portal detection ─────────────────────────────────────────
 # Mirrors ui/src/lib/server/apply-dispatcher.ts:detectPortal. Keep in sync.
 
+
 def detect_portal(url: str) -> dict:
     """Return {'portal': <id>, 'meta': {company?, jobId?}}. Unknown URL
     returns {'portal': 'unknown'}."""
@@ -438,12 +463,24 @@ def detect_portal(url: str) -> dict:
     # Ashby
     if h == "jobs.ashbyhq.com" or re.search(r"(^|\.)ashbyhq\.com$", h):
         parts = [x for x in p.split("/") if x]
-        return {"portal": "ashby", "meta": {"company": parts[0] if parts else None, "jobId": parts[1] if len(parts) > 1 else None}}
+        return {
+            "portal": "ashby",
+            "meta": {
+                "company": parts[0] if parts else None,
+                "jobId": parts[1] if len(parts) > 1 else None,
+            },
+        }
 
     # Lever
     if h == "jobs.lever.co" or re.search(r"(^|\.)lever\.co$", h):
         parts = [x for x in p.split("/") if x]
-        return {"portal": "lever", "meta": {"company": parts[0] if parts else None, "jobId": parts[1] if len(parts) > 1 else None}}
+        return {
+            "portal": "lever",
+            "meta": {
+                "company": parts[0] if parts else None,
+                "jobId": parts[1] if len(parts) > 1 else None,
+            },
+        }
 
     # Workable
     if re.search(r"(^|\.)workable\.com$", h):
@@ -451,13 +488,18 @@ def detect_portal(url: str) -> dict:
         return {"portal": "workable", "meta": {"company": parts[0] if parts else None}}
 
     # Personio
-    if re.search(r"(^|\.)jobs\.personio\.(com|de|eu)$", h) or re.search(r"(^|\.)personio\.(com|de|eu)$", h):
+    if re.search(r"(^|\.)jobs\.personio\.(com|de|eu)$", h) or re.search(
+        r"(^|\.)personio\.(com|de|eu)$", h
+    ):
         return {"portal": "personio"}
 
     # SmartRecruiters
     if re.search(r"(^|\.)smartrecruiters\.com$", h):
         parts = [x for x in p.split("/") if x]
-        return {"portal": "smartrecruiters", "meta": {"company": parts[0] if parts else None}}
+        return {
+            "portal": "smartrecruiters",
+            "meta": {"company": parts[0] if parts else None},
+        }
 
     # Recruitee — {company}.recruitee.com
     if re.search(r"(^|\.)recruitee\.com$", h):
@@ -479,6 +521,7 @@ def detect_portal(url: str) -> dict:
 
 
 # ── Convenience: print the canonical RESULT line ───────────────────
+
 
 def emit_result(status: str, reason: Optional[str] = None) -> int:
     """Print the canonical APPLY_RESULT line + return the right exit code.

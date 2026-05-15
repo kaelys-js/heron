@@ -35,14 +35,13 @@ If/when this saturates, the path forward is per-customer-instance
 overrides (e.g. a `workday-instances.yml` with selectors per known
 Fortune-500 employer).
 """
+
 from __future__ import annotations
 import argparse
 import random
-import re
 import sys
 import time
 from pathlib import Path
-from typing import Optional
 
 try:
     from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
@@ -57,18 +56,28 @@ except ImportError:
     sys.exit(2)
 
 ROOT = Path(__file__).parent
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 
 from lib_apply import (  # noqa: E402
-    human_type, human_click, detect_captcha, detect_already_applied,
-    upload_file, append_step, emit_result,
-    screenshot_for_issue, write_apply_state, detect_portal,
-    load_form_answers, normalize_question,
-    is_eeo_label, auto_decline_eeo,
+    human_type,
+    human_click,
+    detect_captcha,
+    detect_already_applied,
+    upload_file,
+    append_step,
+    emit_result,
+    screenshot_for_issue,
+    write_apply_state,
+    load_form_answers,
+    normalize_question,
+    is_eeo_label,
+    auto_decline_eeo,
 )
 from lib_profiles import resolve_profile_arg, profile_path  # noqa: E402
 
-USER_DATA_DIR = ROOT / ".playwright-workday"
+USER_DATA_DIR = REPO_ROOT / ".playwright-workday"
 DISPATCHER_JOB_ID: str = ""
 
 # Workday's most-stable selectors use data-automation-id. The IDs vary
@@ -108,7 +117,10 @@ def detect_account_gate(page) -> bool:
     create-account page, bail — we don't create accounts automatically."""
     try:
         # Most Workday account pages have one or both of these.
-        for sel in (WORKDAY_SELECTORS["account_signin"], WORKDAY_SELECTORS["account_create"]):
+        for sel in (
+            WORKDAY_SELECTORS["account_signin"],
+            WORKDAY_SELECTORS["account_create"],
+        ):
             if page.locator(sel).first.is_visible(timeout=500):
                 return True
         # Body-text fallback.
@@ -171,7 +183,7 @@ def walk_page_questions(page, answers_cache: dict) -> tuple[int, list[str]]:
     unknown: list[str] = []
     try:
         # Find every label-input pair visible on this page.
-        labels = page.locator('label').all()
+        labels = page.locator("label").all()
         for label_el in labels[:40]:  # cap to avoid scanning 200 fields
             try:
                 if not label_el.is_visible(timeout=200):
@@ -188,7 +200,18 @@ def walk_page_questions(page, answers_cache: dict) -> tuple[int, list[str]]:
 
                 # Already-handled basic fields — skip.
                 lower = label_text.lower()
-                if any(k in lower for k in ["first name", "last name", "email", "phone", "country", "resume", "upload"]):
+                if any(
+                    k in lower
+                    for k in [
+                        "first name",
+                        "last name",
+                        "email",
+                        "phone",
+                        "country",
+                        "resume",
+                        "upload",
+                    ]
+                ):
                     continue
 
                 # Look up the answer.
@@ -239,7 +262,10 @@ def click_next(page) -> bool:
 def detect_submit_page(page) -> bool:
     """Are we on the final review/submit page?"""
     try:
-        for sel in (WORKDAY_SELECTORS["submit_button"], WORKDAY_SELECTORS["review_button"]):
+        for sel in (
+            WORKDAY_SELECTORS["submit_button"],
+            WORKDAY_SELECTORS["review_button"],
+        ):
             if page.locator(sel).first.is_visible(timeout=500):
                 # Disambiguate review-page submit from just-another-next-button
                 body = (page.content() or "").lower()
@@ -255,8 +281,13 @@ def detect_confirmation(page) -> bool:
         return True
     try:
         body = (page.content() or "").lower()
-        for n in ("thanks for applying", "application submitted", "you have applied",
-                  "we've received your application", "successfully submitted"):
+        for n in (
+            "thanks for applying",
+            "application submitted",
+            "you have applied",
+            "we've received your application",
+            "successfully submitted",
+        ):
             if n in body:
                 return True
     except Exception:
@@ -288,8 +319,11 @@ def run(args) -> int:
     if not pdf_path or not pdf_path.exists():
         out_dir = profile_path(profile_id, "output-dir")
         try:
-            cands = sorted([p for p in out_dir.glob("*.pdf") if "cv-general" not in p.name],
-                           key=lambda p: p.stat().st_mtime, reverse=True)
+            cands = sorted(
+                [p for p in out_dir.glob("*.pdf") if "cv-general" not in p.name],
+                key=lambda p: p.stat().st_mtime,
+                reverse=True,
+            )
             pdf_path = cands[0] if cands else None
         except Exception:
             pdf_path = None
@@ -437,7 +471,7 @@ def run(args) -> int:
                     step("confirmed")
                     return emit_result("applied")
                 try:
-                    err = page.locator('.WACO, [data-error], [role=alert]').first
+                    err = page.locator(".WACO, [data-error], [role=alert]").first
                     if err.is_visible(timeout=500):
                         text = (err.text_content() or "").strip()[:120]
                         screenshot_for_issue(page, DISPATCHER_JOB_ID)
@@ -468,7 +502,9 @@ def main() -> int:
     try:
         write_apply_state(
             args.job_id,
-            url=args.url, portal="workday", profileId=args.profile or "",
+            url=args.url,
+            portal="workday",
+            profileId=args.profile or "",
             startedAt=int(time.time() * 1000),
             lastStep="adapter_start",
             stepHistory=["queued", "dispatched", "adapter_start"],

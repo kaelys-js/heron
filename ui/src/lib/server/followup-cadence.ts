@@ -78,7 +78,7 @@ function spawnCadence(profileId?: string): Promise<FollowupCadence> {
         /* leave undefined; script will default to active */
       }
     }
-    const args = ['followup-cadence.mjs'];
+    const args = ['scripts/tracker/followup-cadence.mjs'];
     if (resolvedProfileId) args.push('--profile', resolvedProfileId);
     const p = spawn('node', args, {
       cwd: ROOT,
