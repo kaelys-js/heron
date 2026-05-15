@@ -6,6 +6,7 @@ import { activePath } from './profile-paths';
 import { logEvent } from './events';
 import { loadEnv } from './env';
 import { CLI_NAMESPACE } from '$lib/config/branding';
+import { BRAND } from '$lib/client/brand';
 import { AGENT_CLI } from '$lib/config/cli';
 import { maybeCurrentUserId, SYSTEM_USER_ID } from './user-context';
 import { getActiveProfileId } from './profiles';
@@ -655,7 +656,7 @@ export async function runBulkOfertaParallel(
     );
     batchPromptTempFile = path.join(
       require('node:os').tmpdir(),
-      'career-ops-batch-prompt-' + Date.now() + '.md',
+      `${BRAND.name}-batch-prompt-` + Date.now() + '.md',
     );
     fs.writeFileSync(batchPromptTempFile, realizedPrompt, 'utf8');
   } catch (e) {

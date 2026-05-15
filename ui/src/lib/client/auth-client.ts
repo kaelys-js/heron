@@ -173,6 +173,6 @@ export async function clearLocalAuthState(): Promise<void> {
 
 export function markLocallyAuthed(): void {
   if (typeof localStorage !== 'undefined') {
-    localStorage.setItem('career-ops:authed', '1');
+    localStorage.setItem(AUTHED_KEY, '1');
   }
 }

@@ -224,7 +224,7 @@ export class CareerOpsTray {
     items.push({ type: 'separator' });
     items.push({ label: `Version ${app.getVersion()}`, enabled: false });
     items.push({
-      label: 'Quit career-ops',
+      label: `Quit ${BRAND.displayName}`,
       accelerator: 'CmdOrCtrl+Q',
       click: () => this.handlers.onQuit(),
     });
