@@ -18,6 +18,14 @@
  * point at the ACTIVE profile's actual files. When the user switches
  * profiles or before a per-profile oferta spawn, we re-point the symlinks.
  *
+ * LAZY by design: symlinks are NOT created at server boot. They're created
+ * (or refreshed) lazily by the ~20 `/api/job/[id]/*` endpoints that spawn
+ * the Claude CLI — each one calls swapProfileSymlinks() just before the
+ * spawn. So if you `git pull` + `ls cv.md` at repo root and see "No such
+ * file", that's expected — boot the dashboard and hit any of those
+ * endpoints once, and the symlinks reappear. The endpoints are listed by
+ * `git grep "swapProfileSymlinks" -- 'ui/src/routes/'`.
+ *
  * MULTI-USER CAVEAT — these symlinks are GLOBAL. The repo only has one
  * `cv.md` symlink, so concurrent CLI spawns for different users would race
  * the swap. Until the CLI integration is reworked to pass paths via env
