@@ -59,7 +59,7 @@
   "packages": {
     ".": {
       "release-type": "simple",
-      "package-name": "career-ops",
+      "package-name": "heron",
       "extra-files": [
         {
           "type": "json",

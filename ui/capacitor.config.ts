@@ -24,13 +24,13 @@ import type { CapacitorConfig } from '@capacitor/cli';
  *     plugin → SFSafariViewController.
  */
 const config = {
-  appId: 'com.resistjs.careerops',
-  appName: 'Career Ops',
+  appId: 'com.heron.app',
+  appName: 'Heron',
   webDir: 'build/static',
   /** Append a marker so the dashboard server can tell native vs web
    *  hits apart in logs. {VERSION} is replaced at build time by
    *  apply-brand. */
-  appendUserAgent: 'career-ops/native',
+  appendUserAgent: 'heron/native',
   /** Backgrounds the WebView shows before the first paint. Matches the
    *  dark-mode theme so users don't see a white flash. */
   backgroundColor: '#0a0a0b',
@@ -39,7 +39,7 @@ const config = {
     // WebView origin and deep-link scheme are the same. Default of
     // `capacitor` would split origins and require the deep-link handler
     // to bounce through `capacitor://localhost?deep=...`, adding latency.
-    scheme: 'careerops',
+    scheme: 'heron',
     contentInset: 'always',
     /** When true (Capacitor 8 default), the WebView refuses to navigate
      *  to domains not listed in Info.plist's WKAppBoundDomains.
@@ -72,7 +72,7 @@ const config = {
     backgroundColor: '#0a0a0b',
   },
   electron: {
-    customUrlScheme: 'careerops',
+    customUrlScheme: 'heron',
     trayIconAndMenuEnabled: true,
     deepLinkingEnabled: true,
     splashScreenEnabled: true,

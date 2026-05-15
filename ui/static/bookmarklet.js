@@ -1,5 +1,5 @@
 /**
- * career-ops form-fill bookmarklet.
+ * heron form-fill bookmarklet.
  *
  * Drag the wrapper link from /settings to your bookmarks bar. While viewing
  * a Greenhouse / Ashby / Lever job application, click the bookmark. The
@@ -144,15 +144,15 @@
   async function run() {
     var portal = detectPortal();
     if (!portal) {
-      toast('career-ops: not on a Greenhouse/Ashby/Lever page. Bookmarklet aborted.', 'warn');
+      toast('heron: not on a Greenhouse/Ashby/Lever page. Bookmarklet aborted.', 'warn');
       return;
     }
     var questions = scrapeQuestions();
     if (questions.length === 0) {
-      toast('career-ops: no labelled form fields found on this page.', 'warn');
+      toast('heron: no labelled form fields found on this page.', 'warn');
       return;
     }
-    toast('career-ops: filling ' + questions.length + ' fields…', 'info');
+    toast('heron: filling ' + questions.length + ' fields…', 'info');
 
     var payloadQuestions = questions.map(function (q) {
       return { label: q.label, type: q.type };
@@ -173,12 +173,12 @@
           var e = await res.json();
           msg = (e && e.error && e.error.message) || msg;
         } catch (_) {}
-        toast('career-ops: ' + msg, 'error');
+        toast('heron: ' + msg, 'error');
         return;
       }
       var data = await res.json();
       if (!data.ok) {
-        toast('career-ops: ' + (data.error || 'unknown error'), 'error');
+        toast('heron: ' + (data.error || 'unknown error'), 'error');
         return;
       }
       // Fill answers — map by normalized label
@@ -196,7 +196,7 @@
       });
       var missed = questions.length - filled;
       toast(
-        'career-ops: filled ' +
+        'heron: filled ' +
           filled +
           ' of ' +
           questions.length +
@@ -207,7 +207,7 @@
       );
     } catch (e) {
       toast(
-        'career-ops: ' +
+        'heron: ' +
           (e && e.message ? e.message : 'request failed') +
           '. Is the dashboard running on ' +
           DASHBOARD +

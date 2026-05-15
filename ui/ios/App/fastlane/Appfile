@@ -1,4 +1,4 @@
-app_identifier("com.resistjs.careerops")
+app_identifier("com.heron.app")
 
 # These are read from env when running in CI. Local dev: source .env first.
 apple_id(ENV["APPLE_ID"] || "")

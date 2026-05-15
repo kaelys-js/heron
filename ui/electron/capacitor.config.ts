@@ -14,16 +14,16 @@ import type { CapacitorConfig } from '@capacitor/cli';
  * iOS) — Capacitor never serves the API itself.
  */
 const config = {
-  appId: 'com.resistjs.careerops',
-  appName: 'Career Ops',
+  appId: 'com.heron.app',
+  appName: 'Heron',
   webDir: 'build/static',
   ios: {
-    scheme: 'careerops',
+    scheme: 'heron',
     contentInset: 'always',
     limitsNavigationsToAppBoundDomains: false,
   },
   electron: {
-    customUrlScheme: 'careerops',
+    customUrlScheme: 'heron',
     trayIconAndMenuEnabled: true,
     deepLinkingEnabled: true,
     splashScreenEnabled: true,

@@ -74,7 +74,7 @@
     <script>
       (function () {
         try {
-          var stored = localStorage.getItem('career-ops:theme');
+          var stored = localStorage.getItem('heron:theme');
           var mode = stored === 'light' || stored === 'dark' ? stored : 'system';
           var resolved =
             mode === 'system'
@@ -110,11 +110,11 @@
          run `pnpm brand:apply`; do NOT edit these literals directly. -->
     <meta
       name="description"
-      content="Career Ops is an AI-powered job search platform: multi-user dashboard, autonomous apply across 11 ATS portals, tailored CVs and cover letters per role, interview prep, follow-up cadence, and offline-first native apps on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch."
+      content="Heron is a thinking partner for career transitions. Local-first job-search platform: pipeline tracking, A–F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Runs on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch."
     />
     <meta
       name="keywords"
-      content="ai-agent, anthropic, automation, better-auth, capacitor, career, claude, claude-code, drizzle-orm, electron, interview-prep, ios, job-search, open-source, passkey, resume, svelte, sveltekit, typescript, watchos"
+      content="ai-agent, anthropic, automation, better-auth, capacitor, career, claude, claude-code, drizzle-orm, electron, heron, interview-prep, ios, job-search, local-first, open-source, passkey, resume, svelte, sveltekit, typescript, watchos"
     />
 
     <!-- Theme + color scheme — `theme-color` per scheme so iOS / Android
@@ -128,14 +128,14 @@
          Windows Start when the user pins the PWA from Edge. -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Career Ops" />
+    <meta name="apple-mobile-web-app-title" content="Heron" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="application-name" content="Career Ops" />
+    <meta name="application-name" content="Heron" />
     <meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
 
     <!-- Windows Start tile (pinned PWA from Edge / IE) -->
     <meta name="msapplication-TileColor" content="#5b6cff" />
-    <meta name="msapplication-TileImage" content="%sveltekit.assets%/icons/career-ops-256.png" />
+    <meta name="msapplication-TileImage" content="%sveltekit.assets%/icons/heron-256.png" />
     <meta name="msapplication-config" content="none" />
 
     <!-- Icons + manifest. Order matters: more-specific first (browser
@@ -147,19 +147,19 @@
       rel="icon"
       type="image/png"
       sizes="192x192"
-      href="%sveltekit.assets%/icons/career-ops-192.png"
+      href="%sveltekit.assets%/icons/heron-192.png"
     />
     <link
       rel="icon"
       type="image/png"
       sizes="512x512"
-      href="%sveltekit.assets%/icons/career-ops-512.png"
+      href="%sveltekit.assets%/icons/heron-512.png"
     />
     <link rel="apple-touch-icon" href="%sveltekit.assets%/favicon.svg" />
     <link
       rel="apple-touch-icon"
       sizes="180x180"
-      href="%sveltekit.assets%/icons/career-ops-256.png"
+      href="%sveltekit.assets%/icons/heron-256.png"
     />
     <!-- Safari pinned-tab + macOS Reading List (monochrome silhouette). -->
     <link rel="mask-icon" href="%sveltekit.assets%/favicon.svg" color="#10b981" />
@@ -168,27 +168,27 @@
     <!-- Open Graph — link previews when shared internally or via
          Tailscale magic-DNS. -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Career Ops" />
-    <meta property="og:title" content="Career Ops" />
-    <meta property="og:description" content="Run your job search like a product launch." />
-    <meta property="og:image" content="%sveltekit.assets%/icons/career-ops-512.png" />
+    <meta property="og:site_name" content="Heron" />
+    <meta property="og:title" content="Heron" />
+    <meta property="og:description" content="Stand still. Strike well." />
+    <meta property="og:image" content="%sveltekit.assets%/icons/heron-512.png" />
     <meta property="og:image:width" content="512" />
     <meta property="og:image:height" content="512" />
     <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:alt" content="Career Ops" />
+    <meta property="og:image:alt" content="Heron" />
     <meta property="og:locale" content="en_US" />
 
     <!-- Twitter / X card (summary, same image). -->
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Career Ops" />
-    <meta name="twitter:description" content="Run your job search like a product launch." />
-    <meta name="twitter:image" content="%sveltekit.assets%/icons/career-ops-512.png" />
+    <meta name="twitter:title" content="Heron" />
+    <meta name="twitter:description" content="Stand still. Strike well." />
+    <meta name="twitter:image" content="%sveltekit.assets%/icons/heron-512.png" />
 
     <!-- Author + copyright -->
     <meta name="author" content="resist.js" />
     <meta
       name="copyright"
-      content="© 2026 resist.js (original work © 2026 santifer). Licensed under the MIT License."
+      content="© 2026 Heron contributors (original work © 2026 santifer). Licensed under the MIT License."
     />
 
     <!-- View Transitions API — opt in to same-origin transitions so

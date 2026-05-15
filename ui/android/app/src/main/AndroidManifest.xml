@@ -31,7 +31,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="careerops" />
+                <data android:scheme="heron" />
             </intent-filter>
 
             <!-- Share Intent: receive shared URLs (e.g. from Chrome) -->
@@ -101,11 +101,11 @@
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="careerops" />
+            <data android:scheme="heron" />
         </intent>
         <intent>
             <action android:name="android.intent.action.SENDTO" />
-            <data android:scheme="careerops" />
+            <data android:scheme="heron" />
         </intent>
     </queries>
 

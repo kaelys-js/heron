@@ -4,7 +4,7 @@ android {
     namespace = "com.resistjs.careerops"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.resistjs.careerops"
+        applicationId "com.heron.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

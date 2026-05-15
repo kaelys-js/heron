@@ -1,7 +1,7 @@
 {
-  "name": "Career Ops",
-  "short_name": "Career",
-  "description": "Run your job search like a product launch.",
+  "name": "Heron",
+  "short_name": "Heron",
+  "description": "Stand still. Strike well.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -23,31 +23,31 @@
       "purpose": "maskable monochrome"
     },
     {
-      "src": "/icons/career-ops-192.png",
+      "src": "/icons/heron-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/career-ops-256.png",
+      "src": "/icons/heron-256.png",
       "sizes": "256x256",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/career-ops-384.png",
+      "src": "/icons/heron-384.png",
       "sizes": "384x384",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/career-ops-512.png",
+      "src": "/icons/heron-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "id": "/?source=pwa&app=career-ops",
+  "id": "/?source=pwa&app=heron",
   "display_override": ["window-controls-overlay", "standalone"],
   "shortcuts": [
     {
@@ -57,7 +57,7 @@
       "url": "/pipeline",
       "icons": [
         {
-          "src": "/icons/career-ops-192.png",
+          "src": "/icons/heron-192.png",
           "sizes": "192x192"
         }
       ]
@@ -69,7 +69,7 @@
       "url": "/inbox",
       "icons": [
         {
-          "src": "/icons/career-ops-192.png",
+          "src": "/icons/heron-192.png",
           "sizes": "192x192"
         }
       ]
@@ -81,7 +81,7 @@
       "url": "/queue",
       "icons": [
         {
-          "src": "/icons/career-ops-192.png",
+          "src": "/icons/heron-192.png",
           "sizes": "192x192"
         }
       ]
@@ -93,7 +93,7 @@
       "url": "/settings",
       "icons": [
         {
-          "src": "/icons/career-ops-192.png",
+          "src": "/icons/heron-192.png",
           "sizes": "192x192"
         }
       ]
@@ -101,7 +101,7 @@
   ],
   "protocol_handlers": [
     {
-      "protocol": "web+careerops",
+      "protocol": "web+heron",
       "url": "/?url=%s"
     }
   ]
