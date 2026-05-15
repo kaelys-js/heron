@@ -6,6 +6,7 @@
  * browsers (component project tests it indirectly).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BRAND_STORAGE_KEYS } from '$lib/client/brand';
 
 // $app/environment.browser — module must be mocked before import
 vi.mock('$app/environment', () => ({ browser: true }));
@@ -31,13 +32,13 @@ describe('theme store', () => {
   it('set("light") updates mode + persists', () => {
     theme.set('light');
     expect(theme.mode).toBe('light');
-    expect(localStorage.getItem('career-ops:theme')).toBe('light');
+    expect(localStorage.getItem(BRAND_STORAGE_KEYS.theme)).toBe('light');
   });
 
   it('set("dark") updates mode + persists', () => {
     theme.set('dark');
     expect(theme.mode).toBe('dark');
-    expect(localStorage.getItem('career-ops:theme')).toBe('dark');
+    expect(localStorage.getItem(BRAND_STORAGE_KEYS.theme)).toBe('dark');
   });
 
   it('set("system") updates mode', () => {
@@ -58,13 +59,13 @@ describe('theme store', () => {
   });
 
   it('init() reads from localStorage', () => {
-    localStorage.setItem('career-ops:theme', 'light');
+    localStorage.setItem(BRAND_STORAGE_KEYS.theme, 'light');
     theme.init();
     expect(theme.mode).toBe('light');
   });
 
   it('init() defaults to "system" when storage is invalid', () => {
-    localStorage.setItem('career-ops:theme', 'invalid-value');
+    localStorage.setItem(BRAND_STORAGE_KEYS.theme, 'invalid-value');
     theme.init();
     expect(theme.mode).toBe('system');
   });

@@ -8,6 +8,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
+import { BRAND_STORAGE_KEYS } from '$lib/client/brand';
 
 // Mock toast — must be hoisted before importing api.ts.
 const toastCalls = {
@@ -296,7 +297,7 @@ describe('apiCall — success toasts', () => {
 describe('apiCall — bearer token', () => {
   it('attaches Authorization: Bearer <token> when localStorage has one', async () => {
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('career-ops:bearer-token', 'test-token-123');
+      localStorage.setItem(BRAND_STORAGE_KEYS.bearerToken, 'test-token-123');
     }
     let auth: string | null = null;
     server.use(
@@ -307,7 +308,8 @@ describe('apiCall — bearer token', () => {
     );
     await apiCall('/api/x');
     expect(auth).toBe('Bearer test-token-123');
-    if (typeof localStorage !== 'undefined') localStorage.removeItem('career-ops:bearer-token');
+    if (typeof localStorage !== 'undefined')
+      localStorage.removeItem(BRAND_STORAGE_KEYS.bearerToken);
   });
 
   it('omits Authorization when no token stored', async () => {

@@ -12,6 +12,7 @@
  * jsdom env. Real fetch is mocked via global.fetch.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 import { isOnline, OfflineError, onlineStore } from './online-status.svelte';
 
 describe('OfflineError', () => {
@@ -42,7 +43,7 @@ describe('onlineStore — init + state', () => {
 
   it('init() restores last-known state from localStorage = "0"', () => {
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('career-ops:online-last', '0');
+      localStorage.setItem(`${BRAND_STORAGE_PREFIX}:online-last`, '0');
     }
     onlineStore.online = true;
     onlineStore.init(null);
@@ -147,10 +148,10 @@ describe('onlineStore — update() side effects', () => {
   it('persists online state to localStorage', () => {
     onlineStore.online = true;
     (onlineStore as any).update(false, 'probe');
-    const stored = localStorage.getItem('career-ops:online-last');
+    const stored = localStorage.getItem(`${BRAND_STORAGE_PREFIX}:online-last`);
     expect(stored).toBe('0');
     (onlineStore as any).update(true, null);
-    const stored2 = localStorage.getItem('career-ops:online-last');
+    const stored2 = localStorage.getItem(`${BRAND_STORAGE_PREFIX}:online-last`);
     expect(stored2).toBe('1');
   });
 
@@ -172,10 +173,10 @@ describe('onlineStore — update() side effects', () => {
   it('dispatches a CustomEvent on transition', () => {
     onlineStore.online = true;
     const handler = vi.fn();
-    window.addEventListener('career-ops:online-changed', handler);
+    window.addEventListener(`${BRAND_STORAGE_PREFIX}:online-changed`, handler);
     (onlineStore as any).update(false, 'probe');
     expect(handler).toHaveBeenCalledTimes(1);
-    window.removeEventListener('career-ops:online-changed', handler);
+    window.removeEventListener(`${BRAND_STORAGE_PREFIX}:online-changed`, handler);
   });
 });
 

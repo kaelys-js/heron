@@ -527,6 +527,41 @@ function applyFavicon(brand) {
   log.ok(`static/favicon.svg ← branding/logo.svg`);
 }
 
+function applyGitHubWorkflows(brand) {
+  // Patch artifact names in GitHub workflow YAMLs that include the
+  // brand name. We do NOT touch prose comments, doc files, or the
+  // upstream-pin references (sync-upstream uses the santifer URL on
+  // purpose). Only the upload-artifact name + SBOM filenames.
+  const subs = [
+    {
+      // sbom.yml — three references to <brand>-sbom.spdx.json
+      file: join(ROOT, '.github', 'workflows', 'sbom.yml'),
+      re: /([a-z0-9-]+)-sbom\.spdx\.json/g,
+      val: () => `${brand.name}-sbom.spdx.json`,
+    },
+    {
+      // native-release.yml — upload-artifact name <brand>-${{ matrix.os }}
+      file: join(ROOT, '.github', 'workflows', 'native-release.yml'),
+      re: /name:\s*[a-z0-9-]+(-\$\{\{\s*matrix\.os\s*\}\})/,
+      val: `name: ${brand.name}$1`,
+    },
+  ];
+  for (const { file, re, val } of subs) {
+    if (!existsSync(file)) {
+      log.skip(`${file.replace(ROOT, '.')} — missing`);
+      continue;
+    }
+    let body = readFileSync(file, 'utf8');
+    const next = typeof val === 'function' ? body.replace(re, val) : body.replace(re, val);
+    if (next === body) {
+      log.skip(`${file.replace(ROOT, '.')} — already current`);
+    } else {
+      writeFileSync(file, next);
+      log.ok(file.replace(ROOT, '.'));
+    }
+  }
+}
+
 function applyReleasePleaseConfig(brand) {
   // release-please-config.json — Release Please tracks the package name
   // here so a rebrand needs to retarget it (otherwise the auto-generated
@@ -1235,6 +1270,7 @@ function apply() {
 
   log.step('Release tooling');
   applyReleasePleaseConfig(brand);
+  applyGitHubWorkflows(brand);
 
   log.step('Docs');
   applyAGENTSMd(brand);

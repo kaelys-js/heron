@@ -6,6 +6,7 @@
  * mDNS LAN → tailscale → production.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 
 const prefsBacking = new Map<string, string>();
 vi.mock('@capacitor/preferences', () => ({
@@ -58,16 +59,16 @@ describe('setManualBackend', () => {
   });
   it('writes the cache so subsequent resolveBackend picks it up', async () => {
     await setManualBackend('https://my.example');
-    expect(prefsBacking.get('career-ops:backend-resolved')).toContain('my.example');
+    expect(prefsBacking.get(`${BRAND_STORAGE_PREFIX}:backend-resolved`)).toContain('my.example');
   });
 });
 
 describe('clearBackendCache', () => {
   beforeEach(() => prefsBacking.clear());
   it('removes the cache key', async () => {
-    prefsBacking.set('career-ops:backend-resolved', 'whatever');
+    prefsBacking.set(`${BRAND_STORAGE_PREFIX}:backend-resolved`, 'whatever');
     await clearBackendCache();
-    expect(prefsBacking.get('career-ops:backend-resolved')).toBeUndefined();
+    expect(prefsBacking.get(`${BRAND_STORAGE_PREFIX}:backend-resolved`)).toBeUndefined();
   });
   it('is safe when key is absent', async () => {
     await expect(clearBackendCache()).resolves.toBeUndefined();
@@ -89,7 +90,7 @@ describe('resolveBackend — waterfall', () => {
   it('returns cached value when fresh + still alive', async () => {
     // Seed cache with a fresh entry
     prefsBacking.set(
-      'career-ops:backend-resolved',
+      `${BRAND_STORAGE_PREFIX}:backend-resolved`,
       JSON.stringify({
         url: 'http://cached.example',
         source: 'dev',
@@ -104,7 +105,7 @@ describe('resolveBackend — waterfall', () => {
 
   it('ignores stale cache (older than 5min)', async () => {
     prefsBacking.set(
-      'career-ops:backend-resolved',
+      `${BRAND_STORAGE_PREFIX}:backend-resolved`,
       JSON.stringify({
         url: 'http://stale.example',
         source: 'dev',
@@ -118,7 +119,7 @@ describe('resolveBackend — waterfall', () => {
 
   it('forceRefresh bypasses the cache', async () => {
     prefsBacking.set(
-      'career-ops:backend-resolved',
+      `${BRAND_STORAGE_PREFIX}:backend-resolved`,
       JSON.stringify({
         url: 'http://cached.example',
         source: 'dev',
@@ -195,7 +196,9 @@ describe('resolveBackend — waterfall', () => {
       return new Response('boom', { status: 500 });
     });
     await resolveBackend({});
-    expect(prefsBacking.get('career-ops:backend-resolved')).toContain('localhost:5173');
+    expect(prefsBacking.get(`${BRAND_STORAGE_PREFIX}:backend-resolved`)).toContain(
+      'localhost:5173',
+    );
   });
 
   it('respects custom probeTimeoutMs', async () => {
@@ -215,7 +218,7 @@ describe('resolveBackend — waterfall', () => {
 
   it('cached entry that fails health re-probe is invalidated', async () => {
     prefsBacking.set(
-      'career-ops:backend-resolved',
+      `${BRAND_STORAGE_PREFIX}:backend-resolved`,
       JSON.stringify({
         url: 'http://gone.example',
         source: 'dev',

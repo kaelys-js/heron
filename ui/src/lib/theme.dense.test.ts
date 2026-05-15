@@ -2,6 +2,7 @@
  * lib/theme — dense mode + toggle + persist scenarios.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BRAND_STORAGE_KEYS } from '$lib/client/brand';
 
 vi.mock('$app/environment', () => ({ browser: true }));
 
@@ -20,7 +21,7 @@ describe('theme.set — every mode persists', () => {
   it.each(MODES)('set("%s") persists to localStorage', (m) => {
     theme.set(m);
     expect(theme.mode).toBe(m);
-    expect(localStorage.getItem('career-ops:theme')).toBe(m);
+    expect(localStorage.getItem(BRAND_STORAGE_KEYS.theme)).toBe(m);
   });
 });
 
@@ -73,7 +74,7 @@ describe('theme.init — corrupt localStorage values', () => {
     'null',
     'undefined',
   ])('stored="%s" → falls back to system', (stored) => {
-    localStorage.setItem('career-ops:theme', stored);
+    localStorage.setItem(BRAND_STORAGE_KEYS.theme, stored);
     theme.init();
     expect(theme.mode).toBe('system');
   });
@@ -87,7 +88,7 @@ describe('theme.init — valid stored values', () => {
   });
 
   it.each(['light', 'dark'])('stored="%s" → restored', (stored) => {
-    localStorage.setItem('career-ops:theme', stored);
+    localStorage.setItem(BRAND_STORAGE_KEYS.theme, stored);
     theme.init();
     expect(theme.mode).toBe(stored);
   });
@@ -95,7 +96,7 @@ describe('theme.init — valid stored values', () => {
   // 'system' is the default — storing it doesn't change anything but
   // shouldn't cause a regression.
   it('stored="system" — init() honours it', () => {
-    localStorage.setItem('career-ops:theme', 'system');
+    localStorage.setItem(BRAND_STORAGE_KEYS.theme, 'system');
     theme.init();
     expect(theme.mode).toBe('system');
   });
