@@ -23,7 +23,7 @@ import os from 'node:os';
 // Mock ./files BEFORE importing interview — profile-paths.ts captures
 // ROOT at module-load time, so an env-var override post-import is too
 // late. Mocking the module gives us a per-test tmp root.
-const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'career-ops-interview-test-'));
+const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'heron-interview-test-'));
 vi.mock('./files', async () => {
   const actual = await vi.importActual<typeof import('./files')>('./files');
   return {

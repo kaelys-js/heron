@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 
-const TMP = path.join(tmpdir(), 'career-ops-apply-timing-dense-' + Date.now());
+const TMP = path.join(tmpdir(), 'heron-apply-timing-dense-' + Date.now());
 
 vi.mock('./profile-paths', () => ({
   profilePath: (_p: string, _kind: string) => path.join(TMP, 'scan-history.tsv'),

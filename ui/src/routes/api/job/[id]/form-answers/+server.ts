@@ -4,7 +4,7 @@
  *   GET  /api/job/[id]/form-answers   → returns cached file body if it exists
  *   POST /api/job/[id]/form-answers   → spawns generation, persists, returns body
  *
- * Spawns `claude -p "/career-ops form-answers <url>"`. The mode reads cv.md +
+ * Spawns `claude -p "/heron form-answers <url>"`. The mode reads cv.md +
  * profile.yml + the matching report and writes a pre-filled Q&A markdown
  * file to `interview-prep/{slug}-form-answers.md`. The user copies each
  * answer into the matching field on the application portal manually

@@ -17,7 +17,7 @@ import { stringify as devalueStringify } from 'devalue';
  * screen.
  *
  * Short-circuit: when the page is loaded from a non-http scheme
- * (careerops://, capacitor://, app://, file://) we intercept every
+ * (heron://, capacitor://, app://, file://) we intercept every
  * fetch to `__data.json` and return an empty SvelteKit data envelope.
  * Pages render against undefined `data` props — which is exactly what
  * +layout.svelte already tolerates via `data?.activeProfile?.id`

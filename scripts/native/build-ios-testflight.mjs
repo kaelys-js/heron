@@ -6,7 +6,7 @@
  *   • Xcode + CocoaPods installed (the script offers to install)
  *   • Ruby + Bundler (Apple's Ruby works; system ruby OK)
  *   • Fastlane (the script `bundle install`s it on first run)
- *   • Apple Developer secrets in ~/.career-ops/native-env
+ *   • Apple Developer secrets in ~/.heron/native-env
  *     (run `pnpm setup:secrets` once to generate)
  *
  * On success: build appears in TestFlight within ~5min, internal testers

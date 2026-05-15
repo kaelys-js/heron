@@ -1,14 +1,14 @@
 /**
  * db/index — SQLite connection singletons + Drizzle instances.
  *
- * career-ops uses TWO SQLite files:
+ * Heron uses TWO SQLite files:
  *
  *   • auth.db  — users, sessions, oauth accounts, passkeys, invite codes,
  *                backup codes, audit log, pending deletions. Managed by
  *                Better Auth via its Drizzle adapter; we never write to
  *                these tables directly except for audit_log + invite_codes.
  *
- *   • app.db   — every per-user career-ops data row (profiles, jobs,
+ *   • app.db   — every per-user Heron data row (profiles, jobs,
  *                applications, reports, etc.). Every row has user_id;
  *                cross-database FK enforcement happens in hooks middleware
  *                + every server-lib function being userId-scoped.

@@ -2,7 +2,7 @@
  * /api/job/[id]/tech-prep — per-job technical-interview prep generation.
  *
  *   GET  → returns cached body if it exists
- *   POST → spawns `claude -p "/career-ops tech-prep <url>"` and persists
+ *   POST → spawns `claude -p "/heron tech-prep <url>"` and persists
  *          to interview-prep/{company-slug}-{role-slug}-tech-prep.md
  *
  * The tech-prep mode reads the job's deep-eval report (for Block C

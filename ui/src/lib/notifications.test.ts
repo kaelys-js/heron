@@ -93,7 +93,7 @@ describe('notifications.add', () => {
     expect(toastCalls.error.length).toBe(1);
   });
 
-  it('autoToast dispatches a career-ops:notify CustomEvent', () => {
+  it('autoToast dispatches a heron:notify CustomEvent', () => {
     const fired: any[] = [];
     const h = (e: Event) => fired.push((e as CustomEvent).detail);
     window.addEventListener(BRAND_EVENTS.notify, h);
@@ -103,7 +103,7 @@ describe('notifications.add', () => {
     window.removeEventListener(BRAND_EVENTS.notify, h);
   });
 
-  it('does NOT dispatch career-ops:notify when autoToast is false', () => {
+  it('does NOT dispatch heron:notify when autoToast is false', () => {
     const fired: any[] = [];
     const h = (e: Event) => fired.push(e);
     window.addEventListener(BRAND_EVENTS.notify, h);

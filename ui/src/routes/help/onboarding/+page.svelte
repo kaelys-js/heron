@@ -135,7 +135,7 @@
             class="underline underline-offset-2 hover:text-foreground">/onboarding</a
           >
           walks a fresh install through 7 steps in 5–10 minutes. Onboarding is also how you ADD A NEW
-          PROFILE — Career Ops supports multiple distinct career tracks per install (e.g. Software Engineering
+          PROFILE — Heron supports multiple distinct career tracks per install (e.g. Software Engineering
           + Electrician), and each track gets its own walk-through so the CV / targeting / first-scan
           are scoped to that profile. By the end you have keys configured, identity captured, CV imported,
           target roles + filters set, sources connected, and a first scan complete. This page documents
@@ -152,8 +152,8 @@
             <Card.Title class="text-base">Multi-profile onboarding</Card.Title>
           </div>
           <Card.Description>
-            Career-ops supports multiple distinct career tracks per install. Each profile has its
-            own CV, target roles, filters, pipeline, applications tracker, and reports.
+            Heron supports multiple distinct career tracks per install. Each profile has its own CV,
+            target roles, filters, pipeline, applications tracker, and reports.
           </Card.Description>
         </Card.Header>
         <Card.Content class="space-y-2">
@@ -338,8 +338,8 @@
               modes won't work.
             </li>
             <li>
-              Skip <em>is</em> safe if you cloned an existing setup (dotfiles, prior Career Ops install)
-              and want to dismiss the redirect.
+              Skip <em>is</em> safe if you cloned an existing setup (dotfiles, prior Heron install) and
+              want to dismiss the redirect.
             </li>
           </ul>
         </Card.Content>

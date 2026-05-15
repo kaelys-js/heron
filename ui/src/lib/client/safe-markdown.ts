@@ -46,7 +46,7 @@ export function renderMarkdown(md: string | null | undefined): string {
   const raw = marked.parse(md) as string;
   return DOMPurify.sanitize(raw, {
     // Permitted HTML elements. Mirrors GitHub's allowlist plus a few
-    // career-ops extensions (e.g. <kbd> for keyboard shortcuts in help docs).
+    // Heron extensions (e.g. <kbd> for keyboard shortcuts in help docs).
     ALLOWED_TAGS: [
       'a',
       'abbr',

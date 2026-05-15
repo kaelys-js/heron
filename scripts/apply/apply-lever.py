@@ -106,7 +106,7 @@ def fetch_lever_schema(company: Optional[str], job_id: Optional[str]) -> Optiona
         return None
     url = f"https://api.lever.co/v0/postings/{company}/{job_id}?mode=json"
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "career-ops-apply/1.0"})
+        req = urllib.request.Request(url, headers={"User-Agent": "heron-apply/1.0"})
         with urllib.request.urlopen(req, timeout=10) as resp:
             if resp.status == 200:
                 return json.loads(resp.read().decode("utf-8"))

@@ -250,7 +250,7 @@ const signupGate: Handle = async ({ event, resolve }) => {
 };
 
 /** CORS handler — only path that lets the Capacitor WebView talk to the
- *  backend. The WebView origin is `careerops://localhost`; without these
+ *  backend. The WebView origin is `heron://localhost`; without these
  *  Access-Control-Allow-Origin echoes the browser preflight blocks the
  *  request before it ever reaches the server. Web (same-origin) sees no
  *  Origin header so this no-ops.
@@ -260,7 +260,7 @@ const signupGate: Handle = async ({ event, resolve }) => {
  *  on the client requires `Access-Control-Allow-Credentials: true` here. */
 const ALLOWED_ORIGIN_PATTERNS: RegExp[] = [
   /^https?:\/\/localhost(:\d+)?$/,
-  /^careerops:\/\//,
+  /^heron:\/\//,
   /^capacitor:\/\//,
   /^https?:\/\/[^/]+\.ts\.net$/,
 ];

@@ -109,9 +109,9 @@
     </div>
     <h1 class="text-2xl font-semibold tracking-tight">You're set up.</h1>
     <p class="text-sm text-muted-foreground leading-relaxed max-w-xl mx-auto">
-      Career-ops is now scanning daily across every active source, scoring each posting against your
-      CV, and queuing the high-fit ones in your inbox. You review, you click submit. No
-      auto-applying, no surprises.
+      Heron is now scanning daily across every active source, scoring each posting against your CV,
+      and queuing the high-fit ones in your inbox. You review, you click submit. No auto-applying,
+      no surprises.
     </p>
   </header>
 

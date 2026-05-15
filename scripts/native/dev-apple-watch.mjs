@@ -5,7 +5,7 @@
  * The Watch app lives at ui/ios/App/CareerOpsWatch/ as a standalone
  * watchOS 10+ SwiftUI app (Single Target — no WatchKit Extension). It
  * shows the top job to apply to + open issues, reads from the App Group
- * container `group.com.resistjs.careerops`, and receives live updates
+ * container `group.com.heron.app`, and receives live updates
  * via WCSession from the paired iPhone.
  *
  * Flow:
@@ -80,7 +80,7 @@ if (!watchTargetRegistered) {
   info('One-time setup in Xcode (~5 min):');
   info('  1. File → New → Target → watchOS → "App"');
   info('     • Product name: CareerOpsWatch');
-  info('     • Bundle ID:    com.resistjs.careerops.watchkitapp');
+  info('     • Bundle ID:    com.heron.app.watchkitapp');
   info('     • Interface:    SwiftUI');
   info('     • Embed in companion iOS app: "App"');
   info('  2. Delete the auto-generated files Xcode creates inside');
@@ -88,8 +88,8 @@ if (!watchTargetRegistered) {
   info('     RootView.swift, WatchModel.swift).');
   info('  3. In the watch target settings:');
   info('     • Signing & Capabilities → +Capability → App Groups');
-  info('       → group.com.resistjs.careerops');
-  info('     • Info → WKCompanionAppBundleIdentifier = com.resistjs.careerops');
+  info('       → group.com.heron.app');
+  info('     • Info → WKCompanionAppBundleIdentifier = com.heron.app');
   info('     • Info → WKWatchOnly = NO');
   info('  4. Save + close Xcode. Then re-run `pnpm dev:apple-watch`.');
   info('');
@@ -241,7 +241,7 @@ function pickWatchSim() {
 
   const type = watchTypes[0];
   const runtime = watchRuntimes[0];
-  const simName = `${type.name} (career-ops auto-created)`;
+  const simName = `${type.name} (heron auto-created)`;
   info(`creating sim: "${simName}" · type=${type.identifier} · runtime=${runtime.identifier}`);
   const result = run('xcrun', ['simctl', 'create', simName, type.identifier, runtime.identifier], {
     allowFail: true,
@@ -320,7 +320,7 @@ if (!existsSync(appPath)) {
   process.exit(1);
 }
 run('xcrun', ['simctl', 'install', watchUdid, appPath], { allowFail: true });
-const bundleId = 'com.resistjs.careerops.watchkitapp';
+const bundleId = 'com.heron.app.watchkitapp';
 const launch = run('xcrun', ['simctl', 'launch', watchUdid, bundleId], { allowFail: true });
 if (launch?.status === 0) {
   ok('CareerOpsWatch launched on the watch simulator');

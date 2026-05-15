@@ -13,7 +13,7 @@
  *   2. `http://localhost:5173`     (Vite dev server on this machine —
  *                                   useful when running iOS simulator
  *                                   alongside `pnpm dev` on the Mac)
- *   3. `_career-ops._tcp.local`    (mDNS browse on the local network —
+ *   3. `_heron._tcp.local`    (mDNS browse on the local network —
  *                                   for iOS device on the same wifi as
  *                                   the desktop app)
  *   4. `opts.tailscaleHost`        (configured Tailscale magic-DNS host,
@@ -46,7 +46,7 @@ export type ResolverOptions = {
   embeddedUrl?: string;
   /** User-configured Tailscale host, e.g. "macbook-pro.tail-xxxx.ts.net:5173". */
   tailscaleHost?: string;
-  /** Last-resort remote URL — e.g. "https://career-ops.example.dev". */
+  /** Last-resort remote URL — e.g. "https://heron.example.dev". */
   productionUrl?: string;
   /** Per-call timeout for health probe. */
   probeTimeoutMs?: number;
@@ -85,7 +85,7 @@ async function probe(url: string, timeoutMs = DEFAULT_PROBE_TIMEOUT): Promise<bo
 }
 
 /**
- * mDNS browse for `_career-ops._tcp.local` on the local network. iOS 17+
+ * mDNS browse for `_heron._tcp.local` on the local network. iOS 17+
  * allows this via the local-network entitlement (handled by the Bonjour
  * Capacitor plugin). On platforms that don't support it (web, older iOS)
  * returns null after a short timeout.

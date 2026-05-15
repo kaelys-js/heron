@@ -148,11 +148,11 @@ describe('hooks — CORS preflight', () => {
   it('OPTIONS from Capacitor origin returns 204 + CORS headers', async () => {
     const e = evt('http://localhost:5173/api/jobs', {
       method: 'OPTIONS',
-      headers: { Origin: 'careerops://localhost' },
+      headers: { Origin: 'heron://localhost' },
     });
     const r = await run(e);
     expect(r.status).toBe(204);
-    expect(r.headers.get('Access-Control-Allow-Origin')).toBe('careerops://localhost');
+    expect(r.headers.get('Access-Control-Allow-Origin')).toBe('heron://localhost');
     expect(r.headers.get('Access-Control-Allow-Credentials')).toBe('true');
     expect(r.headers.get('Access-Control-Allow-Headers')).toContain('Authorization');
   });
@@ -289,7 +289,7 @@ describe('hooks — security headers', () => {
   });
 
   it('HSTS is set on HTTPS responses', async () => {
-    const r = await run(evt('https://career-ops.example.com/login'));
+    const r = await run(evt('https://heron.example.com/login'));
     expect(r.headers.get('Strict-Transport-Security')).toContain('max-age=');
   });
 

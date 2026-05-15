@@ -89,8 +89,7 @@ async function fetchText(url, opts = {}) {
     try {
       const res = await fetch(url, {
         headers: {
-          'User-Agent':
-            'Mozilla/5.0 (career-ops-scanner; +https://github.com/kaelys-js/career-ops)',
+          'User-Agent': 'Mozilla/5.0 (heron-scanner; +https://github.com/kaelys-js/heron)',
           Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9',
           ...(opts.headers || {}),
         },
@@ -282,7 +281,7 @@ async function main() {
   if (probeOnly) {
     try {
       const r = await fetch('https://aijobs.net/?page=1', {
-        headers: { 'User-Agent': 'career-ops-probe/1.0' },
+        headers: { 'User-Agent': 'heron-probe/1.0' },
       });
       if (!r.ok) {
         console.error('probe failed: HTTP ' + r.status);

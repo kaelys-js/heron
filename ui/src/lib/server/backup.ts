@@ -43,7 +43,7 @@
  *
  * Format: gzipped tar, paths relative to ROOT. tar binary used (bsdtar
  * on macOS, GNU tar on Linux — both accept -czf / -xzf). Trade-off:
- * losing Windows compatibility, but career-ops is Unix-first anyway.
+ * losing Windows compatibility, but Heron is Unix-first anyway.
  *
  * Retention: configurable N days (default 14). On every successful
  * backup, prune anything older than N days from data/backups/.

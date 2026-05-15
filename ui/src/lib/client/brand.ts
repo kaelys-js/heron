@@ -66,15 +66,15 @@ export const BRAND_STORAGE_PREFIX = BRAND.name;
  * + write. Use these constants instead of typing literal
  * '${BRAND.name}:authed' strings around the codebase — keeps the
  * key names in one searchable place AND eliminates the drift
- * where one site reads 'career-ops:authed' and another writes
- * 'careerops:authed' or similar. */
+ * where one site reads 'heron:authed' and another writes
+ * 'heron:authed' or similar. */
 export const BRAND_STORAGE_KEYS = {
   /** '1' iff the user has a live local-auth marker — used by the
    * layout boot path for the sync-bounce-to-/login race. */
   authed: `${BRAND.name}:authed`,
   /** Bearer token captured from better-auth's Set-Auth-Token
    * header. Required for the Capacitor WebView (cookies don't
-   * cross from careerops:// to http://) and mirrored into App
+   * cross from heron:// to http://) and mirrored into App
    * Group for the Share Extension. */
   bearerToken: `${BRAND.name}:bearer-token`,
   /** User-chosen theme ('light' | 'dark' | 'system'). Read by

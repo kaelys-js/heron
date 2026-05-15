@@ -58,7 +58,7 @@
   </section>
 
   <p class="mt-8 text-xs text-muted-foreground">
-    Career-ops stores your data locally. The owner account can invite household members or teammates
-    with single-use codes that expire after 30 minutes.
+    Heron stores your data locally. The owner account can invite household members or teammates with
+    single-use codes that expire after 30 minutes.
   </p>
 </main>

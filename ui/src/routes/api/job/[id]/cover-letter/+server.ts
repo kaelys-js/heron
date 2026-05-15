@@ -4,7 +4,7 @@
  *   GET  /api/job/[id]/cover-letter   → returns cached file if it exists
  *   POST /api/job/[id]/cover-letter   → spawns generation, persists, returns body
  *
- * Spawns `claude -p "/career-ops cover-letter <url>"`. The mode reads cv.md +
+ * Spawns `claude -p "/heron cover-letter <url>"`. The mode reads cv.md +
  * profile.yml + the matching report (if any) and writes a single-page
  * cover letter to `output/{n}-{slug}-{date}-cover.md` so it lives next to
  * the existing tailored CV PDF.

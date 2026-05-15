@@ -152,7 +152,7 @@ def fetch_form_schema(url: str, company: Optional[str], job_id: Optional[str]) -
     for base in schema_api_hosts(url):
         api_url = f"{base}/{company}/jobs/{job_id}?questions=true"
         try:
-            req = urllib.request.Request(api_url, headers={"User-Agent": "career-ops-apply/1.0"})
+            req = urllib.request.Request(api_url, headers={"User-Agent": "heron-apply/1.0"})
             with urllib.request.urlopen(req, timeout=10) as resp:
                 if resp.status == 200:
                     return json.loads(resp.read().decode("utf-8"))

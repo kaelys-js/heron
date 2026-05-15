@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-scan-broad.py — broad multi-source job scanner for career-ops.
+scan-broad.py — broad multi-source job scanner for Heron.
 
 Sources (all configurable, env-gated where credentials are needed):
   1. JobSpy → LinkedIn, Indeed, Glassdoor, ZipRecruiter, Google Jobs
@@ -14,7 +14,7 @@ Sources (all configurable, env-gated where credentials are needed):
 Output: appends new (deduped) jobs to data/pipeline.md in the same format as
 scan.mjs, and records URLs in data/scan-history.tsv to prevent re-finds.
 
-Run from the career-ops root via:
+Run from the Heron root via:
     .venv/bin/python scan-broad.py
     .venv/bin/python scan-broad.py --only remoteok,wwr     # subset of sources
     .venv/bin/python scan-broad.py --skip jobspy           # skip the slow one
@@ -283,7 +283,7 @@ def fetch_themuse(seen: set):
         try:
             req = Request(
                 f"{THE_MUSE_BASE}?{urlencode(params)}",
-                headers={"User-Agent": "Mozilla/5.0 career-ops"},
+                headers={"User-Agent": "Mozilla/5.0 heron"},
             )
             with urlopen(req, timeout=15) as r:
                 data = json.loads(r.read())
@@ -335,7 +335,7 @@ def fetch_adzuna(seen: set):
             try:
                 req = Request(
                     f"{ADZUNA_BASE}/{country}/search/{page}?{urlencode(params)}",
-                    headers={"User-Agent": "Mozilla/5.0 career-ops"},
+                    headers={"User-Agent": "Mozilla/5.0 heron"},
                 )
                 with urlopen(req, timeout=15) as r:
                     data = json.loads(r.read())
@@ -370,7 +370,7 @@ def fetch_hn_hiring(seen: set):
     ]
     for q in queries:
         try:
-            req = Request(f"{HN_RSS_BASE}{q}", headers={"User-Agent": "Mozilla/5.0 career-ops"})
+            req = Request(f"{HN_RSS_BASE}{q}", headers={"User-Agent": "Mozilla/5.0 heron"})
             with urlopen(req, timeout=15) as r:
                 xml_data = r.read()
             root = ET.fromstring(xml_data)
@@ -406,7 +406,7 @@ def fetch_remoteok(seen: set):
     """
     new = []
     try:
-        req = Request(REMOTEOK_BASE, headers={"User-Agent": "Mozilla/5.0 career-ops"})
+        req = Request(REMOTEOK_BASE, headers={"User-Agent": "Mozilla/5.0 heron"})
         with urlopen(req, timeout=20) as r:
             data = json.loads(r.read())
     except Exception as e:
@@ -484,7 +484,7 @@ def fetch_wwr(seen: set):
     new = []
     for feed_url in WWR_FEEDS:
         try:
-            req = Request(feed_url, headers={"User-Agent": "Mozilla/5.0 career-ops"})
+            req = Request(feed_url, headers={"User-Agent": "Mozilla/5.0 heron"})
             with urlopen(req, timeout=15) as r:
                 xml_data = r.read()
             root = ET.fromstring(xml_data)
@@ -633,7 +633,7 @@ def main():
 
             req = urllib.request.Request(
                 "https://news.ycombinator.com/jobs",
-                headers={"User-Agent": "career-ops-probe/1.0"},
+                headers={"User-Agent": "heron-probe/1.0"},
             )
             with urllib.request.urlopen(req, timeout=20) as resp:
                 ok = resp.status == 200
@@ -667,7 +667,7 @@ def main():
         selected = [s for s in selected if s not in skip]
 
     print(
-        f"career-ops scan-broad — running {len(selected)}/{len(SOURCES)} sources: {', '.join(selected)}"
+        f"heron scan-broad — running {len(selected)}/{len(SOURCES)} sources: {', '.join(selected)}"
     )
     print(f"  pipeline: {PIPELINE}")
     print(f"  history:  {HISTORY}")

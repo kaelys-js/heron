@@ -1,7 +1,7 @@
 /**
  * invite-codes — owner-generated 6-digit codes for new user signups.
  *
- * Why local codes instead of email magic links: career-ops is self-hosted
+ * Why local codes instead of email magic links: Heron is self-hosted
  * with no SMTP/third-party email dependency. Multiple users on ONE local
  * install means everyone is physically nearby — the owner reads the code
  * off their screen and the invitee types it on theirs (like Apple TV

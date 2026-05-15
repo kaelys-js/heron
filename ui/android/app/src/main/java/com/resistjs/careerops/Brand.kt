@@ -4,28 +4,29 @@
 package com.resistjs.careerops
 
 object Brand {
-    const val name = "career-ops"
-    const val displayName = "Career Ops"
+    const val name = "heron"
+    const val displayName = "Heron"
     const val bundleId = "com.resistjs.careerops"
     const val urlScheme = "careerops"
-    const val serviceType = "_career-ops._tcp"
+    const val serviceType = "_heron._tcp"
     const val keychainService = "com.resistjs.careerops"
 
     /** SharedPreferences keys — brand-namespaced for fork-safety. */
     object PrefsKey {
-        const val lanUrl = "${name}:lan-url"
-        const val backendResolvedUrl = "${name}:backend-resolved-url"
-        const val tailscaleUrl = "${name}:tailscale-url"
-        const val productionUrl = "${name}:production-url"
-        const val lastSeenIssue = "${name}:last-seen-issue"
-        const val errorQueue = "${name}:error-queue-native"
-        const val online = "${name}:online"
+        const val lanUrl = "$name:lan-url"
+        const val backendResolvedUrl = "$name:backend-resolved-url"
+        const val tailscaleUrl = "$name:tailscale-url"
+        const val productionUrl = "$name:production-url"
+        const val lastSeenIssue = "$name:last-seen-issue"
+        const val errorQueue = "$name:error-queue-native"
+        const val online = "$name:online"
     }
 
     /** Build a custom-scheme deep link. */
     fun deepLink(route: String): String {
         val trimmed = if (route.startsWith("/")) route.substring(1) else route
-        return "${urlScheme}://${trimmed}"
+        return "$urlScheme://$trimmed"
     }
-    fun jobDeepLink(jobId: String): String = "${urlScheme}://job/${jobId}"
+
+    fun jobDeepLink(jobId: String): String = "$urlScheme://job/$jobId"
 }

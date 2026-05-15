@@ -42,9 +42,7 @@
           <h1 class="text-2xl font-semibold tracking-tight">Technical interview prep</h1>
         </div>
         <p class="text-sm text-muted-foreground leading-relaxed">
-          The Career Ops technical-interview workflow combines three modes: <strong
-            >tech-prep</strong
-          >
+          The Heron technical-interview workflow combines three modes: <strong>tech-prep</strong>
           (company-specific plan), <strong>mock-interview</strong> (live drill), and
           <strong>seed-story-bank</strong> (STAR+R stories for the behavioral half). Run them in sequence
           once a job hits any interview stage and you'll walk into the loop with a focused plan instead

@@ -261,7 +261,7 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
     @objc public func setUserActivity(_ call: CAPPluginCall) {
         let type = call.getString("type") ?? Brand.openJobActivityType
         // NSUserActivity.title shows up in Handoff banners on macOS and
-        // other paired devices ("Continue Career Ops from iPhone").
+        // other paired devices ("Continue Heron from iPhone").
         // Brand display name beats the lowercase technical name.
         let title = call.getString("title") ?? Brand.displayName
         let data = call.getObject("data") ?? JSObject()

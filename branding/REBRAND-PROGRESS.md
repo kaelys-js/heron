@@ -45,7 +45,7 @@ These are non-negotiable. Compaction MUST NOT lose these.
 | 7 | README banner copy | ✓ done | `4247150` | `branding/README-banner.md` (the actual `README.md` swap happens at Task 9) |
 | 8 | Social card spec (HTML/CSS 1200×630 OG) | ✓ done | `27ed486` | `branding/SOCIAL-CARD.md` + `branding/assets/social-card.html` |
 | 9 | brand.json update + apply-brand propagation | ✓ done | `aee85ae` | 35 files: identifiers, URLs, permissions, copyright, store-listing prose. Colors/extensions/icons deferred to Task 10. |
-| 10 | Color sweep + SvelteKit UI wiring + prose sweep | **next** | — | Color tokens in `ui/src/app.css`; font files self-hosted (Fraunces + Inter + IBM Plex Mono); component sweep for hardcoded colors; prose sweep of remaining 458+ `career-ops` / `Career Ops` references in docs/modes/templates/scripts; README.md actual swap (per Task 7 spec). |
+| 10 | Color sweep + SvelteKit UI wiring + prose sweep | **in progress** | — | Sub-tasks: 10.1 README swap (✓ `d2126ba`), 10.2 .md prose sweep (✓ `e398610`), 10.3 helper-script comment sweep (pending), 10.4 self-host fonts (pending), 10.5 color tokens in brand.json + ui/src/app.css (pending), 10.6 component sweep for hardcoded colors (pending) |
 | 11 | Press kit structure + draft copy | pending | — | `branding/PRESS-KIT.md`; optionally render to PDF via `anthropic-skills:pdf` |
 
 ## Locked decisions (do not re-litigate without explicit user pushback)

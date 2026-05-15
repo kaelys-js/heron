@@ -41,7 +41,7 @@ export type NotifyOptions = {
   onClick?: () => void;
   /** Severity — used for icon tinting on Electron + iOS. */
   level?: NotifyLevel;
-  /** A `careerops://` URL invoked on tap (iOS). */
+  /** A `heron://` URL invoked on tap (iOS). */
   deepLink?: string;
 };
 

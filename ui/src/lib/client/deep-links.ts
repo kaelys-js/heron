@@ -1,5 +1,5 @@
 /**
- * Deep-link handler — turn `careerops://job/abc123` into an in-app
+ * Deep-link handler — turn `heron://job/abc123` into an in-app
  * navigation.
  *
  * Capacitor's @capacitor/app plugin emits `appUrlOpen` events whenever
@@ -10,20 +10,20 @@
  * in one of these — widgets, notifications, Live Activity, Share
  * Extension callback, Spotlight tap):
  *
- *   careerops://                              → /
- *   careerops://job/{id}                      → /job/{id}
- *   careerops://interview-prep/{id}           → /job/{id}/interview-prep
+ *   heron://                              → /
+ *   heron://job/{id}                      → /job/{id}
+ *   heron://interview-prep/{id}           → /job/{id}/interview-prep
  *     (Live Activity "Open prep" + Next-Interview widget tap)
- *   careerops://pipeline                      → /pipeline
- *   careerops://inbox                         → /inbox
- *   careerops://queue                         → /queue
- *   careerops://applied                       → /applied
- *   careerops://settings                      → /settings
- *   careerops://autopilot                     → /autopilot
- *   careerops://profile                       → /profile
- *   careerops://login                         → /login
+ *   heron://pipeline                      → /pipeline
+ *   heron://inbox                         → /inbox
+ *   heron://queue                         → /queue
+ *   heron://applied                       → /applied
+ *   heron://settings                      → /settings
+ *   heron://autopilot                     → /autopilot
+ *   heron://profile                       → /profile
+ *   heron://login                         → /login
  *     (widget signed-out gate target)
- *   careerops://notifications                 → /?notifications=open
+ *   heron://notifications                 → /?notifications=open
  *     (notification-tap target → fires BRAND_EVENTS.openNotifications)
  *
  * Anything else falls through to /.
@@ -59,7 +59,7 @@ export function handleDeepLink(url: string): void {
   const target = parseDeepLink(url);
   if (!target) return;
   // Some deep links want to FIRE A SIDE EFFECT in addition to (or
-  // instead of) a route change — e.g. `careerops://notifications`
+  // instead of) a route change — e.g. `heron://notifications`
   // opens the in-app notifications panel via a CustomEvent. The
   // parser annotates these with a `#event=...` fragment that we
   // pull out and dispatch here.

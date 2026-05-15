@@ -139,7 +139,7 @@
 
 <Sidebar.Root collapsible="icon" variant="inset" class="app-shell-sidebar">
   <!-- `pt-safe` keeps the profile switcher button clear of the iOS notch
-       / Dynamic Island when the WebView origin is `careerops://`. On web
+       / Dynamic Island when the WebView origin is `heron://`. On web
        (no inset) env(safe-area-inset-top) evaluates to 0 so this is inert. -->
   <Sidebar.Header class="pt-safe">
     <Sidebar.Menu>
@@ -595,7 +595,7 @@
           onclick={async () => {
             await authClient.signOut();
             // Wipe BOTH the bearer token (native) and the
-            // `career-ops:authed` gate flag so the next page-load on iOS
+            // `heron:authed` gate flag so the next page-load on iOS
             // bounces correctly to /login. clearLocalAuthState() is a
             // single source of truth so adding more local state never
             // forgets to scrub anything on logout.

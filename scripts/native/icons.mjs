@@ -5,7 +5,7 @@
  * Outputs:
  *   ui/electron/build/{icon.png, icon.icns, icon.ico}
  *   ui/ios/App/App/Assets.xcassets/AppIcon.appiconset/* (18 slots)
- *   ui/static/icons/career-ops-{192,256,384,512}.png
+ *   ui/static/icons/heron-{192,256,384,512}.png
  *
  * Idempotent — re-running produces the same output.
  */

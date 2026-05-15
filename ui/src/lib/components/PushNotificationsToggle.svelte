@@ -2,7 +2,7 @@
   PushNotificationsToggle — wraps the browser Notification API.
 
   Not Web Push (which needs VAPID + a service worker + a push server) —
-  career-ops is a local-only tool, so we use the simpler Notification API
+  Heron is a local-only tool, so we use the simpler Notification API
   that fires OS-level notifications when the dashboard tab is open in
   the background. The existing SSE stream is the trigger source; this
   component just routes high-priority events through the Notification
@@ -99,7 +99,7 @@
   }
 
   // Install the SSE→Notification bridge. The notifications store dispatches
-  // a `career-ops:notify` event for every new activity-feed entry; we
+  // a `heron:notify` event for every new activity-feed entry; we
   // intercept and route to Notification when the tab is hidden + the
   // event level is enabled + permission is granted.
   function handleNotify(e: Event) {
@@ -115,7 +115,7 @@
     if (!ev) return;
     if (!enabledLevels[ev.level as keyof typeof enabledLevels]) return;
     try {
-      // Title format: "Career Ops · <source>" — leading display name
+      // Title format: "Heron · <source>" — leading display name
       // keeps it identifiable in the OS notification tray when many
       // apps are stacked. Empty source falls through to bare display
       // name rather than a trailing " · " separator with nothing after.

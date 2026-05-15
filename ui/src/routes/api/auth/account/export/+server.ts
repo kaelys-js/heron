@@ -6,7 +6,7 @@
  *   • the entire data/users/{userId}/ filesystem tree (base64-encoded)
  *
  * The client offers it as a download named
- * "career-ops-export-{userId}-{date}.json".
+ * "heron-export-{userId}-{date}.json".
  */
 import { json } from '@sveltejs/kit';
 import { requireUserId } from '$lib/server/auth-helpers';
@@ -22,7 +22,7 @@ export const GET = async ({ locals }: { locals: App.Locals }) => {
   const date = new Date().toISOString().slice(0, 10);
   return json(payload, {
     headers: {
-      'Content-Disposition': `attachment; filename="career-ops-export-${userId}-${date}.json"`,
+      'Content-Disposition': `attachment; filename="heron-export-${userId}-${date}.json"`,
     },
   });
 };

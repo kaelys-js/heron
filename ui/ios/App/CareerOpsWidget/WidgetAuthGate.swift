@@ -1,5 +1,5 @@
-import WidgetKit
 import SwiftUI
+import WidgetKit
 
 /**
  * WidgetAuthGate — shared signed-out CTA view + helper used by every
@@ -28,7 +28,7 @@ import SwiftUI
  *   • `lock.shield.fill` SF Symbol in brand tint.
  *   • Two-line copy: bold "Sign in on iPhone" headline + secondary
  *     instruction.
- *   • Whole widget is a tap target to `careerops://login` — opens the
+ *   • Whole widget is a tap target to `heron://login` — opens the
  *     iPhone app at /login so the user can authenticate.
  */
 enum WidgetAuth {
@@ -68,14 +68,14 @@ struct BrandBackground: View {
         // System background as the base so .containerBackground on iOS
         // 17+ inherits the OS material correctly while older systems
         // see the standard widget background as a fallback. A subtle
-        // top-to-bottom-right indigo tint differentiates Career Ops
+        // top-to-bottom-right indigo tint differentiates Heron
         // widgets from generic system widgets without overwhelming the
         // foreground content.
         LinearGradient(
             colors: [
                 Color(.systemBackground),
                 Color.indigo.opacity(0.06),
-                Color.purple.opacity(0.10)
+                Color.purple.opacity(0.10),
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -92,7 +92,7 @@ struct BrandBackground: View {
  * Why not just use the SF Symbol `paperplane.fill` or similar:
  *   Generic SF Symbols don't say "this is YOUR app" the way the brand
  *   mark does. The previous gate used `lock.shield.fill` which read as
- *   a generic security warning, not a friendly "open Career Ops to
+ *   a generic security warning, not a friendly "open Heron to
  *   continue" affordance. Reproducing the actual app icon makes the
  *   gate visually identical to the icon the user just installed.
  *
@@ -118,9 +118,9 @@ struct BrandMark: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 0.388, green: 0.400, blue: 0.945),   // #6366f1
-                                Color(red: 0.545, green: 0.361, blue: 0.965),   // #8b5cf6
-                                Color(red: 0.659, green: 0.333, blue: 0.969)    // #a855f7
+                                Color(red: 0.388, green: 0.400, blue: 0.945), // #6366f1
+                                Color(red: 0.545, green: 0.361, blue: 0.965), // #8b5cf6
+                                Color(red: 0.659, green: 0.333, blue: 0.969), // #a855f7
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -168,7 +168,7 @@ extension View {
     @ViewBuilder
     func brandContainerBackground() -> some View {
         if #available(iOS 17.0, *) {
-            self.containerBackground(for: .widget) { BrandBackground() }
+            containerBackground(for: .widget) { BrandBackground() }
         } else {
             // iOS 14-16: widgets get the default system background.
             // Adding an explicit `.background(BrandBackground())` here
@@ -217,7 +217,7 @@ extension WidgetHeader where Trailing == EmptyView {
     init(icon: String, label: String) {
         self.icon = icon
         self.label = label
-        self.trailing = { EmptyView() }
+        trailing = { EmptyView() }
     }
 }
 

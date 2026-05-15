@@ -1,7 +1,7 @@
 /**
  * SvelteKit config — dual adapter + best-practice preprocessing.
  *
- * career-ops ships in two shapes:
+ * Heron ships in two shapes:
  *
  *   1. Web/server build (default) — adapter-node, embedded inside the
  *      Electron app OR run remotely. Output goes to `build/` (Node entry).
@@ -100,7 +100,7 @@ const config: Config = {
     // to the hash list, so a strict script-src CSP blocks them, which
     // in turn blocks the SvelteKit bootstrap from ever running and the
     // WebView shows a blank white page forever. The Capacitor WebView's
-    // origin is the app bundle itself (careerops://localhost) — there's
+    // origin is the app bundle itself (heron://localhost) — there's
     // no third-party origin that can inject scripts, so CSP adds little
     // defence in depth here. The adapter-node (server) build still gets
     // strict CSP via a per-response header set in hooks.server.ts.
@@ -133,7 +133,7 @@ const config: Config = {
             },
           },
 
-    // Service worker is OFF — career-ops doesn't ship one. Capacitor
+    // Service worker is OFF — Heron doesn't ship one. Capacitor
     // WebView doesn't support service workers reliably on iOS anyway.
     serviceWorker: {
       register: false,

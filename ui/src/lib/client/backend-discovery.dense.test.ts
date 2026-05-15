@@ -49,7 +49,7 @@ describe('setManualBackend — every URL shape', () => {
   it.each([
     'https://example.com',
     'http://192.168.1.1:5173',
-    'https://app.career-ops.dev',
+    'https://app.heron.dev',
     'https://my.tail-xxxx.ts.net',
     'http://localhost:5173',
     'https://staging.example.com:8443',

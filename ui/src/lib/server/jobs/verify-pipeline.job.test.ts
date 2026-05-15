@@ -18,7 +18,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
-const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'career-ops-verify-pipeline-test-'));
+const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'heron-verify-pipeline-test-'));
 vi.mock('../files', async () => {
   const actual = await vi.importActual<typeof import('../files')>('../files');
   return { ...actual, ROOT: tmpRoot };

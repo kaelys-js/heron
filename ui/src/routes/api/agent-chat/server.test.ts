@@ -23,8 +23,8 @@ vi.mock('$lib/server/profile-paths', () => ({
 }));
 
 vi.mock('$lib/config/branding', () => ({
-  APP_NAME: 'career-ops',
-  CLI_NAMESPACE: 'career-ops',
+  APP_NAME: 'heron',
+  CLI_NAMESPACE: 'heron',
 }));
 
 const fsMock = {
@@ -82,7 +82,7 @@ describe('POST /api/agent-chat', () => {
 
   it('passes the brand namespace into the system prompt', async () => {
     await post({});
-    expect(chatCalls[0].sys).toContain('/career-ops');
+    expect(chatCalls[0].sys).toContain('/heron');
   });
 
   it('includes the available modes list in the system prompt', async () => {

@@ -1,5 +1,5 @@
-import Foundation
 import CoreSpotlight
+import Foundation
 import MobileCoreServices
 
 /**
@@ -25,11 +25,10 @@ final class SpotlightIndexer {
             // Spotlight keywords — used by iOS's system search to match
             // user queries. Include both the brand display name AND the
             // lowercase technical name so users searching either
-            // "Career Ops anthropic" or "career-ops anthropic" both hit.
+            // "Heron anthropic" or "heron anthropic" both hit.
             attr.keywords = [job.company, job.role, Brand.displayName, Brand.name, "job"]
             if let status = job.status { attr.keywords?.append(status) }
-            let item = CSSearchableItem(uniqueIdentifier: job.id, domainIdentifier: domainID, attributeSet: attr)
-            return item
+            return CSSearchableItem(uniqueIdentifier: job.id, domainIdentifier: domainID, attributeSet: attr)
         }
         CSSearchableIndex.default().indexSearchableItems(items) { error in
             if let error = error {

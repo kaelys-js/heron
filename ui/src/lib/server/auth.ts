@@ -1,7 +1,7 @@
 /**
  * auth — Better Auth singleton.
  *
- * Authentication strategy for career-ops:
+ * Authentication strategy for heron:
  *
  *   • Passkeys (WebAuthn): primary credential type. Sync via iCloud
  *     Keychain (Apple) / Google Password Manager (Android+Chrome). No
@@ -106,7 +106,7 @@ const drizzleSchema = {
 
 export const auth = betterAuth({
   // Sourced from BRAND so a rebrand in branding/brand.json propagates
-  // automatically. Previously hardcoded "career-ops" which would
+  // automatically. Previously hardcoded "heron" which would
   // silently drift on rename.
   appName: BRAND.name,
   secret: BETTER_AUTH_SECRET,
@@ -248,7 +248,7 @@ export const auth = betterAuth({
       origin: BETTER_AUTH_URL,
     }),
     // bearer — adds Authorization-header session support alongside cookies.
-    // Required for the Capacitor WebView (origin `careerops://localhost`),
+    // Required for the Capacitor WebView (origin `heron://localhost`),
     // where cookies set on the backend origin (`http://lan-ip:5173`) don't
     // travel back to the WebView. After every sign-in/sign-up the response
     // carries `Set-Auth-Token: <token>`; the client (auth-client.ts custom
@@ -304,7 +304,7 @@ export const auth = betterAuth({
   // In localhost dev the flag is off so http://localhost can still
   // round-trip the session.
   //
-  // crossSubDomainCookies stays off — career-ops is single-origin
+  // crossSubDomainCookies stays off — Heron is single-origin
   // (no shared cookie across `app.example.com` / `api.example.com`).
   // Leaving it off is defence-in-depth: a hijacked sibling sub-domain
   // can't read or replay the session cookie.
@@ -313,8 +313,8 @@ export const auth = betterAuth({
   // relying on Better Auth defaults, so a future version that changes
   // defaults can't silently weaken our cookie security.
   advanced: {
-    // Cookie names will be prefixed by this — for `career-ops` the
-    // session cookie becomes `career-ops.session_token`. Pulled from
+    // Cookie names will be prefixed by this — for `heron` the
+    // session cookie becomes `heron.session_token`. Pulled from
     // BRAND so the cookie name tracks the brand rename. NOTE: changing
     // this invalidates existing sessions across all clients — a
     // rebrand will sign every user out (intended; clean break).

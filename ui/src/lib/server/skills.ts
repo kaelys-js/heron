@@ -32,7 +32,7 @@ export type Skill = {
   /** Concrete on-disk language directory: 'en' for top-level modes, otherwise
    *  the two-letter subdir code ('de', 'fr', 'ja', 'pt', 'ru', 'es'). */
   lang: 'en' | 'de' | 'fr' | 'ja' | 'pt' | 'ru' | 'es';
-  invocation: string; // '/career-ops oferta'
+  invocation: string; // '/heron oferta'
   /** When relevant: list of inputs the user provides (parsed from the body) */
   inputs?: string[];
   /** path on disk so we can read full body on demand */

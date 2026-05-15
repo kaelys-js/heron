@@ -53,7 +53,7 @@ vi.mock('./db/app-schema', () => ({
 vi.mock('drizzle-orm', () => ({
   eq: (_col: unknown, val: string) => ({ value: val }),
 }));
-vi.mock('./files', () => ({ ROOT: '/tmp/career-ops-test-root' }));
+vi.mock('./files', () => ({ ROOT: '/tmp/heron-test-root' }));
 vi.mock('./user-context', () => ({
   currentUserIdOrDefault: () => currentUser,
   SYSTEM_USER_ID: '__system__',

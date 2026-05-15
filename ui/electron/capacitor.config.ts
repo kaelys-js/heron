@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 /**
- * Capacitor config — career-ops native apps.
+ * Capacitor config — Heron native apps.
  *
  * Single SvelteKit codebase wraps as macOS/Win/Linux desktop via
  * @capacitor-community/electron AND iOS via @capacitor/ios. Backend is

@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 
-const TMP = path.join(tmpdir(), 'career-ops-apply-timing-' + Date.now());
+const TMP = path.join(tmpdir(), 'heron-apply-timing-' + Date.now());
 
 vi.mock('./profile-paths', () => ({
   profilePath: (_p: string, kind: string) => {

@@ -30,7 +30,7 @@ const REPO_ROOT = resolve(__dirname, '../../..');
  * Returns whatever `fn` returns.
  */
 export async function withTmpRepo<T>(fn: (root: string) => Promise<T> | T): Promise<T> {
-  const root = await mkdtemp(join(tmpdir(), 'career-ops-test-'));
+  const root = await mkdtemp(join(tmpdir(), 'heron-test-'));
   try {
     return await fn(root);
   } finally {

@@ -292,7 +292,7 @@ function applyAndroidManifest(brand) {
     return;
   }
   // The manifest itself uses ${applicationId} placeholders that Gradle
-  // resolves at build time, but the `android:scheme="careerops"` literal
+  // resolves at build time, but the `android:scheme="heron"` literal
   // is what we patch when the brand renames.
   let body = readFileSync(path, 'utf8');
   const next = body.replace(/(android:scheme=")[^"]*(")/g, `$1${brand.identifiers.urlScheme}$2`);
@@ -601,7 +601,7 @@ function applyGitHubIssueTemplates(brand) {
     }
     // 2. Standalone <oldname> tokens in prose. Bounded by non-letter
     //    on both sides so we don't munge unrelated identifiers.
-    body = body.replace(/(^|[^A-Za-z0-9_/-])career-ops($|[^A-Za-z0-9_/-])/g, `$1${brand.name}$2`);
+    body = body.replace(/(^|[^A-Za-z0-9_/-])heron($|[^A-Za-z0-9_/-])/g, `$1${brand.name}$2`);
     if (body !== before) {
       writeFileSync(file, body);
       touched += 1;
@@ -864,7 +864,7 @@ function applyManifest(brand) {
     ];
     // Categories — Chrome surfaces these in PWA discovery.
     m.categories = ['productivity', 'utilities', 'business'];
-    // Protocol handler — lets `careerops://` register at PWA install time
+    // Protocol handler — lets `heron://` register at PWA install time
     // on Chrome/Edge so links open the PWA instead of the browser.
     m.protocol_handlers = [
       {
@@ -1043,15 +1043,15 @@ function applyClientBrandTs(brand) {
     ` * + write. Use these constants instead of typing literal`,
     ` * '\${BRAND.name}:authed' strings around the codebase — keeps the`,
     ` * key names in one searchable place AND eliminates the drift`,
-    ` * where one site reads 'career-ops:authed' and another writes`,
-    ` * 'careerops:authed' or similar. */`,
+    ` * where one site reads 'heron:authed' and another writes`,
+    ` * 'heron:authed' or similar. */`,
     `export const BRAND_STORAGE_KEYS = {`,
     `  /** '1' iff the user has a live local-auth marker — used by the`,
     `   * layout boot path for the sync-bounce-to-/login race. */`,
     `  authed: \`\${BRAND.name}:authed\`,`,
     `  /** Bearer token captured from better-auth's Set-Auth-Token`,
     `   * header. Required for the Capacitor WebView (cookies don't`,
-    `   * cross from careerops:// to http://) and mirrored into App`,
+    `   * cross from heron:// to http://) and mirrored into App`,
     `   * Group for the Share Extension. */`,
     `  bearerToken: \`\${BRAND.name}:bearer-token\`,`,
     `  /** User-chosen theme ('light' | 'dark' | 'system'). Read by`,
@@ -1140,8 +1140,8 @@ function applySwiftConstants(brand) {
     join(UI, 'ios', 'App', 'CareerOpsLiveActivity', 'Brand.swift'),
     join(UI, 'ios', 'App', 'CareerOpsShareExtension', 'Brand.swift'),
     // CareerOpsWatch is a separate watchOS target. Without this copy
-    // the Watch had to hardcode "group.com.resistjs.careerops" and
-    // "careerops://queue" everywhere — a rebrand drift waiting to
+    // the Watch had to hardcode "group.com.heron.app" and
+    // "heron://queue" everywhere — a rebrand drift waiting to
     // happen. The Watch's Brand.swift mirrors the host's verbatim.
     join(UI, 'ios', 'App', 'CareerOpsWatch', 'Brand.swift'),
   ];
@@ -1214,7 +1214,7 @@ function applyAGENTSMd(brand) {
     return;
   }
   // No-op for now — most AGENTS.md content is project guidance, not brand.
-  // The brand-derived strings inside it (com.resistjs.careerops, careerops://)
+  // The brand-derived strings inside it (com.heron.app, heron://)
   // are inline references in prose, not template fields. Verifier will
   // flag any that drift.
   log.skip(`AGENTS.md — prose, not regenerated (verifier checks consistency)`);

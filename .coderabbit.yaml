@@ -13,7 +13,7 @@ language: en
 # ── Review behaviour ─────────────────────────────────────────────────
 reviews:
   # 'assertive' = more aggressive feedback; 'chill' = lighter touch.
-  # Career-ops handles secrets, auth, autonomous browser automation,
+  # Heron handles secrets, auth, autonomous browser automation,
   # and security-sensitive data flows — assertive is appropriate.
   profile: assertive
 
@@ -78,7 +78,7 @@ reviews:
         Slim Gemini-specific pointer + slash-command table. Most
         rules live in AGENTS.md. Reject duplication of AGENTS.md
         content into GEMINI.md.
-    - path: ".agents/skills/career-ops/SKILL.md"
+    - path: ".agents/skills/heron/SKILL.md"
       instructions: |
         Source-of-truth skill definition; .claude/skills/.../SKILL.md
         is a symlink to this file. Changes ripple to every agent CLI.
@@ -207,7 +207,7 @@ reviews:
       instructions: |
         Check for command injection, path traversal, and SSRF in any
         script that touches user input or external URLs. Ensure scripts
-        handle missing data/ directories gracefully (career-ops boots
+        handle missing data/ directories gracefully (Heron boots
         on fresh installs where many dirs don't exist yet). Use
         REPO_ROOT-derived paths, never CWD-relative.
     - path: "scripts/system/update-system.mjs"

@@ -10,7 +10,7 @@ import path from 'node:path';
 import { tmpdir } from 'node:os';
 
 // Mock the ROOT export so all paths land in a tmpdir.
-const TMP = path.join(tmpdir(), 'career-ops-apply-counter-' + Date.now());
+const TMP = path.join(tmpdir(), 'heron-apply-counter-' + Date.now());
 vi.mock('./files', () => ({ ROOT: TMP }));
 
 const { todayCount, bumpApplyCounter, applyCounterPath } = await import('./apply-counter');

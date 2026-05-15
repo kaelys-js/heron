@@ -118,7 +118,7 @@
     try {
       await clearAllPending();
       toast.success('Notification center cleared', {
-        description: 'Pending + delivered Career Ops notifications dropped.',
+        description: 'Pending + delivered Heron notifications dropped.',
       });
     } catch (e) {
       toast.error('Could not clear notifications', { description: String(e) });

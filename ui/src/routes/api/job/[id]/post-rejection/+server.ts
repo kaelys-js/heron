@@ -4,7 +4,7 @@
  *   POST /api/job/[id]/post-rejection
  *     body: { wentWell?: string; surprised?: string; wouldChange?: string }
  *
- * Spawns `claude -p "/career-ops post-rejection --url <url> --notes <json>"`
+ * Spawns `claude -p "/heron post-rejection --url <url> --notes <json>"`
  * to expand the user's notes into a story-bank entry. Appends the result
  * to interview-prep/story-bank.md (creates the file if missing) so future
  * applications + interview prep have access to the learning.

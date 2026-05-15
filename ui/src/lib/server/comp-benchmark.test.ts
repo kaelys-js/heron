@@ -38,7 +38,7 @@ vi.mock('node:child_process', () => ({
 }));
 
 vi.mock('$lib/config/branding', () => ({
-  CLI_NAMESPACE: 'career-ops',
+  CLI_NAMESPACE: 'heron',
 }));
 
 vi.mock('$lib/config/cli', () => ({
@@ -77,7 +77,7 @@ describe('fetchBenchmark — happy path', () => {
     await fetchBenchmark({ company: 'Acme', role: 'Eng', location: 'SF' });
     expect(spawnCalls[0].bin).toBe('claude');
     expect(spawnCalls[0].args[0]).toBe('-p');
-    expect(spawnCalls[0].args[1]).toContain('/career-ops deep --benchmark-comp');
+    expect(spawnCalls[0].args[1]).toContain('/heron deep --benchmark-comp');
     expect(spawnCalls[0].args).toContain('--dangerously-skip-permissions');
   });
 

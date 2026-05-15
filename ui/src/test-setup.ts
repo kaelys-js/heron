@@ -38,7 +38,7 @@ if (typeof process !== 'undefined' && process.env && !process.env.CAREER_OPS_DAT
   const os = require('node:os') as typeof import('node:os');
   const fs = require('node:fs') as typeof import('node:fs');
   const path = require('node:path') as typeof import('node:path');
-  const tmp = path.join(os.tmpdir(), `career-ops-test-${process.pid}`);
+  const tmp = path.join(os.tmpdir(), `heron-test-${process.pid}`);
   fs.mkdirSync(tmp, { recursive: true });
   process.env.CAREER_OPS_DATA_DIR = tmp;
 

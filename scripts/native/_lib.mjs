@@ -190,15 +190,15 @@ export async function confirm(prompt, defaultYes = true) {
 
 /** Read the brand name from branding/brand.json. Used to derive
  *  user-facing names (state dirs, banners) so a rebrand doesn't
- *  leave stale "career-ops" strings scattered through native scripts. */
+ *  leave stale "heron" strings scattered through native scripts. */
 function brandName() {
   try {
     const brand = JSON.parse(
       readFileSync(join(__dirname, '..', '..', 'branding', 'brand.json'), 'utf8'),
     );
-    return brand.name || 'career-ops';
+    return brand.name || 'heron';
   } catch {
-    return 'career-ops';
+    return 'heron';
   }
 }
 

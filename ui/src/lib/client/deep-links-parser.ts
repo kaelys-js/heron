@@ -15,7 +15,7 @@
 import { BRAND, BRAND_EVENTS } from './brand';
 
 /**
- * Resolve a `careerops://...` URL to a SvelteKit route, or to a route +
+ * Resolve a `heron://...` URL to a SvelteKit route, or to a route +
  * BRAND_EVENT side-effect (encoded as `#event=<event-name>`).
  *
  * Returns null only when the input doesn't parse as a URL at all.
@@ -27,11 +27,11 @@ import { BRAND, BRAND_EVENTS } from './brand';
 export function parseDeepLink(url: string): string | null {
   try {
     // The custom scheme strips through Capacitor's app plugin as a full
-    // URL. `new URL('careerops://job/abc')` rejects the scheme, so we
+    // URL. `new URL('heron://job/abc')` rejects the scheme, so we
     // rewrite to a parseable https form first.
     const schemePrefix = `${BRAND.urlScheme}://`;
     const normalized = url.startsWith(schemePrefix)
-      ? 'https://career-ops.local/' + url.slice(schemePrefix.length)
+      ? 'https://heron.local/' + url.slice(schemePrefix.length)
       : url;
     const u = new URL(normalized);
     const segments = u.pathname.split('/').filter(Boolean);

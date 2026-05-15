@@ -20,7 +20,9 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.util.Log
 
-class NetworkMonitor(private val context: Context) {
+class NetworkMonitor(
+    private val context: Context,
+) {
     private val connectivityManager: ConnectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
@@ -32,25 +34,33 @@ class NetworkMonitor(private val context: Context) {
 
     fun start(onChange: (Boolean) -> Unit) {
         notifyJs = onChange
-        val request = NetworkRequest.Builder()
-            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            .addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-            .build()
-        val cb = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                set(true)
+        val request =
+            NetworkRequest
+                .Builder()
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+                .build()
+        val cb =
+            object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    set(true)
+                }
+
+                override fun onLost(network: Network) {
+                    set(false)
+                }
+
+                override fun onCapabilitiesChanged(
+                    network: Network,
+                    caps: NetworkCapabilities,
+                ) {
+                    set(caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED))
+                }
             }
-            override fun onLost(network: Network) {
-                set(false)
-            }
-            override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
-                set(caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED))
-            }
-        }
         callback = cb
         try {
             connectivityManager.registerNetworkCallback(request, cb)
-            Log.i("career-ops:net", "monitor started")
+            Log.i("heron:net", "monitor started")
         } catch (e: SecurityException) {
             ErrorReporter.report(e, "NetworkMonitor", "warn")
         }
@@ -71,11 +81,12 @@ class NetworkMonitor(private val context: Context) {
     private fun set(online: Boolean) {
         if (online == isOnline) return
         isOnline = online
-        context.getSharedPreferences(Brand.name, Context.MODE_PRIVATE)
+        context
+            .getSharedPreferences(Brand.name, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(Brand.PrefsKey.online, online)
             .apply()
-        Log.i("career-ops:net", "status → ${if (online) "online" else "offline"}")
+        Log.i("heron:net", "status → ${if (online) "online" else "offline"}")
         notifyJs?.invoke(online)
     }
 }

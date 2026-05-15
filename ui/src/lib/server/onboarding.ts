@@ -159,7 +159,7 @@ export function isFreshInstall(): boolean {
   const state = readOnboarding();
   if (state.completed) return false;
 
-  // Required files for any career-ops workflow to function. Each one would
+  // Required files for any Heron workflow to function. Each one would
   // cause a downstream feature to silently fail (or 500) if missing.
   const requiredFiles = [
     activePath('cv-md'), // cv.md — read by oferta + every CV-tailoring path
