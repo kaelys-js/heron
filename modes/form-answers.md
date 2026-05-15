@@ -5,15 +5,15 @@ Generate concise, candidate-voiced answers to the most common application-form q
 ## Inputs
 
 - URL or pasted JD (the job offer)
-- `cv.md` (canonical CV)
+- `__CV__` (canonical CV)
 - `config/profile.yml` (location, comp targets, work auth, notice period)
-- `modes/_profile.md` (archetype mapping, narrative)
-- `article-digest.md` (proof points, optional)
-- The matching report file in `reports/{n}-{slug}-{date}.md` (if it exists — use Bloque B match table)
+- `__PROFILE_MD__` (archetype mapping, narrative)
+- `__ARTICLE_DIGEST__` (proof points, optional)
+- The matching report file in `__REPORTS__/{n}-{slug}-{date}.md` (if it exists — use Bloque B match table)
 
 ## Output
 
-Write to: `interview-prep/{slug}-form-answers.md`
+Write to: `__INTERVIEW_PREP__/{slug}-form-answers.md`
 
 Where `{slug}` is the slugified company-role pair used elsewhere in the system.
 
@@ -32,7 +32,7 @@ Generate answers to ALL of the following. If something is unknown (notice period
    - NO "I love your mission"
 
 3. **Years of experience with [the top 1–3 technical requirements]** (one line per skill)
-   - Concrete numbers from cv.md (e.g. "Python — 8 years, primary language since 2017")
+   - Concrete numbers from __CV__ (e.g. "Python — 8 years, primary language since 2017")
    - If a skill is adjacent rather than direct, frame the adjacency honestly
 
 4. **Salary expectations** (1 sentence)
@@ -60,7 +60,7 @@ Output as a single markdown file with the structure:
 ```markdown
 # Form answers — {Company} · {Role}
 
-> Pre-filled answers for common application form questions. Copy each block into the matching field on the portal. Tone matches your CV; numbers are from cv.md.
+> Pre-filled answers for common application form questions. Copy each block into the matching field on the portal. Tone matches your CV; numbers are from __CV__.
 
 ## 1. Why this role?
 
@@ -94,20 +94,20 @@ Output as a single markdown file with the structure:
 
 ---
 
-_Generated from `cv.md` and the matching evaluation report. Tweak any answer that doesn't sound like you._
+_Generated from `__CV__` and the matching evaluation report. Tweak any answer that doesn't sound like you._
 ```
 
 ## Voice rules
 
 - First-person, active voice, present tense.
 - 1–4 sentences per answer (≤80 words).
-- Numbers from `cv.md` only — never invent.
+- Numbers from `__CV__` only — never invent.
 - NO superlatives without evidence.
 - Match the language of the JD.
 - One short JD quote allowed if pivotal — wrap in quotes, ≤12 words.
 
 ## Validation before writing
 
-1. Check that the strongest claim in each answer maps to a line in `cv.md`.
+1. Check that the strongest claim in each answer maps to a line in `__CV__`.
 2. Check `config/profile.yml` for comp/notice/work-auth fields. If missing, write `_TODO_:` markers.
 3. Print the path written and a 1-line summary.

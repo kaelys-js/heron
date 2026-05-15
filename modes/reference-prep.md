@@ -11,9 +11,9 @@ with them" and "they painted a picture of the impact."
 - `company`, `role` — context
 - `references` — array of `{ name, relationship, lastWorkedTogether,
   themes? }`. `themes` is optional — if provided, surface those when
-  picking the angle. Otherwise infer from cv.md.
-- `cv.md` — to pull proof points + project context
-- `interview-prep/{company-slug}-{role-slug}-tech-prep.md` — if it
+  picking the angle. Otherwise infer from __CV__.
+- `__CV__` — to pull proof points + project context
+- `__INTERVIEW_PREP__/{company-slug}-{role-slug}-tech-prep.md` — if it
   exists, the company's stated values + the role's stated competencies
 
 ## Output
@@ -21,7 +21,7 @@ with them" and "they painted a picture of the impact."
 For EACH reference, write a separate brief markdown file:
 
 ```text
-interview-prep/{company-slug}-{role-slug}-reference-{ref-slug}.md
+__INTERVIEW_PREP__/{company-slug}-{role-slug}-reference-{ref-slug}.md
 ```
 
 Each file is a 1-pager:

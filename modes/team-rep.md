@@ -16,7 +16,7 @@ violate ToS.
 ## Output
 
 ONE JSON blob printed to stdout (the dashboard caches it under
-`{profile-dir}/team-rep/{slug}.json`). Schema:
+`__PROFILE__/team-rep/{slug}.json`). Schema:
 
 ```json
 {

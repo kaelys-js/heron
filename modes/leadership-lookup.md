@@ -21,7 +21,7 @@ Crunchbase, SEC filings if public).
 ## Output
 
 ONE JSON blob printed to stdout (the dashboard caches under
-`{profile-dir}/leadership/{company-slug}.json`):
+`__PROFILE__/leadership/{company-slug}.json`):
 
 ```json
 {

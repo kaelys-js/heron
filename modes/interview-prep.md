@@ -6,10 +6,10 @@ When the user asks to prep for an interview at a specific company+role, or when 
 
 1. **Company name** and **role title** (required)
 2. **Stage flag** (optional): `--stage <recruiter-screen|hiring-manager-screen|tech-screen|take-home|onsite|final-round|reference>`. When omitted, run the full multi-stage prep below. When provided, narrow Step 3-4 to that stage and produce a 1-page focused brief instead of the full document.
-3. **Evaluation report** in `reports/` (if exists) — read for archetype, gaps, matched proof points
-4. **Story bank** at `interview-prep/story-bank.md` — read for existing prepared stories
-5. **CV** at `cv.md` + `article-digest.md` — read for proof points
-6. **Profile** at `config/profile.yml` + `modes/_profile.md` — read for candidate context
+3. **Evaluation report** in `__REPORTS__/` (if exists) — read for archetype, gaps, matched proof points
+4. **Story bank** at `__STORY_BANK__` — read for existing prepared stories
+5. **CV** at `__CV__` + `__ARTICLE_DIGEST__` — read for proof points
+6. **Profile** at `config/profile.yml` + `__PROFILE_MD__` — read for candidate context
 
 ## Stage tuning
 
@@ -95,7 +95,7 @@ For each: the question, why they're likely asking it (what JD requirement it map
 
 ### Background Red Flags
 
-Questions the interviewer will probably ask about gaps, transitions, or unusual elements in the candidate's background. Read `_profile.md` and `cv.md` to identify what might raise questions.
+Questions the interviewer will probably ask about gaps, transitions, or unusual elements in the candidate's background. Read `__PROFILE_MD__` and `__CV__` to identify what might raise questions.
 For each: the likely question, why it comes up, and a recommended framing (honest, specific, forward-looking — never defensive).
 
 ## Step 5 — Story Bank Mapping
@@ -108,9 +108,9 @@ For each: the likely question, why it comes up, and a recommended framing (hones
 - **partial**: story is adjacent, needs reframing
 - **none**: no existing story — flag for the user
 
-For each gap, suggest: "You need a story about {topic}. Consider: {specific experience from cv.md that could become a STAR+R story}."
+For each gap, suggest: "You need a story about {topic}. Consider: {specific experience from __CV__ that could become a STAR+R story}."
 
-If the user wants to draft missing stories, help them build STAR+R format and append to `interview-prep/story-bank.md`.
+If the user wants to draft missing stories, help them build STAR+R format and append to `__STORY_BANK__`.
 
 ## Step 6 — Technical Prep Checklist
 
@@ -135,7 +135,7 @@ Things to say, do, and avoid based on research:
 
 ## Output
 
-Save the full report to `interview-prep/{company-slug}-{role-slug}.md` with this header:
+Save the full report to `__INTERVIEW_PREP__/{company-slug}-{role-slug}.md` with this header:
 
 ```markdown
 # Interview Intel: {Company} — {Role}

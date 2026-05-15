@@ -17,7 +17,7 @@ You're drafting a 30/60/90 day plan for the new role. Two modes:
 - `focusAreas` — string[] (optional) of priority areas the user wants emphasised
 - `firstWeekGoals` — string[] (only used when `phase: onboarding`)
 
-Read: `cv.md`, the job's deep-eval report (especially Block A — what
+Read: `__CV__`, the job's deep-eval report (especially Block A — what
 they're hiring for + Block B — pain points the JD names), and the
 company's interview-prep file if it exists.
 
@@ -26,7 +26,7 @@ company's interview-prep file if it exists.
 ONE markdown file at:
 
 ```text
-{output-dir}/{company-slug}-first-90-days-{phase}.md
+__OUTPUT__/{company-slug}-first-90-days-{phase}.md
 ```
 
 Format:

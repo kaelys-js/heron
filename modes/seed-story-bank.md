@@ -1,19 +1,19 @@
 # Seed Story Bank — Extract STAR+R stories from CV
 
 You're seeding the master interview story bank. Walk through the user's
-`cv.md` and pull out 5-10 high-impact stories using the STAR+R format
+`__CV__` and pull out 5-10 high-impact stories using the STAR+R format
 (Situation, Task, Action, Result, Reflection).
 
 ## Inputs
 
-1. `cv.md` — canonical CV with experience, projects, achievements
-2. `data/profiles/{slug}/_profile.md` (if exists) — narrative context,
+1. `__CV__` — canonical CV with experience, projects, achievements
+2. `data/profiles/{slug}/__PROFILE_MD__` (if exists) — narrative context,
    superpowers, proof points
 3. `config/profile.yml` → `narrative.proof_points` if present
-4. The existing `interview-prep/story-bank.md` — DON'T overwrite stories
+4. The existing `__STORY_BANK__` — DON'T overwrite stories
    that are already there; APPEND new ones below them
 
-## Output: `interview-prep/story-bank.md`
+## Output: `__STORY_BANK__`
 
 Edit the file IN PLACE, keeping the existing top-of-file header. Append
 each new story under `## Stories` using the format below. Number the
@@ -21,7 +21,7 @@ new stories starting from the next available number.
 
 ```markdown
 ### [Theme] Story Title
-**Source:** Seeded from cv.md on YYYY-MM-DD
+**Source:** Seeded from __CV__ on YYYY-MM-DD
 **S (Situation):** 2-3 sentences setting the scene — when, where, what was at stake
 **T (Task):** 1-2 sentences on what you specifically owned
 **A (Action):** 3-5 sentences on what YOU (not the team) did — concrete, technical

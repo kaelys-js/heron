@@ -1,12 +1,12 @@
 # Modo: pipeline — Inbox de URLs (Second Brain)
 
-Procesa URLs de ofertas acumuladas en `data/pipeline.md`. El usuario agrega URLs cuando quiera y luego ejecuta `/career-ops pipeline` para procesarlas todas.
+Procesa URLs de ofertas acumuladas en `data/__PIPELINE__`. El usuario agrega URLs cuando quiera y luego ejecuta `/career-ops pipeline` para procesarlas todas.
 
 ## Workflow
 
-1. **Leer** `data/pipeline.md` → buscar items `- [ ]` en la sección "Pendientes"
+1. **Leer** `data/__PIPELINE__` → buscar items `- [ ]` en la sección "Pendientes"
 2. **Para cada URL pendiente**:
-   a. Calcular siguiente `REPORT_NUM` secuencial (leer `reports/`, tomar el número más alto + 1)
+   a. Calcular siguiente `REPORT_NUM` secuencial (leer `__REPORTS__/`, tomar el número más alto + 1)
    b. **Extraer JD** usando Playwright (browser_navigate + browser_snapshot) → WebFetch → WebSearch
    c. Si la URL no es accesible → marcar como `- [!]` con nota y continuar
    d. **Ejecutar auto-pipeline completo**: Evaluación A-F → Report .md → PDF (si score >= 3.0) → Tracker
@@ -18,7 +18,7 @@ Procesa URLs de ofertas acumuladas en `data/pipeline.md`. El usuario agrega URLs
 | # | Empresa | Rol | Score | PDF | Acción recomendada |
 ```
 
-## Formato de pipeline.md
+## Formato de __PIPELINE__
 
 ```markdown
 ## Pendientes
@@ -40,11 +40,11 @@ Procesa URLs de ofertas acumuladas en `data/pipeline.md`. El usuario agrega URLs
 **Casos especiales:**
 - **LinkedIn**: Puede requerir login → marcar `[!]` y pedir al usuario que pegue el texto
 - **PDF**: Si la URL apunta a un PDF, leerlo directamente con Read tool
-- **`local:` prefix**: Leer el archivo local. Ejemplo: `local:jds/linkedin-pm-ai.md` → leer `jds/linkedin-pm-ai.md`
+- **`local:` prefix**: Leer el archivo local. Ejemplo: `local:__JDS__/linkedin-pm-ai.md` → leer `__JDS__/linkedin-pm-ai.md`
 
 ## Numeración automática
 
-1. Listar todos los archivos en `reports/`
+1. Listar todos los archivos en `__REPORTS__/`
 2. Extraer el número del prefijo (e.g., `142-medispend...` → 142)
 3. Nuevo número = máximo encontrado + 1
 

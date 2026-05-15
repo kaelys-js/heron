@@ -4,14 +4,14 @@ Triggered weekly OR after every 5 rejections. Run `/career-ops post-rejection` o
 
 ## Goal
 
-Find what's failing in the candidate's funnel and recommend specific changes to the system (cv.md, profile.yml, modes/_profile.md, portals.yml).
+Find what's failing in the candidate's funnel and recommend specific changes to the system (__CV__, profile.yml, __PROFILE_MD__, __PORTALS__).
 
 ## Inputs
 
-1. `data/applications.md` — all application records, status column
-2. `reports/<id>-*.md` — A-G evaluations (Block B has CV-vs-JD match analysis with gaps)
+1. `data/__APPLICATIONS__` — all application records, status column
+2. `__REPORTS__/<id>-*.md` — A-G evaluations (Block B has CV-vs-JD match analysis with gaps)
 3. `config/profile.yml` — current profile
-4. `cv.md` — current CV
+4. `__CV__` — current CV
 
 ## Analysis steps
 
@@ -50,8 +50,8 @@ A structured report:
 ### Recommendations
 For each pattern, propose a SPECIFIC fix:
 - "Drop archetype X from primary; market signal is weak"
-- "Add skill Y to cv.md skills section — appears in 7 of 10 rejected JDs"
-- "Disable companies in industry Z in portals.yml — 0 callbacks from 12 apps"
+- "Add skill Y to __CV__ skills section — appears in 7 of 10 rejected JDs"
+- "Disable companies in industry Z in __PORTALS__ — 0 callbacks from 12 apps"
 - "Adjust profile.yml comp target — current $X may be priced out for stage of companies you're hitting"
 
 ### Open questions for the candidate

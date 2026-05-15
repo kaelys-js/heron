@@ -30,7 +30,7 @@ ROTATE personas between turns instead of staying as one interviewer.
 Standard rotation for a tech onsite:
 
 1. **Hiring Manager (EM)** — turn 1-2: high-level scope, why-this-team
-2. **Peer Engineer** — turn 3-4: a technical deep-dive on cv.md
+2. **Peer Engineer** — turn 3-4: a technical deep-dive on __CV__
 3. **Cross-functional partner** (PM / design / data) — turn 5-6:
    how do you work with non-eng partners
 4. **Bar-raiser / skip-level** — turn 7-8: behavioral + leadership
@@ -62,7 +62,7 @@ the marker reinforces the cognitive switch.
 
 ### Technical screen (live coding / system design / API design)
 - 1 warm-up question on the user's actual stack (TypeScript, React,
-  whatever cv.md shows)
+  whatever __CV__ shows)
 - 1 algorithm/data-structure question at intermediate level
 - 1 system-design or API-design question at intermediate-senior level
 - Probe their THINKING out loud, not just the final answer
@@ -130,6 +130,6 @@ SESSION_SUMMARY:
 ```
 
 The dashboard saves the full transcript + summary to
-`interview-prep/{job-slug}-mock-session-{ts}.md` and writes any
-session-summary stories into `interview-prep/story-bank.md` so the
+`__INTERVIEW_PREP__/{job-slug}-mock-session-{ts}.md` and writes any
+session-summary stories into `__STORY_BANK__` so the
 bank grows from real practice, not just the CV.

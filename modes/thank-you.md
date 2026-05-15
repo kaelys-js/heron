@@ -18,9 +18,9 @@ re-engages the interviewer's specific worry from the call.
 - `talkingPoints` — free-form text the user pasted: 1-3 things that came up in the call
 - `tone` — `formal` | `friendly` | `enthusiastic` (default `friendly`)
 
-Also read: `cv.md`, `interview-prep/{company}-{role}.md` if it exists,
-`interview-prep/story-bank.md`, and any existing per-interviewer dossier
-under `interview-prep/{slug}-dossier.md` (so the note can reference
+Also read: `__CV__`, `__INTERVIEW_PREP__/{company}-{role}.md` if it exists,
+`__STORY_BANK__`, and any existing per-interviewer dossier
+under `__INTERVIEW_PREP__/{slug}-dossier.md` (so the note can reference
 their background concretely).
 
 ## Output
@@ -28,7 +28,7 @@ their background concretely).
 ONE markdown file at:
 
 ```text
-{interview-prep-dir}/{company-slug}-{interviewer-slug}-thank-you-{YYYY-MM-DD}.md
+__INTERVIEW_PREP__/{company-slug}-{interviewer-slug}-thank-you-{YYYY-MM-DD}.md
 ```
 
 Format:

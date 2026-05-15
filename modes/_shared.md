@@ -3,7 +3,7 @@
 <!-- ============================================================
      THIS FILE IS AUTO-UPDATABLE. Don't put personal data here.
      
-     Your customizations go in modes/_profile.md (never auto-updated).
+     Your customizations go in __PROFILE_MD__ (never auto-updated).
      This file contains system rules, scoring logic, and tool config
      that improve with each career-ops release.
      ============================================================ -->
@@ -12,15 +12,15 @@
 
 | File | Path | When |
 |------|------|------|
-| cv.md | `cv.md` (project root) | ALWAYS |
-| article-digest.md | `article-digest.md` (if exists) | ALWAYS (detailed proof points) |
+| __CV__ | `__CV__` (project root) | ALWAYS |
+| __ARTICLE_DIGEST__ | `__ARTICLE_DIGEST__` (if exists) | ALWAYS (detailed proof points) |
 | profile.yml | `config/profile.yml` | ALWAYS (candidate identity and targets) |
-| _profile.md | `modes/_profile.md` | ALWAYS (user archetypes, narrative, negotiation) |
-| writing-samples/ | `writing-samples/` | When generating candidate-facing text — check `_profile.md` for cached `## Writing Style` first; only scan files if absent |
+| __PROFILE_MD__ | `__PROFILE_MD__` | ALWAYS (user archetypes, narrative, negotiation) |
+| __WRITING_SAMPLES__/ | `__WRITING_SAMPLES__/` | When generating candidate-facing text — check `__PROFILE_MD__` for cached `## Writing Style` first; only scan files if absent |
 
-**RULE: NEVER hardcode metrics from proof points.** Read them from cv.md + article-digest.md at evaluation time.
-**RULE: For article/project metrics, article-digest.md takes precedence over cv.md.**
-**RULE: Read _profile.md AFTER this file. User customizations in _profile.md override defaults here.**
+**RULE: NEVER hardcode metrics from proof points.** Read them from __CV__ + __ARTICLE_DIGEST__ at evaluation time.
+**RULE: For article/project metrics, __ARTICLE_DIGEST__ takes precedence over __CV__.**
+**RULE: Read __PROFILE_MD__ AFTER this file. User customizations in __PROFILE_MD__ override defaults here.**
 
 ---
 
@@ -31,7 +31,7 @@ The evaluation uses 6 blocks (A-F) with a global score of 1-5:
 | Dimension | What it measures |
 |-----------|-----------------|
 | Match con CV | Skills, experience, proof points alignment |
-| North Star alignment | How well the role fits the user's target archetypes (from _profile.md) |
+| North Star alignment | How well the role fits the user's target archetypes (from __PROFILE_MD__) |
 | Comp | Salary vs market (5=top quartile, 1=well below) |
 | Cultural signals | Company culture, growth, stability, remote policy |
 | Red flags | Blockers, warnings (negative adjustments) |
@@ -61,7 +61,7 @@ Block G assesses whether a posting is likely a real, active opening. It does NOT
 | Tech specificity in JD | JD text | Medium | Generic JDs correlate with ghost postings but also with poor writing |
 | Requirements realism | JD text | Medium | Contradictions are a strong signal, vagueness is weaker |
 | Recent layoff news | WebSearch | Medium | Must consider department, timing, and company size |
-| Reposting pattern | scan-history.tsv | Medium | Same role reposted 2+ times in 90 days is concerning |
+| Reposting pattern | __SCAN_HISTORY__ | Medium | Same role reposted 2+ times in 90 days is concerning |
 | Salary transparency | JD text | Low | Jurisdiction-dependent, many legitimate reasons to omit |
 | Role-company fit | Qualitative | Low | Subjective, use only as supporting signal |
 
@@ -84,14 +84,14 @@ Classify every offer into one of these types (or hybrid of 2):
 | AI Forward Deployed | "client-facing", "deploy", "prototype", "fast delivery", "field" |
 | AI Transformation | "change management", "adoption", "enablement", "transformation" |
 
-After detecting archetype, read `modes/_profile.md` for the user's specific framing and proof points for that archetype.
+After detecting archetype, read `__PROFILE_MD__` for the user's specific framing and proof points for that archetype.
 
 ## Global Rules
 
 ### NEVER
 
 1. Invent experience or metrics
-2. Modify cv.md or portfolio files
+2. Modify __CV__ or portfolio files
 3. Submit applications on behalf of the candidate
 4. Share phone number in generated messages
 5. Recommend comp below market rate
@@ -102,9 +102,9 @@ After detecting archetype, read `modes/_profile.md` for the user's specific fram
 ### ALWAYS
 
 0. **Cover letter:** If the form allows it, ALWAYS include one. Same visual design as CV. JD quotes mapped to proof points. 1 page max.
-1. Read cv.md, _profile.md, and article-digest.md (if exists) before evaluating
+1. Read __CV__, __PROFILE_MD__, and __ARTICLE_DIGEST__ (if exists) before evaluating
 1b. **First evaluation of each session:** Run `node cv-sync-check.mjs`. If warnings, notify user.
-2. Detect the role archetype and adapt framing per _profile.md
+2. Detect the role archetype and adapt framing per __PROFILE_MD__
 3. Cite exact lines from CV when matching
 4. Use WebSearch for comp and company data
 5. Register in tracker after evaluating
@@ -112,7 +112,7 @@ After detecting archetype, read `modes/_profile.md` for the user's specific fram
 7. Be direct and actionable -- no fluff
 8. Native tech English for generated text. Short sentences, action verbs, no passive voice.
 8b. Case study URLs in PDF Professional Summary (recruiter may only read this).
-9. **Tracker additions as TSV** -- NEVER edit applications.md directly. Write TSV in `batch/tracker-additions/`.
+9. **Tracker additions as TSV** -- NEVER edit __APPLICATIONS__ directly. Write TSV in `batch/tracker-additions/`.
 10. **Include `**URL:**` in every report header.**
 
 ### Tools
@@ -122,8 +122,8 @@ After detecting archetype, read `modes/_profile.md` for the user's specific fram
 | WebSearch | Comp research, trends, company culture, LinkedIn contacts, fallback for JDs |
 | WebFetch | Fallback for extracting JDs from static pages |
 | Playwright | Verify offers (browser_navigate + browser_snapshot). **NEVER 2+ agents with Playwright in parallel.** |
-| Read | cv.md, _profile.md, article-digest.md, cv-template.html |
-| Write | Temporary HTML for PDF, applications.md, reports .md |
+| Read | __CV__, __PROFILE_MD__, __ARTICLE_DIGEST__, cv-template.html |
+| Write | Temporary HTML for PDF, __APPLICATIONS__, reports .md |
 | Edit | Update tracker |
 | Canva MCP | Optional visual CV generation. Duplicate base design, edit text, export PDF. Requires `cv.canva_resume_design_id` in profile.yml. |
 | Bash | `node generate-pdf.mjs` |
@@ -137,11 +137,11 @@ After detecting archetype, read `modes/_profile.md` for the user's specific fram
 
 ## Writing Style Calibration
 
-**Check `_profile.md` first.** If a `## Writing Style` section exists there, use it directly — do not re-scan the writing-samples files. Re-scanning is only needed when new samples are added or the user explicitly asks to recalibrate.
+**Check `__PROFILE_MD__` first.** If a `## Writing Style` section exists there, use it directly — do not re-scan the writing-samples files. Re-scanning is only needed when new samples are added or the user explicitly asks to recalibrate.
 
 **When to apply:** Before generating any text the user will send or publish — cover letters, LinkedIn outreach, application form answers, follow-up emails, executive summaries, profile blurbs. Does NOT apply to internal evaluation reports (A–F blocks, scores, analysis).
 
-**If no cached style in `_profile.md`:** Read all files in `writing-samples/`, **skipping any file named `README.md`**. If no user-provided samples are found, skip style calibration and gently note — once, without pressure — that adding a writing sample (e.g. a past cover letter, a LinkedIn About section, any professional writing) would help tailor outputs to their voice. If samples exist, extract the markers below and write the result to `_profile.md` under `## Writing Style` so future sessions skip this step.
+**If no cached style in `__PROFILE_MD__`:** Read all files in `__WRITING_SAMPLES__/`, **skipping any file named `README.md`**. If no user-provided samples are found, skip style calibration and gently note — once, without pressure — that adding a writing sample (e.g. a past cover letter, a LinkedIn About section, any professional writing) would help tailor outputs to their voice. If samples exist, extract the markers below and write the result to `__PROFILE_MD__` under `## Writing Style` so future sessions skip this step.
 
 ### What to extract
 
@@ -193,12 +193,12 @@ After detecting archetype, read `modes/_profile.md` for the user's specific fram
 
 ### Persisting the extracted style
 
-After scanning (excluding any `README.md` files), write to `modes/_profile.md` only if at least one user-provided sample was found: find the existing `## Writing Style` section and replace the entire block up to the next `##` heading (or EOF) with the new content. If no `## Writing Style` section exists, append it. This ensures there is always exactly one canonical section. If no samples were found after filtering, do not write or modify the section.
+After scanning (excluding any `README.md` files), write to `__PROFILE_MD__` only if at least one user-provided sample was found: find the existing `## Writing Style` section and replace the entire block up to the next `##` heading (or EOF) with the new content. If no `## Writing Style` section exists, append it. This ensures there is always exactly one canonical section. If no samples were found after filtering, do not write or modify the section.
 
 ```markdown
 ## Writing Style
 
-_Extracted from writing-samples/ on {date}. Re-run if new samples are added._
+_Extracted from __WRITING_SAMPLES__/ on {date}. Re-run if new samples are added._
 
 **Tone:** {e.g. conversational, confident, no hedging qualifiers}
 **Sentence length:** {e.g. short and punchy, avg 12 words}

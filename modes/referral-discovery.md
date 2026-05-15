@@ -13,16 +13,16 @@ manually (or copies into LinkedIn).
 - `maxResults` — int, default 10
 - `locationFilter` — optional location string ("San Francisco", "Berlin")
 
-Read: `cv.md` (employment history → past colleagues), the user's
+Read: `__CV__` (employment history → past colleagues), the user's
 LinkedIn export if it exists (`data/users/.../profiles/.../linkedin-export.csv`
-when present), and `_profile.md` for shared-organisation hints.
+when present), and `__PROFILE_MD__` for shared-organisation hints.
 
 ## Output
 
 ONE JSON file at:
 
 ```text
-{profile-dir}/referrals/{jobId}.json
+__PROFILE__/referrals/{jobId}.json
 ```
 
 Schema:
@@ -76,7 +76,7 @@ REFERRALS_PATH: {relative-path-to-file}
 
 Cap total web requests at 8. Order:
 
-1. Mine `cv.md` for past-employer overlap with the target company.
+1. Mine `__CV__` for past-employer overlap with the target company.
 2. Mine `linkedin-export.csv` (if present) for direct connections currently at the target company.
 3. LinkedIn public search via WebFetch for "{company} employees" — top 5 results, filter by `locationFilter`.
 4. For each candidate without a clear connection, search `{name} {company} {role-keyword}` to infer team alignment.

@@ -6,11 +6,11 @@ Track follow-up cadence for active applications. Flag overdue follow-ups, extrac
 
 ## Inputs
 
-- `data/applications.md` — Application tracker
-- `data/follow-ups.md` — Follow-up history (created on first use)
-- `reports/` — Evaluation reports (for context in drafts)
+- `data/__APPLICATIONS__` — Application tracker
+- `data/__FOLLOW_UPS__` — Follow-up history (created on first use)
+- `__REPORTS__/` — Evaluation reports (for context in drafts)
 - `config/profile.yml` — User profile (name, identity)
-- `cv.md` — CV for proof points in drafts
+- `__CV__` — CV for proof points in drafts
 
 ## Step 1 — Run Cadence Script
 
@@ -53,7 +53,7 @@ Use visual indicators:
 For each **overdue** or **urgent** entry only:
 
 1. Read the linked report (`reportPath` from JSON) for company context
-2. Read `cv.md` for proof points
+2. Read `__CV__` for proof points
 3. Read `config/profile.yml` for candidate name and identity
 
 ### Email Follow-up Framework (first follow-up, followupCount == 0)
@@ -61,7 +61,7 @@ For each **overdue** or **urgent** entry only:
 Generate a 3-4 sentence email:
 
 1. **Sentence 1:** Reference the specific role + when you applied. Be specific — mention the company name and role title.
-2. **Sentence 2:** One concrete value-add from the report's Block B match or a proof point from cv.md. Quantify if possible.
+2. **Sentence 2:** One concrete value-add from the report's Block B match or a proof point from __CV__. Quantify if possible.
 3. **Sentence 3:** Soft ask + availability. Offer a specific time window ("this week" or "next Tuesday").
 4. **Sentence 4 (optional):** Brief mention of a relevant recent project or achievement.
 
@@ -127,7 +127,7 @@ For each draft, show:
 
 After the user reviews and says they've sent a follow-up, record it:
 
-1. If `data/follow-ups.md` doesn't exist, create it:
+1. If `data/__FOLLOW_UPS__` doesn't exist, create it:
    ```markdown
    # Follow-up History
 
@@ -145,7 +145,7 @@ After the user reviews and says they've sent a follow-up, record it:
    - `Contact` = who it was sent to
    - `Notes` = brief note (e.g., "First follow-up, referenced Barbeiro.app")
 
-3. Optionally update the Notes column in `data/applications.md` with "Follow-up {N} sent {YYYY-MM-DD}"
+3. Optionally update the Notes column in `data/__APPLICATIONS__` with "Follow-up {N} sent {YYYY-MM-DD}"
 
 **IMPORTANT:** Only record follow-ups the user confirms they actually sent. Never record a draft as sent.
 

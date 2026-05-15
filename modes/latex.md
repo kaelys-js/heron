@@ -4,7 +4,7 @@ Export a tailored, ATS-optimized CV as a `.tex` file and compile it to PDF via `
 
 ## Pipeline
 
-1. Read `cv.md` as source of truth
+1. Read `__CV__` as source of truth
 2. Read `config/profile.yml` for candidate identity and contact info
 3. Ask the user for the JD if not already in context (text or URL)
 4. Extract 15-20 keywords from the JD
@@ -15,8 +15,8 @@ Export a tailored, ATS-optimized CV as a `.tex` file and compile it to PDF via `
 9. Reorder experience bullets by JD relevance
 10. Inject keywords naturally into existing achievements
 11. Generate the `.tex` file using `templates/cv-template.tex`
-12. Write to `output/cv-{candidate}-{company}-{YYYY-MM-DD}.tex`
-13. Run: `node generate-latex.mjs output/cv-{candidate}-{company}-{YYYY-MM-DD}.tex output/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf`
+12. Write to `__OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.tex`
+13. Run: `node generate-latex.mjs __OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.tex __OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf`
 14. Report: .tex path, .pdf path, file sizes, section count, keyword coverage %
 
 **Requires:** `tectonic` (preferred — `brew install tectonic`, auto-downloads packages) or `pdflatex` (MiKTeX / TeX Live) on PATH.
@@ -35,10 +35,10 @@ The template at `templates/cv-template.tex` uses `{{PLACEHOLDER}}` syntax:
 | `{{LINKEDIN_DISPLAY}}` | Display text only (no scheme): `linkedin.com/in/username` |
 | `{{GITHUB_URL}}` | Full URL with scheme for `\href{}`: e.g. `https://github.com/username`. If `profile.yml` stores a bare host+path, prepend `https://`. |
 | `{{GITHUB_DISPLAY}}` | Display text only (no scheme): `github.com/username` |
-| `{{EDUCATION}}` | LaTeX `\resumeSubheading` blocks from cv.md Education section |
+| `{{EDUCATION}}` | LaTeX `\resumeSubheading` blocks from __CV__ Education section |
 | `{{EXPERIENCE}}` | LaTeX `\resumeSubheading` + `\resumeItem` blocks — reordered bullets |
 | `{{PROJECTS}}` | LaTeX `\resumeProjectHeading` + `\resumeItem` blocks — top 3-4 selected |
-| `{{SKILLS}}` | LaTeX `\textbf{Category}{: items}` lines from cv.md Technical Skills |
+| `{{SKILLS}}` | LaTeX `\textbf{Category}{: items}` lines from __CV__ Technical Skills |
 
 ## LaTeX Content Generation Rules
 

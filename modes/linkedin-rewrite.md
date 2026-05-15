@@ -11,15 +11,15 @@ they can paste it into LinkedIn directly.
   (e.g. ['thin-headline', 'thin-about', 'archetype-skill-gap'])
 - `snapshot` — the raw scrape (contains current headline, about, etc.)
 
-Also read: `cv.md`, `config/profile.yml` (target archetypes + role title),
-`modes/_profile.md`, `article-digest.md`.
+Also read: `__CV__`, `config/profile.yml` (target archetypes + role title),
+`__PROFILE_MD__`, `__ARTICLE_DIGEST__`.
 
 ## Output
 
 ONE markdown file at:
 
 ```text
-{output-dir}/linkedin-rewrite-{YYYY-MM-DD}.md
+__OUTPUT__/linkedin-rewrite-{YYYY-MM-DD}.md
 ```
 
 Format:
@@ -42,7 +42,7 @@ recommended order to fix._
 
 Example: "Senior Backend Engineer | Distributed Systems + Kubernetes | Building reliable infra for high-throughput APIs"
 
-Calibrated to: target role title + archetype + cv.md proof points.
+Calibrated to: target role title + archetype + __CV__ proof points.
 NO em-dashes. NO "passionate". NO "results-driven". Use specific
 domain terms recruiters search for.}
 ```text
@@ -72,7 +72,7 @@ Use first person. No clichés. Each sentence testable.}
 ## 3. Featured section
 
 _(IF the finding includes 'empty-featured': suggest 3-5 items pulled
-from cv.md / article-digest.md. Each item has a title + URL + 1-line
+from __CV__ / __ARTICLE_DIGEST__. Each item has a title + URL + 1-line
 caption.)_
 
 - **[Title]** · {URL} · _One-line caption_
@@ -129,7 +129,7 @@ Thanks,
 
 ## 7. Activity prompt
 
-_(IF 'stale-activity': suggest 3 post topics aligned to archetype + cv.md.)_
+_(IF 'stale-activity': suggest 3 post topics aligned to archetype + __CV__.)_
 
 - _{Post topic 1}_ — why this'd land: ...
 - _{Post topic 2}_ — ...

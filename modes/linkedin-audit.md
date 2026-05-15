@@ -1,6 +1,6 @@
 # LinkedIn profile audit — optimize for recruiter SEARCH visibility
 
-You're auditing the user's OWN LinkedIn profile against their cv.md, with
+You're auditing the user's OWN LinkedIn profile against their __CV__, with
 ONE specific goal: make recruiters find them when searching LinkedIn.
 
 This is different from ATS optimization:
@@ -24,7 +24,7 @@ strong their actual experience is.
 
 - `linkedinText` — the extracted text from the user's profile (the
   endpoint runs extract-linkedin-profile.py first and passes it here)
-- `cv` — full contents of cv.md
+- `cv` — full contents of __CV__
 - `targetRoles` — from profile.yml: array of role titles they're after
 
 ## Output
@@ -69,7 +69,7 @@ Pick one — they trade off differently. Recruiters skim headlines first.
 
 ```
 {full About paragraph — 200 words max, written in the user's voice
-based on cv.md narrative. Hits 8-10 recruiter-searched phrases.}
+based on __CV__ narrative. Hits 8-10 recruiter-searched phrases.}
 ```text
 
 ## Top 50 LinkedIn Skills to enable
@@ -117,7 +117,7 @@ Then exit.
 
 ## Critical guardrails
 
-1. **Don't fabricate.** If cv.md doesn't say the user has X experience,
+1. **Don't fabricate.** If __CV__ doesn't say the user has X experience,
    don't suggest they claim it on LinkedIn. The audit should surface
    REAL strengths that are under-represented, not invent new ones.
 2. **Be specific.** "Make your headline stronger" is useless. "Replace
