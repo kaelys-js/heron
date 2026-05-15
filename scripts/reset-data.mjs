@@ -109,15 +109,23 @@ const SHARED_DATA_FILES = [
 /** Top-level data/ subdirs wiped on full reset. */
 const SHARED_DATA_DIRS = ['apply-state', 'avatars'];
 
-// Symlinks at repo root that point into the active profile.
-// These need to be removed since the targets are gone; boot routine
-// recreates them after onboarding finishes.
-const ROOT_SYMLINKS = [
+// Stray repo-root files/dirs that PRE-Option-C versions of the
+// dashboard created as compatibility symlinks. Option C removed the
+// symlink-maintenance machinery; these paths shouldn't exist on a
+// clean install but we sweep them on reset to handle the migration
+// case (user upgrades to post-Option-C from a pre-Option-C install
+// that left the symlinks behind).
+const STRAY_REPO_ROOT_PATHS = [
   'cv.md',
   'config/profile.yml',
   'portals.yml',
   'modes/_profile.md',
   'article-digest.md',
+  'jds',
+  'writing-samples',
+  'interview-prep',
+  'reports',
+  'output',
 ];
 
 function color(c, s) {
@@ -189,11 +197,13 @@ function listToDelete() {
     if (kind) items.push({ kind, path: full, label: `data/${d}/` });
   }
 
-  // Root symlinks (use lstat so dangling symlinks still get cleaned up)
-  for (const link of ROOT_SYMLINKS) {
-    const full = join(ROOT, link);
+  // Stray repo-root paths left over from pre-Option-C installs
+  // (compatibility symlinks that no longer get maintained). Use lstat
+  // so dangling symlinks still get cleaned up.
+  for (const stray of STRAY_REPO_ROOT_PATHS) {
+    const full = join(ROOT, stray);
     const kind = probe(full);
-    if (kind) items.push({ kind: 'symlink', path: full, label: link });
+    if (kind) items.push({ kind, path: full, label: stray });
   }
 
   return items;

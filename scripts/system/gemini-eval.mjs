@@ -18,8 +18,9 @@
  */
 
 import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'fs';
-import { join, dirname } from 'path';
+import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
+import { profilePath, profileFromArgv } from '../lib/lib-profiles.mjs';
 
 // ---------------------------------------------------------------------------
 // Bootstrap: load .env before anything else
@@ -36,17 +37,21 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // ---------------------------------------------------------------------------
 // Paths
 // ---------------------------------------------------------------------------
-const ROOT = dirname(fileURLToPath(import.meta.url));
+// __dirname here is scripts/system/; the repo root is two levels up.
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+// Resolve the active (or --profile-overridden) slug at module load so
+// every per-profile path is consistent for this run.
+const PROFILE_ID = profileFromArgv();
 
 const PATHS = {
-  // Primary evaluation logic lives in these two mode files
-  shared: join(ROOT, 'modes', '_shared.md'),
-  oferta: join(ROOT, 'modes', 'oferta.md'),
-  // Canonical skill path referenced in Issue #344
-  evaluate: join(ROOT, '.claude', 'skills', 'career-ops', 'SKILL.md'),
-  cv: join(ROOT, 'cv.md'),
-  reports: join(ROOT, 'reports'),
-  tracker: join(ROOT, 'data', 'applications.md'),
+  // Primary evaluation logic — system layer, same for every profile.
+  shared: join(REPO_ROOT, 'modes', '_shared.md'),
+  oferta: join(REPO_ROOT, 'modes', 'oferta.md'),
+  // Per-profile data — resolved via lib-profiles.mjs so multi-user is safe.
+  cv: profilePath(PROFILE_ID, 'cv-md'),
+  reports: profilePath(PROFILE_ID, 'reports-dir'),
+  tracker: profilePath(PROFILE_ID, 'applications'),
 };
 
 // ---------------------------------------------------------------------------
