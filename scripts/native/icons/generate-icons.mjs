@@ -6,7 +6,7 @@
  *   ui/static/favicon.svg          (32×32 master, gradient-based — scales fine)
  *
  * Outputs:
- *   native/icons/_build/{size}.png            (raw renders)
+ *   scripts/native/icons/_build/{size}.png    (raw renders)
  *   ui/electron/build/icon.png                512×512 (electron-builder reads this)
  *   ui/electron/build/icon.icns               macOS bundle (built via iconutil)
  *   ui/electron/build/icon.ico                Windows (built via png2ico or ImageMagick)
@@ -26,7 +26,8 @@ import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, '../..');
+// scripts/native/icons/generate-icons.mjs → repo root is 3 dirs up.
+const ROOT = path.resolve(__dirname, '../../..');
 const SVG = path.join(ROOT, 'ui/static/favicon.svg');
 const BUILD = path.join(__dirname, '_build');
 
@@ -42,7 +43,7 @@ const BRAND_NAME = (() => {
     const brand = JSON.parse(fsReadFileSync(path.join(ROOT, 'branding', 'brand.json'), 'utf8'));
     return brand.name || 'icon';
   } catch {
-    // Generator runs in CI with `node native/icons/generate-icons.mjs`
+    // Generator runs in CI with `node scripts/native/icons/generate-icons.mjs`
     // (no apply-brand wrapper). If brand.json is missing, fall back to
     // a brand-agnostic "icon" prefix rather than throwing — the
     // manifest just needs SOME consistent filenames.
@@ -53,7 +54,7 @@ const BRAND_NAME = (() => {
 // Cache key — sha256 of the source SVG bytes. If it matches the cached
 // value, every output PNG is already up-to-date and the whole 80-render
 // pipeline can short-circuit. Set `--force` (or env ICONS_FORCE=1) to
-// override. Cache file: `native/icons/_build/.cache-hash`.
+// override. Cache file: `scripts/native/icons/_build/.cache-hash`.
 const CACHE_KEY_FILE = path.join(BUILD, '.cache-hash');
 
 // Standard size matrix.

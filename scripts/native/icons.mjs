@@ -13,5 +13,5 @@ import { step, run, ok, ROOT } from './_lib.mjs';
 import { join } from 'node:path';
 
 step(1, 'Generating icons');
-run('node', [join(ROOT, 'native', 'icons', 'generate-icons.mjs')]);
+run('node', [join(ROOT, 'scripts', 'native', 'icons', 'generate-icons.mjs')]);
 ok('All platform icons regenerated.');

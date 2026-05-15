@@ -46,7 +46,7 @@
         "branding/brand.json",
         "branding/logo.svg",
         "scripts/native/apply-brand.mjs",
-        "native/icons/generate-icons.mjs"
+        "scripts/native/icons/generate-icons.mjs"
       ],
       "outputs": [
         "ui/src/lib/client/brand.ts",
@@ -71,7 +71,7 @@
         "ui/ios/App/fastlane/Appfile",
         "ui/ios/App/fastlane/Fastfile",
         "scripts/native/add-xcode-targets.rb",
-        "native/icons/_build/**"
+        "scripts/native/icons/_build/**"
       ]
     },
 

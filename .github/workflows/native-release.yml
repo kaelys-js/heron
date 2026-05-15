@@ -152,7 +152,7 @@ jobs:
         run: pnpm build
 
       - name: Generate icons
-        run: node native/icons/generate-icons.mjs
+        run: node scripts/native/icons/generate-icons.mjs
 
       - name: Capacitor sync (electron)
         working-directory: ui
@@ -271,7 +271,7 @@ jobs:
         run: pnpm build
 
       - name: Generate icons
-        run: node native/icons/generate-icons.mjs
+        run: node scripts/native/icons/generate-icons.mjs
 
       - name: Capacitor sync (ios)
         working-directory: ui

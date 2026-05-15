@@ -342,7 +342,7 @@ CI uses `jdx/mise-action@v2` so the same versions install in GitHub runners as o
 | `ui/static/manifest.webmanifest` | name, short_name, description, theme_color, background_color |
 | `ui/ios/App/fastlane/{Appfile,Fastfile}` | app_identifier |
 | `scripts/native/add-xcode-targets.rb` | bundle_root, app_group constants |
-| **All platform icons** (calls `native/icons/generate-icons.mjs` at the end) | .icns / .ico / iOS appiconset / web manifest sizes |
+| **All platform icons** (calls `scripts/native/icons/generate-icons.mjs` at the end) | .icns / .ico / iOS appiconset / web manifest sizes |
 
 **Rules:**
 - Source code reads brand from generated `brand.ts` / `Brand.swift`. Never hardcode `com.resistjs.careerops`, `careerops://`, `_career-ops._tcp` in runtime code.
