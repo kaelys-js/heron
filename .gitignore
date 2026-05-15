@@ -43,11 +43,12 @@ data/onboarding-state.json
 # runtime files above.
 data/profiles.json
 # Repo-root user dirs (reports/, output/, jds/, writing-samples/,
-# interview-prep/) are now COMPATIBILITY SYMLINKS into the active
-# profile dir under data/users/{uid}/profiles/{slug}/... (or
-# data/profiles/{slug}/... in legacy single-user mode). The dashboard
-# creates them on-demand via profile-symlinks.ts. We don't track
-# them — the symlinks regenerate per session.
+# interview-prep/) historically were compatibility symlinks managed
+# by the now-deleted profile-symlinks.ts. Option-C plowdown replaced
+# the symlink mechanism with spawn-time path substitution (see
+# modes/_TOKENS.md + ui/src/lib/server/mode-substitution.ts). The
+# dirs may still be created incidentally by old scripts; ignore them
+# so they never sneak into a commit.
 reports
 output
 jds

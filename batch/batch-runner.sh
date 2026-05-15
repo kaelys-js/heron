@@ -17,11 +17,27 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BATCH_DIR="$SCRIPT_DIR"
 INPUT_FILE="$BATCH_DIR/batch-input.tsv"
 STATE_FILE="$BATCH_DIR/batch-state.tsv"
-PROMPT_FILE="$BATCH_DIR/batch-prompt.md"
+# PROMPT_FILE: orchestrator pre-resolves __TOKEN__ placeholders in
+# batch/batch-prompt.md against the active profile + writes the
+# realized version to a temp file, passing the path via BATCH_PROMPT_FILE.
+# Standalone (non-dashboard) runs fall back to the literal file — those
+# users get a prompt with __CV__ etc. unresolved, which is the visible
+# failure mode that prompts them to invoke via the dashboard.
+PROMPT_FILE="${BATCH_PROMPT_FILE:-$BATCH_DIR/batch-prompt.md}"
 LOGS_DIR="$BATCH_DIR/logs"
 TRACKER_DIR="$BATCH_DIR/tracker-additions"
-REPORTS_DIR="$PROJECT_DIR/reports"
-APPLICATIONS_FILE="$PROJECT_DIR/data/applications.md"
+# REPORTS_DIR + APPLICATIONS_FILE: resolved per-profile via node helper.
+# Orchestrator sets CAREER_OPS_PROFILE_ID; standalone invocations fall
+# back to the active profile from data/profiles.json.
+_CAREER_OPS_PROFILE_ID="${CAREER_OPS_PROFILE_ID:-$(node -e "
+  try {
+    const p = JSON.parse(require('node:fs').readFileSync('$PROJECT_DIR/data/profiles.json', 'utf8'));
+    process.stdout.write(p.activeId || 'default');
+  } catch { process.stdout.write('default'); }
+" 2>/dev/null || echo default)}"
+_PROFILE_BASE="$PROJECT_DIR/data/profiles/$_CAREER_OPS_PROFILE_ID"
+REPORTS_DIR="$_PROFILE_BASE/reports"
+APPLICATIONS_FILE="$_PROFILE_BASE/applications.md"
 LOCK_FILE="$BATCH_DIR/batch-runner.pid"
 STATE_LOCK_DIR="$BATCH_DIR/.batch-state.lock"
 STATE_LOCK_PID_FILE="$STATE_LOCK_DIR/pid"
