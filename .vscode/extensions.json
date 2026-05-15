@@ -1,5 +1,5 @@
 {
-  "//": "Workspace recommendations. VS Code prompts to install on first open.",
+  "//": "Workspace extension recommendations. VS Code prompts to install on first open. Format documented at https://code.visualstudio.com/docs/configure/workspace-recommended-extensions. No public JSON Schema — VS Code understands this file by path.",
   "recommendations": [
     "svelte.svelte-vscode",
     "biomejs.biome",
