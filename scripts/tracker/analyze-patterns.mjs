@@ -14,7 +14,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { profilePath, profileFromArgv } from './lib-profiles.mjs';
+import { profilePath, profileFromArgv } from '../lib/lib-profiles.mjs';
 
 const CAREER_OPS = dirname(fileURLToPath(import.meta.url));
 const PROFILE_ID = profileFromArgv();
