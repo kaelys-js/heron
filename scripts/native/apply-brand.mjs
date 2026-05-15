@@ -177,6 +177,9 @@ function applyCapacitorConfig(brand, path) {
     [/customUrlScheme:\s*['"][^'"]*['"]/, `customUrlScheme: '${brand.identifiers.urlScheme}'`],
     [/iconColor:\s*['"][^'"]*['"]/, `iconColor: '${brand.colors.primary}'`],
     [/backgroundColor:\s*['"][^'"]*['"]/, `backgroundColor: '${brand.colors.darkBg}'`],
+    // appendUserAgent: '<brand>/native' — the marker used by the
+    // dashboard server to tell native vs web hits apart in logs.
+    [/appendUserAgent:\s*['"][^'"]*['"]/, `appendUserAgent: '${brand.name}/native'`],
   ];
   let changed = false;
   for (const [re, val] of replacements) {
@@ -522,6 +525,59 @@ function applyFavicon(brand) {
   }
   copyFileSync(src, dest);
   log.ok(`static/favicon.svg ← branding/logo.svg`);
+}
+
+function applyReleasePleaseConfig(brand) {
+  // release-please-config.json — Release Please tracks the package name
+  // here so a rebrand needs to retarget it (otherwise the auto-generated
+  // CHANGELOG.md keeps the old brand name in every release header).
+  const path = join(ROOT, 'release-please-config.json');
+  if (!existsSync(path)) {
+    log.skip(`release-please-config.json — missing`);
+    return;
+  }
+  const changed = patchJson(path, (cfg) => {
+    if (cfg.packages?.['.']) {
+      cfg.packages['.']['package-name'] = brand.name;
+    }
+  });
+  changed
+    ? log.ok(`release-please-config.json`)
+    : log.skip(`release-please-config.json — already current`);
+}
+
+function applyBookmarklet(brand) {
+  // ui/static/bookmarklet.js — form-fill bookmarklet served from the
+  // dashboard. The toast prefix and the runtime-doc comment carry the
+  // brand name, so a rebrand needs to retarget both.
+  //
+  // Note: window.__CAREER_OPS_HOST__ is INTENTIONALLY kept stable
+  // across rebrands because users have it pinned in their browser
+  // bookmark bar; changing the global symbol would silently break
+  // every existing bookmark. The user-visible toast prefix is what
+  // gets rebranded.
+  const path = join(UI, 'static', 'bookmarklet.js');
+  if (!existsSync(path)) {
+    log.skip(`static/bookmarklet.js — missing`);
+    return;
+  }
+  let body = readFileSync(path, 'utf8');
+  let changed = false;
+  // Match the opening doc comment "<oldname> form-fill bookmarklet."
+  // and every toast prefix "<oldname>: " in a quoted string.
+  const subs = [
+    [/^( \* )[a-z0-9-]+ (form-fill bookmarklet)/m, `$1${brand.name} $2`],
+    [/'[a-z0-9-]+: /g, `'${brand.name}: `],
+  ];
+  for (const [re, val] of subs) {
+    const next = body.replace(re, val);
+    if (next !== body) {
+      body = next;
+      changed = true;
+    }
+  }
+  if (changed) writeFileSync(path, body);
+  changed ? log.ok(`static/bookmarklet.js`) : log.skip(`static/bookmarklet.js — already current`);
 }
 
 function applyAppHtml(brand) {
@@ -1045,7 +1101,9 @@ function regenerateIcons() {
   // and renders all platform sizes.
   log.step('Regenerating platform icons');
   try {
-    execSync(`node ${join(ROOT, 'native', 'icons', 'generate-icons.mjs')}`, { stdio: 'inherit' });
+    execSync(`node ${join(ROOT, 'scripts', 'native', 'icons', 'generate-icons.mjs')}`, {
+      stdio: 'inherit',
+    });
     log.ok('icons regenerated');
   } catch (e) {
     log.warn(`icon regen failed: ${e.message}`);
@@ -1065,7 +1123,7 @@ function computeApplyHash() {
     join(ROOT, 'branding', 'brand.json'),
     join(ROOT, 'branding', 'logo.svg'),
     fileURLToPath(import.meta.url), // this script
-    join(ROOT, 'native', 'icons', 'generate-icons.mjs'),
+    join(ROOT, 'scripts', 'native', 'icons', 'generate-icons.mjs'),
   ];
   const h = createHash('sha256');
   for (const p of inputs) {
@@ -1166,6 +1224,7 @@ function apply() {
   applyManifest(brand);
   applyAppHtml(brand);
   applyErrorHtml(brand);
+  applyBookmarklet(brand);
 
   log.step('Fastlane');
   applyFastlaneAppfile(brand);
@@ -1173,6 +1232,9 @@ function apply() {
 
   log.step('Build scripts');
   applyAddXcodeTargets(brand);
+
+  log.step('Release tooling');
+  applyReleasePleaseConfig(brand);
 
   log.step('Docs');
   applyAGENTSMd(brand);
