@@ -45,7 +45,7 @@ These are non-negotiable. Compaction MUST NOT lose these.
 | 7 | README banner copy | ✓ done | `4247150` | `branding/README-banner.md` (the actual `README.md` swap happens at Task 9) |
 | 8 | Social card spec (HTML/CSS 1200×630 OG) | ✓ done | `27ed486` | `branding/SOCIAL-CARD.md` + `branding/assets/social-card.html` |
 | 9 | brand.json update + apply-brand propagation | ✓ done | `aee85ae` | 35 files: identifiers, URLs, permissions, copyright, store-listing prose. Colors/extensions/icons deferred to Task 10. |
-| 10 | Color sweep + SvelteKit UI wiring + prose sweep | **in progress** | — | Sub-tasks: 10.1 README swap (✓ `d2126ba`), 10.2 .md prose sweep (✓ `e398610`), 10.3 helper-script comment sweep (pending), 10.4 self-host fonts (pending), 10.5 color tokens in brand.json + ui/src/app.css (pending), 10.6 component sweep for hardcoded colors (pending) |
+| 10 | Color sweep + SvelteKit UI wiring + prose sweep | **in progress** | — | Sub-tasks: 10.1 README swap (✓ `d2126ba`), 10.2 .md prose sweep (✓ `e398610`), 10.3 source-code career-ops → heron sweep (✓ `51ec918`), 10.4 self-host fonts (pending), 10.5 color tokens in brand.json + ui/src/app.css (pending), 10.6 component sweep for hardcoded colors (pending), 10.7 Xcode + Android extension folder rename (deferred — apply-brand has partial-update bug on Android Brand.kt that blocks until this lands) |
 | 11 | Press kit structure + draft copy | pending | — | `branding/PRESS-KIT.md`; optionally render to PDF via `anthropic-skills:pdf` |
 
 ## Locked decisions (do not re-litigate without explicit user pushback)
@@ -290,3 +290,54 @@ verification → move on. Never batch tasks.
   uninstall node@25.9.0` or `mise reshim` is run by the user.
 
   Task 7 commit: `4247150`. Task 8 commit: `27ed486`. Task 9 commit: `aee85ae`.
+
+- 2026-05-15 (continued) — Task 10 in progress. Sub-tasks landed:
+
+  - **10.1 (`d2126ba`)** — Banner swap. README.md top section replaced
+    with the spec from `branding/README-banner.md`. Wordmark-only
+    image (lockup-stacked deferred until real mascot). 3 badges (was 8),
+    4-link nav, the BRAND.md origin paragraph verbatim, 9-bullet
+    feature list, "Why local-first" section, 4-line quickstart.
+    Markdownlint clean (banner spec was un-indented to satisfy MD023).
+
+  - **10.2 (`e398610`)** — Prose sweep across 38 .md files. Mechanical
+    `Career Ops` → `Heron` + `career-ops` → `heron` + `Career-Ops` /
+    `Career-ops` → `Heron`. Plus follow-on proper-noun capitalization
+    (mid-sentence `heron` → `Heron`). Forward-reference URLs
+    (`kaelys-js/career-ops` → `heron/heron`) — git remote rename
+    pending until `heron` GH org gets created. Legitimate-historical
+    preserved: `santifer/career-ops` upstream URL,
+    `santifer.io/career-ops-system` case-study URL, branding spec
+    docs that reference the rename source.
+
+  - **10.3 (`51ec918`)** — Source code sweep. 132 files: 65 TS/Svelte,
+    22 .mjs, 4 .py, 11 .swift, 4 .kt, plus configs. Internal API
+    renames: `career-ops:notify` CustomEvent → `heron:notify`,
+    `career-ops:theme` localStorage key → `heron:theme`. Capacitor
+    iosScheme fix `'careerops'` → `'heron'`. Preserved: Java/Kotlin
+    package paths (`com.resistjs.careerops/`) + Xcode extension folder
+    names (CareerOps*) until full structural rename lands. New
+    `.editorconfig` rule disables ktlint
+    `property-naming` for `*.kt` (Brand.kt's camelCase mirrors
+    Swift+TS constants — intentional). Typecheck still 0/0/0.
+
+  - **10.4 (next)** — Self-host fonts: Fraunces (display) + Inter
+    (body) + IBM Plex Mono (data) under `ui/static/fonts/`, replacing
+    Google Fonts CDN imports.
+
+  - **10.5 (then)** — Update `branding/brand.json::colors` to the
+    Heron palette (Slate `#4a5b6d`, Dawn `#c89b4a`, Reed `#7a8c6d`,
+    warm-paper `#f7f5f0`, dark `#0e1014`, etc.), re-run apply-brand to
+    propagate splash + manifest colors, then wire the full 22-token
+    color system into `ui/src/app.css`.
+
+  - **10.6 (then)** — Grep component code for hardcoded color
+    literals (`#5b6cff`, `#34d399`, etc.) and migrate to CSS tokens.
+
+  - **10.7 (deferred)** — Xcode extension folder rename
+    (CareerOps{Widget,LiveActivity,ShareExtension,Watch} → Heron*)
+    + Android package rename (com.resistjs.careerops → com.heron.app).
+    Blocked on Xcode project.pbxproj surgery + Android refactor;
+    apply-brand has a partial-update bug on Brand.kt that surfaces here
+    (bundleId/urlScheme/keychainService not updated, stays on legacy
+    until the package rename lands).
