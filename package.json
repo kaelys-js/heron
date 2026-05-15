@@ -113,6 +113,7 @@
     "validate:markdown": "markdownlint-cli2",
     "validate:plists": "python3 scripts/system/validate-plists.py",
     "validate:tiny-configs": "node scripts/system/validate-tiny-configs.mjs",
+    "validate:version-sync": "node scripts/system/validate-version-sync.mjs",
     "validate:xml": "bash scripts/system/validate-xml.sh",
     "verify": "turbo test"
   },

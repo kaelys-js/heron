@@ -144,6 +144,14 @@ jobs:
         # new prod build without an explicit version-bump PR.
         run: pnpm validate:exact-versions
 
+      - name: Version-source sync (release-please vs manual bumps)
+        # Asserts the 5 places we store the project version stay equal:
+        # package.json (root + ui + electron) + VERSION (plain-text, the
+        # update-system.mjs probe target) + .release-please-manifest.
+        # release-please auto-bumps all 5 on real releases; this catches
+        # manual / partial bumps that bypass the release-please PR flow.
+        run: pnpm validate:version-sync
+
       - name: oxlint (Rust-based JS/TS linter — all rules disabled)
         # All rules currently OFF in .oxlintrc.jsonc per the user's
         # "wire it up but disable everything for now" directive.
