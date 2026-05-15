@@ -195,8 +195,12 @@ coverage/
 *.lcov
 .nyc_output/
 .vitest/
+.vitest-attachments/
+**/.vitest-attachments/
 test-results/
 playwright-report/
+# Vitest browser-mode failure screenshots — regenerated on each run.
+**/__screenshots__/
 playwright/.cache/
 *.tap
 
