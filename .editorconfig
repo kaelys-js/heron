@@ -2,8 +2,16 @@
 # https://editorconfig.org
 #
 # Picked up automatically by VS Code, JetBrains, vim, emacs, Sublime,
-# nano, Xcode (via a plugin), and Android Studio. Matches the biome /
-# prettier configuration so the saved file already passes format-check.
+# nano, Xcode (via a plugin), and Android Studio. The settings here
+# DELIBERATELY mirror biome.jsonc + .prettierrc.json so saving a file
+# in your editor produces output that already passes the lefthook
+# pre-commit gate.
+#
+# If you change any of the values below, mirror the change in
+# biome.jsonc (formatter.{indentStyle,indentWidth,lineWidth,lineEnding}
+# block + javascript.formatter block) AND .prettierrc.json so .svelte
+# files stay in sync with .ts. Drift between these three files is the
+# #1 cause of "the editor formats it differently than the hook" pain.
 
 root = true
 
