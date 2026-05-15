@@ -23,7 +23,7 @@ pnpm release major
 pnpm release 1.7.3         # explicit version
 ```
 
-Each maps to a script under `scripts/native/`. `make` targets exist too if you prefer (`make dev-desktop`, `make release V=patch`, etc.).
+Each maps to a script under `scripts/native/`.
 
 ## First-time setup — what `pnpm setup:native` does
 
