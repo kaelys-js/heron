@@ -45,7 +45,7 @@ from lib_playwright_auth import (
     launch_persistent,
     is_logged_in_indeed,
     humanize,
-    USER_DATA_DIRS,
+    user_data_dir,
 )
 
 ROOT = Path(__file__).resolve().parent
@@ -286,8 +286,8 @@ def main():
     APPLICATIONS_MD = profile_path(profile_id, "applications", user_id=user_id)
     SCAN_HISTORY_TSV = profile_path(profile_id, "scan-history", user_id=user_id)
 
-    udd = USER_DATA_DIRS["indeed"]
-    if not udd.exists():
+    udd = user_data_dir("indeed")
+    if not (udd / "Default" / "Cookies").exists():
         print(
             f"ERROR: {udd} not found. Run `.venv/bin/python lib_playwright_auth.py --portal indeed --login` first.",
             file=sys.stderr,

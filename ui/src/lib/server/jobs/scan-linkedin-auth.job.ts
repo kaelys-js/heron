@@ -1,7 +1,8 @@
 /**
  * Authenticated LinkedIn scrape — wraps `scan-linkedin-auth.py`.
  *
- * Uses the persistent Playwright session at .playwright-linkedin/ (saved
+ * Uses the per-user persistent Playwright session at
+ * data/users/{uid}/.playwright-linkedin/ (saved
  * by the Connect LinkedIn flow on /sources). On success, recordSuccess
  * for the `linkedin-auth` source so the dashboard reflects health. On
  * failure (session expired, captcha, network), recordFailure increments

@@ -93,8 +93,12 @@ from lib_apply import (  # noqa: E402
     auto_decline_eeo,
 )
 from lib_profiles import resolve_profile_arg, resolve_user_arg, profile_path  # noqa: E402
+from lib_playwright_auth import user_data_dir as _resolve_user_data_dir  # noqa: E402
 
-USER_DATA_DIR = REPO_ROOT / ".playwright-greenhouse"
+# Per-user Playwright session dir for Greenhouse — resolves to
+# data/users/{uid}/.playwright-greenhouse/ under multi-user, or
+# data/profiles/_shared/.playwright-greenhouse/ for legacy single-user.
+USER_DATA_DIR = _resolve_user_data_dir("greenhouse")
 DISPATCHER_JOB_ID: str = ""
 
 

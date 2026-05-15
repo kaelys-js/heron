@@ -64,12 +64,10 @@ const SKIP_DIRS = new Set([
   '.venv',
   'venv',
   '.git',
-  '.playwright-linkedin',
-  '.playwright-indeed',
-  '.playwright-greenhouse',
-  '.playwright-ashby',
-  '.playwright-lever',
-  '.playwright-workday',
+  // Note: per-user Playwright session dirs (.playwright-{portal}/) now live
+  // under data/users/{uid}/ or data/profiles/_shared/ — both covered by the
+  // `data` entry below. No repo-root .playwright-* dirs after the
+  // multi-user migration.
   'DerivedData',
   'SourcePackages',
   'data', // gitignored user-runtime data

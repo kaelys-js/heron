@@ -12,7 +12,7 @@ USAGE
 
   from lib_playwright_auth import (
       launch_persistent, is_logged_in_linkedin, is_logged_in_indeed,
-      login_interactive, humanize, USER_DATA_DIRS,
+      login_interactive, humanize, user_data_dir,
   )
 
   # One-shot login (headed, blocks until verified)
@@ -65,23 +65,65 @@ except ImportError:
 ROOT = Path(__file__).resolve().parent
 REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 
-# One persistent Chromium profile per portal. State (cookies, localStorage,
-# cache) lives inside these dirs — wiping the dir disconnects the user.
-USER_DATA_DIRS: dict[str, Path] = {
-    "linkedin": REPO_ROOT / ".playwright-linkedin",
-    "indeed": REPO_ROOT / ".playwright-indeed",
-}
+# One persistent Chromium profile per portal PER USER. State (cookies,
+# localStorage, cache) lives inside these dirs — wiping the dir
+# disconnects that user. Under multi-user (CAREER_OPS_USER_ID set):
+#   data/users/{uid}/.playwright-{portal}/
+# Legacy single-user (SYSTEM_USER_ID fallback):
+#   data/profiles/_shared/.playwright-{portal}/
+#
+# CRITICAL: the persistent dir IS the credential. Two users on one
+# machine MUST NOT share these dirs — otherwise Alice's apply would
+# post as Bob and vice versa. See docs/security.md.
+KNOWN_PORTALS: frozenset[str] = frozenset(
+    {
+        "linkedin",
+        "indeed",
+        "greenhouse",
+        "ashby",
+        "lever",
+        "workday",
+        "recruitee",
+        "smartrecruiters",
+        "workable",
+        "personio",
+        "teamtailor",
+    }
+)
 
 # Public so callers can reuse for `--check-session` etc.
 LOGIN_TIMEOUT_S = 5 * 60  # 5 min for the user to complete the headed login
 PROBE_TIMEOUT_MS = 15_000  # navigation timeouts during is_logged_in_* probes
 
 
-def _user_data_dir(portal: str) -> Path:
-    if portal not in USER_DATA_DIRS:
-        raise ValueError(f"Unknown portal: {portal!r}. Known: {list(USER_DATA_DIRS)}")
-    USER_DATA_DIRS[portal].mkdir(parents=True, exist_ok=True)
-    return USER_DATA_DIRS[portal]
+def user_data_dir(portal: str) -> Path:
+    """Resolve the persistent Chromium dir for the given portal + active user.
+
+    The active user is read from CAREER_OPS_USER_ID at call time so the
+    same Python process can switch between users via env mutation (rare,
+    but well-defined: each spawn from the orchestrator gets its own env).
+
+    Exported for callers that need to test existence before spawning a
+    browser (the "ERROR: not logged in" preflight in scan-linkedin-auth
+    etc.). Internal users should prefer launch_persistent() which calls
+    this transparently.
+    """
+    if portal not in KNOWN_PORTALS:
+        raise ValueError(f"Unknown portal: {portal!r}. Known: {sorted(KNOWN_PORTALS)}")
+    # Lazy import so this module stays usable for tooling that doesn't
+    # have lib_profiles on the path (lefthook hooks, etc.).
+    from lib_profiles import resolve_user_arg, SYSTEM_USER_ID  # noqa: E402
+
+    user_id = resolve_user_arg()
+    if user_id == SYSTEM_USER_ID:
+        # Legacy single-user fallback — under the _shared escape-hatch
+        # so the layout reads as "every dir under profiles/ is either
+        # a profile or _shared".
+        udd = REPO_ROOT / "data" / "profiles" / "_shared" / f".playwright-{portal}"
+    else:
+        udd = REPO_ROOT / "data" / "users" / user_id / f".playwright-{portal}"
+    udd.mkdir(parents=True, exist_ok=True)
+    return udd
 
 
 @contextmanager
@@ -95,7 +137,7 @@ def launch_persistent(
     `headed=True` is for the one-time login flow; the user has to see the
     browser to type credentials. `headed=False` is the headless scrape mode.
     """
-    udd = _user_data_dir(portal)
+    udd = user_data_dir(portal)
     with sync_playwright() as pw:
         ctx = pw.chromium.launch_persistent_context(
             user_data_dir=str(udd),
@@ -223,8 +265,17 @@ def check_session(portal: Literal["linkedin", "indeed"]) -> bool:
     """Quick headless probe — used by the /sources page's Test button.
     Spawns a fresh browser, checks login state, exits. Doesn't touch any
     state beyond reading it."""
-    udd = USER_DATA_DIRS.get(portal)
-    if udd is None or not udd.exists():
+    if portal not in KNOWN_PORTALS:
+        return False
+    # user_data_dir creates the dir if missing; check whether it
+    # contains a real session (cookies file is the canonical marker
+    # set by Chromium on first persistent write).
+    try:
+        udd = user_data_dir(portal)
+    except ValueError:
+        return False
+    cookies = udd / "Default" / "Cookies"
+    if not cookies.exists():
         return False
     is_logged_in = is_logged_in_linkedin if portal == "linkedin" else is_logged_in_indeed
     with launch_persistent(portal, headed=False) as ctx:

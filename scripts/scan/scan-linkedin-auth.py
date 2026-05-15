@@ -55,7 +55,7 @@ from lib_playwright_auth import (
     launch_persistent,
     is_logged_in_linkedin,
     humanize,
-    USER_DATA_DIRS,
+    user_data_dir,
 )
 
 
@@ -333,8 +333,8 @@ def main():
     APPLICATIONS_MD = profile_path(profile_id, "applications", user_id=user_id)
     SCAN_HISTORY_TSV = profile_path(profile_id, "scan-history", user_id=user_id)
 
-    udd = USER_DATA_DIRS["linkedin"]
-    if not udd.exists():
+    udd = user_data_dir("linkedin")
+    if not (udd / "Default" / "Cookies").exists():
         print(
             f"ERROR: {udd} not found. Run `.venv/bin/python lib_playwright_auth.py --portal linkedin --login` first.",
             file=sys.stderr,

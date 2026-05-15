@@ -52,7 +52,7 @@ except ImportError:
 from lib_playwright_auth import (
     launch_persistent,
     is_logged_in_linkedin,
-    USER_DATA_DIRS,
+    user_data_dir,
 )
 
 
@@ -81,8 +81,8 @@ def extract_profile_text(url: str) -> str:
     """Visit the URL using the saved LinkedIn session and pull the visible
     text content. Scrolls a few times to trigger lazy-loaded sections
     (Experience / Education / Skills are commonly below the fold)."""
-    udd = USER_DATA_DIRS["linkedin"]
-    if not udd.exists():
+    udd = user_data_dir("linkedin")
+    if not (udd / "Default" / "Cookies").exists():
         print(
             "ERROR: LinkedIn session not connected. Run "
             "`python linkedin-easy-apply.py --login` or use the /sources page first.",

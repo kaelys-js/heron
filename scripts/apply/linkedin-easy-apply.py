@@ -46,17 +46,23 @@ except ImportError:
     print("ERROR: pyyaml not installed. Run:\n  .venv/bin/pip install pyyaml")
     sys.exit(1)
 
-# Shared Playwright session helpers — same persistent profile dir
-# (.playwright-linkedin/) the new scan-linkedin-auth.py uses, so a single
-# `--login` works for both apply + scrape.
-from lib_playwright_auth import launch_persistent, login_interactive, USER_DATA_DIRS
+# Shared Playwright session helpers — same persistent profile dir as
+# scan-linkedin-auth.py uses, so a single `--login` works for both apply
+# + scrape. user_data_dir() resolves PER USER under multi-user:
+#   data/users/{uid}/.playwright-linkedin/
+# Legacy single-user installs land at
+#   data/profiles/_shared/.playwright-linkedin/
+from lib_playwright_auth import launch_persistent, login_interactive, user_data_dir
 
 
 ROOT = Path(__file__).parent
 REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
-USER_DATA_DIR = USER_DATA_DIRS["linkedin"]  # backward-compat alias
+# Backward-compat alias; resolved lazily on each access so the active
+# CAREER_OPS_USER_ID env var (set by the orchestrator per-spawn) drives
+# the chosen dir.
+USER_DATA_DIR = user_data_dir("linkedin")
 
 from lib_profiles import resolve_profile_arg, resolve_user_arg, profile_path, ensure_profile_dirs
 
