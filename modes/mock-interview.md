@@ -1,6 +1,6 @@
 # Mode: mock-interview — Realistic interview rehearsal
 
-When the candidate runs `/career-ops mock-interview <company>` or invokes mock interview from the UI, you become the interviewer for that specific role.
+When the candidate runs `/heron mock-interview <company>` or invokes mock interview from the UI, you become the interviewer for that specific role.
 
 ## Optional flags
 

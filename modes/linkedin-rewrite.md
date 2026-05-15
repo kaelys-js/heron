@@ -149,7 +149,7 @@ REWRITE_PATH: {relative-path}
   left for the user to fill in.
 - Calibrated to the user's actual CV + archetype + target role — read
   them carefully before drafting.
-- Banned words (career-ops standard list applies): passionate,
+- Banned words (heron standard list applies): passionate,
   results-driven, team player, leveraging, synergy, robust, scalable
   (as a single adjective without numbers), seasoned, hard-working.
 - Each section's "Why this works" is one sentence — not an essay.

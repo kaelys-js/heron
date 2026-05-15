@@ -1,4 +1,4 @@
-# career-ops native apps
+# Heron native apps
 
 You should not need to read this file. The commands are:
 
@@ -31,11 +31,11 @@ Interactive wizard, ~5 minutes:
 
 1. Checks tooling (gh, Xcode, CocoaPods, Bundler, Homebrew). Offers to install anything missing via `brew install`.
 2. Verifies `gh auth status`; runs `gh auth login` if needed.
-3. Prompts for Apple Developer identifiers — `APPLE_ID`, `APPLE_TEAM_ID`. Stored to `~/.career-ops/native-state.json` for re-runs.
-4. Opens `appleid.apple.com` in your browser; you generate an App-Specific Password named "career-ops CI" and paste it. The wizard masks the input.
+3. Prompts for Apple Developer identifiers — `APPLE_ID`, `APPLE_TEAM_ID`. Stored to `~/.heron/native-state.json` for re-runs.
+4. Opens `appleid.apple.com` in your browser; you generate an App-Specific Password named "heron CI" and paste it. The wizard masks the input.
 5. Opens `appstoreconnect.apple.com`; you create an App Store Connect API key (App Manager role), download the `.p8`, the wizard asks for its path and reads it.
 6. Lists code-signing identities in your Keychain via `security find-identity`. Picks the first `Developer ID Application` cert, asks you to set an export password, exports to `.p12` via `security export`.
-7. Writes everything to `~/.career-ops/native-env` (mode 600) so local builds (`pnpm build:desktop`, `pnpm build:ios`) can sign.
+7. Writes everything to `~/.heron/native-env` (mode 600) so local builds (`pnpm build:desktop`, `pnpm build:ios`) can sign.
 8. Pushes the same values to GitHub Actions secrets via `gh secret set` so CI can sign.
 9. Runs `scripts/native/add-xcode-targets.rb` to programmatically add the 3 Xcode extension targets (Widget, Live Activity, Share Extension) using the `xcodeproj` Ruby gem. No Xcode dialogs.
 

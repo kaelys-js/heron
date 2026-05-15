@@ -107,6 +107,6 @@ FINE_PRINT_PATH: {relative-path}
 - Practice law. Frame everything as "consider asking an employment
   lawyer if the dollar amount makes it worth it".
 - Reproduce more than 20 consecutive words from the offer letter
-  verbatim (per career-ops copyright rules).
+  verbatim (per Heron copyright rules).
 - Tell the candidate to sign or not sign. The summary helps them
   decide; doesn't decide for them.

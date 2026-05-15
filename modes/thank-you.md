@@ -95,7 +95,7 @@ which clears the "thank-you owed" Inbox card.
 - Don't write a 3-paragraph essay. The interviewer has 200 unread emails.
 - Don't repeat your CV at them — they read it before the call.
 - Don't end with "let me know if you have any other questions" — passive.
-- Don't use "I'm passionate about" — banned word in career-ops.
+- Don't use "I'm passionate about" — banned word in Heron.
 - Don't paste in a story they already heard during the call.
 
 ## When the user supplies NO `talkingPoints`

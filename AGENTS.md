@@ -1,4 +1,4 @@
-# Career-Ops -- AI Job Search Pipeline
+# Heron -- AI Job Search Pipeline
 
 ## Heritage
 
@@ -35,17 +35,17 @@ node scripts/system/update-system.mjs check
 
 Parse the JSON output:
 - `{"status": "update-available", "local": "1.0.0", "remote": "1.1.0", "changelog": "..."}` → tell the user:
-  > "career-ops update available (v{local} → v{remote}). Your data (CV, profile, tracker, reports) will NOT be touched. Want me to update?"
+  > "heron update available (v{local} → v{remote}). Your data (CV, profile, tracker, reports) will NOT be touched. Want me to update?"
   If yes → run `node scripts/system/update-system.mjs apply`. If no → run `node scripts/system/update-system.mjs dismiss`.
 - `{"status": "up-to-date"}` → say nothing
 - `{"status": "dismissed"}` → say nothing
 - `{"status": "offline"}` → say nothing
 - `{"status": "no-remote-version"}` → say nothing (checker reached GitHub but neither VERSION nor the latest release tag parsed as semver — treat as a silent non-failure, same as offline)
 
-The user can also say "check for updates" or "update career-ops" at any time to force a check.
+The user can also say "check for updates" or "update Heron" at any time to force a check.
 To rollback: `node scripts/system/update-system.mjs rollback`
 
-## What is career-ops
+## What is Heron
 
 AI-powered, CLI-agnostic job search automation: pipeline tracking, offer evaluation, CV generation, portal scanning, batch processing. Runs on any AI coding CLI that follows the [open agent skill standard](https://agentskills.io) (Claude Code, Codex, Gemini, OpenCode, Qwen, Copilot, Kimi).
 
@@ -74,7 +74,7 @@ AI-powered, CLI-agnostic job search automation: pipeline tracking, offer evaluat
 
 ### Multi-Profile Layout (read this first)
 
-Career-ops supports MULTIPLE distinct career identities ("profiles") per install AND multiple users sharing one machine. Per-profile content lives under `data/users/{userId}/profiles/{slug}/` (or `data/profiles/{slug}/` in legacy single-user mode):
+Heron supports MULTIPLE distinct career identities ("profiles") per install AND multiple users sharing one machine. Per-profile content lives under `data/users/{userId}/profiles/{slug}/` (or `data/profiles/{slug}/` in legacy single-user mode):
 
 ```text
 data/users/{userId}/profiles/{slug}/
@@ -111,7 +111,7 @@ data/users/{userId}/profiles/_shared/
 
 **Mode prompts use absolute paths.** Every `modes/*.md` prompt references files via `__TOKEN__` placeholders (e.g. `__CV__`, `__REPORTS__`, `__STORY_BANK__`). The dashboard's `spawnAgentWithMode()` resolves each token to the active profile's absolute on-disk path BEFORE handing the prompt to the AI CLI. No repo-root symlinks, no shell-cwd magic — the AI sees fully-qualified paths and can never read the wrong profile's data. Token vocabulary documented in `modes/_TOKENS.md`.
 
-**Invocation is dashboard-only.** The slash-command flow (`claude "/career-ops oferta <url>"` in a terminal) has been deprecated. Mode prompts are loaded by the dashboard's orchestrator, substituted, and passed to Claude via `--append-system-prompt-file`. Direct-CLI invocation is not supported.
+**Invocation is dashboard-only.** The slash-command flow (`claude "/heron oferta <url>"` in a terminal) has been deprecated. Mode prompts are loaded by the dashboard's orchestrator, substituted, and passed to Claude via `--append-system-prompt-file`. Direct-CLI invocation is not supported.
 
 **When the user asks for personalization**, ALWAYS write to the active profile's files at `data/users/{userId}/profiles/{slug}/...` (or `data/profiles/{slug}/...` in legacy single-user mode). Never write to `data/profiles/default/` directly when the user might be on a different profile — let the dashboard's active-profile selection drive the path.
 
@@ -188,8 +188,8 @@ Store any insights the user shares in `config/profile.yml` (under narrative), `m
 Once all files exist, confirm:
 > "You're all set! You can now:
 > - Paste a job URL to evaluate it
-> - Run `/career-ops scan` (or `/career-ops-scan` if using OpenCode) to search portals
-> - Run `/career-ops` to see all commands
+> - Run `/heron scan` (or `/heron-scan` if using OpenCode) to search portals
+> - Run `/heron` to see all commands
 >
 > Everything is customizable — just ask me to change anything.
 >
@@ -198,7 +198,7 @@ Once all files exist, confirm:
 Then suggest automation:
 > "Want me to scan for new offers automatically? I can set up a recurring scan every few days so you don't miss anything. Just say 'scan every 3 days' and I'll configure it."
 
-If the user accepts, use the `/loop` or `/schedule` skill (if available) to set up a recurring `/career-ops scan` (or `/career-ops-scan` if using OpenCode). If those aren't available, suggest adding a cron job or remind them to run `/career-ops scan` (or `/career-ops-scan` if using OpenCode) periodically.
+If the user accepts, use the `/loop` or `/schedule` skill (if available) to set up a recurring `/heron scan` (or `/heron-scan` if using OpenCode). If those aren't available, suggest adding a cron job or remind them to run `/heron scan` (or `/heron-scan` if using OpenCode) periodically.
 
 ### Personalization
 
@@ -363,7 +363,7 @@ CI uses `jdx/mise-action@v2` so the same versions install in GitHub runners as o
 | **All platform icons** (calls `scripts/native/icons/generate-icons.mjs` at the end) | .icns / .ico / iOS appiconset / web manifest sizes |
 
 **Rules:**
-- Source code reads brand from generated `brand.ts` / `Brand.swift`. Never hardcode `com.resistjs.careerops`, `careerops://`, `_career-ops._tcp` in runtime code.
+- Source code reads brand from generated `brand.ts` / `Brand.swift`. Never hardcode `com.resistjs.heron`, `heron://`, `_heron._tcp` in runtime code.
 - Comments / docstrings may reference literal values for documentation clarity (they don't affect runtime).
 - Vitest's `capacitor.integration.test.ts` checks every consumer matches `brand.json` — drift fails CI.
 - Rebrand workflow: edit `branding/brand.json` → `pnpm brand:apply` → commit. All configs update in one shot.
@@ -438,11 +438,11 @@ AGENT_CLI=codex pnpm dev
 AGENT_CLI=opencode pnpm dev
 ```
 
-**Caveat**: career-ops still passes Claude-Code-specific flags to every
+**Caveat**: Heron still passes Claude-Code-specific flags to every
 spawn (`--dangerously-skip-permissions`, `--append-system-prompt-file`,
 `--model sonnet`). Other CLIs may need adapter shims that translate or
 strip those flags. Track per-CLI compatibility in
-[issues](https://github.com/kaelys-js/career-ops/issues) — the abstraction
+[issues](https://github.com/heron/heron/issues) — the abstraction
 ships intentionally minimal so adapter work is incremental and discoverable.
 
 Single source of truth: `ui/src/lib/config/cli.ts`.

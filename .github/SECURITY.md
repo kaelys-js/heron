@@ -7,7 +7,7 @@
 Use one of:
 
 1. **Preferred — GitHub Private Vulnerability Reporting:**
-   [github.com/kaelys-js/career-ops/security/advisories/new](https://github.com/kaelys-js/career-ops/security/advisories/new)
+   [github.com/heron/heron/security/advisories/new](https://github.com/heron/heron/security/advisories/new)
    Encrypted in transit, reviewed by the maintainer only, and gives you a private
    advisory you can collaborate on without leaking details.
 
@@ -39,7 +39,7 @@ Security issues in the following are in scope:
   patches land via Dependabot)
 - Issues requiring physical access to the user's machine
 - Social engineering attacks
-- career-ops is a **local** tool — there is no hosted service to attack
+- Heron is a **local** tool — there is no hosted service to attack
 - Self-XSS / clickjacking on locally-running dev servers
 
 ## Disclosure Policy

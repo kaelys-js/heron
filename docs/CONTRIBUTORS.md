@@ -1,6 +1,6 @@
 # Contributors
 
-career-ops exists because of the people who build with it. thank you.
+Heron exists because of the people who build with it. thank you.
 
 ## Core Contributors
 
@@ -8,7 +8,7 @@ Contributors with sustained technical ownership over specific areas. Full author
 
 - **[@bracketouverte](https://github.com/bracketouverte)** (Michael) — Technical contributor focused on scan mode and ATS research. Running daily support in Discord.
 
-- **[@piscespieces](https://github.com/piscespieces)** (Andres Urdaneta) — Docs architect. Maintains the getting-started guides at [career-ops-docs.vercel.app](https://career-ops-docs.vercel.app). Shipped [PR #286](https://github.com/santifer/career-ops/pull/286) (portals cleanup). Authored the comparative analysis that defines what career-ops is vs. isn't.
+- **[@piscespieces](https://github.com/piscespieces)** (Andres Urdaneta) — Docs architect. Maintains the getting-started guides at [heron-docs.vercel.app](https://heron-docs.vercel.app). Shipped [PR #286](https://github.com/santifer/career-ops/pull/286) (portals cleanup). Authored the comparative analysis that defines what Heron is vs. isn't.
 
 ## Shipping with the project
 
@@ -20,7 +20,7 @@ Contributors with sustained technical ownership over specific areas. Full author
 
 ## Community Voices
 
-Members who landed roles using career-ops and opted in to share their journey publicly. Their tips and patterns shape how we explain the project.
+Members who landed roles using Heron and opted in to share their journey publicly. Their tips and patterns shape how we explain the project.
 
 - **[@logumani2112](https://github.com/logumani2112)** — Landed Backend Developer (.NET) at an IT services company. 50 listings evaluated, 1 month from first scan to offer. Most useful feature: A–F evaluation scoring. Their tip: *"Focus on quality over quantity. Use the evaluation scoring to prioritize the right opportunities and tailor your resume for each role."* ([#440](https://github.com/santifer/career-ops/issues/440))
 

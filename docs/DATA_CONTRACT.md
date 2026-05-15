@@ -4,7 +4,7 @@ This document defines which files belong to the **system** (auto-updatable) and 
 
 ## Multi-Profile Layout
 
-Career-ops supports multiple distinct career identities ("profiles") per install. Each profile owns its own CV, targeting, pipeline, and applications data under `data/profiles/{slug}/`. The first install gets a `default` profile; users add more via `/onboarding?new=1` or `/profiles`.
+Heron supports multiple distinct career identities ("profiles") per install. Each profile owns its own CV, targeting, pipeline, and applications data under `data/profiles/{slug}/`. The first install gets a `default` profile; users add more via `/onboarding?new=1` or `/profiles`.
 
 **Globally shared infrastructure** is reused across every profile AND every user:
 - `.env` (API keys + IMAP creds — per-machine, NOT in git)
@@ -87,7 +87,7 @@ Token vocabulary (full list in `modes/_TOKENS.md`):
 | `__INTERVIEW_PREP__` | `data/users/{uid}/profiles/{slug}/interview-prep/` |
 | `__STORY_BANK__` | `data/users/{uid}/profiles/_shared/story-bank.md` (user-shared) |
 
-**Invocation:** dashboard-only. The slash-command flow (`claude "/career-ops oferta <url>"` in a terminal) was removed; mode prompts now contain `__TOKEN__` literals that only the dashboard's orchestrator knows how to resolve. Direct-CLI users would see the unresolved tokens as visible failure markers in their AI output.
+**Invocation:** dashboard-only. The slash-command flow (`claude "/heron oferta <url>"` in a terminal) was removed; mode prompts now contain `__TOKEN__` literals that only the dashboard's orchestrator knows how to resolve. Direct-CLI users would see the unresolved tokens as visible failure markers in their AI output.
 
 ## System Layer (safe to auto-update)
 
@@ -151,7 +151,7 @@ If you're writing a new utility script that needs per-profile paths:
 
 ## Status vocabularies
 
-career-ops tracks **two** status values per job, not one — the dashboard's
+heron tracks **two** status values per job, not one — the dashboard's
 pipeline stage and the applications.md canonical state. They're orthogonal,
 not equivalent. See [`docs/STATUS_MODEL.md`](docs/STATUS_MODEL.md) for the
 full mapping table and the reason both exist.

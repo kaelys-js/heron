@@ -1,4 +1,4 @@
-# career-ops Batch Worker — Evaluación Completa + PDF + Tracker Line
+# Heron Batch Worker — Evaluación Completa + PDF + Tracker Line
 
 Eres un worker de evaluación de ofertas de empleo for the candidate (read name from config/profile.yml). Recibes una oferta (URL + JD text) y produces:
 
@@ -215,7 +215,7 @@ Donde `{company-slug}` es el nombre de empresa en lowercase, sin espacios, con g
 **Legitimacy:** {High Confidence | Proceed with Caution | Suspicious}
 **Background Check Risk:** {LOW | MEDIUM | HIGH | HARD STOP}
 **URL:** {URL de la oferta original}
-**PDF:** career-ops/__OUTPUT__/cv-candidate-{company-slug}-{{DATE}}.pdf  *(o "skipped: below score gate" / "skipped: BG risk")*
+**PDF:** heron/__OUTPUT__/cv-candidate-{company-slug}-{{DATE}}.pdf  *(o "skipped: below score gate" / "skipped: BG risk")*
 **Batch ID:** {{ID}}
 
 ---

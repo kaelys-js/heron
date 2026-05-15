@@ -1,6 +1,6 @@
 # Testing
 
-career-ops uses Vitest (TS/Svelte) + XCTest (iOS) with Codecov-tracked
+heron uses Vitest (TS/Svelte) + XCTest (iOS) with Codecov-tracked
 coverage. The single entry point is `pnpm test` — everything below it
 is implementation detail.
 
@@ -197,7 +197,7 @@ import XCTest
 
 final class MyTests: XCTestCase {
   func testBrandConstants() {
-    XCTAssertEqual(Brand.urlScheme, "careerops")
+    XCTAssertEqual(Brand.urlScheme, "heron")
   }
 }
 ```

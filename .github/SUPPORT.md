@@ -1,14 +1,14 @@
 # Getting Help
 
-career-ops is an open source project maintained in limited time. Here's how to get help efficiently.
+heron is an open source project maintained in limited time. Here's how to get help efficiently.
 
 ## Where to ask
 
 | Question type | Where |
 |---|---|
-| **Bug** (something is broken) | [GitHub Issues](https://github.com/kaelys-js/career-ops/issues) — use the Bug Report template |
-| **Feature idea** | [GitHub Issues](https://github.com/kaelys-js/career-ops/issues) — use the Feature Request template |
-| **How do I...?** | [GitHub Discussions](https://github.com/kaelys-js/career-ops/discussions) or [Discord](https://discord.gg/8pRpHETxa4) |
+| **Bug** (something is broken) | [GitHub Issues](https://github.com/heron/heron/issues) — use the Bug Report template |
+| **Feature idea** | [GitHub Issues](https://github.com/heron/heron/issues) — use the Feature Request template |
+| **How do I...?** | [GitHub Discussions](https://github.com/heron/heron/discussions) or [Discord](https://discord.gg/8pRpHETxa4) |
 | **Setup help** | Check [docs/SETUP.md](docs/SETUP.md) first, then ask in [Discord](https://discord.gg/8pRpHETxa4) |
 | **Security vulnerability** | Email <hello@resist.js> — see [SECURITY.md](SECURITY.md) |
 

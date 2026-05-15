@@ -1,6 +1,6 @@
-# career-ops Trademark Policy
+# Heron Trademark Policy
 
-This document explains how the "career-ops" name and brand may be used.
+This document explains how the "heron" name and brand may be used.
 It complements — not replaces — the MIT [LICENSE](LICENSE) that governs
 the source code.
 
@@ -16,7 +16,7 @@ the source code.
 
 The MIT license grants broad freedoms to use, copy, modify, and
 redistribute the source code. It does not grant rights to the name
-"career-ops," its visual identity, or any associated brand assets.
+"heron," its visual identity, or any associated brand assets.
 Those are reserved by the upstream project's trademark holder and any
 successor entity stewarding the project; this fork (resist.js / Career
 Ops) uses the name under the upstream's permissive community policy.
@@ -31,10 +31,10 @@ The following uses are explicitly welcome:
 
 - **Forking and modifying the code** — per MIT, no permission needed.
 - **Describing compatibility, origin, and lineage** — "works with
-  career-ops," "based on career-ops," "fork of career-ops," "extends
-  career-ops" are all welcome and encouraged with attribution.
+  Heron," "based on Heron," "fork of Heron," "extends
+  Heron" are all welcome and encouraged with attribution.
 - **Naming a fork distinctly** — pick your own product name; mention
-  career-ops as origin if you like.
+  Heron as origin if you like.
 - **Educational, journalistic, and personal use** — blog posts,
   tutorials, videos, talks, papers, research.
 - **Community contributions** — using the name freely in PRs, issues,
@@ -46,20 +46,20 @@ The following uses are reserved because they cause — or can be
 reasonably perceived to cause — confusion about official affiliation,
 endorsement, or sponsorship:
 
-- **Product, service, or company names** that include "career-ops" or
+- **Product, service, or company names** that include "heron" or
   close variants. This includes prefixes, suffixes, and capitalizations:
-  "career-ops Cloud," "career-ops Pro," "career-ops SaaS," "Career-Ops
-  Hosted," "CareerOps by [vendor]," "Cloud career-ops," etc.
+  "Heron Cloud," "Heron Pro," "Heron SaaS," "Heron
+  Hosted," "CareerOps by [vendor]," "Cloud Heron," etc.
 - **Endorsement, sponsorship, or affiliation claims** in any context:
-  "Powered by career-ops," "Official career-ops," "Sponsored by
-  career-ops," "Partner of career-ops," "Featured by career-ops," and
+  "Powered by Heron," "Official Heron," "Sponsored by
+  Heron," "Partner of Heron," "Featured by Heron," and
   similar phrasings.
 - **Domain names, social handles, and app store listings** containing
-  "career-ops" or close variants for commercial purposes.
+  "heron" or close variants for commercial purposes.
 - **Logos, wordmarks, color schemes, and visual identity assets** in
   any commercial context.
 - **Compatibility certifications** that imply official testing or
-  approval ("career-ops Certified," "career-ops Verified").
+  approval ("heron Certified," "heron Verified").
 
 This list is illustrative, not exhaustive. The principle is: if your
 use suggests an official relationship that doesn't exist, please ask.
@@ -80,7 +80,7 @@ use case described.
 
 ## Why this policy exists
 
-career-ops is a community-built project used by tens of thousands of
+Heron is a community-built project used by tens of thousands of
 people. A clear brand allows the code to remain free, the documentation
 trustworthy, and contributors confident that no one is impersonating
 the project.
@@ -103,7 +103,7 @@ will be announced in [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-© 2026 resist.js (fork maintainer). The "career-ops"™ name and
+© 2026 resist.js (fork maintainer). The "heron"™ name and
 associated brand assets remain the property of the upstream project's
 trademark holder; this fork uses the name under the upstream's
 permissive community-use policy and does not claim trademark rights

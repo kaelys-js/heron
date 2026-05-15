@@ -1,6 +1,6 @@
 # Mode: negotiation — Offer negotiation playbook
 
-Triggered when an offer arrives. Run `/career-ops negotiation <company>` or invoke from the UI's negotiation panel.
+Triggered when an offer arrives. Run `/heron negotiation <company>` or invoke from the UI's negotiation panel.
 
 ## Inputs needed from the candidate
 

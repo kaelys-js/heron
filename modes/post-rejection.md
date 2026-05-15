@@ -1,6 +1,6 @@
 # Mode: post-rejection — Pattern analysis after rejections
 
-Triggered weekly OR after every 5 rejections. Run `/career-ops post-rejection` or auto-trigger from the UI.
+Triggered weekly OR after every 5 rejections. Run `/heron post-rejection` or auto-trigger from the UI.
 
 ## Goal
 
