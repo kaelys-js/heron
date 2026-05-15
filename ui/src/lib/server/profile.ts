@@ -21,7 +21,7 @@ import { profilePath, ensureProfileDirs } from './profile-paths';
 import { getActiveProfileId } from './profiles';
 
 /** Path to the example profile template — system-layer, shared, NOT per-profile. */
-const EXAMPLE_PATH = path.join(ROOT, 'config', 'profile.example.yml');
+const EXAMPLE_PATH = path.join(ROOT, 'examples', 'profile.example.yml');
 /** Path to the `modes/_profile.md` template — system-layer, shared, NOT per-profile. */
 const PROFILE_TEMPLATE = path.join(ROOT, 'modes', '_profile.template.md');
 

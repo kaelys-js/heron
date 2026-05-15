@@ -100,7 +100,7 @@ function checkPreflight(): void {
       if (!txt.trim() || !/^[a-zA-Z_]/m.test(txt)) {
         trip(
           'profile.yml looks empty or invalid',
-          'The autopilot reads config/profile.yml for archetypes, comp targets, and location policy. Fill it in or restore from profile.example.yml.',
+          'The autopilot reads config/profile.yml for archetypes, comp targets, and location policy. Fill it in or restore from examples/profile.example.yml.',
           { label: 'Open Profile', href: '/profile' },
         );
       }

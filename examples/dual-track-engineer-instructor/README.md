@@ -101,6 +101,6 @@ Dual-track candidates get read as overqualified for pure teaching roles ("you wi
 ## Related files
 
 - `../cv-example.md` -- single-track CV example for comparison.
-- `../../config/profile.example.yml` -- the canonical profile schema this example extends.
+- `../profile.example.yml` -- the canonical profile schema this example extends.
 - `../../modes/_shared.md` -- where archetypes feed into framing logic.
 - `../../.github/CONTRIBUTING.md` -- this example was contributed under "Add example CVs for different roles".

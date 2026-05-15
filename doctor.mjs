@@ -84,7 +84,7 @@ function checkProfile() {
     pass: false,
     label: 'config/profile.yml not found',
     fix: [
-      'Run: cp config/profile.example.yml config/profile.yml',
+      'Run: cp examples/profile.example.yml config/profile.yml',
       'Then edit it with your details',
     ],
   };
