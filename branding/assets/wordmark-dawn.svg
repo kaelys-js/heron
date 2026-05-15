@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Heron wordmark — Heron Dawn accent variant (#c89b4a) for special-
+  occasion moments only (landing-hero gold-strike, year-in-review,
+  press-kit cover). Not for everyday product UI use; Heron Dawn at
+  display size should be a deliberate moment, not a background.
+
+  PLACEHOLDER until letterforms are outlined to vector paths. See
+  wordmark.svg for the outline-to-paths upgrade instructions.
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 280 120"
+  role="img"
+  aria-label="Heron"
+>
+  <title>Heron</title>
+  <text
+    x="50%"
+    y="92"
+    text-anchor="middle"
+    fill="#c89b4a"
+    font-family="Fraunces, 'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times New Roman', Times, Georgia, serif"
+    font-size="96"
+    font-weight="700"
+    font-optical-sizing="auto"
+    font-variation-settings="'opsz' 96, 'SOFT' 0, 'wght' 700"
+    letter-spacing="-0.02em"
+  >Heron</text>
+</svg>

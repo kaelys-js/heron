@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Heron wordmark – universal currentColor variant. Inherits the text
+  color of the container, so a single file works in light, dark, and
+  themed contexts. Embed inside an element that sets the desired text
+  color; the SVG fill follows.
+
+  For fixed-color contexts (PDF, press kit, social cards), use the
+  -slate / -light / -dawn variants instead – they hard-bake the color.
+
+  PLACEHOLDER until letterforms are outlined to vector paths. Until
+  then, this SVG depends on Fraunces being loaded by the renderer. The
+  web UI loads Fraunces self-hosted (Task 9), so this works in-product.
+  For press kits / external embeds / contexts where Fraunces is not
+  guaranteed to load, run this through a vector editor or Claude
+  Design with this prompt: Outline this Fraunces Heron wordmark to
+  vector path elements, preserving the bold weight (wght 700), sharp
+  soft axis (SOFT 0), and display optical size (opsz 96).
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 280 120"
+  role="img"
+  aria-label="Heron"
+>
+  <title>Heron</title>
+  <text
+    x="50%"
+    y="92"
+    text-anchor="middle"
+    fill="currentColor"
+    font-family="Fraunces, 'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times New Roman', Times, Georgia, serif"
+    font-size="96"
+    font-weight="700"
+    font-optical-sizing="auto"
+    font-variation-settings="'opsz' 96, 'SOFT' 0, 'wght' 700"
+    letter-spacing="-0.02em"
+  >Heron</text>
+</svg>
