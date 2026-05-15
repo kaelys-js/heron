@@ -60,10 +60,12 @@ pre-commit:
     biome-format:
       # Formats non-svelte staged source files via Biome (fast Rust formatter).
       # Linting is intentionally NOT run — svelte-check covers type-level issues.
-      # Note: biome doesn't format YAML files — only ts/tsx/js/mjs/cjs/
-      # json/jsonc. YAML stays out of the glob so commits that touch ONLY
-      # workflow YAML don't trip "No files were processed" (exit 1).
-      glob: "*.{ts,tsx,js,mjs,cjs,json,jsonc}"
+      # Covers: ts/tsx/js/mjs/cjs (JS family), json/jsonc (configs),
+      # css (Tailwind 4 entry point — needs `tailwindDirectives: true` in
+      # biome.jsonc which we set), webmanifest (JSON syntax via overrides
+      # in biome.jsonc).
+      # NOT covered: YAML (yamllint owns), Svelte (prettier-svelte owns).
+      glob: "*.{ts,tsx,js,mjs,cjs,json,jsonc,css,webmanifest}"
       run: |
         pnpm exec biome format --write {staged_files} 2>/dev/null || true
         git add {staged_files} 2>/dev/null || true
@@ -82,12 +84,10 @@ pre-commit:
 
     biome-format-check:
       # Read-only verification after auto-format. Fails if anything still
-      # isn't formatted (e.g. a non-svelte file with weird quoting biome
-      # can't fix automatically). This is the hard gate.
-      # Note: biome doesn't format YAML files — only ts/tsx/js/mjs/cjs/
-      # json/jsonc. YAML stays out of the glob so commits that touch ONLY
-      # workflow YAML don't trip "No files were processed" (exit 1).
-      glob: "*.{ts,tsx,js,mjs,cjs,json,jsonc}"
+      # isn't formatted (e.g. a file with weird quoting biome can't fix
+      # automatically). This is the hard gate.
+      # Glob matches biome-format above — same coverage.
+      glob: "*.{ts,tsx,js,mjs,cjs,json,jsonc,css,webmanifest}"
       run: pnpm exec biome format {staged_files}
 
     prettier-svelte:
