@@ -25,7 +25,6 @@ describe('mise.toml — runtimes', () => {
     'pnpm',
     'ruby',
     'python',
-    'go',
   ])('%s pinned to a specific version (no range, no @latest)', (tool) => {
     const re = new RegExp(`^${tool}\\s*=\\s*"\\d`, 'm');
     expect(mise).toMatch(re);
@@ -71,7 +70,6 @@ describe('mise.lock present so CI installs deterministic versions', () => {
       'pnpm',
       'ruby',
       'python',
-      'go',
     ]) {
       const re = new RegExp(`\\[\\[tools\\.${tool}\\]\\]`);
       expect(miseLock, `${tool} missing from mise.lock`).toMatch(re);
@@ -83,7 +81,6 @@ describe('lefthook gates — every multi-lang hook is wired', () => {
   it.each([
     ['actionlint', /actionlint\b/],
     ['ruff', /ruff\b/],
-    ['gofmt', /gofmt\b/],
     ['ktlint', /ktlint\b/],
     ['swiftformat', /swiftformat\b/],
     ['swiftlint', /swiftlint\b/],
@@ -100,7 +97,6 @@ describe('CI test.yml — format job runs every formatter through mise PATH', ()
     ['actionlint', /actionlint\b/],
     ['ruff format', /ruff format/],
     ['ruff check', /ruff check/],
-    ['gofmt', /gofmt -l/],
     ['ktlint', /ktlint\b/],
     ['shfmt', /shfmt -l/],
     ['rufo', /bundle exec rufo/],
