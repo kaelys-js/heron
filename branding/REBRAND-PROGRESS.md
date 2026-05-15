@@ -42,9 +42,9 @@ These are non-negotiable. Compaction MUST NOT lose these.
 | 4 | Wordmark SVG (4 variants) | ✓ done | `e1ead03` | `branding/WORDMARK.md` + `branding/assets/wordmark-*.svg` |
 | 5 | Mascot brief + placeholder SVG | ✓ done | `fb8edc0` | `branding/MASCOT.md` + `branding/assets/mark-placeholder.svg` |
 | 6 | Voice & tone guide (20 phrases + 10 anti-patterns) | ✓ done | `9af2e73` | `branding/VOICE.md` |
-| 7 | README banner copy | ✓ done | `<this commit>` | `branding/README-banner.md` (the actual `README.md` swap happens at Task 9) |
-| 8 | Social card spec (HTML/CSS 1200×630 OG) | **next** | — | `branding/assets/social-card.html` + spec section |
-| 9 | brand.json update + apply-brand dry-run | **DESTRUCTIVE GATE** | — | Renames career-ops → heron across ~30 files. Explicit user approval required before run. |
+| 7 | README banner copy | ✓ done | `4247150` | `branding/README-banner.md` (the actual `README.md` swap happens at Task 9) |
+| 8 | Social card spec (HTML/CSS 1200×630 OG) | ✓ done | `<this commit>` | `branding/SOCIAL-CARD.md` + `branding/assets/social-card.html` |
+| 9 | brand.json update + apply-brand dry-run | **DESTRUCTIVE GATE — next** | — | Renames career-ops → heron across ~30 files. Explicit user approval required before run. |
 | 10 | apply-brand commit + SvelteKit UI wiring | pending | — | Color tokens into `ui/src/app.css`; font files self-hosted; component sweep for hardcoded colors |
 | 11 | Press kit structure + draft copy | pending | — | `branding/PRESS-KIT.md`; optionally render to PDF via `anthropic-skills:pdf` |
 
@@ -115,11 +115,15 @@ branding/COLORS.md             ← Task 2 (be3aa8c)
 branding/TYPOGRAPHY.md         ← Task 3 (e6f6dfc)
 branding/WORDMARK.md           ← Task 4 (e1ead03)
 branding/MASCOT.md             ← Task 5 (fb8edc0)
+branding/VOICE.md              ← Task 6 (9af2e73)
+branding/README-banner.md      ← Task 7 (4247150)
+branding/SOCIAL-CARD.md        ← Task 8 (<this commit>)
 branding/assets/wordmark.svg          ← Task 4 (currentColor)
 branding/assets/wordmark-slate.svg    ← Task 4
 branding/assets/wordmark-light.svg    ← Task 4
 branding/assets/wordmark-dawn.svg     ← Task 4
 branding/assets/mark-placeholder.svg  ← Task 5
+branding/assets/social-card.html      ← Task 8
 ```
 
 ## Files that WILL change at Task 9 (destructive)
@@ -221,12 +225,18 @@ verification → move on. Never batch tasks.
 
 ## Latest update
 
-- 2026-05-15 — Tasks 1–7 complete. Task 8 (social card spec) is next.
-  Latest commit: `<this commit>` (README-banner.md). The README banner
-  spec ships in `branding/README-banner.md` — the actual `README.md`
-  swap is deferred to Task 9 (it's part of the brand-name sweep). The
-  banner is built around the BRAND.md origin paragraph verbatim, a
-  3-link badge row (Build / MIT / Version), a 4-item link row (Get
-  started / Docs / Architecture / Discord), a 9-bullet feature
-  summary, the "Why local-first" differentiator section, and a clean
-  four-line quickstart code block. Anti-patterns enumerated.
+- 2026-05-15 — Tasks 1–8 complete. Task 9 (DESTRUCTIVE GATE — brand.json
+  update + apply-brand dry-run) is next and requires explicit user
+  approval before any propagation.
+
+  Task 8 shipped two files: `branding/SOCIAL-CARD.md` (the spec — design
+  decisions, render pipeline, OG/Twitter meta-tag wiring, per-page
+  variant strategy, forbidden modifications) and
+  `branding/assets/social-card.html` (the actual render source — a
+  self-contained 1200×630 HTML/CSS file with inline mascot SVG, Fraunces
+  + Inter from Google Fonts CDN, dark `#0e1014` background, Heron Dawn
+  `#c89b4a` accent stripe + wordmark, tagline-first hero layout). The
+  HTML opens in Chrome at 1200×630 and screenshots to
+  `ui/static/social-card.png` for the production PNG.
+
+  Task 7 commit: `4247150`. Task 8 commit: `<this commit>`.
