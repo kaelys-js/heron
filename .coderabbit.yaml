@@ -1,22 +1,274 @@
+# CodeRabbit AI — automated PR review configuration.
+# Schema: https://docs.coderabbit.ai/reference/yaml-template
+#
+# CodeRabbit is a GitHub App that auto-reviews PRs. Install (once per
+# repo or org-wide) at:
+#   https://github.com/marketplace/coderabbitai
+#
+# This file does nothing on its own — the App reads it on every PR.
+# After installing the App, the next PR you open will trigger a review.
+
 language: en
+
+# ── Review behaviour ─────────────────────────────────────────────────
 reviews:
+  # 'assertive' = more aggressive feedback; 'chill' = lighter touch.
+  # Career-ops handles secrets, auth, autonomous browser automation,
+  # and security-sensitive data flows — assertive is appropriate.
   profile: assertive
+
+  # Keep CodeRabbit advisory, not blocking. Required PR checks are
+  # owned by .github/workflows/test.yml (Vitest matrix + svelte-check +
+  # format-check + audit). CodeRabbit shouldn't gate merges; humans do.
   request_changes_workflow: false
+
+  # Top-of-PR summary in plain English. Useful for big diffs where the
+  # commit message alone doesn't show intent.
   high_level_summary: true
+
+  # No haiku poems. Serious work, no clutter.
   poem: false
+
+  # Render a per-file walkthrough so reviewers can navigate large
+  # diffs by file rather than scrolling chronologically.
+  collapse_walkthrough: false
+  changed_files_summary: true
+
+  # Draw sequence diagrams when CodeRabbit detects multi-step flows
+  # (e.g. apply-queue.job.ts → apply-portal.py → apply-greenhouse.py).
+  sequence_diagrams: true
+
+  # Link related issues / PRs the reviewer should know about.
+  related_issues: true
+  related_prs: true
+
+  # CodeRabbit suggests labels + reviewers based on changed paths.
+  # The .github/labeler.yml + CODEOWNERS already do this on the
+  # GitHub side, so suggestions here are belt-and-braces.
+  suggested_labels: true
+  suggested_reviewers: true
+
+  # Auto-trigger on every PR opened against main.
   auto_review:
     enabled: true
     drafts: false
     base_branches:
       - main
+
+  # ── Per-path review instructions ──────────────────────────────────
+  # CodeRabbit applies these as additional context when reviewing
+  # files matching each path glob. Order matters — later rules win
+  # on overlapping matches.
   path_instructions:
+    # ── Agent-context files ────────────────────────────────────────
+    - path: "AGENTS.md"
+      instructions: |
+        This is the runtime brief every agent-skill-standard CLI
+        (Claude Code, Gemini, OpenCode, Codex, Qwen, Copilot)
+        loads on session start. Review changes very carefully for
+        conflicts with existing instructions. CLAUDE.md and GEMINI.md
+        are pointers to this file — keep that in mind.
     - path: "CLAUDE.md"
-      instructions: "This file controls agent behavior. Review changes very carefully for conflicts with existing instructions."
-    - path: "modes/_shared.md"
-      instructions: "This file controls the scoring system. Any changes affect ALL evaluations. Flag anything that modifies scoring logic."
+      instructions: |
+        Currently a 2-line pointer to AGENTS.md (`@AGENTS.md`). If
+        anyone tries to add Claude-specific behavior here, redirect
+        it to AGENTS.md unless it's genuinely Claude-Code-only.
+    - path: "GEMINI.md"
+      instructions: |
+        Slim Gemini-specific pointer + slash-command table. Most
+        rules live in AGENTS.md. Reject duplication of AGENTS.md
+        content into GEMINI.md.
+    - path: ".agents/skills/career-ops/SKILL.md"
+      instructions: |
+        Source-of-truth skill definition; .claude/skills/.../SKILL.md
+        is a symlink to this file. Changes ripple to every agent CLI.
+
+    # ── Data + scoring contracts (cross-cutting) ──────────────────
     - path: "docs/DATA_CONTRACT.md"
-      instructions: "This file defines system vs user file boundaries. Changes here are critical — reject if user-layer files are being reclassified."
+      instructions: |
+        Defines system vs user file boundaries. Reject if user-layer
+        files are being reclassified as system (would let updates
+        overwrite user data). Reject if shared infrastructure is
+        being made per-profile (would break multi-profile installs).
+    - path: "modes/_shared.md"
+      instructions: |
+        Controls the 1–5 scoring system + global rules. Any changes
+        affect EVERY evaluation across every user. Flag scoring-logic
+        changes, weight-table changes, archetype-list changes. Demand
+        a rationale + an estimate of how existing reports would shift.
+    - path: "modes/_profile.template.md"
+      instructions: |
+        Template seed for per-profile _profile.md. Changes here only
+        affect NEW profiles (existing per-profile copies aren't
+        retroactively updated). Flag if a system-wide rule is being
+        added here instead of modes/_shared.md.
+    - path: "templates/states.yml"
+      instructions: |
+        Canonical application states. Renaming, removing, or reordering
+        these values is a BREAKING change for applications.md parsers
+        (parsers.ts:mapStatus + normalize-statuses.mjs + merge-tracker.mjs).
+        Adding aliases is fine; mutating IDs is not.
+
+    # ── Security-critical server code ──────────────────────────────
+    - path: "ui/src/lib/server/auth.ts"
+      instructions: |
+        Better Auth integration. Flag any change that loosens cookie
+        attributes (HttpOnly, SameSite, Secure), rate limits, or
+        passkey/email-password flow assumptions. Cross-check
+        ui/src/lib/server/auth-helpers.ts and hooks.server.ts at the
+        same time.
+    - path: "ui/src/hooks.server.ts"
+      instructions: |
+        Security middleware: auth guard, CSP headers, rate limiting,
+        AsyncLocalStorage user context (currentUserId()). A wrong
+        change here breaks user isolation (cross-user IDOR). Demand
+        test coverage in hooks.server.test.ts for any behavior change.
+    - path: "ui/src/lib/server/db/**"
+      instructions: |
+        Drizzle schema + migrations + better-sqlite3 wiring. Migrations
+        are forward-only and run at boot — a destructive migration ships
+        on the next user update. Flag DROP COLUMN, RENAME COLUMN, type
+        narrowings. Also flag any change to db/index.ts's
+        CAREER_OPS_DATA_DIR env-var override (DB-isolation safety).
+    - path: "ui/src/lib/server/api-helpers.ts"
+      instructions: |
+        wrap() is the universal API endpoint envelope. Every endpoint
+        depends on its try/catch + JSON shape ({ ok: true | false, ... }).
+        Behavior changes here ripple to 100+ endpoints — demand test
+        coverage and a CHANGELOG-worthy commit message.
+
+    # ── Autonomous-apply system (Playwright + form filling) ───────
+    - path: "scripts/apply/apply-portal.py"
+      instructions: |
+        URL→adapter dispatcher. PRODUCTION_PORTALS / STUB_PORTALS
+        sets gate which portals are routed to live adapters vs
+        the manual-apply-needed stub. Promoting a portal from STUB
+        to PRODUCTION requires the corresponding adapter to handle
+        CAPTCHA, anti-bot, ManualApplyNeeded fallback, and the
+        APPLY_STEP/APPLY_RESULT protocol.
+    - path: "scripts/apply/lib_apply.py"
+      instructions: |
+        Shared Playwright helpers used by every apply-* adapter.
+        Changes ripple to all 11+ portal scripts. Pay attention to
+        human_type / human_click cadence (anti-bot detection),
+        detect_captcha branches, and the APPLY_RESULT protocol —
+        the TS side (apply-queue.job.ts) parses these line-by-line.
+    - path: "scripts/apply/lib_portal.py"
+      instructions: |
+        Shared PortalConfig scaffold for the second-round adapters
+        (workable, personio, smartrecruiters, recruitee, teamtailor,
+        indeed). Selector-heuristic changes affect every portal that
+        consumes PortalConfig.
+    - path: "scripts/apply/apply-*.py"
+      instructions: |
+        Per-portal autonomous-apply adapter. Validates against:
+        (1) APPLY_STEP / APPLY_RESULT line protocol mirrors lib_apply,
+        (2) GDPR consent / privacy-policy checkbox handling on EU
+        portals (Personio, Workable),
+        (3) screenshot_for_issue() called on captcha/failure paths,
+        (4) profile-isolated user-data dir (.playwright-{portal}/).
+
+    # ── Shared cross-domain libs ───────────────────────────────────
+    - path: "scripts/lib/**"
+      instructions: |
+        Cross-domain libraries imported by scripts/{apply,scan,linkedin}/.
+        lib_profiles.py = profile-path resolution; lib_playwright_auth.py
+        = browser-session management; lib-profiles.mjs = mjs equivalent.
+        Changes ripple to many downstream callers — flag missing test
+        coverage and require a brief impact analysis.
+
+    # ── Single-source-of-truth files ───────────────────────────────
+    - path: "branding/brand.json"
+      instructions: |
+        SINGLE SOURCE OF TRUTH for app name, bundle ID, URL scheme,
+        colors, copyright, etc. Editing this triggers
+        scripts/native/apply-brand.mjs to regenerate ~30 downstream
+        files (package.json × 3, capacitor.config.ts × 2, Info.plist,
+        Brand.swift × 4, brand.ts × 2, manifest.webmanifest, icons,
+        Fastlane configs). Reviewer should confirm apply-brand was
+        run + all generated files are in the same PR.
+    - path: "branding/logo.svg"
+      instructions: |
+        Master SVG. Editing triggers icon regeneration via
+        scripts/native/icons/generate-icons.mjs (.icns / .ico / iOS
+        appiconset / Android mipmap / web manifest sizes). Reviewer
+        should confirm icons were regenerated in the same PR.
+    - path: "package.json"
+      instructions: |
+        Root package.json — workspace + scripts + engines. Be wary of:
+        (1) scripts that drift from the documented `pnpm <name>`
+        surface (every entry should be reachable from README/AGENTS
+        or docs/SCRIPTS.md),
+        (2) engines block — bun/npm/yarn must stay "please-use-pnpm",
+        (3) packageManager pin — must match .mise.toml pnpm version.
+
+    # ── Scripts (CLI tools spawned by ui/) ─────────────────────────
     - path: "**/*.mjs"
-      instructions: "Check for command injection, path traversal, and SSRF. Ensure scripts handle missing data/ directories gracefully."
+      instructions: |
+        Check for command injection, path traversal, and SSRF in any
+        script that touches user input or external URLs. Ensure scripts
+        handle missing data/ directories gracefully (career-ops boots
+        on fresh installs where many dirs don't exist yet). Use
+        REPO_ROOT-derived paths, never CWD-relative.
+    - path: "scripts/system/update-system.mjs"
+      instructions: |
+        Update mechanism. The SYSTEM_PATHS list defines what gets
+        overwritten on `pnpm update`; the USER_PATHS list is the
+        safety check that aborts if user-layer files are touched.
+        Changes here can destroy user data — demand thorough review.
+    - path: "scripts/system/check-liveness.mjs"
+      instructions: |
+        URL liveness probe. Make sure the multi-language expired-
+        pattern list (English / German / French) stays in sync with
+        scripts/system/liveness-core.mjs. Adding patterns should
+        come with test coverage in liveness.integration.test.ts.
+
+    # ── CI + release plumbing ──────────────────────────────────────
+    - path: ".github/workflows/**"
+      instructions: |
+        Review carefully: workflow-level permissions block (must be
+        principle-of-least-privilege), secret usage (no plain echo of
+        APPLE_API_KEY / GITHUB_TOKEN), action pinning (prefer @vX over
+        @main). actionlint runs in pre-commit, but doesn't catch
+        scope/permission issues.
+    - path: ".github/dependabot.yml"
+      instructions: |
+        Dependency-bump groupings. Make sure new ecosystems map to
+        sensible groups, weekly schedule stays, and `ignore` entries
+        have a rationale comment.
+    - path: "release-please-config.json"
+      instructions: |
+        Drives every release. The `packages` extra-files list MUST
+        match the actual package.json files that need version bumps
+        (root + ui/electron). Adding a new workspace package?
+        Add it here too.
+
+    # ── Tests ─────────────────────────────────────────────────────
+    - path: "**/*.test.ts"
+      instructions: |
+        Verify mocks don't paper over real bugs (e.g., a test that
+        mocks db.select() with success when the real code paths fail
+        silently). For component tests in .component.test.ts (browser
+        mode), ensure both Chromium and WebKit are exercised when the
+        feature is browser-API-sensitive.
+    - path: "ui/src/lib/integration/**/*.integration.test.ts"
+      instructions: |
+        Integration suite (replaces legacy verify-*.mjs scripts).
+        Each file should exercise a coherent end-to-end behavior;
+        new tests here should map to a documented user-visible
+        scenario, not implementation details.
+
+# ── PR-chat interactions ───────────────────────────────────────────
 chat:
+  # CodeRabbit answers @coderabbitai questions on the PR.
   auto_reply: true
+
+# ── Knowledge graph / scope ────────────────────────────────────────
+knowledge_base:
+  # Pull commit history + linked issues into review context.
+  learnings:
+    scope: auto
+  issues:
+    scope: auto
+  pull_requests:
+    scope: auto
