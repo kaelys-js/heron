@@ -23,26 +23,11 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
 
-// Read the brand.json repo coordinates at runtime so a rebrand doesn't
-// leave the auto-updater pinned at the prior fork. brand.json lives at
-// repo-root/branding/; this file is at scripts/system/ so back up two.
-const REPO_ROOT = join(__dirname, '..', '..');
-const BRAND = (() => {
-  try {
-    return JSON.parse(readFileSync(join(REPO_ROOT, 'branding', 'brand.json'), 'utf8'));
-  } catch {
-    // brand.json missing — fallback to the historical default so updates
-    // still work on a corrupt install.
-    return {
-      name: 'career-ops',
-      repo: {
-        owner: 'kaelys-js',
-        name: 'career-ops',
-        url: 'https://github.com/kaelys-js/career-ops',
-      },
-    };
-  }
-})();
+// Brand coordinates are loaded from the shared helper so a rebrand
+// retargets every consumer (this script + apply-brand + bookmarklet
+// + workflow artifacts + issue templates) from one brand.json edit.
+import { BRAND } from '../lib/_brand.mjs';
+
 const BRAND_REPO_URL = BRAND.repo?.url || `https://github.com/kaelys-js/${BRAND.name}`;
 const BRAND_REPO_PATH = (() => {
   // owner/name from repo.url like https://github.com/owner/name(.git)?

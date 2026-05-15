@@ -527,6 +527,93 @@ function applyFavicon(brand) {
   log.ok(`static/favicon.svg ← branding/logo.svg`);
 }
 
+function applyExtensionFolders(brand) {
+  // iOS extension folder names (CareerOpsWidget, CareerOpsLiveActivity,
+  // CareerOpsShareExtension, CareerOpsWatch) appear as path segments
+  // in lefthook.yml's apply-brand `git add` step and in turbo.json's
+  // brand-task inputs. A rebrand that renames any extension folder
+  // would leave those paths broken; patch them from brand.extensions.*.name
+  // so the dependency tracking stays in sync.
+  //
+  // The path segments matched here are deliberately suffix-anchored
+  // (Widget|LiveActivity|ShareExtension|Watch) so the regex doesn't
+  // accidentally rewrite an unrelated brand-prefixed string in
+  // either file.
+  const ext = brand.extensions ?? {};
+  const subs = [
+    { suffix: 'Widget', name: ext.widget?.name },
+    { suffix: 'LiveActivity', name: ext.liveActivity?.name },
+    { suffix: 'ShareExtension', name: ext.shareExtension?.name },
+    { suffix: 'Watch', name: ext.watch?.name ?? 'CareerOpsWatch' },
+  ].filter((x) => x.name);
+
+  for (const file of [join(ROOT, 'lefthook.yml'), join(ROOT, 'turbo.json')]) {
+    if (!existsSync(file)) {
+      log.skip(`${file.replace(ROOT, '.')} — missing`);
+      continue;
+    }
+    let body = readFileSync(file, 'utf8');
+    const before = body;
+    for (const { suffix, name } of subs) {
+      // Match "ui/ios/App/<oldname><Suffix>/" path segments only.
+      const re = new RegExp(`ui/ios/App/[A-Za-z0-9]+${suffix}/`, 'g');
+      body = body.replace(re, `ui/ios/App/${name}/`);
+    }
+    if (body !== before) {
+      writeFileSync(file, body);
+      log.ok(file.replace(ROOT, '.'));
+    } else {
+      log.skip(`${file.replace(ROOT, '.')} — already current`);
+    }
+  }
+}
+
+function applyGitHubIssueTemplates(brand) {
+  // GitHub issue templates carry the brand name in their `description`
+  // and inside markdown prose ("A bug in <brand>", "How did <brand>
+  // help?"). config.yml has https URLs that point to the brand's repo.
+  // Patch all of them so a rebrand updates the user-facing templates
+  // in one pass.
+  const dir = join(ROOT, '.github', 'ISSUE_TEMPLATE');
+  if (!existsSync(dir)) {
+    log.skip(`.github/ISSUE_TEMPLATE — missing`);
+    return;
+  }
+  // Match the brand name as a whole word (no preceding letter/digit/hyphen).
+  // We don't replace owner/<oldname> URLs — those go through the repo.url
+  // replacement below which catches the full owner/name path.
+  const repoMatch = String(brand.repo?.url ?? '').match(/github\.com\/([^/]+)\/([^/.]+)/);
+  const newOwner = repoMatch?.[1];
+  const newName = repoMatch?.[2];
+
+  let touched = 0;
+  for (const f of ['bug_report.yml', 'feature_request.yml', 'config.yml', 'i-got-hired.yml']) {
+    const file = join(dir, f);
+    if (!existsSync(file)) continue;
+    let body = readFileSync(file, 'utf8');
+    const before = body;
+    // 1. Owner/name in URLs: github.com/<oldOwner>/<oldName>...
+    if (newOwner && newName) {
+      body = body.replace(
+        /github\.com\/[a-z0-9-]+\/[a-z0-9-]+/g,
+        `github.com/${newOwner}/${newName}`,
+      );
+    }
+    // 2. Standalone <oldname> tokens in prose. Bounded by non-letter
+    //    on both sides so we don't munge unrelated identifiers.
+    body = body.replace(/(^|[^A-Za-z0-9_/-])career-ops($|[^A-Za-z0-9_/-])/g, `$1${brand.name}$2`);
+    if (body !== before) {
+      writeFileSync(file, body);
+      touched += 1;
+    }
+  }
+  if (touched > 0) {
+    log.ok(`.github/ISSUE_TEMPLATE/ (${touched} file${touched === 1 ? '' : 's'})`);
+  } else {
+    log.skip(`.github/ISSUE_TEMPLATE/ — already current`);
+  }
+}
+
 function applyGitHubWorkflows(brand) {
   // Patch artifact names in GitHub workflow YAMLs that include the
   // brand name. We do NOT touch prose comments, doc files, or the
@@ -922,6 +1009,7 @@ function applyClientBrandTs(brand) {
     `  mdnsType: ${JSON.stringify(brand.identifiers.mdnsType)},`,
     `  spotlightDomain: ${JSON.stringify(brand.identifiers.spotlightDomain)},`,
     `  keychainService: ${JSON.stringify(brand.identifiers.keychainService)},`,
+    `  capacitorPluginName: ${JSON.stringify(brand.identifiers.capacitorPluginName ?? 'CareerOpsNative')},`,
     `  colors: ${JSON.stringify(brand.colors, null, 2).replace(/\n/g, '\n  ')},`,
     `  repo: ${JSON.stringify(brand.repo, null, 2).replace(/\n/g, '\n  ')},`,
     `} as const;`,
@@ -1076,6 +1164,8 @@ function applySwiftConstants(brand) {
     `    static let spotlightDomain = "${brand.identifiers.spotlightDomain}"`,
     `    static let keychainService = "${brand.identifiers.keychainService}"`,
     `    static let openJobActivityType = "${openJobActivity}"`,
+    `    /// Capacitor JS↔Swift bridge name. Must match TS registerPlugin('...') call.`,
+    `    static let capacitorPluginName = "${brand.identifiers.capacitorPluginName ?? 'CareerOpsNative'}"`,
     ``,
     `    /// UserDefaults keys — all prefixed with brand name so they're`,
     `    /// namespaced and a brand rename moves them cleanly.`,
@@ -1271,6 +1361,8 @@ function apply() {
   log.step('Release tooling');
   applyReleasePleaseConfig(brand);
   applyGitHubWorkflows(brand);
+  applyGitHubIssueTemplates(brand);
+  applyExtensionFolders(brand);
 
   log.step('Docs');
   applyAGENTSMd(brand);

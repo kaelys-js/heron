@@ -17,6 +17,7 @@ export const BRAND = {
   mdnsType: "career-ops",
   spotlightDomain: "com.resistjs.careerops.jobs",
   keychainService: "com.resistjs.careerops",
+  capacitorPluginName: "CareerOpsNative",
   colors: {
     "primary": "#5b6cff",
     "accentEmeraldLight": "#34d399",

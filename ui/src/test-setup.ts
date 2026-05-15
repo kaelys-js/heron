@@ -239,6 +239,32 @@ export function resetUuidCounter(): void {
   __uuidCounter = 0;
 }
 
+// ── Silence the `yaml` package's "unresolved tag !@#$" warnings ─────
+// Several tests intentionally feed deliberately-corrupt yaml/json
+// fixtures (e.g. '!@#$%^&*( not yaml' in portals.test.ts) to exercise
+// parse-error recovery paths. The `yaml` package emits a YAMLWarning
+// via `process.emitWarning(...)` when it sees an unresolvable tag —
+// the warning is correctly emitted but in a test context it's noise
+// that obscures real failures.
+//
+// We swallow ONLY warnings tagged `YAMLWarning` so the broader
+// process-warning pipeline (deprecation notices, unhandled-rejection
+// hints, etc.) still surfaces normally.
+if (typeof process !== 'undefined' && typeof process.on === 'function') {
+  const origEmit = process.emit.bind(process);
+  // Node's process.emit is overloaded; cast through unknown to satisfy TS.
+  (process as unknown as { emit: (event: string, ...args: unknown[]) => boolean }).emit = (
+    event: string,
+    ...args: unknown[]
+  ): boolean => {
+    if (event === 'warning') {
+      const w = args[0] as { name?: string } | undefined;
+      if (w?.name === 'YAMLWarning') return false; // swallow
+    }
+    return (origEmit as unknown as (event: string, ...args: unknown[]) => boolean)(event, ...args);
+  };
+}
+
 // ── MSW lifecycle (jsdom + node projects; browser uses
 //    Service Worker variant that loads at render time) ──────────────
 // Lazy import so the browser project doesn't blow up requiring node-only

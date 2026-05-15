@@ -37,7 +37,9 @@
     "mdnsType": "career-ops",
     "spotlightDomain": "com.resistjs.careerops.jobs",
     "userActivityTypes": ["com.resistjs.careerops.job", "com.resistjs.careerops.openJob"],
-    "keychainService": "com.resistjs.careerops"
+    "keychainService": "com.resistjs.careerops",
+    "$comment": "capacitorPluginName: bridge contract between TS (registerPlugin) and Swift (jsName). Must match exactly on both sides; apply-brand generates BRAND.capacitorPluginName + Brand.capacitorPluginName so a rebrand retargets both consumers in one step.",
+    "capacitorPluginName": "CareerOpsNative"
   },
 
   "extensions": {

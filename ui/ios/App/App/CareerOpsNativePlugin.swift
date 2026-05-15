@@ -1,5 +1,5 @@
-import Foundation
 import Capacitor
+import Foundation
 import WidgetKit
 
 /**
@@ -24,7 +24,11 @@ import WidgetKit
 @objc(CareerOpsNativePlugin)
 public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "CareerOpsNativePlugin"
-    public let jsName = "CareerOpsNative"
+    // jsName MUST match the TypeScript registerPlugin('...') call in
+    // ui/src/lib/client/native-bridge.ts. Both sides read this string
+    // from branding/brand.json::identifiers.capacitorPluginName via
+    // apply-brand so a rebrand retargets the bridge contract.
+    public let jsName = Brand.capacitorPluginName
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "getLanUrl", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "biometricAvailable", returnType: CAPPluginReturnPromise),
@@ -77,8 +81,8 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
             switch result {
             case .success: call.resolve(["ok": true])
             case .userCanceled: call.resolve(["ok": false, "reason": "canceled"])
-            case .unavailable(let m): call.reject("biometric-unavailable", m)
-            case .failed(let m): call.reject("biometric-failed", m)
+            case let .unavailable(msg): call.reject("biometric-unavailable", msg)
+            case let .failed(msg): call.reject("biometric-failed", msg)
             }
         }
     }
@@ -151,9 +155,10 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
     /// plugin's notifyListeners mechanism. online-status.ts in JS converts
     /// this to a `<brand>:net-status` window event.
     static var pluginInstance: CareerOpsNativePlugin?
-    public override func load() {
+    override public func load() {
         CareerOpsNativePlugin.pluginInstance = self
     }
+
     static func notifyNetStatus(online: Bool) {
         pluginInstance?.notifyListeners("netStatusChanged", data: ["online": online])
     }
@@ -376,10 +381,9 @@ public class CareerOpsNativePlugin: CAPPlugin, CAPBridgedPlugin {
         // a force-cast so any non-String keys are dropped silently.
         let payload = Dictionary(uniqueKeysWithValues:
             call.options.compactMap { key, value -> (String, Any)? in
-                guard let k = key as? String else { return nil }
-                return (k, value)
-            }
-        )
+                guard let keyStr = key as? String else { return nil }
+                return (keyStr, value)
+            })
         WatchSessionBridge.shared.send(payload)
 
         call.resolve(["ok": true])
