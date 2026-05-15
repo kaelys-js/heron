@@ -11,7 +11,7 @@ Use one of:
    Encrypted in transit, reviewed by the maintainer only, and gives you a private
    advisory you can collaborate on without leaking details.
 
-2. **Email** — **hi@santifer.io** with:
+2. **Email** — **<hi@santifer.io>** with:
    - Description of the vulnerability
    - Steps to reproduce
    - Potential impact

@@ -14,7 +14,7 @@ Traite les URLs d'offres accumulees dans `data/pipeline.md`. Le candidat ajoute 
 3. **Si 3+ URLs en attente**, lancer des agents en parallele (Agent tool avec `run_in_background`) pour maximiser la vitesse.
 4. **A la fin**, afficher un tableau recapitulatif :
 
-```
+```text
 | # | Entreprise | Role | Score | PDF | Action recommandee |
 ```
 

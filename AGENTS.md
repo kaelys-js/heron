@@ -73,7 +73,7 @@ AI-powered, CLI-agnostic job search automation: pipeline tracking, offer evaluat
 
 Career-ops supports MULTIPLE distinct career identities ("profiles") per install. Each profile owns its own content under `data/profiles/{slug}/`:
 
-```
+```text
 data/profiles/{slug}/
 ├── cv.md
 ├── profile.yml
@@ -384,7 +384,7 @@ Source of truth: `release-please-config.json`, `.github/workflows/release.yml`, 
 - **Governance**: BDFL model with contributor ladder — Participant → Contributor → Triager → Reviewer → Maintainer (see `docs/GOVERNANCE.md`)
 - **Security**: private vulnerability reporting via email (see `.github/SECURITY.md`)
 - **Support**: help questions go to Discord/Discussions, not issues (see `.github/SUPPORT.md`)
-- **Discord**: https://discord.gg/8pRpHETxa4
+- **Discord**: <https://discord.gg/8pRpHETxa4>
 
 ## Headless / Batch Mode
 
@@ -444,7 +444,7 @@ Single source of truth: `ui/src/lib/config/cli.ts`.
 
 Write one TSV file per evaluation to `batch/tracker-additions/{num}-{company-slug}.tsv`. Single line, 9 tab-separated columns:
 
-```
+```text
 {num}\t{date}\t{company}\t{role}\t{status}\t{score}/5\t{pdf_emoji}\t[{num}](reports/{num}-{slug}-{date}.md)\t{note}
 ```
 

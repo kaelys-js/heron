@@ -1,0 +1,130 @@
+// markdownlint-cli2 — relaxed config focused on REAL BUGS, not style.
+//
+// Filename `.markdownlint-cli2.jsonc` is the canonical filename
+// markdownlint-cli2 looks for; JSONC chosen so each rule decision can
+// carry its `// why` annotation inline.
+//
+// Philosophy: 114 .md files exist (READMEs, AGENTS.md, mode templates,
+// language-specific docs in modes/de/, modes/ja/, etc.). Strict style
+// rules (line length, heading style, list bullet style) would surface
+// hundreds of cosmetic issues without catching any real defect. We
+// enable the rules that catch BROKEN markdown (broken links, malformed
+// tables, dropped emphasis markers) and disable the rest.
+//
+// Run:    pnpm validate:markdown
+// Edit:   add/remove rules below, then dry-run with `pnpm validate:markdown`
+//         to see the impact across the repo.
+{
+  "$schema": "https://raw.githubusercontent.com/DavidAnson/markdownlint/main/schema/markdownlint-config-schema.json",
+  "config": {
+    // ── Disabled: STYLE rules (would surface 100s of cosmetic issues) ──
+    "MD001": false, // heading-increment (## then #### is fine in our docs)
+    "MD003": false, // heading-style (mixing atx + atx_closed is fine)
+    "MD004": false, // ul-style (mixing -, *, + is fine)
+    "MD005": false, // list-indent
+    "MD007": false, // ul-indent (let editorconfig handle indent)
+    "MD009": false, // no-trailing-spaces (.editorconfig sets trim_trailing_whitespace=false for md — meaningful as <br>)
+    "MD010": false, // no-hard-tabs
+    "MD012": false, // no-multiple-blanks (we use double blanks as section separators)
+    "MD013": false, // line-length (docs run wide; not a bug)
+    "MD014": false, // commands-show-output ($) — we have command examples with + without output
+    "MD022": false, // blanks-around-headings
+    "MD024": false, // no-duplicate-heading (same heading text repeats across docs — fine)
+    "MD025": false, // single-title (some docs have multiple top-level headings)
+    "MD026": false, // no-trailing-punctuation (! ? in headings is fine)
+    "MD029": false, // ol-prefix (numbering style)
+    "MD030": false, // list-marker-space
+    "MD031": false, // blanks-around-fences
+    "MD032": false, // blanks-around-lists
+    "MD033": false, // no-inline-html (we use HTML in markdown for layout)
+    "MD035": false, // hr-style
+    "MD036": false, // no-emphasis-as-heading (sometimes intentional)
+    "MD041": false, // first-line-heading (some files start without h1)
+    "MD043": false, // required-headings
+    "MD046": false, // code-block-style (fenced vs indented mixing)
+    "MD048": false, // code-fence-style (` vs ~)
+    "MD049": false, // emphasis-style (* vs _)
+    "MD050": false, // strong-style (** vs __)
+    "MD054": false, // link-image-style (collapsed vs full vs shortcut)
+
+    // ── ENABLED: rules that catch REAL BUGS ──────────────────────────
+    // MD011 — reversed-link syntax: (text)[url] is wrong, should be [text](url)
+    "MD011": true,
+    // MD018, MD019, MD020, MD021 — malformed headings (no/multiple space after #)
+    "MD018": true,
+    "MD019": true,
+    "MD020": true,
+    "MD021": true,
+    // MD023 — heading not starting at left margin (indented heading is rendering bug)
+    "MD023": true,
+    // MD027 — multiple spaces inside blockquote
+    "MD027": true,
+    // MD028 — blank line between blockquotes (renders as two separate quotes)
+    "MD028": true,
+    // MD034 — bare URLs render as plain text in some viewers; should be <url>
+    "MD034": true,
+    // MD037 — space inside emphasis ` *foo* ` doesn't render as emphasis
+    "MD037": true,
+    // MD038 — space inside code `` ` text ` `` breaks the code span
+    "MD038": true,
+    // MD039 — space inside link [ text ](url) breaks the link
+    "MD039": true,
+    // MD040 — fenced code blocks should declare a language (renders better, helps copy-paste)
+    "MD040": true,
+    // MD042 — empty link [text]() is broken
+    "MD042": true,
+    // MD044 — proper names with specific capitalization (would need a names list to enable)
+    "MD044": false,
+    // MD045 — images without alt text (a11y)
+    "MD045": true,
+    // MD047 — every file ends with a single trailing newline
+    "MD047": true,
+    // MD051 — link fragments must point to existing headings: [text](#anchor)
+    "MD051": true,
+    // MD052 — reference-style links must have a matching definition: [text][ref]
+    "MD052": true,
+    // MD053 — reference link/image definitions must be used (catches orphans)
+    "MD053": true,
+    // MD055 — table pipe style (catches malformed tables)
+    "MD055": true,
+    // MD056 — table column count mismatch (rows must match header columns)
+    "MD056": true,
+    // MD058 — tables should be surrounded by blank lines (rendering edge cases)
+    "MD058": false, // disabled — common in our docs to have tables in dense text
+    // MD060 — table-column-style (whether pipes have padding spaces).
+    // Compact-style tables (no padding around pipes) render identically
+    // to padded-style in every viewer — this is pure cosmetic policing.
+    "MD060": false
+  },
+  "globs": ["**/*.md"],
+  "ignores": [
+    // ── Dependency / build / cache trees ──────────────────────────────
+    // ALL ignore patterns are prefixed with `**/` because markdownlint-cli2
+    // only matches `node_modules/**` at the cwd level; nested workspaces
+    // (`ui/node_modules`, `ui/electron/node_modules`) need the recursive
+    // prefix to be excluded.
+    "**/node_modules/**",
+    "**/.svelte-kit/**",
+    "**/build/**",
+    "**/dist/**",
+    "**/.turbo/**",
+    "**/coverage/**",
+    "**/_build/**",
+    "**/.venv/**",
+    "**/.git/**",
+    "**/DerivedData/**",
+    "**/SourcePackages/**",
+    // ── Generated data / user content ────────────────────────────────
+    "data/**",
+    "reports/**",
+    "output/**",
+    "writing-samples/**",
+    // ── iOS Pods + native build dirs (paths absolute from repo root) ──
+    "ui/ios/App/Pods/**",
+    "ui/android/.gradle/**",
+    // ── Files that should never be linted (auto-generated / archive) ──
+    "CHANGELOG.md",
+    "docs/archive/**",
+    "**/*.bak"
+  ]
+}

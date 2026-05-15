@@ -2,7 +2,7 @@
 
 Genera un prompt estructurado para Perplexity/Claude/ChatGPT con 6 ejes:
 
-```
+```text
 ## Deep Research: [Empresa] — [Rol]
 
 Contexto: Estoy evaluando una candidatura para [rol] en [empresa]. Necesito información accionable para la entrevista.

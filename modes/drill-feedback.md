@@ -22,7 +22,7 @@ Tight, specific, in-the-moment.
 
 ALWAYS structured as 4 short sections — no preamble, no closing pleasantries:
 
-```
+```yaml
 WORKING: <one sentence on what's clearly correct / well-chosen>
 WATCH: <one sentence on the biggest current risk — bug, tradeoff
          miscalibration, missing constraint>

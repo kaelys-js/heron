@@ -9,7 +9,7 @@ Modo interativo para quando o candidato está preenchendo um formulário de cand
 
 ## Workflow
 
-```
+```text
 1. DETECTAR    → Ler aba ativa do Chrome (screenshot/URL/título)
 2. IDENTIFICAR → Extrair empresa + vaga da página
 3. BUSCAR      → Match contra reports existentes em reports/
@@ -77,7 +77,7 @@ Para cada pergunta, gerar a resposta seguindo:
 
 **Formato de output:**
 
-```
+```text
 ## Respostas para [Empresa] -- [Vaga]
 
 Base: Report #NNN | Score: X.X/5 | Arquétipo: [tipo]

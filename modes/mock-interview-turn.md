@@ -13,7 +13,7 @@ turn, you receive:
 
 Your output is structured per-turn:
 
-```
+```yaml
 TURN_SCORE: <1-5 or NULL>
 TURN_FEEDBACK: <one sentence, candid>
 NEXT_QUESTION: <the next question you'd ask>
@@ -37,7 +37,7 @@ Standard rotation for a tech onsite:
 
 At each persona-switch, prepend the next question with:
 
-```
+```text
 [PERSONA SWITCH → {Hiring Manager / Peer Engineer / etc}]
 Hi, I'm {synthesized name}, I'm the {persona role}. {The actual question.}
 ```
@@ -117,7 +117,7 @@ The dashboard signals the end by passing `END_OF_SESSION: true` in the
 args. When you receive that, instead of the four-line format above,
 emit a session summary:
 
-```
+```text
 SESSION_SUMMARY:
 - Overall band: <Strong / Borderline / Weak>
 - Best moment: <one-sentence reference to a specific answer>

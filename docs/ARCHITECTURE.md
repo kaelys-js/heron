@@ -2,7 +2,7 @@
 
 ## System Overview
 
-```
+```text
                     ┌─────────────────────────────────┐
                     │         AI Coding CLI Agent      │
                     │   (reads AGENTS.md + modes/*.md) │
@@ -55,7 +55,7 @@
 
 The batch system processes multiple offers in parallel:
 
-```
+```text
 batch-input.tsv    →  batch-runner.sh  →  N × headless CLI workers
 (id, url, source)     (orchestrator)       (self-contained prompt)
                            │
@@ -72,7 +72,7 @@ The orchestrator manages parallelism, state, retries, and resume.
 
 ## Data Flow
 
-```
+```text
 cv.md                    →  Evaluation context
 article-digest.md        →  Proof points for matching
 config/profile.yml       →  Candidate identity

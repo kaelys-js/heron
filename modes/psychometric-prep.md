@@ -37,7 +37,7 @@ Detect from `inviteText`:
 
 ONE markdown file at:
 
-```
+```text
 {output-dir}/psychometric-{testIdentifier}-prep.md
 ```
 
@@ -99,7 +99,7 @@ for?")_
 
 After writing the file, emit:
 
-```
+```yaml
 PSYCHOMETRIC_PATH: {relative-path}
 ```
 

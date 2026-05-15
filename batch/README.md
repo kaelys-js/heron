@@ -38,7 +38,7 @@ Process multiple job offers in parallel via headless workers. Each worker runs t
 
 ## Directory Layout
 
-```
+```text
 batch/
   batch-runner.sh          # Orchestrator script
   batch-prompt.md          # Prompt template sent to each worker

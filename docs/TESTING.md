@@ -11,7 +11,7 @@ is implementation detail.
 | `pnpm test` | Full Vitest matrix across all 5 ui projects + electron |
 | `pnpm test:coverage` | Same, with V8 coverage + hard 70%/65% gate |
 | `pnpm test:watch` | Interactive watch mode |
-| `pnpm test:ui` | Vitest's HTML reporter on http://localhost:51204 |
+| `pnpm test:ui` | Vitest's HTML reporter on <http://localhost:51204> |
 | `pnpm test:ios` | Fastlane `test` lane — full multi-sim XCTest run |
 | `pnpm test:ios:ci` | Fastlane `test_ci` lane — single sim + Codecov-friendly |
 
@@ -30,7 +30,7 @@ and runs in the right environment:
 
 Naming convention:
 
-```
+```text
 foo.ts                 → foo.test.ts            (ui-unit OR ui-server)
 foo.svelte             → foo.component.test.ts  (ui-component, browser)
 foo-verifier.ts        → foo.integration.test.ts (ui-integration)

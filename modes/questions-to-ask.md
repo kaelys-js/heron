@@ -20,7 +20,7 @@ and the per-interviewer dossier if it exists.
 
 ONE markdown file at:
 
-```
+```text
 {interview-prep-dir}/{company-slug}-{interviewer-slug}-questions.md
 ```
 
@@ -68,7 +68,7 @@ without sounding negative. Junior candidates should skip.)_
 
 After writing the file, emit a final stdout line:
 
-```
+```yaml
 QUESTIONS_PATH: {relative-path-to-file}
 ```
 

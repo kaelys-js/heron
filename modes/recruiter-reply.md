@@ -26,7 +26,7 @@ locations, work mode), `modes/_profile.md`.
 
 ONE markdown file at:
 
-```
+```text
 {output-dir}/inbound-reply-{leadId}-{YYYY-MM-DD}.md
 ```
 
@@ -61,7 +61,7 @@ _(If tone was formal: show the "friendly" alternative in 2 sentences.)_
 
 After writing the file, emit:
 
-```
+```yaml
 REPLY_PATH: {relative-path}
 ```
 

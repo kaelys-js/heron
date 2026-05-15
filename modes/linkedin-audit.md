@@ -70,7 +70,7 @@ Pick one — they trade off differently. Recruiters skim headlines first.
 ```
 {full About paragraph — 200 words max, written in the user's voice
 based on cv.md narrative. Hits 8-10 recruiter-searched phrases.}
-```
+```text
 
 ## Top 50 LinkedIn Skills to enable
 
@@ -105,7 +105,7 @@ whether they actually reach out.)_
 
 ## Stdout protocol
 
-```
+```yaml
 AUDIT_PATH: data/profiles/{slug}/linkedin-audit-{date}.md
 RECRUITER_VISIBILITY_SCORE: <0-10>
 HEADLINE_GAP: <"yes" | "no">

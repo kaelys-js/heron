@@ -135,7 +135,7 @@ archetypes. Don't write rows for techs the user doesn't have years on.
 Print to stdout, one line each (the dashboard's endpoint parses these
 for the toast + activity feed):
 
-```
+```yaml
 SEED_ROWS_WRITTEN: <count>
 SEED_ROWS_SKIPPED_EXISTING: <count>
 SEED_ROWS_SKIPPED_UNSURE: <count>

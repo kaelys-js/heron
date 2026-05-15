@@ -72,7 +72,7 @@ ONE JSON blob printed to stdout (the dashboard caches under
 
 After printing the JSON, optionally emit:
 
-```
+```yaml
 LEADERSHIP_PATH: {relative-path-to-file}
 ```
 

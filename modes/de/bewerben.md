@@ -9,7 +9,7 @@ Interaktiver Modus für den Moment, in dem der Kandidat in Chrome ein Bewerbungs
 
 ## Workflow
 
-```
+```text
 1. ERKENNEN     → aktiven Chrome-Tab lesen (Screenshot / URL / Titel)
 2. IDENTIFIZIEREN → Firma + Rolle aus der Seite extrahieren
 3. SUCHEN       → mit bestehenden Reports unter reports/ abgleichen
@@ -77,7 +77,7 @@ Für jede Frage die Antwort nach folgendem Schema bauen:
 
 **Output-Format:**
 
-```
+```text
 ## Antworten für [Firma] — [Rolle]
 
 Basis: Report #NNN | Score: X.X/5 | Archetyp: [Typ]

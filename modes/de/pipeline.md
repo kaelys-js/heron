@@ -14,7 +14,7 @@ Verarbeitet URLs von Stellenanzeigen, die in `data/pipeline.md` gesammelt wurden
 3. **Bei 3+ offenen URLs** Agenten parallel starten (Agent-Tool mit `run_in_background`), um Tempo zu machen.
 4. **Am Ende** eine Zusammenfassungstabelle ausgeben:
 
-```
+```text
 | # | Firma | Rolle | Score | PDF | Empfohlene Aktion |
 ```
 

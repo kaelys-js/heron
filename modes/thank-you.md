@@ -27,7 +27,7 @@ their background concretely).
 
 ONE markdown file at:
 
-```
+```text
 {interview-prep-dir}/{company-slug}-{interviewer-slug}-thank-you-{YYYY-MM-DD}.md
 ```
 
@@ -74,7 +74,7 @@ Best,
 
 After writing the file, emit a final stdout line:
 
-```
+```yaml
 THANK_YOU_PATH: {relative-path-to-file}
 ```
 

@@ -82,7 +82,7 @@ If any of these is uncovered, add a note at the bottom:
 
 When done, print a one-line summary to stdout:
 
-```
+```text
 SEEDED N stories · M themes covered · K coverage gaps
 ```
 

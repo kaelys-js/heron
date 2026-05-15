@@ -16,7 +16,7 @@ Read: `cv.md`, `config/profile.yml` (resolves to the active profile's
 
 ONE JSON file at:
 
-```
+```text
 {profile-dir}/cross-link-audit.json
 ```
 
@@ -75,7 +75,7 @@ Each finding has an `advice` string. Make it SPECIFIC:
 The endpoint reads the file directly — no stdout sentinel required.
 Optionally emit:
 
-```
+```yaml
 AUDIT_PATH: {relative-path-to-file}
 ```
 

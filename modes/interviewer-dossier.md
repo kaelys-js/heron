@@ -23,7 +23,7 @@ report under `reports/`, and the company's general interview-prep file
 
 ONE markdown file at:
 
-```
+```text
 {interview-prep-dir}/{company-slug}-{interviewer-slug}-dossier.md
 ```
 
@@ -103,7 +103,7 @@ the team that introduced it.")_
 
 After writing the file, emit a final stdout line:
 
-```
+```yaml
 DOSSIER_PATH: {relative-path-to-file}
 ```
 

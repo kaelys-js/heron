@@ -20,7 +20,7 @@ with them" and "they painted a picture of the impact."
 
 For EACH reference, write a separate brief markdown file:
 
-```
+```text
 interview-prep/{company-slug}-{role-slug}-reference-{ref-slug}.md
 ```
 
@@ -91,7 +91,7 @@ Thanks again for doing this — I'll let you know the outcome either way.
 
 ## Stdout protocol
 
-```
+```yaml
 REFERENCE_FILES_WRITTEN: <count>
 REFERENCE_PATHS:
   - path/to/file1

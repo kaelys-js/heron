@@ -1,7 +1,7 @@
 # CV -- Sam Rivera
 
 **Location:** Berlin, Germany (remote-friendly, EU timezones)
-**Email:** sam@example.com
+**Email:** <sam@example.com>
 **LinkedIn:** linkedin.com/in/sam-rivera-example
 **Portfolio:** sam-rivera.example.dev
 **GitHub:** github.com/sam-rivera-example
