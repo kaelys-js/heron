@@ -15,15 +15,12 @@
  * localhost:5174 makes this trivially scoped to the user's machine.
  */
 
-import { spawn } from 'node:child_process';
 import { json } from '@sveltejs/kit';
 import { wrap, badRequest, errJson } from '$lib/server/api-helpers';
 import { loadAllJobs } from '$lib/server/parsers';
-import { ROOT } from '$lib/server/files';
+import { getActiveProfileId } from '$lib/server/profiles';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
-
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 type Question = { label: string; type?: string };
 type Answer = { label: string; value: string };
 
@@ -89,22 +86,22 @@ function withCors(res: Response, origin: string | null): Response {
   return res;
 }
 
-function spawnAnswers(url: string, portal: string, questions: Question[]): Promise<Answer[]> {
+function spawnAnswers(
+  url: string,
+  portal: string,
+  questions: Question[],
+  profileId: string,
+): Promise<Answer[]> {
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
     const payload = JSON.stringify({ url, portal, questions }, null, 2);
-    const prompt =
-      '/' +
-      CLI_NAMESPACE +
-      ' form-answers ' +
-      url +
-      ' --bookmarklet --json-output' +
-      ' (questions piped via stdin as JSON)';
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env },
-    });
+
+    const { child: p } = spawnAgentWithMode(
+      'form-answers',
+      url + ' --bookmarklet --json-output (questions piped via stdin as JSON)',
+      { profileId },
+    );
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
     });
@@ -217,7 +214,7 @@ export const POST = wrap('answer-form', async ({ request }: { request: Request }
   });
 
   try {
-    const answers = await spawnAnswers(url, portal, questions);
+    const answers = await spawnAnswers(url, portal, questions, getActiveProfileId());
     logEvent('answer-form', 'Answers produced', {
       level: 'success',
       category: 'application',

@@ -7,16 +7,12 @@
  * section. Output saved to `output/linkedin-rewrite-{date}.md`.
  */
 
-import { spawn } from 'node:child_process';
 import { wrap } from '$lib/server/api-helpers';
-import { ROOT } from '$lib/server/files';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
 import { getActiveProfileId } from '$lib/server/profiles';
 import { readAuditReport } from '$lib/server/linkedin-audit';
 
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 const TIMEOUT_MS = 240_000;
 
 function spawnRewrite(args: {
@@ -32,10 +28,9 @@ function spawnRewrite(args: {
       findings: args.findings,
       snapshot: args.snapshot,
     };
-    const prompt =
-      '/' +
-      CLI_NAMESPACE +
-      ' linkedin-rewrite ' +
+
+    const { child: p } = spawnAgentWithMode(
+      'linkedin-rewrite',
       JSON.stringify({
         profileId: args.profileId,
         findings: args.findings,
@@ -44,14 +39,12 @@ function spawnRewrite(args: {
             .length,
           aboutLength: ((args.snapshot.profile as Record<string, string>)?.about ?? '').length,
         },
-      });
-    try {
-      swapProfileSymlinks(args.profileId);
-    } catch {}
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env, LINKEDIN_REWRITE_INPUT: JSON.stringify(payload) },
-    });
+      }),
+      {
+        profileId: args.profileId,
+        env: { LINKEDIN_REWRITE_INPUT: JSON.stringify(payload) },
+      },
+    );
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
     });

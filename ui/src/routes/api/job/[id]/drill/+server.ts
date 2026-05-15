@@ -11,15 +11,11 @@
  * (button press), NOT on every keystroke — would be wasteful.
  */
 
-import { spawn } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { ROOT } from '$lib/server/files';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
 
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 type DrillInput = {
   mode: 'code' | 'design';
   problem: string;
@@ -39,13 +35,10 @@ function spawnDrill(
       userInput: args.userInput.slice(0, 12_000), // cap input to keep prompt small
       previousFeedback: (args.previousFeedback ?? []).slice(-5),
     };
-    const prompt = '/' + CLI_NAMESPACE + ' drill-feedback ' + JSON.stringify(promptInput);
-    try {
-      swapProfileSymlinks(args.profileId);
-    } catch {}
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env, DRILL_INPUT: JSON.stringify(promptInput) },
+
+    const { child: p } = spawnAgentWithMode('drill-feedback', JSON.stringify(promptInput), {
+      profileId: args.profileId,
+      env: { DRILL_INPUT: JSON.stringify(promptInput) },
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();

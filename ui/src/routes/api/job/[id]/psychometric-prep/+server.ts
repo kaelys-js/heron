@@ -19,15 +19,11 @@
  * `inviteText` patterns before passing to the mode.
  */
 
-import { spawn } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { ROOT } from '$lib/server/files';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
 
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 const TIMEOUT_MS = 120_000;
 
 const DETECTION_PATTERNS: Array<{ id: string; patterns: RegExp[] }> = [
@@ -80,23 +76,20 @@ function spawnPrep(args: {
     let stdout = '';
     let stderr = '';
     const payload = { ...args };
-    const prompt =
-      '/' +
-      CLI_NAMESPACE +
-      ' psychometric-prep ' +
+
+    const { child: p } = spawnAgentWithMode(
+      'psychometric-prep',
       JSON.stringify({
         profileId: args.profileId,
         jobId: args.jobId,
         company: args.company,
         testIdentifier: args.testIdentifier,
-      });
-    try {
-      swapProfileSymlinks(args.profileId);
-    } catch {}
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env, PSYCHOMETRIC_PREP_INPUT: JSON.stringify(payload) },
-    });
+      }),
+      {
+        profileId: args.profileId,
+        env: { PSYCHOMETRIC_PREP_INPUT: JSON.stringify(payload) },
+      },
+    );
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
     });

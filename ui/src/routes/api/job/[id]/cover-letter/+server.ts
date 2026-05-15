@@ -12,15 +12,11 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { ROOT } from '$lib/server/files';
 import { profilePath } from '$lib/server/profile-paths';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
-import { AGENT_CLI } from '$lib/config/cli';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
 import {
   checkCoverLetter,
   checkAiDetect,
@@ -28,6 +24,7 @@ import {
   type AiDetectResult,
 } from '$lib/server/quality-checks';
 
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 /** Cover letters live under {profile}/output/{stem}-cover.md so each profile
  *  has its own set. The CV-pdf naming convention is `{n}-{slug}-{date}.pdf`
  *  (or with leading `cv-` prefix in some templates); the cover letter mode
@@ -64,20 +61,10 @@ function spawnCoverLetter(url: string, profileId: string): Promise<{ path: strin
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
-    const prompt = '/' + CLI_NAMESPACE + ' cover-letter ' + url;
-    try {
-      swapProfileSymlinks(profileId);
-    } catch (e) {
-      logEvent('cover-letter', 'Symlink swap failed — cover letter may read wrong profile', {
-        level: 'warn',
-        category: 'application',
-        message: e instanceof Error ? e.message : String(e),
-      });
-    }
     const outputDir = profilePath(profileId, 'output-dir');
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env },
+
+    const { child: p } = spawnAgentWithMode('cover-letter', url, {
+      profileId: profileId,
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();

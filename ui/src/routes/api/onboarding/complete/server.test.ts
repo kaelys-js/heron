@@ -1,18 +1,29 @@
 /**
  * POST /api/onboarding/complete — flip the completed flag, fire seed.
+ *
+ * Post-Option-C: spawn pattern goes through spawnAgentWithMode() (not
+ * the legacy slash-command path). Tests assert that helper is called
+ * with the right mode name + profileId.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EventEmitter } from 'node:events';
 
-const spawnCalls: { bin: string; args: string[] }[] = [];
+interface SpawnAgentCall {
+  modeName: string;
+  userMessage: string;
+  opts: { profileId: string; env?: Record<string, string> };
+}
+const spawnAgentCalls: SpawnAgentCall[] = [];
 
-vi.mock('node:child_process', () => ({
-  spawn: vi.fn((bin: string, args: string[]) => {
-    spawnCalls.push({ bin, args });
-    const p = new EventEmitter() as EventEmitter & { unref: () => void };
-    p.unref = () => undefined;
-    return p;
-  }),
+vi.mock('$lib/server/spawn-agent', () => ({
+  spawnAgentWithMode: vi.fn(
+    (modeName: string, userMessage: string, opts: SpawnAgentCall['opts']) => {
+      spawnAgentCalls.push({ modeName, userMessage, opts });
+      const p = new EventEmitter() as EventEmitter & { unref: () => void };
+      p.unref = () => undefined;
+      return { child: p, tempPromptPath: '/tmp/fake.md' };
+    },
+  ),
 }));
 
 let markCompleteResult = { completedSteps: ['welcome', 'cv'], completed: true };
@@ -28,23 +39,6 @@ vi.mock('$lib/server/profiles', () => ({
   getActiveProfileId: () => 'default',
 }));
 
-vi.mock('$lib/server/files', () => ({ ROOT: '/tmp/repo' }));
-
-const swapCalls: string[] = [];
-vi.mock('$lib/server/profile-symlinks', () => ({
-  swapProfileSymlinks: (id: string) => {
-    swapCalls.push(id);
-  },
-}));
-
-vi.mock('$lib/config/branding', () => ({
-  CLI_NAMESPACE: 'career-ops',
-}));
-
-vi.mock('$lib/config/cli', () => ({
-  AGENT_CLI: 'claude',
-}));
-
 const loggedEvents: { source: string; msg: string; meta: unknown }[] = [];
 vi.mock('$lib/server/events', () => ({
   logEvent: (source: string, msg: string, meta: unknown) => {
@@ -56,9 +50,8 @@ vi.mock('$lib/server/events', () => ({
 const { POST } = await import('./+server');
 
 beforeEach(() => {
-  spawnCalls.length = 0;
+  spawnAgentCalls.length = 0;
   markCompleteCalls.length = 0;
-  swapCalls.length = 0;
   loggedEvents.length = 0;
   markCompleteResult = { completedSteps: ['welcome', 'cv'], completed: true };
 });
@@ -68,19 +61,18 @@ afterEach(() => {
 });
 
 async function post(body: unknown) {
-  const r = (await (POST as unknown as (e: unknown) => Promise<Response>)({
-    url: new URL('http://localhost/api/onboarding/complete'),
-    request: new Request('http://localhost/api/onboarding/complete', {
-      method: 'POST',
-      body: typeof body === 'string' ? body : JSON.stringify(body),
-      headers: { 'Content-Type': 'application/json' },
-    }),
-  } as unknown)) as Response;
-  return { status: r.status, body: await r.json() };
+  const init: RequestInit = {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: typeof body === 'string' ? body : JSON.stringify(body),
+  };
+  const req = new Request('http://localhost/api/onboarding/complete', init);
+  const res = (await POST({ request: req } as unknown as Parameters<typeof POST>[0])) as Response;
+  return { status: res.status, body: await res.json() };
 }
 
 describe('POST /api/onboarding/complete', () => {
-  it('marks onboarding complete (default body)', async () => {
+  it('calls markComplete and returns 200', async () => {
     const r = await post({});
     expect(r.status).toBe(200);
     expect(markCompleteCalls.length).toBe(1);
@@ -94,22 +86,20 @@ describe('POST /api/onboarding/complete', () => {
 
   it('fires the seed-form-answers spawn on normal-completion path', async () => {
     await post({});
-    expect(spawnCalls.length).toBe(1);
-    expect(spawnCalls[0].bin).toBe('claude');
-    expect(spawnCalls[0].args[0]).toBe('-p');
-    expect(spawnCalls[0].args[1]).toContain('/career-ops seed-form-answers');
-    expect(spawnCalls[0].args).toContain('--dangerously-skip-permissions');
+    expect(spawnAgentCalls.length).toBe(1);
+    expect(spawnAgentCalls[0].modeName).toBe('seed-form-answers');
+    // seed-form-answers takes no user input; empty string passed.
+    expect(spawnAgentCalls[0].userMessage).toBe('');
   });
 
-  it('swaps profile symlinks BEFORE firing the seed', async () => {
+  it('passes the active profileId to spawnAgentWithMode', async () => {
     await post({});
-    expect(swapCalls).toEqual(['default']);
+    expect(spawnAgentCalls[0].opts.profileId).toBe('default');
   });
 
   it('SKIP path does NOT fire the seed spawn', async () => {
     await post({ skip: true });
-    expect(spawnCalls.length).toBe(0);
-    expect(swapCalls.length).toBe(0);
+    expect(spawnAgentCalls.length).toBe(0);
   });
 
   it('SKIP path still marks onboarding complete', async () => {
@@ -135,6 +125,6 @@ describe('POST /api/onboarding/complete', () => {
     const r = await post('not-json');
     expect(r.status).toBe(200);
     // Default → no skip → seed fires
-    expect(spawnCalls.length).toBe(1);
+    expect(spawnAgentCalls.length).toBe(1);
   });
 });

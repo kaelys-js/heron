@@ -13,15 +13,11 @@
  * FormAnswersCard "Seed from CV + profile" button.
  */
 
-import { spawn } from 'node:child_process';
 import { wrap } from '$lib/server/api-helpers';
-import { ROOT } from '$lib/server/files';
 import { getActiveProfileId, getProfile } from '$lib/server/profiles';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 import { logEvent, reportServerError } from '$lib/server/events';
 import { listAnswers, cacheStats } from '$lib/server/form-answers-cache';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
 
 function resolveProfileId(url: URL): string {
   const q = url.searchParams.get('profile');
@@ -33,20 +29,9 @@ function spawnSeed(profileId: string): Promise<{ stdout: string; stderr: string 
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
-    const prompt = '/' + CLI_NAMESPACE + ' seed-form-answers';
-    try {
-      swapProfileSymlinks(profileId);
-    } catch (e) {
-      logEvent('seed-form-answers', 'Symlink swap failed', {
-        level: 'warn',
-        category: 'application',
-        message: e instanceof Error ? e.message : String(e),
-      });
-    }
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env },
-    });
+    // seed-form-answers reads everything from the per-profile files
+    // (CV, profile.yml, _profile.md). No user input needed.
+    const { child: p } = spawnAgentWithMode('seed-form-answers', '', { profileId });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
     });

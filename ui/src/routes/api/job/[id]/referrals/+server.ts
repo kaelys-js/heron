@@ -18,18 +18,14 @@
  * user reviews + sends each ask manually (or copies into LinkedIn).
  */
 
-import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { ROOT } from '$lib/server/files';
 import { profilePath } from '$lib/server/profile-paths';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
 
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 const TIMEOUT_MS = 240_000;
 
 export type ReferralCandidate = {
@@ -69,13 +65,10 @@ function spawnReferralDiscovery(args: {
       maxResults: args.maxResults,
       locationFilter: args.locationFilter,
     };
-    const prompt = '/' + CLI_NAMESPACE + ' referral-discovery ' + JSON.stringify(payload);
-    try {
-      swapProfileSymlinks(args.profileId);
-    } catch {}
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env, REFERRAL_INPUT: JSON.stringify(payload) },
+
+    const { child: p } = spawnAgentWithMode('referral-discovery', JSON.stringify(payload), {
+      profileId: args.profileId,
+      env: { REFERRAL_INPUT: JSON.stringify(payload) },
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();

@@ -11,17 +11,13 @@
  * field is updated on completion.
  */
 
-import { spawn } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { ROOT } from '$lib/server/files';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
 import { getInterviewer, upsertInterviewer } from '$lib/server/interviewers';
 import { touchJob } from '$lib/server/stage-state';
 
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 const TIMEOUT_MS = 120_000;
 
 function spawnQuestions(args: {
@@ -46,13 +42,10 @@ function spawnQuestions(args: {
       interviewerTitle: args.interviewerTitle,
       stage: args.stage,
     };
-    const prompt = '/' + CLI_NAMESPACE + ' questions-to-ask ' + JSON.stringify(payload);
-    try {
-      swapProfileSymlinks(args.profileId);
-    } catch {}
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env, QUESTIONS_INPUT: JSON.stringify(payload) },
+
+    const { child: p } = spawnAgentWithMode('questions-to-ask', JSON.stringify(payload), {
+      profileId: args.profileId,
+      env: { QUESTIONS_INPUT: JSON.stringify(payload) },
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
