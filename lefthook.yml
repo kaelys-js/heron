@@ -274,6 +274,13 @@ pre-commit:
         command -v python3 >/dev/null 2>&1 || { echo "skip: python3 not on PATH"; exit 0; }
         python3 scripts/system/validate-plists.py
 
+    xml-validate:
+      # XML well-formedness check via xmllint — *.svg + *.storyboard.
+      # xmllint ships with libxml2 (pre-installed on macOS + Ubuntu CI).
+      # No schema/DTD validation, just "does this parse as XML".
+      glob: "*.{svg,storyboard}"
+      run: bash scripts/system/validate-xml.sh
+
     taplo:
       # TOML formatter — pyproject.toml + .mise.toml. taplo is the
       # canonical Rust-based formatter (the TOML equivalent of biome).

@@ -334,6 +334,12 @@ jobs:
         # .xcprivacy under the repo. Catches malformed iOS configs that
         # would otherwise blow up xcodebuild on the ios CI runner.
         run: python3 scripts/system/validate-plists.py
+
+      - name: Validate XML files (*.svg + *.storyboard)
+        # xmllint --noout well-formedness check; ships with libxml2 on
+        # every ubuntu-latest + macOS runner. No schema validation, just
+        # "does this parse as XML".
+        run: bash scripts/system/validate-xml.sh
         # JSON-schema validation + format-sync run in the ts job (need
         # node_modules for the ajv + jsonc-parser devDeps).
 
