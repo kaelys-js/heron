@@ -90,6 +90,15 @@ pre-commit:
       glob: "*.{ts,tsx,js,mjs,cjs,json,jsonc,css,webmanifest}"
       run: pnpm exec biome format {staged_files}
 
+    format-config-sync:
+      # Asserts .editorconfig + biome.jsonc + .prettierrc.json agree on
+      # every overlapping setting (indent / line-width / quote-style /
+      # trailing-commas / etc). Drift between these three is the most
+      # common "my editor formats one way, the pre-commit hook formats
+      # another" surprise. Fires only when one of the three is staged.
+      glob: "{.editorconfig,biome.jsonc,.prettierrc.json}"
+      run: pnpm validate:format-sync
+
     prettier-svelte:
       # Biome doesn't support .svelte yet (as of 2026-05). Run prettier
       # with prettier-plugin-svelte for those files only — style matches

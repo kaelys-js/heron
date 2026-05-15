@@ -112,12 +112,21 @@ jobs:
         run: pnpm format:check
 
       - name: Validate JSON schemas
-        # scripts/system/validate-json-schemas.mjs iterates every
-        # $schema-annotated config (turbo.json, biome.jsonc,
-        # release-please-config.json, ui/components.json) and validates
-        # against the referenced schema via ajv. Catches typos / unknown
-        # keys BEFORE the consuming tool's runtime would surface them.
+        # scripts/system/validate-json-schemas.mjs auto-discovers every
+        # $schema-annotated JSON/JSONC and validates against the
+        # referenced schema via ajv. Catches typos / unknown keys
+        # BEFORE the consuming tool's runtime would surface them.
         run: pnpm validate:json-schemas
+
+      - name: Validate format-config sync
+        # Asserts .editorconfig + biome.jsonc + .prettierrc.json agree on
+        # every overlapping setting (indent / line-width / quote style /
+        # trailing commas / etc). Drift between these three configs is
+        # the most common "editor formats it one way, hook reformats it
+        # another" surprise. Pre-commit catches it on the contributor's
+        # machine when one of the three is staged; this CI step is the
+        # belt-and-braces full-repo check.
+        run: pnpm validate:format-sync
 
       - name: Typecheck (svelte-check + tsgo, turbo-cached)
         run: pnpm exec turbo run check
