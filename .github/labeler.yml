@@ -1,3 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/actions/labeler/main/schema.json
+# actions/labeler v5 — auto-labels PRs based on changed-files globs.
+#
+# Schema: matchers are { changed-files: [ ... ] } | { head-branch: [ ... ] }
+# | { base-branch: [ ... ] }. The runner OR's items within a list and
+# AND's the matcher groups.
+#
+# Each label key here MUST also exist as a real label in the repo
+# (Settings → Labels) or the action silently skips it.
+#
+# Adding a label: create the label in GitHub first, then add a stanza
+# here. Glob examples: `**/*.svelte`, `ui/src/lib/server/**`, `*.md`.
+
 "🔴 core-architecture":
   - changed-files:
       - any-glob-to-any-file:

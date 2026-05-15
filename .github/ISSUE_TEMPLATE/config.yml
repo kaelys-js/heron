@@ -1,3 +1,9 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-issue-config.json
+# Issue-template chooser config — surfaced as the "New issue" page on
+# the repo. `blank_issues_enabled: false` forces every reporter through
+# one of the structured templates (bug_report / feature_request /
+# i-got-hired) or one of the contact_links below.
+
 blank_issues_enabled: false
 contact_links:
   - name: Security vulnerability (PRIVATE)

@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-funding.json
 # GitHub Sponsors / funding buttons surfaced on the repo's "Sponsor"
 # tab. Each platform is its own key; comment-out the lines you don't use.
 #
