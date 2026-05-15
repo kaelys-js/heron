@@ -41,6 +41,41 @@ if (typeof process !== 'undefined' && process.env && !process.env.CAREER_OPS_DAT
   const tmp = path.join(os.tmpdir(), `career-ops-test-${process.pid}`);
   fs.mkdirSync(tmp, { recursive: true });
   process.env.CAREER_OPS_DATA_DIR = tmp;
+
+  // ── Live-data write-guard ────────────────────────────────────────
+  // Any test that tries to write to <repo-root>/data/ (the developer's
+  // real per-user content) throws loudly. Forces tests to use the
+  // tmpdir above or explicit mocks. Catches contamination at the
+  // earliest possible moment — the failing test, not a downstream
+  // "why is my data wrong" mystery.
+  const REPO_ROOT_DATA = path.resolve(__dirname, '..', '..', 'data') + path.sep;
+  const guardWrite = (label: string, target: string) => {
+    if (typeof target === 'string' && target.startsWith(REPO_ROOT_DATA)) {
+      throw new Error(
+        `[test-isolation] ${label}() blocked: tests cannot write to live data/. ` +
+          `Path: ${target}. Use /tmp/ or mocks. Set CAREER_OPS_DATA_DIR before fs calls if your test needs an isolated data root.`,
+      );
+    }
+  };
+  // Use a typed alias so the inline cast doesn't trip TS's namespace
+  // resolution on `fs.PathOrFileDescriptor` (the require() return is
+  // the runtime module, not a type alias).
+  const fsLib = fs as typeof import('node:fs');
+  const origWrite = fsLib.writeFileSync;
+  const origMkdir = fsLib.mkdirSync;
+  const origAppend = fsLib.appendFileSync;
+  fsLib.writeFileSync = ((p: unknown, ...rest: unknown[]) => {
+    if (typeof p === 'string') guardWrite('writeFileSync', p);
+    return (origWrite as unknown as (...a: unknown[]) => unknown)(p, ...rest);
+  }) as typeof fsLib.writeFileSync;
+  fsLib.mkdirSync = ((p: unknown, ...rest: unknown[]) => {
+    if (typeof p === 'string') guardWrite('mkdirSync', p);
+    return (origMkdir as unknown as (...a: unknown[]) => unknown)(p, ...rest);
+  }) as typeof fsLib.mkdirSync;
+  fsLib.appendFileSync = ((p: unknown, ...rest: unknown[]) => {
+    if (typeof p === 'string') guardWrite('appendFileSync', p);
+    return (origAppend as unknown as (...a: unknown[]) => unknown)(p, ...rest);
+  }) as typeof fsLib.appendFileSync;
 }
 
 // ── IndexedDB shim (jsdom doesn't ship one) ────────────────────────

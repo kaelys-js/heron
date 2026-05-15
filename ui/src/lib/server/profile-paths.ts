@@ -83,7 +83,10 @@ export type ProfileFileKind =
   // for privacy + multi-user isolation. See docs/DATA_CONTRACT.md.
   | 'jds-dir' // saved JD text files, referenced as `local:<file>` in pipeline.md
   | 'writing-samples-dir' // voice-calibration samples (emails, blog posts, etc.)
-  | 'batch-dir'; // bulk-CV worker state (batch-input.tsv, batch-state.tsv, logs/, tracker-additions/)
+  | 'batch-dir' // bulk-CV worker state (batch-input.tsv, batch-state.tsv, logs/, tracker-additions/)
+  | 'followup-cache' // derived: per-profile follow-up cadence cache
+  | 'patterns-cache' // derived: per-profile rejection-pattern cache
+  | 'insights-cache'; // derived: per-profile pipeline insights cache
 
 /**
  * Files that live ABOVE the profile tree — shared across that user's
@@ -95,7 +98,14 @@ export type ProfileFileKind =
  *   multi-user → data/users/{userId}/_shared/{file}
  *   legacy     → data/profiles/_shared/{file}     (userId === SYSTEM_USER_ID)
  */
-export type UserSharedFileKind = 'story-bank'; // STAR+R interview stories — see modes/interview-prep.md
+export type UserSharedFileKind =
+  | 'story-bank' // STAR+R interview stories — see modes/interview-prep.md
+  | 'autopilot' // recurring-job scheduler config — per-user
+  | 'onboarding-state' // wizard step state — per-user
+  | 'ui-prefs' // UI preferences (theme, layout, etc.) — per-user
+  | 'sources' // scanner connection state (LinkedIn / Indeed sessions) — per-user
+  | 'backups-dir'; // tarball backup destination — per-user (each user's
+// daily snapshot of their own tree)
 
 const PROFILES_ROOT = path.join(ROOT, 'data', 'profiles');
 const USERS_ROOT = path.join(ROOT, 'data', 'users');
@@ -225,6 +235,12 @@ export function profilePathForUser(
       return path.join(base, 'writing-samples');
     case 'batch-dir':
       return path.join(base, 'batch');
+    case 'followup-cache':
+      return path.join(base, 'followup-cache.json');
+    case 'patterns-cache':
+      return path.join(base, 'patterns-cache.json');
+    case 'insights-cache':
+      return path.join(base, 'insights-cache.json');
   }
 }
 
@@ -256,6 +272,16 @@ export function userSharedPathForUser(userId: string, kind: UserSharedFileKind):
   switch (kind) {
     case 'story-bank':
       return path.join(base, 'story-bank.md');
+    case 'autopilot':
+      return path.join(base, 'autopilot.json');
+    case 'onboarding-state':
+      return path.join(base, 'onboarding-state.json');
+    case 'ui-prefs':
+      return path.join(base, 'ui-prefs.json');
+    case 'sources':
+      return path.join(base, 'sources.json');
+    case 'backups-dir':
+      return path.join(base, 'backups');
   }
 }
 

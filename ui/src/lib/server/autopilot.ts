@@ -19,8 +19,21 @@ import {
   isRunning as isJobRunning,
 } from './jobs';
 import { readLastRun, writeLastRun } from './job-last-run';
+import { userSharedPath, userSharedPathForUser } from './profile-paths';
 
-const CONFIG_PATH = path.join(ROOT, 'data', 'autopilot.json');
+/** Per-user autopilot config path. Defaults to the active user's path;
+ *  callers with an explicit userId should use `configPathForUser`. */
+function configPath(): string {
+  return userSharedPath('autopilot');
+}
+function configPathForUser(userId: string): string {
+  return userSharedPathForUser(userId, 'autopilot');
+}
+// Legacy const kept for source compatibility — points at the current
+// user's config (resolves on first access via the AsyncLocalStorage).
+// Code paths that operate ON A SPECIFIC USER should call
+// configPathForUser(userId) instead.
+const CONFIG_PATH_LEGACY = path.join(ROOT, 'data', 'autopilot.json');
 
 /** Task name — any registered job id. The legacy literal union is kept as
  *  a type alias for readability + boot-time defaults; runtime treats
@@ -203,12 +216,12 @@ let cached: AutopilotConfig | null = null;
 export function readConfig(): AutopilotConfig {
   if (cached) return cached;
   try {
-    if (!fs.existsSync(CONFIG_PATH)) {
+    if (!fs.existsSync(configPath())) {
       writeConfig(DEFAULT_CONFIG);
       cached = DEFAULT_CONFIG;
       return cached;
     }
-    const raw = fs.readFileSync(CONFIG_PATH, 'utf8');
+    const raw = fs.readFileSync(configPath(), 'utf8');
     const parsed = JSON.parse(raw) as Partial<AutopilotConfig>;
     cached = mergeWithDefaults(parsed);
     return cached;
@@ -243,8 +256,8 @@ function mergeWithDefaults(partial: Partial<AutopilotConfig>): AutopilotConfig {
 }
 
 export function writeConfig(next: AutopilotConfig): void {
-  fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive: true });
-  fs.writeFileSync(CONFIG_PATH, JSON.stringify(next, null, 2) + '\n');
+  fs.mkdirSync(path.dirname(configPath()), { recursive: true });
+  fs.writeFileSync(configPath(), JSON.stringify(next, null, 2) + '\n');
   cached = next;
 }
 

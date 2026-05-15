@@ -20,11 +20,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './files';
-import { activePath } from './profile-paths';
+import { activePath, userSharedPath } from './profile-paths';
 import { reportServerError } from './events';
 import { readEnv } from './env';
 
-const STATE_PATH = path.join(ROOT, 'data', 'onboarding-state.json');
+/** Per-user onboarding state path. Multi-user installs: each user
+ *  gets their own wizard state — Alice can be at step 3 while Bob is
+ *  at step 6. Resolved lazily so AsyncLocalStorage's current-user
+ *  context is honored. */
+function statePath(): string {
+  return userSharedPath('onboarding-state');
+}
 
 export const STEPS = [
   // Multi-user: pick the owner account (passkey / GitHub / invite code).
@@ -63,7 +69,7 @@ const ZERO_STATE: OnboardingState = {
 
 function ensureDir() {
   try {
-    fs.mkdirSync(path.dirname(STATE_PATH), { recursive: true });
+    fs.mkdirSync(path.dirname(statePath()), { recursive: true });
   } catch {
     // mkdir recursive only fails for permission/IO. Subsequent file
     // writes will surface the real error with the actual op name.
@@ -72,8 +78,8 @@ function ensureDir() {
 
 export function readOnboarding(): OnboardingState {
   try {
-    if (!fs.existsSync(STATE_PATH)) return { ...ZERO_STATE };
-    const txt = fs.readFileSync(STATE_PATH, 'utf8');
+    if (!fs.existsSync(statePath())) return { ...ZERO_STATE };
+    const txt = fs.readFileSync(statePath(), 'utf8');
     if (!txt.trim()) return { ...ZERO_STATE };
     const parsed = JSON.parse(txt) as Partial<OnboardingState>;
     return {
@@ -93,7 +99,7 @@ export function readOnboarding(): OnboardingState {
 function writeOnboarding(state: OnboardingState): OnboardingState {
   ensureDir();
   try {
-    fs.writeFileSync(STATE_PATH, JSON.stringify(state, null, 2) + '\n');
+    fs.writeFileSync(statePath(), JSON.stringify(state, null, 2) + '\n');
   } catch (e) {
     reportServerError('onboarding', 'Failed to write onboarding-state.json', e, {
       category: 'system',
