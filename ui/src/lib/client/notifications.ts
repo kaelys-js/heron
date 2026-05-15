@@ -23,7 +23,12 @@
  */
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { BRAND_STORAGE_KEYS } from './brand';
+import { BRAND, BRAND_STORAGE_KEYS } from './brand';
+
+// Brand-derived globalThis hook the Electron main process sets via preload
+// to mirror notifications when the WebView is hidden. Derived so a rename
+// doesn't leave a dead key that silently disables the bridge.
+const NATIVE_NOTIFY_GLOBAL = `__${BRAND.name.toUpperCase().replace(/-/g, '_')}_NATIVE_NOTIFY__`;
 
 export type NotifyLevel = 'info' | 'success' | 'warn' | 'error';
 
@@ -137,15 +142,16 @@ export async function notify(opts: NotifyOptions): Promise<boolean> {
     const n = new Notification(opts.title, {
       body: opts.body,
       tag: opts.tag,
-      icon: '/icons/career-ops-192.png',
+      icon: `/icons/${BRAND.name}-192.png`,
       silent: false,
     });
     if (opts.onClick) n.onclick = () => opts.onClick!();
     // Electron preload-bridge hook — main-process Notification when the
     // WebView is hidden (better UX). Set by electron/preload.ts.
-    const w = globalThis as any;
-    if (typeof w.__CAREER_OPS_NATIVE_NOTIFY__ === 'function') {
-      w.__CAREER_OPS_NATIVE_NOTIFY__({
+    const w = globalThis as Record<string, unknown>;
+    const nativeNotify = w[NATIVE_NOTIFY_GLOBAL];
+    if (typeof nativeNotify === 'function') {
+      (nativeNotify as (msg: unknown) => void)({
         title: opts.title,
         body: opts.body,
         tag: opts.tag,

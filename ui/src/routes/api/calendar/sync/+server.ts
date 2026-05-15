@@ -11,7 +11,7 @@
  *
  * The feed is read-only — we never write back to the OS calendar. One-way
  * push only. If the user wants to delete an event, they edit it on the
- * career-ops side.
+ * dashboard side.
  */
 
 import { wrap } from '$lib/server/api-helpers';
@@ -19,6 +19,7 @@ import { findUpcomingInterviews } from '$lib/server/interviewers';
 import { listActiveOffers } from '$lib/server/offers';
 import { getActiveProfileId } from '$lib/server/profiles';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
+import { BRAND } from '$lib/client/brand';
 
 const HOUR_MS = 60 * 60 * 1000;
 const HOURS_24 = 24 * HOUR_MS;
@@ -56,16 +57,16 @@ function buildIcs(
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//career-ops//interview-feed//EN',
+    `PRODID:-//${BRAND.name}//interview-feed//EN`,
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    'X-WR-CALNAME:career-ops · interviews',
+    `X-WR-CALNAME:${BRAND.displayName} · interviews`,
     'X-WR-CALDESC:Interviews\\, prep blocks\\, and offer deadlines',
   ];
   const now = fmt(new Date());
   for (const ev of events) {
     lines.push('BEGIN:VEVENT');
-    lines.push('UID:' + ev.uid + '@career-ops');
+    lines.push(`UID:${ev.uid}@${BRAND.name}`);
     lines.push('DTSTAMP:' + now);
     lines.push('DTSTART:' + fmt(new Date(ev.start)));
     lines.push('DTEND:' + fmt(new Date(ev.end)));
@@ -135,7 +136,7 @@ export const GET = async ({ url }: { url: URL }) => {
   return new Response(ics, {
     headers: {
       'content-type': 'text/calendar; charset=utf-8',
-      'content-disposition': 'attachment; filename="career-ops-interviews.ics"',
+      'content-disposition': `attachment; filename="${BRAND.name}-interviews.ics"`,
       'cache-control': 'max-age=300',
     },
   });

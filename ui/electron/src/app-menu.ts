@@ -20,9 +20,9 @@ export function buildAppMenu(h: AppMenuHandlers): Menu {
 
   if (isMac) {
     template.push({
-      label: 'career-ops',
+      label: BRAND.displayName,
       submenu: [
-        { label: 'About career-ops', click: h.onAbout },
+        { label: `About ${BRAND.displayName}`, click: h.onAbout },
         { type: 'separator' },
         { label: 'Preferences…', accelerator: 'Cmd+,', click: h.onPreferences },
         { type: 'separator' },
@@ -142,7 +142,7 @@ export function buildAppMenu(h: AppMenuHandlers): Menu {
         ? ([] as MenuItemConstructorOptions[])
         : ([
             { type: 'separator' },
-            { label: `About career-ops ${app.getVersion()}`, click: h.onAbout },
+            { label: `About ${BRAND.displayName} ${app.getVersion()}`, click: h.onAbout },
           ] as MenuItemConstructorOptions[])),
     ],
   });

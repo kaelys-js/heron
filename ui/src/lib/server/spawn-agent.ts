@@ -34,6 +34,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { ROOT } from './files';
 import { AGENT_CLI } from '$lib/config/cli';
+import { BRAND } from '$lib/client/brand';
 import { realizeModePromptForUser } from './mode-substitution';
 import { currentUserIdOrDefault } from './user-context';
 import { logEvent } from './events';
@@ -88,7 +89,7 @@ export function spawnAgentWithMode(
 
   // Write to a fresh temp file. UUID prevents collisions when two
   // spawns fire simultaneously.
-  const tempPromptPath = path.join(os.tmpdir(), `career-ops-${modeName}-${randomUUID()}.md`);
+  const tempPromptPath = path.join(os.tmpdir(), `${BRAND.name}-${modeName}-${randomUUID()}.md`);
   fs.writeFileSync(tempPromptPath, realizedPrompt, 'utf8');
 
   const env: NodeJS.ProcessEnv = { ...process.env, ...(opts.env ?? {}) };

@@ -21,10 +21,12 @@ import WatchConnectivity
 final class WatchSessionBridge: NSObject, WCSessionDelegate {
     static let shared = WatchSessionBridge()
 
-    private let queue = DispatchQueue(label: "career-ops.watch-session")
+    private let queue = DispatchQueue(label: "\(Brand.name).watch-session")
     private var activated = false
 
-    private override init() { super.init() }
+    override private init() {
+        super.init()
+    }
 
     func send(_ payload: [String: Any]) {
         guard WCSession.isSupported() else { return }
@@ -57,20 +59,20 @@ final class WatchSessionBridge: NSObject, WCSessionDelegate {
     // MARK: - WCSessionDelegate (iPhone side)
 
     func session(
-        _ session: WCSession,
-        activationDidCompleteWith state: WCSessionActivationState,
-        error: Error?
+        _: WCSession,
+        activationDidCompleteWith _: WCSessionActivationState,
+        error _: Error?
     ) {
         // No-op; we only push, we don't receive in this direction.
     }
 
-    func sessionDidBecomeInactive(_ session: WCSession) {
+    func sessionDidBecomeInactive(_: WCSession) {
         // Some iOS apps switch paired-watch mid-session (rare). When
         // that happens iOS deactivates the current session; we'll
         // re-activate on next send().
     }
 
-    func sessionDidDeactivate(_ session: WCSession) {
+    func sessionDidDeactivate(_: WCSession) {
         activated = false
         // Required for switching paired watches.
         WCSession.default.activate()

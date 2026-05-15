@@ -47,6 +47,7 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { ROOT } from '../files';
+import { BRAND } from '$lib/client/brand';
 import * as authSchema from './auth-schema';
 import * as appSchema from './app-schema';
 
@@ -60,8 +61,9 @@ function resolveDataDir(): string {
   if (IS_TEST) {
     // Per-process tmpdir so parallel test workers don't clobber each
     // other's auth.db. pid is enough; vitest re-uses process pools but
-    // never two pools at the same path simultaneously.
-    const tmp = path.join(os.tmpdir(), `career-ops-test-${process.pid}`);
+    // never two pools at the same path simultaneously. Brand-derived
+    // so a rename retargets the tmp namespace consistently.
+    const tmp = path.join(os.tmpdir(), `${BRAND.name}-test-${process.pid}`);
     fs.mkdirSync(tmp, { recursive: true });
     return tmp;
   }

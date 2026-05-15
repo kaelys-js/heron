@@ -45,8 +45,10 @@ describe('db/index.ts — DB paths are isolated during tests', () => {
     expect(dbSrc).toMatch(/os\.tmpdir\(\)/);
   });
 
-  it('per-process tmpdir name uses process.pid (parallel-worker safe)', () => {
-    expect(dbSrc).toMatch(/career-ops-test-\$\{process\.pid\}/);
+  it('per-process tmpdir name uses BRAND-derived prefix + process.pid (parallel-worker safe)', () => {
+    // db/index.ts:64 uses `${BRAND.name}-test-${process.pid}` so the
+    // tmpdir prefix retargets on a brand rename rather than going stale.
+    expect(dbSrc).toMatch(/\$\{BRAND\.name\}-test-\$\{process\.pid\}/);
   });
 });
 
