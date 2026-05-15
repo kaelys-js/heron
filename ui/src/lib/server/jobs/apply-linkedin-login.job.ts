@@ -1,6 +1,8 @@
 /**
  * apply-linkedin-login — opens LinkedIn in a Playwright browser so the user
- * can sign in. Saves the authenticated session at `.playwright-linkedin/`
+ * can sign in. Saves the authenticated session per-user at
+ * `data/users/{uid}/.playwright-linkedin/` (or
+ * `data/profiles/_shared/.playwright-linkedin/` in legacy single-user installs)
  * for subsequent scan-linkedin-auth + linkedin-easy-apply runs.
  *
  * Previously this was only handled by the legacy `/api/run` switch with
@@ -15,7 +17,7 @@ register({
   id: 'apply-linkedin-login',
   label: 'LinkedIn login',
   description:
-    'Opens LinkedIn in a Playwright browser window so you can sign in. The session is saved at .playwright-linkedin/ and reused for scans + Easy Apply.',
+    'Opens LinkedIn in a Playwright browser window so you can sign in. The session is saved per-user at data/users/{uid}/.playwright-linkedin/ and reused for scans + Easy Apply.',
   category: 'apply',
   trigger: { type: 'manual' },
   allowManual: true,

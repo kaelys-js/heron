@@ -21,8 +21,10 @@ import sys
 ROOT = Path(__file__).parent
 REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 
 from lib_portal import PortalConfig, adapter_main  # noqa: E402
+from lib_playwright_auth import user_data_dir as _resolve_user_data_dir  # noqa: E402
 
 
 def _url_transform(url: str) -> str:
@@ -39,7 +41,9 @@ def _url_transform(url: str) -> str:
 def workable_config() -> PortalConfig:
     return PortalConfig(
         portal_id="workable",
-        user_data_dir=REPO_ROOT / ".playwright-workable",
+        # Per-user Playwright session — resolves to data/users/{uid}/.playwright-workable/
+        # under multi-user, or data/profiles/_shared/.playwright-workable/ for legacy.
+        user_data_dir=_resolve_user_data_dir("workable"),
         first_name_selectors=[
             'input[name="firstname"]',
             'input[name="first_name"]',

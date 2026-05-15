@@ -105,7 +105,7 @@ data/users/{userId}/profiles/_shared/
                              real-project stories) but PRIVATE to this user
 ```
 
-**Globally shared infrastructure** (NOT per-profile, NOT per-user — same for everyone on this machine): `.env`, `.playwright-linkedin/`, `.playwright-indeed/`, `data/profiles.json`, `data/sources.json`, `data/onboarding-state.json`, `data/autopilot.json`, `data/activity.jsonl`, `data/issues.jsonl`, `data/inbox-mbox/`.
+**Globally shared infrastructure** (NOT per-profile, NOT per-user — same for everyone on this machine): `.env`, `data/profiles.json`, `data/activity.jsonl`, `data/issues.jsonl`, `data/inbox-mbox/`. NOTE: `data/sources.json`, `data/onboarding-state.json`, `data/autopilot.json` have moved per-user to `data/users/{uid}/profiles/_shared/`. `.playwright-{portal}/` Chromium sessions are also per-user under `data/users/{uid}/` (or `data/profiles/_shared/` for legacy single-user) — the persistent dir IS the credential and must never be shared across users.
 
 **Active profile**: `data/profiles.json` has `{ activeId, profiles: [...] }`. Reads default to the active profile unless an explicit `--profile <slug>` flag (Python/MJS scripts) or `?profile=<slug>` query param (dashboard routes) is passed.
 

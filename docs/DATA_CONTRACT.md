@@ -8,14 +8,18 @@ Career-ops supports multiple distinct career identities ("profiles") per install
 
 **Globally shared infrastructure** is reused across every profile AND every user:
 - `.env` (API keys + IMAP creds — per-machine, NOT in git)
-- `.playwright-linkedin/` and `.playwright-indeed/` (auth sessions)
-- `data/profiles.json` (the registry + active-profile pointer)
-- `data/sources.json` (per-source connection health)
-- `data/onboarding-state.json` (wizard step state)
-- `data/autopilot.json` (global scheduler config)
+- `data/profiles.json` (the registry + active-profile pointer; per-install)
 - `data/activity.jsonl` (global event log)
 - `data/issues.jsonl` (open issues feed)
 - `data/inbox-mbox/*` (shared mbox drop-box for `scripts/scan/scan-email.mjs`)
+
+**Per-user, NOT shared across users** (these MOVED post-multi-user migration):
+- `data/users/{userId}/profiles/_shared/sources.json` (per-source connection health, per-user)
+- `data/users/{userId}/profiles/_shared/onboarding-state.json` (wizard step state, per-user)
+- `data/users/{userId}/profiles/_shared/autopilot.json` (scheduler config, per-user)
+- `data/users/{userId}/.playwright-{portal}/` (Chromium persistent dirs for LinkedIn / Indeed / Greenhouse / Ashby / Lever / Workday / Recruitee / SmartRecruiters / Workable / Personio / Teamtailor — the persistent dir IS the credential, must never cross users)
+
+Legacy single-user installs map all "per-user" content to `data/profiles/_shared/` + `.playwright-{portal}/` under that fallback root.
 
 **Per-user, cross-profile content** lives at `data/users/{userId}/profiles/_shared/` (or `data/profiles/_shared/` in legacy single-user mode):
 - `story-bank.md` — accumulated STAR+R stories that transcend the user's profiles (engineer + instructor profiles draw on the same real-project stories) but stay PRIVATE to that user.

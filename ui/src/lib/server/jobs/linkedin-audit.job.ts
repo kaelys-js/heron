@@ -9,9 +9,9 @@
  *
  * Trigger: weekly Monday 07:00. Manual run also allowed.
  *
- * Runs ONLY for the active profile (LinkedIn auth is shared, not per-
- * profile). Multi-profile installs that need per-profile auth would
- * need .playwright-linkedin-{slug} directories — out of scope here.
+ * Runs ONLY for the active profile (LinkedIn auth is per-user, not per-
+ * profile — the same LinkedIn account serves all of a user's profiles).
+ * Per-user Playwright session dirs are at data/users/{uid}/.playwright-linkedin/.
  */
 
 import { spawn } from 'node:child_process';

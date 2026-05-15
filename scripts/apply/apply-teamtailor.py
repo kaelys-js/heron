@@ -19,14 +19,18 @@ import sys
 ROOT = Path(__file__).parent
 REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 
 from lib_portal import PortalConfig, adapter_main  # noqa: E402
+from lib_playwright_auth import user_data_dir as _resolve_user_data_dir  # noqa: E402
 
 
 def teamtailor_config() -> PortalConfig:
     return PortalConfig(
         portal_id="teamtailor",
-        user_data_dir=REPO_ROOT / ".playwright-teamtailor",
+        # Per-user Playwright session — resolves to data/users/{uid}/.playwright-teamtailor/
+        # under multi-user, or data/profiles/_shared/.playwright-teamtailor/ for legacy.
+        user_data_dir=_resolve_user_data_dir("teamtailor"),
         first_name_selectors=[
             'input[aria-label*="First name" i]',
             'input[name*="first" i]',
