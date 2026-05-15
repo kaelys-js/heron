@@ -1,4 +1,10 @@
 {
+  // ui/electron/tsconfig.json — Electron main + preload (no SvelteKit).
+  //
+  // No $schema declaration (would point at the 432 KB schemastore
+  // tsconfig schema that overwhelms Ajv's strict resolver). tsc itself
+  // validates via `tsgo --noEmit` (pre-push + CI), and editors
+  // auto-bind by filename.
   "compileOnSave": true,
   "include": ["./src/**/*", "./capacitor.config.ts", "./capacitor.config.js"],
   "compilerOptions": {

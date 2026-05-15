@@ -1,4 +1,11 @@
 {
+  // ui/tsconfig.json — extends the SvelteKit-generated config.
+  //
+  // No $schema here: schemastore's tsconfig schema is 432 KB and trips
+  // Ajv's strict resolver. tsc itself validates everything via
+  // `svelte-check` + `tsgo --noEmit` (pre-push hook + CI ts job), and
+  // editors (VS Code / IDEA) auto-bind the schema by filename anyway,
+  // so the explicit $schema declaration would be redundant overhead.
   "extends": "./.svelte-kit/tsconfig.json",
   "compilerOptions": {
     // ── Imports / module system ─────────────────────────────────────
