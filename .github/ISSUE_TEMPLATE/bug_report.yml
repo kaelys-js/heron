@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-issue-forms.json
 name: Bug report
-description: A bug in career-ops (CLI, dashboard, native app, scripts).
+description: A bug in heron (CLI, dashboard, native app, scripts).
 title: "bug: "
 labels: ["bug", "needs-triage"]
 body:
@@ -21,7 +21,7 @@ body:
           required: true
         - label: I read the [Code of Conduct](../CODE_OF_CONDUCT.md).
           required: true
-        - label: I'm on the latest career-ops version (`pnpm update:check`).
+        - label: I'm on the latest heron version (`pnpm update:check`).
           required: true
 
   - type: textarea

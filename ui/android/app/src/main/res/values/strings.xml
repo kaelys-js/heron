@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Career Ops</string>
-    <string name="title_activity_main">Career Ops</string>
-    <string name="package_name">com.resistjs.careerops</string>
-    <string name="custom_url_scheme">careerops</string>
+    <string name="app_name">Heron</string>
+    <string name="title_activity_main">Heron</string>
+    <string name="package_name">com.heron.app</string>
+    <string name="custom_url_scheme">heron</string>
 </resources>

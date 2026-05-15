@@ -24,7 +24,7 @@ body:
     attributes:
       label: Problem
       description: What user pain does this solve? Be concrete.
-      placeholder: "When I do X, I have to manually do Y because career-ops doesn't support Z."
+      placeholder: "When I do X, I have to manually do Y because heron doesn't support Z."
     validations:
       required: true
 
@@ -32,7 +32,7 @@ body:
     id: solution
     attributes:
       label: Proposed solution
-      description: What should career-ops do? Sketch the UX, command, or flow.
+      description: What should heron do? Sketch the UX, command, or flow.
     validations:
       required: true
 

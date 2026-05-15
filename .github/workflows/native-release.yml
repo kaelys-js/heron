@@ -198,7 +198,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: career-ops-${{ matrix.os }}
+          name: heron-${{ matrix.os }}
           path: |
             ui/electron/dist/*.dmg
             ui/electron/dist/*.exe

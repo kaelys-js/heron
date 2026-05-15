@@ -1,11 +1,11 @@
 {
   "$comment": "Single source of truth for ALL branding. Edit this, run `pnpm brand:apply`, and every consumer (Capacitor configs, electron-builder, Info.plist, entitlements, web manifest, Swift constants, root package.json, README badges) is regenerated. Adding a new consumer? Add a function to scripts/native/apply-brand.mjs.",
 
-  "name": "career-ops",
-  "displayName": "Career Ops",
-  "shortName": "Career",
-  "tagline": "Run your job search like a product launch.",
-  "description": "Career Ops is an AI-powered job search platform: multi-user dashboard, autonomous apply across 11 ATS portals, tailored CVs and cover letters per role, interview prep, follow-up cadence, and offline-first native apps on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.",
+  "name": "heron",
+  "displayName": "Heron",
+  "shortName": "Heron",
+  "tagline": "Stand still. Strike well.",
+  "description": "Heron is a thinking partner for career transitions. Local-first job-search platform: pipeline tracking, A–F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Runs on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.",
   "keywords": [
     "ai-agent",
     "anthropic",
@@ -17,9 +17,11 @@
     "claude-code",
     "drizzle-orm",
     "electron",
+    "heron",
     "interview-prep",
     "ios",
     "job-search",
+    "local-first",
     "open-source",
     "passkey",
     "resume",
@@ -30,19 +32,20 @@
   ],
 
   "identifiers": {
-    "bundleId": "com.resistjs.careerops",
-    "appGroup": "group.com.resistjs.careerops",
-    "urlScheme": "careerops",
-    "serviceType": "_career-ops._tcp",
-    "mdnsType": "career-ops",
-    "spotlightDomain": "com.resistjs.careerops.jobs",
-    "userActivityTypes": ["com.resistjs.careerops.job", "com.resistjs.careerops.openJob"],
-    "keychainService": "com.resistjs.careerops",
+    "bundleId": "com.heron.app",
+    "appGroup": "group.com.heron.app",
+    "urlScheme": "heron",
+    "serviceType": "_heron._tcp",
+    "mdnsType": "heron",
+    "spotlightDomain": "com.heron.app.jobs",
+    "userActivityTypes": ["com.heron.app.job", "com.heron.app.openJob"],
+    "keychainService": "com.heron.app",
     "$comment": "capacitorPluginName: bridge contract between TS (registerPlugin) and Swift (jsName). Must match exactly on both sides; apply-brand generates BRAND.capacitorPluginName + Brand.capacitorPluginName so a rebrand retargets both consumers in one step.",
-    "capacitorPluginName": "CareerOpsNative"
+    "capacitorPluginName": "HeronNative"
   },
 
   "extensions": {
+    "$comment": "Extension TARGET names (CareerOpsWidget etc.) are deferred to Task 10 — renaming requires Xcode folder rename + project.pbxproj edits beyond what apply-brand touches. Bundle IDs do flow through (com.heron.app.widget etc.), so the user-facing identity is already Heron post-Task-9.",
     "widget": { "name": "CareerOpsWidget", "bundleSuffix": "widget", "deploymentMin": "16.0" },
     "liveActivity": {
       "name": "CareerOpsLiveActivity",
@@ -57,6 +60,7 @@
   },
 
   "colors": {
+    "$comment": "Colors stay on the legacy career-ops palette until Task 10 — the new Heron tokens (Slate #4a5b6d, Dawn #c89b4a, Reed #7a8c6d, warm-paper #f7f5f0, etc.) ship together with ui/src/app.css token wiring and the component-level color sweep. Task 10 will replace this entire block.",
     "primary": "#5b6cff",
     "accentEmeraldLight": "#34d399",
     "accentEmeraldDark": "#10b981",
@@ -67,16 +71,16 @@
 
   "splash": {
     "backgroundColor": "#0a0a0b",
-    "$comment": "Used by scripts/native/icons/generate-icons.mjs to fill the iOS Splash.imageset PNG canvas. Should match capacitor.config.ts → plugins.SplashScreen.backgroundColor so the launch-screen storyboard and the @capacitor/splash-screen overlay look identical."
+    "$comment": "Splash background stays on the legacy dark until Task 10 — switches to #0e1014 (Heron darkBg) together with the color sweep. Must match capacitor.config.ts → plugins.SplashScreen.backgroundColor so the launch-screen storyboard and the @capacitor/splash-screen overlay look identical."
   },
 
   "iconSource": "branding/logo.svg",
 
   "author": {
     "name": "resist.js",
-    "email": "hello@resist.js",
-    "url": "https://resist.js",
-    "githubHandle": "kaelys-js"
+    "email": "hello@heron.app",
+    "url": "https://heron.app",
+    "githubHandle": "heron"
   },
 
   "originalAuthor": {
@@ -84,57 +88,57 @@
     "email": "hi@santifer.io",
     "url": "https://santifer.io",
     "githubHandle": "santifer",
-    "comment": "Original creator of the career-ops project — this fork builds on their work. Credited in docs/CONTRIBUTORS.md and README upstream link. Do not remove."
+    "comment": "Original creator of the upstream pre-fork project — Heron builds on their work. Credited in docs/CONTRIBUTORS.md and the README upstream link. Do not remove."
   },
 
   "repo": {
-    "owner": "kaelys-js",
-    "name": "career-ops",
-    "url": "https://github.com/kaelys-js/career-ops",
-    "issues": "https://github.com/kaelys-js/career-ops/issues",
-    "docs": "https://github.com/kaelys-js/career-ops#readme",
+    "owner": "heron",
+    "name": "heron",
+    "url": "https://github.com/heron/heron",
+    "issues": "https://github.com/heron/heron/issues",
+    "docs": "https://github.com/heron/heron#readme",
     "upstream": "https://github.com/santifer/career-ops"
   },
 
   "permissions": {
-    "localNetworkUsage": "Career Ops uses local network discovery to find your desktop app on the same Wi-Fi network so your phone, watch, and laptop stay in sync without a cloud account.",
-    "faceIdUsage": "Career Ops uses Face ID to unlock sensitive screens — interview notes, negotiation playbooks, and offer comparisons — so a glance over your shoulder never leaks personal data.",
-    "cameraUsage": "Career Ops uses the camera so you can scan business cards from interviews directly into your contacts file.",
-    "microphoneUsage": "Career Ops uses the microphone for the mock-interview rehearsal mode — audio is processed on-device and never uploaded.",
-    "photoLibraryUsage": "Career Ops needs photo-library access to attach screenshots of job postings or reference letters to a job entry.",
-    "calendarsUsage": "Career Ops reads your calendar to surface upcoming interviews and to schedule follow-up reminders.",
-    "remindersUsage": "Career Ops creates reminders for follow-ups, application deadlines, and interview prep blocks.",
-    "contactsUsage": "Career Ops reads contacts so you can send outreach to recruiters and hiring managers you already know.",
-    "userTrackingUsage": "Career Ops never tracks you. This prompt only appears because Apple requires it for any app that can render web content — we always respond with denied."
+    "localNetworkUsage": "Heron uses local network discovery to find your desktop app on the same Wi-Fi network so your phone, watch, and laptop stay in sync without a cloud account.",
+    "faceIdUsage": "Heron uses Face ID to unlock sensitive screens — interview notes, negotiation playbooks, and offer comparisons — so a glance over your shoulder never leaks personal data.",
+    "cameraUsage": "Heron uses the camera so you can scan business cards from interviews directly into your contacts file.",
+    "microphoneUsage": "Heron uses the microphone for the mock-interview rehearsal mode — audio is processed on-device and never uploaded.",
+    "photoLibraryUsage": "Heron needs photo-library access to attach screenshots of job postings or reference letters to a job entry.",
+    "calendarsUsage": "Heron reads your calendar to surface upcoming interviews and to schedule follow-up reminders.",
+    "remindersUsage": "Heron creates reminders for follow-ups, application deadlines, and interview prep blocks.",
+    "contactsUsage": "Heron reads contacts so you can send outreach to recruiters and hiring managers you already know.",
+    "userTrackingUsage": "Heron never tracks you. This prompt only appears because Apple requires it for any app that can render web content — we always respond with denied."
   },
 
-  "copyright": "© 2026 resist.js (original work © 2026 santifer). Licensed under the MIT License.",
+  "copyright": "© 2026 Heron contributors (original work © 2026 santifer). Licensed under the MIT License.",
   "license": "MIT",
 
-  "homepageUrl": "https://career-ops.org",
-  "supportEmail": "hello@resist.js",
-  "privacyPolicyUrl": "https://career-ops.org/privacy",
-  "termsOfServiceUrl": "https://career-ops.org/terms",
-  "marketingUrl": "https://career-ops.org",
+  "homepageUrl": "https://heron.app",
+  "supportEmail": "hello@heron.app",
+  "privacyPolicyUrl": "https://heron.app/privacy",
+  "termsOfServiceUrl": "https://heron.app/terms",
+  "marketingUrl": "https://heron.app",
 
   "store": {
     "appStore": {
-      "subtitle": "AI job-search command center",
+      "subtitle": "A thinking partner for careers",
       "primaryCategory": "PRODUCTIVITY",
       "secondaryCategory": "BUSINESS",
       "contentRating": "4+",
-      "reviewerNotes": "Career Ops is a personal job-search productivity tool. The app reads job postings the user pastes, drafts tailored CVs/cover letters locally, and tracks application status in a local SQLite database. No personal data leaves the device unless the user explicitly signs in with their own LLM API key (Anthropic / OpenAI / Google). Demo account: not applicable — the app is single-user / self-hosted by design.",
+      "reviewerNotes": "Heron is a personal job-search productivity tool. The app reads job postings the user pastes, drafts tailored CVs/cover letters locally, and tracks application status in a local SQLite database. No personal data leaves the device unless the user explicitly signs in with their own LLM API key (Anthropic / OpenAI / Google). Demo account: not applicable — the app is single-user / self-hosted by design.",
       "demoAccount": null,
       "exportComplianceUsesEncryption": true,
       "exportComplianceEncryptionExempt": true,
       "exportComplianceContainsThirdPartyCryptography": false,
       "exportComplianceAvailableOnFrenchStore": true,
-      "promotionalText": "Run your job search like a product launch — local-first, multi-platform, AI-tailored.",
-      "marketingText": "Tailor CVs, scan portals, track applications, prep interviews. All in one offline-first dashboard."
+      "promotionalText": "Stand still. Strike well. A patient, local-first thinking partner for career transitions — your data stays on your device.",
+      "marketingText": "Tailored CVs, 11-portal scanning, recruiter triage, interview prep. One offline-first dashboard for the moves that matter."
     },
     "playStore": {
-      "shortDescription": "AI-powered job-search command center. Local-first, offline, private.",
-      "fullDescription": "Career Ops is a personal job-search productivity tool. Tailor CVs and cover letters per role with on-device LLMs, scan 11+ job portals (LinkedIn, Greenhouse, Ashby, Lever, Workday, …), track every application in a local SQLite database, and prep interviews with mock-question + STAR-story drills. Data stays on your device unless you sign in with your own LLM API key. Open-source, MIT-licensed.",
+      "shortDescription": "A thinking partner for career transitions. Local-first, AI-agnostic, private.",
+      "fullDescription": "Heron is a patient, local-first thinking partner for career transitions. Tailor CVs and cover letters per role with on-device LLMs, scan 11+ job portals (LinkedIn, Greenhouse, Ashby, Lever, Workday, …), track every application in a local SQLite database, and prep interviews with mock-question + STAR-story drills. Data stays on your device unless you sign in with your own LLM API key. Open-source, MIT-licensed.",
       "category": "PRODUCTIVITY",
       "contentRating": "Everyone",
       "containsAds": false,

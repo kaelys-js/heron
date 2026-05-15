@@ -4,17 +4,17 @@
 import Foundation
 
 enum Brand {
-    static let name = "career-ops"
-    static let displayName = "Career Ops"
-    static let bundleId = "com.resistjs.careerops"
-    static let appGroup = "group.com.resistjs.careerops"
-    static let urlScheme = "careerops"
-    static let serviceType = "_career-ops._tcp"
-    static let spotlightDomain = "com.resistjs.careerops.jobs"
-    static let keychainService = "com.resistjs.careerops"
-    static let openJobActivityType = "com.resistjs.careerops.openJob"
+    static let name = "heron"
+    static let displayName = "Heron"
+    static let bundleId = "com.heron.app"
+    static let appGroup = "group.com.heron.app"
+    static let urlScheme = "heron"
+    static let serviceType = "_heron._tcp"
+    static let spotlightDomain = "com.heron.app.jobs"
+    static let keychainService = "com.heron.app"
+    static let openJobActivityType = "com.heron.app.openJob"
     /// Capacitor JS↔Swift bridge name. Must match TS registerPlugin('...') call.
-    static let capacitorPluginName = "CareerOpsNative"
+    static let capacitorPluginName = "HeronNative"
 
     /// UserDefaults keys — all prefixed with brand name so they're
     /// namespaced and a brand rename moves them cleanly.

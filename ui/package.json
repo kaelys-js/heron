@@ -2,14 +2,14 @@
   "name": "ui",
   "version": "0.1.0",
   "private": true,
-  "description": "Career Ops SvelteKit dashboard — multi-user, multi-platform (web + iOS + Android + Electron).",
-  "homepage": "https://career-ops.org",
+  "description": "Heron SvelteKit dashboard — multi-user, multi-platform (web + iOS + Android + Electron).",
+  "homepage": "https://heron.app",
   "bugs": {
-    "url": "https://github.com/kaelys-js/career-ops/issues"
+    "url": "https://github.com/heron/heron/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/kaelys-js/career-ops",
+    "url": "https://github.com/heron/heron",
     "directory": "ui"
   },
   "license": "MIT",

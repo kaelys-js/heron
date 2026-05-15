@@ -7,18 +7,19 @@
  * from this file so a brand rename touches one JSON file.
  */
 export const BRAND = {
-  name: "career-ops",
-  displayName: "Career Ops",
-  tagline: "Run your job search like a product launch.",
-  bundleId: "com.resistjs.careerops",
-  appGroup: "group.com.resistjs.careerops",
-  urlScheme: "careerops",
-  serviceType: "_career-ops._tcp",
-  mdnsType: "career-ops",
-  spotlightDomain: "com.resistjs.careerops.jobs",
-  keychainService: "com.resistjs.careerops",
-  capacitorPluginName: "CareerOpsNative",
+  name: "heron",
+  displayName: "Heron",
+  tagline: "Stand still. Strike well.",
+  bundleId: "com.heron.app",
+  appGroup: "group.com.heron.app",
+  urlScheme: "heron",
+  serviceType: "_heron._tcp",
+  mdnsType: "heron",
+  spotlightDomain: "com.heron.app.jobs",
+  keychainService: "com.heron.app",
+  capacitorPluginName: "HeronNative",
   colors: {
+    "$comment": "Colors stay on the legacy career-ops palette until Task 10 — the new Heron tokens (Slate #4a5b6d, Dawn #c89b4a, Reed #7a8c6d, warm-paper #f7f5f0, etc.) ship together with ui/src/app.css token wiring and the component-level color sweep. Task 10 will replace this entire block.",
     "primary": "#5b6cff",
     "accentEmeraldLight": "#34d399",
     "accentEmeraldDark": "#10b981",
@@ -27,11 +28,11 @@ export const BRAND = {
     "lightOnDark": "#e4e4e7"
   },
   repo: {
-    "owner": "kaelys-js",
-    "name": "career-ops",
-    "url": "https://github.com/kaelys-js/career-ops",
-    "issues": "https://github.com/kaelys-js/career-ops/issues",
-    "docs": "https://github.com/kaelys-js/career-ops#readme",
+    "owner": "heron",
+    "name": "heron",
+    "url": "https://github.com/heron/heron",
+    "issues": "https://github.com/heron/heron/issues",
+    "docs": "https://github.com/heron/heron#readme",
     "upstream": "https://github.com/santifer/career-ops"
   },
 } as const;
