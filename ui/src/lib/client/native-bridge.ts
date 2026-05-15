@@ -7,7 +7,7 @@
  * fallback.
  */
 import { Capacitor, registerPlugin } from '@capacitor/core';
-import { BRAND_STORAGE_PREFIX } from './brand';
+import { BRAND, BRAND_STORAGE_PREFIX } from './brand';
 
 /** Web/desktop fallback prefix for keychain emulation via localStorage. */
 const KC_PREFIX = `${BRAND_STORAGE_PREFIX}:kc:`;
@@ -93,7 +93,10 @@ export type WidgetUpdate = {
   }>;
 };
 
-const native = registerPlugin<CareerOpsNativePlugin>('CareerOpsNative');
+// Plugin-name is the JS↔Swift bridge contract. Same string lives in
+// CareerOpsNativePlugin.swift::jsName; both sides read from
+// branding/brand.json::identifiers.capacitorPluginName via apply-brand.
+const native = registerPlugin<CareerOpsNativePlugin>(BRAND.capacitorPluginName);
 
 /**
  * Runtime platform check. Exported so the layout boot path can skip the

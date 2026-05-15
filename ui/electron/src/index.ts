@@ -48,7 +48,7 @@ import path from 'node:path';
 
 import { ElectronCapacitorApp, setupContentSecurityPolicy, setupReloadWatcher } from './setup';
 import { buildAppMenu } from './app-menu';
-import { CareerOpsTray } from './tray';
+import { DesktopTray } from './tray';
 import { startMdnsAdvertise } from './mdns';
 import { BRAND } from './brand';
 
@@ -95,7 +95,7 @@ type AppState = {
   serverProcess?: ChildProcess;
   serverPort?: number;
   serverUrl?: string;
-  tray?: CareerOpsTray;
+  tray?: DesktopTray;
   mainWindow?: BrowserWindow;
 };
 const state: AppState = {};
@@ -285,7 +285,7 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
   );
 
   // 5. Tray (macOS Menu Bar / Windows / Linux system tray)
-  state.tray = new CareerOpsTray({
+  state.tray = new DesktopTray({
     getBackendUrl: () => state.serverUrl ?? 'http://localhost:5173',
     onOpen: () => {
       state.mainWindow?.show();

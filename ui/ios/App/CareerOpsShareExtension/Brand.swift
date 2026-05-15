@@ -13,6 +13,8 @@ enum Brand {
     static let spotlightDomain = "com.resistjs.careerops.jobs"
     static let keychainService = "com.resistjs.careerops"
     static let openJobActivityType = "com.resistjs.careerops.openJob"
+    /// Capacitor JS↔Swift bridge name. Must match TS registerPlugin('...') call.
+    static let capacitorPluginName = "CareerOpsNative"
 
     /// UserDefaults keys — all prefixed with brand name so they're
     /// namespaced and a brand rename moves them cleanly.
@@ -35,6 +37,7 @@ enum Brand {
         let trimmed = route.hasPrefix("/") ? String(route.dropFirst()) : route
         return "\(urlScheme)://\(trimmed)"
     }
+
     static func jobDeepLink(_ jobId: String) -> String {
         return "\(urlScheme)://job/\(jobId)"
     }

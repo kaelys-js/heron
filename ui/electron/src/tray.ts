@@ -43,9 +43,19 @@ type Stats = {
 };
 
 const POLL_INTERVAL_MS = 30_000;
+// Persisted user-preference key — INTENTIONALLY kept as a stable literal
+// rather than brand-derived because changing the key on rebrand would
+// silently lose every user's saved "Menu Bar Only" preference. If a
+// future rebrand needs the key changed, ship a migration that reads
+// the old key + writes the new one + deletes the old.
 const PREF_HIDE_DOCK = 'careerOpsHideDock';
 
-export class CareerOpsTray {
+/**
+ * Electron tray menu controller. Class name is brand-agnostic
+ * (DesktopTray, not CareerOpsTray) so a rebrand doesn't require an
+ * Xcode-style class rename across every importer.
+ */
+export class DesktopTray {
   private tray?: Tray;
   private timer?: NodeJS.Timeout;
   private stats: Stats | null = null;

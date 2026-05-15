@@ -36,10 +36,12 @@ import readline from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 import { execSync } from 'node:child_process';
 
+// scripts/system/ -> scripts/ -> repo root (../.. from this script).
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..');
+const ROOT = join(__dirname, '..', '..');
 const DATA = join(ROOT, 'data');
 const PROFILES = join(DATA, 'profiles');
+const USERS_ROOT = join(DATA, 'users');
 
 const RESET = '\x1b[0m';
 const RED = '\x1b[31m';
@@ -158,34 +160,80 @@ function probe(path) {
   }
 }
 
+/** Enumerate the subdir slugs under a parent dir. Skips non-directory
+ *  entries (stray files dropped into the parent by accident). */
+function listSubdirs(parent) {
+  if (!existsSync(parent)) return [];
+  return readdirSync(parent).filter((f) => {
+    try {
+      return statSync(join(parent, f)).isDirectory();
+    } catch {
+      return false;
+    }
+  });
+}
+
+/** Queue every file/dir we should wipe inside a profile dir for the
+ *  Option A (full nuke) reset. Label-prefix lets the dry-run output
+ *  distinguish legacy single-user profiles from per-user profiles. */
+function queueProfile(items, pDir, labelPrefix) {
+  for (const f of PER_PROFILE_DELETE) {
+    const full = join(pDir, f);
+    const kind = probe(full);
+    if (kind) items.push({ kind, path: full, label: `${labelPrefix}/${f}` });
+  }
+  for (const d of PER_PROFILE_DELETE_DIRS) {
+    const full = join(pDir, d);
+    const kind = probe(full);
+    if (kind) items.push({ kind, path: full, label: `${labelPrefix}/${d}/` });
+  }
+}
+
 function listToDelete() {
   const items = [];
 
-  // Per-profile
-  if (existsSync(PROFILES)) {
-    const profiles = readdirSync(PROFILES).filter((f) => {
-      try {
-        return statSync(join(PROFILES, f)).isDirectory();
-      } catch {
-        return false;
-      }
-    });
-    for (const p of profiles) {
-      const pDir = join(PROFILES, p);
-      for (const f of PER_PROFILE_DELETE) {
-        const full = join(pDir, f);
-        const kind = probe(full);
-        if (kind) items.push({ kind, path: full, label: `profile:${p}/${f}` });
-      }
-      for (const d of PER_PROFILE_DELETE_DIRS) {
-        const full = join(pDir, d);
-        const kind = probe(full);
-        if (kind) items.push({ kind, path: full, label: `profile:${p}/${d}/` });
-      }
+  // Legacy single-user profiles: data/profiles/{slug}/
+  // Pre-multi-user installs lived here; first-user-claims-default
+  // migration copies them under data/users/{uid}/profiles/ on first
+  // boot. We still wipe the legacy tree so a stale copy from before
+  // the migration doesn't survive a reset.
+  for (const p of listSubdirs(PROFILES)) {
+    // Skip the _shared escape-hatch dir — that's per-user content
+    // (story-bank, etc.) and gets wiped via SHARED_DATA_FILES below
+    // OR explicitly by the per-user pass when applicable.
+    if (p === '_shared') continue;
+    queueProfile(items, join(PROFILES, p), `profile:${p}`);
+  }
+
+  // Multi-user profiles: data/users/{uid}/profiles/{slug}/
+  // Walk every user's profiles tree so a reset truly nukes ALL users'
+  // data, not just the legacy single-user fallback. Pre-fix this loop
+  // was missing and reset-data left every real user's content intact
+  // when a legacy data/profiles/ tree also existed.
+  for (const uid of listSubdirs(USERS_ROOT)) {
+    const userProfiles = join(USERS_ROOT, uid, 'profiles');
+    for (const p of listSubdirs(userProfiles)) {
+      if (p === '_shared') continue; // see above
+      queueProfile(items, join(userProfiles, p), `user:${uid}/profile:${p}`);
+    }
+    // Per-user _shared dir (story-bank.md, autopilot.json, etc.) — wipe wholesale.
+    const sharedDir = join(userProfiles, '_shared');
+    const sharedKind = probe(sharedDir);
+    if (sharedKind)
+      items.push({ kind: sharedKind, path: sharedDir, label: `user:${uid}/_shared/` });
+    // Per-user Playwright session dirs (.playwright-{portal}/) — credential
+    // material so explicitly wiped on full reset.
+    for (const entry of existsSync(join(USERS_ROOT, uid))
+      ? readdirSync(join(USERS_ROOT, uid))
+      : []) {
+      if (!entry.startsWith('.playwright-')) continue;
+      const full = join(USERS_ROOT, uid, entry);
+      const kind = probe(full);
+      if (kind) items.push({ kind, path: full, label: `user:${uid}/${entry}/` });
     }
   }
 
-  // Shared
+  // Shared (install-wide) data files + dirs.
   for (const f of SHARED_DATA_FILES) {
     const full = join(DATA, f);
     const kind = probe(full);

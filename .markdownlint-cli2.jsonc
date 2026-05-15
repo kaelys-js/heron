@@ -125,6 +125,10 @@
     // ── Files that should never be linted (auto-generated / archive) ──
     "CHANGELOG.md",
     "docs/archive/**",
-    "**/*.bak"
+    "**/*.bak",
+    // Personal planning doc — free-form notes with whatever emphasis
+    // markers the author wants. Not a published doc; lint enforcement
+    // would just nag the author for unrelated reasons.
+    "ui/TODO.md"
   ]
 }
