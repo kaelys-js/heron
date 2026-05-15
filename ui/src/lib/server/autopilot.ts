@@ -8,7 +8,6 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT } from './files';
 import { installBusListener, logEvent, reportServerError } from './events';
 import { listRunning, runScan, runGemini, runLinkedInApply, runAutoEval } from './orchestrator';
 import type { ActivityEvent } from '$lib/types';
@@ -29,11 +28,6 @@ function configPath(): string {
 function configPathForUser(userId: string): string {
   return userSharedPathForUser(userId, 'autopilot');
 }
-// Legacy const kept for source compatibility — points at the current
-// user's config (resolves on first access via the AsyncLocalStorage).
-// Code paths that operate ON A SPECIFIC USER should call
-// configPathForUser(userId) instead.
-const CONFIG_PATH_LEGACY = path.join(ROOT, 'data', 'autopilot.json');
 
 /** Task name — any registered job id. The legacy literal union is kept as
  *  a type alias for readability + boot-time defaults; runtime treats
