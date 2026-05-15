@@ -12,15 +12,12 @@
  * CV fixes that bootstrap problem.
  */
 
-import { spawn } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { ROOT } from '$lib/server/files';
-import { profilePath } from '$lib/server/profile-paths';
+import { profilePath, userSharedPath } from '$lib/server/profile-paths';
 import { getActiveProfileId, getProfile } from '$lib/server/profiles';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -34,20 +31,9 @@ function spawnSeed(profileId: string): Promise<{ stdout: string; stderr: string 
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
-    const prompt = '/' + CLI_NAMESPACE + ' seed-story-bank';
-    try {
-      swapProfileSymlinks(profileId);
-    } catch (e) {
-      logEvent('seed-story-bank', 'Symlink swap failed', {
-        level: 'warn',
-        category: 'application',
-        message: e instanceof Error ? e.message : String(e),
-      });
-    }
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env },
-    });
+    // seed-story-bank reads reports/ + cv.md + _profile.md to draft
+    // the story bank. No user input needed.
+    const { child: p } = spawnAgentWithMode('seed-story-bank', '', { profileId });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
     });
@@ -69,9 +55,10 @@ export const POST = wrap('seed-story-bank', async ({ url }: { url: URL }) => {
     category: 'application',
   });
 
-  // story-bank.md is SHARED (not per-profile) per AGENTS.md, but the spawn
-  // reads from per-profile cv.md / _profile.md via the symlink swap.
-  const bankPath = path.join(ROOT, 'interview-prep', 'story-bank.md');
+  // story-bank.md is per-user shared-across-profiles. Resolve against
+  // the active user; cv.md / _profile.md are per-profile and resolved
+  // by the spawnAgentWithMode token substitution.
+  const bankPath = userSharedPath('story-bank');
   const beforeSize = fs.existsSync(bankPath) ? fs.statSync(bankPath).size : 0;
 
   try {

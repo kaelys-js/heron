@@ -15,16 +15,12 @@
  *   }
  */
 
-import { spawn } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { ROOT } from '$lib/server/files';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
 import { getLead, attachDraftPath, setThreadState } from '$lib/server/inbound-leads';
 import { getActiveProfileId } from '$lib/server/profiles';
 
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 const TIMEOUT_MS = 90_000;
 
 type Body = {
@@ -45,23 +41,20 @@ function spawnRecruiterReply(
     let stdout = '';
     let stderr = '';
     const payload = { ...args };
-    const prompt =
-      '/' +
-      CLI_NAMESPACE +
-      ' recruiter-reply ' +
+
+    const { child: p } = spawnAgentWithMode(
+      'recruiter-reply',
       JSON.stringify({
         leadId: args.leadId,
         profileId: args.profileId,
         tone: args.tone,
         intent: args.intent,
-      });
-    try {
-      swapProfileSymlinks(args.profileId);
-    } catch {}
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env, RECRUITER_REPLY_INPUT: JSON.stringify(payload) },
-    });
+      }),
+      {
+        profileId: args.profileId,
+        env: { RECRUITER_REPLY_INPUT: JSON.stringify(payload) },
+      },
+    );
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
     });

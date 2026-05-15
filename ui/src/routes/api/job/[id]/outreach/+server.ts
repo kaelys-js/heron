@@ -14,16 +14,13 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { ROOT } from '$lib/server/files';
 import { profilePath } from '$lib/server/profile-paths';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
 
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 const VALID_PERSONAS = ['hiring-manager', 'recruiter', 'peer'] as const;
 type Persona = (typeof VALID_PERSONAS)[number];
 
@@ -53,22 +50,9 @@ function spawnContacto(
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
-    const prompt = '/' + CLI_NAMESPACE + ' contacto ' + url + ' --persona ' + persona;
-    // Point repo-root symlinks (cv.md, config/profile.yml, etc.) at this
-    // profile's files before spawning Claude — the slash-command reads them
-    // at their canonical flat paths.
-    try {
-      swapProfileSymlinks(profileId);
-    } catch (e) {
-      logEvent('outreach', 'Symlink swap failed — outreach may read wrong profile', {
-        level: 'warn',
-        category: 'application',
-        message: e instanceof Error ? e.message : String(e),
-      });
-    }
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env },
+
+    const { child: p } = spawnAgentWithMode('contacto', url + ' --persona ' + persona, {
+      profileId: profileId,
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();

@@ -555,48 +555,24 @@ export function runOferta(
       resolve({ ok: false, code: null });
       return;
     }
-    // If a specific profile is requested, swap the repo-root flat-layout
-    // symlinks to point at that profile's files before spawning Claude.
-    // The Claude CLI reads cv.md / config/profile.yml / portals.yml /
-    // modes/_profile.md at their canonical paths per the AGENTS.md /
-    // CLAUDE.md instructions; symlinks let multi-profile work without
-    // rewriting every slash-command prompt.
-    if (profileId) {
-      try {
-        // Lazy-require to avoid circular import.
-        const { swapProfileSymlinks } =
-          require('./profile-symlinks') as typeof import('./profile-symlinks');
-        swapProfileSymlinks(profileId);
-      } catch (e) {
-        logEvent(taskKey, 'Symlink swap failed — oferta may read wrong profile', {
-          level: 'warn',
-          category: 'task',
-          message: e instanceof Error ? e.message : String(e),
-        });
-      }
-    }
-    const prompt = '/' + CLI_NAMESPACE + ' oferta ' + url;
+    // Resolve the active profile if the caller didn't pass one.
+    // Lazy-require to avoid a circular import at module-load.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const profilesMod = require('./profiles') as typeof import('./profiles');
+    const resolvedProfileId = profileId ?? profilesMod.getActiveProfileId();
+
     logEvent(taskKey, 'Generate CV started', {
       category: 'task',
-      message: 'oferta · ' + url + (profileId ? ' · profile=' + profileId : ''),
-      profileId,
+      message: 'oferta · ' + url + ' · profile=' + resolvedProfileId,
+      profileId: resolvedProfileId,
     });
     let p: ChildProcess;
-    // Pass the acting user id so any helper script the CLI invokes (e.g.
-    // generate-pdf.mjs) sees the right user's tree.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { maybeCurrentUserId, SYSTEM_USER_ID } =
-      require('./user-context') as typeof import('./user-context');
-    const ofertaUserId = maybeCurrentUserId();
-    const ofertaEnv: NodeJS.ProcessEnv = { ...process.env };
-    if (ofertaUserId && ofertaUserId !== SYSTEM_USER_ID) {
-      ofertaEnv.CAREER_OPS_USER_ID = ofertaUserId;
-    }
     try {
-      p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-        cwd: ROOT,
-        env: ofertaEnv,
-      });
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { spawnAgentWithMode } = require('./spawn-agent') as typeof import('./spawn-agent');
+      ({ child: p } = spawnAgentWithMode('oferta', url, {
+        profileId: resolvedProfileId,
+      }));
     } catch (e) {
       logEvent(taskKey, 'Failed to spawn ' + AGENT_CLI + ' CLI', {
         level: 'error',

@@ -16,19 +16,20 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { ROOT } from '$lib/server/files';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
+import { userSharedPath } from '$lib/server/profile-paths';
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
 
-// Story-bank stays SHARED across profiles per architecture decision —
-// rejection learnings are cross-track wisdom (negotiation, behavioral
-// stories, communication patterns), not tied to a specific career identity.
-const STORY_BANK = path.join(ROOT, 'interview-prep', 'story-bank.md');
+// Story-bank is per-user shared-across-profiles — rejection learnings
+// are cross-track wisdom (negotiation, behavioral stories, communication
+// patterns), not tied to a specific career identity. Resolved at write
+// time so the active user's _shared/ dir is the target.
+function storyBankPath(): string {
+  return userSharedPath('story-bank');
+}
 
 type Notes = {
   wentWell?: string;
@@ -40,29 +41,11 @@ function spawnPostRejection(url: string, notes: Notes, profileId: string): Promi
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
-    const args = [
-      '-p',
-      '/' +
-        CLI_NAMESPACE +
-        ' post-rejection ' +
-        url +
-        ' --notes ' +
-        JSON.stringify(JSON.stringify(notes)),
-      '--dangerously-skip-permissions',
-    ];
-    // Swap symlinks so the slash-command reads this job's profile data
-    // (CV, profile.yml, applications.md, the report file) and not the
-    // currently-active profile's.
-    try {
-      swapProfileSymlinks(profileId);
-    } catch (e) {
-      logEvent('post-rejection', 'Symlink swap failed — capture may read wrong profile', {
-        level: 'warn',
-        category: 'application',
-        message: e instanceof Error ? e.message : String(e),
-      });
-    }
-    const p = spawn(AGENT_CLI, args, { cwd: ROOT, env: { ...process.env } });
+    const { child: p } = spawnAgentWithMode(
+      'post-rejection',
+      url + ' --notes ' + JSON.stringify(JSON.stringify(notes)),
+      { profileId },
+    );
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
     });
@@ -81,12 +64,12 @@ function spawnPostRejection(url: string, notes: Notes, profileId: string): Promi
 }
 
 function appendToStoryBank(jobLabel: string, content: string): string {
-  fs.mkdirSync(path.dirname(STORY_BANK), { recursive: true });
+  fs.mkdirSync(path.dirname(storyBankPath()), { recursive: true });
   const stamp = new Date().toISOString().slice(0, 10);
   const header = '\n\n---\n\n## ' + stamp + ' · ' + jobLabel + '\n\n';
   const block = header + content.trim() + '\n';
-  fs.appendFileSync(STORY_BANK, block);
-  return path.relative(ROOT, STORY_BANK);
+  fs.appendFileSync(storyBankPath(), block);
+  return path.relative(ROOT, storyBankPath());
 }
 
 export const POST = wrap(

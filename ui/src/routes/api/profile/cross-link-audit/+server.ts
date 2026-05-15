@@ -21,18 +21,14 @@
  * `data/users/.../profiles/.../cross-link-audit.json`.
  */
 
-import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { wrap } from '$lib/server/api-helpers';
-import { ROOT } from '$lib/server/files';
 import { profilePath } from '$lib/server/profile-paths';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { getActiveProfileId } from '$lib/server/profiles';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
 
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 const TIMEOUT_MS = 180_000;
 
 export type CrossLinkFinding = {
@@ -51,13 +47,10 @@ function spawnAudit(args: { profileId: string }): Promise<{ stdout: string }> {
     let stdout = '';
     let stderr = '';
     const payload = { profileId: args.profileId };
-    const prompt = '/' + CLI_NAMESPACE + ' cross-link-audit ' + JSON.stringify(payload);
-    try {
-      swapProfileSymlinks(args.profileId);
-    } catch {}
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env, CROSS_LINK_INPUT: JSON.stringify(payload) },
+
+    const { child: p } = spawnAgentWithMode('cross-link-audit', JSON.stringify(payload), {
+      profileId: args.profileId,
+      env: { CROSS_LINK_INPUT: JSON.stringify(payload) },
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();

@@ -10,15 +10,11 @@
  * never brief refs at all.
  */
 
-import { spawn } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { ROOT } from '$lib/server/files';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
 
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 type Reference = {
   name: string;
   relationship?: string;
@@ -40,13 +36,10 @@ function spawnRefPrep(args: {
       role: args.role,
       references: args.references,
     };
-    const prompt = '/' + CLI_NAMESPACE + ' reference-prep ' + JSON.stringify(promptInput);
-    try {
-      swapProfileSymlinks(args.profileId);
-    } catch {}
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env, REFERENCE_PREP_INPUT: JSON.stringify(promptInput) },
+
+    const { child: p } = spawnAgentWithMode('reference-prep', JSON.stringify(promptInput), {
+      profileId: args.profileId,
+      env: { REFERENCE_PREP_INPUT: JSON.stringify(promptInput) },
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();

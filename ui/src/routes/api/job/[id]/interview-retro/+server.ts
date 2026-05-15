@@ -15,15 +15,12 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { ROOT } from '$lib/server/files';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
 
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 type RetroInput = {
   stage: 'PhoneScreen' | 'Technical' | 'TakeHome' | 'Onsite' | 'Final';
   notes: string;
@@ -43,15 +40,10 @@ function spawnRetro(
       notes: args.notes,
       outcome: args.outcome,
     };
-    const prompt = '/' + CLI_NAMESPACE + ' interview-retro ' + JSON.stringify(promptInput);
-    try {
-      swapProfileSymlinks(args.profileId);
-    } catch {
-      /* logged elsewhere */
-    }
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env, INTERVIEW_RETRO_INPUT: JSON.stringify(promptInput) },
+
+    const { child: p } = spawnAgentWithMode('interview-retro', JSON.stringify(promptInput), {
+      profileId: args.profileId,
+      env: { INTERVIEW_RETRO_INPUT: JSON.stringify(promptInput) },
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();

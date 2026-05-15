@@ -16,16 +16,14 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { ROOT } from '$lib/server/files';
 import { profilePath } from '$lib/server/profile-paths';
 import { getActiveProfileId, getProfile } from '$lib/server/profiles';
 import { readProfile } from '$lib/server/profile';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
 
 function resolveProfileId(url: URL): string {
   const q = url.searchParams.get('profile');
@@ -75,14 +73,11 @@ function spawnAudit(args: {
       cvBytes: args.cv.length,
       targetRoles: args.targetRoles,
     };
-    const prompt = '/' + CLI_NAMESPACE + ' linkedin-audit';
-    try {
-      swapProfileSymlinks(args.profileId);
-    } catch {}
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
+    // linkedin-audit reads the linkedin text + cv via env vars below;
+    // no per-call user message needed.
+    const { child: p } = spawnAgentWithMode('linkedin-audit', '', {
+      profileId: args.profileId,
       env: {
-        ...process.env,
         LINKEDIN_AUDIT_INPUT: JSON.stringify(promptInput),
         LINKEDIN_PROFILE_TEXT: args.linkedinText,
       },

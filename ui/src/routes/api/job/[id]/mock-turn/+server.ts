@@ -15,16 +15,13 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { ROOT } from '$lib/server/files';
 import { profilePath } from '$lib/server/profile-paths';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
 
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 type Turn = { question: string; answer: string; score?: number | null };
 type Stage = 'PhoneScreen' | 'Technical' | 'TakeHome' | 'Onsite' | 'Final';
 
@@ -66,15 +63,10 @@ function spawnMockTurn(args: {
       endOfSession: args.endSession,
       panelMode: !!args.panelMode,
     };
-    const prompt = '/' + CLI_NAMESPACE + ' mock-interview-turn ' + JSON.stringify(promptInput);
-    try {
-      swapProfileSymlinks(args.profileId);
-    } catch {
-      /* logged elsewhere */
-    }
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env, MOCK_TURN_INPUT: JSON.stringify(promptInput) },
+
+    const { child: p } = spawnAgentWithMode('mock-interview-turn', JSON.stringify(promptInput), {
+      profileId: args.profileId,
+      env: { MOCK_TURN_INPUT: JSON.stringify(promptInput) },
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();

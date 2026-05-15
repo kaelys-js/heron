@@ -14,15 +14,11 @@
  *   }
  */
 
-import { spawn } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { ROOT } from '$lib/server/files';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
 import { logEvent, reportServerError } from '$lib/server/events';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
 
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 const TIMEOUT_MS = 180_000;
 
 type Body = {
@@ -49,13 +45,10 @@ function spawnEvaluator(
     let stdout = '';
     let stderr = '';
     const payload = { ...args };
-    const prompt = '/' + CLI_NAMESPACE + ' counter-from-current ' + JSON.stringify(payload);
-    try {
-      swapProfileSymlinks(args.profileId);
-    } catch {}
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env, COUNTER_FROM_CURRENT_INPUT: JSON.stringify(payload) },
+
+    const { child: p } = spawnAgentWithMode('counter-from-current', JSON.stringify(payload), {
+      profileId: args.profileId,
+      env: { COUNTER_FROM_CURRENT_INPUT: JSON.stringify(payload) },
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();

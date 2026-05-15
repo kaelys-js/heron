@@ -17,30 +17,19 @@
  * Background = fire-and-forget; doesn't block the response. The user
  * can re-trigger from /profile if it failed.
  */
-import { spawn } from 'node:child_process';
 import { wrap } from '$lib/server/api-helpers';
 import { markComplete } from '$lib/server/onboarding';
 import { logEvent } from '$lib/server/events';
 import { getActiveProfileId } from '$lib/server/profiles';
-import { ROOT } from '$lib/server/files';
-import { swapProfileSymlinks } from '$lib/server/profile-symlinks';
-import { CLI_NAMESPACE } from '$lib/config/branding';
-import { AGENT_CLI } from '$lib/config/cli';
+import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 
 function fireAndForgetSeedFormAnswers(profileId: string): void {
   try {
-    try {
-      swapProfileSymlinks(profileId);
-    } catch {
-      /* surfaced elsewhere */
-    }
-    const prompt = '/' + CLI_NAMESPACE + ' seed-form-answers';
-    const p = spawn(AGENT_CLI, ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd: ROOT,
-      env: { ...process.env },
-      detached: true,
-      stdio: 'ignore',
-    });
+    // seed-form-answers takes no per-job input; pass an empty user
+    // message and let the mode prompt do everything via the realized
+    // __PROFILE_MD__ etc. tokens.
+    const { child: p } = spawnAgentWithMode('seed-form-answers', '', { profileId });
+    // Detach so the seed continues if the dashboard worker is recycled.
     p.unref();
     logEvent('seed-form-answers', 'Background seed fired from onboarding complete', {
       level: 'info',
