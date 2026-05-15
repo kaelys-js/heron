@@ -137,7 +137,7 @@ So your phone + watch + laptop all reconcile to whichever instance is reachable.
 
 Two formatters, no overlap:
 
-- **Biome** (`biome.json`) handles everything that isn't Svelte: `.ts` / `.tsx` /
+- **Biome** (`biome.jsonc`) handles everything that isn't Svelte: `.ts` / `.tsx` /
   `.js` / `.mjs` / `.cjs` / `.json`.
 - **Prettier** (`.prettierrc.json`) handles `.svelte` ONLY, via the
   `prettier-plugin-svelte` plugin (which teaches prettier how to format

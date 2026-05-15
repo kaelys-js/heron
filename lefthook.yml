@@ -93,7 +93,7 @@ pre-commit:
     prettier-svelte:
       # Biome doesn't support .svelte yet (as of 2026-05). Run prettier
       # with prettier-plugin-svelte for those files only — style matches
-      # biome.json so .ts and .svelte feel identical.
+      # biome.jsonc so .ts and .svelte feel identical.
       #
       # PRE-FIX BUG (caught during the verification-loop commit that
       # introduced this comment): the previous form did `cd ui` then

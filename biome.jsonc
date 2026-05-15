@@ -1,0 +1,119 @@
+{
+  // Biome 2.x — repo-wide formatter config. Linter is OFF: svelte-check +
+  // tsgo (via `pnpm check`) own the type/lint gate; biome only handles
+  // .ts / .tsx / .js / .mjs / .cjs / .json formatting. Prettier handles
+  // .svelte (see docs/SETUP.md "Formatters" for the split rationale).
+  //
+  // Filename: biome.jsonc (Biome auto-detects .json / .jsonc / .json5).
+  // JSONC chosen so each exclude can carry its `// why` comment inline —
+  // saves a maintainer from `git blame` chasing for context.
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "files": {
+    "includes": [
+      "**/*",
+
+      // ── Package + tooling caches (regenerated, never source) ───────
+      "!**/node_modules/**", // pnpm install output
+      "!**/.svelte-kit/**", // svelte-kit sync output
+      "!**/build/**", // adapter-node + adapter-static + electron-builder
+      "!**/dist/**", // electron-builder packaged artefacts
+      "!**/.turbo/**", // turbo task graph cache
+      "!**/.vite/**", // vite dev-server transform cache
+      "!**/coverage/**", // vitest V8 coverage report
+      "!**/.next/**", // not used here but a safety belt for future
+      "!**/.cache/**", // generic tool cache
+      "!**/_build/**", // icon generator + native build artefacts
+
+      // ── Electron build pipeline outputs ───────────────────────────
+      "!ui/electron/build/**", // tsgo output for the Electron main process
+      "!ui/electron/dist/**", // electron-builder packaged DMG/exe/AppImage
+      "!ui/electron/app/**", // @capacitor-community/electron sync output
+
+      // ── iOS build pipeline ────────────────────────────────────────
+      "!ui/ios/App/Pods/**", // CocoaPods install output
+      "!ui/ios/App/App.xcodeproj/**", // xcodeproj generated state
+      "!ui/ios/App/build/**", // xcodebuild output
+      "!ui/ios/App/DerivedData/**", // Xcode derived-data cache
+      "!ui/ios/App/output/**", // fastlane build artefacts
+
+      // ── Android build pipeline ────────────────────────────────────
+      "!ui/android/.gradle/**", // gradle wrapper cache
+      "!ui/android/build/**", // gradle build output
+      "!ui/android/app/build/**", // app module build output
+      "!ui/android/app/src/main/assets/**", // capacitor sync drop of the web bundle
+
+      // ── Backup + intermediate artefacts ───────────────────────────
+      "!**/*.bak", // resetProfile() rollback snapshots
+      "!**/*.tsbuildinfo", // tsc incremental-build metadata
+
+      // ── User-layer runtime data (per docs/DATA_CONTRACT.md) ───────
+      "!data/**", // SQLite DBs, profiles, activity log, …
+      "!reports/**", // user's evaluation reports
+      "!output/**", // user's generated PDFs
+      "!batch/**", // user's batch input + logs
+      "!jds/**", // user's saved job descriptions
+      "!writing-samples/**", // user's portfolio writing
+      "!.playwright-*/**", // user's persistent browser sessions
+      "!.venv/**", // user's Python virtualenv
+      "!venv/**",
+
+      // ── Generated brand constants (scripts/native/apply-brand.mjs owns) ─
+      "!ui/ios/App/App/Brand.swift",
+      "!ui/ios/App/CareerOpsWidget/Brand.swift",
+      "!ui/ios/App/CareerOpsLiveActivity/Brand.swift",
+      "!ui/ios/App/CareerOpsShareExtension/Brand.swift",
+      "!ui/src/lib/client/brand.ts",
+      "!ui/electron/src/brand.ts",
+
+      // ── Auto-managed files / non-Biome formats ────────────────────
+      "!CHANGELOG.md", // Release-Please owns this
+      "!pnpm-lock.yaml", // pnpm owns this
+      "!**/Gemfile.lock", // bundler owns this
+      "!**/Package.resolved", // Xcode SPM owns this
+      "!**/*.svelte", // prettier-plugin-svelte handles these
+      "!**/*.css", // out of biome's scope
+      "!**/*.scss",
+
+      // ── Image assets / generated icon sets ────────────────────────
+      "!ui/ios/App/App/Assets.xcassets/**",
+      "!ui/ios/App/CareerOpsWatch/Assets.xcassets/**",
+      "!**/AppIcon.appiconset/**"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100, // matches Prettier + ruff config (single line-width across the repo)
+    "lineEnding": "lf",
+    "formatWithErrors": false
+  },
+  // Linter disabled — svelte-check + tsgo carry the type/lint gate.
+  // Re-enabling here would duplicate work + create conflicting opinions.
+  "linter": {
+    "enabled": false
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "all",
+      "semicolons": "always",
+      "arrowParentheses": "always",
+      "bracketSpacing": true,
+      "bracketSameLine": false
+    }
+  },
+  "json": {
+    "formatter": {
+      // JSON spec disallows trailing commas; this config IS .jsonc which
+      // does allow them, but the formatter still emits strict JSON when
+      // writing .json files in the project.
+      "trailingCommas": "none"
+    }
+  },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true // respect .gitignore in addition to the includes above
+  }
+}

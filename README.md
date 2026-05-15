@@ -200,7 +200,7 @@ career-ops/
 ├── pnpm-workspace.yaml          # Workspace + allowBuilds + overrides
 ├── turbo.json                   # Cache config for build / check / test
 ├── lefthook.yml                 # Pre-commit + pre-push hooks
-└── biome.json                   # Format-only config (no linting — svelte-check covers it)
+└── biome.jsonc                  # Format-only config (no linting — svelte-check covers it)
 ```
 
 ---
