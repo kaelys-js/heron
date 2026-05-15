@@ -10,15 +10,16 @@ the source code.
 - **This policy covers the name and brand.** It's intentionally
   permissive for community use and reserved for commercial product
   naming and endorsement.
-- **In doubt? Ask.** <hi@santifer.io>, subject `Trademark request`.
+- **In doubt? Ask.** <hello@resist.js>, subject `Trademark request`.
 
 ## The relationship with the MIT license
 
 The MIT license grants broad freedoms to use, copy, modify, and
 redistribute the source code. It does not grant rights to the name
 "career-ops," its visual identity, or any associated brand assets.
-Those are reserved by the project's maintainer, Santiago Fernández de
-Valderrama, and any successor entity stewarding the project.
+Those are reserved by the upstream project's trademark holder and any
+successor entity stewarding the project; this fork (resist.js / Career
+Ops) uses the name under the upstream's permissive community policy.
 
 This is the model used by PostgreSQL, Apache, Mozilla, GitLab, and
 most mature open-source projects: the code is free, the brand is
@@ -65,7 +66,7 @@ use suggests an official relationship that doesn't exist, please ask.
 
 ## How to request permission
 
-Email **<hi@santifer.io>** with subject **"Trademark request — [your use case]"**
+Email **<hello@resist.js>** with subject **"Trademark request — [your use case]"**
 and include:
 
 1. What you'd like to use the name for
@@ -102,8 +103,8 @@ will be announced in [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-© 2026 Santiago Fernández de Valderrama. "career-ops"™ is a trademark of
-Santiago Fernández de Valderrama. A trademark application has been filed
-with the Spanish Patent and Trademark Office (OEPM) in classes 9
-(downloadable software) and 42 (Software-as-a-Service); registration
-pending. International extensions under the Madrid Protocol may follow.
+© 2026 resist.js (fork maintainer). The "career-ops"™ name and
+associated brand assets remain the property of the upstream project's
+trademark holder; this fork uses the name under the upstream's
+permissive community-use policy and does not claim trademark rights
+of its own.

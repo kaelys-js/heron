@@ -2,7 +2,7 @@
 
 ## Overview
 
-career-ops is maintained by [@santifer](https://github.com/santifer) under a **BDFL (Benevolent Dictator for Life)** model with a clear path for community members to earn trust and take on responsibilities.
+career-ops is maintained by [@kaelys-js](https://github.com/kaelys-js) under a **BDFL (Benevolent Dictator for Life)** model with a clear path for community members to earn trust and take on responsibilities. (This is a fork of the upstream CLI-driven system — see [README.md](../README.md) "Acknowledgements" for the upstream credit.)
 
 The goal is to build a self-sustaining community where the project thrives even when the maintainer is offline.
 
