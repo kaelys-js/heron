@@ -407,6 +407,10 @@ url = "https://github.com/tamasfe/taplo/releases/download/0.10.0/taplo-darwin-x8
 [tools.taplo."platforms.windows-x64"]
 url = "https://github.com/tamasfe/taplo/releases/download/0.10.0/taplo-windows-x86_64.zip"
 
+[[tools."ubi:dotenv-linter/dotenv-linter"]]
+version = "4.0.0"
+backend = "ubi:dotenv-linter/dotenv-linter"
+
 [[tools.yamllint]]
 version = "1.36.2"
 backend = "pipx:yamllint"
