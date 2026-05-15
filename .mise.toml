@@ -29,8 +29,6 @@ ruby   = "3.3.5"
 # Python — used by ruff (installed below) AND by the apply-*.py / scan-*.py
 # scripts that drive the Playwright portal automation.
 python = "3.13"
-# Go — used by the dashboard/ workspace AND by `gofmt` in pre-commit.
-go     = "1.23"
 
 # ── Formatters / Linters (managed by mise so fresh-clone works) ──────
 # Every formatter the lefthook + CI gates use must be installable from
@@ -42,7 +40,6 @@ swiftlint   = "0.57"  # Swift lint gate
 swiftformat = "0.55"  # Swift formatter
 ktlint      = "1.5"   # Kotlin formatter
 yamllint    = "1.36"  # YAML syntax + style
-gofumpt     = "0.7"   # Strict Go formatter — pairs with gofmt (which ships with Go)
 
 [env]
 # Project-scoped env vars — applied when shell-activated mise enters this dir.
