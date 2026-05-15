@@ -14,8 +14,14 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './files';
+import { activePath } from './profile-paths';
 
-const CACHE_PATH = path.join(ROOT, 'data', 'followup-cache.json');
+/** Per-profile cache path. Each profile has its own follow-up cache
+ *  derived from its applications.md — sharing across profiles would
+ *  poison the cache with the wrong profile's job data. */
+function cachePath(): string {
+  return activePath('followup-cache');
+}
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 export type Urgency = 'urgent' | 'overdue' | 'waiting' | 'cold';
@@ -114,8 +120,8 @@ function spawnCadence(profileId?: string): Promise<FollowupCadence> {
 /** Read the on-disk cache; returns null if missing or stale. */
 function readCache(): FollowupCadence | null {
   try {
-    if (!fs.existsSync(CACHE_PATH)) return null;
-    const raw = fs.readFileSync(CACHE_PATH, 'utf8');
+    if (!fs.existsSync(cachePath())) return null;
+    const raw = fs.readFileSync(cachePath(), 'utf8');
     const parsed = JSON.parse(raw) as FollowupCadence;
     if (Date.now() - parsed.generatedAt > CACHE_TTL_MS) return null;
     return parsed;
@@ -126,8 +132,8 @@ function readCache(): FollowupCadence | null {
 
 function writeCache(cadence: FollowupCadence): void {
   try {
-    fs.mkdirSync(path.dirname(CACHE_PATH), { recursive: true });
-    fs.writeFileSync(CACHE_PATH, JSON.stringify(cadence, null, 2));
+    fs.mkdirSync(path.dirname(cachePath()), { recursive: true });
+    fs.writeFileSync(cachePath(), JSON.stringify(cadence, null, 2));
   } catch {
     // Cache write failures are non-fatal — caller still got the data.
   }

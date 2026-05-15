@@ -62,8 +62,14 @@ import { spawnSync, spawn } from 'node:child_process';
 import { ROOT } from './files';
 import { logEvent, reportServerError } from './events';
 import { listRunning } from './orchestrator';
+import { userSharedPath } from './profile-paths';
 
-const BACKUPS_DIR = path.join(ROOT, 'data', 'backups');
+/** Per-user backup dir. Each user's tarballs live in their own
+ *  _shared/backups/ — Alice's archives don't end up in Bob's view +
+ *  a per-user reset doesn't nuke other users' history. */
+function backupsDir(): string {
+  return userSharedPath('backups-dir');
+}
 
 // What goes INTO a backup. Relative to ROOT. Resolved at backup time —
 // missing entries are skipped silently (fresh installs may not have
@@ -141,13 +147,15 @@ export type BackupConfig = {
   retentionDays: number;
 };
 
-const CONFIG_PATH = path.join(BACKUPS_DIR, 'config.json');
+function configPath(): string {
+  return path.join(backupsDir(), 'config.json');
+}
 
 /** Read the backup config. Falls back to defaults when missing/corrupt. */
 export function readBackupConfig(): BackupConfig {
   try {
-    if (!fs.existsSync(CONFIG_PATH)) return { retentionDays: DEFAULT_RETENTION_DAYS };
-    const raw = fs.readFileSync(CONFIG_PATH, 'utf8');
+    if (!fs.existsSync(configPath())) return { retentionDays: DEFAULT_RETENTION_DAYS };
+    const raw = fs.readFileSync(configPath(), 'utf8');
     const parsed = JSON.parse(raw) as Partial<BackupConfig>;
     const days =
       typeof parsed.retentionDays === 'number' && parsed.retentionDays > 0
@@ -166,11 +174,11 @@ export function readBackupConfig(): BackupConfig {
 }
 
 export function writeBackupConfig(next: BackupConfig): BackupConfig {
-  fs.mkdirSync(BACKUPS_DIR, { recursive: true });
+  fs.mkdirSync(backupsDir(), { recursive: true });
   const clean: BackupConfig = {
     retentionDays: Math.max(1, Math.min(365, Math.round(next.retentionDays))),
   };
-  fs.writeFileSync(CONFIG_PATH, JSON.stringify(clean, null, 2) + '\n');
+  fs.writeFileSync(configPath(), JSON.stringify(clean, null, 2) + '\n');
   return clean;
 }
 
@@ -318,10 +326,10 @@ function readSchemaVersions(): { auth?: number; app?: number } {
  *  anything older than retentionDays once the new one is on disk.
  *  Logs to the activity feed. */
 export async function createBackup(): Promise<CreateBackupResult> {
-  fs.mkdirSync(BACKUPS_DIR, { recursive: true });
+  fs.mkdirSync(backupsDir(), { recursive: true });
   const id = timestampId();
-  const tarPath = path.join(BACKUPS_DIR, id + '.tar.gz');
-  const metaPath = path.join(BACKUPS_DIR, id + '.meta.json');
+  const tarPath = path.join(backupsDir(), id + '.tar.gz');
+  const metaPath = path.join(backupsDir(), id + '.meta.json');
 
   // Gather what we're including. Skip anything that's not on disk yet —
   // a fresh install may not have data/issues.jsonl yet.
@@ -415,22 +423,22 @@ export async function createBackup(): Promise<CreateBackupResult> {
  *  + fs.stat + sidecar (when present). */
 export function listBackups(): BackupInfo[] {
   try {
-    if (!fs.existsSync(BACKUPS_DIR)) return [];
+    if (!fs.existsSync(backupsDir())) return [];
   } catch {
     return [];
   }
   const out: BackupInfo[] = [];
   let entries: string[] = [];
   try {
-    entries = fs.readdirSync(BACKUPS_DIR);
+    entries = fs.readdirSync(backupsDir());
   } catch {
     return [];
   }
   for (const name of entries) {
     if (!name.endsWith('.tar.gz')) continue;
     const id = name.slice(0, -'.tar.gz'.length);
-    const tarPath = path.join(BACKUPS_DIR, name);
-    const metaPath = path.join(BACKUPS_DIR, id + '.meta.json');
+    const tarPath = path.join(backupsDir(), name);
+    const metaPath = path.join(backupsDir(), id + '.meta.json');
     let size = 0;
     let createdAt = Date.now();
     try {
@@ -574,8 +582,8 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
     return { ok: false, error: 'Backup integrity check failed: ' + (integrity.error || 'unknown') };
   }
 
-  const stage = path.join(BACKUPS_DIR, '.restore-' + id);
-  const audit = path.join(BACKUPS_DIR, '.pre-restore-' + id);
+  const stage = path.join(backupsDir(), '.restore-' + id);
+  const audit = path.join(backupsDir(), '.pre-restore-' + id);
 
   // Clean any stale staging dir from a previous failed attempt. force:true
   // already swallows ENOENT, so this catch only fires on real EACCES/EIO —

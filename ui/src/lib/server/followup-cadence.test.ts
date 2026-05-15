@@ -52,7 +52,9 @@ vi.mock('./profiles', () => ({
 
 const { getFollowupCadence, findEntryByCompanyRole } = await import('./followup-cadence');
 
-const CACHE_PATH = '/tmp/repo/data/followup-cache.json';
+// Per-profile cache path post-Option-E. Resolved via activePath()
+// against the mocked default profile + SYSTEM_USER_ID.
+const CACHE_PATH = '/tmp/repo/data/profiles/default/followup-cache.json';
 
 beforeEach(() => {
   spawnCalls.length = 0;

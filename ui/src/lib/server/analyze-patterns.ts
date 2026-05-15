@@ -21,8 +21,14 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './files';
+import { activePath } from './profile-paths';
 
-const CACHE_PATH = path.join(ROOT, 'data', 'patterns-cache.json');
+/** Per-profile cache path. Each profile's patterns are derived from
+ *  its own applications.md — sharing across profiles would poison
+ *  the cache. */
+function cachePath(): string {
+  return activePath('patterns-cache');
+}
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
 /** Per-outcome score statistics. `count` is the number of applications in
@@ -123,8 +129,8 @@ export type PatternsResult = {
 
 function readCache(): PatternsResult | null {
   try {
-    if (!fs.existsSync(CACHE_PATH)) return null;
-    const parsed = JSON.parse(fs.readFileSync(CACHE_PATH, 'utf8')) as PatternsResult;
+    if (!fs.existsSync(cachePath())) return null;
+    const parsed = JSON.parse(fs.readFileSync(cachePath(), 'utf8')) as PatternsResult;
     if (!parsed.generatedAt || Date.now() - parsed.generatedAt > CACHE_TTL_MS) return null;
     return parsed;
   } catch {
@@ -134,8 +140,8 @@ function readCache(): PatternsResult | null {
 
 function writeCache(r: PatternsResult): void {
   try {
-    fs.mkdirSync(path.dirname(CACHE_PATH), { recursive: true });
-    fs.writeFileSync(CACHE_PATH, JSON.stringify(r, null, 2));
+    fs.mkdirSync(path.dirname(cachePath()), { recursive: true });
+    fs.writeFileSync(cachePath(), JSON.stringify(r, null, 2));
   } catch {
     // best-effort
   }

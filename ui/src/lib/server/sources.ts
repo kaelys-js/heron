@@ -26,8 +26,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './files';
 import { logEvent, reportServerError } from './events';
+import { userSharedPath } from './profile-paths';
 
-const SOURCES_PATH = path.join(ROOT, 'data', 'sources.json');
+/** Per-user sources state. Each user has their own LinkedIn/Indeed
+ *  session-connected flags. Resolved lazily so AsyncLocalStorage's
+ *  current-user context is honored. */
+function sourcesPath(): string {
+  return userSharedPath('sources');
+}
+// Legacy path kept for one-shot boot migration only.
+const SOURCES_PATH_LEGACY = path.join(ROOT, 'data', 'sources.json');
 
 /** Threshold: this many consecutive failures flips a source's `connected`
  *  back to false (so the /sources card surfaces the issue). The user
@@ -140,7 +148,7 @@ export const KNOWN_SOURCES: KnownSource[] = [
 
 function ensureDir() {
   try {
-    fs.mkdirSync(path.dirname(SOURCES_PATH), { recursive: true });
+    fs.mkdirSync(path.dirname(sourcesPath()), { recursive: true });
   } catch {
     // mkdir recursive only fails on permission/IO; subsequent file
     // writes surface the real error with the actual op name.
@@ -151,8 +159,8 @@ function ensureDir() {
  *  can default per-source. Never throws. */
 export function readSources(): Record<string, SourceState> {
   try {
-    if (!fs.existsSync(SOURCES_PATH)) return {};
-    const txt = fs.readFileSync(SOURCES_PATH, 'utf8');
+    if (!fs.existsSync(sourcesPath())) return {};
+    const txt = fs.readFileSync(sourcesPath(), 'utf8');
     if (!txt.trim()) return {};
     const parsed = JSON.parse(txt);
     if (parsed && typeof parsed === 'object') return parsed as Record<string, SourceState>;
@@ -185,7 +193,7 @@ export function updateSource(id: string, patch: Partial<SourceState>): SourceSta
   const next: SourceState = merged;
   all[id] = next;
   try {
-    fs.writeFileSync(SOURCES_PATH, JSON.stringify(all, null, 2) + '\n');
+    fs.writeFileSync(sourcesPath(), JSON.stringify(all, null, 2) + '\n');
   } catch (e) {
     reportServerError('sources', 'Failed to write sources.json', e, { category: 'system' });
   }
@@ -243,7 +251,7 @@ export function resetSource(id: string): void {
   delete all[id];
   ensureDir();
   try {
-    fs.writeFileSync(SOURCES_PATH, JSON.stringify(all, null, 2) + '\n');
+    fs.writeFileSync(sourcesPath(), JSON.stringify(all, null, 2) + '\n');
   } catch (e) {
     reportServerError('sources', 'Failed to reset source', e, { category: 'system' });
   }
