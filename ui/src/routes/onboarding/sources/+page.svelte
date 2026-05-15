@@ -372,7 +372,7 @@
               id="gmail-label"
               bind:value={gmailForm.label}
               class="h-8 text-xs"
-              placeholder="INBOX or Career Ops/job-alerts"
+              placeholder="INBOX or Heron/job-alerts"
             />
           </div>
           <div>
@@ -434,7 +434,7 @@
                 rel="noopener"
                 class="underline underline-offset-2 hover:text-foreground"
                 >myaccount.google.com/apppasswords</a
-              >. Pick "Mail" + "Other (custom name)" → "Career Ops".
+              >. Pick "Mail" + "Other (custom name)" → "Heron".
             </li>
             <li>
               Copy the 16-character password and paste it above. Stored locally in <code
@@ -443,8 +443,7 @@
             </li>
             <li>
               Optional: in Gmail create a filter that auto-applies a label to LinkedIn/Indeed alert
-              emails (e.g. "Career Ops/job-alerts"), then point this card at that label instead of
-              INBOX.
+              emails (e.g. "Heron/job-alerts"), then point this card at that label instead of INBOX.
             </li>
           </ol>
         {/if}

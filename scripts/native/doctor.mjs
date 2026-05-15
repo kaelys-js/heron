@@ -7,7 +7,7 @@
  *   1. LOCAL files exist (entitlements plist, Info.plist, Fastfile,
  *      Brand.swift, etc.) — covered by the capacitor.integration test
  *      suite which we delegate to for completeness.
- *   2. LOCAL env file (~/.career-ops/native-env) populated by
+ *   2. LOCAL env file (~/.heron/native-env) populated by
  *      `pnpm setup:native`. Optional — only needed if you want to
  *      run iOS / Mac builds from your laptop.
  *   3. GITHUB Secrets configured on the repo so CI can sign + upload.
@@ -88,7 +88,7 @@ log.step('Native readiness — local config');
 }
 
 // ── 2. Local credentials file ──────────────────────────────────────
-log.step('Native readiness — local credentials (~/.career-ops/native-env)');
+log.step('Native readiness — local credentials (~/.heron/native-env)');
 const envFile = NATIVE_ENV_FILE;
 if (existsSync(envFile)) {
   log.ok(`local credentials file exists: ${envFile}`);

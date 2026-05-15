@@ -14,9 +14,9 @@
  *
  * Usage:
  *   import { BRAND } from '../lib/_brand.mjs';
- *   console.log(BRAND.name);          // → 'career-ops' (or whatever brand.json says)
- *   console.log(BRAND.repo.url);      // → 'https://github.com/kaelys-js/career-ops'
- *   console.log(BRAND.urlScheme);     // → 'careerops'
+ *   console.log(BRAND.name);          // → 'heron' (or whatever brand.json says)
+ *   console.log(BRAND.repo.url);      // → 'https://github.com/kaelys-js/heron'
+ *   console.log(BRAND.urlScheme);     // → 'heron'
  *
  * If you need the Python equivalent for scan-*.py / apply-*.py:
  *   from _brand import BRAND
@@ -34,16 +34,16 @@ const BRAND_JSON = join(REPO_ROOT, 'branding', 'brand.json');
  *  Keeps scripts functional during fresh-clone bootstrap, repo
  *  surgery, or git-mid-rebase states. */
 const DEFAULTS = Object.freeze({
-  name: 'career-ops',
-  displayName: 'Career Ops',
-  bundleId: 'com.resistjs.careerops',
-  urlScheme: 'careerops',
-  serviceType: '_career-ops._tcp',
+  name: 'heron',
+  displayName: 'Heron',
+  bundleId: 'com.heron.app',
+  urlScheme: 'heron',
+  serviceType: '_heron._tcp',
   repo: {
     owner: 'kaelys-js',
-    name: 'career-ops',
-    url: 'https://github.com/kaelys-js/career-ops',
-    issues: 'https://github.com/kaelys-js/career-ops/issues',
+    name: 'heron',
+    url: 'https://github.com/kaelys-js/heron',
+    issues: 'https://github.com/kaelys-js/heron/issues',
   },
 });
 

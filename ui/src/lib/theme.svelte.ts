@@ -6,7 +6,7 @@
  *   - 'dark'    — force dark
  *   - 'system'  — track OS preference (default)
  *
- * Persistence: localStorage key 'career-ops:theme' stores the user's choice.
+ * Persistence: localStorage key 'heron:theme' stores the user's choice.
  * The companion script in app.html applies the resolved class BEFORE Svelte
  * hydrates so there's no flash. This store keeps the runtime in sync after
  * hydration and reacts to OS changes when in 'system' mode.

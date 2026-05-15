@@ -32,9 +32,9 @@ const SVG = path.join(ROOT, 'ui/static/favicon.svg');
 const BUILD = path.join(__dirname, '_build');
 
 // Read brand.json so the web-manifest filenames track the brand name.
-// Previously hardcoded `career-ops-${size}.png`; if the user renamed the
+// Previously hardcoded `heron-${size}.png`; if the user renamed the
 // brand to e.g. "myapp" the generator would still write
-// `career-ops-192.png` and app.html / manifest.webmanifest would
+// `heron-192.png` and app.html / manifest.webmanifest would
 // reference the wrong filenames. Reading from brand.json keeps the
 // generated filename in sync with whatever apply-brand.mjs propagated
 // into app.html (single source of truth: branding/brand.json).

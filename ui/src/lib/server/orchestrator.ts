@@ -519,7 +519,7 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
 
 // =============================================================================
 // Tailored CV / oferta — spawn the Claude Code CLI to run the oferta mode for
-// a single URL. Claude's `/career-ops oferta <url>` produces a deep evaluation
+// a single URL. Claude's `/heron oferta <url>` produces a deep evaluation
 // report AND a tailored CV PDF in one shot.
 //
 // We pin Claude Code (the CLI) here. Other CLIs follow the open agent skill

@@ -438,7 +438,7 @@ async function fetchOne(apiSpec) {
   const method = spec.method || 'GET';
   const headers = {
     Accept: 'application/json',
-    'User-Agent': 'career-ops-scanner/1.0 (+https://github.com/kaelys-js/career-ops)',
+    'User-Agent': 'heron-scanner/1.0 (+https://github.com/kaelys-js/heron)',
     ...(method !== 'GET' ? { 'Content-Type': 'application/json' } : {}),
     ...(spec.headers || {}),
   };
@@ -694,7 +694,7 @@ async function main() {
   if (probeOnly) {
     const PROBE_URL = 'https://boards-api.greenhouse.io/v1/boards/vercel/jobs';
     try {
-      const r = await fetch(PROBE_URL, { headers: { 'User-Agent': 'career-ops-probe/1.0' } });
+      const r = await fetch(PROBE_URL, { headers: { 'User-Agent': 'heron-probe/1.0' } });
       if (!r.ok) {
         console.error('✗ probe HTTP ' + r.status);
         process.exit(3);

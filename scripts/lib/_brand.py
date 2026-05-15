@@ -5,8 +5,8 @@ Any .py script that needs the brand identifiers imports from here.
 
 Usage:
     from _brand import BRAND
-    print(BRAND["name"])              # -> 'career-ops' (or whatever brand.json says)
-    print(BRAND["repo"]["url"])       # -> 'https://github.com/kaelys-js/career-ops'
+    print(BRAND["name"])              # -> 'heron' (or whatever brand.json says)
+    print(BRAND["repo"]["url"])       # -> 'https://github.com/kaelys-js/heron'
 
 Fail-safe: returns historical defaults if brand.json is missing/corrupt.
 """
@@ -19,16 +19,16 @@ _ROOT = Path(__file__).resolve().parent.parent.parent
 _BRAND_JSON = _ROOT / "branding" / "brand.json"
 
 _DEFAULTS = {
-    "name": "career-ops",
-    "displayName": "Career Ops",
-    "bundleId": "com.resistjs.careerops",
-    "urlScheme": "careerops",
-    "serviceType": "_career-ops._tcp",
+    "name": "heron",
+    "displayName": "Heron",
+    "bundleId": "com.heron.app",
+    "urlScheme": "heron",
+    "serviceType": "_heron._tcp",
     "repo": {
         "owner": "kaelys-js",
-        "name": "career-ops",
-        "url": "https://github.com/kaelys-js/career-ops",
-        "issues": "https://github.com/kaelys-js/career-ops/issues",
+        "name": "heron",
+        "url": "https://github.com/kaelys-js/heron",
+        "issues": "https://github.com/kaelys-js/heron/issues",
     },
 }
 

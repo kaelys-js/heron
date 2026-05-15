@@ -4,7 +4,7 @@
 
     1. Network online/offline (from $lib/client/online-status.svelte).
     2. Backend discovery state (from $lib/client/api-base.ts) — only
-       relevant in Capacitor (careerops:// origin), where the WebView
+       relevant in Capacitor (heron:// origin), where the WebView
        has to find the backend via mDNS / Tailscale / production fallback.
 
   Order matters: a hard offline state is shown over a backend-resolving

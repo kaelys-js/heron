@@ -7,7 +7,7 @@ import { c, capture, which, NATIVE_ENV_FILE } from './_lib.mjs';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-console.log(c.bold('\ncareer-ops native commands\n'));
+console.log(c.bold('\nheron native commands\n'));
 
 const groups = [
   {

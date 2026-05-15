@@ -1,5 +1,5 @@
-import WidgetKit
 import SwiftUI
+import WidgetKit
 
 /**
  * CareerOpsWidget — Lock Screen + Home Screen widgets.
@@ -15,9 +15,9 @@ import SwiftUI
  *
  * To add this target in Xcode:
  *   1. File → New → Target → Widget Extension → "CareerOpsWidget"
- *   2. Bundle ID: com.resistjs.careerops.widget
+ *   2. Bundle ID: com.heron.app.widget
  *   3. Add to "App Groups" entitlement (both this target and the
- *      main app): group.com.resistjs.careerops
+ *      main app): group.com.heron.app
  *   4. Replace the auto-generated CareerOpsWidget.swift with this file.
  */
 struct CareerOpsStats: Codable {
@@ -39,7 +39,7 @@ struct CareerOpsEntry: TimelineEntry {
 struct CareerOpsTimelineProvider: TimelineProvider {
     typealias Entry = CareerOpsEntry
 
-    func placeholder(in context: Context) -> CareerOpsEntry {
+    func placeholder(in _: Context) -> CareerOpsEntry {
         // Placeholder is rendered before the timeline is ready (widget
         // gallery thumbnails + the snapshot before getTimeline returns).
         // Show a populated-looking preview so users picking the widget
@@ -53,7 +53,7 @@ struct CareerOpsTimelineProvider: TimelineProvider {
         )
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (CareerOpsEntry) -> Void) {
+    func getSnapshot(in _: Context, completion: @escaping (CareerOpsEntry) -> Void) {
         completion(CareerOpsEntry(
             date: Date(),
             stats: readStats(),
@@ -61,7 +61,7 @@ struct CareerOpsTimelineProvider: TimelineProvider {
         ))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<CareerOpsEntry>) -> Void) {
+    func getTimeline(in _: Context, completion: @escaping (Timeline<CareerOpsEntry>) -> Void) {
         let entry = CareerOpsEntry(
             date: Date(),
             stats: readStats(),
@@ -92,7 +92,7 @@ struct CareerOpsWidgetEntryView: View {
     var body: some View {
         // Signed-out users see the gate everywhere. The gate is itself a
         // tap target — `widgetURL` is set on the whole bundle by each
-        // widget below, so taps on the gate land at `careerops://login`.
+        // widget below, so taps on the gate land at `heron://login`.
         Group {
             if !entry.authenticated {
                 WidgetSignInGate()
@@ -104,7 +104,7 @@ struct CareerOpsWidgetEntryView: View {
         // `containerBackground` (iOS 17+) is the Apple-recommended way
         // to set widget backgrounds — older systems fall through to the
         // system default. We use a subtle brand-indigo gradient so the
-        // Career Ops widgets read as a coordinated set in the user's
+        // Heron widgets read as a coordinated set in the user's
         // home screen rather than four unrelated white cards.
         .brandContainerBackground()
     }

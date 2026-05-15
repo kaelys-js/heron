@@ -1,5 +1,5 @@
 /**
- * heron form-fill bookmarklet.
+ * Heron form-fill bookmarklet.
  *
  * Drag the wrapper link from /settings to your bookmarks bar. While viewing
  * a Greenhouse / Ashby / Lever job application, click the bookmark. The

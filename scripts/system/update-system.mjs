@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * update-system.mjs — Safe auto-updater for career-ops
+ * update-system.mjs — Safe auto-updater for heron
  *
  * Updates ONLY system layer files (modes, scripts, templates).
  * NEVER touches user data (cv.md, profile.yml, _profile.md, data/, reports/).

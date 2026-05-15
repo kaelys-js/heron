@@ -2,12 +2,12 @@ import Foundation
 import Network
 
 /**
- * BonjourBrowser — discover career-ops desktop servers on the local
+ * BonjourBrowser — discover Heron desktop servers on the local
  * network via mDNS. The discovered URL is stored in UserDefaults under
- * `career-ops:lan-url` so the JS-side backend-discovery resolver can
+ * `heron:lan-url` so the JS-side backend-discovery resolver can
  * read it through a Capacitor Preferences plugin or a tiny native bridge.
  *
- * iOS 14+ Bonjour browsing requires the `_career-ops._tcp` service to
+ * iOS 14+ Bonjour browsing requires the `_heron._tcp` service to
  * be declared in Info.plist's `NSBonjourServices` (done) and the user
  * to have granted local-network permission (handled by the OS — prompt
  * fires on first browse call).
@@ -40,7 +40,7 @@ final class BonjourBrowser {
         }
         browser.stateUpdateHandler = { state in
             NSLog("[bonjour] state: \(state)")
-            if case .failed(let err) = state {
+            if case let .failed(err) = state {
                 ErrorReporter.shared.report(
                     message: "Bonjour browse failed: \(err.localizedDescription)",
                     source: "BonjourBrowser",
@@ -68,14 +68,14 @@ final class BonjourBrowser {
                     if case let .hostPort(host: host, port: port) = inner {
                         let hostStr: String
                         switch host {
-                        case .ipv4(let v): hostStr = String(describing: v)
-                        case .ipv6(let v): hostStr = String(describing: v)
-                        case .name(let n, _): hostStr = n
+                        case let .ipv4(v): hostStr = String(describing: v)
+                        case let .ipv6(v): hostStr = String(describing: v)
+                        case let .name(n, _): hostStr = n
                         @unknown default: hostStr = "unknown"
                         }
                         let url = "http://\(hostStr):\(port.rawValue)"
                         UserDefaults.standard.set(url, forKey: Brand.DefaultsKey.lanUrl)
-                        NSLog("[bonjour] resolved career-ops at \(url)")
+                        NSLog("[bonjour] resolved Heron at \(url)")
                     }
                 }
                 conn.cancel()

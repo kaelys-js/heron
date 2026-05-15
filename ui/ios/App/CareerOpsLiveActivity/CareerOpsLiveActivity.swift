@@ -1,6 +1,6 @@
 import ActivityKit
-import WidgetKit
 import SwiftUI
+import WidgetKit
 
 /**
  * CareerOpsLiveActivity — Dynamic Island + Lock Screen countdown for
@@ -18,17 +18,17 @@ import SwiftUI
  * To add this target in Xcode:
  *   1. File → New → Target → Widget Extension → "CareerOpsLiveActivity"
  *      with "Include Live Activity" ticked
- *   2. Bundle ID: com.resistjs.careerops.liveactivity
- *   3. Add to App Groups: group.com.resistjs.careerops
+ *   2. Bundle ID: com.heron.app.liveactivity
+ *   3. Add to App Groups: group.com.heron.app
  */
 struct CareerOpsInterviewAttributes: ActivityAttributes {
-    public typealias ContentState = State
+    typealias ContentState = State
 
-    public struct State: Codable, Hashable {
+    struct State: Codable, Hashable {
         var scheduledAt: Date
         var company: String
         var role: String
-        var stage: String  // "Phone screen" | "Technical" | "Final" etc.
+        var stage: String // "Phone screen" | "Technical" | "Final" etc.
     }
 
     var jobId: String
@@ -40,7 +40,7 @@ struct CareerOpsInterviewLiveActivity: Widget {
         ActivityConfiguration(for: CareerOpsInterviewAttributes.self) { context in
             // Lock-screen / banner UI. The brand-indigo low-opacity tint
             // matches the iPhone widgets' BrandBackground recipe so the
-            // whole iOS surface reads as one cohesive Career Ops experience
+            // whole iOS surface reads as one cohesive Heron experience
             // instead of the previous heavy black bar.
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
@@ -116,7 +116,7 @@ struct CareerOpsInterviewLiveActivity: Widget {
     }
 }
 
-/*
+/**
  * WidgetBundle entry point. WidgetKit extension targets are binaries
  * that MUST declare an `@main` symbol or the produced .appex has no
  * runtime entry point — iOS's installer then rejects the bundle with

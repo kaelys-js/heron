@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-linkedin-easy-apply.py — LinkedIn Easy Apply automation for career-ops.
+linkedin-easy-apply.py — LinkedIn Easy Apply automation for Heron.
 
 Walks LinkedIn job URLs in data/pipeline.md or data/applications.md,
 detects "Easy Apply" enabled jobs, fills the form using config/profile.yml

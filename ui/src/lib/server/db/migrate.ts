@@ -1,7 +1,7 @@
 /**
  * db/migrate — first-boot schema bootstrap.
  *
- * career-ops doesn't ship a drizzle-kit-generated migration folder yet —
+ * Heron doesn't ship a drizzle-kit-generated migration folder yet —
  * the schemas are still being iterated. We use idempotent CREATE TABLE
  * IF NOT EXISTS statements derived from the Drizzle schema objects.
  * Safe to run on every startup and fast (~1ms when tables already exist).

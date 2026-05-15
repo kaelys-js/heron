@@ -15,7 +15,7 @@
  *        (opens appstoreconnect.apple.com → you paste/select file)
  *   3. Export your Mac code-signing certificate from the Keychain to a
  *      .p12 file (you pick the cert + export password).
- *   4. Save everything locally to ~/.career-ops/native-env (chmod 600).
+ *   4. Save everything locally to ~/.heron/native-env (chmod 600).
  *   5. Push the same values to GitHub Secrets via `gh secret set` so CI
  *      can sign builds when you `pnpm release`.
  *   6. Add the iOS Xcode targets (Widget, LiveActivity, ShareExt) via
@@ -49,7 +49,7 @@ import { existsSync, writeFileSync, chmodSync, mkdirSync, readFileSync } from 'n
 import { join } from 'node:path';
 import { execSync } from 'node:child_process';
 
-console.log(c.bold('\ncareer-ops native — interactive setup\n'));
+console.log(c.bold('\nheron native — interactive setup\n'));
 info('Run this once. Every future native command just works.');
 info('Press Ctrl+C anytime — your progress is saved.\n');
 
@@ -171,7 +171,7 @@ const repo = capture('gh', ['repo', 'view', '--json', 'nameWithOwner', '-q', '.n
 });
 if (!repo) {
   fail('Not in a GitHub-tracked repo OR gh repo view failed.');
-  info('Run this from the career-ops repo root.');
+  info('Run this from the Heron repo root.');
   process.exit(1);
 }
 ok(`repo: ${repo}`);
@@ -195,7 +195,7 @@ if (state.apple.APPLE_APP_SPECIFIC_PASSWORD && (await confirm('  Re-use stored v
   info(
     'Generate one at https://appleid.apple.com → "Sign-In and Security" → "App-Specific Passwords".',
   );
-  info('Name it: "career-ops CI"');
+  info('Name it: "heron CI"');
   if (await confirm('  Open the page now?', true)) {
     openUrl('https://appleid.apple.com/account/manage');
   }
@@ -217,7 +217,7 @@ if (
   info(
     'Create a key at https://appstoreconnect.apple.com → "Users and Access" → "Integrations" → "App Store Connect API" → "+"',
   );
-  info('Access: "App Manager". Name: "career-ops CI"');
+  info('Access: "App Manager". Name: "heron CI"');
   info('After clicking Generate, download the .p8 file IMMEDIATELY — Apple shows it only once.');
   if (await confirm('  Open App Store Connect?', true)) {
     openUrl('https://appstoreconnect.apple.com/access/integrations/api');
@@ -268,7 +268,7 @@ if (state.apple.MAC_CERTIFICATE && (await confirm('  Re-use stored Mac cert?', t
   const certName = developerIdLines[0].match(/"([^"]+)"/)?.[1];
   ok(`found cert: ${certName}`);
 
-  const certP12 = '/tmp/career-ops-mac-cert.p12';
+  const certP12 = '/tmp/heron-mac-cert.p12';
   const certPwd = await ask('Pick an export password for the .p12 (used by CI)', { hidden: true });
   if (!certPwd) {
     fail('Password required.');
@@ -280,7 +280,7 @@ if (state.apple.MAC_CERTIFICATE && (await confirm('  Re-use stored Mac cert?', t
   // security export-keychain doesn't accept output password via CLI easily on
   // recent macOS — use Keychain Access's manual export workflow OR security
   // export with password file.
-  const tmpPwdFile = '/tmp/career-ops-pwd.txt';
+  const tmpPwdFile = '/tmp/heron-pwd.txt';
   writeFileSync(tmpPwdFile, certPwd);
   chmodSync(tmpPwdFile, 0o600);
   try {
@@ -313,9 +313,9 @@ if (state.apple.MAC_CERTIFICATE && (await confirm('  Re-use stored Mac cert?', t
 }
 
 // ───────────────────────────────────────────────────────────────────
-step(7, 'Writing ~/.career-ops/native-env');
+step(7, 'Writing ~/.heron/native-env');
 const envBody = [
-  '# career-ops native build secrets — auto-generated. Do NOT commit.',
+  '# Heron native build secrets — auto-generated. Do NOT commit.',
   `export APPLE_ID="${state.apple.APPLE_ID}"`,
   `export APPLE_TEAM_ID="${state.apple.APPLE_TEAM_ID}"`,
   `export APPLE_APP_SPECIFIC_PASSWORD="${state.apple.APPLE_APP_SPECIFIC_PASSWORD}"`,

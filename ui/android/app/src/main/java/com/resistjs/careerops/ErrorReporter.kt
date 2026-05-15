@@ -19,7 +19,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object ErrorReporter {
-    private const val TAG = "career-ops:error"
+    private const val TAG = "heron:error"
     private const val MAX_QUEUE = 50
 
     private lateinit var appContext: Context
@@ -34,20 +34,25 @@ object ErrorReporter {
         level: String = "error",
         context: Map<String, Any?> = emptyMap(),
     ) {
-        Log.e(TAG, "[${level}] [${source}] $message")
+        Log.e(TAG, "[$level] [$source] $message")
         if (!::appContext.isInitialized) return
-        val entry = JSONObject().apply {
-            put("message", message)
-            put("source", source)
-            put("level", level)
-            put("capturedAt", System.currentTimeMillis())
-            put("platform", "android-native")
-            for ((k, v) in context) put(k, v)
-        }
+        val entry =
+            JSONObject().apply {
+                put("message", message)
+                put("source", source)
+                put("level", level)
+                put("capturedAt", System.currentTimeMillis())
+                put("platform", "android-native")
+                for ((k, v) in context) put(k, v)
+            }
         enqueue(entry)
     }
 
-    fun report(error: Throwable, source: String, level: String = "error") {
+    fun report(
+        error: Throwable,
+        source: String,
+        level: String = "error",
+    ) {
         report(error.localizedMessage ?: error.toString(), source, level)
     }
 
@@ -66,15 +71,16 @@ object ErrorReporter {
     private fun enqueue(entry: JSONObject) {
         val prefs = prefs()
         val raw = prefs.getString(Brand.PrefsKey.errorQueue, null)
-        val arr = if (raw != null) {
-            try {
-                JSONArray(raw)
-            } catch (_: Exception) {
+        val arr =
+            if (raw != null) {
+                try {
+                    JSONArray(raw)
+                } catch (_: Exception) {
+                    JSONArray()
+                }
+            } else {
                 JSONArray()
             }
-        } else {
-            JSONArray()
-        }
         arr.put(entry)
         // Cap at MAX_QUEUE — drop oldest entries
         while (arr.length() > MAX_QUEUE) {

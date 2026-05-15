@@ -4,7 +4,7 @@
  * sees the service and connects automatically.
  *
  * Uses `bonjour-service`, a pure-JS mDNS impl, so no native build steps.
- * Advertised as `_career-ops._tcp.local` with the running port. TXT
+ * Advertised as `_heron._tcp.local` with the running port. TXT
  * record carries the app version so phones can decide if they're
  * compatible.
  */

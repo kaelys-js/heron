@@ -5,7 +5,7 @@
  * scrapes labelled fields, and POSTs them here. We:
  *   1. Try to match `url` to an existing pipeline job (so we have full context
  *      for the prompt — cv.md, report file, profile.yml come from the spawn)
- *   2. Spawn `claude -p "/career-ops form-answers <url> --bookmarklet <json>"`
+ *   2. Spawn `claude -p "/heron form-answers <url> --bookmarklet <json>"`
  *      and pipe the question list as JSON via stdin
  *   3. Return the structured answers as JSON the bookmarklet can fill into
  *      the page

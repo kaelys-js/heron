@@ -29,7 +29,7 @@
     title: string;
     description?: string;
     icon?: Snippet;
-    /** localStorage key suffix — namespaced under `career-ops:cc:`. */
+    /** localStorage key suffix — namespaced under `heron:cc:`. */
     storageKey: string;
     defaultOpen?: boolean;
     headerActions?: Snippet;

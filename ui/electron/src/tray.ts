@@ -9,7 +9,7 @@
  *   • Run actions (Scan now, Pause/Resume autopilot)
  *   • Window controls (Show, Hide, Quit)
  *   • Menu Bar Only mode toggle (macOS) — hides the Dock icon and
- *     promotes career-ops to a pure menu bar app
+ *     promotes Heron to a pure menu bar app
  *
  * Live updates:
  *   • macOS title shows the queued count when > 0 (e.g. "▶︎ 3")
@@ -269,7 +269,7 @@ export class DesktopTray {
     }
   }
 
-  /** Toggle macOS Dock visibility. When hidden, career-ops becomes a
+  /** Toggle macOS Dock visibility. When hidden, Heron becomes a
    *  pure menu bar app — close-window doesn't quit, the icon never
    *  appears in the Dock, and Cmd+Tab skips it. Re-show by re-toggling
    *  from the tray menu. */

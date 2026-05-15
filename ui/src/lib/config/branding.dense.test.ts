@@ -21,7 +21,7 @@ describe('cmd — every verb', () => {
 });
 
 describe('cmd — empty / no verb', () => {
-  it.each(['', undefined])('verb=%p → /career-ops', (verb) => {
+  it.each(['', undefined])('verb=%p → /heron', (verb) => {
     expect(cmd(verb)).toBe(`/${CLI_NAMESPACE}`);
   });
 });

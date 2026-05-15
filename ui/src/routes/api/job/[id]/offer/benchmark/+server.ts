@@ -4,7 +4,7 @@
  * Pull a comp benchmark (levels.fyi / Glassdoor band) for this job's
  * role + level + location and attach it to the OfferRecord. Two modes:
  *
- *   - Auto: omits `manualValues`. Spawns `claude -p '/career-ops deep --benchmark-comp ...'`
+ *   - Auto: omits `manualValues`. Spawns `claude -p '/heron deep --benchmark-comp ...'`
  *     which hits the public pages and returns a band JSON.
  *
  *   - Manual: body has `manualValues: { medianTc, p25Tc?, p75Tc?, sourceUrl? }`.

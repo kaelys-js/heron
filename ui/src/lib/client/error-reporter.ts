@@ -15,7 +15,7 @@
  *      (rate-limited so we don't spam).
  *
  * The "common/shared system" the user asked for: this funnels every
- * platform into the EXISTING career-ops Issues store (server-side
+ * platform into the EXISTING Heron Issues store (server-side
  * issue-store.ts) — the same store the autonomous-apply pipeline writes
  * to, the same store the Inbox displays. iOS / Electron / Web errors
  * all show up alongside apply failures, IMAP errors, etc.

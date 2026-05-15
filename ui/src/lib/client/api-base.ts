@@ -7,7 +7,7 @@
  *   talk to a backend that lives at `window.location.origin` — fetch with
  *   a relative path "just works".
  *
- *   Capacitor iOS / Android live at custom URL schemes (`careerops://localhost`
+ *   Capacitor iOS / Android live at custom URL schemes (`heron://localhost`
  *   on iOS, `https://localhost` on Android-with-WebView) that don't actually
  *   serve HTTP. Any relative-URL fetch in those WebViews hits a phantom
  *   origin and 404s. The fix is to discover the real backend at boot

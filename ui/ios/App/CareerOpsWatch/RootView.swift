@@ -1,6 +1,6 @@
 import SwiftUI
 #if os(watchOS)
-import WatchKit
+    import WatchKit
 #endif
 
 /**
@@ -45,7 +45,7 @@ struct RootView: View {
 }
 
 /**
- * Helper: dispatch a `careerops://` URL to the iPhone via WKExtension's
+ * Helper: dispatch a `heron://` URL to the iPhone via WKExtension's
  * `openSystemURL`. The OS forwards the URL to the paired phone, which
  * fires the standard `appUrlOpen` event in the WebView — same path
  * widget taps + Live Activity buttons take. This is the watch's
@@ -59,7 +59,7 @@ private func openOnPhone(_ deepLink: String) {
     // ships ONLY in the Watch target, the conditional compile guard
     // keeps the import clean while pinning intent.
     #if os(watchOS)
-    WKExtension.shared().openSystemURL(url)
+        WKExtension.shared().openSystemURL(url)
     #endif
 }
 
@@ -84,7 +84,7 @@ private struct SignInGate: View {
             Text("Sign in on iPhone")
                 .font(.headline)
                 .multilineTextAlignment(.center)
-            Text("Open Career Ops on your iPhone to set up. Your stats will sync here.")
+            Text("Open Heron on your iPhone to set up. Your stats will sync here.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -353,6 +353,7 @@ private struct InboxPage: View {
         default: return "info.circle.fill"
         }
     }
+
     private func severityColor(_ s: String) -> Color {
         switch s {
         case "error": return .red

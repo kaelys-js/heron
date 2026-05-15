@@ -1,5 +1,5 @@
 /**
- * Vite config — career-ops `brandWatcherPlugin` + best-practice dev/build
+ * Vite config — Heron `brandWatcherPlugin` + best-practice dev/build
  * settings.
  *
  * `brandWatcherPlugin`:
@@ -27,7 +27,7 @@
  *   • `target: 'es2022'` — Capacitor iOS WebView supports ES2022. Avoids
  *     transpiling features Electron and modern Safari handle natively.
  *   • `sourcemap: true` — small overhead, big debugging win.
- *   • `chunkSizeWarningLimit: 1500` — career-ops bundles a few heavy
+ *   • `chunkSizeWarningLimit: 1500` — Heron bundles a few heavy
  *     dependencies (bits-ui + lucide-svelte) that legitimately push the
  *     default 500kb chunk warning.
  */
@@ -57,7 +57,7 @@ function brandWatcherPlugin(): Plugin {
     }
   };
   return {
-    name: 'career-ops:brand-watcher',
+    name: 'heron:brand-watcher',
     enforce: 'pre',
     configResolved() {
       runApply('vite startup');

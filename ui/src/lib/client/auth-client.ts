@@ -12,7 +12,7 @@
  * handles persistence automatically.
  *
  * On NATIVE (Capacitor iOS / Android) the WebView origin
- * (`careerops://localhost`) is different from the backend origin
+ * (`heron://localhost`) is different from the backend origin
  * (`http://<lan-ip>:5173`), so cookies can't round-trip. We swap to
  * better-auth's `bearer()` plugin: the server sets `Set-Auth-Token: <token>`
  * on every sign-in response; our customFetchImpl captures that token,
@@ -29,7 +29,7 @@ import { BRAND_STORAGE_KEYS } from './brand';
 
 // Pulled from the centralised brand-storage map so a brand rename
 // retargets every read + write in one place. Was previously hardcoded
-// `'career-ops:bearer-token'` which would drift on rebrand.
+// `'heron:bearer-token'` which would drift on rebrand.
 const BEARER_KEY = BRAND_STORAGE_KEYS.bearerToken;
 const AUTHED_KEY = BRAND_STORAGE_KEYS.authed;
 
@@ -37,7 +37,7 @@ const AUTHED_KEY = BRAND_STORAGE_KEYS.authed;
  * Better Auth validates `baseURL` synchronously and throws
  *   "Invalid base URL: …. URL must include 'http://' or 'https://'"
  * if it isn't an http(s) URL. In the Capacitor WebView our origin is
- * `careerops://localhost`, which inferring from window.location.origin
+ * `heron://localhost`, which inferring from window.location.origin
  * would supply. That throw becomes an unhandled promise rejection, the
  * WebView treats the page as crashed, reloads, and we get a continuous
  * reload loop (~9 reloads/sec).

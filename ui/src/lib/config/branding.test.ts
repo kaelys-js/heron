@@ -30,8 +30,8 @@ describe('re-exports', () => {
   it('APP_DESCRIPTION equals APP_TAGLINE (legacy alias)', () => {
     expect(APP_DESCRIPTION).toBe(APP_TAGLINE);
   });
-  it('CLI_NAMESPACE is "career-ops"', () => {
-    expect(CLI_NAMESPACE).toBe('career-ops');
+  it('CLI_NAMESPACE is "heron"', () => {
+    expect(CLI_NAMESPACE).toBe('heron');
   });
   it('REPO_URL is an https URL', () => {
     expect(REPO_URL).toMatch(/^https?:\/\//);
@@ -39,15 +39,15 @@ describe('re-exports', () => {
 });
 
 describe('cmd()', () => {
-  it('returns /career-ops when no verb given', () => {
-    expect(cmd()).toBe('/career-ops');
+  it('returns /heron when no verb given', () => {
+    expect(cmd()).toBe('/heron');
   });
   it('appends verb when given', () => {
-    expect(cmd('oferta')).toBe('/career-ops oferta');
-    expect(cmd('scan')).toBe('/career-ops scan');
+    expect(cmd('oferta')).toBe('/heron oferta');
+    expect(cmd('scan')).toBe('/heron scan');
   });
   it('handles empty string verb (treated as no verb)', () => {
-    expect(cmd('')).toBe('/career-ops');
+    expect(cmd('')).toBe('/heron');
   });
 });
 

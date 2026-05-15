@@ -20,7 +20,7 @@
  *   pnpm build:desktop --fast   — single-arch DMG only, no publish (3-5 min)
  *
  * For SIGNED/notarized builds, set Apple secrets in env first (or run
- * `pnpm setup:secrets` which exports them to ~/.career-ops/native-env).
+ * `pnpm setup:secrets` which exports them to ~/.heron/native-env).
  */
 import { step, run, ok, info, ROOT, UI, NATIVE_ENV_FILE } from './_lib.mjs';
 import { join } from 'node:path';
@@ -50,7 +50,7 @@ run('npm', ['install', '--no-audit', '--no-fund'], { cwd: electronDir });
 step(6, 'Compiling Electron TypeScript');
 run('npm', ['run', 'build'], { cwd: electronDir });
 
-step(7, 'Source signing env from ~/.career-ops/native-env');
+step(7, 'Source signing env from ~/.heron/native-env');
 const envFile = NATIVE_ENV_FILE;
 let signingEnv = {};
 if (existsSync(envFile)) {
@@ -61,9 +61,7 @@ if (existsSync(envFile)) {
   }
   ok(`signing env loaded (${Object.keys(signingEnv).length} vars)`);
 } else {
-  info(
-    'no ~/.career-ops/native-env — building unsigned (Gatekeeper warning expected on first open)',
-  );
+  info('no ~/.heron/native-env — building unsigned (Gatekeeper warning expected on first open)');
 }
 
 step(8, 'electron-builder make' + (FAST_MODE ? ' (fast: single-arch DMG only)' : ''));

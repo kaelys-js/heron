@@ -5,7 +5,7 @@
   which appends an expanded entry to interview-prep/story-bank.md so the
   knowledge survives for future evaluations + interview prep.
   Lives at the layout level so it's available globally; opens via a custom
-  window event 'career-ops:post-rejection-prompt' fired by JobActions when
+  window event 'heron:post-rejection-prompt' fired by JobActions when
   the user changes status to Rejected.
 -->
 <script lang="ts">

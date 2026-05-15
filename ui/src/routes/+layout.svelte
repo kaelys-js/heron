@@ -216,7 +216,7 @@
       }
     })();
 
-    // Deep-link routing — the OS hands us `careerops://` URLs whenever
+    // Deep-link routing — the OS hands us `heron://` URLs whenever
     // the user taps a widget, Live Activity, or Share Extension success
     // callback. Without this, every tap drops the user at the dashboard
     // root regardless of what they tapped. Capacitor's @capacitor/app
@@ -224,7 +224,7 @@
     installDeepLinkHandler();
 
     // Local-notification taps. Notifications scheduled via the unified
-    // notify() API stash a `careerops://` deep link in `extra.deepLink`;
+    // notify() API stash a `heron://` deep link in `extra.deepLink`;
     // when the user taps, this listener resolves + navigates. Without
     // it the app opens to the root on tap (no context).
     const removeNotificationListener = onNotificationTap((deepLink) => {
@@ -409,7 +409,7 @@
     return teardown;
   });
 
-  // Sign-out detector — when the `career-ops:authed` flag flips from set
+  // Sign-out detector — when the `heron:authed` flag flips from set
   // to absent (the sign-out button in AppSidebar.svelte clears it), push
   // `{ authenticated: false }` so the iPhone widgets + Watch immediately
   // flip to the gate state. Without this, the widgets would keep their

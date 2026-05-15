@@ -155,7 +155,7 @@ function discoverFiles(jsoncParser) {
   return out.sort((a, b) => a.path.localeCompare(b.path));
 }
 
-const CACHE_DIR = resolve(tmpdir(), 'career-ops-schema-cache');
+const CACHE_DIR = resolve(tmpdir(), 'heron-schema-cache');
 mkdirSync(CACHE_DIR, { recursive: true });
 
 /** Resolve schema spec (pkg:foo/bar.json / https:// / ./path). */

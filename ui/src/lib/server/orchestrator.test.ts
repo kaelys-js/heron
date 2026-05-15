@@ -68,7 +68,7 @@ vi.mock('./mode-substitution', () => ({
 }));
 
 vi.mock('$lib/config/cli', () => ({ AGENT_CLI: 'claude' }));
-vi.mock('$lib/config/branding', () => ({ CLI_NAMESPACE: 'career-ops' }));
+vi.mock('$lib/config/branding', () => ({ CLI_NAMESPACE: 'heron' }));
 
 const { listRunning, bootOnce, runBulkOfertaParallel } = await import('./orchestrator');
 const { runWithUser } = await import('./user-context');

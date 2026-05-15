@@ -10,7 +10,7 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        // Register the career-ops native plugin (Brand + ErrorReporter +
+        // Register the heron native plugin (Brand + ErrorReporter +
         // NetworkMonitor + future Spotlight/keychain/biometric stubs)
         // before BridgeActivity initializes the WebView. Same plugin
         // name as iOS so lib/client/native-bridge.ts works cross-platform.
@@ -19,7 +19,7 @@ public class MainActivity extends BridgeActivity {
         // Android 8+ (API 26) requires a NotificationChannel before any
         // notification can be shown. The Capacitor LocalNotifications
         // plugin creates a "default" channel automatically; we add
-        // career-ops-specific channels here so each event class has its
+        // heron-specific channels here so each event class has its
         // own importance / sound / badge behaviour.
         createNotificationChannels();
 
@@ -32,9 +32,9 @@ public class MainActivity extends BridgeActivity {
             getSystemService(Context.NOTIFICATION_SERVICE);
         if (mgr == null) return;
 
-        // Each channel maps to an event class career-ops emits. Users can
+        // Each channel maps to an event class heron emits. Users can
         // tweak importance per channel from Android Settings → Apps →
-        // career-ops → Notifications.
+        // heron → Notifications.
         createChannel(mgr, "interview-reminders", "Interview reminders",
             "Heads-up before an upcoming interview (24h + 30min before)",
             NotificationManager.IMPORTANCE_HIGH);

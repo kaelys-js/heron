@@ -286,7 +286,7 @@ let launched = false;
 if (targetUdid) {
   // --no-sync because step 4 already ran cap sync ios.
   // --scheme App: Capacitor otherwise passes `ios.scheme` from
-  // capacitor.config.ts (e.g. `careerops`) as the xcodebuild scheme,
+  // capacitor.config.ts (e.g. `heron`) as the xcodebuild scheme,
   // which is wrong — that's the URL scheme, not the build scheme.
   // The Xcode-generated build scheme is always named `App` (matches
   // the target name) so we pin it explicitly.

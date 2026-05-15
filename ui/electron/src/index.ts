@@ -1,5 +1,5 @@
 /**
- * career-ops desktop — Electron main process.
+ * Heron desktop — Electron main process.
  *
  * Responsibilities (in boot order):
  *
@@ -8,7 +8,7 @@
  *      resolved URL into the WebView via preload's `window.__CAREER_OPS__`.
  *
  *   2. Advertise the running server on the local network via mDNS
- *      (`_career-ops._tcp.local`) so an iOS app on the same wifi can
+ *      (`_heron._tcp.local`) so an iOS app on the same wifi can
  *      auto-discover it through the same backend-discovery resolver.
  *
  *   3. Wait for `/api/health` to respond, then create the BrowserWindow.
@@ -16,7 +16,7 @@
  *   4. Install the full AppMenuBar (File / Edit / View / Window / Help)
  *      and a system Tray with live quick-glance stats.
  *
- *   5. Wire `careerops://job/abc` deep links (custom protocol) to
+ *   5. Wire `heron://job/abc` deep links (custom protocol) to
  *      `mainWindow.loadURL(backend + '/job/abc')`.
  *
  *   6. Auto-update via electron-updater + GitHub Releases.
@@ -221,7 +221,7 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
   await app.whenReady();
 
   // Windows: bind toast notifications to the right app. Without an AUMID
-  // Windows shows toasts as "electron.exe" rather than career-ops.
+  // Windows shows toasts as "electron.exe" rather than Heron.
   // Must run BEFORE any new Notification() call.
   if (process.platform === 'win32') {
     try {

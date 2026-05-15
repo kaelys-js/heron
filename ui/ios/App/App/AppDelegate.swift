@@ -1,8 +1,8 @@
-import UIKit
 import Capacitor
+import UIKit
 
 /**
- * career-ops iOS — UIApplicationDelegate.
+ * Heron iOS — UIApplicationDelegate.
  *
  * Wires platform features that need delegate hooks:
  *
@@ -10,7 +10,7 @@ import Capacitor
  *     to the WebView so backend-discovery.ts can find the desktop app
  *     via the local network.
  *
- *   • Deep links — `careerops://job/abc123` hands the URL to the
+ *   • Deep links — `heron://job/abc123` hands the URL to the
  *     Capacitor app, which the route layer in lib/client/deep-link.ts
  *     resolves to a navigation.
  *
@@ -23,12 +23,11 @@ import Capacitor
  */
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
-
     var window: UIWindow?
     var bonjourBrowser: BonjourBrowser?
     var networkMonitor: NetworkMonitor?
 
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions _: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Keep custom App-target classes from being dead-stripped by the
         // Swift static linker. Both classes are referenced ONLY by name
         // (via Main.storyboard or NSClassFromString plugin lookup) — the
@@ -47,13 +46,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Start the Bonjour browser early so backend-discovery can
         // hit a hot cache. Results are stored in a UserDefaults key
         // the JS bridge reads.
-        self.bonjourBrowser = BonjourBrowser(serviceType: Brand.serviceType)
-        self.bonjourBrowser?.start()
+        bonjourBrowser = BonjourBrowser(serviceType: Brand.serviceType)
+        bonjourBrowser?.start()
 
         // Start the OS-level path monitor and forward state changes into
         // the WebView so online-status.ts has authoritative truth.
-        self.networkMonitor = NetworkMonitor.shared
-        self.networkMonitor?.start { online in
+        networkMonitor = NetworkMonitor.shared
+        networkMonitor?.start { online in
             CareerOpsNativePlugin.notifyNetStatus(online: online)
         }
 
@@ -69,7 +68,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // MARK: - Deep links
 
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-        // Forward careerops:// URLs into Capacitor's URL handling so the
+        // Forward heron:// URLs into Capacitor's URL handling so the
         // App plugin emits the URL to the JS side.
         return ApplicationDelegateProxy.shared.application(app, open: url, options: options)
     }
@@ -80,7 +79,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     // MARK: - Background fetch
 
-    func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+    func application(_: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
         BackgroundFetcher.shared.fetch { result in
             completionHandler(result)
         }
@@ -88,11 +87,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     // MARK: - Lifecycle (preserved from scaffold)
 
-    func applicationWillResignActive(_ application: UIApplication) {}
-    func applicationDidEnterBackground(_ application: UIApplication) {}
-    func applicationWillEnterForeground(_ application: UIApplication) {}
-    func applicationDidBecomeActive(_ application: UIApplication) {}
-    func applicationWillTerminate(_ application: UIApplication) {
-        self.bonjourBrowser?.stop()
+    func applicationWillResignActive(_: UIApplication) {}
+    func applicationDidEnterBackground(_: UIApplication) {}
+    func applicationWillEnterForeground(_: UIApplication) {}
+    func applicationDidBecomeActive(_: UIApplication) {}
+    func applicationWillTerminate(_: UIApplication) {
+        bonjourBrowser?.stop()
     }
 }

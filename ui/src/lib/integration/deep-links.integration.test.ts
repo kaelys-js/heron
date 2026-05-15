@@ -2,10 +2,10 @@
  * Deep-link integration tests.
  *
  * Asserts:
- *   • BRAND.urlScheme === "careerops" (locked from brand.json)
+ *   • BRAND.urlScheme === "heron" (locked from brand.json)
  *   • iOS Info.plist registers the URL scheme via CFBundleURLTypes
  *   • Android intent-filter includes the scheme
- *   • TS code uses BRAND.urlScheme — no hardcoded "careerops://" leaks
+ *   • TS code uses BRAND.urlScheme — no hardcoded "heron://" leaks
  *     outside the generated brand.ts files
  */
 
@@ -29,8 +29,8 @@ const brandJson = JSON.parse(readFile('branding/brand.json'));
 const expectedScheme: string = brandJson.identifiers.urlScheme;
 
 describe('brand.json is the source of truth for urlScheme', () => {
-  it('urlScheme is "careerops"', () => {
-    expect(expectedScheme).toBe('careerops');
+  it('urlScheme is "heron"', () => {
+    expect(expectedScheme).toBe('heron');
   });
 });
 
@@ -68,13 +68,13 @@ describe('Hardcoded scheme leaks (forbidden outside generated files)', () => {
   // code break the rebrand pipeline. Generated brand.ts files + Swift
   // constants are the only place the literal is allowed in CODE; comments
   // referencing the literal for documentation purposes are fine.
-  it('no "careerops://" in EXECUTABLE svelte/ts source (excluding comments + generated + tests)', () => {
+  it('no "heron://" in EXECUTABLE svelte/ts source (excluding comments + generated + tests)', () => {
     // Test files (*.test.ts / *.spec.ts) are explicitly allowed to use
     // the literal — they pin behaviour to the current scheme rather than
     // to BRAND, which catches incidental drift if BRAND.urlScheme silently
     // changes. We grep test files OUT in the shell filter below.
     const out = execSync(
-      `grep -rn 'careerops://' ui/src --include='*.svelte' --include='*.ts' --exclude='*.test.ts' --exclude='*.spec.ts' --exclude-dir=node_modules --exclude-dir=.svelte-kit --exclude-dir=integration || true`,
+      `grep -rn 'heron://' ui/src --include='*.svelte' --include='*.ts' --exclude='*.test.ts' --exclude='*.spec.ts' --exclude-dir=node_modules --exclude-dir=.svelte-kit --exclude-dir=integration || true`,
       { cwd: REPO_ROOT, encoding: 'utf8' },
     );
     const allowedPaths = [
@@ -98,9 +98,9 @@ describe('Hardcoded scheme leaks (forbidden outside generated files)', () => {
         if (trimmed.startsWith('*')) return false;
         if (trimmed.startsWith('<!--')) return false;
         if (trimmed.startsWith('/*')) return false;
-        // If the literal appears INSIDE backticks (e.g. `careerops://`)
+        // If the literal appears INSIDE backticks (e.g. `heron://`)
         // it's a documentation quote, not executable code.
-        if (/`[^`]*careerops:\/\/[^`]*`/.test(body)) return false;
+        if (/`[^`]*heron:\/\/[^`]*`/.test(body)) return false;
         return true;
       });
     expect(offending).toEqual([]);

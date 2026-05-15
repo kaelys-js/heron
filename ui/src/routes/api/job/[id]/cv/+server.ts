@@ -1,7 +1,7 @@
 /**
  * Per-job tailored CV generation.
  *
- * Spawns Claude Code's `/career-ops oferta <url>` mode in the background. The
+ * Spawns Claude Code's `/heron oferta <url>` mode in the background. The
  * mode reads cv.md + the job posting and produces:
  *   - reports/{n}-{slug}-{date}.md (deep eval)
  *   - output/{n}-{slug}-{date}.pdf (tailored CV)

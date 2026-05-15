@@ -283,7 +283,7 @@ function detectRunningDevServer() {
 }
 
 async function main() {
-  console.log(color(BOLD, '\ncareer-ops reset-data\n'));
+  console.log(color(BOLD, '\nheron reset-data\n'));
   console.log(color(DIM, 'Wipes ALL user data (CV, profile, applications, reports, etc.) so'));
   console.log(color(DIM, 'the next launch fires onboarding from scratch.'));
   console.log(color(DIM, `PRESERVED: ${PER_PROFILE_KEEP.join(', ')} (job sources).`));

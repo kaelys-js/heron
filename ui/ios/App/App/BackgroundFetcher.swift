@@ -38,7 +38,7 @@ import UserNotifications
  * requires a server-side push provider holding the APNs certificate,
  * per-device-token persistence, and routing logic to fan out activity-
  * feed events to subscribed devices. The infrastructure for that lives
- * outside the local-first scope of career-ops today. When we add it,
+ * outside the local-first scope of Heron today. When we add it,
  * this fetcher remains useful for low-bandwidth deltas + as a fallback
  * if the user has push notifications disabled.
  *
@@ -51,7 +51,7 @@ import UserNotifications
  *   2. App Group: backend URL + bearer token live in the App Group, not
  *      UserDefaults.standard. The previous resolveBackend() never found
  *      anything because it read the wrong domain.
- *   3. Branding: notification title fallback was lowercase "career-ops"
+ *   3. Branding: notification title fallback was lowercase "heron"
  *      instead of the brand display name.
  *   4. Quiet hours: respect the user's quiet-hours window (read from
  *      App Group too) so a 3am email-reactor event doesn't ring through.
@@ -82,7 +82,8 @@ final class BackgroundFetcher {
         // never gets a notification. Token mirrored from the WebView's
         // auth-client.ts customFetch on every set-auth-token capture.
         if let token = groupDefaults.string(forKey: Brand.DefaultsKey.bearerToken),
-           !token.isEmpty {
+           !token.isEmpty
+        {
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         } else {
             // No token = user signed out. Don't fire a fetch that would
@@ -137,7 +138,7 @@ final class BackgroundFetcher {
     private func scheduleNotification(_ issue: [String: Any]) {
         let content = UNMutableNotificationContent()
         // Default to brand display name when the issue lacks an explicit
-        // title — previously this was lowercase "career-ops", which read
+        // title — previously this was lowercase "heron", which read
         // as a build-system leak in the notification tray.
         content.title = (issue["title"] as? String) ?? Brand.displayName
         content.body = (issue["summary"] as? String) ?? ""
@@ -172,7 +173,8 @@ final class BackgroundFetcher {
               let enabled = parsed["enabled"] as? Bool, enabled,
               let start = parsed["startHour"] as? Int,
               let end = parsed["endHour"] as? Int,
-              start != end else {
+              start != end
+        else {
             return false
         }
         let hour = Calendar.current.component(.hour, from: Date())
