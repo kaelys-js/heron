@@ -30,7 +30,7 @@ the recruiter said verbally:
 ONE markdown file at:
 
 ```text
-{output-dir}/{company-slug}-fine-print-review.md
+__OUTPUT__/{company-slug}-fine-print-review.md
 ```
 
 Format:

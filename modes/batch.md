@@ -16,7 +16,7 @@ Conductor (headed browser mode)
   ├─ Job 2: click next, read JD + URL
   │    └─► headless worker → report .md + PDF + tracker-line
   │
-  └─ End: merge tracker-additions → applications.md + summary
+  └─ End: merge tracker-additions → __APPLICATIONS__ + summary
 ```
 
 Each worker is a headless child process with a clean 200K token context. The conductor only orchestrates. See the **Headless / Batch Mode** table in `AGENTS.md` for the correct command per CLI.
@@ -53,7 +53,7 @@ batch/
    f. Log to `logs/{report_num}-{id}.log`
    g. Chrome: go back → next job
 5. **Pagination**: If no more jobs → click "Next" → repeat
-6. **End**: Merge `tracker-additions/` → `applications.md` + summary
+6. **End**: Merge `tracker-additions/` → `__APPLICATIONS__` + summary
 
 ## Mode B: Standalone script
 
@@ -88,8 +88,8 @@ id	url	status	started_at	completed_at	report_num	score	error	retries
 Each worker receives `batch-prompt.md` as a system prompt. It is self-contained. Use your CLI's headless command — see the **Headless / Batch Mode** table in `AGENTS.md`.
 
 The worker produces:
-1. `.md` report in `reports/`
-2. PDF in `output/`
+1. `.md` report in `__REPORTS__/`
+2. PDF in `__OUTPUT__/`
 3. Tracker line in `batch/tracker-additions/{id}.tsv`
 4. Result JSON via stdout
 

@@ -12,8 +12,8 @@ role + the stage = the candidate is taken seriously.
 - `interviewerSlug`, `interviewerName`, `interviewerTitle`
 - `stage` — recruiter-screen / hiring-manager-screen / tech-screen / take-home / onsite / final-round / reference
 
-Also read: `cv.md`, the job's deep-eval report under `reports/`,
-the company's general interview-prep file under `interview-prep/`,
+Also read: `__CV__`, the job's deep-eval report under `__REPORTS__/`,
+the company's general interview-prep file under `__INTERVIEW_PREP__/`,
 and the per-interviewer dossier if it exists.
 
 ## Output
@@ -21,7 +21,7 @@ and the per-interviewer dossier if it exists.
 ONE markdown file at:
 
 ```text
-{interview-prep-dir}/{company-slug}-{interviewer-slug}-questions.md
+__INTERVIEW_PREP__/{company-slug}-{interviewer-slug}-questions.md
 ```
 
 Format:

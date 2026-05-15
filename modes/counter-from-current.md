@@ -26,14 +26,14 @@ blindly. Real factors that matter:
   changed at current employer between starting the search and the counter
   arriving
 
-Also read: `cv.md`, `config/profile.yml`, `modes/_profile.md`.
+Also read: `__CV__`, `config/profile.yml`, `__PROFILE_MD__`.
 
 ## Output
 
 ONE markdown file at:
 
 ```text
-{output-dir}/{currentEmployer-slug}-counter-evaluation.md
+__OUTPUT__/{currentEmployer-slug}-counter-evaluation.md
 ```
 
 Format:

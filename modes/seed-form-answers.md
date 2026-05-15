@@ -8,13 +8,13 @@ realistic, ready-to-use answers to every common ATS form question.
 
 ## Inputs
 
-- `cv.md` — work history, skills, projects, education
+- `__CV__` — work history, skills, projects, education
 - `config/profile.yml` — candidate (name, email, phone, location, links),
   compensation (target_range, minimum, walkaway), location (country,
   city, visa_status, onsite_availability), preferences (must_have,
   strong_plus, hard_no), target_roles (primary, archetypes), narrative
   (headline, exit_story, superpowers, proof_points)
-- `modes/_profile.md` (if exists) — additional narrative
+- `__PROFILE_MD__` (if exists) — additional narrative
 
 ## Output
 
@@ -37,7 +37,7 @@ per line. Format (must match the existing cache schema exactly):
 
 ## The questions to seed (~25 entries — write ALL of them if you can answer)
 
-Skip a question only if the data genuinely isn't in cv.md / profile.yml.
+Skip a question only if the data genuinely isn't in __CV__ / profile.yml.
 Never fabricate — for any answer where the source is missing or
 ambiguous, omit the row (the dispatcher will surface a `ManualApplyNeeded`
 once and the user fills it then).
@@ -73,7 +73,7 @@ once and the user fills it then).
 - "Minimum salary" / "Walkaway" → `compensation.minimum` if present.
 
 ### Logistics
-- "When can you start?" / "Notice period" → if cv.md or profile.yml has
+- "When can you start?" / "Notice period" → if __CV__ or profile.yml has
   this, use it. Otherwise pick a sensible default of "2 weeks" and tag
   it with a note that the user should confirm.
 - "Are you willing to relocate?" → derive from `location.onsite_availability`.
@@ -92,13 +92,13 @@ once and the user fills it then).
 - "What's your greatest strength?" → pick the top item from
   `narrative.superpowers`.
 - "What's a weakness you're working on?" → DO NOT fabricate. Skip
-  unless cv.md or _profile.md mentions an honest one.
+  unless __CV__ or __PROFILE_MD__ mentions an honest one.
 
 ### Per-archetype years-of-experience
 For each primary archetype in `target_roles.archetypes` (fit: primary),
-write a "Years of experience with {tech}" answer using the cv.md years
+write a "Years of experience with {tech}" answer using the __CV__ years
 where present. Examples:
-- "Years of TypeScript experience" → count years from cv.md work history
+- "Years of TypeScript experience" → count years from __CV__ work history
 - "Years of React experience" → same
 - "Years of Node.js experience" → same
 - "Years of AWS experience" → same

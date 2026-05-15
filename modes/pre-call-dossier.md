@@ -11,12 +11,12 @@ talking to + WHAT to ask + WHICH stories to lead with.
 - `stage` — PhoneScreen / Technical / Onsite / Final
 - `interviewers` — array of `{ name, role?, linkedinUrl? }` (some empty
   is fine — the user might only know the recruiter's name at PhoneScreen)
-- `cv.md` + the deep-eval report (Blocks A-G) + `interview-prep/story-bank.md`
-  + the company's `interview-prep/{company}-{role}.md` if it exists
+- `__CV__` + the deep-eval report (Blocks A-G) + `__STORY_BANK__`
+  + the company's `__INTERVIEW_PREP__/{company}-{role}.md` if it exists
 
 ## Output
 
-Single markdown at `interview-prep/{company-slug}-{role-slug}-dossier-{stage}-{ts}.md`:
+Single markdown at `__INTERVIEW_PREP__/{company-slug}-{role-slug}-dossier-{stage}-{ts}.md`:
 
 ```markdown
 # Dossier · {company} · {role} · {stage}
@@ -103,7 +103,7 @@ fabricate.
 ## Stdout protocol
 
 ```yaml
-DOSSIER_PATH: interview-prep/{slug}-dossier-{stage}-{ts}.md
+DOSSIER_PATH: __INTERVIEW_PREP__/{slug}-dossier-{stage}-{ts}.md
 INTERVIEWERS_RESEARCHED: <count>
 QUESTIONS_GENERATED: <count, should be 5>
 STORIES_MATCHED: <count from story-bank>

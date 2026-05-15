@@ -23,7 +23,7 @@ employment record at that company.
 ONE markdown file at:
 
 ```text
-{output-dir}/resignation-{YYYY-MM-DD}.md
+__OUTPUT__/resignation-{YYYY-MM-DD}.md
 ```
 
 Format:

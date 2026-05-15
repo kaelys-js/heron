@@ -22,7 +22,7 @@ Tabla con:
 
 ## Bloque B — Match con CV
 
-Lee `cv.md`. Crea tabla con cada requisito del JD mapeado a líneas exactas del CV.
+Lee `__CV__`. Crea tabla con cada requisito del JD mapeado a líneas exactas del CV.
 
 **Adaptado al arquetipo:**
 - Si FDE → priorizar proof points de delivery rápida y client-facing
@@ -71,7 +71,7 @@ Top 5 cambios al CV + Top 5 cambios a LinkedIn para maximizar match.
 
 The **Reflection** column captures what was learned or what would be done differently. This signals seniority — junior candidates describe what happened, senior candidates extract lessons.
 
-**Story Bank:** If `interview-prep/story-bank.md` exists, check if any of these stories are already there. If not, append new ones. Over time this builds a reusable bank of 5-10 master stories that can be adapted to any interview question.
+**Story Bank:** If `__STORY_BANK__` exists, check if any of these stories are already there. If not, append new ones. Over time this builds a reusable bank of 5-10 master stories that can be adapted to any interview question.
 
 **Seleccionadas y enmarcadas según el arquetipo:**
 - FDE → enfatizar velocidad de entrega y client-facing
@@ -112,7 +112,7 @@ Analyze the job posting for signals that indicate whether this is a real, active
 - Search: `"{company}" hiring freeze {year}` -- note any announcements
 - If layoffs found: are they in the same department as this role?
 
-**4. Reposting Detection** (from scan-history.tsv):
+**4. Reposting Detection** (from __SCAN_HISTORY__):
 - Check if company + similar role title appeared before with a different URL
 - Note how many times and over what period
 
@@ -148,7 +148,7 @@ Analyze the job posting for signals that indicate whether this is a real, active
 
 ### 1. Guardar report .md
 
-Guardar evaluación completa en `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
+Guardar evaluación completa en `__REPORTS__/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 
 - `{###}` = siguiente número secuencial (3 dígitos, zero-padded)
 - `{company-slug}` = nombre de empresa en lowercase, sin espacios (usar guiones)
@@ -199,7 +199,7 @@ Guardar evaluación completa en `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 
 ### 2. Registrar en tracker
 
-**SIEMPRE** registrar en `data/applications.md`:
+**SIEMPRE** registrar en `data/__APPLICATIONS__`:
 - Siguiente número secuencial
 - Fecha actual
 - Empresa
@@ -207,7 +207,7 @@ Guardar evaluación completa en `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 - Score: promedio de match (1-5)
 - Estado: `Evaluada`
 - PDF: ❌ (o ✅ si auto-pipeline generó PDF)
-- Report: link relativo al report .md (ej: `[001](reports/001-company-2026-01-01.md)`)
+- Report: link relativo al report .md (ej: `[001](__REPORTS__/001-company-2026-01-01.md)`)
 
 **Formato del tracker:**
 

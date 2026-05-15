@@ -8,11 +8,11 @@ that fills 90% of online prep guides.
 ## Inputs
 
 1. The job URL (provided as the first argument)
-2. `data/profiles/{slug}/reports/{NNN}-{slug}-{date}.md` — the deep-eval
+2. `data/profiles/{slug}/__REPORTS__/{NNN}-{slug}-{date}.md` — the deep-eval
    report for this job. Block C (Technical Fit) tells you which stack
    the role uses and where the user's gaps are.
-3. `cv.md` — what the user has actually shipped
-4. `interview-prep/story-bank.md` — STAR+R bank for the soft skills half
+3. `__CV__` — what the user has actually shipped
+4. `__STORY_BANK__` — STAR+R bank for the soft skills half
 5. Live web search to identify:
    - Glassdoor/Blind interview reports for this specific company+role
    - "Leetcode tag" lists matching this company (e.g. "Stripe interview questions")
@@ -24,7 +24,7 @@ that fills 90% of online prep guides.
 
 Single markdown file at:
 ```text
-interview-prep/{company-slug}-{role-slug}-tech-prep.md
+__INTERVIEW_PREP__/{company-slug}-{role-slug}-tech-prep.md
 ```
 
 ### Required sections
@@ -86,7 +86,7 @@ one:
 
 #### 5. Behavioral prep (1 page)
 
-Pull 3 stories from `interview-prep/story-bank.md` that map best to
+Pull 3 stories from `__STORY_BANK__` that map best to
 this company's culture (read their published values / careers page):
 
 - For each: which story, why it fits, which question type it answers.
@@ -134,7 +134,7 @@ Before writing the file:
 1. Confirm the deep-eval report file exists for this job. If missing,
    suggest the user run `/career-ops oferta {url}` first — without
    Block C, this prep is generic.
-2. Check `interview-prep/story-bank.md` size. If &lt;200 lines, warn
+2. Check `__STORY_BANK__` size. If &lt;200 lines, warn
    that behavioral prep will be thin without seeding the bank first.
 
 ## After writing
@@ -143,7 +143,7 @@ Print to stdout, one line each (the dashboard's `/api/job/[id]/tech-prep`
 endpoint parses these for the toast):
 
 ```yaml
-TECH_PREP_PATH: interview-prep/{company-slug}-{role-slug}-tech-prep.md
+TECH_PREP_PATH: __INTERVIEW_PREP__/{company-slug}-{role-slug}-tech-prep.md
 TECH_PREP_ROUNDS: 4
 TECH_PREP_HOURS_ESTIMATED: 25
 TECH_PREP_SOURCES_CITED: 7

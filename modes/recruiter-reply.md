@@ -19,15 +19,15 @@ gets ignored or auto-shelved. A good response in 5 sentences:
 - `userConcern` — optional free-form text the user wants addressed
 - `userQuestion` — optional free-form question to weave in
 
-Also read: `cv.md`, `config/profile.yml` (target archetypes, comp range,
-locations, work mode), `modes/_profile.md`.
+Also read: `__CV__`, `config/profile.yml` (target archetypes, comp range,
+locations, work mode), `__PROFILE_MD__`.
 
 ## Output
 
 ONE markdown file at:
 
 ```text
-{output-dir}/inbound-reply-{leadId}-{YYYY-MM-DD}.md
+__OUTPUT__/inbound-reply-{leadId}-{YYYY-MM-DD}.md
 ```
 
 Format:

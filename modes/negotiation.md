@@ -17,7 +17,7 @@ Ask if not already in the offer message:
 
 ## Research phase (do this BEFORE drafting any counter)
 
-1. Read `reports/<id>-<company>-*.md` Block D for comp research already done
+1. Read `__REPORTS__/<id>-<company>-*.md` Block D for comp research already done
 2. Run a fresh WebSearch for current data:
    - "<company> Senior Software Engineer salary Levels.fyi"
    - "<company> equity refresh"

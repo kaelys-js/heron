@@ -15,16 +15,16 @@ background.
 - `linkedinUrl` — optional
 - `stage` — recruiter-screen / hiring-manager-screen / tech-screen / take-home / onsite / final-round / reference
 
-Also read: `cv.md`, `interview-prep/story-bank.md`, the job's deep-eval
-report under `reports/`, and the company's general interview-prep file
-(`interview-prep/{company}-{role}.md`) if it exists.
+Also read: `__CV__`, `__STORY_BANK__`, the job's deep-eval
+report under `__REPORTS__/`, and the company's general interview-prep file
+(`__INTERVIEW_PREP__/{company}-{role}.md`) if it exists.
 
 ## Output
 
 ONE markdown file at:
 
 ```text
-{interview-prep-dir}/{company-slug}-{interviewer-slug}-dossier.md
+__INTERVIEW_PREP__/{company-slug}-{interviewer-slug}-dossier.md
 ```
 
 Format:
@@ -62,7 +62,7 @@ _(Each bullet ≤ 25 words. Quote the source. Cap at 8 bullets total.)_
 
 ## Your 3 CV stories that best match THIS person
 
-_(Pull from `cv.md` + `interview-prep/story-bank.md`. For each: 30-second
+_(Pull from `__CV__` + `__STORY_BANK__`. For each: 30-second
 version + hook + which interviewer-concern it addresses.)_
 
 1. **{Story title}** — addresses concern: _"{concern}"_. 30s version: ...
@@ -123,6 +123,6 @@ filler.
 
 - Every claim has a source URL or it doesn't appear.
 - Questions are SPECIFIC. "How's the team culture?" is banned.
-- Stories cite cv.md by title — don't invent stories that aren't in
+- Stories cite __CV__ by title — don't invent stories that aren't in
   the user's record.
 - 1 page when printed. Anything longer is bloat.

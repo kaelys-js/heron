@@ -1,21 +1,21 @@
 # Modo: cover-letter — Tailored Cover Letter
 
-Generate a single-page cover letter for a specific role, anchored on proof points from `cv.md` and tone calibrated by `config/profile.yml` and `modes/_profile.md`.
+Generate a single-page cover letter for a specific role, anchored on proof points from `__CV__` and tone calibrated by `config/profile.yml` and `__PROFILE_MD__`.
 
 ## Inputs
 
 - URL or pasted JD (the job offer)
-- `cv.md` (canonical CV)
+- `__CV__` (canonical CV)
 - `config/profile.yml` (candidate name, contact, location, comp targets, narrative)
-- `modes/_profile.md` (archetype mapping, tone, language)
-- `article-digest.md` (proof points, optional)
-- The matching report file in `reports/{n}-{slug}-{date}.md` (if it exists — use Bloque B match table for the strongest proof points)
+- `__PROFILE_MD__` (archetype mapping, tone, language)
+- `__ARTICLE_DIGEST__` (proof points, optional)
+- The matching report file in `__REPORTS__/{n}-{slug}-{date}.md` (if it exists — use Bloque B match table for the strongest proof points)
 
 ## Output
 
-Write the cover letter to: `output/{n}-{slug}-{date}-cover.md`
+Write the cover letter to: `__OUTPUT__/{n}-{slug}-{date}-cover.md`
 
-Where `{n}-{slug}-{date}` matches the existing report/CV pair so all three live next to each other in `output/` and `reports/`.
+Where `{n}-{slug}-{date}` matches the existing report/CV pair so all three live next to each other in `__OUTPUT__/` and `__REPORTS__/`.
 
 ## Structure
 
@@ -30,7 +30,7 @@ Where `{n}-{slug}-{date}` matches the existing report/CV pair so all three live 
    - NO "I'm excited to apply" — show the excitement through specificity.
 
 3. **Body (1–2 paragraphs, 3–5 sentences each)**
-   - Two of the strongest proof points from `cv.md` mapped to the JD's most important requirements. Use numbers when they exist in `cv.md` — never invent.
+   - Two of the strongest proof points from `__CV__` mapped to the JD's most important requirements. Use numbers when they exist in `__CV__` — never invent.
    - One proof point should address the riskiest gap with adjacent experience or a portfolio project. Honest framing, no hedge words.
    - Connect each proof to a problem the company is likely solving (read between the lines of the JD).
 
@@ -41,7 +41,7 @@ Where `{n}-{slug}-{date}` matches the existing report/CV pair so all three live 
 
 ## Voice rules
 
-- Reuse the user's tone from `cv.md`/`article-digest.md`. If the CV says "I built X" use first-person and active voice. Do NOT inject corporate-speak.
+- Reuse the user's tone from `__CV__`/`__ARTICLE_DIGEST__`. If the CV says "I built X" use first-person and active voice. Do NOT inject corporate-speak.
 - Maximum 350 words including header. Single-page is the constraint.
 - NO bullet points in the body — this is prose.
 - NO "I am writing to apply for..." or "Please find attached..."
@@ -51,9 +51,9 @@ Where `{n}-{slug}-{date}` matches the existing report/CV pair so all three live 
 
 ## Validation before writing
 
-1. Verify the report exists at `reports/{n}-{slug}-{date}.md`. If not, run `oferta` first to generate it.
-2. Verify CV-PDF exists at `output/{n}-{slug}-{date}.pdf`. If not, suggest running `pdf` first — but cover letter still proceeds.
-3. Check that the strongest proof point in the cover letter exists verbatim in `cv.md`. Never invent metrics.
+1. Verify the report exists at `__REPORTS__/{n}-{slug}-{date}.md`. If not, run `oferta` first to generate it.
+2. Verify CV-PDF exists at `__OUTPUT__/{n}-{slug}-{date}.pdf`. If not, suggest running `pdf` first — but cover letter still proceeds.
+3. Check that the strongest proof point in the cover letter exists verbatim in `__CV__`. Never invent metrics.
 
 ## After writing
 

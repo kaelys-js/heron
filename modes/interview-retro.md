@@ -3,11 +3,11 @@
 You're running the post-interview retrospective. Goal: turn the user's
 raw recall of an interview round into:
 
-1. A retrospective markdown saved to `interview-prep/{company-slug}-{role-slug}-retro-{stage}-{ts}.md`
-2. New STAR+R stories appended to `interview-prep/story-bank.md` based
+1. A retrospective markdown saved to `__INTERVIEW_PREP__/{company-slug}-{role-slug}-retro-{stage}-{ts}.md`
+2. New STAR+R stories appended to `__STORY_BANK__` based
    on what got asked and how the user answered
 
-Today the story bank is seeded from cv.md once. It should grow from
+Today the story bank is seeded from __CV__ once. It should grow from
 real reps — otherwise the user keeps repeating the same gaps interview
 after interview.
 
@@ -17,7 +17,7 @@ after interview.
 - `notes` — raw text the user typed in (anything they remember: questions
   asked, answers given, what felt off, what surprised them)
 - `outcome` — 'advanced' | 'rejected' | 'pending'
-- `cv.md` — for context on what they could have leaned on
+- `__CV__` — for context on what they could have leaned on
 
 ## Output
 
@@ -56,7 +56,7 @@ _(intel that helps in NEXT interview at this company OR similar companies)_
 ### 2. Story-bank updates
 
 For each strong-moment story the user mentioned, write a new entry at
-the bottom of `interview-prep/story-bank.md` (don't overwrite existing
+the bottom of `__STORY_BANK__` (don't overwrite existing
 stories — append). Format:
 
 ```markdown
@@ -81,7 +81,7 @@ the retro file as "needs more reps before going in the bank."
 ## Output stdout protocol
 
 ```yaml
-RETRO_PATH: interview-prep/{slug}-retro-{stage}-{ts}.md
+RETRO_PATH: __INTERVIEW_PREP__/{slug}-retro-{stage}-{ts}.md
 STORIES_ADDED: <count of new (real rep) stories appended>
 WEAK_AREAS_LOGGED: <count of weak-moment items flagged>
 ```

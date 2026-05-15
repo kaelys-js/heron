@@ -2,7 +2,7 @@
 
 ## Pipeline completo
 
-1. Lee `cv.md` como fuentes de verdad
+1. Lee `__CV__` como fuentes de verdad
 2. Pide al usuario el JD si no está en contexto (texto o URL)
 3. Extrae 15-20 keywords del JD
 4. Detecta idioma del JD → idioma del CV (EN default)
@@ -18,13 +18,13 @@
 12. Genera HTML completo desde template + contenido personalizado
 13. Lee `name` de `config/profile.yml` → normaliza a kebab-case lowercase (e.g. "John Doe" → "john-doe") → `{candidate}`
 14. Escribe HTML a `/tmp/cv-{candidate}-{company}.html`
-15. Ejecuta: `node generate-pdf.mjs /tmp/cv-{candidate}-{company}.html output/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf --format={letter|a4}`
+15. Ejecuta: `node generate-pdf.mjs /tmp/cv-{candidate}-{company}.html __OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf --format={letter|a4}`
     - generate-pdf.mjs lee automáticamente los `<meta>` tags del template (author, subject, keywords, description) y los inyecta en el PDF Info dictionary. No hace falta pasar `--author=...` por CLI si el HTML los tiene.
     - El PDF se genera con `tagged: true` (PDF/UA) por defecto — semantic structure tags que ayudan a ATS parsers y screen readers.
-16. **Valida la compatibilidad ATS**: `node ats-check.mjs output/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf`
+16. **Valida la compatibilidad ATS**: `node ats-check.mjs __OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf`
     - Score < 90% → revisar warnings, ajustar template/contenido, regenerar.
     - El check verifica: metadata completa, unicode normalizado, section headers estándar, hyperlinks preservados, reading order, page count, file size, no embedded JS/forms/encryption.
-17. **Escribe ALSO el SOURCE markdown de la versión tailored** a `output/cv-{candidate}-{company}-{YYYY-MM-DD}.md` (sibling del .pdf).
+17. **Escribe ALSO el SOURCE markdown de la versión tailored** a `__OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.md` (sibling del .pdf).
     - Esto preserva el contenido tailored para análisis posterior (cv-variant-analysis correlaciona keywords inyectados con outcomes).
     - El .md debe contener TODAS las secciones del CV tailored — no es el HTML, es el markdown estructurado que el mode produjo en pasos 7-11.
     - Sin este sibling, /api/profile/cv-variants devuelve "Not enough data" aunque haya 50+ PDFs.
@@ -127,7 +127,7 @@ a. `get-design-content` on the new design → returns all text elements (richtex
 b. Map text elements to CV sections by content matching:
    - Look for the candidate's name → header section
    - Look for "Summary" or "Professional Summary" → summary section
-   - Look for company names from cv.md → experience sections
+   - Look for company names from __CV__ → experience sections
    - Look for degree/school names → education section
    - Look for skill keywords → skills section
 c. If mapping fails, show the user what was found and ask for guidance
@@ -170,12 +170,12 @@ e. `commit-editing-transaction` to save (ONLY after user approval)
 a. `export-design` the duplicate as PDF (format: a4 or letter based on JD location)
 b. **IMMEDIATELY** download the PDF using Bash:
    ```bash
-   curl -sL -o "output/cv-{candidate}-{company}-canva-{YYYY-MM-DD}.pdf" "{download_url}"
+   curl -sL -o "__OUTPUT__/cv-{candidate}-{company}-canva-{YYYY-MM-DD}.pdf" "{download_url}"
    ```
    The export URL is a pre-signed S3 link that expires in ~2 hours. Download it right away.
 c. Verify the download:
    ```bash
-   file output/cv-{candidate}-{company}-canva-{YYYY-MM-DD}.pdf
+   file __OUTPUT__/cv-{candidate}-{company}-canva-{YYYY-MM-DD}.pdf
    ```
    Must show "PDF document". If it shows XML or HTML, the URL expired — re-export and retry.
 d. Report: PDF path, file size, Canva design URL (for manual tweaking)

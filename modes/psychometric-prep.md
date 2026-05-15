@@ -38,7 +38,7 @@ Detect from `inviteText`:
 ONE markdown file at:
 
 ```text
-{output-dir}/psychometric-{testIdentifier}-prep.md
+__OUTPUT__/psychometric-{testIdentifier}-prep.md
 ```
 
 Format:
