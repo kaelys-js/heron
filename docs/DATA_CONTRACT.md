@@ -96,7 +96,7 @@ These files contain system logic, scripts, templates, and instructions that impr
 | `.claude/skills/*` | Skill definitions |
 | `docs/*` | Documentation |
 | `VERSION` | Current version number |
-| `DATA_CONTRACT.md` | This file |
+| `docs/DATA_CONTRACT.md` | This file |
 
 ## Migration
 

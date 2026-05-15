@@ -404,4 +404,4 @@ Upstream READMEs (i18n translations of the original CLI flow) are still in this 
 
 [MIT](LICENSE). Original work © santifer. This fork © resist.js.
 
-See [TRADEMARK.md](TRADEMARK.md) for trademark policy and [GOVERNANCE.md](GOVERNANCE.md) for contribution governance.
+See [TRADEMARK.md](docs/TRADEMARK.md) for trademark policy and [GOVERNANCE.md](docs/GOVERNANCE.md) for contribution governance.

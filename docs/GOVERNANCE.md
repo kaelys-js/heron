@@ -21,7 +21,7 @@ Anyone can grow their role in the project. Roles are earned through sustained, q
 
 **Everyone starts here.**
 
-- Follow the [Code of Conduct](.github/CODE_OF_CONDUCT.md)
+- Follow the [Code of Conduct](../.github/CODE_OF_CONDUCT.md)
 - Open issues, comment on PRs, help others in Discord
 - Submit bug reports with reproduction steps
 
@@ -66,7 +66,7 @@ You don't apply for roles. They emerge naturally:
 1. **Start contributing** — fix a bug, translate a mode, improve docs
 2. **Be consistent** — one quality PR per month beats ten rushed ones
 3. **Help others** — answer questions in Discord, review PRs, triage issues
-4. **Understand the project** — read CLAUDE.md, DATA_CONTRACT.md, the architecture docs
+4. **Understand the project** — read ../CLAUDE.md, DATA_CONTRACT.md, the architecture docs
 5. **The maintainer will notice** — and reach out when the time is right
 
 ## Values

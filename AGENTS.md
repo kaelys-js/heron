@@ -10,7 +10,7 @@ The portfolio that goes with this system is also open source: [cv-santiago](http
 
 ## Data Contract (CRITICAL)
 
-There are two layers. Read `DATA_CONTRACT.md` for the full list.
+There are two layers. Read `docs/DATA_CONTRACT.md` for the full list.
 
 **User Layer (NEVER auto-updated, personalization goes HERE):**
 - `cv.md`, `config/profile.yml`, `modes/_profile.md`, `article-digest.md`, `portals.yml`
