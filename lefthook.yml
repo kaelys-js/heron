@@ -313,6 +313,15 @@ pre-commit:
       glob: "*.md"
       run: pnpm validate:markdown
 
+    exact-versions:
+      # Reject any version specifier that isn't an EXACT pin (no ^, ~,
+      # >=, *, "latest", or partial versions like "1.7"). Scans every
+      # package.json (root + workspaces) + .mise.toml::[tools]. Exact
+      # pinning + a lockfile = reproducible builds + supply-chain-safe
+      # against malicious-publish attacks.
+      glob: "{package.json,**/package.json,.mise.toml}"
+      run: pnpm validate:exact-versions
+
     taplo:
       # TOML formatter — pyproject.toml + .mise.toml. taplo is the
       # canonical Rust-based formatter (the TOML equivalent of biome).

@@ -106,6 +106,7 @@
     "update": "node scripts/system/update-system.mjs apply",
     "update:check": "node scripts/system/update-system.mjs check",
     "validate:dotenv": "dotenv-linter check --ignore-checks UnorderedKey --skip-updates .env.example .env.act.example",
+    "validate:exact-versions": "node scripts/system/validate-exact-versions.mjs",
     "validate:format-sync": "node scripts/system/validate-format-config-sync.mjs",
     "validate:json-schemas": "node scripts/system/validate-json-schemas.mjs",
     "validate:markdown": "markdownlint-cli2",
@@ -122,15 +123,15 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
-    "@vitest/coverage-v8": "^4.1.6",
-    "ajv": "^8.20.0",
-    "ajv-formats": "^3.0.1",
-    "editorconfig": "^3.0.2",
-    "jsonc-parser": "^3.3.1",
-    "markdownlint-cli2": "^0.22.1",
+    "@vitest/coverage-v8": "4.1.6",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "editorconfig": "3.0.2",
+    "jsonc-parser": "3.3.1",
+    "markdownlint-cli2": "0.22.1",
     "sort-package-json": "3.6.1",
     "turbo": "2.9.12",
-    "vitest": "^4.1.6"
+    "vitest": "4.1.6"
   },
   "packageManager": "pnpm@11.1.0",
   "engines": {
