@@ -263,6 +263,17 @@ pre-commit:
         command -v actionlint >/dev/null 2>&1 || { echo "skip: actionlint not installed (mise install)"; exit 0; }
         actionlint {staged_files}
 
+    plist-validate:
+      # Apple plist validator (Info.plist, .entitlements, .xcprivacy).
+      # Uses Python's stdlib plistlib so no install needed beyond the
+      # python pin in .mise.toml. A malformed Info.plist breaks the
+      # iOS build with a confusing xcodebuild error — catching it at
+      # pre-commit means the contributor learns about it before push.
+      glob: "*.{plist,entitlements,xcprivacy}"
+      run: |
+        command -v python3 >/dev/null 2>&1 || { echo "skip: python3 not on PATH"; exit 0; }
+        python3 scripts/system/validate-plists.py
+
     taplo:
       # TOML formatter — pyproject.toml + .mise.toml. taplo is the
       # canonical Rust-based formatter (the TOML equivalent of biome).
