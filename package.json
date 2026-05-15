@@ -1,6 +1,6 @@
 {
   "name": "career-ops",
-  "version": "1.6.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Career Ops is an AI-powered job search platform: multi-user dashboard, autonomous apply across 11 ATS portals, tailored CVs and cover letters per role, interview prep, follow-up cadence, and offline-first native apps on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.",
   "keywords": [

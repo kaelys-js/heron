@@ -1,6 +1,6 @@
 {
   "name": "career-ops",
-  "version": "1.6.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Career Ops desktop — Electron shell embedding the SvelteKit dashboard.",
   "keywords": [
