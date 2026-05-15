@@ -129,7 +129,7 @@ function applyUiPackageJson(brand) {
     // ui/package.json's name stays 'ui' (workspace internal identifier
     // used by `turbo run --filter=ui` and `pnpm -F ui …`). We only
     // touch the metadata fields here so a brand rename doesn't leave
-    // stale santifer-era URLs lying around.
+    // stale upstream-era URLs lying around.
     p.description = `${brand.displayName} SvelteKit dashboard — multi-user, multi-platform (web + iOS + Android + Electron).`;
     p.homepage = brand.homepageUrl ?? brand.repo.url;
     p.repository = { type: 'git', url: brand.repo.url, directory: 'ui' };

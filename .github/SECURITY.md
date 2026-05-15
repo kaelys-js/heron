@@ -7,11 +7,11 @@
 Use one of:
 
 1. **Preferred — GitHub Private Vulnerability Reporting:**
-   [github.com/santifer/career-ops/security/advisories/new](https://github.com/santifer/career-ops/security/advisories/new)
+   [github.com/kaelys-js/career-ops/security/advisories/new](https://github.com/kaelys-js/career-ops/security/advisories/new)
    Encrypted in transit, reviewed by the maintainer only, and gives you a private
    advisory you can collaborate on without leaking details.
 
-2. **Email** — **<hi@santifer.io>** with:
+2. **Email** — **<hello@resist.js>** with:
    - Description of the vulnerability
    - Steps to reproduce
    - Potential impact
