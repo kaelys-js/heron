@@ -12,16 +12,17 @@
  */
 
 import { readFileSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { profilePath, profileFromArgv } from '../lib/lib-profiles.mjs';
 
-const CAREER_OPS = dirname(fileURLToPath(import.meta.url));
 const PROFILE_ID = profileFromArgv();
-const APPS_FILE = existsSync(profilePath(PROFILE_ID, 'applications'))
-  ? profilePath(PROFILE_ID, 'applications')
-  : join(CAREER_OPS, 'applications.md'); // legacy fallback
+const APPS_FILE = profilePath(PROFILE_ID, 'applications');
 const FOLLOWUPS_FILE = profilePath(PROFILE_ID, 'follow-ups');
+/** Profile directory — base for resolving relative `reports/...` links
+ *  inside applications.md. Previously this was the script's own dir,
+ *  which always failed silently (the report files live under the
+ *  profile, not under scripts/tracker/). */
+const PROFILE_DIR = dirname(APPS_FILE);
 
 // --- CLI args ---
 const args = process.argv.slice(2);
@@ -173,7 +174,7 @@ function extractContacts(notes) {
 function resolveReportPath(reportField) {
   const match = reportField.match(/\]\(([^)]+)\)/);
   if (!match) return null;
-  const fullPath = join(CAREER_OPS, match[1]);
+  const fullPath = join(PROFILE_DIR, match[1]);
   return existsSync(fullPath) ? match[1] : null;
 }
 

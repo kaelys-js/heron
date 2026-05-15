@@ -12,16 +12,17 @@
  */
 
 import { readFileSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { profilePath, profileFromArgv } from '../lib/lib-profiles.mjs';
 
-const CAREER_OPS = dirname(fileURLToPath(import.meta.url));
 const PROFILE_ID = profileFromArgv();
-const APPS_FILE = existsSync(profilePath(PROFILE_ID, 'applications'))
-  ? profilePath(PROFILE_ID, 'applications')
-  : join(CAREER_OPS, 'applications.md'); // legacy fallback
+const APPS_FILE = profilePath(PROFILE_ID, 'applications');
 const REPORTS_DIR = profilePath(PROFILE_ID, 'reports-dir');
+/** Profile directory — base for resolving relative `reports/...` links
+ *  inside applications.md. Previously this was the script's own dir,
+ *  which always failed silently (the report files live under the
+ *  profile, not under scripts/tracker/). */
+const PROFILE_DIR = dirname(APPS_FILE);
 
 // --- CLI args ---
 const args = process.argv.slice(2);
@@ -265,7 +266,7 @@ function analyze() {
   // Enrich entries with report data and classification
   const enriched = entries.map((e) => {
     const reportMatch = e.report.match(/\]\(([^)]+)\)/);
-    const reportPath = reportMatch ? join(CAREER_OPS, reportMatch[1]) : null;
+    const reportPath = reportMatch ? join(PROFILE_DIR, reportMatch[1]) : null;
     const reportData = reportPath ? parseReport(reportPath) : null;
     const outcome = classifyOutcome(e.status);
     const score = parseFloat(e.score) || 0;

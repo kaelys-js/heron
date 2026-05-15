@@ -24,7 +24,6 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT } from './files';
 import { logEvent, reportServerError } from './events';
 import { userSharedPath } from './profile-paths';
 
@@ -34,8 +33,6 @@ import { userSharedPath } from './profile-paths';
 function sourcesPath(): string {
   return userSharedPath('sources');
 }
-// Legacy path kept for one-shot boot migration only.
-const SOURCES_PATH_LEGACY = path.join(ROOT, 'data', 'sources.json');
 
 /** Threshold: this many consecutive failures flips a source's `connected`
  *  back to false (so the /sources card surfaces the issue). The user
