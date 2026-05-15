@@ -111,6 +111,14 @@ jobs:
       - name: Format check (biome + prettier-svelte)
         run: pnpm format:check
 
+      - name: Validate JSON schemas
+        # scripts/system/validate-json-schemas.mjs iterates every
+        # $schema-annotated config (turbo.json, biome.jsonc,
+        # release-please-config.json, ui/components.json) and validates
+        # against the referenced schema via ajv. Catches typos / unknown
+        # keys BEFORE the consuming tool's runtime would surface them.
+        run: pnpm validate:json-schemas
+
       - name: Typecheck (svelte-check + tsgo, turbo-cached)
         run: pnpm exec turbo run check
 
@@ -311,6 +319,8 @@ jobs:
         # TOML formatter (pyproject.toml + .mise.toml). taplo is pinned in
         # .mise.toml so mise installs the same version locally + in CI.
         run: git ls-files '*.toml' | xargs -r taplo format --check
+        # JSON-schema validation runs in the ts job (needs node_modules
+        # for the ajv + jsonc-parser devDeps + local schema files).
 
   # ─────────────────────────────────────────────────────────────────
   # Security audit

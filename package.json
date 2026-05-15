@@ -105,7 +105,8 @@
     "typecheck": "turbo check",
     "update": "node scripts/system/update-system.mjs apply",
     "update:check": "node scripts/system/update-system.mjs check",
-    "verify": "turbo test"
+    "verify": "turbo test",
+    "validate:json-schemas": "node scripts/system/validate-json-schemas.mjs"
   },
   "dependencies": {
     "@google/generative-ai": "0.24.1",
@@ -116,6 +117,9 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
     "@vitest/coverage-v8": "^4.1.6",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "jsonc-parser": "^3.3.1",
     "sort-package-json": "3.6.1",
     "turbo": "2.9.12",
     "vitest": "^4.1.6"
