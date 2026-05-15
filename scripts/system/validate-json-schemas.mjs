@@ -142,10 +142,16 @@ function discoverFiles(jsoncParser) {
     if (!schemaUrl) continue;
     // Map known local-mirror URLs to pkg: shorthand for faster resolution.
     const schema = KNOWN_LOCAL_MIRRORS.get(schemaUrl) || schemaUrl;
+    // Files that tolerate JSONC-style comments even with a .json
+    // extension: tsconfig.json (TypeScript), and any nested tsconfig
+    // (tsconfig.app.json / tsconfig.build.json). Match the basename so
+    // the rule applies inside any directory.
+    const base = relPath.split('/').pop() ?? relPath;
+    const isJsonc = relPath.endsWith('.jsonc') || /^tsconfig(\..+)?\.json$/.test(base);
     out.push({
       path: relPath,
       schema,
-      jsonc: relPath.endsWith('.jsonc'),
+      jsonc: isJsonc,
     });
   }
   return out.sort((a, b) => a.path.localeCompare(b.path));
