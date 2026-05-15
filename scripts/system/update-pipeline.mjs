@@ -5,13 +5,15 @@
 // - Skipped entries also append rows to data/applications.md as `SKIP`.
 
 import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { profilePath, ensureProfileDirs, profileFromArgv } from '../lib/lib-profiles.mjs';
 
 const PROFILE_ID = profileFromArgv();
 ensureProfileDirs(PROFILE_ID);
 const PIPELINE = profilePath(PROFILE_ID, 'pipeline');
 const APPLICATIONS = profilePath(PROFILE_ID, 'applications');
-const SKIPPED_TSV = 'batch/pipeline-skipped.tsv';
+// Per-profile batch workspace. Was repo-root batch/ pre-multi-user.
+const SKIPPED_TSV = join(profilePath(PROFILE_ID, 'batch-dir'), 'pipeline-skipped.tsv');
 
 const today = '2026-05-05';
 

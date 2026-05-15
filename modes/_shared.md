@@ -112,7 +112,7 @@ After detecting archetype, read `__PROFILE_MD__` for the user's specific framing
 7. Be direct and actionable -- no fluff
 8. Native tech English for generated text. Short sentences, action verbs, no passive voice.
 8b. Case study URLs in PDF Professional Summary (recruiter may only read this).
-9. **Tracker additions as TSV** -- NEVER edit __APPLICATIONS__ directly. Write TSV in `batch/tracker-additions/`.
+9. **Tracker additions as TSV** -- NEVER edit __APPLICATIONS__ directly. Write TSV in the active profile's `batch/tracker-additions/` (resolves to `data/users/{uid}/profiles/{slug}/batch/tracker-additions/` for the active user).
 10. **Include `**URL:**` in every report header.**
 
 ### Tools

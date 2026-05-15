@@ -131,7 +131,8 @@ function runVerifyPipeline(): Promise<JobResult> {
     }
 
     // Check 3 — unmerged TSVs in the active profile's tracker-additions/
-    // (per-profile post-Option-D, was repo-root batch/tracker-additions/).
+    // (per-profile post-multi-user migration; the legacy repo-root
+    // batch/tracker-additions/ no longer exists).
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { activePath } = require('../profile-paths') as typeof import('../profile-paths');
     const tsvDir = join(activePath('batch-dir'), 'tracker-additions');

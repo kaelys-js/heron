@@ -6,7 +6,7 @@
  * Checks:
  * 1. cv.md exists
  * 2. config/profile.yml exists and has required fields
- * 3. No hardcoded metrics in _shared.md or batch/batch-prompt.md
+ * 3. No hardcoded metrics in _shared.md or templates/batch-prompt.md
  * 4. article-digest.md freshness (if exists)
  */
 
@@ -51,7 +51,7 @@ if (!existsSync(profilePath)) {
 // 3. Check for hardcoded metrics in prompt files
 const filesToCheck = [
   { path: join(projectRoot, 'modes', '_shared.md'), name: '_shared.md' },
-  { path: join(projectRoot, 'batch', 'batch-prompt.md'), name: 'batch-prompt.md' },
+  { path: join(projectRoot, 'templates', 'batch-prompt.md'), name: 'batch-prompt.md' },
 ];
 
 // Pattern: numbers that look like hardcoded metrics (e.g., "170+ hours", "90% self-service")
