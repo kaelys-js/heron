@@ -475,6 +475,14 @@ function applyIosInfoPlist(brand) {
       /(<key>NSBonjourServices<\/key>\s*\n\s*<array>\s*\n\s*<string>)[^<]*(<\/string>)/,
       `$1${brand.identifiers.serviceType}$2`,
     ],
+    // NSHumanReadableCopyright — Apple's per-app copyright string shown
+    // in About menus / TestFlight metadata. Sourced from brand.copyright
+    // so the upstream-required MIT attribution propagates consistently
+    // with electron-builder + app.html + brand.ts.
+    [
+      /(<key>NSHumanReadableCopyright<\/key>\s*\n\s*<string>)[^<]*(<\/string>)/,
+      `$1${brand.copyright}$2`,
+    ],
   ];
   let changed = false;
   for (const [re, val] of subs) {
