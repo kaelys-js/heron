@@ -1,7 +1,7 @@
 # Status Model — pipeline vs application status
 
 This document captures a decision that's easy to miss when reading the
-codebase: **career-ops tracks two different state values per job, not one**.
+codebase: **heron tracks two different state values per job, not one**.
 They look similar, the field names overlap, and several earlier audits
 flagged them as "the same thing in two vocabularies" — but they're not.
 They're orthogonal.

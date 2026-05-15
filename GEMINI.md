@@ -1,4 +1,4 @@
-# Career-Ops — Gemini CLI context
+# Heron — Gemini CLI context
 
 > Auto-loaded by Gemini CLI as persistent context — the Gemini equivalent of CLAUDE.md.
 > **The canonical brief lives in [AGENTS.md](AGENTS.md).** Read it first; this
@@ -10,21 +10,21 @@ Defined in `.gemini/commands/`. Each maps 1:1 to a Claude Code mode:
 
 | Gemini command | Claude Code equivalent | Description |
 |---|---|---|
-| `/career-ops` | `/career-ops` | Show menu or evaluate JD |
-| `/career-ops-pipeline` | `/career-ops pipeline` | Process pending URLs from inbox |
-| `/career-ops-evaluate` | `/career-ops oferta` | Evaluate job offer (A-G scoring) |
-| `/career-ops-compare` | `/career-ops ofertas` | Compare and rank multiple offers |
-| `/career-ops-contact` | `/career-ops contacto` | LinkedIn outreach |
-| `/career-ops-deep` | `/career-ops deep` | Deep company research |
-| `/career-ops-pdf` | `/career-ops pdf` | Generate ATS-optimized CV |
-| `/career-ops-training` | `/career-ops training` | Evaluate course/cert |
-| `/career-ops-project` | `/career-ops project` | Evaluate portfolio project |
-| `/career-ops-tracker` | `/career-ops tracker` | Application status overview |
-| `/career-ops-apply` | `/career-ops apply` | Live application assistant |
-| `/career-ops-scan` | `/career-ops scan` | Scan portals for new offers |
-| `/career-ops-batch` | `/career-ops batch` | Batch processing |
-| `/career-ops-patterns` | `/career-ops patterns` | Analyze rejection patterns |
-| `/career-ops-followup` | `/career-ops followup` | Follow-up cadence tracker |
+| `/heron` | `/heron` | Show menu or evaluate JD |
+| `/heron-pipeline` | `/heron pipeline` | Process pending URLs from inbox |
+| `/heron-evaluate` | `/heron oferta` | Evaluate job offer (A-G scoring) |
+| `/heron-compare` | `/heron ofertas` | Compare and rank multiple offers |
+| `/heron-contact` | `/heron contacto` | LinkedIn outreach |
+| `/heron-deep` | `/heron deep` | Deep company research |
+| `/heron-pdf` | `/heron pdf` | Generate ATS-optimized CV |
+| `/heron-training` | `/heron training` | Evaluate course/cert |
+| `/heron-project` | `/heron project` | Evaluate portfolio project |
+| `/heron-tracker` | `/heron tracker` | Application status overview |
+| `/heron-apply` | `/heron apply` | Live application assistant |
+| `/heron-scan` | `/heron scan` | Scan portals for new offers |
+| `/heron-batch` | `/heron batch` | Batch processing |
+| `/heron-patterns` | `/heron patterns` | Analyze rejection patterns |
+| `/heron-followup` | `/heron followup` | Follow-up cadence tracker |
 
 **All commands share the same evaluation logic** in `modes/*.md`. The `modes/`
 files are shared between Claude Code, OpenCode, and Gemini CLI — there is no

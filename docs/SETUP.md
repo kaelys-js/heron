@@ -1,6 +1,6 @@
 # Setup Guide
 
-This doc gets you from `git clone` to a running Career Ops dashboard in under 5 minutes. If something doesn't work, jump to [Troubleshooting](#troubleshooting) at the bottom.
+This doc gets you from `git clone` to a running Heron dashboard in under 5 minutes. If something doesn't work, jump to [Troubleshooting](#troubleshooting) at the bottom.
 
 ## What you'll have when you're done
 
@@ -24,15 +24,15 @@ You need these installed once, system-wide:
 | **Xcode** (macOS only) | iOS / Watch builds | Mac App Store + `xcode-select --install` |
 | **An AI CLI** | Powers the agent flows | [Claude Code](https://docs.claude.com/en/docs/claude-code/quickstart) (default); OpenCode / Gemini / Codex / Qwen / Copilot work via `AGENT_CLI=<bin>` |
 
-**Why mise?** It pins Node 26.1.0 + pnpm 11.1.0 + Ruby 3.3.5 per-repo so contributors don't need to remember to switch versions. Just `cd career-ops` and you're on the right ones.
+**Why mise?** It pins Node 26.1.0 + pnpm 11.1.0 + Ruby 3.3.5 per-repo so contributors don't need to remember to switch versions. Just `cd heron` and you're on the right ones.
 
 ---
 
 ## 1. Clone + install
 
 ```sh
-gh repo clone kaelys-js/career-ops
-cd career-ops
+gh repo clone heron/heron
+cd heron
 
 # mise installs the pinned Node + pnpm + Ruby versions
 mise install
@@ -77,7 +77,7 @@ This walks you through:
    - **App Store Connect API key** — opens [appstoreconnect.apple.com](https://appstoreconnect.apple.com) → you create the key → paste the .p8 contents
 3. Mac code-signing cert:
    - Opens Keychain → you pick your "Developer ID Application" cert → exports to `.p12` with a password you choose
-4. Saves everything to `~/.career-ops/native-env` (mode 0600 — readable by you only).
+4. Saves everything to `~/.heron/native-env` (mode 0600 — readable by you only).
 5. Pushes the same values to your repo's GitHub Secrets via `gh secret set` so CI can sign + upload.
 6. Generates the iOS Xcode targets (Widget, LiveActivity, ShareExtension).
 
@@ -125,7 +125,7 @@ Native apps don't have a hard-coded server URL. At launch they probe:
 
 1. **Embedded** — Electron spawns the dashboard as a child process
 2. **Dev server** — `http://localhost:5173` if `pnpm dev` is running
-3. **mDNS** — finds your desktop on the same Wi-Fi via `_career-ops._tcp`
+3. **mDNS** — finds your desktop on the same Wi-Fi via `_heron._tcp`
 4. **Tailscale** — finds your instance over the tailnet
 5. **Remote** — falls back to a configured URL
 
@@ -230,7 +230,7 @@ Check both ends:
 curl http://localhost:5173/api/health
 
 # mDNS announced?
-dns-sd -B _career-ops._tcp local.    # press Ctrl+C after seeing your machine
+dns-sd -B _heron._tcp local.    # press Ctrl+C after seeing your machine
 ```
 
 If mDNS isn't broadcasting, your Wi-Fi might block multicast (rare). Set the LAN URL manually in the iOS app's Settings tab.
@@ -251,5 +251,5 @@ Backup: just snapshot `data/` (`tar czf backup.tgz data/`). Restore: extract bac
 
 - Read the main [README](../README.md) for architecture + commands.
 - Browse [docs/](.) for deeper docs (autopilot, autonomous apply, multi-user RBAC, …).
-- File issues at [github.com/kaelys-js/career-ops/issues](https://github.com/kaelys-js/career-ops/issues).
+- File issues at [github.com/heron/heron/issues](https://github.com/heron/heron/issues).
 - Discord: [discord.gg/8pRpHETxa4](https://discord.gg/8pRpHETxa4).

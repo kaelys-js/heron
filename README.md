@@ -20,7 +20,7 @@ A thinking partner for career transitions. Patient, precise, local-first.
 
 ## What is Heron?
 
-The heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes — once, precisely, and the work is done.
+The Heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes — once, precisely, and the work is done.
 
 This is the wrong era for spray-and-pray job searches. Recruiters' attention is finite. So is yours. Heron is a thinking partner for people in career transition who'd rather make one excellent move than fifty mediocre ones.
 
@@ -80,7 +80,7 @@ Capacitor builds for iOS / Android and the Electron desktop wrapper.
 ### Repository layout
 
 ```text
-career-ops/
+heron/
 ├── README.md                    # ← you are here
 ├── CHANGELOG.md                 # Release-Please-managed
 ├── AGENTS.md                    # Runtime brief for any agent-skill-standard CLI
@@ -177,7 +177,7 @@ Native apps don't have a hard-coded server URL. At launch they probe in order:
 
 1. **Embedded** — Electron spawns the SvelteKit server as a child process
 2. **Dev server** — `http://localhost:5173` if running `pnpm dev`
-3. **mDNS (`_career-ops._tcp`)** — finds your desktop instance on the same Wi-Fi
+3. **mDNS (`_heron._tcp`)** — finds your desktop instance on the same Wi-Fi
 4. **Tailscale magic-DNS** — finds your instance over the tailnet
 5. **Remote** — falls back to a user-configured URL
 
@@ -269,7 +269,7 @@ Pre-commit re-runs this automatically when you stage anything under `branding/`.
 
 ## Releasing
 
-Releases are fully automated through [Conventional Commits](https://www.conventionalcommits.org) → [release-please](https://github.com/googleapis/release-please) → [native-release](https://github.com/kaelys-js/career-ops/blob/main/.github/workflows/native-release.yml).
+Releases are fully automated through [Conventional Commits](https://www.conventionalcommits.org) → [release-please](https://github.com/googleapis/release-please) → [native-release](https://github.com/heron/heron/blob/main/.github/workflows/native-release.yml).
 
 | Commit prefix | Bump | Example |
 |---|---|---|
@@ -378,13 +378,13 @@ Every action is on its latest Node-24-native major (no deprecation banner). Conc
 | Native release CI red on `preflight` | `pnpm setup:native` then `pnpm doctor:native` |
 | GitHub Pro features missing (branch protection, secret scanning, rulesets, PVR) | Make the repo public OR upgrade to GitHub Pro ($4/mo) |
 
-For anything else: open a [Discussion](https://github.com/kaelys-js/career-ops/discussions) or jump into [Discord](https://discord.gg/8pRpHETxa4).
+For anything else: open a [Discussion](https://github.com/heron/heron/discussions) or jump into [Discord](https://discord.gg/8pRpHETxa4).
 
 ---
 
 ## Acknowledgements
 
-Career Ops is a hard fork of [`santifer/career-ops`](https://github.com/santifer/career-ops) — the original CLI-driven job-search system [santifer](https://santifer.io) built and used to evaluate 740+ offers, generate 100+ tailored CVs, and land a Head of Applied AI role. His [case study](https://santifer.io/career-ops-system) is required reading if you want to understand the philosophy (filter, not cannon).
+Heron is a hard fork of [`santifer/career-ops`](https://github.com/santifer/career-ops) — the original CLI-driven job-search system [santifer](https://santifer.io) built and used to evaluate 740+ offers, generate 100+ tailored CVs, and land a Head of Applied AI role. His [case study](https://santifer.io/career-ops-system) is required reading if you want to understand the philosophy (filter, not cannon).
 
 This fork adds:
 

@@ -1,6 +1,6 @@
 # Apple Watch — standalone app + Smart Stack widgets
 
-career-ops ships a **standalone watchOS app target** plus four
+heron ships a **standalone watchOS app target** plus four
 Smart-Stack widget families. Watch users get both: a dedicated app on
 the wrist for browsing, and at-a-glance complications + widgets on the
 Smart Stack / watch face.
@@ -49,7 +49,7 @@ The source files are committed; you need to create the Xcode target
 
 1. **File → New → Target → watchOS → App**
    - Product Name: `CareerOpsWatch`
-   - Bundle ID: `com.resistjs.careerops.watchkitapp`
+   - Bundle ID: `com.resistjs.heron.watchkitapp`
    - Interface: SwiftUI · Lifecycle: SwiftUI App
    - Embed in: `App` (the iOS main target)
 2. Delete the auto-generated `ContentView.swift`, `CareerOpsWatchApp.swift`,
@@ -58,7 +58,7 @@ The source files are committed; you need to create the Xcode target
    if needed" should be UNCHECKED — we want references).
 3. Under the watch target's **Signing & Capabilities**:
    - Set **Entitlements**: `CareerOpsWatch.entitlements`
-   - Add **App Groups**: `group.com.resistjs.careerops`
+   - Add **App Groups**: `group.com.resistjs.heron`
 4. Add the watch target to `ui/ios/App/fastlane/Fastfile` so the
    `pnpm build:ios` lane archives it alongside the main app.
 5. Run `pnpm brand:apply` — the icon generator already writes the
@@ -97,7 +97,7 @@ drill in" experience; widgets are the "glance" experience.
 
 * No custom complications outside the Smart Stack (we use system
   widget families, not `CLKComplication`). watchOS picks where to
-  place them on the face — the user can't pin a career-ops
+  place them on the face — the user can't pin a heron
   complication to a specific modular slot.
 * No background refresh on watch when the phone is asleep. The watch
   falls back to its last App Group snapshot. Re-opens the moment the

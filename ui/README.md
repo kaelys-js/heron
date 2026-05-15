@@ -1,4 +1,4 @@
-# `ui/` — Career Ops SvelteKit workspace
+# `ui/` — Heron SvelteKit workspace
 
 The main app workspace. SvelteKit 2 + Svelte 5 + Better Auth + Drizzle ORM,
 wrapped via Capacitor 8 for iOS / Android and Electron 39 for macOS / Windows
@@ -82,7 +82,7 @@ From repo root, the same commands are exposed as `pnpm dev`, `pnpm build`,
   defined in `src/lib/client/native-plugin.ts`. iOS Swift side under
   `ios/App/App/CareerOpsNativePlugin.swift`.
 - **Backend discovery** (native apps) — `src/lib/client/backend-discovery.ts`
-  probes embedded → localhost → mDNS (`_career-ops._tcp`) → Tailscale →
+  probes embedded → localhost → mDNS (`_heron._tcp`) → Tailscale →
   user-configured remote, in that order, with deduped in-flight promises
   and a TTL cache.
 
@@ -108,7 +108,7 @@ are never touched by the test matrix.
 - `ios/App/CareerOpsWatch/` — standalone watchOS app
 - `ios/App/CareerOpsWidget/` — 4 widgets (pipeline / next-interview / top-apply / inbox-issues)
 - `ios/App/CareerOpsLiveActivity/` — Live Activity for interview countdowns
-- `ios/App/CareerOpsShareExtension/` — share-sheet receiver for "Save to career-ops"
+- `ios/App/CareerOpsShareExtension/` — share-sheet receiver for "Save to Heron"
 - `android/` — Capacitor Android wrapper + Brand.kt
 - `electron/` — Capacitor-Electron workspace (its own `package.json`)
 

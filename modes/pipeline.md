@@ -1,6 +1,6 @@
 # Modo: pipeline — Inbox de URLs (Second Brain)
 
-Procesa URLs de ofertas acumuladas en `data/__PIPELINE__`. El usuario agrega URLs cuando quiera y luego ejecuta `/career-ops pipeline` para procesarlas todas.
+Procesa URLs de ofertas acumuladas en `data/__PIPELINE__`. El usuario agrega URLs cuando quiera y luego ejecuta `/heron pipeline` para procesarlas todas.
 
 ## Workflow
 
