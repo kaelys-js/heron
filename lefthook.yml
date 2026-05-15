@@ -332,6 +332,15 @@ pre-commit:
       glob: "*.{js,jsx,mjs,cjs,ts,tsx}"
       run: pnpm lint:oxlint
 
+    version-sync:
+      # Asserts that every place we store the version stays equal:
+      # package.json (root + workspaces) + VERSION (plain text) +
+      # .release-please-manifest.json. release-please auto-bumps all
+      # five on real releases; this hook catches manual / partial
+      # bumps that the manifest doesn't yet know about.
+      glob: "{package.json,**/package.json,VERSION,.release-please-manifest.json}"
+      run: pnpm validate:version-sync
+
     taplo:
       # TOML formatter — pyproject.toml + .mise.toml. taplo is the
       # canonical Rust-based formatter (the TOML equivalent of biome).
