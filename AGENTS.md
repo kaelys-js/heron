@@ -74,10 +74,10 @@ AI-powered, CLI-agnostic job search automation: pipeline tracking, offer evaluat
 
 ### Multi-Profile Layout (read this first)
 
-Career-ops supports MULTIPLE distinct career identities ("profiles") per install. Each profile owns its own content under `data/profiles/{slug}/`:
+Career-ops supports MULTIPLE distinct career identities ("profiles") per install AND multiple users sharing one machine. Per-profile content lives under `data/users/{userId}/profiles/{slug}/` (or `data/profiles/{slug}/` in legacy single-user mode):
 
 ```text
-data/profiles/{slug}/
+data/users/{userId}/profiles/{slug}/
 ├── cv.md
 ├── profile.yml
 ├── _profile.md            ← per-profile copy of modes/_profile.md
@@ -91,12 +91,23 @@ data/profiles/{slug}/
 ├── projects.json
 ├── reports/
 ├── output/                ← incl. cv-general.pdf
-└── interview-prep/        ← per-company files
+├── interview-prep/        ← per-company files
+├── jds/                   ← saved JD text files (referenced as `local:<file>`)
+└── writing-samples/       ← voice-calibration samples (emails, blog posts, etc.)
 ```
 
-**Shared infrastructure** (NOT per-profile): `.env`, `.playwright-linkedin/`, `.playwright-indeed/`, `data/profiles.json`, `data/sources.json`, `data/onboarding-state.json`, `data/autopilot.json`, `data/activity.jsonl`, `data/issues.jsonl`, `interview-prep/story-bank.md`.
+Plus a per-user, cross-profile namespace at `data/users/{userId}/profiles/_shared/`:
 
-**Active profile**: `data/profiles.json` has `{ activeId, profiles: [...] }`. Reads default to the active profile unless an explicit `--profile <slug>` flag (Python/MJS scripts) or `?profile=<slug>` query param (dashboard routes) is passed. The Claude CLI reads the legacy repo-root paths (`cv.md`, `config/profile.yml`, `portals.yml`, `modes/_profile.md`) — those are SYMLINKS into the active profile's dir, maintained automatically by the dashboard.
+```text
+data/users/{userId}/profiles/_shared/
+└── story-bank.md          ← STAR+R interview stories; shared across this user's
+                             profiles (engineer + instructor draw on the same
+                             real-project stories) but PRIVATE to this user
+```
+
+**Globally shared infrastructure** (NOT per-profile, NOT per-user — same for everyone on this machine): `.env`, `.playwright-linkedin/`, `.playwright-indeed/`, `data/profiles.json`, `data/sources.json`, `data/onboarding-state.json`, `data/autopilot.json`, `data/activity.jsonl`, `data/issues.jsonl`, `data/inbox-mbox/`.
+
+**Active profile**: `data/profiles.json` has `{ activeId, profiles: [...] }`. Reads default to the active profile unless an explicit `--profile <slug>` flag (Python/MJS scripts) or `?profile=<slug>` query param (dashboard routes) is passed. The Claude CLI reads files at REPO-ROOT compatibility paths (`cv.md`, `portals.yml`, `jds/`, `writing-samples/`, `interview-prep/`, `interview-prep/story-bank.md`, etc.) — those are SYMLINKS into the active profile's dir, maintained automatically by the dashboard. See `docs/DATA_CONTRACT.md` "Repo-root compatibility symlinks" for the full mapping.
 
 **When the user asks for personalization**, ALWAYS write to the active profile's files via the per-profile paths above (or via the legacy paths, which symlink to the same place). Never write to `data/profiles/default/` directly when the user might be on a different profile — let the dashboard's active-profile selection drive the path.
 

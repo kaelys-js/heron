@@ -169,10 +169,15 @@ export function userSharedPath(kind, userId = SYSTEM_USER_ID) {
       `userSharedPath: unknown kind ${kind}. Valid: ${Object.keys(USER_SHARED_KINDS).join(', ')}`,
     );
   }
+  // Path: data/users/{userId}/profiles/_shared/{file}   (multi-user)
+  //   or: data/profiles/_shared/{file}                  (legacy single-user)
+  // The "_shared" dir lives INSIDE the profiles/ tree (alongside each
+  // profile dir) so the layout reads as: "every dir under profiles/ is
+  // either a real profile or the _shared escape-hatch".
   const base =
     userId === SYSTEM_USER_ID
       ? path.join(LEGACY_PROFILES_ROOT, '_shared')
-      : path.join(USERS_ROOT, userId, '_shared');
+      : path.join(USERS_ROOT, userId, 'profiles', '_shared');
   return path.join(base, USER_SHARED_KINDS[kind]);
 }
 

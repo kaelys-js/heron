@@ -154,10 +154,15 @@ def user_shared_path(kind: str, *, user_id: str = SYSTEM_USER_ID) -> Path:
         raise ValueError(
             f"user_shared_path: unknown kind {kind!r}. Valid: {sorted(USER_SHARED_KINDS)}"
         )
+    # Path: data/users/{user_id}/profiles/_shared/{file}   (multi-user)
+    #   or: data/profiles/_shared/{file}                   (legacy single-user)
+    # The "_shared" dir lives INSIDE the profiles/ tree (alongside each
+    # profile dir) so the layout reads as: "every dir under profiles/ is
+    # either a real profile or the _shared escape-hatch".
     if user_id == SYSTEM_USER_ID:
         base = LEGACY_PROFILES_ROOT / "_shared"
     else:
-        base = USERS_ROOT / user_id / "_shared"
+        base = USERS_ROOT / user_id / "profiles" / "_shared"
     return base / USER_SHARED_KINDS[kind]
 
 

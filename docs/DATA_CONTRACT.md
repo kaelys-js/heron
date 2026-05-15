@@ -6,8 +6,8 @@ This document defines which files belong to the **system** (auto-updatable) and 
 
 Career-ops supports multiple distinct career identities ("profiles") per install. Each profile owns its own CV, targeting, pipeline, and applications data under `data/profiles/{slug}/`. The first install gets a `default` profile; users add more via `/onboarding?new=1` or `/profiles`.
 
-**Shared infrastructure** is reused across every profile:
-- `.env` (API keys + IMAP creds)
+**Globally shared infrastructure** is reused across every profile AND every user:
+- `.env` (API keys + IMAP creds — per-machine, NOT in git)
 - `.playwright-linkedin/` and `.playwright-indeed/` (auth sessions)
 - `data/profiles.json` (the registry + active-profile pointer)
 - `data/sources.json` (per-source connection health)
@@ -15,15 +15,18 @@ Career-ops supports multiple distinct career identities ("profiles") per install
 - `data/autopilot.json` (global scheduler config)
 - `data/activity.jsonl` (global event log)
 - `data/issues.jsonl` (open issues feed)
-- `interview-prep/story-bank.md` (STAR stories cross-track)
+- `data/inbox-mbox/*` (shared mbox drop-box for `scripts/scan/scan-email.mjs`)
 
-**Per-profile content** lives under `data/profiles/{slug}/` — see below.
+**Per-user, cross-profile content** lives at `data/users/{userId}/profiles/_shared/` (or `data/profiles/_shared/` in legacy single-user mode):
+- `story-bank.md` — accumulated STAR+R stories that transcend the user's profiles (engineer + instructor profiles draw on the same real-project stories) but stay PRIVATE to that user.
+
+**Per-profile content** lives at `data/users/{userId}/profiles/{slug}/` (or `data/profiles/{slug}/` in legacy single-user mode) — see below.
 
 ## User Layer (NEVER auto-updated)
 
 These files contain your personal data, customizations, and work product. Updates will NEVER modify them.
 
-### Per-profile files (one set per `data/profiles/{slug}/`)
+### Per-profile files (one set per `data/users/{userId}/profiles/{slug}/`)
 
 | File | Purpose |
 |------|---------|
@@ -41,20 +44,42 @@ These files contain your personal data, customizations, and work product. Update
 | `reports/*` | Your evaluation reports |
 | `output/*` | Your generated PDFs (incl. `cv-general.pdf`) |
 | `interview-prep/*` | Per-company interview prep briefs |
+| `jds/*` | Saved job descriptions (referenced as `local:<file>` in pipeline.md) |
+| `writing-samples/*` | Personal writing samples used to calibrate the CV/cover-letter voice |
 
-### Shared user-layer files
+### Per-user, shared-across-profiles files (`data/users/{userId}/profiles/_shared/`)
 
 | File | Purpose |
 |------|---------|
-| `interview-prep/story-bank.md` | Accumulated STAR+R stories (shared — stories transcend tracks) |
-| `writing-samples/*` | Personal writing samples for style calibration |
-| `jds/*` | Saved job descriptions |
+| `story-bank.md` | Accumulated STAR+R stories. Lives ABOVE the per-profile dirs so the same stories serve every profile of the same user — but never leak to other users. |
+
+### Globally shared user-layer files
+
+| File | Purpose |
+|------|---------|
 | `data/inbox-mbox/*` | Local mbox drops for scripts/scan/scan-email.mjs (shared drop-box) |
 | `.env` | API keys + IMAP credentials |
 | `data/profiles.json` | Profile registry + active selection |
 | `data/sources.json` | Source connection state |
 | `data/onboarding-state.json` | Wizard state |
 | `data/autopilot.json` | Recurring schedule config |
+
+### Repo-root compatibility symlinks (managed by `ui/src/lib/server/profile-symlinks.ts`)
+
+The AI CLI (Claude Code / Codex / etc.) reads its inputs at the repo root, not at the per-profile paths. To bridge that, the dashboard lazily creates symlinks just before every CLI spawn:
+
+| Symlink at repo root | Points to (active profile) |
+|---|---|
+| `cv.md` | `data/users/{uid}/profiles/{slug}/cv.md` |
+| `config/profile.yml` | `data/users/{uid}/profiles/{slug}/profile.yml` |
+| `portals.yml` | `data/users/{uid}/profiles/{slug}/portals.yml` |
+| `modes/_profile.md` | `data/users/{uid}/profiles/{slug}/_profile.md` |
+| `jds/` | `data/users/{uid}/profiles/{slug}/jds/` |
+| `writing-samples/` | `data/users/{uid}/profiles/{slug}/writing-samples/` |
+| `interview-prep/` | `data/users/{uid}/profiles/{slug}/interview-prep/` |
+| `interview-prep/story-bank.md` | `data/users/{uid}/profiles/_shared/story-bank.md` (user-shared) |
+
+If you `git pull` + `ls cv.md` at repo root and see "No such file", that's expected — boot the dashboard and any `/api/job/[id]/*` endpoint hit will recreate the symlinks before spawning the CLI.
 
 ## System Layer (safe to auto-update)
 
@@ -79,11 +104,6 @@ These files contain system logic, scripts, templates, and instructions that impr
 | `modes/training.md` | Training evaluation instructions |
 | `modes/patterns.md` | Pattern analysis instructions |
 | `modes/followup.md` | Follow-up cadence instructions |
-| `modes/de/*` | German language modes |
-| `modes/fr/*` | French language modes |
-| `modes/ja/*` | Japanese language modes |
-| `modes/pt/*` | Portuguese language modes |
-| `modes/ru/*` | Russian language modes |
 | `CLAUDE.md` | Agent instructions |
 | `AGENTS.md` | Codex instructions |
 | `scripts/apply/*` | Autonomous-apply portal adapters (apply-portal.py + per-portal scripts + lib_apply.py + lib_portal.py) |

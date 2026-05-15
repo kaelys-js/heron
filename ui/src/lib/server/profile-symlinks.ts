@@ -44,7 +44,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './files';
-import { profilePathForUser, type ProfileFileKind } from './profile-paths';
+import {
+  profilePathForUser,
+  userSharedPathForUser,
+  type ProfileFileKind,
+  type UserSharedFileKind,
+} from './profile-paths';
 import { currentUserIdOrDefault } from './user-context';
 import { logEvent } from './events';
 
@@ -96,16 +101,36 @@ function releaseLock(): void {
   }
 }
 
-type LegacyTarget = {
-  legacyPath: string;
-  kind: ProfileFileKind;
-};
+type LegacyTarget =
+  | { legacyPath: string; scope: 'profile'; kind: ProfileFileKind }
+  | { legacyPath: string; scope: 'user-shared'; kind: UserSharedFileKind };
 
 const TARGETS: LegacyTarget[] = [
-  { legacyPath: path.join(ROOT, 'cv.md'), kind: 'cv-md' },
-  { legacyPath: path.join(ROOT, 'config', 'profile.yml'), kind: 'profile-yml' },
-  { legacyPath: path.join(ROOT, 'portals.yml'), kind: 'portals-yml' },
-  { legacyPath: path.join(ROOT, 'modes', '_profile.md'), kind: 'profile-md' },
+  // ── Per-profile files (existing) ────────────────────────────────────
+  { legacyPath: path.join(ROOT, 'cv.md'), scope: 'profile', kind: 'cv-md' },
+  { legacyPath: path.join(ROOT, 'config', 'profile.yml'), scope: 'profile', kind: 'profile-yml' },
+  { legacyPath: path.join(ROOT, 'portals.yml'), scope: 'profile', kind: 'portals-yml' },
+  { legacyPath: path.join(ROOT, 'modes', '_profile.md'), scope: 'profile', kind: 'profile-md' },
+  // ── Per-profile directories (Option-C additions) ────────────────────
+  // The AI CLI reads jds/{file}, writing-samples/{file}, and
+  // interview-prep/{file} at repo root. Symlink each to the active
+  // profile's matching dir so the canonical storage is per-profile
+  // but the CLI integration stays back-compatible.
+  { legacyPath: path.join(ROOT, 'jds'), scope: 'profile', kind: 'jds-dir' },
+  { legacyPath: path.join(ROOT, 'writing-samples'), scope: 'profile', kind: 'writing-samples-dir' },
+  { legacyPath: path.join(ROOT, 'interview-prep'), scope: 'profile', kind: 'interview-prep-dir' },
+  // ── User-shared file (Option-C addition) ────────────────────────────
+  // story-bank.md lives at data/users/{uid}/profiles/_shared/story-bank.md
+  // — shared across that user's profiles. But the mode prompts read it
+  // at `interview-prep/story-bank.md`. Since `interview-prep/` is now
+  // itself a symlink to the profile's interview-prep/, story-bank.md
+  // would land INSIDE that profile dir if we put it there literally —
+  // breaking the cross-profile-sharing guarantee. Resolution: symlink
+  // ONLY the file (not the dir) into the per-profile interview-prep/.
+  // The per-profile interview-prep/ symlink resolves to a real dir under
+  // data/profiles/{slug}/interview-prep/; we then drop a symlink at
+  // <that real dir>/story-bank.md → the user-shared path. Handled in
+  // swapInner() below.
 ];
 
 /**
@@ -131,7 +156,10 @@ export function swapProfileSymlinksForUser(userId: string, profileId: string): v
 
 function swapInner(userId: string, profileId: string): void {
   for (const t of TARGETS) {
-    const dst = profilePathForUser(userId, profileId, t.kind);
+    const dst =
+      t.scope === 'profile'
+        ? profilePathForUser(userId, profileId, t.kind)
+        : userSharedPathForUser(userId, t.kind);
     try {
       fs.mkdirSync(path.dirname(t.legacyPath), { recursive: true });
 
@@ -150,16 +178,48 @@ function swapInner(userId: string, profileId: string): void {
           const currentAbs = path.resolve(path.dirname(t.legacyPath), current);
           if (currentAbs === dst) continue; // already correct
           fs.unlinkSync(t.legacyPath);
+        } else if (stat.isDirectory()) {
+          // For directory targets (jds/, writing-samples/, interview-prep/)
+          // a REAL directory at the legacy path means the user (or an old
+          // checkout) created content there. Don't clobber it — the
+          // migration helper (profile-migrate.ts) should move the content
+          // into the per-profile location first.
+          logEvent('profile-symlinks', 'Legacy path is a real directory — skipping symlink', {
+            level: 'warn',
+            category: 'system',
+            message:
+              t.legacyPath +
+              ' (expected a symlink or absent). Move the content into ' +
+              dst +
+              ' and re-run migration.',
+          });
+          continue;
         } else {
           logEvent('profile-symlinks', 'Legacy path is a real file — skipping symlink', {
             level: 'warn',
             category: 'system',
             message:
               t.legacyPath +
-              ' (expected a symlink). Move the file into data/users/{userId}/profiles/{slug}/ and re-run migration.',
+              ' (expected a symlink). Move the file into ' +
+              dst +
+              ' and re-run migration.',
           });
           continue;
         }
+      }
+      // Make sure the target dir exists for directory symlinks — otherwise
+      // the AI CLI gets a dangling symlink and reading the dir errors out.
+      if (
+        t.scope === 'profile' &&
+        (t.kind === 'jds-dir' ||
+          t.kind === 'writing-samples-dir' ||
+          t.kind === 'interview-prep-dir' ||
+          t.kind === 'reports-dir' ||
+          t.kind === 'output-dir')
+      ) {
+        fs.mkdirSync(dst, { recursive: true });
+      } else if (t.scope === 'user-shared') {
+        fs.mkdirSync(path.dirname(dst), { recursive: true });
       }
       // Relative symlink so a repo move doesn't break it.
       const rel = path.relative(path.dirname(t.legacyPath), dst);
@@ -171,5 +231,55 @@ function swapInner(userId: string, profileId: string): void {
         message: t.legacyPath + ': ' + (e instanceof Error ? e.message : String(e)),
       });
     }
+  }
+
+  // story-bank.md lives ONE LEVEL DEEPER than the TARGETS loop handles —
+  // it sits at `interview-prep/story-bank.md`, where `interview-prep/` is
+  // itself a symlink (handled in the loop above). The per-profile target
+  // dir for that symlink is `data/users/{uid}/profiles/{slug}/interview-prep/`,
+  // but story-bank.md is user-shared (lives at
+  // `data/users/{uid}/profiles/_shared/story-bank.md`). We drop a symlink
+  // INSIDE the per-profile interview-prep/ pointing at the shared file.
+  // This way every profile's interview-prep/ contains the same story-bank.md.
+  try {
+    const interviewPrepDir = profilePathForUser(userId, profileId, 'interview-prep-dir');
+    fs.mkdirSync(interviewPrepDir, { recursive: true });
+    const storyBankLink = path.join(interviewPrepDir, 'story-bank.md');
+    const storyBankTarget = userSharedPathForUser(userId, 'story-bank');
+    fs.mkdirSync(path.dirname(storyBankTarget), { recursive: true });
+
+    let stat: fs.Stats | null = null;
+    try {
+      stat = fs.lstatSync(storyBankLink);
+    } catch {
+      stat = null;
+    }
+    if (stat) {
+      if (stat.isSymbolicLink()) {
+        const current = fs.readlinkSync(storyBankLink);
+        const currentAbs = path.resolve(path.dirname(storyBankLink), current);
+        if (currentAbs === storyBankTarget) return; // already correct
+        fs.unlinkSync(storyBankLink);
+      } else {
+        logEvent('profile-symlinks', 'interview-prep/story-bank.md is a real file — skipping', {
+          level: 'warn',
+          category: 'system',
+          message:
+            storyBankLink +
+            ' (expected a symlink). Move the content into ' +
+            storyBankTarget +
+            ' and re-run.',
+        });
+        return;
+      }
+    }
+    const rel = path.relative(path.dirname(storyBankLink), storyBankTarget);
+    fs.symlinkSync(rel, storyBankLink);
+  } catch (e) {
+    logEvent('profile-symlinks', 'story-bank symlink swap failed', {
+      level: 'warn',
+      category: 'system',
+      message: e instanceof Error ? e.message : String(e),
+    });
   }
 }
