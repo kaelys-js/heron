@@ -380,10 +380,10 @@ Source of truth: `release-please-config.json`, `.github/workflows/release.yml`, 
 
 ## Community and Governance
 
-- **Code of Conduct**: Contributor Covenant 2.1 with enforcement actions (see `CODE_OF_CONDUCT.md`)
-- **Governance**: BDFL model with contributor ladder — Participant → Contributor → Triager → Reviewer → Maintainer (see `GOVERNANCE.md`)
-- **Security**: private vulnerability reporting via email (see `SECURITY.md`)
-- **Support**: help questions go to Discord/Discussions, not issues (see `SUPPORT.md`)
+- **Code of Conduct**: Contributor Covenant 2.1 with enforcement actions (see `.github/CODE_OF_CONDUCT.md`)
+- **Governance**: BDFL model with contributor ladder — Participant → Contributor → Triager → Reviewer → Maintainer (see `docs/GOVERNANCE.md`)
+- **Security**: private vulnerability reporting via email (see `.github/SECURITY.md`)
+- **Support**: help questions go to Discord/Discussions, not issues (see `.github/SUPPORT.md`)
 - **Discord**: https://discord.gg/8pRpHETxa4
 
 ## Headless / Batch Mode
