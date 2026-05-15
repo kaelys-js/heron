@@ -30,7 +30,7 @@ PRs without a corresponding issue may be closed if they don't align with the pro
 - Add companies to `templates/portals.example.yml`
 - Translate modes to other languages
 - Improve documentation
-- Add example CVs for different roles (in `examples/`)
+- Add example CVs for different roles (in `docs/examples/`)
 - Report bugs via [Issues](https://github.com/kaelys-js/career-ops/issues)
 
 **Bigger contributions:**
@@ -51,7 +51,7 @@ PRs without a corresponding issue may be closed if they don't align with the pro
 - **PRs that scrape platforms prohibiting automated access** (LinkedIn, etc.). We actively reject these to respect third-party ToS.
 - **PRs that enable auto-submitting applications** without human review. career-ops is a decision-support tool, not a spam bot.
 - **PRs that add external API dependencies** without prior discussion in an issue.
-- **PRs containing personal data** (real CVs, emails, phone numbers). Use `examples/` with fictional data instead.
+- **PRs containing personal data** (real CVs, emails, phone numbers). Use `docs/examples/` with fictional data instead.
 
 ## Development
 

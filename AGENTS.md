@@ -141,7 +141,7 @@ If `cv.md` is missing, ask:
 Create `cv.md` from whatever they provide. Make it clean markdown with standard sections (Summary, Experience, Projects, Education, Skills).
 
 #### Step 2: Profile (required)
-If `config/profile.yml` is missing, copy from `examples/profile.example.yml` and then ask:
+If `config/profile.yml` is missing, copy from `templates/profile.example.yml` and then ask:
 > "I need a few details to personalize the system:
 > - Your full name and email
 > - Your location and timezone
