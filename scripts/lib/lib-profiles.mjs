@@ -64,6 +64,29 @@ const KINDS = {
   'reports-dir': 'reports',
   'output-dir': 'output',
   'interview-prep-dir': 'interview-prep',
+  // ── Item 4d / Option-C additions ─────────────────────────────────
+  // jds/ — saved JD text files referenced as `local:<file>` in
+  // pipeline.md. Previously at repo-root `jds/` (shared across every
+  // user — privacy leak). Now per-profile so Alice's JDs don't show
+  // up in Bob's pipeline.
+  'jds-dir': 'jds',
+  // writing-samples/ — personal writing samples used to calibrate the
+  // CV/cover-letter voice. Previously at repo-root `writing-samples/`
+  // (shared across every user — privacy leak — calibrating Bob's
+  // voice with Alice's emails). Now per-profile.
+  'writing-samples-dir': 'writing-samples',
+};
+
+const USER_SHARED_KINDS = {
+  // story-bank — STAR+R interview stories that transcend the user's
+  // own profiles (engineer + instructor archetypes both draw on the
+  // same stories about real projects). Lives one level above the
+  // profiles, so it's shared across that user's profiles but NEVER
+  // visible to other users.
+  //
+  // Path: data/users/{userId}/_shared/story-bank.md (multi-user)
+  //   or: data/profiles/_shared/story-bank.md       (legacy single-user)
+  'story-bank': 'story-bank.md',
 };
 
 /** Where this user's profile tree lives. SYSTEM_USER_ID maps to the
@@ -127,11 +150,41 @@ export function profilePath(profileId, kind, userId = SYSTEM_USER_ID) {
   return rel === '' ? base : path.join(base, rel);
 }
 
+/** Resolve a path for a user-shared file (shared across that user's
+ *  profiles but NOT across users). Used for `story-bank.md` which
+ *  transcends profile boundaries within a single user's career.
+ *
+ *  Path layout:
+ *    multi-user  → data/users/{userId}/_shared/{file}
+ *    legacy      → data/profiles/_shared/{file}      (userId === SYSTEM_USER_ID) */
+export function userSharedPath(kind, userId = SYSTEM_USER_ID) {
+  if (!userId || typeof userId !== 'string') {
+    throw new Error(`userSharedPath: userId required (got ${JSON.stringify(userId)})`);
+  }
+  if (userId.includes('/') || userId.includes('\\') || userId.includes('..')) {
+    throw new Error(`userSharedPath: invalid userId (path traversal): ${userId}`);
+  }
+  if (!(kind in USER_SHARED_KINDS)) {
+    throw new Error(
+      `userSharedPath: unknown kind ${kind}. Valid: ${Object.keys(USER_SHARED_KINDS).join(', ')}`,
+    );
+  }
+  const base =
+    userId === SYSTEM_USER_ID
+      ? path.join(LEGACY_PROFILES_ROOT, '_shared')
+      : path.join(USERS_ROOT, userId, '_shared');
+  return path.join(base, USER_SHARED_KINDS[kind]);
+}
+
 export function ensureProfileDirs(profileId, userId = SYSTEM_USER_ID) {
   fs.mkdirSync(profilePath(profileId, 'profile-dir', userId), { recursive: true });
   fs.mkdirSync(profilePath(profileId, 'reports-dir', userId), { recursive: true });
   fs.mkdirSync(profilePath(profileId, 'output-dir', userId), { recursive: true });
   fs.mkdirSync(profilePath(profileId, 'interview-prep-dir', userId), { recursive: true });
+  fs.mkdirSync(profilePath(profileId, 'jds-dir', userId), { recursive: true });
+  fs.mkdirSync(profilePath(profileId, 'writing-samples-dir', userId), { recursive: true });
+  // user-shared dir is created lazily on first write — no profileId needed
+  fs.mkdirSync(path.dirname(userSharedPath('story-bank', userId)), { recursive: true });
 }
 
 /**

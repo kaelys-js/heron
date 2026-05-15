@@ -76,6 +76,17 @@ PROFILE_FILE_KINDS = {
     "reports-dir": "reports",
     "output-dir": "output",
     "interview-prep-dir": "interview-prep",
+    # Item 4d / Option-C additions — see lib-profiles.mjs for rationale.
+    # jds/ → per-profile saved JD text (was repo-root, shared, privacy leak).
+    "jds-dir": "jds",
+    # writing-samples/ → per-profile voice-calibration samples.
+    "writing-samples-dir": "writing-samples",
+}
+
+# User-shared kinds — files that transcend the user's profiles but
+# stay private to that user. Lives one level above the profile tree.
+USER_SHARED_KINDS = {
+    "story-bank": "story-bank.md",
 }
 
 
@@ -129,6 +140,27 @@ def profile_path(profile_id: str, kind: str, *, user_id: str = SYSTEM_USER_ID) -
     return base if rel == "" else base / rel
 
 
+def user_shared_path(kind: str, *, user_id: str = SYSTEM_USER_ID) -> Path:
+    """Resolve a per-user shared-across-profiles file path.
+
+    multi-user → data/users/{user_id}/_shared/{file}
+    legacy     → data/profiles/_shared/{file}        (user_id == SYSTEM_USER_ID)
+    """
+    if not user_id or not isinstance(user_id, str):
+        raise ValueError(f"user_shared_path: user_id required (got {user_id!r})")
+    if "/" in user_id or "\\" in user_id or ".." in user_id:
+        raise ValueError(f"user_shared_path: invalid user_id (path traversal): {user_id!r}")
+    if kind not in USER_SHARED_KINDS:
+        raise ValueError(
+            f"user_shared_path: unknown kind {kind!r}. Valid: {sorted(USER_SHARED_KINDS)}"
+        )
+    if user_id == SYSTEM_USER_ID:
+        base = LEGACY_PROFILES_ROOT / "_shared"
+    else:
+        base = USERS_ROOT / user_id / "_shared"
+    return base / USER_SHARED_KINDS[kind]
+
+
 def ensure_profile_dirs(profile_id: str, *, user_id: str = SYSTEM_USER_ID) -> None:
     """Make sure the profile directory + standard subdirs exist. Idempotent."""
     profile_path(profile_id, "profile-dir", user_id=user_id).mkdir(parents=True, exist_ok=True)
@@ -137,6 +169,12 @@ def ensure_profile_dirs(profile_id: str, *, user_id: str = SYSTEM_USER_ID) -> No
     profile_path(profile_id, "interview-prep-dir", user_id=user_id).mkdir(
         parents=True, exist_ok=True
     )
+    profile_path(profile_id, "jds-dir", user_id=user_id).mkdir(parents=True, exist_ok=True)
+    profile_path(profile_id, "writing-samples-dir", user_id=user_id).mkdir(
+        parents=True, exist_ok=True
+    )
+    # user-shared dir is created lazily on first write
+    user_shared_path("story-bank", user_id=user_id).parent.mkdir(parents=True, exist_ok=True)
 
 
 def resolve_profile_arg(value: str | None) -> str:
