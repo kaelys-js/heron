@@ -99,12 +99,12 @@ Scripts maintain data consistency:
 | `normalize-statuses.mjs` | Maps status aliases to canonical values |
 | `cv-sync-check.mjs` | Validates setup consistency |
 
-## Dashboard TUI
+## Dashboard
 
-The `dashboard/` directory contains a standalone Go TUI application that visualizes the pipeline:
+The SvelteKit dashboard in `ui/` is the canonical UI: multi-profile pipeline,
+tracker, Inbox issues, autonomous-apply controls, autopilot config, and the
+agent-chat panel. Wrapped via Capacitor 8 for iOS/Android and Electron 39 for
+macOS/Windows/Linux.
 
-- Filter tabs: All, Evaluada, Aplicado, Entrevista, Top >=4, No Aplicar
-- Sort modes: Score, Date, Company, Status
-- Grouped/flat view
-- Lazy-loaded report previews
-- Inline status picker
+A standalone Go TUI lived in `dashboard/` historically — it was removed once
+the SvelteKit UI reached feature parity (see commit history).

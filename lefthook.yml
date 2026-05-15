@@ -173,22 +173,6 @@ pre-commit:
         command -v ruff >/dev/null 2>&1 || exit 0
         ruff format --check {staged_files} && ruff check {staged_files}
 
-    gofmt:
-      # Go's stdlib formatter — no install, ships with the toolchain.
-      glob: "*.go"
-      run: |
-        command -v gofmt >/dev/null 2>&1 || exit 0
-        gofmt -w {staged_files} 2>/dev/null || true
-        git add {staged_files} 2>/dev/null || true
-      stage_fixed: true
-
-    gofmt-check:
-      glob: "*.go"
-      run: |
-        command -v gofmt >/dev/null 2>&1 || exit 0
-        diff=$(gofmt -l {staged_files} 2>/dev/null)
-        if [ -n "$diff" ]; then echo "gofmt drift: $diff"; exit 1; fi
-
     ktlint:
       # Kotlin linter + formatter. Installed via brew/sdkman.
       glob: "*.kt"

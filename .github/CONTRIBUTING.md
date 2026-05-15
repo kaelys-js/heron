@@ -35,7 +35,7 @@ PRs without a corresponding issue may be closed if they don't align with the pro
 
 **Bigger contributions:**
 - New evaluation dimensions or scoring logic
-- Dashboard TUI features (in `dashboard/`)
+- Dashboard features (in `ui/` — SvelteKit)
 - New skill modes (in `modes/`)
 - Script improvements (`.mjs` utilities)
 

@@ -3,7 +3,7 @@
 /**
  * update-system.mjs — Safe auto-updater for career-ops
  *
- * Updates ONLY system layer files (modes, scripts, dashboard, templates).
+ * Updates ONLY system layer files (modes, scripts, templates).
  * NEVER touches user data (cv.md, profile.yml, _profile.md, data/, reports/).
  *
  * Usage:
@@ -79,7 +79,6 @@ const SYSTEM_PATHS = [
   'gemini-eval.mjs',
   'batch/batch-prompt.md',
   'batch/batch-runner.sh',
-  'dashboard/',
   'templates/',
   'fonts/',
   '.claude/skills/',
