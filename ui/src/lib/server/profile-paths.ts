@@ -78,7 +78,23 @@ export type ProfileFileKind =
   | 'profile-dir' // the root of this profile's content
   | 'reports-dir'
   | 'output-dir'
-  | 'interview-prep-dir';
+  | 'interview-prep-dir'
+  // Option-C / Item-4d additions — previously at repo-root, now per-profile
+  // for privacy + multi-user isolation. See docs/DATA_CONTRACT.md.
+  | 'jds-dir' // saved JD text files, referenced as `local:<file>` in pipeline.md
+  | 'writing-samples-dir'; // voice-calibration samples (emails, blog posts, etc.)
+
+/**
+ * Files that live ABOVE the profile tree — shared across that user's
+ * profiles but isolated per-user. Used for content that transcends
+ * profile boundaries (e.g. STAR-story bank shared between an engineer
+ * profile and a data-science profile of the same person).
+ *
+ * Path layout:
+ *   multi-user → data/users/{userId}/_shared/{file}
+ *   legacy     → data/profiles/_shared/{file}     (userId === SYSTEM_USER_ID)
+ */
+export type UserSharedFileKind = 'story-bank'; // STAR+R interview stories — see modes/interview-prep.md
 
 const PROFILES_ROOT = path.join(ROOT, 'data', 'profiles');
 const USERS_ROOT = path.join(ROOT, 'data', 'users');
@@ -202,6 +218,34 @@ export function profilePathForUser(
       return path.join(base, 'output');
     case 'interview-prep-dir':
       return path.join(base, 'interview-prep');
+    case 'jds-dir':
+      return path.join(base, 'jds');
+    case 'writing-samples-dir':
+      return path.join(base, 'writing-samples');
+  }
+}
+
+/** Resolve the on-disk path of a user-shared (across-profiles) file
+ *  for the CURRENT user. Use this for content like story-bank.md that
+ *  spans the user's own profiles but stays private to them.
+ *
+ *  Path layout:
+ *    multi-user → data/users/{userId}/_shared/{file}
+ *    legacy     → data/profiles/_shared/{file}     (SYSTEM_USER_ID) */
+export function userSharedPath(kind: UserSharedFileKind): string {
+  return userSharedPathForUser(currentUserIdOrDefault(), kind);
+}
+
+/** Like `userSharedPath` but takes an explicit userId. */
+export function userSharedPathForUser(userId: string, kind: UserSharedFileKind): string {
+  validateUserId(userId);
+  const base =
+    userId === SYSTEM_USER_ID
+      ? path.join(PROFILES_ROOT, '_shared')
+      : path.join(USERS_ROOT, userId, '_shared');
+  switch (kind) {
+    case 'story-bank':
+      return path.join(base, 'story-bank.md');
   }
 }
 
@@ -218,6 +262,11 @@ export function ensureProfileDirsForUser(userId: string, profileId: string): voi
   fs.mkdirSync(profilePathForUser(userId, profileId, 'reports-dir'), { recursive: true });
   fs.mkdirSync(profilePathForUser(userId, profileId, 'output-dir'), { recursive: true });
   fs.mkdirSync(profilePathForUser(userId, profileId, 'interview-prep-dir'), { recursive: true });
+  fs.mkdirSync(profilePathForUser(userId, profileId, 'jds-dir'), { recursive: true });
+  fs.mkdirSync(profilePathForUser(userId, profileId, 'writing-samples-dir'), { recursive: true });
+  // The user-shared dir lives one level above profiles — create it on the
+  // first profile-creation event so userSharedPath() reads always resolve.
+  fs.mkdirSync(path.dirname(userSharedPathForUser(userId, 'story-bank')), { recursive: true });
 }
 
 // D20 — `profileDirExists` removed: no caller. Use `fs.existsSync(profilePath(id, 'profile-dir'))`
