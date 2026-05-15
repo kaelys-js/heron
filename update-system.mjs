@@ -12,7 +12,7 @@
  *   node update-system.mjs rollback   # Rollback last update
  *   node update-system.mjs dismiss    # Dismiss update check
  *
- * See DATA_CONTRACT.md for the full system/user layer definitions.
+ * See docs/DATA_CONTRACT.md for the full system/user layer definitions.
  */
 
 import { execFileSync, execSync } from 'child_process';
@@ -86,7 +86,6 @@ const SYSTEM_PATHS = [
   '.gemini/commands/',
   'docs/',
   'VERSION',
-  'DATA_CONTRACT.md',
   'README.md',
   'LICENSE',
   'CITATION.cff',

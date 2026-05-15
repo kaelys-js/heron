@@ -87,7 +87,7 @@ export async function generateInterviewPrep(
   const storyBank = readSafe(path.join(ROOT, 'interview-prep', 'story-bank.md')).slice(0, 4000);
   // P4: article-digest.md per profile — proof points + portfolio context.
   const articleDigest = readSafe(profilePath(id, 'article-digest')).slice(0, 3000);
-  // D26: writing-samples/ (shared per DATA_CONTRACT.md) — concatenate
+  // D26: writing-samples/ (shared per docs/DATA_CONTRACT.md) — concatenate
   // every `*.md` in the directory so the brief uses the user's actual
   // voice rather than generic phrasing. Bounded at 3000 chars total.
   let writingSamples = '';
