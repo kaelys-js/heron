@@ -87,7 +87,6 @@ const SYSTEM_PATHS = [
   'docs/',
   'VERSION',
   'DATA_CONTRACT.md',
-  'CONTRIBUTING.md',
   'README.md',
   'LICENSE',
   'CITATION.cff',

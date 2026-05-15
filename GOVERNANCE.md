@@ -21,7 +21,7 @@ Anyone can grow their role in the project. Roles are earned through sustained, q
 
 **Everyone starts here.**
 
-- Follow the [Code of Conduct](CODE_OF_CONDUCT.md)
+- Follow the [Code of Conduct](.github/CODE_OF_CONDUCT.md)
 - Open issues, comment on PRs, help others in Discord
 - Submit bug reports with reproduction steps
 

@@ -44,7 +44,7 @@
 
 ## Checklist
 
-- [ ] I have read [CONTRIBUTING.md](../CONTRIBUTING.md)
+- [ ] I have read [CONTRIBUTING.md](CONTRIBUTING.md)
 - [ ] I linked a related issue above (required for features + arch changes)
 - [ ] My PR title follows [Conventional Commits](https://www.conventionalcommits.org/)
 - [ ] My PR does not include personal data (real CV / email / names / API keys)
