@@ -641,22 +641,36 @@ export async function runBulkOfertaParallel(
     return { started: false, total: 0 };
   }
   if (urls.length === 0) return { started: false, total: 0 };
-  // batch-runner.sh reads profile context from the symlinks at repo root.
-  // Swap them once up front so every spawned worker reads from the right
-  // profile. The runner is serial-spawn-per-worker so concurrent swaps
-  // aren't a risk here.
-  if (profileId) {
-    try {
-      const { swapProfileSymlinks } =
-        require('./profile-symlinks') as typeof import('./profile-symlinks');
-      swapProfileSymlinks(profileId);
-    } catch (e) {
-      logEvent('bulk-cv', 'Symlink swap failed — batch may read wrong profile', {
-        level: 'warn',
-        category: 'task',
-        message: e instanceof Error ? e.message : String(e),
-      });
-    }
+  // Pre-resolve the __TOKEN__ placeholders in batch-prompt.md against
+  // the active profile + write the realized prompt to a temp file. The
+  // batch worker (batch-runner.sh) then layers its per-job substitutions
+  // ({{URL}}, {{JD_FILE}}, etc.) on top before passing to the AI CLI.
+  // Resolving profile-paths happens HERE (not in bash) so we don't have
+  // to teach the shell script about the multi-user profile layout.
+  const { realizeModePromptForUser } =
+    require('./mode-substitution') as typeof import('./mode-substitution');
+  const { getActiveProfileId } = require('./profiles') as typeof import('./profiles');
+  const resolvedProfileId = profileId ?? getActiveProfileId();
+  const userId = maybeCurrentUserId() ?? SYSTEM_USER_ID;
+  let batchPromptTempFile: string | undefined;
+  try {
+    const realizedPrompt = realizeModePromptForUser(
+      userId,
+      resolvedProfileId,
+      path.join(ROOT, 'batch', 'batch-prompt.md'),
+    );
+    batchPromptTempFile = path.join(
+      require('node:os').tmpdir(),
+      'career-ops-batch-prompt-' + Date.now() + '.md',
+    );
+    fs.writeFileSync(batchPromptTempFile, realizedPrompt, 'utf8');
+  } catch (e) {
+    logEvent('bulk-cv', 'Failed to resolve batch-prompt tokens', {
+      level: 'error',
+      category: 'task',
+      message: e instanceof Error ? e.message : String(e),
+    });
+    return { started: false, total: 0 };
   }
 
   // Build the batch-input.tsv from the URL list. Format expected by
@@ -689,7 +703,16 @@ export async function runBulkOfertaParallel(
   try {
     p = spawn('bash', ['batch/batch-runner.sh', '--parallel', String(w)], {
       cwd: ROOT,
-      env: { ...process.env },
+      env: {
+        ...process.env,
+        // Tell batch-runner.sh to use the pre-resolved prompt (tokens
+        // expanded against the active profile) instead of reading
+        // batch/batch-prompt.md literally.
+        ...(batchPromptTempFile ? { BATCH_PROMPT_FILE: batchPromptTempFile } : {}),
+        // Forward the active profile slug so the runner can resolve
+        // per-profile REPORTS_DIR / APPLICATIONS_FILE paths.
+        CAREER_OPS_PROFILE_ID: resolvedProfileId,
+      },
     });
   } catch (e) {
     running.delete('bulk-cv');
