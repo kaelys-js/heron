@@ -4,7 +4,9 @@
  * the user never added to their pipeline, or external integrations).
  *
  * The per-Job equivalent `/api/job/[id]/interview-prep` persists the
- * resulting brief at `data/profiles/{id}/interview-prep/<jobId>.md`.
+ * resulting brief in the active user's `profiles/{id}/interview-prep/<jobId>.md`
+ * (i.e. `data/users/{uid}/profiles/{id}/interview-prep/<jobId>.md`, or
+ * `data/profiles/{id}/interview-prep/<jobId>.md` in legacy single-user installs).
  * This endpoint returns the brief inline without persistence, so users
  * who don't want the brief filed away can call it ad-hoc.
  *

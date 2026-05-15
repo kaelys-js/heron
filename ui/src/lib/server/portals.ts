@@ -2,8 +2,10 @@
  * Read/write per-profile `portals.yml` — the scanner's source of truth for
  * tracked companies, title filters, and search queries.
  *
- * Each profile owns its own portals.yml under `data/profiles/{id}/portals.yml`
- * (electrician's tracked companies are very different from software's). On
+ * Each profile owns its own portals.yml under
+ * `data/users/{uid}/profiles/{id}/portals.yml` (or `data/profiles/{id}/portals.yml`
+ * in legacy single-user installs) — electrician's tracked companies are very
+ * different from software's. On
  * first read for a profile, if portals.yml doesn't exist there, we fall back
  * to the bundled template `templates/portals.example.yml` so the user inherits
  * the curated 100+-company starter list — then writes seed it into the

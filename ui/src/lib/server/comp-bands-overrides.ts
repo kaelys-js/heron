@@ -5,7 +5,8 @@
  * data. They WILL drift. This module:
  *   1. Tags the defaults with a known last-updated date
  *   2. Lets the user override any band per profile via JSONL at
- *      data/profiles/{slug}/comp-bands.jsonl
+ *      `data/users/{uid}/profiles/{slug}/comp-bands.jsonl` (or
+ *      `data/profiles/{slug}/comp-bands.jsonl` in legacy single-user installs)
  *   3. Surfaces a staleness warning when the bands are >6 months old
  *      AND the user has no overrides
  *   4. Exposes mergedBands(profileId) = defaults overlaid with overrides

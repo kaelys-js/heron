@@ -1,8 +1,9 @@
 /**
  * form-answers-cache — per-question persistent cache shared across all jobs.
  *
- * Storage: data/profiles/{slug}/form-answers-cache.jsonl
- *   One row per question, append-only with last-write-wins on `key`.
+ * Storage: `data/users/{uid}/profiles/{slug}/form-answers-cache.jsonl` (or
+ *   `data/profiles/{slug}/form-answers-cache.jsonl` in legacy single-user
+ *   installs). One row per question, append-only with last-write-wins on `key`.
  *
  * Row shape:
  *   {

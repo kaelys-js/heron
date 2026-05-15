@@ -190,9 +190,11 @@
             <li>
               <strong>Generic cover-letter quality.</strong> Each autonomous apply generates a fresh
               cover letter via Claude. Quality varies and is sometimes worse than what a human would
-              write. The generated cover lives under
-              <code class="font-mono">data/profiles/&lt;slug&gt;/output/</code>
-              so you can audit it post-apply.
+              write. The generated cover lives under the active user's
+              <code class="font-mono">profiles/&lt;slug&gt;/output/</code> dir (<code
+                class="font-mono">data/users/&lt;uid&gt;/profiles/&lt;slug&gt;/output/</code
+              >, or <code class="font-mono">data/profiles/&lt;slug&gt;/output/</code> in legacy single-user
+              installs) so you can audit it post-apply.
             </li>
             <li>
               <strong>Selector breakage.</strong> Every ATS rebuilds its forms eventually. When that

@@ -391,9 +391,13 @@
     {/if}
 
     <p class="text-[11px] text-muted-foreground/60 leading-relaxed pt-1 border-t border-border/30">
-      Storage: <code class="font-mono">data/profiles/{profileId}/form-answers-cache.jsonl</code>.
-      Question labels are normalized (lowercase, no punctuation, stripped of "the/a/an/please") so
-      "Why this role?" and "why-this-role" hit the same cache slot.
+      Storage: the active user's
+      <code class="font-mono">profiles/{profileId}/form-answers-cache.jsonl</code>
+      (<code class="font-mono"
+        >data/users/&lcub;uid&rcub;/profiles/{profileId}/form-answers-cache.jsonl</code
+      >, or <code class="font-mono">data/profiles/{profileId}/form-answers-cache.jsonl</code> in legacy
+      single-user installs). Question labels are normalized (lowercase, no punctuation, stripped of "the/a/an/please")
+      so "Why this role?" and "why-this-role" hit the same cache slot.
     </p>
   </Card.Content>
 </Card.Root>

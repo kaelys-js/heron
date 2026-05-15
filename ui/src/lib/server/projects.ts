@@ -4,8 +4,10 @@
  * (e.g. "Vancouver Senior", "Remote US Staff", "Founding Engineer").
  *
  * Per-profile storage: each career profile owns its own `projects.json`. The
- * file lives at `data/profiles/{slug}/projects.json` and is one of the items
- * the migration (`profile-migrate.ts`) moves out of the flat layout.
+ * file lives at `data/users/{uid}/profiles/{slug}/projects.json` (or
+ * `data/profiles/{slug}/projects.json` in legacy single-user installs) and is
+ * one of the items the migration (`profile-migrate.ts`) moves out of the flat
+ * layout.
  *
  * Every read/write accepts an optional `profileId` first argument. Legacy
  * call shapes without `profileId` resolve to the active profile.

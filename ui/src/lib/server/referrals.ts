@@ -8,7 +8,8 @@
  * double-ask.
  *
  * Storage:
- *   data/profiles/{slug}/referral-asks.jsonl
+ *   `data/users/{uid}/profiles/{slug}/referral-asks.jsonl` (or
+ *   `data/profiles/{slug}/referral-asks.jsonl` in legacy single-user installs).
  *   Each line: { jobId, company, contactName, contactLinkedIn?,
  *               askedAt, status: 'asked'|'replied-yes'|'replied-no'|'silent',
  *               notes? }

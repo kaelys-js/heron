@@ -5,8 +5,10 @@
  *   POST   body { label, answer }     → upsert one answer
  *   DELETE body { key }               → delete one answer
  *
- * The cache lives at data/profiles/{slug}/form-answers-cache.jsonl and is
- * READ by apply-greenhouse.py + apply-ashby.py at form-fill time. Future
+ * The cache lives at `data/users/{uid}/profiles/{slug}/form-answers-cache.jsonl`
+ * (or `data/profiles/{slug}/form-answers-cache.jsonl` in legacy single-user
+ * installs) and is READ by apply-greenhouse.py + apply-ashby.py at
+ * form-fill time. Future
  * adapters (Lever, Workable, Workday, Indeed, …) should use the same
  * lib_apply.load_form_answers() helper so the cache is portal-agnostic.
  */
