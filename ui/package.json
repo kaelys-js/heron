@@ -1,6 +1,6 @@
 {
   "name": "ui",
-  "version": "1.6.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Career Ops SvelteKit dashboard — multi-user, multi-platform (web + iOS + Android + Electron).",
   "homepage": "https://career-ops.org",
