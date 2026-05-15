@@ -72,7 +72,7 @@ from lib_apply import (  # noqa: E402
     is_eeo_label,
     auto_decline_eeo,
 )
-from lib_profiles import resolve_profile_arg, profile_path  # noqa: E402
+from lib_profiles import resolve_profile_arg, resolve_user_arg, profile_path  # noqa: E402
 
 USER_DATA_DIR = REPO_ROOT / ".playwright-ashby"
 DISPATCHER_JOB_ID: str = ""
@@ -316,8 +316,9 @@ def run(args) -> int:
     global DISPATCHER_JOB_ID
     DISPATCHER_JOB_ID = args.job_id or ""
 
+    user_id = resolve_user_arg()
     profile_id = resolve_profile_arg(args.profile)
-    profile_yml = profile_path(profile_id, "profile-yml")
+    profile_yml = profile_path(profile_id, "profile-yml", user_id=user_id)
     if not profile_yml.exists():
         return emit_result("error", "profile-missing")
     with profile_yml.open() as f:
@@ -335,7 +336,7 @@ def run(args) -> int:
 
     pdf_path = Path(args.pdf) if args.pdf else None
     if not pdf_path or not pdf_path.exists():
-        out_dir = profile_path(profile_id, "output-dir")
+        out_dir = profile_path(profile_id, "output-dir", user_id=user_id)
         try:
             cands = sorted(
                 [p for p in out_dir.glob("*.pdf") if "cv-general" not in p.name],

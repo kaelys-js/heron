@@ -403,15 +403,12 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
       message: e instanceof Error ? e.message : String(e),
     });
   }
-  const env = { ...process.env };
+  const env: NodeJS.ProcessEnv = { ...process.env };
   if (autoSubmit) env.LINKEDIN_AUTO_SUBMIT = '1';
   // Pass the acting user id so lib_profiles.py resolves the right
   // data/users/{userId}/profiles/{slug}/ tree.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { maybeCurrentUserId: _curUser, SYSTEM_USER_ID: _sys } =
-    require('./user-context') as typeof import('./user-context');
-  const _uid = _curUser();
-  if (_uid && _uid !== _sys) env.CAREER_OPS_USER_ID = _uid;
+  const _uid = maybeCurrentUserId();
+  if (_uid && _uid !== SYSTEM_USER_ID) env.CAREER_OPS_USER_ID = _uid;
   // Surface up-front whether the general CV is missing for the targeted profile.
   let cvNote = '';
   try {
@@ -1055,11 +1052,17 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boo
       });
     }
 
+    // Forward CAREER_OPS_USER_ID so the Python script resolves the right
+    // data/users/{userId}/profiles/{slug}/ tree under multi-user.
+    const env: NodeJS.ProcessEnv = { ...process.env };
+    const _uid = maybeCurrentUserId();
+    if (_uid && _uid !== SYSTEM_USER_ID) env.CAREER_OPS_USER_ID = _uid;
+
     let p: ChildProcess;
     try {
       p = spawn(venvPython(), ['scripts/apply/linkedin-easy-apply.py', '--url', url], {
         cwd: ROOT,
-        env: { ...process.env },
+        env,
       });
     } catch (e) {
       logEvent('apply-linkedin', 'Failed to spawn LinkedIn Easy Apply', {

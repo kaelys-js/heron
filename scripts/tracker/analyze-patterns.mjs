@@ -13,11 +13,12 @@
 
 import { readFileSync, existsSync } from 'fs';
 import { dirname, join } from 'path';
-import { profilePath, profileFromArgv } from '../lib/lib-profiles.mjs';
+import { profilePath, profileFromArgv, userFromArgv } from '../lib/lib-profiles.mjs';
 
+const USER_ID = userFromArgv();
 const PROFILE_ID = profileFromArgv();
-const APPS_FILE = profilePath(PROFILE_ID, 'applications');
-const REPORTS_DIR = profilePath(PROFILE_ID, 'reports-dir');
+const APPS_FILE = profilePath(PROFILE_ID, 'applications', USER_ID);
+const REPORTS_DIR = profilePath(PROFILE_ID, 'reports-dir', USER_ID);
 /** Profile directory — base for resolving relative `reports/...` links
  *  inside applications.md. Previously this was the script's own dir,
  *  which always failed silently (the report files live under the

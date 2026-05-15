@@ -48,7 +48,7 @@ sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 PIPELINE: Path = REPO_ROOT / "data" / "pipeline.md"  # placeholder; overridden in main()
 HISTORY: Path = REPO_ROOT / "data" / "scan-history.tsv"
 
-from lib_profiles import resolve_profile_arg, profile_path, ensure_profile_dirs
+from lib_profiles import resolve_profile_arg, resolve_user_arg, profile_path, ensure_profile_dirs
 
 # ----- Cole's search profiles -----
 # results_wanted is per (search, source) combination — JobSpy fans out to
@@ -645,10 +645,11 @@ def main():
         except Exception as e:
             print(f"probe failed: {e}", file=sys.stderr)
             sys.exit(3)
+    user_id = resolve_user_arg()
     profile_id = resolve_profile_arg(args.profile)
-    ensure_profile_dirs(profile_id)
-    PIPELINE = profile_path(profile_id, "pipeline")
-    HISTORY = profile_path(profile_id, "scan-history")
+    ensure_profile_dirs(profile_id, user_id=user_id)
+    PIPELINE = profile_path(profile_id, "pipeline", user_id=user_id)
+    HISTORY = profile_path(profile_id, "scan-history", user_id=user_id)
 
     selected = list(SOURCES.keys())
     if args.only:

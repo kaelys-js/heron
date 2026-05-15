@@ -29,18 +29,25 @@ import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } fr
 import path from 'path';
 import dotenv from 'dotenv';
 import { ImapFlow } from 'imapflow';
-import { profilePath, ensureProfileDirs, profileFromArgv } from '../lib/lib-profiles.mjs';
+import {
+  profilePath,
+  ensureProfileDirs,
+  profileFromArgv,
+  userFromArgv,
+} from '../lib/lib-profiles.mjs';
 
 const ROOT = path.resolve(process.cwd());
 const ENV_FILE = path.join(ROOT, '.env');
 
-// Resolve profile from argv (--profile <slug>). Output lands in that
-// profile's pipeline / applications / scan-history.
+// Resolve user + profile from argv (--user/--profile) or env vars set by
+// the orchestrator. Output lands in that user+profile's pipeline /
+// applications / scan-history.
+const USER_ID = userFromArgv();
 const PROFILE_ID = profileFromArgv();
-ensureProfileDirs(PROFILE_ID);
-const PIPELINE = profilePath(PROFILE_ID, 'pipeline');
-const APPLICATIONS = profilePath(PROFILE_ID, 'applications');
-const SCAN_HISTORY = profilePath(PROFILE_ID, 'scan-history');
+ensureProfileDirs(PROFILE_ID, USER_ID);
+const PIPELINE = profilePath(PROFILE_ID, 'pipeline', USER_ID);
+const APPLICATIONS = profilePath(PROFILE_ID, 'applications', USER_ID);
+const SCAN_HISTORY = profilePath(PROFILE_ID, 'scan-history', USER_ID);
 
 // Load .env so creds populate process.env
 if (existsSync(ENV_FILE)) {

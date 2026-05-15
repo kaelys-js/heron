@@ -6,14 +6,20 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { profilePath, ensureProfileDirs, profileFromArgv } from '../lib/lib-profiles.mjs';
+import {
+  profilePath,
+  ensureProfileDirs,
+  profileFromArgv,
+  userFromArgv,
+} from '../lib/lib-profiles.mjs';
 
+const USER_ID = userFromArgv();
 const PROFILE_ID = profileFromArgv();
-ensureProfileDirs(PROFILE_ID);
-const PIPELINE = profilePath(PROFILE_ID, 'pipeline');
-const APPLICATIONS = profilePath(PROFILE_ID, 'applications');
-// Per-profile batch workspace. Was repo-root batch/ pre-multi-user.
-const SKIPPED_TSV = join(profilePath(PROFILE_ID, 'batch-dir'), 'pipeline-skipped.tsv');
+ensureProfileDirs(PROFILE_ID, USER_ID);
+const PIPELINE = profilePath(PROFILE_ID, 'pipeline', USER_ID);
+const APPLICATIONS = profilePath(PROFILE_ID, 'applications', USER_ID);
+// Per-user per-profile batch workspace. Was repo-root batch/ pre-multi-user.
+const SKIPPED_TSV = join(profilePath(PROFILE_ID, 'batch-dir', USER_ID), 'pipeline-skipped.tsv');
 
 const today = '2026-05-05';
 

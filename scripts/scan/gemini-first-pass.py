@@ -42,7 +42,7 @@ ROOT = Path(__file__).parent
 REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
-from lib_profiles import resolve_profile_arg, profile_path, ensure_profile_dirs
+from lib_profiles import resolve_profile_arg, resolve_user_arg, profile_path, ensure_profile_dirs
 
 # Per-profile; set in main() after --profile is resolved. Placeholders so
 # module-level imports + type-checkers don't choke.
@@ -174,11 +174,12 @@ def main():
     )
     args = parser.parse_args()
 
+    user_id = resolve_user_arg()
     profile_id = resolve_profile_arg(args.profile)
-    ensure_profile_dirs(profile_id)
-    PIPELINE = profile_path(profile_id, "pipeline")
-    SCORES_TSV = profile_path(profile_id, "gemini-scores")
-    CV_MD = profile_path(profile_id, "cv-md")
+    ensure_profile_dirs(profile_id, user_id=user_id)
+    PIPELINE = profile_path(profile_id, "pipeline", user_id=user_id)
+    SCORES_TSV = profile_path(profile_id, "gemini-scores", user_id=user_id)
+    CV_MD = profile_path(profile_id, "cv-md", user_id=user_id)
 
     jobs = parse_pipeline()
     print(f"Loaded {len(jobs)} pending jobs from {PIPELINE.name}")

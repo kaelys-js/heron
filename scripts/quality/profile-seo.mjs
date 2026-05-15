@@ -41,6 +41,7 @@
 
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve, join } from 'node:path';
+import { profilePath, profileFromArgv, userFromArgv } from '../lib/lib-profiles.mjs';
 
 const args = process.argv.slice(2);
 const jsonOutput = args.includes('--json');
@@ -54,7 +55,8 @@ const aboutArg = (() => {
 })();
 const stdinFlag = args.includes('-');
 
-const ROOT = resolve(import.meta.dirname);
+// scripts/quality/ -> scripts/ -> repo root (../.. from this script).
+const ROOT = resolve(import.meta.dirname, '..', '..');
 
 const G = '\x1b[32m';
 const Y = '\x1b[33m';
@@ -64,14 +66,12 @@ const DIM = '\x1b[2m';
 const N = '\x1b[0m';
 
 function activeProfileDir() {
-  const profilesJson = join(ROOT, 'data', 'profiles.json');
-  if (!existsSync(profilesJson)) return join(ROOT, 'data', 'profiles', 'default');
-  try {
-    const parsed = JSON.parse(readFileSync(profilesJson, 'utf8'));
-    return join(ROOT, 'data', 'profiles', parsed.activeId || 'default');
-  } catch {
-    return join(ROOT, 'data', 'profiles', 'default');
-  }
+  // Resolves to data/users/{uid}/profiles/{slug}/ when CAREER_OPS_USER_ID
+  // is set (orchestrator passthrough); falls back to data/profiles/{slug}/
+  // under SYSTEM_USER_ID for legacy single-user installs.
+  const userId = userFromArgv();
+  const profileId = profileFromArgv();
+  return profilePath(profileId, 'profile-dir', userId);
 }
 
 function readProfileYaml(dir) {

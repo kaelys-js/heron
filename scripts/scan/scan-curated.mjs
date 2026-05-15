@@ -36,16 +36,22 @@
 
 import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from 'fs';
 import yaml from 'js-yaml';
-import { profilePath, ensureProfileDirs, profileFromArgv } from '../lib/lib-profiles.mjs';
+import {
+  profilePath,
+  ensureProfileDirs,
+  profileFromArgv,
+  userFromArgv,
+} from '../lib/lib-profiles.mjs';
 const parseYaml = yaml.load;
 
+const USER_ID = userFromArgv();
 const PROFILE_ID = profileFromArgv();
-ensureProfileDirs(PROFILE_ID);
+ensureProfileDirs(PROFILE_ID, USER_ID);
 
-const PORTALS_PATH = profilePath(PROFILE_ID, 'portals-yml');
-const SCAN_HISTORY_PATH = profilePath(PROFILE_ID, 'scan-history');
-const PIPELINE_PATH = profilePath(PROFILE_ID, 'pipeline');
-const APPLICATIONS_PATH = profilePath(PROFILE_ID, 'applications');
+const PORTALS_PATH = profilePath(PROFILE_ID, 'portals-yml', USER_ID);
+const SCAN_HISTORY_PATH = profilePath(PROFILE_ID, 'scan-history', USER_ID);
+const PIPELINE_PATH = profilePath(PROFILE_ID, 'pipeline', USER_ID);
+const APPLICATIONS_PATH = profilePath(PROFILE_ID, 'applications', USER_ID);
 
 const FETCH_TIMEOUT_MS = 12_000;
 // 50 pages × 50 jobs = 2500 jobs ceiling. Loop short-circuits as soon as
