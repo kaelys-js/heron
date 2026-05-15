@@ -290,7 +290,7 @@ Default modes are in `modes/` (English). Additional language-specific modes are 
 | **mise** | Auto-manages Node + pnpm + Ruby versions per directory | `.mise.toml` |
 | **pnpm** | Package manager + workspace orchestration | `package.json::packageManager`, `pnpm-workspace.yaml` |
 | **turbo** | Task graph + cache for `build` / `check` / `brand` across workspaces | `turbo.json` |
-| **biome** | Format-only (no linting — svelte-check covers that) | `biome.json` |
+| **biome** | Format-only (no linting — svelte-check covers that) | `biome.jsonc` |
 | **lefthook** | Git hooks manager (pre-commit + pre-push) | `lefthook.yml` |
 
 **Hooks (lefthook):**

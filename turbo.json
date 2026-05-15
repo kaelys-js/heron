@@ -7,7 +7,7 @@
     "branding/logo.svg",
     "package.json",
     ".mise.toml",
-    "biome.json",
+    "biome.jsonc",
     "pnpm-workspace.yaml",
     ".npmrc"
   ],
@@ -112,7 +112,7 @@
         "**/*.jsonc",
         "**/*.yaml",
         "**/*.yml",
-        "biome.json",
+        "biome.jsonc",
         "**/.prettierrc",
         "**/.prettierrc.json",
         ".prettierignore"
