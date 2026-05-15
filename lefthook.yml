@@ -226,7 +226,12 @@ pre-commit:
       # Ruby formatter. Pinned in the root Gemfile so `bundle exec rufo`
       # uses the same version on every machine (mise installs Ruby, then
       # `bundle install` resolves the gem against it).
-      glob: "*.rb"
+      #
+      # Glob matches both `.rb` source files AND extensionless `Gemfile`
+      # (root + ui/ios/App/). Gemfile.lock is auto-generated and stays
+      # untouched (the .editorconfig "files we never reformat" block
+      # already calls this out).
+      glob: "{*.rb,**/Gemfile,Gemfile}"
       run: |
         command -v bundle >/dev/null 2>&1 || { echo "skip: bundler not on PATH (run mise install)"; exit 0; }
         bundle exec rufo {staged_files} 2>/dev/null || true
