@@ -722,8 +722,14 @@ function applyAppHtml(brand) {
   const subs = [
     // localStorage:<brand>:theme key — must match what theme.svelte.ts writes
     [/'[^']*:theme'/, `'${brand.name}:theme'`],
-    // Mask icon color (Safari pinned-tab) — use the brand accent
-    [/(rel="mask-icon"[^>]*color=")[^"]*(")/, `$1${brand.colors.accentEmeraldDark}$2`],
+    // Mask icon color (Safari pinned-tab) — use the brand accent.
+    // Reads `colors.accent` (new schema) with legacy `accentEmeraldDark`
+    // fallback for any unmigrated forks. Falls through to `primary` if
+    // neither accent is defined.
+    [
+      /(rel="mask-icon"[^>]*color=")[^"]*(")/,
+      `$1${brand.colors.accent ?? brand.colors.accentEmeraldDark ?? brand.colors.primary}$2`,
+    ],
     // og:description / og:title / og:site_name
     [/(og:description"\s+content=")[^"]*(")/, `$1${brand.tagline}$2`],
     [/(og:site_name"\s+content=")[^"]*(")/, `$1${brand.displayName}$2`],

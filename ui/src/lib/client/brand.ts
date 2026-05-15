@@ -19,13 +19,16 @@ export const BRAND = {
   keychainService: "com.heron.app",
   capacitorPluginName: "HeronNative",
   colors: {
-    "$comment": "Colors stay on the legacy career-ops palette until Task 10 — the new Heron tokens (Slate #4a5b6d, Dawn #c89b4a, Reed #7a8c6d, warm-paper #f7f5f0, etc.) ship together with ui/src/app.css token wiring and the component-level color sweep. Task 10 will replace this entire block.",
-    "primary": "#5b6cff",
-    "accentEmeraldLight": "#34d399",
-    "accentEmeraldDark": "#10b981",
-    "darkBg": "#0a0a0b",
-    "darkSurface": "#18181b",
-    "lightOnDark": "#e4e4e7"
+    "$comment": "Heron 9-key palette. Spec: branding/COLORS.md. The full 22-token CSS system in ui/src/app.css derives from these 9 bases (status colors and text scale are static across brands).",
+    "primary": "#4a5b6d",
+    "accent": "#c89b4a",
+    "accentSecondary": "#7a8c6d",
+    "darkBg": "#0e1014",
+    "darkSurface": "#14181f",
+    "lightBg": "#f7f5f0",
+    "lightSurface": "#fffefa",
+    "textOnDark": "#e8eaed",
+    "textOnLight": "#1a1f26"
   },
   repo: {
     "owner": "heron",

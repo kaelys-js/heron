@@ -33,7 +33,7 @@ const config = {
   appendUserAgent: 'heron/native',
   /** Backgrounds the WebView shows before the first paint. Matches the
    *  dark-mode theme so users don't see a white flash. */
-  backgroundColor: '#0a0a0b',
+  backgroundColor: '#0e1014',
   ios: {
     // Custom URL scheme — matches CFBundleURLTypes in Info.plist so the
     // WebView origin and deep-link scheme are the same. Default of
@@ -114,7 +114,7 @@ const config = {
   plugins: {
     LocalNotifications: {
       smallIcon: 'ic_stat_career_ops',
-      iconColor: '#5b6cff',
+      iconColor: '#4a5b6d',
       sound: 'default',
     },
     SplashScreen: {
