@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/pnpm-workspace.json
 # pnpm workspace — turborepo + lefthook expect this layout.
 #
 # Why workspaces here? Strictly we don't need them (ui/ and ui/electron/
