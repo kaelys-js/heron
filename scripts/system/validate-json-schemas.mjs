@@ -40,27 +40,116 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..', '..');
 const require_ = createRequire(import.meta.url);
 
-const FILES = [
-  { path: 'turbo.json', schema: 'pkg:turbo/schema.json' },
-  {
-    path: 'release-please-config.json',
-    schema: 'https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json',
-  },
-  { path: 'ui/components.json', schema: 'https://shadcn-svelte.com/schema.json' },
-  // ui/electron/electron-builder.config.json — INTENTIONALLY skipped.
-  // The app-builder-lib package ships its own scheme.json, but it lags
-  // the runtime: real electron-builder options like `win.publisherName`
-  // are accepted by the tool but rejected by the bundled schema. Until
-  // the schema catches up, validating here would mean either dropping
-  // legitimate config or pinning to an older app-builder-lib.
-  // electron-builder itself errors at use-time on invalid config, so
-  // CI coverage isn't lost.
-  {
-    path: 'biome.jsonc',
-    schema: 'pkg:@biomejs/biome/configuration_schema.json',
-    jsonc: true,
-  },
-];
+// Files explicitly excluded from validation — these have a $schema
+// declaration but the schema is broken / wrong / lags the runtime.
+const SKIP = new Map([
+  [
+    'ui/electron/electron-builder.config.json',
+    'app-builder-lib bundled scheme.json lags runtime — rejects legitimate options like win.publisherName',
+  ],
+]);
+
+// Directories never scanned (build outputs, deps, user data).
+const SKIP_DIRS = new Set([
+  'node_modules',
+  '.svelte-kit',
+  'build',
+  'dist',
+  '.turbo',
+  '.vite',
+  'coverage',
+  '.next',
+  '.cache',
+  '_build',
+  '.venv',
+  'venv',
+  '.git',
+  '.playwright-linkedin',
+  '.playwright-indeed',
+  '.playwright-greenhouse',
+  '.playwright-ashby',
+  '.playwright-lever',
+  '.playwright-workday',
+  'DerivedData',
+  'SourcePackages',
+  'data', // gitignored user-runtime data
+  'reports', // user-layer
+  'output', // user-layer
+]);
+
+// Local schema URLs we know about — speeds up resolution when a schema
+// points to a remote URL we can resolve locally via pnpm. Keyed on the
+// remote URL, value is a pkg:<pkg>/<path> shorthand.
+const KNOWN_LOCAL_MIRRORS = new Map([
+  ['./node_modules/turbo/schema.json', 'pkg:turbo/schema.json'],
+  [
+    './node_modules/@biomejs/biome/configuration_schema.json',
+    'pkg:@biomejs/biome/configuration_schema.json',
+  ],
+  ['./node_modules/app-builder-lib/scheme.json', 'pkg:app-builder-lib/scheme.json'],
+]);
+
+/** Walk the repo, return relative paths of every .json / .jsonc file. */
+function* walkConfigFiles(dir, rel = '') {
+  const entries = require_('node:fs').readdirSync(dir, { withFileTypes: true });
+  for (const ent of entries) {
+    const name = ent.name;
+    if (SKIP_DIRS.has(name)) continue;
+    const full = resolve(dir, name);
+    const relPath = rel ? `${rel}/${name}` : name;
+    if (ent.isDirectory()) {
+      yield* walkConfigFiles(full, relPath);
+    } else if (ent.isFile()) {
+      if (name.endsWith('.json') || name.endsWith('.jsonc')) {
+        yield relPath;
+      }
+    }
+  }
+}
+
+/** Parse a JSON / JSONC file and return its top-level $schema value
+ *  (or null if absent / malformed). Uses jsonc-parser for both JSON
+ *  and JSONC so glob patterns like `**\/*.md` in the file don't get
+ *  mistaken for block-comment delimiters by a naive string scan. */
+function detectSchema(absPath, jsoncParser) {
+  let raw;
+  try {
+    raw = readFileSync(absPath, 'utf8');
+  } catch {
+    return null;
+  }
+  // jsonc-parser tolerates BOTH strict JSON and JSONC (comments +
+  // trailing commas) — single parser path for everything.
+  const errors = [];
+  const data = jsoncParser.parse(raw, errors, {
+    allowTrailingComma: true,
+    disallowComments: false,
+  });
+  if (errors.length > 0 || !data || typeof data !== 'object') return null;
+  return typeof data.$schema === 'string' ? data.$schema : null;
+}
+
+/** Build the FILES list at runtime by walking the repo + filtering for
+ *  $schema-annotated configs. */
+function discoverFiles(jsoncParser) {
+  const out = [];
+  for (const relPath of walkConfigFiles(REPO_ROOT)) {
+    if (SKIP.has(relPath)) {
+      out.push({ path: relPath, skip: SKIP.get(relPath) });
+      continue;
+    }
+    const schemaUrl = detectSchema(resolve(REPO_ROOT, relPath), jsoncParser);
+    if (!schemaUrl) continue;
+    // Map known local-mirror URLs to pkg: shorthand for faster resolution.
+    const schema = KNOWN_LOCAL_MIRRORS.get(schemaUrl) || schemaUrl;
+    out.push({
+      path: relPath,
+      schema,
+      jsonc: relPath.endsWith('.jsonc'),
+    });
+  }
+  return out.sort((a, b) => a.path.localeCompare(b.path));
+}
 
 const CACHE_DIR = resolve(tmpdir(), 'career-ops-schema-cache');
 mkdirSync(CACHE_DIR, { recursive: true });
@@ -115,8 +204,19 @@ async function main() {
   }
 
   const errors = [];
+  const FILES = discoverFiles(jsoncParser);
+  if (FILES.length === 0) {
+    console.error('× no JSON/JSONC files with $schema found — discoverer broken?');
+    process.exit(2);
+  }
 
-  for (const { path, schema: schemaSpec, jsonc } of FILES) {
+  for (const entry of FILES) {
+    const { path, skip } = entry;
+    if (skip) {
+      console.log(`  · ${path}  (skipped — ${skip})`);
+      continue;
+    }
+    const { schema: schemaSpec, jsonc } = entry;
     const fullPath = resolve(REPO_ROOT, path);
     if (!existsSync(fullPath)) {
       console.log(`  · ${path}  (not present — skipping)`);
