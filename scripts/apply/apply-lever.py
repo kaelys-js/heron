@@ -23,10 +23,10 @@ The adapter accepts either — it auto-suffixes /apply when needed.
 Reuses the same dispatcher protocol (APPLY_STEP, APPLY_RESULT) as the
 Greenhouse + Ashby adapters.
 """
+
 from __future__ import annotations
 import argparse
 import json
-import random
 import re
 import sys
 import time
@@ -48,18 +48,29 @@ except ImportError:
     sys.exit(2)
 
 ROOT = Path(__file__).parent
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 
 from lib_apply import (  # noqa: E402
-    human_type, human_click, detect_captcha, detect_already_applied,
-    upload_file, append_step, emit_result,
-    screenshot_for_issue, write_apply_state, detect_portal,
-    load_form_answers, normalize_question,
-    is_eeo_label, auto_decline_eeo,
+    human_type,
+    human_click,
+    detect_captcha,
+    detect_already_applied,
+    upload_file,
+    append_step,
+    emit_result,
+    screenshot_for_issue,
+    write_apply_state,
+    detect_portal,
+    load_form_answers,
+    normalize_question,
+    is_eeo_label,
+    auto_decline_eeo,
 )
 from lib_profiles import resolve_profile_arg, profile_path  # noqa: E402
 
-USER_DATA_DIR = ROOT / ".playwright-lever"
+USER_DATA_DIR = REPO_ROOT / ".playwright-lever"
 DISPATCHER_JOB_ID: str = ""
 
 
@@ -74,6 +85,7 @@ def step(name: str) -> None:
 
 
 # ── Schema fetch ───────────────────────────────────────────────────
+
 
 def fetch_lever_schema(company: Optional[str], job_id: Optional[str]) -> Optional[dict]:
     """Hit the Lever postings API for this job. Returns the parsed JSON or None.
@@ -105,28 +117,36 @@ def fetch_lever_schema(company: Optional[str], job_id: Optional[str]) -> Optiona
 
 def plan_from_schema(schema: Optional[dict]) -> dict[str, Any]:
     plan: dict[str, Any] = {
-        "name": True, "email": True, "phone": True, "resume": True,
-        "linkedin": False, "github": False, "portfolio": False,
+        "name": True,
+        "email": True,
+        "phone": True,
+        "resume": True,
+        "linkedin": False,
+        "github": False,
+        "portfolio": False,
         "custom": [],  # {label, required, options}
     }
     if not schema:
         return plan
-    for q in (schema.get("applicationQuestions") or []):
+    for q in schema.get("applicationQuestions") or []:
         label = (q.get("text") or "").strip()
         required = bool(q.get("required"))
         options = q.get("options") or []
         if not label:
             continue
-        plan["custom"].append({
-            "label": label,
-            "required": required,
-            "options": options,
-            "type": "select" if options else "text",
-        })
+        plan["custom"].append(
+            {
+                "label": label,
+                "required": required,
+                "options": options,
+                "type": "select" if options else "text",
+            }
+        )
     return plan
 
 
 # ── Form fills ─────────────────────────────────────────────────────
+
 
 def fill_lever_basic(page, name: str, value: str) -> bool:
     """Fill a Lever input by name attribute or label."""
@@ -230,8 +250,12 @@ def detect_confirmation(page) -> bool:
         return True
     try:
         body = (page.content() or "").lower()
-        for n in ("thanks for applying", "application submitted",
-                  "we'll be in touch", "we've received your application"):
+        for n in (
+            "thanks for applying",
+            "application submitted",
+            "we'll be in touch",
+            "we've received your application",
+        ):
             if n in body:
                 return True
     except Exception:
@@ -240,6 +264,7 @@ def detect_confirmation(page) -> bool:
 
 
 # ── Main flow ──────────────────────────────────────────────────────
+
 
 def run(args) -> int:
     global DISPATCHER_JOB_ID
@@ -266,8 +291,11 @@ def run(args) -> int:
     if not pdf_path or not pdf_path.exists():
         out_dir = profile_path(profile_id, "output-dir")
         try:
-            cands = sorted([p for p in out_dir.glob("*.pdf") if "cv-general" not in p.name],
-                           key=lambda p: p.stat().st_mtime, reverse=True)
+            cands = sorted(
+                [p for p in out_dir.glob("*.pdf") if "cv-general" not in p.name],
+                key=lambda p: p.stat().st_mtime,
+                reverse=True,
+            )
             pdf_path = cands[0] if cands else None
         except Exception:
             pdf_path = None
@@ -342,7 +370,9 @@ def run(args) -> int:
             # Resume upload.
             if pdf_path and pdf_path.exists():
                 try:
-                    resume = page.locator('input[type="file"][name*="resume"], input[type="file"]').first
+                    resume = page.locator(
+                        'input[type="file"][name*="resume"], input[type="file"]'
+                    ).first
                     if resume.count() > 0 and upload_file(resume, str(pdf_path)):
                         step("uploaded_resume")
                     elif resume.count() > 0:
@@ -361,12 +391,16 @@ def run(args) -> int:
                 outcome = fill_custom_question(page, q, answers_cache)
                 if outcome == "unknown":
                     unknown_required.append(q["label"])
-            step(f"custom_questions_done:{len(plan['custom']) - len(unknown_required)}/{len(plan['custom'])}")
+            step(
+                f"custom_questions_done:{len(plan['custom']) - len(unknown_required)}/{len(plan['custom'])}"
+            )
 
             if unknown_required:
                 screenshot_for_issue(page, DISPATCHER_JOB_ID)
-                return emit_result("manual-apply-needed",
-                                   "unknown-field:" + ",".join(unknown_required[:3]))
+                return emit_result(
+                    "manual-apply-needed",
+                    "unknown-field:" + ",".join(unknown_required[:3]),
+                )
 
             if args.dry_run:
                 step("dry_run_skip_submit")
@@ -416,7 +450,9 @@ def main() -> int:
     ap.add_argument("--profile", default=None)
     ap.add_argument("--score", default=None, type=float)
     ap.add_argument("--pdf", default=None)
-    ap.add_argument("--cover-letter", default=None, dest="cover_letter")  # Lever doesn't really use these
+    ap.add_argument(
+        "--cover-letter", default=None, dest="cover_letter"
+    )  # Lever doesn't really use these
     ap.add_argument("--headed", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--force-submit", action="store_true", dest="force_submit")
@@ -425,7 +461,9 @@ def main() -> int:
     try:
         write_apply_state(
             args.job_id,
-            url=args.url, portal="lever", profileId=args.profile or "",
+            url=args.url,
+            portal="lever",
+            profileId=args.profile or "",
             startedAt=int(time.time() * 1000),
             lastStep="adapter_start",
             stepHistory=["queued", "dispatched", "adapter_start"],

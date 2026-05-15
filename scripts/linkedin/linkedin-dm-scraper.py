@@ -44,7 +44,12 @@ import json
 import re
 import sys
 import time
+from pathlib import Path
 from typing import Any
+
+ROOT = Path(__file__).resolve().parent  # scripts/linkedin/
+REPO_ROOT = ROOT.parent.parent  # repo root
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 
 from lib_playwright_auth import (
     launch_persistent,
@@ -111,9 +116,11 @@ def scrape_messages(page: Page, max_messages: int, since_ms: int) -> list[dict[s
             row = rows.nth(i)
             time_text = ""
             try:
-                time_text = row.locator(
-                    "time.msg-conversation-listitem__time-stamp"
-                ).inner_text(timeout=1500).strip()
+                time_text = (
+                    row.locator("time.msg-conversation-listitem__time-stamp")
+                    .inner_text(timeout=1500)
+                    .strip()
+                )
             except Exception:
                 pass
             ts = parse_time_ago(time_text)
@@ -127,7 +134,9 @@ def scrape_messages(page: Page, max_messages: int, since_ms: int) -> list[dict[s
             sender_title = ""
             sender_profile_url = ""
             try:
-                header = page.locator("section.msg-thread h2, header.msg-overlay-bubble-header__title").first
+                header = page.locator(
+                    "section.msg-thread h2, header.msg-overlay-bubble-header__title"
+                ).first
                 sender_name = header.inner_text(timeout=1500).strip()
             except Exception:
                 pass

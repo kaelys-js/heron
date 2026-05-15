@@ -66,7 +66,7 @@ function runMergeTracker(reason: string): Promise<JobResult> {
     mergeInFlight = true;
     let stdout = '';
     let stderr = '';
-    const p = spawn('node', ['merge-tracker.mjs'], {
+    const p = spawn('node', ['scripts/tracker/merge-tracker.mjs'], {
       cwd: ROOT,
       env: { ...process.env },
     });

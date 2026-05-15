@@ -25,7 +25,6 @@ from __future__ import annotations
 import argparse
 import re
 import sys
-import time
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlencode
@@ -43,18 +42,24 @@ except ImportError:
     sys.exit(1)
 
 from lib_playwright_auth import (
-    launch_persistent, is_logged_in_indeed, humanize, USER_DATA_DIRS,
+    launch_persistent,
+    is_logged_in_indeed,
+    humanize,
+    USER_DATA_DIRS,
 )
 
 ROOT = Path(__file__).resolve().parent
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 from lib_profiles import resolve_profile_arg, profile_path, ensure_profile_dirs
 
 # Placeholders — set in main() once --profile is resolved.
-PROFILE_YML: Path = ROOT / "data" / "profiles" / "default" / "profile.yml"
-PORTALS_YML: Path = ROOT / "data" / "profiles" / "default" / "portals.yml"
-PIPELINE_MD: Path = ROOT / "data" / "profiles" / "default" / "pipeline.md"
-APPLICATIONS_MD: Path = ROOT / "data" / "profiles" / "default" / "applications.md"
-SCAN_HISTORY_TSV: Path = ROOT / "data" / "profiles" / "default" / "scan-history.tsv"
+PROFILE_YML: Path = REPO_ROOT / "data" / "profiles" / "default" / "profile.yml"
+PORTALS_YML: Path = REPO_ROOT / "data" / "profiles" / "default" / "portals.yml"
+PIPELINE_MD: Path = REPO_ROOT / "data" / "profiles" / "default" / "pipeline.md"
+APPLICATIONS_MD: Path = REPO_ROOT / "data" / "profiles" / "default" / "applications.md"
+SCAN_HISTORY_TSV: Path = REPO_ROOT / "data" / "profiles" / "default" / "scan-history.tsv"
 
 DEFAULT_MAX_PAGES = 10  # 10 pages × 15 jobs/page ≈ 150 jobs per query
 SCROLL_PAUSE_S = 1.0
@@ -68,10 +73,18 @@ def load_search_queries() -> list[dict[str, str]]:
     profile = yaml.safe_load(PROFILE_YML.read_text()) or {}
     target_roles = (profile.get("target_roles") or {}).get("primary") or []
     location_block = profile.get("location") or {}
-    location = ", ".join(filter(None, [
-        location_block.get("city"),
-        location_block.get("country") or location_block.get("province"),
-    ])) or "United States"
+    location = (
+        ", ".join(
+            filter(
+                None,
+                [
+                    location_block.get("city"),
+                    location_block.get("country") or location_block.get("province"),
+                ],
+            )
+        )
+        or "United States"
+    )
 
     queries: list[dict[str, str]] = []
     for role in target_roles:
@@ -86,10 +99,12 @@ def load_search_queries() -> list[dict[str, str]]:
             if isinstance(q, str):
                 queries.append({"q": q, "l": location})
             elif isinstance(q, dict) and q.get("q"):
-                queries.append({
-                    "q": str(q["q"]),
-                    "l": str(q.get("l") or location),
-                })
+                queries.append(
+                    {
+                        "q": str(q["q"]),
+                        "l": str(q.get("l") or location),
+                    }
+                )
 
     if not queries:
         queries.append({"q": "Software Engineer", "l": location})
@@ -154,13 +169,16 @@ def scrape_one_query(page, q: str, l: str, max_pages: int) -> list[dict]:
 
         # Captcha check — Indeed shows interstitials with these phrases.
         body = (page.content() or "")[:5000].lower()
-        if any(k in body for k in (
-            "additional verification required",
-            "let's confirm you're a human",
-            "press & hold",  # Indeed's classic press-and-hold captcha
-            "are you a robot",
-            "captcha",
-        )):
+        if any(
+            k in body
+            for k in (
+                "additional verification required",
+                "let's confirm you're a human",
+                "press & hold",  # Indeed's classic press-and-hold captcha
+                "are you a robot",
+                "captcha",
+            )
+        ):
             raise RuntimeError("Indeed served a captcha — session may need refresh")
 
         # Each result card has a unique data-jk attribute = job key.
@@ -195,13 +213,15 @@ def scrape_one_query(page, q: str, l: str, max_pages: int) -> list[dict]:
                         location_text = (loc.inner_text() or "").strip()
             except Exception:
                 pass
-            results.append({
-                "url": url_canon,
-                "title": title,
-                "company": company,
-                "location": location_text,
-                "jk": jk,
-            })
+            results.append(
+                {
+                    "url": url_canon,
+                    "title": title,
+                    "company": company,
+                    "location": location_text,
+                    "jk": jk,
+                }
+            )
 
         if new_on_page == 0:
             # No new cards on this page — we've exhausted results.
@@ -250,8 +270,11 @@ def main():
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--max-pages", type=int, default=DEFAULT_MAX_PAGES)
     parser.add_argument("--query", help="Single keyword override")
-    parser.add_argument("--profile", default=None,
-                        help="Profile slug (defaults to active profile in data/profiles.json).")
+    parser.add_argument(
+        "--profile",
+        default=None,
+        help="Profile slug (defaults to active profile in data/profiles.json).",
+    )
     args = parser.parse_args()
 
     profile_id = resolve_profile_arg(args.profile)
@@ -264,13 +287,13 @@ def main():
 
     udd = USER_DATA_DIRS["indeed"]
     if not udd.exists():
-        print(f"ERROR: {udd} not found. Run `.venv/bin/python lib_playwright_auth.py --portal indeed --login` first.", file=sys.stderr)
+        print(
+            f"ERROR: {udd} not found. Run `.venv/bin/python lib_playwright_auth.py --portal indeed --login` first.",
+            file=sys.stderr,
+        )
         sys.exit(2)
 
-    queries = (
-        [{"q": args.query, "l": ""}]
-        if args.query else load_search_queries()
-    )
+    queries = [{"q": args.query, "l": ""}] if args.query else load_search_queries()
     pos, neg = title_filter()
     seen = load_seen_urls()
     new_rows: list[dict] = []
@@ -278,12 +301,18 @@ def main():
     total_filtered = 0
     total_dupes = 0
 
-    print(f"Indeed auth-scrape — {len(queries)} querie(s) × up to {args.max_pages} pages each", file=sys.stderr)
+    print(
+        f"Indeed auth-scrape — {len(queries)} querie(s) × up to {args.max_pages} pages each",
+        file=sys.stderr,
+    )
 
     with launch_persistent("indeed", headed=False) as ctx:
         page = ctx.new_page()
         if not is_logged_in_indeed(page):
-            print("ERROR: Indeed session expired. Click Reconnect on /sources.", file=sys.stderr)
+            print(
+                "ERROR: Indeed session expired. Click Reconnect on /sources.",
+                file=sys.stderr,
+            )
             sys.exit(3)
 
         for q in queries:
@@ -317,7 +346,10 @@ def main():
     if not args.dry_run and new_rows:
         append_to_pipeline(new_rows)
         append_to_scan_history(new_rows)
-        print(f"Wrote {len(new_rows)} rows to pipeline.md + scan-history.tsv", file=sys.stderr)
+        print(
+            f"Wrote {len(new_rows)} rows to pipeline.md + scan-history.tsv",
+            file=sys.stderr,
+        )
 
 
 if __name__ == "__main__":

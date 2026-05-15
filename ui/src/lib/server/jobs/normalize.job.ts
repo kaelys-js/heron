@@ -25,7 +25,7 @@ const COUNT_RE = /(\d+)\s+statuses?\s+normalized/i;
 function runNormalize(): Promise<JobResult> {
   return new Promise((resolve) => {
     let stdout = '';
-    const p = spawn('node', ['normalize-statuses.mjs'], {
+    const p = spawn('node', ['scripts/tracker/normalize-statuses.mjs'], {
       cwd: ROOT,
       env: { ...process.env },
     });

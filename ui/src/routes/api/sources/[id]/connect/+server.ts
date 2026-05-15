@@ -126,7 +126,7 @@ function spawnPlaywrightLogin(portal: 'linkedin' | 'indeed'): Promise<void> {
 
     // Both portals share the same auth helper module — exposes --login
     // for headed login and --check-session for read-only probe.
-    const p = spawn(py, ['lib_playwright_auth.py', '--portal', portal, '--login'], {
+    const p = spawn(py, ['scripts/lib/lib_playwright_auth.py', '--portal', portal, '--login'], {
       cwd: ROOT,
       env: { ...process.env },
     });

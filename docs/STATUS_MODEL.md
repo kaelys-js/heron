@@ -40,8 +40,8 @@ import/export) that needs to interpret an applications.md row.
 
 Used by:
 - `pipeline.integration.test.ts` validates canonical-state-only rows on every push (replaced the legacy `verify-pipeline.mjs` script).
-- `normalize-statuses.mjs` to clean up legacy Spanish / mixed-case writes.
-- `merge-tracker.mjs` and `dedup-tracker.mjs` for CLI-side state semantics.
+- `scripts/tracker/normalize-statuses.mjs` to clean up legacy Spanish / mixed-case writes.
+- `scripts/tracker/merge-tracker.mjs` and `scripts/tracker/dedup-tracker.mjs` for CLI-side state semantics.
 
 ## Why they're not the same
 

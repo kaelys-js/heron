@@ -56,7 +56,7 @@ function runStep(script: string): Promise<StepResult> {
 async function runAutoTriage(): Promise<JobResult> {
   // Step 1: triage.mjs
   logEvent('auto-triage', 'Step 1/3: triage', { level: 'info', category: 'system' });
-  const s1 = await runStep('triage.mjs');
+  const s1 = await runStep('scripts/system/triage.mjs');
   if (!s1.ok) {
     logEvent('auto-triage', 'Triage failed', {
       level: 'error',
@@ -70,7 +70,7 @@ async function runAutoTriage(): Promise<JobResult> {
 
   // Step 2: update-pipeline.mjs
   logEvent('auto-triage', 'Step 2/3: update-pipeline', { level: 'info', category: 'system' });
-  const s2 = await runStep('update-pipeline.mjs');
+  const s2 = await runStep('scripts/system/update-pipeline.mjs');
   if (!s2.ok) {
     logEvent('auto-triage', 'update-pipeline failed', {
       level: 'error',
@@ -83,7 +83,7 @@ async function runAutoTriage(): Promise<JobResult> {
 
   // Step 3: build-batch-input.mjs
   logEvent('auto-triage', 'Step 3/3: build-batch-input', { level: 'info', category: 'system' });
-  const s3 = await runStep('build-batch-input.mjs');
+  const s3 = await runStep('scripts/system/build-batch-input.mjs');
   if (!s3.ok) {
     logEvent('auto-triage', 'build-batch-input failed', {
       level: 'warn',

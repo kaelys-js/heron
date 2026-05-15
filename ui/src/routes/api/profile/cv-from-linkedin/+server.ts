@@ -147,7 +147,7 @@ function spawnExtractScript(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const venvPython = ROOT + '/.venv/bin/python';
     const py = fs.existsSync(venvPython) ? venvPython : 'python3';
-    const p = spawn(py, ['extract-linkedin-profile.py', '--url', url], {
+    const p = spawn(py, ['scripts/linkedin/extract-linkedin-profile.py', '--url', url], {
       cwd: ROOT,
       env: { ...process.env },
     });

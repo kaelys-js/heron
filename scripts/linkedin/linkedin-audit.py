@@ -45,7 +45,12 @@ import json
 import re
 import sys
 import time
+from pathlib import Path
 from typing import Any
+
+ROOT = Path(__file__).resolve().parent  # scripts/linkedin/
+REPO_ROOT = ROOT.parent.parent  # repo root
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 
 from lib_playwright_auth import (
     launch_persistent,
@@ -123,7 +128,9 @@ def scrape_profile_overview(page: Page) -> dict[str, Any]:
     # Photo + banner. We just check for presence; can't read the image
     # content without an extra fetch.
     out["hasPhoto"] = safe_count(page, "img.pv-top-card-profile-picture__image") > 0
-    out["hasBanner"] = safe_count(page, "div.profile-top-card__profile-info img.cover-img__image") > 0
+    out["hasBanner"] = (
+        safe_count(page, "div.profile-top-card__profile-info img.cover-img__image") > 0
+    )
 
     # About section
     about_section = page.locator("div#about").locator("xpath=ancestor::section[1]")
@@ -147,14 +154,14 @@ def scrape_experience(page: Page) -> list[dict[str, Any]]:
     try:
         page.wait_for_selector("main", timeout=PROBE_TIMEOUT_MS)
         # Each role lives inside a list item with bold title + meta lines.
-        cards = page.locator(
-            "section.pvs-list__container li.pvs-list__paged-list-item"
-        )
+        cards = page.locator("section.pvs-list__container li.pvs-list__paged-list-item")
         count = min(cards.count(), 25)
         for i in range(count):
             card = cards.nth(i)
             try:
-                title = card.locator("span[aria-hidden='true']").first.inner_text(timeout=1500).strip()
+                title = (
+                    card.locator("span[aria-hidden='true']").first.inner_text(timeout=1500).strip()
+                )
                 # Company + dates are subsequent spans
                 spans = card.locator("span[aria-hidden='true']")
                 all_text = [
@@ -200,10 +207,12 @@ def scrape_recommendations(page: Page) -> dict[str, Any]:
     if not goto(page, "https://www.linkedin.com/in/me/details/recommendations/"):
         return {"received": 0, "given": 0}
     received = safe_count(
-        page, "section[data-section='received-recommendations'] li.pvs-list__paged-list-item"
+        page,
+        "section[data-section='received-recommendations'] li.pvs-list__paged-list-item",
     )
     given = safe_count(
-        page, "section[data-section='given-recommendations'] li.pvs-list__paged-list-item"
+        page,
+        "section[data-section='given-recommendations'] li.pvs-list__paged-list-item",
     )
     return {"received": received, "given": given}
 

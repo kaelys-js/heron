@@ -12,9 +12,12 @@ Quirks:
   - Standard fields: First name, Last name, Email, Phone, Resume.
   - Submit text: "Send application" or "Submit application".
 """
+
 from pathlib import Path
 import sys
+
 ROOT = Path(__file__).parent
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
 
 from lib_portal import PortalConfig, adapter_main  # noqa: E402
@@ -22,8 +25,8 @@ from lib_portal import PortalConfig, adapter_main  # noqa: E402
 
 def teamtailor_config() -> PortalConfig:
     return PortalConfig(
-        portal_id='teamtailor',
-        user_data_dir=ROOT / '.playwright-teamtailor',
+        portal_id="teamtailor",
+        user_data_dir=REPO_ROOT / ".playwright-teamtailor",
         first_name_selectors=[
             'input[aria-label*="First name" i]',
             'input[name*="first" i]',
@@ -58,7 +61,7 @@ def teamtailor_config() -> PortalConfig:
         cookie_dismiss_selectors=[
             'button:has-text("Accept all")',
             'button:has-text("Allow all")',
-            '#cookie-consent-button',
+            "#cookie-consent-button",
         ],
         initial_apply_selectors=[
             'a:has-text("Apply for this job")',
@@ -68,16 +71,16 @@ def teamtailor_config() -> PortalConfig:
         ],
         already_applied_markers=[
             "you've already applied",
-            'application received',
+            "application received",
         ],
         confirmation_markers=[
-            'thanks for applying',
-            'application sent',
-            'application submitted',
+            "thanks for applying",
+            "application sent",
+            "application submitted",
         ],
         multipage=False,
     )
 
 
-if __name__ == '__main__':
-    sys.exit(adapter_main(teamtailor_config, 'Teamtailor autonomous apply adapter'))
+if __name__ == "__main__":
+    sys.exit(adapter_main(teamtailor_config, "Teamtailor autonomous apply adapter"))

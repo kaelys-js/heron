@@ -24,7 +24,7 @@ const COUNT_RE = /(\d+)\s+duplicates?\s+removed/i;
 function runDedupTracker(): Promise<JobResult> {
   return new Promise((resolve) => {
     let stdout = '';
-    const p = spawn('node', ['dedup-tracker.mjs'], {
+    const p = spawn('node', ['scripts/tracker/dedup-tracker.mjs'], {
       cwd: ROOT,
       env: { ...process.env },
     });

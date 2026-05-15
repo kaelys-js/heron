@@ -1,5 +1,5 @@
 /**
- * lib/server/followup-cadence — spawns followup-cadence.mjs + caches.
+ * lib/server/followup-cadence — spawns scripts/tracker/followup-cadence.mjs + caches.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EventEmitter } from 'node:events';
@@ -100,10 +100,10 @@ const sampleJson = JSON.stringify({
 });
 
 describe('getFollowupCadence — fresh spawn path', () => {
-  it('spawns followup-cadence.mjs as the underlying script', async () => {
+  it('spawns scripts/tracker/followup-cadence.mjs as the underlying script', async () => {
     nextOutcome.stdout = sampleJson;
     await getFollowupCadence({ force: true });
-    expect(spawnCalls[0].script).toBe('followup-cadence.mjs');
+    expect(spawnCalls[0].script).toBe('scripts/tracker/followup-cadence.mjs');
   });
 
   it('honours explicit profileId argument via --profile flag', async () => {

@@ -42,10 +42,10 @@ Exit codes:
     1 — manual-apply-needed
     2 — error
 """
+
 from __future__ import annotations
 import argparse
 import json
-import os
 import random
 import re
 import sys
@@ -58,8 +58,10 @@ from typing import Optional, Any
 try:
     from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 except ImportError:
-    print("ERROR: playwright not installed. Run:\n  .venv/bin/pip install playwright && .venv/bin/python -m playwright install chromium",
-          file=sys.stderr)
+    print(
+        "ERROR: playwright not installed. Run:\n  .venv/bin/pip install playwright && .venv/bin/python -m playwright install chromium",
+        file=sys.stderr,
+    )
     sys.exit(2)
 
 try:
@@ -69,22 +71,35 @@ except ImportError:
     sys.exit(2)
 
 ROOT = Path(__file__).parent
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 
 from lib_apply import (  # noqa: E402
-    human_type, human_click, detect_captcha, detect_already_applied,
-    upload_file, fill_react_select, append_step, emit_result,
-    screenshot_for_issue, write_apply_state, detect_portal,
-    load_form_answers, normalize_question,
-    is_eeo_label, auto_decline_eeo,
+    human_type,
+    human_click,
+    detect_captcha,
+    detect_already_applied,
+    upload_file,
+    fill_react_select,
+    append_step,
+    emit_result,
+    screenshot_for_issue,
+    write_apply_state,
+    detect_portal,
+    load_form_answers,
+    normalize_question,
+    is_eeo_label,
+    auto_decline_eeo,
 )
 from lib_profiles import resolve_profile_arg, profile_path  # noqa: E402
 
-USER_DATA_DIR = ROOT / ".playwright-greenhouse"
+USER_DATA_DIR = REPO_ROOT / ".playwright-greenhouse"
 DISPATCHER_JOB_ID: str = ""
 
 
 # ── Logging shim ───────────────────────────────────────────────────
+
 
 def step(name: str) -> None:
     """Emit APPLY_STEP through lib_apply.append_step so the state file
@@ -100,6 +115,7 @@ def step(name: str) -> None:
 
 
 # ── Schema fetch ───────────────────────────────────────────────────
+
 
 def schema_api_hosts(url: str) -> list[str]:
     """Return the list of API base URLs to try, ordered by likelihood.
@@ -146,14 +162,20 @@ def fetch_form_schema(url: str, company: Optional[str], job_id: Optional[str]) -
 
 # ── Field plan from schema ─────────────────────────────────────────
 
+
 def plan_from_schema(schema: Optional[dict]) -> dict[str, Any]:
     """Build a structured plan from the schema so we know exactly which
     fields exist + which are required. Falls back to a permissive plan
     (try everything) when schema fetch failed."""
     plan = {
-        "first_name": True, "last_name": True, "email": True, "phone": True,
-        "resume": True, "cover_letter": False,
-        "location": False, "custom": [],  # list of (label, required, type)
+        "first_name": True,
+        "last_name": True,
+        "email": True,
+        "phone": True,
+        "resume": True,
+        "cover_letter": False,
+        "location": False,
+        "custom": [],  # list of (label, required, type)
         "required_unknown": [],  # required fields we don't know how to fill
     }
     if not schema:
@@ -180,6 +202,7 @@ def plan_from_schema(schema: Optional[dict]) -> dict[str, Any]:
 
 
 # ── Phone widget (intl-tel-input) ──────────────────────────────────
+
 
 def fill_intl_phone(page, country: str, phone: str) -> bool:
     """Greenhouse phone uses intl-tel-input. The plain <input> only stores
@@ -226,6 +249,7 @@ def fill_intl_phone(page, country: str, phone: str) -> bool:
 
 # ── Google Places location ─────────────────────────────────────────
 
+
 def fill_google_places(page, location_text: str) -> bool:
     """The location field on Greenhouse uses Google Places autocomplete.
     Plain fill() leaves the hidden lat/lng/country inputs blank, which
@@ -254,6 +278,7 @@ def fill_google_places(page, location_text: str) -> bool:
 
 # ── Basic field fills via name= selector ───────────────────────────
 
+
 def fill_basic_text(page, name: str, value: str) -> bool:
     """Find an input by name= or by following-label-text and fill it
     with human cadence. Returns True on success."""
@@ -279,12 +304,13 @@ def fill_basic_text(page, name: str, value: str) -> bool:
 
 # ── Custom Q&A walking ─────────────────────────────────────────────
 
+
 def fill_custom_question(page, question: dict, answers_cache: dict) -> str:
     """Fill one custom question. Returns:
-        'filled'           — answered from cache, EEO auto-decline, or schema default
-        'skipped-empty'    — optional + no answer, left blank
-        'unknown'          — required + no answer source
-        'eeo-decline'      — EEO field declined (counted as filled)
+    'filled'           — answered from cache, EEO auto-decline, or schema default
+    'skipped-empty'    — optional + no answer, left blank
+    'unknown'          — required + no answer source
+    'eeo-decline'      — EEO field declined (counted as filled)
     """
     label = question.get("label", "")
     required = bool(question.get("required"))
@@ -341,6 +367,7 @@ def fill_custom_question(page, question: dict, answers_cache: dict) -> str:
 
 # ── Confirmation detection ─────────────────────────────────────────
 
+
 def detect_confirmation(page) -> bool:
     """Check for the usual confirmation signals after Submit clicks.
     Returns True when we're confident the application went through."""
@@ -364,6 +391,7 @@ def detect_confirmation(page) -> bool:
 
 
 # ── Main flow ──────────────────────────────────────────────────────
+
 
 def run(args) -> int:
     global DISPATCHER_JOB_ID
@@ -393,8 +421,11 @@ def run(args) -> int:
         # Fall back to most-recent per-job PDF in profile's output dir.
         out_dir = profile_path(profile_id, "output-dir")
         try:
-            cands = sorted([p for p in out_dir.glob("*.pdf") if "cv-general" not in p.name],
-                           key=lambda p: p.stat().st_mtime, reverse=True)
+            cands = sorted(
+                [p for p in out_dir.glob("*.pdf") if "cv-general" not in p.name],
+                key=lambda p: p.stat().st_mtime,
+                reverse=True,
+            )
             pdf_path = cands[0] if cands else None
         except Exception:
             pdf_path = None
@@ -466,7 +497,10 @@ def run(args) -> int:
 
             # Location (Google Places).
             if plan["location"]:
-                loc_text = candidate.get("location") or f"{(profile.get('location') or {}).get('city', '')}, {country}"
+                loc_text = (
+                    candidate.get("location")
+                    or f"{(profile.get('location') or {}).get('city', '')}, {country}"
+                )
                 if loc_text.strip(", "):
                     fill_google_places(page, loc_text)
                     step("filled_location")
@@ -516,7 +550,9 @@ def run(args) -> int:
                 outcome = fill_custom_question(page, q, answers_cache)
                 if outcome == "unknown":
                     unknown_required.append(q["label"])
-            step(f"custom_questions_done:{len(plan['custom']) - len(unknown_required)}/{len(plan['custom'])}")
+            step(
+                f"custom_questions_done:{len(plan['custom']) - len(unknown_required)}/{len(plan['custom'])}"
+            )
 
             if unknown_required:
                 screenshot_for_issue(page, DISPATCHER_JOB_ID)
@@ -542,9 +578,7 @@ def run(args) -> int:
                 return emit_result("manual-apply-needed", f"captcha:{captcha}")
 
             try:
-                submit = page.get_by_role(
-                    "button", name=re.compile(r"submit|apply", re.I)
-                ).last
+                submit = page.get_by_role("button", name=re.compile(r"submit|apply", re.I)).last
                 if not submit.is_visible(timeout=3000):
                     # Some embedded boards use <input type=submit>.
                     submit = page.locator('input[type="submit"]').first
@@ -586,14 +620,25 @@ def main() -> int:
     ap.add_argument("--job-id", required=True, dest="job_id")
     ap.add_argument("--profile", default=None)
     ap.add_argument("--score", default=None, type=float)
-    ap.add_argument("--pdf", default=None, help="Tailored CV PDF path. Defaults to most-recent in profile output dir.")
-    ap.add_argument("--cover-letter", default=None, dest="cover_letter",
-                    help="Cover-letter PDF path (optional).")
+    ap.add_argument(
+        "--pdf",
+        default=None,
+        help="Tailored CV PDF path. Defaults to most-recent in profile output dir.",
+    )
+    ap.add_argument(
+        "--cover-letter",
+        default=None,
+        dest="cover_letter",
+        help="Cover-letter PDF path (optional).",
+    )
     ap.add_argument("--headed", action="store_true")
-    ap.add_argument("--dry-run", action="store_true",
-                    help="Fill the form but stop before Submit.")
-    ap.add_argument("--force-submit", action="store_true", dest="force_submit",
-                    help="Submit even when profile.autonomous_apply is off (manual override).")
+    ap.add_argument("--dry-run", action="store_true", help="Fill the form but stop before Submit.")
+    ap.add_argument(
+        "--force-submit",
+        action="store_true",
+        dest="force_submit",
+        help="Submit even when profile.autonomous_apply is off (manual override).",
+    )
     args = ap.parse_args()
 
     # Defensive: write the initial state so the dashboard sees the

@@ -25,6 +25,7 @@ What's different from Greenhouse:
 Dispatcher protocol mirrors apply-greenhouse.py: APPLY_STEP per phase,
 APPLY_RESULT on exit. Exit codes 0/1/2 per lib_apply.emit_result.
 """
+
 from __future__ import annotations
 import argparse
 import json
@@ -50,18 +51,30 @@ except ImportError:
     sys.exit(2)
 
 ROOT = Path(__file__).parent
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 
 from lib_apply import (  # noqa: E402
-    human_type, human_click, detect_captcha, detect_already_applied,
-    upload_file, fill_react_select, append_step, emit_result,
-    screenshot_for_issue, write_apply_state, detect_portal,
-    load_form_answers, normalize_question,
-    is_eeo_label, auto_decline_eeo,
+    human_type,
+    human_click,
+    detect_captcha,
+    detect_already_applied,
+    upload_file,
+    fill_react_select,
+    append_step,
+    emit_result,
+    screenshot_for_issue,
+    write_apply_state,
+    detect_portal,
+    load_form_answers,
+    normalize_question,
+    is_eeo_label,
+    auto_decline_eeo,
 )
 from lib_profiles import resolve_profile_arg, profile_path  # noqa: E402
 
-USER_DATA_DIR = ROOT / ".playwright-ashby"
+USER_DATA_DIR = REPO_ROOT / ".playwright-ashby"
 DISPATCHER_JOB_ID: str = ""
 
 
@@ -76,6 +89,7 @@ def step(name: str) -> None:
 
 
 # ── Schema fetch ───────────────────────────────────────────────────
+
 
 def fetch_ashby_schema(company: Optional[str], job_id: Optional[str]) -> Optional[dict]:
     """Hit the Ashby posting-api for this job's question schema.
@@ -98,7 +112,7 @@ def fetch_ashby_schema(company: Optional[str], job_id: Optional[str]) -> Optiona
         if e.code == 403:
             # Cloudflare blocked our API call too. The form will likely
             # block as well — but persistent context warms over time.
-            print(f"  [ashby-api] Cloudflare 403 on schema fetch", file=sys.stderr)
+            print("  [ashby-api] Cloudflare 403 on schema fetch", file=sys.stderr)
         return None
     except Exception:
         return None
@@ -116,8 +130,14 @@ def plan_from_schema(schema: Optional[dict]) -> dict[str, Any]:
         Plus any "applicationFormQuestions" the company configured.
     """
     plan: dict[str, Any] = {
-        "name": True, "email": True, "phone": False, "resume": True,
-        "cover_letter": {"mode": "auto", "present": False},  # 'auto' | 'rich-text' | 'file'
+        "name": True,
+        "email": True,
+        "phone": False,
+        "resume": True,
+        "cover_letter": {
+            "mode": "auto",
+            "present": False,
+        },  # 'auto' | 'rich-text' | 'file'
         "location": False,
         "custom": [],
         "required_unknown": [],
@@ -136,17 +156,29 @@ def plan_from_schema(schema: Optional[dict]) -> dict[str, Any]:
             plan["location"] = True
         if "coverletter" in path or "cover_letter" in path:
             plan["cover_letter"] = {
-                "mode": "rich-text" if "richtext" in ftype else ("file" if "file" in ftype else "auto"),
+                "mode": "rich-text"
+                if "richtext" in ftype
+                else ("file" if "file" in ftype else "auto"),
                 "present": True,
                 "required": required,
             }
-        if path not in ("name", "email", "phone", "resume", "coverletter", "cover_letter") and not path.startswith("location"):
+        if path not in (
+            "name",
+            "email",
+            "phone",
+            "resume",
+            "coverletter",
+            "cover_letter",
+        ) and not path.startswith("location"):
             label = f.get("title") or f.get("label") or path
-            plan["custom"].append({"label": label, "required": required, "type": ftype, "path": path})
+            plan["custom"].append(
+                {"label": label, "required": required, "type": ftype, "path": path}
+            )
     return plan
 
 
 # ── Field fills ────────────────────────────────────────────────────
+
 
 def fill_ashby_text(page, path: str, value: str) -> bool:
     """Ashby inputs use data-path or aria-label. Try the most-specific
@@ -202,7 +234,7 @@ def fill_richtext_cover_letter(page, markdown_text: str) -> bool:
             # Type in chunks so the editor's internal state debounces correctly.
             chunk_size = 200
             for i in range(0, len(markdown_text), chunk_size):
-                chunk = markdown_text[i:i + chunk_size]
+                chunk = markdown_text[i : i + chunk_size]
                 page.keyboard.type(chunk, delay=random.randint(5, 20))
             return True
     except Exception:
@@ -227,7 +259,11 @@ def detect_cloudflare_block(page) -> bool:
 
 
 def detect_confirmation(page) -> bool:
-    if "/confirmation" in (page.url or "") or "/submitted" in (page.url or "") or "/thanks" in (page.url or ""):
+    if (
+        "/confirmation" in (page.url or "")
+        or "/submitted" in (page.url or "")
+        or "/thanks" in (page.url or "")
+    ):
         return True
     try:
         body = (page.content() or "").lower()
@@ -275,6 +311,7 @@ def fill_custom(page, question: dict, answers_cache: dict) -> str:
 
 # ── Main flow ──────────────────────────────────────────────────────
 
+
 def run(args) -> int:
     global DISPATCHER_JOB_ID
     DISPATCHER_JOB_ID = args.job_id or ""
@@ -300,8 +337,11 @@ def run(args) -> int:
     if not pdf_path or not pdf_path.exists():
         out_dir = profile_path(profile_id, "output-dir")
         try:
-            cands = sorted([p for p in out_dir.glob("*.pdf") if "cv-general" not in p.name],
-                           key=lambda p: p.stat().st_mtime, reverse=True)
+            cands = sorted(
+                [p for p in out_dir.glob("*.pdf") if "cv-general" not in p.name],
+                key=lambda p: p.stat().st_mtime,
+                reverse=True,
+            )
             pdf_path = cands[0] if cands else None
         except Exception:
             pdf_path = None
@@ -385,7 +425,12 @@ def run(args) -> int:
             # Cascading structured location.
             if plan["location"]:
                 country = loc_block.get("country", "")
-                region = loc_block.get("province") or loc_block.get("region") or loc_block.get("state") or ""
+                region = (
+                    loc_block.get("province")
+                    or loc_block.get("region")
+                    or loc_block.get("state")
+                    or ""
+                )
                 city = loc_block.get("city", "")
                 if any([country, region, city]):
                     fill_ashby_location(page, country, region, city)
@@ -430,12 +475,16 @@ def run(args) -> int:
                 result = fill_custom(page, q, answers_cache)
                 if result == "unknown":
                     unknown_required.append(q["label"])
-            step(f"custom_questions_done:{len(plan['custom']) - len(unknown_required)}/{len(plan['custom'])}")
+            step(
+                f"custom_questions_done:{len(plan['custom']) - len(unknown_required)}/{len(plan['custom'])}"
+            )
 
             if unknown_required:
                 screenshot_for_issue(page, DISPATCHER_JOB_ID)
-                return emit_result("manual-apply-needed",
-                                   "unknown-field:" + ",".join(unknown_required[:3]))
+                return emit_result(
+                    "manual-apply-needed",
+                    "unknown-field:" + ",".join(unknown_required[:3]),
+                )
 
             if args.dry_run:
                 step("dry_run_skip_submit")
@@ -490,8 +539,12 @@ def main() -> int:
     ap.add_argument("--score", default=None, type=float)
     ap.add_argument("--pdf", default=None)
     ap.add_argument("--cover-letter", default=None, dest="cover_letter")
-    ap.add_argument("--cover-letter-md", default=None, dest="cover_letter_md",
-                    help="Markdown source for RichText cover-letter mode.")
+    ap.add_argument(
+        "--cover-letter-md",
+        default=None,
+        dest="cover_letter_md",
+        help="Markdown source for RichText cover-letter mode.",
+    )
     ap.add_argument("--headed", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--force-submit", action="store_true", dest="force_submit")
@@ -500,7 +553,9 @@ def main() -> int:
     try:
         write_apply_state(
             args.job_id,
-            url=args.url, portal="ashby", profileId=args.profile or "",
+            url=args.url,
+            portal="ashby",
+            profileId=args.profile or "",
             startedAt=int(time.time() * 1000),
             lastStep="adapter_start",
             stepHistory=["queued", "dispatched", "adapter_start"],

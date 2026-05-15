@@ -37,7 +37,7 @@ type SeoResult = {
 export const POST = wrap('profile-seo', async ({ request }: { request: Request }) => {
   const body = (await request.json().catch(() => ({}))) as Body;
   return new Promise<{ ok: boolean; seo?: SeoResult; error?: string }>((resolveP) => {
-    const args = [path.join(ROOT, 'profile-seo.mjs'), '--json'];
+    const args = [path.join(ROOT, 'scripts/quality/profile-seo.mjs'), '--json'];
     if (body.headline) args.push('--headline', body.headline);
     if (body.about) args.push('--about', body.about);
     const p = spawn('node', args, { cwd: ROOT, env: { ...process.env } });

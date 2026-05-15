@@ -145,7 +145,7 @@ function spawnAnalyze(profileId?: string): Promise<PatternsResult> {
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
-    const args = ['analyze-patterns.mjs'];
+    const args = ['scripts/tracker/analyze-patterns.mjs'];
     if (profileId) args.push('--profile', profileId);
     const p = spawn('node', args, {
       cwd: ROOT,

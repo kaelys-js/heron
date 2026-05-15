@@ -27,7 +27,6 @@ USAGE:
 import os
 import re
 import sys
-import json
 import time
 import random
 import argparse
@@ -36,7 +35,9 @@ from pathlib import Path
 try:
     from playwright.sync_api import TimeoutError as PlaywrightTimeout
 except ImportError:
-    print("ERROR: playwright not installed. Run:\n  .venv/bin/pip install playwright && .venv/bin/python -m playwright install chromium")
+    print(
+        "ERROR: playwright not installed. Run:\n  .venv/bin/pip install playwright && .venv/bin/python -m playwright install chromium"
+    )
     sys.exit(1)
 
 try:
@@ -52,29 +53,36 @@ from lib_playwright_auth import launch_persistent, login_interactive, USER_DATA_
 
 
 ROOT = Path(__file__).parent
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 USER_DATA_DIR = USER_DATA_DIRS["linkedin"]  # backward-compat alias
 
 from lib_profiles import resolve_profile_arg, profile_path, ensure_profile_dirs
+
 # Shared apply helpers — anti-bot cadence, CAPTCHA detection, state file,
 # canonical APPLY_RESULT emission. The autonomous-apply dispatcher
 # (apply-portal.py) calls us with --job-id, which puts us in "dispatcher
 # mode" — we emit APPLY_STEP / APPLY_RESULT lines so apply-queue-drain
 # can pipe them straight into the activity feed.
 from lib_apply import (
-    human_type, human_click, detect_captcha as lib_detect_captcha,
-    upload_file as lib_upload_file, append_step as lib_append_step,
-    write_apply_state as lib_write_apply_state, emit_result as lib_emit_result,
+    human_type,
+    human_click,
+    detect_captcha as lib_detect_captcha,
+    upload_file as lib_upload_file,
+    append_step as lib_append_step,
+    emit_result as lib_emit_result,
     screenshot_for_issue,
 )
 
 # Per-profile paths set in main() once --profile is parsed. Placeholders
 # so module-level type-checkers don't choke before main() runs.
-PROFILE_YML: Path = ROOT / "data" / "profiles" / "default" / "profile.yml"
-APPLICATIONS_MD: Path = ROOT / "data" / "profiles" / "default" / "applications.md"
-PIPELINE_MD: Path = ROOT / "data" / "profiles" / "default" / "pipeline.md"
+PROFILE_YML: Path = REPO_ROOT / "data" / "profiles" / "default" / "profile.yml"
+APPLICATIONS_MD: Path = REPO_ROOT / "data" / "profiles" / "default" / "applications.md"
+PIPELINE_MD: Path = REPO_ROOT / "data" / "profiles" / "default" / "pipeline.md"
 # General-purpose CV PDF — per profile. Falls back to default profile's
 # cv-general.pdf when no --profile is passed.
-DEFAULT_GENERAL_CV: Path = ROOT / "data" / "profiles" / "default" / "output" / "cv-general.pdf"
+DEFAULT_GENERAL_CV: Path = REPO_ROOT / "data" / "profiles" / "default" / "output" / "cv-general.pdf"
 
 MAX_PER_RUN = int(os.environ.get("LINKEDIN_MAX_PER_RUN", "30"))
 AUTO_SUBMIT = os.environ.get("LINKEDIN_AUTO_SUBMIT", "0") == "1"
@@ -101,7 +109,9 @@ def emit_step(step: str) -> None:
     print(f"  [step] {step}")
 
 
-def should_auto_submit(profile: dict, score: float | None, min_score: float) -> tuple[bool, str | None]:
+def should_auto_submit(
+    profile: dict, score: float | None, min_score: float
+) -> tuple[bool, str | None]:
     """Single decision point for "are we allowed to click Submit?".
 
     Priority order:
@@ -139,10 +149,17 @@ def linkedin_jobs_from_pipeline():
         return []
     rows = []
     text = PIPELINE_MD.read_text()
-    pat = re.compile(r"^- \[ \] (https://[^\s|]*linkedin\.com/jobs/view/\S+)\s*\|\s*(.*?)\s*\|\s*(.*?)(?:\s*\|\s*(.*?))?$",
-                     re.MULTILINE)
+    pat = re.compile(
+        r"^- \[ \] (https://[^\s|]*linkedin\.com/jobs/view/\S+)\s*\|\s*(.*?)\s*\|\s*(.*?)(?:\s*\|\s*(.*?))?$",
+        re.MULTILINE,
+    )
     for m in pat.finditer(text):
-        url, company, title, loc = m.group(1), m.group(2).strip(), m.group(3).strip(), (m.group(4) or "").strip()
+        url, company, title, loc = (
+            m.group(1),
+            m.group(2).strip(),
+            m.group(3).strip(),
+            (m.group(4) or "").strip(),
+        )
         rows.append({"url": url, "company": company, "title": title, "location": loc})
     return rows
 
@@ -180,10 +197,16 @@ def page_has_captcha(page) -> bool:
     # LinkedIn-specific phrasing not covered by the generic body-text scan.
     try:
         txt = (page.content() or "").lower()
-        return any(s in txt for s in [
-            "captcha", "are you a robot", "let's do a quick security check",
-            "we want to make sure", "verify it's you",
-        ])
+        return any(
+            s in txt
+            for s in [
+                "captcha",
+                "are you a robot",
+                "let's do a quick security check",
+                "we want to make sure",
+                "verify it's you",
+            ]
+        )
     except Exception:
         return False
 
@@ -209,7 +232,9 @@ def fill_easy_apply(page, profile, pdf_path, may_submit: bool = False) -> str:
             jitter(1, 3)
 
             # Try to fill any visible text inputs by label match
-            inputs = page.locator('input[type="text"], input[type="tel"], input[type="email"], input[type="number"]').all()
+            inputs = page.locator(
+                'input[type="text"], input[type="tel"], input[type="email"], input[type="number"]'
+            ).all()
             for inp in inputs:
                 try:
                     if not inp.is_visible():
@@ -223,8 +248,12 @@ def fill_easy_apply(page, profile, pdf_path, may_submit: bool = False) -> str:
                     # CRITICAL: do NOT auto-fill criminal-history / background
                     # fields. Skip them BEFORE the keyword match below so the
                     # generic "background" partial doesn't catch them.
-                    if any(t in label for t in ["criminal", "convict", "felony", "background check"]):
-                        print(f"    [skip] criminal-history field — leaving blank for human review: '{label}'")
+                    if any(
+                        t in label for t in ["criminal", "convict", "felony", "background check"]
+                    ):
+                        print(
+                            f"    [skip] criminal-history field — leaving blank for human review: '{label}'"
+                        )
                         continue
                     if "phone" in label:
                         human_type(inp, profile["candidate"].get("phone", ""))
@@ -264,7 +293,9 @@ def fill_easy_apply(page, profile, pdf_path, may_submit: bool = False) -> str:
                             emit_step("upload_failed")
                             return "error:upload-failed"
                     else:
-                        print(f"    [skip resume upload] no general CV at {pdf_path} — generate one from /profile to enable")
+                        print(
+                            f"    [skip resume upload] no general CV at {pdf_path} — generate one from /profile to enable"
+                        )
             except Exception:
                 pass
 
@@ -317,33 +348,67 @@ def append_application_row(num, company, role, url, status, notes=""):
 def main():
     global PROFILE_YML, APPLICATIONS_MD, PIPELINE_MD, DISPATCHER_MODE, DISPATCHER_JOB_ID
     parser = argparse.ArgumentParser()
-    parser.add_argument("--login", action="store_true",
-                        help="Open LinkedIn for manual login; saves cookies for next run")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Walk forms but do not click Submit even if AUTO_SUBMIT=1")
-    parser.add_argument("--profile", default=None,
-                        help="Profile slug (defaults to active profile in data/profiles.json).")
-    parser.add_argument("--general-cv", default=None,
-                        help=("Path to your GENERAL CV PDF. Defaults to the per-profile "
-                              "data/profiles/<slug>/output/cv-general.pdf. If the file is "
-                              "missing the resume-upload step is silently skipped."))
+    parser.add_argument(
+        "--login",
+        action="store_true",
+        help="Open LinkedIn for manual login; saves cookies for next run",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Walk forms but do not click Submit even if AUTO_SUBMIT=1",
+    )
+    parser.add_argument(
+        "--profile",
+        default=None,
+        help="Profile slug (defaults to active profile in data/profiles.json).",
+    )
+    parser.add_argument(
+        "--general-cv",
+        default=None,
+        help=(
+            "Path to your GENERAL CV PDF. Defaults to the per-profile "
+            "data/profiles/<slug>/output/cv-general.pdf. If the file is "
+            "missing the resume-upload step is silently skipped."
+        ),
+    )
     # Backward-compat alias: --pdf was the old name.
-    parser.add_argument("--pdf", dest="pdf_legacy", default=None,
-                        help="(deprecated) Alias for --general-cv. Prefer --general-cv.")
-    parser.add_argument("--url",
-                        help="Apply to this single job URL (instead of iterating the pipeline)")
+    parser.add_argument(
+        "--pdf",
+        dest="pdf_legacy",
+        default=None,
+        help="(deprecated) Alias for --general-cv. Prefer --general-cv.",
+    )
+    parser.add_argument(
+        "--url", help="Apply to this single job URL (instead of iterating the pipeline)"
+    )
     # Dispatcher-mode args — when --job-id is given, we emit APPLY_STEP /
     # APPLY_RESULT lines on stdout so apply-portal.py → apply-queue-drain
     # can stream progress to the activity feed.
-    parser.add_argument("--job-id", dest="job_id", default=None,
-                        help=("Dispatcher mode. Set by apply-portal.py. When present, "
-                              "stdout follows the APPLY_STEP / APPLY_RESULT protocol "
-                              "and the apply-state file is updated per step."))
-    parser.add_argument("--score", default=None, type=float,
-                        help=("Job score (0-5). In dispatcher mode, gated against "
-                              "profile.automation.min_score_to_apply before submitting."))
-    parser.add_argument("--headed", action="store_true",
-                        help="Forces headed browser even in dispatcher mode (default: True for LinkedIn).")
+    parser.add_argument(
+        "--job-id",
+        dest="job_id",
+        default=None,
+        help=(
+            "Dispatcher mode. Set by apply-portal.py. When present, "
+            "stdout follows the APPLY_STEP / APPLY_RESULT protocol "
+            "and the apply-state file is updated per step."
+        ),
+    )
+    parser.add_argument(
+        "--score",
+        default=None,
+        type=float,
+        help=(
+            "Job score (0-5). In dispatcher mode, gated against "
+            "profile.automation.min_score_to_apply before submitting."
+        ),
+    )
+    parser.add_argument(
+        "--headed",
+        action="store_true",
+        help="Forces headed browser even in dispatcher mode (default: True for LinkedIn).",
+    )
     args = parser.parse_args()
 
     profile_id = resolve_profile_arg(args.profile)
@@ -397,7 +462,12 @@ def main():
     # Dispatcher mode + score gate failed → bail immediately with a
     # canonical APPLY_RESULT line. apply-queue-drain saw this case
     # already (preflightProfile) but the defensive check stays.
-    if DISPATCHER_MODE and not submit_allowed and no_submit_reason and "below min" in no_submit_reason:
+    if (
+        DISPATCHER_MODE
+        and not submit_allowed
+        and no_submit_reason
+        and "below min" in no_submit_reason
+    ):
         sys.exit(lib_emit_result("manual-apply-needed", f"score-gate:{no_submit_reason}"))
 
     with launch_persistent("linkedin", headed=True) as ctx:
@@ -420,12 +490,21 @@ def main():
             if not DISPATCHER_MODE:
                 print(f"Single-job mode: applying to {args.url} (AUTO_SUBMIT={AUTO_SUBMIT})\n")
         else:
-            candidates = [j for j in linkedin_jobs_from_pipeline() if j["url"] not in already_applied]
+            candidates = [
+                j for j in linkedin_jobs_from_pipeline() if j["url"] not in already_applied
+            ]
             candidates = candidates[:MAX_PER_RUN]
-            print(f"Found {len(candidates)} LinkedIn jobs to walk (cap: {MAX_PER_RUN}, AUTO_SUBMIT={AUTO_SUBMIT})\n")
+            print(
+                f"Found {len(candidates)} LinkedIn jobs to walk (cap: {MAX_PER_RUN}, AUTO_SUBMIT={AUTO_SUBMIT})\n"
+            )
 
-        results = {"submitted": 0, "review": 0, "skipped_no_easy_apply": 0,
-                   "skipped_captcha": 0, "errors": 0}
+        results = {
+            "submitted": 0,
+            "review": 0,
+            "skipped_no_easy_apply": 0,
+            "skipped_captcha": 0,
+            "errors": 0,
+        }
 
         # Dispatcher mode collapses to one URL: capture per-job result so
         # we can emit APPLY_RESULT at the end. Indexed list tolerates the
@@ -473,28 +552,55 @@ def main():
                         # row append to avoid double-rows.
                         dispatcher_result = ("applied", None)
                     else:
-                        append_application_row(num, j["company"], j.get("title", ""), j["url"], "APPLIED-EASY", "auto-submitted")
+                        append_application_row(
+                            num,
+                            j["company"],
+                            j.get("title", ""),
+                            j["url"],
+                            "APPLIED-EASY",
+                            "auto-submitted",
+                        )
                         results["submitted"] += 1
                 elif outcome == "review":
                     if DISPATCHER_MODE:
                         # Submit available but blocked (autonomous_apply
                         # off, score below threshold, or dry-run).
                         detail = no_submit_reason or "submit-not-allowed"
-                        dispatcher_result = ("manual-apply-needed", f"review-required:{detail}")
+                        dispatcher_result = (
+                            "manual-apply-needed",
+                            f"review-required:{detail}",
+                        )
                     else:
-                        append_application_row(num, j["company"], j.get("title", ""), j["url"], "READY-IN-BROWSER", "form filled, click Submit manually")
+                        append_application_row(
+                            num,
+                            j["company"],
+                            j.get("title", ""),
+                            j["url"],
+                            "READY-IN-BROWSER",
+                            "form filled, click Submit manually",
+                        )
                         results["review"] += 1
                 elif isinstance(outcome, str) and outcome.startswith("error:"):
                     # fill_easy_apply returned a tagged failure (e.g. error:upload-failed)
                     if DISPATCHER_MODE:
-                        dispatcher_result = ("manual-apply-needed", outcome.split(":", 1)[1])
+                        dispatcher_result = (
+                            "manual-apply-needed",
+                            outcome.split(":", 1)[1],
+                        )
                         break
                     results["errors"] += 1
                 else:
                     if DISPATCHER_MODE:
                         dispatcher_result = ("error", outcome or "unknown")
                         break
-                    append_application_row(num, j["company"], j.get("title", ""), j["url"], "ERROR", outcome)
+                    append_application_row(
+                        num,
+                        j["company"],
+                        j.get("title", ""),
+                        j["url"],
+                        "ERROR",
+                        outcome,
+                    )
                     results["errors"] += 1
             except Exception as e:
                 msg = f"{type(e).__name__}: {str(e)[:80]}"
@@ -517,7 +623,7 @@ def main():
         print("\n=== RESULTS ===")
         for k, v in results.items():
             print(f"  {k}: {v}")
-        print(f"\napplications.md updated. Browser will stay open for review.")
+        print("\napplications.md updated. Browser will stay open for review.")
         input("Press Enter to close browser: ")
         # ctx is closed automatically by the launch_persistent() context manager.
 

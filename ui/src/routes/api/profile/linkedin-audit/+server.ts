@@ -41,7 +41,7 @@ function venvPython(): string {
 function extractLinkedInText(linkedinUrl: string): { ok: boolean; text?: string; error?: string } {
   const r = spawnSync(
     venvPython(),
-    [path.join(ROOT, 'extract-linkedin-profile.py'), '--url', linkedinUrl],
+    [path.join(ROOT, 'scripts/linkedin/extract-linkedin-profile.py'), '--url', linkedinUrl],
     { cwd: ROOT, encoding: 'utf8', timeout: 60_000 },
   );
   if (r.status !== 0) {

@@ -38,7 +38,7 @@ function runScanEmailImap(args?: JobArgs): Promise<JobResult> {
       return;
     }
 
-    const cliArgs = ['scan-email-imap.mjs'];
+    const cliArgs = ['scripts/scan/scan-email-imap.mjs'];
     if (typeof args?.profileId === 'string' && args.profileId.trim()) {
       cliArgs.push('--profile', args.profileId.trim());
     }

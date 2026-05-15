@@ -27,22 +27,26 @@ import argparse
 import time
 from pathlib import Path
 from urllib.request import Request, urlopen
-from urllib.parse import urlencode, quote
+from urllib.parse import urlencode
 from xml.etree import ElementTree as ET
 
 try:
     from jobspy import scrape_jobs  # type: ignore
+
     JOBSPY_OK = True
 except ImportError:
     scrape_jobs = None  # type: ignore
     JOBSPY_OK = False
 
 ROOT = Path(__file__).parent
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 
 # PIPELINE and HISTORY are now per-profile — set inside main() once we
 # know which profile this run targets (parse_args resolves --profile).
-PIPELINE: Path = ROOT / "data" / "pipeline.md"  # placeholder; overridden in main()
-HISTORY: Path = ROOT / "data" / "scan-history.tsv"
+PIPELINE: Path = REPO_ROOT / "data" / "pipeline.md"  # placeholder; overridden in main()
+HISTORY: Path = REPO_ROOT / "data" / "scan-history.tsv"
 
 from lib_profiles import resolve_profile_arg, profile_path, ensure_profile_dirs
 
@@ -55,57 +59,165 @@ from lib_profiles import resolve_profile_arg, profile_path, ensure_profile_dirs
 # the actual writes to pipeline.md are an order of magnitude smaller.
 RESULTS_WANTED_DEFAULT = 200
 SEARCHES = [
-    {"term": "Senior Software Engineer TypeScript", "location": "Vancouver, BC, Canada",
-     "is_remote": False, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "Canada"},
-    {"term": "Senior Full-Stack Engineer", "location": "Vancouver, BC, Canada",
-     "is_remote": False, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "Canada"},
-    {"term": "Senior Software Engineer TypeScript Remote", "location": "Canada",
-     "is_remote": True, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "Canada"},
-    {"term": "Senior Software Engineer TypeScript", "location": "United States",
-     "is_remote": True, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "USA"},
-    {"term": "Senior Full-Stack Engineer Node React", "location": "United States",
-     "is_remote": True, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "USA"},
-    {"term": "Senior Backend Engineer Node.js", "location": "United States",
-     "is_remote": True, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "USA"},
-    {"term": "Senior Frontend Engineer React TypeScript", "location": "United States",
-     "is_remote": True, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "USA"},
-    {"term": "Senior Platform Engineer", "location": "United States",
-     "is_remote": True, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "USA"},
-    {"term": "Cloudflare Workers Engineer", "location": "United States",
-     "is_remote": True, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "USA"},
-    {"term": "Founding Engineer TypeScript", "location": "United States",
-     "is_remote": True, "results_wanted": RESULTS_WANTED_DEFAULT, "country_indeed": "USA"},
+    {
+        "term": "Senior Software Engineer TypeScript",
+        "location": "Vancouver, BC, Canada",
+        "is_remote": False,
+        "results_wanted": RESULTS_WANTED_DEFAULT,
+        "country_indeed": "Canada",
+    },
+    {
+        "term": "Senior Full-Stack Engineer",
+        "location": "Vancouver, BC, Canada",
+        "is_remote": False,
+        "results_wanted": RESULTS_WANTED_DEFAULT,
+        "country_indeed": "Canada",
+    },
+    {
+        "term": "Senior Software Engineer TypeScript Remote",
+        "location": "Canada",
+        "is_remote": True,
+        "results_wanted": RESULTS_WANTED_DEFAULT,
+        "country_indeed": "Canada",
+    },
+    {
+        "term": "Senior Software Engineer TypeScript",
+        "location": "United States",
+        "is_remote": True,
+        "results_wanted": RESULTS_WANTED_DEFAULT,
+        "country_indeed": "USA",
+    },
+    {
+        "term": "Senior Full-Stack Engineer Node React",
+        "location": "United States",
+        "is_remote": True,
+        "results_wanted": RESULTS_WANTED_DEFAULT,
+        "country_indeed": "USA",
+    },
+    {
+        "term": "Senior Backend Engineer Node.js",
+        "location": "United States",
+        "is_remote": True,
+        "results_wanted": RESULTS_WANTED_DEFAULT,
+        "country_indeed": "USA",
+    },
+    {
+        "term": "Senior Frontend Engineer React TypeScript",
+        "location": "United States",
+        "is_remote": True,
+        "results_wanted": RESULTS_WANTED_DEFAULT,
+        "country_indeed": "USA",
+    },
+    {
+        "term": "Senior Platform Engineer",
+        "location": "United States",
+        "is_remote": True,
+        "results_wanted": RESULTS_WANTED_DEFAULT,
+        "country_indeed": "USA",
+    },
+    {
+        "term": "Cloudflare Workers Engineer",
+        "location": "United States",
+        "is_remote": True,
+        "results_wanted": RESULTS_WANTED_DEFAULT,
+        "country_indeed": "USA",
+    },
+    {
+        "term": "Founding Engineer TypeScript",
+        "location": "United States",
+        "is_remote": True,
+        "results_wanted": RESULTS_WANTED_DEFAULT,
+        "country_indeed": "USA",
+    },
 ]
 
 # ----- Title filtering (mirrors portals.yml) -----
 TITLE_DROP = [
     # Management (Cole is Senior IC)
-    "engineering manager", "director of engineering", "head of engineering",
-    "vp engineering", "vp of engineering", "chief engineering",
+    "engineering manager",
+    "director of engineering",
+    "head of engineering",
+    "vp engineering",
+    "vp of engineering",
+    "chief engineering",
     # Sales-adjacent / non-IC
-    "solutions architect", "solutions engineer", "forward deployed",
-    "customer engineer", "field engineer", "field cto", "field architect",
-    "account executive", "account manager", "sales engineer",
-    "customer success", "support engineer", "recruiter", "talent",
-    "marketing", "growth marketing",
+    "solutions architect",
+    "solutions engineer",
+    "forward deployed",
+    "customer engineer",
+    "field engineer",
+    "field cto",
+    "field architect",
+    "account executive",
+    "account manager",
+    "sales engineer",
+    "customer success",
+    "support engineer",
+    "recruiter",
+    "talent",
+    "marketing",
+    "growth marketing",
     # Off-stack
-    "machine learning engineer", "ml engineer", "research engineer",
-    "applied scientist", "data scientist", "research scientist",
-    "ios engineer", "android engineer", "ios developer", "android developer",
-    "mobile engineer", "kotlin", "swift engineer",
-    "embedded", "firmware", "fpga", "asic", "hardware",
-    "blockchain", "web3", "crypto", "solana", "solidity",
-    "game developer", "game engineer", "unity", "unreal",
-    ".net", "c# ", "java engineer", "java developer",
-    "salesforce", "sap ", "oracle", "mainframe", "cobol",
-    "php developer", "ruby on rails", "rails developer",
+    "machine learning engineer",
+    "ml engineer",
+    "research engineer",
+    "applied scientist",
+    "data scientist",
+    "research scientist",
+    "ios engineer",
+    "android engineer",
+    "ios developer",
+    "android developer",
+    "mobile engineer",
+    "kotlin",
+    "swift engineer",
+    "embedded",
+    "firmware",
+    "fpga",
+    "asic",
+    "hardware",
+    "blockchain",
+    "web3",
+    "crypto",
+    "solana",
+    "solidity",
+    "game developer",
+    "game engineer",
+    "unity",
+    "unreal",
+    ".net",
+    "c# ",
+    "java engineer",
+    "java developer",
+    "salesforce",
+    "sap ",
+    "oracle",
+    "mainframe",
+    "cobol",
+    "php developer",
+    "ruby on rails",
+    "rails developer",
     # BG/clearance hard-stops
-    "security clearance", "ts/sci", "top secret", "polygraph",
-    "background investigation", "clean background", "vulnerable sector",
-    "dod ", "federal contractor", "defense contractor", "intelligence community",
+    "security clearance",
+    "ts/sci",
+    "top secret",
+    "polygraph",
+    "background investigation",
+    "clean background",
+    "vulnerable sector",
+    "dod ",
+    "federal contractor",
+    "defense contractor",
+    "intelligence community",
     # Wrong seniority
-    "junior", "intern", "internship", "apprentice",
-    "graduate", "entry level", "entry-level", "associate engineer",
+    "junior",
+    "intern",
+    "internship",
+    "apprentice",
+    "graduate",
+    "entry level",
+    "entry-level",
+    "associate engineer",
 ]
 
 
@@ -136,6 +248,7 @@ def append_pipeline(rows):
     if not PIPELINE.exists():
         PIPELINE.write_text("# Pipeline Inbox\n\n")
     from datetime import date
+
     with PIPELINE.open("a") as f:
         f.write(f"\n## scan-broad ({date.today().isoformat()}, {len(rows)} new)\n\n")
         for url, company, title, location in rows:
@@ -168,8 +281,10 @@ def fetch_themuse(seen: set):
             "page": page,
         }
         try:
-            req = Request(f"{THE_MUSE_BASE}?{urlencode(params)}",
-                          headers={"User-Agent": "Mozilla/5.0 career-ops"})
+            req = Request(
+                f"{THE_MUSE_BASE}?{urlencode(params)}",
+                headers={"User-Agent": "Mozilla/5.0 career-ops"},
+            )
             with urlopen(req, timeout=15) as r:
                 data = json.loads(r.read())
             for j in data.get("results", []):
@@ -183,7 +298,10 @@ def fetch_themuse(seen: set):
                 seen.add(url)
                 new.append((url, company, title, loc))
         except Exception as e:
-            print(f"  [The Muse error pg{page}]: {type(e).__name__}: {str(e)[:80]}", file=sys.stderr)
+            print(
+                f"  [The Muse error pg{page}]: {type(e).__name__}: {str(e)[:80]}",
+                file=sys.stderr,
+            )
             break
     return new
 
@@ -215,8 +333,10 @@ def fetch_adzuna(seen: set):
                 "content-type": "application/json",
             }
             try:
-                req = Request(f"{ADZUNA_BASE}/{country}/search/{page}?{urlencode(params)}",
-                              headers={"User-Agent": "Mozilla/5.0 career-ops"})
+                req = Request(
+                    f"{ADZUNA_BASE}/{country}/search/{page}?{urlencode(params)}",
+                    headers={"User-Agent": "Mozilla/5.0 career-ops"},
+                )
                 with urlopen(req, timeout=15) as r:
                     data = json.loads(r.read())
                 for j in data.get("results", []):
@@ -229,7 +349,10 @@ def fetch_adzuna(seen: set):
                     seen.add(url)
                     new.append((url, company, title, loc))
             except Exception as e:
-                print(f"  [Adzuna error {country}/{query[:20]}/pg{page}]: {type(e).__name__}: {str(e)[:80]}", file=sys.stderr)
+                print(
+                    f"  [Adzuna error {country}/{query[:20]}/pg{page}]: {type(e).__name__}: {str(e)[:80]}",
+                    file=sys.stderr,
+                )
                 break
     return new
 
@@ -247,8 +370,7 @@ def fetch_hn_hiring(seen: set):
     ]
     for q in queries:
         try:
-            req = Request(f"{HN_RSS_BASE}{q}",
-                          headers={"User-Agent": "Mozilla/5.0 career-ops"})
+            req = Request(f"{HN_RSS_BASE}{q}", headers={"User-Agent": "Mozilla/5.0 career-ops"})
             with urlopen(req, timeout=15) as r:
                 xml_data = r.read()
             root = ET.fromstring(xml_data)
@@ -270,7 +392,10 @@ def fetch_hn_hiring(seen: set):
                 seen.add(url)
                 new.append((url, company, title, ""))
         except Exception as e:
-            print(f"  [HN RSS error {q}]: {type(e).__name__}: {str(e)[:80]}", file=sys.stderr)
+            print(
+                f"  [HN RSS error {q}]: {type(e).__name__}: {str(e)[:80]}",
+                file=sys.stderr,
+            )
             continue
     return new
 
@@ -281,8 +406,7 @@ def fetch_remoteok(seen: set):
     """
     new = []
     try:
-        req = Request(REMOTEOK_BASE,
-                      headers={"User-Agent": "Mozilla/5.0 career-ops"})
+        req = Request(REMOTEOK_BASE, headers={"User-Agent": "Mozilla/5.0 career-ops"})
         with urlopen(req, timeout=20) as r:
             data = json.loads(r.read())
     except Exception as e:
@@ -293,11 +417,38 @@ def fetch_remoteok(seen: set):
         return []
 
     # First element is metadata; rest are jobs
-    keep_tags = {"typescript", "javascript", "node", "react", "full-stack", "fullstack",
-                 "backend", "frontend", "front-end", "back-end", "senior", "engineer"}
-    drop_tags = {"junior", "intern", "internship", "kotlin", "swift", "ios", "android",
-                 "rails", "ruby", "php", "java", "blockchain", "web3", "crypto",
-                 "solidity", "ethereum"}
+    keep_tags = {
+        "typescript",
+        "javascript",
+        "node",
+        "react",
+        "full-stack",
+        "fullstack",
+        "backend",
+        "frontend",
+        "front-end",
+        "back-end",
+        "senior",
+        "engineer",
+    }
+    drop_tags = {
+        "junior",
+        "intern",
+        "internship",
+        "kotlin",
+        "swift",
+        "ios",
+        "android",
+        "rails",
+        "ruby",
+        "php",
+        "java",
+        "blockchain",
+        "web3",
+        "crypto",
+        "solidity",
+        "ethereum",
+    }
 
     for j in data[1:]:
         if not isinstance(j, dict):
@@ -357,17 +508,36 @@ def fetch_wwr(seen: set):
                     continue
                 # Filter out roles that don't match Cole's senior IC TypeScript profile
                 role_lower = role.lower()
-                if not any(kw in role_lower for kw in ["senior", "staff", "principal", "lead", "founding"]):
+                if not any(
+                    kw in role_lower for kw in ["senior", "staff", "principal", "lead", "founding"]
+                ):
                     continue
-                if not any(kw in role_lower for kw in ["engineer", "developer", "full-stack", "fullstack",
-                                                       "backend", "frontend", "back-end", "front-end",
-                                                       "typescript", "javascript", "node", "react"]):
+                if not any(
+                    kw in role_lower
+                    for kw in [
+                        "engineer",
+                        "developer",
+                        "full-stack",
+                        "fullstack",
+                        "backend",
+                        "frontend",
+                        "back-end",
+                        "front-end",
+                        "typescript",
+                        "javascript",
+                        "node",
+                        "react",
+                    ]
+                ):
                     continue
                 seen.add(url)
                 new.append((url, company, role, "Remote"))
         except Exception as e:
             short_feed = feed_url.split("/")[-1]
-            print(f"  [WWR error {short_feed}]: {type(e).__name__}: {str(e)[:80]}", file=sys.stderr)
+            print(
+                f"  [WWR error {short_feed}]: {type(e).__name__}: {str(e)[:80]}",
+                file=sys.stderr,
+            )
             continue
     return new
 
@@ -375,7 +545,10 @@ def fetch_wwr(seen: set):
 def fetch_jobspy(seen: set):
     """Multi-board scrape via python-jobspy: linkedin/indeed/glassdoor/zip/google."""
     if not JOBSPY_OK:
-        print("  [jobspy not installed — pip install python-jobspy to enable]", file=sys.stderr)
+        print(
+            "  [jobspy not installed — pip install python-jobspy to enable]",
+            file=sys.stderr,
+        )
         return []
     new = []
     sites = ["linkedin", "indeed", "glassdoor", "zip_recruiter", "google"]
@@ -414,25 +587,38 @@ def fetch_jobspy(seen: set):
 # ----- Source registry -----
 
 SOURCES = {
-    "jobspy":   ("JobSpy (LI/Indeed/Glassdoor/Zip/Google)", fetch_jobspy),
-    "themuse":  ("The Muse",                                fetch_themuse),
-    "adzuna":   ("Adzuna",                                  fetch_adzuna),
-    "hn":       ("HN Who's Hiring",                         fetch_hn_hiring),
-    "remoteok": ("RemoteOK",                                fetch_remoteok),
-    "wwr":      ("We Work Remotely",                        fetch_wwr),
+    "jobspy": ("JobSpy (LI/Indeed/Glassdoor/Zip/Google)", fetch_jobspy),
+    "themuse": ("The Muse", fetch_themuse),
+    "adzuna": ("Adzuna", fetch_adzuna),
+    "hn": ("HN Who's Hiring", fetch_hn_hiring),
+    "remoteok": ("RemoteOK", fetch_remoteok),
+    "wwr": ("We Work Remotely", fetch_wwr),
 }
 
 
 def parse_args():
     ap = argparse.ArgumentParser(description="Broad multi-source job scanner")
-    ap.add_argument("--only", help="Comma-separated source ids to run (default: all). Choices: " + ", ".join(SOURCES.keys()))
+    ap.add_argument(
+        "--only",
+        help="Comma-separated source ids to run (default: all). Choices: "
+        + ", ".join(SOURCES.keys()),
+    )
     ap.add_argument("--skip", help="Comma-separated source ids to skip")
-    ap.add_argument("--profile", default=None,
-                    help="Profile slug (defaults to active profile in data/profiles.json).")
-    ap.add_argument("--dry-run", action="store_true",
-                    help="Don't write to pipeline.md or scan-history.tsv.")
-    ap.add_argument("--probe", action="store_true",
-                    help="Connectivity probe — hit one stable source (jobspy) and confirm it returns. Exits 0/non-zero.")
+    ap.add_argument(
+        "--profile",
+        default=None,
+        help="Profile slug (defaults to active profile in data/profiles.json).",
+    )
+    ap.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Don't write to pipeline.md or scan-history.tsv.",
+    )
+    ap.add_argument(
+        "--probe",
+        action="store_true",
+        help="Connectivity probe — hit one stable source (jobspy) and confirm it returns. Exits 0/non-zero.",
+    )
     return ap.parse_args()
 
 
@@ -444,6 +630,7 @@ def main():
     if args.probe:
         try:
             import urllib.request
+
             req = urllib.request.Request(
                 "https://news.ycombinator.com/jobs",
                 headers={"User-Agent": "career-ops-probe/1.0"},
@@ -468,14 +655,19 @@ def main():
         wanted = {s.strip() for s in args.only.split(",") if s.strip()}
         unknown = wanted - SOURCES.keys()
         if unknown:
-            print(f"ERROR: unknown source(s): {', '.join(sorted(unknown))}", file=sys.stderr)
+            print(
+                f"ERROR: unknown source(s): {', '.join(sorted(unknown))}",
+                file=sys.stderr,
+            )
             sys.exit(2)
         selected = [s for s in selected if s in wanted]
     if args.skip:
         skip = {s.strip() for s in args.skip.split(",") if s.strip()}
         selected = [s for s in selected if s not in skip]
 
-    print(f"career-ops scan-broad — running {len(selected)}/{len(SOURCES)} sources: {', '.join(selected)}")
+    print(
+        f"career-ops scan-broad — running {len(selected)}/{len(SOURCES)} sources: {', '.join(selected)}"
+    )
     print(f"  pipeline: {PIPELINE}")
     print(f"  history:  {HISTORY}")
     seen = load_history()
@@ -501,7 +693,7 @@ def main():
         print(f"  → +{len(rows)} new in {elapsed:.1f}s\n")
 
     print("=" * 60)
-    print(f"Per-source totals:")
+    print("Per-source totals:")
     for src in selected:
         print(f"  {src:10s}  {counts.get(src, 0):4d} new  ({timings.get(src, 0):4.1f}s)")
     print(f"  {'TOTAL':10s}  {len(new_rows):4d} new")

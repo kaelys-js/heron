@@ -22,6 +22,7 @@ When a real adapter ships for one of these portals (e.g. apply-lever.py),
 remove the portal from STUB_PORTALS in apply-portal.py — the routing
 will automatically prefer the new script.
 """
+
 from __future__ import annotations
 import argparse
 import re
@@ -29,10 +30,11 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).parent
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
 from lib_apply import detect_portal, append_step, emit_result  # noqa: E402
 
-APPLY_STATE_DIR = ROOT / "data" / "apply-state"
+APPLY_STATE_DIR = REPO_ROOT / "data" / "apply-state"
 
 
 def _state_file_for(job_id: str) -> Path:
@@ -72,8 +74,7 @@ def main() -> int:
         print(f"APPLY_STEP: stub-detected:{portal}", flush=True)
 
     print(
-        f"[stub] {portal} automation not implemented yet — "
-        f"escalating to ManualApplyNeeded.",
+        f"[stub] {portal} automation not implemented yet — escalating to ManualApplyNeeded.",
         file=sys.stderr,
         flush=True,
     )

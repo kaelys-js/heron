@@ -13,9 +13,12 @@ Quirks:
   - Resume upload: `input[type=file][name="resume"]` reliably.
   - Submit: button text "Submit application".
 """
+
 from pathlib import Path
 import sys
+
 ROOT = Path(__file__).parent
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
 
 from lib_portal import PortalConfig, adapter_main  # noqa: E402
@@ -23,8 +26,8 @@ from lib_portal import PortalConfig, adapter_main  # noqa: E402
 
 def smartrecruiters_config() -> PortalConfig:
     return PortalConfig(
-        portal_id='smartrecruiters',
-        user_data_dir=ROOT / '.playwright-smartrecruiters',
+        portal_id="smartrecruiters",
+        user_data_dir=REPO_ROOT / ".playwright-smartrecruiters",
         first_name_selectors=[
             'input[name="firstName"]',
             'input[name="first_name"]',
@@ -54,7 +57,7 @@ def smartrecruiters_config() -> PortalConfig:
         cookie_dismiss_selectors=[
             'button:has-text("Accept all")',
             'button:has-text("Accept Cookies")',
-            '#onetrust-accept-btn-handler',
+            "#onetrust-accept-btn-handler",
         ],
         initial_apply_selectors=[
             'button:has-text("I\'m interested")',
@@ -62,16 +65,16 @@ def smartrecruiters_config() -> PortalConfig:
             'a:has-text("Apply")',
         ],
         already_applied_markers=[
-            'you have already applied',
-            'application received',
+            "you have already applied",
+            "application received",
         ],
         confirmation_markers=[
-            'application submitted',
-            'thank you for applying',
+            "application submitted",
+            "thank you for applying",
         ],
         multipage=False,
     )
 
 
-if __name__ == '__main__':
-    sys.exit(adapter_main(smartrecruiters_config, 'SmartRecruiters autonomous apply adapter'))
+if __name__ == "__main__":
+    sys.exit(adapter_main(smartrecruiters_config, "SmartRecruiters autonomous apply adapter"))

@@ -26,7 +26,6 @@ USAGE
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import sys
 import time
@@ -37,30 +36,42 @@ from urllib.parse import urlencode
 try:
     from playwright.sync_api import TimeoutError as PlaywrightTimeout
 except ImportError:
-    print("ERROR: playwright not installed. Run:\n  .venv/bin/pip install playwright && .venv/bin/python -m playwright install chromium", file=sys.stderr)
+    print(
+        "ERROR: playwright not installed. Run:\n  .venv/bin/pip install playwright && .venv/bin/python -m playwright install chromium",
+        file=sys.stderr,
+    )
     sys.exit(1)
 
 try:
     import yaml
 except ImportError:
-    print("ERROR: pyyaml not installed. Run:\n  .venv/bin/pip install pyyaml", file=sys.stderr)
+    print(
+        "ERROR: pyyaml not installed. Run:\n  .venv/bin/pip install pyyaml",
+        file=sys.stderr,
+    )
     sys.exit(1)
 
 from lib_playwright_auth import (
-    launch_persistent, is_logged_in_linkedin, humanize, USER_DATA_DIRS,
+    launch_persistent,
+    is_logged_in_linkedin,
+    humanize,
+    USER_DATA_DIRS,
 )
 
 
 ROOT = Path(__file__).resolve().parent
+REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 from lib_profiles import resolve_profile_arg, profile_path, ensure_profile_dirs
 
 # Per-profile paths are set inside main() once --profile is parsed.
 # Placeholders for module-level type annotations; real values land later.
-PROFILE_YML: Path = ROOT / "data" / "profiles" / "default" / "profile.yml"
-PORTALS_YML: Path = ROOT / "data" / "profiles" / "default" / "portals.yml"
-PIPELINE_MD: Path = ROOT / "data" / "profiles" / "default" / "pipeline.md"
-APPLICATIONS_MD: Path = ROOT / "data" / "profiles" / "default" / "applications.md"
-SCAN_HISTORY_TSV: Path = ROOT / "data" / "profiles" / "default" / "scan-history.tsv"
+PROFILE_YML: Path = REPO_ROOT / "data" / "profiles" / "default" / "profile.yml"
+PORTALS_YML: Path = REPO_ROOT / "data" / "profiles" / "default" / "portals.yml"
+PIPELINE_MD: Path = REPO_ROOT / "data" / "profiles" / "default" / "pipeline.md"
+APPLICATIONS_MD: Path = REPO_ROOT / "data" / "profiles" / "default" / "applications.md"
+SCAN_HISTORY_TSV: Path = REPO_ROOT / "data" / "profiles" / "default" / "scan-history.tsv"
 
 # LinkedIn job search caps:
 #   * 25 page-equivalents (~25 × 25 results = ~625 jobs) per query before
@@ -85,10 +96,18 @@ def load_search_queries() -> list[dict[str, str]]:
 
     target_roles = (profile.get("target_roles") or {}).get("primary") or []
     location_block = profile.get("location") or {}
-    location = ", ".join(filter(None, [
-        location_block.get("city"),
-        location_block.get("country") or location_block.get("province"),
-    ])) or "United States"
+    location = (
+        ", ".join(
+            filter(
+                None,
+                [
+                    location_block.get("city"),
+                    location_block.get("country") or location_block.get("province"),
+                ],
+            )
+        )
+        or "United States"
+    )
 
     queries: list[dict[str, str]] = []
     for role in target_roles:
@@ -104,10 +123,12 @@ def load_search_queries() -> list[dict[str, str]]:
             if isinstance(q, str):
                 queries.append({"keywords": q, "location": location})
             elif isinstance(q, dict) and q.get("keywords"):
-                queries.append({
-                    "keywords": str(q["keywords"]),
-                    "location": str(q.get("location") or location),
-                })
+                queries.append(
+                    {
+                        "keywords": str(q["keywords"]),
+                        "location": str(q.get("location") or location),
+                    }
+                )
 
     if not queries:
         queries.append({"keywords": "Software Engineer", "location": location})
@@ -116,7 +137,7 @@ def load_search_queries() -> list[dict[str, str]]:
 
 def build_search_url(keywords: str, location: str) -> str:
     """https://www.linkedin.com/jobs/search/?keywords=…&location=…&f_TPR=r604800
-       f_TPR=r604800 → past 7 days (3600 sec/hr × 24 × 7 = 604800)"""
+    f_TPR=r604800 → past 7 days (3600 sec/hr × 24 × 7 = 604800)"""
     params = {
         "keywords": keywords,
         "location": location,
@@ -176,7 +197,15 @@ def scrape_one_query(page, keywords: str, location: str, max_pages: int) -> list
 
     # Captcha / verification check — same heuristic as linkedin-easy-apply.py
     body_text = (page.content() or "")[:5000].lower()
-    if any(k in body_text for k in ("captcha", "are you a robot", "verify it's you", "let's do a quick check")):
+    if any(
+        k in body_text
+        for k in (
+            "captcha",
+            "are you a robot",
+            "verify it's you",
+            "let's do a quick check",
+        )
+    ):
         raise RuntimeError("LinkedIn served a captcha — session may need refresh")
 
     results: list[dict] = []
@@ -202,29 +231,37 @@ def scrape_one_query(page, keywords: str, location: str, max_pages: int) -> list
             title = (card.inner_text() or "").strip().split("\n")[0]
             # Company + location are on sibling elements; pull from the
             # closest job-card container if we can find one.
-            container = card.evaluate_handle("el => el.closest('[data-occludable-job-id], li, .job-card-container')")
+            container = card.evaluate_handle(
+                "el => el.closest('[data-occludable-job-id], li, .job-card-container')"
+            )
             company = ""
             location_text = ""
             if container:
                 try:
                     el = container.as_element()
                     if el:
-                        company_el = el.query_selector('.job-card-container__primary-description, .job-card-container__company-name, [data-test-job-card-list__company-name]')
+                        company_el = el.query_selector(
+                            ".job-card-container__primary-description, .job-card-container__company-name, [data-test-job-card-list__company-name]"
+                        )
                         if company_el:
                             company = (company_el.inner_text() or "").strip()
-                        loc_el = el.query_selector('.job-card-container__metadata-item, [data-test-job-card-list__location]')
+                        loc_el = el.query_selector(
+                            ".job-card-container__metadata-item, [data-test-job-card-list__location]"
+                        )
                         if loc_el:
                             location_text = (loc_el.inner_text() or "").strip()
                 except Exception:
                     pass
             url_canon = f"https://www.linkedin.com/jobs/view/{job_id}/"
-            results.append({
-                "url": url_canon,
-                "title": title,
-                "company": company,
-                "location": location_text,
-                "job_id": job_id,
-            })
+            results.append(
+                {
+                    "url": url_canon,
+                    "title": title,
+                    "company": company,
+                    "location": location_text,
+                    "job_id": job_id,
+                }
+            )
 
         # Scroll to load more
         prev_height = page.evaluate("document.body.scrollHeight")
@@ -277,9 +314,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--max-pages", type=int, default=DEFAULT_MAX_PAGES)
-    parser.add_argument("--query", help="Override profile-derived queries with a single keyword string")
-    parser.add_argument("--profile", default=None,
-                        help="Profile slug (defaults to active profile in data/profiles.json).")
+    parser.add_argument(
+        "--query", help="Override profile-derived queries with a single keyword string"
+    )
+    parser.add_argument(
+        "--profile",
+        default=None,
+        help="Profile slug (defaults to active profile in data/profiles.json).",
+    )
     args = parser.parse_args()
 
     profile_id = resolve_profile_arg(args.profile)
@@ -292,13 +334,13 @@ def main():
 
     udd = USER_DATA_DIRS["linkedin"]
     if not udd.exists():
-        print(f"ERROR: {udd} not found. Run `.venv/bin/python lib_playwright_auth.py --portal linkedin --login` first.", file=sys.stderr)
+        print(
+            f"ERROR: {udd} not found. Run `.venv/bin/python lib_playwright_auth.py --portal linkedin --login` first.",
+            file=sys.stderr,
+        )
         sys.exit(2)
 
-    queries = (
-        [{"keywords": args.query, "location": ""}]
-        if args.query else load_search_queries()
-    )
+    queries = [{"keywords": args.query, "location": ""}] if args.query else load_search_queries()
     pos, neg = title_filter()
     seen = load_seen_urls()
     new_rows: list[dict] = []
@@ -306,14 +348,20 @@ def main():
     total_filtered = 0
     total_dupes = 0
 
-    print(f"LinkedIn auth-scrape — {len(queries)} querie(s) × up to {args.max_pages} pages each", file=sys.stderr)
+    print(
+        f"LinkedIn auth-scrape — {len(queries)} querie(s) × up to {args.max_pages} pages each",
+        file=sys.stderr,
+    )
 
     with launch_persistent("linkedin", headed=False) as ctx:
         page = ctx.new_page()
 
         # Bail early if session expired — surfaces a clear error to /sources.
         if not is_logged_in_linkedin(page):
-            print("ERROR: LinkedIn session expired. Click Reconnect on /sources.", file=sys.stderr)
+            print(
+                "ERROR: LinkedIn session expired. Click Reconnect on /sources.",
+                file=sys.stderr,
+            )
             sys.exit(3)
 
         for q in queries:
@@ -348,7 +396,10 @@ def main():
     if not args.dry_run and new_rows:
         append_to_pipeline(new_rows)
         append_to_scan_history(new_rows)
-        print(f"Wrote {len(new_rows)} rows to pipeline.md + scan-history.tsv", file=sys.stderr)
+        print(
+            f"Wrote {len(new_rows)} rows to pipeline.md + scan-history.tsv",
+            file=sys.stderr,
+        )
 
 
 if __name__ == "__main__":

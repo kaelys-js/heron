@@ -171,6 +171,14 @@ career-ops/
 │
 ├── scripts/
 │   ├── clean.mjs, reset-data.mjs, ensure-pnpm.mjs, ensure-native-bindings.mjs
+│   ├── apply/                   # apply-portal.py dispatcher + 13 per-portal adapters + lib_apply + lib_portal
+│   ├── scan/                    # scan.mjs + scan-broad.py + scan-{vc,curated,email,email-imap}.mjs + scan-{indeed,linkedin}-auth.py + gemini-first-pass.py
+│   ├── cv/                      # generate-pdf.mjs + generate-latex.mjs + ats-check.mjs + ai-detect-check.mjs
+│   ├── quality/                 # resume-quality + cover-letter-check + ai-detect + semantic-match + narrative-arc + cv-sync-check + profile-seo
+│   ├── tracker/                 # merge-tracker + dedup-tracker + normalize-statuses + analyze-patterns + followup-cadence
+│   ├── linkedin/                # linkedin-audit.py + linkedin-dm-scraper.py + extract-linkedin-profile.py
+│   ├── system/                  # doctor + check-liveness + liveness-core + update-system + update-pipeline + triage + build-batch-input + gemini-eval
+│   ├── lib/                     # lib-profiles.mjs + lib_profiles.py + lib_playwright_auth.py (cross-domain)
 │   └── native/                  # apply-brand, setup, doctor, build, dev wizards
 │       └── icons/               # generate-icons.mjs + _build/ cache
 │
@@ -188,7 +196,6 @@ career-ops/
 ├── interview-prep/, output/, reports/, jds/   # Runtime symlink targets (managed by dashboard)
 ├── config/                      # User profile.yml (gitignored, auto-created by symlink mgr)
 │
-├── *.mjs / *.py                 # ~49 root-level CLI scripts spawned by ui/ and turbo
 ├── .mise.toml                   # Pinned Node 26.1.0 + pnpm 11.1.0 + Ruby 3.3.5 + Python 3.13
 ├── pnpm-workspace.yaml          # Workspace + allowBuilds + overrides
 ├── turbo.json                   # Cache config for build / check / test
