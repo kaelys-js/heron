@@ -105,8 +105,8 @@
     "typecheck": "turbo check",
     "update": "node scripts/system/update-system.mjs apply",
     "update:check": "node scripts/system/update-system.mjs check",
-    "verify": "turbo test",
-    "validate:json-schemas": "node scripts/system/validate-json-schemas.mjs"
+    "validate:json-schemas": "node scripts/system/validate-json-schemas.mjs",
+    "verify": "turbo test"
   },
   "dependencies": {
     "@google/generative-ai": "0.24.1",
