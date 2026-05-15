@@ -1,24 +1,29 @@
 [tool.ruff]
 line-length = 100
 target-version = "py313"
-extend-exclude = [".venv", "node_modules", "data", "scripts/native/icons/_build"]
+extend-exclude = [
+  ".venv",
+  "node_modules",
+  "data",
+  "scripts/native/icons/_build",
+]
 
 [tool.ruff.lint]
 # Conservative rule set. Auto-fix is OFF for unused-imports/vars so ruff's
 # --fix mode doesn't strip load-bearing code (e.g. sys.path manipulation
 # that has to run BEFORE a `from lib_X import ...` cross-dir import).
 select = [
-  "E",   # pycodestyle errors
-  "F",   # pyflakes (unused imports/vars — see `unfixable` below)
-  "W",   # pycodestyle warnings
-  "I",   # isort (import ordering)
+  "E", # pycodestyle errors
+  "F", # pyflakes (unused imports/vars — see `unfixable` below)
+  "W", # pycodestyle warnings
+  "I", # isort (import ordering)
 ]
 unfixable = ["F401", "F841"]
 
 [tool.ruff.lint.per-file-ignores]
 # scripts/{apply,scan,linkedin}/*.py:
 #   E402 — module-level imports may appear AFTER sys.path manipulation.
-#          The pattern is deliberate; see DATA_CONTRACT.md
+#          The pattern is deliberate; see docs/DATA_CONTRACT.md
 #          "Resolving paths in scripts".
 #   I001 — don't reorder imports inside files that mix sys.path tweaks
 #          with library imports; load order matters.
