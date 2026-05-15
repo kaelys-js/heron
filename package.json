@@ -108,6 +108,7 @@
     "validate:dotenv": "dotenv-linter check --ignore-checks UnorderedKey --skip-updates .env.example .env.act.example",
     "validate:format-sync": "node scripts/system/validate-format-config-sync.mjs",
     "validate:json-schemas": "node scripts/system/validate-json-schemas.mjs",
+    "validate:markdown": "markdownlint-cli2",
     "validate:plists": "python3 scripts/system/validate-plists.py",
     "validate:tiny-configs": "node scripts/system/validate-tiny-configs.mjs",
     "validate:xml": "bash scripts/system/validate-xml.sh",

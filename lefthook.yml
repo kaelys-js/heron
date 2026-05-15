@@ -301,6 +301,18 @@ pre-commit:
       glob: "{.gitattributes,.npmrc,.actrc,LICENSE,**/robots.txt}"
       run: pnpm validate:tiny-configs
 
+    markdownlint:
+      # markdownlint-cli2 with a relaxed config (.markdownlint-cli2.jsonc)
+      # — disables 100s of cosmetic rules, enables the ~20 that catch real
+      # rendering bugs (bare URLs, malformed tables, broken links, empty
+      # link text, missing alt text, dropped emphasis markers, etc.).
+      # Runs on the FULL set (not just staged) because rule MD053
+      # (orphan reference definitions) is cross-file — a definition can
+      # be orphaned by a deletion in a different file. Fast even at full
+      # repo scope (109 files, ~200ms).
+      glob: "*.md"
+      run: pnpm validate:markdown
+
     taplo:
       # TOML formatter — pyproject.toml + .mise.toml. taplo is the
       # canonical Rust-based formatter (the TOML equivalent of biome).
