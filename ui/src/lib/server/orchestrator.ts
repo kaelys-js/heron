@@ -8,6 +8,9 @@ import { loadEnv } from './env';
 import { CLI_NAMESPACE } from '$lib/config/branding';
 import { AGENT_CLI } from '$lib/config/cli';
 import { maybeCurrentUserId, SYSTEM_USER_ID } from './user-context';
+import { getActiveProfileId } from './profiles';
+import { realizeModePromptForUser } from './mode-substitution';
+import { profilePathForUser } from './profile-paths';
 
 loadEnv();
 
@@ -556,10 +559,7 @@ export function runOferta(
       return;
     }
     // Resolve the active profile if the caller didn't pass one.
-    // Lazy-require to avoid a circular import at module-load.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const profilesMod = require('./profiles') as typeof import('./profiles');
-    const resolvedProfileId = profileId ?? profilesMod.getActiveProfileId();
+    const resolvedProfileId = profileId ?? getActiveProfileId();
 
     logEvent(taskKey, 'Generate CV started', {
       category: 'task',
@@ -647,9 +647,6 @@ export async function runBulkOfertaParallel(
   // ({{URL}}, {{JD_FILE}}, etc.) on top before passing to the AI CLI.
   // Resolving profile-paths happens HERE (not in bash) so we don't have
   // to teach the shell script about the multi-user profile layout.
-  const { realizeModePromptForUser } =
-    require('./mode-substitution') as typeof import('./mode-substitution');
-  const { getActiveProfileId } = require('./profiles') as typeof import('./profiles');
   const resolvedProfileId = profileId ?? getActiveProfileId();
   const userId = maybeCurrentUserId() ?? SYSTEM_USER_ID;
   let batchPromptTempFile: string | undefined;
@@ -678,9 +675,7 @@ export async function runBulkOfertaParallel(
   //   <num>\t<url>\t<company>\t<role>
   // We don't know company/role here from the URL alone — leave blank, the
   // worker prompt fills them in. Path is per-profile post-Option-D.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const profilePathsMod = require('./profile-paths') as typeof import('./profile-paths');
-  const batchDir = profilePathsMod.profilePathForUser(userId, resolvedProfileId, 'batch-dir');
+  const batchDir = profilePathForUser(userId, resolvedProfileId, 'batch-dir');
   const inputPath = path.join(batchDir, 'batch-input.tsv');
   try {
     fs.mkdirSync(batchDir, { recursive: true });
@@ -712,8 +707,11 @@ export async function runBulkOfertaParallel(
         // expanded against the active profile) instead of reading
         // templates/batch-prompt.md literally.
         ...(batchPromptTempFile ? { BATCH_PROMPT_FILE: batchPromptTempFile } : {}),
-        // Forward the active profile slug + per-profile batch dir so
-        // the runner reads/writes state at the right user's location.
+        // Forward both the active user AND profile so every per-user
+        // per-profile path inside the runner (REPORTS_DIR,
+        // APPLICATIONS_FILE, BATCH_DIR) resolves to the right
+        // data/users/{uid}/profiles/{slug}/ subtree.
+        CAREER_OPS_USER_ID: userId,
         CAREER_OPS_PROFILE_ID: resolvedProfileId,
         CAREER_OPS_BATCH_DIR: batchDir,
       },

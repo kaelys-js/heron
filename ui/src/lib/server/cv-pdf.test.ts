@@ -37,6 +37,7 @@ vi.mock('./profile-paths', () => ({
   profilePath: (id: string, key: string) => {
     if (key === 'output-dir') return `/tmp/data/profiles/${id}/output`;
     if (key === 'cv-md') return `/tmp/data/profiles/${id}/cv.md`;
+    if (key === 'profile-yml') return `/tmp/data/profiles/${id}/profile.yml`;
     return `/tmp/data/profiles/${id}`;
   },
   ensureProfileDirs: vi.fn(),
@@ -50,10 +51,12 @@ vi.mock('node:child_process', () => ({
   spawn: vi.fn(),
 }));
 
-const { generalCvStatus } = await import('./cv-pdf');
+const { generalCvStatus, resolveTemplate } = await import('./cv-pdf');
 
 const CV_MD = '/tmp/data/profiles/default/cv.md';
 const PDF = '/tmp/data/profiles/default/output/cv-general.pdf';
+const PROFILE_YML = '/tmp/data/profiles/work/profile.yml';
+const CV_TEMPLATE_CLASSIC = '/tmp/repo/templates/cv-template.html';
 
 beforeEach(() => {
   Object.keys(files).forEach((k) => delete files[k]);
@@ -130,5 +133,46 @@ describe('generalCvStatus — path field is repo-relative', () => {
     const s = generalCvStatus();
     expect(s.path).not.toMatch(/^\/tmp/);
     expect(s.path).toContain('cv-general.pdf');
+  });
+});
+
+describe('resolveTemplate — routes through profilePath() for multi-user', () => {
+  it("reads cv_template from the active user's profile.yml (mocked profilePath)", () => {
+    // Pre-fix bug: the function read from
+    //   path.join(ROOT, 'data', 'profiles', profileId, 'profile.yml')
+    // bypassing the multi-user resolver. The mocked profilePath('profile-yml')
+    // returns /tmp/data/profiles/{id}/profile.yml; if the function were still
+    // using the old hardcoded path it would resolve to
+    //   /tmp/repo/data/profiles/work/profile.yml
+    // and miss our test fixture entirely.
+    files[PROFILE_YML] = {
+      content: 'full_name: Alice\ncv_template: missing-variant\n',
+      mtimeMs: 1000,
+      size: 50,
+    };
+    const got = resolveTemplate(undefined, 'work');
+    // 'missing-variant' file doesn't exist in our mock → falls back to classic.
+    // The important assertion: function DID find profile.yml + parse cv_template.
+    expect(got).toBe(CV_TEMPLATE_CLASSIC);
+  });
+
+  it('falls back to classic when no profileId is supplied', () => {
+    expect(resolveTemplate()).toBe(CV_TEMPLATE_CLASSIC);
+  });
+
+  it('falls back to classic when profile.yml is missing for the active user', () => {
+    // No files[PROFILE_YML] in this test → resolver gets undefined → classic.
+    const got = resolveTemplate(undefined, 'work');
+    expect(got).toBe(CV_TEMPLATE_CLASSIC);
+  });
+
+  it('returns explicit variant override when the file exists', () => {
+    const explicitVariant = '/tmp/repo/templates/cv-template-foo.html';
+    files[explicitVariant] = { content: '<html>FOO</html>', mtimeMs: 1, size: 16 };
+    expect(resolveTemplate('foo')).toBe(explicitVariant);
+  });
+
+  it('falls back to classic when explicit variant does not exist on disk', () => {
+    expect(resolveTemplate('does-not-exist')).toBe(CV_TEMPLATE_CLASSIC);
   });
 });

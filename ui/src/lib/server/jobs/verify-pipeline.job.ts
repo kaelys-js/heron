@@ -13,11 +13,11 @@
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { ROOT } from '../files';
 import { logEvent } from '../events';
 import { reportIssue } from '../issues';
 import { register } from './registry';
 import type { JobResult } from './types';
+import { activePath } from '../profile-paths';
 
 type Finding = { severity: 'error' | 'warn'; cls: string; line: string };
 
@@ -36,23 +36,13 @@ const CANONICAL_STATUSES = new Set([
 ]);
 
 function loadActiveProfileTracker(): { path: string; body: string } | null {
-  // Prefer the active-profile applications.md; fall back to the legacy
-  // top-level applications.md if the multi-profile layout isn't in use.
-  const profilesJson = join(ROOT, 'data/profiles.json');
-  if (existsSync(profilesJson)) {
-    try {
-      const state = JSON.parse(readFileSync(profilesJson, 'utf8'));
-      const active = state?.activeId;
-      if (active) {
-        const p = join(ROOT, `data/profiles/${active}/applications.md`);
-        if (existsSync(p)) return { path: p, body: readFileSync(p, 'utf8') };
-      }
-    } catch {
-      // fall through
-    }
-  }
-  const legacy = join(ROOT, 'data/applications.md');
-  if (existsSync(legacy)) return { path: legacy, body: readFileSync(legacy, 'utf8') };
+  // Resolve via activePath() so multi-user installs read the correct
+  // user+profile applications.md (data/users/{uid}/profiles/{slug}/
+  // applications.md). Legacy single-user installs naturally fall back
+  // to data/profiles/{slug}/applications.md via the SYSTEM_USER_ID
+  // branch in profile-paths.ts.
+  const p = activePath('applications');
+  if (existsSync(p)) return { path: p, body: readFileSync(p, 'utf8') };
   return null;
 }
 
@@ -76,7 +66,8 @@ function parseRows(body: string): { rowIdx: number; cols: string[] }[] {
   return rows;
 }
 
-function runVerifyPipeline(): Promise<JobResult> {
+/** Exported for tests; production callers receive this via register(). */
+export function runVerifyPipeline(): Promise<JobResult> {
   return new Promise((resolve) => {
     const findings: Finding[] = [];
     const tracker = loadActiveProfileTracker();
@@ -133,13 +124,9 @@ function runVerifyPipeline(): Promise<JobResult> {
     // Check 3 — unmerged TSVs in the active profile's tracker-additions/
     // (per-profile post-multi-user migration; the legacy repo-root
     // batch/tracker-additions/ no longer exists).
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { activePath } = require('../profile-paths') as typeof import('../profile-paths');
     const tsvDir = join(activePath('batch-dir'), 'tracker-additions');
     if (existsSync(tsvDir)) {
       try {
-        // Use fs.readdirSync via Node — kept in this scope to keep the
-        // import surface small.
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const fs = require('node:fs') as typeof import('node:fs');
         const pending = fs.readdirSync(tsvDir).filter((f: string) => f.endsWith('.tsv'));

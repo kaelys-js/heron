@@ -19,15 +19,20 @@ const fsMock = {
 };
 vi.mock('node:fs', () => ({ default: fsMock, ...fsMock }));
 
+const spawnCalls: { cmd: string; args: string[]; opts: Record<string, unknown> }[] = [];
 vi.mock('node:child_process', () => ({
-  spawn: vi.fn(() => ({
-    stdout: { on: () => {} },
-    stderr: { on: () => {} },
-    on: () => {},
-    kill: () => {},
-    pid: 99,
-    unref: () => {},
-  })),
+  spawn: vi.fn((cmd: string, args: string[], opts: Record<string, unknown>) => {
+    spawnCalls.push({ cmd, args, opts });
+    return {
+      stdout: { on: () => {} },
+      stderr: { on: () => {} },
+      on: () => {},
+      once: () => {},
+      kill: () => {},
+      pid: 99,
+      unref: () => {},
+    };
+  }),
 }));
 
 vi.mock('./files', () => ({ ROOT: '/tmp/repo' }));
@@ -46,6 +51,8 @@ vi.mock('./env', () => ({ loadEnv: vi.fn() }));
 vi.mock('./profile-paths', () => ({
   activePath: (key: string) => '/tmp/p/' + key,
   profilePath: (_id: string, key: string) => '/tmp/p/' + key,
+  profilePathForUser: (uid: string, pid: string, key: string) =>
+    `/tmp/users/${uid}/profiles/${pid}/${key}`,
 }));
 
 vi.mock('./profiles', () => ({
@@ -56,14 +63,20 @@ vi.mock('./profile', () => ({
   readProfile: () => ({}),
 }));
 
+vi.mock('./mode-substitution', () => ({
+  realizeModePromptForUser: () => 'RESOLVED_PROMPT_BODY',
+}));
+
 vi.mock('$lib/config/cli', () => ({ AGENT_CLI: 'claude' }));
 vi.mock('$lib/config/branding', () => ({ CLI_NAMESPACE: 'career-ops' }));
 
-const { listRunning, bootOnce } = await import('./orchestrator');
+const { listRunning, bootOnce, runBulkOfertaParallel } = await import('./orchestrator');
+const { runWithUser } = await import('./user-context');
 
 beforeEach(() => {
   Object.keys(files).forEach((k) => delete files[k]);
   loggedEvents.length = 0;
+  spawnCalls.length = 0;
 });
 
 afterEach(() => {
@@ -96,5 +109,31 @@ describe('orchestrator — bootOnce', () => {
     // once on module load before any test runs — so we don't assert on it
     // here.
     expect(() => bootOnce()).not.toThrow();
+  });
+});
+
+describe('orchestrator — runBulkOfertaParallel forwards user+profile env', () => {
+  // The batch-runner.sh script reads CAREER_OPS_USER_ID +
+  // CAREER_OPS_PROFILE_ID + CAREER_OPS_BATCH_DIR to resolve per-user
+  // per-profile paths. Without USER_ID it falls back to legacy
+  // data/profiles/{slug}/ — every user's batches collide on one tree.
+  it('sets CAREER_OPS_USER_ID + CAREER_OPS_PROFILE_ID on the spawn env when invoked under a user context', async () => {
+    // Reset the running guard between tests by re-requiring? Module-scope
+    // state means the second call could short-circuit. Use a unique user
+    // each run to ensure independence.
+    const r = await runWithUser('orch-alice', () =>
+      runBulkOfertaParallel(['https://acme.com/jobs/1'], 1, 'work'),
+    );
+    expect(r.started).toBe(true);
+
+    // The first call to spawn is the bash batch-runner.sh invocation.
+    const batchCall = spawnCalls.find(
+      (c) => c.cmd === 'bash' && (c.args[0] ?? '').includes('batch-runner.sh'),
+    );
+    expect(batchCall, 'expected a bash batch-runner.sh spawn').toBeDefined();
+    const env = batchCall!.opts.env as Record<string, string>;
+    expect(env.CAREER_OPS_USER_ID).toBe('orch-alice');
+    expect(env.CAREER_OPS_PROFILE_ID).toBe('work');
+    expect(env.CAREER_OPS_BATCH_DIR).toBeDefined();
   });
 });

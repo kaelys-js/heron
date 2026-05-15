@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, readSafe } from './files';
+import { readSafe } from './files';
 import { complete } from './ai';
-import { profilePath, ensureProfileDirs } from './profile-paths';
+import { profilePath, ensureProfileDirs, userSharedPath } from './profile-paths';
 import { getActiveProfileId } from './profiles';
 import { modesPathFor } from './modes';
 
@@ -32,6 +32,54 @@ function slugify(s: string): string {
 
 function persistedInterviewPath(profileId: string, jobId: string): string {
   return path.join(profilePath(profileId, 'interview-prep-dir'), slugify(jobId) + '.md');
+}
+
+/**
+ * Read the STAR+R story bank for the current user. Per-user (NOT
+ * per-profile) — the same human's stories transfer across engineer +
+ * instructor profiles, but Alice's stories MUST NOT appear in Bob's
+ * brief. Pre-multi-user this read the repo-root `interview-prep/story-bank.md`
+ * which leaked across every user on a shared machine.
+ *
+ * Returns '' when no bank exists (caller decides whether to splice).
+ * Capped at 4000 chars by the caller to bound prompt context.
+ */
+export function loadStoryBank(_profileId?: string): string {
+  return readSafe(userSharedPath('story-bank'));
+}
+
+/**
+ * Read the active profile's writing samples as a single concatenated
+ * markdown blob (one `## filename` block per `*.md` in the dir). Per
+ * profile per user — voice samples for the engineer track differ from
+ * the instructor track. Pre-multi-user this read the repo-root
+ * `writing-samples/` which leaked across every profile and every user.
+ *
+ * Returns '' when no dir or no samples. Capped at 3000 chars total
+ * (with each file capped at 1500 to keep the truncation deterministic).
+ */
+export function loadWritingSamples(profileId?: string): string {
+  const id = resolveId(profileId);
+  try {
+    const dir = profilePath(id, 'writing-samples-dir');
+    if (!fs.existsSync(dir)) return '';
+    const samples: string[] = [];
+    let used = 0;
+    for (const f of fs
+      .readdirSync(dir)
+      .filter((n) => n.endsWith('.md'))
+      .sort()) {
+      if (used >= 3000) break;
+      const body = readSafe(path.join(dir, f));
+      const slice = body.slice(0, 1500);
+      samples.push('## ' + f.replace(/\.md$/, '') + '\n' + slice);
+      used += slice.length;
+    }
+    return samples.join('\n\n').slice(0, 3000);
+  } catch {
+    /* directory missing or unreadable — skip */
+    return '';
+  }
 }
 
 /** Read a previously persisted prep file for the named profile, if any. */
@@ -81,36 +129,14 @@ export async function generateInterviewPrep(
   const reportContent = readSafe(path.join(profilePath(id, 'reports-dir'), reportFile));
   const cv = readSafe(profilePath(id, 'cv-md'));
   const interviewPrepMode = loadModeFile('interview-prep.md', id);
-  // P3: splice story-bank.md (shared across profiles per architecture decision)
-  // into the prompt context so previously-captured STAR+R stories influence
-  // the brief. Bounded at 4000 chars to avoid runaway context.
-  const storyBank = readSafe(path.join(ROOT, 'interview-prep', 'story-bank.md')).slice(0, 4000);
+  // P3: splice the user's STAR+R story bank — per-user, cross-profile.
+  // See loadStoryBank() for the path resolution + multi-user rationale.
+  const storyBank = loadStoryBank(id).slice(0, 4000);
   // P4: article-digest.md per profile — proof points + portfolio context.
   const articleDigest = readSafe(profilePath(id, 'article-digest')).slice(0, 3000);
-  // D26: writing-samples/ (shared per docs/DATA_CONTRACT.md) — concatenate
-  // every `*.md` in the directory so the brief uses the user's actual
-  // voice rather than generic phrasing. Bounded at 3000 chars total.
-  let writingSamples = '';
-  try {
-    const dir = path.join(ROOT, 'writing-samples');
-    if (fs.existsSync(dir)) {
-      const samples: string[] = [];
-      let used = 0;
-      for (const f of fs
-        .readdirSync(dir)
-        .filter((n) => n.endsWith('.md'))
-        .sort()) {
-        if (used >= 3000) break;
-        const body = readSafe(path.join(dir, f));
-        const slice = body.slice(0, 1500);
-        samples.push('## ' + f.replace(/\.md$/, '') + '\n' + slice);
-        used += slice.length;
-      }
-      writingSamples = samples.join('\n\n').slice(0, 3000);
-    }
-  } catch {
-    /* directory missing or unreadable — skip */
-  }
+  // D26: per-profile per-user writing samples. See loadWritingSamples()
+  // for the per-profile path + cap details.
+  const writingSamples = loadWritingSamples(id);
   const sys =
     'You are a senior interview-prep coach. Use the report (Block A/B/F) to produce a focused brief.\n\n' +
     (interviewPrepMode || 'Generate a comprehensive interview prep brief.');
