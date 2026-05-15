@@ -307,6 +307,11 @@ jobs:
       - name: yamllint
         run: git ls-files '*.yml' '*.yaml' | xargs -r yamllint --no-warnings
 
+      - name: taplo format --check
+        # TOML formatter (pyproject.toml + .mise.toml). taplo is pinned in
+        # .mise.toml so mise installs the same version locally + in CI.
+        run: git ls-files '*.toml' | xargs -r taplo format --check
+
   # ─────────────────────────────────────────────────────────────────
   # Security audit
   # ─────────────────────────────────────────────────────────────────
