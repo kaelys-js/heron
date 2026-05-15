@@ -27,7 +27,15 @@ import { reportIssue } from '../issues';
 import { register } from './registry';
 import type { JobResult } from './types';
 
-const ADDITIONS_DIR = path.join(ROOT, 'batch', 'tracker-additions');
+// Resolved lazily so a profile-switch (rare today but legal) is picked
+// up the next time the watcher restarts. The watcher itself is rebound
+// in startAutoMergeBatch() each boot, so this resolves once per boot
+// against the active profile at that moment.
+function additionsDir(): string {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { activePath } = require('../profile-paths') as typeof import('../profile-paths');
+  return path.join(activePath('batch-dir'), 'tracker-additions');
+}
 const SUMMARY_RE = /\+(\d+)\s+added.*?(\d+)\s+updated.*?(\d+)\s+skipped/i;
 
 let watchHandle: fs.FSWatcher | null = null;
@@ -37,8 +45,8 @@ let pendingRescan = false;
 
 function pendingTsvCount(): number {
   try {
-    if (!fs.existsSync(ADDITIONS_DIR)) return 0;
-    return fs.readdirSync(ADDITIONS_DIR).filter((n) => n.endsWith('.tsv')).length;
+    if (!fs.existsSync(additionsDir())) return 0;
+    return fs.readdirSync(additionsDir()).filter((n) => n.endsWith('.tsv')).length;
   } catch {
     return 0;
   }
@@ -149,7 +157,7 @@ function scheduleMerge(reason: string) {
 export function startBatchWatcher(): void {
   // Boot-time catch-up
   try {
-    fs.mkdirSync(ADDITIONS_DIR, { recursive: true });
+    fs.mkdirSync(additionsDir(), { recursive: true });
   } catch {
     // mkdir recursive only fails on permission/IO — the watch attempt
     // below will surface the real error if the dir is unusable.
@@ -160,7 +168,7 @@ export function startBatchWatcher(): void {
 
   if (watchHandle) return;
   try {
-    watchHandle = fs.watch(ADDITIONS_DIR, { persistent: false }, (event, filename) => {
+    watchHandle = fs.watch(additionsDir(), { persistent: false }, (event, filename) => {
       if (!filename) return;
       if (!filename.endsWith('.tsv')) return;
       // Only fire on rename/create — ignore content modifications
@@ -171,7 +179,7 @@ export function startBatchWatcher(): void {
     logEvent('boot', 'Batch tracker watcher started', {
       level: 'info',
       category: 'system',
-      message: 'watching ' + ADDITIONS_DIR,
+      message: 'watching ' + additionsDir(),
     });
   } catch (err) {
     logEvent('boot', 'Batch tracker watcher failed to start', {

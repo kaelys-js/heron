@@ -677,10 +677,13 @@ export async function runBulkOfertaParallel(
   // batch-runner.sh (per `batch/batch-runner.sh` parsing):
   //   <num>\t<url>\t<company>\t<role>
   // We don't know company/role here from the URL alone — leave blank, the
-  // worker prompt fills them in.
-  const inputPath = path.join(ROOT, 'batch', 'batch-input.tsv');
+  // worker prompt fills them in. Path is per-profile post-Option-D.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const profilePathsMod = require('./profile-paths') as typeof import('./profile-paths');
+  const batchDir = profilePathsMod.profilePathForUser(userId, resolvedProfileId, 'batch-dir');
+  const inputPath = path.join(batchDir, 'batch-input.tsv');
   try {
-    fs.mkdirSync(path.dirname(inputPath), { recursive: true });
+    fs.mkdirSync(batchDir, { recursive: true });
     const rows = urls.map((u, i) => i + 1 + '\t' + u + '\t\t');
     fs.writeFileSync(inputPath, rows.join('\n') + '\n');
   } catch (err) {
@@ -709,9 +712,10 @@ export async function runBulkOfertaParallel(
         // expanded against the active profile) instead of reading
         // batch/batch-prompt.md literally.
         ...(batchPromptTempFile ? { BATCH_PROMPT_FILE: batchPromptTempFile } : {}),
-        // Forward the active profile slug so the runner can resolve
-        // per-profile REPORTS_DIR / APPLICATIONS_FILE paths.
+        // Forward the active profile slug + per-profile batch dir so
+        // the runner reads/writes state at the right user's location.
         CAREER_OPS_PROFILE_ID: resolvedProfileId,
+        CAREER_OPS_BATCH_DIR: batchDir,
       },
     });
   } catch (e) {

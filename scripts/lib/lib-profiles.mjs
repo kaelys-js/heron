@@ -75,6 +75,13 @@ const KINDS = {
   // (shared across every user — privacy leak — calibrating Bob's
   // voice with Alice's emails). Now per-profile.
   'writing-samples-dir': 'writing-samples',
+  // batch/ — runtime state for the bulk-CV worker (batch-input.tsv,
+  // batch-state.tsv, logs/, tracker-additions/, batch-runner.pid).
+  // Previously at repo-root `batch/` (shared across every user —
+  // Alice + Bob running concurrent bulk runs would corrupt each
+  // other's state). Now per-profile so each profile has its own
+  // independent resumability + worker pool.
+  'batch-dir': 'batch',
 };
 
 const USER_SHARED_KINDS = {
@@ -188,6 +195,7 @@ export function ensureProfileDirs(profileId, userId = SYSTEM_USER_ID) {
   fs.mkdirSync(profilePath(profileId, 'interview-prep-dir', userId), { recursive: true });
   fs.mkdirSync(profilePath(profileId, 'jds-dir', userId), { recursive: true });
   fs.mkdirSync(profilePath(profileId, 'writing-samples-dir', userId), { recursive: true });
+  fs.mkdirSync(profilePath(profileId, 'batch-dir', userId), { recursive: true });
   // user-shared dir is created lazily on first write — no profileId needed
   fs.mkdirSync(path.dirname(userSharedPath('story-bank', userId)), { recursive: true });
 }
