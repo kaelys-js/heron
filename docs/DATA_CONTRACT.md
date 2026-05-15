@@ -64,22 +64,26 @@ These files contain your personal data, customizations, and work product. Update
 | `data/onboarding-state.json` | Wizard state |
 | `data/autopilot.json` | Recurring schedule config |
 
-### Repo-root compatibility symlinks (managed by `ui/src/lib/server/profile-symlinks.ts`)
+### Spawn-time path substitution (replaces the deprecated symlink mechanism)
 
-The AI CLI (Claude Code / Codex / etc.) reads its inputs at the repo root, not at the per-profile paths. To bridge that, the dashboard lazily creates symlinks just before every CLI spawn:
+Mode prompts (`modes/*.md`) reference user content via `__TOKEN__` placeholders, NOT literal paths. The dashboard's orchestrator (`ui/src/lib/server/spawn-agent.ts` → `mode-substitution.ts`) resolves each token to the active profile's absolute on-disk path BEFORE handing the prompt to the AI CLI via `--append-system-prompt-file`. No repo-root symlinks, no shell-cwd magic, no multi-user race.
 
-| Symlink at repo root | Points to (active profile) |
+Token vocabulary (full list in `modes/_TOKENS.md`):
+
+| Token | Substitutes to |
 |---|---|
-| `cv.md` | `data/users/{uid}/profiles/{slug}/cv.md` |
-| `config/profile.yml` | `data/users/{uid}/profiles/{slug}/profile.yml` |
-| `portals.yml` | `data/users/{uid}/profiles/{slug}/portals.yml` |
-| `modes/_profile.md` | `data/users/{uid}/profiles/{slug}/_profile.md` |
-| `jds/` | `data/users/{uid}/profiles/{slug}/jds/` |
-| `writing-samples/` | `data/users/{uid}/profiles/{slug}/writing-samples/` |
-| `interview-prep/` | `data/users/{uid}/profiles/{slug}/interview-prep/` |
-| `interview-prep/story-bank.md` | `data/users/{uid}/profiles/_shared/story-bank.md` (user-shared) |
+| `__CV__` | `data/users/{uid}/profiles/{slug}/cv.md` |
+| `__PROFILE_MD__` | `data/users/{uid}/profiles/{slug}/_profile.md` |
+| `__PORTALS__` | `data/users/{uid}/profiles/{slug}/portals.yml` |
+| `__ARTICLE_DIGEST__` | `data/users/{uid}/profiles/{slug}/article-digest.md` |
+| `__REPORTS__` | `data/users/{uid}/profiles/{slug}/reports/` |
+| `__OUTPUT__` | `data/users/{uid}/profiles/{slug}/output/` |
+| `__JDS__` | `data/users/{uid}/profiles/{slug}/jds/` |
+| `__WRITING_SAMPLES__` | `data/users/{uid}/profiles/{slug}/writing-samples/` |
+| `__INTERVIEW_PREP__` | `data/users/{uid}/profiles/{slug}/interview-prep/` |
+| `__STORY_BANK__` | `data/users/{uid}/profiles/_shared/story-bank.md` (user-shared) |
 
-If you `git pull` + `ls cv.md` at repo root and see "No such file", that's expected — boot the dashboard and any `/api/job/[id]/*` endpoint hit will recreate the symlinks before spawning the CLI.
+**Invocation:** dashboard-only. The slash-command flow (`claude "/career-ops oferta <url>"` in a terminal) was removed; mode prompts now contain `__TOKEN__` literals that only the dashboard's orchestrator knows how to resolve. Direct-CLI users would see the unresolved tokens as visible failure markers in their AI output.
 
 ## System Layer (safe to auto-update)
 

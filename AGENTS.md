@@ -107,23 +107,27 @@ data/users/{userId}/profiles/_shared/
 
 **Globally shared infrastructure** (NOT per-profile, NOT per-user — same for everyone on this machine): `.env`, `.playwright-linkedin/`, `.playwright-indeed/`, `data/profiles.json`, `data/sources.json`, `data/onboarding-state.json`, `data/autopilot.json`, `data/activity.jsonl`, `data/issues.jsonl`, `data/inbox-mbox/`.
 
-**Active profile**: `data/profiles.json` has `{ activeId, profiles: [...] }`. Reads default to the active profile unless an explicit `--profile <slug>` flag (Python/MJS scripts) or `?profile=<slug>` query param (dashboard routes) is passed. The Claude CLI reads files at REPO-ROOT compatibility paths (`cv.md`, `portals.yml`, `jds/`, `writing-samples/`, `interview-prep/`, `interview-prep/story-bank.md`, etc.) — those are SYMLINKS into the active profile's dir, maintained automatically by the dashboard. See `docs/DATA_CONTRACT.md` "Repo-root compatibility symlinks" for the full mapping.
+**Active profile**: `data/profiles.json` has `{ activeId, profiles: [...] }`. Reads default to the active profile unless an explicit `--profile <slug>` flag (Python/MJS scripts) or `?profile=<slug>` query param (dashboard routes) is passed.
 
-**When the user asks for personalization**, ALWAYS write to the active profile's files via the per-profile paths above (or via the legacy paths, which symlink to the same place). Never write to `data/profiles/default/` directly when the user might be on a different profile — let the dashboard's active-profile selection drive the path.
+**Mode prompts use absolute paths.** Every `modes/*.md` prompt references files via `__TOKEN__` placeholders (e.g. `__CV__`, `__REPORTS__`, `__STORY_BANK__`). The dashboard's `spawnAgentWithMode()` resolves each token to the active profile's absolute on-disk path BEFORE handing the prompt to the AI CLI. No repo-root symlinks, no shell-cwd magic — the AI sees fully-qualified paths and can never read the wrong profile's data. Token vocabulary documented in `modes/_TOKENS.md`.
+
+**Invocation is dashboard-only.** The slash-command flow (`claude "/career-ops oferta <url>"` in a terminal) has been deprecated. Mode prompts are loaded by the dashboard's orchestrator, substituted, and passed to Claude via `--append-system-prompt-file`. Direct-CLI invocation is not supported.
+
+**When the user asks for personalization**, ALWAYS write to the active profile's files at `data/users/{userId}/profiles/{slug}/...` (or `data/profiles/{slug}/...` in legacy single-user mode). Never write to `data/profiles/default/` directly when the user might be on a different profile — let the dashboard's active-profile selection drive the path.
 
 ### First Run — Onboarding (IMPORTANT)
 
 **Before doing ANYTHING else, check if the system is set up.** Run these checks silently every time a session starts:
 
 1. Does `data/profiles.json` exist? If yes, read it — `activeId` tells you which profile to operate on.
-2. Does the active profile's `cv.md` exist? (resolved via the legacy symlink at repo root)
+2. Does the active profile's `cv.md` exist? (at `data/users/{uid}/profiles/{slug}/cv.md` — or the legacy `data/profiles/{slug}/cv.md` in single-user mode)
 3. Does the active profile's `profile.yml` exist?
 4. Does the active profile's `_profile.md` exist?
 5. Does the active profile's `portals.yml` exist?
 
 If `data/profiles.json` is missing, the install is pre-multi-profile. The dashboard's boot routine auto-migrates the flat layout into `data/profiles/default/` on next start — let the dashboard handle this rather than running scripts that read the old paths.
 
-**If the active profile is incomplete, enter onboarding mode.** Do NOT proceed with evaluations, scans, or any other mode until the basics are in place. Guide the user step by step (note: paths below are the LEGACY paths shown for familiarity — they symlink to the active profile's files, so `cv.md` writes land in `data/profiles/<active>/cv.md`):
+**If the active profile is incomplete, enter onboarding mode.** Do NOT proceed with evaluations, scans, or any other mode until the basics are in place. Guide the user step by step (paths below are unqualified for readability — the dashboard's spawn-time substitution resolves them against the active profile + user, so `cv.md` writes via the orchestrator land in `data/users/{uid}/profiles/{slug}/cv.md`):
 
 #### Step 1: CV (required)
 If `cv.md` is missing, ask:
