@@ -82,7 +82,8 @@ export type ProfileFileKind =
   // Option-C / Item-4d additions — previously at repo-root, now per-profile
   // for privacy + multi-user isolation. See docs/DATA_CONTRACT.md.
   | 'jds-dir' // saved JD text files, referenced as `local:<file>` in pipeline.md
-  | 'writing-samples-dir'; // voice-calibration samples (emails, blog posts, etc.)
+  | 'writing-samples-dir' // voice-calibration samples (emails, blog posts, etc.)
+  | 'batch-dir'; // bulk-CV worker state (batch-input.tsv, batch-state.tsv, logs/, tracker-additions/)
 
 /**
  * Files that live ABOVE the profile tree — shared across that user's
@@ -222,6 +223,8 @@ export function profilePathForUser(
       return path.join(base, 'jds');
     case 'writing-samples-dir':
       return path.join(base, 'writing-samples');
+    case 'batch-dir':
+      return path.join(base, 'batch');
   }
 }
 
@@ -271,6 +274,7 @@ export function ensureProfileDirsForUser(userId: string, profileId: string): voi
   fs.mkdirSync(profilePathForUser(userId, profileId, 'interview-prep-dir'), { recursive: true });
   fs.mkdirSync(profilePathForUser(userId, profileId, 'jds-dir'), { recursive: true });
   fs.mkdirSync(profilePathForUser(userId, profileId, 'writing-samples-dir'), { recursive: true });
+  fs.mkdirSync(profilePathForUser(userId, profileId, 'batch-dir'), { recursive: true });
   // The user-shared dir lives one level above profiles — create it on the
   // first profile-creation event so userSharedPath() reads always resolve.
   fs.mkdirSync(path.dirname(userSharedPathForUser(userId, 'story-bank')), { recursive: true });

@@ -14,7 +14,24 @@ AGENT_CLI="${AGENT_CLI:-claude}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-BATCH_DIR="$SCRIPT_DIR"
+
+# Resolve the active profile id (orchestrator-set or read from
+# data/profiles.json). Used to derive every per-profile path below.
+_CAREER_OPS_PROFILE_ID="${CAREER_OPS_PROFILE_ID:-$(node -e "
+  try {
+    const p = JSON.parse(require('node:fs').readFileSync('$PROJECT_DIR/data/profiles.json', 'utf8'));
+    process.stdout.write(p.activeId || 'default');
+  } catch { process.stdout.write('default'); }
+" 2>/dev/null || echo default)}"
+_PROFILE_BASE="$PROJECT_DIR/data/profiles/$_CAREER_OPS_PROFILE_ID"
+
+# BATCH_DIR is now per-profile under data/profiles/{slug}/batch/ (or
+# data/users/{uid}/profiles/{slug}/batch/ when CAREER_OPS_PROFILE_DIR
+# is forwarded by the dashboard's orchestrator). Concurrent batches
+# for different profiles can run without colliding on state.
+BATCH_DIR="${CAREER_OPS_BATCH_DIR:-$_PROFILE_BASE/batch}"
+mkdir -p "$BATCH_DIR"
+
 INPUT_FILE="$BATCH_DIR/batch-input.tsv"
 STATE_FILE="$BATCH_DIR/batch-state.tsv"
 # PROMPT_FILE: orchestrator pre-resolves __TOKEN__ placeholders in
@@ -23,19 +40,9 @@ STATE_FILE="$BATCH_DIR/batch-state.tsv"
 # Standalone (non-dashboard) runs fall back to the literal file — those
 # users get a prompt with __CV__ etc. unresolved, which is the visible
 # failure mode that prompts them to invoke via the dashboard.
-PROMPT_FILE="${BATCH_PROMPT_FILE:-$BATCH_DIR/batch-prompt.md}"
+PROMPT_FILE="${BATCH_PROMPT_FILE:-$SCRIPT_DIR/batch-prompt.md}"
 LOGS_DIR="$BATCH_DIR/logs"
 TRACKER_DIR="$BATCH_DIR/tracker-additions"
-# REPORTS_DIR + APPLICATIONS_FILE: resolved per-profile via node helper.
-# Orchestrator sets CAREER_OPS_PROFILE_ID; standalone invocations fall
-# back to the active profile from data/profiles.json.
-_CAREER_OPS_PROFILE_ID="${CAREER_OPS_PROFILE_ID:-$(node -e "
-  try {
-    const p = JSON.parse(require('node:fs').readFileSync('$PROJECT_DIR/data/profiles.json', 'utf8'));
-    process.stdout.write(p.activeId || 'default');
-  } catch { process.stdout.write('default'); }
-" 2>/dev/null || echo default)}"
-_PROFILE_BASE="$PROJECT_DIR/data/profiles/$_CAREER_OPS_PROFILE_ID"
 REPORTS_DIR="$_PROFILE_BASE/reports"
 APPLICATIONS_FILE="$_PROFILE_BASE/applications.md"
 LOCK_FILE="$BATCH_DIR/batch-runner.pid"

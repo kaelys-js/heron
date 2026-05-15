@@ -81,6 +81,9 @@ PROFILE_FILE_KINDS = {
     "jds-dir": "jds",
     # writing-samples/ → per-profile voice-calibration samples.
     "writing-samples-dir": "writing-samples",
+    # batch/ → per-profile bulk-CV worker state. Previously repo-root
+    # `batch/` (shared — concurrent users corrupted each other's state).
+    "batch-dir": "batch",
 }
 
 # User-shared kinds — files that transcend the user's profiles but
@@ -178,6 +181,7 @@ def ensure_profile_dirs(profile_id: str, *, user_id: str = SYSTEM_USER_ID) -> No
     profile_path(profile_id, "writing-samples-dir", user_id=user_id).mkdir(
         parents=True, exist_ok=True
     )
+    profile_path(profile_id, "batch-dir", user_id=user_id).mkdir(parents=True, exist_ok=True)
     # user-shared dir is created lazily on first write
     user_shared_path("story-bank", user_id=user_id).parent.mkdir(parents=True, exist_ok=True)
 
