@@ -102,7 +102,7 @@ fabricate.
 
 ## Stdout protocol
 
-```
+```yaml
 DOSSIER_PATH: interview-prep/{slug}-dossier-{stage}-{ts}.md
 INTERVIEWERS_RESEARCHED: <count>
 QUESTIONS_GENERATED: <count, should be 5>

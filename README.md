@@ -125,7 +125,7 @@ pnpm act:test              # runs the Tests workflow in a local docker container
 
 ### Repository layout
 
-```
+```text
 career-ops/
 ├── README.md                    # ← you are here
 ├── CHANGELOG.md                 # Release-Please-managed
@@ -211,7 +211,7 @@ career-ops/
 
 Each user owns one or more **profiles** (separate career identities: e.g. "AI Engineer search" vs "Engineering Manager search"). Profiles are scoped at the SQL layer via `currentUserId()` AsyncLocalStorage context — no API endpoint accepts a raw `userId` param, so cross-user IDOR is structurally impossible.
 
-```
+```text
 auth.db: users, sessions, passkeys, invite_codes, accounts, audit_log, pending_deletions
 app.db:  profiles, activity_events, issues, ui_prefs
 fs:      data/users/{userId}/profiles/{slug}/{cv.md, profile.yml, applications.md, reports/, output/, ...}

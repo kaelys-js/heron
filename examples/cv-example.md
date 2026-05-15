@@ -1,7 +1,7 @@
 # CV -- Alex Chen
 
 **Location:** Austin, TX
-**Email:** alex@example.com
+**Email:** <alex@example.com>
 **LinkedIn:** linkedin.com/in/alexchen
 **Portfolio:** alexchen.dev
 **GitHub:** github.com/alexchen

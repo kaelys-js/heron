@@ -25,7 +25,7 @@ company's interview-prep file if it exists.
 
 ONE markdown file at:
 
-```
+```text
 {output-dir}/{company-slug}-first-90-days-{phase}.md
 ```
 
@@ -89,7 +89,7 @@ guesswork looks worse than skipping.)_
 
 After writing the file, emit a final stdout line:
 
-```
+```yaml
 PLAN_PATH: {relative-path-to-file}
 ```
 

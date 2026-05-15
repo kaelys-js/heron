@@ -126,6 +126,7 @@
     "ajv-formats": "^3.0.1",
     "editorconfig": "^3.0.2",
     "jsonc-parser": "^3.3.1",
+    "markdownlint-cli2": "^0.22.1",
     "sort-package-json": "3.6.1",
     "turbo": "2.9.12",
     "vitest": "^4.1.6"

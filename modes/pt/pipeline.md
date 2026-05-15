@@ -15,7 +15,7 @@ Processa URLs de vagas acumuladas em `data/pipeline.md`. O candidato adiciona UR
    Se a extração exigir Playwright, processar serialmente (1 vaga por vez) para evitar conflito de sessão.
 4. **Ao terminar**, mostrar tabela resumo:
 
-```
+```text
 | # | Empresa | Vaga | Score | PDF | Ação recomendada |
 ```
 

@@ -21,7 +21,7 @@ when present), and `_profile.md` for shared-organisation hints.
 
 ONE JSON file at:
 
-```
+```text
 {profile-dir}/referrals/{jobId}.json
 ```
 
@@ -68,7 +68,7 @@ Each `draft` field is a complete LinkedIn-style message, 4-6 sentences:
 
 Emit a final stdout line:
 
-```
+```yaml
 REFERRALS_PATH: {relative-path-to-file}
 ```
 

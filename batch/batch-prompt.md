@@ -198,7 +198,7 @@ Apply the BG penalties to the score: HIGH = subtract 1.5 from Block B match befo
 ### Paso 3 — Guardar Report .md
 
 Guardar evaluación completa en:
-```
+```text
 reports/{{REPORT_NUM}}-{company-slug}-{{DATE}}.md
 ```
 
@@ -337,12 +337,12 @@ node generate-pdf.mjs \
 ### Paso 5 — Tracker Line
 
 Escribir una línea TSV a:
-```
+```text
 batch/tracker-additions/{{ID}}.tsv
 ```
 
 Formato TSV (una sola línea, sin header, 9 columnas tab-separated):
-```
+```text
 {next_num}\t{{DATE}}\t{empresa}\t{rol}\t{status}\t{score}/5\t{pdf_emoji}\t[{{REPORT_NUM}}](reports/{{REPORT_NUM}}-{company-slug}-{{DATE}}.md)\t{nota_1_frase}
 ```
 

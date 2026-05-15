@@ -32,7 +32,7 @@ Also read: `cv.md`, `config/profile.yml`, `modes/_profile.md`.
 
 ONE markdown file at:
 
-```
+```text
 {output-dir}/{currentEmployer-slug}-counter-evaluation.md
 ```
 
@@ -100,7 +100,7 @@ Thank you for the counter-offer and the conversation today. I've
 thought about it carefully, and I want to stay — [specific reason that
 maps to whyLooking]. I'd like to formalise the changes we discussed in
 writing this week.
-```
+```text
 
 ### If you go:
 
@@ -112,7 +112,7 @@ made my decision and will be moving forward with the other opportunity.
 [Specific reason that's honest but not burning bridges.] I'd like to
 make this transition as smooth as possible — happy to discuss handoff
 priorities tomorrow.
-```
+```text
 
 ### If you're negotiating:
 
@@ -124,12 +124,12 @@ at {amount}. I'm still strongly inclined toward your role — for [reason
 that matters to them: mission/team/scope]. But I want to make sure my
 move is the right call financially too. Can we revisit {comp / equity /
 signing} in light of this?
-```
+```text
 ```
 
 After writing the file, emit:
 
-```
+```yaml
 COUNTER_PATH: {relative-path}
 ```
 

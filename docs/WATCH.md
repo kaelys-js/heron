@@ -18,7 +18,7 @@ Smart Stack / watch face.
 
 ## Data flow
 
-```
+```text
 iPhone (main app)                         Apple Watch
 ─────────────────                         ───────────
 authClient action                         RootView (TabView)
@@ -66,7 +66,7 @@ The source files are committed; you need to create the Xcode target
 
 ## Files
 
-```
+```text
 ui/ios/App/CareerOpsWatch/
 ├── CareerOpsWatchApp.swift   # @main entry, WindowGroup → RootView
 ├── RootView.swift            # 4-page TabView (Stats, Next Interview, Top Apply, Inbox)

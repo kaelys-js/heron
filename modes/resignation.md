@@ -22,7 +22,7 @@ employment record at that company.
 
 ONE markdown file at:
 
-```
+```text
 {output-dir}/resignation-{YYYY-MM-DD}.md
 ```
 
@@ -59,7 +59,7 @@ Sincerely,
 
 After writing the file, emit a final stdout line:
 
-```
+```yaml
 RESIGNATION_PATH: {relative-path-to-file}
 ```
 

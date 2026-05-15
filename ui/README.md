@@ -10,7 +10,7 @@ release flow, and CI matrix. **This README only covers what's specific to the
 
 ## Layout
 
-```
+```text
 ui/
 ├── src/
 │   ├── routes/                # File-based routing (pages + API endpoints)

@@ -18,7 +18,7 @@ Also read: `cv.md`, `config/profile.yml` (target archetypes + role title),
 
 ONE markdown file at:
 
-```
+```text
 {output-dir}/linkedin-rewrite-{YYYY-MM-DD}.md
 ```
 
@@ -45,7 +45,7 @@ Example: "Senior Backend Engineer | Distributed Systems + Kubernetes | Building 
 Calibrated to: target role title + archetype + cv.md proof points.
 NO em-dashes. NO "passionate". NO "results-driven". Use specific
 domain terms recruiters search for.}
-```
+```text
 
 **Why this works:** _(1-2 sentences explaining the specific levers
 this rewrite pulls — keyword density, scope signalling, recruiter
@@ -65,7 +65,7 @@ search ranking.)_
   Signoff with email/contact if not already public.
 
 Use first person. No clichés. Each sentence testable.}
-```
+```text
 
 **Why this works:** _(...)_
 
@@ -88,7 +88,7 @@ Paste these into Profile → Skills → Add skill:
 - {Skill 1}
 - {Skill 2}
 - ...
-```
+```text
 
 ## 5. Custom URL
 
@@ -96,7 +96,7 @@ _(IF 'random-slug': the slug we'd suggest.)_
 
 ```
 linkedin.com/in/{first-last}
-```
+```yaml
 
 Path: Profile → Edit public profile & URL → Edit URL.
 
@@ -123,7 +123,7 @@ No pressure if it's bad timing — just thought I'd ask.
 
 Thanks,
 {candidate first name}
-```
+```text
 
 ### Ask 2 — ...
 
@@ -138,7 +138,7 @@ _(IF 'stale-activity': suggest 3 post topics aligned to archetype + cv.md.)_
 
 After writing the file, emit:
 
-```
+```yaml
 REWRITE_PATH: {relative-path}
 ```
 

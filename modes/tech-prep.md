@@ -23,7 +23,7 @@ that fills 90% of online prep guides.
 ## Output
 
 Single markdown file at:
-```
+```text
 interview-prep/{company-slug}-{role-slug}-tech-prep.md
 ```
 
@@ -142,7 +142,7 @@ Before writing the file:
 Print to stdout, one line each (the dashboard's `/api/job/[id]/tech-prep`
 endpoint parses these for the toast):
 
-```
+```yaml
 TECH_PREP_PATH: interview-prep/{company-slug}-{role-slug}-tech-prep.md
 TECH_PREP_ROUNDS: 4
 TECH_PREP_HOURS_ESTIMATED: 25

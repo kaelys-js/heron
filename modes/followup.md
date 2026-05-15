@@ -35,7 +35,7 @@ If no actionable entries, tell the user:
 
 Show a cadence dashboard sorted by urgency (urgent > overdue > waiting > cold):
 
-```
+```text
 Follow-up Cadence Dashboard — {date}
 {N} applications tracked, {N} actionable
 
@@ -111,7 +111,7 @@ Do NOT generate another follow-up. Instead suggest:
 
 For each draft, show:
 
-```
+```text
 ## Follow-up: {Company} — {Role} (#{num})
 
 **To:** {email or "No contact found — run `/career-ops contacto` first"}

@@ -80,7 +80,7 @@ the retro file as "needs more reps before going in the bank."
 
 ## Output stdout protocol
 
-```
+```yaml
 RETRO_PATH: interview-prep/{slug}-retro-{stage}-{ts}.md
 STORIES_ADDED: <count of new (real rep) stories appended>
 WEAK_AREAS_LOGGED: <count of weak-moment items flagged>

@@ -9,7 +9,7 @@ Mode interactif pour le moment ou le candidat remplit un formulaire de candidatu
 
 ## Workflow
 
-```
+```text
 1. DETECTER     -> Lire l'onglet Chrome actif (capture/URL/titre)
 2. IDENTIFIER   -> Extraire entreprise + role depuis la page
 3. RECHERCHER   -> Matcher avec les reports existants dans reports/
@@ -77,7 +77,7 @@ Pour chaque question, construire la reponse selon ce schema :
 
 **Format de sortie :**
 
-```
+```text
 ## Reponses pour [Entreprise] -- [Role]
 
 Base : Report #NNN | Score : X.X/5 | Archetype : [type]

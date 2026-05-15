@@ -29,7 +29,7 @@ the recruiter said verbally:
 
 ONE markdown file at:
 
-```
+```text
 {output-dir}/{company-slug}-fine-print-review.md
 ```
 
@@ -85,7 +85,7 @@ context — Director offers get more pushback latitude than entry-level.)_
 
 After writing the file, emit:
 
-```
+```yaml
 FINE_PRINT_PATH: {relative-path}
 ```
 

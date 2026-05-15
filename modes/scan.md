@@ -8,7 +8,7 @@ Escanea portales de empleo configurados, filtra por relevancia de título, y añ
 
 Ejecutar como subagente para no consumir contexto del main:
 
-```
+```text
 Agent(
     subagent_type="general-purpose",
     prompt="[contenido de este archivo + datos específicos]",
@@ -161,7 +161,7 @@ Si se encuentra una URL no accesible públicamente:
 
 `data/scan-history.tsv` trackea TODAS las URLs vistas:
 
-```
+```text
 url	first_seen	portal	title	company	status
 https://...	2026-02-10	Ashby — AI PM	PM AI	Acme	added
 https://...	2026-02-10	Greenhouse — SA	Junior Dev	BigCo	skipped_title
@@ -171,7 +171,7 @@ https://...	2026-02-10	WebSearch — AI PM	PM AI	ClosedCo	skipped_expired
 
 ## Resumen de salida
 
-```
+```text
 Portal Scan — {YYYY-MM-DD}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 Queries ejecutados: N

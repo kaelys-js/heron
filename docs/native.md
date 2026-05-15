@@ -2,7 +2,7 @@
 
 You should not need to read this file. The commands are:
 
-```
+```bash
 pnpm native                # menu of every native command
 pnpm setup:native          # one-time interactive setup (runs once, walks you through everything)
 

@@ -49,7 +49,7 @@ If `$mode` is not a sub-command AND doesn't look like a JD, show discovery.
 
 Show this menu:
 
-```
+```text
 career-ops -- Command Center
 
 Available commands:
@@ -99,7 +99,7 @@ Applies to: `tracker`, `deep`, `interview-prep`, `mock-interview`, `cover-letter
 ### Modes delegated to subagent:
 For `scan`, `apply` (with Playwright), and `pipeline` (3+ URLs): launch as Agent with the content of `_shared.md` + `modes/{mode}.md` injected into the subagent prompt.
 
-```
+```text
 Agent(
   subagent_type="general-purpose",
   prompt="[content of modes/_shared.md]\n\n[content of modes/{mode}.md]\n\n[invocation-specific data]",
