@@ -167,8 +167,12 @@ export function resumeAutopilot(): { ok: boolean; resolved: boolean } {
  *  installBusListener handles HMR-safe re-installation — see events.ts. */
 export function installCircuitBreaker(): void {
   installBusListener('autopilot-circuit-breaker', onEvent);
-  // Defer preflight by a tick so other boot logging stays first.
-  setTimeout(checkPreflight, 1500);
+  // Defer preflight by a tick so other boot logging stays first. Skip in
+  // test envs — the timer would fire after the test process is supposed
+  // to exit and crash on the (intentionally empty) tmpdir DB.
+  if (process.env.VITEST !== 'true' && process.env.NODE_ENV !== 'test') {
+    setTimeout(checkPreflight, 1500);
+  }
 }
 
 installCircuitBreaker();

@@ -100,6 +100,16 @@ export const authSqliteHandle = authSqlite;
 /** Raw better-sqlite3 handle for app.db (for raw SQL / migrations). */
 export const appSqliteHandle = appSqlite;
 
+// Schema bootstrap. Production used to rely on auth.ts (the Better
+// Auth import) to call ensureSchema(), but server-side tests and
+// background timers (autopilot-circuit-breaker preflight) reach the
+// DB without going through auth.ts and hit `no such table: profiles`.
+// Running ensureSchema here means EVERY consumer that imports `db`
+// gets a populated schema. ensureSchema is idempotent + guarded by
+// its own `migrated` flag.
+import { ensureSchema as __ensureSchema } from './migrate';
+__ensureSchema();
+
 /** Tear down — used in tests + the verifier. */
 export function closeAll(): void {
   try {
