@@ -29,7 +29,7 @@ import { execSync } from 'node:child_process';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const UI = join(ROOT, 'ui');
-const CACHE_FILE = join(ROOT, 'native', 'icons', '_build', '.apply-brand-cache');
+const CACHE_FILE = join(ROOT, 'scripts', 'native', 'icons', '_build', '.apply-brand-cache');
 const BRAND_JSON = join(ROOT, 'branding', 'brand.json');
 const BRAND_LOGO = join(ROOT, 'branding', 'logo.svg');
 
