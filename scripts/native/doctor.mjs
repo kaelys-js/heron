@@ -33,6 +33,7 @@ import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
+import { NATIVE_ENV_FILE } from './_lib.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -88,7 +89,7 @@ log.step('Native readiness — local config');
 
 // ── 2. Local credentials file ──────────────────────────────────────
 log.step('Native readiness — local credentials (~/.career-ops/native-env)');
-const envFile = join(homedir(), '.career-ops', 'native-env');
+const envFile = NATIVE_ENV_FILE;
 if (existsSync(envFile)) {
   log.ok(`local credentials file exists: ${envFile}`);
   const body = readFileSync(envFile, 'utf8');

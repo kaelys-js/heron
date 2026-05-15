@@ -3,7 +3,7 @@
  * help — print every native command at a glance.
  * Runs when you forget the names. `pnpm native` triggers this.
  */
-import { c, capture, which } from './_lib.mjs';
+import { c, capture, which, NATIVE_ENV_FILE } from './_lib.mjs';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -84,7 +84,7 @@ console.log(`    ${have('pod')}  CocoaPods`);
 console.log(`    ${have('bundle')}  Bundler`);
 console.log(`    ${have('brew')}  Homebrew`);
 
-const envFile = join(process.env.HOME || '', '.career-ops', 'native-env');
+const envFile = NATIVE_ENV_FILE;
 const haveEnv = existsSync(envFile);
 console.log(
   `    ${haveEnv ? c.green('✓') : c.red('✗')}  Apple secrets configured  ${c.dim(envFile)}`,

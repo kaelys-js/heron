@@ -42,6 +42,8 @@ import {
   c,
   ROOT,
   UI,
+  NATIVE_ENV_FILE,
+  NATIVE_STATE_DIR,
 } from './_lib.mjs';
 import { existsSync, writeFileSync, chmodSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -52,7 +54,7 @@ info('Run this once. Every future native command just works.');
 info('Press Ctrl+C anytime — your progress is saved.\n');
 
 const state = readState();
-const envFile = join(process.env.HOME || '', '.career-ops', 'native-env');
+const envFile = NATIVE_ENV_FILE;
 
 // ───────────────────────────────────────────────────────────────────
 step(-1, 'Activating git hooks via lefthook');
@@ -323,7 +325,7 @@ const envBody = [
   `export MAC_CERTIFICATE_PASSWORD="${state.apple.MAC_CERTIFICATE_PASSWORD}"`,
   '',
 ].join('\n');
-mkdirSync(join(process.env.HOME || '', '.career-ops'), { recursive: true });
+mkdirSync(NATIVE_STATE_DIR, { recursive: true });
 writeFileSync(envFile, envBody);
 chmodSync(envFile, 0o600);
 ok(`wrote ${envFile} (mode 600)`);
