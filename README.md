@@ -162,7 +162,7 @@ career-ops/
 │   ├── DATA_CONTRACT.md         # System vs user layer rules
 │   ├── GOVERNANCE.md            # BDFL + contributor ladder
 │   ├── CONTRIBUTORS.md, LEGAL_DISCLAIMER.md, TRADEMARK.md
-│   ├── native.md, prettier.md
+│   ├── native.md
 │   └── archive/                 # Finished plan snapshots
 │
 ├── branding/
