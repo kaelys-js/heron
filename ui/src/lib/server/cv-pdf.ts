@@ -40,16 +40,20 @@ const CV_TEMPLATE_HTML = path.join(ROOT, 'templates', 'cv-template.html');
 
 /** Picks a template variant based on either an explicit override or the
  *  profile's `cv_template` field. Falls back to the classic ATS-safe
- *  template if the requested variant doesn't exist on disk. */
-function resolveTemplate(explicitName?: string, profileId?: string): string {
+ *  template if the requested variant doesn't exist on disk. Exported for
+ *  tests; production callers use `generateGeneralCv` etc. */
+export function resolveTemplate(explicitName?: string, profileId?: string): string {
   const named =
     explicitName ||
     (() => {
       try {
         // Best-effort: read profile.yml's cv_template field. We avoid pulling
-        // a YAML parser into this server file — only need one key.
+        // a YAML parser into this server file — only need one key. Routes
+        // through profilePath() so multi-user installs read the ACTIVE
+        // user's profile.yml at data/users/{uid}/profiles/{id}/profile.yml
+        // rather than the legacy single-user data/profiles/{id}/profile.yml.
         if (!profileId) return undefined;
-        const pPath = path.join(ROOT, 'data', 'profiles', profileId, 'profile.yml');
+        const pPath = profilePath(profileId, 'profile-yml');
         if (!fs.existsSync(pPath)) return undefined;
         const text = fs.readFileSync(pPath, 'utf8');
         const m = text.match(/^\s*cv_template:\s*"?([a-z0-9-]+)"?/im);

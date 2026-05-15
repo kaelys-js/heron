@@ -59,13 +59,20 @@ const fsMock = {
 };
 vi.mock('node:fs', () => ({ default: fsMock, ...fsMock }));
 
+// Per-profile resolver — the test sets `activeProfileId` and the
+// mock returns a unique path per profile so multi-user isolation can
+// be asserted with the in-memory fsMock.
+let activeProfileId = 'default';
 vi.mock('./profile-paths', () => ({
-  profilePath: (_id: string, _key: string) => '/tmp/profile',
+  profilePath: (id: string, key: string) => {
+    if (key === 'inbound-leads-jsonl') return `/tmp/profile/${id}/inbound-leads.jsonl`;
+    return `/tmp/profile/${id}/${key}`;
+  },
   activePath: (key: string) => '/tmp/' + key,
 }));
 
 vi.mock('./profiles', () => ({
-  getActiveProfileId: () => 'default',
+  getActiveProfileId: () => activeProfileId,
 }));
 
 const { classifyEmail, matchEmailToJob, listLeads } = await import('./email-reactor');
@@ -233,8 +240,64 @@ describe('matchEmailToJob', () => {
   });
 });
 
-describe('listLeads', () => {
+describe('listLeads — per-profile per-user isolation', () => {
   it('returns empty array when no leads recorded', () => {
+    activeProfileId = 'default';
     expect(listLeads()).toEqual([]);
+  });
+
+  it("reads from profilePath(active, 'inbound-leads-jsonl'), not a shared repo-root file", () => {
+    activeProfileId = 'alice';
+    files['/tmp/profile/alice/inbound-leads.jsonl'] =
+      JSON.stringify({ sender: 'recruiter@a.com', subject: 'Alice lead', ts: 100 }) + '\n';
+    const got = listLeads();
+    expect(got).toHaveLength(1);
+    expect(got[0].subject).toBe('Alice lead');
+  });
+
+  it("does NOT leak one profile's leads into another profile's reads", () => {
+    files['/tmp/profile/work/inbound-leads.jsonl'] =
+      JSON.stringify({ sender: 'wr@x.com', subject: 'WORK_LEAD', ts: 200 }) + '\n';
+    files['/tmp/profile/teach/inbound-leads.jsonl'] =
+      JSON.stringify({ sender: 'tr@y.com', subject: 'TEACH_LEAD', ts: 300 }) + '\n';
+
+    activeProfileId = 'work';
+    expect(listLeads().map((l) => l.subject)).toEqual(['WORK_LEAD']);
+
+    activeProfileId = 'teach';
+    expect(listLeads().map((l) => l.subject)).toEqual(['TEACH_LEAD']);
+  });
+
+  it('skips structured Lead objects written by inbound-leads.ts (different schema)', () => {
+    activeProfileId = 'default';
+    // The inbound-leads.ts module writes structured Lead objects with
+    // different keys (leadId, fingerprint, classification, ...). When
+    // email-reactor's listLeads() reads the same per-profile file, it
+    // should skip those rows rather than render half-parsed leads.
+    files['/tmp/profile/default/inbound-leads.jsonl'] =
+      JSON.stringify({ sender: 'r@x.com', subject: 'simple', ts: 100 }) +
+      '\n' +
+      JSON.stringify({
+        leadId: 'abc',
+        fingerprint: 'xyz',
+        classification: { kind: 'recruiter-reach-out' },
+      }) +
+      '\n';
+
+    const got = listLeads();
+    expect(got).toHaveLength(1);
+    expect(got[0].subject).toBe('simple');
+  });
+
+  it('returns leads sorted newest-first', () => {
+    activeProfileId = 'default';
+    files['/tmp/profile/default/inbound-leads.jsonl'] =
+      JSON.stringify({ sender: 'a', subject: 'OLD', ts: 100 }) +
+      '\n' +
+      JSON.stringify({ sender: 'b', subject: 'NEW', ts: 200 }) +
+      '\n';
+
+    const got = listLeads();
+    expect(got.map((l) => l.subject)).toEqual(['NEW', 'OLD']);
   });
 });

@@ -17,7 +17,7 @@ import path from 'node:path';
 import { ROOT, readSafe } from './files';
 import { parse, stringify } from 'yaml';
 import { logEvent } from './events';
-import { profilePath, ensureProfileDirs } from './profile-paths';
+import { profilePath, ensureProfileDirs, userSharedPath } from './profile-paths';
 import { getActiveProfileId } from './profiles';
 
 /** Path to the example profile template — system-layer, shared, NOT per-profile. */
@@ -605,11 +605,19 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
 
   // Shared infrastructure — wiped per the ResetProfileDialog "Everything"
   // description. Each gets backed up to <path>.bak before deletion/reset.
-  const AUTOPILOT_JSON = path.join(ROOT, 'data', 'autopilot.json');
+  //
+  // Per-USER state (autopilot.json + story-bank.md) resolves through
+  // userSharedPath() so we wipe the active user's data — not a stale
+  // repo-root copy that no longer exists post-multi-user migration.
+  //
+  // Per-INSTALL state (activity.jsonl, job-last-run.json, apply-counter.json)
+  // remains at the flat repo-root paths — see AGENTS.md "Globally shared
+  // infrastructure" line.
+  const AUTOPILOT_JSON = userSharedPath('autopilot');
   const ACTIVITY_JSONL = path.join(ROOT, 'data', 'activity.jsonl');
   const JOB_LAST_RUN_JSON = path.join(ROOT, 'data', 'job-last-run.json');
   const APPLY_COUNTER_JSON = path.join(ROOT, 'data', 'apply-counter.json');
-  const STORY_BANK_MD = path.join(ROOT, 'interview-prep', 'story-bank.md');
+  const STORY_BANK_MD = userSharedPath('story-bank');
 
   // Reset autopilot.json to defaults rather than deleting it — the
   // scheduler depends on the file existing on next read; rewriting to

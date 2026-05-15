@@ -28,10 +28,11 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT } from './files';
 import { loadAllJobs } from './parsers';
 import { markStatus } from './applications';
 import { logEvent } from './events';
+import { profilePath } from './profile-paths';
+import { getActiveProfileId } from './profiles';
 
 export type EmailInput = {
   /** ISO timestamp or ms epoch */
@@ -333,7 +334,14 @@ export function matchEmailToJob(
 
 // ── Build action list ──────────────────────────────────────────────
 
-const LEADS_FILE = path.join(ROOT, 'data', 'inbound-leads.jsonl');
+/** Per-user per-profile path. Was a single repo-root file — under
+ *  multi-user that mixed every user's recruiter inbound history. Routes
+ *  through the same kind that inbound-leads.ts uses, so the two modules
+ *  share storage for the active user/profile rather than fighting over
+ *  parallel data files. */
+function leadsFile(profileId?: string): string {
+  return profilePath(profileId ?? getActiveProfileId(), 'inbound-leads-jsonl');
+}
 
 /**
  * Combine classification + match into a concrete action list. The caller
@@ -529,18 +537,32 @@ export function executeActions(actions: EmailAction[]): ExecutionResult {
 }
 
 function appendLead(lead: { sender: string; subject: string; ts: number }): void {
-  fs.mkdirSync(path.dirname(LEADS_FILE), { recursive: true });
-  fs.appendFileSync(LEADS_FILE, JSON.stringify(lead) + '\n');
+  const f = leadsFile();
+  fs.mkdirSync(path.dirname(f), { recursive: true });
+  fs.appendFileSync(f, JSON.stringify(lead) + '\n');
 }
 
 export function listLeads(): Array<{ sender: string; subject: string; ts: number }> {
-  if (!fs.existsSync(LEADS_FILE)) return [];
-  const txt = fs.readFileSync(LEADS_FILE, 'utf8');
+  const f = leadsFile();
+  if (!fs.existsSync(f)) return [];
+  const txt = fs.readFileSync(f, 'utf8');
   const out: Array<{ sender: string; subject: string; ts: number }> = [];
   for (const line of txt.split('\n')) {
     if (!line.trim()) continue;
     try {
-      out.push(JSON.parse(line));
+      // Filter to the simple {sender, subject, ts} shape this module
+      // writes. inbound-leads.ts may also write structured Lead objects
+      // here; skip anything that doesn't match our shape so the UI
+      // doesn't render half-parsed structured leads.
+      const obj = JSON.parse(line);
+      if (
+        obj &&
+        typeof obj.sender === 'string' &&
+        typeof obj.subject === 'string' &&
+        typeof obj.ts === 'number'
+      ) {
+        out.push(obj);
+      }
     } catch {
       /* skip */
     }
