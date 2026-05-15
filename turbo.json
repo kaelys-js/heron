@@ -34,7 +34,7 @@
       "inputs": [
         "src/**",
         "static/**",
-        "svelte.config.js",
+        "svelte.config.ts",
         "vite.config.ts",
         "tsconfig.json",
         "package.json"
@@ -87,7 +87,7 @@
         "src/**/*.d.ts",
         "src/app.html",
         "static/**",
-        "svelte.config.js",
+        "svelte.config.ts",
         "vite.config.ts",
         "tsconfig.json",
         ".svelte-kit/tsconfig.json",
