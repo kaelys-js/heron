@@ -80,7 +80,6 @@ const SYSTEM_PATHS = [
   'batch/batch-prompt.md',
   'batch/batch-runner.sh',
   'templates/',
-  'fonts/',
   '.claude/skills/',
   '.gemini/commands/',
   'docs/',
