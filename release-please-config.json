@@ -28,8 +28,17 @@
         },
         {
           "type": "json",
+          "path": "ui/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
           "path": "ui/electron/package.json",
           "jsonpath": "$.version"
+        },
+        {
+          "type": "generic",
+          "path": "VERSION"
         }
       ]
     }
