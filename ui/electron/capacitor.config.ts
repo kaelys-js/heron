@@ -34,12 +34,12 @@ const config = {
   plugins: {
     LocalNotifications: {
       smallIcon: 'ic_stat_career_ops',
-      iconColor: '#5b6cff',
+      iconColor: '#4a5b6d',
       sound: 'default',
     },
     SplashScreen: {
       launchShowDuration: 1500,
-      backgroundColor: '#0a0a0b',
+      backgroundColor: '#0e1014',
       androidSplashResourceName: 'splash',
       showSpinner: false,
     },
