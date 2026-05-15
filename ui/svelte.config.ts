@@ -22,6 +22,7 @@
  */
 import nodeAdapter from '@sveltejs/adapter-node';
 import staticAdapter from '@sveltejs/adapter-static';
+import type { Config } from '@sveltejs/kit';
 
 const CAPACITOR_BUILD = process.env.CAPACITOR === '1';
 // Vite dev server (`pnpm dev`, `pnpm dev:ios --live`, etc.) — disables
@@ -35,8 +36,7 @@ const CAPACITOR_BUILD = process.env.CAPACITOR === '1';
 // appears. Production node builds keep strict CSP.
 const DEV_MODE = process.env.NODE_ENV !== 'production';
 
-/** @type {import('@sveltejs/kit').Config} */
-const config = {
+const config: Config = {
   // No `preprocess` block — Svelte 5 has built-in TypeScript support and
   // vite handles PostCSS via @tailwindcss/vite. Adding `vitePreprocess()`
   // here would conflict with the runes-detection callback below (rune_
