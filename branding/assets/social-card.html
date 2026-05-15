@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Heron — social card source</title>
+  <!--
+    Heron Open Graph social card — render source.
+
+    This file renders to a 1200×630 PNG that ships at
+    ui/static/social-card.png after Task 9 wiring. Spec lives at
+    branding/SOCIAL-CARD.md.
+
+    To render:
+      1. Open this file in Chrome
+      2. DevTools → Toggle Device Toolbar → Responsive 1200×630
+      3. DevTools menu → Capture screenshot (or DPR=2 for retina)
+      4. Save the PNG to ui/static/social-card.png
+
+    Or run via Puppeteer / Playwright at viewport 1200×630.
+
+    The body is rendered at exactly 1200×630 with overflow hidden so
+    headless screenshot tools without device-mode produce the right
+    crop. Fonts pull from Google Fonts because this is a one-time
+    render — the PNG ships, not the HTML.
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  >
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 1200px;
+      height: 630px;
+      overflow: hidden;
+    }
+
+    body {
+      position: relative;
+      background: #0e1014;
+      color: #e8eaed;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      font-feature-settings: 'ss01', 'cv11';
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: geometricPrecision;
+    }
+
+    /* Single chromatic punctuation mark — top-left accent stripe */
+    .accent-stripe {
+      position: absolute;
+      top: 60px;
+      left: 80px;
+      width: 64px;
+      height: 4px;
+      background: #c89b4a;
+      border-radius: 2px;
+    }
+
+    /* Content column — left-aligned, leaves right ~360px for mascot */
+    .content {
+      position: absolute;
+      top: 110px;
+      left: 80px;
+      right: 400px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tagline {
+      font-family: 'Fraunces', 'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times New Roman', Times, Georgia, serif;
+      font-weight: 700;
+      font-size: 104px;
+      line-height: 1.04;
+      letter-spacing: -0.025em;
+      font-optical-sizing: auto;
+      font-variation-settings: 'opsz' 104, 'SOFT' 0, 'wght' 700;
+      color: #e8eaed;
+    }
+
+    .wordmark {
+      margin-top: 56px;
+      font-family: 'Fraunces', 'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times New Roman', Times, Georgia, serif;
+      font-weight: 700;
+      font-size: 56px;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      font-optical-sizing: auto;
+      font-variation-settings: 'opsz' 56, 'SOFT' 0, 'wght' 700;
+      color: #c89b4a;
+    }
+
+    .subline {
+      margin-top: 14px;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-weight: 400;
+      font-size: 28px;
+      line-height: 1.45;
+      letter-spacing: -0.005em;
+      color: #a8b0bb;
+      max-width: 640px;
+    }
+
+    /* URL strip at footer-left — quiet brand identifier, not a CTA */
+    .url-strip {
+      position: absolute;
+      left: 80px;
+      bottom: 60px;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-weight: 500;
+      font-size: 18px;
+      letter-spacing: 0.04em;
+      color: #6b7585;
+      text-transform: lowercase;
+    }
+
+    /* Mascot — quiet presence on the right, recedes to 92% opacity */
+    .mascot {
+      position: absolute;
+      top: 50%;
+      right: 96px;
+      transform: translateY(-50%);
+      width: 280px;
+      height: auto;
+      opacity: 0.92;
+      color: #4a5b6d;
+    }
+  </style>
+</head>
+<body>
+  <div class="accent-stripe" aria-hidden="true"></div>
+
+  <div class="content">
+    <h1 class="tagline">Stand&nbsp;still.<br>Strike&nbsp;well.</h1>
+    <p class="wordmark">Heron</p>
+    <p class="subline">A thinking partner for career transitions. Patient, precise, local-first.</p>
+  </div>
+
+  <p class="url-strip">heron.app</p>
+
+  <!--
+    Mascot silhouette — inline SVG so this file is self-contained
+    (no external image dependency). Mirrors branding/assets/mark-placeholder.svg
+    so any future mascot update can drop in the same paths. viewBox
+    matches the canonical mark (120×160).
+  -->
+  <svg
+    class="mascot"
+    viewBox="0 0 120 160"
+    role="img"
+    aria-label="Heron mascot silhouette"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <title>Heron</title>
+    <ellipse cx="55" cy="95" rx="28" ry="14" fill="currentColor" />
+    <path
+      d="M 68 84 C 76 60, 58 45, 64 25"
+      stroke="currentColor"
+      stroke-width="6"
+      stroke-linecap="round"
+      fill="none"
+    />
+    <ellipse cx="68" cy="22" rx="9" ry="6" fill="currentColor" />
+    <path d="M 77 21 L 105 23 L 77 25 Z" fill="currentColor" />
+    <circle cx="71" cy="20" r="1.2" fill="#fffefa" />
+    <line x1="48" y1="108" x2="46" y2="150" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+    <line x1="62" y1="108" x2="64" y2="150" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+    <line x1="42" y1="150" x2="50" y2="150" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+    <line x1="60" y1="150" x2="68" y2="150" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+  </svg>
+</body>
+</html>
