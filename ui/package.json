@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.95.1",
-    "@better-auth/passkey": "1.6.10",
+    "@better-auth/passkey": "1.6.11",
     "@capacitor/app-launcher": "8.0.1",
     "@capacitor/browser": "8.0.3",
     "@capacitor/clipboard": "8.0.1",
@@ -45,7 +45,7 @@
     "@capacitor/screen-reader": "8.0.1",
     "@internationalized/date": "3.12.1",
     "@lucide/svelte": "1.14.0",
-    "better-auth": "1.6.10",
+    "better-auth": "1.6.11",
     "better-sqlite3": "12.9.0",
     "chokidar": "5.0.0",
     "clsx": "2.1.1",
