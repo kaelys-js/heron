@@ -272,3 +272,14 @@ ui/electron/.svelte-kit/generated/client/nodes/0.js
 ui/electron/.svelte-kit/generated/client/nodes/1.js
 /.lostpixel/current
 /.lostpixel/difference
+
+# ── Local-only working notes — never commit ─────────────────────────
+# STATE.md is a per-session scratchpad Claude uses to track multi-step
+# work across crashes / context wipes. Don't ship it — it's noise to
+# anyone but the current operator.
+STATE.md
+# TODO files live locally per developer. The shared roadmap lives in
+# the GitHub issue tracker / docs/ROADMAP.md. Keeping personal TODOs
+# off the repo also closes a category of accidental data leak.
+TODO.md
+TODO2.md

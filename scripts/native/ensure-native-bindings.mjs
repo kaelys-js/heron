@@ -56,7 +56,15 @@ import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dirname, '..');
+// Script lives at scripts/native/ensure-native-bindings.mjs → repo root
+// is TWO levels up, not one. The previous `..` calculation resolved
+// ROOT to scripts/ which made parseAllowBuilds() look for
+// scripts/pnpm-workspace.yaml (doesn't exist) → empty target list →
+// the script printed "no native packages to verify" and exited 0
+// even when better-sqlite3's binding was ABI-mismatched. That's
+// EXACTLY the symptom we hit in pre-push runs that should have
+// rebuilt but didn't.
+const ROOT = resolve(__dirname, '..', '..');
 
 const args = process.argv.slice(2);
 const FORCE = args.includes('--force');
@@ -187,13 +195,32 @@ function bindingExists(pkgDir, name) {
 }
 
 function bindingLoads(pkgDir, name) {
-  // Try to `require()` the package in a subprocess so a load failure
-  // (ABI mismatch, missing dylib) doesn't crash this script.
-  const result = spawnSync(
-    process.execPath,
-    ['-e', `require('${pkgDir.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}')`],
-    { encoding: 'utf8', stdio: ['ignore', 'ignore', 'pipe'] },
-  );
+  // Try to EXERCISE the binding in a subprocess so a load failure (ABI
+  // mismatch, missing dylib) doesn't crash this script.
+  //
+  // CRITICAL: a plain `require(pkgDir)` is NOT enough. better-sqlite3
+  // 12.x lazy-loads the .node binary — `require('better-sqlite3')`
+  // succeeds even with an ABI-mismatched binding because the actual
+  // `bindings('better_sqlite3.node')` call only fires when you
+  // construct a Database instance. The previous probe missed this and
+  // reported "binding healthy" for known-broken bindings, letting the
+  // pre-push gate pass while vitest workers immediately ERR_DLOPEN_FAILED.
+  //
+  // Per-package probes that force the binding to actually load:
+  const safePath = pkgDir.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  const probes = {
+    'better-sqlite3': `const D=require('${safePath}'); new D(':memory:').close();`,
+    // For non-better-sqlite3 native pkgs, fall back to `require()`. Any
+    // package whose binding eagerly loads at require-time will be fine
+    // with this. If we add one that's lazy like better-sqlite3, give it
+    // its own entry here so we exercise the binding path.
+  };
+  const probe = probes[name] ?? `require('${safePath}');`;
+
+  const result = spawnSync(process.execPath, ['-e', probe], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'ignore', 'pipe'],
+  });
   if (result.status === 0) return true;
   // Loadable but not our bug? Print stderr only when debugging.
   return false;
