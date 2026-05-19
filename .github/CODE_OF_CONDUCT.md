@@ -1,5 +1,9 @@
 # Code of Conduct
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-15 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 ## Our Pledge
 
 We as members, contributors, and maintainers pledge to make participation in Heron a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.

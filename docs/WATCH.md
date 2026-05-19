@@ -1,5 +1,9 @@
 # Apple Watch — standalone app + Smart Stack widgets
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 heron ships a **standalone watchOS app target** plus four
 Smart-Stack widget families. Watch users get both: a dedicated app on
 the wrist for browsing, and at-a-glance complications + widgets on the

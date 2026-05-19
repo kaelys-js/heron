@@ -1,5 +1,9 @@
 # Customization Guide
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 ## Profile (config/profile.yml)
 
 This is the single source of truth for your identity. All modes read from here.

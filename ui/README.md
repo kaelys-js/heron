@@ -1,5 +1,9 @@
 # `ui/` — Heron SvelteKit workspace
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 The main app workspace. SvelteKit 2 + Svelte 5 + Better Auth + Drizzle ORM,
 wrapped via Capacitor 8 for iOS / Android and Electron 39 for macOS / Windows
 / Linux, plus a watchOS companion + 4 iOS widgets.
@@ -118,5 +122,5 @@ are never touched by the test matrix.
 - [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) — system diagram + data flow
 - [docs/TESTING.md](../docs/TESTING.md) — full testing strategy across TS + iOS
 - [docs/WATCH.md](../docs/WATCH.md) — Apple Watch + widget specifics
-- [docs/native.md](../docs/native.md) — native-build command cheat-sheet
+- [docs/NATIVE.md](../docs/NATIVE.md) — native-build command cheat-sheet
 - [AGENTS.md](../AGENTS.md) — AI-CLI runtime brief (data contract, mode routing)

@@ -1,5 +1,9 @@
 # Security Policy
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-15 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 ## Reporting a Vulnerability
 
 **Do NOT open a public issue for security vulnerabilities.**

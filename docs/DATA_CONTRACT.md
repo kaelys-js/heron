@@ -1,5 +1,9 @@
 # Data Contract
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 This document defines which files belong to the **system** (auto-updatable) and which belong to the **user** (never touched by updates).
 
 ## Multi-Profile Layout
