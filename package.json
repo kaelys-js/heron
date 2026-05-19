@@ -91,6 +91,7 @@
     "resume:check": "node scripts/quality/resume-quality.mjs",
     "rollback": "node scripts/system/update-system.mjs rollback",
     "scan": "node scripts/scan/scan.mjs",
+    "screenshots": "node scripts/system/capture-screenshots.mjs",
     "semantic:match": "node scripts/quality/semantic-match.mjs",
     "setup:native": "node scripts/native/setup.mjs",
     "sync-check": "node scripts/quality/cv-sync-check.mjs",

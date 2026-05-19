@@ -1,6 +1,9 @@
 <div align="center">
 
-<img src="branding/assets/wordmark-slate.svg" alt="Heron" width="180" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="branding/assets/wordmark-light.svg">
+  <img src="branding/assets/wordmark-slate.svg" alt="Heron" width="220" />
+</picture>
 
 # Heron
 
@@ -8,9 +11,7 @@
 *Last revised 2026-05-19 · [Heron](https://heron.app) · Stand still. Strike well.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
-**Stand still. Strike well.**
-
-A thinking partner for career transitions. Patient, precise, local-first.
+**A thinking partner for career transitions. Local-first. Open source. AI-agnostic.**
 
 [![Build](https://github.com/heron/heron/actions/workflows/test.yml/badge.svg)](https://github.com/heron/heron/actions/workflows/test.yml)
 [![CodeQL](https://github.com/heron/heron/actions/workflows/codeql.yml/badge.svg)](https://github.com/heron/heron/actions/workflows/codeql.yml)
@@ -19,14 +20,15 @@ A thinking partner for career transitions. Patient, precise, local-first.
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/github/v/release/heron/heron)](https://github.com/heron/heron/releases)
 [![Discord](https://img.shields.io/discord/1383123430472122572?label=discord&logo=discord)](https://discord.gg/8pRpHETxa4)
+[![REUSE compliant](https://img.shields.io/badge/REUSE-compliant-blue)](https://reuse.software)
 
-[Get started](docs/SETUP.md) · [Documentation](docs/) · [Architecture](docs/ARCHITECTURE.md) · [Discord](https://discord.gg/8pRpHETxa4)
+[**Quick start**](#quick-start) · [**Documentation**](docs/) · [**Architecture**](docs/ARCHITECTURE.md) · [**Discord**](https://discord.gg/8pRpHETxa4) · [**Sponsor**](https://github.com/sponsors/kaelys-js)
 
 </div>
 
 ---
 
-## What is Heron?
+## What is Heron
 
 The Heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes — once, precisely, and the work is done.
 
@@ -34,17 +36,51 @@ This is the wrong era for spray-and-pray job searches. Recruiters' attention is 
 
 It runs entirely on your machine. Your data is yours.
 
+## See it in action
+
+<table>
+  <tr>
+    <td width="50%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/inbox-dark.png">
+        <img src="docs/screenshots/inbox-light.png" alt="Inbox" />
+      </picture>
+      <p align="center"><b>Inbox</b> — triaged opportunities by score</p>
+    </td>
+    <td width="50%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/evaluation-dark.png">
+        <img src="docs/screenshots/evaluation-light.png" alt="A–F evaluation report" />
+      </picture>
+      <p align="center"><b>A–F evaluation</b> — six-block analysis per role</p>
+    </td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/autopilot.png" alt="Autopilot config" /><p align="center"><b>Autopilot</b> — score-gated automation, opt-in</p></td>
+    <td><img src="docs/screenshots/patterns.png" alt="Pattern analysis" /><p align="center"><b>Patterns</b> — rejection-pattern insights</p></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/interview-prep.png" alt="Interview prep" /><p align="center"><b>Interview prep</b> — STAR+R stories from real projects</p></td>
+    <td><img src="docs/screenshots/mobile-inbox.png" alt="Mobile inbox" width="40%" /><p align="center"><b>Mobile</b> — iOS / Android via Capacitor</p></td>
+  </tr>
+</table>
+
+> Screenshots not rendering? Run `pnpm screenshots` against a `pnpm dev` instance to regenerate. PNGs land under `docs/screenshots/`.
+
 ## What it does
 
-- **Pipeline tracking** — every opportunity in one place; status, score, comp, notes
-- **A–F evaluation** — six-block analysis per role: role fit, CV match, level strategy, comp research, CV personalization plan, interview prep
-- **CV generation** — ATS-optimized PDFs (HTML + LaTeX templates), tailored per role
-- **Portal scanning** — 11 ATSes (Greenhouse / Ashby / Lever / LinkedIn / Indeed / Workday / Recruitee / SmartRecruiters / Workable / Personio / Teamtailor)
-- **Recruiter inbound** — email classifier that flags offers, confirms interviews, and reacts to rejections
-- **Interview prep** — STAR+R stories generated from your real work; mock interviews; comp negotiation
-- **Autonomous apply** *(opt-in, score-gated, off by default)* — Heron defers to you on the moves that matter
-- **Multi-user, multi-profile** — two humans share one install, fully segregated; one human runs engineer + instructor profiles, fully segregated
-- **AI-agnostic** — swappable CLI (Claude / Gemini / Codex / OpenCode / Qwen). No vendor lock-in.
+| Capability | What you get | Where in product |
+|---|---|---|
+| **Pipeline tracking** | Every opportunity in one place — status, score, comp, notes. Multi-profile if you're running parallel career tracks. | `/inbox`, `/queue` |
+| **A–F evaluation** | Six-block analysis per role: role-fit, CV match, level strategy, comp research, CV-personalization plan, interview prep. | `/job/[id]/report` |
+| **CV generation** | ATS-optimized PDFs (HTML + LaTeX templates), tailored per role. AI-detect + ATS-keyword check built-in. | `/job/[id]/cv` |
+| **Portal scanning** | 11 ATSes: Greenhouse, Ashby, Lever, LinkedIn, Indeed, Workday, Recruitee, SmartRecruiters, Workable, Personio, Teamtailor. | `/sources`, `pnpm scan` |
+| **Recruiter inbound** | Email classifier flags offers, confirms interviews, reacts to rejections. Gmail IMAP poller built-in. | `/inbox` |
+| **Interview prep** | STAR+R stories from your real projects; mock interviews; comp negotiation playbook. | `/job/[id]/prep` |
+| **Autonomous apply** | Opt-in, score-gated, off by default. LinkedIn Easy Apply / Greenhouse / Ashby in prod; more stubbed. | `/autopilot` |
+| **Multi-user + multi-profile** | Two humans share one install fully segregated. One human runs engineer + instructor profiles fully segregated. | `/settings/users`, profile switcher |
+| **AI-agnostic** | Swappable CLI: Claude / Gemini / Codex / OpenCode / Qwen / Copilot. No vendor lock-in. | `AGENT_CLI=` env var |
+| **Native everywhere** | iOS / Android via Capacitor, Electron desktop (Mac/Win/Linux), Apple Watch widget bundle. | `pnpm setup:native` |
 
 ## Why local-first
 
@@ -52,375 +88,278 @@ Your CV, application history, scoring data, recruiter emails, interview prep —
 
 If a hosted tier emerges in the future, the open-source local-first version stays maintained and supported. That's the whole posture.
 
+## Pricing
+
+Heron is MIT-licensed and free. There is no hosted tier today.
+
+| Cost | When |
+|---|---|
+| **$0/month, forever** | Default. Run locally, use your own AI subscriptions. |
+| AI API tokens | If you use Anthropic / Gemini / OpenAI API keys directly. With a Claude Max plan via `AGENT_CLI=claude`, this is **$0**. |
+| Apple Developer Program $99/yr | Only if you want to ship native iOS builds yourself. Default install uses the web dashboard + Electron desktop. |
+
+The math: Heron saves a week of job-search time per role. That's worth far more than the AI tokens it costs to run. Local-first means you keep the savings.
+
 ## Quick start
 
+<details open><summary><b>macOS / Linux</b></summary>
+
 ```bash
-git clone https://github.com/heron/heron.git
-cd heron
-mise install              # auto-installs Node 26 + pnpm 11 + Ruby 3.3 + Python 3.13
-pnpm install              # one-shot install across workspaces
-pnpm setup:native         # generates Heron-branded native apps (optional)
-pnpm dev                  # SvelteKit dashboard at localhost:5173
+brew install mise gh                              # one-time, if not installed
+gh repo clone heron/heron && cd heron
+mise install                                      # Node 26 + pnpm 11 + Ruby 3.3 + Python 3.13
+pnpm install                                      # one-shot install across workspaces
+pnpm setup:native                                 # optional — Capacitor iOS/Android/Electron setup
+pnpm dev                                          # SvelteKit dashboard at localhost:5173
 ```
 
-See [`docs/SETUP.md`](docs/SETUP.md) for the long form, including
-Capacitor builds for iOS / Android and the Electron desktop wrapper.
+</details>
 
----
+<details><summary><b>Windows</b></summary>
 
-## What's in the box
+```powershell
+scoop install mise gh                              # via Scoop
+gh repo clone heron/heron; cd heron
+mise install                                       # Node 26 + pnpm 11 + Ruby 3.3 + Python 3.13
+pnpm install
+pnpm setup:native                                  # optional
+pnpm dev                                           # SvelteKit dashboard at localhost:5173
+```
 
-| Layer | Tech | Notes |
-|---|---|---|
-| **Dashboard UI** | SvelteKit 2.59 + Tailwind 4 + bits-ui + Svelte 5 runes | Mobile-first responsive |
-| **Auth** | Better Auth 1.6 + passkey + GitHub OAuth + invite codes | Multi-user, RBAC (owner/admin/member) |
-| **DB** | Drizzle ORM + better-sqlite3 12.9 (WAL mode) | Two files: `auth.db` + `app.db` |
-| **AI** | Anthropic SDK + Google Gemini SDK + any CLI via `AGENT_CLI` | Routes through your Max plan via `claude -p` |
-| **Portal scrape** | Playwright 1.59 + direct ATS APIs | Zero token cost on the scan |
-| **Native — desktop** | Electron 39 + electron-builder 26 + electron-updater 6 | Auto-updates via Squirrel/Mac, Squirrel.Windows, AppImageUpdate |
-| **Native — mobile** | Capacitor 8 (iOS + Android) + Swift Package Manager | Same SvelteKit codebase, native APIs via plugins |
-| **Apple Watch** | WKApplication + WCSession + WidgetBundle | Reads from App Group UserDefaults |
-| **iOS Widgets** | 4 widgets (pipeline stats / next interview / top apply / inbox issues) | WidgetKit timeline entries |
-| **Build** | mise + pnpm 11 workspace + turborepo + biome + lefthook | Sub-second warm CI thanks to turbo cache |
-| **CI** | GitHub Actions on Node 24 actions, Node 26.1 for the app | `act` for local runs |
-| **Release** | release-please (Conventional Commits) + fastlane (ASC API key) | One commit ⇒ one release ⇒ TestFlight + GitHub Release artefacts |
+</details>
 
-### Repository layout
+See [`docs/SETUP.md`](docs/SETUP.md) for the long form including Capacitor / iOS / Apple Watch builds, fastlane signing, and the `pnpm doctor:native` preflight check.
+
+## Architecture
+
+The dashboard is a single SvelteKit app. The native apps are the same SvelteKit codebase wrapped in Capacitor (iOS / Android) or Electron (desktop). Backend discovery is hands-off — your phone, watch, and laptop reconcile to whichever Heron instance is reachable without configuration.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant App as Native app
+    participant Embedded as Embedded server
+    participant LAN as LAN (mDNS)
+    participant Tail as Tailscale
+    participant Remote as Configured URL
+    App->>Embedded: 1. Probe embedded (Electron child process)
+    alt embedded reachable
+        Embedded-->>App: ok, use this
+    else
+        App->>App: 2. Probe http://localhost:5173 (pnpm dev)
+        App->>LAN: 3. mDNS browse _heron._tcp
+        App->>Tail: 4. Tailscale magic-DNS
+        App->>Remote: 5. Configured fallback URL
+    end
+```
+
+The full architecture — multi-user data layout, security posture, evaluation pipeline, autonomous-apply flow — is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+<details><summary><b>Tech stack</b></summary>
+
+| Layer | Tech |
+|---|---|
+| Dashboard UI | SvelteKit 2 + Tailwind 4 + bits-ui + Svelte 5 runes |
+| Auth | Better Auth 1.6 + passkey + GitHub OAuth + invite codes (RBAC) |
+| DB | Drizzle ORM + better-sqlite3 (WAL mode); `auth.db` + `app.db` |
+| AI | Anthropic SDK + Google Gemini SDK + any CLI via `AGENT_CLI` |
+| Portal scrape | Playwright 1.60 + direct ATS APIs (zero AI tokens on scan) |
+| Desktop | Electron 39 + electron-builder + auto-update (Squirrel/Mac, Squirrel.Win, AppImage) |
+| Mobile | Capacitor 8 (iOS + Android) + Swift Package Manager |
+| Watch | WKApplication + WCSession + WidgetBundle |
+| iOS widgets | 4 widgets (pipeline / next interview / top apply / inbox issues) |
+| Build | mise + pnpm workspace + turborepo + biome + lefthook |
+| CI | GitHub Actions on `macos-15`, `ubuntu-latest`, `windows-latest`; `act` for local |
+| Release | Conventional Commits → release-please → native-release.yml → TestFlight + GitHub Release |
+
+</details>
+
+<details><summary><b>Repository layout</b></summary>
 
 ```text
 heron/
 ├── README.md                    # ← you are here
 ├── CHANGELOG.md                 # Release-Please-managed
-├── AGENTS.md                    # Runtime brief for any agent-skill-standard CLI
-├── CLAUDE.md                    # 2-line pointer → AGENTS.md
-├── GEMINI.md                    # Gemini-specific slash-command table + pointer
-├── LICENSE
-│
-├── ui/                          # SvelteKit dashboard (workspace)
-│   ├── src/
-│   │   ├── routes/              # Pages + API endpoints (file-based routing)
-│   │   ├── lib/
-│   │   │   ├── server/          # Server-only (auth, db, parsers, jobs, …)
-│   │   │   ├── client/          # Client-only (brand, capacitor plugins, safe-markdown)
-│   │   │   └── components/      # Svelte 5 components
-│   │   └── hooks.server.ts      # Auth guard + security headers + CSP
-│   ├── static/                  # PWA manifest, icons, robots.txt
+├── AGENTS.md / CLAUDE.md / GEMINI.md  # Agent + human entry points
+├── ui/                          # SvelteKit dashboard + Capacitor iOS/Android/Electron
+│   ├── src/                     # routes/, lib/server/, lib/client/, lib/components/, hooks.server.ts
+│   ├── e2e/                     # Playwright end-to-end smoke tests
 │   ├── ios/                     # Capacitor iOS app + Watch + 3 extensions
 │   ├── android/                 # Capacitor Android app
 │   └── electron/                # Capacitor-Electron shell (workspace)
-│
-├── .github/                     # Community profile + workflows
-│   ├── CODE_OF_CONDUCT.md
-│   ├── CONTRIBUTING.md          # Includes "Getting help" section
-│   ├── SECURITY.md
-│   ├── PULL_REQUEST_TEMPLATE.md
-│   ├── ISSUE_TEMPLATE/
-│   └── workflows/
-│
-├── docs/                        # All long-form documentation
-│   ├── ARCHITECTURE.md          # System diagram + flows
-│   ├── SETUP.md, TESTING.md, WATCH.md
-│   ├── DATA_CONTRACT.md         # System vs user layer rules
-│   ├── GOVERNANCE.md            # BDFL + contributor ladder
-│   ├── STATUS_MODEL.md          # The two-axis state machine
-│   ├── CUSTOMIZATION.md, LEGAL_DISCLAIMER.md, TRADEMARK.md
-│   └── NATIVE.md                # Native build / dev / release flow
-│
-├── branding/
-│   ├── brand.json               # SINGLE SOURCE OF TRUTH for all branding
-│   └── logo.svg                 # SINGLE SOURCE OF TRUTH for all icons
-│
-├── scripts/
-│   ├── apply/                   # apply-portal.py dispatcher + 13 per-portal adapters + lib_apply + lib_portal
-│   ├── scan/                    # scan.mjs + scan-broad.py + scan-{vc,curated,email,email-imap}.mjs + scan-{indeed,linkedin}-auth.py + gemini-first-pass.py
-│   ├── cv/                      # generate-pdf.mjs + generate-latex.mjs + ats-check.mjs + ai-detect-check.mjs
-│   ├── quality/                 # resume-quality + cover-letter-check + ai-detect + semantic-match + narrative-arc + cv-sync-check + profile-seo
-│   ├── tracker/                 # merge-tracker + dedup-tracker + normalize-statuses + analyze-patterns + followup-cadence
-│   ├── linkedin/                # linkedin-audit.py + linkedin-dm-scraper.py + extract-linkedin-profile.py
-│   ├── system/                  # doctor + check-liveness + liveness-core + update-system + update-pipeline + triage + build-batch-input + gemini-eval + clean + ensure-pnpm + reset-data
-│   ├── lib/                     # lib-profiles.mjs + lib_profiles.py + lib_playwright_auth.py (cross-domain)
-│   └── native/                  # apply-brand, setup, doctor, build, dev wizards, ensure-native-bindings
-│       └── icons/               # generate-icons.mjs + _build/ cache
-│
-├── modes/                       # AI skill modes (oferta, apply, scan, batch, … + de/fr/ja/pt/ru/)
-├── templates/                   # CV HTML + LaTeX templates, states.yml, portals.example.yml, profile.example.yml, fonts/, batch-prompt.md
-├── docs/examples/               # Sample CVs, sample-report.md, dual-track/ (documentation only)
-├── writing-samples/             # User's portfolio writing (per-profile, gitignored content)
-│
+├── scripts/                     # apply, scan, cv, quality, tracker, native, system, lib
+├── modes/                       # AI skill modes (oferta, apply, scan, batch, …)
+├── docs/                        # ARCHITECTURE, SETUP, TESTING, NATIVE, DATA_CONTRACT, GOVERNANCE, …
+├── branding/                    # brand.json (SSOT) + logo.svg + wordmark variants
 ├── data/                        # Per-user runtime state (gitignored)
-│   ├── auth.db                  # Sessions, passkeys, invites, audit log
-│   ├── app.db                   # Profiles, activity, issues, ui_prefs
-│   └── users/{userId}/profiles/{slug}/   # Per-user content tree
-│
-├── interview-prep/, output/, reports/, jds/   # Runtime symlink targets (managed by dashboard)
-├── config/                      # User profile.yml (gitignored, auto-created by symlink mgr)
-│
-├── .mise.toml                   # Pinned Node 26.1.0 + pnpm 11.1.0 + Ruby 3.3.5 + Python 3.13
-├── pnpm-workspace.yaml          # Workspace + allowBuilds + overrides
-├── turbo.json                   # Cache config for build / check / test
-├── lefthook.yml                 # Pre-commit + pre-push hooks
-└── biome.jsonc                  # Format-only config (no linting — svelte-check covers it)
+└── .github/                     # Workflows, issue/PR templates, CODEOWNERS, rulesets
 ```
 
----
+</details>
 
-## Architecture
+## FAQ
 
-### Multi-user, multi-profile
+<details><summary><b>How much does this cost to run?</b></summary>
 
-Each user owns one or more **profiles** (separate career identities: e.g. "AI Engineer search" vs "Engineering Manager search"). Profiles are scoped at the SQL layer via `currentUserId()` AsyncLocalStorage context — no API endpoint accepts a raw `userId` param, so cross-user IDOR is structurally impossible.
+$0/month if you use a Claude Max plan (`AGENT_CLI=claude` routes through `claude -p`). Otherwise: only the AI tokens for evaluations + CV generations, billed by your chosen provider. See [Pricing](#pricing).
 
-```text
-auth.db: users, sessions, passkeys, invite_codes, accounts, audit_log, pending_deletions
-app.db:  profiles, activity_events, issues, ui_prefs
-fs:      data/users/{userId}/profiles/{slug}/{cv.md, profile.yml, applications.md, reports/, output/, ...}
-```
+</details>
 
-The Claude CLI reads per-user content files directly from the filesystem (legacy upstream design); user separation is enforced by the per-user path prefix.
+<details><summary><b>Does this auto-apply to jobs?</b></summary>
 
-### Backend discovery (native apps)
+Only if you opt in. Autopilot mode is **off by default**, score-gated (≥4.0/5 minimum), capped at a daily limit you set, and gracefully falls back to "manual apply needed" the moment anything looks off. See [`AGENTS.md` § "Ethical Use"](AGENTS.md#ethical-use--critical) for the full posture. Heron is a decision-support tool, not a spam bot.
 
-Native apps don't have a hard-coded server URL. At launch they probe in order:
+</details>
 
-1. **Embedded** — Electron spawns the SvelteKit server as a child process
-2. **Dev server** — `http://localhost:5173` if running `pnpm dev`
-3. **mDNS (`_heron._tcp`)** — finds your desktop instance on the same Wi-Fi
-4. **Tailscale magic-DNS** — finds your instance over the tailnet
-5. **Remote** — falls back to a user-configured URL
+<details><summary><b>Does my data leave my machine?</b></summary>
 
-So your phone, watch, and laptop reconcile to whichever instance is reachable, without you configuring anything.
+No — except for the AI API calls **you initiate** to your chosen provider (Anthropic / Gemini / OpenAI). Even those carry only the JD + prompt + your CV/profile that the AI needs to answer. No telemetry, no aggregator, no third-party uploads. Your `data/` directory is local-only and gitignored.
 
-### Security posture
+</details>
 
-- **Better Auth** with explicit cookie attributes (`HttpOnly`, `SameSite=Lax`, `Path=/`, `Secure` env-gated on HTTPS)
-- **Rate limiting** on auth endpoints (5 req/min on `/sign-in/email`, 3 on `/forget-password`, etc.)
-- **CSP** with hash-mode (`unsafe-inline` blocked on scripts), `frame-ancestors 'none'`, restricted `connect-src`
-- **DOMPurify** sanitises every `{@html ...}` render (markdown from AI / job descriptions is attacker-influenced)
-- **Path-traversal guards** on every per-user file read (avatar, profile, CV)
-- **Audit log** on every state-changing API hit (account-deletion, role-change, backup, etc.)
-- **27 verifier sections** (138 tests) covering auth guard, RBAC, IDOR, session expiry, cookie attributes, rate-limit shape, etc.
+<details><summary><b>Can I use Claude Max instead of API tokens?</b></summary>
 
-### Open-redirect, XSS, IDOR — covered
+Yes. Set `AGENT_CLI=claude` (the default) and Heron uses `claude -p` for every AI call. Your Max plan covers it. No API key required.
 
-| Class | Mitigation | Verifier section |
+</details>
+
+<details><summary><b>Do I need a Mac for iOS builds?</b></summary>
+
+Yes — code-signing requires macOS + Xcode. Linux / Windows still work for the web dashboard + Electron desktop + Android. The CI pipeline `native-release.yml` runs the iOS leg on `macos-15`; local iOS dev needs Xcode 16+.
+
+</details>
+
+<details><summary><b>Why not just use LinkedIn Easy Apply?</b></summary>
+
+Easy Apply maximizes volume. Heron maximizes signal. Easy Apply submits a generic CV to 50 roles; Heron sends a tailored CV to 5 roles that actually fit. See [Comparable tools](#comparable-tools) below.
+
+</details>
+
+<details><summary><b>What ATSes are supported?</b></summary>
+
+11 directly: Greenhouse, Ashby, Lever, LinkedIn, Indeed, Workday, Recruitee, SmartRecruiters, Workable, Personio, Teamtailor. Custom ATSes via the generic apply-portal stub (~50 LOC per new portal).
+
+</details>
+
+<details><summary><b>Is this a job board?</b></summary>
+
+No. Heron is a workflow + decision-support layer. It consumes from job boards (LinkedIn / Indeed / The Muse / HN / RemoteOK / WWR / WelcomeToTheJungle) + ATS APIs you're already using. It doesn't host listings.
+
+</details>
+
+## Comparable tools
+
+| Tool | Type | What Heron is different about |
 |---|---|---|
-| Open redirect | `safeRedirectTo()` rejects protocol-relative / absolute / control-char URLs | n/a (compile-time) |
-| XSS via markdown | `renderMarkdown()` in `safe-markdown.ts` runs `marked.parse → DOMPurify.sanitize` with strict tag allowlist | n/a (compile-time) |
-| CORS abuse | `/api/answer-form` only accepts 17 known ATS origins | n/a (compile-time) |
-| IDOR via `?profile=<slug>` | SQL filters scope by user_id; slug collisions across users return only the caller's row | §27 |
-| Session hijack via stolen cookie | FK cascade on `users` → `sessions` invalidates immediately | §26 |
-| Avatar enumeration | `readAvatar()` validates path under `data/avatars/{userId}/` + `realpath` escape check | §23 |
+| **JobScan** | Hosted SaaS | Resume keyword matching only. Heron does role evaluation, comp research, interview prep, and is local-first. |
+| **Teal** | Hosted SaaS | Pipeline tracking on their servers. Heron tracks on your disk. |
+| **ResumeWorded** | Hosted SaaS | Generic resume score. Heron tailors per-role with a personalization plan (Block E of the evaluation). |
+| **Otta / WelcomeToTheJungle** | Job board | Discovery, not workflow. Heron consumes their RSS / scrapes once you're past discovery. |
+| **AIHawk / Apply.ninja / LazyApply** | Auto-submit bots | Volume over quality. Heron explicitly refuses this category (see CONTRIBUTING § "What we do NOT accept"). |
+| **`santifer/career-ops` (upstream)** | OSS CLI | Original. Heron adds multi-user, native apps, dashboard, autonomous-apply, Watch. See [Acknowledgements](#acknowledgements). |
 
----
+## Community
+
+| Channel | Use for |
+|---|---|
+| 💬 [Discord](https://discord.gg/8pRpHETxa4) | Real-time questions, setup help, show-and-tell — typically same-day during EU/US working hours |
+| 📚 [GitHub Discussions](https://github.com/heron/heron/discussions) | Async Q&A + ideas + roadmap + success stories |
+| 🐛 [Issues](https://github.com/heron/heron/issues) | Bugs + feature requests (use the templates) |
+| 🎓 [I got hired](https://github.com/heron/heron/issues/new?template=i-got-hired.yml) | Tell the Hall of Fame your story |
+| 📰 [Press kit](branding/PRESS.md) | Pre-written boilerplate for journalists + bloggers |
+| 🔒 [Security disclosure](.github/SECURITY.md) | Private vulnerability reporting (NOT public issues) |
+
+See [`.github/SUPPORT.md`](.github/SUPPORT.md) for the "where should I ask this?" routing matrix.
 
 ## Development
 
-### Daily commands
+Daily commands:
 
 ```sh
 pnpm dev                    # SvelteKit dev server (vite + HMR)
-pnpm check                  # svelte-check + tsgo (electron), turbo-cached
+pnpm check                  # svelte-check + tsgo, turbo-cached
 pnpm format                 # biome + prettier-svelte, in-place
-pnpm test                   # full Vitest matrix (unit + server + browser-mode + integration + electron)
+pnpm test                   # full Vitest matrix
+pnpm --filter ui test:e2e   # Playwright E2E smoke
+pnpm --filter ui size       # bundle-size budget check
 pnpm act:test               # run the Tests workflow locally via docker
 ```
 
-### Pre-commit / pre-push
+Pre-commit hooks (lefthook, wired by `pnpm install`): biome-format, svelte-check, no-secrets regex, apply-brand. Pre-push: full Vitest matrix.
 
-`lefthook` is wired automatically by `pnpm install`. On commit it runs:
+Run CI locally with `act` — see [`.github/CONTRIBUTING.md` § "Running CI locally"](.github/CONTRIBUTING.md).
 
-- `apply-brand` if any `branding/*` file is staged
-- `biome-format` + `biome-format-check` (in place + verify)
-- `prettier-svelte` + `prettier-svelte-check`
-- `svelte-check` + `tsgo` (typecheck through turbo cache)
-- `no-secrets` regex guard (Anthropic / GitHub PAT / AWS / Google / Slack / Stripe / OPENSSH)
+<details><summary><b>Branding (single source of truth)</b></summary>
 
-On push:
+`branding/brand.json` + `branding/logo.svg` are the only files you edit to rebrand. Every consumer (package.json × 3, capacitor configs, electron-builder, Info.plist, Brand.swift × 4, brand.ts × 2, manifest.webmanifest, favicon, app icons, fastlane Appfile + Fastfile) is regenerated by `pnpm brand:apply`. Pre-commit re-runs this when anything under `branding/` is staged.
 
-- All of the above + the full Vitest matrix (`turbo run test --filter=ui --filter=electron`)
-- `release-readiness` — if pushing a `v*.*.*` tag, runs `pnpm doctor:native` to verify GitHub Secrets exist before the tag hits origin
+</details>
 
-Bypass any hook with `SKIP_LEFTHOOK=1`. (Don't.)
-
-### Running CI locally — `act`
-
-You don't need to push to verify CI. After `brew install act` + docker running:
-
-```sh
-pnpm act:test               # full Tests workflow, same image as GitHub
-pnpm act:test:dry           # YAML / action-resolution check, no exec
-pnpm act:codeql             # CodeQL on javascript-typescript matrix
-pnpm act:labeler            # PR label workflow
-pnpm act:sbom               # SBOM generation
-pnpm act:dependency-review  # PR dependency-review check
-```
-
-First `act:test` run pulls a ~1GB ubuntu-act image; subsequent runs reuse it. Config is in `.actrc`; secrets template in `.env.act.example`.
-
-### TypeScript
-
-- `ui/tsconfig.json` — strict mode + `noImplicitOverride` + `noFallthroughCasesInSwitch` + `forceConsistentCasingInFileNames`. Compiles via `tsgo` (the Rust port of `tsc`, ~10× faster).
-- `ui/electron/tsconfig.json` — target ES2024, NodeNext module resolution. strict OFF because Capacitor's auto-generated `setup.ts` / `rt/electron-rt.ts` predate strictNullChecks.
-
-### Scripts
-
-`pnpm run` lists every npm-script entry point — that's the canonical inventory. The actual files live under `scripts/{apply,scan,cv,quality,tracker,linkedin,system,lib,native,batch}/`; each subdirectory holds files named for their function. No hand-maintained doc — `pnpm run` is the source of truth.
-
-### Working with branding
-
-`branding/brand.json` + `branding/logo.svg` are the **only** files you edit when rebranding. Every consumer (`package.json` × 3, Capacitor configs × 2, electron-builder, Info.plist, Brand.swift × 4, brand.ts × 2, manifest.webmanifest, favicon, app icons, fastlane Appfile + Fastfile, etc.) is regenerated by:
-
-```sh
-pnpm brand:apply            # propagates brand.json → 30+ files
-```
-
-Pre-commit re-runs this automatically when you stage anything under `branding/`. The icon generator caches by SHA-256 of `logo.svg + size matrix`, so a no-op run is <100ms.
-
----
-
-## Releasing
-
-Releases are fully automated through [Conventional Commits](https://www.conventionalcommits.org) → [release-please](https://github.com/googleapis/release-please) → [native-release](https://github.com/heron/heron/blob/main/.github/workflows/native-release.yml).
+<details><summary><b>Releases (Conventional Commits → release-please → native-release)</b></summary>
 
 | Commit prefix | Bump | Example |
 |---|---|---|
-| `feat: …` | minor (1.6.0 → 1.7.0) | `feat(scan): add Workable ATS adapter` |
-| `fix: …` | patch (1.6.0 → 1.6.1) | `fix(auth): reject same-site=none in WebView` |
+| `feat: …` | minor | `feat(scan): add Workable adapter` |
+| `fix: …` | patch | `fix(auth): reject same-site=none in WebView` |
 | `perf: …` | patch | `perf: cache /api/stats response` |
 | `feat!: …` / `BREAKING CHANGE:` | major | `feat!: drop adapter-auto` |
-| `chore:` / `docs:` / `refactor:` / `ci:` | (none) | `chore(deps): bump electron 39 → 39.8.10` |
+| `chore:` / `docs:` / `refactor:` / `ci:` | none | `chore(deps): bump electron 39 → 39.8.10` |
 
-### Flow
+1. Merge PR to `main` (squash, one Conventional commit).
+2. release-please accumulates commits into a release PR.
+3. Merge release PR → tag + CHANGELOG + GitHub Release.
+4. Tag push fires `native-release.yml`: **preflight** (secrets) → **desktop × 3 OS** → **iOS via fastlane**.
 
-1. Merge a PR to `main` (squash-merge, one Conventional commit).
-2. `release-please` accumulates commits into a long-lived "release PR" titled `chore(main): release X.Y.Z`.
-3. Merge the release PR — `release-please` cuts the tag + generates `CHANGELOG.md` + creates the GitHub Release.
-4. The tag push fires `native-release.yml`:
-   - **`preflight` job** (NEW) verifies all 9 GitHub Secrets are configured. Fails fast with a clear remediation message if any are missing.
-   - **`build-desktop`** runs on `macos-latest`, `ubuntu-latest`, `windows-latest` in parallel → `.dmg`, `.exe`, `.AppImage`
-   - **`build-ios`** runs fastlane → TestFlight (App Store Connect API key auth)
-5. All artefacts attach to the GitHub Release.
+</details>
 
-### One-time setup for releases
+## Security
 
-```sh
-pnpm setup:native           # interactive wizard:
-                            #   – Apple ID + Team ID
-                            #   – App Store Connect API key (.p8)
-                            #   – Mac + iOS code-signing certs (.p12)
-                            #   – iOS provisioning profile (.mobileprovision)
-                            #   – Pushes everything to GitHub Secrets via `gh secret set`
+Heron's security posture covers Better Auth + cookies, CSP + DOMPurify, rate limiting, path-traversal guards, audit logging, multi-user IDOR prevention, OSSF Scorecard, CodeQL across TS+Python+Swift, SLSA L2 build provenance attestations, lockfile-lint, license-compliance, TruffleHog secret-scanning, StepSecurity harden-runner, SHA-pinned actions, branch-protection rulesets, signed commits + DCO.
 
-pnpm doctor:native          # verify all 9 secrets are configured
-pnpm doctor:native --strict # exit non-zero on any warning too
-```
+See [`.github/SECURITY.md`](.github/SECURITY.md) for the full posture + vulnerability disclosure flow.
 
-Without this, the `preflight` job in `native-release.yml` will fail loudly on the first tag push.
+## Contributing
 
-### Manual release escape hatch
+We welcome PRs. Start with [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) — covers the contributor ladder (Participant → Contributor → Triager → Reviewer → Maintainer), commit-message rules, DCO sign-off, and the "what we do NOT accept" list.
 
-```sh
-pnpm release patch          # cuts v1.6.1 immediately, bypasses release-please
-pnpm release minor          # v1.7.0
-pnpm release major          # v2.0.0
-pnpm release 1.7.0-beta.1   # exact
-```
+Issues labeled [`good first issue`](https://github.com/heron/heron/labels/good%20first%20issue) are scoped for first-time contributors. Join [Discord](https://discord.gg/8pRpHETxa4) before opening a feature PR — saves you scope-rework.
 
----
+### Contributors
 
-## Verifiers
+<a href="https://github.com/heron/heron/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=heron/heron" alt="Contributors" />
+</a>
 
-Three layers of verification, all turbo-cached:
+This project follows the [all-contributors](https://allcontributors.org) specification. Non-code contributions (docs, design, translation, ideas, infrastructure) count. See [`.all-contributorsrc`](.all-contributorsrc).
 
-| Command | What it checks | Wall time |
-|---|---|---|
-| `pnpm test` | Full Vitest matrix — unit + server + browser-mode (Chromium + WebKit) + integration + electron | ~30s warm, ~90s cold |
-| `pnpm test --filter=ui-integration` | Integration suite only — pipeline-data hygiene, capacitor brand propagation, multi-user RBAC + IDOR + GDPR + auth flows | ~10s |
-| `pnpm test:coverage` | Same matrix + V8 coverage report (70% lines / 65% branches floor) | ~45s |
-| `pnpm test:ios` | Fastlane test_ci on macOS — XCTest + XCUITest + WidgetTests + WatchTests | ~15min |
-| `pnpm exec svelte-check` | Type/template diagnostics across ui/ | ~17s |
-| `pnpm doctor:native` | GitHub Secrets configured for native-release | ~3s |
+### Sponsors
 
-### Test-failure → fix flow
-
-```sh
-pnpm test                                   # red? read the failure, fix, re-run
-pnpm test --filter=ui-integration           # focus on integration (replaces legacy verify-pipeline + verify-multi-user)
-pnpm test --filter=ui-unit                  # focus on pure-function unit tests
-pnpm test:watch                             # interactive watcher for the file you're working on
-```
-
-If a brand-propagation test (`capacitor.integration.test.ts`) complains about missing icons → run `pnpm brand:apply` (regenerates `.icns`, `.ico`, all PWA + iOS + Android icon sets).
-
----
-
-## CI / GitHub Actions
-
-11 workflows under `.github/workflows/`:
-
-| Workflow | Trigger | What it does |
-|---|---|---|
-| `test.yml` | PR + push to main | Format check + svelte-check + tsgo + full Vitest matrix + build + pnpm audit |
-| `native-release.yml` | tag push / dispatch / call | **preflight** (secret check) → desktop builds × 3 OS in parallel → iOS via fastlane |
-| `release.yml` | push to main | release-please PR accumulation + cut |
-| `codeql.yml` | PR + push + weekly | CodeQL on javascript-typescript |
-| `dependency-review.yml` | PR | Block PRs that add vulnerable deps |
-| `sbom.yml` | release | Anchore SBOM attached to release artefacts |
-| `labeler.yml` | PR | Auto-label based on changed paths |
-| `welcome.yml` | first issue / PR | Greet first-time contributors |
-| `stale.yml` | weekly | Close stale issues / PRs |
-| `sync-upstream.yml` | weekly / dispatch | Mirror santifer/career-ops into this fork |
-| `testflight-keepalive.yml` | weekly | Rebuild & re-upload to TestFlight to keep the build under Apple's 90-day expiry |
-
-Every action is on its latest Node-24-native major (no deprecation banner). Concurrency groups cancel in-flight PR runs; release runs never cancel mid-upload.
-
----
-
-## Troubleshooting
-
-| Symptom | Fix |
-|---|---|
-| `pnpm install` refused (`Wrong package manager`) | Use `pnpm`, not npm/yarn/bun. Install with `mise install` or `brew install pnpm`. |
-| `mise: unknown setting` warnings | Run `mise install` to refresh tool versions, then `mise reshim`. |
-| svelte-check fails on first run | `cd ui && pnpm exec svelte-kit sync` (regenerates `.svelte-kit/`) |
-| `verify:capacitor` red on `icon.icns missing` | `pnpm brand:apply --force` (requires `iconutil` on macOS or `icnsutils` on Linux) |
-| `act:test` complains about Apple Silicon images | The `.actrc` pins `linux/amd64` for portability; Rosetta runs it transparently |
-| Better Auth signup returns 422 | `BETTER_AUTH_SECRET` env var needs to be ≥ 32 characters |
-| Native release CI red on `preflight` | `pnpm setup:native` then `pnpm doctor:native` |
-| GitHub Pro features missing (branch protection, secret scanning, rulesets, PVR) | Make the repo public OR upgrade to GitHub Pro ($4/mo) |
-
-For anything else: open a [Discussion](https://github.com/heron/heron/discussions) or jump into [Discord](https://discord.gg/8pRpHETxa4).
-
----
+Heron is built in volunteer time. If it saves you a job-search week, consider [sponsoring](https://github.com/sponsors/kaelys-js). Sponsors get a thank-you in `CHANGELOG.md` + a Discord role.
 
 ## Acknowledgements
 
-Heron is a hard fork of [`santifer/career-ops`](https://github.com/santifer/career-ops) — the original CLI-driven job-search system [santifer](https://santifer.io) built and used to evaluate 740+ offers, generate 100+ tailored CVs, and land a Head of Applied AI role. His [case study](https://santifer.io/career-ops-system) is required reading if you want to understand the philosophy (filter, not cannon).
+Heron is a hard fork of [`santifer/career-ops`](https://github.com/santifer/career-ops) — the original CLI-driven job-search system [santifer](https://santifer.io) built and used to evaluate 740+ offers, generate 100+ tailored CVs, and land a Head of Applied AI role. His [case study](https://santifer.io/career-ops-system) is required reading for the philosophy (filter, not cannon).
 
-This fork adds:
-
-- Multi-user system + RBAC + GDPR-compliant lifecycle
-- SvelteKit + Better Auth + Drizzle dashboard (replaces the original Go TUI)
-- Capacitor 8 native apps (iOS / Android / desktop / Apple Watch)
-- 4 iOS widgets + Live Activity
-- Autonomous-apply pipeline (LinkedIn / Greenhouse / Ashby in production; 8 portals stubbed)
-- act-based local CI verification
-- Native-release preflight gate (`pnpm doctor:native`)
-- Vitest matrix (unit + server + browser-mode + integration) replacing legacy verifiers
-- 0-CVE supply chain (pnpm overrides + Electron 39)
-- The Heron brand system: single-source `branding/brand.json`, propagation via `apply-brand`, drift-gated rebrand ceremony
-
-### Upstream contributors
-
-The pre-fork project (`santifer/career-ops`) was built and shipped by
-[santifer](https://santifer.io) and contributors. Their work made
-this fork possible. Heron is a separate project with its own
-contributor history starting from `0.1.0`; contributions to the
-upstream are documented in the upstream repository's PR + issue
-history.
+This fork adds: multi-user system + RBAC + GDPR lifecycle, SvelteKit + Better Auth + Drizzle dashboard, Capacitor 8 native apps (iOS + Android + Electron + Watch), 4 iOS widgets + Live Activity, autonomous-apply pipeline, Vitest matrix replacing legacy verifiers, 0-CVE supply chain, OSSF Scorecard + SLSA L2 + CodeQL × 3 languages, and the Heron brand system.
 
 ## License
 
-[MIT](LICENSE). Original work © santifer. This fork © resist.js.
+[MIT](LICENSE) for code. [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) for `branding/*` (logos, mascot specs, voice guide). [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) for `docs/examples/*`. See [`REUSE.toml`](REUSE.toml) for the full SPDX declaration.
 
-See [TRADEMARK.md](docs/TRADEMARK.md) for trademark policy and [GOVERNANCE.md](docs/GOVERNANCE.md) for contribution governance.
+Original work © santifer. This fork © resist.js.
+
+See [`docs/TRADEMARK.md`](docs/TRADEMARK.md) for trademark policy, [`docs/LEGAL_DISCLAIMER.md`](docs/LEGAL_DISCLAIMER.md) for usage disclaimers, and [`docs/GOVERNANCE.md`](docs/GOVERNANCE.md) for contribution governance.
+
+---
+
+<div align="center">
+
+Maintained by [@kaelys-js](https://github.com/kaelys-js).
+[Sponsor](https://github.com/sponsors/kaelys-js) ·
+[Press kit](branding/PRESS.md) ·
+[Discord](https://discord.gg/8pRpHETxa4) ·
+[hello@heron.app](mailto:hello@heron.app)
+
+Forked from [`santifer/career-ops`](https://github.com/santifer/career-ops). MIT licensed.
+
+</div>
