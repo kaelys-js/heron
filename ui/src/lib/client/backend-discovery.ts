@@ -113,15 +113,27 @@ async function browseMdns(timeoutMs = 1500): Promise<string | null> {
   return null;
 }
 
-/** Read the cached resolution if it's still fresh AND still responds. */
+/** Read the cached resolution if it's still fresh AND still responds.
+ *
+ *  Stale-IP race fix (M7): the previous validation timeout was a flat
+ *  500ms which, on a marginal cellular connection or a degraded
+ *  Tailscale link, was long enough for the stale URL to respond from
+ *  whatever cached DNS / route the OS was still holding — re-blessing
+ *  a defunct URL. We use a tighter 250ms + jitter so a sluggish stale
+ *  IP loses the race against the resolver's "no, re-discover" path.
+ *  Jitter prevents thundering-herd on the cache during repeated
+ *  visibilitychange-driven re-probes. */
 async function readCache(): Promise<ResolvedBackend | null> {
   try {
     const { value } = await Preferences.get({ key: CACHE_KEY });
     if (!value) return null;
     const parsed = JSON.parse(value) as ResolvedBackend;
     if (Date.now() - parsed.resolvedAt > CACHE_TTL_MS) return null;
-    // Cache-validate: re-probe quickly. If gone, re-resolve.
-    if (await probe(parsed.url, 500)) return parsed;
+    // 250ms ± 50ms jitter — tight enough to refuse stale IPs that
+    // respond slowly, loose enough that a healthy backend on a slow
+    // wifi link still validates.
+    const jitter = 250 + Math.floor(Math.random() * 100) - 50;
+    if (await probe(parsed.url, jitter)) return parsed;
     return null;
   } catch {
     return null;
@@ -147,14 +159,45 @@ export async function clearBackendCache(): Promise<void> {
   }
 }
 
+/** Global resolver timeout. If every candidate stalls (e.g., slow
+ *  router DNS + unreachable Tailscale + slow production), we want the
+ *  resolver to fail FAST so the UI can render the BackendUnreachable
+ *  overlay instead of hanging on "Connecting…" forever. 10s covers
+ *  worst-case fan-out (5 candidates × ~1.5s with mDNS) plus a small
+ *  safety margin. */
+const GLOBAL_RESOLVE_TIMEOUT_MS = 10_000;
+
 /**
  * Main resolver. Returns the URL plus the source label so the UI can
  * render the DEV/PROD/LAN/TAILSCALE/REMOTE pill.
  *
  * Order of attempts is deliberately fastest-likely-success-first so cold
  * boot resolves in <100ms in the common case (embedded URL).
+ *
+ * Bounded by GLOBAL_RESOLVE_TIMEOUT_MS — if every candidate hangs (slow
+ * DNS, unreachable Tailscale, no production), throws
+ * `BackendNotFoundError('discovery timeout')` rather than spinning on
+ * "Connecting…" forever.
  */
 export async function resolveBackend(opts: ResolverOptions = {}): Promise<ResolvedBackend> {
+  return Promise.race([
+    resolveBackendInner(opts),
+    new Promise<ResolvedBackend>((_, reject) =>
+      setTimeout(
+        () =>
+          reject(
+            new BackendNotFoundError(
+              `Backend discovery timed out after ${GLOBAL_RESOLVE_TIMEOUT_MS}ms. ` +
+                `LAN / Tailscale / production all unresponsive.`,
+            ),
+          ),
+        GLOBAL_RESOLVE_TIMEOUT_MS,
+      ),
+    ),
+  ]);
+}
+
+async function resolveBackendInner(opts: ResolverOptions = {}): Promise<ResolvedBackend> {
   if (!opts.forceRefresh) {
     const cached = await readCache();
     if (cached) return cached;

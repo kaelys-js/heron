@@ -35,7 +35,7 @@
   import { Button } from '$lib/components/ui/button';
   import { onMount, onDestroy } from 'svelte';
   import { fade } from 'svelte/transition';
-  import { BRAND } from '$lib/client/brand';
+  import { BRAND, BRAND_STORAGE_KEYS } from '$lib/client/brand';
 
   // After 4s of being offline we consider the backend "unreachable" and
   // show the overlay. Shorter than this would nag during normal WiFi
@@ -48,6 +48,17 @@
 
   let visible = $state(false);
   let retrying = $state(false);
+  /** M9 — once an authed user picks "Continue offline" we stop blocking
+   *  them with the overlay for the rest of the session. The cached read
+   *  store (lib/client/offline-cache.ts) serves last-known data behind
+   *  the dismissed overlay. Resets when the backend recovers. */
+  let dismissedThisSession = $state(false);
+  /** True if we believe the user is signed in. localStorage AUTHED_KEY
+   *  is set by auth-client on every successful sign-in / session-refresh
+   *  and cleared on sign-out / session-expiry, so a true reading here
+   *  means there's a cached bearer + cached reads that the offline UI
+   *  can use. */
+  let cachedAuth = $state(false);
   let offlineSince: number | null = null;
   let graceTimer: ReturnType<typeof setTimeout> | null = null;
   let probeInterval: ReturnType<typeof setInterval> | null = null;
@@ -70,9 +81,23 @@
     }
   }
 
+  /** Read the cached-auth signal once on mount and after every
+   *  visibilitychange so we know whether to offer "Continue offline"
+   *  alongside "Try again". */
+  function readCachedAuth(): void {
+    if (typeof localStorage === 'undefined') {
+      cachedAuth = false;
+      return;
+    }
+    cachedAuth = localStorage.getItem(BRAND_STORAGE_KEYS.authed) === '1';
+  }
+
   onMount(() => {
+    readCachedAuth();
     // Track online → offline transitions. On going offline, start the
-    // grace window. On coming back online, cancel the window and hide.
+    // grace window. On coming back online, cancel the window, hide,
+    // AND reset the session-dismissed flag so subsequent disconnects
+    // re-prompt the user.
     unsub = onlineStore.addListener((online) => {
       if (online) {
         offlineSince = null;
@@ -80,13 +105,15 @@
           clearTimeout(graceTimer);
           graceTimer = null;
         }
+        dismissedThisSession = false;
         hideOverlay();
       } else {
         if (offlineSince === null) {
           offlineSince = Date.now();
           graceTimer = setTimeout(() => {
-            // Only show if STILL offline after the grace window.
-            if (!onlineStore.online) showOverlay();
+            // Only show if STILL offline after the grace window AND
+            // user hasn't already opted into offline mode this session.
+            if (!onlineStore.online && !dismissedThisSession) showOverlay();
           }, RECONNECT_GRACE_MS);
         }
       }
@@ -96,7 +123,7 @@
     if (!onlineStore.online) {
       offlineSince = Date.now();
       graceTimer = setTimeout(() => {
-        if (!onlineStore.online) showOverlay();
+        if (!onlineStore.online && !dismissedThisSession) showOverlay();
       }, RECONNECT_GRACE_MS);
     }
   });
@@ -127,6 +154,17 @@
         retrying = false;
       }, 600);
     }
+  }
+
+  /** M9 — dismiss the overlay and let the user continue with cached
+   *  data. The offline-read cache (lib/client/offline-cache.ts) serves
+   *  last-known job list / stats / notifications behind the dismissed
+   *  overlay. We don't hide forever: a hard network change re-runs
+   *  showOverlay() via the listener path, but `dismissedThisSession`
+   *  gates the show; only an online→offline→online cycle re-prompts. */
+  function continueOffline(): void {
+    dismissedThisSession = true;
+    hideOverlay();
   }
 </script>
 
@@ -216,6 +254,16 @@
           Try again
         {/if}
       </Button>
+
+      {#if cachedAuth}
+        <!-- M9 — authed users can continue with cached data (last-known
+             job list / stats / notifications served from IndexedDB).
+             Unauthed users have nothing to show offline, so the option
+             stays hidden for them. -->
+        <Button variant="ghost" onclick={continueOffline} class="w-full" size="sm">
+          Continue offline with cached data
+        </Button>
+      {/if}
 
       <p class="text-[11px] text-muted-foreground/70">
         We'll keep checking in the background and dismiss this when the server comes back.

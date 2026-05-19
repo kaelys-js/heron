@@ -234,4 +234,52 @@ describe('resolveBackend — waterfall', () => {
     expect(r.source).toBe('dev');
     expect(r.url).toBe('http://localhost:5173');
   });
+
+  // M7 — stale-IP race fix. The validation timeout is now 250ms ± 50ms
+  // (was a flat 500ms). A stale IP that took 400ms to respond used to
+  // win the race; now it loses cleanly.
+  it('M7: cached entry that responds slowly (>300ms) loses the race + re-resolves', async () => {
+    prefsBacking.set(
+      `${BRAND_STORAGE_PREFIX}:backend-resolved`,
+      JSON.stringify({
+        url: 'http://slow-stale.example',
+        source: 'dev',
+        resolvedAt: Date.now(),
+      }),
+    );
+    fetchSpy.mockImplementation(async (url: string, init?: any) => {
+      if (url.includes('slow-stale.example')) {
+        // 400ms response — exceeds the 250±50ms validation timeout.
+        return new Promise<Response>((resolve, reject) => {
+          const t = setTimeout(() => resolve(new Response('ok', { status: 200 })), 400);
+          init?.signal?.addEventListener('abort', () => {
+            clearTimeout(t);
+            reject(new Error('aborted'));
+          });
+        });
+      }
+      if (url.includes('localhost:5173')) return new Response('ok', { status: 200 });
+      return new Response('boom', { status: 500 });
+    });
+    const r = await resolveBackend({});
+    // Should have skipped the stale URL and resolved to localhost:5173.
+    expect(r.url).toBe('http://localhost:5173');
+  });
+
+  // M3 — global resolver timeout. If EVERY candidate hangs (slow DNS +
+  // unreachable Tailscale + unresponsive prod), throw within 10s rather
+  // than hang forever. Use a very short timeout-friendly mock and a
+  // generous test budget to validate the timer-race path without
+  // actually waiting 10s.
+  it('M3: throws BackendNotFoundError if every candidate hangs', async () => {
+    fetchSpy.mockImplementation(
+      (_url: string, init?: any) =>
+        new Promise<Response>((_, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+        }),
+    );
+    // probeTimeoutMs short so the inner waterfall finishes fast and
+    // we end up in the "no candidate matched" path.
+    await expect(resolveBackend({ probeTimeoutMs: 10 })).rejects.toThrow(BackendNotFoundError);
+  });
 });

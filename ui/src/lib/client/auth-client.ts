@@ -190,6 +190,14 @@ export async function clearLocalAuthState(): Promise<void> {
   // web/desktop.
   void clearAllSharedState();
   void setSharedBearerToken(null);
+  // Wipe the offline-read cache so the next user can't see the previous
+  // user's last-known data when signing in on a shared device. Lazy
+  // import to keep the static graph minimal (this module is leaf-y).
+  void import('$lib/client/offline-cache')
+    .then(({ clearCache }) => clearCache())
+    .catch(() => {
+      /* best-effort — IndexedDB may be unavailable (Safari private mode etc.) */
+    });
 }
 
 export function markLocallyAuthed(): void {

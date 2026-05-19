@@ -368,6 +368,11 @@ export function deepLink(route: string): string {
 export const BRAND_EVENTS = {
   openNotifications: `${BRAND.name}:open-notifications`,
   notify: `${BRAND.name}:notify`,
+  /** Native iOS NetworkMonitor.swift dispatches this when path changes
+   *  (wifi ↔ cellular ↔ offline). Payload: { online: boolean }. The
+   *  online-status store + every SSE client listens for it to react to
+   *  true-offline before navigator.onLine catches up. */
+  netStatus: `${BRAND.name}:net-status`,
 } as const;
 
 /** Brand-namespaced localStorage key prefix. Use as

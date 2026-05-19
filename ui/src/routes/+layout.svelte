@@ -113,10 +113,12 @@
           // bridge listens to /api/notifications, fires OS notifications
           // for warn/error/success events AND dispatches a widget-stale
           // CustomEvent on every event with a widget-relevant source
-          // (apply-*, interview-*, scan-*, issue*). Widget refresh
-          // listener was installed below.
-          if (base || typeof window !== 'undefined') {
-            stopNotificationsBridge = installNotificationsBridge(base || window.location.origin);
+          // (apply-*, interview-*, scan-*, issue*). The bridge resolves
+          // its own backend URL via the shared sse-client wrapper, so
+          // we don't pass `base` in — it'll re-resolve internally on
+          // every reconnect / net-status change.
+          if (typeof window !== 'undefined') {
+            stopNotificationsBridge = installNotificationsBridge();
           }
         })
         .catch(() => {
