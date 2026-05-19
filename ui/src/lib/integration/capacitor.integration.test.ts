@@ -140,3 +140,138 @@ describe('Capacitor — replaces obsolete verify-capacitor.mjs checks', () => {
     }
   });
 });
+
+describe('apply-brand drift gate — protects against accidental destructive rebrand', () => {
+  const SNAPSHOT_REL = 'branding/.brand-snapshot.json';
+  const BRAND_REL = 'branding/brand.json';
+  const APPLY_BRAND = 'scripts/native/apply-brand.mjs';
+
+  function stashBackups() {
+    if (exists(SNAPSHOT_REL))
+      fs.copyFileSync(
+        path.join(REPO_ROOT, SNAPSHOT_REL),
+        path.join(REPO_ROOT, SNAPSHOT_REL + '.test-bak'),
+      );
+    fs.copyFileSync(path.join(REPO_ROOT, BRAND_REL), path.join(REPO_ROOT, BRAND_REL + '.test-bak'));
+  }
+
+  function restoreBackups() {
+    if (exists(SNAPSHOT_REL + '.test-bak')) {
+      fs.copyFileSync(
+        path.join(REPO_ROOT, SNAPSHOT_REL + '.test-bak'),
+        path.join(REPO_ROOT, SNAPSHOT_REL),
+      );
+      fs.unlinkSync(path.join(REPO_ROOT, SNAPSHOT_REL + '.test-bak'));
+    }
+    fs.copyFileSync(path.join(REPO_ROOT, BRAND_REL + '.test-bak'), path.join(REPO_ROOT, BRAND_REL));
+    fs.unlinkSync(path.join(REPO_ROOT, BRAND_REL + '.test-bak'));
+    // Remove any test-generated MIGRATION files
+    for (const f of fs.readdirSync(path.join(REPO_ROOT, 'branding'))) {
+      if (/^MIGRATION-\d{4}-\d{2}-\d{2}\.md$/.test(f))
+        fs.unlinkSync(path.join(REPO_ROOT, 'branding', f));
+    }
+    // Roll the snapshot forward to match restored brand.json so the next
+    // real apply-brand run doesn't see drift.
+    execSync(`node ${APPLY_BRAND}`, {
+      cwd: REPO_ROOT,
+      env: { ...process.env, REBRAND_CONFIRMED: '1', ALLOW_NODE_VERSION_MISMATCH: '1' },
+      stdio: 'pipe',
+    });
+  }
+
+  function runApplyBrand(env: Record<string, string> = {}): {
+    exitCode: number;
+    stdout: string;
+    stderr: string;
+  } {
+    try {
+      const stdout = execSync(`node ${APPLY_BRAND}`, {
+        cwd: REPO_ROOT,
+        env: { ...process.env, ALLOW_NODE_VERSION_MISMATCH: '1', ...env },
+        stdio: 'pipe',
+        encoding: 'utf8',
+      });
+      return { exitCode: 0, stdout, stderr: '' };
+    } catch (e: any) {
+      return {
+        exitCode: e.status ?? 1,
+        stdout: e.stdout?.toString() ?? '',
+        stderr: e.stderr?.toString() ?? '',
+      };
+    }
+  }
+
+  function writeBrandJson(brand: any) {
+    fs.writeFileSync(path.join(REPO_ROOT, BRAND_REL), JSON.stringify(brand, null, 2) + '\n');
+  }
+
+  it('non-destructive change (tagline edit) runs cleanly', () => {
+    stashBackups();
+    try {
+      const b = JSON.parse(readFile(BRAND_REL));
+      b.tagline = 'Test tagline.';
+      writeBrandJson(b);
+      const result = runApplyBrand();
+      expect(result.exitCode).toBe(0);
+    } finally {
+      restoreBackups();
+    }
+  }, 120_000);
+
+  it('destructive change (bundleId) WITHOUT REBRAND_CONFIRMED exits non-zero', () => {
+    stashBackups();
+    try {
+      const b = JSON.parse(readFile(BRAND_REL));
+      b.identifiers.bundleId = 'com.heron.testfork';
+      writeBrandJson(b);
+      const result = runApplyBrand();
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stderr).toMatch(/DESTRUCTIVE rebrand detected/);
+      expect(result.stderr).toMatch(/identifiers\.bundleId/);
+      expect(result.stderr).toMatch(/REBRAND_CONFIRMED=1/);
+    } finally {
+      restoreBackups();
+    }
+  }, 120_000);
+
+  it('destructive change WITH REBRAND_CONFIRMED=1 succeeds + emits MIGRATION', () => {
+    stashBackups();
+    try {
+      const b = JSON.parse(readFile(BRAND_REL));
+      b.identifiers.bundleId = 'com.heron.testfork';
+      b.identifiers.urlScheme = 'heronfork';
+      writeBrandJson(b);
+      const result = runApplyBrand({ REBRAND_CONFIRMED: '1' });
+      expect(result.exitCode).toBe(0);
+      const migrations = fs
+        .readdirSync(path.join(REPO_ROOT, 'branding'))
+        .filter((f) => /^MIGRATION-\d{4}-\d{2}-\d{2}\.md$/.test(f));
+      expect(migrations.length).toBeGreaterThan(0);
+      const migrationBody = fs.readFileSync(
+        path.join(REPO_ROOT, 'branding', migrations[0]),
+        'utf8',
+      );
+      expect(migrationBody).toMatch(/identifiers\.bundleId/);
+      expect(migrationBody).toMatch(/identifiers\.urlScheme/);
+      expect(migrationBody).toMatch(/com\.heron\.testfork/);
+    } finally {
+      restoreBackups();
+    }
+  }, 120_000);
+
+  it('DESTRUCTIVE_FIELDS list covers every App-Store-locked identifier', () => {
+    const src = readFile('scripts/native/apply-brand.mjs');
+    // The 7 identifiers that cannot be reverted at the App Store level.
+    for (const field of [
+      `'name'`,
+      `'identifiers.bundleId'`,
+      `'identifiers.appGroup'`,
+      `'identifiers.urlScheme'`,
+      `'identifiers.serviceType'`,
+      `'identifiers.keychainService'`,
+      `'identifiers.capacitorPluginName'`,
+    ]) {
+      expect(src, `DESTRUCTIVE_FIELDS missing ${field}`).toContain(field);
+    }
+  });
+});

@@ -32,11 +32,29 @@ const UI = join(ROOT, 'ui');
 const CACHE_FILE = join(ROOT, 'scripts', 'native', 'icons', '_build', '.apply-brand-cache');
 const BRAND_JSON = join(ROOT, 'branding', 'brand.json');
 const BRAND_LOGO = join(ROOT, 'branding', 'logo.svg');
+const SNAPSHOT_FILE = join(ROOT, 'branding', '.brand-snapshot.json');
+
+/**
+ * Destructive fields — changes here cannot be reverted at the App
+ * Store / installed-user level. apply-brand refuses to proceed when
+ * any drifts without REBRAND_CONFIRMED=1.
+ */
+const DESTRUCTIVE_FIELDS = [
+  { path: 'name', label: 'Brand slug (package name + git remote inference)' },
+  { path: 'identifiers.bundleId', label: 'Bundle ID (App Store + Play Store identifier)' },
+  { path: 'identifiers.appGroup', label: 'App Group (shared container for widgets / watch)' },
+  { path: 'identifiers.urlScheme', label: 'URL scheme (external deep links)' },
+  { path: 'identifiers.serviceType', label: 'Bonjour service type (LAN autodiscovery)' },
+  { path: 'identifiers.keychainService', label: 'Keychain service (passkey credential storage)' },
+  { path: 'identifiers.capacitorPluginName', label: 'Capacitor plugin JS identifier' },
+];
 
 const RESET = '\x1b[0m';
 const GREEN = '\x1b[32m';
 const CYAN = '\x1b[36m';
 const YELLOW = '\x1b[33m';
+const RED = '\x1b[31m';
+const BOLD = '\x1b[1m';
 const DIM = '\x1b[2m';
 
 const log = {
@@ -45,6 +63,264 @@ const log = {
   skip: (m) => console.log(`  ${DIM}· ${m}${RESET}`),
   warn: (m) => console.log(`  ${YELLOW}!${RESET} ${m}`),
 };
+
+/** Read a dotted path off a nested object: getPath(obj, 'a.b.c') === obj?.a?.b?.c. */
+function getPath(obj, path) {
+  return path.split('.').reduce((acc, k) => acc?.[k], obj);
+}
+
+/** Load the previous brand snapshot. Returns null on first-ever run. */
+function loadSnapshot() {
+  if (!existsSync(SNAPSHOT_FILE)) return null;
+  try {
+    return JSON.parse(readFileSync(SNAPSHOT_FILE, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+/** Persist the post-apply state. Called from main after successful apply. */
+function writeSnapshot(brand) {
+  // Store the entire brand object — full snapshot makes future drift
+  // checks on any field cheap, and a human can diff snapshots to see
+  // what changed across rebrands.
+  writeFileSync(SNAPSHOT_FILE, JSON.stringify(brand, null, 2) + '\n');
+}
+
+/** Compute drift across DESTRUCTIVE_FIELDS. Returns an array of
+ *  { field, label, before, after } or [] when nothing changed. */
+function computeDrift(prev, current) {
+  if (!prev) return [];
+  const drift = [];
+  for (const { path, label } of DESTRUCTIVE_FIELDS) {
+    const before = getPath(prev, path);
+    const after = getPath(current, path);
+    if (before !== after) drift.push({ field: path, label, before, after });
+  }
+  return drift;
+}
+
+/** Print the destructive-change report to stderr. */
+function printDriftReport(drift) {
+  console.error('');
+  console.error(`${RED}${BOLD}🚨 DESTRUCTIVE rebrand detected${RESET}`);
+  console.error('');
+  console.error(`The following fields have changed since the last \`pnpm brand:apply\`.`);
+  console.error(`These changes have ${BOLD}non-reversible consequences${RESET}:`);
+  console.error('');
+  for (const d of drift) {
+    console.error(`  ${YELLOW}${d.field}${RESET}  (${d.label})`);
+    console.error(`    ${RED}old${RESET}: ${d.before}`);
+    console.error(`    ${GREEN}new${RESET}: ${d.after}`);
+  }
+  console.error('');
+  console.error(`${BOLD}Consequences${RESET}:`);
+  console.error('  • App Store Connect: bundle ID changes are NOT reversible. New bundle ID');
+  console.error('    = new App Store entry. Reviews / ratings / TestFlight tester history');
+  console.error('    stay with the old app.');
+  console.error('  • Existing user installs: treated as a new app — users must redownload.');
+  console.error('  • Deep links: every external link using the old URL scheme stops resolving.');
+  console.error('  • Keychain entries (passkey credentials): orphaned under the old');
+  console.error('    keychainService; users must re-create passkeys on next login.');
+  console.error('  • localStorage + IndexedDB: scoped to the old brand prefix; existing user');
+  console.error('    state (theme preference, cached jobs, etc.) is orphaned.');
+  console.error('  • Bonjour: connected mobile / watch clients lose autodiscovery until they');
+  console.error('    rediscover the new service type.');
+  console.error('  • Git remote: the inferred GitHub URL changes; CI badges, external links,');
+  console.error('    SEO indexing all need a manual sweep.');
+  console.error('');
+  console.error(`${BOLD}If you intend to proceed:${RESET}`);
+  console.error(`  ${CYAN}REBRAND_CONFIRMED=1 pnpm brand:apply${RESET}`);
+  console.error('');
+  console.error('apply-brand will:');
+  console.error(
+    `  1. Generate ${YELLOW}branding/MIGRATION-<today>.md${RESET} documenting the change`,
+  );
+  console.error(`     + the manual external steps you still have to do.`);
+  console.error('  2. Apply the rebrand to every consumer (Capacitor configs, Info.plist,');
+  console.error('     Brand.swift × 5, Brand.kt, app.css tokens, etc.).');
+  console.error(
+    `  3. Update ${YELLOW}branding/.brand-snapshot.json${RESET} so the next non-destructive`,
+  );
+  console.error('     edit no longer trips this gate.');
+  console.error('');
+  console.error('See `branding/REBRAND-PROCESS.md` for the full ceremony.');
+  console.error('');
+}
+
+/** Generate a MIGRATION-<date>.md when a destructive rebrand lands. */
+function generateMigrationDoc(drift, brand) {
+  const today = new Date().toISOString().split('T')[0];
+  const path = join(ROOT, 'branding', `MIGRATION-${today}.md`);
+  const find = (field) => drift.find((d) => d.field === field);
+  const bundleDrift = find('identifiers.bundleId');
+  const urlDrift = find('identifiers.urlScheme');
+  const keychainDrift = find('identifiers.keychainService');
+  const serviceDrift = find('identifiers.serviceType');
+  const pluginDrift = find('identifiers.capacitorPluginName');
+  const nameDrift = find('name');
+  const lines = [
+    `# Brand migration — ${today}`,
+    '',
+    `> AUTO-GENERATED by \`scripts/native/apply-brand.mjs\` because a`,
+    `> destructive field in \`branding/brand.json\` changed.`,
+    `>`,
+    `> This file is part of the brand-change audit trail. Commit it`,
+    `> alongside the brand.json change so the lineage is searchable.`,
+    '',
+    '## Changes detected',
+    '',
+    '| Field | Before | After | Reversible? |',
+    '|---|---|---|---|',
+    ...drift.map(
+      (d) =>
+        `| \`${d.field}\` | \`${d.before}\` | \`${d.after}\` | ${reversibilityNote(d.field)} |`,
+    ),
+    '',
+    '## Manual steps that apply-brand CANNOT do for you',
+    '',
+  ];
+  if (bundleDrift) {
+    lines.push(
+      '### App Store Connect (iOS)',
+      '',
+      `- Bundle ID \`${bundleDrift.before}\` → \`${bundleDrift.after}\``,
+      `- App Store does **not** allow changing the bundle ID on a published app.`,
+      `- If \`${bundleDrift.before}\` was published: it stays at that bundle ID, retaining`,
+      `  reviews, ratings, TestFlight tester history, and review queue position.`,
+      `- For the new bundle ID, create a new App Store Connect entry from scratch.`,
+      `- TestFlight: invite testers again with the new bundle ID.`,
+      `- App Store Connect API key (if used by fastlane): may need a fresh issuer scope.`,
+      '',
+      '### Google Play Console (Android)',
+      '',
+      `- Application ID \`${bundleDrift.before}\` → \`${bundleDrift.after}\``,
+      `- Same as iOS: Play Console does not allow changing applicationId on a published app.`,
+      `- New applicationId = new app entry. Old entry stays.`,
+      '',
+    );
+  }
+  if (urlDrift) {
+    lines.push(
+      '### Deep links',
+      '',
+      `- URL scheme \`${urlDrift.before}://\` → \`${urlDrift.after}://\``,
+      `- Every external link using the old scheme stops resolving:`,
+      `  - Social posts, email signatures, prior share extension sends`,
+      `  - Press kit / documentation links`,
+      `  - Universal links / app-site-association → re-publish for the new bundle ID`,
+      `- Recommend: sweep external surfaces (Twitter / LinkedIn / Discord / blog) and`,
+      `  regenerate links pointing at the new scheme.`,
+      '',
+    );
+  }
+  if (keychainDrift) {
+    lines.push(
+      '### Keychain (passkey credentials)',
+      '',
+      `- Service \`${keychainDrift.before}\` → \`${keychainDrift.after}\``,
+      `- Passkey credentials stored under the old service are orphaned.`,
+      `- Users will need to re-create their passkey on next login.`,
+      `- One-time annoyance, but unavoidable — Keychain entries are scoped to the service identifier.`,
+      '',
+    );
+  }
+  if (serviceDrift) {
+    lines.push(
+      '### Bonjour (LAN autodiscovery)',
+      '',
+      `- Service type \`${serviceDrift.before}\` → \`${serviceDrift.after}\``,
+      `- Desktop instance must be restarted to re-advertise under the new service type.`,
+      `- Mobile / watch clients lose autodiscovery for one cycle; they'll find the desktop`,
+      `  again after it re-advertises.`,
+      '',
+    );
+  }
+  if (pluginDrift) {
+    lines.push(
+      '### Capacitor plugin bridge',
+      '',
+      `- JS plugin name \`${pluginDrift.before}\` → \`${pluginDrift.after}\``,
+      `- The TS / Swift / Kotlin sides all read from \`BRAND.capacitorPluginName\`, so a`,
+      `  fresh build picks up the new name automatically.`,
+      `- Cached webview builds (\`ui/{ios,android}/.../public/\`) must be refreshed`,
+      `  via \`pnpm exec cap sync ios && pnpm exec cap sync android\`.`,
+      '',
+    );
+  }
+  if (nameDrift) {
+    lines.push(
+      '### Git repository',
+      '',
+      `- Package name \`${nameDrift.before}\` → \`${nameDrift.after}\``,
+      `- The git remote URL stays whatever it is until \`git remote set-url\` runs.`,
+      `- GitHub repo rename: from the GitHub UI → Settings → Repository name.`,
+      `  GitHub auto-redirects old URLs for some time, but external references should`,
+      `  be updated.`,
+      `- Local working tree directory: optional \`mv ~/${nameDrift.before} ~/${nameDrift.after}\``,
+      `  (this conversation's cwd does not auto-rename).`,
+      '',
+      '### Existing user state (localStorage / IndexedDB)',
+      '',
+      `- Keys / dbs scoped to \`${nameDrift.before}:*\` are orphaned on rebrand to`,
+      `  \`${nameDrift.after}:*\`. Theme preference, cached tokens, etc. reset to defaults.`,
+      '',
+    );
+  }
+  lines.push(
+    '## What apply-brand handles automatically',
+    '',
+    '- All Capacitor / Electron-builder / Info.plist / Brand.swift × 5 / Brand.kt /',
+    '  AndroidManifest.xml / web manifest / app.html updates.',
+    '- ui/src/app.css color + font token blocks (AUTO-GENERATED).',
+    '- 4 wordmark SVG variants (regenerated from brand.displayName).',
+    '- 10 .md docs with AUTO-GENERATED:<section> markers fill from brand.json.',
+    '- branding/.brand-snapshot.json updates to record the new applied state.',
+    '',
+    '## Rollback',
+    '',
+    'Edit `branding/brand.json` to restore the previous values, run',
+    '`REBRAND_CONFIRMED=1 pnpm brand:apply` again. apply-brand treats the rollback',
+    'as another destructive change (because it is — same App Store consequences),',
+    'so the gate runs in both directions.',
+    '',
+    '## Confirmation provenance',
+    '',
+    `This migration was applied because \`REBRAND_CONFIRMED=1\` was set in the`,
+    `environment when apply-brand ran. There is no other way to reach this code path.`,
+    '',
+  );
+  writeFileSync(path, lines.join('\n'));
+  log.ok(`MIGRATION-${today}.md written`);
+}
+
+function reversibilityNote(field) {
+  if (field === 'identifiers.bundleId' || field === 'identifiers.appGroup')
+    return '**NO** (App Store)';
+  if (field === 'identifiers.urlScheme') return 'NO (external deep links broken)';
+  if (field === 'identifiers.keychainService') return 'NO (user data orphaned)';
+  if (field === 'identifiers.serviceType') return 'Partial (autodiscovery resumes)';
+  if (field === 'identifiers.capacitorPluginName') return 'Yes (TS/Swift/Kotlin re-sync)';
+  if (field === 'name') return 'Partial (git remote + local dir manual)';
+  return '—';
+}
+
+/** Run the drift check at the start of apply(). Exits non-zero on
+ *  destructive drift without REBRAND_CONFIRMED. */
+function checkBrandDrift(brand) {
+  const prev = loadSnapshot();
+  const drift = computeDrift(prev, brand);
+  if (!drift.length) return drift; // safe (no drift OR first-ever run)
+  if (process.env.REBRAND_CONFIRMED === '1') {
+    log.warn(
+      `destructive rebrand confirmed via REBRAND_CONFIRMED=1 — proceeding + writing MIGRATION doc`,
+    );
+    generateMigrationDoc(drift, brand);
+    return drift;
+  }
+  printDriftReport(drift);
+  process.exit(1);
+}
 
 /** Load + validate brand.json. Throws if required fields are missing. */
 function loadBrand() {
@@ -1737,11 +2013,15 @@ function recordApplied() {
 }
 
 function apply() {
+  const brand = loadBrand();
+  // Drift check runs BEFORE shouldSkip — a destructive rebrand should
+  // never be hidden by a stale cache hit. If REBRAND_CONFIRMED=1 isn't
+  // set when destructive fields drift, this exits 1.
+  checkBrandDrift(brand);
   if (shouldSkip()) {
     console.log('✓ brand inputs unchanged — apply-brand short-circuited');
     return;
   }
-  const brand = loadBrand();
   console.log(
     `Applying brand "${brand.name}" v${require('node:fs').existsSync(join(ROOT, 'package.json')) ? JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version : '?'}\n`,
   );
@@ -1806,6 +2086,7 @@ function apply() {
   regenerateIcons();
 
   recordApplied();
+  writeSnapshot(brand);
 
   console.log(`\n${GREEN}✓${RESET} brand applied — every consumer reads from branding/brand.json`);
 }
