@@ -1,11 +1,11 @@
 # Typography — Heron
 
 <!-- AUTO-GENERATED:doc-meta -->
-*Last revised 2026-05-19 · part of the [Heron](../README.md) docs.*
+*Part of the [Heron](../README.md) docs.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
-> Last revised 2026-05-15. The typographic system for Heron. Strategy +
-> voice live in [`BRAND.md`](./BRAND.md); colors in
+> The typographic system for Heron. Strategy + voice live in
+> [`BRAND.md`](./BRAND.md); colors in
 > [`COLORS.md`](./COLORS.md). Implementation deferred to Task 9 of the
 > rebrand sequence — this document specifies the *what*; the *how* lands
 > in `ui/src/app.css` + `ui/static/fonts/` when we wire it.

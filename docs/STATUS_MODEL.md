@@ -1,7 +1,7 @@
 # Status Model — pipeline vs application status
 
 <!-- AUTO-GENERATED:doc-meta -->
-*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+*Part of the [Heron](../README.md) docs.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
 This document captures a decision that's easy to miss when reading the

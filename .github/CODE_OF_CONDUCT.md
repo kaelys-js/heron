@@ -1,7 +1,7 @@
 # Code of Conduct
 
 <!-- AUTO-GENERATED:doc-meta -->
-*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+*Part of the [Heron](../README.md) docs.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
 ## Our Pledge

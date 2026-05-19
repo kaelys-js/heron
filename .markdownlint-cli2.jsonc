@@ -129,6 +129,10 @@
     // Personal planning doc — free-form notes with whatever emphasis
     // markers the author wants. Not a published doc; lint enforcement
     // would just nag the author for unrelated reasons.
-    "ui/TODO.md"
+    "ui/TODO.md",
+    // Gitignored Claude session scratchpads — never ship, no lint value.
+    "STATE.md",
+    "TODO.md",
+    "TODO2.md"
   ]
 }

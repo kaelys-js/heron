@@ -1,7 +1,7 @@
 # `ui/` — Heron SvelteKit workspace
 
 <!-- AUTO-GENERATED:doc-meta -->
-*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+*Part of the [Heron](../README.md) docs.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
 The main app workspace. SvelteKit 2 + Svelte 5 + Better Auth + Drizzle ORM,

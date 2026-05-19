@@ -8,7 +8,7 @@
 # Heron
 
 <!-- AUTO-GENERATED:doc-meta -->
-*Last revised 2026-05-19 · [Heron](https://heron.app) · Stand still. Strike well.*
+*[Heron](https://heron.app) · Stand still. Strike well.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
 **A thinking partner for career transitions. Local-first. Open source. AI-agnostic.**

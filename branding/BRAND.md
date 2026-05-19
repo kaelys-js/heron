@@ -1,11 +1,11 @@
 # Brand — Heron
 
 <!-- AUTO-GENERATED:doc-meta -->
-*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+*Part of the [Heron](../README.md) docs.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
-> Last revised 2026-05-15. This document is the canonical source for Heron's
-> name, positioning, audience, voice, and taglines. Visual specs live in
+> Canonical source for Heron's name, positioning, audience, voice, and
+> taglines. Visual specs live in
 > [`COLORS.md`](./COLORS.md), [`TYPOGRAPHY.md`](./TYPOGRAPHY.md), and
 > [`MASCOT.md`](./MASCOT.md). The runtime/build source of truth for
 > identifiers is [`brand.json`](./brand.json); a brand rename happens by
