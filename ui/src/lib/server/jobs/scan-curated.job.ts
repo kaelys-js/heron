@@ -21,6 +21,7 @@ import { logEvent } from '../events';
 import { register } from './registry';
 import { recordSuccess, recordFailure } from '../sources';
 import type { JobArgs, JobResult } from './types';
+import { userContextEnv } from '../user-context';
 
 const FOUND_RE = /New offers:\s+(\d+)/i;
 
@@ -45,7 +46,7 @@ function runScanCurated(args?: JobArgs): Promise<JobResult> {
       category: 'task',
       message: cliArgs.slice(1).join(' ') || 'all curated sources',
     });
-    const p = spawn('node', cliArgs, { cwd: ROOT, env: { ...process.env } });
+    const p = spawn('node', cliArgs, { cwd: ROOT, env: userContextEnv() });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
     });

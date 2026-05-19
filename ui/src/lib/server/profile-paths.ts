@@ -104,6 +104,11 @@ export type UserSharedFileKind =
   | 'onboarding-state' // wizard step state — per-user
   | 'ui-prefs' // UI preferences (theme, layout, etc.) — per-user
   | 'sources' // scanner connection state (LinkedIn / Indeed sessions) — per-user
+  | 'apply-counter' // daily LinkedIn / portal apply counter — per-user so user A's
+  // 30 daily applies don't eat into user B's `maxAppliesPerDay` cap
+  | 'job-last-run' // per-job last-run state for registered jobs — per-user so
+  // autopilot's "did this run today?" dedupe is scoped per user (otherwise
+  // user A's 9am scan would block user B's 9am scan from firing)
   | 'backups-dir'; // tarball backup destination — per-user (each user's
 // daily snapshot of their own tree)
 
@@ -280,6 +285,10 @@ export function userSharedPathForUser(userId: string, kind: UserSharedFileKind):
       return path.join(base, 'ui-prefs.json');
     case 'sources':
       return path.join(base, 'sources.json');
+    case 'apply-counter':
+      return path.join(base, 'apply-counter.json');
+    case 'job-last-run':
+      return path.join(base, 'job-last-run.json');
     case 'backups-dir':
       return path.join(base, 'backups');
   }

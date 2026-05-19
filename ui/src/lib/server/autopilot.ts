@@ -18,13 +18,19 @@ import {
   isRunning as isJobRunning,
 } from './jobs';
 import { readLastRun, writeLastRun } from './job-last-run';
-import { userSharedPath, userSharedPathForUser } from './profile-paths';
+import { userSharedPathForUser } from './profile-paths';
+import {
+  currentUserIdOrDefault,
+  listSchedulableUsers,
+  runAsUser,
+  SYSTEM_USER_ID,
+} from './user-context';
 
-/** Per-user autopilot config path. Defaults to the active user's path;
- *  callers with an explicit userId should use `configPathForUser`. */
-function configPath(): string {
-  return userSharedPath('autopilot');
-}
+/** Per-user autopilot config path. Always explicit-userId — the implicit
+ *  variant was removed (F9) because every caller after the per-user
+ *  cache migration knows which user it's targeting; defaulting silently
+ *  to the active user was the bug that caused user A's writes to land
+ *  in user B's file inside the scheduler tick. */
 function configPathForUser(userId: string): string {
   return userSharedPathForUser(userId, 'autopilot');
 }
@@ -205,24 +211,49 @@ const DEFAULT_CONFIG: AutopilotConfig = {
   },
 };
 
-let cached: AutopilotConfig | null = null;
+/**
+ * Per-user config cache (F9). Pre-F9 this was a single module-level
+ * `let cached: AutopilotConfig | null = null` — the FIRST request to
+ * populate it won for everyone, and `writeConfig` poisoned the cache
+ * across users. Now keyed by `currentUserIdOrDefault()` so:
+ *
+ *   - Each user's read populates their own slot from their own file
+ *   - A write only invalidates the writing user's slot
+ *   - The scheduler tick (F10) iterates `listSchedulableUsers()` and
+ *     each user gets a fresh read from their own slot
+ *
+ * Cache invalidation: there is none; the file is small JSON, every
+ * read goes to disk if the slot is empty, and writes are explicit. If
+ * a future need for cross-process invalidation arises (multiple
+ * SvelteKit replicas), drop the cache entirely — disk reads are ~1ms.
+ */
+const cache = new Map<string, AutopilotConfig>();
 
 export function readConfig(): AutopilotConfig {
-  if (cached) return cached;
+  return readConfigForUser(currentUserIdOrDefault());
+}
+
+export function readConfigForUser(userId: string): AutopilotConfig {
+  const hit = cache.get(userId);
+  if (hit) return hit;
   try {
-    if (!fs.existsSync(configPath())) {
-      writeConfig(DEFAULT_CONFIG);
-      cached = DEFAULT_CONFIG;
-      return cached;
+    const p = configPathForUser(userId);
+    if (!fs.existsSync(p)) {
+      writeConfigForUser(userId, DEFAULT_CONFIG);
+      cache.set(userId, DEFAULT_CONFIG);
+      return DEFAULT_CONFIG;
     }
-    const raw = fs.readFileSync(configPath(), 'utf8');
+    const raw = fs.readFileSync(p, 'utf8');
     const parsed = JSON.parse(raw) as Partial<AutopilotConfig>;
-    cached = mergeWithDefaults(parsed);
-    return cached;
+    const merged = mergeWithDefaults(parsed);
+    cache.set(userId, merged);
+    return merged;
   } catch (e) {
-    reportServerError('autopilot', 'Failed to read config — falling back to defaults', e);
-    cached = DEFAULT_CONFIG;
-    return cached;
+    reportServerError('autopilot', 'Failed to read config — falling back to defaults', e, {
+      userId: userId === SYSTEM_USER_ID ? null : userId,
+    });
+    cache.set(userId, DEFAULT_CONFIG);
+    return DEFAULT_CONFIG;
   }
 }
 
@@ -250,13 +281,25 @@ function mergeWithDefaults(partial: Partial<AutopilotConfig>): AutopilotConfig {
 }
 
 export function writeConfig(next: AutopilotConfig): void {
-  fs.mkdirSync(path.dirname(configPath()), { recursive: true });
-  fs.writeFileSync(configPath(), JSON.stringify(next, null, 2) + '\n');
-  cached = next;
+  writeConfigForUser(currentUserIdOrDefault(), next);
+}
+
+export function writeConfigForUser(userId: string, next: AutopilotConfig): void {
+  const p = configPathForUser(userId);
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  fs.writeFileSync(p, JSON.stringify(next, null, 2) + '\n');
+  cache.set(userId, next);
 }
 
 export function patchConfig(patch: Partial<AutopilotConfig>): AutopilotConfig {
-  const current = readConfig();
+  return patchConfigForUser(currentUserIdOrDefault(), patch);
+}
+
+export function patchConfigForUser(
+  userId: string,
+  patch: Partial<AutopilotConfig>,
+): AutopilotConfig {
+  const current = readConfigForUser(userId);
   const next: AutopilotConfig = {
     ...current,
     ...patch,
@@ -268,7 +311,7 @@ export function patchConfig(patch: Partial<AutopilotConfig>): AutopilotConfig {
         })
       : current.schedules,
   };
-  writeConfig(next);
+  writeConfigForUser(userId, next);
   return next;
 }
 
@@ -333,20 +376,22 @@ async function runTask(s: Schedule): Promise<void> {
   }
   switch (s.task) {
     case 'scan':
-      // P1: default daily-scan fans out across every profile sequentially
-      // so a 2-profile install gets scanned for BOTH career tracks per
-      // run, not just the active one. Explicit `s.profileId` overrides.
+      // P1: default daily-scan fans out across every profile of the
+      // CURRENT user sequentially so a 2-profile install gets scanned
+      // for BOTH career tracks per run, not just the active one.
+      // Explicit `s.profileId` overrides. The cross-USER fan-out
+      // happens in tick() now (F10).
       if (s.profileId) {
         runScan(s.profileId);
       } else {
-        runScanForAllProfiles();
+        runScanForCurrentUsersProfiles();
       }
       break;
     case 'gemini':
       if (s.profileId) {
         runGemini((s.args?.top as number) ?? 30, s.profileId);
       } else {
-        runGeminiForAllProfiles((s.args?.top as number) ?? 30);
+        runGeminiForCurrentUsersProfiles((s.args?.top as number) ?? 30);
       }
       break;
     case 'apply-linkedin':
@@ -375,38 +420,31 @@ async function runTask(s: Schedule): Promise<void> {
 }
 
 /**
- * Fan out a daily-scan run across every profile sequentially. Sequential
- * because the underlying Python scrapers share rate limits + Playwright
- * resources — running them in parallel for multiple profiles would just
- * fight each other.
+ * Fan out a daily-scan run across the CURRENT user's profiles
+ * sequentially. Sequential because the underlying Python scrapers share
+ * rate limits + Playwright resources — running them in parallel for
+ * multiple profiles would just fight each other.
+ *
+ * F10: pre-fix this also iterated `listSchedulableUsers()` itself,
+ * which double-fanned-out when the tick() loop (now per-user) called
+ * it. The user-level loop now lives in tick() so this helper only
+ * handles profile-level fan-out within the current user.
  */
-// listSchedulableUsers moved to user-context.ts — single source of
-// truth shared with jobs/registry.ts for the perUser: true fan-out.
-import { listSchedulableUsers } from './user-context';
-
-async function runScanForAllProfiles(): Promise<void> {
+async function runScanForCurrentUsersProfiles(): Promise<void> {
   try {
-    const { runAsUser } = await import('./user-context');
     const { listProfilesForUser } = await import('./profiles-db');
-    const userIds = await listSchedulableUsers();
-    for (const userId of userIds) {
-      const profiles = listProfilesForUser(userId);
-      if (profiles.length === 0) {
-        await runAsUser(userId, async () => {
-          runScan();
-        });
-        continue;
-      }
-      for (const p of profiles) {
-        logEvent('autopilot', 'Daily scan for user ' + userId + ' / profile ' + p.slug, {
-          category: 'system',
-          message: 'fan-out · user=' + userId + ' · profile=' + p.slug,
-          userId,
-        });
-        await runAsUser(userId, async () => {
-          runScan(p.slug);
-        });
-      }
+    const userId = currentUserIdOrDefault();
+    const profiles = listProfilesForUser(userId);
+    if (profiles.length === 0) {
+      runScan();
+      return;
+    }
+    for (const p of profiles) {
+      logEvent('autopilot', 'Daily scan for profile ' + p.slug, {
+        category: 'system',
+        message: 'fan-out · profile=' + p.slug,
+      });
+      runScan(p.slug);
     }
   } catch (e) {
     reportServerError('autopilot', 'Fan-out scan failed', e);
@@ -415,29 +453,21 @@ async function runScanForAllProfiles(): Promise<void> {
   }
 }
 
-async function runGeminiForAllProfiles(top: number): Promise<void> {
+async function runGeminiForCurrentUsersProfiles(top: number): Promise<void> {
   try {
-    const { runAsUser } = await import('./user-context');
     const { listProfilesForUser } = await import('./profiles-db');
-    const userIds = await listSchedulableUsers();
-    for (const userId of userIds) {
-      const profiles = listProfilesForUser(userId);
-      if (profiles.length === 0) {
-        await runAsUser(userId, async () => {
-          runGemini(top);
-        });
-        continue;
-      }
-      for (const p of profiles) {
-        logEvent('autopilot', 'Gemini for user ' + userId + ' / profile ' + p.slug, {
-          category: 'system',
-          message: 'fan-out · user=' + userId + ' · profile=' + p.slug + ' · top=' + top,
-          userId,
-        });
-        await runAsUser(userId, async () => {
-          runGemini(top, p.slug);
-        });
-      }
+    const userId = currentUserIdOrDefault();
+    const profiles = listProfilesForUser(userId);
+    if (profiles.length === 0) {
+      runGemini(top);
+      return;
+    }
+    for (const p of profiles) {
+      logEvent('autopilot', 'Gemini for profile ' + p.slug, {
+        category: 'system',
+        message: 'fan-out · profile=' + p.slug + ' · top=' + top,
+      });
+      runGemini(top, p.slug);
     }
   } catch (e) {
     reportServerError('autopilot', 'Fan-out gemini failed', e);
@@ -536,20 +566,47 @@ export function startScheduler(): void {
     const isLegacy = ['scan', 'gemini', 'apply-linkedin', 'auto-eval'].includes(task);
     const isRegistered = !!getJob(task);
     if (!isLegacy && !isRegistered) return;
-    if (ev.level === 'success' && (ev.title === 'Task finished' || ev.title.endsWith('finished'))) {
-      trackResult(task, true, ev.message);
-      onTaskCompleted(task);
-    } else if (
-      ev.level === 'error' &&
-      (ev.title === 'Task failed' || ev.title.endsWith('failed'))
-    ) {
-      trackResult(task, false, ev.message);
+    // F10 — scope the trackResult + after-trigger lookup to ev.userId
+    // (if present). Both `trackResult` and `onTaskCompleted` call
+    // `readConfig()` / `writeConfig()` which are now per-user. Without
+    // this wrap, every status update would land in SYSTEM_USER's file.
+    const handle = (): void => {
+      if (
+        ev.level === 'success' &&
+        (ev.title === 'Task finished' || ev.title.endsWith('finished'))
+      ) {
+        trackResult(task, true, ev.message);
+        onTaskCompleted(task);
+      } else if (
+        ev.level === 'error' &&
+        (ev.title === 'Task failed' || ev.title.endsWith('failed'))
+      ) {
+        trackResult(task, false, ev.message);
+      }
+    };
+    if (ev.userId) {
+      void runAsUser(ev.userId, async () => handle());
+    } else {
+      // Broadcast / system event — fall back to SYSTEM_USER. Logged at
+      // info level (not warn) because legitimate system events do hit
+      // this path (boot, cleanup, etc.).
+      handle();
     }
   });
 
   // Tick every 30s — finer-grained matching while still cheap.
-  schedulerInterval = setInterval(tick, 30_000);
-  setTimeout(tick, 5_000);
+  // We wrap tick() to handle its async signature (the per-user fan-out
+  // landed in F10 makes tick a Promise-returning function).
+  schedulerInterval = setInterval(() => {
+    void tick().catch((e) => {
+      reportServerError('autopilot', 'Scheduler tick failed', e);
+    });
+  }, 30_000);
+  setTimeout(() => {
+    void tick().catch((e) => {
+      reportServerError('autopilot', 'Scheduler tick failed', e);
+    });
+  }, 5_000);
   logEvent('autopilot', 'Scheduler started', { category: 'system', message: 'tick interval 30s' });
 }
 
@@ -557,7 +614,32 @@ export function startScheduler(): void {
 // lifetime; HMR resets the schedulerStarted flag implicitly. removeBusListener
 // goes with it (D22) since it had no other caller.
 
-function tick(): void {
+/**
+ * F10 — Per-tick user fan-out. The 30s setInterval runs OUTSIDE any
+ * user ALS context. Pre-F10 this meant readConfig() resolved to
+ * SYSTEM_USER and only legacy data/profiles/_shared/autopilot.json was
+ * ever consulted — real users' schedules + globalEnabled flags were
+ * dead code.
+ *
+ * Now: enumerate every schedulable user, run the per-user tick body
+ * inside `runAsUser(userId, …)` so:
+ *   - readConfig() reads THAT user's autopilot.json (F9)
+ *   - readLastRun() reads THAT user's job-last-run.json (F10 sibling)
+ *   - runTask() / runRegistryJob() spawn under THAT user's context
+ *     (orchestrator's CAREER_OPS_USER_ID env injection covers the
+ *     child process)
+ *   - runJobById() detects the existing user context and runs once
+ *     for THIS user only (registry.ts:104-108) — no double fan-out
+ */
+async function tick(): Promise<void> {
+  const userIds = await listSchedulableUsers();
+  for (const userId of userIds) {
+    await runAsUser(userId, async () => tickForCurrentUser());
+  }
+}
+
+/** Per-user tick body. Caller MUST establish the ALS user context. */
+function tickForCurrentUser(): void {
   try {
     const cfg = readConfig();
     if (!cfg.globalEnabled) return;
@@ -594,8 +676,9 @@ function tick(): void {
 
     // (2) Registry-declared schedules — every JobDef whose trigger is
     //     daily/weekly gets fired automatically here if the user hasn't
-    //     overridden it via a cfg.schedules entry. State lives in
-    //     `data/job-last-run.json` (see job-last-run.ts).
+    //     overridden it via a cfg.schedules entry. State lives in the
+    //     per-user `data/users/{uid}/profiles/_shared/job-last-run.json`
+    //     (see job-last-run.ts).
     for (const def of listJobs()) {
       if (!def.allowManual) continue; // skip pure after-event chains
       if (userTaskIds.has(def.id)) continue; // user override wins

@@ -27,6 +27,7 @@ import { reportIssue } from '../issues';
 import { markClosed } from '../applications';
 import { register } from './registry';
 import type { JobArgs, JobResult } from './types';
+import { userContextEnv } from '../user-context';
 
 type LivenessVerdict = 'active' | 'expired' | 'uncertain';
 type Outcome = { url: string; verdict: LivenessVerdict; reason?: string };
@@ -144,7 +145,7 @@ function runLivenessSubprocess(urls: string[]): Promise<Outcome[]> {
     let stdout = '';
     const p = spawn('node', ['scripts/system/check-liveness.mjs', ...urls], {
       cwd: ROOT,
-      env: { ...process.env },
+      env: userContextEnv(),
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();

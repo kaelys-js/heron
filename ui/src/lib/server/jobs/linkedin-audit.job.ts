@@ -23,6 +23,7 @@ import { ROOT } from '../files';
 import { classifySnapshot, writeAuditReport } from '../linkedin-audit';
 import { reportIssue } from '../issues';
 import { logEvent, reportServerError } from '../events';
+import { userContextEnv } from '../user-context';
 
 const TIMEOUT_MS = 240_000;
 
@@ -39,7 +40,7 @@ function runScraper(): Promise<{ stdout: string; code: number }> {
       [path.join(ROOT, 'scripts/linkedin/linkedin-audit.py'), '--json'],
       {
         cwd: ROOT,
-        env: { ...process.env },
+        env: userContextEnv(),
       },
     );
     p.stdout?.on('data', (c: Buffer) => {

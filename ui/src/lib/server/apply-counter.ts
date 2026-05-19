@@ -1,21 +1,28 @@
 /**
- * apply-counter — daily LinkedIn Easy Apply rate-limit accounting.
+ * apply-counter — daily LinkedIn / portal apply rate-limit accounting.
  *
- * Reads/writes `data/apply-counter.json` which is keyed by ISO yyyy-mm-dd
- * date in the host's local timezone (matching how autopilot's daily-scan
- * weekday logic uses local time). The counter is shared across profiles
- * because `thresholds.maxAppliesPerDay` from autopilot.json is itself a
- * single global cap, not per-profile.
+ * Per-user (F17). Each user gets their own counter file at
+ * `data/users/{userId}/profiles/_shared/apply-counter.json` (or the
+ * legacy `data/profiles/_shared/apply-counter.json` for SYSTEM_USER).
+ * The file is keyed by ISO yyyy-mm-dd in the host's local timezone
+ * (matching how autopilot's daily-scan weekday logic uses local time).
  *
- * Used by orchestrator's `runLinkedInApply` (per-job + bulk paths) to gate
- * each Submit on whether today's count is still under the threshold.
+ * Why per-user: `thresholds.maxAppliesPerDay` from autopilot.json is
+ * itself per-user (F9 fix), so the counter MUST also be per-user.
+ * Pre-F17 a single global file meant user A's 30 applies ate into user
+ * B's cap and concurrent writes race-conditioned on writeState.
+ *
+ * Used by orchestrator's `runLinkedInApply` (per-job + bulk paths) and
+ * `apply-queue.job.ts` to gate each Submit on whether today's count is
+ * still under the threshold. Both callers ALREADY run inside a user
+ * ALS context (the registry's `runById` fan-out wraps each invocation
+ * in `runAsUser(userId, …)`), so the implicit `currentUserIdOrDefault()`
+ * resolution here is correct.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT } from './files';
-
-const PATH = path.join(ROOT, 'data', 'apply-counter.json');
+import { userSharedPath, userSharedPathForUser } from './profile-paths';
 
 type State = Record<string, number>; // { 'yyyy-mm-dd': count }
 
@@ -27,10 +34,10 @@ function todayKey(): string {
   return yyyy + '-' + mm + '-' + dd;
 }
 
-function readState(): State {
+function readState(p: string): State {
   try {
-    if (!fs.existsSync(PATH)) return {};
-    const raw = fs.readFileSync(PATH, 'utf8');
+    if (!fs.existsSync(p)) return {};
+    const raw = fs.readFileSync(p, 'utf8');
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === 'object' ? (parsed as State) : {};
   } catch {
@@ -38,27 +45,50 @@ function readState(): State {
   }
 }
 
-function writeState(s: State): void {
-  fs.mkdirSync(path.dirname(PATH), { recursive: true });
-  fs.writeFileSync(PATH, JSON.stringify(s, null, 2) + '\n');
+function writeState(p: string, s: State): void {
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  fs.writeFileSync(p, JSON.stringify(s, null, 2) + '\n');
 }
 
-/** Today's apply count (0 if no entry). */
+/** Today's apply count for the current user (0 if no entry). */
 export function todayCount(): number {
-  const s = readState();
+  const s = readState(userSharedPath('apply-counter'));
   return s[todayKey()] ?? 0;
 }
 
-/** Increment + persist. Returns the new count after the bump. */
+/** Increment + persist for the current user. Returns the new count after the bump. */
 export function bumpApplyCounter(): number {
-  const s = readState();
+  const p = userSharedPath('apply-counter');
+  const s = readState(p);
   const key = todayKey();
   s[key] = (s[key] ?? 0) + 1;
-  writeState(s);
+  writeState(p, s);
   return s[key];
 }
 
-/** Path getter for reset code that needs to back up the file. */
+/** Path getter for reset code that needs to back up the file. Resolves
+ *  to the current user's counter under `userSharedPath('apply-counter')`. */
 export function applyCounterPath(): string {
-  return PATH;
+  return userSharedPath('apply-counter');
+}
+
+/** Explicit per-user variants for cross-user maintenance code (backup,
+ *  GDPR reap, lifecycle reaper). Callers outside an ALS user context
+ *  MUST use these instead of the implicit-user versions above. */
+export function todayCountForUser(userId: string): number {
+  const s = readState(userSharedPathForUser(userId, 'apply-counter'));
+  return s[todayKey()] ?? 0;
+}
+
+export function bumpApplyCounterForUser(userId: string): number {
+  const p = userSharedPathForUser(userId, 'apply-counter');
+  const s = readState(p);
+  const key = todayKey();
+  s[key] = (s[key] ?? 0) + 1;
+  writeState(p, s);
+  return s[key];
+}
+
+export function applyCounterPathForUser(userId: string): string {
+  return userSharedPathForUser(userId, 'apply-counter');
 }

@@ -38,6 +38,7 @@ import { ROOT } from '../files';
 import { logEvent, reportServerError } from '../events';
 import type { JobArgs, JobResult } from './types';
 import type { Job } from '$lib/types';
+import { userContextEnv } from '../user-context';
 
 const APPLY_PORTAL_SCRIPT = path.join(ROOT, 'scripts/apply/apply-portal.py');
 
@@ -192,7 +193,7 @@ function dispatchApply(
     } | null = null;
     let p;
     try {
-      p = spawn(venvPython(), args, { cwd: ROOT, env: { ...process.env } });
+      p = spawn(venvPython(), args, { cwd: ROOT, env: userContextEnv() });
     } catch (e) {
       resolve({ status: 'error', detail: e instanceof Error ? e.message : String(e) });
       return;

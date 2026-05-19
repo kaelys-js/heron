@@ -12,11 +12,24 @@
  *
  * Status update is fire-and-forget via the existing /api/status helper —
  * normalize.job + dedup.job already chain off that.
+ *
+ * Multi-user safety (F11): the listener fires inside whatever ALS context
+ * the emitting code held — which is usually correct (events fired from a
+ * /api/* request inherit the request's user context). BUT the emit can
+ * also happen from a background tick OR from spawn-completion callbacks
+ * that have lost the original context. So we re-enter the user context
+ * explicitly via `runAsUser(ev.userId, …)` before calling `loadAllJobs()`
+ * / `markStatus()` — both of which read+write per-user data.
+ *
+ * If the event isn't tagged with a userId (broadcast event or pre-F11
+ * emit), we skip — better to no-op than to write into the wrong user's
+ * tree.
  */
 
 import { installBusListener, logEvent, reportServerError } from '../events';
 import { loadAllJobs } from '../parsers';
 import { markStatus } from '../applications';
+import { runAsUser } from '../user-context';
 import type { ActivityEvent } from '$lib/types';
 
 function installAutoQueue(): void {
@@ -31,20 +44,39 @@ function installAutoQueue(): void {
     if (!m) return;
     const url = m[0].replace(/[)\].,>]+$/, '');
 
-    const job = loadAllJobs().find((j) => j.url === url);
-    if (!job) return;
-    if (job.status !== 'Ready' && job.status !== 'Scored' && job.status !== 'New') return;
-
-    try {
-      markStatus(url, 'Queued', 'auto-queued: CV ready for batch send');
-      logEvent('auto-queue', 'Job queued for batch send', {
-        level: 'info',
+    // F11 — anchor to ev.userId. Without it we'd potentially flip the
+    // wrong user's job row (or write to SYSTEM_USER's tree).
+    const ownerUserId = ev.userId;
+    if (!ownerUserId) {
+      // Broadcast / untagged event. Don't guess — log a warn so it
+      // surfaces in /runtimes if it ever fires in real traffic.
+      logEvent('auto-queue', 'Skipping untagged oferta event', {
+        level: 'warn',
         category: 'application',
-        message: (job.company || '?') + ' · ' + (job.role || '?') + ' — review on /queue',
+        message: 'event has no userId — cannot scope to a profile · url=' + url,
       });
-    } catch (err) {
-      reportServerError('auto-queue', 'Status flip failed', err, { category: 'application' });
+      return;
     }
+
+    // Fire-and-forget — the bus listener signature is sync, so we kick
+    // off the async work inside an IIFE. runAsUser preserves ALS through
+    // every await boundary downstream.
+    void runAsUser(ownerUserId, async () => {
+      const job = loadAllJobs().find((j) => j.url === url);
+      if (!job) return;
+      if (job.status !== 'Ready' && job.status !== 'Scored' && job.status !== 'New') return;
+
+      try {
+        markStatus(url, 'Queued', 'auto-queued: CV ready for batch send');
+        logEvent('auto-queue', 'Job queued for batch send', {
+          level: 'info',
+          category: 'application',
+          message: (job.company || '?') + ' · ' + (job.role || '?') + ' — review on /queue',
+        });
+      } catch (err) {
+        reportServerError('auto-queue', 'Status flip failed', err, { category: 'application' });
+      }
+    });
   });
 }
 

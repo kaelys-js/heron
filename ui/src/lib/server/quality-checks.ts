@@ -16,6 +16,7 @@ import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { ROOT } from './files';
 import { reportServerError } from './events';
+import { userContextEnv } from './user-context';
 
 export type QualityCheck = {
   status: 'pass' | 'warn' | 'fail';
@@ -86,7 +87,7 @@ function runScript(scriptName: string, args: string[], timeoutMs = 30_000): Prom
   return new Promise((resolveP, rejectP) => {
     const p = spawn('node', [join(ROOT, scriptName), ...args, '--json'], {
       cwd: ROOT,
-      env: { ...process.env },
+      env: userContextEnv(),
     });
     let stdoutBuf = '';
     let stderrBuf = '';
@@ -204,7 +205,7 @@ export function checkAiDetect(mdPath: string): Promise<AiDetectResult> {
   return new Promise((resolveP) => {
     const p = spawn('node', [join(ROOT, 'scripts/cv/ai-detect-check.mjs'), mdPath, '--json'], {
       cwd: ROOT,
-      env: { ...process.env },
+      env: userContextEnv(),
     });
     let stdoutBuf = '';
     let stderrBuf = '';
@@ -264,7 +265,7 @@ export function checkSemanticMatch(cvPath: string, jdPath: string): Promise<Sema
       [join(ROOT, 'scripts/quality/semantic-match.mjs'), cvPath, jdPath, '--json'],
       {
         cwd: ROOT,
-        env: { ...process.env },
+        env: userContextEnv(),
       },
     );
     let stdoutBuf = '';
@@ -351,7 +352,7 @@ export function checkNarrativeArc(cvPath: string): Promise<NarrativeResult> {
   return new Promise((resolveP) => {
     const p = spawn('node', [join(ROOT, 'scripts/quality/narrative-arc.mjs'), cvPath, '--json'], {
       cwd: ROOT,
-      env: { ...process.env },
+      env: userContextEnv(),
     });
     let stdoutBuf = '';
     let stderrBuf = '';

@@ -4,8 +4,12 @@
  * autopilot config so registry-declared schedules don't have to be
  * duplicated into `data/autopilot.json` just to track lastRunAt.
  *
- * Storage: `data/job-last-run.json`. Shared across profiles — the
- * registry id is the key (no profile suffix).
+ * Storage: `data/users/{userId}/profiles/_shared/job-last-run.json`
+ * (or the legacy `data/profiles/_shared/job-last-run.json` for
+ * SYSTEM_USER_ID single-user installs). PER-USER (F10) — pre-fix this
+ * was a single global file which broke scheduler fan-out: when user A
+ * ran scan-portals at 9:00am, user B's tick at 9:01 saw lastRunAt
+ * today and skipped, so user B's scan never fired.
  *
  * Used by `autopilot.ts:tick()` to dedupe today-firing of
  * registry-declared schedules, and by `autopilot.ts:trackResult()` to
@@ -14,9 +18,8 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT } from './files';
-
-const PATH = path.join(ROOT, 'data', 'job-last-run.json');
+import { userSharedPath, userSharedPathForUser } from './profile-paths';
+import { currentUserIdOrDefault } from './user-context';
 
 export type JobLastRunResult = 'success' | 'failure' | 'started';
 
@@ -28,10 +31,10 @@ export type JobLastRun = {
 
 type AllRuns = Record<string, JobLastRun>;
 
-function readAll(): AllRuns {
+function readAll(p: string): AllRuns {
   try {
-    if (!fs.existsSync(PATH)) return {};
-    const raw = fs.readFileSync(PATH, 'utf8');
+    if (!fs.existsSync(p)) return {};
+    const raw = fs.readFileSync(p, 'utf8');
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === 'object' ? (parsed as AllRuns) : {};
   } catch {
@@ -39,47 +42,69 @@ function readAll(): AllRuns {
   }
 }
 
-function writeAll(all: AllRuns): void {
-  fs.mkdirSync(path.dirname(PATH), { recursive: true });
-  fs.writeFileSync(PATH, JSON.stringify(all, null, 2) + '\n');
+function writeAll(p: string, all: AllRuns): void {
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  fs.writeFileSync(p, JSON.stringify(all, null, 2) + '\n');
 }
 
-/** Returns null when the job has never run (or after `clearLastRun`). */
+/** Returns null when the job has never run (or after `clearLastRun`).
+ *  Resolves to the current user via ALS — callers outside a user context
+ *  should use `readLastRunForUser(userId, jobId)` instead. */
 export function readLastRun(jobId: string): JobLastRun | null {
-  const all = readAll();
+  return readLastRunForUser(currentUserIdOrDefault(), jobId);
+}
+
+export function readLastRunForUser(userId: string, jobId: string): JobLastRun | null {
+  const all = readAll(userSharedPathForUser(userId, 'job-last-run'));
   return all[jobId] ?? null;
 }
 
 /** Upsert by jobId. Caller is responsible for atomic state transitions. */
 export function writeLastRun(jobId: string, state: JobLastRun): void {
-  const all = readAll();
+  writeLastRunForUser(currentUserIdOrDefault(), jobId, state);
+}
+
+export function writeLastRunForUser(userId: string, jobId: string, state: JobLastRun): void {
+  const p = userSharedPathForUser(userId, 'job-last-run');
+  const all = readAll(p);
   all[jobId] = state;
-  writeAll(all);
+  writeAll(p, all);
 }
 
 /** Remove a job's state entirely (e.g. on reset 'everything'). */
 export function clearLastRun(jobId: string): void {
-  const all = readAll();
+  clearLastRunForUser(currentUserIdOrDefault(), jobId);
+}
+
+export function clearLastRunForUser(userId: string, jobId: string): void {
+  const p = userSharedPathForUser(userId, 'job-last-run');
+  const all = readAll(p);
   delete all[jobId];
-  writeAll(all);
+  writeAll(p, all);
 }
 
-/** Wipe every entry — used by the reset-everything danger-zone action. */
+/** Wipe every entry for the current user — used by the
+ *  reset-everything danger-zone action. */
 export function clearAllLastRuns(): void {
-  if (fs.existsSync(PATH)) {
-    // Back up before wiping so reset is recoverable. Best-effort —
-    // if the .bak copy fails we still proceed with the unlink rather
-    // than block the reset flow on a permissions issue.
-    try {
-      fs.copyFileSync(PATH, PATH + '.bak');
-    } catch {
-      // .bak copy failed — reset proceeds without recoverable backup.
-    }
-    fs.unlinkSync(PATH);
-  }
+  clearAllLastRunsForUser(currentUserIdOrDefault());
 }
 
-/** Path getter for reset code that needs to back up the file. */
+export function clearAllLastRunsForUser(userId: string): void {
+  const p = userSharedPathForUser(userId, 'job-last-run');
+  if (!fs.existsSync(p)) return;
+  // Back up before wiping so reset is recoverable. Best-effort — if the
+  // .bak copy fails we still proceed with the unlink rather than block
+  // the reset flow on a permissions issue.
+  try {
+    fs.copyFileSync(p, p + '.bak');
+  } catch {
+    // .bak copy failed — reset proceeds without recoverable backup.
+  }
+  fs.unlinkSync(p);
+}
+
+/** Path getter for reset code that needs to back up the file. Resolves
+ *  to the current user's path. */
 export function jobLastRunPath(): string {
-  return PATH;
+  return userSharedPath('job-last-run');
 }

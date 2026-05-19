@@ -1,5 +1,11 @@
 /**
  * POST + GET /api/email/react — IMAP-poller endpoint.
+ *
+ * F21 — every handler now calls `requireUserId(locals)` first, so the
+ * test harness must hand in a `locals.user` object with a valid id.
+ * Anonymous calls 401. The hooks-level guard would normally block
+ * those at the framework boundary, but the explicit handler-level call
+ * gives defense in depth.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -21,6 +27,20 @@ vi.mock('$lib/server/events', () => ({
 
 const { POST, GET } = await import('./+server');
 
+/** Stand-in `locals` with a valid authed user — every test in this
+ *  file exercises an authenticated path so we don't bother per-test
+ *  customisation. */
+const FAKE_LOCALS = {
+  user: {
+    id: 'user-test',
+    email: 'test@example.com',
+    name: 'Test User',
+    role: 'owner' as const,
+    deletedAt: null,
+  },
+  session: null,
+} as unknown as App.Locals;
+
 beforeEach(() => {
   reactCalls.length = 0;
   leads = [];
@@ -30,7 +50,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-async function post(body: unknown) {
+async function post(body: unknown, locals: App.Locals = FAKE_LOCALS) {
   const r = (await (POST as unknown as (e: unknown) => Promise<Response>)({
     url: new URL('http://localhost/api/email/react'),
     request: new Request('http://localhost/api/email/react', {
@@ -38,13 +58,15 @@ async function post(body: unknown) {
       body: typeof body === 'string' ? body : JSON.stringify(body),
       headers: { 'Content-Type': 'application/json' },
     }),
+    locals,
   } as unknown)) as Response;
   return { status: r.status, body: await r.json() };
 }
 
-async function get() {
+async function get(locals: App.Locals = FAKE_LOCALS) {
   const r = (await (GET as unknown as (e: unknown) => Promise<Response>)({
     url: new URL('http://localhost/api/email/react'),
+    locals,
   } as unknown)) as Response;
   return { status: r.status, body: await r.json() };
 }
@@ -94,5 +116,19 @@ describe('GET /api/email/react', () => {
   it('returns [] when no leads exist yet', async () => {
     const r = await get();
     expect(r.body.leads).toEqual([]);
+  });
+});
+
+describe('Auth (F21 defense-in-depth)', () => {
+  const ANON_LOCALS = { user: null, session: null } as unknown as App.Locals;
+
+  it('POST without locals.user 401s', async () => {
+    const r = await post({ from: 'a@b', subject: 's' }, ANON_LOCALS);
+    expect(r.status).toBe(401);
+  });
+
+  it('GET without locals.user 401s', async () => {
+    const r = await get(ANON_LOCALS);
+    expect(r.status).toBe(401);
   });
 });

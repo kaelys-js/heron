@@ -22,6 +22,7 @@ import { ROOT } from '../files';
 import { logEvent } from '../events';
 import { register } from './registry';
 import type { JobResult } from './types';
+import { userContextEnv } from '../user-context';
 
 const SURVIVORS_RE = /Survivors:\s*(\d+)/i;
 const SKIPPED_RE = /Skipped:\s*(\d+)/i;
@@ -36,7 +37,7 @@ function runStep(script: string): Promise<StepResult> {
     let stderr = '';
     const p = spawn('node', [script], {
       cwd: ROOT,
-      env: { ...process.env },
+      env: userContextEnv(),
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();

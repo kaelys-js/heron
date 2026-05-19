@@ -15,6 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './files';
 import { activePath } from './profile-paths';
+import { userContextEnv } from './user-context';
 
 /** Per-profile cache path. Each profile has its own follow-up cache
  *  derived from its applications.md — sharing across profiles would
@@ -88,7 +89,7 @@ function spawnCadence(profileId?: string): Promise<FollowupCadence> {
     if (resolvedProfileId) args.push('--profile', resolvedProfileId);
     const p = spawn('node', args, {
       cwd: ROOT,
-      env: { ...process.env },
+      env: userContextEnv(),
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();

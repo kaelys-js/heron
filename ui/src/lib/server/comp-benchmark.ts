@@ -22,6 +22,7 @@ import { AGENT_CLI } from '$lib/config/cli';
 import { ROOT } from './files';
 import type { OfferBenchmark, CompCurrency } from './offers';
 import { logEvent, reportServerError } from './events';
+import { userContextEnv } from './user-context';
 
 export type BenchmarkQuery = {
   company: string;
@@ -54,7 +55,7 @@ export async function fetchBenchmark(q: BenchmarkQuery): Promise<OfferBenchmark 
       ['-p', BENCHMARK_PROMPT_PREFIX + payload, '--dangerously-skip-permissions'],
       {
         cwd: ROOT,
-        env: { ...process.env },
+        env: userContextEnv(),
       },
     );
     p.stdout?.on('data', (c: Buffer) => {

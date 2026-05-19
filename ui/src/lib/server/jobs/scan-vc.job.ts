@@ -14,6 +14,7 @@ import { ROOT } from '../files';
 import { logEvent } from '../events';
 import { register } from './registry';
 import type { JobArgs, JobResult } from './types';
+import { userContextEnv } from '../user-context';
 
 const NEW_RE = /New candidates:\s+(\d+)/i;
 
@@ -35,7 +36,7 @@ function runScanVc(args?: JobArgs): Promise<JobResult> {
       category: 'task',
       message: cliArgs.slice(1).join(' ') || 'all VC sources',
     });
-    const p = spawn('node', cliArgs, { cwd: ROOT, env: { ...process.env } });
+    const p = spawn('node', cliArgs, { cwd: ROOT, env: userContextEnv() });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
     });

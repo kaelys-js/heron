@@ -27,6 +27,7 @@ import { logEvent } from '../events';
 import { register } from './registry';
 import { recordSuccess, recordFailure, getSource } from '../sources';
 import type { JobArgs, JobResult } from './types';
+import { userContextEnv } from '../user-context';
 
 const FOUND_RE = /Total jobs found:\s+(\d+)/i;
 
@@ -66,7 +67,7 @@ function runScanLinkedinAuth(args?: JobArgs): Promise<JobResult> {
       message: cliArgs.slice(1).join(' ') || 'profile-derived queries',
     });
 
-    const p = spawn(py, cliArgs, { cwd: ROOT, env: { ...process.env } });
+    const p = spawn(py, cliArgs, { cwd: ROOT, env: userContextEnv() });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
     });

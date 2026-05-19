@@ -17,6 +17,7 @@ import { logEvent } from '../events';
 import { register } from './registry';
 import { recordSuccess, recordFailure } from '../sources';
 import type { JobArgs, JobResult } from './types';
+import { userContextEnv } from '../user-context';
 
 const FOUND_RE = /Total jobs found:\s+(\d+)/i;
 
@@ -40,7 +41,7 @@ function runScanPortals(args?: JobArgs): Promise<JobResult> {
     });
     const p = spawn('node', cliArgs, {
       cwd: ROOT,
-      env: { ...process.env },
+      env: userContextEnv(),
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
