@@ -454,13 +454,20 @@ pre-push:
       # for both the native-binding probe AND the test workers. Without
       # this wrapping a Node 25 shell would still run vitest under 25
       # (engine warning + cached binding ABI mismatch).
+      # Calls `test:coverage` (not `test`) so vitest's coverage gate
+      # (thresholds in ui/vitest.config.ts: lines 70 / branches 65 /
+      # functions 70 / statements 70 with perFile floor) is enforced
+      # locally on every push. Without --coverage, vitest doesn't read
+      # the threshold block at all — push would succeed at 0% coverage
+      # and CI would catch it later. Pre-push wall-time grows ~60s →
+      # ~75s for the v8 coverage collection; acceptable.
       run: |
         bash scripts/system/mise-shim.sh sh -c '
           node scripts/native/ensure-native-bindings.mjs --quiet || {
             echo "✗ native bindings unhealthy — run \`pnpm rebuild:native\` to fix."
             exit 1
           }
-          pnpm exec turbo run test
+          pnpm exec turbo run test:coverage
         '
     format-check:
       # LAST-RESORT gate against unformatted code reaching origin. Auto-
