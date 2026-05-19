@@ -176,7 +176,7 @@
         const el = document.getElementById('boot-fallback');
         if (el) {
           const bg = getComputedStyle(el).backgroundImage;
-          // The boot-fallback uses `background: radial-gradient(...) #0a0a0b`
+          // The boot-fallback uses `background: radial-gradient(...) #0e1014`
           // → computed `background-image` includes `radial-gradient`.
           if (bg && bg !== 'none') break;
         }

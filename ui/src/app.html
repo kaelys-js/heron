@@ -37,8 +37,8 @@
          Tailwind chunk takes an extra paint to land. */
       html,
       body {
-        background-color: #0a0a0b;
-        color: #e4e4e7;
+        background-color: #0e1014;
+        color: #e8eaed;
         margin: 0;
         min-height: 100vh;
         /* Stop iOS WebView from auto-shrinking text on small screens —
@@ -53,7 +53,7 @@
       html:not(.dark),
       html:not(.dark) body {
         background-color: #fafaf9;
-        color: #18181b;
+        color: #14181f;
       }
     </style>
 
@@ -250,7 +250,7 @@
            the splash hides (i.e. once the fallback is the only thing
            on screen and the user already perceives the transition as
            complete).
-         - Background: #0a0a0b — matches brand.json splash.backgroundColor
+         - Background: #0e1014 — matches brand.json splash.backgroundColor
            and ios.backgroundColor in capacitor.config.ts.
 
          Failure handling: if hydration doesn't complete within 3500ms
@@ -265,7 +265,7 @@
         position: fixed;
         inset: 0;
         padding: 24px;
-        color: #e4e4e7;
+        color: #e8eaed;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         z-index: 9999;
         transition: opacity 300ms ease-out;
@@ -277,19 +277,19 @@
         -webkit-touch-callout: none;
         /* Brand-bloom background — single radial gradient centered on
                 screen, mirroring the SVG bloom baked into Splash.imageset.
-                Sits on the same #0a0a0b base so iOS native splash → SvelteKit
+                Sits on the same #0e1014 base so iOS native splash → SvelteKit
                 boot-fallback → login bloom is one continuous visual identity
                 across all three layers. Works at any resolution because
                 radial-gradient is a vector primitive. */
         background:
           radial-gradient(
             circle at 50% 50%,
-            rgba(139, 92, 246, 0.3) 0%,
-            rgba(99, 102, 241, 0.16) 32%,
-            rgba(168, 85, 247, 0.07) 56%,
+            rgba(122, 140, 109, 0.3) 0%,
+            rgba(74, 91, 109, 0.18) 32%,
+            rgba(200, 155, 74, 0.08) 56%,
             transparent 78%
           ),
-          radial-gradient(ellipse at 50% 0%, rgba(168, 85, 247, 0.12) 0%, transparent 60%), #0a0a0b;
+          radial-gradient(ellipse at 50% 0%, rgba(200, 155, 74, 0.10) 0%, transparent 60%), #0e1014;
       "
     >
       <!-- Brand mark wrapper — ABSOLUTELY POSITIONED at TRUE viewport center.
@@ -318,8 +318,8 @@
           display: flex;
           align-items: center;
           justify-content: center;
-          filter: drop-shadow(0 0 32px rgba(139, 92, 246, 0.45))
-            drop-shadow(0 8px 20px rgba(139, 92, 246, 0.22))
+          filter: drop-shadow(0 0 32px rgba(122, 140, 109, 0.45))
+            drop-shadow(0 8px 20px rgba(122, 140, 109, 0.22))
             drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
         "
       >
@@ -336,9 +336,9 @@
         >
           <defs>
             <linearGradient id="bfb-bg" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#6366f1" />
-              <stop offset="55%" stop-color="#8b5cf6" />
-              <stop offset="100%" stop-color="#a855f7" />
+              <stop offset="0%" stop-color="#4a5b6d" />
+              <stop offset="55%" stop-color="#7a8c6d" />
+              <stop offset="100%" stop-color="#c89b4a" />
             </linearGradient>
           </defs>
           <rect width="1024" height="1024" rx="232" fill="url(#bfb-bg)" />
@@ -388,9 +388,9 @@
         <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" style="display: block">
           <defs>
             <linearGradient id="bfb-spin" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#a855f7" stop-opacity="0.15" />
-              <stop offset="40%" stop-color="#8b5cf6" stop-opacity="0.65" />
-              <stop offset="100%" stop-color="#6366f1" stop-opacity="1" />
+              <stop offset="0%" stop-color="#c89b4a" stop-opacity="0.15" />
+              <stop offset="40%" stop-color="#7a8c6d" stop-opacity="0.65" />
+              <stop offset="100%" stop-color="#4a5b6d" stop-opacity="1" />
             </linearGradient>
           </defs>
           <!-- Faint track ring so the arc reads as "progress" against
@@ -474,7 +474,7 @@
               padding: 10px 18px;
               border-radius: 10px;
               border: none;
-              background: linear-gradient(135deg, #6366f1, #8b5cf6);
+              background: linear-gradient(135deg, #4a5b6d, #7a8c6d);
               color: white;
               font-size: 15px;
               font-weight: 600;
@@ -492,8 +492,8 @@
               padding: 10px 16px;
               border-radius: 10px;
               border: 1px solid #27272a;
-              background-color: #18181b;
-              color: #e4e4e7;
+              background-color: #14181f;
+              color: #e8eaed;
               font-size: 14px;
               cursor: pointer;
               font-family: inherit;

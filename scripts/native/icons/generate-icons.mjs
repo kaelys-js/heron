@@ -263,7 +263,7 @@ async function main() {
   // in app.html too. */
   const logoSize = Math.round(splashSize * 0.11); // ~300px logo on the 2732 canvas
   const brandPath = path.join(ROOT, 'branding/brand.json');
-  let splashBg = '#0a0a0b';
+  let splashBg = '#0e1014';
   try {
     const brand = JSON.parse(await fs.readFile(brandPath, 'utf8'));
     splashBg = brand.splash?.backgroundColor ?? brand.colors?.background ?? splashBg;
@@ -300,13 +300,13 @@ async function main() {
   const fullSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${splashSize}" height="${splashSize}" viewBox="0 0 ${splashSize} ${splashSize}">
     <defs>
       <radialGradient id="centerBloom" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-        <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.30" />
-        <stop offset="32%" stop-color="#6366f1" stop-opacity="0.16" />
-        <stop offset="56%" stop-color="#a855f7" stop-opacity="0.07" />
+        <stop offset="0%" stop-color="#7a8c6d" stop-opacity="0.30" />
+        <stop offset="32%" stop-color="#4a5b6d" stop-opacity="0.16" />
+        <stop offset="56%" stop-color="#c89b4a" stop-opacity="0.07" />
         <stop offset="78%" stop-color="${splashBg}" stop-opacity="0" />
       </radialGradient>
       <radialGradient id="topBloom" cx="50%" cy="0%" r="60%" fx="50%" fy="0%">
-        <stop offset="0%" stop-color="#a855f7" stop-opacity="0.12" />
+        <stop offset="0%" stop-color="#c89b4a" stop-opacity="0.12" />
         <stop offset="60%" stop-color="${splashBg}" stop-opacity="0" />
       </radialGradient>
       <filter id="iconGlow" x="-30%" y="-30%" width="160%" height="160%">
@@ -317,7 +317,7 @@ async function main() {
              on the boot-fallback in app.html — both produce a soft
              20-25pt aura around the icon outline on iPhone 17 Pro Max. -->
         <feGaussianBlur in="SourceAlpha" stdDeviation="${Math.round(logoSize * 0.1)}" result="blur"/>
-        <feFlood flood-color="#8b5cf6" flood-opacity="0.45" result="purple"/>
+        <feFlood flood-color="#7a8c6d" flood-opacity="0.45" result="purple"/>
         <feComposite in="purple" in2="blur" operator="in" result="halo"/>
         <feMerge>
           <feMergeNode in="halo"/>
