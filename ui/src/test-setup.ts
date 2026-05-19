@@ -95,10 +95,14 @@ try {
 
 // ── localStorage polyfill (jsdom v29 quirk) ────────────────────────
 // jsdom 29's built-in localStorage prints a "no valid path" warning
-// AND (under certain Vitest configurations) returns an object missing
-// `getItem`/`setItem`. Polyfill unconditionally — cheap, deterministic,
-// makes tests independent of the jsdom config. Real browsers (component
-// project) skip this branch.
+// AND (under certain Vitest configurations) returns an object whose
+// `getItem`/`setItem` exist as properties but are non-callable shims.
+// `typeof obj.getItem === 'function'` returns true in some paths, false
+// in others — depends on whether SvelteKit's $app/forms patching ran
+// first. We install our own Map-backed Storage UNCONDITIONALLY in
+// jsdom (matches the comment that always said "polyfill
+// unconditionally"). Real browsers (component project) skip this
+// branch via the typeof-window guard.
 if (typeof window !== 'undefined') {
   const __localBacking = new Map<string, string>();
   const __sessionBacking = new Map<string, string>();
@@ -116,19 +120,16 @@ if (typeof window !== 'undefined') {
       backing.set(k, String(v));
     },
   });
-  const real = typeof window.localStorage?.getItem === 'function';
-  if (!real) {
-    Object.defineProperty(window, 'localStorage', {
-      configurable: true,
-      writable: true,
-      value: makeStorage(__localBacking),
-    });
-    Object.defineProperty(window, 'sessionStorage', {
-      configurable: true,
-      writable: true,
-      value: makeStorage(__sessionBacking),
-    });
-  }
+  Object.defineProperty(window, 'localStorage', {
+    configurable: true,
+    writable: true,
+    value: makeStorage(__localBacking),
+  });
+  Object.defineProperty(window, 'sessionStorage', {
+    configurable: true,
+    writable: true,
+    value: makeStorage(__sessionBacking),
+  });
 }
 
 // ── matchMedia polyfill (jsdom only) ───────────────────────────────

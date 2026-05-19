@@ -241,9 +241,14 @@ describe('apiCall — error paths', () => {
 
 describe('apiCall — network failures', () => {
   it('wraps fetch error in ApiError(status=0, code=NETWORK)', async () => {
+    // retryable:false opts OUT of the M8 retry queue; without it, GETs
+    // are auto-retried on network recovery and the promise stays
+    // pending until an `online` event arrives (which the test never
+    // dispatches). Production code generally wants the retry; this
+    // test asserts the immediate-throw contract for explicit opt-outs.
     server.use(http.get('*/api/x', () => HttpResponse.error()));
     try {
-      await apiCall('/api/x', { silent: true });
+      await apiCall('/api/x', { silent: true, retryable: false });
     } catch (e) {
       expect(e).toBeInstanceOf(ApiError);
       if (e instanceof ApiError) {
@@ -255,7 +260,7 @@ describe('apiCall — network failures', () => {
 
   it('shows Network error toast on fetch failure', async () => {
     server.use(http.get('*/api/x', () => HttpResponse.error()));
-    await expect(apiCall('/api/x')).rejects.toThrow();
+    await expect(apiCall('/api/x', { retryable: false })).rejects.toThrow();
     expect(toastCalls.error.find((c) => c.msg === 'Network error')).toBeTruthy();
   });
 });
