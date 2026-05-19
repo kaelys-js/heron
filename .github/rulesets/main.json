@@ -47,15 +47,6 @@
           { "context": "DCO" }
         ]
       }
-    },
-    {
-      "type": "commit_message_pattern",
-      "parameters": {
-        "operator": "regex",
-        "pattern": "^(feat|fix|chore|docs|refactor|test|ci|build|style|perf|revert)(\\(.+\\))?!?: .{1,}",
-        "name": "Conventional Commits",
-        "negate": false
-      }
     }
   ],
   "bypass_actors": []
