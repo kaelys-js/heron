@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
+import { withScaffoldedTmpRepo } from '../../test-helpers/fs-fixtures';
 
 const REPO_ROOT = path.resolve(__dirname, '../../../..');
 
@@ -142,52 +143,29 @@ describe('Capacitor — replaces obsolete verify-capacitor.mjs checks', () => {
 });
 
 describe('apply-brand drift gate — protects against accidental destructive rebrand', () => {
-  const SNAPSHOT_REL = 'branding/.brand-snapshot.json';
-  const BRAND_REL = 'branding/brand.json';
-  const APPLY_BRAND = 'scripts/native/apply-brand.mjs';
+  // These tests run apply-brand against a SCAFFOLDED TMPDIR via the
+  // HERON_BRAND_ROOT env override defined in scripts/native/apply-brand.mjs.
+  // The previous incarnation mutated `branding/brand.json` + `.brand-snapshot.json`
+  // in the real working tree and relied on `restoreBackups()` in a `finally`
+  // block — which silently leaked dirt onto disk whenever the worker was
+  // SIGKILLed (OOM, ctrl-c, lefthook timeout). The tmpdir pattern is fail-
+  // safe: `withScaffoldedTmpRepo` removes the dir on every exit path.
+  const APPLY_BRAND = path.join(REPO_ROOT, 'scripts', 'native', 'apply-brand.mjs');
 
-  function stashBackups() {
-    if (exists(SNAPSHOT_REL))
-      fs.copyFileSync(
-        path.join(REPO_ROOT, SNAPSHOT_REL),
-        path.join(REPO_ROOT, SNAPSHOT_REL + '.test-bak'),
-      );
-    fs.copyFileSync(path.join(REPO_ROOT, BRAND_REL), path.join(REPO_ROOT, BRAND_REL + '.test-bak'));
-  }
-
-  function restoreBackups() {
-    if (exists(SNAPSHOT_REL + '.test-bak')) {
-      fs.copyFileSync(
-        path.join(REPO_ROOT, SNAPSHOT_REL + '.test-bak'),
-        path.join(REPO_ROOT, SNAPSHOT_REL),
-      );
-      fs.unlinkSync(path.join(REPO_ROOT, SNAPSHOT_REL + '.test-bak'));
-    }
-    fs.copyFileSync(path.join(REPO_ROOT, BRAND_REL + '.test-bak'), path.join(REPO_ROOT, BRAND_REL));
-    fs.unlinkSync(path.join(REPO_ROOT, BRAND_REL + '.test-bak'));
-    // Remove any test-generated MIGRATION files
-    for (const f of fs.readdirSync(path.join(REPO_ROOT, 'branding'))) {
-      if (/^MIGRATION-\d{4}-\d{2}-\d{2}\.md$/.test(f))
-        fs.unlinkSync(path.join(REPO_ROOT, 'branding', f));
-    }
-    // Roll the snapshot forward to match restored brand.json so the next
-    // real apply-brand run doesn't see drift.
-    execSync(`node ${APPLY_BRAND}`, {
-      cwd: REPO_ROOT,
-      env: { ...process.env, REBRAND_CONFIRMED: '1', ALLOW_NODE_VERSION_MISMATCH: '1' },
-      stdio: 'pipe',
-    });
-  }
-
-  function runApplyBrand(env: Record<string, string> = {}): {
-    exitCode: number;
-    stdout: string;
-    stderr: string;
-  } {
+  /** Run apply-brand against a tmpdir. Returns { exitCode, stdout, stderr }. */
+  function runApplyBrand(
+    root: string,
+    extraEnv: Record<string, string> = {},
+  ): { exitCode: number; stdout: string; stderr: string } {
     try {
       const stdout = execSync(`node ${APPLY_BRAND}`, {
-        cwd: REPO_ROOT,
-        env: { ...process.env, ALLOW_NODE_VERSION_MISMATCH: '1', ...env },
+        cwd: root,
+        env: {
+          ...process.env,
+          HERON_BRAND_ROOT: root,
+          ALLOW_NODE_VERSION_MISMATCH: '1',
+          ...extraEnv,
+        },
         stdio: 'pipe',
         encoding: 'utf8',
       });
@@ -201,62 +179,65 @@ describe('apply-brand drift gate — protects against accidental destructive reb
     }
   }
 
-  function writeBrandJson(brand: any) {
-    fs.writeFileSync(path.join(REPO_ROOT, BRAND_REL), JSON.stringify(brand, null, 2) + '\n');
+  /** Seed `<root>/branding/.brand-snapshot.json` from the current brand.json so
+   *  the next apply-brand run has a baseline to diff against. Mimics what
+   *  apply-brand itself writes after a successful run. */
+  function seedSnapshot(root: string): void {
+    const brandSrc = fs.readFileSync(path.join(root, 'branding', 'brand.json'), 'utf8');
+    fs.writeFileSync(path.join(root, 'branding', '.brand-snapshot.json'), brandSrc);
   }
 
-  it('non-destructive change (tagline edit) runs cleanly', () => {
-    stashBackups();
-    try {
-      const b = JSON.parse(readFile(BRAND_REL));
-      b.tagline = 'Test tagline.';
-      writeBrandJson(b);
-      const result = runApplyBrand();
+  /** Mutate `<root>/branding/brand.json` via a patcher and write back. */
+  function patchBrandJson(root: string, patcher: (brand: any) => void): void {
+    const p = path.join(root, 'branding', 'brand.json');
+    const b = JSON.parse(fs.readFileSync(p, 'utf8'));
+    patcher(b);
+    fs.writeFileSync(p, JSON.stringify(b, null, 2) + '\n');
+  }
+
+  it('non-destructive change (tagline edit) runs cleanly', async () => {
+    await withScaffoldedTmpRepo(async (root) => {
+      seedSnapshot(root);
+      patchBrandJson(root, (b) => {
+        b.tagline = 'Test tagline.';
+      });
+      const result = runApplyBrand(root);
       expect(result.exitCode).toBe(0);
-    } finally {
-      restoreBackups();
-    }
+    });
   }, 120_000);
 
-  it('destructive change (bundleId) WITHOUT REBRAND_CONFIRMED exits non-zero', () => {
-    stashBackups();
-    try {
-      const b = JSON.parse(readFile(BRAND_REL));
-      b.identifiers.bundleId = 'com.heron.testfork';
-      writeBrandJson(b);
-      const result = runApplyBrand();
+  it('destructive change (bundleId) WITHOUT REBRAND_CONFIRMED exits non-zero', async () => {
+    await withScaffoldedTmpRepo(async (root) => {
+      seedSnapshot(root);
+      patchBrandJson(root, (b) => {
+        b.identifiers.bundleId = 'com.heron.testfork';
+      });
+      const result = runApplyBrand(root);
       expect(result.exitCode).not.toBe(0);
       expect(result.stderr).toMatch(/DESTRUCTIVE rebrand detected/);
       expect(result.stderr).toMatch(/identifiers\.bundleId/);
       expect(result.stderr).toMatch(/REBRAND_CONFIRMED=1/);
-    } finally {
-      restoreBackups();
-    }
+    });
   }, 120_000);
 
-  it('destructive change WITH REBRAND_CONFIRMED=1 succeeds + emits MIGRATION', () => {
-    stashBackups();
-    try {
-      const b = JSON.parse(readFile(BRAND_REL));
-      b.identifiers.bundleId = 'com.heron.testfork';
-      b.identifiers.urlScheme = 'heronfork';
-      writeBrandJson(b);
-      const result = runApplyBrand({ REBRAND_CONFIRMED: '1' });
+  it('destructive change WITH REBRAND_CONFIRMED=1 succeeds + emits MIGRATION', async () => {
+    await withScaffoldedTmpRepo(async (root) => {
+      seedSnapshot(root);
+      patchBrandJson(root, (b) => {
+        b.identifiers.bundleId = 'com.heron.testfork';
+        b.identifiers.urlScheme = 'heronfork';
+      });
+      const result = runApplyBrand(root, { REBRAND_CONFIRMED: '1' });
       expect(result.exitCode).toBe(0);
       const migrations = fs
-        .readdirSync(path.join(REPO_ROOT, 'branding'))
+        .readdirSync(path.join(root, 'branding'))
         .filter((f) => /^MIGRATION-\d{4}-\d{2}-\d{2}\.md$/.test(f));
       expect(migrations.length).toBeGreaterThan(0);
-      const migrationBody = fs.readFileSync(
-        path.join(REPO_ROOT, 'branding', migrations[0]),
-        'utf8',
-      );
+      const migrationBody = fs.readFileSync(path.join(root, 'branding', migrations[0]), 'utf8');
       expect(migrationBody).toMatch(/identifiers\.bundleId/);
       expect(migrationBody).toMatch(/identifiers\.urlScheme/);
       expect(migrationBody).toMatch(/com\.heron\.testfork/);
-    } finally {
-      restoreBackups();
-    }
+    });
   }, 120_000);
 
   it('DESTRUCTIVE_FIELDS list covers every App-Store-locked identifier', () => {
