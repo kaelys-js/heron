@@ -7,14 +7,14 @@
 	     The $(AppIdentifierPrefix) prefix is required by Apple. -->
 	<key>keychain-access-groups</key>
 	<array>
-		<string>$(AppIdentifierPrefix)com.resistjs.careerops</string>
+		<string>$(AppIdentifierPrefix)com.heron.app</string>
 	</array>
 
 	<!-- App Group — used by the Widget + Share Extension to read job data
 	     from the main app's container. -->
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.resistjs.careerops</string>
+		<string>group.com.heron.app</string>
 	</array>
 
 	<!-- aps-environment — when this value is "development" / "production",
@@ -32,8 +32,8 @@
 	     dropped. BGProcessingTask handles longer-running maintenance. -->
 	<key>com.apple.developer.background-tasks</key>
 	<array>
-		<string>com.resistjs.careerops.refresh</string>
-		<string>com.resistjs.careerops.maintenance</string>
+		<string>com.heron.app.refresh</string>
+		<string>com.heron.app.maintenance</string>
 	</array>
 </dict>
 </plist>

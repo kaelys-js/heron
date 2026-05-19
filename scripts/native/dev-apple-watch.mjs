@@ -2,7 +2,7 @@
 /**
  * dev-apple-watch — one-shot: build + install + launch the watchOS app.
  *
- * The Watch app lives at ui/ios/App/CareerOpsWatch/ as a standalone
+ * The Watch app lives at ui/ios/App/HeronWatch/ as a standalone
  * watchOS 10+ SwiftUI app (Single Target — no WatchKit Extension). It
  * shows the top job to apply to + open issues, reads from the App Group
  * container `group.com.heron.app`, and receives live updates
@@ -11,14 +11,14 @@
  * Flow:
  *   1. Preflight — xcode tools + watch sim runtime
  *   2. Apply brand (idempotent)
- *   3. Run add-xcode-targets.rb (registers CareerOpsWatch target if
+ *   3. Run add-xcode-targets.rb (registers HeronWatch target if
  *      missing; idempotent)
- *   4. Confirm CareerOpsWatch scheme actually exists in the project.
+ *   4. Confirm HeronWatch scheme actually exists in the project.
  *      If not → opens Xcode + prints setup instructions (the watch
  *      target needs one-time wiring via Xcode UI; see
- *      CareerOpsWatch/CareerOpsWatchApp.swift's header for steps).
+ *      HeronWatch/HeronWatchApp.swift's header for steps).
  *   5. Pick a watch simulator — boot it if needed
- *   6. xcodebuild -scheme CareerOpsWatch -destination 'id=…'
+ *   6. xcodebuild -scheme HeronWatch -destination 'id=…'
  *   7. xcrun simctl install + launch
  *
  * The Watch app has NO WebView — no Vite server is needed. Live job
@@ -31,7 +31,7 @@ import { join } from 'node:path';
 import { step, run, capture, which, ok, warn, info, UI, ROOT } from './_lib.mjs';
 
 const iosDir = join(UI, 'ios', 'App');
-const watchSourceDir = join(iosDir, 'CareerOpsWatch');
+const watchSourceDir = join(iosDir, 'HeronWatch');
 const xcodeproj = join(iosDir, 'App.xcodeproj');
 const pbxprojPath = join(xcodeproj, 'project.pbxproj');
 
@@ -42,7 +42,7 @@ if (!which('xcodebuild') || !which('xcrun')) {
 }
 if (!existsSync(watchSourceDir)) {
   console.error(`Watch source dir not found: ${watchSourceDir}`);
-  console.error('The watchOS app source lives in ui/ios/App/CareerOpsWatch/.');
+  console.error('The watchOS app source lives in ui/ios/App/HeronWatch/.');
   process.exit(1);
 }
 if (!existsSync(pbxprojPath)) {
@@ -67,24 +67,24 @@ if (which('ruby') && which('gem')) {
   warn('ruby/gem not on PATH — skipping target registration');
 }
 
-step(4, 'Checking the CareerOpsWatch scheme exists in App.xcodeproj');
+step(4, 'Checking the HeronWatch scheme exists in App.xcodeproj');
 // Read the pbxproj as text — fastest way to check target presence
 // without spawning xcodebuild -list (which can take 30s+ resolving SPM).
 const pbxText = readFileSync(pbxprojPath, 'utf8');
 const watchTargetRegistered =
-  pbxText.includes('CareerOpsWatch') && /CareerOpsWatch.*PBXNativeTarget/s.test(pbxText);
+  pbxText.includes('HeronWatch') && /HeronWatch.*PBXNativeTarget/s.test(pbxText);
 
 if (!watchTargetRegistered) {
-  warn('CareerOpsWatch target is not registered in App.xcodeproj yet.');
+  warn('HeronWatch target is not registered in App.xcodeproj yet.');
   info('');
   info('One-time setup in Xcode (~5 min):');
   info('  1. File → New → Target → watchOS → "App"');
-  info('     • Product name: CareerOpsWatch');
+  info('     • Product name: HeronWatch');
   info('     • Bundle ID:    com.heron.app.watchkitapp');
   info('     • Interface:    SwiftUI');
   info('     • Embed in companion iOS app: "App"');
   info('  2. Delete the auto-generated files Xcode creates inside');
-  info('     CareerOpsWatch/ — keep ours (CareerOpsWatchApp.swift,');
+  info('     HeronWatch/ — keep ours (HeronWatchApp.swift,');
   info('     RootView.swift, WatchModel.swift).');
   info('  3. In the watch target settings:');
   info('     • Signing & Capabilities → +Capability → App Groups');
@@ -97,7 +97,7 @@ if (!watchTargetRegistered) {
   run('open', [xcodeproj], { allowFail: true });
   process.exit(0);
 }
-ok('CareerOpsWatch is registered');
+ok('HeronWatch is registered');
 
 step(5, 'Picking a watchOS simulator target');
 /** Tier function — Ultra beats Series 11 beats Series 10, etc. */
@@ -278,7 +278,7 @@ if (!watchUdid) {
   process.exit(1);
 }
 
-step(6, 'Building CareerOpsWatch for the watch simulator');
+step(6, 'Building HeronWatch for the watch simulator');
 const derivedData = join(iosDir, 'DerivedData', watchUdid);
 const result = run(
   'xcodebuild',
@@ -286,7 +286,7 @@ const result = run(
     '-project',
     'App.xcodeproj',
     '-scheme',
-    'CareerOpsWatch',
+    'HeronWatch',
     '-configuration',
     'Debug',
     '-destination',
@@ -300,20 +300,14 @@ const result = run(
 );
 if (result?.status !== 0) {
   warn(`xcodebuild failed (exit ${result?.status})`);
-  warn('Open Xcode → CareerOpsWatch scheme → ⌘B to see the full error in the IDE.');
+  warn('Open Xcode → HeronWatch scheme → ⌘B to see the full error in the IDE.');
   run('open', [xcodeproj], { allowFail: true });
   process.exit(1);
 }
 ok('build succeeded');
 
 step(7, 'Installing + launching on watch sim');
-const appPath = join(
-  derivedData,
-  'Build',
-  'Products',
-  'Debug-watchsimulator',
-  'CareerOpsWatch.app',
-);
+const appPath = join(derivedData, 'Build', 'Products', 'Debug-watchsimulator', 'HeronWatch.app');
 if (!existsSync(appPath)) {
   warn(`built app not found at ${appPath}`);
   warn('Xcode build settings may differ — open the project to inspect.');
@@ -323,16 +317,16 @@ run('xcrun', ['simctl', 'install', watchUdid, appPath], { allowFail: true });
 const bundleId = 'com.heron.app.watchkitapp';
 const launch = run('xcrun', ['simctl', 'launch', watchUdid, bundleId], { allowFail: true });
 if (launch?.status === 0) {
-  ok('CareerOpsWatch launched on the watch simulator');
+  ok('HeronWatch launched on the watch simulator');
 } else {
   warn(`launch failed (exit ${launch?.status}) — install succeeded but launch did not`);
-  warn(`Verify CFBundleIdentifier matches "${bundleId}" in CareerOpsWatch/Info.plist.`);
+  warn(`Verify CFBundleIdentifier matches "${bundleId}" in HeronWatch/Info.plist.`);
 }
 
 info('');
 info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 info('Watch app running. Data flows in from the paired iPhone via');
 info('WCSession — run `pnpm dev:ios` in another terminal for the full');
-info('end-to-end stack. Edits to CareerOpsWatch/*.swift require re-running');
+info('end-to-end stack. Edits to HeronWatch/*.swift require re-running');
 info('this script (no hot-reload for SwiftUI on watchOS).');
 info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

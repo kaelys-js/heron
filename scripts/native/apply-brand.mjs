@@ -355,21 +355,22 @@ function applyAndroidKotlinBrand(brand) {
     ``,
     `    /** SharedPreferences keys — brand-namespaced for fork-safety. */`,
     `    object PrefsKey {`,
-    `        const val lanUrl = "\${name}:lan-url"`,
-    `        const val backendResolvedUrl = "\${name}:backend-resolved-url"`,
-    `        const val tailscaleUrl = "\${name}:tailscale-url"`,
-    `        const val productionUrl = "\${name}:production-url"`,
-    `        const val lastSeenIssue = "\${name}:last-seen-issue"`,
-    `        const val errorQueue = "\${name}:error-queue-native"`,
-    `        const val online = "\${name}:online"`,
+    `        const val lanUrl = "\$name:lan-url"`,
+    `        const val backendResolvedUrl = "\$name:backend-resolved-url"`,
+    `        const val tailscaleUrl = "\$name:tailscale-url"`,
+    `        const val productionUrl = "\$name:production-url"`,
+    `        const val lastSeenIssue = "\$name:last-seen-issue"`,
+    `        const val errorQueue = "\$name:error-queue-native"`,
+    `        const val online = "\$name:online"`,
     `    }`,
     ``,
     `    /** Build a custom-scheme deep link. */`,
     `    fun deepLink(route: String): String {`,
     `        val trimmed = if (route.startsWith("/")) route.substring(1) else route`,
-    `        return "\${urlScheme}://\${trimmed}"`,
+    `        return "\$urlScheme://\$trimmed"`,
     `    }`,
-    `    fun jobDeepLink(jobId: String): String = "\${urlScheme}://job/\${jobId}"`,
+    ``,
+    `    fun jobDeepLink(jobId: String): String = "\$urlScheme://job/\$jobId"`,
     `}`,
     ``,
   ].join('\n');
@@ -528,8 +529,8 @@ function applyFavicon(brand) {
 }
 
 function applyExtensionFolders(brand) {
-  // iOS extension folder names (CareerOpsWidget, CareerOpsLiveActivity,
-  // CareerOpsShareExtension, CareerOpsWatch) appear as path segments
+  // iOS extension folder names (HeronWidget, HeronLiveActivity,
+  // HeronShareExtension, HeronWatch) appear as path segments
   // in lefthook.yml's apply-brand `git add` step and in turbo.json's
   // brand-task inputs. A rebrand that renames any extension folder
   // would leave those paths broken; patch them from brand.extensions.*.name
@@ -544,7 +545,7 @@ function applyExtensionFolders(brand) {
     { suffix: 'Widget', name: ext.widget?.name },
     { suffix: 'LiveActivity', name: ext.liveActivity?.name },
     { suffix: 'ShareExtension', name: ext.shareExtension?.name },
-    { suffix: 'Watch', name: ext.watch?.name ?? 'CareerOpsWatch' },
+    { suffix: 'Watch', name: ext.watch?.name ?? 'HeronWatch' },
   ].filter((x) => x.name);
 
   for (const file of [join(ROOT, 'lefthook.yml'), join(ROOT, 'turbo.json')]) {
@@ -1015,7 +1016,7 @@ function applyClientBrandTs(brand) {
     `  mdnsType: ${JSON.stringify(brand.identifiers.mdnsType)},`,
     `  spotlightDomain: ${JSON.stringify(brand.identifiers.spotlightDomain)},`,
     `  keychainService: ${JSON.stringify(brand.identifiers.keychainService)},`,
-    `  capacitorPluginName: ${JSON.stringify(brand.identifiers.capacitorPluginName ?? 'CareerOpsNative')},`,
+    `  capacitorPluginName: ${JSON.stringify(brand.identifiers.capacitorPluginName ?? 'HeronNative')},`,
     `  colors: ${JSON.stringify(brand.colors, null, 2).replace(/\n/g, '\n  ')},`,
     `  repo: ${JSON.stringify(brand.repo, null, 2).replace(/\n/g, '\n  ')},`,
     `} as const;`,
@@ -1113,7 +1114,7 @@ function syncSharedSwift(brand) {
   // too (because Xcode app-extension targets can't import from the host).
   // ErrorReporter.swift is the canonical example — same source, 4 copies.
   const sharedFiles = ['ErrorReporter.swift'];
-  const targets = ['CareerOpsWidget', 'CareerOpsLiveActivity', 'CareerOpsShareExtension'];
+  const targets = ['HeronWidget', 'HeronLiveActivity', 'HeronShareExtension'];
   for (const f of sharedFiles) {
     const src = join(UI, 'ios', 'App', 'App', f);
     if (!existsSync(src)) continue;
@@ -1142,14 +1143,14 @@ function applySwiftConstants(brand) {
   // template, N copies, one place to edit (branding/brand.json).
   const paths = [
     join(UI, 'ios', 'App', 'App', 'Brand.swift'),
-    join(UI, 'ios', 'App', 'CareerOpsWidget', 'Brand.swift'),
-    join(UI, 'ios', 'App', 'CareerOpsLiveActivity', 'Brand.swift'),
-    join(UI, 'ios', 'App', 'CareerOpsShareExtension', 'Brand.swift'),
-    // CareerOpsWatch is a separate watchOS target. Without this copy
+    join(UI, 'ios', 'App', 'HeronWidget', 'Brand.swift'),
+    join(UI, 'ios', 'App', 'HeronLiveActivity', 'Brand.swift'),
+    join(UI, 'ios', 'App', 'HeronShareExtension', 'Brand.swift'),
+    // HeronWatch is a separate watchOS target. Without this copy
     // the Watch had to hardcode "group.com.heron.app" and
     // "heron://queue" everywhere — a rebrand drift waiting to
     // happen. The Watch's Brand.swift mirrors the host's verbatim.
-    join(UI, 'ios', 'App', 'CareerOpsWatch', 'Brand.swift'),
+    join(UI, 'ios', 'App', 'HeronWatch', 'Brand.swift'),
   ];
   const openJobActivity =
     brand.identifiers.userActivityTypes.find((t) => t.endsWith('.openJob')) ??
@@ -1171,7 +1172,7 @@ function applySwiftConstants(brand) {
     `    static let keychainService = "${brand.identifiers.keychainService}"`,
     `    static let openJobActivityType = "${openJobActivity}"`,
     `    /// Capacitor JS↔Swift bridge name. Must match TS registerPlugin('...') call.`,
-    `    static let capacitorPluginName = "${brand.identifiers.capacitorPluginName ?? 'CareerOpsNative'}"`,
+    `    static let capacitorPluginName = "${brand.identifiers.capacitorPluginName ?? 'HeronNative'}"`,
     ``,
     `    /// UserDefaults keys — all prefixed with brand name so they're`,
     `    /// namespaced and a brand rename moves them cleanly.`,
@@ -1184,7 +1185,7 @@ function applySwiftConstants(brand) {
     `        /// Bearer token mirrored from the WebView into App Group`,
     `        /// UserDefaults so the Share Extension can attach`,
     `        /// Authorization: Bearer <token> on its POSTs. Set by`,
-    `        /// CareerOpsNativePlugin.setSharedBearerToken; cleared on`,
+    `        /// HeronNativePlugin.setSharedBearerToken; cleared on`,
     `        /// sign-out.`,
     `        static let bearerToken = "\\(Brand.name):bearer-token"`,
     `    }`,

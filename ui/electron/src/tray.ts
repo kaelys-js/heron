@@ -52,7 +52,7 @@ const PREF_HIDE_DOCK = 'careerOpsHideDock';
 
 /**
  * Electron tray menu controller. Class name is brand-agnostic
- * (DesktopTray, not CareerOpsTray) so a rebrand doesn't require an
+ * (DesktopTray, not HeronTray) so a rebrand doesn't require an
  * Xcode-style class rename across every importer.
  */
 export class DesktopTray {

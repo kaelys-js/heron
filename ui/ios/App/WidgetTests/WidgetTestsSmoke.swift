@@ -1,4 +1,4 @@
-// WidgetTests — XCTest unit tests for the CareerOpsWidget extension
+// WidgetTests — XCTest unit tests for the HeronWidget extension
 // target. Real cases live in WidgetAuthGateTests.swift,
 // NextInterviewWidgetTests.swift, snapshot tests, etc.
 import XCTest
