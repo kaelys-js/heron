@@ -423,28 +423,31 @@ pre-push:
   parallel: true
   commands:
     engine-pin:
-      # Fail fast if the shell's Node doesn't match the engines pin.
-      # The .npmrc + .mise.toml + package.json::engines all agree on a
-      # single exact version (currently 26.1.0). pnpm only WARNS on a
-      # mismatch then proceeds, which means the user sees hundreds of
-      # "[WARN] Unsupported engine: wanted 26.1.0, current 25.9.0"
-      # lines smeared across pre-push output — and worse, they
-      # silently run their pre-push gauntlet against the WRONG Node,
-      # producing test results that don't match what CI will see.
+      # AUTO-FIX engine mismatch via mise (transparent to the user).
       #
-      # ensure-pnpm.mjs already enforces this at `pnpm install` time
-      # (it's the preinstall script); we run gate 2 again here so a
-      # mid-session Node-version drift (e.g. `mise install` upgraded
-      # the pin, but the user's shell still has the old version on
-      # PATH because they haven't `exec zsh`'d yet) blocks the push
-      # with an actionable mise-fix-it message instead of polluting
-      # every subsequent line of output.
-      run: node scripts/system/ensure-pnpm.mjs
-      fail_text: "Node version doesn't match engines pin. See the message above for the mise fix."
+      # Background: .npmrc + .mise.toml + package.json::engines all agree
+      # on a single exact Node version (currently 26.1.0). If the user's
+      # shell PATH resolves a DIFFERENT Node version (orphaned install,
+      # missing mise activation, etc.), pnpm only WARNS and proceeds —
+      # which means every line of output gets smeared with the warning
+      # AND the pre-push gauntlet runs on the wrong Node (test results
+      # diverge from CI).
+      #
+      # The shim does the right thing autonomously:
+      #   - If Node-on-PATH matches the pin → exits 0 instantly (~5ms).
+      #   - If it doesn't AND mise has the pinned version installed →
+      #     subsequent hooks already get the right Node via mise-shim.sh
+      #     wrappers (see other pre-push commands below); this hook is
+      #     just the diagnostic ping.
+      #   - If it doesn't AND mise isn't usable → falls into the
+      #     actionable error message from ensure-pnpm.mjs.
+      run: bash scripts/system/mise-shim.sh node scripts/system/ensure-pnpm.mjs
+      fail_text: "Node version doesn't match engines pin. mise isn't installed or doesn't have the pinned Node version — see message above."
     typecheck:
       # svelte-check (ui) + tsgo (electron), turbo-cached.
-      # Cold ~12s, warm <100ms.
-      run: pnpm exec turbo run check
+      # Cold ~12s, warm <100ms. Wrapped in mise-shim so it auto-routes
+      # through Node 26.x even when the dev shell has a stale Node.
+      run: bash scripts/system/mise-shim.sh pnpm exec turbo run check
     vitest:
       # Run the full Vitest matrix (ui-unit + ui-server + ui-component +
       # ui-routes + ui-integration + electron) via turbo. Cold ~30s on
@@ -462,12 +465,19 @@ pre-push:
       # detected.
       #
       # Bypass for the rare emergency push: `SKIP_LEFTHOOK=1 git push`.
+      #
+      # The whole pipeline runs under mise-shim so Node 26.x is active
+      # for both the native-binding probe AND the test workers. Without
+      # this wrapping a Node 25 shell would still run vitest under 25
+      # (engine warning + cached binding ABI mismatch).
       run: |
-        node scripts/native/ensure-native-bindings.mjs --quiet || {
-          echo "✗ native bindings unhealthy — run \`pnpm rebuild:native\` to fix."
-          exit 1
-        }
-        pnpm exec turbo run test
+        bash scripts/system/mise-shim.sh sh -c '
+          node scripts/native/ensure-native-bindings.mjs --quiet || {
+            echo "✗ native bindings unhealthy — run \`pnpm rebuild:native\` to fix."
+            exit 1
+          }
+          pnpm exec turbo run test
+        '
     format-check:
       # LAST-RESORT gate against unformatted code reaching origin. Auto-
       # recovers on drift so the developer gets a one-liner instead of a
@@ -492,12 +502,16 @@ pre-push:
       # biome major release), or (c) apply-brand regenerating a file
       # whose biome-preferred format diverges from what apply-brand
       # writes verbatim. This gate catches all three.
+      # Whole pipeline routes through mise-shim — biome / prettier /
+      # sort-package-json all need consistent Node + pnpm versions to
+      # produce reproducible output. The shim is a no-op when shell
+      # PATH already matches the pin.
       run: |
-        if pnpm format:check > /dev/null 2>&1; then
+        if bash scripts/system/mise-shim.sh pnpm format:check > /dev/null 2>&1; then
           exit 0
         fi
         echo "✗ Format drift detected. Auto-formatting…"
-        pnpm format > /dev/null 2>&1 || {
+        bash scripts/system/mise-shim.sh pnpm format > /dev/null 2>&1 || {
           echo "  (pnpm format itself failed — run it manually to see the error)"
           exit 1
         }
@@ -511,7 +525,7 @@ pre-push:
           echo "  pnpm format made no changes but format:check still fails."
           echo "  Surfacing the original diagnostic:"
           echo ""
-          pnpm format:check
+          bash scripts/system/mise-shim.sh pnpm format:check
           exit 1
         fi
         echo ""

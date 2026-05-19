@@ -27,7 +27,13 @@
     "automerge": false,
     "schedule": ["at any time"]
   },
-  "ignorePaths": ["**/node_modules/**", "**/dist/**", "**/build/**", "**/.svelte-kit/**"],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.svelte-kit/**",
+    "dashboard/**"
+  ],
   "packageRules": [
     {
       "description": "Group all Capacitor packages together",
@@ -128,7 +134,7 @@
       "labels": ["dependencies", "ios", "swift"]
     },
     {
-      "description": "Group Go module updates",
+      "description": "Group Go module updates (kept inert — see gomod.enabled=false below).",
       "matchManagers": ["gomod"],
       "groupName": "gomod",
       "labels": ["dependencies", "go"]
@@ -140,6 +146,16 @@
   },
   "pnpm": {
     "enabled": true
+  },
+  "gomod": {
+    "enabled": false
+  },
+  "swift": {
+    "enabled": true
+  },
+  "bundler": {
+    "enabled": true,
+    "fileMatch": ["(^|/)Gemfile$"]
   },
   "git-submodules": {
     "enabled": false

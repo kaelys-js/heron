@@ -1,13 +1,17 @@
 name: 'CodeQL Analysis'
 # G8 — extended to cover Python (scripts/) + Swift (ui/ios/App). Pre-fix
-# only TS was analyzed; we ship Python scrapers + a 5-target iOS app +
-# Go (dashboard helper) and missed half the attack surface.
+# only TS was analyzed; we ship Python scrapers + a 5-target iOS app
+# and missed half the attack surface.
 #
 # Matrix legs run in parallel on independent runners.
 #   • javascript-typescript — ubuntu, autobuild (just `pnpm install`)
 #   • python                — ubuntu, autobuild (scripts/ pure Python)
 #   • swift                 — macos-15, manual build (xcodebuild)
-#   • go                    — ubuntu, autobuild (when /dashboard exists)
+#
+# Go was dropped in commit 7b15e50 (the Go TUI was superseded by the
+# SvelteKit dashboard). Renovate is also gated against the deleted
+# directory in renovate.json::gomod.enabled=false + ignorePaths so
+# stale PRs against the removed go.mod can't reappear.
 on:
   push:
     branches: [main]
@@ -35,8 +39,6 @@ jobs:
       fail-fast: false
       matrix:
         language: [javascript-typescript, python, swift]
-        # `go` is conditional on whether /dashboard exists in the
-        # checkout. Skip it from the matrix until the directory ships.
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
