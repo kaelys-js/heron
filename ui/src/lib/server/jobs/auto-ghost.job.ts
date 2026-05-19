@@ -22,7 +22,7 @@ import { listStaleJobs, markGhosted, listAllStageState } from '../stage-state';
 import { listProfilesForUser } from '../profiles-db';
 import { reportIssue } from '../issues';
 import { logEvent } from '../events';
-import { runAsUser, SYSTEM_USER_ID } from '../user-context';
+import { currentUserIdOrDefault, SYSTEM_USER_ID } from '../user-context';
 
 const DAYS_TO_GHOST = 21;
 
@@ -51,36 +51,23 @@ function runOneProfile(profileId: string): { ghosted: number } {
   return { ghosted };
 }
 
-/** Pull the same user list autopilot uses for daily-scan fan-out. Resolved
- *  lazily to avoid a hard dep on the auth schema at module-load time. */
-async function listSchedulableUsers(): Promise<string[]> {
-  try {
-    const { authDb } = await import('../db');
-    const { users } = await import('../db/auth-schema');
-    const { isNull } = await import('drizzle-orm');
-    const rows = authDb.select({ id: users.id }).from(users).where(isNull(users.deletedAt)).all();
-    if (rows.length === 0) return [SYSTEM_USER_ID];
-    return rows.map((r: { id: string }) => r.id);
-  } catch {
-    return [SYSTEM_USER_ID];
-  }
-}
-
 async function runAutoGhost(): Promise<JobResult> {
+  // F26 — single fan-out only. Pre-fix runAutoGhost manually iterated
+  // listSchedulableUsers() AND was registered with perUser:true, so the
+  // registry's runById fan-out invoked this N times and each invocation
+  // looped over N users → N² work + N²× redundant logs. Now: declare
+  // perUser:true and trust the registry to fan out, operate on the
+  // current user only inside this function.
   let totalGhosted = 0;
   let profilesScanned = 0;
-  const userIds = await listSchedulableUsers();
-  for (const userId of userIds) {
-    await runAsUser(userId, async () => {
-      const profiles =
-        userId === SYSTEM_USER_ID
-          ? [{ slug: 'default' } as { slug: string }]
-          : listProfilesForUser(userId);
-      for (const p of profiles) {
-        profilesScanned++;
-        totalGhosted += runOneProfile(p.slug).ghosted;
-      }
-    });
+  const userId = currentUserIdOrDefault();
+  const profiles =
+    userId === SYSTEM_USER_ID
+      ? [{ slug: 'default' } as { slug: string }]
+      : listProfilesForUser(userId);
+  for (const p of profiles) {
+    profilesScanned++;
+    totalGhosted += runOneProfile(p.slug).ghosted;
   }
   const msg =
     'Auto-ghost sweep · ' +

@@ -1,0 +1,67 @@
+# GitHub's auto-generated release notes config. Release Please writes
+# CHANGELOG.md from Conventional Commits; this file shapes the
+# "Generate release notes" button's output for manual/keepalive tags
+# that don't go through Release Please (e.g. testflight-keepalive's
+# `v{X}.{Y}.{Z}-tf{YYYYMMDD}` tags).
+#
+# G16 — without this, manual tags get GitHub's default "what's changed"
+# block which dumps everything by PR title alone. The categorisation
+# below keeps DMG/IPA-recipients reading the right things first.
+
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+      - dependencies
+      - github-actions
+    authors:
+      - dependabot
+      - renovate-bot
+
+  categories:
+    - title: 🚨 Breaking changes
+      labels:
+        - breaking-change
+        - "type: breaking"
+
+    - title: ✨ New features
+      labels:
+        - feature
+        - "type: feat"
+        - enhancement
+
+    - title: 🐛 Bug fixes
+      labels:
+        - bug
+        - "type: fix"
+
+    - title: ⚡ Performance
+      labels:
+        - performance
+        - "type: perf"
+
+    - title: 🔒 Security
+      labels:
+        - security
+        - vulnerability
+
+    - title: 📚 Documentation
+      labels:
+        - documentation
+        - "type: docs"
+
+    - title: 🤖 CI / Tooling
+      labels:
+        - ci
+        - tooling
+        - test
+
+    - title: 🌟 Community contributions
+      labels:
+        - "good first issue"
+        - "help wanted"
+        - "I got hired"
+
+    - title: Other changes
+      labels:
+        - "*"

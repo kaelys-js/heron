@@ -84,7 +84,13 @@ jobs:
 
       - name: Commit + push fix
         if: steps.drift.outputs.drift == 'true'
+        # G31 — retry-with-rebase on push race. Pre-fix a concurrent push
+        # between this workflow's checkout and push would 422 silently
+        # (concurrency.cancel-in-progress: false means our run completes,
+        # but the push fails and we don't notice). Now we rebase + retry
+        # up to 3× before giving up.
         run: |
+          set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
@@ -92,4 +98,15 @@ jobs:
           SUFFIX=$([ "$FILES" -gt 1 ] && echo s)
           git commit -m "style: auto-format ($FILES file$SUFFIX) [skip ci]" \
                      -m "Automated commit by .github/workflows/format.yml — runs \`pnpm format\` and pushes the result so format-check in Tests can't fail on drift."
-          git push origin HEAD:${{ github.ref_name }}
+
+          for attempt in 1 2 3; do
+            if git push origin "HEAD:${{ github.ref_name }}"; then
+              echo "::notice::Pushed on attempt $attempt"
+              exit 0
+            fi
+            echo "::warning::Push attempt $attempt failed — rebasing + retrying"
+            git fetch origin "${{ github.ref_name }}"
+            git rebase "origin/${{ github.ref_name }}"
+          done
+          echo "::error::Push failed after 3 attempts (concurrent commits beat us). Re-run this workflow manually."
+          exit 1
