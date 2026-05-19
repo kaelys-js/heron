@@ -1207,35 +1207,21 @@ function mdSectionGenerators() {
   };
 }
 
-/** Build the doc-meta one-liner: brand displayName link + last-revised date.
+/** Build the doc-meta one-liner: brand displayName link.
  *  The link is relative to the file's own path (so README.md in branding/
- *  links up to ../README.md, etc.). The date is the most recent commit
- *  to the file per `git log -1 --format=%cs`. Falls back to today if
- *  the file isn't yet in git or git is unavailable. */
+ *  links up to ../README.md, etc.). No date stamp — the previous
+ *  "Last revised YYYY-MM-DD" produced commit churn every time apply-brand
+ *  ran against a file with a different latest-commit date. */
 function generateDocMeta(brand, filePath) {
   const rel = filePath.replace(ROOT + '/', '');
   const depth = (rel.match(/\//g) || []).length;
-  // Last revised: most recent commit to this file per git log. Falls
-  // back to today if git is missing or the file is untracked.
-  let lastRevised = new Date().toISOString().slice(0, 10);
-  try {
-    const out = execSync(`git log -1 --format=%cs -- "${filePath}"`, {
-      cwd: ROOT,
-      stdio: ['ignore', 'pipe', 'ignore'],
-    })
-      .toString()
-      .trim();
-    if (out && /^\d{4}-\d{2}-\d{2}$/.test(out)) lastRevised = out;
-  } catch {
-    /* git missing or file untracked — fall back to today */
-  }
   // README.md at root IS the brand entry point — no self-link needed.
   if (rel === 'README.md') {
-    return `*Last revised ${lastRevised} · [${brand.displayName}](${brand.homepageUrl ?? brand.repo.url}) · ${brand.tagline}*`;
+    return `*[${brand.displayName}](${brand.homepageUrl ?? brand.repo.url}) · ${brand.tagline}*`;
   }
   // Every other doc gets a relative link up to README.md.
   const linkToReadme = depth === 0 ? 'README.md' : '../'.repeat(depth) + 'README.md';
-  return `*Last revised ${lastRevised} · part of the [${brand.displayName}](${linkToReadme}) docs.*`;
+  return `*Part of the [${brand.displayName}](${linkToReadme}) docs.*`;
 }
 
 function mdColorBaseTable(b) {

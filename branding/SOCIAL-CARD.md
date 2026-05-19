@@ -1,10 +1,10 @@
 # Social card — Heron
 
 <!-- AUTO-GENERATED:doc-meta -->
-*Last revised 2026-05-19 · part of the [Heron](../README.md) docs.*
+*Part of the [Heron](../README.md) docs.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
-> Last revised 2026-05-15. Spec for the Heron Open Graph (OG) social
+> Spec for the Heron Open Graph (OG) social
 > card. The rendered PNG is what ships at `ui/static/social-card.png`
 > after Task 9 wiring. The HTML source lives at
 > [`assets/social-card.html`](./assets/social-card.html). Companion

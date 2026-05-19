@@ -1,15 +1,15 @@
 # Colors — Heron
 
 <!-- AUTO-GENERATED:doc-meta -->
-*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+*Part of the [Heron](../README.md) docs.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
-> Last revised 2026-05-15. The visual color system for Heron. Strategy +
-> voice live in [`BRAND.md`](./BRAND.md); typography in
-> [`TYPOGRAPHY.md`](./TYPOGRAPHY.md). The runtime/build source of truth
-> is the `colors` block in [`brand.json`](./brand.json) — a rebrand edits
-> that, runs `pnpm brand:apply`, and the CSS/Tailwind layer derives every
-> token below from those base values.
+> The visual color system for Heron. Strategy + voice live in
+> [`BRAND.md`](./BRAND.md); typography in [`TYPOGRAPHY.md`](./TYPOGRAPHY.md).
+> The runtime/build source of truth is the `colors` block in
+> [`brand.json`](./brand.json) — a rebrand edits that, runs
+> `pnpm brand:apply`, and the CSS/Tailwind layer derives every token
+> below from those base values.
 
 ## Concept
 
