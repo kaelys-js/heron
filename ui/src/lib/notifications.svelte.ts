@@ -83,57 +83,47 @@ class NotificationStore {
   connected = $state<'connecting' | 'open' | 'error'>('connecting');
   hasEverConnected = $state(false);
   runningTasks = $state<string[]>([]);
-  private es: EventSource | null = null;
+  /** Shared SSE client handle. The wrapper takes care of:
+   *   - resolving `/api/stream` against getApiBase() (Capacitor-safe)
+   *   - exponential backoff reconnect
+   *   - reset-and-reconnect on net-status / online events
+   *   - reset-and-reconnect on backend-URL changes
+   *  See lib/client/sse-client.ts. */
+  private sseClient: ReturnType<typeof import('./client/sse-client').createSseClient> | null = null;
   private autoToastSet = new Set<string>();
-  private reconnectAttempt = 0;
-  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private runningInterval: ReturnType<typeof setInterval> | null = null;
 
   init() {
-    if (!browser || this.es) return;
-    this.connect();
+    if (!browser || this.sseClient) return;
+    void this.connect();
     this.refreshRunning();
     this.runningInterval = setInterval(() => this.refreshRunning(), 3000);
   }
 
-  private connect() {
+  private async connect(): Promise<void> {
     if (!browser) return;
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-    try {
-      this.es?.close();
-    } catch {}
-    this.es = new EventSource('/api/stream');
+    const { createSseClient } = await import('./client/sse-client');
+    // Idempotent — earlier client (if any) is closed by sse-client's
+    // internal teardown. Guard against double-init by clearing first.
+    this.sseClient?.close();
     this.connected = 'connecting';
-    this.es.onopen = () => {
-      this.connected = 'open';
-      this.hasEverConnected = true;
-      this.reconnectAttempt = 0;
-    };
-    this.es.onerror = () => {
-      this.connected = 'error';
-      this.scheduleReconnect();
-    };
-    this.es.onmessage = (e) => {
-      try {
-        const ev: ActivityEvent = JSON.parse(e.data);
-        this.add(ev, { autoToast: true });
-        // Refresh running tasks when a task event comes in
-        if (ev.category === 'task') this.refreshRunning();
-      } catch {}
-    };
-  }
-
-  private scheduleReconnect() {
-    if (this.reconnectTimer) return;
-    const delay = Math.min(30_000, 1000 * Math.pow(2, this.reconnectAttempt));
-    this.reconnectAttempt += 1;
-    this.reconnectTimer = setTimeout(() => {
-      this.reconnectTimer = null;
-      this.connect();
-    }, delay);
+    this.sseClient = createSseClient('/api/stream', {
+      onOpen: () => {
+        this.connected = 'open';
+        this.hasEverConnected = true;
+      },
+      onError: () => {
+        this.connected = 'error';
+      },
+      onMessage: (e) => {
+        try {
+          const ev: ActivityEvent = JSON.parse(e.data);
+          this.add(ev, { autoToast: true });
+          // Refresh running tasks when a task event comes in
+          if (ev.category === 'task') this.refreshRunning();
+        } catch {}
+      },
+    });
   }
 
   async refreshRunning() {
@@ -152,11 +142,9 @@ class NotificationStore {
   }
 
   destroy() {
-    this.es?.close();
-    this.es = null;
-    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.sseClient?.close();
+    this.sseClient = null;
     if (this.runningInterval) clearInterval(this.runningInterval);
-    this.reconnectTimer = null;
     this.runningInterval = null;
   }
 

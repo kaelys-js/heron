@@ -19,12 +19,14 @@
  *   • iOS: @capacitor/local-notifications.schedule() — works in
  *     foreground; coalesces by tag for repeat events.
  *
- * Call `installNotificationsBridge(backendUrl)` once at app startup
- * (after backend-discovery resolves). Returns a `stop()` function for
- * teardown when the user reconfigures the backend.
+ * Call `installNotificationsBridge()` once at app startup. The shared
+ * sse-client wrapper resolves /api/notifications against getApiBase()
+ * (Capacitor-safe), handles exponential backoff, and reconnects on
+ * native net-status changes. Returns a `stop()` function for teardown.
  */
 import { notify, requestPermission } from './notifications';
 import { BRAND, BRAND_EVENTS, jobDeepLink } from './brand';
+import { createSseClient } from './sse-client';
 
 /**
  * Sources that, when an event comes in for them, mean a widget surface
@@ -57,59 +59,55 @@ export type SseEvent = {
   createdAt?: number;
 };
 
-export function installNotificationsBridge(backendUrl: string): () => void {
+export function installNotificationsBridge(): () => void {
   // Eagerly request permission so the first surfaced notification fires.
   void requestPermission();
 
-  const es = new EventSource(backendUrl.replace(/\/$/, '') + '/api/notifications');
-
-  es.addEventListener('message', (ev) => {
-    let event: SseEvent;
-    try {
-      event = JSON.parse(ev.data);
-    } catch {
-      return;
-    }
-    if (!event) return;
-    // Fire a widget-stale event whenever the activity feed reports
-    // something that changes widget data — even for info-level events.
-    // The +layout.svelte boot path listens for this and re-fetches
-    // /api/widgets/snapshot, then pushes to the iPhone-side plugin.
-    // Without this listener, widgets only refreshed on cold boot +
-    // app-resume, missing every in-session state change.
-    if (shouldRefreshWidgets(event.source) && typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent(`${BRAND_EVENTS.notify}:widgets-stale`));
-    }
-    if (event.level !== 'warn' && event.level !== 'error' && event.level !== 'success') {
-      // We only surface non-info notifications by default. The user can
-      // toggle info-level via ui-prefs.notifications.os.info.
-      return;
-    }
-    const tag = event.jobId ? `apply:${event.jobId}` : (event.source ?? event.id);
-    void notify({
-      title: event.title ?? `${BRAND.displayName}: ${event.level}`,
-      body: event.message ?? '',
-      tag,
-      level: event.level,
-      deepLink: event.jobId ? jobDeepLink(event.jobId) : undefined,
-      onClick: () => {
-        // Defence-in-depth: jobId comes from server-sent events. If a
-        // malicious JD ever poisons the upstream event producer, restrict
-        // navigation to safe alphanumeric ids. Anything else stays put.
-        if (
-          event.jobId &&
-          typeof window !== 'undefined' &&
-          /^[a-zA-Z0-9_-]{1,64}$/.test(event.jobId)
-        ) {
-          window.location.href = `/job/${encodeURIComponent(event.jobId)}`;
-        }
-      },
-    });
+  const client = createSseClient('/api/notifications', {
+    onMessage: (ev) => {
+      let event: SseEvent;
+      try {
+        event = JSON.parse(ev.data);
+      } catch {
+        return;
+      }
+      if (!event) return;
+      // Fire a widget-stale event whenever the activity feed reports
+      // something that changes widget data — even for info-level events.
+      // The +layout.svelte boot path listens for this and re-fetches
+      // /api/widgets/snapshot, then pushes to the iPhone-side plugin.
+      // Without this listener, widgets only refreshed on cold boot +
+      // app-resume, missing every in-session state change.
+      if (shouldRefreshWidgets(event.source) && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(`${BRAND_EVENTS.notify}:widgets-stale`));
+      }
+      if (event.level !== 'warn' && event.level !== 'error' && event.level !== 'success') {
+        // We only surface non-info notifications by default. The user can
+        // toggle info-level via ui-prefs.notifications.os.info.
+        return;
+      }
+      const tag = event.jobId ? `apply:${event.jobId}` : (event.source ?? event.id);
+      void notify({
+        title: event.title ?? `${BRAND.displayName}: ${event.level}`,
+        body: event.message ?? '',
+        tag,
+        level: event.level,
+        deepLink: event.jobId ? jobDeepLink(event.jobId) : undefined,
+        onClick: () => {
+          // Defence-in-depth: jobId comes from server-sent events. If a
+          // malicious JD ever poisons the upstream event producer, restrict
+          // navigation to safe alphanumeric ids. Anything else stays put.
+          if (
+            event.jobId &&
+            typeof window !== 'undefined' &&
+            /^[a-zA-Z0-9_-]{1,64}$/.test(event.jobId)
+          ) {
+            window.location.href = `/job/${encodeURIComponent(event.jobId)}`;
+          }
+        },
+      });
+    },
   });
 
-  es.addEventListener('error', () => {
-    // EventSource auto-reconnects on its own; no-op.
-  });
-
-  return () => es.close();
+  return () => client.close();
 }
