@@ -1,7 +1,7 @@
 # Contributing to Heron
 
 <!-- AUTO-GENERATED:doc-meta -->
-*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+*Last revised 2026-05-19 · part of the [Heron](../README.md) docs.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
 Thanks for your interest in contributing! Heron is built with Claude Code, and you can use it for development too.
@@ -35,7 +35,7 @@ PRs without a corresponding issue may be closed if they don't align with the pro
 - Translate modes to other languages
 - Improve documentation
 - Add example CVs for different roles (in `docs/examples/`)
-- Report bugs via [Issues](https://github.com/heron/heron/issues)
+- Report bugs via [Issues](https://github.com/kaelys-js/heron/issues)
 
 **Bigger contributions:**
 - New evaluation dimensions or scoring logic
@@ -141,9 +141,9 @@ how to get help efficiently.
 
 | Question type | Where |
 |---|---|
-| **Bug** (something is broken) | [GitHub Issues](https://github.com/heron/heron/issues) — use the Bug Report template |
-| **Feature idea** | [GitHub Issues](https://github.com/heron/heron/issues) — use the Feature Request template |
-| **How do I…?** | [GitHub Discussions](https://github.com/heron/heron/discussions) or [Discord](https://discord.gg/8pRpHETxa4) |
+| **Bug** (something is broken) | [GitHub Issues](https://github.com/kaelys-js/heron/issues) — use the Bug Report template |
+| **Feature idea** | [GitHub Issues](https://github.com/kaelys-js/heron/issues) — use the Feature Request template |
+| **How do I…?** | [GitHub Discussions](https://github.com/kaelys-js/heron/discussions) or [Discord](https://discord.gg/8pRpHETxa4) |
 | **Setup help** | Check [`docs/SETUP.md`](../docs/SETUP.md) first, then ask in [Discord](https://discord.gg/8pRpHETxa4) |
 | **Security vulnerability** | Email <hello@heron.app> — see [`SECURITY.md`](SECURITY.md) |
 

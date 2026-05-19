@@ -54,13 +54,13 @@ the language is deliberate.
 | **Name** | Heron |
 | **Tagline** | Stand still. Strike well. |
 | **License** | MIT |
-| **Source** | <https://github.com/heron/heron> |
+| **Source** | <https://github.com/kaelys-js/heron> |
 | **Website** | <https://heron.app> |
 | **Discord** | <https://discord.gg/8pRpHETxa4> |
 | **Bundle ID** | `com.heron.app` |
 | **URL scheme** | `heron://` |
 | **Support email** | <hello@heron.app> |
-| **Heritage** | Hard fork of [`santifer/heron`](https://github.com/santifer/heron) |
+| **Heritage** | Hard fork of [`santifer/career-ops`](https://github.com/santifer/career-ops) |
 <!-- /AUTO-GENERATED:quick-facts-table -->
 
 ## Identifiers

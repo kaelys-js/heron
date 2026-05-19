@@ -9,6 +9,6 @@ export const BRAND = {
   urlScheme: "heron",
   serviceType: "_heron._tcp",
   mdnsType: "heron",
-  repoUrl: "https://github.com/heron/heron",
-  issuesUrl: "https://github.com/heron/heron/issues",
+  repoUrl: "https://github.com/kaelys-js/heron",
+  issuesUrl: "https://github.com/kaelys-js/heron/issues",
 } as const;

@@ -446,7 +446,7 @@ AGENT_CLI=opencode pnpm dev
 spawn (`--dangerously-skip-permissions`, `--append-system-prompt-file`,
 `--model sonnet`). Other CLIs may need adapter shims that translate or
 strip those flags. Track per-CLI compatibility in
-[issues](https://github.com/heron/heron/issues) — the abstraction
+[issues](https://github.com/kaelys-js/heron/issues) — the abstraction
 ships intentionally minimal so adapter work is incremental and discoverable.
 
 Single source of truth: `ui/src/lib/config/cli.ts`.

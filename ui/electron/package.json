@@ -11,11 +11,11 @@
   ],
   "homepage": "https://heron.app",
   "bugs": {
-    "url": "https://github.com/heron/heron/issues"
+    "url": "https://github.com/kaelys-js/heron/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/heron/heron",
+    "url": "https://github.com/kaelys-js/heron",
     "directory": "ui/electron"
   },
   "license": "MIT",

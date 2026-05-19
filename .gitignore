@@ -270,3 +270,5 @@ ui/electron/.svelte-kit/generated/client/app.js
 ui/electron/.svelte-kit/generated/client/matchers.js
 ui/electron/.svelte-kit/generated/client/nodes/0.js
 ui/electron/.svelte-kit/generated/client/nodes/1.js
+/.lostpixel/current
+/.lostpixel/difference

@@ -20,7 +20,7 @@
 version = 1
 SPDX-PackageName = "heron"
 SPDX-PackageSupplier = "resist.js <hello@heron.app>"
-SPDX-PackageDownloadLocation = "https://github.com/heron/heron"
+SPDX-PackageDownloadLocation = "https://github.com/kaelys-js/heron"
 
 [[annotations]]
 path = "**"

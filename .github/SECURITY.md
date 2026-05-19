@@ -1,7 +1,7 @@
 # Security Policy
 
 <!-- AUTO-GENERATED:doc-meta -->
-*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+*Last revised 2026-05-19 · part of the [Heron](../README.md) docs.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
 ## Reporting a Vulnerability
@@ -11,7 +11,7 @@
 Use one of:
 
 1. **Preferred — GitHub Private Vulnerability Reporting:**
-   [github.com/heron/heron/security/advisories/new](https://github.com/heron/heron/security/advisories/new)
+   [github.com/kaelys-js/heron/security/advisories/new](https://github.com/kaelys-js/heron/security/advisories/new)
    Encrypted in transit, reviewed by the maintainer only, and gives you a private
    advisory you can collaborate on without leaking details.
 

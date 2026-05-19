@@ -7,14 +7,14 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security vulnerability (PRIVATE)
-    url: https://github.com/heron/heron/security/advisories/new
+    url: https://github.com/kaelys-js/heron/security/advisories/new
     about: ⚠️ NEVER report security issues here publicly. Use GitHub Private Vulnerability Reporting instead.
   - name: Setup / how-to question
     url: https://discord.gg/8pRpHETxa4
     about: Faster than opening an issue. Real humans, real-time.
   - name: GitHub Discussions
-    url: https://github.com/heron/heron/discussions
+    url: https://github.com/kaelys-js/heron/discussions
     about: Ideas, Q&A, show-and-tell, community conversations.
   - name: Documentation
-    url: https://github.com/heron/heron#readme
+    url: https://github.com/kaelys-js/heron#readme
     about: Read the README before opening an issue — your question might already be answered.

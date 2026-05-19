@@ -9,4 +9,4 @@ Heron is a personal job-search productivity tool.
 
 Heron is open-source (MIT) and self-hostable. The dashboard runs on your Mac, your phone connects via secure local network or Tailscale, and your data stays on YOUR machines.
 
-Source: https://github.com/heron/heron
+Source: https://github.com/kaelys-js/heron

@@ -1,0 +1,244 @@
+name: PR bots
+# PR-time automation that reduces reviewer + author friction.
+#
+# Four small jobs sharing one workflow + one harden-runner setup:
+#
+#   • auto-merge      — when a PR has 1+ approval AND all required
+#                       checks pass AND no `do-not-merge` label, enable
+#                       auto-merge (squash). Renovate already has this
+#                       for dep updates; this extends to human PRs.
+#   • stale-pinger    — when a PR has had no activity for 14 days,
+#                       drop a friendly @mention 7 days BEFORE
+#                       stale.yml's 30-day close threshold. Pings the
+#                       author + the first reviewer.
+#   • needs-rebase    — when main moves and a PR's HEAD diverges from
+#                       its base, comment with `gh pr update-branch`
+#                       instructions. Fires on push-to-main.
+#   • first-timer-help — extends welcome.yml: when a NEW contributor
+#                       opens their first PR, drop a comment with the
+#                       exact `pnpm test` / `pnpm test:e2e` /
+#                       `pnpm act:test` commands they need to verify
+#                       locally before requesting review.
+#
+# Why one file with multiple `on:` triggers: each job has a distinct
+# trigger but shares the same permissions + actor-skip logic. Keeping
+# them in one file makes the cost (one harden-runner setup) shared.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, ready_for_review, synchronize, labeled]
+  pull_request_review:
+    types: [submitted]
+  push:
+    branches: [main]
+  schedule:
+    # 6am UTC Mon-Fri — pinger doesn't need to run on weekends
+    - cron: "0 6 * * 1-5"
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: pr-bots-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  # ── auto-merge — opt-in, label-gated, dep-PR-aware ────────────────
+  auto-merge:
+    name: Auto-merge approved PRs
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    # Trigger only on review + label events (where the gating state changed)
+    if: |
+      github.event_name == 'pull_request_review' ||
+      (github.event_name == 'pull_request_target' &&
+       (github.event.action == 'labeled' || github.event.action == 'ready_for_review'))
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Enable auto-merge
+        # No external action needed — `gh pr merge --auto` waits for
+        # the required checks to land then squash-merges. The check
+        # below verifies the PR meets the gates BEFORE enabling.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          # Skip if the PR carries the do-not-merge label
+          if gh pr view "$PR" --json labels --jq '.labels[].name' | grep -q '^do-not-merge$'; then
+            echo "::notice::PR #$PR has do-not-merge label — skipping auto-merge"
+            exit 0
+          fi
+          # Skip drafts
+          if gh pr view "$PR" --json isDraft --jq '.isDraft' | grep -q true; then
+            echo "::notice::PR #$PR is a draft — skipping auto-merge"
+            exit 0
+          fi
+          # Require at least one approval (Renovate/Dependabot get auto-merge via their own workflow)
+          AUTHOR=$(gh pr view "$PR" --json author --jq '.author.login')
+          if [ "$AUTHOR" = "renovate[bot]" ] || [ "$AUTHOR" = "dependabot[bot]" ]; then
+            echo "::notice::PR #$PR is a bot PR — Renovate's own automerge handles it"
+            exit 0
+          fi
+          APPROVALS=$(gh pr view "$PR" --json reviews --jq '[.reviews[] | select(.state == "APPROVED")] | length')
+          if [ "$APPROVALS" -lt 1 ]; then
+            echo "::notice::PR #$PR has $APPROVALS approval(s) — auto-merge needs 1+"
+            exit 0
+          fi
+          gh pr merge "$PR" --auto --squash --delete-branch || {
+            echo "::warning::Could not enable auto-merge for PR #$PR (likely a branch-protection or merge-conflict issue)"
+          }
+          echo "::notice::Auto-merge enabled for PR #$PR"
+
+  # ── stale-PR pinger — friendly nudge 7d before stale.yml closes ───
+  stale-pinger:
+    name: Ping inactive PRs (7d before stale-close)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Only fires on the weekday schedule
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Find PRs aged 23 days with no comments in last 7 days
+        # stale.yml closes PRs after 30 days inactivity (16d stale +
+        # 14d close window). We ping at day 23 — 7d before the close.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          THRESHOLD=$(date -u -d '23 days ago' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
+            || date -u -v-23d +%Y-%m-%dT%H:%M:%SZ)
+          PRS=$(gh pr list --state open --json number,author,updatedAt,reviewRequests \
+            --jq ".[] | select(.updatedAt < \"$THRESHOLD\")")
+          if [ -z "$PRS" ]; then
+            echo "::notice::No stale PRs to ping"
+            exit 0
+          fi
+          echo "$PRS" | jq -c '.' | while read -r pr; do
+            NUM=$(echo "$pr" | jq -r '.number')
+            AUTHOR=$(echo "$pr" | jq -r '.author.login')
+            REVIEWERS=$(echo "$pr" | jq -r '.reviewRequests[].login' | tr '\n' ' ')
+            REVIEWER_TAG="${REVIEWERS:+@${REVIEWERS// / @}}"
+            {
+              printf '👋 @%s — this PR has had no activity for 23 days. stale.yml will close it in ~7 days unless someone comments to keep it open.\n\n' "$AUTHOR"
+              printf "If you're still working on it: a comment + a rebase against \`main\` is enough.\n"
+              printf "If you're waiting on review: %s could you take a look?\n\n" "$REVIEWER_TAG"
+              printf "To override the close: add the \`pinned\` label.\n\n"
+              printf "_Posted automatically by .github/workflows/pr-bots.yml — stale-pinger job._\n"
+            } > /tmp/comment.md
+            gh pr comment "$NUM" --body-file /tmp/comment.md || true
+            echo "::notice::Pinged PR #$NUM"
+          done
+
+  # ── needs-rebase — comment when main moves ahead of a PR ──────────
+  needs-rebase:
+    name: Comment on PRs that need rebase after main push
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Find PRs that are BEHIND or DIRTY relative to main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # GH's mergeable field returns null while GH is computing —
+          # poll briefly. CONFLICTING means real merge conflict;
+          # BEHIND means out-of-date with base.
+          PRS=$(gh pr list --state open --json number,mergeStateStatus,author \
+            --jq '.[] | select(.mergeStateStatus == "BEHIND" or .mergeStateStatus == "DIRTY")')
+          if [ -z "$PRS" ]; then
+            echo "::notice::No PRs need rebase"
+            exit 0
+          fi
+          echo "$PRS" | jq -c '.' | while read -r pr; do
+            NUM=$(echo "$pr" | jq -r '.number')
+            AUTHOR=$(echo "$pr" | jq -r '.author.login')
+            STATUS=$(echo "$pr" | jq -r '.mergeStateStatus')
+            # Bot PRs handle their own rebase
+            if [ "$AUTHOR" = "renovate[bot]" ] || [ "$AUTHOR" = "dependabot[bot]" ]; then
+              continue
+            fi
+            # Skip if we've already commented since the last main push
+            # (cheap heuristic: check for our needs-rebase signature
+            # in the most recent 5 comments)
+            RECENT=$(gh pr view "$NUM" --json comments \
+              --jq '[.comments[-5:][] | select(.body | contains("[pr-bots/needs-rebase]"))] | length')
+            if [ "$RECENT" -gt 0 ]; then
+              continue
+            fi
+            # shellcheck disable=SC2016 # printf format strings with %s placeholders are intentional (not expansion-broken)
+            case "$STATUS" in
+              BEHIND)
+                {
+                  printf "📦 @%s — this PR is behind \`main\`. Update with:\n\n" "$AUTHOR"
+                  printf '```sh\ngh pr update-branch %s\n```\n\n' "$NUM"
+                  printf "Or locally: \`git fetch origin main && git rebase origin/main && git push --force-with-lease\`.\n\n"
+                  printf "_[pr-bots/needs-rebase] — automated reminder. Re-fires on next main push if still behind/dirty._\n"
+                } > /tmp/comment.md
+                ;;
+              DIRTY)
+                {
+                  printf "⚠️  @%s — this PR has merge conflicts with \`main\`. Please rebase:\n\n" "$AUTHOR"
+                  printf '```sh\ngit fetch origin main\ngit rebase origin/main\n# resolve conflicts in your editor, then:\ngit rebase --continue\ngit push --force-with-lease\n```\n\n'
+                  printf "_[pr-bots/needs-rebase] — automated reminder. Re-fires on next main push if still behind/dirty._\n"
+                } > /tmp/comment.md
+                ;;
+            esac
+            gh pr comment "$NUM" --body-file /tmp/comment.md || true
+            echo "::notice::Commented on PR #$NUM ($STATUS)"
+          done
+
+  # ── first-timer test-help — when a first-time contributor opens a PR ──
+  first-timer-help:
+    name: First-timer test-help comment
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    if: |
+      github.event_name == 'pull_request_target' &&
+      github.event.action == 'opened' &&
+      github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Drop the test-help comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          {
+            printf "Welcome, @%s — first PR? Here's the local-verification checklist before requesting review:\n\n" "$AUTHOR"
+            printf '```sh\n'
+            printf 'pnpm install                          # one-shot workspace install\n'
+            printf 'pnpm check                            # svelte-check + tsgo (typecheck)\n'
+            printf 'pnpm test                             # full Vitest matrix (~60s)\n'
+            printf 'pnpm --filter ui test:e2e             # Playwright E2E smoke\n'
+            printf 'pnpm --filter ui size                 # bundle-size budget check\n'
+            printf 'pnpm format                           # biome + prettier-svelte in-place\n'
+            printf '```\n\n'
+            printf "For CI without pushing: \`pnpm act:test\` (needs Docker).\n\n"
+            printf "Sign off your commits with \`git commit -s\` — DCO required (see CONTRIBUTING.md).\n\n"
+            printf "Need a hand? Drop into [Discord](https://discord.gg/8pRpHETxa4) — same-day response during EU/US hours.\n\n"
+            printf "_Posted automatically by .github/workflows/pr-bots.yml — first-timer-help job._\n"
+          } > /tmp/comment.md
+          gh pr comment "$PR" --body-file /tmp/comment.md
+          echo "::notice::Welcomed first-time contributor @$AUTHOR on PR #$PR"

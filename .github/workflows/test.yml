@@ -306,6 +306,29 @@ jobs:
       - name: Build (turbo)
         run: pnpm build
 
+      # ── E2E (Playwright against prod build via vite preview) ─────
+      # Spec lives under ui/e2e/; playwright.config.ts boots `vite
+      # preview` with the already-built static bundle, runs the auth +
+      # smoke specs in headless Chromium. CI=1 enables retry-on-flake
+      # + trace-on-failure for diagnostics.
+      - name: Install Playwright browsers
+        run: pnpm --filter ui exec playwright install --with-deps chromium
+
+      - name: E2E (Playwright)
+        env:
+          CI: "1"
+        run: pnpm --filter ui test:e2e
+
+      - name: Upload Playwright trace + screenshots on failure
+        if: failure() && hashFiles('ui/playwright-report/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: |
+            ui/playwright-report/
+            ui/test-results/
+          retention-days: 14
+
   # ─────────────────────────────────────────────────────────────────
   # iOS — Fastlane test_ci on macOS-15 (Xcode 16, Swift 5.9+)
   # ─────────────────────────────────────────────────────────────────

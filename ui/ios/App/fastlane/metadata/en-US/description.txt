@@ -11,4 +11,4 @@ Heron is open-source (MIT) and self-hostable. The dashboard runs on your Mac, yo
 
 Built with Capacitor + SvelteKit + Better Auth (passkey-first).
 
-Source: https://github.com/heron/heron
+Source: https://github.com/kaelys-js/heron
