@@ -27,13 +27,22 @@ import {
   existsSync,
   copyFileSync as _fsCopyFileSync,
   statSync,
+  mkdirSync,
 } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+// ROOT is the repo root by default — the script lives at
+// scripts/native/apply-brand.mjs so two `..` jumps land at /<repo>.
+// HERON_BRAND_ROOT env override is the test-isolation hook: integration
+// tests in ui/src/lib/integration/capacitor.integration.test.ts copy
+// `branding/` into a tmpdir + invoke apply-brand with HERON_BRAND_ROOT
+// pointing at that tmpdir, so the destructive-rebrand assertions never
+// mutate real source. Production never sets this.
+const ROOT =
+  process.env.HERON_BRAND_ROOT ?? join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const UI = join(ROOT, 'ui');
 const CACHE_FILE = join(ROOT, 'scripts', 'native', 'icons', '_build', '.apply-brand-cache');
 const BRAND_JSON = join(ROOT, 'branding', 'brand.json');
@@ -95,6 +104,11 @@ function writeFileSync(path, content) {
       // Unreadable (permission / lock) — fall through and rewrite
     }
   }
+  // Ensure parent dir exists. Production trees always have these dirs,
+  // but the integration suite scaffolds a partial tree under tmpdir and
+  // expects apply-brand to write anyway (the test rig only copies
+  // `branding/` + `templates/`, not the whole repo).
+  mkdirSync(dirname(path), { recursive: true });
   _fsWriteFileSync(path, content);
   MODIFIED_FILES.add(path);
 }
@@ -107,6 +121,8 @@ function copyFileSync(src, dest) {
       // Either side unreadable — fall through and re-copy
     }
   }
+  // Same parent-dir-exists guarantee as writeFileSync above.
+  mkdirSync(dirname(dest), { recursive: true });
   _fsCopyFileSync(src, dest);
   MODIFIED_FILES.add(dest);
 }
