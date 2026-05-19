@@ -26,6 +26,7 @@ import { complete } from '$lib/server/ai';
 import { getSource } from '$lib/server/sources';
 import { logEvent } from '$lib/server/events';
 import { ROOT } from '$lib/server/files';
+import { userContextEnv } from '$lib/server/user-context';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 
@@ -149,7 +150,7 @@ function spawnExtractScript(url: string): Promise<string> {
     const py = fs.existsSync(venvPython) ? venvPython : 'python3';
     const p = spawn(py, ['scripts/linkedin/extract-linkedin-profile.py', '--url', url], {
       cwd: ROOT,
-      env: { ...process.env },
+      env: userContextEnv(),
     });
 
     let stdoutBuf = '';

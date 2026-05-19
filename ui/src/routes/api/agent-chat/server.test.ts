@@ -41,6 +41,19 @@ vi.mock('$lib/server/events', () => ({
   reportServerError: vi.fn(),
 }));
 
+// F29 — stub auth-helpers so the test doesn't import the DB transitively.
+// Match the real implementation by throwing SvelteKit's HttpError (which
+// the wrap() helper unwraps into a Response with the correct status).
+vi.mock('$lib/server/auth-helpers', async () => {
+  const { error } = await import('@sveltejs/kit');
+  return {
+    requireUserId: (locals: { user?: { id: string } | null }) => {
+      if (!locals?.user) throw error(401, 'unauthenticated');
+      return locals.user.id;
+    },
+  };
+});
+
 const { POST } = await import('./+server');
 
 beforeEach(() => {
@@ -52,7 +65,21 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-async function post(body: unknown) {
+// F29 — handler now calls requireUserId; tests provide a fake authed
+// locals so the requireUserId guard passes. Anonymous-call test below
+// asserts the guard 401s.
+const FAKE_LOCALS = {
+  user: {
+    id: 'user-test',
+    email: 'test@example.com',
+    name: 'Test User',
+    role: 'owner' as const,
+    deletedAt: null,
+  },
+  session: null,
+} as unknown as App.Locals;
+
+async function post(body: unknown, locals: App.Locals = FAKE_LOCALS) {
   const r = (await (POST as unknown as (e: unknown) => Promise<Response>)({
     url: new URL('http://localhost/api/agent-chat'),
     request: new Request('http://localhost/api/agent-chat', {
@@ -60,6 +87,7 @@ async function post(body: unknown) {
       body: typeof body === 'string' ? body : JSON.stringify(body),
       headers: { 'Content-Type': 'application/json' },
     }),
+    locals,
   } as unknown)) as Response;
   return { status: r.status, body: await r.json() };
 }
@@ -100,5 +128,11 @@ describe('POST /api/agent-chat', () => {
     expect(chatCalls[0].sys).toContain('r9.md');
     // Earlier reports aren't included
     expect(chatCalls[0].sys).not.toContain('r0.md');
+  });
+
+  it('401s an anonymous request (F29 defense-in-depth)', async () => {
+    const ANON_LOCALS = { user: null, session: null } as unknown as App.Locals;
+    const r = await post({}, ANON_LOCALS);
+    expect(r.status).toBe(401);
   });
 });
