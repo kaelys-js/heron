@@ -19,7 +19,7 @@
  *   • Apple Watch complication (the ring + "X hours" countdown)
  *   • iOS widget tiny-size variant
  *
- * Designed to be a single network call from the Watch — every detail
+ * Designed to be a single network call from the Watch -- every detail
  * needed for the glance fits in ~500 bytes.
  */
 

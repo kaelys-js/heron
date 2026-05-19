@@ -1,5 +1,5 @@
 /**
- * E2E — sign-in flow smoke test.
+ * E2E -- sign-in flow smoke test.
  *
  * Cold-path: unauthenticated visit → /login redirect → success state.
  * The full passkey + GitHub-OAuth flows are out of E2E scope (require

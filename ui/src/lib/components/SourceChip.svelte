@@ -25,7 +25,7 @@
     if (!source) return null;
     const known = SOURCE_LABELS[source];
     if (known) return known;
-    // Fallback for sources we haven't catalogued — still render but with a
+    // Fallback for sources we haven't catalogued -- still render but with a
     // neutral tint and the raw id so we can spot uncategorised values
     // showing up in production.
     return { label: source, tint: 'bg-muted/30 text-muted-foreground border-border/50' };

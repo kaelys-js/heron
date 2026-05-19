@@ -31,7 +31,7 @@ export const POST = wrap(
       } catch (err) {
         // markClosed itself logs via reportServerError, but surface a focused
         // warn here too so the user sees that the verdict was 'expired' but
-        // the row didn't update — they may need to fix permissions on
+        // the row didn't update -- they may need to fix permissions on
         // applications.md or rotate a corrupt file.
         logEvent('job-liveness', 'Could not auto-close after expired verdict', {
           level: 'warn',

@@ -1,15 +1,15 @@
-# Mode: evaluate — Complete A-G Evaluation
+# Mode: evaluate -- Complete A-G Evaluation
 
-When the candidate pastes an offer (text or URL), ALWAYS deliver all 7 blocks (A–F evaluation + G legitimacy):
+When the candidate pastes an offer (text or URL), ALWAYS deliver all 7 blocks (A-F evaluation + G legitimacy):
 
-## Step 0 — Archetype Detection
+## Step 0 -- Archetype Detection
 
 Classify the offer into one of the 6 archetypes (see `_shared.md`). If it's hybrid, indicate the 2 closest. This determines:
 - Which proof points to prioritize in block B
 - How to rewrite the summary in block E
 - Which STAR stories to prepare in block F
 
-## Block A — Role Summary
+## Block A -- Role Summary
 
 Table with:
 - Detected archetype
@@ -20,7 +20,7 @@ Table with:
 - Team size (if mentioned)
 - TL;DR in 1 sentence
 
-## Block B — CV Match
+## Block B -- CV Match
 
 Read `__CV__`. Create a table mapping each JD requirement to the exact CV line that backs it.
 
@@ -38,13 +38,13 @@ Read `__CV__`. Create a table mapping each JD requirement to the exact CV line t
 3. Is there a portfolio project that covers this gap?
 4. A concrete mitigation plan (cover-letter sentence, quick project, etc.).
 
-## Block C — Level + Strategy
+## Block C -- Level + Strategy
 
 1. **Level detected** in the JD vs **the candidate's natural level for that archetype**.
 2. **"Sell senior without lying" plan**: specific phrases adapted to the archetype, concrete wins to highlight, how to position founder experience as an advantage.
 3. **"If they downlevel me" plan**: accept if comp is fair, negotiate a 6-month review, clear promotion criteria.
 
-## Block D — Comp + Demand
+## Block D -- Comp + Demand
 
 Use WebSearch for:
 - Current salaries for the role (Glassdoor, Levels.fyi, Blind)
@@ -53,7 +53,7 @@ Use WebSearch for:
 
 Table with data and cited sources. If there's no data, say so instead of inventing.
 
-## Block E — Personalization Plan
+## Block E -- Personalization Plan
 
 | # | Section | Current state | Proposed change | Why |
 |---|---------|---------------|-----------------|-----|
@@ -62,16 +62,16 @@ Table with data and cited sources. If there's no data, say so instead of inventi
 
 Top 5 changes to the CV + Top 5 changes to LinkedIn to maximize match.
 
-## Block F — Interview Plan
+## Block F -- Interview Plan
 
-6–10 STAR+R stories mapped to the JD requirements (STAR + **Reflection**):
+6-10 STAR+R stories mapped to the JD requirements (STAR + **Reflection**):
 
 | # | JD requirement | STAR+R story | S | T | A | R | Reflection |
 |---|----------------|--------------|---|---|---|---|------------|
 
-The **Reflection** column captures what was learned or what would be done differently. This signals seniority — junior candidates describe what happened, senior candidates extract lessons.
+The **Reflection** column captures what was learned or what would be done differently. This signals seniority -- junior candidates describe what happened, senior candidates extract lessons.
 
-**Story Bank:** If `__STORY_BANK__` exists, check if any of these stories are already there. If not, append new ones. Over time this builds a reusable bank of 5–10 master stories that can be adapted to any interview question.
+**Story Bank:** If `__STORY_BANK__` exists, check if any of these stories are already there. If not, append new ones. Over time this builds a reusable bank of 5-10 master stories that can be adapted to any interview question.
 
 **Selected and framed per archetype:**
 - FDE → emphasize delivery speed and client-facing work
@@ -85,7 +85,7 @@ Also include:
 - 1 recommended case study (which of the candidate's projects to present and how)
 - Red-flag questions and how to answer them (e.g. "why did you sell your company?", "do you have a team of reports?")
 
-## Block G — Posting Legitimacy
+## Block G -- Posting Legitimacy
 
 Analyze the job posting for signals that indicate whether this is a real, active opening. This helps the user prioritize their effort on opportunities most likely to result in a hiring process.
 
@@ -144,7 +144,7 @@ Analyze the job posting for signals that indicate whether this is a real, active
 
 ## Post-evaluation
 
-**ALWAYS** after generating blocks A–G:
+**ALWAYS** after generating blocks A-G:
 
 ### 1. Save the report .md
 
@@ -204,7 +204,7 @@ Save the full evaluation to `__REPORTS__/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 - Today's date
 - Company
 - Role
-- Score: average match (1–5)
+- Score: average match (1-5)
 - Status: `Evaluated`
 - PDF: ❌ (or ✅ if auto-pipeline generated the PDF)
 - Report: relative link to the .md report (e.g. `[001](__REPORTS__/001-company-2026-01-01.md)`)

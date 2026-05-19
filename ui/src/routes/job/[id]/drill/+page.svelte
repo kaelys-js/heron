@@ -58,7 +58,7 @@
   let codeFeedback = $state<Feedback[]>([]);
   let codeBusy = $state(false);
 
-  // Design state — nodes + edges JSON, plus SVG preview.
+  // Design state -- nodes + edges JSON, plus SVG preview.
   type Node = { id: string; label: string; x: number; y: number };
   type Edge = { from: string; to: string; label?: string };
   let designProblem = $state('');

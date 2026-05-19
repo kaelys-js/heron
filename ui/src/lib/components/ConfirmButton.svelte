@@ -52,7 +52,7 @@
     timeoutMs?: number;
   } = $props();
 
-  // svelte-ignore state_referenced_locally — `timeoutMs` is read once at
+  // svelte-ignore state_referenced_locally -- `timeoutMs` is read once at
   // construction; a different value at runtime would require a new gate anyway.
   const confirm = new ConfirmGate(timeoutMs);
   const KEY = 'btn';

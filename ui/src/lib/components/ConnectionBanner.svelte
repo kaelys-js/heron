@@ -2,7 +2,7 @@
   import { notifications } from '$lib/notifications.svelte';
   import { Loader2, WifiOff } from '@lucide/svelte';
 
-  // Suppress the banner on initial connection — only surface it after a real disconnect,
+  // Suppress the banner on initial connection -- only surface it after a real disconnect,
   // OR after >1.5s of stuck "connecting" (server unreachable).
   let stuckConnecting = $state(false);
   let timer: ReturnType<typeof setTimeout> | null = null;

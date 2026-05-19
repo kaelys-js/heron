@@ -1,5 +1,5 @@
 /**
- * capacitor-plugins — typed wrappers for every Capacitor plugin we use.
+ * capacitor-plugins -- typed wrappers for every Capacitor plugin we use.
  *
  * Each wrapper:
  *   • Is safe to call on Web (falls back to the closest browser API)
@@ -27,7 +27,7 @@ async function lazy<T>(moduleId: string): Promise<T | null> {
 const isNative = (): boolean => Capacitor.isNativePlatform();
 
 // ──────────────────────────────────────────────────────────────────────
-// Haptics — tactile feedback for critical actions.
+// Haptics -- tactile feedback for critical actions.
 // ──────────────────────────────────────────────────────────────────────
 
 export async function hapticLight(): Promise<void> {
@@ -61,7 +61,7 @@ export async function hapticError(): Promise<void> {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Clipboard — copy URLs, codes, JSON exports with native UX.
+// Clipboard -- copy URLs, codes, JSON exports with native UX.
 // ──────────────────────────────────────────────────────────────────────
 
 export async function copyToClipboard(text: string): Promise<boolean> {
@@ -85,7 +85,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Dialog — native alert/confirm/prompt. Browser's window.confirm is
+// Dialog -- native alert/confirm/prompt. Browser's window.confirm is
 // blocked in Capacitor WebView so we need the native plugin.
 // ──────────────────────────────────────────────────────────────────────
 
@@ -116,7 +116,7 @@ export async function nativeConfirm(title: string, message: string): Promise<boo
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Browser — SFSafariViewController / Chrome Custom Tabs for external
+// Browser -- SFSafariViewController / Chrome Custom Tabs for external
 // links. Keeps the user inside the app for a frictionless back-button.
 // ──────────────────────────────────────────────────────────────────────
 
@@ -134,7 +134,7 @@ export async function openExternal(url: string): Promise<void> {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// App Launcher — open mailto:, tel:, system settings URLs.
+// App Launcher -- open mailto:, tel:, system settings URLs.
 // ──────────────────────────────────────────────────────────────────────
 
 /** Open an external URL. On native, hands off to the OS via the Capacitor
@@ -173,7 +173,7 @@ export async function launchUrl(url: string): Promise<boolean> {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Keyboard — Capacitor exposes show/hide events + height. Useful for
+// Keyboard -- Capacitor exposes show/hide events + height. Useful for
 // scroll adjustments on the apply form.
 // ──────────────────────────────────────────────────────────────────────
 
@@ -206,7 +206,7 @@ export async function onKeyboardHide(cb: () => void): Promise<() => void> {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Device — model / OS / language for analytics, locale switching, and
+// Device -- model / OS / language for analytics, locale switching, and
 // the Settings → Diagnostics card.
 // ──────────────────────────────────────────────────────────────────────
 
@@ -254,7 +254,7 @@ export async function deviceInfo(): Promise<DeviceFingerprint> {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Screen Reader — detect VoiceOver / TalkBack so we can adjust UI
+// Screen Reader -- detect VoiceOver / TalkBack so we can adjust UI
 // (e.g. announce timer changes instead of relying on visual updates).
 // ──────────────────────────────────────────────────────────────────────
 
@@ -286,7 +286,7 @@ export async function announceForAccessibility(value: string): Promise<void> {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Push notifications — APNS on iOS, FCM on Android. Token registration
+// Push notifications -- APNS on iOS, FCM on Android. Token registration
 // is tied to the Better Auth session so per-user push targeting works.
 // ──────────────────────────────────────────────────────────────────────
 

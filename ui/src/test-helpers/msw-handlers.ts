@@ -1,5 +1,5 @@
 /**
- * MSW handlers — central HTTP fixture set. Imported by `test-setup.ts`
+ * MSW handlers -- central HTTP fixture set. Imported by `test-setup.ts`
  * for jsdom/node projects and by `test-helpers/render.ts` for the
  * browser project (via the Service Worker variant).
  *
@@ -8,8 +8,8 @@
  * modes or assertion-specific payloads.
  *
  * Coverage mirrors the most-trafficked endpoints:
- *   • Auth (/api/auth/*) — pass-through OK responses
- *   • Health probe (/api/health) — 200 by default; flip to 503 per-test
+ *   • Auth (/api/auth/*) -- pass-through OK responses
+ *   • Health probe (/api/health) -- 200 by default; flip to 503 per-test
  *   • Jobs / pipeline (/api/jobs, /api/status)
  *   • Per-job actions (/api/job/[id]/cv, /api/job/[id]/apply)
  *   • Notifications feed (/api/notifications/feed)
@@ -82,7 +82,7 @@ export const handlers = [
   http.get('*/api/insights', () => HttpResponse.json({ insights: [] })),
 ];
 
-/** Failure-mode handlers — `server.use(...failureHandlers.unreachable)` to
+/** Failure-mode handlers -- `server.use(...failureHandlers.unreachable)` to
  *  simulate a fully-offline backend. */
 export const failureHandlers = {
   unreachable: [http.all('*/api/*', () => HttpResponse.error())],

@@ -1,5 +1,5 @@
 /**
- * comp-benchmark — pull comp bands from public sources.
+ * comp-benchmark -- pull comp bands from public sources.
  *
  * Levels.fyi and Glassdoor both publish role/level/location bands at
  * stable URLs. Their ToS prohibits scraping, so this module instead:
@@ -9,7 +9,7 @@
  *   2. OR: invokes the AGENT_CLI (Claude) with a deep-research prompt
  *      that hits the public pages once, extracts the band, and writes
  *      a citation. Same legal status as a human visiting the site once.
- *   3. OR: --offline mode that takes a JSON file as the source — useful
+ *   3. OR: --offline mode that takes a JSON file as the source -- useful
  *      for unit tests + air-gapped runs.
  *
  * The output is normalised to OfferBenchmark records that get stored on

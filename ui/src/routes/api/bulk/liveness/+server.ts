@@ -3,7 +3,7 @@
  *
  * POST { scope?: 'stale' | 'all' | 'urls', urls?: string[] }
  *
- * Fire-and-forget — the orchestrator runs the sweep, streams progress events,
+ * Fire-and-forget -- the orchestrator runs the sweep, streams progress events,
  * and the caller polls /api/run or watches the activity feed for completion.
  */
 
@@ -30,7 +30,7 @@ export const POST = wrap('bulk-liveness', async ({ request }: { request: Request
       args.scope = body.scope;
     }
   }
-  // Fire and forget — the activity feed is the source of truth for progress.
+  // Fire and forget -- the activity feed is the source of truth for progress.
   runById('liveness', args).catch((err) =>
     reportServerError('bulk-liveness', 'Liveness sweep rejected', err, { category: 'system' }),
   );

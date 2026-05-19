@@ -1,8 +1,8 @@
 /**
- * Playwright config — E2E tests only (separate from the
+ * Playwright config -- E2E tests only (separate from the
  * `vitest.workspace.ts` browser project which handles component tests).
  *
- * HP5 — boots `pnpm preview` against the prod build, runs top-down user
+ * HP5 -- boots `pnpm preview` against the prod build, runs top-down user
  * journey specs from `ui/e2e/**`. CI runs headless; local dev can flip
  * to headed via `--ui` or `--headed`.
  *
@@ -44,7 +44,7 @@ export default defineConfig({
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     // WebKit covers iOS Safari quirks (Sheet drag-gesture, etc.). Skip in
-    // CI to halve runtime — covered by the Vitest browser project.
+    // CI to halve runtime -- covered by the Vitest browser project.
     ...(CI ? [] : [{ name: 'webkit', use: { ...devices['Desktop Safari'] } }]),
   ],
 

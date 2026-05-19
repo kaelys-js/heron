@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * release — one-shot: bump version, tag, push. CI handles the rest.
+ * release -- one-shot: bump version, tag, push. CI handles the rest.
  *
  * Usage:
  *   pnpm release patch    # 1.6.0 → 1.6.1

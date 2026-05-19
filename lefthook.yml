@@ -345,9 +345,18 @@ pre-commit:
       # they reach main. Inline-allowlist English loan words / proper
       # nouns / language-detection regex literals in
       # scripts/system/verify-english-only.mjs::ALLOWLIST when adding new
-      # legitimate cases. Runs on the full set — fast (~50 ms).
+      # legitimate cases. Runs on the full set -- fast (~50 ms).
       glob: "*.{md,ts,tsx,svelte,mjs,py,sh}"
       run: pnpm verify:english-only
+
+    no-slop:
+      # Block accidental re-introduction of em-/en-dashes in prose. They
+      # are the most reliable LLM-prose tell -- GPT-style models emit
+      # U+2014 / U+2013 freely; humans typing on a US keyboard reach for
+      # the hyphen-minus. The .md set is scanned full-body (outside code
+      # fences). See scripts/system/verify-no-slop.mjs for the allowlist.
+      glob: "*.md"
+      run: pnpm verify:no-slop
 
     exact-versions:
       # Reject any version specifier that isn't an EXACT pin (no ^, ~,

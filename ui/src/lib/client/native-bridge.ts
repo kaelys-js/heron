@@ -1,5 +1,5 @@
 /**
- * native-bridge — JS wrapper around the HeronNative Capacitor plugin.
+ * native-bridge -- JS wrapper around the HeronNative Capacitor plugin.
  *
  * Calls fall through with safe defaults on non-iOS platforms so the
  * Web / Electron builds don't crash. Each method has a runtime guard:
@@ -51,7 +51,7 @@ export type WidgetUpdate = {
   /** Auth gate visible to every iPhone widget + the Watch.
    *
    *   • `true`  → widgets render real data (stats, nextInterview, topApply,
-   *               openIssues). Passing this without data is fine — widgets
+   *               openIssues). Passing this without data is fine -- widgets
    *               just show the empty placeholder.
    *   • `false` → NativePlugin.updateWidgets scrubs every cached
    *               key from App Group UserDefaults and the Watch flips
@@ -88,7 +88,7 @@ export type WidgetUpdate = {
     location?: string;
     portal?: string;
   } | null;
-  /** F5 — up to 2 runner-ups for the systemLarge widget variant. The
+  /** F5 -- up to 2 runner-ups for the systemLarge widget variant. The
    *  small/medium families ignore this; only renders under the top
    *  candidate in large. Pass [] or omit to clear. */
   topApplyRunnerUps?: Array<{
@@ -117,7 +117,7 @@ const native = registerPlugin<NativePlugin>(BRAND.capacitorPluginName);
 
 /**
  * Runtime platform check. Exported so the layout boot path can skip the
- * widget snapshot fetch entirely on web/desktop — there's no plugin to
+ * widget snapshot fetch entirely on web/desktop -- there's no plugin to
  * call there, and the GET round-trip would just be wasted cycles.
  */
 export function isIos(): boolean {
@@ -251,7 +251,7 @@ export function onNetStatusChange(handler: (online: boolean) => void): () => voi
       try {
         sub?.remove?.();
       } catch {
-        // Subscription already removed or Capacitor not present — no-op
+        // Subscription already removed or Capacitor not present -- no-op
         // on cleanup is safe.
       }
     };
@@ -419,7 +419,7 @@ export async function getSharedProductionUrl(): Promise<string | null> {
  * localStorage scope) can honour the same window when deciding whether
  * to surface a warn-level notification at 3am.
  *
- * Passed as a serialized JSON string of the QuietHours shape — same
+ * Passed as a serialized JSON string of the QuietHours shape -- same
  * payload localStorage holds, so the Swift side decodes the same shape
  * and runs the same cross-midnight window logic.
  */
@@ -438,18 +438,18 @@ export async function setSharedQuietHours(json: string): Promise<boolean> {
  *
  * Why one method instead of a fan-out of individual clears: the App Group
  * container is shared across the host app, the Share Extension, the Watch,
- * the Widgets, and the BackgroundFetcher — if the sign-out flow forgets
+ * the Widgets, and the BackgroundFetcher -- if the sign-out flow forgets
  * even one key, user A's data leaks to user B on the same device. A
  * single scrub method moves the "what counts as user-scoped" decision
  * into Swift (next to the keys themselves), so adding a new App Group
- * key only requires updating NativePlugin.clearAllSharedState() — the
+ * key only requires updating NativePlugin.clearAllSharedState() -- the
  * JS sign-out flow stays untouched.
  *
  * Called from `clearLocalAuthState()` (auth-client.ts) which itself is
  * called from every sign-out path. No-op on web/desktop.
  *
  * Note: widget data + auth gate are scrubbed separately via
- * `updateWidgets({authenticated: false})` — the layout +effect already
+ * `updateWidgets({authenticated: false})` -- the layout +effect already
  * fires that when the `heron:authed` localStorage flag drops. Keeping
  * the two paths split lets widget UI be re-gated without nuking the
  * bearer (e.g. on a 401 we want widgets gone but the bearer cleared

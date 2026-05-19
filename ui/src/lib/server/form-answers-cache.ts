@@ -1,5 +1,5 @@
 /**
- * form-answers-cache — per-question persistent cache shared across all jobs.
+ * form-answers-cache -- per-question persistent cache shared across all jobs.
  *
  * Storage: `data/users/{uid}/profiles/{slug}/form-answers-cache.jsonl` (or
  *   `data/profiles/{slug}/form-answers-cache.jsonl` in legacy single-user
@@ -7,7 +7,7 @@
  *
  * Row shape:
  *   {
- *     key: string,           // normalized — see normalizeQuestion()
+ *     key: string,           // normalized -- see normalizeQuestion()
  *     label: string,         // original question text (most recent verbatim)
  *     answer: string,        // the user's answer
  *     updatedAt: number,     // ms epoch
@@ -31,7 +31,7 @@ import { profilePath } from './profile-paths';
 
 const CACHE_FILENAME = 'form-answers-cache.jsonl';
 
-/** Mirror Python's normalize_question() in lib_apply.py — keep them in lockstep. */
+/** Mirror Python's normalize_question() in lib_apply.py -- keep them in lockstep. */
 export function normalizeQuestion(label: string): string {
   return (
     (label || '')
@@ -122,7 +122,7 @@ export function saveAnswer(profileId: string, label: string, answer: string): Fo
 }
 
 /** Bump the useCount on a successful auto-fill. Called by the adapters
- *  (well — by a helper they invoke) when an answer is actually applied to
+ *  (well -- by a helper they invoke) when an answer is actually applied to
  *  a form. Letting the UI sort by useCount surfaces the answers the user
  *  actually relies on. */
 export function bumpUseCount(profileId: string, label: string): void {
@@ -141,7 +141,7 @@ export function bumpUseCount(profileId: string, label: string): void {
 }
 
 /** Delete an answer by normalized key. Returns true on success. The on-disk
- *  representation is "tombstone" — we append a row with answer="" so the
+ *  representation is "tombstone" -- we append a row with answer="" so the
  *  next read collapses it away. Pure delete would require rewriting the
  *  whole file; tombstones keep append-only semantics.
  *
@@ -151,9 +151,9 @@ export function deleteAnswer(profileId: string, key: string): boolean {
   const cache = readCache(profileId);
   if (!cache.has(key)) return false;
   const p = cachePath(profileId);
-  // Compact rewrite — drop the entry. JSONL doesn't have to be append-only,
+  // Compact rewrite -- drop the entry. JSONL doesn't have to be append-only,
   // and a full rewrite at delete-time is fine for the typical cache size
-  // (50–200 entries per profile).
+  // (50-200 entries per profile).
   const remaining = Array.from(cache.values()).filter((r) => r.key !== key);
   const body = remaining.map((r) => JSON.stringify(r)).join('\n') + (remaining.length ? '\n' : '');
   fs.writeFileSync(p, body);

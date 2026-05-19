@@ -1,5 +1,5 @@
 /**
- * GET /api/stats — tray + widget polling endpoint.
+ * GET /api/stats -- tray + widget polling endpoint.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

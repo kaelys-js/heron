@@ -1,4 +1,4 @@
-# Mode: pipeline — URL Inbox (Second Brain)
+# Mode: pipeline -- URL Inbox (Second Brain)
 
 Processes offer URLs accumulated in `data/__PIPELINE__`. The user adds URLs whenever, then runs `/heron pipeline` to process them all.
 
@@ -9,7 +9,7 @@ Processes offer URLs accumulated in `data/__PIPELINE__`. The user adds URLs when
    a. Compute the next sequential `REPORT_NUM` (read `__REPORTS__/`, take the highest number + 1)
    b. **Extract the JD** using Playwright (browser_navigate + browser_snapshot) → WebFetch → WebSearch
    c. If the URL isn't reachable → mark it `- [!]` with a note and continue
-   d. **Run the full auto-pipeline**: A–F evaluation → Report .md → PDF (if score >= 3.0) → Tracker
+   d. **Run the full auto-pipeline**: A-F evaluation → Report .md → PDF (if score >= 3.0) → Tracker
    e. **Move from "Pending" to "Processed"**: `- [x] #NNN | URL | Company | Role | Score/5 | PDF ✅/❌`
 3. **If there are 3+ pending URLs**, launch agents in parallel (Agent tool with `run_in_background`) to maximize throughput.
 4. **When finished**, show a summary table:

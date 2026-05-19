@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 /**
- * dev-ios — one-shot: build, sync, boot simulator, install, launch.
+ * dev-ios -- one-shot: build, sync, boot simulator, install, launch.
  *
  * What it actually does:
- *   1. Preflight — pnpm + xcode CLI present, ios/App exists
- *   2. Apply brand (idempotent — propagates branding/brand.json)
+ *   1. Preflight -- pnpm + xcode CLI present, ios/App exists
+ *   2. Apply brand (idempotent -- propagates branding/brand.json)
  *   3. Build the SvelteKit static shell (CAPACITOR=1)
  *   4. `cap sync ios` (copies static build into the iOS project)
- *   5. CocoaPods (only if Podfile exists — Capacitor 7+ uses SPM)
+ *   5. CocoaPods (only if Podfile exists -- Capacitor 7+ uses SPM)
  *   6. Start Vite dev server on :5173 in the background
  *   7. Pick a target simulator (reuse booted iPhone, else boot newest)
- *   8. `cap run ios --target=<udid> --no-sync` — xcodebuild + install + launch
+ *   8. `cap run ios --target=<udid> --no-sync` -- xcodebuild + install + launch
  *
  * The WebView in the simulator hits localhost:5173 so live-reload works
  * as you edit Svelte files. Real device on same wifi finds your Mac via
@@ -95,7 +95,7 @@ run('node', [join(ROOT, 'scripts/native/apply-brand.mjs')], { silent: true });
 if (isLive) {
   step(3, 'Skipping static build (live mode — WebView points at Vite)');
   info('  build/static is reused if present; cap sync still needs SOMETHING to copy');
-  // cap sync ios requires webDir to exist — produce a minimal placeholder if
+  // cap sync ios requires webDir to exist -- produce a minimal placeholder if
   // missing so the sync step doesn't error. The WebView never reads this dir
   // in live mode (server.url overrides it).
   const webDir = join(UI, 'build', 'static');
@@ -119,7 +119,7 @@ if (isLive) {
 step(4, 'Syncing iOS project' + (isLive ? ` (server.url=${liveUrl})` : ''));
 run('pnpm', ['exec', 'cap', 'sync', 'ios'], {
   cwd: UI,
-  // CAPACITOR_SERVER_URL is read by ui/capacitor.config.ts at sync time —
+  // CAPACITOR_SERVER_URL is read by ui/capacitor.config.ts at sync time --
   // present → server.url is written into ios/App/App/capacitor.config.json,
   // absent → no server.url key (bundled static, what production wants).
   env: isLive ? { CAPACITOR_SERVER_URL: liveUrl } : {},
@@ -131,7 +131,7 @@ run('pnpm', ['exec', 'cap', 'sync', 'ios'], {
 // NativePlugin, ErrorReporter, Brand) live in App/*.swift on disk
 // but aren't auto-added to the target. Without this step, xcodebuild
 // fails with "cannot find type 'BonjourBrowser' in scope" the moment
-// AppDelegate references them. The ruby script is idempotent — no-op
+// AppDelegate references them. The ruby script is idempotent -- no-op
 // when the pbxproj is already up-to-date.
 step('4b', 'Ensuring App target includes all Swift sources');
 if (which('ruby') && which('gem')) {
@@ -164,7 +164,7 @@ if (usesPodfile) {
 }
 
 step(6, 'Starting Vite dev server in background');
-// Kill any process still bound to :5173 from a previous dev:ios run —
+// Kill any process still bound to :5173 from a previous dev:ios run --
 // otherwise vite errors with EADDRINUSE and the WebView ends up serving
 // a stale build. lsof + kill is the simplest portable check; macOS-only
 // is fine here since dev:ios is iOS-simulator-specific anyway.
@@ -181,7 +181,7 @@ try {
     await new Promise((r) => setTimeout(r, 300));
   }
 } catch {
-  /* non-fatal — vite will surface EADDRINUSE if it's still blocked */
+  /* non-fatal -- vite will surface EADDRINUSE if it's still blocked */
 }
 const dev = spawn('pnpm', ['dev'], {
   cwd: UI,
@@ -192,7 +192,7 @@ const dev = spawn('pnpm', ['dev'], {
 ok(`vite dev started (pid ${dev.pid}) — waiting for it to bind :5173…`);
 
 // Wait for Vite to actually accept connections on :5173 before launching
-// the iOS app — otherwise the WebView's first request hits a closed port
+// the iOS app -- otherwise the WebView's first request hits a closed port
 // and the app shows a blank/error screen.
 async function waitForPort(port, host = '127.0.0.1', timeoutMs = 30_000) {
   const deadline = Date.now() + timeoutMs;
@@ -287,7 +287,7 @@ if (targetUdid) {
   // --no-sync because step 4 already ran cap sync ios.
   // --scheme App: Capacitor otherwise passes `ios.scheme` from
   // capacitor.config.ts (e.g. `heron`) as the xcodebuild scheme,
-  // which is wrong — that's the URL scheme, not the build scheme.
+  // which is wrong -- that's the URL scheme, not the build scheme.
   // The Xcode-generated build scheme is always named `App` (matches
   // the target name) so we pin it explicitly.
   const result = run(
@@ -309,7 +309,7 @@ if (targetUdid) {
 if (!launched) {
   // Hard-fail instead of silently opening Xcode. Opening Xcode hides the
   // root cause (missing simulator runtime, stale DerivedData, etc.) and
-  // forces the user to debug via the Xcode UI dance — anti-goal for
+  // forces the user to debug via the Xcode UI dance -- anti-goal for
   // `pnpm dev:ios`, which should be one command + a working app.
   console.error('');
   console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -340,7 +340,7 @@ if (isLive) {
   info('Edits to Svelte files require a rebuild. Pass --live for HMR.');
 }
 
-// Swift "HMR" — auto rebuild + reinstall when any *.swift file changes.
+// Swift "HMR" -- auto rebuild + reinstall when any *.swift file changes.
 // Pure Swift is compiled, so there's no JS-style live-patch possible;
 // the best we can do is detect file changes, run the same xcodebuild +
 // install + launch the cold-boot path used, and relaunch the app
@@ -362,7 +362,7 @@ info('Press Ctrl+C in this terminal to stop the dev server.');
 info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
 /**
- * Swift HMR machinery — recursive fs.watch over every Xcode target's
+ * Swift HMR machinery -- recursive fs.watch over every Xcode target's
  * source dir, debounced to coalesce burst saves (Xcode + Cursor both
  * write multiple times per "save"). On change, runs the same cap-run
  * pipeline used at cold-boot. Output streams to stdout so the user
@@ -372,7 +372,7 @@ info('━━━━━━━━━━━━━━━━━━━━━━━━�
  *   - fs.watch's `recursive: true` is supported on macOS + Windows
  *     (Linux ignores it, falls back to per-dir; not relevant here
  *     since iOS dev is Mac-only).
- *   - Zero extra dependencies — the whole watcher fits in ~40 lines.
+ *   - Zero extra dependencies -- the whole watcher fits in ~40 lines.
  *
  * Race avoidance: only ONE rebuild runs at a time. If a save fires
  * during an in-flight rebuild, we queue a "rebuild needed" flag and
@@ -397,7 +397,7 @@ function installSwiftWatcher(targetUdid) {
     info('   rebuilding + reinstalling…');
     const started = Date.now();
     try {
-      // Same command the cold-boot path runs at step 8 — `cap run ios`
+      // Same command the cold-boot path runs at step 8 -- `cap run ios`
       // wraps xcodebuild + simctl install + simctl launch. --no-sync
       // skips the cap-sync step (we already synced at boot; only Swift
       // changed, not the WebView bundle).
@@ -407,7 +407,7 @@ function installSwiftWatcher(targetUdid) {
       // that arrive during that window queue at the OS level; when
       // we return, the watcher fires once per queued save and the
       // debounce coalesces them into ONE follow-up rebuild. That's
-      // the "tail-call" behaviour the user wants — keep editing and
+      // the "tail-call" behaviour the user wants -- keep editing and
       // the final state is what ends up on device.
       const result = run(
         'pnpm',
@@ -442,7 +442,7 @@ function installSwiftWatcher(targetUdid) {
         scheduleRebuild(join(root, filename));
       });
       // unref() so the watcher doesn't keep the event loop alive on its
-      // own — the script ends when SIGINT/etc fires, not when watchers
+      // own -- the script ends when SIGINT/etc fires, not when watchers
       // see no more events.
       watcher.unref?.();
     } catch (err) {
@@ -454,14 +454,14 @@ installSwiftWatcher(targetUdid);
 
 // Relay terminate signals to the dev (vite) child so vite doesn't get
 // orphaned when this script dies. Pre-fix only SIGINT (Ctrl+C) was
-// handled — if the parent shell sent SIGTERM, SIGHUP, or the user
+// handled -- if the parent shell sent SIGTERM, SIGHUP, or the user
 // closed the terminal, vite kept running as a zombie. Three signal
 // channels cover every common kill path:
 //
-//   • SIGINT  — Ctrl+C (most common)
-//   • SIGTERM — `kill <pid>` / parent-process kill (e.g. when the
+//   • SIGINT  -- Ctrl+C (most common)
+//   • SIGTERM -- `kill <pid>` / parent-process kill (e.g. when the
 //               background-task wrapper dies)
-//   • SIGHUP  — terminal window closed
+//   • SIGHUP  -- terminal window closed
 //
 // We also escalate to SIGKILL after a 5s grace period so a stuck vite
 // can't keep us alive indefinitely. exit(0) so other tooling reading

@@ -128,7 +128,7 @@ function isProfileYamlError(ev: ActivityEvent): boolean {
   return false;
 }
 
-/** Boot-time sanity check — fan out across every schedulable user. If a
+/** Boot-time sanity check -- fan out across every schedulable user. If a
  *  user's user-layer essentials are missing, that user's autopilot has
  *  nothing to apply with, so trip pre-emptively for THAT user.
  *
@@ -191,7 +191,7 @@ async function checkPreflight(): Promise<void> {
 }
 
 function onEvent(ev: ActivityEvent): void {
-  // F12 — every breaker action is scoped to the event's userId. Events
+  // F12 -- every breaker action is scoped to the event's userId. Events
   // without a userId fall back to SYSTEM_USER which keeps legacy
   // single-user installs working unchanged.
   const userId = ev.userId ?? SYSTEM_USER_ID;
@@ -261,11 +261,11 @@ export function resumeAutopilot(): { ok: boolean; resolved: boolean } {
 }
 
 /** Idempotent installer. Call once from boot (orchestrator/hooks).
- *  installBusListener handles HMR-safe re-installation — see events.ts. */
+ *  installBusListener handles HMR-safe re-installation -- see events.ts. */
 export function installCircuitBreaker(): void {
   installBusListener('autopilot-circuit-breaker', onEvent);
   // Defer preflight by a tick so other boot logging stays first. Skip in
-  // test envs — the timer would fire after the test process is supposed
+  // test envs -- the timer would fire after the test process is supposed
   // to exit and crash on the (intentionally empty) tmpdir DB.
   if (process.env.VITEST !== 'true' && process.env.NODE_ENV !== 'test') {
     setTimeout(() => {

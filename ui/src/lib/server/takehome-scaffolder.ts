@@ -1,5 +1,5 @@
 /**
- * takehome-scaffolder — when a job hits TakeHome status, build the
+ * takehome-scaffolder -- when a job hits TakeHome status, build the
  * working directory + README + submission-etiquette checklist.
  *
  * Most candidates over-spend on take-homes by 2-3× the stated cap.
@@ -29,7 +29,7 @@ export type TakeHomeState = {
   company: string;
   role: string;
   startedAt: number;
-  /** User-chosen time budget in minutes. Default 240 (4h) — most take-homes
+  /** User-chosen time budget in minutes. Default 240 (4h) -- most take-homes
    *  say 4h but candidates spend 8-12h. We anchor LOW deliberately. */
   budgetMinutes: number;
   /** Optional brief snippet extracted from the email (first 800 chars). */
@@ -161,7 +161,7 @@ Most rubrics secretly weight (in this order):
 Polish, performance, and UI matter MUCH LESS than candidates think.
 `;
 
-/** Scaffold the take-home dir for a job. Idempotent — re-running won't
+/** Scaffold the take-home dir for a job. Idempotent -- re-running won't
  *  overwrite a hand-edited README. */
 export function scaffoldTakeHome(input: {
   jobId: string;

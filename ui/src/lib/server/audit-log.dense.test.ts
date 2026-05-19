@@ -1,5 +1,5 @@
 /**
- * lib/server/audit-log — dense matrix over every AuditEvent type.
+ * lib/server/audit-log -- dense matrix over every AuditEvent type.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

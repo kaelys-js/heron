@@ -175,7 +175,7 @@ export function markStatus(
 
   // Auto-trigger tech-prep when a job transitions into an interview stage.
   // Implements #4 of the punch-list: the user doesn't have to click
-  // "Generate tech-prep plan" per job — the system does it on stage
+  // "Generate tech-prep plan" per job -- the system does it on stage
   // change. De-duped server-side (tech-prep endpoint skips when the
   // output file already exists).
   if (writeOk) {
@@ -236,7 +236,7 @@ function maybeAutoFireTechPrep(profileId: string, url: string, newStatus: string
         profileId: match.profileId,
       });
     } catch {
-      /* silent — auto-fire is best-effort */
+      /* silent -- auto-fire is best-effort */
     }
   })();
 }

@@ -164,7 +164,7 @@
   // ---- Apply-issue inline save-answer + re-queue ----
   // When an apply:{jobId} issue's detail starts with "unknown-field:label1,label2",
   // we parse out the missing question labels and let the user save an answer
-  // inline — POSTs to /api/profile/form-answers, then re-queues the job so
+  // inline -- POSTs to /api/profile/form-answers, then re-queues the job so
   // the drain picks it up again on next run.
   let expandedIssueId = $state<string | null>(null);
   let savingAnswer = $state(false);

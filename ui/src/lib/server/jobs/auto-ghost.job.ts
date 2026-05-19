@@ -1,5 +1,5 @@
 /**
- * Auto-ghost sweep — flags applications silent for ≥ DAYS_TO_GHOST days.
+ * Auto-ghost sweep -- flags applications silent for ≥ DAYS_TO_GHOST days.
  *
  * Why a sweep (not on-write): `lastTouchAt` is updated whenever a stage
  * transition happens. Detecting "silence" is the absence of an event,
@@ -32,7 +32,7 @@ function runOneProfile(profileId: string): { ghosted: number } {
   const allState = listAllStageState(profileId);
   for (const { jobId, daysSinceLastTouch } of stale) {
     const state = allState[jobId];
-    // Already ghosted in a previous sweep — leave alone.
+    // Already ghosted in a previous sweep -- leave alone.
     if (state?.ghostedAt) continue;
     markGhosted(jobId, profileId);
     ghosted++;
@@ -52,7 +52,7 @@ function runOneProfile(profileId: string): { ghosted: number } {
 }
 
 async function runAutoGhost(): Promise<JobResult> {
-  // F26 — single fan-out only. Pre-fix runAutoGhost manually iterated
+  // F26 -- single fan-out only. Pre-fix runAutoGhost manually iterated
   // listSchedulableUsers() AND was registered with perUser:true, so the
   // registry's runById fan-out invoked this N times and each invocation
   // looped over N users → N² work + N²× redundant logs. Now: declare

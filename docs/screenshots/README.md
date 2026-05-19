@@ -29,7 +29,7 @@ The capture script is at `scripts/system/capture-screenshots.mjs`.
 To avoid stale screenshots drifting from the UI. Each contributor
 regenerates them against the current `main` before opening a docs-
 focused PR. The README falls back gracefully (broken-image placeholder)
-if a PNG is missing — alt text describes the intended content.
+if a PNG is missing -- alt text describes the intended content.
 
 For a marketing-quality capture (post-launch), commit a curated set of
 PNGs here. Re-run `pnpm screenshots` weekly to keep them current.

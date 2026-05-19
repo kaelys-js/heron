@@ -1,5 +1,5 @@
 /**
- * lib/server/job-resolver — find a job by UI-facing id, scoped to the
+ * lib/server/job-resolver -- find a job by UI-facing id, scoped to the
  * right profile. Three precedence rules:
  *   1. explicit ?profile=<slug> URL param wins
  *   2. id suffix `urlId:profileSlug` is honoured if profile exists

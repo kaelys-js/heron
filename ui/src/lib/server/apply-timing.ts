@@ -1,12 +1,12 @@
 /**
- * apply-timing — turn a job's first_seen date into a "apply NOW" /
+ * apply-timing -- turn a job's first_seen date into a "apply NOW" /
  * "still good" / "already late" band.
  *
  * Industry baseline: postings on Days 1-3 convert to phone screen at
  * 3-5× the rate of postings on Days 7+. After ~Day 14, most pipelines
  * are full enough that you're an "also-ran" regardless of CV quality.
  *
- * We use scan-history.first_seen as the proxy for "posted on" — it's
+ * We use scan-history.first_seen as the proxy for "posted on" -- it's
  * not perfect (a posting could have existed before we discovered it),
  * but it's monotonically non-decreasing relative to the true post
  * date, so the ordering is correct even if absolute numbers skew late.
@@ -26,7 +26,7 @@ export type ApplyTiming = {
   band: TimingBand;
   /** Short label suitable for a badge. */
   label: string;
-  /** Coaching one-liner — what to do given the band. */
+  /** Coaching one-liner -- what to do given the band. */
   advice: string;
 };
 
@@ -80,7 +80,7 @@ function readFirstSeen(profileId: string, url: string): string | null {
       if (/^\d{4}-\d{2}-\d{2}$/.test(fs)) return fs;
     }
   } catch {
-    // scan-history.tsv read failure — return null so the UI degrades to
+    // scan-history.tsv read failure -- return null so the UI degrades to
     // "unknown timing" rather than crashing. Caller falls back to neutral
     // classification.
   }

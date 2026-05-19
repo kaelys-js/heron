@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * Login page — passkey-first sign-in with optional GitHub OAuth and
+   * Login page -- passkey-first sign-in with optional GitHub OAuth and
    * invite-code-based signup. Designed as the user's FIRST visual
    * impression of the app, so the layout treats the brand mark as a
    * hero element above the form, mirrors the boot-fallback's gradient
@@ -17,7 +17,7 @@
   import { APP_NAME } from '$lib/config/branding';
   // `slide` animates height + opacity together, so the error banner
   // grows DOWN from zero-height instead of popping fully formed into
-  // existence — eliminates the layout jump when the banner first
+  // existence -- eliminates the layout jump when the banner first
   // appears (or disappears on success).
   import { slide } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
@@ -32,14 +32,14 @@
   /**
    * Translate raw passkey/WebAuthn errors into copy a non-engineer can act
    * on. Better-auth surfaces things like "Auth cancelled" / "NotAllowedError"
-   * / "The operation either timed out or was not allowed" — none of which
+   * / "The operation either timed out or was not allowed" -- none of which
    * tell the user what to do next. The mapper below covers every error code
    * a browser or Capacitor WebView can emit during a passkey sign-in, plus
    * a sane default for anything we haven't seen yet.
    *
    * The biggest source of mysterious "Auth cancelled" errors is a first-
    * time user pressing "Sign in with passkey" before they've ever created
-   * one — the platform throws NotAllowedError because there's no credential
+   * one -- the platform throws NotAllowedError because there's no credential
    * to choose. We catch that and redirect them to the invite-code flow.
    */
   function friendlyAuthError(raw: unknown): string {
@@ -88,7 +88,7 @@
 
   async function signInWithPasskey() {
     busy = true;
-    // Don't clear `error = null` here — that causes the inline banner
+    // Don't clear `error = null` here -- that causes the inline banner
     // to unmount, then remount with the (same) message on the next
     // failed attempt, jumping the layout. We only clear on SUCCESS;
     // on retry-and-fail the existing banner just stays put with the
@@ -114,7 +114,7 @@
 
   async function signInWithGitHub() {
     busy = true;
-    // Same rationale as signInWithPasskey — keep the previous error
+    // Same rationale as signInWithPasskey -- keep the previous error
     // visible until we know the new attempt outcome.
     try {
       await authClient.signIn.social({
@@ -123,7 +123,7 @@
       });
       error = null;
     } catch (e) {
-      // Same friendly mapper as passkey — OAuth surfaces network /
+      // Same friendly mapper as passkey -- OAuth surfaces network /
       // cancellation errors identically and the user benefits from
       // consistent copy.
       error = friendlyAuthError(e);
@@ -239,7 +239,7 @@
       </Button>
 
       {#if data.githubEnabled}
-        <!-- Divider — "or" with hairlines, classic auth pattern. -->
+        <!-- Divider -- "or" with hairlines, classic auth pattern. -->
         <div
           class="my-4 flex items-center gap-3 text-[11px] uppercase tracking-wider text-muted-foreground/60"
         >

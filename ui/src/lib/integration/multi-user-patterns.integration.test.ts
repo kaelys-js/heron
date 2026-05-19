@@ -1,23 +1,23 @@
 /**
- * Multi-user safety — structural pattern guards (F9–F30 regression suite).
+ * Multi-user safety -- structural pattern guards (F9-F30 regression suite).
  *
- * Catches the easy-to-regress anti-patterns that the F9–F30 audit
+ * Catches the easy-to-regress anti-patterns that the F9-F30 audit
  * surfaced. Each test greps the codebase for the unsafe pattern and
  * asserts only an allowlisted set of files contains it.
  *
  * Patterns enforced:
- *   1. No bare `env: { ...process.env }` in spawn() / execFile() —
+ *   1. No bare `env: { ...process.env }` in spawn() / execFile() --
  *      every server-side spawn must use `userContextEnv()` so the child
  *      inherits `CAREER_OPS_USER_ID` from the parent's ALS scope (F13).
  *   2. No module-level `let cached: AutopilotConfig` (or similar
- *      single-instance Config singletons) — they cross users (F9).
+ *      single-instance Config singletons) -- they cross users (F9).
  *   3. Every `installBusListener` callback that touches user data must
  *      reference `ev.userId` (F11).
  *   4. Background daemons (setInterval at module load) must NOT call
- *      job functions directly — they must go through `runById()` so the
+ *      job functions directly -- they must go through `runById()` so the
  *      registry's `perUser: true` fan-out fires (F15).
  *
- * Mechanism: regex-on-source rather than runtime. The F9–F30 fixes
+ * Mechanism: regex-on-source rather than runtime. The F9-F30 fixes
  * landed alongside this file; future regressions are caught at CI time
  * before they ship.
  */
@@ -30,11 +30,11 @@ const REPO_ROOT = path.resolve(__dirname, '../../../..');
 const SERVER_ROOT = path.join(REPO_ROOT, 'ui/src/lib/server');
 
 /** ──────────────────────────────────────────────────────────────────────
- *  F13 — spawn-env injection
+ *  F13 -- spawn-env injection
  *  ──────────────────────────────────────────────────────────────────── */
 describe('Multi-user — every spawn() injects userContextEnv (F13 guard)', () => {
   it('no bare `env: { ...process.env }` in server modules + api routes', () => {
-    // Extended in the final audit loop — `routes/api/**` had 4 missed
+    // Extended in the final audit loop -- `routes/api/**` had 4 missed
     // spawn sites because the original grep only covered lib/server/.
     // Now the pattern guard sweeps both trees.
     const ROUTES_API_ROOT = path.join(REPO_ROOT, 'ui/src/routes/api');
@@ -72,7 +72,7 @@ describe('Multi-user — every spawn() injects userContextEnv (F13 guard)', () =
 });
 
 /** ──────────────────────────────────────────────────────────────────────
- *  F9 — no module-level config singletons crossing users
+ *  F9 -- no module-level config singletons crossing users
  *  ──────────────────────────────────────────────────────────────────── */
 describe('Multi-user — no module-singleton user config caches (F9 guard)', () => {
   // Files that legitimately have module-scope state that's NOT
@@ -80,14 +80,14 @@ describe('Multi-user — no module-singleton user config caches (F9 guard)', () 
   // Adding to this list requires a PR-review confirmation that the
   // state is genuinely user-independent.
   const ALLOWED_FILES = new Set<string>([
-    // tick / setInterval handles — not user state
+    // tick / setInterval handles -- not user state
     'ui/src/lib/server/autopilot.ts',
     'ui/src/lib/server/jobs/scan-email-imap.job.ts',
     'ui/src/lib/server/jobs/interview-reminder.job.ts',
     'ui/src/lib/server/jobs/auto-merge-batch.ts',
     // bus emitter + listener state
     'ui/src/lib/server/events.ts',
-    // SSE subscriber set — keyed by client conn, not user
+    // SSE subscriber set -- keyed by client conn, not user
     'ui/src/lib/server/sse-broker.ts',
   ]);
 
@@ -126,7 +126,7 @@ describe('Multi-user — no module-singleton user config caches (F9 guard)', () 
 });
 
 /** ──────────────────────────────────────────────────────────────────────
- *  F11 — bus listeners scope to ev.userId
+ *  F11 -- bus listeners scope to ev.userId
  *  ──────────────────────────────────────────────────────────────────── */
 describe('Multi-user — bus listeners scope to ev.userId (F11 guard)', () => {
   it('auto-queue + auto-interview-prep both reference ev.userId + runAsUser', () => {
@@ -170,7 +170,7 @@ describe('Multi-user — bus listeners scope to ev.userId (F11 guard)', () => {
 });
 
 /** ──────────────────────────────────────────────────────────────────────
- *  F15 — daemons route through runById (registry fan-out)
+ *  F15 -- daemons route through runById (registry fan-out)
  *  ──────────────────────────────────────────────────────────────────── */
 describe('Multi-user — setInterval daemons in jobs/ go through runById (F15 guard)', () => {
   it('interview-reminder daemon calls runById, not the raw function', () => {
@@ -191,7 +191,7 @@ describe('Multi-user — setInterval daemons in jobs/ go through runById (F15 gu
 });
 
 /** ──────────────────────────────────────────────────────────────────────
- *  F17 — apply-counter is per-user
+ *  F17 -- apply-counter is per-user
  *  ──────────────────────────────────────────────────────────────────── */
 describe('Multi-user — apply-counter is per-user (F17 guard)', () => {
   it('apply-counter.ts resolves via userSharedPath, not ROOT/data/apply-counter.json', () => {
@@ -203,7 +203,7 @@ describe('Multi-user — apply-counter is per-user (F17 guard)', () => {
 });
 
 /** ──────────────────────────────────────────────────────────────────────
- *  F10 — autopilot scheduler tick fans out per user
+ *  F10 -- autopilot scheduler tick fans out per user
  *  ──────────────────────────────────────────────────────────────────── */
 describe('Multi-user — autopilot tick fans out across users (F10 guard)', () => {
   it('tick() iterates listSchedulableUsers + wraps in runAsUser', () => {
@@ -217,7 +217,7 @@ describe('Multi-user — autopilot tick fans out across users (F10 guard)', () =
 });
 
 /** ──────────────────────────────────────────────────────────────────────
- *  F12 — circuit breaker per-user state
+ *  F12 -- circuit breaker per-user state
  *  ──────────────────────────────────────────────────────────────────── */
 describe('Multi-user — circuit breaker per-user state (F12 guard)', () => {
   it('autopilot-circuit-breaker.ts uses Map for consecutiveLinkedInFailures', () => {
@@ -234,7 +234,7 @@ describe('Multi-user — circuit breaker per-user state (F12 guard)', () => {
 });
 
 /** ──────────────────────────────────────────────────────────────────────
- *  F14/F30 — IMAP reactor in-process (no HTTP roundtrip)
+ *  F14/F30 -- IMAP reactor in-process (no HTTP roundtrip)
  *  ──────────────────────────────────────────────────────────────────── */
 describe('Multi-user — IMAP reactor in-process (F14/F30 guard)', () => {
   it('scan-email-imap.mjs no longer POSTs to /api/email/react', () => {

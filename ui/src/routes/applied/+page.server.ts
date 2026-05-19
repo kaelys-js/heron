@@ -20,7 +20,7 @@ export async function load({ url }: { url: URL }) {
   const profileId = profileParam === 'all' ? 'all' : (profileParam ?? getActiveProfileId());
   const jobs = loadAllJobs(profileId).filter((j) => ACTIVE.includes(j.status));
 
-  // Cadence snapshot is best-effort — if the script chokes (no applications
+  // Cadence snapshot is best-effort -- if the script chokes (no applications
   // tracker yet, malformed file, missing node), the page still renders
   // without badges instead of crashing.
   let cadence: Awaited<ReturnType<typeof getFollowupCadence>> | null = null;

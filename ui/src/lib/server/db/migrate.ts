@@ -1,7 +1,7 @@
 /**
- * db/migrate — first-boot schema bootstrap.
+ * db/migrate -- first-boot schema bootstrap.
  *
- * Heron doesn't ship a drizzle-kit-generated migration folder yet —
+ * Heron doesn't ship a drizzle-kit-generated migration folder yet --
  * the schemas are still being iterated. We use idempotent CREATE TABLE
  * IF NOT EXISTS statements derived from the Drizzle schema objects.
  * Safe to run on every startup and fast (~1ms when tables already exist).
@@ -16,9 +16,9 @@ import { authSqliteHandle, appSqliteHandle } from './index';
 
 /** Schema version. Bump when adding/removing tables.
  *
- *  v1 — initial schema (17 app.db tables including dead-on-arrival
+ *  v1 -- initial schema (17 app.db tables including dead-on-arrival
  *       jobs/applications/reports/cv_content/etc).
- *  v2 — Trimmed app.db to 4 tables (profiles, activity_events, issues,
+ *  v2 -- Trimmed app.db to 4 tables (profiles, activity_events, issues,
  *       ui_prefs). All per-user content files stay on the filesystem under
  *       data/users/{userId}/profiles/{slug}/... because the Claude CLI
  *       reads them directly. The dropped-table-cleanup migration below
@@ -44,7 +44,7 @@ const APP_DROPPED_IN_V2 = [
   'profile_md_content',
 ];
 
-/** AUTH.DB tables — mirrors `auth-schema.ts`. */
+/** AUTH.DB tables -- mirrors `auth-schema.ts`. */
 const AUTH_DDL = `
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY NOT NULL,
@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS schema_meta (
 );
 `;
 
-/** APP.DB tables — mirrors `app-schema.ts`.
+/** APP.DB tables -- mirrors `app-schema.ts`.
  *
  *  Only the 4 tables the dashboard actually queries are defined:
  *  profiles, activity_events, issues, ui_prefs. Per-user content files
@@ -246,7 +246,7 @@ function readVersion(handle: typeof authSqliteHandle): number {
   }
 }
 
-/** Bootstrap both SQLite files. Idempotent — safe to call repeatedly.
+/** Bootstrap both SQLite files. Idempotent -- safe to call repeatedly.
  *
  * On v1 → v2 upgrade, drops the 13 app.db tables that were defined but
  * never written to in v1 (jobs, applications, reports, scan_history,
@@ -262,14 +262,14 @@ export function ensureSchema(): void {
 
   // Drop tables that existed in v1 but were removed in v2. Pre-v2 installs
   // never wrote any rows to these (they were aspirational), so DROP is
-  // safe — no user data is destroyed.
+  // safe -- no user data is destroyed.
   const appVersion = readVersion(appSqliteHandle);
   if (appVersion < 2) {
     for (const table of APP_DROPPED_IN_V2) {
       try {
         appSqliteHandle.exec(`DROP TABLE IF EXISTS ${table};`);
       } catch {
-        /* table didn't exist — fine */
+        /* table didn't exist -- fine */
       }
     }
   }

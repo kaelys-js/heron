@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * normalize-statuses.mjs — Clean non-canonical states in applications.md
+ * normalize-statuses.mjs -- Clean non-canonical states in applications.md
  *
  * Maps all non-canonical statuses to canonical ones per states.yml:
  *   Evaluada, Aplicado, Respondido, Entrevista, Oferta, Rechazado, Descartado, NO APLICAR
@@ -69,10 +69,10 @@ function normalizeStatus(raw) {
   // Repost #NNN → Discarded
   if (/^repost/i.test(s)) return { status: 'Discarded', moveToNotes: raw.trim() };
 
-  // "—" (em dash, no status) → Discarded
+  // "--" (em dash, no status) → Discarded
   if (s === '—' || s === '-' || s === '') return { status: 'Discarded' };
 
-  // Already canonical (English, per states.yml) — just fix casing/bold
+  // Already canonical (English, per states.yml) -- just fix casing/bold
   const canonical = [
     'Evaluated',
     'Applied',
@@ -107,7 +107,7 @@ function normalizeStatus(raw) {
     return { status: 'Queued' };
   }
 
-  // Unknown — flag it
+  // Unknown -- flag it
   return { status: null, unknown: true };
 }
 
@@ -128,7 +128,7 @@ for (let i = 0; i < lines.length; i++) {
   if (!line.startsWith('|')) continue;
 
   const parts = line.split('|').map((s) => s.trim());
-  // Schema detection per row — 12 cells (incl. empty leading/trailing) when
+  // Schema detection per row -- 12 cells (incl. empty leading/trailing) when
   // URL column is present, 11 cells when not. Column offsets shift by 1.
   //   9-col  (length 11): ['', '#', 'date', 'co', 'role', 'score', 'STATUS', 'pdf', 'report', 'notes', '']
   //   10-col (length 12): ['', '#', 'date', 'co', 'role', 'URL', 'score', 'STATUS', 'pdf', 'report', 'notes', '']

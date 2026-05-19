@@ -1,5 +1,5 @@
 /**
- * /api/settings/secrets — per-user encrypted credential store.
+ * /api/settings/secrets -- per-user encrypted credential store.
  *
  * Unlike /api/settings (owner-only, writes to install-wide .env), this
  * endpoint is scoped to each authenticated user. Members manage their
@@ -11,7 +11,7 @@
  *   DELETE → remove one key (?key=NAME)
  *
  * Storage is `data/users/{userId}/profiles/_shared/secrets.json`,
- * AES-256-GCM at rest with HKDF-derived per-user keys — see
+ * AES-256-GCM at rest with HKDF-derived per-user keys -- see
  * lib/server/user-secrets.ts for the threat model.
  *
  * The KNOWN_KEYS allowlist prevents arbitrary blob-storage abuse:
@@ -23,7 +23,7 @@ import { deleteSecret, getSecret, listSecretKeys, setSecret } from '$lib/server/
 import { logEvent } from '$lib/server/events';
 
 /** The credential keys that the codebase actually reads. Any POST/DELETE
- *  with a key outside this set returns 400 — prevents abuse of the
+ *  with a key outside this set returns 400 -- prevents abuse of the
  *  encrypted-blob store as a generic per-user key/value cache.
  *
  *  When a new credential needs per-user scoping, ADD IT HERE first,
@@ -55,7 +55,7 @@ function mask(value: string | null): string {
 export const GET = wrap('settings.secrets', async ({ locals }: { locals: App.Locals }) => {
   const userId = requireUserId(locals);
   const present = new Set(listSecretKeys(userId));
-  // Build a stable object listing every KNOWN_KEY — present keys show
+  // Build a stable object listing every KNOWN_KEY -- present keys show
   // their masked value, absent keys show empty string. Lets the UI
   // render a fixed-shape form with consistent placeholders.
   const out: Record<string, string> = {};
@@ -86,7 +86,7 @@ export const POST = wrap(
       }
       // Empty string → delete. Strings starting with '****' are the
       // masked round-trip from the UI when the user didn't edit that
-      // field — silently skip.
+      // field -- silently skip.
       if (typeof v !== 'string') {
         badRequest(`value for ${k} must be a string`);
       }
@@ -95,7 +95,7 @@ export const POST = wrap(
         deleteSecret(userId, k);
         changed.push(k + ' (deleted)');
       } else if (val.startsWith('****')) {
-        /* unchanged masked round-trip — skip */
+        /* unchanged masked round-trip -- skip */
       } else {
         setSecret(userId, k, val);
         changed.push(k);

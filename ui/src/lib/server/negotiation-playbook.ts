@@ -1,5 +1,5 @@
 /**
- * negotiation-playbook — the structured playbook for verbal → signed.
+ * negotiation-playbook -- the structured playbook for verbal → signed.
  *
  * Today the product has comp-eval math + negotiation prompt drafts.
  * What's missing is the calibrated "if they say X, you say Y" tree,
@@ -7,7 +7,7 @@
  * and the multiple-offer leveraging coach. This module assembles all
  * four into structured data the UI surfaces as a wizard.
  *
- * Pure-function. No LLM. The structure is the value — the user (or
+ * Pure-function. No LLM. The structure is the value -- the user (or
  * the user + Claude in agent mode) can refine wording per situation,
  * but the decision tree of WHAT to ask + WHEN is what most candidates
  * lack and what loses the most money at signing.
@@ -27,7 +27,7 @@ export type Branch = {
   trigger: string;
   /** What you say back (you can paraphrase, this is the structure) */
   response: string;
-  /** Why this response — so the user understands the logic, not just memorizes */
+  /** Why this response -- so the user understands the logic, not just memorizes */
   rationale: string;
   /** Optional next branch label they'll likely hit */
   nextLikely?: string;
@@ -260,7 +260,7 @@ export const DONT_ACCEPT_VERBALLY = {
 };
 
 // ── Comp-band benchmarking (#20) ───────────────────────────────────
-// Static reference data — Senior IC bands in tech as of 2024-2025, US.
+// Static reference data -- Senior IC bands in tech as of 2024-2025, US.
 // Numbers are approximate; user should refine via levels.fyi for the
 // specific company × role × location. This is the "default sanity check."
 
@@ -271,7 +271,7 @@ export type CompBand = {
   notes: string;
 };
 
-/** Version tag for the baked-in defaults — used by the staleness
+/** Version tag for the baked-in defaults -- used by the staleness
  *  warning in comp-bands-overrides.ts. Bump whenever the numbers below
  *  are updated. */
 export const TIER_COMP_BANDS_VERSION = '2024-2025';

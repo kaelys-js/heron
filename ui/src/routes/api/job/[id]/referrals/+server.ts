@@ -5,7 +5,7 @@
  * The mode walks the user's LinkedIn 1st/2nd-degree network for people
  * currently at the target company, ranked by closeness + role-relevance,
  * and pre-drafts an outreach message per person ("Hi {name}, I saw you
- * work at {company} on {team}. I'm applying for {role} — would you mind
+ * work at {company} on {team}. I'm applying for {role} -- would you mind
  * passing along my CV?").
  *
  * Body:
@@ -14,7 +14,7 @@
  * Output: `data/users/{userId}/profiles/{slug}/referrals/{jobId}.json`
  * with the ranked list.
  *
- * NOTE: this is a network-graph-only mode — it does NOT send messages. The
+ * NOTE: this is a network-graph-only mode -- it does NOT send messages. The
  * user reviews + sends each ask manually (or copies into LinkedIn).
  */
 

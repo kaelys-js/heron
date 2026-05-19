@@ -6,7 +6,7 @@
  * shape and spawn generateInterviewPrep() in the background so the brief
  * is waiting on the Interview Prep tab when the user opens it.
  *
- * Runs at most one prep at a time per (userId, jobId) — duplicate flips
+ * Runs at most one prep at a time per (userId, jobId) -- duplicate flips
  * while the first generation is in flight are dropped (the persisted
  * file from the winning run will be served on next read either way).
  *
@@ -34,7 +34,7 @@ import type { ActivityEvent } from '$lib/types';
 const inFlight = new Set<string>();
 
 function installAutoInterviewPrep(): void {
-  // installBusListener is idempotent across HMR — see events.ts.
+  // installBusListener is idempotent across HMR -- see events.ts.
   installBusListener('auto-interview-prep', (ev: ActivityEvent) => {
     // We only care about "Status changed to Interview" success events
     if (ev.level !== 'success') return;
@@ -47,7 +47,7 @@ function installAutoInterviewPrep(): void {
     const [companyRaw, roleRaw] = message.split('·').map((s) => s.trim());
     if (!companyRaw) return;
 
-    // F11 — anchor to ev.userId. Status events ARE always tagged (the
+    // F11 -- anchor to ev.userId. Status events ARE always tagged (the
     // /api/status endpoint runs inside requireUserId), but defensively
     // skip if missing.
     const ownerUserId = ev.userId;
@@ -69,13 +69,13 @@ function installAutoInterviewPrep(): void {
       );
       if (!match) return;
       if (!match.reportFile) {
-        // No deep eval yet — the prep would be empty; skip.
+        // No deep eval yet -- the prep would be empty; skip.
         return;
       }
       const flightKey = ownerUserId + ':' + match.id;
       if (inFlight.has(flightKey)) return;
       if (readPersistedInterviewPrep(match.id)) {
-        // Already have a prep on disk — don't burn tokens regenerating.
+        // Already have a prep on disk -- don't burn tokens regenerating.
         return;
       }
 
@@ -103,5 +103,5 @@ function installAutoInterviewPrep(): void {
   });
 }
 
-// Boot-time install — called from jobs/index.ts. Idempotent on HMR reload.
+// Boot-time install -- called from jobs/index.ts. Idempotent on HMR reload.
 installAutoInterviewPrep();

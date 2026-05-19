@@ -1,12 +1,12 @@
 /**
- * daily-backup job — registered with the autopilot job registry so the
+ * daily-backup job -- registered with the autopilot job registry so the
  * scheduled trigger + the manual /agents "Run now" button both go through
  * the same code path.
  *
  * Trigger: daily 02:00, all 7 days. We pick 02:00 because:
  *   - The autopilot's other jobs (scan, gemini, apply-queue-drain) run
- *     during work hours (08:00–18:00). 02:00 is reliably quiet.
- *   - Local timezone is fine — backup doesn't care about UTC offsets.
+ *     during work hours (08:00-18:00). 02:00 is reliably quiet.
+ *   - Local timezone is fine -- backup doesn't care about UTC offsets.
  *
  * Manual trigger is also exposed via /api/backup/run (Backups card on
  * /settings). Both paths land in createBackup() in backup.ts.
@@ -40,7 +40,7 @@ register({
   label: 'Daily backup',
   description:
     'Snapshot user data (profiles, tracker, reports, output) to data/backups/. Excludes .env, node_modules, .playwright-*. Pruning is retention-day based.',
-  // 'hygiene' is the closest existing JobCategory — backup is maintenance
+  // 'hygiene' is the closest existing JobCategory -- backup is maintenance
   // adjacent to normalize/dedup/verify which also live under that label.
   category: 'hygiene',
   trigger: { type: 'daily', hour: 2, minute: 0, weekdays: [0, 1, 2, 3, 4, 5, 6] },

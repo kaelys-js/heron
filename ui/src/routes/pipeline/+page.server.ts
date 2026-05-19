@@ -41,7 +41,7 @@ export async function load({ url }: { url: URL }) {
   if (profileId === 'all') {
     // For cross-profile views we'd need to walk every profile's sidecar.
     // listAllStageState reads the active-profile file by default, which
-    // is the conservative behaviour here — the page shows what's loaded
+    // is the conservative behaviour here -- the page shows what's loaded
     // for the active profile and leaves cross-profile aggregation to a
     // separate phase.
     Object.assign(stageStateMap, listAllStageState(getActiveProfileId()));

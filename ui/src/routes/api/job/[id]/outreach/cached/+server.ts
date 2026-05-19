@@ -2,7 +2,7 @@
  * Cached outreach drafts.
  *
  *   GET /api/job/[id]/outreach/cached
- *     → { variants: { persona, content }[] } — one entry per persona that
+ *     → { variants: { persona, content }[] } -- one entry per persona that
  *       has an existing draft on disk. Empty array if none yet.
  *
  * Lets the Outreach tab restore previously generated drafts after a page

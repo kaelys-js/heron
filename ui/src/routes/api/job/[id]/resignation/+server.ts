@@ -3,7 +3,7 @@
  *
  * Draft a resignation letter for the user's CURRENT employer (not for the
  * new job). The new-job context (company + role) only frames the letter
- * for the agent — the letter content is addressed to the user's current
+ * for the agent -- the letter content is addressed to the user's current
  * manager + HR.
  *
  * Body:

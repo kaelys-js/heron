@@ -1,10 +1,10 @@
 /**
- * Theme store — runes-based singleton that drives light/dark mode.
+ * Theme store -- runes-based singleton that drives light/dark mode.
  *
  * Three modes:
- *   - 'light'   — force light
- *   - 'dark'    — force dark
- *   - 'system'  — track OS preference (default)
+ *   - 'light'   -- force light
+ *   - 'dark'    -- force dark
+ *   - 'system'  -- track OS preference (default)
  *
  * Persistence: localStorage key 'heron:theme' stores the user's choice.
  * The companion script in app.html applies the resolved class BEFORE Svelte
@@ -113,11 +113,11 @@ class ThemeStore {
     // (Chrome 111+, Safari 18+, iOS WKWebView 18+). The browser
     // captures a full-viewport snapshot, applies the DOM change
     // inside the callback, then crossfades the new state over the
-    // old — single-shot GPU-composited transition, no per-element
+    // old -- single-shot GPU-composited transition, no per-element
     // CSS transitions, no FOUC. CSS keyframes attached to the
     // ::view-transition pseudo-elements live in app.css.
     //
-    // Honour `prefers-reduced-motion` — users with vestibular
+    // Honour `prefers-reduced-motion` -- users with vestibular
     // disorders explicitly opt out of crossfades.
     const reduced =
       typeof window !== 'undefined' &&
@@ -128,7 +128,7 @@ class ThemeStore {
     if (!reduced && typeof doc.startViewTransition === 'function') {
       // `theme-swap` flag class scopes the view-transition CSS
       // overrides in app.css so the sidebar + topbar crossfade too
-      // (during navigation they snap instead — see view-transition
+      // (during navigation they snap instead -- see view-transition
       // section in app.css). The flag is removed when the transition
       // completes OR if the browser cancels.
       const root = document.documentElement;

@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 /**
- * validate-tiny-configs.mjs — syntax checks for the small static config
+ * validate-tiny-configs.mjs -- syntax checks for the small static config
  * files no formatter / linter ecosystem exists for:
  *
- *   .gitattributes  — git's per-path attributes (text/binary/eol/diff)
- *   .npmrc          — pnpm INI-style config
- *   .actrc          — act (local CI runner) flag list
- *   LICENSE         — MIT template match (no drift from upstream MIT text)
- *   robots.txt      — minimal directive set (User-agent, Allow, Disallow,
+ *   .gitattributes  -- git's per-path attributes (text/binary/eol/diff)
+ *   .npmrc          -- pnpm INI-style config
+ *   .actrc          -- act (local CI runner) flag list
+ *   LICENSE         -- MIT template match (no drift from upstream MIT text)
+ *   robots.txt      -- minimal directive set (User-agent, Allow, Disallow,
  *                     Sitemap, Crawl-delay)
  *
- * Each check is a regex-driven sanity pass — not a full grammar parser.
+ * Each check is a regex-driven sanity pass -- not a full grammar parser.
  * Catches the realistic failure modes (truncated lines / typo'd keys /
  * unknown directives) without false-positive noise.
  *
@@ -56,7 +56,7 @@ check('.gitattributes', () => {
     const stripped = line.trim();
     if (!stripped) return; // blank
     if (stripped.startsWith('#')) return; // comment
-    // .gitattributes does NOT support inline comments — the whole line
+    // .gitattributes does NOT support inline comments -- the whole line
     // is treated as data, so we don't strip trailing #.
     if (!re.test(line)) {
       throw new Error(`line ${i + 1}: not "<pattern> <attr>...": ${JSON.stringify(stripped)}`);

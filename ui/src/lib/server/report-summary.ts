@@ -2,8 +2,8 @@
  * Parse a deep-evaluation report (English/Spanish/mixed Markdown) into structured fields
  * for the job detail page's Key Facts panel.
  *
- * The goal: surface everything a job-seeker actually wants to know at a glance —
- * comp, work mode, location, visa, BG risk, company stage, team, stack, gaps —
+ * The goal: surface everything a job-seeker actually wants to know at a glance --
+ * comp, work mode, location, visa, BG risk, company stage, team, stack, gaps --
  * without forcing them to scan the full report.
  */
 
@@ -137,7 +137,7 @@ function classifyWorkMode(raw: string): WorkMode {
     return 'remote';
   if (/^yes\b|^remote\b|\bdistributed\b|\banywhere\b/.test(s)) return 'remote';
   if (/\bno\b|\bmust be (in|located|based) (in)?\s/.test(s)) return 'onsite';
-  // If it just mentions a city, lean on-site/hybrid — pessimistic
+  // If it just mentions a city, lean on-site/hybrid -- pessimistic
   if (/\b(based in|located in)\s+[A-Z]/.test(raw)) return 'hybrid';
   return 'unknown';
 }

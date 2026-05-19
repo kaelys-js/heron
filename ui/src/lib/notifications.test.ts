@@ -1,5 +1,5 @@
 /**
- * lib/notifications — central activity-feed store.
+ * lib/notifications -- central activity-feed store.
  *
  * Tests cover: add() dedup + cap at 200 + autoToast event dispatch,
  * markRead / markAllRead, clear, init/destroy lifecycle, reportClient-

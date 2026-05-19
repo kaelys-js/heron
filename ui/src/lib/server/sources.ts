@@ -1,12 +1,12 @@
 /**
- * Source connection state — single source of truth for which scanners are
+ * Source connection state -- single source of truth for which scanners are
  * connected, when they last ran, and how often they fail.
  *
  * Distinct from the activity feed (transient log) and the `data/issues.jsonl`
  * issue stream (operational alerts). This is per-source health, written by
  * each scanner JobDef on every run and read by the /sources dashboard.
  *
- * State lives at `data/sources.json` — gitignored runtime data, regenerated
+ * State lives at `data/sources.json` -- gitignored runtime data, regenerated
  * on demand. Atomic writes via the same write-rename pattern used by other
  * state files in this project.
  *
@@ -45,7 +45,7 @@ export type SourceState = {
   lastConnectedAt?: number;
   /** Most recent successful pull (any non-zero job count or healthy probe). */
   lastSuccessfulPullAt?: number;
-  /** Most recent failure message — shown on the /sources card. */
+  /** Most recent failure message -- shown on the /sources card. */
   lastError?: string;
   consecutiveFailures: number;
   /** Per-source metadata (e.g. LinkedIn profile URL after first auth, Gmail
@@ -64,7 +64,7 @@ export type KnownSource = {
   label: string;
   /** One-line description for the card body. */
   description: string;
-  /** Connection method — drives which "Connect" UI to render. */
+  /** Connection method -- drives which "Connect" UI to render. */
   authKind: 'playwright' | 'imap' | 'env-key' | 'always-on';
   /** Whether this source is essential (LinkedIn / Anthropic) or optional. */
   required: boolean;
@@ -168,7 +168,7 @@ export function readSources(): Record<string, SourceState> {
   }
 }
 
-/** Get one source's state — returns a zero state when absent (never null). */
+/** Get one source's state -- returns a zero state when absent (never null). */
 export function getSource(id: string): SourceState {
   const all = readSources();
   return all[id] ?? { connected: false, consecutiveFailures: 0 };
@@ -178,7 +178,7 @@ export function getSource(id: string): SourceState {
 export function updateSource(id: string, patch: Partial<SourceState>): SourceState {
   ensureDir();
   const all = readSources();
-  // Spread defaults first, then prev, then patch — TS doesn't like having
+  // Spread defaults first, then prev, then patch -- TS doesn't like having
   // explicit named keys *after* a spread that re-supplies them, so we put
   // defaults via the prev/patch chain and assert the result.
   const merged = {
@@ -239,7 +239,7 @@ export function recordFailure(id: string, error: unknown): SourceState {
 }
 
 /**
- * Reset a source's state to zero — used by the /sources page's
+ * Reset a source's state to zero -- used by the /sources page's
  * "Disconnect" button + by `reset onboarding` flows. Distinct from a
  * failure (which keeps history); this wipes everything.
  */

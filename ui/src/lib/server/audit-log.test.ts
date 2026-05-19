@@ -1,5 +1,5 @@
 /**
- * lib/server/audit-log — append-only security event log.
+ * lib/server/audit-log -- append-only security event log.
  *
  * Mocks the auth DB so calls are captured + asserted without a real
  * SQLite file. Tests record + read + safeParse fallback.

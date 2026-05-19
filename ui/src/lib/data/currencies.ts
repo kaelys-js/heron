@@ -1,5 +1,5 @@
 /**
- * Major ISO 4217 currencies — the ones that actually show up in tech-job
+ * Major ISO 4217 currencies -- the ones that actually show up in tech-job
  * compensation discussions. Free-text fallback for niche cases.
  */
 export type Currency = { code: string; name: string; symbol: string };

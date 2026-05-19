@@ -2,7 +2,7 @@
  * Client-side pin/unpin state for the sidebar.
  *
  * The server auto-derives a base set of "pinnable" jobs (top Ready jobs by score).
- * The user can unpin individual ones — those go into an exclusion set persisted
+ * The user can unpin individual ones -- those go into an exclusion set persisted
  * in localStorage, so the sidebar respects the user's choices across reloads.
  */
 

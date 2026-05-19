@@ -1,18 +1,18 @@
 /**
- * /queue loader — surfaces every job currently in the autonomous-apply
+ * /queue loader -- surfaces every job currently in the autonomous-apply
  * pipeline so the user can supervise the drain:
  *
- *   Queued            — staged, waiting for apply-queue-drain to run
- *   Applying          — script running right now, with current step
- *   ManualApplyNeeded — soft-failed, finish by hand from Inbox
+ *   Queued            -- staged, waiting for apply-queue-drain to run
+ *   Applying          -- script running right now, with current step
+ *   ManualApplyNeeded -- soft-failed, finish by hand from Inbox
  *
  * Profile-scoped: `?profile=<slug>` filters to that profile. `?profile=all`
  * shows the union across every profile. No query param → active profile.
  *
  * Side-data the page renders in its header:
- *   todayCount    — applications sent today (for the X/cap counter)
- *   cap           — maxAppliesPerDay from autopilot config
- *   inFlight      — Map(jobId → ApplyState) so Applying rows show step
+ *   todayCount    -- applications sent today (for the X/cap counter)
+ *   cap           -- maxAppliesPerDay from autopilot config
+ *   inFlight      -- Map(jobId → ApplyState) so Applying rows show step
  */
 
 import { loadAllJobs } from '$lib/server/parsers';
@@ -30,7 +30,7 @@ export async function load({ url }: { url: URL }) {
   const applying = all.filter((j) => j.status === 'Applying');
   const manual = all.filter((j) => j.status === 'ManualApplyNeeded');
 
-  // Highest-fit first — drain processes in this order, so the UI should
+  // Highest-fit first -- drain processes in this order, so the UI should
   // mirror it.
   const byScore = (a: (typeof all)[number], b: (typeof all)[number]) =>
     (b.score ?? b.geminiScore ?? 0) - (a.score ?? a.geminiScore ?? 0);
@@ -44,7 +44,7 @@ export async function load({ url }: { url: URL }) {
   try {
     for (const s of listInFlight()) inFlight[s.jobId] = s;
   } catch {
-    /* swallow — page still renders fine without per-step detail */
+    /* swallow -- page still renders fine without per-step detail */
   }
 
   return {

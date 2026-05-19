@@ -11,7 +11,7 @@ import { logEvent } from '$lib/server/events';
 /**
  * Persist the rolling chat history per (profile, job) so page reloads
  * resume the conversation instead of starting over (P7). The bookkeeping
- * is shared with the rest of interview-prep — same profile dir, same
+ * is shared with the rest of interview-prep -- same profile dir, same
  * cleanup story (reset 'jobs' or 'everything' wipes it).
  */
 function historyPath(profileId: string, jobId: string): string {
@@ -61,13 +61,13 @@ export const POST = async ({ request, url }) => {
   // Profile resolution: caller can pass ?profile=<slug>; else fall back to active.
   // The report file is per-user-per-profile (lives under
   // `data/users/{uid}/profiles/{id}/reports/`, or `data/profiles/{id}/reports/`
-  // in legacy single-user installs) — so is the CV, since each profile has its
+  // in legacy single-user installs) -- so is the CV, since each profile has its
   // own narrative + experience pitch.
   const queryProfile = url.searchParams.get('profile');
   const profileId = queryProfile && getProfile(queryProfile) ? queryProfile : getActiveProfileId();
   const report = readSafe(path.join(profilePath(profileId, 'reports-dir'), reportFile));
   const cv = readSafe(profilePath(profileId, 'cv-md'));
-  // The mock-interview mode template — language follows profile.yml.language.modes_dir.
+  // The mock-interview mode template -- language follows profile.yml.language.modes_dir.
   // Re-read each request so a language change takes effect without server restart;
   // the fs cost is negligible per-turn vs the LLM round trip (cf. P17 note).
   const mode = readSafe(modesPathFor('mock-interview.md', profileId));
@@ -96,7 +96,7 @@ export const POST = async ({ request, url }) => {
       thinking: true,
     });
     // Persist the rolling history (client-supplied turns + the new assistant
-    // reply). Bounded — the file balloons otherwise on long sessions.
+    // reply). Bounded -- the file balloons otherwise on long sessions.
     if (jobId) {
       const lastUser = effectiveHistory[effectiveHistory.length - 1];
       const nextHistory: ChatTurn[] =

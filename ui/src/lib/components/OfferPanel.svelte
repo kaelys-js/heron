@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * OfferPanel — log offer + run counter rounds + attach benchmark +
+   * OfferPanel -- log offer + run counter rounds + attach benchmark +
    * compute EV + close as accepted/declined.
    */
 
@@ -61,10 +61,10 @@
   // Initialize form state from incoming props. These are user-editable values
   // that persist across re-renders; we deliberately don't $derive so the user
   // can edit them without props blowing the state away. Initial values are
-  // captured ONCE on mount — subsequent prop changes won't update the form
+  // captured ONCE on mount -- subsequent prop changes won't update the form
   // (which is the right UX for an editor).
   //
-  // `untrack()` tells Svelte 5 this is intentional — otherwise it warns
+  // `untrack()` tells Svelte 5 this is intentional -- otherwise it warns
   // "This reference only captures the initial value" on every build.
   const initialOffer = untrack(() => offer);
   const initialCurrent = untrack(() => offerCurrent);

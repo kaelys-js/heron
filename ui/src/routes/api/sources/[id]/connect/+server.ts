@@ -1,5 +1,5 @@
 /**
- * POST /api/sources/[id]/connect — initiate the source-specific connect flow.
+ * POST /api/sources/[id]/connect -- initiate the source-specific connect flow.
  *
  *   linkedin-auth / indeed-auth → spawns headed Playwright via the existing
  *                                  `python linkedin-easy-apply.py --login`
@@ -68,13 +68,13 @@ export const POST = wrap(
     }
 
     if (id === 'gmail-imap') {
-      // F19 — gmail-imap is SINGLE-TENANT across this install. Creds
+      // F19 -- gmail-imap is SINGLE-TENANT across this install. Creds
       // are stored in shared `.env` (GMAIL_IMAP_*) and only ONE Gmail
       // mailbox can be polled per install. The IMAP poller daemon
       // resolves the OWNER's user-context via `getOwnerUserId()` and
       // runs the scan under that ALS scope, so the reactor's side
       // effects (markStatus, generateTechPrep, appendLead) land in
-      // the owner's applications.md — never another user's tree.
+      // the owner's applications.md -- never another user's tree.
       //
       // Per-user gmail-imap would require encrypted per-user
       // credential storage (e.g. keychain integration) which is out
@@ -127,7 +127,7 @@ export const POST = wrap(
 /**
  * Spawn the Python Playwright wrapper in headed mode. Resolves when the
  * subprocess exits with code 0 (login confirmed by URL check inside the
- * script). Rejects on non-zero exit OR after a 5-minute timeout — login
+ * script). Rejects on non-zero exit OR after a 5-minute timeout -- login
  * shouldn't take longer than that and a hung process is worse than a
  * surfaced error.
  */
@@ -137,7 +137,7 @@ function spawnPlaywrightLogin(portal: 'linkedin' | 'indeed'): Promise<void> {
     const fs = require('node:fs') as typeof import('node:fs');
     const py = fs.existsSync(venvPython) ? venvPython : 'python3';
 
-    // Both portals share the same auth helper module — exposes --login
+    // Both portals share the same auth helper module -- exposes --login
     // for headed login and --check-session for read-only probe.
     const p = spawn(py, ['scripts/lib/lib_playwright_auth.py', '--portal', portal, '--login'], {
       cwd: ROOT,
@@ -197,7 +197,7 @@ async function testImapConnection(
     await client.connect();
     const lock = await client.getMailboxLock(mailbox);
     try {
-      // Just verify the mailbox opens — don't actually fetch anything.
+      // Just verify the mailbox opens -- don't actually fetch anything.
       await client.status(mailbox, { messages: true });
     } finally {
       lock.release();
@@ -209,7 +209,7 @@ async function testImapConnection(
   }
 }
 
-/** Probe an API key end-to-end (real round-trip, not just env presence —
+/** Probe an API key end-to-end (real round-trip, not just env presence --
  *  B13). Same probe the /api/settings/test endpoint runs. Throws on any
  *  non-2xx so the caller can flip Connect to failure. */
 async function testApiKey(provider: 'anthropic' | 'gemini' | 'adzuna'): Promise<void> {

@@ -1,5 +1,5 @@
 /**
- * Generic interview-prep endpoint — useful when the caller already has a
+ * Generic interview-prep endpoint -- useful when the caller already has a
  * report file in hand but no Job row (e.g. interview prep for a posting
  * the user never added to their pipeline, or external integrations).
  *
@@ -11,7 +11,7 @@
  * who don't want the brief filed away can call it ad-hoc.
  *
  * Accepts:
- *   ?profile=<slug>  — which profile's CV + report dir to read from
+ *   ?profile=<slug>  -- which profile's CV + report dir to read from
  *                      (defaults to active)
  *   body { reportFile, archetype? }
  */

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * fix-md040.mjs — one-shot codemod that adds a language tag to every
+ * fix-md040.mjs -- one-shot codemod that adds a language tag to every
  * bare ``` fence that MD040 (markdownlint) is flagging.
  *
  * Why a codemod and not `markdownlint-cli2 --fix`: --fix cannot pick a
@@ -25,7 +25,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 // ── Step 1: ask markdownlint-cli2 where MD040 violations live ────────
 // markdownlint-cli2 writes its report to STDERR (not stdout) and exits
 // with code 1 when it finds violations. We capture both streams and
-// concatenate — the `path:line error MDxxx ...` lines come from stderr.
+// concatenate -- the `path:line error MDxxx ...` lines come from stderr.
 // Format produced: `<path>:<line>[:col] error MDxxx ...`
 const result = spawnSync('pnpm', ['exec', 'markdownlint-cli2'], {
   encoding: 'utf8',
@@ -37,7 +37,7 @@ if (!raw) {
   process.exit(0);
 }
 
-// `<path>:<line>[:col] error MDxxx ...` — the second segment may have
+// `<path>:<line>[:col] error MDxxx ...` -- the second segment may have
 // trailing tokens like "52 error MD040 ...". `Number()` returns NaN
 // when there's trailing non-numeric content; `parseInt` does what we
 // want here.

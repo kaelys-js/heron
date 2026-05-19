@@ -1,7 +1,7 @@
 /**
- * /api/health — minimal liveness probe.
+ * /api/health -- minimal liveness probe.
  *
- * F22 — pre-fix this returned per-file stats (size + mtime) for the
+ * F22 -- pre-fix this returned per-file stats (size + mtime) for the
  * active user's pipeline.md + gemini-scores.tsv + reports/ count. The
  * endpoint is anonymous (backend-discovery uses it before sign-in
  * lands), so on a multi-user install ALS resolved to SYSTEM_USER and

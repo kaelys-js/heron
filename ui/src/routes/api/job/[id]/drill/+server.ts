@@ -1,5 +1,5 @@
 /**
- * /api/job/[id]/drill — live drill feedback for code or design.
+ * /api/job/[id]/drill -- live drill feedback for code or design.
  *
  * POST body: { mode: 'code' | 'design', problem, userInput, previousFeedback }
  *
@@ -8,7 +8,7 @@
  * Browser-side this lights up coach commentary inline next to the editor.
  *
  * Cost: 1 short Claude pass (~5-15s). The user calls this on-demand
- * (button press), NOT on every keystroke — would be wasteful.
+ * (button press), NOT on every keystroke -- would be wasteful.
  */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';

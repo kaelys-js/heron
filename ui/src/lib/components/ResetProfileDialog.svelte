@@ -4,14 +4,14 @@
   intentionally awkward: a single misclick should never destroy data.
 
   Three-level destructiveness:
-    * Profile only        — wipes profile.yml + cv.md + _profile.md back to
+    * Profile only        -- wipes profile.yml + cv.md + _profile.md back to
                             defaults. Tracker / reports / sources ALL kept.
-    * Jobs data only      — wipes the job-search tracker (applications,
+    * Jobs data only      -- wipes the job-search tracker (applications,
                             pipeline, scan history, scores, reports, PDFs,
                             follow-ups, interview-prep company files, issues,
                             activity feed). Profile + CV + targeting +
                             sources are PRESERVED so you can keep working.
-    * Everything          — strict superset of the two above, plus the
+    * Everything          -- strict superset of the two above, plus the
                             longer-lived configs (filter profiles, autopilot
                             schedule, story bank). Closest thing to `rm -rf`.
 
@@ -50,7 +50,7 @@
   const REQUIRED_PHRASE = 'RESET';
   let typed = $state('');
   let busy = $state(false);
-  // svelte-ignore state_referenced_locally — initial seed only
+  // svelte-ignore state_referenced_locally -- initial seed only
   let scope = $state<Scope>(initialScope);
   // Force-on (and disabled) when scope is 'everything', user-toggleable
   // otherwise. Resetting onboarding wipes `data/onboarding-state.json` so
@@ -127,7 +127,7 @@
     }
   }
 
-  // Three-mode card config — keeps the JSX simple
+  // Three-mode card config -- keeps the JSX simple
   const SCOPES: {
     value: Scope;
     label: string;

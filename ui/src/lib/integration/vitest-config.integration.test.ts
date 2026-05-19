@@ -1,7 +1,7 @@
 /**
  * Regression guard for vitest.workspace.ts configuration.
  *
- * Vitest 4's default `browser.headless` is `process.env.CI` — locally
+ * Vitest 4's default `browser.headless` is `process.env.CI` -- locally
  * that's `undefined` → falsy → a real Chromium window pops every time
  * you run `pnpm test`. We explicitly set headless at the top-level
  * `browser` config (NOT inside the playwright() factory, which doesn't
@@ -19,7 +19,7 @@ describe('vitest.workspace.ts headless gate', () => {
 
   it('declares browser.headless explicitly (no CI-env fallback drift)', () => {
     // Must contain the literal `headless: !process.env.BROWSER_HEAD`
-    // inside the `browser:` block — that's the only way to override
+    // inside the `browser:` block -- that's the only way to override
     // Vitest 4's `process.env.CI` default.
     expect(cfg).toMatch(/headless:\s*!process\.env\.BROWSER_HEAD/);
   });
@@ -27,7 +27,7 @@ describe('vitest.workspace.ts headless gate', () => {
   it('headless setting lives at browser-config level, not inside playwright() factory', () => {
     // Find the `browser: {` opening brace and assert `headless:` appears
     // before the `provider:` line. The playwright() factory's headless
-    // option does NOT propagate to the parent — only the top-level
+    // option does NOT propagate to the parent -- only the top-level
     // browser.headless is read.
     const browserStart = cfg.indexOf('browser: {');
     const providerLine = cfg.indexOf('provider: playwright(', browserStart);

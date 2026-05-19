@@ -1,5 +1,5 @@
 /**
- * Autopilot — recurring + event-triggered task schedules.
+ * Autopilot -- recurring + event-triggered task schedules.
  *
  * Config lives in `data/autopilot.json` and is the source of truth.
  * The scheduler runs in-process while the dashboard is up; this is documented
@@ -26,7 +26,7 @@ import {
   SYSTEM_USER_ID,
 } from './user-context';
 
-/** Per-user autopilot config path. Always explicit-userId — the implicit
+/** Per-user autopilot config path. Always explicit-userId -- the implicit
  *  variant was removed (F9) because every caller after the per-user
  *  cache migration knows which user it's targeting; defaulting silently
  *  to the active user was the bug that caused user A's writes to land
@@ -35,7 +35,7 @@ function configPathForUser(userId: string): string {
   return userSharedPathForUser(userId, 'autopilot');
 }
 
-/** Task name — any registered job id. The legacy literal union is kept as
+/** Task name -- any registered job id. The legacy literal union is kept as
  *  a type alias for readability + boot-time defaults; runtime treats
  *  Schedule.task as an open string so new jobs work without code changes. */
 export type TaskName = string;
@@ -68,7 +68,7 @@ export type Schedule = {
   name: string;
   /** One-sentence description shown in UI */
   description: string;
-  /** Multi-line "what this actually does" — shown in the expandable detail panel */
+  /** Multi-line "what this actually does" -- shown in the expandable detail panel */
   details: string[];
   /** Visible label on the linked task (icon legend) */
   taskLabel: string;
@@ -93,7 +93,7 @@ export type AutopilotConfig = {
     /** Auto-eval triggers when Gemini scoring tags a job ≥ this score. */
     autoEvaluateScore: number;
     /** Auto-eval batch is capped at this many evaluate runs per fire. Each
-     *  run costs ~$0.30–$1.00 of Claude usage, so a low cap is a real
+     *  run costs ~$0.30-$1.00 of Claude usage, so a low cap is a real
      *  cost-safety knob, not just a perf knob. */
     maxAutoEvalsPerRun: number;
     /** LinkedIn Easy Apply caps at this number of submissions per UTC day. */
@@ -213,7 +213,7 @@ const DEFAULT_CONFIG: AutopilotConfig = {
 
 /**
  * Per-user config cache (F9). Pre-F9 this was a single module-level
- * `let cached: AutopilotConfig | null = null` — the FIRST request to
+ * `let cached: AutopilotConfig | null = null` -- the FIRST request to
  * populate it won for everyone, and `writeConfig` poisoned the cache
  * across users. Now keyed by `currentUserIdOrDefault()` so:
  *
@@ -225,7 +225,7 @@ const DEFAULT_CONFIG: AutopilotConfig = {
  * Cache invalidation: there is none; the file is small JSON, every
  * read goes to disk if the slot is empty, and writes are explicit. If
  * a future need for cross-process invalidation arises (multiple
- * SvelteKit replicas), drop the cache entirely — disk reads are ~1ms.
+ * SvelteKit replicas), drop the cache entirely -- disk reads are ~1ms.
  */
 const cache = new Map<string, AutopilotConfig>();
 
@@ -398,7 +398,7 @@ async function runTask(s: Schedule): Promise<void> {
       runLinkedInApply(false, undefined, s.profileId);
       break;
     case 'auto-eval':
-      // Fire-and-forget — runAutoEval emits its own batch start/finish
+      // Fire-and-forget -- runAutoEval emits its own batch start/finish
       // events on the activity bus, and the scheduler's bus listener picks
       // those up to update lastRunResult. We don't await here because the
       // batch can run for up to an hour.
@@ -422,7 +422,7 @@ async function runTask(s: Schedule): Promise<void> {
 /**
  * Fan out a daily-scan run across the CURRENT user's profiles
  * sequentially. Sequential because the underlying Python scrapers share
- * rate limits + Playwright resources — running them in parallel for
+ * rate limits + Playwright resources -- running them in parallel for
  * multiple profiles would just fight each other.
  *
  * F10: pre-fix this also iterated `listSchedulableUsers()` itself,
@@ -518,7 +518,7 @@ function onTaskCompleted(task: TaskName): void {
  *  `data/job-last-run.json` (registry-declared) so the /autopilot page
  *  shows the right state regardless of which path triggered the run. */
 function trackResult(task: TaskName, success: boolean, message?: string): void {
-  // Legacy / user-configured schedules — update the matching cfg entries.
+  // Legacy / user-configured schedules -- update the matching cfg entries.
   const cfg = readConfig();
   let dirty = false;
   const next = cfg.schedules.map((s) => {
@@ -533,7 +533,7 @@ function trackResult(task: TaskName, success: boolean, message?: string): void {
   });
   if (dirty) writeConfig({ ...cfg, schedules: next });
 
-  // Registry-declared schedules — update job-last-run.json. Only flip from
+  // Registry-declared schedules -- update job-last-run.json. Only flip from
   // 'started' to a terminal state so a manual run doesn't clobber a
   // scheduler-driven success that already landed.
   const last = readLastRun(task);
@@ -555,18 +555,18 @@ export function startScheduler(): void {
   schedulerStarted = true;
 
   // Subscribe to task lifecycle events on the bus (avoids a circular import with orchestrator).
-  // installBusListener is HMR-idempotent — see events.ts.
+  // installBusListener is HMR-idempotent -- see events.ts.
   installBusListener(SCHEDULER_BUS_NAME, (ev: ActivityEvent) => {
     if (ev.category !== 'task' && ev.category !== 'system') return;
     const task = ev.source as TaskName;
     // Accept any registered job id OR the 4 legacy task ids. Filtering by
     // an open-ended allowlist is what makes registry-declared schedules
-    // get their lastRunResult updated automatically — previously only the
+    // get their lastRunResult updated automatically -- previously only the
     // 4 hardcoded ids passed this gate.
     const isLegacy = ['scan', 'gemini', 'apply-linkedin', 'auto-eval'].includes(task);
     const isRegistered = !!getJob(task);
     if (!isLegacy && !isRegistered) return;
-    // F10 — scope the trackResult + after-trigger lookup to ev.userId
+    // F10 -- scope the trackResult + after-trigger lookup to ev.userId
     // (if present). Both `trackResult` and `onTaskCompleted` call
     // `readConfig()` / `writeConfig()` which are now per-user. Without
     // this wrap, every status update would land in SYSTEM_USER's file.
@@ -587,14 +587,14 @@ export function startScheduler(): void {
     if (ev.userId) {
       void runAsUser(ev.userId, async () => handle());
     } else {
-      // Broadcast / system event — fall back to SYSTEM_USER. Logged at
+      // Broadcast / system event -- fall back to SYSTEM_USER. Logged at
       // info level (not warn) because legitimate system events do hit
       // this path (boot, cleanup, etc.).
       handle();
     }
   });
 
-  // Tick every 30s — finer-grained matching while still cheap.
+  // Tick every 30s -- finer-grained matching while still cheap.
   // We wrap tick() to handle its async signature (the per-user fan-out
   // landed in F10 makes tick a Promise-returning function).
   schedulerInterval = setInterval(() => {
@@ -610,15 +610,15 @@ export function startScheduler(): void {
   logEvent('autopilot', 'Scheduler started', { category: 'system', message: 'tick interval 30s' });
 }
 
-// D17 — `stopScheduler` removed: scheduler lives for the dashboard's
+// D17 -- `stopScheduler` removed: scheduler lives for the dashboard's
 // lifetime; HMR resets the schedulerStarted flag implicitly. removeBusListener
 // goes with it (D22) since it had no other caller.
 
 /**
- * F10 — Per-tick user fan-out. The 30s setInterval runs OUTSIDE any
+ * F10 -- Per-tick user fan-out. The 30s setInterval runs OUTSIDE any
  * user ALS context. Pre-F10 this meant readConfig() resolved to
  * SYSTEM_USER and only legacy data/profiles/_shared/autopilot.json was
- * ever consulted — real users' schedules + globalEnabled flags were
+ * ever consulted -- real users' schedules + globalEnabled flags were
  * dead code.
  *
  * Now: enumerate every schedulable user, run the per-user tick body
@@ -629,7 +629,7 @@ export function startScheduler(): void {
  *     (orchestrator's CAREER_OPS_USER_ID env injection covers the
  *     child process)
  *   - runJobById() detects the existing user context and runs once
- *     for THIS user only (registry.ts:104-108) — no double fan-out
+ *     for THIS user only (registry.ts:104-108) -- no double fan-out
  */
 async function tick(): Promise<void> {
   const userIds = await listSchedulableUsers();
@@ -650,7 +650,7 @@ function tickForCurrentUser(): void {
     const minute = nowDate.getMinutes();
     const weekday = nowDate.getDay();
 
-    // (1) User-configured / legacy schedules — same logic as before, plus
+    // (1) User-configured / legacy schedules -- same logic as before, plus
     //     a `weekly` branch.
     const userTaskIds = new Set<string>();
     for (const s of cfg.schedules) {
@@ -674,7 +674,7 @@ function tickForCurrentUser(): void {
       // 'after' triggers fire from onTaskCompleted, not from tick.
     }
 
-    // (2) Registry-declared schedules — every JobDef whose trigger is
+    // (2) Registry-declared schedules -- every JobDef whose trigger is
     //     daily/weekly gets fired automatically here if the user hasn't
     //     overridden it via a cfg.schedules entry. State lives in the
     //     per-user `data/users/{uid}/profiles/_shared/job-last-run.json`

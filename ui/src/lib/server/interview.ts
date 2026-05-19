@@ -36,7 +36,7 @@ function persistedInterviewPath(profileId: string, jobId: string): string {
 
 /**
  * Read the STAR+R story bank for the current user. Per-user (NOT
- * per-profile) — the same human's stories transfer across engineer +
+ * per-profile) -- the same human's stories transfer across engineer +
  * instructor profiles, but Alice's stories MUST NOT appear in Bob's
  * brief. Pre-multi-user this read the repo-root `interview-prep/story-bank.md`
  * which leaked across every user on a shared machine.
@@ -51,7 +51,7 @@ export function loadStoryBank(_profileId?: string): string {
 /**
  * Read the active profile's writing samples as a single concatenated
  * markdown blob (one `## filename` block per `*.md` in the dir). Per
- * profile per user — voice samples for the engineer track differ from
+ * profile per user -- voice samples for the engineer track differ from
  * the instructor track. Pre-multi-user this read the repo-root
  * `writing-samples/` which leaked across every profile and every user.
  *
@@ -77,7 +77,7 @@ export function loadWritingSamples(profileId?: string): string {
     }
     return samples.join('\n\n').slice(0, 3000);
   } catch {
-    /* directory missing or unreadable — skip */
+    /* directory missing or unreadable -- skip */
     return '';
   }
 }
@@ -129,10 +129,10 @@ export async function generateInterviewPrep(
   const reportContent = readSafe(path.join(profilePath(id, 'reports-dir'), reportFile));
   const cv = readSafe(profilePath(id, 'cv-md'));
   const interviewPrepMode = loadModeFile('interview-prep.md', id);
-  // P3: splice the user's STAR+R story bank — per-user, cross-profile.
+  // P3: splice the user's STAR+R story bank -- per-user, cross-profile.
   // See loadStoryBank() for the path resolution + multi-user rationale.
   const storyBank = loadStoryBank(id).slice(0, 4000);
-  // P4: article-digest.md per profile — proof points + portfolio context.
+  // P4: article-digest.md per profile -- proof points + portfolio context.
   const articleDigest = readSafe(profilePath(id, 'article-digest')).slice(0, 3000);
   // D26: per-profile per-user writing samples. See loadWritingSamples()
   // for the per-profile path + cap details.
@@ -156,7 +156,7 @@ export async function generateInterviewPrep(
       ensureProfileDirs(id);
       fs.writeFileSync(persistedInterviewPath(id, persistJobId), md);
     } catch {
-      // Persistence is best-effort — caller still got the body
+      // Persistence is best-effort -- caller still got the body
     }
   }
   return md;

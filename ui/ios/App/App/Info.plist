@@ -125,7 +125,7 @@
 
 	<!-- Face ID usage description (BiometricAuth flow). -->
 	<key>NSFaceIDUsageDescription</key>
-	<string>Heron uses Face ID to unlock sensitive screens — interview notes, negotiation playbooks, and offer comparisons — so a glance over your shoulder never leaks personal data.</string>
+	<string>Heron uses Face ID to unlock sensitive screens -- interview notes, negotiation playbooks, and offer comparisons -- so a glance over your shoulder never leaks personal data.</string>
 
 	<!-- Spotlight indexing description -->
 	<key>NSUserActivityTypes</key>
@@ -169,7 +169,7 @@
 	<!-- Mock-interview voice capture uses MediaRecorder which iOS WebView
 	     routes through the native mic permission. -->
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Heron uses the microphone for the mock-interview rehearsal mode — audio is processed on-device and never uploaded.</string>
+	<string>Heron uses the microphone for the mock-interview rehearsal mode -- audio is processed on-device and never uploaded.</string>
 
 	<!-- Avatar upload via file picker — system asks for Photos access. -->
 	<key>NSPhotoLibraryUsageDescription</key>

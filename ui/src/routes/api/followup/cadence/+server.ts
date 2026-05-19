@@ -6,7 +6,7 @@
  *
  * Note on consumers: the dashboard's page loaders (/applied, Inbox,
  * JobActions sheet) call `getFollowupCadence()` via SERVER-SIDE import
- * from `$lib/server/followup-cadence`, not via this HTTP endpoint —
+ * from `$lib/server/followup-cadence`, not via this HTTP endpoint --
  * cheaper than a round trip and avoids a network hop. This endpoint
  * remains as the public surface for external integrations (bookmarklets,
  * scripts, mobile clients) that want the same JSON shape over HTTP.

@@ -1,5 +1,5 @@
 /**
- * lib/server/apply-dispatcher — URL → portal detection.
+ * lib/server/apply-dispatcher -- URL → portal detection.
  *
  * Pure function over the URL. The portal table changes as ATSes get
  * onboarded; this test locks the contract for every portal currently

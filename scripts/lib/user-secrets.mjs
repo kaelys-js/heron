@@ -1,5 +1,5 @@
 /**
- * user-secrets.mjs — JS twin of ui/src/lib/server/user-secrets.ts.
+ * user-secrets.mjs -- JS twin of ui/src/lib/server/user-secrets.ts.
  *
  * CLI scripts (gemini-eval.mjs, scan-email-imap.mjs, etc.) can't easily
  * import from the TypeScript dashboard codebase, so this file mirrors
@@ -10,11 +10,11 @@
  * `mjs-ts parity`). Touch either side and re-run that test.
  *
  * Resolution order for a CLI script that wants a credential:
- *   1. per-user value (this module) — keyed by `CAREER_OPS_USER_ID` env
+ *   1. per-user value (this module) -- keyed by `CAREER_OPS_USER_ID` env
  *   2. process.env fallback (legacy single-user install)
  *
  * If CAREER_OPS_USER_ID isn't set, scripts fall straight through to
- * process.env — that's the pre-multi-user path and stays supported.
+ * process.env -- that's the pre-multi-user path and stays supported.
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
@@ -68,7 +68,7 @@ function deriveKey(saltB64) {
 /** Decrypt a single key from the user's secrets file. Returns null if
  *  the file doesn't exist or the key isn't in it. Throws if the file
  *  is present but corrupt or the auth tag doesn't verify (rotated
- *  BETTER_AUTH_SECRET, tampered file, etc.) — the caller gets a loud
+ *  BETTER_AUTH_SECRET, tampered file, etc.) -- the caller gets a loud
  *  signal rather than a silent fallback.
  *  @param {string} userId
  *  @param {string} key
@@ -103,7 +103,7 @@ export function getSecret(userId, key) {
  *    const apiKey = getCredential('GEMINI_API_KEY');
  *
  *  Resolves the userId from CAREER_OPS_USER_ID. When unset, the function
- *  skips the per-user lookup and goes straight to process.env — that's
+ *  skips the per-user lookup and goes straight to process.env -- that's
  *  the pre-multi-user path and stays supported.
  *  @param {string} key
  *  @returns {string | null}
@@ -115,7 +115,7 @@ export function getCredential(key) {
       const fromStore = getSecret(userId, key);
       if (fromStore !== null) return fromStore;
     } catch (err) {
-      // Don't bail the script over a decrypt failure — surface a
+      // Don't bail the script over a decrypt failure -- surface a
       // warning + fall through to process.env. The dashboard's
       // health-check will flag the corrupt secrets.json separately.
       const msg = err instanceof Error ? err.message : String(err);

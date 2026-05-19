@@ -1,5 +1,5 @@
 /**
- * /api/profile/referrals — referral-ask tracker + LinkedIn search URL.
+ * /api/profile/referrals -- referral-ask tracker + LinkedIn search URL.
  *
  * GET ?company=Acme → { url, asks: ReferralAsk[], silent: ReferralAsk[] }
  *   - url: the LinkedIn mutuals search URL for a given company
@@ -64,7 +64,7 @@ export const PATCH = wrap('referrals', async ({ request, url }: { request: Reque
   if (!body.jobId || !body.contactName || !body.status) {
     badRequest('jobId + contactName + status required');
   }
-  // Append a new row with the updated status — last-write-wins in listAsks.
+  // Append a new row with the updated status -- last-write-wins in listAsks.
   const existing = listAsks(profileId).find(
     (a) =>
       a.jobId === body.jobId && a.contactName.toLowerCase() === body.contactName!.toLowerCase(),
@@ -74,7 +74,7 @@ export const PATCH = wrap('referrals', async ({ request, url }: { request: Reque
     ...existing!,
     status: body.status!,
     notes: body.notes ?? existing!.notes,
-    // Don't change askedAt — preserve original ask timestamp.
+    // Don't change askedAt -- preserve original ask timestamp.
   };
   logAsk(profileId, ask);
   return { ok: true, ask };

@@ -1,7 +1,7 @@
 /** Loads masked existing keys so the form pre-fills if the user is
  *  resuming the wizard after a partial setup. Also flags whether all
- *  required keys are already set — used by the 2nd+ profile onboarding
- *  flow to show "Keys already configured — continue" path. */
+ *  required keys are already set -- used by the 2nd+ profile onboarding
+ *  flow to show "Keys already configured -- continue" path. */
 import { readEnvMasked, readEnv } from '$lib/server/env';
 import { getActiveProfileId, getProfile, listProfiles } from '$lib/server/profiles';
 

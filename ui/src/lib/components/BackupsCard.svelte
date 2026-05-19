@@ -56,9 +56,9 @@
     initialConfig?: { retentionDays: number };
   } = $props();
 
-  // svelte-ignore state_referenced_locally — initial seed; user actions update.
+  // svelte-ignore state_referenced_locally -- initial seed; user actions update.
   let backups = $state<BackupInfo[]>(initialBackups);
-  // svelte-ignore state_referenced_locally — initial seed.
+  // svelte-ignore state_referenced_locally -- initial seed.
   let retentionDays = $state<number>(initialConfig.retentionDays);
 
   let busyBackup = $state(false);
@@ -67,12 +67,12 @@
   let restoreConfirmInput = $state('');
   let restoreInFlight = $state(false);
 
-  // Retention save state — debounced via a small timer so typing doesn't
+  // Retention save state -- debounced via a small timer so typing doesn't
   // hit the endpoint on every keystroke.
   let retentionSaveTimer: ReturnType<typeof setTimeout> | null = null;
   let retentionSaving = $state(false);
 
-  // Refresh helper — pulls latest list + config from /api/backup/list.
+  // Refresh helper -- pulls latest list + config from /api/backup/list.
   async function refresh() {
     try {
       const r = await api.get<{ backups: BackupInfo[]; config: { retentionDays: number } }>(
@@ -139,7 +139,7 @@
   }
 
   function downloadOne(b: BackupInfo) {
-    // Open the download URL in a new window — the server sets
+    // Open the download URL in a new window -- the server sets
     // Content-Disposition so the browser saves it instead of navigating.
     window.open('/api/backup/' + encodeURIComponent(b.id), '_blank');
   }

@@ -1,4 +1,4 @@
-# Mode: training — Training Evaluation
+# Mode: training -- Training Evaluation
 
 For every course/cert the candidate asks about, evaluate 6 dimensions:
 
@@ -13,7 +13,7 @@ For every course/cert the candidate asks about, evaluate 6 dimensions:
 
 ## Verdicts
 
-- **DO IT** → 4–12-week plan with weekly deliverables and a scoreboard
+- **DO IT** → 4-12-week plan with weekly deliverables and a scoreboard
 - **SKIP** → a better alternative with justification
 - **DO IT WITH A TIMEBOX** (max X weeks) → condensed plan, essentials only
 

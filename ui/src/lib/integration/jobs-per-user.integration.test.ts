@@ -1,5 +1,5 @@
 /**
- * Multi-user safety regression guard — every JobDef that touches user data
+ * Multi-user safety regression guard -- every JobDef that touches user data
  * MUST declare `perUser: true` so `runById()` fans the work out across
  * every schedulable user. The opposite (`perUser: false`) is reserved for
  * a TINY, KNOWN list of system-only jobs (e.g. GDPR account reaper) that
@@ -7,7 +7,7 @@
  * if fanned out per user.
  *
  * Why a regression test, not a runtime check:
- *   • A new `*.job.ts` file that forgets `perUser` is a silent bug — it
+ *   • A new `*.job.ts` file that forgets `perUser` is a silent bug -- it
  *     defaults to `undefined` (falsy), so the registry runs it once with
  *     no user context, mutating SYSTEM_USER files and leaking nothing
  *     into per-user data. We won't notice in dev. CI must catch this.
@@ -17,7 +17,7 @@
  *
  * Mechanism: file-system parse, not import. We can't import the job modules
  * from a Vitest node project because they pull `$env/dynamic/private` at
- * boot. Regex-on-source is sufficient — the JobDef shape is stable.
+ * boot. Regex-on-source is sufficient -- the JobDef shape is stable.
  */
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
@@ -27,7 +27,7 @@ const REPO_ROOT = path.resolve(__dirname, '../../../..');
 const JOBS_DIR = path.join(REPO_ROOT, 'ui/src/lib/server/jobs');
 
 /** Jobs that legitimately run ONCE across the system, not per user. Adding
- *  to this list requires deliberate review — these jobs MUST NOT read or
+ *  to this list requires deliberate review -- these jobs MUST NOT read or
  *  write any user-scoped data (no `currentUserId()`, no
  *  `profilePathForUser`, no `data/users/...` paths). */
 const SYSTEM_ONLY_JOBS: ReadonlySet<string> = new Set([
@@ -56,7 +56,7 @@ function listJobFiles(): JobFile[] {
     if (entry.endsWith('.test.ts')) continue;
     const abs = path.join(JOBS_DIR, entry);
     const source = fs.readFileSync(abs, 'utf8');
-    // Skip bus-listener-only modules — they don't register a JobDef.
+    // Skip bus-listener-only modules -- they don't register a JobDef.
     if (!/\bregister\(\s*{/.test(source)) continue;
     const idMatch = source.match(/\bregister\([\s\S]*?\bid:\s*['"]([^'"]+)['"]/);
     const perUserMatch = source.match(/\bregister\([\s\S]*?\bperUser:\s*(true|false)\b/);

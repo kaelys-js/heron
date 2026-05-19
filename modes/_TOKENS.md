@@ -26,13 +26,13 @@ This replaces the older approach (repo-root symlinks like `cv.md` → `data/prof
 | `__JDS__` | absolute path of `<profile>/jds/` (dir) |
 | `__WRITING_SAMPLES__` | absolute path of `<profile>/writing-samples/` (dir) |
 | `__INTERVIEW_PREP__` | absolute path of `<profile>/interview-prep/` (dir) |
-| `__STORY_BANK__` | absolute path of `<user-shared>/story-bank.md` — lives ABOVE the profile tree, shared across this user's profiles, isolated per-user |
+| `__STORY_BANK__` | absolute path of `<user-shared>/story-bank.md` -- lives ABOVE the profile tree, shared across this user's profiles, isolated per-user |
 
 ## Substitution rules
 
 - **Word-boundary aware.** `__CV__` substitutes whole-token; `__CV___EXTRA` doesn't match.
 - **Idempotent.** Running substitution on an already-substituted prompt is a no-op (tokens are gone after first pass).
-- **Closed set.** An unknown token like `__FOO__` is left as literal text — substitution doesn't guess. This means a typo in a mode file shows up loud in the AI's output (literal `__FOO__` in the rendered prompt).
+- **Closed set.** An unknown token like `__FOO__` is left as literal text -- substitution doesn't guess. This means a typo in a mode file shows up loud in the AI's output (literal `__FOO__` in the rendered prompt).
 - **System paths NOT substituted.** `modes/_shared.md`, `templates/cv-template.html`, etc. are SYSTEM assets at repo root and stay as relative paths. Substitution only touches the user-content tokens above.
 
 ## Authoring rules for new modes
@@ -41,7 +41,7 @@ When writing a new `modes/<mode>.md`:
 
 - **DO** reference user files via tokens: `Read __CV__ to extract...`
 - **DO** reference user dirs via tokens: `Save the report at __REPORTS__/{number}-{slug}-{date}.md`
-- **DON'T** use literal repo-root paths like `cv.md`, `portals.yml`, `jds/`, `reports/`, `output/`, `interview-prep/`, `writing-samples/` — these only worked under the deprecated symlink scheme.
+- **DON'T** use literal repo-root paths like `cv.md`, `portals.yml`, `jds/`, `reports/`, `output/`, `interview-prep/`, `writing-samples/` -- these only worked under the deprecated symlink scheme.
 - **DON'T** invent new tokens without adding them to:
   1. The "Token vocabulary" table above
   2. The `TOKEN_RESOLVERS` map in `ui/src/lib/server/mode-substitution.ts`
@@ -51,6 +51,6 @@ When writing a new `modes/<mode>.md`:
 
 The CI integration test `ui/src/lib/integration/mode-substitution.integration.test.ts` runs `substituteModeTokens()` against every `modes/*.md` file and asserts:
 - No `__UPPERCASE__` token literals remain after substitution (would indicate a token in the file that isn't in `TOKEN_RESOLVERS`).
-- No legacy literal references (`cv.md`, `portals.yml`, etc.) remain — would indicate a mode file that hasn't been migrated.
+- No legacy literal references (`cv.md`, `portals.yml`, etc.) remain -- would indicate a mode file that hasn't been migrated.
 
 Run locally with: `pnpm --filter ui exec vitest run mode-substitution`.

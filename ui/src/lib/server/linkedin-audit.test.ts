@@ -1,5 +1,5 @@
 /**
- * lib/server/linkedin-audit — classifies a LinkedIn profile snapshot
+ * lib/server/linkedin-audit -- classifies a LinkedIn profile snapshot
  * into Findings + persists the report. Tests focus on the pure
  * classifier + the read/write/mark cycle.
  */

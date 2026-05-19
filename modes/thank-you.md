@@ -1,4 +1,4 @@
-# Thank-you note — the post-interview follow-up that ACTUALLY helps
+# Thank-you note -- the post-interview follow-up that ACTUALLY helps
 
 You're drafting the thank-you note the user sends 6-24h after an interview.
 Goal: a 5-7 sentence note that (a) thanks the interviewer specifically,
@@ -14,9 +14,9 @@ re-engages the interviewer's specific worry from the call.
 
 - `jobId`, `company`, `role`
 - `interviewerSlug`, `interviewerName`, `interviewerTitle`
-- `stage` — recruiter-screen / hiring-manager-screen / tech-screen / take-home / onsite / final-round
-- `talkingPoints` — free-form text the user pasted: 1-3 things that came up in the call
-- `tone` — `formal` | `friendly` | `enthusiastic` (default `friendly`)
+- `stage` -- recruiter-screen / hiring-manager-screen / tech-screen / take-home / onsite / final-round
+- `talkingPoints` -- free-form text the user pasted: 1-3 things that came up in the call
+- `tone` -- `formal` | `friendly` | `enthusiastic` (default `friendly`)
 
 Also read: `__CV__`, `__INTERVIEW_PREP__/{company}-{role}.md` if it exists,
 `__STORY_BANK__`, and any existing per-interviewer dossier
@@ -91,11 +91,11 @@ which clears the "thank-you owed" Inbox card.
 
 ## Anti-patterns (DO NOT)
 
-- Don't open with "I just wanted to thank you" — drop "just" and "wanted to".
+- Don't open with "I just wanted to thank you" -- drop "just" and "wanted to".
 - Don't write a 3-paragraph essay. The interviewer has 200 unread emails.
-- Don't repeat your CV at them — they read it before the call.
-- Don't end with "let me know if you have any other questions" — passive.
-- Don't use "I'm passionate about" — banned word in Heron.
+- Don't repeat your CV at them -- they read it before the call.
+- Don't end with "let me know if you have any other questions" -- passive.
+- Don't use "I'm passionate about" -- banned word in Heron.
 - Don't paste in a story they already heard during the call.
 
 ## When the user supplies NO `talkingPoints`
@@ -109,8 +109,8 @@ Make a single best-guess based on the stage:
 | tech-screen           | The specific problem solved + a follow-up idea             |
 | take-home             | The trade-off you noted in your write-up                   |
 | onsite                | The cross-functional moment that resonated                 |
-| final-round           | The strategic question — where this role goes in 18 months |
+| final-round           | The strategic question -- where this role goes in 18 months |
 
 But warn in a `**Note:**` line above the draft: "No specific talking points
-were supplied — review the hook below and swap it for something from the
+were supplied -- review the hook below and swap it for something from the
 actual conversation before sending."

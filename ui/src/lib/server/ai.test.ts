@@ -1,5 +1,5 @@
 /**
- * ai.test.ts — Anthropic client + complete()/chat() with per-user
+ * ai.test.ts -- Anthropic client + complete()/chat() with per-user
  * credential resolution.
  *
  * The refactor moves `ANTHROPIC_API_KEY` from process-wide .env to
@@ -7,11 +7,11 @@
  *   1. Resolves the current userId via `currentUserIdOrDefault()`
  *      (AsyncLocalStorage when in a request; SYSTEM otherwise).
  *   2. Pulls the API key via `getCredential(userId, 'ANTHROPIC_API_KEY')`
- *      — per-user store wins, falls back to process.env.
+ *      -- per-user store wins, falls back to process.env.
  *   3. Memoizes the SDK client by API-KEY VALUE so two users sharing the
  *      same key (e.g., same household) share the underlying client.
  *
- * Anthropic SDK is mocked at the module boundary — we don't make real
+ * Anthropic SDK is mocked at the module boundary -- we don't make real
  * network calls or even instantiate the real SDK.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -36,7 +36,7 @@ vi.mock('@anthropic-ai/sdk', () => {
       constructor(opts: { apiKey: string }) {
         this.apiKey = opts.apiKey;
         instances.push(this);
-        // bind `this` lexically — the SDK lets you pull `messages.create`
+        // bind `this` lexically -- the SDK lets you pull `messages.create`
         // off the instance, so the fake needs the same shape.
         const self = this;
         this.messages = {

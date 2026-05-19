@@ -1,5 +1,5 @@
 /**
- * BackendUnreachableOverlay — full-screen blocker when backend is
+ * BackendUnreachableOverlay -- full-screen blocker when backend is
  * unreachable for > RECONNECT_GRACE_MS.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -27,7 +27,7 @@ describe('BackendUnreachableOverlay', () => {
   it('still hidden during the grace window after going offline', () => {
     onlineStore.online = false;
     const { container } = render(BackendUnreachableOverlay);
-    // Grace period — should NOT be visible yet
+    // Grace period -- should NOT be visible yet
     vi.advanceTimersByTime(1_000);
     expect(container.textContent ?? '').not.toContain('reach the server');
   });

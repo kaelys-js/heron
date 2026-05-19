@@ -1,10 +1,10 @@
 /**
- * lib/server/auth — Better Auth singleton.
+ * lib/server/auth -- Better Auth singleton.
  *
  * We can't test Better Auth's internals (it's a third party), but the
- * BEHAVIOUR we own — first-user-becomes-owner, trusted-origins from
+ * BEHAVIOUR we own -- first-user-becomes-owner, trusted-origins from
  * BRAND, env-gated rate limit, env-gated GitHub OAuth, secret
- * persistence — is testable by mocking the DB + inspecting the exported
+ * persistence -- is testable by mocking the DB + inspecting the exported
  * config / firing the registered hook callbacks directly.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -81,7 +81,7 @@ vi.mock('$lib/client/brand', () => ({
   },
 }));
 
-// Better Auth + plugins — we only need the call to record options.
+// Better Auth + plugins -- we only need the call to record options.
 const capturedOptions: { config: Record<string, unknown> } = { config: {} };
 
 vi.mock('better-auth', () => ({

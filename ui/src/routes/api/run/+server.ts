@@ -30,7 +30,7 @@ export const POST = wrap('run', async ({ request }: any) => {
       : typeof args?.profileId === 'string'
         ? args.profileId
         : undefined;
-  // Legacy hardcoded paths — preserved verbatim for backward compat.
+  // Legacy hardcoded paths -- preserved verbatim for backward compat.
   switch (task) {
     case 'scan':
       runScan(profileId);
@@ -45,13 +45,13 @@ export const POST = wrap('run', async ({ request }: any) => {
       runLinkedInLogin();
       return { running: listRunning() };
     case 'auto-eval':
-      // Fire-and-forget — runAutoEval emits its own start/finish events.
+      // Fire-and-forget -- runAutoEval emits its own start/finish events.
       runAutoEval(profileId).catch((err) =>
         reportServerError('run', 'Auto-eval rejected', err, { category: 'task' }),
       );
       return { running: listRunning() };
   }
-  // Pluggable path — any registered job id (scan-portals, dedup,
+  // Pluggable path -- any registered job id (scan-portals, dedup,
   // normalize, etc.). Each job's internal try/catch normalises throws
   // to {ok: false, error}; this outer .catch covers the unlikely case
   // the promise itself rejects.

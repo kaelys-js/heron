@@ -199,7 +199,7 @@
     saving = true;
     try {
       // DELETE with body isn't in the shared api helper, so we pass key
-      // as a URL parameter — matches the endpoint's expectations.
+      // as a URL parameter -- matches the endpoint's expectations.
       await api.delete(
         '/api/profile/form-answers?profile=' +
           encodeURIComponent(profileId) +

@@ -1,8 +1,8 @@
-# Mode: compare — Multi-Offer Comparison
+# Mode: compare -- Multi-Offer Comparison
 
 Scoring matrix across 10 weighted dimensions:
 
-| Dimension | Weight | 1–5 criteria |
+| Dimension | Weight | 1-5 criteria |
 |-----------|--------|----------------|
 | North Star alignment | 25% | 5=exact target role, 1=unrelated |
 | CV match | 15% | 5=90%+ match, 1=<40% match |

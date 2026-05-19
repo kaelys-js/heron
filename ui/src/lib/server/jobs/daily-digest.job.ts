@@ -1,5 +1,5 @@
 /**
- * Daily digest — once-per-day rollup of operationally meaningful changes.
+ * Daily digest -- once-per-day rollup of operationally meaningful changes.
  *
  * Computes today's deltas across:
  *   - Applications fired (status = Applied today)
@@ -14,7 +14,7 @@
  *
  * Emits a single info-level activity event with a rich one-liner so the
  * bell shows it without spamming the feed. Idempotent on multiple manual
- * runs — re-emitting the same digest is harmless.
+ * runs -- re-emitting the same digest is harmless.
  *
  * Default trigger: daily at 18:00 local. allowManual=true so power users
  * can run it from the Agents page.
@@ -46,7 +46,7 @@ function todayCount(events: ActivityEvent[], match: (ev: ActivityEvent) => boole
 async function runDailyDigest(): Promise<JobResult> {
   try {
     const jobs = loadAllJobs();
-    // F25 — scope events to THIS user (the digest is per-user; daily-digest
+    // F25 -- scope events to THIS user (the digest is per-user; daily-digest
     // is registered as perUser:true so each invocation runs inside
     // runAsUser(userId, …)). Pre-fix `bus.recent()` returned events
     // tagged for every user → user A's "Applied" events counted into
@@ -58,7 +58,7 @@ async function runDailyDigest(): Promise<JobResult> {
     const interviews = jobs.filter((j: Job) => j.status === 'Interview').length;
     const offers = jobs.filter((j: Job) => j.status === 'Offer').length;
 
-    // Today's deltas (best-effort from activity feed — applications.md doesn't
+    // Today's deltas (best-effort from activity feed -- applications.md doesn't
     // store a "modified" timestamp per row, so we rely on the events the
     // dashboard emits for status flips.)
     const appliedToday = todayCount(
@@ -75,7 +75,7 @@ async function runDailyDigest(): Promise<JobResult> {
     );
     const errorsToday = todayCount(events, (ev) => ev.level === 'error');
 
-    // Follow-up cadence — best-effort. Skip if the script chokes.
+    // Follow-up cadence -- best-effort. Skip if the script chokes.
     let followupsUrgent = 0;
     let followupsOverdue = 0;
     try {
@@ -85,11 +85,11 @@ async function runDailyDigest(): Promise<JobResult> {
         else if (e.urgency === 'overdue') followupsOverdue += 1;
       }
     } catch {
-      // tolerated — digest stays useful without cadence
+      // tolerated -- digest stays useful without cadence
     }
 
     // Pattern detection emits 'info' issues with a "pattern" keyword
-    // in the summary — surface count in the digest line.
+    // in the summary -- surface count in the digest line.
     const open = listOpenIssues();
     const newPatterns = open.filter(
       (i) => i.severity === 'info' && /pattern/i.test(i.summary),

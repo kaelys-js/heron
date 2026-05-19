@@ -1,13 +1,13 @@
 /**
  * Per-profile CRUD endpoints (scoped to the current user).
  *
- *   PATCH /api/profiles/[id]  { name?, color? }     — rename / recolor
- *   DELETE /api/profiles/[id]                       — remove from list + wipe its dir
+ *   PATCH /api/profiles/[id]  { name?, color? }     -- rename / recolor
+ *   DELETE /api/profiles/[id]                       -- remove from list + wipe its dir
  *
  * DELETE refuses to remove the last profile (the system needs at least one).
  * Deleting the active profile flips active to the oldest remaining profile.
  *
- * `[id]` in the URL is the profile SLUG (kebab-case), not the DB UUID —
+ * `[id]` in the URL is the profile SLUG (kebab-case), not the DB UUID --
  * that's the legacy public identifier we preserve for client compat.
  */
 import fs from 'node:fs';
@@ -94,7 +94,7 @@ export const DELETE = wrap(
       badRequest(e instanceof Error ? e.message : String(e));
     }
 
-    // Remove the profile's directory tree. This is destructive — the caller
+    // Remove the profile's directory tree. This is destructive -- the caller
     // is responsible for the type-DELETE confirmation gate above.
     const dir = profilePath(id, 'profile-dir');
     try {

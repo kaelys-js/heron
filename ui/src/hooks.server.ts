@@ -7,7 +7,7 @@ import { building } from '$app/environment';
 
 // bootOnce() runs at module-load time (top of hooks.server.ts, BEFORE
 // any request handler). If it throws, SvelteKit's module-init fails
-// and EVERY request gets the bare "500 | Internal Error" HTML —
+// and EVERY request gets the bare "500 | Internal Error" HTML --
 // bypassing our +error.svelte. Wrap defensively: log the failure but
 // let the module finish loading so handlers (including +error.svelte
 // for any first-request failure) can still render. Routes that need
@@ -28,7 +28,7 @@ try {
 }
 
 // Catch process-level crashes so they don't disappear silently.
-// Don't process.exit — let the dev server keep going for the next request.
+// Don't process.exit -- let the dev server keep going for the next request.
 //
 // EPIPE / EBADF / ECONNRESET filter is critical: in some setups (Cursor's
 // wallaby/console-ninja extension, certain Node debuggers) console.error
@@ -61,15 +61,15 @@ if (typeof process !== 'undefined') {
 /**
  * Paths that DON'T require authentication. Everything else needs a session.
  *
- *   /api/auth/*        — Better Auth's own endpoints (login, register, etc.)
- *   /login, /signup    — the auth UI pages
- *   /onboarding        — first-run setup (no users exist yet)
- *   /api/health        — liveness probe used by backend-discovery
- *   /api/discover      — Bonjour/mDNS pairing check
- *   /api/onboarding/*  — first-run setup endpoints
- *   /favicon, /robots, /manifest.webmanifest, /apple-touch-icon — bare assets
- *   /_app/*            — SvelteKit's hashed bundle assets (served by adapter-node)
- *   /assets/*, /static/*, /branding/* — static folders
+ *   /api/auth/*        -- Better Auth's own endpoints (login, register, etc.)
+ *   /login, /signup    -- the auth UI pages
+ *   /onboarding        -- first-run setup (no users exist yet)
+ *   /api/health        -- liveness probe used by backend-discovery
+ *   /api/discover      -- Bonjour/mDNS pairing check
+ *   /api/onboarding/*  -- first-run setup endpoints
+ *   /favicon, /robots, /manifest.webmanifest, /apple-touch-icon -- bare assets
+ *   /_app/*            -- SvelteKit's hashed bundle assets (served by adapter-node)
+ *   /assets/*, /static/*, /branding/* -- static folders
  */
 const PUBLIC_PREFIXES = [
   '/api/auth/',
@@ -90,7 +90,7 @@ const PUBLIC_PREFIXES = [
 ];
 
 function isPublicPath(pathname: string): boolean {
-  // Root '/' is public — the layout decides whether to show login or dashboard.
+  // Root '/' is public -- the layout decides whether to show login or dashboard.
   if (pathname === '/') return true;
   for (const prefix of PUBLIC_PREFIXES) {
     if (pathname === prefix || pathname.startsWith(prefix)) return true;
@@ -120,7 +120,7 @@ const populateAuth: Handle = async ({ event, resolve }) => {
  *  phase invokes this handler with no session cookie to render the SPA
  *  fallback page; without this short-circuit the guard would throw a 302
  *  to /login and adapter-static would error with "Could not create a
- *  fallback page — failed with status 302", aborting `pnpm build:desktop`
+ *  fallback page -- failed with status 302", aborting `pnpm build:desktop`
  *  + `pnpm dev:ios` + `pnpm build:ios`.
  */
 const guard: Handle = async ({ event, resolve }) => {
@@ -138,20 +138,20 @@ const guard: Handle = async ({ event, resolve }) => {
 
 /** Wraps every request in an AsyncLocalStorage context so legacy server-lib
  *  code can read the acting user via `currentUserId()` without parameter
- *  plumbing. Public/unauth requests use the SYSTEM_USER_ID sentinel — the
+ *  plumbing. Public/unauth requests use the SYSTEM_USER_ID sentinel -- the
  *  guard above already blocked them from reaching anything per-user. */
 const withUserContext: Handle = ({ event, resolve }) =>
   runWithUser(event.locals.user?.id ?? SYSTEM_USER_ID, () => resolve(event));
 
-/** Auth lifecycle observer — emits `logEvent` for sign-out events so the
+/** Auth lifecycle observer -- emits `logEvent` for sign-out events so the
  *  activity feed has a complete audit trail (sign-up + sign-in are logged
  *  from `auth.ts` databaseHooks; only sign-out has to be observed here
  *  because Better Auth's `session.delete` hook isn't reliably surfaced
- *  on every code path — explicit logout, session-expiry, manual delete
+ *  on every code path -- explicit logout, session-expiry, manual delete
  *  from /settings/users, etc.).
  *
  *  We capture the user BEFORE resolving (post-resolution the session has
- *  been destroyed). Only log if the response was a 2xx — failed sign-out
+ *  been destroyed). Only log if the response was a 2xx -- failed sign-out
  *  attempts are 4xx/5xx and would be misleading audit entries. */
 const authLifecycleObserver: Handle = async ({ event, resolve }) => {
   const path = event.url.pathname;
@@ -172,7 +172,7 @@ const authLifecycleObserver: Handle = async ({ event, resolve }) => {
   return response;
 };
 
-/** Signup gate — defense-in-depth so the invite-code requirement can't
+/** Signup gate -- defense-in-depth so the invite-code requirement can't
  *  be bypassed by hand-crafting a POST to better-auth's signup endpoint
  *  directly. The /signup UI page already gates this for honest users,
  *  but the underlying `/api/auth/sign-up/email` route is part of
@@ -186,7 +186,7 @@ const authLifecycleObserver: Handle = async ({ event, resolve }) => {
  *    • If users.count >  0 → the request MUST carry a valid, unclaimed
  *      `x-invite-code` header. We CONSUME the invite at this point
  *      (delete the row) so the same code can't be replayed even within
- *      its 30-minute TTL — single-use is enforced at the API boundary,
+ *      its 30-minute TTL -- single-use is enforced at the API boundary,
  *      not just by the UI calling /api/auth/invite/claim earlier.
  *
  *  The /signup +page.svelte stashes the validated code in
@@ -223,7 +223,7 @@ const signupGate: Handle = async ({ event, resolve }) => {
 
   // Atomic single-use check: find the matching row (unclaimed +
   // unexpired) and DELETE it. If the delete returns 0 rows, the code
-  // was already consumed in a parallel request — reject.
+  // was already consumed in a parallel request -- reject.
   const row = authDb
     .select()
     .from(inviteCodes)
@@ -249,7 +249,7 @@ const signupGate: Handle = async ({ event, resolve }) => {
   return resolve(event);
 };
 
-/** CORS handler — only path that lets the Capacitor WebView talk to the
+/** CORS handler -- only path that lets the Capacitor WebView talk to the
  *  backend. The WebView origin is `heron://localhost`; without these
  *  Access-Control-Allow-Origin echoes the browser preflight blocks the
  *  request before it ever reaches the server. Web (same-origin) sees no
@@ -323,7 +323,7 @@ const cors: Handle = async ({ event, resolve }) => {
  *     requests. Skipped on localhost.
  *
  *   Cross-Origin-Opener-Policy: same-origin
- *     Process isolation for window.opener — opens us up to
+ *     Process isolation for window.opener -- opens us up to
  *     SharedArrayBuffer + high-precision timers safely.
  *
  *   Cross-Origin-Resource-Policy: same-site
@@ -335,7 +335,7 @@ const cors: Handle = async ({ event, resolve }) => {
  *     JIT (CSS-in-JS for theme classes); we tighten to a hash later.
  *
  * Skip these for /api/auth/* because Better Auth's responses are pure
- * JSON and don't need page-level headers — sending CSP there is just
+ * JSON and don't need page-level headers -- sending CSP there is just
  * bytes-on-the-wire noise for IPC-style endpoints.
  */
 const securityHeaders: Handle = async ({ event, resolve }) => {

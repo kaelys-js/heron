@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * build-desktop — one-shot: full local desktop build → DMG / .exe / .AppImage.
+ * build-desktop -- one-shot: full local desktop build → DMG / .exe / .AppImage.
  *
  * Runs the entire chain:
- *   1. Build SvelteKit (node adapter — embedded server)
- *   2. Build SvelteKit (static — WebView shell)
- *   3. Regenerate icons (idempotent — no-op if already current)
+ *   1. Build SvelteKit (node adapter -- embedded server)
+ *   2. Build SvelteKit (static -- WebView shell)
+ *   3. Regenerate icons (idempotent -- no-op if already current)
  *   4. Capacitor sync to electron/
  *   5. npm install in electron/
  *   6. Compile electron TS
@@ -16,8 +16,8 @@
  * On Windows: NSIS .exe. On Linux: AppImage + .deb.
  *
  * Modes:
- *   pnpm build:desktop          — release build (both archs + signing + publish)
- *   pnpm build:desktop --fast   — single-arch DMG only, no publish (3-5 min)
+ *   pnpm build:desktop          -- release build (both archs + signing + publish)
+ *   pnpm build:desktop --fast   -- single-arch DMG only, no publish (3-5 min)
  *
  * For SIGNED/notarized builds, set Apple secrets in env first (or run
  * `pnpm setup:secrets` which exports them to ~/.heron/native-env).

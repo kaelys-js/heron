@@ -1,5 +1,5 @@
 /**
- * verify-pipeline.job — loadActiveProfileTracker must route through
+ * verify-pipeline.job -- loadActiveProfileTracker must route through
  * activePath('applications') so multi-user installs verify the right
  * user's tracker.
  *
@@ -34,7 +34,7 @@ const { runWithUser } = await import('../user-context');
 const { ensureProfileDirsForUser, profilePathForUser } = await import('../profile-paths');
 // Import via dynamic-import so the module sees the mocked ./files.
 const verifyMod = await import('./verify-pipeline.job');
-// `loadActiveProfileTracker` is internal — exercise the public job
+// `loadActiveProfileTracker` is internal -- exercise the public job
 // instead by invoking the registered run() function, OR call its
 // internal helper via runVerifyPipeline. We exercise via the exported
 // run() result.
@@ -86,7 +86,7 @@ describe('verify-pipeline.job — routes through activePath() for multi-user', (
     const result = await runWithUser(userId, () => verifyMod.runVerifyPipeline());
     // If we'd read the LEGACY file, the result would show 0 warnings.
     // Post-fix we read alice's actual tracker, which contains the bogus
-    // status — non-canonical-status warning.
+    // status -- non-canonical-status warning.
     expect(result.meta?.warnings).toBeGreaterThan(0);
     expect(result.meta?.trackerPath).toBe(apps);
   });
@@ -108,7 +108,7 @@ describe('verify-pipeline.job — routes through activePath() for multi-user', (
     );
     fs.writeFileSync(profilePathForUser('verify-clean', 'default', 'applications'), APPS_BODY_GOOD);
 
-    // Running as 'verify-clean' MUST NOT find Bob's bad-status issue —
+    // Running as 'verify-clean' MUST NOT find Bob's bad-status issue --
     // 0 warnings + trackerPath belongs to verify-clean.
     const result = await runWithUser('verify-clean', () => verifyMod.runVerifyPipeline());
     expect(result.meta?.warnings).toBe(0);

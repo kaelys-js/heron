@@ -1,5 +1,5 @@
 /**
- * lib/client/backend-discovery — dense source + URL scenarios.
+ * lib/client/backend-discovery -- dense source + URL scenarios.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';

@@ -22,7 +22,7 @@ function exists(rel: string): boolean {
 describe('Cleanup invariants — no stray dev artefacts', () => {
   // .DS_Store files exist on every macOS developer's machine and DON'T
   // get committed (.gitignore catches them). The verifier originally
-  // tried to fail on their presence — we relax to "they're gitignored",
+  // tried to fail on their presence -- we relax to "they're gitignored",
   // not "they don't exist on disk."
   it('.DS_Store is gitignored', () => {
     const gi = fs.readFileSync(path.join(REPO_ROOT, '.gitignore'), 'utf8');
@@ -58,7 +58,7 @@ describe('Cleanup invariants — directory structure', () => {
 describe('Cleanup — extended structural checks (replaces obsolete verify-cleanup.mjs spot-checks)', () => {
   // The legacy verifier had ~30 specific symbol/file checks that drifted
   // over time as the cleanup phases finished. We assert the high-level
-  // invariants here — anything more granular is covered by per-module
+  // invariants here -- anything more granular is covered by per-module
   // tests in lib/server/*.test.ts.
 
   it('no .DS_Store files committed', () => {

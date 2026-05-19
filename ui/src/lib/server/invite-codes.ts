@@ -1,9 +1,9 @@
 /**
- * invite-codes — owner-generated 6-digit codes for new user signups.
+ * invite-codes -- owner-generated 6-digit codes for new user signups.
  *
  * Why local codes instead of email magic links: Heron is self-hosted
  * with no SMTP/third-party email dependency. Multiple users on ONE local
- * install means everyone is physically nearby — the owner reads the code
+ * install means everyone is physically nearby -- the owner reads the code
  * off their screen and the invitee types it on theirs (like Apple TV
  * pairing). Codes expire after 30 minutes and are single-use.
  *
@@ -12,7 +12,7 @@
  * server (rate-limited attempts can be layered in when needed).
  *
  * Storage: app.db is the right home if we had jobs to do per-user-id,
- * but invite codes belong in auth.db's `invite_codes` table — they're
+ * but invite codes belong in auth.db's `invite_codes` table -- they're
  * an auth concern. Drizzle adapter handles read/write.
  *
  * Claim semantics: when a user enters a valid code at signup,
@@ -69,7 +69,7 @@ function toJson(row: typeof inviteCodes.$inferSelect): InviteCode {
 }
 
 /** Generate a single-use invite code owned by the given user. Rejects
- *  collisions by retrying up to 10 times — at 10^6 codes the chance is
+ *  collisions by retrying up to 10 times -- at 10^6 codes the chance is
  *  ~10⁻⁵ per attempt with a handful of unexpired codes. */
 export function createInvite(ownerUserId: string): InviteCode {
   const now = Date.now();
@@ -92,7 +92,7 @@ export function createInvite(ownerUserId: string): InviteCode {
       const row = authDb.select().from(inviteCodes).where(eq(inviteCodes.id, id)).get();
       if (row) return toJson(row);
     } catch {
-      // UNIQUE collision — retry with a new code.
+      // UNIQUE collision -- retry with a new code.
     }
   }
   throw new Error('Failed to allocate a unique invite code after 10 attempts');
@@ -114,7 +114,7 @@ export function lookupInvite(code: string): InviteCode | null {
   return row ? toJson(row) : null;
 }
 
-/** Consume the code on behalf of the given new user. Idempotent — if the
+/** Consume the code on behalf of the given new user. Idempotent -- if the
  *  code is already claimed (or expired) returns null and the caller
  *  should refuse the signup attempt. */
 export function claimInvite(code: string, claimingUserId: string): InviteCode | null {
@@ -158,7 +158,7 @@ export function revokeInvite(ownerUserId: string, id: string): boolean {
   return (result.changes ?? 0) > 0;
 }
 
-/** Total user count — used to decide whether the next signup creates the
+/** Total user count -- used to decide whether the next signup creates the
  *  owner (n=0) or requires an invite (n>0). */
 export function userCount(): number {
   const row = authDb.select({ n: sql<number>`count(*)` }).from(users).get();

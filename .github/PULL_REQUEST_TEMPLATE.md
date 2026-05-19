@@ -1,5 +1,5 @@
 <!--
-  PR title — write a Conventional Commit subject (feat:, fix:, chore:, etc.)
+  PR title -- write a Conventional Commit subject (feat:, fix:, chore:, etc.)
   Examples:
     feat(scan): support Workable adapter
     fix(auth): reject same-site=none in CapacitorWebView
@@ -8,7 +8,7 @@
 
 ## Summary
 
-<!-- 1-3 sentences. What changed and why. Skip the "how" — the diff shows that. -->
+<!-- 1-3 sentences. What changed and why. Skip the "how" -- the diff shows that. -->
 
 ## Related issue
 
@@ -29,16 +29,16 @@
 
 ## Screenshots / recordings
 
-<!-- For UI changes. Drag-drop into the PR body — GitHub uploads to its CDN. -->
+<!-- For UI changes. Drag-drop into the PR body -- GitHub uploads to its CDN. -->
 
 ## Test plan
 
 <!-- Bulleted checklist of how YOU verified this works. Reviewers run the same. -->
 - [ ] `pnpm install` clean
-- [ ] `pnpm check` (svelte-check + tsgo) passes — 0 errors / 0 warnings
+- [ ] `pnpm check` (svelte-check + tsgo) passes -- 0 errors / 0 warnings
 - [ ] `pnpm build` succeeds
-- [ ] `pnpm test` passes (Vitest matrix — unit + server + component + routes + integration)
-- [ ] `pnpm test:coverage` ≥ 70% lines / 65% branches (TS) — see Codecov PR comment
+- [ ] `pnpm test` passes (Vitest matrix -- unit + server + component + routes + integration)
+- [ ] `pnpm test:coverage` ≥ 70% lines / 65% branches (TS) -- see Codecov PR comment
 - [ ] `pnpm test:ios` passes (if iOS native code touched; CI macos-15 runner)
 - [ ] Manual smoke: <describe your manual test path>
 

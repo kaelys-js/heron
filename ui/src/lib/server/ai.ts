@@ -1,5 +1,5 @@
 /**
- * ai.ts — Anthropic client + completion helpers, scoped per-user.
+ * ai.ts -- Anthropic client + completion helpers, scoped per-user.
  *
  * Each user holds their own ANTHROPIC_API_KEY (see user-secrets.ts).
  * `getClient()` resolves the current user via AsyncLocalStorage (the
@@ -13,7 +13,7 @@
  *   - two users sharing the same key share one HTTP connection pool
  *   - rotating a user's key naturally re-instantiates on next call
  *
- * Callers do NOT pass userId explicitly — keeping the function shape
+ * Callers do NOT pass userId explicitly -- keeping the function shape
  * unchanged so consumers can be migrated without touching their call
  * sites. The implicit lookup is the whole point.
  */
@@ -23,7 +23,7 @@ import { getCredential } from './user-secrets';
 
 const DEFAULT_MODEL = 'claude-opus-4-7';
 
-/** Map from API-KEY VALUE → SDK client. NOT keyed by userId — two
+/** Map from API-KEY VALUE → SDK client. NOT keyed by userId -- two
  *  users sharing the same key share the client (households / shared
  *  Anthropic accounts). */
 const clientCache = new Map<string, Anthropic>();
@@ -46,7 +46,7 @@ export function getClient(): Anthropic | null {
 }
 
 /** TEST-ONLY: clear the client cache. Production code never needs this
- *  — keys rotate naturally on next call (the cache miss instantiates
+ *  -- keys rotate naturally on next call (the cache miss instantiates
  *  a fresh client). Exposed so the test suite can isolate cases that
  *  assert on instance-count side-effects. */
 export function __resetClientCache(): void {
@@ -95,7 +95,7 @@ export async function chat(
     system: systemPrompt,
     messages: history,
   };
-  // Adaptive thinking opt-in (off by default for chat — keeps responses snappy)
+  // Adaptive thinking opt-in (off by default for chat -- keeps responses snappy)
   if (
     opts.thinking &&
     (params.model.includes('opus-4-7') ||

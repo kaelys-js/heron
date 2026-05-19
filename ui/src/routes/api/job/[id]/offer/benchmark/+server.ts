@@ -51,7 +51,7 @@ export const POST = wrap(
       });
       return { ok: true, offer: saved };
     }
-    // Auto-pull mode — spawn the agent CLI's deep-research path.
+    // Auto-pull mode -- spawn the agent CLI's deep-research path.
     const bench = await fetchBenchmark(query);
     if (!bench) {
       return { ok: false, error: 'Benchmark fetch returned no usable data — try the manual mode' };

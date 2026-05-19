@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * analyze-patterns.mjs — Rejection Pattern Detector for heron
+ * analyze-patterns.mjs -- Rejection Pattern Detector for heron
  *
  * Parses applications.md + all linked reports, extracts dimensions
  * (archetype, seniority, remote, gaps, scores), classifies outcomes,
@@ -19,7 +19,7 @@ const USER_ID = userFromArgv();
 const PROFILE_ID = profileFromArgv();
 const APPS_FILE = profilePath(PROFILE_ID, 'applications', USER_ID);
 const REPORTS_DIR = profilePath(PROFILE_ID, 'reports-dir', USER_ID);
-/** Profile directory — base for resolving relative `reports/...` links
+/** Profile directory -- base for resolving relative `reports/...` links
  *  inside applications.md. Previously this was the script's own dir,
  *  which always failed silently (the report files live under the
  *  profile, not under scripts/tracker/). */
@@ -125,7 +125,7 @@ function parseReport(reportPath) {
   // Strip bold markers for easier matching
   const plain = content.replace(/\*\*/g, '');
 
-  // Extract Block A table (Role Summary) — works with both EN and ES headers
+  // Extract Block A table (Role Summary) -- works with both EN and ES headers
   const blockARegex = /\|\s*(?:Archetype|Arquetipo)\s*\|\s*(.*?)\s*\|/i;
   const seniorityRegex = /\|\s*(?:Seniority|Nivel|Level)\s*\|\s*(.*?)\s*\|/i;
   const remoteRegex = /\|\s*(?:Remote|Remoto|Location)\s*\|\s*(.*?)\s*\|/i;
@@ -151,7 +151,7 @@ function parseReport(reportPath) {
   const domainMatch = plain.match(domainRegex);
   if (domainMatch) report.domain = domainMatch[1].trim();
 
-  // Extract scoring table — look for table with "Global" row (using plain, bold already stripped)
+  // Extract scoring table -- look for table with "Global" row (using plain, bold already stripped)
   const scoreRegex = /\|\s*(?:CV Match|Match con CV)\s*\|\s*([\d.]+)\/5\s*\|/i;
   const northStarRegex = /\|\s*(?:North Star)\s*\|\s*([\d.]+)\/5\s*\|/i;
   const compScoreRegex = /\|\s*(?:Comp)\s*\|\s*([\d.]+)\/5\s*\|/i;

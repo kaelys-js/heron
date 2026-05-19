@@ -31,7 +31,7 @@ for (const row of skippedRows) {
   skippedMap.set(url, { url, company, role, tier, reason });
 }
 
-// Update pipeline.md in place — only modify item lines that match the pattern.
+// Update pipeline.md in place -- only modify item lines that match the pattern.
 const itemRe = /^- \[ \] (\S+)\s*\|\s*([^|]+?)\s*\|\s*(.+?)\s*$/;
 const text = readFileSync(PIPELINE, 'utf8');
 const lines = text.split('\n');

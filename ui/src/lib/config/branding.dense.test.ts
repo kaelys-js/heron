@@ -1,5 +1,5 @@
 /**
- * lib/config/branding — dense table-driven helper coverage.
+ * lib/config/branding -- dense table-driven helper coverage.
  */
 import { describe, expect, it } from 'vitest';
 import { APP_NAME, APP_TAGLINE, CLI_NAMESPACE, cmd, docTitle } from './branding';

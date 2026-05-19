@@ -1,12 +1,12 @@
 /**
- * /api/job/[id]/reference-prep — generate per-reference briefs.
+ * /api/job/[id]/reference-prep -- generate per-reference briefs.
  *
  * POST body: { references: [{ name, relationship, lastWorkedTogether,
  *               themes? }] }
  *
  * Each reference gets their own 1-pager that the user emails them
  * 24-48h before the company calls. Cost: 1 Claude pass + 1 file per
- * reference. The PROCESS structure is the value — most candidates
+ * reference. The PROCESS structure is the value -- most candidates
  * never brief refs at all.
  */
 

@@ -13,14 +13,14 @@
  *
  * What it captures (light + dark variants where applicable):
  *
- *   docs/screenshots/inbox-light.png       — /inbox triaged list
+ *   docs/screenshots/inbox-light.png       -- /inbox triaged list
  *   docs/screenshots/inbox-dark.png
- *   docs/screenshots/evaluation-light.png  — A-F report page
+ *   docs/screenshots/evaluation-light.png  -- A-F report page
  *   docs/screenshots/evaluation-dark.png
- *   docs/screenshots/autopilot.png         — /autopilot config
- *   docs/screenshots/patterns.png          — /patterns rejection insights
- *   docs/screenshots/interview-prep.png    — /job/[id]/prep page
- *   docs/screenshots/mobile-inbox.png      — iOS-sized viewport
+ *   docs/screenshots/autopilot.png         -- /autopilot config
+ *   docs/screenshots/patterns.png          -- /patterns rejection insights
+ *   docs/screenshots/interview-prep.png    -- /job/[id]/prep page
+ *   docs/screenshots/mobile-inbox.png      -- iOS-sized viewport
  *
  * Each PNG is run through `sharp` for optimal compression: PNG-8 where
  * possible, otherwise oxipng-level optimization. Typical: 200KB max
@@ -41,7 +41,7 @@ const OUT = join(ROOT, 'docs', 'screenshots');
 const BASE_URL = process.env.BASE_URL || 'http://localhost:5173';
 
 // Each entry: [filename, route, viewport, theme]
-// theme: 'light' | 'dark' — sets the matchMedia preference before nav
+// theme: 'light' | 'dark' -- sets the matchMedia preference before nav
 const CAPTURES = [
   ['inbox-light.png', '/inbox', { width: 1440, height: 900 }, 'light'],
   ['inbox-dark.png', '/inbox', { width: 1440, height: 900 }, 'dark'],

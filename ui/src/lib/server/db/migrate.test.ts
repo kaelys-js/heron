@@ -1,5 +1,5 @@
 /**
- * Migration dry-run test — boot a fresh in-memory SQLite via the same
+ * Migration dry-run test -- boot a fresh in-memory SQLite via the same
  * code path production uses (`ensureSchema()`), then introspect
  * `sqlite_master` to assert every table the Drizzle schema declares
  * actually exists with the expected columns.
@@ -13,7 +13,7 @@
  *     doesn't model (drift in the other direction)
  *
  * The HERON_DATA_DIR override + the `:memory:` shim in db/index.ts
- * mean this test is hermetic — no disk side-effects beyond the
+ * mean this test is hermetic -- no disk side-effects beyond the
  * vitest tmpdir.
  */
 import { describe, expect, it } from 'vitest';
@@ -58,7 +58,7 @@ describe('db/migrate — schema parity (drizzle ↔ CREATE TABLE)', () => {
     // migrate.ts. If any statement is malformed, better-sqlite3 throws.
     // The actual ensureSchema() in migrate.ts mutates the module-level
     // singletons in db/index.ts, which the test harness already
-    // re-routes to tmpdir — but here we ALSO verify the SQL parses
+    // re-routes to tmpdir -- but here we ALSO verify the SQL parses
     // independently of the singleton lifecycle.
     const authDb = new Database(':memory:');
     const appDb = new Database(':memory:');

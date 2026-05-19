@@ -4,7 +4,7 @@
   job-detail page's hero. Single source of truth for:
 
     * Change status   (drives /api/status)
-    * Apply           (linkedin / open-and-mark / mark — drives /api/job/[id]/apply)
+    * Apply           (linkedin / open-and-mark / mark -- drives /api/job/[id]/apply)
     * Generate CV     (drives /api/job/[id]/cv via runEvaluate)
     * Open posting    (target=_blank on the URL)
     * Copy URL        (clipboard)
@@ -14,9 +14,9 @@
   it fires SvelteKit's invalidateAll() so all visible views refresh.
 
   Visual variants:
-    * size="row"    — small icon-only triggers (used in dense rows: compact / list / table)
-    * size="card"   — slightly larger triggers with abbreviated labels (board / by-company)
-    * size="hero"   — full labelled buttons (job detail page)
+    * size="row"    -- small icon-only triggers (used in dense rows: compact / list / table)
+    * size="card"   -- slightly larger triggers with abbreviated labels (board / by-company)
+    * size="hero"   -- full labelled buttons (job detail page)
 -->
 <script lang="ts">
   import * as Tooltip from '$lib/components/ui/tooltip';
@@ -79,7 +79,7 @@
   let hasReport = $derived(!!job.reportFile);
   // Pull the per-profile automation block surfaced by +layout.server.ts.
   // When the job's profile has autonomous_apply ON, we collapse the
-  // 3-mode dropdown into a single "Queue apply" button — clicking it
+  // 3-mode dropdown into a single "Queue apply" button -- clicking it
   // hands the job off to apply-queue-drain which runs the right portal
   // adapter automatically.
   type ProfileAutomation = {
@@ -122,7 +122,7 @@
     Applying: 'bg-blue-400',
     Applied: 'bg-violet-400',
     Screened: 'bg-amber-400',
-    // Interview sub-stages — warm hue family, ordered light → dark by progression.
+    // Interview sub-stages -- warm hue family, ordered light → dark by progression.
     PhoneScreen: 'bg-amber-300',
     Technical: 'bg-orange-400',
     TakeHome: 'bg-yellow-400',
@@ -208,7 +208,7 @@
 
   /**
    * Stage the job for apply-queue-drain. Used when the job's profile has
-   * autonomous_apply ON — collapses the 3-mode dropdown into a single
+   * autonomous_apply ON -- collapses the 3-mode dropdown into a single
    * click that hands off to the autopilot drain. Returns immediately;
    * progress flows through APPLY_STEP events to the activity bell.
    */

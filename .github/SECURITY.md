@@ -10,12 +10,12 @@
 
 Use one of:
 
-1. **Preferred — GitHub Private Vulnerability Reporting:**
+1. **Preferred -- GitHub Private Vulnerability Reporting:**
    [github.com/kaelys-js/heron/security/advisories/new](https://github.com/kaelys-js/heron/security/advisories/new)
    Encrypted in transit, reviewed by the maintainer only, and gives you a private
    advisory you can collaborate on without leaking details.
 
-2. **Email** — **<hello@resist.js>** with:
+2. **Email** -- **<hello@resist.js>** with:
    - Description of the vulnerability
    - Steps to reproduce
    - Potential impact
@@ -29,13 +29,13 @@ with you to understand and address the issue before any public disclosure.
 
 Security issues in the following are in scope:
 
-- **Scripts** (`*.mjs`, `*.py`) — command injection, path traversal, SSRF
-- **Dashboard** (`ui/`) — SvelteKit + Better Auth (XSS, CSRF, auth bypass,
+- **Scripts** (`*.mjs`, `*.py`) -- command injection, path traversal, SSRF
+- **Dashboard** (`ui/`) -- SvelteKit + Better Auth (XSS, CSRF, auth bypass,
   session fixation, open redirect, IDOR, multi-user data leakage)
-- **Native** (`ui/ios/`, `ui/electron/`, `ui/android/`) — privilege
+- **Native** (`ui/ios/`, `ui/electron/`, `ui/android/`) -- privilege
   escalation, deep-link hijacking, IPC abuse, code-signing bypass
-- **Templates** (`templates/`) — XSS in generated HTML/PDF
-- **Configuration** — secrets exposure, unsafe defaults
+- **Templates** (`templates/`) -- XSS in generated HTML/PDF
+- **Configuration** -- secrets exposure, unsafe defaults
 
 ## Out of Scope
 
@@ -43,7 +43,7 @@ Security issues in the following are in scope:
   patches land via Dependabot)
 - Issues requiring physical access to the user's machine
 - Social engineering attacks
-- Heron is a **local** tool — there is no hosted service to attack
+- Heron is a **local** tool -- there is no hosted service to attack
 - Self-XSS / clickjacking on locally-running dev servers
 
 ## Disclosure Policy
@@ -59,7 +59,7 @@ We follow **coordinated disclosure**:
 
 We aim for fixes within **30 days** for critical/high severity, **90 days**
 for medium/low. If we miss those windows, you're free to publicly disclose
-unilaterally — that's the deal.
+unilaterally -- that's the deal.
 
 ## Supply chain
 
@@ -102,25 +102,25 @@ unilaterally — that's the deal.
 The following toggles are **active** as of 2026-05-19 (free for public
 repositories, verified via `gh api repos/kaelys-js/heron`):
 
-- [x] **Secret scanning** — surfaces committed credentials in the
+- [x] **Secret scanning** -- surfaces committed credentials in the
       Security tab
-- [x] **Push protection** — REJECTS pushes containing detected
+- [x] **Push protection** -- REJECTS pushes containing detected
       secrets at git-receive time, before they ever land on the
       remote. Complements the lefthook `no-secrets` regex
       (pre-commit) and the TruffleHog workflow (server-side).
-- [x] **Dependabot security updates** — auto-PRs for known
+- [x] **Dependabot security updates** -- auto-PRs for known
       vulnerabilities
-- [x] **Private vulnerability reporting** — enables the GHSA flow
+- [x] **Private vulnerability reporting** -- enables the GHSA flow
       documented above
-- [x] **Web commit signoff required** — UI commits get the DCO
+- [x] **Web commit signoff required** -- UI commits get the DCO
       trailer
 
 Two toggles need a paid GHAS plan and are NOT enabled (acceptable for
 free-tier OSS):
 
-- [ ] `secret_scanning_validity_checks` — confirms detected secrets
+- [ ] `secret_scanning_validity_checks` -- confirms detected secrets
       are still live against the issuing service
-- [ ] `secret_scanning_non_provider_patterns` — non-vendor regex
+- [ ] `secret_scanning_non_provider_patterns` -- non-vendor regex
       patterns (custom keys, JWT secrets, etc.)
 
 A drift-detection workflow (`secret-expiry-check.yml`) already runs

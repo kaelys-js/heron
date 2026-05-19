@@ -27,7 +27,7 @@ export const PUT = wrap(
     const profileId = resolveProfileId(url);
     const project = updateProject(profileId, params.id, body);
     if (!project) badRequest('Project not found: ' + params.id);
-    // Activity feed (info level — page-level success toast handles UI feedback).
+    // Activity feed (info level -- page-level success toast handles UI feedback).
     logEvent('projects', 'Project updated: ' + project.name, {
       level: 'info',
       category: 'user',

@@ -63,7 +63,7 @@
       // Mirror the canonical sign-out flow from AppSidebar:
       //   1. Wipe local bearer token + heron:authed gate so the next
       //      page-load on iOS bounces to /login. clearLocalAuthState() is
-      //      the single source of truth — also scrubs App Group state
+      //      the single source of truth -- also scrubs App Group state
       //      (bearer + spotlight index + quiet hours) so a subsequent
       //      user on the same device can't inherit the previous user's
       //      data via the Share Extension or Watch widgets.

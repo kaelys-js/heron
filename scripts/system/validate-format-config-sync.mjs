@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * validate-format-config-sync.mjs — assert .editorconfig + biome.jsonc
+ * validate-format-config-sync.mjs -- assert .editorconfig + biome.jsonc
  * + .prettierrc.json agree on every overlapping setting.
  *
  * Why: three configs control formatting in this repo. Drift between them
@@ -71,7 +71,7 @@ function loadJsonc(absPath) {
 }
 
 // Define each cross-config concept + how to read it from each source.
-// `expected` runs after collection — picks the "winning" value (or null
+// `expected` runs after collection -- picks the "winning" value (or null
 // if missing) and validates the others against it.
 function buildChecks(editor, biome, prettier) {
   const editorIndentStyle = editor.indent_style; // 'space' | 'tab'

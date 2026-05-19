@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * scan.mjs — Zero-token portal scanner
+ * scan.mjs -- Zero-token portal scanner
  *
  * Fetches public ATS APIs directly, applies title filters from
  * portals.yml, deduplicates against existing history, and appends new
- * offers to pipeline.md + scan-history.tsv. Zero Claude API tokens —
+ * offers to pipeline.md + scan-history.tsv. Zero Claude API tokens --
  * pure HTTP + JSON.
  *
  * Supported ATS providers (detected from careers_url):
@@ -38,7 +38,7 @@ import {
 } from '../lib/lib-profiles.mjs';
 const parseYaml = yaml.load;
 
-// ── Config — per-user per-profile paths ────────────────────────────
+// ── Config -- per-user per-profile paths ────────────────────────────
 // Resolve --user / --profile (or CAREER_OPS_USER_ID / CAREER_OPS_PROFILE_ID
 // env vars set by the orchestrator). Multi-user installs land at
 // data/users/{uid}/profiles/{slug}/; legacy single-user at data/profiles/{slug}/.
@@ -67,11 +67,11 @@ async function withRetry(label, fn) {
     } catch (err) {
       lastErr = err;
       const msg = err?.message || '';
-      // Don't retry on 4xx — they're permanent (404, 401, 403, 422 etc).
+      // Don't retry on 4xx -- they're permanent (404, 401, 403, 422 etc).
       if (/HTTP 4\d\d/.test(msg)) throw err;
       // Last attempt: rethrow.
       if (attempt === MAX_RETRIES) throw err;
-      // Backoff (1.5s, 3s) — easy on the upstream.
+      // Backoff (1.5s, 3s) -- easy on the upstream.
       await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));
     }
   }
@@ -82,14 +82,14 @@ async function withRetry(label, fn) {
 //
 // Each detector inspects company.careers_url + optional explicit overrides
 // (company.api, company.ats) and returns one of:
-//   { type: 'greenhouse'|'ashby'|..., url, fetch?, parse? }   — match
-//   null                                                      — no match
+//   { type: 'greenhouse'|'ashby'|..., url, fetch?, parse? }   -- match
+//   null                                                      -- no match
 //
 // The `fetch` field, when present, is the request descriptor the runner
 // uses (method, body, headers). Default is GET with Accept: application/json.
 
 function detectApi(company) {
-  // Explicit overrides win over URL pattern matching — useful for companies
+  // Explicit overrides win over URL pattern matching -- useful for companies
   // whose branded careers page hides the underlying ATS, or for dual-listed
   // companies where you want to force a specific source.
   if (company.api && company.api.includes('greenhouse')) {
@@ -142,7 +142,7 @@ function detectApi(company) {
     };
   }
 
-  // -- Workday — extract { tenant, pod (wd1/wd3/wd5/...), site } from the
+  // -- Workday -- extract { tenant, pod (wd1/wd3/wd5/...), site } from the
   //    `*.myworkdayjobs.com/...` URL. The site segment may be preceded by a
   //    locale prefix like `/en-US/`. Workday caps `limit` at 20 per request,
   //    so we paginate; the runner sees a marker `paginate: 'workday'` and
@@ -152,7 +152,7 @@ function detectApi(company) {
   );
   if (wdayMatch) {
     const [, tenant, pod, site] = wdayMatch;
-    // Per-tenant pagination cap — `workday_max_pages` in portals.yml lets the
+    // Per-tenant pagination cap -- `workday_max_pages` in portals.yml lets the
     // user override (each page is 20 jobs). Default 100 pages = 2000 jobs,
     // which covers >99% of real Workday tenants. The pagination loop also
     // short-circuits as soon as `total` is exhausted, so this is a safety
@@ -195,7 +195,7 @@ function detectApi(company) {
     };
   }
 
-  // -- Personio: {tenant}.jobs.personio.{com|de|eu} — XML feed --
+  // -- Personio: {tenant}.jobs.personio.{com|de|eu} -- XML feed --
   const personioMatch = url.match(/https?:\/\/([a-zA-Z0-9_-]+)\.jobs\.personio\.(com|de|eu)/);
   if (personioMatch) {
     const [, tenant, tld] = personioMatch;
@@ -234,7 +234,7 @@ function detectApi(company) {
 //
 // Every parser receives the raw response (JSON object, JSON array, or string
 // for XML providers like Personio) and the company name from portals.yml.
-// Returns an array of { title, url, company, location } — the canonical
+// Returns an array of { title, url, company, location } -- the canonical
 // shape consumed by the title filter + dedup pipeline.
 
 function parseGreenhouse(json, companyName) {
@@ -320,7 +320,7 @@ function parseWorkable(json, companyName) {
 
 /** Personio: XML feed with <position><id/><name/><office/><additionalOffices><office/>...</additionalOffices></position>
  *  Job URL: https://{tenant}.jobs.personio.{tld}/job/{id}
- *  Lightweight regex parse — avoids pulling in an XML lib. */
+ *  Lightweight regex parse -- avoids pulling in an XML lib. */
 function parsePersonio(xml, companyName, meta) {
   if (typeof xml !== 'string') return [];
   const { tenant, tld } = meta || {};
@@ -446,7 +446,7 @@ async function fetchOne(apiSpec) {
   // Helper: one HTTP round-trip with timeout + body-shape negotiation.
   // Wrapped in withRetry so transient network errors / 5xx don't drop a
   // whole company's worth of jobs from the run. 4xx (auth, not-found,
-  // bad-request) bypass retry — they won't fix themselves.
+  // bad-request) bypass retry -- they won't fix themselves.
   async function once(reqUrl, reqInit) {
     return withRetry(reqUrl, async () => {
       const controller = new AbortController();
@@ -507,7 +507,7 @@ async function fetchOne(apiSpec) {
     const maxPages = spec.maxPages ?? 5;
     // Workday quirk: only the first page returns the correct `total`; later
     // pages return `total: 0`. Capture the cap on the first page and ignore
-    // it thereafter — paginate until either the cap or maxPages, OR a
+    // it thereafter -- paginate until either the cap or maxPages, OR a
     // server-shortened page (signalling no more results) ends the loop.
     let combined = null;
     let totalFromFirst = Infinity;
@@ -571,7 +571,7 @@ function loadSeenUrls() {
     }
   }
 
-  // pipeline.md — extract URLs from checkbox lines
+  // pipeline.md -- extract URLs from checkbox lines
   if (existsSync(PIPELINE_PATH)) {
     const text = readFileSync(PIPELINE_PATH, 'utf-8');
     for (const match of text.matchAll(/- \[[ x]\] (https?:\/\/\S+)/g)) {
@@ -579,7 +579,7 @@ function loadSeenUrls() {
     }
   }
 
-  // applications.md — extract URLs from report links and any inline URLs
+  // applications.md -- extract URLs from report links and any inline URLs
   if (existsSync(APPLICATIONS_PATH)) {
     const text = readFileSync(APPLICATIONS_PATH, 'utf-8');
     for (const match of text.matchAll(/https?:\/\/[^\s|)]+/g)) {
@@ -617,7 +617,7 @@ function appendToPipeline(offers) {
   const marker = '## Pendientes';
   const idx = text.indexOf(marker);
   if (idx === -1) {
-    // No Pendientes section — append at end before Procesadas
+    // No Pendientes section -- append at end before Procesadas
     const procIdx = text.indexOf('## Procesadas');
     const insertAt = procIdx === -1 ? text.length : procIdx;
     const block =
@@ -710,7 +710,7 @@ async function main() {
   }
 
   // --probe URL: ad-hoc detection + sample fetch for a single careers URL.
-  // Useful when adding a company to portals.yml — confirms the URL maps to
+  // Useful when adding a company to portals.yml -- confirms the URL maps to
   // a known ATS before you commit to it.
   if (probeUrl) {
     const fakeCompany = { careers_url: probeUrl, name: '(probe)' };
@@ -751,7 +751,7 @@ async function main() {
   const companies = config.tracked_companies || [];
   const titleFilter = buildTitleFilter(config.title_filter);
 
-  // Per-source toggles — `sources` block in portals.yml lets the user
+  // Per-source toggles -- `sources` block in portals.yml lets the user
   // disable a whole ATS without removing each company manually:
   //
   //   sources:

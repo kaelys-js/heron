@@ -1,5 +1,5 @@
 /**
- * /api/profile/avatar — avatar upload / read / clear.
+ * /api/profile/avatar -- avatar upload / read / clear.
  *
  * GET    → returns the image bytes (or 404)
  * POST   → multipart/form-data with field `avatar` (file) → upload

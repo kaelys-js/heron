@@ -1,5 +1,5 @@
 /**
- * POST /api/autopilot/run — manual schedule trigger.
+ * POST /api/autopilot/run -- manual schedule trigger.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

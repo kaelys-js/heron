@@ -1,5 +1,5 @@
 /**
- * lib/server/apply-failures — dense matrix per failure mode + portal.
+ * lib/server/apply-failures -- dense matrix per failure mode + portal.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

@@ -1,5 +1,5 @@
 /**
- * Full AppMenuBar — File / Edit / View / Window / Help.
+ * Full AppMenuBar -- File / Edit / View / Window / Help.
  *
  * The macOS menu adds an `appMenu` slot up front (with About + Preferences +
  * Quit) because Apple's HIG mandates that pattern. Win/Linux skip it.
@@ -40,7 +40,7 @@ export function buildAppMenu(h: AppMenuHandlers): Menu {
   template.push({
     label: '&File',
     submenu: [
-      // Deliberately no "New Window" — the Capacitor electron template
+      // Deliberately no "New Window" -- the Capacitor electron template
       // wraps a single BrowserWindow + a single WebView instance with
       // shared per-user state. Spawning a second window would either
       // duplicate the SvelteKit hydration (breaks AsyncLocalStorage on

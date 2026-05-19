@@ -1,5 +1,5 @@
 /**
- * offline-cache — IndexedDB-backed read cache for the central apiCall.
+ * offline-cache -- IndexedDB-backed read cache for the central apiCall.
  *
  * Goal: when the backend is unreachable (cellular without Tailscale,
  * airplane mode, server crashed), authenticated users see THEIR LAST
@@ -9,14 +9,14 @@
  *   Only GET responses to endpoints on the CACHEABLE_PATTERNS allowlist
  *   below. Anything else (mutations, probes, /api/health) bypasses the
  *   cache. The allowlist intentionally excludes high-cardinality URLs
- *   like /api/job/[id] — caching every individual job would balloon
+ *   like /api/job/[id] -- caching every individual job would balloon
  *   storage; list endpoints already include the rows the UI needs.
  *
  * When cache is served:
  *   apiCall() falls back to the cache ONLY when the live fetch fails
  *   with a network error AND the URL is cacheable. Successful fetches
  *   always update the cache (transparent write-through). The cache is
- *   never preferred over the network — it's purely an offline fallback.
+ *   never preferred over the network -- it's purely an offline fallback.
  *
  * Eviction:
  *   No automatic eviction by age. We do trim by total-entry-count
@@ -27,7 +27,7 @@
  * Threat model:
  *   The cache holds the same data the user already saw on screen
  *   (encrypted at rest by the OS / browser). No additional security
- *   guarantees — if an attacker has the device, they have the cache.
+ *   guarantees -- if an attacker has the device, they have the cache.
  *   Cleared on logout via `clearCache()` so a shared device doesn't
  *   leak the previous user's reads.
  */
@@ -72,7 +72,7 @@ export function isCacheable(url: string): boolean {
       pathOnly = new URL(url).pathname;
     }
   } catch {
-    /* malformed URL — fall through to the raw string match */
+    /* malformed URL -- fall through to the raw string match */
   }
   const queryIdx = pathOnly.indexOf('?');
   if (queryIdx >= 0) pathOnly = pathOnly.slice(0, queryIdx);
@@ -120,13 +120,13 @@ export async function getCached<T = unknown>(
           resolve(null);
           return;
         }
-        // Touch lastAccessedAt for LRU. Best-effort — don't fail the
+        // Touch lastAccessedAt for LRU. Best-effort -- don't fail the
         // read if the touch write fails.
         entry.lastAccessedAt = Date.now();
         try {
           store.put(entry);
         } catch {
-          /* swallow — cache hit is the important part */
+          /* swallow -- cache hit is the important part */
         }
         resolve({ data: entry.data as T, cachedAt: entry.cachedAt });
       };
@@ -139,7 +139,7 @@ export async function getCached<T = unknown>(
 
 /** Write through to the cache after a successful network read. Caps
  *  total entry count at MAX_ENTRIES via LRU eviction. Fire-and-forget
- *  from callers — apiCall doesn't await this. */
+ *  from callers -- apiCall doesn't await this. */
 export async function setCached(url: string, data: unknown): Promise<void> {
   if (!isCacheable(url)) return;
   try {
@@ -160,7 +160,7 @@ export async function setCached(url: string, data: unknown): Promise<void> {
             if (cursor) {
               cursor.delete();
             }
-            // Continue to the put either way — count was at limit, this
+            // Continue to the put either way -- count was at limit, this
             // write keeps us at-or-below.
             store.put(entry);
           };

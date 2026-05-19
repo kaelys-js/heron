@@ -1,5 +1,5 @@
 /**
- * Pipeline integrity verification — silent + on-demand.
+ * Pipeline integrity verification -- silent + on-demand.
  *
  * Runs in-process, in pure TS, against the active profile's
  * applications.md. Emits one issue per problem class with a stable
@@ -83,7 +83,7 @@ export function runVerifyPipeline(): Promise<JobResult> {
 
     const rows = parseRows(tracker.body);
 
-    // Check 1 — canonical statuses
+    // Check 1 -- canonical statuses
     const seen = new Map<string, number[]>();
     rows.forEach(({ rowIdx, cols }) => {
       if (cols.length < 6) {
@@ -110,7 +110,7 @@ export function runVerifyPipeline(): Promise<JobResult> {
       else seen.set(dedupKey, [rowIdx]);
     });
 
-    // Check 2 — duplicates
+    // Check 2 -- duplicates
     for (const [key, idxs] of seen) {
       if (idxs.length > 1) {
         findings.push({
@@ -121,7 +121,7 @@ export function runVerifyPipeline(): Promise<JobResult> {
       }
     }
 
-    // Check 3 — unmerged TSVs in the active profile's tracker-additions/
+    // Check 3 -- unmerged TSVs in the active profile's tracker-additions/
     // (per-profile post-multi-user migration; the legacy repo-root
     // batch/tracker-additions/ no longer exists).
     const tsvDir = join(activePath('batch-dir'), 'tracker-additions');
@@ -138,11 +138,11 @@ export function runVerifyPipeline(): Promise<JobResult> {
           });
         }
       } catch {
-        // ignore — non-fatal
+        // ignore -- non-fatal
       }
     }
 
-    // Group findings by class — one issue per class with stable dedupeKey.
+    // Group findings by class -- one issue per class with stable dedupeKey.
     const groups = new Map<string, Finding[]>();
     for (const f of findings) {
       if (!groups.has(f.cls)) groups.set(f.cls, []);

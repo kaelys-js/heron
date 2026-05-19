@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * scan-email-imap.mjs — Real-time Gmail IMAP polling for job-alert emails.
+ * scan-email-imap.mjs -- Real-time Gmail IMAP polling for job-alert emails.
  *
  * Companion to scan-email.mjs (which parses local .mbox files): this
  * version connects to Gmail directly via IMAP+app-password, fetches new
@@ -56,7 +56,7 @@ if (existsSync(ENV_FILE)) {
 }
 
 // Per-user secrets first (via CAREER_OPS_USER_ID, set by the orchestrator
-// before spawn), .env fallback. Closes F14/F19/F27 — gmail-imap creds
+// before spawn), .env fallback. Closes F14/F19/F27 -- gmail-imap creds
 // are no longer install-wide; each user manages their own mailbox.
 const HOST = getCredential('GMAIL_IMAP_HOST') || 'imap.gmail.com';
 const USER = getCredential('GMAIL_IMAP_USER');
@@ -88,7 +88,7 @@ function decodeQuotedPrintable(s) {
 
 /** Extract URLs from a body, decoding quoted-printable ONLY when the
  *  encoding header explicitly says so (otherwise plain `?jk=ab` would
- *  get its `=ab` interpreted as a hex escape and corrupt the URL —
+ *  get its `=ab` interpreted as a hex escape and corrupt the URL --
  *  same bug fixed in scan-email.mjs). */
 function extractUrls(body, encoding) {
   let text = body;
@@ -239,7 +239,7 @@ async function main() {
   const processedUids = [];
   let processedMessages = 0;
   let dupeCount = 0;
-  // Reactor counters — emails that weren't job alerts went through
+  // Reactor counters -- emails that weren't job alerts went through
   // /api/email/react. classified = the dashboard accepted + classified,
   // acted = the classification was actionable (not 'other'),
   // errors = the POST failed (dashboard not running, etc).
@@ -278,7 +278,7 @@ async function main() {
         const cteMatch = raw.match(/^Content-Transfer-Encoding:\s*([^\r\n]+)/im);
         const encoding = (cteMatch?.[1] || '').trim();
 
-        // Pick the body — split off headers at the first blank line.
+        // Pick the body -- split off headers at the first blank line.
         const blank = raw.indexOf('\n\n');
         const body = blank === -1 ? '' : raw.slice(blank + 2);
         // Decode the body once for the reactor path. The reactor classifier
@@ -293,7 +293,7 @@ async function main() {
         }
 
         if (extracted && extracted.length > 0) {
-          // Job-alert digest path — same as before.
+          // Job-alert digest path -- same as before.
           for (const offer of extracted) {
             if (seen.has(offer.url)) {
               dupeCount++;
@@ -306,17 +306,17 @@ async function main() {
         } else if (!dryRun) {
           // NOT a job-alert. Emit a structured stdout line so the TS
           // parent (scan-email-imap.job.ts) can call reactToEmail()
-          // IN-PROCESS — preserving the OWNER's ALS user context that
+          // IN-PROCESS -- preserving the OWNER's ALS user context that
           // the .mjs HTTP-out path would otherwise lose at the network
           // boundary (F14/F19).
           //
           // Pre-fix this POSTed to /api/email/react over localhost with
           // no Authorization header. The dashboard's hooks guard 401'd
           // every call, OR (worse) processed under whoever's session
-          // happened to be active — flipping the wrong user's job
+          // happened to be active -- flipping the wrong user's job
           // statuses on each rejection email.
           //
-          // Format: `INBOUND_REACTION: {json}\n` — the parent reads stdout
+          // Format: `INBOUND_REACTION: {json}\n` -- the parent reads stdout
           // line-by-line, matches the sentinel prefix, JSON.parses the
           // rest. Truncate body to 8000 chars matching the prior reactor
           // contract.

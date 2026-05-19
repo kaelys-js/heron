@@ -34,7 +34,7 @@
   import { ConfirmGate } from '$lib/confirm.svelte';
   import { onDestroy } from 'svelte';
 
-  // Discard throws away in-progress edits — same red double-click confirm
+  // Discard throws away in-progress edits -- same red double-click confirm
   // pattern as the rest of the app.
   const confirmDiscard = new ConfirmGate();
   onDestroy(() => confirmDiscard.destroy());
@@ -49,7 +49,7 @@
     };
   } = $props();
 
-  // svelte-ignore state_referenced_locally — data.config seeds local mutable state; saved back via /api.
+  // svelte-ignore state_referenced_locally -- data.config seeds local mutable state; saved back via /api.
   let config = $state<AutopilotConfig>(structuredClone(data.config));
   let saving = $state(false);
   let runningId = $state<string | null>(null);

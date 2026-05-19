@@ -1,16 +1,16 @@
 /**
  * Shared input validators. Every function returns either:
- *   { ok: true }                      — value is acceptable (incl. empty)
- *   { ok: false, message: string }    — value is unacceptable
+ *   { ok: true }                      -- value is acceptable (incl. empty)
+ *   { ok: false, message: string }    -- value is unacceptable
  *
- * The pattern: validators are LENIENT by default — a blank string is OK,
+ * The pattern: validators are LENIENT by default -- a blank string is OK,
  * which the parent UI can mark as required separately if it cares. This
  * keeps the validator boundary clean (one job: "is this value sane?") and
  * lets the form layer decide whether emptiness is acceptable.
  *
  * URL validators normalise host-only inputs ("github.com/jane") to https://
  * before checking, so users don't have to type the protocol. The original
- * value is preserved — we only synthesize a URL for the URL constructor.
+ * value is preserved -- we only synthesize a URL for the URL constructor.
  */
 
 export type ValidationResult = { ok: true } | { ok: false; message: string };
@@ -28,7 +28,7 @@ export function validateOptional(v: string | undefined | null): boolean {
   return !v || !v.trim();
 }
 
-/** Strict required — empty is a failure. */
+/** Strict required -- empty is a failure. */
 export function validateRequired(v: string | undefined | null): ValidationResult {
   if (validateOptional(v)) return fail('Required');
   return OK;
@@ -38,7 +38,7 @@ export function validateRequired(v: string | undefined | null): ValidationResult
 
 /**
  * Lenient RFC-ish email check. Will accept anything an email server would
- * accept in practice — does NOT enforce TLDs, IDN punycode, or quoted local
+ * accept in practice -- does NOT enforce TLDs, IDN punycode, or quoted local
  * parts. Catches obvious typos (no @, no domain, trailing space) without
  * being a regex theology project.
  */
@@ -56,7 +56,7 @@ export function validateEmail(v: string): ValidationResult {
 /**
  * Phone validation is HARD because formats vary wildly by country. We
  * accept anything that's plausibly a phone number: digits + common separators,
- * 7–15 digits total (E.164 max), optional leading +.
+ * 7-15 digits total (E.164 max), optional leading +.
  */
 export function validatePhone(v: string): ValidationResult {
   if (validateOptional(v)) return OK;
@@ -79,9 +79,9 @@ export function validatePhone(v: string): ValidationResult {
 function normaliseUrl(v: string): string | null {
   const t = v.trim();
   if (!t) return null;
-  // Already has a protocol — use as-is
+  // Already has a protocol -- use as-is
   if (/^https?:\/\//i.test(t)) return t;
-  // Looks like a host (contains a dot, no spaces) — assume https
+  // Looks like a host (contains a dot, no spaces) -- assume https
   if (/\./.test(t) && !/\s/.test(t)) return 'https://' + t;
   return null;
 }
@@ -150,7 +150,7 @@ export const validateTwitter = makeHostValidator(
 );
 
 /**
- * Portfolio is permissive — any valid URL is fine since people host on
+ * Portfolio is permissive -- any valid URL is fine since people host on
  * Vercel, Netlify, GitHub Pages, custom domains, etc. We just check it's
  * a real URL and not a host typo like "yousite.dev " (trailing space).
  */

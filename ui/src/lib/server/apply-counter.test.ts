@@ -1,14 +1,14 @@
 /**
- * lib/server/apply-counter — daily LinkedIn / portal apply rate-limit accounting.
+ * lib/server/apply-counter -- daily LinkedIn / portal apply rate-limit accounting.
  *
  * Per-user (F17). The implicit-user variants (`todayCount`, `bumpApplyCounter`)
  * resolve via `currentUserIdOrDefault()`; the explicit `*ForUser` variants
  * take a userId directly.
  *
  * Mocks the ROOT export so all files land in a tmpdir. Two test groups:
- *   1. Implicit (SYSTEM_USER fallback when no ALS context) — proves the
+ *   1. Implicit (SYSTEM_USER fallback when no ALS context) -- proves the
  *      old single-user behaviour still works.
- *   2. Multi-user isolation — proves user A's bumps don't leak into user B's
+ *   2. Multi-user isolation -- proves user A's bumps don't leak into user B's
  *      counter file. This is the regression guard for F17.
  *
  * Node env.

@@ -1,5 +1,5 @@
 /**
- * GET /api/notifications — recent activity events scoped to current user.
+ * GET /api/notifications -- recent activity events scoped to current user.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

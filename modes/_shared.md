@@ -16,7 +16,7 @@
 | __ARTICLE_DIGEST__ | `__ARTICLE_DIGEST__` (if exists) | ALWAYS (detailed proof points) |
 | profile.yml | `config/profile.yml` | ALWAYS (candidate identity and targets) |
 | __PROFILE_MD__ | `__PROFILE_MD__` | ALWAYS (user archetypes, narrative, negotiation) |
-| __WRITING_SAMPLES__/ | `__WRITING_SAMPLES__/` | When generating candidate-facing text — check `__PROFILE_MD__` for cached `## Writing Style` first; only scan files if absent |
+| __WRITING_SAMPLES__/ | `__WRITING_SAMPLES__/` | When generating candidate-facing text -- check `__PROFILE_MD__` for cached `## Writing Style` first; only scan files if absent |
 
 **RULE: NEVER hardcode metrics from proof points.** Read them from __CV__ + __ARTICLE_DIGEST__ at evaluation time.
 **RULE: For article/project metrics, __ARTICLE_DIGEST__ takes precedence over __CV__.**
@@ -137,11 +137,11 @@ After detecting archetype, read `__PROFILE_MD__` for the user's specific framing
 
 ## Writing Style Calibration
 
-**Check `__PROFILE_MD__` first.** If a `## Writing Style` section exists there, use it directly — do not re-scan the writing-samples files. Re-scanning is only needed when new samples are added or the user explicitly asks to recalibrate.
+**Check `__PROFILE_MD__` first.** If a `## Writing Style` section exists there, use it directly -- do not re-scan the writing-samples files. Re-scanning is only needed when new samples are added or the user explicitly asks to recalibrate.
 
-**When to apply:** Before generating any text the user will send or publish — cover letters, LinkedIn outreach, application form answers, follow-up emails, executive summaries, profile blurbs. Does NOT apply to internal evaluation reports (A–F blocks, scores, analysis).
+**When to apply:** Before generating any text the user will send or publish -- cover letters, LinkedIn outreach, application form answers, follow-up emails, executive summaries, profile blurbs. Does NOT apply to internal evaluation reports (A-F blocks, scores, analysis).
 
-**If no cached style in `__PROFILE_MD__`:** Read all files in `__WRITING_SAMPLES__/`, **skipping any file named `README.md`**. If no user-provided samples are found, skip style calibration and gently note — once, without pressure — that adding a writing sample (e.g. a past cover letter, a LinkedIn About section, any professional writing) would help tailor outputs to their voice. If samples exist, extract the markers below and write the result to `__PROFILE_MD__` under `## Writing Style` so future sessions skip this step.
+**If no cached style in `__PROFILE_MD__`:** Read all files in `__WRITING_SAMPLES__/`, **skipping any file named `README.md`**. If no user-provided samples are found, skip style calibration and gently note -- once, without pressure -- that adding a writing sample (e.g. a past cover letter, a LinkedIn About section, any professional writing) would help tailor outputs to their voice. If samples exist, extract the markers below and write the result to `__PROFILE_MD__` under `## Writing Style` so future sessions skip this step.
 
 ### What to extract
 
@@ -149,43 +149,43 @@ After detecting archetype, read `__PROFILE_MD__` for the user's specific framing
 - Formal vs. conversational
 - Confident vs. hedging (watch for qualifiers like "I think", "perhaps", "somewhat")
 - Warm vs. transactional
-- Degree of self-promotion — does the user undersell, match, or lead with achievements?
+- Degree of self-promotion -- does the user undersell, match, or lead with achievements?
 
 **Sentence structure**
-- Average sentence length — short and punchy or long and layered?
+- Average sentence length -- short and punchy or long and layered?
 - Use of fragments for emphasis
 - Clause nesting and complexity
-- How sentences open — subject-first, action-first, context-first?
+- How sentences open -- subject-first, action-first, context-first?
 
 **Punctuation habits**
 - Em dashes, en dashes, or parentheses for asides?
 - Oxford comma or not?
-- Ellipses — used or avoided?
-- Exclamation marks — never, sparingly, or freely?
+- Ellipses -- used or avoided?
+- Exclamation marks -- never, sparingly, or freely?
 - Semicolons vs. full stops to join related ideas
 
 **Vocabulary**
-- Technical density — how much jargon per paragraph?
+- Technical density -- how much jargon per paragraph?
 - Preferred synonyms (e.g. "built" vs. "developed" vs. "engineered")
-- Words or phrases the user reaches for repeatedly — keep them
-- Words that never appear — don't introduce them
+- Words or phrases the user reaches for repeatedly -- keep them
+- Words that never appear -- don't introduce them
 
 **Paragraph and structure patterns**
-- Paragraph length — one-liners or developed blocks?
+- Paragraph length -- one-liners or developed blocks?
 - Bullet-heavy or prose-heavy?
-- How ideas are sequenced — problem → solution, result-first, chronological?
+- How ideas are sequenced -- problem → solution, result-first, chronological?
 - Use of headers within longer pieces
 
 **Voice signatures**
-- First-person patterns — "I led", "we built", "our team"?
+- First-person patterns -- "I led", "we built", "our team"?
 - Active vs. passive ratio
 - Habitual openers and closers
-- Rhetorical moves — does the user ask questions, use contrast, tell micro-stories?
+- Rhetorical moves -- does the user ask questions, use contrast, tell micro-stories?
 
 ### Rules
 
 - **Only extract what is demonstrably present.** Do not infer style from a single data point.
-- **Idiosyncratic choices are intentional.** Unconventional punctuation or phrasing is the user's voice — preserve it, do not correct it.
+- **Idiosyncratic choices are intentional.** Unconventional punctuation or phrasing is the user's voice -- preserve it, do not correct it.
 - **If samples conflict**, weight the most recent or most similar-context file.
 - **If samples are sparse**, apply what can be reliably extracted and fall back to defaults for the rest.
 - **Style calibration applies to tone and structure only.** Do not import content, claims, or metrics from samples into CVs, reports, or evaluations.
@@ -231,7 +231,7 @@ These rules apply to ALL generated text that ends up in candidate-facing documen
 ### Vary sentence structure
 - Don't start every bullet with the same verb
 - Mix sentence lengths (short. Then longer with context. Short again.)
-- Don't always use "X, Y, and Z" — sometimes two items, sometimes four
+- Don't always use "X, Y, and Z" -- sometimes two items, sometimes four
 
 ### Prefer specifics over abstractions
 - "Cut p95 latency from 2.1s to 380ms" beats "improved performance"

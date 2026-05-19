@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * apply-brand — propagate branding/brand.json into every config file.
+ * apply-brand -- propagate branding/brand.json into every config file.
  *
  * branding/brand.json is the single source of truth for:
  *   • App name, displayName, bundle ID, URL scheme, App Group
@@ -12,14 +12,14 @@
  * This script reads brand.json and overwrites every consumer config
  * (Capacitor configs, electron-builder, Info.plist, entitlements, web
  * manifest, root + electron package.json, ios Appfile, Swift constants).
- * Run after editing brand.json — verifier checks consistency.
+ * Run after editing brand.json -- verifier checks consistency.
  *
  * Each consumer is its own function below. Adding a new consumer:
  *   1. Add a function `applyXxx(brand)`
  *   2. Call it from the main `apply()` at the bottom
  *   3. Add a check in ui/src/lib/integration/capacitor.integration.test.ts
  *
- * Safe to re-run — idempotent. No-ops if the file already matches.
+ * Safe to re-run -- idempotent. No-ops if the file already matches.
  */
 import {
   readFileSync,
@@ -34,7 +34,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 
-// ROOT is the repo root by default — the script lives at
+// ROOT is the repo root by default -- the script lives at
 // scripts/native/apply-brand.mjs so two `..` jumps land at /<repo>.
 // HERON_BRAND_ROOT env override is the test-isolation hook: integration
 // tests in ui/src/lib/integration/capacitor.integration.test.ts copy
@@ -50,7 +50,7 @@ const BRAND_LOGO = join(ROOT, 'branding', 'logo.svg');
 const SNAPSHOT_FILE = join(ROOT, 'branding', '.brand-snapshot.json');
 
 /**
- * Destructive fields — changes here cannot be reverted at the App
+ * Destructive fields -- changes here cannot be reverted at the App
  * Store / installed-user level. apply-brand refuses to proceed when
  * any drifts without REBRAND_CONFIRMED=1.
  */
@@ -84,7 +84,7 @@ const log = {
 // flag uses this set to drive `git add` so pre-commit hooks can pick up
 // apply-brand's output WITHOUT maintaining a parallel list of paths
 // (the old approach drifted whenever apply-brand started touching a
-// new file — easy bug to miss, hard to detect).
+// new file -- easy bug to miss, hard to detect).
 //
 // Every writeFileSync + copyFileSync call site routes through the
 // wrappers below, so additions are zero-effort: write to a new path,
@@ -101,7 +101,7 @@ function writeFileSync(path, content) {
     try {
       if (readFileSync(path).equals(buf)) return;
     } catch {
-      // Unreadable (permission / lock) — fall through and rewrite
+      // Unreadable (permission / lock) -- fall through and rewrite
     }
   }
   // Ensure parent dir exists. Production trees always have these dirs,
@@ -118,7 +118,7 @@ function copyFileSync(src, dest) {
     try {
       if (readFileSync(src).equals(readFileSync(dest))) return;
     } catch {
-      // Either side unreadable — fall through and re-copy
+      // Either side unreadable -- fall through and re-copy
     }
   }
   // Same parent-dir-exists guarantee as writeFileSync above.
@@ -144,7 +144,7 @@ function loadSnapshot() {
 
 /** Persist the post-apply state. Called from main after successful apply. */
 function writeSnapshot(brand) {
-  // Store the entire brand object — full snapshot makes future drift
+  // Store the entire brand object -- full snapshot makes future drift
   // checks on any field cheap, and a human can diff snapshots to see
   // what changed across rebrands.
   //
@@ -162,7 +162,7 @@ function writeSnapshot(brand) {
       cwd: ROOT,
     });
   } catch {
-    // biome unavailable in this environment — fall through. The dev
+    // biome unavailable in this environment -- fall through. The dev
     // will catch the drift at the next `pnpm format:check`; not a
     // hard failure.
   }
@@ -437,7 +437,7 @@ function writeIfChanged(path, content) {
   // Auto-format the output so apply-brand's writes match what the
   // pre-push `format-check` gate expects. Skipping this is the root
   // cause of "every apply-brand run dirties the working tree because
-  // <formatter> wants to reformat" drift cycles — and the user has
+  // <formatter> wants to reformat" drift cycles -- and the user has
   // (correctly) complained about it more than once.
   //
   // Dispatch by extension to the formatter that OWNS that file type.
@@ -451,7 +451,7 @@ function writeIfChanged(path, content) {
         cwd: ROOT,
       });
     } catch {
-      // biome unavailable / parse failure — fall through.
+      // biome unavailable / parse failure -- fall through.
     }
   } else if (/\.swift$/i.test(path)) {
     try {
@@ -460,10 +460,10 @@ function writeIfChanged(path, content) {
       // line between two static funcs; apply-brand's template doesn't.
       // Without this call, every apply-brand re-touched the file with
       // the template form, and the next pre-commit's swiftformat hook
-      // re-inserted the blank line — endless drift.
+      // re-inserted the blank line -- endless drift.
       execSync(`swiftformat --quiet "${path}"`, { stdio: 'pipe', cwd: ROOT });
     } catch {
-      // swiftformat unavailable — fall through. The pre-commit Swift
+      // swiftformat unavailable -- fall through. The pre-commit Swift
       // hook will catch any residual drift on the next commit.
     }
   }
@@ -483,7 +483,7 @@ function patchJson(path, patcher) {
   try {
     execSync(`pnpm exec biome format --write "${path}"`, { stdio: 'pipe', cwd: ROOT });
   } catch {
-    /* biome may not be installed yet — best effort */
+    /* biome may not be installed yet -- best effort */
   }
   return true;
 }
@@ -539,12 +539,12 @@ function applyElectronPackageJson(brand) {
   }
   const changed = patchJson(path, (p) => {
     // CRITICAL: must NOT match the root package's `name`. Two workspaces
-    // with the same npm name collide in turbo's task graph — turbo treats
+    // with the same npm name collide in turbo's task graph -- turbo treats
     // them as one package and aliases the root's `test` script to whatever
     // it ran for the inner one. Symptoms: `pnpm test` invokes electron's
     // `vitest run` from /Users/.../ui/electron and emits "No Svelte config
     // file found", "tsconfig.json should extend ./.svelte-kit/tsconfig.json",
-    // "src/app.html does not exist" — all under a misleading "heron:test"
+    // "src/app.html does not exist" -- all under a misleading "heron:test"
     // prefix. Suffix with `-electron` so the names are workspace-distinct.
     p.name = `${brand.name}-electron`;
     p.description = `${brand.displayName} desktop — Electron shell embedding the SvelteKit dashboard.`;
@@ -566,7 +566,7 @@ function applyCapacitorConfig(brand, path) {
     log.skip(`${path} — missing`);
     return;
   }
-  // The config is TypeScript with comments and types — surgically edit
+  // The config is TypeScript with comments and types -- surgically edit
   // the appId / appName / scheme / customUrlScheme via regex rather
   // than parse-and-reserialize.
   let body = readFileSync(path, 'utf8');
@@ -577,7 +577,7 @@ function applyCapacitorConfig(brand, path) {
     [/customUrlScheme:\s*['"][^'"]*['"]/, `customUrlScheme: '${brand.identifiers.urlScheme}'`],
     [/iconColor:\s*['"][^'"]*['"]/, `iconColor: '${brand.colors.primary}'`],
     [/backgroundColor:\s*['"][^'"]*['"]/, `backgroundColor: '${brand.colors.darkBg}'`],
-    // appendUserAgent: '<brand>/native' — the marker used by the
+    // appendUserAgent: '<brand>/native' -- the marker used by the
     // dashboard server to tell native vs web hits apart in logs.
     [/appendUserAgent:\s*['"][^'"]*['"]/, `appendUserAgent: '${brand.name}/native'`],
   ];
@@ -705,7 +705,7 @@ function applyAndroidManifest(brand) {
 }
 
 function applyAndroidBuildGradle(brand) {
-  // app/build.gradle has the applicationId — capacitor.config.json's appId
+  // app/build.gradle has the applicationId -- capacitor.config.json's appId
   // is also surfaced into Gradle via cap sync. We patch the applicationId
   // explicitly here for renames.
   const path = join(UI, 'android', 'app', 'build.gradle');
@@ -735,7 +735,7 @@ function applyAndroidKotlinBrand(brand) {
   // it exists; if not, fall back to a generic location.
   const dir = dirname(path);
   if (!existsSync(dir)) {
-    // Scaffold may not have created it yet — best effort
+    // Scaffold may not have created it yet -- best effort
     log.skip(`Brand.kt — pkg dir missing (run cap sync android)`);
     return;
   }
@@ -879,7 +879,7 @@ function applyIosInfoPlist(brand) {
       /(<key>NSBonjourServices<\/key>\s*\n\s*<array>\s*\n\s*<string>)[^<]*(<\/string>)/,
       `$1${brand.identifiers.serviceType}$2`,
     ],
-    // NSHumanReadableCopyright — Apple's per-app copyright string shown
+    // NSHumanReadableCopyright -- Apple's per-app copyright string shown
     // in About menus / TestFlight metadata. Sourced from brand.copyright
     // so the upstream-required MIT attribution propagates consistently
     // with electron-builder + app.html + brand.ts.
@@ -896,7 +896,7 @@ function applyIosInfoPlist(brand) {
       changed = true;
     }
   }
-  // NSUserActivityTypes array — rebuild from brand.identifiers.userActivityTypes
+  // NSUserActivityTypes array -- rebuild from brand.identifiers.userActivityTypes
   const uatPattern = /(<key>NSUserActivityTypes<\/key>\s*\n\s*<array>)([\s\S]*?)(<\/array>)/;
   if (uatPattern.test(body)) {
     const items =
@@ -981,7 +981,7 @@ function applyGitHubIssueTemplates(brand) {
     return;
   }
   // Match the brand name as a whole word (no preceding letter/digit/hyphen).
-  // We don't replace owner/<oldname> URLs — those go through the repo.url
+  // We don't replace owner/<oldname> URLs -- those go through the repo.url
   // replacement below which catches the full owner/name path.
   const repoMatch = String(brand.repo?.url ?? '').match(/github\.com\/([^/]+)\/([^/.]+)/);
   const newOwner = repoMatch?.[1];
@@ -1022,13 +1022,13 @@ function applyGitHubWorkflows(brand) {
   // purpose). Only the upload-artifact name + SBOM filenames.
   const subs = [
     {
-      // sbom.yml — three references to <brand>-sbom.spdx.json
+      // sbom.yml -- three references to <brand>-sbom.spdx.json
       file: join(ROOT, '.github', 'workflows', 'sbom.yml'),
       re: /([a-z0-9-]+)-sbom\.spdx\.json/g,
       val: () => `${brand.name}-sbom.spdx.json`,
     },
     {
-      // native-release.yml — upload-artifact name <brand>-${{ matrix.os }}
+      // native-release.yml -- upload-artifact name <brand>-${{ matrix.os }}
       file: join(ROOT, '.github', 'workflows', 'native-release.yml'),
       re: /name:\s*[a-z0-9-]+(-\$\{\{\s*matrix\.os\s*\}\})/,
       val: `name: ${brand.name}$1`,
@@ -1051,7 +1051,7 @@ function applyGitHubWorkflows(brand) {
 }
 
 function applyReleasePleaseConfig(brand) {
-  // release-please-config.json — Release Please tracks the package name
+  // release-please-config.json -- Release Please tracks the package name
   // here so a rebrand needs to retarget it (otherwise the auto-generated
   // CHANGELOG.md keeps the old brand name in every release header).
   const path = join(ROOT, 'release-please-config.json');
@@ -1070,7 +1070,7 @@ function applyReleasePleaseConfig(brand) {
 }
 
 function applyBookmarklet(brand) {
-  // ui/static/bookmarklet.js — form-fill bookmarklet served from the
+  // ui/static/bookmarklet.js -- form-fill bookmarklet served from the
   // dashboard. The toast prefix and the runtime-doc comment carry the
   // brand name, so a rebrand needs to retarget both.
   //
@@ -1203,9 +1203,9 @@ function mdSectionGenerators() {
     'personality-list': (b) => b.voice.personality.map((p) => `- ${p}`).join('\n'),
     'anti-brands-list': (b) => b.voice.antiBrands.map((p) => `- ${p}`).join('\n'),
     'principles-list': (b) =>
-      b.voice.principles.map((p) => `- **${p.name}** — ${p.description}`).join('\n'),
+      b.voice.principles.map((p) => `- **${p.name}** -- ${p.description}`).join('\n'),
     'anti-patterns-list': (b) =>
-      b.voice.antiPatterns.map((p) => `- **${p.name}** — ${p.example}`).join('\n'),
+      b.voice.antiPatterns.map((p) => `- **${p.name}** -- ${p.example}`).join('\n'),
     'quotes-list': (b) => b.voice.quotes.map((q) => `- *"${q}"*`).join('\n'),
     'keywords-list': (b) => b.keywords.map((k) => `\`${k}\``).join(', '),
     'color-base-table': (b) => mdColorBaseTable(b),
@@ -1216,25 +1216,25 @@ function mdSectionGenerators() {
     'quick-facts-table': (b) => mdQuickFactsTable(b),
     'identifiers-list': (b) =>
       [
-        `- **Bundle ID** — \`${b.identifiers.bundleId}\``,
-        `- **URL scheme** — \`${b.identifiers.urlScheme}://\``,
-        `- **App Group** — \`${b.identifiers.appGroup}\``,
-        `- **Bonjour service** — \`${b.identifiers.serviceType}\``,
-        `- **Capacitor plugin** — \`${b.identifiers.capacitorPluginName}\``,
-        `- **Keychain service** — \`${b.identifiers.keychainService}\``,
+        `- **Bundle ID** -- \`${b.identifiers.bundleId}\``,
+        `- **URL scheme** -- \`${b.identifiers.urlScheme}://\``,
+        `- **App Group** -- \`${b.identifiers.appGroup}\``,
+        `- **Bonjour service** -- \`${b.identifiers.serviceType}\``,
+        `- **Capacitor plugin** -- \`${b.identifiers.capacitorPluginName}\``,
+        `- **Keychain service** -- \`${b.identifiers.keychainService}\``,
       ].join('\n'),
   };
 }
 
 /** Build the doc-meta one-liner: brand displayName link.
  *  The link is relative to the file's own path (so README.md in branding/
- *  links up to ../README.md, etc.). No date stamp — the previous
+ *  links up to ../README.md, etc.). No date stamp -- the previous
  *  "Last revised YYYY-MM-DD" produced commit churn every time apply-brand
  *  ran against a file with a different latest-commit date. */
 function generateDocMeta(brand, filePath) {
   const rel = filePath.replace(ROOT + '/', '');
   const depth = (rel.match(/\//g) || []).length;
-  // README.md at root IS the brand entry point — no self-link needed.
+  // README.md at root IS the brand entry point -- no self-link needed.
   if (rel === 'README.md') {
     return `*[${brand.displayName}](${brand.homepageUrl ?? brand.repo.url}) · ${brand.tagline}*`;
   }
@@ -1284,7 +1284,7 @@ function mdFontTable(b) {
     if (!f) continue;
     const fallback = f.fallback.length > 60 ? f.fallback.slice(0, 57) + '…' : f.fallback;
     const weights = Array.isArray(f.weights) ? f.weights.join(', ') : f.weights;
-    const axes = (f.axes ?? []).join(', ') || '—';
+    const axes = (f.axes ?? []).join(', ') || '--';
     rows.push(`| ${role} | \`${f.family}\` | \`${fallback}\` | ${weights} | ${axes} |`);
   }
   return rows.join('\n');
@@ -1299,8 +1299,8 @@ function mdMascotTable(b) {
     `| Pose | ${m.pose} |`,
     `| Style refs | ${m.styleReferences.join(', ')} |`,
     `| Anti-styles | ${m.antiStyles.join(', ')} |`,
-    `| Mark tier | ${m.tiers.mark.use} — ${m.tiers.mark.treatment} |`,
-    `| Illustration tier | ${m.tiers.illustration.use} — ${m.tiers.illustration.treatment} |`,
+    `| Mark tier | ${m.tiers.mark.use} -- ${m.tiers.mark.treatment} |`,
+    `| Illustration tier | ${m.tiers.illustration.use} -- ${m.tiers.illustration.treatment} |`,
   ].join('\n');
 }
 
@@ -1578,7 +1578,7 @@ function applyAppHtml(brand) {
   // here. Brand changes → re-run apply-brand → app.html updates.
   //
   // Every brand-derived literal in app.html lives in the `subs` table
-  // below — adding a new value means adding a row here, NOT editing
+  // below -- adding a new value means adding a row here, NOT editing
   // app.html directly. The verifier (verify-capacitor) cross-checks
   // app.html against this table so drift can't slip through.
   const path = join(UI, 'src', 'app.html');
@@ -1589,9 +1589,9 @@ function applyAppHtml(brand) {
   let body = readFileSync(path, 'utf8');
   let changed = false;
   const subs = [
-    // localStorage:<brand>:theme key — must match what theme.svelte.ts writes
+    // localStorage:<brand>:theme key -- must match what theme.svelte.ts writes
     [/'[^']*:theme'/, `'${brand.name}:theme'`],
-    // Mask icon color (Safari pinned-tab) — use the brand accent.
+    // Mask icon color (Safari pinned-tab) -- use the brand accent.
     // Reads `colors.accent` (new schema) with legacy `accentEmeraldDark`
     // fallback for any unmigrated forks. Falls through to `primary` if
     // neither accent is defined.
@@ -1611,9 +1611,9 @@ function applyAppHtml(brand) {
     [/(apple-mobile-web-app-title"\s+content=")[^"]*(")/, `$1${brand.displayName}$2`],
     // application-name (Windows Start tile pinned PWA + general PWA name)
     [/(name="application-name"\s+content=")[^"]*(")/, `$1${brand.displayName}$2`],
-    // General description meta — search snippet, browser bookmarks
+    // General description meta -- search snippet, browser bookmarks
     [/(name="description"\s+content=")[^"]*(")/, `$1${brand.description ?? brand.tagline}$2`],
-    // Keywords — browser auto-suggest, SEO (Bing still indexes this)
+    // Keywords -- browser auto-suggest, SEO (Bing still indexes this)
     [/(name="keywords"\s+content=")[^"]*(")/, `$1${(brand.keywords ?? []).join(', ')}$2`],
     // msapplication-TileColor + msapplication-TileImage filename
     [/(msapplication-TileColor"\s+content=")[^"]*(")/, `$1${brand.colors.primary}$2`],
@@ -1621,11 +1621,11 @@ function applyAppHtml(brand) {
       /(msapplication-TileImage"[^>]*content="[^"]*\/icons\/)[^"]+(\.png")/,
       `$1${brand.name}-256$2`,
     ],
-    // Icon paths — every <link rel="icon"> or apple-touch-icon path that
+    // Icon paths -- every <link rel="icon"> or apple-touch-icon path that
     // references the brand-named PNG generated by scripts/native/icons/generate-icons.mjs.
     // Match any sizes/icons/<oldname>-<size>.png and rewrite to ${brand.name}-<size>.png.
     [/(icons\/)[a-z0-9_-]+(-\d+\.png)/g, (_m, pre, post) => `${pre}${brand.name}${post}`],
-    // Theme colors — dark + light from brand.colors. iOS / Android use
+    // Theme colors -- dark + light from brand.colors. iOS / Android use
     // these to tint the status bar AND Chrome's address bar.
     [
       /(theme-color"\s+content=")[^"]*("\s+media="\(prefers-color-scheme:\s*dark\)")/,
@@ -1668,9 +1668,9 @@ function applyErrorHtml(brand) {
   const subs = [
     // <title>%status% · {displayName}</title>
     [/(<title>%status%\s*·\s*)[^<]+(<\/title>)/, `$1${brand.displayName}$2`],
-    // Reload button — "Reload {displayName}"
+    // Reload button -- "Reload {displayName}"
     [/(>Reload\s+)[^<]+(<\/a>)/, `$1${brand.displayName}$2`],
-    // Inline SVG gradient stops match logo.svg — pulled from brand.colors
+    // Inline SVG gradient stops match logo.svg -- pulled from brand.colors
     // in case the brand-gradient colors get swapped via brand.json. We
     // match the THREE gradient stops in order.
     [/(<stop offset="0%" stop-color=")[^"]+(")/, `$1${brand.colors.gradientStart ?? '#4a5b6d'}$2`],
@@ -1700,10 +1700,10 @@ function applyManifest(brand) {
     m.description = brand.tagline;
     m.theme_color = brand.colors.primary;
     m.background_color = brand.colors.darkBg;
-    // Stable identity — Chrome PWA install treats this as the app's ID.
+    // Stable identity -- Chrome PWA install treats this as the app's ID.
     // Changing it later prompts a reinstall, so derive from brand id.
     m.id = `/?source=pwa&app=${brand.name}`;
-    // display_override — 'window-controls-overlay' lets Chrome PWAs draw
+    // display_override -- 'window-controls-overlay' lets Chrome PWAs draw
     // a custom titlebar; fall back to standalone if unsupported.
     m.display_override = ['window-controls-overlay', 'standalone'];
     // App shortcuts (right-click PWA icon in dock/start, or 3D-Touch on iOS).
@@ -1737,9 +1737,9 @@ function applyManifest(brand) {
         icons: [{ src: `/icons/${brand.name}-192.png`, sizes: '192x192' }],
       },
     ];
-    // Categories — Chrome surfaces these in PWA discovery.
+    // Categories -- Chrome surfaces these in PWA discovery.
     m.categories = ['productivity', 'utilities', 'business'];
-    // Protocol handler — lets `heron://` register at PWA install time
+    // Protocol handler -- lets `heron://` register at PWA install time
     // on Chrome/Edge so links open the PWA instead of the browser.
     m.protocol_handlers = [
       {
@@ -1747,7 +1747,7 @@ function applyManifest(brand) {
         url: '/?url=%s',
       },
     ];
-    // Rebuild icon list — keep SVG (resolution-independent) + every
+    // Rebuild icon list -- keep SVG (resolution-independent) + every
     // PWA-required PNG size we generate via the icon pipeline. PWA
     // install on Chrome/Edge wants at least one 192×192 + one 512×512
     // PNG icon; we ship 192/256/384/512 for maximum compatibility.
@@ -1861,7 +1861,7 @@ function applyAddXcodeTargets(brand) {
 
 function applyClientBrandTs(brand) {
   // Generated TS file that lib/client/* sources import. Single point
-  // where the URL scheme / service type / app group live — change in
+  // where the URL scheme / service type / app group live -- change in
   // brand.json, run apply-brand, every consumer re-links at build time.
   const path = join(UI, 'src', 'lib', 'client', 'brand.ts');
   const body = [
@@ -1988,7 +1988,7 @@ function applyElectronBrandTs(brand) {
 function syncSharedSwift(brand) {
   // Files in ui/ios/App/App/ that need to exist in every extension target
   // too (because Xcode app-extension targets can't import from the host).
-  // ErrorReporter.swift is the canonical example — same source, 4 copies.
+  // ErrorReporter.swift is the canonical example -- same source, 4 copies.
   const sharedFiles = ['ErrorReporter.swift'];
   const targets = ['AppWidget', 'AppLiveActivity', 'AppShareExtension'];
   for (const f of sharedFiles) {
@@ -2013,7 +2013,7 @@ function applySwiftConstants(brand) {
   // Same content is emitted into every extension dir so each Xcode
   // target's source pool includes Brand without cross-target imports
   // (Swift module-system limitation in Xcode app-extension targets).
-  // Every Xcode target that compiles Swift needs its own Brand.swift —
+  // Every Xcode target that compiles Swift needs its own Brand.swift --
   // Xcode app-extension AND watchOS-app targets can't import constants
   // from the host (Swift module system limitation). One source-of-truth
   // template, N copies, one place to edit (branding/brand.json).
@@ -2024,7 +2024,7 @@ function applySwiftConstants(brand) {
     join(UI, 'ios', 'App', 'AppShareExtension', 'Brand.swift'),
     // WatchApp is a separate watchOS target. Without this copy
     // the Watch had to hardcode "group.com.heron.app" and
-    // "heron://queue" everywhere — a rebrand drift waiting to
+    // "heron://queue" everywhere -- a rebrand drift waiting to
     // happen. The Watch's Brand.swift mirrors the host's verbatim.
     join(UI, 'ios', 'App', 'WatchApp', 'Brand.swift'),
   ];
@@ -2106,7 +2106,7 @@ function applyAGENTSMd(brand) {
     log.skip(`AGENTS.md — missing`);
     return;
   }
-  // No-op for now — most AGENTS.md content is project guidance, not brand.
+  // No-op for now -- most AGENTS.md content is project guidance, not brand.
   // The brand-derived strings inside it (com.heron.app, heron://)
   // are inline references in prose, not template fields. Verifier will
   // flag any that drift.
@@ -2164,7 +2164,7 @@ function shouldSkip() {
   try {
     const prev = readFileSync(CACHE_FILE, 'utf8').trim();
     if (prev !== computeApplyHash()) return false;
-    // Cache says "no work to do" — but verify the canonical generated outputs
+    // Cache says "no work to do" -- but verify the canonical generated outputs
     // still exist on disk. CI starts from a fresh checkout with NO generated
     // files: if the cache file got committed (or restored from turbo cache)
     // the hash would match but the outputs would be missing. In that case,
@@ -2206,7 +2206,7 @@ function apply() {
   // maybeApplyGitHubConfig (called at the end) needs the pre-apply
   // repo block to decide whether to auto-chain into `gh:apply`.
   const prevSnapshot = loadSnapshot();
-  // Drift check runs BEFORE shouldSkip — a destructive rebrand should
+  // Drift check runs BEFORE shouldSkip -- a destructive rebrand should
   // never be hidden by a stale cache hit. If REBRAND_CONFIRMED=1 isn't
   // set when destructive fields drift, this exits 1.
   checkBrandDrift(brand);
@@ -2290,12 +2290,12 @@ function apply() {
   // every time apply-brand learned to touch a new file).
   //
   // The MODIFIED_FILES set is populated by the writeFileSync /
-  // copyFileSync wrappers near the top of this file — ANY new write
+  // copyFileSync wrappers near the top of this file -- ANY new write
   // site is captured automatically with no maintenance.
   if (process.argv.includes('--stage') && MODIFIED_FILES.size > 0) {
     const allPaths = Array.from(MODIFIED_FILES);
 
-    // Filter out paths that .gitignore matches — apply-brand writes a
+    // Filter out paths that .gitignore matches -- apply-brand writes a
     // few derived artifacts under gitignored dirs (the apply-brand
     // cache under scripts/native/icons/_build/ is the canonical case),
     // and `git add` aborts the ENTIRE batch if any one path is ignored.
@@ -2305,7 +2305,7 @@ function apply() {
     // Exit codes:
     //   0  = at least one path is ignored (stdout lists them)
     //   1  = no paths are ignored (stdout empty)
-    //   ≥2 = real error (e.g. not in a git work tree) — fall through
+    //   ≥2 = real error (e.g. not in a git work tree) -- fall through
     let ignored = new Set();
     try {
       const result = execSync(
@@ -2320,7 +2320,7 @@ function apply() {
     } catch (err) {
       // status 1 = no matches (normal); anything else = real error.
       if (err.status === 1) {
-        // No ignored paths — nothing to subtract.
+        // No ignored paths -- nothing to subtract.
       } else if (err.stdout) {
         // status 0 came as throw because check-ignore exits 0 ONLY
         // when ≥1 path is ignored, which Node may flag if combined
@@ -2349,7 +2349,7 @@ function apply() {
         log.ok(`auto-staged ${stageable.length} file(s) for commit${note}`);
       } catch (e) {
         // Hook-level failures (e.g. running outside a git work tree)
-        // shouldn't abort apply-brand — surface as a warning so the
+        // shouldn't abort apply-brand -- surface as a warning so the
         // developer notices but the brand apply itself still
         // succeeded.
         log.warn(`--stage: git add failed (${e.message.split('\n')[0]})`);
@@ -2371,16 +2371,16 @@ function apply() {
  *
  * Skip conditions (each a deliberate design choice):
  *
- *   • No prior snapshot — first-ever run, user hasn't yet demonstrated
+ *   • No prior snapshot -- first-ever run, user hasn't yet demonstrated
  *     intent to manage GitHub state via this repo. They may not even
  *     own the repo yet (fresh fork).
- *   • repo block unchanged — gh:apply is idempotent but a network
+ *   • repo block unchanged -- gh:apply is idempotent but a network
  *     round-trip with no expected work is wasted time.
- *   • `gh auth status` fails — CI without GH_TOKEN, dev container
+ *   • `gh auth status` fails -- CI without GH_TOKEN, dev container
  *     without gh installed, etc. Print one line + continue; the next
  *     authed run catches up.
  *
- * Errors during the gh:apply child process are warn-only — apply-brand's
+ * Errors during the gh:apply child process are warn-only -- apply-brand's
  * own file changes are already on disk, and gh:apply can be re-invoked
  * manually any time via `pnpm gh:apply`.
  */
@@ -2390,7 +2390,7 @@ function maybeApplyGitHubConfig(brand, prevSnapshot) {
 
   // Fields that map onto gh:apply's reconciliation surface. Other
   // brand.json::repo keys (url, issues, docs, upstream) are
-  // informational — they don't drive any `gh api` call.
+  // informational -- they don't drive any `gh api` call.
   const REPO_FIELDS = ['description', 'homepage', 'topics', 'owner', 'name'];
   const repoChanged = REPO_FIELDS.some((f) => {
     const before = prevSnapshot.repo?.[f];

@@ -4,10 +4,10 @@ import { getProfile, getActiveProfileId } from '$lib/server/profiles';
 import { logEvent } from '$lib/server/events';
 
 /**
- * /api/profile — read/write the user's profile.yml for the targeted profile.
+ * /api/profile -- read/write the user's profile.yml for the targeted profile.
  *
- *   GET  /api/profile[?profile=<slug>]              — read
- *   POST /api/profile[?profile=<slug>] { …edit }    — write
+ *   GET  /api/profile[?profile=<slug>]              -- read
+ *   POST /api/profile[?profile=<slug>] { …edit }    -- write
  *
  * When `?profile=<slug>` is omitted (or the slug doesn't match a real
  * profile), the active profile is used. Used by:

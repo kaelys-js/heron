@@ -1,6 +1,6 @@
 /**
- * GET    /api/backup/[id] — download the .tar.gz for a given backup.
- * DELETE /api/backup/[id] — delete the .tar.gz + its sidecar.
+ * GET    /api/backup/[id] -- download the .tar.gz for a given backup.
+ * DELETE /api/backup/[id] -- delete the .tar.gz + its sidecar.
  *
  * Both endpoints are OWNER-ONLY. Backups capture every user's data, so
  * exposing one to a non-owner is equivalent to giving them root access

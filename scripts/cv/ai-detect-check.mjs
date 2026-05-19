@@ -1,22 +1,22 @@
 #!/usr/bin/env node
 /**
- * ai-detect-check.mjs — perplexity + burstiness AI-text detector.
+ * ai-detect-check.mjs -- perplexity + burstiness AI-text detector.
  *
  * The phrase-blacklist in resume-quality.mjs and cover-letter-check.mjs
  * catches obvious LLM signals (`leverage`, `delve into`, `passionate`)
  * but misses subtler patterns. Modern detectors (GPTZero v3,
  * Originality 2.0, Pangram) look at TWO statistical signals:
  *
- *   1. PERPLEXITY — average word-frequency rarity. Human text has more
+ *   1. PERPLEXITY -- average word-frequency rarity. Human text has more
  *      surprise (more rare words mixed in). LLM text gravitates to
  *      common-vocabulary clusters.
  *
- *   2. BURSTINESS — sentence-length + word-frequency variance. Human
+ *   2. BURSTINESS -- sentence-length + word-frequency variance. Human
  *      writing is uneven: some short sentences, some long; some rare
  *      words clustered, some plain. LLM text is more uniform.
  *
  * Without external models we approximate both with simple statistics
- * — won't catch every LLM artefact, but flags the obvious "robotic"
+ * -- won't catch every LLM artefact, but flags the obvious "robotic"
  * patterns that the phrase blacklist misses.
  *
  * The scoring approximates real-detector output, scaled 0-100 where
@@ -30,9 +30,9 @@
  *   pnpm ai-detect:check <path/to/cv.md> --json
  *
  * Exit codes:
- *   0 — score < 60 (low AI-detection risk)
- *   1 — score >= 60 (high risk; rewrite recommended)
- *   2 — argument / environment issue
+ *   0 -- score < 60 (low AI-detection risk)
+ *   1 -- score >= 60 (high risk; rewrite recommended)
+ *   2 -- argument / environment issue
  */
 
 import { readFileSync, existsSync } from 'node:fs';
@@ -90,7 +90,7 @@ const wordCount = tokens.length;
 // The corpus is the 1000 most-frequent English words from the Brown corpus.
 // We embed a trimmed subset; full 1000 would bloat this file.
 const TOP_1K = new Set([
-  // 200 of the highest-frequency English words — enough for the proxy
+  // 200 of the highest-frequency English words -- enough for the proxy
   'the',
   'of',
   'and',

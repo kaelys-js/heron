@@ -15,7 +15,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { fly, fade } from 'svelte/transition';
-  // Lucide icon imports removed — the pills now use a colored dot
+  // Lucide icon imports removed -- the pills now use a colored dot
   // (1.5px-radius circle styled inline) as the status indicator
   // instead of Lucide glyphs. Avoids the cluttered "wifi icon +
   // text + retry icon" look the previous design had.
@@ -55,7 +55,7 @@
       }
     });
 
-    // Backend status — show the badge whenever the resolver is actively
+    // Backend status -- show the badge whenever the resolver is actively
     // probing or has errored. On resolved, show briefly for confirmation,
     // then hide. Idle (web same-origin) never shows.
     unsubBackend = onBackendStatusChange((s) => {
@@ -68,7 +68,7 @@
         showBackendBadge = true;
       } else if (s.state === 'resolved') {
         // Same-origin web: source==='embedded' AND we never started
-        // a resolving cycle for it — skip the badge entirely.
+        // a resolving cycle for it -- skip the badge entirely.
         if (showBackendBadge) {
           backendBadgeTimer = setTimeout(() => {
             showBackendBadge = false;

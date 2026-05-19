@@ -1,5 +1,5 @@
 /**
- * /calendar loader — interview + prep-block + decision-deadline calendar.
+ * /calendar loader -- interview + prep-block + decision-deadline calendar.
  * Forward-window default 30d, configurable via ?days=N.
  */
 

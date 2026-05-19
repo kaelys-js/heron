@@ -1,10 +1,10 @@
 <!--
   CV Manager — single sheet that handles all four CV actions:
 
-    * View      — read-only rendered markdown of cv.md
-    * Edit      — in-place editor with Save → PUT /api/profile/file/cv
-    * Replace   — paste a new CV; backs up the existing one to cv.md.bak
-    * Reprocess — runs Claude over cv.md and emits a ProfileEdit suggestion
+    * View      -- read-only rendered markdown of cv.md
+    * Edit      -- in-place editor with Save → PUT /api/profile/file/cv
+    * Replace   -- paste a new CV; backs up the existing one to cv.md.bak
+    * Reprocess -- runs Claude over cv.md and emits a ProfileEdit suggestion
                    (parent merges it into local edit state — never auto-saved)
 
   The sheet talks to two endpoints:
@@ -64,7 +64,7 @@
     onApplySuggestion?: (suggestion: Suggestion) => void;
   } = $props();
 
-  // svelte-ignore state_referenced_locally — `initialTab` is the seed only;
+  // svelte-ignore state_referenced_locally -- `initialTab` is the seed only;
   // the $effect below resyncs whenever the sheet re-opens.
   let activeTab = $state<Tab>(initialTab);
 
@@ -134,7 +134,7 @@
     } catch (e) {
       const err = e as ApiError;
       bodyError = err.message;
-      // Don't toast — bodyError renders inline
+      // Don't toast -- bodyError renders inline
     } finally {
       bodyLoading = false;
     }

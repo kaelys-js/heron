@@ -1,16 +1,16 @@
 /**
- * /api/email/react — accept an inbound email + react to it.
+ * /api/email/react -- accept an inbound email + react to it.
  *
  * POST body: { ts, from, subject, body, messageId? }
  * Returns: { classification, match, actions, execution }
  *
  * The IMAP poller used to call this from a child process, which crossed
- * an HTTP boundary that dropped the ALS user context — the reactor then
+ * an HTTP boundary that dropped the ALS user context -- the reactor then
  * resolved to SYSTEM_USER and either 401'd OR processed under the wrong
  * user (F14). After F14/F19 the IMAP poller calls `reactToEmail()`
  * IN-PROCESS under the OWNER's ALS context, so this HTTP endpoint is
  * now ONLY hit from the dashboard UI (the "Replay last email" debug
- * tool) — never from the IMAP child.
+ * tool) -- never from the IMAP child.
  *
  * Side-effects (status flips, tech-prep generation, etc.) happen
  * synchronously inside the request. Per-email cost is one fs scan

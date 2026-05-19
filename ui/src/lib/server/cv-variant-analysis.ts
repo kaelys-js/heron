@@ -1,5 +1,5 @@
 /**
- * cv-variant-analysis — what's making some applications convert + others
+ * cv-variant-analysis -- what's making some applications convert + others
  * ghost? Correlate CV variants with outcomes.
  *
  * The system already generates per-job tailored CVs. After 50+
@@ -9,7 +9,7 @@
  * Approach (intentionally simple, explainable):
  *   1. For every job, identify its CV variant by:
  *      - Top 10 keywords in the tailored CV's content (vs. cv-general's
- *        baseline) — these are what got injected per JD
+ *        baseline) -- these are what got injected per JD
  *      - Length delta vs cv-general
  *      - Score range bracket the job fell in
  *   2. Tag each application with its outcome bucket (positive: applied →
@@ -36,7 +36,7 @@ export type CvVariantReport = {
    *  tailoring move is working). */
   winningKeywords: { keyword: string; positiveCount: number; negativeCount: number }[];
   /** Keywords that appear more in negative-outcome CVs (signal: this
-   *  move may be hurting OR is just noise — investigate). */
+   *  move may be hurting OR is just noise -- investigate). */
   underperformingKeywords: { keyword: string; positiveCount: number; negativeCount: number }[];
   /** Length-delta correlation: are longer or shorter tailored CVs
    *  converting more? */
@@ -130,7 +130,7 @@ function readTailoredPdfMarkdown(profileId: string, pdfFile: string): string {
     const coverPath = p.replace(/\.pdf$/, '-cover.md');
     if (fs.existsSync(coverPath)) return fs.readFileSync(coverPath, 'utf8');
   } catch {
-    // Sibling .md read failure — fall through to empty, caller treats it
+    // Sibling .md read failure -- fall through to empty, caller treats it
     // as a "no source markdown available" signal and skips that PDF.
   }
   return '';

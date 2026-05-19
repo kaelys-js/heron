@@ -1,5 +1,5 @@
 /**
- * POST /api/backup/restore — owner-only restore from snapshot.
+ * POST /api/backup/restore -- owner-only restore from snapshot.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

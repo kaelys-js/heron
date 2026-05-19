@@ -6,43 +6,43 @@
  * person who can trigger a backup, and a restore overwrites everything.
  *
  * What's backed up:
- *   data/users/                   — every user's content tree:
+ *   data/users/                   -- every user's content tree:
  *                                   data/users/{userId}/profiles/{slug}/{cv.md,
  *                                   profile.yml, _profile.md, portals.yml,
  *                                   applications.md, pipeline.md,
  *                                   scan-history.tsv, gemini-scores.tsv,
  *                                   follow-ups.md, reports/, output/,
  *                                   interview-prep/}
- *   data/users/.legacy-claimed    — which user inherited legacy single-user data
- *   data/profiles/                — legacy single-user content (still
+ *   data/users/.legacy-claimed    -- which user inherited legacy single-user data
+ *   data/profiles/                -- legacy single-user content (still
  *                                   populated until full DB migration lands;
  *                                   captured for safety)
- *   data/profiles.json            — legacy active-profile pointer
- *   data/auth.db                  — every user + session + passkey
- *   data/app.db                   — every per-user app row
- *   data/sources.json             — scanner config (install-wide)
- *   data/autopilot.json           — schedule + thresholds (install-wide)
- *   data/issues.jsonl             — open issues (per-user filtered at read time)
- *   data/activity.jsonl           — activity feed (per-user filtered)
- *   data/onboarding-state.json    — onboarding progress (install-wide)
- *   interview-prep/story-bank.md  — shared STAR+R bank (install-wide)
+ *   data/profiles.json            -- legacy active-profile pointer
+ *   data/auth.db                  -- every user + session + passkey
+ *   data/app.db                   -- every per-user app row
+ *   data/sources.json             -- scanner config (install-wide)
+ *   data/autopilot.json           -- schedule + thresholds (install-wide)
+ *   data/issues.jsonl             -- open issues (per-user filtered at read time)
+ *   data/activity.jsonl           -- activity feed (per-user filtered)
+ *   data/onboarding-state.json    -- onboarding progress (install-wide)
+ *   interview-prep/story-bank.md  -- shared STAR+R bank (install-wide)
  *
  * What's NOT backed up:
- *   .env                          — credentials (deliberate; scope (a))
- *   node_modules/                 — re-installable
- *   .playwright-*                 — browser sessions (re-login)
- *   .git/                         — version control
- *   data/backups/                 — recursion guard
- *   data/apply-state/             — transient runtime state
- *   data/*.db-{wal,shm,journal}   — SQLite runtime journals
- *   ui/build/, ui/.svelte-kit/    — build artifacts
+ *   .env                          -- credentials (deliberate; scope (a))
+ *   node_modules/                 -- re-installable
+ *   .playwright-*                 -- browser sessions (re-login)
+ *   .git/                         -- version control
+ *   data/backups/                 -- recursion guard
+ *   data/apply-state/             -- transient runtime state
+ *   data/*.db-{wal,shm,journal}   -- SQLite runtime journals
+ *   ui/build/, ui/.svelte-kit/    -- build artifacts
  *
  * Storage layout:
- *   data/backups/{ISO}.tar.gz     — gzipped tarball, ISO timestamp filename
- *   data/backups/{ISO}.meta.json  — sidecar with file count + profile slugs
+ *   data/backups/{ISO}.tar.gz     -- gzipped tarball, ISO timestamp filename
+ *   data/backups/{ISO}.meta.json  -- sidecar with file count + profile slugs
  *
  * Format: gzipped tar, paths relative to ROOT. tar binary used (bsdtar
- * on macOS, GNU tar on Linux — both accept -czf / -xzf). Trade-off:
+ * on macOS, GNU tar on Linux -- both accept -czf / -xzf). Trade-off:
  * losing Windows compatibility, but Heron is Unix-first anyway.
  *
  * Retention: configurable N days (default 14). On every successful
@@ -53,7 +53,7 @@
  *     (a half-restored applications.md is much worse than no restore).
  *   - Tarball integrity verified with `tar -tzf` before extraction.
  *   - Extraction lands in a temp dir, then renames in over the existing
- *     paths atomically (well — as atomic as fs.rename across dirs gets).
+ *     paths atomically (well -- as atomic as fs.rename across dirs gets).
  */
 
 import path from 'node:path';
@@ -65,24 +65,24 @@ import { listRunning } from './orchestrator';
 import { userSharedPath } from './profile-paths';
 
 /** Per-user backup dir. Each user's tarballs live in their own
- *  _shared/backups/ — Alice's archives don't end up in Bob's view +
+ *  _shared/backups/ -- Alice's archives don't end up in Bob's view +
  *  a per-user reset doesn't nuke other users' history. */
 function backupsDir(): string {
   return userSharedPath('backups-dir');
 }
 
-// What goes INTO a backup. Relative to ROOT. Resolved at backup time —
+// What goes INTO a backup. Relative to ROOT. Resolved at backup time --
 // missing entries are skipped silently (fresh installs may not have
 // all files yet).
 //
-// F28 — these once-install-wide files moved per-user via Phase 1 + 3
+// F28 -- these once-install-wide files moved per-user via Phase 1 + 3
 // fixes (sources, autopilot, onboarding-state, apply-counter, job-last-run
 // all live under data/users/{uid}/profiles/_shared/ now). `data/users`
 // captures them all in the multi-user tree. The legacy `data/profiles`
 // branch is kept for SYSTEM_USER (single-user installs that haven't
 // migrated yet).
 const INCLUDE_PATHS = [
-  // Multi-user trees — captures every user's per-profile + _shared/
+  // Multi-user trees -- captures every user's per-profile + _shared/
   // content including per-user sources.json, autopilot.json,
   // onboarding-state.json, apply-counter.json, job-last-run.json.
   'data/users',
@@ -94,7 +94,7 @@ const INCLUDE_PATHS = [
   // shared infra in the legacy layout.
   'data/profiles',
   'data/profiles.json',
-  // Install-wide infrastructure (truly global — not user-scoped).
+  // Install-wide infrastructure (truly global -- not user-scoped).
   'data/issues.jsonl',
   'data/activity.jsonl',
 ] as const;
@@ -108,7 +108,7 @@ const EXCLUDE_PATTERNS = [
   '.git',
   'data/backups',
   'data/apply-state',
-  // SQLite runtime journals — restoring these without the main db file
+  // SQLite runtime journals -- restoring these without the main db file
   // is catastrophic. The db file itself IS included; the wal/shm get
   // recreated on next open.
   '*.db-wal',
@@ -118,7 +118,7 @@ const EXCLUDE_PATTERNS = [
   'ui/.svelte-kit',
 ];
 
-// Default retention in days — the autopilot card lets the user tune this.
+// Default retention in days -- the autopilot card lets the user tune this.
 export const DEFAULT_RETENTION_DAYS = 14;
 
 export type BackupInfo = {
@@ -170,7 +170,7 @@ export function readBackupConfig(): BackupConfig {
         : DEFAULT_RETENTION_DAYS;
     return { retentionDays: days };
   } catch (e) {
-    // Config corrupted but recoverable — fall back to defaults but surface
+    // Config corrupted but recoverable -- fall back to defaults but surface
     // the corruption so the user knows their retention preference isn't
     // being honored.
     reportServerError('backup', 'Backup config corrupt — using defaults', e, {
@@ -217,7 +217,7 @@ function listBackupInventory(): { users: string[]; legacyProfiles: string[] } {
     }
   } catch (e) {
     // readdir failure on a dir we just confirmed exists means EACCES or
-    // EIO — backup will succeed with empty inventory which is misleading.
+    // EIO -- backup will succeed with empty inventory which is misleading.
     reportServerError('backup', 'Could not enumerate users dir for inventory', e, {
       category: 'system',
     });
@@ -301,7 +301,7 @@ function readVersion(): string | undefined {
 
 /** Snapshot the on-disk schema_version rows from both SQLite DBs. We use
  *  the singleton handles from db/index.ts which are already open under
- *  WAL mode — the read is sub-millisecond and doesn't block writers. */
+ *  WAL mode -- the read is sub-millisecond and doesn't block writers. */
 function readSchemaVersions(): { auth?: number; app?: number } {
   const out: { auth?: number; app?: number } = {};
   try {
@@ -320,11 +320,11 @@ function readSchemaVersions(): { auth?: number; app?: number } {
           | undefined;
         if (row?.value) out[key] = parseInt(row.value, 10);
       } catch {
-        /* tables may not exist yet on a fresh install — non-fatal */
+        /* tables may not exist yet on a fresh install -- non-fatal */
       }
     }
   } catch {
-    /* db module not loadable in this context — non-fatal */
+    /* db module not loadable in this context -- non-fatal */
   }
   return out;
 }
@@ -338,7 +338,7 @@ export async function createBackup(): Promise<CreateBackupResult> {
   const tarPath = path.join(backupsDir(), id + '.tar.gz');
   const metaPath = path.join(backupsDir(), id + '.meta.json');
 
-  // Gather what we're including. Skip anything that's not on disk yet —
+  // Gather what we're including. Skip anything that's not on disk yet --
   // a fresh install may not have data/issues.jsonl yet.
   const presentTargets = INCLUDE_PATHS.filter((p) => fs.existsSync(path.join(ROOT, p)));
   if (presentTargets.length === 0) {
@@ -468,7 +468,7 @@ export function listBackups(): BackupInfo[] {
         info.app = parsed.app;
       }
     } catch (e) {
-      // Sidecar corrupt — we still surface the tarball so the user can
+      // Sidecar corrupt -- we still surface the tarball so the user can
       // restore from it (tarball integrity is checked at restore time),
       // but flag the broken sidecar so they know the metadata is stale.
       logEvent('backup', 'Backup sidecar unreadable · ' + id, {
@@ -503,7 +503,7 @@ export function deleteBackup(id: string): boolean {
   try {
     if (fs.existsSync(info.metaPath)) fs.unlinkSync(info.metaPath);
   } catch (e) {
-    // Orphan sidecar — the tarball is gone but we couldn't drop the
+    // Orphan sidecar -- the tarball is gone but we couldn't drop the
     // metadata. listBackups() will skip it (no .tar.gz to pair with) but
     // the user will see leftover .meta.json files in the dir.
     logEvent('backup', 'Backup sidecar unlink failed · ' + id, {
@@ -517,7 +517,7 @@ export function deleteBackup(id: string): boolean {
 }
 
 /** Drop any backup older than `retentionDays`. Returns the count pruned.
- *  The most recent backup is ALWAYS kept regardless of age — safety net
+ *  The most recent backup is ALWAYS kept regardless of age -- safety net
  *  in case the retention setting was just dropped to 1 day and yesterday's
  *  backup is the only one we have. */
 export function pruneOldBackups(): number {
@@ -536,7 +536,7 @@ export function pruneOldBackups(): number {
   return pruned;
 }
 
-/** Validate that a tarball is well-formed gzip + tar. Cheap to do — we
+/** Validate that a tarball is well-formed gzip + tar. Cheap to do -- we
  *  list its contents without extracting. Returns true on valid. */
 export function verifyBackupIntegrity(id: string): {
   ok: boolean;
@@ -554,7 +554,7 @@ export function verifyBackupIntegrity(id: string): {
 }
 
 /** Restore a backup, OVERWRITING the current data/profiles + shared infra
- *  files. Refuses to run while any orchestrator task is active — a half-
+ *  files. Refuses to run while any orchestrator task is active -- a half-
  *  restored applications.md is much worse than no restore.
  *
  *  Strategy:
@@ -564,7 +564,7 @@ export function verifyBackupIntegrity(id: string): {
  *   4. Rename staging → real paths.
  *   5. Log success + return count.
  *
- *  We DON'T delete the .pre-restore-{id}/ folder afterwards — it's the
+ *  We DON'T delete the .pre-restore-{id}/ folder afterwards -- it's the
  *  "are you sure" undo button. The next prune will sweep it after the
  *  retention window. */
 export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
@@ -593,7 +593,7 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
   const audit = path.join(backupsDir(), '.pre-restore-' + id);
 
   // Clean any stale staging dir from a previous failed attempt. force:true
-  // already swallows ENOENT, so this catch only fires on real EACCES/EIO —
+  // already swallows ENOENT, so this catch only fires on real EACCES/EIO --
   // worth surfacing since it'll cause the subsequent mkdir to fail too.
   try {
     fs.rmSync(stage, { recursive: true, force: true });
@@ -648,7 +648,7 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
       fs.mkdirSync(path.dirname(dst), { recursive: true });
       fs.cpSync(src, dst, { recursive: true });
     } catch (e) {
-      // Audit copy failed — bail BEFORE touching live data.
+      // Audit copy failed -- bail BEFORE touching live data.
       reportServerError('backup', 'Audit snapshot failed during restore · ' + id, e, {
         category: 'system',
       });
@@ -697,7 +697,7 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
       // Count files brought across.
       restoredFiles += countFilesAt(liveDst);
     } catch (e) {
-      // Mid-restore failure — try to roll back from the audit dir.
+      // Mid-restore failure -- try to roll back from the audit dir.
       reportServerError('backup', 'Restore failed mid-flight; rolling back from audit', e, {
         category: 'system',
       });
@@ -709,7 +709,7 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
           fs.cpSync(auditSrc, liveDst, { recursive: true });
         }
       } catch (rollbackErr) {
-        // Rollback failed — user is in a half-restored state. This is the
+        // Rollback failed -- user is in a half-restored state. This is the
         // worst possible outcome; surface it as an error event so they
         // know to inspect data/backups/.pre-restore-{id}/ manually.
         reportServerError(
@@ -740,7 +740,7 @@ export async function restoreBackup(id: string): Promise<RestoreBackupResult> {
   try {
     fs.rmSync(stage, { recursive: true, force: true });
   } catch (e) {
-    // Successful restore but couldn't clean the staging dir — non-fatal
+    // Successful restore but couldn't clean the staging dir -- non-fatal
     // (next restore will rm -rf it first), just surfaced for visibility.
     logEvent('backup', 'Could not clean staging dir after successful restore', {
       level: 'warn',
@@ -770,7 +770,7 @@ function countFilesAt(p: string): number {
     try {
       for (const entry of fs.readdirSync(p)) n += countFilesAt(path.join(p, entry));
     } catch {
-      // readdir failure on a stat-confirmed dir is EACCES/EIO — we just
+      // readdir failure on a stat-confirmed dir is EACCES/EIO -- we just
       // skip the subtree so file count is slightly under-reported.
     }
   }

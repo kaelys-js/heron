@@ -1,5 +1,5 @@
 /**
- * state-helpers — utilities to drain Svelte 5 module-singleton state
+ * state-helpers -- utilities to drain Svelte 5 module-singleton state
  * between tests within the SAME file. (Across files, Vitest's
  * `isolate: true` config already gives us a fresh module graph.)
  *
@@ -23,7 +23,7 @@ export async function resetNotificationsStore(): Promise<void> {
       (mod.notifications.unreadIds as Set<string>).clear();
     }
   } catch {
-    // Module hasn't been imported by this test file — nothing to reset.
+    // Module hasn't been imported by this test file -- nothing to reset.
   }
 }
 
@@ -97,7 +97,7 @@ export function resetAll(): void {
   // Synchronous resets first.
   resetCapacitorPreferences();
   resetUuidCounter();
-  // Async resets fire-and-forget — they only matter when the
+  // Async resets fire-and-forget -- they only matter when the
   // corresponding module is already imported by the test file, in
   // which case the reset completes before the next event loop tick.
   void resetNotificationsStore();

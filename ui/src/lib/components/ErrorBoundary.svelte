@@ -9,7 +9,7 @@
    *
    * The previous version showed just an icon + one-line message + a
    * "Try again" button. That made every render error look identical
-   * and trivial, but most of them aren't — a crash here is the user's
+   * and trivial, but most of them aren't -- a crash here is the user's
    * one chance to see what went wrong. The expanded panel:
    *   • shows the error TYPE (constructor.name) prominently
    *   • formats the message in a code-styled monospace block

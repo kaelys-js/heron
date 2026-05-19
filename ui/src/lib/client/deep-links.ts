@@ -1,5 +1,5 @@
 /**
- * Deep-link handler — turn `heron://job/abc123` into an in-app
+ * Deep-link handler -- turn `heron://job/abc123` into an in-app
  * navigation.
  *
  * Capacitor's @capacitor/app plugin emits `appUrlOpen` events whenever
@@ -7,7 +7,7 @@
  * target route, and call goto() with it.
  *
  * Supported forms (every iOS surface that emits a deep link must land
- * in one of these — widgets, notifications, Live Activity, Share
+ * in one of these -- widgets, notifications, Live Activity, Share
  * Extension callback, Spotlight tap):
  *
  *   heron://                              → /
@@ -34,7 +34,7 @@ import { parseDeepLink } from './deep-links-parser';
 
 // Re-export so the existing API surface stays stable. Callers can import
 // either `parseDeepLink` or `handleDeepLink` from `./deep-links` exactly
-// as before — the parser just physically lives in a sibling module so
+// as before -- the parser just physically lives in a sibling module so
 // `deep-links.integration.test.ts` can exercise it in plain Node.
 export { parseDeepLink } from './deep-links-parser';
 
@@ -59,7 +59,7 @@ export function handleDeepLink(url: string): void {
   const target = parseDeepLink(url);
   if (!target) return;
   // Some deep links want to FIRE A SIDE EFFECT in addition to (or
-  // instead of) a route change — e.g. `heron://notifications`
+  // instead of) a route change -- e.g. `heron://notifications`
   // opens the in-app notifications panel via a CustomEvent. The
   // parser annotates these with a `#event=...` fragment that we
   // pull out and dispatch here.
@@ -77,6 +77,6 @@ export function handleDeepLink(url: string): void {
 }
 
 // parseDeepLink is exported above. See ./deep-links-parser.ts for the
-// implementation + contract. Keep both modules in sync — adding a new
+// implementation + contract. Keep both modules in sync -- adding a new
 // route here means adding a case to deep-links.integration.test.ts in
 // the same commit so regressions surface immediately in CI.

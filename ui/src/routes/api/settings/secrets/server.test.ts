@@ -1,5 +1,5 @@
 /**
- * /api/settings/secrets — per-user encrypted credential management.
+ * /api/settings/secrets -- per-user encrypted credential management.
  *
  * Distinct from /api/settings (owner-only, install-wide .env): this
  * endpoint is open to every authenticated user and operates on THEIR

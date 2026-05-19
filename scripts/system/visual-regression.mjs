@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * visual-regression.mjs — local Lost Pixel runner.
+ * visual-regression.mjs -- local Lost Pixel runner.
  *
  * Boots `vite preview` against the freshly-built static bundle, runs
  * `lost-pixel`, then tears the server down. Same flow the CI workflow
@@ -92,7 +92,7 @@ async function main() {
       try {
         execFileSync('open', [path.join(ROOT, '.lostpixel', 'difference')], { stdio: 'ignore' });
       } catch {
-        /* macOS only — silently skip */
+        /* macOS only -- silently skip */
       }
     }
     if (MODE === 'compare') {

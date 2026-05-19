@@ -1,5 +1,5 @@
 /**
- * lib/server/ui-prefs — per-user UI preferences in app.db.ui_prefs.
+ * lib/server/ui-prefs -- per-user UI preferences in app.db.ui_prefs.
  *
  * Mocks the DB chain + filesystem so we can exercise the prefs
  * merge/migrate/avatar paths without touching real SQLite or disk.

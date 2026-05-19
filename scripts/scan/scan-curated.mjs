@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * scan-curated.mjs — Niche / curated job-board scrapers
+ * scan-curated.mjs -- Niche / curated job-board scrapers
  *
  * scan.mjs covers ATS providers (Greenhouse / Ashby / Lever / Workday /
  * SmartRecruiters / Workable / Personio / Recruitee / Teamtailor).
@@ -11,20 +11,20 @@
  * HTML extractor.
  *
  * Currently shipping:
- *   • AI Jobs (aijobs.net)        — HTML scrape, 50 listings/page, paginated
+ *   • AI Jobs (aijobs.net)        -- HTML scrape, 50 listings/page, paginated
  *
  * Skipped + reasoning (see Sources Assessment in docs/):
- *   • Wellfound (AngelList)       — captcha-delivery wall on every page;
+ *   • Wellfound (AngelList)       -- captcha-delivery wall on every page;
  *                                    needs Playwright + manual captcha solve.
- *   • Honeypot                    — host unreachable from this network at
+ *   • Honeypot                    -- host unreachable from this network at
  *                                    write time; revisit when it's responding.
- *   • Welcome to the Jungle       — Algolia-backed search, requires sniffing
+ *   • Welcome to the Jungle       -- Algolia-backed search, requires sniffing
  *                                    rotating public app-id + read-only key
  *                                    from page source. Brittle. Use the
  *                                    AddJobDialog paste flow for individual
  *                                    listings instead.
  *
- * Output: same shape as scan.mjs — appends to data/pipeline.md and records
+ * Output: same shape as scan.mjs -- appends to data/pipeline.md and records
  * URLs in data/scan-history.tsv with `source: aijobs-net` etc.
  *
  * Usage:
@@ -62,7 +62,7 @@ const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1500;
 
 /** Retry on transient network/5xx; hard-fail on 4xx. Same semantics as
- *  scan.mjs's withRetry — kept duplicated here to avoid a shared-utility
+ *  scan.mjs's withRetry -- kept duplicated here to avoid a shared-utility
  *  module that has to be installed via a build step. */
 async function withRetry(label, fn) {
   let lastErr;
@@ -117,8 +117,8 @@ async function scanAiJobs({ pages = DEFAULT_MAX_PAGES } = {}) {
   const out = [];
   // aijobs.net's slug pattern is `{role}-id{employerJobId}-{location}-{listingId}/`.
   // The same role gets re-listed once per supported location, so we'd see the
-  // exact same title 5–10× otherwise. Dedup intra-source by `id{N}` (the
-  // employer-side job template id) plus normalised title — different titles
+  // exact same title 5-10× otherwise. Dedup intra-source by `id{N}` (the
+  // employer-side job template id) plus normalised title -- different titles
   // sharing an employer id are still treated as distinct.
   const seen = new Set();
 
@@ -276,7 +276,7 @@ async function main() {
       ? Math.max(1, Math.min(20, parseInt(args[pagesFlag + 1], 10) || DEFAULT_MAX_PAGES))
       : DEFAULT_MAX_PAGES;
 
-  // /sources Test button (B12) — connectivity probe. Hit aijobs.net's
+  // /sources Test button (B12) -- connectivity probe. Hit aijobs.net's
   // search page and confirm a 200 response. Exits 0/non-zero.
   if (probeOnly) {
     try {
@@ -295,14 +295,14 @@ async function main() {
     }
   }
 
-  // Optional title filter from portals.yml — same as scan.mjs.
+  // Optional title filter from portals.yml -- same as scan.mjs.
   let titleFilter = (_t) => true;
   if (existsSync(PORTALS_PATH)) {
     try {
       const config = parseYaml(readFileSync(PORTALS_PATH, 'utf-8'));
       titleFilter = buildTitleFilter(config.title_filter);
     } catch {
-      /* missing/malformed — fall through with no-op filter */
+      /* missing/malformed -- fall through with no-op filter */
     }
   }
 

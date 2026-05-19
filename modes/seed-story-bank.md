@@ -1,4 +1,4 @@
-# Seed Story Bank — Extract STAR+R stories from CV
+# Seed Story Bank -- Extract STAR+R stories from CV
 
 You're seeding the master interview story bank. Walk through the user's
 `__CV__` and pull out 5-10 high-impact stories using the STAR+R format
@@ -6,11 +6,11 @@ You're seeding the master interview story bank. Walk through the user's
 
 ## Inputs
 
-1. `__CV__` — canonical CV with experience, projects, achievements
-2. `data/profiles/{slug}/__PROFILE_MD__` (if exists) — narrative context,
+1. `__CV__` -- canonical CV with experience, projects, achievements
+2. `data/profiles/{slug}/__PROFILE_MD__` (if exists) -- narrative context,
    superpowers, proof points
 3. `config/profile.yml` → `narrative.proof_points` if present
-4. The existing `__STORY_BANK__` — DON'T overwrite stories
+4. The existing `__STORY_BANK__` -- DON'T overwrite stories
    that are already there; APPEND new ones below them
 
 ## Output: `__STORY_BANK__`
@@ -34,18 +34,18 @@ new stories starting from the next available number.
 
 Pick 1-2 tags per story from this list (or add new ones that fit):
 
-- **[ownership]** — owned a project end-to-end through ambiguity
-- **[scale]** — built or operated something at significant scale
-- **[migration]** — moved a system from legacy to modern stack
-- **[performance]** — fixed a measurable performance / latency / cost problem
-- **[cross-functional]** — worked across teams, departments, geographies
-- **[mentorship]** — coached, hired, leveled up a peer or report
-- **[conflict]** — resolved a meaningful disagreement (technical or interpersonal)
-- **[failure]** — shipped something that didn't work AND what you learned
-- **[customer-impact]** — feature or fix that customers felt directly
-- **[reliability]** — improved uptime, alerting, incident response
-- **[architecture]** — made a load-bearing design decision
-- **[data]** — data-driven decision-making, instrumentation, analytics
+- **[ownership]** -- owned a project end-to-end through ambiguity
+- **[scale]** -- built or operated something at significant scale
+- **[migration]** -- moved a system from legacy to modern stack
+- **[performance]** -- fixed a measurable performance / latency / cost problem
+- **[cross-functional]** -- worked across teams, departments, geographies
+- **[mentorship]** -- coached, hired, leveled up a peer or report
+- **[conflict]** -- resolved a meaningful disagreement (technical or interpersonal)
+- **[failure]** -- shipped something that didn't work AND what you learned
+- **[customer-impact]** -- feature or fix that customers felt directly
+- **[reliability]** -- improved uptime, alerting, incident response
+- **[architecture]** -- made a load-bearing design decision
+- **[data]** -- data-driven decision-making, instrumentation, analytics
 
 ## Quality bar
 

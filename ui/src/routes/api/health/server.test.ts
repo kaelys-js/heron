@@ -1,7 +1,7 @@
 /**
- * GET /api/health — minimal liveness probe.
+ * GET /api/health -- minimal liveness probe.
  *
- * F22 — pre-fix this endpoint exposed per-user pipeline metadata
+ * F22 -- pre-fix this endpoint exposed per-user pipeline metadata
  * (file size + mtime + reports count) to anonymous callers. The
  * authenticated /api/stats + /api/insights endpoints carry that data
  * now; /api/health stays minimal so the public backend-discovery
@@ -38,7 +38,7 @@ describe('GET /api/health', () => {
   it('does NOT leak pipeline metadata (F22 regression guard)', async () => {
     const r = await call();
     // Pre-F22 these fields were present; the audit closed it. Re-adding
-    // them is the wrong direction — keep them out.
+    // them is the wrong direction -- keep them out.
     expect(r.body.pipeline).toBeUndefined();
     expect(r.body.gemini).toBeUndefined();
     expect(r.body.anthropic).toBeUndefined();

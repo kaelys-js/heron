@@ -29,13 +29,13 @@ pnpm release 1.7.3         # explicit version
 
 Each maps to a script under `scripts/native/`.
 
-## First-time setup — what `pnpm setup:native` does
+## First-time setup -- what `pnpm setup:native` does
 
 Interactive wizard, ~5 minutes:
 
 1. Checks tooling (gh, Xcode, CocoaPods, Bundler, Homebrew). Offers to install anything missing via `brew install`.
 2. Verifies `gh auth status`; runs `gh auth login` if needed.
-3. Prompts for Apple Developer identifiers — `APPLE_ID`, `APPLE_TEAM_ID`. Stored to `~/.heron/native-state.json` for re-runs.
+3. Prompts for Apple Developer identifiers -- `APPLE_ID`, `APPLE_TEAM_ID`. Stored to `~/.heron/native-state.json` for re-runs.
 4. Opens `appleid.apple.com` in your browser; you generate an App-Specific Password named "heron CI" and paste it. The wizard masks the input.
 5. Opens `appstoreconnect.apple.com`; you create an App Store Connect API key (App Manager role), download the `.p8`, the wizard asks for its path and reads it.
 6. Lists code-signing identities in your Keychain via `security find-identity`. Picks the first `Developer ID Application` cert, asks you to set an export password, exports to `.p12` via `security export`.
@@ -43,7 +43,7 @@ Interactive wizard, ~5 minutes:
 8. Pushes the same values to GitHub Actions secrets via `gh secret set` so CI can sign.
 9. Runs `scripts/native/add-xcode-targets.rb` to programmatically add the 3 Xcode extension targets (Widget, Live Activity, Share Extension) using the `xcodeproj` Ruby gem. No Xcode dialogs.
 
-Safe to re-run — re-prompts only for missing/stale values, otherwise reuses what's stored.
+Safe to re-run -- re-prompts only for missing/stale values, otherwise reuses what's stored.
 
 ## Release flow (after setup)
 
@@ -64,7 +64,7 @@ Auto-update on the desktop side is wired (electron-updater + GitHub Releases). T
 
 ## Architecture (the spine)
 
-The app finds its backend at runtime — same Capacitor binary works against:
+The app finds its backend at runtime -- same Capacitor binary works against:
 - Vite dev server (`pnpm dev`)
 - Embedded Node server in the installed desktop app
 - Your Mac discovered via Bonjour on the same wifi
@@ -77,7 +77,7 @@ A `DEV / PROD / LAN / TAILSCALE / REMOTE` pill in the topbar shows the live sour
 
 | Need | Read |
 |---|---|
-| Run a command | `pnpm native` — print all options + current status |
+| Run a command | `pnpm native` -- print all options + current status |
 | Add a new one-shot script | `scripts/native/_lib.mjs` for the helpers, then mirror an existing script |
 | Debug a build failure | `pnpm test -- capacitor.integration` (brand + native consistency checks) |
 | Understand resolver | `ui/src/lib/client/backend-discovery.ts` |

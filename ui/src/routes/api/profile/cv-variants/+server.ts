@@ -1,5 +1,5 @@
 /**
- * /api/profile/cv-variants — analyze which tailoring moves are converting.
+ * /api/profile/cv-variants -- analyze which tailoring moves are converting.
  *
  * GET → CvVariantReport
  *
@@ -21,7 +21,7 @@ function resolveProfileId(url: URL): string {
 
 export const GET = wrap('cv-variant-analysis', async ({ url }: { url: URL }) => {
   const profileId = resolveProfileId(url);
-  // Surface .md-sibling preservation stats — explains "not enough data"
+  // Surface .md-sibling preservation stats -- explains "not enough data"
   // when most PDFs are pre-update and lack their .md source.
   return {
     ...analyzeCvVariants(profileId),

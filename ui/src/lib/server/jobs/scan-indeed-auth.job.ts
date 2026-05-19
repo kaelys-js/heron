@@ -1,11 +1,11 @@
 /**
- * Authenticated Indeed scrape — wraps `scan-indeed-auth.py`.
+ * Authenticated Indeed scrape -- wraps `scan-indeed-auth.py`.
  *
  * Mirror of scan-linkedin-auth.job.ts. Indeed's anti-bot is heavier; the
  * script bails on first captcha (exit code 4) and recordFailure flips
- * the source state — /sources surfaces "Indeed needs reconnection".
+ * the source state -- /sources surfaces "Indeed needs reconnection".
  *
- * Schedule: daily 09:30 weekdays — 30 min after scan-all so LinkedIn's
+ * Schedule: daily 09:30 weekdays -- 30 min after scan-all so LinkedIn's
  * fresh load is done first (Indeed has stricter rate limits).
  */
 
@@ -112,4 +112,4 @@ register({
   run: runScanIndeedAuth,
 });
 
-// D24 — `runScanIndeedAuth` was only used by the registry; export removed.
+// D24 -- `runScanIndeedAuth` was only used by the registry; export removed.

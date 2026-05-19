@@ -29,7 +29,7 @@
   /** When the user is onboarding their 2nd+ profile AND all required API
    *  keys are already configured (carried over from the first profile),
    *  this step is essentially a no-op. We surface a "Keys already
-   *  configured — continue" path that skips ahead. The user can still
+   *  configured -- continue" path that skips ahead. The user can still
    *  expand and edit if they want different keys for this profile,
    *  but defaults to one click forward. */
   let canSkipApiKeys = $derived(data.isAdditionalProfile && data.hasRequiredKeys);
@@ -178,7 +178,7 @@
     </div>
   {:else}
     <div class="space-y-4">
-      <!-- Anthropic — required -->
+      <!-- Anthropic -- required -->
       <div class="rounded-md border border-amber-500/40 bg-amber-500/5 px-4 py-3 space-y-2">
         <div class="flex items-center justify-between">
           <Label for="anthropic" class="text-sm font-medium flex items-center gap-1.5">
@@ -237,7 +237,7 @@
         {/if}
       </div>
 
-      <!-- Gemini — recommended -->
+      <!-- Gemini -- recommended -->
       <div class="rounded-md border border-border/40 bg-card px-4 py-3 space-y-2">
         <div class="flex items-center justify-between">
           <Label for="gemini" class="text-sm font-medium"
@@ -289,7 +289,7 @@
         {/if}
       </div>
 
-      <!-- Adzuna — optional -->
+      <!-- Adzuna -- optional -->
       <details class="rounded-md border border-border/40 bg-card px-4 py-3 group">
         <summary class="cursor-pointer text-sm font-medium flex items-center justify-between">
           Adzuna <span class="text-[11px] text-muted-foreground/70">(optional)</span>

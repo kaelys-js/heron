@@ -1,14 +1,14 @@
 /**
- * auth-schema — Drizzle schema for the auth.db SQLite file.
+ * auth-schema -- Drizzle schema for the auth.db SQLite file.
  *
  * Better Auth manages most of these via its core tables (users, sessions,
  * accounts, verification). We extend with:
  *
- *   • passkeys           — WebAuthn credentials (label + last_used)
- *   • invite_codes       — owner-generated 6-digit codes for new user signup
- *   • backup_codes       — 2FA recovery codes (hashed)
- *   • audit_log          — append-only log of every auth event
- *   • pending_deletions  — soft-delete grace period tracking
+ *   • passkeys           -- WebAuthn credentials (label + last_used)
+ *   • invite_codes       -- owner-generated 6-digit codes for new user signup
+ *   • backup_codes       -- 2FA recovery codes (hashed)
+ *   • audit_log          -- append-only log of every auth event
+ *   • pending_deletions  -- soft-delete grace period tracking
  *
  * Times stored as INTEGER ms-epoch on disk; Drizzle's `{ mode: 'timestamp_ms' }`
  * surfaces them as JS `Date` objects in TypeScript, which is what Better
@@ -27,7 +27,7 @@ export const users = sqliteTable('users', {
   twoFactorEnabled: integer('two_factor_enabled', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
-  // Soft-delete marker — non-null means scheduled for deletion at day 30.
+  // Soft-delete marker -- non-null means scheduled for deletion at day 30.
   deletedAt: integer('deleted_at', { mode: 'timestamp_ms' }),
 });
 
@@ -77,7 +77,7 @@ export const verifications = sqliteTable('verifications', {
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
 });
 
-/** Passkeys table — Better Auth's passkey plugin schema. */
+/** Passkeys table -- Better Auth's passkey plugin schema. */
 export const passkeys = sqliteTable('passkeys', {
   id: text('id').primaryKey(),
   name: text('name'),
@@ -94,7 +94,7 @@ export const passkeys = sqliteTable('passkeys', {
   lastUsedAt: integer('last_used_at', { mode: 'timestamp_ms' }),
 });
 
-/** Invite codes — owner generates a 6-digit code, invitee uses it at signup.
+/** Invite codes -- owner generates a 6-digit code, invitee uses it at signup.
  *  Single-use, 30-minute TTL. */
 export const inviteCodes = sqliteTable('invite_codes', {
   id: text('id').primaryKey(),
@@ -108,7 +108,7 @@ export const inviteCodes = sqliteTable('invite_codes', {
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 });
 
-/** 2FA backup codes — hashed (sha-256), single-use. */
+/** 2FA backup codes -- hashed (sha-256), single-use. */
 export const backupCodes = sqliteTable('backup_codes', {
   id: text('id').primaryKey(),
   userId: text('user_id')
@@ -119,7 +119,7 @@ export const backupCodes = sqliteTable('backup_codes', {
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 });
 
-/** Audit log — append-only. Even admins can't delete.
+/** Audit log -- append-only. Even admins can't delete.
  *  Events: signup, login, login-failed, logout, passkey-add, passkey-revoke,
  *  oauth-link, oauth-unlink, deletion-requested, deletion-cancelled,
  *  account-restored, data-exported, role-changed, backup-code-used. */
@@ -133,7 +133,7 @@ export const auditLog = sqliteTable('audit_log', {
   ts: integer('ts', { mode: 'timestamp_ms' }).notNull(),
 });
 
-/** Pending deletions — soft-delete tracking with 30-day grace. */
+/** Pending deletions -- soft-delete tracking with 30-day grace. */
 export const pendingDeletions = sqliteTable('pending_deletions', {
   id: text('id').primaryKey(),
   userId: text('user_id')

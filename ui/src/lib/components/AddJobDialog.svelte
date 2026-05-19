@@ -148,7 +148,7 @@
 
       // If the user opted in AND we have a company name to target, fire a
       // per-company portal scan so the rest of that company's open roles
-      // land in the pipeline too. Fire-and-forget — the activity feed is
+      // land in the pipeline too. Fire-and-forget -- the activity feed is
       // the source of truth for completion.
       if (alsoScanCompany && trimmedCompany) {
         api

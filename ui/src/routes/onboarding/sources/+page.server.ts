@@ -9,7 +9,7 @@ export async function load({ url }: { url: URL }) {
   const queryProfile = url.searchParams.get('profile');
   const profileId = queryProfile && getProfile(queryProfile) ? queryProfile : getActiveProfileId();
   const sources = listSourcesWithState();
-  // True when at least one non-trivial source is already connected — used
+  // True when at least one non-trivial source is already connected -- used
   // to render an "Already connected from previous profile" hint on the 2nd+
   // wizard run. Doesn't gate any action; user can still reconnect.
   const anyConnected = sources.some((s) =>

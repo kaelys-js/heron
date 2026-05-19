@@ -7,21 +7,21 @@ import { readProfile } from '$lib/server/profile';
 /**
  * Layout-level loader. Four responsibilities:
  *
- *   1. **First-run redirect** — fresh installs (missing cv.md / profile.yml /
+ *   1. **First-run redirect** -- fresh installs (missing cv.md / profile.yml /
  *      portals.yml / modes/_profile.md / ANTHROPIC_API_KEY) get bounced to
  *      /onboarding. The wizard's own routes are exempt to avoid an infinite
  *      loop, and so are /api/* routes (the wizard hits them mid-flow).
  *
- *   2. **Unauthenticated bypass** — anonymous traffic on public auth pages
+ *   2. **Unauthenticated bypass** -- anonymous traffic on public auth pages
  *      (/login, /signup, /onboarding/account, root) doesn't need the
  *      profile + sidebar payload. Return a minimal shape so the layout
  *      renders without spending a DB round-trip.
  *
- *   3. **Profile state** — the active profile + the full profile list, so
+ *   3. **Profile state** -- the active profile + the full profile list, so
  *      the sidebar profile-switcher dropdown can render without a separate
  *      fetch.
  *
- *   4. **Sidebar data** — pinned jobs, inbox count, queue count for the
+ *   4. **Sidebar data** -- pinned jobs, inbox count, queue count for the
  *      AppSidebar's badges. Computed against the ACTIVE profile only.
  */
 export async function load({ url, locals }: { url: URL; locals: App.Locals }) {

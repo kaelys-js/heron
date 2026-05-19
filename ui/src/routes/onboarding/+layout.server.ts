@@ -3,7 +3,7 @@
  *
  * Four responsibilities (after multi-user landed):
  *
- *   0. **Auth gate** — if no user accounts exist in auth.db, divert to
+ *   0. **Auth gate** -- if no user accounts exist in auth.db, divert to
  *      /onboarding/account (the "create your owner account" step). If a
  *      user exists but isn't signed in for this request, divert to /login
  *      so they can authenticate before continuing setup. Already-authed
@@ -43,7 +43,7 @@ function seedProfileMd(profileId: string): void {
     ensureProfileDirs(profileId);
     fs.copyFileSync(PROFILE_TEMPLATE, target);
   } catch {
-    // Non-fatal — wizard still works without _profile.md.
+    // Non-fatal -- wizard still works without _profile.md.
   }
 }
 
@@ -81,7 +81,7 @@ export async function load({ url, locals }: { url: URL; locals: App.Locals }) {
 
   const state = readOnboarding();
   const progress = progressSummary().map((p) =>
-    // If a user is signed in, the 'account' step is implicitly done —
+    // If a user is signed in, the 'account' step is implicitly done --
     // they had to authenticate to reach the rest of the wizard.
     p.step === 'account' && locals.user ? { ...p, status: 'complete' as const } : p,
   );
@@ -94,5 +94,5 @@ export async function load({ url, locals }: { url: URL; locals: App.Locals }) {
   };
 }
 
-// Tell SvelteKit to NOT inherit parent layout data — we don't need
+// Tell SvelteKit to NOT inherit parent layout data -- we don't need
 // inboxCount / queueCount / pinnedJobs in the wizard.

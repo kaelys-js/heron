@@ -39,7 +39,7 @@ function parseAppliedRows(profileId?: string): AppliedRow[] {
     if (cells.length < 6) continue;
     const date = cells[2];
     const company = cells[3] ?? '';
-    // Status column position varies (11 vs 12 cols) — same logic as parsers.ts
+    // Status column position varies (11 vs 12 cols) -- same logic as parsers.ts
     let status: string = '';
     if (cells.length >= 12) status = cells[8] ?? '';
     else if (cells.length >= 11) status = cells[7] ?? '';
@@ -79,7 +79,7 @@ export async function load({ url }: { url: URL }) {
   const profileId = profileParam === 'all' ? 'all' : (profileParam ?? getActiveProfileId());
   const jobs = loadAllJobs(profileId);
   const env = readEnv();
-  // F25 — scope events to THIS user. /inbox renders an "activity" panel
+  // F25 -- scope events to THIS user. /inbox renders an "activity" panel
   // that previously bled other users' task events (Bob's scan-portals
   // finished events appearing on Alice's inbox).
   const recent = bus.recentForUser(currentUserIdOrDefault());
@@ -95,7 +95,7 @@ export async function load({ url }: { url: URL }) {
         : activePath('pipeline');
     pipelineMtime = fs.statSync(pipelinePath).mtimeMs;
   } catch {
-    // No pipeline file yet (fresh install) — leave mtime null, the
+    // No pipeline file yet (fresh install) -- leave mtime null, the
     // "Last scan" badge just won't render.
   }
   const pipelineDaysAgo = pipelineMtime ? Math.floor((Date.now() - pipelineMtime) / DAY_MS) : null;
@@ -166,7 +166,7 @@ export async function load({ url }: { url: URL }) {
       else if (host.includes('hnrss') || host.includes('news.ycombinator')) src = 'HN Hiring';
       else src = host.split('.').slice(-2, -1)[0] ?? 'Other';
     } catch {
-      // URL constructor threw on a malformed job URL — keep the default
+      // URL constructor threw on a malformed job URL -- keep the default
       // 'Other' bucket so the source breakdown still renders.
     }
     sourceCounts.set(src, (sourceCounts.get(src) ?? 0) + 1);
@@ -186,7 +186,7 @@ export async function load({ url }: { url: URL }) {
 
   // Alerts
   const alerts: InboxAlert[] = [];
-  // Circuit-breaker takes precedence — surface at the top so the user always
+  // Circuit-breaker takes precedence -- surface at the top so the user always
   // sees the operationally most-blocking thing first.
   const openIssues = listOpenIssues();
   const breakerIssue = openIssues.find((i) => i.dedupeKey === 'autopilot-circuit-breaker');
@@ -201,7 +201,7 @@ export async function load({ url }: { url: URL }) {
     });
   }
 
-  // Apply-failure issues — emitted by reportApplyFailure() whenever an
+  // Apply-failure issues -- emitted by reportApplyFailure() whenever an
   // autonomous-apply run hits a soft block (CAPTCHA, anti-bot, unknown
   // form field, stub-portal, upload-failed, validation, error). Each
   // has dedupeKey `apply:{jobId}` so retries don't accumulate.
@@ -271,7 +271,7 @@ export async function load({ url }: { url: URL }) {
 
   const firstName = (profile.candidate?.full_name ?? '').split(' ')[0] || '';
 
-  // Follow-up cadence — best-effort. If the script chokes (no tracker yet,
+  // Follow-up cadence -- best-effort. If the script chokes (no tracker yet,
   // missing Node), the page renders without the urgent-followups section.
   let followupsUrgent: { job: Job; entry: FollowupEntry }[] = [];
   let followupsOverdue: { job: Job; entry: FollowupEntry }[] = [];
@@ -293,10 +293,10 @@ export async function load({ url }: { url: URL }) {
     followupsUrgent = followupsUrgent.slice(0, 6);
     followupsOverdue = followupsOverdue.slice(0, 6);
   } catch {
-    // Silent — Inbox stays usable even if cadence parsing fails
+    // Silent -- Inbox stays usable even if cadence parsing fails
   }
 
-  // Inbound recruiter leads — emails the reactor classified as
+  // Inbound recruiter leads -- emails the reactor classified as
   // `recruiter-reach-out` (no prior tracker match). Highest-converting
   // channel historically; surface up.
   const leads = (() => {
@@ -307,7 +307,7 @@ export async function load({ url }: { url: URL }) {
     }
   })();
 
-  // Post-apply pipeline cards — derived from the JSON sidecars on every
+  // Post-apply pipeline cards -- derived from the JSON sidecars on every
   // request (no persistence). Six kinds: thank-you-owed, follow-up-due,
   // prep-block-recommended, offer-decision-due, ghosted-flagged,
   // next-action-due. See /api/inbox/cards for the same logic exposed as

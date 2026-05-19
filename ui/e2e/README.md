@@ -1,12 +1,12 @@
 # E2E tests (Playwright)
 
-HP5 — top-down user-flow smoke tests against `pnpm preview` (prod
+HP5 -- top-down user-flow smoke tests against `pnpm preview` (prod
 build). Complement the per-component Vitest browser-mode suite.
 
 ## Why a separate suite
 
 The existing `ui-component` Vitest project runs Playwright at the
-component level — wraps a single Svelte component, drives it with
+component level -- wraps a single Svelte component, drives it with
 keyboard/mouse, asserts DOM. The E2E tests here are higher up: they
 boot the whole SvelteKit app and exercise multi-page user journeys
 (signin → create profile → paste JD → evaluate). They're slower
@@ -38,11 +38,11 @@ to disable headed mode + trace-on-failure recording.
 
 Group by user-journey, not by feature:
 
-- `e2e/auth/` — sign-in, sign-up, sign-out
-- `e2e/onboarding/` — first-run wizard
-- `e2e/inbox/` — pipeline browsing, status flips
-- `e2e/evaluation/` — paste-a-JD → A-F report
-- `e2e/multi-user/` — user A vs user B isolation
+- `e2e/auth/` -- sign-in, sign-up, sign-out
+- `e2e/onboarding/` -- first-run wizard
+- `e2e/inbox/` -- pipeline browsing, status flips
+- `e2e/evaluation/` -- paste-a-JD → A-F report
+- `e2e/multi-user/` -- user A vs user B isolation
 
 Each spec gets a fresh ephemeral DB seeded via
 `e2e/_helpers/seed.ts`. The seed file is the same shape `pnpm doctor`

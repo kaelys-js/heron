@@ -1,5 +1,5 @@
 /**
- * pattern-suggestions — convert analyze-patterns.mjs textual recommendations
+ * pattern-suggestions -- convert analyze-patterns.mjs textual recommendations
  * into STRUCTURED suggestions the UI can one-click apply.
  *
  * The analyzer outputs `recommendations: [{ action, reasoning, impact }]`
@@ -56,7 +56,7 @@ export type StructuredSuggestion = {
     | 'profile-flag-archetype-strong'
     | 'profile-flag-archetype-weak'
     | 'manual';
-  /** Free-form payload — meaning depends on op. */
+  /** Free-form payload -- meaning depends on op. */
   payload?: {
     keyword?: string;
     keywords?: string[];

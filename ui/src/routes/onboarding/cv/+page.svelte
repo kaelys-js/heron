@@ -29,13 +29,13 @@
 
   // Default mode: markdown if a CV is already saved, else linkedin if
   // connected (one-click flow), else plain text.
-  // svelte-ignore state_referenced_locally — initial seed only
+  // svelte-ignore state_referenced_locally -- initial seed only
   let mode = $state<Mode>(
     data.existing ? 'markdown' : data.linkedinConnected ? 'linkedin' : 'plain',
   );
-  // svelte-ignore state_referenced_locally — initial seed only
+  // svelte-ignore state_referenced_locally -- initial seed only
   let textArea = $state(data.existing);
-  // svelte-ignore state_referenced_locally — initial seed only
+  // svelte-ignore state_referenced_locally -- initial seed only
   let linkedinUrl = $state(data.linkedinUrl);
   let working = $state(false);
   let workingLabel = $state('');

@@ -1,5 +1,5 @@
 /**
- * availability-reply — draft the "here are 3 times that work" reply.
+ * availability-reply -- draft the "here are 3 times that work" reply.
  *
  * When the email-reactor classifies an incoming email as interview-
  * scheduling, the user still has to write the reply by hand. This
@@ -8,7 +8,7 @@
  * plus an inline calendar link if configured.
  *
  * Pure-function. No I/O except reading profile.yml. The user reviews
- * the draft and sends from their mail client — we never send for them
+ * the draft and sends from their mail client -- we never send for them
  * (per AGENTS.md ethical rule on autonomous communications).
  */
 
@@ -80,10 +80,10 @@ function slotsForDay(day: Date, workStartHour: number, workEndHour: number): Dat
  * Build the availability reply for a profile. Pulls timezone + working
  * hours + optional calendar URL from profile.yml.
  *
- *   profile.yml.location.timezone        — e.g. "America/Vancouver"
- *   profile.yml.location.working_hours   — { start: 9, end: 17 }
+ *   profile.yml.location.timezone        -- e.g. "America/Vancouver"
+ *   profile.yml.location.working_hours   -- { start: 9, end: 17 }
  *                                          defaults: 9-17 local
- *   profile.yml.calendar_url             — optional Calendly / Cal.com link
+ *   profile.yml.calendar_url             -- optional Calendly / Cal.com link
  */
 export function draftAvailabilityReply(input: {
   profileId?: string;
@@ -109,7 +109,7 @@ export function draftAvailabilityReply(input: {
   const candidateFirstName = (profile?.candidate?.full_name || '').split(' ')[0] || 'I';
 
   // Generate 3 slots across 2 business days for variety (today's tomorrow
-  // + the day after). 6 slots total, but we surface only 3 — the most
+  // + the day after). 6 slots total, but we surface only 3 -- the most
   // varied trio (1 morning, 1 mid, 1 afternoon, spread across days).
   const days = nextBusinessDays(3);
   // Pick: morning on day-1, midpoint on day-2, afternoon on day-3.

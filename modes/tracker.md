@@ -1,4 +1,4 @@
-# Mode: tracker — Applications Tracker
+# Mode: tracker -- Applications Tracker
 
 Read and display `data/__APPLICATIONS__`.
 

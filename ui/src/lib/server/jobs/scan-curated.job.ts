@@ -1,5 +1,5 @@
 /**
- * Curated-board scan — wraps `scan-curated.mjs`.
+ * Curated-board scan -- wraps `scan-curated.mjs`.
  *
  * scan-curated handles niche boards that don't expose a public ATS API
  * and aren't covered by JobSpy or scan.mjs. Currently: AI Jobs (aijobs.net).
@@ -7,8 +7,8 @@
  * unified.
  *
  * Args:
- *   { source: string }  — only one source ('aijobs')
- *   { pages: number }   — max pages per source (default: walks until empty)
+ *   { source: string }  -- only one source ('aijobs')
+ *   { pages: number }   -- max pages per source (default: walks until empty)
  *   { dryRun: boolean }
  *
  * Schedule: weekdays 08:30 (30 min after the portal scan, to spread the
@@ -62,7 +62,7 @@ function runScanCurated(args?: JobArgs): Promise<JobResult> {
       try {
         recordFailure('scan-curated', err);
       } catch {
-        // sources counter best-effort — failure is already logged above.
+        // sources counter best-effort -- failure is already logged above.
       }
       resolve({ ok: false, error: err.message });
     });
@@ -77,7 +77,7 @@ function runScanCurated(args?: JobArgs): Promise<JobResult> {
         try {
           recordFailure('scan-curated', new Error('scan-curated.mjs exited ' + code));
         } catch {
-          // sources counter best-effort — failure is already logged above.
+          // sources counter best-effort -- failure is already logged above.
         }
         resolve({ ok: false, error: 'scan-curated.mjs exited ' + code });
         return;
@@ -90,7 +90,7 @@ function runScanCurated(args?: JobArgs): Promise<JobResult> {
       try {
         recordSuccess('scan-curated');
       } catch {
-        // sources counter best-effort — success is already logged above.
+        // sources counter best-effort -- success is already logged above.
       }
       resolve({ ok: true, message: found + ' new offers', meta: { found } });
     });
@@ -103,11 +103,11 @@ register({
   description:
     'AI Jobs + future niche boards. Free, HTML scrapes only — title-filtered before write.',
   category: 'discovery',
-  // 08:30 — 30 min after the portal scan so dedup catches the ATS rows first
+  // 08:30 -- 30 min after the portal scan so dedup catches the ATS rows first
   trigger: { type: 'daily', hour: 8, minute: 30, weekdays: [1, 2, 3, 4, 5] },
   allowManual: true,
   perUser: true,
   run: runScanCurated,
 });
 
-// D24 — `runScanCurated` was only used by the registry; export removed.
+// D24 -- `runScanCurated` was only used by the registry; export removed.

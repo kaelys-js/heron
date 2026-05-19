@@ -1,10 +1,10 @@
 /**
- * lib/confirm — ConfirmGate double-click destructive-action helper.
+ * lib/confirm -- ConfirmGate double-click destructive-action helper.
  *
  * Test surface:
- *   • trigger() — first click arms, second confirms, returns true
- *   • isArmed() — accurate after arm/disarm
- *   • multiple keys — independent until armed simultaneously
+ *   • trigger() -- first click arms, second confirms, returns true
+ *   • isArmed() -- accurate after arm/disarm
+ *   • multiple keys -- independent until armed simultaneously
  *   • 3s auto-disarm
  *   • Switching keys mid-armed disarms the previous one
  *   • destroy() clears timer + armed state

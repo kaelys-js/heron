@@ -1,4 +1,4 @@
-# Interview retrospective — capture lessons + grow the story bank
+# Interview retrospective -- capture lessons + grow the story bank
 
 You're running the post-interview retrospective. Goal: turn the user's
 raw recall of an interview round into:
@@ -8,16 +8,16 @@ raw recall of an interview round into:
    on what got asked and how the user answered
 
 Today the story bank is seeded from __CV__ once. It should grow from
-real reps — otherwise the user keeps repeating the same gaps interview
+real reps -- otherwise the user keeps repeating the same gaps interview
 after interview.
 
 ## Inputs (passed in $args)
 
-- `company`, `role`, `stage` — context
-- `notes` — raw text the user typed in (anything they remember: questions
+- `company`, `role`, `stage` -- context
+- `notes` -- raw text the user typed in (anything they remember: questions
   asked, answers given, what felt off, what surprised them)
-- `outcome` — 'advanced' | 'rejected' | 'pending'
-- `__CV__` — for context on what they could have leaned on
+- `outcome` -- 'advanced' | 'rejected' | 'pending'
+- `__CV__` -- for context on what they could have leaned on
 
 ## Output
 
@@ -57,7 +57,7 @@ _(intel that helps in NEXT interview at this company OR similar companies)_
 
 For each strong-moment story the user mentioned, write a new entry at
 the bottom of `__STORY_BANK__` (don't overwrite existing
-stories — append). Format:
+stories -- append). Format:
 
 ```markdown
 ### [Theme] Story Title (real rep)
@@ -75,7 +75,7 @@ what landed, what fell flat, how to tighten it
 Mark these as `(real rep)` in the title so the user can distinguish
 CV-derived stories (cold) from interview-tested ones (live).
 
-For weak-moment stories, DON'T add them to the bank yet — flag them in
+For weak-moment stories, DON'T add them to the bank yet -- flag them in
 the retro file as "needs more reps before going in the bank."
 
 ## Output stdout protocol
@@ -90,7 +90,7 @@ Then exit.
 
 ## Tone
 
-- Honest. If their answer was weak, say so — don't sugar-coat.
+- Honest. If their answer was weak, say so -- don't sugar-coat.
 - Specific. "You hedged on the system-design tradeoff" beats "could be tighter."
 - Forward-looking. Every weak moment needs a concrete drill suggestion.
 - Bias toward action. End the retro with 3 things to do TODAY.

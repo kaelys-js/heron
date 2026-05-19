@@ -1,5 +1,5 @@
 /**
- * lib/server/orchestrator — long-running task spawn surface.
+ * lib/server/orchestrator -- long-running task spawn surface.
  *
  * The full module is 1200+ LOC and orchestrates spawn / Playwright /
  * Claude over real subprocesses. Tests focus on the deterministic
@@ -106,7 +106,7 @@ describe('orchestrator — bootOnce', () => {
   it('emits at least one boot-source log event (boot-time markers)', () => {
     // bootOnce is set up in module evaluation already; just call again to
     // confirm idempotency + non-throw. The "Server started" event fires
-    // once on module load before any test runs — so we don't assert on it
+    // once on module load before any test runs -- so we don't assert on it
     // here.
     expect(() => bootOnce()).not.toThrow();
   });
@@ -116,7 +116,7 @@ describe('orchestrator — runBulkOfertaParallel forwards user+profile env', () 
   // The batch-runner.sh script reads CAREER_OPS_USER_ID +
   // CAREER_OPS_PROFILE_ID + CAREER_OPS_BATCH_DIR to resolve per-user
   // per-profile paths. Without USER_ID it falls back to legacy
-  // data/profiles/{slug}/ — every user's batches collide on one tree.
+  // data/profiles/{slug}/ -- every user's batches collide on one tree.
   it('sets CAREER_OPS_USER_ID + CAREER_OPS_PROFILE_ID on the spawn env when invoked under a user context', async () => {
     // Reset the running guard between tests by re-requiring? Module-scope
     // state means the second call could short-circuit. Use a unique user

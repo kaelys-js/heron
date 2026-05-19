@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * help — print every native command at a glance.
+ * help -- print every native command at a glance.
  * Runs when you forget the names. `pnpm native` triggers this.
  */
 import { c, capture, which, NATIVE_ENV_FILE } from './_lib.mjs';

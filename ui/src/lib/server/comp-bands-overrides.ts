@@ -1,5 +1,5 @@
 /**
- * comp-bands-overrides — per-profile overrides of the static TIER_COMP_BANDS.
+ * comp-bands-overrides -- per-profile overrides of the static TIER_COMP_BANDS.
  *
  * The defaults in negotiation-playbook.ts are baked-at-build-time 2024-2025
  * data. They WILL drift. This module:
@@ -30,7 +30,7 @@ const OVERRIDE_FILE = 'comp-bands.jsonl';
 export type BandOverride = {
   /** The tier key (e.g. 'faang-senior'). Matches DEFAULT_TIER_COMP_BANDS. */
   key: string;
-  /** Override the band data. Partial — fields not present fall through. */
+  /** Override the band data. Partial -- fields not present fall through. */
   band: Partial<CompBand>;
   /** ms epoch when the user updated this entry. */
   updatedAt: number;
@@ -56,7 +56,7 @@ export function readOverrides(profileId: string): Map<string, BandOverride> {
       const row = JSON.parse(line) as BandOverride;
       if (row.key) out.set(row.key, row);
     } catch {
-      // Corrupt line from a partial write — skip and continue loading
+      // Corrupt line from a partial write -- skip and continue loading
       // the rest of the override map. The full row will be rewritten
       // on the next writeOverride() call.
     }

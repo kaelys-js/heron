@@ -1,6 +1,6 @@
-# Mode: project — Portfolio Project Evaluation
+# Mode: project -- Portfolio Project Evaluation
 
-Scoring across 6 dimensions (1–5):
+Scoring across 6 dimensions (1-5):
 
 | Dimension | Weight | 5 = ... | 1 = ... |
 |-----------|--------|---------|---------|

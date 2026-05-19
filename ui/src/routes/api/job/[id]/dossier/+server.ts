@@ -1,5 +1,5 @@
 /**
- * /api/job/[id]/dossier — spawn the pre-call-dossier Claude mode.
+ * /api/job/[id]/dossier -- spawn the pre-call-dossier Claude mode.
  *
  * POST body: { stage, interviewers: [{name, role?, linkedinUrl?}] }
  *
@@ -8,7 +8,7 @@
  * with, the 5 questions to ask back, red flags to listen for.
  *
  * Cost: ~6 web requests + one Claude pass = 60-120s per dossier. Cache
- * via filename (slug + stage + ts) — multiple dossiers for the same
+ * via filename (slug + stage + ts) -- multiple dossiers for the same
  * job at different stages.
  */
 

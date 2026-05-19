@@ -1,5 +1,5 @@
 /**
- * lib/validators — leniency-by-default validators for the forms layer.
+ * lib/validators -- leniency-by-default validators for the forms layer.
  *
  * Every validator: empty → OK, valid → OK, invalid → { ok:false, message }.
  * `validateRequired` is the one exception that fails on empty.
@@ -172,7 +172,7 @@ describe('validatePortfolio', () => {
     expect(validatePortfolio('https://janes-portfolio.vercel.app').ok).toBe(true);
   });
   it('fails on too-short hostname', () => {
-    // tld.x has hostname "tld.x" which is 5 chars — passes
+    // tld.x has hostname "tld.x" which is 5 chars -- passes
     // make a shorter one:
     expect(validatePortfolio('https://a.b').ok).toBe(false);
   });

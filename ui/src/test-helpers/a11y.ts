@@ -1,7 +1,7 @@
 /**
- * Accessibility test helper — drop-in axe-core wrapper for component tests.
+ * Accessibility test helper -- drop-in axe-core wrapper for component tests.
  *
- * HP3 — Heron's component tests run via Vitest's browser provider against
+ * HP3 -- Heron's component tests run via Vitest's browser provider against
  * real Chromium/WebKit. axe-core integrates by running against the
  * `document` inside the test page; the helper returns the same Promise
  * shape `expect()` understands so we can chain into a regular assertion.
@@ -22,9 +22,9 @@
  * level DOM issues outside our control.
  *
  * Rules we DISABLE by default:
- *   - `region` — landmark-region rule fails on isolated components that
+ *   - `region` -- landmark-region rule fails on isolated components that
  *     don't include `<main>` / `<nav>` etc. Real-page tests assert this.
- *   - `color-contrast` — depends on computed styles from the surrounding
+ *   - `color-contrast` -- depends on computed styles from the surrounding
  *     theme; surfaces too many false positives in JSDOM-influenced
  *     theming. Re-enable per-test when explicitly testing theme.
  *

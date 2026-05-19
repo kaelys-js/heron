@@ -1,8 +1,8 @@
 /**
- * backend-discovery — the spine of every Capacitor target.
+ * backend-discovery -- the spine of every Capacitor target.
  *
  * Whether you launched the Vite dev server, the production Electron build,
- * a remote-hosted server, or a phone on a different network — this resolver
+ * a remote-hosted server, or a phone on a different network -- this resolver
  * finds the backend at boot, caches it, and exposes it as a stable URL.
  *
  * Resolution order:
@@ -10,10 +10,10 @@
  *   1. `opts.embeddedUrl`          (Electron prod build serves its own
  *                                   Node server; main process passes
  *                                   the port via window.__CAREER_OPS__)
- *   2. `http://localhost:5173`     (Vite dev server on this machine —
+ *   2. `http://localhost:5173`     (Vite dev server on this machine --
  *                                   useful when running iOS simulator
  *                                   alongside `pnpm dev` on the Mac)
- *   3. `_heron._tcp.local`    (mDNS browse on the local network —
+ *   3. `_heron._tcp.local`    (mDNS browse on the local network --
  *                                   for iOS device on the same wifi as
  *                                   the desktop app)
  *   4. `opts.tailscaleHost`        (configured Tailscale magic-DNS host,
@@ -25,7 +25,7 @@
  * current source via the DEV / PROD / LAN / TAILSCALE / REMOTE pill so
  * the user always knows what they're hitting.
  *
- * This module is platform-agnostic — it imports Preferences from
+ * This module is platform-agnostic -- it imports Preferences from
  * @capacitor/preferences (which has a web fallback), and only attempts
  * mDNS when the runtime supports it. On plain browsers (`pnpm dev`),
  * everything still works: localhost:5173 wins at step 2.
@@ -46,7 +46,7 @@ export type ResolverOptions = {
   embeddedUrl?: string;
   /** User-configured Tailscale host, e.g. "macbook-pro.tail-xxxx.ts.net:5173". */
   tailscaleHost?: string;
-  /** Last-resort remote URL — e.g. "https://heron.example.dev". */
+  /** Last-resort remote URL -- e.g. "https://heron.example.dev". */
   productionUrl?: string;
   /** Per-call timeout for health probe. */
   probeTimeoutMs?: number;
@@ -63,7 +63,7 @@ const DEV_FALLBACK = 'http://localhost:5173';
  * Probe a candidate URL by hitting /api/health. Returns true if it answers
  * 200 within `timeoutMs`. Uses fetch with AbortController to avoid hanging.
  *
- * /api/health is a thin endpoint that returns the running version + port —
+ * /api/health is a thin endpoint that returns the running version + port --
  * cheap enough to call every resolution attempt.
  */
 async function probe(url: string, timeoutMs = DEFAULT_PROBE_TIMEOUT): Promise<boolean> {
@@ -72,7 +72,7 @@ async function probe(url: string, timeoutMs = DEFAULT_PROBE_TIMEOUT): Promise<bo
   try {
     const res = await fetch(url.replace(/\/$/, '') + '/api/health', {
       signal: ctrl.signal,
-      // Don't carry cookies across origins — keeps the probe stateless.
+      // Don't carry cookies across origins -- keeps the probe stateless.
       credentials: 'omit',
       method: 'GET',
     });
@@ -95,7 +95,7 @@ async function probe(url: string, timeoutMs = DEFAULT_PROBE_TIMEOUT): Promise<bo
  * network we pick the first one that answers.
  */
 async function browseMdns(timeoutMs = 1500): Promise<string | null> {
-  // Capacitor mDNS plugin doesn't ship in the core packages — we look for
+  // Capacitor mDNS plugin doesn't ship in the core packages -- we look for
   // a runtime-injected helper (electron main sets one, an iOS bonjour
   // plugin sets another). If neither is present, we return null.
   const w = globalThis as any;
@@ -107,7 +107,7 @@ async function browseMdns(timeoutMs = 1500): Promise<string | null> {
       ]);
       if (result && typeof result === 'string') return result;
     } catch {
-      // Swallow — mDNS is opportunistic, not authoritative.
+      // Swallow -- mDNS is opportunistic, not authoritative.
     }
   }
   return null;
@@ -118,7 +118,7 @@ async function browseMdns(timeoutMs = 1500): Promise<string | null> {
  *  Stale-IP race fix (M7): the previous validation timeout was a flat
  *  500ms which, on a marginal cellular connection or a degraded
  *  Tailscale link, was long enough for the stale URL to respond from
- *  whatever cached DNS / route the OS was still holding — re-blessing
+ *  whatever cached DNS / route the OS was still holding -- re-blessing
  *  a defunct URL. We use a tighter 250ms + jitter so a sluggish stale
  *  IP loses the race against the resolver's "no, re-discover" path.
  *  Jitter prevents thundering-herd on the cache during repeated
@@ -129,7 +129,7 @@ async function readCache(): Promise<ResolvedBackend | null> {
     if (!value) return null;
     const parsed = JSON.parse(value) as ResolvedBackend;
     if (Date.now() - parsed.resolvedAt > CACHE_TTL_MS) return null;
-    // 250ms ± 50ms jitter — tight enough to refuse stale IPs that
+    // 250ms ± 50ms jitter -- tight enough to refuse stale IPs that
     // respond slowly, loose enough that a healthy backend on a slow
     // wifi link still validates.
     const jitter = 250 + Math.floor(Math.random() * 100) - 50;
@@ -144,17 +144,17 @@ async function writeCache(r: ResolvedBackend): Promise<void> {
   try {
     await Preferences.set({ key: CACHE_KEY, value: JSON.stringify(r) });
   } catch {
-    // Best-effort — if Preferences isn't available we just re-resolve next time.
+    // Best-effort -- if Preferences isn't available we just re-resolve next time.
   }
 }
 
-/** Drop the cache — call this from the settings page when user picks
+/** Drop the cache -- call this from the settings page when user picks
  *  "force re-discovery". */
 export async function clearBackendCache(): Promise<void> {
   try {
     await Preferences.remove({ key: CACHE_KEY });
   } catch {
-    // Preferences API not available (web — no Capacitor) or the key
+    // Preferences API not available (web -- no Capacitor) or the key
     // didn't exist. Either way, the cache is effectively cleared.
   }
 }
@@ -174,7 +174,7 @@ const GLOBAL_RESOLVE_TIMEOUT_MS = 10_000;
  * Order of attempts is deliberately fastest-likely-success-first so cold
  * boot resolves in <100ms in the common case (embedded URL).
  *
- * Bounded by GLOBAL_RESOLVE_TIMEOUT_MS — if every candidate hangs (slow
+ * Bounded by GLOBAL_RESOLVE_TIMEOUT_MS -- if every candidate hangs (slow
  * DNS, unreachable Tailscale, no production), throws
  * `BackendNotFoundError('discovery timeout')` rather than spinning on
  * "Connecting…" forever.
@@ -267,7 +267,7 @@ export class BackendNotFoundError extends Error {
 }
 
 /**
- * Manual override — set when the user picks a URL in /settings.
+ * Manual override -- set when the user picks a URL in /settings.
  * Stored in Preferences so it survives app restarts.
  */
 export async function setManualBackend(url: string): Promise<ResolvedBackend> {
@@ -276,7 +276,7 @@ export async function setManualBackend(url: string): Promise<ResolvedBackend> {
   return r;
 }
 
-/** UI helper — the pill label shown in the topbar. */
+/** UI helper -- the pill label shown in the topbar. */
 export function pillLabel(source: BackendSource): string {
   const map: Record<BackendSource, string> = {
     embedded: 'PROD',

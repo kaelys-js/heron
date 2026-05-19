@@ -1,4 +1,4 @@
-# Cross-link audit — does your CV, LinkedIn, GitHub, and portfolio tell the same story?
+# Cross-link audit -- does your CV, LinkedIn, GitHub, and portfolio tell the same story?
 
 You're checking that the user's CV (__CV__) matches what a recruiter
 will see when they Google the user. Inconsistencies between CV and
@@ -42,9 +42,9 @@ Schema:
 
 `level` values:
 
-- `mismatch` — the surfaces disagree on a fact (different title, different company, different year)
-- `gap` — one surface mentions something the other doesn't (e.g. a key project visible on GitHub but absent from CV)
-- `ok` — surfaces agree
+- `mismatch` -- the surfaces disagree on a fact (different title, different company, different year)
+- `gap` -- one surface mentions something the other doesn't (e.g. a key project visible on GitHub but absent from CV)
+- `ok` -- surfaces agree
 
 `field` values: `name`, `currentRole`, `currentEmployer`, `yearsExperience`,
 `projects`, `skills`. Add new fields when the audit surfaces something
@@ -52,13 +52,13 @@ specific (e.g. `school`, `certifications`).
 
 ## What to check
 
-1. **Name match** — do all surfaces use the same full name?
-2. **Current role + title** — CV's most-recent role matches LinkedIn's most-recent?
-3. **Most-recent employer** — same company name? Same start date (year + month tolerance)?
-4. **Years of experience** — implied total experience adds up within ±1 year across surfaces?
-5. **Projects** — CV's named projects are visible on GitHub pinned repos OR portfolio?
-6. **Skills** — top 5 CV skills appear on LinkedIn's skills section?
-7. **School / Education** — CV's degree + year match LinkedIn?
+1. **Name match** -- do all surfaces use the same full name?
+2. **Current role + title** -- CV's most-recent role matches LinkedIn's most-recent?
+3. **Most-recent employer** -- same company name? Same start date (year + month tolerance)?
+4. **Years of experience** -- implied total experience adds up within ±1 year across surfaces?
+5. **Projects** -- CV's named projects are visible on GitHub pinned repos OR portfolio?
+6. **Skills** -- top 5 CV skills appear on LinkedIn's skills section?
+7. **School / Education** -- CV's degree + year match LinkedIn?
 
 Cap web requests at 4 (one per linked surface). If a URL isn't reachable,
 add a `level: 'gap', field: 'profile-url-broken'` finding.
@@ -68,11 +68,11 @@ add a `level: 'gap', field: 'profile-url-broken'` finding.
 Each finding has an `advice` string. Make it SPECIFIC:
 
 - Don't say "fix this" → say "Pick {value-A} or {value-B}, update the other".
-- Don't say "you should add X" → say "Add the {X} project to your CV's Projects section — it's pinned on GitHub but absent from the CV."
+- Don't say "you should add X" → say "Add the {X} project to your CV's Projects section -- it's pinned on GitHub but absent from the CV."
 
 ## After writing the file
 
-The endpoint reads the file directly — no stdout sentinel required.
+The endpoint reads the file directly -- no stdout sentinel required.
 Optionally emit:
 
 ```yaml

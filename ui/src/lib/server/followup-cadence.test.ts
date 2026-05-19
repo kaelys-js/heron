@@ -1,5 +1,5 @@
 /**
- * lib/server/followup-cadence — spawns scripts/tracker/followup-cadence.mjs + caches.
+ * lib/server/followup-cadence -- spawns scripts/tracker/followup-cadence.mjs + caches.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EventEmitter } from 'node:events';

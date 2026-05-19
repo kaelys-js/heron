@@ -24,7 +24,7 @@ export const POST = wrap(
     const { job, profileId } = resolved!;
     if (!job.url) badRequest('Job has no URL — cannot run evaluate');
 
-    // Fire and forget — the activity feed is the source of truth for progress.
+    // Fire and forget -- the activity feed is the source of truth for progress.
     // runEvaluate resolves with {ok, code} rather than throwing, but the outer
     // catch covers truly exceptional rejection paths. Pass profileId so the
     // orchestrator swaps repo-root symlinks to this job's profile before

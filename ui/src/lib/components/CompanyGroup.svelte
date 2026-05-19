@@ -11,7 +11,7 @@
     defaultOpen = false,
   }: { company: string; jobs: Job[]; defaultOpen?: boolean } = $props();
 
-  // svelte-ignore state_referenced_locally — initial seed only
+  // svelte-ignore state_referenced_locally -- initial seed only
   let open = $state(defaultOpen);
 
   // Aggregate stats for the section header

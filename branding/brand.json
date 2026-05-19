@@ -5,7 +5,7 @@
   "displayName": "Heron",
   "shortName": "Heron",
   "tagline": "Stand still. Strike well.",
-  "description": "Heron is a thinking partner for career transitions. Local-first job-search platform: pipeline tracking, A–F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Runs on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.",
+  "description": "Heron is a thinking partner for career transitions. Local-first job-search platform: pipeline tracking, A-F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Runs on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.",
   "keywords": [
     "ai-agent",
     "anthropic",
@@ -45,7 +45,7 @@
   },
 
   "extensions": {
-    "$comment": "Xcode extension targets — generic structural identifiers. Folder paths and target names are brand-agnostic (Extensions/AppWidget, Extensions/AppLiveActivity, Extensions/AppShareExtension), so a rebrand never touches Xcode targets. Bundle IDs flow from identifiers.bundleId + bundleSuffix (e.g. com.heron.app.widget). The deploymentMin floor is the platform minimum, not a brand decision.",
+    "$comment": "Xcode extension targets -- generic structural identifiers. Folder paths and target names are brand-agnostic (Extensions/AppWidget, Extensions/AppLiveActivity, Extensions/AppShareExtension), so a rebrand never touches Xcode targets. Bundle IDs flow from identifiers.bundleId + bundleSuffix (e.g. com.heron.app.widget). The deploymentMin floor is the platform minimum, not a brand decision.",
     "widget": { "targetName": "AppWidget", "bundleSuffix": "widget", "deploymentMin": "16.0" },
     "liveActivity": {
       "targetName": "AppLiveActivity",
@@ -144,7 +144,7 @@
   },
 
   "fonts": {
-    "$comment": "Typography system. apply-brand generates the @font-face declarations and the cascade defaults (body=sans, h1-h4=display, code/.font-mono=mono) into ui/src/app.css AUTO-GENERATED block. woff2 files live at ui/static/fonts/ — self-hosted, no CDN.",
+    "$comment": "Typography system. apply-brand generates the @font-face declarations and the cascade defaults (body=sans, h1-h4=display, code/.font-mono=mono) into ui/src/app.css AUTO-GENERATED block. woff2 files live at ui/static/fonts/ -- self-hosted, no CDN.",
     "display": {
       "family": "Fraunces",
       "fallback": "'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times New Roman', Times, Georgia, serif",
@@ -193,12 +193,12 @@
   },
 
   "voice": {
-    "$comment": "Brand voice as data — consumed by AUTO-GENERATED:<section> markers inside the .md docs. Narrative .md files (BRAND, VOICE, COLORS, TYPOGRAPHY, MASCOT, SOCIAL-CARD, PRESS, REBRAND-PROCESS) carry markers that apply-brand fills from this block + the rest of brand.json.",
+    "$comment": "Brand voice as data -- consumed by AUTO-GENERATED:<section> markers inside the .md docs. Narrative .md files (BRAND, VOICE, COLORS, TYPOGRAPHY, MASCOT, SOCIAL-CARD, PRESS, REBRAND-PROCESS) carry markers that apply-brand fills from this block + the rest of brand.json.",
     "tagline": "Stand still. Strike well.",
     "subline": "A thinking partner for career transitions. Patient, precise, local-first.",
-    "origin": "The heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes — once, precisely, and the work is done.",
+    "origin": "The heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes -- once, precisely, and the work is done.",
     "mission": "Help one person make one excellent career move, instead of fifty mediocre ones. The wrong era for spray-and-pray is the era we're in.",
-    "philosophy": "Recruiters' attention is finite. So is yours. Quality over quantity, by design — the system actively discourages applications below a 4/5 score.",
+    "philosophy": "Recruiters' attention is finite. So is yours. Quality over quantity, by design -- the system actively discourages applications below a 4/5 score.",
     "personality": ["calm", "sophisticated", "patient", "precise", "local-first"],
     "antiBrands": ["LinkedIn", "AI-slop", "hustle-bro", "wellness-coddling"],
     "principles": [
@@ -212,7 +212,7 @@
       },
       {
         "name": "Earned over claimed",
-        "description": "Don't say 'easy' — show the four-line quickstart. Don't say 'powerful' — show the feature."
+        "description": "Don't say 'easy' -- show the four-line quickstart. Don't say 'powerful' -- show the feature."
       },
       {
         "name": "Patient over urgent",
@@ -238,7 +238,7 @@
       },
       {
         "name": "Decorative emojis",
-        "example": "🚀 💡 🎯 📈 🔥 — none of these. Punctuation only."
+        "example": "🚀 💡 🎯 📈 🔥 -- none of these. Punctuation only."
       },
       {
         "name": "Manufactured urgency",
@@ -258,11 +258,11 @@
       },
       {
         "name": "Welcoming language",
-        "example": "\"Welcome to Heron!\" / \"Let's get started!\" — no. Open with what the page is for."
+        "example": "\"Welcome to Heron!\" / \"Let's get started!\" -- no. Open with what the page is for."
       },
       {
         "name": "Just-doing",
-        "example": "\"Just paste the URL\" — no. \"Paste the URL.\" The word 'just' minimizes."
+        "example": "\"Just paste the URL\" -- no. \"Paste the URL.\" The word 'just' minimizes."
       },
       {
         "name": "We-language",
@@ -270,9 +270,9 @@
       }
     ],
     "boilerplate": {
-      "short": "Heron — a thinking partner for career transitions. Patient. Precise. Local-first. Open source.",
-      "medium": "Heron is an open-source job-search assistant for the wrong era of spray-and-pray. It tracks your pipeline, scores every role A-F, generates ATS-optimized CVs, scans 11 ATSes, and triages recruiter email — all locally. Your data never leaves your machine.",
-      "long": "The heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes — once, precisely, and the work is done. Heron is a thinking partner for people in career transition who'd rather make one excellent move than fifty mediocre ones. It runs entirely on your machine: pipeline tracking, A-F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Open source. AI-agnostic. Your data stays yours."
+      "short": "Heron -- a thinking partner for career transitions. Patient. Precise. Local-first. Open source.",
+      "medium": "Heron is an open-source job-search assistant for the wrong era of spray-and-pray. It tracks your pipeline, scores every role A-F, generates ATS-optimized CVs, scans 11 ATSes, and triages recruiter email -- all locally. Your data never leaves your machine.",
+      "long": "The heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes -- once, precisely, and the work is done. Heron is a thinking partner for people in career transition who'd rather make one excellent move than fifty mediocre ones. It runs entirely on your machine: pipeline tracking, A-F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Open source. AI-agnostic. Your data stays yours."
     },
     "quotes": [
       "Recruiters' attention is finite. So is yours. The wrong era for spray-and-pray is the era we're in. Heron is the alternative.",
@@ -283,14 +283,17 @@
   },
 
   "mascot": {
-    "$comment": "Mascot identity — fed into the MASCOT.md template + apply-brand placeholder SVG generator. The SVG art itself lives in branding/assets/ (mark-placeholder.svg today, mark-{slate,light,dawn}.svg when the illustrator output lands).",
+    "$comment": "Mascot identity -- fed into the MASCOT.md template + apply-brand placeholder SVG generator. The SVG art itself lives in branding/assets/ (mark-placeholder.svg today, mark-{slate,light,dawn}.svg when the illustrator output lands).",
     "subject": "Great Blue Heron",
     "pose": "side profile, standing in shallow water, neck S-curve, head turned 25-30° right",
     "styleReferences": ["Audubon", "Charley Harper", "Field Notes", "Hasegawa Tōhaku sumi-e"],
     "tiers": {
-      "mark": { "use": "≤64px contexts — favicon, app icon, inline UI", "treatment": "silhouette" },
+      "mark": {
+        "use": "≤64px contexts -- favicon, app icon, inline UI",
+        "treatment": "silhouette"
+      },
       "illustration": {
-        "use": "≥200px contexts — landing pages, marketing, press",
+        "use": "≥200px contexts -- landing pages, marketing, press",
         "treatment": "editorial illustration with subtle detail"
       }
     },
@@ -305,7 +308,7 @@
 
   "splash": {
     "backgroundColor": "#0e1014",
-    "$comment": "Heron darkBg — must match capacitor.config.ts → plugins.SplashScreen.backgroundColor so the launch-screen storyboard and the @capacitor/splash-screen overlay look identical."
+    "$comment": "Heron darkBg -- must match capacitor.config.ts → plugins.SplashScreen.backgroundColor so the launch-screen storyboard and the @capacitor/splash-screen overlay look identical."
   },
 
   "iconSource": "branding/logo.svg",
@@ -322,7 +325,7 @@
     "email": "hi@santifer.io",
     "url": "https://santifer.io",
     "githubHandle": "santifer",
-    "comment": "Original creator of the upstream pre-fork project — Heron builds on their work. Credited in the README Acknowledgements section and via the upstream repository link from every issue page. Do not remove."
+    "comment": "Original creator of the upstream pre-fork project -- Heron builds on their work. Credited in the README Acknowledgements section and via the upstream repository link from every issue page. Do not remove."
   },
 
   "repo": {
@@ -360,14 +363,14 @@
 
   "permissions": {
     "localNetworkUsage": "Heron uses local network discovery to find your desktop app on the same Wi-Fi network so your phone, watch, and laptop stay in sync without a cloud account.",
-    "faceIdUsage": "Heron uses Face ID to unlock sensitive screens — interview notes, negotiation playbooks, and offer comparisons — so a glance over your shoulder never leaks personal data.",
+    "faceIdUsage": "Heron uses Face ID to unlock sensitive screens -- interview notes, negotiation playbooks, and offer comparisons -- so a glance over your shoulder never leaks personal data.",
     "cameraUsage": "Heron uses the camera so you can scan business cards from interviews directly into your contacts file.",
-    "microphoneUsage": "Heron uses the microphone for the mock-interview rehearsal mode — audio is processed on-device and never uploaded.",
+    "microphoneUsage": "Heron uses the microphone for the mock-interview rehearsal mode -- audio is processed on-device and never uploaded.",
     "photoLibraryUsage": "Heron needs photo-library access to attach screenshots of job postings or reference letters to a job entry.",
     "calendarsUsage": "Heron reads your calendar to surface upcoming interviews and to schedule follow-up reminders.",
     "remindersUsage": "Heron creates reminders for follow-ups, application deadlines, and interview prep blocks.",
     "contactsUsage": "Heron reads contacts so you can send outreach to recruiters and hiring managers you already know.",
-    "userTrackingUsage": "Heron never tracks you. This prompt only appears because Apple requires it for any app that can render web content — we always respond with denied."
+    "userTrackingUsage": "Heron never tracks you. This prompt only appears because Apple requires it for any app that can render web content -- we always respond with denied."
   },
 
   "copyright": "© 2026 Heron contributors (original work © 2026 santifer). Licensed under the MIT License.",
@@ -385,13 +388,13 @@
       "primaryCategory": "PRODUCTIVITY",
       "secondaryCategory": "BUSINESS",
       "contentRating": "4+",
-      "reviewerNotes": "Heron is a personal job-search productivity tool. The app reads job postings the user pastes, drafts tailored CVs/cover letters locally, and tracks application status in a local SQLite database. No personal data leaves the device unless the user explicitly signs in with their own LLM API key (Anthropic / OpenAI / Google). Demo account: not applicable — the app is single-user / self-hosted by design.",
+      "reviewerNotes": "Heron is a personal job-search productivity tool. The app reads job postings the user pastes, drafts tailored CVs/cover letters locally, and tracks application status in a local SQLite database. No personal data leaves the device unless the user explicitly signs in with their own LLM API key (Anthropic / OpenAI / Google). Demo account: not applicable -- the app is single-user / self-hosted by design.",
       "demoAccount": null,
       "exportComplianceUsesEncryption": true,
       "exportComplianceEncryptionExempt": true,
       "exportComplianceContainsThirdPartyCryptography": false,
       "exportComplianceAvailableOnFrenchStore": true,
-      "promotionalText": "Stand still. Strike well. A patient, local-first thinking partner for career transitions — your data stays on your device.",
+      "promotionalText": "Stand still. Strike well. A patient, local-first thinking partner for career transitions -- your data stays on your device.",
       "marketingText": "Tailored CVs, 11-portal scanning, recruiter triage, interview prep. One offline-first dashboard for the moves that matter."
     },
     "playStore": {

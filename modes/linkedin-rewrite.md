@@ -1,4 +1,4 @@
-# LinkedIn rewrite — paste-ready text for every section that needs work
+# LinkedIn rewrite -- paste-ready text for every section that needs work
 
 This mode runs AFTER the audit. The user has the raw LinkedIn snapshot
 + a list of findings; this mode produces the actual rewritten text so
@@ -7,9 +7,9 @@ they can paste it into LinkedIn directly.
 ## Inputs ($args, parsed from `LINKEDIN_REWRITE_INPUT` env JSON)
 
 - `profileId`
-- `findings` — array of finding `kind` values to rewrite for
+- `findings` -- array of finding `kind` values to rewrite for
   (e.g. ['thin-headline', 'thin-about', 'archetype-skill-gap'])
-- `snapshot` — the raw scrape (contains current headline, about, etc.)
+- `snapshot` -- the raw scrape (contains current headline, about, etc.)
 
 Also read: `__CV__`, `config/profile.yml` (target archetypes + role title),
 `__PROFILE_MD__`, `__ARTICLE_DIGEST__`.
@@ -59,9 +59,9 @@ search ranking.)_
 
 ```
 {1500-2000 char rewrite. Structure:
-  Paragraph 1 (3-4 sentences) — opening hook + what you specifically do
-  Paragraph 2 (3-4 sentences) — 3 concrete proof points, with numbers
-  Paragraph 3 (3-4 sentences) — what you're looking for next + clear CTA
+  Paragraph 1 (3-4 sentences) -- opening hook + what you specifically do
+  Paragraph 2 (3-4 sentences) -- 3 concrete proof points, with numbers
+  Paragraph 3 (3-4 sentences) -- what you're looking for next + clear CTA
   Signoff with email/contact if not already public.
 
 Use first person. No clichés. Each sentence testable.}
@@ -112,14 +112,14 @@ vouch for.)_
 Hi {firstName},
 
 I'm refreshing my LinkedIn for {target role}. Of everyone I've worked
-with, you saw {specific work they witnessed} most directly — would you
+with, you saw {specific work they witnessed} most directly -- would you
 be willing to write 3-5 sentences about it?
 
 A few things you might mention:
 - _{specific 1}_
 - _{specific 2}_
 
-No pressure if it's bad timing — just thought I'd ask.
+No pressure if it's bad timing -- just thought I'd ask.
 
 Thanks,
 {candidate first name}
@@ -145,13 +145,13 @@ REWRITE_PATH: {relative-path}
 ## Quality bar
 
 - Every rewrite is specific, never generic.
-- Every paste-ready block is COPY-AND-PASTE READY — no `{placeholder}`
+- Every paste-ready block is COPY-AND-PASTE READY -- no `{placeholder}`
   left for the user to fill in.
-- Calibrated to the user's actual CV + archetype + target role — read
+- Calibrated to the user's actual CV + archetype + target role -- read
   them carefully before drafting.
 - Banned words (heron standard list applies): passionate,
   results-driven, team player, leveraging, synergy, robust, scalable
   (as a single adjective without numbers), seasoned, hard-working.
-- Each section's "Why this works" is one sentence — not an essay.
+- Each section's "Why this works" is one sentence -- not an essay.
 - Total document under 1500 words (excluding the paste-ready text
   blocks).

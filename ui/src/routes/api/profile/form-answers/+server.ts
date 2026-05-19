@@ -1,5 +1,5 @@
 /**
- * /api/profile/form-answers — per-question cache CRUD.
+ * /api/profile/form-answers -- per-question cache CRUD.
  *
  *   GET    ?profile=slug              → list every answer for a profile
  *   POST   body { label, answer }     → upsert one answer

@@ -1,5 +1,5 @@
 /**
- * lib/server/apply-counter — dense increment scenarios.
+ * lib/server/apply-counter -- dense increment scenarios.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';

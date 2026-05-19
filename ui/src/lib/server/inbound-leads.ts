@@ -1,5 +1,5 @@
 /**
- * inbound-leads — unified storage + state machine for recruiter inbound
+ * inbound-leads -- unified storage + state machine for recruiter inbound
  * across BOTH channels (email + LinkedIn DM).
  *
  * Storage:
@@ -102,12 +102,12 @@ function writeThreadsMap(map: Record<string, InboundThread>, profileId?: string)
   fs.writeFileSync(p, JSON.stringify(map, null, 2));
 }
 
-/** Append a lead to the jsonl log. Deduped by messageId — if the same
+/** Append a lead to the jsonl log. Deduped by messageId -- if the same
  *  message is scraped twice (overlapping windows), the first wins. */
 export function appendLead(lead: InboundLead, profileId?: string): boolean {
   const p = leadsPath(profileId);
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  // Dedup by messageId — read existing
+  // Dedup by messageId -- read existing
   if (fs.existsSync(p)) {
     const text = fs.readFileSync(p, 'utf8');
     if (text.includes('"messageId":"' + lead.messageId + '"')) return false;
@@ -133,11 +133,11 @@ export function listLeads(profileId?: string): InboundLead[] {
       try {
         out.push(JSON.parse(line) as InboundLead);
       } catch {
-        // Corrupt line from a partial write — skip and keep loading.
+        // Corrupt line from a partial write -- skip and keep loading.
       }
     }
   } catch {
-    // File read failure — degrade to empty list rather than crash.
+    // File read failure -- degrade to empty list rather than crash.
     // The /api/inbound endpoint surfaces this as an empty inbox.
   }
   return out.sort((a, b) => b.arrivedAt - a.arrivedAt);
@@ -175,14 +175,14 @@ export function recordUserReply(leadId: string, profileId?: string): InboundThre
 }
 
 export function attachDraftPath(leadId: string, draftPath: string, profileId?: string): void {
-  // We don't rewrite the jsonl — we add a side-channel record.
+  // We don't rewrite the jsonl -- we add a side-channel record.
   const draftMapPath = path.join(path.dirname(threadsPath(profileId)), 'inbound-drafts.json');
   let map: Record<string, string> = {};
   if (fs.existsSync(draftMapPath)) {
     try {
       map = JSON.parse(fs.readFileSync(draftMapPath, 'utf8'));
     } catch {
-      // Corrupt JSON — start with an empty map; the new entry will
+      // Corrupt JSON -- start with an empty map; the new entry will
       // overwrite the bad file on the writeFileSync below.
     }
   }
@@ -224,7 +224,7 @@ export function detectSilentRecruiters(profileId?: string): string[] {
 
 // ── Classifier ─────────────────────────────────────────────────────
 // Lightweight heuristic classifier. Real classifier could use an LLM
-// pass — left as a follow-up; the heuristic is good enough to filter
+// pass -- left as a follow-up; the heuristic is good enough to filter
 // out the obvious mass-blasts + spam.
 
 const REAL_ROLE_SIGNALS = [

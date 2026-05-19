@@ -61,7 +61,7 @@
     (outcomes?.positive ?? 0) + (outcomes?.negative ?? 0) + (outcomes?.self_filtered ?? 0),
   );
 
-  // ---- Subtitle / date range — guard against missing dates ----
+  // ---- Subtitle / date range -- guard against missing dates ----
   let dateRangeLabel = $derived.by(() => {
     const m = p?.metadata;
     if (!m) return '';
@@ -83,7 +83,7 @@
     (p?.companySizeBreakdown ?? []).slice().sort((a, b) => b.total - a.total),
   );
 
-  // ---- Funnel — order known stage names first, then anything else by count desc ----
+  // ---- Funnel -- order known stage names first, then anything else by count desc ----
   // Script's funnel mixes status labels (evaluated, skip, discarded) with score
   // buckets (4.3, 3.5/5, etc); show the recognised statuses first so the chart
   // reads as a real funnel, then dump the rest.
@@ -107,7 +107,7 @@
   });
   let funnelTotal = $derived(funnelRows.reduce((acc, [, v]) => acc + v, 0));
 
-  // ---- Formatting helpers — defensive against missing fields ----
+  // ---- Formatting helpers -- defensive against missing fields ----
   /** conversionRate from script is already 0-100 (integer). NEVER multiply
    *  it by 100 again. Returns "0%" when undefined/NaN to avoid "NaN%". */
   function fmtRate(r: number | undefined | null): string {
@@ -127,7 +127,7 @@
     if (typeof n !== 'number' || !Number.isFinite(n)) return '0';
     return n.toLocaleString();
   }
-  /** Tint a conversion rate (0-100) — green at high, amber middling, red low. */
+  /** Tint a conversion rate (0-100) -- green at high, amber middling, red low. */
   function rateTint(r: number): string {
     if (r >= 30) return 'bg-emerald-500/40';
     if (r >= 15) return 'bg-amber-500/40';

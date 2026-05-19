@@ -1,9 +1,9 @@
 /**
- * Regression guard — every formatter the lefthook + CI gates assume
+ * Regression guard -- every formatter the lefthook + CI gates assume
  * must be pinned in `.mise.toml` so a fresh clone (and CI's
  * `jdx/mise-action@v4` step) installs them automatically. If someone
  * adds a new language formatter to lefthook without also pinning it
- * in mise, the lock breaks and CI fails on the next push — this test
+ * in mise, the lock breaks and CI fails on the next push -- this test
  * catches that drift in pre-push instead.
  */
 import { describe, expect, it } from 'vitest';

@@ -23,7 +23,7 @@
 
   let draft = $state('');
 
-  // One gate per editor instance — keys are chip-index strings so several
+  // One gate per editor instance -- keys are chip-index strings so several
   // chips can be in differing armed states without affecting each other.
   // (Only one is ever armed at a time, but conceptually every X has its own
   // confirm state.)
@@ -56,7 +56,7 @@
       e.preventDefault();
       add();
     } else if (e.key === 'Backspace' && draft === '' && items.length > 0) {
-      // Backspace on empty input is a known keyboard shortcut — single-action
+      // Backspace on empty input is a known keyboard shortcut -- single-action
       // intent (the user is actively typing), so skip the confirm gate.
       e.preventDefault();
       commit(items.slice(0, -1));

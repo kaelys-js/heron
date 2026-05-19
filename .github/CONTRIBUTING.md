@@ -39,7 +39,7 @@ PRs without a corresponding issue may be closed if they don't align with the pro
 
 **Bigger contributions:**
 - New evaluation dimensions or scoring logic
-- Dashboard features (in `ui/` — SvelteKit)
+- Dashboard features (in `ui/` -- SvelteKit)
 - New skill modes (in `modes/`)
 - Script improvements (`.mjs` utilities)
 
@@ -47,14 +47,14 @@ PRs without a corresponding issue may be closed if they don't align with the pro
 
 - Keep modes language-agnostic when possible (Claude handles both EN and ES)
 - Scripts should handle missing files gracefully (check `existsSync` before `readFileSync`)
-- Dashboard changes require `go build` — test with real data before submitting
+- Dashboard changes require `go build` -- test with real data before submitting
 - Don't commit personal data (cv.md, profile.yml, applications.md, reports/)
 
 ## Developer Certificate of Origin (DCO)
 
 Every commit MUST be signed off with a `Signed-off-by: Name <email>`
 trailer. This certifies you wrote the code (or have the right to
-submit it) under the project's MIT license — the [DCO](https://developercertificate.org)
+submit it) under the project's MIT license -- the [DCO](https://developercertificate.org)
 text. The DCO bot enforces this on every PR.
 
 The easiest way: use `git commit -s` to auto-append the trailer.
@@ -141,7 +141,7 @@ Pre-commit hooks (lefthook, wired by `pnpm install`): biome-format, svelte-check
 ### Running CI locally
 
 [`act`](https://github.com/nektos/act) runs GitHub Actions workflows on
-your machine via Docker — useful for iterating on a workflow change
+your machine via Docker -- useful for iterating on a workflow change
 without 5-minute push-and-wait cycles. The repo ships per-workflow
 shortcuts:
 
@@ -157,14 +157,14 @@ pnpm act:sbom                 # SBOM + attestations workflow
 
 First run downloads ~3GB of Ubuntu runner images. Subsequent runs are
 fast. `act` doesn't have macOS runners, so the `ios` job is skipped
-locally — push to a PR branch to exercise it.
+locally -- push to a PR branch to exercise it.
 
 ## Brand and Trademark
 
 Contributions to the codebase are governed by the MIT [LICENSE](../LICENSE).
 The "heron" name itself is governed by [TRADEMARK.md](../docs/TRADEMARK.md).
 If you fork the project for commercial use, you're welcome to do so
-under MIT — please give it your own product name and follow the
+under MIT -- please give it your own product name and follow the
 trademark policy regarding commercial naming and endorsement claims.
 
 ## Getting help
@@ -176,16 +176,16 @@ how to get help efficiently.
 
 | Question type | Where |
 |---|---|
-| **Bug** (something is broken) | [GitHub Issues](https://github.com/kaelys-js/heron/issues) — use the Bug Report template |
-| **Feature idea** | [GitHub Issues](https://github.com/kaelys-js/heron/issues) — use the Feature Request template |
+| **Bug** (something is broken) | [GitHub Issues](https://github.com/kaelys-js/heron/issues) -- use the Bug Report template |
+| **Feature idea** | [GitHub Issues](https://github.com/kaelys-js/heron/issues) -- use the Feature Request template |
 | **How do I…?** | [GitHub Discussions](https://github.com/kaelys-js/heron/discussions) or [Discord](https://discord.gg/8pRpHETxa4) |
 | **Setup help** | Check [`docs/SETUP.md`](../docs/SETUP.md) first, then ask in [Discord](https://discord.gg/8pRpHETxa4) |
-| **Security vulnerability** | Email <hello@heron.app> — see [`SECURITY.md`](SECURITY.md) |
+| **Security vulnerability** | Email <hello@heron.app> -- see [`SECURITY.md`](SECURITY.md) |
 
 ### Before opening an issue
 
-1. Search existing issues — someone may have reported it already.
-2. Run `pnpm run doctor` — it catches most setup problems.
+1. Search existing issues -- someone may have reported it already.
+2. Run `pnpm run doctor` -- it catches most setup problems.
 3. Include your OS, Node.js version, and the CLI you're using
    (Claude Code, Gemini, Codex, OpenCode, etc.).
 

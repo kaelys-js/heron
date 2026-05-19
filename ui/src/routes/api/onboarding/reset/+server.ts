@@ -1,10 +1,10 @@
 /**
- * POST /api/onboarding/reset — owner-only.
+ * POST /api/onboarding/reset -- owner-only.
  *
  * Wipes the install's onboarding state file so the wizard re-runs on the
  * next page load. Doesn't delete user content (cv.md, profile.yml, etc.)
  * but the onboarding-state file is install-wide (data/onboarding-state.json),
- * not per-user — so only the owner should be able to flip it.
+ * not per-user -- so only the owner should be able to flip it.
  */
 import { wrap } from '$lib/server/api-helpers';
 import { requireOwner } from '$lib/server/auth-helpers';

@@ -1,5 +1,5 @@
 /**
- * ResponsiveActionMenu — drawer on mobile, dropdown on desktop.
+ * ResponsiveActionMenu -- drawer on mobile, dropdown on desktop.
  *
  * Uses the snippet harness wrapper so we can pass {#snippet trigger}
  * + {#snippet items} through testing-library/svelte v5 (which doesn't

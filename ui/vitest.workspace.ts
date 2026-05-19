@@ -1,5 +1,5 @@
 /**
- * Vitest workspace — four projects per intended runtime:
+ * Vitest workspace -- four projects per intended runtime:
  *
  *   ui-unit       jsdom    Pure-logic + state-store cases (lib/**)
  *   ui-server     node     SvelteKit endpoints + server modules
@@ -8,12 +8,12 @@
  *
  * Why split:
  *   • Server modules import `$env/dynamic/private`, `node:fs`, and
- *     better-sqlite3 — jsdom doesn't help them and would actively hurt
+ *     better-sqlite3 -- jsdom doesn't help them and would actively hurt
  *     (better-sqlite3 segfaults under jsdom's polyfilled Buffer).
  *   • Components depend on real `matchMedia` and `getBoundingClientRect`
  *     for the responsive primitive sweep. jsdom's stubs are insufficient.
  *   • Unit tests want jsdom's `document` for testing DOM helpers but
- *     don't need a real browser — the slowest layer is browser bootstrap,
+ *     don't need a real browser -- the slowest layer is browser bootstrap,
  *     so reserve it for what needs it.
  *
  * The `extends` field re-uses everything from `vitest.config.ts`
@@ -64,7 +64,7 @@ export default defineConfig({
 
       // ── ui-component ───────────────────────────────────────────────
       // Real-browser component tests. Vitest 4 derives
-      // `environment: 'browser'` from `browser.enabled: true` — setting
+      // `environment: 'browser'` from `browser.enabled: true` -- setting
       // both errors out. We run both Chromium and WebKit so any test
       // that exercises pointer-event gestures (bits-ui Sheet drag, etc.)
       // catches Safari/iOS-specific quirks the same day a regression
@@ -76,7 +76,7 @@ export default defineConfig({
           include: ['src/**/*.component.test.ts', 'src/**/*.svelte.test.ts'],
           browser: {
             enabled: true,
-            // Vitest 4's default `headless` is `process.env.CI` — locally
+            // Vitest 4's default `headless` is `process.env.CI` -- locally
             // that's undefined → falsy → window opens. The playwright()
             // factory's `headless` option does NOT propagate to this
             // top-level setting; it has to be set HERE on the browser
@@ -89,7 +89,7 @@ export default defineConfig({
             provider: playwright({
               // Headless config is read from the parent `browser.headless`
               // above (see node_modules/@vitest/browser-playwright/dist/
-              // index.js — `headless: options.headless`). launchOptions
+              // index.js -- `headless: options.headless`). launchOptions
               // is reserved for additional Playwright args.
               launchOptions: {},
             }),
@@ -125,7 +125,7 @@ export default defineConfig({
           environment: 'node',
           include: ['src/lib/integration/**/*.integration.test.ts'],
           // Integration cases shell out to real binaries (node, git, etc.)
-          // — bump the budget so a real `pnpm build` smoke fits.
+          // -- bump the budget so a real `pnpm build` smoke fits.
           testTimeout: 120_000,
           hookTimeout: 120_000,
         },

@@ -1,14 +1,14 @@
 /**
- * Read/write per-profile `portals.yml` — the scanner's source of truth for
+ * Read/write per-profile `portals.yml` -- the scanner's source of truth for
  * tracked companies, title filters, and search queries.
  *
  * Each profile owns its own portals.yml under
  * `data/users/{uid}/profiles/{id}/portals.yml` (or `data/profiles/{id}/portals.yml`
- * in legacy single-user installs) — electrician's tracked companies are very
+ * in legacy single-user installs) -- electrician's tracked companies are very
  * different from software's. On
  * first read for a profile, if portals.yml doesn't exist there, we fall back
  * to the bundled template `templates/portals.example.yml` so the user inherits
- * the curated 100+-company starter list — then writes seed it into the
+ * the curated 100+-company starter list -- then writes seed it into the
  * per-profile path on first save.
  *
  * Every exported function takes an OPTIONAL `profileId` as its first arg;
@@ -22,7 +22,7 @@ import { ROOT, readSafe } from './files';
 import { profilePath, ensureProfileDirs } from './profile-paths';
 import { getActiveProfileId } from './profiles';
 
-/** System-layer template — shared across profiles, never overwritten. */
+/** System-layer template -- shared across profiles, never overwritten. */
 const PORTALS_TEMPLATE = path.join(ROOT, 'templates', 'portals.example.yml');
 
 export type TitleFilter = {
@@ -149,7 +149,7 @@ export function writePortalsTitleFilter(
     );
     return readPortals(id);
   }
-  // Bootstrap from template — copy so we keep the curated companies + queries.
+  // Bootstrap from template -- copy so we keep the curated companies + queries.
   if (source === 'template') {
     fs.copyFileSync(PORTALS_TEMPLATE, portalsPath);
   }
@@ -168,7 +168,7 @@ export function writePortalsTitleFilter(
   return readPortals(id);
 }
 
-// D18 — `writePortalsCompanies` is intentionally absent. Companies are
+// D18 -- `writePortalsCompanies` is intentionally absent. Companies are
 // edited by hand in portals.yml today (the file is the SSOT) and the
 // dashboard reads them via `readPortals()`. If a UX for in-app
 // company management ever ships, restore the write helper from git

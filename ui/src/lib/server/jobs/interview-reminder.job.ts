@@ -1,5 +1,5 @@
 /**
- * interview-reminder — ticks every 15 minutes; emits high-priority events
+ * interview-reminder -- ticks every 15 minutes; emits high-priority events
  * for jobs within T-30min or T-24h of a scheduled interview.
  *
  * These events flow through the standard activity-feed → SSE → OS
@@ -86,7 +86,7 @@ register({
 // Daemon: tick every 15 min from server boot. Mirrors the IMAP poller
 // pattern (see scan-email-imap.job.ts:installImapPollerDaemon).
 //
-// F15 — pre-fix the daemon called `runInterviewReminder()` directly
+// F15 -- pre-fix the daemon called `runInterviewReminder()` directly
 // from OUTSIDE any user ALS context. `listProfiles()` resolved to
 // SYSTEM_USER → daemon only saw SYSTEM's profiles → real users' interview
 // reminders NEVER fired. Now: go through `runById('interview-reminder')`

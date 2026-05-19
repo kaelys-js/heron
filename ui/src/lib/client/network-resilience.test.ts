@@ -1,5 +1,5 @@
 /**
- * network-resilience — abort-on-offline + retry-on-recovery.
+ * network-resilience -- abort-on-offline + retry-on-recovery.
  *
  * Tests the abort/retry primitive used by lib/api.ts. The fetch
  * wrapper itself is covered by api.test.ts; here we exercise the
@@ -144,7 +144,7 @@ describe('network-resilience — retry queue', () => {
         dropped = true;
       },
     });
-    // Fill the cap (50) — push 50 more so the first one falls out.
+    // Fill the cap (50) -- push 50 more so the first one falls out.
     for (let i = 0; i < 50; i++) {
       enqueueForRetry({
         url: '/api/jobs',

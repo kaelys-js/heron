@@ -1,5 +1,5 @@
 /**
- * lib/client/online-status — three-signal reconciliation of online state.
+ * lib/client/online-status -- three-signal reconciliation of online state.
  *
  * Tests cover:
  *   • init() restores last-known state from localStorage

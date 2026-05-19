@@ -1,6 +1,6 @@
 /**
  * Lightweight index of every job for client-side search palette.
- * Returns id, company, role, location, status, score, bgRisk — under 100 bytes per job.
+ * Returns id, company, role, location, status, score, bgRisk -- under 100 bytes per job.
  */
 
 import { wrap } from '$lib/server/api-helpers';

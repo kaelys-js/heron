@@ -33,22 +33,22 @@ function venvPython(): string {
   return 'python3';
 }
 
-// D14 — `isRunning` removed; callers consult `listRunning()` instead, and
+// D14 -- `isRunning` removed; callers consult `listRunning()` instead, and
 // the job registry has its own `isRunning(jobId)` for registered jobs.
 export function listRunning(): string[] {
   return [...running.keys()];
 }
 
 // =============================================================================
-// Spawn hardening — shared across every long-running task in this module.
+// Spawn hardening -- shared across every long-running task in this module.
 // Adds three guards that any production-shape orchestrator needs:
-//   1. A timeout — children that hang (Anthropic API stall, captcha block,
+//   1. A timeout -- children that hang (Anthropic API stall, captcha block,
 //      infinite loop) get SIGTERM'd and never sit in `running` forever
 //      holding pipes & cookies.
-//   2. A bounded stdoutBuf — a child that writes megabytes without `\n`
+//   2. A bounded stdoutBuf -- a child that writes megabytes without `\n`
 //      (e.g. a JSON dump) used to OOM the dev server's heap. Now capped
 //      at 1MB; we force-flush a truncation breadcrumb and reset.
-//   3. A per-spawn line-rate limiter — a runaway `print()` loop produced
+//   3. A per-spawn line-rate limiter -- a runaway `print()` loop produced
 //      one logEvent (and one disk write) per line. Capped at 100 lines/s
 //      with a single rate-limit warning when the cap is hit.
 // All wired at boot via `installChildCleanup()` which kills surviving
@@ -56,7 +56,7 @@ export function listRunning(): string[] {
 // =============================================================================
 
 /** Per-task default kill-after deadline. The longest-running task today is
- *  the parallel batch CV runner — 4h ceiling matches the documented user
+ *  the parallel batch CV runner -- 4h ceiling matches the documented user
  *  expectation. Override via `attachTimeout` if a caller knows better. */
 const TIMEOUT_MS: Record<TaskName, number> = {
   scan: 30 * 60_000, // 30 min
@@ -155,14 +155,14 @@ function attachTimeout(p: ChildProcess, taskName: TaskName, ms: number): void {
     try {
       p.kill('SIGTERM');
     } catch {
-      /* process already exited — kill races with the close event */
+      /* process already exited -- kill races with the close event */
     }
     const hard = setTimeout(() => {
       if (p.exitCode !== null) return;
       try {
         p.kill('SIGKILL');
       } catch {
-        /* process already exited — kill races with the close event */
+        /* process already exited -- kill races with the close event */
       }
     }, 5_000);
     p.once('close', () => clearTimeout(hard));
@@ -178,7 +178,7 @@ let cleanupInstalled = false;
  * hooks.server.ts orphans child PIDs across the dev session and leaks file
  * handles + cookies + ports.
  */
-// D15: kept internal — only `bootOnce()` calls this. Removed the export.
+// D15: kept internal -- only `bootOnce()` calls this. Removed the export.
 function installChildCleanup(): void {
   if (cleanupInstalled) return;
   cleanupInstalled = true;
@@ -243,7 +243,7 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
   }
   // Resolve per-user credentials and inject into the child's env. This
   // is the bridge that makes the per-user secrets store transparent to
-  // every spawned script — even legacy ones that read straight from
+  // every spawned script -- even legacy ones that read straight from
   // `os.environ.get('GEMINI_API_KEY')`. The child sees the resolved
   // value (per-user store wins, .env fallback otherwise); it doesn't
   // need to know the value came from an encrypted file.
@@ -273,7 +273,7 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
   running.set(name, p);
   attachStdio(p, name);
   attachTimeout(p, name, TIMEOUT_MS[name] ?? 30 * 60_000);
-  // Critical: without this listener, a spawn failure (ENOENT — binary missing)
+  // Critical: without this listener, a spawn failure (ENOENT -- binary missing)
   // emits an unhandled error and crashes the dev server.
   p.on('error', (err: Error) => {
     running.delete(name);
@@ -297,7 +297,7 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
         if (code === 0) recordSuccess('scan-broad');
         else if (code !== null) recordFailure('scan-broad', new Error('exit ' + code));
       } catch (e) {
-        // sources record best-effort — log but don't fail the close handler.
+        // sources record best-effort -- log but don't fail the close handler.
         logEvent(name, 'Could not update sources counter for scan-broad', {
           level: 'warn',
           category: 'task',
@@ -312,7 +312,7 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
         message: 'Exit code 0 · ' + name,
       });
     } else if (code === null) {
-      // null = killed by signal (e.g. user reload during dev) — don't surface as error
+      // null = killed by signal (e.g. user reload during dev) -- don't surface as error
       logEvent(name, 'Task interrupted', {
         level: 'warn',
         category: 'task',
@@ -362,7 +362,7 @@ export function runGemini(top = 30, profileId?: string) {
 }
 
 /**
- * Login flow for an authenticated portal — opens Playwright, lets the user
+ * Login flow for an authenticated portal -- opens Playwright, lets the user
  * sign in, persists the session to `.playwright-<portal>/`. P14: previously
  * hardcoded to LinkedIn; now generalised to support Indeed too via the
  * shared lib_playwright_auth.py helper (same module used by
@@ -372,7 +372,7 @@ export function runGemini(top = 30, profileId?: string) {
  * with the /api/run switch.
  */
 export function runPortalLogin(portal: 'linkedin' | 'indeed') {
-  // Login is profile-agnostic — it writes the Playwright session to a
+  // Login is profile-agnostic -- it writes the Playwright session to a
   // shared dir (.playwright-<portal>/) that all profiles use.
   if (portal === 'linkedin') {
     start('apply-linkedin', venvPython(), ['scripts/apply/linkedin-easy-apply.py', '--login']);
@@ -400,7 +400,7 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
     return;
   }
   // Enforce autopilot's per-day apply cap. The cap is a real cost / shadowban
-  // safety knob — every Submit risks LinkedIn flagging the session — so we
+  // safety knob -- every Submit risks LinkedIn flagging the session -- so we
   // honour it on both per-URL and queue-mode invocations.
   try {
     const { readConfig } = require('./autopilot') as typeof import('./autopilot');
@@ -418,7 +418,7 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
   } catch (e) {
     // Non-fatal: fall through if autopilot/apply-counter modules aren't
     // loadable yet (boot race during HMR). Without the cap check the
-    // user might exceed their daily apply target — worth logging so the
+    // user might exceed their daily apply target -- worth logging so the
     // operator notices the regression if it keeps recurring.
     logEvent('apply-linkedin', 'Apply-cap check skipped (modules not ready)', {
       level: 'warn',
@@ -490,7 +490,7 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
   p.on('close', (code: number | null) => {
     running.delete('apply-linkedin');
     if (code === 0) {
-      // Successful apply path — bump the daily counter so the cap covers
+      // Successful apply path -- bump the daily counter so the cap covers
       // subsequent fires within today. For queue-mode we conservatively
       // bump by 1 even though the queue may have applied to multiple
       // postings; the Python script is responsible for re-checking the
@@ -507,7 +507,7 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
             n,
         });
       } catch (e) {
-        // Counter bump failed — apply still succeeded so we surface success,
+        // Counter bump failed -- apply still succeeded so we surface success,
         // but warn so the operator knows the daily-cap accounting is off.
         logEvent('apply-linkedin', 'Apply counter bump failed', {
           level: 'warn',
@@ -540,7 +540,7 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
 }
 
 // =============================================================================
-// Tailored CV / evaluate — spawn the Claude Code CLI to run the evaluate mode
+// Tailored CV / evaluate -- spawn the Claude Code CLI to run the evaluate mode
 // for a single URL. Claude's `/heron evaluate <url>` produces a deep evaluation
 // report AND a tailored CV PDF in one shot.
 //
@@ -636,12 +636,12 @@ export function runEvaluate(
 }
 
 // =============================================================================
-// Bulk CV — sequentially run evaluate for each URL. We don't parallelize to avoid
+// Bulk CV -- sequentially run evaluate for each URL. We don't parallelize to avoid
 // Claude rate limits and to keep the activity feed readable.
 // =============================================================================
 
 /**
- * Parallel bulk-CV — wraps scripts/batch/batch-runner.sh which orchestrates N
+ * Parallel bulk-CV -- wraps scripts/batch/batch-runner.sh which orchestrates N
  * concurrent `claude -p` workers. Faster than the sequential `runBulkOferta`
  * but consumes more Anthropic credits in parallel; the dialog explains the
  * tradeoff. Writes <profile>/batch/batch-input.tsv from the URL list, kicks off
@@ -694,7 +694,7 @@ export async function runBulkOfertaParallel(
   // Build the batch-input.tsv from the URL list. Format expected by
   // batch-runner.sh (per `scripts/batch/batch-runner.sh` parsing):
   //   <num>\t<url>\t<company>\t<role>
-  // We don't know company/role here from the URL alone — leave blank, the
+  // We don't know company/role here from the URL alone -- leave blank, the
   // worker prompt fills them in. Path is per-profile post-Option-D.
   const batchDir = profilePathForUser(userId, resolvedProfileId, 'batch-dir');
   const inputPath = path.join(batchDir, 'batch-input.tsv');
@@ -776,7 +776,7 @@ export async function runBulkOferta(
     logEvent('bulk-cv', 'Bulk CV already running', { level: 'warn', category: 'task' });
     return { ok: 0, failed: 0, total: 0 };
   }
-  // Reserve the slot synchronously — spawn() runs inside runEvaluate with a different key
+  // Reserve the slot synchronously -- spawn() runs inside runEvaluate with a different key
   running.set('bulk-cv', null as any);
   logEvent('bulk-cv', 'Bulk CV started', {
     category: 'task',
@@ -806,7 +806,7 @@ export async function runBulkOferta(
 }
 
 // =============================================================================
-// Auto-eval — fires after Gemini scoring lands. For every job scoring ≥
+// Auto-eval -- fires after Gemini scoring lands. For every job scoring ≥
 // thresholds.autoEvaluateScore that doesn't already have a deep-eval report,
 // queue a runEvaluate() call serially up to thresholds.maxAutoEvalsPerRun.
 //
@@ -819,7 +819,7 @@ export async function runBulkOferta(
 //   • 1h cooldown via the schedule's lastRunAt
 //   • 3-strike abort on consecutive runEvaluate failures (Claude CLI broken /
 //     API key revoked → bail before burning more $$)
-//   • globalEnabled self-check (defensive — autopilot scheduler already
+//   • globalEnabled self-check (defensive -- autopilot scheduler already
 //     gates, but /api/run can call this directly)
 // =============================================================================
 
@@ -885,7 +885,7 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
   const cap = cfg.thresholds.maxAutoEvalsPerRun ?? 10;
 
   // For each profile, gather candidates up to the cap. Across profiles
-  // we still respect the same cap — a single auto-eval run is the user's
+  // we still respect the same cap -- a single auto-eval run is the user's
   // budget for that timeslice, multi-profile or not.
   type Candidate = {
     url: string;
@@ -957,7 +957,7 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
 
       // Re-check this candidate against its profile's current state. A
       // manual eval / status flip mid-batch should remove the URL from
-      // our queue automatically. Cheap — in-memory file reads.
+      // our queue automatically. Cheap -- in-memory file reads.
       const fresh = loadAllJobs(job.profileId).find((j) => j.url === job.url);
       if (!fresh) {
         skipped++;
@@ -1034,7 +1034,7 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
 }
 
 // =============================================================================
-// Bulk apply — fans out across two paths:
+// Bulk apply -- fans out across two paths:
 //   * LinkedIn URLs → linkedin-easy-apply.py with --url one at a time
 //   * Other URLs → mark-applied (status flip). The UI is responsible for
 //     opening the postings in new tabs separately; the orchestrator only does
@@ -1051,7 +1051,7 @@ export type BulkApplyOutcome = {
 function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boolean }> {
   return new Promise((resolve) => {
     // Cap check: same enforcement as the fire-and-forget path. Treats
-    // "cap reached" as a non-error skip — caller can interpret the
+    // "cap reached" as a non-error skip -- caller can interpret the
     // `capped: true` flag.
     try {
       const { readConfig } = require('./autopilot') as typeof import('./autopilot');
@@ -1067,7 +1067,7 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boo
         return;
       }
     } catch (e) {
-      // Non-fatal — bulk apply proceeds without the cap check. Warn so
+      // Non-fatal -- bulk apply proceeds without the cap check. Warn so
       // operator notices the regression if it keeps recurring.
       logEvent('apply-linkedin', 'Bulk apply cap-check skipped (modules not ready)', {
         level: 'warn',
@@ -1119,7 +1119,7 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boo
           message: 'url=' + url + ' · exit=' + code,
         });
       }
-      // Successful per-job apply — bump counter so the bulk caller's
+      // Successful per-job apply -- bump counter so the bulk caller's
       // subsequent iterations see the updated daily count.
       if (code === 0) {
         try {
@@ -1127,7 +1127,7 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boo
             require('./apply-counter') as typeof import('./apply-counter');
           bumpApplyCounter();
         } catch (e) {
-          // Non-fatal — apply succeeded, but the bulk caller's
+          // Non-fatal -- apply succeeded, but the bulk caller's
           // subsequent iterations won't see the updated daily count.
           logEvent('apply-linkedin', 'Per-job apply counter bump failed', {
             level: 'warn',
@@ -1173,7 +1173,7 @@ export async function runBulkApply(
               ? 'Apply cap reached for today — skipped'
               : 'LinkedIn Easy Apply exited non-zero',
         });
-        // If we just hit the cap, stop iterating — subsequent calls would
+        // If we just hit the cap, stop iterating -- subsequent calls would
         // also be no-ops and just spam the activity feed.
         if (r.capped) break;
       } else {
@@ -1202,7 +1202,7 @@ export function bootOnce() {
   bootRan = true;
   loadEnv();
   // Silently migrate install-wide credentials from .env into the OWNER's
-  // per-user encrypted store. Idempotent — only copies values the owner
+  // per-user encrypted store. Idempotent -- only copies values the owner
   // doesn't yet have. Fire-and-forget: this is opportunistic and must
   // never block boot. See user-secrets.ts::migrateEnvToUserSecrets for
   // the full contract.
@@ -1220,7 +1220,7 @@ export function bootOnce() {
   // but `process.once` fires only once per signal).
   installChildCleanup();
   // Lazy import to avoid circular dep at module init. If it fails, the user
-  // loses Autopilot — we MUST log so the bell shows it instead of silently
+  // loses Autopilot -- we MUST log so the bell shows it instead of silently
   // pretending scheduling works.
   import('./autopilot')
     .then((m) => m.startScheduler())
@@ -1234,7 +1234,7 @@ export function bootOnce() {
     });
   // Install the pluggable job registry. Each *.job.ts module registers its
   // own JobDef; this barrel triggers all of them at boot. Failure here
-  // shouldn't block boot — log + continue.
+  // shouldn't block boot -- log + continue.
   import('./jobs')
     .then((m) => m.installAllJobs())
     .catch((err) => {
@@ -1251,9 +1251,9 @@ export function bootOnce() {
   logEvent('boot', 'Server started', { category: 'system' });
   // CRITICAL: every spawn-y / IO-y branch below is wrapped in
   // try/catch so a failure can NEVER bubble out of bootOnce(). This
-  // function runs at the TOP of hooks.server.ts (line 8 — outside
+  // function runs at the TOP of hooks.server.ts (line 8 -- outside
   // any handler), so any uncaught error crashes the whole hooks
-  // module — and SvelteKit responds with the bare "500 | Internal
+  // module -- and SvelteKit responds with the bare "500 | Internal
   // Error" white page that bypasses our +error.svelte entirely. Even
   // when the user is just trying to load /login, a stray scan-spawn
   // failure here would lock them out. Log and continue instead.

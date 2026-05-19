@@ -65,7 +65,7 @@
   import { cn, withMinDuration } from '$lib/utils';
   import type { ProfileSnapshot, ProfileEdit } from '$lib/server/profile';
   import type { GeneralCvStatus } from '$lib/server/cv-pdf';
-  // ConfirmGate import removed — the Discard button now uses ConfirmButton
+  // ConfirmGate import removed -- the Discard button now uses ConfirmButton
   // (which encapsulates the gate). Other places on this page that need the
   // gate import directly should re-add this line as needed.
   import { onDestroy, onMount } from 'svelte';
@@ -84,7 +84,7 @@
 
   // Project a ProfileSnapshot down to JUST the editable ProfileEdit shape.
   // Without this, structuredClone(data.profile) would seed `edit` with all
-  // the snapshot's read-only metadata (archetypes, files, exists) — and the
+  // the snapshot's read-only metadata (archetypes, files, exists) -- and the
   // dirty-comparison would always evaluate true because `edit` carried extra
   // keys the right-hand side didn't. Symmetric snapshot fixes that.
   function snapshotEdit(p: ProfileSnapshot): ProfileEdit {
@@ -98,17 +98,17 @@
       language: structuredClone(p.language ?? {}),
       // Carry the automation block through so the autonomous-apply card
       // can edit it in place. snapshotEdit was originally written before
-      // this block existed — including it now keeps the dirty-compare
+      // this block existed -- including it now keeps the dirty-compare
       // and PUT round-trip symmetric.
       automation: structuredClone(p.automation ?? {}),
     };
   }
 
-  // CV manager sheet — opens with the appropriate tab based on which button the user clicks.
+  // CV manager sheet -- opens with the appropriate tab based on which button the user clicks.
   type CvTab = 'view' | 'edit' | 'replace' | 'reprocess';
   let cvOpen = $state(false);
   let cvInitialTab = $state<CvTab>('view');
-  // Reset dialog — type RESET to enable the destructive button.
+  // Reset dialog -- type RESET to enable the destructive button.
   // initialScope lets the danger-zone "Clear jobs…" button open the dialog
   // pre-selected on the jobs scope, while the generic "Reset…" button
   // defaults to profile.
@@ -119,11 +119,11 @@
   // by LinkedIn Easy Apply (where consistency with the LinkedIn profile
   // matters); per-job tailored CVs continue to be used for non-LinkedIn
   // portals.
-  // svelte-ignore state_referenced_locally — initial seed only
+  // svelte-ignore state_referenced_locally -- initial seed only
   let generalCv = $state<GeneralCvStatus>(data.generalCv);
   let generatingGeneralCv = $state(false);
 
-  // Story bank state — refreshed on mount + after seeding.
+  // Story bank state -- refreshed on mount + after seeding.
   type StoryBankStats = {
     exists: boolean;
     storyCount: number;
@@ -247,7 +247,7 @@
 
   /**
    * Merge a Claude-extracted profile suggestion into the local edit state.
-   * Only fills empty fields by default — never clobbers something the user
+   * Only fills empty fields by default -- never clobbers something the user
    * already typed. Marks the form dirty so the sticky Save bar appears.
    */
   function applyCvSuggestion(suggestion: {
@@ -304,7 +304,7 @@
     edit = next;
   }
 
-  // svelte-ignore state_referenced_locally — server data seeds local mutable state.
+  // svelte-ignore state_referenced_locally -- server data seeds local mutable state.
   let edit = $state<ProfileEdit>(snapshotEdit(data.profile));
   let saving = $state(false);
 
@@ -410,7 +410,7 @@
     }, 250);
   }
 
-  // Update helpers — keep edit immutable so $derived recomputes
+  // Update helpers -- keep edit immutable so $derived recomputes
   function patchCandidate(patch: Partial<NonNullable<ProfileEdit['candidate']>>) {
     edit = { ...edit, candidate: { ...edit.candidate, ...patch } };
   }
@@ -653,7 +653,7 @@
               "must overlap with US Pacific" type postings.
             </p>
           </div>
-          <!-- Country first — drives whether the Province field has a structured list -->
+          <!-- Country first -- drives whether the Province field has a structured list -->
           <div class="space-y-1.5">
             <Label class="text-xs">Country</Label>
             <Combobox
@@ -1327,7 +1327,7 @@
       >
         {#snippet icon()}<FileText class="size-3.5 text-muted-foreground" />{/snippet}
         <div class="space-y-2">
-          <!-- ============ CV row — full View / Edit / Replace / Reprocess actions ============ -->
+          <!-- ============ CV row -- full View / Edit / Replace / Reprocess actions ============ -->
           <div class="flex items-start gap-3 p-3 rounded-md border border-border/40 bg-card/50">
             <FileText class="size-4 text-muted-foreground mt-0.5 flex-shrink-0" />
             <div class="flex-1 min-w-0">
@@ -1476,7 +1476,7 @@
             </div>
           </div>
 
-          <!-- ============ General CV PDF — what LinkedIn Easy Apply uploads ============ -->
+          <!-- ============ General CV PDF -- what LinkedIn Easy Apply uploads ============ -->
           <div class="flex items-start gap-3 p-3 rounded-md border border-border/40 bg-card/50">
             <FileText class="size-4 text-blue-400/80 mt-0.5 flex-shrink-0" />
             <div class="flex-1 min-w-0">
@@ -1637,7 +1637,7 @@
             </div>
           </div>
 
-          <!-- ============ profile.md row — copy-path only for now ============ -->
+          <!-- ============ profile.md row -- copy-path only for now ============ -->
           <div class="flex items-start gap-3 p-3 rounded-md border border-border/40 bg-card/50">
             <FileCode class="size-4 text-muted-foreground mt-0.5 flex-shrink-0" />
             <div class="flex-1 min-w-0">
@@ -1774,7 +1774,7 @@
         </div>
       </CollapsibleCard>
 
-      <!-- CV manager sheet + Reset dialog — open via buttons above -->
+      <!-- CV manager sheet + Reset dialog -- open via buttons above -->
       <CvManagerSheet
         bind:open={cvOpen}
         initialTab={cvInitialTab}

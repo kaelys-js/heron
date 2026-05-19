@@ -1,6 +1,6 @@
 /**
- * GET    /api/inbound/leads/[id]  — fetch a single lead + thread state + draft
- * POST   /api/inbound/leads/[id]  — body: { state, notes? } — update thread state
+ * GET    /api/inbound/leads/[id]  -- fetch a single lead + thread state + draft
+ * POST   /api/inbound/leads/[id]  -- body: { state, notes? } -- update thread state
  *
  * State transitions the dashboard uses:
  *   new → reviewed (when user opens the lead)

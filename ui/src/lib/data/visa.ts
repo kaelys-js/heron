@@ -1,6 +1,6 @@
 /**
  * Visa / work-authorization status options. The values are the strings
- * Claude reads in the eligibility block of every evaluation report — so
+ * Claude reads in the eligibility block of every evaluation report -- so
  * they're written to be self-explanatory in narrative prose, not just codes.
  *
  * Free-text fallback ("Other / custom") lets users with unusual situations

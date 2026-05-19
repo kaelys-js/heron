@@ -1,4 +1,4 @@
-# Typography — Heron
+# Typography -- Heron
 
 <!-- AUTO-GENERATED:doc-meta -->
 *Part of the [Heron](../README.md) docs.*
@@ -7,7 +7,7 @@
 > The typographic system for Heron. Strategy + voice live in
 > [`BRAND.md`](./BRAND.md); colors in
 > [`COLORS.md`](./COLORS.md). Implementation deferred to Task 9 of the
-> rebrand sequence — this document specifies the *what*; the *how* lands
+> rebrand sequence -- this document specifies the *what*; the *how* lands
 > in `ui/src/app.css` + `ui/static/fonts/` when we wire it.
 
 ## Concept
@@ -15,7 +15,7 @@
 Calm + sophisticated = editorial gravitas at the headline level,
 screen-grade legibility at the body level, with optional monospace
 accent for data (comp numbers, dates, scores). The risk to avoid:
-"modern startup tech" — every product uses Inter for everything. Heron
+"modern startup tech" -- every product uses Inter for everything. Heron
 earns its register by *pairing*, not by font choice in isolation.
 
 Constraint set:
@@ -28,20 +28,20 @@ Constraint set:
 - **Multi-language.** Latin coverage for EN/ES/DE/FR/PT/RU + matched
   CJK fallback for JA.
 - **Variable-axis where possible.** One file per family, all weights
-  derived — smaller bundle, more nuance.
+  derived -- smaller bundle, more nuance.
 
 ## Primary pairing
 
 | Role | Family | Why |
 |---|---|---|
-| Display / headlines | **Fraunces** (Google Fonts, variable serif) | Editorial serif with `wght` + `SOFT` + `opsz` axes — calm by default, dial-able to sharp for impact. Reads as considered, not stuffy. Designed by Phaedra Charles + Diego Mariscal. Excellent Latin coverage. |
+| Display / headlines | **Fraunces** (Google Fonts, variable serif) | Editorial serif with `wght` + `SOFT` + `opsz` axes -- calm by default, dial-able to sharp for impact. Reads as considered, not stuffy. Designed by Phaedra Charles + Diego Mariscal. Excellent Latin coverage. |
 | UI / body | **Inter** (Google Fonts, variable sans) | Default screen-product face; mature, very legible at small sizes; the unofficial standard for serious tools. Distinctiveness comes from the *pairing*, not from Inter alone. |
-| Data / numerics | **IBM Plex Mono** (Google Fonts, free) | Salary ranges, scores, dates, percentages. Less code-coded than JetBrains Mono. Optional — use sparingly. |
+| Data / numerics | **IBM Plex Mono** (Google Fonts, free) | Salary ranges, scores, dates, percentages. Less code-coded than JetBrains Mono. Optional -- use sparingly. |
 
 Three faces total. All free. All variable (Fraunces + Inter) or
 static-with-multiple-weights (Plex Mono). Total ~260 KB self-hosted.
 
-## Type scale — 1.250 modular, 16px base
+## Type scale -- 1.250 modular, 16px base
 
 | Token | Size | Line-height | Letter-spacing | Family | Weight |
 |---|---|---|---|---|---|
@@ -56,8 +56,8 @@ static-with-multiple-weights (Plex Mono). Total ~260 KB self-hosted.
 | `caption` | 12px (0.75rem) | 1.4 | 0.01em | Inter | 500 Medium |
 | `mono` | 14px (0.875rem) | 1.4 | 0 | IBM Plex Mono | 500 Medium |
 
-H1–H4 use Fraunces (serif gravitas at the structural level). H5
-switches to Inter at semibold — small sizes look cleaner sans. Body and
+H1-H4 use Fraunces (serif gravitas at the structural level). H5
+switches to Inter at semibold -- small sizes look cleaner sans. Body and
 below are Inter throughout.
 
 ## Fraunces axis usage
@@ -67,7 +67,7 @@ Fraunces has three variable axes. These are the brand-default values:
 | Axis | Default value | Effect |
 |---|---|---|
 | `wght` (weight) | 400 / 500 / 600 / 700 per token | Standard weight scale. |
-| `SOFT` (softness) | `0` (sharp) | Sharp terminals — reads editorial / refined. Dial to `50` *only* for warm marketing moments (landing-page hero) where you want a touch of humanity. |
+| `SOFT` (softness) | `0` (sharp) | Sharp terminals -- reads editorial / refined. Dial to `50` *only* for warm marketing moments (landing-page hero) where you want a touch of humanity. |
 | `opsz` (optical size) | auto | Larger sizes get more contrast; smaller sizes get more uniform stroke weight. CSS: `font-optical-sizing: auto;`. |
 
 ## Weight + style discipline
@@ -105,7 +105,7 @@ Fraunces has three variable axes. These are the brand-default values:
 }
 ```
 
-The Latin face always comes first — for mixed content (an English UI
+The Latin face always comes first -- for mixed content (an English UI
 string with a single Japanese word) the browser falls through to the
 JA face only for the characters Fraunces/Inter can't render. Clean
 visual mix.
@@ -117,10 +117,10 @@ visual mix.
 |---|---|---|---|---|
 | display | `Fraunces` | `'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times …` | 400 700 | opsz, wght, SOFT |
 | body | `Inter` | `system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',…` | 400 700 | wght |
-| mono | `IBM Plex Mono` | `ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, C…` | 400, 500 | — |
+| mono | `IBM Plex Mono` | `ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, C…` | 400, 500 | -- |
 <!-- /AUTO-GENERATED:font-table -->
 
-## CV template — separate decision
+## CV template -- separate decision
 
 The CV template's typography is a *user-deliverable* concern, not a
 brand-self-presentation concern. ATS parsers can be quirky with serif
@@ -128,17 +128,17 @@ fonts in headings.
 
 **Decision: keep the CV template on Inter for every role.** Pure sans
 maximizes ATS parseability. The brand identity applies to *Heron*
-(the product) — not to the user's CV (the artifact they hand to a
+(the product) -- not to the user's CV (the artifact they hand to a
 recruiter). The Fraunces serif lives in the web/native UI; the CV
 template ships clean Inter end-to-end.
 
-Implementation: the CV template uses Inter only —
+Implementation: the CV template uses Inter only --
 woff2 files live at templates/fonts/inter-{latin,latin-ext}.woff2,
 and update `templates/cv-template.html` font-family declarations.
 
 ## Implementation notes (all wired)
 
-1. **Self-hosted woff2 files** — present under `ui/static/fonts/`:
+1. **Self-hosted woff2 files** -- present under `ui/static/fonts/`:
    `fraunces-{latin,latin-ext}.woff2`, `inter-{latin,latin-ext}.woff2`,
    `ibm-plex-mono-{400,500}-{latin,latin-ext}.woff2`. The CV ships
    Inter-only under `templates/fonts/inter-{latin,latin-ext}.woff2`.
@@ -146,11 +146,11 @@ and update `templates/cv-template.html` font-family declarations.
    block of `ui/src/app.css` by `scripts/native/apply-brand.mjs`
    (function `appCssFontFaces`). One source: `brand.json::fonts`.
 3. **CV template** (`templates/cv-template.html`) uses Inter
-   throughout — ATS-safe, matches `brand.json::fonts.body`.
+   throughout -- ATS-safe, matches `brand.json::fonts.body`.
 4. **Components** read the cascade defaults set in `app.css`
    (`body { font-family: var(--font-body); }`); no hardcoded
    `font-family` declarations outside the AUTO-GENERATED block.
-5. **Pre-commit + CI verifier** —
+5. **Pre-commit + CI verifier** --
    `scripts/system/verify-fonts.mjs` recomputes SHA256 of every
    `ui/static/fonts/*.woff2` and compares against
    `ui/static/fonts/CHECKSUMS.json`. Runs via lefthook's

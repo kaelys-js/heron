@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * validate-json-schemas.mjs — validate every JSON/JSONC config against
+ * validate-json-schemas.mjs -- validate every JSON/JSONC config against
  * its `$schema` declaration.
  *
  * Why: tools like turbo / biome / release-please catch schema errors at
@@ -23,7 +23,7 @@
  *     VS Code uses) so comments + trailing commas don't trip us up.
  *   - Draft-2020-12 schemas use the Ajv2020 import (legacy Ajv default
  *     doesn't include the 2020 meta-schema).
- *   - Strict mode disabled — schemas in the wild use vendor-specific
+ *   - Strict mode disabled -- schemas in the wild use vendor-specific
  *     keywords (allowAdditionalProperties, etc.).
  *
  * Exit 0 if every file validates; exit 1 if any fails. Soft-skips files
@@ -40,7 +40,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..', '..');
 const require_ = createRequire(import.meta.url);
 
-// Files explicitly excluded from validation — these have a $schema
+// Files explicitly excluded from validation -- these have a $schema
 // declaration but the schema is broken / wrong / lags the runtime.
 const SKIP = new Map([
   [
@@ -65,7 +65,7 @@ const SKIP_DIRS = new Set([
   'venv',
   '.git',
   // Note: per-user Playwright session dirs (.playwright-{portal}/) now live
-  // under data/users/{uid}/ or data/profiles/_shared/ — both covered by the
+  // under data/users/{uid}/ or data/profiles/_shared/ -- both covered by the
   // `data` entry below. No repo-root .playwright-* dirs after the
   // multi-user migration.
   'DerivedData',
@@ -75,7 +75,7 @@ const SKIP_DIRS = new Set([
   'output', // user-layer
 ]);
 
-// Local schema URLs we know about — speeds up resolution when a schema
+// Local schema URLs we know about -- speeds up resolution when a schema
 // points to a remote URL we can resolve locally via pnpm. Keyed on the
 // remote URL, value is a pkg:<pkg>/<path> shorthand.
 const KNOWN_LOCAL_MIRRORS = new Map([
@@ -117,7 +117,7 @@ function detectSchema(absPath, jsoncParser) {
     return null;
   }
   // jsonc-parser tolerates BOTH strict JSON and JSONC (comments +
-  // trailing commas) — single parser path for everything.
+  // trailing commas) -- single parser path for everything.
   const errors = [];
   const data = jsoncParser.parse(raw, errors, {
     allowTrailingComma: true,
@@ -161,7 +161,7 @@ mkdirSync(CACHE_DIR, { recursive: true });
 /** Resolve schema spec (pkg:foo/bar.json / https:// / ./path). */
 async function loadSchema(spec) {
   if (spec.startsWith('pkg:')) {
-    // pkg:packageName/path.json — Node's package resolution handles
+    // pkg:packageName/path.json -- Node's package resolution handles
     // pnpm's nested .pnpm/<pkg>@<v>/node_modules/ layout transparently.
     // Search paths cover root + workspace packages (some deps live only
     // inside ui/electron/node_modules under pnpm's isolated linker).
@@ -262,7 +262,7 @@ async function main() {
     const draft = schema.$schema || '';
     const isDraft2020 = draft.includes('2020-12');
     // Silence the "unknown format" warnings ajv-formats prints for
-    // vendor types like uint8 / uint16 / uint64 in the biome schema —
+    // vendor types like uint8 / uint16 / uint64 in the biome schema --
     // they're harmless (ajv ignores unknown formats by default) but
     // make the CI log noisy.
     const silentLogger = { log: () => {}, warn: () => {}, error: console.error };

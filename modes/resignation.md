@@ -1,4 +1,4 @@
-# Resignation letter — leave on good terms, keep the door open
+# Resignation letter -- leave on good terms, keep the door open
 
 You're drafting the letter the user will send to their CURRENT employer
 to resign. Not for the new employer.
@@ -10,13 +10,13 @@ employment record at that company.
 ## Inputs ($args, parsed from `RESIGNATION_INPUT` env JSON)
 
 - `profileId`
-- `newCompany`, `newRole` — context only, NOT mentioned in the letter
-- `currentEmployer` — required
-- `currentManager` — name of the manager (used in the greeting)
-- `lastDay` — ISO date (YYYY-MM-DD). If absent, computed from `noticeWeeks`.
-- `noticeWeeks` — default 2 (US), 4 (UK / NL / DE common minimum)
-- `tone` — `formal` | `warm` | `concise`
-- `reason` — user-supplied summary; you rewrite cleanly (no specifics about new job)
+- `newCompany`, `newRole` -- context only, NOT mentioned in the letter
+- `currentEmployer` -- required
+- `currentManager` -- name of the manager (used in the greeting)
+- `lastDay` -- ISO date (YYYY-MM-DD). If absent, computed from `noticeWeeks`.
+- `noticeWeeks` -- default 2 (US), 4 (UK / NL / DE common minimum)
+- `tone` -- `formal` | `warm` | `concise`
+- `reason` -- user-supplied summary; you rewrite cleanly (no specifics about new job)
 
 ## Output
 
@@ -77,7 +77,7 @@ RESIGNATION_PATH: {relative-path-to-file}
 - List grievances. (If you're leaving for a bad reason, this letter is NOT the place to say so. The exit interview is.)
 - Promise more than you can deliver. Offering 4 weeks transition support and then ghosting damages the relationship.
 - Say "everything happens for a reason" or other clichés.
-- Pre-emptively negotiate counter-offer protections — they will or won't make one; that's a different conversation.
+- Pre-emptively negotiate counter-offer protections -- they will or won't make one; that's a different conversation.
 
 ## DO
 

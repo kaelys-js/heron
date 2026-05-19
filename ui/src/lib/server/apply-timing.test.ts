@@ -1,5 +1,5 @@
 /**
- * lib/server/apply-timing — banding of a job's first-seen date.
+ * lib/server/apply-timing -- banding of a job's first-seen date.
  *
  * Mocks the scan-history file lookup so we can exercise every band
  * (fresh, good, fading, late) deterministically.

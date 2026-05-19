@@ -1,5 +1,5 @@
 /**
- * quality-checks — server-side wrappers for ats-check, resume-quality
+ * quality-checks -- server-side wrappers for ats-check, resume-quality
  * and cover-letter-check. Each spawns the corresponding mjs script
  * in --json mode and returns a typed result.
  *
@@ -8,7 +8,7 @@
  *   • /api/job/[id]/cover-letter (after cover-letter render → cover-letter-check)
  *   • onboarding flow (when user uploads/edits their base CV)
  *
- * Failures are SURFACED, never blocking — we always return the score so
+ * Failures are SURFACED, never blocking -- we always return the score so
  * the caller can decide whether to retry, auto-fix, or just warn the user.
  */
 
@@ -36,10 +36,10 @@ export type QualityResult = {
 };
 
 /** Result shape from ai-detect-check.mjs. Independent of QualityResult
- *  because it doesn't use the pass/warn/fail model — it reports a single
+ *  because it doesn't use the pass/warn/fail model -- it reports a single
  *  0-100 risk score with per-signal evidence. */
 export type AiDetectResult = {
-  /** 0-100 — higher = more LLM-like. Threshold: <50 = low risk, 50-74 =
+  /** 0-100 -- higher = more LLM-like. Threshold: <50 = low risk, 50-74 =
    *  medium (rewrite for burstiness), ≥75 = high (modern detectors will flag). */
   aiScore: number;
   wordCount: number;
@@ -219,7 +219,7 @@ export function checkAiDetect(mdPath: string): Promise<AiDetectResult> {
       try {
         p.kill('SIGTERM');
       } catch {
-        /* process already exited — kill races with the close event */
+        /* process already exited -- kill races with the close event */
       }
       reportServerError(
         'quality-checks',
@@ -280,7 +280,7 @@ export function checkSemanticMatch(cvPath: string, jdPath: string): Promise<Sema
       try {
         p.kill('SIGTERM');
       } catch {
-        /* process already exited — kill races with the close event */
+        /* process already exited -- kill races with the close event */
       }
       reportServerError(
         'quality-checks',
@@ -366,7 +366,7 @@ export function checkNarrativeArc(cvPath: string): Promise<NarrativeResult> {
       try {
         p.kill('SIGTERM');
       } catch {
-        /* process already exited — kill races with the close event */
+        /* process already exited -- kill races with the close event */
       }
       reportServerError(
         'quality-checks',
@@ -401,7 +401,7 @@ export function checkNarrativeArc(cvPath: string): Promise<NarrativeResult> {
 }
 
 /** Sugar: run all four checks in parallel for a job's outputs (PDF + CV.md + cover.md).
- *  Now includes the perplexity-burstiness AI detector — score the markdown
+ *  Now includes the perplexity-burstiness AI detector -- score the markdown
  *  source (not the PDF) since the detector reads text. */
 export async function checkAll(opts: {
   pdfPath?: string;

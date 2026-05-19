@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 /**
- * dev-apple-watch — one-shot: build + install + launch the watchOS app.
+ * dev-apple-watch -- one-shot: build + install + launch the watchOS app.
  *
  * The Watch app lives at ui/ios/App/WatchApp/ as a standalone
- * watchOS 10+ SwiftUI app (Single Target — no WatchKit Extension). It
+ * watchOS 10+ SwiftUI app (Single Target -- no WatchKit Extension). It
  * shows the top job to apply to + open issues, reads from the App Group
  * container `group.com.heron.app`, and receives live updates
  * via WCSession from the paired iPhone.
  *
  * Flow:
- *   1. Preflight — xcode tools + watch sim runtime
+ *   1. Preflight -- xcode tools + watch sim runtime
  *   2. Apply brand (idempotent)
  *   3. Run add-xcode-targets.rb (registers WatchApp target if
  *      missing; idempotent)
@@ -17,11 +17,11 @@
  *      If not → opens Xcode + prints setup instructions (the watch
  *      target needs one-time wiring via Xcode UI; see
  *      WatchApp/WatchApp.swift's header for steps).
- *   5. Pick a watch simulator — boot it if needed
+ *   5. Pick a watch simulator -- boot it if needed
  *   6. xcodebuild -scheme WatchApp -destination 'id=…'
  *   7. xcrun simctl install + launch
  *
- * The Watch app has NO WebView — no Vite server is needed. Live job
+ * The Watch app has NO WebView -- no Vite server is needed. Live job
  * data flows over WCSession from the paired iPhone app, which itself
  * reads from the dashboard via the normal SvelteKit stack. Run
  * `pnpm dev:ios` in another terminal if you want the full data flow.
@@ -68,7 +68,7 @@ if (which('ruby') && which('gem')) {
 }
 
 step(4, 'Checking the WatchApp scheme exists in App.xcodeproj');
-// Read the pbxproj as text — fastest way to check target presence
+// Read the pbxproj as text -- fastest way to check target presence
 // without spawning xcodebuild -list (which can take 30s+ resolving SPM).
 const pbxText = readFileSync(pbxprojPath, 'utf8');
 const watchTargetRegistered =
@@ -100,7 +100,7 @@ if (!watchTargetRegistered) {
 ok('WatchApp is registered');
 
 step(5, 'Picking a watchOS simulator target');
-/** Tier function — Ultra beats Series 11 beats Series 10, etc. */
+/** Tier function -- Ultra beats Series 11 beats Series 10, etc. */
 const watchTier = (name) => {
   const m = name.match(/Apple Watch (Series|Ultra)\s*(\d+)?/i);
   if (!m) return -1;
@@ -111,7 +111,7 @@ const watchTier = (name) => {
  * Reuse a booted watch sim if any; else boot an existing-but-shutdown
  * sim; else CREATE one from the newest installed watch device type +
  * runtime (Xcode ships device-types but doesn't create sim instances
- * by default — first run after Xcode install needs the create step).
+ * by default -- first run after Xcode install needs the create step).
  */
 function pickWatchSim() {
   const devicesJson = capture('xcrun', ['simctl', 'list', 'devices', '-j'], {
@@ -130,7 +130,7 @@ function pickWatchSim() {
     }
   }
 
-  // 2. Existing shutdown watch sims — boot the newest.
+  // 2. Existing shutdown watch sims -- boot the newest.
   const existing = [];
   for (const [runtime, list] of Object.entries(devices.devices || {})) {
     if (!runtime.toLowerCase().includes('watch')) continue;
@@ -151,7 +151,7 @@ function pickWatchSim() {
     return pick.udid;
   }
 
-  // 3. No sim instances — create one from the newest device-type + runtime.
+  // 3. No sim instances -- create one from the newest device-type + runtime.
   info('no watch sims exist — creating one from installed device types');
   let typesJson, runtimesJson;
   try {
@@ -173,7 +173,7 @@ function pickWatchSim() {
   const watchRuntimes = (runtimesJson.runtimes || [])
     .filter((r) => r.isAvailable && r.platform === 'watchOS')
     .sort((a, b) => {
-      // Newest runtime first — version is "10.4" / "11.2" etc.
+      // Newest runtime first -- version is "10.4" / "11.2" etc.
       const va = (a.version ?? '').split('.').map(Number);
       const vb = (b.version ?? '').split('.').map(Number);
       for (let i = 0; i < Math.max(va.length, vb.length); i++) {
@@ -189,7 +189,7 @@ function pickWatchSim() {
   // headless equivalent of clicking Xcode → Settings → Platforms → watchOS
   // → GET. Runs in foreground so the user sees the download progress; on
   // first run this takes 5-15 min depending on network. allowFail because
-  // download requires Apple ID auth in some configurations — if it can't
+  // download requires Apple ID auth in some configurations -- if it can't
   // download silently we fall through to the helpful error below.
   if (watchTypes.length > 0 && watchRuntimes.length === 0) {
     info('watch device types are installed but no watchOS runtime exists.');

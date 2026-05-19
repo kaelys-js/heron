@@ -1,5 +1,5 @@
 /**
- * JobStageBadge — browser-mode tests for the stage-state badge.
+ * JobStageBadge -- browser-mode tests for the stage-state badge.
  *
  * Cases focus on:
  *   • Null stage renders nothing

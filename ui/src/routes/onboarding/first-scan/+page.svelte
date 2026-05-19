@@ -32,7 +32,7 @@
   // Track each child scanner's state. The keys are job ids matching the
   // `source` field of activity events. Initialised from props, which is fine
   // during $state() construction.
-  // svelte-ignore state_referenced_locally — initial seed only
+  // svelte-ignore state_referenced_locally -- initial seed only
   let statuses = $state<Record<string, { status: ChildStatus; message?: string; found?: number }>>(
     Object.fromEntries(data.children.map((c) => [c.id, { status: 'pending' as const }])),
   );
@@ -55,7 +55,7 @@
     if (ev.source === 'scan-all') {
       // Top-level fan-out events.
       if (ev.title.includes('dispatched')) {
-        // No state change — children will report their own start events.
+        // No state change -- children will report their own start events.
         return;
       }
       if (ev.title.includes('finished')) {
@@ -84,7 +84,7 @@
       if (prev.status === 'success' || prev.status === 'error') return;
       statuses = { ...statuses, [id]: { status: 'running', message: ev.message ?? ev.title } };
     } else {
-      // info — running
+      // info -- running
       if (prev.status === 'success' || prev.status === 'error') return;
       statuses = { ...statuses, [id]: { status: 'running', message: ev.message ?? ev.title } };
     }
@@ -98,7 +98,7 @@
       if (startedAt) elapsedSec = Math.round((Date.now() - startedAt) / 1000);
     }, 500);
     try {
-      // Fire and forget — the SSE stream tells us when each child finishes.
+      // Fire and forget -- the SSE stream tells us when each child finishes.
       // Pass profileId in the body so the scan-all fan-out targets this
       // profile only (not every profile in the system).
       await api.post(

@@ -1,5 +1,5 @@
 /**
- * compile-latex — registry-exposed wrapper around `generate-latex.mjs`
+ * compile-latex -- registry-exposed wrapper around `generate-latex.mjs`
  * (D11). The user typically writes their CV as markdown (cv.md), but
  * advanced users who maintain a hand-written `.tex` CV can drop one in
  * the active user's `profiles/{slug}/output/cv.tex` (resolved to

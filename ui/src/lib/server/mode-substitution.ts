@@ -1,5 +1,5 @@
 /**
- * mode-substitution — orchestrator-side path-token substitution.
+ * mode-substitution -- orchestrator-side path-token substitution.
  *
  * Replaces the legacy "symlinks at repo root" mechanism. Mode files
  * (modes/*.md) contain `__TOKEN__` placeholders; this module resolves
@@ -22,7 +22,7 @@
  *      argument; two concurrent spawns for different profiles each
  *      get their own realized prompt. No global state, no lock.
  *
- * Token vocabulary documented in modes/_TOKENS.md — keep this file
+ * Token vocabulary documented in modes/_TOKENS.md -- keep this file
  * and that doc in sync.
  */
 
@@ -76,7 +76,7 @@ const ALL_TOKENS = new Set<string>([
  * `\b__[A-Z_]+__\b` doesn't even fire if there's a word character
  * after the trailing `__`.
  *
- * Unknown tokens (`__FOO__`) are LEFT AS LITERAL TEXT — substitution
+ * Unknown tokens (`__FOO__`) are LEFT AS LITERAL TEXT -- substitution
  * doesn't guess. A typo in a mode file shows up loud in the AI's
  * output.
  *
@@ -88,7 +88,7 @@ export function substituteModeTokens(profileId: string, source: string): string 
   return substituteModeTokensForUser(currentUserIdOrDefault(), profileId, source);
 }
 
-/** Like `substituteModeTokens` but takes an explicit userId — used
+/** Like `substituteModeTokens` but takes an explicit userId -- used
  *  by tests + background jobs that may operate on a different user
  *  than the request actor. */
 export function substituteModeTokensForUser(
@@ -109,7 +109,7 @@ export function substituteModeTokensForUser(
     if (sharedKind) {
       return userSharedPathForUser(userId, sharedKind);
     }
-    // Unknown token — leave as literal so the typo is visible.
+    // Unknown token -- leave as literal so the typo is visible.
     return match;
   });
 }

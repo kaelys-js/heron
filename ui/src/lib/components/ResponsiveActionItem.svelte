@@ -28,7 +28,7 @@
     /** Lucide-style icon component. Renders in a tinted square tile on
      *  mobile, inline on desktop. Mutually-exclusive with `leading`. */
     icon?: any;
-    /** Custom leading snippet — use for things that aren't a single
+    /** Custom leading snippet -- use for things that aren't a single
      *  icon (profile-color dots, avatars, multi-element badges). Takes
      *  precedence over `icon` if both are provided. */
     leading?: Snippet;

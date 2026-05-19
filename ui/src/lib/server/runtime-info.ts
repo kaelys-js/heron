@@ -1,7 +1,7 @@
 /**
  * Real runtime/integration health probes for the Runtimes page.
  *
- * Every value here is observed live from the system — no static "looks healthy" cards.
+ * Every value here is observed live from the system -- no static "looks healthy" cards.
  */
 
 import fs from 'node:fs';
@@ -99,7 +99,7 @@ function detectPython(): {
       sitePackagesPath = path.join(libDir, py, 'site-packages');
     }
   } catch (e) {
-    // .venv exists but lib/ is unreadable — corrupt venv. Surface so the
+    // .venv exists but lib/ is unreadable -- corrupt venv. Surface so the
     // user knows why the Runtimes page shows "unconfigured" despite a venv.
     logEvent('runtime-info', 'Could not read .venv/lib', {
       level: 'warn',
@@ -164,7 +164,7 @@ function eventsInWindow(predicate: (ev: ActivityEvent) => boolean): {
   let count = 0;
   let lastUsed: number | null = null;
   let lastError: ActivityEvent | undefined;
-  // F25 — scope to the calling user. /runtimes is the consumer; it runs
+  // F25 -- scope to the calling user. /runtimes is the consumer; it runs
   // inside a user request context so currentUserIdOrDefault resolves
   // correctly. Pre-fix this counted user A's anthropic API errors
   // against user B's "last 24h" stats.

@@ -64,14 +64,14 @@ export type JobDef = {
   /** True = `runById` fans out across every schedulable user, wrapping each
    *  invocation in `runAsUser(userId, …)`. The job's `run()` sees one user
    *  per call via `currentUserId()`. False = job runs once with whatever
-   *  context the caller provides (system jobs only — boot, cleanup, etc.).
+   *  context the caller provides (system jobs only -- boot, cleanup, etc.).
    *
    *  Multi-user safety: every job that touches user data MUST set this to
    *  true. The vitest test `jobs-per-user.integration.test.ts` enforces
    *  this against the static set of system-only jobs. */
   perUser: boolean;
   /** The implementation. May spawn a subprocess, call `logEvent`, etc.
-   *  Must not throw — return `{ ok: false, error }` for failures. */
+   *  Must not throw -- return `{ ok: false, error }` for failures. */
   run: (args?: JobArgs) => Promise<JobResult> | JobResult;
 };
 

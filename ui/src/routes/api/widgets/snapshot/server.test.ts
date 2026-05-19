@@ -1,5 +1,5 @@
 /**
- * GET /api/widgets/snapshot — unified iOS widget + Watch data feed.
+ * GET /api/widgets/snapshot -- unified iOS widget + Watch data feed.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

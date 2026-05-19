@@ -1,5 +1,5 @@
 /**
- * lib/client/error-reporter — unified error funnel for web/Electron/iOS.
+ * lib/client/error-reporter -- unified error funnel for web/Electron/iOS.
  *
  * Tests:
  *   • reportError accepts Error, string, plain-value coercion

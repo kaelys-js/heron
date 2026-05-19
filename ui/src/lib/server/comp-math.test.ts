@@ -1,5 +1,5 @@
 /**
- * lib/server/comp-math — offer evaluation + side-by-side comparison.
+ * lib/server/comp-math -- offer evaluation + side-by-side comparison.
  *
  * Pure math, no IO. Tests cover input clamping, 4-year totals, equity
  * vesting, discounting, signing-bonus year-1 timing, and the comparator.

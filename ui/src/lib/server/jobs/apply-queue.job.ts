@@ -1,5 +1,5 @@
 /**
- * apply-queue-drain — autopilot job that processes Queued jobs.
+ * apply-queue-drain -- autopilot job that processes Queued jobs.
  *
  * Trigger: weekday daily 10:30 (replaces the legacy weekday-apply schedule
  * that fired apply-linkedin only). Manual run via /agents.
@@ -90,7 +90,7 @@ function preflightProfile(job: Job, portal: SupportedPortal): string | null {
   } catch {
     /* allow */
   }
-  // Visa / work-auth gate — short-circuit the apply if the JD requires
+  // Visa / work-auth gate -- short-circuit the apply if the JD requires
   // sponsorship the user doesn't have, OR the role is in a country the
   // user hasn't opted to relocate to. Same checks as /api/job/[id]/visa-check;
   // implemented here inline to keep the dispatcher self-contained.
@@ -99,7 +99,7 @@ function preflightProfile(job: Job, portal: SupportedPortal): string | null {
   return null;
 }
 
-/** Visa preflight — mirrors /api/job/[id]/visa-check but inline so the
+/** Visa preflight -- mirrors /api/job/[id]/visa-check but inline so the
  *  dispatcher doesn't need an HTTP call. Returns a block reason string
  *  ('visa: no-sponsorship') or null when the apply may proceed. */
 function preflightVisa(job: Job, profileId: string): string | null {
@@ -214,7 +214,7 @@ function dispatchApply(
             appendStep(job.id, step);
           } catch {
             // appendStep already surfaces its own errors via logEvent
-            // — swallow here so a state-file IO issue doesn't crash the
+            // -- swallow here so a state-file IO issue doesn't crash the
             // protocol parser.
           }
           logEvent('apply-' + portal, 'step: ' + step, {
@@ -232,7 +232,7 @@ function dispatchApply(
             lastResult = { status: trimmed, detail };
           }
         } else {
-          // Generic stdout line — surface at info level.
+          // Generic stdout line -- surface at info level.
           logEvent('apply-' + portal, line.slice(0, 200), {
             level: 'info',
             category: 'application',
@@ -340,7 +340,7 @@ async function runApplyQueueDrain(_args?: JobArgs): Promise<JobResult> {
       stepHistory: ['queued', 'dispatching'],
     });
 
-    // Pre-apply assembly only for production-quality portals — stubs don't
+    // Pre-apply assembly only for production-quality portals -- stubs don't
     // need a CV/cover letter (they're going to fail soft anyway).
     if (isPortalAutomated(portal)) {
       const ready = await ensureAssembly(job);
@@ -377,7 +377,7 @@ async function runApplyQueueDrain(_args?: JobArgs): Promise<JobResult> {
     } else if (result.status === 'manual-apply-needed') {
       // The Python adapter emits its own Issue via reportApplyFailure (called
       // from apply-portal.py through the dispatcher). But adapters may also
-      // exit 1 without calling it — defensive double-emit is OK because the
+      // exit 1 without calling it -- defensive double-emit is OK because the
       // Issue dedupeKey absorbs the duplicate.
       const reason = (result.detail ?? 'unknown').split(':')[0] as
         | 'captcha'
@@ -454,7 +454,7 @@ register({
   run: runApplyQueueDrain,
 });
 
-// Silence the unused-variable warning re: getProfile — kept in scope for
+// Silence the unused-variable warning re: getProfile -- kept in scope for
 // future per-profile preflight extensions (e.g. surface the friendly profile
 // name in Issue messages).
 void getProfile;

@@ -4,7 +4,7 @@
  * Used by the signup page BEFORE the user runs through Better Auth's
  * sign-up flow. Validates that the invite code is real, unexpired, and
  * unclaimed. The actual claim (setting claimedByUserId) doesn't happen
- * until after Better Auth has created the user — that's handled by a
+ * until after Better Auth has created the user -- that's handled by a
  * follow-up call to /api/auth/invite/finalize once we know the new
  * user's id.
  *
@@ -25,7 +25,7 @@ export const POST = wrap('invite-claim', async ({ request }: { request: Request 
     badRequest('expected JSON body with { code: string, email: string }');
   }
   if (userCount() === 0) {
-    // No users yet — the first signup goes through without an invite.
+    // No users yet -- the first signup goes through without an invite.
     badRequest('No users exist yet — sign up as the first user without a code.');
   }
   const invite = lookupInvite(body.code.trim());

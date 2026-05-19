@@ -1,12 +1,12 @@
 /**
- * apply-linkedin-login — opens LinkedIn in a Playwright browser so the user
+ * apply-linkedin-login -- opens LinkedIn in a Playwright browser so the user
  * can sign in. Saves the authenticated session per-user at
  * `data/users/{uid}/.playwright-linkedin/` (or
  * `data/profiles/_shared/.playwright-linkedin/` in legacy single-user installs)
  * for subsequent scan-linkedin-auth + linkedin-easy-apply runs.
  *
  * Previously this was only handled by the legacy `/api/run` switch with
- * task id `apply-linkedin-login` — invisible to the registry, the Agents
+ * task id `apply-linkedin-login` -- invisible to the registry, the Agents
  * page, and any post-Phase-1 surface. Registering here makes it show up
  * with every other manual job (D25).
  */

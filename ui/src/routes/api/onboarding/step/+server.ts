@@ -1,7 +1,7 @@
 /**
  * POST /api/onboarding/step  { step: string, action: 'complete' | 'skipped' }
  *
- * Used by every wizard step page on submit. Idempotent — re-marking the
+ * Used by every wizard step page on submit. Idempotent -- re-marking the
  * same step is a no-op.
  */
 import { wrap, badRequest } from '$lib/server/api-helpers';

@@ -1,12 +1,12 @@
 <script lang="ts">
   /**
-   * /settings/backend — backend discovery configuration.
+   * /settings/backend -- backend discovery configuration.
    *
    * Two text inputs:
-   *   1. Tailscale host — used as the 4th-in-line discovery candidate.
+   *   1. Tailscale host -- used as the 4th-in-line discovery candidate.
    *      Pattern: `http://imac.tail-XXXX.ts.net:5173` (the user's Mac's
    *      magic-DNS hostname, with explicit http:// + :port).
-   *   2. Production URL — last-resort fallback when LAN + Tailscale fail.
+   *   2. Production URL -- last-resort fallback when LAN + Tailscale fail.
    *      For users who self-host a public deployment.
    *
    * Both persist to App Group UserDefaults (iOS) AND localStorage so

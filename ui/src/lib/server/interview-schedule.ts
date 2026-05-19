@@ -1,5 +1,5 @@
 /**
- * interview-schedule — per-job scheduledAt + reminder scheduler.
+ * interview-schedule -- per-job scheduledAt + reminder scheduler.
  *
  * Today the system knows a job is in PhoneScreen/Technical/Onsite/Final
  * status but NOT when the actual call is. The user might have a phone
@@ -35,9 +35,9 @@ export type ScheduleEntry = {
   interviewers?: Array<{ name: string; role?: string; linkedinUrl?: string }>;
   /** Optional: notes the user wants in the reminder */
   notes?: string;
-  /** Tracking — when this entry was set */
+  /** Tracking -- when this entry was set */
   setAt: number;
-  /** Tracking — which reminders have fired already (T-24h, T-30min) */
+  /** Tracking -- which reminders have fired already (T-24h, T-30min) */
   reminders?: { fired24h?: boolean; fired30min?: boolean };
 };
 
@@ -62,7 +62,7 @@ export function listSchedule(profileId: string): ScheduleEntry[] {
       const e = JSON.parse(line) as ScheduleEntry;
       if (e.jobId) map.set(e.jobId, e);
     } catch {
-      // Corrupt line from a partial write — skip and continue loading.
+      // Corrupt line from a partial write -- skip and continue loading.
     }
   }
   return [...map.values()].sort((a, b) => a.scheduledAt - b.scheduledAt);

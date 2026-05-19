@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * generate-latex.mjs — Validate and compile a generated .tex CV file to PDF
+ * generate-latex.mjs -- Validate and compile a generated .tex CV file to PDF
  *
  * Usage:
  *   node generate-latex.mjs <input.tex> [output.pdf]

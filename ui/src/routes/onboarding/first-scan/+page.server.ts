@@ -1,4 +1,4 @@
-/** First-scan step preload — list which sources are connected so we know
+/** First-scan step preload -- list which sources are connected so we know
  *  which child scanners scan-all will fan out to. We don't trigger anything
  *  here; the page does that on mount via /api/run. */
 import { listSourcesWithState } from '$lib/server/sources';

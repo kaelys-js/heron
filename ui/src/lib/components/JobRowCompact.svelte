@@ -17,7 +17,7 @@
   import SourceChip from './SourceChip.svelte';
 
   /**
-   * `hideCompany` removes the company column — used inside CompanyGroup
+   * `hideCompany` removes the company column -- used inside CompanyGroup
    * (where the section header already names the company). Frees up space
    * for the role to be more legible.
    */
@@ -161,7 +161,7 @@
         </Tooltip.Content>
       </Tooltip.Root>
 
-      <!-- 3. Role (flex) — tooltip shows full role when truncated -->
+      <!-- 3. Role (flex) -- tooltip shows full role when truncated -->
       <Tooltip.Root>
         <Tooltip.Trigger>
           {#snippet child({ props })}
@@ -261,7 +261,7 @@
         {/if}
       </span>
 
-      <!-- 9. File indicators (w-12) — read-only state, last cell INSIDE the anchor -->
+      <!-- 9. File indicators (w-12) -- read-only state, last cell INSIDE the anchor -->
       <span class="w-12 flex-shrink-0 inline-flex items-center justify-end gap-1.5">
         {#if job.reportFile}
           <Tooltip.Root>

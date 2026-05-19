@@ -1,5 +1,5 @@
 /**
- * offline-cache — IndexedDB-backed read cache.
+ * offline-cache -- IndexedDB-backed read cache.
  *
  * Uses `fake-indexeddb` (already in test-setup.ts) so each test runs
  * against an isolated in-memory IDB instance.
@@ -67,7 +67,7 @@ describe('offline-cache — set/get round-trip', () => {
 
   it('returns null for non-cacheable URL even if there is a stale entry', async () => {
     // Forcibly write a non-cacheable URL via a direct call. setCached
-    // should reject it — but if it leaked through, getCached must
+    // should reject it -- but if it leaked through, getCached must
     // still gate the read on isCacheable.
     await setCached('/api/scan', { sneaky: true });
     expect(await getCached('/api/scan')).toBeNull();

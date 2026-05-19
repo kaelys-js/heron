@@ -1,12 +1,12 @@
 /**
- * Root client layout — controls SSR vs CSR mode.
+ * Root client layout -- controls SSR vs CSR mode.
  *
  * When building for Capacitor (CAPACITOR=1 → adapter-static), every page
  * must render client-side because the WebView has no Node server. The
  * existing +layout.server.ts still loads on Node builds; adapter-static
  * just skips it.
  *
- * For the regular Node build this stays harmless — ssr remains true by
+ * For the regular Node build this stays harmless -- ssr remains true by
  * default (this file doesn't override it), so SSR continues to work.
  */
 import { browser } from '$app/environment';
@@ -18,11 +18,11 @@ const IS_CAPACITOR = import.meta.env.PUBLIC_CAPACITOR_BUILD === '1';
 
 export const ssr = !IS_CAPACITOR;
 export const prerender = false;
-// Trailing slash needs to match fallback: 'index.html' from svelte.config —
+// Trailing slash needs to match fallback: 'index.html' from svelte.config --
 // otherwise the WebView fails to load /pipeline/ vs /pipeline.
 export const trailingSlash = 'never';
 
-// Merge with parent (+layout.server.ts) data — DON'T replace it, or downstream
+// Merge with parent (+layout.server.ts) data -- DON'T replace it, or downstream
 // pages lose access to activeProfile/inboxCount/queueCount/etc.
 export const load = async ({ data }) => {
   return {

@@ -7,7 +7,7 @@ export type Status =
   | 'Applying'
   | 'Applied'
   | 'Screened'
-  // Interview sub-stages — finer-grained than the legacy 'Interview' bucket.
+  // Interview sub-stages -- finer-grained than the legacy 'Interview' bucket.
   // 'Interview' is preserved as a catch-all parent for back-compat with
   // existing applications.md rows; new flows should pick one of the specific
   // stages below.
@@ -18,7 +18,7 @@ export type Status =
   | 'TakeHome'
   | 'Final'
   | 'Offer'
-  // Post-offer stages — used by the negotiation + decision-support flows.
+  // Post-offer stages -- used by the negotiation + decision-support flows.
   | 'Negotiating'
   | 'Accepted'
   | 'Declined'
@@ -83,7 +83,7 @@ export type Job = {
   /**
    * Where the URL was first discovered. Looked up from data/scan-history.tsv
    * during job parsing. Stable identifier (`workday-api`, `aijobs`,
-   * `linkedin-alert-email`, etc) — see `SOURCE_LABELS` for human-readable
+   * `linkedin-alert-email`, etc) -- see `SOURCE_LABELS` for human-readable
    * names + tints.
    */
   source?: string;
@@ -133,7 +133,7 @@ export const SOURCE_LABELS: Record<string, { label: string; tint: string }> = {
     label: 'Indeed (auth)',
     tint: 'bg-blue-700/15 text-blue-200 border-blue-700/50',
   },
-  // Broad scan (scan-broad.py — JobSpy + free aggregators)
+  // Broad scan (scan-broad.py -- JobSpy + free aggregators)
   linkedin: { label: 'LinkedIn', tint: 'bg-sky-500/10 text-sky-300 border-sky-500/30' },
   indeed: { label: 'Indeed', tint: 'bg-blue-700/10 text-blue-300 border-blue-700/30' },
   glassdoor: {
@@ -177,7 +177,7 @@ export const STATUS_ORDER: Status[] = [
   'Applying',
   'Applied',
   'Screened',
-  // Interview stages — ordered by typical progression. 'Interview' as a
+  // Interview stages -- ordered by typical progression. 'Interview' as a
   // generic bucket sits last so users with legacy data still see it grouped
   // but don't pick it for new flows.
   'PhoneScreen',
@@ -202,11 +202,11 @@ export const STATUS_TINTS: Record<Status, string> = {
   Scored: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30',
   Ready: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
   Queued: 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/30',
-  // Applying = active blue with pulse anim — script is running right now.
+  // Applying = active blue with pulse anim -- script is running right now.
   Applying: 'bg-blue-500/15 text-blue-200 border-blue-500/50 animate-pulse',
   Applied: 'bg-violet-500/10 text-violet-300 border-violet-500/30',
   Screened: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
-  // Interview stages share a warm hue family — distinguishable but
+  // Interview stages share a warm hue family -- distinguishable but
   // visually clustered so you can tell "interview pipeline" at a glance.
   PhoneScreen: 'bg-amber-500/10 text-amber-200 border-amber-500/40',
   Technical: 'bg-orange-500/10 text-orange-200 border-orange-500/40',
@@ -215,7 +215,7 @@ export const STATUS_TINTS: Record<Status, string> = {
   Final: 'bg-red-400/15 text-red-200 border-red-400/50',
   Interview: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
   Offer: 'bg-green-500/15 text-green-300 border-green-500/40',
-  // Post-offer flow stages — green spectrum trending to neutral as the
+  // Post-offer flow stages -- green spectrum trending to neutral as the
   // candidate moves from offer to outcome.
   Negotiating: 'bg-lime-500/15 text-lime-200 border-lime-500/50',
   Accepted: 'bg-emerald-500/25 text-emerald-100 border-emerald-500/60',
@@ -225,7 +225,7 @@ export const STATUS_TINTS: Record<Status, string> = {
   Ghosted: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/40 border-dashed',
   Rejected: 'bg-red-500/10 text-red-300 border-red-500/30',
   Closed: 'bg-zinc-500/5 text-zinc-500 border-zinc-500/20',
-  // ManualApplyNeeded = amber with dashed border — action required.
+  // ManualApplyNeeded = amber with dashed border -- action required.
   ManualApplyNeeded: 'bg-amber-500/15 text-amber-200 border-amber-500/50 border-dashed',
 };
 
@@ -288,7 +288,7 @@ export type ActivityEvent = {
 };
 
 /**
- * Issue — a structured, persisted "open problem" that needs user attention.
+ * Issue -- a structured, persisted "open problem" that needs user attention.
  * Distinct from ActivityEvent because issues represent open work that should
  * stay visible until resolved (failed integrity check, dead links found,
  * autopilot circuit-broken). Backed by data/issues.jsonl.
@@ -304,7 +304,7 @@ export type Issue = {
   summary: string;
   /** Optional longer body / diagnostic detail (markdown OK). */
   detail?: string;
-  /** Optional fix hint — a button + URL the UI surfaces. */
+  /** Optional fix hint -- a button + URL the UI surfaces. */
   fix?: { label: string; href: string };
   /** When set, repeated reports of the same dedupeKey overwrite the previous
    *  open issue rather than creating a new one. */
@@ -328,7 +328,7 @@ export type SortKey = 'score-desc' | 'score-asc' | 'date-desc' | 'company-asc';
  */
 export type ViewMode = 'board' | 'list' | 'compact' | 'table' | 'by-company';
 /**
- * Tab filter — controls which Status columns appear on the board.
+ * Tab filter -- controls which Status columns appear on the board.
  *  - 'all': every status (default)
  *  - 'ready': just the Ready column
  *  - 'applied': Applied + Screened + Interview + Offer

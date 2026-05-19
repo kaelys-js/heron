@@ -1,7 +1,7 @@
 /**
  * GET /api/job/[id]/signals
  *
- * Returns dysfunctionSignal + remoteReality for a single job. Cheap —
+ * Returns dysfunctionSignal + remoteReality for a single job. Cheap --
  * runs server-side over the scan-history TSV + the deep-eval report.
  * No agent spawn. Surfaces on the job page as warning badges.
  */

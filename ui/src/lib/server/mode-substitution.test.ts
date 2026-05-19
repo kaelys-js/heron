@@ -1,5 +1,5 @@
 /**
- * mode-substitution.test.ts — unit tests for the token substitution
+ * mode-substitution.test.ts -- unit tests for the token substitution
  * engine. Covers every per-profile + user-shared token, word-boundary
  * edge cases, idempotency, and the "leave unknown tokens as literal"
  * guarantee.
@@ -103,7 +103,7 @@ describe('substituteModeTokensForUser', () => {
       const out = substituteModeTokensForUser(USER, PROFILE, 'prefix__CV__suffix');
       // Underscores are word chars in JS regex, so `\b` requires a
       // transition between word/non-word. Inside `prefix__CV__suffix`
-      // every character is a word char — no boundary anywhere.
+      // every character is a word char -- no boundary anywhere.
       expect(out).toBe('prefix__CV__suffix');
     });
   });

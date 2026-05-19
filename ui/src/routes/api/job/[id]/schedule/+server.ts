@@ -1,5 +1,5 @@
 /**
- * /api/job/[id]/schedule — set / read the scheduled interview time.
+ * /api/job/[id]/schedule -- set / read the scheduled interview time.
  *
  * GET → current schedule entry (or null)
  * POST body: { scheduledAt: number (ms epoch), stage?, format?,

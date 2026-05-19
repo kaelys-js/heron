@@ -10,7 +10,7 @@
  *
  * The legacy /api/run endpoint is preserved for the original 3 task ids
  * (scan, gemini, apply-linkedin) so existing UI code keeps working without
- * a change. New code should prefer /api/jobs/[id]/run for new task types —
+ * a change. New code should prefer /api/jobs/[id]/run for new task types --
  * the Agents page wires its Run buttons to that endpoint for any
  * non-legacy registered job.
  */

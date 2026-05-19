@@ -1,5 +1,5 @@
 /**
- * POST /api/onboarding/complete — flip the completed flag, fire seed.
+ * POST /api/onboarding/complete -- flip the completed flag, fire seed.
  *
  * Post-Option-C: spawn pattern goes through spawnAgentWithMode() (not
  * the legacy slash-command path). Tests assert that helper is called

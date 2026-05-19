@@ -1,7 +1,7 @@
 /**
  * GET /api/reality
  *
- * The "Reality dashboard" — what's ACTUALLY happening, free of confirmation
+ * The "Reality dashboard" -- what's ACTUALLY happening, free of confirmation
  * bias. Combines:
  *
  *   • Funnel rates (applied → screen → interview → offer → accept)
@@ -38,7 +38,7 @@ export const GET = wrap('reality', async () => {
   const thankYousOwed = findThankYousOwed(profileId);
   const stale = listStaleJobs(DAYS_TO_GHOST, profileId);
 
-  // Leverage points — what could turn into an offer in the next 14d
+  // Leverage points -- what could turn into an offer in the next 14d
   const leverage: { kind: string; signal: string; jobId?: string }[] = [];
   for (const o of offers) {
     if (o.decisionDeadline) {
@@ -70,7 +70,7 @@ export const GET = wrap('reality', async () => {
     });
   }
 
-  // Hidden costs — work the user owes that's slipping
+  // Hidden costs -- work the user owes that's slipping
   const hiddenCosts: { kind: string; count: number; severity: 'info' | 'warn' | 'error' }[] = [];
   if (thankYousOwed.length) {
     hiddenCosts.push({
@@ -95,7 +95,7 @@ export const GET = wrap('reality', async () => {
     });
   }
 
-  // Targeting reality — which stage leaks most
+  // Targeting reality -- which stage leaks most
   const conversions = [
     { name: 'applied→screen', rate: funnel.appliedToScreen },
     { name: 'screen→interview', rate: funnel.screenToInterview },

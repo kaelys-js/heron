@@ -35,7 +35,7 @@
     return Math.floor(dt / 86_400_000) + 'd ago';
   }
 
-  // /api/health snapshot — surfaced at the top so the user sees pipeline
+  // /api/health snapshot -- surfaced at the top so the user sees pipeline
   // freshness + key configuration without leaving Settings. Refreshes on
   // mount only; click Refresh to re-poll.
   type HealthSnapshot = {
@@ -74,7 +74,7 @@
 
   type ProviderKey = 'ANTHROPIC_API_KEY' | 'GEMINI_API_KEY' | 'ADZUNA_APP_ID' | 'ADZUNA_APP_KEY';
 
-  // svelte-ignore state_referenced_locally — `data.env` is intentionally the seed; env takes over after save.
+  // svelte-ignore state_referenced_locally -- `data.env` is intentionally the seed; env takes over after save.
   let env = $state<Record<string, string>>({ ...data.env });
   let pending = $state<Record<string, string>>({});
   let revealed = $state<Record<string, boolean>>({});

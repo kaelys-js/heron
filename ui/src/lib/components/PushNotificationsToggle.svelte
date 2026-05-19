@@ -115,7 +115,7 @@
     if (!ev) return;
     if (!enabledLevels[ev.level as keyof typeof enabledLevels]) return;
     try {
-      // Title format: "Heron · <source>" — leading display name
+      // Title format: "Heron · <source>" -- leading display name
       // keeps it identifiable in the OS notification tray when many
       // apps are stacked. Empty source falls through to bare display
       // name rather than a trailing " · " separator with nothing after.
@@ -126,7 +126,7 @@
         tag: `${BRAND_STORAGE_PREFIX}:` + (ev.source ?? 'evt'),
       });
     } catch {
-      /* silently fail — Notification can throw if quota exceeded */
+      /* silently fail -- Notification can throw if quota exceeded */
     }
   }
 

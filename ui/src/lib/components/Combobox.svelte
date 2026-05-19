@@ -1,7 +1,7 @@
 <!--
   Searchable combobox built on Popover + Command. Used for fields where:
     * The list is long enough that a plain Select gets unwieldy (countries)
-    * OR the list isn't exhaustive — users with niche values need to type
+    * OR the list isn't exhaustive -- users with niche values need to type
       their own (visa status, on-site availability, currencies for some
       regional flavours).
 

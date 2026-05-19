@@ -1,6 +1,6 @@
 /**
- * DELETE /api/job/[id]/interviewers/[slug] — remove one interviewer.
- * GET    /api/job/[id]/interviewers/[slug] — fetch a single interviewer record.
+ * DELETE /api/job/[id]/interviewers/[slug] -- remove one interviewer.
+ * GET    /api/job/[id]/interviewers/[slug] -- fetch a single interviewer record.
  */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';

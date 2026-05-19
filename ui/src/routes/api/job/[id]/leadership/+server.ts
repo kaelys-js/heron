@@ -4,7 +4,7 @@
  * Pull the leadership-lookup deep-research blob for this job's company.
  * Cached at `{profile-dir}/leadership/{company-slug}.json` for 30 days;
  * `?force=1` bypasses the cache. Same legal posture as comp-benchmark
- * and team-rep — hits public pages once, doesn't scrape.
+ * and team-rep -- hits public pages once, doesn't scrape.
  */
 
 import fs from 'node:fs';

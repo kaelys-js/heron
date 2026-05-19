@@ -1,5 +1,5 @@
 /**
- * modes — single source of truth for resolving a mode file path given a
+ * modes -- single source of truth for resolving a mode file path given a
  * profile's selected language. Centralised so every spawn site that reads
  * `modes/*.md` honours the user's language preference.
  *
@@ -8,7 +8,7 @@
  * 'modes/de' → modes/de/<name>.md, falling back to modes/<name>.md when
  * the localized file doesn't exist. Same for fr / ja / pt / ru / es.
  *
- * Locale resolution is intentionally permissive — a `_profile.md`
+ * Locale resolution is intentionally permissive -- a `_profile.md`
  * customisation file might exist at modes/_profile.md but NOT
  * modes/de/_profile.md, and we should still find it.
  */

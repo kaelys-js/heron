@@ -1,5 +1,5 @@
 /**
- * lib/server/portals — YAML CRUD for per-profile portals.yml.
+ * lib/server/portals -- YAML CRUD for per-profile portals.yml.
  *
  * Mocks fs + profile-paths so we can feed synthetic YAML content +
  * assert read/write behaviour without touching disk.

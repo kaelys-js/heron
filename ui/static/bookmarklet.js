@@ -13,7 +13,7 @@
  *      fields on the page. The user reviews, tweaks any answers that
  *      sound off, and clicks the portal's Submit button themselves.
  *
- * NOTE: This file is the SOURCE — what gets pasted into a bookmark bar is
+ * NOTE: This file is the SOURCE -- what gets pasted into a bookmark bar is
  * the minified IIFE wrapped in `javascript:` per the Settings page.
  */
 
@@ -181,7 +181,7 @@
         toast('heron: ' + (data.error || 'unknown error'), 'error');
         return;
       }
-      // Fill answers — map by normalized label
+      // Fill answers -- map by normalized label
       var answers = data.answers || [];
       var byLabel = {};
       answers.forEach(function (a) {

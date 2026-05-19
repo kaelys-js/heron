@@ -1,5 +1,5 @@
 /**
- * lifecycle-reap — daily cron that hard-deletes users whose 30-day
+ * lifecycle-reap -- daily cron that hard-deletes users whose 30-day
  * soft-delete grace window has elapsed. Idempotent; no-ops if no users
  * are due.
  *
@@ -24,7 +24,7 @@ async function runLifecycleReap(): Promise<JobResult> {
     logEvent('lifecycle-reap', `Reaped ${purgedUsers.length} user(s), ${purgedInvites} invite(s)`, {
       level: 'info',
       category: 'system',
-      // Broadcast — every authed user can see this in the activity feed,
+      // Broadcast -- every authed user can see this in the activity feed,
       // because the affected user is gone and there's no per-user scope.
       userId: null,
     });
@@ -44,7 +44,7 @@ register({
   category: 'hygiene',
   trigger: { type: 'daily', hour: 4, minute: 0 },
   allowManual: true,
-  // System-level GDPR sweep — operates across the auth DB directly, not
+  // System-level GDPR sweep -- operates across the auth DB directly, not
   // per-user data. Must NOT fan out (would run the same reap 1× per user).
   perUser: false,
   run: runLifecycleReap,

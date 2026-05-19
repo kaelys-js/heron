@@ -1,4 +1,4 @@
-# Reference prep — brief each reference before the company calls them
+# Reference prep -- brief each reference before the company calls them
 
 Most candidates send references cold without context. Reviewers asking
 references "tell me about working with $name" get rambling answers that
@@ -8,12 +8,12 @@ with them" and "they painted a picture of the impact."
 
 ## Inputs ($args)
 
-- `company`, `role` — context
-- `references` — array of `{ name, relationship, lastWorkedTogether,
-  themes? }`. `themes` is optional — if provided, surface those when
+- `company`, `role` -- context
+- `references` -- array of `{ name, relationship, lastWorkedTogether,
+  themes? }`. `themes` is optional -- if provided, surface those when
   picking the angle. Otherwise infer from __CV__.
-- `__CV__` — to pull proof points + project context
-- `__INTERVIEW_PREP__/{company-slug}-{role-slug}-tech-prep.md` — if it
+- `__CV__` -- to pull proof points + project context
+- `__INTERVIEW_PREP__/{company-slug}-{role-slug}-tech-prep.md` -- if it
   exists, the company's stated values + the role's stated competencies
 
 ## Output

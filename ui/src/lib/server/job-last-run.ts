@@ -1,12 +1,12 @@
 /**
- * job-last-run — per-job last-run state for jobs registered via the
+ * job-last-run -- per-job last-run state for jobs registered via the
  * job registry (lib/server/jobs/*.job.ts). Stored separately from the
  * autopilot config so registry-declared schedules don't have to be
  * duplicated into `data/autopilot.json` just to track lastRunAt.
  *
  * Storage: `data/users/{userId}/profiles/_shared/job-last-run.json`
  * (or the legacy `data/profiles/_shared/job-last-run.json` for
- * SYSTEM_USER_ID single-user installs). PER-USER (F10) — pre-fix this
+ * SYSTEM_USER_ID single-user installs). PER-USER (F10) -- pre-fix this
  * was a single global file which broke scheduler fan-out: when user A
  * ran scan-portals at 9:00am, user B's tick at 9:01 saw lastRunAt
  * today and skipped, so user B's scan never fired.
@@ -48,7 +48,7 @@ function writeAll(p: string, all: AllRuns): void {
 }
 
 /** Returns null when the job has never run (or after `clearLastRun`).
- *  Resolves to the current user via ALS — callers outside a user context
+ *  Resolves to the current user via ALS -- callers outside a user context
  *  should use `readLastRunForUser(userId, jobId)` instead. */
 export function readLastRun(jobId: string): JobLastRun | null {
   return readLastRunForUser(currentUserIdOrDefault(), jobId);
@@ -83,7 +83,7 @@ export function clearLastRunForUser(userId: string, jobId: string): void {
   writeAll(p, all);
 }
 
-/** Wipe every entry for the current user — used by the
+/** Wipe every entry for the current user -- used by the
  *  reset-everything danger-zone action. */
 export function clearAllLastRuns(): void {
   clearAllLastRunsForUser(currentUserIdOrDefault());
@@ -92,13 +92,13 @@ export function clearAllLastRuns(): void {
 export function clearAllLastRunsForUser(userId: string): void {
   const p = userSharedPathForUser(userId, 'job-last-run');
   if (!fs.existsSync(p)) return;
-  // Back up before wiping so reset is recoverable. Best-effort — if the
+  // Back up before wiping so reset is recoverable. Best-effort -- if the
   // .bak copy fails we still proceed with the unlink rather than block
   // the reset flow on a permissions issue.
   try {
     fs.copyFileSync(p, p + '.bak');
   } catch {
-    // .bak copy failed — reset proceeds without recoverable backup.
+    // .bak copy failed -- reset proceeds without recoverable backup.
   }
   fs.unlinkSync(p);
 }

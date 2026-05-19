@@ -2,7 +2,7 @@
  * POST /api/job/[id]/offer/close
  *
  * Mark the offer as accepted / declined / rescinded. This is the
- * end-of-flow action — flips the job status to the corresponding
+ * end-of-flow action -- flips the job status to the corresponding
  * Accepted/Declined value and records the transition.
  *
  * Body: { outcome: 'accepted' | 'declined' | 'rescinded', note?: string }

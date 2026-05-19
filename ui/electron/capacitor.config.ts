@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 /**
- * Capacitor config — Heron native apps.
+ * Capacitor config -- Heron native apps.
  *
  * Single SvelteKit codebase wraps as macOS/Win/Linux desktop via
  * @capacitor-community/electron AND iOS via @capacitor/ios. Backend is
@@ -11,7 +11,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
  * The webDir is the SvelteKit *static* build output (adapter-static),
  * which Capacitor copies into platform-specific public dirs at sync time.
  * The actual API server runs separately (embedded on desktop, remote on
- * iOS) — Capacitor never serves the API itself.
+ * iOS) -- Capacitor never serves the API itself.
  */
 const config = {
   appId: 'com.heron.app',

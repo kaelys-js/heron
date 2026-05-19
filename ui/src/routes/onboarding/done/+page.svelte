@@ -41,7 +41,7 @@
       try {
         await api.post('/api/profiles/active', { id: data.profileId }, { silent: true });
       } catch {
-        // Non-fatal — the user can switch from the sidebar.
+        // Non-fatal -- the user can switch from the sidebar.
       }
 
       // Fire-and-forget: seed the story bank from cv.md. Same idea as the

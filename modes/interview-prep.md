@@ -1,4 +1,4 @@
-# Mode: interview-prep — Company-Specific Interview Intelligence
+# Mode: interview-prep -- Company-Specific Interview Intelligence
 
 When the user asks to prep for an interview at a specific company+role, or when an evaluation scores 4.0+ and the user updates status to `Interview`, run this mode.
 
@@ -6,10 +6,10 @@ When the user asks to prep for an interview at a specific company+role, or when 
 
 1. **Company name** and **role title** (required)
 2. **Stage flag** (optional): `--stage <recruiter-screen|hiring-manager-screen|tech-screen|take-home|onsite|final-round|reference>`. When omitted, run the full multi-stage prep below. When provided, narrow Step 3-4 to that stage and produce a 1-page focused brief instead of the full document.
-3. **Evaluation report** in `__REPORTS__/` (if exists) — read for archetype, gaps, matched proof points
-4. **Story bank** at `__STORY_BANK__` — read for existing prepared stories
-5. **CV** at `__CV__` + `__ARTICLE_DIGEST__` — read for proof points
-6. **Profile** at `config/profile.yml` + `__PROFILE_MD__` — read for candidate context
+3. **Evaluation report** in `__REPORTS__/` (if exists) -- read for archetype, gaps, matched proof points
+4. **Story bank** at `__STORY_BANK__` -- read for existing prepared stories
+5. **CV** at `__CV__` + `__ARTICLE_DIGEST__` -- read for proof points
+6. **Profile** at `config/profile.yml` + `__PROFILE_MD__` -- read for candidate context
 
 ## Stage tuning
 
@@ -25,7 +25,7 @@ When `--stage` is provided, anchor the document at that stage:
 | `final-round`           | Strategic questions, what closing looks like, comp ask preparation, BATNA framing                                               |
 | `reference`             | What references should emphasise, briefing notes for the user's referees                                                        |
 
-## Step 1 — Research
+## Step 1 -- Research
 
 Run these WebSearch queries. Extract structured data, not summaries. Cite sources for every claim.
 
@@ -35,13 +35,13 @@ Run these WebSearch queries. Extract structured data, not summaries. Cite source
 | `"{company} interview process site:teamblind.com"`          | Candid process descriptions, recent data points, comp negotiation details, hiring bar                                |
 | `"{company} {role} interview site:leetcode.com/discuss"`    | Specific coding/technical problems, system design topics, round structure                                            |
 | `"{company} engineering blog"`                              | Tech stack, values, what they publish about, technical priorities                                                    |
-| `"{company} interview process {role}"` (general)            | Fills gaps from above — blog posts, YouTube, prep guides, candidate write-ups                                        |
+| `"{company} interview process {role}"` (general)            | Fills gaps from above -- blog posts, YouTube, prep guides, candidate write-ups                                        |
 
 If the company is small or obscure and yields few results, broaden: search for the role archetype at similar-stage companies, and note that intel is sparse.
 
 **Do NOT fabricate questions.** If a source says "they asked about distributed systems," report that. Do not invent a specific distributed systems question. When generating likely questions from JD analysis, label them clearly as `[inferred from JD]` not sourced from candidates.
 
-## Step 2 — Process Overview
+## Step 2 -- Process Overview
 
 ```markdown
 ## Process Overview
@@ -54,9 +54,9 @@ If the company is small or obscure and yields few results, broaden: search for t
 - **Sources:** {links}
 ```
 
-If data is insufficient for any field, write "unknown — not enough data" rather than guessing.
+If data is insufficient for any field, write "unknown -- not enough data" rather than guessing.
 
-## Step 3 — Round-by-Round Breakdown
+## Step 3 -- Round-by-Round Breakdown
 
 For each round discovered in research:
 
@@ -74,7 +74,7 @@ For each round discovered in research:
 
 If round structure is unknown, state that and provide the best available intel on what types of rounds to expect based on company size, stage, and role level.
 
-## Step 4 — Likely Questions
+## Step 4 -- Likely Questions
 
 Categorize all discovered and inferred questions:
 
@@ -96,9 +96,9 @@ For each: the question, why they're likely asking it (what JD requirement it map
 ### Background Red Flags
 
 Questions the interviewer will probably ask about gaps, transitions, or unusual elements in the candidate's background. Read `__PROFILE_MD__` and `__CV__` to identify what might raise questions.
-For each: the likely question, why it comes up, and a recommended framing (honest, specific, forward-looking — never defensive).
+For each: the likely question, why it comes up, and a recommended framing (honest, specific, forward-looking -- never defensive).
 
-## Step 5 — Story Bank Mapping
+## Step 5 -- Story Bank Mapping
 
 | #   | Likely question/topic | Best story from story-bank.md | Fit                 | Gap? |
 | --- | --------------------- | ----------------------------- | ------------------- | ---- |
@@ -106,13 +106,13 @@ For each: the likely question, why it comes up, and a recommended framing (hones
 
 - **strong**: story directly answers the question
 - **partial**: story is adjacent, needs reframing
-- **none**: no existing story — flag for the user
+- **none**: no existing story -- flag for the user
 
 For each gap, suggest: "You need a story about {topic}. Consider: {specific experience from __CV__ that could become a STAR+R story}."
 
 If the user wants to draft missing stories, help them build STAR+R format and append to `__STORY_BANK__`.
 
-## Step 6 — Technical Prep Checklist
+## Step 6 -- Technical Prep Checklist
 
 Based on what the company actually tests, not generic advice:
 
@@ -124,12 +124,12 @@ Based on what the company actually tests, not generic advice:
 
 Prioritize by frequency and relevance to the role. Max 10 items.
 
-## Step 7 — Company Signals
+## Step 7 -- Company Signals
 
 Things to say, do, and avoid based on research:
 
 - **Values they screen for:** name them, cite source (careers page, blog, Glassdoor reviews)
-- **Vocabulary to use:** terms the company uses internally — shows homework (e.g., Stripe says "increase the GDP of the internet", Anthropic says "safety" not "alignment")
+- **Vocabulary to use:** terms the company uses internally -- shows homework (e.g., Stripe says "increase the GDP of the internet", Anthropic says "safety" not "alignment")
 - **Things to avoid:** specific anti-patterns flagged in interview reviews
 - **Questions to ask them:** 2-3 sharp questions that demonstrate you've researched the company, tied to recent news or blog posts discovered in Step 1
 
@@ -151,7 +151,7 @@ After delivering the report:
 
 1. Ask the user if they want to draft stories for any gaps found in Step 5
 2. If they have a scheduled interview date, note it: "Your interview is in {X} days. Want me to set a reminder to review this prep?"
-3. Suggest running `deep` mode if the company research in Step 1 was thin — deep mode covers strategy, culture, and competitive landscape in more depth
+3. Suggest running `deep` mode if the company research in Step 1 was thin -- deep mode covers strategy, culture, and competitive landscape in more depth
 
 ## Rules
 

@@ -1,4 +1,4 @@
-# Gemini CLI context — Heron
+# Gemini CLI context -- Heron
 
 <!-- AUTO-GENERATED:doc-meta -->
 *Part of the [Heron](README.md) docs.*
@@ -30,6 +30,6 @@ launching an interactive session.
 ## Everything else
 
 Data contract, update-check protocol, onboarding flow, ethical use,
-pipeline integrity rules, mode routing — read [AGENTS.md](AGENTS.md).
+pipeline integrity rules, mode routing -- read [AGENTS.md](AGENTS.md).
 The rules apply identically across every supported AI CLI; there is
 no Gemini-specific fork of any mode prompt.

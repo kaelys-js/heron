@@ -1,5 +1,5 @@
 /**
- * /api/ui-prefs — read + patch the per-machine UI preferences.
+ * /api/ui-prefs -- read + patch the per-machine UI preferences.
  *
  * GET → UiPrefs (appearance / theme / displayName / avatarPath / notifications)
  * PATCH body: Partial<UiPrefs> → merged with current + persisted

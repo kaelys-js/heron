@@ -3,20 +3,20 @@
  *
  *   POST /api/job/[id]/queue-apply
  *
- * Stages the job for the autopilot apply-queue drain. Returns immediately —
+ * Stages the job for the autopilot apply-queue drain. Returns immediately --
  * the actual application is scheduled by the apply-queue-drain job (Task 1.2).
  *
  * Pre-flight checks:
  *   - Resolve the job + its profile (cross-profile-aware)
  *   - Refuse if status is already Applied / Applying / Queued (idempotent)
- *   - Refuse if today's apply count has hit the cap (gracefully — the user
+ *   - Refuse if today's apply count has hit the cap (gracefully -- the user
  *     can retry tomorrow without losing the intent)
  *
  * Status flow set by this endpoint: Scored → Queued.
  * The drain takes it from Queued → Applying → Applied | ManualApplyNeeded.
  *
  * NB: this endpoint does NOT check `profile.automation.autonomous_apply`.
- * The user is explicitly clicking the Apply button — that's a per-action
+ * The user is explicitly clicking the Apply button -- that's a per-action
  * consent, not a per-profile policy. The autopilot scheduled drain DOES
  * check the toggle (in apply-queue.job.ts) so background queue-pulls
  * respect the opt-in.
@@ -49,7 +49,7 @@ export const POST = wrap(
       };
     }
 
-    // Cap check — refuse to queue if today's already at cap. Don't bump the
+    // Cap check -- refuse to queue if today's already at cap. Don't bump the
     // counter here (that happens after a successful apply); just refuse.
     const cap = readConfig().thresholds.maxAppliesPerDay;
     if (todayCount() >= cap) {

@@ -1,5 +1,5 @@
 /**
- * POST /api/sources/[id]/disconnect — remove credentials/session.
+ * POST /api/sources/[id]/disconnect -- remove credentials/session.
  *
  *   linkedin-auth / indeed-auth → rm -rf .playwright-{portal}/ + reset state
  *   gmail-imap                  → wipe the GMAIL_IMAP_* keys from .env + reset state
@@ -26,7 +26,7 @@ export const POST = wrap(
 
     if (id === 'linkedin-auth' || id === 'indeed-auth') {
       const portal = id === 'linkedin-auth' ? 'linkedin' : 'indeed';
-      // F20 — use the same path Playwright writes to. Pre-fix this hit
+      // F20 -- use the same path Playwright writes to. Pre-fix this hit
       // the legacy repo-root `.playwright-{portal}/` which never
       // existed in multi-user mode, so "Disconnect" was a no-op.
       const stateDir = playwrightUserDataDir(userId, portal);
@@ -35,7 +35,7 @@ export const POST = wrap(
           fs.rmSync(stateDir, { recursive: true, force: true });
         }
       } catch (err) {
-        // Surface the error but continue — state file reset is the primary effect.
+        // Surface the error but continue -- state file reset is the primary effect.
         logEvent('sources', 'Could not remove ' + stateDir, {
           level: 'warn',
           category: 'system',

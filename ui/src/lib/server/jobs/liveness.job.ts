@@ -1,10 +1,10 @@
 /**
- * Liveness check — weekly background sweep + per-job + bulk surfaces.
+ * Liveness check -- weekly background sweep + per-job + bulk surfaces.
  *
  * Wraps `check-liveness.mjs` (Playwright-based detector) to classify URLs:
- *   active    — posting still listed
- *   expired   — 404 / posting removed / "no longer accepting applications"
- *   uncertain — couldn't reach a verdict (Playwright timeout, captcha, …)
+ *   active    -- posting still listed
+ *   expired   -- 404 / posting removed / "no longer accepting applications"
+ *   uncertain -- couldn't reach a verdict (Playwright timeout, captcha, …)
  *
  * On the bulk sweep, expired URLs auto-flip to status=Closed via markClosed.
  * Uncertain URLs become Inbox issues (so the user can verify by hand).
@@ -12,10 +12,10 @@
  * Trigger: weekly (Mondays at 06:00) + manual + per-URL via /api/job/[id]/liveness.
  *
  * Args (manual run):
- *   { urls: string[] }   — explicit URL list
- *   { scope: 'stale' }   — every job ≥ 14 days old in pipeline.md / applications.md
- *   { scope: 'all' }     — every job in pipeline.md (use sparingly — costs Playwright time)
- *   default              — same as scope='stale'
+ *   { urls: string[] }   -- explicit URL list
+ *   { scope: 'stale' }   -- every job ≥ 14 days old in pipeline.md / applications.md
+ *   { scope: 'all' }     -- every job in pipeline.md (use sparingly -- costs Playwright time)
+ *   default              -- same as scope='stale'
  */
 
 import { spawn } from 'node:child_process';
@@ -67,7 +67,7 @@ const STALE_DAYS = 14;
  *  row doesn't have a parseable YYYY-MM-DD in its second pipe-delimited cell. */
 function applicationsDate(line: string): Date | null {
   const cells = line.split('|').map((c) => c.trim());
-  // Layout: '', '#', 'date', 'company', 'role', ... — date is at cells[2].
+  // Layout: '', '#', 'date', 'company', 'role', ... -- date is at cells[2].
   const m = cells[2]?.match(/(\d{4})-(\d{2})-(\d{2})/);
   if (!m) return null;
   const d = new Date(m[1] + '-' + m[2] + '-' + m[3]);
@@ -103,7 +103,7 @@ function collectUrls(scope: 'stale' | 'all'): string[] {
       });
     }
   }
-  // applications.md — included in both scopes, but with different filtering.
+  // applications.md -- included in both scopes, but with different filtering.
   try {
     const text = fs.readFileSync(activePath('applications'), 'utf8');
     for (const line of text.split('\n')) {
@@ -116,7 +116,7 @@ function collectUrls(scope: 'stale' | 'all'): string[] {
       }
       // 'stale': include only when the row's date is older than STALE_DAYS,
       // OR when there's no date at all (means it predates the dated layout
-      // — likely very old, safe to check).
+      // -- likely very old, safe to check).
       const date = applicationsDate(line);
       if (!date || date.getTime() <= staleCutoff) {
         urls.add(url);
@@ -168,7 +168,7 @@ function runLivenessSubprocess(urls: string[]): Promise<Outcome[]> {
 }
 
 /**
- * Public surface: per-URL check (fast path) — used by /api/job/[id]/liveness.
+ * Public surface: per-URL check (fast path) -- used by /api/job/[id]/liveness.
  */
 export async function checkOne(url: string): Promise<Outcome> {
   const out = await runLivenessSubprocess([url]);
@@ -176,7 +176,7 @@ export async function checkOne(url: string): Promise<Outcome> {
 }
 
 /**
- * Bulk sweep — auto-flips expired URLs to Closed, files an issue per
+ * Bulk sweep -- auto-flips expired URLs to Closed, files an issue per
  * uncertain URL. Idempotent: stable issue dedupeKey per URL.
  */
 async function runLivenessSweep(args?: JobArgs): Promise<JobResult> {

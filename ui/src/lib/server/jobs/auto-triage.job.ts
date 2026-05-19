@@ -1,21 +1,21 @@
 /**
- * Auto-triage workflow — silent chain that runs after every scan.
+ * Auto-triage workflow -- silent chain that runs after every scan.
  *
  * Today the user must manually run `triage → update-pipeline → build-batch-input`
  * to prepare a scan's output for batch evaluation. This job stitches the
  * three together so the user's pipeline is auto-classified and the
  * batch-input.tsv is always fresh.
  *
- *   1. triage.mjs           — classifies pipeline.md by company+role rules
+ *   1. triage.mjs           -- classifies pipeline.md by company+role rules
  *                              (survivors.tsv + pipeline-skipped.tsv)
- *   2. update-pipeline.mjs  — applies `[!] reason` markers in pipeline.md
+ *   2. update-pipeline.mjs  -- applies `[!] reason` markers in pipeline.md
  *                              and appends SKIP rows to applications.md
- *   3. build-batch-input.mjs — writes <profile>/batch/batch-input.tsv from survivors
+ *   3. build-batch-input.mjs -- writes <profile>/batch/batch-input.tsv from survivors
  *
  * Trigger: registered as a manual-invocation job today; users run it
  * explicitly via the Tasks panel after a scan. The job is structured
  * so a future after-event hook on 'scan' / 'scan-portals' can drop in
- * without touching the implementation — the registry's `trigger` field
+ * without touching the implementation -- the registry's `trigger` field
  * carries that wiring when added. Manual invocation is the supported
  * path; no behaviour regression exists by waiting on the hook.
  */
@@ -94,7 +94,7 @@ async function runAutoTriage(): Promise<JobResult> {
       category: 'system',
       message: s3.stderr.slice(0, 200) || 'exit ' + s3.code,
     });
-    // Soft failure — we still got triage + pipeline-marking benefit.
+    // Soft failure -- we still got triage + pipeline-marking benefit.
   }
   const offers = parseInt(s3.stdout.match(BATCH_OFFERS_RE)?.[1] ?? '0', 10);
 

@@ -1,5 +1,5 @@
 /**
- * lib/config/branding — legacy re-export surface for brand strings + the
+ * lib/config/branding -- legacy re-export surface for brand strings + the
  * cmd() / docTitle() helpers.
  *
  * Tests confirm the helpers compose correctly + the re-exports resolve

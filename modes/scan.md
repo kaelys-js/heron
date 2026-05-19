@@ -1,4 +1,4 @@
-# Mode: scan — Portal Scanner (Offer Discovery)
+# Mode: scan -- Portal Scanner (Offer Discovery)
 
 Scans configured job portals, filters by title relevance, and adds new offers to the pipeline for later evaluation.
 
@@ -25,7 +25,7 @@ Read `__PORTALS__`, which contains:
 
 ## Discovery strategy (3 tiers)
 
-### Tier 1 — Playwright direct (PRIMARY)
+### Tier 1 -- Playwright direct (PRIMARY)
 
 **For each company in `tracked_companies`:** Navigate to its `careers_url` with Playwright (`browser_navigate` + `browser_snapshot`), read EVERY visible job listing, and extract title + URL for each one. This is the most reliable method because:
 - It sees the page in real time (no cached Google results)
@@ -35,7 +35,7 @@ Read `__PORTALS__`, which contains:
 
 **Every company MUST have a `careers_url` in __PORTALS__.** If it doesn't, look it up once, save it, and reuse it on future scans.
 
-### Tier 2 — ATS APIs / Feeds (COMPLEMENTARY)
+### Tier 2 -- ATS APIs / Feeds (COMPLEMENTARY)
 
 For companies with a public API or structured feed, use the JSON/XML response as a quick complement to Tier 1. It's faster than Playwright and reduces visual-scraping errors.
 
@@ -55,7 +55,7 @@ For companies with a public API or structured feed, use the JSON/XML response as
 - `teamtailor`: RSS items → `title`, `link`
 - `workday`: `jobPostings[]`/`jobPostings` (per tenant) → `title`, `externalPath` or URL built from the host
 
-### Tier 3 — WebSearch queries (WIDE DISCOVERY)
+### Tier 3 -- WebSearch queries (WIDE DISCOVERY)
 
 The `search_queries` with `site:` filters cover portals horizontally (every Ashby, every Greenhouse, etc.). Useful for discovering NEW companies not yet in `tracked_companies`, but the results may be stale.
 
@@ -64,7 +64,7 @@ The `search_queries` with `site:` filters cover portals horizontally (every Ashb
 2. Tier 2: API → every `tracked_company` with `api:`
 3. Tier 3: WebSearch → every `search_query` with `enabled: true`
 
-The tiers are additive — run all, merge results, deduplicate.
+The tiers are additive -- run all, merge results, deduplicate.
 
 ## Workflow
 
@@ -72,7 +72,7 @@ The tiers are additive — run all, merge results, deduplicate.
 2. **Read history**: `data/__SCAN_HISTORY__` → URLs already seen
 3. **Read dedup sources**: `data/__APPLICATIONS__` + `data/__PIPELINE__`
 
-4. **Tier 1 — Playwright scan** (parallel in batches of 3–5):
+4. **Tier 1 -- Playwright scan** (parallel in batches of 3-5):
    For each company in `tracked_companies` with `enabled: true` and a defined `careers_url`:
    a. `browser_navigate` to the `careers_url`
    b. `browser_snapshot` to read every job listing
@@ -82,7 +82,7 @@ The tiers are additive — run all, merge results, deduplicate.
    f. Accumulate into the candidate list
    g. If `careers_url` fails (404, redirect), try `scan_query` as a fallback and note the URL for updating
 
-5. **Tier 2 — ATS APIs / feeds** (parallel):
+5. **Tier 2 -- ATS APIs / feeds** (parallel):
    For each company in `tracked_companies` with `api:` set and `enabled: true`:
    a. WebFetch the API/feed URL
    b. If `api_provider` is set, use its parser; if not, infer from the domain (`boards-api.greenhouse.io`, `jobs.ashbyhq.com`, `api.lever.co`, `*.bamboohr.com`, `*.teamtailor.com`, `*.myworkdayjobs.com`)
@@ -95,7 +95,7 @@ The tiers are additive — run all, merge results, deduplicate.
    f. For each job extract and normalize: `{title, url, company}`
    g. Accumulate into the candidate list (dedup against Tier 1)
 
-6. **Tier 3 — WebSearch queries** (parallel where possible):
+6. **Tier 3 -- WebSearch queries** (parallel where possible):
    For each query in `search_queries` with `enabled: true`:
    a. Run WebSearch with the defined `query`
    b. For each result extract: `{title, url, company}`
@@ -114,11 +114,11 @@ The tiers are additive — run all, merge results, deduplicate.
    - `__APPLICATIONS__` → company + normalized role already evaluated
    - `__PIPELINE__` → exact URL already pending or processed
 
-7.5. **Verify liveness of Tier 3 (WebSearch) results** — BEFORE adding to pipeline:
+7.5. **Verify liveness of Tier 3 (WebSearch) results** -- BEFORE adding to pipeline:
 
    WebSearch results can be stale (Google caches for weeks or months). To avoid evaluating expired offers, verify each new Tier-3 URL with Playwright. Tiers 1 and 2 are inherently real-time and don't need this verification.
 
-   For each new Tier-3 URL (sequential — NEVER Playwright in parallel):
+   For each new Tier-3 URL (sequential -- NEVER Playwright in parallel):
    a. `browser_navigate` to the URL
    b. `browser_snapshot` to read the content
    c. Classify:
@@ -142,14 +142,14 @@ The tiers are additive — run all, merge results, deduplicate.
 
 ## Extracting title + company from WebSearch results
 
-WebSearch results come in formats: `"Job Title @ Company"` or `"Job Title | Company"` or `"Job Title — Company"`.
+WebSearch results come in formats: `"Job Title @ Company"` or `"Job Title | Company"` or `"Job Title -- Company"`.
 
 Extraction patterns per portal:
 - **Ashby**: `"Senior AI PM (Remote) @ EverAI"` → title: `Senior AI PM`, company: `EverAI`
 - **Greenhouse**: `"AI Engineer at Anthropic"` → title: `AI Engineer`, company: `Anthropic`
 - **Lever**: `"Product Manager - AI @ Temporal"` → title: `Product Manager - AI`, company: `Temporal`
 
-Generic regex: `(.+?)(?:\s*[@|—–-]\s*|\s+at\s+)(.+?)$`
+Generic regex: `(.+?)(?:\s*[@|----]\s*|\s+at\s+)(.+?)$`
 
 ## Private URLs
 
@@ -189,7 +189,7 @@ New additions to __PIPELINE__: N
 
 ## Managing careers_url
 
-Each company in `tracked_companies` must have a `careers_url` — the direct URL to its careers page. This avoids re-discovering it every time.
+Each company in `tracked_companies` must have a `careers_url` -- the direct URL to its careers page. This avoids re-discovering it every time.
 
 **RULE: Always prefer the company's own corporate URL; fall back to the ATS endpoint only when the company has no corporate page.**
 
@@ -237,4 +237,4 @@ Fallback: if you only have the direct ATS URL, first navigate to the company's w
 - Disable queries with `enabled: false` if they generate too much noise
 - Adjust filter keywords as target roles evolve
 - Add companies to `tracked_companies` when you want to track them closely
-- Verify `careers_url` periodically — companies change ATS platforms
+- Verify `careers_url` periodically -- companies change ATS platforms

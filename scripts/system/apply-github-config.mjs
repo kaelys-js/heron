@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * apply-github-config.mjs — idempotent GitHub repo configuration.
+ * apply-github-config.mjs -- idempotent GitHub repo configuration.
  *
  * Reads the desired GitHub-side state from:
  *
@@ -13,24 +13,24 @@
  * What it propagates:
  *
  *   1. Repo description + homepage + visibility (description/homepage
- *      from brand.json; visibility stays untouched — flipping it
+ *      from brand.json; visibility stays untouched -- flipping it
  *      requires explicit user confirmation, not silent automation)
  *   2. Repository topics (set-union: applies the brand.json list as
  *      the authoritative set)
  *   3. Branch-protection rulesets (one per file under .github/rulesets/;
  *      matched by `name` field; updated if changed, created if missing)
  *   4. GitHub Advanced Security toggles (secret_scanning,
- *      push_protection, dependabot, PVR — all "enabled" for public
+ *      push_protection, dependabot, PVR -- all "enabled" for public
  *      OSS repos)
  *   5. Repo settings: allow_auto_merge, delete_branch_on_merge,
  *      web_commit_signoff_required
  *
  * What it does NOT touch:
  *
- *   • Visibility (public/private flip) — too sensitive for automation
- *   • Wiki / Projects / Discussions enablement — maintainer's call
- *   • Branch creation / deletion — out of scope
- *   • Workflow secrets — `gh secret` is the right tool
+ *   • Visibility (public/private flip) -- too sensitive for automation
+ *   • Wiki / Projects / Discussions enablement -- maintainer's call
+ *   • Branch creation / deletion -- out of scope
+ *   • Workflow secrets -- `gh secret` is the right tool
  *
  * Usage:
  *
@@ -224,7 +224,7 @@ async function main() {
       gh('PUT', `/repos/${repoSlug}/vulnerability-alerts`);
       gh('PUT', `/repos/${repoSlug}/automated-security-fixes`);
     } catch {
-      /* idempotent — already enabled is fine */
+      /* idempotent -- already enabled is fine */
     }
   }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * followup-cadence.mjs — Follow-up Cadence Tracker for heron
+ * followup-cadence.mjs -- Follow-up Cadence Tracker for heron
  *
  * Parses applications.md + follow-ups.md, calculates follow-up cadence
  * for active applications, extracts contacts, and flags overdue entries.
@@ -19,7 +19,7 @@ const USER_ID = userFromArgv();
 const PROFILE_ID = profileFromArgv();
 const APPS_FILE = profilePath(PROFILE_ID, 'applications', USER_ID);
 const FOLLOWUPS_FILE = profilePath(PROFILE_ID, 'follow-ups', USER_ID);
-/** Profile directory — base for resolving relative `reports/...` links
+/** Profile directory -- base for resolving relative `reports/...` links
  *  inside applications.md. Previously this was the script's own dir,
  *  which always failed silently (the report files live under the
  *  profile, not under scripts/tracker/). */

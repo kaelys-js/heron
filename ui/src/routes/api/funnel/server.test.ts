@@ -1,5 +1,5 @@
 /**
- * GET /api/funnel — conversion-rate funnel stats.
+ * GET /api/funnel -- conversion-rate funnel stats.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -87,7 +87,7 @@ describe('GET /api/funnel', () => {
     mockStats.interviewToOffer = 0.8;
     mockStats.offerToAccept = 0.9;
     const r = await get();
-    // 0 is filtered out — leakiest is 0.5 (screen→interview)
+    // 0 is filtered out -- leakiest is 0.5 (screen→interview)
     expect(r.body.leakiestStage).toBe('screen→interview');
   });
 

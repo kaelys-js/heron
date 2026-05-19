@@ -95,7 +95,7 @@ export const AU_STATES: State[] = [
 /**
  * Look up the structured province/state list for a given country (matched
  * by either code or display name). Returns an empty array for countries
- * we don't have structured data for — caller should fall back to free-text.
+ * we don't have structured data for -- caller should fall back to free-text.
  */
 export function statesForCountry(country: string): State[] {
   const c = country.trim().toLowerCase();

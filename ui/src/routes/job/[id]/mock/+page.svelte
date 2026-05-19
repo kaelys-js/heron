@@ -56,7 +56,7 @@
     audioUrl?: string;
   };
 
-  // MediaRecorder state — capture the user's audio per turn so they can
+  // MediaRecorder state -- capture the user's audio per turn so they can
   // replay themselves and HEAR what they sound like. Browser-side only;
   // never uploaded. Blob URLs are revoked on session end / unmount.
   let mediaStream: MediaStream | null = null;
@@ -69,7 +69,7 @@
   let blobUrlsToRevoke: string[] = [];
 
   let stage = $state<Stage>('PhoneScreen');
-  // Panel mode (#10) — auto-enables when stage is Onsite, since that's
+  // Panel mode (#10) -- auto-enables when stage is Onsite, since that's
   // the typical panel format. User can also force it on for other stages.
   let panelMode = $state(false);
   $effect(() => {
@@ -104,7 +104,7 @@
         (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
       recognitionSupported = !!SR;
       synthesisSupported = 'speechSynthesis' in window;
-      // MediaRecorder check — capturing audio for playback.
+      // MediaRecorder check -- capturing audio for playback.
       recordingSupported = 'MediaRecorder' in window && !!navigator.mediaDevices;
       if (recognitionSupported) {
         // @ts-expect-error - vendor-specific class
@@ -123,7 +123,7 @@
           if (final) currentAnswer = (currentAnswer + ' ' + final).trim();
           // For interim, append visually; but don't persist until final.
           if (interim) {
-            // Show interim by suffixing temporarily — when next final arrives
+            // Show interim by suffixing temporarily -- when next final arrives
             // it overwrites with the final version of those words.
           }
         };

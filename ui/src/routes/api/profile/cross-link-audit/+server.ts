@@ -5,7 +5,7 @@
  * profiles (GitHub, LinkedIn, personal portfolio) tell the SAME story.
  *
  * Recruiters Google candidates. If your CV says "Senior Engineer at
- * AcmeCo" but your LinkedIn says "Lead Engineer at AcmeCo" — that
+ * AcmeCo" but your LinkedIn says "Lead Engineer at AcmeCo" -- that
  * inconsistency raises a red flag.
  *
  * Checks performed:

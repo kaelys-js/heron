@@ -11,7 +11,7 @@ const LOG_BACKUP = LOG_FILE + '.1';
 const MAX_BUFFER = 500;
 /** Rotate the activity log when it exceeds this size on append.
  *  Keeps one backup (`activity.jsonl.1`) so total disk usage is bounded
- *  at ~2× this number. Set conservatively — we don't read the whole log
+ *  at ~2× this number. Set conservatively -- we don't read the whole log
  *  at boot, only the tail, so size has no practical upside. */
 const MAX_LOG_BYTES = 50 * 1024 * 1024; // 50MB
 
@@ -20,7 +20,7 @@ const MAX_LOG_BYTES = 50 * 1024 * 1024; // 50MB
  * If a wrapping debugger / extension intercepts console and that pathway
  * fails (e.g. Cursor's wallaby/console-ninja closing its socket → EPIPE),
  * the error is swallowed instead of propagating up to the runtime's
- * `uncaughtException` handler — which would re-enter logEvent and cause
+ * `uncaughtException` handler -- which would re-enter logEvent and cause
  * an unbounded feedback loop. See data/activity.jsonl growing to 15GB
  * for what happens without this guard.
  */
@@ -29,7 +29,7 @@ function safeConsole(level: 'log' | 'error', ...args: unknown[]): void {
     if (level === 'error') console.error(...args);
     else console.log(...args);
   } catch {
-    // Intentionally empty — we cannot do anything useful if console itself
+    // Intentionally empty -- we cannot do anything useful if console itself
     // is throwing, and any logEvent call from here would re-enter.
   }
 }
@@ -42,7 +42,7 @@ class Bus extends EventEmitter {
   private depth = 0;
   /** Most recent rapid-fire window: { ts (ms), count }. Resets every 1s.
    *  If we cross BURST_LIMIT in one window we drop further events for the
-   *  remainder of the window — belt-and-braces against any future loop. */
+   *  remainder of the window -- belt-and-braces against any future loop. */
   private windowStart = 0;
   private windowCount = 0;
   private droppedThisWindow = 0;
@@ -83,7 +83,7 @@ class Bus extends EventEmitter {
           const ev = JSON.parse(line);
           if (ev.id && ev.ts) this.buf.push(ev);
         } catch {
-          // Truncated final line from a crash mid-write — skip and continue
+          // Truncated final line from a crash mid-write -- skip and continue
           // loading the rest of the buffer. Logging here would re-enter
           // the load path, so we drop silently by design.
         }
@@ -104,7 +104,7 @@ class Bus extends EventEmitter {
         if (fs.existsSync(LOG_BACKUP)) fs.unlinkSync(LOG_BACKUP);
       } catch {
         // Old backup unlink failed (EBUSY on Windows, EACCES on shared
-        // volumes). Rotation is best-effort — the rename below will fail
+        // volumes). Rotation is best-effort -- the rename below will fail
         // too in that case and the outer catch will surface it.
       }
       try {
@@ -130,11 +130,11 @@ class Bus extends EventEmitter {
           }) + '\n',
         );
       } catch {
-        // Rotation breadcrumb write failed — the next regular append
+        // Rotation breadcrumb write failed -- the next regular append
         // will recreate LOG_FILE. We can't re-enter logEvent from here.
       }
     } catch {
-      // Rotation is best-effort — never let it crash the caller, and
+      // Rotation is best-effort -- never let it crash the caller, and
       // never re-enter logEvent from rotation code.
     }
   }
@@ -156,7 +156,7 @@ class Bus extends EventEmitter {
     const BURST_WINDOW = 1000;
     const BURST_LIMIT = 200; // events per second across the whole bus
     if (now - this.windowStart > BURST_WINDOW) {
-      // Window rolled over — if we dropped anything, surface it once.
+      // Window rolled over -- if we dropped anything, surface it once.
       if (this.droppedThisWindow > 0) {
         const note: ActivityEvent = {
           id: crypto.randomBytes(6).toString('hex'),
@@ -199,7 +199,7 @@ class Bus extends EventEmitter {
     // queries without re-parsing megabytes of JSONL.
     //
     // Lazy-require so a missing better-sqlite3 binary at boot doesn't
-    // crash the event bus — events.ts MUST stay up even when the DB is
+    // crash the event bus -- events.ts MUST stay up even when the DB is
     // broken because we use it to log DB errors.
     if (ev.userId) {
       try {
@@ -247,7 +247,7 @@ class Bus extends EventEmitter {
 export const bus = new Bus();
 
 /**
- * Install a named bus listener — idempotent across Vite HMR reloads.
+ * Install a named bus listener -- idempotent across Vite HMR reloads.
  *
  * Without this helper, every save of a module that does `bus.on('event', …)`
  * at module init stacks a fresh listener on top of the previous one. After
@@ -258,7 +258,7 @@ export const bus = new Bus();
  * prior listener with the same name (regardless of whether the calling
  * module's local state survived the reload) and remove it before adding
  * the new one. EventEmitter doesn't index by name natively, so we walk
- * the existing listener list — that's O(N) in current listener count,
+ * the existing listener list -- that's O(N) in current listener count,
  * not O(1). Called once per module load (~10 listeners at runtime) so
  * even with HMR amplification it remains fast enough; a true O(1) lookup
  * would need a separate Map<name, handler> mirror, deliberately not done
@@ -274,7 +274,7 @@ export function installBusListener(name: string, handler: (ev: ActivityEvent) =>
   bus.on('event', handler);
 }
 
-// D22 — `removeBusListener` removed: only `stopScheduler` called it, and
+// D22 -- `removeBusListener` removed: only `stopScheduler` called it, and
 // that itself is dead (D17). `installBusListener` is idempotent across
 // HMR via the __busName tag walk, so explicit removal isn't needed.
 
@@ -290,7 +290,7 @@ export function logEvent(
     /** Profile slug if the event is per-profile (scan in profile X, evaluate
      *  for a job in profile Y, etc.). Omit for shared-infra events. */
     profileId?: string;
-    /** Override user-id tagging — caller knows whose event this is. When
+    /** Override user-id tagging -- caller knows whose event this is. When
      *  omitted, defaults to the AsyncLocalStorage current user (per
      *  request) or SYSTEM_USER_ID outside a request. Pass `null` to
      *  emit a broadcast event visible to every authenticated user. */
@@ -318,7 +318,7 @@ export function logEvent(
   const prefix =
     ev.level === 'error' ? '✗' : ev.level === 'warn' ? '⚠' : ev.level === 'success' ? '✓' : 'ℹ';
   const head = prefix + ' [' + source + '] ' + title + (opts.message ? ' — ' + opts.message : '');
-  // safeConsole swallows EPIPE/EBADF from intercepted-console extensions —
+  // safeConsole swallows EPIPE/EBADF from intercepted-console extensions --
   // see comment at the top of this file.
   if (ev.level === 'error') {
     safeConsole('error', head);

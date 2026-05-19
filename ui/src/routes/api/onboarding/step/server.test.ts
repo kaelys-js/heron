@@ -1,5 +1,5 @@
 /**
- * POST /api/onboarding/step — wizard step transitions.
+ * POST /api/onboarding/step -- wizard step transitions.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

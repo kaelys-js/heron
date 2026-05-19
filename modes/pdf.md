@@ -1,32 +1,32 @@
-# Mode: pdf — ATS-Optimized PDF Generation
+# Mode: pdf -- ATS-Optimized PDF Generation
 
 ## Full pipeline
 
 1. Read `__CV__` as the source of truth
 2. Ask the user for the JD if it isn't in context (text or URL)
-3. Extract 15–20 keywords from the JD
+3. Extract 15-20 keywords from the JD
 4. Detect the JD language → CV language (EN default)
 5. Detect company location → paper format:
    - US/Canada → `letter`
    - Rest of world → `a4`
 6. Detect the role's archetype → adapt framing
 7. Rewrite the Professional Summary injecting JD keywords + an exit-narrative bridge ("Built and sold a business. Now applying systems thinking to [JD domain].")
-8. Select the top 3–4 projects most relevant to the offer
+8. Select the top 3-4 projects most relevant to the offer
 9. Reorder experience bullets by relevance to the JD
-10. Build the competency grid from the JD requirements (6–8 keyword phrases)
+10. Build the competency grid from the JD requirements (6-8 keyword phrases)
 11. Inject keywords naturally into existing achievements (NEVER invent)
 12. Generate the full HTML from the template + personalized content
 13. Read `name` from `config/profile.yml` → normalize to kebab-case lowercase (e.g. "John Doe" → "john-doe") → `{candidate}`
 14. Write HTML to `/tmp/cv-{candidate}-{company}.html`
 15. Run: `node generate-pdf.mjs /tmp/cv-{candidate}-{company}.html __OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf --format={letter|a4}`
     - generate-pdf.mjs automatically reads the template's `<meta>` tags (author, subject, keywords, description) and injects them into the PDF Info dictionary. No need to pass `--author=...` via CLI if the HTML carries them.
-    - The PDF is generated with `tagged: true` (PDF/UA) by default — semantic structure tags that help ATS parsers and screen readers.
+    - The PDF is generated with `tagged: true` (PDF/UA) by default -- semantic structure tags that help ATS parsers and screen readers.
 16. **Validate ATS compatibility**: `node ats-check.mjs __OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf`
     - Score < 90% → review warnings, adjust template/content, regenerate.
     - The check verifies: complete metadata, normalized unicode, standard section headers, preserved hyperlinks, reading order, page count, file size, no embedded JS/forms/encryption.
 17. **ALSO write the SOURCE markdown of the tailored version** to `__OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.md` (sibling of the .pdf).
     - This preserves the tailored content for later analysis (cv-variant-analysis correlates injected keywords with outcomes).
-    - The .md must contain EVERY tailored CV section — it isn't the HTML, it's the structured markdown the mode produced in steps 7–11.
+    - The .md must contain EVERY tailored CV section -- it isn't the HTML, it's the structured markdown the mode produced in steps 7-11.
     - Without this sibling, /api/profile/cv-variants returns "Not enough data" even if there are 50+ PDFs.
 18. Report: PDF path, page count, % keyword coverage, **ATS score**.
 
@@ -42,7 +42,7 @@
 
 ## PDF design
 
-- **Fonts**: Inter (400–700, single family for headings + body)
+- **Fonts**: Inter (400-700, single family for headings + body)
 - **Self-hosted fonts**: `fonts/`
 - **Header**: name in Inter 28px bold + gradient line `linear-gradient(to right, hsl(187,74%,32%), hsl(270,70%,45%))` 2px + contact row
 - **Section headers**: Inter 12px, uppercase, letter-spacing 0.05em, cyan primary color
@@ -54,10 +54,10 @@
 ## Section order (optimized for the "6-second recruiter scan")
 
 1. Header (big name, gradient, contact, portfolio link)
-2. Professional Summary (3–4 lines, keyword-dense)
-3. Core Competencies (6–8 keyword phrases in a flex-grid)
+2. Professional Summary (3-4 lines, keyword-dense)
+3. Core Competencies (6-8 keyword phrases in a flex-grid)
 4. Work Experience (reverse chronological)
-5. Projects (top 3–4 most relevant)
+5. Projects (top 3-4 most relevant)
 6. Education & Certifications
 7. Skills (languages + technical)
 
@@ -79,11 +79,11 @@ Use the template at `cv-template.html`. Replace the `{{...}}` placeholders with 
 | `{{LANG}}` | `en` |
 | `{{PAGE_WIDTH}}` | `8.5in` (letter) or `210mm` (A4) |
 | `{{NAME}}` | (from profile.yml) |
-| `{{ROLE_TITLE}}` | The exact role title from the JD (e.g. "Senior Software Engineer"). Appears in the HTML `<title>` and becomes the PDF Title metadata — recruiters file by this. |
-| `{{ROLE_AT_COMPANY}}` | `"<role> — <company>"` (e.g. "Senior Software Engineer — Acme Corp"). Becomes the PDF Subject metadata — many ATSes sort by this field. |
-| `{{KEYWORDS_CSV}}` | Comma-separated list of the 15–20 JD keywords (e.g. `"Python, TypeScript, RAG, MLOps, LangChain, …"`). Becomes the PDF Keywords metadata — several ATSes index by this field. |
+| `{{ROLE_TITLE}}` | The exact role title from the JD (e.g. "Senior Software Engineer"). Appears in the HTML `<title>` and becomes the PDF Title metadata -- recruiters file by this. |
+| `{{ROLE_AT_COMPANY}}` | `"<role> -- <company>"` (e.g. "Senior Software Engineer -- Acme Corp"). Becomes the PDF Subject metadata -- many ATSes sort by this field. |
+| `{{KEYWORDS_CSV}}` | Comma-separated list of the 15-20 JD keywords (e.g. `"Python, TypeScript, RAG, MLOps, LangChain, …"`). Becomes the PDF Keywords metadata -- several ATSes index by this field. |
 | `{{SUMMARY_DESCRIPTION}}` | First line of the Professional Summary (≤ 150 chars). Becomes the PDF Description metadata. |
-| `{{PHONE}}` | (from profile.yml — include with its separator only when `profile.yml` has a non-empty `phone` value; omit both `<span>` and `<span class="separator">` otherwise) |
+| `{{PHONE}}` | (from profile.yml -- include with its separator only when `profile.yml` has a non-empty `phone` value; omit both `<span>` and `<span class="separator">` otherwise) |
 | `{{EMAIL}}` | (from profile.yml) |
 | `{{LINKEDIN_URL}}` | [from profile.yml] |
 | `{{LINKEDIN_DISPLAY}}` | [from profile.yml] |
@@ -93,11 +93,11 @@ Use the template at `cv-template.html`. Replace the `{{...}}` placeholders with 
 | `{{SECTION_SUMMARY}}` | Professional Summary |
 | `{{SUMMARY_TEXT}}` | Personalized summary with keywords |
 | `{{SECTION_COMPETENCIES}}` | Core Competencies |
-| `{{COMPETENCIES}}` | `<span class="competency-tag">keyword</span>` × 6–8 |
+| `{{COMPETENCIES}}` | `<span class="competency-tag">keyword</span>` × 6-8 |
 | `{{SECTION_EXPERIENCE}}` | Work Experience |
 | `{{EXPERIENCE}}` | HTML for each job with reordered bullets |
 | `{{SECTION_PROJECTS}}` | Projects |
-| `{{PROJECTS}}` | HTML for the top 3–4 projects |
+| `{{PROJECTS}}` | HTML for the top 3-4 projects |
 | `{{SECTION_EDUCATION}}` | Education |
 | `{{EDUCATION}}` | Education HTML |
 | `{{SECTION_CERTIFICATIONS}}` | Certifications |
@@ -108,20 +108,20 @@ Use the template at `cv-template.html`. Replace the `{{...}}` placeholders with 
 ## Canva CV Generation (optional)
 
 If `config/profile.yml` has `cv.canva_resume_design_id` set, offer the user a choice before generating:
-- **"HTML/PDF (fast, ATS-optimized)"** — the existing flow above
-- **"Canva CV (visual, design-preserving)"** — the flow below
+- **"HTML/PDF (fast, ATS-optimized)"** -- the existing flow above
+- **"Canva CV (visual, design-preserving)"** -- the flow below
 
 If the user has no `cv.canva_resume_design_id`, skip this prompt and use the HTML/PDF flow.
 
 ### Canva workflow
 
-#### Step 1 — Duplicate the base design
+#### Step 1 -- Duplicate the base design
 
 a. `export-design` the base design (using `cv.canva_resume_design_id`) as PDF → get download URL
 b. `import-design-from-url` using that download URL → creates a new editable design (the duplicate)
 c. Note the new `design_id` for the duplicate
 
-#### Step 2 — Read the design structure
+#### Step 2 -- Read the design structure
 
 a. `get-design-content` on the new design → returns all text elements (richtexts) with their content
 b. Map text elements to CV sections by content matching:
@@ -132,17 +132,17 @@ b. Map text elements to CV sections by content matching:
    - Look for skill keywords → skills section
 c. If mapping fails, show the user what was found and ask for guidance
 
-#### Step 3 — Generate tailored content
+#### Step 3 -- Generate tailored content
 
-Same content generation as the HTML flow (Steps 1–11 above):
+Same content generation as the HTML flow (Steps 1-11 above):
 - Rewrite Professional Summary with JD keywords + exit narrative
 - Reorder experience bullets by JD relevance
 - Select top competencies from JD requirements
 - Inject keywords naturally (NEVER invent)
 
-**IMPORTANT — Character budget rule:** Each replacement text MUST be approximately the same length as the original text it replaces (within ±15% character count). If tailored content is longer, condense it. The Canva design has fixed-size text boxes — longer text causes overlapping with adjacent elements. Count the characters in each original element from Step 2 and enforce this budget when generating replacements.
+**IMPORTANT -- Character budget rule:** Each replacement text MUST be approximately the same length as the original text it replaces (within ±15% character count). If tailored content is longer, condense it. The Canva design has fixed-size text boxes -- longer text causes overlapping with adjacent elements. Count the characters in each original element from Step 2 and enforce this budget when generating replacements.
 
-#### Step 4 — Apply edits
+#### Step 4 -- Apply edits
 
 a. `start-editing-transaction` on the duplicate design
 b. `perform-editing-operations` with `find_and_replace_text` for each section:
@@ -165,7 +165,7 @@ d. **Verify layout before commit:**
 d. Show the user the final preview and ask for approval
 e. `commit-editing-transaction` to save (ONLY after user approval)
 
-#### Step 5 — Export and download PDF
+#### Step 5 -- Export and download PDF
 
 a. `export-design` the duplicate as PDF (format: a4 or letter based on JD location)
 b. **IMMEDIATELY** download the PDF using Bash:
@@ -177,7 +177,7 @@ c. Verify the download:
    ```bash
    file __OUTPUT__/cv-{candidate}-{company}-canva-{YYYY-MM-DD}.pdf
    ```
-   Must show "PDF document". If it shows XML or HTML, the URL expired — re-export and retry.
+   Must show "PDF document". If it shows XML or HTML, the URL expired -- re-export and retry.
 d. Report: PDF path, file size, Canva design URL (for manual tweaking)
 
 #### Error handling

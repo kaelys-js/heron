@@ -1,5 +1,5 @@
 /**
- * POST /api/onboarding/reset — owner-only wizard reset.
+ * POST /api/onboarding/reset -- owner-only wizard reset.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

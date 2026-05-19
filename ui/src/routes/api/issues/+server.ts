@@ -1,5 +1,5 @@
 /**
- * Issue stream API — public HTTP surface for external integrations.
+ * Issue stream API -- public HTTP surface for external integrations.
  *
  *   GET                    → list open issues (newest first)
  *   GET ?include=resolved  → list every issue ever recorded
@@ -12,8 +12,8 @@
  *
  * Note: the dashboard's Inbox loader reads `listOpenIssues()` via direct
  * server-side import (cheaper than a round-trip). This HTTP endpoint exists
- * so external integrations — CLI scripts, mobile clients, the bookmarklet
- * — can consume the same JSON shape over HTTP.
+ * so external integrations -- CLI scripts, mobile clients, the bookmarklet
+ * -- can consume the same JSON shape over HTTP.
  */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';

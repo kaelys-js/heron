@@ -79,7 +79,7 @@ export const POST = wrap(
       },
       profileId,
     );
-    // Adding/updating an interviewer counts as a "touch" — keeps the
+    // Adding/updating an interviewer counts as a "touch" -- keeps the
     // auto-ghost detector from flagging the job as silent.
     touchJob(job.id, profileId);
     logEvent('interviewers', 'Interviewer upserted: ' + interviewer.name, {

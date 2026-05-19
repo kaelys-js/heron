@@ -3,10 +3,10 @@
  *
  * Team-reputation signals for a target company. Pulls from public sources:
  *
- *   • Glassdoor — overall rating, Recommend %, CEO approval, interview difficulty
- *   • Blind — company sentiment, recent layoff/cash-burn discussion (text snippets only)
- *   • Layoffs.fyi — recent layoff events at this company
- *   • LinkedIn — headcount trend (growth vs shrink) — proxy via the
+ *   • Glassdoor -- overall rating, Recommend %, CEO approval, interview difficulty
+ *   • Blind -- company sentiment, recent layoff/cash-burn discussion (text snippets only)
+ *   • Layoffs.fyi -- recent layoff events at this company
+ *   • LinkedIn -- headcount trend (growth vs shrink) -- proxy via the
  *     deep-research mode since direct scraping isn't allowed
  *
  * Same legal/ToS posture as comp-benchmark.ts: we don't scrape, we ask

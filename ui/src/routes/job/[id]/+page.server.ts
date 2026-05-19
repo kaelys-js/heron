@@ -1,5 +1,5 @@
 /**
- * /job/[id] route — single page that works for both single-profile and
+ * /job/[id] route -- single page that works for both single-profile and
  * cross-profile contexts.
  *
  * Two id formats accepted:
@@ -73,10 +73,10 @@ export async function load({ params, url }: { params: { id: string }; url: URL }
     : '';
   const summary = report ? parseReportSummary(report) : null;
 
-  // Post-apply pipeline data — sidecars per job (stage history, interview
+  // Post-apply pipeline data -- sidecars per job (stage history, interview
   // panel, offer rounds). Each is read-only; null when absent. These power
   // the new tabs on the job page (interviewers / offer / negotiation /
-  // ready-gate). Cheap reads — sidecars are < 5KB each in practice.
+  // ready-gate). Cheap reads -- sidecars are < 5KB each in practice.
   const stage = getStageState(job.id, resolvedProfileId) ?? null;
   const interviewers = listInterviewers(job.id, resolvedProfileId);
   const offer = getOffer(job.id, resolvedProfileId) ?? null;

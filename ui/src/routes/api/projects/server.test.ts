@@ -1,5 +1,5 @@
 /**
- * GET + POST /api/projects — saved-filter CRUD.
+ * GET + POST /api/projects -- saved-filter CRUD.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

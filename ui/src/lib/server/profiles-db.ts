@@ -1,5 +1,5 @@
 /**
- * profiles-db — userId-scoped Profile CRUD backed by app.db.profiles.
+ * profiles-db -- userId-scoped Profile CRUD backed by app.db.profiles.
  *
  * Replaces the flat `data/profiles.json` file with per-user rows. Every
  * call takes a `userId` and only ever sees that user's profiles, so two
@@ -18,7 +18,7 @@
  * once every caller is verified to use this module.
  *
  * Why "first user inherits legacy"? Single-user installs had no notion of
- * ownership — there's only ever been one user's data. Making the owner
+ * ownership -- there's only ever been one user's data. Making the owner
  * inherit gives them a smooth upgrade with no manual import step.
  */
 import fs from 'node:fs';
@@ -51,7 +51,7 @@ function copyDirSync(src: string, dst: string): void {
         try {
           fs.copyFileSync(s, d);
         } catch {
-          // Both symlink+file-copy failed for this entry — skip and let
+          // Both symlink+file-copy failed for this entry -- skip and let
           // the upstream migrator surface a more specific error if the
           // resulting profile dir is missing critical files.
         }
@@ -60,7 +60,7 @@ function copyDirSync(src: string, dst: string): void {
       try {
         fs.copyFileSync(s, d);
       } catch {
-        // Single file copy failed — skip and let the caller verify the
+        // Single file copy failed -- skip and let the caller verify the
         // copied tree afterwards.
       }
     }
@@ -68,7 +68,7 @@ function copyDirSync(src: string, dst: string): void {
 }
 
 /** Copy `data/profiles/{slug}/` to `data/users/{userId}/profiles/{slug}/`
- *  the first time this user references that slug. Idempotent — skips if
+ *  the first time this user references that slug. Idempotent -- skips if
  *  the destination tree already exists. */
 function maybeCopyProfileTree(userId: string, slug: string): void {
   if (userId === SYSTEM_USER_ID) return;
@@ -176,7 +176,7 @@ function claimLegacyForUser(userId: string): boolean {
  *  the legacy data, copy its rows under this user_id. Other users start
  *  with an empty default profile. */
 function maybeMigrateLegacy(userId: string): void {
-  // Never seed for the system sentinel — those are anonymous reads we
+  // Never seed for the system sentinel -- those are anonymous reads we
   // don't want producing phantom rows. The endpoint guard already 401s
   // unauthenticated traffic before it reaches the per-user surface.
   if (userId === SYSTEM_USER_ID) return;
@@ -241,7 +241,7 @@ function maybeMigrateLegacy(userId: string): void {
     };
     const list = Array.isArray(parsed.profiles) ? parsed.profiles : [];
     if (list.length === 0) {
-      // Empty file — same fallback as no file.
+      // Empty file -- same fallback as no file.
       const now = nowMs();
       appDb
         .insert(profiles)
@@ -399,7 +399,7 @@ export function createProfileFor(
     } catch (e) {
       lastErr = e;
       const msg = e instanceof Error ? e.message : String(e);
-      // Only retry on UNIQUE conflict — anything else (FK / disk full /
+      // Only retry on UNIQUE conflict -- anything else (FK / disk full /
       // permission) should surface to the caller.
       if (!/UNIQUE/i.test(msg) && !/constraint/i.test(msg)) throw e;
       // Loop: uniqueSlug() will read the now-newer state and append

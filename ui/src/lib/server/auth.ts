@@ -1,5 +1,5 @@
 /**
- * auth — Better Auth singleton.
+ * auth -- Better Auth singleton.
  *
  * Authentication strategy for heron:
  *
@@ -55,11 +55,11 @@ function getOrCreateSecret(): string {
   secret = crypto.randomBytes(32).toString('hex'); // 64 hex chars
   process.env.BETTER_AUTH_SECRET = secret;
   try {
-    // writeEnv() ignores keys it doesn't know about — fall back to
+    // writeEnv() ignores keys it doesn't know about -- fall back to
     // appending directly so the value persists.
     persistSecretToEnv(secret);
   } catch (e) {
-    // Read-only filesystem or similar — the secret will stay in-memory
+    // Read-only filesystem or similar -- the secret will stay in-memory
     // for this run, which means every restart re-generates and every
     // session is invalidated. Surface it so the operator knows.
     // eslint-disable-next-line no-console
@@ -146,7 +146,7 @@ export const auth = betterAuth({
    * insert (race with concurrent first signups), so we check AFTER and
    * upgrade the role if this user's id was the lowest-created.
    *
-   * Subsequent signups (after an invite-code claim) keep role='member' —
+   * Subsequent signups (after an invite-code claim) keep role='member' --
    * the owner can promote them to 'admin' via /settings/users.
    */
   databaseHooks: {
@@ -168,7 +168,7 @@ export const auth = betterAuth({
               promotedToOwner = true;
             }
           } catch (e) {
-            // Non-fatal — the user keeps their default 'member' role.
+            // Non-fatal -- the user keeps their default 'member' role.
             // /settings/users gives a path to fix this manually later.
             // Surface so we can audit when owner-promotion misfires.
             reportServerError('auth', 'Owner auto-promotion failed', e, {
@@ -204,10 +204,10 @@ export const auth = betterAuth({
 
   // Trusted origins for CSRF + cookie purposes.
   //
-  //   • http://localhost (no port) — Capacitor WebView + Electron
-  //   • capacitor://localhost      — Capacitor iOS scheme
-  //   • http://localhost:*         — every dev / preview / verifier port
-  //   • Tailscale magic-DNS        — *.ts.net for remote LAN access
+  //   • http://localhost (no port) -- Capacitor WebView + Electron
+  //   • capacitor://localhost      -- Capacitor iOS scheme
+  //   • http://localhost:*         -- every dev / preview / verifier port
+  //   • Tailscale magic-DNS        -- *.ts.net for remote LAN access
   //
   // Better Auth supports wildcard ports via `localhost:*` and subdomain
   // wildcards via `*.ts.net`. These are the only patterns we ever want
@@ -247,14 +247,14 @@ export const auth = betterAuth({
       rpID: new URL(BETTER_AUTH_URL).hostname,
       origin: BETTER_AUTH_URL,
     }),
-    // bearer — adds Authorization-header session support alongside cookies.
+    // bearer -- adds Authorization-header session support alongside cookies.
     // Required for the Capacitor WebView (origin `heron://localhost`),
     // where cookies set on the backend origin (`http://lan-ip:5173`) don't
     // travel back to the WebView. After every sign-in/sign-up the response
     // carries `Set-Auth-Token: <token>`; the client (auth-client.ts custom
     // fetch) captures it, stores in Capacitor Preferences, and replays on
     // every subsequent request as `Authorization: Bearer <token>`. Web
-    // browsers keep using cookies — both paths coexist transparently.
+    // browsers keep using cookies -- both paths coexist transparently.
     bearer(),
   ],
 
@@ -304,7 +304,7 @@ export const auth = betterAuth({
   // In localhost dev the flag is off so http://localhost can still
   // round-trip the session.
   //
-  // crossSubDomainCookies stays off — Heron is single-origin
+  // crossSubDomainCookies stays off -- Heron is single-origin
   // (no shared cookie across `app.example.com` / `api.example.com`).
   // Leaving it off is defence-in-depth: a hijacked sibling sub-domain
   // can't read or replay the session cookie.
@@ -313,10 +313,10 @@ export const auth = betterAuth({
   // relying on Better Auth defaults, so a future version that changes
   // defaults can't silently weaken our cookie security.
   advanced: {
-    // Cookie names will be prefixed by this — for `heron` the
+    // Cookie names will be prefixed by this -- for `heron` the
     // session cookie becomes `heron.session_token`. Pulled from
     // BRAND so the cookie name tracks the brand rename. NOTE: changing
-    // this invalidates existing sessions across all clients — a
+    // this invalidates existing sessions across all clients -- a
     // rebrand will sign every user out (intended; clean break).
     cookiePrefix: BRAND.name,
     useSecureCookies: BETTER_AUTH_URL.startsWith('https://'),
@@ -325,11 +325,11 @@ export const auth = betterAuth({
       session_token: {
         attributes: {
           httpOnly: true,
-          // SameSite=Lax — Set-Cookie travels on top-level navigation
+          // SameSite=Lax -- Set-Cookie travels on top-level navigation
           // (OAuth callback redirects need this) but blocked on cross-
           // site fetch / iframe. Strict would break GitHub OAuth callback.
           sameSite: 'lax',
-          // Secure — only set when running over HTTPS. The dev shell
+          // Secure -- only set when running over HTTPS. The dev shell
           // (http://localhost) keeps it off so cookies round-trip locally.
           secure: BETTER_AUTH_URL.startsWith('https://'),
           path: '/',

@@ -7,7 +7,7 @@
  *   • report links resolve
  *   • score format X.X/5 or N/A or DUP
  *   • no pending TSVs in any profile's batch/tracker-additions/
- *     (per-profile post-multi-user — was repo-root batch/tracker-additions/)
+ *     (per-profile post-multi-user -- was repo-root batch/tracker-additions/)
  *   • states.yml itself is well-formed
  */
 import { describe, expect, it } from 'vitest';
@@ -47,7 +47,7 @@ describe('data/profiles structure', () => {
     for (const p of state.profiles) {
       const apps = `data/profiles/${p.id}/applications.md`;
       if (exists(apps)) {
-        // shape — first line is "# Applications Tracker" or similar
+        // shape -- first line is "# Applications Tracker" or similar
         const head = readFile(apps).split('\n').slice(0, 3).join('\n');
         expect(head.toLowerCase()).toMatch(/applications?/);
       }
@@ -56,7 +56,7 @@ describe('data/profiles structure', () => {
 });
 
 describe('per-profile batch/tracker-additions/ should be empty', () => {
-  // Pending TSVs are unmerged — surfacing this so users don't lose
+  // Pending TSVs are unmerged -- surfacing this so users don't lose
   // evals to forgotten merges. Walks every profile under
   // data/profiles/{slug}/ and data/users/{uid}/profiles/{slug}/.
   function profileRoots(): string[] {

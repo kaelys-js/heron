@@ -1,5 +1,5 @@
 /**
- * lib/server/apply-failures — single entry-point for autonomous-apply
+ * lib/server/apply-failures -- single entry-point for autonomous-apply
  * failure reporting (Issue + status flip + activity event).
  *
  * Mocks all four dependencies (reportIssue, logEvent, markStatus,

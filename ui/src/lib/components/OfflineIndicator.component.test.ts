@@ -1,5 +1,5 @@
 /**
- * OfflineIndicator — top-of-viewport status pill.
+ * OfflineIndicator -- top-of-viewport status pill.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { render } from '@testing-library/svelte';

@@ -9,7 +9,7 @@
  * to interview-prep/story-bank.md (creates the file if missing) so future
  * applications + interview prep have access to the learning.
  *
- * Empty bodies are valid — the mode can introspect from applications.md
+ * Empty bodies are valid -- the mode can introspect from applications.md
  * and the report alone, useful when the user just wants the system to
  * derive learnings without typing.
  */
@@ -23,7 +23,7 @@ import { userSharedPath } from '$lib/server/profile-paths';
 import { spawnAgentWithMode } from '$lib/server/spawn-agent';
 import { logEvent, reportServerError } from '$lib/server/events';
 
-// Story-bank is per-user shared-across-profiles — rejection learnings
+// Story-bank is per-user shared-across-profiles -- rejection learnings
 // are cross-track wisdom (negotiation, behavioral stories, communication
 // patterns), not tied to a specific career identity. Resolved at write
 // time so the active user's _shared/ dir is the target.

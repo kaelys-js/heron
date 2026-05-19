@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * cover-letter-check.mjs — strict quality gate for cover-letter markdown.
+ * cover-letter-check.mjs -- strict quality gate for cover-letter markdown.
  *
  * Cover letters live or die on three signals recruiters scan for in <30s:
  *   1. Personalisation (do they know who I am / what we do?)
@@ -17,9 +17,9 @@
  *   pnpm cover:check <path/to/cover.md> --lenient
  *
  * Exit codes:
- *   0 — every check passed
- *   1 — at least one hard fail
- *   2 — environment / argument issue
+ *   0 -- every check passed
+ *   1 -- at least one hard fail
+ *   2 -- environment / argument issue
  */
 
 import { readFileSync, existsSync } from 'node:fs';
@@ -136,7 +136,7 @@ else pass('Opening hook', `"${firstSentence.slice(0, 80)}${firstSentence.length 
 
 // ── 4. PERSONALISATION ────────────────────────────────────────────
 if (detectedCompany) {
-  // Company name (or its slug-words) should appear in the body — at least once.
+  // Company name (or its slug-words) should appear in the body -- at least once.
   const compRe = new RegExp(
     `\\b${detectedCompany.replace(/[^\w\s]/g, '').replace(/\s+/g, '\\s+')}\\b`,
     'i',
@@ -157,7 +157,7 @@ if (detectedRole) {
 }
 
 // Specificity signal: at least one concrete reference (product, team, mission, technology).
-// We look for proper-noun phrases NOT in the standard CV-glossary — anything capitalised
+// We look for proper-noun phrases NOT in the standard CV-glossary -- anything capitalised
 // in the middle of a sentence that's not common job vocabulary.
 const properNouns = plain.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b/g) || [];
 const COMMON = new Set([

@@ -1,5 +1,5 @@
 /**
- * /api/profile/seed-form-answers — pre-populate the form-answers cache
+ * /api/profile/seed-form-answers -- pre-populate the form-answers cache
  * from cv.md + profile.yml so the FIRST autonomous-apply run doesn't
  * dead-end on `unknown-field:notice period` and similar.
  *

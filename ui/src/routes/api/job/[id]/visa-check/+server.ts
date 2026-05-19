@@ -3,11 +3,11 @@
  *
  * Visa / work-authorisation gate. Combines two sources:
  *
- *   1. User's profile.yml — `targeting.visa.status` (e.g. 'us-citizen',
+ *   1. User's profile.yml -- `targeting.visa.status` (e.g. 'us-citizen',
  *      'eu-citizen', 'h1b-needed', 'h1b-transfer', 'green-card', 'permanent-resident', 'unknown')
  *      and `targeting.visa.willingToRelocate`.
  *
- *   2. Job description — heuristics over the JD text:
+ *   2. Job description -- heuristics over the JD text:
  *      - "must be authorised to work in {country} without sponsorship"
  *      - "we do not provide visa sponsorship"
  *      - "h1b sponsorship available" / "willing to sponsor"
@@ -60,7 +60,7 @@ function readProfileYaml(profileId: string): {
     const text = fs.readFileSync(p, 'utf8');
     // We avoid pulling a YAML parser into this server file; we only need
     // two fields. Grep them out with line-level matches. This is
-    // intentionally tolerant — missing values just fall back to defaults.
+    // intentionally tolerant -- missing values just fall back to defaults.
     const statusMatch = text.match(/^\s*status:\s*"?([a-z0-9-]+)"?/im);
     const reloMatch = text.match(/^\s*willing(?:To)?[Rr]elocate:\s*(true|false)/m);
     const locationsBlock = text.match(/^locations:\s*([\s\S]+?)(?:\n[a-z]|$)/im);

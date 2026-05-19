@@ -1,5 +1,5 @@
 /**
- * linkedin-audit — turn the raw scraper snapshot into a remediation report.
+ * linkedin-audit -- turn the raw scraper snapshot into a remediation report.
  *
  * The Python scraper (`linkedin-audit.py`) dumps a structured snapshot:
  *   { profile, experience, skills, recommendations, featured, activity,
@@ -32,7 +32,7 @@ export type AuditSeverity = 'error' | 'warn' | 'info';
 export type FindingCategory = 'profile' | 'account' | 'activity' | 'security';
 
 export type AuditFinding = {
-  /** Stable machine id — e.g. 'no-photo', 'stale-activity', 'no-2fa'. */
+  /** Stable machine id -- e.g. 'no-photo', 'stale-activity', 'no-2fa'. */
   kind: string;
   severity: AuditSeverity;
   category: FindingCategory;

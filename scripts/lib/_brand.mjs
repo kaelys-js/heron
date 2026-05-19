@@ -1,14 +1,14 @@
 /**
- * _brand.mjs — shared brand.json loader for Node scripts.
+ * _brand.mjs -- shared brand.json loader for Node scripts.
  *
  * Any .mjs script that needs the brand identifiers (display name,
  * repo URL, URL scheme, etc.) imports from here. Centralising the
  * load gives us:
- *   • Single source of truth — every consumer hits the same JSON.
- *   • Fail-safe fallback — if brand.json is missing/corrupt (e.g.
+ *   • Single source of truth -- every consumer hits the same JSON.
+ *   • Fail-safe fallback -- if brand.json is missing/corrupt (e.g.
  *     during early bootstrap on a fresh clone), we return the
  *     historical defaults so the script still works.
- *   • Resilient path resolution — works regardless of which subdir
+ *   • Resilient path resolution -- works regardless of which subdir
  *     under scripts/ the caller lives in (lib/, native/, system/,
  *     etc.) because we walk up from this file's location.
  *
@@ -30,7 +30,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, '..', '..');
 const BRAND_JSON = join(REPO_ROOT, 'branding', 'brand.json');
 
-/** Historical defaults — used when brand.json is missing or corrupt.
+/** Historical defaults -- used when brand.json is missing or corrupt.
  *  Keeps scripts functional during fresh-clone bootstrap, repo
  *  surgery, or git-mid-rebase states. */
 const DEFAULTS = Object.freeze({

@@ -1,5 +1,5 @@
 /**
- * lib-profiles.mjs — argv + env helpers.
+ * lib-profiles.mjs -- argv + env helpers.
  *
  * The MJS scripts in scripts/ (scanners, appliers, tracker tools, etc.)
  * use `profileFromArgv()` and `userFromArgv()` to resolve their target
@@ -82,7 +82,7 @@ describe('lib-profiles.mjs::userFromArgv', () => {
 });
 
 describe('lib-profiles.mjs::resolveUserArg — path-traversal guard', () => {
-  // The path-traversal guard exits the process — capture that via
+  // The path-traversal guard exits the process -- capture that via
   // mocking process.exit. resolveUserArg is the same code path that
   // userFromArgv uses, so the guard fires for both.
   it.each([

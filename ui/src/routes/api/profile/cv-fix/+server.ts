@@ -3,7 +3,7 @@
  *
  * Auto-fix the user's base CV based on the failed checks from
  * /api/profile/cv-check. Uses the Anthropic SDK to rewrite cv.md so the
- * checks pass — preserving every fact while removing AI-detection
+ * checks pass -- preserving every fact while removing AI-detection
  * patterns, clichés, missing sections, etc.
  *
  * Safe by default:
@@ -128,12 +128,12 @@ export const POST = wrap('cv-fix', async ({ request }: { request: Request }) => 
       fs.copyFileSync(cvMd, cvMd + '.bak');
       backedUp = true;
     } catch {
-      /* non-fatal — proceed with the write */
+      /* non-fatal -- proceed with the write */
     }
     fs.writeFileSync(cvMd, rewritten);
 
     // Re-run checks on the new file so the response includes the new
-    // score. Don't regenerate the PDF here — that's a separate step.
+    // score. Don't regenerate the PDF here -- that's a separate step.
     qualityAfter = await checkResumeQuality(cvMd);
     const status = generalCvStatus();
     if (status.exists) atsAfter = await checkAts(status.path);

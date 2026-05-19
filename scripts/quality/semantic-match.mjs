@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * semantic-match.mjs — semantic similarity scorer for CV ↔ JD pairs.
+ * semantic-match.mjs -- semantic similarity scorer for CV ↔ JD pairs.
  *
  * Modern ATS-on-top-of-AI tools (Eightfold AI, Phenom, HireVue, Beamery,
  * Pymetrics, Harver, Plum) score "fit" against the JD using semantic
- * embeddings — NOT keyword regex. A CV that lexically matches the JD
+ * embeddings -- NOT keyword regex. A CV that lexically matches the JD
  * may STILL underperform a CV with deeper conceptual match.
  *
  * Real embedding APIs (OpenAI, Cohere, Voyage) would give the truest
@@ -12,12 +12,12 @@
  * cosine similarity via:
  *
  *   1. TF-IDF over the union of CV + JD vocabulary (so rare terms in
- *      the JD that ALSO appear in CV score high — that's where
+ *      the JD that ALSO appear in CV score high -- that's where
  *      semantic match actually lives).
  *   2. Bag-of-bigrams to capture short phrasal context ("kubernetes
  *      operator", "growth equity", "design systems") that single-word
  *      TF-IDF misses.
- *   3. Concept buckets — pre-defined synonym groups (e.g.
+ *   3. Concept buckets -- pre-defined synonym groups (e.g.
  *      "leadership"={lead, manage, mentor, coached, owned, drove}) so
  *      that "drove revenue" on the CV matches "lead growth" on the JD
  *      even though no token overlaps.
@@ -31,10 +31,10 @@
  *   pnpm semantic:match <cv.md> <jd.txt> --json
  *
  * Exit codes:
- *   0  — match score ≥ 60 (looks tailored)
- *   1  — score 40-59 (acceptable but rewrite specific sections)
- *   2  — score < 40 (looks generic; tailor the CV before applying)
- *   3  — env / argument issue
+ *   0  -- match score ≥ 60 (looks tailored)
+ *   1  -- score 40-59 (acceptable but rewrite specific sections)
+ *   2  -- score < 40 (looks generic; tailor the CV before applying)
+ *   3  -- env / argument issue
  */
 
 import { readFileSync, existsSync } from 'node:fs';
@@ -433,7 +433,7 @@ function termFreq(tokens) {
 const jdTf = termFreq(jdTokens);
 const cvTf = termFreq(cvTokens);
 
-// "IDF" approximation — terms that appear 1-2× in the JD are rarer than
+// "IDF" approximation -- terms that appear 1-2× in the JD are rarer than
 // terms that appear 10× (which are stop-word-ish even after stopword removal).
 function idf(t) {
   const f = jdTf.get(t) || 0;
@@ -487,7 +487,7 @@ const conceptScore = conceptPossibleTotal
 // ── Composite ────────────────────────────────────────────────────────
 const composite = Math.round(tfIdfScore * 0.4 + bigramScore * 0.25 + conceptScore * 0.35);
 
-// Find concepts the JD CARES ABOUT that the CV is silent on — the
+// Find concepts the JD CARES ABOUT that the CV is silent on -- the
 // most actionable feedback in the whole report.
 const gaps = conceptMatches.filter((c) => c.cvMatches === 0 && c.jdMatches >= 2);
 

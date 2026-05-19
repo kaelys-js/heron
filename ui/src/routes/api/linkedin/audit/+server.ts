@@ -4,11 +4,11 @@
  *
  * POST /api/linkedin/audit
  *   → spawn `linkedin-audit.py`, classify the snapshot, persist the
- *     report, return it. Long-running — Playwright over LinkedIn pages
+ *     report, return it. Long-running -- Playwright over LinkedIn pages
  *     takes 30-90s. Caller should show a spinner.
  *
  * The body of POST accepts:
- *   { headed?: boolean }   — pass true for the one-time login session
+ *   { headed?: boolean }   -- pass true for the one-time login session
  */
 
 import { spawn } from 'node:child_process';

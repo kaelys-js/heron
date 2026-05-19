@@ -13,7 +13,7 @@ export type EnvVars = {
   ANTHROPIC_API_KEY?: string;
   ADZUNA_APP_ID?: string;
   ADZUNA_APP_KEY?: string;
-  // Gmail IMAP — populated by the /sources page's Gmail Connect form,
+  // Gmail IMAP -- populated by the /sources page's Gmail Connect form,
   // consumed by scan-email-imap.mjs. Plain-text in .env (per user choice
   // for simplest auth). Removed by the Disconnect endpoint.
   GMAIL_IMAP_HOST?: string;

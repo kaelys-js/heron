@@ -2,15 +2,15 @@
  * GET /api/inbox/cards
  *
  * Returns the auto-derived "next action" cards for the current user:
- *   • thank-you-owed   — interviewers from the last 48h with no thank-you-path yet
- *   • follow-up-due    — applications past their follow-up cadence
- *   • prep-block-recommended — upcoming interviews in the next 5 days without a dossier
- *   • offer-decision-due — offers with decisionDeadline in the next 72h
- *   • ghosted-flagged   — auto-ghost detector flagged applications silent ≥21d
- *   • next-action-due  — explicit nextActionDue items from stage-state
+ *   • thank-you-owed   -- interviewers from the last 48h with no thank-you-path yet
+ *   • follow-up-due    -- applications past their follow-up cadence
+ *   • prep-block-recommended -- upcoming interviews in the next 5 days without a dossier
+ *   • offer-decision-due -- offers with decisionDeadline in the next 72h
+ *   • ghosted-flagged   -- auto-ghost detector flagged applications silent ≥21d
+ *   • next-action-due  -- explicit nextActionDue items from stage-state
  *
  * Used by the Inbox page (alongside the existing apply-failure Issues).
- * Stateless — derived on every call from sidecar JSON. No persisted card
+ * Stateless -- derived on every call from sidecar JSON. No persisted card
  * entities; the user reaches the relevant flow via the card's CTA.
  */
 
@@ -25,7 +25,7 @@ const DAYS_PREP_REQUIRED = 5;
 const HOURS_TO_DECIDE = 72;
 
 export type InboxCard = {
-  /** Stable card id — derived from kind + jobId + secondary key so the
+  /** Stable card id -- derived from kind + jobId + secondary key so the
    *  client can de-dupe across polls. */
   id: string;
   kind:
@@ -38,9 +38,9 @@ export type InboxCard = {
   jobId: string;
   title: string;
   description: string;
-  /** ISO ms — when this card became actionable. */
+  /** ISO ms -- when this card became actionable. */
   dueAt: number;
-  /** Optional secondary action — what the user should do next. */
+  /** Optional secondary action -- what the user should do next. */
   cta?: { label: string; href: string };
 };
 

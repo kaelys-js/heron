@@ -10,19 +10,19 @@
  *   - Jobs that aren't currently in Ready (preserves manual status flips)
  *   - Jobs that already have status >= Queued (idempotent on re-runs)
  *
- * Status update is fire-and-forget via the existing /api/status helper —
+ * Status update is fire-and-forget via the existing /api/status helper --
  * normalize.job + dedup.job already chain off that.
  *
  * Multi-user safety (F11): the listener fires inside whatever ALS context
- * the emitting code held — which is usually correct (events fired from a
+ * the emitting code held -- which is usually correct (events fired from a
  * /api/* request inherit the request's user context). BUT the emit can
  * also happen from a background tick OR from spawn-completion callbacks
  * that have lost the original context. So we re-enter the user context
  * explicitly via `runAsUser(ev.userId, …)` before calling `loadAllJobs()`
- * / `markStatus()` — both of which read+write per-user data.
+ * / `markStatus()` -- both of which read+write per-user data.
  *
  * If the event isn't tagged with a userId (broadcast event or pre-F11
- * emit), we skip — better to no-op than to write into the wrong user's
+ * emit), we skip -- better to no-op than to write into the wrong user's
  * tree.
  */
 
@@ -33,7 +33,7 @@ import { runAsUser } from '../user-context';
 import type { ActivityEvent } from '$lib/types';
 
 function installAutoQueue(): void {
-  // installBusListener is idempotent across HMR — see events.ts.
+  // installBusListener is idempotent across HMR -- see events.ts.
   installBusListener('auto-queue', (ev: ActivityEvent) => {
     if (ev.level !== 'success') return;
     if (ev.source !== 'evaluate') return;
@@ -44,11 +44,11 @@ function installAutoQueue(): void {
     if (!m) return;
     const url = m[0].replace(/[)\].,>]+$/, '');
 
-    // F11 — anchor to ev.userId. Without it we'd potentially flip the
+    // F11 -- anchor to ev.userId. Without it we'd potentially flip the
     // wrong user's job row (or write to SYSTEM_USER's tree).
     const ownerUserId = ev.userId;
     if (!ownerUserId) {
-      // Broadcast / untagged event. Don't guess — log a warn so it
+      // Broadcast / untagged event. Don't guess -- log a warn so it
       // surfaces in /runtimes if it ever fires in real traffic.
       logEvent('auto-queue', 'Skipping untagged evaluate event', {
         level: 'warn',
@@ -58,7 +58,7 @@ function installAutoQueue(): void {
       return;
     }
 
-    // Fire-and-forget — the bus listener signature is sync, so we kick
+    // Fire-and-forget -- the bus listener signature is sync, so we kick
     // off the async work inside an IIFE. runAsUser preserves ALS through
     // every await boundary downstream.
     void runAsUser(ownerUserId, async () => {

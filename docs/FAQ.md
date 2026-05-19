@@ -8,7 +8,7 @@
 
 $0/month if you use a Claude Max plan (`AGENT_CLI=claude` routes through `claude -p`). Otherwise: only the AI tokens for evaluations + CV generations, billed by your chosen provider.
 
-Heron is MIT-licensed and free. There is no hosted tier today. The math: Heron saves a week of job-search time per role — that's worth far more than the AI tokens it costs.
+Heron is MIT-licensed and free. There is no hosted tier today. The math: Heron saves a week of job-search time per role -- that's worth far more than the AI tokens it costs.
 
 ## Does this auto-apply to jobs?
 
@@ -16,7 +16,7 @@ Only if you opt in. Autopilot mode is **off by default**, score-gated (≥4.0/5 
 
 ## Does my data leave my machine?
 
-No — except for the AI API calls **you initiate** to your chosen provider (Anthropic / Gemini / OpenAI). Even those carry only the JD + prompt + your CV/profile that the AI needs to answer. No telemetry, no aggregator, no third-party uploads. Your `data/` directory is local-only and gitignored.
+No -- except for the AI API calls **you initiate** to your chosen provider (Anthropic / Gemini / OpenAI). Even those carry only the JD + prompt + your CV/profile that the AI needs to answer. No telemetry, no aggregator, no third-party uploads. Your `data/` directory is local-only and gitignored.
 
 ## Can I use Claude Max instead of API tokens?
 
@@ -24,7 +24,7 @@ Yes. Set `AGENT_CLI=claude` (the default) and Heron uses `claude -p` for every A
 
 ## Do I need a Mac for iOS builds?
 
-Yes — code-signing requires macOS + Xcode. Linux / Windows still work for the web dashboard + Electron desktop + Android. The CI pipeline `native-release.yml` runs the iOS leg on `macos-15`; local iOS dev needs Xcode 16+.
+Yes -- code-signing requires macOS + Xcode. Linux / Windows still work for the web dashboard + Electron desktop + Android. The CI pipeline `native-release.yml` runs the iOS leg on `macos-15`; local iOS dev needs Xcode 16+.
 
 ## Why not just use LinkedIn Easy Apply?
 
@@ -40,7 +40,7 @@ No. Heron is a workflow + decision-support layer. It consumes from job boards (L
 
 ## Can I run Heron without an AI subscription?
 
-Most evaluations need an AI call (the A–F report, comp research, CV tailoring). The portal scanner is zero-AI — it hits ATS APIs directly. So you can curate the pipeline by hand and only spend AI tokens on the roles you choose to evaluate.
+Most evaluations need an AI call (the A-F report, comp research, CV tailoring). The portal scanner is zero-AI -- it hits ATS APIs directly. So you can curate the pipeline by hand and only spend AI tokens on the roles you choose to evaluate.
 
 ## How do I switch AI providers?
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * cv-sync-check.mjs — Validates that the Heron setup is consistent.
+ * cv-sync-check.mjs -- Validates that the Heron setup is consistent.
  *
  * Checks:
  * 1. cv.md exists

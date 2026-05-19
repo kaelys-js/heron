@@ -1,5 +1,5 @@
 /**
- * Parse the `modes/` directory into structured "skills" — each mode is a Claude Code
+ * Parse the `modes/` directory into structured "skills" -- each mode is a Claude Code
  * slash-command prompt. The Skills page renders them with descriptions, categories,
  * and full markdown bodies.
  */
@@ -80,7 +80,7 @@ const CATEGORY: Record<string, SkillCategory> = {
   _profile: 'system',
   _shared: 'system',
   '_profile.template': 'system',
-  // Localized modes use parallel ids — surfaces them with the right category
+  // Localized modes use parallel ids -- surfaces them with the right category
   // even though they live under modes/{lang}/.
   angebot: 'evaluation', // de: Stellenangebot
   offre: 'evaluation', // fr: offre d'emploi
@@ -140,7 +140,7 @@ function inferCategory(id: string): SkillCategory {
 function parseHeader(text: string): { title: string; subtitle: string } {
   const firstHeading = text.split('\n').find((l) => l.startsWith('# ')) ?? '';
   const cleaned = firstHeading.replace(/^# /, '').trim();
-  // Match "Modo: X — Y" or "Mode: X -- Y" or "Mode: X — Y"
+  // Match "Modo: X -- Y" or "Mode: X -- Y" or "Mode: X -- Y"
   const m =
     cleaned.match(/^(?:Modo|Mode):\s*([^—–\-]+?)\s*[—–\-]{1,2}\s*(.+)$/i) ??
     cleaned.match(/^([a-z\-]+)\s*[—–\-]{1,2}\s*(.+)$/i);
@@ -202,7 +202,7 @@ function detectLanguage(_text: string): 'en' | 'es' | 'mixed' {
   // Heron ships English-only mode templates (locale dirs retired in
   // commit 7e3fd99). The `modes_dir` escape hatch still lets a user
   // point at a restored localized directory of their own, but we no
-  // longer detect language heuristically — anything top-level is 'en';
+  // longer detect language heuristically -- anything top-level is 'en';
   // anything under a `modes/<lang>/` subdir is tagged by its directory
   // path in `listSkills()` below.
   return 'en';
@@ -213,7 +213,7 @@ function detectLanguage(_text: string): 'en' | 'es' | 'mixed' {
 const LANG_SUBDIRS = new Set(['de', 'fr', 'ja', 'pt', 'ru', 'es']);
 
 /**
- * List every `*.md` mode discoverable in modes/ — both top-level (English)
+ * List every `*.md` mode discoverable in modes/ -- both top-level (English)
  * and one-level language subdirs (modes/de/, modes/fr/, etc.). Skill ids
  * use a `<lang>:<id>` prefix for localized entries (e.g. `de:angebot`) so
  * they don't collide with the English file. The `/skills` page filters
@@ -224,7 +224,7 @@ export function listSkills(includeSystem = false): Skill[] {
 
   const consumeFile = (f: string, dirAbs: string, lang: Skill['lang'], idPrefix: string) => {
     const id = idPrefix + f.replace(/\.md$/, '');
-    // Don't carry the prefix into category lookup — `de:angebot` should look
+    // Don't carry the prefix into category lookup -- `de:angebot` should look
     // up `angebot` in CATEGORY.
     const lookupId = id.includes(':') ? id.split(':', 2)[1] : id;
     const category = inferCategory(lookupId);
@@ -277,7 +277,7 @@ export function listSkills(includeSystem = false): Skill[] {
             consumeFile(lf, full, f as Skill['lang'], f + ':');
           }
         } catch {
-          /* unreadable lang dir — skip */
+          /* unreadable lang dir -- skip */
         }
       }
     }

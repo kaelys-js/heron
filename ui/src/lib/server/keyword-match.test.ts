@@ -1,7 +1,7 @@
 /**
- * lib/server/keyword-match — deterministic ATS-style keyword overlap.
+ * lib/server/keyword-match -- deterministic ATS-style keyword overlap.
  *
- * Pure function — no IO, no DB. Node env.
+ * Pure function -- no IO, no DB. Node env.
  */
 import { describe, expect, it } from 'vitest';
 import { extractJdFromReport, keywordMatch } from './keyword-match';
@@ -48,7 +48,7 @@ describe('keywordMatch', () => {
   });
 
   it('weights trigrams 3x, bigrams 2x, unigrams 1x', () => {
-    // JD with a "needed" word the CV lacks — that single 1-gram-miss
+    // JD with a "needed" word the CV lacks -- that single 1-gram-miss
     // pulls the score down from 100. The MATCHED set should still
     // include the full 3-gram "machine learning engineer" + 2-grams.
     const jdHasTri = 'machine learning engineer needed';
@@ -56,7 +56,7 @@ describe('keywordMatch', () => {
     const r = keywordMatch(jdHasTri, cvFull);
     expect(r.matched).toContain('machine learning engineer');
     expect(r.missing).toContain('needed');
-    // Score is partial — high but not 100 because "needed" missed.
+    // Score is partial -- high but not 100 because "needed" missed.
     expect(r.score).toBeGreaterThan(50);
     expect(r.score).toBeLessThan(100);
   });

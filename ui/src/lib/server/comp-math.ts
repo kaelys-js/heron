@@ -1,5 +1,5 @@
 /**
- * comp-math — pure-function compensation math.
+ * comp-math -- pure-function compensation math.
  *
  * For senior IC roles equity is often 30-50% of total comp. The negotiation
  * mode wrote prompts about it but never computed anything. This module
@@ -13,19 +13,19 @@
  *   3. Equity NPV     = sum of vested-shares per year, discounted to today
  *
  * Equity flavors handled:
- *   - RSU (public)   — vest at FMV per share, taxed as W-2 income at vest
- *   - RSU (private)  — same vesting but FMV is the company's 409A. Often
+ *   - RSU (public)   -- vest at FMV per share, taxed as W-2 income at vest
+ *   - RSU (private)  -- same vesting but FMV is the company's 409A. Often
  *                       wildly understates "outcome" value; risk-adjust.
- *   - ISO/NSO        — option grants, value = max(0, FMV - strike) × growth
- *   - Pre-IPO RSU    — double-trigger: vest + liquidity event
+ *   - ISO/NSO        -- option grants, value = max(0, FMV - strike) × growth
+ *   - Pre-IPO RSU    -- double-trigger: vest + liquidity event
  *
  * We don't model:
- *   - Taxes (too jurisdiction-specific — leave to TaxJar / personal CPA)
+ *   - Taxes (too jurisdiction-specific -- leave to TaxJar / personal CPA)
  *   - 401k employer match (handled as a flat benefit credit)
- *   - Refresh grants (year-3+ — too speculative)
+ *   - Refresh grants (year-3+ -- too speculative)
  *
  * All math is in the user's chosen currency (default USD). The numbers
- * coming OUT are nominal — no inflation adjustment. Annual bonus is
+ * coming OUT are nominal -- no inflation adjustment. Annual bonus is
  * modeled at TARGET; risk-adjust via probability if the user wants.
  */
 
@@ -36,7 +36,7 @@ export type VestingSchedule = {
   totalYears: number;
   /** Months before any equity vests. Default 12 (one-year cliff). */
   cliffMonths: number;
-  /** Schedule shape — most US tech is monthly or quarterly after cliff. */
+  /** Schedule shape -- most US tech is monthly or quarterly after cliff. */
   cadence: 'monthly' | 'quarterly' | 'yearly';
 };
 
@@ -52,7 +52,7 @@ export type OfferInput = {
     grantValueToday: number;
     /** ISO/NSO only: strike price. RSU ignores. */
     strikePerShare?: number;
-    /** Optional growth assumption per year. Default 0 (conservative — risk-
+    /** Optional growth assumption per year. Default 0 (conservative -- risk-
      *  adjust via the discountRate instead). For pre-IPO RSU at a late-stage
      *  company, 5-15% is reasonable. */
     growthRatePct?: number;
@@ -63,7 +63,7 @@ export type OfferInput = {
   /** Risk discount applied to equity (and only equity). 0 = treat at face;
    *  0.3 = "I'd take 70¢ on the dollar in cash today over this paper". */
   equityDiscountPct?: number;
-  /** Annualized cost of capital — discounts FUTURE cash + equity to today.
+  /** Annualized cost of capital -- discounts FUTURE cash + equity to today.
    *  Default 5%. Conservative for a working-age IC's opportunity cost. */
   discountRatePct?: number;
 };
@@ -141,7 +141,7 @@ function equityNominalValue(
 
 /**
  * Evaluate a structured offer. All money in the same unit (USD by default).
- * Pure function — no I/O, no side effects, deterministic.
+ * Pure function -- no I/O, no side effects, deterministic.
  */
 export function evaluateOffer(input: OfferInput): OfferEvaluation {
   const base = Math.max(0, input.base);

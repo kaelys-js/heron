@@ -1,10 +1,10 @@
 /**
- * lib/types — runtime guards over the type-and-constant surface.
+ * lib/types -- runtime guards over the type-and-constant surface.
  *
  * The constants here drive the entire pipeline UI (status pills, empty
  * states, source labels, tab presets, default filters). Any drift
  * between the union types and the records keyed on them is a real
- * runtime bug — these tests are the gate.
+ * runtime bug -- these tests are the gate.
  */
 import { describe, expect, it } from 'vitest';
 import {

@@ -1,5 +1,5 @@
 /**
- * notifications.ts — bridge between the embedded SvelteKit server's
+ * notifications.ts -- bridge between the embedded SvelteKit server's
  * activity event bus and macOS/Windows/Linux OS notifications.
  *
  * Two delivery paths:
@@ -9,7 +9,7 @@
  *      browser API, which routes to the native NotificationCenter
  *      (macOS) / Action Center (Windows) / libnotify (Linux). The
  *      renderer code in `ui/src/lib/client/notifications.ts` already
- *      does this — Electron just needs the right entitlements + an app
+ *      does this -- Electron just needs the right entitlements + an app
  *      user model id so Windows binds the toast to the correct app.
  *
  *   2. **From the main process (for events that arrive while the
@@ -60,7 +60,7 @@ export type OsNotificationOptions = {
   silent?: boolean;
   /** Subtitle (macOS only). */
   subtitle?: string;
-  /** Urgency — 'low' | 'normal' | 'critical' (Linux). */
+  /** Urgency -- 'low' | 'normal' | 'critical' (Linux). */
   urgency?: 'low' | 'normal' | 'critical';
 };
 
@@ -82,7 +82,7 @@ export function showOsNotification(opts: OsNotificationOptions): Notification | 
   return n;
 }
 
-/** Probe — useful for the verifier or runtime self-checks. */
+/** Probe -- useful for the verifier or runtime self-checks. */
 export function notificationsSupported(): boolean {
   return Notification.isSupported();
 }

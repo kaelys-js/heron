@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * assert-coverage-thresholds.mjs — enforce coverage thresholds where
+ * assert-coverage-thresholds.mjs -- enforce coverage thresholds where
  * vitest 4 itself fails to.
  *
  * Why this exists: vitest@4.1.6 with a workspace config prints
@@ -10,11 +10,11 @@
  * coverage dropped. This script reads `ui/coverage/coverage-summary.json`
  * post-test-run and exits 1 if any threshold misses.
  *
- * Thresholds mirror ui/vitest.config.ts::test.coverage.thresholds —
+ * Thresholds mirror ui/vitest.config.ts::test.coverage.thresholds --
  * single source of truth. If the gate is too tight, raise coverage
  * (add tests); don't lower the bar.
  *
- * Usage: chain after `vitest run --coverage` — see ui/package.json
+ * Usage: chain after `vitest run --coverage` -- see ui/package.json
  *   "test:coverage": "vitest ... && node ../scripts/system/assert-coverage-thresholds.mjs"
  */
 import { readFileSync, existsSync } from 'node:fs';

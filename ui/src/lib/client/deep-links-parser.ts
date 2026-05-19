@@ -1,5 +1,5 @@
 /**
- * deep-links-parser — the pure URL→route resolution function, split out
+ * deep-links-parser -- the pure URL→route resolution function, split out
  * from deep-links.ts so it can be unit-tested in plain Node.
  *
  * The companion `deep-links.ts` adds the side-effecting wiring on top:
@@ -60,7 +60,7 @@ export function parseDeepLink(url: string): string | null {
       case 'profile':
         return '/profile';
       case 'login':
-        // Widget signed-out gate target — `redirectTo=/` so the
+        // Widget signed-out gate target -- `redirectTo=/` so the
         // post-login path lands on the dashboard rather than nothing.
         return '/login?redirectTo=/';
       case 'notifications':

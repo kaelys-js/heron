@@ -11,7 +11,7 @@ This document defines which files belong to the **system** (auto-updatable) and 
 Heron supports multiple distinct career identities ("profiles") per install. Each profile owns its own CV, targeting, pipeline, and applications data under `data/profiles/{slug}/`. The first install gets a `default` profile; users add more via `/onboarding?new=1` or `/profiles`.
 
 **Globally shared infrastructure** is reused across every profile AND every user:
-- `.env` (API keys + IMAP creds — per-machine, NOT in git)
+- `.env` (API keys + IMAP creds -- per-machine, NOT in git)
 - `data/profiles.json` (the registry + active-profile pointer; per-install)
 - `data/activity.jsonl` (global event log)
 - `data/issues.jsonl` (open issues feed)
@@ -21,14 +21,14 @@ Heron supports multiple distinct career identities ("profiles") per install. Eac
 - `data/users/{userId}/profiles/_shared/sources.json` (per-source connection health, per-user)
 - `data/users/{userId}/profiles/_shared/onboarding-state.json` (wizard step state, per-user)
 - `data/users/{userId}/profiles/_shared/autopilot.json` (scheduler config, per-user)
-- `data/users/{userId}/.playwright-{portal}/` (Chromium persistent dirs for LinkedIn / Indeed / Greenhouse / Ashby / Lever / Workday / Recruitee / SmartRecruiters / Workable / Personio / Teamtailor — the persistent dir IS the credential, must never cross users)
+- `data/users/{userId}/.playwright-{portal}/` (Chromium persistent dirs for LinkedIn / Indeed / Greenhouse / Ashby / Lever / Workday / Recruitee / SmartRecruiters / Workable / Personio / Teamtailor -- the persistent dir IS the credential, must never cross users)
 
 Legacy single-user installs map all "per-user" content to `data/profiles/_shared/` + `.playwright-{portal}/` under that fallback root.
 
 **Per-user, cross-profile content** lives at `data/users/{userId}/profiles/_shared/` (or `data/profiles/_shared/` in legacy single-user mode):
-- `story-bank.md` — accumulated STAR+R stories that transcend the user's profiles (engineer + instructor profiles draw on the same real-project stories) but stay PRIVATE to that user.
+- `story-bank.md` -- accumulated STAR+R stories that transcend the user's profiles (engineer + instructor profiles draw on the same real-project stories) but stay PRIVATE to that user.
 
-**Per-profile content** lives at `data/users/{userId}/profiles/{slug}/` (or `data/profiles/{slug}/` in legacy single-user mode) — see below.
+**Per-profile content** lives at `data/users/{userId}/profiles/{slug}/` (or `data/profiles/{slug}/` in legacy single-user mode) -- see below.
 
 ## User Layer (NEVER auto-updated)
 
@@ -59,7 +59,7 @@ These files contain your personal data, customizations, and work product. Update
 
 | File | Purpose |
 |------|---------|
-| `story-bank.md` | Accumulated STAR+R stories. Lives ABOVE the per-profile dirs so the same stories serve every profile of the same user — but never leak to other users. |
+| `story-bank.md` | Accumulated STAR+R stories. Lives ABOVE the per-profile dirs so the same stories serve every profile of the same user -- but never leak to other users. |
 
 ### Globally shared user-layer files
 
@@ -137,7 +137,7 @@ These files contain system logic, scripts, templates, and instructions that impr
 
 ## Migration
 
-If you upgrade from a pre-multi-profile install (cv.md / config/profile.yml / portals.yml at the repo root), the dashboard's boot routine **automatically migrates** your files into `data/profiles/default/` on next start. Every moved file gets a `.bak` sibling at its original path for rollback safety. The migration runs once and is idempotent — booting again after migration is a no-op.
+If you upgrade from a pre-multi-profile install (cv.md / config/profile.yml / portals.yml at the repo root), the dashboard's boot routine **automatically migrates** your files into `data/profiles/default/` on next start. Every moved file gets a `.bak` sibling at its original path for rollback safety. The migration runs once and is idempotent -- booting again after migration is a no-op.
 
 ## The Rule
 
@@ -149,13 +149,13 @@ If you upgrade from a pre-multi-profile install (cv.md / config/profile.yml / po
 
 If you're writing a new utility script that needs per-profile paths:
 
-- **Node/MJS**: import from `scripts/lib/lib-profiles.mjs` — use `profilePath(profileId, kind)` and `profileFromArgv()` to add a `--profile <slug>` CLI flag.
-- **Python**: import from `scripts/lib/lib_profiles.py` — same API.
-- **Dashboard (TypeScript)**: import from `$lib/server/profile-paths.ts` — use `profilePath(id, kind)` for explicit profile, `activePath(kind)` when you just want the active one.
+- **Node/MJS**: import from `scripts/lib/lib-profiles.mjs` -- use `profilePath(profileId, kind)` and `profileFromArgv()` to add a `--profile <slug>` CLI flag.
+- **Python**: import from `scripts/lib/lib_profiles.py` -- same API.
+- **Dashboard (TypeScript)**: import from `$lib/server/profile-paths.ts` -- use `profilePath(id, kind)` for explicit profile, `activePath(kind)` when you just want the active one.
 
 ## Status vocabularies
 
-heron tracks **two** status values per job, not one — the dashboard's
+heron tracks **two** status values per job, not one -- the dashboard's
 pipeline stage and the applications.md canonical state. They're orthogonal,
 not equivalent. See [`STATUS_MODEL.md`](./STATUS_MODEL.md) for the
 full mapping table and the reason both exist.

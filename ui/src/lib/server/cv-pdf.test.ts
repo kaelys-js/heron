@@ -1,5 +1,5 @@
 /**
- * lib/server/cv-pdf — generalCvStatus (filesystem stat parser) + template
+ * lib/server/cv-pdf -- generalCvStatus (filesystem stat parser) + template
  * resolver. The Anthropic+spawn-driven generation paths require a real
  * subprocess and a real model; those are exercised manually via the
  * /api/cv/general/generate endpoint and not asserted here.

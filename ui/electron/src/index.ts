@@ -1,5 +1,5 @@
 /**
- * Heron desktop — Electron main process.
+ * Heron desktop -- Electron main process.
  *
  * Responsibilities (in boot order):
  *
@@ -113,7 +113,7 @@ function findFreePort(): Promise<number> {
   });
 }
 
-/** Probe a URL — returns true if /api/health returns 2xx within timeoutMs. */
+/** Probe a URL -- returns true if /api/health returns 2xx within timeoutMs. */
 function probeHealth(url: string, timeoutMs = 1000): Promise<boolean> {
   return new Promise((resolve) => {
     const u = new URL('/api/health', url);
@@ -145,7 +145,7 @@ async function waitForServer(url: string, timeoutMs = 15000): Promise<boolean> {
 
 /**
  * Spawn the embedded Node server. In dev mode (electronIsDev) we don't
- * spawn anything — we expect the user to run `pnpm dev` separately and
+ * spawn anything -- we expect the user to run `pnpm dev` separately and
  * the resolver to discover localhost:5173. In prod (packaged app) we
  * spawn `build/index.js` (adapter-node output) on a random free port.
  */
@@ -206,7 +206,7 @@ if (electronIsDev) {
   setupReloadWatcher(myCapacitorApp);
 }
 
-// ipcMain bridge — preload calls these to interact with the main process.
+// ipcMain bridge -- preload calls these to interact with the main process.
 ipcMain.handle(`${BRAND.name}:get-server-url`, () => state.serverUrl);
 ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; body: string }) => {
   if (Notification.isSupported()) {
@@ -229,7 +229,7 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
       const { BRAND } = require('./brand') as typeof import('./brand');
       app.setAppUserModelId(BRAND.bundleId);
     } catch {
-      /* non-fatal — toasts still show, just with the wrong app label */
+      /* non-fatal -- toasts still show, just with the wrong app label */
     }
   }
 
@@ -238,7 +238,7 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
     await startEmbeddedServer();
   } catch (e) {
     console.error('[main] failed to start embedded server', e);
-    // Don't bail — the WebView's resolver may still find a remote backend.
+    // Don't bail -- the WebView's resolver may still find a remote backend.
   }
 
   // 2. mDNS advertise (only if we have an embedded server)
@@ -303,7 +303,7 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
         const u = new URL(subPath, base);
         void state.mainWindow.loadURL(u.toString());
       } catch {
-        /* invalid subPath — leave the window where it was */
+        /* invalid subPath -- leave the window where it was */
       }
     },
     // When the user enables "Menu Bar Only", close-window must NOT quit
@@ -320,7 +320,7 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
   // 6. Auto-update
   autoUpdater.checkForUpdatesAndNotify();
 
-  // 7. Network status monitoring — Electron exposes `net.online` as a
+  // 7. Network status monitoring -- Electron exposes `net.online` as a
   //    static getter that reflects Chromium's connectivity heuristic.
   //    We poll it every 5s and push changes to the renderer; the
   //    online-status store in the WebView listens for `<brand>:net-status`.

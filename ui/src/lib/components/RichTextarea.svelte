@@ -47,7 +47,7 @@
   let el = $state<HTMLTextAreaElement | null>(null);
   let focused = $state(false);
 
-  // Estimated line height in px — comes out to ~21px at text-sm with leading-relaxed.
+  // Estimated line height in px -- comes out to ~21px at text-sm with leading-relaxed.
   // We compute exact maxHeight from this, which is good enough for the "grow until
   // N rows then scroll" behaviour without measuring CSS.
   const LINE_PX = 21;

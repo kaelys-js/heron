@@ -3,7 +3,7 @@
  *
  * Spawns `node followup-cadence.mjs` (which already returns JSON to stdout
  * by default) and parses the result. The script handles cadence math,
- * status normalization, urgency clustering — we just transport its output.
+ * status normalization, urgency clustering -- we just transport its output.
  *
  * Cached on disk at `data/followup-cache.json` with a short TTL so repeat
  * page loads don't re-spawn the script. The daily Autopilot job invalidates
@@ -18,7 +18,7 @@ import { activePath } from './profile-paths';
 import { userContextEnv } from './user-context';
 
 /** Per-profile cache path. Each profile has its own follow-up cache
- *  derived from its applications.md — sharing across profiles would
+ *  derived from its applications.md -- sharing across profiles would
  *  poison the cache with the wrong profile's job data. */
 function cachePath(): string {
   return activePath('followup-cache');
@@ -136,7 +136,7 @@ function writeCache(cadence: FollowupCadence): void {
     fs.mkdirSync(path.dirname(cachePath()), { recursive: true });
     fs.writeFileSync(cachePath(), JSON.stringify(cadence, null, 2));
   } catch {
-    // Cache write failures are non-fatal — caller still got the data.
+    // Cache write failures are non-fatal -- caller still got the data.
   }
 }
 

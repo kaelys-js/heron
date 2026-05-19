@@ -8,7 +8,7 @@
   import { BG_TINTS, STATUS_TINTS } from '$lib/types';
   import { cn } from '$lib/utils';
 
-  // Single grid template — header and rows must stay in lock-step.
+  // Single grid template -- header and rows must stay in lock-step.
   const GRID_TEMPLATE =
     '60px_minmax(220px,_3fr)_1fr_1fr_70px_70px_60px_minmax(140px,_1.2fr)_60px_100px';
 
@@ -79,7 +79,7 @@
 
 <div class="border rounded-lg overflow-hidden bg-muted/10">
   <Tooltip.Provider delayDuration={300}>
-    <!-- Header — every column has a tooltip explaining what it represents -->
+    <!-- Header -- every column has a tooltip explaining what it represents -->
     <div
       class="grid grid-cols-[60px_minmax(220px,_3fr)_1fr_1fr_70px_70px_60px_minmax(140px,_1.2fr)_60px_100px] gap-3 px-3 py-2 text-[11px] uppercase tracking-wider text-muted-foreground border-b font-medium bg-muted/20"
     >
@@ -346,7 +346,7 @@
           </div>
         </a>
 
-        <!-- Actions cell — SIBLING of the anchor (not nested) -->
+        <!-- Actions cell -- SIBLING of the anchor (not nested) -->
         <div class="flex items-center justify-end">
           <JobActions {job} size="row" align="end" />
         </div>

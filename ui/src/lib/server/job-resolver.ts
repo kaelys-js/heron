@@ -1,14 +1,14 @@
 /**
- * job-resolver — find a job by its UI-facing id and return it together with
+ * job-resolver -- find a job by its UI-facing id and return it together with
  * the profile it lives in. Used by every per-job endpoint under
  * `/api/job/[id]/*` so they can scope to the right profile's
  * interview-prep dir, reports dir, and Claude-CLI workspace.
  *
  * Two id shapes are supported (same contract as `/job/[id]` page):
  *
- *   - bare urlId (e.g. "abc123def456") — looked up in the active profile,
+ *   - bare urlId (e.g. "abc123def456") -- looked up in the active profile,
  *     then falls back to a cross-profile scan if not found
- *   - suffixed (e.g. "abc123def456:elec") — splits the suffix and looks up
+ *   - suffixed (e.g. "abc123def456:elec") -- splits the suffix and looks up
  *     in the named profile only (no fallback). This is the form emitted by
  *     `loadAllJobs('all')` to keep ids unique across profiles.
  *

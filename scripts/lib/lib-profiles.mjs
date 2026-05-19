@@ -1,4 +1,4 @@
-// lib-profiles.mjs — Shared user+profile path helpers for MJS scripts.
+// lib-profiles.mjs -- Shared user+profile path helpers for MJS scripts.
 //
 // Mirrors profile-paths.ts (TS) and lib_profiles.py (Python). Each MJS
 // script imports this to resolve per-user, per-profile file paths.
@@ -39,7 +39,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Repo root sits two levels above this file (scripts/lib/lib-profiles.mjs).
 // Previously this was just `__dirname` which silently created a phantom
-// `scripts/lib/data/profiles/` tree on first access — the actual data was
+// `scripts/lib/data/profiles/` tree on first access -- the actual data was
 // at `data/profiles/` at repo root, so every script that touched profile
 // paths was reading from the wrong place. Resolving to repo root fixes
 // F3 (multi-user audit finding: tracker scripts hardcode legacy paths).
@@ -71,19 +71,19 @@ const KINDS = {
   'output-dir': 'output',
   'interview-prep-dir': 'interview-prep',
   // ── Item 4d / Option-C additions ─────────────────────────────────
-  // jds/ — saved JD text files referenced as `local:<file>` in
+  // jds/ -- saved JD text files referenced as `local:<file>` in
   // pipeline.md. Previously at repo-root `jds/` (shared across every
-  // user — privacy leak). Now per-profile so Alice's JDs don't show
+  // user -- privacy leak). Now per-profile so Alice's JDs don't show
   // up in Bob's pipeline.
   'jds-dir': 'jds',
-  // writing-samples/ — personal writing samples used to calibrate the
+  // writing-samples/ -- personal writing samples used to calibrate the
   // CV/cover-letter voice. Previously at repo-root `writing-samples/`
-  // (shared across every user — privacy leak — calibrating Bob's
+  // (shared across every user -- privacy leak -- calibrating Bob's
   // voice with Alice's emails). Now per-profile.
   'writing-samples-dir': 'writing-samples',
-  // batch/ — runtime state for the bulk-CV worker (batch-input.tsv,
+  // batch/ -- runtime state for the bulk-CV worker (batch-input.tsv,
   // batch-state.tsv, logs/, tracker-additions/, batch-runner.pid).
-  // Previously at repo-root `batch/` (shared across every user —
+  // Previously at repo-root `batch/` (shared across every user --
   // Alice + Bob running concurrent bulk runs would corrupt each
   // other's state). Now per-profile so each profile has its own
   // independent resumability + worker pool.
@@ -91,7 +91,7 @@ const KINDS = {
 };
 
 const USER_SHARED_KINDS = {
-  // story-bank — STAR+R interview stories that transcend the user's
+  // story-bank -- STAR+R interview stories that transcend the user's
   // own profiles (engineer + instructor archetypes both draw on the
   // same stories about real projects). Lives one level above the
   // profiles, so it's shared across that user's profiles but NEVER
@@ -202,7 +202,7 @@ export function ensureProfileDirs(profileId, userId = SYSTEM_USER_ID) {
   fs.mkdirSync(profilePath(profileId, 'jds-dir', userId), { recursive: true });
   fs.mkdirSync(profilePath(profileId, 'writing-samples-dir', userId), { recursive: true });
   fs.mkdirSync(profilePath(profileId, 'batch-dir', userId), { recursive: true });
-  // user-shared dir is created lazily on first write — no profileId needed
+  // user-shared dir is created lazily on first write -- no profileId needed
   fs.mkdirSync(path.dirname(userSharedPath('story-bank', userId)), { recursive: true });
 }
 

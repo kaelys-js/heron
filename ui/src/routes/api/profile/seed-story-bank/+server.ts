@@ -1,5 +1,5 @@
 /**
- * /api/profile/seed-story-bank — extract STAR+R stories from cv.md.
+ * /api/profile/seed-story-bank -- extract STAR+R stories from cv.md.
  *
  * POST → spawns the seed-story-bank Claude mode (`claude -p` + the prompt
  * file at modes/seed-story-bank.md). The mode reads cv.md + _profile.md +
@@ -101,7 +101,7 @@ export const POST = wrap('seed-story-bank', async ({ url }: { url: URL }) => {
 
 export const GET = wrap('seed-story-bank', async () => {
   // GET → stats about the current story bank so the UI can show
-  // "23 stories · last updated 2 days ago" or "empty — seed now".
+  // "23 stories · last updated 2 days ago" or "empty -- seed now".
   const bankPath = path.join(ROOT, 'interview-prep', 'story-bank.md');
   if (!fs.existsSync(bankPath)) {
     return { exists: false, storyCount: 0, lastUpdatedAt: null };
@@ -110,7 +110,7 @@ export const GET = wrap('seed-story-bank', async () => {
   const txt = fs.readFileSync(bankPath, 'utf8');
   // Count `### ` headings (skipping the bullet-list intro). Each story
   // starts with `### [Theme] Title`. Must skip headings inside HTML
-  // comments — the shipped story-bank.md includes a "Format:" example
+  // comments -- the shipped story-bank.md includes a "Format:" example
   // inside <!-- --> that would otherwise be counted as 1 fake story.
   let storyCount = 0;
   let inComment = false;

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * doctor.mjs — Setup validation for heron
+ * doctor.mjs -- Setup validation for heron
  * Checks all prerequisites and prints a pass/fail checklist.
  */
 

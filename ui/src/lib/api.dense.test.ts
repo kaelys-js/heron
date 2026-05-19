@@ -1,5 +1,5 @@
 /**
- * lib/api — dense table-driven cases for every HTTP status + envelope shape.
+ * lib/api -- dense table-driven cases for every HTTP status + envelope shape.
  */
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
@@ -120,7 +120,7 @@ describe('apiCall — body serialisation', () => {
     let captured: any;
     server.use(
       http.post('*/api/x', async ({ request }) => {
-        // .clone() — MSW 2.14 experimental-frames re-reads bodies
+        // .clone() -- MSW 2.14 experimental-frames re-reads bodies
         // during handler routing; clone gives us a fresh stream.
         captured = await request.clone().json();
         return HttpResponse.json({ ok: true });
@@ -150,7 +150,7 @@ describe('ApiError — instance hygiene', () => {
 });
 
 /**
- * F8 — session expiry: when the server returns 401 AND the client has
+ * F8 -- session expiry: when the server returns 401 AND the client has
  * locally-marked itself as authed, apiCall must scrub local state +
  * redirect to /login so a stale bearer doesn't keep leaking through
  * the Share Extension / Watch / BackgroundFetcher.
@@ -176,11 +176,11 @@ describe('apiCall — 401 session expiry triggers clearLocalAuthState + /login r
   beforeEach(() => {
     clearLocalAuthState.mockClear();
     assignSpy = vi.fn();
-    // @ts-expect-error — overriding window.location for the test
+    // @ts-expect-error -- overriding window.location for the test
     delete window.location;
-    // @ts-expect-error — minimal stub of Location interface
+    // @ts-expect-error -- minimal stub of Location interface
     window.location = { ...originalLocation, pathname: '/inbox', assign: assignSpy };
-    // Pretend the user IS locally authed — this is what flips the
+    // Pretend the user IS locally authed -- this is what flips the
     // 401-handler from "bad creds, do nothing" to "session expired,
     // scrub everything".
     localStorage.setItem('heron:authed', '1');
@@ -188,7 +188,7 @@ describe('apiCall — 401 session expiry triggers clearLocalAuthState + /login r
 
   afterEach(() => {
     localStorage.removeItem('heron:authed');
-    // @ts-expect-error — restoring window.location
+    // @ts-expect-error -- restoring window.location
     window.location = originalLocation;
   });
 

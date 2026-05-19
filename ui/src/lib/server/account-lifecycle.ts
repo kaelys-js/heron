@@ -1,5 +1,5 @@
 /**
- * account-lifecycle — soft delete, restore, hard delete, GDPR export.
+ * account-lifecycle -- soft delete, restore, hard delete, GDPR export.
  *
  * Soft delete: `users.deletedAt` set to NOW + 30d. The user can still
  * sign in and undo during the grace period. The autopilot's daily
@@ -84,7 +84,7 @@ export function softDeleteUser(userId: string, reason?: string): { scheduledFor:
       })
       .run();
   }
-  // Kill any active sessions — the user must re-auth to undo, which
+  // Kill any active sessions -- the user must re-auth to undo, which
   // they're prompted for at /login with a "Cancel deletion" CTA.
   authDb.delete(sessions).where(eq(sessions.userId, userId)).run();
   return { scheduledFor };
@@ -115,11 +115,11 @@ export function restoreUser(userId: string): boolean {
 
 /** PERMANENTLY delete the user and all their data. Run after the grace
  *  window via the reaper, OR directly via an opt-in "purge now" flow
- *  (which skips the 30-day wait — useful for GDPR right-to-erasure
+ *  (which skips the 30-day wait -- useful for GDPR right-to-erasure
  *  requests when the user explicitly asks for immediate deletion). */
 export function hardDeleteUser(userId: string): void {
   // 1. Wipe app.db rows. Other per-user data lives on the filesystem
-  //    under data/users/{userId}/profiles/{slug}/... — that's wiped in
+  //    under data/users/{userId}/profiles/{slug}/... -- that's wiped in
   //    step 2 below.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const userScopedTables: any[] = [uiPrefs, issues, activityEvents, profiles];
@@ -185,7 +185,7 @@ export function reapExpiredDeletions(): string[] {
   return purged;
 }
 
-/** Build a GDPR export blob for the user — every per-user row + the FS
+/** Build a GDPR export blob for the user -- every per-user row + the FS
  *  tree contents serialized as base64-encoded files. Caller writes to
  *  disk and streams it. */
 export function buildExport(userId: string): { json: unknown; files: Record<string, string> } {

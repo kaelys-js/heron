@@ -5,7 +5,7 @@
 <!-- /AUTO-GENERATED:doc-meta -->
 
 This document explains how the "heron" name and brand may be used.
-It complements — not replaces — the MIT [LICENSE](../LICENSE) that governs
+It complements -- not replaces -- the MIT [LICENSE](../LICENSE) that governs
 the source code.
 
 ## TL;DR
@@ -33,21 +33,21 @@ stewarded.
 
 The following uses are explicitly welcome:
 
-- **Forking and modifying the code** — per MIT, no permission needed.
-- **Describing compatibility, origin, and lineage** — "works with
+- **Forking and modifying the code** -- per MIT, no permission needed.
+- **Describing compatibility, origin, and lineage** -- "works with
   Heron," "based on Heron," "fork of Heron," "extends
   Heron" are all welcome and encouraged with attribution.
-- **Naming a fork distinctly** — pick your own product name; mention
+- **Naming a fork distinctly** -- pick your own product name; mention
   Heron as origin if you like.
-- **Educational, journalistic, and personal use** — blog posts,
+- **Educational, journalistic, and personal use** -- blog posts,
   tutorials, videos, talks, papers, research.
-- **Community contributions** — using the name freely in PRs, issues,
+- **Community contributions** -- using the name freely in PRs, issues,
   Discord, and discussions.
 
 ## What requires written permission
 
-The following uses are reserved because they cause — or can be
-reasonably perceived to cause — confusion about official affiliation,
+The following uses are reserved because they cause -- or can be
+reasonably perceived to cause -- confusion about official affiliation,
 endorsement, or sponsorship:
 
 - **Product, service, or company names** that include "heron" or
@@ -70,7 +70,7 @@ use suggests an official relationship that doesn't exist, please ask.
 
 ## How to request permission
 
-Email **<hello@resist.js>** with subject **"Trademark request — [your use case]"**
+Email **<hello@resist.js>** with subject **"Trademark request -- [your use case]"**
 and include:
 
 1. What you'd like to use the name for
@@ -90,7 +90,7 @@ trustworthy, and contributors confident that no one is impersonating
 the project.
 
 This policy is intended to be permissive, not punitive. If you've read
-this far and are unsure where your case lands, write us — we'd rather
+this far and are unsure where your case lands, write us -- we'd rather
 have the conversation than have a surprise.
 
 ## Modeled after

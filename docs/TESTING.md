@@ -5,7 +5,7 @@
 <!-- /AUTO-GENERATED:doc-meta -->
 
 heron uses Vitest (TS/Svelte) + XCTest (iOS) with Codecov-tracked
-coverage. The single entry point is `pnpm test` — everything below it
+coverage. The single entry point is `pnpm test` -- everything below it
 is implementation detail.
 
 ## Quick reference
@@ -16,8 +16,8 @@ is implementation detail.
 | `pnpm test:coverage` | Same, with V8 coverage + hard 70%/65% gate |
 | `pnpm test:watch` | Interactive watch mode |
 | `pnpm test:ui` | Vitest's HTML reporter on <http://localhost:51204> |
-| `pnpm test:ios` | Fastlane `test` lane — full multi-sim XCTest run |
-| `pnpm test:ios:ci` | Fastlane `test_ci` lane — single sim + Codecov-friendly |
+| `pnpm test:ios` | Fastlane `test` lane -- full multi-sim XCTest run |
+| `pnpm test:ios:ci` | Fastlane `test_ci` lane -- single sim + Codecov-friendly |
 
 ## Project layout (Vitest workspace)
 
@@ -28,7 +28,7 @@ and runs in the right environment:
 |---|---|---|---|
 | `ui-unit` | jsdom | `src/lib/**/*.test.ts` (excl server/components) | Fast pure-logic + state-store tests |
 | `ui-server` | node | `src/lib/server/**/*.test.ts`, `src/routes/api/**/*.test.ts`, `src/hooks.server.test.ts` | Server modules + endpoints (no jsdom) |
-| `ui-component` | browser (Playwright — Chromium + WebKit, headless by default) | `src/**/*.component.test.ts`, `src/**/*.svelte.test.ts` | Real DOM for responsive-matchMedia behaviour |
+| `ui-component` | browser (Playwright -- Chromium + WebKit, headless by default) | `src/**/*.component.test.ts`, `src/**/*.svelte.test.ts` | Real DOM for responsive-matchMedia behaviour |
 | `ui-routes` | jsdom | `src/routes/**/*.test.ts` excl `api/*` | Page-level smoke |
 | `ui-integration` | node | `src/lib/integration/**/*.integration.test.ts` | Structural assertions across repo files (apply / backup / capacitor / cleanup / deep-links / multi-user / pipeline / post-apply / versions) |
 
@@ -127,7 +127,7 @@ Excluded paths (auto-generated, types-only, test infra):
 - `src/test-setup.ts`, `src/test-helpers/**`
 - `src/**/*.test.ts`, `src/**/*.component.test.ts`
 
-iOS coverage (xcov) uses `.xcovignore` at repo root — same idea: generated
+iOS coverage (xcov) uses `.xcovignore` at repo root -- same idea: generated
 Brand.swift, ErrorReporter shims, CapApp-SPM bridge, SPM checkouts, and
 Smoke.swift placeholders don't count.
 
@@ -226,9 +226,9 @@ speedup). Bypass for emergencies: `SKIP_LEFTHOOK=1 git push`.
 
 `.github/workflows/test.yml` splits into three parallel jobs:
 
-- `ts` (ubuntu-latest, ~8 min) — typecheck + Vitest matrix + Codecov `ts` flag
-- `ios` (macos-15, ~25 min) — Fastlane `test_ci` + Codecov `ios` flag
-- `audit` (ubuntu-latest, ~30s) — `pnpm audit --audit-level moderate`
+- `ts` (ubuntu-latest, ~8 min) -- typecheck + Vitest matrix + Codecov `ts` flag
+- `ios` (macos-15, ~25 min) -- Fastlane `test_ci` + Codecov `ios` flag
+- `audit` (ubuntu-latest, ~30s) -- `pnpm audit --audit-level moderate`
 
 `coverage` (downstream) summarises the two flagged Codecov uploads. The
 Codecov action handles PR comments per-flag.
@@ -240,20 +240,20 @@ consumed by the `ios`-flagged Codecov upload step.
 
 ## Troubleshooting
 
-**"Context Menu.Content not found"** — bits-ui Menu context error.
+**"Context Menu.Content not found"** -- bits-ui Menu context error.
 Usually means a parent rendered Sheet but a child rendered
 DropdownMenu.Item (or vice versa). Use the `useIsMobile()` hook from
-`$lib/hooks/use-is-mobile.svelte` (it's a singleton — see file's
+`$lib/hooks/use-is-mobile.svelte` (it's a singleton -- see file's
 header for the history).
 
-**Tests pass locally but fail in CI** — check the Playwright browser
+**Tests pass locally but fail in CI** -- check the Playwright browser
 cache key. If `pnpm-lock.yaml` changed, the cache invalidates and
 Chromium is re-downloaded (90 sec cold). Watch `Cache Playwright
 browsers` in the workflow log for a hit/miss.
 
-**Coverage tanks unexpectedly** — `pnpm test:coverage` then open
+**Coverage tanks unexpectedly** -- `pnpm test:coverage` then open
 `ui/coverage/html/index.html`. The per-file table shows what dropped.
 
-**MSW "unhandled request"** — `setupServer({ onUnhandledRequest:
+**MSW "unhandled request"** -- `setupServer({ onUnhandledRequest:
 'error' })` forces every fetch to have a matching handler. Add one to
 your test or to `msw-handlers.ts`.

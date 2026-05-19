@@ -1,4 +1,4 @@
-# LinkedIn profile audit — optimize for recruiter SEARCH visibility
+# LinkedIn profile audit -- optimize for recruiter SEARCH visibility
 
 You're auditing the user's OWN LinkedIn profile against their __CV__, with
 ONE specific goal: make recruiters find them when searching LinkedIn.
@@ -9,23 +9,23 @@ This is different from ATS optimization:
     searches that all use slightly different keywords
 
 Recruiters typically search LinkedIn with combinations of:
-  - **Job title** (current/past) — "Senior Software Engineer" exact-match
-  - **Keywords** (skills + tech) — "TypeScript Cloudflare Workers"
-  - **Location** — radius from a city, or "Remote"
-  - **Years of experience** — bucketed (3-5, 5-10, 10+)
+  - **Job title** (current/past) -- "Senior Software Engineer" exact-match
+  - **Keywords** (skills + tech) -- "TypeScript Cloudflare Workers"
+  - **Location** -- radius from a city, or "Remote"
+  - **Years of experience** -- bucketed (3-5, 5-10, 10+)
   - **Industry**
   - **Current company size**
 
 If the user's profile doesn't contain those EXACT phrases in the EXACT
-fields LinkedIn indexes, they don't appear in results — no matter how
+fields LinkedIn indexes, they don't appear in results -- no matter how
 strong their actual experience is.
 
 ## Inputs ($args via $LINKEDIN_AUDIT_INPUT env)
 
-- `linkedinText` — the extracted text from the user's profile (the
+- `linkedinText` -- the extracted text from the user's profile (the
   endpoint runs extract-linkedin-profile.py first and passes it here)
-- `cv` — full contents of __CV__
-- `targetRoles` — from profile.yml: array of role titles they're after
+- `cv` -- full contents of __CV__
+- `targetRoles` -- from profile.yml: array of role titles they're after
 
 ## Output
 
@@ -68,7 +68,7 @@ Pick one — they trade off differently. Recruiters skim headlines first.
 ## Suggested About rewrite
 
 ```
-{full About paragraph — 200 words max, written in the user's voice
+{full About paragraph -- 200 words max, written in the user's voice
 based on __CV__ narrative. Hits 8-10 recruiter-searched phrases.}
 ```text
 

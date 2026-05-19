@@ -37,7 +37,7 @@ function listReportsFor(profileId: string): string[] {
  * scanner writes a row when it discovers a new URL with the `portal`
  * column = source identifier (e.g. `workday-api`, `aijobs`).
  *
- * Returns an empty map if the file doesn't exist or fails to parse —
+ * Returns an empty map if the file doesn't exist or fails to parse --
  * never throws.
  */
 function loadSourceMap(profileId: string): Record<string, string> {
@@ -171,14 +171,14 @@ export function parseApplications(
  *   3. Legacy Spanish aliases from when the project shipped bilingual modes
  *
  * See `docs/STATUS_MODEL.md` for why the pipeline `Status` is orthogonal to
- * `ApplicationStatus` — this function does the "fold" for display purposes;
+ * `ApplicationStatus` -- this function does the "fold" for display purposes;
  * the orthogonal value is preserved separately via `extractApplicationStatus`.
  */
 function mapStatus(s: string): Status {
   const up = s.toUpperCase().trim();
   const lower = s.toLowerCase().trim();
 
-  // Autonomous-apply states — produced by the apply-queue drain
+  // Autonomous-apply states -- produced by the apply-queue drain
   // writing back to applications.md.
   if (lower === 'queued') return 'Queued';
   if (lower === 'applying' || up.includes('APPLYING')) return 'Applying';
@@ -193,7 +193,7 @@ function mapStatus(s: string): Status {
   // Pipeline-stage substring matches (legacy heuristic).
   if (up.includes('READY')) return 'Ready';
 
-  // Interview sub-stages — checked BEFORE the generic 'screen'/'interview'
+  // Interview sub-stages -- checked BEFORE the generic 'screen'/'interview'
   // catch-alls so "Phone Screen" → PhoneScreen and "Tech Interview" →
   // Technical instead of getting flattened to the legacy bucket.
   if (
@@ -243,7 +243,7 @@ function mapStatus(s: string): Status {
   )
     return 'Final';
 
-  // Post-offer stages — checked BEFORE generic OFFER/REJECT catch-alls.
+  // Post-offer stages -- checked BEFORE generic OFFER/REJECT catch-alls.
   if (
     lower === 'negotiating' ||
     lower === 'negotiation' ||
@@ -288,7 +288,7 @@ function mapStatus(s: string): Status {
 /**
  * Extract the canonical states.yml `ApplicationStatus` from the same cell.
  * Returns undefined when the row is in pipeline-stage vocabulary (e.g.
- * "Ready" / "Screened") that has no states.yml equivalent — the dashboard
+ * "Ready" / "Screened") that has no states.yml equivalent -- the dashboard
  * just won't render a secondary chip in that case.
  */
 function extractApplicationStatus(s: string): import('$lib/types').ApplicationStatus | undefined {
@@ -380,7 +380,7 @@ export function indexReports(
  * Load + join every job for the given profile. When profileId === 'all',
  * returns the UNION across every registered profile, with each Job tagged
  * with its source profileId. The 'all' case dedupes jobs that share a URL
- * across profiles by KEEPING ALL OF THEM — they're legitimately different
+ * across profiles by KEEPING ALL OF THEM -- they're legitimately different
  * candidate-rows since each profile may have different status / score for
  * the same posting.
  */
@@ -402,7 +402,7 @@ export function loadAllJobs(profileId?: string): Job[] {
   }
   const id = resolveId(profileId);
   const jobs = loadJobsForProfile(id);
-  // Stamp profileId on every job for single-profile callers too — the
+  // Stamp profileId on every job for single-profile callers too -- the
   // UI uses this to decide whether to render a profile chip on each row.
   for (const j of jobs) j.profileId = id;
   return jobs;

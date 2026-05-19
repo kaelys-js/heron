@@ -2,7 +2,7 @@
  * POST /api/inbound/leads/[id]/reply
  *
  * Spawns the `recruiter-reply` mode to draft a personalised response.
- * NEVER auto-sends — the draft is saved to disk + path returned. The
+ * NEVER auto-sends -- the draft is saved to disk + path returned. The
  * dashboard renders the draft + a "I sent this" button the user clicks
  * AFTER pasting into LinkedIn / their email client.
  *
@@ -91,7 +91,7 @@ export const POST = wrap(
     const lead = getLead(params.id);
     if (!lead) badRequest('Lead not found: ' + params.id);
     const profileId = getActiveProfileId();
-    // Refuse to draft for scam / mass-blast — return a stub message.
+    // Refuse to draft for scam / mass-blast -- return a stub message.
     if (lead!.kind === 'scam' || lead!.kind === 'mass-blast') {
       return {
         ok: true,

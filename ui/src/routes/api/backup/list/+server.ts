@@ -1,5 +1,5 @@
 /**
- * GET /api/backup/list — every backup currently on disk, newest first.
+ * GET /api/backup/list -- every backup currently on disk, newest first.
  * Owner-only.
  *
  * Backups capture install-wide state; the list itself reveals filenames

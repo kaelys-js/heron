@@ -1,8 +1,8 @@
 /**
- * POST /api/backup/restore — restore from a specific snapshot. Owner-only.
+ * POST /api/backup/restore -- restore from a specific snapshot. Owner-only.
  *
  * A restore overwrites EVERY user's data. Members and admins cannot
- * trigger this — only the install owner.
+ * trigger this -- only the install owner.
  *
  * Body: { id: string }
  *

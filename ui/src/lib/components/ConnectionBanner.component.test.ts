@@ -1,5 +1,5 @@
 /**
- * ConnectionBanner — surfaces SSE connection state.
+ * ConnectionBanner -- surfaces SSE connection state.
  *
  * Browser-mode tests. Direct-mutates the notifications singleton to
  * simulate connection states.
@@ -40,7 +40,7 @@ describe('ConnectionBanner', () => {
     notifications.hasEverConnected = false;
     notifications.connected = 'error';
     const { container } = render(ConnectionBanner);
-    // No banner shown — "error" before first connect is treated as initial boot
+    // No banner shown -- "error" before first connect is treated as initial boot
     expect(container.textContent).not.toContain('Reconnecting');
   });
 

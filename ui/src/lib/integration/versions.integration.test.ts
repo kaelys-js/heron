@@ -3,7 +3,7 @@
  *
  * Asserts every place that pins Node / pnpm / Ruby matches `.mise.toml`
  * exactly. Runs in the `ui-integration` Vitest project (env=node,
- * 120s timeout — these touch real files at repo root).
+ * 120s timeout -- these touch real files at repo root).
  */
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
@@ -89,7 +89,7 @@ describe('packageManager field matches mise pnpm', () => {
 });
 
 describe('CI workflow does NOT pin a Node version directly', () => {
-  // mise-action reads .mise.toml — any hardcoded `node-version` input
+  // mise-action reads .mise.toml -- any hardcoded `node-version` input
   // is drift waiting to happen.
   it('test.yml uses jdx/mise-action, not actions/setup-node', () => {
     const wf = readFile('.github/workflows/test.yml');

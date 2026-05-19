@@ -1,7 +1,7 @@
 /**
- * NotificationsBell — mounts cleanly + reflects notification state.
+ * NotificationsBell -- mounts cleanly + reflects notification state.
  *
- * Direct-renders the component (no harness needed — it uses no
+ * Direct-renders the component (no harness needed -- it uses no
  * snippet props). Drives state via the shared notifications store.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';

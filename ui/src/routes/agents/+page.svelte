@@ -73,7 +73,7 @@
   }
 
   /**
-   * POST /api/jobs/[id]/run — the generic registry-driven trigger.
+   * POST /api/jobs/[id]/run -- the generic registry-driven trigger.
    * Falls back to /api/run for the legacy 4 task ids that orchestrator
    * still handles in its switch (scan, gemini, apply-linkedin, auto-eval)
    * so the busy state in `notifications.runningTasks` keeps working.

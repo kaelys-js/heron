@@ -1,5 +1,5 @@
 /**
- * POST /api/comp-eval — evaluate or compare an offer.
+ * POST /api/comp-eval -- evaluate or compare an offer.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

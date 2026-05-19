@@ -1,14 +1,14 @@
 /**
- * lib/theme — light/dark/system mode store + view-transition theme swap.
+ * lib/theme -- light/dark/system mode store + view-transition theme swap.
  *
  * jsdom env. The view-transition path is gated on doc.startViewTransition
- * which jsdom doesn't ship — that branch is exercised only on real
+ * which jsdom doesn't ship -- that branch is exercised only on real
  * browsers (component project tests it indirectly).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BRAND_STORAGE_KEYS } from '$lib/client/brand';
 
-// $app/environment.browser — module must be mocked before import
+// $app/environment.browser -- module must be mocked before import
 vi.mock('$app/environment', () => ({ browser: true }));
 
 const { theme } = await import('./theme.svelte');

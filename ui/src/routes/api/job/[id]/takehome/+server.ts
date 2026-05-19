@@ -1,5 +1,5 @@
 /**
- * /api/job/[id]/takehome — scaffold + manage the take-home working dir.
+ * /api/job/[id]/takehome -- scaffold + manage the take-home working dir.
  *
  * GET    → return existing scaffold state (or null if not scaffolded)
  * POST   → scaffold (creates README + CHECKLIST + state.json)

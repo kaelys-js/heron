@@ -1,4 +1,4 @@
-# Modo: form-answers — Pre-Filled Application Q&A
+# Modo: form-answers -- Pre-Filled Application Q&A
 
 Generate concise, candidate-voiced answers to the most common application-form questions for a specific role. Used for non-LinkedIn portals (Greenhouse, Ashby, Lever, Workday, custom ATS) where the user copies answers manually into the form.
 
@@ -9,7 +9,7 @@ Generate concise, candidate-voiced answers to the most common application-form q
 - `config/profile.yml` (location, comp targets, work auth, notice period)
 - `__PROFILE_MD__` (archetype mapping, narrative)
 - `__ARTICLE_DIGEST__` (proof points, optional)
-- The matching report file in `__REPORTS__/{n}-{slug}-{date}.md` (if it exists — use Bloque B match table)
+- The matching report file in `__REPORTS__/{n}-{slug}-{date}.md` (if it exists -- use Bloque B match table)
 
 ## Output
 
@@ -21,18 +21,18 @@ Where `{slug}` is the slugified company-role pair used elsewhere in the system.
 
 Generate answers to ALL of the following. If something is unknown (notice period, salary range), pull the value from `config/profile.yml`. If still unknown, write the answer with a TODO marker so the user fills it in:
 
-1. **Why this role?** (1–4 sentences)
+1. **Why this role?** (1-4 sentences)
    - One concrete thing about the team's mandate or the product that resonates
    - One proof point from the CV that maps to the role's headline requirement
    - Avoid generic enthusiasm
 
-2. **Why this company?** (1–4 sentences)
+2. **Why this company?** (1-4 sentences)
    - Reference one piece of public material: a product launch, an engineering blog post, a public roadmap, a company value
    - Tie it back to something the candidate has done or believes
    - NO "I love your mission"
 
-3. **Years of experience with [the top 1–3 technical requirements]** (one line per skill)
-   - Concrete numbers from __CV__ (e.g. "Python — 8 years, primary language since 2017")
+3. **Years of experience with [the top 1-3 technical requirements]** (one line per skill)
+   - Concrete numbers from __CV__ (e.g. "Python -- 8 years, primary language since 2017")
    - If a skill is adjacent rather than direct, frame the adjacency honestly
 
 4. **Salary expectations** (1 sentence)
@@ -48,7 +48,7 @@ Generate answers to ALL of the following. If something is unknown (notice period
    - Read from `config/profile.yml` (`candidate.work_auth` etc.)
    - Be explicit about visa status, work permits, or citizenship for the role's country
 
-7. **Anything else we should know?** (2–4 sentences)
+7. **Anything else we should know?** (2-4 sentences)
    - One distinctive proof point that didn't fit in the resume but is highly relevant
    - Optional pointer to a portfolio piece or open-source project
    - Close with availability / time-zone notes if relevant
@@ -100,11 +100,11 @@ _Generated from `__CV__` and the matching evaluation report. Tweak any answer th
 ## Voice rules
 
 - First-person, active voice, present tense.
-- 1–4 sentences per answer (≤80 words).
-- Numbers from `__CV__` only — never invent.
+- 1-4 sentences per answer (≤80 words).
+- Numbers from `__CV__` only -- never invent.
 - NO superlatives without evidence.
 - Match the language of the JD.
-- One short JD quote allowed if pivotal — wrap in quotes, ≤12 words.
+- One short JD quote allowed if pivotal -- wrap in quotes, ≤12 words.
 
 ## Validation before writing
 

@@ -78,7 +78,7 @@ function spawnCoverLetter(url: string, profileId: string): Promise<{ path: strin
         reject(new Error('claude -p exited ' + code + ': ' + stderr.slice(0, 300)));
         return;
       }
-      // Mode prints "Wrote: <path>" — try to capture it; otherwise fall back
+      // Mode prints "Wrote: <path>" -- try to capture it; otherwise fall back
       // to scanning this profile's output dir for the newest *-cover.md
       // created in the last 60s.
       const m = stdout.match(/(?:wrote|saved|file)\s*[:=]?\s*([\S]+-cover\.md)/i);
@@ -147,7 +147,7 @@ export const POST = wrap(
       });
 
       // Run cover-letter-check.mjs AND ai-detect-check.mjs on the freshly-
-      // written file in parallel. The checks are read-only — they return
+      // written file in parallel. The checks are read-only -- they return
       // scores and fail-summaries we surface to the dashboard so the user
       // can decide whether to regenerate or hand-edit. Non-blocking.
       let quality: QualityResult | undefined;

@@ -1,5 +1,5 @@
 /**
- * /reality loader — funnel rates + leverage points + hidden costs.
+ * /reality loader -- funnel rates + leverage points + hidden costs.
  */
 
 import { computeFunnelStats, listStaleJobs } from '$lib/server/stage-state';

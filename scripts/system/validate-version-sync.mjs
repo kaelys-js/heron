@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * validate-version-sync.mjs — assert every version source agrees.
+ * validate-version-sync.mjs -- assert every version source agrees.
  *
  * Why: release-please-config.json::extra-files bumps the version in
  * four places on every release:
@@ -15,7 +15,7 @@
  * bypass, or a hand-edit that bypasses release-please), the four sources
  * can drift. This validator catches that drift before it lands.
  *
- * Bonus: also asserts that .release-please-manifest.json::"." matches —
+ * Bonus: also asserts that .release-please-manifest.json::"." matches --
  * release-please's own ledger of the last released version. If the
  * manifest disagrees, release-please will compute the wrong "next"
  * version on the upcoming PR.

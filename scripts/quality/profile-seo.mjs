@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * profile-seo.mjs — LinkedIn / portfolio profile keyword-SEO checker.
+ * profile-seo.mjs -- LinkedIn / portfolio profile keyword-SEO checker.
  *
  * Recruiter inbound is the second-highest converting channel (10-20%
  * vs 3-15% cold apply). It depends almost entirely on whether YOUR
@@ -9,19 +9,19 @@
  *
  * The cheap-but-effective checks here:
  *
- *   1. HEADLINE TEST — does your headline include 2+ keywords that
+ *   1. HEADLINE TEST -- does your headline include 2+ keywords that
  *      target-archetype recruiters search for? Generic ("Software
  *      Engineer at Acme") loses to specific ("Senior Backend Engineer
  *      | Distributed Systems | Go + Kubernetes").
  *
- *   2. ABOUT-SECTION DENSITY — for the target archetype, are the top
+ *   2. ABOUT-SECTION DENSITY -- for the target archetype, are the top
  *      10 most-searched keywords in your About section? A profile
  *      with 0/10 doesn't get found via search.
  *
- *   3. SKILLS COVERAGE — LinkedIn ranks profiles partly by skills
+ *   3. SKILLS COVERAGE -- LinkedIn ranks profiles partly by skills
  *      endorsements; missing core skills hurts visibility.
  *
- *   4. ACTIVITY SIGNAL (heuristic) — when did you last post / comment?
+ *   4. ACTIVITY SIGNAL (heuristic) -- when did you last post / comment?
  *      Inactive profiles rank lower in LinkedIn's algorithm.
  *
  * Inputs:
@@ -115,7 +115,7 @@ if (headlineArg || aboutArg) {
   }
 }
 
-// Heuristic — first non-empty line is the headline; rest is About.
+// Heuristic -- first non-empty line is the headline; rest is About.
 const lines = exportText
   .split('\n')
   .map((l) => l.trim())
@@ -354,7 +354,7 @@ add(
   headline.length + ' chars (LinkedIn shows ~120, max 220)',
 );
 
-// 4. Generic-words penalty — "passionate", "results-driven", "team player"
+// 4. Generic-words penalty -- "passionate", "results-driven", "team player"
 const genericRe =
   /\b(passionate|results[- ]driven|team player|seasoned|self[- ]starter|go[- ]getter|hard[- ]working|hardworking|detail[- ]oriented|out[- ]of[- ]the[- ]box|leveraging|leverages|leverage)\b/gi;
 const genericHits = ((headline + ' ' + about).match(genericRe) || []).length;
@@ -365,14 +365,14 @@ add(
   genericHits + ' generic clichés (passionate / results-driven / etc.)',
 );
 
-// 5. Specific-numbers signal — "scaled to 1M users", "$5M ARR" → high score
+// 5. Specific-numbers signal -- "scaled to 1M users", "$5M ARR" → high score
 const numericRe =
   /(\$[\d,.]+[mk]?|\d+%|\d+(?:,\d{3})+|\d+\s*(?:million|billion|users|customers|engineers|reports))/gi;
 const numericHits = (about.match(numericRe) || []).length;
 const numericScore = numericHits >= 4 ? 100 : numericHits >= 2 ? 70 : numericHits >= 1 ? 40 : 0;
 add('numeric-signal', numericScore, numericHits + ' quantified achievements in About');
 
-// 6. URL presence — portfolio / github / personal site linked
+// 6. URL presence -- portfolio / github / personal site linked
 const hasUrl = /https?:\/\/[^\s]+/.test(headline + ' ' + about);
 const urlScore = hasUrl ? 100 : 30;
 add(

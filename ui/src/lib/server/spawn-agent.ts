@@ -1,5 +1,5 @@
 /**
- * spawn-agent — central helper for spawning the AI CLI with a
+ * spawn-agent -- central helper for spawning the AI CLI with a
  * substituted mode prompt.
  *
  * Replaces the legacy "send slash-command, let Claude load skill"
@@ -57,7 +57,7 @@ export interface SpawnAgentResult {
   /** The spawned child process. */
   child: ChildProcess;
   /** Absolute path of the temp prompt file. Caller may inspect for
-   *  debugging but doesn't need to delete — cleanup is automatic. */
+   *  debugging but doesn't need to delete -- cleanup is automatic. */
   tempPromptPath: string;
 }
 

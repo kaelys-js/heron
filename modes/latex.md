@@ -1,4 +1,4 @@
-# Mode: latex — LaTeX/Overleaf CV Export
+# Mode: latex -- LaTeX/Overleaf CV Export
 
 Export a tailored, ATS-optimized CV as a `.tex` file and compile it to PDF via `tectonic` or `pdflatex`.
 
@@ -10,7 +10,7 @@ Export a tailored, ATS-optimized CV as a `.tex` file and compile it to PDF via `
 4. Extract 15-20 keywords from the JD
 5. Detect JD language → CV language (EN default)
 6. Detect role archetype → adapt framing
-7. Rewrite Professional Summary injecting JD keywords (same rules as `pdf` mode — NEVER invent skills)
+7. Rewrite Professional Summary injecting JD keywords (same rules as `pdf` mode -- NEVER invent skills)
 8. Select top 3-4 most relevant projects for the offer
 9. Reorder experience bullets by JD relevance
 10. Inject keywords naturally into existing achievements
@@ -19,7 +19,7 @@ Export a tailored, ATS-optimized CV as a `.tex` file and compile it to PDF via `
 13. Run: `node generate-latex.mjs __OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.tex __OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf`
 14. Report: .tex path, .pdf path, file sizes, section count, keyword coverage %
 
-**Requires:** `tectonic` (preferred — `brew install tectonic`, auto-downloads packages) or `pdflatex` (MiKTeX / TeX Live) on PATH.
+**Requires:** `tectonic` (preferred -- `brew install tectonic`, auto-downloads packages) or `pdflatex` (MiKTeX / TeX Live) on PATH.
 
 ## Template Placeholders
 
@@ -28,16 +28,16 @@ The template at `templates/cv-template.tex` uses `{{PLACEHOLDER}}` syntax:
 | Placeholder | Source |
 |-------------|--------|
 | `{{NAME}}` | `profile.yml → candidate.full_name` |
-| `{{CONTACT_LINE}}` | Phone / City, State / Visa status — built from profile.yml |
-| `{{EMAIL_URL}}` | Raw email for `mailto:` URL — must not be LaTeX-escaped (from profile.yml) |
-| `{{EMAIL_DISPLAY}}` | Escaped email for display text — LaTeX-special chars like `_` must be escaped, e.g. `first\_name@example.com` |
+| `{{CONTACT_LINE}}` | Phone / City, State / Visa status -- built from profile.yml |
+| `{{EMAIL_URL}}` | Raw email for `mailto:` URL -- must not be LaTeX-escaped (from profile.yml) |
+| `{{EMAIL_DISPLAY}}` | Escaped email for display text -- LaTeX-special chars like `_` must be escaped, e.g. `first\_name@example.com` |
 | `{{LINKEDIN_URL}}` | Full URL with scheme for `\href{}`: e.g. `https://linkedin.com/in/username`. If `profile.yml` stores a bare host+path (no scheme), prepend `https://` before substitution. |
 | `{{LINKEDIN_DISPLAY}}` | Display text only (no scheme): `linkedin.com/in/username` |
 | `{{GITHUB_URL}}` | Full URL with scheme for `\href{}`: e.g. `https://github.com/username`. If `profile.yml` stores a bare host+path, prepend `https://`. |
 | `{{GITHUB_DISPLAY}}` | Display text only (no scheme): `github.com/username` |
 | `{{EDUCATION}}` | LaTeX `\resumeSubheading` blocks from __CV__ Education section |
-| `{{EXPERIENCE}}` | LaTeX `\resumeSubheading` + `\resumeItem` blocks — reordered bullets |
-| `{{PROJECTS}}` | LaTeX `\resumeProjectHeading` + `\resumeItem` blocks — top 3-4 selected |
+| `{{EXPERIENCE}}` | LaTeX `\resumeSubheading` + `\resumeItem` blocks -- reordered bullets |
+| `{{PROJECTS}}` | LaTeX `\resumeProjectHeading` + `\resumeItem` blocks -- top 3-4 selected |
 | `{{SKILLS}}` | LaTeX `\textbf{Category}{: items}` lines from __CV__ Technical Skills |
 
 ## LaTeX Content Generation Rules
@@ -113,7 +113,7 @@ All text content MUST be escaped for LaTeX before insertion:
 | `±` | `$\pm$` |
 | `→` | `$\rightarrow$` |
 
-**Exception:** Do NOT escape LaTeX commands themselves (`\resumeItem`, `\textbf`, etc.) — only user-supplied text content.
+**Exception:** Do NOT escape LaTeX commands themselves (`\resumeItem`, `\textbf`, etc.) -- only user-supplied text content.
 
 **Exception for URLs:** Do NOT escape text inside `\href{URL}{...}` first arguments. The URL must remain raw (or RFC 3986 percent-encoded). Only escape the *display text* (second argument). For example:
 ```latex
@@ -144,4 +144,4 @@ The generated `.tex` file uses only standard CTAN packages (no custom or bundled
 - `latexsym`, `fullpage`, `titlesec`, `marvosym`, `color`, `verbatim`, `enumitem`
 - `hyperref`, `fancyhdr`, `babel`, `tabularx`, `fontawesome5`, `multicol`, `glyphtounicode`
 
-Upload the `.tex` file directly to Overleaf — compiles with no extra configuration.
+Upload the `.tex` file directly to Overleaf -- compiles with no extra configuration.

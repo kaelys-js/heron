@@ -1,9 +1,9 @@
 /**
- * lib/utils — property-based tests via fast-check.
+ * lib/utils -- property-based tests via fast-check.
  *
  * Densifies the existing utils.test.ts cases by running 100+ random
  * inputs per property. Each `fc.assert` call counts as one Vitest case
- * but exercises 100 distinct generated inputs — high signal for
+ * but exercises 100 distinct generated inputs -- high signal for
  * regression coverage.
  */
 import { describe, expect, it } from 'vitest';

@@ -1,5 +1,5 @@
 /**
- * lib/client/backend-discovery — resolveBackend / setManualBackend / pillLabel.
+ * lib/client/backend-discovery -- resolveBackend / setManualBackend / pillLabel.
  *
  * Mocks fetch + Capacitor Preferences to exercise every branch of the
  * waterfall. The order of attempts is: cache → embedded → dev →
@@ -204,7 +204,7 @@ describe('resolveBackend — waterfall', () => {
   it('respects custom probeTimeoutMs', async () => {
     let timed = false;
     fetchSpy.mockImplementation(async (_url: string, init?: any) => {
-      // Slow response — abort signal should fire if timeout works
+      // Slow response -- abort signal should fire if timeout works
       return new Promise<Response>((_, reject) => {
         init?.signal?.addEventListener('abort', () => {
           timed = true;
@@ -235,7 +235,7 @@ describe('resolveBackend — waterfall', () => {
     expect(r.url).toBe('http://localhost:5173');
   });
 
-  // M7 — stale-IP race fix. The validation timeout is now 250ms ± 50ms
+  // M7 -- stale-IP race fix. The validation timeout is now 250ms ± 50ms
   // (was a flat 500ms). A stale IP that took 400ms to respond used to
   // win the race; now it loses cleanly.
   it('M7: cached entry that responds slowly (>300ms) loses the race + re-resolves', async () => {
@@ -249,7 +249,7 @@ describe('resolveBackend — waterfall', () => {
     );
     fetchSpy.mockImplementation(async (url: string, init?: any) => {
       if (url.includes('slow-stale.example')) {
-        // 400ms response — exceeds the 250±50ms validation timeout.
+        // 400ms response -- exceeds the 250±50ms validation timeout.
         return new Promise<Response>((resolve, reject) => {
           const t = setTimeout(() => resolve(new Response('ok', { status: 200 })), 400);
           init?.signal?.addEventListener('abort', () => {
@@ -266,7 +266,7 @@ describe('resolveBackend — waterfall', () => {
     expect(r.url).toBe('http://localhost:5173');
   });
 
-  // M3 — global resolver timeout. If EVERY candidate hangs (slow DNS +
+  // M3 -- global resolver timeout. If EVERY candidate hangs (slow DNS +
   // unreachable Tailscale + unresponsive prod), throw within 10s rather
   // than hang forever. Use a very short timeout-friendly mock and a
   // generous test budget to validate the timer-race path without

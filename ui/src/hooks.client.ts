@@ -3,23 +3,23 @@ import { reportClientError } from '$lib/notifications.svelte';
 import { stringify as devalueStringify } from 'devalue';
 
 /**
- * Capacitor (adapter-static) `__data.json` shim — fixes the iOS WebView
+ * Capacitor (adapter-static) `__data.json` shim -- fixes the iOS WebView
  * reload loop.
  *
  * When SvelteKit's client router navigates between routes, it fetches
  * `/__data.json?x-sveltekit-invalidated=N` to obtain the result of the
  * route's `+page.server.ts` load(). In our adapter-static build the
- * WebView has no server — those files don't exist on disk, so the
+ * WebView has no server -- those files don't exist on disk, so the
  * fetch fails. SvelteKit's load pipeline rejects, the layout's
  * <svelte:boundary> catches the error, the page reloads, hydration
- * runs again, refetches __data.json, fails again — a continuous
+ * runs again, refetches __data.json, fails again -- a continuous
  * ~9-reload-per-second loop that the user sees as a flashing white
  * screen.
  *
  * Short-circuit: when the page is loaded from a non-http scheme
  * (heron://, capacitor://, app://, file://) we intercept every
  * fetch to `__data.json` and return an empty SvelteKit data envelope.
- * Pages render against undefined `data` props — which is exactly what
+ * Pages render against undefined `data` props -- which is exactly what
  * +layout.svelte already tolerates via `data?.activeProfile?.id`
  * style optional-chaining. Real API data flows through api.ts →
  * backend-discovery to the resolved backend, not through this path.
@@ -118,9 +118,9 @@ if (typeof window !== 'undefined' && !window.location.protocol.startsWith('http'
  * sees a toast + activity-feed entry instead of a silent console log.
  *
  * Three sources are wired up:
- *   1. SvelteKit `handleError` hook — load/navigation lifecycle errors
- *   2. `<svelte:boundary onerror>` in +layout.svelte — component-tree errors ($effect, render, lifecycle)
- *   3. Plain `window.error` and `window.unhandledrejection` — anything outside Svelte's reach
+ *   1. SvelteKit `handleError` hook -- load/navigation lifecycle errors
+ *   2. `<svelte:boundary onerror>` in +layout.svelte -- component-tree errors ($effect, render, lifecycle)
+ *   3. Plain `window.error` and `window.unhandledrejection` -- anything outside Svelte's reach
  */
 export const handleError: HandleClientError = ({ error, event, status, message }) => {
   const url = event?.url?.pathname ?? '?';

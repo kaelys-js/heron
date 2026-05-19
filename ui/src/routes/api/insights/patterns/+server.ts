@@ -1,5 +1,5 @@
 /**
- * Insights endpoint — backs the /insights page.
+ * Insights endpoint -- backs the /insights page.
  *
  *   GET             → cached snapshot (≤10min stale OK)
  *   GET ?fresh=1    → re-spawn analyze-patterns.mjs (slow, costs nothing,

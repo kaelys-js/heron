@@ -1,5 +1,5 @@
 /**
- * lib/server/auth-helpers — guards/extractors used by every protected
+ * lib/server/auth-helpers -- guards/extractors used by every protected
  * endpoint.
  *
  * Mocks the auth DB so role-lookup branches are testable without a real

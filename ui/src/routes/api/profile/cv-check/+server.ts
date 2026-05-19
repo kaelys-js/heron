@@ -8,15 +8,15 @@
  *   • ats-check.mjs against the latest generated CV PDF (if it exists)
  *
  * Used by:
- *   • Onboarding step 3 (post-CV-paste) — surfaces issues before the user
+ *   • Onboarding step 3 (post-CV-paste) -- surfaces issues before the user
  *     moves on, so the first apply attempt doesn't fail recruiter scans.
- *   • Profile page "Verify CV" button — re-runs anytime.
- *   • The CV-PDF generator (auto-fires after every render — see cv-pdf.ts).
+ *   • Profile page "Verify CV" button -- re-runs anytime.
+ *   • The CV-PDF generator (auto-fires after every render -- see cv-pdf.ts).
  *
  * Response: { ok, hasCv, atsScore?, qualityScore?, atsFailSummary?,
  *             qualityFailSummary?, atsFailedChecks, qualityFailedChecks }
  *
- * Non-destructive — never modifies any file. Use POST /api/profile/cv-fix
+ * Non-destructive -- never modifies any file. Use POST /api/profile/cv-fix
  * to apply auto-fix suggestions.
  */
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * setup — one-shot interactive wizard for native-app readiness.
+ * setup -- one-shot interactive wizard for native-app readiness.
  *
  * Walks you through ALL the one-time setup so you never have to read
  * docs/NATIVE.md. Run once; every future native command just works.
@@ -22,7 +22,7 @@
  *      ruby-xcodeproj.
  *   7. Print a "you're done" summary.
  *
- * Safe to re-run — it skips steps that are already complete and only
+ * Safe to re-run -- it skips steps that are already complete and only
  * re-prompts for values that are missing or stale.
  */
 import {
@@ -278,7 +278,7 @@ if (state.apple.MAC_CERTIFICATE && (await confirm('  Re-use stored Mac cert?', t
   info(`Exporting "${certName}" to ${certP12}`);
   info('Keychain Access will prompt for your login password to authorize the export.');
   // security export-keychain doesn't accept output password via CLI easily on
-  // recent macOS — use Keychain Access's manual export workflow OR security
+  // recent macOS -- use Keychain Access's manual export workflow OR security
   // export with password file.
   const tmpPwdFile = '/tmp/heron-pwd.txt';
   writeFileSync(tmpPwdFile, certPwd);
@@ -348,7 +348,7 @@ for (const [name, value] of Object.entries(secrets)) {
     warn(`skipping ${name} — empty`);
     continue;
   }
-  // `gh secret set NAME --body "value" --repo repo` — pipe via stdin for newlines.
+  // `gh secret set NAME --body "value" --repo repo` -- pipe via stdin for newlines.
   const proc = execSync(`gh secret set ${name} --repo ${repo}`, {
     input: value,
     stdio: ['pipe', 'pipe', 'inherit'],

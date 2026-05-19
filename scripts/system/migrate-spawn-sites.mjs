@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * migrate-spawn-sites.mjs — refactor every AI-CLI spawn site to use
+ * migrate-spawn-sites.mjs -- refactor every AI-CLI spawn site to use
  * spawnAgentWithMode(). One-shot codemod.
  *
  * Strategy: find each spawn block by anchor lines, extract the whole
@@ -45,7 +45,7 @@ function findNextBlock(src, fromIdx) {
   // ahead of the prompt.
   const spawnPos = src.indexOf('spawn(AGENT_CLI', promptStart);
   if (spawnPos === -1) return null;
-  // Find the matching `});` — naive: search for `});` after spawnPos.
+  // Find the matching `});` -- naive: search for `});` after spawnPos.
   // The spawn call is one-deep so this is OK.
   const closePos = src.indexOf('});', spawnPos);
   if (closePos === -1) return null;
@@ -150,7 +150,7 @@ function cleanupImports(src) {
   }
 
   // Add spawnAgentWithMode import if not present. Insert AFTER the
-  // last complete import statement (which may span multiple lines —
+  // last complete import statement (which may span multiple lines --
   // `import { A, B } from 'x';` form) so we don't bisect a multi-line
   // import.
   if (!/spawn-agent/.test(out) && /spawnAgentWithMode/.test(out)) {
@@ -201,7 +201,7 @@ for (const rel of FILES) {
     if (!block) break;
     const replacement = rewriteBlock(block.blockText);
     if (replacement == null) {
-      // Couldn't parse this block — abort for this file
+      // Couldn't parse this block -- abort for this file
       report.push(`  ⚠ ${rel}  (failed to parse spawn block @${block.startIdx})`);
       src = original;
       break;

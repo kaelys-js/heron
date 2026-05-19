@@ -1,5 +1,5 @@
 /**
- * sse-notifications-bridge — wire the existing /api/notifications SSE
+ * sse-notifications-bridge -- wire the existing /api/notifications SSE
  * stream into the unified `notify()` function so OS notifications fire
  * on every supported platform (Web, Electron, iOS Capacitor).
  *
@@ -16,7 +16,7 @@
  *
  *   • Web/Electron: same Notification API, plus electron-native via
  *     preload (better UX when window is hidden).
- *   • iOS: @capacitor/local-notifications.schedule() — works in
+ *   • iOS: @capacitor/local-notifications.schedule() -- works in
  *     foreground; coalesces by tag for repeat events.
  *
  * Call `installNotificationsBridge()` once at app startup. The shared
@@ -39,7 +39,7 @@ import { createSseClient } from './sse-client';
  *                                       + stats (queued count changes)
  *   • issue, issues → openIssues (Inbox widget)
  *
- * Substring match — events use prefixes like `apply-linkedin` /
+ * Substring match -- events use prefixes like `apply-linkedin` /
  * `scan-broad` so we test for the root tag.
  */
 const WIDGET_RELEVANT_SOURCES = ['apply', 'interview', 'scan', 'issue'];
@@ -73,7 +73,7 @@ export function installNotificationsBridge(): () => void {
       }
       if (!event) return;
       // Fire a widget-stale event whenever the activity feed reports
-      // something that changes widget data — even for info-level events.
+      // something that changes widget data -- even for info-level events.
       // The +layout.svelte boot path listens for this and re-fetches
       // /api/widgets/snapshot, then pushes to the iPhone-side plugin.
       // Without this listener, widgets only refreshed on cold boot +

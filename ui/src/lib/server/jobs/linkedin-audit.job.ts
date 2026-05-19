@@ -1,5 +1,5 @@
 /**
- * linkedin-audit-job — weekly background re-audit of LinkedIn profile +
+ * linkedin-audit-job -- weekly background re-audit of LinkedIn profile +
  * account settings.
  *
  * LinkedIn changes layout often (and recruiter algorithms re-rank
@@ -10,7 +10,7 @@
  * Trigger: weekly Monday 07:00. Manual run also allowed.
  *
  * Runs ONLY for the active profile (LinkedIn auth is per-user, not per-
- * profile — the same LinkedIn account serves all of a user's profiles).
+ * profile -- the same LinkedIn account serves all of a user's profiles).
  * Per-user Playwright session dirs are at data/users/{uid}/.playwright-linkedin/.
  */
 
@@ -50,7 +50,7 @@ function runScraper(): Promise<{ stdout: string; code: number }> {
       try {
         p.kill('SIGTERM');
       } catch {
-        /* process already exited — kill races with the close event */
+        /* process already exited -- kill races with the close event */
       }
       resolveP({ stdout, code: 124 });
     }, TIMEOUT_MS);

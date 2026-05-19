@@ -1,9 +1,9 @@
 /**
- * scan-email-imap.job — daemon multi-user fan-out (F14/F19/F27 fix).
+ * scan-email-imap.job -- daemon multi-user fan-out (F14/F19/F27 fix).
  *
  * Before: tickOnce() ran ONLY under the owner's context, polling the
  * owner's gmail-imap source. Every other user's mailbox was invisible
- * to the daemon — an explicit deferred-work note lived in the source.
+ * to the daemon -- an explicit deferred-work note lived in the source.
  *
  * After: tickOnce() walks every schedulable user; for each, enters
  * their ALS context via runAsUser and polls their own gmail-imap

@@ -1,11 +1,11 @@
 <script lang="ts">
   /**
-   * JobStageBadge — compact "days since touched + next action" badge
+   * JobStageBadge -- compact "days since touched + next action" badge
    * for surfacing stage-state on pipeline rows + job-page headers.
    *
    * Reads from the `stage` prop (the JobStageState shape from
    * lib/server/stage-state.ts). When `stage` is null/undefined, the
-   * component renders nothing — drop-in safe.
+   * component renders nothing -- drop-in safe.
    *
    * Props:
    *   stage:       JobStageState | null

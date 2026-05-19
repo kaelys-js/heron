@@ -1,12 +1,12 @@
 /**
- * /api/job/[id]/keyword-match — deterministic JD ⇄ CV keyword overlap.
+ * /api/job/[id]/keyword-match -- deterministic JD ⇄ CV keyword overlap.
  *
  * GET → { score, matched, missing, considered }
  *
  * Pulls the JD text from the deep-eval report (the evaluate mode embeds it)
- * and the CV from cv.md (NOT the rendered PDF — we want the source text).
+ * and the CV from cv.md (NOT the rendered PDF -- we want the source text).
  *
- * Returns null when no report exists yet — the UI should hide the badge
+ * Returns null when no report exists yet -- the UI should hide the badge
  * in that case and prompt the user to run a deep-eval first.
  */
 
@@ -26,7 +26,7 @@ export const GET = wrap(
     const { job, profileId } = resolved!;
 
     // Source of CV text: cv.md (per-profile). Falls back to empty string,
-    // which produces a 0% score — accurate for the "no CV yet" case.
+    // which produces a 0% score -- accurate for the "no CV yet" case.
     let cvText = '';
     try {
       const cvPath = profilePath(profileId, 'cv-md');
