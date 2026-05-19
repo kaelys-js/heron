@@ -99,21 +99,30 @@ unilaterally — that's the deal.
 
 ## GitHub Advanced Security settings
 
-When this repository goes public, the maintainer should enable the
-following toggles in **Settings → Code security and analysis** (all
-free for public repositories):
+The following toggles are **active** as of 2026-05-19 (free for public
+repositories, verified via `gh api repos/kaelys-js/heron`):
 
-- [ ] **Secret scanning** — surfaces committed credentials in the
-      Security tab.
-- [ ] **Push protection** — REJECTS pushes containing detected
+- [x] **Secret scanning** — surfaces committed credentials in the
+      Security tab
+- [x] **Push protection** — REJECTS pushes containing detected
       secrets at git-receive time, before they ever land on the
       remote. Complements the lefthook `no-secrets` regex
-      (client-side) and the `TruffleHog` workflow (server-side).
-- [ ] **Dependency graph** — required for `dependency-review-action`
-      to function (PR-time GPL block + vulnerability gate).
-- [ ] **Private vulnerability reporting** — enables the GHSA flow
-      documented above.
+      (pre-commit) and the TruffleHog workflow (server-side).
+- [x] **Dependabot security updates** — auto-PRs for known
+      vulnerabilities
+- [x] **Private vulnerability reporting** — enables the GHSA flow
+      documented above
+- [x] **Web commit signoff required** — UI commits get the DCO
+      trailer
 
-A drift-detection workflow (`secret-expiry-check.yml`, planned) will
-verify these toggles stay on via `gh api repos/{owner}/{repo}` and
-warn if any flip off.
+Two toggles need a paid GHAS plan and are NOT enabled (acceptable for
+free-tier OSS):
+
+- [ ] `secret_scanning_validity_checks` — confirms detected secrets
+      are still live against the issuing service
+- [ ] `secret_scanning_non_provider_patterns` — non-vendor regex
+      patterns (custom keys, JWT secrets, etc.)
+
+A drift-detection workflow (`secret-expiry-check.yml`) already runs
+monthly for signing-cert expiry. Extend later to verify these
+GHAS toggles stay on.
