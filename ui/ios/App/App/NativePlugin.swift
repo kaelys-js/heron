@@ -54,6 +54,17 @@ public class NativePlugin: CAPPlugin, CAPBridgedPlugin {
         // lets the JS side push the resolved URL into the App Group so
         // the extension reads the same value.
         CAPPluginMethod(name: "setSharedBackendUrl", returnType: CAPPluginReturnPromise),
+        // Tailscale + production URL configuration. The user enters
+        // these in /settings/backend on the dashboard; the JS side
+        // persists them via these bridge methods into App Group
+        // UserDefaults. backend-discovery.ts reads them back on cold
+        // boot to populate `opts.tailscaleHost` + `opts.productionUrl`
+        // — the previous build never wrote either, so cellular users
+        // were stuck at "no backend found" even with Tailscale running.
+        CAPPluginMethod(name: "setSharedTailscaleUrl", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setSharedProductionUrl", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getSharedTailscaleUrl", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getSharedProductionUrl", returnType: CAPPluginReturnPromise),
         // Quiet-hours mirror so BackgroundFetcher.swift can honour the
         // user's window when deciding whether to fire a 3am warn-level
         // notification. The WebView writes localStorage; this method
@@ -232,6 +243,69 @@ public class NativePlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     /**
+     * Persist the user-configured Tailscale URL (e.g.
+     * `http://imac.tail-xxxx.ts.net:5173`) into App Group UserDefaults.
+     * Backend-discovery reads it back at boot via getSharedTailscaleUrl
+     * and passes it as `opts.tailscaleHost` to `resolveBackend()`.
+     *
+     * Empty string clears the slot. No validation here — the JS side
+     * has already URL-parsed the value. We store it verbatim so a user
+     * who wants to point at a non-standard port or path can.
+     */
+    @objc public func setSharedTailscaleUrl(_ call: CAPPluginCall) {
+        guard let defaults = UserDefaults(suiteName: Brand.appGroup) else {
+            call.reject("app-group-missing", "App Group not configured: \(Brand.appGroup)")
+            return
+        }
+        let url = call.getString("url") ?? ""
+        if url.isEmpty {
+            defaults.removeObject(forKey: Brand.DefaultsKey.tailscaleUrl)
+        } else {
+            defaults.set(url, forKey: Brand.DefaultsKey.tailscaleUrl)
+        }
+        call.resolve(["ok": true])
+    }
+
+    /**
+     * Persist the user-configured production URL (a public deployment
+     * the user has set up themselves, e.g. their own VPS). Last-resort
+     * fallback after LAN + Tailscale fail.
+     */
+    @objc public func setSharedProductionUrl(_ call: CAPPluginCall) {
+        guard let defaults = UserDefaults(suiteName: Brand.appGroup) else {
+            call.reject("app-group-missing", "App Group not configured: \(Brand.appGroup)")
+            return
+        }
+        let url = call.getString("url") ?? ""
+        if url.isEmpty {
+            defaults.removeObject(forKey: Brand.DefaultsKey.productionUrl)
+        } else {
+            defaults.set(url, forKey: Brand.DefaultsKey.productionUrl)
+        }
+        call.resolve(["ok": true])
+    }
+
+    /** Read the stored Tailscale URL. Returns empty string when unset. */
+    @objc public func getSharedTailscaleUrl(_ call: CAPPluginCall) {
+        guard let defaults = UserDefaults(suiteName: Brand.appGroup) else {
+            call.resolve(["url": ""])
+            return
+        }
+        let url = defaults.string(forKey: Brand.DefaultsKey.tailscaleUrl) ?? ""
+        call.resolve(["url": url])
+    }
+
+    /** Read the stored production URL. Returns empty string when unset. */
+    @objc public func getSharedProductionUrl(_ call: CAPPluginCall) {
+        guard let defaults = UserDefaults(suiteName: Brand.appGroup) else {
+            call.resolve(["url": ""])
+            return
+        }
+        let url = defaults.string(forKey: Brand.DefaultsKey.productionUrl) ?? ""
+        call.resolve(["url": url])
+    }
+
+    /**
      * Quiet-hours preference mirror. The JS NotificationPreferences
      * component persists a `{enabled, startHour, endHour}` JSON blob to
      * localStorage; we copy it (verbatim) into App Group UserDefaults
@@ -361,6 +435,7 @@ public class NativePlugin: CAPPlugin, CAPBridgedPlugin {
                 "stats:upcomingInterviews",
                 "interview:next",
                 "topApply:next",
+                "topApply:runnerUps",
                 "issues:open",
             ] {
                 defaults.removeObject(forKey: key)
@@ -405,6 +480,17 @@ public class NativePlugin: CAPPlugin, CAPBridgedPlugin {
             }
         } else if call.options.keys.contains("topApply") {
             defaults.removeObject(forKey: "topApply:next")
+        }
+
+        // F5 — topApplyRunnerUps (up to 2 candidates surfaced under the
+        // top one in the systemLarge widget variant). Array of the same
+        // TopApplyCandidate shape the widget already decodes.
+        if let runnerUps = call.getArray("topApplyRunnerUps") {
+            if let data = try? JSONSerialization.data(withJSONObject: runnerUps) {
+                defaults.set(data, forKey: "topApply:runnerUps")
+            }
+        } else if call.options.keys.contains("topApplyRunnerUps") {
+            defaults.removeObject(forKey: "topApply:runnerUps")
         }
 
         // openIssues — array of issue snapshots

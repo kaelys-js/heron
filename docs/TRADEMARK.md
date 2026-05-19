@@ -1,7 +1,7 @@
 # Heron Trademark Policy
 
 <!-- AUTO-GENERATED:doc-meta -->
-*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+*Last revised 2026-05-19 · part of the [Heron](../README.md) docs.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
 This document explains how the "heron" name and brand may be used.

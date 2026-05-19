@@ -74,6 +74,32 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
+        // F4 — Watch / Live Activity → iPhone Handoff. Activity type
+        // pattern is `<bundleId>.handoff.<kind>` (see Brand.handoffActivityType).
+        // We gate on the bundleId prefix so a rogue app on the same Apple
+        // ID can't push us into a foreign view, then forward the embedded
+        // deep link through Capacitor's URL plugin so the WebView routes
+        // exactly the same way it would for a normal `heron://` tap.
+        let handoffPrefix = "\(Brand.bundleId).handoff."
+        if userActivity.activityType.hasPrefix(handoffPrefix) {
+            // webpageURL is set to a heron:// scheme URL by the Watch
+            // publisher; we accept that OR a `deepLink` userInfo key as
+            // a fallback for future publishers (Live Activity buttons,
+            // Spotlight rows, etc.) that may not be able to set
+            // webpageURL.
+            var url: URL? = userActivity.webpageURL
+            if url == nil, let link = userActivity.userInfo?["deepLink"] as? String {
+                url = URL(string: link)
+            }
+            if let url = url, url.scheme == Brand.urlScheme {
+                // Defence-in-depth: route through the same open(url:)
+                // path a launched-from-cold-state heron:// URL takes
+                // so any future changes to URL handling apply uniformly.
+                _ = self.application(application, open: url, options: [:])
+                return true
+            }
+        }
+        // Spotlight + universal-link activities (Capacitor handles those).
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
     }
 

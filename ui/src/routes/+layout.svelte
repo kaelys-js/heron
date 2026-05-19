@@ -281,6 +281,7 @@
           stats: { queued: number; appliedToday: number; upcomingInterviews: number };
           nextInterview: unknown | null;
           topApply: unknown | null;
+          topApplyRunnerUps?: unknown[];
           openIssues: unknown[];
         }>('/api/widgets/snapshot', { silent: true });
         if (!snap?.ok) return;
@@ -289,6 +290,7 @@
           stats: snap.stats,
           nextInterview: snap.nextInterview as never,
           topApply: snap.topApply as never,
+          topApplyRunnerUps: snap.topApplyRunnerUps as never,
           openIssues: snap.openIssues as never,
         });
       } catch {

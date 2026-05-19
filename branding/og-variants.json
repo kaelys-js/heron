@@ -1,0 +1,40 @@
+{
+  "$comment": "Per-page Open Graph card variants. Each route gets its own PNG rendered from branding/assets/social-card.html with the title + subtitle below substituted into the template. Generator: scripts/system/generate-og-cards.mjs. Output: ui/static/og/{slug}.png (committed; production doesn't need Playwright). Pages reference the right card via the OG meta tags emitted by their +page.svelte's <svelte:head>.",
+  "variants": [
+    {
+      "slug": "default",
+      "title": "Stand still. Strike well.",
+      "subtitle": "A local-first thinking partner for career transitions."
+    },
+    {
+      "slug": "inbox",
+      "title": "Your job-search inbox.",
+      "subtitle": "Issues, interview reminders, autonomous-apply results — one queue."
+    },
+    {
+      "slug": "autopilot",
+      "title": "Apply on autopilot.",
+      "subtitle": "Score-gated, opt-in, off by default. 11 portal adapters in prod."
+    },
+    {
+      "slug": "interview-prep",
+      "title": "Prepare like it matters.",
+      "subtitle": "STAR+R stories from your real projects, mock interviews, comp playbook."
+    },
+    {
+      "slug": "agents",
+      "title": "Agents you actually control.",
+      "subtitle": "Swappable CLIs: Claude / Gemini / Codex / OpenCode / Qwen / Copilot."
+    },
+    {
+      "slug": "sources",
+      "title": "Every job board in one place.",
+      "subtitle": "LinkedIn, Indeed, Greenhouse, Ashby, Lever, Workday, Gmail alerts."
+    },
+    {
+      "slug": "settings",
+      "title": "Your data. Your machine.",
+      "subtitle": "Local-first. Multi-user. Self-hosted. Open source."
+    }
+  ]
+}

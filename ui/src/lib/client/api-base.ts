@@ -77,25 +77,44 @@ export async function getApiBase(): Promise<string> {
     return '';
   }
 
-  // Cross-origin path (Capacitor). Kick off backend-discovery; the first
-  // candidate that answers `/api/health` within 1s wins.
+  // Cross-origin path (Capacitor). Kick off backend-discovery; the
+  // first candidate that answers `/api/health` within 1s wins. Read
+  // user-configured Tailscale + production URLs from App Group / local-
+  // Storage BEFORE the resolver so steps 4 + 5 of the waterfall
+  // (Tailscale, production) actually have somewhere to point.
+  //
+  // Previously this called resolveBackend({}) with no opts, so even a
+  // user with Tailscale running on their phone + a reachable Mac at
+  // `imac.tail-xxxx.ts.net:5173` would see "no backend found" because
+  // the resolver skipped Tailscale entirely. The /settings/backend
+  // route lets users enter these values; native-bridge persists them;
+  // we read them here so the resolver tries them.
   setStatus({ state: 'resolving' });
-  resolving = resolveBackend({}).then(
-    (r) => {
+  resolving = (async () => {
+    let tailscaleHost: string | undefined;
+    let productionUrl: string | undefined;
+    try {
+      const { getSharedTailscaleUrl, getSharedProductionUrl } = await import('./native-bridge');
+      const [ts, prod] = await Promise.all([getSharedTailscaleUrl(), getSharedProductionUrl()]);
+      if (ts) tailscaleHost = ts;
+      if (prod) productionUrl = prod;
+    } catch {
+      // native-bridge unavailable on web — fall through with undefined
+      // values, resolver will skip the corresponding candidates.
+    }
+    try {
+      const r = await resolveBackend({ tailscaleHost, productionUrl });
       cachedBase = r.url.replace(/\/$/, '');
-      resolving = null;
       setStatus({ state: 'resolved', url: cachedBase, source: r.source });
       return cachedBase;
-    },
-    (err) => {
-      // Don't memoize failure — next call retries. Surface so the caller
-      // can render a "Can't find backend" banner.
-      resolving = null;
+    } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setStatus({ state: 'error', message: msg });
       throw err;
-    },
-  );
+    } finally {
+      resolving = null;
+    }
+  })();
   return resolving;
 }
 
