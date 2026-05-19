@@ -128,7 +128,7 @@
           to move it. Some transitions happen automatically: scanning creates
           <span class="font-mono">New</span>; running Gemini turns it into
           <span class="font-mono">Scored</span>; running deep eval (<span class="font-mono"
-            >{cmd('oferta')}</span
+            >{cmd('evaluate')}</span
           >) + generating a CV PDF promotes it to <span class="font-mono">Ready</span>; using
           LinkedIn Easy Apply or "Open posting &amp; mark Applied" flips to
           <span class="font-mono">Applied</span>.

@@ -24,7 +24,7 @@ There are two layers. Read `docs/DATA_CONTRACT.md` for the full list.
 - `data/*`, `reports/*`, `output/*`, `interview-prep/*`
 
 **System Layer (auto-updatable, DON'T put user data here):**
-- `modes/_shared.md`, `modes/oferta.md`, all other modes
+- `modes/_shared.md`, `modes/evaluate.md`, all other modes
 - `AGENTS.md`, `CLAUDE.md`, `*.mjs` scripts, `templates/*`, `batch/*`
 
 **THE RULE: When the user asks to customize anything (archetypes, narrative, negotiation scripts, proof points, location policy, comp targets), ALWAYS write to `modes/_profile.md` or `config/profile.yml`. NEVER edit `modes/_shared.md` for user-specific content.** This ensures system updates don't overwrite their customizations.
@@ -117,7 +117,7 @@ data/users/{userId}/profiles/_shared/
 
 **Mode prompts use absolute paths.** Every `modes/*.md` prompt references files via `__TOKEN__` placeholders (e.g. `__CV__`, `__REPORTS__`, `__STORY_BANK__`). The dashboard's `spawnAgentWithMode()` resolves each token to the active profile's absolute on-disk path BEFORE handing the prompt to the AI CLI. No repo-root symlinks, no shell-cwd magic — the AI sees fully-qualified paths and can never read the wrong profile's data. Token vocabulary documented in `modes/_TOKENS.md`.
 
-**Invocation is dashboard-only.** The slash-command flow (`claude "/heron oferta <url>"` in a terminal) has been deprecated. Mode prompts are loaded by the dashboard's orchestrator, substituted, and passed to Claude via `--append-system-prompt-file`. Direct-CLI invocation is not supported.
+**Invocation is dashboard-only.** The slash-command flow (`claude "/heron evaluate <url>"` in a terminal) has been deprecated. Mode prompts are loaded by the dashboard's orchestrator, substituted, and passed to Claude via `--append-system-prompt-file`. Direct-CLI invocation is not supported.
 
 **When the user asks for personalization**, ALWAYS write to the active profile's files at `data/users/{userId}/profiles/{slug}/...` (or `data/profiles/{slug}/...` in legacy single-user mode). Never write to `data/profiles/default/` directly when the user might be on a different profile — let the dashboard's active-profile selection drive the path.
 
@@ -242,9 +242,9 @@ maintained.
 | If the user... | Mode |
 |----------------|------|
 | Pastes JD or URL | auto-pipeline (evaluate + report + PDF + tracker) |
-| Asks to evaluate offer | `oferta` |
-| Asks to compare offers | `ofertas` |
-| Wants LinkedIn outreach | `contacto` |
+| Asks to evaluate offer | `evaluate` |
+| Asks to compare offers | `compare` |
+| Wants LinkedIn outreach | `outreach` |
 | Asks for company research | `deep` |
 | Preps for interview at specific company | `interview-prep` |
 | Wants to generate CV/PDF | `pdf` |
@@ -420,7 +420,7 @@ When spawning headless workers for batch processing, use the appropriate command
 ## Switching the AI CLI
 
 The dashboard spawns an AI CLI binary for every slash-command-driven flow
-(oferta, cover-letter, outreach, post-rejection, form-answers, followup-draft,
+(evaluate, cover-letter, outreach, post-rejection, form-answers, followup-draft,
 answer-form, batch-runner). The binary is read from the `AGENT_CLI`
 environment variable; it defaults to `claude`.
 
@@ -483,7 +483,7 @@ Write one TSV file per evaluation to the active profile's `batch/tracker-additio
 
 1. **NEVER edit applications.md to ADD new entries** -- Write TSV in the active profile's `batch/tracker-additions/` and `scripts/tracker/merge-tracker.mjs` handles the merge.
 2. **YES you can edit applications.md to UPDATE status/notes of existing entries.**
-3. All reports MUST include `**URL:**` in the header (between Score and PDF). Include `**Legitimacy:** {tier}` (see Block G in `modes/oferta.md`).
+3. All reports MUST include `**URL:**` in the header (between Score and PDF). Include `**Legitimacy:** {tier}` (see Block G in `modes/evaluate.md`).
 4. All statuses MUST be canonical (see `data/states.yml`).
 5. Health check: `pnpm test --filter=ui-integration` (pipeline.integration.test.ts validates this)
 6. Normalize statuses: `node scripts/tracker/normalize-statuses.mjs`

@@ -5,7 +5,7 @@
 
     * Change status   (drives /api/status)
     * Apply           (linkedin / open-and-mark / mark — drives /api/job/[id]/apply)
-    * Generate CV     (drives /api/job/[id]/cv via runOferta)
+    * Generate CV     (drives /api/job/[id]/cv via runEvaluate)
     * Open posting    (target=_blank on the URL)
     * Copy URL        (clipboard)
 
@@ -898,7 +898,7 @@
         closeOnSelect={false}
         disabled={!job.url || cvBusy}
         icon={cvBusy ? Loader2 : Wand2}
-        description="Spawns Claude oferta — produces a deep eval report + CV PDF. 1–3 min per job."
+        description="Spawns Claude evaluate — produces a deep eval report + CV PDF. 1–3 min per job."
       >
         {hasPdf ? 'Regenerate tailored CV' : 'Generate tailored CV'}
       </ResponsiveActionItem>

@@ -4,7 +4,7 @@
  * English `modes/*.md` set.
  *
  * Heron's mode prompts live at `modes/*.md` and drive every AI-CLI
- * spawn (oferta / contacto / interview-prep / cover-letter / etc.).
+ * spawn (evaluate / outreach / interview-prep / cover-letter / etc.).
  * Localised variants live at `modes/{de,fr,ja,pt,ru,es}/*.md` and
  * are selected via `profile.yml::language.modes_dir`.
  *
@@ -86,7 +86,7 @@ for (const lang of existingLocales) {
     .filter((f) => f.endsWith('.md') && !f.startsWith('_'))
     .sort();
   // Locale files may be RENAMED versions of the English ones (e.g.
-  // German `angebot.md` mirrors English `oferta.md`). The parity gate
+  // German `angebot.md` mirrors English `evaluate.md`). The parity gate
   // checks COUNT + locale-specific-allowlist, not literal filenames.
   // Stricter mapping would require a per-locale rename table; we
   // optimise for "either has every mode or none" which is the actual

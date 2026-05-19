@@ -35,7 +35,7 @@ export function docTitle(parts: (string | undefined | null)[]): string {
   return [...parts2, APP_NAME].join(' — ');
 }
 
-/** Format a slash-command invocation, e.g. cmd('oferta') → '/heron oferta'. */
+/** Format a slash-command invocation, e.g. cmd('evaluate') → '/heron evaluate'. */
 export function cmd(verb?: string): string {
   return verb ? '/' + CLI_NAMESPACE + ' ' + verb : '/' + CLI_NAMESPACE;
 }

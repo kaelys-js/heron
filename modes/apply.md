@@ -97,7 +97,7 @@ Notes:
 If the candidate confirms that they submitted the application:
 1. Update status in `__APPLICATIONS__` from "Evaluated" to "Applied"
 2. Update Section G of the report with the final responses
-3. Suggest next step: `/heron contacto` for LinkedIn outreach
+3. Suggest next step: `/heron outreach` for LinkedIn outreach
 
 ## Scroll handling
 

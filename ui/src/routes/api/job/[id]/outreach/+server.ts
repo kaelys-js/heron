@@ -51,7 +51,7 @@ function spawnContacto(
     let stdout = '';
     let stderr = '';
 
-    const { child: p } = spawnAgentWithMode('contacto', url + ' --persona ' + persona, {
+    const { child: p } = spawnAgentWithMode('outreach', url + ' --persona ' + persona, {
       profileId: profileId,
     });
     p.stdout?.on('data', (c: Buffer) => {

@@ -8,7 +8,7 @@
  *   1. Re-validate (cap not hit, status still Queued, autonomous_apply ON for
  *      the job's profile).
  *   2. Pre-apply assembly: ensure tailored CV + cover letter exist.
- *      Auto-generate via runOferta if missing. If that fails → ManualApplyNeeded.
+ *      Auto-generate via runEvaluate if missing. If that fails → ManualApplyNeeded.
  *   3. Dispatch via apply-portal.py (Task 2.1). The Python script writes
  *      APPLY_STEP / APPLY_RESULT lines to stdout; this job parses them.
  *   4. Update status based on exit code:
@@ -33,7 +33,7 @@ import { detectPortal, isPortalAutomated, type SupportedPortal } from '../apply-
 import { reportApplyFailure } from '../apply-failures';
 import { todayCount, bumpApplyCounter } from '../apply-counter';
 import { readConfig } from '../autopilot';
-import { runOferta } from '../orchestrator';
+import { runEvaluate } from '../orchestrator';
 import { ROOT } from '../files';
 import { logEvent, reportServerError } from '../events';
 import type { JobArgs, JobResult } from './types';
@@ -149,22 +149,22 @@ async function ensureAssembly(job: Job): Promise<boolean> {
   const pdfFile = job.pdfFile;
   if (reportFile && pdfFile) return true; // both already exist
 
-  // Missing → spawn oferta which produces report + tailored CV PDF + cover letter.
-  // This is fire-and-forget in runOferta but we need to await; the result
+  // Missing → spawn evaluate which produces report + tailored CV PDF + cover letter.
+  // This is fire-and-forget in runEvaluate but we need to await; the result
   // bus emits a Task finished event we could listen to, but for simplicity
-  // we use the awaitable form of runOferta.
+  // we use the awaitable form of runEvaluate.
   logEvent('apply-queue', 'Pre-apply assembly · generating CV + cover letter', {
     category: 'application',
     message: (job.company || '?') + ' · ' + (job.role || '?'),
     profileId: job.profileId,
   });
   try {
-    const r = await runOferta(job.url, 'oferta', job.profileId);
+    const r = await runEvaluate(job.url, 'evaluate', job.profileId);
     if (!r.ok) {
       logEvent('apply-queue', 'Pre-apply assembly failed', {
         level: 'error',
         category: 'application',
-        message: 'oferta exit code ' + (r.code ?? '?'),
+        message: 'evaluate exit code ' + (r.code ?? '?'),
         profileId: job.profileId,
       });
       return false;
@@ -353,7 +353,7 @@ async function runApplyQueueDrain(_args?: JobArgs): Promise<JobResult> {
           company: job.company,
           role: job.role,
           mode: 'error',
-          detail: 'Pre-apply assembly failed (oferta did not complete)',
+          detail: 'Pre-apply assembly failed (evaluate did not complete)',
         });
         errored++;
         continue;

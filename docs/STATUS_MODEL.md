@@ -33,7 +33,7 @@ Used by:
 ### 2. Application status (states.yml canonical)
 
 The **outcome status** as recorded on the applications.md row by the
-Claude CLI's `oferta` / `apply` modes. Defined in
+Claude CLI's `evaluate` / `apply` modes. Defined in
 `data/states.yml` (8 values):
 
 `evaluated | applied | responded | interview | offer | rejected | discarded | skip`

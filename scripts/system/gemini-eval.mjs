@@ -3,7 +3,7 @@
  * gemini-eval.mjs — Gemini-powered Job Offer Evaluator for heron
  *
  * A free-tier alternative to the Claude-based pipeline.
- * Reads evaluation logic from modes/oferta.md + modes/_shared.md,
+ * Reads evaluation logic from modes/evaluate.md + modes/_shared.md,
  * reads the user's resume from cv.md, and evaluates a Job Description
  * passed as a command-line argument.
  *
@@ -49,7 +49,7 @@ const PROFILE_ID = profileFromArgv();
 const PATHS = {
   // Primary evaluation logic — system layer, same for every profile.
   shared: join(REPO_ROOT, 'modes', '_shared.md'),
-  oferta: join(REPO_ROOT, 'modes', 'oferta.md'),
+  evaluate: join(REPO_ROOT, 'modes', 'evaluate.md'),
   // Per-user per-profile data — resolved via lib-profiles.mjs.
   cv: profilePath(PROFILE_ID, 'cv-md', USER_ID),
   reports: profilePath(PROFILE_ID, 'reports-dir', USER_ID),
@@ -175,7 +175,7 @@ if (!readdirSync) {
 console.log('\n📂  Loading context files...');
 
 const sharedContext = readFile(PATHS.shared, 'modes/_shared.md');
-const ofertaLogic = readFile(PATHS.oferta, 'modes/oferta.md');
+const evaluateLogic = readFile(PATHS.evaluate, 'modes/evaluate.md');
 const cvContent = readFile(PATHS.cv, 'cv.md');
 
 // ---------------------------------------------------------------------------
@@ -192,9 +192,9 @@ SYSTEM CONTEXT (_shared.md)
 ${sharedContext}
 
 ═══════════════════════════════════════════════════════
-EVALUATION MODE (oferta.md)
+EVALUATION MODE (evaluate.md)
 ═══════════════════════════════════════════════════════
-${ofertaLogic}
+${evaluateLogic}
 
 ═══════════════════════════════════════════════════════
 CANDIDATE RESUME (cv.md)

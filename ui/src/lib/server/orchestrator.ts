@@ -19,7 +19,7 @@ loadEnv();
 type TaskName =
   | 'scan'
   | 'gemini'
-  | 'oferta'
+  | 'evaluate'
   | 'pdf'
   | 'apply-linkedin'
   | 'bulk-cv'
@@ -61,12 +61,12 @@ export function listRunning(): string[] {
 const TIMEOUT_MS: Record<TaskName, number> = {
   scan: 30 * 60_000, // 30 min
   gemini: 15 * 60_000, // 15 min
-  oferta: 10 * 60_000, // 10 min — a single Claude oferta run
+  evaluate: 10 * 60_000, // 10 min — a single Claude evaluate run
   pdf: 5 * 60_000, // 5 min
   'apply-linkedin': 30 * 60_000, // 30 min — Playwright + login + apply
   'bulk-cv': 4 * 60 * 60_000, // 4h — covers the largest realistic batch
   'bulk-apply': 2 * 60 * 60_000, // 2h
-  'auto-eval': 60 * 60_000, // 60 min — up to 10 oferta runs × 3min + headroom
+  'auto-eval': 60 * 60_000, // 60 min — up to 10 evaluate runs × 3min + headroom
 };
 
 const MAX_STDOUT_BUF = 1024 * 1024; // 1MB — see comment above
@@ -540,8 +540,8 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
 }
 
 // =============================================================================
-// Tailored CV / oferta — spawn the Claude Code CLI to run the oferta mode for
-// a single URL. Claude's `/heron oferta <url>` produces a deep evaluation
+// Tailored CV / evaluate — spawn the Claude Code CLI to run the evaluate mode
+// for a single URL. Claude's `/heron evaluate <url>` produces a deep evaluation
 // report AND a tailored CV PDF in one shot.
 //
 // We pin Claude Code (the CLI) here. Other CLIs follow the open agent skill
@@ -550,30 +550,30 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
 // ENOENT and we surface a clean error in the activity feed.
 // =============================================================================
 
-export type OfertaResult = { ok: boolean; code: number | null };
+export type EvaluateResult = { ok: boolean; code: number | null };
 
 /**
- * Spawn the Claude CLI to run the oferta mode for a single URL.
+ * Spawn the Claude CLI to run the evaluate mode for a single URL.
  *
- * Multi-profile note: the oferta slash-command reads cv.md / profile.yml /
+ * Multi-profile note: the evaluate slash-command reads cv.md / profile.yml /
  * portals.yml via the AGENTS.md instructions, which still point at the
  * repo-root flat-layout paths. Until those instructions are updated (out of
  * scope for now), we maintain a per-profile symlink set at the repo root
  * before spawning so the active profile's files are at the expected paths.
- * The symlinks are atomic-swap on each call so a concurrent oferta for a
+ * The symlinks are atomic-swap on each call so a concurrent evaluate for a
  * different profile is guaranteed to see consistent state.
  */
-export function runOferta(
+export function runEvaluate(
   url: string,
-  taskKey: TaskName = 'oferta',
+  taskKey: TaskName = 'evaluate',
   profileId?: string,
-): Promise<OfertaResult> {
+): Promise<EvaluateResult> {
   return new Promise((resolve) => {
     if (running.has(taskKey)) {
       logEvent(taskKey, 'Generate CV already running', {
         level: 'warn',
         category: 'task',
-        message: 'Wait for the in-flight oferta to finish before queueing another.',
+        message: 'Wait for the in-flight evaluate to finish before queueing another.',
       });
       resolve({ ok: false, code: null });
       return;
@@ -583,14 +583,14 @@ export function runOferta(
 
     logEvent(taskKey, 'Generate CV started', {
       category: 'task',
-      message: 'oferta · ' + url + ' · profile=' + resolvedProfileId,
+      message: 'evaluate · ' + url + ' · profile=' + resolvedProfileId,
       profileId: resolvedProfileId,
     });
     let p: ChildProcess;
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { spawnAgentWithMode } = require('./spawn-agent') as typeof import('./spawn-agent');
-      ({ child: p } = spawnAgentWithMode('oferta', url, {
+      ({ child: p } = spawnAgentWithMode('evaluate', url, {
         profileId: resolvedProfileId,
       }));
     } catch (e) {
@@ -604,7 +604,7 @@ export function runOferta(
     }
     running.set(taskKey, p);
     attachStdio(p, taskKey);
-    attachTimeout(p, taskKey, TIMEOUT_MS[taskKey] ?? TIMEOUT_MS.oferta);
+    attachTimeout(p, taskKey, TIMEOUT_MS[taskKey] ?? TIMEOUT_MS.evaluate);
     p.on('error', (err: Error) => {
       running.delete(taskKey);
       const isMissingBinary = (err as NodeJS.ErrnoException).code === 'ENOENT';
@@ -636,7 +636,7 @@ export function runOferta(
 }
 
 // =============================================================================
-// Bulk CV — sequentially run oferta for each URL. We don't parallelize to avoid
+// Bulk CV — sequentially run evaluate for each URL. We don't parallelize to avoid
 // Claude rate limits and to keep the activity feed readable.
 // =============================================================================
 
@@ -776,7 +776,7 @@ export async function runBulkOferta(
     logEvent('bulk-cv', 'Bulk CV already running', { level: 'warn', category: 'task' });
     return { ok: 0, failed: 0, total: 0 };
   }
-  // Reserve the slot synchronously — spawn() runs inside runOferta with a different key
+  // Reserve the slot synchronously — spawn() runs inside runEvaluate with a different key
   running.set('bulk-cv', null as any);
   logEvent('bulk-cv', 'Bulk CV started', {
     category: 'task',
@@ -790,7 +790,7 @@ export async function runBulkOferta(
         category: 'task',
         message: urls[i],
       });
-      const r = await runOferta(urls[i], 'oferta', profileId);
+      const r = await runEvaluate(urls[i], 'evaluate', profileId);
       if (r.ok) ok++;
       else failed++;
     }
@@ -808,7 +808,7 @@ export async function runBulkOferta(
 // =============================================================================
 // Auto-eval — fires after Gemini scoring lands. For every job scoring ≥
 // thresholds.autoEvaluateScore that doesn't already have a deep-eval report,
-// queue a runOferta() call serially up to thresholds.maxAutoEvalsPerRun.
+// queue a runEvaluate() call serially up to thresholds.maxAutoEvalsPerRun.
 //
 // Wired in via the autopilot scheduler's runTask switch + the after-trigger
 // listener on 'gemini' completions. Also exposed via /api/run for power-user
@@ -817,7 +817,7 @@ export async function runBulkOferta(
 // Safety rails (see plan):
 //   • per-run cap from autopilot.thresholds.maxAutoEvalsPerRun
 //   • 1h cooldown via the schedule's lastRunAt
-//   • 3-strike abort on consecutive runOferta failures (Claude CLI broken /
+//   • 3-strike abort on consecutive runEvaluate failures (Claude CLI broken /
 //     API key revoked → bail before burning more $$)
 //   • globalEnabled self-check (defensive — autopilot scheduler already
 //     gates, but /api/run can call this directly)
@@ -985,7 +985,7 @@ export async function runAutoEval(profileId?: string): Promise<AutoEvalResult> {
           job.geminiScore.toFixed(1),
       });
 
-      const r = await runOferta(job.url, 'auto-eval', job.profileId);
+      const r = await runEvaluate(job.url, 'auto-eval', job.profileId);
       if (r.ok) {
         evaluated++;
         consecutive = 0;

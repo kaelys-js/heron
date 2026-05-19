@@ -656,7 +656,7 @@
                       <div>
                         <div>Has deep evaluation report</div>
                         <div class="text-[11px] text-muted-foreground/60">
-                          Claude oferta has been run
+                          Claude evaluate has been run
                         </div>
                       </div>
                     </Label>

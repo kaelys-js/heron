@@ -162,8 +162,9 @@
         <BookOpen class="size-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
         <p class="text-[11px] text-muted-foreground/90 leading-relaxed">
           Saved to <code class="font-mono">interview-prep/story-bank.md</code>. Future runs of
-          <code class="font-mono">oferta</code>, <code class="font-mono">interview-prep</code>, and
-          <code class="font-mono">contacto</code> read from this file so each app gets smarter. You can
+          <code class="font-mono">evaluate</code>, <code class="font-mono">interview-prep</code>,
+          and
+          <code class="font-mono">outreach</code> read from this file so each app gets smarter. You can
           leave any field blank — Claude expands what it has.
         </p>
       </div>

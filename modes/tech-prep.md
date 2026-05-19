@@ -132,7 +132,7 @@ well but works badly.
 Before writing the file:
 
 1. Confirm the deep-eval report file exists for this job. If missing,
-   suggest the user run `/heron oferta {url}` first — without
+   suggest the user run `/heron evaluate {url}` first — without
    Block C, this prep is generic.
 2. Check `__STORY_BANK__` size. If &lt;200 lines, warn
    that behavioral prep will be thin without seeding the bank first.

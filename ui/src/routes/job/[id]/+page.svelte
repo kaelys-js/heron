@@ -539,7 +539,7 @@
                   icon={ScrollText}
                   title="No deep evaluation yet"
                   description={'Run ' +
-                    cmd('oferta') +
+                    cmd('evaluate') +
                     ' with this job’s URL in Claude Code to generate a tailored A–G report. Or use the Generate CV action above.'}
                 />
               {/if}
@@ -810,7 +810,7 @@
                     description={'Click Generate to draft messages for the ' +
                       (outreachPersona === 'hiring-manager' ? 'hiring-manager' : outreachPersona) +
                       ' angle. Runs ' +
-                      cmd('contacto') +
+                      cmd('outreach') +
                       ' in the background — usually 30–60s. The result is saved to interview-prep/ so a reload restores it.'}
                   />
                 {/if}

@@ -287,7 +287,7 @@ export function logEvent(
     message?: string;
     link?: string;
     stack?: string;
-    /** Profile slug if the event is per-profile (scan in profile X, oferta
+    /** Profile slug if the event is per-profile (scan in profile X, evaluate
      *  for a job in profile Y, etc.). Omit for shared-infra events. */
     profileId?: string;
     /** Override user-id tagging — caller knows whose event this is. When

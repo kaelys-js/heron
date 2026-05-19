@@ -214,8 +214,8 @@
             {/snippet}
           </Tooltip.Trigger>
           <Tooltip.Content side="bottom" class="text-xs max-w-xs">
-            Run Claude oferta on all {cvWillRun} job{cvWillRun === 1 ? '' : 's'} (sequentially, ~1–3 min
-            each).
+            Run Claude evaluate on all {cvWillRun} job{cvWillRun === 1 ? '' : 's'} (sequentially, ~1–3
+            min each).
           </Tooltip.Content>
         </Tooltip.Root>
       </Tooltip.Provider>
@@ -364,7 +364,7 @@
             >Generate {cvWillRun} tailored CV{cvWillRun === 1 ? '' : 's'}</Dialog.Title
           >
           <Dialog.Description class="text-xs mt-0.5">
-            Spawns Claude Code's <code class="font-mono">oferta</code> mode for each job, sequentially.
+            Spawns Claude Code's <code class="font-mono">evaluate</code> mode for each job, sequentially.
           </Dialog.Description>
         </div>
       </div>

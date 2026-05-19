@@ -274,7 +274,7 @@ export function keywordMatch(jd: string, cv: string): KeywordMatchResult {
 
 /**
  * Heuristic to extract the JD text from a report markdown file. The
- * oferta mode embeds the original JD inside "## JD" or as the first
+ * evaluate mode embeds the original JD inside "## JD" or as the first
  * block. Falls back to the full report if no marker is found.
  */
 export function extractJdFromReport(reportMd: string): string {

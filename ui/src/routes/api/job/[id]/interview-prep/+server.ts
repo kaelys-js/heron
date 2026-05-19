@@ -36,7 +36,7 @@ export const POST = wrap(
     const resolved = resolveJobAndProfile(params.id, url);
     if (!resolved) badRequest('Job not found: ' + params.id);
     const { job, profileId } = resolved!;
-    if (!job.reportFile) badRequest('Job has no deep evaluation report yet — run oferta first.');
+    if (!job.reportFile) badRequest('Job has no deep evaluation report yet — run evaluate first.');
     const body = (await request.json().catch(() => ({}))) as { archetype?: string };
 
     logEvent('interview-prep', 'Generating interview prep', {

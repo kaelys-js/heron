@@ -20,10 +20,10 @@ export type SkillCategory =
   | 'system';
 
 export type Skill = {
-  id: string; // 'oferta'
-  name: string; // 'oferta — Evaluación Completa A-G'
-  title: string; // 'oferta'
-  subtitle: string; // 'Evaluación Completa A-G'
+  id: string; // 'evaluate'
+  name: string; // 'evaluate — Complete A-G Evaluation'
+  title: string; // 'evaluate'
+  subtitle: string; // 'Complete A-G Evaluation'
   description: string; // first non-heading paragraph
   category: SkillCategory;
   emoji: string;
@@ -32,7 +32,7 @@ export type Skill = {
   /** Concrete on-disk language directory: 'en' for top-level modes, otherwise
    *  the two-letter subdir code ('de', 'fr', 'ja', 'pt', 'ru', 'es'). */
   lang: 'en' | 'de' | 'fr' | 'ja' | 'pt' | 'ru' | 'es';
-  invocation: string; // '/heron oferta'
+  invocation: string; // '/heron evaluate'
   /** When relevant: list of inputs the user provides (parsed from the body) */
   inputs?: string[];
   /** path on disk so we can read full body on demand */
@@ -41,8 +41,8 @@ export type Skill = {
 };
 
 const CATEGORY: Record<string, SkillCategory> = {
-  oferta: 'evaluation',
-  ofertas: 'evaluation',
+  evaluate: 'evaluation',
+  compare: 'evaluation',
   deep: 'evaluation',
   project: 'evaluation',
   training: 'evaluation',
@@ -50,7 +50,7 @@ const CATEGORY: Record<string, SkillCategory> = {
   followup: 'evaluation',
 
   apply: 'application',
-  contacto: 'application',
+  outreach: 'application',
   'cover-letter': 'application',
   'form-answers': 'application',
   'post-rejection': 'application',
@@ -91,15 +91,15 @@ const CATEGORY: Record<string, SkillCategory> = {
 };
 
 const EMOJI: Record<string, string> = {
-  oferta: '🎯',
-  ofertas: '⚖️',
+  evaluate: '🎯',
+  compare: '⚖️',
   deep: '🔍',
   project: '🧪',
   training: '📚',
   patterns: '📈',
   followup: '📨',
   apply: '✉️',
-  contacto: '🤝',
+  outreach: '🤝',
   'cover-letter': '✉️',
   'form-answers': '📝',
   'post-rejection': '↩️',
@@ -198,18 +198,14 @@ function parseInputs(text: string): string[] {
   return out;
 }
 
-function detectLanguage(text: string): 'en' | 'es' | 'mixed' {
-  // Simple heuristic
-  const sample = text.slice(0, 1500).toLowerCase();
-  const esWords = (
-    sample.match(/\b(modo|para|cuando|qué|cómo|usuario|empresa|paso|sección)\b/g) ?? []
-  ).length;
-  const enWords = (
-    sample.match(/\b(mode|when|user|company|step|section|inputs|outputs|run)\b/g) ?? []
-  ).length;
-  if (esWords > enWords + 2) return 'es';
-  if (enWords > esWords + 2) return 'en';
-  return 'mixed';
+function detectLanguage(_text: string): 'en' | 'es' | 'mixed' {
+  // Heron ships English-only mode templates (locale dirs retired in
+  // commit 7e3fd99). The `modes_dir` escape hatch still lets a user
+  // point at a restored localized directory of their own, but we no
+  // longer detect language heuristically — anything top-level is 'en';
+  // anything under a `modes/<lang>/` subdir is tagged by its directory
+  // path in `listSkills()` below.
+  return 'en';
 }
 
 /** Set of valid two-letter language subdir codes. Recursion is exactly one

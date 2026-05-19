@@ -12,7 +12,7 @@
 /** Categories drive the UI grouping on Autopilot / Agents pages. */
 export type JobCategory =
   | 'discovery' // scans + portal pulls
-  | 'evaluation' // gemini / oferta / batch
+  | 'evaluation' // gemini / evaluate / batch
   | 'apply' // linkedin apply, bulk apply
   | 'hygiene' // normalize, dedup, verify, liveness, auto-triage
   | 'insight' // pattern analysis, follow-up cadence, daily digest
