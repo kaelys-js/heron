@@ -50,6 +50,35 @@ PRs without a corresponding issue may be closed if they don't align with the pro
 - Dashboard changes require `go build` — test with real data before submitting
 - Don't commit personal data (cv.md, profile.yml, applications.md, reports/)
 
+## Developer Certificate of Origin (DCO)
+
+Every commit MUST be signed off with a `Signed-off-by: Name <email>`
+trailer. This certifies you wrote the code (or have the right to
+submit it) under the project's MIT license — the [DCO](https://developercertificate.org)
+text. The DCO bot enforces this on every PR.
+
+The easiest way: use `git commit -s` to auto-append the trailer.
+
+```sh
+git commit -s -m "feat(api): add retry helper"
+# →  Signed-off-by: Your Name <you@example.com>
+```
+
+If you forgot, amend:
+
+```sh
+git commit --amend --signoff && git push --force-with-lease
+```
+
+A failing `dco` status check means a commit is missing the trailer.
+Fix by rebasing and adding `-s`:
+
+```sh
+git rebase HEAD~N --signoff
+```
+
+(Where `N` = the number of commits in your PR.)
+
 ## What we do NOT accept
 
 - **PRs that scrape platforms prohibiting automated access** (LinkedIn, etc.). We actively reject these to respect third-party ToS.

@@ -34,6 +34,8 @@
     "size:why": "size-limit --why",
     "test": "vitest --config vitest.workspace.ts run --passWithNoTests",
     "test:coverage": "vitest --config vitest.workspace.ts run --coverage --passWithNoTests",
+    "test:e2e": "playwright test e2e/",
+    "test:e2e:ui": "playwright test e2e/ --ui",
     "test:ui": "vitest --config vitest.workspace.ts --ui",
     "test:watch": "vitest --config vitest.workspace.ts",
     "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --threshold error",
@@ -71,6 +73,7 @@
     "yaml": "catalog:"
   },
   "devDependencies": {
+    "@axe-core/playwright": "catalog:",
     "@capacitor-community/electron": "catalog:",
     "@capacitor/android": "catalog:",
     "@capacitor/app": "catalog:",
@@ -83,6 +86,7 @@
     "@capacitor/share": "catalog:",
     "@capacitor/splash-screen": "catalog:",
     "@capacitor/status-bar": "catalog:",
+    "@playwright/test": "catalog:",
     "@size-limit/file": "catalog:",
     "@size-limit/preset-app": "catalog:",
     "@sveltejs/adapter-node": "catalog:",
@@ -101,6 +105,7 @@
     "@vitest/browser-playwright": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "@vitest/ui": "catalog:",
+    "axe-core": "catalog:",
     "bits-ui": "catalog:",
     "drizzle-kit": "catalog:",
     "fake-indexeddb": "catalog:",
