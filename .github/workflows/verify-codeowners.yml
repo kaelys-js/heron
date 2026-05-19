@@ -1,0 +1,79 @@
+name: Verify CODEOWNERS paths
+# Catches the HP27 audit finding: CODEOWNERS had `/biome.json` but the
+# actual file was `biome.jsonc` — the path silently never matched, so
+# no review was ever required on biome config changes.
+#
+# This workflow asserts every non-wildcard path entry in CODEOWNERS
+# resolves to a real file or directory on disk. Wildcards (`*`,
+# `**/*.ts`) are left as-is; only literal absolute paths get checked.
+on:
+  pull_request:
+    paths:
+      - ".github/CODEOWNERS"
+      - "**" # any file move could orphan a CODEOWNERS entry
+  schedule:
+    - cron: "33 6 * * 1" # Weekly Monday 06:33 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-codeowners-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Every CODEOWNERS path resolves on-disk
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Resolve every literal path in CODEOWNERS
+        run: |
+          set -euo pipefail
+          CO=.github/CODEOWNERS
+          if [ ! -f "$CO" ]; then
+            echo "::error::CODEOWNERS file missing at $CO"
+            exit 1
+          fi
+          MISSING=()
+          while IFS= read -r line; do
+            # Skip blank lines + comments
+            [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+            # Extract the path token (first field)
+            path=$(echo "$line" | awk '{print $1}')
+            # Skip wildcards (`*`, `**/*.ts`, etc.) — only check literals
+            [[ "$path" == *'*'* ]] && continue
+            # Strip leading slash (CODEOWNERS uses repo-root-relative)
+            check="${path#/}"
+            # Trailing slash means directory
+            check="${check%/}"
+            if [ ! -e "$check" ]; then
+              MISSING+=("$path")
+            fi
+          done < "$CO"
+          if [ ${#MISSING[@]} -gt 0 ]; then
+            echo "::error::CODEOWNERS references non-existent paths:"
+            for p in "${MISSING[@]}"; do
+              echo "  - $p"
+            done
+            echo ""
+            echo "Fix: either move/restore the file, OR delete the line in CODEOWNERS."
+            exit 1
+          fi
+          echo "✓ All literal CODEOWNERS paths resolve on-disk."
+          {
+            echo "## ✅ CODEOWNERS paths verified"
+            echo ""
+            echo "All literal paths resolve on-disk. Wildcards (\`*\`, \`**/*.ts\`) skipped."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,143 @@
+name: Verify required-check names
+# Asserts every required-status-check context named in
+# `.github/rulesets/main.json` matches an actual workflow / job name
+# defined under `.github/workflows/`.
+#
+# Catches the HP28 audit finding: ruleset said `Tests / ts` but the
+# actual job was named `Tests / TS — typecheck + Vitest + coverage` —
+# every PR was technically passing all required checks but the
+# REQUIRED-CHECK NAMES themselves were dead strings. This workflow
+# catches that mismatch at PR time + on a weekly cron sweep.
+#
+# Parser is permissive: matches "<workflow-name> / <job-name>" where
+# workflow-name is the `name:` field of any workflow file and job-name
+# is the explicit `name:` field of a job (or the job-id if no name).
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/rulesets/**"
+  schedule:
+    - cron: "27 6 * * 1" # Weekly Monday 06:27 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-required-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Required-check ↔ workflow-job names
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Cross-reference required-check contexts
+        run: |
+          set -euo pipefail
+          python3 - <<'PYEOF'
+          import json, os, re, sys
+          from pathlib import Path
+
+          ROOT = Path('.')
+          RULESET_DIR = ROOT / '.github' / 'rulesets'
+          WORKFLOW_DIR = ROOT / '.github' / 'workflows'
+
+          # Allowlist: contexts provided by GitHub Apps that aren't workflow jobs
+          ALLOWLIST = {
+              "DCO",                                              # github.com/apps/dco
+              "CodeQL Analysis / Analyze (javascript-typescript)",
+              "CodeQL Analysis / Analyze (python)",
+              "CodeQL Analysis / Analyze (swift)",
+          }
+
+          # Parse all workflow files into a set of "Workflow name / job display name"
+          # accept either `name:` (job display name) OR the job-id if no name set
+          known = set()
+          for wf in sorted(WORKFLOW_DIR.glob('*.yml')):
+              text = wf.read_text()
+              # Workflow `name:` is the first top-level name field
+              m = re.search(r'^name:\s*[\'"]?([^\n\'"#]+?)[\'"]?\s*(?:#.*)?$', text, re.MULTILINE)
+              wf_name = (m.group(1).strip() if m else wf.stem).strip()
+              # Find `jobs:` block then each `<id>:` two-space-indented
+              # then optional `name:` four-space-indented inside that block
+              lines = text.split('\n')
+              in_jobs = False
+              current_job = None
+              for line in lines:
+                  if re.match(r'^jobs:\s*(?:#.*)?$', line):
+                      in_jobs = True
+                      continue
+                  if not in_jobs:
+                      continue
+                  # job-id line — 2 leading spaces, ends with `:`
+                  m2 = re.match(r'^  ([a-z][a-z0-9_-]*):\s*(?:#.*)?$', line)
+                  if m2:
+                      # Default to job-id if no explicit name found
+                      if current_job and not current_job.get('name'):
+                          known.add(f"{wf_name} / {current_job['id']}")
+                      current_job = {'id': m2.group(1), 'name': None}
+                      continue
+                  # explicit `name:` inside a job (4+ leading spaces)
+                  m3 = re.match(r'^    name:\s*[\'"]?([^\n\'"#]+?)[\'"]?\s*(?:#.*)?$', line)
+                  if m3 and current_job:
+                      jname = m3.group(1).strip()
+                      known.add(f"{wf_name} / {jname}")
+                      current_job['name'] = jname
+              # Flush last job
+              if current_job and not current_job.get('name'):
+                  known.add(f"{wf_name} / {current_job['id']}")
+
+          # Read every required-status-check context from every ruleset
+          required = set()
+          for rs in sorted(RULESET_DIR.glob('*.json')):
+              data = json.loads(rs.read_text())
+              for rule in data.get('rules', []):
+                  if rule.get('type') == 'required_status_checks':
+                      for c in rule['parameters'].get('required_status_checks', []):
+                          required.add(c['context'])
+
+          if not required:
+              print("No required_status_checks in any ruleset — nothing to verify.")
+              sys.exit(0)
+
+          missing = sorted(c for c in required if c not in known and c not in ALLOWLIST)
+          unused = sorted(k for k in known if k not in required and k not in ALLOWLIST)
+
+          # Summary table
+          print(f"Required contexts: {len(required)}")
+          print(f"Known job names:   {len(known)}")
+          print(f"In allowlist:      {len(ALLOWLIST)}")
+          print(f"Missing (req but no job): {len(missing)}")
+          print(f"Unused (job but not req): {len(unused)}")
+
+          if missing:
+              print("\n::error::Required status checks have no matching workflow job:")
+              for m in missing:
+                  print(f"  - {m!r}")
+              print("\nFix: rename the job's `name:` field to match the ruleset context,")
+              print("OR update .github/rulesets/main.json::required_status_checks.")
+
+          # Unused is informational, not an error — many workflows
+          # (welcome.yml, stale.yml) intentionally aren't required.
+          if unused:
+              print("\n(info) Workflows that exist but aren't required checks:")
+              for u in unused[:10]:
+                  print(f"  - {u!r}")
+              if len(unused) > 10:
+                  print(f"  ... and {len(unused) - 10} more")
+
+          sys.exit(1 if missing else 0)
+          PYEOF

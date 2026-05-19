@@ -350,7 +350,31 @@
     "url": "https://github.com/kaelys-js/heron",
     "issues": "https://github.com/kaelys-js/heron/issues",
     "docs": "https://github.com/kaelys-js/heron#readme",
-    "upstream": "https://github.com/santifer/career-ops"
+    "upstream": "https://github.com/santifer/career-ops",
+    "description": "Stand still. Strike well. A local-first, AI-agnostic thinking partner for career transitions. Multi-user, open source.",
+    "homepage": "https://heron.app",
+    "topics": [
+      "ai-agent",
+      "anthropic",
+      "better-auth",
+      "capacitor",
+      "claude",
+      "claude-code",
+      "drizzle-orm",
+      "electron",
+      "heron",
+      "interview-prep",
+      "ios",
+      "job-search",
+      "local-first",
+      "open-source",
+      "passkey",
+      "resume",
+      "svelte",
+      "sveltekit",
+      "typescript",
+      "watchos"
+    ]
   },
   "permissions": {
     "localNetworkUsage": "Heron uses local network discovery to find your desktop app on the same Wi-Fi network so your phone, watch, and laptop stay in sync without a cloud account.",

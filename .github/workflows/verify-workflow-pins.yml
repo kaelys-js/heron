@@ -1,0 +1,85 @@
+name: Verify workflow action pins
+# Asserts every `uses:` directive in `.github/workflows/*` is SHA-pinned
+# (40-char hex), NOT tag-pinned (`@v6`, `@main`). SHAs are immutable;
+# tags can be rewritten silently — Renovate keeps the SHAs current via
+# weekly digest-update PRs.
+#
+# Exceptions:
+#   - Local references (`./.github/actions/setup-toolchain`) — by definition
+#     not a SHA-pinnable thing
+#   - Workflow re-uses (`uses: ./.github/workflows/X.yml`) — same
+#
+# This was the G2 audit finding. Re-runs at PR-time + weekly so a
+# manually-edited workflow that adds a tag-pinned action gets caught.
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+  schedule:
+    - cron: "41 6 * * 1" # Weekly Monday 06:41 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-workflow-pins-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Every external action is SHA-pinned
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Check every `uses` line for SHA pin
+        run: |
+          set -euo pipefail
+          # Grep every `uses:` outside local-reference (./.github/...) +
+          # workflow-re-use (./.github/workflows/...) patterns.
+          # Capture the action@ref portion.
+          OFFENDERS=()
+          while IFS= read -r line; do
+            # Skip empty matches
+            [ -z "$line" ] && continue
+            # Extract the action@ref token (handles indented `- uses:` + `uses:` forms)
+            ACTION=$(echo "$line" | sed -E 's/.*uses:\s*//' | awk '{print $1}')
+            # Skip local references
+            [[ "$ACTION" == ./* ]] && continue
+            # Skip if the part after @ is a 40-char hex (SHA-pinned)
+            REF="${ACTION##*@}"
+            if [[ "$REF" =~ ^[0-9a-f]{40}$ ]]; then
+              continue
+            fi
+            OFFENDERS+=("$line")
+          done < <(grep -RhnE '^\s*(- )?uses:\s+' .github/workflows .github/actions 2>/dev/null || true)
+
+          if [ ${#OFFENDERS[@]} -gt 0 ]; then
+            echo "::error::Found ${#OFFENDERS[@]} non-SHA-pinned uses: directive(s):"
+            for o in "${OFFENDERS[@]}"; do
+              echo "  $o"
+            done
+            echo ""
+            echo "Fix: resolve the action to its commit SHA + add a trailing"
+            echo "\`# <tag>\` comment so Renovate can keep it current."
+            echo "Example: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6"
+            exit 1
+          fi
+          echo "✓ Every uses: directive is SHA-pinned."
+          {
+            echo "## ✅ Workflow action pins verified"
+            echo ""
+            echo "Every external \`uses:\` directive is SHA-pinned (40-char hex)."
+            echo "Local references (./.github/...) and workflow-re-uses skipped."
+          } >> "$GITHUB_STEP_SUMMARY"

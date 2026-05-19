@@ -25,6 +25,18 @@ name: PR bots
 # them in one file makes the cost (one harden-runner setup) shared.
 
 on:
+  # SAFETY: pull_request_target runs against the BASE branch + has
+  # access to repo secrets. The classic injection vector is checking
+  # out the PR head and executing its code with secret access. This
+  # workflow does NEITHER:
+  #   1. No `actions/checkout` step anywhere — we don't fetch the PR's
+  #      code, just read PR metadata via `gh pr view`.
+  #   2. No shell-evaluation of untrusted strings — every `gh pr
+  #      comment` call uses --body-file (heredoc-rendered) with the
+  #      AUTHOR/PR-number passed as environment variables, never
+  #      interpolated into shell.
+  # Permissions are minimum-necessary (pull-requests: write, issues:
+  # write — but no contents:write, no id-token, no packages).
   pull_request_target:
     types: [opened, reopened, ready_for_review, synchronize, labeled]
   pull_request_review:
