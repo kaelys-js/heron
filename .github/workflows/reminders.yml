@@ -1,0 +1,231 @@
+name: Cadence reminders
+# Four cadence reminders sharing one workflow + one harden-runner setup:
+#
+#   • quarterly-audit  — opens an issue if no `chore(audit)` /
+#                        `fix(audit)` commit landed in 90 days.
+#                        Forces a regular sweep of the multi-user
+#                        + GitHub-workflow audits.
+#   • release-cadence  — opens an issue if no release tag in 60 days.
+#                        Heron should ship at least every 2 months;
+#                        longer means we're hoarding unmerged work.
+#   • issue-stale-pinger — friendly @mention 7 days BEFORE stale.yml
+#                        closes a 60-day-inactive issue (stale.yml
+#                        marks at 60d + closes 14d after; we ping at
+#                        day 67 = 7 days before close).
+#   • dependency-staleness — alerts if the Renovate dependency
+#                        dashboard issue's open-item count grows above
+#                        a threshold (signal that nobody's reviewing
+#                        Renovate PRs).
+#
+# All 4 jobs are idempotent — they check for an existing open issue
+# matching their signature before opening a new one (dedupe via labels
+# + body sentinel string).
+on:
+  schedule:
+    - cron: "11 7 * * 1" # Weekly Monday 07:11 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: reminders-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  # ── Quarterly audit reminder ─────────────────────────────────
+  quarterly-audit:
+    name: Quarterly audit reminder (90d cadence)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+      - name: Last audit commit ≤ 90 days?
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Look at last 200 commits for any audit-related conventional commit
+          LAST_AUDIT=$(git log -200 --format='%H %s' \
+            | grep -E '^\w+ (chore|fix|feat|ci)(\([a-z-]*audit[a-z-]*\)|: .*[Aa]udit)' \
+            | head -1 || true)
+          if [ -z "$LAST_AUDIT" ]; then
+            DAYS=999
+          else
+            SHA=$(echo "$LAST_AUDIT" | awk '{print $1}')
+            COMMIT_DATE=$(git show -s --format=%ct "$SHA")
+            NOW=$(date +%s)
+            DAYS=$(( (NOW - COMMIT_DATE) / 86400 ))
+          fi
+          echo "Days since last audit commit: $DAYS"
+          if [ "$DAYS" -lt 90 ]; then
+            echo "::notice::Audit cadence on track ($DAYS days < 90)"
+            exit 0
+          fi
+          EXISTING=$(gh issue list --label "audit-due" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            echo "::notice::Audit-due issue #$EXISTING already open"
+            exit 0
+          fi
+          {
+            printf "It's been **%d days** since the last audit commit. Heron does a 90-day sweep across:\n\n" "$DAYS"
+            printf "- Multi-user safety (every job has \`perUser\`; spawn sites inject env; bus listeners scope by ev.userId)\n"
+            printf "- GitHub workflow + bot posture (SHA-pinned, harden-runner, GHAS toggles still on)\n"
+            printf "- Dependency staleness (Renovate dashboard backlog)\n"
+            printf "- Security advisory backlog (GHSA + open security issues)\n"
+            printf "- README screenshots refresh (drift from UI changes)\n\n"
+            printf "Trigger the audit with:\n\n\`\`\`sh\npnpm gh:verify  # config drift check\npnpm test       # full test matrix\npnpm screenshots # README assets refresh\n\`\`\`\n\n"
+            printf "_Posted by reminders.yml — close when the next audit lands._\n"
+          } > /tmp/issue.md
+          gh issue create \
+            --title "📋 Quarterly audit due (${DAYS} days since last)" \
+            --label "audit-due,maintenance" \
+            --body-file /tmp/issue.md
+
+  # ── Release cadence reminder ─────────────────────────────────
+  release-cadence:
+    name: Release cadence reminder (60d cadence)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Last release ≤ 60 days?
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          LATEST=$(gh release list --limit 1 --json publishedAt,tagName --jq '.[0] // empty')
+          if [ -z "$LATEST" ]; then
+            echo "::notice::No releases yet — skipping cadence check"
+            exit 0
+          fi
+          PUBLISHED=$(echo "$LATEST" | jq -r '.publishedAt')
+          TAG=$(echo "$LATEST" | jq -r '.tagName')
+          # date(1) compat: macOS uses BSD date, ubuntu GNU date. CI is ubuntu only.
+          NOW=$(date +%s)
+          THEN=$(date -d "$PUBLISHED" +%s)
+          DAYS=$(( (NOW - THEN) / 86400 ))
+          echo "Days since last release ($TAG): $DAYS"
+          if [ "$DAYS" -lt 60 ]; then
+            echo "::notice::Release cadence on track ($DAYS days < 60)"
+            exit 0
+          fi
+          EXISTING=$(gh issue list --label "release-due" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            echo "::notice::Release-due issue #$EXISTING already open"
+            exit 0
+          fi
+          {
+            printf "Last release was **%s** (%d days ago).\n\n" "$TAG" "$DAYS"
+            printf "Releases happen automatically via release-please on every push to main —\n"
+            printf "if there's no pending \`chore(main): release X.Y.Z\` PR, that means no\n"
+            printf "Conventional commit since the last release has triggered a version bump\n"
+            printf "(only \`feat:\` / \`fix:\` / \`perf:\` / \`feat!:\` trigger bumps; \`chore:\` and\n"
+            printf "\`docs:\` do not).\n\n"
+            printf "If main has merged commits since %s but no release PR exists,\n" "$TAG"
+            printf "release-please may need its PR reopened or a manual:\n\n"
+            printf "\`\`\`sh\npnpm release patch  # or minor / major / exact\n\`\`\`\n\n"
+            printf "_Posted by reminders.yml — close when the next release ships._\n"
+          } > /tmp/issue.md
+          gh issue create \
+            --title "🚀 Release overdue (${DAYS} days since ${TAG})" \
+            --label "release-due,maintenance" \
+            --body-file /tmp/issue.md
+
+  # ── Issue stale-pinger ────────────────────────────────────────
+  issue-stale-pinger:
+    name: Ping issues 7d before stale-close
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Find issues aged 67 days with no comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # stale.yml: marks at 60 days inactive, closes 14 days after.
+        # We ping at day 67 (= 7 days before close) so the author has
+        # a fair-warning window.
+        run: |
+          set -euo pipefail
+          THRESHOLD=$(date -u -d '67 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          ISSUES=$(gh issue list --state open --json number,author,updatedAt,labels \
+            --jq ".[] | select(.updatedAt < \"$THRESHOLD\") | select([.labels[].name] | contains([\"pinned\"]) or contains([\"security\"]) or contains([\"hired\"]) | not)")
+          if [ -z "$ISSUES" ]; then
+            echo "::notice::No stale issues to ping"
+            exit 0
+          fi
+          echo "$ISSUES" | jq -c '.' | while read -r issue; do
+            NUM=$(echo "$issue" | jq -r '.number')
+            AUTHOR=$(echo "$issue" | jq -r '.author.login')
+            # Skip if we've already pinged in the last 5 comments
+            RECENT=$(gh issue view "$NUM" --json comments \
+              --jq '[.comments[-5:][] | select(.body | contains("[reminders/issue-stale-pinger]"))] | length')
+            if [ "$RECENT" -gt 0 ]; then
+              continue
+            fi
+            {
+              printf "👋 @%s — this issue has had no activity for 67 days. stale.yml will close it in ~7 days unless someone comments to keep it open.\n\n" "$AUTHOR"
+              printf "If this is still relevant: a comment is enough. To override the auto-close: add the \`pinned\` label.\n\n"
+              printf "_[reminders/issue-stale-pinger] — automated nudge._\n"
+            } > /tmp/comment.md
+            gh issue comment "$NUM" --body-file /tmp/comment.md || true
+            echo "::notice::Pinged issue #$NUM"
+          done
+
+  # ── Dependency-dashboard backlog tracker ──────────────────────
+  dependency-staleness:
+    name: Renovate dashboard backlog alert
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Count open Renovate PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # When Renovate's backlog grows past N PRs, nobody's reviewing
+        # them. Open an alert so the maintainer either auto-merges the
+        # safe ones (`pnpm renovate:merge-all`) or triages the rest.
+        run: |
+          set -euo pipefail
+          OPEN=$(gh pr list --state open --author "renovate[bot]" --json number --jq 'length')
+          echo "Open Renovate PRs: $OPEN"
+          THRESHOLD=10
+          if [ "$OPEN" -lt "$THRESHOLD" ]; then
+            echo "::notice::Renovate backlog OK ($OPEN open, threshold $THRESHOLD)"
+            exit 0
+          fi
+          EXISTING=$(gh issue list --label "renovate-backlog" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            echo "::notice::Renovate-backlog issue #$EXISTING already open"
+            exit 0
+          fi
+          {
+            printf "Renovate has **%d open PRs** (threshold: %d).\n\n" "$OPEN" "$THRESHOLD"
+            printf "Triage flow:\n\n"
+            printf "1. \`gh pr list --author 'renovate[bot]' --state open\`\n"
+            printf "2. Auto-merge the safe (devDependency patch+minor) ones — they should already be auto-merging via pr-bots.yml\n"
+            printf "3. Manually review production-dep majors\n"
+            printf "4. Close any that are superseded\n\n"
+            printf "_Posted by reminders.yml — close when backlog drops below %d._\n" "$THRESHOLD"
+          } > /tmp/issue.md
+          gh issue create \
+            --title "📦 Renovate backlog: ${OPEN} open PRs" \
+            --label "renovate-backlog,maintenance" \
+            --body-file /tmp/issue.md

@@ -25,6 +25,9 @@
         "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }],
         "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
         "total-blocking-time": ["warn", { "maxNumericValue": 300 }],
+        "interaction-to-next-paint": ["error", { "maxNumericValue": 200 }],
+        "speed-index": ["warn", { "maxNumericValue": 3000 }],
+        "_comment_inp": "INP replaced FID as a Core Web Vital in March 2024. 200ms is the 'good' threshold per web.dev/inp.",
         "uses-rel-preconnect": "off",
         "uses-text-compression": "off",
         "_comment_skipped": "uses-http2 + uses-text-compression are dev-server-only failures; Vite's preview doesn't gzip"

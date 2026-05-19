@@ -161,11 +161,17 @@ final class BackgroundFetcher {
     }
 
     /// Read the quiet-hours JSON the JS NotificationPreferences.svelte
-    /// persisted into localStorage. The WebView ALSO mirrors it into
-    /// App Group UserDefaults via NativePlugin (TODO when we
-    /// wire that) so extension processes can read it; until that wiring
-    /// lands we fail safe to "not in quiet hours" — wakes for warn /
-    /// error events regardless.
+    /// persisted into App Group UserDefaults via NativePlugin's
+    /// setSharedQuietHours method. The JS side fires this on every
+    /// preference change (see NotificationPreferences.svelte lines
+    /// 74 + 92); this background fetcher reads the value at decision
+    /// time so a recently-saved preference change takes effect on the
+    /// next fetch cycle.
+    ///
+    /// Fails safe to "not in quiet hours" if the key is missing,
+    /// malformed, or disabled — better to wake the user for a warn /
+    /// error event than to silently swallow a notification because
+    /// the JSON didn't parse.
     private func isInQuietHours(groupDefaults: UserDefaults) -> Bool {
         guard let raw = groupDefaults.string(forKey: "\(Brand.name):quiet-hours"),
               let data = raw.data(using: .utf8),

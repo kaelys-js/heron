@@ -323,7 +323,31 @@ export const BRAND = {
     "url": "https://github.com/kaelys-js/heron",
     "issues": "https://github.com/kaelys-js/heron/issues",
     "docs": "https://github.com/kaelys-js/heron#readme",
-    "upstream": "https://github.com/santifer/career-ops"
+    "upstream": "https://github.com/santifer/career-ops",
+    "description": "Stand still. Strike well. A local-first, AI-agnostic thinking partner for career transitions. Multi-user, open source.",
+    "homepage": "https://heron.app",
+    "topics": [
+      "ai-agent",
+      "anthropic",
+      "better-auth",
+      "capacitor",
+      "claude",
+      "claude-code",
+      "drizzle-orm",
+      "electron",
+      "heron",
+      "interview-prep",
+      "ios",
+      "job-search",
+      "local-first",
+      "open-source",
+      "passkey",
+      "resume",
+      "svelte",
+      "sveltekit",
+      "typescript",
+      "watchos"
+    ]
   },
 } as const;
 

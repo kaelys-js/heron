@@ -89,18 +89,31 @@ git rebase HEAD~N --signoff
 ## Development
 
 ```bash
-# Scripts
-pnpm run doctor               # Setup validation
+# Test suites
 pnpm test                     # Full Vitest matrix (unit + server + component + routes + integration)
 pnpm test:coverage            # Coverage report (≥70% TS / ≥60% iOS gates)
 pnpm test:ios                 # iOS XCTest + XCUITest (needs Mac + Xcode)
-pnpm --filter ui test:e2e     # Playwright E2E smoke (boots prod build via vite preview)
-pnpm --filter ui size         # Bundle-size budget check
-node cv-sync-check.mjs        # Config check
+pnpm e2e                      # Playwright E2E (boots vite preview, installs Chromium first run)
 
-# Dashboard
-cd dashboard && go build -o career-dashboard .
-./career-dashboard --path ..
+# Quality gates
+pnpm check                    # svelte-check + tsgo (typecheck), turbo-cached
+pnpm format                   # biome + prettier-svelte, in-place
+pnpm --filter ui size         # Bundle-size budget check (size-limit gates 80/30/700 KB)
+pnpm --filter ui run lint     # oxlint
+
+# Visual regression (Lost Pixel — self-hosted, baselines committed)
+pnpm visual:baseline          # Generate baselines (first run + after legitimate UI changes)
+pnpm visual:diff              # Compare current vs baseline; fails on >10% pixel diff
+pnpm visual:diff --open       # Open .lostpixel/difference/ in Finder on diff (macOS)
+
+# Brand + GH config (single source of truth)
+pnpm brand:apply              # Propagate branding/brand.json → 30+ files
+pnpm gh:verify                # Diff live GitHub state vs brand.json + .github/rulesets/
+pnpm gh:apply                 # Reconcile (needs `gh auth status` + admin scope)
+
+# Setup
+pnpm run doctor               # Setup validation
+node cv-sync-check.mjs        # Config check
 ```
 
 ### Running CI locally

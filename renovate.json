@@ -13,6 +13,9 @@
   "timezone": "Europe/Madrid",
   "labels": ["dependencies"],
   "rangeStrategy": "pin",
+  "osvVulnerabilityAlerts": true,
+  "transitiveRemediation": true,
+  "configMigration": true,
   "lockFileMaintenance": {
     "enabled": true,
     "schedule": ["before 6am on monday"],
