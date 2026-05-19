@@ -37,10 +37,11 @@ import {
 } from './profile-paths';
 import { currentUserIdOrDefault } from './user-context';
 
-/** Map of token → ProfileFileKind. Per-profile resolution. */
+/** Map of token -> ProfileFileKind. Per-profile resolution. */
 const PROFILE_TOKEN_KINDS: Record<string, ProfileFileKind> = {
   __PROFILE__: 'profile-dir',
   __CV__: 'cv-md',
+  __PROFILE_YML__: 'profile-yml',
   __PROFILE_MD__: 'profile-md',
   __PORTALS__: 'portals-yml',
   __ARTICLE_DIGEST__: 'article-digest',
@@ -55,6 +56,7 @@ const PROFILE_TOKEN_KINDS: Record<string, ProfileFileKind> = {
   __JDS__: 'jds-dir',
   __WRITING_SAMPLES__: 'writing-samples-dir',
   __INTERVIEW_PREP__: 'interview-prep-dir',
+  __BATCH__: 'batch-dir',
 };
 
 /** Map of token → UserSharedFileKind. User-shared resolution. */

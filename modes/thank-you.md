@@ -1,4 +1,4 @@
-# Thank-you note -- the post-interview follow-up that ACTUALLY helps
+# Mode: thank-you -- the post-interview follow-up that ACTUALLY helps
 
 You're drafting the thank-you note the user sends 6-24h after an interview.
 Goal: a 5-7 sentence note that (a) thanks the interviewer specifically,

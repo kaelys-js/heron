@@ -1,4 +1,4 @@
-# Drill feedback -- comment on live code OR a system-design sketch
+# Mode: drill-feedback -- comment on live code OR a system-design sketch
 
 You're providing live coaching during a drill session. The user is
 either writing CODE (live-coding rehearsal) or DRAWING boxes-and-arrows

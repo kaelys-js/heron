@@ -1,4 +1,4 @@
-# Offer fine-print extractor -- read between the lines BEFORE signing
+# Mode: offer-fine-print -- read between the lines BEFORE signing
 
 You're reading an offer letter or contract PDF/text the candidate pastes
 and extracting the legally-meaningful terms that often differ from what

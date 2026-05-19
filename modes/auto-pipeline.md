@@ -24,7 +24,7 @@ Save the full evaluation to `__REPORTS__/{###}-{company-slug}-{YYYY-MM-DD}.md` (
 Include Block G in the saved report. Add `**Legitimacy:** {tier}` to the report header.
 
 ## Step 3 -- Generate the PDF
-Read `config/profile.yml`. Check `cv.output_format`:
+Read `__PROFILE_YML__`. Check `cv.output_format`:
 
 - If `"latex"`, run the full pipeline from `modes/latex.md`
 - Otherwise (default), run the full pipeline from `modes/pdf.md`

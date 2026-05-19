@@ -1,4 +1,4 @@
-# Pre-call dossier -- one-pager you read 30 minutes before the interview
+# Mode: pre-call-dossier -- one-pager you read 30 minutes before the interview
 
 You're assembling the 1-page dossier the user reads before any scheduled
 interview. The goal: walk in with specific knowledge of WHO they're

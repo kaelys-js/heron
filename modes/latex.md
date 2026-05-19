@@ -5,7 +5,7 @@ Export a tailored, ATS-optimized CV as a `.tex` file and compile it to PDF via `
 ## Pipeline
 
 1. Read `__CV__` as source of truth
-2. Read `config/profile.yml` for candidate identity and contact info
+2. Read `__PROFILE_YML__` for candidate identity and contact info
 3. Ask the user for the JD if not already in context (text or URL)
 4. Extract 15-20 keywords from the JD
 5. Detect JD language → CV language (EN default)
@@ -16,7 +16,7 @@ Export a tailored, ATS-optimized CV as a `.tex` file and compile it to PDF via `
 10. Inject keywords naturally into existing achievements
 11. Generate the `.tex` file using `templates/cv-template.tex`
 12. Write to `__OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.tex`
-13. Run: `node generate-latex.mjs __OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.tex __OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf`
+13. Run: `node scripts/cv/generate-latex.mjs __OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.tex __OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf`
 14. Report: .tex path, .pdf path, file sizes, section count, keyword coverage %
 
 **Requires:** `tectonic` (preferred -- `brew install tectonic`, auto-downloads packages) or `pdflatex` (MiKTeX / TeX Live) on PATH.
@@ -27,13 +27,13 @@ The template at `templates/cv-template.tex` uses `{{PLACEHOLDER}}` syntax:
 
 | Placeholder | Source |
 |-------------|--------|
-| `{{NAME}}` | `profile.yml → candidate.full_name` |
-| `{{CONTACT_LINE}}` | Phone / City, State / Visa status -- built from profile.yml |
-| `{{EMAIL_URL}}` | Raw email for `mailto:` URL -- must not be LaTeX-escaped (from profile.yml) |
+| `{{NAME}}` | `__PROFILE_YML__` → `candidate.full_name` |
+| `{{CONTACT_LINE}}` | Phone / City, State / Visa status -- built from `__PROFILE_YML__` |
+| `{{EMAIL_URL}}` | Raw email for `mailto:` URL -- must not be LaTeX-escaped (from `__PROFILE_YML__`) |
 | `{{EMAIL_DISPLAY}}` | Escaped email for display text -- LaTeX-special chars like `_` must be escaped, e.g. `first\_name@example.com` |
-| `{{LINKEDIN_URL}}` | Full URL with scheme for `\href{}`: e.g. `https://linkedin.com/in/username`. If `profile.yml` stores a bare host+path (no scheme), prepend `https://` before substitution. |
+| `{{LINKEDIN_URL}}` | Full URL with scheme for `\href{}`: e.g. `https://linkedin.com/in/username`. If `__PROFILE_YML__` stores a bare host+path (no scheme), prepend `https://` before substitution. |
 | `{{LINKEDIN_DISPLAY}}` | Display text only (no scheme): `linkedin.com/in/username` |
-| `{{GITHUB_URL}}` | Full URL with scheme for `\href{}`: e.g. `https://github.com/username`. If `profile.yml` stores a bare host+path, prepend `https://`. |
+| `{{GITHUB_URL}}` | Full URL with scheme for `\href{}`: e.g. `https://github.com/username`. If `__PROFILE_YML__` stores a bare host+path, prepend `https://`. |
 | `{{GITHUB_DISPLAY}}` | Display text only (no scheme): `github.com/username` |
 | `{{EDUCATION}}` | LaTeX `\resumeSubheading` blocks from __CV__ Education section |
 | `{{EXPERIENCE}}` | LaTeX `\resumeSubheading` + `\resumeItem` blocks -- reordered bullets |

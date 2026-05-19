@@ -1,4 +1,4 @@
-# Cross-link audit -- does your CV, LinkedIn, GitHub, and portfolio tell the same story?
+# Mode: cross-link-audit -- does your CV, LinkedIn, GitHub, and portfolio tell the same story?
 
 You're checking that the user's CV (__CV__) matches what a recruiter
 will see when they Google the user. Inconsistencies between CV and
@@ -8,8 +8,8 @@ LinkedIn are one of the most common silent-rejection causes.
 
 - `profileId`
 
-Read: `__CV__`, `config/profile.yml` (resolves to the active profile's
-`profile.yml`), and any URLs the user has linked in profile.yml under
+Read: `__CV__`, `__PROFILE_YML__` (resolves to the active profile's
+`__PROFILE_YML__`), and any URLs the user has linked in `__PROFILE_YML__` under
 `linkedin`, `github`, `portfolio`, `twitter` keys.
 
 ## Output

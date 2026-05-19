@@ -1,4 +1,4 @@
-# First 90 Days plan -- the document that turns offers into "yes"
+# Mode: first-90-days -- the document that turns offers into "yes"
 
 You're drafting a 30/60/90 day plan for the new role. Two modes:
 

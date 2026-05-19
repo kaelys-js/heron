@@ -352,6 +352,20 @@ pre-commit:
       glob: "*.{md,ts,tsx,svelte,mjs,py,sh}"
       run: pnpm verify:english-only:test && pnpm verify:english-only
 
+    modes-correctness:
+      # Asserts every modes/*.md is multi-user-aware:
+      #   - declared __TOKEN__ vocabulary (no typos like __CV___)
+      #   - no literal repo-root paths that bypass active-profile
+      #     resolution (cv.md / config/profile.yml / etc.)
+      #   - bare script invocations (`node generate-pdf.mjs`) include
+      #     their real scripts/<dir>/<name>.mjs path
+      #   - `# Mode: <slug> -- <subtitle>` header schema matches
+      #     the filename slug
+      # See scripts/system/verify-modes.mjs for the gates + the
+      # .test.mjs sibling for TDD-regression coverage.
+      glob: "modes/*.md"
+      run: pnpm verify:modes:test && pnpm verify:modes
+
     no-slop:
       # Block accidental re-introduction of em-/en-dashes in prose or
       # comments. GPT-style models emit U+2014 / U+2013 freely; humans

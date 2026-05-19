@@ -1,4 +1,4 @@
-# Counter from current employer -- should you take it?
+# Mode: counter-from-current -- should you take it?
 
 Your current employer just made a counter-offer to keep you. This mode
 runs an EV-of-staying calculation + drafts a response.
@@ -26,7 +26,7 @@ blindly. Real factors that matter:
   changed at current employer between starting the search and the counter
   arriving
 
-Also read: `__CV__`, `config/profile.yml`, `__PROFILE_MD__`.
+Also read: `__CV__`, `__PROFILE_YML__`, `__PROFILE_MD__`.
 
 ## Output
 

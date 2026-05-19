@@ -37,7 +37,7 @@ data/users/{uid}/profiles/{slug}/batch/
 
 ## Mode A: Conductor --chrome
 
-1. **Read state**: the active profile's `batch/batch-state.tsv` → identify what has already been processed
+1. **Read state**: the active profile's `__BATCH__/batch-state.tsv` → identify what has already been processed
 2. **Navigate portal**: Chrome → search URL
 3. **Extract URLs**: Read results DOM → extract URL list → append to `batch-input.tsv`
 4. **For each pending URL**:
@@ -92,7 +92,7 @@ Each worker receives `batch-prompt.md` as a system prompt. It is self-contained.
 The worker produces:
 1. `.md` report in `__REPORTS__/`
 2. PDF in `__OUTPUT__/`
-3. Tracker line in the active profile's `batch/tracker-additions/{id}.tsv`
+3. Tracker line in the active profile's `__BATCH__/tracker-additions/{id}.tsv`
 4. Result JSON via stdout
 
 ## Error handling
