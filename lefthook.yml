@@ -341,13 +341,16 @@ pre-commit:
 
     english-only:
       # Heron ships English-only mode templates + system docs. This gate
-      # catches Spanish prose (or other accented-language slip-ins) before
-      # they reach main. Inline-allowlist English loan words / proper
-      # nouns / language-detection regex literals in
-      # scripts/system/verify-english-only.mjs::ALLOWLIST when adding new
-      # legitimate cases. Runs on the full set -- fast (~50 ms).
+      # catches Spanish prose (accented + unambiguous-cluster) before it
+      # reaches main. Two detection layers: accented characters (with
+      # ALLOWLIST for English loan words / proper nouns) and a Spanish
+      # word-cluster heuristic that catches 3+ Spanish-only function
+      # words on a single line (aunque / mientras / porque / etc.). See
+      # scripts/system/verify-english-only.mjs for tunables and
+      # scripts/system/verify-english-only.test.mjs for the regression
+      # suite. Runs on the full set -- fast (~50 ms).
       glob: "*.{md,ts,tsx,svelte,mjs,py,sh}"
-      run: pnpm verify:english-only
+      run: pnpm verify:english-only:test && pnpm verify:english-only
 
     no-slop:
       # Block accidental re-introduction of em-/en-dashes in prose. They

@@ -79,12 +79,7 @@ for (const { path, name } of filesToCheck) {
   const lines = content.split('\n');
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (
-      line.includes('NEVER hardcode') ||
-      line.includes('NUNCA hardcode') ||
-      line.startsWith('#') ||
-      line.startsWith('<!--')
-    )
+    if (line.includes('NEVER hardcode') || line.startsWith('#') || line.startsWith('<!--'))
       continue;
     const matches = line.match(metricPattern);
     if (matches) {
