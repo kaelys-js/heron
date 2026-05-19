@@ -28,7 +28,7 @@ export type Status =
   | 'ManualApplyNeeded';
 
 /**
- * Canonical application status per `templates/states.yml`. This is the
+ * Canonical application status per `data/states.yml`. This is the
  * "where in the hiring process is this job" axis, parallel to the
  * pipeline `Status` above. See `docs/STATUS_MODEL.md` for why they're
  * orthogonal. The dashboard renders this as a secondary chip beside the

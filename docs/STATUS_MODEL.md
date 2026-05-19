@@ -30,7 +30,7 @@ Used by:
 
 The **outcome status** as recorded on the applications.md row by the
 Claude CLI's `oferta` / `apply` modes. Defined in
-`templates/states.yml` (8 values):
+`data/states.yml` (8 values):
 
 `evaluated | applied | responded | interview | offer | rejected | discarded | skip`
 
@@ -87,7 +87,7 @@ nuance like "discarded" vs "skip" isn't lost in the fold.
 ## Where the contract lives
 
 - **Pipeline `Status`**: `ui/src/lib/types.ts`. The 11 stages. Dashboard-internal.
-- **Application status canonical IDs**: `templates/states.yml`. The 8 states. CLI-side.
+- **Application status canonical IDs**: `data/states.yml`. The 8 states. CLI-side.
 - **Mapping function**: `ui/src/lib/server/parsers.ts:mapStatus()`. Reads applications.md cells, folds into pipeline `Status`.
 - **Display chip**: `ui/src/lib/components/JobCard.svelte` and `ui/src/routes/job/[id]/+page.svelte` render the secondary chip.
 

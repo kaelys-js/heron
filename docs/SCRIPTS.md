@@ -56,7 +56,7 @@ messages printed).
 Aliased to `turbo test` — runs the full Vitest matrix. Pipeline-data integrity
 is exercised by `ui/src/lib/integration/pipeline.integration.test.ts`, which
 validates `data/applications.md` against the same rules the legacy
-`verify-pipeline.mjs` used: canonical statuses (per `templates/states.yml`),
+`verify-pipeline.mjs` used: canonical statuses (per `data/states.yml`),
 no duplicate company+role pairs, all report links point to existing files,
 score format, row format, no pending TSVs in any profile's `batch/tracker-additions/`, and
 no markdown bold in scores.
@@ -147,7 +147,7 @@ pnpm pdf -- input.html output.pdf --format=a4        # A4 (default)
 
 Validates that the Heron setup is internally consistent: `cv.md` exists
 and is not too short, `config/profile.yml` exists with required fields, no
-hardcoded metrics in `modes/_shared.md` or `templates/batch-prompt.md`, and
+hardcoded metrics in `modes/_shared.md` or `modes/batch-prompt.md`, and
 `article-digest.md` freshness (warns if older than 30 days).
 
 ```bash

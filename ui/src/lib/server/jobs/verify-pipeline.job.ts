@@ -21,7 +21,7 @@ import { activePath } from '../profile-paths';
 
 type Finding = { severity: 'error' | 'warn'; cls: string; line: string };
 
-// Canonical statuses per templates/states.yml. Kept inline to avoid a
+// Canonical statuses per data/states.yml. Kept inline to avoid a
 // YAML parser dep just for this list; tested by templates.test.ts to
 // stay in sync with the canonical file.
 const CANONICAL_STATUSES = new Set([
@@ -101,7 +101,7 @@ export function runVerifyPipeline(): Promise<JobResult> {
         findings.push({
           severity: 'warn',
           cls: 'Non-canonical status',
-          line: `row ${rowIdx}: "${status}" not in templates/states.yml`,
+          line: `row ${rowIdx}: "${status}" not in data/states.yml`,
         });
       }
       const dedupKey = `${(company || '').toLowerCase()}|${(role || '').toLowerCase()}`;

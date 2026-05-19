@@ -123,9 +123,9 @@ These files contain system logic, scripts, templates, and instructions that impr
 | `scripts/system/*` | Repo plumbing (doctor, check-liveness, update-system, gemini-eval, …) |
 | `scripts/lib/*` | Cross-domain shared libs (lib-profiles.mjs, lib_profiles.py, lib_playwright_auth.py) |
 | `scripts/native/*` | Native build / dev / setup wizards |
-| `templates/batch-prompt.md` | Batch worker prompt |
+| `modes/batch-prompt.md` | Batch worker prompt |
 | `scripts/batch/batch-runner.sh` | Batch orchestrator |
-| `templates/*` | Base templates (including `cv-template.html`, `portals.example.yml`, `profile.example.yml`, `batch-prompt.md`, `fonts/`) |
+| `templates/*` | Base templates (including `cv-template.html`, `cv-template.tex`, `portals.example.yml`, `profile.example.yml`, `fonts/`) |
 | `.claude/skills/*` | Skill definitions |
 | `docs/*` | Documentation |
 | `VERSION` | Current version number |

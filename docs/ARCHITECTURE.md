@@ -77,7 +77,7 @@ cv.md                    →  Evaluation context
 article-digest.md        →  Proof points for matching
 config/profile.yml       →  Candidate identity
 portals.yml              →  Scanner configuration
-templates/states.yml     →  Canonical status values
+data/states.yml     →  Canonical status values
 templates/cv-template.html → PDF generation template
 ```
 
