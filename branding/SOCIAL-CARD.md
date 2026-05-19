@@ -137,23 +137,42 @@ Tasks for `apply-brand` to consider during the Task 9 sweep:
 3. Sync title/description/image meta values from `brand.json` so a
    rebrand re-flows automatically.
 
-## Per-page variant strategy (deferred, future)
+## Per-page variant strategy
 
-The default social card is sufficient for ~95% of share contexts (the
-homepage, the GitHub README, the marketing site root). For
-deeper-page sharing — feature pages, blog posts, individual job pages
-(when they become shareable, if ever) — a per-page variant pattern is
-worth thinking about but not in scope here:
+Per-page OG card variants ship as committed static PNGs under
+`ui/static/og/{slug}.png`. The single shared card is still served at
+`ui/static/social-card.png` (the homepage default); per-page Svelte
+routes override via their `<svelte:head>` block:
 
-- A `/og/[slug].png` SvelteKit endpoint that renders the same HTML
-  template with substituted title/subtitle text per page
-- Vercel OG (`@vercel/og`) is the canonical implementation pattern
-- Satori (Vercel's React-to-SVG renderer) is the underlying engine
-- Cached at the edge for performance
+```svelte
+<svelte:head>
+  <meta property="og:image" content="/og/autopilot.png" />
+  <meta property="og:title" content="Apply on autopilot." />
+  <meta property="og:description" content="Score-gated, opt-in, off by default." />
+</svelte:head>
+```
 
-We don't build this now. The single shared card covers the
-shipping-Heron case. When a blog launches, the per-page variant pattern
-gets its own task.
+### Authoring a new variant
+
+1. Add an entry to `branding/og-variants.json` with `slug`, `title`,
+   `subtitle`.
+2. Run `pnpm og:generate` — Playwright renders
+   `branding/assets/social-card.html` at 1200×630 (DPR 2 = 2400×1260
+   retina) with the title + subtitle substituted into the
+   `<h1 class="tagline">` and `<p class="subline">` slots.
+3. Commit the PNG under `ui/static/og/{slug}.png` + the regenerated
+   `ui/src/lib/data/og-map.json`.
+
+The generator skips up-to-date outputs by mtime; force a full rebuild
+with `pnpm og:generate:force` after editing the HTML template.
+
+### Why static (not a SvelteKit endpoint)
+
+Vercel OG / Satori at request time work great when the host already
+runs Node. Heron ships as a local-first Capacitor app; a per-request
+Playwright spawn would be ~2s of latency for a card that never
+changes between deploys. Static generation keeps the canonical-render
+path identical between dev + prod + Capacitor.
 
 ## Forbidden modifications
 

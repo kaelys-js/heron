@@ -113,28 +113,37 @@ function pickNextInterview(profileId: string, jobs: Job[]): WidgetInterview | nu
   };
 }
 
-/** Highest-scoring job in Queued / Scored state. Used by the
- *  TopApplyWidget single-candidate variants. */
-function pickTopApply(jobs: Job[]): WidgetTopApply | null {
-  let best: Job | null = null;
-  let bestScore = -1;
-  for (const j of jobs) {
-    if (j.status !== 'Queued' && j.status !== 'Scored') continue;
-    const score = j.score ?? j.geminiScore ?? 0;
-    if (score > bestScore) {
-      best = j;
-      bestScore = score;
-    }
-  }
-  if (!best) return null;
+function jobToWidgetTopApply(j: Job): WidgetTopApply {
   return {
-    jobId: best.id,
-    company: best.company || 'Unknown',
-    role: best.role || 'Unknown role',
-    score: best.score ?? best.geminiScore ?? 0,
-    compBand: best.salary || undefined,
-    location: best.location || undefined,
-    portal: best.source || undefined,
+    jobId: j.id,
+    company: j.company || 'Unknown',
+    role: j.role || 'Unknown role',
+    score: j.score ?? j.geminiScore ?? 0,
+    compBand: j.salary || undefined,
+    location: j.location || undefined,
+    portal: j.source || undefined,
+  };
+}
+
+/** Highest-scoring job in Queued / Scored state + 2 runner-ups.
+ *  Used by the TopApplyWidget — small/medium show only `topApply`,
+ *  systemLarge / accessory variants on the Lock Screen render the
+ *  runner-ups too. Snapshot.runnerUps may be undefined when fewer
+ *  than two qualifying jobs exist. */
+function pickTopApply(jobs: Job[]): {
+  topApply: WidgetTopApply | null;
+  runnerUps: WidgetTopApply[];
+} {
+  const candidates = jobs.filter((j) => j.status === 'Queued' || j.status === 'Scored');
+  candidates.sort((a, b) => {
+    const sa = a.score ?? a.geminiScore ?? 0;
+    const sb = b.score ?? b.geminiScore ?? 0;
+    return sb - sa;
+  });
+  if (candidates.length === 0) return { topApply: null, runnerUps: [] };
+  return {
+    topApply: jobToWidgetTopApply(candidates[0]),
+    runnerUps: candidates.slice(1, 3).map(jobToWidgetTopApply),
   };
 }
 
@@ -189,7 +198,7 @@ export const GET = wrap('widgets-snapshot', async () => {
 
   const stats: WidgetStats = { queued, appliedToday, upcomingInterviews };
   const nextInterview = pickNextInterview(profileId, jobs);
-  const topApply = pickTopApply(jobs);
+  const { topApply, runnerUps } = pickTopApply(jobs);
   // Cap to 8 — widgets only ever show 5 (large InboxIssuesWidget) but
   // keep a small buffer so the next refresh has something to dedupe.
   const openIssues = listOpenIssues().slice(0, 8).map(toWidgetIssue);
@@ -200,6 +209,7 @@ export const GET = wrap('widgets-snapshot', async () => {
     stats,
     nextInterview,
     topApply,
+    topApplyRunnerUps: runnerUps,
     openIssues,
   };
 });

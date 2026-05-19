@@ -39,6 +39,10 @@ type NativePlugin = {
   setSharedBearerToken(opts: { token: string }): Promise<{ ok: boolean }>;
   clearSharedBearerToken(): Promise<{ ok: boolean }>;
   setSharedBackendUrl(opts: { url: string }): Promise<{ ok: boolean }>;
+  setSharedTailscaleUrl(opts: { url: string }): Promise<{ ok: boolean }>;
+  setSharedProductionUrl(opts: { url: string }): Promise<{ ok: boolean }>;
+  getSharedTailscaleUrl(): Promise<{ url: string }>;
+  getSharedProductionUrl(): Promise<{ url: string }>;
   setSharedQuietHours(opts: { json: string }): Promise<{ ok: boolean }>;
   clearAllSharedState(): Promise<{ ok: boolean }>;
 };
@@ -84,6 +88,18 @@ export type WidgetUpdate = {
     location?: string;
     portal?: string;
   } | null;
+  /** F5 — up to 2 runner-ups for the systemLarge widget variant. The
+   *  small/medium families ignore this; only renders under the top
+   *  candidate in large. Pass [] or omit to clear. */
+  topApplyRunnerUps?: Array<{
+    jobId: string;
+    company: string;
+    role: string;
+    score: number;
+    compBand?: string;
+    location?: string;
+    portal?: string;
+  }>;
   /** Latest open issues (already filtered to the acting user). */
   openIssues?: Array<{
     id: string;
@@ -318,6 +334,83 @@ export async function setSharedBackendUrl(url: string | null): Promise<boolean> 
   } catch {
     return false;
   }
+}
+
+/**
+ * Persist the user-entered Tailscale URL.
+ *
+ * On iOS (Capacitor) → App Group UserDefaults under
+ *   `<brand>:tailscale-url`. backend-discovery reads it back via
+ *   getSharedTailscaleUrl() so cellular sessions can try Tailscale
+ *   as a fallback after LAN fails.
+ * On web/desktop → localStorage under the same key namespace so the
+ *   web build (where Tailscale isn't typically reachable but the user
+ *   may still configure one for forwarding) honours the value too.
+ */
+const TAILSCALE_URL_KEY = `${BRAND_STORAGE_PREFIX}:tailscale-url`;
+const PRODUCTION_URL_KEY = `${BRAND_STORAGE_PREFIX}:production-url`;
+
+export async function setSharedTailscaleUrl(url: string | null): Promise<boolean> {
+  const value = url ?? '';
+  if (typeof localStorage !== 'undefined') {
+    if (value) localStorage.setItem(TAILSCALE_URL_KEY, value);
+    else localStorage.removeItem(TAILSCALE_URL_KEY);
+  }
+  if (!isIos()) return true;
+  try {
+    const res = await native.setSharedTailscaleUrl({ url: value });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function setSharedProductionUrl(url: string | null): Promise<boolean> {
+  const value = url ?? '';
+  if (typeof localStorage !== 'undefined') {
+    if (value) localStorage.setItem(PRODUCTION_URL_KEY, value);
+    else localStorage.removeItem(PRODUCTION_URL_KEY);
+  }
+  if (!isIos()) return true;
+  try {
+    const res = await native.setSharedProductionUrl({ url: value });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Read the persisted Tailscale URL. Returns null when unset. iOS
+ *  reads from App Group UserDefaults (the native source of truth);
+ *  other platforms fall back to localStorage. */
+export async function getSharedTailscaleUrl(): Promise<string | null> {
+  if (isIos()) {
+    try {
+      const res = await native.getSharedTailscaleUrl();
+      return res.url || null;
+    } catch {
+      return null;
+    }
+  }
+  if (typeof localStorage !== 'undefined') {
+    return localStorage.getItem(TAILSCALE_URL_KEY);
+  }
+  return null;
+}
+
+export async function getSharedProductionUrl(): Promise<string | null> {
+  if (isIos()) {
+    try {
+      const res = await native.getSharedProductionUrl();
+      return res.url || null;
+    } catch {
+      return null;
+    }
+  }
+  if (typeof localStorage !== 'undefined') {
+    return localStorage.getItem(PRODUCTION_URL_KEY);
+  }
+  return null;
 }
 
 /**

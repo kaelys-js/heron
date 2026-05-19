@@ -57,6 +57,15 @@ pre-commit:
           ui/ios/App/fastlane/Fastfile \
           scripts/native/add-xcode-targets.rb 2>/dev/null || true
 
+    verify-fonts:
+      # Closes TYPOGRAPHY.md Task 9 item 5 — guard against accidental /
+      # malicious woff2 swaps. Fires only when a font binary or the
+      # checksum lockfile is staged; otherwise no-op. Run
+      # `pnpm fonts:lock` after a deliberate font upgrade.
+      glob: "ui/static/fonts/*"
+      run: node scripts/system/verify-fonts.mjs
+      fail_text: "woff2 drift — see verify-fonts output. Run `pnpm fonts:lock` after a deliberate font swap."
+
     biome-format:
       # Formats non-svelte staged source files via Biome (fast Rust formatter).
       # Linting is intentionally NOT run — svelte-check covers type-level issues.

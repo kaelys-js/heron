@@ -243,13 +243,16 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
   }
   // Resolve per-user credentials and inject into the child's env. This
   // is the bridge that makes the per-user secrets store transparent to
-  // every spawned script — even Python ones that read straight from
+  // every spawned script — even legacy ones that read straight from
   // `os.environ.get('GEMINI_API_KEY')`. The child sees the resolved
   // value (per-user store wins, .env fallback otherwise); it doesn't
-  // need to know the value came from an encrypted file. When the
-  // Python helper twin lands (queued in TODO2.md), scripts will be able
-  // to read directly via lib/user_secrets.py and this injection
-  // becomes redundant — but keep it for back-compat.
+  // need to know the value came from an encrypted file.
+  //
+  // scripts/lib/user_secrets.py + scripts/lib/user-secrets.mjs DO read
+  // the encrypted store directly today, so this injection is technically
+  // redundant for those. Keep it: a) defence-in-depth (one fewer
+  // failure mode if the helper import errors), b) any new CLI script
+  // that hasn't yet imported the helper still works correctly.
   const resolveAs = ctxUserId ?? SYSTEM_USER_ID;
   for (const key of MIGRATABLE_KEYS) {
     const v = getCredential(resolveAs, key);

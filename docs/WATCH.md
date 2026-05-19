@@ -106,7 +106,12 @@ drill in" experience; widgets are the "glance" experience.
 * No background refresh on watch when the phone is asleep. The watch
   falls back to its last App Group snapshot. Re-opens the moment the
   phone wakes.
-* No `WidgetURL` deep linking from a watch widget to the dashboard
-  yet — the watch tap brings the watch app to the foreground; the
-  dashboard would need Handoff (`NSUserActivity` from the watch).
-  Stubbed in `RootView.NextInterviewPage` for a future PR.
+* `WidgetURL` from a watch widget can't open the iPhone dashboard
+  directly — watchOS only knows how to open the watch app. The
+  workaround landed: when the user taps a job on the Watch and the
+  paired iPhone is on the same Apple ID, an `NSUserActivity` published
+  by the SwiftUI view (`RootView.NextInterviewPage` and friends) appears
+  in iPhone Continuity — swipe up on the lock screen lands on
+  `interview-prep/{jobId}` in the dashboard. Routed through
+  `AppDelegate.application(_:continue:restorationHandler:)` which gates
+  on the `Brand.handoffActivityType` prefix.

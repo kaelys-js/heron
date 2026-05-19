@@ -27,6 +27,10 @@ struct TopApplyCandidate: Codable {
 struct TopApplyEntry: TimelineEntry {
     let date: Date
     let candidate: TopApplyCandidate?
+    /// F5 — up to 2 runner-ups surfaced below the top candidate in the
+    /// systemLarge widget variant. Empty array when fewer than two
+    /// qualifying jobs exist; small/medium families ignore this.
+    let runnerUps: [TopApplyCandidate]
     /// Auth gate — see WidgetAuthGate.swift for the full contract.
     let authenticated: Bool
 }
@@ -46,13 +50,34 @@ struct TopApplyProvider: TimelineProvider {
             location: "Remote · US",
             portal: "Greenhouse"
         )
-        return TopApplyEntry(date: Date(), candidate: preview, authenticated: true)
+        let runnerUpPreview = [
+            TopApplyCandidate(
+                jobId: "preview-2",
+                company: "OpenAI",
+                role: "Applied ML Engineer",
+                score: 4.4,
+                compBand: "$220k–$300k",
+                location: "SF · Hybrid",
+                portal: "Ashby"
+            ),
+            TopApplyCandidate(
+                jobId: "preview-3",
+                company: "Mistral",
+                role: "Research Eng — Reasoning",
+                score: 4.2,
+                compBand: "€180k–€240k",
+                location: "Paris · On-site",
+                portal: "Greenhouse"
+            ),
+        ]
+        return TopApplyEntry(date: Date(), candidate: preview, runnerUps: runnerUpPreview, authenticated: true)
     }
 
     func getSnapshot(in _: Context, completion: @escaping (TopApplyEntry) -> Void) {
         completion(TopApplyEntry(
             date: Date(),
             candidate: read(),
+            runnerUps: readRunnerUps(),
             authenticated: WidgetAuth.isAuthenticated()
         ))
     }
@@ -61,6 +86,7 @@ struct TopApplyProvider: TimelineProvider {
         let entry = TopApplyEntry(
             date: Date(),
             candidate: read(),
+            runnerUps: readRunnerUps(),
             authenticated: WidgetAuth.isAuthenticated()
         )
         // 15min refresh — fast enough to feel current, slow enough to
@@ -73,6 +99,15 @@ struct TopApplyProvider: TimelineProvider {
         guard let defaults = UserDefaults(suiteName: Brand.appGroup),
               let data = defaults.data(forKey: "topApply:next") else { return nil }
         return try? JSONDecoder().decode(TopApplyCandidate.self, from: data)
+    }
+
+    /// F5 — read the runner-ups array the dashboard writes via
+    /// NativePlugin.pushWidgetSnapshot. Returns [] when the key isn't
+    /// present (fresh install, single candidate available, etc.).
+    private func readRunnerUps() -> [TopApplyCandidate] {
+        guard let defaults = UserDefaults(suiteName: Brand.appGroup),
+              let data = defaults.data(forKey: "topApply:runnerUps") else { return [] }
+        return (try? JSONDecoder().decode([TopApplyCandidate].self, from: data)) ?? []
     }
 }
 
@@ -153,12 +188,15 @@ struct TopApplyWidgetView: View {
             .widgetURL(URL(string: Brand.jobDeepLink(c.jobId)))
 
         case .systemLarge:
-            // Large variant — surfaces the SINGLE top candidate at the top
-            // with full details, then a list of up-to-2 runner-ups below
-            // (read from App Group "topApply:runnerUps" key if present —
-            // a future enhancement; for now we just show the top candidate
-            // in a roomier layout with full comp + portal + Apply CTA).
-            VStack(alignment: .leading, spacing: 10) {
+            // Large variant — top candidate in full detail, then up to
+            // two runner-ups beneath it. The dashboard's
+            // /api/widgets/snapshot endpoint computes top + runner-ups
+            // together (NativePlugin.pushWidgetSnapshot writes
+            // "topApply:next" + "topApply:runnerUps" to App Group).
+            // Runner-ups are tap-targets too — each row carries a Link
+            // wrapping its own deep link so the widget can dispatch to
+            // multiple URLs (widgetURL alone is single-target).
+            VStack(alignment: .leading, spacing: 8) {
                 WidgetHeader(icon: "star.fill", label: "Top to Apply") {
                     if let portal = c.portal {
                         Text(portal.capitalized)
@@ -174,33 +212,30 @@ struct TopApplyWidgetView: View {
                     Spacer()
                     ScoreBadge(score: c.score, size: .large)
                 }
-                Divider()
                 VStack(alignment: .leading, spacing: 4) {
                     if let band = c.compBand {
                         HStack(spacing: 6) {
                             Image(systemName: "dollarsign.circle.fill")
                                 .foregroundStyle(.tint)
-                            Text(band).font(.subheadline.bold())
+                            Text(band).font(.caption.bold())
                         }
                     }
                     if let loc = c.location {
                         HStack(spacing: 6) {
                             Image(systemName: "mappin.and.ellipse")
                                 .foregroundStyle(.secondary)
-                            Text(loc).font(.caption).foregroundStyle(.secondary)
+                            Text(loc).font(.caption2).foregroundStyle(.secondary)
                         }
                     }
                 }
-                Spacer(minLength: 0)
-                HStack {
-                    Spacer()
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.up.right.circle.fill")
-                            .font(.subheadline)
-                        Text("Tap to apply").font(.caption.bold())
+                if !entry.runnerUps.isEmpty {
+                    Divider()
+                    Text("Also worth a look").font(.caption2).foregroundStyle(.tertiary)
+                    ForEach(entry.runnerUps.prefix(2), id: \.jobId) { runner in
+                        RunnerUpRow(candidate: runner)
                     }
-                    .foregroundStyle(.tint)
                 }
+                Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .padding()
@@ -241,19 +276,67 @@ struct TopApplyWidgetView: View {
     }
 }
 
+/// F5 — single row in the systemLarge runner-ups list. Extracted into
+/// its own View so the `content(_:)` builder stays under SwiftLint's
+/// 100-line function-body cap.
+private struct RunnerUpRow: View {
+    let candidate: TopApplyCandidate
+
+    var body: some View {
+        Link(destination: URL(string: Brand.jobDeepLink(candidate.jobId))!) {
+            HStack(spacing: 8) {
+                ScoreBadge(score: candidate.score, size: .small)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(candidate.company).font(.caption.bold()).lineLimit(1)
+                    Text(candidate.role).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                }
+                Spacer()
+                if let band = candidate.compBand {
+                    Text(band).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 struct ScoreBadge: View {
     let score: Double
-    enum Size { case standard, large }
+    enum Size { case small, standard, large }
     var size: Size = .standard
 
     var body: some View {
         Text(String(format: "%.1f", score))
-            .font(size == .large ? .title.bold() : .caption.bold())
+            .font(badgeFont)
             .foregroundStyle(color)
-            .padding(.horizontal, size == .large ? 8 : 4)
-            .padding(.vertical, size == .large ? 4 : 2)
+            .padding(.horizontal, badgePaddingH)
+            .padding(.vertical, badgePaddingV)
             .background(color.opacity(0.15))
             .clipShape(Capsule())
+    }
+
+    private var badgeFont: Font {
+        switch size {
+        case .small: return .caption2.bold()
+        case .standard: return .caption.bold()
+        case .large: return .title.bold()
+        }
+    }
+
+    private var badgePaddingH: CGFloat {
+        switch size {
+        case .small: return 3
+        case .standard: return 4
+        case .large: return 8
+        }
+    }
+
+    private var badgePaddingV: CGFloat {
+        switch size {
+        case .small: return 1
+        case .standard: return 2
+        case .large: return 4
+        }
     }
 
     private var color: Color {

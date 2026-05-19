@@ -136,20 +136,24 @@ Implementation: the CV template uses Inter only —
 woff2 files live at templates/fonts/inter-{latin,latin-ext}.woff2,
 and update `templates/cv-template.html` font-family declarations.
 
-## Implementation notes (deferred to Task 9 — apply-brand wiring)
+## Implementation notes (all wired)
 
-1. Download self-hosted woff2 files:
-   - `ui/static/fonts/fraunces-variable.woff2` (~80 KB)
-   - `ui/static/fonts/inter-variable.woff2` (~140 KB)
-   - `ui/static/fonts/ibm-plex-mono-regular.woff2` + `-medium.woff2` (~40 KB)
-   - `templates/fonts/inter-variable.woff2` (parallel copy for CV)
-2. Update `ui/src/app.css` (or wherever `@font-face` lives) with the new
-   font declarations + CSS variables. Set
-   `font-optical-sizing: auto` globally for variable-fonts behaviour.
-3. cv-template.html -face declarations + body / heading font-family
-   and use Inter throughout. Remove the now-orphaned woff2 files from
-   `templates/fonts/`.
-4. Sweep `ui/src/lib/components/**` and any Tailwind config for
-   hardcoded `font-family` references. Migrate to the CSS variables.
-5. Pre-commit verifier: ensure self-hosted woff2 SHA256 matches the
-   upstream Google Fonts release.
+1. **Self-hosted woff2 files** — present under `ui/static/fonts/`:
+   `fraunces-{latin,latin-ext}.woff2`, `inter-{latin,latin-ext}.woff2`,
+   `ibm-plex-mono-{400,500}-{latin,latin-ext}.woff2`. The CV ships
+   Inter-only under `templates/fonts/inter-{latin,latin-ext}.woff2`.
+2. **`@font-face` declarations** are emitted into the AUTO-GENERATED
+   block of `ui/src/app.css` by `scripts/native/apply-brand.mjs`
+   (function `appCssFontFaces`). One source: `brand.json::fonts`.
+3. **CV template** (`templates/cv-template.html`) uses Inter
+   throughout — ATS-safe, matches `brand.json::fonts.body`.
+4. **Components** read the cascade defaults set in `app.css`
+   (`body { font-family: var(--font-body); }`); no hardcoded
+   `font-family` declarations outside the AUTO-GENERATED block.
+5. **Pre-commit + CI verifier** —
+   `scripts/system/verify-fonts.mjs` recomputes SHA256 of every
+   `ui/static/fonts/*.woff2` and compares against
+   `ui/static/fonts/CHECKSUMS.json`. Runs via lefthook's
+   `verify-fonts` hook on every commit that touches a woff2.
+   Regenerate the lockfile after a deliberate font swap with
+   `pnpm fonts:lock`.

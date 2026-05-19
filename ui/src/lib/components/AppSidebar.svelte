@@ -21,6 +21,7 @@
     Wrench,
     Settings as SettingsIcon,
     KeyRound,
+    Network,
     ChevronsUpDown,
     Search,
     Plus,
@@ -553,6 +554,16 @@
                   <a href="/settings/api-keys" {...props}>
                     <KeyRound class="size-4" />
                     <span>API Keys</span>
+                  </a>
+                {/snippet}
+              </Sidebar.MenuButton>
+            </Sidebar.MenuItem>
+            <Sidebar.MenuItem>
+              <Sidebar.MenuButton isActive={isActive('/settings/backend')}>
+                {#snippet child({ props })}
+                  <a href="/settings/backend" {...props}>
+                    <Network class="size-4" />
+                    <span>Backend</span>
                   </a>
                 {/snippet}
               </Sidebar.MenuButton>

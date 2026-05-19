@@ -215,6 +215,22 @@ private struct NextInterviewPage: View {
                         Label("Open prep on iPhone", systemImage: "iphone.and.arrow.forward")
                     }
                     .tint(.orange)
+                    .userActivity(
+                        Brand.handoffActivityType("interview-prep"),
+                        isActive: true
+                    ) { activity in
+                        // F4 — Handoff. Publish an NSUserActivity that
+                        // iPhone (paired, same Apple ID) picks up from the
+                        // continuity hint. User swipes up on iPhone lock
+                        // screen → routes straight to interview-prep for
+                        // THIS job.
+                        activity.title = "Prep: \(i.company)"
+                        activity.userInfo = ["jobId": i.jobId, "kind": "interview-prep"]
+                        activity.webpageURL = URL(string: Brand.deepLink("interview-prep/\(i.jobId)"))
+                        activity.isEligibleForHandoff = true
+                        activity.isEligibleForPrediction = true
+                        activity.isEligibleForSearch = false
+                    }
                 } else {
                     VStack(spacing: 6) {
                         Image(systemName: "calendar.badge.clock")

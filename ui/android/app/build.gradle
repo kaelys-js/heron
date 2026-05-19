@@ -74,6 +74,27 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
+    // F1 — BiometricPrompt for the Android parity of iOS Face ID. The
+    // `androidx.biometric` artifact bundles the Compose-friendly API
+    // (FragmentActivity-rooted prompt) and the older AppCompatActivity
+    // path; we use the latter since MainActivity extends BridgeActivity.
+    implementation "androidx.biometric:biometric:1.2.0-alpha05"
+    // F2 — EncryptedSharedPreferences for the Android parity of iOS
+    // Keychain. androidx.security wraps a SharedPreferences impl with
+    // AES-GCM under a master key managed by the Android Keystore so
+    // values survive backups + uninstall correctly.
+    implementation "androidx.security:security-crypto:1.1.0-alpha06"
+    // F3 — Jetpack AppSearch (Android parity of iOS CoreSpotlight).
+    // Local on-device index that the OS can surface in the global
+    // search bar + the home-screen `Universal Search` widget.
+    implementation "androidx.appsearch:appsearch:1.1.0-alpha05"
+    implementation "androidx.appsearch:appsearch-local-storage:1.1.0-alpha05"
+    implementation "androidx.appsearch:appsearch-platform-storage:1.1.0-alpha05"
+    // Kotlin coroutines — biometric + appsearch both expose suspend
+    // APIs; we surface them as Capacitor PluginCall.resolve callbacks
+    // so the existing JS surface stays unchanged.
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+    implementation "androidx.concurrent:concurrent-futures-ktx:1.1.0"
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"

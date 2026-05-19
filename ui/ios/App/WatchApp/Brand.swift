@@ -41,4 +41,14 @@ enum Brand {
     static func jobDeepLink(_ jobId: String) -> String {
         return "\(urlScheme)://job/\(jobId)"
     }
+
+    /// NSUserActivity type for Handoff between Watch / Widget /
+    /// Live Activity → iPhone. Pattern: "<bundleId>.handoff.<kind>".
+    /// E.g. handoffActivityType("interview-prep") →
+    /// "com.heron.app.handoff.interview-prep". iPhone's AppDelegate
+    /// gates incoming activities on the bundleId prefix so any rogue
+    /// app can't push us into a foreign view.
+    static func handoffActivityType(_ kind: String) -> String {
+        return "\(bundleId).handoff.\(kind)"
+    }
 }
