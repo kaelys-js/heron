@@ -112,3 +112,64 @@ macOS/Windows/Linux.
 
 A standalone Go TUI lived in `dashboard/` historically — it was removed once
 the SvelteKit UI reached feature parity (see commit history).
+
+## Backend discovery
+
+The dashboard is a single SvelteKit app. The native apps are the same SvelteKit codebase wrapped in Capacitor (iOS / Android) or Electron (desktop). Backend discovery is hands-off — your phone, watch, and laptop reconcile to whichever Heron instance is reachable without configuration.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant App as Native app
+    participant Embedded as Embedded server
+    participant LAN as LAN (mDNS)
+    participant Tail as Tailscale
+    participant Remote as Configured URL
+    App->>Embedded: 1. Probe embedded (Electron child process)
+    alt embedded reachable
+        Embedded-->>App: ok, use this
+    else
+        App->>App: 2. Probe http://localhost:5173 (pnpm dev)
+        App->>LAN: 3. mDNS browse _heron._tcp
+        App->>Tail: 4. Tailscale magic-DNS
+        App->>Remote: 5. Configured fallback URL
+    end
+```
+
+## Tech stack
+
+| Layer | Tech |
+|---|---|
+| Dashboard UI | SvelteKit 2 + Tailwind 4 + bits-ui + Svelte 5 runes |
+| Auth | Better Auth 1.6 + passkey + GitHub OAuth + invite codes (RBAC) |
+| DB | Drizzle ORM + better-sqlite3 (WAL mode); `auth.db` + `app.db` |
+| AI | Anthropic SDK + Google Gemini SDK + any CLI via `AGENT_CLI` |
+| Portal scrape | Playwright 1.60 + direct ATS APIs (zero AI tokens on scan) |
+| Desktop | Electron 39 + electron-builder + auto-update (Squirrel/Mac, Squirrel.Win, AppImage) |
+| Mobile | Capacitor 8 (iOS + Android) + Swift Package Manager |
+| Watch | WKApplication + WCSession + WidgetBundle |
+| iOS widgets | 4 widgets (pipeline / next interview / top apply / inbox issues) |
+| Build | mise + pnpm workspace + turborepo + biome + lefthook |
+| CI | GitHub Actions on `macos-15`, `ubuntu-latest`, `windows-latest`; `act` for local |
+| Release | Conventional Commits → release-please → native-release.yml → TestFlight + GitHub Release |
+
+## Repository layout
+
+```text
+heron/
+├── README.md                    # User-facing entry point
+├── CHANGELOG.md                 # Release-Please-managed
+├── AGENTS.md / CLAUDE.md / GEMINI.md  # Agent + human entry points
+├── ui/                          # SvelteKit dashboard + Capacitor iOS/Android/Electron
+│   ├── src/                     # routes/, lib/server/, lib/client/, lib/components/, hooks.server.ts
+│   ├── e2e/                     # Playwright end-to-end smoke tests
+│   ├── ios/                     # Capacitor iOS app + Watch + 3 extensions
+│   ├── android/                 # Capacitor Android app
+│   └── electron/                # Capacitor-Electron shell (workspace)
+├── scripts/                     # apply, scan, cv, quality, tracker, native, system, lib
+├── modes/                       # AI skill modes (oferta, apply, scan, batch, …)
+├── docs/                        # ARCHITECTURE, SETUP, TESTING, NATIVE, DATA_CONTRACT, GOVERNANCE, …
+├── branding/                    # brand.json (SSOT) + logo.svg + wordmark variants
+├── data/                        # Per-user runtime state (gitignored)
+└── .github/                     # Workflows, issue/PR templates, CODEOWNERS, rulesets
+```
