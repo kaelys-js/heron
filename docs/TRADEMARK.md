@@ -5,7 +5,7 @@
 <!-- /AUTO-GENERATED:doc-meta -->
 
 This document explains how the "heron" name and brand may be used.
-It complements — not replaces — the MIT [LICENSE](LICENSE) that governs
+It complements — not replaces — the MIT [LICENSE](../LICENSE) that governs
 the source code.
 
 ## TL;DR
@@ -103,7 +103,7 @@ and the [GitLab Trademark Guidelines](https://about.gitlab.com/handbook/marketin
 ## Updates
 
 This policy may be updated as the project evolves. Material changes
-will be announced in [CHANGELOG.md](CHANGELOG.md).
+will be announced in [CHANGELOG.md](../CHANGELOG.md).
 
 ---
 

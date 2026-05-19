@@ -157,5 +157,5 @@ If you're writing a new utility script that needs per-profile paths:
 
 heron tracks **two** status values per job, not one — the dashboard's
 pipeline stage and the applications.md canonical state. They're orthogonal,
-not equivalent. See [`docs/STATUS_MODEL.md`](docs/STATUS_MODEL.md) for the
+not equivalent. See [`STATUS_MODEL.md`](./STATUS_MODEL.md) for the
 full mapping table and the reason both exist.

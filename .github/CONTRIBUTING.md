@@ -24,7 +24,7 @@ PRs without a corresponding issue may be closed if they don't align with the pro
 2. Fork the repo
 3. Create a branch (`git checkout -b feature/my-feature`)
 4. Make your changes
-5. Test with a fresh clone (see [docs/SETUP.md](docs/SETUP.md))
+5. Test with a fresh clone (see [docs/SETUP.md](../docs/SETUP.md))
 6. Commit and push
 7. Open a Pull Request referencing the issue
 
