@@ -30,6 +30,8 @@
     "lint:fix": "oxlint --fix --config ../.oxlintrc.jsonc .",
     "prepare": "svelte-kit sync || echo ''",
     "preview": "vite preview",
+    "size": "size-limit",
+    "size:why": "size-limit --why",
     "test": "vitest --config vitest.workspace.ts run --passWithNoTests",
     "test:coverage": "vitest --config vitest.workspace.ts run --coverage --passWithNoTests",
     "test:ui": "vitest --config vitest.workspace.ts --ui",
@@ -81,6 +83,8 @@
     "@capacitor/share": "catalog:",
     "@capacitor/splash-screen": "catalog:",
     "@capacitor/status-bar": "catalog:",
+    "@size-limit/file": "catalog:",
+    "@size-limit/preset-app": "catalog:",
     "@sveltejs/adapter-node": "catalog:",
     "@sveltejs/adapter-static": "catalog:",
     "@sveltejs/kit": "catalog:",
@@ -108,6 +112,7 @@
     "prettier": "catalog:",
     "prettier-plugin-svelte": "catalog:",
     "sharp": "catalog:",
+    "size-limit": "catalog:",
     "svelte": "catalog:",
     "svelte-check": "catalog:",
     "tailwindcss": "catalog:",
@@ -119,5 +124,25 @@
   "engines": {
     "node": "26.1.0",
     "pnpm": "11.1.0"
-  }
+  },
+  "size-limit": [
+    {
+      "name": "SvelteKit entry chunk (start.js)",
+      "path": "build/client/_app/immutable/entry/start-*.js",
+      "limit": "80 KB",
+      "gzip": true
+    },
+    {
+      "name": "SvelteKit app chunk (app.js)",
+      "path": "build/client/_app/immutable/entry/app-*.js",
+      "limit": "30 KB",
+      "gzip": true
+    },
+    {
+      "name": "Total client bundle (gz)",
+      "path": "build/client/_app/immutable/**/*.js",
+      "limit": "700 KB",
+      "gzip": true
+    }
+  ]
 }

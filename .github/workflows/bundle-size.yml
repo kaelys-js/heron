@@ -1,0 +1,67 @@
+name: Bundle size
+# HP1 — track client-bundle size on every PR and post a sticky comment
+# with the delta vs main. The `andresz1/size-limit-action` runs
+# `pnpm size` in both base + PR commits and produces a comparison
+# table:
+#
+#   ┌──────────────────────────────┬──────────┬─────────────┐
+#   │ Bundle                       │ Size     │ Diff vs main│
+#   ├──────────────────────────────┼──────────┼─────────────┤
+#   │ SvelteKit entry chunk        │ 62.3 KB  │ +1.2 KB     │
+#   │ Total client bundle (gz)     │ 542.1 KB │ +18.4 KB    │
+#   └──────────────────────────────┴──────────┴─────────────┘
+#
+# Budgets are configured in `ui/package.json` under `"size-limit"`.
+# Exceeding a per-bundle limit FAILS the workflow → PR can't merge
+# until the budget is bumped (explicitly) or the regression is
+# investigated.
+on:
+  pull_request:
+    paths:
+      - "ui/src/**"
+      - "ui/static/**"
+      - "ui/package.json"
+      - "ui/vite.config.ts"
+      - "pnpm-lock.yaml"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: bundle-size-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  size:
+    name: Compare bundle size
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          # size-limit-action checks out main internally; we just need
+          # the PR head.
+          persist-credentials: false
+
+      - name: Setup mise (Node + pnpm)
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+
+      - name: size-limit
+        uses: andresz1/size-limit-action@94bc357df29c36c8f8d50ea497c3e225c3c95d1d # v1.8.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Build before measuring. Apply brand first so generated TS
+          # imports resolve.
+          build_script: "brand && build"
+          script: "size"
+          package_manager: pnpm
+          directory: ui
+          skip_step: install # mise-action already installed pnpm + ran install

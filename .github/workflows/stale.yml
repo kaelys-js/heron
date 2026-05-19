@@ -35,5 +35,10 @@ jobs:
           days-before-pr-close: 14
           stale-issue-label: 'stale'
           stale-pr-label: 'stale'
-          exempt-issue-labels: 'pinned,security,roadmap'
+          # HP24 — `hired` exempts the "I got hired" success stories
+          # (issue template `i-got-hired.yml`) from auto-close. Those
+          # stories are the social-proof Hall of Fame; auto-closing them
+          # at 60+14 days would silently delete the best signal we have
+          # that Heron works.
+          exempt-issue-labels: 'pinned,security,roadmap,hired'
           exempt-pr-labels: 'pinned,security'
