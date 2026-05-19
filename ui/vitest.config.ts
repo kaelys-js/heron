@@ -20,10 +20,24 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vitest/config';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { tmpdir } from 'node:os';
+import { mkdirSync } from 'node:fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Pre-create the temp dir so the --localstorage-file flag (passed to
+// every test worker below) resolves to a writable path. Without this
+// path, Node 22+ emits "Warning: --localstorage-file was provided
+// without a valid path" on every worker startup — once per test file,
+// surfacing as the kind of stderr noise that hides real failures.
+// /tmp doesn't survive reboot; that's fine — each test run wants a
+// fresh blank backing anyway, and our test-setup.ts polyfill replaces
+// localStorage with an in-memory Map before any test runs (the file
+// just satisfies Node's flag validation).
+const __localStoragePath = join(tmpdir(), 'heron-test-localstorage');
+mkdirSync(dirname(__localStoragePath), { recursive: true });
 
 export default defineConfig({
   // NOTE: We deliberately do NOT include the `brandWatcherPlugin` from
@@ -48,6 +62,62 @@ export default defineConfig({
     // `$state` stores can't leak between files. Per-test resets are
     // still required for in-file isolation (see test-helpers/state-helpers).
     isolate: true,
+    // Pass extra flags to every worker process. Two reasons:
+    //   --localstorage-file=<path>: Node 22+ emits a warning if anything
+    //     accesses globalThis.localStorage without a valid backing path,
+    //     even when jsdom + our test-setup polyfill the storage object.
+    //     Pointing at a real tmpdir path silences the warning at the
+    //     ROOT (Node never warns) rather than masking it with a filter.
+    //   --disable-warning=ExperimentalWarning: webstorage is still
+    //     experimental in Node 25/26 even though it works. The warning
+    //     is documentation, not actionable; suppress per-warning rather
+    //     than --no-warnings (which would also mask real DeprecationWarning).
+    poolOptions: {
+      forks: {
+        execArgv: [
+          `--localstorage-file=${__localStoragePath}`,
+          '--disable-warning=ExperimentalWarning',
+          // DEP0205: tsx + vitest + vite all still call module.register()
+          // instead of module.registerHooks() (introduced Node 22.15).
+          // Tracked upstream — until the chain migrates we'd see a
+          // DeprecationWarning per worker spawn. Suppressed by code,
+          // not by class, so a future genuine deprecation we DO own
+          // still surfaces. TODO: drop once tsx ≥ 5 / vitest ≥ 5 ship
+          // the registerHooks migration.
+          '--disable-warning=DEP0205',
+          // Turn every OTHER DeprecationWarning into a thrown error.
+          // This is the "warnings should fail" contract — if a new Node
+          // deprecation lands in our test surface, the test crashes
+          // immediately instead of silently accumulating debt. Pairs
+          // with the targeted --disable-warning=DEP0205 above: known
+          // third-party debt is silenced (with a TODO), everything
+          // else is hard-fail.
+          '--throw-deprecation',
+        ],
+      },
+      threads: {
+        execArgv: [
+          `--localstorage-file=${__localStoragePath}`,
+          '--disable-warning=ExperimentalWarning',
+          // DEP0205: tsx + vitest + vite all still call module.register()
+          // instead of module.registerHooks() (introduced Node 22.15).
+          // Tracked upstream — until the chain migrates we'd see a
+          // DeprecationWarning per worker spawn. Suppressed by code,
+          // not by class, so a future genuine deprecation we DO own
+          // still surfaces. TODO: drop once tsx ≥ 5 / vitest ≥ 5 ship
+          // the registerHooks migration.
+          '--disable-warning=DEP0205',
+          // Turn every OTHER DeprecationWarning into a thrown error.
+          // This is the "warnings should fail" contract — if a new Node
+          // deprecation lands in our test surface, the test crashes
+          // immediately instead of silently accumulating debt. Pairs
+          // with the targeted --disable-warning=DEP0205 above: known
+          // third-party debt is silenced (with a TODO), everything
+          // else is hard-fail.
+          '--throw-deprecation',
+        ],
+      },
+    },
     // Setup runs once per test FILE before any test inside it.
     setupFiles: [resolve(__dirname, 'src/test-setup.ts')],
     // Stop after the first hung file. Keeps CI fast on a real freeze.

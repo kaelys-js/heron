@@ -8,11 +8,13 @@
 # YAML-driven (vs scripts), no Node dependency for the hook runtime itself,
 # and `lefthook run <name>` lets you trigger any hook manually for debugging.
 
-# Skip rules — applied to every hook (`rebase` is a common reason to skip checks)
-skip_output:
-  - meta
-  - success
-  - skips
+# skip_output: REMOVED — lefthook 2.x dropped the `meta` / `success` /
+# `skips` keys we previously suppressed. The array form (`- meta`) emits
+# a "Value is array but should be object" advisory in `lefthook validate`;
+# the object form (`meta: true`) errors with "No values are allowed because
+# the schema is set to 'false'" (the keys can't be enabled in 2.x). Either
+# way, hooks run fine. Easiest: remove entirely. Lefthook prints a small
+# header on each run — acceptable tax for clean `validate`.
 
 # Bypass the entire hook suite with: SKIP_LEFTHOOK=1 git commit ...
 # Use sparingly — CI re-runs everything anyway.
@@ -27,35 +29,94 @@ pre-commit:
     - rebase
     - merge
   commands:
-    apply-brand:
-      # Runs when any branding/ file is staged, then re-stages the
-      # propagated artifacts so the commit captures everything atomically.
-      glob: "branding/*"
+    format-pipeline:
+      # SERIAL PIPELINE — the apply-brand → biome-format → sort-pkg →
+      # biome-format-check chain MUST run in order, never in parallel
+      # with itself. Previously these were three separate parallel
+      # hooks; the race showed up as "✗ biome-format-check" failing
+      # whenever apply-brand happened to write a file biome wanted to
+      # reformat AFTER the check had already read it. End-result for
+      # the contributor: commit blocked, no obvious fix, retry-the-
+      # commit-and-it-works-this-time flakiness.
+      #
+      # Combining into one shell-script command runs each step in a
+      # strict order while still letting all OTHER pre-commit hooks
+      # (no-secrets, version-sync, ktlint, swiftlint, etc.) run in
+      # parallel alongside. ~50ms net cost vs the broken parallel form.
+      #
+      # The glob is the UNION of every step's interest: branding/
+      # source files trigger apply-brand; *.ts/*.json/*.css trigger
+      # biome-format; */package.json triggers sort-package-json.
+      # Lefthook fires the command once if ANY staged file matches.
+      glob: "{branding/*,*.{ts,tsx,js,mjs,cjs,json,jsonc,css,webmanifest},**/package.json}"
       run: |
-        node scripts/native/apply-brand.mjs > /dev/null 2>&1
-        git add \
-          package.json \
-          ui/electron/package.json \
-          ui/capacitor.config.ts \
-          ui/electron/capacitor.config.ts \
-          ui/electron/electron-builder.config.json \
-          ui/ios/App/App/Info.plist \
-          ui/ios/App/App/Brand.swift \
-          ui/ios/App/Extensions/AppWidget/Brand.swift \
-          ui/ios/App/Extensions/AppLiveActivity/Brand.swift \
-          ui/ios/App/Extensions/AppShareExtension/Brand.swift \
-          ui/ios/App/App/ErrorReporter.swift \
-          ui/ios/App/Extensions/AppWidget/ErrorReporter.swift \
-          ui/ios/App/Extensions/AppLiveActivity/ErrorReporter.swift \
-          ui/ios/App/Extensions/AppShareExtension/ErrorReporter.swift \
-          ui/src/lib/client/brand.ts \
-          ui/electron/src/brand.ts \
-          ui/static/favicon.svg \
-          ui/static/manifest.webmanifest \
-          ui/src/app.html \
-          ui/ios/App/fastlane/Appfile \
-          ui/ios/App/fastlane/Fastfile \
-          scripts/native/add-xcode-targets.rb 2>/dev/null || true
+        set -e
+        # Step 1: apply-brand (only meaningful when branding/ changed,
+        # but cheap to run unconditionally — it's a no-op when nothing
+        # drifted). Regenerates 20+ propagated artifacts.
+        BRAND_CHANGED=$(echo "{staged_files}" | grep -E '(^|/)branding/' || true)
+        if [ -n "$BRAND_CHANGED" ]; then
+          node scripts/native/apply-brand.mjs > /dev/null 2>&1 || true
+          git add \
+            package.json \
+            ui/electron/package.json \
+            ui/capacitor.config.ts \
+            ui/electron/capacitor.config.ts \
+            ui/electron/electron-builder.config.json \
+            ui/ios/App/App/Info.plist \
+            ui/ios/App/App/Brand.swift \
+            ui/ios/App/Extensions/AppWidget/Brand.swift \
+            ui/ios/App/Extensions/AppLiveActivity/Brand.swift \
+            ui/ios/App/Extensions/AppShareExtension/Brand.swift \
+            ui/ios/App/App/ErrorReporter.swift \
+            ui/ios/App/Extensions/AppWidget/ErrorReporter.swift \
+            ui/ios/App/Extensions/AppLiveActivity/ErrorReporter.swift \
+            ui/ios/App/Extensions/AppShareExtension/ErrorReporter.swift \
+            ui/src/lib/client/brand.ts \
+            ui/electron/src/brand.ts \
+            ui/static/favicon.svg \
+            ui/static/manifest.webmanifest \
+            ui/src/app.html \
+            ui/ios/App/fastlane/Appfile \
+            ui/ios/App/fastlane/Fastfile \
+            scripts/native/add-xcode-targets.rb 2>/dev/null || true
+        fi
+
+        # Step 2: biome-format (writer). Idempotent for already-
+        # formatted files; rewrites those that drifted. Includes
+        # files apply-brand just regenerated.
+        #
+        # We pass `--write` so biome mutates in place. We INTENTIONALLY
+        # do NOT use `|| true` here — a biome parse failure is a real
+        # bug (the file is syntactically broken) and silencing it
+        # masks the issue until biome-format-check below catches a
+        # ghost "format drift" that's actually unparseable code.
+        STAGED_BIOME=$(git diff --cached --name-only --diff-filter=d | grep -E '\.(ts|tsx|js|mjs|cjs|json|jsonc|css|webmanifest)$' || true)
+        if [ -n "$STAGED_BIOME" ]; then
+          echo "$STAGED_BIOME" | xargs pnpm exec biome format --write
+          echo "$STAGED_BIOME" | xargs git add
+        fi
+
+        # Step 3: sort-package-json (after biome — biome's JSON
+        # formatter cares about key order WITHIN objects but not
+        # about the top-level ordering this enforces).
+        STAGED_PKGS=$(git diff --cached --name-only --diff-filter=d | grep -E '(^|/)package\.json$' || true)
+        if [ -n "$STAGED_PKGS" ]; then
+          echo "$STAGED_PKGS" | xargs pnpm exec sort-package-json
+          echo "$STAGED_PKGS" | xargs git add
+        fi
+
+        # Step 4: biome-format-check (verifier). At this point Steps
+        # 2+3 just ran on every relevant staged file; this re-read
+        # should be a no-op. If it fails, biome encountered a parse
+        # error or refused to fix something (rare but real, e.g.
+        # ambiguous JSX). We exit non-zero so the commit aborts
+        # with the actual biome diagnostic visible.
+        STAGED_CHECK=$(git diff --cached --name-only --diff-filter=d | grep -E '\.(ts|tsx|js|mjs|cjs|json|jsonc|css|webmanifest)$' || true)
+        if [ -n "$STAGED_CHECK" ]; then
+          echo "$STAGED_CHECK" | xargs pnpm exec biome format
+        fi
+      stage_fixed: true
 
     verify-fonts:
       # Closes TYPOGRAPHY.md Task 9 item 5 — guard against accidental /
@@ -66,38 +127,10 @@ pre-commit:
       run: node scripts/system/verify-fonts.mjs
       fail_text: "woff2 drift — see verify-fonts output. Run `pnpm fonts:lock` after a deliberate font swap."
 
-    biome-format:
-      # Formats non-svelte staged source files via Biome (fast Rust formatter).
-      # Linting is intentionally NOT run — svelte-check covers type-level issues.
-      # Covers: ts/tsx/js/mjs/cjs (JS family), json/jsonc (configs),
-      # css (Tailwind 4 entry point — needs `tailwindDirectives: true` in
-      # biome.jsonc which we set), webmanifest (JSON syntax via overrides
-      # in biome.jsonc).
-      # NOT covered: YAML (yamllint owns), Svelte (prettier-svelte owns).
-      glob: "*.{ts,tsx,js,mjs,cjs,json,jsonc,css,webmanifest}"
-      run: |
-        pnpm exec biome format --write {staged_files} 2>/dev/null || true
-        git add {staged_files} 2>/dev/null || true
-      stage_fixed: true
-
-    sort-package-json:
-      # Sorts package.json keys into a canonical order (name → version →
-      # scripts → deps → devDeps), and alphabetizes inner keys. Runs after
-      # biome-format above so biome's quote/indent fixes don't fight with
-      # the sort. Idempotent — silent when nothing changes.
-      glob: "**/package.json"
-      run: |
-        pnpm exec sort-package-json {staged_files} 2>/dev/null || true
-        git add {staged_files} 2>/dev/null || true
-      stage_fixed: true
-
-    biome-format-check:
-      # Read-only verification after auto-format. Fails if anything still
-      # isn't formatted (e.g. a file with weird quoting biome can't fix
-      # automatically). This is the hard gate.
-      # Glob matches biome-format above — same coverage.
-      glob: "*.{ts,tsx,js,mjs,cjs,json,jsonc,css,webmanifest}"
-      run: pnpm exec biome format {staged_files}
+    # NOTE: biome-format / sort-package-json / biome-format-check were
+    # merged into the `format-pipeline` command above so they run in
+    # order. Keeping them as separate parallel commands re-introduces
+    # the race condition with apply-brand.
 
     format-config-sync:
       # Asserts .editorconfig + biome.jsonc + .prettierrc.json agree on
@@ -389,6 +422,25 @@ pre-commit:
 pre-push:
   parallel: true
   commands:
+    engine-pin:
+      # Fail fast if the shell's Node doesn't match the engines pin.
+      # The .npmrc + .mise.toml + package.json::engines all agree on a
+      # single exact version (currently 26.1.0). pnpm only WARNS on a
+      # mismatch then proceeds, which means the user sees hundreds of
+      # "[WARN] Unsupported engine: wanted 26.1.0, current 25.9.0"
+      # lines smeared across pre-push output — and worse, they
+      # silently run their pre-push gauntlet against the WRONG Node,
+      # producing test results that don't match what CI will see.
+      #
+      # ensure-pnpm.mjs already enforces this at `pnpm install` time
+      # (it's the preinstall script); we run gate 2 again here so a
+      # mid-session Node-version drift (e.g. `mise install` upgraded
+      # the pin, but the user's shell still has the old version on
+      # PATH because they haven't `exec zsh`'d yet) blocks the push
+      # with an actionable mise-fix-it message instead of polluting
+      # every subsequent line of output.
+      run: node scripts/system/ensure-pnpm.mjs
+      fail_text: "Node version doesn't match engines pin. See the message above for the mise fix."
     typecheck:
       # svelte-check (ui) + tsgo (electron), turbo-cached.
       # Cold ~12s, warm <100ms.
@@ -417,13 +469,59 @@ pre-push:
         }
         pnpm exec turbo run test
     format-check:
-      # Note: this is the LAST-RESORT gate. The pre-commit hook auto-
-      # formats on write, and .github/workflows/format.yml runs `pnpm
-      # format` on every push to main and commits the fix back. By the
-      # time CI runs the format check, drift should be impossible.
-      # This hook stays so a `--no-verify` commit can't slip unformatted
-      # code into a push.
-      run: pnpm format:check
+      # LAST-RESORT gate against unformatted code reaching origin. Auto-
+      # recovers on drift so the developer gets a one-liner instead of a
+      # mystery red ✗ at push time:
+      #
+      #   1. Run `pnpm format:check`. If clean → exit 0, no friction.
+      #   2. If dirty → auto-run `pnpm format` to fix in place,
+      #      enumerate the changed files, and exit 1 with the exact
+      #      `git add … && git commit --amend --no-edit && git push`
+      #      one-liner the developer needs.
+      #
+      # Why not auto-amend automatically: amending during push is
+      # invasive — the SHA changes mid-flight, the developer's local
+      # state diverges from what they typed into the editor, and a
+      # `git rev-parse HEAD` they saved earlier silently breaks. Better
+      # to surface the fix and let the developer drive.
+      #
+      # The pre-commit `format-pipeline` already auto-formats anything
+      # the developer staged. The only way drift survives to pre-push
+      # is (a) a `--no-verify` commit, (b) a file that wasn't staged
+      # at commit time but drifted from a tool-version bump (e.g.
+      # biome major release), or (c) apply-brand regenerating a file
+      # whose biome-preferred format diverges from what apply-brand
+      # writes verbatim. This gate catches all three.
+      run: |
+        if pnpm format:check > /dev/null 2>&1; then
+          exit 0
+        fi
+        echo "✗ Format drift detected. Auto-formatting…"
+        pnpm format > /dev/null 2>&1 || {
+          echo "  (pnpm format itself failed — run it manually to see the error)"
+          exit 1
+        }
+        CHANGED=$(git diff --name-only)
+        if [ -z "$CHANGED" ]; then
+          # `pnpm format` didn't actually change anything but check still
+          # fails — likely a config issue, not auto-fixable. Surface the
+          # original check output so the developer can see what biome
+          # objects to.
+          echo ""
+          echo "  pnpm format made no changes but format:check still fails."
+          echo "  Surfacing the original diagnostic:"
+          echo ""
+          pnpm format:check
+          exit 1
+        fi
+        echo ""
+        echo "  Auto-formatted:"
+        printf '    %s\n' $CHANGED
+        echo ""
+        echo "  Fix with this one-liner, then push again:"
+        echo "    git add . && git commit --amend --no-edit && git push"
+        echo ""
+        exit 1
     swiftlint-strict:
       # Pre-commit swiftlint is advisory (`|| true`) so contributors can
       # iterate; CI uses `swiftlint --strict` and BLOCKS. Without this

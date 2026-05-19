@@ -1,5 +1,5 @@
 {
-  "name": "heron",
+  "name": "heron-electron",
   "version": "0.1.0",
   "private": true,
   "description": "Heron desktop — Electron shell embedding the SvelteKit dashboard.",
