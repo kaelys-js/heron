@@ -22,6 +22,12 @@ import { BRAND_STORAGE_KEYS } from '$lib/client/brand';
  *  origin native sessions persist across reloads. Pulled from
  *  BRAND_STORAGE_KEYS so the key tracks brand renames. */
 const BEARER_KEY = BRAND_STORAGE_KEYS.bearerToken;
+const AUTHED_KEY = BRAND_STORAGE_KEYS.authed;
+
+/** Module-local guard so a flood of in-flight requests that all 401
+ *  after a session lapse only triggers ONE scrub + ONE redirect. The
+ *  flag is reset by the redirect (full page nav clears module state). */
+let sessionExpiryHandled = false;
 
 async function getBearerToken(): Promise<string | null> {
   // Preferences first (Capacitor-backed Keychain on iOS, SharedPreferences
@@ -167,6 +173,61 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
       'Request failed';
     const code = envelope?.code;
     const details = envelope?.details;
+
+    // F8 — session expiry: if the server says 401 AND we previously
+    // marked the client as locally-authed, the session lapsed under us.
+    // Scrub every local + App Group signal and bounce to /login so:
+    //   • the Share Extension can't keep posting with the stale bearer
+    //   • Spotlight stops surfacing the previous user's job index
+    //   • the BackgroundFetcher stops honouring stale quiet hours
+    //   • widgets gate themselves via the layout +effect once
+    //     heron:authed drops
+    // Guarded by a module-local flag so a fan-out of in-flight requests
+    // that all 401 only triggers ONE scrub + ONE redirect. The full-page
+    // nav at the end resets module state on the next load.
+    //
+    // Why check authed FIRST: a 401 on /api/auth/sign-in/* (bad creds)
+    // hits this path too but the user wasn't logged in. We only want to
+    // bounce session-expiry cases, not invalid-creds cases.
+    if (
+      response.status === 401 &&
+      !sessionExpiryHandled &&
+      typeof window !== 'undefined' &&
+      localStorage.getItem(AUTHED_KEY) === '1'
+    ) {
+      sessionExpiryHandled = true;
+      // Surface a sticky toast — the user needs to know why they're on
+      // /login. Sign-out flows go through their own UI so this only
+      // fires on involuntary expiry.
+      toast.warning('Your session expired', {
+        description: 'Please sign in again to continue.',
+        duration: 12_000,
+      });
+      // Dynamic import to keep the static import graph acyclic:
+      // auth-client.ts → native-bridge.ts → api-base.ts; api.ts already
+      // sits at the leaf of that tree.
+      void import('$lib/client/auth-client')
+        .then(({ clearLocalAuthState }) => clearLocalAuthState())
+        .catch(() => {
+          // Best-effort scrub: even if the dynamic import fails (e.g.
+          // chunk eviction), still wipe what we can from THIS module.
+          try {
+            localStorage.removeItem(BEARER_KEY);
+            localStorage.removeItem(AUTHED_KEY);
+          } catch {
+            /* localStorage unavailable */
+          }
+        })
+        .finally(() => {
+          // Hard nav — clears in-memory store state, SvelteKit's session
+          // load fns, and any pending fetches that would race the scrub.
+          // Skip if we're already on /login to avoid a redirect loop.
+          if (!window.location.pathname.startsWith('/login')) {
+            window.location.assign('/login');
+          }
+        });
+    }
+
     if (!silent && !inlineError) {
       toast.error(message, {
         description: response.status + ' · ' + url,

@@ -44,5 +44,8 @@ register({
   category: 'hygiene',
   trigger: { type: 'daily', hour: 4, minute: 0 },
   allowManual: true,
+  // System-level GDPR sweep — operates across the auth DB directly, not
+  // per-user data. Must NOT fan out (would run the same reap 1× per user).
+  perUser: false,
   run: runLifecycleReap,
 });

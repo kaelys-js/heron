@@ -77,5 +77,6 @@ register({
   category: 'hygiene',
   trigger: { type: 'after', tasks: ['status', 'batch-merge', 'boot'] },
   allowManual: true,
+  perUser: true,
   run: runNormalize,
 });

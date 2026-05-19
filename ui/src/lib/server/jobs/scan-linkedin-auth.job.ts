@@ -120,6 +120,7 @@ register({
   category: 'discovery',
   trigger: { type: 'daily', hour: 9, minute: 15, weekdays: [1, 2, 3, 4, 5] },
   allowManual: true,
+  perUser: true,
   run: runScanLinkedinAuth,
 });
 

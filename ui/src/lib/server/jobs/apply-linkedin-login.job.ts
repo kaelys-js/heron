@@ -21,6 +21,7 @@ register({
   category: 'apply',
   trigger: { type: 'manual' },
   allowManual: true,
+  perUser: true,
   run: async () => {
     try {
       const { runLinkedInLogin } = await import('../orchestrator');

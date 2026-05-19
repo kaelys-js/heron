@@ -119,5 +119,6 @@ register({
   category: 'hygiene',
   trigger: { type: 'after', tasks: ['scan', 'scan-portals'] },
   allowManual: true,
+  perUser: true,
   run: runAutoTriage,
 });

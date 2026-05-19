@@ -86,6 +86,7 @@ register({
   category: 'discovery',
   trigger: { type: 'manual' },
   allowManual: true,
+  perUser: true,
   run: runScanEmail,
 });
 

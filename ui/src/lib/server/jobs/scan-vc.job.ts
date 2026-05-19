@@ -79,6 +79,7 @@ register({
   category: 'discovery',
   trigger: { type: 'weekly', dayOfWeek: 1, hour: 7, minute: 0 },
   allowManual: true,
+  perUser: true,
   run: runScanVc,
 });
 

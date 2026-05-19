@@ -107,6 +107,7 @@ register({
   category: 'discovery',
   trigger: { type: 'daily', hour: 9, minute: 30, weekdays: [1, 2, 3, 4, 5] },
   allowManual: true,
+  perUser: true,
   run: runScanIndeedAuth,
 });
 

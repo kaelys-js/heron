@@ -75,3 +75,31 @@ export function currentUserIdOrDefault(): string {
 }
 
 export const SYSTEM_USER_ID = SYSTEM_USER;
+
+/**
+ * List every real user (deletedAt IS NULL) for fan-out scheduling.
+ * Falls back to `[SYSTEM_USER_ID]` when no users exist yet
+ * (pre-multi-user single-user mode). Pure read; no side-effects.
+ *
+ * Consumed by:
+ *   • `autopilot.ts` for the legacy `runScanForAllProfiles()` etc.
+ *   • `jobs/registry.ts:runById()` to fan registered `perUser: true`
+ *     jobs across users.
+ *
+ * Single source of truth — every fan-out caller hits this function so
+ * adding a new "schedulable user" criterion (e.g. exclude users on a
+ * 30-day cooldown after sign-up) only needs to change one place.
+ */
+export async function listSchedulableUsers(): Promise<string[]> {
+  try {
+    const { authDb } = await import('./db');
+    const { users } = await import('./db/auth-schema');
+    const { isNull } = await import('drizzle-orm');
+    const rows = authDb.select({ id: users.id }).from(users).where(isNull(users.deletedAt)).all();
+    if (rows.length === 0) return [SYSTEM_USER_ID];
+    return rows.map((r) => r.id);
+  } catch {
+    // DB not initialized yet (e.g. boot-time probe) — fall back to system.
+    return [SYSTEM_USER_ID];
+  }
+}

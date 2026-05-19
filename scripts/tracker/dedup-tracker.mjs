@@ -6,22 +6,30 @@
  * Keeps entry with highest score. If discarded entry had more advanced status,
  * preserves that status. Merges notes.
  *
- * Run: node heron/dedup-tracker.mjs [--dry-run]
+ * Multi-profile + multi-user safe (F3 fix). Resolves the target
+ * applications.md via `lib-profiles.mjs` so:
+ *   • --profile <slug>        scopes to one profile
+ *   • --user <id> / env       scopes to one user
+ *   • omit both               falls back to active profile / system user
+ *
+ * Run:
+ *   node scripts/tracker/dedup-tracker.mjs [--dry-run]
+ *   node scripts/tracker/dedup-tracker.mjs --profile teacher --dry-run
+ *   node scripts/tracker/dedup-tracker.mjs --user u_alice --profile engineer
  */
 
 import { readFileSync, writeFileSync, copyFileSync, existsSync, mkdirSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import { profilePath, profileFromArgv, userFromArgv } from '../lib/lib-profiles.mjs';
 
-const CAREER_OPS = dirname(fileURLToPath(import.meta.url));
-// Support both layouts: data/applications.md (boilerplate) and applications.md (original)
-const APPS_FILE = existsSync(join(CAREER_OPS, 'data/applications.md'))
-  ? join(CAREER_OPS, 'data/applications.md')
-  : join(CAREER_OPS, 'applications.md');
+const USER_ID = userFromArgv();
+const PROFILE_ID = profileFromArgv();
+const APPS_FILE = profilePath(PROFILE_ID, 'applications', USER_ID);
 const DRY_RUN = process.argv.includes('--dry-run');
 
-// Ensure required directories exist (fresh setup)
-mkdirSync(join(CAREER_OPS, 'data'), { recursive: true });
+// Ensure the profile dir exists so a first-run with --dry-run on an
+// empty profile doesn't error out before reporting "nothing to do".
+mkdirSync(dirname(APPS_FILE), { recursive: true });
 
 // Status advancement order (higher = more advanced in pipeline)
 // Aplicado > Rechazado because active application > terminal state
@@ -270,7 +278,7 @@ console.log(`\n📊 ${removed} duplicates removed`);
 if (!DRY_RUN && removed > 0) {
   copyFileSync(APPS_FILE, APPS_FILE + '.bak');
   writeFileSync(APPS_FILE, lines.join('\n'));
-  console.log('✅ Written to applications.md (backup: applications.md.bak)');
+  console.log(`✅ Written to ${APPS_FILE} (backup: ${APPS_FILE}.bak)`);
 } else if (DRY_RUN) {
   console.log('(dry-run — no changes written)');
 } else {

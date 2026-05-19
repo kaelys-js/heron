@@ -24,7 +24,7 @@ import { createAuthClient } from 'better-auth/svelte';
 import { passkeyClient } from '@better-auth/passkey/client';
 import { Preferences } from '@capacitor/preferences';
 import { getApiBase } from './api-base';
-import { setSharedBearerToken } from './native-bridge';
+import { setSharedBearerToken, clearAllSharedState } from './native-bridge';
 import { BRAND_STORAGE_KEYS } from './brand';
 
 // Pulled from the centralised brand-storage map so a brand rename
@@ -154,7 +154,24 @@ export const authClient = createAuthClient({
 export const { signIn, signOut, signUp, useSession, getSession, passkey } = authClient;
 
 /** Convenience helpers for login + logout pages so we have a single place
- *  that knows about the bearer-token / authed-flag pair. */
+ *  that knows about the bearer-token / authed-flag pair.
+ *
+ *  Multi-user safety (F2/F4): this is the single source of truth for
+ *  scrubbing every piece of local + shared state keyed to the previous
+ *  user, so the same device can host multiple users without leaking
+ *  data between them. The function tears down THREE layers:
+ *
+ *    1. Capacitor Preferences (WebView's secure store) — bearer token
+ *    2. localStorage (web + iOS WebView fallback) — bearer + heron:authed
+ *    3. App Group UserDefaults (shared across host app, Share Extension,
+ *       Watch, Widgets, BackgroundFetcher) — bearer + spotlight index +
+ *       quiet hours + last-seen-issue cursor. Delegated to
+ *       NativePlugin.clearAllSharedState() which is the swift-side single
+ *       source of truth.
+ *
+ *  Widgets are scrubbed separately by `updateWidgets({authenticated:false})`
+ *  fired from the layout +effect when `heron:authed` drops.
+ */
 export async function clearLocalAuthState(): Promise<void> {
   try {
     await Preferences.remove({ key: BEARER_KEY });
@@ -165,9 +182,13 @@ export async function clearLocalAuthState(): Promise<void> {
     localStorage.removeItem(BEARER_KEY);
     localStorage.removeItem(AUTHED_KEY);
   }
-  // Also scrub the App Group mirror so the Share Extension can't
-  // accidentally authenticate a post-sign-out share with the previous
-  // session's token. No-op on web/desktop.
+  // Defence in depth: clearAllSharedState wipes ALL user-scoped App Group
+  // keys in one Swift round-trip (bearer + quiet hours + last-seen-issue
+  // + spotlight index). The setSharedBearerToken(null) call below is a
+  // belt-and-suspenders fallback for older native builds shipped before
+  // clearAllSharedState() landed — it's harmless to call both. No-op on
+  // web/desktop.
+  void clearAllSharedState();
   void setSharedBearerToken(null);
 }
 

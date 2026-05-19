@@ -254,5 +254,6 @@ register({
   category: 'hygiene',
   trigger: { type: 'weekly', dayOfWeek: 1, hour: 6, minute: 0 },
   allowManual: true,
+  perUser: true,
   run: runLivenessSweep,
 });

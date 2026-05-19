@@ -101,3 +101,70 @@ describe('Multi-user — extended structural checks (replaces verify-multi-user.
     }
   });
 });
+
+/**
+ * Sign-out hygiene — every UI call site that invokes `authClient.signOut()`
+ * MUST be paired with `clearLocalAuthState()`. Without that pairing the
+ * server-side cookie/session is torn down but the LOCAL state (bearer
+ * token, `heron:authed` gate flag, App Group shared state) lingers — so
+ * the next user on the same device inherits user A's session signals,
+ * which is the F2 finding from the multi-user audit.
+ *
+ * Regex-on-source rather than runtime: signOut sits inside Svelte
+ * components that pull in $app/navigation etc., which we can't easily
+ * load from a node-environment vitest project.
+ */
+describe('Multi-user — sign-out scrubs local state (F2 regression guard)', () => {
+  const SIGNOUT_CALL_SITES = [
+    'ui/src/lib/components/AppSidebar.svelte',
+    'ui/src/routes/settings/users/+page.svelte',
+  ];
+
+  for (const rel of SIGNOUT_CALL_SITES) {
+    it(`${rel}: authClient.signOut() is paired with clearLocalAuthState()`, () => {
+      if (!exists(rel)) {
+        throw new Error(`Expected sign-out site missing: ${rel}`);
+      }
+      const src = readFile(rel);
+      expect(
+        src,
+        `${rel} calls authClient.signOut() — must also import + call clearLocalAuthState() to scrub local bearer + App Group state`,
+      ).toContain('authClient.signOut');
+      expect(src, `${rel} must import clearLocalAuthState from $lib/client/auth-client`).toMatch(
+        /clearLocalAuthState/,
+      );
+    });
+  }
+
+  it('no other component calls authClient.signOut() without clearLocalAuthState (sweep)', () => {
+    // Sweep the entire src tree for stray authClient.signOut calls that
+    // aren't on our known-paired allowlist. Any new call site MUST be
+    // added to SIGNOUT_CALL_SITES (and pair clearLocalAuthState) at the
+    // same time.
+    const sweep = execSync(
+      `grep -rln "authClient\\.signOut" ${path.join(REPO_ROOT, 'ui/src')} || true`,
+      { encoding: 'utf8' },
+    )
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((abs) => path.relative(REPO_ROOT, abs))
+      .filter((rel) => !rel.endsWith('.test.ts') && !rel.endsWith('.integration.test.ts'));
+    const stray = sweep.filter((rel) => !SIGNOUT_CALL_SITES.includes(rel));
+    expect(
+      stray,
+      `New authClient.signOut() call site(s) found — add them to SIGNOUT_CALL_SITES and pair with clearLocalAuthState():\n  ${stray.join('\n  ')}`,
+    ).toEqual([]);
+  });
+
+  it('clearLocalAuthState scrubs all three local-state signals', () => {
+    const ts = readFile('ui/src/lib/client/auth-client.ts');
+    // 1. Bearer token from Capacitor Preferences (native)
+    expect(ts).toMatch(/Preferences\.remove\(\s*\{\s*key:\s*BEARER_KEY/);
+    // 2. localStorage fallback (web + iOS)
+    expect(ts).toMatch(/localStorage\.removeItem\(BEARER_KEY\)/);
+    expect(ts).toMatch(/localStorage\.removeItem\(AUTHED_KEY\)/);
+    // 3. App Group mirror (Share Extension / Watch / Widgets)
+    expect(ts).toMatch(/setSharedBearerToken\(null\)|clearAllSharedState\(\)/);
+  });
+});

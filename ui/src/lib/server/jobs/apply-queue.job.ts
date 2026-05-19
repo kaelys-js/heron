@@ -449,6 +449,7 @@ register({
   category: 'apply',
   trigger: { type: 'daily', hour: 10, minute: 30, weekdays: [1, 2, 3, 4, 5] },
   allowManual: true,
+  perUser: true,
   run: runApplyQueueDrain,
 });
 

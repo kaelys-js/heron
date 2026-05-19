@@ -45,5 +45,6 @@ register({
   category: 'hygiene',
   trigger: { type: 'daily', hour: 2, minute: 0, weekdays: [0, 1, 2, 3, 4, 5, 6] },
   allowManual: true,
+  perUser: true,
   run: runBackup,
 });

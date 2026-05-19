@@ -155,6 +155,7 @@ register({
   category: 'discovery',
   trigger: { type: 'daily', hour: 8, minute: 0 },
   allowManual: true,
+  perUser: true,
   run: runLinkedInDmIngest,
 });
 
@@ -166,5 +167,6 @@ register({
   category: 'discovery',
   trigger: { type: 'daily', hour: 16, minute: 0 },
   allowManual: false,
+  perUser: true,
   run: runLinkedInDmIngest,
 });

@@ -101,6 +101,7 @@ register({
   category: 'discovery',
   trigger: { type: 'daily', hour: 8, minute: 0, weekdays: [1, 2, 3, 4, 5] },
   allowManual: true,
+  perUser: true,
   run: runScanPortals,
 });
 

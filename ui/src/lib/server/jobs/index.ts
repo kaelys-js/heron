@@ -100,6 +100,11 @@ export function installAllJobs(): void {
     category: 'discovery',
     trigger: { type: 'manual' },
     allowManual: true,
+    // runScan() reads the active profile's portals.yml / scan-history.tsv
+    // and writes the active profile's pipeline.md — must fan out across
+    // every schedulable user. The orchestrator's spawn passes the resolved
+    // user/profile via `--user`/`--profile` flags.
+    perUser: true,
     run: () => {
       runScan();
       return { ok: true, message: 'Scan started — watch the activity feed' };
@@ -114,6 +119,8 @@ export function installAllJobs(): void {
     category: 'evaluation',
     trigger: { type: 'manual' },
     allowManual: true,
+    // runGemini() scores entries in the active profile's pipeline.md.
+    perUser: true,
     run: (args) => {
       const top = typeof args?.top === 'number' ? args.top : 30;
       runGemini(top);
@@ -129,6 +136,10 @@ export function installAllJobs(): void {
     category: 'apply',
     trigger: { type: 'manual' },
     allowManual: true,
+    // LinkedIn Easy Apply runs against the active profile's cv.md +
+    // applications.md row; the persistent Playwright session is also
+    // per-user (see lib_playwright_auth.py).
+    perUser: true,
     run: (args) => {
       const autoSubmit = !!args?.autoSubmit;
       const url = typeof args?.url === 'string' ? args.url : undefined;

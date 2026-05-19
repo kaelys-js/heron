@@ -40,6 +40,7 @@ type NativePlugin = {
   clearSharedBearerToken(): Promise<{ ok: boolean }>;
   setSharedBackendUrl(opts: { url: string }): Promise<{ ok: boolean }>;
   setSharedQuietHours(opts: { json: string }): Promise<{ ok: boolean }>;
+  clearAllSharedState(): Promise<{ ok: boolean }>;
 };
 
 export type WidgetUpdate = {
@@ -333,6 +334,38 @@ export async function setSharedQuietHours(json: string): Promise<boolean> {
   if (!isIos()) return false;
   try {
     const res = await native.setSharedQuietHours({ json });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Wipe every user-scoped App Group key in a single bridge round-trip.
+ *
+ * Why one method instead of a fan-out of individual clears: the App Group
+ * container is shared across the host app, the Share Extension, the Watch,
+ * the Widgets, and the BackgroundFetcher — if the sign-out flow forgets
+ * even one key, user A's data leaks to user B on the same device. A
+ * single scrub method moves the "what counts as user-scoped" decision
+ * into Swift (next to the keys themselves), so adding a new App Group
+ * key only requires updating NativePlugin.clearAllSharedState() — the
+ * JS sign-out flow stays untouched.
+ *
+ * Called from `clearLocalAuthState()` (auth-client.ts) which itself is
+ * called from every sign-out path. No-op on web/desktop.
+ *
+ * Note: widget data + auth gate are scrubbed separately via
+ * `updateWidgets({authenticated: false})` — the layout +effect already
+ * fires that when the `heron:authed` localStorage flag drops. Keeping
+ * the two paths split lets widget UI be re-gated without nuking the
+ * bearer (e.g. on a 401 we want widgets gone but the bearer cleared
+ * the moment the session expires).
+ */
+export async function clearAllSharedState(): Promise<boolean> {
+  if (!isIos()) return false;
+  try {
+    const res = await native.clearAllSharedState();
     return res.ok;
   } catch {
     return false;
