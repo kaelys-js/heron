@@ -119,51 +119,119 @@ colors, text scale).
 
 ### brand.json keys (9 values to set on a rebrand)
 
-| Key | Hex | Used as |
+<!-- AUTO-GENERATED:color-base-table -->
+| Key | Hex | Name |
 |---|---|---|
-| `primary` | `#4a5b6d` | Heron Slate — brand mark, buttons, links |
-| `accent` | `#c89b4a` | Heron Dawn — highlight accent |
-| `accentSecondary` | `#7a8c6d` | Heron Reed — reserve accent |
-| `darkBg` | `#0e1014` | Dark mode page background |
+| `primary` | `#4a5b6d` | Heron Slate |
+| `accent` | `#c89b4a` | Heron Dawn |
+| `accentSecondary` | `#7a8c6d` | Heron Reed |
+| `darkBg` | `#0e1014` | Dark mode background |
 | `darkSurface` | `#14181f` | Dark mode card surface |
-| `lightBg` | `#f7f5f0` | Light mode page background (warm paper) |
+| `lightBg` | `#f7f5f0` | Light mode background (warm paper) |
 | `lightSurface` | `#fffefa` | Light mode card surface |
 | `textOnDark` | `#e8eaed` | Text on dark surfaces |
 | `textOnLight` | `#1a1f26` | Text on light surfaces |
+<!-- /AUTO-GENERATED:color-base-table -->
+
+### Derived CSS tokens — light mode
+
+<!-- AUTO-GENERATED:color-tokens-light-table -->
+| Token | Hex |
+|---|---|
+| `--background` | `#f7f5f0` |
+| `--foreground` | `#1a1f26` |
+| `--card` | `#fffefa` |
+| `--card-foreground` | `#1a1f26` |
+| `--popover` | `#fffefa` |
+| `--popover-foreground` | `#1a1f26` |
+| `--primary` | `#4a5b6d` |
+| `--primary-foreground` | `#fffefa` |
+| `--secondary` | `#efeae0` |
+| `--secondary-foreground` | `#1a1f26` |
+| `--muted` | `#efeae0` |
+| `--muted-foreground` | `#6b7585` |
+| `--accent` | `#c89b4a` |
+| `--accent-foreground` | `#1a1f26` |
+| `--accent-secondary` | `#7a8c6d` |
+| `--accent-secondary-foreground` | `#1a1f26` |
+| `--destructive` | `#a85459` |
+| `--destructive-foreground` | `#fffefa` |
+| `--border` | `#e0d8c8` |
+| `--input` | `#e0d8c8` |
+| `--ring` | `#c89b4a` |
+| `--sidebar` | `#efeae0` |
+| `--sidebar-foreground` | `#1a1f26` |
+| `--sidebar-primary` | `#4a5b6d` |
+| `--sidebar-primary-foreground` | `#fffefa` |
+| `--sidebar-accent` | `#e8e0cc` |
+| `--sidebar-accent-foreground` | `#1a1f26` |
+| `--sidebar-border` | `#e0d8c8` |
+| `--sidebar-ring` | `#c89b4a` |
+| `--chart-1` | `#c89b4a` |
+| `--chart-2` | `#7a8c6d` |
+| `--chart-3` | `#4a5b6d` |
+| `--chart-4` | `#a8823a` |
+| `--chart-5` | `#5c6f50` |
+<!-- /AUTO-GENERATED:color-tokens-light-table -->
+
+### Derived CSS tokens — dark mode
+
+<!-- AUTO-GENERATED:color-tokens-dark-table -->
+| Token | Hex |
+|---|---|
+| `--background` | `#0e1014` |
+| `--foreground` | `#e8eaed` |
+| `--card` | `#14181f` |
+| `--card-foreground` | `#e8eaed` |
+| `--popover` | `#1a1f29` |
+| `--popover-foreground` | `#e8eaed` |
+| `--primary` | `#c89b4a` |
+| `--primary-foreground` | `#14181f` |
+| `--secondary` | `#1a1f29` |
+| `--secondary-foreground` | `#e8eaed` |
+| `--muted` | `#1a1f29` |
+| `--muted-foreground` | `#a8b0bb` |
+| `--accent` | `#c89b4a` |
+| `--accent-foreground` | `#14181f` |
+| `--accent-secondary` | `#7a8c6d` |
+| `--accent-secondary-foreground` | `#0e1014` |
+| `--destructive` | `#b3666b` |
+| `--destructive-foreground` | `#f4e8e9` |
+| `--border` | `#232a35` |
+| `--input` | `#232a35` |
+| `--ring` | `#c89b4a` |
+| `--sidebar` | `#0e1014` |
+| `--sidebar-foreground` | `#a8b0bb` |
+| `--sidebar-primary` | `#c89b4a` |
+| `--sidebar-primary-foreground` | `#14181f` |
+| `--sidebar-accent` | `#1a1f29` |
+| `--sidebar-accent-foreground` | `#e8eaed` |
+| `--sidebar-border` | `#1a1f29` |
+| `--sidebar-ring` | `#c89b4a` |
+| `--chart-1` | `#d4a866` |
+| `--chart-2` | `#8a9b7d` |
+| `--chart-3` | `#6b7c8d` |
+| `--chart-4` | `#b88f4a` |
+| `--chart-5` | `#7a8c6d` |
+<!-- /AUTO-GENERATED:color-tokens-dark-table -->
 
 The remaining 13 tokens (`surface.2`, `surface.3`, `border.*`,
 `text.secondary/tertiary/disabled`, `status.*`) are derived in the CSS
 layer either by tonal lightening/darkening of the bases or as static
 values shared across all brands of the system.
 
-## What changes vs the career-ops palette
+## Implementation
 
-| | career-ops | Heron |
-|---|---|---|
-| Primary | `#5b6cff` indigo-blue | `#4a5b6d` Heron Slate |
-| Accent | `#10b981` / `#34d399` emerald | `#c89b4a` Heron Dawn (warm gold) |
-| Dark bg | `#0a0a0b` near-black | `#0e1014` slate-tinted black |
-| Dark surface | `#18181b` zinc-900 | `#14181f` slate-darker |
-| Text on dark | `#e4e4e7` zinc-200 (cool) | `#e8eaed` warm white |
-| Light mode | not defined | full warm-paper surface set |
-| Status colors | not defined | desaturated forest / amber / oxblood |
-| Total tokens | 6 | 22 |
+The system is fully wired through `apply-brand`:
 
-The shift is from "generic dev-tool dark mode" to "considered visual
-system that earns *calm + sophisticated.*"
-
-## Implementation notes (deferred to Task 9 — apply-brand wiring)
-
-When Task 9 lands:
-
-1. `brand.json::colors` gets the 9 base keys above (replaces the current
-   6-key block).
+1. `brand.json::colors` holds the 9 base hex values + 3 human-readable
+   color names + the `tokens.{light,dark}` derived 22-token system.
 2. `apply-brand` regenerates `ui/src/lib/client/brand.ts` so the JS side
-   sees `BRAND.colors.primary` → Heron Slate, etc.
+   sees `BRAND.colors.primary`, etc.
 3. `apply-brand` regenerates `ui/ios/App/App/Brand.swift` (+ 4 extension
-   copies) with the new color literals.
-4. `ui/src/app.css` (or the Tailwind theme) gets a new color-token block
-   that consumes the brand.ts values and expands the 9 bases into the
+   copies) with the same color literals.
+4. `ui/src/app.css` AUTO-GENERATED:brand-tokens block consumes the
+   brand.ts values and expands the 9 bases into the
    full 22-token system.
 5. Every component using hardcoded color literals (`#5b6cff`, etc.) gets
    migrated to the token system. A grep + sweep before commit.

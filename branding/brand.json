@@ -61,16 +61,246 @@
   },
 
   "colors": {
-    "$comment": "Heron 9-key palette. Spec: branding/COLORS.md. The full 22-token CSS system in ui/src/app.css derives from these 9 bases (status colors and text scale are static across brands).",
+    "$comment": "9 base hex values + their human-readable names. The full 22-token CSS system in ui/src/app.css is generated from these by apply-brand (status colors + text scale are static across brands; everything else derives).",
     "primary": "#4a5b6d",
+    "primaryName": "Heron Slate",
     "accent": "#c89b4a",
+    "accentName": "Heron Dawn",
     "accentSecondary": "#7a8c6d",
+    "accentSecondaryName": "Heron Reed",
     "darkBg": "#0e1014",
     "darkSurface": "#14181f",
     "lightBg": "#f7f5f0",
     "lightSurface": "#fffefa",
     "textOnDark": "#e8eaed",
-    "textOnLight": "#1a1f26"
+    "textOnLight": "#1a1f26",
+    "tokens": {
+      "$comment": "22-token CSS system, derived from the 9 bases. apply-brand writes these into the AUTO-GENERATED block in ui/src/app.css. The shadcn-shaped token graph (--background, --foreground, --primary, --accent, --sidebar-*, status.*) maps onto the brand palette here. light = warm-paper register, dark = slate-tinted black register.",
+      "light": {
+        "background": "#f7f5f0",
+        "foreground": "#1a1f26",
+        "card": "#fffefa",
+        "cardForeground": "#1a1f26",
+        "popover": "#fffefa",
+        "popoverForeground": "#1a1f26",
+        "primary": "#4a5b6d",
+        "primaryForeground": "#fffefa",
+        "secondary": "#efeae0",
+        "secondaryForeground": "#1a1f26",
+        "muted": "#efeae0",
+        "mutedForeground": "#6b7585",
+        "accent": "#c89b4a",
+        "accentForeground": "#1a1f26",
+        "accentSecondary": "#7a8c6d",
+        "accentSecondaryForeground": "#1a1f26",
+        "destructive": "#a85459",
+        "destructiveForeground": "#fffefa",
+        "border": "#e0d8c8",
+        "input": "#e0d8c8",
+        "ring": "#c89b4a",
+        "sidebar": "#efeae0",
+        "sidebarForeground": "#1a1f26",
+        "sidebarPrimary": "#4a5b6d",
+        "sidebarPrimaryForeground": "#fffefa",
+        "sidebarAccent": "#e8e0cc",
+        "sidebarAccentForeground": "#1a1f26",
+        "sidebarBorder": "#e0d8c8",
+        "sidebarRing": "#c89b4a",
+        "chart": ["#c89b4a", "#7a8c6d", "#4a5b6d", "#a8823a", "#5c6f50"]
+      },
+      "dark": {
+        "background": "#0e1014",
+        "foreground": "#e8eaed",
+        "card": "#14181f",
+        "cardForeground": "#e8eaed",
+        "popover": "#1a1f29",
+        "popoverForeground": "#e8eaed",
+        "primary": "#c89b4a",
+        "primaryForeground": "#14181f",
+        "secondary": "#1a1f29",
+        "secondaryForeground": "#e8eaed",
+        "muted": "#1a1f29",
+        "mutedForeground": "#a8b0bb",
+        "accent": "#c89b4a",
+        "accentForeground": "#14181f",
+        "accentSecondary": "#7a8c6d",
+        "accentSecondaryForeground": "#0e1014",
+        "destructive": "#b3666b",
+        "destructiveForeground": "#f4e8e9",
+        "border": "#232a35",
+        "input": "#232a35",
+        "ring": "#c89b4a",
+        "sidebar": "#0e1014",
+        "sidebarForeground": "#a8b0bb",
+        "sidebarPrimary": "#c89b4a",
+        "sidebarPrimaryForeground": "#14181f",
+        "sidebarAccent": "#1a1f29",
+        "sidebarAccentForeground": "#e8eaed",
+        "sidebarBorder": "#1a1f29",
+        "sidebarRing": "#c89b4a",
+        "chart": ["#d4a866", "#8a9b7d", "#6b7c8d", "#b88f4a", "#7a8c6d"]
+      }
+    }
+  },
+
+  "fonts": {
+    "$comment": "Typography system. apply-brand generates the @font-face declarations and the cascade defaults (body=sans, h1-h4=display, code/.font-mono=mono) into ui/src/app.css AUTO-GENERATED block. woff2 files live at ui/static/fonts/ — self-hosted, no CDN.",
+    "display": {
+      "family": "Fraunces",
+      "fallback": "'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times New Roman', Times, Georgia, serif",
+      "weights": "400 700",
+      "axes": ["opsz", "wght", "SOFT"],
+      "files": [
+        { "subset": "latin", "path": "/fonts/fraunces-latin.woff2" },
+        { "subset": "latin-ext", "path": "/fonts/fraunces-latin-ext.woff2" }
+      ]
+    },
+    "body": {
+      "family": "Inter",
+      "fallback": "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+      "weights": "400 700",
+      "axes": ["wght"],
+      "files": [
+        { "subset": "latin", "path": "/fonts/inter-latin.woff2" },
+        { "subset": "latin-ext", "path": "/fonts/inter-latin-ext.woff2" }
+      ]
+    },
+    "mono": {
+      "family": "IBM Plex Mono",
+      "fallback": "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', monospace",
+      "weights": ["400", "500"],
+      "files": [
+        { "weight": "400", "subset": "latin", "path": "/fonts/ibm-plex-mono-400-latin.woff2" },
+        {
+          "weight": "400",
+          "subset": "latin-ext",
+          "path": "/fonts/ibm-plex-mono-400-latin-ext.woff2"
+        },
+        { "weight": "500", "subset": "latin", "path": "/fonts/ibm-plex-mono-500-latin.woff2" },
+        {
+          "weight": "500",
+          "subset": "latin-ext",
+          "path": "/fonts/ibm-plex-mono-500-latin-ext.woff2"
+        }
+      ]
+    },
+    "japaneseFallback": "'Hiragino Sans', 'Hiragino Kaku Gothic Pro', 'Yu Gothic', 'Yu Gothic UI', 'Meiryo', 'Noto Sans JP', system-ui, -apple-system, sans-serif",
+    "subsetUnicodeRanges": {
+      "$comment": "Unicode ranges for the @font-face declarations. Pulled from Google Fonts CSS output. Keeping them in brand.json means swapping in a new font (or a new subset) doesn't require an apply-brand code change.",
+      "latin": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "latin-ext": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF"
+    }
+  },
+
+  "voice": {
+    "$comment": "Brand voice as data — used by .md templates in branding/_templates/. The narrative .md files (BRAND.md, VOICE.md, COLORS.md, TYPOGRAPHY.md, MASCOT.md, README-banner.md, SOCIAL-CARD.md, PRESS.md) are GENERATED by apply-brand from these templates + the values here.",
+    "tagline": "Stand still. Strike well.",
+    "subline": "A thinking partner for career transitions. Patient, precise, local-first.",
+    "origin": "The heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes — once, precisely, and the work is done.",
+    "mission": "Help one person make one excellent career move, instead of fifty mediocre ones. The wrong era for spray-and-pray is the era we're in.",
+    "philosophy": "Recruiters' attention is finite. So is yours. Quality over quantity, by design — the system actively discourages applications below a 4/5 score.",
+    "personality": ["calm", "sophisticated", "patient", "precise", "local-first"],
+    "antiBrands": ["LinkedIn", "AI-slop", "hustle-bro", "wellness-coddling"],
+    "principles": [
+      {
+        "name": "Specific over abstract",
+        "description": "Concrete numbers, named tools, real workflows. Not 'AI-powered' or 'next-generation'."
+      },
+      {
+        "name": "Quiet over loud",
+        "description": "No exclamation marks. No urgency-by-typography. Calm carries weight."
+      },
+      {
+        "name": "Earned over claimed",
+        "description": "Don't say 'easy' — show the four-line quickstart. Don't say 'powerful' — show the feature."
+      },
+      {
+        "name": "Patient over urgent",
+        "description": "Heron is for considered decisions. Manufactured urgency contradicts the brand at every layer."
+      },
+      {
+        "name": "Local-first over cloud-default",
+        "description": "Data on disk. AI bring-your-own-key. No cloud aggregator."
+      },
+      {
+        "name": "Filter over cannon",
+        "description": "The autonomous-apply gate is below 4/5 by default. The brand promise made operational."
+      }
+    ],
+    "antiPatterns": [
+      {
+        "name": "Hustle-bro tone",
+        "example": "\"Crush your job search! 🚀\" → no. \"A thinking partner for career transitions.\" → yes."
+      },
+      {
+        "name": "Empty futurism",
+        "example": "\"Welcome to the future of work!\" → no. (just describe what the thing does)"
+      },
+      {
+        "name": "Decorative emojis",
+        "example": "🚀 💡 🎯 📈 🔥 — none of these. Punctuation only."
+      },
+      {
+        "name": "Manufactured urgency",
+        "example": "\"Get started in seconds!\" / \"Limited time!\" → no. Time is the user's."
+      },
+      {
+        "name": "AI-slop adjectives",
+        "example": "\"Powerful AI\" / \"Next-generation\" / \"Revolutionary\" → no. Specifics or nothing."
+      },
+      {
+        "name": "Wellness coddling",
+        "example": "\"You've got this! 💪\" → no. The user is an adult."
+      },
+      {
+        "name": "Easy claims",
+        "example": "\"It's easy!\" → never. Show the four lines, let them judge."
+      },
+      {
+        "name": "Welcoming language",
+        "example": "\"Welcome to Heron!\" / \"Let's get started!\" — no. Open with what the page is for."
+      },
+      {
+        "name": "Just-doing",
+        "example": "\"Just paste the URL\" — no. \"Paste the URL.\" The word 'just' minimizes."
+      },
+      {
+        "name": "We-language",
+        "example": "\"We think you'll love it!\" → no. The brand is the brand, not the maintainer."
+      }
+    ],
+    "boilerplate": {
+      "short": "Heron — a thinking partner for career transitions. Patient. Precise. Local-first. Open source.",
+      "medium": "Heron is an open-source job-search assistant for the wrong era of spray-and-pray. It tracks your pipeline, scores every role A-F, generates ATS-optimized CVs, scans 11 ATSes, and triages recruiter email — all locally. Your data never leaves your machine.",
+      "long": "The heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes — once, precisely, and the work is done. Heron is a thinking partner for people in career transition who'd rather make one excellent move than fifty mediocre ones. It runs entirely on your machine: pipeline tracking, A-F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Open source. AI-agnostic. Your data stays yours."
+    },
+    "quotes": [
+      "Recruiters' attention is finite. So is yours. The wrong era for spray-and-pray is the era we're in. Heron is the alternative.",
+      "Local-first isn't a feature, it's a posture. Your career data is the most concentrated personal data you'll ever generate. Treating it like analytics fodder for a SaaS isn't a tradeoff we made.",
+      "We score every role before applying. Below four out of five, the system actively discourages you. The recruiter's time is worth as much as yours.",
+      "The heron stands still. Then it strikes. That's the whole product, in two sentences."
+    ]
+  },
+
+  "mascot": {
+    "$comment": "Mascot identity — fed into the MASCOT.md template + apply-brand placeholder SVG generator. The SVG art itself lives in branding/assets/ (mark-placeholder.svg today, mark-{slate,light,dawn}.svg when the illustrator output lands).",
+    "subject": "Great Blue Heron",
+    "pose": "side profile, standing in shallow water, neck S-curve, head turned 25-30° right",
+    "styleReferences": ["Audubon", "Charley Harper", "Field Notes", "Hasegawa Tōhaku sumi-e"],
+    "tiers": {
+      "mark": { "use": "≤64px contexts — favicon, app icon, inline UI", "treatment": "silhouette" },
+      "illustration": {
+        "use": "≥200px contexts — landing pages, marketing, press",
+        "treatment": "editorial illustration with subtle detail"
+      }
+    },
+    "antiStyles": [
+      "cartoon",
+      "photo-realistic",
+      "3D-rendered",
+      "anthropomorphized",
+      "mascot-with-arms"
+    ]
   },
 
   "splash": {
