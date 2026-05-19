@@ -1,7 +1,16 @@
 /**
- * lib/server/apply-counter — daily LinkedIn Easy Apply rate-limit accounting.
+ * lib/server/apply-counter — daily LinkedIn / portal apply rate-limit accounting.
  *
- * Mocks the filesystem layer; tests todayCount + bumpApplyCounter.
+ * Per-user (F17). The implicit-user variants (`todayCount`, `bumpApplyCounter`)
+ * resolve via `currentUserIdOrDefault()`; the explicit `*ForUser` variants
+ * take a userId directly.
+ *
+ * Mocks the ROOT export so all files land in a tmpdir. Two test groups:
+ *   1. Implicit (SYSTEM_USER fallback when no ALS context) — proves the
+ *      old single-user behaviour still works.
+ *   2. Multi-user isolation — proves user A's bumps don't leak into user B's
+ *      counter file. This is the regression guard for F17.
+ *
  * Node env.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,7 +22,15 @@ import { tmpdir } from 'node:os';
 const TMP = path.join(tmpdir(), 'heron-apply-counter-' + Date.now());
 vi.mock('./files', () => ({ ROOT: TMP }));
 
-const { todayCount, bumpApplyCounter, applyCounterPath } = await import('./apply-counter');
+const {
+  todayCount,
+  bumpApplyCounter,
+  applyCounterPath,
+  todayCountForUser,
+  bumpApplyCounterForUser,
+  applyCounterPathForUser,
+} = await import('./apply-counter');
+const { runAsUser } = await import('./user-context');
 
 function todayKey() {
   const d = new Date();
@@ -23,7 +40,7 @@ function todayKey() {
   return yyyy + '-' + mm + '-' + dd;
 }
 
-describe('apply-counter', () => {
+describe('apply-counter — implicit (SYSTEM_USER fallback)', () => {
   beforeEach(() => {
     if (fs.existsSync(TMP)) fs.rmSync(TMP, { recursive: true, force: true });
   });
@@ -77,15 +94,72 @@ describe('apply-counter', () => {
   it('handles array-shape JSON gracefully (treats as empty)', () => {
     fs.mkdirSync(path.dirname(applyCounterPath()), { recursive: true });
     fs.writeFileSync(applyCounterPath(), '[1, 2, 3]');
-    // Array is technically `typeof 'object'`, so it doesn't return {} from
-    // readState's filter. But array indexing by yyyy-mm-dd key returns
-    // undefined → ??.0 → still works.
     expect(todayCount()).toBe(0);
   });
 
-  it('applyCounterPath() resolves under ROOT/data/', () => {
+  it('applyCounterPath() resolves under the user-shared tree', () => {
     const p = applyCounterPath();
-    expect(p).toContain('data');
+    expect(p).toContain('_shared');
     expect(p).toContain('apply-counter.json');
+  });
+});
+
+describe('apply-counter — multi-user isolation (F17 regression guard)', () => {
+  beforeEach(() => {
+    if (fs.existsSync(TMP)) fs.rmSync(TMP, { recursive: true, force: true });
+  });
+
+  afterEach(() => {
+    if (fs.existsSync(TMP)) fs.rmSync(TMP, { recursive: true, force: true });
+  });
+
+  it("user A's bumps don't appear in user B's count", async () => {
+    await runAsUser('user_alice', async () => {
+      bumpApplyCounter();
+      bumpApplyCounter();
+      bumpApplyCounter();
+    });
+    await runAsUser('user_bob', async () => {
+      expect(todayCount()).toBe(0);
+      bumpApplyCounter();
+      expect(todayCount()).toBe(1);
+    });
+    // Alice's count is unchanged
+    await runAsUser('user_alice', async () => {
+      expect(todayCount()).toBe(3);
+    });
+  });
+
+  it('counter paths are distinct between users', () => {
+    const pA = applyCounterPathForUser('user_alice');
+    const pB = applyCounterPathForUser('user_bob');
+    expect(pA).not.toBe(pB);
+    expect(pA).toContain('user_alice');
+    expect(pB).toContain('user_bob');
+    // Neither should overlap with SYSTEM_USER's path
+    expect(pA).not.toContain('data/profiles/_shared');
+    expect(pB).not.toContain('data/profiles/_shared');
+  });
+
+  it('explicit *ForUser variants ignore ALS context', async () => {
+    // Inside Alice's context, bumping Bob explicitly writes to Bob's file
+    await runAsUser('user_alice', async () => {
+      bumpApplyCounterForUser('user_bob');
+      bumpApplyCounterForUser('user_bob');
+      // Alice's implicit count is untouched
+      expect(todayCount()).toBe(0);
+    });
+    expect(todayCountForUser('user_bob')).toBe(2);
+    expect(todayCountForUser('user_alice')).toBe(0);
+  });
+
+  it('SYSTEM_USER and a real userId map to different files', async () => {
+    // No ALS context → SYSTEM_USER fallback
+    bumpApplyCounter();
+    expect(todayCount()).toBe(1);
+    // Real user starts at 0
+    await runAsUser('user_alice', async () => {
+      expect(todayCount()).toBe(0);
+    });
   });
 });

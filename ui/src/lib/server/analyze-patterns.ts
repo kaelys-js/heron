@@ -22,6 +22,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './files';
 import { activePath } from './profile-paths';
+import { userContextEnv } from './user-context';
 
 /** Per-profile cache path. Each profile's patterns are derived from
  *  its own applications.md — sharing across profiles would poison
@@ -155,7 +156,7 @@ function spawnAnalyze(profileId?: string): Promise<PatternsResult> {
     if (profileId) args.push('--profile', profileId);
     const p = spawn('node', args, {
       cwd: ROOT,
-      env: { ...process.env },
+      env: userContextEnv(),
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();

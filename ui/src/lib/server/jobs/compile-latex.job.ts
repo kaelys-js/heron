@@ -25,6 +25,7 @@ import { profilePath } from '../profile-paths';
 import { getActiveProfileId } from '../profiles';
 import { logEvent, reportServerError } from '../events';
 import type { JobArgs, JobResult } from './types';
+import { userContextEnv } from '../user-context';
 
 async function runCompileLatex(args?: JobArgs): Promise<JobResult> {
   const profileId = (typeof args?.profileId === 'string' && args.profileId) || getActiveProfileId();
@@ -50,7 +51,7 @@ async function runCompileLatex(args?: JobArgs): Promise<JobResult> {
   return new Promise<JobResult>((resolve) => {
     const p = spawn('node', ['scripts/cv/generate-latex.mjs', tex, out], {
       cwd: ROOT,
-      env: { ...process.env },
+      env: userContextEnv(),
     });
     let stdoutBuf = '';
     let stderrBuf = '';

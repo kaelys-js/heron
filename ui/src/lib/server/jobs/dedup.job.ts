@@ -17,7 +17,7 @@ import { spawn } from 'node:child_process';
 import { ROOT } from '../files';
 import { logEvent } from '../events';
 import { register } from './registry';
-import { maybeCurrentUserId, SYSTEM_USER_ID } from '../user-context';
+import { userContextEnv } from '../user-context';
 import type { JobResult } from './types';
 
 const COUNT_RE = /(\d+)\s+duplicates?\s+removed/i;
@@ -25,14 +25,12 @@ const COUNT_RE = /(\d+)\s+duplicates?\s+removed/i;
 function runDedupTracker(): Promise<JobResult> {
   return new Promise((resolve) => {
     let stdout = '';
-    const env: NodeJS.ProcessEnv = { ...process.env };
-    // Forward the active user so the script resolves the right
-    // data/users/{uid}/profiles/{slug}/applications.md tree.
-    const uid = maybeCurrentUserId();
-    if (uid && uid !== SYSTEM_USER_ID) env.CAREER_OPS_USER_ID = uid;
     const p = spawn('node', ['scripts/tracker/dedup-tracker.mjs'], {
       cwd: ROOT,
-      env,
+      // userContextEnv injects CAREER_OPS_USER_ID so the script
+      // resolves the right data/users/{uid}/profiles/{slug}/applications.md
+      // tree (F13).
+      env: userContextEnv(),
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();

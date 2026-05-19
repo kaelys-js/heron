@@ -85,19 +85,35 @@ register({
 
 // Daemon: tick every 15 min from server boot. Mirrors the IMAP poller
 // pattern (see scan-email-imap.job.ts:installImapPollerDaemon).
+//
+// F15 — pre-fix the daemon called `runInterviewReminder()` directly
+// from OUTSIDE any user ALS context. `listProfiles()` resolved to
+// SYSTEM_USER → daemon only saw SYSTEM's profiles → real users' interview
+// reminders NEVER fired. Now: go through `runById('interview-reminder')`
+// which honors the JobDef's `perUser: true` flag and fans out across
+// every schedulable user via the registry's standard fan-out helper.
 const TICK_MS = 15 * 60 * 1000;
 let installed = false;
 
 export function installInterviewReminderDaemon(): void {
   if (installed) return;
   installed = true;
+  // Lazy import to avoid a boot-time circular: registry.ts imports
+  // types.ts, this file imports './registry' for `register`, and the
+  // registry's `runById` reaches back into the jobs barrel.
+  const fire = async (): Promise<void> => {
+    try {
+      const { runById } = await import('./registry');
+      await runById('interview-reminder');
+    } catch {
+      /* logged inside runById */
+    }
+  };
   // Initial tick after a short delay (let server finish booting).
   setTimeout(() => {
-    runInterviewReminder().catch(() => {
-      /* logged inside */
-    });
+    void fire();
     setInterval(() => {
-      runInterviewReminder().catch(() => {});
+      void fire();
     }, TICK_MS);
   }, 30_000);
 }

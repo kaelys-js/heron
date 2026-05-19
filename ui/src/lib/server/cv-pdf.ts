@@ -34,6 +34,7 @@ import { complete } from './ai';
 import { logEvent, reportServerError } from './events';
 import { profilePath, ensureProfileDirs } from './profile-paths';
 import { getActiveProfileId } from './profiles';
+import { userContextEnv } from './user-context';
 
 /** System-layer template — shared, never per-profile. */
 const CV_TEMPLATE_HTML = path.join(ROOT, 'templates', 'cv-template.html');
@@ -322,7 +323,7 @@ function spawnPdfRender(
   return new Promise((resolve, reject) => {
     const p = spawn('node', ['scripts/cv/generate-pdf.mjs', htmlPath, pdfPath, '--format=letter'], {
       cwd: ROOT,
-      env: { ...process.env },
+      env: userContextEnv(),
     });
     let stdoutBuf = '';
     let stderrBuf = '';
@@ -385,7 +386,7 @@ export function spawnAtsCheck(
   return new Promise((resolve, reject) => {
     const p = spawn('node', ['scripts/cv/ats-check.mjs', pdfPath, '--json'], {
       cwd: ROOT,
-      env: { ...process.env },
+      env: userContextEnv(),
     });
     let stdoutBuf = '';
     let stderrBuf = '';

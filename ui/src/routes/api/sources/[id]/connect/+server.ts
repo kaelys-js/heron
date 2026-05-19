@@ -67,6 +67,18 @@ export const POST = wrap(
     }
 
     if (id === 'gmail-imap') {
+      // F19 — gmail-imap is SINGLE-TENANT across this install. Creds
+      // are stored in shared `.env` (GMAIL_IMAP_*) and only ONE Gmail
+      // mailbox can be polled per install. The IMAP poller daemon
+      // resolves the OWNER's user-context via `getOwnerUserId()` and
+      // runs the scan under that ALS scope, so the reactor's side
+      // effects (markStatus, generateTechPrep, appendLead) land in
+      // the owner's applications.md — never another user's tree.
+      //
+      // Per-user gmail-imap would require encrypted per-user
+      // credential storage (e.g. keychain integration) which is out
+      // of scope for this audit. Owner-only is the safe default until
+      // that lands; the requireOwner() guard above enforces it.
       const { host, user, password, label } = body as Record<string, string>;
       if (!host || !user || !password) badRequest('host, user, password required');
       try {

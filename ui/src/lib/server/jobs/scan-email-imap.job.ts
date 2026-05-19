@@ -23,6 +23,7 @@ import { logEvent, reportServerError } from '../events';
 import { register, runById, has as hasJob } from './registry';
 import { recordSuccess, recordFailure, getSource } from '../sources';
 import type { JobArgs, JobResult } from './types';
+import { getOwnerUserId, runAsUser, SYSTEM_USER_ID, userContextEnv } from '../user-context';
 
 const FOUND_RE = /Total jobs found:\s+(\d+)/i;
 const POLL_INTERVAL_MS = 30 * 60 * 1000; // 30 min
@@ -53,7 +54,7 @@ function runScanEmailImap(args?: JobArgs): Promise<JobResult> {
       message: cliArgs.slice(1).join(' ') || 'unread-since-14d',
     });
 
-    const p = spawn('node', cliArgs, { cwd: ROOT, env: { ...process.env } });
+    const p = spawn('node', cliArgs, { cwd: ROOT, env: userContextEnv() });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();
     });
@@ -69,7 +70,7 @@ function runScanEmailImap(args?: JobArgs): Promise<JobResult> {
       });
       resolve({ ok: false, error: err.message });
     });
-    p.on('close', (code) => {
+    p.on('close', async (code) => {
       const found = parseInt(stdout.match(FOUND_RE)?.[1] ?? '0', 10);
       if (code !== 0) {
         const tail = (stderr || stdout).slice(-300).trim();
@@ -82,13 +83,54 @@ function runScanEmailImap(args?: JobArgs): Promise<JobResult> {
         resolve({ ok: false, error: 'exit ' + code });
         return;
       }
+
+      // F14/F19/F30 — process inbound reactions IN-PROCESS, not via
+      // an HTTP roundtrip that would drop the ALS user context. The
+      // .mjs child emits `INBOUND_REACTION: {json}` lines on stdout;
+      // we parse them here and call reactToEmail() directly. Pre-fix
+      // the child POSTed to /api/email/react which 401'd OR processed
+      // under the wrong user. Now reactor side-effects (markStatus,
+      // generateTechPrep, appendLead) all run under the CURRENT user
+      // context — which the daemon set to the OWNER via runAsUser.
+      let reactedActed = 0;
+      let reactedTotal = 0;
+      try {
+        const { reactToEmail } = await import('../email-reactor');
+        for (const line of stdout.split('\n')) {
+          if (!line.startsWith('INBOUND_REACTION: ')) continue;
+          reactedTotal++;
+          try {
+            const payload = JSON.parse(line.slice('INBOUND_REACTION: '.length));
+            const result = await reactToEmail(payload);
+            if (result?.classification?.kind && result.classification.kind !== 'other') {
+              reactedActed++;
+            }
+          } catch (err) {
+            reportServerError('scan-email-imap', 'reactToEmail crashed on a line', err, {
+              category: 'task',
+            });
+          }
+        }
+      } catch (err) {
+        reportServerError('scan-email-imap', 'Failed to load email-reactor', err, {
+          category: 'task',
+        });
+      }
+
       recordSuccess('gmail-imap');
-      logEvent('scan-email-imap', 'Gmail poll finished · ' + found + ' new', {
+      const reactedSuffix = reactedTotal
+        ? ' · reactor: ' + reactedActed + '/' + reactedTotal + ' acted'
+        : '';
+      logEvent('scan-email-imap', 'Gmail poll finished · ' + found + ' new' + reactedSuffix, {
         level: 'success',
         category: 'task',
         message: 'IMAP session healthy',
       });
-      resolve({ ok: true, message: found + ' new offers', meta: { found } });
+      resolve({
+        ok: true,
+        message: found + ' new offers' + reactedSuffix,
+        meta: { found, reactedActed, reactedTotal },
+      });
     });
   });
 }
@@ -113,13 +155,36 @@ register({
 
 let pollerHandle: ReturnType<typeof setInterval> | null = null;
 
-function tickOnce(): void {
-  // Bail fast when the source isn't connected — the user can connect
-  // anytime and the next tick picks it up.
-  if (!getSource('gmail-imap').connected) return;
-  if (!hasJob('scan-email-imap')) return;
-  runById('scan-email-imap').catch((err) => {
-    reportServerError('scan-email-imap', 'Daemon poll rejected', err, { category: 'task' });
+/** F14/F19/F27 — gmail-imap is single-tenant (creds live in shared
+ *  `.env`, one mailbox per install). The daemon checks the OWNER's
+ *  sources.json and runs the poll under the OWNER's user context if
+ *  connected. Member-role users can NOT connect a different gmail-imap
+ *  today — that would require per-user encrypted credential storage
+ *  which is out of scope for this audit.
+ *
+ *  Pre-fix the daemon resolved getSource() from SYSTEM's sources.json,
+ *  and the IMAP child's HTTP callback to /api/email/react crossed an
+ *  HTTP boundary that dropped ALS context. Now: the work runs entirely
+ *  inside the OWNER's ALS context (in-process), so the reactor's
+ *  loadAllJobs / markStatus / generateInterviewPrep land in OWNER's
+ *  applications.md — never accidentally in another user's tree. */
+async function tickOnce(): Promise<void> {
+  const ownerId = await getOwnerUserId();
+  if (ownerId === SYSTEM_USER_ID) {
+    // No real owner exists (pre-onboarding fresh install). Don't poll
+    // against SYSTEM_USER's sources because legacy single-user installs
+    // are handled by the existing code path; new installs without an
+    // owner have nothing to poll.
+    return;
+  }
+  await runAsUser(ownerId, async () => {
+    if (!getSource('gmail-imap').connected) return;
+    if (!hasJob('scan-email-imap')) return;
+    try {
+      await runById('scan-email-imap');
+    } catch (err) {
+      reportServerError('scan-email-imap', 'Daemon poll rejected', err, { category: 'task' });
+    }
   });
 }
 
@@ -133,10 +198,15 @@ export function installImapPollerDaemon(): void {
     }
     pollerHandle = null;
   }
+  const fire = (): void => {
+    void tickOnce().catch((err) => {
+      reportServerError('scan-email-imap', 'Daemon tick failed', err, { category: 'task' });
+    });
+  };
   // Run a first poll 60s after boot (don't block boot itself), then
   // every 30 min thereafter.
-  setTimeout(tickOnce, 60_000);
-  pollerHandle = setInterval(tickOnce, POLL_INTERVAL_MS);
+  setTimeout(fire, 60_000);
+  pollerHandle = setInterval(fire, POLL_INTERVAL_MS);
   // Don't keep the event loop alive solely for this timer — pairs well
   // with the spawn-cleanup handlers in orchestrator.ts.
   pollerHandle.unref?.();

@@ -298,45 +298,34 @@ async function main() {
           }
           processedUids.push(msg.uid);
         } else if (!dryRun) {
-          // NOT a job-alert. Route to the email-reactor endpoint, which
-          // classifies (rejection / interview-scheduling / offer /
-          // take-home / recruiter-reach-out) and auto-applies status
-          // transitions + tech-prep + lead-logging side-effects.
+          // NOT a job-alert. Emit a structured stdout line so the TS
+          // parent (scan-email-imap.job.ts) can call reactToEmail()
+          // IN-PROCESS — preserving the OWNER's ALS user context that
+          // the .mjs HTTP-out path would otherwise lose at the network
+          // boundary (F14/F19).
           //
-          // Best-effort: a failed POST shouldn't block the rest of the
-          // batch. We mark the message Seen even when the reactor fails
-          // because retrying the classification won't help (it's
-          // deterministic on the same body) and re-trying triggers the
-          // reactor's auto-fire side-effects again, which is worse than
-          // missing one.
-          try {
-            const reactorUrl = process.env.CAREER_OPS_DASHBOARD_URL || 'http://127.0.0.1:5174';
-            const res = await fetch(reactorUrl + '/api/email/react', {
-              method: 'POST',
-              headers: { 'content-type': 'application/json' },
-              body: JSON.stringify({
+          // Pre-fix this POSTed to /api/email/react over localhost with
+          // no Authorization header. The dashboard's hooks guard 401'd
+          // every call, OR (worse) processed under whoever's session
+          // happened to be active — flipping the wrong user's job
+          // statuses on each rejection email.
+          //
+          // Format: `INBOUND_REACTION: {json}\n` — the parent reads stdout
+          // line-by-line, matches the sentinel prefix, JSON.parses the
+          // rest. Truncate body to 8000 chars matching the prior reactor
+          // contract.
+          console.log(
+            'INBOUND_REACTION: ' +
+              JSON.stringify({
                 ts,
                 from,
                 subject,
                 body: decodedBody.slice(0, 8000),
                 messageId,
               }),
-            });
-            if (res.ok) {
-              const json = await res.json().catch(() => ({}));
-              reactorClassified++;
-              if (json?.classification?.kind && json.classification.kind !== 'other') {
-                reactorActed++;
-              }
-            } else {
-              reactorErrors++;
-            }
-          } catch {
-            // Dashboard not running, or network blip. Don't crash — the
-            // user can re-run with the dashboard up. We still mark
-            // Seen below so we don't loop on the same unparseable mail.
-            reactorErrors++;
-          }
+          );
+          reactorClassified++; // counted as "emitted"; the parent decides
+          // whether it acted (kind !== 'other').
           processedUids.push(msg.uid);
         }
       }
