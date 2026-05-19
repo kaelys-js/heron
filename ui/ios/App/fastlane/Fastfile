@@ -186,6 +186,12 @@ platform :ios do
       result_bundle: true,
       fail_build: true,
       xcargs: "-skipPackagePluginValidation -skipMacroValidation",
+      # G26 — xcbeautify formats xcodebuild's raw output into something
+      # legible. Fastlane installs xcbeautify automatically when
+      # `formatter: "xcbeautify"` is set; falls back to its bundled
+      # `xcpretty` shim if missing. Reads better in GitHub Actions logs
+      # and surfaces test failures with file:line annotations.
+      formatter: "xcbeautify",
       output_directory: "fastlane/test_output"
     )
     # xcov reads the xcresult bundle and emits an HTML report + cobertura

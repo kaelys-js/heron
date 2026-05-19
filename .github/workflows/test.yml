@@ -80,14 +80,23 @@ jobs:
             pnpm-store-${{ runner.os }}-
 
       - name: Cache turbo
+        # G22 — multi-tier restore-keys. Pre-fix the key was `turbo-{os}-
+        # {sha}` which always missed on a new commit; only the
+        # `turbo-{os}-` fallback hit (any branch's last build). Now we
+        # try most-specific → progressively broader keys, giving ~50%
+        # warm hits on the same branch and ~100% on the same PR
+        # incremental push. The `${{ github.sha }}` SAVE key still
+        # ensures fresh writes don't pollute older caches.
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: |
             .turbo
             ui/.turbo
             ui/electron/.turbo
-          key: turbo-${{ runner.os }}-${{ github.sha }}
+          key: turbo-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
+            turbo-${{ runner.os }}-${{ github.ref_name }}-
+            turbo-${{ runner.os }}-main-
             turbo-${{ runner.os }}-
 
       - name: Cache Vitest
@@ -180,6 +189,26 @@ jobs:
             --allowed-schemes https: \
             --validate-https \
             --validate-integrity
+
+      - name: No leftover merge-conflict markers (G28)
+        # sync-upstream.yml's bot writes conflict markers into the
+        # tree when an upstream-merge conflicts (so the conflict
+        # surfaces in the PR diff). If someone hits "Squash + merge"
+        # without resolving, the markers land in main and ship.
+        # This CI step blocks any commit containing `<<<<<<<` /
+        # `=======` / `>>>>>>>` triple-character marker lines in
+        # source files. Skips docs that intentionally explain merge
+        # conflicts.
+        run: |
+          set -euo pipefail
+          if git grep -l -E '^(<{7}|={7}|>{7})( |$)' -- \
+              ':!docs/**/*.md' ':!**/CHANGELOG.md' ':!**/*.test.*' \
+              2>/dev/null
+          then
+            echo "::error::Tracked file(s) contain merge-conflict markers — do not merge until resolved."
+            exit 1
+          fi
+          echo "✓ no conflict markers"
 
       - name: License compliance (G32)
         # Heron ships under MIT and bundles Electron. Any GPL/AGPL/LGPL
@@ -346,7 +375,7 @@ jobs:
 
       - name: Upload xcresult bundle
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: xcresult-bundle
           path: ui/ios/App/fastlane/test_output/

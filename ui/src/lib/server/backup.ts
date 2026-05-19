@@ -74,22 +74,29 @@ function backupsDir(): string {
 // What goes INTO a backup. Relative to ROOT. Resolved at backup time —
 // missing entries are skipped silently (fresh installs may not have
 // all files yet).
+//
+// F28 — these once-install-wide files moved per-user via Phase 1 + 3
+// fixes (sources, autopilot, onboarding-state, apply-counter, job-last-run
+// all live under data/users/{uid}/profiles/_shared/ now). `data/users`
+// captures them all in the multi-user tree. The legacy `data/profiles`
+// branch is kept for SYSTEM_USER (single-user installs that haven't
+// migrated yet).
 const INCLUDE_PATHS = [
-  // Multi-user trees (new layout).
+  // Multi-user trees — captures every user's per-profile + _shared/
+  // content including per-user sources.json, autopilot.json,
+  // onboarding-state.json, apply-counter.json, job-last-run.json.
   'data/users',
   'data/auth.db',
   'data/app.db',
   // Legacy single-user layout (preserved until full DB migration lands so
-  // pre-multi-user installs can still be backed up & restored).
+  // pre-multi-user installs can still be backed up & restored). The
+  // _shared/ subdir under data/profiles holds SYSTEM_USER's per-user
+  // shared infra in the legacy layout.
   'data/profiles',
   'data/profiles.json',
-  // Install-wide shared infra.
-  'data/sources.json',
-  'data/autopilot.json',
+  // Install-wide infrastructure (truly global — not user-scoped).
   'data/issues.jsonl',
   'data/activity.jsonl',
-  'data/onboarding-state.json',
-  'interview-prep/story-bank.md',
 ] as const;
 
 // Exclude patterns passed to tar. tar accepts --exclude='pattern' relative

@@ -16,7 +16,7 @@
  */
 import { appDb } from './db';
 import { activityEvents, issues as issuesTable } from './db/app-schema';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { SYSTEM_USER_ID } from './user-context';
 import type { ActivityEvent, Issue } from '$lib/types';
 
@@ -90,14 +90,20 @@ export function dbWriteIssue(issue: Issue): void {
   }
 }
 
-/** Mark an issue resolved in the DB (called after the JSONL write). */
+/** Mark an issue resolved in the DB (called after the JSONL write).
+ *
+ *  F24 — filter by (userId, id) not just id. Issue ids are 12-char hex
+ *  (24 bits of entropy from crypto.randomBytes(6)) — collision risk
+ *  across users is small but real. The JSONL resolver already filters
+ *  via visibleToUser(); this defense-in-depth fix prevents user A
+ *  resolving user B's issue if the ids ever collide. */
 export function dbResolveIssue(userId: string, id: string, resolvedAt: number): void {
   if (!shouldWrite(userId)) return;
   try {
     appDb
       .update(issuesTable)
       .set({ resolvedAt, updatedAt: resolvedAt })
-      .where(eq(issuesTable.id, id))
+      .where(and(eq(issuesTable.id, id), eq(issuesTable.userId, userId)))
       .run();
   } catch {
     /* non-fatal */

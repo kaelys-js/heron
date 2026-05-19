@@ -13,8 +13,12 @@
 A thinking partner for career transitions. Patient, precise, local-first.
 
 [![Build](https://github.com/heron/heron/actions/workflows/test.yml/badge.svg)](https://github.com/heron/heron/actions/workflows/test.yml)
+[![CodeQL](https://github.com/heron/heron/actions/workflows/codeql.yml/badge.svg)](https://github.com/heron/heron/actions/workflows/codeql.yml)
+[![codecov](https://codecov.io/github/heron/heron/graph/badge.svg)](https://codecov.io/github/heron/heron)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/heron/heron/badge)](https://securityscorecards.dev/viewer/?uri=github.com/heron/heron)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/github/v/release/heron/heron)](https://github.com/heron/heron/releases)
+[![Discord](https://img.shields.io/discord/1383123430472122572?label=discord&logo=discord)](https://discord.gg/8pRpHETxa4)
 
 [Get started](docs/SETUP.md) · [Documentation](docs/) · [Architecture](docs/ARCHITECTURE.md) · [Discord](https://discord.gg/8pRpHETxa4)
 
