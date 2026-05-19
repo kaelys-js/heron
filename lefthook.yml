@@ -410,6 +410,29 @@ pre-push:
       # This hook stays so a `--no-verify` commit can't slip unformatted
       # code into a push.
       run: pnpm format:check
+    swiftlint-strict:
+      # Pre-commit swiftlint is advisory (`|| true`) so contributors can
+      # iterate; CI uses `swiftlint --strict` and BLOCKS. Without this
+      # pre-push step, a developer who fixed everything BUT swiftlint
+      # would push successfully and see CI red after the fact. This
+      # mirrors CI exactly so the surprise is caught locally.
+      run: |
+        command -v swiftlint >/dev/null 2>&1 || { echo "skip: swiftlint not installed (mise install)"; exit 0; }
+        swiftlint --strict --no-cache ui/ios/App
+    ktlint-strict:
+      # Mirror of CI's strict ktlint check. Pre-commit auto-formats;
+      # this catches anything ktlint --format couldn't auto-fix
+      # (line-length, unused imports, etc.).
+      run: |
+        command -v ktlint >/dev/null 2>&1 || exit 0
+        ktlint 'ui/android/app/src/**/*.kt'
+    ruff-strict:
+      # Mirror of CI's strict ruff check on every Python file. Pre-
+      # commit auto-fixes; this catches anything that needs manual
+      # attention (logic errors, unsafe imports, etc.).
+      run: |
+        command -v ruff >/dev/null 2>&1 || exit 0
+        ruff format --check . && ruff check .
     actionlint:
       # Lint .github/workflows/*.yml — catches typos / unknown action inputs
       # / job-needs cycles before they ever hit GitHub. Free + fast.
