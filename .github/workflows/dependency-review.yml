@@ -17,15 +17,20 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
-
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Dependency Review
-        # TODO: remove continue-on-error once the Dependency graph is enabled in
-        # Settings > Security & Analysis (see #343). Until then, this is a temporary
-        # workaround to unblock PRs — note that fail-on-severity: high is still
-        # configured but will not block merges while continue-on-error is true.
-        continue-on-error: true
-        uses: actions/dependency-review-action@v5
+        # G7 — blocking again. The Dependency Graph must be enabled in
+        # Settings → Security & Analysis (it's enabled by default for
+        # public repos as of 2024). If a fork or restored repo somehow
+        # has it disabled, the action will fail with a clear error
+        # message and the maintainer can re-enable it in 2 clicks. This
+        # is preferable to silently passing on vulnerable PRs.
+        #
+        # Also denies GPL/AGPL/LGPL licenses since Heron ships under
+        # MIT and bundles Electron — any GPL-family transitive would
+        # taint the binary.
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: high
+          deny-licenses: AGPL-3.0, GPL-2.0, GPL-3.0, LGPL-2.1, LGPL-3.0
           comment-summary-in-pr: always

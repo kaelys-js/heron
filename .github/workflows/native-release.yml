@@ -34,9 +34,12 @@ on:
         required: true
         type: string
 
-# Least-privilege: needs to attach artifacts to a release.
+# Least-privilege: needs to attach artifacts to a release + (G1) mint
+# Sigstore OIDC tokens for build-provenance attestations on every binary.
 permissions:
   contents: write
+  id-token: write # G1 — SLSA provenance via Sigstore
+  attestations: write # G1 — write attestation to GitHub's attestation API
 
 # Two release tags landing in quick succession waste 30min of CI per
 # job. Only one native-release run per ref at a time. We don't cancel
@@ -55,6 +58,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
+      - name: Harden runner
+        # G4 — defense-in-depth against compromised actions. `audit` mode
+        # surfaces unexpected egress in the run logs; promote to `block`
+        # after 2 weeks of green runs once the allowed-endpoints list is
+        # known-good. Especially valuable on this job because the secrets
+        # block above grants access to Apple signing certs + ASC API key.
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
       - name: Required secret check
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -99,13 +111,22 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v6
+      - name: Harden runner
+        # G4 — harden every native build runner. The macos leg writes
+        # the signing cert to the runner keychain; the windows leg
+        # signs with the (forthcoming G18) Azure trusted-signing token.
+        # Audit mode for the rollout — flip to `block` after observing
+        # legitimate endpoints.
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
 
       # mise installs Node + pnpm versions pinned in .mise.toml so CI
       # uses the same versions developers run locally.
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
         with:
           experimental: true
           cache: true
@@ -116,7 +137,7 @@ jobs:
         id: pnpm-store
         shell: bash
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v5
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -125,7 +146,7 @@ jobs:
 
       # Cache electron-builder's intermediate downloads (electron
       # binaries, app-builder, etc.) — saves ~2min per run.
-      - uses: actions/cache@v5
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: |
             ~/.cache/electron
@@ -194,9 +215,29 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: pnpm run electron:make
 
+      - name: Verify macOS notarization-staple
+        # G17 — without this step, a silent notarization regression
+        # (Apple's notarytool returns success but the staple isn't
+        # written) ships a broken DMG. End users get "App is damaged
+        # and can't be opened" with no way to fix it themselves.
+        # `xcrun stapler validate` confirms the notarization ticket
+        # was actually written to the package; `spctl --assess` runs
+        # the same check Gatekeeper does at install time.
+        if: matrix.os == 'macos-latest'
+        working-directory: ui/electron/dist
+        run: |
+          set -e
+          shopt -s nullglob
+          for dmg in *.dmg; do
+            echo "::group::Verify $dmg"
+            xcrun stapler validate "$dmg"
+            spctl --assess --type install --verbose "$dmg"
+            echo "::endgroup::"
+          done
+
       - name: Upload artifacts
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: heron-${{ matrix.os }}
           path: |
@@ -209,6 +250,24 @@ jobs:
           if-no-files-found: warn
           retention-days: 90
 
+      - name: Attest build provenance
+        # G1 — SLSA build provenance per binary. End users verify with
+        # `gh attestation verify <file> --owner heron`. Signed by
+        # Sigstore via OIDC; no per-secret cert management. Failure
+        # here doesn't block the release (the binaries are already
+        # uploaded by electron-builder above) — we want the provenance
+        # but won't kill a successful build over a Sigstore blip.
+        if: success() && hashFiles('ui/electron/dist/*.dmg', 'ui/electron/dist/*.exe', 'ui/electron/dist/*.AppImage') != ''
+        continue-on-error: true
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-path: |
+            ui/electron/dist/*.dmg
+            ui/electron/dist/*.exe
+            ui/electron/dist/*.AppImage
+            ui/electron/dist/*.deb
+            ui/electron/dist/*.zip
+
   build-ios:
     name: Build iOS (TestFlight)
     needs: preflight
@@ -219,13 +278,21 @@ jobs:
       # .mise.toml + test.yml's `ios` job. Bump in lockstep.
       DEVELOPER_DIR: /Applications/Xcode_16.app/Contents/Developer
     steps:
-      - uses: actions/checkout@v6
+      - name: Harden runner
+        # G4 — iOS build runner. Handles Apple ASC API key + signing
+        # cert; the highest-privilege runner in this workflow. Audit
+        # mode to observe what xcodebuild + fastlane reach out to during
+        # the rollout.
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
 
       # mise pins Node + pnpm + Ruby together so Fastlane uses the same
       # Ruby version we develop against locally.
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
         with:
           experimental: true
           cache: true
@@ -235,7 +302,7 @@ jobs:
         id: pnpm-store
         shell: bash
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v5
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -244,7 +311,7 @@ jobs:
 
       # Capacitor 8 uses Swift Package Manager (no Cocoapods). Cache
       # Xcode's derived data + the SPM resolved-packages cache.
-      - uses: actions/cache@v5
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: |
             ~/Library/Developer/Xcode/DerivedData
@@ -255,7 +322,7 @@ jobs:
 
       # Bundler installs Fastlane + plugins pinned in Gemfile.lock.
       # Ruby version comes from `.ruby-version` in ui/ios/App/.
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@97ecb7b512899eb71ab1bf2310a624c6f1589ac6 # v1.308.0
         with:
           bundler-cache: true
           working-directory: ui/ios/App
