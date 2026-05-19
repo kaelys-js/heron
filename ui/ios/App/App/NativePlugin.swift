@@ -60,6 +60,11 @@ public class NativePlugin: CAPPlugin, CAPBridgedPlugin {
         // copies the JSON into App Group UserDefaults where the
         // background process can read it.
         CAPPluginMethod(name: "setSharedQuietHours", returnType: CAPPluginReturnPromise),
+        // Full sign-out scrub. Single method to wipe every piece of
+        // user-scoped App Group state in one bridge round-trip so the
+        // JS sign-out flow can't accidentally forget one of the keys.
+        // See clearAllSharedState() below.
+        CAPPluginMethod(name: "clearAllSharedState", returnType: CAPPluginReturnPromise),
     ]
 
     @objc public func getLanUrl(_ call: CAPPluginCall) {
@@ -248,6 +253,50 @@ public class NativePlugin: CAPPlugin, CAPBridgedPlugin {
         } else {
             defaults.set(json, forKey: key)
         }
+        call.resolve(["ok": true])
+    }
+
+    /**
+     * Full sign-out scrub of every user-scoped App Group key.
+     *
+     * Multi-tenant safety: when user A signs out and user B signs in on
+     * the same device, NO piece of user A's data may leak through the
+     * App Group container — that container is shared across the host app,
+     * the Share Extension, the Watch, the Widgets, and the BackgroundFetcher,
+     * none of which know about better-auth sessions. The only defence is
+     * to wipe everything that's keyed to the previous user.
+     *
+     * What's cleared (user-specific):
+     *   • bearerToken             — auth credential
+     *   • <brand>:quiet-hours     — user A's notification schedule
+     *   • lastSeenIssue           — user A's dismissed-issue cursor
+     *   • Spotlight job index     — user A's company/role names visible in
+     *                               iOS Spotlight search
+     *
+     * What's kept (machine-level, NOT user-specific):
+     *   • lanUrl / backendResolvedUrl / tailscaleUrl / productionUrl
+     *     — same backend serves the next user too; resolving them again
+     *       would cost a Bonjour round-trip with zero security benefit.
+     *
+     * Widget data + auth gate are scrubbed separately by
+     * NativePlugin.updateWidgets({authenticated: false}) — the layout
+     * +effect already fires that on `heron:authed` flag drop. Splitting
+     * the two paths means widgets can be re-gated without nuking the rest
+     * of the App Group (and vice versa).
+     */
+    @objc public func clearAllSharedState(_ call: CAPPluginCall) {
+        guard let defaults = UserDefaults(suiteName: Brand.appGroup) else {
+            call.reject("app-group-missing", "App Group not configured: \(Brand.appGroup)")
+            return
+        }
+        // User-scoped App Group keys.
+        defaults.removeObject(forKey: Brand.DefaultsKey.bearerToken)
+        defaults.removeObject(forKey: Brand.DefaultsKey.lastSeenIssue)
+        defaults.removeObject(forKey: "\(Brand.name):quiet-hours")
+        // Spotlight index — user A's job IDs / company / role names live
+        // in the system search index. Clear them so user B's Spotlight
+        // search doesn't surface user A's pipeline.
+        SpotlightIndexer.shared.clear()
         call.resolve(["ok": true])
     }
 

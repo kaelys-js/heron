@@ -101,6 +101,7 @@ register({
   category: 'discovery',
   trigger: { type: 'manual' }, // scheduling handled by the daemon below
   allowManual: true,
+  perUser: true,
   run: runScanEmailImap,
 });
 

@@ -146,3 +146,102 @@ describe('ApiError — instance hygiene', () => {
     expect(e.code).toBe(code);
   });
 });
+
+/**
+ * F8 — session expiry: when the server returns 401 AND the client has
+ * locally-marked itself as authed, apiCall must scrub local state +
+ * redirect to /login so a stale bearer doesn't keep leaking through
+ * the Share Extension / Watch / BackgroundFetcher.
+ *
+ * We verify the BEHAVIOUR (clearLocalAuthState gets called, redirect
+ * fires) rather than the internal flag, because the flag is a private
+ * implementation detail. The structural test in
+ * multi-user.integration.test.ts asserts the static-analysis-level
+ * pairing of signOut/clearLocalAuthState; this test asserts the
+ * dynamic behaviour.
+ */
+describe('apiCall — 401 session expiry triggers clearLocalAuthState + /login redirect', () => {
+  // Stub clearLocalAuthState BEFORE re-importing api.ts so the dynamic
+  // import inside apiCall picks up the mock instead of the real impl.
+  const clearLocalAuthState = vi.fn(async () => undefined);
+  vi.doMock('$lib/client/auth-client', () => ({ clearLocalAuthState }));
+
+  // window.location.assign isn't normally writable; replace it on each
+  // test and restore after. Locking via getter would crash jsdom.
+  const originalLocation = window.location;
+  let assignSpy: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    clearLocalAuthState.mockClear();
+    assignSpy = vi.fn();
+    // @ts-expect-error — overriding window.location for the test
+    delete window.location;
+    // @ts-expect-error — minimal stub of Location interface
+    window.location = { ...originalLocation, pathname: '/inbox', assign: assignSpy };
+    // Pretend the user IS locally authed — this is what flips the
+    // 401-handler from "bad creds, do nothing" to "session expired,
+    // scrub everything".
+    localStorage.setItem('heron:authed', '1');
+  });
+
+  afterEach(() => {
+    localStorage.removeItem('heron:authed');
+    // @ts-expect-error — restoring window.location
+    window.location = originalLocation;
+  });
+
+  it('401 with heron:authed=1 calls clearLocalAuthState + window.location.assign(/login)', async () => {
+    // Re-import api.ts fresh so the module-local sessionExpiryHandled
+    // flag is reset between tests.
+    vi.resetModules();
+    const { apiCall: freshApiCall, ApiError: FreshApiError } = await import('./api');
+    void FreshApiError; // imported for instanceof assertions on the fresh class
+    server.use(http.get('*/api/x', () => HttpResponse.json({ ok: false }, { status: 401 })));
+    await expect(freshApiCall('/api/x', { silent: true })).rejects.toBeInstanceOf(FreshApiError);
+    // The handler scrubs + redirects asynchronously (Promise chain).
+    // Wait one microtask tick for the dynamic-import .then to fire.
+    await new Promise((r) => setTimeout(r, 10));
+    expect(clearLocalAuthState).toHaveBeenCalled();
+    expect(assignSpy).toHaveBeenCalledWith('/login');
+  });
+
+  it('401 WITHOUT heron:authed (bad creds at login) does NOT scrub or redirect', async () => {
+    vi.resetModules();
+    const { apiCall: freshApiCall, ApiError: FreshApiError } = await import('./api');
+    void FreshApiError; // imported for instanceof assertions on the fresh class
+    localStorage.removeItem('heron:authed');
+    server.use(http.get('*/api/x', () => HttpResponse.json({ ok: false }, { status: 401 })));
+    await expect(freshApiCall('/api/x', { silent: true })).rejects.toBeInstanceOf(FreshApiError);
+    await new Promise((r) => setTimeout(r, 10));
+    expect(clearLocalAuthState).not.toHaveBeenCalled();
+    expect(assignSpy).not.toHaveBeenCalled();
+  });
+
+  it('repeated 401s from a fan-out only trigger ONE scrub + redirect', async () => {
+    vi.resetModules();
+    const { apiCall: freshApiCall, ApiError: FreshApiError } = await import('./api');
+    void FreshApiError; // imported for instanceof assertions on the fresh class
+    server.use(http.get('*/api/x', () => HttpResponse.json({ ok: false }, { status: 401 })));
+    await Promise.all(
+      [1, 2, 3, 4].map(() => freshApiCall('/api/x', { silent: true }).catch(() => undefined)),
+    );
+    await new Promise((r) => setTimeout(r, 10));
+    // Exactly one scrub + one redirect even though 4 requests 401'd.
+    expect(clearLocalAuthState).toHaveBeenCalledTimes(1);
+    expect(assignSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('does NOT redirect if already on /login (avoid loop)', async () => {
+    vi.resetModules();
+    const { apiCall: freshApiCall, ApiError: FreshApiError } = await import('./api');
+    void FreshApiError; // imported for instanceof assertions on the fresh class
+    window.location.pathname = '/login';
+    server.use(http.get('*/api/x', () => HttpResponse.json({ ok: false }, { status: 401 })));
+    await expect(freshApiCall('/api/x', { silent: true })).rejects.toBeInstanceOf(FreshApiError);
+    await new Promise((r) => setTimeout(r, 10));
+    // We still want the scrub (the local-authed flag is wrong);
+    // we just don't bounce because we're already at /login.
+    expect(clearLocalAuthState).toHaveBeenCalled();
+    expect(assignSpy).not.toHaveBeenCalled();
+  });
+});

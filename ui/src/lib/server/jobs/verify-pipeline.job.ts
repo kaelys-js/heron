@@ -219,5 +219,6 @@ register({
   category: 'hygiene',
   trigger: { type: 'daily', hour: 4, minute: 0 },
   allowManual: true,
+  perUser: true,
   run: runVerifyPipeline,
 });

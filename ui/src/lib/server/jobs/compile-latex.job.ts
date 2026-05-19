@@ -98,5 +98,6 @@ register({
   category: 'apply',
   trigger: { type: 'manual' },
   allowManual: true,
+  perUser: true,
   run: runCompileLatex,
 });

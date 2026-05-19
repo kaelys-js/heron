@@ -105,6 +105,7 @@ register({
   // 08:30 — 30 min after the portal scan so dedup catches the ATS rows first
   trigger: { type: 'daily', hour: 8, minute: 30, weekdays: [1, 2, 3, 4, 5] },
   allowManual: true,
+  perUser: true,
   run: runScanCurated,
 });
 

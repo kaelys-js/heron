@@ -182,6 +182,7 @@ register({
   // finishes, so behaviour is unchanged from the user's perspective.
   trigger: { type: 'daily', hour: 9, minute: 0, weekdays: [1, 2, 3, 4, 5] },
   allowManual: true,
+  perUser: true,
   run: runScanAll,
 });
 

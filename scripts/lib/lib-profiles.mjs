@@ -37,7 +37,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const ROOT = __dirname;
+// Repo root sits two levels above this file (scripts/lib/lib-profiles.mjs).
+// Previously this was just `__dirname` which silently created a phantom
+// `scripts/lib/data/profiles/` tree on first access — the actual data was
+// at `data/profiles/` at repo root, so every script that touched profile
+// paths was reading from the wrong place. Resolving to repo root fixes
+// F3 (multi-user audit finding: tracker scripts hardcode legacy paths).
+export const ROOT = path.resolve(__dirname, '..', '..');
 const PROFILES_JSON = path.join(ROOT, 'data', 'profiles.json');
 const LEGACY_PROFILES_ROOT = path.join(ROOT, 'data', 'profiles');
 const USERS_ROOT = path.join(ROOT, 'data', 'users');

@@ -79,6 +79,7 @@ register({
   // orchestrator boot (see installInterviewReminderDaemon below).
   trigger: { type: 'daily', hour: 9, minute: 0 },
   allowManual: true,
+  perUser: true,
   run: runInterviewReminder,
 });
 

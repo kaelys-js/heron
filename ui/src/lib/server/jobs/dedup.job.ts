@@ -74,5 +74,6 @@ register({
   category: 'hygiene',
   trigger: { type: 'after', tasks: ['batch-merge'] },
   allowManual: true,
+  perUser: true,
   run: runDedupTracker,
 });

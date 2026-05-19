@@ -114,22 +114,22 @@
     "validate:xml": "bash scripts/system/validate-xml.sh"
   },
   "dependencies": {
-    "@google/generative-ai": "0.24.1",
+    "@google/generative-ai": "catalog:",
     "dotenv": "catalog:",
-    "js-yaml": "4.1.1",
+    "js-yaml": "catalog:",
     "playwright": "catalog:"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.15",
+    "@biomejs/biome": "catalog:",
     "@vitest/coverage-v8": "catalog:",
-    "ajv": "8.20.0",
-    "ajv-formats": "3.0.1",
-    "editorconfig": "3.0.2",
-    "jsonc-parser": "3.3.1",
-    "markdownlint-cli2": "0.22.1",
-    "oxlint": "1.64.0",
-    "sort-package-json": "3.6.1",
-    "turbo": "2.9.12",
+    "ajv": "catalog:",
+    "ajv-formats": "catalog:",
+    "editorconfig": "catalog:",
+    "jsonc-parser": "catalog:",
+    "markdownlint-cli2": "catalog:",
+    "oxlint": "catalog:",
+    "sort-package-json": "catalog:",
+    "turbo": "catalog:",
     "vitest": "catalog:"
   },
   "packageManager": "pnpm@11.1.0",

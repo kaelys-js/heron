@@ -380,25 +380,9 @@ async function runTask(s: Schedule): Promise<void> {
  * resources — running them in parallel for multiple profiles would just
  * fight each other.
  */
-/** List every real user (deleted_at IS NULL) for fan-out scheduling.
- *  Falls back to the SYSTEM_USER_ID legacy install when no users exist
- *  yet (pre-multi-user single-user mode). */
-async function listSchedulableUsers(): Promise<string[]> {
-  try {
-    const { authDb } = await import('./db');
-    const { users } = await import('./db/auth-schema');
-    const { isNull } = await import('drizzle-orm');
-    const rows = authDb.select({ id: users.id }).from(users).where(isNull(users.deletedAt)).all();
-    if (rows.length === 0) {
-      const { SYSTEM_USER_ID } = await import('./user-context');
-      return [SYSTEM_USER_ID];
-    }
-    return rows.map((r) => r.id);
-  } catch {
-    const { SYSTEM_USER_ID } = await import('./user-context');
-    return [SYSTEM_USER_ID];
-  }
-}
+// listSchedulableUsers moved to user-context.ts — single source of
+// truth shared with jobs/registry.ts for the perUser: true fan-out.
+import { listSchedulableUsers } from './user-context';
 
 async function runScanForAllProfiles(): Promise<void> {
   try {

@@ -160,5 +160,6 @@ register({
   category: 'insight',
   trigger: { type: 'daily', hour: 7, minute: 0 },
   allowManual: true,
+  perUser: true,
   run: runDailyDigest,
 });

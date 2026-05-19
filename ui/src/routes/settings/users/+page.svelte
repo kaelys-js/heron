@@ -1,7 +1,8 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
   import { Plus, Copy, X, Users as UsersIcon } from '@lucide/svelte';
-  import { authClient } from '$lib/client/auth-client';
+  import { authClient, clearLocalAuthState } from '$lib/client/auth-client';
+  import { clearAllPending } from '$lib/client/notifications';
   import { goto, invalidateAll } from '$app/navigation';
   import { BRAND } from '$lib/client/brand';
 
@@ -59,6 +60,20 @@
     busy = true;
     try {
       await authClient.signOut();
+      // Mirror the canonical sign-out flow from AppSidebar:
+      //   1. Wipe local bearer token + heron:authed gate so the next
+      //      page-load on iOS bounces to /login. clearLocalAuthState() is
+      //      the single source of truth — also scrubs App Group state
+      //      (bearer + spotlight index + quiet hours) so a subsequent
+      //      user on the same device can't inherit the previous user's
+      //      data via the Share Extension or Watch widgets.
+      //   2. Drain pending + delivered iOS notifications so a "Scan
+      //      complete · 3 new offers" scheduled while user A was signed
+      //      in can't fire after user B signs in on the same device.
+      // Both helpers no-op on web/desktop so the same flow is safe
+      // everywhere.
+      await clearLocalAuthState();
+      await clearAllPending();
       await goto('/login', { invalidateAll: true });
     } finally {
       busy = false;

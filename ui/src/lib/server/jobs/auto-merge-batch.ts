@@ -203,5 +203,6 @@ register({
   category: 'hygiene',
   trigger: { type: 'manual' },
   allowManual: true,
+  perUser: true,
   run: () => runMergeTracker('manual'),
 });

@@ -73,6 +73,16 @@ export function listSummaries(): JobSummary[] {
  * Invoke a registered job by id. Catches throws so bad implementations
  * can't crash the server. The job itself is responsible for emitting
  * activity-feed events as it progresses.
+ *
+ * Multi-user fan-out (F1): if `def.perUser` is true, this iterates
+ * every schedulable user and wraps each `def.run()` call in
+ * `runAsUser(userId, …)`. The job sees one user per invocation via
+ * `currentUserId()` and doesn't have to know about user iteration.
+ * Aggregated result reports overall ok + per-user breakdown.
+ *
+ * If a caller is ALREADY inside a user context (manual /api/jobs/[id]/run
+ * with the acting user, or after-trigger chained inside an existing
+ * user context), the existing context is preserved — no double fan-out.
  */
 export async function runById(id: string, args?: JobArgs): Promise<JobResult> {
   const def = registry.get(id);
@@ -82,8 +92,41 @@ export async function runById(id: string, args?: JobArgs): Promise<JobResult> {
   }
   inFlight.add(id);
   try {
-    const result = await def.run(args);
-    return result;
+    // Non-per-user jobs (system: boot, cleanup, etc.) OR jobs already
+    // inside a user context (manual run from /api/jobs/[id]/run hits
+    // hooks.server.ts's withUserContext) run once with the current scope.
+    if (!def.perUser) {
+      return await def.run(args);
+    }
+    const { maybeCurrentUserId, runAsUser, listSchedulableUsers, SYSTEM_USER_ID } = await import(
+      '../user-context'
+    );
+    const existingUser = maybeCurrentUserId();
+    if (existingUser && existingUser !== SYSTEM_USER_ID) {
+      // Manual run hit by an authenticated user — scope to THAT user only.
+      return await def.run(args);
+    }
+    // Scheduled / system-triggered: fan out across every schedulable user.
+    const userIds = await listSchedulableUsers();
+    const perUserResults: Array<{ userId: string; result: JobResult }> = [];
+    let failed = 0;
+    for (const userId of userIds) {
+      try {
+        const result = await runAsUser(userId, () => def.run(args));
+        perUserResults.push({ userId, result });
+        if (!result.ok) failed++;
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        perUserResults.push({ userId, result: { ok: false, error: errMsg } });
+        failed++;
+      }
+    }
+    const total = perUserResults.length;
+    const ok = failed === 0;
+    const summary = `${total - failed}/${total} users ok` + (failed ? ` (${failed} failed)` : '');
+    return ok
+      ? { ok: true, message: summary, meta: { perUser: perUserResults } }
+      : { ok: false, error: summary, meta: { perUser: perUserResults } };
   } catch (err) {
     reportServerError('jobs', 'Job ' + id + ' threw', err, { category: 'system' });
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
