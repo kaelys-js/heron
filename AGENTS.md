@@ -353,7 +353,7 @@ CI uses `jdx/mise-action@v2` so the same versions install in GitHub runners as o
 | `ui/capacitor.config.ts` + `ui/electron/capacitor.config.ts` | appId, appName, URL scheme, splash colors |
 | `ui/electron/electron-builder.config.json` | appId, productName, copyright, CFBundleURLTypes, NSBonjourServices, GitHub publish target |
 | `ui/ios/App/App/Info.plist` | CFBundleDisplayName, URL scheme, Bonjour services, NSLocalNetworkUsageDescription, NSFaceIDUsageDescription, NSUserActivityTypes |
-| `ui/ios/App/App/Brand.swift` (generated) | Swift constants for every Swift file to import — `Brand.bundleId`, `Brand.urlScheme`, `Brand.serviceType`, `Brand.DefaultsKey.lanUrl`, `Brand.jobDeepLink(id)`, etc. Replicated into each extension target (`CareerOpsWidget/Brand.swift`, `CareerOpsLiveActivity/Brand.swift`, `CareerOpsShareExtension/Brand.swift`) because Xcode app-extension targets can't import from the host. |
+| `ui/ios/App/App/Brand.swift` (generated) | Swift constants for every Swift file to import — `Brand.bundleId`, `Brand.urlScheme`, `Brand.serviceType`, `Brand.DefaultsKey.lanUrl`, `Brand.jobDeepLink(id)`, etc. Replicated into each extension target (`AppWidget/Brand.swift`, `AppLiveActivity/Brand.swift`, `AppShareExtension/Brand.swift`) because Xcode app-extension targets can't import from the host. |
 | `ui/src/lib/client/brand.ts` (generated) | TS constants — `BRAND.bundleId`, `BRAND.urlScheme`, `jobDeepLink(id)`, `deepLink(route)`. Web/Capacitor sources import from here. |
 | `ui/electron/src/brand.ts` (generated) | Same for the Electron main process. |
 | `ui/static/favicon.svg` | Copy of `branding/logo.svg` |

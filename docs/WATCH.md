@@ -9,12 +9,12 @@ Smart Stack / watch face.
 
 | Surface | Source | Where it appears |
 |---|---|---|
-| Standalone Watch app | `ui/ios/App/CareerOpsWatch/` | Dedicated launcher icon on the watch home grid |
-| Pipeline stats widget | `CareerOpsWidget` | Smart Stack, Home Screen widget (mirrored via Lock-Screen widgets) |
+| Standalone Watch app | `ui/ios/App/WatchApp/` | Dedicated launcher icon on the watch home grid |
+| Pipeline stats widget | `AppWidget` | Smart Stack, Home Screen widget (mirrored via Lock-Screen widgets) |
 | Next interview countdown | `NextInterviewWidget` | Smart Stack, Home Screen |
 | Top job to apply | `TopApplyWidget` | Smart Stack, Lock Screen |
 | Inbox issues | `InboxIssuesWidget` | Smart Stack, Home Screen |
-| Interview Live Activity | `CareerOpsLiveActivity` | Dynamic Island → Watch Smart Stack (watchOS 9+) |
+| Interview Live Activity | `AppLiveActivity` | Dynamic Island → Watch Smart Stack (watchOS 9+) |
 
 ## Data flow
 
@@ -27,7 +27,7 @@ api/* writes data                          WatchModel @Published
    ↓                                          ↑
 updateWidgets(payload)  ─Capacitor──┐      WCSession.didReceive*
    ↓                                ▼
-CareerOpsNativePlugin           WatchSessionBridge
+NativePlugin           WatchSessionBridge
    ↓                                ↓
 App Group UserDefaults     ────────►  WCSession.applicationContext
    ↓                                ↓                          ↑
@@ -48,16 +48,16 @@ The source files are committed; you need to create the Xcode target
 (Xcode does target wiring through its UI, not files we can write).
 
 1. **File → New → Target → watchOS → App**
-   - Product Name: `CareerOpsWatch`
+   - Product Name: `WatchApp`
    - Bundle ID: `com.resistjs.heron.watchkitapp`
    - Interface: SwiftUI · Lifecycle: SwiftUI App
    - Embed in: `App` (the iOS main target)
-2. Delete the auto-generated `ContentView.swift`, `CareerOpsWatchApp.swift`,
+2. Delete the auto-generated `ContentView.swift`, `WatchApp.swift`,
    `Assets.xcassets` and `Info.plist` Xcode created. Drag the existing
-   files from `ui/ios/App/CareerOpsWatch/` into the new target (✓ "Copy
+   files from `ui/ios/App/WatchApp/` into the new target (✓ "Copy
    if needed" should be UNCHECKED — we want references).
 3. Under the watch target's **Signing & Capabilities**:
-   - Set **Entitlements**: `CareerOpsWatch.entitlements`
+   - Set **Entitlements**: `WatchApp.entitlements`
    - Add **App Groups**: `group.com.resistjs.heron`
 4. Add the watch target to `ui/ios/App/fastlane/Fastfile` so the
    `pnpm build:ios` lane archives it alongside the main app.
@@ -67,12 +67,12 @@ The source files are committed; you need to create the Xcode target
 ## Files
 
 ```text
-ui/ios/App/CareerOpsWatch/
-├── CareerOpsWatchApp.swift   # @main entry, WindowGroup → RootView
+ui/ios/App/WatchApp/
+├── WatchApp.swift   # @main entry, WindowGroup → RootView
 ├── RootView.swift            # 4-page TabView (Stats, Next Interview, Top Apply, Inbox)
 ├── WatchModel.swift          # @ObservableObject + WCSessionDelegate
 ├── Info.plist                # WKApplication, WKCompanionAppBundleIdentifier
-├── CareerOpsWatch.entitlements  # App Group
+├── WatchApp.entitlements  # App Group
 └── Assets.xcassets/
     ├── AppIcon.appiconset/   # 1024×1024 (Xcode auto-derives sizes)
     └── AccentColor.colorset/

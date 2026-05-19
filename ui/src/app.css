@@ -634,7 +634,7 @@ body {
 }
 /* Capacitor only: iOS WebViews still rubber-band even with overscroll-
    behavior set, because the WebView's own scroll view sits above the
-   document. The careerops:// scheme guarantees we're inside the
+   document. The heron:// scheme guarantees we're inside the
    Capacitor WebView; the html.dark + custom URL detection in app.html's
    inline script ensures this class is set early. For now, `touch-action:
    pan-y` discourages horizontal pan gestures which trigger Safari's

@@ -80,7 +80,7 @@ A `DEV / PROD / LAN / TAILSCALE / REMOTE` pill in the topbar shows the live sour
 | Understand notification routing | `ui/src/lib/client/sse-notifications-bridge.ts` |
 | Tweak the AppMenuBar | `ui/electron/src/app-menu.ts` |
 | Tweak the system tray | `ui/electron/src/tray.ts` |
-| Add an iOS feature | `ui/ios/App/App/CareerOpsNativePlugin.swift` + JS wrapper in `ui/src/lib/client/native-bridge.ts` |
+| Add an iOS feature | `ui/ios/App/App/NativePlugin.swift` + JS wrapper in `ui/src/lib/client/native-bridge.ts` |
 | Change CI build flow | `.github/workflows/native-release.yml` |
 
 That's it. `pnpm native` is the menu, `pnpm setup:native` is the one-time setup, everything else is one command.

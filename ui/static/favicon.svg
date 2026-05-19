@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <!--
-    Career Ops master logo. Single source of truth.
+    Heron master logo. Single source of truth.
     `pnpm brand:apply` propagates this into:
       - All platform icons (iOS appiconset, Splash.imageset, electron .icns/.ico, web manifest sizes)
       - ui/static/favicon.svg (web favicon)

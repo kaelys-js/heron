@@ -78,9 +78,9 @@ From repo root, the same commands are exposed as `pnpm dev`, `pnpm build`,
 - **`wrap()` helper** (`src/lib/server/api-helpers.ts`) — every API endpoint
   uses it for try/catch + JSON envelope (`{ ok: true, ... }` /
   `{ ok: false, error: { message, code, details } }`).
-- **Capacitor 8** with custom native plugin `CareerOpsNativePlugin`. Bridge
+- **Capacitor 8** with custom native plugin `NativePlugin`. Bridge
   defined in `src/lib/client/native-plugin.ts`. iOS Swift side under
-  `ios/App/App/CareerOpsNativePlugin.swift`.
+  `ios/App/App/NativePlugin.swift`.
 - **Backend discovery** (native apps) — `src/lib/client/backend-discovery.ts`
   probes embedded → localhost → mDNS (`_heron._tcp`) → Tailscale →
   user-configured remote, in that order, with deduped in-flight promises
@@ -98,17 +98,17 @@ Five Vitest projects in `vitest.workspace.ts`:
 | `ui-routes` | jsdom | `src/routes/**/*.test.ts` (excl. api) | Page-level smoke |
 | `ui-integration` | node | `src/lib/integration/**/*.integration.test.ts` | Replaces legacy verify-pipeline / verify-capacitor / verify-multi-user / verify-apply / verify-backup / verify-cleanup / verify-deep-links / verify-post-apply / verify-versions |
 
-DB-isolation: every test process gets a tmpdir DB via `CAREER_OPS_DATA_DIR`
+DB-isolation: every test process gets a tmpdir DB via `HERON_DATA_DIR`
 auto-set in `test-setup.ts`. The production `data/auth.db` and `data/app.db`
 are never touched by the test matrix.
 
 ## Native sub-targets
 
 - `ios/App/App/` — main iOS app (Capacitor WebView + Native Plugin + Spotlight indexer)
-- `ios/App/CareerOpsWatch/` — standalone watchOS app
-- `ios/App/CareerOpsWidget/` — 4 widgets (pipeline / next-interview / top-apply / inbox-issues)
-- `ios/App/CareerOpsLiveActivity/` — Live Activity for interview countdowns
-- `ios/App/CareerOpsShareExtension/` — share-sheet receiver for "Save to Heron"
+- `ios/App/WatchApp/` — standalone watchOS app
+- `ios/App/Extensions/AppWidget/` — 4 widgets (pipeline / next-interview / top-apply / inbox-issues)
+- `ios/App/Extensions/AppLiveActivity/` — Live Activity for interview countdowns
+- `ios/App/Extensions/AppShareExtension/` — share-sheet receiver for "Save to Heron"
 - `android/` — Capacitor Android wrapper + Brand.kt
 - `electron/` — Capacitor-Electron workspace (its own `package.json`)
 

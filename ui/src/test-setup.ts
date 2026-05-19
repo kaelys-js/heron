@@ -25,13 +25,13 @@ import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 
 // ── DB isolation — MUST run before any server module is imported ────
-// db/index.ts checks process.env.VITEST + process.env.CAREER_OPS_DATA_DIR
-// at module-load time. Setting CAREER_OPS_DATA_DIR here is belt-and-
+// db/index.ts checks process.env.VITEST + process.env.HERON_DATA_DIR
+// at module-load time. Setting HERON_DATA_DIR here is belt-and-
 // braces: db/index.ts already auto-routes to a tmpdir when VITEST=true,
 // but if some other ENV strips that var we still want isolation. The
 // directory is per-process so parallel test workers don't collide.
 // Browser-mode workers don't expose `process` — guard with typeof.
-if (typeof process !== 'undefined' && process.env && !process.env.CAREER_OPS_DATA_DIR) {
+if (typeof process !== 'undefined' && process.env && !process.env.HERON_DATA_DIR) {
   // Lazy-import node:os/fs/path. They only resolve in the node-env
   // projects (ui-server, ui-integration). The browser-mode worker
   // skips this branch entirely via the typeof-process guard above.
@@ -40,7 +40,7 @@ if (typeof process !== 'undefined' && process.env && !process.env.CAREER_OPS_DAT
   const path = require('node:path') as typeof import('node:path');
   const tmp = path.join(os.tmpdir(), `heron-test-${process.pid}`);
   fs.mkdirSync(tmp, { recursive: true });
-  process.env.CAREER_OPS_DATA_DIR = tmp;
+  process.env.HERON_DATA_DIR = tmp;
 
   // ── Live-data write-guard ────────────────────────────────────────
   // Any test that tries to write to <repo-root>/data/ (the developer's
@@ -53,7 +53,7 @@ if (typeof process !== 'undefined' && process.env && !process.env.CAREER_OPS_DAT
     if (typeof target === 'string' && target.startsWith(REPO_ROOT_DATA)) {
       throw new Error(
         `[test-isolation] ${label}() blocked: tests cannot write to live data/. ` +
-          `Path: ${target}. Use /tmp/ or mocks. Set CAREER_OPS_DATA_DIR before fs calls if your test needs an isolated data root.`,
+          `Path: ${target}. Use /tmp/ or mocks. Set HERON_DATA_DIR before fs calls if your test needs an isolated data root.`,
       );
     }
   };

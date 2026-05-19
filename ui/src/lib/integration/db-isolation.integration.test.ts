@@ -11,9 +11,9 @@
  * a fresh-clone user could no longer become owner.
  *
  * The fix lives in lib/server/db/index.ts:
- *   - If VITEST=true (or NODE_ENV=test, or CAREER_OPS_DATA_DIR is
+ *   - If VITEST=true (or NODE_ENV=test, or HERON_DATA_DIR is
  *     explicitly set), the DB paths route to a tmpdir.
- *   - test-setup.ts sets CAREER_OPS_DATA_DIR to os.tmpdir()/career-
+ *   - test-setup.ts sets HERON_DATA_DIR to os.tmpdir()/career-
  *     ops-test-<pid> as belt-and-braces.
  *
  * These tests fail loudly if either guard regresses.
@@ -28,8 +28,8 @@ const REPO_ROOT = path.resolve(__dirname, '../../../..');
 describe('db/index.ts — DB paths are isolated during tests', () => {
   const dbSrc = fs.readFileSync(path.join(REPO_ROOT, 'ui/src/lib/server/db/index.ts'), 'utf8');
 
-  it('reads CAREER_OPS_DATA_DIR env override', () => {
-    expect(dbSrc).toMatch(/process\.env\.CAREER_OPS_DATA_DIR/);
+  it('reads HERON_DATA_DIR env override', () => {
+    expect(dbSrc).toMatch(/process\.env\.HERON_DATA_DIR/);
   });
 
   it('reads CAREER_OPS_AUTH_DB env override', () => {
@@ -55,15 +55,15 @@ describe('db/index.ts — DB paths are isolated during tests', () => {
 describe('test-setup.ts — DB env var is set BEFORE server imports', () => {
   const setup = fs.readFileSync(path.join(REPO_ROOT, 'ui/src/test-setup.ts'), 'utf8');
 
-  it('sets CAREER_OPS_DATA_DIR if missing', () => {
-    expect(setup).toMatch(/process\.env\.CAREER_OPS_DATA_DIR\s*=/);
+  it('sets HERON_DATA_DIR if missing', () => {
+    expect(setup).toMatch(/process\.env\.HERON_DATA_DIR\s*=/);
   });
 
   it('env-var setup happens before any other import that could touch the DB', () => {
-    // Find the line with `CAREER_OPS_DATA_DIR =` and assert no
+    // Find the line with `HERON_DATA_DIR =` and assert no
     // `from '$lib/server/...'` import sits above it.
     const lines = setup.split('\n');
-    const setIdx = lines.findIndex((l) => /process\.env\.CAREER_OPS_DATA_DIR\s*=/.test(l));
+    const setIdx = lines.findIndex((l) => /process\.env\.HERON_DATA_DIR\s*=/.test(l));
     expect(setIdx).toBeGreaterThan(-1);
     for (let i = 0; i < setIdx; i += 1) {
       const line = lines[i];
@@ -80,8 +80,8 @@ describe('test-setup.ts — DB env var is set BEFORE server imports', () => {
 });
 
 describe('runtime check — current test process does NOT use repo data/', () => {
-  it('CAREER_OPS_DATA_DIR is set + points outside the repo', () => {
-    const dataDir = process.env.CAREER_OPS_DATA_DIR;
+  it('HERON_DATA_DIR is set + points outside the repo', () => {
+    const dataDir = process.env.HERON_DATA_DIR;
     expect(dataDir).toBeTruthy();
     // Must NOT be the repo's data/ dir
     expect(dataDir!.startsWith(REPO_ROOT)).toBe(false);
@@ -89,8 +89,8 @@ describe('runtime check — current test process does NOT use repo data/', () =>
     expect(dataDir!.startsWith(os.tmpdir())).toBe(true);
   });
 
-  it('CAREER_OPS_DATA_DIR exists on disk + is writable', () => {
-    const dataDir = process.env.CAREER_OPS_DATA_DIR!;
+  it('HERON_DATA_DIR exists on disk + is writable', () => {
+    const dataDir = process.env.HERON_DATA_DIR!;
     expect(fs.existsSync(dataDir)).toBe(true);
     // Touch + remove a probe file
     const probe = path.join(dataDir, `.probe-${process.pid}`);

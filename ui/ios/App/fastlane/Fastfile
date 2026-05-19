@@ -1,4 +1,4 @@
-# career-ops iOS — Fastlane lanes.
+# heron iOS — Fastlane lanes.
 #
 # `bundle exec fastlane beta` builds the app, signs it, and uploads to
 # TestFlight for internal-tester distribution. No App Store submission
@@ -85,7 +85,7 @@ platform :ios do
       configuration: "Release",
       clean: true,
       output_directory: "fastlane/builds",
-      output_name: "career-ops-#{Time.now.utc.strftime('%Y%m%d%H%M%S')}.ipa",
+      output_name: "heron-#{Time.now.utc.strftime('%Y%m%d%H%M%S')}.ipa",
       include_symbols: true,
       include_bitcode: false   # Apple deprecated bitcode in Xcode 14
     )
@@ -209,7 +209,7 @@ platform :ios do
       msg = sh("git log -1 --pretty=%B").strip
       msg.length > 4000 ? msg[0...3997] + "..." : msg
     rescue
-      "career-ops automatic build (#{Time.now.utc.strftime('%Y-%m-%d')})"
+      "heron automatic build (#{Time.now.utc.strftime('%Y-%m-%d')})"
     end
   end
 

@@ -1,4 +1,4 @@
-Career Ops is a personal job-search productivity tool. The app reads job postings the user pastes, drafts tailored CVs/cover letters locally using the user's own LLM API key (Anthropic / OpenAI / Google), and tracks application status in a local SQLite database.
+Heron is a personal job-search productivity tool. The app reads job postings the user pastes, drafts tailored CVs/cover letters locally using the user's own LLM API key (Anthropic / OpenAI / Google), and tracks application status in a local SQLite database.
 
 No data leaves the device unless the user explicitly signs in (passkey + email) or enables LLM features. No advertising, no third-party analytics SDKs, no IDFA collection.
 
