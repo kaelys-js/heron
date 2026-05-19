@@ -169,7 +169,7 @@ Analyze posting signals to assess whether this is a real, active opening.
 **What IS available in batch mode:**
 1. **Description quality analysis** -- Full JD text is available. Analyze specificity, requirements realism, salary transparency, boilerplate ratio.
 2. **Company hiring signals** -- WebSearch queries for layoff/freeze news (combine with Block D comp research).
-3. **Reposting detection** -- Read `data/scan-history.tsv` to check for prior appearances.
+3. **Reposting detection** -- Read `__SCAN_HISTORY__` to check for prior appearances.
 4. **Role market context** -- Qualitative assessment from JD content.
 
 **Output format:** Same as interactive mode (Assessment tier + Signals table + Context Notes), but with a note that posting freshness is unverified.

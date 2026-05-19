@@ -1,7 +1,7 @@
 # Contributing to Heron
 
 <!-- AUTO-GENERATED:doc-meta -->
-*Last revised 2026-05-15 · part of the [Heron](../README.md) docs.*
+*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
 Thanks for your interest in contributing! Heron is built with Claude Code, and you can use it for development too.

@@ -157,7 +157,7 @@ jobs:
         # "wire it up but disable everything for now" directive.
         # Running anyway catches parse-level failures (~50 ms full-repo)
         # and keeps the lint-infrastructure live for incremental rollout.
-        run: pnpm lint:oxlint
+        run: pnpm lint
 
       - name: Typecheck (svelte-check + tsgo, turbo-cached)
         run: pnpm exec turbo run check

@@ -44,6 +44,11 @@ function isExact(spec) {
   if (typeof spec !== 'string') return false;
   // pnpm workspace alias
   if (spec === 'workspace:*') return true;
+  // pnpm catalog reference — the catalog itself is validated separately
+  // (the catalog: protocol resolves at install time to an exact version
+  // defined in pnpm-workspace.yaml). Either bare `catalog:` (default
+  // catalog) or `catalog:<name>` (named catalog) is acceptable.
+  if (spec === 'catalog:' || /^catalog:[A-Za-z][A-Za-z0-9_-]*$/.test(spec)) return true;
   // pnpm link / file / portal protocols — local refs, not registry versions
   if (/^(link|file|portal):/.test(spec)) return true;
   // npm alias: "npm:<name>@<rest>" — recurse on <rest>
