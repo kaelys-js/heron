@@ -275,6 +275,24 @@ jobs:
             console.log("| Lines      | " + fmt(s.lines.pct)      + " (" + s.lines.covered + "/" + s.lines.total + ") |");
           ' >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Assert lcov.info exists (Codecov gate)
+        # Pre-codecov guard. The codecov-action below is gated on
+        # hashFiles() being non-empty — if the file is MISSING, the
+        # upload silently skips and the Codecov badge stays "unknown".
+        # This step turns "missing lcov.info" into a hard CI failure
+        # so a vitest config drift (reporter list ignored, wrong
+        # path, etc.) surfaces immediately instead of letting Codecov
+        # display stale data forever.
+        run: |
+          if [ ! -s ui/coverage/lcov.info ]; then
+            echo "::error::ui/coverage/lcov.info missing or empty after test:coverage."
+            echo "::error::Check that vitest config emits the 'lcov' reporter."
+            echo "::error::Try: pnpm --filter ui exec vitest run --coverage --coverage.reporter=lcov --passWithNoTests"
+            ls -la ui/coverage/ || true
+            exit 1
+          fi
+          echo "✓ lcov.info present: $(wc -l < ui/coverage/lcov.info) lines"
+
       - name: Upload coverage to Codecov (ts flag)
         # G12 — OIDC + fail_ci_if_error. OIDC means no CODECOV_TOKEN
         # rotation, no token leakage risk, and the upload works on PRs
@@ -283,7 +301,6 @@ jobs:
         # coverage gate is enforced — pre-fix a broken upload silently
         # passed.
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
-        if: always() && hashFiles('ui/coverage/lcov.info') != ''
         with:
           files: ui/coverage/lcov.info
           flags: ts

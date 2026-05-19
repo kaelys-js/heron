@@ -40,16 +40,14 @@ export function buildAppMenu(h: AppMenuHandlers): Menu {
   template.push({
     label: '&File',
     submenu: [
-      {
-        label: 'New Window',
-        accelerator: 'CmdOrCtrl+N',
-        click: () => {
-          // The Capacitor electron template only supports one window — log
-          // and no-op. If we ever want multi-window we'd revisit setup.ts.
-          console.log('[menu] new window requested (not yet supported)');
-        },
-      },
-      { type: 'separator' },
+      // Deliberately no "New Window" — the Capacitor electron template
+      // wraps a single BrowserWindow + a single WebView instance with
+      // shared per-user state. Spawning a second window would either
+      // duplicate the SvelteKit hydration (breaks AsyncLocalStorage on
+      // the server side) or share the WebView (breaks the user's
+      // expectation of independent windows). Multi-window is a real
+      // refactor (fork Capacitor electron template) that we won't ship
+      // half-implemented as a no-op menu item.
       {
         label: 'Import URL…',
         accelerator: 'CmdOrCtrl+I',

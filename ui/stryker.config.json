@@ -1,0 +1,43 @@
+{
+  "$comment": "Stryker mutation testing — scoped to the 5 server modules whose tests carry the most weight. Mutation testing catches happy-path-only assertions: a test that asserts `expect(result).toBeTruthy()` survives every mutation that produces a truthy non-equal value. The 'mutationScore' threshold gates CI to ≥ 80% on these files; expanding the scope is opt-in. See https://stryker-mutator.io/docs/stryker-js/configuration/.",
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "_comment": "Vitest is the test runner; Stryker auto-detects vitest.config.ts + the test-setup.ts mocks.",
+  "packageManager": "pnpm",
+  "testRunner": "vitest",
+  "vitest": {
+    "configFile": "vitest.config.ts"
+  },
+  "reporters": ["clear-text", "progress", "html", "json"],
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "jsonReporter": {
+    "fileName": "reports/mutation/mutation.json"
+  },
+  "coverageAnalysis": "perTest",
+  "concurrency": 4,
+  "timeoutMS": 60000,
+  "timeoutFactor": 2,
+  "mutate": [
+    "src/lib/server/user-secrets.ts",
+    "src/lib/server/ai.ts",
+    "src/lib/server/apply-state.ts",
+    "src/lib/server/apply-dispatcher.ts",
+    "src/lib/server/apply-failures.ts"
+  ],
+  "ignorePatterns": [
+    "**/*.test.ts",
+    "**/test-setup.ts",
+    "**/test-helpers/**",
+    "**/.svelte-kit/**",
+    "**/build/**",
+    "**/node_modules/**",
+    "**/coverage/**",
+    "**/reports/**"
+  ],
+  "thresholds": {
+    "high": 90,
+    "low": 70,
+    "break": 60
+  }
+}
