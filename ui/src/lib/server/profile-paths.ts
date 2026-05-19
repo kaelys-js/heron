@@ -294,6 +294,36 @@ export function userSharedPathForUser(userId: string, kind: UserSharedFileKind):
   }
 }
 
+/**
+ * Resolve the persistent Chromium dir for a per-portal Playwright session.
+ *
+ * F20 — TS mirror of `scripts/lib/lib_playwright_auth.py::user_data_dir`.
+ * Pre-fix the disconnect/test endpoints used `path.join(ROOT,
+ * '.playwright-' + portal)` which never matched the actual layout
+ * (Python writes to `data/users/{uid}/.playwright-{portal}/`). Result:
+ * "Disconnect LinkedIn" was a no-op.
+ *
+ * Layout:
+ *   multi-user → data/users/{userId}/.playwright-{portal}/
+ *   legacy     → data/profiles/_shared/.playwright-{portal}/ (SYSTEM_USER)
+ *
+ * Caller is responsible for verifying `portal` against an allowlist —
+ * we accept any string here so the same helper works for new portals
+ * added without code changes.
+ */
+export function playwrightUserDataDir(userId: string, portal: string): string {
+  validateUserId(userId);
+  // Allow letters / digits / hyphen / underscore in portal slug; reject
+  // path-traversal attempts.
+  if (!/^[a-zA-Z0-9_-]+$/.test(portal)) {
+    throw new Error('playwrightUserDataDir: invalid portal: ' + portal);
+  }
+  if (userId === SYSTEM_USER_ID) {
+    return path.join(PROFILES_ROOT, '_shared', '.playwright-' + portal);
+  }
+  return path.join(USERS_ROOT, userId, '.playwright-' + portal);
+}
+
 /** Make sure the profile directory + its standard subdirs exist for the
  *  CURRENT user. Idempotent. */
 export function ensureProfileDirs(profileId: string): void {

@@ -10,23 +10,26 @@
  */
 
 import fs from 'node:fs';
-import path from 'node:path';
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { ROOT } from '$lib/server/files';
 import { resetSource } from '$lib/server/sources';
 import { logEvent } from '$lib/server/events';
 import { writeEnv, readEnv } from '$lib/server/env';
-import { requireOwner } from '$lib/server/auth-helpers';
+import { requireOwner, requireUserId } from '$lib/server/auth-helpers';
+import { playwrightUserDataDir } from '$lib/server/profile-paths';
 
 export const POST = wrap(
   'sources-disconnect',
   async ({ params, locals }: { params: { id: string }; locals: App.Locals }) => {
     requireOwner(locals);
+    const userId = requireUserId(locals);
     const id = params.id;
 
     if (id === 'linkedin-auth' || id === 'indeed-auth') {
       const portal = id === 'linkedin-auth' ? 'linkedin' : 'indeed';
-      const stateDir = path.join(ROOT, '.playwright-' + portal);
+      // F20 — use the same path Playwright writes to. Pre-fix this hit
+      // the legacy repo-root `.playwright-{portal}/` which never
+      // existed in multi-user mode, so "Disconnect" was a no-op.
+      const stateDir = playwrightUserDataDir(userId, portal);
       try {
         if (fs.existsSync(stateDir)) {
           fs.rmSync(stateDir, { recursive: true, force: true });

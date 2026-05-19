@@ -16,6 +16,7 @@ import { listLeads } from '$lib/server/email-reactor';
 import { findThankYousOwed, findUpcomingInterviews } from '$lib/server/interviewers';
 import { listAllStageState, listStaleJobs } from '$lib/server/stage-state';
 import { listActiveOffers } from '$lib/server/offers';
+import { currentUserIdOrDefault } from '$lib/server/user-context';
 import fs from 'node:fs';
 import type { Job, ActivityEvent, Status } from '$lib/types';
 
@@ -78,7 +79,10 @@ export async function load({ url }: { url: URL }) {
   const profileId = profileParam === 'all' ? 'all' : (profileParam ?? getActiveProfileId());
   const jobs = loadAllJobs(profileId);
   const env = readEnv();
-  const recent = bus.recent();
+  // F25 — scope events to THIS user. /inbox renders an "activity" panel
+  // that previously bled other users' task events (Bob's scan-portals
+  // finished events appearing on Alice's inbox).
+  const recent = bus.recentForUser(currentUserIdOrDefault());
   const running = listRunning();
   const profile = readProfile(profileId === 'all' ? undefined : profileId);
 

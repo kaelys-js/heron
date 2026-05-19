@@ -1,0 +1,65 @@
+name: zizmor — workflow security scan
+# G9 — static analyzer for GitHub Actions workflows. Flags:
+#   - Template injection (`run: echo ${{ github.event.... }}`)
+#   - Unconditional checkout of PR head from pull_request_target
+#   - Excessive permissions (write-all)
+#   - Untrusted input flowing into shell
+#   - Cache poisoning via writeable cache key
+#   - Self-hosted runner misuse
+#
+# Runs on every workflow file change + weekly. SARIF lands in
+# GitHub Code Scanning alongside CodeQL.
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+  schedule:
+    - cron: "37 4 * * 1" # Weekly Monday 04:37 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: zizmor-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  zizmor:
+    name: Scan workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor
+        # uvx zips through the install in <5s vs `pip install zizmor`'s
+        # 30s. Re-uses the existing python/uv stack the format job
+        # already provisions.
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          source "$HOME/.local/bin/env" || true
+          uvx zizmor@1.25.2 --format=sarif --output=zizmor.sarif .github/workflows/ || true
+          # Always exit 0 — we want the SARIF upload even on findings;
+          # branch protection blocks via the SARIF severity, not exit code.
+
+      - name: Upload SARIF to code-scanning
+        uses: github/codeql-action/upload-sarif@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4
+        with:
+          sarif_file: zizmor.sarif
+          category: zizmor

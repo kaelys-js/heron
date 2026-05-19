@@ -1,0 +1,155 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)",
+    ":dependencyDashboard",
+    ":separateMultipleMajorReleases",
+    ":enableVulnerabilityAlertsWithLabel(security)",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "schedule": ["before 6am on monday"],
+  "timezone": "Europe/Madrid",
+  "labels": ["dependencies"],
+  "rangeStrategy": "pin",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on monday"],
+    "commitMessageAction": "Refresh",
+    "labels": ["dependencies", "lockfile"]
+  },
+  "vulnerabilityAlerts": {
+    "labels": ["security", "dependencies"],
+    "automerge": false,
+    "schedule": ["at any time"]
+  },
+  "ignorePaths": ["**/node_modules/**", "**/dist/**", "**/build/**", "**/.svelte-kit/**"],
+  "packageRules": [
+    {
+      "description": "Group all Capacitor packages together",
+      "matchPackagePatterns": ["^@capacitor/", "^@capacitor-community/"],
+      "groupName": "capacitor",
+      "labels": ["dependencies", "capacitor"]
+    },
+    {
+      "description": "Group SvelteKit + Svelte + Vite",
+      "matchPackagePatterns": ["^@sveltejs/", "^svelte", "^vite", "^@tailwindcss/"],
+      "groupName": "sveltekit",
+      "labels": ["dependencies", "sveltekit"]
+    },
+    {
+      "description": "Group Better Auth ecosystem",
+      "matchPackagePatterns": ["^better-auth", "^@better-auth/"],
+      "groupName": "better-auth",
+      "labels": ["dependencies", "auth"]
+    },
+    {
+      "description": "Group Drizzle + sqlite",
+      "matchPackagePatterns": ["^drizzle-", "^@types/better-sqlite3", "^better-sqlite3"],
+      "groupName": "drizzle",
+      "labels": ["dependencies", "drizzle"]
+    },
+    {
+      "description": "Group bits-ui + Lucide + UI primitives",
+      "matchPackagePatterns": ["^bits-ui", "^@lucide/", "^@melt-ui/", "^tw-animate"],
+      "groupName": "ui-primitives",
+      "labels": ["dependencies", "ui"]
+    },
+    {
+      "description": "Group @types/* together",
+      "matchPackagePatterns": ["^@types/"],
+      "groupName": "types",
+      "labels": ["dependencies", "types"]
+    },
+    {
+      "description": "Group all linters / formatters",
+      "matchPackageNames": [
+        "biome",
+        "@biomejs/biome",
+        "oxlint",
+        "@typescript/native-preview",
+        "prettier",
+        "prettier-plugin-svelte"
+      ],
+      "groupName": "linters",
+      "labels": ["dependencies", "tooling"]
+    },
+    {
+      "description": "Auto-merge patch + minor dev-dep updates that pass CI",
+      "matchUpdateTypes": ["patch", "minor"],
+      "matchDepTypes": ["devDependencies"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Auto-merge GitHub Actions digest updates (already SHA-pinned)",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["digest", "patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Group all GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "labels": ["dependencies", "ci"]
+    },
+    {
+      "description": "Block major bumps on production deps until manually approved",
+      "matchUpdateTypes": ["major"],
+      "matchDepTypes": ["dependencies"],
+      "dependencyDashboardApproval": true,
+      "labels": ["dependencies", "major"]
+    },
+    {
+      "description": "Electron majors require a CJS/ESM audit — gate on dashboard approval",
+      "matchPackageNames": ["electron", "electron-is-dev", "electron-serve", "electron-builder"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true,
+      "labels": ["dependencies", "electron", "major"]
+    },
+    {
+      "description": "Group Fastlane + bundler updates (iOS native release)",
+      "matchManagers": ["bundler"],
+      "matchPaths": ["ui/ios/App/**"],
+      "groupName": "ios-bundler",
+      "labels": ["dependencies", "ios"]
+    },
+    {
+      "description": "Group Swift Package Manager updates",
+      "matchManagers": ["swift"],
+      "groupName": "swift",
+      "labels": ["dependencies", "ios", "swift"]
+    },
+    {
+      "description": "Group Go module updates",
+      "matchManagers": ["gomod"],
+      "groupName": "gomod",
+      "labels": ["dependencies", "go"]
+    }
+  ],
+  "mise": {
+    "enabled": true,
+    "fileMatch": ["(^|/)\\.mise\\.toml$"]
+  },
+  "pnpm": {
+    "enabled": true
+  },
+  "git-submodules": {
+    "enabled": false
+  },
+  "prHourlyLimit": 4,
+  "prConcurrentLimit": 12,
+  "stabilityDays": 3,
+  "internalChecksFilter": "strict",
+  "rebaseWhen": "behind-base-branch",
+  "commitMessagePrefix": "chore(deps):",
+  "commitMessageAction": "Bump",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "from {{currentValue}} to {{newValue}}",
+  "branchPrefix": "renovate/",
+  "addLabels": ["dependencies"]
+}

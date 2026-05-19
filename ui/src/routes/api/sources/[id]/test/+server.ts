@@ -29,17 +29,23 @@ import { wrap, badRequest } from '$lib/server/api-helpers';
 import { ROOT } from '$lib/server/files';
 import { recordSuccess, recordFailure, getSource } from '$lib/server/sources';
 import { readEnv } from '$lib/server/env';
-import { requireOwner } from '$lib/server/auth-helpers';
+import { requireOwner, requireUserId } from '$lib/server/auth-helpers';
+import { playwrightUserDataDir } from '$lib/server/profile-paths';
+import { userContextEnv } from '$lib/server/user-context';
 
 export const POST = wrap(
   'sources-test',
   async ({ params, locals }: { params: { id: string }; locals: App.Locals }) => {
     requireOwner(locals);
+    const userId = requireUserId(locals);
     const id = params.id;
 
     if (id === 'linkedin-auth' || id === 'indeed-auth') {
       const portal = id === 'linkedin-auth' ? 'linkedin' : 'indeed';
-      const stateDir = path.join(ROOT, '.playwright-' + portal);
+      // F20 — match the path Playwright writes to. Pre-fix this checked
+      // the legacy `.playwright-{portal}/` at repo root which never
+      // existed, so "Test connection" always reported "No saved session".
+      const stateDir = playwrightUserDataDir(userId, portal);
       if (!fs.existsSync(stateDir)) {
         const err = new Error('No saved session — click Connect first.');
         recordFailure(id, err);
@@ -200,7 +206,7 @@ function probeAlwaysOnScanner(
     let stderr = '';
     let p: import('node:child_process').ChildProcess;
     try {
-      p = spawn(bin, [script, '--dry-run', '--probe'], { cwd: ROOT, env: { ...process.env } });
+      p = spawn(bin, [script, '--dry-run', '--probe'], { cwd: ROOT, env: userContextEnv() });
     } catch (e) {
       resolve({ ok: false, message: e instanceof Error ? e.message : String(e) });
       return;
@@ -249,7 +255,7 @@ function spawnSessionCheck(portal: 'linkedin' | 'indeed'): Promise<void> {
       ['scripts/lib/lib_playwright_auth.py', '--portal', portal, '--check-session'],
       {
         cwd: ROOT,
-        env: { ...process.env },
+        env: userContextEnv(),
       },
     );
     p.stdout?.on('data', (c: Buffer) => {

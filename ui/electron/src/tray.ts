@@ -107,7 +107,21 @@ export class DesktopTray {
     this.tray = undefined;
   }
 
-  /** Fetch /api/stats and rebuild the popover menu. */
+  /** Fetch /api/stats and rebuild the popover menu.
+   *
+   * F18 — known multi-user limitation: this fetch runs from the Electron
+   * main process which has NO Better-Auth cookie + NO bearer token (the
+   * WebView holds those). On a multi-user install /api/stats 401s and
+   * this returns null. The menu falls back to a generic
+   * "Heron is running · open dashboard" state.
+   *
+   * Proper fix (follow-up): IPC bridge — the WebView fetches stats
+   * inside its authenticated context and pushes them to the main
+   * process via `tray:push-stats`. The main process then doesn't need
+   * to authenticate at all. Tracked as a Phase 4 follow-up.
+   *
+   * Until then: the tray gracefully degrades (no stats != crash).
+   */
   private async refresh(): Promise<void> {
     const url = this.handlers.getBackendUrl();
     this.stats = await this.fetchStats(url).catch(() => null);
