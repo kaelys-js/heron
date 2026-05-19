@@ -79,5 +79,51 @@ fi
 
 # Auto-route through mise. Set the loop guard so we don't recurse
 # if the spawned process happens to re-invoke this shim.
+#
+# IMPORTANT: `mise exec node@X -- <cmd>` only resolves the literal
+# `<cmd>` token through mise's PATH. If <cmd> is a SHELL invocation
+# (sh -c '...', bash -c '...'), the inner shell inherits the OUTER
+# PATH which still has the wrong Node first → npm, node-gyp, and any
+# subprocess spawned from inside `<cmd>` resolve to the wrong Node.
+# We hit this exact issue with `mise exec node@26.1.0 -- sh -c
+# 'node-gyp rebuild'` silently invoking Node 25 inside node-gyp.
+#
+# Correct fix: PREPEND mise's bin dir to PATH ourselves, then `exec`
+# the command. Every spawned subprocess inherits PATH and resolves
+# `node` / `npm` / `pnpm` to mise's pinned version. Equivalent to
+# what `mise activate` does for a login shell — but scoped to this
+# single command tree without polluting the parent shell.
+NODE_BIN_DIR="$(mise where "node@$EXPECTED" 2>/dev/null)/bin"
+if [ ! -d "$NODE_BIN_DIR" ]; then
+  # Defensive: mise reported the version is installed but the bin dir
+  # is missing. Fall through with a warning rather than break the user.
+  printf '\033[33m↻\033[0m mise has node@%s but %s is missing — falling through\n' "$EXPECTED" "$NODE_BIN_DIR" >&2
+  exec "$@"
+fi
 export HERON_MISE_SHIM_ACTIVE=1
-exec mise exec "node@$EXPECTED" -- "$@"
+export PATH="$NODE_BIN_DIR:$PATH"
+
+# NODE_OPTIONS — suppress known-third-party warnings so they don't
+# pollute output. Node 22+ allows --disable-warning in NODE_OPTIONS.
+# The OUTER vitest CLI fires DEP0205 (module.register deprecation
+# from tsx/vitest/vite) BEFORE my vitest.config.ts execArgv applies
+# to spawned workers — setting it here means the outer process and
+# every subprocess inherit the suppression.
+#
+#   --enable-source-maps:        better stack traces (mirrors .mise.toml)
+#   --disable-warning=DEP0205:   tsx/vitest/vite still call module.register()
+#                                 (TODO: remove when upstream migrates)
+#   --disable-warning=ExperimentalWarning:
+#                                 webstorage stub probe in jsdom + the
+#                                 polyfill we install in test-setup.ts
+#
+# Do NOT set --localstorage-file here — it needs a real per-run path
+# which vitest.config.ts assembles into the worker execArgv.
+# Do NOT set --throw-deprecation here either — it'd convert third-
+# party deprecations into errors at process load before our
+# --disable-warning kicks in (order is parse-then-apply). The
+# vitest.config.ts worker execArgv already adds it scoped to workers
+# where our `--disable-warning=DEP0205` lands first.
+export NODE_OPTIONS="${NODE_OPTIONS:-} --enable-source-maps --disable-warning=DEP0205 --disable-warning=ExperimentalWarning"
+
+exec "$@"

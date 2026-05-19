@@ -39,6 +39,41 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const __localStoragePath = join(tmpdir(), 'heron-test-localstorage');
 mkdirSync(dirname(__localStoragePath), { recursive: true });
 
+// ── Worker exec args (shared between forks + threads) ────────────────
+// Vitest 4 removed `test.poolOptions` — the per-pool config is now
+// top-level (`forks:` / `threads:` siblings of `test:`). We keep ONE
+// array and re-use it under both pool keys so a future `pool: 'threads'`
+// switch picks up the same flags.
+//
+// Why these flags:
+//   --localstorage-file=<path>: Node 22+ emits a warning if anything
+//     accesses globalThis.localStorage without a backing path, even
+//     when jsdom and our test-setup polyfill the storage object.
+//     Pointing at a real tmpdir path silences the warning at the ROOT
+//     (Node never warns) rather than masking it with a filter.
+//   --disable-warning=ExperimentalWarning: webstorage is still
+//     experimental in Node 25/26 even though it works. The warning
+//     is documentation, not actionable; suppress per-warning rather
+//     than --no-warnings (which would also mask real DeprecationWarning).
+//   --disable-warning=DEP0205: tsx + vitest + vite all still call
+//     module.register() instead of module.registerHooks() (introduced
+//     Node 22.15). Tracked upstream — until the chain migrates we'd
+//     see a DeprecationWarning per worker spawn. Suppressed by code,
+//     not by class, so a future genuine deprecation we DO own still
+//     surfaces. TODO: drop once tsx ≥ 5 / vitest ≥ 5 ship the
+//     registerHooks migration.
+//   --throw-deprecation: turn every OTHER DeprecationWarning into a
+//     thrown error. This is the "warnings should fail" contract — if
+//     a new Node deprecation lands in our test surface, the test
+//     crashes immediately instead of silently accumulating debt.
+//     Pairs with the targeted --disable-warning=DEP0205 above.
+const __workerExecArgv = [
+  `--localstorage-file=${__localStoragePath}`,
+  '--disable-warning=ExperimentalWarning',
+  '--disable-warning=DEP0205',
+  '--throw-deprecation',
+];
+
 export default defineConfig({
   // NOTE: We deliberately do NOT include the `brandWatcherPlugin` from
   // vite.config.ts. That plugin shells out to `apply-brand.mjs` on every
@@ -62,62 +97,6 @@ export default defineConfig({
     // `$state` stores can't leak between files. Per-test resets are
     // still required for in-file isolation (see test-helpers/state-helpers).
     isolate: true,
-    // Pass extra flags to every worker process. Two reasons:
-    //   --localstorage-file=<path>: Node 22+ emits a warning if anything
-    //     accesses globalThis.localStorage without a valid backing path,
-    //     even when jsdom + our test-setup polyfill the storage object.
-    //     Pointing at a real tmpdir path silences the warning at the
-    //     ROOT (Node never warns) rather than masking it with a filter.
-    //   --disable-warning=ExperimentalWarning: webstorage is still
-    //     experimental in Node 25/26 even though it works. The warning
-    //     is documentation, not actionable; suppress per-warning rather
-    //     than --no-warnings (which would also mask real DeprecationWarning).
-    poolOptions: {
-      forks: {
-        execArgv: [
-          `--localstorage-file=${__localStoragePath}`,
-          '--disable-warning=ExperimentalWarning',
-          // DEP0205: tsx + vitest + vite all still call module.register()
-          // instead of module.registerHooks() (introduced Node 22.15).
-          // Tracked upstream — until the chain migrates we'd see a
-          // DeprecationWarning per worker spawn. Suppressed by code,
-          // not by class, so a future genuine deprecation we DO own
-          // still surfaces. TODO: drop once tsx ≥ 5 / vitest ≥ 5 ship
-          // the registerHooks migration.
-          '--disable-warning=DEP0205',
-          // Turn every OTHER DeprecationWarning into a thrown error.
-          // This is the "warnings should fail" contract — if a new Node
-          // deprecation lands in our test surface, the test crashes
-          // immediately instead of silently accumulating debt. Pairs
-          // with the targeted --disable-warning=DEP0205 above: known
-          // third-party debt is silenced (with a TODO), everything
-          // else is hard-fail.
-          '--throw-deprecation',
-        ],
-      },
-      threads: {
-        execArgv: [
-          `--localstorage-file=${__localStoragePath}`,
-          '--disable-warning=ExperimentalWarning',
-          // DEP0205: tsx + vitest + vite all still call module.register()
-          // instead of module.registerHooks() (introduced Node 22.15).
-          // Tracked upstream — until the chain migrates we'd see a
-          // DeprecationWarning per worker spawn. Suppressed by code,
-          // not by class, so a future genuine deprecation we DO own
-          // still surfaces. TODO: drop once tsx ≥ 5 / vitest ≥ 5 ship
-          // the registerHooks migration.
-          '--disable-warning=DEP0205',
-          // Turn every OTHER DeprecationWarning into a thrown error.
-          // This is the "warnings should fail" contract — if a new Node
-          // deprecation lands in our test surface, the test crashes
-          // immediately instead of silently accumulating debt. Pairs
-          // with the targeted --disable-warning=DEP0205 above: known
-          // third-party debt is silenced (with a TODO), everything
-          // else is hard-fail.
-          '--throw-deprecation',
-        ],
-      },
-    },
     // Setup runs once per test FILE before any test inside it.
     setupFiles: [resolve(__dirname, 'src/test-setup.ts')],
     // Stop after the first hung file. Keeps CI fast on a real freeze.
@@ -163,5 +142,11 @@ export default defineConfig({
       // that exaggerate the denominator — that's why branches: 65 sits
       // lower than the other thresholds.
     },
+    // Vitest 4 promoted `execArgv` from
+    // `test.poolOptions.{forks,threads}.execArgv` to top-level
+    // `test.execArgv` — applies to whichever pool is active. Pre-4
+    // form triggers a "DEPRECATED" log spam per worker spawn until
+    // moved (each project under vitest.workspace.ts logs its own).
+    execArgv: __workerExecArgv,
   },
 });
