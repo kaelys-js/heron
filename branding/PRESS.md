@@ -1,7 +1,7 @@
 # Heron — press kit
 
 <!-- AUTO-GENERATED:doc-meta -->
-*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+*Last revised 2026-05-19 · part of the [Heron](../README.md) docs.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
 > Last revised 2026-05-18. The single document a journalist, blogger,
