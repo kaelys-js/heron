@@ -180,9 +180,12 @@ describe('Multi-user — setInterval daemons in jobs/ go through runById (F15 gu
     expect(src).toMatch(/runById\(\s*['"]interview-reminder['"]\s*\)/);
   });
 
-  it('scan-email-imap daemon resolves OWNER via getOwnerUserId + runAsUser', () => {
+  it('scan-email-imap daemon fans out across all schedulable users via runAsUser (F14/F19/F27)', () => {
+    // Pre-fix the daemon ran only under the OWNER (getOwnerUserId).
+    // Post-fix it iterates listSchedulableUsers() so every user's
+    // gmail-imap mailbox gets polled under their own ALS context.
     const src = fs.readFileSync(path.join(SERVER_ROOT, 'jobs/scan-email-imap.job.ts'), 'utf8');
-    expect(src).toMatch(/\bgetOwnerUserId\(/);
+    expect(src).toMatch(/\blistSchedulableUsers\(/);
     expect(src).toMatch(/\brunAsUser\(/);
   });
 });
