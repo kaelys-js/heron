@@ -329,9 +329,10 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
     );
     expect(m, `${rel} doc-meta block malformed`).toBeTruthy();
     const content = m![1];
-    // Shape: italicized one-liner with a YYYY-MM-DD date and the brand displayName.
+    // Shape: italicized one-liner with the brand displayName. Date
+    // stamps were removed (apply-brand idempotence) — only the brand
+    // displayName is required.
     expect(content, `${rel}: doc-meta missing italic wrapper`).toMatch(/^\*.+\*$/);
-    expect(content, `${rel}: doc-meta missing date`).toMatch(/\d{4}-\d{2}-\d{2}/);
     expect(content, `${rel}: doc-meta missing brand displayName`).toContain(displayName);
   });
 
