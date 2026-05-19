@@ -11,8 +11,7 @@ Initial release post-fork. The project diverged significantly from its
 upstream (multi-user RBAC, native iOS / macOS apps, Better Auth, autonomous
 apply pipeline, full Vitest matrix, per-user Playwright sessions) and the
 prior version line no longer mapped meaningfully onto the current
-architecture. The pre-fork changelog is preserved at
-`docs/archive/CHANGELOG-pre-fork.md` for historical reference; new entries
-start from here.
+architecture. New entries start from here; the pre-fork release log lives
+in the upstream repository (`santifer/career-ops`).
 
 See the git history for the full set of changes that produced this baseline.

@@ -1,5 +1,9 @@
 # Voice & tone — Heron
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 > Last revised 2026-05-15. The Heron voice in worked examples — UI
 > microcopy, marketing copy, error messages, empty states. The six
 > high-level voice principles live in [`BRAND.md`](./BRAND.md); this

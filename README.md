@@ -4,6 +4,10 @@
 
 # Heron
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-15 · [Heron](https://heron.app) · Stand still. Strike well.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 **Stand still. Strike well.**
 
 A thinking partner for career transitions. Patient, precise, local-first.
@@ -101,23 +105,22 @@ heron/
 │   ├── android/                 # Capacitor Android app
 │   └── electron/                # Capacitor-Electron shell (workspace)
 │
-├── .github/                     # Community profile + 11 workflows
+├── .github/                     # Community profile + workflows
 │   ├── CODE_OF_CONDUCT.md
-│   ├── CONTRIBUTING.md
+│   ├── CONTRIBUTING.md          # Includes "Getting help" section
 │   ├── SECURITY.md
-│   ├── SUPPORT.md
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   ├── ISSUE_TEMPLATE/
 │   └── workflows/
 │
 ├── docs/                        # All long-form documentation
 │   ├── ARCHITECTURE.md          # System diagram + flows
-│   ├── SETUP.md, TESTING.md, WATCH.md, SCRIPTS.md, …
+│   ├── SETUP.md, TESTING.md, WATCH.md
 │   ├── DATA_CONTRACT.md         # System vs user layer rules
 │   ├── GOVERNANCE.md            # BDFL + contributor ladder
-│   ├── CONTRIBUTORS.md, LEGAL_DISCLAIMER.md, TRADEMARK.md
-│   ├── native.md
-│   └── archive/                 # Finished plan snapshots
+│   ├── STATUS_MODEL.md          # The two-axis state machine
+│   ├── CUSTOMIZATION.md, LEGAL_DISCLAIMER.md, TRADEMARK.md
+│   └── NATIVE.md                # Native build / dev / release flow
 │
 ├── branding/
 │   ├── brand.json               # SINGLE SOURCE OF TRUTH for all branding
@@ -254,6 +257,10 @@ First `act:test` run pulls a ~1GB ubuntu-act image; subsequent runs reuse it. Co
 
 - `ui/tsconfig.json` — strict mode + `noImplicitOverride` + `noFallthroughCasesInSwitch` + `forceConsistentCasingInFileNames`. Compiles via `tsgo` (the Rust port of `tsc`, ~10× faster).
 - `ui/electron/tsconfig.json` — target ES2024, NodeNext module resolution. strict OFF because Capacitor's auto-generated `setup.ts` / `rt/electron-rt.ts` predate strictNullChecks.
+
+### Scripts
+
+`pnpm run` lists every npm-script entry point — that's the canonical inventory. The actual files live under `scripts/{apply,scan,cv,quality,tracker,linkedin,system,lib,native,batch}/`; each subdirectory holds files named for their function. No hand-maintained doc — `pnpm run` is the source of truth.
 
 ### Working with branding
 
@@ -395,10 +402,18 @@ This fork adds:
 - Autonomous-apply pipeline (LinkedIn / Greenhouse / Ashby in production; 8 portals stubbed)
 - act-based local CI verification
 - Native-release preflight gate (`pnpm doctor:native`)
-- 138-test multi-user behavioural verifier
+- Vitest matrix (unit + server + browser-mode + integration) replacing legacy verifiers
 - 0-CVE supply chain (pnpm overrides + Electron 39)
+- The Heron brand system: single-source `branding/brand.json`, propagation via `apply-brand`, drift-gated rebrand ceremony
 
-Upstream READMEs (i18n translations of the original CLI flow) are still in this repo as `README.{es,pt-BR,ko-KR,ja,ru,cn,zh-TW}.md`. They describe the upstream system; for the multi-user fork's onboarding, this English README is canonical.
+### Upstream contributors
+
+The pre-fork project (`santifer/career-ops`) was built and shipped by
+[santifer](https://santifer.io) and contributors. Their work made
+this fork possible. Heron is a separate project with its own
+contributor history starting from `0.1.0`; contributions to the
+upstream are documented in the upstream repository's PR + issue
+history.
 
 ## License
 

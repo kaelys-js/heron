@@ -3,7 +3,7 @@
  * setup — one-shot interactive wizard for native-app readiness.
  *
  * Walks you through ALL the one-time setup so you never have to read
- * docs/native.md. Run once; every future native command just works.
+ * docs/NATIVE.md. Run once; every future native command just works.
  *
  * What it does:
  *

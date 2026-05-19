@@ -1,10 +1,14 @@
 # Mascot — Heron
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 > Last revised 2026-05-15. Production brief for the Heron mascot.
 > Detailed enough that a human illustrator can execute in 1–2 days, or
 > Claude Design can produce a usable first draft in 5 minutes.
 > Companion docs: [`BRAND.md`](./BRAND.md) (personality, voice),
-> [`COLORS.md`](./COLORS.md) (palette), [`WORDMARK.md`](./WORDMARK.md)
+> [`COLORS.md`](./COLORS.md) (palette), [`BRAND.md#wordmark`](./BRAND.md#wordmark)
 > (lockup with the wordmark), [`TYPOGRAPHY.md`](./TYPOGRAPHY.md) (face
 > used in lockups).
 
@@ -121,7 +125,7 @@ Store screenshots, blog post headers.
 
 ## Lockup with the wordmark
 
-Two configurations, defined here, also referenced in [`WORDMARK.md`](./WORDMARK.md).
+Two configurations, defined here, also referenced in [`BRAND.md#wordmark`](./BRAND.md#wordmark).
 
 ### Horizontal lockup (header navs, README banner, footer)
 

@@ -1,5 +1,9 @@
 # Typography — Heron
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 > Last revised 2026-05-15. The typographic system for Heron. Strategy +
 > voice live in [`BRAND.md`](./BRAND.md); colors in
 > [`COLORS.md`](./COLORS.md). Implementation deferred to Task 9 of the

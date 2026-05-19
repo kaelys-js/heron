@@ -1,5 +1,9 @@
 # Contributing to Heron
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-15 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 Thanks for your interest in contributing! Heron is built with Claude Code, and you can use it for development too.
 
 ## Before Submitting a PR
@@ -76,8 +80,39 @@ If you fork the project for commercial use, you're welcome to do so
 under MIT — please give it your own product name and follow the
 trademark policy regarding commercial naming and endorsement claims.
 
-## Need Help?
+## Getting help
 
-- [Join the Discord](https://discord.gg/8pRpHETxa4) — fastest way to get answers and connect with other contributors
-- [Open an issue](https://github.com/heron/heron/issues)
-- [Read the architecture docs](docs/ARCHITECTURE.md)
+Heron is an open source project maintained in limited time. Here's
+how to get help efficiently.
+
+### Where to ask
+
+| Question type | Where |
+|---|---|
+| **Bug** (something is broken) | [GitHub Issues](https://github.com/heron/heron/issues) — use the Bug Report template |
+| **Feature idea** | [GitHub Issues](https://github.com/heron/heron/issues) — use the Feature Request template |
+| **How do I…?** | [GitHub Discussions](https://github.com/heron/heron/discussions) or [Discord](https://discord.gg/8pRpHETxa4) |
+| **Setup help** | Check [`docs/SETUP.md`](../docs/SETUP.md) first, then ask in [Discord](https://discord.gg/8pRpHETxa4) |
+| **Security vulnerability** | Email <hello@heron.app> — see [`SECURITY.md`](SECURITY.md) |
+
+### Before opening an issue
+
+1. Search existing issues — someone may have reported it already.
+2. Run `pnpm run doctor` — it catches most setup problems.
+3. Include your OS, Node.js version, and the CLI you're using
+   (Claude Code, Gemini, Codex, OpenCode, etc.).
+
+### What NOT to use GitHub Issues for
+
+- General questions about job searching
+- Requests for personal career advice
+- Support for modified forks or unofficial distributions
+- Asking the maintainer to review your CV
+
+These will be closed and redirected to the appropriate channel.
+
+### Reference links
+
+- [Architecture docs](../docs/ARCHITECTURE.md)
+- [Setup guide](../docs/SETUP.md)
+- [Discord community](https://discord.gg/8pRpHETxa4)

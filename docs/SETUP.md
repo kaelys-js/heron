@@ -1,5 +1,9 @@
 # Setup Guide
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-15 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 This doc gets you from `git clone` to a running Heron dashboard in under 5 minutes. If something doesn't work, jump to [Troubleshooting](#troubleshooting) at the bottom.
 
 ## What you'll have when you're done

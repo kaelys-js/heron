@@ -995,20 +995,46 @@ function applyBookmarklet(brand) {
  * asserts each marked region matches what apply-brand would emit.
  */
 function applyMarkdownSections(brand) {
+  // Every doc that should derive its data from brand.json. AUTO-GENERATED:*
+  // markers inside any of these files get filled by the generators below.
+  // doc-meta is applied to ALL of them; the per-doc data sections only
+  // fire if the marker exists in that specific file.
   const targets = [
+    // Branding spec docs
     join(ROOT, 'branding', 'BRAND.md'),
     join(ROOT, 'branding', 'COLORS.md'),
     join(ROOT, 'branding', 'TYPOGRAPHY.md'),
     join(ROOT, 'branding', 'VOICE.md'),
     join(ROOT, 'branding', 'MASCOT.md'),
-    join(ROOT, 'branding', 'WORDMARK.md'),
     join(ROOT, 'branding', 'SOCIAL-CARD.md'),
     join(ROOT, 'branding', 'PRESS.md'),
-    join(ROOT, 'branding', 'README-banner.md'),
+    join(ROOT, 'branding', 'REBRAND-PROCESS.md'),
+    // Root + community
     join(ROOT, 'README.md'),
+    join(ROOT, 'AGENTS.md'),
+    join(ROOT, 'GEMINI.md'),
+    join(ROOT, 'CLAUDE.md'),
+    join(ROOT, '.github', 'CODE_OF_CONDUCT.md'),
+    join(ROOT, '.github', 'CONTRIBUTING.md'),
+    join(ROOT, '.github', 'SECURITY.md'),
+    // docs/
+    join(ROOT, 'docs', 'ARCHITECTURE.md'),
+    join(ROOT, 'docs', 'CUSTOMIZATION.md'),
+    join(ROOT, 'docs', 'DATA_CONTRACT.md'),
+    join(ROOT, 'docs', 'GOVERNANCE.md'),
+    join(ROOT, 'docs', 'LEGAL_DISCLAIMER.md'),
+    join(ROOT, 'docs', 'NATIVE.md'),
+    join(ROOT, 'docs', 'SETUP.md'),
+    join(ROOT, 'docs', 'STATUS_MODEL.md'),
+    join(ROOT, 'docs', 'TESTING.md'),
+    join(ROOT, 'docs', 'TRADEMARK.md'),
+    join(ROOT, 'docs', 'WATCH.md'),
+    // Workspaces
+    join(ROOT, 'templates', 'README.md'),
+    join(ROOT, 'ui', 'README.md'),
   ];
   const generators = mdSectionGenerators();
-  let any = false;
+  let touched = 0;
   for (const path of targets) {
     if (!existsSync(path)) continue;
     const before = readFileSync(path, 'utf8');
@@ -1019,22 +1045,25 @@ function applyMarkdownSections(brand) {
       const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const re = new RegExp(escape(startMarker) + '[\\s\\S]*?' + escape(endMarker), 'm');
       if (re.test(body)) {
-        const content = gen(brand);
+        const content = gen(brand, path);
         body = body.replace(re, `${startMarker}\n${content}\n${endMarker}`);
       }
     }
     if (body !== before) {
       writeFileSync(path, body);
-      any = true;
+      touched++;
     }
   }
-  any
-    ? log.ok(`branding/*.md (regenerated marked sections)`)
-    : log.skip(`branding/*.md — no marker drift`);
+  touched > 0
+    ? log.ok(`${touched} .md file${touched === 1 ? '' : 's'} (regenerated marked sections)`)
+    : log.skip(`.md markers — no drift`);
 }
 
 function mdSectionGenerators() {
   return {
+    // doc-meta: standardized one-line header. Brand name + last-revised
+    // date pulled from git log. Filled into every .md in scope.
+    'doc-meta': (b, filePath) => generateDocMeta(b, filePath),
     'display-name': (b) => b.displayName,
     tagline: (b) => `> **${b.voice.tagline}**`,
     subline: (b) => b.voice.subline,
@@ -1068,6 +1097,37 @@ function mdSectionGenerators() {
         `- **Keychain service** — \`${b.identifiers.keychainService}\``,
       ].join('\n'),
   };
+}
+
+/** Build the doc-meta one-liner: brand displayName link + last-revised date.
+ *  The link is relative to the file's own path (so README.md in branding/
+ *  links up to ../README.md, etc.). The date is the most recent commit
+ *  to the file per `git log -1 --format=%cs`. Falls back to today if
+ *  the file isn't yet in git or git is unavailable. */
+function generateDocMeta(brand, filePath) {
+  const rel = filePath.replace(ROOT + '/', '');
+  const depth = (rel.match(/\//g) || []).length;
+  // Last revised: most recent commit to this file per git log. Falls
+  // back to today if git is missing or the file is untracked.
+  let lastRevised = new Date().toISOString().slice(0, 10);
+  try {
+    const out = execSync(`git log -1 --format=%cs -- "${filePath}"`, {
+      cwd: ROOT,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .toString()
+      .trim();
+    if (out && /^\d{4}-\d{2}-\d{2}$/.test(out)) lastRevised = out;
+  } catch {
+    /* git missing or file untracked — fall back to today */
+  }
+  // README.md at root IS the brand entry point — no self-link needed.
+  if (rel === 'README.md') {
+    return `*Last revised ${lastRevised} · [${brand.displayName}](${brand.homepageUrl ?? brand.repo.url}) · ${brand.tagline}*`;
+  }
+  // Every other doc gets a relative link up to README.md.
+  const linkToReadme = depth === 0 ? 'README.md' : '../'.repeat(depth) + 'README.md';
+  return `*Last revised ${lastRevised} · part of the [${brand.displayName}](${linkToReadme}) docs.*`;
 }
 
 function mdColorBaseTable(b) {

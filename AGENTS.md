@@ -1,5 +1,9 @@
 # Heron -- AI Job Search Pipeline
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-18 · part of the [Heron](README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 ## Heritage
 
 This is a hard fork of an open-source CLI-driven job-search system. The
@@ -401,7 +405,7 @@ Source of truth: `release-please-config.json`, `.github/workflows/release.yml`, 
 - **Code of Conduct**: Contributor Covenant 2.1 with enforcement actions (see `.github/CODE_OF_CONDUCT.md`)
 - **Governance**: BDFL model with contributor ladder — Participant → Contributor → Triager → Reviewer → Maintainer (see `docs/GOVERNANCE.md`)
 - **Security**: private vulnerability reporting via email (see `.github/SECURITY.md`)
-- **Support**: help questions go to Discord/Discussions, not issues (see `.github/SUPPORT.md`)
+- **Support**: help questions go to Discord/Discussions, not issues (see [`.github/CONTRIBUTING.md#getting-help`](.github/CONTRIBUTING.md))
 - **Discord**: <https://discord.gg/8pRpHETxa4>
 
 ## Headless / Batch Mode

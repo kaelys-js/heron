@@ -1,12 +1,16 @@
 # Heron — press kit
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 > Last revised 2026-05-18. The single document a journalist, blogger,
 > podcaster, partner, or community organizer needs to write about Heron
 > accurately. Copy the relevant block, attach the relevant asset, file
 > the piece.
 >
 > Companion docs: [`BRAND.md`](./BRAND.md) (strategy + voice),
-> [`VOICE.md`](./VOICE.md) (anti-patterns), [`WORDMARK.md`](./WORDMARK.md)
+> [`VOICE.md`](./VOICE.md) (anti-patterns), [`BRAND.md#wordmark`](./BRAND.md#wordmark)
 > + [`MASCOT.md`](./MASCOT.md) (visual assets),
 > [`SOCIAL-CARD.md`](./SOCIAL-CARD.md) (OG image),
 > [`COLORS.md`](./COLORS.md) + [`TYPOGRAPHY.md`](./TYPOGRAPHY.md)
@@ -207,7 +211,7 @@ doubt, ask <hello@heron.app> — we default to permissive.
 
 For pieces that need to be precise about Heron's lineage:
 
-> Heron is a hard fork of `santifer/career-ops`, the original CLI-driven job-search system [santifer](https://santifer.io) built and used to evaluate 740+ offers, generate 100+ tailored CVs, and land a Head of Applied AI role. His [case study](https://santifer.io/career-ops-system) is the philosophical foundation. The fork extends the original with multi-user RBAC, a SvelteKit dashboard, Capacitor native apps, an autonomous-apply pipeline, and the present brand identity. Credit to santifer is preserved in the README, in [`docs/CONTRIBUTORS.md`](../docs/CONTRIBUTORS.md), and in the upstream repository link from every issue page.
+> Heron is a hard fork of `santifer/career-ops`, the original CLI-driven job-search system [santifer](https://santifer.io) built and used to evaluate 740+ offers, generate 100+ tailored CVs, and land a Head of Applied AI role. His [case study](https://santifer.io/career-ops-system) is the philosophical foundation. The fork extends the original with multi-user RBAC, a SvelteKit dashboard, Capacitor native apps, an autonomous-apply pipeline, and the present brand identity. Credit to santifer is preserved in the README Acknowledgements section and in the upstream repository link from every issue page.
 
 ## What's been published already
 

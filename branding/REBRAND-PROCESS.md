@@ -1,5 +1,9 @@
 # Rebrand process
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 > How to change the brand cleanly — names, colors, fonts, voice, the
 > whole identity — and the protections that stop accidental damage.
 >
@@ -120,54 +124,168 @@ The `!` in the commit prefix tells Release Please to cut a major
 release; combined with a `BREAKING CHANGE:` footer in the commit body,
 the changelog flags the rebrand clearly.
 
-## What apply-brand CANNOT do for you
+## External steps — what apply-brand CANNOT do for you
 
-External systems live outside the repo. The MIGRATION doc enumerates
-them; the highlights:
+External systems live outside the repo. The MIGRATION doc auto-emits
+a summary; this section is the full checklist.
+
+### Local working tree + GitHub
+
+The git remote URL inside the repo points at the OLD GitHub coordinates
+until the actual GitHub rename happens. GitHub auto-redirects the old
+URL for ~90 days, but external bookmarks / blog posts / press
+references should be updated.
+
+```sh
+# 1. Rename the GitHub repo via web UI (Settings → Repository name)
+#    or via gh CLI:
+gh repo rename <new-name> --repo <old-owner>/<old-name>
+
+# 2. If also moving to a new GitHub org:
+#    Transfer ownership via Settings → Transfer (new org must exist first).
+
+# 3. Update the local remote URL:
+git remote set-url origin git@github.com:<new-owner>/<new-name>.git
+git remote -v
+
+# 4. Optional: rename the local working tree directory:
+mv ~/<old-dir> ~/<new-dir>
+cd ~/<new-dir>
+```
 
 ### App Store Connect (Apple)
 
-- Bundle ID lock is **non-negotiable**. A published app cannot have its
-  bundle ID changed. New bundle ID = a new App Store Connect entry,
-  losing ratings, reviews, TestFlight tester history, App Store
-  Optimization (ASO) ranking, screenshot reviews.
-- Plan: keep the old entry as legacy (mark deprecated), create new
-  entry for the new bundle ID, migrate users via in-app banner.
+**Bundle ID is locked.** The most important external constraint of a
+rebrand — Apple does not allow changing the bundle ID of a published
+app. Options when the bundle ID changes:
+
+- **Keep the old app as legacy.** The old App Store entry stays alive
+  at the old bundle ID. Reviews, ratings, TestFlight history, download
+  counts all stay with it. The new bundle ID gets a fresh App Store
+  Connect entry.
+- **Mark old as deprecated.** Apple supports "Removed from sale" status
+  — users who already installed keep using it; new users can't find it.
+- **In-app migration banner** on the old app pointing users at the new
+  App Store entry (manual code; not covered by apply-brand).
+
+App Store Connect steps for the new bundle ID:
+
+1. App Store Connect → My Apps → "+ New App"
+2. Bundle ID = pick the new value (must match
+   `brand.json::identifiers.bundleId`)
+3. Re-upload screenshots, metadata, privacy nutrition labels.
+4. Re-invite TestFlight testers (cannot migrate from old app's tester
+   pool).
+5. Submit for review.
+
+ASO (App Store Optimization) implications: keyword history, ranking,
+click-through-rate data resets. Plan to lose 2–4 weeks of ASO
+performance during the transition.
 
 ### Google Play Console (Android)
 
-- `applicationId` lock is the same as iOS. Same plan.
+`applicationId` is locked the same way as iOS bundle ID. Same plan:
+old `applicationId` stays as legacy, new `applicationId` = new Play
+Console listing. Re-upload AAB, metadata, screenshots. Re-invite
+internal testers.
 
-### GitHub (repo URL)
+### DNS + email + domains
 
-- Repo rename from Settings → Repository name. GitHub auto-redirects
-  for a while, but external bookmarks / RSS feeds / SEO indexing
-  should be updated.
-- Update local clone:
-  ```sh
-  git remote set-url origin git@github.com:<new-org>/<new-repo>.git
-  ```
-- Optional: rename the local working tree directory:
-  ```sh
-  mv ~/<old-name> ~/<new-name>
-  ```
+If `brand.json::homepageUrl` / `supportEmail` changes domain:
 
-### Domain + email
+- Register the new domain.
+- DNS: A / AAAA / CNAME records for the new website, MX for email.
+- Email forwarding: `hello@<newbrand>` → existing mailbox.
+- SPF / DKIM / DMARC records on the new domain.
+- Move landing-page hosting (Vercel / Netlify / GitHub Pages).
 
-- DNS for the new homepageUrl / supportEmail domain must be set up.
-- Update email forwarding (`hello@newbrand.com` → mailbox).
-- Update OAuth callback URLs if Better Auth integrates with external
-  providers (GitHub OAuth app, etc.).
+### OAuth / Better Auth callbacks
+
+Better Auth's GitHub OAuth integration uses callback URLs scoped to
+the OAuth app. If the OAuth app's name / homepage changes:
+
+- GitHub OAuth Apps → Settings → update Application name + Homepage URL.
+- Authorization callback URL: keep the existing values unless the
+  underlying domain changes.
+- Generate new client secret (recommended on rebrand — invalidates any
+  leaked secret).
+
+Other integrations (Stripe, Sentry, Linear, Discord, etc.) need similar
+profile updates.
+
+### Discord server + community
+
+- Server Settings → Overview → server name.
+- Update invite link description, channel topics, category names
+  referencing the old brand.
+- Bot integrations: GitHub webhooks pointing at Discord may need
+  re-authorizing under the new repo URL.
+
+### Search engines + SEO
+
+- Google Search Console: add the new domain as a separate property.
+- Sitemap: regenerate if the marketing site moved.
+- 301 redirects from old domain → new domain (preserves SEO equity).
+- Update structured data (schema.org JSON-LD) referencing the brand.
+
+### Social handles
+
+- Twitter / X handle change (if available).
+- LinkedIn page rename.
+- GitHub org rename (if owning an org, not a personal repo).
+- Mastodon / Bluesky handles.
+- npm package name change (if published — `npm deprecate` the old,
+  publish under the new).
+
+### Trademark + legal
+
+If the brand is registered as a trademark:
+
+- USPTO TEAS application for the new name.
+- Domain ownership + protection (typo-squat watching service).
+- Update `LICENSE` copyright holder if the legal entity changes.
+- `docs/TRADEMARK.md` policy text references the brand by name —
+  apply-brand regenerates the relevant data sections; the narrative
+  may need a manual sweep.
+
+### Notify existing users
+
+- Email blast to the user mailing list (if any).
+- In-app banner on the OLD bundle ID app pointing users at the new
+  App Store / Play Store entry.
+- Blog post on the website explaining the rename.
 
 ### Capacitor-synced webview caches
 
-- `ui/ios/App/App/public/` and `ui/android/app/src/main/assets/public/`
-  hold a cached SvelteKit build referenced by the iOS / Android shell.
-- Refresh after rebrand:
-  ```sh
-  pnpm exec cap sync ios
-  pnpm exec cap sync android
-  ```
+`ui/ios/App/App/public/` and `ui/android/app/src/main/assets/public/`
+hold a cached SvelteKit build referenced by the iOS / Android shell.
+Refresh after rebrand:
+
+```sh
+pnpm exec cap sync ios
+pnpm exec cap sync android
+```
+
+### Verification checklist
+
+After running through the above:
+
+- [ ] `git remote -v` shows the new URL.
+- [ ] `cd <new-dir> && pnpm brand:apply` runs cleanly (no drift).
+- [ ] `pnpm exec vitest run capacitor.integration.test.ts` passes.
+- [ ] iOS simulator launches under the new bundle ID:
+      `cd ui && pnpm exec cap run ios`
+- [ ] Android emulator launches under the new applicationId:
+      `cd ui && pnpm exec cap run android`
+- [ ] Web manifest theme color, app name, icon all updated — visit
+      `http://localhost:5173` and inspect the head.
+- [ ] App Store Connect new entry exists + is "Ready for Submission".
+- [ ] Play Console new entry exists + has an internal-test build.
+- [ ] DNS resolves for the new domain.
+- [ ] OAuth callbacks work end-to-end.
+- [ ] Discord server has the new name.
+- [ ] Social handles updated where available.
+- [ ] Search Console knows about the new domain.
 
 ## Bypassing the gate (emergency)
 

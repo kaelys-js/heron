@@ -1,11 +1,15 @@
 # Social card — Heron
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-15 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 > Last revised 2026-05-15. Spec for the Heron Open Graph (OG) social
 > card. The rendered PNG is what ships at `ui/static/social-card.png`
 > after Task 9 wiring. The HTML source lives at
 > [`assets/social-card.html`](./assets/social-card.html). Companion
 > docs: [`BRAND.md`](./BRAND.md), [`COLORS.md`](./COLORS.md),
-> [`TYPOGRAPHY.md`](./TYPOGRAPHY.md), [`WORDMARK.md`](./WORDMARK.md),
+> [`TYPOGRAPHY.md`](./TYPOGRAPHY.md), [`BRAND.md#wordmark`](./BRAND.md#wordmark),
 > [`MASCOT.md`](./MASCOT.md).
 
 ## Purpose

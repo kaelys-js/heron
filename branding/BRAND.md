@@ -1,5 +1,9 @@
 # Brand — Heron
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-18 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 > Last revised 2026-05-15. This document is the canonical source for Heron's
 > name, positioning, audience, voice, and taglines. Visual specs live in
 > [`COLORS.md`](./COLORS.md), [`TYPOGRAPHY.md`](./TYPOGRAPHY.md), and
@@ -130,3 +134,49 @@ The brand is designed to scale into a commercial entity (`Heron`,
 identity — single-brand strategy, not Next.js/Vercel-split. If/when a
 commercial entity emerges, the open-source project keeps the same name,
 the same mark, the same voice.
+
+## Wordmark
+
+The wordmark is just **Heron** — no accent, no underline, no inline icon.
+Restraint reads as confidence; distinction is earned through *consistency*
+(same face, same weight, same tracking, same token-defined color) rather
+than logo trickery. The mascot ships separately so each component is
+composable: wordmark alone (most contexts), mascot alone (favicon, watch
+face), or locked-up together (marketing, press kit).
+
+| Property | Value |
+|---|---|
+| Family | Fraunces (variable serif) — see [`TYPOGRAPHY.md`](./TYPOGRAPHY.md) |
+| Weight (`wght`) | 700 |
+| Optical size (`opsz`) | 96 (display) |
+| Soft axis (`SOFT`) | 0 (sharp — full editorial gravitas) |
+| Letter-spacing | -0.02em |
+| Minimum render size | 24px height — below this, use the mascot alone |
+| Clearspace | 1× cap-height on every side |
+
+Four SVG variants ship under `assets/`. `apply-brand` regenerates all
+four from `brand.json::displayName` + the relevant color hex; edit
+brand.json + run `pnpm brand:apply` to retarget every variant.
+
+| File | Fill source | Use |
+|---|---|---|
+| `assets/wordmark.svg` | `currentColor` | Inline use where parent sets `color` |
+| `assets/wordmark-slate.svg` | `brand.colors.primary` | Light surfaces (default) |
+| `assets/wordmark-light.svg` | `brand.colors.textOnDark` | Dark surfaces |
+| `assets/wordmark-dawn.svg` | `brand.colors.accent` | Special-occasion only — gold-strike moment, press-kit cover. Not for everyday UI. |
+
+**Forbidden**: stretching either axis, drop shadows, re-coloring outside
+the token set, outlining the letterforms, setting below 24px, or placing
+a tagline directly underneath without the cap-height clearspace.
+
+**Honest limitation — text mode placeholder.** The shipped SVGs depend
+on Fraunces being loaded by the renderer. The web UI self-hosts Fraunces
+(`brand.fonts.display`); the dashboard, Capacitor wrappers, and any
+context that loads `ui/src/app.css` render correctly. Contexts where
+Fraunces *isn't* loaded — press kit PDFs, server-rasterized social
+cards, third-party embeds, email signatures — need the letterforms
+**outlined to vector `<path>` elements** as a one-time production prep
+step (Claude Design, Figma "Outline Stroke", Glyphs / FontForge, or
+any vector editor). Replace the placeholder `<text>` element in each
+variant with the resulting `<path>`; the viewBox stays the same so
+consumers don't have to change.

@@ -1,5 +1,9 @@
 # Governance
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-15 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 ## Overview
 
 heron is maintained by [@kaelys-js](https://github.com/kaelys-js) under a **BDFL (Benevolent Dictator for Life)** model with a clear path for community members to earn trust and take on responsibilities. (This is a fork of the upstream CLI-driven system — see [README.md](../README.md) "Acknowledgements" for the upstream credit.)
@@ -47,7 +51,7 @@ Anyone can grow their role in the project. Roles are earned through sustained, q
 **Earned after 5+ quality PRs merged + track record of helpful code reviews.**
 
 - Can approve PRs (maintainer still merges)
-- Listed in CONTRIBUTORS.md
+- Listed in the README Acknowledgements section
 - Invited to architectural discussions before major changes
 
 ### Maintainer

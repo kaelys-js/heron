@@ -1,5 +1,9 @@
 # Heron native apps
 
+<!-- AUTO-GENERATED:doc-meta -->
+*Last revised 2026-05-19 · part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
+
 You should not need to read this file. The commands are:
 
 ```bash
