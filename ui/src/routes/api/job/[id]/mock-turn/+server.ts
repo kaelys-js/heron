@@ -1,17 +1,9 @@
-/**
- * /api/job/[id]/mock-turn -- one turn of the voice mock interview.
- *
- * The browser captures the user's spoken answer (via Web Speech STT),
- * POSTs it here along with the running conversation history. We spawn
- * the mock-interview-turn Claude mode with the structured input, parse
- * the four-line output (TURN_SCORE / TURN_FEEDBACK / NEXT_QUESTION /
- * QUESTION_RATIONALE), and return JSON for the browser to TTS-speak
- * the next question.
- *
- * Stateless: history is in the request body. The client maintains the
- * transcript; the server doesn't persist anything until the session
- * ends (via the `endSession` flag).
- */
+/** /api/job/[id]/mock-turn -- one turn of the voice mock interview. The
+ *  browser captures the spoken answer (Web Speech STT) + POSTs it with the
+ *  running history. Spawns the mock-interview-turn mode, parses the four-line
+ *  output (TURN_SCORE / TURN_FEEDBACK / NEXT_QUESTION / QUESTION_RATIONALE),
+ *  returns JSON for the browser to TTS-speak the next question. Stateless:
+ *  history is in the body; server persists nothing until endSession=true. */
 
 import fs from 'node:fs';
 import path from 'node:path';

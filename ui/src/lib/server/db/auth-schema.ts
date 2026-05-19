@@ -1,19 +1,11 @@
-/**
- * auth-schema -- Drizzle schema for the auth.db SQLite file.
- *
- * Better Auth manages most of these via its core tables (users, sessions,
- * accounts, verification). We extend with:
- *
- *   • passkeys           -- WebAuthn credentials (label + last_used)
- *   • invite_codes       -- owner-generated 6-digit codes for new user signup
- *   • backup_codes       -- 2FA recovery codes (hashed)
- *   • audit_log          -- append-only log of every auth event
- *   • pending_deletions  -- soft-delete grace period tracking
- *
- * Times stored as INTEGER ms-epoch on disk; Drizzle's `{ mode: 'timestamp_ms' }`
- * surfaces them as JS `Date` objects in TypeScript, which is what Better
- * Auth's internal models expect for read+write.
- */
+/** auth-schema -- Drizzle schema for auth.db. Better Auth owns the
+ *  core tables (users, sessions, accounts, verification); we add
+ *  passkeys (WebAuthn label + last_used), invite_codes (owner-issued
+ *  6-digit signup codes), backup_codes (hashed 2FA recovery),
+ *  audit_log (append-only auth events), pending_deletions (soft-delete
+ *  grace tracking).
+ *  Times stored as INTEGER ms-epoch; { mode: 'timestamp_ms' } surfaces
+ *  them as JS Date, which Better Auth's models expect. */
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 
 /** Better Auth core: users */

@@ -166,8 +166,8 @@ function eventsInWindow(predicate: (ev: ActivityEvent) => boolean): {
   let lastError: ActivityEvent | undefined;
   // F25 -- scope to the calling user. /runtimes is the consumer; it runs
   // inside a user request context so currentUserIdOrDefault resolves
-  // correctly. Pre-fix this counted user A's anthropic API errors
-  // against user B's "last 24h" stats.
+  // correctly. `bus.recent()` (unscoped) would count user A's anthropic
+  // API errors against user B's "last 24h" stats.
   for (const ev of bus.recentForUser(currentUserIdOrDefault())) {
     if (!predicate(ev)) continue;
     if (ev.ts < cutoff) continue;

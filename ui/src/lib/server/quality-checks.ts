@@ -1,16 +1,9 @@
-/**
- * quality-checks -- server-side wrappers for ats-check, resume-quality
- * and cover-letter-check. Each spawns the corresponding mjs script
- * in --json mode and returns a typed result.
- *
- * Used by:
- *   • cv-pdf.ts (after PDF render → ats-check + resume-quality)
- *   • /api/job/[id]/cover-letter (after cover-letter render → cover-letter-check)
- *   • onboarding flow (when user uploads/edits their base CV)
- *
- * Failures are SURFACED, never blocking -- we always return the score so
- * the caller can decide whether to retry, auto-fix, or just warn the user.
- */
+/** quality-checks -- server-side wrappers for ats-check, resume-quality,
+ *  cover-letter-check. Each spawns the matching mjs script in --json
+ *  mode and returns a typed result. Called from cv-pdf.ts (post-render),
+ *  /api/job/[id]/cover-letter (post-render), and the onboarding flow on
+ *  base-CV upload/edit. Failures are surfaced, never blocking -- the
+ *  score always returns so the caller can retry, auto-fix, or warn. */
 
 import { spawn } from 'node:child_process';
 import { join } from 'node:path';

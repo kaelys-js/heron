@@ -1,22 +1,6 @@
-/**
- * fs-fixtures -- temporary-directory helpers for integration tests
- * that want to spawn a faux `data/` tree, run a check against it,
- * then tear it down.
- *
- * The standard pattern:
- *
- *   import { withTmpRepo } from '$lib/test-helpers/fs-fixtures';
- *
- *   it('does the thing', async () => {
- *     await withTmpRepo(async (root) => {
- *       writeFileSync(join(root, 'data', 'applications.md'), '...');
- *       const result = await checkPipeline(root);
- *       expect(result.ok).toBe(true);
- *     });
- *   });
- *
- * Tmp root is always cleaned, even on throw.
- */
+/** fs-fixtures -- tmpdir helpers for integration tests that need a
+ *  faux data/ tree. Use withTmpRepo(async (root) => { ... }); the tmp
+ *  root is always rm'd, even on throw. */
 import { mkdtemp, rm, mkdir, writeFile, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';

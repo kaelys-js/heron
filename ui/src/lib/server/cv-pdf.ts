@@ -1,30 +1,11 @@
-/**
- * Generate the user's "general CV" PDF -- a non-tailored, ATS-friendly PDF
- * built straight from cv.md, deliberately consistent with their LinkedIn
- * profile.
- *
- * Why a separate concept from the per-job tailored CVs:
- *   LinkedIn Easy Apply shows recruiters the user's LinkedIn profile and the
- *   uploaded resume side by side. Uploading a CV that reframes the user's
- *   experience differently from their LinkedIn profile is a known recruiter
- *   red flag. So the rule is:
- *     - LinkedIn Easy Apply → upload this general CV (matches profile)
- *     - Greenhouse / Ashby / Lever / Workday / etc. → tailored per-job CV
- *
- * Pipeline:
- *   1. Read cv.md
- *   2. Read templates/cv-template.html
- *   3. Ask Claude to populate the template's placeholders from cv.md.
- *      No JD-specific tailoring -- the prompt is explicit about this.
- *   4. Write filled HTML to a temp file in output/.tmp/
- *   5. Spawn `node generate-pdf.mjs <tmp.html> output/cv-general.pdf` to
- *      render the actual PDF (handles fonts, margins, ATS unicode cleanup)
- *   6. Return the path + sizing info
- *
- * Cost: 1 Anthropic call (~$0.30-$0.60) + ~5s Playwright render. Done once
- * per cv.md edit, not per application. Status endpoint surfaces whether the
- * existing PDF is stale relative to cv.md so the UI can prompt regeneration.
- */
+/** Builds the user's "general CV" PDF -- non-tailored, ATS-friendly,
+ *  built straight from cv.md to mirror their LinkedIn profile.
+ *  Use case: LinkedIn Easy Apply shows recruiters resume + profile
+ *  side by side, so a mismatched reframing is a known red flag. Web
+ *  ATSes (Greenhouse / Ashby / Lever / Workday) use the per-job
+ *  tailored CV instead. Pipeline: cv.md -> Claude fills cv-template.html
+ *  -> generate-pdf.mjs -> output/cv-general.pdf. Run once per cv.md
+ *  edit. */
 
 import fs from 'node:fs';
 import path from 'node:path';

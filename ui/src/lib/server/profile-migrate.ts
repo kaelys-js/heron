@@ -1,41 +1,12 @@
-/**
- * profile-migrate -- one-time migration from the legacy single-profile
- * flat layout to the new multi-profile `data/profiles/{slug}/` layout.
- *
- * Idempotent: re-running after migration succeeded is a no-op. Safe to
- * call unconditionally on every server boot.
- *
- * Safety design:
- *  - Every moved file gets a `.bak` sibling at its ORIGINAL path before
- *    being moved. If anything goes wrong, the user can restore by hand.
- *  - We use copyFile + unlink rather than rename, so a partial failure
- *    leaves the original intact.
- *  - Migration writes `data/profiles.json` LAST. If the process crashes
- *    mid-way, the next boot retries the migration (since profiles.json
- *    doesn't exist yet).
- *
- * Source → destination mapping for the `default` profile:
- *
- *   cv.md                          → data/profiles/default/cv.md
- *   config/profile.yml             → data/profiles/default/profile.yml
- *   portals.yml                    → data/profiles/default/portals.yml
- *   modes/_profile.md              → data/profiles/default/_profile.md
- *   article-digest.md              → data/profiles/default/article-digest.md
- *   data/pipeline.md               → data/profiles/default/pipeline.md
- *   data/applications.md           → data/profiles/default/applications.md
- *   data/scan-history.tsv          → data/profiles/default/scan-history.tsv
- *   data/gemini-scores.tsv         → data/profiles/default/gemini-scores.tsv
- *   data/follow-ups.md             → data/profiles/default/follow-ups.md
- *   data/projects.json             → data/profiles/default/projects.json
- *   reports/*                      → data/profiles/default/reports/*
- *   output/*                       → data/profiles/default/output/*
- *   interview-prep/{company}-*.md  → data/profiles/default/interview-prep/*
- *
- * What we DO NOT touch (intentionally -- these are shared):
- *   .env, .playwright-*, data/sources.json, data/onboarding-state.json,
- *   data/autopilot.json, data/activity.jsonl, data/issues.jsonl,
- *   data/inbox-mbox/, *-cache.json, interview-prep/story-bank.md.
- */
+/** profile-migrate -- one-time move from legacy flat layout to
+ *  data/profiles/{slug}/. Idempotent, safe on every boot.
+ *  Safety: each moved file gets a .bak sibling at its original path first;
+ *  copyFile + unlink (not rename) so partial failures leave originals
+ *  intact; data/profiles.json written LAST so a crash mid-way retries
+ *  cleanly on next boot.
+ *  Source → dest mapping in buildMoveSpecs() below. Untouched (shared):
+ *  .env, .playwright-*, data/{sources,onboarding-state,autopilot}.json,
+ *  data/{activity,issues}.jsonl, *-cache.json, interview-prep/story-bank.md. */
 
 import fs from 'node:fs';
 import path from 'node:path';

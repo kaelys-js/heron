@@ -1,25 +1,11 @@
-/**
- * POST /api/profile/cross-link-audit
- *
- * Validates that the user's CV, profile.yml, and the linked external
- * profiles (GitHub, LinkedIn, personal portfolio) tell the SAME story.
- *
- * Recruiters Google candidates. If your CV says "Senior Engineer at
- * AcmeCo" but your LinkedIn says "Lead Engineer at AcmeCo" -- that
- * inconsistency raises a red flag.
- *
- * Checks performed:
- *   1. Name match across all surfaces
- *   2. Current role + title match
- *   3. Most-recent employer match
- *   4. Years-of-experience implied by each surface lines up
- *   5. Project list from CV vs. pinned repos on GitHub
- *   6. Skills listed match the skills the user owns on LinkedIn
- *
- * Spawns the `cross-link-audit` mode which does the actual fetching +
- * comparison. Output: JSON summary written to
- * `data/users/.../profiles/.../cross-link-audit.json`.
- */
+/** POST /api/profile/cross-link-audit -- validate that the user's CV,
+ *  profile.yml, and linked external profiles (GitHub, LinkedIn, portfolio)
+ *  tell the same story. Recruiters Google candidates; CV "Senior Engineer"
+ *  vs LinkedIn "Lead Engineer" raises a red flag. Checks: name, current
+ *  role + title, most-recent employer, implied years-of-experience, CV
+ *  projects vs pinned GitHub repos, CV skills vs LinkedIn skills. Spawns
+ *  the cross-link-audit mode (does the fetching + comparison). Output:
+ *  data/users/.../profiles/.../cross-link-audit.json. */
 
 import fs from 'node:fs';
 import path from 'node:path';

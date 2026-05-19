@@ -206,10 +206,8 @@ function listToDelete() {
   }
 
   // Multi-user profiles: data/users/{uid}/profiles/{slug}/
-  // Walk every user's profiles tree so a reset truly nukes ALL users'
-  // data, not just the legacy single-user fallback. Pre-fix this loop
-  // was missing and reset-data left every real user's content intact
-  // when a legacy data/profiles/ tree also existed.
+  // Walk every user's profiles tree so reset nukes ALL users' data,
+  // not just the legacy single-user fallback at data/profiles/.
   for (const uid of listSubdirs(USERS_ROOT)) {
     const userProfiles = join(USERS_ROOT, uid, 'profiles');
     for (const p of listSubdirs(userProfiles)) {

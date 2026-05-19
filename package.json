@@ -125,6 +125,8 @@
     "validate:tiny-configs": "node scripts/system/validate-tiny-configs.mjs",
     "validate:version-sync": "node scripts/system/validate-version-sync.mjs",
     "validate:xml": "bash scripts/system/validate-xml.sh",
+    "verify:comment-style": "node scripts/system/verify-comment-style.mjs",
+    "verify:comment-style:test": "node scripts/system/verify-comment-style.test.mjs",
     "verify:english-only": "node scripts/system/verify-english-only.mjs",
     "verify:english-only:test": "node scripts/system/verify-english-only.test.mjs",
     "verify:modes": "node scripts/system/verify-modes.mjs",

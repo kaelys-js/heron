@@ -1,16 +1,10 @@
-/**
- * Job registry barrel -- importing this module triggers registration of
- * every known job. Called from `bootOnce()` in orchestrator.ts.
- *
- * Order matters only for visibility (the registry is a Map keyed by id,
- * so later registrations of the same id overwrite earlier ones). Legacy
- * tasks are wired here directly to avoid circular imports between
- * orchestrator and registry.
- *
- * Each job's `*.job.ts` module self-registers on import; the imports
- * below MUST stay even though they look unused -- tree-shaking would
- * otherwise drop them and the job wouldn't exist at runtime.
- */
+/** Job registry barrel -- importing triggers registration of every
+ *  known job. Called from bootOnce() in orchestrator.ts. Each *.job.ts
+ *  self-registers on import; the seemingly-unused imports below MUST
+ *  stay or tree-shaking drops them and the job never exists at runtime.
+ *  Order matters only for visibility (Map keyed by id, last write
+ *  wins). Legacy tasks are wired here directly to avoid circular
+ *  imports between orchestrator and registry. */
 
 import { register, installAfterListener } from './registry';
 import { runScan, runGemini, runLinkedInApply } from '../orchestrator';

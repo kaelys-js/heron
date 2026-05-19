@@ -189,7 +189,7 @@ function parseLinkedInAlert(rawMessage) {
     out.push({
       url: `https://www.linkedin.com/jobs/view/${jobId}/`,
       title: '', // LinkedIn alerts often inline the title near the URL but
-      // robust HTML→title extraction is brittle without a parser. Leave
+      // HTML→title extraction without a parser would be brittle. Leave
       // blank -- the downstream evaluator (evaluate) reads the JD anyway.
       company: '',
       source: 'linkedin-alert-email',

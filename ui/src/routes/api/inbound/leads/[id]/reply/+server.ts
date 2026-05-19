@@ -1,19 +1,9 @@
-/**
- * POST /api/inbound/leads/[id]/reply
- *
- * Spawns the `recruiter-reply` mode to draft a personalised response.
- * NEVER auto-sends -- the draft is saved to disk + path returned. The
- * dashboard renders the draft + a "I sent this" button the user clicks
- * AFTER pasting into LinkedIn / their email client.
- *
- * Body:
- *   {
- *     tone?: 'formal' | 'friendly' | 'concise',
- *     intent?: 'interested-want-more' | 'interested-with-concern' | 'polite-decline' | 'comp-first',
- *     userConcern?: string,
- *     userQuestion?: string
- *   }
- */
+/** POST /api/inbound/leads/[id]/reply -- spawns the `recruiter-reply` mode
+ *  to draft a personalised response. NEVER auto-sends; saves the draft
+ *  to disk + returns the path. Body: { tone?, intent?, userConcern?,
+ *  userQuestion? }. tone = 'formal'|'friendly'|'concise'; intent =
+ *  'interested-want-more'|'interested-with-concern'|'polite-decline'|
+ *  'comp-first'. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { logEvent, reportServerError } from '$lib/server/events';

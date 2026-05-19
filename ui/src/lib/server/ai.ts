@@ -1,22 +1,10 @@
-/**
- * ai.ts -- Anthropic client + completion helpers, scoped per-user.
- *
- * Each user holds their own ANTHROPIC_API_KEY (see user-secrets.ts).
- * `getClient()` resolves the current user via AsyncLocalStorage (the
- * dashboard wraps every request in `runAsUser(uid, ...)` from
- * hooks.server.ts; CLI scripts set `HERON_USER_ID` to drive the
- * same default). The resolver then pulls the user's key from the
- * encrypted secrets store, falling back to `process.env.ANTHROPIC_API_KEY`
- * for legacy single-user installs.
- *
- * SDK clients are memoized by API-KEY VALUE so:
- *   - two users sharing the same key share one HTTP connection pool
- *   - rotating a user's key naturally re-instantiates on next call
- *
- * Callers do NOT pass userId explicitly -- keeping the function shape
- * unchanged so consumers can be migrated without touching their call
- * sites. The implicit lookup is the whole point.
- */
+/** Per-user Anthropic client + completion helpers. getClient() resolves
+ *  current user via AsyncLocalStorage (request scope) or HERON_USER_ID
+ *  (CLI), pulls their ANTHROPIC_API_KEY from user-secrets, falls back
+ *  to process.env for legacy single-user. SDK clients memoized by
+ *  key VALUE so shared keys pool their HTTP connections + rotation
+ *  re-instantiates on next call. Callers do not pass userId -- implicit
+ *  resolution is the entire point. */
 import Anthropic from '@anthropic-ai/sdk';
 import { currentUserIdOrDefault } from './user-context';
 import { getCredential } from './user-secrets';

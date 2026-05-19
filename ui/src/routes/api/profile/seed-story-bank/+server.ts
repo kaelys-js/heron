@@ -1,16 +1,9 @@
-/**
- * /api/profile/seed-story-bank -- extract STAR+R stories from cv.md.
- *
- * POST → spawns the seed-story-bank Claude mode (`claude -p` + the prompt
- * file at modes/seed-story-bank.md). The mode reads cv.md + _profile.md +
- * the EXISTING story-bank.md, appends new stories, and prints a one-line
- * summary on stdout that we parse for the UI toast.
- *
- * Why an explicit "seed" action (vs. running oferta and waiting for Block F
- * to do it): users with no applications yet have an empty story-bank.md.
- * That blocks every future interview-prep run. One-shot seeding from the
- * CV fixes that bootstrap problem.
- */
+/** /api/profile/seed-story-bank -- extract STAR+R stories from cv.md.
+ *  POST → spawn seed-story-bank Claude mode (modes/seed-story-bank.md).
+ *  Mode reads cv.md + _profile.md + existing story-bank.md, appends new
+ *  stories, prints a one-line stdout summary parsed for the UI toast.
+ *  Explicit seed (vs. waiting for Block F in evaluate) so first-time
+ *  users with empty story-bank.md can still run interview-prep. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { ROOT } from '$lib/server/files';

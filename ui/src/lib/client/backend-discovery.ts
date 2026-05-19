@@ -1,35 +1,9 @@
-/**
- * backend-discovery -- the spine of every Capacitor target.
- *
- * Whether you launched the Vite dev server, the production Electron build,
- * a remote-hosted server, or a phone on a different network -- this resolver
- * finds the backend at boot, caches it, and exposes it as a stable URL.
- *
- * Resolution order:
- *
- *   1. `opts.embeddedUrl`          (Electron prod build serves its own
- *                                   Node server; main process passes
- *                                   the port via window.__HERON__)
- *   2. `http://localhost:5173`     (Vite dev server on this machine --
- *                                   useful when running iOS simulator
- *                                   alongside `pnpm dev` on the Mac)
- *   3. `_heron._tcp.local`    (mDNS browse on the local network --
- *                                   for iOS device on the same wifi as
- *                                   the desktop app)
- *   4. `opts.tailscaleHost`        (configured Tailscale magic-DNS host,
- *                                   for phone away from home)
- *   5. `opts.productionUrl`        (last-resort user-configured remote)
- *
- * The first candidate that responds 200 to `/api/health` within 1s wins.
- * Result is cached in Preferences with a 5min TTL. UI surfaces the
- * current source via the DEV / PROD / LAN / TAILSCALE / REMOTE pill so
- * the user always knows what they're hitting.
- *
- * This module is platform-agnostic -- it imports Preferences from
- * @capacitor/preferences (which has a web fallback), and only attempts
- * mDNS when the runtime supports it. On plain browsers (`pnpm dev`),
- * everything still works: localhost:5173 wins at step 2.
- */
+/** Backend URL resolver for every Capacitor / Electron target. Probes
+ *  in order: opts.embeddedUrl (Electron main), localhost:5173 (vite
+ *  dev), _heron._tcp.local (mDNS), opts.tailscaleHost, opts.productionUrl.
+ *  First /api/health 200 within 1s wins; result cached in Preferences
+ *  with 5min TTL. UI exposes the active source via the
+ *  DEV/PROD/LAN/TAILSCALE/REMOTE pill. */
 import { Preferences } from '@capacitor/preferences';
 import { BRAND } from './brand';
 

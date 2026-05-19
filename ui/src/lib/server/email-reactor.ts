@@ -1,30 +1,11 @@
-/**
- * email-reactor -- classify inbound emails + auto-react.
- *
- * For an autonomous job-search pipeline, the gap between "applied" and
- * "interviewing" is bridged by recruiter emails. The system already
- * polls Gmail via IMAP for job-alert digests; this module adds the
- * complementary capability: when a per-job recruiter email arrives,
- * automatically detect what kind it is and react.
- *
- * Reactions:
- *   - Rejection            → flip status to Rejected + fire post-rejection
- *   - Interview-scheduling → flip status to the appropriate stage
- *                            (PhoneScreen / Technical / Onsite / Final)
- *                            + auto-trigger tech-prep generation
- *   - Offer                → flip status to Offer, surface to /comp-eval,
- *                            push a high-priority notification
- *   - Take-home             → flip status to TakeHome
- *   - Recruiter-reach-out (no prior application) → log as a lead in
- *                            inbound-leads.jsonl (the channel that
- *                            historically converts best for the user)
- *
- * Architecture: pure functions for classification + matching; side-
- * effects (markStatus, spawn tech-prep, etc.) are surfaced via the
- * returned `Action[]` so the caller decides when to execute them.
- * This keeps the module testable in isolation and keeps the
- * "apply automatically" decision in one place (the API endpoint).
- */
+/** email-reactor -- classify inbound recruiter emails + emit Actions.
+ *  Reactions: Rejection → status=Rejected + post-rejection trigger;
+ *  Interview-schedule → matching stage (PhoneScreen/Technical/Onsite/
+ *  Final) + tech-prep spawn; Offer → status=Offer + /comp-eval +
+ *  high-priority push; TakeHome → status=TakeHome; cold recruiter
+ *  reach-out → log to inbound-leads.jsonl.
+ *  Pure classification/matching; side-effects (markStatus, spawn) are
+ *  returned as Action[] so the API endpoint owns when to execute. */
 
 import fs from 'node:fs';
 import path from 'node:path';

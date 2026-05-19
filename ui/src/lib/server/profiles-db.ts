@@ -1,26 +1,12 @@
-/**
- * profiles-db -- userId-scoped Profile CRUD backed by app.db.profiles.
- *
- * Replaces the flat `data/profiles.json` file with per-user rows. Every
- * call takes a `userId` and only ever sees that user's profiles, so two
- * users can have separate "Default" / "Engineer search" / "Founder search"
- * profile lists that don't collide.
- *
- * One row per (user_id, slug). Composite unique index enforces it at the
- * DB layer; the application code adds the same dedup logic so we surface
- * friendly errors instead of UNIQUE-constraint exceptions.
- *
- * Migration: on first read for a user, if their app.db row count is zero
- * AND the legacy `data/profiles.json` file still exists, we COPY (don't
- * move) the legacy rows under this user. The owner user (the first
- * account created) inherits the legacy data. Other users start empty.
- * A follow-up migration step will eventually delete the legacy file
- * once every caller is verified to use this module.
- *
- * Why "first user inherits legacy"? Single-user installs had no notion of
- * ownership -- there's only ever been one user's data. Making the owner
- * inherit gives them a smooth upgrade with no manual import step.
- */
+/** profiles-db -- userId-scoped Profile CRUD backed by app.db.profiles.
+ *  Replaces flat data/profiles.json with per-user rows; each call takes
+ *  a userId and only sees that user's profiles, so two users can have
+ *  separate "Default" / "Engineer" / "Founder" lists without collision.
+ *  One row per (user_id, slug); composite unique index enforces it at
+ *  the DB layer, app code dedups for friendlier errors.
+ *  Migration: on first read for a user with zero rows AND a legacy
+ *  data/profiles.json still on disk, we COPY rows under that user. The
+ *  owner (first account) inherits legacy data; others start empty. */
 import fs from 'node:fs';
 import path from 'node:path';
 import { and, eq } from 'drizzle-orm';

@@ -1,20 +1,10 @@
-/**
- * POST /api/job/[id]/interviewers/[slug]/dossier
- *
- * Spawn the per-interviewer dossier mode.
- *
- * The system already has a job-wide /api/job/[id]/dossier endpoint (calls
- * the `pre-call-dossier` mode and writes ONE file covering the whole panel).
- * This sibling endpoint instead generates a PER-INTERVIEWER deep-research
- * brief -- recent talks, papers, projects, opinions on technical topics,
- * the 3 stories from the user's CV that match THIS interviewer's
- * background, and 7 questions calibrated to their role.
- *
- * Output: `interview-prep/{company}-{interviewer-slug}-dossier.md` and the
- * Interviewer record's `dossierPath` field gets updated.
- *
- * Cost: 4-8 web requests + one Claude pass = 90-150s per dossier.
- */
+/** POST /api/job/[id]/interviewers/[slug]/dossier -- spawn the per-interviewer
+ *  dossier mode. Distinct from the job-wide /api/job/[id]/dossier (pre-call-
+ *  dossier, one file per panel): this generates a PER-INTERVIEWER brief --
+ *  recent talks/papers/projects, opinions, 3 CV stories matching this person,
+ *  7 questions calibrated to their role. Output: interview-prep/{company}-
+ *  {slug}-dossier.md; updates the Interviewer's dossierPath. Cost: 4-8 web
+ *  requests + one Claude pass = 90-150s. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';

@@ -1,20 +1,8 @@
-/**
- * comp-benchmark -- pull comp bands from public sources.
- *
- * Levels.fyi and Glassdoor both publish role/level/location bands at
- * stable URLs. Their ToS prohibits scraping, so this module instead:
- *
- *   1. Prompts the user to paste a manual benchmark (the dashboard's
- *      negotiation tab has an "I checked levels.fyi" field).
- *   2. OR: invokes the AGENT_CLI (Claude) with a deep-research prompt
- *      that hits the public pages once, extracts the band, and writes
- *      a citation. Same legal status as a human visiting the site once.
- *   3. OR: --offline mode that takes a JSON file as the source -- useful
- *      for unit tests + air-gapped runs.
- *
- * The output is normalised to OfferBenchmark records that get stored on
- * each OfferRecord. /comparison + the negotiation tab render the band.
- */
+/** Pulls comp bands from public sources (Levels.fyi, Glassdoor) without
+ *  scraping (ToS-prohibited). Three input paths: user-pasted manual,
+ *  AGENT_CLI deep-research one-shot with citation, or --offline JSON
+ *  for tests / air-gapped runs. Output: OfferBenchmark records stored
+ *  on each OfferRecord; rendered by /comparison + negotiation tab. */
 
 import { spawn } from 'node:child_process';
 import { CLI_NAMESPACE } from '$lib/config/branding';

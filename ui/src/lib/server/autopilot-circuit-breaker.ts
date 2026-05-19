@@ -1,39 +1,12 @@
-/**
- * Autopilot circuit breaker.
- *
- * Listens to bus events for operationally suspicious failures and pauses
- * Autopilot when thresholds trip. Surfaces a structured Issue (deduped,
- * so repeated tripping doesn't spam the inbox) so the user can see what
- * happened on /inbox and click "Resume" once they've fixed it.
- *
- * Multi-user (F12): pre-fix this module had a single
- * `consecutiveLinkedInFailures` counter and `checkPreflight()` read
- * `activePath('cv-md')` from whatever ALS context the boot timer held
- * (= SYSTEM_USER). Result: user A's two LinkedIn failures paused
- * Autopilot for EVERYONE, and the boot preflight tripped on SYSTEM's
- * empty profile tree even when all real users had cv.md.
- *
- * Now:
- *   - Per-user `consecutiveLinkedInFailures` map keyed by
- *     `ev.userId ?? SYSTEM_USER_ID`. Each user trips their own breaker.
- *   - `trip()` writes to THIS user's autopilot config + tags the issue
- *     with the userId so /inbox only surfaces it to the affected user.
- *   - `checkPreflight()` iterates every schedulable user and only trips
- *     for users whose own profile tree is missing essentials.
- *
- * Trip conditions (any one breaks the circuit for a user):
- *   - 2× consecutive `apply-linkedin` task failures for that user
- *   - profile.yml YAML parse error tagged to that user
- *   - cv.md missing for that user's active profile (preflight only)
- *
- * Resolution: the user clicks "Resume autopilot" on the issue (which
- * calls resumeAutopilot()), or directly toggles globalEnabled back on
- * from the Autopilot page. Either path clears the dedupeKey'd issue
- * on next trip.
- *
- * Idempotent: installCircuitBreaker() can be called multiple times
- * safely (only the first call wires the bus listener).
- */
+/** Per-user autopilot circuit breaker (F12). Listens for suspicious
+ *  failures + pauses each user's autopilot independently. Trip
+ *  conditions per user: 2x consecutive apply-linkedin failures,
+ *  profile.yml YAML parse error, or missing cv.md (preflight only).
+ *  Trip raises a deduped Issue tagged with the userId so /inbox only
+ *  shows it to that user. Resolution: "Resume autopilot" on the
+ *  Issue or toggle globalEnabled from the Autopilot page.
+ *  installCircuitBreaker() is idempotent (only first call wires the
+ *  bus listener). */
 
 import fs from 'node:fs';
 import { installBusListener, logEvent } from './events';
@@ -132,8 +105,8 @@ function isProfileYamlError(ev: ActivityEvent): boolean {
  *  user's user-layer essentials are missing, that user's autopilot has
  *  nothing to apply with, so trip pre-emptively for THAT user.
  *
- *  F12 sibling: pre-fix this ran once at boot with SYSTEM_USER context,
- *  tripping the global breaker for an empty SYSTEM tree even when all
+ *  F12: must run per-user, NOT once at boot under SYSTEM_USER -- that
+ *  would trip the global breaker for an empty SYSTEM tree even when all
  *  real users had cv.md. */
 async function checkPreflight(): Promise<void> {
   try {

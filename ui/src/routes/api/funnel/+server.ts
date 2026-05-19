@@ -1,15 +1,7 @@
-/**
- * GET /api/funnel
- *
- * Returns funnel-rate statistics for the current profile:
- *   applied → screened → interview → offer → accepted
- * along with conversion rates between adjacent stages.
- *
- * Powers:
- *   • /reality dashboard (Phase IX.3)
- *   • The "leverage points" section of the inbox header
- *   • iOS widget secondary tile
- */
+/** GET /api/funnel -- funnel-rate statistics for the current profile
+ *  (applied → screened → interview → offer → accepted) plus conversion
+ *  rates between adjacent stages. Powers /reality, the `leverage points`
+ *  block in the inbox header, and the iOS widget secondary tile. */
 
 import { wrap } from '$lib/server/api-helpers';
 import { computeFunnelStats } from '$lib/server/stage-state';
@@ -19,8 +11,8 @@ export const GET = wrap('funnel', async () => {
   const profileId = getActiveProfileId();
   const stats = computeFunnelStats(profileId);
   // Identify the most-leaky stage -- the smallest conversion rate. This is
-  // the highest-leverage place to focus (the place where 1% improvement
-  // converts to the biggest absolute offer-count gain).
+  // the highest-impact place to focus (a 1% improvement here converts to
+  // the biggest absolute offer-count gain).
   const conversions = [
     { name: 'applied→screen', rate: stats.appliedToScreen },
     { name: 'screen→interview', rate: stats.screenToInterview },

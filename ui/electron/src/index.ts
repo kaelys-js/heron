@@ -1,26 +1,8 @@
-/**
- * Heron desktop -- Electron main process.
- *
- * Responsibilities (in boot order):
- *
- *   1. Spawn the embedded Node SvelteKit server (the same `build/index.js`
- *      that adapter-node produces). Pick a free port at random; pass the
- *      resolved URL into the WebView via preload's `window.__HERON__`.
- *
- *   2. Advertise the running server on the local network via mDNS
- *      (`_heron._tcp.local`) so an iOS app on the same wifi can
- *      auto-discover it through the same backend-discovery resolver.
- *
- *   3. Wait for `/api/health` to respond, then create the BrowserWindow.
- *
- *   4. Install the full AppMenuBar (File / Edit / View / Window / Help)
- *      and a system Tray with live quick-glance stats.
- *
- *   5. Wire `heron://job/abc` deep links (custom protocol) to
- *      `mainWindow.loadURL(backend + '/job/abc')`.
- *
- *   6. Auto-update via electron-updater + GitHub Releases.
- */
+/** Electron main: spawns embedded SvelteKit server (random port,
+ *  injects URL via preload's window.__HERON__), advertises via mDNS
+ *  (`_heron._tcp.local`), waits for /api/health, creates BrowserWindow,
+ *  installs AppMenuBar + tray, wires heron:// deep links to
+ *  mainWindow.loadURL, runs electron-updater against GitHub Releases. */
 import type { CapacitorElectronConfig } from '@capacitor-community/electron';
 import {
   getCapacitorElectronConfig,

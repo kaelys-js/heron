@@ -1,22 +1,11 @@
-/**
- * /api/settings/secrets -- per-user encrypted credential store.
- *
- * Unlike /api/settings (owner-only, writes to install-wide .env), this
- * endpoint is scoped to each authenticated user. Members manage their
- * OWN Anthropic / Gemini / Adzuna / Gmail-IMAP / OpenAI keys without
- * needing owner permission and without sharing them with other users.
- *
- *   GET    → list keys the current user has set (masked values)
- *   POST   → upsert one or more keys for the current user
- *   DELETE → remove one key (?key=NAME)
- *
- * Storage is `data/users/{userId}/profiles/_shared/secrets.json`,
- * AES-256-GCM at rest with HKDF-derived per-user keys -- see
- * lib/server/user-secrets.ts for the threat model.
- *
- * The KNOWN_KEYS allowlist prevents arbitrary blob-storage abuse:
- * we only persist keys the rest of the codebase actually reads.
- */
+/** /api/settings/secrets -- per-user encrypted credential store.
+ *  Unlike /api/settings (owner-only, install-wide .env), this is scoped
+ *  to the authenticated user: members manage their own Anthropic / Gemini /
+ *  Adzuna / Gmail-IMAP / OpenAI keys without owner perms.
+ *    GET    → list keys (masked)   POST → upsert    DELETE ?key=NAME
+ *  Stored at data/users/{uid}/profiles/_shared/secrets.json, AES-256-GCM,
+ *  HKDF per-user key -- see lib/server/user-secrets.ts. KNOWN_KEYS
+ *  allowlist blocks the store from being used as a generic kv cache. */
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { requireUserId } from '$lib/server/auth-helpers';
 import { deleteSecret, getSecret, listSecretKeys, setSecret } from '$lib/server/user-secrets';

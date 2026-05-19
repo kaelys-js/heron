@@ -1,25 +1,10 @@
-/**
- * POST /api/profile/cv-from-linkedin
- *
- * Reads a LinkedIn profile URL, extracts its visible text via the saved
- * Playwright session (.playwright-linkedin/), and converts the result into
- * canonical markdown CV sections via Claude.
- *
- * Why authenticated-only: LinkedIn aggressively blocks public scraping of
- * profile pages (auth-walls, JS-only rendering, IP rate-limits). The user's
- * saved session bypasses every one of those -- same view they'd see when
- * visiting the URL themselves. Public scraping reliably fails so we don't
- * even attempt it.
- *
- * Pre-condition: the user has connected LinkedIn from /sources or the
- * onboarding wizard's Sources step. Otherwise we 400 with a clear hint.
- *
- * Request:  { url: string }
- * Response: { markdown: string }
- *
- * Cost: 1 Anthropic call (~$0.10-$0.40 depending on profile length) +
- * a few seconds of headless Playwright.
- */
+/** POST /api/profile/cv-from-linkedin -- LinkedIn URL → markdown CV.
+ *  Extracts profile text via the saved .playwright-linkedin/ session
+ *  (LinkedIn auth-walls + JS-renders + IP-limits public scraping), then
+ *  Claude converts to canonical CV sections. Requires the user to have
+ *  connected LinkedIn via /sources first -- 400 otherwise.
+ *  Body: { url }. Reply: { markdown }.
+ *  Cost: ~$0.10-0.40 Anthropic + a few s of headless Playwright. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { complete } from '$lib/server/ai';

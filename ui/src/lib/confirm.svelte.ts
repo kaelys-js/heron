@@ -1,30 +1,7 @@
-/**
- * Shared "double-click to confirm" gate for destructive actions.
- *
- * One instance per component (or per logical group of buttons). Each button
- * passes a unique `key` (e.g. the row id, or "delete" / "clear") so the same
- * gate can guard several actions side-by-side without crosstalk.
- *
- * Behaviour:
- *   First click  → arms the action and turns the button red. A 3s timer auto-
- *                  disarms if the user walks away.
- *   Second click → executes (and disarms).
- *   Click on a different key → re-arms for that key (the previous one disarms).
- *
- * Usage:
- *   const confirm = new ConfirmGate();
- *
- *   function onRemove(idx: number) {
- *     if (!confirm.trigger('chip:' + idx)) return;   // first click -- arm
- *     items.splice(idx, 1);                          // second click -- go
- *   }
- *
- *   <button class={confirm.isArmed('chip:' + i) ? 'red-tinted' : 'muted'}>
- *     <X />
- *   </button>
- *
- *   onDestroy(() => confirm.destroy());              // cleanup the timer
- */
+/** Double-click-to-confirm gate for destructive actions. One instance
+ *  per component; each button passes a unique `key` so multiple actions
+ *  on the same page don't crosstalk. First click arms (3s auto-disarm),
+ *  second click fires + disarms, clicking a different key swaps arm. */
 
 export class ConfirmGate {
   // The single key currently armed, or null. Reactive via Svelte 5 runes.

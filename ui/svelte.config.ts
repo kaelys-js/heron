@@ -1,25 +1,11 @@
-/**
- * SvelteKit config -- dual adapter + best-practice preprocessing.
- *
- * Heron ships in two shapes:
- *
- *   1. Web/server build (default) -- adapter-node, embedded inside the
- *      Electron app OR run remotely. Output goes to `build/` (Node entry).
- *
- *   2. Static shell build (CAPACITOR=1) -- adapter-static, the Capacitor
- *      WebView's HTML/JS/CSS bundle. Output goes to `build/static/`. The
- *      WebView loads this shell, which immediately runs backend-discovery
- *      and connects to whichever backend is reachable.
- *
- * The same source code produces both. Server-only modules (`$lib/server/*`)
- * are tree-shaken out of the static build because they're never imported
- * by client code.
- *
- * vitePreprocess() -- handles <script lang="ts">, <style lang="scss">, etc.
- * in .svelte files. Still recommended in Svelte 5 even though the compiler
- * has type-stripping support; vitePreprocess is the canonical bridge to
- * vite's plugin pipeline for source transforms.
- */
+/** SvelteKit config -- dual adapter.
+ *  1. Web/server (default): adapter-node, embedded in Electron OR run
+ *     remotely; output → build/.
+ *  2. Static shell (CAPACITOR=1): adapter-static, the Capacitor WebView
+ *     bundle (build/static/) that boots backend-discovery on load.
+ *  Same source produces both -- `$lib/server/*` tree-shakes out of static.
+ *  vitePreprocess handles <script lang="ts"> etc; still the canonical
+ *  bridge to Vite's transform pipeline in Svelte 5. */
 import nodeAdapter from '@sveltejs/adapter-node';
 import staticAdapter from '@sveltejs/adapter-static';
 import type { Config } from '@sveltejs/kit';

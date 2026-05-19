@@ -1,16 +1,6 @@
-/**
- * lib/client/online-status -- three-signal reconciliation of online state.
- *
- * Tests cover:
- *   • init() restores last-known state from localStorage
- *   • navigator online/offline events drive update()
- *   • probe() against /api/health flips the store on success/fail
- *   • listeners fire on transitions, NOT on no-op same-state updates
- *   • destroy() clears timers + listeners
- *   • OfflineError class + isOnline() helper
- *
- * jsdom env. Real fetch is mocked via global.fetch.
- */
+/** Tests for lib/client/online-status: init / navigator events /
+ *  probe / transition-listeners / destroy / OfflineError. jsdom env,
+ *  fetch mocked via global.fetch. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BRAND_STORAGE_PREFIX } from '$lib/client/brand';
 import { isOnline, OfflineError, onlineStore } from './online-status.svelte';

@@ -1,17 +1,8 @@
-/**
- * Queue batch send.
- *
- *   POST /api/queue/send  { jobIds: string[] }
- *
- * Splits the jobs by source:
- *   - LinkedIn URLs → kicked off via runLinkedInApply (one at a time)
- *   - others        → marked Applied immediately + their URLs returned in
- *                     `openInTabs` so the client can open them
- *
- * Same shape as /api/bulk/apply but specifically for Queued jobs (the
- * /queue page passes the already-filtered list). Respects the autopilot
- * `maxAppliesPerDay` cap by trimming the LinkedIn portion if needed.
- */
+/** POST /api/queue/send { jobIds } -- batch-send Queued jobs.
+ *  Splits by source: LinkedIn URLs → runLinkedInApply (one at a time);
+ *  others → marked Applied + URLs returned in `openInTabs` for the client
+ *  to open. Same shape as /api/bulk/apply but pre-filtered to Queued.
+ *  Honors autopilot.maxAppliesPerDay by trimming the LinkedIn portion. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { loadAllJobs } from '$lib/server/parsers';

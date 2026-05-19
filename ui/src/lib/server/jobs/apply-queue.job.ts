@@ -1,23 +1,13 @@
-/**
- * apply-queue-drain -- autopilot job that processes Queued jobs.
- *
- * Trigger: weekday daily 10:30 (replaces the legacy weekday-apply schedule
- * that fired apply-linkedin only). Manual run via /agents.
- *
- * Flow per Queued job (sorted by score desc):
- *   1. Re-validate (cap not hit, status still Queued, autonomous_apply ON for
- *      the job's profile).
- *   2. Pre-apply assembly: ensure tailored CV + cover letter exist.
- *      Auto-generate via runEvaluate if missing. If that fails → ManualApplyNeeded.
- *   3. Dispatch via apply-portal.py (Task 2.1). The Python script writes
- *      APPLY_STEP / APPLY_RESULT lines to stdout; this job parses them.
- *   4. Update status based on exit code:
- *        0 → Applied (bump counter)
- *        1 → ManualApplyNeeded (Issue already emitted by Python side)
- *        2 → Error (Issue emitted server-side here)
- *
- * Stops processing as soon as today's count reaches the cap.
- */
+/** apply-queue-drain -- autopilot job that processes Queued jobs.
+ *  Trigger: weekday 10:30 (replaced the LinkedIn-only legacy schedule).
+ *  Manual run via /agents.
+ *  Per Queued job (score desc): re-validate (cap, status still Queued,
+ *  autonomous_apply ON for that profile) → assemble (ensure tailored
+ *  CV + cover letter, auto-runEvaluate if missing, fall back to
+ *  ManualApplyNeeded on failure) → dispatch via apply-portal.py whose
+ *  stdout APPLY_STEP/APPLY_RESULT lines we parse → set status from
+ *  exit code (0 Applied + counter bump, 1 ManualApplyNeeded, 2 Error).
+ *  Stops when today's apply count hits the daily cap. */
 
 import path from 'node:path';
 import fs from 'node:fs';

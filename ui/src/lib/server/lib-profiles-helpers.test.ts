@@ -1,23 +1,11 @@
-/**
- * lib-profiles.mjs -- argv + env helpers.
- *
- * The MJS scripts in scripts/ (scanners, appliers, tracker tools, etc.)
- * use `profileFromArgv()` and `userFromArgv()` to resolve their target
- * profile + user from a uniform interface:
- *   • --profile <slug> | --profile=<slug>  → profile id
- *   • --user <uid>     | --user=<uid>      → user id (multi-user)
- *   • HERON_PROFILE_ID env var        → fallback for profile
- *   • HERON_USER_ID env var           → fallback for user
- *
- * The orchestrator forwards these env vars on every spawn so dashboard
- * invocations land in the right data/users/{uid}/profiles/{slug}/ tree
- * automatically. Standalone CLI invocations either pass --profile/--user
- * or fall back to SYSTEM_USER_ID + the active profile.
- *
- * Tests here cover the argv parser + env-var fallback + path-traversal
- * guard. They run against the actual MJS module via dynamic import so
- * the contract stays in lock-step with the script-side code.
- */
+/** Tests for lib-profiles.mjs argv + env helpers (profileFromArgv,
+ *  userFromArgv). MJS scripts resolve target profile/user via:
+ *    --profile <slug> | --user <uid>   → flags
+ *    HERON_PROFILE_ID | HERON_USER_ID  → env-var fallback
+ *  The orchestrator forwards these env vars on every spawn so dashboard
+ *  invocations land in data/users/{uid}/profiles/{slug}/ automatically.
+ *  Covers argv parser, env fallback, path-traversal guard. Loaded via
+ *  dynamic import to stay in lock-step with the script-side code. */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';

@@ -1,25 +1,12 @@
-/**
- * referrals -- track referral asks + build the LinkedIn search URL.
- *
- * TOS-careful: we do NOT scrape LinkedIn for mutuals. Instead we open
- * the LinkedIn People search with the right filters pre-populated, the
- * user reviews their actual mutuals there, and the user manually picks
- * 1-2 to message. After they message, they log it here so they don't
- * double-ask.
- *
- * Storage:
- *   `data/users/{uid}/profiles/{slug}/referral-asks.jsonl` (or
- *   `data/profiles/{slug}/referral-asks.jsonl` in legacy single-user installs).
- *   Each line: { jobId, company, contactName, contactLinkedIn?,
- *               askedAt, status: 'asked'|'replied-yes'|'replied-no'|'silent',
- *               notes? }
- *
- * Surfaces:
- *   - JobActions menu: "Find LinkedIn mutuals at {company}"
- *     → opens LinkedIn search URL in new tab + lets user log who they ask
- *   - /inbox: "X pending referral asks -- follow up?" if asked >7 days ago
- *     with no reply
- */
+/** referrals -- track referral asks + build the LinkedIn search URL.
+ *  TOS-careful: no scraping for mutuals. We open LinkedIn People search
+ *  with filters pre-populated, the user picks 1-2 to message, and logs
+ *  the ask here so they don't double-ask.
+ *  Storage: data/users/{uid}/profiles/{slug}/referral-asks.jsonl. Each
+ *  line: { jobId, company, contactName, contactLinkedIn?, askedAt,
+ *  status: asked|replied-yes|replied-no|silent, notes? }.
+ *  Surfaces: JobActions "Find LinkedIn mutuals at {company}" + /inbox
+ *  "X pending referral asks -- follow up?" if asked >7d with no reply. */
 
 import fs from 'node:fs';
 import path from 'node:path';

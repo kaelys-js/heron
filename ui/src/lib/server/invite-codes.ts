@@ -1,26 +1,11 @@
-/**
- * invite-codes -- owner-generated 6-digit codes for new user signups.
- *
- * Why local codes instead of email magic links: Heron is self-hosted
- * with no SMTP/third-party email dependency. Multiple users on ONE local
- * install means everyone is physically nearby -- the owner reads the code
- * off their screen and the invitee types it on theirs (like Apple TV
- * pairing). Codes expire after 30 minutes and are single-use.
- *
- * Generation: cryptographically random 6 digits (10^6 = 1M space). With
- * a 30-minute TTL, brute force is impractical for a low-traffic local
- * server (rate-limited attempts can be layered in when needed).
- *
- * Storage: app.db is the right home if we had jobs to do per-user-id,
- * but invite codes belong in auth.db's `invite_codes` table -- they're
- * an auth concern. Drizzle adapter handles read/write.
- *
- * Claim semantics: when a user enters a valid code at signup,
- * `claimInvite()` marks the code consumed and records which user took
- * it. The user is created with role 'member' (vs the first user who
- * gets 'owner'). The owner can later promote members to admins from
- * /settings/users.
- */
+/** invite-codes -- owner-generated 6-digit single-use signup codes,
+ *  30-min TTL. Local-pairing UX (Apple-TV-style: owner reads, invitee
+ *  types) because Heron is self-hosted with no SMTP dependency.
+ *  Codes are cryptographically random (10^6 space); a 30-min TTL on
+ *  low-traffic local servers makes brute-force impractical.
+ *  Stored in auth.db.invite_codes (auth concern). claimInvite() marks
+ *  consumed + creates the user with role='member' (the first-ever
+ *  signup gets 'owner'). Owner promotes members from /settings/users. */
 import crypto from 'node:crypto';
 import { and, eq, isNull, lt, gt, sql } from 'drizzle-orm';
 import { authDb } from './db';

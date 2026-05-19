@@ -1,33 +1,7 @@
-/**
- * Deep-link handler -- turn `heron://job/abc123` into an in-app
- * navigation.
- *
- * Capacitor's @capacitor/app plugin emits `appUrlOpen` events whenever
- * the OS hands us a custom-scheme URL. We parse the URL, resolve the
- * target route, and call goto() with it.
- *
- * Supported forms (every iOS surface that emits a deep link must land
- * in one of these -- widgets, notifications, Live Activity, Share
- * Extension callback, Spotlight tap):
- *
- *   heron://                              → /
- *   heron://job/{id}                      → /job/{id}
- *   heron://interview-prep/{id}           → /job/{id}/interview-prep
- *     (Live Activity "Open prep" + Next-Interview widget tap)
- *   heron://pipeline                      → /pipeline
- *   heron://inbox                         → /inbox
- *   heron://queue                         → /queue
- *   heron://applied                       → /applied
- *   heron://settings                      → /settings
- *   heron://autopilot                     → /autopilot
- *   heron://profile                       → /profile
- *   heron://login                         → /login
- *     (widget signed-out gate target)
- *   heron://notifications                 → /?notifications=open
- *     (notification-tap target → fires BRAND_EVENTS.openNotifications)
- *
- * Anything else falls through to /.
- */
+/** Routes `heron://` deep links to in-app navigation. Capacitor's
+ *  @capacitor/app emits appUrlOpen for every custom-scheme URL; this
+ *  parses + goto()s. Route table lives in deep-links-parser.ts (which
+ *  has no Capacitor imports so it tests in plain Node). */
 import { App } from '@capacitor/app';
 import { goto } from '$app/navigation';
 import { parseDeepLink } from './deep-links-parser';

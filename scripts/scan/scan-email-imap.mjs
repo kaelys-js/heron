@@ -310,12 +310,6 @@ async function main() {
           // the .mjs HTTP-out path would otherwise lose at the network
           // boundary (F14/F19).
           //
-          // Pre-fix this POSTed to /api/email/react over localhost with
-          // no Authorization header. The dashboard's hooks guard 401'd
-          // every call, OR (worse) processed under whoever's session
-          // happened to be active -- flipping the wrong user's job
-          // statuses on each rejection email.
-          //
           // Format: `INBOUND_REACTION: {json}\n` -- the parent reads stdout
           // line-by-line, matches the sentinel prefix, JSON.parses the
           // rest. Truncate body to 8000 chars matching the prior reactor

@@ -1,27 +1,8 @@
-/**
- * comp-preflight -- the one-liner that goes "ASK FOR $X. Walkaway at $Y."
- *
- * Half of phone screens die on the salary question with no preparation.
- * The product already knows the user's target_range + minimum from
- * profile.yml.compensation. This module assembles those into a tight
- * pre-flight string the JobActions card surfaces in front of every
- * interview-stage job so the user reads it in the 30 seconds before
- * the call starts.
- *
- * Output shape:
- *   { ask, walkaway, band?, currency, advice }
- *
- * ask:       What to anchor at when asked "what are you looking for?"
- * walkaway:  Hard minimum below which you politely close.
- * band?:     Optional levels.fyi / Glassdoor band for this company × role
- *            × location (heuristic -- derived from the report's Block A
- *            when available, otherwise omitted).
- * currency:  Same as profile.compensation.currency, default USD.
- * advice:    2-3 sentences on HOW to deliver the number (anchor high,
- *            don't disclose current, link to scope/impact).
- *
- * Pure-function. Reads profile.yml. No LLM calls. Fast.
- */
+/** Pre-flight one-liner for the salary question. Reads
+ *  profile.yml.compensation + the report's Block A and returns
+ *  { ask, walkaway, band?, currency, advice }. Surfaced by JobActions
+ *  on every interview-stage job so the user reads it in the 30 seconds
+ *  before the call. Pure function, no LLM. */
 
 import { readProfile } from './profile';
 import { loadAllJobs } from './parsers';

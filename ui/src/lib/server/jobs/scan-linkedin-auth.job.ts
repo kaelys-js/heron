@@ -1,23 +1,10 @@
-/**
- * Authenticated LinkedIn scrape -- wraps `scan-linkedin-auth.py`.
- *
- * Uses the per-user persistent Playwright session at
- * data/users/{uid}/.playwright-linkedin/ (saved
- * by the Connect LinkedIn flow on /sources). On success, recordSuccess
- * for the `linkedin-auth` source so the dashboard reflects health. On
- * failure (session expired, captcha, network), recordFailure increments
- * the consecutive-failure counter; 3 strikes → source flips to
- * Disconnected and the user gets a Reconnect prompt.
- *
- * Schedule: daily 09:15 weekdays -- runs 15 min after the broad scan-all
- * fan-out so the headless browser opens during low-traffic morning hours
- * and benefits from any session refresh the user did at standup.
- *
- * Args:
- *   { dryRun?: boolean }     -- pass --dry-run, no writes
- *   { maxPages?: number }    -- cap pages per query (default 25)
- *   { query?: string }       -- one-off override (single keyword search)
- */
+/** Authenticated LinkedIn scrape -- wraps `scan-linkedin-auth.py`. Uses
+ *  the per-user Playwright session at data/users/{uid}/.playwright-linkedin/
+ *  (saved by the Connect LinkedIn flow on /sources). recordSuccess /
+ *  recordFailure drive the /sources health dot; 3 consecutive failures
+ *  flip the source to Disconnected and prompt Reconnect.
+ *  Schedule: weekdays 09:15 -- 15 min after scan-all fan-out.
+ *  Args: { dryRun?, maxPages? (default 25), query? (single-keyword override) }. */
 
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';

@@ -1,16 +1,9 @@
-/**
- * Probe a configured provider with a minimal authenticated call to verify
- * the user's key works. Never echoes the key back to the client.
- *
- * Resolves credentials via the per-user store first (Settings → API Keys),
- * falling back to install-wide .env for legacy single-user installs.
- *
- * Any authenticated user can probe THEIR OWN credentials -- the call is
- * scoped to the current user's per-user store via getCredential, so a
- * member-role user probing "anthropic" hits their own key (not the
- * owner's). The probe makes a single minimal API call so it doesn't
- * meaningfully affect rate limits.
- */
+/** Probe a configured provider with a minimal authenticated call to
+ *  verify the user's key works. Never echoes the key back. Reads from
+ *  the per-user secret store (Settings → API Keys), falling back to .env
+ *  for legacy single-user installs. Scoped to the current user via
+ *  getCredential -- a member probing "anthropic" hits their own key, not
+ *  the owner's. One API call so rate-limits aren't meaningfully impacted. */
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { requireUserId } from '$lib/server/auth-helpers';
 import { loadEnv } from '$lib/server/env';

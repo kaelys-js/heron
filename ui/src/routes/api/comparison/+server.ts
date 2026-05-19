@@ -1,19 +1,10 @@
-/**
- * GET /api/comparison
- *
- * Returns every active offer for the current profile in a normalised
- * form for side-by-side comparison. Each entry carries:
- *   • The job (company, role, location, score)
- *   • The current round of the offer (TC, base, bonus, equity, signing)
- *   • The benchmark band (if attached)
- *   • The BATNA score (this offer vs. best alternative)
- *   • The funnel-stage history (so the UI can show "got to onsite at X but Y is in offer")
- *
- * Used by:
- *   • /comparison page (BATNA leverage view + multi-offer table)
- *   • iOS widget (top-of-deck card)
- *   • Apple Watch glance
- */
+/** GET /api/comparison -- every active offer for the current profile in
+ *  one normalised side-by-side row. Each entry carries the job (company,
+ *  role, location, score), current round (TC + base/bonus/equity/signing),
+ *  benchmark band if attached, BATNA score vs. best alt, and funnel-stage
+ *  history (so the UI can show "got to onsite at X but Y is in offer").
+ *  Consumed by /comparison page (BATNA view + multi-offer table), the iOS
+ *  top-of-deck widget, and the Apple Watch glance. */
 
 import { wrap } from '$lib/server/api-helpers';
 import { listActiveOffers, currentRound, annualisedTc, batnaScore } from '$lib/server/offers';

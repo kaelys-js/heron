@@ -1,17 +1,7 @@
-/**
- * /api/profile/referrals -- referral-ask tracker + LinkedIn search URL.
- *
- * GET ?company=Acme → { url, asks: ReferralAsk[], silent: ReferralAsk[] }
- *   - url: the LinkedIn mutuals search URL for a given company
- *   - asks: all prior referral asks for THIS profile
- *   - silent: asks pending >7 days with no reply (follow-up candidates)
- *
- * POST body: { jobId, company, contactName, contactLinkedIn?, notes? }
- *   - log a new ask (defaults to status='asked', askedAt=now)
- *
- * PATCH body: { jobId, contactName, status, notes? }
- *   - update an existing ask's status (replied-yes / replied-no / silent)
- */
+/** /api/profile/referrals -- referral-ask tracker + LinkedIn mutuals URL.
+ *    GET   ?company=Acme  → { url, asks, silent } (silent = >7d no-reply)
+ *    POST  { jobId, company, contactName, contactLinkedIn?, notes? }
+ *    PATCH { jobId, contactName, status, notes? } (replied-yes/no/silent) */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import {

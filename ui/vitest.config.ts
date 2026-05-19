@@ -1,22 +1,11 @@
-/**
- * Vitest base config -- defaults consumed by every project in
- * `vitest.workspace.ts`. Re-uses Vite's plugin pipeline (SvelteKit +
- * Tailwind + brand watcher) so test code resolves the same aliases
- * (`$lib/*`, `$app/*`, `$env/*`) and the same Svelte compiler as
- * runtime code.
- *
- * Why a separate config file rather than putting `test` inside
- * `vite.config.ts`:
- *   • SvelteKit's vite plugin doesn't expose a stable way to disable
- *     its server side-effects during `vitest run`. Cleaner to import
- *     it here and let Vitest own the test surface.
- *   • Coverage thresholds live here; production build settings live in
- *     vite.config.ts. Separation prevents accidental coupling.
- *
- * The actual environment + globs per suite are defined in
- * `vitest.workspace.ts`. This file only carries shared bits:
- * setupFiles, coverage policy, alias resolution.
- */
+/** Vitest base config -- defaults inherited by every project in
+ *  vitest.workspace.ts. Reuses Vite's plugin pipeline (SvelteKit,
+ *  Tailwind, brand watcher) so tests resolve the same aliases ($lib/*,
+ *  $app/*, $env/*) and Svelte compiler as runtime.
+ *  Separate from vite.config.ts: SvelteKit's plugin lacks a stable opt-out
+ *  for server side-effects during `vitest run`, and coverage thresholds
+ *  shouldn't couple to prod build settings. Per-suite env + globs live in
+ *  vitest.workspace.ts -- this only holds setupFiles, coverage, aliases. */
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vitest/config';

@@ -1,17 +1,8 @@
-/**
- * SSE stream of activity events, scoped to the current user.
- *
- * Sends:
- *   1. The recent in-memory buffer (events tagged for this user OR broadcast).
- *   2. Live events as they happen.
- *
- * The endpoint requires authentication -- the hooks-level guard refuses
- * anonymous traffic to anything under /api/* that isn't on the public
- * allowlist, but we ALSO double-check here so the SSE filter has a userId
- * to gate against.
- *
- * @module
- */
+/** SSE stream of activity events, scoped to the current user.
+ *  Emits: (1) recent in-memory buffer filtered to events tagged for this
+ *  user OR broadcast, (2) live events as they fire. Auth-gated: hooks-level
+ *  guard refuses anon /api/* (non-allowlist), but we re-check here so the
+ *  SSE filter has a userId to gate against. */
 
 import { bus, logEvent } from '$lib/server/events';
 import { requireUserId } from '$lib/server/auth-helpers';

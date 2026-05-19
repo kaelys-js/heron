@@ -1,22 +1,11 @@
-/**
- * /api/job/[id]/tech-prep -- per-job technical-interview prep generation.
- *
- *   GET  → returns cached body if it exists
- *   POST → spawns `claude -p "/heron tech-prep <url>"` and persists
- *          to interview-prep/{company-slug}-{role-slug}-tech-prep.md
- *
- * The tech-prep mode reads the job's deep-eval report (for Block C
- * technical-fit) + cv.md + story-bank.md, hits the web for company-
- * specific interview reports (Glassdoor/Blind), and produces a focused
- * prep plan with budgeted hours, specific LeetCode problems, and the
- * 3-4 architectural debates the company cares about.
- *
- * Output stdout protocol (parsed for the toast + activity feed):
- *   TECH_PREP_PATH: <relative-path>
- *   TECH_PREP_ROUNDS: <int>
- *   TECH_PREP_HOURS_ESTIMATED: <int>
- *   TECH_PREP_SOURCES_CITED: <int>
- */
+/** /api/job/[id]/tech-prep -- per-job technical-interview prep. GET returns
+ *  the cached body if it exists; POST spawns the tech-prep mode and persists
+ *  to interview-prep/{company-slug}-{role-slug}-tech-prep.md. The mode reads
+ *  the deep-eval report (Block C technical-fit) + cv.md + story-bank.md,
+ *  hits Glassdoor/Blind for company-specific interview reports, and produces
+ *  a prep plan with budgeted hours, LeetCode problems, and the 3-4
+ *  architectural debates the company cares about. Stdout protocol:
+ *  TECH_PREP_PATH/ROUNDS/HOURS_ESTIMATED/SOURCES_CITED. */
 
 import fs from 'node:fs';
 import path from 'node:path';

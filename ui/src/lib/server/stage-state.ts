@@ -1,32 +1,12 @@
-/**
- * stage-state -- per-job stage tracking sidecar.
- *
- * Why a sidecar JSON file instead of widening applications.md:
- *   • applications.md is a fixed 9-column markdown table. Adding cols
- *     would break every existing row and every parser (incl. the
- *     Claude CLI that reads it).
- *   • Stage-history (every transition, with timestamps) doesn't fit a
- *     table cell -- it's a list-of-records per job.
- *   • The sidecar lives at `data/users/{userId}/profiles/{slug}/stage-
- *     state.json` so it's automatically scoped to one user + one
- *     profile, just like every other per-profile file.
- *
- * Shape:
- *   {
- *     "{jobId}": {
- *       "stageHistory": [{ status: 'Applied', at: 1778500000000 }, ...],
- *       "lastTouchAt": 1778600000000,
- *       "nextActionDue": { dueAt: 1778800000000, kind: 'follow-up' | 'thank-you' | 'prep' | 'decision', note?: string },
- *       "ghostedAt": 1778900000000   // null until auto-ghost flag fires
- *     }
- *   }
- *
- * Used by:
- *   • Pipeline UI -- surfaces "days since last touch" + "next action due"
- *   • Inbox -- auto-cards for thank-you-owed / follow-up-due / prep-block
- *   • Funnel stats -- measures applied→screen→onsite→offer rates per company tier
- *   • Auto-ghost detection -- flags applications silent for ≥ daysToGhost
- */
+/** stage-state -- per-job stage tracking sidecar at
+ *  data/users/{userId}/profiles/{slug}/stage-state.json.
+ *  Sidecar (not new columns in applications.md) because the .md table is
+ *  fixed at 9 columns -- adding fields would break every parser including
+ *  the Claude CLI; stage-history is also a per-job list, not a cell.
+ *  Shape: jobId → { stageHistory[{status,at}], lastTouchAt, nextActionDue
+ *  {dueAt,kind,note?}, ghostedAt|null }.
+ *  Drives Pipeline UI (days-since / next-due), Inbox auto-cards, funnel
+ *  stats per tier, and auto-ghost detection. */
 
 import fs from 'node:fs';
 import path from 'node:path';

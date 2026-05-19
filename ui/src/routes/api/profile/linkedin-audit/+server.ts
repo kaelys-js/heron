@@ -1,18 +1,9 @@
-/**
- * /api/profile/linkedin-audit -- audit the user's LinkedIn profile for
- * recruiter SEARCH visibility (different from ATS keyword matching).
- *
- * POST body: { linkedinUrl: string }
- *
- * Two phases:
- *   1. Spawn extract-linkedin-profile.py to scrape the user's profile
- *      via their saved Playwright session (.playwright-linkedin/).
- *   2. Spawn the linkedin-audit Claude mode with the extracted text +
- *      cv.md + target_roles. Mode writes a structured audit markdown.
- *
- * Cost: 1 Playwright fetch (~5-10s) + 1 Claude pass (~30-60s). Cache
- * by date so re-running on the same day returns the existing audit.
- */
+/** /api/profile/linkedin-audit -- audit the user's LinkedIn profile for
+ *  recruiter SEARCH visibility (different from ATS keyword matching).
+ *  POST { linkedinUrl }. Two phases: (1) extract-linkedin-profile.py
+ *  scrapes via .playwright-linkedin/, (2) linkedin-audit Claude mode
+ *  consumes extracted text + cv.md + target_roles → audit markdown.
+ *  Cost: ~5-10s Playwright + 30-60s Claude. Cached by date. */
 
 import fs from 'node:fs';
 import path from 'node:path';

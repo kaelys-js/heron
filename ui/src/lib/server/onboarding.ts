@@ -1,21 +1,13 @@
-/**
- * Onboarding state -- tracks which wizard steps the user has completed,
- * powers the first-run redirect at the layout level.
- *
- * State at `data/onboarding-state.json` -- gitignored runtime data.
- *
- * Two distinct concepts:
- *   - `completed: true`  -- user has been through the wizard at least once.
- *                           Don't redirect them again, even if they later
- *                           delete files manually. Trust the user.
- *   - `isFreshInstall()` -- a NEVER-completed install where the required
- *                           config files are missing. Redirects to /onboarding.
- *
- * Why this split: a power user who manually populates cv.md / profile.yml
- * and clicks "Skip onboarding" on the welcome page should get
- * `completed: true` set without going through every step. They never see
- * the wizard again, even though their state.completedSteps is short.
- */
+/** Onboarding state -- tracks which wizard steps the user has completed,
+ *  powers the first-run redirect at the layout level. Per-user state at
+ *  data/users/{uid}/.../onboarding-state.json (gitignored).
+ *  Two concepts:
+ *    `completed: true`  -- has been through the wizard at least once;
+ *                          never auto-redirect again.
+ *    `isFreshInstall()` -- never-completed install missing required config
+ *                          files; redirect to /onboarding.
+ *  Split exists so a power user who manually populates cv.md / profile.yml
+ *  and clicks "Skip onboarding" sets completed:true without every step. */
 
 import fs from 'node:fs';
 import path from 'node:path';

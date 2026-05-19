@@ -1,29 +1,10 @@
-/**
- * POST /api/job/[id]/offer/ev
- *
- * Should-I-take expected-value calculator. Combines:
- *   • Annualised TC (from the latest offer round)
- *   • Benchmark (if attached) -- median band
- *   • BATNA score (best alternative offer)
- *   • User-supplied subjective ratings (1-5):
- *     - growthFit / teamFit / commuteFit / missionFit / workLifeBalance
- *
- * ALSO supports the EV-of-waiting extension:
- *   • currentRoleTC (optional)   -- if you have a current job, models
- *     "do nothing, wait for offer B" as a third path
- *   • waitDays (optional)        -- how long you'd hold out for offer B
- *   • waitProbability (optional) -- 0-1 probability offer B actually
- *     materialises in waitDays. Default 0.4 (calibrated to real data --
- *     pipelines die ~60% of the time)
- *   • offerBTcEstimate (optional) -- expected TC of the alternative
- *
- * Returns:
- *   ev:        0-100 composite score for THIS offer
- *   verdict:   'strong-take' | 'take' | 'mixed' | 'pass'
- *   breakdown: weighted inputs + contributions
- *   waiting:   when waiting inputs supplied, the EV of holding out
- *     (expected TC × P(B materialises) × time discount) vs taking now
- */
+/** POST /api/job/[id]/offer/ev -- should-I-take EV calculator. Inputs:
+ *  annualised TC (latest round), benchmark median (if attached), BATNA score,
+ *  subjective 1-5 ratings (growthFit/teamFit/commuteFit/missionFit/WLB).
+ *  EV-of-waiting extension: currentRoleTC?, waitDays?, waitProbability?
+ *  (default 0.4 -- pipelines die ~60%), offerBTcEstimate?. Returns:
+ *  ev (0-100), verdict ('strong-take'|'take'|'mixed'|'pass'), breakdown,
+ *  and waiting EV when wait inputs supplied. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';

@@ -1,16 +1,8 @@
-/**
- * availability-reply -- draft the "here are 3 times that work" reply.
- *
- * When the email-reactor classifies an incoming email as interview-
- * scheduling, the user still has to write the reply by hand. This
- * module generates the draft: 3 specific time slots within the next
- * 5 business days that respect the user's working hours + timezone,
- * plus an inline calendar link if configured.
- *
- * Pure-function. No I/O except reading profile.yml. The user reviews
- * the draft and sends from their mail client -- we never send for them
- * (per AGENTS.md ethical rule on autonomous communications).
- */
+/** Drafts the "3 times that work" reply when email-reactor classifies
+ *  incoming email as interview-scheduling. Output: 3 slots in the next
+ *  5 business days respecting user working-hours + timezone, plus an
+ *  optional calendar link. Pure (only I/O is reading profile.yml).
+ *  User reviews + sends from their mail client -- never auto-sent. */
 
 import { readProfile } from './profile';
 

@@ -1,36 +1,12 @@
-/**
- * Vite config -- Heron `brandWatcherPlugin` + best-practice dev/build
- * settings.
- *
- * `brandWatcherPlugin`:
- *   • Runs `pnpm brand:apply` once at startup (dev or build) so every
- *     generated config (capacitor.config.ts, Brand.swift, brand.ts,
- *     manifest.webmanifest, favicon.svg, icons.*) is fresh before any
- *     other plugin reads from those files.
- *   • In dev mode, watches `branding/brand.json` + `branding/logo.svg`
- *     and re-runs the propagator on change. Touched files (brand.ts,
- *     manifest.webmanifest) hot-reload through SvelteKit's HMR pipeline.
- *
- * Net result: 100% automated. The user edits brand.json or logo.svg,
- * saves, and the running app + future builds pick up the change with
- * zero manual `pnpm brand:apply` invocations.
- *
- * Server settings:
- *   • `host: true` -- listens on every interface (0.0.0.0). Required so
- *     an iOS device on the same wifi can hit the dev server via the
- *     Mac's LAN IP / Bonjour. Single-user job tool; LAN exposure is OK.
- *   • `port: 5173` -- explicit, matches backend-discovery's dev fallback.
- *   • `strictPort: true` -- fail loud if 5173 is taken, don't silently
- *     fall through to 5174 (would break discovery).
- *
- * Build settings:
- *   • `target: 'es2022'` -- Capacitor iOS WebView supports ES2022. Avoids
- *     transpiling features Electron and modern Safari handle natively.
- *   • `sourcemap: true` -- small overhead, big debugging win.
- *   • `chunkSizeWarningLimit: 1500` -- Heron bundles a few heavy
- *     dependencies (bits-ui + lucide-svelte) that legitimately push the
- *     default 500kb chunk warning.
- */
+/** Vite config -- brandWatcherPlugin + dev/build settings.
+ *  brandWatcherPlugin runs `pnpm brand:apply` once at startup (dev or
+ *  build) and, in dev, re-runs on branding/{brand.json,logo.svg} changes
+ *  so generated configs (capacitor, Brand.swift, brand.ts, manifest,
+ *  favicon, icons) are always fresh. Touched files HMR through SvelteKit.
+ *  Server: host:true (0.0.0.0 for iOS-on-LAN), port:5173 + strictPort
+ *  (discovery's dev fallback). Build: target es2022 (Capacitor iOS WebView
+ *  supports it), sourcemap on, chunkSizeWarningLimit 1500 for bits-ui +
+ *  lucide-svelte. */
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, type Plugin } from 'vite';

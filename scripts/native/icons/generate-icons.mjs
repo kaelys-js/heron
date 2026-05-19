@@ -281,7 +281,7 @@ async function main() {
   // clean soft-edged halo of the squircle's outline, tinted purple
   // via `feFlood`. Matches the CSS `filter: drop-shadow(0 0 56px ...)`
   // on the boot-fallback so the cross-fade between the iOS native
-  // splash and the SvelteKit boot-fallback is visually seamless.
+  // splash and the SvelteKit boot-fallback matches glyph + glow at the swap.
   //
   // Pieces:
   //   1. Two stacked radial gradients for the brand bloom (center +

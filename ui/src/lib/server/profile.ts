@@ -1,16 +1,9 @@
-/**
- * Read/write per-profile `profile.yml`, `cv.md`, `_profile.md` + reset helpers.
- *
- * Every exported function takes an OPTIONAL `profileId` as its first argument.
- * When omitted, the active profile (from `data/profiles.json`) is used. This
- * keeps existing single-profile callers working unchanged while letting new
- * callers explicitly target a specific profile.
- *
- * Path resolution is centralised in `profile-paths.ts`. The flat-layout
- * constants previously imported from `files.ts` (CV_PATH, APPLICATIONS,
- * PIPELINE, …) are no longer used here -- they're per-active-profile shims
- * for legacy callers and shouldn't be used from new code.
- */
+/** Read/write per-profile profile.yml, cv.md, _profile.md + reset helpers.
+ *  Every export takes optional `profileId` first; undefined → active
+ *  profile (from data/profiles.json). Path resolution is centralised in
+ *  profile-paths.ts; the flat-layout constants in files.ts (CV_PATH,
+ *  APPLICATIONS, PIPELINE, …) are legacy-shim only -- don't use them
+ *  from new code. */
 
 import fs from 'node:fs';
 import path from 'node:path';

@@ -1,24 +1,10 @@
-/**
- * POST /api/job/[id]/resignation
- *
- * Draft a resignation letter for the user's CURRENT employer (not for the
- * new job). The new-job context (company + role) only frames the letter
- * for the agent -- the letter content is addressed to the user's current
- * manager + HR.
- *
- * Body:
- *   {
- *     currentEmployer: string,
- *     currentManager?: string,
- *     lastDay?: string,           // ISO date
- *     noticeWeeks?: number,       // computed if lastDay omitted
- *     tone?: 'formal' | 'warm' | 'concise',
- *     reason?: string,            // user-supplied summary; agent rewrites
- *   }
- *
- * Output path: `output/resignation-{YYYY-MM-DD}.md` written by the
- * `resignation` mode.
- */
+/** POST /api/job/[id]/resignation -- draft a resignation letter for the
+ *  user's CURRENT employer (not the new job). New-job context (company +
+ *  role) only frames the letter for the agent -- the body is addressed to
+ *  the user's current manager + HR. Body: { currentEmployer, currentManager?,
+ *  lastDay? (ISO), noticeWeeks? (derived if lastDay omitted),
+ *  tone?: 'formal'|'warm'|'concise', reason? (user summary; agent rewrites) }.
+ *  Output: output/resignation-{YYYY-MM-DD}.md via the resignation mode. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';

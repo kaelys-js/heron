@@ -1,46 +1,13 @@
-/**
- * db/index -- SQLite connection singletons + Drizzle instances.
- *
- * Heron uses TWO SQLite files:
- *
- *   • auth.db  -- users, sessions, oauth accounts, passkeys, invite codes,
- *                backup codes, audit log, pending deletions. Managed by
- *                Better Auth via its Drizzle adapter; we never write to
- *                these tables directly except for audit_log + invite_codes.
- *
- *   • app.db   -- every per-user Heron data row (profiles, jobs,
- *                applications, reports, etc.). Every row has user_id;
- *                cross-database FK enforcement happens in hooks middleware
- *                + every server-lib function being userId-scoped.
- *
- * Why two files instead of one?
- *   - Compartmentalisation: an attacker who exploits a SQL bug in app code
- *     can't pivot to the auth tables.
- *   - Backup cadence: auth.db changes rarely (logins / new sessions),
- *     app.db changes on every job edit. We can snapshot them at different
- *     frequencies.
- *   - GDPR delete: removing a user means cascading deletes in BOTH files,
- *     but the auth.db side is well-defined Better Auth behaviour. The
- *     app.db cascade is user-id-scoped and we own it.
- *
- * Both files live under `data/` (same as activity.jsonl, issues.jsonl,
- * profiles.json, etc. -- system-layer, not per-profile) by default.
- *
- * ── Test / fresh-clone safety ────────────────────────────────────────
- * The DB paths are configurable via three env vars (override order):
- *   1. HERON_DATA_DIR  → both files live under that dir
- *   2. HERON_AUTH_DB   → specific auth.db path (or ":memory:")
- *      HERON_APP_DB    → specific app.db path  (or ":memory:")
- *   3. VITEST + NODE_ENV=test → auto-route to a fresh tmpdir so a test
- *      run NEVER touches the developer's local data/*.db. This
- *      prevents the "first-user/owner" race where prior test runs leave
- *      ghost rows in auth.db.users and a fresh-clone user can no longer
- *      be promoted to owner.
- *
- * Returned drizzle instances are SINGLETONS -- module-load creates the
- * connections, all callers share. better-sqlite3 is synchronous and
- * thread-safe enough for SvelteKit's per-request model.
- */
+/** db/index -- SQLite singletons + Drizzle instances.
+ *  Two files: auth.db (Better Auth core + passkeys, invite_codes,
+ *  backup_codes, audit_log, pending_deletions) and app.db (every
+ *  per-user Heron row, all user_id-scoped). Split for blast-radius
+ *  isolation, independent backup cadence, and clean GDPR cascade.
+ *  Paths resolve in order: HERON_DATA_DIR → HERON_AUTH_DB/HERON_APP_DB
+ *  (accept ":memory:") → VITEST tmpdir → repo data/. Test isolation
+ *  prevents prior runs from claiming the "first-user/owner" slot.
+ *  Connections are module-load singletons; better-sqlite3 is
+ *  synchronous and fine for SvelteKit's per-request model. */
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';

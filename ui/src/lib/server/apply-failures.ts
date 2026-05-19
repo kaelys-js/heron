@@ -1,33 +1,8 @@
-/**
- * apply-failures -- single entry point for autonomous-apply failures.
- *
- * Every soft-failure mode (CAPTCHA, anti-bot, unknown form field, upload
- * failure, stub adapter, validation rejection) calls reportApplyFailure().
- * The function:
- *
- *   1. Emits an Issue with dedupeKey = `apply:{jobId}` so repeat failures
- *      for the same job don't accumulate in the Inbox.
- *   2. Flips the job's status to `ManualApplyNeeded` in applications.md.
- *   3. Appends a note to the row with the failure mode + detail.
- *   4. Logs a warn-level activity event so the bell pops.
- *
- * Failure modes:
- *   stub          -- portal is `unknown` (URL didn't match any known portal),
- *                   or a portal-specific adapter chose to defer to manual.
- *                   All 11 named portals (LinkedIn, Greenhouse, Ashby, Lever,
- *                   Workday, Workable, Personio, SmartRecruiters, Recruitee,
- *                   Teamtailor, Indeed) ship production adapters today; the
- *                   stub fires only when detect_portal() returns 'unknown'.
- *   captcha       -- reCAPTCHA / hCaptcha / Turnstile detected
- *   anti-bot      -- Cloudflare 403 / "you are a bot" page
- *   unknown-field -- required form field has no answer in cache or schema
- *   upload-failed -- resume or cover-letter set_input_files failed
- *   validation    -- Submit clicked but form rejected (missing field, format)
- *   error         -- anything else (script crashed, timeout)
- *
- * Each mode has a different "fix" CTA the Inbox renders so the user knows
- * what to do next.
- */
+/** Single entry point for autonomous-apply failures. reportApplyFailure()
+ *  emits a deduped Issue (`apply:{jobId}`), flips status to
+ *  ManualApplyNeeded, appends a row note, logs a warn event.
+ *  Modes (each renders a distinct Inbox fix CTA): stub (unknown portal),
+ *  captcha, anti-bot, unknown-field, upload-failed, validation, error. */
 
 import { reportIssue } from './issues';
 import { logEvent } from './events';

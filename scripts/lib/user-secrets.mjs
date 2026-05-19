@@ -1,21 +1,7 @@
-/**
- * user-secrets.mjs -- JS twin of ui/src/lib/server/user-secrets.ts.
- *
- * CLI scripts (gemini-eval.mjs, scan-email-imap.mjs, etc.) can't easily
- * import from the TypeScript dashboard codebase, so this file mirrors
- * the encryption format byte-for-byte. The on-disk schema is identical;
- * a file written by either side decrypts correctly with the other.
- *
- * Round-trip parity is enforced by a vitest case (search for
- * `mjs-ts parity`). Touch either side and re-run that test.
- *
- * Resolution order for a CLI script that wants a credential:
- *   1. per-user value (this module) -- keyed by `HERON_USER_ID` env
- *   2. process.env fallback (legacy single-user install)
- *
- * If HERON_USER_ID isn't set, scripts fall straight through to
- * process.env -- that's the pre-multi-user path and stays supported.
- */
+/** JS twin of ui/src/lib/server/user-secrets.ts. Same encryption
+ *  format byte-for-byte (round-trip parity gated by a vitest case
+ *  search for `mjs-ts parity`). Credential resolution: per-user value
+ *  keyed by HERON_USER_ID first, then process.env fallback. */
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

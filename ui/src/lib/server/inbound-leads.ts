@@ -1,23 +1,11 @@
-/**
- * inbound-leads -- unified storage + state machine for recruiter inbound
- * across BOTH channels (email + LinkedIn DM).
- *
- * Storage:
- *   - `inbound-leads.jsonl` (append-only log of raw + classified leads)
- *   - `inbound-threads.json` (per-lead state: awaiting-reply / engaged /
- *     went-silent / closed / replied)
- *
- * Lead lifecycle:
- *   1. Lead arrives (from email-reactor OR linkedin-dm scrape)
- *   2. Classified: real-role / mass-blast / scam / referral-ask /
- *      status-update / unknown
- *   3. If real-role + has JD URL → JD enrichment kicks off (fetch + score)
- *   4. Surfaces as Inbox card
- *   5. User generates a reply draft (or system pre-drafts)
- *   6. User reviews + clicks send (NEVER auto-sent)
- *   7. Reply marked; thread enters 'awaiting-reply'
- *   8. If no reply in 7 days → 'went-silent' card surfaces
- */
+/** inbound-leads -- unified storage + state machine for recruiter
+ *  inbound across both channels (email + LinkedIn DM).
+ *  Storage: inbound-leads.jsonl (raw + classified log) + inbound-
+ *  threads.json (per-lead state).
+ *  Lifecycle: arrive → classify (real-role/mass-blast/scam/referral-
+ *  ask/status-update/unknown) → if real-role+URL enrich JD → Inbox
+ *  card → user-reviewed reply (never auto-sent) → awaiting-reply →
+ *  went-silent at 7 days. */
 
 import fs from 'node:fs';
 import path from 'node:path';

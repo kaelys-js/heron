@@ -1,19 +1,7 @@
-/**
- * /api/stats -- quick-glance counters for the desktop tray icon
- * + iOS widget + Live Activity heads-up.
- *
- * Intentionally cheap: aggregates from existing in-memory caches.
- * No filesystem walks, no Claude calls. The tray polls every 30s,
- * the iOS widget refreshes every 15min, so this needs to be sub-50ms.
- *
- * Response shape:
- *   {
- *     queued: number,
- *     appliedToday: number,
- *     upcomingInterviews: number,
- *     autopilotPaused: boolean
- *   }
- */
+/** /api/stats -- counters for tray icon + iOS widget + Live Activity.
+ *  Cheap: in-memory cache aggregation, no FS walks / Claude calls --
+ *  tray polls every 30s, widget every 15min, must be sub-50ms.
+ *  Reply: { queued, appliedToday, upcomingInterviews, autopilotPaused }. */
 import { wrap } from '$lib/server/api-helpers';
 import { loadAllJobs } from '$lib/server/parsers';
 import { readConfig as readAutopilotConfig } from '$lib/server/autopilot';

@@ -1,16 +1,9 @@
-/**
- * /api/job/[id]/dossier -- spawn the pre-call-dossier Claude mode.
- *
- * POST body: { stage, interviewers: [{name, role?, linkedinUrl?}] }
- *
- * Generates the 1-pager the user reads 30 minutes before the call:
- * who the interviewers are, what to ask each, the 3 stories to lead
- * with, the 5 questions to ask back, red flags to listen for.
- *
- * Cost: ~6 web requests + one Claude pass = 60-120s per dossier. Cache
- * via filename (slug + stage + ts) -- multiple dossiers for the same
- * job at different stages.
- */
+/** /api/job/[id]/dossier -- spawn the pre-call-dossier Claude mode.
+ *  POST body: { stage, interviewers: [{name, role?, linkedinUrl?}] }.
+ *  Generates the 1-pager the user reads 30 min before the call: who the
+ *  interviewers are, what to ask each, 3 stories to lead with, 5 questions
+ *  to ask back, red flags. Cost: ~6 web requests + one Claude pass = 60-120s.
+ *  Cache via filename (slug + stage + ts) -- multiple per job. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';

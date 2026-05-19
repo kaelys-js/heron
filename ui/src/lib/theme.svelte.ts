@@ -1,23 +1,11 @@
-/**
- * Theme store -- runes-based singleton that drives light/dark mode.
- *
- * Three modes:
- *   - 'light'   -- force light
- *   - 'dark'    -- force dark
- *   - 'system'  -- track OS preference (default)
- *
- * Persistence: localStorage key 'heron:theme' stores the user's choice.
- * The companion script in app.html applies the resolved class BEFORE Svelte
- * hydrates so there's no flash. This store keeps the runtime in sync after
- * hydration and reacts to OS changes when in 'system' mode.
- *
- * Usage:
- *   import { theme } from '$lib/theme.svelte';
- *   theme.init();              // call once on the client
- *   theme.set('light');        // user picks light
- *   theme.mode    -> 'light'   // raw setting
- *   theme.resolved -> 'light'  // what's actually applied (always concrete)
- */
+/** Theme store -- runes-based singleton for light/dark mode.
+ *  Modes: 'light' | 'dark' | 'system' (track OS, default).
+ *  Persisted in localStorage under BRAND_STORAGE_KEYS.theme. The
+ *  bootstrap script in app.html applies the resolved class BEFORE Svelte
+ *  hydrates so there's no flash; this store keeps runtime in sync after
+ *  hydration and reacts to OS-pref changes when in 'system'.
+ *  Usage: theme.init() once on client, then theme.set(mode);
+ *  theme.mode = raw setting, theme.resolved = always 'light'|'dark'. */
 
 import { browser } from '$app/environment';
 import { BRAND_STORAGE_KEYS } from '$lib/client/brand';

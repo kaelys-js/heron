@@ -1,36 +1,12 @@
-/**
- * network-resilience -- abort-on-offline + auto-retry-on-recovery for
- * the central apiCall fetch wrapper.
- *
- * Two coordinated responsibilities:
- *
- *   1. **Abort coordination**: every in-flight request registers its
- *      AbortController here. When the native `heron:net-status` event
- *      fires `{ online: false }` (iOS NWPathMonitor catches true offline
- *      before navigator.onLine), we abort every pending controller. The
- *      callers' fetches throw cleanly with AbortError instead of hanging
- *      until OS TCP timeout (~30s) -- the user sees a fast "network
- *      dropped" state instead of a thirty-second mystery.
- *
- *   2. **Auto-retry queue**: when a request fails with a network error
- *      AND it's idempotent (GET by default; mutation if `retryable:true`),
- *      we enqueue it. On the next online signal we replay the queued
- *      requests once each. Caller's promise resolves with the retry's
- *      result, so from their point of view the call just "took longer".
- *
- *      Mutations DO NOT auto-retry unless the caller explicitly opts in:
- *      a POST /api/scan that the server already processed but the
- *      response packet got dropped would silently double-apply on a
- *      naive retry. The opt-in (`retryable: true`) is the caller's
- *      assertion of idempotency.
- *
- *      Queue caps at MAX_QUEUE_SIZE to prevent runaway in pathological
- *      cases (extended flap, many concurrent calls).
- *
- * This module's only public surface is for `lib/api.ts`. UI components
- * stay unaware -- they call `apiCall(url, { retryable })` and the
- * resilience layer is transparent.
- */
+/** Abort-on-offline + auto-retry-on-recovery for lib/api.ts. On
+ *  `heron:net-status { online: false }` (iOS NWPathMonitor fires
+ *  earlier than navigator.onLine), every in-flight AbortController
+ *  cancels so callers get AbortError instead of a 30s TCP hang.
+ *  Failed idempotent requests (GET by default; mutation only if
+ *  `retryable: true`) enqueue + replay on next online signal. Caller
+ *  opts in to mutation retry because a dropped response packet on a
+ *  successful POST would silently double-apply. Queue capped at
+ *  MAX_QUEUE_SIZE. */
 import { BRAND_EVENTS } from './brand';
 
 /** Cap the retry queue to prevent unbounded memory growth during a

@@ -1,21 +1,10 @@
-/**
- * Migration dry-run test -- boot a fresh in-memory SQLite via the same
- * code path production uses (`ensureSchema()`), then introspect
- * `sqlite_master` to assert every table the Drizzle schema declares
- * actually exists with the expected columns.
- *
- * Catches the failure modes that DON'T have a drizzle-kit migration
- * folder to dry-run against:
- *   • Schema file adds a column → CREATE TABLE in migrate.ts doesn't
- *   • Schema file removes a column → migrate.ts still creates it
- *   • Schema file adds a whole table → migrate.ts forgets the CREATE
- *   • Vice versa: migrate.ts ships an aspirational table the schema
- *     doesn't model (drift in the other direction)
- *
- * The HERON_DATA_DIR override + the `:memory:` shim in db/index.ts
- * mean this test is hermetic -- no disk side-effects beyond the
- * vitest tmpdir.
- */
+/** Migration dry-run test -- boot a fresh in-memory SQLite via the
+ *  production ensureSchema() path, then introspect sqlite_master to
+ *  assert every Drizzle-declared table exists with expected columns.
+ *  Catches drift in either direction: schema adds a column/table that
+ *  migrate.ts forgot, or migrate.ts ships a table the schema doesn't
+ *  model. HERON_DATA_DIR override + the ":memory:" shim in db/index.ts
+ *  keep this hermetic to vitest's tmpdir. */
 import { describe, expect, it } from 'vitest';
 import Database from 'better-sqlite3';
 import { readFileSync } from 'node:fs';

@@ -1,24 +1,9 @@
-/**
- * Multi-user safety regression guard -- every JobDef that touches user data
- * MUST declare `perUser: true` so `runById()` fans the work out across
- * every schedulable user. The opposite (`perUser: false`) is reserved for
- * a TINY, KNOWN list of system-only jobs (e.g. GDPR account reaper) that
- * operate across the auth DB / global infra and would do the WRONG thing
- * if fanned out per user.
- *
- * Why a regression test, not a runtime check:
- *   • A new `*.job.ts` file that forgets `perUser` is a silent bug -- it
- *     defaults to `undefined` (falsy), so the registry runs it once with
- *     no user context, mutating SYSTEM_USER files and leaking nothing
- *     into per-user data. We won't notice in dev. CI must catch this.
- *   • The allowlist below is the explicit set of system-only jobs. Adding
- *     a new system-only job requires a deliberate edit here, which forces
- *     a multi-user-safety review at PR time.
- *
- * Mechanism: file-system parse, not import. We can't import the job modules
- * from a Vitest node project because they pull `$env/dynamic/private` at
- * boot. Regex-on-source is sufficient -- the JobDef shape is stable.
- */
+/** Multi-user safety gate. Every JobDef that touches user data must
+ *  set `perUser: true`; `perUser: false` is reserved for the small
+ *  allowlist below (GDPR reaper etc.). Missing `perUser` defaults to
+ *  falsy, runs once under SYSTEM_USER, silently mishandles per-user
+ *  state -- CI must catch that. Mechanism: regex-on-source (Vitest
+ *  node project can't import the modules; they need $env at boot). */
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';

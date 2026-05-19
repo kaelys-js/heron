@@ -1,23 +1,11 @@
-/**
- * POST /api/job/[id]/psychometric-prep
- *
- * Detects the psychometric test (Pymetrics / Plum / Harver / etc.) from
- * the invite text the user pastes, then spawns the `psychometric-prep`
- * mode to draft a technique brief.
- *
- * Body:
- *   {
- *     testIdentifier?: 'pymetrics' | 'plum' | 'harver' | 'cangrade' |
- *                      'wonderlic' | 'berke' | 'predictive-index' |
- *                      'hogan' | 'caliper' | 'criteria-cognitive-aptitude' |
- *                      'revelian' | 'koru7' | 'arctic-shores' | 'unknown',
- *     inviteText: string,
- *     dueDate?: string
- *   }
- *
- * When `testIdentifier === 'unknown'` (or omitted), we detect from
- * `inviteText` patterns before passing to the mode.
- */
+/** POST /api/job/[id]/psychometric-prep -- detect the psychometric test
+ *  (Pymetrics / Plum / Harver / etc.) from the pasted invite text, then spawn
+ *  the psychometric-prep mode to draft a technique brief. Body:
+ *  { testIdentifier?: 'pymetrics'|'plum'|'harver'|'cangrade'|'wonderlic'|
+ *  'berke'|'predictive-index'|'hogan'|'caliper'|'criteria-cognitive-aptitude'|
+ *  'revelian'|'koru7'|'arctic-shores'|'unknown', inviteText: string,
+ *  dueDate?: string }. When testIdentifier='unknown' (or omitted), detect
+ *  from inviteText regex patterns before passing to the mode. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';

@@ -1,22 +1,12 @@
-/**
- * takehome-scaffolder -- when a job hits TakeHome status, build the
- * working directory + README + submission-etiquette checklist.
- *
- * Most candidates over-spend on take-homes by 2-3× the stated cap.
- * The scaffolder enforces structure: a budget you commit to, a README
- * template, a submission-etiquette checklist. The timer lives client-
- * side (browser localStorage) so it survives reloads but doesn't
- * require a server daemon.
- *
- * Storage:
- *   interview-prep/{company-slug}-{role-slug}-take-home/
- *     README.md          ← brief, decisions, design notes
- *     CHECKLIST.md       ← submission-etiquette checklist
- *     state.json         ← {startedAt, budgetMinutes, status}
- *
- * Pure-function. Idempotent: re-scaffolding the same job updates state.json
- * but doesn't clobber a hand-edited README.
- */
+/** takehome-scaffolder -- when a job hits TakeHome status, build the
+ *  working directory + README + submission-etiquette checklist. Most
+ *  candidates over-spend on take-homes by 2-3× the stated cap; the
+ *  scaffolder enforces structure (budget commit, README template,
+ *  checklist). Timer lives client-side in localStorage -- survives
+ *  reloads without a server daemon.
+ *  Layout: interview-prep/{company}-{role}-take-home/ contains README.md,
+ *  CHECKLIST.md, state.json {startedAt, budgetMinutes, status}.
+ *  Idempotent: re-scaffolding updates state.json, never clobbers README. */
 
 import fs from 'node:fs';
 import path from 'node:path';

@@ -1,20 +1,8 @@
-/**
- * Generic interview-prep endpoint -- useful when the caller already has a
- * report file in hand but no Job row (e.g. interview prep for a posting
- * the user never added to their pipeline, or external integrations).
- *
- * The per-Job equivalent `/api/job/[id]/interview-prep` persists the
- * resulting brief in the active user's `profiles/{id}/interview-prep/<jobId>.md`
- * (i.e. `data/users/{uid}/profiles/{id}/interview-prep/<jobId>.md`, or
- * `data/profiles/{id}/interview-prep/<jobId>.md` in legacy single-user installs).
- * This endpoint returns the brief inline without persistence, so users
- * who don't want the brief filed away can call it ad-hoc.
- *
- * Accepts:
- *   ?profile=<slug>  -- which profile's CV + report dir to read from
- *                      (defaults to active)
- *   body { reportFile, archetype? }
- */
+/** POST /api/interview -- generic interview-prep when caller has a report
+ *  file but no Job row (postings not in the pipeline, external integrations).
+ *  Returns the brief INLINE without persistence; for per-Job + persisted, use
+ *  /api/job/[id]/interview-prep. Accepts ?profile=<slug> (defaults to active)
+ *  and body { reportFile, archetype? }. */
 import { json, error } from '@sveltejs/kit';
 import { generateInterviewPrep } from '$lib/server/interview';
 import { getActiveProfileId, getProfile } from '$lib/server/profiles';

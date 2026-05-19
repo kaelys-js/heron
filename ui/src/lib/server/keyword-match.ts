@@ -1,28 +1,11 @@
-/**
- * keyword-match -- deterministic JD ⇄ CV keyword-overlap score.
- *
- * Pre-LLM ATS-readiness check. The pdf mode tells Claude to inject the
- * JD's keywords into the tailored CV, but nothing checks whether that
- * actually happened. This module hands the user a hard number so they
- * know when the CV is genuinely tuned vs eyeballed.
- *
- * Algorithm (intentionally simple -- explainable beats clever):
- *
- *   1. Tokenize each text to a Set of lower-cased terms, stripped of
- *      punctuation, with stopwords removed.
- *   2. Take 1-gram + 2-gram + 3-gram from the JD (3-grams catch
- *      "machine learning engineer", "amazon web services", etc.).
- *   3. For each JD n-gram, check if it appears in the CV text.
- *   4. Weight 3-grams higher (3x) > 2-grams (2x) > 1-grams (1x) since
- *      multi-word terms are more meaningful.
- *   5. Score = sum(matched weights) / sum(all weights) × 100.
- *
- * Returns the score + the matched + missing lists so the UI can show:
- *   "ATS match: 78% · 12 keywords missing"
- *   with the missing list as a click-to-expand chip cloud.
- *
- * This is FAST -- pure string ops, no LLM, sub-millisecond per pair.
- */
+/** keyword-match -- deterministic JD ⇄ CV keyword-overlap score (pre-LLM
+ *  ATS-readiness check). pdf mode tells Claude to inject the JD's keywords
+ *  into the tailored CV; this module verifies it happened.
+ *  Algorithm: tokenize → lowercase → drop stopwords; take 1/2/3-grams from
+ *  the JD (3-grams catch "machine learning engineer"); weight matched
+ *  n-grams 3x/2x/1x; score = sum(matched)/sum(all) × 100.
+ *  Returns score + matched + missing for the UI chip cloud. Pure string
+ *  ops, no LLM, sub-millisecond per pair. */
 
 // Common stopwords we drop before scoring -- these are noise for ATS matching.
 const STOPWORDS = new Set([

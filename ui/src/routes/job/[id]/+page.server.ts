@@ -1,17 +1,10 @@
-/**
- * /job/[id] route -- single page that works for both single-profile and
- * cross-profile contexts.
- *
- * Two id formats accepted:
- *   - Raw urlId (e.g. "abc123def456")        → looked up in active profile
- *   - Suffixed  (e.g. "abc123def456:elec")   → looked up in named profile.
- *     This is the form emitted by `loadAllJobs('all')` to disambiguate
- *     URLs that appear in multiple profile pipelines.
- *
- * The optional `?profile=<slug>` query param overrides the suffix and
- * forces a specific profile lookup. Useful for direct deep-links from
- * the management page or per-profile inbox views.
- */
+/** /job/[id] loader -- single + cross-profile.
+ *  Two id formats:
+ *    "abc123def456"        → active-profile lookup
+ *    "abc123def456:elec"   → named-profile lookup (loadAllJobs('all') emits
+ *                            this to disambiguate URLs across pipelines)
+ *  `?profile=<slug>` overrides the suffix; used by deep-links from the
+ *  management page or per-profile inbox views. */
 
 import path from 'node:path';
 import { loadAllJobs } from '$lib/server/parsers';

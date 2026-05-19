@@ -1,34 +1,9 @@
-/**
- * safe-markdown -- XSS-safe markdown → HTML renderer.
- *
- * The dashboard renders AI-generated markdown (CVs, cover letters,
- * interview prep, negotiation drafts, evaluation reports) via Svelte's
- * `{@html ...}` directive. Markdown sources can pass through:
- *
- *   • Job descriptions scraped from ATS portals (attacker-influenced)
- *   • LLM output that may have echoed-back JD content verbatim
- *   • User-edited files (CV, profile, portfolio)
- *
- * `marked.parse()` alone is NOT a sanitizer -- it preserves raw HTML in
- * markdown, including `<script>` and event-handler attributes. Without
- * post-processing, a malicious JD could embed `<img onerror>` and run
- * arbitrary code in our dashboard origin (which holds session cookies +
- * passkey scope).
- *
- * Fix: every `{@html bodyHtml}` MUST consume the output of this helper,
- * not `marked.parse()` directly. The eslint-disable comment on the
- * legitimate `{@html}` call sites should reference this file so a future
- * audit can confirm.
- *
- * Implementation:
- *   1. `marked.parse(md)` -- markdown → HTML string
- *   2. `DOMPurify.sanitize(html)` -- strip script tags, event handlers,
- *      javascript: URIs, data: URIs (except images), and any attribute
- *      not on the allowlist.
- *
- * Performance: DOMPurify uses jsdom server-side and the native DOM
- * client-side. Sub-millisecond for typical doc sizes.
- */
+/** XSS-safe markdown -> HTML renderer for `{@html ...}` sinks. Pipeline:
+ *  marked.parse -> DOMPurify.sanitize. JDs, LLM output, and user docs
+ *  all pass through here. `marked.parse` alone keeps raw HTML
+ *  (script tags, event handlers); DOMPurify strips that + javascript:
+ *  URIs + non-image data: URIs. Every `{@html}` sink MUST consume this
+ *  helper -- never raw marked output. */
 import { marked } from 'marked';
 import DOMPurify from 'isomorphic-dompurify';
 

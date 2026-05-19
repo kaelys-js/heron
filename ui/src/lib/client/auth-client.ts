@@ -1,25 +1,10 @@
-/**
- * Better Auth Svelte client singleton.
- *
- * Used by every auth-aware page (login, signup, settings, topbar) to:
- *   • Read the current session reactively (`authClient.useSession()`)
- *   • Trigger sign-in flows (passkey / GitHub OAuth / invite-code)
- *   • Add a new passkey from /settings
- *   • Sign out
- *
- * On WEB the client talks to the catch-all `/api/auth/*` route at the
- * current origin; cookies are httpOnly + same-origin and the browser
- * handles persistence automatically.
- *
- * On NATIVE (Capacitor iOS / Android) the WebView origin
- * (`heron://localhost`) is different from the backend origin
- * (`http://<lan-ip>:5173`), so cookies can't round-trip. We swap to
- * better-auth's `bearer()` plugin: the server sets `Set-Auth-Token: <token>`
- * on every sign-in response; our customFetchImpl captures that token,
- * persists it in Capacitor Preferences, and adds it as
- * `Authorization: Bearer <token>` on every subsequent request. Same code
- * path on web -- it's just inert there because Preferences is empty.
- */
+/** Better Auth Svelte client singleton (reactive session, passkey /
+ *  GitHub OAuth / invite-code sign-in, /settings passkey add, sign-out).
+ *  Web: httpOnly same-origin cookies. Native (Capacitor): WebView
+ *  origin differs from backend, so we use `bearer()`. customFetchImpl
+ *  captures `Set-Auth-Token`, stores it in Preferences, attaches it
+ *  as `Authorization: Bearer ...` on subsequent requests. Same code
+ *  path on web -- inert because Preferences is empty. */
 import { createAuthClient } from 'better-auth/svelte';
 import { passkeyClient } from '@better-auth/passkey/client';
 import { Preferences } from '@capacitor/preferences';

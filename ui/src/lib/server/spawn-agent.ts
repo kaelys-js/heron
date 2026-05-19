@@ -1,32 +1,12 @@
-/**
- * spawn-agent -- central helper for spawning the AI CLI with a
- * substituted mode prompt.
- *
- * Replaces the legacy "send slash-command, let Claude load skill"
- * pattern. The orchestrator now:
- *   1. Reads modes/<mode>.md from disk
- *   2. Substitutes __TOKEN__ placeholders against the active profile
- *      + user (via mode-substitution.ts)
- *   3. Writes the realized prompt to a temp file
- *   4. Spawns Claude with --append-system-prompt-file pointing at the
- *      temp file, plus the user message via -p
- *   5. Cleans up the temp file when the child exits
- *
- * Why temp file rather than passing the prompt body inline via -p?
- * Realized prompts can be > 10 KB (modes/evaluate.md alone is several
- * KB after substitution). Argv length limits + shell escaping
- * pitfalls (newlines, backticks, $) make inline passing fragile.
- * Temp files dodge both.
- *
- * Why --append-system-prompt-file? Claude Code's documented system-
- * prompt extension mechanism. Other CLIs (Gemini, Codex, etc.) may
- * accept a similar flag or fall back to inline -p with the realized
- * prompt prepended.
- *
- * Cleanup contract: the caller doesn't need to delete the temp file.
- * `closeOnExit` registers an `on('exit')` listener that unlinks the
- * temp file when the child process terminates.
- */
+/** spawn-agent -- central helper for spawning the AI CLI with a
+ *  substituted mode prompt. Reads modes/<mode>.md, substitutes __TOKEN__
+ *  placeholders against the active profile + user (mode-substitution.ts),
+ *  writes the realized prompt to a temp file, spawns Claude with
+ *  --append-system-prompt-file + user message via -p, then unlinks the
+ *  temp file when the child exits (closeOnExit).
+ *  Temp file (not inline -p) because realized prompts can exceed 10 KB
+ *  and argv length + shell escaping (newlines, backticks, $) make inline
+ *  passing fragile. */
 import { spawn, type ChildProcess, type SpawnOptions } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';

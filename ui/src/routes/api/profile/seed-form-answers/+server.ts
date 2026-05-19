@@ -1,17 +1,9 @@
-/**
- * /api/profile/seed-form-answers -- pre-populate the form-answers cache
- * from cv.md + profile.yml so the FIRST autonomous-apply run doesn't
- * dead-end on `unknown-field:notice period` and similar.
- *
- * POST → spawns the seed-form-answers Claude mode, reads back the count
- *        of rows written, returns it for the UI toast.
- *
- * GET  → returns the current cache stats (count + last-update) so the UI
- *        can decide whether to prompt for seeding.
- *
- * Auto-fired during onboarding completion + manually from the
- * FormAnswersCard "Seed from CV + profile" button.
- */
+/** /api/profile/seed-form-answers -- pre-populate the form-answers cache
+ *  from cv.md + profile.yml so the first autonomous-apply run doesn't
+ *  dead-end on `unknown-field:notice period` and similar.
+ *    POST → spawn seed-form-answers Claude mode, return row-count.
+ *    GET  → cache stats (count + last-update) for the UI prompt.
+ *  Auto-fired on onboarding completion + manually from FormAnswersCard. */
 
 import { wrap } from '$lib/server/api-helpers';
 import { getActiveProfileId, getProfile } from '$lib/server/profiles';

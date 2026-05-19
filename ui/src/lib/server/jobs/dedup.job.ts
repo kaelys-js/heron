@@ -1,17 +1,11 @@
-/**
- * Tracker dedup -- silent hygiene job.
- *
- * Runs `dedup-tracker.mjs` to merge same-URL duplicates in applications.md.
- * The script keeps the highest-scored row, merges notes, and writes a backup.
- *
- * Trigger: after every successful 'batch-merge' event (the auto-merge
- * fs watcher in `auto-merge-batch.ts` emits these). Manual run via the
- * Agents page Run button OR via
- * `POST /api/jobs/dedup-tracker/run` (same code path as the Agents page).
- *
- * Activity feed: silent unless ≥1 row was actually removed. Stdout parsed
- * for the "📊 N duplicates removed" summary line.
- */
+/** Tracker dedup -- silent hygiene job. Runs dedup-tracker.mjs to
+ *  merge same-URL duplicates in applications.md (keeps highest-scored
+ *  row, merges notes, writes a backup).
+ *  Trigger: after every successful 'batch-merge' event (emitted by
+ *  the auto-merge fs watcher). Manual via /agents Run button or
+ *  POST /api/jobs/dedup-tracker/run (same code path).
+ *  Activity feed: silent unless ≥1 row was removed; stdout parsed for
+ *  the "N duplicates removed" summary line. */
 
 import { spawn } from 'node:child_process';
 import { ROOT } from '../files';

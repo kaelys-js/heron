@@ -1,22 +1,12 @@
-/**
- * negotiation-playbook -- the structured playbook for verbal → signed.
- *
- * Today the product has comp-eval math + negotiation prompt drafts.
- * What's missing is the calibrated "if they say X, you say Y" tree,
- * the non-comp ask checklist, the exploding-offer counter-scripts,
- * and the multiple-offer leveraging coach. This module assembles all
- * four into structured data the UI surfaces as a wizard.
- *
- * Pure-function. No LLM. The structure is the value -- the user (or
- * the user + Claude in agent mode) can refine wording per situation,
- * but the decision tree of WHAT to ask + WHEN is what most candidates
- * lack and what loses the most money at signing.
- *
- * Why static structured data + not Claude: the negotiation conversation
- * happens in real-time over phone calls. The user needs a flowchart
- * they can SEE while talking, not a 1-minute LLM call between each
- * recruiter sentence.
- */
+/** Structured playbook for verbal → signed. Four pieces fused into
+ *  one wizard: an "if they say X you say Y" decision tree, the non-comp
+ *  ask checklist, exploding-offer counter-scripts, and the multi-offer
+ *  bidding coach. Pure-function, no LLM -- the conversation happens in
+ *  real time over the phone, and the user needs a flowchart they can
+ *  SEE while talking, not a 1-minute LLM call between each recruiter
+ *  sentence. Claude (in agent mode) can refine wording per situation,
+ *  but the tree of WHAT to ask + WHEN is what most candidates lack and
+ *  what loses the most money at signing. */
 
 import { evaluateOffer, type OfferInput, type OfferEvaluation } from './comp-math';
 

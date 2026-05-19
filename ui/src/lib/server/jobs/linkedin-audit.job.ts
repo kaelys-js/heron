@@ -1,18 +1,10 @@
-/**
- * linkedin-audit-job -- weekly background re-audit of LinkedIn profile +
- * account settings.
- *
- * LinkedIn changes layout often (and recruiter algorithms re-rank
- * silently). A weekly re-run catches drift between the last fix and
- * today. Findings filed as Inbox cards via `reportIssue` with dedupeKey
- * `linkedin-audit:{kind}` so the cards don't pile up across runs.
- *
- * Trigger: weekly Monday 07:00. Manual run also allowed.
- *
- * Runs ONLY for the active profile (LinkedIn auth is per-user, not per-
- * profile -- the same LinkedIn account serves all of a user's profiles).
- * Per-user Playwright session dirs are at data/users/{uid}/.playwright-linkedin/.
- */
+/** linkedin-audit-job -- weekly re-audit of LinkedIn profile + account
+ *  settings. LinkedIn changes layout + recruiter rankings silently;
+ *  weekly catches drift. Findings filed via reportIssue with
+ *  dedupeKey='linkedin-audit:{kind}' so cards don't accumulate.
+ *  Trigger: Monday 07:00; manual allowed.
+ *  Active-profile only (LinkedIn auth is per-user, not per-profile).
+ *  Per-user Playwright session dir: data/users/{uid}/.playwright-linkedin/. */
 
 import { spawn } from 'node:child_process';
 import path from 'node:path';

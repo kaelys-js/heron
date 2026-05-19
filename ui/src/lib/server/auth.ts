@@ -1,37 +1,11 @@
-/**
- * auth -- Better Auth singleton.
- *
- * Authentication strategy for heron:
- *
- *   • Passkeys (WebAuthn): primary credential type. Sync via iCloud
- *     Keychain (Apple) / Google Password Manager (Android+Chrome). No
- *     password to leak, no email round-trip, works offline once enrolled.
- *
- *   • GitHub OAuth: optional, env-gated. Set GITHUB_CLIENT_ID +
- *     GITHUB_CLIENT_SECRET in .env to enable. Lets a developer sign in
- *     with their existing GitHub account on first launch without
- *     creating yet another credential.
- *
- *   • Local invite codes: replaces email magic links. The first user
- *     ("owner") generates a 6-digit code from the running dashboard; the
- *     invitee enters it on the signup page. Codes expire after 30min and
- *     are single-use. Works offline, no SMTP, no third-party.
- *
- *   • Email + password is DISABLED. We never want passwords in this app.
- *
- * Database: drizzle-adapter against the `auth.db` SQLite file. Schema
- * defined in `db/auth-schema.ts`; create-on-first-boot DDL in
- * `db/migrate.ts:ensureSchema()`.
- *
- * Secret: BETTER_AUTH_SECRET in .env. If missing on first boot we
- * generate one and persist it (via `writeEnv()`) so the user never sees
- * "missing secret" errors.
- *
- * Base URL: BETTER_AUTH_URL or auto-derived. SvelteKit's RequestEvent
- * passes the full URL through so the auth callbacks always know the
- * right origin (works in dev :5173, Capacitor capacitor://, Electron
- * file://).
- */
+/** Better Auth singleton. Three credential types: passkeys (primary,
+ *  WebAuthn synced via iCloud / Google Password Manager), GitHub OAuth
+ *  (optional, env-gated), local 6-digit invite codes (30min TTL, single-
+ *  use, offline). Email+password is intentionally disabled.
+ *  DB: drizzle adapter against auth.db (schema in db/auth-schema.ts).
+ *  BETTER_AUTH_SECRET auto-generates + writes to .env on first boot.
+ *  Base URL auto-derived from SvelteKit RequestEvent (dev/Capacitor/
+ *  Electron origins all handled). */
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { bearer } from 'better-auth/plugins';

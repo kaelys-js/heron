@@ -1,21 +1,10 @@
-/**
- * /settings -- page loader.
- *
- * Returns env (masked) + backup list + backup-retention config. Owner-only
- * (F23) because:
- *   - `readEnvMasked()` reveals which credentials the OWNER configured
- *     (Anthropic, Gemini, Adzuna, Gmail-IMAP, etc.). Even masked, the
- *     presence/absence of each key is sensitive: it tells a member-role
- *     user how the install is wired.
- *   - `listBackups()` returns filenames with ISO timestamps + per-profile
- *     metadata across every user. A member could enumerate other users'
- *     profile slugs.
- *
- * The corresponding API endpoints (`/api/backup/*`, `/api/settings/*`)
- * already call `requireOwner` -- this loader was the only un-gated path
- * to the same data. Members hitting /settings get a 403 (better than
- * silently rendering an empty page).
- */
+/** /settings loader -- masked env + backup list + retention config.
+ *  Owner-only (F23): readEnvMasked() leaks which install-wide creds
+ *  the owner has configured (presence/absence is itself sensitive);
+ *  listBackups() returns ISO-timestamped filenames + per-profile metadata
+ *  across every user, letting a member enumerate other users' slugs.
+ *  Matching /api/backup/* + /api/settings/* already requireOwner -- this
+ *  loader was the last un-gated path. Members get 403. */
 import { readEnvMasked, loadEnv } from '$lib/server/env';
 import { listBackups, readBackupConfig } from '$lib/server/backup';
 import { requireOwnerOrAdmin } from '$lib/server/auth-helpers';

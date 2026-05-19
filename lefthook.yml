@@ -377,6 +377,19 @@ pre-commit:
       glob: "*.{md,ts,tsx,svelte,mjs,js,cjs,py,rb,sh,bash,yml,yaml}"
       run: pnpm verify:no-slop:test && pnpm verify:no-slop
 
+    comment-style:
+      # Enforce docs/COMMENT-STYLE.md across .ts/.tsx/.svelte/.mjs/.js/.cjs:
+      #   - Top-of-file /** ... */ headers capped at 12 lines (HEADER_MAX_LINES)
+      #   - AI-slop adjectives banned in comments (comprehensive, robust,
+      #     elegant, seamless, leverage(s|ing), powerful, cutting-edge, etc.)
+      #   - "Pre-fix" / "Post-fix" / "historical context" framing banned
+      # Backtick-quoted runs are citations and exempt -- write `leverage`
+      # if the literal word is the subject. String literals + JSX text +
+      # UI copy never get inspected; only comment context does. See
+      # scripts/system/verify-comment-style.mjs + its .test.mjs sibling.
+      glob: "*.{ts,tsx,svelte,mjs,js,cjs}"
+      run: pnpm verify:comment-style:test && pnpm verify:comment-style
+
     exact-versions:
       # Reject any version specifier that isn't an EXACT pin (no ^, ~,
       # >=, *, "latest", or partial versions like "1.7"). Scans every

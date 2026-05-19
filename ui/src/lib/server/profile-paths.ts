@@ -1,50 +1,14 @@
-/**
- * profile-paths -- single source of truth for "where does file X for
- * profile Y live on disk".
- *
- * Every read/write helper in lib/server/* that touches a per-profile file
- * must go through `profilePath(profileId, kind)`. This makes it impossible
- * to accidentally cross-contaminate profile data and keeps the layout
- * change localized to one module.
- *
- * Layout (single profile shown; same shape for every profile):
- *
- *   data/profiles/{slug}/
- *     ├── cv.md
- *     ├── profile.yml
- *     ├── _profile.md             ← per-profile copy of modes/_profile.md
- *     ├── portals.yml
- *     ├── article-digest.md
- *     ├── pipeline.md
- *     ├── applications.md
- *     ├── scan-history.tsv
- *     ├── gemini-scores.tsv
- *     ├── follow-ups.md
- *     ├── projects.json
- *     ├── reports/
- *     ├── output/                 ← incl. cv-general.pdf for LinkedIn Easy Apply
- *     └── interview-prep/         ← per-company .md files (story-bank.md stays shared)
- *
- * Files NOT covered here (shared across profiles, stay at original paths):
- *   .env                          ← shared API keys + IMAP creds
- *   .playwright-{linkedin,indeed}/← shared auth sessions
- *   data/profiles.json            ← THIS file itself + active selection
- *   data/sources.json             ← shared source connection state
- *   data/onboarding-state.json    ← shared wizard state
- *   data/autopilot.json           ← shared scheduler config
- *   data/activity.jsonl           ← shared event log
- *   data/issues.jsonl             ← shared open-issues feed
- *   data/inbox-mbox/              ← shared mbox dropbox for scan-email.mjs
- *   data/followup-cache.json      ← derived cache
- *   data/patterns-cache.json      ← derived cache
- *   data/insights-cache.json      ← derived cache
- *   interview-prep/story-bank.md  ← shared STAR-story bank
- *
- * Why a single helper rather than path constants per kind:
- *  - The profileId is dynamic. Hardcoding `path.join(ROOT, 'data', 'profiles', 'default', 'cv.md')`
- *    in every caller forces them to also import readProfiles → defeating the point.
- *  - Adding a new per-profile file later is a one-line change here, not a hunt.
- */
+/** profile-paths -- single source of truth for "where does file X for
+ *  profile Y live on disk". Every per-profile read/write in lib/server/*
+ *  must route through profilePath(profileId, kind); this prevents
+ *  cross-profile contamination and keeps layout changes localised.
+ *  Per-profile tree under data/users/{uid}/profiles/{slug}/ contains:
+ *  cv.md, profile.yml, _profile.md, portals.yml, article-digest.md,
+ *  pipeline.md, applications.md, scan-history.tsv, gemini-scores.tsv,
+ *  follow-ups.md, projects.json, reports/, output/, interview-prep/.
+ *  Shared (not per-profile): .env, .playwright-*, data/{sources,
+ *  onboarding-state,autopilot,activity,issues}.*, data/inbox-mbox/,
+ *  *-cache.json, interview-prep/story-bank.md. */
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -300,18 +264,17 @@ export function userSharedPathForUser(userId: string, kind: UserSharedFileKind):
   }
 }
 
-/**
- * Resolve the persistent Chromium dir for a per-portal Playwright session.
+/** Resolve the persistent Chromium dir for a per-portal Playwright session.
  *
- * F20 -- TS mirror of `scripts/lib/lib_playwright_auth.py::user_data_dir`.
- * Pre-fix the disconnect/test endpoints used `path.join(ROOT,
- * '.playwright-' + portal)` which never matched the actual layout
- * (Python writes to `data/users/{uid}/.playwright-{portal}/`). Result:
- * "Disconnect LinkedIn" was a no-op.
+ *  F20 -- TS mirror of `scripts/lib/lib_playwright_auth.py::user_data_dir`.
+ *  The disconnect/test endpoints MUST hit the same layout Python writes
+ *  to (`data/users/{uid}/.playwright-{portal}/`); a naive `path.join(ROOT,
+ *  '.playwright-' + portal)` would silently no-op ("Disconnect LinkedIn"
+ *  clicks that do nothing).
  *
- * Layout:
- *   multi-user → data/users/{userId}/.playwright-{portal}/
- *   legacy     → data/profiles/_shared/.playwright-{portal}/ (SYSTEM_USER)
+ *  Layout:
+ *    multi-user → data/users/{userId}/.playwright-{portal}/
+ *    legacy     → data/profiles/_shared/.playwright-{portal}/ (SYSTEM_USER)
  *
  * Caller is responsible for verifying `portal` against an allowlist --
  * we accept any string here so the same helper works for new portals

@@ -1,24 +1,10 @@
-/**
- * pattern-suggestions -- convert analyze-patterns.mjs textual recommendations
- * into STRUCTURED suggestions the UI can one-click apply.
- *
- * The analyzer outputs `recommendations: [{ action, reasoning, impact }]`
- * but doesn't say WHERE to put the change. This module:
- *
- *   1. Spawns the analyzer (JSON mode) and parses its output
- *   2. Maps each recommendation to a structured suggestion with
- *      `targetFile` + `op` + `payload`
- *   3. Exposes `applySuggestion(s)` that actually edits portals.yml /
- *      _profile.md based on the payload
- *
- * Why structured: textual "tighten location filters" leaves the user to
- * figure out which file + which line. Structured "add negative keyword
- * `US only` to portals.yml title_filter.negative" lets the dashboard do
- * it with one click + rollback if wrong.
- *
- * Safety: every mutation writes `<file>.bak` first (matches the existing
- * resetProfile() backup convention) so the user can revert via `mv`.
- */
+/** pattern-suggestions -- turn analyze-patterns.mjs textual output into
+ *  structured, one-click-applyable suggestions. The analyzer emits
+ *  recommendations: [{ action, reasoning, impact }] but doesn't say WHERE
+ *  to apply them; we (1) spawn it in JSON mode, (2) map each rec to
+ *  { targetFile, op, payload }, (3) expose applySuggestion(s) that mutate
+ *  portals.yml / _profile.md. Every mutation writes <file>.bak first
+ *  (same convention as resetProfile) so the user can revert with `mv`. */
 
 import fs from 'node:fs';
 import path from 'node:path';

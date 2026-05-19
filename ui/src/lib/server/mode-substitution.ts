@@ -1,30 +1,12 @@
-/**
- * mode-substitution -- orchestrator-side path-token substitution.
- *
- * Replaces the legacy "symlinks at repo root" mechanism. Mode files
- * (modes/*.md) contain `__TOKEN__` placeholders; this module resolves
- * each token to an absolute on-disk path against the active profile +
- * user context, and returns the realized prompt that gets handed to
- * the AI CLI via `--append-system-prompt-file` (or as the `-p` body).
- *
- * Why bake paths into the prompt instead of teaching the AI an env
- * var? Three reasons:
- *
- *   1. Provider-agnostic. Claude Code, Gemini, Codex, OpenCode, Qwen,
- *      Copilot all handle prompts as raw text. None of them
- *      uniformly honour env-var interpolation in instructional text.
- *   2. No silent fallback. If we wrote "read $HERON_PROFILE_DIR/
- *      cv.md" and the AI ignored the variable, it would happily try
- *      "$HERON_PROFILE_DIR/cv.md" as a literal path and fail
- *      cryptically. With pre-substituted absolute paths there's no
- *      env-var indirection to misinterpret.
- *   3. Per-spawn state. The substitution function takes a profileId
- *      argument; two concurrent spawns for different profiles each
- *      get their own realized prompt. No global state, no lock.
- *
- * Token vocabulary documented in modes/_TOKENS.md -- keep this file
- * and that doc in sync.
- */
+/** mode-substitution -- orchestrator-side path-token substitution. Mode
+ *  files (modes/*.md) contain __TOKEN__ placeholders; this module resolves
+ *  each to an absolute on-disk path against the active profile + user,
+ *  returning the realized prompt for --append-system-prompt-file / -p.
+ *  Baked paths (vs $ENV) because: (1) provider-agnostic across Claude /
+ *  Gemini / Codex / Copilot, none of which uniformly interpolate env
+ *  vars in instructions; (2) no silent fallback to literal "$VAR" paths;
+ *  (3) the profileId arg gives each concurrent spawn its own realized
+ *  prompt with no global state. Token vocabulary: modes/_TOKENS.md. */
 
 import { readFileSync } from 'node:fs';
 import {

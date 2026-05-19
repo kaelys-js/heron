@@ -1,20 +1,11 @@
-/**
- * compile-latex -- registry-exposed wrapper around `generate-latex.mjs`
- * (D11). The user typically writes their CV as markdown (cv.md), but
- * advanced users who maintain a hand-written `.tex` CV can drop one in
- * the active user's `profiles/{slug}/output/cv.tex` (resolved to
- * `data/users/{uid}/profiles/{slug}/output/cv.tex`, or
- * `data/profiles/{slug}/output/cv.tex` in legacy single-user installs)
- * and trigger this job to compile it to `cv.pdf`.
- *
- * Trigger: manual via Agents page. Args:
- *   { tex?: string, out?: string }
- *     - tex: input .tex path (default: <profile output dir>/cv.tex)
- *     - out: output .pdf path (default: same dir, replace .tex → .pdf)
- *
- * Requires `tectonic` (preferred) or `pdflatex` on PATH. Surfaces a clear
- * error in the activity feed when neither is installed.
- */
+/** compile-latex (D11) -- registry wrapper around generate-latex.mjs.
+ *  Most users write cv.md; this job compiles a hand-written cv.tex
+ *  dropped at <profile output dir>/cv.tex into cv.pdf.
+ *  Trigger: manual via Agents page. Args: { tex?, out? } -- tex
+ *  defaults to <profile output dir>/cv.tex, out to .tex→.pdf in the
+ *  same dir.
+ *  Requires `tectonic` (preferred) or `pdflatex` on PATH; surfaces a
+ *  clear error in the activity feed if neither is installed. */
 
 import path from 'node:path';
 import fs from 'node:fs';

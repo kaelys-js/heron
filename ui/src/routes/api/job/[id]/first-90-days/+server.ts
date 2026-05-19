@@ -1,21 +1,9 @@
-/**
- * POST /api/job/[id]/first-90-days
- *
- * Draft a "First 90 Days" plan for the new role. This is the document
- * the user submits to the hiring manager either as part of the final
- * round OR after signing -- both modes are supported via `phase`:
- *   • 'closing'     -- used as part of the offer ask, demonstrates seriousness
- *   • 'onboarding'  -- written after signing, used to align with the manager
- *
- * The plan follows the classic 30/60/90 day breakdown:
- *   - Days 0-30: listen, learn, identify wins
- *   - Days 31-60: ship a small but visible win
- *   - Days 61-90: lead a measurable improvement on a key metric
- *
- * Output: `output/{company}-first-90-days.md` written by the `first-90-days`
- * mode. The mode reads the job's deep-evaluation report (when present) so
- * the plan can cite specific challenges the company mentions in the JD.
- */
+/** POST /api/job/[id]/first-90-days -- draft a 30/60/90 plan for the new role.
+ *  phase='closing' submits with the offer ask; phase='onboarding' aligns with
+ *  the manager post-signing. Plan: 0-30 listen/learn, 31-60 ship visible win,
+ *  61-90 lead measurable improvement. Output: output/{company}-first-90-days.md
+ *  via the first-90-days mode (reads the deep-eval report to cite specific
+ *  challenges from the JD). */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';

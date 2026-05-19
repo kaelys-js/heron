@@ -1,24 +1,11 @@
-/**
- * POST /api/profile/cv-check
- *
- * Strict quality + ATS lint for the user's base CV.
- *
- * Runs (in parallel):
- *   • resume-quality.mjs against `data/users/{userId}/profiles/{slug}/cv.md`
- *   • ats-check.mjs against the latest generated CV PDF (if it exists)
- *
- * Used by:
- *   • Onboarding step 3 (post-CV-paste) -- surfaces issues before the user
- *     moves on, so the first apply attempt doesn't fail recruiter scans.
- *   • Profile page "Verify CV" button -- re-runs anytime.
- *   • The CV-PDF generator (auto-fires after every render -- see cv-pdf.ts).
- *
- * Response: { ok, hasCv, atsScore?, qualityScore?, atsFailSummary?,
- *             qualityFailSummary?, atsFailedChecks, qualityFailedChecks }
- *
- * Non-destructive -- never modifies any file. Use POST /api/profile/cv-fix
- * to apply auto-fix suggestions.
- */
+/** POST /api/profile/cv-check -- strict quality + ATS lint for the base CV.
+ *  Runs in parallel: resume-quality.mjs against data/users/{uid}/profiles/
+ *  {slug}/cv.md, ats-check.mjs against the latest generated CV PDF (if any).
+ *  Triggered by: onboarding step 3 post-CV-paste, Profile "Verify CV"
+ *  button, and cv-pdf.ts after every render. Response: { ok, hasCv,
+ *  atsScore?, qualityScore?, atsFailSummary?, qualityFailSummary?,
+ *  atsFailedChecks, qualityFailedChecks }. Non-destructive; use
+ *  /api/profile/cv-fix to apply suggestions. */
 
 import fs from 'node:fs';
 import { wrap } from '$lib/server/api-helpers';

@@ -1,16 +1,7 @@
-/**
- * capacitor-plugins -- typed wrappers for every Capacitor plugin we use.
- *
- * Each wrapper:
- *   • Is safe to call on Web (falls back to the closest browser API)
- *   • Awaits the import dynamically so we don't ship the iOS native
- *     binding in the Web bundle
- *   • Returns a discriminated union { ok, error? } so callers can
- *     surface failures consistently
- *
- * Tree-shakeability: each export is a thin async function; Vite's
- * rolldown bundler drops the ones a build path doesn't reach.
- */
+/** Typed Capacitor plugin wrappers. Each is web-safe (browser-API
+ *  fallback), imports the native binding dynamically (no iOS code in
+ *  the web bundle), and returns `{ ok, error? }`. Thin async functions
+ *  so rolldown tree-shakes unused paths. */
 import { Capacitor } from '@capacitor/core';
 
 /** Lazily import a Capacitor plugin. Returns null on Web when the

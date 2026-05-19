@@ -1,26 +1,13 @@
-/**
- * Multi-user safety -- structural pattern guards (F9-F30 regression suite).
- *
- * Catches the easy-to-regress anti-patterns that the F9-F30 audit
- * surfaced. Each test greps the codebase for the unsafe pattern and
- * asserts only an allowlisted set of files contains it.
- *
- * Patterns enforced:
- *   1. No bare `env: { ...process.env }` in spawn() / execFile() --
- *      every server-side spawn must use `userContextEnv()` so the child
- *      inherits `HERON_USER_ID` from the parent's ALS scope (F13).
- *   2. No module-level `let cached: AutopilotConfig` (or similar
- *      single-instance Config singletons) -- they cross users (F9).
- *   3. Every `installBusListener` callback that touches user data must
- *      reference `ev.userId` (F11).
- *   4. Background daemons (setInterval at module load) must NOT call
- *      job functions directly -- they must go through `runById()` so the
- *      registry's `perUser: true` fan-out fires (F15).
- *
- * Mechanism: regex-on-source rather than runtime. The F9-F30 fixes
- * landed alongside this file; future regressions are caught at CI time
- * before they ship.
- */
+/** Multi-user pattern guards (F9-F30 regression suite). Each test
+ *  greps source for an anti-pattern + asserts only allowlisted files
+ *  match. Patterns:
+ *    1. spawn() / execFile() must use userContextEnv() (no bare
+ *       `env: { ...process.env }`) so the child inherits HERON_USER_ID
+ *    2. No module-level Config singletons (cross-user leak)
+ *    3. installBusListener callbacks touching user data must read
+ *       `ev.userId`
+ *    4. Background daemons go through runById(), not direct job calls
+ *  Mechanism: regex-on-source, runs in CI before merge. */
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -118,8 +105,8 @@ describe('Multi-user — no module-singleton user config caches (F9 guard)', () 
 
   it('autopilot.ts uses Map<userId, AutopilotConfig> not a single cached singleton', () => {
     const src = fs.readFileSync(path.join(SERVER_ROOT, 'autopilot.ts'), 'utf8');
-    // F9 specifically: no `let cached: AutopilotConfig` line. The
-    // post-fix file has `const cache = new Map<string, AutopilotConfig>()`.
+    // F9: no `let cached: AutopilotConfig` (would cross users); the
+    // file must use `const cache = new Map<string, AutopilotConfig>()`.
     expect(src).not.toMatch(/^\s*let\s+cached\s*:\s*AutopilotConfig/m);
     expect(src).toMatch(/new\s+Map<\s*string,\s*AutopilotConfig\s*>/);
   });
@@ -175,15 +162,16 @@ describe('Multi-user — bus listeners scope to ev.userId (F11 guard)', () => {
 describe('Multi-user — setInterval daemons in jobs/ go through runById (F15 guard)', () => {
   it('interview-reminder daemon calls runById, not the raw function', () => {
     const src = fs.readFileSync(path.join(SERVER_ROOT, 'jobs/interview-reminder.job.ts'), 'utf8');
-    // Pre-F15 the daemon called `runInterviewReminder()` directly from
-    // setInterval. Post-fix it imports `runById` and fires that.
+    // F15 requires the daemon to import `runById` and fire it, NOT call
+    // `runInterviewReminder()` directly from setInterval (which would
+    // skip the registry fan-out across users).
     expect(src).toMatch(/runById\(\s*['"]interview-reminder['"]\s*\)/);
   });
 
   it('scan-email-imap daemon fans out across all schedulable users via runAsUser (F14/F19/F27)', () => {
-    // Pre-fix the daemon ran only under the OWNER (getOwnerUserId).
-    // Post-fix it iterates listSchedulableUsers() so every user's
-    // gmail-imap mailbox gets polled under their own ALS context.
+    // F14/F19/F27: the daemon iterates listSchedulableUsers() so every
+    // user's gmail-imap mailbox gets polled under their own ALS context
+    // -- running only under the OWNER would silently skip everyone else.
     const src = fs.readFileSync(path.join(SERVER_ROOT, 'jobs/scan-email-imap.job.ts'), 'utf8');
     expect(src).toMatch(/\blistSchedulableUsers\(/);
     expect(src).toMatch(/\brunAsUser\(/);
@@ -222,10 +210,11 @@ describe('Multi-user — autopilot tick fans out across users (F10 guard)', () =
 describe('Multi-user — circuit breaker per-user state (F12 guard)', () => {
   it('autopilot-circuit-breaker.ts uses Map for consecutiveLinkedInFailures', () => {
     const src = fs.readFileSync(path.join(SERVER_ROOT, 'autopilot-circuit-breaker.ts'), 'utf8');
-    // Pre-F12: `let consecutiveLinkedInFailures = 0`. Post-fix:
-    // `const consecutiveLinkedInFailures = new Map<string, number>()`.
+    // F12: must be `const consecutiveLinkedInFailures = new Map<string,
+    // number>()`, NOT `let consecutiveLinkedInFailures = 0` (which would
+    // share one counter across every user and cross-trip the breaker).
     // Anchor to start-of-line + skip comment prefixes (` * ` block
-    // comments mention the pre-fix pattern for context).
+    // comments may cite the banned pattern for context).
     expect(src).not.toMatch(/^\s*let\s+consecutiveLinkedInFailures\b/m);
     expect(src).toMatch(/consecutiveLinkedInFailures\s*=\s*new Map<\s*string,\s*number\s*>/);
     // trip() should take a userId
