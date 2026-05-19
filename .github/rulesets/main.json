@@ -1,0 +1,59 @@
+{
+  "name": "Protect main branch",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "exclude": [],
+      "include": ["~DEFAULT_BRANCH"]
+    }
+  },
+  "rules": [
+    {
+      "type": "deletion"
+    },
+    {
+      "type": "non_fast_forward"
+    },
+    {
+      "type": "required_signatures"
+    },
+    {
+      "type": "pull_request",
+      "parameters": {
+        "required_approving_review_count": 1,
+        "dismiss_stale_reviews_on_push": true,
+        "require_code_owner_review": true,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": true
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "strict_required_status_checks_policy": false,
+        "do_not_enforce_on_create": false,
+        "required_status_checks": [
+          { "context": "Tests / ts" },
+          { "context": "Tests / ios" },
+          { "context": "Tests / Lint + format (Python / Go / Kotlin / Shell / Ruby / YAML)" },
+          { "context": "CodeQL / Analyze (javascript-typescript)" },
+          { "context": "CodeQL / Analyze (go)" },
+          { "context": "Dependency Review / dependency-review" },
+          { "context": "OSSF Scorecard / Scorecard analysis" },
+          { "context": "zizmor — workflow security scan / Scan workflows" }
+        ]
+      }
+    },
+    {
+      "type": "commit_message_pattern",
+      "parameters": {
+        "operator": "regex",
+        "pattern": "^(feat|fix|chore|docs|refactor|test|ci|build|style|perf|revert)(\\(.+\\))?!?: .{1,}",
+        "name": "Conventional Commits",
+        "negate": false
+      }
+    }
+  ],
+  "bypass_actors": []
+}

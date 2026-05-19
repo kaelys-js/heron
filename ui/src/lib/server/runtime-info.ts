@@ -10,6 +10,7 @@ import { ROOT } from './files';
 import { readEnv } from './env';
 import { bus, logEvent } from './events';
 import { listRunning } from './orchestrator';
+import { currentUserIdOrDefault } from './user-context';
 import type { ActivityEvent } from '$lib/types';
 
 export type RuntimeStatus = 'healthy' | 'degraded' | 'down' | 'unconfigured';
@@ -163,7 +164,11 @@ function eventsInWindow(predicate: (ev: ActivityEvent) => boolean): {
   let count = 0;
   let lastUsed: number | null = null;
   let lastError: ActivityEvent | undefined;
-  for (const ev of bus.recent()) {
+  // F25 — scope to the calling user. /runtimes is the consumer; it runs
+  // inside a user request context so currentUserIdOrDefault resolves
+  // correctly. Pre-fix this counted user A's anthropic API errors
+  // against user B's "last 24h" stats.
+  for (const ev of bus.recentForUser(currentUserIdOrDefault())) {
     if (!predicate(ev)) continue;
     if (ev.ts < cutoff) continue;
     count++;

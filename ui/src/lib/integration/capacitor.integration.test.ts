@@ -389,6 +389,10 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
       'ui/TODO.md', // user-personal
       'ui/ios/App/CapApp-SPM/README.md', // vendor (Capacitor SPM)
       '.github/PULL_REQUEST_TEMPLATE.md', // GitHub-loaded PR scaffold, not a doc
+      // Community-health files — short, GitHub-surfaces them via the
+      // Community profile. Not a doc-meta candidate.
+      '.github/SUPPORT.md',
+      '.github/rulesets/README.md',
       // Reference examples — read-only sample content, no doc-meta needed
       'docs/examples/README.md',
       'docs/examples/article-digest-example.md',

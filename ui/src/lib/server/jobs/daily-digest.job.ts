@@ -25,6 +25,7 @@ import { logEvent, bus } from '../events';
 import { listOpenIssues } from '../issues';
 import { getFollowupCadence } from '../followup-cadence';
 import { register } from './registry';
+import { currentUserIdOrDefault } from '../user-context';
 import type { JobResult } from './types';
 import type { ActivityEvent, Job } from '$lib/types';
 
@@ -45,7 +46,12 @@ function todayCount(events: ActivityEvent[], match: (ev: ActivityEvent) => boole
 async function runDailyDigest(): Promise<JobResult> {
   try {
     const jobs = loadAllJobs();
-    const events = bus.recent();
+    // F25 — scope events to THIS user (the digest is per-user; daily-digest
+    // is registered as perUser:true so each invocation runs inside
+    // runAsUser(userId, …)). Pre-fix `bus.recent()` returned events
+    // tagged for every user → user A's "Applied" events counted into
+    // user B's digest delta.
+    const events = bus.recentForUser(currentUserIdOrDefault());
 
     // Status snapshot
     const queued = jobs.filter((j: Job) => j.status === 'Queued').length;

@@ -19,9 +19,12 @@ on:
 
 # Least-privilege: this workflow only reads source + writes statuses /
 # annotations + uploads coverage. No release artefacts, no Pages, no packages.
+# id-token: write is required for Codecov OIDC upload (G12) — replaces the
+# CODECOV_TOKEN secret. Works on fork PRs (which can't see secrets).
 permissions:
   contents: read
   pull-requests: read
+  id-token: write
 
 concurrency:
   group: tests-${{ github.workflow }}-${{ github.ref }}
@@ -159,6 +162,50 @@ jobs:
         # manual / partial bumps that bypass the release-please PR flow.
         run: pnpm validate:version-sync
 
+      - name: Lockfile integrity (G21)
+        # Catches:
+        #   - non-pnpm registries (e.g. someone swapped npmjs for a typo-
+        #     squatted mirror)
+        #   - http:// URLs (every dep must be fetched over TLS)
+        #   - git+ssh sources (not auditable, no integrity hash)
+        #   - missing integrity hashes (npm <7-style entries)
+        # Pairs with validate:exact-versions above — that asserts
+        # specifiers in package.json are pinned; this asserts the lockfile
+        # resolves them to safe, verifiable sources.
+        run: |
+          pnpm dlx lockfile-lint@4 \
+            --type pnpm \
+            --path pnpm-lock.yaml \
+            --allowed-hosts npm \
+            --allowed-schemes https: \
+            --validate-https \
+            --validate-integrity
+
+      - name: License compliance (G32)
+        # Heron ships under MIT and bundles Electron. Any GPL/AGPL/LGPL
+        # transitive would taint the binary's license. The
+        # dependency-review-action already blocks NEW GPL deps in PRs;
+        # this check catches GPL deps that already lurk in the existing
+        # graph (e.g. a transitive upgrade that switched license).
+        # Production deps only — devDeps may include GPL CLI tooling.
+        run: |
+          pnpm licenses list --prod --json > licenses.json
+          node -e '
+            const data = JSON.parse(require("fs").readFileSync("licenses.json", "utf8"));
+            const banned = /(?:^|\b)(AGPL|GPL-2\.0|GPL-3\.0|LGPL|SSPL|Commons-Clause)(?:\b|$)/i;
+            const offenders = [];
+            for (const [licenseKey, pkgs] of Object.entries(data)) {
+              if (!banned.test(licenseKey)) continue;
+              for (const p of pkgs) offenders.push(p.name + "@" + p.versions[0] + " (" + licenseKey + ")");
+            }
+            if (offenders.length) {
+              console.error("::error::License compliance: banned licenses found in prod deps:");
+              for (const o of offenders) console.error("  - " + o);
+              process.exit(1);
+            }
+            console.log("✓ no banned licenses in prod deps");
+          '
+
       - name: oxlint (Rust-based JS/TS linter — all rules disabled)
         # All rules currently OFF in .oxlintrc.jsonc per the user's
         # "wire it up but disable everything for now" directive.
@@ -178,15 +225,21 @@ jobs:
         run: pnpm test:coverage
 
       - name: Upload coverage to Codecov (ts flag)
+        # G12 — OIDC + fail_ci_if_error. OIDC means no CODECOV_TOKEN
+        # rotation, no token leakage risk, and the upload works on PRs
+        # from forks (which can't see secrets). fail_ci_if_error: true
+        # turns silent upload skips into real CI failures so the
+        # coverage gate is enforced — pre-fix a broken upload silently
+        # passed.
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         if: always() && hashFiles('ui/coverage/lcov.info') != ''
         with:
           files: ui/coverage/lcov.info
           flags: ts
           name: ts-coverage
-          fail_ci_if_error: false
+          fail_ci_if_error: true
+          use_oidc: true
           verbose: true
-          token: ${{ secrets.CODECOV_TOKEN }}
 
       # apply-brand regenerates the platform icons + propagated configs
       # that verify-capacitor inspects. Icons (.png/.icns/.ico) live
@@ -300,15 +353,16 @@ jobs:
           retention-days: 14
 
       - name: Upload coverage to Codecov (ios flag)
+        # G12 — see the ts upload above for OIDC rationale.
         if: always() && hashFiles('ui/ios/App/fastlane/coverage/cobertura.xml') != ''
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         with:
           files: ui/ios/App/fastlane/coverage/cobertura.xml
           flags: ios
           name: ios-coverage
-          fail_ci_if_error: false
+          fail_ci_if_error: true
+          use_oidc: true
           verbose: true
-          token: ${{ secrets.CODECOV_TOKEN }}
 
   # ─────────────────────────────────────────────────────────────────
   # Multi-language format / lint — one job covers every non-JS surface
