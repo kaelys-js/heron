@@ -209,6 +209,12 @@ jobs:
             exit 1
           fi
           echo "✓ no conflict markers"
+          # HP10 — surface in Actions Summary tab
+          {
+            echo "### ✅ No merge-conflict markers"
+            echo
+            echo "All tracked source files are clean of \`<<<<<<<\`/\`=======\`/\`>>>>>>>\` triples."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: License compliance (G32)
         # Heron ships under MIT and bundles Electron. Any GPL/AGPL/LGPL
@@ -252,6 +258,22 @@ jobs:
       # enforced by vitest.config.ts — falling below trips this step.
       - name: Vitest matrix (with coverage)
         run: pnpm test:coverage
+
+      - name: Coverage summary (HP10)
+        if: always() && hashFiles('ui/coverage/coverage-summary.json') != ''
+        run: |
+          node -e '
+            const s = require("./ui/coverage/coverage-summary.json").total;
+            const fmt = (k) => k.toFixed(1) + "%";
+            console.log("## 📊 Coverage");
+            console.log("");
+            console.log("| Metric | Coverage |");
+            console.log("|---|---|");
+            console.log("| Statements | " + fmt(s.statements.pct) + " (" + s.statements.covered + "/" + s.statements.total + ") |");
+            console.log("| Branches   | " + fmt(s.branches.pct)   + " (" + s.branches.covered + "/" + s.branches.total + ") |");
+            console.log("| Functions  | " + fmt(s.functions.pct)  + " (" + s.functions.covered + "/" + s.functions.total + ") |");
+            console.log("| Lines      | " + fmt(s.lines.pct)      + " (" + s.lines.covered + "/" + s.lines.total + ") |");
+          ' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload coverage to Codecov (ts flag)
         # G12 — OIDC + fail_ci_if_error. OIDC means no CODECOV_TOKEN

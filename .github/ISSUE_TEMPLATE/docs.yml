@@ -1,0 +1,83 @@
+name: 📚 Documentation issue
+description: Report a typo, broken link, outdated example, or missing topic
+title: "docs: "
+labels: ["documentation", "good first issue"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for improving the docs. Documentation matters — a clear
+        README + setup guide is the difference between an OSS project
+        that gets contributors and one that doesn't.
+
+        This template is for **typos / broken links / outdated content /
+        missing topics**. For a bigger restructure ("split CONTRIBUTING
+        into smaller files") use the [Feature request template](?template=feature_request.yml)
+        instead.
+
+  - type: dropdown
+    id: file
+    attributes:
+      label: Which file?
+      description: Where did you spot the issue?
+      options:
+        - "README.md"
+        - "AGENTS.md"
+        - "docs/SETUP.md"
+        - "docs/ARCHITECTURE.md"
+        - "docs/DATA_CONTRACT.md"
+        - "docs/TESTING.md"
+        - "docs/NATIVE.md"
+        - "docs/STATUS_MODEL.md"
+        - "docs/CUSTOMIZATION.md"
+        - "docs/GOVERNANCE.md"
+        - "docs/TRADEMARK.md"
+        - "docs/LEGAL_DISCLAIMER.md"
+        - ".github/CONTRIBUTING.md"
+        - ".github/SECURITY.md"
+        - ".github/SUPPORT.md"
+        - ".github/CODE_OF_CONDUCT.md"
+        - "Other (specify below)"
+    validations:
+      required: true
+
+  - type: input
+    id: section
+    attributes:
+      label: Section / heading
+      description: e.g. "Quick start" or "## Multi-user safety"
+      placeholder: "## Multi-user safety"
+
+  - type: textarea
+    id: issue
+    attributes:
+      label: What's wrong?
+      description: |
+        Quote the current text if it's a typo / broken link / unclear
+        sentence. Paste a small enough excerpt that I can find it.
+      placeholder: |
+        Current text says "pnpm test:quick" but that script doesn't exist
+        anymore (replaced by `pnpm test`).
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested change (optional)
+      description: |
+        If you have a fix in mind, suggest the replacement. Even
+        rough wording is helpful.
+      placeholder: |
+        Change to: "Run `pnpm test` (full Vitest matrix, ~60s)."
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: I've checked the obvious
+      options:
+        - label: I'm on the latest version (or this is in `main`).
+          required: false
+        - label: I searched existing issues + Discussions and didn't find this.
+          required: true
