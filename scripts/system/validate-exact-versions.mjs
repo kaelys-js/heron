@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * validate-exact-versions.mjs — reject non-exact version specifiers
+ * validate-exact-versions.mjs -- reject non-exact version specifiers
  * anywhere they can hide.
  *
  * Why: "^1.2.3" / "~1.2.3" / "*" / "latest" let any maintainer (or any
@@ -10,10 +10,10 @@
  * reproducible-build means reproducible-build.
  *
  * Files scanned:
- *   - package.json (root + every workspace) — dependencies /
+ *   - package.json (root + every workspace) -- dependencies /
  *     devDependencies / peerDependencies / optionalDependencies /
  *     pnpm.overrides / resolutions
- *   - .mise.toml — [tools] section (every tool version)
+ *   - .mise.toml -- [tools] section (every tool version)
  *
  * What's accepted (allow-list, anything else fails):
  *   - SemVer exact: "1.2.3", "1.2.3-alpha.4", "1.2.3+build.5"
@@ -25,7 +25,7 @@
  * What's rejected:
  *   - Range operators: ^, ~, >=, >, <, <=, ||, " - "
  *   - Wildcards: *, x, X, "latest", "next", "*-pre"
- *   - Bare partial versions ("1", "1.2") — mise tolerates these but
+ *   - Bare partial versions ("1", "1.2") -- mise tolerates these but
  *     they pull whatever the latest matching release is.
  *
  * Exit 0 if every file passes; exit 1 with a per-violation report.
@@ -44,14 +44,14 @@ function isExact(spec) {
   if (typeof spec !== 'string') return false;
   // pnpm workspace alias
   if (spec === 'workspace:*') return true;
-  // pnpm catalog reference — the catalog itself is validated separately
+  // pnpm catalog reference -- the catalog itself is validated separately
   // (the catalog: protocol resolves at install time to an exact version
   // defined in pnpm-workspace.yaml). Either bare `catalog:` (default
   // catalog) or `catalog:<name>` (named catalog) is acceptable.
   if (spec === 'catalog:' || /^catalog:[A-Za-z][A-Za-z0-9_-]*$/.test(spec)) return true;
-  // pnpm link / file / portal protocols — local refs, not registry versions
+  // pnpm link / file / portal protocols -- local refs, not registry versions
   if (/^(link|file|portal):/.test(spec)) return true;
-  // npm alias: "npm:<name>@<rest>" — recurse on <rest>
+  // npm alias: "npm:<name>@<rest>" -- recurse on <rest>
   const npmAlias = spec.match(/^npm:[^@]+@(.+)$/);
   if (npmAlias) return isExact(npmAlias[1]);
   // git URLs pinned to a SHA (40 hex chars after #)
@@ -88,7 +88,7 @@ function scanPackageJson(path, rel) {
       }
     }
   }
-  // pnpm.overrides — nested
+  // pnpm.overrides -- nested
   const overrides = json.pnpm?.overrides;
   if (overrides && typeof overrides === 'object') {
     for (const [name, spec] of Object.entries(overrides)) {
@@ -104,7 +104,7 @@ function scanPackageJson(path, rel) {
   }
 }
 
-/** .mise.toml parser — naive but sufficient: scans only the [tools]
+/** .mise.toml parser -- naive but sufficient: scans only the [tools]
  *  block, ignores comments, expects `key = "value"` per line. */
 function scanMiseToml(path, rel) {
   if (!existsSync(path)) return;

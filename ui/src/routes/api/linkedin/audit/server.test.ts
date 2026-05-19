@@ -1,5 +1,5 @@
 /**
- * GET + POST /api/linkedin/audit — LinkedIn profile audit.
+ * GET + POST /api/linkedin/audit -- LinkedIn profile audit.
  *
  * The POST handler spawns linkedin-audit.py; we mock child_process.spawn
  * to drive every branch (success / session-expired / spawn-fail / bad-JSON).
@@ -48,7 +48,7 @@ vi.mock('$lib/server/linkedin-audit', () => ({
     lastReport = r as { findings: { resolvedAt?: number }[] };
   },
   classifySnapshot: (snap: Record<string, unknown>) => {
-    // Stub classifier — count of "missing" fields as warnings
+    // Stub classifier -- count of "missing" fields as warnings
     const out: { resolvedAt?: number; severity: string }[] = [];
     if (!snap.profile) out.push({ severity: 'error' });
     return out;

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * ensure-native-bindings.mjs — self-heal native node-module bindings.
+ * ensure-native-bindings.mjs -- self-heal native node-module bindings.
  *
  * Wired into root package.json `postinstall` so every fresh
  * `pnpm install` (clone, CI checkout, dev re-install) ends with
@@ -30,7 +30,7 @@
  *
  * This script handles all three by:
  *   1. Walking the list of native packages we declare (allowBuilds in
- *      pnpm-workspace.yaml is the source of truth — packages that need
+ *      pnpm-workspace.yaml is the source of truth -- packages that need
  *      to run their install script).
  *   2. For each, locating the package's directory under
  *      node_modules/.pnpm/<name>@<version>/node_modules/<name>/.
@@ -113,16 +113,16 @@ function parseAllowBuilds() {
 }
 
 // Sub-list: packages that actually have a NATIVE binding we should
-// verify post-install. (`esbuild` etc. just unpack platform binaries —
+// verify post-install. (`esbuild` etc. just unpack platform binaries --
 // they have their own heal path inside the package and don't need our
-// help.) Keep this conservative — over-listing adds noise.
+// help.) Keep this conservative -- over-listing adds noise.
 //
 // `sharp` is intentionally NOT in this set even though it's a native
 // package: its install mechanism is `@img/sharp-{platform}-{arch}`
 // scoped prebuilds with dylib dependencies on libvips. Auto-rebuilding
 // sharp from source on macOS triggers Homebrew vips version warnings
 // and isn't reliable. If sharp breaks, run `pnpm install --force` +
-// `pnpm rebuild sharp` manually — the package's own install logic is
+// `pnpm rebuild sharp` manually -- the package's own install logic is
 // more reliable than ours for that case.
 const NATIVE_PACKAGES = new Set(['better-sqlite3']);
 
@@ -199,7 +199,7 @@ function bindingLoads(pkgDir, name) {
   // mismatch, missing dylib) doesn't crash this script.
   //
   // CRITICAL: a plain `require(pkgDir)` is NOT enough. better-sqlite3
-  // 12.x lazy-loads the .node binary — `require('better-sqlite3')`
+  // 12.x lazy-loads the .node binary -- `require('better-sqlite3')`
   // succeeds even with an ABI-mismatched binding because the actual
   // `bindings('better_sqlite3.node')` call only fires when you
   // construct a Database instance. The previous probe missed this and
@@ -237,7 +237,7 @@ function rebuild(pkgDir, name) {
   // First attempt: run the package's own install script (which tries
   // prebuild-install for prebuilt binaries, falling back to node-gyp
   // compile-from-source only if no prebuild exists for this Node ABI).
-  // This is the fast path — for established packages, Node 26 + arm64
+  // This is the fast path -- for established packages, Node 26 + arm64
   // darwin prebuilds are typically published within days of a Node
   // release and we just download a ~2MB tarball.
   log(`  ${Y}↻${N} ${name}  ${DIM}fetching prebuilt or compiling...${N}`);

@@ -1,5 +1,5 @@
 /**
- * EmptyState — placeholder for blank lists.
+ * EmptyState -- placeholder for blank lists.
  *
  * Browser-mode tests confirm: size / variant / title / description /
  * icon all render. Snippet-based `actions` prop is exercised via the

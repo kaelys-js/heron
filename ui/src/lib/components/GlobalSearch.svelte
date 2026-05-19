@@ -33,7 +33,7 @@
   async function load() {
     loading = true;
     try {
-      // silent: search index failure shouldn't block the user from typing —
+      // silent: search index failure shouldn't block the user from typing --
       // the empty-state UI below makes the failure obvious.
       const r = await api.get<{ jobs?: unknown[] }>('/api/search-index', { silent: true });
       jobs = Array.isArray(r.jobs) ? (r.jobs as typeof jobs) : [];

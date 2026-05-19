@@ -5,7 +5,7 @@
  *   1. The recent in-memory buffer (events tagged for this user OR broadcast).
  *   2. Live events as they happen.
  *
- * The endpoint requires authentication — the hooks-level guard refuses
+ * The endpoint requires authentication -- the hooks-level guard refuses
  * anonymous traffic to anything under /api/* that isn't on the public
  * allowlist, but we ALSO double-check here so the SSE filter has a userId
  * to gate against.

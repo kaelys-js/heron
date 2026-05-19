@@ -1,4 +1,4 @@
-# Seed Form Answers — Pre-populate the per-question cache from CV + profile
+# Seed Form Answers -- Pre-populate the per-question cache from CV + profile
 
 You're seeding the user's persistent form-answers cache (the JSONL at
 `data/profiles/{slug}/form-answers-cache.jsonl`) so that the autonomous-
@@ -8,13 +8,13 @@ realistic, ready-to-use answers to every common ATS form question.
 
 ## Inputs
 
-- `__CV__` — work history, skills, projects, education
-- `config/profile.yml` — candidate (name, email, phone, location, links),
+- `__CV__` -- work history, skills, projects, education
+- `config/profile.yml` -- candidate (name, email, phone, location, links),
   compensation (target_range, minimum, walkaway), location (country,
   city, visa_status, onsite_availability), preferences (must_have,
   strong_plus, hard_no), target_roles (primary, archetypes), narrative
   (headline, exit_story, superpowers, proof_points)
-- `__PROFILE_MD__` (if exists) — additional narrative
+- `__PROFILE_MD__` (if exists) -- additional narrative
 
 ## Output
 
@@ -35,10 +35,10 @@ per line. Format (must match the existing cache schema exactly):
 
 `<ms-epoch>` is the current epoch in milliseconds.
 
-## The questions to seed (~25 entries — write ALL of them if you can answer)
+## The questions to seed (~25 entries -- write ALL of them if you can answer)
 
 Skip a question only if the data genuinely isn't in __CV__ / profile.yml.
-Never fabricate — for any answer where the source is missing or
+Never fabricate -- for any answer where the source is missing or
 ambiguous, omit the row (the dispatcher will surface a `ManualApplyNeeded`
 once and the user fills it then).
 
@@ -56,13 +56,13 @@ once and the user fills it then).
 ### Work authorization (visa / sponsorship)
 - "Are you legally authorized to work in [the country]?" → derive from
   `location.country` + `location.visa_status`. If the user is a citizen
-  / PR of the country they're targeting: "Yes — I am a citizen/permanent
-  resident of {country}." Otherwise: "Yes — I am authorized to work in
+  / PR of the country they're targeting: "Yes -- I am a citizen/permanent
+  resident of {country}." Otherwise: "Yes -- I am authorized to work in
   {target-country}." If unsure, omit.
 - "Will you now or in the future require sponsorship to work in [country]?"
   → derive from `location.visa_status`. If citizen / PR of target
-  country: "No — I do not require visa sponsorship." If on a work visa
-  that converts: "No — I have a work permit that does not require
+  country: "No -- I do not require visa sponsorship." If on a work visa
+  that converts: "No -- I have a work permit that does not require
   employer sponsorship." Don't write "Yes" without explicit ground truth.
 - "Visa status" / "Work authorization status" → `location.visa_status`
   verbatim if present.
@@ -123,7 +123,7 @@ archetypes. Don't write rows for techs the user doesn't have years on.
 
 3. **Don't overwrite existing answers.** If the cache file already
    exists, read it first. Only append NEW keys. If a key already exists
-   in the cache, skip — the user's hand-edited answer is more
+   in the cache, skip -- the user's hand-edited answer is more
    trustworthy than your re-derived one.
 
 4. **Be conservative on count.** 15-25 high-confidence rows beats 40

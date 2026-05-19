@@ -21,9 +21,9 @@ You need these installed once, system-wide:
 
 | Tool | Why | Install |
 |---|---|---|
-| **mise** | Runtime version manager — gives you the exact Node / pnpm / Ruby this repo expects | `brew install mise` then add `eval "$(mise activate zsh)"` to your shell rc |
+| **mise** | Runtime version manager -- gives you the exact Node / pnpm / Ruby this repo expects | `brew install mise` then add `eval "$(mise activate zsh)"` to your shell rc |
 | **git** | Source control | `brew install git` or system package manager |
-| **gh** | GitHub CLI — used by `pnpm setup:native` to push secrets | `brew install gh` then `gh auth login` |
+| **gh** | GitHub CLI -- used by `pnpm setup:native` to push secrets | `brew install gh` then `gh auth login` |
 | **docker** (or OrbStack) | Only for `pnpm act:*` local CI runs | [docker.com](https://docker.com) or `brew install --cask orbstack` |
 | **Xcode** (macOS only) | iOS / Watch builds | Mac App Store + `xcode-select --install` |
 | **An AI CLI** | Powers the agent flows | [Claude Code](https://docs.claude.com/en/docs/claude-code/quickstart) (default); OpenCode / Gemini / Codex / Qwen / Copilot work via `AGENT_CLI=<bin>` |
@@ -53,7 +53,7 @@ The `pnpm install` step runs `lefthook install` automatically, so git hooks fire
 pnpm dev
 ```
 
-Opens at `http://localhost:5173`. You'll see a passkey signup form. Sign up — the first user is auto-promoted to `owner`.
+Opens at `http://localhost:5173`. You'll see a passkey signup form. Sign up -- the first user is auto-promoted to `owner`.
 
 Onboarding flow runs once: upload your CV → fill out `profile.yml` answers → import portals → start scanning.
 
@@ -78,10 +78,10 @@ This walks you through:
 1. Tooling check (`gh`, `cocoapods`, `bundler`, `fastlane`) and installs anything missing.
 2. Apple Developer credentials:
    - **Apple ID** + **Team ID** (paste)
-   - **App Store Connect API key** — opens [appstoreconnect.apple.com](https://appstoreconnect.apple.com) → you create the key → paste the .p8 contents
+   - **App Store Connect API key** -- opens [appstoreconnect.apple.com](https://appstoreconnect.apple.com) → you create the key → paste the .p8 contents
 3. Mac code-signing cert:
    - Opens Keychain → you pick your "Developer ID Application" cert → exports to `.p12` with a password you choose
-4. Saves everything to `~/.heron/native-env` (mode 0600 — readable by you only).
+4. Saves everything to `~/.heron/native-env` (mode 0600 -- readable by you only).
 5. Pushes the same values to your repo's GitHub Secrets via `gh secret set` so CI can sign + upload.
 6. Generates the iOS Xcode targets (Widget, LiveActivity, ShareExtension).
 
@@ -103,7 +103,7 @@ pnpm dev:desktop            # Electron live-reload — auto-restarts on src chan
 pnpm dev:ios                # Capacitor sync + Xcode auto-open
 ```
 
-Production builds (locally — CI does the signed ones):
+Production builds (locally -- CI does the signed ones):
 
 ```sh
 pnpm build:desktop          # → ui/electron/dist/{*.dmg, *.exe, *.AppImage}
@@ -123,21 +123,21 @@ First `act:test` pulls a ~1GB image; subsequent runs reuse it. Configure via `.a
 
 ---
 
-## Backend discovery — what just happened?
+## Backend discovery -- what just happened?
 
 Native apps don't have a hard-coded server URL. At launch they probe:
 
-1. **Embedded** — Electron spawns the dashboard as a child process
-2. **Dev server** — `http://localhost:5173` if `pnpm dev` is running
-3. **mDNS** — finds your desktop on the same Wi-Fi via `_heron._tcp`
-4. **Tailscale** — finds your instance over the tailnet
-5. **Remote** — falls back to a configured URL
+1. **Embedded** -- Electron spawns the dashboard as a child process
+2. **Dev server** -- `http://localhost:5173` if `pnpm dev` is running
+3. **mDNS** -- finds your desktop on the same Wi-Fi via `_heron._tcp`
+4. **Tailscale** -- finds your instance over the tailnet
+5. **Remote** -- falls back to a configured URL
 
 So your phone + watch + laptop all reconcile to whichever instance is reachable. No configuration. The first time you open the iOS app on the same network as a running `pnpm dev`, it'll find it via mDNS and remember the address.
 
 ---
 
-## Formatters — biome + prettier
+## Formatters -- biome + prettier
 
 Two formatters, no overlap:
 
@@ -153,12 +153,12 @@ always-parens arrow functions, brace spacing.
 
 Run:
 
-- `pnpm format` — formats everything (biome + prettier)
-- `pnpm format:check` — CI check
-- `pnpm format:svelte` — only the prettier pass on `.svelte` files
+- `pnpm format` -- formats everything (biome + prettier)
+- `pnpm format:check` -- CI check
+- `pnpm format:svelte` -- only the prettier pass on `.svelte` files
 
 Lefthook pre-commit auto-runs both formatters on staged files of the
-appropriate types — you generally don't need to invoke them manually.
+appropriate types -- you generally don't need to invoke them manually.
 
 ---
 
@@ -243,9 +243,9 @@ If mDNS isn't broadcasting, your Wi-Fi might block multicast (rare). Set the LAN
 
 `data/` (gitignored):
 
-- `data/auth.db` — sessions, passkeys, invite codes
-- `data/app.db` — profiles, activity, issues, ui-prefs
-- `data/users/{userId}/profiles/{slug}/` — your per-user CV / applications / reports / generated CVs
+- `data/auth.db` -- sessions, passkeys, invite codes
+- `data/app.db` -- profiles, activity, issues, ui-prefs
+- `data/users/{userId}/profiles/{slug}/` -- your per-user CV / applications / reports / generated CVs
 
 Backup: just snapshot `data/` (`tar czf backup.tgz data/`). Restore: extract back.
 

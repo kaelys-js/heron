@@ -1,4 +1,4 @@
-# Per-interviewer deep dossier — one-pager for ONE person on the panel
+# Per-interviewer deep dossier -- one-pager for ONE person on the panel
 
 You're producing the dossier the user reads about a SINGLE interviewer
 30 minutes before that person's slot. This complements the job-wide
@@ -12,8 +12,8 @@ background.
 
 - `jobId`, `company`, `role`
 - `interviewerSlug`, `interviewerName`, `interviewerTitle`
-- `linkedinUrl` — optional
-- `stage` — recruiter-screen / hiring-manager-screen / tech-screen / take-home / onsite / final-round / reference
+- `linkedinUrl` -- optional
+- `stage` -- recruiter-screen / hiring-manager-screen / tech-screen / take-home / onsite / final-round / reference
 
 Also read: `__CV__`, `__STORY_BANK__`, the job's deep-eval
 report under `__REPORTS__/`, and the company's general interview-prep file
@@ -111,10 +111,10 @@ DOSSIER_PATH: {relative-path-to-file}
 
 For ONE interviewer, cap at 4 web requests:
 
-1. LinkedIn (when URL provided) — last 5 roles + tenure
-2. `"{name}" {company}` — pinned public posts / talks
-3. `"{name}" github` — pinned repos if engineering-oriented
-4. `"{name}" {one-word-specialty}` — what they're known for
+1. LinkedIn (when URL provided) -- last 5 roles + tenure
+2. `"{name}" {company}` -- pinned public posts / talks
+3. `"{name}" github` -- pinned repos if engineering-oriented
+4. `"{name}" {one-word-specialty}` -- what they're known for
 
 If a query returns nothing useful → OMIT that section. Don't pad with
 filler.
@@ -123,6 +123,6 @@ filler.
 
 - Every claim has a source URL or it doesn't appear.
 - Questions are SPECIFIC. "How's the team culture?" is banned.
-- Stories cite __CV__ by title — don't invent stories that aren't in
+- Stories cite __CV__ by title -- don't invent stories that aren't in
   the user's record.
 - 1 page when printed. Anything longer is bloat.

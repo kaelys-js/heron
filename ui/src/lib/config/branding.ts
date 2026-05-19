@@ -1,14 +1,14 @@
 /**
- * User-facing brand strings — re-exported from the generated brand.ts so
+ * User-facing brand strings -- re-exported from the generated brand.ts so
  * everything ultimately resolves to branding/brand.json.
  *
  * This file is the LEGACY entry point. New code should import directly
  * from `$lib/client/brand`. Keeping these re-exports for back-compat with
  * the dozens of components/pages already importing APP_NAME / docTitle /
- * cmd / etc. — they keep working without rewrites.
+ * cmd / etc. -- they keep working without rewrites.
  *
  * NOT branded (kept as literal "heron"):
- *   - localStorage keys (changing would wipe user state) — these now use
+ *   - localStorage keys (changing would wipe user state) -- these now use
  *     BRAND.name prefix so a rename namespaces them correctly going forward
  *   - custom DOM event names (internal coupling, not user-visible)
  *   - the `/heron` slash-command namespace can be overridden via
@@ -29,7 +29,7 @@ export const CLI_NAMESPACE = 'heron';
 /** Upstream repo for "Report an issue" / "Star on GitHub". */
 export const REPO_URL = BRAND.repo.url;
 
-/** Compose `<page> — <APP_NAME>` for document titles. */
+/** Compose `<page> -- <APP_NAME>` for document titles. */
 export function docTitle(parts: (string | undefined | null)[]): string {
   const parts2 = parts.filter((p): p is string => !!p && p.trim().length > 0);
   return [...parts2, APP_NAME].join(' — ');

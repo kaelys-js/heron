@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 /**
- * dev-android — one-shot: build, sync, boot emulator, install, launch.
+ * dev-android -- one-shot: build, sync, boot emulator, install, launch.
  *
  * Mirrors dev-ios.mjs but targets Android:
- *   1. Preflight — pnpm + JDK + ANDROID_HOME/SDK + adb on PATH
- *   2. Apply brand (idempotent — propagates branding/brand.json)
+ *   1. Preflight -- pnpm + JDK + ANDROID_HOME/SDK + adb on PATH
+ *   2. Apply brand (idempotent -- propagates branding/brand.json)
  *   3. Build the SvelteKit static shell (CAPACITOR=1)
  *   4. `cap sync android` (copies static build into the Android project)
  *   5. Start Vite dev server on :5173 in the background
- *   6. Pick an Android target — prefer a running emulator/device,
+ *   6. Pick an Android target -- prefer a running emulator/device,
  *      else boot the newest available AVD
  *   7. `cap run android --target=<id> --no-sync --forwardPorts 5173:5173`
- *      — gradle build + install + launch; `adb reverse` makes the
+ *      -- gradle build + install + launch; `adb reverse` makes the
  *      emulator's localhost:5173 hit the Mac's Vite server
  *
  * The WebView in the emulator hits 10.0.2.2 / localhost:5173 so
@@ -20,7 +20,7 @@
  *
  * If `cap run android` fails (signing, missing SDK platform, gradle
  * heap, etc.) the script prints a helpful pointer rather than just
- * dying — Android tooling has dozens of failure modes.
+ * dying -- Android tooling has dozens of failure modes.
  */
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -147,7 +147,7 @@ const dev = spawn('pnpm', ['dev'], {
 });
 ok(`vite dev started (pid ${dev.pid}) — waiting for it to bind :5173…`);
 
-// Same wait-for-port pattern as dev-ios.mjs — the WebView hitting a
+// Same wait-for-port pattern as dev-ios.mjs -- the WebView hitting a
 // closed port shows a blank/error screen.
 async function waitForPort(port, host = '127.0.0.1', timeoutMs = 30_000) {
   const deadline = Date.now() + timeoutMs;
@@ -197,7 +197,7 @@ function pickAndroidTarget() {
     warn(`could not parse adb devices: ${err.message}`);
   }
 
-  // 2. No live device — boot the newest available AVD.
+  // 2. No live device -- boot the newest available AVD.
   if (!which('emulator')) {
     warn('emulator binary not on PATH and no device connected.');
     warn(
@@ -243,7 +243,7 @@ function pickAndroidTarget() {
         ok(`emulator online: ${serial}`);
         return serial;
       }
-      // Brief sleep — busy-loop would peg the CPU.
+      // Brief sleep -- busy-loop would peg the CPU.
       const start = Date.now();
       while (Date.now() - start < 1000) {
         /* spin briefly */

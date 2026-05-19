@@ -5,7 +5,7 @@
  * Resolves credentials via the per-user store first (Settings → API Keys),
  * falling back to install-wide .env for legacy single-user installs.
  *
- * Any authenticated user can probe THEIR OWN credentials — the call is
+ * Any authenticated user can probe THEIR OWN credentials -- the call is
  * scoped to the current user's per-user store via getCredential, so a
  * member-role user probing "anthropic" hits their own key (not the
  * owner's). The probe makes a single minimal API call so it doesn't

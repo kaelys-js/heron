@@ -1,5 +1,5 @@
 /**
- * lib/client/online-status — dense listener + transition scenarios.
+ * lib/client/online-status -- dense listener + transition scenarios.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { isOnline, OfflineError, onlineStore } from './online-status.svelte';

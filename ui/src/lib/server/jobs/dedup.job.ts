@@ -1,5 +1,5 @@
 /**
- * Tracker dedup — silent hygiene job.
+ * Tracker dedup -- silent hygiene job.
  *
  * Runs `dedup-tracker.mjs` to merge same-URL duplicates in applications.md.
  * The script keeps the highest-scored row, merges notes, and writes a backup.

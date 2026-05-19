@@ -1,5 +1,5 @@
 /**
- * /settings/api-keys — page loader.
+ * /settings/api-keys -- page loader.
  *
  * Per-user API key management. Open to every authenticated user (not
  * owner-only like /settings) because each user manages THEIR OWN
@@ -12,7 +12,7 @@
 import { requireUserId } from '$lib/server/auth-helpers';
 import { getSecret, listSecretKeys } from '$lib/server/user-secrets';
 
-/** Same allowlist as /api/settings/secrets — keep these in sync.
+/** Same allowlist as /api/settings/secrets -- keep these in sync.
  *  Anything in this list renders a form row on the page. */
 const KNOWN_KEYS = [
   'ANTHROPIC_API_KEY',

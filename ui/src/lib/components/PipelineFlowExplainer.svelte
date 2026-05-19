@@ -16,7 +16,7 @@
     } catch {}
     return false;
   }
-  // svelte-ignore state_referenced_locally — initial seed only
+  // svelte-ignore state_referenced_locally -- initial seed only
   let open = $state(readInitial(`${BRAND_STORAGE_PREFIX}:` + storageKey));
   $effect(() => {
     if (typeof window === 'undefined') return;

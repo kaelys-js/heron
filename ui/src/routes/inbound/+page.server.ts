@@ -1,5 +1,5 @@
 /**
- * /inbound — full inbound recruiter triage view.
+ * /inbound -- full inbound recruiter triage view.
  *
  * Lists every recruiter message (email + LinkedIn DM) with classifier
  * tag, thread state, age, and one-click "Open" link to the per-lead

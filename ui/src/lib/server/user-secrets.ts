@@ -1,5 +1,5 @@
 /**
- * user-secrets.ts — per-user encrypted credential store.
+ * user-secrets.ts -- per-user encrypted credential store.
  *
  * Each user holds their own personal credentials (Anthropic / Gemini /
  * Adzuna / Gmail-IMAP / OpenAI keys + tokens) under
@@ -8,7 +8,7 @@
  *
  * Why per-user (not in `.env`):
  *   The previous model shared every credential install-wide via .env.
- *   That broke the multi-user contract — user A's Anthropic key would
+ *   That broke the multi-user contract -- user A's Anthropic key would
  *   bill user B's evaluations, and only the OWNER could configure
  *   Gmail IMAP (see scan-email-imap.job.ts F14/F19/F27 deferred note).
  *   This module's existence retires that limitation.
@@ -17,10 +17,10 @@
  *
  *   {
  *     "version": 1,
- *     "salt": "<base64 32-byte random — per-user, generated once>",
+ *     "salt": "<base64 32-byte random -- per-user, generated once>",
  *     "entries": {
  *       "ANTHROPIC_API_KEY": {
- *         "iv": "<base64 12-byte random — per-write>",
+ *         "iv": "<base64 12-byte random -- per-write>",
  *         "ciphertext": "<base64 AES-256-GCM>",
  *         "tag": "<base64 16-byte GCM auth tag>"
  *       },
@@ -52,7 +52,7 @@
  *
  * Concurrency:
  *   Writes are atomic (write-to-tmp + rename). Concurrent writers
- *   from the SAME process serialize through Node's event loop — no
+ *   from the SAME process serialize through Node's event loop -- no
  *   in-process race possible. Across-process concurrency (CLI
  *   scripts + dashboard) is mitigated by the rename being atomic
  *   on POSIX; last-writer-wins is acceptable because credentials
@@ -75,7 +75,7 @@ const HKDF_INFO = 'heron-user-secrets-v1';
 /** GCM IV size in bytes. 12 is the NIST-recommended size for AES-GCM. */
 const IV_BYTES = 12;
 
-/** Per-user salt size in bytes. 32 bytes = 256 bits — overkill for HKDF
+/** Per-user salt size in bytes. 32 bytes = 256 bits -- overkill for HKDF
  *  but matches the underlying AES-256 key strength. */
 const SALT_BYTES = 32;
 
@@ -95,7 +95,7 @@ type SecretsFile = {
  *  silently producing a bad-key. The auth subsystem auto-generates this
  *  on first boot (see auth.ts::getOrCreateSecret), so the only way to
  *  hit this branch is to explicitly `delete process.env.BETTER_AUTH_SECRET`
- *  — which the test suite does to verify the error path. */
+ *  -- which the test suite does to verify the error path. */
 function requireBetterAuthSecret(): string {
   const s = process.env.BETTER_AUTH_SECRET;
   if (!s) {
@@ -158,13 +158,13 @@ function readFile(userId: string): SecretsFile {
   return parsed;
 }
 
-/** Atomic write — same write-to-tmp + rename pattern as sources.ts. */
+/** Atomic write -- same write-to-tmp + rename pattern as sources.ts. */
 function writeFile(userId: string, data: SecretsFile): void {
   const p = userSharedPathForUser(userId, 'secrets');
   fs.mkdirSync(path.dirname(p), { recursive: true });
   const tmp = p + '.tmp';
   // Open with explicit mode so the FILE itself is created 0600 from
-  // the start — not 0644-then-chmod, which races against any reader
+  // the start -- not 0644-then-chmod, which races against any reader
   // hitting the file in the window between rename and chmod.
   const fd = fs.openSync(tmp, 'w', 0o600);
   try {
@@ -194,7 +194,7 @@ export function getSecret(userId: string, key: string): string | null {
   const decipher = createDecipheriv('aes-256-gcm', aesKey, iv);
   decipher.setAuthTag(tag);
   // decipher.update + .final both throw on auth-tag mismatch (rotated
-  // BETTER_AUTH_SECRET, tampered file, etc.) — surface that loudly
+  // BETTER_AUTH_SECRET, tampered file, etc.) -- surface that loudly
   // rather than returning a corrupt plaintext.
   const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
   return plaintext.toString('utf8');
@@ -239,7 +239,7 @@ export function listSecretKeys(userId: string): string[] {
 
 /**
  * Two-tier credential resolver: per-user store wins, .env is the
- * fallback. This is the shape every consumer should use — `ai.ts`,
+ * fallback. This is the shape every consumer should use -- `ai.ts`,
  * `gemini-eval.mjs`, IMAP, etc. all read through here so the
  * per-user override is honored without changing their call shape
  * beyond passing the userId in.
@@ -249,7 +249,7 @@ export function listSecretKeys(userId: string): string[] {
  */
 export function getCredential(userId: string, key: string): string | null {
   // Per-user store wins. The lookup is cheap (one file read + one
-  // AES-GCM decrypt) — small enough to do per call. If a consumer
+  // AES-GCM decrypt) -- small enough to do per call. If a consumer
   // becomes hot enough to need memoization, cache the result at the
   // call site (e.g. an Anthropic client singleton keyed by userId).
   const fromStore = getSecret(userId, key);
@@ -267,7 +267,7 @@ export function getCredential(userId: string, key: string): string | null {
  *   - migrateEnvToUserSecrets() (which keys to copy from .env into the
  *     OWNER's per-user store on first boot post-upgrade)
  *
- * NOT exhaustive of every env var the app reads — only the personal
+ * NOT exhaustive of every env var the app reads -- only the personal
  * credentials. Infrastructure config (BETTER_AUTH_SECRET, GITHUB_CLIENT_*,
  * CAREER_OPS_DATA_DIR, HERON_UPDATE_*) stays in `.env` because it's
  * shared across all users by design.
@@ -300,7 +300,7 @@ export const MIGRATABLE_KEYS = [
  *
  * Best-effort: any error is swallowed + logged so it can't crash boot.
  * The user still has their .env-fallback path working, so this is purely
- * an opportunistic upgrade — not a blocking gate.
+ * an opportunistic upgrade -- not a blocking gate.
  *
  * Behavioural contract for the user:
  *
@@ -324,7 +324,7 @@ export async function migrateEnvToUserSecrets(): Promise<void> {
     return; // DB not ready
   }
   // user-context returns SYSTEM_USER_ID when no real owner exists yet.
-  // We don't want to silently populate SYSTEM's secrets — wait for a
+  // We don't want to silently populate SYSTEM's secrets -- wait for a
   // real owner to register first.
   const { SYSTEM_USER_ID } = await import('./user-context');
   if (ownerId === SYSTEM_USER_ID) return;
@@ -333,7 +333,7 @@ export async function migrateEnvToUserSecrets(): Promise<void> {
   for (const key of MIGRATABLE_KEYS) {
     const envVal = process.env[key];
     if (typeof envVal !== 'string' || envVal.length === 0) continue;
-    // Don't clobber an existing per-user value — once the user has
+    // Don't clobber an existing per-user value -- once the user has
     // configured a key in Settings, .env never wins over it (the
     // resolver's per-user-first contract).
     if (getSecret(ownerId, key) !== null) continue;
@@ -357,7 +357,7 @@ export async function migrateEnvToUserSecrets(): Promise<void> {
           ' moved into encrypted per-user store. .env values still work as fallback.',
       });
     } catch {
-      // Events unavailable — fine. The migration itself succeeded.
+      // Events unavailable -- fine. The migration itself succeeded.
     }
   }
 }

@@ -1,21 +1,21 @@
 #!/usr/bin/env node
 /**
- * resume-quality.mjs — strict quality gate for CV markdown.
+ * resume-quality.mjs -- strict quality gate for CV markdown.
  *
  * Reads cv.md (or any markdown CV) and runs 30+ checks across three
  * threat models that ats-check.mjs doesn't cover:
  *
- *   1. AI-DETECTION — patterns that GPTZero, Originality.ai, Copyleaks,
+ *   1. AI-DETECTION -- patterns that GPTZero, Originality.ai, Copyleaks,
  *      Turnitin, and recruiter-side AI-detectors flag as machine-written.
  *      The submitted resume needs to read like a human wrote it, even
  *      after AI-assisted tailoring.
  *
- *   2. HUMAN REVIEW — the 6-second recruiter scan. Action verbs at the
+ *   2. HUMAN REVIEW -- the 6-second recruiter scan. Action verbs at the
  *      start of every bullet, quantified achievements ≥ 40%, no clichés,
  *      no first-person pronouns, no superlatives the CV can't back up,
  *      tense consistency, reading-level appropriate.
  *
- *   3. STRUCTURE — required sections, contact info present, dates
+ *   3. STRUCTURE -- required sections, contact info present, dates
  *      consistent, no orphan bullets, no widow lines.
  *
  * Usage:
@@ -24,9 +24,9 @@
  *   pnpm resume:check <path/to/cv.md> --lenient   # warnings instead of fails
  *
  * Exit codes:
- *   0 — every check passed
- *   1 — at least one hard fail
- *   2 — environment / argument issue
+ *   0 -- every check passed
+ *   1 -- at least one hard fail
+ *   2 -- environment / argument issue
  */
 
 import { readFileSync, existsSync } from 'node:fs';
@@ -120,7 +120,7 @@ if (wordCount >= 350 && wordCount <= 900)
 else if (wordCount < 350) fail('Word count', `${wordCount} words — too short for a CV`);
 else fail('Word count', `${wordCount} words — likely 3+ pages, will be cut`);
 
-// ── 2. HUMAN-REVIEW — action verbs + quantification ───────────────
+// ── 2. HUMAN-REVIEW -- action verbs + quantification ───────────────
 const bullets = [];
 for (const line of lines) {
   const m = /^[-*]\s+(.+)$/.exec(line);
@@ -312,7 +312,7 @@ else fail('Quantification', `only ${(quantRatio * 100).toFixed(0)}% — quantify
 
 // First-person pronouns
 const firstPerson = (plain.match(/\b(I|my|me|we|our|us)\b/g) || []).filter(
-  // Allow in Summary paragraph only — count pronouns outside it
+  // Allow in Summary paragraph only -- count pronouns outside it
   () => true,
 ).length;
 // Subtract pronouns inside the Summary paragraph (first 200 words)
@@ -412,7 +412,7 @@ else
       .join(', ')}`,
   );
 
-// Em-dash usage — LLMs overuse em-dashes IN PROSE. Em-dashes in headers
+// Em-dash usage -- LLMs overuse em-dashes IN PROSE. Em-dashes in headers
 // (role titles, section dividers) are legitimate style; only count those
 // that appear inside sentences/bullets.
 const bodyLines = lines.filter((l) => {
@@ -445,7 +445,7 @@ if (sentLens.length >= 5) {
   const cv = mean ? stdDev / mean : 0;
   // Human writing has CV (coefficient of variation) ≈ 0.4-0.9.
   // AI text tends to be too uniform (CV < 0.3). Threshold set at 0.35
-  // to be forgiving — CV-format prose is denser/more uniform than essays.
+  // to be forgiving -- CV-format prose is denser/more uniform than essays.
   if (cv >= 0.35)
     pass('Sentence-length variance', `CV ${cv.toFixed(2)} (humans typically 0.4-0.9)`);
   else warn('Sentence-length variance', `CV ${cv.toFixed(2)} — too uniform; humans vary more`);
@@ -490,8 +490,8 @@ const supHits = SUPERLATIVES.filter((s) => new RegExp(`\\b${s}\\b`, 'i').test(pl
 if (supHits.length <= 1) pass('Superlatives', `${supHits.length} (acceptable)`);
 else warn('Superlatives', `${supHits.length}: ${supHits.join(', ')} — back with numbers or remove`);
 
-// ── 4. STRUCTURE — tense consistency, dates ───────────────────────
-// Date patterns — at least 2 valid date ranges expected (one role minimum)
+// ── 4. STRUCTURE -- tense consistency, dates ───────────────────────
+// Date patterns -- at least 2 valid date ranges expected (one role minimum)
 const datePatterns = [
   /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d{4}\b/gi,
   /\b\d{4}\s*[-–—]\s*(?:\d{4}|present)\b/gi,

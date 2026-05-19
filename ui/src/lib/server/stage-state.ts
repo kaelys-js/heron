@@ -1,12 +1,12 @@
 /**
- * stage-state — per-job stage tracking sidecar.
+ * stage-state -- per-job stage tracking sidecar.
  *
  * Why a sidecar JSON file instead of widening applications.md:
  *   • applications.md is a fixed 9-column markdown table. Adding cols
  *     would break every existing row and every parser (incl. the
  *     Claude CLI that reads it).
  *   • Stage-history (every transition, with timestamps) doesn't fit a
- *     table cell — it's a list-of-records per job.
+ *     table cell -- it's a list-of-records per job.
  *   • The sidecar lives at `data/users/{userId}/profiles/{slug}/stage-
  *     state.json` so it's automatically scoped to one user + one
  *     profile, just like every other per-profile file.
@@ -22,10 +22,10 @@
  *   }
  *
  * Used by:
- *   • Pipeline UI — surfaces "days since last touch" + "next action due"
- *   • Inbox — auto-cards for thank-you-owed / follow-up-due / prep-block
- *   • Funnel stats — measures applied→screen→onsite→offer rates per company tier
- *   • Auto-ghost detection — flags applications silent for ≥ daysToGhost
+ *   • Pipeline UI -- surfaces "days since last touch" + "next action due"
+ *   • Inbox -- auto-cards for thank-you-owed / follow-up-due / prep-block
+ *   • Funnel stats -- measures applied→screen→onsite→offer rates per company tier
+ *   • Auto-ghost detection -- flags applications silent for ≥ daysToGhost
  */
 
 import fs from 'node:fs';
@@ -47,7 +47,7 @@ export type NextAction = {
 
 export type JobStageState = {
   stageHistory: StageTransition[];
-  /** Timestamp of the most recent event the user "touched" — apply, stage
+  /** Timestamp of the most recent event the user "touched" -- apply, stage
    *  transition, sent a follow-up, scheduled an interview, etc. Drives the
    *  "days since last touch" badge + auto-ghost detection. */
   lastTouchAt: number;
@@ -275,7 +275,7 @@ export function computeFunnelStats(profileId?: string): FunnelStats {
   return stats;
 }
 
-/** List all jobs with their full stage state — used by /api/pipeline + /api/inbox/cards. */
+/** List all jobs with their full stage state -- used by /api/pipeline + /api/inbox/cards. */
 export function listAllStageState(profileId?: string): Record<string, JobStageState> {
   return readAll(profileId);
 }

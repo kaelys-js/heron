@@ -1,5 +1,5 @@
 /**
- * lib/server/interview-schedule — JSONL-backed per-job schedule + reminder
+ * lib/server/interview-schedule -- JSONL-backed per-job schedule + reminder
  * windows. Append-only with last-write-wins on jobId.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

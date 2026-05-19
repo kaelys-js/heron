@@ -1,16 +1,16 @@
 /**
  * POST /api/onboarding/complete
  *
- * Flips the `completed: true` flag — fresh-install redirect now passes.
+ * Flips the `completed: true` flag -- fresh-install redirect now passes.
  * Used by the Done step's "Open Inbox" button AND the Welcome page's
- * "Skip — I've set up by hand" link (with `{ skip: true }`).
+ * "Skip -- I've set up by hand" link (with `{ skip: true }`).
  *
  * Idempotent. Doesn't touch cv.md / profile.yml / portals.yml.
  *
  * Side effect (NEW for #1): fires the seed-form-answers Claude mode in
  * the background to pre-populate the cache. If we don't do this, the
  * user's FIRST autonomous-apply runs all dead-end on `unknown-field`
- * for "notice period" / "visa status" / etc. — the cache stays empty
+ * for "notice period" / "visa status" / etc. -- the cache stays empty
  * until they manually fill questions via the inbox. Auto-seeding closes
  * the cold-start gap.
  *
@@ -55,7 +55,7 @@ export const POST = wrap('onboarding-complete', async ({ request }: { request: R
   });
 
   // Fire the form-answers seed in the background. We do this on BOTH
-  // normal-completion and skip paths — even an "advanced" user who set
+  // normal-completion and skip paths -- even an "advanced" user who set
   // up by hand benefits from the pre-populated cache. Skipped if the
   // user has no CV yet (the seed mode will exit non-zero, which is fine).
   if (!skip) {

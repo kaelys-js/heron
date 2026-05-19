@@ -1,5 +1,5 @@
 /**
- * /api/widgets/snapshot — single endpoint that feeds every iOS surface that
+ * /api/widgets/snapshot -- single endpoint that feeds every iOS surface that
  * lives outside the WebView:
  *   • iPhone Home Screen widgets (AppWidget, InboxIssuesWidget,
  *     NextInterviewWidget, TopApplyWidget)
@@ -17,7 +17,7 @@
  *
  * Auth: routed through hooks.server.ts's guard, so requests without a
  * session bounce to 401 before this handler runs. Per-user via the
- * AsyncLocalStorage user-context — every user sees only their own
+ * AsyncLocalStorage user-context -- every user sees only their own
  * queue / interviews / issues.
  *
  * Response shape mirrors what NativePlugin.updateWidgets expects
@@ -34,7 +34,7 @@
  *     openIssues: [{ id, severity, source, summary, ts }]
  *   }
  *
- * Empty state is fine — a fresh install with no jobs returns
+ * Empty state is fine -- a fresh install with no jobs returns
  * stats={0,0,0}, nextInterview=null, topApply=null, openIssues=[].
  * The Swift widgets render the appropriate empty-state placeholders;
  * the auth gate (Task 2) handles the signed-out case via the bool flag.
@@ -57,7 +57,7 @@ type WidgetInterview = {
   company: string;
   role: string;
   stage: string;
-  /** ISO 8601 — Swift JSONDecoder decodes Date with ISO 8601 strategy */
+  /** ISO 8601 -- Swift JSONDecoder decodes Date with ISO 8601 strategy */
   scheduledAt: string;
   interviewers: string[];
 };
@@ -77,7 +77,7 @@ type WidgetIssue = {
   severity: 'info' | 'warn' | 'error';
   source: string;
   summary: string;
-  /** ms epoch — Swift expects Double per IssueSnapshot.ts type */
+  /** ms epoch -- Swift expects Double per IssueSnapshot.ts type */
   ts: number;
 };
 
@@ -99,7 +99,7 @@ function pickNextInterview(profileId: string, jobs: Job[]): WidgetInterview | nu
   // but the widget contract expects bare strings (the SwiftUI view just
   // renders them as a comma-joined list). Flatten to `name`.
   const interviewers = (next.interviewers ?? []).map((i) => i.name).filter((n): n is string => !!n);
-  // Schedule entries don't carry company / role themselves — they reference
+  // Schedule entries don't carry company / role themselves -- they reference
   // the job catalog by jobId. Look up the parent job to enrich; fall back to
   // sensible placeholders so the widget never renders "undefined".
   const job = jobs.find((j) => j.id === next.jobId);
@@ -126,7 +126,7 @@ function jobToWidgetTopApply(j: Job): WidgetTopApply {
 }
 
 /** Highest-scoring job in Queued / Scored state + 2 runner-ups.
- *  Used by the TopApplyWidget — small/medium show only `topApply`,
+ *  Used by the TopApplyWidget -- small/medium show only `topApply`,
  *  systemLarge / accessory variants on the Lock Screen render the
  *  runner-ups too. Snapshot.runnerUps may be undefined when fewer
  *  than two qualifying jobs exist. */
@@ -147,7 +147,7 @@ function pickTopApply(jobs: Job[]): {
   };
 }
 
-/** Compact issue snapshot — only fields the Swift IssueSnapshot expects.
+/** Compact issue snapshot -- only fields the Swift IssueSnapshot expects.
  *  Strips the rich `fix` payload (not used by the widget). */
 function toWidgetIssue(issue: {
   id: string;
@@ -193,13 +193,13 @@ export const GET = wrap('widgets-snapshot', async () => {
       if (entry.scheduledAt >= now && entry.scheduledAt <= weekFromNow) upcomingInterviews++;
     }
   } catch {
-    // Schedule store missing on a fresh install — already counted as 0.
+    // Schedule store missing on a fresh install -- already counted as 0.
   }
 
   const stats: WidgetStats = { queued, appliedToday, upcomingInterviews };
   const nextInterview = pickNextInterview(profileId, jobs);
   const { topApply, runnerUps } = pickTopApply(jobs);
-  // Cap to 8 — widgets only ever show 5 (large InboxIssuesWidget) but
+  // Cap to 8 -- widgets only ever show 5 (large InboxIssuesWidget) but
   // keep a small buffer so the next refresh has something to dedupe.
   const openIssues = listOpenIssues().slice(0, 8).map(toWidgetIssue);
 

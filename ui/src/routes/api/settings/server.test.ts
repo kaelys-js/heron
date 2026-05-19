@@ -1,5 +1,5 @@
 /**
- * GET + POST /api/settings — owner-only env management.
+ * GET + POST /api/settings -- owner-only env management.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

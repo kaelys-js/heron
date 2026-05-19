@@ -1,5 +1,5 @@
 /**
- * Profiles — multi-track career identity support.
+ * Profiles -- multi-track career identity support.
  *
  * Storage layer:
  *   • For multi-user installs, profiles live in app.db.profiles (one row
@@ -14,7 +14,7 @@
  * Why this indirection: the codebase had ~30 call sites for these
  * functions when multi-user was retrofitted. Forcing every caller to
  * thread a userId explicitly would have been a 30-file refactor in one
- * PR. The user-context AsyncLocalStorage lets us migrate incrementally —
+ * PR. The user-context AsyncLocalStorage lets us migrate incrementally --
  * routes/jobs can opt into the explicit `*-db.ts` API while everything
  * else keeps working through this facade.
  *
@@ -43,7 +43,7 @@ export type ProfileColor = ProfileColorDb;
 export const PROFILE_COLORS = PROFILE_COLORS_DB;
 
 export type Profile = {
-  /** Slug — kebab-case derived from display name at creation. Immutable. */
+  /** Slug -- kebab-case derived from display name at creation. Immutable. */
   id: string;
   /** Human-readable display name. Renamable. */
   name: string;

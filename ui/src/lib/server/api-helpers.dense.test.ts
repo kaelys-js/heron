@@ -1,5 +1,5 @@
 /**
- * lib/server/api-helpers — dense status-code / envelope matrix.
+ * lib/server/api-helpers -- dense status-code / envelope matrix.
  */
 import { describe, expect, it, vi } from 'vitest';
 

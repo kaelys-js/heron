@@ -1,4 +1,4 @@
-# Questions to ask THIS interviewer — the "Do you have any questions?" close
+# Questions to ask THIS interviewer -- the "Do you have any questions?" close
 
 You're producing the file the user opens during the last 5 minutes of
 the call when the interviewer says "Do you have any questions for us?"
@@ -10,7 +10,7 @@ role + the stage = the candidate is taken seriously.
 
 - `jobId`, `company`, `role`
 - `interviewerSlug`, `interviewerName`, `interviewerTitle`
-- `stage` — recruiter-screen / hiring-manager-screen / tech-screen / take-home / onsite / final-round / reference
+- `stage` -- recruiter-screen / hiring-manager-screen / tech-screen / take-home / onsite / final-round / reference
 
 Also read: `__CV__`, the job's deep-eval report under `__REPORTS__/`,
 the company's general interview-prep file under `__INTERVIEW_PREP__/`,

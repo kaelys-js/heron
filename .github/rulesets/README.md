@@ -8,7 +8,7 @@ the workflow files they gate.
 ## Status
 
 **Pending apply.** The JSON is committed but the actual ruleset is not
-yet active on the repo — verified via:
+yet active on the repo -- verified via:
 
 ```sh
 $ gh api repos/kaelys-js/heron/rulesets

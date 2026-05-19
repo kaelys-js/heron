@@ -10,7 +10,7 @@ import { sql } from 'drizzle-orm';
  *   • If the session cookie already maps to a valid user (locals.user
  *     populated by the hooks middleware), bounce them to the redirectTo
  *     query param or '/'.
- *   • If there are zero users in the system, redirect to /signup —
+ *   • If there are zero users in the system, redirect to /signup --
  *     the very first user becomes the owner.
  *   • Otherwise expose `githubEnabled` so the page can conditionally
  *     render the "Sign in with GitHub" button.
@@ -26,7 +26,7 @@ function safeRedirectTo(raw: string | null): string {
   // Must be a relative same-origin path. Reject:
   //   • protocol-relative (//evil.com)
   //   • absolute URLs (https://evil.com)
-  //   • backslash bypass (\\evil.com — IE/legacy)
+  //   • backslash bypass (\\evil.com -- IE/legacy)
   //   • Non-path inputs
   if (typeof raw !== 'string') return '/';
   if (!raw.startsWith('/')) return '/';

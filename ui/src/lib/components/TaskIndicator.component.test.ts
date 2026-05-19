@@ -1,5 +1,5 @@
 /**
- * TaskIndicator — pill showing background-task progress.
+ * TaskIndicator -- pill showing background-task progress.
  *
  * Hidden when no tasks are running. When tasks are present, shows the
  * first label + "+N" count for additional tasks.

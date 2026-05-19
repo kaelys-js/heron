@@ -1,5 +1,5 @@
 /**
- * lib/server/comp-math — dense matrix of offer evaluations.
+ * lib/server/comp-math -- dense matrix of offer evaluations.
  *
  * Exercises every base/equity combination over a parametric grid.
  */

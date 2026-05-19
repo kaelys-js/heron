@@ -1,4 +1,4 @@
-# Status Model — pipeline vs application status
+# Status Model -- pipeline vs application status
 
 <!-- AUTO-GENERATED:doc-meta -->
 *Part of the [Heron](../README.md) docs.*
@@ -7,7 +7,7 @@
 This document captures a decision that's easy to miss when reading the
 codebase: **heron tracks two different state values per job, not one**.
 They look similar, the field names overlap, and several earlier audits
-flagged them as "the same thing in two vocabularies" — but they're not.
+flagged them as "the same thing in two vocabularies" -- but they're not.
 They're orthogonal.
 
 ## The two axes

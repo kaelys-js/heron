@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 /**
- * Capacitor config — Heron native apps.
+ * Capacitor config -- Heron native apps.
  *
  * Single SvelteKit codebase wraps as macOS/Win/Linux desktop via
  * @capacitor-community/electron AND iOS via @capacitor/ios. Backend is
@@ -11,11 +11,11 @@ import type { CapacitorConfig } from '@capacitor/cli';
  * The webDir is the SvelteKit *static* build output (adapter-static),
  * which Capacitor copies into platform-specific public dirs at sync time.
  * The actual API server runs separately (embedded on desktop, remote on
- * iOS) — Capacitor never serves the API itself.
+ * iOS) -- Capacitor never serves the API itself.
  *
  * Hostname / scheme:
  *   • iOS WebView: `capacitor://localhost` (default). Same-origin for
- *     auth cookies — Better Auth's secure-cookie path works.
+ *     auth cookies -- Better Auth's secure-cookie path works.
  *   • Android WebView: `https://localhost` so cookies + service workers
  *     follow the same security model as iOS.
  *   • External nav: blocked by `limitsNavigationsToAppBoundDomains` on
@@ -35,7 +35,7 @@ const config = {
    *  dark-mode theme so users don't see a white flash. */
   backgroundColor: '#0e1014',
   ios: {
-    // Custom URL scheme — matches CFBundleURLTypes in Info.plist so the
+    // Custom URL scheme -- matches CFBundleURLTypes in Info.plist so the
     // WebView origin and deep-link scheme are the same. Default of
     // `capacitor` would split origins and require the deep-link handler
     // to bounce through `capacitor://localhost?deep=...`, adding latency.
@@ -54,7 +54,7 @@ const config = {
     /** Allow the WebView's keyboard to behave like a native UITextField
      *  (auto-scroll on focus, predictive text bar). */
     preferredContentMode: 'mobile',
-    /** Debug Inspector only in development builds — disable in CI. */
+    /** Debug Inspector only in development builds -- disable in CI. */
     webContentsDebuggingEnabled: true,
     /** Hide the legacy iOS swipe-back from the WebView since we have
      *  our own router-driven back button. */
@@ -65,7 +65,7 @@ const config = {
      *  same SameSite + Secure semantics. Capacitor 5+ default. */
     allowMixedContent: false,
     captureInput: true,
-    /** Disable webContentsDebuggingEnabled by default — only set true
+    /** Disable webContentsDebuggingEnabled by default -- only set true
      *  in debug builds. The CI build override toggles this. */
     webContentsDebuggingEnabled: false,
     /** Backgrounds the WebView shows before the first paint. */
@@ -79,7 +79,7 @@ const config = {
   },
   server: {
     /**
-     * Live-reload mode — when scripts/native/dev-ios.mjs is run with
+     * Live-reload mode -- when scripts/native/dev-ios.mjs is run with
      * `--live`, CAPACITOR_SERVER_URL is set to `http://<lan-ip>:5173` and
      * passed through to `cap sync`. Capacitor writes it into the synced
      * `capacitor.config.json`, so the WebView loads from Vite directly
@@ -99,11 +99,11 @@ const config = {
      *  Default in Capacitor 5+ is already `https`; explicit so future
      *  defaults can't surprise us. */
     androidScheme: 'https',
-    /** iOS WebView scheme — `heron` so WebView origin matches the
+    /** iOS WebView scheme -- `heron` so WebView origin matches the
      *  custom URL scheme used by deep links (CFBundleURLTypes in
      *  Info.plist). Keeps everything same-origin.
      *
-     * IMPORTANT — In live-reload mode the WebView origin becomes the
+     * IMPORTANT -- In live-reload mode the WebView origin becomes the
      * server.url's scheme (http://lan-ip), so we drop iosScheme here. If
      * we kept `heron`, Capacitor's URLSchemeHandler intercepts navigation
      * requests for that scheme and the WebView never paints anything from
@@ -140,7 +140,7 @@ const config = {
        *  Capacitor 7+ projects sometimes miss the Embed Frameworks step
        *  so plugin calls like SplashScreen.hide() silently no-op). The
        *  SvelteKit root layout still calls SplashScreen.hide() on
-       *  hydration as a belt-and-braces — whichever fires first wins. */
+       *  hydration as a belt-and-braces -- whichever fires first wins. */
       launchAutoHide: true,
     },
     StatusBar: {

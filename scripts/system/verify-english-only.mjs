@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * verify-english-only.mjs — enforce English-only system layer.
+ * verify-english-only.mjs -- enforce English-only system layer.
  *
  * Heron ships English-only mode templates (locale dirs were dropped in
  * commit 7e3fd99; the `modes_dir` hook in profile.yml still lets a user
@@ -18,7 +18,7 @@
  *   - Proper nouns containing accents (Bogotá, São Paulo, …)
  *   - Foreign-language regex patterns used as data (e.g. liveness-core.mjs
  *     matches "offre expirée" to detect French expired-job pages)
- *   - User-personal scratchpads (STATE.md, TODO*.md — gitignored anyway)
+ *   - User-personal scratchpads (STATE.md, TODO*.md -- gitignored anyway)
  *   - Generated reports / data / writing-samples (per-user content, gitignored)
  *
  * The allowlist below is the explicit set of accented strings that are
@@ -40,7 +40,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // Words and short phrases that legitimately appear in English-language prose.
-// Match must be exact (case-insensitive) — every accented occurrence in a
+// Match must be exact (case-insensitive) -- every accented occurrence in a
 // tracked file must reduce to one of these via case-folded substring lookup.
 const ALLOWLIST = [
   // English loan words / common foreign-origin terms used inside English

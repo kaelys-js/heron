@@ -48,7 +48,7 @@
 
   let visible = $state(false);
   let retrying = $state(false);
-  /** M9 — once an authed user picks "Continue offline" we stop blocking
+  /** M9 -- once an authed user picks "Continue offline" we stop blocking
    *  them with the overlay for the rest of the session. The cached read
    *  store (lib/client/offline-cache.ts) serves last-known data behind
    *  the dismissed overlay. Resets when the backend recovers. */
@@ -148,7 +148,7 @@
       await onlineStore.refresh();
     } finally {
       // Give the user a visible "I tried" beat even if the probe was
-      // instantaneous — feels more responsive than the button snapping
+      // instantaneous -- feels more responsive than the button snapping
       // back to "Try again" before they let go.
       setTimeout(() => {
         retrying = false;
@@ -156,7 +156,7 @@
     }
   }
 
-  /** M9 — dismiss the overlay and let the user continue with cached
+  /** M9 -- dismiss the overlay and let the user continue with cached
    *  data. The offline-read cache (lib/client/offline-cache.ts) serves
    *  last-known job list / stats / notifications behind the dismissed
    *  overlay. We don't hide forever: a hard network change re-runs

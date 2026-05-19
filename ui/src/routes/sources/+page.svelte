@@ -32,7 +32,7 @@
 
   let busy = $state<Record<string, 'connect' | 'test' | 'disconnect' | null>>({});
 
-  // Gmail-specific form state — only used by the gmail-imap card
+  // Gmail-specific form state -- only used by the gmail-imap card
   let gmailForm = $state({
     host: 'imap.gmail.com',
     user: '',

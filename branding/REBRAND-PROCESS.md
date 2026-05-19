@@ -4,8 +4,8 @@
 *Part of the [Heron](../README.md) docs.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
-> How to change the brand cleanly — names, colors, fonts, voice, the
-> whole identity — and the protections that stop accidental damage.
+> How to change the brand cleanly -- names, colors, fonts, voice, the
+> whole identity -- and the protections that stop accidental damage.
 >
 > The single edit-point is [`brand.json`](./brand.json). `apply-brand`
 > propagates from there into every consumer. A drift gate refuses to
@@ -58,7 +58,7 @@ branding/.brand-snapshot.json  ← apply-brand records post-state here
 
 > **Note.** The auto-chain is best-effort and idempotent. If `gh` isn't
 > authed locally (e.g., in a Docker dev container), apply-brand prints
-> a `· skipped gh:apply — gh CLI not authed` line and continues. The
+> a `· skipped gh:apply -- gh CLI not authed` line and continues. The
 > next time a maintainer runs apply-brand on an authed machine, the
 > chain catches up. `pnpm gh:apply` can also be invoked directly any
 > time to force a sync.
@@ -128,7 +128,7 @@ REBRAND_CONFIRMED=1 pnpm brand:apply
 apply-brand then:
 
 1. Runs the full propagation (every consumer config updates).
-2. Writes `branding/MIGRATION-<today>.md` — auto-generated audit log of
+2. Writes `branding/MIGRATION-<today>.md` -- auto-generated audit log of
    every destructive field that changed, with the consequences and the
    manual steps you must take outside the repo.
 3. Updates `branding/.brand-snapshot.json` to record the new applied
@@ -145,12 +145,12 @@ The `!` in the commit prefix tells Release Please to cut a major
 release; combined with a `BREAKING CHANGE:` footer in the commit body,
 the changelog flags the rebrand clearly.
 
-## External steps — what apply-brand CANNOT do for you
+## External steps -- what apply-brand CANNOT do for you
 
 External systems live outside the repo. The MIGRATION doc auto-emits
 a summary; this section is the full checklist.
 
-### GitHub repository state — automated via `pnpm gh:apply`
+### GitHub repository state -- automated via `pnpm gh:apply`
 
 What used to be 6+ manual GitHub-UI clicks is now reconciled by a single
 script. After you edit `brand.json::repo` (description, homepage, topics)
@@ -160,14 +160,14 @@ and run apply-brand, the chain auto-invokes `pnpm gh:apply`, which calls
 | GitHub-side state | Source of truth |
 |---|---|
 | Repo description + homepage | `brand.json::repo.{description,homepage}` |
-| Topics | `brand.json::repo.topics` (set-union — applies as authoritative list) |
+| Topics | `brand.json::repo.topics` (set-union -- applies as authoritative list) |
 | Security toggles (secret scanning, push protection, Dependabot) | hard-coded "enabled" in apply-github-config.mjs |
 | Private Vulnerability Reporting | hard-coded "enabled" |
 | `allow_auto_merge` / `delete_branch_on_merge` / `web_commit_signoff_required` | hard-coded "true" |
 | `has_discussions` / `has_issues` | hard-coded "true" |
 | Branch-protection rulesets | `.github/rulesets/*.json` (matched by `name` field) |
 
-The script is idempotent — re-running is a no-op unless something
+The script is idempotent -- re-running is a no-op unless something
 drifted. `pnpm gh:verify` reports drift without writing (CI uses this).
 `pnpm gh:apply:dry` shows what would change without writing.
 
@@ -203,14 +203,14 @@ REBRAND_CONFIRMED=1 pnpm brand:apply
 
 > **Visibility flips.** `gh:apply` deliberately does NOT touch
 > public/private visibility. Flipping a repo public is a one-way trip
-> (search engines crawl, forks spread) — it requires explicit
+> (search engines crawl, forks spread) -- it requires explicit
 > maintainer intent, not silent automation. Use the GitHub UI or `gh
 > repo edit --visibility public`.
 
 ### App Store Connect (Apple)
 
 **Bundle ID is locked.** The most important external constraint of a
-rebrand — Apple does not allow changing the bundle ID of a published
+rebrand -- Apple does not allow changing the bundle ID of a published
 app. Options when the bundle ID changes:
 
 - **Keep the old app as legacy.** The old App Store entry stays alive
@@ -218,7 +218,7 @@ app. Options when the bundle ID changes:
   counts all stay with it. The new bundle ID gets a fresh App Store
   Connect entry.
 - **Mark old as deprecated.** Apple supports "Removed from sale" status
-  — users who already installed keep using it; new users can't find it.
+  -- users who already installed keep using it; new users can't find it.
 - **In-app migration banner** on the old app pointing users at the new
   App Store entry (manual code; not covered by apply-brand).
 
@@ -233,7 +233,7 @@ App Store Connect steps for the new bundle ID:
 5. Submit for review.
 
 ASO (App Store Optimization) implications: keyword history, ranking,
-click-through-rate data resets. Plan to lose 2–4 weeks of ASO
+click-through-rate data resets. Plan to lose 2-4 weeks of ASO
 performance during the transition.
 
 ### Google Play Console (Android)
@@ -261,7 +261,7 @@ the OAuth app. If the OAuth app's name / homepage changes:
 - GitHub OAuth Apps → Settings → update Application name + Homepage URL.
 - Authorization callback URL: keep the existing values unless the
   underlying domain changes.
-- Generate new client secret (recommended on rebrand — invalidates any
+- Generate new client secret (recommended on rebrand -- invalidates any
   leaked secret).
 
 Other integrations (Stripe, Sentry, Linear, Discord, etc.) need similar
@@ -288,7 +288,7 @@ profile updates.
 - LinkedIn page rename.
 - GitHub org rename (if owning an org, not a personal repo).
 - Mastodon / Bluesky handles.
-- npm package name change (if published — `npm deprecate` the old,
+- npm package name change (if published -- `npm deprecate` the old,
   publish under the new).
 
 ### Trademark + legal
@@ -298,7 +298,7 @@ If the brand is registered as a trademark:
 - USPTO TEAS application for the new name.
 - Domain ownership + protection (typo-squat watching service).
 - Update `LICENSE` copyright holder if the legal entity changes.
-- `docs/TRADEMARK.md` policy text references the brand by name —
+- `docs/TRADEMARK.md` policy text references the brand by name --
   apply-brand regenerates the relevant data sections; the narrative
   may need a manual sweep.
 
@@ -333,7 +333,7 @@ After running through the above:
       `cd ui && pnpm exec cap run ios`
 - [ ] Android emulator launches under the new applicationId:
       `cd ui && pnpm exec cap run android`
-- [ ] Web manifest theme color, app name, icon all updated — visit
+- [ ] Web manifest theme color, app name, icon all updated -- visit
       `http://localhost:5173` and inspect the head.
 - [ ] App Store Connect new entry exists + is "Ready for Submission".
 - [ ] Play Console new entry exists + has an internal-test build.
@@ -361,7 +361,7 @@ it afterward.
 verbatim copy of brand.json from the last successful apply-brand run.
 The drift check compares fresh `brand.json` against this snapshot.
 
-**Commit this file.** It's the protection's source of truth — a
+**Commit this file.** It's the protection's source of truth -- a
 collaborator who clones a fresh repo without the snapshot would never
 see the gate fire on their first apply-brand run.
 

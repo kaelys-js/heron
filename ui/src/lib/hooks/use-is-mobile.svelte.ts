@@ -1,11 +1,11 @@
 /**
- * useIsMobile — singleton reactive matchMedia hook.
+ * useIsMobile -- singleton reactive matchMedia hook.
  *
  * iOS HIG + Apple HIG: anything ≤ 768pt-wide is a "phone-shaped" context
  * and deserves bottom-sheet / drawer chrome instead of desktop-style
  * popovers + dropdowns. 768px matches Tailwind's `md` breakpoint so the
  * boundary is the same one used by `md:` utility classes throughout the
- * app — flip with viewport rotation on iPad and the layout follows.
+ * app -- flip with viewport rotation on iPad and the layout follows.
  *
  * CRITICAL: this is a MODULE-LEVEL singleton, NOT per-component.
  * Pre-fix every call to `useIsMobile()` created a fresh `$state` that
@@ -14,7 +14,7 @@
  * stores, and the stores updated independently on mount. During the
  * brief window between the parent flipping to mobile and the child
  * doing the same, the child rendered <DropdownMenu.Item> inside a
- * parent that had already switched to <Sheet.Content> — bits-ui then
+ * parent that had already switched to <Sheet.Content> -- bits-ui then
  * threw "ContextMenu.Content not found" because the Menu context was
  * not in scope. The fix is one shared store, one matchMedia listener,
  * and every component reads from the same source so flips are atomic.
@@ -45,7 +45,7 @@ function attachListener() {
     sharedStore.value = e.matches;
   };
   mediaQuery.addEventListener('change', onChange);
-  // We deliberately don't tear down the listener — the singleton lives
+  // We deliberately don't tear down the listener -- the singleton lives
   // for the page lifetime. matchMedia listeners are O(1) and the page
   // unload cleans them up automatically. Adding teardown would mean
   // ref-counting consumers, which is complexity for no gain.

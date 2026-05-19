@@ -1,5 +1,5 @@
 /**
- * lib/server/comp-benchmark — spawn AGENT_CLI for comp band research,
+ * lib/server/comp-benchmark -- spawn AGENT_CLI for comp band research,
  * plus manualBenchmark shape helper.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

@@ -18,7 +18,7 @@
   richColors
   toastOptions={{
     classes: {
-      // Shared close-button geometry — applied to every variant so the
+      // Shared close-button geometry -- applied to every variant so the
       // close X is a perfect circle (was reading as an oval because the
       // svelte-sonner default leaves both the button AND the SVG to
       // inherit Tailwind preflight reset, which can collapse line-height

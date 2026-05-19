@@ -11,5 +11,5 @@ Baseline images for visual regression testing. See
   baselines + commits them to your PR branch.
 - **Out-of-band cleanup**: never. Always go through a PR.
 
-Files in this directory are checked into git deliberately — they're
+Files in this directory are checked into git deliberately -- they're
 the source of truth for what the UI should look like.

@@ -1,5 +1,5 @@
 /**
- * cli — single source of truth for the AI CLI binary the dashboard spawns.
+ * cli -- single source of truth for the AI CLI binary the dashboard spawns.
  *
  * Defaults to `claude` for backward compatibility. Override with the
  * `AGENT_CLI` environment variable, e.g.:

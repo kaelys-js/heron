@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * gemini-eval.mjs — Gemini-powered Job Offer Evaluator for heron
+ * gemini-eval.mjs -- Gemini-powered Job Offer Evaluator for heron
  *
  * A free-tier alternative to the Claude-based pipeline.
  * Reads evaluation logic from modes/evaluate.md + modes/_shared.md,
@@ -30,7 +30,7 @@ try {
   const { config } = await import('dotenv');
   config();
 } catch {
-  // dotenv is optional — fall back to process.env if not installed
+  // dotenv is optional -- fall back to process.env if not installed
 }
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -47,10 +47,10 @@ const USER_ID = userFromArgv();
 const PROFILE_ID = profileFromArgv();
 
 const PATHS = {
-  // Primary evaluation logic — system layer, same for every profile.
+  // Primary evaluation logic -- system layer, same for every profile.
   shared: join(REPO_ROOT, 'modes', '_shared.md'),
   evaluate: join(REPO_ROOT, 'modes', 'evaluate.md'),
-  // Per-user per-profile data — resolved via lib-profiles.mjs.
+  // Per-user per-profile data -- resolved via lib-profiles.mjs.
   cv: profilePath(PROFILE_ID, 'cv-md', USER_ID),
   reports: profilePath(PROFILE_ID, 'reports-dir', USER_ID),
   tracker: profilePath(PROFILE_ID, 'applications', USER_ID),
@@ -157,7 +157,7 @@ function nextReportNumber() {
   return String(Math.max(...files) + 1).padStart(3, '0');
 }
 
-// Lazy import — only used when saving
+// Lazy import -- only used when saving
 let readdirSync;
 try {
   ({ readdirSync } = await import('fs'));

@@ -21,7 +21,7 @@ export const POST = wrap('projects', async ({ request, url }: { request: Request
   }
   const profileId = resolveProfileId(url);
   const project = createProject(profileId, body);
-  // info level — the Projects page already toasts "Project created" inline,
+  // info level -- the Projects page already toasts "Project created" inline,
   // so we only need the activity-feed entry here for telemetry.
   logEvent('projects', 'Project created: ' + project.name, {
     level: 'info',

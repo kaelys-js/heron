@@ -12,7 +12,7 @@ How Heron differs from adjacent tools in the job-search tooling space.
 | **Teal** | Hosted SaaS | Pipeline tracking on their servers. Heron tracks on your disk. |
 | **ResumeWorded** | Hosted SaaS | Generic resume score. Heron tailors per-role with a personalization plan (Block E of the evaluation). |
 | **Otta / WelcomeToTheJungle** | Job board | Discovery, not workflow. Heron consumes their RSS / scrapes once you're past discovery. |
-| **AIHawk / Apply.ninja / LazyApply** | Auto-submit bots | Volume over quality. Heron explicitly refuses this category — see [`.github/CONTRIBUTING.md` § "What we do NOT accept"](../.github/CONTRIBUTING.md). |
+| **AIHawk / Apply.ninja / LazyApply** | Auto-submit bots | Volume over quality. Heron explicitly refuses this category -- see [`.github/CONTRIBUTING.md` § "What we do NOT accept"](../.github/CONTRIBUTING.md). |
 | **`santifer/career-ops` (upstream)** | OSS CLI | Original. Heron adds multi-user, native apps, dashboard, autonomous-apply, Watch. See README § Acknowledgements. |
 
 ## Stance summary

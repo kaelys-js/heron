@@ -1,5 +1,5 @@
 /**
- * Agents page loader — pulls every registered job's summary from the
+ * Agents page loader -- pulls every registered job's summary from the
  * pluggable job registry. Previously the page hardcoded a list of 4
  * cards; this loader makes /agents the single user-facing surface for
  * manually triggering any of the 18+ registered jobs.

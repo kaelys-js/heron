@@ -18,7 +18,7 @@ import { getActiveProfileId } from '$lib/server/profiles';
 export const GET = wrap('funnel', async () => {
   const profileId = getActiveProfileId();
   const stats = computeFunnelStats(profileId);
-  // Identify the most-leaky stage — the smallest conversion rate. This is
+  // Identify the most-leaky stage -- the smallest conversion rate. This is
   // the highest-leverage place to focus (the place where 1% improvement
   // converts to the biggest absolute offer-count gain).
   const conversions = [

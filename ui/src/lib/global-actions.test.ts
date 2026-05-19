@@ -1,5 +1,5 @@
 /**
- * lib/global-actions — singleton store for the global Search palette
+ * lib/global-actions -- singleton store for the global Search palette
  * and the New Apply dialog.
  *
  * Tests confirm:

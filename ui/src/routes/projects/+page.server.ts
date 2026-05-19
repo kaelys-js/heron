@@ -5,7 +5,7 @@ import { getActiveProfileId, getProfile } from '$lib/server/profiles';
 export async function load({ url }: { url: URL }) {
   // Projects are per-profile. Default to active; `?profile=<slug>` scopes
   // to a specific profile. `?profile=all` deliberately not supported here
-  // because projects identity is a per-track concept — a Software Engineering
+  // because projects identity is a per-track concept -- a Software Engineering
   // project doesn't sensibly merge with an Electrician one.
   const queryProfile = url.searchParams.get('profile');
   const profileId = queryProfile && getProfile(queryProfile) ? queryProfile : getActiveProfileId();

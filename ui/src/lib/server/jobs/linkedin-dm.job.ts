@@ -1,5 +1,5 @@
 /**
- * linkedin-dm-job — periodic LinkedIn DM ingestion + classification.
+ * linkedin-dm-job -- periodic LinkedIn DM ingestion + classification.
  *
  * Runs every 6 hours by default. Each tick:
  *   1. Spawns `linkedin-dm-scraper.py --json`
@@ -56,7 +56,7 @@ function runScraper(): Promise<{ stdout: string; code: number }> {
       try {
         p.kill('SIGTERM');
       } catch {
-        /* process already exited — kill races with the close event */
+        /* process already exited -- kill races with the close event */
       }
       resolveP({ stdout, code: 124 });
     }, TIMEOUT_MS);

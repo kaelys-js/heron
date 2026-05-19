@@ -1,5 +1,5 @@
 /**
- * Generate the user's "general CV" PDF — a non-tailored, ATS-friendly PDF
+ * Generate the user's "general CV" PDF -- a non-tailored, ATS-friendly PDF
  * built straight from cv.md, deliberately consistent with their LinkedIn
  * profile.
  *
@@ -15,13 +15,13 @@
  *   1. Read cv.md
  *   2. Read templates/cv-template.html
  *   3. Ask Claude to populate the template's placeholders from cv.md.
- *      No JD-specific tailoring — the prompt is explicit about this.
+ *      No JD-specific tailoring -- the prompt is explicit about this.
  *   4. Write filled HTML to a temp file in output/.tmp/
  *   5. Spawn `node generate-pdf.mjs <tmp.html> output/cv-general.pdf` to
  *      render the actual PDF (handles fonts, margins, ATS unicode cleanup)
  *   6. Return the path + sizing info
  *
- * Cost: 1 Anthropic call (~$0.30–$0.60) + ~5s Playwright render. Done once
+ * Cost: 1 Anthropic call (~$0.30-$0.60) + ~5s Playwright render. Done once
  * per cv.md edit, not per application. Status endpoint surfaces whether the
  * existing PDF is stale relative to cv.md so the UI can prompt regeneration.
  */
@@ -36,7 +36,7 @@ import { profilePath, ensureProfileDirs } from './profile-paths';
 import { getActiveProfileId } from './profiles';
 import { userContextEnv } from './user-context';
 
-/** System-layer template — shared, never per-profile. */
+/** System-layer template -- shared, never per-profile. */
 const CV_TEMPLATE_HTML = path.join(ROOT, 'templates', 'cv-template.html');
 
 /** Picks a template variant based on either an explicit override or the
@@ -49,7 +49,7 @@ export function resolveTemplate(explicitName?: string, profileId?: string): stri
     (() => {
       try {
         // Best-effort: read profile.yml's cv_template field. We avoid pulling
-        // a YAML parser into this server file — only need one key. Routes
+        // a YAML parser into this server file -- only need one key. Routes
         // through profilePath() so multi-user installs read the ACTIVE
         // user's profile.yml at data/users/{uid}/profiles/{id}/profile.yml
         // rather than the legacy single-user data/profiles/{id}/profile.yml.
@@ -60,7 +60,7 @@ export function resolveTemplate(explicitName?: string, profileId?: string): stri
         const m = text.match(/^\s*cv_template:\s*"?([a-z0-9-]+)"?/im);
         return m ? m[1] : undefined;
       } catch (e) {
-        // profile.yml unreadable — silently fall back to the classic template.
+        // profile.yml unreadable -- silently fall back to the classic template.
         // Non-fatal but surface so users can debug missing customization.
         logEvent('cv-pdf', 'Could not read profile.yml for cv_template field', {
           level: 'warn',
@@ -97,11 +97,11 @@ export type GeneralCvStatus = {
   path: string;
   bytes?: number;
   generatedAt?: number;
-  /** Mtime of cv.md when the PDF was last produced — null if PDF doesn't exist. */
+  /** Mtime of cv.md when the PDF was last produced -- null if PDF doesn't exist. */
   cvLastModified?: number;
-  /** True when cv.md is newer than the PDF — caller should prompt regenerate. */
+  /** True when cv.md is newer than the PDF -- caller should prompt regenerate. */
   outdated: boolean;
-  /** True when cv.md is missing — can't generate without it. */
+  /** True when cv.md is missing -- can't generate without it. */
   missingSource: boolean;
 };
 
@@ -265,12 +265,12 @@ export async function generateGeneralCv(profileId?: string): Promise<GenerateRes
   });
 
   // Run the strict ATS + resume-quality checks on the freshly-rendered
-  // PDF + the source cv.md. Both are non-blocking — they surface scores
+  // PDF + the source cv.md. Both are non-blocking -- they surface scores
   // via the activity feed so the user can decide whether to regenerate.
   // The dashboard renders the fail-summary as actionable cards.
   const { checkAts, checkResumeQuality } = await import('./quality-checks');
   // .catch(() => null) is safe here because checkAts / checkResumeQuality
-  // already call reportServerError on their internal failures — the null
+  // already call reportServerError on their internal failures -- the null
   // just means "no score badge for this run" rather than a missed event.
   const [atsResult, resumeResult] = await Promise.all([
     checkAts(generalCvPdf).catch((e) => {
@@ -338,7 +338,7 @@ function spawnPdfRender(
       try {
         p.kill('SIGTERM');
       } catch {
-        /* process already exited — kill races with the close event */
+        /* process already exited -- kill races with the close event */
       }
       reject(new Error('PDF render timed out after 90s'));
     }, 90_000);
@@ -356,7 +356,7 @@ function spawnPdfRender(
       }
       try {
         const stat = fs.statSync(pdfPath);
-        // generate-pdf.mjs prints "📊 Pages: N" on success — parse if present.
+        // generate-pdf.mjs prints "📊 Pages: N" on success -- parse if present.
         const pageMatch = stdoutBuf.match(/Pages:\s*(\d+)/);
         resolve({ bytes: stat.size, pages: pageMatch ? Number(pageMatch[1]) : undefined });
       } catch (e) {
@@ -372,7 +372,7 @@ export function generalCvPath(profileId?: string): string {
 }
 
 /**
- * Lint a generated PDF for ATS compatibility — non-blocking, just emits
+ * Lint a generated PDF for ATS compatibility -- non-blocking, just emits
  * an activity event with the score so the dashboard can surface it.
  *
  * Returns { score, warnings, failures } so callers can decide whether
@@ -398,7 +398,7 @@ export function spawnAtsCheck(
     });
     p.on('error', (err) => reject(err));
     p.on('close', () => {
-      // ats-check exits non-zero when score is low — but we still want
+      // ats-check exits non-zero when score is low -- but we still want
       // to parse its JSON output (it always emits it on stdout first).
       try {
         const json = JSON.parse(stdoutBuf);

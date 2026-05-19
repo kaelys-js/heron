@@ -1,10 +1,10 @@
 /**
- * api-base — single source of truth for "where do `/api/*` calls go".
+ * api-base -- single source of truth for "where do `/api/*` calls go".
  *
  * Why this exists:
  *
  *   Same-origin browsers (`pnpm dev` on Mac, Electron embedded server)
- *   talk to a backend that lives at `window.location.origin` — fetch with
+ *   talk to a backend that lives at `window.location.origin` -- fetch with
  *   a relative path "just works".
  *
  *   Capacitor iOS / Android live at custom URL schemes (`heron://localhost`
@@ -29,7 +29,7 @@ import { resolveBackend, type BackendSource } from './backend-discovery';
 let cachedBase: string | null = null;
 let resolving: Promise<string> | null = null;
 
-/** Listener-based reactive status — components subscribe to render a
+/** Listener-based reactive status -- components subscribe to render a
  *  "Looking for backend…" / "Backend: DEV/LAN/REMOTE" / "Can't find backend"
  *  badge. Mirrors the lightweight listener pattern in online-status.svelte. */
 export type BackendStatus =
@@ -46,7 +46,7 @@ function setStatus(next: BackendStatus): void {
     try {
       fn(next);
     } catch {
-      /* listener threw — ignore so one bad sub doesn't break the rest */
+      /* listener threw -- ignore so one bad sub doesn't break the rest */
     }
   }
 }
@@ -99,7 +99,7 @@ export async function getApiBase(): Promise<string> {
       if (ts) tailscaleHost = ts;
       if (prod) productionUrl = prod;
     } catch {
-      // native-bridge unavailable on web — fall through with undefined
+      // native-bridge unavailable on web -- fall through with undefined
       // values, resolver will skip the corresponding candidates.
     }
     try {

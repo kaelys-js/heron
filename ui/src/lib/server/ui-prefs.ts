@@ -1,5 +1,5 @@
 /**
- * ui-prefs — per-USER UI preferences.
+ * ui-prefs -- per-USER UI preferences.
  *
  * Storage: app.db `ui_prefs` table, keyed by user_id (PRIMARY KEY). Each
  * user has their own row holding appearance (light/dark/system), theme,
@@ -17,7 +17,7 @@
  * by `readAvatar()` when it sees a path that doesn't include a userId
  * segment.
  *
- * The public API of this module is unchanged — `readPrefs()` etc. all
+ * The public API of this module is unchanged -- `readPrefs()` etc. all
  * still take zero args and resolve the acting user via the AsyncLocal-
  * Storage context that `hooks.server.ts` populates per request.
  */
@@ -125,7 +125,7 @@ function maybeMigrateLegacy(userId: string): void {
       .onConflictDoNothing()
       .run();
   } catch {
-    // Legacy file unparseable — leave it alone and let the user start fresh.
+    // Legacy file unparseable -- leave it alone and let the user start fresh.
   }
 }
 
@@ -239,7 +239,7 @@ export function saveAvatar(
       try {
         fs.unlinkSync(other);
       } catch {
-        // Stale avatar variant unlink failed — non-fatal, the new variant
+        // Stale avatar variant unlink failed -- non-fatal, the new variant
         // is already written so reads will pick it up. Storage drift is
         // bounded (max 1 stale file per user) and the next upload will
         // try again.
@@ -298,7 +298,7 @@ export function clearAvatar(): void {
     try {
       fs.unlinkSync(full);
     } catch {
-      // File already gone or permissions issue — proceed with the
+      // File already gone or permissions issue -- proceed with the
       // pref clear anyway so the UI shows no avatar.
     }
   }

@@ -16,7 +16,7 @@
  *   • POST /api/auth/passkey/verify-authenticate
  *
  * …and a dozen more from the passkey + (future) admin + (future) 2FA
- * plugins. We never need to know the exact path list — the handler
+ * plugins. We never need to know the exact path list -- the handler
  * routes internally.
  */
 import { auth } from '$lib/server/auth';

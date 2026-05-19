@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * merge-tracker.mjs — Merge batch tracker additions into applications.md
+ * merge-tracker.mjs -- Merge batch tracker additions into applications.md
  *
  * Handles multiple TSV formats:
  * - 9-col: num\tdate\tcompany\trole\tstatus\tscore\tpdf\treport\tnotes
@@ -101,7 +101,7 @@ function normalizeCompany(name) {
   return name.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-// Tokens that almost every role shares — must NOT count as signal.
+// Tokens that almost every role shares -- must NOT count as signal.
 // Includes seniority, work-mode, contract, and common locations.
 const ROLE_STOPWORDS = new Set([
   // seniority / level
@@ -207,7 +207,7 @@ function roleFuzzyMatch(a, b) {
   if (overlap === 0) return false;
 
   // Jaccard-style ratio on content tokens. Two roles are "the same" only
-  // when the overlap dominates the smaller side — not when they just share
+  // when the overlap dominates the smaller side -- not when they just share
   // a location + "engineer".
   const minLen = Math.min(wordsA.length, wordsB.length);
   const ratio = overlap / minLen;
@@ -447,7 +447,7 @@ for (const file of tsvFiles) {
       skipped++;
     }
   } else {
-    // New entry — use the number from the TSV
+    // New entry -- use the number from the TSV
     const entryNum = addition.num > maxNum ? addition.num : ++maxNum;
     if (addition.num > maxNum) maxNum = addition.num;
 
@@ -494,7 +494,7 @@ if (VERIFY && !DRY_RUN) {
   try {
     // Pipeline integrity is now covered by the integration test
     // (pipeline integrity is covered by the pipeline.integration vitest project).
-    // Run from the repo root — two levels up from this script (scripts/tracker/).
+    // Run from the repo root -- two levels up from this script (scripts/tracker/).
     const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
     execFileSync('pnpm', ['exec', 'vitest', 'run', '--', 'pipeline.integration'], {
       stdio: 'inherit',

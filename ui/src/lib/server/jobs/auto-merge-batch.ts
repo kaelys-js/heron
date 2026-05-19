@@ -1,5 +1,5 @@
 /**
- * Auto-merge batch additions — fs watcher.
+ * Auto-merge batch additions -- fs watcher.
  *
  * The batch runner (`scripts/batch/batch-runner.sh`) writes one TSV per
  * evaluated job into the active profile's `batch/tracker-additions/`.
@@ -15,14 +15,14 @@
  *   - Issue stream gets a row if anything looked malformed
  *
  * Boot path: also runs once at startup so any TSVs that landed while the
- * dev server was down get caught up — for every user × profile, not just
+ * dev server was down get caught up -- for every user × profile, not just
  * the active one.
  *
  * Multi-user (F16): pre-fix the watcher resolved a single
  * `additionsDir()` from SYSTEM_USER's ALS context at boot and used
  * `fs.watch` against that one directory. TSVs landing under
  * `data/users/{uid}/profiles/{slug}/batch/tracker-additions/` (where the
- * per-user batch runner writes them — see `orchestrator.ts:701`) were
+ * per-user batch runner writes them -- see `orchestrator.ts:701`) were
  * never seen, so the auto-merge → dedup → normalize chain never fired
  * for real users. Now: chokidar globs across every user × profile and
  * each event fires `runMergeTracker` inside `runAsUser(userId, …)` so
@@ -51,7 +51,7 @@ let watcher: FSWatcher | null = null;
 const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
 /** Per-user in-flight gate. */
 const mergeInFlight = new Set<string>();
-/** Per-user "another TSV landed mid-merge — schedule a rescan" flag. */
+/** Per-user "another TSV landed mid-merge -- schedule a rescan" flag. */
 const pendingRescan = new Set<string>();
 
 /**
@@ -83,7 +83,7 @@ function additionsDirForUser(userId: string): string {
 function pendingTsvCountForUser(userId: string): number {
   let count = 0;
   try {
-    // Synchronous traversal — small directory, runs at boot only.
+    // Synchronous traversal -- small directory, runs at boot only.
     const usersRoot =
       userId === SYSTEM_USER_ID
         ? path.join(ROOT, 'data', 'profiles')
@@ -95,14 +95,14 @@ function pendingTsvCountForUser(userId: string): number {
       count += fs.readdirSync(dir).filter((n) => n.endsWith('.tsv')).length;
     }
   } catch {
-    /* swallow — best effort */
+    /* swallow -- best effort */
   }
   return count;
 }
 
 /**
  * Run merge-tracker once FOR A SPECIFIC USER and emit the batch-merge
- * event on success. Idempotent — concurrent calls collapse via the
+ * event on success. Idempotent -- concurrent calls collapse via the
  * per-user mergeInFlight gate.
  */
 function runMergeTrackerForUser(userId: string, reason: string): Promise<JobResult> {
@@ -127,7 +127,7 @@ function runMergeTrackerForUser(userId: string, reason: string): Promise<JobResu
       const p = spawn('node', ['scripts/tracker/merge-tracker.mjs'], {
         cwd: ROOT,
         // userContextEnv picks up the userId from the ALS context we're
-        // already inside — no need to override explicitly.
+        // already inside -- no need to override explicitly.
         env: userContextEnv(),
       });
       p.stdout?.on('data', (c: Buffer) => {
@@ -209,7 +209,7 @@ function runMergeTracker(reason: string): Promise<JobResult> {
   return runMergeTrackerForUser(uid, reason);
 }
 
-/** Debounced scheduler — multiple file events for THE SAME USER within
+/** Debounced scheduler -- multiple file events for THE SAME USER within
  *  1.5s collapse into one merge. */
 function scheduleMergeForUser(userId: string, reason: string): void {
   const existing = debounceTimers.get(userId);
@@ -254,7 +254,7 @@ export function startBatchWatcher(): void {
     }
   })();
 
-  // chokidar glob — `data/users/*/profiles/*/batch/tracker-additions/*.tsv`
+  // chokidar glob -- `data/users/*/profiles/*/batch/tracker-additions/*.tsv`
   // covers every multi-user install, and the second pattern covers the
   // legacy single-user layout. ignoreInitial: true because the boot
   // catch-up loop above already handles pre-existing files.
@@ -302,7 +302,7 @@ export function startBatchWatcher(): void {
 // to inspect per-user dirs without re-implementing the path math.
 export { additionsDirForUser };
 
-// D16 — `stopBatchWatcher` removed: HMR creates a fresh module instance
+// D16 -- `stopBatchWatcher` removed: HMR creates a fresh module instance
 // so the previous watcher is GC'd. No caller imported it.
 
 // Register a manual run option so power users can force a merge from the UI.

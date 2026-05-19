@@ -1,5 +1,5 @@
 /**
- * POST /api/linkedin/audit/fix — mark a finding resolved.
+ * POST /api/linkedin/audit/fix -- mark a finding resolved.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

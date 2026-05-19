@@ -1,7 +1,7 @@
 /**
  * Multi-user integration tests.
  *
- * Structural assertions on the multi-user code surface — auth helpers,
+ * Structural assertions on the multi-user code surface -- auth helpers,
  * user-context plumbing through every API route, per-user data
  * isolation conventions. The deeper end-to-end auth-flow / passkey
  * coverage lives in lib/server/auth.test.ts + the routes/api/*.test.ts
@@ -66,7 +66,7 @@ describe('Multi-user — endpoint guards', () => {
 describe('Multi-user — extended structural checks (replaces verify-multi-user.mjs server-spawn parity)', () => {
   // The legacy verifier spawned a preview server and hit ~40 endpoints
   // to assert per-user isolation. Below: assertions on the code surface
-  // that prove the user-context plumbing is wired everywhere — without
+  // that prove the user-context plumbing is wired everywhere -- without
   // the 2-minute server boot cost. The end-to-end behavioural pass runs
   // in CI's `ts` job through `pnpm build` (where the server is real).
 
@@ -103,10 +103,10 @@ describe('Multi-user — extended structural checks (replaces verify-multi-user.
 });
 
 /**
- * Sign-out hygiene — every UI call site that invokes `authClient.signOut()`
+ * Sign-out hygiene -- every UI call site that invokes `authClient.signOut()`
  * MUST be paired with `clearLocalAuthState()`. Without that pairing the
  * server-side cookie/session is torn down but the LOCAL state (bearer
- * token, `heron:authed` gate flag, App Group shared state) lingers — so
+ * token, `heron:authed` gate flag, App Group shared state) lingers -- so
  * the next user on the same device inherits user A's session signals,
  * which is the F2 finding from the multi-user audit.
  *

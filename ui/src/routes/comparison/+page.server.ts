@@ -1,5 +1,5 @@
 /**
- * /comparison loader — fetches active offers (with TC + benchmark + BATNA)
+ * /comparison loader -- fetches active offers (with TC + benchmark + BATNA)
  * normalised by the same API that powers the iOS widget and Watch glance.
  *
  * Cross-profile by default. ?profile=<slug> narrows to one.

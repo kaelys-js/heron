@@ -1,5 +1,5 @@
 /**
- * lib/server/quality-checks — spawn wrappers for ats-check / resume-
+ * lib/server/quality-checks -- spawn wrappers for ats-check / resume-
  * quality / cover-letter-check / ai-detect.
  *
  * Mocks child_process.spawn so we can drive every branch (good JSON,

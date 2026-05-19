@@ -1,5 +1,5 @@
 /**
- * referrals — track referral asks + build the LinkedIn search URL.
+ * referrals -- track referral asks + build the LinkedIn search URL.
  *
  * TOS-careful: we do NOT scrape LinkedIn for mutuals. Instead we open
  * the LinkedIn People search with the right filters pre-populated, the
@@ -17,7 +17,7 @@
  * Surfaces:
  *   - JobActions menu: "Find LinkedIn mutuals at {company}"
  *     → opens LinkedIn search URL in new tab + lets user log who they ask
- *   - /inbox: "X pending referral asks — follow up?" if asked >7 days ago
+ *   - /inbox: "X pending referral asks -- follow up?" if asked >7 days ago
  *     with no reply
  */
 
@@ -57,7 +57,7 @@ export function listAsks(profileId: string): ReferralAsk[] {
       const key = r.jobId + '|' + r.contactName.toLowerCase();
       map.set(key, r);
     } catch {
-      // Corrupt line from a partial write — skip and continue loading.
+      // Corrupt line from a partial write -- skip and continue loading.
     }
   }
   return [...map.values()].sort((a, b) => b.askedAt - a.askedAt);
@@ -70,12 +70,12 @@ export function logAsk(profileId: string, ask: ReferralAsk): void {
 }
 
 /** Build the LinkedIn People search URL pre-filtered to mutuals at a
- *  given company. We use the public LinkedIn search query format —
+ *  given company. We use the public LinkedIn search query format --
  *  it works in any logged-in browser. */
 export function linkedInMutualsUrl(company: string): string {
   // LinkedIn People search with company filter + 1st-degree (network=F).
   // network=F → 1st-degree connections. company is the canonical company URN
-  // or company name — passing the name works; LinkedIn auto-resolves.
+  // or company name -- passing the name works; LinkedIn auto-resolves.
   const params = new URLSearchParams({
     keywords: company,
     network: 'F', // 1st-degree only
@@ -84,7 +84,7 @@ export function linkedInMutualsUrl(company: string): string {
   return 'https://www.linkedin.com/search/results/people/?' + params.toString();
 }
 
-/** Find asks that have been silent for N+ days — candidates for a
+/** Find asks that have been silent for N+ days -- candidates for a
  *  gentle follow-up. */
 export function silentAsks(profileId: string, days = 7): ReferralAsk[] {
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;

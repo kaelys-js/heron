@@ -30,7 +30,7 @@
   import { installNotificationsBridge } from '$lib/client/sse-notifications-bridge';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 
-  // Reactive auth flag — true ONLY when the user is on a private route
+  // Reactive auth flag -- true ONLY when the user is on a private route
   // AND has the local auth marker set. Used to gate the floating UI
   // (AgentChat FAB, GlobalSearch, dialogs) so unauthenticated screens
   // (/login, /signup, /help) never accidentally show app-shell controls.
@@ -76,26 +76,26 @@
 
   onMount(() => {
     // Hydrate the theme store so OS-preference changes propagate at runtime.
-    // The inline app.html script already applied the initial class — this
+    // The inline app.html script already applied the initial class -- this
     // just lights up the reactive store.
     theme.init();
 
     // Install global error handlers (window.onerror + onunhandledrejection)
     // and wire the reporter at the current origin. backend-discovery (the
     // Capacitor resolver) updates this later via setReporterBackend when
-    // running native — but in plain web mode, location.origin is correct.
+    // running native -- but in plain web mode, location.origin is correct.
     if (typeof window !== 'undefined') {
       installErrorReporter(window.location.origin);
       // Initialize the cross-platform online-status store. Periodic /api/health
       // probe + navigator.onLine listeners + native hints (iOS/Electron) all
-      // funnel through one boolean — OfflineIndicator + api.ts subscribe.
+      // funnel through one boolean -- OfflineIndicator + api.ts subscribe.
       onlineStore.init(window.location.origin);
     }
 
     // Kick off backend discovery early so api-base.ts's cache is primed
     // before any /api/* call. On web (any http(s) origin) this resolves
     // instantly to ''. On Capacitor it runs the dev → mDNS → Tailscale →
-    // production probe ladder. We don't await — first /api/* call will
+    // production probe ladder. We don't await -- first /api/* call will
     // wait on the same promise via api-base.ts's `resolving` deduplication.
     // Track the SSE bridge teardown so we can stop it on cleanup.
     let stopNotificationsBridge: (() => void) | null = null;
@@ -115,7 +115,7 @@
           // CustomEvent on every event with a widget-relevant source
           // (apply-*, interview-*, scan-*, issue*). The bridge resolves
           // its own backend URL via the shared sse-client wrapper, so
-          // we don't pass `base` in — it'll re-resolve internally on
+          // we don't pass `base` in -- it'll re-resolve internally on
           // every reconnect / net-status change.
           if (typeof window !== 'undefined') {
             stopNotificationsBridge = installNotificationsBridge();
@@ -126,7 +126,7 @@
         }),
     );
 
-    // Splash dismiss + boot-fallback removal — SEQUENCED handover so
+    // Splash dismiss + boot-fallback removal -- SEQUENCED handover so
     // the user sees three distinct, clean phases instead of overlapping
     // fades:
     //
@@ -138,14 +138,14 @@
     // Why sequenced rather than simultaneous: the previous version
     // fired SplashScreen.hide + setAttribute('data-hide','1') in the
     // SAME rAF, so the native splash AND the boot-fallback faded out
-    // in parallel — the user briefly saw BOTH at half-opacity, which
+    // in parallel -- the user briefly saw BOTH at half-opacity, which
     // reads as a hesitation / "gap". Sequencing them means the splash
     // hands off to a SOLID boot-fallback, the boot stays solid for a
     // perception beat, then fades to the app cleanly.
     //
     // Paint-confirmed splash dismiss. Previously the splash hid on a
     // fixed 1100ms timer regardless of whether the boot-fallback had
-    // actually committed pixels yet — on slow devices the splash
+    // actually committed pixels yet -- on slow devices the splash
     // disappeared into a black gap before the WebView had painted the
     // bloom gradient, then the boot-fallback flashed in afterwards.
     // The fix waits for THREE paint confirmations before dismissing:
@@ -187,7 +187,7 @@
       // Two more rAFs so the gradient + glow have actually composited.
       await new Promise<void>((r) => requestAnimationFrame(() => r()));
       await new Promise<void>((r) => requestAnimationFrame(() => r()));
-      // Floor — the splash always shows ≥ MIN_PAINT_MS even on a
+      // Floor -- the splash always shows ≥ MIN_PAINT_MS even on a
       // hot-cache device that paints instantly.
       const elapsed = performance.now() - splashStartedAt;
       if (elapsed < BOOT_FALLBACK_MIN_PAINT_MS) {
@@ -218,7 +218,7 @@
       }
     })();
 
-    // Deep-link routing — the OS hands us `heron://` URLs whenever
+    // Deep-link routing -- the OS hands us `heron://` URLs whenever
     // the user taps a widget, Live Activity, or Share Extension success
     // callback. Without this, every tap drops the user at the dashboard
     // root regardless of what they tapped. Capacitor's @capacitor/app
@@ -236,7 +236,7 @@
     // iOS Home Screen / Lock Screen / Watch widget refresh pipeline.
     //
     // The widgets read App Group UserDefaults that ONLY the iPhone main
-    // app can write to (Apple's sandbox model — extension targets can
+    // app can write to (Apple's sandbox model -- extension targets can
     // read, but it's the host app's job to feed). Without this fetch,
     // every widget renders the empty / "Sign in on iPhone" placeholder
     // forever, even for an authenticated user with a populated queue.
@@ -257,7 +257,7 @@
     // doesn't exist.
     async function refreshWidgetSnapshot() {
       if (typeof window === 'undefined' || !isIos()) return;
-      // Skip the fetch on auth screens — the route guard would return
+      // Skip the fetch on auth screens -- the route guard would return
       // 401 and the error-reporter would surface a misleading red toast
       // ("401 · /api/widgets/snapshot") on the login page. We push
       // `{ authenticated: false }` instead so the widgets flip to the
@@ -271,7 +271,7 @@
       }
       try {
         // `silent: true` so an unauth race or backend hiccup doesn't
-        // surface a red toast — widget refresh is a background concern;
+        // surface a red toast -- widget refresh is a background concern;
         // failures should NOT pop UI in the user's face. We'd rather the
         // user see stale widget data than a "401 · /api/widgets/snapshot"
         // toast on the login screen.
@@ -301,7 +301,7 @@
       }
     }
 
-    // Initial push. Fire-and-forget — don't block layout hydration.
+    // Initial push. Fire-and-forget -- don't block layout hydration.
     void refreshWidgetSnapshot();
 
     // Re-fetch on resume so a user backgrounding the app for hours and
@@ -315,7 +315,7 @@
     if (typeof document !== 'undefined') {
       document.addEventListener('visibilitychange', onVisible);
     }
-    // Listen for the brand-internal refresh event — Task 9's SSE bridge
+    // Listen for the brand-internal refresh event -- Task 9's SSE bridge
     // dispatches it whenever the activity feed reports a widget-relevant
     // event (apply state change, interview scheduled, issue added). The
     // bridge can't import `updateWidgets` directly without pulling
@@ -326,7 +326,7 @@
       window.addEventListener(`${BRAND_EVENTS.notify}:widgets-stale`, onRefresh);
     }
 
-    // Cleanup — onMount returns a teardown so HMR doesn't pile listeners.
+    // Cleanup -- onMount returns a teardown so HMR doesn't pile listeners.
     const teardown = () => {
       if (typeof document !== 'undefined') {
         document.removeEventListener('visibilitychange', onVisible);
@@ -340,14 +340,14 @@
 
     // Client-side auth gate. In adapter-node builds hooks.server.ts
     // bounces unauthenticated users to /login before the page ever
-    // hydrates — but in adapter-static (Capacitor) hooks.server.ts
+    // hydrates -- but in adapter-static (Capacitor) hooks.server.ts
     // doesn't run, so we have to gate here.
     //
     // Two-layer check:
-    //   1. SYNCHRONOUS — if there's no localStorage flag at all, redirect
+    //   1. SYNCHRONOUS -- if there's no localStorage flag at all, redirect
     //      immediately. Wins the race against +page.svelte's onMount
     //      `goto('/inbox')`.
-    //   2. ASYNCHRONOUS — even WITH the flag, probe the real session via
+    //   2. ASYNCHRONOUS -- even WITH the flag, probe the real session via
     //      authClient.getSession(). A stale flag (left over from a prior
     //      install where data persisted across uninstall in WKWebView's
     //      WebsiteData) would otherwise let unauthenticated users see the
@@ -361,7 +361,7 @@
       !window.location.protocol.startsWith('http')
     ) {
       const path = window.location.pathname;
-      // Layer 1: sync flag check — bounce immediately if no flag.
+      // Layer 1: sync flag check -- bounce immediately if no flag.
       if (localStorage.getItem(BRAND_STORAGE_KEYS.authed) !== '1') {
         // window.location.replace cancels every in-flight SvelteKit
         // navigation, including the root +page.svelte's queueMicrotask
@@ -371,7 +371,7 @@
         // Layer 2: async session probe. authClient.getSession() races
         // through the customFetch which awaits backend resolution. Cap at
         // 4s so an unreachable backend doesn't trap the user on a stale
-        // shell — that case falls back to "treat as unauthed".
+        // shell -- that case falls back to "treat as unauthed".
         const ctrl = new AbortController();
         const probeTimeout = setTimeout(() => ctrl.abort(), 4000);
         Promise.race([
@@ -392,7 +392,7 @@
               // Hard-navigate (window.location), NOT SvelteKit goto.
               // The root +page.svelte enqueues `goto('/inbox')` in
               // onMount via queueMicrotask. Two SvelteKit goto()s race
-              // and the last one wins — which is the wrong one. A
+              // and the last one wins -- which is the wrong one. A
               // direct location.replace() cancels every in-flight
               // navigation and wins unconditionally.
               window.location.replace('/login?redirectTo=' + encodeURIComponent(path));
@@ -413,17 +413,17 @@
     return teardown;
   });
 
-  // Sign-out detector — when the `heron:authed` flag flips from set
+  // Sign-out detector -- when the `heron:authed` flag flips from set
   // to absent (the sign-out button in AppSidebar.svelte clears it), push
   // `{ authenticated: false }` so the iPhone widgets + Watch immediately
   // flip to the gate state. Without this, the widgets would keep their
-  // last data on screen until the next 15-min refresh tick — leaking the
+  // last data on screen until the next 15-min refresh tick -- leaking the
   // previous user's queue / interview info to anyone who picks up the phone.
   $effect(() => {
     if (typeof window === 'undefined' || !isIos()) return;
     // Track the flag's value so we only push when it transitions out of '1'.
     // Reading inside the effect makes Svelte track localStorage misses too,
-    // but localStorage isn't a Svelte signal — so we also poll on the
+    // but localStorage isn't a Svelte signal -- so we also poll on the
     // existing 'storage' event (fires on cross-tab change) + the layout's
     // isAuthed derived (which re-evaluates on every nav).
     if (!isAuthed) {
@@ -439,7 +439,7 @@
   // views). setContext only fires once at mount; the wrapper object is
   // mutated so consumers calling getContext('activeProfile').id stay reactive
   // across profile switches without manual prop drilling.
-  // svelte-ignore state_referenced_locally — initial seed only; $effect keeps it live
+  // svelte-ignore state_referenced_locally -- initial seed only; $effect keeps it live
   const activeProfileCtx = $state<{ id: string | undefined }>({ id: data?.activeProfile?.id });
   $effect(() => {
     activeProfileCtx.id = data?.activeProfile?.id;
@@ -455,7 +455,7 @@
   }
 
   /**
-   * View Transitions — fade routes when navigating. Progressively enhanced:
+   * View Transitions -- fade routes when navigating. Progressively enhanced:
    * Chromium ships `document.startViewTransition`; Safari/Firefox skip and we
    * fall through to SvelteKit's default instant swap. The CSS animations live
    * in app.css under `::view-transition-{old,new}(root)` and respect

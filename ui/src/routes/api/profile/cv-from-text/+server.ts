@@ -3,7 +3,7 @@
  *
  * Converts a plain-text CV (resume copy-pasted from Word, PDF text export,
  * LinkedIn "Save to PDF", etc.) into the canonical markdown CV shape used by
- * the rest of the system — Summary / Experience / Projects / Education /
+ * the rest of the system -- Summary / Experience / Projects / Education /
  * Skills sections, ATS-friendly bullet lists, no fluff.
  *
  * Distinct from /api/profile/reprocess (which extracts structured profile
@@ -11,10 +11,10 @@
  * first when the user pastes plain text, then optionally calls reprocess
  * once cv.md is written.
  *
- * Cost: one Anthropic call (~$0.10–$0.40 depending on CV length).
+ * Cost: one Anthropic call (~$0.10-$0.40 depending on CV length).
  *
- * Request:  { text: string }   — raw plain-text CV
- * Response: { markdown: string } — canonical markdown CV
+ * Request:  { text: string }   -- raw plain-text CV
+ * Response: { markdown: string } -- canonical markdown CV
  */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';

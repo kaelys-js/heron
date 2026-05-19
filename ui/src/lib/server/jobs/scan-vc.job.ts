@@ -1,5 +1,5 @@
 /**
- * VC portfolio discovery — wraps `scan-vc.mjs`.
+ * VC portfolio discovery -- wraps `scan-vc.mjs`.
  *
  * Different output shape from the other scanners: this writes a TSV of
  * candidate COMPANIES (a16z + Sequoia portfolio), not jobs. The user
@@ -84,4 +84,4 @@ register({
   run: runScanVc,
 });
 
-// D24 — `runScanVc` was only used by the registry; export removed.
+// D24 -- `runScanVc` was only used by the registry; export removed.

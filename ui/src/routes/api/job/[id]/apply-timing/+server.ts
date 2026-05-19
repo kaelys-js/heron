@@ -1,10 +1,10 @@
 /**
- * /api/job/[id]/apply-timing — return the timing band for this job.
+ * /api/job/[id]/apply-timing -- return the timing band for this job.
  *
  * GET → { firstSeen, daysSinceFirstSeen, band, label, advice }
  *
  * Used by the JobActions badges row to surface "Apply NOW" / "already
- * late" — closes the application-timing gap that direct-apply users
+ * late" -- closes the application-timing gap that direct-apply users
  * historically can't see.
  */
 

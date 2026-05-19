@@ -1,10 +1,10 @@
 <script lang="ts">
   /**
-   * /queue — supervises the autonomous-apply pipeline. Sections:
+   * /queue -- supervises the autonomous-apply pipeline. Sections:
    *
-   *   ▸ Applying (live)         — script running, with step name
-   *   ▸ Queued                  — waiting on the drain (sorted by score)
-   *   ▸ Manual-apply-needed     — soft-failed, finish from Inbox
+   *   ▸ Applying (live)         -- script running, with step name
+   *   ▸ Queued                  -- waiting on the drain (sorted by score)
+   *   ▸ Manual-apply-needed     -- soft-failed, finish from Inbox
    *
    * Header counts: "today X/cap · M applying · N queued · K need review".
    * Primary CTA: "Run drain now" → fires apply-queue-drain manually.
@@ -151,7 +151,7 @@
     }
   }
 
-  /** Legacy batch send — preserved for users without autonomous mode. */
+  /** Legacy batch send -- preserved for users without autonomous mode. */
   async function sendAll() {
     if (batchSendBusy || selected.size === 0) return;
     if (!confirm.trigger('send-all')) return;

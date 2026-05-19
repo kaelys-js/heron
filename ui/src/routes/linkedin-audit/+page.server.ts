@@ -1,5 +1,5 @@
 /**
- * /linkedin-audit loader — surfaces the saved audit report (or null
+ * /linkedin-audit loader -- surfaces the saved audit report (or null
  * when never run). Page renders the findings grouped by category +
  * severity, each with a copy-to-clipboard paste block.
  */

@@ -1,5 +1,5 @@
 /**
- * mDNS advertise — make the embedded server discoverable on the local
+ * mDNS advertise -- make the embedded server discoverable on the local
  * network. iOS app with @capacitor-community/bonjour (or a custom plugin)
  * sees the service and connects automatically.
  *

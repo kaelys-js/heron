@@ -3,7 +3,7 @@
  *
  * Owner or admin only. Generates a 6-digit invite code that someone
  * else can redeem at signup. Codes are single-use and expire after 30
- * minutes. Members can't invite — they'd otherwise be able to onboard
+ * minutes. Members can't invite -- they'd otherwise be able to onboard
  * arbitrary outsiders without the owner's consent.
  */
 import { wrap } from '$lib/server/api-helpers';

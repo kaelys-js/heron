@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * /help/technical-interview — guide to the tech-prep workflow.
+   * /help/technical-interview -- guide to the tech-prep workflow.
    *
    * Tells the user:
    *   - When to run "Generate tech-prep plan" (any interview stage)

@@ -1,5 +1,5 @@
 /**
- * apply-counter — daily LinkedIn / portal apply rate-limit accounting.
+ * apply-counter -- daily LinkedIn / portal apply rate-limit accounting.
  *
  * Per-user (F17). Each user gets their own counter file at
  * `data/users/{userId}/profiles/_shared/apply-counter.json` (or the

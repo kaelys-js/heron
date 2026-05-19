@@ -1,5 +1,5 @@
 /**
- * ThemeToggle — appearance picker built on ResponsiveActionMenu.
+ * ThemeToggle -- appearance picker built on ResponsiveActionMenu.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { render } from '@testing-library/svelte';

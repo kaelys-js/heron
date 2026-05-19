@@ -29,7 +29,7 @@
     title: string;
     description?: string;
     icon?: Snippet;
-    /** localStorage key suffix — namespaced under `heron:cc:`. */
+    /** localStorage key suffix -- namespaced under `heron:cc:`. */
     storageKey: string;
     defaultOpen?: boolean;
     headerActions?: Snippet;
@@ -50,7 +50,7 @@
     return defaultOpen;
   }
 
-  // svelte-ignore state_referenced_locally — initial seed only.
+  // svelte-ignore state_referenced_locally -- initial seed only.
   let open = $state(readInitial());
 
   $effect(() => {

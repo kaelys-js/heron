@@ -15,7 +15,7 @@
    *  profile would write to whatever happens to be active at submit time. */
   let q = $derived('?profile=' + encodeURIComponent(data.profileId));
 
-  // svelte-ignore state_referenced_locally — initial seed only
+  // svelte-ignore state_referenced_locally -- initial seed only
   let form = $state({ ...data.initial });
   let saving = $state(false);
 

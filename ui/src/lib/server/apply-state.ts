@@ -1,5 +1,5 @@
 /**
- * apply-state — per-job persistent state for the autonomous apply pipeline.
+ * apply-state -- per-job persistent state for the autonomous apply pipeline.
  *
  * Each in-flight apply writes progress to `data/apply-state/{jobId}.json`.
  * The state file lets the dashboard:
@@ -8,13 +8,13 @@
  *  - Keep the step trail so users can audit what the bot did before
  *    the failure (`apply-state/{jobId}.json::steps[]`).
  *
- * Retries today re-run from step 0 — which is correct (idempotent
+ * Retries today re-run from step 0 -- which is correct (idempotent
  * on the LinkedIn / Greenhouse / Ashby adapters), if slightly less
  * efficient than resuming mid-flow. The persisted step trail is
  * available to a future resume-from-step-N path; that's a structural
  * choice (always-have-the-data), not deferred work.
  *
- * Shared across profiles — jobId is globally unique (URL-derived).
+ * Shared across profiles -- jobId is globally unique (URL-derived).
  *
  * Lifecycle:
  *   queue-apply endpoint  →  writeApplyState({lastStep: 'queued'})
@@ -49,7 +49,7 @@ export type ApplyState = {
 };
 
 function statePath(jobId: string): string {
-  // Sanitize — jobId comes from urlId() in parsers.ts so it's already
+  // Sanitize -- jobId comes from urlId() in parsers.ts so it's already
   // [a-f0-9]+, but guard against future suffixed forms (':profileId').
   const safe = jobId.replace(/[^a-zA-Z0-9_\-:]/g, '');
   return path.join(DIR, safe + '.json');
@@ -68,7 +68,7 @@ export function readApplyState(jobId: string): ApplyState | null {
     if (!parsed || typeof parsed !== 'object') return null;
     return parsed as ApplyState;
   } catch (e) {
-    // Corrupt state file — likely a half-written JSON from a crash
+    // Corrupt state file -- likely a half-written JSON from a crash
     // mid-write. Surface so the dispatcher's "where am I?" lookups don't
     // silently treat in-flight applies as never-started.
     logEvent('apply-state', 'State file unreadable · ' + jobId, {
@@ -95,7 +95,7 @@ export function writeApplyState(state: ApplyState): void {
       profileId: state.profileId,
     });
   } catch (e) {
-    // Persistence failure is critical — the dispatcher won't be able to
+    // Persistence failure is critical -- the dispatcher won't be able to
     // resume / report state. Re-throw after logging so callers see it.
     reportServerError('apply-state', 'Write failed · ' + state.jobId, e, {
       category: 'application',
@@ -106,12 +106,12 @@ export function writeApplyState(state: ApplyState): void {
 }
 
 /** Append a step to the history of an existing state file. No-op when no
- *  state exists — caller should `writeApplyState` first to seed. */
+ *  state exists -- caller should `writeApplyState` first to seed. */
 export function appendStep(jobId: string, step: string): void {
   const prev = readApplyState(jobId);
   if (!prev) {
     // Seeded-step race: APPLY_STEP arrived from the worker before the
-    // dispatcher seeded the state file. Worth surfacing — usually means
+    // dispatcher seeded the state file. Worth surfacing -- usually means
     // the seeding writeApplyState() call errored silently.
     logEvent('apply-state', 'appendStep skipped — no state for ' + jobId, {
       level: 'warn',
@@ -138,7 +138,7 @@ export function clearApplyState(jobId: string): void {
       });
     }
   } catch (e) {
-    // State file unlink failed — surface, but don't throw; subsequent
+    // State file unlink failed -- surface, but don't throw; subsequent
     // applies for the same jobId will just overwrite.
     logEvent('apply-state', 'Clear failed · ' + jobId, {
       level: 'warn',
@@ -160,7 +160,7 @@ export function listInFlight(): ApplyState[] {
         const parsed = JSON.parse(fs.readFileSync(path.join(DIR, f), 'utf8'));
         if (parsed && typeof parsed === 'object') out.push(parsed as ApplyState);
       } catch (e) {
-        // Corrupt individual state file — keep going so one bad file
+        // Corrupt individual state file -- keep going so one bad file
         // doesn't blank out the entire /queue UI. Surface for visibility.
         logEvent('apply-state', 'Skipped corrupt state file · ' + f, {
           level: 'warn',
@@ -170,7 +170,7 @@ export function listInFlight(): ApplyState[] {
       }
     }
   } catch (e) {
-    // The dir is created by ensureDir() at the top — any error here is
+    // The dir is created by ensureDir() at the top -- any error here is
     // EACCES / EIO and worth surfacing.
     reportServerError('apply-state', 'listInFlight readdir failed', e, {
       category: 'application',

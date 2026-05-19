@@ -1,7 +1,7 @@
 /**
- * POST + GET /api/email/react — IMAP-poller endpoint.
+ * POST + GET /api/email/react -- IMAP-poller endpoint.
  *
- * F21 — every handler now calls `requireUserId(locals)` first, so the
+ * F21 -- every handler now calls `requireUserId(locals)` first, so the
  * test harness must hand in a `locals.user` object with a valid id.
  * Anonymous calls 401. The hooks-level guard would normally block
  * those at the framework boundary, but the explicit handler-level call
@@ -27,7 +27,7 @@ vi.mock('$lib/server/events', () => ({
 
 const { POST, GET } = await import('./+server');
 
-/** Stand-in `locals` with a valid authed user — every test in this
+/** Stand-in `locals` with a valid authed user -- every test in this
  *  file exercises an authenticated path so we don't bother per-test
  *  customisation. */
 const FAKE_LOCALS = {

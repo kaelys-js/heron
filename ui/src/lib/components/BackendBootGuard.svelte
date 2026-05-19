@@ -32,7 +32,7 @@
 
   onMount(async () => {
     if (!isCapacitor) {
-      // Web mode — origin is the backend, nothing to discover.
+      // Web mode -- origin is the backend, nothing to discover.
       state = {
         kind: 'ready',
         resolved: { url: location.origin, source: 'embedded', resolvedAt: Date.now() },

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * verify-fonts.mjs — guard the self-hosted woff2 files against silent
+ * verify-fonts.mjs -- guard the self-hosted woff2 files against silent
  * tampering / accidental upgrade.
  *
  * Closes TYPOGRAPHY.md Task 9 item 5: "Pre-commit verifier: ensure
@@ -33,7 +33,7 @@
  *     swap a font for one with a malicious cmap table. Rare but the
  *     guard is cheap.
  *   • The lockfile gives a clear "this is what we ship" pin for OSS
- *     reproducibility — fork users can run the same verify.
+ *     reproducibility -- fork users can run the same verify.
  */
 import { readFileSync, readdirSync, writeFileSync, existsSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';

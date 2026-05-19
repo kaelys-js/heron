@@ -1,5 +1,5 @@
 /**
- * offers — per-job structured offer + negotiation tracking.
+ * offers -- per-job structured offer + negotiation tracking.
  *
  * Stored at `data/users/{userId}/profiles/{slug}/offers.json` as a map
  * of jobId → OfferRecord. Captures every offer round (initial, counter,

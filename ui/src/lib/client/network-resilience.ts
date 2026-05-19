@@ -1,5 +1,5 @@
 /**
- * network-resilience — abort-on-offline + auto-retry-on-recovery for
+ * network-resilience -- abort-on-offline + auto-retry-on-recovery for
  * the central apiCall fetch wrapper.
  *
  * Two coordinated responsibilities:
@@ -9,7 +9,7 @@
  *      fires `{ online: false }` (iOS NWPathMonitor catches true offline
  *      before navigator.onLine), we abort every pending controller. The
  *      callers' fetches throw cleanly with AbortError instead of hanging
- *      until OS TCP timeout (~30s) — the user sees a fast "network
+ *      until OS TCP timeout (~30s) -- the user sees a fast "network
  *      dropped" state instead of a thirty-second mystery.
  *
  *   2. **Auto-retry queue**: when a request fails with a network error
@@ -28,7 +28,7 @@
  *      cases (extended flap, many concurrent calls).
  *
  * This module's only public surface is for `lib/api.ts`. UI components
- * stay unaware — they call `apiCall(url, { retryable })` and the
+ * stay unaware -- they call `apiCall(url, { retryable })` and the
  * resilience layer is transparent.
  */
 import { BRAND_EVENTS } from './brand';
@@ -44,7 +44,7 @@ const MAX_QUEUE_SIZE = 50;
  *  start and remove in a finally block. */
 const inflight = new Set<AbortController>();
 
-/** Single retry attempt per queued entry — if it fails AGAIN we give up
+/** Single retry attempt per queued entry -- if it fails AGAIN we give up
  *  rather than spiral. */
 type Retryable = {
   url: string;
@@ -61,7 +61,7 @@ let installed = false;
 function install(): void {
   if (installed || typeof window === 'undefined') return;
   installed = true;
-  // Native true-offline detection — iOS NWPathMonitor.swift dispatches
+  // Native true-offline detection -- iOS NWPathMonitor.swift dispatches
   // heron:net-status with { online: false } when path goes unsatisfied.
   window.addEventListener(BRAND_EVENTS.netStatus, ((e: Event) => {
     const detail = (e as CustomEvent<{ online?: boolean }>).detail;
@@ -72,13 +72,13 @@ function install(): void {
       drainQueue();
     }
   }) as EventListener);
-  // Browser-default online event — fires when navigator.onLine flips
+  // Browser-default online event -- fires when navigator.onLine flips
   // back to true. On iOS this lags NWPathMonitor; both paths converge
   // on drainQueue.
   window.addEventListener('online', () => drainQueue());
 }
 
-/** Abort every in-flight request. Idempotent — already-aborted
+/** Abort every in-flight request. Idempotent -- already-aborted
  *  controllers swallow the second abort silently. */
 function abortAll(): void {
   for (const ctrl of inflight) {
@@ -88,7 +88,7 @@ function abortAll(): void {
       /* idempotent */
     }
   }
-  // Don't clear inflight here — apiCall's finally block removes each
+  // Don't clear inflight here -- apiCall's finally block removes each
   // entry naturally as its fetch settles.
 }
 
@@ -97,7 +97,7 @@ function abortAll(): void {
  *  fresh otherwise). Caller MUST call unregister() in finally. */
 export function register(init: RequestInit): AbortController {
   install();
-  // Reuse the caller's controller if they passed one — composes with
+  // Reuse the caller's controller if they passed one -- composes with
   // caller-side timeouts cleanly.
   let ctrl: AbortController;
   if (init.signal && init.signal instanceof AbortSignal && !init.signal.aborted) {
@@ -125,7 +125,7 @@ export function enqueueForRetry(entry: Retryable): void {
   install();
   if (retryQueue.length >= MAX_QUEUE_SIZE) {
     // Drop the oldest entry to make room. Caller's promise rejects so
-    // they fall into their normal error path — better than silently
+    // they fall into their normal error path -- better than silently
     // queueing forever.
     const dropped = retryQueue.shift();
     dropped?.reject(new Error('retry queue full — request dropped'));

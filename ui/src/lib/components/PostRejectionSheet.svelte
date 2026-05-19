@@ -41,7 +41,7 @@
     wouldChange = '';
     busy = false;
     // 600ms delay so the status-update toast finishes settling before the
-    // sheet slides in — feels less jumpy.
+    // sheet slides in -- feels less jumpy.
     setTimeout(() => {
       open = true;
     }, 600);

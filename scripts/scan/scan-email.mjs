@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * scan-email.mjs — Email-based job-alert ingestion
+ * scan-email.mjs -- Email-based job-alert ingestion
  *
  * Why this exists: LinkedIn / Indeed Job Alerts surface jobs that JobSpy
  * can't always reach (especially LinkedIn's "Easy Apply" private listings).
@@ -15,18 +15,18 @@
  *   2. Once a week / month, run a Google Takeout for that label only:
  *      https://takeout.google.com → Gmail → Include only labels → job-alerts
  *   3. Drop the resulting `.mbox` file into `data/inbox-mbox/`
- *   4. Run `node scan-email.mjs` — it consumes every .mbox, extracts URLs,
+ *   4. Run `node scan-email.mjs` -- it consumes every .mbox, extracts URLs,
  *      moves the consumed file to `data/inbox-mbox/processed/{date}.mbox`,
  *      and appends new URLs to pipeline.md.
  *
- * No new npm deps — uses Node's built-in `fs` + plain regex on the mbox
+ * No new npm deps -- uses Node's built-in `fs` + plain regex on the mbox
  * format. The mbox format is just `From ` separators between RFC-2822
  * messages, which is more than parseable for what we need.
  *
  * Supported parsers (each a `(rawMessage) => Array<{title, url, source}>`):
- *   • LinkedIn — extracts /jobs/view/{id} URLs + nearby title/company text
- *   • Indeed   — extracts indeed.com/viewjob URLs + title/company
- *   • generic  — fallback: any URL on a recognised job-board host (last
+ *   • LinkedIn -- extracts /jobs/view/{id} URLs + nearby title/company text
+ *   • Indeed   -- extracts indeed.com/viewjob URLs + title/company
+ *   • generic  -- fallback: any URL on a recognised job-board host (last
  *     resort if a more specific parser doesn't fire)
  *
  * Usage:
@@ -54,7 +54,7 @@ import {
   userFromArgv,
 } from '../lib/lib-profiles.mjs';
 
-// Mbox inbox is shared (drop emails here from any client) — output is
+// Mbox inbox is shared (drop emails here from any client) -- output is
 // per-user per-profile.
 const INBOX_DIR = 'data/inbox-mbox';
 const PROCESSED_DIR = path.join(INBOX_DIR, 'processed');
@@ -72,7 +72,7 @@ mkdirSync(PROCESSED_DIR, { recursive: true });
 // ── mbox split ──────────────────────────────────────────────────────
 //
 // mbox separates messages with lines beginning `From ` (note the trailing
-// space — distinguishes it from the From: header). The separator may be
+// space -- distinguishes it from the From: header). The separator may be
 // at the very start of the file or preceded by a blank line. We split
 // on `\n\nFrom ` (most reliable) plus the file-start case.
 
@@ -127,7 +127,7 @@ function parseHeaders(rawMessage) {
 // Real-world mbox bodies are quoted-printable or base64 encoded, often as
 // multipart/alternative. For our needs (URL extraction) we just decode
 // quoted-printable inline since LinkedIn/Indeed alerts are almost always
-// quoted-printable HTML. We don't need the full HTML — just the URLs.
+// quoted-printable HTML. We don't need the full HTML -- just the URLs.
 
 function decodeQuotedPrintable(s) {
   if (!s) return s;
@@ -146,7 +146,7 @@ function decodeBase64(s) {
 }
 
 /** Pull URLs from a (potentially encoded) body. We don't need to fully
- *  decode multipart — just find every URL we care about.
+ *  decode multipart -- just find every URL we care about.
  *
  *  CRITICAL: only decode quoted-printable when the header explicitly says
  *  so. Decoding plain-text URLs that happen to contain `=ab` (e.g.
@@ -156,7 +156,7 @@ function extractUrls(body, encoding) {
   let text = body;
   if (/quoted-printable/i.test(encoding)) text = decodeQuotedPrintable(body);
   else if (/base64/i.test(encoding)) text = decodeBase64(body);
-  // (No fall-through to decodeQuotedPrintable — see comment above.)
+  // (No fall-through to decodeQuotedPrintable -- see comment above.)
   const out = new Set();
   for (const m of text.matchAll(/https?:\/\/[^\s"<>'\)]+/g)) {
     out.add(m[0]);
@@ -190,7 +190,7 @@ function parseLinkedInAlert(rawMessage) {
       url: `https://www.linkedin.com/jobs/view/${jobId}/`,
       title: '', // LinkedIn alerts often inline the title near the URL but
       // robust HTML→title extraction is brittle without a parser. Leave
-      // blank — the downstream evaluator (evaluate) reads the JD anyway.
+      // blank -- the downstream evaluator (evaluate) reads the JD anyway.
       company: '',
       source: 'linkedin-alert-email',
     });
@@ -231,7 +231,7 @@ function parseIndeedAlert(rawMessage) {
 // ── Generic URL fallback ────────────────────────────────────────────
 //
 // Catches HN Who's Hiring email digests, weekly-digest types, etc that
-// list job URLs at recognised ATS hosts. We're conservative — only
+// list job URLs at recognised ATS hosts. We're conservative -- only
 // hosts we already know how to score downstream.
 
 const KNOWN_JOB_HOSTS = [
@@ -270,7 +270,7 @@ function parseGenericDigest(rawMessage) {
   return out;
 }
 
-// Try parsers in order — first one that returns a non-null result wins.
+// Try parsers in order -- first one that returns a non-null result wins.
 const PARSERS = [parseLinkedInAlert, parseIndeedAlert, parseGenericDigest];
 
 // ── Dedup + writers (mirror scan.mjs) ───────────────────────────────

@@ -5,7 +5,7 @@
  * pulls in:
  *   • What the interviewer's likely focus was (their stage + title)
  *   • A discussion-point hook the user supplies in the body
- *     (`talkingPoints`) — usually 1-2 things that came up in the call
+ *     (`talkingPoints`) -- usually 1-2 things that came up in the call
  *   • One concrete callback connecting their challenge to a story
  *     from the user's CV
  *

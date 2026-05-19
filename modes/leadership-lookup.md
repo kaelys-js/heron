@@ -1,13 +1,13 @@
-# Leadership lookup — who runs this company and should you care?
+# Leadership lookup -- who runs this company and should you care?
 
 Before joining, candidates should know:
 
-- **Founders** — are they still here? Track record? Reputation?
-- **C-suite tenure** — long average tenure = stable; <18mo average = revolving door (red flag)
-- **Hiring manager → CEO chain** — fewer hops = startup energy; many hops = corporate
-- **Recent C-suite departures** — last 12 months. CFO leaving before IPO? Bad signal.
-- **VP/SVP of Engineering** — for engineering candidates, who's the technical north star?
-- **Recent board changes** — investor exits, new board seats = strategy shift
+- **Founders** -- are they still here? Track record? Reputation?
+- **C-suite tenure** -- long average tenure = stable; <18mo average = revolving door (red flag)
+- **Hiring manager → CEO chain** -- fewer hops = startup energy; many hops = corporate
+- **Recent C-suite departures** -- last 12 months. CFO leaving before IPO? Bad signal.
+- **VP/SVP of Engineering** -- for engineering candidates, who's the technical north star?
+- **Recent board changes** -- investor exits, new board seats = strategy shift
 
 This mode pulls this from public sources (LinkedIn, company press releases,
 Crunchbase, SEC filings if public).
@@ -15,7 +15,7 @@ Crunchbase, SEC filings if public).
 ## Inputs ($args, parsed from `LEADERSHIP_INPUT` env JSON)
 
 - `profileId`, `jobId`, `company`
-- `focusRole` — optional string, e.g. "Engineering" — emphasises that
+- `focusRole` -- optional string, e.g. "Engineering" -- emphasises that
   function's leadership chain
 
 ## Output
@@ -84,7 +84,7 @@ Cap web requests at 6. Order:
 2. LinkedIn "People" view for the company
 3. Crunchbase entry (for funding + board history)
 4. Public press: "{company} hires CFO" / "{company} departs"
-5. SEC EDGAR if public — proxy statement has executive compensation + tenure
+5. SEC EDGAR if public -- proxy statement has executive compensation + tenure
 6. Glassdoor "Senior Leadership" page
 
 ## Red flag heuristics
@@ -107,5 +107,5 @@ Cap web requests at 6. Order:
 - NEVER speculate. If you can't find when an exec started, say "unknown".
 - Don't reproduce executive headshots or biographical detail beyond
   what's necessary to flag a signal.
-- Keep the JSON compact — the dashboard renders a summary card, not
+- Keep the JSON compact -- the dashboard renders a summary card, not
   a wall of text.

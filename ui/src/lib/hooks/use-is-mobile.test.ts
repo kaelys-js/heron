@@ -1,5 +1,5 @@
 /**
- * lib/hooks/use-is-mobile — singleton matchMedia store.
+ * lib/hooks/use-is-mobile -- singleton matchMedia store.
  *
  * Critical regression coverage from the dropdown-sweep session: every
  * `useIsMobile()` caller MUST share the same store, NOT create a fresh
@@ -7,7 +7,7 @@
  * "Context Menu.Content not found" in bits-ui when parent + child
  * rendered different mobile/desktop branches during a viewport flip.
  *
- * jsdom env — uses the matchMedia polyfill from test-setup.ts
+ * jsdom env -- uses the matchMedia polyfill from test-setup.ts
  * (setMobileViewport helper).
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -46,7 +46,7 @@ describe('useIsMobile — singleton', () => {
 describe('useIsMobile — matchMedia integration (smoke only)', () => {
   // The matchMedia listener attaches via `onMount(...)` inside the hook.
   // Outside a Svelte component lifecycle (raw vitest unit context),
-  // onMount callbacks don't fire — so the store stays at its initial
+  // onMount callbacks don't fire -- so the store stays at its initial
   // `{value: false}` regardless of `setMobileViewport()`. End-to-end
   // matchMedia reactivity is tested in the ui-component project where
   // the hook mounts inside a real component running in real Chromium.

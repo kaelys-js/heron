@@ -1,5 +1,5 @@
 /**
- * fs-fixtures — temporary-directory helpers for integration tests
+ * fs-fixtures -- temporary-directory helpers for integration tests
  * that want to spawn a faux `data/` tree, run a check against it,
  * then tear it down.
  *
@@ -40,7 +40,7 @@ export async function withTmpRepo<T>(fn: (root: string) => Promise<T> | T): Prom
 
 /**
  * Copy the REAL repo's `templates/`, `branding/`, and minimal package.json
- * into the tmpdir — enough scaffolding for verifier-style checks that
+ * into the tmpdir -- enough scaffolding for verifier-style checks that
  * cross-reference these files.
  */
 export async function withScaffoldedTmpRepo<T>(fn: (root: string) => Promise<T> | T): Promise<T> {

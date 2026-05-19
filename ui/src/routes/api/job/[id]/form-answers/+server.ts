@@ -8,7 +8,7 @@
  * profile.yml + the matching report and writes a pre-filled Q&A markdown
  * file to `interview-prep/{slug}-form-answers.md`. The user copies each
  * answer into the matching field on the application portal manually
- * (Path A from the plan — Path B is the bookmarklet).
+ * (Path A from the plan -- Path B is the bookmarklet).
  */
 
 import fs from 'node:fs';
@@ -123,7 +123,7 @@ export const POST = wrap(
     try {
       const out = await spawnFormAnswers(job.url, job.id, profileId);
       // Auto-seed the per-question cache from the markdown's "## {question}"
-      // headings — each Q+A pair becomes a persistent cache entry the future
+      // headings -- each Q+A pair becomes a persistent cache entry the future
       // apply-greenhouse / apply-ashby runs can look up.
       let seeded = 0;
       try {
@@ -178,7 +178,7 @@ function seedCacheFromMarkdown(profileId: string, markdown: string): number {
       saveAnswer(profileId, b.heading, answer);
       count++;
     } catch {
-      // skip — empty key after normalization, etc.
+      // skip -- empty key after normalization, etc.
     }
   }
   return count;

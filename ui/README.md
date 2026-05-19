@@ -1,4 +1,4 @@
-# `ui/` — Heron SvelteKit workspace
+# `ui/` -- Heron SvelteKit workspace
 
 <!-- AUTO-GENERATED:doc-meta -->
 *Part of the [Heron](../README.md) docs.*
@@ -75,17 +75,17 @@ From repo root, the same commands are exposed as `pnpm dev`, `pnpm build`,
   (sessions, passkeys, invite codes, audit log, pending deletions) and
   `data/app.db` (profiles, activity_events, issues, ui_prefs).
   Schemas in `src/lib/server/db/{auth,app}.schema.ts`.
-- **AsyncLocalStorage user context** — every server endpoint sets
+- **AsyncLocalStorage user context** -- every server endpoint sets
   `currentUserId()` via `hooks.server.ts:populateAuth` then `withUserContext`
   scopes every Drizzle read to that user. No endpoint accepts a raw
   `userId` param, so cross-user IDOR is structurally impossible.
-- **`wrap()` helper** (`src/lib/server/api-helpers.ts`) — every API endpoint
+- **`wrap()` helper** (`src/lib/server/api-helpers.ts`) -- every API endpoint
   uses it for try/catch + JSON envelope (`{ ok: true, ... }` /
   `{ ok: false, error: { message, code, details } }`).
 - **Capacitor 8** with custom native plugin `NativePlugin`. Bridge
   defined in `src/lib/client/native-plugin.ts`. iOS Swift side under
   `ios/App/App/NativePlugin.swift`.
-- **Backend discovery** (native apps) — `src/lib/client/backend-discovery.ts`
+- **Backend discovery** (native apps) -- `src/lib/client/backend-discovery.ts`
   probes embedded → localhost → mDNS (`_heron._tcp`) → Tailscale →
   user-configured remote, in that order, with deduped in-flight promises
   and a TTL cache.
@@ -108,19 +108,19 @@ are never touched by the test matrix.
 
 ## Native sub-targets
 
-- `ios/App/App/` — main iOS app (Capacitor WebView + Native Plugin + Spotlight indexer)
-- `ios/App/WatchApp/` — standalone watchOS app
-- `ios/App/Extensions/AppWidget/` — 4 widgets (pipeline / next-interview / top-apply / inbox-issues)
-- `ios/App/Extensions/AppLiveActivity/` — Live Activity for interview countdowns
-- `ios/App/Extensions/AppShareExtension/` — share-sheet receiver for "Save to Heron"
-- `android/` — Capacitor Android wrapper + Brand.kt
-- `electron/` — Capacitor-Electron workspace (its own `package.json`)
+- `ios/App/App/` -- main iOS app (Capacitor WebView + Native Plugin + Spotlight indexer)
+- `ios/App/WatchApp/` -- standalone watchOS app
+- `ios/App/Extensions/AppWidget/` -- 4 widgets (pipeline / next-interview / top-apply / inbox-issues)
+- `ios/App/Extensions/AppLiveActivity/` -- Live Activity for interview countdowns
+- `ios/App/Extensions/AppShareExtension/` -- share-sheet receiver for "Save to Heron"
+- `android/` -- Capacitor Android wrapper + Brand.kt
+- `electron/` -- Capacitor-Electron workspace (its own `package.json`)
 
 ## See also
 
-- Root [README](../README.md) — project overview + repo layout
-- [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) — system diagram + data flow
-- [docs/TESTING.md](../docs/TESTING.md) — full testing strategy across TS + iOS
-- [docs/WATCH.md](../docs/WATCH.md) — Apple Watch + widget specifics
-- [docs/NATIVE.md](../docs/NATIVE.md) — native-build command cheat-sheet
-- [AGENTS.md](../AGENTS.md) — AI-CLI runtime brief (data contract, mode routing)
+- Root [README](../README.md) -- project overview + repo layout
+- [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) -- system diagram + data flow
+- [docs/TESTING.md](../docs/TESTING.md) -- full testing strategy across TS + iOS
+- [docs/WATCH.md](../docs/WATCH.md) -- Apple Watch + widget specifics
+- [docs/NATIVE.md](../docs/NATIVE.md) -- native-build command cheat-sheet
+- [AGENTS.md](../AGENTS.md) -- AI-CLI runtime brief (data contract, mode routing)

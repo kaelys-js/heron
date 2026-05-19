@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * narrative-arc.mjs — career-story coherence checker.
+ * narrative-arc.mjs -- career-story coherence checker.
  *
  * A great CV tells a coherent story across roles. Recruiters and human
  * reviewers consciously and unconsciously check:
@@ -10,13 +10,13 @@
  *   • Title regression (Senior → Junior at a new company)
  *   • Industry pivots without a thread (FinTech → HealthTech → Adtech
  *     with no narrative)
- *   • Tenure thinness (every role under 18 months — looks like
+ *   • Tenure thinness (every role under 18 months -- looks like
  *     someone the candidate can't hold a job)
  *   • Flat progression (10 years, all "Software Engineer", no scope
  *     growth)
  *
  * This script parses cv.md, extracts Role + Company + Date-range +
- * Title for each entry, and surfaces red flags. It does NOT auto-fix —
+ * Title for each entry, and surfaces red flags. It does NOT auto-fix --
  * it tells the user what a human reviewer would notice so they can
  * address it in the summary / cover letter explicitly.
  *
@@ -25,10 +25,10 @@
  *   pnpm narrative:check <cv.md> --json
  *
  * Exit codes:
- *   0 — score ≥ 80 (clean career narrative)
- *   1 — score 50-79 (address findings in summary or cover letter)
- *   2 — score < 50 (significant narrative work needed before applying)
- *   3 — env / argument issue
+ *   0 -- score ≥ 80 (clean career narrative)
+ *   1 -- score 50-79 (address findings in summary or cover letter)
+ *   2 -- score < 50 (significant narrative work needed before applying)
+ *   3 -- env / argument issue
  */
 
 import { readFileSync, existsSync } from 'node:fs';
@@ -59,12 +59,12 @@ const md = readFileSync(inputPath, 'utf8');
 // ── Parse roles from cv.md ────────────────────────────────────────────
 // We accept several shapes commonly seen in markdown CVs:
 //   ### Senior Engineer · Acme · 2020-2024
-//   ### Senior Engineer @ Acme — 2020-Present
-//   ## Lead Designer | Beta Co · Apr 2018 – Mar 2020
+//   ### Senior Engineer @ Acme -- 2020-Present
+//   ## Lead Designer | Beta Co · Apr 2018 - Mar 2020
 //
 // The regex below extracts: title, company, startYear, startMonth (opt),
 // endYear (or 'Present'), endMonth (opt). Sub-headings + lists below the
-// header are ignored — we only need the role line.
+// header are ignored -- we only need the role line.
 
 const MONTH_MAP = {
   jan: 1,
@@ -100,7 +100,7 @@ function monthsBetween(a, b) {
   return (b.year - a.year) * 12 + (b.month - a.month);
 }
 
-// Pull headings that contain a 4-digit year — these are role rows.
+// Pull headings that contain a 4-digit year -- these are role rows.
 const lines = md.split('\n');
 const roles = [];
 for (const line of lines) {
@@ -111,7 +111,7 @@ for (const line of lines) {
     .replace(/^#+\s*/, '')
     .replace(/^[-*]\s*/, '')
     .trim();
-  // Common separators: · (·) | – —  · @
+  // Common separators: · (·) | - --  · @
   const parts = stripped
     .split(/[·|—–]|\s—\s|\s\|\s|\s@\s/)
     .map((p) => p.trim())
@@ -130,7 +130,7 @@ for (const line of lines) {
     }
   }
   if (!dateRange) continue;
-  // Date range: "2020-2024", "Jan 2020 – Mar 2024", "2020 - Present"
+  // Date range: "2020-2024", "Jan 2020 - Mar 2024", "2020 - Present"
   const m = dateRange.match(
     /([a-z]+\s+\d{4}|\d{4})\s*[-–—to ]+\s*([a-z]+\s+\d{4}|\d{4}|present|now|current)/i,
   );
@@ -154,7 +154,7 @@ roles.sort((a, b) => a.start.year - b.start.year || a.start.month - b.start.mont
 // ── Findings ──────────────────────────────────────────────────────────
 const findings = [];
 
-// 1. Gap years — any gap >6 months between end of role N and start of N+1
+// 1. Gap years -- any gap >6 months between end of role N and start of N+1
 for (let i = 1; i < roles.length; i++) {
   const prev = roles[i - 1];
   const cur = roles[i];
@@ -179,7 +179,7 @@ for (let i = 1; i < roles.length; i++) {
   }
 }
 
-// 2. Short stints (<9 months) — flag each
+// 2. Short stints (<9 months) -- flag each
 for (const r of roles) {
   if (r.tenureMonths > 0 && r.tenureMonths < 9) {
     findings.push({
@@ -197,7 +197,7 @@ for (const r of roles) {
   }
 }
 
-// 3. Tenure thinness — if MORE than half of roles are <18mo, flag
+// 3. Tenure thinness -- if MORE than half of roles are <18mo, flag
 const shortRoles = roles.filter((r) => r.tenureMonths > 0 && r.tenureMonths < 18).length;
 if (roles.length >= 3 && shortRoles / roles.length > 0.5) {
   findings.push({
@@ -211,7 +211,7 @@ if (roles.length >= 3 && shortRoles / roles.length > 0.5) {
   });
 }
 
-// 4. Level regression — Senior → Junior, Lead → Associate, etc.
+// 4. Level regression -- Senior → Junior, Lead → Associate, etc.
 const LEVELS = {
   intern: 0,
   junior: 1,
@@ -253,7 +253,7 @@ for (let i = 1; i < roles.length; i++) {
   }
 }
 
-// 5. No progression — last 3+ roles same level
+// 5. No progression -- last 3+ roles same level
 if (roles.length >= 3) {
   const last3 = roles.slice(-3);
   const levels = last3.map((r) => levelOf(r.title));
@@ -269,7 +269,7 @@ if (roles.length >= 3) {
   }
 }
 
-// 6. Industry pivots — count distinct industry tokens; warn if >2 with no obvious thread
+// 6. Industry pivots -- count distinct industry tokens; warn if >2 with no obvious thread
 const INDUSTRY_TOKENS = [
   'fintech',
   'banking',

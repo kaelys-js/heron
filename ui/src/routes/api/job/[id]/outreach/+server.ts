@@ -4,7 +4,7 @@
  *   POST /api/job/[id]/outreach  { persona: 'hiring-manager' | 'recruiter' | 'peer' }
  *
  * Spawns `claude -p "/heron contacto --url <url> --persona <persona>"`
- * to produce 2–3 cold-message variants tuned to the chosen persona. The
+ * to produce 2-3 cold-message variants tuned to the chosen persona. The
  * mode reads cv.md + the report file + profile.yml so the messages
  * reference the user's actual proof points instead of generic praise.
  *

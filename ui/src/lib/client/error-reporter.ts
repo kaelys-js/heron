@@ -1,5 +1,5 @@
 /**
- * error-reporter — unified, platform-aware error capture.
+ * error-reporter -- unified, platform-aware error capture.
  *
  * Every error funnels through `reportError(err, context?)`. Behavior:
  *
@@ -16,7 +16,7 @@
  *
  * The "common/shared system" the user asked for: this funnels every
  * platform into the EXISTING Heron Issues store (server-side
- * issue-store.ts) — the same store the autonomous-apply pipeline writes
+ * issue-store.ts) -- the same store the autonomous-apply pipeline writes
  * to, the same store the Inbox displays. iOS / Electron / Web errors
  * all show up alongside apply failures, IMAP errors, etc.
  *
@@ -51,13 +51,13 @@ const RATE_LIMIT_MS = 30_000; // suppress duplicate OS notifications for 30s
 const recentTags = new Map<string, number>();
 let backendUrl: string | null = null;
 
-/** Set the resolved backend URL — called once after backend-discovery. */
+/** Set the resolved backend URL -- called once after backend-discovery. */
 export function setReporterBackend(url: string | null): void {
   backendUrl = url;
   if (url) void flushQueue();
 }
 
-/** Install global handlers — onerror + onunhandledrejection + Electron IPC. */
+/** Install global handlers -- onerror + onunhandledrejection + Electron IPC. */
 export function installErrorReporter(initialBackendUrl?: string): void {
   if (initialBackendUrl) setReporterBackend(initialBackendUrl);
   if (typeof window === 'undefined') return;
@@ -73,7 +73,7 @@ export function installErrorReporter(initialBackendUrl?: string): void {
         ? e.reason
         : new Error(typeof e.reason === 'string' ? e.reason : JSON.stringify(e.reason));
     if (isBenignRejection(reason)) {
-      // Still log to the console for debugging, but don't toast or queue —
+      // Still log to the console for debugging, but don't toast or queue --
       // these are spec-defined "you navigated faster than the animation
       // finished" notices, not real errors.
       console.debug('[benign]', reason.message);
@@ -173,7 +173,7 @@ export function reportInfo(message: string, context?: ReportContext): Promise<vo
 
 /**
  * Some thrown values reach `unhandledrejection` even though they're
- * spec-defined "this is fine" notices — most notably the view-transition
+ * spec-defined "this is fine" notices -- most notably the view-transition
  * AbortError that fires when the user navigates faster than the current
  * crossfade can finish. We surface those to console (debugging is still
  * useful) but skip the user-visible toast + issue-store entry. Add new
@@ -214,7 +214,7 @@ async function sendToBackend(payload: QueuedReport): Promise<boolean> {
         route: payload.context?.route,
         data: payload.context?.data,
         capturedAt: payload.capturedAt,
-        // Stable dedupe key — same error in the same route within a
+        // Stable dedupe key -- same error in the same route within a
         // session collapses to one issue.
         dedupeKey: `client:${payload.context?.source ?? 'unknown'}:${payload.message.slice(0, 80)}`,
       }),
@@ -231,7 +231,7 @@ function queueLocally(payload: QueuedReport): void {
     const raw = localStorage.getItem(QUEUE_KEY);
     const queue: QueuedReport[] = raw ? JSON.parse(raw) : [];
     queue.push(payload);
-    // Cap queue at 50 entries — drop oldest
+    // Cap queue at 50 entries -- drop oldest
     if (queue.length > 50) queue.splice(0, queue.length - 50);
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
   } catch {

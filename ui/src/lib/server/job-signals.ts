@@ -1,10 +1,10 @@
 /**
- * job-signals — defensive heuristics over a job posting.
+ * job-signals -- defensive heuristics over a job posting.
  *
  * Two checks ship here, both run cheaply over the job's metadata +
  * deep-evaluation report text:
  *
- *   1. dysfunctionSignal — does this posting look like a long-open
+ *   1. dysfunctionSignal -- does this posting look like a long-open
  *      dysfunction marker? Signals: posting age > 60 days, re-listing
  *      pattern, "urgent hire" language combined with no recent updates.
  *      Real hiring orgs fill or close roles inside 6-8 weeks. Anything
@@ -13,7 +13,7 @@
  *      (d) hiring freeze that wasn't taken down. None of those are
  *      good for a candidate.
  *
- *   2. remoteReality — when a posting claims "remote" or "remote-
+ *   2. remoteReality -- when a posting claims "remote" or "remote-
  *      friendly", how truly remote is it? Many "remote" postings are
  *      hybrid-in-disguise (must live near hub, X days/week in office,
  *      US-only, must travel quarterly). Surfaces a verdict + the
@@ -73,7 +73,7 @@ function readReport(reportFile?: string): string {
   }
 }
 
-/** Compute the dysfunction signal for one job. Heuristic only — never
+/** Compute the dysfunction signal for one job. Heuristic only -- never
  *  blocks an apply; just shows the user "this might be a flag". */
 export function dysfunctionSignal(job: Job, profileId: string): DysfunctionSignal {
   const history = readScanHistory(profileId);
@@ -240,7 +240,7 @@ export function remoteReality(job: Job, profileId?: string): RemoteRealityCheck 
     }
   }
 
-  // Hybrid-disguise detection — overrides "remote" claim when found
+  // Hybrid-disguise detection -- overrides "remote" claim when found
   for (const { pattern, severity } of HYBRID_DISGUISES) {
     if (pattern.test(haystack)) {
       const matched = haystack.match(pattern)?.[0];

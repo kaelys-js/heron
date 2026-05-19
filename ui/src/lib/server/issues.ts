@@ -1,5 +1,5 @@
 /**
- * Issue stream — append-only persistent queue of "open problems" that need
+ * Issue stream -- append-only persistent queue of "open problems" that need
  * user attention. Distinct from the activity feed (transient information):
  * issues live in data/issues.jsonl and stay visible until explicitly resolved.
  *
@@ -34,7 +34,7 @@ function ensureDir() {
   try {
     fs.mkdirSync(path.dirname(ISSUES_PATH), { recursive: true });
   } catch {
-    // mkdir recursive only fails for permission / IO issues — write
+    // mkdir recursive only fails for permission / IO issues -- write
     // attempts below will surface those concretely with the real op name.
   }
 }
@@ -50,14 +50,14 @@ function readAll(): Issue[] {
         const ev = JSON.parse(line) as Issue;
         if (ev.id && ev.ts) out.push(ev);
       } catch {
-        // Truncated JSON line (crash mid-write) — drop and keep loading.
+        // Truncated JSON line (crash mid-write) -- drop and keep loading.
         // Re-entering logEvent from issues.ts could loop if log+issue
         // both write at the same time, so we skip silently.
       }
     }
     return out;
   } catch (e) {
-    // File read failed — return empty rather than throwing so callers
+    // File read failed -- return empty rather than throwing so callers
     // (UI badges, /api/issues) degrade gracefully. Mirror to console
     // since logEvent would also try to read this file.
     // eslint-disable-next-line no-console
@@ -125,7 +125,7 @@ export function reportIssue(input: {
       const { dbWriteIssue } = require('./db-writers') as typeof import('./db-writers');
       dbWriteIssue(next);
     } catch (e) {
-      // app.db mirror failed — JSONL is still the source of truth so
+      // app.db mirror failed -- JSONL is still the source of truth so
       // listOpenIssues() still works. Surface via console so the operator
       // notices index drift, but don't call reportServerError (that would
       // attempt a fresh issue write and could recurse).
@@ -192,7 +192,7 @@ export function listAllIssues(): Issue[] {
 }
 
 /** Mark an issue resolved by id. Returns the resolved Issue or null.
- *  Only resolves issues this user can see — prevents one user resolving
+ *  Only resolves issues this user can see -- prevents one user resolving
  *  another user's issues. */
 export function resolveIssue(id: string): Issue | null {
   const userId = maybeCurrentUserId() ?? SYSTEM_USER_ID;
@@ -215,7 +215,7 @@ export function resolveIssue(id: string): Issue | null {
       dbResolveIssue(f.userId, f.id, f.resolvedAt ?? Date.now());
     }
   } catch (e) {
-    // app.db mirror failed — JSONL is still authoritative.
+    // app.db mirror failed -- JSONL is still authoritative.
     // eslint-disable-next-line no-console
     console.error(
       '[issues] dbResolveIssue mirror failed:',

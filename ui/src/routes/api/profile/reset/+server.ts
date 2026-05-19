@@ -2,12 +2,12 @@
  * Reset of the user's profile and/or the job-search tracker (DANGER ZONE).
  *
  * RBAC:
- *   • `scope='profile'` and `scope='jobs'` — per-user. Members can reset
+ *   • `scope='profile'` and `scope='jobs'` -- per-user. Members can reset
  *     THEIR OWN profile or job data. We verify ownership: the profileId
  *     must belong to `locals.user.id` or we return 403.
- *   • `scope='everything'` — strictly destructive: blows away install-wide
+ *   • `scope='everything'` -- strictly destructive: blows away install-wide
  *     shared infra (autopilot.json, activity.jsonl, story-bank.md,
- *     onboarding-state.json, apply-counter.json). OWNER-ONLY — a member
+ *     onboarding-state.json, apply-counter.json). OWNER-ONLY -- a member
  *     resetting "everything" would wipe other users' data.
  *
  * Body: { confirm: 'RESET'; scope?: 'profile' | 'jobs' | 'everything'; profileId?: string }
@@ -49,7 +49,7 @@ export const POST = wrap(
     const requested = body.scope as ResetScope | undefined;
     const scope: ResetScope = requested && VALID_SCOPES.has(requested) ? requested : 'profile';
 
-    // `everything` wipes shared infra — strictly owner-only.
+    // `everything` wipes shared infra -- strictly owner-only.
     if (scope === 'everything') {
       requireOwner(locals);
     }
@@ -64,7 +64,7 @@ export const POST = wrap(
       profileSlug = getActiveProfile(userId)?.slug ?? 'default';
     } else {
       // Explicit slug was given but doesn't exist under this user. Either it
-      // belongs to someone else or it's stale — either way refuse rather
+      // belongs to someone else or it's stale -- either way refuse rather
       // than silently retargeting their default.
       throw error(403, `Profile "${explicit}" does not belong to you`);
     }
@@ -76,7 +76,7 @@ export const POST = wrap(
     // file is shared infrastructure.
     const resetOnboarding = body.resetOnboarding === true || scope === 'everything';
     if (resetOnboarding && fs.existsSync(ONBOARDING_STATE)) {
-      // Onboarding reset is shared-state — owner-only.
+      // Onboarding reset is shared-state -- owner-only.
       requireOwner(locals);
       try {
         fs.copyFileSync(ONBOARDING_STATE, ONBOARDING_STATE + '.bak');

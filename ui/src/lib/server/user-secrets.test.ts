@@ -1,5 +1,5 @@
 /**
- * user-secrets.test.ts — per-user encrypted credential store.
+ * user-secrets.test.ts -- per-user encrypted credential store.
  *
  * TDD spec. The implementation reads paths via `userSharedPathForUser`
  * which derives off `ROOT` from `./files`. We mock that to a tmpdir so
@@ -39,7 +39,7 @@ function secretsFileFor(userId: string): string {
 }
 
 beforeEach(() => {
-  // Fresh BETTER_AUTH_SECRET per test — the file's encryption key is
+  // Fresh BETTER_AUTH_SECRET per test -- the file's encryption key is
   // derived from it, so tests are independent only if it doesn't drift.
   process.env.BETTER_AUTH_SECRET = 'a'.repeat(64); // 64 hex chars
 });
@@ -134,7 +134,7 @@ describe('user-secrets — at-rest encryption', () => {
   });
 
   it('file mode is 0600 (owner read/write only)', () => {
-    // Skip on non-POSIX systems — Windows file modes don't map.
+    // Skip on non-POSIX systems -- Windows file modes don't map.
     if (process.platform === 'win32') return;
     setSecret(TEST_USER_A, 'X', 'y');
     const mode = fs.statSync(secretsFileFor(TEST_USER_A)).mode & 0o777;
@@ -229,7 +229,7 @@ describe('user-secrets — mjs/ts parity (CLI scripts share the same format)', (
     const prevHeron = process.env.HERON_DATA_DIR;
     process.env.HERON_DATA_DIR = path.join(TMP, 'data');
     try {
-      // Dynamic import — module is cached but the env-var read at call
+      // Dynamic import -- module is cached but the env-var read at call
       // time is what matters for path resolution.
       const mjs = await import('../../../../scripts/lib/user-secrets.mjs');
       const out = mjs.getSecret(TEST_USER_A, 'GEMINI_API_KEY');
@@ -251,7 +251,7 @@ describe('user-secrets — mjs/ts parity (CLI scripts share the same format)', (
     try {
       const mjs = await import('../../../../scripts/lib/user-secrets.mjs');
       expect(mjs.getCredential('ANTHROPIC_API_KEY')).toBe('sk-ant-per-user-WINS-LONG');
-      // Now unset CAREER_OPS_USER_ID — should fall through to process.env
+      // Now unset CAREER_OPS_USER_ID -- should fall through to process.env
       delete process.env.CAREER_OPS_USER_ID;
       expect(mjs.getCredential('ANTHROPIC_API_KEY')).toBe('env-LOSES');
     } finally {
@@ -366,7 +366,7 @@ describe('user-secrets — atomicity + durability', () => {
   });
 
   it('parent directories are auto-created', () => {
-    // Ensure the user's profile dir doesn't exist before the call —
+    // Ensure the user's profile dir doesn't exist before the call --
     // the implementation must mkdirSync({recursive: true}) on demand.
     const dir = path.dirname(secretsFileFor(TEST_USER_A));
     fs.rmSync(dir, { recursive: true, force: true });

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * build-ios-testflight — one-shot: build the iOS app and upload to TestFlight.
+ * build-ios-testflight -- one-shot: build the iOS app and upload to TestFlight.
  *
  * Runs the full Fastlane :beta lane. Requires:
  *   • Xcode + CocoaPods installed (the script offers to install)
@@ -24,7 +24,7 @@ if (!which('xcodebuild')) {
   process.exit(1);
 }
 // CocoaPods is only required when the iOS project ships a Podfile.
-// Capacitor 7+ uses Swift Package Manager by default — no Podfile, no
+// Capacitor 7+ uses Swift Package Manager by default -- no Podfile, no
 // `pod install` needed. Detect + skip if not present.
 const usesPodfile = existsSync(join(iosDir, 'Podfile'));
 if (usesPodfile && !which('pod')) {
@@ -74,7 +74,7 @@ run('pnpm', ['build'], {
 step(5, 'Syncing iOS');
 run('pnpm', ['exec', 'cap', 'sync', 'ios'], { cwd: UI });
 
-// Same self-heal as dev-ios.mjs — see comment there. xcodebuild via
+// Same self-heal as dev-ios.mjs -- see comment there. xcodebuild via
 // Fastlane will fail with "cannot find type" if any App/*.swift file
 // isn't in the App target's compile-sources phase.
 if (which('ruby') && which('gem')) {

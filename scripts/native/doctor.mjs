@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
- * doctor:native — read-only check that the repo + GitHub repo are
+ * doctor:native -- read-only check that the repo + GitHub repo are
  * release-ready.
  *
  * Three layers:
  *   1. LOCAL files exist (entitlements plist, Info.plist, Fastfile,
- *      Brand.swift, etc.) — covered by the capacitor.integration test
+ *      Brand.swift, etc.) -- covered by the capacitor.integration test
  *      suite which we delegate to for completeness.
  *   2. LOCAL env file (~/.heron/native-env) populated by
- *      `pnpm setup:native`. Optional — only needed if you want to
+ *      `pnpm setup:native`. Optional -- only needed if you want to
  *      run iOS / Mac builds from your laptop.
  *   3. GITHUB Secrets configured on the repo so CI can sign + upload.
  *      This is the gate that catches "I forgot to run setup:native"
@@ -16,9 +16,9 @@
  *      same thing.
  *
  * Exit codes:
- *   0  — everything's wired
- *   1  — missing secrets (release would fail)
- *   2  — environment issue (gh not authed, etc.)
+ *   0  -- everything's wired
+ *   1  -- missing secrets (release would fail)
+ *   2  -- environment issue (gh not authed, etc.)
  *
  * Usage:
  *   pnpm doctor:native              # human-readable

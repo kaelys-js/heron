@@ -33,7 +33,7 @@ export function truncate(s: string, n = 60): string {
 
 /**
  * Run an async action while ensuring its visible busy state lasts at least `minMs`.
- * Makes near-instant actions feel responsive — the user sees the spinner long enough
+ * Makes near-instant actions feel responsive -- the user sees the spinner long enough
  * to register that something happened, instead of a flicker.
  *
  * Use:

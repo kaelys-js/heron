@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * clean.mjs — nuke build caches across the monorepo.
+ * clean.mjs -- nuke build caches across the monorepo.
  *
  * Removes:
  *   • .turbo/                       (turbo task graph cache)
@@ -12,9 +12,9 @@
  *   • scripts/native/icons/_build/  (icon generator cache)
  *
  * Does NOT remove:
- *   • node_modules/                 — use `pnpm dlx rimraf node_modules` if needed
- *   • data/                         — that's user data, never auto-deleted
- *   • reports/, output/             — user-generated artefacts
+ *   • node_modules/                 -- use `pnpm dlx rimraf node_modules` if needed
+ *   • data/                         -- that's user data, never auto-deleted
+ *   • reports/, output/             -- user-generated artefacts
  *
  * Safe to re-run; missing dirs are skipped.
  */

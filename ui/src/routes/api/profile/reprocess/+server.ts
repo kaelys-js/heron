@@ -2,11 +2,11 @@
  * Reprocess cv.md → structured ProfileEdit suggestion.
  *
  * Reads the canonical CV, asks Claude to extract identity + narrative fields,
- * and returns the JSON. The endpoint NEVER auto-writes to profile.yml — the
+ * and returns the JSON. The endpoint NEVER auto-writes to profile.yml -- the
  * client merges the suggestion into the local edit state so the user can
  * review every field before clicking Save.
  *
- * Cost: one Anthropic call per invocation (~$0.10–$0.30 on Opus). The Profile
+ * Cost: one Anthropic call per invocation (~$0.10-$0.30 on Opus). The Profile
  * page warns the user before submitting.
  */
 

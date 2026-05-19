@@ -1,5 +1,5 @@
 /**
- * POST /api/backup/run — manual backup trigger. Owner-only.
+ * POST /api/backup/run -- manual backup trigger. Owner-only.
  *
  * Backups capture install-wide state (every user's per-user tree, the
  * auth.db, the app.db). Non-owners must not be able to trigger or read

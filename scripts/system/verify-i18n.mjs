@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * verify-i18n.mjs — assert locale-mode parity with the canonical
+ * verify-i18n.mjs -- assert locale-mode parity with the canonical
  * English `modes/*.md` set.
  *
  * Heron's mode prompts live at `modes/*.md` and drive every AI-CLI

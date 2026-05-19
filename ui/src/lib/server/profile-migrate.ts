@@ -1,5 +1,5 @@
 /**
- * profile-migrate — one-time migration from the legacy single-profile
+ * profile-migrate -- one-time migration from the legacy single-profile
  * flat layout to the new multi-profile `data/profiles/{slug}/` layout.
  *
  * Idempotent: re-running after migration succeeded is a no-op. Safe to
@@ -31,7 +31,7 @@
  *   output/*                       → data/profiles/default/output/*
  *   interview-prep/{company}-*.md  → data/profiles/default/interview-prep/*
  *
- * What we DO NOT touch (intentionally — these are shared):
+ * What we DO NOT touch (intentionally -- these are shared):
  *   .env, .playwright-*, data/sources.json, data/onboarding-state.json,
  *   data/autopilot.json, data/activity.jsonl, data/issues.jsonl,
  *   data/inbox-mbox/, *-cache.json, interview-prep/story-bank.md.
@@ -68,11 +68,11 @@ function buildMoveSpecs(): MoveSpec[] {
     { kind: 'file', src: path.join(ROOT, 'data', 'gemini-scores.tsv'), dst: dst('gemini-scores') },
     { kind: 'file', src: path.join(ROOT, 'data', 'follow-ups.md'), dst: dst('follow-ups') },
     { kind: 'file', src: path.join(ROOT, 'data', 'projects.json'), dst: dst('projects-json') },
-    // Per-profile directories — move CONTENTS not the directory itself
+    // Per-profile directories -- move CONTENTS not the directory itself
     // (so .gitkeep / system-managed entries stay where they are).
     { kind: 'dir-contents', src: path.join(ROOT, 'reports'), dst: dst('reports-dir') },
     { kind: 'dir-contents', src: path.join(ROOT, 'output'), dst: dst('output-dir') },
-    // interview-prep needs the story-bank.md exception — it's shared,
+    // interview-prep needs the story-bank.md exception -- it's shared,
     // not per-profile, so we leave it where it is.
     {
       kind: 'dir-contents',
@@ -102,7 +102,7 @@ function backupAndMove(src: string, dst: string, result: MoveResult): void {
       fs.copyFileSync(src, bak);
       result.backedUp.push(path.relative(ROOT, bak));
     } catch (e) {
-      // .bak failure is non-fatal — proceed but surface the warning.
+      // .bak failure is non-fatal -- proceed but surface the warning.
       result.errors.push({
         path: path.relative(ROOT, bak),
         message: 'backup failed: ' + (e instanceof Error ? e.message : String(e)),
@@ -110,7 +110,7 @@ function backupAndMove(src: string, dst: string, result: MoveResult): void {
     }
     // 2. Make sure dst's parent exists
     fs.mkdirSync(path.dirname(dst), { recursive: true });
-    // 3. Copy then unlink (NOT rename — rename can fail across mount points
+    // 3. Copy then unlink (NOT rename -- rename can fail across mount points
     //    and is non-atomic in failure modes).
     fs.copyFileSync(src, dst);
     fs.unlinkSync(src);
@@ -147,7 +147,7 @@ function moveDirContents(
         backupAndMove(srcPath, dstPath, result);
       } else if (stat.isDirectory()) {
         // Nested dirs (e.g. reports/ may have subdirs in some setups).
-        // Recurse — same exclude rules apply.
+        // Recurse -- same exclude rules apply.
         moveDirContents(srcPath, dstPath, result, exclude);
       }
     }
@@ -162,13 +162,13 @@ function moveDirContents(
 /**
  * Detect whether the legacy single-profile layout is present. We use the
  * presence of `cv.md` OR `config/profile.yml` at the repo root as the
- * canonical signal — either of those means "this install was created
+ * canonical signal -- either of those means "this install was created
  * before multi-profile and has real user content sitting in the flat
  * layout".
  *
  * If the profile dir already exists (someone partially migrated), we
  * still return true if any legacy file is still hanging around at the
- * old path — the migration is idempotent at the per-file level.
+ * old path -- the migration is idempotent at the per-file level.
  */
 function legacyLayoutDetected(): boolean {
   const candidates = [
@@ -183,7 +183,7 @@ function legacyLayoutDetected(): boolean {
 
 /**
  * Run the legacy single-user → multi-profile migration if needed. Safe to
- * call on every boot — exits early when profiles.json already exists AND
+ * call on every boot -- exits early when profiles.json already exists AND
  * no legacy files remain.
  *
  * Multi-user note: this only handles the pre-multi-user → single-default-
@@ -191,25 +191,25 @@ function legacyLayoutDetected(): boolean {
  * Once a real user account is created, `profiles-db.ts:maybeMigrateLegacy()`
  * copies that tree into `data/users/{ownerUserId}/profiles/default/` (the
  * "first user inherits" pattern). This function on its own never creates
- * per-user data — it only sets up the legacy single-user tree as a staging
+ * per-user data -- it only sets up the legacy single-user tree as a staging
  * area for the first signup to inherit.
  */
 export function migrateToMultiProfile(): { migrated: boolean; result?: MoveResult } {
   const profilesJsonExists = fs.existsSync(PROFILES_JSON);
 
   if (profilesJsonExists && !legacyLayoutDetected()) {
-    // Already migrated cleanly. Common case — no work to do.
+    // Already migrated cleanly. Common case -- no work to do.
     return { migrated: false };
   }
 
   // We're either:
   //  - Fresh install with legacy files (profiles.json doesn't exist yet)
   //  - Partially-migrated install (profiles.json exists but legacy files
-  //    leaked back somehow — unusual but the recursive backup-and-move
+  //    leaked back somehow -- unusual but the recursive backup-and-move
   //    handles it idempotently)
   // ensureProfileDirs() with no user context falls back to SYSTEM_USER_ID,
   // which `userProfilesRoot` maps back to the legacy `data/profiles/` root.
-  // That's the right place for the migration to land — `profiles-db.ts`
+  // That's the right place for the migration to land -- `profiles-db.ts`
   // copies from there into a real user's tree on first signup.
   ensureProfileDirs(DEFAULT_PROFILE_ID);
 
@@ -224,7 +224,7 @@ export function migrateToMultiProfile(): { migrated: boolean; result?: MoveResul
   }
 
   // Write profiles.json LAST. If anything before failed catastrophically,
-  // we want the next boot to retry the migration — which requires
+  // we want the next boot to retry the migration -- which requires
   // profiles.json to still be absent (in the no-prior-state case).
   if (!profilesJsonExists) {
     const state: ProfilesState = {

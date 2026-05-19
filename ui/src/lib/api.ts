@@ -24,7 +24,7 @@ import {
 } from '$lib/client/network-resilience';
 import { getCached, isCacheable, setCached } from '$lib/client/offline-cache';
 
-/** Capacitor Preferences + localStorage key for the bearer token —
+/** Capacitor Preferences + localStorage key for the bearer token --
  *  Set-Auth-Token from /api/auth/* responses lives here so cross-
  *  origin native sessions persist across reloads. Pulled from
  *  BRAND_STORAGE_KEYS so the key tracks brand renames. */
@@ -44,7 +44,7 @@ async function getBearerToken(): Promise<string | null> {
     const { value } = await Preferences.get({ key: BEARER_KEY });
     if (value) return value;
   } catch {
-    /* Preferences not available — fall through to localStorage */
+    /* Preferences not available -- fall through to localStorage */
   }
   if (typeof localStorage !== 'undefined') {
     return localStorage.getItem(BEARER_KEY);
@@ -59,7 +59,7 @@ export type ApiCallOpts = RequestInit & {
   /** Skip auto-toast; caller wants to render its own UI for the error. */
   inlineError?: boolean;
   /** Opt this request into the auto-retry queue. Default: GETs auto-opt-in,
-   *  mutations (POST/PUT/PATCH/DELETE) opt OUT (idempotency risk — see
+   *  mutations (POST/PUT/PATCH/DELETE) opt OUT (idempotency risk -- see
    *  network-resilience.ts). Pass `retryable: true` to force a mutation
    *  into the queue when you know it's idempotent server-side. */
   retryable?: boolean;
@@ -95,7 +95,7 @@ type ResponseBody = { ok?: boolean; error?: ErrorEnvelope | string; message?: st
 export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Promise<T> {
   const { successToast, silent, inlineError, retryable, ...init } = opts;
 
-  // Offline short-circuit — never speculatively fire mutations when
+  // Offline short-circuit -- never speculatively fire mutations when
   // offline. For cacheable GETs we can serve last-known data from
   // IndexedDB instead so authed users keep functioning behind a
   // dismissed BackendUnreachableOverlay.
@@ -140,7 +140,7 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
   }
   const fullUrl = url.startsWith('http') ? url : base + url;
 
-  // Bearer token — set by better-auth's bearer plugin after sign-in. On
+  // Bearer token -- set by better-auth's bearer plugin after sign-in. On
   // web cookie-auth still works, so the Authorization header is a no-op
   // there (the server reads whichever wins). On native it's the only
   // session signal that survives the WebView's foreign origin.
@@ -151,7 +151,7 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  // AbortController registration — the network-resilience module fires
+  // AbortController registration -- the network-resilience module fires
   // ctrl.abort() on every in-flight request when iOS NWPathMonitor
   // reports offline, so fetches don't hang on the OS TCP timeout. Caller-
   // supplied signals are bridged by register() so caller-side timeouts
@@ -175,14 +175,14 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
     // last-known value before either retrying or surfacing the error.
     // Auth'd users keep seeing their dashboard behind a dismissed
     // BackendUnreachableOverlay (M9). The retry queue (below) also
-    // fires when the network recovers — so cache + retry stack: user
+    // fires when the network recovers -- so cache + retry stack: user
     // gets stale data NOW, fresh data when network returns.
     const method = (fetchInit.method ?? 'GET').toUpperCase();
     if (method === 'GET' && isCacheable(url)) {
       const cached = await getCached<T>(url);
       if (cached) {
         // Still enqueue for retry so the cache refreshes when the
-        // network recovers — but resolve to the cached snapshot NOW.
+        // network recovers -- but resolve to the cached snapshot NOW.
         if (isRetryable(fetchInit, retryable)) {
           enqueueForRetry({
             url: fullUrl,
@@ -198,7 +198,7 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
               }
             },
             reject: () => {
-              /* swallow — caller already has cached snapshot */
+              /* swallow -- caller already has cached snapshot */
             },
           });
         }
@@ -233,7 +233,7 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
             }
           },
           reject: (err) => {
-            // Retry also failed — surface the error like the original
+            // Retry also failed -- surface the error like the original
             // failure would have. Caller's catch sees the same shape.
             const finalMsg = err instanceof Error ? err.message : String(err);
             reject(new ApiError(finalMsg, { status: 0, code: 'NETWORK' }));
@@ -278,7 +278,7 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
     const code = envelope?.code;
     const details = envelope?.details;
 
-    // F8 — session expiry: if the server says 401 AND we previously
+    // F8 -- session expiry: if the server says 401 AND we previously
     // marked the client as locally-authed, the session lapsed under us.
     // Scrub every local + App Group signal and bounce to /login so:
     //   • the Share Extension can't keep posting with the stale bearer
@@ -300,7 +300,7 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
       localStorage.getItem(AUTHED_KEY) === '1'
     ) {
       sessionExpiryHandled = true;
-      // Surface a sticky toast — the user needs to know why they're on
+      // Surface a sticky toast -- the user needs to know why they're on
       // /login. Sign-out flows go through their own UI so this only
       // fires on involuntary expiry.
       toast.warning('Your session expired', {
@@ -323,7 +323,7 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
           }
         })
         .finally(() => {
-          // Hard nav — clears in-memory store state, SvelteKit's session
+          // Hard nav -- clears in-memory store state, SvelteKit's session
           // load fns, and any pending fetches that would race the scrub.
           // Skip if we're already on /login to avoid a redirect loop.
           if (!window.location.pathname.startsWith('/login')) {
@@ -353,7 +353,7 @@ export async function apiCall<T = any>(url: string, opts: ApiCallOpts = {}): Pro
     }
   }
   // Write-through to the offline cache for cacheable GETs. Fire-and-
-  // forget — the cache is a fallback, never blocking the request path.
+  // forget -- the cache is a fallback, never blocking the request path.
   const method = (fetchInit.method ?? 'GET').toUpperCase();
   if (method === 'GET' && data && isCacheable(url)) {
     void setCached(url, data);

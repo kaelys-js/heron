@@ -1,11 +1,11 @@
 /**
- * auth-helpers — server-side helpers that build on top of Better Auth.
+ * auth-helpers -- server-side helpers that build on top of Better Auth.
  *
- * Layer 1 — authentication (is there a session?):
+ * Layer 1 -- authentication (is there a session?):
  *   • requireUser(locals)         → user or 401
  *   • requireUserId(locals)       → user id or 401
  *
- * Layer 2 — role-based access control (is this user allowed to do X?):
+ * Layer 2 -- role-based access control (is this user allowed to do X?):
  *   • requireRole(locals, roles)  → user with matching role, else 403
  *   • requireOwner(locals)        → 403 unless role === 'owner'
  *   • requireOwnerOrAdmin(locals) → 403 unless role in ['owner', 'admin']
@@ -16,7 +16,7 @@
  *               reset, user role promotion).
  *   - admin   : delegated owner. Can invite/revoke users and view all
  *               users, but cannot reset the install or change owner.
- *               Currently unused by the UI — surfaced when a host
+ *               Currently unused by the UI -- surfaced when a host
  *               needs an extra trusted operator alongside the owner.
  *   - member  : a regular user. Sees only their own data. Cannot affect
  *               other users or install-wide config.
@@ -70,7 +70,7 @@ export function userIdFromEvent(event: Pick<RequestEvent, 'locals'>): string {
 
 /** Read the role of locals.user. Better Auth's session payload doesn't
  *  include the `role` column by default, so we look it up from auth.db
- *  (cached per-request). Returns 'member' if the lookup fails — safer
+ *  (cached per-request). Returns 'member' if the lookup fails -- safer
  *  fallback than promoting an unknown user to admin. */
 export function userRole(locals: App.Locals): UserRole {
   const user = requireUser(locals);
@@ -106,13 +106,13 @@ export function requireRole(locals: App.Locals, allowed: UserRole | UserRole[]):
   return user;
 }
 
-/** Owner-only endpoints — install-wide config (API keys, backups,
+/** Owner-only endpoints -- install-wide config (API keys, backups,
  *  danger-zone reset, role promotion). */
 export function requireOwner(locals: App.Locals): LocalsUser {
   return requireRole(locals, 'owner');
 }
 
-/** Owner OR admin — user management endpoints (invite codes, user list). */
+/** Owner OR admin -- user management endpoints (invite codes, user list). */
 export function requireOwnerOrAdmin(locals: App.Locals): LocalsUser {
   return requireRole(locals, ['owner', 'admin']);
 }

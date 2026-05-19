@@ -16,8 +16,8 @@
   // fullscreen) with hardcoded `top/right/bottom/left` calc()s. That broke
   // on iOS because the WebView's viewport math doesn't match desktop CSS,
   // and the resulting fullscreen overflowed the safe area. The fix is to
-  // delegate panel positioning + animations to bits-ui Sheet — `side="bottom"`
-  // for the mobile drawer, `side="right"` for the desktop side panel —
+  // delegate panel positioning + animations to bits-ui Sheet -- `side="bottom"`
+  // for the mobile drawer, `side="right"` for the desktop side panel --
   // and toggle a width override for the desktop fullscreen mode.
   let chatOpen = $state(false);
   let fullscreen = $state(false); // desktop-only toggle
@@ -150,7 +150,7 @@
         isMobile && 'rounded-t-2xl h-[85svh] max-h-[85svh] pb-[env(safe-area-inset-bottom)]',
         // Desktop compact: ~420px wide, full-height right panel. The
         // Sheet primitive's default `data-[side=right]:sm:max-w-sm` would
-        // cap at 384px — we override with our own width.
+        // cap at 384px -- we override with our own width.
         !isMobile && !fullscreen && 'w-full sm:max-w-[420px]',
         // Desktop fullscreen: edge-to-edge takeover. !important needed
         // because the Sheet primitive sets a max-width via data attrs.

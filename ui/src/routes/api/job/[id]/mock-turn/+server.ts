@@ -1,5 +1,5 @@
 /**
- * /api/job/[id]/mock-turn — one turn of the voice mock interview.
+ * /api/job/[id]/mock-turn -- one turn of the voice mock interview.
  *
  * The browser captures the user's spoken answer (via Web Speech STT),
  * POSTs it here along with the running conversation history. We spawn

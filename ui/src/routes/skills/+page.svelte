@@ -29,7 +29,7 @@
 
   let { data }: { data: { skills: Skill[] } } = $props();
 
-  // svelte-ignore state_referenced_locally — server data seeds local state.
+  // svelte-ignore state_referenced_locally -- server data seeds local state.
   let allSkills = data.skills;
 
   type CategoryFilter = 'all' | SkillCategory;
@@ -351,7 +351,7 @@
       </Sheet.Header>
 
       <div class="px-6 py-4 border-b space-y-4">
-        <!-- Run this skill — large, prominent block -->
+        <!-- Run this skill -- large, prominent block -->
         <div class="space-y-2">
           <div class="flex items-baseline justify-between gap-2">
             <div class="text-[11px] uppercase tracking-wider text-muted-foreground/80 font-medium">

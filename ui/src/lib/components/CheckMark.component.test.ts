@@ -1,7 +1,7 @@
 /**
- * CheckMark — animated checkmark used by the responsive primitives.
+ * CheckMark -- animated checkmark used by the responsive primitives.
  *
- * Simple component without snippet props — great browser-mode smoke
+ * Simple component without snippet props -- great browser-mode smoke
  * for the testing-library/svelte + Playwright wiring.
  */
 import { describe, expect, it } from 'vitest';

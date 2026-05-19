@@ -1,5 +1,5 @@
 /**
- * Per-job interview prep — cached + on-demand.
+ * Per-job interview prep -- cached + on-demand.
  *
  *   GET /api/job/[id]/interview-prep
  *     → returns the persisted file at interview-prep/{slug}.md if one exists,
@@ -7,7 +7,7 @@
  *
  *   POST /api/job/[id]/interview-prep
  *     → spawns generateInterviewPrep(), persists the result, returns the
- *       fresh markdown. Re-runs OK — overwrites the persisted file.
+ *       fresh markdown. Re-runs OK -- overwrites the persisted file.
  *
  * Auto-firing on status→Interview is handled by `auto-interview-prep.ts`
  * (a bus listener). This endpoint is the manual escape hatch.

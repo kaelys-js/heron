@@ -1,4 +1,4 @@
-# Mode: deep — Deep Research Prompt
+# Mode: deep -- Deep Research Prompt
 
 Generates a structured prompt for Perplexity/Claude/ChatGPT with 6 axes:
 

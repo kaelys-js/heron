@@ -3,14 +3,14 @@
  *
  * Returns a checklist of "are you ready for the upcoming interview" items:
  *
- *   - resume    — tailored CV PDF exists for this job
- *   - report    — deep-evaluation report exists
- *   - dossier   — job-wide pre-call dossier exists (in interview-prep/)
- *   - interviewers — at least one Interviewer record exists for this job
- *   - perInterviewerDossier — every Interviewer has a dossierPath
- *   - questions — every Interviewer has a questionsPath
- *   - drills    — has the user done a mock-interview drill in last 7 days
- *   - sleep     — interview is far enough away that there's time to prep
+ *   - resume    -- tailored CV PDF exists for this job
+ *   - report    -- deep-evaluation report exists
+ *   - dossier   -- job-wide pre-call dossier exists (in interview-prep/)
+ *   - interviewers -- at least one Interviewer record exists for this job
+ *   - perInterviewerDossier -- every Interviewer has a dossierPath
+ *   - questions -- every Interviewer has a questionsPath
+ *   - drills    -- has the user done a mock-interview drill in last 7 days
+ *   - sleep     -- interview is far enough away that there's time to prep
  *
  * Returns counts + a boolean "ready" verdict (every required item green).
  *
@@ -72,7 +72,7 @@ export const GET = wrap(
 
     const resumeOk = fileExists(job.pdfFile);
     const reportOk = fileExists(job.reportFile);
-    // Job-wide dossier — best-effort: any file in interview-prep/ matching
+    // Job-wide dossier -- best-effort: any file in interview-prep/ matching
     // the company slug + 'dossier' counts.
     const ipDir = profilePath(profileId, 'interview-prep-dir');
     let dossierOk = false;

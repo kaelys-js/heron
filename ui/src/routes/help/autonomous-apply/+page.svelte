@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * /help/autonomous-apply — risk acknowledgment + reference for the
+   * /help/autonomous-apply -- risk acknowledgment + reference for the
    * autonomous-apply pipeline. Linked from the /profile autonomous-apply
    * card and the AGENTS.md ethical-rule amendment.
    *

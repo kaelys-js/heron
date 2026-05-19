@@ -1,5 +1,5 @@
 /**
- * /sources — connection-state dashboard.
+ * /sources -- connection-state dashboard.
  *
  * Loads the merged shape (KNOWN_SOURCES × current state) plus per-source
  * 7-day pull counts derived from data/scan-history.tsv. The page renders

@@ -1,4 +1,4 @@
-/** Done-step preload — counts the connected sources + jobs in this
+/** Done-step preload -- counts the connected sources + jobs in this
  *  profile's pipeline so the celebratory summary has real numbers. */
 import { listSourcesWithState } from '$lib/server/sources';
 import { readSafe } from '$lib/server/files';

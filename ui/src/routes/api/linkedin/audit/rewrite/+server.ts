@@ -1,6 +1,6 @@
 /**
  * POST /api/linkedin/audit/rewrite
- *   body: { findings?: string[] }   — kind values to rewrite; defaults
+ *   body: { findings?: string[] }   -- kind values to rewrite; defaults
  *                                     to all unresolved text-fix findings
  *
  * Spawns the `linkedin-rewrite` mode which drafts paste-ready text per

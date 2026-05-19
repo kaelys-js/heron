@@ -333,7 +333,7 @@ export function computeStats(project: Project, jobs: Job[]): ProjectStats {
 
 /**
  * Build URL search-params string that pre-applies a project's filter on the pipeline page.
- * Used by the "Open in Pipeline" button — links like `/?from=project:abc&score=4&bg=LOW,MEDIUM&search=…`.
+ * Used by the "Open in Pipeline" button -- links like `/?from=project:abc&score=4&bg=LOW,MEDIUM&search=…`.
  */
 export function projectToPipelineQuery(project: Project): string {
   const params = new URLSearchParams();
@@ -353,7 +353,7 @@ export function projectToPipelineQuery(project: Project): string {
 }
 
 /**
- * Inverse of `projectToPipelineQuery` — used by `+page.server.ts` to seed initial filter from URL.
+ * Inverse of `projectToPipelineQuery` -- used by `+page.server.ts` to seed initial filter from URL.
  */
 export function parseFilterFromUrl(url: URL): Partial<FilterState> {
   const out: Partial<FilterState> = {};
@@ -381,7 +381,7 @@ export function parseFilterFromUrl(url: URL): Partial<FilterState> {
   if (url.searchParams.get('report') === '1') out.hasReport = true;
   const search = url.searchParams.get('search');
   if (search) out.search = search;
-  // `?source=workday-api` — single source filter, persists in URL so a
+  // `?source=workday-api` -- single source filter, persists in URL so a
   // bookmark like /pipeline?source=linkedin-alert-email gives a focused view.
   const source = url.searchParams.get('source');
   if (source) out.source = source;

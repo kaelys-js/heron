@@ -5,7 +5,7 @@
  * (transitively, via auth-helpers, profiles-db, etc.) used to open
  * the developer's REAL `data/auth.db` and `data/app.db` at module-
  * load. Tests that signed users up via Better Auth then left ghost
- * rows in users.users — and the FIRST-USER-BECOMES-OWNER rule in
+ * rows in users.users -- and the FIRST-USER-BECOMES-OWNER rule in
  * Better Auth's databaseHooks (see lib/server/auth.ts) only fires
  * when the row count is exactly zero. So after a verification run,
  * a fresh-clone user could no longer become owner.

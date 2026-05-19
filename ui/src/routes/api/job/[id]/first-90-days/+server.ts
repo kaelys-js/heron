@@ -3,9 +3,9 @@
  *
  * Draft a "First 90 Days" plan for the new role. This is the document
  * the user submits to the hiring manager either as part of the final
- * round OR after signing — both modes are supported via `phase`:
- *   • 'closing'     — used as part of the offer ask, demonstrates seriousness
- *   • 'onboarding'  — written after signing, used to align with the manager
+ * round OR after signing -- both modes are supported via `phase`:
+ *   • 'closing'     -- used as part of the offer ask, demonstrates seriousness
+ *   • 'onboarding'  -- written after signing, used to align with the manager
  *
  * The plan follows the classic 30/60/90 day breakdown:
  *   - Days 0-30: listen, learn, identify wins
@@ -28,7 +28,7 @@ type Body = {
   phase?: 'closing' | 'onboarding';
   focusAreas?: string[];
   /** When 'onboarding', the user can give a list of concrete first-week
-   *  goals — recurring 1:1s, codebase tour, etc. */
+   *  goals -- recurring 1:1s, codebase tour, etc. */
   firstWeekGoals?: string[];
 };
 

@@ -1,5 +1,5 @@
 /**
- * POST /api/notifications/clear — wipe the activity buffer.
+ * POST /api/notifications/clear -- wipe the activity buffer.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

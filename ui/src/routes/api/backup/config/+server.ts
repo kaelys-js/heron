@@ -1,5 +1,5 @@
 /**
- * GET/PUT /api/backup/config — read or update retention settings. Owner-only.
+ * GET/PUT /api/backup/config -- read or update retention settings. Owner-only.
  *
  * Retention is install-wide (every user's data is captured by the same
  * cadence), so editing the policy is the owner's job.

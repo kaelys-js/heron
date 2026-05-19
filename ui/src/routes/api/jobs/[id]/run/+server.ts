@@ -31,7 +31,7 @@ export const POST = wrap(
       args?: Record<string, unknown>;
     } | null;
     const result = await runById(params.id, body?.args);
-    // Note: don't double-write `ok` — wrap() injects it; the runById result
+    // Note: don't double-write `ok` -- wrap() injects it; the runById result
     // already includes its own ok. Strip it before merging so wrap's envelope
     // stays canonical.
     const { ok: _drop, ...rest } = result as { ok: boolean } & Record<string, unknown>;

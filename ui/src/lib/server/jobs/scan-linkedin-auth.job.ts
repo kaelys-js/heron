@@ -1,5 +1,5 @@
 /**
- * Authenticated LinkedIn scrape — wraps `scan-linkedin-auth.py`.
+ * Authenticated LinkedIn scrape -- wraps `scan-linkedin-auth.py`.
  *
  * Uses the per-user persistent Playwright session at
  * data/users/{uid}/.playwright-linkedin/ (saved
@@ -9,14 +9,14 @@
  * the consecutive-failure counter; 3 strikes → source flips to
  * Disconnected and the user gets a Reconnect prompt.
  *
- * Schedule: daily 09:15 weekdays — runs 15 min after the broad scan-all
+ * Schedule: daily 09:15 weekdays -- runs 15 min after the broad scan-all
  * fan-out so the headless browser opens during low-traffic morning hours
  * and benefits from any session refresh the user did at standup.
  *
  * Args:
- *   { dryRun?: boolean }     — pass --dry-run, no writes
- *   { maxPages?: number }    — cap pages per query (default 25)
- *   { query?: string }       — one-off override (single keyword search)
+ *   { dryRun?: boolean }     -- pass --dry-run, no writes
+ *   { maxPages?: number }    -- cap pages per query (default 25)
+ *   { query?: string }       -- one-off override (single keyword search)
  */
 
 import { spawn } from 'node:child_process';
@@ -33,7 +33,7 @@ const FOUND_RE = /Total jobs found:\s+(\d+)/i;
 
 function runScanLinkedinAuth(args?: JobArgs): Promise<JobResult> {
   return new Promise((resolve) => {
-    // Don't bother spawning if the user hasn't connected LinkedIn yet —
+    // Don't bother spawning if the user hasn't connected LinkedIn yet --
     // the script would just exit 2 (which is correct behaviour but noisy).
     const state = getSource('linkedin-auth');
     if (!state.connected) {
@@ -125,4 +125,4 @@ register({
   run: runScanLinkedinAuth,
 });
 
-// D24 — `runScanLinkedinAuth` was only used by the registry; export removed.
+// D24 -- `runScanLinkedinAuth` was only used by the registry; export removed.

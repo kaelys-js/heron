@@ -64,9 +64,9 @@
   /**
    * The validation envelope. Combines required + custom validator and
    * returns:
-   *   { state: 'idle' }      — empty, optional, or not yet touched
-   *   { state: 'valid' }     — non-empty and passes the validator
-   *   { state: 'invalid', message } — fails some check
+   *   { state: 'idle' }      -- empty, optional, or not yet touched
+   *   { state: 'valid' }     -- non-empty and passes the validator
+   *   { state: 'invalid', message } -- fails some check
    */
   type State = { state: 'idle' } | { state: 'valid' } | { state: 'invalid'; message: string };
 
@@ -84,7 +84,7 @@
   let showError = $derived(result.state === 'invalid' && (validateOn === 'input' || touched));
   // Show the green check whenever the value passes the validator. We used to
   // gate this on `touched` so a fresh field wouldn't show the check before
-  // the user interacted with it — but if the parent seeds the field with a
+  // the user interacted with it -- but if the parent seeds the field with a
   // valid value (typical on profile reload), the user expects to see the
   // ✓ immediately. Errors still wait for blur (see showError) so a partial
   // value mid-type doesn't surface "Required" prematurely.
@@ -111,7 +111,7 @@
     )}
   />
 
-  <!-- Status icon at right edge — explains itself via tooltip. -->
+  <!-- Status icon at right edge -- explains itself via tooltip. -->
   {#if showError}
     <Tooltip.Provider delayDuration={150}>
       <Tooltip.Root>

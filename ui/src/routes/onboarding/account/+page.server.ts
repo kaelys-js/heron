@@ -5,7 +5,7 @@ import { sql } from 'drizzle-orm';
 import { isGithubEnabled } from '$lib/server/auth';
 
 /**
- * Onboarding step 0 — "Create your account".
+ * Onboarding step 0 -- "Create your account".
  *
  * This is the very first thing a brand-new install asks for. Until a user
  * exists, the rest of the wizard is meaningless because we have no
@@ -17,7 +17,7 @@ import { isGithubEnabled } from '$lib/server/auth';
  *                    them through to the regular wizard.
  *   • Already authed → skip straight to /onboarding (the welcome step).
  *
- * The actual passkey/GitHub/invite-code UI lives at /signup and /login —
+ * The actual passkey/GitHub/invite-code UI lives at /signup and /login --
  * this page is just the wizard's framing of that flow so first-run users
  * don't feel dropped into a bare login screen.
  */

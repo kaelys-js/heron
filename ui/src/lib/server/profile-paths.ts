@@ -1,5 +1,5 @@
 /**
- * profile-paths — single source of truth for "where does file X for
+ * profile-paths -- single source of truth for "where does file X for
  * profile Y live on disk".
  *
  * Every read/write helper in lib/server/* that touches a per-profile file
@@ -65,9 +65,9 @@ export type ProfileFileKind =
   | 'gemini-scores'
   | 'follow-ups'
   | 'projects-json'
-  // Stage-tracking sidecars (Phase I — post-apply pipeline).
+  // Stage-tracking sidecars (Phase I -- post-apply pipeline).
   // Stored as JSON per-profile because applications.md is a markdown
-  // file with fixed columns — we'd break backward-compat by widening it.
+  // file with fixed columns -- we'd break backward-compat by widening it.
   | 'stage-state-json' // job_id → {stageHistory, lastTouchAt, nextActionDue}
   | 'interviewers-json' // job_id → [{name, title, linkedin, scheduledAt, ...}]
   | 'offers-json' // job_id → {base, bonus, equity, benchmark, counter, ...}
@@ -79,7 +79,7 @@ export type ProfileFileKind =
   | 'reports-dir'
   | 'output-dir'
   | 'interview-prep-dir'
-  // Option-C / Item-4d additions — previously at repo-root, now per-profile
+  // Option-C / Item-4d additions -- previously at repo-root, now per-profile
   // for privacy + multi-user isolation. See docs/DATA_CONTRACT.md.
   | 'jds-dir' // saved JD text files, referenced as `local:<file>` in pipeline.md
   | 'writing-samples-dir' // voice-calibration samples (emails, blog posts, etc.)
@@ -89,7 +89,7 @@ export type ProfileFileKind =
   | 'insights-cache'; // derived: per-profile pipeline insights cache
 
 /**
- * Files that live ABOVE the profile tree — shared across that user's
+ * Files that live ABOVE the profile tree -- shared across that user's
  * profiles but isolated per-user. Used for content that transcends
  * profile boundaries (e.g. STAR-story bank shared between an engineer
  * profile and a data-science profile of the same person).
@@ -171,7 +171,7 @@ function validateUserId(userId: unknown): asserts userId is string {
 /**
  * Resolve the on-disk path of a per-profile file or directory.
  *
- * Caller MUST pass a real profileId — this function does NOT default to
+ * Caller MUST pass a real profileId -- this function does NOT default to
  * the active profile. Defaulting happens at the helper-function level
  * (readProfile, readPortals, etc.) so a missing-profileId bug surfaces
  * loudly here rather than silently writing to the active profile's files.
@@ -303,7 +303,7 @@ export function userSharedPathForUser(userId: string, kind: UserSharedFileKind):
 /**
  * Resolve the persistent Chromium dir for a per-portal Playwright session.
  *
- * F20 — TS mirror of `scripts/lib/lib_playwright_auth.py::user_data_dir`.
+ * F20 -- TS mirror of `scripts/lib/lib_playwright_auth.py::user_data_dir`.
  * Pre-fix the disconnect/test endpoints used `path.join(ROOT,
  * '.playwright-' + portal)` which never matched the actual layout
  * (Python writes to `data/users/{uid}/.playwright-{portal}/`). Result:
@@ -313,7 +313,7 @@ export function userSharedPathForUser(userId: string, kind: UserSharedFileKind):
  *   multi-user → data/users/{userId}/.playwright-{portal}/
  *   legacy     → data/profiles/_shared/.playwright-{portal}/ (SYSTEM_USER)
  *
- * Caller is responsible for verifying `portal` against an allowlist —
+ * Caller is responsible for verifying `portal` against an allowlist --
  * we accept any string here so the same helper works for new portals
  * added without code changes.
  */
@@ -346,12 +346,12 @@ export function ensureProfileDirsForUser(userId: string, profileId: string): voi
   fs.mkdirSync(profilePathForUser(userId, profileId, 'jds-dir'), { recursive: true });
   fs.mkdirSync(profilePathForUser(userId, profileId, 'writing-samples-dir'), { recursive: true });
   fs.mkdirSync(profilePathForUser(userId, profileId, 'batch-dir'), { recursive: true });
-  // The user-shared dir lives one level above profiles — create it on the
+  // The user-shared dir lives one level above profiles -- create it on the
   // first profile-creation event so userSharedPath() reads always resolve.
   fs.mkdirSync(path.dirname(userSharedPathForUser(userId, 'story-bank')), { recursive: true });
 }
 
-// D20 — `profileDirExists` removed: no caller. Use `fs.existsSync(profilePath(id, 'profile-dir'))`
+// D20 -- `profileDirExists` removed: no caller. Use `fs.existsSync(profilePath(id, 'profile-dir'))`
 // directly if needed; reinstate as a helper once two+ call sites materialise.
 
 /**

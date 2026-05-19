@@ -1,5 +1,5 @@
 /**
- * lib/api — apiCall + the `api.{get,post,put,delete}` convenience map.
+ * lib/api -- apiCall + the `api.{get,post,put,delete}` convenience map.
  *
  * Uses MSW for HTTP. Mocks svelte-sonner so we can assert toast calls
  * without rendering. Mocks the online-status store to control offline
@@ -10,7 +10,7 @@ import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { BRAND_STORAGE_KEYS } from '$lib/client/brand';
 
-// Mock toast — must be hoisted before importing api.ts.
+// Mock toast -- must be hoisted before importing api.ts.
 const toastCalls = {
   error: [] as any[],
   warning: [] as any[],
@@ -30,7 +30,7 @@ vi.mock('svelte-sonner', () => ({
   },
 }));
 
-// Mock onlineStore — default online; flip per-test for offline cases.
+// Mock onlineStore -- default online; flip per-test for offline cases.
 const onlineState = { online: true };
 vi.mock('$lib/client/online-status.svelte', () => ({
   onlineStore: onlineState,
@@ -81,7 +81,7 @@ describe('apiCall — happy path', () => {
     server.use(
       http.post('*/api/x', async ({ request }) => {
         // .clone() defends against MSW 2.14 experimental-frames body
-        // re-read during multi-handler routing — see the "Body is
+        // re-read during multi-handler routing -- see the "Body is
         // unusable" error that surfaces when handlers added via
         // server.use() compete with a default match path.
         captured = await request.clone().json();
@@ -97,7 +97,7 @@ describe('apiCall — happy path', () => {
     server.use(
       http.post('*/api/x', async ({ request }) => {
         // .clone() defends against MSW 2.14 experimental-frames body
-        // re-read during multi-handler routing — see the "Body is
+        // re-read during multi-handler routing -- see the "Body is
         // unusable" error that surfaces when handlers added via
         // server.use() compete with a default match path.
         captured = await request.clone().json();
@@ -113,7 +113,7 @@ describe('apiCall — happy path', () => {
     server.use(
       http.put('*/api/x', async ({ request }) => {
         // .clone() defends against MSW 2.14 experimental-frames body
-        // re-read during multi-handler routing — see the "Body is
+        // re-read during multi-handler routing -- see the "Body is
         // unusable" error that surfaces when handlers added via
         // server.use() compete with a default match path.
         captured = await request.clone().json();

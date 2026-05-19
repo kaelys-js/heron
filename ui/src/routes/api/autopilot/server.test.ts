@@ -1,5 +1,5 @@
 /**
- * GET + POST /api/autopilot — autopilot schedule config.
+ * GET + POST /api/autopilot -- autopilot schedule config.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

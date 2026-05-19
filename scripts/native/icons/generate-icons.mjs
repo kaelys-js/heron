@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * generate-icons.mjs — render master SVG into every platform asset size.
+ * generate-icons.mjs -- render master SVG into every platform asset size.
  *
  * Inputs:
- *   ui/static/favicon.svg          (32×32 master, gradient-based — scales fine)
+ *   ui/static/favicon.svg          (32×32 master, gradient-based -- scales fine)
  *
  * Outputs:
  *   scripts/native/icons/_build/{size}.png    (raw renders)
@@ -45,13 +45,13 @@ const BRAND_NAME = (() => {
   } catch {
     // Generator runs in CI with `node scripts/native/icons/generate-icons.mjs`
     // (no apply-brand wrapper). If brand.json is missing, fall back to
-    // a brand-agnostic "icon" prefix rather than throwing — the
+    // a brand-agnostic "icon" prefix rather than throwing -- the
     // manifest just needs SOME consistent filenames.
     return 'icon';
   }
 })();
 
-// Cache key — sha256 of the source SVG bytes. If it matches the cached
+// Cache key -- sha256 of the source SVG bytes. If it matches the cached
 // value, every output PNG is already up-to-date and the whole 80-render
 // pipeline can short-circuit. Set `--force` (or env ICONS_FORCE=1) to
 // override. Cache file: `scripts/native/icons/_build/.cache-hash`.
@@ -203,7 +203,7 @@ async function main() {
   // iOS 18 supports three "appearances" per app icon: light (default),
   // dark (transparent background composited over the user's wallpaper),
   // and tinted (monochrome icon that picks up the user's accent colour).
-  // For most apps the same artwork renders correctly in all three —
+  // For most apps the same artwork renders correctly in all three --
   // tinted just gets desaturated by iOS. We register all three so the
   // App Store reports "Full iOS 18 support" rather than "Light only".
   console.log('Building iOS AppIcon.appiconset (light + dark + tinted)...');
@@ -221,7 +221,7 @@ async function main() {
       filename: slot.name,
     });
   }
-  // iOS 18 dark + tinted entries — use the same 1024 marketing artwork
+  // iOS 18 dark + tinted entries -- use the same 1024 marketing artwork
   // for each appearance. Xcode auto-derives the smaller sizes from the
   // 1024 source on devices that support per-appearance icons.
   for (const appearance of ['dark', 'tinted']) {
@@ -255,8 +255,8 @@ async function main() {
   const splashSize = 2732;
   // Logo proportion = 0.11 of the 2732 canvas. With LaunchScreen.storyboard's
   // scaleAspectFill content mode this gives a ~105pt rendered icon on iPhone
-  // 17 Pro Max (956pt screen × 0.11 = 105pt — modern-iOS-app sized, in the
-  // Notion / Things / Spotify range of 100–130pt). The boot-fallback in
+  // 17 Pro Max (956pt screen × 0.11 = 105pt -- modern-iOS-app sized, in the
+  // Notion / Things / Spotify range of 100-130pt). The boot-fallback in
   // app.html mirrors this with `max(11vh, 11vw)`, so the iOS native splash
   // and the SvelteKit boot-fallback render the icon at the SAME pixel size
   // / position. Bumping or shrinking this value REQUIRES updating the 11vh
@@ -268,13 +268,13 @@ async function main() {
     const brand = JSON.parse(await fs.readFile(brandPath, 'utf8'));
     splashBg = brand.splash?.backgroundColor ?? brand.colors?.background ?? splashBg;
   } catch {
-    /* brand.json missing — keep default */
+    /* brand.json missing -- keep default */
   }
 
   // Build the entire splash as a SINGLE composite SVG, then rasterise.
   // Doing it inline (rather than compositing PNG layers via sharp) means
   // the icon's glow is computed by an SVG filter that operates on the
-  // icon's ALPHA channel — i.e. the silhouette only. This is critical
+  // icon's ALPHA channel -- i.e. the silhouette only. This is critical
   // for visual quality: blurring the colored icon (the rocket strokes
   // + the purple squircle gradient) creates an ugly ghost-rocket bleed
   // visible behind the crisp icon. Blurring just the alpha gives a
@@ -291,7 +291,7 @@ async function main() {
   //      purple → feComposite to mask → feMerge halo behind original.
   //   3. The brand SVG inlined (read favicon.svg, extract inner content,
   //      embed scaled to `logoSize` and centered). favicon.svg already
-  //      contains its own `<defs id="bg">` gradient for the squircle —
+  //      contains its own `<defs id="bg">` gradient for the squircle --
   //      the id is a different namespace than our wrapper's gradient ids
   //      so they don't collide.
   const logoSvgText = await fs.readFile(SVG, 'utf8');
@@ -344,7 +344,7 @@ async function main() {
   for (const name of ['splash-2732x2732.png', 'splash-2732x2732-1.png', 'splash-2732x2732-2.png']) {
     await fs.writeFile(path.join(splashDir, name), splashBuffer);
   }
-  // Contents.json — preserve the @1x/@2x/@3x mapping Capacitor wrote.
+  // Contents.json -- preserve the @1x/@2x/@3x mapping Capacitor wrote.
   await fs.writeFile(
     path.join(splashDir, 'Contents.json'),
     JSON.stringify(
@@ -369,7 +369,7 @@ async function main() {
   await renderAtSize(sharp, svgBuffer, 256, path.join(electronBuild, 'icon-256.png'));
   await renderAtSize(sharp, svgBuffer, 1024, path.join(electronBuild, 'icon-1024.png'));
 
-  // .icns (macOS) — prefer iconutil (macOS-native, best output) and fall
+  // .icns (macOS) -- prefer iconutil (macOS-native, best output) and fall
   // back to png2icns (libicns, available on Linux CI via icnsutils).
   // Both produce the same wire format; iconutil's output is just a hair
   // smaller because it deduplicates @1x/@2x pairs.
@@ -436,7 +436,7 @@ async function main() {
     );
   }
 
-  // .ico (Windows) — ImageMagick v7 ships `magick`; Ubuntu 24.04 still
+  // .ico (Windows) -- ImageMagick v7 ships `magick`; Ubuntu 24.04 still
   // ships v6 with `convert`. Both produce identical .ico output for our
   // input set; the v6 syntax is `convert inputs output`.
   const icoPath = path.join(electronBuild, 'icon.ico');
@@ -467,7 +467,7 @@ async function main() {
   // Android uses density-suffixed dirs: mipmap-mdpi (1x = 48), -hdpi (1.5x = 72),
   // -xhdpi (2x = 96), -xxhdpi (3x = 144), -xxxhdpi (4x = 192).
   // For each density we ship: ic_launcher (square), ic_launcher_round (round),
-  // ic_launcher_foreground (adaptive icon foreground — full color, square).
+  // ic_launcher_foreground (adaptive icon foreground -- full color, square).
   const androidRoot = path.join(ROOT, 'ui/android/app/src/main/res');
   if (
     await fs
@@ -488,7 +488,7 @@ async function main() {
       await fs.mkdir(ddir, { recursive: true });
       await renderAtSize(sharp, svgBuffer, d.size, path.join(ddir, 'ic_launcher.png'));
       await renderAtSize(sharp, svgBuffer, d.size, path.join(ddir, 'ic_launcher_round.png'));
-      // Adaptive icon foreground — Android letterboxes/masks it, so render
+      // Adaptive icon foreground -- Android letterboxes/masks it, so render
       // at 108dp×108dp at the appropriate density. The safe zone is 66dp
       // centered, so we render the full SVG at the safe size and inset.
       const adaptiveSize = Math.round((d.size * 108) / 48);
@@ -529,7 +529,7 @@ async function main() {
       console.log('  watchOS AppIcon-1024.png rendered');
     }
   } catch {
-    /* watch target not present yet — skip */
+    /* watch target not present yet -- skip */
   }
 
   // ---- favicon.ico ----
@@ -546,7 +546,7 @@ async function main() {
     execSync(`magick ${inputs} "${faviconIco}"`, { stdio: 'inherit' });
     console.log('  favicon.ico generated (multi-size via ImageMagick)');
   } catch {
-    // Fallback: write a single-size 32x32 PNG masquerading as .ico —
+    // Fallback: write a single-size 32x32 PNG masquerading as .ico --
     // browsers accept this gracefully. ImageMagick is the right way
     // to build a true ICO container.
     try {

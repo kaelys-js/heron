@@ -1,5 +1,5 @@
 /**
- * safe-markdown — XSS-safe markdown → HTML renderer.
+ * safe-markdown -- XSS-safe markdown → HTML renderer.
  *
  * The dashboard renders AI-generated markdown (CVs, cover letters,
  * interview prep, negotiation drafts, evaluation reports) via Svelte's
@@ -9,7 +9,7 @@
  *   • LLM output that may have echoed-back JD content verbatim
  *   • User-edited files (CV, profile, portfolio)
  *
- * `marked.parse()` alone is NOT a sanitizer — it preserves raw HTML in
+ * `marked.parse()` alone is NOT a sanitizer -- it preserves raw HTML in
  * markdown, including `<script>` and event-handler attributes. Without
  * post-processing, a malicious JD could embed `<img onerror>` and run
  * arbitrary code in our dashboard origin (which holds session cookies +
@@ -21,8 +21,8 @@
  * audit can confirm.
  *
  * Implementation:
- *   1. `marked.parse(md)` — markdown → HTML string
- *   2. `DOMPurify.sanitize(html)` — strip script tags, event handlers,
+ *   1. `marked.parse(md)` -- markdown → HTML string
+ *   2. `DOMPurify.sanitize(html)` -- strip script tags, event handlers,
  *      javascript: URIs, data: URIs (except images), and any attribute
  *      not on the allowlist.
  *
@@ -129,7 +129,7 @@ export function renderMarkdown(md: string | null | undefined): string {
     // and other dangerous URIs.
     ALLOWED_URI_REGEXP: /^(https?:|mailto:|tel:|#|\/|\.\.?\/)/i,
     // Add rel="noopener noreferrer" to every external link automatically
-    // — pairs with target="_blank" to prevent tabnabbing.
+    // -- pairs with target="_blank" to prevent tabnabbing.
     ADD_ATTR: ['target', 'rel'],
     // Force every <a target=_blank> to carry safe rel.
     ADD_TAGS: [],
@@ -148,13 +148,13 @@ export function renderMarkdown(md: string | null | undefined): string {
     ],
     SANITIZE_DOM: true,
     KEEP_CONTENT: true,
-    // Disable XML namespaces (SVG / MathML) — markdown shouldn't need them
+    // Disable XML namespaces (SVG / MathML) -- markdown shouldn't need them
     // and they're a common XSS vector via <svg onload=…>.
     USE_PROFILES: { html: true },
   });
 }
 
-/** Inline-only variant — strips block-level wrappers. For single-line
+/** Inline-only variant -- strips block-level wrappers. For single-line
  *  fields like job titles, company names, etc. where we want bold/italic
  *  emphasis but no headings/lists. */
 export function renderMarkdownInline(md: string | null | undefined): string {

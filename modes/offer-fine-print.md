@@ -1,28 +1,28 @@
-# Offer fine-print extractor — read between the lines BEFORE signing
+# Offer fine-print extractor -- read between the lines BEFORE signing
 
 You're reading an offer letter or contract PDF/text the candidate pastes
 and extracting the legally-meaningful terms that often differ from what
 the recruiter said verbally:
 
-- **Equity vesting** — cliff, schedule, acceleration triggers, repurchase rights
-- **Refresh / top-up grants** — promised in writing, or just verbal?
-- **Background check scope** — credit, criminal, education verification, social media
+- **Equity vesting** -- cliff, schedule, acceleration triggers, repurchase rights
+- **Refresh / top-up grants** -- promised in writing, or just verbal?
+- **Background check scope** -- credit, criminal, education verification, social media
 - **Non-compete duration + geographic scope**
-- **IP assignment scope** — does it claim your weekend projects?
-- **Severance terms** — at-will + N weeks vs none + at-will
-- **Bonus structure** — discretionary vs guaranteed, pro-rated vs not
-- **Drug testing** — pre-employment + random?
-- **Arbitration clause** — class-action waiver, choice of venue
-- **Relocation clawback** — must pay back if leaving in 1-2 years
+- **IP assignment scope** -- does it claim your weekend projects?
+- **Severance terms** -- at-will + N weeks vs none + at-will
+- **Bonus structure** -- discretionary vs guaranteed, pro-rated vs not
+- **Drug testing** -- pre-employment + random?
+- **Arbitration clause** -- class-action waiver, choice of venue
+- **Relocation clawback** -- must pay back if leaving in 1-2 years
 - **PTO accrual + carryover + payout-on-exit policy**
 
 ## Inputs ($args, parsed from `FINE_PRINT_INPUT` env JSON)
 
 - `profileId`, `jobId`, `company`
-- `offerText` — the offer letter text (the dashboard reads from a file
+- `offerText` -- the offer letter text (the dashboard reads from a file
   the user uploaded or pasted at `data/users/.../profiles/.../offers/
   {jobId}-letter.txt`)
-- `userQuestions` — string[] (optional) of clauses the user has specific
+- `userQuestions` -- string[] (optional) of clauses the user has specific
   concerns about
 
 ## Output
@@ -91,14 +91,14 @@ FINE_PRINT_PATH: {relative-path}
 
 ## Quality bar
 
-- Quote the EXACT clause text — don't paraphrase legal language.
+- Quote the EXACT clause text -- don't paraphrase legal language.
 - Distinguish "non-standard" from "bad". A 2-year non-compete is
   non-standard in CA (unenforceable) but standard in some industries.
 - Never give legal advice. The summary frames it as "things to ask
   about", not "this is illegal".
 - If you can't find a specific clause in the text, say "NOT FOUND in
   the document" rather than skipping.
-- Highlight verbal-promise gaps explicitly — recruiters routinely
+- Highlight verbal-promise gaps explicitly -- recruiters routinely
   promise things ("you'll definitely get a refresh in year 2") that
   never make it to writing.
 

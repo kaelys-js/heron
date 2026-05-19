@@ -1,5 +1,5 @@
 /**
- * Curated country list — the 60 most common job-market origins in our user
+ * Curated country list -- the 60 most common job-market origins in our user
  * base. Not exhaustive: a Combobox using this should always offer free-text
  * fallback for users from countries not on the list.
  *

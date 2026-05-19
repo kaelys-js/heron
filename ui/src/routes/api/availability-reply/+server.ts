@@ -1,5 +1,5 @@
 /**
- * /api/availability-reply — draft the "here are 3 times" recruiter reply.
+ * /api/availability-reply -- draft the "here are 3 times" recruiter reply.
  *
  * POST body: { recruiterFirstName?, company?, role?, timezone? }
  * GET ?company=&role=&recruiter=  (convenience for query-param callers)
@@ -7,7 +7,7 @@
  * Returns: { subject, body, slots: [{startIso, label}], calendarUrl?, warning? }
  *
  * Stateless. The user copies the body into their mail client. We never
- * send mail — per AGENTS.md, recruiter communications are never
+ * send mail -- per AGENTS.md, recruiter communications are never
  * autonomous, even with opt-in.
  */
 

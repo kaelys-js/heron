@@ -1,5 +1,5 @@
 /**
- * POST /api/backup/run — owner-only manual backup trigger.
+ * POST /api/backup/run -- owner-only manual backup trigger.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

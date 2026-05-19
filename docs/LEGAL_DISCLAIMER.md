@@ -14,7 +14,7 @@ Users download the code, run it on their own machines, and connect it to their o
 
 The maintainers do not act as a Data Controller or Data Processor under GDPR or any other data protection regulation.
 
-- All Personal Identifiable Information (PII) you input — CVs, contact details, career history — is processed locally on your machine.
+- All Personal Identifiable Information (PII) you input -- CVs, contact details, career history -- is processed locally on your machine.
 - When you use an AI CLI tool (Claude Code, Codex, OpenCode), your data is sent directly to the AI provider you chose. Review their privacy policies.
 - We do not collect analytics, telemetry, or usage data of any kind.
 - API keys, credentials, and personal files are gitignored by default. Never commit them to a public fork.
@@ -34,7 +34,7 @@ Heron interacts with career portals and job boards (Greenhouse, Lever, Ashby, Wo
 - Users must comply with the Terms of Service of every platform they interact with.
 - Do not use this tool to scrape platforms that prohibit automated access.
 - Do not use this tool to spam employers, overwhelm ATS systems, or submit mass applications.
-- Any consequences from ToS violations — including IP bans, account restrictions, or legal action from platforms — are solely the responsibility of the user.
+- Any consequences from ToS violations -- including IP bans, account restrictions, or legal action from platforms -- are solely the responsibility of the user.
 - The maintainers actively reject contributions that facilitate ToS violations (see ../.github/CONTRIBUTING.md).
 
 ## 5. Acceptable Use

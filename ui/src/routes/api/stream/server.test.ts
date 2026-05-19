@@ -1,5 +1,5 @@
 /**
- * GET /api/stream — SSE activity feed (user-scoped).
+ * GET /api/stream -- SSE activity feed (user-scoped).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EventEmitter } from 'node:events';

@@ -1,5 +1,5 @@
 /**
- * /api/job/[id]/interview-retro — spawn the interview-retro Claude mode.
+ * /api/job/[id]/interview-retro -- spawn the interview-retro Claude mode.
  *
  * POST body: { stage, notes, outcome }
  *

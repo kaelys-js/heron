@@ -41,7 +41,7 @@
     applyCandidates = [] as Job[],
     /** Jobs that should get a tailored CV (typically scored ≥4 without a PDF). */
     cvCandidates = [] as Job[],
-    /** Visual size — use 'compact' for inline placement in pipeline header,
+    /** Visual size -- use 'compact' for inline placement in pipeline header,
         'full' for the standalone Inbox bar. */
     size = 'compact' as 'compact' | 'full',
     /** Custom labels for the buttons (allows context-specific phrasing). */

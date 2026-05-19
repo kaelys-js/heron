@@ -1,4 +1,4 @@
-# Mode: batch — Mass Processing of Jobs
+# Mode: batch -- Mass Processing of Jobs
 
 Two usage modes: **conductor --chrome** (navigates portals in real time) or **standalone** (script for URLs already collected).
 
@@ -64,11 +64,11 @@ scripts/batch/batch-runner.sh [OPTIONS]
 ```
 
 Options:
-- `--dry-run` — list pending jobs without executing
-- `--retry-failed` — retry only failed jobs
-- `--start-from N` — start from ID N
-- `--parallel N` — N workers in parallel
-- `--max-retries N` — attempts per job (default: 2)
+- `--dry-run` -- list pending jobs without executing
+- `--retry-failed` -- retry only failed jobs
+- `--start-from N` -- start from ID N
+- `--parallel N` -- N workers in parallel
+- `--max-retries N` -- attempts per job (default: 2)
 
 ## batch-state.tsv Format
 
@@ -87,7 +87,7 @@ id	url	status	started_at	completed_at	report_num	score	error	retries
 
 ## Workers (headless mode)
 
-Each worker receives `batch-prompt.md` as a system prompt. It is self-contained. Use your CLI's headless command — see the **Headless / Batch Mode** table in `AGENTS.md`.
+Each worker receives `batch-prompt.md` as a system prompt. It is self-contained. Use your CLI's headless command -- see the **Headless / Batch Mode** table in `AGENTS.md`.
 
 The worker produces:
 1. `.md` report in `__REPORTS__/`

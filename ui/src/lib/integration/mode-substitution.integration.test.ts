@@ -1,10 +1,10 @@
 /**
- * mode-substitution.integration.test.ts — assert every modes/*.md
+ * mode-substitution.integration.test.ts -- assert every modes/*.md
  * file substitutes cleanly + leaves no token literals + leaves no
  * legacy repo-root literal paths.
  *
  * Runs at the integration level (not unit) because it touches the
- * real `modes/` tree on disk. Spawns no processes — purely textual.
+ * real `modes/` tree on disk. Spawns no processes -- purely textual.
  */
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -17,7 +17,7 @@ const MODES_DIR = join(ROOT, 'modes');
 const TEST_PROFILE = 'default';
 const TEST_USER = SYSTEM_USER_ID;
 
-// Files the migration intentionally SKIPPED — they reference legacy
+// Files the migration intentionally SKIPPED -- they reference legacy
 // paths AS DATA, not as instructions.
 const SKIP_FILES = new Set<string>([
   '_TOKENS.md', // documents what the tokens replace
@@ -56,7 +56,7 @@ describe('mode-substitution end-to-end', () => {
       const substituted = substituteModeTokensForUser(TEST_USER, TEST_PROFILE, source);
 
       // No __KNOWN_TOKEN__ literals should remain after substitution.
-      // Unknown __FOO__ tokens DO remain (intentional — typos visible),
+      // Unknown __FOO__ tokens DO remain (intentional -- typos visible),
       // so this asserts only the closed set is fully resolved.
       for (const tok of listKnownTokens()) {
         expect(substituted, `${rel} still contains ${tok}`).not.toContain(tok);
@@ -74,7 +74,7 @@ describe('mode-substitution end-to-end', () => {
       { name: 'pipeline.md', re: /\bpipeline\.md\b/ },
       { name: 'applications.md', re: /\bapplications\.md\b/ },
       { name: 'scan-history.tsv', re: /\bscan-history\.tsv\b/ },
-      // Dir prefixes — these only show as `<dir>/<file>` references
+      // Dir prefixes -- these only show as `<dir>/<file>` references
       { name: 'jds/', re: /\bjds\// },
       { name: 'reports/', re: /\breports\// },
       { name: 'output/', re: /\boutput\// },

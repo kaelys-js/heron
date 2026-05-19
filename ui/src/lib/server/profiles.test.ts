@@ -1,5 +1,5 @@
 /**
- * lib/server/profiles — legacy facade over profiles-db.
+ * lib/server/profiles -- legacy facade over profiles-db.
  *
  * This file exposes the legacy single-user API (readProfiles,
  * getActiveProfileId, createProfile, etc.) but routes every call

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * dev-desktop — one-shot: spin up the dev server AND the Electron window.
+ * dev-desktop -- one-shot: spin up the dev server AND the Electron window.
  *
  * Equivalent to running two terminals:
  *   Terminal 1: cd ui && pnpm dev
@@ -28,7 +28,7 @@ import { homedir, platform as nodePlatform } from 'node:os';
 
 /** Electron's @electron/get cache directory per OS. Poisoned entries
  *  (truncated / aborted downloads) cause `install.js` to extract a
- *  cached zip that only contains LICENSES.chromium.html — exits 0,
+ *  cached zip that only contains LICENSES.chromium.html -- exits 0,
  *  but no binary + no path.txt. The user then sees the misleading
  *  "Electron failed to install correctly" runtime error. */
 function electronCacheDir() {
@@ -56,16 +56,16 @@ run('npm', ['install', '--no-audit', '--no-fund', '--foreground-scripts'], {
   allowFail: true,
 });
 
-// Step 3.5 — self-heal a partially-installed electron binary.
+// Step 3.5 -- self-heal a partially-installed electron binary.
 //
 // Three failure modes we recover from automatically:
-//   (a) postinstall never ran (silent-flag + npm quirks) — path.txt missing,
+//   (a) postinstall never ran (silent-flag + npm quirks) -- path.txt missing,
 //       dist/ empty. Fix: run install.js in foreground.
-//   (b) postinstall ran but cache is poisoned — install.js extracts a
+//   (b) postinstall ran but cache is poisoned -- install.js extracts a
 //       truncated zip that contains only LICENSES.chromium.html, then
 //       silently exits 0 without writing path.txt. Fix: nuke the cache
 //       directory + re-run install.js with force_no_cache=true.
-//   (c) the binary itself is corrupted post-extract — dist/version is
+//   (c) the binary itself is corrupted post-extract -- dist/version is
 //       missing or doesn't match the package's version. Treated same as (b).
 const pathTxt = join(electronModule, 'path.txt');
 const installJs = join(electronModule, 'install.js');
@@ -90,7 +90,7 @@ if (existsSync(electronModule) && existsSync(installJs) && !electronBinaryHealth
   run('node', ['install.js'], { cwd: electronModule, allowFail: true });
 
   if (!electronBinaryHealthy()) {
-    // Attempt 2: cache is poisoned — clear it + force a fresh download.
+    // Attempt 2: cache is poisoned -- clear it + force a fresh download.
     const cacheDir = electronCacheDir();
     warn('install.js exited but binary still missing — clearing electron cache at ' + cacheDir);
     try {

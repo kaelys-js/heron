@@ -1,5 +1,5 @@
 /**
- * /api/job/[id]/comp-preflight — return the pre-call comp pre-flight.
+ * /api/job/[id]/comp-preflight -- return the pre-call comp pre-flight.
  *
  * GET → { ask, walkaway, currency, advice, warning? }
  *

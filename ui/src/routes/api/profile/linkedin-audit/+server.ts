@@ -1,5 +1,5 @@
 /**
- * /api/profile/linkedin-audit — audit the user's LinkedIn profile for
+ * /api/profile/linkedin-audit -- audit the user's LinkedIn profile for
  * recruiter SEARCH visibility (different from ATS keyword matching).
  *
  * POST body: { linkedinUrl: string }

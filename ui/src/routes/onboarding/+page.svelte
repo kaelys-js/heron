@@ -119,7 +119,7 @@
     if (creating) return;
     creating = true;
     try {
-      // POST to /api/profiles/active doesn't create — we need a CREATE
+      // POST to /api/profiles/active doesn't create -- we need a CREATE
       // endpoint. Since /api/profiles supports POST creation? Let me use
       // the profiles.ts createProfile via a dedicated POST.
       const r = await fetch('/api/profiles', {

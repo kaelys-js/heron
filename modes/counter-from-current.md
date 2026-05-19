@@ -1,9 +1,9 @@
-# Counter from current employer — should you take it?
+# Counter from current employer -- should you take it?
 
 Your current employer just made a counter-offer to keep you. This mode
 runs an EV-of-staying calculation + drafts a response.
 
-The conventional wisdom is "never accept a counter — 80% leave within
+The conventional wisdom is "never accept a counter -- 80% leave within
 12 months anyway". That's directionally true but wrong when applied
 blindly. Real factors that matter:
 
@@ -16,13 +16,13 @@ blindly. Real factors that matter:
 ## Inputs ($args, parsed from `COUNTER_FROM_CURRENT_INPUT` env JSON)
 
 - `profileId`, `jobId` (the new-employer job in question), `newCompany`, `newRole`
-- `currentEmployer` — current company name
+- `currentEmployer` -- current company name
 - `currentTitle`, `currentTC`, `currentTenureYears`
 - `newOfferTC`, `newOfferLevel`
-- `counterOffer` — what current employer is offering: `{ newTitle?, newTC, otherChanges?: string[] }`
-- `whyLooking` — string the user wrote: 2-4 sentences on why they started
+- `counterOffer` -- what current employer is offering: `{ newTitle?, newTC, otherChanges?: string[] }`
+- `whyLooking` -- string the user wrote: 2-4 sentences on why they started
   job-searching in the first place
-- `whatChangedSinceTalking` — string the user wrote: what (if anything)
+- `whatChangedSinceTalking` -- string the user wrote: what (if anything)
   changed at current employer between starting the search and the counter
   arriving
 
@@ -97,7 +97,7 @@ against the specific counter.)_
 Hi {current manager},
 
 Thank you for the counter-offer and the conversation today. I've
-thought about it carefully, and I want to stay — [specific reason that
+thought about it carefully, and I want to stay -- [specific reason that
 maps to whyLooking]. I'd like to formalise the changes we discussed in
 writing this week.
 ```text
@@ -110,7 +110,7 @@ Hi {current manager},
 Thank you again for the counter and the trust it represents. I've
 made my decision and will be moving forward with the other opportunity.
 [Specific reason that's honest but not burning bridges.] I'd like to
-make this transition as smooth as possible — happy to discuss handoff
+make this transition as smooth as possible -- happy to discuss handoff
 priorities tomorrow.
 ```text
 
@@ -120,7 +120,7 @@ priorities tomorrow.
 Hi {newCompany recruiter},
 
 I want to be transparent with you: my current employer counter-offered
-at {amount}. I'm still strongly inclined toward your role — for [reason
+at {amount}. I'm still strongly inclined toward your role -- for [reason
 that matters to them: mission/team/scope]. But I want to make sure my
 move is the right call financially too. Can we revisit {comp / equity /
 signing} in light of this?
@@ -137,8 +137,8 @@ COUNTER_PATH: {relative-path}
 
 - Be honest. If the counter genuinely addresses the root cause + the
   new offer has real ramp risk, RECOMMEND STAYING. Don't default to
-  "always take the new offer" — that's lazy.
+  "always take the new offer" -- that's lazy.
 - Make the EV math visible. The user should be able to argue with your
   numbers, not just accept them.
-- The draft responses are STARTING points — the user adapts them.
+- The draft responses are STARTING points -- the user adapts them.
 - Never tell the user what to do; surface trade-offs.

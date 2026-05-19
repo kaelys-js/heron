@@ -1,5 +1,5 @@
 /**
- * Pluggable job registry — a Map<id, JobDef> singleton populated at module
+ * Pluggable job registry -- a Map<id, JobDef> singleton populated at module
  * init time by individual `*.job.ts` modules.
  *
  * Designed to coexist with the legacy `runScan / runGemini / runLinkedInApply`
@@ -7,7 +7,7 @@
  * for backward compatibility; we additionally register them here so that:
  *  - The Agents page (lists all `allowManual: true` jobs)
  *  - Autopilot's scheduler (honors `trigger: daily | weekly` for every
- *    registered job — see `autopilot.ts:tick()`)
+ *    registered job -- see `autopilot.ts:tick()`)
  *  - `/api/jobs/[id]/run` (the manual-trigger HTTP endpoint)
  *  - After-event chains (`installAfterListener` below)
  * all see the same canonical set.
@@ -37,7 +37,7 @@ export function register(def: JobDef): void {
   registry.set(def.id, def);
 }
 
-// D21 — `unregister` removed: no caller (HMR re-imports replace via
+// D21 -- `unregister` removed: no caller (HMR re-imports replace via
 // `register`'s last-writer-wins semantics, which already covers the
 // reload case the function was anticipating).
 
@@ -82,7 +82,7 @@ export function listSummaries(): JobSummary[] {
  *
  * If a caller is ALREADY inside a user context (manual /api/jobs/[id]/run
  * with the acting user, or after-trigger chained inside an existing
- * user context), the existing context is preserved — no double fan-out.
+ * user context), the existing context is preserved -- no double fan-out.
  */
 export async function runById(id: string, args?: JobArgs): Promise<JobResult> {
   const def = registry.get(id);
@@ -103,7 +103,7 @@ export async function runById(id: string, args?: JobArgs): Promise<JobResult> {
     );
     const existingUser = maybeCurrentUserId();
     if (existingUser && existingUser !== SYSTEM_USER_ID) {
-      // Manual run hit by an authenticated user — scope to THAT user only.
+      // Manual run hit by an authenticated user -- scope to THAT user only.
       return await def.run(args);
     }
     // Scheduled / system-triggered: fan out across every schedulable user.
@@ -142,7 +142,7 @@ export function isRunning(id: string): boolean {
 
 /**
  * Install a single bus listener that fires `after`-triggered jobs when any
- * upstream task emits a success-level event. Idempotent — calling twice is
+ * upstream task emits a success-level event. Idempotent -- calling twice is
  * a no-op.
  *
  * The listener fires on ANY level=success event whose source matches one of
@@ -156,7 +156,7 @@ export function isRunning(id: string): boolean {
  * trigger" notification events (source=jobId, title starts with 'After-trigger').
  */
 export function installAfterListener(): void {
-  // installBusListener is idempotent across HMR — re-call replaces the
+  // installBusListener is idempotent across HMR -- re-call replaces the
   // previous listener instead of stacking. See events.ts for rationale.
   installBusListener('jobs/registry/after', (ev: ActivityEvent) => {
     if (ev.level !== 'success') return;
@@ -168,7 +168,7 @@ export function installAfterListener(): void {
       if (!def.trigger.tasks.includes(finishedId)) continue;
       // Don't chain a job to its own success event
       if (def.id === finishedId) continue;
-      // Fire and forget — log if it errors
+      // Fire and forget -- log if it errors
       logEvent(def.id, 'After-trigger from ' + finishedId, {
         category: 'system',
         message: def.label,

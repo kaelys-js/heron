@@ -1,10 +1,10 @@
 /**
- * /api/comp-eval — evaluate a structured offer.
+ * /api/comp-eval -- evaluate a structured offer.
  *
  * POST body: OfferInput (see comp-math.ts).
  * Returns: OfferEvaluation.
  *
- * Stateless — no DB writes. The UI submits the form, gets back the
+ * Stateless -- no DB writes. The UI submits the form, gets back the
  * per-year breakdown + year-1 cash + 4-year totals + equity NPV, and
  * renders them. Save-for-later is handled client-side via localStorage
  * for now (multi-offer comparison can graduate to per-job-attached

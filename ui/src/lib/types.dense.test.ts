@@ -1,5 +1,5 @@
 /**
- * lib/types — dense table-driven cases for every Status / tab / source.
+ * lib/types -- dense table-driven cases for every Status / tab / source.
  */
 import { describe, expect, it } from 'vitest';
 import {

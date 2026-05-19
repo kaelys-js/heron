@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * _bump-versions — set the version field in both package.json files.
+ * _bump-versions -- set the version field in both package.json files.
  *
  * Called by semantic-release via the @semantic-release/exec plugin
  * (verifyReleaseCmd) with the resolved next version. Keeping root and

@@ -2,8 +2,8 @@
  * API helpers for consistent ok/error envelope and centralized try/catch.
  *
  * Every endpoint should return either:
- *   { ok: true, ...data }                                — success
- *   { ok: false, error: { message, code?, details? } }   — failure
+ *   { ok: true, ...data }                                -- success
+ *   { ok: false, error: { message, code?, details? } }   -- failure
  *
  * @module
  */

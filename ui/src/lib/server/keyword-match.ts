@@ -1,12 +1,12 @@
 /**
- * keyword-match — deterministic JD ⇄ CV keyword-overlap score.
+ * keyword-match -- deterministic JD ⇄ CV keyword-overlap score.
  *
  * Pre-LLM ATS-readiness check. The pdf mode tells Claude to inject the
  * JD's keywords into the tailored CV, but nothing checks whether that
  * actually happened. This module hands the user a hard number so they
  * know when the CV is genuinely tuned vs eyeballed.
  *
- * Algorithm (intentionally simple — explainable beats clever):
+ * Algorithm (intentionally simple -- explainable beats clever):
  *
  *   1. Tokenize each text to a Set of lower-cased terms, stripped of
  *      punctuation, with stopwords removed.
@@ -21,10 +21,10 @@
  *   "ATS match: 78% · 12 keywords missing"
  *   with the missing list as a click-to-expand chip cloud.
  *
- * This is FAST — pure string ops, no LLM, sub-millisecond per pair.
+ * This is FAST -- pure string ops, no LLM, sub-millisecond per pair.
  */
 
-// Common stopwords we drop before scoring — these are noise for ATS matching.
+// Common stopwords we drop before scoring -- these are noise for ATS matching.
 const STOPWORDS = new Set([
   'a',
   'an',
@@ -197,7 +197,7 @@ export type KeywordMatchResult = {
 };
 
 /**
- * Score how well the CV covers the JD's vocabulary. Stable across runs —
+ * Score how well the CV covers the JD's vocabulary. Stable across runs --
  * the same (jd, cv) pair always returns the same numbers.
  */
 export function keywordMatch(jd: string, cv: string): KeywordMatchResult {
@@ -222,7 +222,7 @@ export function keywordMatch(jd: string, cv: string): KeywordMatchResult {
   // For matching: 1-grams must appear as a token in the CV set; 2/3-grams
   // must appear as a substring of the TOKENIZED CV string (NOT the raw
   // CV lowercase). Using the tokenized join means commas/dashes/punctuation
-  // in either the JD or CV don't break phrase detection — "react, node.js"
+  // in either the JD or CV don't break phrase detection -- "react, node.js"
   // tokenizes to "react node.js" which matches the JD bigram "react node.js".
   const cvNormalized = tokenize(cv).join(' ');
   const matchUnigram = (t: string) => cvTokenSet.has(t);
@@ -260,7 +260,7 @@ export function keywordMatch(jd: string, cv: string): KeywordMatchResult {
 
   const score = totalWeight === 0 ? 0 : Math.round((matchedWeight / totalWeight) * 100);
 
-  // Sort by weight desc (multi-word terms first — more meaningful for UI).
+  // Sort by weight desc (multi-word terms first -- more meaningful for UI).
   matched.sort((a, b) => b.weight - a.weight || a.term.localeCompare(b.term));
   missing.sort((a, b) => b.weight - a.weight || a.term.localeCompare(b.term));
 

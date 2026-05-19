@@ -1,5 +1,5 @@
 /**
- * lib/server/keyword-match — dense table-driven coverage.
+ * lib/server/keyword-match -- dense table-driven coverage.
  */
 import { describe, expect, it } from 'vitest';
 import { keywordMatch } from './keyword-match';

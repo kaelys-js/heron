@@ -27,7 +27,7 @@
 
   let { data } = $props();
 
-  // Per-company refresh — fires the zero-token portal scan with --company.
+  // Per-company refresh -- fires the zero-token portal scan with --company.
   // Tracks which company is in flight so a row's button can show a spinner.
   let refreshingCompany = $state<string | null>(null);
   async function refreshCompany(name: string) {
@@ -304,7 +304,7 @@
         </Card.Content>
       </Card.Root>
 
-      <!-- Scan history — shows scanner ROI day-by-day -->
+      <!-- Scan history -- shows scanner ROI day-by-day -->
       {#if data.scanHistory && data.scanHistory.totalRuns > 0}
         <Card.Root>
           <Card.Header class="pb-2">

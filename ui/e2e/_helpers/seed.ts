@@ -1,5 +1,5 @@
 /**
- * E2E test helper — seed an ephemeral SQLite + profile tree.
+ * E2E test helper -- seed an ephemeral SQLite + profile tree.
  *
  * Each test calls `seedFreshInstall()` in its `beforeAll` (or beforeEach
  * for stronger isolation). The helper:
@@ -29,7 +29,7 @@ import os from 'node:os';
 export type SeededInstall = {
   /** tmpdir absolute path. Set DATA_DIR=this for the preview server. */
   dataDir: string;
-  /** Test user — same email + id every run for deterministic asserts. */
+  /** Test user -- same email + id every run for deterministic asserts. */
   user: { id: string; email: string; name: string };
   /** Profile slug used in the test. */
   profileSlug: string;

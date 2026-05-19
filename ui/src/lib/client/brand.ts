@@ -113,7 +113,7 @@ export const BRAND = {
     }
   },
   fonts: {
-    "$comment": "Typography system. apply-brand generates the @font-face declarations and the cascade defaults (body=sans, h1-h4=display, code/.font-mono=mono) into ui/src/app.css AUTO-GENERATED block. woff2 files live at ui/static/fonts/ — self-hosted, no CDN.",
+    "$comment": "Typography system. apply-brand generates the @font-face declarations and the cascade defaults (body=sans, h1-h4=display, code/.font-mono=mono) into ui/src/app.css AUTO-GENERATED block. woff2 files live at ui/static/fonts/ -- self-hosted, no CDN.",
     "display": {
       "family": "Fraunces",
       "fallback": "'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times New Roman', Times, Georgia, serif",
@@ -190,12 +190,12 @@ export const BRAND = {
     }
   },
   voice: {
-    "$comment": "Brand voice as data — consumed by AUTO-GENERATED:<section> markers inside the .md docs. Narrative .md files (BRAND, VOICE, COLORS, TYPOGRAPHY, MASCOT, SOCIAL-CARD, PRESS, REBRAND-PROCESS) carry markers that apply-brand fills from this block + the rest of brand.json.",
+    "$comment": "Brand voice as data -- consumed by AUTO-GENERATED:<section> markers inside the .md docs. Narrative .md files (BRAND, VOICE, COLORS, TYPOGRAPHY, MASCOT, SOCIAL-CARD, PRESS, REBRAND-PROCESS) carry markers that apply-brand fills from this block + the rest of brand.json.",
     "tagline": "Stand still. Strike well.",
     "subline": "A thinking partner for career transitions. Patient, precise, local-first.",
-    "origin": "The heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes — once, precisely, and the work is done.",
+    "origin": "The heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes -- once, precisely, and the work is done.",
     "mission": "Help one person make one excellent career move, instead of fifty mediocre ones. The wrong era for spray-and-pray is the era we're in.",
-    "philosophy": "Recruiters' attention is finite. So is yours. Quality over quantity, by design — the system actively discourages applications below a 4/5 score.",
+    "philosophy": "Recruiters' attention is finite. So is yours. Quality over quantity, by design -- the system actively discourages applications below a 4/5 score.",
     "personality": [
       "calm",
       "sophisticated",
@@ -220,7 +220,7 @@ export const BRAND = {
       },
       {
         "name": "Earned over claimed",
-        "description": "Don't say 'easy' — show the four-line quickstart. Don't say 'powerful' — show the feature."
+        "description": "Don't say 'easy' -- show the four-line quickstart. Don't say 'powerful' -- show the feature."
       },
       {
         "name": "Patient over urgent",
@@ -246,7 +246,7 @@ export const BRAND = {
       },
       {
         "name": "Decorative emojis",
-        "example": "🚀 💡 🎯 📈 🔥 — none of these. Punctuation only."
+        "example": "🚀 💡 🎯 📈 🔥 -- none of these. Punctuation only."
       },
       {
         "name": "Manufactured urgency",
@@ -266,11 +266,11 @@ export const BRAND = {
       },
       {
         "name": "Welcoming language",
-        "example": "\"Welcome to Heron!\" / \"Let's get started!\" — no. Open with what the page is for."
+        "example": "\"Welcome to Heron!\" / \"Let's get started!\" -- no. Open with what the page is for."
       },
       {
         "name": "Just-doing",
-        "example": "\"Just paste the URL\" — no. \"Paste the URL.\" The word 'just' minimizes."
+        "example": "\"Just paste the URL\" -- no. \"Paste the URL.\" The word 'just' minimizes."
       },
       {
         "name": "We-language",
@@ -278,9 +278,9 @@ export const BRAND = {
       }
     ],
     "boilerplate": {
-      "short": "Heron — a thinking partner for career transitions. Patient. Precise. Local-first. Open source.",
-      "medium": "Heron is an open-source job-search assistant for the wrong era of spray-and-pray. It tracks your pipeline, scores every role A-F, generates ATS-optimized CVs, scans 11 ATSes, and triages recruiter email — all locally. Your data never leaves your machine.",
-      "long": "The heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes — once, precisely, and the work is done. Heron is a thinking partner for people in career transition who'd rather make one excellent move than fifty mediocre ones. It runs entirely on your machine: pipeline tracking, A-F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Open source. AI-agnostic. Your data stays yours."
+      "short": "Heron -- a thinking partner for career transitions. Patient. Precise. Local-first. Open source.",
+      "medium": "Heron is an open-source job-search assistant for the wrong era of spray-and-pray. It tracks your pipeline, scores every role A-F, generates ATS-optimized CVs, scans 11 ATSes, and triages recruiter email -- all locally. Your data never leaves your machine.",
+      "long": "The heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes -- once, precisely, and the work is done. Heron is a thinking partner for people in career transition who'd rather make one excellent move than fifty mediocre ones. It runs entirely on your machine: pipeline tracking, A-F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Open source. AI-agnostic. Your data stays yours."
     },
     "quotes": [
       "Recruiters' attention is finite. So is yours. The wrong era for spray-and-pray is the era we're in. Heron is the alternative.",
@@ -290,7 +290,7 @@ export const BRAND = {
     ]
   },
   mascot: {
-    "$comment": "Mascot identity — fed into the MASCOT.md template + apply-brand placeholder SVG generator. The SVG art itself lives in branding/assets/ (mark-placeholder.svg today, mark-{slate,light,dawn}.svg when the illustrator output lands).",
+    "$comment": "Mascot identity -- fed into the MASCOT.md template + apply-brand placeholder SVG generator. The SVG art itself lives in branding/assets/ (mark-placeholder.svg today, mark-{slate,light,dawn}.svg when the illustrator output lands).",
     "subject": "Great Blue Heron",
     "pose": "side profile, standing in shallow water, neck S-curve, head turned 25-30° right",
     "styleReferences": [
@@ -301,11 +301,11 @@ export const BRAND = {
     ],
     "tiers": {
       "mark": {
-        "use": "≤64px contexts — favicon, app icon, inline UI",
+        "use": "≤64px contexts -- favicon, app icon, inline UI",
         "treatment": "silhouette"
       },
       "illustration": {
-        "use": "≥200px contexts — landing pages, marketing, press",
+        "use": "≥200px contexts -- landing pages, marketing, press",
         "treatment": "editorial illustration with subtle detail"
       }
     },

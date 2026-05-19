@@ -1,5 +1,5 @@
 /**
- * test-setup.ts — runs ONCE per test file BEFORE any test in it.
+ * test-setup.ts -- runs ONCE per test file BEFORE any test in it.
  *
  * Provides:
  *   • DB isolation: routes auth.db + app.db to a tmpdir so no test
@@ -9,7 +9,7 @@
  *     promoted to owner.
  *   • testing-library/jest-dom matchers (`toBeInTheDocument`, etc.)
  *   • MSW server lifecycle (`beforeAll`/`afterEach`/`afterAll`)
- *   • matchMedia polyfill for jsdom — defaults to desktop. Per-test
+ *   • matchMedia polyfill for jsdom -- defaults to desktop. Per-test
  *     viewport flip via `setMobileViewport(true|false)` from
  *     `test-helpers/render.ts`.
  *   • `$env/*` stubs so server modules don't blow up on import.
@@ -24,13 +24,13 @@
 import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 
-// ── DB isolation — MUST run before any server module is imported ────
+// ── DB isolation -- MUST run before any server module is imported ────
 // db/index.ts checks process.env.VITEST + process.env.HERON_DATA_DIR
 // at module-load time. Setting HERON_DATA_DIR here is belt-and-
 // braces: db/index.ts already auto-routes to a tmpdir when VITEST=true,
 // but if some other ENV strips that var we still want isolation. The
 // directory is per-process so parallel test workers don't collide.
-// Browser-mode workers don't expose `process` — guard with typeof.
+// Browser-mode workers don't expose `process` -- guard with typeof.
 if (typeof process !== 'undefined' && process.env && !process.env.HERON_DATA_DIR) {
   // Lazy-import node:os/fs/path. They only resolve in the node-env
   // projects (ui-server, ui-integration). The browser-mode worker
@@ -46,7 +46,7 @@ if (typeof process !== 'undefined' && process.env && !process.env.HERON_DATA_DIR
   // Any test that tries to write to <repo-root>/data/ (the developer's
   // real per-user content) throws loudly. Forces tests to use the
   // tmpdir above or explicit mocks. Catches contamination at the
-  // earliest possible moment — the failing test, not a downstream
+  // earliest possible moment -- the failing test, not a downstream
   // "why is my data wrong" mystery.
   const REPO_ROOT_DATA = path.resolve(__dirname, '..', '..', 'data') + path.sep;
   const guardWrite = (label: string, target: string) => {
@@ -79,14 +79,14 @@ if (typeof process !== 'undefined' && process.env && !process.env.HERON_DATA_DIR
 }
 
 // ── IndexedDB shim (jsdom doesn't ship one) ────────────────────────
-// Wrapped in try/catch — browser mode already has IDB; importing
+// Wrapped in try/catch -- browser mode already has IDB; importing
 // fake-indexeddb there would clobber the real one.
 try {
   if (typeof window !== 'undefined' && !('indexedDB' in window)) {
     // fake-indexeddb ships ESM-only without bundled types for its
-    // `/auto` side-effect entry — `@ts-ignore` is the standard workaround
+    // `/auto` side-effect entry -- `@ts-ignore` is the standard workaround
     // since the import has no return value we care about.
-    // @ts-ignore — no type decl for /auto side-effect entry
+    // @ts-ignore -- no type decl for /auto side-effect entry
     await import('fake-indexeddb/auto');
   }
 } catch {
@@ -98,7 +98,7 @@ try {
 // AND (under certain Vitest configurations) returns an object whose
 // `getItem`/`setItem` exist as properties but are non-callable shims.
 // `typeof obj.getItem === 'function'` returns true in some paths, false
-// in others — depends on whether SvelteKit's $app/forms patching ran
+// in others -- depends on whether SvelteKit's $app/forms patching ran
 // first. We install our own Map-backed Storage UNCONDITIONALLY in
 // jsdom (matches the comment that always said "polyfill
 // unconditionally"). Real browsers (component project) skip this
@@ -166,7 +166,7 @@ if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
 }
 
 /**
- * Test-only helper — flips the `(max-width: 768px)` polyfill and
+ * Test-only helper -- flips the `(max-width: 768px)` polyfill and
  * fires change events to every registered listener. Used by
  * `renderMobile()` / `renderDesktop()` in test-helpers.
  */
@@ -244,7 +244,7 @@ export function resetUuidCounter(): void {
 // Several tests intentionally feed deliberately-corrupt yaml/json
 // fixtures (e.g. '!@#$%^&*( not yaml' in portals.test.ts) to exercise
 // parse-error recovery paths. The `yaml` package emits a YAMLWarning
-// via `process.emitWarning(...)` when it sees an unresolvable tag —
+// via `process.emitWarning(...)` when it sees an unresolvable tag --
 // the warning is correctly emitted but in a test context it's noise
 // that obscures real failures.
 //

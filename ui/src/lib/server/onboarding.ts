@@ -1,14 +1,14 @@
 /**
- * Onboarding state — tracks which wizard steps the user has completed,
+ * Onboarding state -- tracks which wizard steps the user has completed,
  * powers the first-run redirect at the layout level.
  *
- * State at `data/onboarding-state.json` — gitignored runtime data.
+ * State at `data/onboarding-state.json` -- gitignored runtime data.
  *
  * Two distinct concepts:
- *   - `completed: true`  — user has been through the wizard at least once.
+ *   - `completed: true`  -- user has been through the wizard at least once.
  *                           Don't redirect them again, even if they later
  *                           delete files manually. Trust the user.
- *   - `isFreshInstall()` — a NEVER-completed install where the required
+ *   - `isFreshInstall()` -- a NEVER-completed install where the required
  *                           config files are missing. Redirects to /onboarding.
  *
  * Why this split: a power user who manually populates cv.md / profile.yml
@@ -25,7 +25,7 @@ import { reportServerError } from './events';
 import { readEnv } from './env';
 
 /** Per-user onboarding state path. Multi-user installs: each user
- *  gets their own wizard state — Alice can be at step 3 while Bob is
+ *  gets their own wizard state -- Alice can be at step 3 while Bob is
  *  at step 6. Resolved lazily so AsyncLocalStorage's current-user
  *  context is honored. */
 function statePath(): string {
@@ -54,7 +54,7 @@ export type OnboardingState = {
   /** ms timestamp when the user finished (or skipped) the wizard. */
   completedAt?: number;
   completedSteps: OnboardingStep[];
-  /** Steps the user explicitly skipped — kept for analytics + the
+  /** Steps the user explicitly skipped -- kept for analytics + the
    *  Done page's "you skipped these, finish them later via /sources" hint. */
   skippedSteps: OnboardingStep[];
   /** Last step the user landed on. Used to resume mid-wizard on refresh. */
@@ -108,7 +108,7 @@ function writeOnboarding(state: OnboardingState): OnboardingState {
   return state;
 }
 
-/** Mark a step complete. Idempotent — re-marking is a no-op (no dupes
+/** Mark a step complete. Idempotent -- re-marking is a no-op (no dupes
  *  in completedSteps). Also sets `currentStep` to the just-completed
  *  step's successor (so resume lands on the next pending one). */
 export function markStepComplete(step: OnboardingStep): OnboardingState {
@@ -141,7 +141,7 @@ export function markComplete(): OnboardingState {
   return writeOnboarding(state);
 }
 
-/** Reset everything — used by the "Re-run onboarding" Settings button.
+/** Reset everything -- used by the "Re-run onboarding" Settings button.
  *  Only touches the state file; cv.md / profile.yml / etc are preserved. */
 export function reset(): OnboardingState {
   return writeOnboarding({ ...ZERO_STATE });
@@ -179,7 +179,7 @@ export function isFreshInstall(): boolean {
   return false;
 }
 
-/** Helper for the wizard's progress sidebar — returns step → status map
+/** Helper for the wizard's progress sidebar -- returns step → status map
  *  in canonical order. */
 export function progressSummary(): Array<{
   step: OnboardingStep;

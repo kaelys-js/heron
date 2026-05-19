@@ -1,5 +1,5 @@
 /**
- * lib/notifications — dense scenarios for the activity-feed store.
+ * lib/notifications -- dense scenarios for the activity-feed store.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

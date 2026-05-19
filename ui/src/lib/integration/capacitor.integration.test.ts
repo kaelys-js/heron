@@ -6,7 +6,7 @@
  *   manifest.webmanifest, electron-builder, fastlane Appfile, favicon.
  *
  * Any drift between branding/brand.json and a downstream consumer fails
- * here — keeps every rebrand atomic.
+ * here -- keeps every rebrand atomic.
  */
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
@@ -147,7 +147,7 @@ describe('apply-brand drift gate — protects against accidental destructive reb
   // HERON_BRAND_ROOT env override defined in scripts/native/apply-brand.mjs.
   // The previous incarnation mutated `branding/brand.json` + `.brand-snapshot.json`
   // in the real working tree and relied on `restoreBackups()` in a `finally`
-  // block — which silently leaked dirt onto disk whenever the worker was
+  // block -- which silently leaked dirt onto disk whenever the worker was
   // SIGKILLed (OOM, ctrl-c, lefthook timeout). The tmpdir pattern is fail-
   // safe: `withScaffoldedTmpRepo` removes the dir on every exit path.
   const APPLY_BRAND = path.join(REPO_ROOT, 'scripts', 'native', 'apply-brand.mjs');
@@ -314,7 +314,7 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
     expect(m, `${rel} doc-meta block malformed`).toBeTruthy();
     const content = m![1];
     // Shape: italicized one-liner with the brand displayName. Date
-    // stamps were removed (apply-brand idempotence) — only the brand
+    // stamps were removed (apply-brand idempotence) -- only the brand
     // displayName is required.
     expect(content, `${rel}: doc-meta missing italic wrapper`).toMatch(/^\*.+\*$/);
     expect(content, `${rel}: doc-meta missing brand displayName`).toContain(displayName);
@@ -323,7 +323,7 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
   it('apply-brand.mjs target list matches the test-side SCOPED_DOCS list', () => {
     const applyBrandSrc = readFile('scripts/native/apply-brand.mjs');
     for (const rel of SCOPED_DOCS) {
-      // The source uses join(ROOT, 'a', 'b.md') — match on 'b.md' as a
+      // The source uses join(ROOT, 'a', 'b.md') -- match on 'b.md' as a
       // basename plus the parent dir(s). Cheap structural assertion;
       // catches "forgot to add the new doc to apply-brand's target list".
       const parts = rel.split('/');
@@ -377,16 +377,16 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
       'STATE.md', // Claude per-session scratchpad (gitignored, see .gitignore)
       'ui/ios/App/CapApp-SPM/README.md', // vendor (Capacitor SPM)
       '.github/PULL_REQUEST_TEMPLATE.md', // GitHub-loaded PR scaffold, not a doc
-      // Community-health files — short, GitHub-surfaces them via the
+      // Community-health files -- short, GitHub-surfaces them via the
       // Community profile. Not a doc-meta candidate.
       '.github/SUPPORT.md',
       '.github/rulesets/README.md',
-      // Subsystem READMEs — short, locally-scoped, not part of the
+      // Subsystem READMEs -- short, locally-scoped, not part of the
       // brand-propagated doc set.
       '.lostpixel/baseline/README.md',
       'docs/screenshots/README.md',
       'ui/e2e/README.md',
-      // Reference examples — read-only sample content, no doc-meta needed
+      // Reference examples -- read-only sample content, no doc-meta needed
       'docs/examples/README.md',
       'docs/examples/article-digest-example.md',
       'docs/examples/cv-example.md',

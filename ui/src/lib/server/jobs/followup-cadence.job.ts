@@ -1,5 +1,5 @@
 /**
- * Follow-up cadence — daily snapshot.
+ * Follow-up cadence -- daily snapshot.
  *
  * Refreshes the cached follow-up cadence (data/followup-cache.json) once a
  * day. The cache is also lazily refreshed on /api/followup/cadence reads

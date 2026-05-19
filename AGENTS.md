@@ -44,7 +44,7 @@ Parse the JSON output:
 - `{"status": "up-to-date"}` → say nothing
 - `{"status": "dismissed"}` → say nothing
 - `{"status": "offline"}` → say nothing
-- `{"status": "no-remote-version"}` → say nothing (checker reached GitHub but neither VERSION nor the latest release tag parsed as semver — treat as a silent non-failure, same as offline)
+- `{"status": "no-remote-version"}` → say nothing (checker reached GitHub but neither VERSION nor the latest release tag parsed as semver -- treat as a silent non-failure, same as offline)
 
 The user can also say "check for updates" or "update Heron" at any time to force a check.
 To rollback: `node scripts/system/update-system.mjs rollback`
@@ -71,7 +71,7 @@ AI-powered, CLI-agnostic job search automation: pipeline tracking, offer evaluat
 | `scripts/tracker/analyze-patterns.mjs` | Pattern analysis script (JSON output) |
 | `scripts/tracker/followup-cadence.mjs` | Follow-up cadence calculator (JSON output) |
 | `data/follow-ups.md` | Follow-up history tracker |
-| `scripts/scan/scan.mjs` | Zero-token portal scanner — hits Greenhouse/Ashby/Lever APIs directly, zero LLM cost |
+| `scripts/scan/scan.mjs` | Zero-token portal scanner -- hits Greenhouse/Ashby/Lever APIs directly, zero LLM cost |
 | `scripts/system/check-liveness.mjs` | Job posting liveness checker |
 | `scripts/system/liveness-core.mjs` | Shared liveness logic (expired signals win over generic Apply text) |
 | `reports/` | Evaluation reports (format: `{###}-{company-slug}-{YYYY-MM-DD}.md`). Blocks A-F + G (Posting Legitimacy). Header includes `**Legitimacy:** {tier}`. |
@@ -109,31 +109,31 @@ data/users/{userId}/profiles/_shared/
                              real-project stories) but PRIVATE to this user
 ```
 
-**Globally shared infrastructure** (NOT per-profile, NOT per-user — same for everyone on this machine): `.env` (machine-wide infrastructure only — `BETTER_AUTH_SECRET`, `GITHUB_CLIENT_ID/SECRET`, `CAREER_OPS_DATA_DIR`, `HERON_UPDATE_*`), `data/profiles.json`, `data/activity.jsonl`, `data/issues.jsonl`, `data/inbox-mbox/`. NOTE: `data/sources.json`, `data/onboarding-state.json`, `data/autopilot.json` have moved per-user to `data/users/{uid}/profiles/_shared/`. `.playwright-{portal}/` Chromium sessions are also per-user under `data/users/{uid}/` (or `data/profiles/_shared/` for legacy single-user) — the persistent dir IS the credential and must never be shared across users.
+**Globally shared infrastructure** (NOT per-profile, NOT per-user -- same for everyone on this machine): `.env` (machine-wide infrastructure only -- `BETTER_AUTH_SECRET`, `GITHUB_CLIENT_ID/SECRET`, `CAREER_OPS_DATA_DIR`, `HERON_UPDATE_*`), `data/profiles.json`, `data/activity.jsonl`, `data/issues.jsonl`, `data/inbox-mbox/`. NOTE: `data/sources.json`, `data/onboarding-state.json`, `data/autopilot.json` have moved per-user to `data/users/{uid}/profiles/_shared/`. `.playwright-{portal}/` Chromium sessions are also per-user under `data/users/{uid}/` (or `data/profiles/_shared/` for legacy single-user) -- the persistent dir IS the credential and must never be shared across users.
 
-**Personal credentials are per-user**, NOT in `.env`. The keys `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `OPENAI_API_KEY`, `ADZUNA_APP_ID/KEY`, `GMAIL_IMAP_*` live in `data/users/{uid}/profiles/_shared/secrets.json` — AES-256-GCM encrypted at rest with a key derived via HKDF(`BETTER_AUTH_SECRET` + per-user random salt). Each user manages their own via Settings → API Keys. Resolution order in code: per-user store first, then `.env` fallback for legacy single-user installs. On first boot after upgrade, install-wide `.env` values are silently migrated into the OWNER's per-user store (idempotent — `.env` still works as fallback until the maintainer deletes the keys). See `ui/src/lib/server/user-secrets.ts` + `scripts/lib/user-secrets.mjs` (JS twin for CLI scripts).
+**Personal credentials are per-user**, NOT in `.env`. The keys `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `OPENAI_API_KEY`, `ADZUNA_APP_ID/KEY`, `GMAIL_IMAP_*` live in `data/users/{uid}/profiles/_shared/secrets.json` -- AES-256-GCM encrypted at rest with a key derived via HKDF(`BETTER_AUTH_SECRET` + per-user random salt). Each user manages their own via Settings → API Keys. Resolution order in code: per-user store first, then `.env` fallback for legacy single-user installs. On first boot after upgrade, install-wide `.env` values are silently migrated into the OWNER's per-user store (idempotent -- `.env` still works as fallback until the maintainer deletes the keys). See `ui/src/lib/server/user-secrets.ts` + `scripts/lib/user-secrets.mjs` (JS twin for CLI scripts).
 
 **Active profile**: `data/profiles.json` has `{ activeId, profiles: [...] }`. Reads default to the active profile unless an explicit `--profile <slug>` flag (Python/MJS scripts) or `?profile=<slug>` query param (dashboard routes) is passed.
 
-**Mode prompts use absolute paths.** Every `modes/*.md` prompt references files via `__TOKEN__` placeholders (e.g. `__CV__`, `__REPORTS__`, `__STORY_BANK__`). The dashboard's `spawnAgentWithMode()` resolves each token to the active profile's absolute on-disk path BEFORE handing the prompt to the AI CLI. No repo-root symlinks, no shell-cwd magic — the AI sees fully-qualified paths and can never read the wrong profile's data. Token vocabulary documented in `modes/_TOKENS.md`.
+**Mode prompts use absolute paths.** Every `modes/*.md` prompt references files via `__TOKEN__` placeholders (e.g. `__CV__`, `__REPORTS__`, `__STORY_BANK__`). The dashboard's `spawnAgentWithMode()` resolves each token to the active profile's absolute on-disk path BEFORE handing the prompt to the AI CLI. No repo-root symlinks, no shell-cwd magic -- the AI sees fully-qualified paths and can never read the wrong profile's data. Token vocabulary documented in `modes/_TOKENS.md`.
 
 **Invocation is dashboard-only.** The slash-command flow (`claude "/heron evaluate <url>"` in a terminal) has been deprecated. Mode prompts are loaded by the dashboard's orchestrator, substituted, and passed to Claude via `--append-system-prompt-file`. Direct-CLI invocation is not supported.
 
-**When the user asks for personalization**, ALWAYS write to the active profile's files at `data/users/{userId}/profiles/{slug}/...` (or `data/profiles/{slug}/...` in legacy single-user mode). Never write to `data/profiles/default/` directly when the user might be on a different profile — let the dashboard's active-profile selection drive the path.
+**When the user asks for personalization**, ALWAYS write to the active profile's files at `data/users/{userId}/profiles/{slug}/...` (or `data/profiles/{slug}/...` in legacy single-user mode). Never write to `data/profiles/default/` directly when the user might be on a different profile -- let the dashboard's active-profile selection drive the path.
 
-### First Run — Onboarding (IMPORTANT)
+### First Run -- Onboarding (IMPORTANT)
 
 **Before doing ANYTHING else, check if the system is set up.** Run these checks silently every time a session starts:
 
-1. Does `data/profiles.json` exist? If yes, read it — `activeId` tells you which profile to operate on.
-2. Does the active profile's `cv.md` exist? (at `data/users/{uid}/profiles/{slug}/cv.md` — or the legacy `data/profiles/{slug}/cv.md` in single-user mode)
+1. Does `data/profiles.json` exist? If yes, read it -- `activeId` tells you which profile to operate on.
+2. Does the active profile's `cv.md` exist? (at `data/users/{uid}/profiles/{slug}/cv.md` -- or the legacy `data/profiles/{slug}/cv.md` in single-user mode)
 3. Does the active profile's `profile.yml` exist?
 4. Does the active profile's `_profile.md` exist?
 5. Does the active profile's `portals.yml` exist?
 
-If `data/profiles.json` is missing, the install is pre-multi-profile. The dashboard's boot routine auto-migrates the flat layout into `data/profiles/default/` on next start — let the dashboard handle this rather than running scripts that read the old paths.
+If `data/profiles.json` is missing, the install is pre-multi-profile. The dashboard's boot routine auto-migrates the flat layout into `data/profiles/default/` on next start -- let the dashboard handle this rather than running scripts that read the old paths.
 
-**If the active profile is incomplete, enter onboarding mode.** Do NOT proceed with evaluations, scans, or any other mode until the basics are in place. Guide the user step by step (paths below are unqualified for readability — the dashboard's spawn-time substitution resolves them against the active profile + user, so `cv.md` writes via the orchestrator land in `data/users/{uid}/profiles/{slug}/cv.md`):
+**If the active profile is incomplete, enter onboarding mode.** Do NOT proceed with evaluations, scans, or any other mode until the basics are in place. Guide the user step by step (paths below are unqualified for readability -- the dashboard's spawn-time substitution resolves them against the active profile + user, so `cv.md` writes via the orchestrator land in `data/users/{uid}/profiles/{slug}/cv.md`):
 
 #### Step 1: CV (required)
 If `cv.md` is missing, ask:
@@ -181,10 +181,10 @@ After the basics are set up, proactively ask for more context. The more you know
 > - What makes you unique? What's your 'superpower' that other candidates don't have?
 > - What kind of work excites you? What drains you?
 > - Any deal-breakers? (e.g., no on-site, no startups under 20 people, no Java shops)
-> - Your best professional achievement — the one you'd lead with in an interview
+> - Your best professional achievement -- the one you'd lead with in an interview
 > - Any projects, articles, or case studies you've published?
 >
-> The more context you give me, the better I filter. Think of it as onboarding a recruiter — the first week I need to learn about you, then I become invaluable."
+> The more context you give me, the better I filter. Think of it as onboarding a recruiter -- the first week I need to learn about you, then I become invaluable."
 
 Store any insights the user shares in `config/profile.yml` (under narrative), `modes/_profile.md`, or in `article-digest.md` if they share proof points. Do not put user-specific archetypes or framing into `modes/_shared.md`.
 
@@ -197,9 +197,9 @@ Once all files exist, confirm:
 > - Run `/heron scan` (or `/heron-scan` if using OpenCode) to search portals
 > - Run `/heron` to see all commands
 >
-> Everything is customizable — just ask me to change anything.
+> Everything is customizable -- just ask me to change anything.
 >
-> Tip: Having a personal portfolio dramatically improves your job search. A simple GitHub Pages site or static HTML CV is enough — recruiters search for proof of work, not for design awards."
+> Tip: Having a personal portfolio dramatically improves your job search. A simple GitHub Pages site or static HTML CV is enough -- recruiters search for proof of work, not for design awards."
 
 Then suggest automation:
 > "Want me to scan for new offers automatically? I can set up a recurring scan every few days so you don't miss anything. Just say 'scan every 3 days' and I'll configure it."
@@ -231,7 +231,7 @@ resolves localised files first and falls back to English on a miss.
 `scripts/system/verify-i18n.mjs` (run via `pnpm i18n:verify`) gates
 locale parity if any directory is reintroduced.
 
-For now the AI CLI handles localisation in-prompt — when a user
+For now the AI CLI handles localisation in-prompt -- when a user
 targets a German posting, the English prompt + the German JD
 together produce German output from the model, with the locale-
 specific terminology cited inline. No file-level translation is
@@ -308,27 +308,27 @@ maintained.
 | **mise** | Auto-manages Node + pnpm + Ruby versions per directory | `.mise.toml` |
 | **pnpm** | Package manager + workspace orchestration | `package.json::packageManager`, `pnpm-workspace.yaml` |
 | **turbo** | Task graph + cache for `build` / `check` / `brand` across workspaces | `turbo.json` |
-| **biome** | Format-only (no linting — svelte-check covers that) | `biome.jsonc` |
+| **biome** | Format-only (no linting -- svelte-check covers that) | `biome.jsonc` |
 | **lefthook** | Git hooks manager (pre-commit + pre-push) | `lefthook.yml` |
 
 **Hooks (lefthook):**
 
 - `pre-commit` (parallel):
-  - `apply-brand` — if any `branding/*` file is staged, re-runs apply-brand and re-stages all propagated files
-  - `biome-format` — formats staged `.ts/.tsx/.js/.mjs/.svelte/.json` in place
-  - `no-secrets` — regex-blocks Anthropic keys / GitHub PATs / AWS keys / private keys
+  - `apply-brand` -- if any `branding/*` file is staged, re-runs apply-brand and re-stages all propagated files
+  - `biome-format` -- formats staged `.ts/.tsx/.js/.mjs/.svelte/.json` in place
+  - `no-secrets` -- regex-blocks Anthropic keys / GitHub PATs / AWS keys / private keys
 - `pre-push` (sequential):
-  - `typecheck` — svelte-check + tsgo, turbo-cached
-  - `vitest` — full Vitest matrix (unit + server + browser-mode + integration + electron) via turbo
-  - `format-check` — biome + prettier
-  - `release-readiness` — gated when a release tag is being pushed
+  - `typecheck` -- svelte-check + tsgo, turbo-cached
+  - `vitest` -- full Vitest matrix (unit + server + browser-mode + integration + electron) via turbo
+  - `format-check` -- biome + prettier
+  - `release-readiness` -- gated when a release tag is being pushed
 
 Bypass with `--no-verify` if you must (don't).
 
 **Activation:**
 
-- `mise install` — applies `.mise.toml` (one-time per machine after `mise activate` is in your shell)
-- `pnpm install` — runs `lefthook install` via the `prepare` script
+- `mise install` -- applies `.mise.toml` (one-time per machine after `mise activate` is in your shell)
+- `pnpm install` -- runs `lefthook install` via the `prepare` script
 - Setup wizard (`pnpm setup:native`) does both automatically
 
 **Daily commands:**
@@ -343,7 +343,7 @@ Bypass with `--no-verify` if you must (don't).
 
 CI uses `jdx/mise-action@v2` so the same versions install in GitHub runners as on your local machine.
 
-### Branding — single source of truth
+### Branding -- single source of truth
 
 `branding/brand.json` + `branding/logo.svg` are the **only** files you edit when rebranding (app name, bundle ID, URL scheme, colors, copyright, repo URL, permission descriptions, extension bundle suffixes). Running `pnpm brand:apply` propagates these into every consumer:
 
@@ -353,8 +353,8 @@ CI uses `jdx/mise-action@v2` so the same versions install in GitHub runners as o
 | `ui/capacitor.config.ts` + `ui/electron/capacitor.config.ts` | appId, appName, URL scheme, splash colors |
 | `ui/electron/electron-builder.config.json` | appId, productName, copyright, CFBundleURLTypes, NSBonjourServices, GitHub publish target |
 | `ui/ios/App/App/Info.plist` | CFBundleDisplayName, URL scheme, Bonjour services, NSLocalNetworkUsageDescription, NSFaceIDUsageDescription, NSUserActivityTypes |
-| `ui/ios/App/App/Brand.swift` (generated) | Swift constants for every Swift file to import — `Brand.bundleId`, `Brand.urlScheme`, `Brand.serviceType`, `Brand.DefaultsKey.lanUrl`, `Brand.jobDeepLink(id)`, etc. Replicated into each extension target (`AppWidget/Brand.swift`, `AppLiveActivity/Brand.swift`, `AppShareExtension/Brand.swift`) because Xcode app-extension targets can't import from the host. |
-| `ui/src/lib/client/brand.ts` (generated) | TS constants — `BRAND.bundleId`, `BRAND.urlScheme`, `jobDeepLink(id)`, `deepLink(route)`. Web/Capacitor sources import from here. |
+| `ui/ios/App/App/Brand.swift` (generated) | Swift constants for every Swift file to import -- `Brand.bundleId`, `Brand.urlScheme`, `Brand.serviceType`, `Brand.DefaultsKey.lanUrl`, `Brand.jobDeepLink(id)`, etc. Replicated into each extension target (`AppWidget/Brand.swift`, `AppLiveActivity/Brand.swift`, `AppShareExtension/Brand.swift`) because Xcode app-extension targets can't import from the host. |
+| `ui/src/lib/client/brand.ts` (generated) | TS constants -- `BRAND.bundleId`, `BRAND.urlScheme`, `jobDeepLink(id)`, `deepLink(route)`. Web/Capacitor sources import from here. |
 | `ui/electron/src/brand.ts` (generated) | Same for the Electron main process. |
 | `ui/static/favicon.svg` | Copy of `branding/logo.svg` |
 | `ui/static/manifest.webmanifest` | name, short_name, description, theme_color, background_color |
@@ -365,12 +365,12 @@ CI uses `jdx/mise-action@v2` so the same versions install in GitHub runners as o
 **Rules:**
 - Source code reads brand from generated `brand.ts` / `Brand.swift`. Never hardcode `com.resistjs.heron`, `heron://`, `_heron._tcp` in runtime code.
 - Comments / docstrings may reference literal values for documentation clarity (they don't affect runtime).
-- Vitest's `capacitor.integration.test.ts` checks every consumer matches `brand.json` — drift fails CI.
+- Vitest's `capacitor.integration.test.ts` checks every consumer matches `brand.json` -- drift fails CI.
 - Rebrand workflow: edit `branding/brand.json` → `pnpm brand:apply` → commit. All configs update in one shot.
 
 ### Release automation (Conventional Commits → Release Please → native-release)
 
-Releases are fully automated. You don't run a release command — you write commits in [Conventional Commits](https://www.conventionalcommits.org/) format and Release Please does the rest.
+Releases are fully automated. You don't run a release command -- you write commits in [Conventional Commits](https://www.conventionalcommits.org/) format and Release Please does the rest.
 
 **Commit prefix → bump rule:**
 
@@ -392,14 +392,14 @@ Releases are fully automated. You don't run a release command — you write comm
 
 **Manual override:** `pnpm release patch` (or `minor`/`major`/`x.y.z`) still works for emergencies. It bypasses Release Please and pushes a tag directly. `native-release.yml`'s `on: push: tags` trigger picks it up.
 
-**Commit author guidance:** when in doubt about whether a change deserves a release, use `chore:` (no release). To force-include a tweak in the next release without bumping, use `chore: ... [skip-release-only]` — Release Please will include the line in the changelog under "Chore" but won't bump the version.
+**Commit author guidance:** when in doubt about whether a change deserves a release, use `chore:` (no release). To force-include a tweak in the next release without bumping, use `chore: ... [skip-release-only]` -- Release Please will include the line in the changelog under "Chore" but won't bump the version.
 
 Source of truth: `release-please-config.json`, `.github/workflows/release.yml`, `.github/workflows/native-release.yml`.
 
 ## Community and Governance
 
 - **Code of Conduct**: Contributor Covenant 2.1 with enforcement actions (see `.github/CODE_OF_CONDUCT.md`)
-- **Governance**: BDFL model with contributor ladder — Participant → Contributor → Triager → Reviewer → Maintainer (see `docs/GOVERNANCE.md`)
+- **Governance**: BDFL model with contributor ladder -- Participant → Contributor → Triager → Reviewer → Maintainer (see `docs/GOVERNANCE.md`)
 - **Security**: private vulnerability reporting via email (see `.github/SECURITY.md`)
 - **Support**: help questions go to Discord/Discussions, not issues (see [`.github/CONTRIBUTING.md#getting-help`](.github/CONTRIBUTING.md))
 - **Discord**: <https://discord.gg/8pRpHETxa4>
@@ -442,7 +442,7 @@ AGENT_CLI=opencode pnpm dev
 spawn (`--dangerously-skip-permissions`, `--append-system-prompt-file`,
 `--model sonnet`). Other CLIs may need adapter shims that translate or
 strip those flags. Track per-CLI compatibility in
-[issues](https://github.com/kaelys-js/heron/issues) — the abstraction
+[issues](https://github.com/kaelys-js/heron/issues) -- the abstraction
 ships intentionally minimal so adapter work is incremental and discoverable.
 
 Single source of truth: `ui/src/lib/config/cli.ts`.

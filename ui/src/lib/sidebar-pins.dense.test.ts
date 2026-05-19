@@ -1,5 +1,5 @@
 /**
- * lib/sidebar-pins — dense scenarios for the pin/unpin localStorage store.
+ * lib/sidebar-pins -- dense scenarios for the pin/unpin localStorage store.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { pinStore } from './sidebar-pins.svelte';

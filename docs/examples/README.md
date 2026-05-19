@@ -11,7 +11,7 @@ Reference files that demonstrate Heron data formats and conventions. None of the
 | `sample-report.md` | The A-F evaluation report format produced by the evaluation pipeline, with all six blocks (Role Summary through Interview Plan) |
 | `dual-track-engineer-instructor/` | Complete profile config for a candidate with two primary archetypes (engineer + instructor), including `cv.md`, `profile.yml`, and a README explaining when and how to use the dual-track pattern |
 
-The canonical `profile.example.yml` lives in [`templates/profile.example.yml`](../../templates/profile.example.yml) — that's the file the dashboard, doctor, and circuit-breaker actually consume at runtime.
+The canonical `profile.example.yml` lives in [`templates/profile.example.yml`](../../templates/profile.example.yml) -- that's the file the dashboard, doctor, and circuit-breaker actually consume at runtime.
 
 ## Usage
 

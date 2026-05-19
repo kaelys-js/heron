@@ -1,5 +1,5 @@
 /**
- * GET + PUT /api/backup/config — retention settings.
+ * GET + PUT /api/backup/config -- retention settings.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

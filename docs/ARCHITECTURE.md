@@ -67,7 +67,7 @@ batch-input.tsv    →  batch-runner.sh  →  N × headless CLI workers
                     (tracks progress)
 ```
 
-Each worker is a headless AI CLI instance — the bundled `batch-runner.sh` invokes `claude -p`, but the architecture supports any CLI's headless mode (see the Headless / Batch Mode table in `AGENTS.md` for the correct command per CLI). Workers produce:
+Each worker is a headless AI CLI instance -- the bundled `batch-runner.sh` invokes `claude -p`, but the architecture supports any CLI's headless mode (see the Headless / Batch Mode table in `AGENTS.md` for the correct command per CLI). Workers produce:
 - Report .md
 - PDF
 - Tracker TSV line
@@ -110,12 +110,12 @@ tracker, Inbox issues, autonomous-apply controls, autopilot config, and the
 agent-chat panel. Wrapped via Capacitor 8 for iOS/Android and Electron 39 for
 macOS/Windows/Linux.
 
-A standalone Go TUI lived in `dashboard/` historically — it was removed once
+A standalone Go TUI lived in `dashboard/` historically -- it was removed once
 the SvelteKit UI reached feature parity (see commit history).
 
 ## Backend discovery
 
-The dashboard is a single SvelteKit app. The native apps are the same SvelteKit codebase wrapped in Capacitor (iOS / Android) or Electron (desktop). Backend discovery is hands-off — your phone, watch, and laptop reconcile to whichever Heron instance is reachable without configuration.
+The dashboard is a single SvelteKit app. The native apps are the same SvelteKit codebase wrapped in Capacitor (iOS / Android) or Electron (desktop). Backend discovery is hands-off -- your phone, watch, and laptop reconcile to whichever Heron instance is reachable without configuration.
 
 ```mermaid
 sequenceDiagram

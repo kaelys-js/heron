@@ -1,8 +1,8 @@
 /**
- * Curated IANA timezones — every city tech workers usually live or hire in,
+ * Curated IANA timezones -- every city tech workers usually live or hire in,
  * grouped roughly by region. The display label uses the city + UTC offset
  * so the user picks "Vancouver (UTC-8)" rather than "America/Vancouver"
- * — but the persisted value is always the canonical IANA name.
+ * -- but the persisted value is always the canonical IANA name.
  *
  * Free-text fallback through the Combobox handles obscure timezones we
  * didn't enumerate.

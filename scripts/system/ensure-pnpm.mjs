@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * ensure-pnpm.mjs — refuse non-pnpm package managers + wrong Node version.
+ * ensure-pnpm.mjs -- refuse non-pnpm package managers + wrong Node version.
  *
  * Wired in as the root `preinstall` script. Runs two gates:
  *
  *   1. Package-manager gate. Inspects `npm_config_user_agent` and refuses
  *      `npm install`, `yarn`, `bun install`, etc. with a helpful message.
- *      pnpm is the only allowed tool — the repo ships `pnpm-workspace.yaml`
+ *      pnpm is the only allowed tool -- the repo ships `pnpm-workspace.yaml`
  *      and pnpm's hoisting + lockfile layout. npm/yarn would silently
  *      produce a different `node_modules/`, leading to "module not found"
  *      errors that are hard to debug. Lefthook hooks installed via the
@@ -18,7 +18,7 @@
  *      failure mode: a developer has multiple Node versions installed
  *      (orphaned mise installs, system Node, Homebrew Node) and their
  *      shell's PATH resolves a wrong one ahead of the mise-pinned one.
- *      pnpm only emits a warning in that case — silent drift between
+ *      pnpm only emits a warning in that case -- silent drift between
  *      contributors. This gate makes it a hard install-time failure.
  *
  * Set `ALLOW_NON_PNPM=1` to bypass the package-manager gate.
@@ -44,7 +44,7 @@ if (process.env.ALLOW_NON_PNPM !== '1') {
   const ua = process.env.npm_config_user_agent || '';
   const tool = ua.split('/')[0]; // 'pnpm' | 'npm' | 'yarn' | 'bun' | …
   // Empty UA usually means direct invocation (`node scripts/system/ensure-pnpm.mjs`)
-  // — allow that so devs can run this script standalone for debugging.
+  // -- allow that so devs can run this script standalone for debugging.
   if (tool && tool !== 'pnpm') {
     console.error(
       `\n${RED}${BOLD}✗ Wrong package manager: ${tool}${RESET}\n` +
@@ -75,7 +75,7 @@ if (process.env.ALLOW_NODE_VERSION_MISMATCH !== '1') {
     const pkg = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8'));
     expected = pkg?.engines?.node;
   } catch {
-    // package.json unreadable — non-fatal. Skip the gate rather than
+    // package.json unreadable -- non-fatal. Skip the gate rather than
     // block install on a malformed file (pnpm itself will fail later
     // with a clearer error).
   }
@@ -85,7 +85,7 @@ if (process.env.ALLOW_NODE_VERSION_MISMATCH !== '1') {
     // If mise is on PATH and the expected Node version is already
     // installed under mise, transparently re-exec the calling command
     // through `mise exec` so the rest of the install/lefthook/whatever
-    // runs on the correct Node. The user never sees the mismatch —
+    // runs on the correct Node. The user never sees the mismatch --
     // their broken shell PATH is silently routed around.
     //
     // Detection chain:
@@ -93,7 +93,7 @@ if (process.env.ALLOW_NODE_VERSION_MISMATCH !== '1') {
     //   2. `mise where node@<expected>` (is the right version installed?)
     //
     // If either fails we fall through to the actionable error message
-    // (the hand-fix path) — the user installs mise / runs `mise install`,
+    // (the hand-fix path) -- the user installs mise / runs `mise install`,
     // and the auto-fix engages on their next attempt.
     //
     // Why not auto-install via mise? `mise install` downloads + compiles
@@ -116,11 +116,11 @@ if (process.env.ALLOW_NODE_VERSION_MISMATCH !== '1') {
       if (nodeInstalled) {
         // Re-exec the parent command via `mise exec`. The parent command
         // is whatever pnpm/lefthook/etc. was running when this guard
-        // fired — e.g. `pnpm install`, `git push`, `pnpm test`. The
+        // fired -- e.g. `pnpm install`, `git push`, `pnpm test`. The
         // process.env.npm_lifecycle_script / npm_lifecycle_event tell
         // us what to re-run. If we can identify it, re-exec; otherwise
         // we fall through with a friendlier message (no re-exec, but
-        // also no scary stacktrace — mise is set up, user just needs
+        // also no scary stacktrace -- mise is set up, user just needs
         // to invoke the command via mise themselves).
         const lifecycleScript = process.env.npm_lifecycle_script;
         const lifecycleEvent = process.env.npm_lifecycle_event;
@@ -130,7 +130,7 @@ if (process.env.ALLOW_NODE_VERSION_MISMATCH !== '1') {
         if (lifecycleScript && lifecycleEvent) {
           // Re-running the lifecycle script under the correct Node.
           // We bypass THIS guard on the re-exec (otherwise infinite
-          // loop) by setting ALLOW_NODE_VERSION_MISMATCH=1 — safe
+          // loop) by setting ALLOW_NODE_VERSION_MISMATCH=1 -- safe
           // because mise IS giving us the right version inside the
           // exec; the guard's redundant.
           console.error(

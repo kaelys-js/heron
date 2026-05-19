@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * dedup-tracker.mjs — Remove duplicate entries from applications.md
+ * dedup-tracker.mjs -- Remove duplicate entries from applications.md
  *
  * Groups by normalized company + fuzzy role match.
  * Keeps entry with highest score. If discarded entry had more advanced status,
@@ -43,7 +43,7 @@ const STATUS_RANK = {
   responded: 4,
   interview: 5,
   offer: 6,
-  // Spanish aliases — kept for backwards compat with existing tracker data
+  // Spanish aliases -- kept for backwards compat with existing tracker data
   no_aplicar: 0,
   'no aplicar': 0,
   descartado: 0,

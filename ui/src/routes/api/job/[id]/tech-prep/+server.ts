@@ -1,5 +1,5 @@
 /**
- * /api/job/[id]/tech-prep — per-job technical-interview prep generation.
+ * /api/job/[id]/tech-prep -- per-job technical-interview prep generation.
  *
  *   GET  → returns cached body if it exists
  *   POST → spawns `claude -p "/heron tech-prep <url>"` and persists

@@ -1,5 +1,5 @@
 /**
- * Vitest base config — defaults consumed by every project in
+ * Vitest base config -- defaults consumed by every project in
  * `vitest.workspace.ts`. Re-uses Vite's plugin pipeline (SvelteKit +
  * Tailwind + brand watcher) so test code resolves the same aliases
  * (`$lib/*`, `$app/*`, `$env/*`) and the same Svelte compiler as
@@ -30,9 +30,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // Pre-create the temp dir so the --localstorage-file flag (passed to
 // every test worker below) resolves to a writable path. Without this
 // path, Node 22+ emits "Warning: --localstorage-file was provided
-// without a valid path" on every worker startup — once per test file,
+// without a valid path" on every worker startup -- once per test file,
 // surfacing as the kind of stderr noise that hides real failures.
-// /tmp doesn't survive reboot; that's fine — each test run wants a
+// /tmp doesn't survive reboot; that's fine -- each test run wants a
 // fresh blank backing anyway, and our test-setup.ts polyfill replaces
 // localStorage with an in-memory Map before any test runs (the file
 // just satisfies Node's flag validation).
@@ -40,7 +40,7 @@ const __localStoragePath = join(tmpdir(), 'heron-test-localstorage');
 mkdirSync(dirname(__localStoragePath), { recursive: true });
 
 // ── Worker exec args (shared between forks + threads) ────────────────
-// Vitest 4 removed `test.poolOptions` — the per-pool config is now
+// Vitest 4 removed `test.poolOptions` -- the per-pool config is now
 // top-level (`forks:` / `threads:` siblings of `test:`). We keep ONE
 // array and re-use it under both pool keys so a future `pool: 'threads'`
 // switch picks up the same flags.
@@ -57,13 +57,13 @@ mkdirSync(dirname(__localStoragePath), { recursive: true });
 //     than --no-warnings (which would also mask real DeprecationWarning).
 //   --disable-warning=DEP0205: tsx + vitest + vite all still call
 //     module.register() instead of module.registerHooks() (introduced
-//     Node 22.15). Tracked upstream — until the chain migrates we'd
+//     Node 22.15). Tracked upstream -- until the chain migrates we'd
 //     see a DeprecationWarning per worker spawn. Suppressed by code,
 //     not by class, so a future genuine deprecation we DO own still
 //     surfaces. TODO: drop once tsx ≥ 5 / vitest ≥ 5 ship the
 //     registerHooks migration.
 //   --throw-deprecation: turn every OTHER DeprecationWarning into a
-//     thrown error. This is the "warnings should fail" contract — if
+//     thrown error. This is the "warnings should fail" contract -- if
 //     a new Node deprecation lands in our test surface, the test
 //     crashes immediately instead of silently accumulating debt.
 //     Pairs with the targeted --disable-warning=DEP0205 above.
@@ -77,7 +77,7 @@ const __workerExecArgv = [
 export default defineConfig({
   // NOTE: We deliberately do NOT include the `brandWatcherPlugin` from
   // vite.config.ts. That plugin shells out to `apply-brand.mjs` on every
-  // `configResolved()` call — fine for dev/build, but Vitest spawns
+  // `configResolved()` call -- fine for dev/build, but Vitest spawns
   // multiple Vite instances (one per project) and we'd run apply-brand
   // four times per test invocation. Tests assume brand.ts already
   // exists; if it doesn't, `pnpm brand:apply` should be run once
@@ -128,7 +128,7 @@ export default defineConfig({
         'src/**/*.{test,spec,component.test}.{ts,svelte}',
       ],
       thresholds: {
-        // Repo-wide floor — CI red below this.
+        // Repo-wide floor -- CI red below this.
         lines: 70,
         branches: 65,
         functions: 70,
@@ -139,12 +139,12 @@ export default defineConfig({
         autoUpdate: false,
       },
       // V8's branch counting includes implicit `?? undefined` chains
-      // that exaggerate the denominator — that's why branches: 65 sits
+      // that exaggerate the denominator -- that's why branches: 65 sits
       // lower than the other thresholds.
     },
     // Vitest 4 promoted `execArgv` from
     // `test.poolOptions.{forks,threads}.execArgv` to top-level
-    // `test.execArgv` — applies to whichever pool is active. Pre-4
+    // `test.execArgv` -- applies to whichever pool is active. Pre-4
     // form triggers a "DEPRECATED" log spam per worker spawn until
     // moved (each project under vitest.workspace.ts logs its own).
     execArgv: __workerExecArgv,

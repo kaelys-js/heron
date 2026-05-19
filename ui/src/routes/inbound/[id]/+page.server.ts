@@ -1,5 +1,5 @@
 /**
- * /inbound/[id] loader — full lead + thread + draft preview.
+ * /inbound/[id] loader -- full lead + thread + draft preview.
  */
 
 import fs from 'node:fs';

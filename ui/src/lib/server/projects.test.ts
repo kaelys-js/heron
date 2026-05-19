@@ -1,5 +1,5 @@
 /**
- * lib/server/projects — saved filter profile CRUD (per career profile).
+ * lib/server/projects -- saved filter profile CRUD (per career profile).
  *
  * Mocks the fs + profile-paths so we can exercise the full lifecycle
  * (create / list / get / update / delete) on an in-memory file.

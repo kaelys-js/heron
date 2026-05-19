@@ -52,7 +52,7 @@ export const POST = wrap('bulk-apply', async ({ request }: { request: Request })
   const others = groups.filter((g) => !g.isLinkedIn);
 
   // Mark non-LinkedIn jobs Applied immediately. The client opens those URLs in
-  // new tabs — server-side state must reflect "user has committed to apply" so
+  // new tabs -- server-side state must reflect "user has committed to apply" so
   // they don't double-process.
   for (const g of others) {
     try {
@@ -73,7 +73,7 @@ export const POST = wrap('bulk-apply', async ({ request }: { request: Request })
     });
   }
 
-  // Fire LinkedIn pipeline async — orchestrator drives the activity feed.
+  // Fire LinkedIn pipeline async -- orchestrator drives the activity feed.
   if (linkedIn.length > 0) {
     runBulkApply(linkedIn.map((g) => ({ url: g.url, isLinkedIn: true }))).catch((err) =>
       reportServerError('bulk-apply', 'LinkedIn bulk-apply rejected', err, { category: 'task' }),

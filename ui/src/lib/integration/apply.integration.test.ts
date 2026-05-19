@@ -2,7 +2,7 @@
  * Apply pipeline integration tests.
  *
  * Structural assertions on the apply-dispatcher + per-portal adapters
- * (LinkedIn / Greenhouse / Ashby / Lever / Workday / etc.) — code-surface
+ * (LinkedIn / Greenhouse / Ashby / Lever / Workday / etc.) -- code-surface
  * checks that the right exports + entry points + per-portal handler
  * tables exist. End-to-end portal-mocked behavioural runs are covered
  * by the per-adapter unit tests in lib/server/apply-*.test.ts.

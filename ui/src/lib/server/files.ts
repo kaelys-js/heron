@@ -5,9 +5,9 @@
  * the active-profile shortcut `activePath(kind)`). This module is now ONLY
  * for paths that are genuinely shared across all profiles (system layer):
  *
- *   ROOT       — repository root
- *   ENV_FILE   — .env (shared API keys + IMAP creds)
- *   MODES_DIR  — modes/ (system-layer mode templates; never per-profile)
+ *   ROOT       -- repository root
+ *   ENV_FILE   -- .env (shared API keys + IMAP creds)
+ *   MODES_DIR  -- modes/ (system-layer mode templates; never per-profile)
  *
  * Anything that used to live here as a flat-layout per-profile constant
  * (PIPELINE, APPLICATIONS, CV_MD, etc.) has moved to `profile-paths.ts`.
@@ -27,7 +27,7 @@ export function readSafe(p: string): string {
   }
 }
 
-/** modes/ contents — system layer, shared, NOT per-profile. */
+/** modes/ contents -- system layer, shared, NOT per-profile. */
 export function listModes(): string[] {
   try {
     return fs.readdirSync(MODES_DIR).filter((f: string) => f.endsWith('.md'));

@@ -1,4 +1,4 @@
-# Social card — Heron
+# Social card -- Heron
 
 <!-- AUTO-GENERATED:doc-meta -->
 *Part of the [Heron](../README.md) docs.*
@@ -35,7 +35,7 @@ social card raises the perceived credibility of whatever it accompanies.
 
 ## Design
 
-### Composition — tagline-first hero
+### Composition -- tagline-first hero
 
 ```text
 +--------------------------------------------------------------+
@@ -54,22 +54,22 @@ social card raises the perceived credibility of whatever it accompanies.
 +--------------------------------------------------------------+
 ```
 
-- **Tagline as hero** — the primary tagline (`Stand still. / Strike well.`) is the dominant element, set in Fraunces 700 at 104px display size. It carries the whole brand.
-- **Wordmark as subordinate** — `Heron` set in Fraunces 700 at 56px, colored Heron Dawn `#c89b4a`. The wordmark is the brand identifier; the dawn-gold is the one accent moment on the card.
-- **Subline as orientation** — the one-sentence positioning (`A thinking partner for career transitions. Patient, precise, local-first.`) in Inter 400 at 28px, colored text-secondary `#a8b0bb`.
-- **Mascot as quiet presence** — heron silhouette on the right at ~240px tall, slate color, 92% opacity to recede slightly. Inline SVG to keep the file self-contained.
-- **URL strip at footer-left** — `heron.app` in small caps Inter 500 at 18px, colored text-tertiary `#6b7585`. Quiet brand identifier; not a CTA.
-- **Accent stripe at top-left** — 64px × 4px in Heron Dawn `#c89b4a`. The single chromatic punctuation mark.
+- **Tagline as hero** -- the primary tagline (`Stand still. / Strike well.`) is the dominant element, set in Fraunces 700 at 104px display size. It carries the whole brand.
+- **Wordmark as subordinate** -- `Heron` set in Fraunces 700 at 56px, colored Heron Dawn `#c89b4a`. The wordmark is the brand identifier; the dawn-gold is the one accent moment on the card.
+- **Subline as orientation** -- the one-sentence positioning (`A thinking partner for career transitions. Patient, precise, local-first.`) in Inter 400 at 28px, colored text-secondary `#a8b0bb`.
+- **Mascot as quiet presence** -- heron silhouette on the right at ~240px tall, slate color, 92% opacity to recede slightly. Inline SVG to keep the file self-contained.
+- **URL strip at footer-left** -- `heron.app` in small caps Inter 500 at 18px, colored text-tertiary `#6b7585`. Quiet brand identifier; not a CTA.
+- **Accent stripe at top-left** -- 64px × 4px in Heron Dawn `#c89b4a`. The single chromatic punctuation mark.
 
 ### Color usage on the card
 
 | Element | Color | Contrast vs `#0e1014` background |
 |---|---|---|
-| Tagline | `#e8eaed` (text.primary) | 15.6:1 — AAA |
-| Wordmark | `#c89b4a` (Heron Dawn) | 7.5:1 — AAA |
-| Subline | `#a8b0bb` (text.secondary) | 9.1:1 — AAA |
+| Tagline | `#e8eaed` (text.primary) | 15.6:1 -- AAA |
+| Wordmark | `#c89b4a` (Heron Dawn) | 7.5:1 -- AAA |
+| Subline | `#a8b0bb` (text.secondary) | 9.1:1 -- AAA |
 | Mascot silhouette | `#4a5b6d` (Heron Slate) at 92% opacity | decorative, no text contrast requirement |
-| URL strip | `#6b7585` (text.tertiary) | 4.6:1 — AA for normal text |
+| URL strip | `#6b7585` (text.tertiary) | 4.6:1 -- AA for normal text |
 | Accent stripe | `#c89b4a` (Heron Dawn) | decorative |
 
 All text elements pass WCAG AA at the size they're rendered. The
@@ -83,7 +83,7 @@ tagline + wordmark pass AAA.
 - **URL strip**: Inter, weight 500, size 18px, letter-spacing 0.02em
 
 All per [`TYPOGRAPHY.md`](./TYPOGRAPHY.md). Fonts pull from Google Fonts
-CDN in the source HTML — acceptable because this is a one-time render
+CDN in the source HTML -- acceptable because this is a one-time render
 producing a self-contained PNG; the PNG is what ships, the HTML is
 just the source.
 
@@ -156,7 +156,7 @@ routes override via their `<svelte:head>` block:
 
 1. Add an entry to `branding/og-variants.json` with `slug`, `title`,
    `subtitle`.
-2. Run `pnpm og:generate` — Playwright renders
+2. Run `pnpm og:generate` -- Playwright renders
    `branding/assets/social-card.html` at 1200×630 (DPR 2 = 2400×1260
    retina) with the title + subtitle substituted into the
    `<h1 class="tagline">` and `<p class="subline">` slots.
@@ -180,7 +180,7 @@ path identical between dev + prod + Capacitor.
 |---|---|
 | Add a CTA button on the card | This is a share image, not a landing page. The URL strip is the only call-to-action. |
 | Add screenshots of the app to the card | Reduces visual focus, ages quickly, fails at small thumbnail sizes |
-| Animate any element (even if your render tool supports it) | OG meta consumers (Twitter, LinkedIn, Slack) render PNG only — animation is wasted; also contradicts the calm register |
+| Animate any element (even if your render tool supports it) | OG meta consumers (Twitter, LinkedIn, Slack) render PNG only -- animation is wasted; also contradicts the calm register |
 | Use any color outside the brand token set | Token discipline applies to every brand surface, the social card most of all |
 | Add multiple typefaces beyond Fraunces + Inter | One serif + one sans is the system. Stick to it. |
 | Place the wordmark larger than the tagline | The tagline is the hero. The wordmark is the source. Hierarchy is non-negotiable. |
@@ -201,7 +201,7 @@ path identical between dev + prod + Capacitor.
 4. **Wire the meta values** through `apply-brand` so they regenerate
    from `brand.json` on every rebrand pass.
 5. **Update the production domain** in `og:url` + `og:image` + the
-   URL strip in the HTML source — once `heron.app` (or whatever the
+   URL strip in the HTML source -- once `heron.app` (or whatever the
    real domain is) is registered.
 6. **Replace the placeholder mascot** in the inline SVG when the real
    mascot ships. The viewBox stays the same, so the swap is a
@@ -211,4 +211,4 @@ path identical between dev + prod + Capacitor.
 
 The render-update cadence: anytime the wordmark / mascot / tagline /
 color tokens change, re-render. Otherwise the rendered PNG is
-durable — no per-deploy regeneration needed.
+durable -- no per-deploy regeneration needed.

@@ -1,5 +1,5 @@
 /**
- * lib/validators — table-driven dense tests.
+ * lib/validators -- table-driven dense tests.
  *
  * Each describe.each block runs the same assertion against N inputs.
  * Densifies the regression surface without adding fast-check complexity.

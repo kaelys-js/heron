@@ -1,5 +1,5 @@
 /**
- * hooks.server — the SvelteKit request middleware chain.
+ * hooks.server -- the SvelteKit request middleware chain.
  *
  *   cors → populateAuth → authLifecycleObserver → guard → signupGate
  *   → withUserContext → securityHeaders → user handler
@@ -59,7 +59,7 @@ vi.mock('$app/environment', () => ({
   building: false,
 }));
 
-// Better-Auth signup-gate DB import is lazy — we can pass through with a
+// Better-Auth signup-gate DB import is lazy -- we can pass through with a
 // stub that returns 0 users so the first-user path is always open during
 // these tests (signup-gate behaviour is its own test below).
 let userCount = 0;

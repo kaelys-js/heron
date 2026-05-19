@@ -31,17 +31,17 @@
   let q = $derived('?profile=' + encodeURIComponent(data.profileId));
 
   // Each chip-list owns its own draft input + array. Local state, never cross-bound.
-  // svelte-ignore state_referenced_locally — initial seed only
+  // svelte-ignore state_referenced_locally -- initial seed only
   let targetRoles = $state([...data.initial.target_roles]);
-  // svelte-ignore state_referenced_locally — initial seed only
+  // svelte-ignore state_referenced_locally -- initial seed only
   let positive = $state([...data.initial.positive]);
-  // svelte-ignore state_referenced_locally — initial seed only
+  // svelte-ignore state_referenced_locally -- initial seed only
   let negative = $state([...data.initial.negative]);
-  // svelte-ignore state_referenced_locally — initial seed only
+  // svelte-ignore state_referenced_locally -- initial seed only
   let mustHave = $state([...data.initial.must_have]);
-  // svelte-ignore state_referenced_locally — initial seed only
+  // svelte-ignore state_referenced_locally -- initial seed only
   let strongPlus = $state([...data.initial.strong_plus]);
-  // svelte-ignore state_referenced_locally — initial seed only
+  // svelte-ignore state_referenced_locally -- initial seed only
   let hardNo = $state([...data.initial.hard_no]);
 
   let draft = $state({
@@ -53,7 +53,7 @@
     hardNo: '',
   });
 
-  // svelte-ignore state_referenced_locally — initial seed only
+  // svelte-ignore state_referenced_locally -- initial seed only
   let comp = $state({
     target_range: data.initial.target_range,
     currency: data.initial.currency || 'USD',

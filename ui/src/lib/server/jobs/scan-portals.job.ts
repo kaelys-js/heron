@@ -1,14 +1,14 @@
 /**
- * Zero-token portal scan — sister to scan-broad.py.
+ * Zero-token portal scan -- sister to scan-broad.py.
  *
  * Wraps `scan.mjs` (direct Greenhouse/Ashby/Lever/Workable API hits with no
  * scraping or LLM cost). Faster (~30s) and free; complementary to the full
  * JobSpy-based scrape that runs as 'scan'.
  *
  * Args:
- *   { company: string }   — narrow to a single company (passes --company)
- *   { dryRun: boolean }   — pass --dry-run, no writes
- *   default               — scan every company in portals.yml
+ *   { company: string }   -- narrow to a single company (passes --company)
+ *   { dryRun: boolean }   -- pass --dry-run, no writes
+ *   default               -- scan every company in portals.yml
  */
 
 import { spawn } from 'node:child_process';
@@ -73,7 +73,7 @@ function runScanPortals(args?: JobArgs): Promise<JobResult> {
         try {
           recordFailure('scan-portals', new Error('scan.mjs exited ' + code));
         } catch {
-          // sources counter best-effort — the outer logEvent above
+          // sources counter best-effort -- the outer logEvent above
           // already surfaced the scan failure to the user.
         }
         resolve({ ok: false, error: 'scan.mjs exited ' + code });
@@ -87,7 +87,7 @@ function runScanPortals(args?: JobArgs): Promise<JobResult> {
       try {
         recordSuccess('scan-portals');
       } catch {
-        // sources counter best-effort — scan success is already logged.
+        // sources counter best-effort -- scan success is already logged.
       }
       resolve({ ok: true, message: found + ' jobs found', meta: { found } });
     });
@@ -106,4 +106,4 @@ register({
   run: runScanPortals,
 });
 
-// (Re-export removed — runScanPortals is only used by the registry above.)
+// (Re-export removed -- runScanPortals is only used by the registry above.)

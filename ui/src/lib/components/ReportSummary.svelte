@@ -78,7 +78,7 @@
       summary.gaps.length === 0,
   );
 
-  // Build the header chip set in priority order — only render chips with content
+  // Build the header chip set in priority order -- only render chips with content
   type Chip = { icon: any; label: string; value: string; tip: string; tint?: string };
   let headerChips = $derived.by<Chip[]>(() => {
     const chips: Chip[] = [];

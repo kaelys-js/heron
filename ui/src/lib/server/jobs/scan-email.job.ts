@@ -1,5 +1,5 @@
 /**
- * Email-alert ingestion — wraps `scan-email.mjs`.
+ * Email-alert ingestion -- wraps `scan-email.mjs`.
  *
  * Reads .mbox files from data/inbox-mbox/ (Google Takeout output for the
  * user's job-alert label) and parses LinkedIn / Indeed alert URLs into
@@ -11,8 +11,8 @@
  *
  * Args:
  *   { dryRun: boolean }
- *   { keep: boolean }   — don't move processed files
- *   { file: string }    — process a single explicit path
+ *   { keep: boolean }   -- don't move processed files
+ *   { file: string }    -- process a single explicit path
  */
 
 import { spawn } from 'node:child_process';
@@ -91,4 +91,4 @@ register({
   run: runScanEmail,
 });
 
-// D24 — `runScanEmail` was only used by the registry; export removed.
+// D24 -- `runScanEmail` was only used by the registry; export removed.

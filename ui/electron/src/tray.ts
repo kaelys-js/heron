@@ -1,5 +1,5 @@
 /**
- * System tray / macOS Menu Bar — live job-application status at a glance.
+ * System tray / macOS Menu Bar -- live job-application status at a glance.
  *
  * Renders a tray icon in macOS top-right / Windows bottom-right / Linux
  * as supported. Clicking the icon opens a context menu with:
@@ -8,7 +8,7 @@
  *   • Per-section deep links (Pipeline, Inbox, Queue, Stats)
  *   • Run actions (Scan now, Pause/Resume autopilot)
  *   • Window controls (Show, Hide, Quit)
- *   • Menu Bar Only mode toggle (macOS) — hides the Dock icon and
+ *   • Menu Bar Only mode toggle (macOS) -- hides the Dock icon and
  *     promotes Heron to a pure menu bar app
  *
  * Live updates:
@@ -43,7 +43,7 @@ type Stats = {
 };
 
 const POLL_INTERVAL_MS = 30_000;
-// Persisted user-preference key — INTENTIONALLY kept as a stable literal
+// Persisted user-preference key -- INTENTIONALLY kept as a stable literal
 // rather than brand-derived because changing the key on rebrand would
 // silently lose every user's saved "Menu Bar Only" preference. If a
 // future rebrand needs the key changed, ship a migration that reads
@@ -109,13 +109,13 @@ export class DesktopTray {
 
   /** Fetch /api/stats and rebuild the popover menu.
    *
-   * F18 — known multi-user limitation: this fetch runs from the Electron
+   * F18 -- known multi-user limitation: this fetch runs from the Electron
    * main process which has NO Better-Auth cookie + NO bearer token (the
    * WebView holds those). On a multi-user install /api/stats 401s and
    * this returns null. The menu falls back to a generic
    * "Heron is running · open dashboard" state.
    *
-   * Proper fix (follow-up): IPC bridge — the WebView fetches stats
+   * Proper fix (follow-up): IPC bridge -- the WebView fetches stats
    * inside its authenticated context and pushes them to the main
    * process via `tray:push-stats`. The main process then doesn't need
    * to authenticate at all. Tracked as a Phase 4 follow-up.
@@ -256,7 +256,7 @@ export class DesktopTray {
     const contextMenu = Menu.buildFromTemplate(items);
     this.tray.setContextMenu(contextMenu);
 
-    // macOS title — show queued count as a number badge next to the
+    // macOS title -- show queued count as a number badge next to the
     // tray icon when > 0. This is the equivalent of an unread badge for
     // a menu bar app.
     if (process.platform === 'darwin' && this.stats && this.stats.queued > 0) {
@@ -266,7 +266,7 @@ export class DesktopTray {
     }
   }
 
-  /** macOS / Linux Dock badge — set to the upcoming-interviews count so
+  /** macOS / Linux Dock badge -- set to the upcoming-interviews count so
    *  glancing at the Dock shows "you have N interviews coming up". */
   private updateDockBadge(): void {
     if (process.platform !== 'darwin') return;
@@ -284,7 +284,7 @@ export class DesktopTray {
   }
 
   /** Toggle macOS Dock visibility. When hidden, Heron becomes a
-   *  pure menu bar app — close-window doesn't quit, the icon never
+   *  pure menu bar app -- close-window doesn't quit, the icon never
    *  appears in the Dock, and Cmd+Tab skips it. Re-show by re-toggling
    *  from the tray menu. */
   private setMenuBarOnly(enable: boolean): void {

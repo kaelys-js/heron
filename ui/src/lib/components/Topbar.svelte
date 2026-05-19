@@ -133,7 +133,7 @@
   ];
   let activeView = $derived(VIEWS.find((v) => v.key === viewMode) ?? VIEWS[0]);
 
-  // ---- Tab presets — descriptions shown in dropdown ----
+  // ---- Tab presets -- descriptions shown in dropdown ----
   const PRESET_DESC: Record<string, string> = {
     all: 'Every status — no filtering by stage',
     ready: 'Eval done · CV PDF generated · ready to send',
@@ -197,7 +197,7 @@
     onTabChange(t);
   }
 
-  // Tab title: "<Title> · <Breadcrumb> — APP_NAME". When breadcrumb === APP_NAME, drop it.
+  // Tab title: "<Title> · <Breadcrumb> -- APP_NAME". When breadcrumb === APP_NAME, drop it.
   let docTitle = $derived(
     crumb && crumb !== title && crumb !== APP_NAME
       ? buildDocTitle([title, crumb])
@@ -709,7 +709,7 @@
                 </div>
               </section>
 
-              <!-- SOURCE — single-select dropdown of which scanner first surfaced the URL -->
+              <!-- SOURCE -- single-select dropdown of which scanner first surfaced the URL -->
               <section class="space-y-2 pt-1 border-t border-border/40">
                 <header class="flex items-center justify-between pt-3">
                   <Label for="f-source" class="text-xs flex items-center gap-1.5">

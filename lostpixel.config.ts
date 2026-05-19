@@ -1,7 +1,7 @@
 /**
- * Lost Pixel — self-hosted visual regression testing.
+ * Lost Pixel -- self-hosted visual regression testing.
  *
- * HP4 (Lost Pixel variant) — captures snapshots of canonical
+ * HP4 (Lost Pixel variant) -- captures snapshots of canonical
  * dashboard routes against `pnpm preview` (prod build), compares to
  * baselines stored in git, posts a sticky PR comment with the diff.
  *
@@ -12,10 +12,10 @@
  *
  * Baselines: stored under `.lostpixel/baseline/`. Commit them
  * deliberately. On a "design refresh" PR that legitimately changes
- * many visuals, add the `accept-snapshots` label — the workflow
+ * many visuals, add the `accept-snapshots` label -- the workflow
  * regenerates the baselines on that PR and commits them back.
  *
- * Threshold: 0.1 (10% pixel difference) — tighter than Lost Pixel's
+ * Threshold: 0.1 (10% pixel difference) -- tighter than Lost Pixel's
  * default 0.5. Heron's UI is dense; even a 5-pixel shift on a status
  * badge matters.
  *
@@ -27,7 +27,7 @@ import type { CustomProjectConfig } from 'lost-pixel';
 export const config: CustomProjectConfig = {
   pageShots: {
     pages: [
-      // Auth — the cold-start screen most contributors see first
+      // Auth -- the cold-start screen most contributors see first
       { path: '/login', name: 'login' },
 
       // Dashboard core
@@ -43,7 +43,7 @@ export const config: CustomProjectConfig = {
     ],
     baseUrl: 'http://localhost:4173',
     breakpoints: [
-      // Mobile (iPhone 16 Pro) — gate the responsive layout
+      // Mobile (iPhone 16 Pro) -- gate the responsive layout
       375,
       // Tablet
       768,
@@ -59,7 +59,7 @@ export const config: CustomProjectConfig = {
   imagePathDifference: '.lostpixel/difference',
   failOnDifference: true,
   failOnMissingBaselines: false, // First run on a new page is OK
-  // 10% pixel difference threshold — adjust per route via per-page config
+  // 10% pixel difference threshold -- adjust per route via per-page config
   // if a particularly dense view needs slack.
   threshold: 0.1,
   // Wait for SvelteKit hydration before capturing

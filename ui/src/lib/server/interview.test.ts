@@ -1,5 +1,5 @@
 /**
- * interview.ts — per-user story-bank + writing-samples reads.
+ * interview.ts -- per-user story-bank + writing-samples reads.
  *
  * Pre-fix bug: interview.ts hardcoded
  *   - `<repo>/interview-prep/story-bank.md`
@@ -10,7 +10,7 @@
  *
  * The fix routes both reads through `userSharedPath('story-bank')` and
  * `profilePath(id, 'writing-samples-dir')` so the data is segregated by
- * user. These tests assert that segregation directly — call the helpers
+ * user. These tests assert that segregation directly -- call the helpers
  * for one user, write content, switch users, call again, and verify the
  * second user reads their own content (or empty if missing) rather than
  * the first user's.
@@ -20,7 +20,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
-// Mock ./files BEFORE importing interview — profile-paths.ts captures
+// Mock ./files BEFORE importing interview -- profile-paths.ts captures
 // ROOT at module-load time, so an env-var override post-import is too
 // late. Mocking the module gives us a per-test tmp root.
 const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'heron-interview-test-'));

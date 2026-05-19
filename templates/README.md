@@ -21,10 +21,10 @@ instead (see [`../docs/DATA_CONTRACT.md`](../docs/DATA_CONTRACT.md)).
 | `fonts/` | `cv-template.html` (`@font-face`) | Self-hosted woff2 for the CV template (Inter latin + latin-ext) |
 
 **Note**: `batch-prompt.md` (the AI worker prompt) moved to
-[`../modes/batch-prompt.md`](../modes/batch-prompt.md) — it's a
+[`../modes/batch-prompt.md`](../modes/batch-prompt.md) -- it's a
 system-prompt sibling to the rest of the modes, not a data template.
 The canonical-state schema (formerly `templates/states.yml`) moved to
-[`../data/states.yml`](../data/states.yml) — it's runtime data, not a
+[`../data/states.yml`](../data/states.yml) -- it's runtime data, not a
 template.
 
 ### cv-template.html
@@ -33,7 +33,7 @@ The HTML template rendered by Playwright into PDF. Uses placeholder
 tokens (`{{NAME}}`, `{{SUMMARY_TEXT}}`, `{{EXPERIENCE}}`, etc.) that
 the PDF pipeline fills at generation time.
 
-**Design:** Inter throughout (display + body) — ATS-safe, matches the
+**Design:** Inter throughout (display + body) -- ATS-safe, matches the
 Heron brand's `brand.json::fonts.body` family. Single-column layout.
 Self-hosted woff2 in `templates/fonts/` so the renderer works offline
 and produces identical bytes on every machine.
@@ -47,7 +47,7 @@ placeholders" (the worker fills them in for batch CV runs).
 
 LaTeX template for Overleaf-compatible CV generation. Based on the [sb2nov/resume](https://github.com/sb2nov/resume) format. Uses placeholder tokens (`{{NAME}}`, `{{EXPERIENCE}}`, `{{PROJECTS}}`, etc.) that the LaTeX pipeline fills at generation time.
 
-**Design:** Single-column ATS-safe layout using standard CTAN packages (`fontawesome5`, `enumitem`, `hyperref`, `titlesec`). No custom fonts or external dependencies — uploads directly to Overleaf.
+**Design:** Single-column ATS-safe layout using standard CTAN packages (`fontawesome5`, `enumitem`, `hyperref`, `titlesec`). No custom fonts or external dependencies -- uploads directly to Overleaf.
 
 **Usage:**
 ```bash
@@ -58,7 +58,7 @@ node generate-latex.mjs output/cv-name-company-date.tex
 node generate-latex.mjs output/cv-name-company-date.tex output/custom-name.pdf
 ```
 
-**Prerequisites:** `pdflatex` via [MiKTeX](https://miktex.org/) (Windows) or TeX Live (Linux/macOS). First compilation may auto-install missing LaTeX packages. Alternatively, upload the `.tex` file directly to [Overleaf](https://www.overleaf.com) — no local install needed.
+**Prerequisites:** `pdflatex` via [MiKTeX](https://miktex.org/) (Windows) or TeX Live (Linux/macOS). First compilation may auto-install missing LaTeX packages. Alternatively, upload the `.tex` file directly to [Overleaf](https://www.overleaf.com) -- no local install needed.
 
 **Customization:** Edit this file to change margins, section order, or formatting commands. The placeholder tokens are documented in `modes/latex.md` under "Template Placeholders."
 

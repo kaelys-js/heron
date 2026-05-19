@@ -1,5 +1,5 @@
 /**
- * lib/server/apply-timing — dense band coverage.
+ * lib/server/apply-timing -- dense band coverage.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';

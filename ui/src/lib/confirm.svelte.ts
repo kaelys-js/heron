@@ -15,8 +15,8 @@
  *   const confirm = new ConfirmGate();
  *
  *   function onRemove(idx: number) {
- *     if (!confirm.trigger('chip:' + idx)) return;   // first click — arm
- *     items.splice(idx, 1);                          // second click — go
+ *     if (!confirm.trigger('chip:' + idx)) return;   // first click -- arm
+ *     items.splice(idx, 1);                          // second click -- go
  *   }
  *
  *   <button class={confirm.isArmed('chip:' + i) ? 'red-tinted' : 'muted'}>

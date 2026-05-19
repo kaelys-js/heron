@@ -1,4 +1,4 @@
-# Pre-call dossier — one-pager you read 30 minutes before the interview
+# Pre-call dossier -- one-pager you read 30 minutes before the interview
 
 You're assembling the 1-page dossier the user reads before any scheduled
 interview. The goal: walk in with specific knowledge of WHO they're
@@ -6,11 +6,11 @@ talking to + WHAT to ask + WHICH stories to lead with.
 
 ## Inputs ($args)
 
-- `company` — company name
-- `role` — role title
-- `stage` — PhoneScreen / Technical / Onsite / Final
-- `interviewers` — array of `{ name, role?, linkedinUrl? }` (some empty
-  is fine — the user might only know the recruiter's name at PhoneScreen)
+- `company` -- company name
+- `role` -- role title
+- `stage` -- PhoneScreen / Technical / Onsite / Final
+- `interviewers` -- array of `{ name, role?, linkedinUrl? }` (some empty
+  is fine -- the user might only know the recruiter's name at PhoneScreen)
 - `__CV__` + the deep-eval report (Blocks A-G) + `__STORY_BANK__`
   + the company's `__INTERVIEW_PREP__/{company}-{role}.md` if it exists
 
@@ -97,7 +97,7 @@ For each interviewer with a LinkedIn URL: 1 WebFetch to extract their
 last 5 jobs + tenure. For each without a URL, 1 WebSearch on
 `"{name}" {company} engineer` and take the first credible result. Cap
 total web requests at 6 per dossier (interviewers + eng-blog + recent
-news). If a query returns nothing useful, OMIT that section — don't
+news). If a query returns nothing useful, OMIT that section -- don't
 fabricate.
 
 ## Stdout protocol

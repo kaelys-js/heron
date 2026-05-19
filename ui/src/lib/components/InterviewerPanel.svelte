@@ -1,13 +1,13 @@
 <script lang="ts">
   /**
-   * InterviewerPanel — surfaces the interviewer list for a job + lets
+   * InterviewerPanel -- surfaces the interviewer list for a job + lets
    * the user add new ones, generate a per-interviewer dossier, generate
    * 10-questions-to-ask, and draft a thank-you after the call.
    *
    * Props:
    *   jobId
    *   profileId
-   *   interviewers — current list (from +page.server.ts data.interviewers)
+   *   interviewers -- current list (from +page.server.ts data.interviewers)
    *
    * State is rerendered after each mutation by calling invalidateAll().
    */

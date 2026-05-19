@@ -1,9 +1,9 @@
 /**
- * render — thin wrapper around @testing-library/svelte's render that
+ * render -- thin wrapper around @testing-library/svelte's render that
  *
  *   1. Flips the matchMedia polyfill BEFORE mount (so components that
  *      branch on `useIsMobile()` get the right value during their first
- *      render — not after a reactive update)
+ *      render -- not after a reactive update)
  *   2. Returns a typed `{ component, container, queries, …userEvent }`
  *      bundle so tests don't have to import `userEvent` themselves
  *   3. Auto-cleans the singleton state stores via `resetAll()` from

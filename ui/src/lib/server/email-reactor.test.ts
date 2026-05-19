@@ -1,7 +1,7 @@
 /**
- * lib/server/email-reactor — inbound-email classifier + action planner.
+ * lib/server/email-reactor -- inbound-email classifier + action planner.
  *
- * Tests focus on the pure classifyEmail + matchEmailToJob branches —
+ * Tests focus on the pure classifyEmail + matchEmailToJob branches --
  * the orchestration in reactToEmail() is exercised end-to-end by the
  * /api/email/react endpoint test.
  */
@@ -59,7 +59,7 @@ const fsMock = {
 };
 vi.mock('node:fs', () => ({ default: fsMock, ...fsMock }));
 
-// Per-profile resolver — the test sets `activeProfileId` and the
+// Per-profile resolver -- the test sets `activeProfileId` and the
 // mock returns a unique path per profile so multi-user isolation can
 // be asserted with the in-memory fsMock.
 let activeProfileId = 'default';

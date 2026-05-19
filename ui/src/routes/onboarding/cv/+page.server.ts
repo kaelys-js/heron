@@ -1,6 +1,6 @@
 /** Pre-fills the textarea with whatever's already in cv.md for the target
  *  profile (resolved from `?profile=<slug>`). Also reports whether LinkedIn
- *  is connected — the LinkedIn URL import path is only available when
+ *  is connected -- the LinkedIn URL import path is only available when
  *  there's a saved authenticated session to scrape with. */
 import { readSiblingFile, readProfile } from '$lib/server/profile';
 import { getSource } from '$lib/server/sources';

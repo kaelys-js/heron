@@ -3,19 +3,19 @@
  *
  * Should-I-take expected-value calculator. Combines:
  *   • Annualised TC (from the latest offer round)
- *   • Benchmark (if attached) — median band
+ *   • Benchmark (if attached) -- median band
  *   • BATNA score (best alternative offer)
  *   • User-supplied subjective ratings (1-5):
  *     - growthFit / teamFit / commuteFit / missionFit / workLifeBalance
  *
  * ALSO supports the EV-of-waiting extension:
- *   • currentRoleTC (optional)   — if you have a current job, models
+ *   • currentRoleTC (optional)   -- if you have a current job, models
  *     "do nothing, wait for offer B" as a third path
- *   • waitDays (optional)        — how long you'd hold out for offer B
- *   • waitProbability (optional) — 0-1 probability offer B actually
- *     materialises in waitDays. Default 0.4 (calibrated to real data —
+ *   • waitDays (optional)        -- how long you'd hold out for offer B
+ *   • waitProbability (optional) -- 0-1 probability offer B actually
+ *     materialises in waitDays. Default 0.4 (calibrated to real data --
  *     pipelines die ~60% of the time)
- *   • offerBTcEstimate (optional) — expected TC of the alternative
+ *   • offerBTcEstimate (optional) -- expected TC of the alternative
  *
  * Returns:
  *   ev:        0-100 composite score for THIS offer

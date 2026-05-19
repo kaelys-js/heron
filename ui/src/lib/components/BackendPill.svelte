@@ -18,7 +18,7 @@
   let resolved: ResolvedBackend | null = $state(null);
   let isCapacitor = $derived(typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform());
 
-  // Color per source — green when local, amber when LAN, blue when remote.
+  // Color per source -- green when local, amber when LAN, blue when remote.
   const colorBySource: Record<BackendSource, string> = {
     embedded: 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40',
     dev: 'bg-violet-500/20 text-violet-200 border-violet-500/40',

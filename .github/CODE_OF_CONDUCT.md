@@ -34,9 +34,9 @@ Maintainers have the right and responsibility to remove, edit, or reject comment
 
 ## Enforcement Actions
 
-1. **Warning** — A private written warning with clarity on the violation
-2. **Temporary Ban** — Temporary inability to interact with the project
-3. **Permanent Ban** — Permanent removal from all project spaces
+1. **Warning** -- A private written warning with clarity on the violation
+2. **Temporary Ban** -- Temporary inability to interact with the project
+3. **Permanent Ban** -- Permanent removal from all project spaces
 
 ## Scope
 

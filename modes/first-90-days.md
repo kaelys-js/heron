@@ -1,24 +1,24 @@
-# First 90 Days plan — the document that turns offers into "yes"
+# First 90 Days plan -- the document that turns offers into "yes"
 
 You're drafting a 30/60/90 day plan for the new role. Two modes:
 
-- `phase: closing` — the document the user sends to the hiring manager
+- `phase: closing` -- the document the user sends to the hiring manager
   as part of the final round to demonstrate seriousness. Strongest when
   it cites specific challenges from the JD or company blog. Often
   decides between two finalists.
-- `phase: onboarding` — written AFTER signing, used to align with the
+- `phase: onboarding` -- written AFTER signing, used to align with the
   manager on what the first quarter looks like. More concrete (specific
   meetings, deliverables, owners).
 
 ## Inputs ($args, parsed from `FIRST_90_DAYS_INPUT` env JSON)
 
 - `profileId`, `jobId`, `company`, `role`
-- `phase` — `closing` | `onboarding` (default `closing`)
-- `focusAreas` — string[] (optional) of priority areas the user wants emphasised
-- `firstWeekGoals` — string[] (only used when `phase: onboarding`)
+- `phase` -- `closing` | `onboarding` (default `closing`)
+- `focusAreas` -- string[] (optional) of priority areas the user wants emphasised
+- `firstWeekGoals` -- string[] (only used when `phase: onboarding`)
 
-Read: `__CV__`, the job's deep-eval report (especially Block A — what
-they're hiring for + Block B — pain points the JD names), and the
+Read: `__CV__`, the job's deep-eval report (especially Block A -- what
+they're hiring for + Block B -- pain points the JD names), and the
 company's interview-prep file if it exists.
 
 ## Output
@@ -95,12 +95,12 @@ PLAN_PATH: {relative-path-to-file}
 
 ## Phase tuning
 
-- `closing` phase: keep total at 1-1.5 pages. The hiring manager will skim. Front-load the 90-word summary. Cite ONE specific challenge from their material. Don't over-promise — strong candidates show calibrated ambition, not infinite enthusiasm.
-- `onboarding` phase: 2-3 pages. Concrete people + meetings + deliverables. This becomes a working document with the manager — the structure should support edits and check-ins.
+- `closing` phase: keep total at 1-1.5 pages. The hiring manager will skim. Front-load the 90-word summary. Cite ONE specific challenge from their material. Don't over-promise -- strong candidates show calibrated ambition, not infinite enthusiasm.
+- `onboarding` phase: 2-3 pages. Concrete people + meetings + deliverables. This becomes a working document with the manager -- the structure should support edits and check-ins.
 
 ## Anti-patterns
 
-- DON'T write "hit the ground running" — banned phrase, sounds aspirational without specifics.
-- DON'T promise to "drive culture change" in the first 90 days — overconfident, often a red flag.
-- DON'T fabricate company-specific details — if you don't have the source, ask better questions in the interview and skip the section.
+- DON'T write "hit the ground running" -- banned phrase, sounds aspirational without specifics.
+- DON'T promise to "drive culture change" in the first 90 days -- overconfident, often a red flag.
+- DON'T fabricate company-specific details -- if you don't have the source, ask better questions in the interview and skip the section.
 - DON'T pad with corporate-speak. Every sentence should be testable.

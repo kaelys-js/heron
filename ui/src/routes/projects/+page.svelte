@@ -49,7 +49,7 @@
     };
   } = $props();
 
-  // Profile-scoped projects endpoints — append ?profile=<slug> so writes
+  // Profile-scoped projects endpoints -- append ?profile=<slug> so writes
   // land in the same profile the page is showing (avoids "I edited project
   // foo while on Electrician, but it saved to Software").
   let pq = $derived('?profile=' + encodeURIComponent(data.profileId));
@@ -262,7 +262,7 @@
     }
   }
 
-  // ---- "Open in Pipeline" — build URL params and navigate ----
+  // ---- "Open in Pipeline" -- build URL params and navigate ----
   function projectUrl(p: Project): string {
     const params = new URLSearchParams();
     params.set('from', 'project:' + p.id);
@@ -283,7 +283,7 @@
     await goto(projectUrl(p));
   }
 
-  // ---- editor — filter helpers ----
+  // ---- editor -- filter helpers ----
   const SCORE_TIERS = [
     { label: 'Any', value: 0 },
     { label: '3+', value: 3 },

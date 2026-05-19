@@ -1,5 +1,5 @@
 /**
- * /api/profile/comp-bands — read merged bands + write overrides.
+ * /api/profile/comp-bands -- read merged bands + write overrides.
  *
  * GET → { bands, staleness }
  *   bands = defaults overlaid with per-profile overrides

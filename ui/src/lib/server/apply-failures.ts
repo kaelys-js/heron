@@ -1,5 +1,5 @@
 /**
- * apply-failures — single entry point for autonomous-apply failures.
+ * apply-failures -- single entry point for autonomous-apply failures.
  *
  * Every soft-failure mode (CAPTCHA, anti-bot, unknown form field, upload
  * failure, stub adapter, validation rejection) calls reportApplyFailure().
@@ -12,18 +12,18 @@
  *   4. Logs a warn-level activity event so the bell pops.
  *
  * Failure modes:
- *   stub          — portal is `unknown` (URL didn't match any known portal),
+ *   stub          -- portal is `unknown` (URL didn't match any known portal),
  *                   or a portal-specific adapter chose to defer to manual.
  *                   All 11 named portals (LinkedIn, Greenhouse, Ashby, Lever,
  *                   Workday, Workable, Personio, SmartRecruiters, Recruitee,
  *                   Teamtailor, Indeed) ship production adapters today; the
  *                   stub fires only when detect_portal() returns 'unknown'.
- *   captcha       — reCAPTCHA / hCaptcha / Turnstile detected
- *   anti-bot      — Cloudflare 403 / "you are a bot" page
- *   unknown-field — required form field has no answer in cache or schema
- *   upload-failed — resume or cover-letter set_input_files failed
- *   validation    — Submit clicked but form rejected (missing field, format)
- *   error         — anything else (script crashed, timeout)
+ *   captcha       -- reCAPTCHA / hCaptcha / Turnstile detected
+ *   anti-bot      -- Cloudflare 403 / "you are a bot" page
+ *   unknown-field -- required form field has no answer in cache or schema
+ *   upload-failed -- resume or cover-letter set_input_files failed
+ *   validation    -- Submit clicked but form rejected (missing field, format)
+ *   error         -- anything else (script crashed, timeout)
  *
  * Each mode has a different "fix" CTA the Inbox renders so the user knows
  * what to do next.
@@ -68,9 +68,9 @@ export type ReportApplyFailureInput = {
   url?: string;
   portal: string;
   profileId?: string;
-  /** Job's company name — used in the Issue summary. Optional but helps UX. */
+  /** Job's company name -- used in the Issue summary. Optional but helps UX. */
   company?: string;
-  /** Job's role title — same. */
+  /** Job's role title -- same. */
   role?: string;
   mode: ApplyFailureMode;
   /** Free-form detail surfaced in the Issue body and the applications.md note.
@@ -87,7 +87,7 @@ export type ReportApplyFailureInput = {
  *
  *   - Issue created/refreshed
  *   - applications.md status → `ManualApplyNeeded`
- *   - applications.md notes → `Auto-apply: {mode} — {detail}`
+ *   - applications.md notes → `Auto-apply: {mode} -- {detail}`
  *   - activity feed event at warn level
  */
 export function reportApplyFailure(input: ReportApplyFailureInput): void {
@@ -132,7 +132,7 @@ export function reportApplyFailure(input: ReportApplyFailureInput): void {
     }
   }
 
-  // 3. Activity feed event — warn level so the bell highlights.
+  // 3. Activity feed event -- warn level so the bell highlights.
   logEvent('apply-' + portal, summary, {
     level: 'warn',
     category: 'application',

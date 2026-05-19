@@ -1,5 +1,5 @@
 /**
- * GET /api/search-index — compact client-side search index.
+ * GET /api/search-index -- compact client-side search index.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

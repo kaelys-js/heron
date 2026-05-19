@@ -1,5 +1,5 @@
 /**
- * /api/stats — quick-glance counters for the desktop tray icon
+ * /api/stats -- quick-glance counters for the desktop tray icon
  * + iOS widget + Live Activity heads-up.
  *
  * Intentionally cheap: aggregates from existing in-memory caches.

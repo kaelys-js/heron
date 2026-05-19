@@ -1,5 +1,5 @@
 /**
- * POST /api/autopilot/resume — re-enable autopilot after circuit-breaker trip.
+ * POST /api/autopilot/resume -- re-enable autopilot after circuit-breaker trip.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -51,7 +51,7 @@ describe('POST /api/autopilot/resume', () => {
   it('passes through ok=false from the circuit breaker', async () => {
     mockResult = { ok: false, message: 'nothing to resume' };
     const r = await post();
-    // wrap doesn't translate ok=false to non-2xx — that's by design;
+    // wrap doesn't translate ok=false to non-2xx -- that's by design;
     // resumeAutopilot reports cleared=0 with ok=false when there was no
     // open circuit.
     expect(r.body.ok).toBe(false);

@@ -1,5 +1,5 @@
 /**
- * GET /api/calendar — unified interview + prep-block + deadline + action feed.
+ * GET /api/calendar -- unified interview + prep-block + deadline + action feed.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

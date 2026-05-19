@@ -8,7 +8,7 @@
  * Body shape:
  *   {
  *     currency: 'USD',
- *     receivedAt: 1700000000000,        // unix ms — defaults to Date.now()
+ *     receivedAt: 1700000000000,        // unix ms -- defaults to Date.now()
  *     decisionDeadline?: 1700500000000, // when recruiter wants an answer
  *     initial: {
  *       base, bonus?, signing?, equity?, equityVestingYears?, otherCash?, notes?

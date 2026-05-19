@@ -1,5 +1,5 @@
 /**
- * email-reactor — classify inbound emails + auto-react.
+ * email-reactor -- classify inbound emails + auto-react.
  *
  * For an autonomous job-search pipeline, the gap between "applied" and
  * "interviewing" is bridged by recruiter emails. The system already
@@ -62,14 +62,14 @@ export type Classification = {
   confidence: 'high' | 'medium' | 'low';
   /** When kind === 'interview-scheduling', which stage. */
   stage?: InterviewStage;
-  /** Sender domain — used by the matcher to pair with a tracker job */
+  /** Sender domain -- used by the matcher to pair with a tracker job */
   senderDomain: string;
   /** Excerpt of the matched phrase, for the audit trail */
   evidence?: string;
 };
 
 /** Action items the caller should run after classification. The reactor
- *  doesn't execute these directly — it returns them so the API endpoint
+ *  doesn't execute these directly -- it returns them so the API endpoint
  *  can apply them and log a structured audit trail. */
 export type EmailAction =
   | {
@@ -178,7 +178,7 @@ function extractSenderDomain(from: string): string {
 }
 
 /**
- * Classify an inbound email. Pure function — no I/O. Order of checks
+ * Classify an inbound email. Pure function -- no I/O. Order of checks
  * matters: rejection patterns are matched FIRST because some rejection
  * emails also contain phrasing that looks like "we'll keep you in mind
  * for other opportunities" which could trigger recruiter-reach-out
@@ -190,7 +190,7 @@ export function classifyEmail(email: EmailInput): Classification {
   const combined = subj + '\n' + body;
   const senderDomain = extractSenderDomain(email.from);
 
-  // Offer FIRST — offer + take-home patterns can both appear in long emails
+  // Offer FIRST -- offer + take-home patterns can both appear in long emails
   const offerEvidence = extractEvidence(combined, OFFER_PATTERNS);
   if (offerEvidence) {
     return {
@@ -228,7 +228,7 @@ export function classifyEmail(email: EmailInput): Classification {
   const schedulingEvidence = extractEvidence(combined, INTERVIEW_SCHEDULING_PATTERNS);
   if (schedulingEvidence) {
     // Determine which stage. Default to PhoneScreen for ambiguous "let's
-    // chat" emails — they're almost always the first call.
+    // chat" emails -- they're almost always the first call.
     let stage: InterviewStage = 'PhoneScreen';
     for (const [pat, s] of STAGE_PATTERNS) {
       if (pat.test(combined)) {
@@ -334,7 +334,7 @@ export function matchEmailToJob(
 
 // ── Build action list ──────────────────────────────────────────────
 
-/** Per-user per-profile path. Was a single repo-root file — under
+/** Per-user per-profile path. Was a single repo-root file -- under
  *  multi-user that mixed every user's recruiter inbound history. Routes
  *  through the same kind that inbound-leads.ts uses, so the two modules
  *  share storage for the active user/profile rather than fighting over
@@ -356,7 +356,7 @@ export function planActions(
   const actions: EmailAction[] = [];
 
   if (cls.kind === 'recruiter-reach-out') {
-    // No existing job to match against — log as an inbound lead. These
+    // No existing job to match against -- log as an inbound lead. These
     // are the channel that historically converts; surface them up.
     actions.push({
       type: 'log-lead',
@@ -368,7 +368,7 @@ export function planActions(
   }
 
   if (!match) {
-    // No tracker match — we can't take any per-job action. The caller
+    // No tracker match -- we can't take any per-job action. The caller
     // can still log this so the user sees it in the inbox.
     return actions;
   }
@@ -471,7 +471,7 @@ export function executeActions(actions: EmailAction[]): ExecutionResult {
           result.executed++;
           break;
         case 'fire-tech-prep':
-          // Fire-and-forget background spawn — keeps the email-reactor
+          // Fire-and-forget background spawn -- keeps the email-reactor
           // hot-path fast. The actual generation is handled by the
           // existing /api/job/[id]/tech-prep endpoint logic.
           fireBackgroundTechPrep(a.jobId, a.profileId);
@@ -580,7 +580,7 @@ function fireBackgroundTechPrep(jobId: string, profileId?: string): void {
     '/tech-prep' +
     (profileId ? '?profile=' + encodeURIComponent(profileId) : '');
   // SvelteKit endpoints accept relative paths only from within the
-  // server context — we use globalThis.fetch which routes through the
+  // server context -- we use globalThis.fetch which routes through the
   // server runtime. Errors are surfaced via the activity feed inside
   // the tech-prep endpoint itself.
   void fetch('http://127.0.0.1:5174' + url, {

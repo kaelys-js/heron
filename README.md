@@ -30,7 +30,7 @@
 
 ## What is Heron
 
-The Heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes — once, precisely, and the work is done.
+The Heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes -- once, precisely, and the work is done.
 
 This is the wrong era for spray-and-pray job searches. Recruiters' attention is finite. So is yours. Heron is a thinking partner for people in career transition who'd rather make one excellent move than fifty mediocre ones.
 
@@ -45,23 +45,23 @@ It runs entirely on your machine. Your data is yours. See [`docs/PHILOSOPHY.md`]
         <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/inbox-dark.png">
         <img src="docs/screenshots/inbox-light.png" alt="Inbox" />
       </picture>
-      <p align="center"><b>Inbox</b> — triaged opportunities by score</p>
+      <p align="center"><b>Inbox</b> -- triaged opportunities by score</p>
     </td>
     <td width="50%">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/evaluation-dark.png">
-        <img src="docs/screenshots/evaluation-light.png" alt="A–F evaluation report" />
+        <img src="docs/screenshots/evaluation-light.png" alt="A-F evaluation report" />
       </picture>
-      <p align="center"><b>A–F evaluation</b> — six-block analysis per role</p>
+      <p align="center"><b>A-F evaluation</b> -- six-block analysis per role</p>
     </td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/autopilot.png" alt="Autopilot config" /><p align="center"><b>Autopilot</b> — score-gated automation, opt-in</p></td>
-    <td><img src="docs/screenshots/patterns.png" alt="Pattern analysis" /><p align="center"><b>Patterns</b> — rejection-pattern insights</p></td>
+    <td><img src="docs/screenshots/autopilot.png" alt="Autopilot config" /><p align="center"><b>Autopilot</b> -- score-gated automation, opt-in</p></td>
+    <td><img src="docs/screenshots/patterns.png" alt="Pattern analysis" /><p align="center"><b>Patterns</b> -- rejection-pattern insights</p></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/interview-prep.png" alt="Interview prep" /><p align="center"><b>Interview prep</b> — STAR+R stories from real projects</p></td>
-    <td><img src="docs/screenshots/mobile-inbox.png" alt="Mobile inbox" width="40%" /><p align="center"><b>Mobile</b> — iOS / Android via Capacitor</p></td>
+    <td><img src="docs/screenshots/interview-prep.png" alt="Interview prep" /><p align="center"><b>Interview prep</b> -- STAR+R stories from real projects</p></td>
+    <td><img src="docs/screenshots/mobile-inbox.png" alt="Mobile inbox" width="40%" /><p align="center"><b>Mobile</b> -- iOS / Android via Capacitor</p></td>
   </tr>
 </table>
 
@@ -69,15 +69,15 @@ It runs entirely on your machine. Your data is yours. See [`docs/PHILOSOPHY.md`]
 
 ## What it does
 
-- **Pipeline + A–F evaluation** — every opportunity tracked with a six-block analysis (role fit, CV match, level strategy, comp research, personalization plan, interview prep). Multi-profile if you run parallel career tracks.
-- **CV generation** — ATS-optimized PDFs tailored per role, with AI-detect + keyword check baked in.
-- **Portal scanning** — 11 ATSes (Greenhouse, Ashby, Lever, LinkedIn, Indeed, Workday, Recruitee, SmartRecruiters, Workable, Personio, Teamtailor) hit directly via their APIs — zero AI tokens on scan.
-- **Recruiter inbound + interview prep** — Gmail IMAP poller classifies offers; STAR+R stories ready when a screen lands.
-- **Autonomous apply (opt-in, off by default)** — score-gated, daily-capped, falls back to manual the moment anything looks off. Native everywhere via Capacitor (iOS / Android) + Electron (Mac/Win/Linux) + Apple Watch.
+- **Pipeline + A-F evaluation** -- every opportunity tracked with a six-block analysis (role fit, CV match, level strategy, comp research, personalization plan, interview prep). Multi-profile if you run parallel career tracks.
+- **CV generation** -- ATS-optimized PDFs tailored per role, with AI-detect + keyword check baked in.
+- **Portal scanning** -- 11 ATSes (Greenhouse, Ashby, Lever, LinkedIn, Indeed, Workday, Recruitee, SmartRecruiters, Workable, Personio, Teamtailor) hit directly via their APIs -- zero AI tokens on scan.
+- **Recruiter inbound + interview prep** -- Gmail IMAP poller classifies offers; STAR+R stories ready when a screen lands.
+- **Autonomous apply (opt-in, off by default)** -- score-gated, daily-capped, falls back to manual the moment anything looks off. Native everywhere via Capacitor (iOS / Android) + Electron (Mac/Win/Linux) + Apple Watch.
 
 ## Pricing
 
-Heron is MIT-licensed and free — `$0/month, forever` if you use a Claude Max plan via `AGENT_CLI=claude`. See [`docs/FAQ.md`](docs/FAQ.md) for the cost breakdown including direct API tokens and the optional Apple Developer Program fee for iOS builds.
+Heron is MIT-licensed and free -- `$0/month, forever` if you use a Claude Max plan via `AGENT_CLI=claude`. See [`docs/FAQ.md`](docs/FAQ.md) for the cost breakdown including direct API tokens and the optional Apple Developer Program fee for iOS builds.
 
 ## Quick start
 
@@ -127,7 +127,7 @@ See [`docs/SETUP.md`](docs/SETUP.md) for the long form including Capacitor / iOS
 
 | Channel | Use for |
 |---|---|
-| 💬 [Discord](https://discord.gg/8pRpHETxa4) | Real-time questions, setup help, show-and-tell — typically same-day during EU/US working hours |
+| 💬 [Discord](https://discord.gg/8pRpHETxa4) | Real-time questions, setup help, show-and-tell -- typically same-day during EU/US working hours |
 | 📚 [GitHub Discussions](https://github.com/kaelys-js/heron/discussions) | Async Q&A + ideas + roadmap + success stories |
 | 🐛 [Issues](https://github.com/kaelys-js/heron/issues) | Bugs + feature requests (use the templates) |
 | 🎓 [I got hired](https://github.com/kaelys-js/heron/issues/new?template=i-got-hired.yml) | Tell the Hall of Fame your story |
@@ -144,9 +144,9 @@ See [`.github/SECURITY.md`](.github/SECURITY.md) for the full posture + vulnerab
 
 ## Contributing
 
-We welcome PRs. Start with [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) — covers the contributor ladder (Participant → Contributor → Triager → Reviewer → Maintainer), commit-message rules, DCO sign-off, and the "what we do NOT accept" list.
+We welcome PRs. Start with [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) -- covers the contributor ladder (Participant → Contributor → Triager → Reviewer → Maintainer), commit-message rules, DCO sign-off, and the "what we do NOT accept" list.
 
-Issues labeled [`good first issue`](https://github.com/kaelys-js/heron/labels/good%20first%20issue) are scoped for first-time contributors. Join [Discord](https://discord.gg/8pRpHETxa4) before opening a feature PR — saves you scope-rework.
+Issues labeled [`good first issue`](https://github.com/kaelys-js/heron/labels/good%20first%20issue) are scoped for first-time contributors. Join [Discord](https://discord.gg/8pRpHETxa4) before opening a feature PR -- saves you scope-rework.
 
 ### Contributors
 
@@ -162,7 +162,7 @@ Heron is built in volunteer time. If it saves you a job-search week, consider [s
 
 ## Acknowledgements
 
-Heron is a hard fork of [`santifer/career-ops`](https://github.com/santifer/career-ops) — the original CLI-driven job-search system [santifer](https://santifer.io) built and used to evaluate 740+ offers, generate 100+ tailored CVs, and land a Head of Applied AI role. His [case study](https://santifer.io/career-ops-system) is required reading for the philosophy (filter, not cannon).
+Heron is a hard fork of [`santifer/career-ops`](https://github.com/santifer/career-ops) -- the original CLI-driven job-search system [santifer](https://santifer.io) built and used to evaluate 740+ offers, generate 100+ tailored CVs, and land a Head of Applied AI role. His [case study](https://santifer.io/career-ops-system) is required reading for the philosophy (filter, not cannon).
 
 This fork adds: multi-user system + RBAC + GDPR lifecycle, SvelteKit + Better Auth + Drizzle dashboard, Capacitor 8 native apps (iOS + Android + Electron + Watch), 4 iOS widgets + Live Activity, autonomous-apply pipeline, Vitest matrix replacing legacy verifiers, 0-CVE supply chain, OSSF Scorecard + SLSA L2 + CodeQL × 3 languages, and the Heron brand system.
 

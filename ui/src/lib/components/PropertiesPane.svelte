@@ -56,7 +56,7 @@
           : 'bg-red-500/10 text-red-300 border-red-500/30',
   );
 
-  // Defensive hostname parse — never crash the page over a malformed URL
+  // Defensive hostname parse -- never crash the page over a malformed URL
   let hostname = $derived.by(() => {
     if (!job.url) return '';
     try {
@@ -167,7 +167,7 @@
 <aside class="w-72 flex-shrink-0 border-l bg-muted/10 overflow-y-auto">
   <div class="p-4 space-y-4">
     <Tooltip.Provider delayDuration={350}>
-      <!-- Quick actions toolbar — open the posting or copy the URL -->
+      <!-- Quick actions toolbar -- open the posting or copy the URL -->
       {#if job.url}
         <div class="flex items-center gap-1 -mx-1 -mt-1">
           <Tooltip.Root>

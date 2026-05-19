@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * generate-og-cards.mjs — render per-page Open Graph cards.
+ * generate-og-cards.mjs -- render per-page Open Graph cards.
  *
  * Closes SOCIAL-CARD.md "Per-page variant strategy" by:
  *
@@ -16,7 +16,7 @@
  *   • Playwright at request time is too heavy (~2s cold start)
  *   • The variant set is small + stable; regenerating on every brand
  *     change is fine
- *   • Production serves the PNGs as static files — zero runtime cost
+ *   • Production serves the PNGs as static files -- zero runtime cost
  *
  * Workflow:
  *
@@ -79,7 +79,7 @@ const htmlTemplate = readFileSync(HTML_SOURCE, 'utf8');
 function substituteTemplate(html, title, subtitle) {
   // Replace the contents of the first <h1 class="tagline"> and
   // <p class="subline"> elements. Inner content may contain <br>,
-  // &nbsp;, and other inline markup — capture lazily up to the
+  // &nbsp;, and other inline markup -- capture lazily up to the
   // closing tag. The template is hand-curated so these selectors are
   // stable; if they change, the generator explodes loudly (better
   // than silently rendering defaults).

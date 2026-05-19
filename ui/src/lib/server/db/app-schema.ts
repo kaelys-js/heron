@@ -1,22 +1,22 @@
 /**
- * app-schema — Drizzle schema for the app.db SQLite file.
+ * app-schema -- Drizzle schema for the app.db SQLite file.
  *
  * Scope: ONLY the tables the dashboard actually queries. Per-user user
- * data — CV, profile.yml, portals.yml, _profile.md, applications.md,
+ * data -- CV, profile.yml, portals.yml, _profile.md, applications.md,
  * pipeline.md, scan-history.tsv, gemini-scores.tsv, reports/*.md,
  * output/*.pdf, interview-prep/*.md, form-answers-cache.jsonl,
- * apply-state JSON, comp-overrides JSON, interview-schedule.jsonl —
+ * apply-state JSON, comp-overrides JSON, interview-schedule.jsonl --
  * stays on the filesystem under `data/users/{userId}/profiles/{slug}/...`
  * because the Claude CLI reads/writes those paths directly per AGENTS.md.
  * User separation is enforced at the filesystem layer via the per-user
  * path prefix; moving these into SQLite would break the CLI integration.
  *
  * Tables in this file:
- *   • profiles          — per-user career-track list + active flag
- *   • ui_prefs          — per-user appearance / theme / display name
- *   • activity_events   — append-only mirror of data/activity.jsonl for
+ *   • profiles          -- per-user career-track list + active flag
+ *   • ui_prefs          -- per-user appearance / theme / display name
+ *   • activity_events   -- append-only mirror of data/activity.jsonl for
  *                          indexed per-user queries on the UI side
- *   • issues            — append-only mirror of data/issues.jsonl for
+ *   • issues            -- append-only mirror of data/issues.jsonl for
  *                          indexed per-user queries on the UI side
  *
  * Every row has `user_id` (FK to auth.db users; enforced application-side
@@ -79,7 +79,7 @@ export const issues = sqliteTable(
   (t) => [uniqueIndex('issues_user_dedupe_uniq').on(t.userId, t.dedupeKey)],
 );
 
-/** UI prefs (theme, notifications, avatar path) — one row per user. */
+/** UI prefs (theme, notifications, avatar path) -- one row per user. */
 export const uiPrefs = sqliteTable('ui_prefs', {
   userId: text('user_id').primaryKey(),
   displayName: text('display_name'),

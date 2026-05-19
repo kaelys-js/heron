@@ -1,22 +1,22 @@
 /**
- * online-status — unified offline detection across Web / Electron / iOS.
+ * online-status -- unified offline detection across Web / Electron / iOS.
  *
  * Three signals are reconciled into one `online` boolean:
  *
- *   1. `navigator.onLine` — fast, dirty (it lies — "online" can mean
+ *   1. `navigator.onLine` -- fast, dirty (it lies -- "online" can mean
  *      "connected to router but no internet"). Useful as a low-priority
  *      hint.
- *   2. **Backend health probe** — periodic `/api/health` GET against the
- *      resolved backend. Authoritative — if this fails we are offline
+ *   2. **Backend health probe** -- periodic `/api/health` GET against the
+ *      resolved backend. Authoritative -- if this fails we are offline
  *      for app purposes even if navigator.onLine is true.
- *   3. **Native hint** (iOS Capacitor + Electron) — NWPathMonitor on
+ *   3. **Native hint** (iOS Capacitor + Electron) -- NWPathMonitor on
  *      iOS and `net.isOnline()` on Electron, forwarded into this store
  *      via window-injected hooks.
  *
  * Subscribers (api.ts, OfflineIndicator.svelte, BackendBootGuard) read
  * `onlineState.online` (boolean) and listen for `online-changed` events.
  *
- * The user picked "(a) always fail with 'offline' UI when offline" —
+ * The user picked "(a) always fail with 'offline' UI when offline" --
  * we DON'T cache responses or serve stale reads. fetch() short-circuits
  * with a synthesized "offline" error so the unified error-reporter
  * stays out of it (offline is expected; reporting it spams Issues).
@@ -28,11 +28,11 @@ const PROBE_TIMEOUT_MS = 2_000;
 const STORAGE_KEY = `${BRAND_STORAGE_PREFIX}:online-last`;
 
 class OnlineStore {
-  /** Reactive store-style — Svelte 5 will pick up reads automatically
+  /** Reactive store-style -- Svelte 5 will pick up reads automatically
    *  if used inside a $derived or $effect; for plain JS callers we
    *  expose an addListener() that re-fires on every state change. */
   online = $state(true);
-  /** "Why" — populated when offline. 'navigator' / 'probe' / 'native'. */
+  /** "Why" -- populated when offline. 'navigator' / 'probe' / 'native'. */
   reason = $state<string | null>(null);
   /** Last successful probe timestamp (ms). */
   lastOk = $state(Date.now());
@@ -55,12 +55,12 @@ class OnlineStore {
       // probe will correct it within ~PROBE_INTERVAL_MS.
     }
 
-    // navigator.onLine — fast but flaky
+    // navigator.onLine -- fast but flaky
     window.addEventListener('online', () => this.update(true, 'navigator'));
     window.addEventListener('offline', () => this.update(false, 'navigator'));
     this.online = navigator.onLine;
 
-    // Periodic backend health probe — authoritative
+    // Periodic backend health probe -- authoritative
     this.startProbing();
 
     // Listen for native hints (iOS / Electron forward via DOM events)
@@ -70,7 +70,7 @@ class OnlineStore {
     }) as EventListener);
 
     // iOS Capacitor plugin emits via Capacitor's listener bus, not DOM.
-    // Bridge it lazily — dynamic import keeps web/desktop bundles small.
+    // Bridge it lazily -- dynamic import keeps web/desktop bundles small.
     void import('./native-bridge')
       .then((m) => {
         m.onNetStatusChange?.((online) => this.update(online, 'native'));
@@ -87,12 +87,12 @@ class OnlineStore {
         });
       } catch {
         // Electron preload bridge missing the `on` method (older
-        // build). Fall back to navigator + probe only — no crash.
+        // build). Fall back to navigator + probe only -- no crash.
       }
     }
   }
 
-  /** Update the resolved backend URL — called by BackendBootGuard. */
+  /** Update the resolved backend URL -- called by BackendBootGuard. */
   setBackend(url: string | null): void {
     this.backendUrl = url;
     if (url) void this.probe();
@@ -123,7 +123,7 @@ class OnlineStore {
   private async probe(): Promise<void> {
     if (!this.backendUrl) return;
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      // OS says offline — trust it, don't waste a request
+      // OS says offline -- trust it, don't waste a request
       this.update(false, 'navigator');
       return;
     }
@@ -155,14 +155,14 @@ class OnlineStore {
     try {
       localStorage.setItem(STORAGE_KEY, online ? '1' : '0');
     } catch {
-      // localStorage denied — runtime state is still authoritative,
+      // localStorage denied -- runtime state is still authoritative,
       // we just don't restore on next cold boot.
     }
     for (const fn of this.listeners) {
       try {
         fn(online);
       } catch (e) {
-        // Listener crashed — don't let one broken subscriber take down
+        // Listener crashed -- don't let one broken subscriber take down
         // the whole notification fan-out. Log to console (we're in the
         // client lib so no logEvent).
         // eslint-disable-next-line no-console
@@ -190,7 +190,7 @@ export class OfflineError extends Error {
   }
 }
 
-/** Helper for non-Svelte callers — just read the current state. */
+/** Helper for non-Svelte callers -- just read the current state. */
 export function isOnline(): boolean {
   return onlineStore.online;
 }

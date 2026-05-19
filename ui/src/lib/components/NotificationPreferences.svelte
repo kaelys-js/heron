@@ -28,7 +28,7 @@
 
   // Sourced from the centralised brand-storage map. Single source of
   // truth means the BackgroundFetcher (Swift) and this UI can never
-  // drift on the same key — they read what's literally stored under
+  // drift on the same key -- they read what's literally stored under
   // `BRAND.name:quiet-hours` regardless of any future rename.
   const STORAGE_KEY = BRAND_STORAGE_KEYS.quietHours;
   // Default: no quiet hours. Users opt in explicitly so we don't silently
@@ -39,7 +39,7 @@
   let isNative = $state(false);
   let clearing = $state(false);
 
-  // Live preview of whether the current time falls inside the window —
+  // Live preview of whether the current time falls inside the window --
   // helps the user understand "what would happen right now" while they
   // tweak the sliders.
   let nowInQuiet = $derived(isInQuietHours(prefs));
@@ -64,9 +64,9 @@
         };
       }
     } catch {
-      // Corrupt prefs — keep defaults.
+      // Corrupt prefs -- keep defaults.
     }
-    // Initial App Group mirror — without this the BackgroundFetcher
+    // Initial App Group mirror -- without this the BackgroundFetcher
     // would read no prefs on first boot and never enforce quiet hours
     // until the user opened this settings page once. Pushing on mount
     // means the very first background fetch already honours the user's
@@ -79,7 +79,7 @@
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
     } catch {
-      // localStorage denied (Safari private mode) — runtime state
+      // localStorage denied (Safari private mode) -- runtime state
       // still works for this session.
     }
     // Mirror into App Group UserDefaults so the BackgroundFetcher
@@ -87,7 +87,7 @@
     // WebView's localStorage scope) can honour quiet hours when
     // deciding whether to deliver a warn-level notification at 3am.
     // No-op on web/desktop. We pass the FULL prefs as JSON so the
-    // Swift side can decode the same shape — handles the cross-
+    // Swift side can decode the same shape -- handles the cross-
     // midnight window logic identically in both languages.
     void setSharedQuietHours(JSON.stringify(prefs));
   }

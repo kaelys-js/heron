@@ -5,7 +5,7 @@
  *   • BRAND.urlScheme === "heron" (locked from brand.json)
  *   • iOS Info.plist registers the URL scheme via CFBundleURLTypes
  *   • Android intent-filter includes the scheme
- *   • TS code uses BRAND.urlScheme — no hardcoded "heron://" leaks
+ *   • TS code uses BRAND.urlScheme -- no hardcoded "heron://" leaks
  *     outside the generated brand.ts files
  */
 
@@ -24,7 +24,7 @@ function exists(rel: string): boolean {
 }
 
 const brandJson = JSON.parse(readFile('branding/brand.json'));
-// brand.json nests every platform identifier under `identifiers` —
+// brand.json nests every platform identifier under `identifiers` --
 // urlScheme, bundleId, appGroup, serviceType, etc. all live there.
 const expectedScheme: string = brandJson.identifiers.urlScheme;
 
@@ -56,7 +56,7 @@ describe('Generated TS brand constants', () => {
     if (!exists('ui/src/lib/client/brand.ts')) return;
     const ts = readFile('ui/src/lib/client/brand.ts');
     expect(ts).toContain('urlScheme');
-    // Either quote style is fine — apply-brand writes double quotes
+    // Either quote style is fine -- apply-brand writes double quotes
     // but a future biome reformat could swap to single. Match both.
     const matches = ts.includes(`"${expectedScheme}"`) || ts.includes(`'${expectedScheme}'`);
     expect(matches).toBe(true);
@@ -70,7 +70,7 @@ describe('Hardcoded scheme leaks (forbidden outside generated files)', () => {
   // referencing the literal for documentation purposes are fine.
   it('no "heron://" in EXECUTABLE svelte/ts source (excluding comments + generated + tests)', () => {
     // Test files (*.test.ts / *.spec.ts) are explicitly allowed to use
-    // the literal — they pin behaviour to the current scheme rather than
+    // the literal -- they pin behaviour to the current scheme rather than
     // to BRAND, which catches incidental drift if BRAND.urlScheme silently
     // changes. We grep test files OUT in the shell filter below.
     const out = execSync(

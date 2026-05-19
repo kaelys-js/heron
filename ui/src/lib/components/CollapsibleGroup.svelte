@@ -32,7 +32,7 @@
     return defaultOpen;
   }
 
-  // svelte-ignore state_referenced_locally — initial seed only; `open` becomes the source of truth.
+  // svelte-ignore state_referenced_locally -- initial seed only; `open` becomes the source of truth.
   let open = $state(readInitial(`${BRAND_STORAGE_PREFIX}:sidebar-group:` + storageKey));
 
   $effect(() => {

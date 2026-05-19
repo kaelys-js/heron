@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * /settings/api-keys — per-user encrypted credentials.
+   * /settings/api-keys -- per-user encrypted credentials.
    *
    * Each authenticated user manages THEIR OWN provider keys here.
    * Distinct from /settings which is owner-only and shows install-wide
@@ -37,10 +37,10 @@
 
   /** Last known server state per key. Updated on every successful save
    *  / delete from `{current: ...}` in the response. */
-  // svelte-ignore state_referenced_locally — data.secrets is intentionally the seed; current takes over after save.
+  // svelte-ignore state_referenced_locally -- data.secrets is intentionally the seed; current takes over after save.
   let current = $state<Record<string, string>>({ ...data.secrets });
 
-  /** Local edits — what the user has typed but not yet saved. */
+  /** Local edits -- what the user has typed but not yet saved. */
   let pending = $state<Record<string, string>>({});
 
   /** Per-field "show value as you type" toggle. Defaults off so a
@@ -86,7 +86,7 @@
     for (const [k, v] of Object.entries(pending)) {
       // Only send fields the user actually edited. Skip masked round-
       // trips ("****…") because that's the same string the form
-      // pre-populated with — sending it would no-op server-side anyway,
+      // pre-populated with -- sending it would no-op server-side anyway,
       // but conserving payload helps audit trails.
       if (typeof v !== 'string') continue;
       if (v.startsWith('****')) continue;

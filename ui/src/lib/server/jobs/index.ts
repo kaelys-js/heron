@@ -1,5 +1,5 @@
 /**
- * Job registry barrel — importing this module triggers registration of
+ * Job registry barrel -- importing this module triggers registration of
  * every known job. Called from `bootOnce()` in orchestrator.ts.
  *
  * Order matters only for visibility (the registry is a Map keyed by id,
@@ -8,7 +8,7 @@
  * orchestrator and registry.
  *
  * Each job's `*.job.ts` module self-registers on import; the imports
- * below MUST stay even though they look unused — tree-shaking would
+ * below MUST stay even though they look unused -- tree-shaking would
  * otherwise drop them and the job wouldn't exist at runtime.
  */
 
@@ -17,14 +17,14 @@ import { runScan, runGemini, runLinkedInApply } from '../orchestrator';
 import { startBatchWatcher } from './auto-merge-batch';
 import { migrateToMultiProfile } from '../profile-migrate';
 
-// Hygiene — keep applications.md canonical, dedup, validate URLs.
+// Hygiene -- keep applications.md canonical, dedup, validate URLs.
 import './normalize.job';
 import './dedup.job';
 import './verify-pipeline.job';
 import './liveness.job';
 import './auto-triage.job';
 
-// Discovery — portal scrapes + curated feeds + email/IMAP intake.
+// Discovery -- portal scrapes + curated feeds + email/IMAP intake.
 import './scan-portals.job';
 import './scan-curated.job';
 import './scan-vc.job';
@@ -34,32 +34,32 @@ import './scan-linkedin-auth.job';
 import './scan-indeed-auth.job';
 import './scan-all.job';
 
-// Insight — follow-up cadence calculator + auto-interview-prep.
+// Insight -- follow-up cadence calculator + auto-interview-prep.
 import './followup-cadence.job';
 import './auto-interview-prep';
 
-// Auto-apply pipeline — queue, digest, LinkedIn warmup, LaTeX render.
+// Auto-apply pipeline -- queue, digest, LinkedIn warmup, LaTeX render.
 import './auto-queue';
 import './daily-digest.job';
 import './apply-linkedin-login.job';
 import './compile-latex.job';
 import '../autopilot-circuit-breaker';
 
-// Autonomous-apply system — drains the queue when conditions hold.
+// Autonomous-apply system -- drains the queue when conditions hold.
 import './apply-queue.job';
 
-// Maintenance — backups, auto-ghost, LinkedIn audit + DM.
+// Maintenance -- backups, auto-ghost, LinkedIn audit + DM.
 import './backup.job';
 import './auto-ghost.job';
 import './linkedin-audit.job';
 import './linkedin-dm.job';
 
-// Interview-reminder daemon — ticks every 15 min via setInterval (not
+// Interview-reminder daemon -- ticks every 15 min via setInterval (not
 // the daily autopilot) so T-30min and T-24h reminders fire on time.
 import './interview-reminder.job';
 import { installInterviewReminderDaemon } from './interview-reminder.job';
 
-// Multi-user lifecycle reaper — daily 04:00. Hard-deletes users past
+// Multi-user lifecycle reaper -- daily 04:00. Hard-deletes users past
 // their 30-day soft-delete grace window and prunes expired invite codes.
 import './lifecycle-reap.job';
 
@@ -70,14 +70,14 @@ export function installAllJobs(): void {
   installed = true;
 
   // FIRST: migrate legacy single-profile layout into data/profiles/default/.
-  // Idempotent — once profiles.json exists and no legacy files remain at
+  // Idempotent -- once profiles.json exists and no legacy files remain at
   // their flat-layout paths, this is a cheap early-return.
   try {
     migrateToMultiProfile();
   } catch (e) {
     // P16: surface the failure in the activity feed (not just stdout) so
     // a user who only sees the dashboard knows their data wasn't migrated.
-    // Don't let a migration error kill boot — fall through to default state.
+    // Don't let a migration error kill boot -- fall through to default state.
     // Use a dynamic import to avoid a circular dependency with the bus.
     import('../events')
       .then(({ reportServerError }) => {
@@ -90,7 +90,7 @@ export function installAllJobs(): void {
       });
   }
 
-  // Legacy tasks — preserve the exact ids used in /api/run today so
+  // Legacy tasks -- preserve the exact ids used in /api/run today so
   // existing callers and Autopilot config keep working unchanged.
   register({
     id: 'scan',
@@ -101,7 +101,7 @@ export function installAllJobs(): void {
     trigger: { type: 'manual' },
     allowManual: true,
     // runScan() reads the active profile's portals.yml / scan-history.tsv
-    // and writes the active profile's pipeline.md — must fan out across
+    // and writes the active profile's pipeline.md -- must fan out across
     // every schedulable user. The orchestrator's spawn passes the resolved
     // user/profile via `--user`/`--profile` flags.
     perUser: true,
@@ -154,7 +154,7 @@ export function installAllJobs(): void {
   // Start the fs watcher for batch tracker additions. Idempotent.
   startBatchWatcher();
 
-  // Interview-reminder daemon — ticks every 15 min to fire T-30min
+  // Interview-reminder daemon -- ticks every 15 min to fire T-30min
   // and T-24h reminders for scheduled interviews.
   installInterviewReminderDaemon();
 }

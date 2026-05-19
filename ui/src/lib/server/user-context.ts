@@ -1,5 +1,5 @@
 /**
- * user-context — per-request user-id context via Node AsyncLocalStorage.
+ * user-context -- per-request user-id context via Node AsyncLocalStorage.
  *
  * Legacy server-lib functions (`profiles.ts`, `parsers.ts`, `applications.ts`,
  * `events.ts`, etc.) read "the active user's data" without taking an
@@ -8,22 +8,22 @@
  *
  * Instead, the hooks middleware (`hooks.server.ts`) wraps every request
  * inside `runWithUser(userId, () => resolve(event))`. Anywhere downstream
- * — even deeply nested helpers — can call `currentUserId()` to read the
+ * -- even deeply nested helpers -- can call `currentUserId()` to read the
  * acting user without parameter plumbing.
  *
  * Why AsyncLocalStorage is safe here:
- *   • Node's ALS is request-scoped by design — each request gets its own
+ *   • Node's ALS is request-scoped by design -- each request gets its own
  *     store and they don't bleed between concurrent requests.
  *   • All our endpoints run on the same Node process; we don't fork
  *     workers mid-request.
  *   • Async/await preserves the context across `await` boundaries
  *     automatically (that's the whole point of ALS).
  *
- * Edge case — background jobs (autopilot ticks, batch workers): these
+ * Edge case -- background jobs (autopilot ticks, batch workers): these
  * run OUTSIDE a request and need to set the context explicitly. The
  * `runAsUser(userId, fn)` helper is what the jobs code uses.
  *
- * Fallback — `currentUserIdOrDefault()` returns `'__system__'` when no
+ * Fallback -- `currentUserIdOrDefault()` returns `'__system__'` when no
  * user is in scope. Callers that expect to be in a request context
  * should prefer `currentUserId()` which throws instead, so bugs surface
  * loudly instead of silently writing under a phantom system user.
@@ -48,7 +48,7 @@ export async function runAsUser<T>(userId: string, fn: () => Promise<T> | T): Pr
   return als.run({ userId }, async () => fn());
 }
 
-/** Current user id — throws if there's no context. Use this in endpoint
+/** Current user id -- throws if there's no context. Use this in endpoint
  *  handlers / server-lib code where missing context is a bug. */
 export function currentUserId(): string {
   const store = als.getStore();
@@ -69,7 +69,7 @@ export function maybeCurrentUserId(): string | null {
 
 /** Return current user id, falling back to a system sentinel string. Use
  *  ONLY in legacy code that hasn't been audited for multi-user safety
- *  yet — write a TODO comment when you reach for this. */
+ *  yet -- write a TODO comment when you reach for this. */
 export function currentUserIdOrDefault(): string {
   return maybeCurrentUserId() ?? SYSTEM_USER;
 }
@@ -79,7 +79,7 @@ export const SYSTEM_USER_ID = SYSTEM_USER;
 /**
  * Compose a `process.env` snapshot with `CAREER_OPS_USER_ID` injected if
  * there's a current ALS user. Use this whenever you `spawn()` a child
- * process that resolves per-user file paths — without the env var the
+ * process that resolves per-user file paths -- without the env var the
  * child falls back to SYSTEM_USER and writes to legacy `data/profiles/`
  * instead of `data/users/{uid}/profiles/` (F13).
  *
@@ -96,10 +96,10 @@ export const SYSTEM_USER_ID = SYSTEM_USER;
  *   spawn(cmd, args, { cwd: ROOT, env: userContextEnv({ FOO: 'bar' }) });
  *   ```
  *
- * Safe to call outside a request context — when no user is active, this
+ * Safe to call outside a request context -- when no user is active, this
  * is a no-op pass-through of `process.env` (+ any extras). SYSTEM_USER_ID
  * is intentionally NOT propagated because scripts default to SYSTEM when
- * the env var is absent — passing the sentinel explicitly is redundant
+ * the env var is absent -- passing the sentinel explicitly is redundant
  * and would leak the internal constant into spawned-process env.
  */
 export function userContextEnv(extra: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
@@ -121,7 +121,7 @@ export function userContextEnv(extra: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv
  *   • `jobs/registry.ts:runById()` to fan registered `perUser: true`
  *     jobs across users.
  *
- * Single source of truth — every fan-out caller hits this function so
+ * Single source of truth -- every fan-out caller hits this function so
  * adding a new "schedulable user" criterion (e.g. exclude users on a
  * 30-day cooldown after sign-up) only needs to change one place.
  */
@@ -134,25 +134,25 @@ export async function listSchedulableUsers(): Promise<string[]> {
     if (rows.length === 0) return [SYSTEM_USER_ID];
     return rows.map((r) => r.id);
   } catch {
-    // DB not initialized yet (e.g. boot-time probe) — fall back to system.
+    // DB not initialized yet (e.g. boot-time probe) -- fall back to system.
     return [SYSTEM_USER_ID];
   }
 }
 
 /**
- * Resolve the install's OWNER userId — the first user created on the
+ * Resolve the install's OWNER userId -- the first user created on the
  * fresh install (role='owner'). Returns SYSTEM_USER_ID when no owner
  * exists yet (pre-onboarding fresh install).
  *
  * Used by single-tenant integrations that can't be parameterised per
- * user — gmail-IMAP creds in `.env`, email-reactor side-effects, etc.
+ * user -- gmail-IMAP creds in `.env`, email-reactor side-effects, etc.
  * Those integrations stay scoped to the owner so a multi-user install
  * doesn't accidentally process the owner's inbox under member A's
  * profile (F14/F19).
  *
  * If multiple owners somehow exist (manual DB edit), the earliest one
  * by createdAt wins. Stable across owner role demotion + a new admin
- * promotion to owner — we always pick the earliest owner so single-
+ * promotion to owner -- we always pick the earliest owner so single-
  * tenant state doesn't migrate behind the user's back.
  */
 export async function getOwnerUserId(): Promise<string> {

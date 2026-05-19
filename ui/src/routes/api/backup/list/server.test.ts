@@ -1,5 +1,5 @@
 /**
- * GET /api/backup/list — owner-only backup snapshots list.
+ * GET /api/backup/list -- owner-only backup snapshots list.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

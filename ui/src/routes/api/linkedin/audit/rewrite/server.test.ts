@@ -1,5 +1,5 @@
 /**
- * POST /api/linkedin/audit/rewrite — spawn the AI rewrite mode.
+ * POST /api/linkedin/audit/rewrite -- spawn the AI rewrite mode.
  *
  * Post-Option-C: spawn goes through spawnAgentWithMode().
  */

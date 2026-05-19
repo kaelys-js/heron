@@ -52,7 +52,7 @@ export const GET = wrap('comparison', async ({ url }: { url: URL }) => {
       roundsCount: offer.rounds.length,
     };
   });
-  // Sort by TC desc — strongest offer first.
+  // Sort by TC desc -- strongest offer first.
   items.sort((a, b) => (b.tc ?? 0) - (a.tc ?? 0));
   return { ok: true, offers: items };
 });

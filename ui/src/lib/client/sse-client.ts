@@ -1,7 +1,7 @@
 /**
- * sse-client — shared EventSource wrapper with:
+ * sse-client -- shared EventSource wrapper with:
  *
- *   1. Cross-origin URL resolution via getApiBase() — fixes the
+ *   1. Cross-origin URL resolution via getApiBase() -- fixes the
  *      Capacitor iOS bug where raw `/api/stream` resolves to
  *      `heron://localhost/api/stream` (no backend behind it) instead
  *      of the discovered LAN/Tailscale URL.
@@ -15,7 +15,7 @@
  *   3. Network-state coordination via `BRAND_EVENTS.netStatus`
  *      (iOS NWPathMonitor → JS) and `window.online` (browser default).
  *      On a network-up signal, backoff resets to 0 and a reconnect
- *      fires immediately — so users don't wait the full backoff after
+ *      fires immediately -- so users don't wait the full backoff after
  *      airplane-mode toggles off.
  *
  *   4. Idempotent close + restart. `client.close()` is safe to call
@@ -38,7 +38,7 @@ import { BRAND_EVENTS } from './brand';
 
 export type SseClientOptions = {
   /** Called on every `message` event. Wrap with a try/catch if your
-   *  payload parsing can throw — the helper doesn't intercept errors
+   *  payload parsing can throw -- the helper doesn't intercept errors
    *  from your handler. */
   onMessage?: (event: MessageEvent) => void;
   /** Fired on successful open (initial + every reconnect). */
@@ -57,7 +57,7 @@ export type SseClient = {
   /** Tear down the current EventSource + cancel any pending reconnect.
    *  Idempotent. */
   close: () => void;
-  /** Force a fresh connection — drops the current EventSource, re-resolves
+  /** Force a fresh connection -- drops the current EventSource, re-resolves
    *  the backend URL, and reconnects. Use when the user changes backend
    *  settings or after a long offline period. */
   restart: () => void;
@@ -72,7 +72,7 @@ function inBrowser(): boolean {
 
 export function createSseClient(path: string, opts: SseClientOptions = {}): SseClient {
   if (!inBrowser()) {
-    // SSR / Node test runner — return a no-op shape so callers don't
+    // SSR / Node test runner -- return a no-op shape so callers don't
     // have to branch on browser checks.
     return { close: () => undefined, restart: () => undefined };
   }
@@ -86,13 +86,13 @@ export function createSseClient(path: string, opts: SseClientOptions = {}): SseC
   let closed = false;
 
   // Backend URL changes (user clicks "force re-discovery" in /settings,
-  // or visibility-change triggers resetApiBase()) — tear down + reconnect.
+  // or visibility-change triggers resetApiBase()) -- tear down + reconnect.
   const unsubscribeBackend = onBackendStatusChange((s) => {
     if (closed) return;
     // 'resolved' fires both on initial resolve AND after a reset →
     // reconnect to the new URL even if it's the same string.
     if (s.state === 'resolved' || s.state === 'idle') {
-      // Idle is rare in practice but means "re-resolution pending" —
+      // Idle is rare in practice but means "re-resolution pending" --
       // proactively close the stale ES so we don't keep hammering an
       // old URL while resolution is in flight.
       closeEventSource();
@@ -157,7 +157,7 @@ export function createSseClient(path: string, opts: SseClientOptions = {}): SseC
       base = await getApiBase();
     } catch {
       // Discovery failed (no backend reachable). Don't open an
-      // EventSource against a phantom URL — schedule a backoff retry.
+      // EventSource against a phantom URL -- schedule a backoff retry.
       // The api-base listener will also force-reconnect when
       // resolution eventually succeeds.
       opts.onError?.();
@@ -187,7 +187,7 @@ export function createSseClient(path: string, opts: SseClientOptions = {}): SseC
       opts.onError?.();
       // EventSource sets readyState=2 on terminal close, =0 on
       // transient (browser-auto-reconnect) state. Browser auto-reconnect
-      // re-tries the SAME URL — which is exactly wrong on Capacitor
+      // re-tries the SAME URL -- which is exactly wrong on Capacitor
       // after a backend-URL change. We disable it by closing the ES
       // and scheduling our own reconnect through `connect()`, which
       // re-resolves via getApiBase().

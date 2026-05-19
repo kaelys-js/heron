@@ -1,5 +1,5 @@
 /**
- * comp-preflight — the one-liner that goes "ASK FOR $X. Walkaway at $Y."
+ * comp-preflight -- the one-liner that goes "ASK FOR $X. Walkaway at $Y."
  *
  * Half of phone screens die on the salary question with no preparation.
  * The product already knows the user's target_range + minimum from
@@ -14,7 +14,7 @@
  * ask:       What to anchor at when asked "what are you looking for?"
  * walkaway:  Hard minimum below which you politely close.
  * band?:     Optional levels.fyi / Glassdoor band for this company × role
- *            × location (heuristic — derived from the report's Block A
+ *            × location (heuristic -- derived from the report's Block A
  *            when available, otherwise omitted).
  * currency:  Same as profile.compensation.currency, default USD.
  * advice:    2-3 sentences on HOW to deliver the number (anchor high,

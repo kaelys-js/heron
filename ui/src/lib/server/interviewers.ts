@@ -1,5 +1,5 @@
 /**
- * interviewers — per-job interview-panel tracking.
+ * interviewers -- per-job interview-panel tracking.
  *
  * Stored at `data/users/{userId}/profiles/{slug}/interviewers.json` as a
  * map of jobId → Interviewer[]. Each entry records who is on the panel,
@@ -10,7 +10,7 @@
  *   • POST /api/job/[id]/interviewers      → upsert an interviewer
  *   • GET  /api/job/[id]/interviewers      → list current panel
  *   • POST /api/job/[id]/interviewer/[slug]/dossier → spawn deep research
- *   • Inbox — thank-you-owed cards (per interviewer, within 24h of scheduledAt)
+ *   • Inbox -- thank-you-owed cards (per interviewer, within 24h of scheduledAt)
  *   • Calendar surface
  */
 
@@ -40,7 +40,7 @@ export type Interviewer = {
   githubUrl?: string;
   /** Stage this interviewer is responsible for. */
   stage: InterviewerStage;
-  /** Unix ms — when the interview is/was scheduled. */
+  /** Unix ms -- when the interview is/was scheduled. */
   scheduledAt?: number;
   /** Path (relative to ROOT) to the dossier file in interview-prep/. */
   dossierPath?: string;
@@ -50,7 +50,7 @@ export type Interviewer = {
   thankYouPath?: string;
   /** Free-form user notes (added in the dashboard). */
   notes?: string;
-  /** ISO ts of last edit — useful for "stale dossier" warnings. */
+  /** ISO ts of last edit -- useful for "stale dossier" warnings. */
   updatedAt: number;
 };
 
@@ -153,7 +153,7 @@ export function findThankYousOwed(
   return out;
 }
 
-/** List interviews scheduled in the next `forwardDays` — used by the
+/** List interviews scheduled in the next `forwardDays` -- used by the
  *  Calendar surface + the Ready-to-Interview gate. */
 export function findUpcomingInterviews(
   forwardDays = 14,

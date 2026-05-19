@@ -1,4 +1,4 @@
-# Mode: post-rejection — Pattern analysis after rejections
+# Mode: post-rejection -- Pattern analysis after rejections
 
 Triggered weekly OR after every 5 rejections. Run `/heron post-rejection` or auto-trigger from the UI.
 
@@ -8,10 +8,10 @@ Find what's failing in the candidate's funnel and recommend specific changes to 
 
 ## Inputs
 
-1. `data/__APPLICATIONS__` — all application records, status column
-2. `__REPORTS__/<id>-*.md` — A-G evaluations (Block B has CV-vs-JD match analysis with gaps)
-3. `config/profile.yml` — current profile
-4. `__CV__` — current CV
+1. `data/__APPLICATIONS__` -- all application records, status column
+2. `__REPORTS__/<id>-*.md` -- A-G evaluations (Block B has CV-vs-JD match analysis with gaps)
+3. `config/profile.yml` -- current profile
+4. `__CV__` -- current CV
 
 ## Analysis steps
 
@@ -50,9 +50,9 @@ A structured report:
 ### Recommendations
 For each pattern, propose a SPECIFIC fix:
 - "Drop archetype X from primary; market signal is weak"
-- "Add skill Y to __CV__ skills section — appears in 7 of 10 rejected JDs"
-- "Disable companies in industry Z in __PORTALS__ — 0 callbacks from 12 apps"
-- "Adjust profile.yml comp target — current $X may be priced out for stage of companies you're hitting"
+- "Add skill Y to __CV__ skills section -- appears in 7 of 10 rejected JDs"
+- "Disable companies in industry Z in __PORTALS__ -- 0 callbacks from 12 apps"
+- "Adjust profile.yml comp target -- current $X may be priced out for stage of companies you're hitting"
 
 ### Open questions for the candidate
 - "Are you comfortable with the geographic discount that comes with these roles?"
@@ -60,4 +60,4 @@ For each pattern, propose a SPECIFIC fix:
 
 ## Important
 
-This mode is INSIGHT, not action. It produces a recommendation report — the candidate (and you, the agent) review it together and decide which changes to actually apply.
+This mode is INSIGHT, not action. It produces a recommendation report -- the candidate (and you, the agent) review it together and decide which changes to actually apply.

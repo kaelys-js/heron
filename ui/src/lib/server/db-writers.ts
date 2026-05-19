@@ -1,12 +1,12 @@
 /**
- * db-writers — DB-mirror writers for activity_events + issues.
+ * db-writers -- DB-mirror writers for activity_events + issues.
  *
  * The JSONL files (`data/activity.jsonl`, `data/issues.jsonl`) remain the
  * cheap append-only source of truth. These functions mirror each write
  * into the matching app.db table so the UI can do indexed per-user
  * queries (e.g. "show me Alice's last 100 errors of source=apply-*").
  *
- * Each writer is tolerant of DB failures — if the insert throws, we
+ * Each writer is tolerant of DB failures -- if the insert throws, we
  * swallow it so a DB hiccup doesn't break the file-based source of
  * truth. The UI falls back to the JSONL parser when the DB table is
  * empty (legacy install).
@@ -45,7 +45,7 @@ export function dbWriteActivity(ev: ActivityEvent): void {
       })
       .run();
   } catch {
-    /* non-fatal — JSONL remains the source of truth */
+    /* non-fatal -- JSONL remains the source of truth */
   }
 }
 
@@ -86,14 +86,14 @@ export function dbWriteIssue(issue: Issue): void {
       })
       .run();
   } catch {
-    /* non-fatal — JSONL remains the source of truth */
+    /* non-fatal -- JSONL remains the source of truth */
   }
 }
 
 /** Mark an issue resolved in the DB (called after the JSONL write).
  *
- *  F24 — filter by (userId, id) not just id. Issue ids are 12-char hex
- *  (24 bits of entropy from crypto.randomBytes(6)) — collision risk
+ *  F24 -- filter by (userId, id) not just id. Issue ids are 12-char hex
+ *  (24 bits of entropy from crypto.randomBytes(6)) -- collision risk
  *  across users is small but real. The JSONL resolver already filters
  *  via visibleToUser(); this defense-in-depth fix prevents user A
  *  resolving user B's issue if the ids ever collide. */

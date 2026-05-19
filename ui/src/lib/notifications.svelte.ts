@@ -103,7 +103,7 @@ class NotificationStore {
   private async connect(): Promise<void> {
     if (!browser) return;
     const { createSseClient } = await import('./client/sse-client');
-    // Idempotent — earlier client (if any) is closed by sse-client's
+    // Idempotent -- earlier client (if any) is closed by sse-client's
     // internal teardown. Guard against double-init by clearing first.
     this.sseClient?.close();
     this.connected = 'connecting';
@@ -158,7 +158,7 @@ class NotificationStore {
       // Dispatch `heron:notify` for PushNotificationsToggle. It
       // listens and fires an OS-level Notification when the tab is in
       // the background + the user has granted permission + the level is
-      // enabled. Tightly scoped — only auto-toast events propagate so
+      // enabled. Tightly scoped -- only auto-toast events propagate so
       // backfill/replay events don't trigger a barrage.
       if (typeof window !== 'undefined') {
         try {

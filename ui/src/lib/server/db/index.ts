@@ -1,14 +1,14 @@
 /**
- * db/index — SQLite connection singletons + Drizzle instances.
+ * db/index -- SQLite connection singletons + Drizzle instances.
  *
  * Heron uses TWO SQLite files:
  *
- *   • auth.db  — users, sessions, oauth accounts, passkeys, invite codes,
+ *   • auth.db  -- users, sessions, oauth accounts, passkeys, invite codes,
  *                backup codes, audit log, pending deletions. Managed by
  *                Better Auth via its Drizzle adapter; we never write to
  *                these tables directly except for audit_log + invite_codes.
  *
- *   • app.db   — every per-user Heron data row (profiles, jobs,
+ *   • app.db   -- every per-user Heron data row (profiles, jobs,
  *                applications, reports, etc.). Every row has user_id;
  *                cross-database FK enforcement happens in hooks middleware
  *                + every server-lib function being userId-scoped.
@@ -24,7 +24,7 @@
  *     app.db cascade is user-id-scoped and we own it.
  *
  * Both files live under `data/` (same as activity.jsonl, issues.jsonl,
- * profiles.json, etc. — system-layer, not per-profile) by default.
+ * profiles.json, etc. -- system-layer, not per-profile) by default.
  *
  * ── Test / fresh-clone safety ────────────────────────────────────────
  * The DB paths are configurable via three env vars (override order):
@@ -37,7 +37,7 @@
  *      ghost rows in auth.db.users and a fresh-clone user can no longer
  *      be promoted to owner.
  *
- * Returned drizzle instances are SINGLETONS — module-load creates the
+ * Returned drizzle instances are SINGLETONS -- module-load creates the
  * connections, all callers share. better-sqlite3 is synchronous and
  * thread-safe enough for SvelteKit's per-request model.
  */
@@ -51,7 +51,7 @@ import { BRAND } from '$lib/client/brand';
 import * as authSchema from './auth-schema';
 import * as appSchema from './app-schema';
 
-/** Detect a test run — Vitest sets VITEST and NODE_ENV=test by default. */
+/** Detect a test run -- Vitest sets VITEST and NODE_ENV=test by default. */
 const IS_TEST = process.env.VITEST === 'true' || process.env.NODE_ENV === 'test';
 
 /** Resolve the SQLite root dir. Order: explicit env override → tmpdir
@@ -76,18 +76,18 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 export const AUTH_DB_PATH = process.env.CAREER_OPS_AUTH_DB ?? path.join(DATA_DIR, 'auth.db');
 export const APP_DB_PATH = process.env.CAREER_OPS_APP_DB ?? path.join(DATA_DIR, 'app.db');
 
-/** Lazy-open raw sqlite handles. We open eagerly at module load — the cost
+/** Lazy-open raw sqlite handles. We open eagerly at module load -- the cost
  *  is microseconds and lazy-init across SSR + jobs caused weird races. */
 const authSqlite = new Database(AUTH_DB_PATH);
 const appSqlite = new Database(APP_DB_PATH);
 
-// WAL mode for both — readers don't block writers, and crashes are recoverable.
+// WAL mode for both -- readers don't block writers, and crashes are recoverable.
 authSqlite.pragma('journal_mode = WAL');
 appSqlite.pragma('journal_mode = WAL');
 // Foreign keys must be enabled per-connection (off by default in SQLite).
 authSqlite.pragma('foreign_keys = ON');
 appSqlite.pragma('foreign_keys = ON');
-// Synchronous = NORMAL is the recommended pairing with WAL — durable enough,
+// Synchronous = NORMAL is the recommended pairing with WAL -- durable enough,
 // much faster than FULL.
 authSqlite.pragma('synchronous = NORMAL');
 appSqlite.pragma('synchronous = NORMAL');
@@ -112,7 +112,7 @@ export const appSqliteHandle = appSqlite;
 import { ensureSchema as __ensureSchema } from './migrate';
 __ensureSchema();
 
-/** Tear down — used in tests + the verifier. */
+/** Tear down -- used in tests + the verifier. */
 export function closeAll(): void {
   try {
     authSqlite.close();

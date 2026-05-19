@@ -5,11 +5,11 @@
  * decision deadlines for the next 60 days. The Capacitor app (iOS / macOS)
  * subscribes the OS calendar to this URL so events show up natively.
  *
- * Body: { calendarUrl?: string }   — when provided, the server records
+ * Body: { calendarUrl?: string }   -- when provided, the server records
  *   the URL so a future push-notification can fire if the calendar feed
  *   subscription is broken (P10 follow-up). Not required to fetch the feed.
  *
- * The feed is read-only — we never write back to the OS calendar. One-way
+ * The feed is read-only -- we never write back to the OS calendar. One-way
  * push only. If the user wants to delete an event, they edit it on the
  * dashboard side.
  */
@@ -26,7 +26,7 @@ const HOURS_24 = 24 * HOUR_MS;
 const HOURS_48 = 48 * HOUR_MS;
 
 function fmt(d: Date): string {
-  // RFC 5545 DTSTAMP / DTSTART / DTEND — UTC basic format YYYYMMDDTHHMMSSZ
+  // RFC 5545 DTSTAMP / DTSTART / DTEND -- UTC basic format YYYYMMDDTHHMMSSZ
   const pad = (n: number) => String(n).padStart(2, '0');
   return (
     d.getUTCFullYear() +

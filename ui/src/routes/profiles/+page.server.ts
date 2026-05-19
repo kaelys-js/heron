@@ -1,5 +1,5 @@
 /**
- * /profiles — management page server loader.
+ * /profiles -- management page server loader.
  *
  * Returns every profile + light stats per profile (job count, applied count).
  * Stats are derived from each profile's own loadAllJobs() result.

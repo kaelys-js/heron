@@ -4,7 +4,7 @@
  *   POST /api/job/[id]/followup-draft  { tone?: 'warm' | 'direct' | 'short' }
  *
  * Spawns `claude -p "/heron followup --url <url> --tone <tone>"` to
- * produce 2–3 message variants the user can copy/paste into LinkedIn or
+ * produce 2-3 message variants the user can copy/paste into LinkedIn or
  * email. The mode itself reads applications.md + the report file for
  * context (days since applied, contacts, what's actionable).
  *

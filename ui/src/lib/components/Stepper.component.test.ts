@@ -1,5 +1,5 @@
 /**
- * Stepper — numeric increment/decrement input.
+ * Stepper -- numeric increment/decrement input.
  *
  * Browser-mode tests confirm: bump up/down, clamping at min/max,
  * decimal formatting, suffix display, onchange callback.

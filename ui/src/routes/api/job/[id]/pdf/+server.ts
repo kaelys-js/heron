@@ -26,7 +26,7 @@ export const GET = async ({ params, url }: { params: { id: string }; url: URL })
   const { job, profileId } = resolved;
   if (!job.pdfFile) throw error(404, 'No CV PDF generated for this job yet');
 
-  // Resolve safely under THIS JOB'S profile output dir — reject traversal.
+  // Resolve safely under THIS JOB'S profile output dir -- reject traversal.
   const outputDir = profilePath(profileId, 'output-dir');
   const candidate = path.resolve(outputDir, job.pdfFile);
   const root = path.resolve(outputDir);
@@ -58,7 +58,7 @@ export const GET = async ({ params, url }: { params: { id: string }; url: URL })
       'Content-Type': 'application/pdf',
       'Content-Disposition': 'inline; filename="' + path.basename(candidate) + '"',
       'Content-Length': String(buf.byteLength),
-      // 5 min cache — tailored CVs don't change after they're written
+      // 5 min cache -- tailored CVs don't change after they're written
       'Cache-Control': 'private, max-age=300',
     },
   });

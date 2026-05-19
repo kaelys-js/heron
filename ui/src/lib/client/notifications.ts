@@ -1,5 +1,5 @@
 /**
- * Unified notifications client — single API across Web, Electron, iOS.
+ * Unified notifications client -- single API across Web, Electron, iOS.
  *
  * The existing in-app SSE pipeline emits activity events. This module
  * is the LAST mile that turns one of those events into an OS-level
@@ -8,7 +8,7 @@
  *   • Web browser            → `new Notification(title, { body, icon })`
  *                              (requires user-granted permission)
  *
- *   • Electron desktop       → same Notification API — works identically
+ *   • Electron desktop       → same Notification API -- works identically
  *                              in the Chromium WebView, AND we additionally
  *                              forward to Electron's main-process
  *                              Notification (better UX when WebView is
@@ -35,11 +35,11 @@ export type NotifyLevel = 'info' | 'success' | 'warn' | 'error';
 export type NotifyOptions = {
   title: string;
   body: string;
-  /** Unique tag — repeat calls with the same tag replace prior notification. */
+  /** Unique tag -- repeat calls with the same tag replace prior notification. */
   tag?: string;
-  /** Click handler — fires when the user taps the notification. */
+  /** Click handler -- fires when the user taps the notification. */
   onClick?: () => void;
-  /** Severity — used for icon tinting on Electron + iOS. */
+  /** Severity -- used for icon tinting on Electron + iOS. */
   level?: NotifyLevel;
   /** A `heron://` URL invoked on tap (iOS). */
   deepLink?: string;
@@ -49,7 +49,7 @@ let permissionGranted: boolean | null = null;
 
 /**
  * Request OS-level permission to show notifications. Returns true if
- * granted, false otherwise. Safe to call repeatedly — caches the result.
+ * granted, false otherwise. Safe to call repeatedly -- caches the result.
  *
  * On iOS Capacitor this triggers the native permission dialog; on
  * Electron + Web it triggers the browser's permission prompt.
@@ -70,7 +70,7 @@ export async function requestPermission(): Promise<boolean> {
     }
   }
 
-  // Web or Electron — both use the Notification API
+  // Web or Electron -- both use the Notification API
   if (typeof Notification === 'undefined') {
     permissionGranted = false;
     return false;
@@ -103,7 +103,7 @@ export async function notify(opts: NotifyOptions): Promise<boolean> {
   const granted = await requestPermission();
   if (!granted) return false;
 
-  // Quiet-hours gate. Errors always go through — a failed apply /
+  // Quiet-hours gate. Errors always go through -- a failed apply /
   // autopilot crash is exactly the kind of thing a user would want
   // to hear about even at 3am. Info/warn/success respect the window.
   if (opts.level !== 'error' && isInQuietHoursFromStorage()) return false;
@@ -111,7 +111,7 @@ export async function notify(opts: NotifyOptions): Promise<boolean> {
   const platform = Capacitor.getPlatform();
 
   if (platform === 'ios') {
-    // Capacitor local notifications require a numeric id — derive from
+    // Capacitor local notifications require a numeric id -- derive from
     // tag hash so repeat calls with same tag overwrite.
     const id = tagToId(opts.tag ?? opts.title);
     try {
@@ -146,7 +146,7 @@ export async function notify(opts: NotifyOptions): Promise<boolean> {
       silent: false,
     });
     if (opts.onClick) n.onclick = () => opts.onClick!();
-    // Electron preload-bridge hook — main-process Notification when the
+    // Electron preload-bridge hook -- main-process Notification when the
     // WebView is hidden (better UX). Set by electron/preload.ts.
     const w = globalThis as Record<string, unknown>;
     const nativeNotify = w[NATIVE_NOTIFY_GLOBAL];
@@ -178,7 +178,7 @@ function tagToId(tag: string): number {
 }
 
 /**
- * Drop all pending iOS notifications — used by the "muted" toggle in
+ * Drop all pending iOS notifications -- used by the "muted" toggle in
  * settings AND the sign-out path so a notification scheduled while
  * user A was signed in doesn't fire after user B signs in. Web/Electron
  * have no equivalent (Notification API can't un-show already-displayed
@@ -197,7 +197,7 @@ export async function clearAllPending(): Promise<void> {
         await LocalNotifications.cancel({ notifications: list.notifications });
       }
     } catch {
-      // LocalNotifications plugin not available — extension target or
+      // LocalNotifications plugin not available -- extension target or
       // permission denied. Either way there's nothing to drain.
     }
     try {
@@ -216,20 +216,20 @@ export async function clearAllPending(): Promise<void> {
         }
       }
     } catch {
-      // Same fallback as pending — non-fatal.
+      // Same fallback as pending -- non-fatal.
     }
   }
 }
 
 /**
- * Quiet-hours preference shape — stored in ui-prefs.json. Times are
+ * Quiet-hours preference shape -- stored in ui-prefs.json. Times are
  * 24-hour clock numbers (e.g. 22 = 10pm, 7 = 7am). When `enabled` is
  * false the gate always passes. When `start === end` quiet hours
  * never apply (zero-length window).
  *
  * Window semantics: a window like (22, 7) means "from 22:00 until
- * 07:00 the next morning" — spans midnight. (8, 18) means "from 08:00
- * until 18:00 same day" — does not span midnight.
+ * 07:00 the next morning" -- spans midnight. (8, 18) means "from 08:00
+ * until 18:00 same day" -- does not span midnight.
  */
 export type QuietHours = {
   enabled: boolean;
@@ -241,22 +241,22 @@ export type QuietHours = {
  * True when the current local time falls within the user's quiet-hours
  * window. Callers should bypass `notify()` for non-critical levels
  * during this window. Critical (`error`) notifications always go
- * through — a failed apply / autopilot crash shouldn't be silenced.
+ * through -- a failed apply / autopilot crash shouldn't be silenced.
  */
 export function isInQuietHours(prefs: QuietHours, now: Date = new Date()): boolean {
   if (!prefs.enabled) return false;
   if (prefs.startHour === prefs.endHour) return false;
   const hour = now.getHours();
   if (prefs.startHour < prefs.endHour) {
-    // Same-day window — e.g. (8, 18) means 08:00-17:59.
+    // Same-day window -- e.g. (8, 18) means 08:00-17:59.
     return hour >= prefs.startHour && hour < prefs.endHour;
   }
-  // Cross-midnight window — e.g. (22, 7) means 22:00-23:59 OR 00:00-06:59.
+  // Cross-midnight window -- e.g. (22, 7) means 22:00-23:59 OR 00:00-06:59.
   return hour >= prefs.startHour || hour < prefs.endHour;
 }
 
 /**
- * Internal helper used by `notify()` — reads the localStorage-backed
+ * Internal helper used by `notify()` -- reads the localStorage-backed
  * prefs and evaluates the window. Falls back to "not in quiet hours"
  * if storage is denied or the prefs blob is corrupt, so a broken
  * settings page can never silently silence the user.
@@ -264,7 +264,7 @@ export function isInQuietHours(prefs: QuietHours, now: Date = new Date()): boole
 function isInQuietHoursFromStorage(): boolean {
   if (typeof localStorage === 'undefined') return false;
   try {
-    // Sourced from BRAND_STORAGE_KEYS — matches what
+    // Sourced from BRAND_STORAGE_KEYS -- matches what
     // NotificationPreferences.svelte writes. Centralising the key here
     // means a brand rename retargets read + write together; previously
     // this was a hardcoded literal that would drift on rebrand.

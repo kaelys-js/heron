@@ -6,11 +6,11 @@ Analyze all tracked applications to find patterns in outcomes and surface action
 
 ## Inputs
 
-- `data/__APPLICATIONS__` — Application tracker
-- `__REPORTS__/` — Individual evaluation reports
-- `config/profile.yml` — User profile (for recommendation context)
-- `__PROFILE_MD__` — User archetypes and framing
-- `__PORTALS__` — Portal config (for filter update recommendations)
+- `data/__APPLICATIONS__` -- Application tracker
+- `__REPORTS__/` -- Individual evaluation reports
+- `config/profile.yml` -- User profile (for recommendation context)
+- `__PROFILE_MD__` -- User archetypes and framing
+- `__PORTALS__` -- Portal config (for filter update recommendations)
 
 ## Minimum Threshold
 
@@ -21,7 +21,7 @@ If not, tell the user:
 
 Exit gracefully.
 
-## Step 1 — Run Analysis Script
+## Step 1 -- Run Analysis Script
 
 Execute:
 
@@ -46,7 +46,7 @@ Parse the JSON output. It contains:
 
 If the script returns `error`, display the error message and exit.
 
-## Step 2 — Generate Report
+## Step 2 -- Generate Report
 
 Write the report to `__REPORTS__/pattern-analysis-{YYYY-MM-DD}.md`.
 
@@ -109,7 +109,7 @@ Number the top recommendations (from the script output). For each:
    Reasoning behind the recommendation.
 ```
 
-## Step 3 — Present Summary
+## Step 3 -- Present Summary
 
 Show the user a condensed version with:
 1. One-line stat summary (X applications, Y% applied, Z% positive outcome)
@@ -126,7 +126,7 @@ Example:
 >
 > Full report: `__REPORTS__/pattern-analysis-2026-04-08.md`
 
-## Step 4 — Offer to Apply Recommendations
+## Step 4 -- Offer to Apply Recommendations
 
 Ask the user if they want to act on any recommendations:
 

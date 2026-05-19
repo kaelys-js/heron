@@ -6,7 +6,7 @@
  * The system already has a job-wide /api/job/[id]/dossier endpoint (calls
  * the `pre-call-dossier` mode and writes ONE file covering the whole panel).
  * This sibling endpoint instead generates a PER-INTERVIEWER deep-research
- * brief — recent talks, papers, projects, opinions on technical topics,
+ * brief -- recent talks, papers, projects, opinions on technical topics,
  * the 3 stories from the user's CV that match THIS interviewer's
  * background, and 7 questions calibrated to their role.
  *

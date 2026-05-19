@@ -1,22 +1,22 @@
-# Psychometric test prep — gate-clearing for Pymetrics / Plum / Harver / etc.
+# Psychometric test prep -- gate-clearing for Pymetrics / Plum / Harver / etc.
 
 Behavioural + cognitive tests are a real gate at F500 / consulting /
 big tech entry-level. Unlike technical interviews, you can't "practice
-the answers" — these tests measure traits, not knowledge. But you CAN
+the answers" -- these tests measure traits, not knowledge. But you CAN
 practice technique + understand what each test rewards.
 
 ## Inputs ($args, parsed from `PSYCHOMETRIC_PREP_INPUT` env JSON)
 
-- `profileId`, `jobId` (optional — when present, links to the job)
-- `testIdentifier` — one of: `pymetrics`, `plum`, `harver`, `cangrade`,
+- `profileId`, `jobId` (optional -- when present, links to the job)
+- `testIdentifier` -- one of: `pymetrics`, `plum`, `harver`, `cangrade`,
   `wonderlic`, `berke`, `predictive-index`, `hogan`, `caliper`,
   `criteria-cognitive-aptitude`, `revelian`, `koru7`, `arctic-shores`,
   `unknown`
-- `inviteText` — the test invitation email or URL the user pasted (we
+- `inviteText` -- the test invitation email or URL the user pasted (we
   use this to detect the test if `testIdentifier === 'unknown'`)
-- `dueDate` — ISO date when the test expires (for timing advice)
+- `dueDate` -- ISO date when the test expires (for timing advice)
 
-## Detection — when testIdentifier is 'unknown'
+## Detection -- when testIdentifier is 'unknown'
 
 Detect from `inviteText`:
 - `pymetrics.ai` / "pymetrics" / "12 gamified tasks" → pymetrics
@@ -122,10 +122,10 @@ PSYCHOMETRIC_PATH: {relative-path}
 - Multi-module: behavioural assessment + situational judgment + cognitive
 - "Match score" with 0-100 fit
 - Some companies show your score; many don't
-- Key technique: situational judgment questions — pick the BUSINESS answer, not the heroic one
+- Key technique: situational judgment questions -- pick the BUSINESS answer, not the heroic one
 
 ### wonderlic / WPT / Wonderlic Personnel Test
-- 50 questions in 12 minutes — strict speed test
+- 50 questions in 12 minutes -- strict speed test
 - Math, vocab, logic, spatial
 - Higher scores correlate with role complexity but only weakly
 - Key technique: skip + return; never spend > 30 sec on one Q
@@ -150,7 +150,7 @@ PSYCHOMETRIC_PATH: {relative-path}
 ### criteria-cognitive-aptitude / CCAT
 - 50 questions in 15 minutes
 - Math, verbal, spatial
-- Adaptive — wrong answers make it harder
+- Adaptive -- wrong answers make it harder
 - Key technique: skip + return; quick + accurate beats deep + slow
 
 ### revelian / arctic-shores / koru7 / berke / cangrade
@@ -159,7 +159,7 @@ PSYCHOMETRIC_PATH: {relative-path}
 
 ## Quality bar
 
-- NEVER claim to know "the right answers" — these tests measure traits,
+- NEVER claim to know "the right answers" -- these tests measure traits,
   not knowledge. Cheating backfires (lie-scale, consistency checks).
 - Always recommend the OFFICIAL practice site over third-party "answer
   banks" (those are usually scams + signal "I tried to game this").

@@ -1,5 +1,5 @@
 /**
- * /api/patterns/suggestions — list + apply structured pattern recommendations.
+ * /api/patterns/suggestions -- list + apply structured pattern recommendations.
  *
  * GET → spawns analyze-patterns.mjs, parses textual recs into structured
  *       suggestions, returns both.

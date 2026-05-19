@@ -1,8 +1,8 @@
 /**
- * POST /api/sources/[id]/test — light health probe.
+ * POST /api/sources/[id]/test -- light health probe.
  *
  *   linkedin-auth / indeed-auth → spawn a short python `--check-session`
- *                                  invocation (read-only — opens browser
+ *                                  invocation (read-only -- opens browser
  *                                  headless, navigates to /feed/, checks
  *                                  for redirect to login)
  *
@@ -14,7 +14,7 @@
  *                                  against the provider (issue B13).
  *
  *   scan-portals / scan-broad / → dry-run --probe of the underlying
- *   scan-curated                  scanner (B12) — confirms the scanner
+ *   scan-curated                  scanner (B12) -- confirms the scanner
  *                                  can hit at least one provider without
  *                                  actually adding rows to pipeline.md.
  *
@@ -42,7 +42,7 @@ export const POST = wrap(
 
     if (id === 'linkedin-auth' || id === 'indeed-auth') {
       const portal = id === 'linkedin-auth' ? 'linkedin' : 'indeed';
-      // F20 — match the path Playwright writes to. Pre-fix this checked
+      // F20 -- match the path Playwright writes to. Pre-fix this checked
       // the legacy `.playwright-{portal}/` at repo root which never
       // existed, so "Test connection" always reported "No saved session".
       const stateDir = playwrightUserDataDir(userId, portal);
@@ -120,7 +120,7 @@ export const POST = wrap(
       }
     }
 
-    // Unknown id — explicit "no probe available" rather than fake success.
+    // Unknown id -- explicit "no probe available" rather than fake success.
     const s = getSource(id);
     return { ok: false, error: 'No probe available for source: ' + id, state: s };
   },

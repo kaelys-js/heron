@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * scan-vc.mjs — VC / accelerator portfolio discovery
+ * scan-vc.mjs -- VC / accelerator portfolio discovery
  *
  * Output is fundamentally different from scan.mjs / scan-curated.mjs:
  *
@@ -24,17 +24,17 @@
  * polluting portals.yml with companies the user doesn't actually want.
  *
  * Sources:
- *   • a16z       — embedded JSON in /portfolio/ HTML; 800+ companies
- *   • Sequoia    — HTML table in /our-companies/; ~52 server-rendered
+ *   • a16z       -- embedded JSON in /portfolio/ HTML; 800+ companies
+ *   • Sequoia    -- HTML table in /our-companies/; ~52 server-rendered
  *                  companies (the rest are FacetWP-lazy-loaded behind
  *                  an authenticated payload we can't easily replay).
  *
  * Skipped (with reasons):
- *   • Underdog.io   — Webflow-rendered, list isn't in the initial HTML
+ *   • Underdog.io   -- Webflow-rendered, list isn't in the initial HTML
  *                     and their own job-list endpoint requires login
  *                     (Magic Link). Not worth the effort given user already
  *                     covers HN Who's Hiring + RemoteOK + JobSpy.
- *   • Index Ventures — Page is fully JS-rendered with no JSON visible in
+ *   • Index Ventures -- Page is fully JS-rendered with no JSON visible in
  *                     the source. Would need Playwright. Skipped for MVP.
  *
  * Usage:
@@ -116,7 +116,7 @@ async function discoverA16z() {
       source: 'a16z',
       company,
       website,
-      // Common conventions for hosted careers pages — we flag a guess so
+      // Common conventions for hosted careers pages -- we flag a guess so
       // the user can verify quickly. Sometimes wrong; that's fine.
       careers_url_guess: website ? website.replace(/\/$/, '') + '/careers' : '',
       stage: Array.isArray(c.stages) ? c.stages.join(',') : '',
@@ -129,7 +129,7 @@ async function discoverA16z() {
 //
 // /our-companies/ has a server-rendered <table id="company_listing">
 // with one <tr> per company. The company name lives in a <th> inside
-// the row. The website isn't embedded in the row — we only get name +
+// the row. The website isn't embedded in the row -- we only get name +
 // description + stage + partners.
 
 async function discoverSequoia() {

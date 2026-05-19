@@ -1,5 +1,5 @@
 /**
- * audit-log — append-only record of every security-relevant event.
+ * audit-log -- append-only record of every security-relevant event.
  *
  * Events: signup, login, login-failed, logout, passkey-add, passkey-revoke,
  * oauth-link, oauth-unlink, deletion-requested, deletion-cancelled,
@@ -12,7 +12,7 @@
  * the historical row but anonymise it. That preserves the security
  * timeline while honouring GDPR right-to-erasure.
  *
- * No PII inside the JSON details blob — only event-shape data
+ * No PII inside the JSON details blob -- only event-shape data
  * (ip address, user-agent, anonymous context). The user's email and
  * name live in `users` (and are cleared on hard delete).
  */

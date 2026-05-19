@@ -1,5 +1,5 @@
 /**
- * Gmail IMAP poller — wraps `scan-email-imap.mjs`.
+ * Gmail IMAP poller -- wraps `scan-email-imap.mjs`.
  *
  * Runs every 30 minutes via a tiny setInterval daemon kicked off at boot
  * (see `installImapPollerDaemon` below). The daemon checks the gmail-imap
@@ -13,8 +13,8 @@
  * system focused on its happy path.
  *
  * Args:
- *   { dryRun?: boolean }     — pass --dry-run, no writes, no Seen-marking
- *   { keepUnread?: boolean } — process but don't mark Seen (for testing)
+ *   { dryRun?: boolean }     -- pass --dry-run, no writes, no Seen-marking
+ *   { keepUnread?: boolean } -- process but don't mark Seen (for testing)
  */
 
 import { spawn } from 'node:child_process';
@@ -84,14 +84,14 @@ function runScanEmailImap(args?: JobArgs): Promise<JobResult> {
         return;
       }
 
-      // F14/F19/F30 — process inbound reactions IN-PROCESS, not via
+      // F14/F19/F30 -- process inbound reactions IN-PROCESS, not via
       // an HTTP roundtrip that would drop the ALS user context. The
       // .mjs child emits `INBOUND_REACTION: {json}` lines on stdout;
       // we parse them here and call reactToEmail() directly. Pre-fix
       // the child POSTed to /api/email/react which 401'd OR processed
       // under the wrong user. Now reactor side-effects (markStatus,
       // generateTechPrep, appendLead) all run under the CURRENT user
-      // context — which the daemon set to the OWNER via runAsUser.
+      // context -- which the daemon set to the OWNER via runAsUser.
       let reactedActed = 0;
       let reactedTotal = 0;
       try {
@@ -150,19 +150,19 @@ register({
 // ── Daemon ─────────────────────────────────────────────────────────────
 //
 // installImapPollerDaemon() kicks off a 30-min setInterval when the
-// jobs/index.ts barrel imports this file. Idempotent — multiple imports
+// jobs/index.ts barrel imports this file. Idempotent -- multiple imports
 // (e.g. Vite HMR re-running module init) clear the prior timer first.
 
 let pollerHandle: ReturnType<typeof setInterval> | null = null;
 
-/** F14/F19/F27 — multi-user gmail-imap fan-out.
+/** F14/F19/F27 -- multi-user gmail-imap fan-out.
  *
  *  Each user holds their own GMAIL_IMAP_* credentials in their
  *  encrypted per-user secrets store (`user-secrets.ts`) and tracks
  *  their own connection state in their own `sources.json`. Every 30
  *  minutes the daemon walks all schedulable users; for each one it
  *  enters their ALS context (`runAsUser`), checks if THEY have
- *  gmail-imap connected, and — if so — runs the poll under that user.
+ *  gmail-imap connected, and -- if so -- runs the poll under that user.
  *
  *  Why per-user ALS context matters: the child process inherits
  *  `CAREER_OPS_USER_ID` from the orchestrator's env injection
@@ -171,7 +171,7 @@ let pollerHandle: ReturnType<typeof setInterval> | null = null;
  *  writes pipeline / applications / scan-history into THAT user's
  *  profile tree, and the in-process `reactToEmail()` calls in this
  *  file's close-handler run inside THAT user's context. No cross-user
- *  contamination possible — the same primitive that gates every other
+ *  contamination possible -- the same primitive that gates every other
  *  fan-out job (autopilot.ts::runScanForAllProfiles etc.) gates this
  *  one too.
  *
@@ -180,7 +180,7 @@ let pollerHandle: ReturnType<typeof setInterval> | null = null;
 export async function tickOnce(): Promise<void> {
   if (!hasJob('scan-email-imap')) return;
   const userIds = await listSchedulableUsers();
-  // Filter out SYSTEM_USER_ID — legacy single-user installs that
+  // Filter out SYSTEM_USER_ID -- legacy single-user installs that
   // haven't yet completed onboarding have nothing real to poll, and
   // SYSTEM's sources.json is the install-wide fallback we don't want
   // running automatically.
@@ -199,7 +199,7 @@ export async function tickOnce(): Promise<void> {
         if (!getSource('gmail-imap').connected) return;
         await runById('scan-email-imap');
       } catch (err) {
-        // Per-user error — log + continue to the next user. NEVER let a
+        // Per-user error -- log + continue to the next user. NEVER let a
         // single bad credential or transient IMAP failure halt the
         // whole fan-out.
         reportServerError('scan-email-imap', 'Daemon poll rejected for user ' + userId, err, {
@@ -217,7 +217,7 @@ export function installImapPollerDaemon(): void {
     try {
       clearInterval(pollerHandle);
     } catch {
-      // Already cleared or handle no longer valid — no-op on idempotent reinstall.
+      // Already cleared or handle no longer valid -- no-op on idempotent reinstall.
     }
     pollerHandle = null;
   }
@@ -230,7 +230,7 @@ export function installImapPollerDaemon(): void {
   // every 30 min thereafter.
   setTimeout(fire, 60_000);
   pollerHandle = setInterval(fire, POLL_INTERVAL_MS);
-  // Don't keep the event loop alive solely for this timer — pairs well
+  // Don't keep the event loop alive solely for this timer -- pairs well
   // with the spawn-cleanup handlers in orchestrator.ts.
   pollerHandle.unref?.();
 }
@@ -238,4 +238,4 @@ export function installImapPollerDaemon(): void {
 // Auto-install when the module is first imported (jobs/index.ts barrel).
 installImapPollerDaemon();
 
-// D24 — `runScanEmailImap` was only used by the registry; export removed.
+// D24 -- `runScanEmailImap` was only used by the registry; export removed.

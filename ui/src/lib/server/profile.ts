@@ -8,7 +8,7 @@
  *
  * Path resolution is centralised in `profile-paths.ts`. The flat-layout
  * constants previously imported from `files.ts` (CV_PATH, APPLICATIONS,
- * PIPELINE, …) are no longer used here — they're per-active-profile shims
+ * PIPELINE, …) are no longer used here -- they're per-active-profile shims
  * for legacy callers and shouldn't be used from new code.
  */
 
@@ -20,9 +20,9 @@ import { logEvent } from './events';
 import { profilePath, ensureProfileDirs, userSharedPath } from './profile-paths';
 import { getActiveProfileId } from './profiles';
 
-/** Path to the example profile template — system-layer, shared, NOT per-profile. */
+/** Path to the example profile template -- system-layer, shared, NOT per-profile. */
 const EXAMPLE_PATH = path.join(ROOT, 'templates', 'profile.example.yml');
-/** Path to the `modes/_profile.md` template — system-layer, shared, NOT per-profile. */
+/** Path to the `modes/_profile.md` template -- system-layer, shared, NOT per-profile. */
 const PROFILE_TEMPLATE = path.join(ROOT, 'modes', '_profile.template.md');
 
 /** Subset of profile.yml that the UI exposes as editable. */
@@ -74,13 +74,13 @@ export type ProfileEdit = {
   language?: {
     modes_dir?: string;
   };
-  /** Autonomous apply settings — OPT-IN per profile. When `autonomous_apply`
+  /** Autonomous apply settings -- OPT-IN per profile. When `autonomous_apply`
    *  is true, the system MAY auto-submit applications on supported portals
    *  (LinkedIn / Greenhouse / Ashby) subject to score gate, daily cap, and
    *  per-portal toggles. See AGENTS.md "Ethical Use" + /help/autonomous-apply
    *  for the safety story. */
   automation?: {
-    /** Master switch. Default false — must be explicitly enabled per profile. */
+    /** Master switch. Default false -- must be explicitly enabled per profile. */
     autonomous_apply?: boolean;
     /** For the first N days after autonomous_apply flips on, the daily cap
      *  is reduced to 5/day (LinkedIn shadowban + ATS bot-filter mitigation). */
@@ -100,7 +100,7 @@ export type ProfileEdit = {
 export type ProfileSnapshot = ProfileEdit & {
   /** True when the file exists; false on first run */
   exists: boolean;
-  /** Raw archetypes array — surfaced read-only in the UI */
+  /** Raw archetypes array -- surfaced read-only in the UI */
   archetypes: { name: string; level?: string; fit?: string }[];
   /** Path summaries for sibling files */
   files: {
@@ -255,7 +255,7 @@ export function readProfile(profileId?: string): ProfileSnapshot {
 /**
  * Merge edit into the existing YAML document (preserving unknown keys + archetypes etc.)
  * and write back. Existing comments may be stripped because YAML round-trip via parse/stringify
- * doesn't preserve them — we accept that trade-off for v1; the user can always edit by hand.
+ * doesn't preserve them -- we accept that trade-off for v1; the user can always edit by hand.
  */
 export function writeProfile(profileId: string | undefined, edit: ProfileEdit): ProfileSnapshot;
 // Back-compat overload: callers that don't pass profileId pass edit as first arg.
@@ -384,7 +384,7 @@ export function readSiblingFile(
  *                    projects.json AND shared infrastructure listed below.
  *
  * Shared infrastructure ALSO wiped on scope='everything' (per the
- * ResetProfileDialog's "Everything — what happens" description). The
+ * ResetProfileDialog's "Everything -- what happens" description). The
  * 'profile' and 'jobs' scopes do NOT touch these:
  *   data/autopilot.json     ← reset to DEFAULT_CONFIG
  *   data/activity.jsonl     ← truncated
@@ -417,15 +417,15 @@ function backupTo(p: string, backups: string[]): void {
     fs.copyFileSync(p, p + '.bak');
     backups.push(p + '.bak');
   } catch {
-    // Backup failure is non-fatal — caller has been warned via UI confirm.
+    // Backup failure is non-fatal -- caller has been warned via UI confirm.
   }
 }
 
 /** Empty a directory's contents but leave the directory itself (so other tools that index it don't break).
  *  Before each delete the file/subtree is backed up to `<path>.bak` (file)
  *  or `<path>.bak.tar` (directory subtree) so a panicked user can recover.
- *  Skip the backup if `.bak` already exists — don't clobber the previous one.
- *  `exclude` is an optional set of basenames to leave untouched — used by the 'jobs' scope to keep
+ *  Skip the backup if `.bak` already exists -- don't clobber the previous one.
+ *  `exclude` is an optional set of basenames to leave untouched -- used by the 'jobs' scope to keep
  *  long-lived artifacts like interview-prep/story-bank.md while still wiping company-specific files. */
 function emptyDir(dir: string, resetFiles: string[], displayName: string, exclude?: Set<string>) {
   if (!fs.existsSync(dir)) return;
@@ -452,7 +452,7 @@ function emptyDir(dir: string, resetFiles: string[], displayName: string, exclud
           }
         }
       } catch (e) {
-        // Backup failure is non-fatal — still attempt the delete.
+        // Backup failure is non-fatal -- still attempt the delete.
         logEvent('reset-profile', 'Could not back up ' + name, {
           level: 'warn',
           category: 'application',
@@ -464,7 +464,7 @@ function emptyDir(dir: string, resetFiles: string[], displayName: string, exclud
         removed++;
       } catch (e) {
         failed++;
-        // Log per-file failure at warn — user expects "reset" to clear and
+        // Log per-file failure at warn -- user expects "reset" to clear and
         // a partial reset is misleading without a signal.
         logEvent('reset-profile', 'Could not remove ' + name, {
           level: 'warn',
@@ -581,7 +581,7 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
   emptyDir(REPORTS_DIR, resetFiles, path.relative(ROOT, REPORTS_DIR) + '/');
   emptyDir(OUTPUT_DIR, resetFiles, path.relative(ROOT, OUTPUT_DIR) + '/');
 
-  // Per-profile interview-prep dir — story-bank.md was never moved here by
+  // Per-profile interview-prep dir -- story-bank.md was never moved here by
   // migration (it stays at the shared top-level path), but a future per-profile
   // story-bank.md could exist; preserve it under 'jobs' scope to be safe.
   if (scope === 'jobs') {
@@ -603,15 +603,15 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
   // This profile's saved filter views.
   backupAndDelete(PROJECTS_JSON_PATH, resetFiles, backups);
 
-  // Shared infrastructure — wiped per the ResetProfileDialog "Everything"
+  // Shared infrastructure -- wiped per the ResetProfileDialog "Everything"
   // description. Each gets backed up to <path>.bak before deletion/reset.
   //
   // Per-USER state (autopilot.json + story-bank.md) resolves through
-  // userSharedPath() so we wipe the active user's data — not a stale
+  // userSharedPath() so we wipe the active user's data -- not a stale
   // repo-root copy that no longer exists post-multi-user migration.
   //
   // Per-INSTALL state (activity.jsonl, job-last-run.json, apply-counter.json)
-  // remains at the flat repo-root paths — see AGENTS.md "Globally shared
+  // remains at the flat repo-root paths -- see AGENTS.md "Globally shared
   // infrastructure" line.
   const AUTOPILOT_JSON = userSharedPath('autopilot');
   const ACTIVITY_JSONL = path.join(ROOT, 'data', 'activity.jsonl');
@@ -619,7 +619,7 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
   const APPLY_COUNTER_JSON = path.join(ROOT, 'data', 'apply-counter.json');
   const STORY_BANK_MD = userSharedPath('story-bank');
 
-  // Reset autopilot.json to defaults rather than deleting it — the
+  // Reset autopilot.json to defaults rather than deleting it -- the
   // scheduler depends on the file existing on next read; rewriting to
   // DEFAULT_CONFIG is more honest than deleting and racing with the
   // scheduler's next tick.
@@ -646,7 +646,7 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
     }
   }
 
-  // Activity feed — backup then truncate (preserve file so the bus's append
+  // Activity feed -- backup then truncate (preserve file so the bus's append
   // path doesn't need to recreate it on next emit).
   if (fs.existsSync(ACTIVITY_JSONL)) {
     backupTo(ACTIVITY_JSONL, backups);
@@ -710,7 +710,7 @@ export function writeSiblingFile(
       backedUp = true;
       backupPath = p + '.bak';
     } catch {
-      // Backup failures are non-fatal — proceed with the write so the user
+      // Backup failures are non-fatal -- proceed with the write so the user
       // doesn't lose their new content.
     }
   }

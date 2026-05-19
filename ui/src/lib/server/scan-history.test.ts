@@ -1,5 +1,5 @@
 /**
- * lib/server/scan-history — parser for data/scan-history.tsv.
+ * lib/server/scan-history -- parser for data/scan-history.tsv.
  *
  * Mocks fs + profiles so we can feed synthetic TSV content + assert
  * the aggregation behaviour without touching disk.

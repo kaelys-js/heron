@@ -1,5 +1,5 @@
 /**
- * lib/server/api-helpers — okJson, errJson, badRequest, wrap.
+ * lib/server/api-helpers -- okJson, errJson, badRequest, wrap.
  *
  * Tests the envelope shape contract every endpoint relies on.
  */

@@ -7,7 +7,7 @@
  *
  * Why authenticated-only: LinkedIn aggressively blocks public scraping of
  * profile pages (auth-walls, JS-only rendering, IP rate-limits). The user's
- * saved session bypasses every one of those — same view they'd see when
+ * saved session bypasses every one of those -- same view they'd see when
  * visiting the URL themselves. Public scraping reliably fails so we don't
  * even attempt it.
  *
@@ -17,7 +17,7 @@
  * Request:  { url: string }
  * Response: { markdown: string }
  *
- * Cost: 1 Anthropic call (~$0.10–$0.40 depending on profile length) +
+ * Cost: 1 Anthropic call (~$0.10-$0.40 depending on profile length) +
  * a few seconds of headless Playwright.
  */
 
@@ -180,7 +180,7 @@ function spawnExtractScript(url: string): Promise<string> {
     p.on('close', (code) => {
       clearTimeout(timer);
       if (code === 0) return resolve(stdoutBuf);
-      // Map well-known exit codes to clear user messages — the script
+      // Map well-known exit codes to clear user messages -- the script
       // documents these in its docstring.
       const tail = (stderrBuf || '').slice(-400).trim();
       const map: Record<number, string> = {

@@ -1,5 +1,5 @@
 /**
- * lib/sidebar-pins — localStorage-backed exclusion set for the sidebar.
+ * lib/sidebar-pins -- localStorage-backed exclusion set for the sidebar.
  *
  * Tests:
  *   • init() reads from localStorage

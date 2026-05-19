@@ -61,7 +61,7 @@ export const POST = wrap('bulk-cv', async ({ request }: { request: Request }) =>
         'x faster wall-clock.',
     };
   }
-  // Fire and forget — orchestrator drives the activity feed. Outer catch
+  // Fire and forget -- orchestrator drives the activity feed. Outer catch
   // covers the unlikely case the promise itself rejects (orchestrator
   // already logs per-job failures internally).
   runBulkOferta(urls).catch((err) =>

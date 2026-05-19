@@ -54,26 +54,26 @@
     /** Sub-line shown below the title on mobile. */
     description?: string;
     /** Where the desktop dropdown anchors relative to its trigger.
-     *  Mobile ignores this — sheets are always bottom-anchored. */
+     *  Mobile ignores this -- sheets are always bottom-anchored. */
     align?: 'start' | 'end' | 'center';
     /** Override the desktop dropdown width. Mobile is always full-width. */
     desktopWidth?: string;
-    /** Trigger snippet — receives `props` that must be spread onto
+    /** Trigger snippet -- receives `props` that must be spread onto
      *  the actual trigger element (Button / div / etc.). */
     trigger: Snippet<[{ props: Record<string, unknown> }]>;
-    /** Items snippet — same markup works for both desktop dropdown
+    /** Items snippet -- same markup works for both desktop dropdown
      *  AND mobile sheet. Use ResponsiveActionItem inside. */
     items: Snippet;
     /** Optional tooltip content shown on hover of the trigger on
      *  desktop. Hidden on mobile (no hover; long-press tooltips are
      *  the wrong UX). Useful when the trigger is icon-only and needs
      *  a hint, or when the menu's state-of-the-world differs from
-     *  the button label (e.g. "Already applied — open to apply again"). */
+     *  the button label (e.g. "Already applied -- open to apply again"). */
     tooltip?: Snippet;
     /** Tooltip side anchor. Defaults to "top" which is the usual
      *  Apple-style placement above the trigger button. */
     tooltipSide?: 'top' | 'right' | 'bottom' | 'left';
-    /** Tooltip delay in ms. Defaults to 300 — short enough for
+    /** Tooltip delay in ms. Defaults to 300 -- short enough for
      *  power users, long enough not to flash on quick mouseover. */
     tooltipDelay?: number;
     class?: string;

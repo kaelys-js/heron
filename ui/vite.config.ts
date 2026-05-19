@@ -1,5 +1,5 @@
 /**
- * Vite config — Heron `brandWatcherPlugin` + best-practice dev/build
+ * Vite config -- Heron `brandWatcherPlugin` + best-practice dev/build
  * settings.
  *
  * `brandWatcherPlugin`:
@@ -16,18 +16,18 @@
  * zero manual `pnpm brand:apply` invocations.
  *
  * Server settings:
- *   • `host: true` — listens on every interface (0.0.0.0). Required so
+ *   • `host: true` -- listens on every interface (0.0.0.0). Required so
  *     an iOS device on the same wifi can hit the dev server via the
  *     Mac's LAN IP / Bonjour. Single-user job tool; LAN exposure is OK.
- *   • `port: 5173` — explicit, matches backend-discovery's dev fallback.
- *   • `strictPort: true` — fail loud if 5173 is taken, don't silently
+ *   • `port: 5173` -- explicit, matches backend-discovery's dev fallback.
+ *   • `strictPort: true` -- fail loud if 5173 is taken, don't silently
  *     fall through to 5174 (would break discovery).
  *
  * Build settings:
- *   • `target: 'es2022'` — Capacitor iOS WebView supports ES2022. Avoids
+ *   • `target: 'es2022'` -- Capacitor iOS WebView supports ES2022. Avoids
  *     transpiling features Electron and modern Safari handle natively.
- *   • `sourcemap: true` — small overhead, big debugging win.
- *   • `chunkSizeWarningLimit: 1500` — Heron bundles a few heavy
+ *   • `sourcemap: true` -- small overhead, big debugging win.
+ *   • `chunkSizeWarningLimit: 1500` -- Heron bundles a few heavy
  *     dependencies (bits-ui + lucide-svelte) that legitimately push the
  *     default 500kb chunk warning.
  */
@@ -83,12 +83,12 @@ export default defineConfig({
     host: true,
     port: 5173,
     strictPort: true,
-    // Filesystem access — keep strict so the dev server can't accidentally
+    // Filesystem access -- keep strict so the dev server can't accidentally
     // serve files outside the project root (e.g. via `..` paths).
     fs: {
       strict: true,
     },
-    // HMR — let it pick the same port; explicit so a future surprise doesn't
+    // HMR -- let it pick the same port; explicit so a future surprise doesn't
     // break iOS sim re-connection during dev.
     hmr: {
       port: 5173,
@@ -103,7 +103,7 @@ export default defineConfig({
     target: 'es2022',
     sourcemap: true,
     chunkSizeWarningLimit: 1500,
-    // Vite 8 uses rolldown + oxc by default — fastest production builds.
+    // Vite 8 uses rolldown + oxc by default -- fastest production builds.
     // Don't override `minify` (defaults to 'oxc' under rolldown).
     rollupOptions: {
       // Vite 8 / Rolldown uses `onLog` (level, log, defaultHandler) as the
@@ -111,7 +111,7 @@ export default defineConfig({
       // routed through SvelteKit's adapter passes. `onLog` covers both
       // bundler passes (client + server) reliably.
       onLog(level, log, defaultHandler) {
-        // INEFFECTIVE_DYNAMIC_IMPORT — Rolldown flags `await import('./x')`
+        // INEFFECTIVE_DYNAMIC_IMPORT -- Rolldown flags `await import('./x')`
         // when `x` is ALSO statically imported elsewhere. The dynamic
         // imports in orchestrator.ts + apply-linkedin-login.job.ts are
         // INTENTIONAL: they break the `orchestrator ↔ autopilot` circular
@@ -119,7 +119,7 @@ export default defineConfig({
         // code-splitting happens, but the lazy evaluation still solves the
         // cycle. Silencing here keeps the build output clean.
         if (log.code === 'INEFFECTIVE_DYNAMIC_IMPORT') return;
-        // INVALID_ANNOTATION — third-party libs (notably @noble/ciphers,
+        // INVALID_ANNOTATION -- third-party libs (notably @noble/ciphers,
         // a transitive dep of better-auth) ship `@__NO_SIDE_EFFECTS__`
         // JSDoc annotations in positions Rolldown can't preserve through
         // tree-shaking. Not our code to fix; the comment gets stripped

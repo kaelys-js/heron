@@ -1,5 +1,5 @@
 /**
- * lib/theme — dense mode + toggle + persist scenarios.
+ * lib/theme -- dense mode + toggle + persist scenarios.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BRAND_STORAGE_KEYS } from '$lib/client/brand';
@@ -93,7 +93,7 @@ describe('theme.init — valid stored values', () => {
     expect(theme.mode).toBe(stored);
   });
 
-  // 'system' is the default — storing it doesn't change anything but
+  // 'system' is the default -- storing it doesn't change anything but
   // shouldn't cause a regression.
   it('stored="system" — init() honours it', () => {
     localStorage.setItem(BRAND_STORAGE_KEYS.theme, 'system');

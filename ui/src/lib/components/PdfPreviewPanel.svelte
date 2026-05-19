@@ -32,7 +32,7 @@
     class?: string;
   } = $props();
 
-  // svelte-ignore state_referenced_locally — initial seed only.
+  // svelte-ignore state_referenced_locally -- initial seed only.
   let open = $state(defaultOpen);
   let pq = $derived(profileId ? '?profile=' + encodeURIComponent(profileId) : '');
   let pdfUrl = $derived('/api/job/' + encodeURIComponent(jobId) + '/pdf' + pq);

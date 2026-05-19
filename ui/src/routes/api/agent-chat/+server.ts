@@ -1,5 +1,5 @@
 /**
- * Agent chat endpoint — wraps Anthropic client with system context.
+ * Agent chat endpoint -- wraps Anthropic client with system context.
  *
  * @module
  */
@@ -15,7 +15,7 @@ import fs from 'node:fs';
 export const POST = wrap(
   'agent-chat',
   async ({ request, locals }: { request: Request; locals: App.Locals }) => {
-    // F29 — defense in depth. The hooks-server.ts guard 401s anonymous
+    // F29 -- defense in depth. The hooks-server.ts guard 401s anonymous
     // requests already, but adding requireUserId here documents intent
     // and protects against future allowlist changes. Without it, an
     // anonymous request that somehow reached this handler would feed

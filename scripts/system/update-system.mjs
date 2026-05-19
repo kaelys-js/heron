@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * update-system.mjs — Safe auto-updater for heron
+ * update-system.mjs -- Safe auto-updater for heron
  *
  * Updates ONLY system layer files (modes, scripts, templates).
  * NEVER touches user data (cv.md, profile.yml, _profile.md, data/, reports/).
@@ -48,7 +48,7 @@ const RELEASES_API =
   process.env.HERON_UPDATE_RELEASES_API ||
   `https://api.github.com/repos/${BRAND_REPO_PATH}/releases/latest`;
 
-// System layer paths — ONLY these files get updated
+// System layer paths -- ONLY these files get updated
 const SYSTEM_PATHS = [
   'modes/_shared.md',
   'modes/_profile.template.md',
@@ -96,7 +96,7 @@ const SYSTEM_PATHS = [
   'package.json',
 ];
 
-// User layer paths — NEVER touch these (safety check)
+// User layer paths -- NEVER touch these (safety check)
 const USER_PATHS = [
   'cv.md',
   'config/profile.yml',
@@ -119,7 +119,7 @@ function localVersion() {
 /**
  * Compare two semver strings. Supports pre-release tags (1.6.0-rc1) per
  * the canonical semver ordering: pre-release < release for the same major.minor.patch.
- * (P11 — prior numeric-split implementation silently equated 1.6.0-rc1 == 1.6.0.)
+ * (P11 -- prior numeric-split implementation silently equated 1.6.0-rc1 == 1.6.0.)
  *
  * Pre-release identifiers compare ASCII-lexicographically (rc1 < rc2,
  * alpha < beta < rc), good enough for the small set of tags this project uses.
@@ -134,7 +134,7 @@ function compareVersions(a, b) {
     if ((pa[i] || 0) < (pb[i] || 0)) return -1;
     if ((pa[i] || 0) > (pb[i] || 0)) return 1;
   }
-  // Bases equal — pre-release comparison.
+  // Bases equal -- pre-release comparison.
   // Per semver: 1.6.0-rc1 < 1.6.0 (no pre-release).
   if (aPre && !bPre) return -1;
   if (!aPre && bPre) return 1;
@@ -186,7 +186,7 @@ async function check() {
   let releaseVersion = '';
   let changelog = '';
 
-  // Fetch both sources in parallel — only fail offline if BOTH are unreachable.
+  // Fetch both sources in parallel -- only fail offline if BOTH are unreachable.
   // Use AbortSignal so a hung TCP connection can't stall the session-start check.
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -232,7 +232,7 @@ async function check() {
 
   if (!remote && !releaseVersion) {
     // Distinguish true network failures from "fetched OK but response was
-    // unparseable" — the latter shouldn't be silenced as offline since the
+    // unparseable" -- the latter shouldn't be silenced as offline since the
     // network is actually fine.
     const bothNetworkFailed =
       versionResult.status !== 'fulfilled' && releaseResult.status !== 'fulfilled';
@@ -271,7 +271,7 @@ async function apply() {
   const local = localVersion();
   const initialStatusPaths = new Set(gitStatusEntries().map((entry) => entry.path));
 
-  // P12: honour the .update-dismissed flag here too — not just on check.
+  // P12: honour the .update-dismissed flag here too -- not just on check.
   // A user who explicitly dismissed an update shouldn't have it apply on
   // accident from a different code path (autopilot, manual `apply` run).
   // The `--force` flag (any argv after the action) lets advanced users
@@ -347,7 +347,7 @@ async function apply() {
     }
 
     // 5. Install any new dependencies (root + ui/, since the SvelteKit
-    //    dashboard's deps live in ui/package.json — P10).
+    //    dashboard's deps live in ui/package.json -- P10).
     try {
       execSync('npm install --silent', { cwd: ROOT, timeout: 60000 });
     } catch {

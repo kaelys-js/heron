@@ -92,7 +92,7 @@
       );
       if (r.exists && r.content) prepContent = r.content;
     } catch {
-      // 404 or no report yet — leave empty so the user can hit Generate
+      // 404 or no report yet -- leave empty so the user can hit Generate
     }
   }
 
@@ -281,7 +281,7 @@
     }
   });
 
-  // Same lazy-load pattern for the Interview Prep tab — pulls the persisted
+  // Same lazy-load pattern for the Interview Prep tab -- pulls the persisted
   // brief if one exists (auto-fired by the bus listener on status→Interview).
   $effect(() => {
     if (activeTab === 'prep') {

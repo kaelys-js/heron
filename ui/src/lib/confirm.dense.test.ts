@@ -1,5 +1,5 @@
 /**
- * lib/confirm — dense ConfirmGate scenarios.
+ * lib/confirm -- dense ConfirmGate scenarios.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfirmGate } from './confirm.svelte';

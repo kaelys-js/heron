@@ -96,7 +96,7 @@ function velocityBuckets(dates: string[]): { day: string; count: number }[] {
 }
 
 export async function load({ url }: { url: URL }) {
-  // /stats is CROSS-PROFILE by default — comparing track performance is the
+  // /stats is CROSS-PROFILE by default -- comparing track performance is the
   // whole point. `?profile=<slug>` narrows to one profile for drill-down.
   const queryProfile = url.searchParams.get('profile');
   const profileId = queryProfile && queryProfile !== 'all' ? queryProfile : 'all';
@@ -114,7 +114,7 @@ export async function load({ url }: { url: URL }) {
   const appliedStatuses: Status[] = ['Applied', 'Screened', 'Interview', 'Offer', 'Rejected'];
   const applied = appliedStatuses.reduce((acc, s) => acc + grouped[s].length, 0);
 
-  // Score distribution — 5 buckets, applied vs unapplied
+  // Score distribution -- 5 buckets, applied vs unapplied
   const buckets = [
     { label: '0–1', range: [0, 1], total: 0, applied: 0 },
     { label: '1–2', range: [1, 2], total: 0, applied: 0 },
@@ -183,7 +183,7 @@ export async function load({ url }: { url: URL }) {
       rate: v.count > 0 ? v.applied / v.count : 0,
     }));
 
-  // BG-risk distribution — normalize defensively (some legacy reports may have lowercased values)
+  // BG-risk distribution -- normalize defensively (some legacy reports may have lowercased values)
   const bgCounts: Record<NonNullable<BgRisk>, number> = { LOW: 0, MEDIUM: 0, HIGH: 0, BLOCKED: 0 };
   let bgUnknown = 0;
   const VALID_BG = new Set(['LOW', 'MEDIUM', 'HIGH', 'BLOCKED']);
@@ -209,7 +209,7 @@ export async function load({ url }: { url: URL }) {
     bgRisk: j.bgRisk,
   }));
 
-  // Pipeline staleness — for 'all' mode, use the freshest mtime across
+  // Pipeline staleness -- for 'all' mode, use the freshest mtime across
   // every profile (so a recently-scanned profile makes the overall view
   // appear fresh).
   let pipelineStaleDays: number | null = null;
@@ -246,7 +246,7 @@ export async function load({ url }: { url: URL }) {
     overallApplied: counts.total > 0 ? applied / counts.total : 0,
   };
 
-  // Scan-history summary — used by the new "Scan history" card
+  // Scan-history summary -- used by the new "Scan history" card
   const scanHistory = readScanHistorySummary(profileId);
 
   return {

@@ -45,7 +45,7 @@
       fromProject: string | null;
     };
   } = $props();
-  // svelte-ignore state_referenced_locally — server data seeds local mutable state on first render.
+  // svelte-ignore state_referenced_locally -- server data seeds local mutable state on first render.
   let activeTab = $state<TabFilter>(data.initialTab);
   let sort = $state<SortKey>('score-desc');
 
@@ -70,7 +70,7 @@
       window.localStorage.setItem(VIEW_KEY, viewMode);
     } catch {}
   });
-  // svelte-ignore state_referenced_locally — server seeds initial filter; user controls afterward.
+  // svelte-ignore state_referenced_locally -- server seeds initial filter; user controls afterward.
   let filter = $state<FilterState>({
     ...data.initialFilter,
     bgRisk: { ...data.initialFilter.bgRisk },
@@ -89,7 +89,7 @@
       const u = new URL(page.url);
       if (t === 'all') u.searchParams.delete('tab');
       else u.searchParams.set('tab', t);
-      // No-op when the URL hasn't actually changed — avoids a useless history entry.
+      // No-op when the URL hasn't actually changed -- avoids a useless history entry.
       if (u.searchParams.toString() === page.url.searchParams.toString()) return;
       replaceState(u, page.state);
     } catch (e) {
@@ -121,7 +121,7 @@
     if (filter.hasPdf && !j.pdfFile) return false;
     if (filter.hasReport && !j.reportFile) return false;
     if (filter.hasSalary && !j.salary) return false;
-    // Source filter — '' means "all sources"; anything else must match
+    // Source filter -- '' means "all sources"; anything else must match
     // exactly the scan-history source identifier.
     if (filter.source && j.source !== filter.source) return false;
     if (filter.search.trim()) {
@@ -229,7 +229,7 @@
   });
 
   // Liveness sweep candidates: visible jobs that look like they could be stale
-  // (New / Scored / Ready). >10 makes the bulk button worth showing — the user
+  // (New / Scored / Ready). >10 makes the bulk button worth showing -- the user
   // can also run a sweep at any time from Settings → Maintenance.
   let livenessCandidateCount = $derived(
     listJobs.filter((j) => ['New', 'Scoring', 'Scored', 'Ready'].includes(j.status)).length,

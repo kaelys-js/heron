@@ -1,5 +1,5 @@
 /**
- * lib/server/auth-helpers — dense role + guard matrix.
+ * lib/server/auth-helpers -- dense role + guard matrix.
  */
 import { describe, expect, it, vi } from 'vitest';
 
@@ -75,7 +75,7 @@ describe('requireUser — every unauthed shape throws', () => {
 describe('isAuthed — type guard', () => {
   // Note: isAuthed checks `locals.user !== null` strictly, so only null
   // counts as unauthed. undefined slips through (no explicit null check)
-  // — that's the existing contract.
+  // -- that's the existing contract.
   it.each([
     [{ id: 'u' }, true],
     [{ id: 'a', role: 'admin' }, true],

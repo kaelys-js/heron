@@ -1,14 +1,14 @@
 /**
- * Status normalization — silent hygiene job.
+ * Status normalization -- silent hygiene job.
  *
  * Runs `normalize-statuses.mjs` to clean non-canonical states in
  * applications.md (DUPLICADO → Discarded, strip markdown bold from status,
  * map Spanish → canonical English statuses, etc.).
  *
  * Triggers (match the `source` field of upstream success events):
- *   - 'status'      — every /api/status POST emits a success event
- *   - 'batch-merge' — emitted by the auto-merge fs watcher (`auto-merge-batch.ts`)
- *   - 'boot'        — emitted by bootOnce when the dev server is fully up
+ *   - 'status'      -- every /api/status POST emits a success event
+ *   - 'batch-merge' -- emitted by the auto-merge fs watcher (`auto-merge-batch.ts`)
+ *   - 'boot'        -- emitted by bootOnce when the dev server is fully up
  *
  * Activity feed: silent unless ≥1 row was actually changed. The script's
  * stdout is parsed for the "📊 N statuses normalized" line.
@@ -37,7 +37,7 @@ function runNormalize(): Promise<JobResult> {
       stdout += c.toString();
     });
     p.stderr?.on('data', () => {
-      /* swallow — non-fatal */
+      /* swallow -- non-fatal */
     });
     p.on('error', (err: Error) => {
       logEvent('normalize', 'Normalize failed to spawn', {
@@ -49,7 +49,7 @@ function runNormalize(): Promise<JobResult> {
     });
     p.on('close', (code: number | null) => {
       if (code !== 0) {
-        // Non-zero exit isn't a hard error here — script may have nothing to do
+        // Non-zero exit isn't a hard error here -- script may have nothing to do
         resolve({ ok: false, error: 'normalize exited with code ' + code });
         return;
       }

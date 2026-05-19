@@ -10,9 +10,9 @@
  * remote-policy correlation, and recommendations. We just transport its
  * output and let the page render it.
  *
- * IMPORTANT — the type definitions below are the *script's actual JSON
+ * IMPORTANT -- the type definitions below are the *script's actual JSON
  * shape*, not what felt natural at the time of writing the page. Keys
- * like `total` (not `count`), `conversionRate` (already 0–100, not 0–1),
+ * like `total` (not `count`), `conversionRate` (already 0-100, not 0-1),
  * and array-of-objects (not Record<>) are the source of truth. The
  * /insights page reads against these types verbatim.
  */
@@ -25,7 +25,7 @@ import { activePath } from './profile-paths';
 import { userContextEnv } from './user-context';
 
 /** Per-profile cache path. Each profile's patterns are derived from
- *  its own applications.md — sharing across profiles would poison
+ *  its own applications.md -- sharing across profiles would poison
  *  the cache. */
 function cachePath(): string {
   return activePath('patterns-cache');
@@ -46,7 +46,7 @@ export type ArchetypeRow = {
   negative: number;
   self_filtered: number;
   pending: number;
-  /** 0–100 integer percentage (positive / total). NOT 0–1. */
+  /** 0-100 integer percentage (positive / total). NOT 0-1. */
   conversionRate: number;
 };
 
@@ -74,7 +74,7 @@ export type Blocker = {
   blocker: string;
   /** Raw count of applications that hit this blocker. */
   frequency: number;
-  /** 0–100 integer percentage of all evaluated applications. */
+  /** 0-100 integer percentage of all evaluated applications. */
   percentage: number;
 };
 
@@ -88,14 +88,14 @@ export type TechGap = {
 export type Recommendation = {
   /** Imperative one-line action: "Tighten location filters in portals.yml…" */
   action: string;
-  /** 1–2 sentences of supporting evidence pulled from the data. */
+  /** 1-2 sentences of supporting evidence pulled from the data. */
   reasoning: string;
   /** Used to tint the chip on the page. */
   impact: 'high' | 'medium' | 'low';
 };
 
 export type ScoreThreshold = {
-  /** Suggested floor (e.g. 3.5) — generate PDFs only at/above this. */
+  /** Suggested floor (e.g. 3.5) -- generate PDFs only at/above this. */
   recommended: number;
   /** Plain-English explanation of why this threshold was chosen. */
   reasoning: string;
@@ -122,9 +122,9 @@ export type PatternsResult = {
   scoreThreshold?: ScoreThreshold;
   techStackGaps?: TechGap[];
   recommendations?: Recommendation[];
-  /** Set by the wrapper, not the script — used to age out the disk cache. */
+  /** Set by the wrapper, not the script -- used to age out the disk cache. */
   generatedAt?: number;
-  /** Set by the wrapper when spawn/parse failed — UI surfaces this. */
+  /** Set by the wrapper when spawn/parse failed -- UI surfaces this. */
   error?: string;
 };
 

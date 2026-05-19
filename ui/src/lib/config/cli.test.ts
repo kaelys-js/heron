@@ -1,5 +1,5 @@
 /**
- * lib/config/cli — AGENT_CLI constant.
+ * lib/config/cli -- AGENT_CLI constant.
  *
  * One env-driven export. Tests confirm:
  *   • default 'claude' when AGENT_CLI is unset

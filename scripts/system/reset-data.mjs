@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * reset-data — full user-data nuke for re-testing first-time UX.
+ * reset-data -- full user-data nuke for re-testing first-time UX.
  *
  * Per the user's specification:
  *   • Option A (full nuke): wipe cv.md / profile.yml / _profile.md so the
  *     onboarding flow fires from zero.
- *   • EXCEPTION: preserve portals.yml — job source configuration is
+ *   • EXCEPTION: preserve portals.yml -- job source configuration is
  *     useful infrastructure regardless of who's using the system.
  *   • Backup everything deleted to data/.reset-bak-{timestamp}/ so it's
  *     recoverable if you change your mind. The backup dir is gitignored.
@@ -76,7 +76,7 @@ const PER_PROFILE_DELETE = [
 
 const PER_PROFILE_DELETE_DIRS = ['reports', 'output', 'interview-prep'];
 
-/** Files PRESERVED at the profile level — explicit allowlist. */
+/** Files PRESERVED at the profile level -- explicit allowlist. */
 const PER_PROFILE_KEEP = [
   'portals.yml', // job sources — user said keep
 ];
@@ -92,7 +92,7 @@ const SHARED_DATA_FILES = [
   'autopilot.json',
   'ui-prefs.json',
   'profiles.json', // forces fresh boot migration
-  // SQLite databases — wiping these is the ONLY way to reset the
+  // SQLite databases -- wiping these is the ONLY way to reset the
   // first-user owner-onboarding flow. auth.db holds users / sessions /
   // passkeys / invite codes; app.db holds every per-user job /
   // application / interview row. Both are auto-recreated empty by
@@ -145,7 +145,7 @@ async function confirm(prompt) {
   }
 }
 
-/** existsSync follows symlinks — a dangling symlink reads as "missing".
+/** existsSync follows symlinks -- a dangling symlink reads as "missing".
  *  We DO want to clean up dangling symlinks though, so use lstat which
  *  inspects the symlink itself. Returns one of:
  *    'file' / 'dir' / 'symlink' / null (truly absent). */
@@ -198,7 +198,7 @@ function listToDelete() {
   // boot. We still wipe the legacy tree so a stale copy from before
   // the migration doesn't survive a reset.
   for (const p of listSubdirs(PROFILES)) {
-    // Skip the _shared escape-hatch dir — that's per-user content
+    // Skip the _shared escape-hatch dir -- that's per-user content
     // (story-bank, etc.) and gets wiped via SHARED_DATA_FILES below
     // OR explicitly by the per-user pass when applicable.
     if (p === '_shared') continue;
@@ -216,12 +216,12 @@ function listToDelete() {
       if (p === '_shared') continue; // see above
       queueProfile(items, join(userProfiles, p), `user:${uid}/profile:${p}`);
     }
-    // Per-user _shared dir (story-bank.md, autopilot.json, etc.) — wipe wholesale.
+    // Per-user _shared dir (story-bank.md, autopilot.json, etc.) -- wipe wholesale.
     const sharedDir = join(userProfiles, '_shared');
     const sharedKind = probe(sharedDir);
     if (sharedKind)
       items.push({ kind: sharedKind, path: sharedDir, label: `user:${uid}/_shared/` });
-    // Per-user Playwright session dirs (.playwright-{portal}/) — credential
+    // Per-user Playwright session dirs (.playwright-{portal}/) -- credential
     // material so explicitly wiped on full reset.
     for (const entry of existsSync(join(USERS_ROOT, uid))
       ? readdirSync(join(USERS_ROOT, uid))
@@ -259,7 +259,7 @@ function listToDelete() {
 
 /**
  * Detect a running dev server (pnpm dev, dev:ios --live, etc.) by
- * probing :5173. If found, refuse to proceed — the server's open
+ * probing :5173. If found, refuse to proceed -- the server's open
  * SQLite handles would prevent the .db files from cleanly reseting,
  * leaving a zombie state (file deleted but inode still held, new
  * writes to "phantom" file, fresh `new Database()` opens an empty
@@ -277,7 +277,7 @@ function detectRunningDevServer() {
       .map((s) => s.trim())
       .filter(Boolean);
   } catch {
-    // lsof not available or no listeners — proceed.
+    // lsof not available or no listeners -- proceed.
     return [];
   }
 }

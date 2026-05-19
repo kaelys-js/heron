@@ -1,5 +1,5 @@
 /**
- * lib/utils — dense edge-case matrix.
+ * lib/utils -- dense edge-case matrix.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cn, formatRelativeTime, truncate, withMinDuration } from './utils';

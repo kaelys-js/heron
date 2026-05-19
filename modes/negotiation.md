@@ -1,4 +1,4 @@
-# Mode: negotiation — Offer negotiation playbook
+# Mode: negotiation -- Offer negotiation playbook
 
 Triggered when an offer arrives. Run `/heron negotiation <company>` or invoke from the UI's negotiation panel.
 
@@ -13,7 +13,7 @@ Ask if not already in the offer message:
 6. **Location** (remote / hybrid / on-site)
 7. **Start date** flexibility
 8. **Competing offers** if any
-9. **Candidate's current comp** (only used for the "I'm coming from X" framing — optional)
+9. **Candidate's current comp** (only used for the "I'm coming from X" framing -- optional)
 
 ## Research phase (do this BEFORE drafting any counter)
 
@@ -37,7 +37,7 @@ Score the offer:
 Pick a leverage stance:
 - **Strong** (offer < 50th percentile or competing offer in hand): counter aggressively
 - **Moderate** (offer at 50-70th): counter with modest ask + non-cash improvements
-- **Weak** (offer > 75th, no competing offer): polish edges (start date, signing bonus) — don't push base
+- **Weak** (offer > 75th, no competing offer): polish edges (start date, signing bonus) -- don't push base
 
 ## Counter-offer template
 
@@ -45,7 +45,7 @@ Output a draft email with:
 
 > Hi [recruiter],
 >
-> Thanks so much for the offer — really excited about [specific thing about the team/role from Block A].
+> Thanks so much for the offer -- really excited about [specific thing about the team/role from Block A].
 >
 > I'd like to talk through a few details before signing:
 >
@@ -72,4 +72,4 @@ Output a draft email with:
 - Never auto-send. The candidate sends the email themselves.
 - Geographic discount pushback (if recruiter cites Vancouver vs SF): "The roles I'm competitive for are output-based, not location-based. My track record doesn't change based on postal code."
 - If competing offer leverage exists, frame it as "I have another offer at [range]; how can we close the gap?"
-- BG check note: do NOT mention any criminal record proactively. If the offer letter requires BG-check pass-through, surface that to the candidate as a manual checkpoint — the candidate decides disclosure timing.
+- BG check note: do NOT mention any criminal record proactively. If the offer letter requires BG-check pass-through, surface that to the candidate as a manual checkpoint -- the candidate decides disclosure timing.

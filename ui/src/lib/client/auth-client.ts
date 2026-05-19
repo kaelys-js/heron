@@ -18,7 +18,7 @@
  * on every sign-in response; our customFetchImpl captures that token,
  * persists it in Capacitor Preferences, and adds it as
  * `Authorization: Bearer <token>` on every subsequent request. Same code
- * path on web — it's just inert there because Preferences is empty.
+ * path on web -- it's just inert there because Preferences is empty.
  */
 import { createAuthClient } from 'better-auth/svelte';
 import { passkeyClient } from '@better-auth/passkey/client';
@@ -43,8 +43,8 @@ const AUTHED_KEY = BRAND_STORAGE_KEYS.authed;
  * reload loop (~9 reloads/sec).
  *
  * Substitute `http://localhost` whenever the origin isn't already http(s).
- * The actual API calls don't use this baseURL — they route through
- * `customFetchImpl` below — so the placeholder is purely to keep
+ * The actual API calls don't use this baseURL -- they route through
+ * `customFetchImpl` below -- so the placeholder is purely to keep
  * better-auth's validator happy.
  */
 function safeBaseURL(): string | undefined {
@@ -55,7 +55,7 @@ function safeBaseURL(): string | undefined {
 }
 
 /**
- * Custom fetch — every auth-client HTTP call goes through here so both:
+ * Custom fetch -- every auth-client HTTP call goes through here so both:
  *   1. Relative URLs get prepended with the resolved backend base URL
  *      (so `/api/auth/sign-in/passkey` actually reaches the server on
  *      Capacitor), and
@@ -91,7 +91,7 @@ async function customFetch(input: RequestInfo | URL, init?: RequestInit): Promis
     const { value } = await Preferences.get({ key: BEARER_KEY });
     token = value;
   } catch {
-    /* Preferences not wired (web only) — try localStorage */
+    /* Preferences not wired (web only) -- try localStorage */
   }
   if (!token && typeof localStorage !== 'undefined') {
     token = localStorage.getItem(BEARER_KEY);
@@ -129,7 +129,7 @@ async function customFetch(input: RequestInfo | URL, init?: RequestInit): Promis
     }
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(BEARER_KEY, setToken);
-      // Also flip the client-side gate flag — relevant on Capacitor where
+      // Also flip the client-side gate flag -- relevant on Capacitor where
       // +layout.svelte's localStorage check is the only auth gate (the
       // server-side hooks.server.ts doesn't run for adapter-static).
       // Both signals get cleared together in `clearLocalAuthState()`.
@@ -161,10 +161,10 @@ export const { signIn, signOut, signUp, useSession, getSession, passkey } = auth
  *  user, so the same device can host multiple users without leaking
  *  data between them. The function tears down THREE layers:
  *
- *    1. Capacitor Preferences (WebView's secure store) — bearer token
- *    2. localStorage (web + iOS WebView fallback) — bearer + heron:authed
+ *    1. Capacitor Preferences (WebView's secure store) -- bearer token
+ *    2. localStorage (web + iOS WebView fallback) -- bearer + heron:authed
  *    3. App Group UserDefaults (shared across host app, Share Extension,
- *       Watch, Widgets, BackgroundFetcher) — bearer + spotlight index +
+ *       Watch, Widgets, BackgroundFetcher) -- bearer + spotlight index +
  *       quiet hours + last-seen-issue cursor. Delegated to
  *       NativePlugin.clearAllSharedState() which is the swift-side single
  *       source of truth.
@@ -186,7 +186,7 @@ export async function clearLocalAuthState(): Promise<void> {
   // keys in one Swift round-trip (bearer + quiet hours + last-seen-issue
   // + spotlight index). The setSharedBearerToken(null) call below is a
   // belt-and-suspenders fallback for older native builds shipped before
-  // clearAllSharedState() landed — it's harmless to call both. No-op on
+  // clearAllSharedState() landed -- it's harmless to call both. No-op on
   // web/desktop.
   void clearAllSharedState();
   void setSharedBearerToken(null);
@@ -196,7 +196,7 @@ export async function clearLocalAuthState(): Promise<void> {
   void import('$lib/client/offline-cache')
     .then(({ clearCache }) => clearCache())
     .catch(() => {
-      /* best-effort — IndexedDB may be unavailable (Safari private mode etc.) */
+      /* best-effort -- IndexedDB may be unavailable (Safari private mode etc.) */
     });
 }
 

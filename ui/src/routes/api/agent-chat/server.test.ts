@@ -1,5 +1,5 @@
 /**
- * POST /api/agent-chat — Anthropic chat wrapper.
+ * POST /api/agent-chat -- Anthropic chat wrapper.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -41,7 +41,7 @@ vi.mock('$lib/server/events', () => ({
   reportServerError: vi.fn(),
 }));
 
-// F29 — stub auth-helpers so the test doesn't import the DB transitively.
+// F29 -- stub auth-helpers so the test doesn't import the DB transitively.
 // Match the real implementation by throwing SvelteKit's HttpError (which
 // the wrap() helper unwraps into a Response with the correct status).
 vi.mock('$lib/server/auth-helpers', async () => {
@@ -65,7 +65,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-// F29 — handler now calls requireUserId; tests provide a fake authed
+// F29 -- handler now calls requireUserId; tests provide a fake authed
 // locals so the requireUserId guard passes. Anonymous-call test below
 // asserts the guard 401s.
 const FAKE_LOCALS = {

@@ -1,17 +1,17 @@
-# Mode: mock-interview — Realistic interview rehearsal
+# Mode: mock-interview -- Realistic interview rehearsal
 
 When the candidate runs `/heron mock-interview <company>` or invokes mock interview from the UI, you become the interviewer for that specific role.
 
 ## Optional flags
 
-- `--stage <recruiter-screen|hiring-manager-screen|tech-screen|take-home|onsite|final-round>` — pin the simulated interviewer to this stage (default: hiring-manager-screen)
-- `--interviewer <slug>` — when paired with a logged Interviewer record, BECOME that specific interviewer. Read `data/users/.../profiles/.../interviewers.json` to find their title + stage + dossier path, then conduct the mock with their voice (skip-level vs peer vs cross-functional alters tone and questions).
+- `--stage <recruiter-screen|hiring-manager-screen|tech-screen|take-home|onsite|final-round>` -- pin the simulated interviewer to this stage (default: hiring-manager-screen)
+- `--interviewer <slug>` -- when paired with a logged Interviewer record, BECOME that specific interviewer. Read `data/users/.../profiles/.../interviewers.json` to find their title + stage + dossier path, then conduct the mock with their voice (skip-level vs peer vs cross-functional alters tone and questions).
 
 When `--interviewer` is set:
 
 1. Look up the interviewer record from interviewers.json for the active profile
-2. If a dossier exists at `interviewer.dossierPath`, read it for the public-signals + likely-focus areas — these become the topics this mock leans on
-3. Open with a question grounded in something this interviewer is known to care about ("I see your team is migrating off {tech} — let's start there.")
+2. If a dossier exists at `interviewer.dossierPath`, read it for the public-signals + likely-focus areas -- these become the topics this mock leans on
+3. Open with a question grounded in something this interviewer is known to care about ("I see your team is migrating off {tech} -- let's start there.")
 
 ## Setup
 
@@ -27,7 +27,7 @@ Pick the most likely interviewer type for this round:
 - **Recruiter screen** (1st round): warm, asks about motivation, current comp, timeline, basic technical fit. ~15 min, no deep tech.
 - **Hiring manager** (2nd round): mid-warmth, focused on past work, asks behavioral STAR questions, validates seniority. ~30-45 min.
 - **Tech lead / peer** (3rd round): direct, asks specific technical depth questions, code/system design. ~45-60 min.
-- **Cross-functional** (4th round): product/design/skip-level — asks about collaboration, conflict, judgment. ~30 min.
+- **Cross-functional** (4th round): product/design/skip-level -- asks about collaboration, conflict, judgment. ~30 min.
 
 Default to Hiring Manager unless the user specifies.
 

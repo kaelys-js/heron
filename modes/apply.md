@@ -1,4 +1,4 @@
-# Mode: apply — Live Application Assistant
+# Mode: apply -- Live Application Assistant
 
 Interactive mode for when the candidate is filling out an application form in Chrome. It reads what is on the screen, loads the previous context of the job, and generates personalized responses for each form question.
 
@@ -20,7 +20,7 @@ Interactive mode for when the candidate is filling out an application form in Ch
 8. PRESENT     → Show formatted responses for copy-paste
 ```
 
-## Step 1 — Detect the job
+## Step 1 -- Detect the job
 
 **With Playwright:** Take a snapshot of the active page. Read title, URL, and visible content.
 
@@ -29,7 +29,7 @@ Interactive mode for when the candidate is filling out an application form in Ch
 - Or paste the form questions as text
 - Or say company + role so we can search for it
 
-## Step 2 — Identify and search for context
+## Step 2 -- Identify and search for context
 
 1. Extract company name and role title from the page
 2. Search in `__REPORTS__/` by company name (case-insensitive grep)
@@ -37,7 +37,7 @@ Interactive mode for when the candidate is filling out an application form in Ch
 4. If there is a Section G → load previous draft answers as a base
 5. If there is NO match → notify and offer to run a quick auto-pipeline
 
-## Step 3 — Detect changes in the role
+## Step 3 -- Detect changes in the role
 
 If the role on screen differs from the one evaluated:
 - **Notify the candidate**: "The role has changed from [X] to [Y]. Do you want me to re-evaluate or adapt the responses to the new title?"
@@ -45,7 +45,7 @@ If the role on screen differs from the one evaluated:
 - **If re-evaluate**: Execute full A-F evaluation, update report, regenerate Section G
 - **Update tracker**: Change role title in __APPLICATIONS__ if applicable
 
-## Step 4 — Analyze form questions
+## Step 4 -- Analyze form questions
 
 Identify ALL visible questions:
 - Free text fields (cover letter, why this role, etc.)
@@ -58,7 +58,7 @@ Classify each question:
 - **Already answered in Section G** → adapt the existing response
 - **New question** → generate response from the report + __CV__
 
-## Step 5 — Generate responses
+## Step 5 -- Generate responses
 
 For each question, generate the response following:
 
@@ -92,7 +92,7 @@ Notes:
 - [Personalization suggestions the candidate should review]
 ```
 
-## Step 6 — Post-apply (optional)
+## Step 6 -- Post-apply (optional)
 
 If the candidate confirms that they submitted the application:
 1. Update status in `__APPLICATIONS__` from "Evaluated" to "Applied"

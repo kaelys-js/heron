@@ -16,7 +16,7 @@
     └──────────────────────────────────────────────────────┘
 
   Design choices:
-    * Name on its own row at the top — it's the primary identifier
+    * Name on its own row at the top -- it's the primary identifier
     * Hero metric + URL split 50/50 with leading icons
     * Description uses the shared RichTextarea so the user gets auto-grow,
       char/word counts, and ⌘B/⌘I/⌘K markdown shortcuts
@@ -70,7 +70,7 @@
   const confirm = new ConfirmGate();
   onDestroy(() => confirm.destroy());
 
-  // Per-row open/closed state — collapsed rows show only the header summary
+  // Per-row open/closed state -- collapsed rows show only the header summary
   // (index + name preview + remove). New rows default to OPEN so the user
   // can fill them out immediately.
   let openSet = $state<Set<number>>(new Set());
@@ -340,7 +340,7 @@
               </div>
             </div>
 
-            <!-- Description — RichTextarea -->
+            <!-- Description -- RichTextarea -->
             <div class="space-y-1.5">
               <Label
                 class="text-[11px] uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5"

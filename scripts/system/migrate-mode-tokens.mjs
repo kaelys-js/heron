@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * migrate-mode-tokens.mjs — one-shot codemod that rewrites every
+ * migrate-mode-tokens.mjs -- one-shot codemod that rewrites every
  * `modes/*.md` file from literal repo-root paths (legacy symlink
  * convention) to the `__TOKEN__` vocabulary documented in
  * `modes/_TOKENS.md`.
@@ -10,10 +10,10 @@
  *
  * Skipped:
  *   - modes/_TOKENS.md itself (it documents the legacy paths)
- *   - modes/_profile.template.md (template seed — kept as readable
+ *   - modes/_profile.template.md (template seed -- kept as readable
  *     example for users authoring their own _profile.md)
  *
- * Replacement order matters — longer paths first to avoid partial
+ * Replacement order matters -- longer paths first to avoid partial
  * matches (e.g. `interview-prep/story-bank.md` must replace before
  * `interview-prep/`).
  */
@@ -26,7 +26,7 @@ const MODES_DIR = resolve(__dirname, '..', '..', 'modes');
 
 // Ordered: longest/most-specific first.
 const REPLACEMENTS = [
-  // Compound path — story-bank.md is user-shared, NOT inside interview-prep
+  // Compound path -- story-bank.md is user-shared, NOT inside interview-prep
   [/\binterview-prep\/story-bank\.md\b/g, '__STORY_BANK__'],
   // Pre-existing curly-brace placeholders that some modes already use
   [/\{output-dir\}/g, '__OUTPUT__'],

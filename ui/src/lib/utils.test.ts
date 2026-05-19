@@ -1,5 +1,5 @@
 /**
- * lib/utils — cn / formatRelativeTime / truncate / withMinDuration.
+ * lib/utils -- cn / formatRelativeTime / truncate / withMinDuration.
  *
  * Plain functions. No mocks beyond a stubbed clock for relative-time
  * cases that span "just now" vs "1m ago".
@@ -77,7 +77,7 @@ describe('formatRelativeTime', () => {
 
   it('falls back to locale date past 30 days', () => {
     const out = formatRelativeTime(Date.now() - 60 * 24 * 60 * 60_000);
-    // Locale string varies by environment — assert shape, not exact value.
+    // Locale string varies by environment -- assert shape, not exact value.
     expect(out).toMatch(/\d/);
     expect(out).not.toMatch(/ago/);
   });

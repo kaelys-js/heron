@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * ats-check.mjs — strict ATS-compatibility validator for CV PDFs.
+ * ats-check.mjs -- strict ATS-compatibility validator for CV PDFs.
  *
  * Every rule is binary: pass or fail. There are no "warnings" in default
- * mode — anything below 100% means at least one ATS in the wild will
+ * mode -- anything below 100% means at least one ATS in the wild will
  * mis-parse or reject the resume. The exit code matches the score so
  * CI / pre-push hooks can gate on it.
  *
@@ -13,9 +13,9 @@
  *   pnpm ats:check <path/to/cv.pdf> --lenient      # downgrade structural-only checks to warnings
  *
  * Exit codes:
- *   0 — all checks pass (≥ 100% strict)
- *   1 — at least one check failed
- *   2 — environment issue (missing tool, corrupt PDF)
+ *   0 -- all checks pass (≥ 100% strict)
+ *   1 -- at least one check failed
+ *   2 -- environment issue (missing tool, corrupt PDF)
  *
  * What it checks (every rule below is a hard fail by default):
  *
@@ -36,7 +36,7 @@
  *   ── Metadata (recruiter file managers index these) ─────────────
  *   • Title set (HTML <title>)
  *   • Author set (HTML <meta name="author">)
- *   • Subject set (Role — Company)
+ *   • Subject set (Role -- Company)
  *   • Keywords set (JD keywords CSV)
  *   • Creator stamped (proves this is a generated PDF, not a scan)
  *   • PDF/UA tagged structure (Tagged: yes)

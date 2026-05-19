@@ -6,7 +6,7 @@
    * Shared empty-state placeholder. Three sizes:
    *  - sm: a thin one-liner for in-card empty rows (Activity feed, Stats slots)
    *  - md: medium card-ish placeholder for filtered lists (JobList / JobTable / Compact)
-   *  - lg: hero placeholder for first-run / inbox-zero moments — supports CTA actions
+   *  - lg: hero placeholder for first-run / inbox-zero moments -- supports CTA actions
    *
    * `variant`:
    *  - 'inline': no border, just centered content

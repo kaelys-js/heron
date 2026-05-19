@@ -1,5 +1,5 @@
 /**
- * Compensation presets — common salary brackets and walk-away minimums in
+ * Compensation presets -- common salary brackets and walk-away minimums in
  * USD. The Combobox always allows free-text fallback, so anyone with
  * non-USD or off-curve numbers can type their own.
  *
@@ -63,7 +63,7 @@ export const WALKAWAY_OPTIONS: CompOption[] = [
 ];
 
 /**
- * Location flexibility — predefined phrasings the system already understands
+ * Location flexibility -- predefined phrasings the system already understands
  * when reasoning about remote/hybrid postings. Maps cleanly to the cover
  * letter "Are you open to relocation?" answer.
  */

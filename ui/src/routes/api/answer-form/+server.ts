@@ -4,7 +4,7 @@
  * The browser-side bookmarklet runs on Greenhouse / Ashby / Lever job pages,
  * scrapes labelled fields, and POSTs them here. We:
  *   1. Try to match `url` to an existing pipeline job (so we have full context
- *      for the prompt — cv.md, report file, profile.yml come from the spawn)
+ *      for the prompt -- cv.md, report file, profile.yml come from the spawn)
  *   2. Spawn `claude -p "/heron form-answers <url> --bookmarklet <json>"`
  *      and pipe the question list as JSON via stdin
  *   3. Return the structured answers as JSON the bookmarklet can fill into
@@ -25,7 +25,7 @@ type Question = { label: string; type?: string };
 type Answer = { label: string; value: string };
 
 /**
- * CORS for the bookmarklet — restricted to known ATS origins.
+ * CORS for the bookmarklet -- restricted to known ATS origins.
  *
  * Previously this endpoint used `Access-Control-Allow-Origin: *` which
  * meant ANY website you visited could fire arbitrary form-answer
@@ -33,7 +33,7 @@ type Answer = { label: string; value: string };
  * back only if it matches a known ATS host pattern (the bookmarklet
  * only runs on these in practice).
  *
- * Wildcard fallback is removed — unknown origins receive no CORS
+ * Wildcard fallback is removed -- unknown origins receive no CORS
  * headers, which the browser interprets as "cross-origin denied".
  */
 const ATS_ORIGIN_PATTERNS: RegExp[] = [
@@ -118,7 +118,7 @@ function spawnAnswers(
       }
       // The mode emits a JSON block. Try to extract the largest JSON object/
       // array from stdout. If parsing fails, return a heuristic mapping so
-      // the bookmarklet still does *something* — better than failing the
+      // the bookmarklet still does *something* -- better than failing the
       // whole submit flow when only the JSON formatting was off.
       const arr = extractAnswers(stdout, questions);
       resolve(arr);
@@ -127,7 +127,7 @@ function spawnAnswers(
 }
 
 function extractAnswers(stdout: string, questions: Question[]): Answer[] {
-  // Try to find a JSON array first — most modes emit one.
+  // Try to find a JSON array first -- most modes emit one.
   const arrMatch = stdout.match(/\[\s*\{[\s\S]*?\}\s*\]/);
   if (arrMatch) {
     try {
@@ -183,7 +183,7 @@ export const POST = wrap('answer-form', async ({ request }: { request: Request }
   // can't spawn a runaway CLI invocation with 10k bogus questions.
   if (questions.length > 100) badRequest('too many questions (max 100)');
 
-  // Validate URL is to an actual ATS — prevents using this endpoint as
+  // Validate URL is to an actual ATS -- prevents using this endpoint as
   // a generic Anthropic CLI proxy.
   let parsedUrl: URL;
   try {
@@ -198,7 +198,7 @@ export const POST = wrap('answer-form', async ({ request }: { request: Request }
 
   const job = loadAllJobs().find((j) => j.url === url);
   if (!job) {
-    // Soft warning — still try to answer using just the URL + JD scrape,
+    // Soft warning -- still try to answer using just the URL + JD scrape,
     // but log so the user knows why answers may be generic.
     logEvent('answer-form', 'URL not in pipeline', {
       level: 'warn',
