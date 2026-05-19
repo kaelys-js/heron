@@ -559,7 +559,7 @@ pre-push:
       # mirrors CI exactly so the surprise is caught locally.
       run: |
         command -v swiftlint >/dev/null 2>&1 || { echo "skip: swiftlint not installed (mise install)"; exit 0; }
-        swiftlint --strict --no-cache ui/ios/App
+        swiftlint --strict --quiet --no-cache ui/ios/App
     ktlint-strict:
       # Mirror of CI's strict ktlint check. Pre-commit auto-formats;
       # this catches anything ktlint --format couldn't auto-fix
