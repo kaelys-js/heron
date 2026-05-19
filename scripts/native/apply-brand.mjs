@@ -424,7 +424,15 @@ function applyElectronPackageJson(brand) {
     return;
   }
   const changed = patchJson(path, (p) => {
-    p.name = brand.name;
+    // CRITICAL: must NOT match the root package's `name`. Two workspaces
+    // with the same npm name collide in turbo's task graph — turbo treats
+    // them as one package and aliases the root's `test` script to whatever
+    // it ran for the inner one. Symptoms: `pnpm test` invokes electron's
+    // `vitest run` from /Users/.../ui/electron and emits "No Svelte config
+    // file found", "tsconfig.json should extend ./.svelte-kit/tsconfig.json",
+    // "src/app.html does not exist" — all under a misleading "heron:test"
+    // prefix. Suffix with `-electron` so the names are workspace-distinct.
+    p.name = `${brand.name}-electron`;
     p.description = `${brand.displayName} desktop — Electron shell embedding the SvelteKit dashboard.`;
     p.author = {
       name: brand.author.name,
