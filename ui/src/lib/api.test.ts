@@ -80,7 +80,11 @@ describe('apiCall — happy path', () => {
     let captured: any;
     server.use(
       http.post('*/api/x', async ({ request }) => {
-        captured = await request.json();
+        // .clone() defends against MSW 2.14 experimental-frames body
+        // re-read during multi-handler routing — see the "Body is
+        // unusable" error that surfaces when handlers added via
+        // server.use() compete with a default match path.
+        captured = await request.clone().json();
         return HttpResponse.json({ ok: true });
       }),
     );
@@ -92,7 +96,11 @@ describe('apiCall — happy path', () => {
     let captured: any;
     server.use(
       http.post('*/api/x', async ({ request }) => {
-        captured = await request.json();
+        // .clone() defends against MSW 2.14 experimental-frames body
+        // re-read during multi-handler routing — see the "Body is
+        // unusable" error that surfaces when handlers added via
+        // server.use() compete with a default match path.
+        captured = await request.clone().json();
         return HttpResponse.json({ ok: true });
       }),
     );
@@ -104,7 +112,11 @@ describe('apiCall — happy path', () => {
     let captured: any;
     server.use(
       http.put('*/api/x', async ({ request }) => {
-        captured = await request.json();
+        // .clone() defends against MSW 2.14 experimental-frames body
+        // re-read during multi-handler routing — see the "Body is
+        // unusable" error that surfaces when handlers added via
+        // server.use() compete with a default match path.
+        captured = await request.clone().json();
         return HttpResponse.json({ ok: true });
       }),
     );

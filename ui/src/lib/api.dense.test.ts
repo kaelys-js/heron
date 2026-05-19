@@ -120,7 +120,9 @@ describe('apiCall — body serialisation', () => {
     let captured: any;
     server.use(
       http.post('*/api/x', async ({ request }) => {
-        captured = await request.json();
+        // .clone() — MSW 2.14 experimental-frames re-reads bodies
+        // during handler routing; clone gives us a fresh stream.
+        captured = await request.clone().json();
         return HttpResponse.json({ ok: true });
       }),
     );
