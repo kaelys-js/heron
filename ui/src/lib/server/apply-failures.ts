@@ -12,7 +12,12 @@
  *   4. Logs a warn-level activity event so the bell pops.
  *
  * Failure modes:
- *   stub          — portal automation not yet implemented (8 of 11 portals)
+ *   stub          — portal is `unknown` (URL didn't match any known portal),
+ *                   or a portal-specific adapter chose to defer to manual.
+ *                   All 11 named portals (LinkedIn, Greenhouse, Ashby, Lever,
+ *                   Workday, Workable, Personio, SmartRecruiters, Recruitee,
+ *                   Teamtailor, Indeed) ship production adapters today; the
+ *                   stub fires only when detect_portal() returns 'unknown'.
  *   captcha       — reCAPTCHA / hCaptcha / Turnstile detected
  *   anti-bot      — Cloudflare 403 / "you are a bot" page
  *   unknown-field — required form field has no answer in cache or schema

@@ -168,6 +168,10 @@ export function writePortalsTitleFilter(
   return readPortals(id);
 }
 
-// D18 — `writePortalsCompanies` removed: no caller. The "Add this company"
-// flow it was anticipating doesn't exist yet; when it lands, reinstate
-// from git history rather than carry dead surface in the meantime.
+// D18 — `writePortalsCompanies` is intentionally absent. Companies are
+// edited by hand in portals.yml today (the file is the SSOT) and the
+// dashboard reads them via `readPortals()`. If a UX for in-app
+// company management ever ships, restore the write helper from git
+// history (last present at HEAD~D18) rather than re-deriving it.
+// Carrying the dead surface in the meantime would mean callers could
+// drift from the YAML reader's accepted shape without anyone noticing.
