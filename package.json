@@ -119,6 +119,7 @@
     "validate:exact-versions": "node scripts/system/validate-exact-versions.mjs",
     "validate:format-sync": "node scripts/system/validate-format-config-sync.mjs",
     "validate:json-schemas": "node scripts/system/validate-json-schemas.mjs",
+    "validate:lockfile": "node scripts/system/validate-pnpm-lockfile.mjs",
     "validate:markdown": "markdownlint-cli2",
     "validate:plists": "python3 scripts/system/validate-plists.py",
     "validate:tiny-configs": "node scripts/system/validate-tiny-configs.mjs",

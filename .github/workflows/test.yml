@@ -172,23 +172,16 @@ jobs:
         run: pnpm validate:version-sync
 
       - name: Lockfile integrity (G21)
-        # Catches:
-        #   - non-pnpm registries (e.g. someone swapped npmjs for a typo-
-        #     squatted mirror)
-        #   - http:// URLs (every dep must be fetched over TLS)
-        #   - git+ssh sources (not auditable, no integrity hash)
-        #   - missing integrity hashes (npm <7-style entries)
-        # Pairs with validate:exact-versions above — that asserts
-        # specifiers in package.json are pinned; this asserts the lockfile
-        # resolves them to safe, verifiable sources.
-        run: |
-          pnpm dlx lockfile-lint@4 \
-            --type pnpm \
-            --path pnpm-lock.yaml \
-            --allowed-hosts npm \
-            --allowed-schemes https: \
-            --validate-https \
-            --validate-integrity
+        # Native pnpm-lock.yaml v9 validator. lockfile-lint@4 cannot
+        # parse v9 (the YAML structure diverged from yarn-lock around
+        # v8 and the maintainers do not plan to add pnpm support).
+        # This step catches the same four supply-chain risks
+        # lockfile-lint covered: non-HTTPS tarballs, missing integrity
+        # hashes, git+ssh refs, and `file:` protocol abuse. Pairs with
+        # validate:exact-versions above (which asserts package.json
+        # specifiers are exact) - this asserts the lockfile resolves
+        # them to safe, verifiable sources.
+        run: pnpm validate:lockfile
 
       - name: No leftover merge-conflict markers (G28)
         # sync-upstream.yml's bot writes conflict markers into the
@@ -423,6 +416,12 @@ jobs:
 
       - name: Apply brand
         run: pnpm brand:apply
+
+      - name: Build static web assets (Capacitor webDir = ui/build/static)
+        # cap sync ios copies the SvelteKit static-adapter output into the
+        # iOS bundle. Without this step, capacitor errors with "Could not
+        # find the web assets directory: ./build/static".
+        run: pnpm --filter ui build:static
 
       - name: Capacitor sync iOS
         run: pnpm --filter ui exec cap sync ios
