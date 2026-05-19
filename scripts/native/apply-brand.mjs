@@ -21,7 +21,13 @@
  *
  * Safe to re-run — idempotent. No-ops if the file already matches.
  */
-import { readFileSync, writeFileSync, existsSync, copyFileSync, statSync } from 'node:fs';
+import {
+  readFileSync,
+  writeFileSync as _fsWriteFileSync,
+  existsSync,
+  copyFileSync as _fsCopyFileSync,
+  statSync,
+} from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -64,6 +70,47 @@ const log = {
   warn: (m) => console.log(`  ${YELLOW}!${RESET} ${m}`),
 };
 
+// ── Output tracking ──────────────────────────────────────────────────
+// Every file apply-brand mutates lands in MODIFIED_FILES. The --stage
+// flag uses this set to drive `git add` so pre-commit hooks can pick up
+// apply-brand's output WITHOUT maintaining a parallel list of paths
+// (the old approach drifted whenever apply-brand started touching a
+// new file — easy bug to miss, hard to detect).
+//
+// Every writeFileSync + copyFileSync call site routes through the
+// wrappers below, so additions are zero-effort: write to a new path,
+// staging happens automatically.
+const MODIFIED_FILES = new Set();
+
+function writeFileSync(path, content) {
+  // Idempotent: skip when content is byte-identical to what's on disk.
+  // Many apply-brand call sites already gate on a `changed` boolean
+  // from patchJson(), but the few unconditional writes (snapshot,
+  // migration log) would dirty mtime unnecessarily without this.
+  if (existsSync(path)) {
+    const buf = Buffer.isBuffer(content) ? content : Buffer.from(content);
+    try {
+      if (readFileSync(path).equals(buf)) return;
+    } catch {
+      // Unreadable (permission / lock) — fall through and rewrite
+    }
+  }
+  _fsWriteFileSync(path, content);
+  MODIFIED_FILES.add(path);
+}
+
+function copyFileSync(src, dest) {
+  if (existsSync(dest)) {
+    try {
+      if (readFileSync(src).equals(readFileSync(dest))) return;
+    } catch {
+      // Either side unreadable — fall through and re-copy
+    }
+  }
+  _fsCopyFileSync(src, dest);
+  MODIFIED_FILES.add(dest);
+}
+
 /** Read a dotted path off a nested object: getPath(obj, 'a.b.c') === obj?.a?.b?.c. */
 function getPath(obj, path) {
   return path.split('.').reduce((acc, k) => acc?.[k], obj);
@@ -84,7 +131,25 @@ function writeSnapshot(brand) {
   // Store the entire brand object — full snapshot makes future drift
   // checks on any field cheap, and a human can diff snapshots to see
   // what changed across rebrands.
+  //
+  // CRITICAL: run biome over the output, same as patchJson. Without
+  // this step, JSON.stringify produces compact single-line arrays
+  // (`"chart": ["#a", "#b", "#c"]`) but biome's JSON formatter prefers
+  // multi-line arrays once an array exceeds the line-width budget. Net
+  // effect of skipping biome: every `pnpm format` flags the snapshot
+  // as drifted, the dev runs `pnpm format`, the next apply-brand run
+  // re-writes the compact form, drift returns. Endless cycle.
   writeFileSync(SNAPSHOT_FILE, JSON.stringify(brand, null, 2) + '\n');
+  try {
+    execSync(`pnpm exec biome format --write "${SNAPSHOT_FILE}"`, {
+      stdio: 'pipe',
+      cwd: ROOT,
+    });
+  } catch {
+    // biome unavailable in this environment — fall through. The dev
+    // will catch the drift at the next `pnpm format:check`; not a
+    // hard failure.
+  }
 }
 
 /** Compute drift across DESTRUCTIVE_FIELDS. Returns an array of
@@ -353,6 +418,39 @@ function writeIfChanged(path, content) {
     if (current === content) return false;
   }
   writeFileSync(path, content);
+  // Auto-format the output so apply-brand's writes match what the
+  // pre-push `format-check` gate expects. Skipping this is the root
+  // cause of "every apply-brand run dirties the working tree because
+  // <formatter> wants to reformat" drift cycles — and the user has
+  // (correctly) complained about it more than once.
+  //
+  // Dispatch by extension to the formatter that OWNS that file type.
+  // The formatter binaries (biome, swiftformat) are silent no-ops
+  // when unavailable so contributors without the full toolchain don't
+  // hard-fail mid-apply.
+  if (/\.(ts|tsx|js|mjs|cjs|json|jsonc|css|webmanifest)$/i.test(path)) {
+    try {
+      execSync(`pnpm exec biome format --write "${path}"`, {
+        stdio: 'pipe',
+        cwd: ROOT,
+      });
+    } catch {
+      // biome unavailable / parse failure — fall through.
+    }
+  } else if (/\.swift$/i.test(path)) {
+    try {
+      // swiftformat owns Swift layout (blank-line conventions, brace
+      // placement, trailing commas). HEAD's Brand.swift had a blank
+      // line between two static funcs; apply-brand's template doesn't.
+      // Without this call, every apply-brand re-touched the file with
+      // the template form, and the next pre-commit's swiftformat hook
+      // re-inserted the blank line — endless drift.
+      execSync(`swiftformat --quiet "${path}"`, { stdio: 'pipe', cwd: ROOT });
+    } catch {
+      // swiftformat unavailable — fall through. The pre-commit Swift
+      // hook will catch any residual drift on the next commit.
+    }
+  }
   return true;
 }
 
@@ -2180,6 +2278,79 @@ function apply() {
   // Auto-chain into gh:apply if brand.json::repo changed AND `gh` is
   // authed. Best-effort: silent skip on no-auth, warn-only on error.
   maybeApplyGitHubConfig(brand, prevSnapshot);
+
+  // Auto-stage the mutated files when invoked from a git hook (or any
+  // caller that passes --stage). Avoids the brittle hard-coded `git
+  // add` list the pre-commit hook used to carry (which silently drifted
+  // every time apply-brand learned to touch a new file).
+  //
+  // The MODIFIED_FILES set is populated by the writeFileSync /
+  // copyFileSync wrappers near the top of this file — ANY new write
+  // site is captured automatically with no maintenance.
+  if (process.argv.includes('--stage') && MODIFIED_FILES.size > 0) {
+    const allPaths = Array.from(MODIFIED_FILES);
+
+    // Filter out paths that .gitignore matches — apply-brand writes a
+    // few derived artifacts under gitignored dirs (the apply-brand
+    // cache under scripts/native/icons/_build/ is the canonical case),
+    // and `git add` aborts the ENTIRE batch if any one path is ignored.
+    // `git check-ignore -v <paths…>` returns the ignored subset; we
+    // subtract that to get the stageable set.
+    //
+    // Exit codes:
+    //   0  = at least one path is ignored (stdout lists them)
+    //   1  = no paths are ignored (stdout empty)
+    //   ≥2 = real error (e.g. not in a git work tree) — fall through
+    let ignored = new Set();
+    try {
+      const result = execSync(
+        `git check-ignore --no-index -v -- ${allPaths.map((p) => `"${p}"`).join(' ')}`,
+        { cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'], encoding: 'utf8' },
+      );
+      // Each line: "<source>\t<file>" (when -v is set)
+      for (const line of result.split('\n')) {
+        const file = line.split('\t').pop()?.trim();
+        if (file) ignored.add(file);
+      }
+    } catch (err) {
+      // status 1 = no matches (normal); anything else = real error.
+      if (err.status === 1) {
+        // No ignored paths — nothing to subtract.
+      } else if (err.stdout) {
+        // status 0 came as throw because check-ignore exits 0 ONLY
+        // when ≥1 path is ignored, which Node may flag if combined
+        // with non-empty stderr. Parse stdout anyway.
+        for (const line of err.stdout.toString().split('\n')) {
+          const file = line.split('\t').pop()?.trim();
+          if (file) ignored.add(file);
+        }
+      } else {
+        log.warn(`--stage: check-ignore failed (${err.message.split('\n')[0]})`);
+      }
+    }
+
+    const stageable = allPaths.filter((p) => !ignored.has(p));
+
+    if (stageable.length === 0) {
+      log.skip(`--stage: nothing to stage (all ${allPaths.length} write(s) gitignored)`);
+    } else {
+      try {
+        execSync(`git add -- ${stageable.map((p) => `"${p}"`).join(' ')}`, {
+          cwd: ROOT,
+          stdio: 'pipe',
+        });
+        const skipped = allPaths.length - stageable.length;
+        const note = skipped > 0 ? ` (${skipped} gitignored, skipped)` : '';
+        log.ok(`auto-staged ${stageable.length} file(s) for commit${note}`);
+      } catch (e) {
+        // Hook-level failures (e.g. running outside a git work tree)
+        // shouldn't abort apply-brand — surface as a warning so the
+        // developer notices but the brand apply itself still
+        // succeeded.
+        log.warn(`--stage: git add failed (${e.message.split('\n')[0]})`);
+      }
+    }
+  }
 
   console.log(`\n${GREEN}✓${RESET} brand applied — every consumer reads from branding/brand.json`);
 }

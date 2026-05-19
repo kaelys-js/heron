@@ -54,32 +54,16 @@ pre-commit:
         # Step 1: apply-brand (only meaningful when branding/ changed,
         # but cheap to run unconditionally — it's a no-op when nothing
         # drifted). Regenerates 20+ propagated artifacts.
+        #
+        # `--stage` tells apply-brand to `git add` everything it
+        # mutated. The set of mutated paths is tracked internally via
+        # writeFileSync/copyFileSync wrappers in apply-brand.mjs, so
+        # this hook never has to know about specific paths. Adding a
+        # new output to apply-brand is a one-file change; no lefthook
+        # update needed.
         BRAND_CHANGED=$(echo "{staged_files}" | grep -E '(^|/)branding/' || true)
         if [ -n "$BRAND_CHANGED" ]; then
-          node scripts/native/apply-brand.mjs > /dev/null 2>&1 || true
-          git add \
-            package.json \
-            ui/electron/package.json \
-            ui/capacitor.config.ts \
-            ui/electron/capacitor.config.ts \
-            ui/electron/electron-builder.config.json \
-            ui/ios/App/App/Info.plist \
-            ui/ios/App/App/Brand.swift \
-            ui/ios/App/Extensions/AppWidget/Brand.swift \
-            ui/ios/App/Extensions/AppLiveActivity/Brand.swift \
-            ui/ios/App/Extensions/AppShareExtension/Brand.swift \
-            ui/ios/App/App/ErrorReporter.swift \
-            ui/ios/App/Extensions/AppWidget/ErrorReporter.swift \
-            ui/ios/App/Extensions/AppLiveActivity/ErrorReporter.swift \
-            ui/ios/App/Extensions/AppShareExtension/ErrorReporter.swift \
-            ui/src/lib/client/brand.ts \
-            ui/electron/src/brand.ts \
-            ui/static/favicon.svg \
-            ui/static/manifest.webmanifest \
-            ui/src/app.html \
-            ui/ios/App/fastlane/Appfile \
-            ui/ios/App/fastlane/Fastfile \
-            scripts/native/add-xcode-targets.rb 2>/dev/null || true
+          node scripts/native/apply-brand.mjs --stage > /dev/null 2>&1 || true
         fi
 
         # Step 2: biome-format (writer). Idempotent for already-
