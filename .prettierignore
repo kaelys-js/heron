@@ -1,4 +1,4 @@
-# Prettier only formats .svelte files in career-ops. Biome handles everything
+# Prettier only formats .svelte files in heron. Biome handles everything
 # else. Even so, give prettier an ignore file so it never accidentally
 # touches unrelated content if the script is misconfigured.
 
@@ -41,9 +41,9 @@ pnpm-lock.yaml
 
 # ── Brand-generated files (auto-rewritten by apply-brand.mjs) ───────
 ui/ios/App/App/Brand.swift
-ui/ios/App/CareerOpsWidget/Brand.swift
-ui/ios/App/CareerOpsLiveActivity/Brand.swift
-ui/ios/App/CareerOpsShareExtension/Brand.swift
+ui/ios/App/Extensions/AppWidget/Brand.swift
+ui/ios/App/Extensions/AppLiveActivity/Brand.swift
+ui/ios/App/Extensions/AppShareExtension/Brand.swift
 ui/src/lib/client/brand.ts
 ui/electron/src/brand.ts
 

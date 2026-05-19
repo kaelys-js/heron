@@ -38,14 +38,14 @@ const BRAND_REPO_PATH = (() => {
 // Auto-updater points at the brand-configured fork; this fork has
 // diverged from any upstream (multi-user, native apps, Better Auth) so
 // pulling from a different repo would conflict on most modes/* files.
-// To re-target a different repo, set CAREER_OPS_UPDATE_REPO +
-// CAREER_OPS_UPDATE_VERSION_URL env vars OR edit branding/brand.json.
-const CANONICAL_REPO = process.env.CAREER_OPS_UPDATE_REPO || `${BRAND_REPO_URL}.git`;
+// To re-target a different repo, set HERON_UPDATE_REPO +
+// HERON_UPDATE_VERSION_URL env vars OR edit branding/brand.json.
+const CANONICAL_REPO = process.env.HERON_UPDATE_REPO || `${BRAND_REPO_URL}.git`;
 const RAW_VERSION_URL =
-  process.env.CAREER_OPS_UPDATE_VERSION_URL ||
+  process.env.HERON_UPDATE_VERSION_URL ||
   `https://raw.githubusercontent.com/${BRAND_REPO_PATH}/main/VERSION`;
 const RELEASES_API =
-  process.env.CAREER_OPS_UPDATE_RELEASES_API ||
+  process.env.HERON_UPDATE_RELEASES_API ||
   `https://api.github.com/repos/${BRAND_REPO_PATH}/releases/latest`;
 
 // System layer paths — ONLY these files get updated

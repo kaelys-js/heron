@@ -182,8 +182,8 @@ Test bundles live under `ui/ios/App/`:
 |---|---|---|---|
 | `AppTests` | unit-test | App | 15.0 |
 | `AppUITests` | ui-testing | App | 15.0 |
-| `WidgetTests` | unit-test | CareerOpsWidget | 16.0 |
-| `WatchTests` | unit-test | CareerOpsWatch | 15.0 (watchOS) |
+| `WidgetTests` | unit-test | AppWidget | 16.0 |
+| `WatchTests` | unit-test | WatchApp | 15.0 (watchOS) |
 
 Re-run `ruby scripts/native/add-xcode-targets.rb` (from `ui/ios/App/`) to
 recreate any test target you delete. The script is idempotent.

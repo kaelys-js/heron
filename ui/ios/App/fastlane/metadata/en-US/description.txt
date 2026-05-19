@@ -1,4 +1,4 @@
-Career Ops is a personal job-search productivity tool.
+Heron is a personal job-search productivity tool.
 
 • Tailor CVs and cover letters per role with on-device LLMs (Anthropic, OpenAI, or Google — use your own API key)
 • Scan 11+ job portals: LinkedIn, Greenhouse, Ashby, Lever, Workday, SmartRecruiters, Workable, Indeed, Wellfound, Ladders, plus generic ATS support
@@ -7,8 +7,8 @@ Career Ops is a personal job-search productivity tool.
 • Receive follow-up reminders at the optimal cadence (3-day, 7-day, 14-day windows)
 • Multi-platform: iPhone, iPad, Apple Watch, Mac, Windows, Linux, web
 
-Career Ops is open-source (MIT) and self-hostable. The dashboard runs on your Mac, your phone connects via secure local network or Tailscale, and your data stays on YOUR machines.
+Heron is open-source (MIT) and self-hostable. The dashboard runs on your Mac, your phone connects via secure local network or Tailscale, and your data stays on YOUR machines.
 
 Built with Capacitor + SvelteKit + Better Auth (passkey-first).
 
-Source: https://github.com/kaelys-js/career-ops
+Source: https://github.com/heron/heron

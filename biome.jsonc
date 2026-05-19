@@ -59,9 +59,9 @@
 
       // ── Generated brand constants (scripts/native/apply-brand.mjs owns) ─
       "!ui/ios/App/App/Brand.swift",
-      "!ui/ios/App/CareerOpsWidget/Brand.swift",
-      "!ui/ios/App/CareerOpsLiveActivity/Brand.swift",
-      "!ui/ios/App/CareerOpsShareExtension/Brand.swift",
+      "!ui/ios/App/Extensions/AppWidget/Brand.swift",
+      "!ui/ios/App/Extensions/AppLiveActivity/Brand.swift",
+      "!ui/ios/App/Extensions/AppShareExtension/Brand.swift",
       "!ui/src/lib/client/brand.ts",
       "!ui/electron/src/brand.ts",
 
@@ -77,7 +77,7 @@
 
       // ── Image assets / generated icon sets ────────────────────────
       "!ui/ios/App/App/Assets.xcassets/**",
-      "!ui/ios/App/CareerOpsWatch/Assets.xcassets/**",
+      "!ui/ios/App/WatchApp/Assets.xcassets/**",
       "!**/AppIcon.appiconset/**"
     ]
   },

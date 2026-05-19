@@ -1,21 +1,21 @@
 default_platform(:android)
 
-# Career Ops Android — Fastlane lanes for Play Store distribution.
+# Heron Android — Fastlane lanes for Play Store distribution.
 #
 # Required env vars (set via repo secrets in CI):
 #   PLAY_STORE_JSON_KEY              — base64-decoded path to a Google
 #                                       Play service-account JSON file
 #                                       with "Release manager" role.
-#   PLAY_STORE_PACKAGE_NAME          — com.resistjs.careerops (matches
+#   PLAY_STORE_PACKAGE_NAME          — com.heron.app (matches
 #                                       applicationId in build.gradle).
-#   ANDROID_KEYSTORE_BASE64          — base64-encoded careerops-release
+#   ANDROID_KEYSTORE_BASE64          — base64-encoded heron-release
 #                                       .keystore. CI decodes + writes to
 #                                       ui/android/.
 #   ANDROID_KEYSTORE_PASSWORD        — password for the keystore.
-#   ANDROID_KEY_ALIAS                — usually "careerops".
+#   ANDROID_KEY_ALIAS                — usually "heron".
 #   ANDROID_KEY_PASSWORD             — password for the key.
 
-PACKAGE_NAME = "com.resistjs.careerops"
+PACKAGE_NAME = "com.heron.app"
 
 platform :android do
   before_all do

@@ -9,7 +9,7 @@
 
   ── What we declare here ─────────────────────────────────────────────
 
-  NSPrivacyTracking — false. Career Ops never tracks users across apps
+  NSPrivacyTracking — false. Heron never tracks users across apps
   or websites. No ad networks, no IDFA collection, no third-party
   analytics SDKs.
 

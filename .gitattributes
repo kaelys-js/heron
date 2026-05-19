@@ -123,10 +123,10 @@ ui/static/icons/*.png                                 linguist-generated
 ui/static/favicon.ico                                 linguist-generated
 ui/static/apple-touch-icon*.png                       linguist-generated
 ui/ios/App/App/Brand.swift                            linguist-generated
-ui/ios/App/CareerOpsWidget/Brand.swift                linguist-generated
-ui/ios/App/CareerOpsLiveActivity/Brand.swift          linguist-generated
-ui/ios/App/CareerOpsShareExtension/Brand.swift        linguist-generated
-ui/ios/App/CareerOpsWatch/Assets.xcassets/**          linguist-generated
+ui/ios/App/Extensions/AppWidget/Brand.swift                linguist-generated
+ui/ios/App/Extensions/AppLiveActivity/Brand.swift          linguist-generated
+ui/ios/App/Extensions/AppShareExtension/Brand.swift        linguist-generated
+ui/ios/App/WatchApp/Assets.xcassets/**          linguist-generated
 ui/ios/App/App/Assets.xcassets/**                     linguist-generated
 ui/src/lib/client/brand.ts                            linguist-generated
 ui/electron/src/brand.ts                              linguist-generated

@@ -28,7 +28,7 @@
  *
  * ── Test / fresh-clone safety ────────────────────────────────────────
  * The DB paths are configurable via three env vars (override order):
- *   1. CAREER_OPS_DATA_DIR  → both files live under that dir
+ *   1. HERON_DATA_DIR  → both files live under that dir
  *   2. CAREER_OPS_AUTH_DB   → specific auth.db path (or ":memory:")
  *      CAREER_OPS_APP_DB    → specific app.db path  (or ":memory:")
  *   3. VITEST + NODE_ENV=test → auto-route to a fresh tmpdir so a test
@@ -57,7 +57,7 @@ const IS_TEST = process.env.VITEST === 'true' || process.env.NODE_ENV === 'test'
 /** Resolve the SQLite root dir. Order: explicit env override → tmpdir
  *  during tests → repo `data/` for normal runs. */
 function resolveDataDir(): string {
-  if (process.env.CAREER_OPS_DATA_DIR) return process.env.CAREER_OPS_DATA_DIR;
+  if (process.env.HERON_DATA_DIR) return process.env.HERON_DATA_DIR;
   if (IS_TEST) {
     // Per-process tmpdir so parallel test workers don't clobber each
     // other's auth.db. pid is enough; vitest re-uses process pools but
