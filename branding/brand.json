@@ -331,7 +331,7 @@
     "url": "https://github.com/heron/heron",
     "issues": "https://github.com/heron/heron/issues",
     "docs": "https://github.com/heron/heron#readme",
-    "upstream": "https://github.com/santifer/career-ops"
+    "upstream": "https://github.com/santifer/heron"
   },
 
   "permissions": {

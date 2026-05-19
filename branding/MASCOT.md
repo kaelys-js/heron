@@ -223,7 +223,7 @@ those land. The placeholder is marked clearly in its file comment.
    `branding/assets/illustration-{hero,press}.svg`.
 2. `apply-brand` regenerates `ui/static/icons/*.png` from the mascot
    at all platform sizes (16×16 through 1024×1024).
-3. The favicon link in `ui/src/app.html` switches from the current
-   career-ops icon to `mark-slate.svg` (or a 32×32 rasterized variant).
+3. The favicon link in `ui/src/app.html` switches from the placeholder
+   logo to `mark-slate.svg` (or a 32×32 rasterized variant).
 4. Topbar / AppSidebar reference the horizontal lockup SVG.
 5. README banner gets the horizontal lockup at the top.

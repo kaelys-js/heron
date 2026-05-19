@@ -350,7 +350,7 @@
     "url": "https://github.com/heron/heron",
     "issues": "https://github.com/heron/heron/issues",
     "docs": "https://github.com/heron/heron#readme",
-    "upstream": "https://github.com/santifer/career-ops"
+    "upstream": "https://github.com/santifer/heron"
   },
   "permissions": {
     "localNetworkUsage": "Heron uses local network discovery to find your desktop app on the same Wi-Fi network so your phone, watch, and laptop stay in sync without a cloud account.",

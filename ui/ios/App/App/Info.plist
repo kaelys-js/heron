@@ -58,13 +58,13 @@
 
 	<!-- Stage Manager (iPadOS 16+) — opt in to the resizable window
 	     experience. Together with UIRequiresFullScreen=false this lets
-	     the user open career-ops alongside Mail / Calendar / Notes. -->
+	     the user open heron alongside Mail / Calendar / Notes. -->
 	<key>UISupportsTrueScreenSizeOnMac</key>
 	<true/>
 
-	<!-- ===== career-ops customizations ===== -->
+	<!-- ===== heron customizations ===== -->
 
-	<!-- Custom URL scheme: careerops://job/abc opens the app. -->
+	<!-- Custom URL scheme: heron://job/abc opens the app. -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -78,7 +78,7 @@
 	</array>
 
 	<!-- Local network access — for mDNS Bonjour discovery of the desktop
-	     career-ops server on the same wifi. Without this string iOS shows
+	     heron server on the same wifi. Without this string iOS shows
 	     a permission prompt with no explanation. -->
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Heron uses local network discovery to find your desktop app on the same Wi-Fi network so your phone, watch, and laptop stay in sync without a cloud account.</string>
@@ -142,7 +142,7 @@
 	<string>public.app-category.productivity</string>
 
 	<!-- Export compliance — TestFlight asks every build whether it uses
-	     non-exempt encryption. career-ops uses only standard HTTPS/TLS
+	     non-exempt encryption. heron uses only standard HTTPS/TLS
 	     which Apple treats as exempt. Setting this to false in Info.plist
 	     suppresses the per-upload prompt. -->
 	<key>ITSAppUsesNonExemptEncryption</key>

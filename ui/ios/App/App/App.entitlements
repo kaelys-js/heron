@@ -27,7 +27,7 @@
 	<key>aps-environment</key>
 	<string>development</string>
 
-	<!-- Background fetch + processing — career-ops uses BGAppRefreshTask
+	<!-- Background fetch + processing — heron uses BGAppRefreshTask
 	     to poll high-priority Issues when the WebView's SSE connection
 	     dropped. BGProcessingTask handles longer-running maintenance. -->
 	<key>com.apple.developer.background-tasks</key>

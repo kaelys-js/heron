@@ -155,7 +155,7 @@
 
 ## Worked rewrites — before / after
 
-| Surface | Before (generic SaaS or career-ops) | After (Heron) |
+| Surface | Before (generic SaaS) | After (Heron) |
 |---|---|---|
 | Login-fail toast | "Login failed. Please try again." | "Wrong email or password." |
 | Logout confirmation | "Are you sure you want to log out?" | "Log out of Heron?" *(buttons: Log out / Cancel)* |
