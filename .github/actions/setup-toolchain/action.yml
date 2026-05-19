@@ -1,0 +1,85 @@
+name: Setup toolchain
+description: |
+  Composite action that handles the repeated mise + pnpm + caches
+  prelude used by every JS-touching workflow. Saves ~30 lines of
+  boilerplate per workflow + ensures cache keys + tool versions stay
+  in sync across the whole CI matrix.
+
+  HP9 — replaces 5 copies of the same setup block across test.yml,
+  format.yml, codeql.yml, lighthouse.yml, bundle-size.yml. Updates to
+  Node/pnpm/Ruby/Swift versions land in one place (.mise.toml +
+  pnpm-workspace.yaml); this action picks them up automatically.
+
+  Inputs:
+    install_deps  (default true)  — run `pnpm install --frozen-lockfile`
+    pnpm_cache    (default true)  — restore the pnpm store cache
+    turbo_cache   (default false) — restore the Turbo cache
+    apply_brand   (default false) — run `pnpm brand` after install
+
+  Usage:
+
+    - name: Setup toolchain
+      uses: ./.github/actions/setup-toolchain
+      with:
+        apply_brand: true
+        turbo_cache: true
+
+inputs:
+  install_deps:
+    description: Run `pnpm install --frozen-lockfile`
+    required: false
+    default: "true"
+  pnpm_cache:
+    description: Restore the pnpm store cache
+    required: false
+    default: "true"
+  turbo_cache:
+    description: Restore the Turbo task-graph cache
+    required: false
+    default: "false"
+  apply_brand:
+    description: Run `pnpm brand` after install (generates Brand.ts etc.)
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Setup mise (Node + pnpm versions from .mise.toml)
+      uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+
+    - name: Cache pnpm store
+      if: inputs.pnpm_cache == 'true'
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      with:
+        path: ~/.local/share/pnpm/store/v3
+        # Cache key includes the lockfile so a bump invalidates;
+        # restore-keys fall back to broader prefixes for warm hits
+        # on incremental pushes.
+        key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          pnpm-${{ runner.os }}-
+
+    - name: Cache Turbo
+      if: inputs.turbo_cache == 'true'
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      with:
+        path: |
+          .turbo
+          ui/.turbo
+          ui/electron/.turbo
+        key: turbo-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+        restore-keys: |
+          turbo-${{ runner.os }}-${{ github.ref_name }}-
+          turbo-${{ runner.os }}-main-
+          turbo-${{ runner.os }}-
+
+    - name: Install dependencies
+      if: inputs.install_deps == 'true'
+      shell: bash
+      run: pnpm install --frozen-lockfile
+
+    - name: Apply brand
+      if: inputs.apply_brand == 'true'
+      shell: bash
+      run: pnpm brand

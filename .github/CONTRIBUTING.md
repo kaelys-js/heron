@@ -94,12 +94,35 @@ pnpm run doctor               # Setup validation
 pnpm test                     # Full Vitest matrix (unit + server + component + routes + integration)
 pnpm test:coverage            # Coverage report (≥70% TS / ≥60% iOS gates)
 pnpm test:ios                 # iOS XCTest + XCUITest (needs Mac + Xcode)
+pnpm --filter ui test:e2e     # Playwright E2E smoke (boots prod build via vite preview)
+pnpm --filter ui size         # Bundle-size budget check
 node cv-sync-check.mjs        # Config check
 
 # Dashboard
 cd dashboard && go build -o career-dashboard .
 ./career-dashboard --path ..
 ```
+
+### Running CI locally
+
+[`act`](https://github.com/nektos/act) runs GitHub Actions workflows on
+your machine via Docker — useful for iterating on a workflow change
+without 5-minute push-and-wait cycles. The repo ships per-workflow
+shortcuts:
+
+```bash
+pnpm act:list                 # Show every job act would execute
+pnpm act:test                 # Run .github/workflows/test.yml
+pnpm act:test:dry             # Dry-run (just enumerate steps)
+pnpm act:codeql               # Run the CodeQL workflow
+pnpm act:dependency-review    # PR-time dependency review check
+pnpm act:labeler              # PR auto-labeler
+pnpm act:sbom                 # SBOM + attestations workflow
+```
+
+First run downloads ~3GB of Ubuntu runner images. Subsequent runs are
+fast. `act` doesn't have macOS runners, so the `ios` job is skipped
+locally — push to a PR branch to exercise it.
 
 ## Brand and Trademark
 
