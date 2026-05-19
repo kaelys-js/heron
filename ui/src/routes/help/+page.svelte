@@ -196,7 +196,7 @@
   type CommandDef = { invocation: string; purpose: string };
   const COMMANDS: CommandDef[] = [
     {
-      invocation: cmd('oferta'),
+      invocation: cmd('evaluate'),
       purpose:
         'Deep evaluation of one job (paste URL or JD text). Produces 7-block A-G report + tailored CV PDF.',
     },
@@ -208,7 +208,7 @@
     { invocation: cmd('batch'), purpose: 'Batch-evaluate many jobs at once.' },
     { invocation: cmd('apply'), purpose: 'Fill out an application form (paste URL).' },
     {
-      invocation: cmd('contacto'),
+      invocation: cmd('outreach'),
       purpose: 'Generate LinkedIn outreach for hiring manager / recruiter / peers.',
     },
     { invocation: cmd('deep'), purpose: 'Generate a Perplexity-style company-research prompt.' },

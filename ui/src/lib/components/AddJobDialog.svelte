@@ -392,7 +392,7 @@
             <div class="text-[11px] font-medium">What happens next</div>
             <p class="text-[11px] text-muted-foreground/80 leading-relaxed">
               The job lands in your pipeline. From the job detail page you can run a deep evaluation
-              (<code class="font-mono text-foreground/80">{cmd('oferta')}</code>), generate a
+              (<code class="font-mono text-foreground/80">{cmd('evaluate')}</code>), generate a
               tailored CV PDF, and apply — manually, via LinkedIn Easy Apply, or via Open &amp; Mark
               Applied.
             </p>

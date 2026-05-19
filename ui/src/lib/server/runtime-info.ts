@@ -269,7 +269,7 @@ export function buildRuntimeReport(): RuntimeReport {
   const anthropicUsage = eventsInWindow(
     (ev) =>
       ev.source === 'agent-chat' ||
-      ev.source === 'oferta' ||
+      ev.source === 'evaluate' ||
       (ev.source === 'settings' && ev.title.includes('anthropic')),
   );
   cards.push({
@@ -283,7 +283,7 @@ export function buildRuntimeReport(): RuntimeReport {
       ? ['Sonnet 4.6 · Opus 4.7 · Haiku 4.5 (chat default: Sonnet 4.6)']
       : ['Add a key to enable deep evaluation, agent chat, mock interviews, negotiation drafts'],
     powers: [
-      'Deep job evaluations (oferta mode)',
+      'Deep job evaluations (evaluate mode)',
       'Agent chat (bottom-right floating)',
       'Mock interviews & interview prep',
       'Negotiation drafts & comp strategy',

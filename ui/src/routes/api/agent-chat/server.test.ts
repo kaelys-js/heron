@@ -29,7 +29,7 @@ vi.mock('$lib/config/branding', () => ({
 
 const fsMock = {
   readdirSync: vi.fn((p: string) => {
-    if (p === '/tmp/modes') return ['oferta.md', 'apply.md', 'scan.md'];
+    if (p === '/tmp/modes') return ['evaluate.md', 'apply.md', 'scan.md'];
     if (p.includes('reports')) return ['001.md', '002.md', '003.md'];
     return [];
   }),
@@ -115,12 +115,12 @@ describe('POST /api/agent-chat', () => {
 
   it('includes the available modes list in the system prompt', async () => {
     await post({});
-    expect(chatCalls[0].sys).toMatch(/oferta\.md/);
+    expect(chatCalls[0].sys).toMatch(/evaluate\.md/);
   });
 
   it('includes the most recent 5 reports in the system prompt', async () => {
     fsMock.readdirSync.mockImplementation((p: string) => {
-      if (p === '/tmp/modes') return ['oferta.md'];
+      if (p === '/tmp/modes') return ['evaluate.md'];
       if (p.includes('reports')) return Array.from({ length: 10 }, (_, i) => 'r' + i + '.md');
       return [];
     });

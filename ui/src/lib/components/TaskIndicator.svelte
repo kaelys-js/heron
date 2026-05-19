@@ -7,7 +7,7 @@
     scan: 'Scanning jobs',
     gemini: 'Gemini scoring',
     'apply-linkedin': 'LinkedIn apply',
-    oferta: 'Deep eval',
+    evaluate: 'Deep eval',
     pdf: 'PDF tailoring',
   };
 

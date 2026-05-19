@@ -1,7 +1,7 @@
 /**
  * Auto-flip Ready → Queued after CV generation finishes.
  *
- * runOferta() emits a 'Generate CV finished' success event with the URL in
+ * runEvaluate() emits a 'Generate CV finished' success event with the URL in
  * the message field once the report + PDF are written to disk. We intercept
  * that, look up the job, and bump its status to Queued so it lands on the
  * /queue page for batch send.
@@ -36,10 +36,10 @@ function installAutoQueue(): void {
   // installBusListener is idempotent across HMR — see events.ts.
   installBusListener('auto-queue', (ev: ActivityEvent) => {
     if (ev.level !== 'success') return;
-    if (ev.source !== 'oferta') return;
+    if (ev.source !== 'evaluate') return;
     if (!/Generate CV finished/i.test(ev.title)) return;
 
-    // Message format set by runOferta: 'Report + tailored CV PDF generated · <url>'
+    // Message format set by runEvaluate: 'Report + tailored CV PDF generated · <url>'
     const m = (ev.message ?? '').match(/\bhttps?:\/\/\S+/);
     if (!m) return;
     const url = m[0].replace(/[)\].,>]+$/, '');
@@ -50,7 +50,7 @@ function installAutoQueue(): void {
     if (!ownerUserId) {
       // Broadcast / untagged event. Don't guess — log a warn so it
       // surfaces in /runtimes if it ever fires in real traffic.
-      logEvent('auto-queue', 'Skipping untagged oferta event', {
+      logEvent('auto-queue', 'Skipping untagged evaluate event', {
         level: 'warn',
         category: 'application',
         message: 'event has no userId — cannot scope to a profile · url=' + url,

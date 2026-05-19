@@ -85,7 +85,7 @@ export type ProfileEdit = {
     /** For the first N days after autonomous_apply flips on, the daily cap
      *  is reduced to 5/day (LinkedIn shadowban + ATS bot-filter mitigation). */
     warmup_days?: number;
-    /** Minimum oferta / Gemini score required to autonomous-apply. Below this
+    /** Minimum evaluate / Gemini score required to autonomous-apply. Below this
      *  threshold the job stays at Scored regardless of autonomous_apply. */
     min_score_to_apply?: number;
     /** Which ATS portals this profile auto-applies via. Portals not listed

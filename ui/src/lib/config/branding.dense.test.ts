@@ -6,7 +6,7 @@ import { APP_NAME, APP_TAGLINE, CLI_NAMESPACE, cmd, docTitle } from './branding'
 
 describe('cmd — every verb', () => {
   it.each([
-    'oferta',
+    'evaluate',
     'scan',
     'apply',
     'cv',

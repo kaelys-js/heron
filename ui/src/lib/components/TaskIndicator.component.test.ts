@@ -36,7 +36,7 @@ describe('TaskIndicator', () => {
   });
 
   it('"+N" suffix when multiple tasks', () => {
-    notifications.runningTasks = ['scan', 'gemini', 'oferta'];
+    notifications.runningTasks = ['scan', 'gemini', 'evaluate'];
     const { container } = render(TaskIndicator);
     expect(container.textContent).toContain('Scanning jobs');
     expect(container.textContent).toContain('+2');
@@ -60,8 +60,8 @@ describe('TaskIndicator', () => {
     expect(container.textContent).toContain('LinkedIn apply');
   });
 
-  it('maps oferta to "Deep eval"', () => {
-    notifications.runningTasks = ['oferta'];
+  it('maps evaluate to "Deep eval"', () => {
+    notifications.runningTasks = ['evaluate'];
     const { container } = render(TaskIndicator);
     expect(container.textContent).toContain('Deep eval');
   });

@@ -1052,7 +1052,7 @@
       <!-- LANGUAGE -->
       <CollapsibleCard
         title="Language"
-        description={'Pick which mode-template language the dashboard uses for evaluations + interview prep. Defaults to English (top-level modes/). Selecting German / French / Japanese / Portuguese / Russian / Spanish points spawned-CLI flows at modes/<lang>/ — individual files fall back to English when the localized version is missing. The Skills page groups + filters by this language too.'}
+        description={'The dashboard ships English-only mode templates. The localized-modes hook (`profile.yml.language.modes_dir`) still works as an escape hatch if you restore a `modes/<lang>/` directory of your own — files fall back to English on a miss. The locale-aware skills resolver in lib/server/modes.ts respects this setting.'}
         storageKey="language"
       >
         {#snippet icon()}<ShieldAlert class="size-3.5 text-muted-foreground" />{/snippet}
@@ -1068,18 +1068,12 @@
             }}
           >
             <option value="">English (modes/) — default</option>
-            <option value="modes/de">Deutsch (modes/de)</option>
-            <option value="modes/fr">Français (modes/fr)</option>
-            <option value="modes/ja">日本語 (modes/ja)</option>
-            <option value="modes/pt">Português (modes/pt)</option>
-            <option value="modes/ru">Русский (modes/ru)</option>
-            <option value="modes/es">Español (modes/es)</option>
           </select>
           <p class="text-[11px] text-muted-foreground/70 leading-relaxed">
-            Saved to <code class="font-mono">profile.yml.language.modes_dir</code>. Picked up
-            immediately by mock-interview, interview-prep, and negotiation flows; oferta + outreach
-            use it once the symlink re-swap on next spawn lands. Missing translations gracefully
-            fall back to English.
+            Saved to <code class="font-mono">profile.yml.language.modes_dir</code>. Heron ships
+            English-only since v2 — set a custom path here if you've restored a localized modes
+            directory locally; spawned-CLI flows pick it up on next spawn. Missing translations
+            gracefully fall back to English.
           </p>
         </div>
       </CollapsibleCard>

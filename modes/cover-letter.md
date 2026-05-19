@@ -51,7 +51,7 @@ Where `{n}-{slug}-{date}` matches the existing report/CV pair so all three live 
 
 ## Validation before writing
 
-1. Verify the report exists at `__REPORTS__/{n}-{slug}-{date}.md`. If not, run `oferta` first to generate it.
+1. Verify the report exists at `__REPORTS__/{n}-{slug}-{date}.md`. If not, run `evaluate` first to generate it.
 2. Verify CV-PDF exists at `__OUTPUT__/{n}-{slug}-{date}.pdf`. If not, suggest running `pdf` first — but cover letter still proceeds.
 3. Check that the strongest proof point in the cover letter exists verbatim in `__CV__`. Never invent metrics.
 

@@ -35,7 +35,7 @@
 
   let scoreVerdict = $derived.by(() => {
     if (summary.score == null)
-      return { label: 'Unscored', desc: 'No deep evaluation yet — run ' + cmd('oferta') };
+      return { label: 'Unscored', desc: 'No deep evaluation yet — run ' + cmd('evaluate') };
     if (summary.score >= 4.5) return { label: 'Strong fit', desc: 'Prioritize this one' };
     if (summary.score >= 4) return { label: 'Good fit', desc: 'Worth applying' };
     if (summary.score >= 3) return { label: 'Marginal', desc: 'Review the gaps before deciding' };

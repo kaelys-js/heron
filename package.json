@@ -124,6 +124,7 @@
     "validate:tiny-configs": "node scripts/system/validate-tiny-configs.mjs",
     "validate:version-sync": "node scripts/system/validate-version-sync.mjs",
     "validate:xml": "bash scripts/system/validate-xml.sh",
+    "verify:english-only": "node scripts/system/verify-english-only.mjs",
     "visual:baseline": "node scripts/system/visual-regression.mjs --generate",
     "visual:diff": "node scripts/system/visual-regression.mjs --compare"
   },

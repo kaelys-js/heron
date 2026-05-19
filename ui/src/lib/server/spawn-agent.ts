@@ -13,7 +13,7 @@
  *   5. Cleans up the temp file when the child exits
  *
  * Why temp file rather than passing the prompt body inline via -p?
- * Realized prompts can be > 10 KB (modes/oferta.md alone is several
+ * Realized prompts can be > 10 KB (modes/evaluate.md alone is several
  * KB after substitution). Argv length limits + shell escaping
  * pitfalls (newlines, backticks, $) make inline passing fragile.
  * Temp files dodge both.
@@ -65,7 +65,7 @@ export interface SpawnAgentResult {
  * Spawn the AI CLI with the realized contents of `modes/<modeName>.md`
  * loaded as the system prompt, and `userMessage` as the user prompt.
  *
- * @param modeName e.g. 'oferta', 'cover-letter', 'pre-call-dossier'.
+ * @param modeName e.g. 'evaluate', 'cover-letter', 'pre-call-dossier'.
  *                 Maps to `<repo>/modes/<modeName>.md`.
  * @param userMessage The text passed to Claude as the user prompt
  *                    (usually the job URL or a JSON payload).

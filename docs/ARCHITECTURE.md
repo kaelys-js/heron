@@ -167,7 +167,7 @@ heron/
 │   ├── android/                 # Capacitor Android app
 │   └── electron/                # Capacitor-Electron shell (workspace)
 ├── scripts/                     # apply, scan, cv, quality, tracker, native, system, lib
-├── modes/                       # AI skill modes (oferta, apply, scan, batch, …)
+├── modes/                       # AI skill modes (evaluate, apply, scan, batch, …)
 ├── docs/                        # ARCHITECTURE, SETUP, TESTING, NATIVE, DATA_CONTRACT, GOVERNANCE, …
 ├── branding/                    # brand.json (SSOT) + logo.svg + wordmark variants
 ├── data/                        # Per-user runtime state (gitignored)

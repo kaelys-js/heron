@@ -56,7 +56,7 @@ export const POST = wrap(
       ns +
       ' scan, ' +
       ns +
-      ' oferta, etc.).\n\n# CV\n' +
+      ' evaluate, etc.).\n\n# CV\n' +
       cv.slice(0, 2500) +
       '\n\n# Profile\n' +
       profile.slice(0, 2000);

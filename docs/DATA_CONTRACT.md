@@ -91,7 +91,7 @@ Token vocabulary (full list in `modes/_TOKENS.md`):
 | `__INTERVIEW_PREP__` | `data/users/{uid}/profiles/{slug}/interview-prep/` |
 | `__STORY_BANK__` | `data/users/{uid}/profiles/_shared/story-bank.md` (user-shared) |
 
-**Invocation:** dashboard-only. The slash-command flow (`claude "/heron oferta <url>"` in a terminal) was removed; mode prompts now contain `__TOKEN__` literals that only the dashboard's orchestrator knows how to resolve. Direct-CLI users would see the unresolved tokens as visible failure markers in their AI output.
+**Invocation:** dashboard-only. The slash-command flow (`claude "/heron evaluate <url>"` in a terminal) was removed; mode prompts now contain `__TOKEN__` literals that only the dashboard's orchestrator knows how to resolve. Direct-CLI users would see the unresolved tokens as visible failure markers in their AI output.
 
 ## System Layer (safe to auto-update)
 
@@ -101,15 +101,15 @@ These files contain system logic, scripts, templates, and instructions that impr
 |------|---------|
 | `modes/_shared.md` | Scoring system, global rules, tools |
 | `modes/_profile.template.md` | Template seed for per-profile `_profile.md` |
-| `modes/oferta.md` | Evaluation mode instructions |
+| `modes/evaluate.md` | Evaluation mode instructions |
 | `modes/pdf.md` | PDF generation instructions |
 | `modes/scan.md` | Portal scanner instructions |
 | `modes/batch.md` | Batch processing instructions |
 | `modes/apply.md` | Application assistant instructions |
 | `modes/auto-pipeline.md` | Auto-pipeline instructions |
-| `modes/contacto.md` | LinkedIn outreach instructions |
+| `modes/outreach.md` | LinkedIn outreach instructions |
 | `modes/deep.md` | Research prompt instructions |
-| `modes/ofertas.md` | Comparison instructions |
+| `modes/compare.md` | Comparison instructions |
 | `modes/pipeline.md` | Pipeline processing instructions |
 | `modes/project.md` | Project evaluation instructions |
 | `modes/tracker.md` | Tracker instructions |

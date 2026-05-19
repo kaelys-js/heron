@@ -211,7 +211,7 @@ export function evaluateOffer(input: OfferInput): OfferEvaluation {
 
 /** Compare two offers side-by-side and return a "winner" + dollar delta on
  *  the user-preferred metric (default: discounted 4-year total). Useful for
- *  the multi-offer comparator (ofertas mode) and the negotiation flow. */
+ *  the multi-offer comparator (compare mode) and the negotiation flow. */
 export type ComparisonResult = {
   preferred: 'a' | 'b' | 'tied';
   metric: '4yr-discounted' | '4yr-nominal' | 'year1';

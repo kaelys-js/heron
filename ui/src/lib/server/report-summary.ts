@@ -239,22 +239,20 @@ export function parseReportSummary(markdown: string): ReportSummary {
   const tldr = parseTldr(table);
   const salary =
     table['salary'] ??
-    table['salario'] ??
     table['compensation'] ??
     table['comp'] ??
     table['salary range'] ??
     table['target comp'] ??
     '';
-  const workModeRaw =
-    table['remote'] ?? table['work mode'] ?? table['location policy'] ?? table['ubicación'] ?? '';
+  const workModeRaw = table['remote'] ?? table['work mode'] ?? table['location policy'] ?? '';
   const workMode = classifyWorkMode(workModeRaw);
-  const location = table['location'] ?? table['ubicación'] ?? table['ciudad'] ?? '';
+  const location = table['location'] ?? '';
   const visa = parseVisa(markdown, table);
 
-  const domain = table['domain'] ?? table['dominio'] ?? '';
-  const fn = table['function'] ?? table['función'] ?? table['rol'] ?? table['role function'] ?? '';
-  const seniority = table['seniority'] ?? table['nivel'] ?? table['level'] ?? '';
-  const teamSize = table['team size'] ?? table['team'] ?? table['tamaño del equipo'] ?? '';
+  const domain = table['domain'] ?? '';
+  const fn = table['function'] ?? table['role function'] ?? '';
+  const seniority = table['seniority'] ?? table['level'] ?? '';
+  const teamSize = table['team size'] ?? table['team'] ?? '';
   const companyStage = parseCompanyStage(markdown, table);
 
   const url = takeFirst(markdown, /\*\*URL:\*\*\s*(\S+)/i);

@@ -92,7 +92,7 @@ export type AutopilotConfig = {
   thresholds: {
     /** Auto-eval triggers when Gemini scoring tags a job ≥ this score. */
     autoEvaluateScore: number;
-    /** Auto-eval batch is capped at this many oferta runs per fire. Each
+    /** Auto-eval batch is capped at this many evaluate runs per fire. Each
      *  run costs ~$0.30–$1.00 of Claude usage, so a low cap is a real
      *  cost-safety knob, not just a perf knob. */
     maxAutoEvalsPerRun: number;
@@ -143,7 +143,7 @@ const DEFAULT_CONFIG: AutopilotConfig = {
       details: [
         'Triggers after every successful gemini-first-pass.py run.',
         'Picks up to N jobs (Max auto-evals / run) sorted by Gemini score, descending.',
-        'Each oferta run takes 1–3 min and costs ~$0.30–$1.00 in Claude usage.',
+        'Each evaluate run takes 1–3 min and costs ~$0.30–$1.00 in Claude usage.',
         'Skips jobs that already have a deep-eval report. Skips jobs the user moved past Scored.',
         'Aborts the batch after 3 consecutive failures (likely Claude CLI broken or API key revoked).',
         '1-hour cooldown between runs prevents accidental double-billing from manual scan retries.',

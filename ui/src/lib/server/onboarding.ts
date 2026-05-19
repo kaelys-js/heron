@@ -162,7 +162,7 @@ export function isFreshInstall(): boolean {
   // Required files for any Heron workflow to function. Each one would
   // cause a downstream feature to silently fail (or 500) if missing.
   const requiredFiles = [
-    activePath('cv-md'), // cv.md — read by oferta + every CV-tailoring path
+    activePath('cv-md'), // cv.md — read by evaluate + every CV-tailoring path
     activePath('profile-yml'), // profile.yml — every personalization read
     activePath('portals-yml'), // tracker company list + title filter
     activePath('profile-md'), // user-customisable mode fragment (per-profile)

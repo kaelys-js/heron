@@ -3,7 +3,7 @@
  *
  * GET → { score, matched, missing, considered }
  *
- * Pulls the JD text from the deep-eval report (the oferta mode embeds it)
+ * Pulls the JD text from the deep-eval report (the evaluate mode embeds it)
  * and the CV from cv.md (NOT the rendered PDF — we want the source text).
  *
  * Returns null when no report exists yet — the UI should hide the badge
@@ -33,7 +33,7 @@ export const GET = wrap(
       if (fs.existsSync(cvPath)) cvText = fs.readFileSync(cvPath, 'utf8');
     } catch {}
 
-    // Source of JD text: the deep-eval report (oferta mode embeds the JD).
+    // Source of JD text: the deep-eval report (evaluate mode embeds the JD).
     // If no report exists yet, return null so the UI can prompt.
     if (!job.reportFile) {
       return {

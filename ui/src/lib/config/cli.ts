@@ -8,8 +8,8 @@
  *   AGENT_CLI=codex    pnpm dev
  *   AGENT_CLI=opencode pnpm dev
  *
- * Every server-side spawn site that runs a slash-command (oferta, contacto,
- * cover-letter, post-rejection, form-answers, followup-draft, outreach,
+ * Every server-side spawn site that runs a slash-command (evaluate, outreach,
+ * cover-letter, post-rejection, form-answers, followup-draft,
  * answer-form) reads from this constant. Each CLI's `-p` syntax differs
  * slightly; adapter shims may be needed for non-default values. See
  * AGENTS.md "Switching the AI CLI" for the support matrix.

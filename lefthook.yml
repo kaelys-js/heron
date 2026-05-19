@@ -339,6 +339,16 @@ pre-commit:
       glob: "*.md"
       run: pnpm validate:markdown
 
+    english-only:
+      # Heron ships English-only mode templates + system docs. This gate
+      # catches Spanish prose (or other accented-language slip-ins) before
+      # they reach main. Inline-allowlist English loan words / proper
+      # nouns / language-detection regex literals in
+      # scripts/system/verify-english-only.mjs::ALLOWLIST when adding new
+      # legitimate cases. Runs on the full set — fast (~50 ms).
+      glob: "*.{md,ts,tsx,svelte,mjs,py,sh}"
+      run: pnpm verify:english-only
+
     exact-versions:
       # Reject any version specifier that isn't an EXACT pin (no ^, ~,
       # >=, *, "latest", or partial versions like "1.7"). Scans every

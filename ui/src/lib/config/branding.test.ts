@@ -43,7 +43,7 @@ describe('cmd()', () => {
     expect(cmd()).toBe('/heron');
   });
   it('appends verb when given', () => {
-    expect(cmd('oferta')).toBe('/heron oferta');
+    expect(cmd('evaluate')).toBe('/heron evaluate');
     expect(cmd('scan')).toBe('/heron scan');
   });
   it('handles empty string verb (treated as no verb)', () => {
