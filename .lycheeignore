@@ -1,0 +1,32 @@
+# lychee ignore list — links to skip even if they 404.
+#
+# Format: one regex per line (lychee uses regex::Regex). Lychee
+# matches the FULL URL, so anchor the start with ^https?:// to avoid
+# false positives.
+#
+# Add to this list ONLY when:
+#   - The URL is intentionally a placeholder (example.com, your-fork.example)
+#   - The URL is a planned-but-not-yet-live deployment (heron.app)
+#   - The URL is a runtime template (`__TOKEN__`, `{{REPORT_NUM}}`)
+#
+# Do NOT add stale upstream / external URLs that we should actually
+# update. The workflow runs in --offline mode by default so external
+# URLs aren't probed anyway; this file is reserved for local-path
+# patterns lychee can't resolve.
+
+# Mode-prompt token substitution patterns — these are resolved at
+# spawn time by the dashboard, not at write time.
+__TOKEN__
+__REPORTS__/
+__CV__
+\{\{[A-Z_]+\}\}
+\{[a-z-]+\}
+
+# Example placeholders in README + setup docs — these are clearly
+# marked "your-fork" / "example" and not meant to be resolved.
+^https?://example\.com
+^https?://your-fork\.example
+^https?://your-org\.example
+
+# Production domain — not active yet, will resolve after launch.
+^https?://heron\.app
