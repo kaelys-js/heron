@@ -205,17 +205,10 @@ When Task 9 propagates the rebrand:
      Claude Design or an illustrator)
    - If the lockup SVG isn't ready, fall back to
      `branding/assets/wordmark-slate.svg` for the top image
-3. **Update** all `career-ops` / `Career Ops` mentions deeper in the
-   README to `heron` / `Heron`. Many of these get caught by
-   `apply-brand`'s prose-update pass; the rest need a manual sweep.
-4. **Update** the GitHub URL references — currently
-   `kaelys-js/career-ops`, target `heron/heron` (or whatever the new
-   GitHub org becomes when registered).
-5. **Update** the badge URLs once the new repo org is in place.
-6. **Remove** any career-ops-era taglines or section headers that
-   conflict with the new voice (sweep for the anti-patterns enumerated
-   above).
-7. **Keep** the rest of the README structure (Stack and Conventions,
+3. **Update** GitHub URL references in the README banner — currently
+   `heron/heron`. When the actual GitHub org becomes available,
+   `git remote set-url` accordingly.
+4. **Keep** the rest of the README structure (Stack and Conventions,
    scripts/ directory tree, etc.) — those are functional reference
    docs and don't need brand-voice rewriting.
 

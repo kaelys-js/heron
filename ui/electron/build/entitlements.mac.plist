@@ -21,7 +21,7 @@
   <!-- File access for data/ profiles -->
   <key>com.apple.security.files.user-selected.read-write</key>
   <true/>
-  <!-- Disable App Sandbox — career-ops needs Playwright + Claude CLI -->
+  <!-- Disable App Sandbox — heron needs Playwright + Claude CLI -->
   <key>com.apple.security.app-sandbox</key>
   <false/>
 </dict>

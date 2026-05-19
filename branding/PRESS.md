@@ -56,7 +56,7 @@ the language is deliberate.
 | **Bundle ID** | `com.heron.app` |
 | **URL scheme** | `heron://` |
 | **Support email** | <hello@heron.app> |
-| **Heritage** | Hard fork of [`santifer/career-ops`](https://github.com/santifer/career-ops) |
+| **Heritage** | Hard fork of [`santifer/heron`](https://github.com/santifer/heron) |
 <!-- /AUTO-GENERATED:quick-facts-table -->
 
 ## Identifiers
