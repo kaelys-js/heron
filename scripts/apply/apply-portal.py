@@ -16,16 +16,26 @@ Exit codes (mirrors lib_apply.emit_result):
     1 — manual-apply-needed (Issue should be emitted)
     2 — error (system-level failure, e.g. adapter script missing)
 
-Adapter routing:
-    linkedin        → apply-linkedin.py   (production)
-    greenhouse      → apply-greenhouse.py (production)
-    ashby           → apply-ashby.py      (production)
-    lever, workable, personio, smartrecruiters, recruitee, teamtailor,
-    workday, indeed, unknown → apply-stub.py (manual-apply-needed:stub)
+Adapter routing (all 11 named portals are production today):
+    linkedin           → apply-linkedin.py
+    greenhouse         → apply-greenhouse.py
+    ashby              → apply-ashby.py
+    lever              → apply-lever.py
+    workday            → apply-workday.py
+    workable           → apply-workable.py
+    personio           → apply-personio.py
+    smartrecruiters    → apply-smartrecruiters.py
+    recruitee          → apply-recruitee.py
+    teamtailor         → apply-teamtailor.py
+    indeed             → apply-indeed.py
+    unknown            → apply-stub.py (catch-all → ManualApplyNeeded)
 
-The stub adapter is deliberately invoked in-process via subprocess too —
-keeping ONE dispatch path means there's no special-case branch to forget
-when a portal graduates from stub to production.
+`unknown` is the only path that intentionally routes to apply-stub.py:
+detect_portal() returns 'unknown' when the URL doesn't match any of
+the known portal hostnames, so the user finishes manually from the
+Inbox. The stub adapter is deliberately invoked in-process via
+subprocess so we keep ONE dispatch path — no special-case branch to
+forget when adding a new portal.
 """
 
 from __future__ import annotations

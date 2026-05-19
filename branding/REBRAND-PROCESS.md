@@ -31,16 +31,37 @@ pnpm brand:apply             ← propagates everywhere
        ├──→ ui/src/app.css AUTO-GENERATED:brand-tokens block
        │       (@font-face × 8 + @theme inline + :root + .dark)
        ├──→ 4 wordmark SVGs (regenerated from displayName + colors)
-       ├──→ 10 branding/*.md files (AUTO-GENERATED:<section> markers)
+       ├──→ 8 branding/*.md files (AUTO-GENERATED:<section> markers)
        ├──→ release-please-config.json + .github/{ISSUE_TEMPLATE,workflows}
        ├──→ ui/ios/App/fastlane/{Appfile,Fastfile}
        ├──→ scripts/native/add-xcode-targets.rb
        ├──→ lefthook.yml + turbo.json paths
        └──→ All platform icons (icons regen via brand.iconSource)
+       │
+       │  (After a successful apply, if `brand.json::repo` differs from
+       │   the previous snapshot AND `gh auth status` succeeds, apply-brand
+       │   automatically chains into:)
+       │
+       ▼
+pnpm gh:apply                ← propagates the repo block to GitHub
+       │
+       ├──→ Repo description + homepage
+       ├──→ Repository topics (set-union with brand.json::repo.topics)
+       ├──→ GHAS toggles (secret scanning / push protection / dependabot)
+       ├──→ Private Vulnerability Reporting
+       ├──→ allow_auto_merge + delete_branch_on_merge + web_commit_signoff_required
+       └──→ Branch-protection rulesets (`.github/rulesets/*.json`)
 
        ▼
 branding/.brand-snapshot.json  ← apply-brand records post-state here
 ```
+
+> **Note.** The auto-chain is best-effort and idempotent. If `gh` isn't
+> authed locally (e.g., in a Docker dev container), apply-brand prints
+> a `· skipped gh:apply — gh CLI not authed` line and continues. The
+> next time a maintainer runs apply-brand on an authed machine, the
+> chain catches up. `pnpm gh:apply` can also be invoked directly any
+> time to force a sync.
 
 ## Day-to-day edits (low risk)
 
@@ -129,29 +150,62 @@ the changelog flags the rebrand clearly.
 External systems live outside the repo. The MIGRATION doc auto-emits
 a summary; this section is the full checklist.
 
-### Local working tree + GitHub
+### GitHub repository state — automated via `pnpm gh:apply`
 
-The git remote URL inside the repo points at the OLD GitHub coordinates
-until the actual GitHub rename happens. GitHub auto-redirects the old
-URL for ~90 days, but external bookmarks / blog posts / press
-references should be updated.
+What used to be 6+ manual GitHub-UI clicks is now reconciled by a single
+script. After you edit `brand.json::repo` (description, homepage, topics)
+and run apply-brand, the chain auto-invokes `pnpm gh:apply`, which calls
+`gh api` to upsert:
+
+| GitHub-side state | Source of truth |
+|---|---|
+| Repo description + homepage | `brand.json::repo.{description,homepage}` |
+| Topics | `brand.json::repo.topics` (set-union — applies as authoritative list) |
+| Security toggles (secret scanning, push protection, Dependabot) | hard-coded "enabled" in apply-github-config.mjs |
+| Private Vulnerability Reporting | hard-coded "enabled" |
+| `allow_auto_merge` / `delete_branch_on_merge` / `web_commit_signoff_required` | hard-coded "true" |
+| `has_discussions` / `has_issues` | hard-coded "true" |
+| Branch-protection rulesets | `.github/rulesets/*.json` (matched by `name` field) |
+
+The script is idempotent — re-running is a no-op unless something
+drifted. `pnpm gh:verify` reports drift without writing (CI uses this).
+`pnpm gh:apply:dry` shows what would change without writing.
+
+### Local working tree + GitHub (still manual)
+
+A handful of GitHub operations cannot live behind the SSOT because they
+are either too sensitive (visibility flips) or affect git history that
+apply-brand should never touch (rename, ownership transfer).
 
 ```sh
-# 1. Rename the GitHub repo via web UI (Settings → Repository name)
-#    or via gh CLI:
+# 1. Rename the GitHub repo — gh:apply does NOT do this (too destructive
+#    for an idempotent reconciliation script):
 gh repo rename <new-name> --repo <old-owner>/<old-name>
 
 # 2. If also moving to a new GitHub org:
 #    Transfer ownership via Settings → Transfer (new org must exist first).
+#    Wait ~30s after the transfer, then run `pnpm gh:apply` to re-apply
+#    topics + rulesets in the new namespace.
 
-# 3. Update the local remote URL:
+# 3. Update the local remote URL (git doesn't follow GitHub's redirect):
 git remote set-url origin git@github.com:<new-owner>/<new-name>.git
 git remote -v
 
 # 4. Optional: rename the local working tree directory:
 mv ~/<old-dir> ~/<new-dir>
 cd ~/<new-dir>
+
+# 5. Now run apply-brand — it propagates everything and auto-invokes
+#    gh:apply to reconcile description / homepage / topics / GHAS / rulesets
+#    in the renamed repo:
+REBRAND_CONFIRMED=1 pnpm brand:apply
 ```
+
+> **Visibility flips.** `gh:apply` deliberately does NOT touch
+> public/private visibility. Flipping a repo public is a one-way trip
+> (search engines crawl, forks spread) — it requires explicit
+> maintainer intent, not silent automation. Use the GitHub UI or `gh
+> repo edit --visibility public`.
 
 ### App Store Connect (Apple)
 
@@ -272,7 +326,9 @@ After running through the above:
 
 - [ ] `git remote -v` shows the new URL.
 - [ ] `cd <new-dir> && pnpm brand:apply` runs cleanly (no drift).
+- [ ] `pnpm gh:verify` reports `✓ No drift` (live GitHub matches `brand.json` + `.github/rulesets/`).
 - [ ] `pnpm exec vitest run capacitor.integration.test.ts` passes.
+- [ ] `pnpm visual:diff` reports no regressions (UI hasn't shifted under the new brand).
 - [ ] iOS simulator launches under the new bundle ID:
       `cd ui && pnpm exec cap run ios`
 - [ ] Android emulator launches under the new applicationId:

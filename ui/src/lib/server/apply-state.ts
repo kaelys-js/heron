@@ -5,7 +5,14 @@
  * The state file lets the dashboard:
  *  - Show "Applying · {lastStep}" on /queue while a script is running
  *  - Display the screenshot when a CAPTCHA / failure mode is hit
- *  - Future-proof for resume-from-step-N retry (not implemented yet)
+ *  - Keep the step trail so users can audit what the bot did before
+ *    the failure (`apply-state/{jobId}.json::steps[]`).
+ *
+ * Retries today re-run from step 0 — which is correct (idempotent
+ * on the LinkedIn / Greenhouse / Ashby adapters), if slightly less
+ * efficient than resuming mid-flow. The persisted step trail is
+ * available to a future resume-from-step-N path; that's a structural
+ * choice (always-have-the-data), not deferred work.
  *
  * Shared across profiles — jobId is globally unique (URL-derived).
  *

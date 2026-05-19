@@ -12,9 +12,12 @@
  *                              and appends SKIP rows to applications.md
  *   3. build-batch-input.mjs — writes <profile>/batch/batch-input.tsv from survivors
  *
- * Trigger: after-event on 'scan' and 'scan-portals' (when 2.1 lands). Also
- * registered for manual invocation so power users can dry-run after editing
- * portals.yml triage rules.
+ * Trigger: registered as a manual-invocation job today; users run it
+ * explicitly via the Tasks panel after a scan. The job is structured
+ * so a future after-event hook on 'scan' / 'scan-portals' can drop in
+ * without touching the implementation — the registry's `trigger` field
+ * carries that wiring when added. Manual invocation is the supported
+ * path; no behaviour regression exists by waiting on the hook.
  */
 
 import { spawn } from 'node:child_process';

@@ -77,7 +77,7 @@ It runs entirely on your machine. Your data is yours.
 | **Portal scanning** | 11 ATSes: Greenhouse, Ashby, Lever, LinkedIn, Indeed, Workday, Recruitee, SmartRecruiters, Workable, Personio, Teamtailor. | `/sources`, `pnpm scan` |
 | **Recruiter inbound** | Email classifier flags offers, confirms interviews, reacts to rejections. Gmail IMAP poller built-in. | `/inbox` |
 | **Interview prep** | STAR+R stories from your real projects; mock interviews; comp negotiation playbook. | `/job/[id]/prep` |
-| **Autonomous apply** | Opt-in, score-gated, off by default. LinkedIn Easy Apply / Greenhouse / Ashby in prod; more stubbed. | `/autopilot` |
+| **Autonomous apply** | Opt-in, score-gated, off by default. 11 portal adapters in prod (LinkedIn Easy Apply, Greenhouse, Ashby, Lever, Workday, Workable, Personio, SmartRecruiters, Recruitee, Teamtailor, Indeed); unknown portals fall back to manual. | `/autopilot` |
 | **Multi-user + multi-profile** | Two humans share one install fully segregated. One human runs engineer + instructor profiles fully segregated. | `/settings/users`, profile switcher |
 | **AI-agnostic** | Swappable CLI: Claude / Gemini / Codex / OpenCode / Qwen / Copilot. No vendor lock-in. | `AGENT_CLI=` env var |
 | **Native everywhere** | iOS / Android via Capacitor, Electron desktop (Mac/Win/Linux), Apple Watch widget bundle. | `pnpm setup:native` |
