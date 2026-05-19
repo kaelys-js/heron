@@ -28,6 +28,13 @@ import sys
 import re
 import json
 import time
+from pathlib import Path
+
+# Resolve per-user secrets when CAREER_OPS_USER_ID is set; .env fallback
+# otherwise. Closes the multi-user gap where GEMINI_API_KEY used to be
+# install-wide via .env only.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from lib.user_secrets import get_credential  # noqa: E402
 import argparse
 from pathlib import Path
 
@@ -50,7 +57,7 @@ PIPELINE: Path = REPO_ROOT / "data" / "profiles" / "default" / "pipeline.md"
 SCORES_TSV: Path = REPO_ROOT / "data" / "profiles" / "default" / "gemini-scores.tsv"
 CV_MD: Path = REPO_ROOT / "data" / "profiles" / "default" / "cv.md"
 
-API_KEY = os.environ.get("GEMINI_API_KEY")
+API_KEY = get_credential("GEMINI_API_KEY")
 if not API_KEY:
     print("ERROR: GEMINI_API_KEY env var not set.")
     print("Get a free key at: https://aistudio.google.com/apikey")

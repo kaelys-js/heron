@@ -23,7 +23,7 @@ import { logEvent, reportServerError } from '../events';
 import { register, runById, has as hasJob } from './registry';
 import { recordSuccess, recordFailure, getSource } from '../sources';
 import type { JobArgs, JobResult } from './types';
-import { getOwnerUserId, runAsUser, SYSTEM_USER_ID, userContextEnv } from '../user-context';
+import { listSchedulableUsers, runAsUser, SYSTEM_USER_ID, userContextEnv } from '../user-context';
 
 const FOUND_RE = /Total jobs found:\s+(\d+)/i;
 const POLL_INTERVAL_MS = 30 * 60 * 1000; // 30 min
@@ -155,37 +155,60 @@ register({
 
 let pollerHandle: ReturnType<typeof setInterval> | null = null;
 
-/** F14/F19/F27 — gmail-imap is single-tenant (creds live in shared
- *  `.env`, one mailbox per install). The daemon checks the OWNER's
- *  sources.json and runs the poll under the OWNER's user context if
- *  connected. Member-role users can NOT connect a different gmail-imap
- *  today — that would require per-user encrypted credential storage
- *  which is out of scope for this audit.
+/** F14/F19/F27 — multi-user gmail-imap fan-out.
  *
- *  Pre-fix the daemon resolved getSource() from SYSTEM's sources.json,
- *  and the IMAP child's HTTP callback to /api/email/react crossed an
- *  HTTP boundary that dropped ALS context. Now: the work runs entirely
- *  inside the OWNER's ALS context (in-process), so the reactor's
- *  loadAllJobs / markStatus / generateInterviewPrep land in OWNER's
- *  applications.md — never accidentally in another user's tree. */
-async function tickOnce(): Promise<void> {
-  const ownerId = await getOwnerUserId();
-  if (ownerId === SYSTEM_USER_ID) {
-    // No real owner exists (pre-onboarding fresh install). Don't poll
-    // against SYSTEM_USER's sources because legacy single-user installs
-    // are handled by the existing code path; new installs without an
-    // owner have nothing to poll.
-    return;
+ *  Each user holds their own GMAIL_IMAP_* credentials in their
+ *  encrypted per-user secrets store (`user-secrets.ts`) and tracks
+ *  their own connection state in their own `sources.json`. Every 30
+ *  minutes the daemon walks all schedulable users; for each one it
+ *  enters their ALS context (`runAsUser`), checks if THEY have
+ *  gmail-imap connected, and — if so — runs the poll under that user.
+ *
+ *  Why per-user ALS context matters: the child process inherits
+ *  `CAREER_OPS_USER_ID` from the orchestrator's env injection
+ *  (orchestrator.ts::start) which means the .mjs script reads THAT
+ *  user's encrypted credentials via `scripts/lib/user-secrets.mjs`,
+ *  writes pipeline / applications / scan-history into THAT user's
+ *  profile tree, and the in-process `reactToEmail()` calls in this
+ *  file's close-handler run inside THAT user's context. No cross-user
+ *  contamination possible — the same primitive that gates every other
+ *  fan-out job (autopilot.ts::runScanForAllProfiles etc.) gates this
+ *  one too.
+ *
+ *  Errors per user are isolated: a malformed credential on user A
+ *  doesn't stop user B's poll from running. */
+export async function tickOnce(): Promise<void> {
+  if (!hasJob('scan-email-imap')) return;
+  const userIds = await listSchedulableUsers();
+  // Filter out SYSTEM_USER_ID — legacy single-user installs that
+  // haven't yet completed onboarding have nothing real to poll, and
+  // SYSTEM's sources.json is the install-wide fallback we don't want
+  // running automatically.
+  const realUsers = userIds.filter((u) => u !== SYSTEM_USER_ID);
+  if (realUsers.length === 0) return;
+
+  // Run polls SEQUENTIALLY rather than in parallel: each poll spawns
+  // a child process that consumes network + IMAP-connection slots, and
+  // a busy install with five users would otherwise stampede the local
+  // resolver / our own ImapFlow socket pool. Serial fan-out keeps load
+  // predictable and lets `await runAsUser` clear context cleanly
+  // between users.
+  for (const userId of realUsers) {
+    await runAsUser(userId, async () => {
+      try {
+        if (!getSource('gmail-imap').connected) return;
+        await runById('scan-email-imap');
+      } catch (err) {
+        // Per-user error — log + continue to the next user. NEVER let a
+        // single bad credential or transient IMAP failure halt the
+        // whole fan-out.
+        reportServerError('scan-email-imap', 'Daemon poll rejected for user ' + userId, err, {
+          category: 'task',
+          userId,
+        });
+      }
+    });
   }
-  await runAsUser(ownerId, async () => {
-    if (!getSource('gmail-imap').connected) return;
-    if (!hasJob('scan-email-imap')) return;
-    try {
-      await runById('scan-email-imap');
-    } catch (err) {
-      reportServerError('scan-email-imap', 'Daemon poll rejected', err, { category: 'task' });
-    }
-  });
 }
 
 export function installImapPollerDaemon(): void {

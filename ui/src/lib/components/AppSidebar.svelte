@@ -20,6 +20,7 @@
     Cpu,
     Wrench,
     Settings as SettingsIcon,
+    KeyRound,
     ChevronsUpDown,
     Search,
     Plus,
@@ -542,6 +543,16 @@
                   <a href="/skills" {...props}>
                     <Wrench class="size-4" />
                     <span>Skills</span>
+                  </a>
+                {/snippet}
+              </Sidebar.MenuButton>
+            </Sidebar.MenuItem>
+            <Sidebar.MenuItem>
+              <Sidebar.MenuButton isActive={isActive('/settings/api-keys')}>
+                {#snippet child({ props })}
+                  <a href="/settings/api-keys" {...props}>
+                    <KeyRound class="size-4" />
+                    <span>API Keys</span>
                   </a>
                 {/snippet}
               </Sidebar.MenuButton>

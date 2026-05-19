@@ -21,6 +21,7 @@ import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'fs';
 import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { profilePath, profileFromArgv, userFromArgv } from '../lib/lib-profiles.mjs';
+import { getCredential } from '../lib/user-secrets.mjs';
 
 // ---------------------------------------------------------------------------
 // Bootstrap: load .env before anything else
@@ -121,14 +122,16 @@ if (!jdText) {
 // ---------------------------------------------------------------------------
 // Validate environment
 // ---------------------------------------------------------------------------
-const apiKey = process.env.GEMINI_API_KEY;
+// Per-user store first (via CAREER_OPS_USER_ID), .env fallback.
+const apiKey = getCredential('GEMINI_API_KEY');
 if (!apiKey) {
   console.error(`
 ❌  GEMINI_API_KEY not found.
 
    1. Get a free key at https://aistudio.google.com/apikey
-   2. Add it to .env:   GEMINI_API_KEY=your_key_here
-   3. Or export it:     export GEMINI_API_KEY=your_key_here
+   2. Configure it in dashboard Settings → API Keys (per-user), OR
+   3. Add it to .env:   GEMINI_API_KEY=your_key_here   (install-wide fallback)
+   4. Or export it:     export GEMINI_API_KEY=your_key_here
 `);
   process.exit(1);
 }

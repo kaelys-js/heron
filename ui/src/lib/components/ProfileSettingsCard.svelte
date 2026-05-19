@@ -202,8 +202,8 @@
       Profile + appearance
     </Card.Title>
     <Card.Description>
-      Per-machine settings — your display name, avatar, theme, and which event types ping you.
-      Multi-user support comes later; for now these apply to this install.
+      Per-user settings — your display name, avatar, theme, and which event types ping you. Stored
+      against your user account; never shared with other users on this install.
     </Card.Description>
   </Card.Header>
   <Card.Content class="space-y-5">

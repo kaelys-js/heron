@@ -30,6 +30,13 @@ from urllib.request import Request, urlopen
 from urllib.parse import urlencode
 from xml.etree import ElementTree as ET
 
+# Resolve per-user secrets when CAREER_OPS_USER_ID is set; .env fallback
+# otherwise. Each user holds their own Adzuna credentials in their
+# encrypted secrets store; this helper hides that lookup behind the
+# same shape as os.environ.get.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from lib.user_secrets import get_credential  # noqa: E402
+
 try:
     from jobspy import scrape_jobs  # type: ignore
 
@@ -311,8 +318,8 @@ def fetch_adzuna(seen: set):
     Set ADZUNA_APP_ID and ADZUNA_APP_KEY env vars (or in .env).
     Sign up: https://developer.adzuna.com/
     """
-    app_id = os.environ.get("ADZUNA_APP_ID")
-    app_key = os.environ.get("ADZUNA_APP_KEY")
+    app_id = get_credential("ADZUNA_APP_ID")
+    app_key = get_credential("ADZUNA_APP_KEY")
     if not app_id or not app_key:
         print("  [Adzuna] skipped (set ADZUNA_APP_ID + ADZUNA_APP_KEY env vars to enable)")
         return []

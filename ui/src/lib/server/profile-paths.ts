@@ -109,8 +109,12 @@ export type UserSharedFileKind =
   | 'job-last-run' // per-job last-run state for registered jobs — per-user so
   // autopilot's "did this run today?" dedupe is scoped per user (otherwise
   // user A's 9am scan would block user B's 9am scan from firing)
-  | 'backups-dir'; // tarball backup destination — per-user (each user's
-// daily snapshot of their own tree)
+  | 'backups-dir' // tarball backup destination — per-user (each user's
+  // daily snapshot of their own tree)
+  | 'secrets'; // per-user encrypted credential store (Anthropic / Gemini /
+// Adzuna / Gmail-IMAP / OpenAI API keys + tokens). AES-256-GCM at rest,
+// key derived via HKDF(BETTER_AUTH_SECRET + per-user salt). See
+// user-secrets.ts for the threat model + format spec.
 
 const PROFILES_ROOT = path.join(ROOT, 'data', 'profiles');
 const USERS_ROOT = path.join(ROOT, 'data', 'users');
@@ -291,6 +295,8 @@ export function userSharedPathForUser(userId: string, kind: UserSharedFileKind):
       return path.join(base, 'job-last-run.json');
     case 'backups-dir':
       return path.join(base, 'backups');
+    case 'secrets':
+      return path.join(base, 'secrets.json');
   }
 }
 
