@@ -75,7 +75,7 @@
       ]
     },
 
-    "check": {
+    "typecheck": {
       "dependsOn": ["brand"],
       "outputs": [],
       "inputs": [
@@ -93,6 +93,31 @@
         ".svelte-kit/tsconfig.json",
         "package.json"
       ]
+    },
+
+    "lint": {
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.svelte",
+        "src/**/*.js",
+        "src/**/*.mjs",
+        "src/**/*.d.ts",
+        "../.oxlintrc.jsonc",
+        "../../.oxlintrc.jsonc",
+        "package.json"
+      ]
+    },
+
+    "lint:fix": {
+      "cache": false,
+      "outputs": []
+    },
+
+    "check": {
+      "dependsOn": ["lint", "typecheck"],
+      "outputs": []
     },
 
     "format": {
@@ -119,19 +144,10 @@
       ]
     },
 
-    "verify": {
-      "dependsOn": ["brand"],
-      "outputs": []
-    },
-
     "dev": {
       "cache": false,
       "persistent": true,
       "dependsOn": ["brand"]
-    },
-
-    "lint": {
-      "outputs": []
     },
 
     "test": {

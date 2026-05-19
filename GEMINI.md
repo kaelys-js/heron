@@ -1,7 +1,7 @@
 # Gemini CLI context — Heron
 
 <!-- AUTO-GENERATED:doc-meta -->
-*Last revised 2026-05-15 · part of the [Heron](README.md) docs.*
+*Last revised 2026-05-18 · part of the [Heron](README.md) docs.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
 > Auto-loaded by Gemini CLI as persistent context. The canonical

@@ -330,7 +330,7 @@ pre-commit:
       #   - keep the lint-pipeline plumbing alive for incremental rollout
       # Cost: ~50 ms full-repo. No reason to scope to staged files.
       glob: "*.{js,jsx,mjs,cjs,ts,tsx}"
-      run: pnpm lint:oxlint
+      run: pnpm lint
 
     version-sync:
       # Asserts that every place we store the version stays equal:

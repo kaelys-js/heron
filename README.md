@@ -5,7 +5,7 @@
 # Heron
 
 <!-- AUTO-GENERATED:doc-meta -->
-*Last revised 2026-05-15 · [Heron](https://heron.app) · Stand still. Strike well.*
+*Last revised 2026-05-18 · [Heron](https://heron.app) · Stand still. Strike well.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
 **Stand still. Strike well.**
