@@ -3,7 +3,7 @@ import Foundation
 import WidgetKit
 
 /**
- * HeronNativePlugin — Capacitor JS↔Swift bridge for native-only
+ * NativePlugin — Capacitor JS↔Swift bridge for native-only
  * features the WebView can't reach.
  *
  * Exposed JS methods (called via Capacitor.Plugins.HeronNative.*):
@@ -21,9 +21,9 @@ import WidgetKit
  * Registered in CapApp-SPM/Package.swift (or via Xcode targets if not
  * using SPM). Capacitor auto-discovers it via the @objc(...) name.
  */
-@objc(HeronNativePlugin)
-public class HeronNativePlugin: CAPPlugin, CAPBridgedPlugin {
-    public let identifier = "HeronNativePlugin"
+@objc(NativePlugin)
+public class NativePlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "NativePlugin"
     // jsName MUST match the TypeScript registerPlugin('...') call in
     // ui/src/lib/client/native-bridge.ts. Both sides read this string
     // from branding/brand.json::identifiers.capacitorPluginName via
@@ -154,9 +154,9 @@ public class HeronNativePlugin: CAPPlugin, CAPBridgedPlugin {
     /// path-state change. We push the bool down to the WebView via the
     /// plugin's notifyListeners mechanism. online-status.ts in JS converts
     /// this to a `<brand>:net-status` window event.
-    static var pluginInstance: HeronNativePlugin?
+    static var pluginInstance: NativePlugin?
     override public func load() {
-        HeronNativePlugin.pluginInstance = self
+        NativePlugin.pluginInstance = self
     }
 
     static func notifyNetStatus(online: Bool) {
@@ -326,7 +326,7 @@ public class HeronNativePlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
 
-        // stats — flat int keys (read by HeronTimelineProvider).
+        // stats — flat int keys (read by AppTimelineProvider).
         if let stats = call.getObject("stats") {
             if let queued = stats["queued"] as? Int {
                 defaults.set(queued, forKey: "stats:queued")

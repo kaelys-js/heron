@@ -1,8 +1,8 @@
 import Capacitor
 import UIKit
 
-// HeronBridgeViewController — CAPBridgeViewController subclass that
-// explicitly registers our custom HeronNativePlugin with the
+// BridgeViewController — CAPBridgeViewController subclass that
+// explicitly registers our custom NativePlugin with the
 // Capacitor bridge.
 //
 // Why this subclass exists: Capacitor 7+ auto-discovers plugins that
@@ -17,9 +17,9 @@ import UIKit
 //
 // Wiring: App/Base.lproj/Main.storyboard points its root view-
 // controller's customClass at this class (was CAPBridgeViewController
-// from the Capacitor module — now HeronBridgeViewController from
+// from the Capacitor module — now BridgeViewController from
 // the App module).
-class HeronBridgeViewController: CAPBridgeViewController {
+class BridgeViewController: CAPBridgeViewController {
     /// Brand-dark background applied natively to the view hierarchy
     /// BEFORE the WebView paints. Eliminates the white flash users
     /// previously saw between when the native splash dismissed and
@@ -50,7 +50,7 @@ class HeronBridgeViewController: CAPBridgeViewController {
 
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
-        bridge?.registerPluginInstance(HeronNativePlugin())
+        bridge?.registerPluginInstance(NativePlugin())
         // Trace the resolved load URL so we can tell from the simulator
         // log whether `server.url` in capacitor.config.json actually
         // surfaced as the WebView's appStartServerURL. CAPLog is silent

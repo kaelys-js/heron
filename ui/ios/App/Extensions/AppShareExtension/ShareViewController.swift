@@ -4,13 +4,13 @@ import UIKit
 import UniformTypeIdentifiers
 
 /**
- * HeronShareExtension — adds a "Send to heron" option to the
+ * AppShareExtension — adds a "Send to heron" option to the
  * iOS share sheet. When the user shares a job-posting URL from Safari
  * (or any app), this extension grabs the URL and POSTs it to the
  * /api/pipeline endpoint on the resolved backend.
  *
  * To add this target in Xcode:
- *   1. File → New → Target → Share Extension → "HeronShareExtension"
+ *   1. File → New → Target → Share Extension → "AppShareExtension"
  *   2. Bundle ID: com.heron.app.share
  *   3. Add to App Groups: group.com.heron.app
  *   4. NSExtensionAttributes / NSExtensionActivationRule (in
@@ -34,7 +34,7 @@ class ShareViewController: SLComposeServiceViewController {
                 self.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
                 return
             }
-            let outcome = await postToHeron(url: url, note: self.contentText)
+            let outcome = await postToBackend(url: url, note: self.contentText)
             await showOutcome(outcome)
             self.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
         }
@@ -119,10 +119,10 @@ class ShareViewController: SLComposeServiceViewController {
         }
     }
 
-    private func postToHeron(url: URL, note: String?) async -> ShareOutcome {
+    private func postToBackend(url: URL, note: String?) async -> ShareOutcome {
         // Read the resolved backend URL + bearer token from the shared
         // App Group. The iPhone main app mirrors both whenever they
-        // change (see HeronNativePlugin.setSharedBackendUrl /
+        // change (see NativePlugin.setSharedBackendUrl /
         // setSharedBearerToken). If either is missing the user hasn't
         // opened + signed in to the host app yet.
         guard let defaults = UserDefaults(suiteName: Brand.appGroup),

@@ -33,15 +33,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // (via Main.storyboard or NSClassFromString plugin lookup) — the
         // optimizer has no compile-time Swift edge proving they're live,
         // so it drops them, and at runtime UIKit / Capacitor fail silently:
-        //   • Missing HeronBridgeViewController → storyboard fails to
+        //   • Missing BridgeViewController → storyboard fails to
         //     instantiate the root VC → empty UIWindow → BLACK SCREEN.
-        //   • Missing HeronNativePlugin → JS bridge reports
+        //   • Missing NativePlugin → JS bridge reports
         //     "HeronNative plugin is not implemented on ios" and every
         //     Bonjour / biometric / keychain / Spotlight / Handoff call
         //     becomes a no-op.
         // Touching the metatype here pins both symbols in the binary.
-        _ = HeronBridgeViewController.self
-        _ = HeronNativePlugin.self
+        _ = BridgeViewController.self
+        _ = NativePlugin.self
 
         // Start the Bonjour browser early so backend-discovery can
         // hit a hot cache. Results are stored in a UserDefaults key
@@ -53,7 +53,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // the WebView so online-status.ts has authoritative truth.
         networkMonitor = NetworkMonitor.shared
         networkMonitor?.start { online in
-            HeronNativePlugin.notifyNetStatus(online: online)
+            NativePlugin.notifyNetStatus(online: online)
         }
 
         // Register for background fetch — minimum interval is iOS-decided.

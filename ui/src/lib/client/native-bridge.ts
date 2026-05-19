@@ -20,7 +20,7 @@ export type JobIndexEntry = {
   status?: string;
 };
 
-type HeronNativePlugin = {
+type NativePlugin = {
   getLanUrl(): Promise<{ url: string | null }>;
   biometricAvailable(): Promise<{ available: boolean }>;
   biometricAuth(opts: { reason: string }): Promise<{ ok: boolean; reason?: string }>;
@@ -48,7 +48,7 @@ export type WidgetUpdate = {
    *   • `true`  → widgets render real data (stats, nextInterview, topApply,
    *               openIssues). Passing this without data is fine — widgets
    *               just show the empty placeholder.
-   *   • `false` → HeronNativePlugin.updateWidgets scrubs every cached
+   *   • `false` → NativePlugin.updateWidgets scrubs every cached
    *               key from App Group UserDefaults and the Watch flips
    *               to its SignInGate immediately. Use this on sign-out so
    *               a screenshot of the home screen or Lock Screen never
@@ -94,9 +94,9 @@ export type WidgetUpdate = {
 };
 
 // Plugin-name is the JS↔Swift bridge contract. Same string lives in
-// HeronNativePlugin.swift::jsName; both sides read from
+// NativePlugin.swift::jsName; both sides read from
 // branding/brand.json::identifiers.capacitorPluginName via apply-brand.
-const native = registerPlugin<HeronNativePlugin>(BRAND.capacitorPluginName);
+const native = registerPlugin<NativePlugin>(BRAND.capacitorPluginName);
 
 /**
  * Runtime platform check. Exported so the layout boot path can skip the
@@ -223,7 +223,7 @@ export async function setUserActivity(
 }
 
 /** Subscribe to iOS native network-status changes (NWPathMonitor →
- *  HeronNativePlugin.notifyListeners). Returns a remover. */
+ *  NativePlugin.notifyListeners). Returns a remover. */
 export function onNetStatusChange(handler: (online: boolean) => void): () => void {
   if (!isIos()) return () => {};
   try {

@@ -1,4 +1,4 @@
-// WidgetTests — XCTest unit tests for the HeronWidget extension
+// WidgetTests — XCTest unit tests for the AppWidget extension
 // target. Real cases live in WidgetAuthGateTests.swift,
 // NextInterviewWidgetTests.swift, snapshot tests, etc.
 import XCTest

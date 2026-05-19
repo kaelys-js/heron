@@ -1,4 +1,4 @@
-// WatchTests — XCTest unit tests for the HeronWatch target.
+// WatchTests — XCTest unit tests for the WatchApp target.
 // Real cases live in WatchModelTests.swift, RootViewTests.swift
 // (ViewInspector), snapshot tests, etc.
 import XCTest

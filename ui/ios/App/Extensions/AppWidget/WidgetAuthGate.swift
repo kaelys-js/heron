@@ -3,7 +3,7 @@ import WidgetKit
 
 /**
  * WidgetAuthGate — shared signed-out CTA view + helper used by every
- * widget in the HeronWidget bundle.
+ * widget in the AppWidget bundle.
  *
  * Why a dedicated module:
  *   Every widget (Pipeline / Inbox / TopApply / NextInterview) needs the
@@ -14,7 +14,7 @@ import WidgetKit
  *
  * Auth model:
  *   The iPhone main app writes `auth:isAuthenticated` (Bool) into the
- *   shared App Group UserDefaults via HeronNativePlugin.updateWidgets.
+ *   shared App Group UserDefaults via NativePlugin.updateWidgets.
  *   On sign-out the plugin also scrubs every cached widget data key so
  *   the widget surface can't render stale data — but the boolean is the
  *   authoritative gate. A fresh-installed device defaults to FALSE

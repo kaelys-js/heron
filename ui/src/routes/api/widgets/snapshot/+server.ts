@@ -1,7 +1,7 @@
 /**
  * /api/widgets/snapshot — single endpoint that feeds every iOS surface that
  * lives outside the WebView:
- *   • iPhone Home Screen widgets (HeronWidget, InboxIssuesWidget,
+ *   • iPhone Home Screen widgets (AppWidget, InboxIssuesWidget,
  *     NextInterviewWidget, TopApplyWidget)
  *   • Lock Screen accessory widgets
  *   • Apple Watch app + Smart Stack
@@ -9,7 +9,7 @@
  *
  * Why a dedicated endpoint instead of stitching together /api/stats +
  * /api/issues + /api/interviews on the client: the iPhone-side
- * HeronNativePlugin.updateWidgets() pushes ONE blob into App Group
+ * NativePlugin.updateWidgets() pushes ONE blob into App Group
  * UserDefaults + ONE WCSession message to the Watch. Forcing the JS
  * caller to make three calls and combine them adds 100-200ms latency
  * on every widget refresh and three places to handle 401s. One round
@@ -20,7 +20,7 @@
  * AsyncLocalStorage user-context — every user sees only their own
  * queue / interviews / issues.
  *
- * Response shape mirrors what HeronNativePlugin.updateWidgets expects
+ * Response shape mirrors what NativePlugin.updateWidgets expects
  * (see plugin.swift's docstring for the key contract):
  *
  *   {

@@ -1,7 +1,7 @@
-// Android counterpart of iOS HeronNativePlugin.swift.
+// Android counterpart of iOS NativePlugin.swift.
 //
 // Capacitor plugin that exposes Android-native features to the WebView
-// via the same JS API surface — registerPlugin<HeronNativePlugin>
+// via the same JS API surface — registerPlugin<NativePlugin>
 // in native-bridge.ts already routes calls cross-platform.
 //
 // Methods implemented (parity with iOS):
@@ -24,9 +24,9 @@ import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 
 @CapacitorPlugin(name = "HeronNative")
-class HeronNativePlugin : Plugin() {
+class NativePlugin : Plugin() {
     companion object {
-        @Volatile var instance: HeronNativePlugin? = null
+        @Volatile var instance: NativePlugin? = null
 
         fun notifyNetStatus(online: Boolean) {
             val data = JSObject()

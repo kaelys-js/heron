@@ -42,7 +42,7 @@ final class ErrorReporter {
         report(message: error.localizedDescription, source: source, level: level)
     }
 
-    /// Drain the queue — called by the JS reporter via HeronNativePlugin.
+    /// Drain the queue — called by the JS reporter via NativePlugin.
     func drain() -> [[String: Any]] {
         guard let defaults = sharedDefaults() else { return [] }
         let queue = defaults.array(forKey: queueKey) as? [[String: Any]] ?? []

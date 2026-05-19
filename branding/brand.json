@@ -45,18 +45,19 @@
   },
 
   "extensions": {
-    "$comment": "Xcode extension target names. apply-brand regenerates Brand.swift inside each named folder; bundle IDs flow from identifiers.bundleId + bundleSuffix (e.g. com.heron.app.widget). Renaming a target = update name here, rename the folder + .entitlements + main .swift, then sweep project.pbxproj. The 4 Heron* folders that ship live at ui/ios/App/{name}/.",
-    "widget": { "name": "HeronWidget", "bundleSuffix": "widget", "deploymentMin": "16.0" },
+    "$comment": "Xcode extension targets — generic structural identifiers. Folder paths and target names are brand-agnostic (Extensions/AppWidget, Extensions/AppLiveActivity, Extensions/AppShareExtension), so a rebrand never touches Xcode targets. Bundle IDs flow from identifiers.bundleId + bundleSuffix (e.g. com.heron.app.widget). The deploymentMin floor is the platform minimum, not a brand decision.",
+    "widget": { "targetName": "AppWidget", "bundleSuffix": "widget", "deploymentMin": "16.0" },
     "liveActivity": {
-      "name": "HeronLiveActivity",
+      "targetName": "AppLiveActivity",
       "bundleSuffix": "liveactivity",
       "deploymentMin": "16.1"
     },
     "shareExtension": {
-      "name": "HeronShareExtension",
+      "targetName": "AppShareExtension",
       "bundleSuffix": "share",
       "deploymentMin": "15.0"
-    }
+    },
+    "watch": { "targetName": "WatchApp", "bundleSuffix": "watchkitapp", "deploymentMin": "10.0" }
   },
 
   "colors": {
