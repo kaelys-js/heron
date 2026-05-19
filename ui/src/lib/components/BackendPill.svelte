@@ -31,7 +31,7 @@
   onMount(async () => {
     try {
       resolved = await resolveBackend({
-        embeddedUrl: (globalThis as any).__CAREER_OPS__?.embeddedUrl,
+        embeddedUrl: (globalThis as any).__HERON__?.embeddedUrl,
         // tailscaleHost/productionUrl pulled from user prefs by the settings page
       });
     } catch {

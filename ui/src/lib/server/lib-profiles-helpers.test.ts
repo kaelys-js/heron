@@ -6,8 +6,8 @@
  * profile + user from a uniform interface:
  *   • --profile <slug> | --profile=<slug>  → profile id
  *   • --user <uid>     | --user=<uid>      → user id (multi-user)
- *   • CAREER_OPS_PROFILE_ID env var        → fallback for profile
- *   • CAREER_OPS_USER_ID env var           → fallback for user
+ *   • HERON_PROFILE_ID env var        → fallback for profile
+ *   • HERON_USER_ID env var           → fallback for user
  *
  * The orchestrator forwards these env vars on every spawn so dashboard
  * invocations land in the right data/users/{uid}/profiles/{slug}/ tree
@@ -22,8 +22,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const ORIG_ENV_USER = process.env.CAREER_OPS_USER_ID;
-const ORIG_ENV_PROFILE = process.env.CAREER_OPS_PROFILE_ID;
+const ORIG_ENV_USER = process.env.HERON_USER_ID;
+const ORIG_ENV_PROFILE = process.env.HERON_PROFILE_ID;
 
 // Resolve the MJS module by absolute file:// URL so vitest's loader
 // doesn't try to resolve via the workspace's module-resolution graph.
@@ -32,13 +32,13 @@ const libPath = pathToFileURL(
 ).href;
 
 beforeEach(() => {
-  delete process.env.CAREER_OPS_USER_ID;
-  delete process.env.CAREER_OPS_PROFILE_ID;
+  delete process.env.HERON_USER_ID;
+  delete process.env.HERON_PROFILE_ID;
 });
 
 afterEach(() => {
-  process.env.CAREER_OPS_USER_ID = ORIG_ENV_USER;
-  process.env.CAREER_OPS_PROFILE_ID = ORIG_ENV_PROFILE;
+  process.env.HERON_USER_ID = ORIG_ENV_USER;
+  process.env.HERON_PROFILE_ID = ORIG_ENV_PROFILE;
 });
 
 describe('lib-profiles.mjs::userFromArgv', () => {
@@ -52,14 +52,14 @@ describe('lib-profiles.mjs::userFromArgv', () => {
     expect(lib.userFromArgv(['--user=bob'])).toBe('bob');
   });
 
-  it('falls back to CAREER_OPS_USER_ID env var when no flag', async () => {
-    process.env.CAREER_OPS_USER_ID = 'env-charlie';
+  it('falls back to HERON_USER_ID env var when no flag', async () => {
+    process.env.HERON_USER_ID = 'env-charlie';
     const lib = await import(libPath);
     expect(lib.userFromArgv([])).toBe('env-charlie');
   });
 
-  it('--user flag wins over CAREER_OPS_USER_ID env var', async () => {
-    process.env.CAREER_OPS_USER_ID = 'env-loser';
+  it('--user flag wins over HERON_USER_ID env var', async () => {
+    process.env.HERON_USER_ID = 'env-loser';
     const lib = await import(libPath);
     expect(lib.userFromArgv(['--user', 'arg-winner'])).toBe('arg-winner');
   });
@@ -70,7 +70,7 @@ describe('lib-profiles.mjs::userFromArgv', () => {
   });
 
   it('returns SYSTEM_USER_ID when env var is empty string', async () => {
-    process.env.CAREER_OPS_USER_ID = '';
+    process.env.HERON_USER_ID = '';
     const lib = await import(libPath);
     expect(lib.userFromArgv([])).toBe(lib.SYSTEM_USER_ID);
   });

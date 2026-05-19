@@ -28,7 +28,7 @@ function runNormalize(): Promise<JobResult> {
     let stdout = '';
     const p = spawn('node', ['scripts/tracker/normalize-statuses.mjs'], {
       cwd: ROOT,
-      // userContextEnv injects CAREER_OPS_USER_ID so the script
+      // userContextEnv injects HERON_USER_ID so the script
       // resolves the right data/users/{uid}/profiles/{slug}/applications.md
       // tree (F13).
       env: userContextEnv(),

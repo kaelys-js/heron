@@ -6,7 +6,7 @@ import UIKit
  *
  * Wires platform features that need delegate hooks:
  *
- *   • Bonjour browse — exposes a JS bridge `__CAREER_OPS_MDNS_BROWSE__()`
+ *   • Bonjour browse — exposes a JS bridge `__HERON_MDNS_BROWSE__()`
  *     to the WebView so backend-discovery.ts can find the desktop app
  *     via the local network.
  *

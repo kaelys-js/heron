@@ -75,7 +75,7 @@ from lib_apply import (  # noqa: E402
 from lib_profiles import resolve_profile_arg, resolve_user_arg, profile_path  # noqa: E402
 from lib_playwright_auth import user_data_dir as _resolve_user_data_dir  # noqa: E402
 
-# Per-user Playwright session dir — resolves per active CAREER_OPS_USER_ID.
+# Per-user Playwright session dir — resolves per active HERON_USER_ID.
 USER_DATA_DIR = _resolve_user_data_dir("ashby")
 DISPATCHER_JOB_ID: str = ""
 

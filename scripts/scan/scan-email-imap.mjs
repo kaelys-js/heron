@@ -55,7 +55,7 @@ if (existsSync(ENV_FILE)) {
   dotenv.config({ path: ENV_FILE, override: false });
 }
 
-// Per-user secrets first (via CAREER_OPS_USER_ID, set by the orchestrator
+// Per-user secrets first (via HERON_USER_ID, set by the orchestrator
 // before spawn), .env fallback. Closes F14/F19/F27 -- gmail-imap creds
 // are no longer install-wide; each user manages their own mailbox.
 const HOST = getCredential('GMAIL_IMAP_HOST') || 'imap.gmail.com';

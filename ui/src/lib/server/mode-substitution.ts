@@ -13,9 +13,9 @@
  *   1. Provider-agnostic. Claude Code, Gemini, Codex, OpenCode, Qwen,
  *      Copilot all handle prompts as raw text. None of them
  *      uniformly honour env-var interpolation in instructional text.
- *   2. No silent fallback. If we wrote "read $CAREER_OPS_PROFILE_DIR/
+ *   2. No silent fallback. If we wrote "read $HERON_PROFILE_DIR/
  *      cv.md" and the AI ignored the variable, it would happily try
- *      "$CAREER_OPS_PROFILE_DIR/cv.md" as a literal path and fail
+ *      "$HERON_PROFILE_DIR/cv.md" as a literal path and fail
  *      cryptically. With pre-substituted absolute paths there's no
  *      env-var indirection to misinterpret.
  *   3. Per-spawn state. The substitution function takes a profileId

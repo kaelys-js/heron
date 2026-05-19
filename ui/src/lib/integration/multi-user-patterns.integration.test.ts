@@ -8,7 +8,7 @@
  * Patterns enforced:
  *   1. No bare `env: { ...process.env }` in spawn() / execFile() --
  *      every server-side spawn must use `userContextEnv()` so the child
- *      inherits `CAREER_OPS_USER_ID` from the parent's ALS scope (F13).
+ *      inherits `HERON_USER_ID` from the parent's ALS scope (F13).
  *   2. No module-level `let cached: AutopilotConfig` (or similar
  *      single-instance Config singletons) -- they cross users (F9).
  *   3. Every `installBusListener` callback that touches user data must
@@ -56,7 +56,7 @@ describe('Multi-user — every spawn() injects userContextEnv (F13 guard)', () =
 
     expect(
       hits,
-      `Spawn sites must use \`env: userContextEnv()\` so the child inherits CAREER_OPS_USER_ID.\nOffending files:\n  ${hits.join(
+      `Spawn sites must use \`env: userContextEnv()\` so the child inherits HERON_USER_ID.\nOffending files:\n  ${hits.join(
         '\n  ',
       )}`,
     ).toEqual([]);
@@ -65,9 +65,9 @@ describe('Multi-user — every spawn() injects userContextEnv (F13 guard)', () =
   it('userContextEnv is exported from user-context.ts', () => {
     const src = fs.readFileSync(path.join(SERVER_ROOT, 'user-context.ts'), 'utf8');
     expect(src).toMatch(/export\s+function\s+userContextEnv\s*\(/);
-    // The helper must inject CAREER_OPS_USER_ID (the contract the
+    // The helper must inject HERON_USER_ID (the contract the
     // scripts-side `lib-profiles.mjs::resolveUserArg()` expects).
-    expect(src).toContain('CAREER_OPS_USER_ID');
+    expect(src).toContain('HERON_USER_ID');
   });
 });
 

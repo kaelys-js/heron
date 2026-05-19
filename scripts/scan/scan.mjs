@@ -39,7 +39,7 @@ import {
 const parseYaml = yaml.load;
 
 // ── Config -- per-user per-profile paths ────────────────────────────
-// Resolve --user / --profile (or CAREER_OPS_USER_ID / CAREER_OPS_PROFILE_ID
+// Resolve --user / --profile (or HERON_USER_ID / HERON_PROFILE_ID
 // env vars set by the orchestrator). Multi-user installs land at
 // data/users/{uid}/profiles/{slug}/; legacy single-user at data/profiles/{slug}/.
 const USER_ID = userFromArgv();

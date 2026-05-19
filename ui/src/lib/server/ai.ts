@@ -4,7 +4,7 @@
  * Each user holds their own ANTHROPIC_API_KEY (see user-secrets.ts).
  * `getClient()` resolves the current user via AsyncLocalStorage (the
  * dashboard wraps every request in `runAsUser(uid, ...)` from
- * hooks.server.ts; CLI scripts set `CAREER_OPS_USER_ID` to drive the
+ * hooks.server.ts; CLI scripts set `HERON_USER_ID` to drive the
  * same default). The resolver then pulls the user's key from the
  * encrypted secrets store, falling back to `process.env.ANTHROPIC_API_KEY`
  * for legacy single-user installs.

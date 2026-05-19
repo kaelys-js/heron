@@ -1018,7 +1018,7 @@ function applyGitHubIssueTemplates(brand) {
 function applyGitHubWorkflows(brand) {
   // Patch artifact names in GitHub workflow YAMLs that include the
   // brand name. We do NOT touch prose comments, doc files, or the
-  // upstream-pin references (sync-upstream uses the santifer URL on
+  // upstream-pin references (sync-upstream used the upstream URL on
   // purpose). Only the upload-artifact name + SBOM filenames.
   const subs = [
     {
@@ -1074,7 +1074,7 @@ function applyBookmarklet(brand) {
   // dashboard. The toast prefix and the runtime-doc comment carry the
   // brand name, so a rebrand needs to retarget both.
   //
-  // Note: window.__CAREER_OPS_HOST__ is INTENTIONALLY kept stable
+  // Note: window.__HERON_HOST__ is INTENTIONALLY kept stable
   // across rebrands because users have it pinned in their browser
   // bookmark bar; changing the global symbol would silently break
   // every existing bookmark. The user-visible toast prefix is what
@@ -1317,7 +1317,6 @@ function mdQuickFactsTable(b) {
     `| **Bundle ID** | \`${b.identifiers.bundleId}\` |`,
     `| **URL scheme** | \`${b.identifiers.urlScheme}://\` |`,
     `| **Support email** | <${b.supportEmail}> |`,
-    `| **Heritage** | Hard fork of [\`${new URL(b.repo.upstream ?? b.repo.url).pathname.slice(1)}\`](${b.repo.upstream ?? b.repo.url}) |`,
   ].join('\n');
 }
 
@@ -2389,8 +2388,8 @@ function maybeApplyGitHubConfig(brand, prevSnapshot) {
   if (!brand.repo) return;
 
   // Fields that map onto gh:apply's reconciliation surface. Other
-  // brand.json::repo keys (url, issues, docs, upstream) are
-  // informational -- they don't drive any `gh api` call.
+  // brand.json::repo keys (url, issues, docs) are informational --
+  // they don't drive any `gh api` call.
   const REPO_FIELDS = ['description', 'homepage', 'topics', 'owner', 'name'];
   const repoChanged = REPO_FIELDS.some((f) => {
     const before = prevSnapshot.repo?.[f];

@@ -66,7 +66,7 @@ const DIM = '\x1b[2m';
 const N = '\x1b[0m';
 
 function activeProfileDir() {
-  // Resolves to data/users/{uid}/profiles/{slug}/ when CAREER_OPS_USER_ID
+  // Resolves to data/users/{uid}/profiles/{slug}/ when HERON_USER_ID
   // is set (orchestrator passthrough); falls back to data/profiles/{slug}/
   // under SYSTEM_USER_ID for legacy single-user installs.
   const userId = userFromArgv();

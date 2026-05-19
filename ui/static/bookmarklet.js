@@ -20,7 +20,7 @@
 (function () {
   'use strict';
 
-  var DASHBOARD = window.__CAREER_OPS_HOST__ || 'http://localhost:5174';
+  var DASHBOARD = window.__HERON_HOST__ || 'http://localhost:5174';
   var ENDPOINT = DASHBOARD + '/api/answer-form';
 
   function toast(msg, kind) {

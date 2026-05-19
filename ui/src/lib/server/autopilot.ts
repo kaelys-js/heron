@@ -626,7 +626,7 @@ export function startScheduler(): void {
  *   - readConfig() reads THAT user's autopilot.json (F9)
  *   - readLastRun() reads THAT user's job-last-run.json (F10 sibling)
  *   - runTask() / runRegistryJob() spawn under THAT user's context
- *     (orchestrator's CAREER_OPS_USER_ID env injection covers the
+ *     (orchestrator's HERON_USER_ID env injection covers the
  *     child process)
  *   - runJobById() detects the existing user context and runs once
  *     for THIS user only (registry.ts:104-108) -- no double fan-out

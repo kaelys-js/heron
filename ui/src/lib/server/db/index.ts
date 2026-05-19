@@ -29,8 +29,8 @@
  * ── Test / fresh-clone safety ────────────────────────────────────────
  * The DB paths are configurable via three env vars (override order):
  *   1. HERON_DATA_DIR  → both files live under that dir
- *   2. CAREER_OPS_AUTH_DB   → specific auth.db path (or ":memory:")
- *      CAREER_OPS_APP_DB    → specific app.db path  (or ":memory:")
+ *   2. HERON_AUTH_DB   → specific auth.db path (or ":memory:")
+ *      HERON_APP_DB    → specific app.db path  (or ":memory:")
  *   3. VITEST + NODE_ENV=test → auto-route to a fresh tmpdir so a test
  *      run NEVER touches the developer's local data/*.db. This
  *      prevents the "first-user/owner" race where prior test runs leave
@@ -73,8 +73,8 @@ function resolveDataDir(): string {
 const DATA_DIR = resolveDataDir();
 fs.mkdirSync(DATA_DIR, { recursive: true });
 
-export const AUTH_DB_PATH = process.env.CAREER_OPS_AUTH_DB ?? path.join(DATA_DIR, 'auth.db');
-export const APP_DB_PATH = process.env.CAREER_OPS_APP_DB ?? path.join(DATA_DIR, 'app.db');
+export const AUTH_DB_PATH = process.env.HERON_AUTH_DB ?? path.join(DATA_DIR, 'auth.db');
+export const APP_DB_PATH = process.env.HERON_APP_DB ?? path.join(DATA_DIR, 'app.db');
 
 /** Lazy-open raw sqlite handles. We open eagerly at module load -- the cost
  *  is microseconds and lazy-init across SSR + jobs caused weird races. */

@@ -229,17 +229,17 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
   });
   let p: ChildProcess;
   // Inject the current user's id into the spawned env. Both lib_profiles.py
-  // and lib-profiles.mjs honor `CAREER_OPS_USER_ID` as a fallback for the
+  // and lib-profiles.mjs honor `HERON_USER_ID` as a fallback for the
   // `--user` CLI flag, so even scripts that don't yet accept the flag
   // pick up the right user's data tree automatically.
   const ctxUserId = maybeCurrentUserId();
   const envWithUser: NodeJS.ProcessEnv = { ...process.env };
   if (ctxUserId && ctxUserId !== SYSTEM_USER_ID) {
-    envWithUser.CAREER_OPS_USER_ID = ctxUserId;
-  } else if (process.env.CAREER_OPS_USER_ID) {
+    envWithUser.HERON_USER_ID = ctxUserId;
+  } else if (process.env.HERON_USER_ID) {
     // Inherit any pre-set var (autopilot jobs may set it explicitly before
     // calling start()).
-    envWithUser.CAREER_OPS_USER_ID = process.env.CAREER_OPS_USER_ID;
+    envWithUser.HERON_USER_ID = process.env.HERON_USER_ID;
   }
   // Resolve per-user credentials and inject into the child's env. This
   // is the bridge that makes the per-user secrets store transparent to
@@ -342,7 +342,7 @@ export function runScan(profileId?: string) {
 export function runGemini(top = 30, profileId?: string) {
   // Per-user store wins; .env fallback. The Python child still reads
   // GEMINI_API_KEY from its own env, so we resolve here and inject below
-  // (orchestrator's CAREER_OPS_USER_ID env-injection already covers the
+  // (orchestrator's HERON_USER_ID env-injection already covers the
   // multi-user fan-out for spawned children).
   if (!getCredential(currentUserIdOrDefault(), 'GEMINI_API_KEY')) {
     logEvent('gemini', 'Gemini API key not set', {
@@ -431,7 +431,7 @@ export function runLinkedInApply(autoSubmit = false, url?: string, profileId?: s
   // Pass the acting user id so lib_profiles.py resolves the right
   // data/users/{userId}/profiles/{slug}/ tree.
   const _uid = maybeCurrentUserId();
-  if (_uid && _uid !== SYSTEM_USER_ID) env.CAREER_OPS_USER_ID = _uid;
+  if (_uid && _uid !== SYSTEM_USER_ID) env.HERON_USER_ID = _uid;
   // Surface up-front whether the general CV is missing for the targeted profile.
   let cvNote = '';
   try {
@@ -732,9 +732,9 @@ export async function runBulkOfertaParallel(
         // per-profile path inside the runner (REPORTS_DIR,
         // APPLICATIONS_FILE, BATCH_DIR) resolves to the right
         // data/users/{uid}/profiles/{slug}/ subtree.
-        CAREER_OPS_USER_ID: userId,
-        CAREER_OPS_PROFILE_ID: resolvedProfileId,
-        CAREER_OPS_BATCH_DIR: batchDir,
+        HERON_USER_ID: userId,
+        HERON_PROFILE_ID: resolvedProfileId,
+        HERON_BATCH_DIR: batchDir,
       },
     });
   } catch (e) {
@@ -1076,11 +1076,11 @@ function runLinkedInApplyAwait(url: string): Promise<{ ok: boolean; capped?: boo
       });
     }
 
-    // Forward CAREER_OPS_USER_ID so the Python script resolves the right
+    // Forward HERON_USER_ID so the Python script resolves the right
     // data/users/{userId}/profiles/{slug}/ tree under multi-user.
     const env: NodeJS.ProcessEnv = { ...process.env };
     const _uid = maybeCurrentUserId();
-    if (_uid && _uid !== SYSTEM_USER_ID) env.CAREER_OPS_USER_ID = _uid;
+    if (_uid && _uid !== SYSTEM_USER_ID) env.HERON_USER_ID = _uid;
 
     let p: ChildProcess;
     try {

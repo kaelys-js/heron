@@ -323,7 +323,6 @@ export const BRAND = {
     "url": "https://github.com/kaelys-js/heron",
     "issues": "https://github.com/kaelys-js/heron/issues",
     "docs": "https://github.com/kaelys-js/heron#readme",
-    "upstream": "https://github.com/santifer/career-ops",
     "description": "Stand still. Strike well. A local-first, AI-agnostic thinking partner for career transitions. Multi-user, open source.",
     "homepage": "https://heron.app",
     "topics": [

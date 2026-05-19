@@ -10,10 +10,10 @@
  * `mjs-ts parity`). Touch either side and re-run that test.
  *
  * Resolution order for a CLI script that wants a credential:
- *   1. per-user value (this module) -- keyed by `CAREER_OPS_USER_ID` env
+ *   1. per-user value (this module) -- keyed by `HERON_USER_ID` env
  *   2. process.env fallback (legacy single-user install)
  *
- * If CAREER_OPS_USER_ID isn't set, scripts fall straight through to
+ * If HERON_USER_ID isn't set, scripts fall straight through to
  * process.env -- that's the pre-multi-user path and stays supported.
  */
 import { readFileSync, existsSync } from 'node:fs';
@@ -29,11 +29,11 @@ const SYSTEM_USER_ID = 'system-user';
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /** Data directory. Same precedence as ui/src/lib/server/db/index.ts:
- *  HERON_DATA_DIR > CAREER_OPS_DATA_DIR > <repo>/data. The override
+ *  HERON_DATA_DIR > HERON_DATA_DIR > <repo>/data. The override
  *  variants let the vitest parity case and any future migration scripts
  *  point at a tmpdir without touching the developer's real `data/`. */
 function dataDir() {
-  return process.env.HERON_DATA_DIR || process.env.CAREER_OPS_DATA_DIR || join(REPO_ROOT, 'data');
+  return process.env.HERON_DATA_DIR || process.env.HERON_DATA_DIR || join(REPO_ROOT, 'data');
 }
 
 /** Resolve the on-disk secrets path for a user. Mirrors
@@ -102,14 +102,14 @@ export function getSecret(userId, key) {
  *    import { getCredential } from '../lib/user-secrets.mjs';
  *    const apiKey = getCredential('GEMINI_API_KEY');
  *
- *  Resolves the userId from CAREER_OPS_USER_ID. When unset, the function
+ *  Resolves the userId from HERON_USER_ID. When unset, the function
  *  skips the per-user lookup and goes straight to process.env -- that's
  *  the pre-multi-user path and stays supported.
  *  @param {string} key
  *  @returns {string | null}
  */
 export function getCredential(key) {
-  const userId = process.env.CAREER_OPS_USER_ID;
+  const userId = process.env.HERON_USER_ID;
   if (userId) {
     try {
       const fromStore = getSecret(userId, key);

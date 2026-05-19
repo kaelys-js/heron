@@ -32,12 +32,12 @@ describe('db/index.ts — DB paths are isolated during tests', () => {
     expect(dbSrc).toMatch(/process\.env\.HERON_DATA_DIR/);
   });
 
-  it('reads CAREER_OPS_AUTH_DB env override', () => {
-    expect(dbSrc).toMatch(/process\.env\.CAREER_OPS_AUTH_DB/);
+  it('reads HERON_AUTH_DB env override', () => {
+    expect(dbSrc).toMatch(/process\.env\.HERON_AUTH_DB/);
   });
 
-  it('reads CAREER_OPS_APP_DB env override', () => {
-    expect(dbSrc).toMatch(/process\.env\.CAREER_OPS_APP_DB/);
+  it('reads HERON_APP_DB env override', () => {
+    expect(dbSrc).toMatch(/process\.env\.HERON_APP_DB/);
   });
 
   it('auto-routes to tmpdir when VITEST=true', () => {

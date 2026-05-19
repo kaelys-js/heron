@@ -5,7 +5,7 @@
  *
  *   1. Spawn the embedded Node SvelteKit server (the same `build/index.js`
  *      that adapter-node produces). Pick a free port at random; pass the
- *      resolved URL into the WebView via preload's `window.__CAREER_OPS__`.
+ *      resolved URL into the WebView via preload's `window.__HERON__`.
  *
  *   2. Advertise the running server on the local network via mDNS
  *      (`_heron._tcp.local`) so an iOS app on the same wifi can
@@ -255,12 +255,10 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
   await myCapacitorApp.init();
   state.mainWindow = myCapacitorApp.getMainWindow();
 
-  // Inject embedded URL into the WebView via window.__CAREER_OPS__
+  // Inject embedded URL into the WebView via window.__HERON__
   if (state.serverUrl && state.mainWindow) {
     state.mainWindow.webContents
-      .executeJavaScript(
-        `window.__CAREER_OPS__ = { embeddedUrl: ${JSON.stringify(state.serverUrl)} };`,
-      )
+      .executeJavaScript(`window.__HERON__ = { embeddedUrl: ${JSON.stringify(state.serverUrl)} };`)
       .catch(() => {});
   }
 

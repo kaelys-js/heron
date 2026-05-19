@@ -67,7 +67,7 @@ REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 
 # One persistent Chromium profile per portal PER USER. State (cookies,
 # localStorage, cache) lives inside these dirs — wiping the dir
-# disconnects that user. Under multi-user (CAREER_OPS_USER_ID set):
+# disconnects that user. Under multi-user (HERON_USER_ID set):
 #   data/users/{uid}/.playwright-{portal}/
 # Legacy single-user (SYSTEM_USER_ID fallback):
 #   data/profiles/_shared/.playwright-{portal}/
@@ -99,7 +99,7 @@ PROBE_TIMEOUT_MS = 15_000  # navigation timeouts during is_logged_in_* probes
 def user_data_dir(portal: str) -> Path:
     """Resolve the persistent Chromium dir for the given portal + active user.
 
-    The active user is read from CAREER_OPS_USER_ID at call time so the
+    The active user is read from HERON_USER_ID at call time so the
     same Python process can switch between users via env mutation (rare,
     but well-defined: each spawn from the orchestrator gets its own env).
 

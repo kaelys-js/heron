@@ -77,7 +77,7 @@ export function currentUserIdOrDefault(): string {
 export const SYSTEM_USER_ID = SYSTEM_USER;
 
 /**
- * Compose a `process.env` snapshot with `CAREER_OPS_USER_ID` injected if
+ * Compose a `process.env` snapshot with `HERON_USER_ID` injected if
  * there's a current ALS user. Use this whenever you `spawn()` a child
  * process that resolves per-user file paths -- without the env var the
  * child falls back to SYSTEM_USER and writes to legacy `data/profiles/`
@@ -106,7 +106,7 @@ export function userContextEnv(extra: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv
   const merged: NodeJS.ProcessEnv = { ...process.env, ...extra };
   const uid = maybeCurrentUserId();
   if (uid && uid !== SYSTEM_USER) {
-    merged.CAREER_OPS_USER_ID = uid;
+    merged.HERON_USER_ID = uid;
   }
   return merged;
 }

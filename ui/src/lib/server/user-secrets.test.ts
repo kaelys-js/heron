@@ -240,25 +240,25 @@ describe('user-secrets — mjs/ts parity (CLI scripts share the same format)', (
     }
   });
 
-  it('mjs getCredential() honors CAREER_OPS_USER_ID and falls back to process.env', async () => {
+  it('mjs getCredential() honors HERON_USER_ID and falls back to process.env', async () => {
     setSecret(TEST_USER_A, 'ANTHROPIC_API_KEY', 'sk-ant-per-user-WINS-LONG');
     const prevHeron = process.env.HERON_DATA_DIR;
-    const prevUser = process.env.CAREER_OPS_USER_ID;
+    const prevUser = process.env.HERON_USER_ID;
     const prevEnv = process.env.ANTHROPIC_API_KEY;
     process.env.HERON_DATA_DIR = path.join(TMP, 'data');
-    process.env.CAREER_OPS_USER_ID = TEST_USER_A;
+    process.env.HERON_USER_ID = TEST_USER_A;
     process.env.ANTHROPIC_API_KEY = 'env-LOSES';
     try {
       const mjs = await import('../../../../scripts/lib/user-secrets.mjs');
       expect(mjs.getCredential('ANTHROPIC_API_KEY')).toBe('sk-ant-per-user-WINS-LONG');
-      // Now unset CAREER_OPS_USER_ID -- should fall through to process.env
-      delete process.env.CAREER_OPS_USER_ID;
+      // Now unset HERON_USER_ID -- should fall through to process.env
+      delete process.env.HERON_USER_ID;
       expect(mjs.getCredential('ANTHROPIC_API_KEY')).toBe('env-LOSES');
     } finally {
       if (prevHeron === undefined) delete process.env.HERON_DATA_DIR;
       else process.env.HERON_DATA_DIR = prevHeron;
-      if (prevUser === undefined) delete process.env.CAREER_OPS_USER_ID;
-      else process.env.CAREER_OPS_USER_ID = prevUser;
+      if (prevUser === undefined) delete process.env.HERON_USER_ID;
+      else process.env.HERON_USER_ID = prevUser;
       if (prevEnv === undefined) delete process.env.ANTHROPIC_API_KEY;
       else process.env.ANTHROPIC_API_KEY = prevEnv;
     }

@@ -43,7 +43,7 @@
     state = { kind: 'resolving', phase: `Looking for your ${BRAND.displayName} server…` };
     try {
       const w = globalThis as any;
-      const embedded = w?.__CAREER_OPS__?.embeddedUrl;
+      const embedded = w?.__HERON__?.embeddedUrl;
       const resolved = await resolveBackend({
         embeddedUrl: embedded,
       });

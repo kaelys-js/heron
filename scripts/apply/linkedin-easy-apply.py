@@ -60,7 +60,7 @@ REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 # Backward-compat alias; resolved lazily on each access so the active
-# CAREER_OPS_USER_ID env var (set by the orchestrator per-spawn) drives
+# HERON_USER_ID env var (set by the orchestrator per-spawn) drives
 # the chosen dir.
 USER_DATA_DIR = user_data_dir("linkedin")
 

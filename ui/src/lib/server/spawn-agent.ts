@@ -44,7 +44,7 @@ export interface SpawnAgentOptions {
   profileId: string;
   /** Override the userId. Defaults to AsyncLocalStorage current user. */
   userId?: string;
-  /** Extra env vars to merge onto the child. Userid + CAREER_OPS_* envs
+  /** Extra env vars to merge onto the child. Userid + HERON_* envs
    *  are set automatically. */
   env?: NodeJS.ProcessEnv;
   /** Extra CLI args to insert AFTER -p but BEFORE --append-system-prompt-file. */
@@ -95,7 +95,7 @@ export function spawnAgentWithMode(
   const env: NodeJS.ProcessEnv = { ...process.env, ...(opts.env ?? {}) };
   // Pass acting userId through so child scripts (generate-pdf.mjs etc.)
   // resolve per-user paths correctly without re-reading AsyncLocalStorage.
-  if (userId) env.CAREER_OPS_USER_ID = userId;
+  if (userId) env.HERON_USER_ID = userId;
 
   const args = [
     '-p',

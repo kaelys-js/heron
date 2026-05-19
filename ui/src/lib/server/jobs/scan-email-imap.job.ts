@@ -165,7 +165,7 @@ let pollerHandle: ReturnType<typeof setInterval> | null = null;
  *  gmail-imap connected, and -- if so -- runs the poll under that user.
  *
  *  Why per-user ALS context matters: the child process inherits
- *  `CAREER_OPS_USER_ID` from the orchestrator's env injection
+ *  `HERON_USER_ID` from the orchestrator's env injection
  *  (orchestrator.ts::start) which means the .mjs script reads THAT
  *  user's encrypted credentials via `scripts/lib/user-secrets.mjs`,
  *  writes pipeline / applications / scan-history into THAT user's

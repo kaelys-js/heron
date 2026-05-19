@@ -9,7 +9,7 @@
  *
  *   1. `opts.embeddedUrl`          (Electron prod build serves its own
  *                                   Node server; main process passes
- *                                   the port via window.__CAREER_OPS__)
+ *                                   the port via window.__HERON__)
  *   2. `http://localhost:5173`     (Vite dev server on this machine --
  *                                   useful when running iOS simulator
  *                                   alongside `pnpm dev` on the Mac)
@@ -42,7 +42,7 @@ export type ResolvedBackend = {
 };
 
 export type ResolverOptions = {
-  /** Set by Electron main process via window.__CAREER_OPS__.embeddedUrl. */
+  /** Set by Electron main process via window.__HERON__.embeddedUrl. */
   embeddedUrl?: string;
   /** User-configured Tailscale host, e.g. "macbook-pro.tail-xxxx.ts.net:5173". */
   tailscaleHost?: string;
@@ -99,10 +99,10 @@ async function browseMdns(timeoutMs = 1500): Promise<string | null> {
   // a runtime-injected helper (electron main sets one, an iOS bonjour
   // plugin sets another). If neither is present, we return null.
   const w = globalThis as any;
-  if (typeof w.__CAREER_OPS_MDNS_BROWSE__ === 'function') {
+  if (typeof w.__HERON_MDNS_BROWSE__ === 'function') {
     try {
       const result = await Promise.race([
-        w.__CAREER_OPS_MDNS_BROWSE__(BRAND.serviceType),
+        w.__HERON_MDNS_BROWSE__(BRAND.serviceType),
         new Promise<null>((r) => setTimeout(() => r(null), timeoutMs)),
       ]);
       if (result && typeof result === 'string') return result;

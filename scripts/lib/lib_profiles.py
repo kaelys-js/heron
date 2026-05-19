@@ -20,7 +20,7 @@ LEGACY SINGLE-USER LAYOUT (still works for pre-multi-user installs):
 
 Scripts get the user id from the dashboard via either:
   * --user <userId>            CLI flag (preferred)
-  * CAREER_OPS_USER_ID env var (set by the orchestrator when it spawns)
+  * HERON_USER_ID env var (set by the orchestrator when it spawns)
 
 When neither is set, lib_profiles falls back to the legacy `data/profiles/`
 root. This lets old single-user workflows keep working.
@@ -202,10 +202,10 @@ def resolve_profile_arg(value: str | None) -> str:
 
 
 def resolve_user_arg(value: str | None = None) -> str:
-    """Resolve a CLI --user arg or CAREER_OPS_USER_ID env var. Returns
+    """Resolve a CLI --user arg or HERON_USER_ID env var. Returns
     SYSTEM_USER_ID when neither is set (legacy single-user fallback)."""
     if value is None:
-        value = os.environ.get("CAREER_OPS_USER_ID")
+        value = os.environ.get("HERON_USER_ID")
     if not value:
         return SYSTEM_USER_ID
     if not isinstance(value, str):

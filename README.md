@@ -162,15 +162,13 @@ Heron is built in volunteer time. If it saves you a job-search week, consider [s
 
 ## Acknowledgements
 
-Heron is a hard fork of [`santifer/career-ops`](https://github.com/santifer/career-ops) -- the original CLI-driven job-search system [santifer](https://santifer.io) built and used to evaluate 740+ offers, generate 100+ tailored CVs, and land a Head of Applied AI role. His [case study](https://santifer.io/career-ops-system) is required reading for the philosophy (filter, not cannon).
-
-This fork adds: multi-user system + RBAC + GDPR lifecycle, SvelteKit + Better Auth + Drizzle dashboard, Capacitor 8 native apps (iOS + Android + Electron + Watch), 4 iOS widgets + Live Activity, autonomous-apply pipeline, Vitest matrix replacing legacy verifiers, 0-CVE supply chain, OSSF Scorecard + SLSA L2 + CodeQL × 3 languages, and the Heron brand system.
+Original work © 2026 santifer, MIT-licensed. See [`REUSE.toml`](REUSE.toml) for the full SPDX attribution.
 
 ## License
 
 [MIT](LICENSE) for code. [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) for `branding/*` (logos, mascot specs, voice guide). [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) for `docs/examples/*`. See [`REUSE.toml`](REUSE.toml) for the full SPDX declaration.
 
-Original work © santifer. This fork © resist.js.
+This fork © resist.js.
 
 See [`docs/TRADEMARK.md`](docs/TRADEMARK.md) for trademark policy, [`docs/LEGAL_DISCLAIMER.md`](docs/LEGAL_DISCLAIMER.md) for usage disclaimers, and [`docs/GOVERNANCE.md`](docs/GOVERNANCE.md) for contribution governance.
 
@@ -184,6 +182,6 @@ Maintained by [@kaelys-js](https://github.com/kaelys-js).
 [Discord](https://discord.gg/8pRpHETxa4) ·
 [hello@heron.app](mailto:hello@heron.app)
 
-Forked from [`santifer/career-ops`](https://github.com/santifer/career-ops). MIT licensed.
+MIT licensed.
 
 </div>

@@ -24,7 +24,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..', '..');
 
 // Per-user per-profile paths. cv.md + profile.yml + article-digest.md
-// all live under the active profile of the active user (CAREER_OPS_USER_ID
+// all live under the active profile of the active user (HERON_USER_ID
 // env or --user flag). Legacy single-user installs resolve to
 // data/profiles/{slug}/ via the SYSTEM_USER_ID sentinel.
 const USER_ID = userFromArgv();

@@ -269,7 +269,7 @@ export function getCredential(userId: string, key: string): string | null {
  *
  * NOT exhaustive of every env var the app reads -- only the personal
  * credentials. Infrastructure config (BETTER_AUTH_SECRET, GITHUB_CLIENT_*,
- * CAREER_OPS_DATA_DIR, HERON_UPDATE_*) stays in `.env` because it's
+ * HERON_DATA_DIR, HERON_UPDATE_*) stays in `.env` because it's
  * shared across all users by design.
  */
 export const MIGRATABLE_KEYS = [

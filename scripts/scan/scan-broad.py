@@ -30,7 +30,7 @@ from urllib.request import Request, urlopen
 from urllib.parse import urlencode
 from xml.etree import ElementTree as ET
 
-# Resolve per-user secrets when CAREER_OPS_USER_ID is set; .env fallback
+# Resolve per-user secrets when HERON_USER_ID is set; .env fallback
 # otherwise. Each user holds their own Adzuna credentials in their
 # encrypted secrets store; this helper hides that lookup behind the
 # same shape as os.environ.get.
