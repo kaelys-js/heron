@@ -102,7 +102,7 @@ reviews:
         affect NEW profiles (existing per-profile copies aren't
         retroactively updated). Flag if a system-wide rule is being
         added here instead of modes/_shared.md.
-    - path: "templates/states.yml"
+    - path: "data/states.yml"
       instructions: |
         Canonical application states. Renaming, removing, or reordering
         these values is a BREAKING change for applications.md parsers

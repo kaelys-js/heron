@@ -6,7 +6,7 @@
  * Checks:
  * 1. cv.md exists
  * 2. config/profile.yml exists and has required fields
- * 3. No hardcoded metrics in _shared.md or templates/batch-prompt.md
+ * 3. No hardcoded metrics in _shared.md or modes/batch-prompt.md
  * 4. article-digest.md freshness (if exists)
  */
 

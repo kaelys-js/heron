@@ -36,7 +36,7 @@ Copy from `templates/portals.example.yml` and customize:
 ## CV Template (templates/cv-template.html)
 
 The HTML template uses these design tokens:
-- **Fonts**: Space Grotesk (headings) + DM Sans (body) -- self-hosted in `templates/fonts/`
+- **Fonts**: Inter (400-700, single family) -- self-hosted in `templates/fonts/`
 - **Colors**: Cyan primary (`hsl(187,74%,32%)`) + Purple accent (`hsl(270,70%,45%)`)
 - **Layout**: Single-column, ATS-optimized
 
@@ -68,9 +68,9 @@ Heron can integrate with external systems via Claude Code hooks. Example hooks:
 
 Save hooks in `.claude/settings.json`.
 
-## States (templates/states.yml)
+## States (data/states.yml)
 
 The canonical states rarely need changing. If you add new states, update:
-1. `templates/states.yml`
+1. `data/states.yml`
 2. `scripts/tracker/normalize-statuses.mjs` (alias mappings)
 3. `modes/_shared.md` (any references)

@@ -45,12 +45,12 @@ mkdir -p "$BATCH_DIR"
 INPUT_FILE="$BATCH_DIR/batch-input.tsv"
 STATE_FILE="$BATCH_DIR/batch-state.tsv"
 # PROMPT_FILE: orchestrator pre-resolves __TOKEN__ placeholders in
-# templates/batch-prompt.md against the active profile + writes the
+# modes/batch-prompt.md against the active profile + writes the
 # realized version to a temp file, passing the path via BATCH_PROMPT_FILE.
 # Standalone (non-dashboard) runs fall back to the literal file — those
 # users get a prompt with __CV__ etc. unresolved, which is the visible
 # failure mode that prompts them to invoke via the dashboard.
-PROMPT_FILE="${BATCH_PROMPT_FILE:-$PROJECT_DIR/templates/batch-prompt.md}"
+PROMPT_FILE="${BATCH_PROMPT_FILE:-$PROJECT_DIR/modes/batch-prompt.md}"
 LOGS_DIR="$BATCH_DIR/logs"
 TRACKER_DIR="$BATCH_DIR/tracker-additions"
 REPORTS_DIR="$_PROFILE_BASE/reports"

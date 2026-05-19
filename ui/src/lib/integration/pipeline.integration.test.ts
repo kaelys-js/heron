@@ -2,7 +2,7 @@
  * Pipeline-integrity integration tests.
  *
  * Asserts:
- *   • canonical statuses (per templates/states.yml)
+ *   • canonical statuses (per data/states.yml)
  *   • no duplicate company+role
  *   • report links resolve
  *   • score format X.X/5 or N/A or DUP
@@ -24,13 +24,13 @@ function readFile(rel: string): string {
   return fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
 }
 
-describe('templates/states.yml is the canonical states source', () => {
-  it('exists at templates/states.yml', () => {
-    expect(exists('templates/states.yml')).toBe(true);
+describe('data/states.yml is the canonical states source', () => {
+  it('exists at data/states.yml', () => {
+    expect(exists('data/states.yml')).toBe(true);
   });
 
   it('lists the core lifecycle statuses', () => {
-    const yml = readFile('templates/states.yml');
+    const yml = readFile('data/states.yml');
     expect(yml).toContain('Evaluated');
     expect(yml).toContain('Applied');
     expect(yml).toContain('Interview');

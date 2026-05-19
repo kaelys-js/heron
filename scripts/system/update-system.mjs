@@ -88,7 +88,7 @@ const SYSTEM_PATHS = [
   'analyze-patterns.mjs',
   'followup-cadence.mjs',
   'gemini-eval.mjs',
-  'templates/batch-prompt.md',
+  'modes/batch-prompt.md',
   'scripts/batch/batch-runner.sh',
   'templates/',
   '.claude/skills/',

@@ -210,7 +210,7 @@ This system is designed to be customized by YOU (AI Agent). When the user asks y
 - "Add these companies to my portals" → edit `portals.yml`
 - "Update my profile" → edit `config/profile.yml`
 - "Change the CV template design" → edit `templates/cv-template.html`
-- "Adjust the scoring weights" → edit `modes/_profile.md` for user-specific weighting, or edit `modes/_shared.md` and `templates/batch-prompt.md` only when changing the shared system defaults for everyone
+- "Adjust the scoring weights" → edit `modes/_profile.md` for user-specific weighting, or edit `modes/_shared.md` and `modes/batch-prompt.md` only when changing the shared system defaults for everyone
 
 ### Language Modes
 
@@ -484,14 +484,14 @@ Write one TSV file per evaluation to the active profile's `batch/tracker-additio
 1. **NEVER edit applications.md to ADD new entries** -- Write TSV in the active profile's `batch/tracker-additions/` and `scripts/tracker/merge-tracker.mjs` handles the merge.
 2. **YES you can edit applications.md to UPDATE status/notes of existing entries.**
 3. All reports MUST include `**URL:**` in the header (between Score and PDF). Include `**Legitimacy:** {tier}` (see Block G in `modes/oferta.md`).
-4. All statuses MUST be canonical (see `templates/states.yml`).
+4. All statuses MUST be canonical (see `data/states.yml`).
 5. Health check: `pnpm test --filter=ui-integration` (pipeline.integration.test.ts validates this)
 6. Normalize statuses: `node scripts/tracker/normalize-statuses.mjs`
 7. Dedup: `node scripts/tracker/dedup-tracker.mjs`
 
 ### Canonical States (applications.md)
 
-**Source of truth:** `templates/states.yml`
+**Source of truth:** `data/states.yml`
 
 | State | When to use |
 |-------|-------------|

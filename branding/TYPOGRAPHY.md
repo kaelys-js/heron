@@ -128,8 +128,8 @@ maximizes ATS parseability. The brand identity applies to *Heron*
 recruiter). The Fraunces serif lives in the web/native UI; the CV
 template ships clean Inter end-to-end.
 
-Implementation: replace `templates/fonts/space-grotesk-*.woff2` +
-`templates/fonts/dm-sans-*.woff2` with `templates/fonts/inter-variable.woff2`,
+Implementation: the CV template uses Inter only —
+woff2 files live at templates/fonts/inter-{latin,latin-ext}.woff2,
 and update `templates/cv-template.html` font-family declarations.
 
 ## Implementation notes (deferred to Task 9 — apply-brand wiring)
@@ -142,7 +142,7 @@ and update `templates/cv-template.html` font-family declarations.
 2. Update `ui/src/app.css` (or wherever `@font-face` lives) with the new
    font declarations + CSS variables. Set
    `font-optical-sizing: auto` globally for variable-fonts behaviour.
-3. Update `templates/cv-template.html` to drop Space Grotesk + DM Sans
+3. cv-template.html -face declarations + body / heading font-family
    and use Inter throughout. Remove the now-orphaned woff2 files from
    `templates/fonts/`.
 4. Sweep `ui/src/lib/components/**` and any Tailwind config for

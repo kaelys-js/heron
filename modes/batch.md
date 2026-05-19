@@ -25,7 +25,7 @@ Each worker is a headless child process with a clean 200K token context. The con
 
 ```text
 scripts/batch/batch-runner.sh                            # Standalone orchestrator (system layer)
-templates/batch-prompt.md                                # Prompt template for workers (system layer)
+modes/batch-prompt.md                                # Prompt template for workers (system layer)
 
 # Runtime state — per-profile under the active user's data tree:
 data/users/{uid}/profiles/{slug}/batch/
