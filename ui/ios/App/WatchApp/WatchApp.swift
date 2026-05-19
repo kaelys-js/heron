@@ -1,7 +1,7 @@
 import SwiftUI
 
 /**
- * HeronWatchApp — standalone watchOS app target.
+ * WatchApp — standalone watchOS app target.
  *
  * Bundle ID: com.heron.app.watchkitapp
  * Deployment target: watchOS 10.0 (lowest version with current SwiftUI
@@ -11,7 +11,7 @@ import SwiftUI
  *   1. File → New → Target → watchOS → "App"
  *   2. Embed in companion iOS app: "App" (the main Heron target)
  *   3. Replace the auto-generated files with the ones in this directory
- *      (HeronWatchApp.swift, RootView.swift, etc.)
+ *      (WatchApp.swift, RootView.swift, etc.)
  *   4. Add to App Groups entitlement (both watch + iPhone targets):
  *      `group.com.heron.app`
  *   5. The Watch app's Info.plist must include WKWatchOnly=false and
@@ -31,7 +31,7 @@ import SwiftUI
  * meaningful offline).
  */
 @main
-struct HeronWatchApp: App {
+struct WatchApp: App {
     @StateObject private var model = WatchModel.shared
 
     var body: some Scene {

@@ -27,7 +27,7 @@ enum Brand {
         /// Bearer token mirrored from the WebView into App Group
         /// UserDefaults so the Share Extension can attach
         /// Authorization: Bearer <token> on its POSTs. Set by
-        /// HeronNativePlugin.setSharedBearerToken; cleared on
+        /// NativePlugin.setSharedBearerToken; cleared on
         /// sign-out.
         static let bearerToken = "\(Brand.name):bearer-token"
     }

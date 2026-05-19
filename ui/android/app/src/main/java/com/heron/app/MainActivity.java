@@ -14,7 +14,7 @@ public class MainActivity extends BridgeActivity {
         // NetworkMonitor + future Spotlight/keychain/biometric stubs)
         // before BridgeActivity initializes the WebView. Same plugin
         // name as iOS so lib/client/native-bridge.ts works cross-platform.
-        registerPlugin(HeronNativePlugin.class);
+        registerPlugin(NativePlugin.class);
 
         // Android 8+ (API 26) requires a NotificationChannel before any
         // notification can be shown. The Capacitor LocalNotifications

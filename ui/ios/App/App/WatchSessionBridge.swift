@@ -15,7 +15,7 @@ import WatchConnectivity
  * activation. If WCSession isn't supported (iPad without paired watch),
  * `send()` no-ops silently.
  *
- * Called by HeronNativePlugin.updateWidgets — every dashboard data
+ * Called by NativePlugin.updateWidgets — every dashboard data
  * change pushes through here automatically.
  */
 final class WatchSessionBridge: NSObject, WCSessionDelegate {

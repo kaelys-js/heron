@@ -41,13 +41,13 @@ pre-commit:
           ui/electron/electron-builder.config.json \
           ui/ios/App/App/Info.plist \
           ui/ios/App/App/Brand.swift \
-          ui/ios/App/HeronWidget/Brand.swift \
-          ui/ios/App/HeronLiveActivity/Brand.swift \
-          ui/ios/App/HeronShareExtension/Brand.swift \
+          ui/ios/App/Extensions/AppWidget/Brand.swift \
+          ui/ios/App/Extensions/AppLiveActivity/Brand.swift \
+          ui/ios/App/Extensions/AppShareExtension/Brand.swift \
           ui/ios/App/App/ErrorReporter.swift \
-          ui/ios/App/HeronWidget/ErrorReporter.swift \
-          ui/ios/App/HeronLiveActivity/ErrorReporter.swift \
-          ui/ios/App/HeronShareExtension/ErrorReporter.swift \
+          ui/ios/App/Extensions/AppWidget/ErrorReporter.swift \
+          ui/ios/App/Extensions/AppLiveActivity/ErrorReporter.swift \
+          ui/ios/App/Extensions/AppShareExtension/ErrorReporter.swift \
           ui/src/lib/client/brand.ts \
           ui/electron/src/brand.ts \
           ui/static/favicon.svg \

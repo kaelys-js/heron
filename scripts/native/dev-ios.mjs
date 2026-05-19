@@ -128,7 +128,7 @@ run('pnpm', ['exec', 'cap', 'sync', 'ios'], {
 // `cap add ios` only registered AppDelegate.swift with the App target.
 // Native features added later (BonjourBrowser, NetworkMonitor, Biometric,
 // KeychainStore, BackgroundFetcher, SpotlightIndexer, WatchSessionBridge,
-// HeronNativePlugin, ErrorReporter, Brand) live in App/*.swift on disk
+// NativePlugin, ErrorReporter, Brand) live in App/*.swift on disk
 // but aren't auto-added to the target. Without this step, xcodebuild
 // fails with "cannot find type 'BonjourBrowser' in scope" the moment
 // AppDelegate references them. The ruby script is idempotent — no-op
@@ -383,10 +383,10 @@ function installSwiftWatcher(targetUdid) {
   if (!swiftWatchEnabled) return;
   const watchRoots = [
     join(iosDir, 'App'),
-    join(iosDir, 'HeronWidget'),
-    join(iosDir, 'HeronLiveActivity'),
-    join(iosDir, 'HeronShareExtension'),
-    join(iosDir, 'HeronWatch'),
+    join(iosDir, 'AppWidget'),
+    join(iosDir, 'AppLiveActivity'),
+    join(iosDir, 'AppShareExtension'),
+    join(iosDir, 'WatchApp'),
   ].filter(existsSync);
 
   let debounceTimer = null;

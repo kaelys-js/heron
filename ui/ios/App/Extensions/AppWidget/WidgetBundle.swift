@@ -2,7 +2,7 @@ import SwiftUI
 import WidgetKit
 
 /**
- * HeronWidget — Lock Screen + Home Screen widgets.
+ * AppWidget — Lock Screen + Home Screen widgets.
  *
  * Three variants:
  *   • small: "3 queued"
@@ -14,21 +14,21 @@ import WidgetKit
  * state transitions (a new Issue, queue change, applied count change).
  *
  * To add this target in Xcode:
- *   1. File → New → Target → Widget Extension → "HeronWidget"
+ *   1. File → New → Target → Widget Extension → "AppWidget"
  *   2. Bundle ID: com.heron.app.widget
  *   3. Add to "App Groups" entitlement (both this target and the
  *      main app): group.com.heron.app
- *   4. Replace the auto-generated HeronWidget.swift with this file.
+ *   4. Replace the auto-generated AppWidget.swift with this file.
  */
-struct HeronStats: Codable {
+struct WidgetStats: Codable {
     var queued: Int
     var appliedToday: Int
     var upcomingInterviews: Int
 }
 
-struct HeronEntry: TimelineEntry {
+struct WidgetEntry: TimelineEntry {
     let date: Date
-    let stats: HeronStats
+    let stats: WidgetStats
     /// Auth gate — when false, the widget renders WidgetSignInGate instead
     /// of the stats. Read at TimelineProvider time from App Group defaults
     /// so the gate flips immediately when the iPhone main app pushes
@@ -36,33 +36,33 @@ struct HeronEntry: TimelineEntry {
     let authenticated: Bool
 }
 
-struct HeronTimelineProvider: TimelineProvider {
-    typealias Entry = HeronEntry
+struct AppTimelineProvider: TimelineProvider {
+    typealias Entry = WidgetEntry
 
-    func placeholder(in _: Context) -> HeronEntry {
+    func placeholder(in _: Context) -> WidgetEntry {
         // Placeholder is rendered before the timeline is ready (widget
         // gallery thumbnails + the snapshot before getTimeline returns).
         // Show a populated-looking preview so users picking the widget
         // from the gallery understand what it does — but mark it
         // authenticated so the placeholder doesn't accidentally tell
         // the user to sign in.
-        HeronEntry(
+        WidgetEntry(
             date: Date(),
-            stats: HeronStats(queued: 3, appliedToday: 1, upcomingInterviews: 2),
+            stats: WidgetStats(queued: 3, appliedToday: 1, upcomingInterviews: 2),
             authenticated: true
         )
     }
 
-    func getSnapshot(in _: Context, completion: @escaping (HeronEntry) -> Void) {
-        completion(HeronEntry(
+    func getSnapshot(in _: Context, completion: @escaping (WidgetEntry) -> Void) {
+        completion(WidgetEntry(
             date: Date(),
             stats: readStats(),
             authenticated: WidgetAuth.isAuthenticated()
         ))
     }
 
-    func getTimeline(in _: Context, completion: @escaping (Timeline<HeronEntry>) -> Void) {
-        let entry = HeronEntry(
+    func getTimeline(in _: Context, completion: @escaping (Timeline<WidgetEntry>) -> Void) {
+        let entry = WidgetEntry(
             date: Date(),
             stats: readStats(),
             authenticated: WidgetAuth.isAuthenticated()
@@ -72,12 +72,12 @@ struct HeronTimelineProvider: TimelineProvider {
         completion(Timeline(entries: [entry], policy: .after(next)))
     }
 
-    private func readStats() -> HeronStats {
+    private func readStats() -> WidgetStats {
         // App Group UserDefaults — shared with the main app target.
         guard let defaults = UserDefaults(suiteName: Brand.appGroup) else {
-            return HeronStats(queued: 0, appliedToday: 0, upcomingInterviews: 0)
+            return WidgetStats(queued: 0, appliedToday: 0, upcomingInterviews: 0)
         }
-        return HeronStats(
+        return WidgetStats(
             queued: defaults.integer(forKey: "stats:queued"),
             appliedToday: defaults.integer(forKey: "stats:appliedToday"),
             upcomingInterviews: defaults.integer(forKey: "stats:upcomingInterviews")
@@ -85,8 +85,8 @@ struct HeronTimelineProvider: TimelineProvider {
     }
 }
 
-struct HeronWidgetEntryView: View {
-    var entry: HeronEntry
+struct AppWidgetEntryView: View {
+    var entry: WidgetEntry
     @Environment(\.widgetFamily) var family
 
     var body: some View {
@@ -191,12 +191,12 @@ struct StatBlock: View {
     }
 }
 
-struct HeronWidget: Widget {
-    let kind: String = "HeronWidget"
+struct AppWidget: Widget {
+    let kind: String = "AppWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: HeronTimelineProvider()) { entry in
-            HeronWidgetEntryView(entry: entry)
+        StaticConfiguration(kind: kind, provider: AppTimelineProvider()) { entry in
+            AppWidgetEntryView(entry: entry)
         }
         // Widget-gallery label + subtitle. These are what the user reads
         // when picking the widget — should describe what it DOES, not
@@ -223,15 +223,15 @@ struct HeronWidget: Widget {
  * the widget picker.
  *
  * The four widgets:
- *   • HeronWidget    — pipeline stats summary
+ *   • AppWidget    — pipeline stats summary
  *   • NextInterviewWidget — countdown to next interview
  *   • TopApplyWidget     — highest-scoring queued job
  *   • InboxIssuesWidget  — open issues needing user action
  */
 @main
-struct HeronWidgetBundle: WidgetBundle {
+struct AppWidgetBundle: WidgetBundle {
     var body: some Widget {
-        HeronWidget()
+        AppWidget()
         NextInterviewWidget()
         TopApplyWidget()
         InboxIssuesWidget()

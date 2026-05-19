@@ -29,7 +29,7 @@ final class WatchModel: NSObject, ObservableObject, WCSessionDelegate {
     @Published var isReachable: Bool = false
     /// Watch app's auth gate. TRUE means the paired iPhone has an active
     /// Better-Auth session AND has pushed at least one widget update to
-    /// the App Group (via HeronNativePlugin.updateWidgets, which now
+    /// the App Group (via NativePlugin.updateWidgets, which now
     /// stamps `auth:isAuthenticated` into the same defaults the Watch
     /// reads). Default FALSE — first-launch / signed-out / never-paired
     /// Watches show a "Sign in on iPhone" gate instead of empty data.

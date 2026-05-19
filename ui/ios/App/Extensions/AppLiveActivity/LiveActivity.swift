@@ -3,7 +3,7 @@ import SwiftUI
 import WidgetKit
 
 /**
- * HeronLiveActivity — Dynamic Island + Lock Screen countdown for
+ * AppLiveActivity — Dynamic Island + Lock Screen countdown for
  * upcoming interviews.
  *
  * The WebView starts a Live Activity ~24h before a scheduled interview
@@ -16,7 +16,7 @@ import WidgetKit
  *   • expanded: company logo + role + countdown + "Open prep" button
  *
  * To add this target in Xcode:
- *   1. File → New → Target → Widget Extension → "HeronLiveActivity"
+ *   1. File → New → Target → Widget Extension → "AppLiveActivity"
  *      with "Include Live Activity" ticked
  *   2. Bundle ID: com.heron.app.liveactivity
  *   3. Add to App Groups: group.com.heron.app
@@ -125,16 +125,16 @@ struct HeronInterviewLiveActivity: Widget {
  * from an entry-less binary.
  *
  * Apple's recommended pattern is actually one WidgetBundle in the
- * main HeronWidget extension containing all widgets + live
+ * main AppWidget extension containing all widgets + live
  * activities. This project ships them as SEPARATE extension targets
- * (HeronWidget vs HeronLiveActivity) because Live Activities
+ * (AppWidget vs AppLiveActivity) because Live Activities
  * require iOS 16.1 while regular widgets only need 14.0 — keeping
  * them split lets the widget extension support older iPhones. Each
  * separate extension needs its own @main.
  */
 @available(iOS 16.1, *)
 @main
-struct HeronLiveActivityBundle: WidgetBundle {
+struct LiveActivityBundle: WidgetBundle {
     var body: some Widget {
         HeronInterviewLiveActivity()
     }

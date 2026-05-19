@@ -47,7 +47,7 @@ import UserNotifications
  *   1. Bearer auth: /api/issues is auth-gated. The previous version sent
  *      no Authorization header → every background poll silently 401'd.
  *      We now read the token mirrored into App Group UserDefaults by
- *      the WebView (HeronNativePlugin.setSharedBearerToken).
+ *      the WebView (NativePlugin.setSharedBearerToken).
  *   2. App Group: backend URL + bearer token live in the App Group, not
  *      UserDefaults.standard. The previous resolveBackend() never found
  *      anything because it read the wrong domain.
@@ -162,7 +162,7 @@ final class BackgroundFetcher {
 
     /// Read the quiet-hours JSON the JS NotificationPreferences.svelte
     /// persisted into localStorage. The WebView ALSO mirrors it into
-    /// App Group UserDefaults via HeronNativePlugin (TODO when we
+    /// App Group UserDefaults via NativePlugin (TODO when we
     /// wire that) so extension processes can read it; until that wiring
     /// lands we fail safe to "not in quiet hours" — wakes for warn /
     /// error events regardless.
@@ -190,7 +190,7 @@ final class BackgroundFetcher {
         // WebView isn't running during background-fetch.
         //
         // Reads from App Group, not UserDefaults.standard — the WebView
-        // mirrors the resolved URL there via HeronNativePlugin.
+        // mirrors the resolved URL there via NativePlugin.
         // setSharedBackendUrl. Pre-fix this method read .standard and
         // found nothing, so background fetch silently no-op'd forever.
         let defaults = UserDefaults(suiteName: Brand.appGroup) ?? UserDefaults.standard
