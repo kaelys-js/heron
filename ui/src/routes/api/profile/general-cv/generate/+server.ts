@@ -11,9 +11,12 @@
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { generateGeneralCv } from '$lib/server/cv-pdf';
 import { logEvent } from '$lib/server/events';
+import { currentUserIdOrDefault } from '$lib/server/user-context';
+import { getCredential } from '$lib/server/user-secrets';
 
 export const POST = wrap('general-cv-generate', async () => {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  // Per-user store wins; .env fallback for legacy single-user installs.
+  if (!getCredential(currentUserIdOrDefault(), 'ANTHROPIC_API_KEY')) {
     badRequest('Anthropic key not set — configure it in Settings or the API-keys onboarding step.');
   }
   try {

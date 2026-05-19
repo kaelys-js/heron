@@ -8,7 +8,8 @@ import { loadEnv } from './env';
 import { CLI_NAMESPACE } from '$lib/config/branding';
 import { BRAND } from '$lib/client/brand';
 import { AGENT_CLI } from '$lib/config/cli';
-import { maybeCurrentUserId, SYSTEM_USER_ID } from './user-context';
+import { currentUserIdOrDefault, maybeCurrentUserId, SYSTEM_USER_ID } from './user-context';
+import { getCredential, MIGRATABLE_KEYS } from './user-secrets';
 import { getActiveProfileId } from './profiles';
 import { realizeModePromptForUser } from './mode-substitution';
 import { profilePathForUser } from './profile-paths';
@@ -240,6 +241,20 @@ function start(name: TaskName, cmd: string, args: string[], cwd = ROOT) {
     // calling start()).
     envWithUser.CAREER_OPS_USER_ID = process.env.CAREER_OPS_USER_ID;
   }
+  // Resolve per-user credentials and inject into the child's env. This
+  // is the bridge that makes the per-user secrets store transparent to
+  // every spawned script — even Python ones that read straight from
+  // `os.environ.get('GEMINI_API_KEY')`. The child sees the resolved
+  // value (per-user store wins, .env fallback otherwise); it doesn't
+  // need to know the value came from an encrypted file. When the
+  // Python helper twin lands (queued in TODO2.md), scripts will be able
+  // to read directly via lib/user_secrets.py and this injection
+  // becomes redundant — but keep it for back-compat.
+  const resolveAs = ctxUserId ?? SYSTEM_USER_ID;
+  for (const key of MIGRATABLE_KEYS) {
+    const v = getCredential(resolveAs, key);
+    if (v) envWithUser[key] = v;
+  }
   try {
     p = spawn(cmd, args, { cwd, env: envWithUser });
   } catch (e) {
@@ -322,7 +337,11 @@ export function runScan(profileId?: string) {
 }
 
 export function runGemini(top = 30, profileId?: string) {
-  if (!process.env.GEMINI_API_KEY) {
+  // Per-user store wins; .env fallback. The Python child still reads
+  // GEMINI_API_KEY from its own env, so we resolve here and inject below
+  // (orchestrator's CAREER_OPS_USER_ID env-injection already covers the
+  // multi-user fan-out for spawned children).
+  if (!getCredential(currentUserIdOrDefault(), 'GEMINI_API_KEY')) {
     logEvent('gemini', 'Gemini API key not set', {
       level: 'error',
       category: 'task',
@@ -1179,6 +1198,20 @@ export function bootOnce() {
   if (bootRan) return;
   bootRan = true;
   loadEnv();
+  // Silently migrate install-wide credentials from .env into the OWNER's
+  // per-user encrypted store. Idempotent — only copies values the owner
+  // doesn't yet have. Fire-and-forget: this is opportunistic and must
+  // never block boot. See user-secrets.ts::migrateEnvToUserSecrets for
+  // the full contract.
+  import('./user-secrets')
+    .then((m) => m.migrateEnvToUserSecrets())
+    .catch((err) => {
+      logEvent('boot', 'user-secrets migration failed (continuing)', {
+        level: 'warn',
+        category: 'system',
+        message: err instanceof Error ? err.message : String(err),
+      });
+    });
   // Register exit handlers so spawned children don't outlive the dev server.
   // Idempotent across HMR reloads (re-import re-creates `cleanupInstalled`
   // but `process.once` fires only once per signal).
@@ -1237,7 +1270,11 @@ export function bootOnce() {
     }
     return;
   }
-  if (!geminiExists && process.env.GEMINI_API_KEY) {
+  // Resolve once via the per-user resolver so both branches below see
+  // the same answer (avoids a race where the user adds a key between
+  // the two checks).
+  const geminiKey = getCredential(currentUserIdOrDefault(), 'GEMINI_API_KEY');
+  if (!geminiExists && geminiKey) {
     logEvent('boot', 'Auto-scoring new pipeline', {
       category: 'system',
       message: 'Spawning gemini-first-pass.py',
@@ -1253,7 +1290,7 @@ export function bootOnce() {
     }
     return;
   }
-  if (!process.env.GEMINI_API_KEY && !geminiExists) {
+  if (!geminiKey && !geminiExists) {
     logEvent('boot', 'Gemini API key not set', {
       level: 'warn',
       category: 'system',

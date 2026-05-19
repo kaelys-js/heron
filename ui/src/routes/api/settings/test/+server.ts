@@ -1,11 +1,22 @@
 /**
  * Probe a configured provider with a minimal authenticated call to verify
  * the user's key works. Never echoes the key back to the client.
+ *
+ * Resolves credentials via the per-user store first (Settings → API Keys),
+ * falling back to install-wide .env for legacy single-user installs.
+ *
+ * Any authenticated user can probe THEIR OWN credentials — the call is
+ * scoped to the current user's per-user store via getCredential, so a
+ * member-role user probing "anthropic" hits their own key (not the
+ * owner's). The probe makes a single minimal API call so it doesn't
+ * meaningfully affect rate limits.
  */
 import { wrap, badRequest } from '$lib/server/api-helpers';
-import { requireOwner } from '$lib/server/auth-helpers';
+import { requireUserId } from '$lib/server/auth-helpers';
 import { loadEnv } from '$lib/server/env';
 import { logEvent } from '$lib/server/events';
+import { currentUserIdOrDefault } from '$lib/server/user-context';
+import { getCredential } from '$lib/server/user-secrets';
 import Anthropic from '@anthropic-ai/sdk';
 
 loadEnv();
@@ -18,7 +29,7 @@ type ProbeResult = {
 };
 
 async function probeAnthropic(): Promise<ProbeResult> {
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = getCredential(currentUserIdOrDefault(), 'ANTHROPIC_API_KEY');
   if (!key) return { provider: 'anthropic', ok: false, message: 'No key configured' };
   if (!key.startsWith('sk-ant-')) {
     return {
@@ -51,7 +62,7 @@ async function probeAnthropic(): Promise<ProbeResult> {
 }
 
 async function probeGemini(): Promise<ProbeResult> {
-  const key = process.env.GEMINI_API_KEY;
+  const key = getCredential(currentUserIdOrDefault(), 'GEMINI_API_KEY');
   if (!key) return { provider: 'gemini', ok: false, message: 'No key configured' };
   if (!key.startsWith('AIza')) {
     return { provider: 'gemini', ok: false, message: 'Key format looks wrong (expected AIza…)' };
@@ -83,8 +94,9 @@ async function probeGemini(): Promise<ProbeResult> {
 }
 
 async function probeAdzuna(): Promise<ProbeResult> {
-  const id = process.env.ADZUNA_APP_ID;
-  const key = process.env.ADZUNA_APP_KEY;
+  const uid = currentUserIdOrDefault();
+  const id = getCredential(uid, 'ADZUNA_APP_ID');
+  const key = getCredential(uid, 'ADZUNA_APP_KEY');
   if (!id || !key) {
     return { provider: 'adzuna', ok: false, message: 'Both APP_ID and APP_KEY are required' };
   }
@@ -126,7 +138,7 @@ const PROBES: Record<string, () => Promise<ProbeResult>> = {
 export const POST = wrap(
   'settings-test',
   async ({ request, locals }: { request: Request; locals: App.Locals }) => {
-    requireOwner(locals);
+    requireUserId(locals);
     const body = await request.json().catch(() => null);
     const provider = (body as { provider?: string } | null)?.provider;
     if (!provider || !(provider in PROBES)) {

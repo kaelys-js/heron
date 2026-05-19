@@ -35,6 +35,7 @@ import {
   profileFromArgv,
   userFromArgv,
 } from '../lib/lib-profiles.mjs';
+import { getCredential } from '../lib/user-secrets.mjs';
 
 const ROOT = path.resolve(process.cwd());
 const ENV_FILE = path.join(ROOT, '.env');
@@ -49,18 +50,23 @@ const PIPELINE = profilePath(PROFILE_ID, 'pipeline', USER_ID);
 const APPLICATIONS = profilePath(PROFILE_ID, 'applications', USER_ID);
 const SCAN_HISTORY = profilePath(PROFILE_ID, 'scan-history', USER_ID);
 
-// Load .env so creds populate process.env
+// Load .env so creds populate process.env (machine-wide fallback).
 if (existsSync(ENV_FILE)) {
   dotenv.config({ path: ENV_FILE, override: false });
 }
 
-const HOST = process.env.GMAIL_IMAP_HOST || 'imap.gmail.com';
-const USER = process.env.GMAIL_IMAP_USER;
-const PASS = process.env.GMAIL_IMAP_PASSWORD;
-const LABEL = process.env.GMAIL_IMAP_LABEL || 'INBOX';
+// Per-user secrets first (via CAREER_OPS_USER_ID, set by the orchestrator
+// before spawn), .env fallback. Closes F14/F19/F27 — gmail-imap creds
+// are no longer install-wide; each user manages their own mailbox.
+const HOST = getCredential('GMAIL_IMAP_HOST') || 'imap.gmail.com';
+const USER = getCredential('GMAIL_IMAP_USER');
+const PASS = getCredential('GMAIL_IMAP_PASSWORD');
+const LABEL = getCredential('GMAIL_IMAP_LABEL') || 'INBOX';
 
 if (!USER || !PASS) {
-  console.error('ERROR: GMAIL_IMAP_USER + GMAIL_IMAP_PASSWORD must be set in .env.');
+  console.error('ERROR: GMAIL_IMAP_USER + GMAIL_IMAP_PASSWORD must be set.');
+  console.error('       Configure them in dashboard Settings → API Keys (per-user),');
+  console.error('       or set them in .env as an install-wide fallback.');
   console.error('       Connect Gmail from /sources first.');
   process.exit(2);
 }
