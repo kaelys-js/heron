@@ -34,14 +34,16 @@
         "strict_required_status_checks_policy": false,
         "do_not_enforce_on_create": false,
         "required_status_checks": [
-          { "context": "Tests / ts" },
-          { "context": "Tests / ios" },
+          { "context": "Tests / TS — typecheck + Vitest + coverage" },
+          { "context": "Tests / iOS — XCTest + XCUITest + Snapshot" },
           { "context": "Tests / Lint + format (Python / Go / Kotlin / Shell / Ruby / YAML)" },
-          { "context": "CodeQL / Analyze (javascript-typescript)" },
-          { "context": "CodeQL / Analyze (go)" },
+          { "context": "CodeQL Analysis / Analyze (javascript-typescript)" },
+          { "context": "CodeQL Analysis / Analyze (python)" },
+          { "context": "CodeQL Analysis / Analyze (swift)" },
           { "context": "Dependency Review / dependency-review" },
           { "context": "OSSF Scorecard / Scorecard analysis" },
-          { "context": "zizmor — workflow security scan / Scan workflows" }
+          { "context": "zizmor — workflow security scan / Scan workflows" },
+          { "context": "PR quality / Conventional Commits PR title" }
         ]
       }
     },

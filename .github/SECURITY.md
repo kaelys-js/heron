@@ -63,10 +63,57 @@ unilaterally — that's the deal.
 
 ## Supply chain
 
-- **Dependabot** monitors npm / RubyGems / Swift Packages / GitHub Actions
-  / Go modules weekly. Security-only updates are auto-approved on green CI.
-- **CodeQL** runs on every PR and weekly on `main`.
-- **SBOM** (Software Bill of Materials) is generated on every release via
+- **Renovate** monitors npm / RubyGems / Swift Packages / GitHub Actions
+  / Go modules weekly. Patch + minor dev-deps auto-merge on green CI.
+  Major bumps require dashboard approval.
+- **CodeQL** runs on every PR and weekly on `main` covering
+  javascript-typescript, python, and swift.
+- **OSSF Scorecard** publishes a public posture score weekly.
+- **zizmor** static-analyses workflows for injection / cache-poisoning /
+  excessive-permission issues.
+- **SBOM** (Software Bill of Materials) generated on every release via
   `anchore/sbom-action` and attached to the GitHub Release.
-- **Branch protection** on `main` requires CI green + 1 reviewer + signed
-  commits before merge.
+- **SLSA Level 2 build provenance** is attested for every release
+  artifact (DMG / exe / AppImage / IPA). Users verify with:
+  ```sh
+  gh attestation verify <file> --owner heron
+  ```
+- **TruffleHog** runs on every PR + weekly to catch verified credential
+  patterns (130+ detectors).
+- **Lockfile-lint** enforces pnpm-lock uses only `https://npmjs.org`
+  sources with integrity hashes.
+- **License compliance** scan blocks GPL/AGPL/LGPL transitives in prod
+  deps (Heron ships under MIT + bundles Electron).
+- **All GitHub Actions are SHA-pinned**, not tag-pinned. Renovate keeps
+  the pins current via weekly digest-update PRs.
+- **StepSecurity harden-runner** enforces egress-policy on every
+  privileged runner (release, signing, secrets).
+- **Branch protection** on `main` (per `.github/rulesets/main.json`) requires:
+    - CI green across 11 required status checks (Tests, CodeQL × 3 languages,
+      Dependency Review, Scorecard, zizmor, PR-title-Conventional-Commits)
+    - 1 reviewer + CODEOWNERS approval
+    - Signed commits
+    - Conventional Commits message pattern
+    - No force-push to main
+    - No bypass actors (admins included)
+
+## GitHub Advanced Security settings
+
+When this repository goes public, the maintainer should enable the
+following toggles in **Settings → Code security and analysis** (all
+free for public repositories):
+
+- [ ] **Secret scanning** — surfaces committed credentials in the
+      Security tab.
+- [ ] **Push protection** — REJECTS pushes containing detected
+      secrets at git-receive time, before they ever land on the
+      remote. Complements the lefthook `no-secrets` regex
+      (client-side) and the `TruffleHog` workflow (server-side).
+- [ ] **Dependency graph** — required for `dependency-review-action`
+      to function (PR-time GPL block + vulnerability gate).
+- [ ] **Private vulnerability reporting** — enables the GHSA flow
+      documented above.
+
+A drift-detection workflow (`secret-expiry-check.yml`, planned) will
+verify these toggles stay on via `gh api repos/{owner}/{repo}` and
+warn if any flip off.

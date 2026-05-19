@@ -5,6 +5,30 @@ to source control + lost if the org is restored from backup. We mirror them
 here as JSON so PR reviewers can see proposed protection changes alongside
 the workflow files they gate.
 
+## Status
+
+**Pending apply.** The JSON is committed but the actual ruleset is not
+yet active on the repo — verified via:
+
+```sh
+$ gh api repos/kaelys-js/career-ops/rulesets
+# → 403 "Upgrade to GitHub Pro or make this repository public"
+# (rulesets API is free only for public repos OR Pro accounts)
+```
+
+Two paths to activation:
+
+1. **Flip the repo public** (planned for the OSS launch milestone).
+   Rulesets become free, then run the apply command below.
+2. **Upgrade to GitHub Pro** ($4/mo per user) if the repo needs to stay
+   private during the pre-launch window.
+
+Until the ruleset is active, branch protection falls back to the legacy
+"Branch protection rules" UI (Settings → Branches). The defaults from
+GitHub's "Limit pushes" toggle cover the basics (no force-push to main,
+no deletion) but DO NOT enforce signed commits, conventional-commit
+messages, or required status checks.
+
 ## Applying
 
 A maintainer applies these to a fresh clone of the repo with `gh`:
