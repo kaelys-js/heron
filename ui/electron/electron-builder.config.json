@@ -22,7 +22,7 @@
   "publish": [
     {
       "provider": "github",
-      "owner": "heron",
+      "owner": "kaelys-js",
       "repo": "heron",
       "releaseType": "release"
     }

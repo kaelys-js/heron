@@ -335,7 +335,7 @@
     "name": "resist.js",
     "email": "hello@heron.app",
     "url": "https://heron.app",
-    "githubHandle": "heron"
+    "githubHandle": "kaelys-js"
   },
   "originalAuthor": {
     "name": "santifer",
@@ -345,12 +345,12 @@
     "comment": "Original creator of the upstream pre-fork project — Heron builds on their work. Credited in the README Acknowledgements section and via the upstream repository link from every issue page. Do not remove."
   },
   "repo": {
-    "owner": "heron",
+    "owner": "kaelys-js",
     "name": "heron",
-    "url": "https://github.com/heron/heron",
-    "issues": "https://github.com/heron/heron/issues",
-    "docs": "https://github.com/heron/heron#readme",
-    "upstream": "https://github.com/santifer/heron"
+    "url": "https://github.com/kaelys-js/heron",
+    "issues": "https://github.com/kaelys-js/heron/issues",
+    "docs": "https://github.com/kaelys-js/heron#readme",
+    "upstream": "https://github.com/santifer/career-ops"
   },
   "permissions": {
     "localNetworkUsage": "Heron uses local network discovery to find your desktop app on the same Wi-Fi network so your phone, watch, and laptop stay in sync without a cloud account.",

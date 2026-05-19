@@ -11,7 +11,7 @@ the workflow files they gate.
 yet active on the repo — verified via:
 
 ```sh
-$ gh api repos/kaelys-js/career-ops/rulesets
+$ gh api repos/kaelys-js/heron/rulesets
 # → 403 "Upgrade to GitHub Pro or make this repository public"
 # (rulesets API is free only for public repos OR Pro accounts)
 ```

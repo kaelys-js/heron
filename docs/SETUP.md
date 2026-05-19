@@ -35,7 +35,7 @@ You need these installed once, system-wide:
 ## 1. Clone + install
 
 ```sh
-gh repo clone heron/heron
+gh repo clone kaelys-js/heron
 cd heron
 
 # mise installs the pinned Node + pnpm + Ruby versions
@@ -255,5 +255,5 @@ Backup: just snapshot `data/` (`tar czf backup.tgz data/`). Restore: extract bac
 
 - Read the main [README](../README.md) for architecture + commands.
 - Browse [docs/](.) for deeper docs (autopilot, autonomous apply, multi-user RBAC, …).
-- File issues at [github.com/heron/heron/issues](https://github.com/heron/heron/issues).
+- File issues at [github.com/kaelys-js/heron/issues](https://github.com/kaelys-js/heron/issues).
 - Discord: [discord.gg/8pRpHETxa4](https://discord.gg/8pRpHETxa4).

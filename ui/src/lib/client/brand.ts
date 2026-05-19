@@ -318,12 +318,12 @@ export const BRAND = {
     ]
   },
   repo: {
-    "owner": "heron",
+    "owner": "kaelys-js",
     "name": "heron",
-    "url": "https://github.com/heron/heron",
-    "issues": "https://github.com/heron/heron/issues",
-    "docs": "https://github.com/heron/heron#readme",
-    "upstream": "https://github.com/santifer/heron"
+    "url": "https://github.com/kaelys-js/heron",
+    "issues": "https://github.com/kaelys-js/heron/issues",
+    "docs": "https://github.com/kaelys-js/heron#readme",
+    "upstream": "https://github.com/santifer/career-ops"
   },
 } as const;
 

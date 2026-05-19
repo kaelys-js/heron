@@ -153,6 +153,7 @@ catalog:
   marked: "18.0.3"
   mode-watcher: "1.1.0"
   msw: "2.14.6"
+  lost-pixel: "3.22.0"
   oxlint: "1.64.0"
   "@playwright/test": "1.60.0"
   playwright: "1.60.0"

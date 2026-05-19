@@ -13,12 +13,12 @@
 
 **A thinking partner for career transitions. Local-first. Open source. AI-agnostic.**
 
-[![Build](https://github.com/heron/heron/actions/workflows/test.yml/badge.svg)](https://github.com/heron/heron/actions/workflows/test.yml)
-[![CodeQL](https://github.com/heron/heron/actions/workflows/codeql.yml/badge.svg)](https://github.com/heron/heron/actions/workflows/codeql.yml)
-[![codecov](https://codecov.io/github/heron/heron/graph/badge.svg)](https://codecov.io/github/heron/heron)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/heron/heron/badge)](https://securityscorecards.dev/viewer/?uri=github.com/heron/heron)
+[![Build](https://github.com/kaelys-js/heron/actions/workflows/test.yml/badge.svg)](https://github.com/kaelys-js/heron/actions/workflows/test.yml)
+[![CodeQL](https://github.com/kaelys-js/heron/actions/workflows/codeql.yml/badge.svg)](https://github.com/kaelys-js/heron/actions/workflows/codeql.yml)
+[![codecov](https://codecov.io/github/kaelys-js/heron/graph/badge.svg)](https://codecov.io/github/kaelys-js/heron)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/kaelys-js/heron/badge)](https://securityscorecards.dev/viewer/?uri=github.com/kaelys-js/heron)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/github/v/release/heron/heron)](https://github.com/heron/heron/releases)
+[![Version](https://img.shields.io/github/v/release/kaelys-js/heron)](https://github.com/kaelys-js/heron/releases)
 [![Discord](https://img.shields.io/discord/1383123430472122572?label=discord&logo=discord)](https://discord.gg/8pRpHETxa4)
 [![REUSE compliant](https://img.shields.io/badge/REUSE-compliant-blue)](https://reuse.software)
 
@@ -106,7 +106,7 @@ The math: Heron saves a week of job-search time per role. That's worth far more 
 
 ```bash
 brew install mise gh                              # one-time, if not installed
-gh repo clone heron/heron && cd heron
+gh repo clone kaelys-js/heron && cd heron
 mise install                                      # Node 26 + pnpm 11 + Ruby 3.3 + Python 3.13
 pnpm install                                      # one-shot install across workspaces
 pnpm setup:native                                 # optional — Capacitor iOS/Android/Electron setup
@@ -119,7 +119,7 @@ pnpm dev                                          # SvelteKit dashboard at local
 
 ```powershell
 scoop install mise gh                              # via Scoop
-gh repo clone heron/heron; cd heron
+gh repo clone kaelys-js/heron; cd heron
 mise install                                       # Node 26 + pnpm 11 + Ruby 3.3 + Python 3.13
 pnpm install
 pnpm setup:native                                  # optional
@@ -263,9 +263,9 @@ No. Heron is a workflow + decision-support layer. It consumes from job boards (L
 | Channel | Use for |
 |---|---|
 | 💬 [Discord](https://discord.gg/8pRpHETxa4) | Real-time questions, setup help, show-and-tell — typically same-day during EU/US working hours |
-| 📚 [GitHub Discussions](https://github.com/heron/heron/discussions) | Async Q&A + ideas + roadmap + success stories |
-| 🐛 [Issues](https://github.com/heron/heron/issues) | Bugs + feature requests (use the templates) |
-| 🎓 [I got hired](https://github.com/heron/heron/issues/new?template=i-got-hired.yml) | Tell the Hall of Fame your story |
+| 📚 [GitHub Discussions](https://github.com/kaelys-js/heron/discussions) | Async Q&A + ideas + roadmap + success stories |
+| 🐛 [Issues](https://github.com/kaelys-js/heron/issues) | Bugs + feature requests (use the templates) |
+| 🎓 [I got hired](https://github.com/kaelys-js/heron/issues/new?template=i-got-hired.yml) | Tell the Hall of Fame your story |
 | 📰 [Press kit](branding/PRESS.md) | Pre-written boilerplate for journalists + bloggers |
 | 🔒 [Security disclosure](.github/SECURITY.md) | Private vulnerability reporting (NOT public issues) |
 
@@ -322,12 +322,12 @@ See [`.github/SECURITY.md`](.github/SECURITY.md) for the full posture + vulnerab
 
 We welcome PRs. Start with [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) — covers the contributor ladder (Participant → Contributor → Triager → Reviewer → Maintainer), commit-message rules, DCO sign-off, and the "what we do NOT accept" list.
 
-Issues labeled [`good first issue`](https://github.com/heron/heron/labels/good%20first%20issue) are scoped for first-time contributors. Join [Discord](https://discord.gg/8pRpHETxa4) before opening a feature PR — saves you scope-rework.
+Issues labeled [`good first issue`](https://github.com/kaelys-js/heron/labels/good%20first%20issue) are scoped for first-time contributors. Join [Discord](https://discord.gg/8pRpHETxa4) before opening a feature PR — saves you scope-rework.
 
 ### Contributors
 
-<a href="https://github.com/heron/heron/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=heron/heron" alt="Contributors" />
+<a href="https://github.com/kaelys-js/heron/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=kaelys-js/heron" alt="Contributors" />
 </a>
 
 This project follows the [all-contributors](https://allcontributors.org) specification. Non-code contributions (docs, design, translation, ideas, infrastructure) count. See [`.all-contributorsrc`](.all-contributorsrc).
