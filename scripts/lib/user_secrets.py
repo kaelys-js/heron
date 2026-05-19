@@ -112,7 +112,7 @@ def get_secret(user_id: str, key: str) -> Optional[str]:
     iv = base64.b64decode(entry["iv"])
     tag = base64.b64decode(entry["tag"])
     ciphertext = base64.b64decode(entry["ciphertext"])
-    # Python's AESGCM expects the auth tag appended to the ciphertext —
+    # Python's AESGCM expects the auth tag appended to the ciphertext --
     # the JS Buffer split it into separate fields, so glue them back.
     aesgcm = AESGCM(aes_key)
     plaintext = aesgcm.decrypt(iv, ciphertext + tag, associated_data=None)
@@ -137,7 +137,7 @@ def get_credential(key: str) -> Optional[str]:
             if from_store is not None:
                 return from_store
         except Exception as err:  # noqa: BLE001 - intentional broad catch
-            # Don't bail the script over a decrypt failure — surface a
+            # Don't bail the script over a decrypt failure -- surface a
             # warning + fall through to os.environ. The dashboard's
             # health-check will flag the corrupt secrets.json separately.
             import sys

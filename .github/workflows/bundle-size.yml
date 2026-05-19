@@ -1,5 +1,5 @@
 name: Bundle size
-# HP1 — track client-bundle size on every PR and post a sticky comment
+# HP1 -- track client-bundle size on every PR and post a sticky comment
 # with the delta vs main. The `andresz1/size-limit-action` runs
 # `pnpm size` in both base + PR commits and produces a comparison
 # table:

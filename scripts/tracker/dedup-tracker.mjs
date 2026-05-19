@@ -48,7 +48,7 @@ const STATUS_RANK = {
   'no aplicar': 0,
   descartado: 0,
   descartada: 0,
-  rechazado: 1, // Terminal — below active states
+  rechazado: 1, // Terminal -- below active states
   rechazada: 1,
   evaluada: 2,
   aplicado: 3,

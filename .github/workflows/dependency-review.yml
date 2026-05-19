@@ -19,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Dependency Review
-        # G7 — blocking again. The Dependency Graph must be enabled in
+        # G7 -- blocking again. The Dependency Graph must be enabled in
         # Settings → Security & Analysis (it's enabled by default for
         # public repos as of 2024). If a fork or restored repo somehow
         # has it disabled, the action will fail with a clear error
@@ -27,7 +27,7 @@ jobs:
         # is preferable to silently passing on vulnerable PRs.
         #
         # Also denies GPL/AGPL/LGPL licenses since Heron ships under
-        # MIT and bundles Electron — any GPL-family transitive would
+        # MIT and bundles Electron -- any GPL-family transitive would
         # taint the binary.
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:

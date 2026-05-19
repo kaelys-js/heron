@@ -274,7 +274,7 @@ export function startBatchWatcher(): void {
     watcher.on('add', (filepath: string) => {
       if (!filepath.endsWith('.tsv')) return;
       const userId = userIdFromTsvPath(filepath);
-      if (!userId) return; // unexpected layout — skip
+      if (!userId) return; // unexpected layout -- skip
       scheduleMergeForUser(userId, 'fs-watch · ' + path.basename(filepath));
     });
     watcher.on('error', (err: unknown) => {

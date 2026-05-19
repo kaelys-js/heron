@@ -1,28 +1,28 @@
 name: native-release
 
-# Cross-platform native builds — desktop (DMG / .exe / .AppImage) + iOS (TestFlight).
+# Cross-platform native builds -- desktop (DMG / .exe / .AppImage) + iOS (TestFlight).
 #
 # Triggered three ways:
-#   1. Tag push (manual escape hatch — `pnpm release patch` still works).
+#   1. Tag push (manual escape hatch -- `pnpm release patch` still works).
 #   2. workflow_dispatch from the GitHub UI.
 #   3. workflow_call from release.yml after release-please cuts a new
 #      version. This is the primary path: every merged feat/fix commit
 #      eventually graduates into a release that fires native-release.
 #
 # Secrets required (configure in GitHub repo settings → Secrets):
-#   APPLE_TEAM_ID            — found in developer.apple.com
-#   MAC_CERTIFICATE          — base64-encoded Developer ID Application .p12
-#   MAC_CERTIFICATE_PASSWORD — the .p12 export password
-#   IOS_CERTIFICATE          — base64-encoded Apple Distribution .p12
-#   IOS_CERTIFICATE_PASSWORD — the .p12 export password
-#   IOS_PROVISIONING_PROFILE — base64-encoded .mobileprovision
+#   APPLE_TEAM_ID            -- found in developer.apple.com
+#   MAC_CERTIFICATE          -- base64-encoded Developer ID Application .p12
+#   MAC_CERTIFICATE_PASSWORD -- the .p12 export password
+#   IOS_CERTIFICATE          -- base64-encoded Apple Distribution .p12
+#   IOS_CERTIFICATE_PASSWORD -- the .p12 export password
+#   IOS_PROVISIONING_PROFILE -- base64-encoded .mobileprovision
 #
 #   App Store Connect API auth (preferred over legacy app-specific-password):
-#   APP_STORE_CONNECT_KEY_ID       — the 10-char key ID
-#   APP_STORE_CONNECT_ISSUER_ID    — UUID issuer id
-#   APP_STORE_CONNECT_PRIVATE_KEY  — full .p8 contents (base64-encoded)
+#   APP_STORE_CONNECT_KEY_ID       -- the 10-char key ID
+#   APP_STORE_CONNECT_ISSUER_ID    -- UUID issuer id
+#   APP_STORE_CONNECT_PRIVATE_KEY  -- full .p8 contents (base64-encoded)
 #
-#   GITHUB_TOKEN             — auto-provided by Actions
+#   GITHUB_TOKEN             -- auto-provided by Actions
 on:
   push:
     tags: ['v*.*.*']
@@ -59,7 +59,7 @@ jobs:
     timeout-minutes: 2
     steps:
       - name: Harden runner
-        # G4 — defense-in-depth against compromised actions. `audit` mode
+        # G4 -- defense-in-depth against compromised actions. `audit` mode
         # surfaces unexpected egress in the run logs; promote to `block`
         # after 2 weeks of green runs once the allowed-endpoints list is
         # known-good. Especially valuable on this job because the secrets
@@ -112,10 +112,10 @@ jobs:
         os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
       - name: Harden runner
-        # G4 — harden every native build runner. The macos leg writes
+        # G4 -- harden every native build runner. The macos leg writes
         # the signing cert to the runner keychain; the windows leg
         # signs with the (forthcoming G18) Azure trusted-signing token.
-        # Audit mode for the rollout — flip to `block` after observing
+        # Audit mode for the rollout -- flip to `block` after observing
         # legitimate endpoints.
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
@@ -145,7 +145,7 @@ jobs:
             pnpm-store-${{ runner.os }}-
 
       # Cache electron-builder's intermediate downloads (electron
-      # binaries, app-builder, etc.) — saves ~2min per run.
+      # binaries, app-builder, etc.) -- saves ~2min per run.
       - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: |
@@ -157,7 +157,7 @@ jobs:
             electron-builder-${{ runner.os }}-
 
       # Single root install covers every workspace (ui + ui/electron).
-      # The preinstall guard refuses npm/yarn/bun — pnpm only.
+      # The preinstall guard refuses npm/yarn/bun -- pnpm only.
       - name: Install dependencies (pnpm, frozen lockfile)
         run: pnpm install --frozen-lockfile
 
@@ -216,7 +216,7 @@ jobs:
         run: pnpm run electron:make
 
       - name: Verify macOS notarization-staple
-        # G17 — without this step, a silent notarization regression
+        # G17 -- without this step, a silent notarization regression
         # (Apple's notarytool returns success but the staple isn't
         # written) ships a broken DMG. End users get "App is damaged
         # and can't be opened" with no way to fix it themselves.
@@ -251,11 +251,11 @@ jobs:
           retention-days: 90
 
       - name: Attest build provenance
-        # G1 — SLSA build provenance per binary. End users verify with
+        # G1 -- SLSA build provenance per binary. End users verify with
         # `gh attestation verify <file> --owner heron`. Signed by
         # Sigstore via OIDC; no per-secret cert management. Failure
         # here doesn't block the release (the binaries are already
-        # uploaded by electron-builder above) — we want the provenance
+        # uploaded by electron-builder above) -- we want the provenance
         # but won't kill a successful build over a Sigstore blip.
         if: success() && hashFiles('ui/electron/dist/*.dmg', 'ui/electron/dist/*.exe', 'ui/electron/dist/*.AppImage') != ''
         continue-on-error: true
@@ -274,12 +274,12 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 60
     env:
-      # Pinned Xcode version — keeps Swift toolchain consistent with
+      # Pinned Xcode version -- keeps Swift toolchain consistent with
       # .mise.toml + test.yml's `ios` job. Bump in lockstep.
       DEVELOPER_DIR: /Applications/Xcode_16.app/Contents/Developer
     steps:
       - name: Harden runner
-        # G4 — iOS build runner. Handles Apple ASC API key + signing
+        # G4 -- iOS build runner. Handles Apple ASC API key + signing
         # cert; the highest-privilege runner in this workflow. Audit
         # mode to observe what xcodebuild + fastlane reach out to during
         # the rollout.
@@ -351,7 +351,7 @@ jobs:
           IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
           IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
           IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
-          # App Store Connect API key (.p8) — preferred over legacy
+          # App Store Connect API key (.p8) -- preferred over legacy
           # APPLE_ID + app-specific password. Required for 2FA-enabled
           # accounts; reused across every Fastlane lane.
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}

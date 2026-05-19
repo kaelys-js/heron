@@ -174,7 +174,7 @@ describe('Better Auth config — trusted origins', () => {
   });
 });
 
-describe('Better Auth config — first-user-becomes-owner hook', () => {
+describe('Better Auth config -- first-user-becomes-owner hook', () => {
   it('promotes the user to owner when total user count is 1 after creation', async () => {
     await loadAuth();
     const hooks = capturedOptions.config.databaseHooks as {
@@ -238,7 +238,7 @@ describe('Better Auth config — first-user-becomes-owner hook', () => {
   });
 });
 
-describe('Better Auth config — session.create.after hook (sign-in log)', () => {
+describe('Better Auth config -- session.create.after hook (sign-in log)', () => {
   it('emits a "Sign-in" activity event with userId', async () => {
     await loadAuth();
     const hooks = capturedOptions.config.databaseHooks as {
@@ -271,7 +271,7 @@ describe('Better Auth config — session.create.after hook (sign-in log)', () =>
   });
 });
 
-describe('Better Auth config — rate limit env gate', () => {
+describe('Better Auth config -- rate limit env gate', () => {
   it('enables rate limit by default', async () => {
     delete process.env.BETTER_AUTH_RATE_LIMIT;
     await loadAuth();
@@ -294,7 +294,7 @@ describe('Better Auth config — rate limit env gate', () => {
   });
 });
 
-describe('Better Auth config — GitHub OAuth env gate', () => {
+describe('Better Auth config -- GitHub OAuth env gate', () => {
   it('OMITS the github provider when GITHUB_CLIENT_ID is missing', async () => {
     delete process.env.GITHUB_CLIENT_ID;
     delete process.env.GITHUB_CLIENT_SECRET;
@@ -325,7 +325,7 @@ describe('Better Auth config — GitHub OAuth env gate', () => {
   });
 });
 
-describe('Better Auth config — plugins', () => {
+describe('Better Auth config -- plugins', () => {
   it('includes the passkey plugin with rpName from BRAND.displayName', async () => {
     await loadAuth();
     const plugins = capturedOptions.config.plugins as {
@@ -344,7 +344,7 @@ describe('Better Auth config — plugins', () => {
   });
 });
 
-describe('Better Auth config — session settings', () => {
+describe('Better Auth config -- session settings', () => {
   it('session expiry is 30 days', async () => {
     await loadAuth();
     const session = capturedOptions.config.session as { expiresIn: number };

@@ -185,7 +185,7 @@ describe('hooks — CORS preflight', () => {
   });
 });
 
-describe('hooks — guard (auth)', () => {
+describe('hooks -- guard (auth)', () => {
   it('401 JSON for unauthenticated /api/* requests', async () => {
     const r = await run(evt('http://localhost:5173/api/jobs'));
     expect(r.status).toBe(401);
@@ -229,7 +229,7 @@ describe('hooks — guard (auth)', () => {
   });
 });
 
-describe('hooks — populateAuth', () => {
+describe('hooks -- populateAuth', () => {
   it('reads bearer token from Authorization header', async () => {
     sessions.set('tok-abc', { user: { id: 'u-2', email: 'x@y' }, session: { id: 'sB' } });
     const r = await run(
@@ -244,7 +244,7 @@ describe('hooks — populateAuth', () => {
     expect(r.status).toBe(200);
   });
 
-  it('survives auth.getSession throwing — reports + falls through as anon', async () => {
+  it('survives auth.getSession throwing -- reports + falls through as anon', async () => {
     invalidSessionThrows = true;
     const r = await run(evt('http://localhost:5173/api/jobs'));
     expect(r.status).toBe(401); // treated as unauthenticated
@@ -252,7 +252,7 @@ describe('hooks — populateAuth', () => {
   });
 });
 
-describe('hooks — withUserContext', () => {
+describe('hooks -- withUserContext', () => {
   it('sets user-context to session userId for authenticated requests', async () => {
     sessions.set('s1', { user: { id: 'u-7' }, session: { id: 's1' } });
     await run(evt('http://localhost:5173/api/jobs', { headers: { Cookie: 'sid=s1' } }));
@@ -265,7 +265,7 @@ describe('hooks — withUserContext', () => {
   });
 });
 
-describe('hooks — security headers', () => {
+describe('hooks -- security headers', () => {
   it('always sets X-Content-Type-Options: nosniff', async () => {
     const r = await run(evt('http://localhost:5173/login'));
     expect(r.headers.get('X-Content-Type-Options')).toBe('nosniff');
@@ -299,7 +299,7 @@ describe('hooks — security headers', () => {
   });
 });
 
-describe('hooks — signupGate', () => {
+describe('hooks -- signupGate', () => {
   it('first signup (users.count === 0) bypasses the gate', async () => {
     userCount = 0;
     const r = await run(evt('http://localhost:5173/api/auth/sign-up/email', { method: 'POST' }));
@@ -340,7 +340,7 @@ describe('hooks — signupGate', () => {
   });
 });
 
-describe('hooks — authLifecycleObserver', () => {
+describe('hooks -- authLifecycleObserver', () => {
   it('emits "Sign-out" activity event on successful 2xx sign-out', async () => {
     sessions.set('s1', { user: { id: 'u-1', email: 'a@b' }, session: { id: 's1' } });
     const r = await run(

@@ -49,7 +49,7 @@ function isBenignIO(err: unknown): boolean {
 
 if (typeof process !== 'undefined') {
   process.on('uncaughtException', (err: Error) => {
-    if (isBenignIO(err)) return; // swallow — see comment above
+    if (isBenignIO(err)) return; // swallow -- see comment above
     reportServerError('process', 'uncaughtException', err);
   });
   process.on('unhandledRejection', (reason: unknown) => {
@@ -206,7 +206,7 @@ const signupGate: Handle = async ({ event, resolve }) => {
   const { inviteCodes } = await import('$lib/server/db/auth-schema');
 
   const [{ n }] = authDb.select({ n: sql<number>`count(*)` }).from(users).all();
-  if (n === 0) return resolve(event); // first-user path — open
+  if (n === 0) return resolve(event); // first-user path -- open
 
   const code = event.request.headers.get('x-invite-code')?.trim();
   if (!code || !/^\d{6}$/.test(code)) {

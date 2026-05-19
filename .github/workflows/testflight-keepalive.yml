@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   rebuild:
-    # Tagging doesn't need macOS — pick the cheap runner. The actual
+    # Tagging doesn't need macOS -- pick the cheap runner. The actual
     # build runs on macOS via native-release.yml after the tag push.
     runs-on: ubuntu-latest
     timeout-minutes: 5

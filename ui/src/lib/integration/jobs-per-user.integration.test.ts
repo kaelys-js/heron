@@ -31,7 +31,7 @@ const JOBS_DIR = path.join(REPO_ROOT, 'ui/src/lib/server/jobs');
  *  write any user-scoped data (no `currentUserId()`, no
  *  `profilePathForUser`, no `data/users/...` paths). */
 const SYSTEM_ONLY_JOBS: ReadonlySet<string> = new Set([
-  'lifecycle-reap', // GDPR account reaper — operates on auth DB
+  'lifecycle-reap', // GDPR account reaper -- operates on auth DB
 ]);
 
 type JobFile = {

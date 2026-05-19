@@ -125,7 +125,7 @@ export const backupCodes = sqliteTable('backup_codes', {
  *  account-restored, data-exported, role-changed, backup-code-used. */
 export const auditLog = sqliteTable('audit_log', {
   id: text('id').primaryKey(),
-  userId: text('user_id'), // nullable — anonymized on hard delete
+  userId: text('user_id'), // nullable -- anonymized on hard delete
   eventType: text('event_type').notNull(),
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),

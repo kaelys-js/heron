@@ -1,5 +1,5 @@
 name: PR quality
-# G20 — lightweight PR-title + size enforcement.
+# G20 -- lightweight PR-title + size enforcement.
 #
 # Semantic PR title check is a 2s no-op when the title is already
 # Conventional Commits format (which Release Please depends on). The
@@ -67,7 +67,7 @@ jobs:
       - uses: pascalgn/size-label-action@56b489b027932ec0cf60438a1a5f1a19c8fc71ff # v0.5.7
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Customised thresholds — Heron PRs skew larger than the
+          # Customised thresholds -- Heron PRs skew larger than the
           # default because of the SvelteKit-component diffs.
           IGNORED: |
             pnpm-lock.yaml

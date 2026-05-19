@@ -71,7 +71,7 @@ from lib_apply import (  # noqa: E402
 from lib_profiles import resolve_profile_arg, resolve_user_arg, profile_path  # noqa: E402
 from lib_playwright_auth import user_data_dir as _resolve_user_data_dir  # noqa: E402
 
-# Per-user Playwright session dir — resolves per active HERON_USER_ID.
+# Per-user Playwright session dir -- resolves per active HERON_USER_ID.
 USER_DATA_DIR = _resolve_user_data_dir("lever")
 DISPATCHER_JOB_ID: str = ""
 
@@ -202,7 +202,7 @@ def fill_custom_question(page, question: dict, answers_cache: dict) -> str:
     required = bool(question.get("required"))
     if not label:
         return "skipped"
-    # EEO short-circuit — Lever has fewer EEO fields than Greenhouse but
+    # EEO short-circuit -- Lever has fewer EEO fields than Greenhouse but
     # the same handling applies when present.
     if is_eeo_label(label):
         if auto_decline_eeo(page, label):
@@ -236,7 +236,7 @@ def fill_custom_question(page, question: dict, answers_cache: dict) -> str:
             pass
         return "unknown" if required else "skipped"
 
-    # Plain text / textarea — type the answer.
+    # Plain text / textarea -- type the answer.
     try:
         el = page.get_by_label(label, exact=False).first
         if el.is_visible(timeout=1500):
@@ -359,7 +359,7 @@ def run(args) -> int:
                 fill_lever_basic(page, "phone", phone)
                 step("filled_phone")
 
-            # URLs section — LinkedIn / GitHub / Portfolio. Lever's
+            # URLs section -- LinkedIn / GitHub / Portfolio. Lever's
             # name attrs are inconsistent across instances; we try
             # common ones.
             if candidate.get("linkedin"):
@@ -384,7 +384,7 @@ def run(args) -> int:
                 except Exception:
                     pass
 
-            # Custom Q&A — pulled from persistent cache.
+            # Custom Q&A -- pulled from persistent cache.
             answers_cache = load_form_answers(profile_id)
             for legacy_k, legacy_v in (profile.get("form_answers") or {}).items():
                 if isinstance(legacy_k, str) and isinstance(legacy_v, str):

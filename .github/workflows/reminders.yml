@@ -1,23 +1,23 @@
 name: Cadence reminders
 # Four cadence reminders sharing one workflow + one harden-runner setup:
 #
-#   • quarterly-audit  — opens an issue if no `chore(audit)` /
+#   • quarterly-audit  -- opens an issue if no `chore(audit)` /
 #                        `fix(audit)` commit landed in 90 days.
 #                        Forces a regular sweep of the multi-user
 #                        + GitHub-workflow audits.
-#   • release-cadence  — opens an issue if no release tag in 60 days.
+#   • release-cadence  -- opens an issue if no release tag in 60 days.
 #                        Heron should ship at least every 2 months;
 #                        longer means we're hoarding unmerged work.
-#   • issue-stale-pinger — friendly @mention 7 days BEFORE stale.yml
+#   • issue-stale-pinger -- friendly @mention 7 days BEFORE stale.yml
 #                        closes a 60-day-inactive issue (stale.yml
 #                        marks at 60d + closes 14d after; we ping at
 #                        day 67 = 7 days before close).
-#   • dependency-staleness — alerts if the Renovate dependency
+#   • dependency-staleness -- alerts if the Renovate dependency
 #                        dashboard issue's open-item count grows above
 #                        a threshold (signal that nobody's reviewing
 #                        Renovate PRs).
 #
-# All 4 jobs are idempotent — they check for an existing open issue
+# All 4 jobs are idempotent -- they check for an existing open issue
 # matching their signature before opening a new one (dedupe via labels
 # + body sentinel string).
 on:

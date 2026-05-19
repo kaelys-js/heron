@@ -693,7 +693,7 @@ function tickForCurrentUser(): void {
         if (t.hour !== hour) continue;
         if (t.minute !== minute) continue;
       } else {
-        continue; // manual or after — not driven by the clock
+        continue; // manual or after -- not driven by the clock
       }
       const last = readLastRun(def.id);
       if (last && last.lastRunAt >= today) continue; // already fired today

@@ -1,5 +1,5 @@
 name: Visual regression (Lost Pixel)
-# HP4 — self-hosted visual regression testing. Each PR builds the
+# HP4 -- self-hosted visual regression testing. Each PR builds the
 # dashboard, boots `vite preview`, snapshots the canonical routes
 # (config at lostpixel.config.ts), and diffs against the baselines
 # committed under .lostpixel/baseline/.
@@ -7,8 +7,8 @@ name: Visual regression (Lost Pixel)
 # Diff threshold: 10% pixel difference (configurable in
 # lostpixel.config.ts). Exceeding it fails the workflow. Failure
 # artifacts:
-#   - .lostpixel/current/     — fresh snapshots for the PR commit
-#   - .lostpixel/difference/  — diff images (pink overlay over changed pixels)
+#   - .lostpixel/current/     -- fresh snapshots for the PR commit
+#   - .lostpixel/difference/  -- diff images (pink overlay over changed pixels)
 # Both uploaded as GH Actions artifacts on red, accessible from the
 # PR's Checks tab.
 #

@@ -2,7 +2,7 @@ name: Auto-format
 
 # Runs `pnpm format` on every push to main and pushes the result back
 # as a separate commit. Eliminates the "format-check failed in CI"
-# class of failure entirely — we always commit pre-formatted code
+# class of failure entirely -- we always commit pre-formatted code
 # because the bot fixes it for us when we forget.
 #
 # Safe-loop rules:
@@ -39,7 +39,7 @@ jobs:
     name: Format + auto-commit
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Skip when WE pushed the format fix — prevents an infinite loop.
+    # Skip when WE pushed the format fix -- prevents an infinite loop.
     if: github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip ci]')
     steps:
       - name: Checkout
@@ -84,7 +84,7 @@ jobs:
 
       - name: Commit + push fix
         if: steps.drift.outputs.drift == 'true'
-        # G31 — retry-with-rebase on push race. Pre-fix a concurrent push
+        # G31 -- retry-with-rebase on push race. Pre-fix a concurrent push
         # between this workflow's checkout and push would 422 silently
         # (concurrency.cancel-in-progress: false means our run completes,
         # but the push fails and we don't notice). Now we rebase + retry

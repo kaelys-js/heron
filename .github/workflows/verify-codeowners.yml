@@ -1,6 +1,6 @@
 name: Verify CODEOWNERS paths
 # Catches the HP27 audit finding: CODEOWNERS had `/biome.json` but the
-# actual file was `biome.jsonc` — the path silently never matched, so
+# actual file was `biome.jsonc` -- the path silently never matched, so
 # no review was ever required on biome config changes.
 #
 # This workflow asserts every non-wildcard path entry in CODEOWNERS
@@ -52,7 +52,7 @@ jobs:
             [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
             # Extract the path token (first field)
             path=$(echo "$line" | awk '{print $1}')
-            # Skip wildcards (`*`, `**/*.ts`, etc.) — only check literals
+            # Skip wildcards (`*`, `**/*.ts`, etc.) -- only check literals
             [[ "$path" == *'*'* ]] && continue
             # Strip leading slash (CODEOWNERS uses repo-root-relative)
             check="${path#/}"

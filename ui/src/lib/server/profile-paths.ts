@@ -99,17 +99,17 @@ export type ProfileFileKind =
  *   legacy     → data/profiles/_shared/{file}     (userId === SYSTEM_USER_ID)
  */
 export type UserSharedFileKind =
-  | 'story-bank' // STAR+R interview stories — see modes/interview-prep.md
-  | 'autopilot' // recurring-job scheduler config — per-user
-  | 'onboarding-state' // wizard step state — per-user
-  | 'ui-prefs' // UI preferences (theme, layout, etc.) — per-user
-  | 'sources' // scanner connection state (LinkedIn / Indeed sessions) — per-user
-  | 'apply-counter' // daily LinkedIn / portal apply counter — per-user so user A's
+  | 'story-bank' // STAR+R interview stories -- see modes/interview-prep.md
+  | 'autopilot' // recurring-job scheduler config -- per-user
+  | 'onboarding-state' // wizard step state -- per-user
+  | 'ui-prefs' // UI preferences (theme, layout, etc.) -- per-user
+  | 'sources' // scanner connection state (LinkedIn / Indeed sessions) -- per-user
+  | 'apply-counter' // daily LinkedIn / portal apply counter -- per-user so user A's
   // 30 daily applies don't eat into user B's `maxAppliesPerDay` cap
-  | 'job-last-run' // per-job last-run state for registered jobs — per-user so
+  | 'job-last-run' // per-job last-run state for registered jobs -- per-user so
   // autopilot's "did this run today?" dedupe is scoped per user (otherwise
   // user A's 9am scan would block user B's 9am scan from firing)
-  | 'backups-dir' // tarball backup destination — per-user (each user's
+  | 'backups-dir' // tarball backup destination -- per-user (each user's
   // daily snapshot of their own tree)
   | 'secrets'; // per-user encrypted credential store (Anthropic / Gemini /
 // Adzuna / Gmail-IMAP / OpenAI API keys + tokens). AES-256-GCM at rest,

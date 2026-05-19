@@ -1,7 +1,7 @@
 # Markdown link check.
 #
 # markdownlint-cli2 (already in pre-commit) catches malformed link syntax,
-# orphaned reference definitions, and broken anchor fragments — but it
+# orphaned reference definitions, and broken anchor fragments -- but it
 # does NOT validate that `[text](./path/file.md)` actually points at a
 # file that exists. This workflow fills that gap.
 #
@@ -13,7 +13,7 @@
 #   • Honors `.lycheeignore` for explicit exclusions
 #
 # Mode: `--offline` validates only relative paths + anchor fragments.
-# External URLs are skipped — they flake too often to justify CI fails
+# External URLs are skipped -- they flake too often to justify CI fails
 # (Discord redirects, GitHub rate limits, etc.). Run lychee locally
 # without `--offline` periodically to spot-check external links.
 name: link-check
@@ -55,10 +55,10 @@ jobs:
       - name: Lychee (offline mode — paths + anchors only)
         uses: lycheeverse/lychee-action@v2
         with:
-          # --offline                — skip external URL probes
-          # --include-fragments      — validate #anchors against headings
-          # --no-progress            — clean CI output
-          # --cache + --max-cache-age — reuse the restored cache
+          # --offline                -- skip external URL probes
+          # --include-fragments      -- validate #anchors against headings
+          # --no-progress            -- clean CI output
+          # --cache + --max-cache-age -- reuse the restored cache
           # Targets: every md outside node_modules and CHANGELOG.md
           # (CHANGELOG references historical commits that may have
           # moved across renames; not a maintenance signal worth gating

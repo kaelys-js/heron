@@ -45,7 +45,7 @@ function modeFiles(): string[] {
 describe('mode-substitution end-to-end', () => {
   describe('every mode file', () => {
     const files = modeFiles();
-    expect(files.length).toBeGreaterThan(20); // sanity — at least 20 mode files exist
+    expect(files.length).toBeGreaterThan(20); // sanity -- at least 20 mode files exist
 
     it.each(
       files.map((f) => [f.slice(ROOT.length + 1)] as const),

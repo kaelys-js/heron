@@ -28,7 +28,7 @@ from lib_playwright_auth import user_data_dir as _resolve_user_data_dir  # noqa:
 def teamtailor_config() -> PortalConfig:
     return PortalConfig(
         portal_id="teamtailor",
-        # Per-user Playwright session — resolves to data/users/{uid}/.playwright-teamtailor/
+        # Per-user Playwright session -- resolves to data/users/{uid}/.playwright-teamtailor/
         # under multi-user, or data/profiles/_shared/.playwright-teamtailor/ for legacy.
         user_data_dir=_resolve_user_data_dir("teamtailor"),
         first_name_selectors=[

@@ -53,7 +53,7 @@ const CACHEABLE_PATTERNS = [
 ] as const;
 
 type CacheEntry = {
-  url: string; // full URL including query string — keypath
+  url: string; // full URL including query string -- keypath
   data: unknown;
   cachedAt: number;
   lastAccessedAt: number;

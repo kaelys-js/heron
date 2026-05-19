@@ -78,7 +78,7 @@ const PER_PROFILE_DELETE_DIRS = ['reports', 'output', 'interview-prep'];
 
 /** Files PRESERVED at the profile level -- explicit allowlist. */
 const PER_PROFILE_KEEP = [
-  'portals.yml', // job sources — user said keep
+  'portals.yml', // job sources -- user said keep
 ];
 
 /** Top-level data/ files (shared across profiles) wiped on full reset. */
@@ -376,7 +376,7 @@ async function main() {
   console.log(color(DIM, `  Backup:    ${bakDir.replace(ROOT, '.')}`));
   console.log(color(DIM, `  Restore:   cp -r ${bakDir.replace(ROOT, '.')}/data/* data/`));
   console.log(color(DIM, `\nNext step:`));
-  console.log('  pnpm dev     # boot — should land on onboarding\n');
+  console.log('  pnpm dev     # boot -- should land on onboarding\n');
 }
 
 main().catch((e) => {

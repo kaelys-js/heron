@@ -1,5 +1,5 @@
 name: OSSF Scorecard
-# Supply-chain posture report — runs weekly + on every push to main.
+# Supply-chain posture report -- runs weekly + on every push to main.
 #
 # Publishes results to securityscorecards.dev (public dashboard) and
 # uploads the SARIF report to GitHub Code Scanning so findings show up
@@ -8,10 +8,10 @@ name: OSSF Scorecard
 # Required GitHub setup:
 #   • Settings → Code security and analysis → "Code scanning" enabled
 #   • Settings → Security → "Token-less Scorecard publishing" enabled
-#     (or set SCORECARD_TOKEN as a repo secret — public-repo path uses
+#     (or set SCORECARD_TOKEN as a repo secret -- public-repo path uses
 #     OIDC by default, no token needed)
 #
-# G3 — fills the missing public-supply-chain reputation signal. Most
+# G3 -- fills the missing public-supply-chain reputation signal. Most
 # May-2026 OSS projects expose a Scorecard score; absence is now a yellow
 # flag for security-conscious adopters.
 on:
@@ -42,11 +42,11 @@ jobs:
       contents: read
     steps:
       - name: Harden runner
-        # G4 — egress-policy: audit in initial rollout. After 2 weeks of
+        # G4 -- egress-policy: audit in initial rollout. After 2 weeks of
         # green runs, flip to `egress-policy: block` and add observed
         # endpoints to `allowed-endpoints`. Especially important on this
         # workflow because it runs with `security-events: write` +
-        # `id-token: write` — a compromised action step here could
+        # `id-token: write` -- a compromised action step here could
         # exfiltrate the OIDC token.
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
@@ -62,7 +62,7 @@ jobs:
         with:
           results_file: results.sarif
           results_format: sarif
-          # public_results: true is the default for public repos —
+          # public_results: true is the default for public repos --
           # publishes to https://api.securityscorecards.dev/projects/{repo}.
           # The README badge resolves through this endpoint.
           publish_results: true

@@ -135,7 +135,7 @@
       //   4. Set the session cookie
       const result = await authClient.signUp.email({
         email: email.trim(),
-        password: crypto.randomUUID(), // unused — emailAndPassword is disabled
+        password: crypto.randomUUID(), // unused -- emailAndPassword is disabled
         name: name.trim(),
       });
 

@@ -27,7 +27,7 @@ from lib_playwright_auth import user_data_dir as _resolve_user_data_dir  # noqa:
 def recruitee_config() -> PortalConfig:
     return PortalConfig(
         portal_id="recruitee",
-        # Per-user Playwright session — resolves to data/users/{uid}/.playwright-recruitee/
+        # Per-user Playwright session -- resolves to data/users/{uid}/.playwright-recruitee/
         # under multi-user, or data/profiles/_shared/.playwright-recruitee/ for legacy.
         user_data_dir=_resolve_user_data_dir("recruitee"),
         name_selectors=[

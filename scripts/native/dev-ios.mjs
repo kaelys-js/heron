@@ -147,7 +147,7 @@ if (which('ruby') && which('gem')) {
     allowFail: true,
   });
 } else {
-  warn('ruby/gem not on PATH — skipping App-target source sync');
+  warn('ruby/gem not on PATH -- skipping App-target source sync');
 }
 
 if (usesPodfile) {
@@ -156,7 +156,7 @@ if (usesPodfile) {
     run('pod', ['install', '--silent'], { cwd: iosDir, allowFail: true });
     ok('pods installed');
   } else {
-    warn('skipped — pod not on PATH');
+    warn('skipped -- pod not on PATH');
   }
 } else {
   step(5, 'Skipping CocoaPods (project uses Swift Package Manager)');

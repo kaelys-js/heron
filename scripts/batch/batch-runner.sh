@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Heron batch runner — standalone orchestrator for AI CLI workers
+# Heron batch runner -- standalone orchestrator for AI CLI workers
 # Reads batch-input.tsv, delegates each offer to an AGENT_CLI -p worker,
 # tracks state in batch-state.tsv for resumability.
 #
@@ -47,7 +47,7 @@ STATE_FILE="$BATCH_DIR/batch-state.tsv"
 # PROMPT_FILE: orchestrator pre-resolves __TOKEN__ placeholders in
 # modes/batch-prompt.md against the active profile + writes the
 # realized version to a temp file, passing the path via BATCH_PROMPT_FILE.
-# Standalone (non-dashboard) runs fall back to the literal file — those
+# Standalone (non-dashboard) runs fall back to the literal file -- those
 # users get a prompt with __CV__ etc. unresolved, which is the visible
 # failure mode that prompts them to invoke via the dashboard.
 PROMPT_FILE="${BATCH_PROMPT_FILE:-$PROJECT_DIR/modes/batch-prompt.md}"

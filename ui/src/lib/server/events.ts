@@ -49,7 +49,7 @@ class Bus extends EventEmitter {
 
   constructor() {
     super();
-    this.setMaxListeners(50); // dev HMR can stack listeners — avoid noise warning
+    this.setMaxListeners(50); // dev HMR can stack listeners -- avoid noise warning
     this.loadFromDisk();
   }
 
@@ -299,7 +299,7 @@ export function logEvent(
 ): ActivityEvent {
   const resolvedUserId =
     opts.userId === null
-      ? undefined // broadcast — no userId tag
+      ? undefined // broadcast -- no userId tag
       : (opts.userId ?? maybeCurrentUserId() ?? undefined);
   const ev: ActivityEvent = {
     id: crypto.randomBytes(6).toString('hex'),

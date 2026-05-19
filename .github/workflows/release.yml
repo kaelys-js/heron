@@ -1,4 +1,4 @@
-# release — automated semantic releases via Release Please.
+# release -- automated semantic releases via Release Please.
 #
 # Flow:
 #
@@ -11,16 +11,16 @@
 #        chore: docs: refactor: test: ci: build: style: → no bump
 #   3. If there are bump-worthy commits, Release Please opens (or updates)
 #      a "release PR" that accumulates the changes + CHANGELOG entries.
-#      The PR sits there until you merge it — gives you a chance to review
+#      The PR sits there until you merge it -- gives you a chance to review
 #      what's about to ship.
 #   4. When the release PR is merged: Release Please cuts the actual
-#      release — creates the git tag, the GitHub Release, the CHANGELOG
+#      release -- creates the git tag, the GitHub Release, the CHANGELOG
 #      commit, and emits a `releases_created: true` output.
 #   5. This workflow then triggers native-release.yml via workflow_call to
 #      build DMG / .exe / .AppImage / iOS TestFlight artifacts and attach
 #      them to the just-created GitHub Release.
 #
-# Manual override: `pnpm release patch` from the CLI still works — it
+# Manual override: `pnpm release patch` from the CLI still works -- it
 # bypasses Release Please and pushes a tag directly. native-release.yml
 # picks up that tag via its `on: push: tags` trigger.
 name: release
@@ -62,7 +62,7 @@ jobs:
 
   # When Release Please cuts a real release (i.e. the release PR was just
   # merged), kick off the cross-platform build. workflow_call within the
-  # same run means we don't need a PAT — secrets: inherit forwards every
+  # same run means we don't need a PAT -- secrets: inherit forwards every
   # repo secret (APPLE_*, MAC_CERTIFICATE_*, etc.) into the called workflow.
   build-natives:
     needs: release-please

@@ -76,17 +76,17 @@ PROFILE_FILE_KINDS = {
     "reports-dir": "reports",
     "output-dir": "output",
     "interview-prep-dir": "interview-prep",
-    # Item 4d / Option-C additions — see lib-profiles.mjs for rationale.
+    # Item 4d / Option-C additions -- see lib-profiles.mjs for rationale.
     # jds/ → per-profile saved JD text (was repo-root, shared, privacy leak).
     "jds-dir": "jds",
     # writing-samples/ → per-profile voice-calibration samples.
     "writing-samples-dir": "writing-samples",
     # batch/ → per-profile bulk-CV worker state. Previously repo-root
-    # `batch/` (shared — concurrent users corrupted each other's state).
+    # `batch/` (shared -- concurrent users corrupted each other's state).
     "batch-dir": "batch",
 }
 
-# User-shared kinds — files that transcend the user's profiles but
+# User-shared kinds -- files that transcend the user's profiles but
 # stay private to that user. Lives one level above the profile tree.
 USER_SHARED_KINDS = {
     "story-bank": "story-bank.md",

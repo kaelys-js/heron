@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://json.schemastore.org/pnpm-workspace.json
-# pnpm workspace — turborepo + lefthook expect this layout.
+# pnpm workspace -- turborepo + lefthook expect this layout.
 #
 # Why workspaces here? Strictly we don't need them (ui/ and ui/electron/
 # aren't separately published), but turbo's task graph and pnpm's
@@ -18,12 +18,12 @@ packages:
 # Don't add packages here without inspecting their install scripts.
 # These five each need their script to land precompiled binaries OR
 # build native bindings on the user's host:
-#   • better-sqlite3   — compiles or downloads prebuilt SQLite + node binding
-#   • electron         — downloads + unpacks the Electron runtime
-#   • electron-winstaller — Windows installer bundler (transitive of electron-builder)
-#   • esbuild          — downloads the platform-specific binary
-#   • sharp            — downloads precompiled libvips binaries
-#   • msw              — postinstall is a CLI welcome message. The
+#   • better-sqlite3   -- compiles or downloads prebuilt SQLite + node binding
+#   • electron         -- downloads + unpacks the Electron runtime
+#   • electron-winstaller -- Windows installer bundler (transitive of electron-builder)
+#   • esbuild          -- downloads the platform-specific binary
+#   • sharp            -- downloads precompiled libvips binaries
+#   • msw              -- postinstall is a CLI welcome message. The
 #                        browser-mode Service Worker is already shipped
 #                        at ui/static/mockServiceWorker.js. Refresh it
 #                        after a major msw bump with
@@ -39,20 +39,20 @@ allowBuilds:
 
 # ── Transitive override pinning ─────────────────────────────────────
 # pnpm 11 reads `overrides` ONLY from pnpm-workspace.yaml in workspaces.
-# Documented at https://pnpm.io/settings#overrides — the `pnpm.overrides`
+# Documented at https://pnpm.io/settings#overrides -- the `pnpm.overrides`
 # key in package.json is silently ignored when a workspace is present.
 #
 # Each entry below pins a specific transitive away from a known CVE.
 overrides:
-  # GHSA-67mh-4wv8-2f99 — esbuild dev server lets any website CORS-read
+  # GHSA-67mh-4wv8-2f99 -- esbuild dev server lets any website CORS-read
   # the response. Patched in 0.25.0. @esbuild-kit/core-utils still pins
   # 0.18.x; this forces all instances onto a safe version.
   esbuild: ">=0.25.12"
-  # GHSA-pxg6-pf52-xh8x — cookie accepts out-of-bounds chars in name/path/
+  # GHSA-pxg6-pf52-xh8x -- cookie accepts out-of-bounds chars in name/path/
   # domain (CRLF injection). Patched in 0.7.0. @sveltejs/kit 2.59.x still
   # bundles 0.6.0.
   cookie: ">=0.7.0"
-  # GHSA-f5x3-32g6-xq36, GHSA-3jfq-g458-7qm9, plus 3 sibling CVEs — tar
+  # GHSA-f5x3-32g6-xq36, GHSA-3jfq-g458-7qm9, plus 3 sibling CVEs -- tar
   # path traversal / arbitrary write. Patched in 7.5.7.
   tar: ">=7.5.7"
   # GHSA-px2f-25qx-c2pq -- @tootallnate/once is unmaintained and has an
@@ -74,19 +74,19 @@ overrides:
 # ── Peer dependency rules ──────────────────────────────────────────
 peerDependencyRules:
   # Better Auth optionally peers on react/@types/react for its React SDK
-  # — we don't use that. Suppress the missing-peer warnings.
+  # -- we don't use that. Suppress the missing-peer warnings.
   ignoreMissing:
     - "@types/react"
     - react
 
-# ── Catalog — single source of truth for ALL dep versions ──────
+# ── Catalog -- single source of truth for ALL dep versions ──────
 # pnpm 9.5+ feature. Every dep in every workspace package.json
 # uses "<pkg>": "catalog:" and pnpm resolves to the version
 # below at install time. Single edit-point for every bump.
 #
 # Q1c policy: catalog ALL deps (production + dev), not just
 # shared. Removes the entire class of "root has X@1, ui has X@2"
-# drift bugs — alignment is structural, not test-enforced.
+# drift bugs -- alignment is structural, not test-enforced.
 catalog:
   "@anthropic-ai/sdk": "0.95.1"
   "@better-auth/passkey": "1.6.10"

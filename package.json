@@ -128,6 +128,7 @@
     "verify:english-only": "node scripts/system/verify-english-only.mjs",
     "verify:english-only:test": "node scripts/system/verify-english-only.test.mjs",
     "verify:no-slop": "node scripts/system/verify-no-slop.mjs",
+    "verify:no-slop:test": "node scripts/system/verify-no-slop.test.mjs",
     "visual:baseline": "node scripts/system/visual-regression.mjs --generate",
     "visual:diff": "node scripts/system/visual-regression.mjs --compare"
   },

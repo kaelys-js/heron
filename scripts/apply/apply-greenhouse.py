@@ -95,7 +95,7 @@ from lib_apply import (  # noqa: E402
 from lib_profiles import resolve_profile_arg, resolve_user_arg, profile_path  # noqa: E402
 from lib_playwright_auth import user_data_dir as _resolve_user_data_dir  # noqa: E402
 
-# Per-user Playwright session dir for Greenhouse — resolves to
+# Per-user Playwright session dir for Greenhouse -- resolves to
 # data/users/{uid}/.playwright-greenhouse/ under multi-user, or
 # data/profiles/_shared/.playwright-greenhouse/ for legacy single-user.
 USER_DATA_DIR = _resolve_user_data_dir("greenhouse")
@@ -131,7 +131,7 @@ def schema_api_hosts(url: str) -> list[str]:
         return ["https://job-boards-api.greenhouse.io/v1/boards"]
     if "boards.greenhouse.io" in url:
         return ["https://boards-api.greenhouse.io/v1/boards"]
-    # Embedded iframe on careers.{company}.com — try both, prefer new.
+    # Embedded iframe on careers.{company}.com -- try both, prefer new.
     return [
         "https://job-boards-api.greenhouse.io/v1/boards",
         "https://boards-api.greenhouse.io/v1/boards",
@@ -229,7 +229,7 @@ def fill_intl_phone(page, country: str, phone: str) -> bool:
             if search.is_visible(timeout=1500):
                 human_type(search, country)
             else:
-                # No search input — country list auto-filters via keyboard.
+                # No search input -- country list auto-filters via keyboard.
                 page.keyboard.type(country, delay=random.randint(40, 100))
             time.sleep(random.uniform(0.2, 0.4))
             page.keyboard.press("Enter")
@@ -241,7 +241,7 @@ def fill_intl_phone(page, country: str, phone: str) -> bool:
     try:
         phone_input = page.locator('input[type="tel"], input[name="phone"]').first
         if phone_input.is_visible(timeout=2000):
-            # Strip the country code if we set the flag — intl-tel-input
+            # Strip the country code if we set the flag -- intl-tel-input
             # adds it automatically. Heuristic: drop a leading "+NN-" prefix.
             local = re.sub(r"^\+\d{1,3}[-\s]?", "", phone or "")
             human_type(phone_input, local or phone)
@@ -269,7 +269,7 @@ def fill_google_places(page, location_text: str) -> bool:
             return False
         loc.click()
         human_type(loc, location_text)
-        # Wait for suggestion dropdown — Google's .pac-container appears as a body-level div.
+        # Wait for suggestion dropdown -- Google's .pac-container appears as a body-level div.
         time.sleep(random.uniform(0.8, 1.4))
         page.keyboard.press("ArrowDown")
         time.sleep(random.uniform(0.2, 0.4))
@@ -322,7 +322,7 @@ def fill_custom_question(page, question: dict, answers_cache: dict) -> str:
     if not label:
         return "skipped-empty"
 
-    # EEO short-circuit — every US-facing Greenhouse has a Voluntary Self-ID
+    # EEO short-circuit -- every US-facing Greenhouse has a Voluntary Self-ID
     # step. Default policy: decline. If the field is EEO and we can pick a
     # decline option, that counts as "filled" (the form is satisfied).
     if is_eeo_label(label):
@@ -375,7 +375,7 @@ def fill_custom_question(page, question: dict, answers_cache: dict) -> str:
 def detect_confirmation(page) -> bool:
     """Check for the usual confirmation signals after Submit clicks.
     Returns True when we're confident the application went through."""
-    # URL signal — Greenhouse redirects to /jobs/{id}/confirmation
+    # URL signal -- Greenhouse redirects to /jobs/{id}/confirmation
     if "/confirmation" in (page.url or ""):
         return True
     try:
@@ -415,7 +415,7 @@ def run(args) -> int:
     min_score = float(auto.get("min_score_to_apply", 4.0))
     autonomous = bool(auto.get("autonomous_apply", False))
 
-    # Score gate (defensive — apply-queue.job.ts preflight already checked).
+    # Score gate (defensive -- apply-queue.job.ts preflight already checked).
     score = float(args.score) if args.score is not None else None
     if score is not None and autonomous and score < min_score:
         return emit_result("manual-apply-needed", f"score-gate:{score:.1f} below {min_score:.1f}")
@@ -438,7 +438,7 @@ def run(args) -> int:
     if cover_path and not cover_path.exists():
         cover_path = None
 
-    # Portal meta from URL — we need company + jobId for the schema fetch.
+    # Portal meta from URL -- we need company + jobId for the schema fetch.
     det = detect_portal(args.url)
     meta = det.get("meta") or {}
     company = meta.get("company")
@@ -449,7 +449,7 @@ def run(args) -> int:
     step(f"schema_fetch_done:{'ok' if schema else 'no'}")
     plan = plan_from_schema(schema)
 
-    # Persistent context — Greenhouse Cloudflare watches header fingerprints.
+    # Persistent context -- Greenhouse Cloudflare watches header fingerprints.
     USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
     headed = bool(args.headed)
     with sync_playwright() as pw:
@@ -529,7 +529,7 @@ def run(args) -> int:
             if cover_path and cover_path.exists():
                 try:
                     # The cover letter file input is usually the second
-                    # input[type=file] — but try the named selector first.
+                    # input[type=file] -- but try the named selector first.
                     cl_input = page.locator('input[name="job_application[cover_letter]"]').first
                     if cl_input.count() == 0:
                         cl_input = page.locator('input[type="file"]').nth(1)
@@ -543,7 +543,7 @@ def run(args) -> int:
             # Load the PER-PROFILE persistent cache (data/profiles/{slug}/
             # form-answers-cache.jsonl). Fall back to the legacy
             # profile.yml.form_answers dict ONLY for backward-compat with
-            # any hand-maintained YAML — the persistent JSONL is the new
+            # any hand-maintained YAML -- the persistent JSONL is the new
             # source of truth and what the UI writes to.
             answers_cache = load_form_answers(profile_id)
             for legacy_k, legacy_v in (profile.get("form_answers") or {}).items():
@@ -575,7 +575,7 @@ def run(args) -> int:
                 step("autonomous_off_review_only")
                 return emit_result("manual-apply-needed", "review-required:autonomous_apply off")
 
-            # Captcha recheck just before submit — Greenhouse sometimes
+            # Captcha recheck just before submit -- Greenhouse sometimes
             # lazy-injects reCAPTCHA Enterprise on the final step.
             captcha = detect_captcha(page)
             if captcha:
@@ -610,7 +610,7 @@ def run(args) -> int:
                 except Exception:
                     pass
 
-            # No confirmation, no validation error — flag as ambiguous so
+            # No confirmation, no validation error -- flag as ambiguous so
             # the user can verify by hand.
             screenshot_for_issue(page, DISPATCHER_JOB_ID)
             return emit_result("manual-apply-needed", "no-confirmation")

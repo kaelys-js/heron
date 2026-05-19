@@ -1,12 +1,12 @@
 name: 'CodeQL Analysis'
-# G8 — extended to cover Python (scripts/) + Swift (ui/ios/App). Pre-fix
+# G8 -- extended to cover Python (scripts/) + Swift (ui/ios/App). Pre-fix
 # only TS was analyzed; we ship Python scrapers + a 5-target iOS app
 # and missed half the attack surface.
 #
 # Matrix legs run in parallel on independent runners.
-#   • javascript-typescript — ubuntu, autobuild (just `pnpm install`)
-#   • python                — ubuntu, autobuild (scripts/ pure Python)
-#   • swift                 — macos-15, manual build (xcodebuild)
+#   • javascript-typescript -- ubuntu, autobuild (just `pnpm install`)
+#   • python                -- ubuntu, autobuild (scripts/ pure Python)
+#   • swift                 -- macos-15, manual build (xcodebuild)
 #
 # Go was dropped in commit 7b15e50 (the Go TUI was superseded by the
 # SvelteKit dashboard). Renovate is also gated against the deleted
@@ -57,12 +57,12 @@ jobs:
           # `security-and-quality` runs ~70 queries beyond the default
           # `security-extended`. Catches dataflow + control-flow patterns
           # the default set misses. ~5min extra per leg, run weekly + on
-          # main pushes only (not every PR — those use the lighter default
+          # main pushes only (not every PR -- those use the lighter default
           # set on the path filter).
           queries: ${{ github.event_name == 'pull_request' && 'security-extended' || 'security-and-quality' }}
 
       # JavaScript/TypeScript + Python autobuild via pnpm install / uv pip
-      # — no extra build step.
+      # -- no extra build step.
       - name: Autobuild
         if: matrix.language != 'swift'
         uses: github/codeql-action/autobuild@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4

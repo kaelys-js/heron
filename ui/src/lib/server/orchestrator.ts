@@ -61,15 +61,15 @@ export function listRunning(): string[] {
 const TIMEOUT_MS: Record<TaskName, number> = {
   scan: 30 * 60_000, // 30 min
   gemini: 15 * 60_000, // 15 min
-  evaluate: 10 * 60_000, // 10 min — a single Claude evaluate run
+  evaluate: 10 * 60_000, // 10 min -- a single Claude evaluate run
   pdf: 5 * 60_000, // 5 min
-  'apply-linkedin': 30 * 60_000, // 30 min — Playwright + login + apply
-  'bulk-cv': 4 * 60 * 60_000, // 4h — covers the largest realistic batch
+  'apply-linkedin': 30 * 60_000, // 30 min -- Playwright + login + apply
+  'bulk-cv': 4 * 60 * 60_000, // 4h -- covers the largest realistic batch
   'bulk-apply': 2 * 60 * 60_000, // 2h
-  'auto-eval': 60 * 60_000, // 60 min — up to 10 evaluate runs × 3min + headroom
+  'auto-eval': 60 * 60_000, // 60 min -- up to 10 evaluate runs × 3min + headroom
 };
 
-const MAX_STDOUT_BUF = 1024 * 1024; // 1MB — see comment above
+const MAX_STDOUT_BUF = 1024 * 1024; // 1MB -- see comment above
 const MAX_LINES_PER_SEC = 100;
 
 /**

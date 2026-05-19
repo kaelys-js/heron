@@ -91,7 +91,7 @@
         var prev = f.previousElementSibling;
         if (prev) label = prev.textContent.trim();
       }
-      if (!label) return; // skip unlabelled fields — we can't match them
+      if (!label) return; // skip unlabelled fields -- we can't match them
 
       var type =
         f.tagName.toLowerCase() === 'textarea'

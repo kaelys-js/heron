@@ -119,7 +119,7 @@ export default defineConfig({
         '**/.svelte-kit/**',
         '**/coverage/**',
         '**/dist/**',
-        'src/lib/components/ui/**', // bits-ui wrappers — auto-generated
+        'src/lib/components/ui/**', // bits-ui wrappers -- auto-generated
         'src/**/*.config.{ts,js,mjs}',
         'src/**/types.ts',
         'src/**/*.d.ts',

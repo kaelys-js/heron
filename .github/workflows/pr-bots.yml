@@ -3,18 +3,18 @@ name: PR bots
 #
 # Four small jobs sharing one workflow + one harden-runner setup:
 #
-#   • auto-merge      — when a PR has 1+ approval AND all required
+#   • auto-merge      -- when a PR has 1+ approval AND all required
 #                       checks pass AND no `do-not-merge` label, enable
 #                       auto-merge (squash). Renovate already has this
 #                       for dep updates; this extends to human PRs.
-#   • stale-pinger    — when a PR has had no activity for 14 days,
+#   • stale-pinger    -- when a PR has had no activity for 14 days,
 #                       drop a friendly @mention 7 days BEFORE
 #                       stale.yml's 30-day close threshold. Pings the
 #                       author + the first reviewer.
-#   • needs-rebase    — when main moves and a PR's HEAD diverges from
+#   • needs-rebase    -- when main moves and a PR's HEAD diverges from
 #                       its base, comment with `gh pr update-branch`
 #                       instructions. Fires on push-to-main.
-#   • first-timer-help — extends welcome.yml: when a NEW contributor
+#   • first-timer-help -- extends welcome.yml: when a NEW contributor
 #                       opens their first PR, drop a comment with the
 #                       exact `pnpm test` / `pnpm test:e2e` /
 #                       `pnpm act:test` commands they need to verify
@@ -29,14 +29,14 @@ on:
   # access to repo secrets. The classic injection vector is checking
   # out the PR head and executing its code with secret access. This
   # workflow does NEITHER:
-  #   1. No `actions/checkout` step anywhere — we don't fetch the PR's
+  #   1. No `actions/checkout` step anywhere -- we don't fetch the PR's
   #      code, just read PR metadata via `gh pr view`.
-  #   2. No shell-evaluation of untrusted strings — every `gh pr
+  #   2. No shell-evaluation of untrusted strings -- every `gh pr
   #      comment` call uses --body-file (heredoc-rendered) with the
   #      AUTHOR/PR-number passed as environment variables, never
   #      interpolated into shell.
   # Permissions are minimum-necessary (pull-requests: write, issues:
-  # write — but no contents:write, no id-token, no packages).
+  # write -- but no contents:write, no id-token, no packages).
   pull_request_target:
     types: [opened, reopened, ready_for_review, synchronize, labeled]
   pull_request_review:
@@ -44,7 +44,7 @@ on:
   push:
     branches: [main]
   schedule:
-    # 6am UTC Mon-Fri — pinger doesn't need to run on weekends
+    # 6am UTC Mon-Fri -- pinger doesn't need to run on weekends
     - cron: "0 6 * * 1-5"
 
 permissions:
@@ -57,7 +57,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # ── auto-merge — opt-in, label-gated, dep-PR-aware ────────────────
+  # ── auto-merge -- opt-in, label-gated, dep-PR-aware ────────────────
   auto-merge:
     name: Auto-merge approved PRs
     runs-on: ubuntu-latest
@@ -74,7 +74,7 @@ jobs:
           egress-policy: audit
 
       - name: Enable auto-merge
-        # No external action needed — `gh pr merge --auto` waits for
+        # No external action needed -- `gh pr merge --auto` waits for
         # the required checks to land then squash-merges. The check
         # below verifies the PR meets the gates BEFORE enabling.
         env:
@@ -108,7 +108,7 @@ jobs:
           }
           echo "::notice::Auto-merge enabled for PR #$PR"
 
-  # ── stale-PR pinger — friendly nudge 7d before stale.yml closes ───
+  # ── stale-PR pinger -- friendly nudge 7d before stale.yml closes ───
   stale-pinger:
     name: Ping inactive PRs (7d before stale-close)
     runs-on: ubuntu-latest
@@ -123,7 +123,7 @@ jobs:
 
       - name: Find PRs aged 23 days with no comments in last 7 days
         # stale.yml closes PRs after 30 days inactivity (16d stale +
-        # 14d close window). We ping at day 23 — 7d before the close.
+        # 14d close window). We ping at day 23 -- 7d before the close.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -152,7 +152,7 @@ jobs:
             echo "::notice::Pinged PR #$NUM"
           done
 
-  # ── needs-rebase — comment when main moves ahead of a PR ──────────
+  # ── needs-rebase -- comment when main moves ahead of a PR ──────────
   needs-rebase:
     name: Comment on PRs that need rebase after main push
     runs-on: ubuntu-latest
@@ -169,7 +169,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          # GH's mergeable field returns null while GH is computing —
+          # GH's mergeable field returns null while GH is computing --
           # poll briefly. CONFLICTING means real merge conflict;
           # BEHIND means out-of-date with base.
           PRS=$(gh pr list --state open --json number,mergeStateStatus,author \
@@ -216,7 +216,7 @@ jobs:
             echo "::notice::Commented on PR #$NUM ($STATUS)"
           done
 
-  # ── first-timer test-help — when a first-time contributor opens a PR ──
+  # ── first-timer test-help -- when a first-time contributor opens a PR ──
   first-timer-help:
     name: First-timer test-help comment
     runs-on: ubuntu-latest

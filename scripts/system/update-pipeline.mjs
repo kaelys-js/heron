@@ -40,7 +40,7 @@ const newLines = lines.map((line) => {
   if (!m) return line;
   const [, url, company, role] = m;
   const skip = skippedMap.get(url);
-  if (!skip) return line; // survivor — leave as-is
+  if (!skip) return line; // survivor -- leave as-is
   return `- [!] ${url} | ${company.trim()} | ${role.trim()} -- SKIPPED: ${skip.reason}`;
 });
 writeFileSync(PIPELINE, newLines.join('\n'));

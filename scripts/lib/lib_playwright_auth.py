@@ -66,14 +66,14 @@ ROOT = Path(__file__).resolve().parent
 REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 
 # One persistent Chromium profile per portal PER USER. State (cookies,
-# localStorage, cache) lives inside these dirs — wiping the dir
+# localStorage, cache) lives inside these dirs -- wiping the dir
 # disconnects that user. Under multi-user (HERON_USER_ID set):
 #   data/users/{uid}/.playwright-{portal}/
 # Legacy single-user (SYSTEM_USER_ID fallback):
 #   data/profiles/_shared/.playwright-{portal}/
 #
 # CRITICAL: the persistent dir IS the credential. Two users on one
-# machine MUST NOT share these dirs — otherwise Alice's apply would
+# machine MUST NOT share these dirs -- otherwise Alice's apply would
 # post as Bob and vice versa. See docs/security.md.
 KNOWN_PORTALS: frozenset[str] = frozenset(
     {
@@ -116,7 +116,7 @@ def user_data_dir(portal: str) -> Path:
 
     user_id = resolve_user_arg()
     if user_id == SYSTEM_USER_ID:
-        # Legacy single-user fallback — under the _shared escape-hatch
+        # Legacy single-user fallback -- under the _shared escape-hatch
         # so the layout reads as "every dir under profiles/ is either
         # a profile or _shared".
         udd = REPO_ROOT / "data" / "profiles" / "_shared" / f".playwright-{portal}"
@@ -234,7 +234,7 @@ def login_interactive(portal: Literal["linkedin", "indeed"]) -> bool:
             page.goto(landing, timeout=PROBE_TIMEOUT_MS, wait_until="domcontentloaded")
         except PlaywrightTimeout:
             print(f"[lib_playwright_auth] Timed out loading {landing}", file=sys.stderr)
-            # Continue — the user may have manually navigated to a different URL.
+            # Continue -- the user may have manually navigated to a different URL.
 
         # Poll for login completion.
         deadline = time.time() + LOGIN_TIMEOUT_S

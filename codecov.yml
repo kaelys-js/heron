@@ -1,4 +1,4 @@
-# HP8 — Codecov PR-comment + coverage gate shape.
+# HP8 -- Codecov PR-comment + coverage gate shape.
 #
 # Lives at repo root (codecov.io scans this path). Shapes:
 #   - The PR comment layout (reach + diff + per-flag + per-component)
@@ -33,7 +33,7 @@ coverage:
         threshold: 1%
         only_pulls: true
       auth-critical:
-        # Auth-critical paths are zero-tolerance — never below 80%.
+        # Auth-critical paths are zero-tolerance -- never below 80%.
         # Set via the `auth` component below.
         target: 80%
         threshold: 0%

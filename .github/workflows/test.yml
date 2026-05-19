@@ -4,9 +4,9 @@ name: Tests
 # for the same ref so rapid pushes don't burn CI minutes.
 #
 # Three parallel jobs:
-#   ts     — ubuntu-latest — typecheck + format + Vitest matrix + Codecov
-#   ios    — macos-15      — Fastlane test_ci on iPhone 17 Pro Max sim
-#   audit  — ubuntu-latest — pnpm audit gate
+#   ts     -- ubuntu-latest -- typecheck + format + Vitest matrix + Codecov
+#   ios    -- macos-15      -- Fastlane test_ci on iPhone 17 Pro Max sim
+#   audit  -- ubuntu-latest -- pnpm audit gate
 #
 # `coverage` job (depends on ts + ios) downloads both artifacts and posts
 # a single Codecov PR comment with combined + per-flag deltas.
@@ -19,7 +19,7 @@ on:
 
 # Least-privilege: this workflow only reads source + writes statuses /
 # annotations + uploads coverage. No release artefacts, no Pages, no packages.
-# id-token: write is required for Codecov OIDC upload (G12) — replaces the
+# id-token: write is required for Codecov OIDC upload (G12) -- replaces the
 # CODECOV_TOKEN secret. Works on fork PRs (which can't see secrets).
 permissions:
   contents: read
@@ -36,7 +36,7 @@ defaults:
 
 jobs:
   # ─────────────────────────────────────────────────────────────────
-  # TS / Svelte / Server / Electron — Vitest + svelte-check + audit
+  # TS / Svelte / Server / Electron -- Vitest + svelte-check + audit
   # ─────────────────────────────────────────────────────────────────
   ts:
     name: TS — typecheck + Vitest + coverage
@@ -49,7 +49,7 @@ jobs:
 
     steps:
       - name: Harden runner
-        # G4 — defense-in-depth for the TS test runner. Audit mode for
+        # G4 -- defense-in-depth for the TS test runner. Audit mode for
         # rollout; flip to block after observing legitimate endpoints
         # (pnpm registry, codecov, etc.).
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
@@ -80,7 +80,7 @@ jobs:
             pnpm-store-${{ runner.os }}-
 
       - name: Cache turbo
-        # G22 — multi-tier restore-keys. Pre-fix the key was `turbo-{os}-
+        # G22 -- multi-tier restore-keys. Pre-fix the key was `turbo-{os}-
         # {sha}` which always missed on a new commit; only the
         # `turbo-{os}-` fallback hit (any branch's last build). Now we
         # try most-specific → progressively broader keys, giving ~50%
@@ -152,7 +152,7 @@ jobs:
         # in .markdownlint-cli2.jsonc. Catches bare URLs, malformed
         # tables, missing alt text, broken links, etc. Style rules
         # (line length / heading style / list bullets) are intentionally
-        # disabled — see the file header for the full rule rationale.
+        # disabled -- see the file header for the full rule rationale.
         run: pnpm validate:markdown
 
       - name: Exact-version pins (no ^ / ~ / partial versions)
@@ -202,7 +202,7 @@ jobs:
             exit 1
           fi
           echo "✓ no conflict markers"
-          # HP10 — surface in Actions Summary tab
+          # HP10 -- surface in Actions Summary tab
           {
             echo "### ✅ No merge-conflict markers"
             echo
@@ -215,7 +215,7 @@ jobs:
         # dependency-review-action already blocks NEW GPL deps in PRs;
         # this check catches GPL deps that already lurk in the existing
         # graph (e.g. a transitive upgrade that switched license).
-        # Production deps only — devDeps may include GPL CLI tooling.
+        # Production deps only -- devDeps may include GPL CLI tooling.
         run: |
           pnpm licenses list --prod --json > licenses.json
           node -e '
@@ -248,7 +248,7 @@ jobs:
       # Run the full Vitest matrix (ui-unit + ui-server + ui-component
       # + ui-routes + ui-integration + electron) with coverage. Coverage
       # threshold (70% lines / 65% branches / per-file 50% floor) is
-      # enforced by vitest.config.ts — falling below trips this step.
+      # enforced by vitest.config.ts -- falling below trips this step.
       - name: Vitest matrix (with coverage)
         run: pnpm test:coverage
 
@@ -270,7 +270,7 @@ jobs:
 
       - name: Assert lcov.info exists (Codecov gate)
         # Pre-codecov guard. The codecov-action below is gated on
-        # hashFiles() being non-empty — if the file is MISSING, the
+        # hashFiles() being non-empty -- if the file is MISSING, the
         # upload silently skips and the Codecov badge stays "unknown".
         # This step turns "missing lcov.info" into a hard CI failure
         # so a vitest config drift (reporter list ignored, wrong
@@ -287,11 +287,11 @@ jobs:
           echo "✓ lcov.info present: $(wc -l < ui/coverage/lcov.info) lines"
 
       - name: Upload coverage to Codecov (ts flag)
-        # G12 — OIDC + fail_ci_if_error. OIDC means no CODECOV_TOKEN
+        # G12 -- OIDC + fail_ci_if_error. OIDC means no CODECOV_TOKEN
         # rotation, no token leakage risk, and the upload works on PRs
         # from forks (which can't see secrets). fail_ci_if_error: true
         # turns silent upload skips into real CI failures so the
-        # coverage gate is enforced — pre-fix a broken upload silently
+        # coverage gate is enforced -- pre-fix a broken upload silently
         # passed.
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         with:
@@ -340,7 +340,7 @@ jobs:
           retention-days: 14
 
   # ─────────────────────────────────────────────────────────────────
-  # iOS — Fastlane test_ci on macOS-15 (Xcode 16, Swift 5.9+)
+  # iOS -- Fastlane test_ci on macOS-15 (Xcode 16, Swift 5.9+)
   # ─────────────────────────────────────────────────────────────────
   # Runs XCTest + XCUITest + snapshot tests across AppTests, AppUITests,
   # WidgetTests, WatchTests. xcov produces a Cobertura report consumed by
@@ -352,13 +352,13 @@ jobs:
     env:
       CI: "true"
       FORCE_COLOR: "3"
-      # Pinned Xcode version — must match .mise.toml's swift entry. When
+      # Pinned Xcode version -- must match .mise.toml's swift entry. When
       # we bump Xcode, this gets bumped too.
       DEVELOPER_DIR: /Applications/Xcode_16.app/Contents/Developer
 
     steps:
       - name: Harden runner
-        # G4 — iOS test runner. xcodebuild reaches sigverify + Apple's
+        # G4 -- iOS test runner. xcodebuild reaches sigverify + Apple's
         # CDN for simulators; we want to see exactly what before
         # tightening to block.
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
@@ -443,7 +443,7 @@ jobs:
           retention-days: 14
 
       - name: Upload coverage to Codecov (ios flag)
-        # G12 — see the ts upload above for OIDC rationale.
+        # G12 -- see the ts upload above for OIDC rationale.
         if: always() && hashFiles('ui/ios/App/fastlane/coverage/cobertura.xml') != ''
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         with:
@@ -455,7 +455,7 @@ jobs:
           verbose: true
 
   # ─────────────────────────────────────────────────────────────────
-  # Multi-language format / lint — one job covers every non-JS surface
+  # Multi-language format / lint -- one job covers every non-JS surface
   # so the JS-focused `ts` job stays focused.
   # ─────────────────────────────────────────────────────────────────
   format:
@@ -482,7 +482,7 @@ jobs:
       # All formatters are pinned in .mise.toml and installed by the
       # mise setup step above (`jdx/mise-action@v4` with experimental +
       # cache enabled). No per-tool curl / pip / gem / apt install needed
-      # — fresh-clone reproducibility is the whole point of mise.
+      # -- fresh-clone reproducibility is the whole point of mise.
 
       - name: actionlint .github/workflows/*.yml
         run: actionlint -color
@@ -571,7 +571,7 @@ jobs:
         run: pnpm audit --audit-level moderate
 
   # ─────────────────────────────────────────────────────────────────
-  # Coverage summary — wait on ts + ios, post combined Codecov comment
+  # Coverage summary -- wait on ts + ios, post combined Codecov comment
   # ─────────────────────────────────────────────────────────────────
   coverage:
     name: Coverage summary

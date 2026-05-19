@@ -80,8 +80,8 @@ function preflightProfile(job: Job, portal: SupportedPortal): string | null {
       };
     };
     const a = p?.automation;
-    if (!a) return null; // no opt-in block — allow user-clicked queue-apply
-    if (a.autonomous_apply === false) return null; // user clicked Apply manually — allowed
+    if (!a) return null; // no opt-in block -- allow user-clicked queue-apply
+    if (a.autonomous_apply === false) return null; // user clicked Apply manually -- allowed
     const minScore = typeof a.min_score_to_apply === 'number' ? a.min_score_to_apply : 4.0;
     const score = job.score ?? job.geminiScore ?? 0;
     if (score < minScore) return 'score ' + score.toFixed(1) + ' < min ' + minScore;
@@ -107,7 +107,7 @@ function preflightVisa(job: Job, profileId: string): string | null {
   try {
     profileYml = fs.readFileSync(profilePath(profileId, 'profile-yml'), 'utf8');
   } catch {
-    return null; // no profile.yml — can't decide; allow
+    return null; // no profile.yml -- can't decide; allow
   }
   const statusMatch = profileYml.match(/^\s*status:\s*"?([a-z0-9-]+)"?/im);
   const status = statusMatch ? statusMatch[1] : 'unknown';
