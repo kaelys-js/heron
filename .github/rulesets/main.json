@@ -43,7 +43,8 @@
           { "context": "Dependency Review / dependency-review" },
           { "context": "OSSF Scorecard / Scorecard analysis" },
           { "context": "zizmor — workflow security scan / Scan workflows" },
-          { "context": "PR quality / Conventional Commits PR title" }
+          { "context": "PR quality / Conventional Commits PR title" },
+          { "context": "DCO" }
         ]
       }
     },

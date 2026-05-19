@@ -1,0 +1,43 @@
+{
+  "$schema": "https://raw.githubusercontent.com/all-contributors/all-contributors/master/.all-contributorsrc.schema.json",
+  "projectName": "heron",
+  "projectOwner": "heron",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": ["README.md"],
+  "imageSize": 80,
+  "commit": false,
+  "commitConvention": "angular",
+  "skipCi": true,
+  "contributorsPerLine": 7,
+  "linkToUsage": true,
+  "contributorsSortAlphabetically": true,
+  "badgeTemplate": "[![All Contributors](https://img.shields.io/badge/all_contributors-<%= contributors.length %>-orange.svg?style=flat-square)](#contributors)",
+  "contributors": [
+    {
+      "login": "kaelys-js",
+      "name": "kaelys-js",
+      "avatar_url": "https://avatars.githubusercontent.com/kaelys-js",
+      "profile": "https://github.com/kaelys-js",
+      "contributions": [
+        "code",
+        "design",
+        "maintenance",
+        "review",
+        "infra",
+        "doc",
+        "ideas",
+        "security",
+        "tool",
+        "test"
+      ]
+    },
+    {
+      "login": "santifer",
+      "name": "santifer",
+      "avatar_url": "https://avatars.githubusercontent.com/santifer",
+      "profile": "https://github.com/santifer",
+      "contributions": ["code", "ideas", "design"]
+    }
+  ]
+}

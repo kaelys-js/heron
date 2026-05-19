@@ -1,0 +1,73 @@
+# HP26 — REUSE compliance for SPDX license declarations.
+#
+# This file lets `reuse lint` (https://reuse.software) verify every file
+# in the repo has a known copyright + license, without requiring
+# SPDX-FileCopyrightText / SPDX-License-Identifier headers in every
+# source file (which would be invasive on a 6000-file codebase).
+#
+# The default: everything in the repo is MIT-licensed, copyright
+# resist.js (the fork maintainer) for new work, and original-author
+# attribution for upstream santifer carryover.
+#
+# Carve-outs:
+#   - branding/* is licensed CC-BY-4.0 (logos, mascot specs, voice
+#     guide). The trademark + logo art is NOT MIT — see TRADEMARK.md.
+#   - docs/examples/* is CC0 (public domain) so anyone can copy the
+#     sample CV / report shapes verbatim.
+#   - vendored content (ui/ios/App/CapApp-SPM/, .venv/) is excluded
+#     entirely; upstream owns those licenses.
+
+version = 1
+SPDX-PackageName = "heron"
+SPDX-PackageSupplier = "resist.js <hello@heron.app>"
+SPDX-PackageDownloadLocation = "https://github.com/heron/heron"
+
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+  "Copyright (c) 2026 resist.js",
+  "Copyright (c) 2024 santifer (upstream career-ops contributions)",
+]
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "branding/**"
+precedence = "override"
+SPDX-FileCopyrightText = "Copyright (c) 2026 resist.js"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = "docs/examples/**"
+precedence = "override"
+SPDX-FileCopyrightText = "Copyright (c) 2026 resist.js"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = [
+  "ui/ios/App/CapApp-SPM/**",
+  ".venv/**",
+  "ui/node_modules/**",
+  "node_modules/**",
+  "ui/ios/App/Pods/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "NOASSERTION (vendored upstream content)"
+SPDX-License-Identifier = "NOASSERTION"
+
+[[annotations]]
+path = [
+  "data/**",
+  "reports/**",
+  "output/**",
+  "writing-samples/**",
+  "ui/build/**",
+  "ui/.svelte-kit/**",
+  "ui/electron/build/**",
+  "ui/electron/dist/**",
+  "**/*.bak",
+  "**/.DS_Store",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Generated content"
+SPDX-License-Identifier = "NOASSERTION"

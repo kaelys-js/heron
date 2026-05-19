@@ -1,0 +1,37 @@
+{
+  "$schema": "https://googlechrome.github.io/lighthouse-ci/schemas/lhr-config.json",
+  "_comment": "HP2 — Lighthouse CI budgets for the SvelteKit dashboard.",
+
+  "ci": {
+    "collect": {
+      "startServerCommand": "pnpm --filter ui exec vite preview --port 4173",
+      "startServerReadyPattern": "Local: +http://localhost:4173",
+      "url": ["http://localhost:4173/login", "http://localhost:4173/inbox"],
+      "numberOfRuns": 3,
+      "settings": {
+        "preset": "desktop",
+        "skipAudits": ["uses-http2", "is-on-https", "redirects-http"],
+        "chromeFlags": "--no-sandbox --headless=new"
+      }
+    },
+    "assert": {
+      "preset": "lighthouse:recommended",
+      "assertions": {
+        "categories:performance": ["error", { "minScore": 0.85 }],
+        "categories:accessibility": ["error", { "minScore": 0.95 }],
+        "categories:best-practices": ["warn", { "minScore": 0.9 }],
+        "categories:seo": ["warn", { "minScore": 0.9 }],
+        "first-contentful-paint": ["warn", { "maxNumericValue": 2000 }],
+        "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
+        "total-blocking-time": ["warn", { "maxNumericValue": 300 }],
+        "uses-rel-preconnect": "off",
+        "uses-text-compression": "off",
+        "_comment_skipped": "uses-http2 + uses-text-compression are dev-server-only failures; Vite's preview doesn't gzip"
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}
