@@ -33,15 +33,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // (via Main.storyboard or NSClassFromString plugin lookup) — the
         // optimizer has no compile-time Swift edge proving they're live,
         // so it drops them, and at runtime UIKit / Capacitor fail silently:
-        //   • Missing CareerOpsBridgeViewController → storyboard fails to
+        //   • Missing HeronBridgeViewController → storyboard fails to
         //     instantiate the root VC → empty UIWindow → BLACK SCREEN.
-        //   • Missing CareerOpsNativePlugin → JS bridge reports
-        //     "CareerOpsNative plugin is not implemented on ios" and every
+        //   • Missing HeronNativePlugin → JS bridge reports
+        //     "HeronNative plugin is not implemented on ios" and every
         //     Bonjour / biometric / keychain / Spotlight / Handoff call
         //     becomes a no-op.
         // Touching the metatype here pins both symbols in the binary.
-        _ = CareerOpsBridgeViewController.self
-        _ = CareerOpsNativePlugin.self
+        _ = HeronBridgeViewController.self
+        _ = HeronNativePlugin.self
 
         // Start the Bonjour browser early so backend-discovery can
         // hit a hot cache. Results are stored in a UserDefaults key
@@ -53,7 +53,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // the WebView so online-status.ts has authoritative truth.
         networkMonitor = NetworkMonitor.shared
         networkMonitor?.start { online in
-            CareerOpsNativePlugin.notifyNetStatus(online: online)
+            HeronNativePlugin.notifyNetStatus(online: online)
         }
 
         // Register for background fetch — minimum interval is iOS-decided.

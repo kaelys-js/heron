@@ -49,12 +49,7 @@ describe('Capacitor brand consistency — iOS', () => {
   });
 
   it('Every extension target has its own Brand.swift', () => {
-    const targets = [
-      'CareerOpsWidget',
-      'CareerOpsLiveActivity',
-      'CareerOpsShareExtension',
-      'CareerOpsWatch',
-    ];
+    const targets = ['HeronWidget', 'HeronLiveActivity', 'HeronShareExtension', 'HeronWatch'];
     for (const t of targets) {
       const p = `ui/ios/App/${t}/Brand.swift`;
       if (exists(`ui/ios/App/${t}/`)) {

@@ -3,18 +3,18 @@
 # to App.xcodeproj using the xcodeproj gem.
 #
 # Without this script, the user has to do 3 File→New→Target dances in Xcode
-# AND manually link the source files in CareerOpsWidget/ etc. With this
+# AND manually link the source files in HeronWidget/ etc. With this
 # script, one `ruby add-xcode-targets.rb` does it all.
 #
 # Targets created:
-#   • CareerOpsWidget          — Widget Extension (small/medium/circular)
-#   • CareerOpsLiveActivity    — Widget Extension w/ ActivityKit
-#   • CareerOpsShareExtension  — Share Extension
+#   • HeronWidget          — Widget Extension (small/medium/circular)
+#   • HeronLiveActivity    — Widget Extension w/ ActivityKit
+#   • HeronShareExtension  — Share Extension
 #
 # All three get:
-#   • Their Swift source from ui/ios/App/CareerOpsXxx/
-#   • Bundle ID: com.resistjs.careerops.{widget,liveactivity,share}
-#   • App Group capability: group.com.resistjs.careerops
+#   • Their Swift source from ui/ios/App/HeronXxx/
+#   • Bundle ID: com.heron.app.{widget,liveactivity,share}
+#   • App Group capability: group.com.heron.app
 #   • Deployment target: matches main app
 #
 # Safe to re-run — checks if a target already exists before adding.
@@ -41,8 +41,8 @@ puts "✓ opened #{PROJECT_PATH}"
 
 deployment_target = main_target.build_configurations.first.build_settings["IPHONEOS_DEPLOYMENT_TARGET"] || "15.0"
 team_id = main_target.build_configurations.first.build_settings["DEVELOPMENT_TEAM"]
-app_group = "group.com.resistjs.careerops"
-bundle_root = "com.resistjs.careerops"
+app_group = "group.com.heron.app"
+bundle_root = "com.heron.app"
 
 # ── PrivacyInfo.xcprivacy — Apple privacy manifest, required for App
 # Store submission since May 2024. Must be in the App target's Copy
@@ -73,31 +73,31 @@ end
 
 EXTENSIONS = [
   {
-    name: "CareerOpsWidget",
+    name: "HeronWidget",
     bundle_suffix: "widget",
     type: "com.apple.product-type.app-extension",
     extension_point: "com.apple.widgetkit-extension",
-    source_dir: "CareerOpsWidget",
+    source_dir: "HeronWidget",
     info_plist_extra: {},
     deployment_min: "16.0", # WidgetKit modern features need 16+
   },
   {
-    name: "CareerOpsLiveActivity",
+    name: "HeronLiveActivity",
     bundle_suffix: "liveactivity",
     type: "com.apple.product-type.app-extension",
     extension_point: "com.apple.widgetkit-extension",
-    source_dir: "CareerOpsLiveActivity",
+    source_dir: "HeronLiveActivity",
     info_plist_extra: {
       "NSSupportsLiveActivities" => true,
     },
     deployment_min: "16.1",
   },
   {
-    name: "CareerOpsShareExtension",
+    name: "HeronShareExtension",
     bundle_suffix: "share",
     type: "com.apple.product-type.app-extension",
     extension_point: "com.apple.share-services",
-    source_dir: "CareerOpsShareExtension",
+    source_dir: "HeronShareExtension",
     info_plist_extra: {
       "NSExtensionAttributes" => {
         "NSExtensionActivationRule" => {
@@ -114,7 +114,7 @@ EXTENSIONS = [
 # `cap add ios` only initializes the App target with AppDelegate.swift.
 # Native features we add later (BonjourBrowser, NetworkMonitor, Biometric,
 # KeychainStore, BackgroundFetcher, SpotlightIndexer, WatchSessionBridge,
-# CareerOpsNativePlugin, ErrorReporter, Brand) live in App/*.swift on disk
+# HeronNativePlugin, ErrorReporter, Brand) live in App/*.swift on disk
 # but aren't auto-added to the App target. Without this block xcodebuild
 # fails: "cannot find type 'BonjourBrowser' in scope". Walk App/*.swift
 # and ensure every file is in the App target's compile-sources phase.
@@ -123,7 +123,7 @@ EXTENSIONS = [
 app_sources_dir = File.expand_path("App", Dir.pwd)
 if Dir.exist?(app_sources_dir)
   # NOTE: do NOT name this `app_group` — the outer scope's `app_group`
-  # string ('group.com.resistjs.careerops') is reused in the entitlements
+  # string ('group.com.heron.app') is reused in the entitlements
   # block below. Shadowing it with a PBXGroup object corrupts the
   # entitlements file (the plist gem then Marshal-dumps the Ruby object
   # into the <data> element).
@@ -375,15 +375,15 @@ main_target.build_configurations.each do |config|
   config.build_settings["CODE_SIGN_ENTITLEMENTS"] ||= "App/App.entitlements"
 end
 
-# ── Apple Watch (CareerOpsWatch) target ─────────────────────────────
+# ── Apple Watch (HeronWatch) target ─────────────────────────────
 # watchOS 10+ single-target SwiftUI app. The source files live at
-# ../CareerOpsWatch/ (CareerOpsWatchApp.swift, RootView.swift,
+# ../HeronWatch/ (HeronWatchApp.swift, RootView.swift,
 # WatchModel.swift). Without registering this target, dev:apple-watch
 # can't build — and the user has to do the dance of "File → New →
 # Target → watchOS → App" through the Xcode UI, which is fragile and
-# manual. Idempotent: skips if a CareerOpsWatch target already exists.
-WATCH_NAME = "CareerOpsWatch"
-# Source dir lives at ui/ios/App/CareerOpsWatch/ — same level as the
+# manual. Idempotent: skips if a HeronWatch target already exists.
+WATCH_NAME = "HeronWatch"
+# Source dir lives at ui/ios/App/HeronWatch/ — same level as the
 # .xcodeproj (cwd), NOT one level up. The legacy EXTENSIONS loop above
 # uses `../#{name}` which resolves to ui/ios/ — those extension dirs
 # don't actually exist on disk, so that branch has been silently
@@ -512,7 +512,7 @@ else
   end
   main_target.add_dependency(watch_target)
 
-  # Shared scheme — without this, `xcodebuild -scheme CareerOpsWatch`
+  # Shared scheme — without this, `xcodebuild -scheme HeronWatch`
   # errors "scheme not found" (Xcode only auto-generates user schemes
   # on first open, which CI / dev:apple-watch can't rely on).
   schemes_dir = File.join(PROJECT_PATH, "xcshareddata", "xcschemes")
@@ -599,10 +599,10 @@ TEST_TARGETS = [
     name: "WidgetTests",
     bundle_suffix: "widgettests",
     type: "com.apple.product-type.bundle.unit-test",
-    host: "CareerOpsWidget",
+    host: "HeronWidget",
     deployment_min: "16.0",
     placeholder: <<~SWIFT,
-      // WidgetTests — XCTest unit tests for the CareerOpsWidget extension
+      // WidgetTests — XCTest unit tests for the HeronWidget extension
       // target. Real cases live in WidgetAuthGateTests.swift,
       // NextInterviewWidgetTests.swift, snapshot tests, etc.
       import XCTest
@@ -618,11 +618,11 @@ TEST_TARGETS = [
     name: "WatchTests",
     bundle_suffix: "watchtests",
     type: "com.apple.product-type.bundle.unit-test",
-    host: "CareerOpsWatch",
+    host: "HeronWatch",
     deployment_min: "15.0",
     sdk: "watchos",
     placeholder: <<~SWIFT,
-      // WatchTests — XCTest unit tests for the CareerOpsWatch target.
+      // WatchTests — XCTest unit tests for the HeronWatch target.
       // Real cases live in WatchModelTests.swift, RootViewTests.swift
       // (ViewInspector), snapshot tests, etc.
       import XCTest

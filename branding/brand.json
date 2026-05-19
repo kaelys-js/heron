@@ -45,15 +45,15 @@
   },
 
   "extensions": {
-    "$comment": "Extension TARGET names (CareerOpsWidget etc.) are deferred to Task 10 — renaming requires Xcode folder rename + project.pbxproj edits beyond what apply-brand touches. Bundle IDs do flow through (com.heron.app.widget etc.), so the user-facing identity is already Heron post-Task-9.",
-    "widget": { "name": "CareerOpsWidget", "bundleSuffix": "widget", "deploymentMin": "16.0" },
+    "$comment": "Xcode extension target names. apply-brand regenerates Brand.swift inside each named folder; bundle IDs flow from identifiers.bundleId + bundleSuffix (e.g. com.heron.app.widget). Renaming a target = update name here, rename the folder + .entitlements + main .swift, then sweep project.pbxproj. The 4 Heron* folders that ship live at ui/ios/App/{name}/.",
+    "widget": { "name": "HeronWidget", "bundleSuffix": "widget", "deploymentMin": "16.0" },
     "liveActivity": {
-      "name": "CareerOpsLiveActivity",
+      "name": "HeronLiveActivity",
       "bundleSuffix": "liveactivity",
       "deploymentMin": "16.1"
     },
     "shareExtension": {
-      "name": "CareerOpsShareExtension",
+      "name": "HeronShareExtension",
       "bundleSuffix": "share",
       "deploymentMin": "15.0"
     }

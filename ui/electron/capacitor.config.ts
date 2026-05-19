@@ -33,7 +33,7 @@ const config = {
   },
   plugins: {
     LocalNotifications: {
-      smallIcon: 'ic_stat_career_ops',
+      smallIcon: 'ic_stat_heron',
       iconColor: '#4a5b6d',
       sound: 'default',
     },

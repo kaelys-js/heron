@@ -518,10 +518,7 @@ async function main() {
   // image at `AppIcon-1024.png`. Xcode auto-derives the smaller sizes
   // (24/27.5/29/33/40/44/50/51/54/86/98/108/117/129/172/196/216/234/258)
   // from this master at build time.
-  const watchIconDir = path.join(
-    ROOT,
-    'ui/ios/App/CareerOpsWatch/Assets.xcassets/AppIcon.appiconset',
-  );
+  const watchIconDir = path.join(ROOT, 'ui/ios/App/HeronWatch/Assets.xcassets/AppIcon.appiconset');
   try {
     const exists = await fs
       .access(watchIconDir)

@@ -11,17 +11,17 @@
 		1384E818E0B0BB9C24B3712A /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13A4B88F10BE222B3E1F1BCB /* ErrorReporter.swift */; };
 		1410FAC7E621519DCCAA554E /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FD7C6838A42199F3A5357F9 /* Brand.swift */; };
 		1A1E6B6C4CFE57F9BB79B986 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 527F4909548255C904FEC97F /* Brand.swift */; };
-		282B8FCC6D1B1FB06EA462D7 /* CareerOpsNativePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE88770478FB968E108A903 /* CareerOpsNativePlugin.swift */; };
-		2CFA0A1C5A08E375AF78B634 /* CareerOpsWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B4B54803324B7A34A4644CE6 /* CareerOpsWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		282B8FCC6D1B1FB06EA462D7 /* HeronNativePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE88770478FB968E108A903 /* HeronNativePlugin.swift */; };
+		2CFA0A1C5A08E375AF78B634 /* HeronWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B4B54803324B7A34A4644CE6 /* HeronWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		306F94610F83E2172089B6A2 /* ErrorReporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A63DB96BB61618B21A1A46D /* ErrorReporterTests.swift */; };
 		32EB3B3FF98F8C294977A471 /* BiometricAuthTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A043EEDC504358B4A9D56041 /* BiometricAuthTests.swift */; };
 		3521FD15CAEE97D1B1F89B14 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18818E6F512F4FDB4E0E23 /* NetworkMonitor.swift */; };
-		35515C38E78666B2B260AE1C /* CareerOpsLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A2BA497A7735FA0C55C2F3F4 /* CareerOpsLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		372E82A1545BDF1E9CDBE18F /* CareerOpsLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61F7E4F675384A34CE49A942 /* CareerOpsLiveActivity.swift */; };
+		35515C38E78666B2B260AE1C /* HeronLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A2BA497A7735FA0C55C2F3F4 /* HeronLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		372E82A1545BDF1E9CDBE18F /* HeronLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61F7E4F675384A34CE49A942 /* HeronLiveActivity.swift */; };
 		39AE56D8D333DCE81A16A6D5 /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CA1675A1757C18B2FF09E0 /* ErrorReporter.swift */; };
 		3BCA8D89ECD906AE04F604E8 /* WatchSessionBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51CD8E57475622C06A0B72CA /* WatchSessionBridge.swift */; };
-		3EC41BCD48A909DCE62A32C7 /* CareerOpsWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 45A788CFF48FB162CF58655F /* CareerOpsWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		3EC41BCD48A909DCE62A32C7 /* HeronWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 45A788CFF48FB162CF58655F /* HeronWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		464E3AF67C92B9D73E4AD958 /* BrandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C6DBE48967C2185A1EA702 /* BrandTests.swift */; };
 		4CDC6A84B0B5B438F8ACFA84 /* WidgetTestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6F3EBB92FC26A8909F2E030 /* WidgetTestsSmoke.swift */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
@@ -42,11 +42,11 @@
 		72F610D6F09C4E4101EBDCED /* NextInterviewWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29AFA3C1756697C1450E03AC /* NextInterviewWidget.swift */; };
 		7623847E565D6D406BE4999D /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6FF0483296BD7B4DF03552B /* ErrorReporter.swift */; };
 		7A5501C8C2D0C2B9160EB349 /* KeychainStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A60ED4B98EE76C3731F81BA /* KeychainStoreTests.swift */; };
-		7AC0D36C2BBD93C60EFC3C4F /* CareerOpsBridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26631DCF28D85F99FB13A91E /* CareerOpsBridgeViewController.swift */; };
+		7AC0D36C2BBD93C60EFC3C4F /* HeronBridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26631DCF28D85F99FB13A91E /* HeronBridgeViewController.swift */; };
 		7DBFA4641E2729F109B35EF2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27884949441377C8C7559A26 /* Foundation.framework */; };
 		8914930D75A1C77BA5BFB215 /* WatchTestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = A341629834FE8424663D0140 /* WatchTestsSmoke.swift */; };
 		91269196C8EDE956B323C1CA /* NetworkMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D00F0BF04C6ACD70B7ED94 /* NetworkMonitorTests.swift */; };
-		967E279FFF6CBEBE28CEC91D /* CareerOpsShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C05A76F56281A0EFD15DAD02 /* CareerOpsShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		967E279FFF6CBEBE28CEC91D /* HeronShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C05A76F56281A0EFD15DAD02 /* HeronShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A17A18173DACDECD9ECF0E6A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB936BF2B6B11D3A31B7859C /* Foundation.framework */; };
 		A8C93FC3E1C6E5089E3AA399 /* BiometricAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9012709D08A85C7A9CEB2C91 /* BiometricAuth.swift */; };
 		ACCBB797BD9C29A3EA53C321 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54DE54E7F784B44516C7B1D5 /* Brand.swift */; };
@@ -56,7 +56,7 @@
 		C61D7BBE9991CEF00B516A6B /* SpotlightIndexerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735399543377D51D2BECCBD9 /* SpotlightIndexerTests.swift */; };
 		CC0F3E437FBFF23CA0DE6CC5 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB936BF2B6B11D3A31B7859C /* Foundation.framework */; };
 		DB9888B9A6B6413600F13C3D /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31513D0E4528E2BF567E770E /* ErrorReporter.swift */; };
-		DD736F2150095034A1A5D70A /* CareerOpsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B536A0A3EB877FABCC9B18D3 /* CareerOpsWidget.swift */; };
+		DD736F2150095034A1A5D70A /* HeronWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B536A0A3EB877FABCC9B18D3 /* HeronWidget.swift */; };
 		E876A9D11F7DC6FE329E1D80 /* AppTestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C1D23B601810C4801F8ED2 /* AppTestsSmoke.swift */; };
 		E965C7A3C853232B1A0AA3EE /* AppUITestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C777DB39253E575C27951E6 /* AppUITestsSmoke.swift */; };
 		F144B112F6B3589C16293DBF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 1F1F2BF74317E3F6B16DDA93 /* PrivacyInfo.xcprivacy */; };
@@ -64,7 +64,7 @@
 		F1F394828835CCEEBB9D625C /* BonjourBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DA0F3C2FA120D4A573F42DD /* BonjourBrowser.swift */; };
 		F7767B589F14995F442A2D97 /* BackgroundFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2CB39CFF5FD8265A4264E6 /* BackgroundFetcher.swift */; };
 		FB144018EF447333F7EC2B37 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C73C9434A8B33AAD827E716 /* Brand.swift */; };
-		FEDC0D7E63F105A7E9D216B8 /* CareerOpsWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B6989861C5B4F1B0CDA0EC /* CareerOpsWatchApp.swift */; };
+		FEDC0D7E63F105A7E9D216B8 /* HeronWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B6989861C5B4F1B0CDA0EC /* HeronWatchApp.swift */; };
 		FF24E0EAF3EB998992F290D6 /* TopApplyWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07E05E7932775592D5BE6108 /* TopApplyWidget.swift */; };
 		FF4D01143FCAC7E73E98408A /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 725697F6C88065D295E18F63 /* ShareViewController.swift */; };
 /* End PBXBuildFile section */
@@ -75,7 +75,7 @@
 			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 5A04383019EDAD2FAE1F9F7A;
-			remoteInfo = CareerOpsWidget;
+			remoteInfo = HeronWidget;
 		};
 		1C5D40C24D59CC729F12D922 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -96,35 +96,35 @@
 			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = B9F6220DFC7E8DBB5676EA3F;
-			remoteInfo = CareerOpsWatch;
+			remoteInfo = HeronWatch;
 		};
 		97A697CEA06EB16DD8F50B70 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 5A04383019EDAD2FAE1F9F7A;
-			remoteInfo = CareerOpsWidget;
+			remoteInfo = HeronWidget;
 		};
 		B9A45D7EA44F64F1757016CF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 28FD4AC421AE696E07E4B285;
-			remoteInfo = CareerOpsShareExtension;
+			remoteInfo = HeronShareExtension;
 		};
 		BE69E1A01CE71C433A544FAB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = B9F6220DFC7E8DBB5676EA3F;
-			remoteInfo = CareerOpsWatch;
+			remoteInfo = HeronWatch;
 		};
 		FC8A9D421F7E3957593C9302 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = CCB5315836B1FF3237625C1E;
-			remoteInfo = CareerOpsLiveActivity;
+			remoteInfo = HeronLiveActivity;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -135,7 +135,7 @@
 			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
 			dstSubfolderSpec = 16;
 			files = (
-				3EC41BCD48A909DCE62A32C7 /* CareerOpsWatch.app in Embed Watch Content */,
+				3EC41BCD48A909DCE62A32C7 /* HeronWatch.app in Embed Watch Content */,
 			);
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -146,9 +146,9 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				2CFA0A1C5A08E375AF78B634 /* CareerOpsWidget.appex in Embed Foundation Extensions */,
-				35515C38E78666B2B260AE1C /* CareerOpsLiveActivity.appex in Embed Foundation Extensions */,
-				967E279FFF6CBEBE28CEC91D /* CareerOpsShareExtension.appex in Embed Foundation Extensions */,
+				2CFA0A1C5A08E375AF78B634 /* HeronWidget.appex in Embed Foundation Extensions */,
+				35515C38E78666B2B260AE1C /* HeronLiveActivity.appex in Embed Foundation Extensions */,
+				967E279FFF6CBEBE28CEC91D /* HeronShareExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -164,11 +164,11 @@
 		1A60ED4B98EE76C3731F81BA /* KeychainStoreTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KeychainStoreTests.swift; sourceTree = "<group>"; };
 		1C777DB39253E575C27951E6 /* AppUITestsSmoke.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppUITestsSmoke.swift; sourceTree = "<group>"; };
 		1F1F2BF74317E3F6B16DDA93 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		26631DCF28D85F99FB13A91E /* CareerOpsBridgeViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CareerOpsBridgeViewController.swift; sourceTree = "<group>"; };
+		26631DCF28D85F99FB13A91E /* HeronBridgeViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HeronBridgeViewController.swift; sourceTree = "<group>"; };
 		27884949441377C8C7559A26 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		29AFA3C1756697C1450E03AC /* NextInterviewWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NextInterviewWidget.swift; sourceTree = "<group>"; };
 		2BAC25F9472B859A8F679955 /* AppUITests.bundle */ = {isa = PBXFileReference; explicitFileType = "wrapper.plug-in"; includeInIndex = 0; path = AppUITests.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
-		2CE88770478FB968E108A903 /* CareerOpsNativePlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CareerOpsNativePlugin.swift; sourceTree = "<group>"; };
+		2CE88770478FB968E108A903 /* HeronNativePlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HeronNativePlugin.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		30EC7E27DF4F9B9730EE74E5 /* WatchTests.bundle */ = {isa = PBXFileReference; explicitFileType = "wrapper.plug-in"; includeInIndex = 0; path = WatchTests.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		31513D0E4528E2BF567E770E /* ErrorReporter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ErrorReporter.swift; sourceTree = "<group>"; };
@@ -176,7 +176,7 @@
 		39BFEFD4AB09C83E133FF2AC /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		3C73C9434A8B33AAD827E716 /* Brand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
 		3DA0F3C2FA120D4A573F42DD /* BonjourBrowser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BonjourBrowser.swift; sourceTree = "<group>"; };
-		45A788CFF48FB162CF58655F /* CareerOpsWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CareerOpsWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		45A788CFF48FB162CF58655F /* HeronWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HeronWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -190,25 +190,25 @@
 		54DE54E7F784B44516C7B1D5 /* Brand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
 		559AF47C7C7A75A0218312AA /* InboxIssuesWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InboxIssuesWidget.swift; sourceTree = "<group>"; };
 		604BE1F005FDB069FF3F1985 /* WatchModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchModel.swift; sourceTree = "<group>"; };
-		61F7E4F675384A34CE49A942 /* CareerOpsLiveActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CareerOpsLiveActivity.swift; sourceTree = "<group>"; };
+		61F7E4F675384A34CE49A942 /* HeronLiveActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HeronLiveActivity.swift; sourceTree = "<group>"; };
 		67CA1675A1757C18B2FF09E0 /* ErrorReporter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ErrorReporter.swift; sourceTree = "<group>"; };
 		725697F6C88065D295E18F63 /* ShareViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		735399543377D51D2BECCBD9 /* SpotlightIndexerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SpotlightIndexerTests.swift; sourceTree = "<group>"; };
 		8126D767BB835DA855B58552 /* SpotlightIndexer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SpotlightIndexer.swift; sourceTree = "<group>"; };
 		8D7738EEBCC31A28A769071A /* RootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		9012709D08A85C7A9CEB2C91 /* BiometricAuth.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BiometricAuth.swift; sourceTree = "<group>"; };
-		939AF9DEAE52F3A5D09A7C5A /* CareerOpsWatch.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = CareerOpsWatch.entitlements; sourceTree = "<group>"; };
+		939AF9DEAE52F3A5D09A7C5A /* HeronWatch.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = HeronWatch.entitlements; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		9D8E6EDB09C70285DE6FC30E /* AppTests.bundle */ = {isa = PBXFileReference; explicitFileType = "wrapper.plug-in"; includeInIndex = 0; path = AppTests.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		9FD7C6838A42199F3A5357F9 /* Brand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
 		A043EEDC504358B4A9D56041 /* BiometricAuthTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BiometricAuthTests.swift; sourceTree = "<group>"; };
-		A2BA497A7735FA0C55C2F3F4 /* CareerOpsLiveActivity.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CareerOpsLiveActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A2BA497A7735FA0C55C2F3F4 /* HeronLiveActivity.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = HeronLiveActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A341629834FE8424663D0140 /* WatchTestsSmoke.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchTestsSmoke.swift; sourceTree = "<group>"; };
 		B04DDA8861B187894F3581C1 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		B4B54803324B7A34A4644CE6 /* CareerOpsWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CareerOpsWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		B536A0A3EB877FABCC9B18D3 /* CareerOpsWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CareerOpsWidget.swift; sourceTree = "<group>"; };
+		B4B54803324B7A34A4644CE6 /* HeronWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = HeronWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B536A0A3EB877FABCC9B18D3 /* HeronWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HeronWidget.swift; sourceTree = "<group>"; };
 		B6F3EBB92FC26A8909F2E030 /* WidgetTestsSmoke.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetTestsSmoke.swift; sourceTree = "<group>"; };
-		C05A76F56281A0EFD15DAD02 /* CareerOpsShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CareerOpsShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C05A76F56281A0EFD15DAD02 /* HeronShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = HeronShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6FF0483296BD7B4DF03552B /* ErrorReporter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ErrorReporter.swift; sourceTree = "<group>"; };
 		C7C1D23B601810C4801F8ED2 /* AppTestsSmoke.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppTestsSmoke.swift; sourceTree = "<group>"; };
 		C85AA568F77B851EEABF69F5 /* Brand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
@@ -217,7 +217,7 @@
 		D9A6456417C346D5DF36A0BF /* WidgetTests.bundle */ = {isa = PBXFileReference; explicitFileType = "wrapper.plug-in"; includeInIndex = 0; path = WidgetTests.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		DB2CB39CFF5FD8265A4264E6 /* BackgroundFetcher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackgroundFetcher.swift; sourceTree = "<group>"; };
 		DD18818E6F512F4FDB4E0E23 /* NetworkMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
-		F4B6989861C5B4F1B0CDA0EC /* CareerOpsWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CareerOpsWatchApp.swift; sourceTree = "<group>"; };
+		F4B6989861C5B4F1B0CDA0EC /* HeronWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HeronWatchApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -296,30 +296,30 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0DCE31D4689FC015BE598274 /* CareerOpsShareExtension */ = {
+		0DCE31D4689FC015BE598274 /* HeronShareExtension */ = {
 			isa = PBXGroup;
 			children = (
 				725697F6C88065D295E18F63 /* ShareViewController.swift */,
 				527F4909548255C904FEC97F /* Brand.swift */,
 				31513D0E4528E2BF567E770E /* ErrorReporter.swift */,
 			);
-			name = CareerOpsShareExtension;
-			path = CareerOpsShareExtension;
+			name = HeronShareExtension;
+			path = HeronShareExtension;
 			sourceTree = "<group>";
 		};
-		1653866B61025599CDC07813 /* CareerOpsWatch */ = {
+		1653866B61025599CDC07813 /* HeronWatch */ = {
 			isa = PBXGroup;
 			children = (
-				F4B6989861C5B4F1B0CDA0EC /* CareerOpsWatchApp.swift */,
+				F4B6989861C5B4F1B0CDA0EC /* HeronWatchApp.swift */,
 				8D7738EEBCC31A28A769071A /* RootView.swift */,
 				604BE1F005FDB069FF3F1985 /* WatchModel.swift */,
 				B04DDA8861B187894F3581C1 /* Assets.xcassets */,
 				39BFEFD4AB09C83E133FF2AC /* Info.plist */,
-				939AF9DEAE52F3A5D09A7C5A /* CareerOpsWatch.entitlements */,
+				939AF9DEAE52F3A5D09A7C5A /* HeronWatch.entitlements */,
 				54DE54E7F784B44516C7B1D5 /* Brand.swift */,
 			);
-			name = CareerOpsWatch;
-			path = CareerOpsWatch;
+			name = HeronWatch;
+			path = HeronWatch;
 			sourceTree = "<group>";
 		};
 		232370DDDB48A6D31A4A3979 /* Frameworks */ = {
@@ -354,10 +354,10 @@
 				504EC3061FED79650016851F /* App */,
 				504EC3051FED79650016851F /* Products */,
 				232370DDDB48A6D31A4A3979 /* Frameworks */,
-				1653866B61025599CDC07813 /* CareerOpsWatch */,
-				ED4496DB991AB2F69C697C84 /* CareerOpsWidget */,
-				FC0BB833616F3628C13021F2 /* CareerOpsLiveActivity */,
-				0DCE31D4689FC015BE598274 /* CareerOpsShareExtension */,
+				1653866B61025599CDC07813 /* HeronWatch */,
+				ED4496DB991AB2F69C697C84 /* HeronWidget */,
+				FC0BB833616F3628C13021F2 /* HeronLiveActivity */,
+				0DCE31D4689FC015BE598274 /* HeronShareExtension */,
 				84537F76DF7143B2F2783BCF /* AppTests */,
 				CDDF36EC432C08EC8EEFC6B7 /* AppUITests */,
 				41D62E5DFC4AB3DFAE1B83BF /* WidgetTests */,
@@ -369,10 +369,10 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
-				45A788CFF48FB162CF58655F /* CareerOpsWatch.app */,
-				B4B54803324B7A34A4644CE6 /* CareerOpsWidget.appex */,
-				A2BA497A7735FA0C55C2F3F4 /* CareerOpsLiveActivity.appex */,
-				C05A76F56281A0EFD15DAD02 /* CareerOpsShareExtension.appex */,
+				45A788CFF48FB162CF58655F /* HeronWatch.app */,
+				B4B54803324B7A34A4644CE6 /* HeronWidget.appex */,
+				A2BA497A7735FA0C55C2F3F4 /* HeronLiveActivity.appex */,
+				C05A76F56281A0EFD15DAD02 /* HeronShareExtension.appex */,
 				9D8E6EDB09C70285DE6FC30E /* AppTests.bundle */,
 				2BAC25F9472B859A8F679955 /* AppUITests.bundle */,
 				D9A6456417C346D5DF36A0BF /* WidgetTests.bundle */,
@@ -396,13 +396,13 @@
 				9012709D08A85C7A9CEB2C91 /* BiometricAuth.swift */,
 				3DA0F3C2FA120D4A573F42DD /* BonjourBrowser.swift */,
 				3C73C9434A8B33AAD827E716 /* Brand.swift */,
-				2CE88770478FB968E108A903 /* CareerOpsNativePlugin.swift */,
+				2CE88770478FB968E108A903 /* HeronNativePlugin.swift */,
 				67CA1675A1757C18B2FF09E0 /* ErrorReporter.swift */,
 				0864100E15B7E184D1F89EC5 /* KeychainStore.swift */,
 				DD18818E6F512F4FDB4E0E23 /* NetworkMonitor.swift */,
 				8126D767BB835DA855B58552 /* SpotlightIndexer.swift */,
 				51CD8E57475622C06A0B72CA /* WatchSessionBridge.swift */,
-				26631DCF28D85F99FB13A91E /* CareerOpsBridgeViewController.swift */,
+				26631DCF28D85F99FB13A91E /* HeronBridgeViewController.swift */,
 				1F1F2BF74317E3F6B16DDA93 /* PrivacyInfo.xcprivacy */,
 			);
 			path = App;
@@ -438,19 +438,19 @@
 			name = watchOS;
 			sourceTree = "<group>";
 		};
-		ED4496DB991AB2F69C697C84 /* CareerOpsWidget */ = {
+		ED4496DB991AB2F69C697C84 /* HeronWidget */ = {
 			isa = PBXGroup;
 			children = (
 				29AFA3C1756697C1450E03AC /* NextInterviewWidget.swift */,
 				07E05E7932775592D5BE6108 /* TopApplyWidget.swift */,
-				B536A0A3EB877FABCC9B18D3 /* CareerOpsWidget.swift */,
+				B536A0A3EB877FABCC9B18D3 /* HeronWidget.swift */,
 				559AF47C7C7A75A0218312AA /* InboxIssuesWidget.swift */,
 				C85AA568F77B851EEABF69F5 /* Brand.swift */,
 				C6FF0483296BD7B4DF03552B /* ErrorReporter.swift */,
 				3176B0165C26166B17F7F403 /* WidgetAuthGate.swift */,
 			);
-			name = CareerOpsWidget;
-			path = CareerOpsWidget;
+			name = HeronWidget;
+			path = HeronWidget;
 			sourceTree = "<group>";
 		};
 		EDB8A354F93C6457E2A3B486 /* iOS */ = {
@@ -461,15 +461,15 @@
 			name = iOS;
 			sourceTree = "<group>";
 		};
-		FC0BB833616F3628C13021F2 /* CareerOpsLiveActivity */ = {
+		FC0BB833616F3628C13021F2 /* HeronLiveActivity */ = {
 			isa = PBXGroup;
 			children = (
-				61F7E4F675384A34CE49A942 /* CareerOpsLiveActivity.swift */,
+				61F7E4F675384A34CE49A942 /* HeronLiveActivity.swift */,
 				9FD7C6838A42199F3A5357F9 /* Brand.swift */,
 				13A4B88F10BE222B3E1F1BCB /* ErrorReporter.swift */,
 			);
-			name = CareerOpsLiveActivity;
-			path = CareerOpsLiveActivity;
+			name = HeronLiveActivity;
+			path = HeronLiveActivity;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -511,9 +511,9 @@
 			productReference = 9D8E6EDB09C70285DE6FC30E /* AppTests.bundle */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		28FD4AC421AE696E07E4B285 /* CareerOpsShareExtension */ = {
+		28FD4AC421AE696E07E4B285 /* HeronShareExtension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A33CF9A2C6670D738110D8F4 /* Build configuration list for PBXNativeTarget "CareerOpsShareExtension" */;
+			buildConfigurationList = A33CF9A2C6670D738110D8F4 /* Build configuration list for PBXNativeTarget "HeronShareExtension" */;
 			buildPhases = (
 				DCD9C0605308BEB88FDB11B6 /* Sources */,
 				CCCBF717092DD11658B3982F /* Frameworks */,
@@ -523,9 +523,9 @@
 			);
 			dependencies = (
 			);
-			name = CareerOpsShareExtension;
-			productName = CareerOpsShareExtension;
-			productReference = C05A76F56281A0EFD15DAD02 /* CareerOpsShareExtension.appex */;
+			name = HeronShareExtension;
+			productName = HeronShareExtension;
+			productReference = C05A76F56281A0EFD15DAD02 /* HeronShareExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 		504EC3031FED79650016851F /* App */ = {
@@ -554,9 +554,9 @@
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
 		};
-		5A04383019EDAD2FAE1F9F7A /* CareerOpsWidget */ = {
+		5A04383019EDAD2FAE1F9F7A /* HeronWidget */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 4A4AAD74547FF2E4D137E979 /* Build configuration list for PBXNativeTarget "CareerOpsWidget" */;
+			buildConfigurationList = 4A4AAD74547FF2E4D137E979 /* Build configuration list for PBXNativeTarget "HeronWidget" */;
 			buildPhases = (
 				495D99F2021D67E773AE7DC7 /* Sources */,
 				D830F5D6B33CF0FA0277D90B /* Frameworks */,
@@ -566,9 +566,9 @@
 			);
 			dependencies = (
 			);
-			name = CareerOpsWidget;
-			productName = CareerOpsWidget;
-			productReference = B4B54803324B7A34A4644CE6 /* CareerOpsWidget.appex */;
+			name = HeronWidget;
+			productName = HeronWidget;
+			productReference = B4B54803324B7A34A4644CE6 /* HeronWidget.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 		939EEB016EDA5854F0BD0E6D /* WatchTests */ = {
@@ -589,9 +589,9 @@
 			productReference = 30EC7E27DF4F9B9730EE74E5 /* WatchTests.bundle */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		B9F6220DFC7E8DBB5676EA3F /* CareerOpsWatch */ = {
+		B9F6220DFC7E8DBB5676EA3F /* HeronWatch */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AE6AE94044207BD70AC41749 /* Build configuration list for PBXNativeTarget "CareerOpsWatch" */;
+			buildConfigurationList = AE6AE94044207BD70AC41749 /* Build configuration list for PBXNativeTarget "HeronWatch" */;
 			buildPhases = (
 				7DA5C407F977890EBE30DA2F /* Sources */,
 				20A80612CF00D8ABA3368D35 /* Frameworks */,
@@ -601,14 +601,14 @@
 			);
 			dependencies = (
 			);
-			name = CareerOpsWatch;
-			productName = CareerOpsWatch;
-			productReference = 45A788CFF48FB162CF58655F /* CareerOpsWatch.app */;
+			name = HeronWatch;
+			productName = HeronWatch;
+			productReference = 45A788CFF48FB162CF58655F /* HeronWatch.app */;
 			productType = "com.apple.product-type.application";
 		};
-		CCB5315836B1FF3237625C1E /* CareerOpsLiveActivity */ = {
+		CCB5315836B1FF3237625C1E /* HeronLiveActivity */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B67BB17D2186A32842DFBA01 /* Build configuration list for PBXNativeTarget "CareerOpsLiveActivity" */;
+			buildConfigurationList = B67BB17D2186A32842DFBA01 /* Build configuration list for PBXNativeTarget "HeronLiveActivity" */;
 			buildPhases = (
 				352F0BCBB253B9704381F3B8 /* Sources */,
 				B188DFEB303DAD27227C807D /* Frameworks */,
@@ -618,9 +618,9 @@
 			);
 			dependencies = (
 			);
-			name = CareerOpsLiveActivity;
-			productName = CareerOpsLiveActivity;
-			productReference = A2BA497A7735FA0C55C2F3F4 /* CareerOpsLiveActivity.appex */;
+			name = HeronLiveActivity;
+			productName = HeronLiveActivity;
+			productReference = A2BA497A7735FA0C55C2F3F4 /* HeronLiveActivity.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 		F179A0341AFBF6A0D52AEC98 /* AppUITests */ = {
@@ -674,10 +674,10 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
-				B9F6220DFC7E8DBB5676EA3F /* CareerOpsWatch */,
-				5A04383019EDAD2FAE1F9F7A /* CareerOpsWidget */,
-				CCB5315836B1FF3237625C1E /* CareerOpsLiveActivity */,
-				28FD4AC421AE696E07E4B285 /* CareerOpsShareExtension */,
+				B9F6220DFC7E8DBB5676EA3F /* HeronWatch */,
+				5A04383019EDAD2FAE1F9F7A /* HeronWidget */,
+				CCB5315836B1FF3237625C1E /* HeronLiveActivity */,
+				28FD4AC421AE696E07E4B285 /* HeronShareExtension */,
 				2502338F788157F13363BB08 /* AppTests */,
 				F179A0341AFBF6A0D52AEC98 /* AppUITests */,
 				0C9D4BA5BFA8A32400860F69 /* WidgetTests */,
@@ -765,7 +765,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				372E82A1545BDF1E9CDBE18F /* CareerOpsLiveActivity.swift in Sources */,
+				372E82A1545BDF1E9CDBE18F /* HeronLiveActivity.swift in Sources */,
 				1410FAC7E621519DCCAA554E /* Brand.swift in Sources */,
 				1384E818E0B0BB9C24B3712A /* ErrorReporter.swift in Sources */,
 			);
@@ -777,7 +777,7 @@
 			files = (
 				72F610D6F09C4E4101EBDCED /* NextInterviewWidget.swift in Sources */,
 				FF24E0EAF3EB998992F290D6 /* TopApplyWidget.swift in Sources */,
-				DD736F2150095034A1A5D70A /* CareerOpsWidget.swift in Sources */,
+				DD736F2150095034A1A5D70A /* HeronWidget.swift in Sources */,
 				5C10E71DF4CB6EA4C40FF156 /* InboxIssuesWidget.swift in Sources */,
 				6FDE5093301DB8CE45AC70E9 /* Brand.swift in Sources */,
 				7623847E565D6D406BE4999D /* ErrorReporter.swift in Sources */,
@@ -794,13 +794,13 @@
 				A8C93FC3E1C6E5089E3AA399 /* BiometricAuth.swift in Sources */,
 				F1F394828835CCEEBB9D625C /* BonjourBrowser.swift in Sources */,
 				FB144018EF447333F7EC2B37 /* Brand.swift in Sources */,
-				282B8FCC6D1B1FB06EA462D7 /* CareerOpsNativePlugin.swift in Sources */,
+				282B8FCC6D1B1FB06EA462D7 /* HeronNativePlugin.swift in Sources */,
 				39AE56D8D333DCE81A16A6D5 /* ErrorReporter.swift in Sources */,
 				6BB0F8A01827A3FF34261489 /* KeychainStore.swift in Sources */,
 				3521FD15CAEE97D1B1F89B14 /* NetworkMonitor.swift in Sources */,
 				5C7BEACB7A09695AF511E256 /* SpotlightIndexer.swift in Sources */,
 				3BCA8D89ECD906AE04F604E8 /* WatchSessionBridge.swift in Sources */,
-				7AC0D36C2BBD93C60EFC3C4F /* CareerOpsBridgeViewController.swift in Sources */,
+				7AC0D36C2BBD93C60EFC3C4F /* HeronBridgeViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -830,7 +830,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FEDC0D7E63F105A7E9D216B8 /* CareerOpsWatchApp.swift in Sources */,
+				FEDC0D7E63F105A7E9D216B8 /* HeronWatchApp.swift in Sources */,
 				B1166C2AFCE9CB88941BA785 /* RootView.swift in Sources */,
 				C362913F0191FC3C677CCE21 /* WatchModel.swift in Sources */,
 				ACCBB797BD9C29A3EA53C321 /* Brand.swift in Sources */,
@@ -868,20 +868,20 @@
 /* Begin PBXTargetDependency section */
 		123417F9FD23A9C909F79A12 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = CareerOpsWidget;
-			target = 5A04383019EDAD2FAE1F9F7A /* CareerOpsWidget */;
+			name = HeronWidget;
+			target = 5A04383019EDAD2FAE1F9F7A /* HeronWidget */;
 			targetProxy = 013A769FE09DB32203EEF36A /* PBXContainerItemProxy */;
 		};
 		2F511F0189B4634F55435D9F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = CareerOpsShareExtension;
-			target = 28FD4AC421AE696E07E4B285 /* CareerOpsShareExtension */;
+			name = HeronShareExtension;
+			target = 28FD4AC421AE696E07E4B285 /* HeronShareExtension */;
 			targetProxy = B9A45D7EA44F64F1757016CF /* PBXContainerItemProxy */;
 		};
 		78C47C84A5FC22A431AE9035 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = CareerOpsWatch;
-			target = B9F6220DFC7E8DBB5676EA3F /* CareerOpsWatch */;
+			name = HeronWatch;
+			target = B9F6220DFC7E8DBB5676EA3F /* HeronWatch */;
 			targetProxy = BE69E1A01CE71C433A544FAB /* PBXContainerItemProxy */;
 		};
 		9958AFF066DAF2097BDD4BFB /* PBXTargetDependency */ = {
@@ -892,8 +892,8 @@
 		};
 		A72B1321490775D61A5BD9C5 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = CareerOpsWidget;
-			target = 5A04383019EDAD2FAE1F9F7A /* CareerOpsWidget */;
+			name = HeronWidget;
+			target = 5A04383019EDAD2FAE1F9F7A /* HeronWidget */;
 			targetProxy = 97A697CEA06EB16DD8F50B70 /* PBXContainerItemProxy */;
 		};
 		B511CE21F9C26AB27DE6D148 /* PBXTargetDependency */ = {
@@ -904,14 +904,14 @@
 		};
 		B69F1AF5210D34339CE1BD0E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = CareerOpsWatch;
-			target = B9F6220DFC7E8DBB5676EA3F /* CareerOpsWatch */;
+			name = HeronWatch;
+			target = B9F6220DFC7E8DBB5676EA3F /* HeronWatch */;
 			targetProxy = 9173A2D5BF002BBA23F8E63A /* PBXContainerItemProxy */;
 		};
 		E1DEBB673CC8CE3AAEF10E2F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = CareerOpsLiveActivity;
-			target = CCB5315836B1FF3237625C1E /* CareerOpsLiveActivity */;
+			name = HeronLiveActivity;
+			target = CCB5315836B1FF3237625C1E /* HeronLiveActivity */;
 			targetProxy = FC8A9D421F7E3957593C9302 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -945,7 +945,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = AppTests;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.tests;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -959,15 +959,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_ENTITLEMENTS = CareerOpsWidget/CareerOpsWidget.entitlements;
+				CODE_SIGN_ENTITLEMENTS = HeronWidget/HeronWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				INFOPLIST_FILE = CareerOpsWidget/Info.plist;
+				INFOPLIST_FILE = HeronWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.widget;
-				PRODUCT_NAME = CareerOpsWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.widget;
+				PRODUCT_NAME = HeronWidget;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.9;
@@ -984,7 +984,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = AppUITests;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.uitests;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -1004,12 +1004,12 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = WidgetTests;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.widgettests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.widgettests;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CareerOpsWidget.app/CareerOpsWidget";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HeronWidget.app/HeronWidget";
 				WRAPPER_EXTENSION = bundle;
 			};
 			name = Debug;
@@ -1018,15 +1018,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_ENTITLEMENTS = CareerOpsShareExtension/CareerOpsShareExtension.entitlements;
+				CODE_SIGN_ENTITLEMENTS = HeronShareExtension/HeronShareExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				INFOPLIST_FILE = CareerOpsShareExtension/Info.plist;
+				INFOPLIST_FILE = HeronShareExtension/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.share;
-				PRODUCT_NAME = CareerOpsShareExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.share;
+				PRODUCT_NAME = HeronShareExtension;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.9;
@@ -1159,7 +1159,7 @@
 				);
 				MARKETING_VERSION = 0.1.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_VERSION = 5.9;
@@ -1181,7 +1181,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
 				SWIFT_VERSION = 5.9;
@@ -1193,15 +1193,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_ENTITLEMENTS = CareerOpsShareExtension/CareerOpsShareExtension.entitlements;
+				CODE_SIGN_ENTITLEMENTS = HeronShareExtension/HeronShareExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				INFOPLIST_FILE = CareerOpsShareExtension/Info.plist;
+				INFOPLIST_FILE = HeronShareExtension/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.share;
-				PRODUCT_NAME = CareerOpsShareExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.share;
+				PRODUCT_NAME = HeronShareExtension;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.9;
@@ -1217,7 +1217,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = AppTests;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.tests;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -1232,15 +1232,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_ENTITLEMENTS = CareerOpsLiveActivity/CareerOpsLiveActivity.entitlements;
+				CODE_SIGN_ENTITLEMENTS = HeronLiveActivity/HeronLiveActivity.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				INFOPLIST_FILE = CareerOpsLiveActivity/Info.plist;
+				INFOPLIST_FILE = HeronLiveActivity/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.liveactivity;
-				PRODUCT_NAME = CareerOpsLiveActivity;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.liveactivity;
+				PRODUCT_NAME = HeronLiveActivity;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.9;
@@ -1254,15 +1254,15 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = CareerOpsWatch/CareerOpsWatch.entitlements;
+				CODE_SIGN_ENTITLEMENTS = HeronWatch/HeronWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = CareerOpsWatch/Info.plist;
+				INFOPLIST_FILE = HeronWatch/Info.plist;
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.watchkitapp;
-				PRODUCT_NAME = CareerOpsWatch;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.watchkitapp;
+				PRODUCT_NAME = HeronWatch;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "watchsimulator watchos";
@@ -1281,7 +1281,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = AppUITests;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.uitests;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -1295,15 +1295,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_ENTITLEMENTS = CareerOpsWidget/CareerOpsWidget.entitlements;
+				CODE_SIGN_ENTITLEMENTS = HeronWidget/HeronWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				INFOPLIST_FILE = CareerOpsWidget/Info.plist;
+				INFOPLIST_FILE = HeronWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.widget;
-				PRODUCT_NAME = CareerOpsWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.widget;
+				PRODUCT_NAME = HeronWidget;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.9;
@@ -1317,12 +1317,12 @@
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = WatchTests;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.watchtests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.watchtests;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CareerOpsWatch.app/CareerOpsWatch";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HeronWatch.app/HeronWatch";
 				VALIDATE_PRODUCT = YES;
 				WATCHOS_DEPLOYMENT_TARGET = 15.0;
 				WRAPPER_EXTENSION = bundle;
@@ -1333,15 +1333,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_ENTITLEMENTS = CareerOpsLiveActivity/CareerOpsLiveActivity.entitlements;
+				CODE_SIGN_ENTITLEMENTS = HeronLiveActivity/HeronLiveActivity.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				INFOPLIST_FILE = CareerOpsLiveActivity/Info.plist;
+				INFOPLIST_FILE = HeronLiveActivity/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.liveactivity;
-				PRODUCT_NAME = CareerOpsLiveActivity;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.liveactivity;
+				PRODUCT_NAME = HeronLiveActivity;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.9;
@@ -1354,15 +1354,15 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = CareerOpsWatch/CareerOpsWatch.entitlements;
+				CODE_SIGN_ENTITLEMENTS = HeronWatch/HeronWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = CareerOpsWatch/Info.plist;
+				INFOPLIST_FILE = HeronWatch/Info.plist;
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.watchkitapp;
-				PRODUCT_NAME = CareerOpsWatch;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.watchkitapp;
+				PRODUCT_NAME = HeronWatch;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "watchsimulator watchos";
@@ -1382,12 +1382,12 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = WidgetTests;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.widgettests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.widgettests;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CareerOpsWidget.app/CareerOpsWidget";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HeronWidget.app/HeronWidget";
 				VALIDATE_PRODUCT = YES;
 				WRAPPER_EXTENSION = bundle;
 			};
@@ -1400,12 +1400,12 @@
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = WatchTests;
-				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.careerops.watchtests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.watchtests;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CareerOpsWatch.app/CareerOpsWatch";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HeronWatch.app/HeronWatch";
 				WATCHOS_DEPLOYMENT_TARGET = 15.0;
 				WRAPPER_EXTENSION = bundle;
 			};
@@ -1423,7 +1423,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		4A4AAD74547FF2E4D137E979 /* Build configuration list for PBXNativeTarget "CareerOpsWidget" */ = {
+		4A4AAD74547FF2E4D137E979 /* Build configuration list for PBXNativeTarget "HeronWidget" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				241F39C140F19C7CDF17CA2D /* Release */,
@@ -1459,7 +1459,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A33CF9A2C6670D738110D8F4 /* Build configuration list for PBXNativeTarget "CareerOpsShareExtension" */ = {
+		A33CF9A2C6670D738110D8F4 /* Build configuration list for PBXNativeTarget "HeronShareExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				4C9C2BA615BA89D55A07F512 /* Release */,
@@ -1468,7 +1468,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		AE6AE94044207BD70AC41749 /* Build configuration list for PBXNativeTarget "CareerOpsWatch" */ = {
+		AE6AE94044207BD70AC41749 /* Build configuration list for PBXNativeTarget "HeronWatch" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D110C9DBC43F73AEFFEDEE83 /* Release */,
@@ -1486,7 +1486,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B67BB17D2186A32842DFBA01 /* Build configuration list for PBXNativeTarget "CareerOpsLiveActivity" */ = {
+		B67BB17D2186A32842DFBA01 /* Build configuration list for PBXNativeTarget "HeronLiveActivity" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				6A3386744C0606E3AE740249 /* Release */,

@@ -9,7 +9,7 @@ import Network
  * actual path status from the OS networking stack — much more reliable.
  *
  * State changes are forwarded to the WebView via UserDefaults (read by
- * the CareerOpsNative plugin's `getNetworkStatus` accessor) AND a JS
+ * the HeronNative plugin's `getNetworkStatus` accessor) AND a JS
  * bridge event (`<brand>:net-status`) that the online-status store
  * listens for.
  */
