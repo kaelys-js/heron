@@ -45,8 +45,8 @@ These are non-negotiable. Compaction MUST NOT lose these.
 | 7 | README banner copy | ✓ done | `4247150` | `branding/README-banner.md` (the actual `README.md` swap happens at Task 9) |
 | 8 | Social card spec (HTML/CSS 1200×630 OG) | ✓ done | `27ed486` | `branding/SOCIAL-CARD.md` + `branding/assets/social-card.html` |
 | 9 | brand.json update + apply-brand propagation | ✓ done | `aee85ae` | 35 files: identifiers, URLs, permissions, copyright, store-listing prose. Colors/extensions/icons deferred to Task 10. |
-| 10 | Color sweep + SvelteKit UI wiring + prose sweep | **in progress** | — | Sub-tasks: 10.1 README swap (✓ `d2126ba`), 10.2 .md prose sweep (✓ `e398610`), 10.3 source-code career-ops → heron sweep (✓ `51ec918`), 10.4 self-host fonts (pending), 10.5 color tokens in brand.json + ui/src/app.css (pending), 10.6 component sweep for hardcoded colors (pending), 10.7 Xcode + Android extension folder rename (deferred — apply-brand has partial-update bug on Android Brand.kt that blocks until this lands) |
-| 11 | Press kit structure + draft copy | pending | — | `branding/PRESS-KIT.md`; optionally render to PDF via `anthropic-skills:pdf` |
+| 10 | Color sweep + SvelteKit UI wiring + prose sweep | ✓ done | `976d97f` (final sub-task) | Sub-tasks: 10.1 README swap (✓ `d2126ba`), 10.2 .md prose sweep (✓ `e398610`), 10.3 source-code career-ops → heron sweep (✓ `51ec918`), 10.5a brand.json color palette + apply-brand (✓ `7ee75dc`), 10.4 + 10.5b self-host fonts + app.css 22-token rewrite (✓ `5c443d3`), 10.6 component hardcoded-color sweep (✓ `45a9b9b`), 10.7 Xcode + Android structural rename (✓ `976d97f`) |
+| 11 | Press kit | ✓ done | `<this commit>` | `branding/PRESS-KIT.md` — boilerplate (short/medium/long), quick-facts table, feature list, what-Heron-is-NOT, origin paragraph, visual asset index, color palette, typography, attributable quotes, story angles to pitch + to avoid, contact + heritage + trademark |
 
 ## Locked decisions (do not re-litigate without explicit user pushback)
 
@@ -334,10 +334,30 @@ verification → move on. Never batch tasks.
   - **10.6 (then)** — Grep component code for hardcoded color
     literals (`#5b6cff`, `#34d399`, etc.) and migrate to CSS tokens.
 
-  - **10.7 (deferred)** — Xcode extension folder rename
-    (CareerOps{Widget,LiveActivity,ShareExtension,Watch} → Heron*)
-    + Android package rename (com.resistjs.careerops → com.heron.app).
-    Blocked on Xcode project.pbxproj surgery + Android refactor;
-    apply-brand has a partial-update bug on Brand.kt that surfaces here
-    (bundleId/urlScheme/keychainService not updated, stays on legacy
-    until the package rename lands).
+  - **10.7 (`976d97f`)** — Xcode + Android structural rename DONE.
+    Folders: `CareerOps{Widget,LiveActivity,ShareExtension,Watch}` →
+    `Heron*` (git mv, history preserved). Plugin: `CareerOpsNativePlugin
+    .{swift,kt}` → `HeronNativePlugin.{swift,kt}` + `@objc(...)` +
+    `@CapacitorPlugin(name = "HeronNative")`. Android package
+    `com.resistjs.careerops/` → `com/heron/app/`. 128 references in
+    project.pbxproj rewritten. Entitlements + Info.plist bundle IDs
+    swept to `com.heron.app`. Android notification resource
+    `ic_stat_career_ops` → `ic_stat_heron`. Capacitor plugin bridge
+    now consistent end-to-end (TS `registerPlugin('HeronNative')` ↔
+    Swift `jsName = Brand.capacitorPluginName` ↔ Kotlin
+    `@CapacitorPlugin(name = "HeronNative")`). Apply-brand's Brand.kt
+    template fixed for ktlint cleanliness (`$name` instead of `${name}`,
+    blank line before second function). brand.json
+    `extensions[*].name` updated to Heron-prefixed names.
+
+  Task 10 — fully complete. Every visual surface, every config
+  consumer, every source-code reference now reads as Heron.
+
+- **Task 11 (`<this commit>`)** — Press kit shipped.
+  `branding/PRESS-KIT.md` is the one-stop document for journalists,
+  bloggers, partners, podcasters. Includes: one-liner, boilerplate
+  (140/280/600 char variants), quick-facts table, feature list,
+  what-Heron-is-NOT, the origin paragraph verbatim, visual asset
+  index, color palette + WCAG, typography, four attributable
+  pull-quotes, story angles to pitch + to avoid, contact info,
+  heritage statement, trademark pointer.
