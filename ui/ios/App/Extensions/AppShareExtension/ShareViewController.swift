@@ -96,10 +96,8 @@ class ShareViewController: SLComposeServiceViewController {
         guard let items = extensionContext?.inputItems as? [NSExtensionItem] else { return nil }
         for item in items {
             guard let providers = item.attachments else { continue }
-            for provider in providers {
-                if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
-                    return await loadItem(provider: provider)
-                }
+            for provider in providers where provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
+                return await loadItem(provider: provider)
             }
         }
         return nil

@@ -400,8 +400,22 @@ pre-push:
       # are NOT in pre-push — they're CI-only because the simulator
       # bootstrap dwarfs the speedup turbo would give us.
       #
+      # Self-heals better-sqlite3 ABI mismatches inline BEFORE invoking
+      # vitest — otherwise a mid-session Node-version swap (mise 26.x ↔
+      # 25.x) leaves the cached binding stale and vitest red-bars 11+
+      # test files with a confusing "NODE_MODULE_VERSION 141 vs 147"
+      # error that looks like a test failure but is a tooling glitch.
+      # The heal is fast when healthy (~50ms, just a require-probe in a
+      # subprocess); only actually rebuilds when an ABI mismatch is
+      # detected.
+      #
       # Bypass for the rare emergency push: `SKIP_LEFTHOOK=1 git push`.
-      run: pnpm exec turbo run test
+      run: |
+        node scripts/native/ensure-native-bindings.mjs --quiet || {
+          echo "✗ native bindings unhealthy — run \`pnpm rebuild:native\` to fix."
+          exit 1
+        }
+        pnpm exec turbo run test
     format-check:
       # Note: this is the LAST-RESORT gate. The pre-commit hook auto-
       # formats on write, and .github/workflows/format.yml runs `pnpm

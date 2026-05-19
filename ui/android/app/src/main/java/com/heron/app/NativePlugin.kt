@@ -17,10 +17,8 @@
 package com.heron.app
 
 import android.content.Context
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appsearch.app.AppSearchSession
-import androidx.appsearch.app.GenericDocument
 import androidx.appsearch.app.PutDocumentsRequest
 import androidx.appsearch.app.RemoveByDocumentIdRequest
 import androidx.appsearch.app.SetSchemaRequest
