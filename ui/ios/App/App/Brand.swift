@@ -37,7 +37,6 @@ enum Brand {
         let trimmed = route.hasPrefix("/") ? String(route.dropFirst()) : route
         return "\(urlScheme)://\(trimmed)"
     }
-
     static func jobDeepLink(_ jobId: String) -> String {
         return "\(urlScheme)://job/\(jobId)"
     }

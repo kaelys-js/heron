@@ -26,33 +26,49 @@ the language is deliberate.
 
 ### Short (140 chars — Twitter / X bio, podcast description)
 
+<!-- AUTO-GENERATED:boilerplate-short -->
 > Heron — a thinking partner for career transitions. Patient. Precise. Local-first. Open source.
+<!-- /AUTO-GENERATED:boilerplate-short -->
 
 ### Medium (≤ 280 chars — article lede, App Store description, conference bio)
 
+<!-- AUTO-GENERATED:boilerplate-medium -->
 > Heron is an open-source job-search assistant for the wrong era of spray-and-pray. It tracks your pipeline, scores every role A-F, generates ATS-optimized CVs, scans 11 ATSes, and triages recruiter email — all locally. Your data never leaves your machine.
+<!-- /AUTO-GENERATED:boilerplate-medium -->
 
 ### Long (≤ 600 chars — press release, blog intro, About page)
 
+<!-- AUTO-GENERATED:boilerplate-long -->
 > The heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes — once, precisely, and the work is done. Heron is a thinking partner for people in career transition who'd rather make one excellent move than fifty mediocre ones. It runs entirely on your machine: pipeline tracking, A-F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Open source. AI-agnostic. Your data stays yours.
+<!-- /AUTO-GENERATED:boilerplate-long -->
 
 ## Quick facts
 
+<!-- AUTO-GENERATED:quick-facts-table -->
 | | |
 |---|---|
 | **Name** | Heron |
 | **Tagline** | Stand still. Strike well. |
-| **Category** | Open-source job-search assistant (productivity / career tools) |
 | **License** | MIT |
-| **Source** | github.com/heron/heron |
-| **Website** | heron.app |
-| **Discord** | discord.gg/8pRpHETxa4 |
-| **Platforms** | macOS, Windows, Linux (Electron); iOS + iPadOS (Capacitor); Android (Capacitor); watchOS (companion + 4 widgets) |
-| **Stack** | SvelteKit 2.59, Better Auth 1.6, Drizzle ORM + SQLite (WAL), Capacitor 8, Electron 39 |
-| **Data posture** | Local-first. SQLite on disk. No cloud aggregator. AI runs locally or against an API key you own. |
-| **AI CLIs supported** | Claude / Gemini / Codex / Copilot / OpenCode / Qwen (via `AGENT_CLI` env var) |
-| **Author / maintainer** | resist.js (<hello@heron.app>) |
-| **Heritage** | Hard fork of [`santifer/career-ops`](https://github.com/santifer/career-ops) — credit preserved in README and docs/CONTRIBUTORS.md |
+| **Source** | <https://github.com/heron/heron> |
+| **Website** | <https://heron.app> |
+| **Discord** | <https://discord.gg/8pRpHETxa4> |
+| **Bundle ID** | `com.heron.app` |
+| **URL scheme** | `heron://` |
+| **Support email** | <hello@heron.app> |
+| **Heritage** | Hard fork of [`santifer/career-ops`](https://github.com/santifer/career-ops) |
+<!-- /AUTO-GENERATED:quick-facts-table -->
+
+## Identifiers
+
+<!-- AUTO-GENERATED:identifiers-list -->
+- **Bundle ID** — `com.heron.app`
+- **URL scheme** — `heron://`
+- **App Group** — `group.com.heron.app`
+- **Bonjour service** — `_heron._tcp`
+- **Capacitor plugin** — `HeronNative`
+- **Keychain service** — `com.heron.app`
+<!-- /AUTO-GENERATED:identifiers-list -->
 
 ## What Heron does (feature list — for technical articles)
 
@@ -80,7 +96,9 @@ When the article needs to draw the distinction:
 
 The single strongest sentence in the brand. Use verbatim when you can.
 
+<!-- AUTO-GENERATED:origin -->
 > The heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes — once, precisely, and the work is done.
+<!-- /AUTO-GENERATED:origin -->
 
 ## Visual assets
 
@@ -102,28 +120,34 @@ flagged as PLACEHOLDER if rendered in print. When the illustrator
 output lands, swap to `mark-slate.svg` / `mark-light.svg` /
 `mark-dawn.svg`.
 
-## Color palette (for design systems referencing Heron)
+## Color palette (for design systems referencing the brand)
 
-| Token | Hex | Name |
+<!-- AUTO-GENERATED:color-base-table -->
+| Key | Hex | Name |
 |---|---|---|
-| Primary | `#4a5b6d` | Heron Slate |
-| Accent | `#c89b4a` | Heron Dawn (warm gold) |
-| Accent secondary | `#7a8c6d` | Heron Reed |
-| Dark background | `#0e1014` | Slate-tinted black |
-| Dark surface | `#14181f` | Slate-darker |
-| Light background | `#f7f5f0` | Warm paper |
-| Light surface | `#fffefa` | Lightest warm |
-| Text on dark | `#e8eaed` | Warm white |
-| Text on light | `#1a1f26` | Cool dark |
+| `primary` | `#4a5b6d` | Heron Slate |
+| `accent` | `#c89b4a` | Heron Dawn |
+| `accentSecondary` | `#7a8c6d` | Heron Reed |
+| `darkBg` | `#0e1014` | Dark mode background |
+| `darkSurface` | `#14181f` | Dark mode card surface |
+| `lightBg` | `#f7f5f0` | Light mode background (warm paper) |
+| `lightSurface` | `#fffefa` | Light mode card surface |
+| `textOnDark` | `#e8eaed` | Text on dark surfaces |
+| `textOnLight` | `#1a1f26` | Text on light surfaces |
+<!-- /AUTO-GENERATED:color-base-table -->
 
 Full WCAG contrast ratios + the 22-token CSS system are documented
 in [`COLORS.md`](./COLORS.md).
 
 ## Typography
 
-- **Display**: Fraunces (variable serif; opsz 9–144, wght 400–700, SOFT 0–100)
-- **Body**: Inter (variable sans; wght 400–700)
-- **Mono**: IBM Plex Mono (Regular + Medium)
+<!-- AUTO-GENERATED:font-table -->
+| Role | Family | Fallback | Weights | Axes |
+|---|---|---|---|---|
+| display | `Fraunces` | `'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times …` | 400 700 | opsz, wght, SOFT |
+| body | `Inter` | `system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',…` | 400 700 | wght |
+| mono | `IBM Plex Mono` | `ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, C…` | 400, 500 | — |
+<!-- /AUTO-GENERATED:font-table -->
 
 Self-hosted under `ui/static/fonts/`. No CDN dependency at runtime.
 
@@ -132,10 +156,12 @@ Self-hosted under `ui/static/fonts/`. No CDN dependency at runtime.
 Use these as drop-in pull quotes in articles. All attributed to the
 maintainer team (`resist.js`).
 
+<!-- AUTO-GENERATED:quotes-list -->
 - *"Recruiters' attention is finite. So is yours. The wrong era for spray-and-pray is the era we're in. Heron is the alternative."*
 - *"Local-first isn't a feature, it's a posture. Your career data is the most concentrated personal data you'll ever generate. Treating it like analytics fodder for a SaaS isn't a tradeoff we made."*
 - *"We score every role before applying. Below four out of five, the system actively discourages you. The recruiter's time is worth as much as yours."*
 - *"The heron stands still. Then it strikes. That's the whole product, in two sentences."*
+<!-- /AUTO-GENERATED:quotes-list -->
 
 Custom quotes for specific contexts can be requested at <hello@heron.app>.
 

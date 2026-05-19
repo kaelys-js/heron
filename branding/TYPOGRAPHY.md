@@ -106,18 +106,15 @@ string with a single Japanese word) the browser falls through to the
 JA face only for the characters Fraunces/Inter can't render. Clean
 visual mix.
 
-## What changes vs career-ops
+## Font assignments
 
-| | career-ops | Heron |
-|---|---|---|
-| Display | Space Grotesk (geometric sans, slightly quirky) | Fraunces (variable serif, editorial) |
-| Body | DM Sans (clean but generic) | Inter (industry-standard product face) |
-| Mono | not defined | IBM Plex Mono (numerics) |
-| Variable axes | not used | `wght + SOFT + opsz` on Fraunces; `wght + slnt` on Inter |
-| Files self-hosted | DM-Sans + Space-Grotesk woff2 in `templates/fonts/` (CV template only) | All three families in `ui/static/fonts/` (web UI) + a parallel set in `templates/fonts/` for the CV template |
-| Japanese fallback | not defined | Noto Serif JP + Noto Sans JP via `:lang(ja)` |
-| Italics policy | none | Reserved to Fraunces |
-| Type scale | inline / ad-hoc | 1.250 modular, 10 tokens, anchored at 16px |
+<!-- AUTO-GENERATED:font-table -->
+| Role | Family | Fallback | Weights | Axes |
+|---|---|---|---|---|
+| display | `Fraunces` | `'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times …` | 400 700 | opsz, wght, SOFT |
+| body | `Inter` | `system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',…` | 400 700 | wght |
+| mono | `IBM Plex Mono` | `ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, C…` | 400, 500 | — |
+<!-- /AUTO-GENERATED:font-table -->
 
 ## CV template — separate decision
 

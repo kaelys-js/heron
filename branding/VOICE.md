@@ -6,19 +6,31 @@
 > document operationalizes them. Read this before writing any
 > user-facing string.
 
-## Recap — the six voice principles
+## Voice principles
 
-1. **Direct without being curt.** Tell users what to do; give enough
-   context to understand why. Skip hype.
-2. **Confident without being absolute.** "We'd recommend." "Consider."
-   Never "you MUST" or "the only way."
-3. **Specific over abstract.** *"This role pays $180–220K base in SF."*
-   Not *"competitive comp."*
-4. **Patient tone.** No urgency manufacturing. No countdown timers.
-   Heron does not pressure.
-5. **Respect the user's time and intelligence.** No "as an AI."
-   No onboarding tours for obvious UI.
-6. **Quiet about itself.** The user is the protagonist.
+<!-- AUTO-GENERATED:principles-list -->
+- **Specific over abstract** — Concrete numbers, named tools, real workflows. Not 'AI-powered' or 'next-generation'.
+- **Quiet over loud** — No exclamation marks. No urgency-by-typography. Calm carries weight.
+- **Earned over claimed** — Don't say 'easy' — show the four-line quickstart. Don't say 'powerful' — show the feature.
+- **Patient over urgent** — Heron is for considered decisions. Manufactured urgency contradicts the brand at every layer.
+- **Local-first over cloud-default** — Data on disk. AI bring-your-own-key. No cloud aggregator.
+- **Filter over cannon** — The autonomous-apply gate is below 4/5 by default. The brand promise made operational.
+<!-- /AUTO-GENERATED:principles-list -->
+
+## Anti-patterns
+
+<!-- AUTO-GENERATED:anti-patterns-list -->
+- **Hustle-bro tone** — "Crush your job search! 🚀" → no. "A thinking partner for career transitions." → yes.
+- **Empty futurism** — "Welcome to the future of work!" → no. (just describe what the thing does)
+- **Decorative emojis** — 🚀 💡 🎯 📈 🔥 — none of these. Punctuation only.
+- **Manufactured urgency** — "Get started in seconds!" / "Limited time!" → no. Time is the user's.
+- **AI-slop adjectives** — "Powerful AI" / "Next-generation" / "Revolutionary" → no. Specifics or nothing.
+- **Wellness coddling** — "You've got this! 💪" → no. The user is an adult.
+- **Easy claims** — "It's easy!" → never. Show the four lines, let them judge.
+- **Welcoming language** — "Welcome to Heron!" / "Let's get started!" — no. Open with what the page is for.
+- **Just-doing** — "Just paste the URL" — no. "Paste the URL." The word 'just' minimizes.
+- **We-language** — "We think you'll love it!" → no. The brand is the brand, not the maintainer.
+<!-- /AUTO-GENERATED:anti-patterns-list -->
 
 ## 20 example phrases — by context
 

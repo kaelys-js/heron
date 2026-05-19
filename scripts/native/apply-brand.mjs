@@ -703,6 +703,425 @@ function applyBookmarklet(brand) {
   changed ? log.ok(`static/bookmarklet.js`) : log.skip(`static/bookmarklet.js — already current`);
 }
 
+/**
+ * Generate brand-derived data sections inside markdown docs.
+ *
+ * Each .md under branding/ can declare AUTO-GENERATED:<section>
+ * markers; apply-brand fills those regions from brand.json. Narrative
+ * prose around the markers stays human-authored. Example:
+ *
+ *   <!-- AUTO-GENERATED:tagline -->
+ *   > Stand still. Strike well.
+ *   <!-- /AUTO-GENERATED:tagline -->
+ *
+ * Edit brand.json → run apply-brand → every marker across every .md
+ * updates atomically. Drift is impossible: the integration test
+ * asserts each marked region matches what apply-brand would emit.
+ */
+function applyMarkdownSections(brand) {
+  const targets = [
+    join(ROOT, 'branding', 'BRAND.md'),
+    join(ROOT, 'branding', 'COLORS.md'),
+    join(ROOT, 'branding', 'TYPOGRAPHY.md'),
+    join(ROOT, 'branding', 'VOICE.md'),
+    join(ROOT, 'branding', 'MASCOT.md'),
+    join(ROOT, 'branding', 'WORDMARK.md'),
+    join(ROOT, 'branding', 'SOCIAL-CARD.md'),
+    join(ROOT, 'branding', 'PRESS.md'),
+    join(ROOT, 'branding', 'README-banner.md'),
+    join(ROOT, 'README.md'),
+  ];
+  const generators = mdSectionGenerators();
+  let any = false;
+  for (const path of targets) {
+    if (!existsSync(path)) continue;
+    const before = readFileSync(path, 'utf8');
+    let body = before;
+    for (const [sectionName, gen] of Object.entries(generators)) {
+      const startMarker = `<!-- AUTO-GENERATED:${sectionName} -->`;
+      const endMarker = `<!-- /AUTO-GENERATED:${sectionName} -->`;
+      const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(escape(startMarker) + '[\\s\\S]*?' + escape(endMarker), 'm');
+      if (re.test(body)) {
+        const content = gen(brand);
+        body = body.replace(re, `${startMarker}\n${content}\n${endMarker}`);
+      }
+    }
+    if (body !== before) {
+      writeFileSync(path, body);
+      any = true;
+    }
+  }
+  any
+    ? log.ok(`branding/*.md (regenerated marked sections)`)
+    : log.skip(`branding/*.md — no marker drift`);
+}
+
+function mdSectionGenerators() {
+  return {
+    'display-name': (b) => b.displayName,
+    tagline: (b) => `> **${b.voice.tagline}**`,
+    subline: (b) => b.voice.subline,
+    origin: (b) => `> ${b.voice.origin}`,
+    mission: (b) => b.voice.mission ?? '',
+    philosophy: (b) => b.voice.philosophy ?? '',
+    'boilerplate-short': (b) => `> ${b.voice.boilerplate.short}`,
+    'boilerplate-medium': (b) => `> ${b.voice.boilerplate.medium}`,
+    'boilerplate-long': (b) => `> ${b.voice.boilerplate.long}`,
+    'personality-list': (b) => b.voice.personality.map((p) => `- ${p}`).join('\n'),
+    'anti-brands-list': (b) => b.voice.antiBrands.map((p) => `- ${p}`).join('\n'),
+    'principles-list': (b) =>
+      b.voice.principles.map((p) => `- **${p.name}** — ${p.description}`).join('\n'),
+    'anti-patterns-list': (b) =>
+      b.voice.antiPatterns.map((p) => `- **${p.name}** — ${p.example}`).join('\n'),
+    'quotes-list': (b) => b.voice.quotes.map((q) => `- *"${q}"*`).join('\n'),
+    'keywords-list': (b) => b.keywords.map((k) => `\`${k}\``).join(', '),
+    'color-base-table': (b) => mdColorBaseTable(b),
+    'color-tokens-light-table': (b) => mdColorTokensTable(b, 'light'),
+    'color-tokens-dark-table': (b) => mdColorTokensTable(b, 'dark'),
+    'font-table': (b) => mdFontTable(b),
+    'mascot-summary-table': (b) => mdMascotTable(b),
+    'quick-facts-table': (b) => mdQuickFactsTable(b),
+    'identifiers-list': (b) =>
+      [
+        `- **Bundle ID** — \`${b.identifiers.bundleId}\``,
+        `- **URL scheme** — \`${b.identifiers.urlScheme}://\``,
+        `- **App Group** — \`${b.identifiers.appGroup}\``,
+        `- **Bonjour service** — \`${b.identifiers.serviceType}\``,
+        `- **Capacitor plugin** — \`${b.identifiers.capacitorPluginName}\``,
+        `- **Keychain service** — \`${b.identifiers.keychainService}\``,
+      ].join('\n'),
+  };
+}
+
+function mdColorBaseTable(b) {
+  const c = b.colors;
+  const rows = [
+    `| Key | Hex | Name |`,
+    `|---|---|---|`,
+    `| \`primary\` | \`${c.primary}\` | ${c.primaryName ?? ''} |`,
+    `| \`accent\` | \`${c.accent}\` | ${c.accentName ?? ''} |`,
+    `| \`accentSecondary\` | \`${c.accentSecondary}\` | ${c.accentSecondaryName ?? ''} |`,
+    `| \`darkBg\` | \`${c.darkBg}\` | Dark mode background |`,
+    `| \`darkSurface\` | \`${c.darkSurface}\` | Dark mode card surface |`,
+    `| \`lightBg\` | \`${c.lightBg}\` | Light mode background (warm paper) |`,
+    `| \`lightSurface\` | \`${c.lightSurface}\` | Light mode card surface |`,
+    `| \`textOnDark\` | \`${c.textOnDark}\` | Text on dark surfaces |`,
+    `| \`textOnLight\` | \`${c.textOnLight}\` | Text on light surfaces |`,
+  ];
+  return rows.join('\n');
+}
+
+function mdColorTokensTable(b, mode) {
+  const tokens = b.colors.tokens[mode];
+  const rows = [`| Token | Hex |`, `|---|---|`];
+  for (const [key, value] of Object.entries(tokens)) {
+    if (key.startsWith('$')) continue;
+    if (key === 'chart') {
+      for (let i = 0; i < value.length; i++)
+        rows.push(`| \`--chart-${i + 1}\` | \`${value[i]}\` |`);
+      continue;
+    }
+    const cssVar = '--' + key.replace(/([A-Z])/g, '-$1').toLowerCase();
+    rows.push(`| \`${cssVar}\` | \`${value}\` |`);
+  }
+  return rows.join('\n');
+}
+
+function mdFontTable(b) {
+  const rows = [`| Role | Family | Fallback | Weights | Axes |`, `|---|---|---|---|---|`];
+  for (const role of ['display', 'body', 'mono']) {
+    const f = b.fonts[role];
+    if (!f) continue;
+    const fallback = f.fallback.length > 60 ? f.fallback.slice(0, 57) + '…' : f.fallback;
+    const weights = Array.isArray(f.weights) ? f.weights.join(', ') : f.weights;
+    const axes = (f.axes ?? []).join(', ') || '—';
+    rows.push(`| ${role} | \`${f.family}\` | \`${fallback}\` | ${weights} | ${axes} |`);
+  }
+  return rows.join('\n');
+}
+
+function mdMascotTable(b) {
+  const m = b.mascot;
+  return [
+    `| Property | Value |`,
+    `|---|---|`,
+    `| Subject | ${m.subject} |`,
+    `| Pose | ${m.pose} |`,
+    `| Style refs | ${m.styleReferences.join(', ')} |`,
+    `| Anti-styles | ${m.antiStyles.join(', ')} |`,
+    `| Mark tier | ${m.tiers.mark.use} — ${m.tiers.mark.treatment} |`,
+    `| Illustration tier | ${m.tiers.illustration.use} — ${m.tiers.illustration.treatment} |`,
+  ].join('\n');
+}
+
+function mdQuickFactsTable(b) {
+  return [
+    `| | |`,
+    `|---|---|`,
+    `| **Name** | ${b.displayName} |`,
+    `| **Tagline** | ${b.voice.tagline} |`,
+    `| **License** | ${b.license} |`,
+    `| **Source** | <${b.repo.url}> |`,
+    `| **Website** | <${b.homepageUrl}> |`,
+    `| **Discord** | <https://discord.gg/8pRpHETxa4> |`,
+    `| **Bundle ID** | \`${b.identifiers.bundleId}\` |`,
+    `| **URL scheme** | \`${b.identifiers.urlScheme}://\` |`,
+    `| **Support email** | <${b.supportEmail}> |`,
+    `| **Heritage** | Hard fork of [\`${new URL(b.repo.upstream ?? b.repo.url).pathname.slice(1)}\`](${b.repo.upstream ?? b.repo.url}) |`,
+  ].join('\n');
+}
+
+/**
+ * Regenerate the 4 wordmark SVG variants from a single template.
+ *
+ * brand.displayName drives the text content; the color variants
+ * (slate / light / dawn / currentColor) drive the `fill` value. A
+ * rebrand updates all 4 SVGs by editing brand.json::displayName +
+ * the relevant `colors.*` keys and re-running apply-brand.
+ *
+ * Files written:
+ *   branding/assets/wordmark.svg            (fill="currentColor")
+ *   branding/assets/wordmark-slate.svg      (fill=brand.colors.primary)
+ *   branding/assets/wordmark-light.svg      (fill=brand.colors.textOnDark)
+ *   branding/assets/wordmark-dawn.svg       (fill=brand.colors.accent)
+ *
+ * The text-mode placeholder relies on the Fraunces font being loaded
+ * by the renderer. For press / external embeds, run the outputs
+ * through a vector editor to outline the letterforms to paths.
+ */
+function applyWordmarks(brand) {
+  const variants = [
+    { suffix: '', fill: 'currentColor', label: 'inherits parent color' },
+    {
+      suffix: '-slate',
+      fill: brand.colors.primary,
+      label: `${brand.colors.primaryName ?? 'primary'} variant (${brand.colors.primary})`,
+    },
+    {
+      suffix: '-light',
+      fill: brand.colors.textOnDark,
+      label: `warm-white variant for dark surfaces (${brand.colors.textOnDark})`,
+    },
+    {
+      suffix: '-dawn',
+      fill: brand.colors.accent,
+      label: `${brand.colors.accentName ?? 'accent'} variant (${brand.colors.accent})`,
+    },
+  ];
+  let any = false;
+  for (const v of variants) {
+    const path = join(ROOT, 'branding', 'assets', `wordmark${v.suffix}.svg`);
+    const svg = buildWordmarkSvg(brand, v);
+    if (writeIfChanged(path, svg)) any = true;
+  }
+  any
+    ? log.ok(`wordmark SVGs × 4 (regenerated from brand.displayName)`)
+    : log.skip(`wordmark SVGs — already current`);
+}
+
+function buildWordmarkSvg(brand, v) {
+  const family = `${brand.fonts.display.family}, ${brand.fonts.display.fallback}`;
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ${brand.displayName} wordmark — ${v.label}.
+
+  AUTO-GENERATED by scripts/native/apply-brand.mjs from
+  brand.json::displayName + brand.fonts.display. Do not edit; edit
+  branding/brand.json and run \`pnpm brand:apply\`.
+
+  PLACEHOLDER until letterforms are outlined to vector paths. The
+  text-mode rendering depends on ${brand.fonts.display.family} being
+  loaded — the web UI loads it self-hosted under ui/static/fonts/
+  so this works in-product. For press kits or external embeds, run
+  through a vector editor to outline the letterforms to <path>.
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 280 120"
+  role="img"
+  aria-label="${brand.displayName}"
+>
+  <title>${brand.displayName}</title>
+  <text
+    x="50%"
+    y="92"
+    text-anchor="middle"
+    fill="${v.fill}"
+    font-family="${family}"
+    font-size="96"
+    font-weight="700"
+    font-optical-sizing="auto"
+    font-variation-settings="'opsz' 96, 'SOFT' 0, 'wght' 700"
+    letter-spacing="-0.02em"
+  >${brand.displayName}</text>
+</svg>
+`;
+}
+
+/**
+ * Regenerate the AUTO-GENERATED brand-tokens block in ui/src/app.css.
+ *
+ * Sources:
+ *   • brand.fonts.{display,body,mono} → @font-face declarations +
+ *     @theme inline --font-{sans,serif,mono} tokens + body / h1-h4 /
+ *     code cascade defaults + :lang(ja) Japanese fallback.
+ *   • brand.colors.tokens.{light,dark} → :root + .dark CSS variable
+ *     blocks, mapped onto the shadcn token graph (--background,
+ *     --foreground, --primary, --accent, --sidebar-*, --chart-*).
+ *   • brand.colors.primary/accent/accentSecondary → "Brand essentials"
+ *     comment header explaining the palette to a reader of app.css.
+ *
+ * Generated block is wrapped in `/* AUTO-GENERATED:brand-tokens *\/`
+ * markers so the rest of app.css (cascade defaults, view transitions,
+ * media queries) stays human-authored.
+ */
+function applyAppCss(brand) {
+  const path = join(UI, 'src', 'app.css');
+  if (!existsSync(path)) {
+    log.skip(`app.css — missing`);
+    return;
+  }
+  const body = readFileSync(path, 'utf8');
+  const block = buildAppCssBlock(brand);
+  const markerStart =
+    '/* AUTO-GENERATED:brand-tokens — Do not edit. Edit branding/brand.json + run `pnpm brand:apply`. */';
+  const markerEnd = '/* /AUTO-GENERATED:brand-tokens */';
+  const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(escape(markerStart) + '[\\s\\S]*?' + escape(markerEnd), 'm');
+  let next;
+  if (re.test(body)) {
+    next = body.replace(re, `${markerStart}\n${block}\n${markerEnd}`);
+  } else {
+    const anchor = '@custom-variant dark (&:is(.dark *));';
+    const idx = body.indexOf(anchor);
+    if (idx < 0) {
+      log.warn(`app.css — anchor "${anchor}" missing; cannot insert AUTO-GENERATED block`);
+      return;
+    }
+    const lineEnd = body.indexOf('\n', idx) + 1;
+    next =
+      body.slice(0, lineEnd) + `\n${markerStart}\n${block}\n${markerEnd}\n` + body.slice(lineEnd);
+  }
+  const changed = writeIfChanged(path, next);
+  changed ? log.ok(`ui/src/app.css`) : log.skip(`ui/src/app.css — already current`);
+}
+
+/** Build the inside of the AUTO-GENERATED block: @font-face + @theme + :root + .dark. */
+function buildAppCssBlock(brand) {
+  return [
+    appCssFontFaces(brand),
+    appCssThemeInline(brand),
+    appCssLightTokens(brand),
+    appCssDarkTokens(brand),
+  ].join('\n\n');
+}
+
+function appCssFontFaces(brand) {
+  const out = [];
+  out.push(
+    '/* Self-hosted fonts — woff2 under ui/static/fonts/. font-display: swap so',
+    ' * system fallback paints first, the woff2 swap in seamlessly. */',
+    '',
+  );
+  for (const role of ['display', 'body', 'mono']) {
+    const f = brand.fonts[role];
+    if (!f) continue;
+    const weightList = Array.isArray(f.weights) ? f.weights : [f.weights];
+    for (const file of f.files) {
+      const weight = file.weight ?? f.weights;
+      const range = brand.fonts.subsetUnicodeRanges?.[file.subset];
+      out.push(
+        '@font-face {',
+        `  font-family: '${f.family}';`,
+        `  font-style: normal;`,
+        `  font-weight: ${weight};`,
+        `  font-display: swap;`,
+        `  src: url('${file.path}') format('woff2');`,
+        ...(range ? [`  unicode-range: ${range};`] : []),
+        '}',
+      );
+    }
+  }
+  return out.join('\n');
+}
+
+function appCssThemeInline(brand) {
+  const sans = `'${brand.fonts.body.family}', ${brand.fonts.body.fallback}`;
+  const serif = `'${brand.fonts.display.family}', ${brand.fonts.display.fallback}`;
+  const mono = `'${brand.fonts.mono.family}', ${brand.fonts.mono.fallback}`;
+  return [
+    '@theme inline {',
+    '  --radius-sm: calc(var(--radius) - 4px);',
+    '  --radius-md: calc(var(--radius) - 2px);',
+    '  --radius-lg: var(--radius);',
+    '  --radius-xl: calc(var(--radius) + 4px);',
+    '  --color-background: var(--background);',
+    '  --color-foreground: var(--foreground);',
+    '  --color-card: var(--card);',
+    '  --color-card-foreground: var(--card-foreground);',
+    '  --color-popover: var(--popover);',
+    '  --color-popover-foreground: var(--popover-foreground);',
+    '  --color-primary: var(--primary);',
+    '  --color-primary-foreground: var(--primary-foreground);',
+    '  --color-secondary: var(--secondary);',
+    '  --color-secondary-foreground: var(--secondary-foreground);',
+    '  --color-muted: var(--muted);',
+    '  --color-muted-foreground: var(--muted-foreground);',
+    '  --color-accent: var(--accent);',
+    '  --color-accent-foreground: var(--accent-foreground);',
+    '  --color-accent-secondary: var(--accent-secondary);',
+    '  --color-destructive: var(--destructive);',
+    '  --color-destructive-foreground: var(--destructive-foreground);',
+    '  --color-border: var(--border);',
+    '  --color-input: var(--input);',
+    '  --color-ring: var(--ring);',
+    '  --color-chart-1: var(--chart-1);',
+    '  --color-chart-2: var(--chart-2);',
+    '  --color-chart-3: var(--chart-3);',
+    '  --color-chart-4: var(--chart-4);',
+    '  --color-chart-5: var(--chart-5);',
+    '  --color-sidebar: var(--sidebar);',
+    '  --color-sidebar-foreground: var(--sidebar-foreground);',
+    '  --color-sidebar-primary: var(--sidebar-primary);',
+    '  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);',
+    '  --color-sidebar-accent: var(--sidebar-accent);',
+    '  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);',
+    '  --color-sidebar-border: var(--sidebar-border);',
+    '  --color-sidebar-ring: var(--sidebar-ring);',
+    '',
+    "  /* Font stacks — Tailwind's font-sans / font-serif / font-mono resolve to these. */",
+    `  --font-sans: ${sans};`,
+    `  --font-serif: ${serif};`,
+    `  --font-mono: ${mono};`,
+    '}',
+  ].join('\n');
+}
+
+function appCssTokenBlock(selector, tokens) {
+  const out = [`${selector} {`];
+  if (selector === ':root') out.push('  --radius: 0.625rem;');
+  for (const [key, value] of Object.entries(tokens)) {
+    if (key === 'chart') {
+      for (let i = 0; i < value.length; i++) out.push(`  --chart-${i + 1}: ${value[i]};`);
+      continue;
+    }
+    if (key.startsWith('$')) continue;
+    const cssVar = '--' + key.replace(/([A-Z])/g, '-$1').toLowerCase();
+    out.push(`  ${cssVar}: ${value};`);
+  }
+  out.push('}');
+  return out.join('\n');
+}
+
+function appCssLightTokens(brand) {
+  return appCssTokenBlock(':root', brand.colors.tokens.light);
+}
+
+function appCssDarkTokens(brand) {
+  return appCssTokenBlock('.dark', brand.colors.tokens.dark);
+}
+
 function applyAppHtml(brand) {
   // app.html runs an INLINE script before SvelteKit hydrates (theme
   // bootstrap to avoid light-mode flash). That script can't import TS
@@ -1018,6 +1437,9 @@ function applyClientBrandTs(brand) {
     `  keychainService: ${JSON.stringify(brand.identifiers.keychainService)},`,
     `  capacitorPluginName: ${JSON.stringify(brand.identifiers.capacitorPluginName ?? 'NativePlugin')},`,
     `  colors: ${JSON.stringify(brand.colors, null, 2).replace(/\n/g, '\n  ')},`,
+    `  fonts: ${JSON.stringify(brand.fonts, null, 2).replace(/\n/g, '\n  ')},`,
+    `  voice: ${JSON.stringify(brand.voice, null, 2).replace(/\n/g, '\n  ')},`,
+    `  mascot: ${JSON.stringify(brand.mascot, null, 2).replace(/\n/g, '\n  ')},`,
     `  repo: ${JSON.stringify(brand.repo, null, 2).replace(/\n/g, '\n  ')},`,
     `} as const;`,
     ``,
@@ -1357,6 +1779,13 @@ function apply() {
   applyAppHtml(brand);
   applyErrorHtml(brand);
   applyBookmarklet(brand);
+  applyAppCss(brand);
+
+  log.step('Branding assets');
+  applyWordmarks(brand);
+
+  log.step('Branding markdown sections');
+  applyMarkdownSections(brand);
 
   log.step('Fastlane');
   applyFastlaneAppfile(brand);

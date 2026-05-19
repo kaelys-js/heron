@@ -25,17 +25,28 @@ Disney character.
 
 ## Subject specification
 
+<!-- AUTO-GENERATED:mascot-summary-table -->
+| Property | Value |
+|---|---|
+| Subject | Great Blue Heron |
+| Pose | side profile, standing in shallow water, neck S-curve, head turned 25-30° right |
+| Style refs | Audubon, Charley Harper, Field Notes, Hasegawa Tōhaku sumi-e |
+| Anti-styles | cartoon, photo-realistic, 3D-rendered, anthropomorphized, mascot-with-arms |
+| Mark tier | ≤64px contexts — favicon, app icon, inline UI — silhouette |
+| Illustration tier | ≥200px contexts — landing pages, marketing, press — editorial illustration with subtle detail |
+<!-- /AUTO-GENERATED:mascot-summary-table -->
+
+### Anatomical detail (human-authored)
+
 | Attribute | Choice |
 |---|---|
-| Species reference | Great Blue Heron (*Ardea herodias*) OR Grey Heron (*Ardea cinerea*, the European equivalent). Both give the same slate-blue plumage + long S-neck silhouette. |
-| Pose | Standing tall, neck in resting S-curve (not stretched, not coiled). Head turned to viewer's right at ~25–30° (the wordmark sits to the right in horizontal lockup; the heron "regards" the brand name). Legs planted, body weight balanced. |
 | Body proportion | Compact teardrop; head + body together ≈ ⅔ the height of the legs |
 | Neck S-curve | Soft, never angular. The curve evokes the calligraphic ʃ glyph more than a sharp Z. |
 | Beak | Sharp, angular, slightly forward — implies precision without showing aggression. Length ≈ 1× head diameter. |
-| Eye | Single small dot. Light color on dark plumage. Gives the heron a *focal point of attention* without anthropomorphizing it. |
+| Eye | Single small dot. Light color on dark plumage. A *focal point of attention* without anthropomorphizing. |
 | Legs | Long, thin, mostly straight, slightly bent at the knee. Suggest planted stillness — not a stride. |
 | Feet | Suggest with small horizontal terminators; don't render toes explicitly. |
-| Plumage | Slate-blue mass at body, suggestion of a few darker flight feathers on the wings (illustration variant only — mark variant is solid silhouette). |
+| Plumage | Mass at body, suggestion of a few darker flight feathers on the wings (illustration variant only — mark variant is solid silhouette). |
 
 ## Style direction
 

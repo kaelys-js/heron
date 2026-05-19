@@ -9,16 +9,14 @@
 
 ## Identity
 
-| Field | Value |
-|---|---|
-| Brand name | **Heron** |
-| Capitalization | Sentence case. Never ALL CAPS. Never hyphenated. |
-| Package identifier | `heron` (lowercase) |
-| Display name (UI / App Store / dock / Electron menu) | Heron |
-| Repository slug | `heron` (lowercase) |
-| Bundle ID | `com.heron.app` (clean) — TBD per Task 9 |
-| URL scheme | `heron://` |
-| Local mDNS service | `_heron._tcp` |
+<!-- AUTO-GENERATED:identifiers-list -->
+- **Bundle ID** — `com.heron.app`
+- **URL scheme** — `heron://`
+- **App Group** — `group.com.heron.app`
+- **Bonjour service** — `_heron._tcp`
+- **Capacitor plugin** — `HeronNative`
+- **Keychain service** — `com.heron.app`
+<!-- /AUTO-GENERATED:identifiers-list -->
 
 ## Mission
 
@@ -56,26 +54,51 @@ they're about to make.
 
 ## Voice principles
 
-1. **Direct without being curt.** Tell users what to do; give enough context to understand why. Skip hype.
-2. **Confident without being absolute.** "We'd recommend." "Consider." Never "you MUST" or "the only way."
-3. **Specific over abstract.** *"This role pays $180–220K base in SF, 0.05–0.12% equity at this stage."* Not *"competitive comp."*
-4. **Patient tone.** No urgency manufacturing. No "limited time." No countdown timers. Heron does not pressure.
-5. **Respect the user's time and intelligence.** No "as an AI language model." No onboarding tours for obvious UI. Insights are unlocked by relevance, not by friction gates.
-6. **Quiet about itself.** Heron isn't the protagonist of the user's career. The user is. The brand stamp is light.
+<!-- AUTO-GENERATED:principles-list -->
+- **Specific over abstract** — Concrete numbers, named tools, real workflows. Not 'AI-powered' or 'next-generation'.
+- **Quiet over loud** — No exclamation marks. No urgency-by-typography. Calm carries weight.
+- **Earned over claimed** — Don't say 'easy' — show the four-line quickstart. Don't say 'powerful' — show the feature.
+- **Patient over urgent** — Heron is for considered decisions. Manufactured urgency contradicts the brand at every layer.
+- **Local-first over cloud-default** — Data on disk. AI bring-your-own-key. No cloud aggregator.
+- **Filter over cannon** — The autonomous-apply gate is below 4/5 by default. The brand promise made operational.
+<!-- /AUTO-GENERATED:principles-list -->
+
+## Personality
+
+<!-- AUTO-GENERATED:personality-list -->
+- calm
+- sophisticated
+- patient
+- precise
+- local-first
+<!-- /AUTO-GENERATED:personality-list -->
+
+## Anti-brands
+
+<!-- AUTO-GENERATED:anti-brands-list -->
+- LinkedIn
+- AI-slop
+- hustle-bro
+- wellness-coddling
+<!-- /AUTO-GENERATED:anti-brands-list -->
 
 ## Taglines
 
-**Primary** — *Stand still. Strike well.*
+**Primary** —
+
+<!-- AUTO-GENERATED:tagline -->
+> **Stand still. Strike well.**
+<!-- /AUTO-GENERATED:tagline -->
 
 Two short clauses. Parallel rhythm. Carries the entire philosophy:
 patient observation, then decisive precise action. Works at every scale
 — landing-page hero, tweet bio, About page first line, README banner.
 
-**Secondary** (longer-form contexts, About page, press kit) —
-*A thinking partner for the moves that matter.*
-
 **Twitter-bio length** (≤160 chars, App Store subtitle) —
-*Heron — a thinking partner for career transitions. Patient. Precise. Local-first. Open source.*
+
+<!-- AUTO-GENERATED:boilerplate-short -->
+> Heron — a thinking partner for career transitions. Patient. Precise. Local-first. Open source.
+<!-- /AUTO-GENERATED:boilerplate-short -->
 
 **Reserves** (use only if the primary stops landing):
 
@@ -85,13 +108,9 @@ patient observation, then decisive precise action. Works at every scale
 
 ## Origin story (one paragraph for README / About page)
 
-> The heron stands motionless in shallow water. It waits. It watches. It
-> evaluates every passing form. Then, when the moment is exactly right,
-> it strikes — once, precisely, and the work is done. This is the wrong
-> era for spray-and-pray job searches. Recruiters' attention is finite.
-> So is yours. Heron is a thinking partner for people in career
-> transition who'd rather make one excellent move than fifty mediocre
-> ones. It runs entirely on your machine. Your data is yours.
+<!-- AUTO-GENERATED:origin -->
+> The heron stands motionless in shallow water. It waits. It watches. It evaluates every passing form. Then, when the moment is exactly right, it strikes — once, precisely, and the work is done.
+<!-- /AUTO-GENERATED:origin -->
 
 ## What this brand deliberately does NOT say
 
