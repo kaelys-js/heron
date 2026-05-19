@@ -15,10 +15,10 @@
 # ── Repo-level governance + security ────────────────────────────────
 /AGENTS.md                       @kaelys-js
 /CLAUDE.md                       @kaelys-js
-/GOVERNANCE.md                   @kaelys-js
-/SECURITY.md                     @kaelys-js
-/CODE_OF_CONDUCT.md              @kaelys-js
-/SUPPORT.md                      @kaelys-js
+/docs/GOVERNANCE.md              @kaelys-js
+/.github/SECURITY.md             @kaelys-js
+/.github/CODE_OF_CONDUCT.md      @kaelys-js
+/.github/SUPPORT.md              @kaelys-js
 /LICENSE                         @kaelys-js
 /.github/                        @kaelys-js
 
@@ -40,7 +40,7 @@
 /.npmrc                         @kaelys-js
 /.mise.toml                     @kaelys-js
 /pnpm-workspace.yaml            @kaelys-js
-/biome.json                     @kaelys-js
+/biome.jsonc                    @kaelys-js
 /lefthook.yml                   @kaelys-js
 
 # ── Native config (signing + secrets paths) ─────────────────────────

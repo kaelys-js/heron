@@ -1,4 +1,4 @@
-name: SBOM Generation
+name: SBOM + Attestations
 on:
   release:
     types: [published]
@@ -6,20 +6,56 @@ on:
 permissions:
   contents: write
 
+# G35 — guard against double-fire on retry. Without this, re-running the
+# workflow from the GitHub UI (e.g. after a transient anchore API blip)
+# would double-upload the SBOM + duplicate the attestation.
+concurrency:
+  group: sbom-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
 jobs:
   sbom:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: write # gh release upload + draft release edit
+      # G1 — build provenance attestations require id-token + attestations
+      # write so Sigstore can sign on behalf of the workflow.
+      id-token: write
+      attestations: write
     steps:
+      - name: Harden runner
+        # G4 — release-time runner. Has `contents: write` + can mint
+        # OIDC tokens for Sigstore. Audit mode during rollout.
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
 
       - name: Generate SBOM (SPDX)
-        uses: anchore/sbom-action@v0
+        # G29 — pinned to a specific SHA inside v0. The v0 floating
+        # major was the highest-risk pin in the whole repo because
+        # this workflow runs at RELEASE time with `contents: write`.
+        # Dependabot picks up new v0 releases automatically and opens
+        # a PR; that PR is reviewable before it can affect signing.
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
         with:
           artifact-name: heron-sbom.spdx.json
           format: spdx-json
           output-file: heron-sbom.spdx.json
+
+      - name: Attest SBOM
+        # G1 — proves the SBOM was produced by this workflow run, signed
+        # by Sigstore via the OIDC token. Users can verify with
+        # `gh attestation verify heron-sbom.spdx.json --owner heron`.
+        uses: actions/attest-sbom@bd218ad0dbcb3e146bd073d1d9c6d78e08aa8a0b # v2.4.0
+        with:
+          subject-path: heron-sbom.spdx.json
+          sbom-path: heron-sbom.spdx.json
 
       - name: Upload SBOM to release
         env:
