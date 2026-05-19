@@ -19,6 +19,7 @@ import { wrap } from '$lib/server/api-helpers';
 import { ROOT } from '$lib/server/files';
 import path from 'node:path';
 import { logEvent, reportServerError } from '$lib/server/events';
+import { userContextEnv } from '$lib/server/user-context';
 
 const TIMEOUT_MS = 10_000;
 
@@ -40,7 +41,7 @@ export const POST = wrap('profile-seo', async ({ request }: { request: Request }
     const args = [path.join(ROOT, 'scripts/quality/profile-seo.mjs'), '--json'];
     if (body.headline) args.push('--headline', body.headline);
     if (body.about) args.push('--about', body.about);
-    const p = spawn('node', args, { cwd: ROOT, env: { ...process.env } });
+    const p = spawn('node', args, { cwd: ROOT, env: userContextEnv() });
     let stdoutBuf = '';
     let stderrBuf = '';
     p.stdout?.on('data', (c: Buffer) => {

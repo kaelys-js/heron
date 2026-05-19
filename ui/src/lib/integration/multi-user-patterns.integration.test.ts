@@ -33,12 +33,18 @@ const SERVER_ROOT = path.join(REPO_ROOT, 'ui/src/lib/server');
  *  F13 — spawn-env injection
  *  ──────────────────────────────────────────────────────────────────── */
 describe('Multi-user — every spawn() injects userContextEnv (F13 guard)', () => {
-  it('no bare `env: { ...process.env }` in server modules', () => {
+  it('no bare `env: { ...process.env }` in server modules + api routes', () => {
+    // Extended in the final audit loop — `routes/api/**` had 4 missed
+    // spawn sites because the original grep only covered lib/server/.
+    // Now the pattern guard sweeps both trees.
+    const ROUTES_API_ROOT = path.join(REPO_ROOT, 'ui/src/routes/api');
     const hits = execSync(
       // -E for extended regex, -l doesn't help here because we want line context
       // Match `env: { ...process.env }` (and the variant without spaces).
       'grep -rln --include="*.ts" "env: { ...process.env }\\|env: process\\.env\\>" ' +
         SERVER_ROOT +
+        ' ' +
+        ROUTES_API_ROOT +
         ' || true',
       { encoding: 'utf8' },
     )

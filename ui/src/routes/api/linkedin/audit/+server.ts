@@ -16,6 +16,7 @@ import path from 'node:path';
 import { wrap } from '$lib/server/api-helpers';
 import { ROOT } from '$lib/server/files';
 import { logEvent, reportServerError } from '$lib/server/events';
+import { userContextEnv } from '$lib/server/user-context';
 import {
   readAuditReport,
   writeAuditReport,
@@ -44,7 +45,7 @@ function runScraper(headed: boolean): Promise<{ stdout: string; stderr: string; 
     if (headed) args.push('--headed');
     const p = spawn(pythonBin(), args, {
       cwd: ROOT,
-      env: { ...process.env },
+      env: userContextEnv(),
     });
     p.stdout?.on('data', (c: Buffer) => {
       stdout += c.toString();

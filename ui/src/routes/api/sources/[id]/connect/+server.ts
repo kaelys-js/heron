@@ -24,6 +24,7 @@ import { recordSuccess, recordFailure } from '$lib/server/sources';
 import { logEvent, reportServerError } from '$lib/server/events';
 import { writeEnv, readEnv } from '$lib/server/env';
 import { requireOwner } from '$lib/server/auth-helpers';
+import { userContextEnv } from '$lib/server/user-context';
 
 export const POST = wrap(
   'sources-connect',
@@ -140,7 +141,7 @@ function spawnPlaywrightLogin(portal: 'linkedin' | 'indeed'): Promise<void> {
     // for headed login and --check-session for read-only probe.
     const p = spawn(py, ['scripts/lib/lib_playwright_auth.py', '--portal', portal, '--login'], {
       cwd: ROOT,
-      env: { ...process.env },
+      env: userContextEnv(),
     });
 
     let stdoutBuf = '';
