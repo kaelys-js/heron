@@ -147,9 +147,9 @@
          continuity (user feels they're in one "still loading" state). -->
     <div
       aria-hidden="true"
-      class="absolute inset-0 bg-[#0a0a0b]/95 backdrop-blur-md"
+      class="absolute inset-0 bg-[#0e1014]/95 backdrop-blur-md"
       style="background:
-        radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.20) 0%, rgba(99, 102, 241, 0.10) 32%, rgba(168, 85, 247, 0.05) 56%, transparent 78%),
+        radial-gradient(circle at 50% 50%, rgba(122, 140, 109, 0.20) 0%, rgba(74, 91, 109, 0.10) 32%, rgba(200, 155, 74, 0.05) 56%, transparent 78%),
         rgba(10, 10, 11, 0.95);"
     ></div>
 
@@ -165,9 +165,9 @@
         <svg viewBox="0 0 1024 1024" aria-hidden="true" class="block size-full">
           <defs>
             <linearGradient id="bu-grad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#6366f1" />
-              <stop offset="55%" stop-color="#8b5cf6" />
-              <stop offset="100%" stop-color="#a855f7" />
+              <stop offset="0%" stop-color="#4a5b6d" />
+              <stop offset="55%" stop-color="#7a8c6d" />
+              <stop offset="100%" stop-color="#c89b4a" />
             </linearGradient>
           </defs>
           <rect width="1024" height="1024" rx="232" fill="url(#bu-grad)" />

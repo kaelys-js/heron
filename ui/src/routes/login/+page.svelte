@@ -145,9 +145,9 @@
     aria-hidden="true"
     class="pointer-events-none absolute inset-0 overflow-hidden"
     style="background:
-      radial-gradient(60rem 40rem at 50% -10%, rgba(139, 92, 246, 0.22), transparent 60%),
-      radial-gradient(40rem 30rem at 100% 100%, rgba(99, 102, 241, 0.14), transparent 60%),
-      radial-gradient(36rem 28rem at 0% 100%, rgba(168, 85, 247, 0.12), transparent 60%);"
+      radial-gradient(60rem 40rem at 50% -10%, rgba(122, 140, 109, 0.22), transparent 60%),
+      radial-gradient(40rem 30rem at 100% 100%, rgba(74, 91, 109, 0.14), transparent 60%),
+      radial-gradient(36rem 28rem at 0% 100%, rgba(200, 155, 74, 0.12), transparent 60%);"
   ></div>
 
   <div class="relative z-10 flex w-full max-w-sm flex-col items-center">
@@ -155,15 +155,15 @@
          the sign-in screen feels like the same app, not a generic gate. -->
     <div
       class="mb-7 flex size-16 items-center justify-center"
-      style="filter: drop-shadow(0 6px 24px rgba(139, 92, 246, 0.35)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));"
+      style="filter: drop-shadow(0 6px 24px rgba(122, 140, 109, 0.35)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));"
       aria-hidden="true"
     >
       <svg width="64" height="64" viewBox="0 0 1024 1024">
         <defs>
           <linearGradient id="login-bg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#6366f1" />
-            <stop offset="55%" stop-color="#8b5cf6" />
-            <stop offset="100%" stop-color="#a855f7" />
+            <stop offset="0%" stop-color="#4a5b6d" />
+            <stop offset="55%" stop-color="#7a8c6d" />
+            <stop offset="100%" stop-color="#c89b4a" />
           </linearGradient>
         </defs>
         <rect width="1024" height="1024" rx="232" fill="url(#login-bg)" />

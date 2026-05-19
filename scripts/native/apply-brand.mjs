@@ -804,9 +804,9 @@ function applyErrorHtml(brand) {
     // Inline SVG gradient stops match logo.svg — pulled from brand.colors
     // in case the brand-gradient colors get swapped via brand.json. We
     // match the THREE gradient stops in order.
-    [/(<stop offset="0%" stop-color=")[^"]+(")/, `$1${brand.colors.gradientStart ?? '#6366f1'}$2`],
-    [/(<stop offset="55%" stop-color=")[^"]+(")/, `$1${brand.colors.gradientMid ?? '#8b5cf6'}$2`],
-    [/(<stop offset="100%" stop-color=")[^"]+(")/, `$1${brand.colors.gradientEnd ?? '#a855f7'}$2`],
+    [/(<stop offset="0%" stop-color=")[^"]+(")/, `$1${brand.colors.gradientStart ?? '#4a5b6d'}$2`],
+    [/(<stop offset="55%" stop-color=")[^"]+(")/, `$1${brand.colors.gradientMid ?? '#7a8c6d'}$2`],
+    [/(<stop offset="100%" stop-color=")[^"]+(")/, `$1${brand.colors.gradientEnd ?? '#c89b4a'}$2`],
   ];
   for (const [re, val] of subs) {
     const next = body.replace(re, val);

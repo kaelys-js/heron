@@ -58,7 +58,7 @@ const config = {
     webContentsDebuggingEnabled: true,
     /** Hide the legacy iOS swipe-back from the WebView since we have
      *  our own router-driven back button. */
-    backgroundColor: '#0a0a0b',
+    backgroundColor: '#0e1014',
   },
   android: {
     /** Match iOS: WebView lives at https://localhost. Cookies share the
@@ -69,7 +69,7 @@ const config = {
      *  in debug builds. The CI build override toggles this. */
     webContentsDebuggingEnabled: false,
     /** Backgrounds the WebView shows before the first paint. */
-    backgroundColor: '#0a0a0b',
+    backgroundColor: '#0e1014',
   },
   electron: {
     customUrlScheme: 'heron',
@@ -124,7 +124,7 @@ const config = {
       // onMount as soon as the SvelteKit shell is on screen; whichever
       // fires first wins.
       launchShowDuration: 3500,
-      backgroundColor: '#0a0a0b',
+      backgroundColor: '#0e1014',
       showSpinner: false,
       /** Capacitor 5+ uses `androidScaleType` instead of the deprecated
        *  `androidSplashResourceName`. CENTER fills the view but
@@ -148,7 +148,7 @@ const config = {
        *  notch / cutout area never looks "off". `default` lets iOS pick
        *  contents based on the underlying view. */
       style: 'DEFAULT',
-      backgroundColor: '#0a0a0b',
+      backgroundColor: '#0e1014',
       overlaysWebView: true,
     },
     Keyboard: {

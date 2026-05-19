@@ -20,21 +20,21 @@ import UIKit
 // from the Capacitor module — now CareerOpsBridgeViewController from
 // the App module).
 class CareerOpsBridgeViewController: CAPBridgeViewController {
-    // Brand-dark background applied natively to the view hierarchy
-    // BEFORE the WebView paints. Eliminates the white flash users
-    // previously saw between when the native splash dismissed and
-    // when the WebView's first paint applied the body CSS background.
-    //
-    // Three surfaces matter: the view controller's view (visible if
-    // the WebView is briefly transparent), the WebView itself (the
-    // WKWebView's underlying backgroundColor — defaults to white in
-    // iOS), and the WebView's scrollView (visible during bounce).
-    // `isOpaque = false` keeps the bg visible even while content is
-    // composing on top.
-    //
-    // Hex #0a0a0b = RGB(10, 10, 11). Divided by 255 below.
+    /// Brand-dark background applied natively to the view hierarchy
+    /// BEFORE the WebView paints. Eliminates the white flash users
+    /// previously saw between when the native splash dismissed and
+    /// when the WebView's first paint applied the body CSS background.
+    ///
+    /// Three surfaces matter: the view controller's view (visible if
+    /// the WebView is briefly transparent), the WebView itself (the
+    /// WKWebView's underlying backgroundColor — defaults to white in
+    /// iOS), and the WebView's scrollView (visible during bounce).
+    /// `isOpaque = false` keeps the bg visible even while content is
+    /// composing on top.
+    ///
+    /// Hex #0e1014 = RGB(14, 16, 20). Divided by 255 below.
     private let brandDarkBg = UIColor(
-        red: 10.0 / 255.0, green: 10.0 / 255.0, blue: 11.0 / 255.0, alpha: 1.0
+        red: 14.0 / 255.0, green: 16.0 / 255.0, blue: 20.0 / 255.0, alpha: 1.0
     )
 
     override func viewDidLoad() {
