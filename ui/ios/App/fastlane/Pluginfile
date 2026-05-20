@@ -1,18 +1,19 @@
 # Fastlane plugins.
 #
 # This file is read by the Gemfile so `bundle install` picks up every
-# plugin alongside Fastlane itself. Keep plugins minimal — every extra
+# plugin alongside Fastlane itself. Keep plugins minimal -- every extra
 # gem extends CI install time.
+#
+# IMPORTANT: Fastlane's Pluginfile is for gems named `fastlane-plugin-*`
+# ONLY. Fastlane auto-requires those at startup so their actions
+# self-register. Listing a non-plugin gem (e.g. `xcov`, `cocoapods`)
+# here makes fastlane warn "plugins couldn't be loaded" at startup --
+# put those in `Gemfile` instead. `xcov` lives in Gemfile alongside
+# fastlane + cocoapods; the `xcov` Fastfile action is auto-discovered
+# once the gem is bundle-loaded.
 
-# Versioning helper — bumps Info.plist / xcconfig version + build numbers
+# Versioning helper -- bumps Info.plist / xcconfig version + build numbers
 # consistently. Built-in but pinning the gem ensures CI uses the same.
 # gem 'fastlane-plugin-versioning'
-
-# xcov — code-coverage report generator. Reads the xcresult bundle from
-# run_tests, emits HTML for humans and cobertura.xml for Codecov.
-# The gem is `xcov`, NOT `fastlane-plugin-xcov` (the latter doesn't
-# exist on RubyGems -- xcov is a standalone tool that integrates with
-# fastlane, not a fastlane plugin in the auto-registering sense).
-gem 'xcov'
 
 # Add additional plugins below as the build pipeline grows.

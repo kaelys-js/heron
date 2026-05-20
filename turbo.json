@@ -152,7 +152,7 @@
 
     "test": {
       "dependsOn": ["brand"],
-      "outputs": ["coverage/**", ".vitest-cache/**"],
+      "outputs": [".vitest-cache/**"],
       "inputs": [
         "src/**",
         "static/**",
@@ -165,7 +165,7 @@
     },
 
     "test:coverage": {
-      "dependsOn": ["test"],
+      "dependsOn": ["brand"],
       "outputs": ["coverage/**"],
       "inputs": [
         "src/**",

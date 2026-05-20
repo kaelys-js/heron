@@ -14,5 +14,13 @@ gem "fastlane", "~> 2.226"
 # `bundle exec pod install` uses the same version on every machine.
 gem "cocoapods", "~> 1.16"
 
+# xcov -- code-coverage report generator. Reads the xcresult bundle
+# from run_tests + emits HTML for humans and cobertura.xml for Codecov.
+# Lives in Gemfile (NOT Pluginfile): xcov is a standalone gem with a
+# Fastfile action, NOT a fastlane plugin (those must be named
+# fastlane-plugin-*). Bundler loading is sufficient -- fastlane's
+# action loader picks the action up at startup.
+gem "xcov"
+
 plugins_path = File.join(File.dirname(__FILE__), "fastlane", "Pluginfile")
 eval_gemfile(plugins_path) if File.exist?(plugins_path)
