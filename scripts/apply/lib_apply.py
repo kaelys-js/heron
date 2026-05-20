@@ -161,9 +161,14 @@ def detect_captcha(page) -> CaptchaKind:
             path = (urlparse(raw).path or "").lower()
             if host == "www.google.com" and "/recaptcha" in path:
                 return "recaptcha"
-            if host.endswith("recaptcha.net") or host.endswith("recaptcha.google.com"):
+            if (
+                host == "recaptcha.net"
+                or host.endswith(".recaptcha.net")
+                or host == "recaptcha.google.com"
+                or host.endswith(".recaptcha.google.com")
+            ):
                 return "recaptcha"
-            if host.endswith("hcaptcha.com"):
+            if host == "hcaptcha.com" or host.endswith(".hcaptcha.com"):
                 return "hcaptcha"
             if (
                 host == "challenges.cloudflare.com"
