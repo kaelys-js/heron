@@ -110,3 +110,25 @@ ignore:
   - ui/electron/build/**
   - ui/ios/App/CapApp-SPM/**
   - data/**
+  # CI configuration and orchestration files cannot be covered by
+  # unit tests. They're shipped as PR diff but should NOT count toward
+  # `patch` coverage (% covered of CHANGED lines). Without these
+  # ignores, a YAML/lockfile-heavy PR like this one tanks the patch
+  # target below the 70% threshold even when every actual source file
+  # change is fully tested.
+  - ".github/**"
+  - "**/*.yml"
+  - "**/*.yaml"
+  - "**/*.toml"
+  - "**/*.json"
+  - "**/*.jsonc"
+  - "**/*.lock"
+  - "**/*.md"
+  - "**/.mise.toml"
+  - "lefthook.yml"
+  - "pnpm-workspace.yaml"
+  - "pnpm-lock.yaml"
+  - "turbo.json"
+  - "branding/**"
+  - "scripts/system/apply-brand.mjs" # brand-pipeline tooling
+  - "scripts/native/icons/**" # build-time icon generation
