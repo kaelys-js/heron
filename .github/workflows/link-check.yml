@@ -63,16 +63,23 @@ jobs:
           # (CHANGELOG references historical commits that may have
           # moved across renames; not a maintenance signal worth gating
           # PRs on).
+          #
+          # NB: lychee's --exclude-path takes a REGEX (not a glob).
+          # The earlier `**/node_modules/**` form failed with
+          # "regex parse error: repetition operator missing expression"
+          # because `*` is a regex quantifier. The patterns below are
+          # plain substrings that anchor against the path string lychee
+          # walks (e.g. "node_modules/" matches any path containing
+          # that segment).
           args: >-
             --offline
             --include-fragments
             --no-progress
             --cache
             --max-cache-age 7d
-            --exclude-path '**/node_modules/**'
-            --exclude-path 'CHANGELOG.md'
-            --exclude-path '**/CHANGELOG.md'
-            --exclude-path 'TODO.md'
-            --exclude-path 'TODO2.md'
+            --exclude-path 'node_modules'
+            --exclude-path 'CHANGELOG\.md'
+            --exclude-path 'TODO\.md'
+            --exclude-path 'TODO2\.md'
             './**/*.md'
           fail: true

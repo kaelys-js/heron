@@ -58,6 +58,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          # `github_token` is a REQUIRED `with:` input on this action --
+          # setting it only via the `env: GITHUB_TOKEN:` block is not
+          # enough; v1.8.0 errors with "Parameter token or opts.auth is
+          # required" because the JS @actions/github wrapper reads it
+          # from `core.getInput('github_token')`, not the env. Keep the
+          # env line too for the internal git operations.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           # Build before measuring. Apply brand first so generated TS
           # imports resolve.
           build_script: "brand && build"
