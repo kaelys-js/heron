@@ -69,6 +69,12 @@ jobs:
 
       # Swift needs an explicit xcodebuild step so CodeQL can extract the
       # full module graph. Match the test.yml ios job's Xcode pin.
+      #
+      # Capacitor 8 uses SPM (Swift Package Manager) -- there is NO
+      # App.xcworkspace at the project root. Build against
+      # App.xcodeproj directly. SPM dependencies (CapApp-SPM +
+      # @capacitor/* plugin local packages) resolve via the xcodeproj's
+      # package references.
       - name: Build Swift target
         if: matrix.language == 'swift'
         env:
@@ -80,7 +86,7 @@ jobs:
             ruby ../../../scripts/native/add-xcode-targets.rb || true
           fi
           xcodebuild \
-            -workspace App.xcworkspace \
+            -project App.xcodeproj \
             -scheme App \
             -configuration Debug \
             -destination 'generic/platform=iOS Simulator' \
