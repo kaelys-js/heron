@@ -30,14 +30,14 @@
         "uses-text-compression": "off",
 
         "is-crawlable": "off",
-        "redirects": "off",
+        "redirects": ["error", { "minScore": 1 }],
         "redirects-http": "off",
         "inspector-issues": "off",
         "forced-reflow-insight": "off",
         "document-latency-insight": "off",
         "interaction-to-next-paint": "off",
         "unused-javascript": ["warn", { "maxLength": 0 }],
-        "errors-in-console": ["warn", { "minScore": 0 }]
+        "errors-in-console": ["error", { "minScore": 1 }]
       }
     },
     "upload": {

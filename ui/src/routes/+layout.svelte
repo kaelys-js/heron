@@ -117,7 +117,19 @@
           // its own backend URL via the shared sse-client wrapper, so
           // we don't pass `base` in -- it'll re-resolve internally on
           // every reconnect / net-status change.
-          if (typeof window !== 'undefined') {
+          //
+          // Gate on `authed === '1'`. /api/notifications is auth-protected;
+          // opening the SSE on an unauth page (/login, /signup, /help)
+          // 401s the request, the sse-client retries with backoff, and
+          // Lighthouse's `errors-in-console` audit records each 401 as a
+          // network error. The bridge gets installed on the very NEXT
+          // navigation after sign-in completes (the layer-2 probe below
+          // sets localStorage.authed = '1'), so we don't miss any events.
+          if (
+            typeof window !== 'undefined' &&
+            typeof localStorage !== 'undefined' &&
+            localStorage.getItem(BRAND_STORAGE_KEYS.authed) === '1'
+          ) {
             stopNotificationsBridge = installNotificationsBridge();
           }
         })
@@ -169,22 +181,20 @@
     const splashStartedAt = performance.now();
     async function waitForBootFallbackPaint(): Promise<void> {
       const deadline = splashStartedAt + BOOT_FALLBACK_MAX_WAIT_MS;
-      // Spin in rAF until the boot-fallback is in the DOM with its
-      // bloom-gradient background actually computed. getComputedStyle
-      // returns rgba(0,0,0,0) for un-styled elements; we look for the
-      // brand-dark base (`rgb(10, 10, 11)`) OR any non-default value
-      // confirming styling has been applied.
-      while (performance.now() < deadline) {
-        const el = document.getElementById('boot-fallback');
-        if (el) {
-          const bg = getComputedStyle(el).backgroundImage;
-          // The boot-fallback uses `background: radial-gradient(...) #0e1014`
-          // → computed `background-image` includes `radial-gradient`.
-          if (bg && bg !== 'none') break;
-        }
+      // The boot-fallback element is the first child of <body> in
+      // app.html with its full style declared INLINE on the element
+      // (background gradient, color, position, etc). Style is therefore
+      // applied at HTML parse time -- existence of the element implies
+      // styling is in place. Earlier versions polled `getComputedStyle`
+      // each rAF tick to confirm the background-image had resolved,
+      // which Lighthouse correctly flagged as 84ms of forced synchronous
+      // reflow. Replaced with a cheap existence check + two rAFs for
+      // compositing confirmation.
+      while (performance.now() < deadline && !document.getElementById('boot-fallback')) {
         await new Promise<void>((r) => requestAnimationFrame(() => r()));
       }
-      // Two more rAFs so the gradient + glow have actually composited.
+      // Two rAFs so the gradient + glow have composited at least one
+      // frame before we hand the splash off.
       await new Promise<void>((r) => requestAnimationFrame(() => r()));
       await new Promise<void>((r) => requestAnimationFrame(() => r()));
       // Floor -- the splash always shows ≥ MIN_PAINT_MS even on a

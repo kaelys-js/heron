@@ -71,7 +71,7 @@
       Mirrors the runtime store in src/lib/theme.svelte.ts — keep these
       two scripts in sync.
     -->
-    <script>
+    <script nonce="%sveltekit.nonce%">
       (function () {
         try {
           var stored = localStorage.getItem('heron:theme');
@@ -199,7 +199,7 @@
     <!-- Speculation Rules — prerender same-origin links on hover/touch
          start so they paint instantly. Chrome 121+ honours this; older
          browsers ignore it. -->
-    <script type="speculationrules">
+    <script type="speculationrules" nonce="%sveltekit.nonce%">
       {
         "prerender": [
           {
@@ -585,7 +585,7 @@
         }
       </style>
     </div>
-    <script>
+    <script nonce="%sveltekit.nonce%">
       // Capture early errors so the diagnostics button has something
       // useful to copy. The full error-reporter installs later in
       // hydration — this is a lightweight bridge so failures BEFORE
