@@ -20,11 +20,11 @@ on:
 # Least-privilege: this workflow only reads source + writes statuses /
 # annotations + uploads coverage. No release artefacts, no Pages, no packages.
 # id-token: write is required for Codecov OIDC upload (G12) -- replaces the
-# CODECOV_TOKEN secret. Works on fork PRs (which can't see secrets).
+# CODECOV_TOKEN secret. Works on fork PRs (which can't see secrets). Declared
+# per-job below so it isn't inherited by jobs that don't upload coverage.
 permissions:
   contents: read
   pull-requests: read
-  id-token: write
 
 concurrency:
   group: tests-${{ github.workflow }}-${{ github.ref }}
@@ -95,6 +95,9 @@ jobs:
     name: TS — typecheck + Vitest + coverage
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write # Codecov OIDC upload (G12)
     env:
       CI: "true"
       BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-${{ github.run_id }}
@@ -442,6 +445,9 @@ jobs:
     # provisioning overhead.
     runs-on: macos-15
     timeout-minutes: 35
+    permissions:
+      contents: read
+      id-token: write # Codecov OIDC upload (G12)
     env:
       CI: "true"
       FORCE_COLOR: "3"

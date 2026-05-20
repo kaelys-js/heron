@@ -10,7 +10,6 @@ on:
     types: [opened, edited, synchronize, reopened]
 
 permissions:
-  pull-requests: write
   contents: read
 
 concurrency:
@@ -22,6 +21,9 @@ jobs:
     name: Conventional Commits PR title
     runs-on: ubuntu-latest
     timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: write # action-semantic-pull-request posts status checks
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
@@ -58,6 +60,9 @@ jobs:
     name: PR size label
     runs-on: ubuntu-latest
     timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: write # size-label-action applies XS/S/M/L/XL labels
     if: github.event.pull_request.user.login != 'dependabot[bot]' && github.event.pull_request.user.login != 'renovate[bot]'
     steps:
       - name: Harden runner

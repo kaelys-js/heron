@@ -16,6 +16,12 @@ const fsMock = {
   appendFileSync: vi.fn(),
   mkdirSync: vi.fn(),
   statSync: vi.fn(() => ({ size: 0, mtimeMs: 0 })),
+  // mkdtempSync added after the CodeQL `js/insecure-temporary-file`
+  // refactor in orchestrator.ts moved the batch-prompt temp path
+  // construction from `Date.now()` suffix to `fs.mkdtempSync`.
+  // Returns a deterministic mock path so spawn-env assertions don't
+  // need to know about random suffixes.
+  mkdtempSync: vi.fn((prefix: string) => prefix + 'mock-suffix'),
 };
 vi.mock('node:fs', () => ({ default: fsMock, ...fsMock }));
 

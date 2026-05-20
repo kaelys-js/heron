@@ -23,6 +23,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
       - name: Dependency Review
         # G7 -- blocking again. The Dependency Graph must be enabled in
         # Settings → Security & Analysis (it's enabled by default for

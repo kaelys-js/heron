@@ -27,7 +27,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
 
 concurrency:
   group: reminders-${{ github.run_id }}
@@ -39,6 +38,9 @@ jobs:
     name: Quarterly audit reminder (90d cadence)
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    permissions:
+      contents: read # git log on the checked-out tree
+      issues: write # opens an audit-due issue if cadence breaches
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
@@ -48,6 +50,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Last audit commit ≤ 90 days?
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -95,6 +98,9 @@ jobs:
     name: Release cadence reminder (60d cadence)
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    permissions:
+      contents: read
+      issues: write # opens a release-due issue if cadence breaches
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
@@ -148,6 +154,9 @@ jobs:
     name: Ping issues 7d before stale-close
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write # gh issue comment on stale issues
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
@@ -191,6 +200,9 @@ jobs:
     name: Renovate dashboard backlog alert
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    permissions:
+      contents: read
+      issues: write # opens a renovate-backlog issue if PR count exceeds threshold
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3

@@ -99,24 +99,30 @@ jobs:
         # (concurrency.cancel-in-progress: false means our run completes,
         # but the push fails and we don't notice). Now we rebase + retry
         # up to 3× before giving up.
+        #
+        # zizmor/template-injection -- $REF_NAME / $FILES are dereferenced
+        # by the shell, not expanded by the workflow templater, so a
+        # branch name with shell metachars can't escape the string.
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          FILES: ${{ steps.drift.outputs.files }}
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          FILES='${{ steps.drift.outputs.files }}'
           SUFFIX=$([ "$FILES" -gt 1 ] && echo s)
           git commit -m "style: auto-format ($FILES file$SUFFIX) [skip ci]" \
                      -m "Automated commit by .github/workflows/format.yml — runs \`pnpm format\` and pushes the result so format-check in Tests can't fail on drift."
 
           for attempt in 1 2 3; do
-            if git push origin "HEAD:${{ github.ref_name }}"; then
+            if git push origin "HEAD:${REF_NAME}"; then
               echo "::notice::Pushed on attempt $attempt"
               exit 0
             fi
             echo "::warning::Push attempt $attempt failed — rebasing + retrying"
-            git fetch origin "${{ github.ref_name }}"
-            git rebase "origin/${{ github.ref_name }}"
+            git fetch origin "${REF_NAME}"
+            git rebase "origin/${REF_NAME}"
           done
           echo "::error::Push failed after 3 attempts (concurrent commits beat us). Re-run this workflow manually."
           exit 1

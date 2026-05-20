@@ -24,7 +24,7 @@ name: PR bots
 # trigger but shares the same permissions + actor-skip logic. Keeping
 # them in one file makes the cost (one harden-runner setup) shared.
 
-on:
+on: # zizmor: ignore[dangerous-triggers]
   # SAFETY: pull_request_target runs against the BASE branch + has
   # access to repo secrets. The classic injection vector is checking
   # out the PR head and executing its code with secret access. This
@@ -35,8 +35,9 @@ on:
   #      comment` call uses --body-file (heredoc-rendered) with the
   #      AUTHOR/PR-number passed as environment variables, never
   #      interpolated into shell.
-  # Permissions are minimum-necessary (pull-requests: write, issues:
-  # write -- but no contents:write, no id-token, no packages).
+  # Permissions are minimum-necessary (declared per-job below --
+  # pull-requests: write only; no contents:write, no id-token,
+  # no packages, no issues:write).
   pull_request_target:
     types: [opened, reopened, ready_for_review, synchronize, labeled]
   pull_request_review:
@@ -49,8 +50,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
-  issues: write
 
 concurrency:
   group: pr-bots-${{ github.event.pull_request.number || github.run_id }}
@@ -62,6 +61,9 @@ jobs:
     name: Auto-merge approved PRs
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    permissions:
+      contents: read
+      pull-requests: write # gh pr merge --auto
     # Trigger only on review + label events (where the gating state changed)
     if: |
       github.event_name == 'pull_request_review' ||
@@ -120,6 +122,9 @@ jobs:
     name: Ping inactive PRs (7d before stale-close)
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write # gh pr comment
     # Only fires on the weekday schedule
     if: github.event_name == 'schedule'
     steps:
@@ -164,6 +169,9 @@ jobs:
     name: Comment on PRs that need rebase after main push
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write # gh pr comment
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Harden runner
@@ -228,6 +236,9 @@ jobs:
     name: First-timer test-help comment
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    permissions:
+      contents: read
+      pull-requests: write # gh pr comment
     if: |
       github.event_name == 'pull_request_target' &&
       github.event.action == 'opened' &&

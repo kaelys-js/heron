@@ -52,8 +52,11 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           # Need write access for baseline regeneration when the PR is
-          # labeled `accept-snapshots`. Otherwise read-only.
-          token: ${{ github.event.pull_request.user.login == github.repository_owner && secrets.GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          # labeled `accept-snapshots`. zizmor/artipacked -- don't
+          # persist the token in .git/config; the baseline-commit step
+          # below re-injects it inline so the token can't leak into
+          # the upload-artifact step on failure.
+          persist-credentials: false
 
       - name: Setup toolchain
         uses: ./.github/actions/setup-toolchain
@@ -106,6 +109,9 @@ jobs:
         env:
           HEAD_REF: ${{ github.head_ref }}
           PR_NUM: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
@@ -117,7 +123,11 @@ jobs:
           fi
           git commit -m "chore(visual-regression): regenerate baselines [skip ci]" \
                      -m "Triggered by the \`accept-snapshots\` label on PR #${PR_NUM}."
-          git push origin "HEAD:${HEAD_REF}"
+          # Token-injected push URL keeps the credential scoped to this
+          # single command -- never lands in .git/config or the
+          # upload-artifact step.
+          HOSTLESS_URL="${SERVER_URL#https://}"
+          git push "https://x-access-token:${GH_TOKEN}@${HOSTLESS_URL}/${REPO}.git" "HEAD:${HEAD_REF}"
 
       - name: Upload diff artifacts on failure
         if: failure()

@@ -33,6 +33,29 @@ on:
         description: 'Version tag to build (e.g. 1.7.0). Required when called.'
         required: true
         type: string
+    # zizmor/secrets-inherit -- enumerate the secrets the called
+    # workflow consumes instead of `secrets: inherit` in release.yml.
+    # When a new signing secret is added to a job below, declare it
+    # here AND mirror it in release.yml's `secrets:` block.
+    secrets:
+      APPLE_TEAM_ID:
+        required: true
+      MAC_CERTIFICATE:
+        required: true
+      MAC_CERTIFICATE_PASSWORD:
+        required: true
+      IOS_CERTIFICATE:
+        required: true
+      IOS_CERTIFICATE_PASSWORD:
+        required: true
+      IOS_PROVISIONING_PROFILE:
+        required: true
+      APP_STORE_CONNECT_KEY_ID:
+        required: true
+      APP_STORE_CONNECT_ISSUER_ID:
+        required: true
+      APP_STORE_CONNECT_PRIVATE_KEY:
+        required: true
 
 # Workflow-level is read-only -- each job declares the writes it
 # genuinely needs (contents: write to attach binaries, id-token /
@@ -131,7 +154,15 @@ jobs:
 
       # mise installs Node + pnpm versions pinned in .mise.toml so CI
       # uses the same versions developers run locally.
-      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+      #
+      # zizmor/cache-poisoning: this workflow only runs on tag pushes /
+      # workflow_call from release.yml / workflow_dispatch -- ALL three
+      # require maintainer write access (PR-based events can't push
+      # tags or call this reusable workflow). Cache keys are hashed on
+      # repo content (.mise.toml, lockfiles) that's only mutable via
+      # merged PRs that already passed PR CI, so a malicious PR can't
+      # poison the release-time cache without first getting code merged.
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4 # zizmor: ignore[cache-poisoning]
         with:
           experimental: true
           cache: true
@@ -142,7 +173,9 @@ jobs:
         id: pnpm-store
         shell: bash
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      # zizmor: ignore[cache-poisoning] -- see jdx/mise-action note above.
+      # pnpm-lock.yaml is integrity-verified at install time.
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -151,7 +184,10 @@ jobs:
 
       # Cache electron-builder's intermediate downloads (electron
       # binaries, app-builder, etc.) -- saves ~2min per run.
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      # zizmor: ignore[cache-poisoning] -- electron downloads are
+      # SHA256-verified by electron-builder against the version pinned
+      # in ui/electron/package.json (which keys the cache).
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
         with:
           path: |
             ~/.cache/electron
@@ -301,7 +337,10 @@ jobs:
 
       # mise pins Node + pnpm + Ruby together so Fastlane uses the same
       # Ruby version we develop against locally.
-      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+      # zizmor/cache-poisoning -- same release-only-trigger rationale
+      # as the build-desktop job above (this workflow runs only on
+      # maintainer-pushed tags / workflow_call from release.yml).
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4 # zizmor: ignore[cache-poisoning]
         with:
           experimental: true
           cache: true
@@ -311,7 +350,9 @@ jobs:
         id: pnpm-store
         shell: bash
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      # zizmor: ignore[cache-poisoning] -- pnpm integrity-verifies from
+      # the lockfile that keys this cache; see build-desktop job notes.
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -320,7 +361,10 @@ jobs:
 
       # Capacitor 8 uses Swift Package Manager (no Cocoapods). Cache
       # Xcode's derived data + the SPM resolved-packages cache.
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      # zizmor: ignore[cache-poisoning] -- SPM dependencies are SHA-
+      # pinned in Package.resolved (which keys the cache); xcodebuild
+      # re-verifies on restore.
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
         with:
           path: |
             ~/Library/Developer/Xcode/DerivedData
@@ -331,7 +375,10 @@ jobs:
 
       # Bundler installs Fastlane + plugins pinned in Gemfile.lock.
       # Ruby version comes from `.ruby-version` in ui/ios/App/.
-      - uses: ruby/setup-ruby@97ecb7b512899eb71ab1bf2310a624c6f1589ac6 # v1.308.0
+      # zizmor: ignore[cache-poisoning] -- bundler verifies gems
+      # against the Gemfile.lock checksums; the lockfile is committed
+      # and changes only via PR.
+      - uses: ruby/setup-ruby@97ecb7b512899eb71ab1bf2310a624c6f1589ac6 # v1.308.0 # zizmor: ignore[cache-poisoning]
         with:
           bundler-cache: true
           working-directory: ui/ios/App
