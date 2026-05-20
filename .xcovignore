@@ -1,24 +1,33 @@
-# .xcovignore — paths excluded from iOS coverage measurement.
+# .xcovignore -- paths excluded from iOS coverage measurement.
 #
 # Read by Fastlane's xcov plugin during `test_ci`. Everything matching
-# these globs is removed from the coverage denominator BEFORE the 60%
+# these patterns is removed from the coverage denominator BEFORE the 60%
 # threshold check, so generated / vendored / test-only code can't pull
 # the score down.
+#
+# Patterns are RUBY REGEX -- NOT shell globs. xcov passes each entry
+# through `Regexp.new` (and downcases both pattern + filepath before
+# matching), so:
+#   - `.` matches any char; for a LITERAL dot use `\.`
+#   - `*` is a quantifier on the previous element; for "any chars" use `.*`
+#   - leading `*` (with nothing before it) raises
+#     `target of repeat operator is not specified` and crashes the lane
+# Quote with single quotes (') in YAML so `\.` is preserved literally.
 
 # Auto-generated Swift constants from `pnpm brand:apply`.
-- "*Brand.swift"
+- '.*Brand\.swift$'
 
 # Auto-generated ErrorReporter shims (per-extension copies).
-- "*/ErrorReporter.swift"
+- '.*/ErrorReporter\.swift$'
 
 # Capacitor's vendored CapApp-SPM bridge.
-- "*/CapApp-SPM/*"
+- '.*/CapApp-SPM/.*'
 
 # Swift Package Manager checkouts (third-party plugin sources).
-- "**/SourcePackages/**"
+- '.*/SourcePackages/.*'
 
-# DerivedData snapshots — not source.
-- "**/DerivedData/**"
+# DerivedData snapshots -- not source.
+- '.*/DerivedData/.*'
 
 # The placeholder smoke tests added by `add-xcode-targets.rb`.
-- "*Smoke.swift"
+- '.*Smoke\.swift$'
