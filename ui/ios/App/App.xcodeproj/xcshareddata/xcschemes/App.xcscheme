@@ -27,6 +27,11 @@
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
+      <!-- Only AppTests (unit) in CI -- AppUITests pulls in XCUIElement
+           launch flows that need the simulator interactive and exceed
+           the macos-15 GH-runner time budget. UI tests are run locally
+           via `bundle exec fastlane test` (which targets every device
+           in the matrix) or as a follow-up Phase 3 task. -->
       <Testables>
          <TestableReference
             skipped = "NO">
@@ -35,16 +40,6 @@
                BlueprintIdentifier = "2502338F788157F13363BB08"
                BuildableName = "AppTests.bundle"
                BlueprintName = "AppTests"
-               ReferencedContainer = "container:App.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "F179A0341AFBF6A0D52AEC98"
-               BuildableName = "AppUITests.bundle"
-               BlueprintName = "AppUITests"
                ReferencedContainer = "container:App.xcodeproj">
             </BuildableReference>
          </TestableReference>

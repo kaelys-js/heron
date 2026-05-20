@@ -184,29 +184,26 @@ platform :ios do
   desc "Run iOS tests for CI (single sim, xcresult + xcov + cobertura)"
   lane :test_ci do
     setup_ci if is_ci
-    # macos-15 GitHub runner ships Xcode 16 with the iOS 18 SDK. The
-    # only iPhone simulator pre-installed (per actions/runner-images)
-    # is "iPhone 16 Pro" (iOS 18.5). The screenshots/test lanes
-    # request "iPhone 17 Pro Max" which the runner doesn't have --
-    # fastlane falls back to default and xcodebuild then errors with
-    # "Unable to find a destination matching the provided destination
-    # specifier". Use the actually-installed sim here. The screenshots
-    # lane (which never runs in CI -- only locally on a Mac with the
-    # 17 sim available) keeps its 17 Pro Max for visual fidelity.
+    # macos-15 GitHub runner ships Xcode 16 with the iOS 18.5 SDK
+    # (per actions/runner-images). Use `destination:` directly with
+    # `OS=latest` instead of fastlane's `devices:` resolver -- the
+    # resolver kept resolving to a UUID xcodebuild then rejected
+    # ("Unable to find a destination matching..."). The `OS=latest`
+    # form tells xcodebuild to pick whichever iOS 18.x runtime IS
+    # installed, side-stepping the "iOS 18.0 not installed" trap.
+    # Also: drop xcbeautify wrapper -- xcpretty was crashing on the
+    # log file with `Errno::ENOENT @ rb_sysopen - -----` because
+    # `fastlane` shells `xcpretty -f xcbeautify` and the formatter
+    # binary path mismatches when xcbeautify isn't a system command.
+    # Raw xcodebuild output is uglier but unblocks CI.
     run_tests(
       project: PROJECT,
       scheme: SCHEME,
-      devices: ["iPhone 16 Pro"],
+      destination: "platform=iOS Simulator,OS=latest,name=iPhone 16 Pro",
       code_coverage: true,
       result_bundle: true,
       fail_build: true,
       xcargs: "-skipPackagePluginValidation -skipMacroValidation",
-      # G26 — xcbeautify formats xcodebuild's raw output into something
-      # legible. Fastlane installs xcbeautify automatically when
-      # `formatter: "xcbeautify"` is set; falls back to its bundled
-      # `xcpretty` shim if missing. Reads better in GitHub Actions logs
-      # and surfaces test failures with file:line annotations.
-      formatter: "xcbeautify",
       output_directory: "fastlane/test_output"
     )
     # xcov reads the xcresult bundle and emits an HTML report + cobertura
