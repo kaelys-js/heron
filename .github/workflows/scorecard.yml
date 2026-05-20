@@ -20,6 +20,12 @@ on:
     - cron: "23 4 * * 1" # Weekly, Monday 04:23 UTC (avoids the round-hour cron-storm)
   push:
     branches: [main]
+  # Also run on PRs to main so the required-status-check on this
+  # workflow (configured in branch protection) actually has a chance
+  # to report green or red on the PR. Without this trigger the check
+  # would stay "Expected" forever and block every merge.
+  pull_request:
+    branches: [main]
 
 permissions: read-all
 
