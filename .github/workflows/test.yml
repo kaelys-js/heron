@@ -36,6 +36,57 @@ defaults:
 
 jobs:
   # ─────────────────────────────────────────────────────────────────
+  # Path-change detector -- decides whether downstream macOS jobs run.
+  # ─────────────────────────────────────────────────────────────────
+  # macos-15 is billed at 10× ubuntu minutes. A 7-min iOS test_ci run
+  # = ~70 ubuntu-min equivalent. When a PR doesn't touch iOS-affecting
+  # files (e.g. a docs-only or pure-TS change), allocating macos-15
+  # and downloading Xcode caches just to no-op is pure waste.
+  #
+  # This job runs in ~10s on ubuntu, emits `ios=true|false`, and the
+  # ios job below uses dynamic `runs-on` to pick macos-15 only when
+  # needed. The ios job's `name:` is preserved so the required-check
+  # context still reports a status on every PR (otherwise branch
+  # protection would treat a skipped job as missing and block merge).
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      ios: ${{ steps.filter.outputs.ios }}
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Filter
+        # dorny/paths-filter v3.0.2 -- pinned by SHA per repo policy
+        # (verify-workflow-pins.yml gates this).
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          filters: |
+            ios:
+              # Swift sources, xcodeproj, fastlane, icons, brand
+              - 'ui/ios/**'
+              # Brand propagates into Brand.swift + Info.plist
+              - 'branding/**'
+              # add-xcode-targets.rb owns the AppTests/AppUITests targets
+              - 'scripts/native/add-xcode-targets.rb'
+              # When THIS workflow changes the ios job's behaviour, force a run
+              - '.github/workflows/test.yml'
+              # When capacitor sync into ios changes -- still iOS impact
+              - 'ui/capacitor.config.ts'
+              - 'ui/static/**'
+              # Lockfile drift can change native bundle resolution
+              - 'pnpm-lock.yaml'
+
+  # ─────────────────────────────────────────────────────────────────
   # TS / Svelte / Server / Electron -- Vitest + svelte-check + audit
   # ─────────────────────────────────────────────────────────────────
   ts:
@@ -370,17 +421,44 @@ jobs:
   # the codecov upload step below (separate `ios` flag from the `ts` flag).
   ios:
     name: iOS — XCTest + XCUITest + Snapshot
-    runs-on: macos-15
-    timeout-minutes: 35
+    needs: changes
+    # Dynamic runner: macos-15 ONLY when iOS-affecting paths changed.
+    # Otherwise stay on ubuntu-latest so the short-circuit step below
+    # finishes in ~10s without burning macOS minutes (10× billing).
+    runs-on: ${{ needs.changes.outputs.ios == 'true' && 'macos-15' || 'ubuntu-latest' }}
+    timeout-minutes: ${{ needs.changes.outputs.ios == 'true' && 35 || 3 }}
     env:
       CI: "true"
       FORCE_COLOR: "3"
       # Pinned Xcode version -- must match .mise.toml's swift entry. When
-      # we bump Xcode, this gets bumped too.
+      # we bump Xcode, this gets bumped too. Only honoured on macos-15.
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
 
     steps:
+      # ── Short-circuit ────────────────────────────────────────────
+      # When no iOS-affecting paths changed, this is the ONLY step that
+      # runs. The job reports success on the required-check context
+      # "iOS -- XCTest + XCUITest + Snapshot" without spending macOS
+      # minutes. Branch protection sees a green check; merge proceeds.
+      - name: Skip iOS — no iOS-relevant paths changed
+        if: needs.changes.outputs.ios != 'true'
+        run: |
+          echo "::notice::iOS test_ci skipped — no changes under ui/ios/**, branding/**, scripts/native/add-xcode-targets.rb, ui/capacitor.config.ts, ui/static/**, pnpm-lock.yaml, or .github/workflows/test.yml."
+          {
+            echo "### ⏭️ iOS test_ci skipped"
+            echo ""
+            echo "No iOS-affecting paths changed in this PR. Re-running the"
+            echo "macOS-15 xcodebuild + simulator suite would cost ~7 min of"
+            echo "macOS time (10× billing) for no signal."
+            echo ""
+            echo "Affecting paths: \`ui/ios/**\`, \`branding/**\`,"
+            echo "\`scripts/native/add-xcode-targets.rb\`,"
+            echo "\`ui/capacitor.config.ts\`, \`ui/static/**\`,"
+            echo "\`pnpm-lock.yaml\`, \`.github/workflows/test.yml\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Harden runner
+        if: needs.changes.outputs.ios == 'true'
         # G4 -- iOS test runner. xcodebuild reaches sigverify + Apple's
         # CDN for simulators; we want to see exactly what before
         # tightening to block.
@@ -388,22 +466,26 @@ jobs:
         with:
           egress-policy: audit
       - name: Checkout
+        if: needs.changes.outputs.ios == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Setup mise (Node + pnpm + Ruby + Swift)
+        if: needs.changes.outputs.ios == 'true'
         uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
         with:
           experimental: true
           cache: true
 
       - name: Resolve pnpm store path
+        if: needs.changes.outputs.ios == 'true'
         id: pnpm-store
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
+        if: needs.changes.outputs.ios == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
@@ -412,6 +494,7 @@ jobs:
             pnpm-store-${{ runner.os }}-
 
       - name: Cache Xcode DerivedData
+        if: needs.changes.outputs.ios == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/Library/Developer/Xcode/DerivedData
@@ -420,6 +503,7 @@ jobs:
             derived-data-${{ runner.os }}-
 
       - name: Cache SPM
+        if: needs.changes.outputs.ios == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/Library/Caches/org.swift.swiftpm
@@ -428,37 +512,45 @@ jobs:
             spm-${{ runner.os }}-
 
       - name: Install dependencies
+        if: needs.changes.outputs.ios == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Install SwiftLint + SwiftFormat (Brewfile)
+        if: needs.changes.outputs.ios == 'true'
         run: |
           brew install swiftlint swiftformat || true
 
       - name: SwiftLint (strict)
+        if: needs.changes.outputs.ios == 'true'
         run: swiftlint --strict --quiet ui/ios/App
 
       - name: Apply brand
+        if: needs.changes.outputs.ios == 'true'
         run: pnpm brand:apply
 
       - name: Build static web assets (Capacitor webDir = ui/build/static)
+        if: needs.changes.outputs.ios == 'true'
         # cap sync ios copies the SvelteKit static-adapter output into the
         # iOS bundle. Without this step, capacitor errors with "Could not
         # find the web assets directory: ./build/static".
         run: pnpm --filter ui build:static
 
       - name: Capacitor sync iOS
+        if: needs.changes.outputs.ios == 'true'
         run: pnpm --filter ui exec cap sync ios
 
       - name: Bundle install (Fastlane gems)
+        if: needs.changes.outputs.ios == 'true'
         working-directory: ui/ios/App
         run: bundle install --jobs 4 --retry 3
 
       - name: Fastlane test_ci (XCTest + XCUITest)
+        if: needs.changes.outputs.ios == 'true'
         working-directory: ui/ios/App
         run: bundle exec fastlane test_ci
 
       - name: Upload xcresult bundle
-        if: always()
+        if: always() && needs.changes.outputs.ios == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: xcresult-bundle
@@ -467,7 +559,7 @@ jobs:
 
       - name: Upload coverage to Codecov (ios flag)
         # G12 -- see the ts upload above for OIDC rationale.
-        if: always() && hashFiles('ui/ios/App/fastlane/coverage/cobertura.xml') != ''
+        if: always() && needs.changes.outputs.ios == 'true' && hashFiles('ui/ios/App/fastlane/coverage/cobertura.xml') != ''
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         with:
           files: ui/ios/App/fastlane/coverage/cobertura.xml
