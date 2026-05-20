@@ -29,7 +29,16 @@ vi.mock('./profiles', () => ({
   getActiveProfileId: () => 'default',
 }));
 
-const { classifyEmail } = await import('./email-reactor');
+const { classifyEmail, planActions } = await import('./email-reactor');
+
+const baseEmail = { ts: 1700000000000, from: 'jane@acme.com', subject: 's', body: 'b' };
+const baseMatch = {
+  jobId: 'j1',
+  profileId: 'engineer',
+  url: 'https://acme.com/jobs/1',
+  company: 'Acme',
+  status: 'Applied',
+};
 
 function email(subj: string, body: string, from = 'recruiter@acme.com') {
   return { ts: 1700000000000, from, subject: subj, body };
@@ -273,5 +282,161 @@ describe('classifyEmail -- robustness', () => {
   it('handles missing body (empty string)', () => {
     const r = classifyEmail({ ts: 1, from: 'x@y.com', subject: '', body: '' });
     expect(r.kind).toBe('other');
+  });
+});
+
+describe('planActions', () => {
+  it('recruiter-reach-out emits a log-lead action (no match needed)', () => {
+    const cls = {
+      kind: 'recruiter-reach-out' as const,
+      confidence: 'medium' as const,
+      senderDomain: 'acme.com',
+    };
+    const actions = planActions(baseEmail, cls, null);
+    expect(actions).toHaveLength(1);
+    expect(actions[0].type).toBe('log-lead');
+    if (actions[0].type === 'log-lead') {
+      expect(actions[0].sender).toBe('jane@acme.com');
+      expect(actions[0].subject).toBe('s');
+      expect(actions[0].ts).toBe(1700000000000);
+    }
+  });
+
+  it('log-lead: parses string-typed ts to ms epoch', () => {
+    const cls = {
+      kind: 'recruiter-reach-out' as const,
+      confidence: 'medium' as const,
+      senderDomain: 'acme.com',
+    };
+    const actions = planActions({ ...baseEmail, ts: '2024-01-15T12:00:00Z' }, cls, null);
+    if (actions[0].type === 'log-lead') {
+      expect(actions[0].ts).toBeGreaterThan(0);
+    }
+  });
+
+  it('returns empty when no match (non-recruiter-reach-out classifications)', () => {
+    const cls = {
+      kind: 'rejection' as const,
+      confidence: 'high' as const,
+      senderDomain: 'acme.com',
+    };
+    expect(planActions(baseEmail, cls, null)).toEqual([]);
+  });
+
+  it('rejection: mark-status Rejected + fire-post-rejection', () => {
+    const cls = {
+      kind: 'rejection' as const,
+      confidence: 'high' as const,
+      senderDomain: 'acme.com',
+      evidence: 'after careful consideration',
+    };
+    const actions = planActions(baseEmail, cls, baseMatch);
+    expect(actions).toHaveLength(2);
+    expect(actions[0].type).toBe('mark-status');
+    if (actions[0].type === 'mark-status') {
+      expect(actions[0].status).toBe('Rejected');
+      expect(actions[0].jobId).toBe('j1');
+    }
+    expect(actions[1].type).toBe('fire-post-rejection');
+  });
+
+  it('offer: mark-status Offer + flag-offer', () => {
+    const cls = { kind: 'offer' as const, confidence: 'high' as const, senderDomain: 'acme.com' };
+    const actions = planActions(baseEmail, cls, baseMatch);
+    expect(actions).toHaveLength(2);
+    if (actions[0].type === 'mark-status') {
+      expect(actions[0].status).toBe('Offer');
+    }
+    expect(actions[1].type).toBe('flag-offer');
+  });
+
+  it('interview-scheduling: mark-status with stage value', () => {
+    const cls = {
+      kind: 'interview-scheduling' as const,
+      confidence: 'medium' as const,
+      senderDomain: 'acme.com',
+      stage: 'PhoneScreen' as const,
+    };
+    const actions = planActions(baseEmail, cls, baseMatch);
+    if (actions[0].type === 'mark-status') {
+      expect(actions[0].status).toBe('PhoneScreen');
+    }
+  });
+
+  it('interview-scheduling Technical: ALSO fires fire-tech-prep', () => {
+    const cls = {
+      kind: 'interview-scheduling' as const,
+      confidence: 'medium' as const,
+      senderDomain: 'acme.com',
+      stage: 'Technical' as const,
+    };
+    const actions = planActions(baseEmail, cls, baseMatch);
+    expect(actions.some((a) => a.type === 'fire-tech-prep')).toBe(true);
+  });
+
+  it('interview-scheduling Onsite: ALSO fires fire-tech-prep', () => {
+    const cls = {
+      kind: 'interview-scheduling' as const,
+      confidence: 'medium' as const,
+      senderDomain: 'acme.com',
+      stage: 'Onsite' as const,
+    };
+    const actions = planActions(baseEmail, cls, baseMatch);
+    expect(actions.some((a) => a.type === 'fire-tech-prep')).toBe(true);
+  });
+
+  it('interview-scheduling Final: ALSO fires fire-tech-prep', () => {
+    const cls = {
+      kind: 'interview-scheduling' as const,
+      confidence: 'medium' as const,
+      senderDomain: 'acme.com',
+      stage: 'Final' as const,
+    };
+    const actions = planActions(baseEmail, cls, baseMatch);
+    expect(actions.some((a) => a.type === 'fire-tech-prep')).toBe(true);
+  });
+
+  it('interview-scheduling PhoneScreen: does NOT fire-tech-prep (not technical)', () => {
+    const cls = {
+      kind: 'interview-scheduling' as const,
+      confidence: 'medium' as const,
+      senderDomain: 'acme.com',
+      stage: 'PhoneScreen' as const,
+    };
+    const actions = planActions(baseEmail, cls, baseMatch);
+    expect(actions.some((a) => a.type === 'fire-tech-prep')).toBe(false);
+  });
+
+  it('take-home: mark-status TakeHome + fire-tech-prep + fire-takehome-scaffold', () => {
+    const cls = {
+      kind: 'take-home' as const,
+      confidence: 'medium' as const,
+      senderDomain: 'acme.com',
+      stage: 'TakeHome' as const,
+    };
+    const actions = planActions(baseEmail, cls, baseMatch);
+    expect(actions).toHaveLength(3);
+    expect(actions[0].type).toBe('mark-status');
+    expect(actions.some((a) => a.type === 'fire-tech-prep')).toBe(true);
+    expect(actions.some((a) => a.type === 'fire-takehome-scaffold')).toBe(true);
+  });
+
+  it('other kind: returns empty actions', () => {
+    const cls = { kind: 'other' as const, confidence: 'low' as const, senderDomain: 'acme.com' };
+    expect(planActions(baseEmail, cls, baseMatch)).toEqual([]);
+  });
+
+  it('mark-status note includes the evidence excerpt', () => {
+    const cls = {
+      kind: 'rejection' as const,
+      confidence: 'high' as const,
+      senderDomain: 'acme.com',
+      evidence: 'after careful consideration we have decided to go with another candidate',
+    };
+    const actions = planActions(baseEmail, cls, baseMatch);
+    if (actions[0].type === 'mark-status') {
+      expect(actions[0].note).toContain('rejection');
+      expect(actions[0].note).toContain('after careful');
+    }
   });
 });

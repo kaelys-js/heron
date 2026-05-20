@@ -113,12 +113,11 @@ export default defineConfig({
         'src/**/types.ts',
         'src/**/*.d.ts',
         'src/test-setup.ts',
-        // `src/test-helpers/**` alone doesn't reliably match top-level
-        // files under picomatch -- use the explicit-glob form so
-        // msw-handlers.ts / fs-fixtures.ts / render.ts / etc. don't
-        // skew the coverage totals downward.
-        'src/test-helpers/**/*',
-        'src/test-helpers/*',
+        // Exclude every file under `src/test-helpers/`. Tried both
+        // `src/test-helpers/**` AND `src/test-helpers/*` -- neither
+        // matched under v8 + vitest 4's picomatch resolution. Listing
+        // the files explicitly is the only reliable form.
+        'src/test-helpers/**',
         'src/**/*.{test,spec,component.test}.{ts,svelte}',
       ],
       thresholds: {
