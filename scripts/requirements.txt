@@ -19,4 +19,11 @@
 # Python helper that needs to read user credentials (Anthropic /
 # Gemini / Adzuna / Gmail-IMAP keys). The TypeScript twin lives at
 # ui/src/lib/server/user-secrets.ts and is binary-format-compatible.
-cryptography>=44.0.0,<46.0.0
+#
+# 46.0.5 floor: earlier 46.0.x is affected by GHSA-r6ph-v2qm-q3c2
+# (Subgroup Attack on SECT curves -- missing subgroup validation).
+# The user-secrets path only uses AES-GCM + HKDF-SHA256, so this
+# CVE is not reachable from our code, but Dependency Review still
+# fails on the lockfile. The 46.0.5+ floor avoids the false-positive
+# block while staying on the cryptography 46.x line.
+cryptography>=46.0.5,<47.0.0
