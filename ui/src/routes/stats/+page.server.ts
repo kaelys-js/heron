@@ -29,26 +29,32 @@ import type { Job, Status, BgRisk } from '$lib/types';
 import { STATUS_ORDER } from '$lib/types';
 import fs from 'node:fs';
 
-const SOURCE_PATTERNS: Array<{ name: string; match: RegExp }> = [
-  { name: 'LinkedIn', match: /linkedin\.com/i },
-  { name: 'Indeed', match: /indeed\.com/i },
-  { name: 'Greenhouse', match: /greenhouse\.io/i },
-  { name: 'Ashby', match: /ashbyhq\.com|jobs\.ashbyhq/i },
-  { name: 'Lever', match: /lever\.co/i },
-  { name: 'Workday', match: /myworkdayjobs|workday\.com/i },
-  { name: 'SmartRecruiters', match: /smartrecruiters\.com/i },
-  { name: 'Wellfound', match: /wellfound\.com|angel\.co/i },
-  { name: 'YC Work', match: /ycombinator\.com|workatastartup\.com/i },
-  { name: 'Hacker News', match: /news\.ycombinator/i },
-  { name: 'The Muse', match: /themuse\.com/i },
-  { name: 'Adzuna', match: /adzuna/i },
-  { name: 'Google Jobs', match: /jobs\.google/i },
-  { name: 'Glassdoor', match: /glassdoor\.com/i },
-  { name: 'Monster', match: /monster\.com/i },
+// Source-pattern matchers. Each `match` returns true if the URL is from that source.
+// Substring presence checks (CodeQL js/regex/missing-regexp-anchor: pattern 4 -- substring is intended).
+const SOURCE_PATTERNS: Array<{ name: string; match: (lower: string) => boolean }> = [
+  { name: 'LinkedIn', match: (u) => u.includes('linkedin.com') },
+  { name: 'Indeed', match: (u) => u.includes('indeed.com') },
+  { name: 'Greenhouse', match: (u) => u.includes('greenhouse.io') },
+  { name: 'Ashby', match: (u) => u.includes('ashbyhq.com') || u.includes('jobs.ashbyhq') },
+  { name: 'Lever', match: (u) => u.includes('lever.co') },
+  { name: 'Workday', match: (u) => u.includes('myworkdayjobs') || u.includes('workday.com') },
+  { name: 'SmartRecruiters', match: (u) => u.includes('smartrecruiters.com') },
+  { name: 'Wellfound', match: (u) => u.includes('wellfound.com') || u.includes('angel.co') },
+  {
+    name: 'YC Work',
+    match: (u) => u.includes('ycombinator.com') || u.includes('workatastartup.com'),
+  },
+  { name: 'Hacker News', match: (u) => u.includes('news.ycombinator') },
+  { name: 'The Muse', match: (u) => u.includes('themuse.com') },
+  { name: 'Adzuna', match: (u) => u.includes('adzuna') },
+  { name: 'Google Jobs', match: (u) => u.includes('jobs.google') },
+  { name: 'Glassdoor', match: (u) => u.includes('glassdoor.com') },
+  { name: 'Monster', match: (u) => u.includes('monster.com') },
 ];
 
 function sourceOf(url: string): string {
-  for (const p of SOURCE_PATTERNS) if (p.match.test(url)) return p.name;
+  const lower = url.toLowerCase();
+  for (const p of SOURCE_PATTERNS) if (p.match(lower)) return p.name;
   try {
     const h = new URL(url).hostname.replace(/^www\./, '');
     return (

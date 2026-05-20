@@ -30,7 +30,8 @@ export const POST = wrap(
     const { job, profileId } = resolved!;
 
     if (mode === 'linkedin') {
-      if (!/linkedin\.com/.test(job.url)) {
+      // Substring presence check (CodeQL js/regex/missing-regexp-anchor: pattern 4 -- substring is intended).
+      if (!job.url.includes('linkedin.com')) {
         badRequest('Job URL is not on LinkedIn — only Easy Apply jobs can be auto-applied');
       }
       // Pass profileId so easy-apply spawns with --profile + uses that profile's

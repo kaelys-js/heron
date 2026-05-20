@@ -32,7 +32,7 @@ import {
 import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execSync } from 'node:child_process';
+import { execSync, execFileSync } from 'node:child_process';
 
 // ROOT is the repo root by default -- the script lives at
 // scripts/native/apply-brand.mjs so two `..` jumps land at /<repo>.
@@ -160,7 +160,9 @@ function writeSnapshot(brand) {
   // re-writes the compact form, drift returns. Endless cycle.
   writeFileSync(SNAPSHOT_FILE, JSON.stringify(brand, null, 2) + '\n');
   try {
-    execSync(`pnpm exec biome format --write "${SNAPSHOT_FILE}"`, {
+    // argv-passing avoids shell interpolation. CodeQL
+    // `js/indirect-command-line-injection`-clean.
+    execFileSync('pnpm', ['exec', 'biome', 'format', '--write', SNAPSHOT_FILE], {
       stdio: 'pipe',
       cwd: ROOT,
     });
@@ -449,7 +451,10 @@ function writeIfChanged(path, content) {
   // hard-fail mid-apply.
   if (/\.(ts|tsx|js|mjs|cjs|json|jsonc|css|webmanifest)$/i.test(path)) {
     try {
-      execSync(`pnpm exec biome format --write "${path}"`, {
+      // execFileSync with argv array avoids shell interpolation -- closes
+      // CodeQL `js/indirect-command-line-injection` flag on path strings
+      // that could in theory contain shell metachars.
+      execFileSync('pnpm', ['exec', 'biome', 'format', '--write', path], {
         stdio: 'pipe',
         cwd: ROOT,
       });
@@ -464,7 +469,8 @@ function writeIfChanged(path, content) {
       // Without this call, every apply-brand re-touched the file with
       // the template form, and the next pre-commit's swiftformat hook
       // re-inserted the blank line -- endless drift.
-      execSync(`swiftformat --quiet "${path}"`, { stdio: 'pipe', cwd: ROOT });
+      // argv-passing -- CodeQL `js/indirect-command-line-injection`-clean.
+      execFileSync('swiftformat', ['--quiet', path], { stdio: 'pipe', cwd: ROOT });
     } catch {
       // swiftformat unavailable -- fall through. The pre-commit Swift
       // hook will catch any residual drift on the next commit.
@@ -2122,9 +2128,13 @@ function regenerateIcons() {
   // and renders all platform sizes.
   log.step('Regenerating platform icons');
   try {
-    execSync(`node ${join(ROOT, 'scripts', 'native', 'icons', 'generate-icons.mjs')}`, {
-      stdio: 'inherit',
-    });
+    // argv-passing -- CodeQL `js/indirect-command-line-injection`-clean.
+    // process.execPath is Node's absolute path so PATH doesn't matter.
+    execFileSync(
+      process.execPath,
+      [join(ROOT, 'scripts', 'native', 'icons', 'generate-icons.mjs')],
+      { stdio: 'inherit' },
+    );
     log.ok('icons regenerated');
   } catch (e) {
     log.warn(`icon regen failed: ${e.message}`);
@@ -2311,10 +2321,14 @@ function apply() {
     //   ≥2 = real error (e.g. not in a git work tree) -- fall through
     let ignored = new Set();
     try {
-      const result = execSync(
-        `git check-ignore --no-index -v -- ${allPaths.map((p) => `"${p}"`).join(' ')}`,
-        { cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'], encoding: 'utf8' },
-      );
+      // execFileSync (argv-array, no shell) -- closes CodeQL
+      // `js/indirect-command-line-injection`. Paths flow straight to
+      // argv with no shell-metachar interpretation.
+      const result = execFileSync('git', ['check-ignore', '--no-index', '-v', '--', ...allPaths], {
+        cwd: ROOT,
+        stdio: ['ignore', 'pipe', 'ignore'],
+        encoding: 'utf8',
+      });
       // Each line: "<source>\t<file>" (when -v is set)
       for (const line of result.split('\n')) {
         const file = line.split('\t').pop()?.trim();
@@ -2343,7 +2357,9 @@ function apply() {
       log.skip(`--stage: nothing to stage (all ${allPaths.length} write(s) gitignored)`);
     } else {
       try {
-        execSync(`git add -- ${stageable.map((p) => `"${p}"`).join(' ')}`, {
+        // execFileSync (argv-array, no shell). CodeQL `js/indirect-
+        // command-line-injection`-clean.
+        execFileSync('git', ['add', '--', ...stageable], {
           cwd: ROOT,
           stdio: 'pipe',
         });

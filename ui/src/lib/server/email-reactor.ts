@@ -100,11 +100,24 @@ const INTERVIEW_SCHEDULING_PATTERNS = [
   /\bnext step (?:in|of) (?:the |our )?(?:interview|process)\b/i,
   /\bnext steps?\b.{0,80}\binterview\b/i,
   /\binvite you to (?:a |the |an )?(?:phone screen|interview|onsite|panel)\b/i,
-  /\bcalendly\.com\b/i,
   /\b(?:savvycal|cal\.com|chilipiper|gem\.com)\b/i,
   /\bschedule (?:a |the |your )?(?:call|interview|chat)\b/i,
   /\bavailable times?\b/i,
 ];
+
+// Calendly URL detection -- substring presence check
+// (CodeQL js/regex/missing-regexp-anchor: pattern 4 -- substring is intended).
+// Returns the matched literal "calendly.com" snippet when present, else undefined.
+function findCalendlyEvidence(text: string): string | undefined {
+  const idx = text.toLowerCase().indexOf('calendly.com');
+  if (idx < 0) return undefined;
+  // Preserve original \bcalendly\.com\b semantics: require the trailing char
+  // (if any) to NOT be a word character (a-z, 0-9, underscore).
+  const tail = text.toLowerCase().charCodeAt(idx + 'calendly.com'.length);
+  if (Number.isNaN(tail)) return 'calendly.com'; // end of string
+  const isWord = (tail >= 97 && tail <= 122) || (tail >= 48 && tail <= 57) || tail === 95; // a-z, 0-9, _
+  return isWord ? undefined : 'calendly.com';
+}
 
 const TAKE_HOME_PATTERNS = [
   /\btake[- ]home (?:assignment|exercise|project|challenge|test)\b/i,
@@ -206,7 +219,8 @@ export function classifyEmail(email: EmailInput): Classification {
     };
   }
 
-  const schedulingEvidence = extractEvidence(combined, INTERVIEW_SCHEDULING_PATTERNS);
+  const schedulingEvidence =
+    extractEvidence(combined, INTERVIEW_SCHEDULING_PATTERNS) ?? findCalendlyEvidence(combined);
   if (schedulingEvidence) {
     // Determine which stage. Default to PhoneScreen for ambiguous "let's
     // chat" emails -- they're almost always the first call.

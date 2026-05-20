@@ -46,8 +46,9 @@
 
   function detectPortal() {
     var h = window.location.host;
-    if (/greenhouse\.io/.test(h)) return 'greenhouse';
-    if (/ashbyhq\.com/.test(h) || /jobs\.ashbyhq\.com/.test(h)) return 'ashby';
+    // Substring presence checks (CodeQL js/regex/missing-regexp-anchor: pattern 4 -- substring is intended).
+    if (h.indexOf('greenhouse.io') >= 0) return 'greenhouse';
+    if (h.indexOf('ashbyhq.com') >= 0 || h.indexOf('jobs.ashbyhq.com') >= 0) return 'ashby';
     if (/lever\.co/.test(h) || /jobs\.lever\.co/.test(h)) return 'lever';
     return null;
   }

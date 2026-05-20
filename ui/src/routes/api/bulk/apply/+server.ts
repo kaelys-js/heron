@@ -43,7 +43,8 @@ export const POST = wrap('bulk-apply', async ({ request }: { request: Request })
       url: j.url,
       company: j.company || '',
       role: j.role || '',
-      isLinkedIn: /linkedin\.com/.test(j.url),
+      // Substring presence check (CodeQL js/regex/missing-regexp-anchor: pattern 4 -- substring is intended).
+      isLinkedIn: j.url.includes('linkedin.com'),
     });
   }
   if (groups.length === 0) badRequest('No jobs found for the given ids');

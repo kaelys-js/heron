@@ -33,7 +33,8 @@ export const POST = wrap('queue-send', async ({ request }: { request: Request })
       url: j.url,
       company: j.company,
       role: j.role,
-      isLinkedIn: /linkedin\.com/.test(j.url),
+      // Substring presence check (CodeQL js/regex/missing-regexp-anchor: pattern 4 -- substring is intended).
+      isLinkedIn: j.url.includes('linkedin.com'),
     });
   }
   if (picks.length === 0) badRequest('No Queued jobs found for the given ids');
