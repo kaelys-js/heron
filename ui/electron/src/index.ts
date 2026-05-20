@@ -223,13 +223,13 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
     // Don't bail -- the WebView's resolver may still find a remote backend.
   }
 
-  // 2. mDNS advertise (only if we have an embedded server)
+  // 2. mDNS advertise (only if we have an embedded server). Fire and
+  // forget -- startMdnsAdvertise is async (dynamic import + try/catch
+  // internal) so callers can ignore the returned Promise safely.
   if (state.serverPort) {
-    try {
-      startMdnsAdvertise({ name: BRAND.name, port: state.serverPort });
-    } catch (e) {
+    startMdnsAdvertise({ name: BRAND.name, port: state.serverPort }).catch((e) => {
       console.warn('[main] mDNS advertise failed', e);
-    }
+    });
   }
 
   // 3. Security CSP + WebView init
