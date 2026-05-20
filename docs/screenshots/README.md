@@ -26,11 +26,8 @@ The seed fixtures live at `scripts/system/seed-demo-data.mjs`.
 |---|---|---|---|
 | `inbox-light.png` | `/inbox` | 1440x900 | light |
 | `inbox-dark.png` | `/inbox` | 1440x900 | dark |
-| `evaluation-light.png` | `/job/{acmeId}` | 1440x900 | light |
-| `evaluation-dark.png` | `/job/{acmeId}` | 1440x900 | dark |
+| `evaluation.png` | `/job/{acmeId}` | 1440x900 | light |
 | `autopilot.png` | `/autopilot` | 1440x900 | light |
-| `patterns.png` | `/patterns` | 1440x900 | light |
-| `interview-prep.png` | `/job/{acmeId}/prep` | 1440x900 | light |
 | `mobile-inbox.png` | `/inbox` | 393x852 (iPhone 16 Pro) | light |
 
 `{acmeId}` is the deterministic `urlId()` of the seeded Acme posting --

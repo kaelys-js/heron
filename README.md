@@ -47,24 +47,15 @@ It runs entirely on your machine. Your data is yours. See [`docs/PHILOSOPHY.md`]
 
 <br />
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/evaluation-dark.png">
-  <img src="docs/screenshots/evaluation-light.png" alt="A-F evaluation report" width="900" />
-</picture>
+<img src="docs/screenshots/evaluation.png" alt="A-F evaluation report" width="900" />
 
 **A-F evaluation** -- six-block analysis per role (fit, CV match, level, comp, personalization, prep)
 
 <br />
 
-<img src="docs/screenshots/autopilot.png" alt="Autopilot configuration" width="440" />&nbsp;<img src="docs/screenshots/patterns.png" alt="Pattern analysis" width="440" />
+<img src="docs/screenshots/autopilot.png" alt="Autopilot configuration" width="600" />&nbsp;<img src="docs/screenshots/mobile-inbox.png" alt="Mobile inbox" width="240" />
 
-**Autopilot** -- score-gated, daily-capped, opt-in &nbsp;·&nbsp; **Patterns** -- rejection-trend insights
-
-<br />
-
-<img src="docs/screenshots/interview-prep.png" alt="Interview prep" width="600" />&nbsp;<img src="docs/screenshots/mobile-inbox.png" alt="Mobile inbox" width="240" />
-
-**Interview prep** -- STAR+R stories from real projects &nbsp;·&nbsp; **Mobile** -- iOS / Android via Capacitor
+**Autopilot** -- score-gated, daily-capped, opt-in &nbsp;·&nbsp; **Mobile** -- iOS / Android via Capacitor
 
 </div>
 

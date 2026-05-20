@@ -215,6 +215,13 @@
           bootFallback.setAttribute('data-hide', '1');
           setTimeout(() => bootFallback.remove(), 300);
         }
+        // Hard signal for headless tools (screenshot capture, e2e specs)
+        // that the app shell has finished its boot-handoff. Existing
+        // heuristics (querying for sidebar links / main h1) are racy
+        // when seeded data is sparse; this flag flips exactly once,
+        // immediately after the boot-fallback dismissal sequence
+        // commits, regardless of which route the user landed on.
+        document.documentElement.dataset.appReady = '1';
       }
     })();
 

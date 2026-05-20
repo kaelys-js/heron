@@ -253,14 +253,17 @@ const JOB_ROWS = [
 
 // Embed each row's URL in the Notes column so parseApplications can join
 // to pipeline.md without requiring N report files (the parser uses a
-// liberal `/https?:\/\/\S+/` match anywhere on the row).
+// liberal `/https?:\/\/\S+/` match anywhere on the row). Trailing space
+// before the closing `|` matters: parseApplications' `\S+` is greedy and
+// would otherwise hoover up the row's pipe terminator into the URL,
+// breaking the urlId join with pipeline.md.
 const APPLICATIONS_MD =
   '# Applications Tracker\n\n' +
   '| # | Date | Company | Role | Score | Status | PDF | Report | Notes |\n' +
   '|---|------|---------|------|-------|--------|-----|--------|-------|\n' +
   JOB_ROWS.map(
     (j, i) =>
-      `| ${i + 1} | ${j.date} | ${j.company} | ${j.role} | ${j.score} | ${j.status} | ${j.report ? '✅' : '❌'} | ${j.report} | ${j.notes} (${j.url}) |`,
+      `| ${i + 1} | ${j.date} | ${j.company} | ${j.role} | ${j.score} | ${j.status} | ${j.report ? '✅' : '❌'} | ${j.report} | ${j.notes} ${j.url} |`,
   ).join('\n') +
   '\n';
 
@@ -412,12 +415,36 @@ fs.writeFileSync(
   ),
 );
 
-// Insert the demo profile row into the app.db so readProfiles() returns a
-// non-empty profiles list. Uses better-sqlite3 via dynamic import; the
-// DDL mirrors ui/src/lib/server/db/migrate.ts:APP_DDL. Path:
-// HERON_DATA_DIR/app.db.
-try {
-  const appDbPath = path.join(process.env.HERON_DATA_DIR || DATA_DIR, 'app.db');
+// Legacy single-user profiles.json at the data-root. profile-migrate.ts
+// checks this file at boot via `fs.existsSync(PROFILES_JSON)`; without
+// it the migrator decides "fresh install, run migration" and the
+// success toast ("Multi-profile layout initialised (nothing to move)")
+// bleeds into the README screenshot. The stub here is just to satisfy
+// the existence check -- migrate then short-circuits cleanly.
+fs.writeFileSync(
+  path.join(DATA_DIR, 'profiles.json'),
+  JSON.stringify(
+    {
+      activeId: PROFILE_ID,
+      profiles: [
+        {
+          id: PROFILE_ID,
+          name: 'AI/Backend track',
+          color: 'blue',
+          createdAt: 1747612800000,
+          lastActiveAt: 1747612800000,
+        },
+      ],
+    },
+    null,
+    2,
+  ),
+);
+
+// Resolve better-sqlite3 once -- the script touches BOTH app.db (profile +
+// activity rows) AND auth.db (users row), so it's worth doing the pnpm
+// store walk a single time.
+function resolveBetterSqlite3() {
   // pnpm's nested store layout means bare `better-sqlite3` doesn't resolve
   // from a script at scripts/system/. Walk the .pnpm/ store, pick the
   // first match. Pinning the version would couple the seeder to lockfile
@@ -433,7 +460,56 @@ try {
   if (candidates.length === 0) {
     throw new Error('better-sqlite3 not found in node_modules/.pnpm/');
   }
-  const { default: Database } = await import(candidates[0]);
+  return candidates[0];
+}
+
+// Insert a users row in auth.db so the route guards that count(*) users
+// see 1 (not 0). Without this row, /onboarding redirects to
+// /onboarding/account → which checks locals.user → which the bypass IS
+// providing → redirects back to /onboarding. Infinite loop.
+//
+// Note: the screenshot bypass still owns the in-request `locals.user`
+// shape; this row exists ONLY to satisfy COUNT(*) gates in
+// +layout.server.ts / login/+page.server.ts / onboarding/+layout.server.ts.
+// No session is persisted -- the bypass populates locals from env, not
+// from a session cookie.
+try {
+  const Database = (await import(resolveBetterSqlite3())).default;
+  const authDbPath = path.join(process.env.HERON_DATA_DIR || DATA_DIR, 'auth.db');
+  fs.mkdirSync(path.dirname(authDbPath), { recursive: true });
+  const authDb = new Database(authDbPath);
+  authDb.exec(`CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    email_verified INTEGER NOT NULL DEFAULT 0,
+    name TEXT,
+    image TEXT,
+    role TEXT NOT NULL DEFAULT 'member',
+    two_factor_enabled INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    deleted_at INTEGER
+  );`);
+  const tsAuth = 1747612800000;
+  authDb
+    .prepare(
+      `INSERT OR REPLACE INTO users
+       (id, email, email_verified, name, role, two_factor_enabled, created_at, updated_at)
+       VALUES (?, ?, 1, ?, 'owner', 0, ?, ?)`,
+    )
+    .run(USER_ID, 'alex@demo.example', 'Alex Demo', tsAuth, tsAuth);
+  authDb.close();
+} catch (err) {
+  console.error('::warning::failed to seed auth.db users row:', err?.message ?? err);
+}
+
+// Insert the demo profile row into the app.db so readProfiles() returns a
+// non-empty profiles list. Uses better-sqlite3 via dynamic import; the
+// DDL mirrors ui/src/lib/server/db/migrate.ts:APP_DDL. Path:
+// HERON_DATA_DIR/app.db.
+try {
+  const appDbPath = path.join(process.env.HERON_DATA_DIR || DATA_DIR, 'app.db');
+  const Database = (await import(resolveBetterSqlite3())).default;
   fs.mkdirSync(path.dirname(appDbPath), { recursive: true });
   const db = new Database(appDbPath);
   db.exec(`CREATE TABLE IF NOT EXISTS profiles (
@@ -504,7 +580,117 @@ fs.writeFileSync(
   ),
 );
 
+// data/activity.jsonl -- shared event log the autopilot timeline reads
+// via `bus.recent()`. Without entries here, /autopilot's "Recent activity"
+// section is empty + the screenshot looks like a fresh install. The bus
+// loads from `${HERON_DATA_DIR}/activity.jsonl` at module load, so the
+// rows MUST be on disk before the dashboard boots for the capture pass.
+//
+// Source filter (routes/autopilot/+page.server.ts:7):
+//   HISTORY_SOURCES = ['scan', 'gemini', 'apply-linkedin', 'autopilot']
+//   category must be 'task' OR 'system'
+// userId is set to the screenshot-bypass user ('demo-screenshots') so the
+// per-user SSE stream + activity_events mirror both attribute to the same
+// account the demo profile is wired to.
+const NOW = 1747612800000; // 2026-05-19T00:00:00Z -- matches profile/profiles.json
+const ACTIVITY_EVENTS = [
+  {
+    id: 'evt0001demoscan',
+    ts: NOW - 12 * 3600_000, // 12h ago
+    level: 'success',
+    category: 'task',
+    source: 'scan',
+    title: 'Portal scan complete',
+    message: 'Greenhouse + Ashby + Lever -- 11 new postings, 3 fresh matches.',
+    userId: USER_ID,
+    profileId: PROFILE_ID,
+  },
+  {
+    id: 'evt0002demogemi',
+    ts: NOW - 8 * 3600_000, // 8h ago
+    level: 'info',
+    category: 'task',
+    source: 'gemini',
+    title: 'Gemini triage pass',
+    message: '24 jobs scored. 4 above threshold (≥ 4.0); 11 below; 9 skipped.',
+    userId: USER_ID,
+    profileId: PROFILE_ID,
+  },
+  {
+    id: 'evt0003demoappl',
+    ts: NOW - 4 * 3600_000, // 4h ago
+    level: 'success',
+    category: 'task',
+    source: 'apply-linkedin',
+    title: 'Auto-apply submitted',
+    message: 'Cortex Labs · Senior ML Engineer (4.2/5) -- LinkedIn Easy Apply ✓',
+    userId: USER_ID,
+    profileId: PROFILE_ID,
+  },
+  {
+    id: 'evt0004demoauto',
+    ts: NOW - 1 * 3600_000, // 1h ago
+    level: 'info',
+    category: 'system',
+    source: 'autopilot',
+    title: 'Daily digest queued',
+    message: 'Tomorrow 07:00 CET -- 4 fresh matches, 1 interview reminder.',
+    userId: USER_ID,
+    profileId: PROFILE_ID,
+  },
+];
+const activityLog = path.join(DATA_DIR, 'activity.jsonl');
+fs.writeFileSync(activityLog, ACTIVITY_EVENTS.map((e) => JSON.stringify(e)).join('\n') + '\n');
+
+// Mirror the same rows into app.db.activity_events so the per-user
+// queries (used by the /api/notifications/feed surface + future indexed
+// reads) return the demo data too. Schema mirrors migrate.ts:179-193.
+try {
+  const appDbPath2 = path.join(process.env.HERON_DATA_DIR || DATA_DIR, 'app.db');
+  const Database2 = (await import(resolveBetterSqlite3())).default;
+  {
+    const db2 = new Database2(appDbPath2);
+    db2.exec(`CREATE TABLE IF NOT EXISTS activity_events (
+      id TEXT PRIMARY KEY NOT NULL,
+      user_id TEXT NOT NULL,
+      profile_id TEXT,
+      level TEXT NOT NULL,
+      category TEXT NOT NULL,
+      source TEXT NOT NULL,
+      title TEXT NOT NULL,
+      message TEXT,
+      stack TEXT,
+      link TEXT,
+      ts INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS activity_events_user_id_idx ON activity_events(user_id);
+    CREATE INDEX IF NOT EXISTS activity_events_ts_idx ON activity_events(ts);`);
+    const stmt = db2.prepare(
+      `INSERT OR REPLACE INTO activity_events
+       (id, user_id, profile_id, level, category, source, title, message, ts)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    );
+    for (const e of ACTIVITY_EVENTS) {
+      stmt.run(
+        e.id,
+        e.userId,
+        e.profileId,
+        e.level,
+        e.category,
+        e.source,
+        e.title,
+        e.message,
+        e.ts,
+      );
+    }
+    db2.close();
+  }
+} catch (err) {
+  console.error('::warning::failed to mirror activity events to app.db:', err?.message ?? err);
+}
+
 console.log('✓ seed-demo-data complete');
 console.log('  user: ' + USER_ID);
 console.log('  profile: ' + PROFILE_ID);
 console.log('  root: ' + PROFILE_ROOT);
+console.log('  activity events: ' + ACTIVITY_EVENTS.length + ' (jsonl + app.db)');

@@ -1258,6 +1258,18 @@ export function bootOnce() {
   // when the user is just trying to load /login, a stray scan-spawn
   // failure here would lock them out. Log and continue instead.
   if (!pipelineExists || fs.statSync(pipelinePath).size < 200) {
+    // Screenshot capture pipeline runs in a sealed tmpdir + must never
+    // hit external job-board APIs (no creds, intermittent 403s pollute
+    // the captured frames). The bypass user has a seeded pipeline.md in
+    // their per-user dir; the SYSTEM_USER_ID path checked above is a
+    // separate, intentionally-empty branch and triggering a scan from
+    // here is exactly the wrong response under HERON_SCREENSHOT_MODE.
+    if (process.env.HERON_SCREENSHOT_MODE === '1') {
+      logEvent('boot', 'Pipeline empty — auto-scan skipped (screenshot mode)', {
+        category: 'system',
+      });
+      return;
+    }
     logEvent('boot', 'Pipeline empty — running auto-scan', {
       category: 'system',
       message: 'Spawning scan-broad.py',

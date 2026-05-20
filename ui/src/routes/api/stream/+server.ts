@@ -34,14 +34,24 @@ export const GET = async ({ request, locals }: { request: Request; locals: App.L
       try {
         controller.enqueue(enc.encode(': connected\n\n'));
       } catch {}
-      try {
-        for (const ev of bus.recentForUser(userId)) send(ev);
-      } catch (e: unknown) {
-        logEvent('stream', 'failed to send recent events', {
-          level: 'warn',
-          category: 'system',
-          message: e instanceof Error ? e.message : String(e),
-        });
+      // Screenshot capture pipeline (HERON_SCREENSHOT_MODE=1) seeds a
+      // handful of recent activity events so /autopilot's timeline shows
+      // live data, but the SSE replay fires a `toast.success` on every
+      // event the bell hasn't seen before -- that drops a green popup
+      // over the bottom-right of every captured PNG. Suppress the
+      // backfill in screenshot mode; the autopilot loader still reads
+      // `bus.recent()` directly and renders the same events inline,
+      // without going through the toast path.
+      if (process.env.HERON_SCREENSHOT_MODE !== '1') {
+        try {
+          for (const ev of bus.recentForUser(userId)) send(ev);
+        } catch (e: unknown) {
+          logEvent('stream', 'failed to send recent events', {
+            level: 'warn',
+            category: 'system',
+            message: e instanceof Error ? e.message : String(e),
+          });
+        }
       }
       const handler = (ev: ActivityEvent) => send(ev);
       bus.on('event', handler);

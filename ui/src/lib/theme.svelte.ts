@@ -74,7 +74,14 @@ class ThemeStore {
   private computeResolved(): ResolvedTheme {
     if (this.mode === 'light') return 'light';
     if (this.mode === 'dark') return 'dark';
-    return browser && this.mql?.matches ? 'dark' : 'dark';
+    // 'system' mode honours `prefers-color-scheme`. Returning 'dark' on
+    // both branches was a latent bug that pinned every 'system' user to
+    // dark mode after hydration (the inline app.html bootstrap got the
+    // light/dark split right, then this overrode it). The SSR-only fallback
+    // when `browser=false` stays 'dark' so the server-rendered HTML still
+    // matches the dark-first default that app.html primes the class on.
+    if (!browser) return 'dark';
+    return this.mql?.matches ? 'dark' : 'light';
   }
 
   private apply(next: ResolvedTheme) {

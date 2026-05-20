@@ -310,7 +310,9 @@
                         >Up next</span
                       >
                     </div>
-                    <div class="text-2xl font-mono tabular-nums mt-1 text-emerald-200">
+                    <div
+                      class="text-2xl font-mono tabular-nums mt-1 text-emerald-700 dark:text-emerald-200"
+                    >
                       {data.upNextTotal}
                     </div>
                     <div class="text-[11px] text-muted-foreground">≥4.0 awaiting eval</div>
@@ -337,7 +339,9 @@
                         >In flight</span
                       >
                     </div>
-                    <div class="text-2xl font-mono tabular-nums mt-1 text-orange-200">
+                    <div
+                      class="text-2xl font-mono tabular-nums mt-1 text-orange-700 dark:text-orange-200"
+                    >
                       {data.inFlightTotal}
                     </div>
                     <div class="text-[11px] text-muted-foreground">interview + offer</div>
@@ -364,7 +368,9 @@
                         >Active apps</span
                       >
                     </div>
-                    <div class="text-2xl font-mono tabular-nums mt-1 text-violet-200">
+                    <div
+                      class="text-2xl font-mono tabular-nums mt-1 text-violet-700 dark:text-violet-200"
+                    >
                       {data.followUpsTotal}
                     </div>
                     <div class="text-[11px] text-muted-foreground">applied / screened</div>

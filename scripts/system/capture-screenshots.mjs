@@ -47,14 +47,18 @@ const ACME_JOB_ID = createHash('md5').update(ACME_URL).digest('hex').slice(0, 12
 
 // Capture catalogue. Each tuple: [filename, route, viewport, theme].
 // Routes resolve against the seeded demo profile (alex@demo.example).
+// Curated to 5 entries -- one per major surface area, balanced light/dark
+// on inbox where the visual difference matters most, and one mobile view.
+// Dropped evaluation-dark / patterns / interview-prep because:
+//   • the README only had real estate for 5 hero shots,
+//   • evaluation's dark variant duplicates info the light shot conveys,
+//   • patterns + interview-prep both depend on accumulated history that
+//     a fresh seed can't represent honestly.
 const CAPTURES = [
   ['inbox-light.png', '/inbox', { width: 1440, height: 900 }, 'light'],
   ['inbox-dark.png', '/inbox', { width: 1440, height: 900 }, 'dark'],
-  ['evaluation-light.png', '/job/' + ACME_JOB_ID, { width: 1440, height: 900 }, 'light'],
-  ['evaluation-dark.png', '/job/' + ACME_JOB_ID, { width: 1440, height: 900 }, 'dark'],
+  ['evaluation.png', '/job/' + ACME_JOB_ID, { width: 1440, height: 900 }, 'light'],
   ['autopilot.png', '/autopilot', { width: 1440, height: 900 }, 'light'],
-  ['patterns.png', '/patterns', { width: 1440, height: 900 }, 'light'],
-  ['interview-prep.png', '/job/' + ACME_JOB_ID + '/prep', { width: 1440, height: 900 }, 'light'],
   // iPhone 16 Pro viewport
   ['mobile-inbox.png', '/inbox', { width: 393, height: 852 }, 'light'],
 ];
@@ -90,22 +94,22 @@ async function captureOne(browser, baseUrl, [filename, route, viewport, theme]) 
     } catch (err) {
       console.error(`::warning::nav to ${route} failed: ${err.message}`);
     }
-    // Wait for hydration. The splash screen hides itself once Svelte
-    // mounts; the indicator we watch for is the splash being GONE
-    // (the rocket-icon container is removed from the DOM, not just
-    // hidden via opacity).
+    // Wait for hydration. Primary signal is the
+    // `documentElement.dataset.appReady = '1'` flag set by `+layout.svelte`
+    // immediately after the boot-fallback splash dismissal sequence
+    // commits. That marker is exact + race-free. We keep the legacy
+    // heuristic (splash gone + a content selector present) as a fallback
+    // so the script still works against older builds of the dashboard
+    // that don't carry the marker yet.
     try {
       await page.waitForFunction(
         () => {
-          // The `#boot-fallback` element is the splash. The dismissal
-          // sequence sets `data-hide=1`, fades out, then `.remove()`s
-          // it from DOM after a 300ms transition. Wait until it's
-          // either gone OR has data-hide set.
+          if (document.documentElement.dataset.appReady === '1') return true;
+          // Fallback path -- pre-marker builds.
           const splash = document.getElementById('boot-fallback');
           if (splash && splash.getAttribute('data-hide') !== '1') {
             return false;
           }
-          // Real content present?
           return !!document.querySelector(
             'a[href="/inbox"], a[href="/pipeline"], main h1, main h2',
           );
@@ -162,22 +166,23 @@ async function main() {
   }
 
   // Path 2: managed -- seed + boot + capture + teardown.
-  //   - DB lives under tmpdir (HERON_DATA_DIR controls SQLite paths;
-  //     the bypass requires it to be tmpdir-scoped).
-  //   - FS data lives under repo-local `data/users/demo-screenshots/`
-  //     because profile-paths.ts resolves against the repo ROOT, not
-  //     HERON_DATA_DIR. The `demo-screenshots` user ID is reserved.
-  //     Teardown rm -rf's that subtree.
+  //
+  // Single tmpdir for BOTH the DB (auth.db / app.db / activity.jsonl) AND
+  // per-user FS layout (cv.md / profile.yml / etc.). After the DATA_ROOT
+  // unification in files.ts, every server-side path resolves under
+  // HERON_DATA_DIR -- splitting DB vs FS would have the webServer reading
+  // FS files in tmpdir that the seed wrote to the repo, sending every
+  // request through the fresh-install redirect chain.
+  //
   // tmpDataDir: per-run when fresh, stable across runs when --skip-seed
-  // is in play so the DB rows seeded once can be re-used. Either way it
-  // sits under os.tmpdir(), which satisfies the screenshot-bypass's
-  // double-gate (HERON_DATA_DIR must be tmpdir-scoped).
+  // is in play so the seeded state can be re-used. Either way it sits
+  // under os.tmpdir(), which satisfies the screenshot-bypass's double-gate
+  // (HERON_DATA_DIR must be tmpdir-scoped).
   const tmpDataDir = SKIP_SEED
     ? join(tmpdir(), 'heron-screenshots-cache')
     : mkdtempSync(join(tmpdir(), 'heron-screenshots-'));
   if (SKIP_SEED) mkdirSync(tmpDataDir, { recursive: true });
-  const seedFsRoot = join(ROOT, 'data');
-  const demoUserDir = join(seedFsRoot, 'users', 'demo-screenshots');
+  const demoUserDir = join(tmpDataDir, 'users', 'demo-screenshots');
   const buildDir = join(ROOT, 'ui', 'build');
   try {
     // ── Seed (cacheable via --skip-seed) ─────────────────────────────
@@ -188,14 +193,13 @@ async function main() {
       if (SKIP_SEED && !seedAlreadyExists) {
         console.log('--skip-seed requested but no prior seed found -- seeding anyway.');
       }
-      console.log(`Seeding demo data: DB=${tmpDataDir}, FS=${demoUserDir}`);
+      console.log(`Seeding demo data: DATA_DIR=${tmpDataDir}`);
       await new Promise((res, rej) => {
         const p = spawn('node', ['scripts/system/seed-demo-data.mjs'], {
           cwd: ROOT,
           env: {
             ...process.env,
             HERON_DATA_DIR: tmpDataDir,
-            HERON_SEED_DATA_ROOT: seedFsRoot,
           },
           stdio: 'inherit',
         });
@@ -248,9 +252,12 @@ async function main() {
           HERON_SCREENSHOT_MODE: '1',
           // isFreshInstall() also checks env for ANTHROPIC_API_KEY -- supply
           // a placeholder so the layout doesn't redirect to /onboarding.
-          // The capture pipeline never makes an outbound API call.
+          // GEMINI_API_KEY likewise silences the inbox "Gemini key not set"
+          // banner. The capture pipeline never makes an outbound API call
+          // (HERON_SCREENSHOT_MODE gates every spawn-y boot path).
           ANTHROPIC_API_KEY:
             process.env.ANTHROPIC_API_KEY ?? 'sk-ant-screenshot-placeholder-never-fires',
+          GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? 'gem-screenshot-placeholder-never-fires',
           BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? 'a'.repeat(64),
         },
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -280,15 +287,14 @@ async function main() {
     }
   } finally {
     if (PRESERVE_TMP) {
-      console.log(`PRESERVE_TMP=1 -- keeping ${tmpDataDir} + ${demoUserDir} for inspection.`);
+      console.log(`PRESERVE_TMP=1 -- keeping ${tmpDataDir} (contains FS + DB) for inspection.`);
     } else if (SKIP_SEED) {
       // Keep the cache for the next --skip-seed run. Without this, the
       // very thing --skip-seed is supposed to skip would have to be
       // redone every time. Explicit log so the user knows what's left.
-      console.log(`--skip-seed: preserving ${tmpDataDir} + ${demoUserDir} for re-use.`);
+      console.log(`--skip-seed: preserving ${tmpDataDir} (contains FS + DB) for re-use.`);
     } else {
       rmSync(tmpDataDir, { recursive: true, force: true });
-      rmSync(demoUserDir, { recursive: true, force: true });
     }
   }
   console.log('Done.');
