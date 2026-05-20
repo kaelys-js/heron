@@ -580,7 +580,7 @@ importers:
         specifier: 'catalog:'
         version: 11.2.0
       svelte:
-        specifier: '>=5.55.7'
+        specifier: ^5.55.8
         version: 5.55.8
       svelte-check:
         specifier: 'catalog:'
