@@ -1,86 +1,56 @@
 /**
- * E2E test helper -- seed an ephemeral SQLite + profile tree.
+ * E2E test-user constants. The actual seeding happens ONCE per test
+ * run via `playwright.config.ts -> globalSetup` (see global-setup.ts).
  *
- * Each test calls `seedFreshInstall()` in its `beforeAll` (or beforeEach
- * for stronger isolation). The helper:
+ * Specs that need to assert against the seeded user import these
+ * constants instead of re-seeding per-test. The Playwright webServer
+ * is a single long-lived process; we couldn't reseed it between specs
+ * even if we wanted to.
  *
- *   1. Writes a tmpdir DATA_DIR
- *   2. Creates auth.db + app.db with the canonical schema
- *   3. Inserts a default user (id=u_e2e, role=owner)
- *   4. Creates a single 'default' profile under
- *      data/users/u_e2e/profiles/default/
- *   5. Drops in a minimal cv.md + profile.yml so /onboarding doesn't
- *      bounce the user back
- *   6. Returns { dataDir, user, signInUrl }
- *
- * The test then sets the DATA_DIR env var BEFORE booting the preview
- * server. The preview server reads that env var and routes all reads/
- * writes there, leaving the developer's real data/* untouched.
- *
- * Why a TypeScript helper (not a fixtures.json): the schema evolves
- * fast in this phase; keeping the seed code aligned with the live
- * schema via direct imports beats maintaining a fixture file.
+ * If you need a SEPARATE user shape for a future test scenario
+ * (multi-tenant, role-permission cases), add a second seed step in
+ * global-setup.ts -- don't re-export per-spec seed helpers from here.
  */
 
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
+export const TEST_USER_ID = 'u_e2e';
+export const TEST_USER_EMAIL = 'e2e@heron.test';
+export const TEST_USER_NAME = 'E2E Test User';
+export const TEST_PROFILE_SLUG = 'default';
 
+/**
+ * Information about the seeded install. Same id/email every run for
+ * deterministic asserts. dataDir is read at runtime from the sidecar
+ * file global-setup wrote.
+ */
 export type SeededInstall = {
-  /** tmpdir absolute path. Set DATA_DIR=this for the preview server. */
+  /** Absolute tmpdir path passed to the preview server as HERON_DATA_DIR. */
   dataDir: string;
-  /** Test user -- same email + id every run for deterministic asserts. */
+  /** Seeded owner user -- id/email/name match what globalSetup inserted. */
   user: { id: string; email: string; name: string };
-  /** Profile slug used in the test. */
+  /** Profile slug used in the test layout. */
   profileSlug: string;
 };
 
-const TEST_USER_ID = 'u_e2e';
-const TEST_USER_EMAIL = 'e2e@heron.test';
-
-export function seedFreshInstall(): SeededInstall {
-  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'heron-e2e-'));
-  // Per-user profile dir
-  const profileDir = path.join(dataDir, 'users', TEST_USER_ID, 'profiles', 'default');
-  fs.mkdirSync(profileDir, { recursive: true });
-
-  // Minimal CV
-  fs.writeFileSync(
-    path.join(profileDir, 'cv.md'),
-    '# E2E Test User\n\nSenior Software Engineer · Test University · 2020-Present',
-    'utf8',
-  );
-  // Minimal profile.yml
-  fs.writeFileSync(
-    path.join(profileDir, 'profile.yml'),
-    'name: E2E Test User\nemail: e2e@heron.test\ntargets:\n  - "Senior Software Engineer"\n',
-    'utf8',
-  );
-  // Empty applications.md (header only)
-  fs.writeFileSync(
-    path.join(profileDir, 'applications.md'),
-    [
-      '# Applications Tracker',
-      '',
-      '| # | Date | Company | Role | Score | Status | PDF | Report | Notes |',
-      '|---|------|---------|------|-------|--------|-----|--------|-------|',
-      '',
-    ].join('\n'),
-    'utf8',
-  );
-
+/** Read the seed metadata that globalSetup wrote. Specs call this in
+ *  `beforeAll` when they need the dataDir path (most don't -- the
+ *  webServer is already pointed at it via env). */
+export function getSeededInstall(): SeededInstall {
+  // Lazy-load fs so this module is safe to import in non-Node contexts.
+  // (Specs run under Node; this is just defence-in-depth.)
+  const fs = require('node:fs') as typeof import('node:fs');
+  const path = require('node:path') as typeof import('node:path');
+  const sidecar = path.join(__dirname, '.dataDir');
+  if (!fs.existsSync(sidecar)) {
+    throw new Error(
+      'getSeededInstall: .dataDir sidecar missing. Did Playwright globalSetup run? ' +
+        'Check playwright.config.ts -> globalSetup is set to ' +
+        '"./e2e/_helpers/global-setup.ts".',
+    );
+  }
+  const dataDir = fs.readFileSync(sidecar, 'utf8').trim();
   return {
     dataDir,
-    user: { id: TEST_USER_ID, email: TEST_USER_EMAIL, name: 'E2E Test User' },
-    profileSlug: 'default',
+    user: { id: TEST_USER_ID, email: TEST_USER_EMAIL, name: TEST_USER_NAME },
+    profileSlug: TEST_PROFILE_SLUG,
   };
-}
-
-/** Tear down the dataDir created by seedFreshInstall. */
-export function teardown(install: SeededInstall): void {
-  try {
-    fs.rmSync(install.dataDir, { recursive: true, force: true });
-  } catch {
-    /* best-effort */
-  }
 }

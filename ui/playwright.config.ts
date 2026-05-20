@@ -17,10 +17,27 @@
  *
  * Run in CI: this config detects CI=1 and switches to headless +
  * retry-on-flake + trace-on-failure.
+ *
+ * Seed coordination: HERON_E2E_DATA_DIR is computed below (a stable
+ * tmpdir path) + exported to process.env so BOTH globalSetup (in this
+ * process) AND the webServer (a child process) read the same path.
+ * globalSetup creates + seeds it; webServer reads it as HERON_DATA_DIR.
  */
+
+import os from 'node:os';
+import path from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 
 const CI = !!process.env.CI;
+
+// Stable per-run tmpdir for the e2e seed. globalSetup creates this dir
+// + seeds auth.db; the webServer reads it as HERON_DATA_DIR via the
+// `env:` block below. CI uses a single fixed name per checkout
+// (cleaned by globalSetup at start). Local dev keeps the same path so
+// `--ui` re-runs against the same seeded state.
+const HERON_E2E_DATA_DIR =
+  process.env.HERON_E2E_DATA_DIR ?? path.join(os.tmpdir(), CI ? 'heron-e2e-ci' : 'heron-e2e-local');
+process.env.HERON_E2E_DATA_DIR = HERON_E2E_DATA_DIR;
 
 export default defineConfig({
   testDir: './e2e',
@@ -31,6 +48,12 @@ export default defineConfig({
   retries: CI ? 2 : 0,
   workers: CI ? 1 : undefined,
   reporter: CI ? [['github'], ['html', { open: 'never' }]] : 'list',
+
+  // Single-run seed lifecycle. globalSetup populates HERON_E2E_DATA_DIR
+  // BEFORE the webServer starts; globalTeardown removes the tmpdir at
+  // the end (unless HERON_E2E_PRESERVE=1 is set for debugging).
+  globalSetup: './e2e/_helpers/global-setup.ts',
+  globalTeardown: './e2e/_helpers/global-teardown.ts',
 
   use: {
     baseURL: 'http://localhost:4173',
@@ -56,5 +79,10 @@ export default defineConfig({
     timeout: 180_000, // give the build + preview boot a budget
     stdout: 'pipe',
     stderr: 'pipe',
+    // Pass the seeded HERON_DATA_DIR to the preview server so db/index.ts
+    // resolves auth.db + app.db under the tmpdir globalSetup populated.
+    env: {
+      HERON_DATA_DIR: HERON_E2E_DATA_DIR,
+    },
   },
 });
