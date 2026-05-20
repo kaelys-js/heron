@@ -215,6 +215,20 @@ export default async function globalSetup(): Promise<void> {
     authDb.close();
   }
 
+  // Sanity check -- read back what we wrote so we know the DB file is
+  // healthy + the row landed. Logged so CI debug surfaces any drift
+  // between "seed says count=1" and "webServer sees count=0".
+  const verifyDb = new Database(path.join(dataDir, 'auth.db'));
+  try {
+    const row = verifyDb.prepare('SELECT COUNT(*) AS n FROM users').get() as { n: number };
+    console.log(`[e2e:global-setup] auth.db users count: ${row.n}`);
+    if (row.n < 1) {
+      throw new Error('global-setup: users count is 0 after insert. Seed broken.');
+    }
+  } finally {
+    verifyDb.close();
+  }
+
   // Record where the seed lives so global-teardown can rm -rf it.
   // .gitignore'd via the broader e2e/.* glob (Playwright stores
   // .last-run.json etc. here too).
