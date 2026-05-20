@@ -166,14 +166,6 @@
 
     "test:coverage": {
       "dependsOn": ["brand"],
-      // Coverage MUST run fresh every time. v8 coverage is sensitive to
-      // worker timing + GC + JIT state, so cached `coverage-summary.json`
-      // can show measurably lower coverage than a fresh re-run (saw
-      // 2-3% drops between cached and fresh on identical source). The
-      // restored cache also includes the FAILING run's outputs (turbo
-      // caches by input hash regardless of task exit code), so a
-      // historical fail gets replayed forever until a meaningful input
-      // change. `cache: false` opts out -- the task always runs.
       "cache": false,
       "outputs": ["coverage/**"]
     },

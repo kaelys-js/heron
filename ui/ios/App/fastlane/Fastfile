@@ -184,10 +184,19 @@ platform :ios do
   desc "Run iOS tests for CI (single sim, xcresult + xcov + cobertura)"
   lane :test_ci do
     setup_ci if is_ci
+    # macos-15 GitHub runner ships Xcode 16 with the iOS 18 SDK. The
+    # only iPhone simulator pre-installed (per actions/runner-images)
+    # is "iPhone 16 Pro" (iOS 18.5). The screenshots/test lanes
+    # request "iPhone 17 Pro Max" which the runner doesn't have --
+    # fastlane falls back to default and xcodebuild then errors with
+    # "Unable to find a destination matching the provided destination
+    # specifier". Use the actually-installed sim here. The screenshots
+    # lane (which never runs in CI -- only locally on a Mac with the
+    # 17 sim available) keeps its 17 Pro Max for visual fidelity.
     run_tests(
       project: PROJECT,
       scheme: SCHEME,
-      devices: ["iPhone 17 Pro Max"],
+      devices: ["iPhone 16 Pro"],
       code_coverage: true,
       result_bundle: true,
       fail_build: true,
