@@ -46,6 +46,7 @@ import random
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator, Literal
+from urllib.parse import urlparse
 
 try:
     from playwright.sync_api import (
@@ -66,14 +67,14 @@ ROOT = Path(__file__).resolve().parent
 REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 
 # One persistent Chromium profile per portal PER USER. State (cookies,
-# localStorage, cache) lives inside these dirs — wiping the dir
-# disconnects that user. Under multi-user (CAREER_OPS_USER_ID set):
+# localStorage, cache) lives inside these dirs -- wiping the dir
+# disconnects that user. Under multi-user (HERON_USER_ID set):
 #   data/users/{uid}/.playwright-{portal}/
 # Legacy single-user (SYSTEM_USER_ID fallback):
 #   data/profiles/_shared/.playwright-{portal}/
 #
 # CRITICAL: the persistent dir IS the credential. Two users on one
-# machine MUST NOT share these dirs — otherwise Alice's apply would
+# machine MUST NOT share these dirs -- otherwise Alice's apply would
 # post as Bob and vice versa. See docs/security.md.
 KNOWN_PORTALS: frozenset[str] = frozenset(
     {
@@ -99,7 +100,7 @@ PROBE_TIMEOUT_MS = 15_000  # navigation timeouts during is_logged_in_* probes
 def user_data_dir(portal: str) -> Path:
     """Resolve the persistent Chromium dir for the given portal + active user.
 
-    The active user is read from CAREER_OPS_USER_ID at call time so the
+    The active user is read from HERON_USER_ID at call time so the
     same Python process can switch between users via env mutation (rare,
     but well-defined: each spawn from the orchestrator gets its own env).
 
@@ -116,7 +117,7 @@ def user_data_dir(portal: str) -> Path:
 
     user_id = resolve_user_arg()
     if user_id == SYSTEM_USER_ID:
-        # Legacy single-user fallback — under the _shared escape-hatch
+        # Legacy single-user fallback -- under the _shared escape-hatch
         # so the layout reads as "every dir under profiles/ is either
         # a profile or _shared".
         udd = REPO_ROOT / "data" / "profiles" / "_shared" / f".playwright-{portal}"
@@ -176,7 +177,14 @@ def humanize(min_s: float = 1.5, max_s: float = 4.0) -> None:
 def is_logged_in_linkedin(page: Page) -> bool:
     """Navigate to /feed/ and infer login state from the resulting URL.
     LinkedIn redirects unauthenticated users to /authwall, /login, or
-    /signup; logged-in users stay on /feed."""
+    /signup; logged-in users stay on /feed.
+
+    Match on parsed hostname + path rather than `in url` substring. The
+    previous substring form was flagged by CodeQL's
+    `py/incomplete-url-substring-sanitization`: a URL whose PATH contains
+    `linkedin.com` (`https://attacker.example/?u=linkedin.com`) would
+    have fooled the host check.
+    """
     try:
         page.goto(
             "https://www.linkedin.com/feed/",
@@ -185,15 +193,21 @@ def is_logged_in_linkedin(page: Page) -> bool:
         )
     except PlaywrightTimeout:
         return False
-    url = page.url.lower()
-    if "login" in url or "signup" in url or "authwall" in url or "checkpoint" in url:
+    parsed = urlparse(page.url)
+    host = (parsed.hostname or "").lower()
+    path = (parsed.path or "").lower()
+    if "login" in path or "signup" in path or "authwall" in path or "checkpoint" in path:
         return False
-    return "/feed" in url or "linkedin.com" in url
+    return path.startswith("/feed") or host == "linkedin.com" or host.endswith(".linkedin.com")
 
 
 def is_logged_in_indeed(page: Page) -> bool:
     """Navigate to /account and infer login state. Indeed redirects
-    unauthenticated users to secure.indeed.com/auth or /account/login."""
+    unauthenticated users to secure.indeed.com/auth or /account/login.
+
+    Match on parsed hostname + path rather than `in url` substring (see
+    is_logged_in_linkedin for the CodeQL rationale).
+    """
     try:
         page.goto(
             "https://www.indeed.com/account",
@@ -202,10 +216,14 @@ def is_logged_in_indeed(page: Page) -> bool:
         )
     except PlaywrightTimeout:
         return False
-    url = page.url.lower()
-    if "/auth" in url or "/login" in url or "secure.indeed.com" in url and "auth" in url:
+    parsed = urlparse(page.url)
+    host = (parsed.hostname or "").lower()
+    path = (parsed.path or "").lower()
+    if path.startswith("/auth") or path.startswith("/login"):
         return False
-    return "indeed.com" in url
+    if host == "secure.indeed.com" and "auth" in path:
+        return False
+    return host == "indeed.com" or host.endswith(".indeed.com")
 
 
 def login_interactive(portal: Literal["linkedin", "indeed"]) -> bool:
@@ -234,7 +252,7 @@ def login_interactive(portal: Literal["linkedin", "indeed"]) -> bool:
             page.goto(landing, timeout=PROBE_TIMEOUT_MS, wait_until="domcontentloaded")
         except PlaywrightTimeout:
             print(f"[lib_playwright_auth] Timed out loading {landing}", file=sys.stderr)
-            # Continue — the user may have manually navigated to a different URL.
+            # Continue -- the user may have manually navigated to a different URL.
 
         # Poll for login completion.
         deadline = time.time() + LOGIN_TIMEOUT_S

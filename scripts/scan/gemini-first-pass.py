@@ -30,7 +30,7 @@ import json
 import time
 from pathlib import Path
 
-# Resolve per-user secrets when CAREER_OPS_USER_ID is set; .env fallback
+# Resolve per-user secrets when HERON_USER_ID is set; .env fallback
 # otherwise. Closes the multi-user gap where GEMINI_API_KEY used to be
 # install-wide via .env only.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))

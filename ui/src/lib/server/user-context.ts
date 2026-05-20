@@ -1,33 +1,13 @@
-/**
- * user-context -- per-request user-id context via Node AsyncLocalStorage.
- *
- * Legacy server-lib functions (`profiles.ts`, `parsers.ts`, `applications.ts`,
- * `events.ts`, etc.) read "the active user's data" without taking an
- * explicit `userId` param. Adding one to every signature would touch
- * dozens of callers across the codebase.
- *
- * Instead, the hooks middleware (`hooks.server.ts`) wraps every request
- * inside `runWithUser(userId, () => resolve(event))`. Anywhere downstream
- * -- even deeply nested helpers -- can call `currentUserId()` to read the
- * acting user without parameter plumbing.
- *
- * Why AsyncLocalStorage is safe here:
- *   • Node's ALS is request-scoped by design -- each request gets its own
- *     store and they don't bleed between concurrent requests.
- *   • All our endpoints run on the same Node process; we don't fork
- *     workers mid-request.
- *   • Async/await preserves the context across `await` boundaries
- *     automatically (that's the whole point of ALS).
- *
- * Edge case -- background jobs (autopilot ticks, batch workers): these
- * run OUTSIDE a request and need to set the context explicitly. The
- * `runAsUser(userId, fn)` helper is what the jobs code uses.
- *
- * Fallback -- `currentUserIdOrDefault()` returns `'__system__'` when no
- * user is in scope. Callers that expect to be in a request context
- * should prefer `currentUserId()` which throws instead, so bugs surface
- * loudly instead of silently writing under a phantom system user.
- */
+/** user-context -- per-request user-id context via Node AsyncLocalStorage.
+ *  hooks.server.ts wraps every request in runWithUser(userId, …); any
+ *  downstream helper (profiles.ts, parsers.ts, applications.ts, events.ts)
+ *  can call currentUserId() without threading a param through every
+ *  signature. ALS is request-scoped by design, doesn't bleed between
+ *  concurrent requests, and survives await boundaries.
+ *  Background jobs (autopilot, batch) run outside a request and must set
+ *  context via runAsUser(userId, fn). currentUserIdOrDefault() returns
+ *  '__system__' when no user is in scope; routes should prefer
+ *  currentUserId() which throws, so bugs surface loudly. */
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 const SYSTEM_USER = '__system__';
@@ -77,7 +57,7 @@ export function currentUserIdOrDefault(): string {
 export const SYSTEM_USER_ID = SYSTEM_USER;
 
 /**
- * Compose a `process.env` snapshot with `CAREER_OPS_USER_ID` injected if
+ * Compose a `process.env` snapshot with `HERON_USER_ID` injected if
  * there's a current ALS user. Use this whenever you `spawn()` a child
  * process that resolves per-user file paths -- without the env var the
  * child falls back to SYSTEM_USER and writes to legacy `data/profiles/`
@@ -106,7 +86,7 @@ export function userContextEnv(extra: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv
   const merged: NodeJS.ProcessEnv = { ...process.env, ...extra };
   const uid = maybeCurrentUserId();
   if (uid && uid !== SYSTEM_USER) {
-    merged.CAREER_OPS_USER_ID = uid;
+    merged.HERON_USER_ID = uid;
   }
   return merged;
 }

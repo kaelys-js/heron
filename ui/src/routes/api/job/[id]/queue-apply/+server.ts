@@ -1,26 +1,11 @@
-/**
- * Queue-apply endpoint.
- *
- *   POST /api/job/[id]/queue-apply
- *
- * Stages the job for the autopilot apply-queue drain. Returns immediately --
- * the actual application is scheduled by the apply-queue-drain job (Task 1.2).
- *
- * Pre-flight checks:
- *   - Resolve the job + its profile (cross-profile-aware)
- *   - Refuse if status is already Applied / Applying / Queued (idempotent)
- *   - Refuse if today's apply count has hit the cap (gracefully -- the user
- *     can retry tomorrow without losing the intent)
- *
- * Status flow set by this endpoint: Scored → Queued.
- * The drain takes it from Queued → Applying → Applied | ManualApplyNeeded.
- *
- * NB: this endpoint does NOT check `profile.automation.autonomous_apply`.
- * The user is explicitly clicking the Apply button -- that's a per-action
- * consent, not a per-profile policy. The autopilot scheduled drain DOES
- * check the toggle (in apply-queue.job.ts) so background queue-pulls
- * respect the opt-in.
- */
+/** POST /api/job/[id]/queue-apply -- stage the job for the autopilot apply-
+ *  queue drain (Task 1.2). Returns immediately; the drain schedules the actual
+ *  apply. Pre-flight: resolve job + profile (cross-profile-aware); refuse if
+ *  status already Applied/Applying/Queued (idempotent); refuse if today's cap
+ *  hit. Flow: Scored → Queued; drain takes it Queued → Applying → Applied |
+ *  ManualApplyNeeded. Does NOT check automation.autonomous_apply -- explicit
+ *  click is per-action consent. The scheduled drain (apply-queue.job.ts)
+ *  honours the toggle for background pulls. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';

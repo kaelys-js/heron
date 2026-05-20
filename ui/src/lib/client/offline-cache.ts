@@ -1,36 +1,9 @@
-/**
- * offline-cache -- IndexedDB-backed read cache for the central apiCall.
- *
- * Goal: when the backend is unreachable (cellular without Tailscale,
- * airplane mode, server crashed), authenticated users see THEIR LAST
- * KNOWN data instead of a blocking "can't reach backend" overlay.
- *
- * What gets cached:
- *   Only GET responses to endpoints on the CACHEABLE_PATTERNS allowlist
- *   below. Anything else (mutations, probes, /api/health) bypasses the
- *   cache. The allowlist intentionally excludes high-cardinality URLs
- *   like /api/job/[id] -- caching every individual job would balloon
- *   storage; list endpoints already include the rows the UI needs.
- *
- * When cache is served:
- *   apiCall() falls back to the cache ONLY when the live fetch fails
- *   with a network error AND the URL is cacheable. Successful fetches
- *   always update the cache (transparent write-through). The cache is
- *   never preferred over the network -- it's purely an offline fallback.
- *
- * Eviction:
- *   No automatic eviction by age. We do trim by total-entry-count
- *   (MAX_ENTRIES) when a write would push us over, dropping the LRU
- *   entry. IndexedDB quota is browser-managed; for the small number of
- *   cacheable endpoints (~8) drift is negligible.
- *
- * Threat model:
- *   The cache holds the same data the user already saw on screen
- *   (encrypted at rest by the OS / browser). No additional security
- *   guarantees -- if an attacker has the device, they have the cache.
- *   Cleared on logout via `clearCache()` so a shared device doesn't
- *   leak the previous user's reads.
- */
+/** IndexedDB read-cache for apiCall(). Serves last-known data when the
+ *  backend is unreachable. Scope: only GET on CACHEABLE_PATTERNS list
+ *  endpoints (high-cardinality URLs like /api/job/[id] excluded). Cache
+ *  is fallback-only -- never preferred over a live fetch; successful
+ *  fetches write-through. LRU evict at MAX_ENTRIES. Cleared on logout
+ *  via clearCache() so a shared device doesn't leak prior reads. */
 
 const DB_NAME = 'heron-offline-cache';
 const DB_VERSION = 1;
@@ -53,7 +26,7 @@ const CACHEABLE_PATTERNS = [
 ] as const;
 
 type CacheEntry = {
-  url: string; // full URL including query string — keypath
+  url: string; // full URL including query string -- keypath
   data: unknown;
   cachedAt: number;
   lastAccessedAt: number;

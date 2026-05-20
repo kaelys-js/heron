@@ -1,4 +1,4 @@
-# Recruiter-reply -- drafts the personalised response to an inbound recruiter message
+# Mode: recruiter-reply -- drafts the personalised response to an inbound recruiter message
 
 NEVER auto-sends. Drafts only. The user reviews + clicks send.
 
@@ -19,7 +19,7 @@ gets ignored or auto-shelved. A good response in 5 sentences:
 - `userConcern` -- optional free-form text the user wants addressed
 - `userQuestion` -- optional free-form question to weave in
 
-Also read: `__CV__`, `config/profile.yml` (target archetypes, comp range,
+Also read: `__CV__`, `__PROFILE_YML__` (target archetypes, comp range,
 locations, work mode), `__PROFILE_MD__`.
 
 ## Output

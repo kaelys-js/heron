@@ -259,7 +259,7 @@
               <Search class="size-4" />
               <span>Search jobs…</span>
               <kbd
-                class="ml-auto text-[11px] font-mono text-muted-foreground/60 px-1 py-0.5 rounded border border-border/50"
+                class="ml-auto text-[11px] font-mono text-muted-foreground dark:text-muted-foreground/60 px-1 py-0.5 rounded border border-border/50"
                 >⌘K</kbd
               >
             </Sidebar.MenuButton>
@@ -269,7 +269,7 @@
               <Plus class="size-4" />
               <span>Add job</span>
               <kbd
-                class="ml-auto text-[11px] font-mono text-muted-foreground/60 px-1 py-0.5 rounded border border-border/50"
+                class="ml-auto text-[11px] font-mono text-muted-foreground dark:text-muted-foreground/60 px-1 py-0.5 rounded border border-border/50"
                 >N</kbd
               >
             </Sidebar.MenuButton>

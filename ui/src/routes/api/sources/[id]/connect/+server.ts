@@ -1,21 +1,12 @@
-/**
- * POST /api/sources/[id]/connect -- initiate the source-specific connect flow.
- *
- *   linkedin-auth / indeed-auth → spawns headed Playwright via the existing
- *                                  `python linkedin-easy-apply.py --login`
- *                                  pattern (extended to per-portal). User
- *                                  logs in on the desktop window; we poll
- *                                  the process exit and recordSuccess.
- *
- *   gmail-imap                  → expects { host, user, password, label } in
- *                                  body. Tests the connection synchronously,
- *                                  writes creds to .env on success, calls
- *                                  recordSuccess.
- *
- *   anthropic / gemini / adzuna → API-key sources. Re-validates the key (via
- *                                  /api/settings/test) and recordSuccess.
- *                                  The actual key is set on /settings.
- */
+/** POST /api/sources/[id]/connect -- per-source connect flow.
+ *    linkedin-auth/indeed-auth → headed Playwright via
+ *                                python linkedin-easy-apply.py --login;
+ *                                we poll process exit then recordSuccess.
+ *    gmail-imap → body { host, user, password, label }; sync test, write
+ *                 creds to .env on success, recordSuccess.
+ *    anthropic/gemini/adzuna → API-key sources, re-validates via
+ *                              /api/settings/test then recordSuccess.
+ *                              Key itself is set on /settings. */
 
 import { spawn } from 'node:child_process';
 import { wrap, badRequest } from '$lib/server/api-helpers';

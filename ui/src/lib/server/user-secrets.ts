@@ -1,63 +1,15 @@
-/**
- * user-secrets.ts -- per-user encrypted credential store.
- *
- * Each user holds their own personal credentials (Anthropic / Gemini /
- * Adzuna / Gmail-IMAP / OpenAI keys + tokens) under
- * `data/users/{userId}/profiles/_shared/secrets.json`. This module is
- * the ONLY surface that reads/writes that file.
- *
- * Why per-user (not in `.env`):
- *   The previous model shared every credential install-wide via .env.
- *   That broke the multi-user contract -- user A's Anthropic key would
- *   bill user B's evaluations, and only the OWNER could configure
- *   Gmail IMAP (see scan-email-imap.job.ts F14/F19/F27 deferred note).
- *   This module's existence retires that limitation.
- *
- * File format (single JSON blob, written atomically):
- *
- *   {
- *     "version": 1,
- *     "salt": "<base64 32-byte random -- per-user, generated once>",
- *     "entries": {
- *       "ANTHROPIC_API_KEY": {
- *         "iv": "<base64 12-byte random -- per-write>",
- *         "ciphertext": "<base64 AES-256-GCM>",
- *         "tag": "<base64 16-byte GCM auth tag>"
- *       },
- *       "GEMINI_API_KEY": { ... }
- *     }
- *   }
- *
- * Why per-entry IV instead of one envelope:
- *   - Lets listSecretKeys() return key names without decrypting the
- *     entire file (the keys aren't secret; their values are).
- *   - Lets setSecret() update a single entry without re-randomizing
- *     every other entry's IV (smaller diff, simpler atomicity story).
- *
- * Key derivation:
- *   ikm  = sha256(BETTER_AUTH_SECRET)        // 32 bytes
- *   key  = HKDF-SHA256(ikm, salt, "heron-user-secrets-v1", 32)
- *
- * Salt is per-user (stored in the file), so even with the same
- * BETTER_AUTH_SECRET two users encrypt under different keys.
- *
- * Threat model:
- *   ✓ Protects values from accidental backup tarballing / git
- *     commit of the data tree.
- *   ✓ Protects against `grep -r sk-ant data/` on a shared machine.
- *   ✗ Does NOT protect against an attacker who has BOTH the data
- *     directory AND the BETTER_AUTH_SECRET. For OS-keychain-level
- *     isolation see branding/REBRAND-PROCESS.md (rejected as
- *     out-of-scope for single-machine local-first deployments).
- *
- * Concurrency:
- *   Writes are atomic (write-to-tmp + rename). Concurrent writers
- *   from the SAME process serialize through Node's event loop -- no
- *   in-process race possible. Across-process concurrency (CLI
- *   scripts + dashboard) is mitigated by the rename being atomic
- *   on POSIX; last-writer-wins is acceptable because credentials
- *   change rarely + manually.
- */
+/** user-secrets -- per-user encrypted credential store at
+ *  data/users/{userId}/profiles/_shared/secrets.json. ONLY surface for
+ *  Anthropic / Gemini / Adzuna / Gmail-IMAP / OpenAI keys (was: shared
+ *  .env, see F14/F19/F27 in scan-email-imap.job.ts).
+ *  Format: { version:1, salt(b64, per-user), entries: { KEY: { iv(b64,
+ *  per-write), ciphertext(b64), tag(b64 AES-256-GCM) } } }. Per-entry
+ *  IV so listSecretKeys() doesn't decrypt and setSecret() doesn't
+ *  re-randomise other entries. Key: HKDF-SHA256(sha256(BETTER_AUTH_SECRET),
+ *  salt, "heron-user-secrets-v1", 32) -- per-user salt isolates users.
+ *  Threat: protects against accidental backup / git / grep; NOT against
+ *  attacker with both data dir AND BETTER_AUTH_SECRET. Atomic
+ *  write-to-tmp + POSIX rename; last-writer-wins across processes. */
 import fs from 'node:fs';
 import path from 'node:path';
 import { createCipheriv, createDecipheriv, createHash, hkdfSync, randomBytes } from 'node:crypto';
@@ -269,7 +221,7 @@ export function getCredential(userId: string, key: string): string | null {
  *
  * NOT exhaustive of every env var the app reads -- only the personal
  * credentials. Infrastructure config (BETTER_AUTH_SECRET, GITHUB_CLIENT_*,
- * CAREER_OPS_DATA_DIR, HERON_UPDATE_*) stays in `.env` because it's
+ * HERON_DATA_DIR, HERON_UPDATE_*) stays in `.env` because it's
  * shared across all users by design.
  */
 export const MIGRATABLE_KEYS = [

@@ -1,17 +1,6 @@
-/**
- * deep-links-parser -- the pure URL→route resolution function, split out
- * from deep-links.ts so it can be unit-tested in plain Node.
- *
- * The companion `deep-links.ts` adds the side-effecting wiring on top:
- *   • App.addListener('appUrlOpen') subscription
- *   • goto() + window.dispatchEvent dispatch
- *   • Capacitor + SvelteKit imports that don't load in a bare Node
- *     environment (which is what `deep-links.integration.test.ts` runs)
- *
- * Keeping this file dependency-free is a contract: do NOT add any
- * imports here other than from `./brand` (which is itself an
- * auto-generated dependency-free constants module).
- */
+/** Pure URL -> route resolver. Split from deep-links.ts so it tests
+ *  in plain Node (no Capacitor / SvelteKit imports). Contract: only
+ *  imports allowed are `./brand` (itself a generated constants module). */
 import { BRAND, BRAND_EVENTS } from './brand';
 
 /**

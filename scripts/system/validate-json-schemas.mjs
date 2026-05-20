@@ -177,8 +177,13 @@ async function loadSchema(spec) {
   if (spec.startsWith('http://') || spec.startsWith('https://')) {
     const fname = spec.replace(/[^a-zA-Z0-9._-]/g, '_');
     const cached = resolve(CACHE_DIR, fname);
-    if (existsSync(cached)) {
+    // try/catch on readFileSync rather than `existsSync ? read : fetch`
+    // -- TOCTOU-free vs `js/file-system-race`. ENOENT means "not cached
+    // yet" (fall through to fetch + writeFileSync).
+    try {
       return JSON.parse(readFileSync(cached, 'utf8'));
+    } catch (e) {
+      if (e.code !== 'ENOENT') throw e;
     }
     const res = await fetch(spec);
     if (!res.ok) {

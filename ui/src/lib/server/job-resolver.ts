@@ -1,19 +1,11 @@
-/**
- * job-resolver -- find a job by its UI-facing id and return it together with
- * the profile it lives in. Used by every per-job endpoint under
- * `/api/job/[id]/*` so they can scope to the right profile's
- * interview-prep dir, reports dir, and Claude-CLI workspace.
- *
- * Two id shapes are supported (same contract as `/job/[id]` page):
- *
- *   - bare urlId (e.g. "abc123def456") -- looked up in the active profile,
- *     then falls back to a cross-profile scan if not found
- *   - suffixed (e.g. "abc123def456:elec") -- splits the suffix and looks up
- *     in the named profile only (no fallback). This is the form emitted by
- *     `loadAllJobs('all')` to keep ids unique across profiles.
- *
- * An explicit `?profile=<slug>` query param ALWAYS wins over the suffix.
- */
+/** job-resolver -- find a job by UI id + return the profile it lives
+ *  in. Used by every /api/job/[id]/* endpoint to scope to the right
+ *  profile's interview-prep, reports, and CLI workspace.
+ *  Two id shapes (same contract as /job/[id]): bare urlId (looked up
+ *  in active profile, falls back to cross-profile scan) and suffixed
+ *  "urlId:slug" (named profile only, no fallback -- the form emitted
+ *  by loadAllJobs('all') to keep ids unique).
+ *  Explicit ?profile=<slug> query param ALWAYS wins. */
 
 import type { Job } from '$lib/types';
 import { loadAllJobs } from './parsers';

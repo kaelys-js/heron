@@ -1,29 +1,11 @@
-/**
- * GET /api/job/[id]/visa-check
- *
- * Visa / work-authorisation gate. Combines two sources:
- *
- *   1. User's profile.yml -- `targeting.visa.status` (e.g. 'us-citizen',
- *      'eu-citizen', 'h1b-needed', 'h1b-transfer', 'green-card', 'permanent-resident', 'unknown')
- *      and `targeting.visa.willingToRelocate`.
- *
- *   2. Job description -- heuristics over the JD text:
- *      - "must be authorised to work in {country} without sponsorship"
- *      - "we do not provide visa sponsorship"
- *      - "h1b sponsorship available" / "willing to sponsor"
- *      - "security clearance" / "must be us citizen"
- *      - JD location vs user's `targeting.locations`
- *
- * Returns:
- *   verdict: 'ok' | 'risk' | 'block'
- *   reasons: string[]   // human-readable list
- *   advice:  string     // what to do next
- *
- * Used by:
- *   • Apply gate (the dispatcher reads this before clicking Submit)
- *   • Job-page badge (renders a chip on the header when verdict != 'ok')
- *   • Inbox card when an apply attempt is blocked by visa
- */
+/** GET /api/job/[id]/visa-check -- visa / work-authorisation gate combining
+ *  profile.yml (targeting.visa.status: us-citizen|eu-citizen|h1b-needed|
+ *  h1b-transfer|green-card|permanent-resident|unknown + willingToRelocate)
+ *  with JD heuristics (must-be-authorised, no-sponsorship, sponsorship-
+ *  available, security-clearance, citizenship-required, location vs
+ *  targeting.locations). Returns verdict ('ok'|'risk'|'block') + reasons +
+ *  advice. Consumed by the apply gate, job-page badge, and Inbox card on
+ *  visa-blocked apply. */
 
 import fs from 'node:fs';
 import { wrap, badRequest } from '$lib/server/api-helpers';

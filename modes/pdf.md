@@ -16,12 +16,12 @@
 10. Build the competency grid from the JD requirements (6-8 keyword phrases)
 11. Inject keywords naturally into existing achievements (NEVER invent)
 12. Generate the full HTML from the template + personalized content
-13. Read `name` from `config/profile.yml` → normalize to kebab-case lowercase (e.g. "John Doe" → "john-doe") → `{candidate}`
+13. Read `name` from `__PROFILE_YML__` → normalize to kebab-case lowercase (e.g. "John Doe" → "john-doe") → `{candidate}`
 14. Write HTML to `/tmp/cv-{candidate}-{company}.html`
-15. Run: `node generate-pdf.mjs /tmp/cv-{candidate}-{company}.html __OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf --format={letter|a4}`
+15. Run: `node scripts/cv/generate-pdf.mjs /tmp/cv-{candidate}-{company}.html __OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf --format={letter|a4}`
     - generate-pdf.mjs automatically reads the template's `<meta>` tags (author, subject, keywords, description) and injects them into the PDF Info dictionary. No need to pass `--author=...` via CLI if the HTML carries them.
     - The PDF is generated with `tagged: true` (PDF/UA) by default -- semantic structure tags that help ATS parsers and screen readers.
-16. **Validate ATS compatibility**: `node ats-check.mjs __OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf`
+16. **Validate ATS compatibility**: `node scripts/cv/ats-check.mjs __OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.pdf`
     - Score < 90% → review warnings, adjust template/content, regenerate.
     - The check verifies: complete metadata, normalized unicode, standard section headers, preserved hyperlinks, reading order, page count, file size, no embedded JS/forms/encryption.
 17. **ALSO write the SOURCE markdown of the tailored version** to `__OUTPUT__/cv-{candidate}-{company}-{YYYY-MM-DD}.md` (sibling of the .pdf).
@@ -78,18 +78,18 @@ Use the template at `cv-template.html`. Replace the `{{...}}` placeholders with 
 |-------------|---------|
 | `{{LANG}}` | `en` |
 | `{{PAGE_WIDTH}}` | `8.5in` (letter) or `210mm` (A4) |
-| `{{NAME}}` | (from profile.yml) |
+| `{{NAME}}` | (from `__PROFILE_YML__`) |
 | `{{ROLE_TITLE}}` | The exact role title from the JD (e.g. "Senior Software Engineer"). Appears in the HTML `<title>` and becomes the PDF Title metadata -- recruiters file by this. |
 | `{{ROLE_AT_COMPANY}}` | `"<role> -- <company>"` (e.g. "Senior Software Engineer -- Acme Corp"). Becomes the PDF Subject metadata -- many ATSes sort by this field. |
 | `{{KEYWORDS_CSV}}` | Comma-separated list of the 15-20 JD keywords (e.g. `"Python, TypeScript, RAG, MLOps, LangChain, …"`). Becomes the PDF Keywords metadata -- several ATSes index by this field. |
 | `{{SUMMARY_DESCRIPTION}}` | First line of the Professional Summary (≤ 150 chars). Becomes the PDF Description metadata. |
-| `{{PHONE}}` | (from profile.yml -- include with its separator only when `profile.yml` has a non-empty `phone` value; omit both `<span>` and `<span class="separator">` otherwise) |
-| `{{EMAIL}}` | (from profile.yml) |
-| `{{LINKEDIN_URL}}` | [from profile.yml] |
-| `{{LINKEDIN_DISPLAY}}` | [from profile.yml] |
-| `{{PORTFOLIO_URL}}` | [from profile.yml] |
-| `{{PORTFOLIO_DISPLAY}}` | [from profile.yml] |
-| `{{LOCATION}}` | [from profile.yml] |
+| `{{PHONE}}` | (from `__PROFILE_YML__` -- include with its separator only when `__PROFILE_YML__` has a non-empty `phone` value; omit both `<span>` and `<span class="separator">` otherwise) |
+| `{{EMAIL}}` | (from `__PROFILE_YML__`) |
+| `{{LINKEDIN_URL}}` | [from `__PROFILE_YML__`] |
+| `{{LINKEDIN_DISPLAY}}` | [from `__PROFILE_YML__`] |
+| `{{PORTFOLIO_URL}}` | [from `__PROFILE_YML__`] |
+| `{{PORTFOLIO_DISPLAY}}` | [from `__PROFILE_YML__`] |
+| `{{LOCATION}}` | [from `__PROFILE_YML__`] |
 | `{{SECTION_SUMMARY}}` | Professional Summary |
 | `{{SUMMARY_TEXT}}` | Personalized summary with keywords |
 | `{{SECTION_COMPETENCIES}}` | Core Competencies |
@@ -107,7 +107,7 @@ Use the template at `cv-template.html`. Replace the `{{...}}` placeholders with 
 
 ## Canva CV Generation (optional)
 
-If `config/profile.yml` has `cv.canva_resume_design_id` set, offer the user a choice before generating:
+If `__PROFILE_YML__` has `cv.canva_resume_design_id` set, offer the user a choice before generating:
 - **"HTML/PDF (fast, ATS-optimized)"** -- the existing flow above
 - **"Canva CV (visual, design-preserving)"** -- the flow below
 

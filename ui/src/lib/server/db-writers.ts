@@ -1,19 +1,9 @@
-/**
- * db-writers -- DB-mirror writers for activity_events + issues.
- *
- * The JSONL files (`data/activity.jsonl`, `data/issues.jsonl`) remain the
- * cheap append-only source of truth. These functions mirror each write
- * into the matching app.db table so the UI can do indexed per-user
- * queries (e.g. "show me Alice's last 100 errors of source=apply-*").
- *
- * Each writer is tolerant of DB failures -- if the insert throws, we
- * swallow it so a DB hiccup doesn't break the file-based source of
- * truth. The UI falls back to the JSONL parser when the DB table is
- * empty (legacy install).
- *
- * Other tables in app.db (profiles, ui_prefs) have their own dedicated
- * modules (`profiles-db.ts`, `ui-prefs.ts`) that own both read and write.
- */
+/** db-writers -- mirror activity.jsonl + issues.jsonl writes into the
+ *  matching app.db tables so the UI can do indexed per-user queries.
+ *  JSONL stays the source of truth; DB insert failures are swallowed so
+ *  a DB hiccup doesn't break file appends. UI falls back to the JSONL
+ *  parser when the table is empty (legacy install).
+ *  Other tables (profiles, ui_prefs) own their own read+write modules. */
 import { appDb } from './db';
 import { activityEvents, issues as issuesTable } from './db/app-schema';
 import { and, eq } from 'drizzle-orm';

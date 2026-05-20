@@ -1,4 +1,4 @@
-# Resignation letter -- leave on good terms, keep the door open
+# Mode: resignation -- leave on good terms, keep the door open
 
 You're drafting the letter the user will send to their CURRENT employer
 to resign. Not for the new employer.

@@ -1,18 +1,11 @@
-/**
- * POST /api/calendar/sync
- *
- * Return an iCalendar (.ics) feed of the user's interviews + prep blocks +
- * decision deadlines for the next 60 days. The Capacitor app (iOS / macOS)
- * subscribes the OS calendar to this URL so events show up natively.
- *
- * Body: { calendarUrl?: string }   -- when provided, the server records
- *   the URL so a future push-notification can fire if the calendar feed
- *   subscription is broken (P10 follow-up). Not required to fetch the feed.
- *
- * The feed is read-only -- we never write back to the OS calendar. One-way
- * push only. If the user wants to delete an event, they edit it on the
- * dashboard side.
- */
+/** POST /api/calendar/sync -- returns an iCalendar (.ics) feed of the
+ *  user's interviews + prep blocks + decision deadlines for the next 60
+ *  days. The Capacitor app (iOS / macOS) subscribes the OS calendar to
+ *  this URL so events show up natively.
+ *  Body: { calendarUrl? } -- when provided, server records the URL so a
+ *  future push-notification can fire if the subscription breaks (P10
+ *  follow-up). Not required to fetch the feed.
+ *  Read-only / one-way push -- to delete an event, edit on dashboard side. */
 
 import { wrap } from '$lib/server/api-helpers';
 import { findUpcomingInterviews } from '$lib/server/interviewers';

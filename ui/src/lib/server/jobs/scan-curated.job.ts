@@ -1,19 +1,11 @@
-/**
- * Curated-board scan -- wraps `scan-curated.mjs`.
- *
- * scan-curated handles niche boards that don't expose a public ATS API
- * and aren't covered by JobSpy or scan.mjs. Currently: AI Jobs (aijobs.net).
- * Output schema is identical to scan.mjs so dedup + pipeline.md stay
- * unified.
- *
- * Args:
- *   { source: string }  -- only one source ('aijobs')
- *   { pages: number }   -- max pages per source (default: walks until empty)
- *   { dryRun: boolean }
- *
- * Schedule: weekdays 08:30 (30 min after the portal scan, to spread the
- * load and let the ATS scan finish before the title filters cross-check).
- */
+/** Curated-board scan -- wraps scan-curated.mjs. Handles niche boards
+ *  without a public ATS API and not covered by JobSpy or scan.mjs;
+ *  currently AI Jobs (aijobs.net). Output schema matches scan.mjs so
+ *  dedup + pipeline.md stay unified.
+ *  Args: { source } (only 'aijobs' today), { pages } (default walks
+ *  until empty), { dryRun }.
+ *  Schedule: weekdays 08:30 (30 min after portal scan so the ATS run
+ *  finishes before title-filter cross-checks). */
 
 import { spawn } from 'node:child_process';
 import { ROOT } from '../files';

@@ -1,20 +1,13 @@
-/**
- * job-last-run -- per-job last-run state for jobs registered via the
- * job registry (lib/server/jobs/*.job.ts). Stored separately from the
- * autopilot config so registry-declared schedules don't have to be
- * duplicated into `data/autopilot.json` just to track lastRunAt.
- *
- * Storage: `data/users/{userId}/profiles/_shared/job-last-run.json`
- * (or the legacy `data/profiles/_shared/job-last-run.json` for
- * SYSTEM_USER_ID single-user installs). PER-USER (F10) -- pre-fix this
- * was a single global file which broke scheduler fan-out: when user A
- * ran scan-portals at 9:00am, user B's tick at 9:01 saw lastRunAt
- * today and skipped, so user B's scan never fired.
- *
- * Used by `autopilot.ts:tick()` to dedupe today-firing of
- * registry-declared schedules, and by `autopilot.ts:trackResult()` to
- * flip lastRunResult success/failure after the job exits.
- */
+/** Per-job last-run state for jobs registered via the job registry
+ *  (lib/server/jobs/*.job.ts). Stored separately from autopilot config
+ *  so registry-declared schedules don't have to be duplicated into
+ *  `autopilot.json` just to track lastRunAt. Storage: per-user at
+ *  `data/users/{userId}/profiles/_shared/job-last-run.json` (legacy
+ *  `data/profiles/_shared/job-last-run.json` under SYSTEM_USER_ID).
+ *  F10 -- must be per-user; a single global file would let user A's
+ *  9:00am scan suppress user B's 9:01am tick. Used by autopilot.ts
+ *  tick() to dedupe today-firing and trackResult() to flip the
+ *  success/failure flag after the job exits. */
 
 import fs from 'node:fs';
 import path from 'node:path';

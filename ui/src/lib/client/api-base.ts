@@ -1,29 +1,9 @@
-/**
- * api-base -- single source of truth for "where do `/api/*` calls go".
- *
- * Why this exists:
- *
- *   Same-origin browsers (`pnpm dev` on Mac, Electron embedded server)
- *   talk to a backend that lives at `window.location.origin` -- fetch with
- *   a relative path "just works".
- *
- *   Capacitor iOS / Android live at custom URL schemes (`heron://localhost`
- *   on iOS, `https://localhost` on Android-with-WebView) that don't actually
- *   serve HTTP. Any relative-URL fetch in those WebViews hits a phantom
- *   origin and 404s. The fix is to discover the real backend at boot
- *   (lib/client/backend-discovery.ts: localhost dev → mDNS → Tailscale →
- *   production) and prepend it to every fetch.
- *
- * Usage:
- *
- *   import { getApiBase } from '$lib/client/api-base';
- *   const base = await getApiBase();   // '' on web, 'http://192.168.1.5:5173' on iOS
- *   await fetch(base + '/api/health');
- *
- * `apiBaseSync()` is the synchronous read used by code that can't await
- * (early hydration, top-level module imports). It returns '' until the
- * first `getApiBase()` resolves, then the cached value.
- */
+/** Where do /api/* calls go? Same-origin on web (returns ''), but
+ *  Capacitor WebViews live at heron://localhost which serves no HTTP --
+ *  fetch needs the real backend URL. `getApiBase()` resolves via
+ *  backend-discovery (localhost / mDNS / Tailscale / production).
+ *  `apiBaseSync()` returns the cached value (or '' before first
+ *  resolve) for code that can't await. */
 import { resolveBackend, type BackendSource } from './backend-discovery';
 
 let cachedBase: string | null = null;

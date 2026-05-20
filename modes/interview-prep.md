@@ -9,7 +9,7 @@ When the user asks to prep for an interview at a specific company+role, or when 
 3. **Evaluation report** in `__REPORTS__/` (if exists) -- read for archetype, gaps, matched proof points
 4. **Story bank** at `__STORY_BANK__` -- read for existing prepared stories
 5. **CV** at `__CV__` + `__ARTICLE_DIGEST__` -- read for proof points
-6. **Profile** at `config/profile.yml` + `__PROFILE_MD__` -- read for candidate context
+6. **Profile** at `__PROFILE_YML__` + `__PROFILE_MD__` -- read for candidate context
 
 ## Stage tuning
 
@@ -86,7 +86,7 @@ For each: the question, source, and what a strong answer looks like for this can
 ### Behavioral
 
 Questions about leadership, conflict, collaboration, failure.
-For each: the question, source, and which story from `story-bank.md` maps best.
+For each: the question, source, and which story from `__STORY_BANK__` maps best.
 
 ### Role-Specific
 
@@ -100,7 +100,7 @@ For each: the likely question, why it comes up, and a recommended framing (hones
 
 ## Step 5 -- Story Bank Mapping
 
-| #   | Likely question/topic | Best story from story-bank.md | Fit                 | Gap? |
+| #   | Likely question/topic | Best story from `__STORY_BANK__` | Fit                 | Gap? |
 | --- | --------------------- | ----------------------------- | ------------------- | ---- |
 | 1   | ...                   | [Story Title]                 | strong/partial/none |      |
 

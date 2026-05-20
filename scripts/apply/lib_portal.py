@@ -64,7 +64,7 @@ class PortalConfig:
     portal_id: str  # 'workable' | 'personio' | etc
     user_data_dir: Path  # .playwright-{portal}/
 
-    # Basic-field selectors (CSS — listed in order of preference).
+    # Basic-field selectors (CSS -- listed in order of preference).
     # Each adapter overrides whichever the portal actually uses.
     name_selectors: list[str] = field(default_factory=list)
     first_name_selectors: list[str] = field(default_factory=list)
@@ -87,11 +87,11 @@ class PortalConfig:
         ]
     )
 
-    # Optional initial-CTA — when the portal lands the user on a description
+    # Optional initial-CTA -- when the portal lands the user on a description
     # page first and a separate "Apply" button opens the form.
     initial_apply_selectors: list[str] = field(default_factory=list)
 
-    # Cookie-banner / GDPR / consent CTA — clicked silently before form fill.
+    # Cookie-banner / GDPR / consent CTA -- clicked silently before form fill.
     cookie_dismiss_selectors: list[str] = field(default_factory=list)
 
     # Portal-specific "already applied" body markers (in addition to lib_apply.detect_already_applied).
@@ -100,10 +100,10 @@ class PortalConfig:
     # Portal-specific confirmation body markers (in addition to the generic ones).
     confirmation_markers: list[str] = field(default_factory=list)
 
-    # Optional URL fixer — some portals require /apply suffix.
+    # Optional URL fixer -- some portals require /apply suffix.
     url_transform: Optional[Callable[[str], str]] = None
 
-    # Optional schema fetcher — returns a list of custom-question dicts
+    # Optional schema fetcher -- returns a list of custom-question dicts
     # the adapter walks. Each: {label, required, type, options?}.
     schema_fetcher: Optional[Callable[[Optional[str], Optional[str]], list[dict]]] = None
 
@@ -327,7 +327,7 @@ def run_portal_apply(
             pass
         step("page_loaded")
 
-        # Cookie banners first — they often steal click events.
+        # Cookie banners first -- they often steal click events.
         dismiss_cookies(page, cfg.cookie_dismiss_selectors)
 
         # Hard blockers.
@@ -338,7 +338,7 @@ def run_portal_apply(
         if detect_already_applied_combined(page, cfg.already_applied_markers):
             return emit_result("manual-apply-needed", "already-applied")
 
-        # Initial Apply-CTA — when the portal lands you on the JD page first.
+        # Initial Apply-CTA -- when the portal lands you on the JD page first.
         if cfg.initial_apply_selectors:
             if click_first_visible(page, cfg.initial_apply_selectors):
                 step("clicked_initial_apply")
@@ -385,7 +385,7 @@ def run_portal_apply(
                 except Exception:
                     continue
 
-        # Custom Q&A — from schema if available, else heuristic discovery.
+        # Custom Q&A -- from schema if available, else heuristic discovery.
         answers_cache = load_form_answers(profile_id)
         questions: list[dict] = []
         if cfg.schema_fetcher:

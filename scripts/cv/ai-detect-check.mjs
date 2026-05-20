@@ -323,7 +323,7 @@ const perplexitySignal = (() => {
   if (topRatio >= 0.45) return 45;
   if (topRatio >= 0.4) return 25;
   if (topRatio >= 0.3) return 10;
-  return 30; // suspiciously LOW top-1k ratio — overly jargon-heavy, but not AI
+  return 30; // suspiciously LOW top-1k ratio -- overly jargon-heavy, but not AI
 })();
 
 // ── 2. Burstiness ──────────────────────────────────────────────────

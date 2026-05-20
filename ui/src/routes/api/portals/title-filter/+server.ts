@@ -1,17 +1,10 @@
-/**
- * POST /api/portals/title-filter
- *
- * Patches `title_filter.positive` + `title_filter.negative` in portals.yml.
- * Used by the onboarding wizard's targeting step. Preserves every other
- * field (tracked_companies, search_queries, sources, seniority_boost).
- *
- * If portals.yml doesn't exist yet, the canonical template at
- * `templates/portals.example.yml` is copied first so the user inherits the
- * curated 100+-company starter list.
- *
- * Request:  { positive: string[]; negative: string[] }
- * Response: { snapshot: PortalsSnapshot }
- */
+/** POST /api/portals/title-filter -- patch title_filter.positive +
+ *  title_filter.negative in portals.yml. Used by the onboarding wizard's
+ *  targeting step. Preserves every other field (tracked_companies,
+ *  search_queries, sources, seniority_boost). If portals.yml is missing,
+ *  templates/portals.example.yml is copied first so the user inherits the
+ *  curated 100+-company starter list. Request: { positive: string[];
+ *  negative: string[] }. Response: { snapshot: PortalsSnapshot }. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { writePortalsTitleFilter } from '$lib/server/portals';

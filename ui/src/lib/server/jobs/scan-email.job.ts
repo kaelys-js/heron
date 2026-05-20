@@ -1,19 +1,9 @@
-/**
- * Email-alert ingestion -- wraps `scan-email.mjs`.
- *
- * Reads .mbox files from data/inbox-mbox/ (Google Takeout output for the
- * user's job-alert label) and parses LinkedIn / Indeed alert URLs into
- * the unified pipeline.
- *
- * Trigger: manual only by default. Email ingestion is event-driven (a
- * new mbox just landed) rather than time-driven, and there's nothing to
- * gain by polling an empty inbox-mbox/ folder on a schedule.
- *
- * Args:
- *   { dryRun: boolean }
- *   { keep: boolean }   -- don't move processed files
- *   { file: string }    -- process a single explicit path
- */
+/** Email-alert ingestion -- wraps `scan-email.mjs`. Reads .mbox files
+ *  from data/inbox-mbox/ (Google Takeout of the user's job-alert label)
+ *  and parses LinkedIn / Indeed alert URLs into the unified pipeline.
+ *  Trigger: manual only -- ingestion is event-driven (mbox landed), not
+ *  time-driven, so polling an empty folder buys nothing.
+ *  Args: { dryRun?, keep? (don't move processed files), file? (single path) }. */
 
 import { spawn } from 'node:child_process';
 import { ROOT } from '../files';

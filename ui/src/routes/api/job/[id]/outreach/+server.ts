@@ -1,16 +1,9 @@
-/**
- * LinkedIn outreach drafter.
- *
- *   POST /api/job/[id]/outreach  { persona: 'hiring-manager' | 'recruiter' | 'peer' }
- *
- * Spawns `claude -p "/heron contacto --url <url> --persona <persona>"`
- * to produce 2-3 cold-message variants tuned to the chosen persona. The
- * mode reads cv.md + the report file + profile.yml so the messages
- * reference the user's actual proof points instead of generic praise.
- *
- * Persists output to interview-prep/{slug}-outreach-{persona}.md so a
- * page reload restores the variants without re-spawning.
- */
+/** POST /api/job/[id]/outreach -- LinkedIn outreach drafter. Body:
+ *  { persona: 'hiring-manager' | 'recruiter' | 'peer' }. Spawns the contacto
+ *  mode to produce 2-3 cold-message variants tuned to the persona. The mode
+ *  reads cv.md + report + profile.yml so messages reference the user's actual
+ *  proof points, not generic praise. Persists to interview-prep/{slug}-
+ *  outreach-{persona}.md so reloads restore without re-spawning. */
 
 import fs from 'node:fs';
 import path from 'node:path';

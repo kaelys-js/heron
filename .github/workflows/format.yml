@@ -2,7 +2,7 @@ name: Auto-format
 
 # Runs `pnpm format` on every push to main and pushes the result back
 # as a separate commit. Eliminates the "format-check failed in CI"
-# class of failure entirely — we always commit pre-formatted code
+# class of failure entirely -- we always commit pre-formatted code
 # because the bot fixes it for us when we forget.
 #
 # Safe-loop rules:
@@ -22,9 +22,12 @@ on:
   push:
     branches: [main]
 
-# Needs `contents: write` so it can push back. No other permissions.
-permissions:
-  contents: write
+# Top-level is the safe default (no inherited writes). The single job
+# that needs to push back declares `contents: write` for itself --
+# Scorecard's TokenPermissions rubric wants the narrowest declaration
+# possible at the top level so a hand-edit that adds a new job can't
+# silently inherit write.
+permissions: {}
 
 concurrency:
   group: auto-format-${{ github.ref }}
@@ -39,9 +42,16 @@ jobs:
     name: Format + auto-commit
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Skip when WE pushed the format fix — prevents an infinite loop.
+    permissions:
+      contents: write # pushes the auto-format commit back to the branch
+    # Skip when WE pushed the format fix -- prevents an infinite loop.
     if: github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip ci]')
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -84,29 +94,35 @@ jobs:
 
       - name: Commit + push fix
         if: steps.drift.outputs.drift == 'true'
-        # G31 — retry-with-rebase on push race. Pre-fix a concurrent push
+        # G31 -- retry-with-rebase on push race. Pre-fix a concurrent push
         # between this workflow's checkout and push would 422 silently
         # (concurrency.cancel-in-progress: false means our run completes,
         # but the push fails and we don't notice). Now we rebase + retry
         # up to 3× before giving up.
+        #
+        # zizmor/template-injection -- $REF_NAME / $FILES are dereferenced
+        # by the shell, not expanded by the workflow templater, so a
+        # branch name with shell metachars can't escape the string.
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          FILES: ${{ steps.drift.outputs.files }}
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          FILES='${{ steps.drift.outputs.files }}'
           SUFFIX=$([ "$FILES" -gt 1 ] && echo s)
           git commit -m "style: auto-format ($FILES file$SUFFIX) [skip ci]" \
                      -m "Automated commit by .github/workflows/format.yml — runs \`pnpm format\` and pushes the result so format-check in Tests can't fail on drift."
 
           for attempt in 1 2 3; do
-            if git push origin "HEAD:${{ github.ref_name }}"; then
+            if git push origin "HEAD:${REF_NAME}"; then
               echo "::notice::Pushed on attempt $attempt"
               exit 0
             fi
             echo "::warning::Push attempt $attempt failed — rebasing + retrying"
-            git fetch origin "${{ github.ref_name }}"
-            git rebase "origin/${{ github.ref_name }}"
+            git fetch origin "${REF_NAME}"
+            git rebase "origin/${REF_NAME}"
           done
           echo "::error::Push failed after 3 attempts (concurrent commits beat us). Re-run this workflow manually."
           exit 1

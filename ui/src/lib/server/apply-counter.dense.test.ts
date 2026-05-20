@@ -7,7 +7,7 @@ import path from 'node:path';
 import { tmpdir } from 'node:os';
 
 const TMP = path.join(tmpdir(), 'heron-apply-counter-dense-' + Date.now());
-vi.mock('./files', () => ({ ROOT: TMP }));
+vi.mock('./files', () => ({ ROOT: TMP, DATA_ROOT: path.join(TMP, 'data') }));
 
 const { todayCount, bumpApplyCounter, applyCounterPath } = await import('./apply-counter');
 

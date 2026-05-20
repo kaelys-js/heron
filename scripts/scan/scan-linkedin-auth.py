@@ -195,7 +195,7 @@ def scrape_one_query(page, keywords: str, location: str, max_pages: int) -> list
         print(f"  Timed out loading {url}", file=sys.stderr)
         return []
 
-    # Captcha / verification check — same heuristic as linkedin-easy-apply.py
+    # Captcha / verification check -- same heuristic as linkedin-easy-apply.py
     body_text = (page.content() or "")[:5000].lower()
     if any(
         k in body_text
@@ -357,7 +357,7 @@ def main():
     with launch_persistent("linkedin", headed=False) as ctx:
         page = ctx.new_page()
 
-        # Bail early if session expired — surfaces a clear error to /sources.
+        # Bail early if session expired -- surfaces a clear error to /sources.
         if not is_logged_in_linkedin(page):
             print(
                 "ERROR: LinkedIn session expired. Click Reconnect on /sources.",
@@ -391,7 +391,7 @@ def main():
     print(f"Filtered: {total_filtered}", file=sys.stderr)
     print(f"Duplicates: {total_dupes}", file=sys.stderr)
     print(f"New offers: {len(new_rows)}", file=sys.stderr)
-    # Stdout summary line — orchestrator parses this.
+    # Stdout summary line -- orchestrator parses this.
     print(f"Total jobs found: {len(new_rows)}")
 
     if not args.dry_run and new_rows:

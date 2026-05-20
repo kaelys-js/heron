@@ -31,13 +31,6 @@
         "tool",
         "test"
       ]
-    },
-    {
-      "login": "santifer",
-      "name": "santifer",
-      "avatar_url": "https://avatars.githubusercontent.com/santifer",
-      "profile": "https://github.com/santifer",
-      "contributions": ["code", "ideas", "design"]
     }
   ]
 }

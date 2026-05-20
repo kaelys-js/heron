@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Heron batch runner — standalone orchestrator for AI CLI workers
+# Heron batch runner -- standalone orchestrator for AI CLI workers
 # Reads batch-input.tsv, delegates each offer to an AGENT_CLI -p worker,
 # tracks state in batch-state.tsv for resumability.
 #
@@ -18,28 +18,28 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Resolve the active profile id (orchestrator-set or read from
 # data/profiles.json). Used to derive every per-profile path below.
-_CAREER_OPS_PROFILE_ID="${CAREER_OPS_PROFILE_ID:-$(node -e "
+_HERON_PROFILE_ID="${HERON_PROFILE_ID:-$(node -e "
   try {
     const p = JSON.parse(require('node:fs').readFileSync('$PROJECT_DIR/data/profiles.json', 'utf8'));
     process.stdout.write(p.activeId || 'default');
   } catch { process.stdout.write('default'); }
 " 2>/dev/null || echo default)}"
 
-# When the dashboard's orchestrator invokes us, it sets CAREER_OPS_USER_ID
+# When the dashboard's orchestrator invokes us, it sets HERON_USER_ID
 # so we resolve data/users/{uid}/profiles/{slug}/. Standalone invocations
 # (no user context) fall back to the legacy single-user data/profiles/{slug}/
 # tree under the SYSTEM_USER sentinel. Concurrent batches for different
 # users (or different profiles for the same user) never collide on state.
-if [ -n "${CAREER_OPS_USER_ID:-}" ]; then
-  _PROFILE_BASE="$PROJECT_DIR/data/users/$CAREER_OPS_USER_ID/profiles/$_CAREER_OPS_PROFILE_ID"
+if [ -n "${HERON_USER_ID:-}" ]; then
+  _PROFILE_BASE="$PROJECT_DIR/data/users/$HERON_USER_ID/profiles/$_HERON_PROFILE_ID"
 else
-  _PROFILE_BASE="$PROJECT_DIR/data/profiles/$_CAREER_OPS_PROFILE_ID"
+  _PROFILE_BASE="$PROJECT_DIR/data/profiles/$_HERON_PROFILE_ID"
 fi
 
 # BATCH_DIR honours an explicit orchestrator override so the dashboard's
 # resolved profilePath(user, profile, 'batch-dir') wins over the env-derived
 # default. Standalone runs build it from $_PROFILE_BASE above.
-BATCH_DIR="${CAREER_OPS_BATCH_DIR:-$_PROFILE_BASE/batch}"
+BATCH_DIR="${HERON_BATCH_DIR:-$_PROFILE_BASE/batch}"
 mkdir -p "$BATCH_DIR"
 
 INPUT_FILE="$BATCH_DIR/batch-input.tsv"
@@ -47,7 +47,7 @@ STATE_FILE="$BATCH_DIR/batch-state.tsv"
 # PROMPT_FILE: orchestrator pre-resolves __TOKEN__ placeholders in
 # modes/batch-prompt.md against the active profile + writes the
 # realized version to a temp file, passing the path via BATCH_PROMPT_FILE.
-# Standalone (non-dashboard) runs fall back to the literal file — those
+# Standalone (non-dashboard) runs fall back to the literal file -- those
 # users get a prompt with __CV__ etc. unresolved, which is the visible
 # failure mode that prompts them to invoke via the dashboard.
 PROMPT_FILE="${BATCH_PROMPT_FILE:-$PROJECT_DIR/modes/batch-prompt.md}"

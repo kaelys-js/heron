@@ -75,7 +75,7 @@ from lib_apply import (  # noqa: E402
 from lib_profiles import resolve_profile_arg, resolve_user_arg, profile_path  # noqa: E402
 from lib_playwright_auth import user_data_dir as _resolve_user_data_dir  # noqa: E402
 
-# Per-user Playwright session dir — resolves per active CAREER_OPS_USER_ID.
+# Per-user Playwright session dir -- resolves per active HERON_USER_ID.
 USER_DATA_DIR = _resolve_user_data_dir("ashby")
 DISPATCHER_JOB_ID: str = ""
 
@@ -113,7 +113,7 @@ def fetch_ashby_schema(company: Optional[str], job_id: Optional[str]) -> Optiona
     except urllib.error.HTTPError as e:
         if e.code == 403:
             # Cloudflare blocked our API call too. The form will likely
-            # block as well — but persistent context warms over time.
+            # block as well -- but persistent context warms over time.
             print("  [ashby-api] Cloudflare 403 on schema fetch", file=sys.stderr)
         return None
     except Exception:
@@ -287,7 +287,7 @@ def fill_custom(page, question: dict, answers_cache: dict) -> str:
     label = question.get("label", "")
     required = bool(question.get("required"))
     qtype = (question.get("type") or "input_text").lower()
-    # EEO short-circuit — Ashby's voluntary self-ID step uses the same
+    # EEO short-circuit -- Ashby's voluntary self-ID step uses the same
     # decline-to-answer escape hatch as Greenhouse. Default: decline.
     if is_eeo_label(label):
         if auto_decline_eeo(page, label):
@@ -451,7 +451,7 @@ def run(args) -> int:
                 except Exception:
                     pass
 
-            # Cover letter — RichText OR file upload depending on schema.
+            # Cover letter -- RichText OR file upload depending on schema.
             cl_plan = plan["cover_letter"]
             if isinstance(cl_plan, dict) and cl_plan.get("present"):
                 mode = cl_plan.get("mode", "auto")
@@ -466,7 +466,7 @@ def run(args) -> int:
                     except Exception:
                         pass
 
-            # Custom Q&A — pull from the persistent JSONL cache (the TS-side
+            # Custom Q&A -- pull from the persistent JSONL cache (the TS-side
             # UI writes here when the user confirms an answer). Legacy
             # profile.yml.form_answers entries are merged in for back-compat.
             answers_cache = load_form_answers(profile_id)

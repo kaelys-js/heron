@@ -1,21 +1,9 @@
-/**
- * Interviewer panel for a single job.
- *
- * GET  /api/job/[id]/interviewers
- *   → list every interviewer for this job (slug, name, title, stage, scheduledAt,
- *     dossierPath, questionsPath, thankYouPath, notes, updatedAt).
- *
- * POST /api/job/[id]/interviewers
- *   body: { name, title?, email?, linkedinUrl?, twitterUrl?, githubUrl?,
- *           stage, scheduledAt?, notes? }
- *   → upsert by slug (slug derived from name unless supplied).
- *
- * The "remove" + "spawn-dossier" endpoints live as siblings:
- *   • DELETE /api/job/[id]/interviewers/[slug]
- *   • POST   /api/job/[id]/interviewers/[slug]/dossier
- *   • POST   /api/job/[id]/interviewers/[slug]/questions
- *   • POST   /api/job/[id]/interviewers/[slug]/thank-you
- */
+/** Interviewer panel for a single job. GET /api/job/[id]/interviewers lists
+ *  every interviewer (slug, name, title, stage, scheduledAt, dossierPath,
+ *  questionsPath, thankYouPath, notes, updatedAt). POST upserts by slug
+ *  (slug derived from name unless supplied); body: { name, title?, email?,
+ *  linkedinUrl?, twitterUrl?, githubUrl?, stage, scheduledAt?, notes? }.
+ *  Remove + dossier + questions + thank-you live as [slug]/* siblings. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';

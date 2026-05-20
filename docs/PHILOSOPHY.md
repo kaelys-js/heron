@@ -33,7 +33,5 @@ Spray-and-pray job applications waste two finite resources: recruiters' attentio
 
 ## Further reading
 
-- The [`santifer/career-ops`](https://github.com/santifer/career-ops) original -- the upstream CLI Heron forks from.
-- The [`santifer/career-ops` case study](https://santifer.io/career-ops-system) on using the system to evaluate 740+ offers.
 - [`AGENTS.md` § Ethical Use](../AGENTS.md) for the autonomous-apply posture.
 - [`docs/COMPARISON.md`](COMPARISON.md) for how Heron differs from JobScan / Teal / AIHawk and similar.

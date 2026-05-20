@@ -1,38 +1,9 @@
-/**
- * sse-client -- shared EventSource wrapper with:
- *
- *   1. Cross-origin URL resolution via getApiBase() -- fixes the
- *      Capacitor iOS bug where raw `/api/stream` resolves to
- *      `heron://localhost/api/stream` (no backend behind it) instead
- *      of the discovered LAN/Tailscale URL.
- *
- *   2. Exponential backoff reconnect (1s → 2s → 4s → ... → cap=30s).
- *      Previously: `notifications.svelte.ts` had its own backoff,
- *      `sse-notifications-bridge.ts` had nothing (relied on browser's
- *      30s default). Now both share this helper so reconnect feel is
- *      identical across the app.
- *
- *   3. Network-state coordination via `BRAND_EVENTS.netStatus`
- *      (iOS NWPathMonitor → JS) and `window.online` (browser default).
- *      On a network-up signal, backoff resets to 0 and a reconnect
- *      fires immediately -- so users don't wait the full backoff after
- *      airplane-mode toggles off.
- *
- *   4. Idempotent close + restart. `client.close()` is safe to call
- *      multiple times; `client.restart()` tears down + re-resolves
- *      the backend URL (call when the user picks "force re-discovery"
- *      in Settings).
- *
- * Usage:
- *
- *   const client = createSseClient('/api/stream', {
- *     onMessage: (ev) => handleEvent(JSON.parse(ev.data)),
- *     onOpen: () => setStatus('open'),
- *     onError: () => setStatus('error'),
- *   });
- *   // ... later
- *   client.close();
- */
+/** EventSource wrapper with cross-origin URL resolution (getApiBase()
+ *  so Capacitor iOS doesn't try heron://localhost/api/stream),
+ *  exponential backoff reconnect (1s -> 30s cap), network-event
+ *  reset on `BRAND_EVENTS.netStatus` / `window.online` (no full-
+ *  backoff wait after airplane-mode toggle), and idempotent close /
+ *  restart. */
 import { getApiBase, onBackendStatusChange } from './api-base';
 import { BRAND_EVENTS } from './brand';
 

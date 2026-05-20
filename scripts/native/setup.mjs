@@ -45,8 +45,16 @@ import {
   NATIVE_ENV_FILE,
   NATIVE_STATE_DIR,
 } from './_lib.mjs';
-import { existsSync, writeFileSync, chmodSync, mkdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import {
+  existsSync,
+  writeFileSync,
+  chmodSync,
+  mkdirSync,
+  readFileSync,
+  mkdtempSync,
+} from 'node:fs';
+import { join, join as joinPath } from 'node:path';
+import { tmpdir } from 'node:os';
 import { execSync } from 'node:child_process';
 
 console.log(c.bold('\nheron native — interactive setup\n'));
@@ -279,10 +287,12 @@ if (state.apple.MAC_CERTIFICATE && (await confirm('  Re-use stored Mac cert?', t
   info('Keychain Access will prompt for your login password to authorize the export.');
   // security export-keychain doesn't accept output password via CLI easily on
   // recent macOS -- use Keychain Access's manual export workflow OR security
-  // export with password file.
-  const tmpPwdFile = '/tmp/heron-pwd.txt';
-  writeFileSync(tmpPwdFile, certPwd);
-  chmodSync(tmpPwdFile, 0o600);
+  // export with password file. mkdtempSync produces a unique random-suffix
+  // directory (CodeQL `js/insecure-temporary-file`-clean -- /tmp/heron-pwd.txt
+  // was guessable + globally writable).
+  const tmpDir = mkdtempSync(joinPath(tmpdir(), 'heron-pwd-'));
+  const tmpPwdFile = joinPath(tmpDir, 'pwd.txt');
+  writeFileSync(tmpPwdFile, certPwd, { mode: 0o600 });
   try {
     execSync(
       `security export -k login.keychain-db -t identities -f pkcs12 -P "${certPwd}" -o "${certP12}"`,

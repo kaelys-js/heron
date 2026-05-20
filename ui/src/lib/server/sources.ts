@@ -1,26 +1,10 @@
-/**
- * Source connection state -- single source of truth for which scanners are
- * connected, when they last ran, and how often they fail.
- *
- * Distinct from the activity feed (transient log) and the `data/issues.jsonl`
- * issue stream (operational alerts). This is per-source health, written by
- * each scanner JobDef on every run and read by the /sources dashboard.
- *
- * State lives at `data/sources.json` -- gitignored runtime data, regenerated
- * on demand. Atomic writes via the same write-rename pattern used by other
- * state files in this project.
- *
- *   {
- *     "linkedin-auth": {
- *       "connected": true,
- *       "lastConnectedAt": 1778266000000,
- *       "lastSuccessfulPullAt": 1778355000000,
- *       "consecutiveFailures": 0,
- *       "metadata": { "username": "kaelys-js" }
- *     },
- *     "gmail-imap": { "connected": false, "consecutiveFailures": 3, "lastError": "Auth failed" }
- *   }
- */
+/** Source connection state -- per-scanner health written by each JobDef
+ *  on every run and read by the /sources dashboard. Distinct from the
+ *  activity feed (transient log) and data/issues.jsonl (operational
+ *  alerts). Per-user state under data/users/{uid}/.../sources.json --
+ *  gitignored, regenerated on demand. Atomic writes via write-rename.
+ *  Row shape: { connected, lastConnectedAt, lastSuccessfulPullAt,
+ *  consecutiveFailures, lastError?, metadata? }. */
 
 import fs from 'node:fs';
 import path from 'node:path';

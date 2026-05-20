@@ -1,24 +1,8 @@
-/**
- * notifications.ts -- bridge between the embedded SvelteKit server's
- * activity event bus and macOS/Windows/Linux OS notifications.
- *
- * Two delivery paths:
- *
- *   1. **Direct from the renderer (preferred)**: the web page calls
- *      `new Notification(title, body)`. Electron exposes the standard
- *      browser API, which routes to the native NotificationCenter
- *      (macOS) / Action Center (Windows) / libnotify (Linux). The
- *      renderer code in `ui/src/lib/client/notifications.ts` already
- *      does this -- Electron just needs the right entitlements + an app
- *      user model id so Windows binds the toast to the correct app.
- *
- *   2. **From the main process (for events that arrive while the
- *      renderer is unfocused / backgrounded)**: this module exports
- *      `showOsNotification()` which the IPC handler can call.
- *
- * Requires app.setAppUserModelId() on Windows (set in setup.ts) so the
- * notification carries the right app name + icon in the Action Center.
- */
+/** Bridge from the embedded SvelteKit activity bus to native OS
+ *  notifications. Renderer path: `new Notification()` (default).
+ *  Main-process fallback: `showOsNotification()` for events that
+ *  arrive while the window is unfocused. Requires app.setAppUserModelId()
+ *  on Windows (set in setup.ts) so toasts carry the app's name + icon. */
 
 import { Notification, app, nativeImage } from 'electron';
 import path from 'node:path';

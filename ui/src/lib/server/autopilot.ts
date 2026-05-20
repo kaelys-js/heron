@@ -419,17 +419,13 @@ async function runTask(s: Schedule): Promise<void> {
   }
 }
 
-/**
- * Fan out a daily-scan run across the CURRENT user's profiles
- * sequentially. Sequential because the underlying Python scrapers share
- * rate limits + Playwright resources -- running them in parallel for
- * multiple profiles would just fight each other.
+/** Fan out a daily-scan run across the CURRENT user's profiles
+ *  sequentially. Sequential because the underlying Python scrapers share
+ *  rate limits + Playwright resources -- running them in parallel for
+ *  multiple profiles would just fight each other.
  *
- * F10: pre-fix this also iterated `listSchedulableUsers()` itself,
- * which double-fanned-out when the tick() loop (now per-user) called
- * it. The user-level loop now lives in tick() so this helper only
- * handles profile-level fan-out within the current user.
- */
+ *  F10 -- profile-level fan-out ONLY. User-level fan-out lives in
+ *  tick(); doing both here would double-iterate every user × profile. */
 async function runScanForCurrentUsersProfiles(): Promise<void> {
   try {
     const { listProfilesForUser } = await import('./profiles-db');
@@ -626,7 +622,7 @@ export function startScheduler(): void {
  *   - readConfig() reads THAT user's autopilot.json (F9)
  *   - readLastRun() reads THAT user's job-last-run.json (F10 sibling)
  *   - runTask() / runRegistryJob() spawn under THAT user's context
- *     (orchestrator's CAREER_OPS_USER_ID env injection covers the
+ *     (orchestrator's HERON_USER_ID env injection covers the
  *     child process)
  *   - runJobById() detects the existing user context and runs once
  *     for THIS user only (registry.ts:104-108) -- no double fan-out
@@ -693,7 +689,7 @@ function tickForCurrentUser(): void {
         if (t.hour !== hour) continue;
         if (t.minute !== minute) continue;
       } else {
-        continue; // manual or after — not driven by the clock
+        continue; // manual or after -- not driven by the clock
       }
       const last = readLastRun(def.id);
       if (last && last.lastRunAt >= today) continue; // already fired today

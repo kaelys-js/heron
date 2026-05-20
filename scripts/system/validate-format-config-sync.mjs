@@ -49,7 +49,7 @@ const REPO_ROOT = resolve(__dirname, '..', '..');
 // ask for a generic .ts file so the [*] block is what we get back.
 async function loadEditorConfig() {
   const editorconfig = await import('editorconfig');
-  const sample = resolve(REPO_ROOT, 'sample.ts'); // virtual — only used to drive resolution
+  const sample = resolve(REPO_ROOT, 'sample.ts'); // virtual -- only used to drive resolution
   const props = await editorconfig.parse(sample);
   return props;
 }

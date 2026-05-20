@@ -166,8 +166,8 @@ function eventsInWindow(predicate: (ev: ActivityEvent) => boolean): {
   let lastError: ActivityEvent | undefined;
   // F25 -- scope to the calling user. /runtimes is the consumer; it runs
   // inside a user request context so currentUserIdOrDefault resolves
-  // correctly. Pre-fix this counted user A's anthropic API errors
-  // against user B's "last 24h" stats.
+  // correctly. `bus.recent()` (unscoped) would count user A's anthropic
+  // API errors against user B's "last 24h" stats.
   for (const ev of bus.recentForUser(currentUserIdOrDefault())) {
     if (!predicate(ev)) continue;
     if (ev.ts < cutoff) continue;
@@ -317,7 +317,7 @@ export function buildRuntimeReport(): RuntimeReport {
     details: geminiConfigured
       ? ['Free-tier Flash (~1M tokens/day) · used for cheap title-based first-pass scoring']
       : [
-          'Free key. Without this, jobs land in pipeline unscored — manual Claude eval becomes the only path.',
+          'Free key. Without this, jobs land in pipeline unscored -- manual Claude eval becomes the only path.',
         ],
     powers: [
       'Cheap first-pass scoring of every pending job (~1 min for 800 jobs)',
@@ -350,7 +350,7 @@ export function buildRuntimeReport(): RuntimeReport {
     badge: adzunaConfigured ? maskKey(env.ADZUNA_APP_KEY) : 'no keys',
     details: adzunaConfigured
       ? ['Free tier: 1,000 calls/month. Adds ~150 jobs per scan.']
-      : ['Optional. The scanner skips Adzuna if not configured — the other 6 sources still run.'],
+      : ['Optional. The scanner skips Adzuna if not configured -- the other 6 sources still run.'],
     powers: [
       'Adds Adzuna as an additional source in scan-broad.py',
       '~150 extra jobs/scan (CA + US senior-engineer queries)',

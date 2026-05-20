@@ -1,26 +1,9 @@
-/**
- * online-status -- unified offline detection across Web / Electron / iOS.
- *
- * Three signals are reconciled into one `online` boolean:
- *
- *   1. `navigator.onLine` -- fast, dirty (it lies -- "online" can mean
- *      "connected to router but no internet"). Useful as a low-priority
- *      hint.
- *   2. **Backend health probe** -- periodic `/api/health` GET against the
- *      resolved backend. Authoritative -- if this fails we are offline
- *      for app purposes even if navigator.onLine is true.
- *   3. **Native hint** (iOS Capacitor + Electron) -- NWPathMonitor on
- *      iOS and `net.isOnline()` on Electron, forwarded into this store
- *      via window-injected hooks.
- *
- * Subscribers (api.ts, OfflineIndicator.svelte, BackendBootGuard) read
- * `onlineState.online` (boolean) and listen for `online-changed` events.
- *
- * The user picked "(a) always fail with 'offline' UI when offline" --
- * we DON'T cache responses or serve stale reads. fetch() short-circuits
- * with a synthesized "offline" error so the unified error-reporter
- * stays out of it (offline is expected; reporting it spams Issues).
- */
+/** Unified online-state across Web / Electron / iOS. Three inputs:
+ *  navigator.onLine (hint, lies on captive networks), /api/health probe
+ *  (authoritative), native hooks (NWPathMonitor on iOS, net.isOnline()
+ *  on Electron). Subscribers read `onlineState.online` + listen for
+ *  `online-changed`. Offline = synthesized fetch() failure; the error
+ *  reporter ignores offline (expected, would spam Issues). */
 import { BRAND, BRAND_EVENTS, BRAND_STORAGE_PREFIX } from './brand';
 
 const PROBE_INTERVAL_MS = 15_000;

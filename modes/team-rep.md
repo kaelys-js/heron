@@ -1,4 +1,4 @@
-# Team-reputation deep research -- what's the inside word on this company?
+# Mode: team-rep -- what is the inside word on this company?
 
 You're producing a structured snapshot of company reputation across
 public sources. Used to surface team-quality risk BEFORE the user

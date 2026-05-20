@@ -1,22 +1,11 @@
-/**
- * /api/settings/secrets -- per-user encrypted credential store.
- *
- * Unlike /api/settings (owner-only, writes to install-wide .env), this
- * endpoint is scoped to each authenticated user. Members manage their
- * OWN Anthropic / Gemini / Adzuna / Gmail-IMAP / OpenAI keys without
- * needing owner permission and without sharing them with other users.
- *
- *   GET    → list keys the current user has set (masked values)
- *   POST   → upsert one or more keys for the current user
- *   DELETE → remove one key (?key=NAME)
- *
- * Storage is `data/users/{userId}/profiles/_shared/secrets.json`,
- * AES-256-GCM at rest with HKDF-derived per-user keys -- see
- * lib/server/user-secrets.ts for the threat model.
- *
- * The KNOWN_KEYS allowlist prevents arbitrary blob-storage abuse:
- * we only persist keys the rest of the codebase actually reads.
- */
+/** /api/settings/secrets -- per-user encrypted credential store.
+ *  Unlike /api/settings (owner-only, install-wide .env), this is scoped
+ *  to the authenticated user: members manage their own Anthropic / Gemini /
+ *  Adzuna / Gmail-IMAP / OpenAI keys without owner perms.
+ *    GET    → list keys (masked)   POST → upsert    DELETE ?key=NAME
+ *  Stored at data/users/{uid}/profiles/_shared/secrets.json, AES-256-GCM,
+ *  HKDF per-user key -- see lib/server/user-secrets.ts. _KNOWN_KEYS
+ *  allowlist blocks the store from being used as a generic kv cache. */
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { requireUserId } from '$lib/server/auth-helpers';
 import { deleteSecret, getSecret, listSecretKeys, setSecret } from '$lib/server/user-secrets';
@@ -28,7 +17,10 @@ import { logEvent } from '$lib/server/events';
  *
  *  When a new credential needs per-user scoping, ADD IT HERE first,
  *  then wire the consumer (ai.ts pattern: `getCredential(userId, KEY)`). */
-export const KNOWN_KEYS = [
+// Prefixed with `_` so SvelteKit's `+server.ts` exports allowlist
+// (GET/POST/etc + anything starting with `_`) accepts it. The constant
+// is internal to this endpoint -- no other module imports it.
+const _KNOWN_KEYS = [
   'ANTHROPIC_API_KEY',
   'GEMINI_API_KEY',
   'GEMINI_MODEL',
@@ -41,7 +33,7 @@ export const KNOWN_KEYS = [
   'GMAIL_IMAP_LABEL',
 ] as const;
 
-export type SecretKey = (typeof KNOWN_KEYS)[number];
+type SecretKey = (typeof _KNOWN_KEYS)[number];
 
 /** Mask a stored value the same way readEnvMasked does, so the UI
  *  shows '****abcd' / blank consistently between .env-fallback and
@@ -59,7 +51,7 @@ export const GET = wrap('settings.secrets', async ({ locals }: { locals: App.Loc
   // their masked value, absent keys show empty string. Lets the UI
   // render a fixed-shape form with consistent placeholders.
   const out: Record<string, string> = {};
-  for (const k of KNOWN_KEYS) {
+  for (const k of _KNOWN_KEYS) {
     if (present.has(k)) {
       const v = getSecret(userId, k);
       out[k] = mask(v);
@@ -78,11 +70,11 @@ export const POST = wrap(
     if (!updates || typeof updates !== 'object') {
       badRequest('expected JSON object of secret updates');
     }
-    const allowed = new Set<string>(KNOWN_KEYS);
+    const allowed = new Set<string>(_KNOWN_KEYS);
     const changed: string[] = [];
     for (const [k, v] of Object.entries(updates)) {
       if (!allowed.has(k)) {
-        badRequest(`unknown key: ${k}. Allowed: ${KNOWN_KEYS.join(', ')}`);
+        badRequest(`unknown key: ${k}. Allowed: ${_KNOWN_KEYS.join(', ')}`);
       }
       // Empty string → delete. Strings starting with '****' are the
       // masked round-trip from the UI when the user didn't edit that
@@ -116,7 +108,7 @@ export const DELETE = wrap(
     const userId = requireUserId(locals);
     const key = url.searchParams.get('key');
     if (!key) badRequest('missing ?key query param');
-    if (!(KNOWN_KEYS as readonly string[]).includes(key)) {
+    if (!(_KNOWN_KEYS as readonly string[]).includes(key)) {
       badRequest(`unknown key: ${key}`);
     }
     deleteSecret(userId, key);
@@ -132,7 +124,7 @@ export const DELETE = wrap(
 async function readMaskedForUser(userId: string): Promise<Record<string, string>> {
   const present = new Set(listSecretKeys(userId));
   const out: Record<string, string> = {};
-  for (const k of KNOWN_KEYS) {
+  for (const k of _KNOWN_KEYS) {
     out[k] = present.has(k) ? mask(getSecret(userId, k)) : '';
   }
   return out;

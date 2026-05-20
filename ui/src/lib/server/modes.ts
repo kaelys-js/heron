@@ -1,17 +1,11 @@
-/**
- * modes -- single source of truth for resolving a mode file path given a
- * profile's selected language. Centralised so every spawn site that reads
- * `modes/*.md` honours the user's language preference.
- *
- * Per-profile language is stored at `profile.yml.language.modes_dir`.
- * Empty / unset / 'modes' → English (top-level modes/).
- * 'modes/de' → modes/de/<name>.md, falling back to modes/<name>.md when
- * the localized file doesn't exist. Same for fr / ja / pt / ru / es.
- *
- * Locale resolution is intentionally permissive -- a `_profile.md`
- * customisation file might exist at modes/_profile.md but NOT
- * modes/de/_profile.md, and we should still find it.
- */
+/** modes -- resolve a mode file path against the profile's selected
+ *  language. Centralised so every spawn site honours the user preference.
+ *  Per-profile language at profile.yml.language.modes_dir:
+ *    empty / 'modes'  → English (top-level modes/)
+ *    'modes/<lang>'   → modes/<lang>/<name>.md, falling back to English
+ *                       when the localised file is absent (de/fr/ja/pt/ru/es).
+ *  Fallback is intentional -- _profile.md customisations live only in
+ *  English and must still resolve under any locale. */
 
 import fs from 'node:fs';
 import path from 'node:path';

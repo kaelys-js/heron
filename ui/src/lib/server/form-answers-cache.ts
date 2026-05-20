@@ -1,29 +1,11 @@
-/**
- * form-answers-cache -- per-question persistent cache shared across all jobs.
- *
- * Storage: `data/users/{uid}/profiles/{slug}/form-answers-cache.jsonl` (or
- *   `data/profiles/{slug}/form-answers-cache.jsonl` in legacy single-user
- *   installs). One row per question, append-only with last-write-wins on `key`.
- *
- * Row shape:
- *   {
- *     key: string,           // normalized -- see normalizeQuestion()
- *     label: string,         // original question text (most recent verbatim)
- *     answer: string,        // the user's answer
- *     updatedAt: number,     // ms epoch
- *     useCount: number,      // bumped each time apply-* uses this entry
- *   }
- *
- * Why JSONL not JSON: append-friendly, robust to partial writes (corrupt
- * line ⇒ skip that line, keep the rest). Same pattern as activity.jsonl /
- * issues.jsonl elsewhere in this codebase.
- *
- * Why per-question and per-profile: a "Why this company?" answer is
- * job-specific (different per company) but archetypal questions like
- * "Years of TypeScript experience" / "Notice period" / "Visa status" /
- * "Desired salary" are reusable across hundreds of applications.
- * Persisting them eliminates retyping the same answer 100x.
- */
+/** form-answers-cache -- per-question answer cache reused across jobs.
+ *  Storage: per-profile form-answers-cache.jsonl, one row per
+ *  normalized question (key, label, answer, updatedAt, useCount),
+ *  append-only with last-write-wins on key. JSONL chosen for partial-
+ *  write tolerance (corrupt line → skip, keep rest).
+ *  Per-question because answers like "Years of TS" / "Notice period" /
+ *  "Visa status" are reusable across hundreds of forms; per-profile
+ *  because "Why this company?" stays job-specific. */
 
 import fs from 'node:fs';
 import path from 'node:path';

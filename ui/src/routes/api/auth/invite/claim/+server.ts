@@ -1,18 +1,11 @@
-/**
- * POST /api/auth/invite/claim   { code, email }
- *
- * Used by the signup page BEFORE the user runs through Better Auth's
- * sign-up flow. Validates that the invite code is real, unexpired, and
- * unclaimed. The actual claim (setting claimedByUserId) doesn't happen
- * until after Better Auth has created the user -- that's handled by a
- * follow-up call to /api/auth/invite/finalize once we know the new
- * user's id.
- *
- * The endpoint is intentionally PUBLIC (it sits inside /api/auth/* which
- * the hooks middleware exempts from the auth guard). Without this, no
- * unauthenticated user could check whether their code is valid before
- * surrendering it to the WebAuthn ceremony.
- */
+/** POST /api/auth/invite/claim  { code, email } -- called by the signup
+ *  page BEFORE the Better Auth sign-up flow. Validates that the invite
+ *  code is real, unexpired, and unclaimed. The actual claim (setting
+ *  claimedByUserId) happens later via /api/auth/invite/finalize once
+ *  Better Auth has created the user and we know the new userId.
+ *  Intentionally PUBLIC (hooks middleware exempts /api/auth/* from the
+ *  auth guard) -- otherwise no unauthenticated user could validate a
+ *  code before the WebAuthn ceremony. */
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { lookupInvite, userCount } from '$lib/server/invite-codes';
 

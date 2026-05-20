@@ -1,28 +1,24 @@
 /**
  * E2E -- sign-in flow smoke test.
  *
- * Cold-path: unauthenticated visit → /login redirect → success state.
- * The full passkey + GitHub-OAuth flows are out of E2E scope (require
- * live external providers); this exercises the happy path that gets
- * the user into the dashboard.
+ * Cold-path: unauthenticated visit (with a user already in DB, set up
+ * via playwright.config.ts -> globalSetup) → /login redirect → success
+ * state. The full passkey + GitHub-OAuth flows are out of E2E scope
+ * (require live external providers); this exercises the happy path
+ * that gets the user into the dashboard.
+ *
+ * Seed: see ui/e2e/_helpers/global-setup.ts. It inserts a single
+ * owner-role user (id=u_e2e) into auth.db BEFORE the preview server
+ * boots. That puts the app in "users-exist" mode -- anonymous visits
+ * to / redirect to /login (not /onboarding/account which is the
+ * fresh-install path).
  */
 import { expect, test } from '@playwright/test';
-import { seedFreshInstall, teardown, type SeededInstall } from '../_helpers/seed';
-
-let install: SeededInstall;
-
-test.beforeAll(() => {
-  install = seedFreshInstall();
-});
-
-test.afterAll(() => {
-  teardown(install);
-});
 
 test.describe('Login page', () => {
-  test('anonymous root redirects to /login', async ({ page }) => {
+  test('anonymous root redirects to /login (users exist in DB)', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveURL(/\/login(?:\/|$)/);
+    await expect(page).toHaveURL(/\/login(?:\/|$|\?)/);
   });
 
   test('login page shows the brand + auth options', async ({ page }) => {

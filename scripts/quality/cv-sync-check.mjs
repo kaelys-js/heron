@@ -24,7 +24,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..', '..');
 
 // Per-user per-profile paths. cv.md + profile.yml + article-digest.md
-// all live under the active profile of the active user (CAREER_OPS_USER_ID
+// all live under the active profile of the active user (HERON_USER_ID
 // env or --user flag). Legacy single-user installs resolve to
 // data/profiles/{slug}/ via the SYSTEM_USER_ID sentinel.
 const USER_ID = userFromArgv();
@@ -79,12 +79,7 @@ for (const { path, name } of filesToCheck) {
   const lines = content.split('\n');
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (
-      line.includes('NEVER hardcode') ||
-      line.includes('NUNCA hardcode') ||
-      line.startsWith('#') ||
-      line.startsWith('<!--')
-    )
+    if (line.includes('NEVER hardcode') || line.startsWith('#') || line.startsWith('<!--'))
       continue;
     const matches = line.match(metricPattern);
     if (matches) {

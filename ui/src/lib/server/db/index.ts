@@ -1,52 +1,21 @@
-/**
- * db/index -- SQLite connection singletons + Drizzle instances.
- *
- * Heron uses TWO SQLite files:
- *
- *   • auth.db  -- users, sessions, oauth accounts, passkeys, invite codes,
- *                backup codes, audit log, pending deletions. Managed by
- *                Better Auth via its Drizzle adapter; we never write to
- *                these tables directly except for audit_log + invite_codes.
- *
- *   • app.db   -- every per-user Heron data row (profiles, jobs,
- *                applications, reports, etc.). Every row has user_id;
- *                cross-database FK enforcement happens in hooks middleware
- *                + every server-lib function being userId-scoped.
- *
- * Why two files instead of one?
- *   - Compartmentalisation: an attacker who exploits a SQL bug in app code
- *     can't pivot to the auth tables.
- *   - Backup cadence: auth.db changes rarely (logins / new sessions),
- *     app.db changes on every job edit. We can snapshot them at different
- *     frequencies.
- *   - GDPR delete: removing a user means cascading deletes in BOTH files,
- *     but the auth.db side is well-defined Better Auth behaviour. The
- *     app.db cascade is user-id-scoped and we own it.
- *
- * Both files live under `data/` (same as activity.jsonl, issues.jsonl,
- * profiles.json, etc. -- system-layer, not per-profile) by default.
- *
- * ── Test / fresh-clone safety ────────────────────────────────────────
- * The DB paths are configurable via three env vars (override order):
- *   1. HERON_DATA_DIR  → both files live under that dir
- *   2. CAREER_OPS_AUTH_DB   → specific auth.db path (or ":memory:")
- *      CAREER_OPS_APP_DB    → specific app.db path  (or ":memory:")
- *   3. VITEST + NODE_ENV=test → auto-route to a fresh tmpdir so a test
- *      run NEVER touches the developer's local data/*.db. This
- *      prevents the "first-user/owner" race where prior test runs leave
- *      ghost rows in auth.db.users and a fresh-clone user can no longer
- *      be promoted to owner.
- *
- * Returned drizzle instances are SINGLETONS -- module-load creates the
- * connections, all callers share. better-sqlite3 is synchronous and
- * thread-safe enough for SvelteKit's per-request model.
- */
+/** db/index -- SQLite singletons + Drizzle instances.
+ *  Two files: auth.db (Better Auth core + passkeys, invite_codes,
+ *  backup_codes, audit_log, pending_deletions) and app.db (every
+ *  per-user Heron row, all user_id-scoped). Split for blast-radius
+ *  isolation, independent backup cadence, and clean GDPR cascade.
+ *  Paths resolve in order: HERON_DATA_DIR → HERON_AUTH_DB/HERON_APP_DB
+ *  (accept ":memory:") → VITEST tmpdir → repo data/. Test / fresh-clone safety:
+ *  prior-run ghost rows from a leftover data/auth.db can't claim the
+ *  "first-user/owner" slot under vitest because each test process
+ *  gets its own tmpdir-scoped path.
+ *  Connections are module-load singletons; better-sqlite3 is
+ *  synchronous and fine for SvelteKit's per-request model. */
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { ROOT } from '../files';
+import { DATA_ROOT, ROOT } from '../files';
 import { BRAND } from '$lib/client/brand';
 import * as authSchema from './auth-schema';
 import * as appSchema from './app-schema';
@@ -57,7 +26,10 @@ const IS_TEST = process.env.VITEST === 'true' || process.env.NODE_ENV === 'test'
 /** Resolve the SQLite root dir. Order: explicit env override → tmpdir
  *  during tests → repo `data/` for normal runs. */
 function resolveDataDir(): string {
-  if (process.env.HERON_DATA_DIR) return process.env.HERON_DATA_DIR;
+  // HERON_DATA_DIR override is already baked into DATA_ROOT (files.ts).
+  // Vitest's per-process tmpdir is preserved as a second branch so
+  // unit tests stay isolated even when HERON_DATA_DIR isn't set.
+  if (process.env.HERON_DATA_DIR) return DATA_ROOT;
   if (IS_TEST) {
     // Per-process tmpdir so parallel test workers don't clobber each
     // other's auth.db. pid is enough; vitest re-uses process pools but
@@ -67,14 +39,22 @@ function resolveDataDir(): string {
     fs.mkdirSync(tmp, { recursive: true });
     return tmp;
   }
-  return path.join(ROOT, 'data');
+  return DATA_ROOT;
 }
 
 const DATA_DIR = resolveDataDir();
 fs.mkdirSync(DATA_DIR, { recursive: true });
 
-export const AUTH_DB_PATH = process.env.CAREER_OPS_AUTH_DB ?? path.join(DATA_DIR, 'auth.db');
-export const APP_DB_PATH = process.env.CAREER_OPS_APP_DB ?? path.join(DATA_DIR, 'app.db');
+export const AUTH_DB_PATH = process.env.HERON_AUTH_DB ?? path.join(DATA_DIR, 'auth.db');
+export const APP_DB_PATH = process.env.HERON_APP_DB ?? path.join(DATA_DIR, 'app.db');
+
+// Diagnostic boot log -- removable once the e2e seed/serve race is
+// proven stable. Logs once per process at module load.
+if (process.env.HERON_DATA_DIR || process.env.CI) {
+  console.log(
+    `[db/index] HERON_DATA_DIR=${process.env.HERON_DATA_DIR ?? '(unset)'} DATA_DIR=${DATA_DIR} AUTH_DB_PATH=${AUTH_DB_PATH}`,
+  );
+}
 
 /** Lazy-open raw sqlite handles. We open eagerly at module load -- the cost
  *  is microseconds and lazy-init across SSR + jobs caused weird races. */

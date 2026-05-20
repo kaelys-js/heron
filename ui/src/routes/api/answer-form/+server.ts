@@ -1,19 +1,12 @@
-/**
- * Answer-form endpoint for the form-fill bookmarklet.
- *
- * The browser-side bookmarklet runs on Greenhouse / Ashby / Lever job pages,
- * scrapes labelled fields, and POSTs them here. We:
- *   1. Try to match `url` to an existing pipeline job (so we have full context
- *      for the prompt -- cv.md, report file, profile.yml come from the spawn)
- *   2. Spawn `claude -p "/heron form-answers <url> --bookmarklet <json>"`
- *      and pipe the question list as JSON via stdin
- *   3. Return the structured answers as JSON the bookmarklet can fill into
- *      the page
- *
- * CORS: enabled for OPTIONS + POST since the bookmarklet executes on a
- * third-party domain (greenhouse.io, ashbyhq.com, etc.). Listening on
- * localhost:5174 makes this trivially scoped to the user's machine.
- */
+/** Answer-form endpoint for the form-fill bookmarklet. The bookmarklet
+ *  runs on Greenhouse / Ashby / Lever pages, scrapes labelled fields,
+ *  POSTs them here. We (1) match `url` to a pipeline job so the prompt
+ *  gets full context (cv.md, report, profile.yml from the spawn), (2)
+ *  spawn `claude -p "/heron form-answers <url> --bookmarklet <json>"`
+ *  with the question list piped on stdin, (3) return structured answers
+ *  as JSON for the page-side fill.
+ *  CORS: OPTIONS + POST enabled -- bookmarklet executes on a third-party
+ *  origin. Localhost-bound, so scoped to the user's machine. */
 
 import { json } from '@sveltejs/kit';
 import { wrap, badRequest, errJson } from '$lib/server/api-helpers';

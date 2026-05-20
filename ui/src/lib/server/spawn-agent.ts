@@ -1,32 +1,12 @@
-/**
- * spawn-agent -- central helper for spawning the AI CLI with a
- * substituted mode prompt.
- *
- * Replaces the legacy "send slash-command, let Claude load skill"
- * pattern. The orchestrator now:
- *   1. Reads modes/<mode>.md from disk
- *   2. Substitutes __TOKEN__ placeholders against the active profile
- *      + user (via mode-substitution.ts)
- *   3. Writes the realized prompt to a temp file
- *   4. Spawns Claude with --append-system-prompt-file pointing at the
- *      temp file, plus the user message via -p
- *   5. Cleans up the temp file when the child exits
- *
- * Why temp file rather than passing the prompt body inline via -p?
- * Realized prompts can be > 10 KB (modes/evaluate.md alone is several
- * KB after substitution). Argv length limits + shell escaping
- * pitfalls (newlines, backticks, $) make inline passing fragile.
- * Temp files dodge both.
- *
- * Why --append-system-prompt-file? Claude Code's documented system-
- * prompt extension mechanism. Other CLIs (Gemini, Codex, etc.) may
- * accept a similar flag or fall back to inline -p with the realized
- * prompt prepended.
- *
- * Cleanup contract: the caller doesn't need to delete the temp file.
- * `closeOnExit` registers an `on('exit')` listener that unlinks the
- * temp file when the child process terminates.
- */
+/** spawn-agent -- central helper for spawning the AI CLI with a
+ *  substituted mode prompt. Reads modes/<mode>.md, substitutes __TOKEN__
+ *  placeholders against the active profile + user (mode-substitution.ts),
+ *  writes the realized prompt to a temp file, spawns Claude with
+ *  --append-system-prompt-file + user message via -p, then unlinks the
+ *  temp file when the child exits (closeOnExit).
+ *  Temp file (not inline -p) because realized prompts can exceed 10 KB
+ *  and argv length + shell escaping (newlines, backticks, $) make inline
+ *  passing fragile. */
 import { spawn, type ChildProcess, type SpawnOptions } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -44,7 +24,7 @@ export interface SpawnAgentOptions {
   profileId: string;
   /** Override the userId. Defaults to AsyncLocalStorage current user. */
   userId?: string;
-  /** Extra env vars to merge onto the child. Userid + CAREER_OPS_* envs
+  /** Extra env vars to merge onto the child. Userid + HERON_* envs
    *  are set automatically. */
   env?: NodeJS.ProcessEnv;
   /** Extra CLI args to insert AFTER -p but BEFORE --append-system-prompt-file. */
@@ -87,15 +67,20 @@ export function spawnAgentWithMode(
   const userId = opts.userId ?? currentUserIdOrDefault();
   const realizedPrompt = realizeModePromptForUser(userId, opts.profileId, modePath);
 
-  // Write to a fresh temp file. UUID prevents collisions when two
-  // spawns fire simultaneously.
-  const tempPromptPath = path.join(os.tmpdir(), `${BRAND.name}-${modeName}-${randomUUID()}.md`);
+  // mkdtempSync creates a unique random-suffix directory.
+  // CodeQL `js/insecure-temporary-file` flagged the prior
+  // `randomUUID()` path -- in theory UUIDs are unpredictable but
+  // CodeQL's data-flow tracker still considers join'd paths
+  // predictable. Using the OS's mkdtempSync syscall (which uses
+  // mkstemp internally) is the canonical race-free pattern.
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), `${BRAND.name}-${modeName}-`));
+  const tempPromptPath = path.join(tmpDir, 'prompt.md');
   fs.writeFileSync(tempPromptPath, realizedPrompt, 'utf8');
 
   const env: NodeJS.ProcessEnv = { ...process.env, ...(opts.env ?? {}) };
   // Pass acting userId through so child scripts (generate-pdf.mjs etc.)
   // resolve per-user paths correctly without re-reading AsyncLocalStorage.
-  if (userId) env.CAREER_OPS_USER_ID = userId;
+  if (userId) env.HERON_USER_ID = userId;
 
   const args = [
     '-p',

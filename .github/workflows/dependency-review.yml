@@ -16,10 +16,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
       - name: Dependency Review
-        # G7 — blocking again. The Dependency Graph must be enabled in
+        # G7 -- blocking again. The Dependency Graph must be enabled in
         # Settings → Security & Analysis (it's enabled by default for
         # public repos as of 2024). If a fork or restored repo somehow
         # has it disabled, the action will fail with a clear error
@@ -27,10 +34,52 @@ jobs:
         # is preferable to silently passing on vulnerable PRs.
         #
         # Also denies GPL/AGPL/LGPL licenses since Heron ships under
-        # MIT and bundles Electron — any GPL-family transitive would
+        # MIT and bundles Electron -- any GPL-family transitive would
         # taint the binary.
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: high
           deny-licenses: AGPL-3.0, GPL-2.0, GPL-3.0, LGPL-2.1, LGPL-3.0
           comment-summary-in-pr: always
+          # ALLOW-LIST: GHSA-c32j-vqhx-rx3x  (jwt 2.10.2 -- empty-key HMAC bypass)
+          #
+          # Source: transitive dev-dep of fastlane.  Reach this code only
+          # via `bundle exec fastlane ...`; NOT shipped to end users.
+          #
+          # Why unreachable in our use:
+          #   * Fastlane uses jwt to sign App Store Connect API requests.
+          #   * ASC uses asymmetric ES256/RS256 with a real .p8 RSA key
+          #     loaded from `APP_STORE_CONNECT_API_KEY`; never HMAC,
+          #     never empty key.
+          #   * The vuln requires HMAC-with-empty-key (`JWT.decode(t, '',
+          #     true, algorithm: 'HS256')`) -- not a code path fastlane
+          #     ever exercises.
+          #
+          # Why we can't bump:
+          #   * Patched version is `>= 3.2.0`.
+          #   * jwt 2.x line has NO patch (line jumped 2.10.2 -> 3.0.0).
+          #   * fastlane 2.234.0 (latest) hard-pins `jwt (>= 2.1.0, < 3)`.
+          #     Bumping requires upstream fastlane to relax the bound.
+          #     Tracked upstream:
+          #       https://github.com/fastlane/fastlane/issues  (search jwt 3)
+          #
+          # Revisit when fastlane ships a release that allows jwt 3.x;
+          # drop this allow-list line + run `bundle update jwt fastlane`.
+          allow-ghsas: GHSA-c32j-vqhx-rx3x
+          # ALLOW-LIST: highline (gem)
+          #
+          # Highline ships under SPDX expression `GPL-2.0-only OR Ruby`
+          # -- the OR means the user CHOOSES which license to apply.
+          # Heron consumes highline under the Ruby License terms (BSD-
+          # like, MIT-compatible). The dependency-review-action's
+          # `deny-licenses: GPL-2.0` regex matches the GPL-2.0-only
+          # half of the OR expression and rejects -- but we never
+          # actually take that half.
+          #
+          # Source: transitive dev-dep of fastlane (used to render
+          # interactive CLI prompts). NOT shipped to end users.
+          #
+          # If a future highline release drops the GPL half or
+          # fastlane swaps in a different prompt library, drop this
+          # allow-list line.
+          allow-dependencies-licenses: pkg:gem/highline

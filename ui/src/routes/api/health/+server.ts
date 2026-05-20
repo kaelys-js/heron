@@ -1,21 +1,12 @@
-/**
- * /api/health -- minimal liveness probe.
- *
- * F22 -- pre-fix this returned per-file stats (size + mtime) for the
- * active user's pipeline.md + gemini-scores.tsv + reports/ count. The
- * endpoint is anonymous (backend-discovery uses it before sign-in
- * lands), so on a multi-user install ALS resolved to SYSTEM_USER and
- * leaked the OWNER's pipeline metadata (file size ≈ job count, mtime ≈
- * "when did the owner last scan") to anyone who could reach the
- * backend.
- *
- * Now: returns a static {ok, version} blob. The "is the backend
- * reachable" semantic is preserved; the "what does the owner's
- * pipeline look like" leak is closed. Authenticated endpoints
- * (/api/stats, /api/insights) carry the per-user numbers behind auth.
- *
- * @module
- */
+/** /api/health -- minimal liveness probe. Returns a static {ok, version}
+ *  blob so the "is the backend reachable" probe (used by backend-discovery
+ *  BEFORE sign-in) is anonymous-safe. F22: must NOT return per-file stats
+ *  (size + mtime) for the active user's pipeline.md / gemini-scores.tsv
+ *  / reports/ count -- ALS resolves to SYSTEM_USER on an anonymous request,
+ *  which would leak the OWNER's pipeline shape (file size ≈ job count,
+ *  mtime ≈ "when did the owner last scan") to anyone who can reach the
+ *  backend. Per-user numbers live on authenticated endpoints
+ *  (/api/stats, /api/insights). */
 
 import { wrap } from '$lib/server/api-helpers';
 

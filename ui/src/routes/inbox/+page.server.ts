@@ -238,7 +238,12 @@ export async function load({ url }: { url: URL }) {
       actionTask: 'scan',
     });
   }
-  if (!env.ANTHROPIC_API_KEY) {
+  // Screenshot mode runs in a sealed tmpdir + never calls Anthropic /
+  // Gemini, so the "key not set" CTAs are inbox noise that pollutes
+  // README captures. Suppress in screenshot mode only -- real users
+  // still see the prompts.
+  const screenshotMode = process.env.HERON_SCREENSHOT_MODE === '1';
+  if (!env.ANTHROPIC_API_KEY && !screenshotMode) {
     alerts.push({
       id: 'no-anthropic',
       level: 'info',
@@ -249,7 +254,7 @@ export async function load({ url }: { url: URL }) {
       actionUrl: '/settings',
     });
   }
-  if (!env.GEMINI_API_KEY) {
+  if (!env.GEMINI_API_KEY && !screenshotMode) {
     alerts.push({
       id: 'no-gemini',
       level: 'info',

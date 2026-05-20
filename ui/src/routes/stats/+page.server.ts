@@ -29,26 +29,54 @@ import type { Job, Status, BgRisk } from '$lib/types';
 import { STATUS_ORDER } from '$lib/types';
 import fs from 'node:fs';
 
-const SOURCE_PATTERNS: Array<{ name: string; match: RegExp }> = [
-  { name: 'LinkedIn', match: /linkedin\.com/i },
-  { name: 'Indeed', match: /indeed\.com/i },
-  { name: 'Greenhouse', match: /greenhouse\.io/i },
-  { name: 'Ashby', match: /ashbyhq\.com|jobs\.ashbyhq/i },
-  { name: 'Lever', match: /lever\.co/i },
-  { name: 'Workday', match: /myworkdayjobs|workday\.com/i },
-  { name: 'SmartRecruiters', match: /smartrecruiters\.com/i },
-  { name: 'Wellfound', match: /wellfound\.com|angel\.co/i },
-  { name: 'YC Work', match: /ycombinator\.com|workatastartup\.com/i },
-  { name: 'Hacker News', match: /news\.ycombinator/i },
-  { name: 'The Muse', match: /themuse\.com/i },
-  { name: 'Adzuna', match: /adzuna/i },
-  { name: 'Google Jobs', match: /jobs\.google/i },
-  { name: 'Glassdoor', match: /glassdoor\.com/i },
-  { name: 'Monster', match: /monster\.com/i },
+/**
+ * Test whether `url`'s hostname matches any allowlisted domain (exact or subdomain).
+ *
+ * Replaces the previous raw-string `.includes('domain.com')` shape that CodeQL
+ * flagged under `js/incomplete-url-substring-sanitization` -- an attacker URL
+ * like `https://evil.example/?u=linkedin.com` would have passed the substring
+ * test. Hostname parsing prevents that.
+ *
+ * Each allowlisted entry matches the exact host or any subdomain (e.g.
+ * `'linkedin.com'` matches `linkedin.com` and `www.linkedin.com`). Hosts that
+ * fail to parse return false.
+ */
+function hostMatches(url: string, allowed: string[]): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return allowed.some((d) => host === d || host.endsWith('.' + d));
+  } catch {
+    return false;
+  }
+}
+
+// Source-pattern matchers. Each entry lists the allowlist of domains that count
+// as that source; `hostMatches` does the hostname-exact / subdomain check.
+const SOURCE_PATTERNS: Array<{ name: string; domains: string[] }> = [
+  { name: 'LinkedIn', domains: ['linkedin.com'] },
+  { name: 'Indeed', domains: ['indeed.com'] },
+  { name: 'Greenhouse', domains: ['greenhouse.io'] },
+  // jobs.ashbyhq.com is a subdomain of ashbyhq.com so one entry covers both.
+  { name: 'Ashby', domains: ['ashbyhq.com'] },
+  { name: 'Lever', domains: ['lever.co'] },
+  // The legacy substring 'myworkdayjobs' caught hosts like *.myworkdayjobs.com;
+  // hostname suffix matching does the same.
+  { name: 'Workday', domains: ['myworkdayjobs.com', 'workday.com'] },
+  { name: 'SmartRecruiters', domains: ['smartrecruiters.com'] },
+  { name: 'Wellfound', domains: ['wellfound.com', 'angel.co'] },
+  { name: 'YC Work', domains: ['ycombinator.com', 'workatastartup.com'] },
+  // 'news.ycombinator' previously matched news.ycombinator.com; covered above by ycombinator.com.
+  { name: 'Hacker News', domains: ['news.ycombinator.com'] },
+  { name: 'The Muse', domains: ['themuse.com'] },
+  { name: 'Adzuna', domains: ['adzuna.com', 'adzuna.co.uk'] },
+  // 'jobs.google' was a substring catch-all for jobs.google.com.
+  { name: 'Google Jobs', domains: ['jobs.google.com'] },
+  { name: 'Glassdoor', domains: ['glassdoor.com'] },
+  { name: 'Monster', domains: ['monster.com'] },
 ];
 
 function sourceOf(url: string): string {
-  for (const p of SOURCE_PATTERNS) if (p.match.test(url)) return p.name;
+  for (const p of SOURCE_PATTERNS) if (hostMatches(url, p.domains)) return p.name;
   try {
     const h = new URL(url).hostname.replace(/^www\./, '');
     return (

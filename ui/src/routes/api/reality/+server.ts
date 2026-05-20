@@ -1,25 +1,11 @@
-/**
- * GET /api/reality
- *
- * The "Reality dashboard" -- what's ACTUALLY happening, free of confirmation
- * bias. Combines:
- *
- *   • Funnel rates (applied → screen → interview → offer → accept)
- *   • Active leverage points:
- *       - Open offers + decision deadlines
- *       - Active negotiations
- *       - Multi-offer competition signal (BATNA across active offers)
- *   • Hidden costs:
- *       - Jobs silent ≥21d (ghosted candidates)
- *       - Applications with no follow-up overdue
- *       - Dossiers missing for upcoming interviews
- *   • Targeting reality:
- *       - Pass-through rate vs target
- *       - Stage where most rejections happen
- *
- * Designed to show the user the truth about their search, not the
- * vanity-metric version. Used by /reality page + iOS widget secondary slot.
- */
+/** GET /api/reality -- the "Reality dashboard": what's ACTUALLY happening,
+ *  free of confirmation bias. Fuses funnel rates, active `leverage points`
+ *  (open offers with deadlines, in-flight negotiations, multi-offer BATNA),
+ *  hidden costs (jobs silent ≥21d, missing follow-ups, dossiers due for
+ *  upcoming interviews), and targeting reality (pass-through rate vs.
+ *  target, the stage that drops the most candidates). Designed to show
+ *  the user the truth about their search, not the vanity-metric version.
+ *  Drives /reality + the iOS widget's secondary slot. */
 
 import { wrap } from '$lib/server/api-helpers';
 import { computeFunnelStats, listStaleJobs, listAllStageState } from '$lib/server/stage-state';
@@ -38,7 +24,7 @@ export const GET = wrap('reality', async () => {
   const thankYousOwed = findThankYousOwed(profileId);
   const stale = listStaleJobs(DAYS_TO_GHOST, profileId);
 
-  // Leverage points -- what could turn into an offer in the next 14d
+  // `Leverage points` -- what could turn into an offer in the next 14d
   const leverage: { kind: string; signal: string; jobId?: string }[] = [];
   for (const o of offers) {
     if (o.decisionDeadline) {
@@ -59,7 +45,7 @@ export const GET = wrap('reality', async () => {
       });
     }
   }
-  // Multi-offer competition: more than one active offer = real leverage.
+  // Multi-offer competition: more than one active offer = real `leverage`.
   if (offers.length >= 2) {
     const top = offers
       .map((o) => ({ jobId: o.jobId, tc: currentRound(o) ? annualisedTc(currentRound(o)!) : 0 }))

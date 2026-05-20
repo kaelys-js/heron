@@ -56,8 +56,15 @@ export function readEnvMasked(): Record<string, string> {
 
 export function writeEnv(updates: Partial<EnvVars>) {
   let existing: Record<string, string> = {};
-  if (fs.existsSync(ENV_FILE)) {
-    const txt = fs.readFileSync(ENV_FILE, 'utf8');
+  // CodeQL js/file-system-race: read directly and treat ENOENT as empty
+  // rather than racing existsSync against the subsequent read.
+  let txt: string | null = null;
+  try {
+    txt = fs.readFileSync(ENV_FILE, 'utf8');
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+  }
+  if (txt !== null) {
     for (const line of txt.split('\n')) {
       const m = /^([A-Z_]+)=(.*)$/.exec(line.trim());
       if (m) existing[m[1]] = m[2];

@@ -1,19 +1,9 @@
-/**
- * /queue loader -- surfaces every job currently in the autonomous-apply
- * pipeline so the user can supervise the drain:
- *
- *   Queued            -- staged, waiting for apply-queue-drain to run
- *   Applying          -- script running right now, with current step
- *   ManualApplyNeeded -- soft-failed, finish by hand from Inbox
- *
- * Profile-scoped: `?profile=<slug>` filters to that profile. `?profile=all`
- * shows the union across every profile. No query param → active profile.
- *
- * Side-data the page renders in its header:
- *   todayCount    -- applications sent today (for the X/cap counter)
- *   cap           -- maxAppliesPerDay from autopilot config
- *   inFlight      -- Map(jobId → ApplyState) so Applying rows show step
- */
+/** /queue loader -- jobs in the autonomous-apply pipeline.
+ *  Statuses: Queued (waiting for drain), Applying (script running, with
+ *  current step), ManualApplyNeeded (soft-failed, finish in Inbox).
+ *  ?profile=<slug> filters; ?profile=all unions; default = active.
+ *  Header data: todayCount, cap (maxAppliesPerDay), inFlight (Map(jobId
+ *  → ApplyState) so Applying rows show their current step). */
 
 import { loadAllJobs } from '$lib/server/parsers';
 import { getActiveProfileId } from '$lib/server/profiles';

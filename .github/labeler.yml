@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/actions/labeler/main/schema.json
-# actions/labeler v5 — auto-labels PRs based on changed-files globs.
+# actions/labeler v5 -- auto-labels PRs based on changed-files globs.
 #
 # Schema: matchers are { changed-files: [ ... ] } | { head-branch: [ ... ] }
 # | { base-branch: [ ... ] }. The runner OR's items within a list and

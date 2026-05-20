@@ -11,7 +11,7 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { withScaffoldedTmpRepo } from '../../test-helpers/fs-fixtures';
 
 const REPO_ROOT = path.resolve(__dirname, '../../../..');
@@ -158,7 +158,10 @@ describe('apply-brand drift gate — protects against accidental destructive reb
     extraEnv: Record<string, string> = {},
   ): { exitCode: number; stdout: string; stderr: string } {
     try {
-      const stdout = execSync(`node ${APPLY_BRAND}`, {
+      // execFileSync avoids the shell (no `js/shell-command-injection-
+      // from-environment` flag on APPLY_BRAND). Argv-passing is the safe
+      // pattern when any argument originates outside a literal.
+      const stdout = execFileSync(process.execPath, [APPLY_BRAND], {
         cwd: root,
         env: {
           ...process.env,
@@ -278,6 +281,7 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
     '.github/CONTRIBUTING.md',
     '.github/SECURITY.md',
     'docs/ARCHITECTURE.md',
+    'docs/COMMENT-STYLE.md',
     'docs/COMPARISON.md',
     'docs/CUSTOMIZATION.md',
     'docs/DATA_CONTRACT.md',

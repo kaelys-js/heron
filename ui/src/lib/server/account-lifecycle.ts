@@ -1,29 +1,15 @@
-/**
- * account-lifecycle -- soft delete, restore, hard delete, GDPR export.
- *
- * Soft delete: `users.deletedAt` set to NOW + 30d. The user can still
- * sign in and undo during the grace period. The autopilot's daily
- * "lifecycle-reap" job runs hardDelete() for any user whose grace
- * window has expired.
- *
- * Hard delete:
- *   1. Wipe every app.db row keyed by user_id (cascades via ON DELETE
- *      CASCADE where defined; explicit DELETE statements where not).
- *   2. Remove the per-user filesystem tree `data/users/{userId}/`.
- *   3. Anonymise the audit_log rows (set user_id to NULL) so the
- *      timeline is preserved but the user is unlinkable.
- *   4. DELETE the row from auth.db users.
- *
- * Export: builds a JSON blob with every per-user row + the FS tree
- * inventory + the raw markdown/yaml contents. Caller writes the JSON
- * to disk and returns the path; the /api/auth/account/export endpoint
- * then streams it back as a download.
- */
+/** Soft delete / restore / hard delete / GDPR export.
+ *  Soft delete sets users.deletedAt = NOW + 30d (user can undo during
+ *  the grace window; autopilot lifecycle-reap hard-deletes after).
+ *  Hard delete wipes app.db rows, the per-user FS tree at
+ *  data/users/{userId}/, anonymises audit_log (user_id -> NULL), then
+ *  removes the auth.db users row. Export bundles every per-user row +
+ *  FS inventory + raw markdown/yaml into a JSON file for download. */
 import fs from 'node:fs';
 import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { authDb, appDb } from './db';
-import { ROOT } from './files';
+import { ROOT, DATA_ROOT } from './files';
 import {
   users as authUsers,
   pendingDeletions,
@@ -133,13 +119,13 @@ export function hardDeleteUser(userId: string): void {
   }
 
   // 2. FS tree under data/users/{userId}/.
-  const userDir = path.join(ROOT, 'data', 'users', userId);
+  const userDir = path.join(DATA_ROOT, 'users', userId);
   try {
     fs.rmSync(userDir, { recursive: true, force: true });
   } catch {
     /* best-effort */
   }
-  const avatarDir = path.join(ROOT, 'data', 'avatars', userId);
+  const avatarDir = path.join(DATA_ROOT, 'avatars', userId);
   try {
     fs.rmSync(avatarDir, { recursive: true, force: true });
   } catch {
@@ -213,7 +199,7 @@ export function buildExport(userId: string): { json: unknown; files: Record<stri
   // Inventory the per-user filesystem tree. We base64-encode files so the
   // export is a single self-contained JSON blob (no zip dependency).
   const files: Record<string, string> = {};
-  const userDir = path.join(ROOT, 'data', 'users', userId);
+  const userDir = path.join(DATA_ROOT, 'users', userId);
   if (fs.existsSync(userDir)) {
     walkDir(userDir, userDir, files);
   }

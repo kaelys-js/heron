@@ -1,37 +1,23 @@
-/**
- * ui-prefs -- per-USER UI preferences.
- *
- * Storage: app.db `ui_prefs` table, keyed by user_id (PRIMARY KEY). Each
- * user has their own row holding appearance (light/dark/system), theme,
- * display name, avatar path, and notification toggles.
- *
- * Backwards compat with the single-user `data/ui-prefs.json` file:
- *   • On first read for a user, if no DB row exists AND the legacy file
- *     is present, we copy its contents under that user_id. Same first-
- *     user-inherits pattern as profiles.
- *
- * Avatars: still stored on FS for streaming convenience, but the
- * per-user directory is `data/avatars/{userId}/avatar.{ext}` so two
- * users don't overwrite each other's image. The DB row stores the
- * relative path; the legacy "avatars/avatar.png" format is auto-migrated
- * by `readAvatar()` when it sees a path that doesn't include a userId
- * segment.
- *
- * The public API of this module is unchanged -- `readPrefs()` etc. all
- * still take zero args and resolve the acting user via the AsyncLocal-
- * Storage context that `hooks.server.ts` populates per request.
- */
+/** ui-prefs -- per-USER UI preferences in app.db.ui_prefs (PK user_id).
+ *  Row holds appearance (light/dark/system), theme, display name, avatar
+ *  path, notification toggles. On first read for a user with no row, if
+ *  legacy data/ui-prefs.json is present we copy it under that user_id
+ *  (first-user-inherits, same as profiles).
+ *  Avatars on FS at data/avatars/{userId}/avatar.{ext} (per-user dir so
+ *  uploads can't clobber each other); legacy "avatars/avatar.png" is
+ *  auto-migrated by readAvatar(). Public API is zero-arg -- the acting
+ *  user resolves via hooks.server.ts's AsyncLocalStorage context. */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { appDb } from './db';
 import { uiPrefs } from './db/app-schema';
-import { ROOT } from './files';
+import { ROOT, DATA_ROOT } from './files';
 import { currentUserIdOrDefault, SYSTEM_USER_ID } from './user-context';
 
-const LEGACY_PREFS_FILE = path.join(ROOT, 'data', 'ui-prefs.json');
-const AVATAR_DIR = path.join(ROOT, 'data', 'avatars');
+const LEGACY_PREFS_FILE = path.join(DATA_ROOT, 'ui-prefs.json');
+const AVATAR_DIR = path.join(DATA_ROOT, 'avatars');
 
 export type Appearance = 'system' | 'light' | 'dark';
 export type Theme = 'default' | 'fuchsia' | 'emerald' | 'amber' | 'blue' | 'rose';
@@ -294,7 +280,7 @@ export function readAvatar(): { buffer: Buffer; contentType: string } | null {
 export function clearAvatar(): void {
   const prefs = readPrefs();
   if (prefs.avatarPath) {
-    const full = path.join(ROOT, 'data', prefs.avatarPath);
+    const full = path.join(DATA_ROOT, prefs.avatarPath);
     try {
       fs.unlinkSync(full);
     } catch {

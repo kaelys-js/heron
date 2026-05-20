@@ -44,7 +44,7 @@ const fsMock = {
 };
 vi.mock('node:fs', () => ({ default: fsMock, ...fsMock }));
 
-vi.mock('./files', () => ({ ROOT: '/tmp/repo' }));
+vi.mock('./files', () => ({ ROOT: '/tmp/repo', DATA_ROOT: '/tmp/repo/data' }));
 
 vi.mock('./profiles', () => ({
   getActiveProfileId: () => 'default',

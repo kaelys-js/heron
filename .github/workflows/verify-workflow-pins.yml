@@ -1,13 +1,13 @@
 name: Verify workflow action pins
 # Asserts every `uses:` directive in `.github/workflows/*` is SHA-pinned
 # (40-char hex), NOT tag-pinned (`@v6`, `@main`). SHAs are immutable;
-# tags can be rewritten silently — Renovate keeps the SHAs current via
+# tags can be rewritten silently -- Renovate keeps the SHAs current via
 # weekly digest-update PRs.
 #
 # Exceptions:
-#   - Local references (`./.github/actions/setup-toolchain`) — by definition
+#   - Local references (`./.github/actions/setup-toolchain`) -- by definition
 #     not a SHA-pinnable thing
-#   - Workflow re-uses (`uses: ./.github/workflows/X.yml`) — same
+#   - Workflow re-uses (`uses: ./.github/workflows/X.yml`) -- same
 #
 # This was the G2 audit finding. Re-runs at PR-time + weekly so a
 # manually-edited workflow that adds a tag-pinned action gets caught.

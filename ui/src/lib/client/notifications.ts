@@ -1,26 +1,9 @@
-/**
- * Unified notifications client -- single API across Web, Electron, iOS.
- *
- * The existing in-app SSE pipeline emits activity events. This module
- * is the LAST mile that turns one of those events into an OS-level
- * notification. Behavior per platform:
- *
- *   • Web browser            → `new Notification(title, { body, icon })`
- *                              (requires user-granted permission)
- *
- *   • Electron desktop       → same Notification API -- works identically
- *                              in the Chromium WebView, AND we additionally
- *                              forward to Electron's main-process
- *                              Notification (better UX when WebView is
- *                              hidden behind another app)
- *
- *   • iOS Capacitor          → @capacitor/local-notifications.schedule()
- *                              with immediate fire time. Scheduled flag
- *                              lets us coalesce repeated identical pings.
- *
- * Each call goes through `notify(opts)`. Platform detection is runtime,
- * not build-time, so a single bundle works everywhere.
- */
+/** Unified notify() across Web / Electron / iOS. Last-mile bridge from
+ *  the in-app SSE activity stream to OS notifications.
+ *  Web + Electron: `new Notification(title, { body, icon })` (Electron
+ *  also forwards to main-process Notification for hidden-window UX).
+ *  iOS Capacitor: `LocalNotifications.schedule()` with immediate fire.
+ *  Runtime platform detection -- single bundle everywhere. */
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { BRAND, BRAND_STORAGE_KEYS } from './brand';

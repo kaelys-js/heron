@@ -1,29 +1,8 @@
-/**
- * sse-notifications-bridge -- wire the existing /api/notifications SSE
- * stream into the unified `notify()` function so OS notifications fire
- * on every supported platform (Web, Electron, iOS Capacitor).
- *
- * The existing pipeline:
- *
- *   Server                  Client (web)
- *   ──────                  ──────────────
- *   activity-feed.ts  ──┐
- *                       ├─→ /api/notifications SSE  ──→  Notification API
- *   issue-store.ts    ──┘                                (browser)
- *
- * This bridge re-routes the same SSE messages through the platform-
- * detecting `notify()` in lib/client/notifications.ts:
- *
- *   • Web/Electron: same Notification API, plus electron-native via
- *     preload (better UX when window is hidden).
- *   • iOS: @capacitor/local-notifications.schedule() -- works in
- *     foreground; coalesces by tag for repeat events.
- *
- * Call `installNotificationsBridge()` once at app startup. The shared
- * sse-client wrapper resolves /api/notifications against getApiBase()
- * (Capacitor-safe), handles exponential backoff, and reconnects on
- * native net-status changes. Returns a `stop()` function for teardown.
- */
+/** Bridges /api/notifications SSE into the unified notify() so OS
+ *  notifications fire on Web / Electron / iOS Capacitor. Call
+ *  installNotificationsBridge() once at boot; it returns a stop()
+ *  teardown. Uses the shared sse-client wrapper (getApiBase resolution
+ *  for Capacitor, exponential backoff, native net-status reconnect). */
 import { notify, requestPermission } from './notifications';
 import { BRAND, BRAND_EVENTS, jobDeepLink } from './brand';
 import { createSseClient } from './sse-client';

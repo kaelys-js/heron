@@ -1,30 +1,13 @@
-/**
- * Auto-flip Ready → Queued after CV generation finishes.
- *
- * runEvaluate() emits a 'Generate CV finished' success event with the URL in
- * the message field once the report + PDF are written to disk. We intercept
- * that, look up the job, and bump its status to Queued so it lands on the
- * /queue page for batch send.
- *
- * Skips:
- *   - Jobs that aren't currently in Ready (preserves manual status flips)
- *   - Jobs that already have status >= Queued (idempotent on re-runs)
- *
- * Status update is fire-and-forget via the existing /api/status helper --
- * normalize.job + dedup.job already chain off that.
- *
- * Multi-user safety (F11): the listener fires inside whatever ALS context
- * the emitting code held -- which is usually correct (events fired from a
- * /api/* request inherit the request's user context). BUT the emit can
- * also happen from a background tick OR from spawn-completion callbacks
- * that have lost the original context. So we re-enter the user context
- * explicitly via `runAsUser(ev.userId, …)` before calling `loadAllJobs()`
- * / `markStatus()` -- both of which read+write per-user data.
- *
- * If the event isn't tagged with a userId (broadcast event or pre-F11
- * emit), we skip -- better to no-op than to write into the wrong user's
- * tree.
- */
+/** Auto-flip Ready → Queued after CV generation finishes. Listens for
+ *  runEvaluate's 'Generate CV finished' success event (URL in message
+ *  field), looks up the job, bumps status to Queued so it appears on
+ *  /queue for batch send. Skips jobs not currently in Ready (preserves
+ *  manual flips) and jobs already ≥ Queued (idempotent).
+ *  Status update is fire-and-forget via /api/status (normalize.job +
+ *  dedup.job chain off that).
+ *  F11 multi-user: re-enters runAsUser(ev.userId, …) because the bus
+ *  emit may originate from a background tick or spawn callback with
+ *  no ALS context. Untagged events are skipped. */
 
 import { installBusListener, logEvent, reportServerError } from '../events';
 import { loadAllJobs } from '../parsers';

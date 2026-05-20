@@ -1,29 +1,10 @@
-/**
- * useIsMobile -- singleton reactive matchMedia hook.
- *
- * iOS HIG + Apple HIG: anything ≤ 768pt-wide is a "phone-shaped" context
- * and deserves bottom-sheet / drawer chrome instead of desktop-style
- * popovers + dropdowns. 768px matches Tailwind's `md` breakpoint so the
- * boundary is the same one used by `md:` utility classes throughout the
- * app -- flip with viewport rotation on iPad and the layout follows.
- *
- * CRITICAL: this is a MODULE-LEVEL singleton, NOT per-component.
- * Pre-fix every call to `useIsMobile()` created a fresh `$state` that
- * mounted its own matchMedia listener. ResponsiveActionMenu (parent) +
- * ResponsiveActionItem (child) each called the hook, got separate
- * stores, and the stores updated independently on mount. During the
- * brief window between the parent flipping to mobile and the child
- * doing the same, the child rendered <DropdownMenu.Item> inside a
- * parent that had already switched to <Sheet.Content> -- bits-ui then
- * threw "ContextMenu.Content not found" because the Menu context was
- * not in scope. The fix is one shared store, one matchMedia listener,
- * and every component reads from the same source so flips are atomic.
- *
- * Use:
- *   import { useIsMobile } from '$lib/hooks/use-is-mobile.svelte';
- *   const isMobile = useIsMobile();
- *   {#if isMobile.value} ...mobile UI... {:else} ...desktop UI... {/if}
- */
+/** Singleton matchMedia hook keyed at 768px (Tailwind `md` breakpoint
+ *  + Apple HIG phone width). MUST be module-level: per-component
+ *  `$state` would mount one matchMedia listener per call and parent +
+ *  child renders would flip on different ticks, tearing down bits-ui
+ *  menu context mid-render. Use:
+ *    const isMobile = useIsMobile();
+ *    {#if isMobile.value} ... mobile ... {:else} ... desktop ... {/if} */
 import { onMount } from 'svelte';
 
 const BREAKPOINT_QUERY = '(max-width: 768px)';

@@ -43,7 +43,7 @@ vi.mock('./events', () => ({
   reportServerError: vi.fn(),
 }));
 
-vi.mock('./files', () => ({ ROOT: '/tmp/repo' }));
+vi.mock('./files', () => ({ ROOT: '/tmp/repo', DATA_ROOT: '/tmp/repo/data' }));
 
 const files: Record<string, string> = {};
 const fsMock = {

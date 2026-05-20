@@ -14,7 +14,7 @@
 |------|------|------|
 | __CV__ | `__CV__` (project root) | ALWAYS |
 | __ARTICLE_DIGEST__ | `__ARTICLE_DIGEST__` (if exists) | ALWAYS (detailed proof points) |
-| profile.yml | `config/profile.yml` | ALWAYS (candidate identity and targets) |
+| __PROFILE_YML__ | `__PROFILE_YML__` | ALWAYS (candidate identity and targets) |
 | __PROFILE_MD__ | `__PROFILE_MD__` | ALWAYS (user archetypes, narrative, negotiation) |
 | __WRITING_SAMPLES__/ | `__WRITING_SAMPLES__/` | When generating candidate-facing text -- check `__PROFILE_MD__` for cached `## Writing Style` first; only scan files if absent |
 
@@ -103,7 +103,7 @@ After detecting archetype, read `__PROFILE_MD__` for the user's specific framing
 
 0. **Cover letter:** If the form allows it, ALWAYS include one. Same visual design as CV. JD quotes mapped to proof points. 1 page max.
 1. Read __CV__, __PROFILE_MD__, and __ARTICLE_DIGEST__ (if exists) before evaluating
-1b. **First evaluation of each session:** Run `node cv-sync-check.mjs`. If warnings, notify user.
+1b. **First evaluation of each session:** Run `node scripts/quality/cv-sync-check.mjs`. If warnings, notify user.
 2. Detect the role archetype and adapt framing per __PROFILE_MD__
 3. Cite exact lines from CV when matching
 4. Use WebSearch for comp and company data
@@ -112,7 +112,7 @@ After detecting archetype, read `__PROFILE_MD__` for the user's specific framing
 7. Be direct and actionable -- no fluff
 8. Native tech English for generated text. Short sentences, action verbs, no passive voice.
 8b. Case study URLs in PDF Professional Summary (recruiter may only read this).
-9. **Tracker additions as TSV** -- NEVER edit __APPLICATIONS__ directly. Write TSV in the active profile's `batch/tracker-additions/` (resolves to `data/users/{uid}/profiles/{slug}/batch/tracker-additions/` for the active user).
+9. **Tracker additions as TSV** -- NEVER edit __APPLICATIONS__ directly. Write TSV in the active profile's `__BATCH__/tracker-additions/` (resolves to `data/users/{uid}/profiles/{slug}/batch/tracker-additions/` for the active user).
 10. **Include `**URL:**` in every report header.**
 
 ### Tools
@@ -125,8 +125,8 @@ After detecting archetype, read `__PROFILE_MD__` for the user's specific framing
 | Read | __CV__, __PROFILE_MD__, __ARTICLE_DIGEST__, cv-template.html |
 | Write | Temporary HTML for PDF, __APPLICATIONS__, reports .md |
 | Edit | Update tracker |
-| Canva MCP | Optional visual CV generation. Duplicate base design, edit text, export PDF. Requires `cv.canva_resume_design_id` in profile.yml. |
-| Bash | `node generate-pdf.mjs` |
+| Canva MCP | Optional visual CV generation. Duplicate base design, edit text, export PDF. Requires `cv.canva_resume_design_id` in `__PROFILE_YML__`. |
+| Bash | `node scripts/cv/generate-pdf.mjs` |
 
 ### Time-to-offer priority
 - Working demo + metrics > perfection

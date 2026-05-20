@@ -1,30 +1,11 @@
-/**
- * email-reactor -- classify inbound emails + auto-react.
- *
- * For an autonomous job-search pipeline, the gap between "applied" and
- * "interviewing" is bridged by recruiter emails. The system already
- * polls Gmail via IMAP for job-alert digests; this module adds the
- * complementary capability: when a per-job recruiter email arrives,
- * automatically detect what kind it is and react.
- *
- * Reactions:
- *   - Rejection            → flip status to Rejected + fire post-rejection
- *   - Interview-scheduling → flip status to the appropriate stage
- *                            (PhoneScreen / Technical / Onsite / Final)
- *                            + auto-trigger tech-prep generation
- *   - Offer                → flip status to Offer, surface to /comp-eval,
- *                            push a high-priority notification
- *   - Take-home             → flip status to TakeHome
- *   - Recruiter-reach-out (no prior application) → log as a lead in
- *                            inbound-leads.jsonl (the channel that
- *                            historically converts best for the user)
- *
- * Architecture: pure functions for classification + matching; side-
- * effects (markStatus, spawn tech-prep, etc.) are surfaced via the
- * returned `Action[]` so the caller decides when to execute them.
- * This keeps the module testable in isolation and keeps the
- * "apply automatically" decision in one place (the API endpoint).
- */
+/** email-reactor -- classify inbound recruiter emails + emit Actions.
+ *  Reactions: Rejection → status=Rejected + post-rejection trigger;
+ *  Interview-schedule → matching stage (PhoneScreen/Technical/Onsite/
+ *  Final) + tech-prep spawn; Offer → status=Offer + /comp-eval +
+ *  high-priority push; TakeHome → status=TakeHome; cold recruiter
+ *  reach-out → log to inbound-leads.jsonl.
+ *  Pure classification/matching; side-effects (markStatus, spawn) are
+ *  returned as Action[] so the API endpoint owns when to execute. */
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -119,11 +100,24 @@ const INTERVIEW_SCHEDULING_PATTERNS = [
   /\bnext step (?:in|of) (?:the |our )?(?:interview|process)\b/i,
   /\bnext steps?\b.{0,80}\binterview\b/i,
   /\binvite you to (?:a |the |an )?(?:phone screen|interview|onsite|panel)\b/i,
-  /\bcalendly\.com\b/i,
   /\b(?:savvycal|cal\.com|chilipiper|gem\.com)\b/i,
   /\bschedule (?:a |the |your )?(?:call|interview|chat)\b/i,
   /\bavailable times?\b/i,
 ];
+
+// Calendly URL detection -- substring presence check
+// (CodeQL js/regex/missing-regexp-anchor: pattern 4 -- substring is intended).
+// Returns the matched literal "calendly.com" snippet when present, else undefined.
+function findCalendlyEvidence(text: string): string | undefined {
+  const idx = text.toLowerCase().indexOf('calendly.com');
+  if (idx < 0) return undefined;
+  // Preserve original \bcalendly\.com\b semantics: require the trailing char
+  // (if any) to NOT be a word character (a-z, 0-9, underscore).
+  const tail = text.toLowerCase().charCodeAt(idx + 'calendly.com'.length);
+  if (Number.isNaN(tail)) return 'calendly.com'; // end of string
+  const isWord = (tail >= 97 && tail <= 122) || (tail >= 48 && tail <= 57) || tail === 95; // a-z, 0-9, _
+  return isWord ? undefined : 'calendly.com';
+}
 
 const TAKE_HOME_PATTERNS = [
   /\btake[- ]home (?:assignment|exercise|project|challenge|test)\b/i,
@@ -225,7 +219,8 @@ export function classifyEmail(email: EmailInput): Classification {
     };
   }
 
-  const schedulingEvidence = extractEvidence(combined, INTERVIEW_SCHEDULING_PATTERNS);
+  const schedulingEvidence =
+    extractEvidence(combined, INTERVIEW_SCHEDULING_PATTERNS) ?? findCalendlyEvidence(combined);
   if (schedulingEvidence) {
     // Determine which stage. Default to PhoneScreen for ambiguous "let's
     // chat" emails -- they're almost always the first call.

@@ -1,21 +1,11 @@
-/**
- * Reset of the user's profile and/or the job-search tracker (DANGER ZONE).
- *
- * RBAC:
- *   • `scope='profile'` and `scope='jobs'` -- per-user. Members can reset
- *     THEIR OWN profile or job data. We verify ownership: the profileId
- *     must belong to `locals.user.id` or we return 403.
- *   • `scope='everything'` -- strictly destructive: blows away install-wide
- *     shared infra (autopilot.json, activity.jsonl, story-bank.md,
- *     onboarding-state.json, apply-counter.json). OWNER-ONLY -- a member
- *     resetting "everything" would wipe other users' data.
- *
- * Body: { confirm: 'RESET'; scope?: 'profile' | 'jobs' | 'everything'; profileId?: string }
- *
- * All modes back up every modified file to `<path>.bak` before overwriting.
- * The endpoint NEVER touches .env (API keys), .venv (Python deps), or
- * source code.
- */
+/** Reset the user's profile and/or tracker (DANGER ZONE).
+ *  RBAC: scope='profile'|'jobs' per-user (ownership-checked → 403); scope='everything'
+ *  wipes install-wide shared infra (autopilot.json, activity.jsonl, story-bank.md,
+ *  onboarding-state.json, apply-counter.json) -- OWNER-ONLY since a member would
+ *  wipe other users' data.
+ *  Body: { confirm:'RESET', scope?, profileId? }.
+ *  Every modified file is backed up to <path>.bak. Never touches .env, .venv,
+ *  or source code. */
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -24,12 +14,12 @@ import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resetProfile, type ResetScope } from '$lib/server/profile';
 import { getActiveProfile, getProfileBySlug } from '$lib/server/profiles-db';
 import { requireUserId, requireOwner } from '$lib/server/auth-helpers';
-import { ROOT } from '$lib/server/files';
+import { DATA_ROOT, ROOT } from '$lib/server/files';
 import { logEvent } from '$lib/server/events';
 
 const VALID_SCOPES = new Set<ResetScope>(['profile', 'jobs', 'everything']);
 
-const ONBOARDING_STATE = path.join(ROOT, 'data', 'onboarding-state.json');
+const ONBOARDING_STATE = path.join(DATA_ROOT, 'onboarding-state.json');
 
 export const POST = wrap(
   'profile-reset',

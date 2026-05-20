@@ -1,18 +1,10 @@
-/**
- * interviewers -- per-job interview-panel tracking.
- *
- * Stored at `data/users/{userId}/profiles/{slug}/interviewers.json` as a
- * map of jobId → Interviewer[]. Each entry records who is on the panel,
- * what stage they're for, when they're scheduled, and where the dossier
- * lives (filesystem path under `interview-prep/{company}-{slug}.md`).
- *
- * Used by:
- *   • POST /api/job/[id]/interviewers      → upsert an interviewer
- *   • GET  /api/job/[id]/interviewers      → list current panel
- *   • POST /api/job/[id]/interviewer/[slug]/dossier → spawn deep research
- *   • Inbox -- thank-you-owed cards (per interviewer, within 24h of scheduledAt)
- *   • Calendar surface
- */
+/** interviewers -- per-job interview-panel tracking. Stored at
+ *  data/users/{uid}/profiles/{slug}/interviewers.json as jobId →
+ *  Interviewer[]; each entry records panel member, stage, schedule,
+ *  and dossier path under interview-prep/{company}-{slug}.md.
+ *  Consumers: /api/job/[id]/interviewers (upsert/list),
+ *  /api/job/[id]/interviewer/[slug]/dossier (deep research spawn),
+ *  Inbox thank-you-owed cards, Calendar surface. */
 
 import fs from 'node:fs';
 import path from 'node:path';

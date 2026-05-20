@@ -1,22 +1,9 @@
-/**
- * Offer record for a single job.
- *
- * GET  /api/job/[id]/offer  → return the OfferRecord (or null)
- * POST /api/job/[id]/offer  → upsert the offer; on first POST creates the
- *                             record with a single "initial" round.
- *
- * Body shape:
- *   {
- *     currency: 'USD',
- *     receivedAt: 1700000000000,        // unix ms -- defaults to Date.now()
- *     decisionDeadline?: 1700500000000, // when recruiter wants an answer
- *     initial: {
- *       base, bonus?, signing?, equity?, equityVestingYears?, otherCash?, notes?
- *     }
- *   }
- *
- * Subsequent counter-rounds use /counter (see sibling endpoint).
- */
+/** Offer record for a single job. GET returns the OfferRecord (or null).
+ *  POST upserts; on first POST creates the record with one "initial" round.
+ *  Body: { currency: 'USD', receivedAt: unix-ms (default now),
+ *  decisionDeadline?: unix-ms, initial: { base, bonus?, signing?, equity?,
+ *  equityVestingYears?, otherCash?, notes? } }. Subsequent counter-rounds
+ *  use the /counter sibling. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';

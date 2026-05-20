@@ -1,23 +1,11 @@
-/**
- * inbound-leads -- unified storage + state machine for recruiter inbound
- * across BOTH channels (email + LinkedIn DM).
- *
- * Storage:
- *   - `inbound-leads.jsonl` (append-only log of raw + classified leads)
- *   - `inbound-threads.json` (per-lead state: awaiting-reply / engaged /
- *     went-silent / closed / replied)
- *
- * Lead lifecycle:
- *   1. Lead arrives (from email-reactor OR linkedin-dm scrape)
- *   2. Classified: real-role / mass-blast / scam / referral-ask /
- *      status-update / unknown
- *   3. If real-role + has JD URL → JD enrichment kicks off (fetch + score)
- *   4. Surfaces as Inbox card
- *   5. User generates a reply draft (or system pre-drafts)
- *   6. User reviews + clicks send (NEVER auto-sent)
- *   7. Reply marked; thread enters 'awaiting-reply'
- *   8. If no reply in 7 days → 'went-silent' card surfaces
- */
+/** inbound-leads -- unified storage + state machine for recruiter
+ *  inbound across both channels (email + LinkedIn DM).
+ *  Storage: inbound-leads.jsonl (raw + classified log) + inbound-
+ *  threads.json (per-lead state).
+ *  Lifecycle: arrive → classify (real-role/mass-blast/scam/referral-
+ *  ask/status-update/unknown) → if real-role+URL enrich JD → Inbox
+ *  card → user-reviewed reply (never auto-sent) → awaiting-reply →
+ *  went-silent at 7 days. */
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -108,10 +96,15 @@ export function appendLead(lead: InboundLead, profileId?: string): boolean {
   const p = leadsPath(profileId);
   fs.mkdirSync(path.dirname(p), { recursive: true });
   // Dedup by messageId -- read existing
-  if (fs.existsSync(p)) {
-    const text = fs.readFileSync(p, 'utf8');
-    if (text.includes('"messageId":"' + lead.messageId + '"')) return false;
+  // CodeQL js/file-system-race: read directly and treat ENOENT as no
+  // existing leads rather than racing existsSync against the read.
+  let text: string | null = null;
+  try {
+    text = fs.readFileSync(p, 'utf8');
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
   }
+  if (text !== null && text.includes('"messageId":"' + lead.messageId + '"')) return false;
   fs.appendFileSync(p, JSON.stringify(lead) + '\n');
   // Initialise thread state
   const threads = readThreadsMap(profileId);
@@ -178,12 +171,14 @@ export function attachDraftPath(leadId: string, draftPath: string, profileId?: s
   // We don't rewrite the jsonl -- we add a side-channel record.
   const draftMapPath = path.join(path.dirname(threadsPath(profileId)), 'inbound-drafts.json');
   let map: Record<string, string> = {};
-  if (fs.existsSync(draftMapPath)) {
-    try {
-      map = JSON.parse(fs.readFileSync(draftMapPath, 'utf8'));
-    } catch {
-      // Corrupt JSON -- start with an empty map; the new entry will
-      // overwrite the bad file on the writeFileSync below.
+  // CodeQL js/file-system-race: read directly and treat ENOENT as an
+  // empty map rather than racing existsSync against the read.
+  try {
+    map = JSON.parse(fs.readFileSync(draftMapPath, 'utf8'));
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
+      // Corrupt JSON or other read error -- start with an empty map; the
+      // new entry will overwrite the bad file on the writeFileSync below.
     }
   }
   map[leadId] = draftPath;
@@ -285,20 +280,47 @@ export function classifyInbound(input: { subject: string; body: string; senderDo
 
 /** Extract the first https URL that looks like a JD posting (so we
  *  can auto-enrich). */
+// JD-posting hostnames -- substring presence check
+// (CodeQL js/regex/missing-regexp-anchor: pattern 4 -- substring is intended).
+const JD_POSTING_HINTS = [
+  'lever.co/',
+  'greenhouse.io/',
+  'ashbyhq.com/',
+  'workable.com/',
+  'jobs.',
+  'careers.',
+  'linkedin.com/jobs/',
+];
 export function extractJdUrl(text: string): string | undefined {
   const matches = text.match(/https?:\/\/[^\s<>"]+/g) ?? [];
   for (const url of matches) {
-    if (
-      /lever\.co\/|greenhouse\.io\/|ashbyhq\.com\/|workable\.com\/|jobs\.|careers\.|linkedin\.com\/jobs\//i.test(
-        url,
-      )
-    ) {
+    const lower = url.toLowerCase();
+    if (JD_POSTING_HINTS.some((h) => lower.includes(h))) {
       return url.replace(/[)\].,>]+$/, '');
     }
   }
-  // Fallback: first https URL if it's not clearly a profile link
+  // Fallback: first https URL if it's not clearly a profile link.
+  // CodeQL `js/regex/missing-regexp-anchor`: a substring regex against
+  // a URL would also flag `js/incomplete-url-substring-sanitization`,
+  // so resolve via real URL parsing -- hostname end-match + anchored
+  // path prefix is the canonical pattern.
   for (const url of matches) {
-    if (!/linkedin\.com\/(in|company)\//i.test(url)) return url.replace(/[)\].,>]+$/, '');
+    const cleaned = url.replace(/[)\].,>]+$/, '');
+    if (!isLinkedInProfileUrl(cleaned)) return cleaned;
   }
   return undefined;
+}
+
+function isLinkedInProfileUrl(url: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  const host = parsed.hostname.toLowerCase();
+  const isLinkedIn = host === 'linkedin.com' || host.endsWith('.linkedin.com');
+  if (!isLinkedIn) return false;
+  // Anchored path-prefix check: profile (/in/...) or company (/company/...).
+  return /^\/(in|company)\//i.test(parsed.pathname);
 }

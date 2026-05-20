@@ -1,17 +1,9 @@
-/**
- * db/migrate -- first-boot schema bootstrap.
- *
- * Heron doesn't ship a drizzle-kit-generated migration folder yet --
- * the schemas are still being iterated. We use idempotent CREATE TABLE
- * IF NOT EXISTS statements derived from the Drizzle schema objects.
- * Safe to run on every startup and fast (~1ms when tables already exist).
- *
- * When the schema stabilises we switch to drizzle-kit migrations.
- * Until then, ANY schema change requires:
- *   1. Edit the schema file
- *   2. Add a corresponding CREATE TABLE here (or ALTER for additions)
- *   3. Bump SCHEMA_VERSION below + write a one-shot migration step
- */
+/** db/migrate -- first-boot schema bootstrap. No drizzle-kit migration
+ *  folder yet (schemas still iterating); we use idempotent CREATE TABLE
+ *  IF NOT EXISTS statements derived from the Drizzle schema. Runs on
+ *  every startup (~1ms when tables exist).
+ *  Schema change checklist: edit schema file, add CREATE TABLE / ALTER
+ *  here, bump SCHEMA_VERSION + write a one-shot migration step. */
 import { authSqliteHandle, appSqliteHandle } from './index';
 
 /** Schema version. Bump when adding/removing tables.

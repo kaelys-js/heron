@@ -1,4 +1,4 @@
-# Per-interviewer deep dossier -- one-pager for ONE person on the panel
+# Mode: interviewer-dossier -- one-pager for ONE person on the panel
 
 You're producing the dossier the user reads about a SINGLE interviewer
 30 minutes before that person's slot. This complements the job-wide

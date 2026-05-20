@@ -1,65 +1,17 @@
-/**
- * Backup + restore module.
- *
- * Multi-user: backups now capture EVERY user's data tree (not just the
- * legacy `data/profiles/`) plus both SQLite files. The owner is the only
- * person who can trigger a backup, and a restore overwrites everything.
- *
- * What's backed up:
- *   data/users/                   -- every user's content tree:
- *                                   data/users/{userId}/profiles/{slug}/{cv.md,
- *                                   profile.yml, _profile.md, portals.yml,
- *                                   applications.md, pipeline.md,
- *                                   scan-history.tsv, gemini-scores.tsv,
- *                                   follow-ups.md, reports/, output/,
- *                                   interview-prep/}
- *   data/users/.legacy-claimed    -- which user inherited legacy single-user data
- *   data/profiles/                -- legacy single-user content (still
- *                                   populated until full DB migration lands;
- *                                   captured for safety)
- *   data/profiles.json            -- legacy active-profile pointer
- *   data/auth.db                  -- every user + session + passkey
- *   data/app.db                   -- every per-user app row
- *   data/sources.json             -- scanner config (install-wide)
- *   data/autopilot.json           -- schedule + thresholds (install-wide)
- *   data/issues.jsonl             -- open issues (per-user filtered at read time)
- *   data/activity.jsonl           -- activity feed (per-user filtered)
- *   data/onboarding-state.json    -- onboarding progress (install-wide)
- *   interview-prep/story-bank.md  -- shared STAR+R bank (install-wide)
- *
- * What's NOT backed up:
- *   .env                          -- credentials (deliberate; scope (a))
- *   node_modules/                 -- re-installable
- *   .playwright-*                 -- browser sessions (re-login)
- *   .git/                         -- version control
- *   data/backups/                 -- recursion guard
- *   data/apply-state/             -- transient runtime state
- *   data/*.db-{wal,shm,journal}   -- SQLite runtime journals
- *   ui/build/, ui/.svelte-kit/    -- build artifacts
- *
- * Storage layout:
- *   data/backups/{ISO}.tar.gz     -- gzipped tarball, ISO timestamp filename
- *   data/backups/{ISO}.meta.json  -- sidecar with file count + profile slugs
- *
- * Format: gzipped tar, paths relative to ROOT. tar binary used (bsdtar
- * on macOS, GNU tar on Linux -- both accept -czf / -xzf). Trade-off:
- * losing Windows compatibility, but Heron is Unix-first anyway.
- *
- * Retention: configurable N days (default 14). On every successful
- * backup, prune anything older than N days from data/backups/.
- *
- * Safety:
- *   - Restore refuses to run while any orchestrator task is in flight
- *     (a half-restored applications.md is much worse than no restore).
- *   - Tarball integrity verified with `tar -tzf` before extraction.
- *   - Extraction lands in a temp dir, then renames in over the existing
- *     paths atomically (well -- as atomic as fs.rename across dirs gets).
- */
+/** Backup + restore. Owner-only. Captures every user tree
+ *  (data/users/{uid}/profiles/) + legacy data/profiles/ + both SQLite
+ *  DBs + install-wide JSONs (sources, autopilot, issues, activity,
+ *  onboarding-state) + shared story-bank.md. Skips .env, node_modules,
+ *  .playwright-*, .git, data/backups (recursion guard), apply-state,
+ *  SQLite journals, build outputs. Format: gzip tar (bsdtar/GNU tar),
+ *  stored at data/backups/{ISO}.tar.gz + {ISO}.meta.json sidecar.
+ *  Retention: N days (default 14). Restore refuses while tasks are
+ *  in-flight; extracts to tmp then renames in atomically. */
 
 import path from 'node:path';
 import fs from 'node:fs';
 import { spawnSync, spawn } from 'node:child_process';
-import { ROOT } from './files';
+import { ROOT, DATA_ROOT } from './files';
 import { logEvent, reportServerError } from './events';
 import { listRunning } from './orchestrator';
 import { userSharedPath } from './profile-paths';
@@ -206,7 +158,7 @@ function listBackupInventory(): { users: string[]; legacyProfiles: string[] } {
   const users: string[] = [];
   const legacyProfiles: string[] = [];
   // Multi-user: data/users/{userId}/profiles/{slug}/...
-  const usersRoot = path.join(ROOT, 'data', 'users');
+  const usersRoot = path.join(DATA_ROOT, 'users');
   try {
     if (fs.existsSync(usersRoot)) {
       for (const entry of fs.readdirSync(usersRoot, { withFileTypes: true })) {
@@ -223,7 +175,7 @@ function listBackupInventory(): { users: string[]; legacyProfiles: string[] } {
     });
   }
   // Legacy single-user: data/profiles/{slug}/...
-  const legacyRoot = path.join(ROOT, 'data', 'profiles');
+  const legacyRoot = path.join(DATA_ROOT, 'profiles');
   try {
     if (fs.existsSync(legacyRoot)) {
       for (const entry of fs.readdirSync(legacyRoot, { withFileTypes: true })) {

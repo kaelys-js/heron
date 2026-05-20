@@ -1,16 +1,8 @@
-/**
- * apply-timing -- turn a job's first_seen date into a "apply NOW" /
- * "still good" / "already late" band.
- *
- * Industry baseline: postings on Days 1-3 convert to phone screen at
- * 3-5× the rate of postings on Days 7+. After ~Day 14, most pipelines
- * are full enough that you're an "also-ran" regardless of CV quality.
- *
- * We use scan-history.first_seen as the proxy for "posted on" -- it's
- * not perfect (a posting could have existed before we discovered it),
- * but it's monotonically non-decreasing relative to the true post
- * date, so the ordering is correct even if absolute numbers skew late.
- */
+/** Bands a job's first_seen date into "apply NOW" / "still good" /
+ *  "already late". Day 1-3 postings convert at 3-5x the rate of Day 7+;
+ *  past Day 14 you're an also-ran. scan-history.first_seen is the proxy
+ *  for true post date -- monotonically non-decreasing so ordering is
+ *  correct even when absolute numbers skew late. */
 
 import { readScanHistorySummary } from './scan-history';
 import { profilePath } from './profile-paths';

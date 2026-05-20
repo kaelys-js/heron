@@ -1,29 +1,17 @@
-/**
- * lib-profiles.mjs -- argv + env helpers.
- *
- * The MJS scripts in scripts/ (scanners, appliers, tracker tools, etc.)
- * use `profileFromArgv()` and `userFromArgv()` to resolve their target
- * profile + user from a uniform interface:
- *   • --profile <slug> | --profile=<slug>  → profile id
- *   • --user <uid>     | --user=<uid>      → user id (multi-user)
- *   • CAREER_OPS_PROFILE_ID env var        → fallback for profile
- *   • CAREER_OPS_USER_ID env var           → fallback for user
- *
- * The orchestrator forwards these env vars on every spawn so dashboard
- * invocations land in the right data/users/{uid}/profiles/{slug}/ tree
- * automatically. Standalone CLI invocations either pass --profile/--user
- * or fall back to SYSTEM_USER_ID + the active profile.
- *
- * Tests here cover the argv parser + env-var fallback + path-traversal
- * guard. They run against the actual MJS module via dynamic import so
- * the contract stays in lock-step with the script-side code.
- */
+/** Tests for lib-profiles.mjs argv + env helpers (profileFromArgv,
+ *  userFromArgv). MJS scripts resolve target profile/user via:
+ *    --profile <slug> | --user <uid>   → flags
+ *    HERON_PROFILE_ID | HERON_USER_ID  → env-var fallback
+ *  The orchestrator forwards these env vars on every spawn so dashboard
+ *  invocations land in data/users/{uid}/profiles/{slug}/ automatically.
+ *  Covers argv parser, env fallback, path-traversal guard. Loaded via
+ *  dynamic import to stay in lock-step with the script-side code. */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const ORIG_ENV_USER = process.env.CAREER_OPS_USER_ID;
-const ORIG_ENV_PROFILE = process.env.CAREER_OPS_PROFILE_ID;
+const ORIG_ENV_USER = process.env.HERON_USER_ID;
+const ORIG_ENV_PROFILE = process.env.HERON_PROFILE_ID;
 
 // Resolve the MJS module by absolute file:// URL so vitest's loader
 // doesn't try to resolve via the workspace's module-resolution graph.
@@ -32,13 +20,13 @@ const libPath = pathToFileURL(
 ).href;
 
 beforeEach(() => {
-  delete process.env.CAREER_OPS_USER_ID;
-  delete process.env.CAREER_OPS_PROFILE_ID;
+  delete process.env.HERON_USER_ID;
+  delete process.env.HERON_PROFILE_ID;
 });
 
 afterEach(() => {
-  process.env.CAREER_OPS_USER_ID = ORIG_ENV_USER;
-  process.env.CAREER_OPS_PROFILE_ID = ORIG_ENV_PROFILE;
+  process.env.HERON_USER_ID = ORIG_ENV_USER;
+  process.env.HERON_PROFILE_ID = ORIG_ENV_PROFILE;
 });
 
 describe('lib-profiles.mjs::userFromArgv', () => {
@@ -52,14 +40,14 @@ describe('lib-profiles.mjs::userFromArgv', () => {
     expect(lib.userFromArgv(['--user=bob'])).toBe('bob');
   });
 
-  it('falls back to CAREER_OPS_USER_ID env var when no flag', async () => {
-    process.env.CAREER_OPS_USER_ID = 'env-charlie';
+  it('falls back to HERON_USER_ID env var when no flag', async () => {
+    process.env.HERON_USER_ID = 'env-charlie';
     const lib = await import(libPath);
     expect(lib.userFromArgv([])).toBe('env-charlie');
   });
 
-  it('--user flag wins over CAREER_OPS_USER_ID env var', async () => {
-    process.env.CAREER_OPS_USER_ID = 'env-loser';
+  it('--user flag wins over HERON_USER_ID env var', async () => {
+    process.env.HERON_USER_ID = 'env-loser';
     const lib = await import(libPath);
     expect(lib.userFromArgv(['--user', 'arg-winner'])).toBe('arg-winner');
   });
@@ -70,7 +58,7 @@ describe('lib-profiles.mjs::userFromArgv', () => {
   });
 
   it('returns SYSTEM_USER_ID when env var is empty string', async () => {
-    process.env.CAREER_OPS_USER_ID = '';
+    process.env.HERON_USER_ID = '';
     const lib = await import(libPath);
     expect(lib.userFromArgv([])).toBe(lib.SYSTEM_USER_ID);
   });
@@ -110,7 +98,10 @@ describe('lib-profiles.mjs::resolveUserArg — path-traversal guard', () => {
       expect(() => lib.resolveUserArg(badId)).toThrow('__EXIT__');
       expect(exited).toBe(true);
       expect(exitCode).toBe(2);
-      expect(errMsg).toMatch(/invalid characters/);
+      // Message was widened in the CodeQL js/clear-text-logging fix --
+      // it no longer echoes the raw id value but does say "invalid path
+      // characters" plus a sanitized summary of the offending chars.
+      expect(errMsg).toMatch(/invalid path characters/);
     } finally {
       process.exit = origExit;
       console.error = origErr;

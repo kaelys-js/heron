@@ -1,27 +1,8 @@
-/**
- * GET /api/watch/prep-brief
- *
- * Compact JSON payload sized for an Apple Watch glance:
- *   {
- *     hasUpcoming: boolean,
- *     nextStart: number,         // unix ms
- *     hoursAway: number,
- *     company: string,
- *     stage: string,
- *     interviewerName: string,
- *     hasDossier: boolean,
- *     ready: boolean,            // true if the ready-gate passes
- *     missingCount: number,      // ready-gate items still red
- *     topQuestion?: string,      // pulled from the questions file if present
- *   }
- *
- * Used by:
- *   • Apple Watch complication (the ring + "X hours" countdown)
- *   • iOS widget tiny-size variant
- *
- * Designed to be a single network call from the Watch -- every detail
- * needed for the glance fits in ~500 bytes.
- */
+/** GET /api/watch/prep-brief -- compact JSON for the Apple Watch
+ *  complication (ring + "X hours" countdown) + tiny iOS widget.
+ *  Fits ~500 bytes so a single Watch call suffices. Returns
+ *  { hasUpcoming, nextStart, hoursAway, company, stage, interviewerName,
+ *    hasDossier, ready, missingCount, topQuestion? }. */
 
 import fs from 'node:fs';
 import path from 'node:path';

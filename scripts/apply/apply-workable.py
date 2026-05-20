@@ -41,7 +41,7 @@ def _url_transform(url: str) -> str:
 def workable_config() -> PortalConfig:
     return PortalConfig(
         portal_id="workable",
-        # Per-user Playwright session — resolves to data/users/{uid}/.playwright-workable/
+        # Per-user Playwright session -- resolves to data/users/{uid}/.playwright-workable/
         # under multi-user, or data/profiles/_shared/.playwright-workable/ for legacy.
         user_data_dir=_resolve_user_data_dir("workable"),
         first_name_selectors=[

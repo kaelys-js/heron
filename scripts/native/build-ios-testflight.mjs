@@ -94,9 +94,9 @@ run('pod', ['install', '--repo-update'], { cwd: iosDir });
 step(7, 'Bundle install (Fastlane)');
 run('bundle', ['install', '--quiet'], { cwd: iosDir });
 
-step(8, 'Running Fastlane :beta — uploading to TestFlight');
+step(8, 'Running Fastlane :beta -- uploading to TestFlight');
 run('bundle', ['exec', 'fastlane', 'beta'], { cwd: iosDir, env });
 
 step(9, 'Done');
-ok('Build uploaded — check TestFlight in ~5min.');
+ok('Build uploaded -- check TestFlight in ~5min.');
 info('Internal testers see it immediately (no Apple beta review).');

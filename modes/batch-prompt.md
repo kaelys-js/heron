@@ -1,6 +1,6 @@
-# Heron Batch Worker -- Full Evaluation + PDF + Tracker Line
+# Mode: batch-prompt -- Heron batch worker (full evaluation + PDF + tracker line)
 
-You are a job-offer evaluation worker for the candidate (read name from config/profile.yml). You receive an offer (URL + JD text) and produce:
+You are a job-offer evaluation worker for the candidate (read name from `__PROFILE_YML__`). You receive an offer (URL + JD text) and produce:
 
 1. Full A-G evaluation (report .md)
 2. ATS-optimized personalized PDF
@@ -16,7 +16,7 @@ You are a job-offer evaluation worker for the candidate (read name from config/p
 |------|---------------|------|
 | __CV__ | `__CV__ (project root)` | ALWAYS |
 | __PROFILE_MD__ | `__PROFILE_MD__` | ALWAYS (archetypes, BG policy, comp targets, narrative) |
-| config/profile.yml | `config/profile.yml` | ALWAYS (name, location, hard_no, contact) |
+| __PROFILE_YML__ | `__PROFILE_YML__` | ALWAYS (name, location, hard_no, contact) |
 | llms.txt | `llms.txt (if exists)` | ALWAYS |
 | __ARTICLE_DIGEST__ | `__ARTICLE_DIGEST__ (project root)` | ALWAYS (proof points) |
 | i18n.ts | `i18n.ts (if exists, optional)` | Interviews / deep only |
@@ -276,7 +276,7 @@ If the gate passes:
 12. Write the HTML to `/tmp/cv-candidate-{company-slug}.html`
 13. Run:
 ```bash
-node generate-pdf.mjs \
+node scripts/cv/generate-pdf.mjs \
   /tmp/cv-candidate-{company-slug}.html \
   __OUTPUT__/cv-candidate-{company-slug}-{{DATE}}.pdf \
   --format={letter|a4}
@@ -312,13 +312,13 @@ node generate-pdf.mjs \
 |-------------|---------|
 | `{{LANG}}` | `en` |
 | `{{PAGE_WIDTH}}` | `8.5in` (letter) or `210mm` (A4) |
-| `{{NAME}}` | (from profile.yml) |
-| `{{EMAIL}}` | (from profile.yml) |
-| `{{LINKEDIN_URL}}` | (from profile.yml) |
-| `{{LINKEDIN_DISPLAY}}` | (from profile.yml) |
-| `{{PORTFOLIO_URL}}` | (from profile.yml) |
-| `{{PORTFOLIO_DISPLAY}}` | (from profile.yml) |
-| `{{LOCATION}}` | (from profile.yml) |
+| `{{NAME}}` | (from `__PROFILE_YML__`) |
+| `{{EMAIL}}` | (from `__PROFILE_YML__`) |
+| `{{LINKEDIN_URL}}` | (from `__PROFILE_YML__`) |
+| `{{LINKEDIN_DISPLAY}}` | (from `__PROFILE_YML__`) |
+| `{{PORTFOLIO_URL}}` | (from `__PROFILE_YML__`) |
+| `{{PORTFOLIO_DISPLAY}}` | (from `__PROFILE_YML__`) |
+| `{{LOCATION}}` | (from `__PROFILE_YML__`) |
 | `{{SECTION_SUMMARY}}` | Professional Summary |
 | `{{SUMMARY_TEXT}}` | Personalized summary with keywords |
 | `{{SECTION_COMPETENCIES}}` | Core Competencies |
@@ -336,9 +336,9 @@ node generate-pdf.mjs \
 
 ### Step 5 -- Tracker line
 
-Write a TSV line to the active profile's `batch/tracker-additions/` directory (dashboard orchestration resolves it per user + profile):
+Write a TSV line to the active profile's `__BATCH__/tracker-additions/` directory (dashboard orchestration resolves it per user + profile):
 ```text
-batch/tracker-additions/{{ID}}.tsv
+`__BATCH__`/tracker-additions/{{ID}}.tsv
 ```
 
 TSV format (single line, no header, 9 tab-separated columns):

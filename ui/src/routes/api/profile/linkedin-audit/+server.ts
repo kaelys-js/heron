@@ -1,18 +1,9 @@
-/**
- * /api/profile/linkedin-audit -- audit the user's LinkedIn profile for
- * recruiter SEARCH visibility (different from ATS keyword matching).
- *
- * POST body: { linkedinUrl: string }
- *
- * Two phases:
- *   1. Spawn extract-linkedin-profile.py to scrape the user's profile
- *      via their saved Playwright session (.playwright-linkedin/).
- *   2. Spawn the linkedin-audit Claude mode with the extracted text +
- *      cv.md + target_roles. Mode writes a structured audit markdown.
- *
- * Cost: 1 Playwright fetch (~5-10s) + 1 Claude pass (~30-60s). Cache
- * by date so re-running on the same day returns the existing audit.
- */
+/** /api/profile/linkedin-audit -- audit the user's LinkedIn profile for
+ *  recruiter SEARCH visibility (different from ATS keyword matching).
+ *  POST { linkedinUrl }. Two phases: (1) extract-linkedin-profile.py
+ *  scrapes via .playwright-linkedin/, (2) linkedin-audit Claude mode
+ *  consumes extracted text + cv.md + target_roles → audit markdown.
+ *  Cost: ~5-10s Playwright + 30-60s Claude. Cached by date. */
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -135,13 +126,21 @@ export const GET = wrap('linkedin-audit', async ({ url }: { url: URL }) => {
   entries.sort();
   const newest = entries[entries.length - 1];
   const full = path.join(dir, newest);
-  const stat = fs.statSync(full);
-  return {
-    exists: true,
-    path: path.relative(ROOT, full),
-    body: fs.readFileSync(full, 'utf8'),
-    lastUpdatedAt: stat.mtimeMs,
-  };
+  // CodeQL js/file-system-race: open once and use fstatSync/readFileSync
+  // through the fd so the stat and read see the same inode atomically.
+  const fd = fs.openSync(full, 'r');
+  try {
+    const stat = fs.fstatSync(fd);
+    const body = fs.readFileSync(fd, 'utf8');
+    return {
+      exists: true,
+      path: path.relative(ROOT, full),
+      body,
+      lastUpdatedAt: stat.mtimeMs,
+    };
+  } finally {
+    fs.closeSync(fd);
+  }
 });
 
 export const POST = wrap(

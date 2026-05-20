@@ -1,29 +1,9 @@
-/**
- * error-reporter -- unified, platform-aware error capture.
- *
- * Every error funnels through `reportError(err, context?)`. Behavior:
- *
- *   1. **Always**: console.error with structured context.
- *   2. **Always**: POSTs to `/api/issues` on the resolved backend so the
- *      existing Issues system (Inbox / dedupe / activity feed) sees it.
- *      Web + Electron + iOS Capacitor all use the same endpoint.
- *   3. **If backend unreachable**: queues the error in localStorage and
- *      retries on next reportError call (or on `installErrorReporter`
- *      bootstrap).
- *   4. **Surfaces a toast** for level=error so the user sees it.
- *   5. **Fires an OS notification** for level=error AND severity=high
- *      (rate-limited so we don't spam).
- *
- * The "common/shared system" the user asked for: this funnels every
- * platform into the EXISTING Heron Issues store (server-side
- * issue-store.ts) -- the same store the autonomous-apply pipeline writes
- * to, the same store the Inbox displays. iOS / Electron / Web errors
- * all show up alongside apply failures, IMAP errors, etc.
- *
- * Wire this up once at app boot:
- *   import { installErrorReporter } from '$lib/client/error-reporter';
- *   installErrorReporter(resolvedBackendUrl);
- */
+/** Unified error capture. Every error goes through reportError().
+ *  Pipeline: console.error -> POST /api/issues (same Issues store the
+ *  Inbox + autonomous-apply pipeline use) -> localStorage queue on
+ *  backend-unreachable + retry on next call -> toast on level=error ->
+ *  rate-limited OS notification for high-severity. Wire once at boot
+ *  via installErrorReporter(resolvedBackendUrl). */
 import { toast } from 'svelte-sonner';
 import { BRAND, BRAND_STORAGE_PREFIX } from './brand';
 import { notify } from './notifications';

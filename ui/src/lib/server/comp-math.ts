@@ -1,33 +1,9 @@
-/**
- * comp-math -- pure-function compensation math.
- *
- * For senior IC roles equity is often 30-50% of total comp. The negotiation
- * mode wrote prompts about it but never computed anything. This module
- * gives the UI actual numbers so the user can compare offers / negotiate
- * counters on a real basis.
- *
- * Three quantities computed:
- *
- *   1. Year-1 cash    = base + signing + (annual_bonus_target)
- *   2. 4-year total   = Σ year_i for i in 1..4
- *   3. Equity NPV     = sum of vested-shares per year, discounted to today
- *
- * Equity flavors handled:
- *   - RSU (public)   -- vest at FMV per share, taxed as W-2 income at vest
- *   - RSU (private)  -- same vesting but FMV is the company's 409A. Often
- *                       wildly understates "outcome" value; risk-adjust.
- *   - ISO/NSO        -- option grants, value = max(0, FMV - strike) × growth
- *   - Pre-IPO RSU    -- double-trigger: vest + liquidity event
- *
- * We don't model:
- *   - Taxes (too jurisdiction-specific -- leave to TaxJar / personal CPA)
- *   - 401k employer match (handled as a flat benefit credit)
- *   - Refresh grants (year-3+ -- too speculative)
- *
- * All math is in the user's chosen currency (default USD). The numbers
- * coming OUT are nominal -- no inflation adjustment. Annual bonus is
- * modeled at TARGET; risk-adjust via probability if the user wants.
- */
+/** Pure-function compensation math. Computes year-1 cash (base +
+ *  signing + bonus_target), 4-year total, and equity NPV (sum of
+ *  vested shares discounted). Equity types: RSU-public, RSU-private
+ *  (409A FMV often understates outcome), ISO/NSO, pre-IPO RSU (double-
+ *  trigger). Not modelled: taxes (jurisdictional), 401k match (treat as
+ *  flat benefit), refresh grants. Nominal numbers, user's currency. */
 
 export type EquityType = 'rsu-public' | 'rsu-private' | 'iso' | 'nso' | 'pre-ipo-rsu' | 'none';
 

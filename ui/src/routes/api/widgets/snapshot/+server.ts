@@ -1,44 +1,12 @@
-/**
- * /api/widgets/snapshot -- single endpoint that feeds every iOS surface that
- * lives outside the WebView:
- *   • iPhone Home Screen widgets (AppWidget, InboxIssuesWidget,
- *     NextInterviewWidget, TopApplyWidget)
- *   • Lock Screen accessory widgets
- *   • Apple Watch app + Smart Stack
- *   • Live Activities (next-interview countdown)
- *
- * Why a dedicated endpoint instead of stitching together /api/stats +
- * /api/issues + /api/interviews on the client: the iPhone-side
- * NativePlugin.updateWidgets() pushes ONE blob into App Group
- * UserDefaults + ONE WCSession message to the Watch. Forcing the JS
- * caller to make three calls and combine them adds 100-200ms latency
- * on every widget refresh and three places to handle 401s. One round
- * trip, one shape.
- *
- * Auth: routed through hooks.server.ts's guard, so requests without a
- * session bounce to 401 before this handler runs. Per-user via the
- * AsyncLocalStorage user-context -- every user sees only their own
- * queue / interviews / issues.
- *
- * Response shape mirrors what NativePlugin.updateWidgets expects
- * (see plugin.swift's docstring for the key contract):
- *
- *   {
- *     ok: true,
- *     authenticated: true,
- *     stats: { queued, appliedToday, upcomingInterviews },
- *     nextInterview: { jobId, company, role, stage, scheduledAt (ISO),
- *                      interviewers[] } | null,
- *     topApply: { jobId, company, role, score, compBand, location,
- *                 portal } | null,
- *     openIssues: [{ id, severity, source, summary, ts }]
- *   }
- *
- * Empty state is fine -- a fresh install with no jobs returns
- * stats={0,0,0}, nextInterview=null, topApply=null, openIssues=[].
- * The Swift widgets render the appropriate empty-state placeholders;
- * the auth gate (Task 2) handles the signed-out case via the bool flag.
- */
+/** /api/widgets/snapshot -- single payload feeding every iOS surface
+ *  outside the WebView (Home Screen widgets, Lock Screen accessories,
+ *  Apple Watch + Smart Stack, Live Activities). Dedicated to keep
+ *  NativePlugin.updateWidgets() at one blob → App Group UserDefaults +
+ *  one WCSession message (vs. 3 API calls + 100-200ms latency).
+ *  Auth via hooks guard + AsyncLocalStorage user-context. Shape mirrors
+ *  plugin.swift's contract: { ok, authenticated, stats, nextInterview?,
+ *  topApply?, openIssues[] }. Empty state is fine -- Swift widgets render
+ *  placeholders; signed-out is conveyed via `authenticated: false`. */
 import { wrap } from '$lib/server/api-helpers';
 import { loadAllJobs } from '$lib/server/parsers';
 import { listSchedule } from '$lib/server/interview-schedule';

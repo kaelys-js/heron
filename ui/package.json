@@ -2,7 +2,7 @@
   "name": "ui",
   "version": "0.1.0",
   "private": true,
-  "description": "Heron SvelteKit dashboard — multi-user, multi-platform (web + iOS + Android + Electron).",
+  "description": "Heron SvelteKit dashboard -- multi-user, multi-platform (web + iOS + Android + Electron).",
   "homepage": "https://heron.app",
   "bugs": {
     "url": "https://github.com/kaelys-js/heron/issues"
@@ -88,7 +88,6 @@
     "@capacitor/status-bar": "catalog:",
     "@playwright/test": "catalog:",
     "@size-limit/file": "catalog:",
-    "@size-limit/preset-app": "catalog:",
     "@sveltejs/adapter-node": "catalog:",
     "@sveltejs/adapter-static": "catalog:",
     "@sveltejs/kit": "catalog:",
@@ -133,13 +132,13 @@
   "size-limit": [
     {
       "name": "SvelteKit entry chunk (start.js)",
-      "path": "build/client/_app/immutable/entry/start-*.js",
+      "path": "build/client/_app/immutable/entry/start.*.js",
       "limit": "80 KB",
       "gzip": true
     },
     {
       "name": "SvelteKit app chunk (app.js)",
-      "path": "build/client/_app/immutable/entry/app-*.js",
+      "path": "build/client/_app/immutable/entry/app.*.js",
       "limit": "30 KB",
       "gzip": true
     },
@@ -149,5 +148,6 @@
       "limit": "700 KB",
       "gzip": true
     }
-  ]
+  ],
+  "_comment_size_limit": "Uses @size-limit/file only (the @size-limit/preset-app dep was dropped). preset-app always launches headless Chrome to measure parse + execute time -- on macos-15 CI runners the 20s navigation timeout exceeded under CPU contention (run 26175226568). The gzip-size budget is what we actually gate on; runtime performance is measured by Lighthouse separately. Glob uses `start.*.js` / `app.*.js` (dot, not hyphen) because SvelteKit emits files as `start.<hash>.js`, not `start-<hash>.js`."
 }

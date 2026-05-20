@@ -152,7 +152,12 @@ describe('resolveBackend — waterfall', () => {
 
   it('falls through to tailscale when local options unavailable', async () => {
     fetchSpy.mockImplementation(async (url: string) => {
-      if (url.includes('tail.ts.net')) return new Response('ok', { status: 200 });
+      // Match on parsed hostname with an explicit boundary check:
+      // allow exactly `tail.ts.net` or any subdomain like `*.tail.ts.net`.
+      const hostname = new URL(url).hostname;
+      if (hostname === 'tail.ts.net' || hostname.endsWith('.tail.ts.net')) {
+        return new Response('ok', { status: 200 });
+      }
       return new Response('boom', { status: 500 });
     });
     const r = await resolveBackend({ tailscaleHost: 'mac.tail.ts.net' });
@@ -183,7 +188,18 @@ describe('resolveBackend — waterfall', () => {
 
   it('tailscaleHost without protocol gets http:// prefix', async () => {
     fetchSpy.mockImplementation(async (url: string) => {
-      if (url.startsWith('http://mac.tail')) return new Response('ok', { status: 200 });
+      // Parse the URL; host check uses parsed `.hostname` and an exact
+      // equal-or-suffix match. `u.host.startsWith('mac.tail')` (the
+      // previous form) is what CodeQL's
+      // `js/incomplete-url-substring-sanitization` rule flags -- a host
+      // like `mac.tailspoof.com` would have passed.
+      const u = new URL(url);
+      if (
+        u.protocol === 'http:' &&
+        (u.hostname === 'mac.tail.ts.net' || u.hostname.endsWith('.tail.ts.net'))
+      ) {
+        return new Response('ok', { status: 200 });
+      }
       return new Response('boom', { status: 500 });
     });
     const r = await resolveBackend({ tailscaleHost: 'mac.tail.ts.net:5173' });

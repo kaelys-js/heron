@@ -1,22 +1,8 @@
-/**
- * tests-dont-mutate-working-tree.integration.test.ts
- *
- * Regression gate: the test suite must not mutate the real working tree.
- *
- * History: the apply-brand drift-gate tests used to write directly to
- * `branding/brand.json` + `.brand-snapshot.json` and rely on a try/finally
- * `restoreBackups()` to undo. When a worker was SIGKILLed (OOM, ctrl-c,
- * lefthook timeout) the finally never ran and the working tree stayed
- * dirty. We rewrote those tests to use a tmpdir via
- * `withScaffoldedTmpRepo` + `HERON_BRAND_ROOT`.
- *
- * This file snapshots `git status --porcelain` in `beforeAll` and diffs
- * it in `afterAll`. Any test that adds a working-tree mutation will fail
- * this check immediately, with a clear message pointing at the new entry.
- *
- * Lives in the `ui-integration` project so it runs alongside the other
- * integration tests that are the most likely culprits.
- */
+/** Regression gate: the test suite must not mutate the real working
+ *  tree. Snapshots `git status --porcelain` in beforeAll, diffs in
+ *  afterAll, fails on any new entry pointing at the offending file.
+ *  Lives in ui-integration so it runs next to the SIGKILL-prone
+ *  integration suites most likely to leak. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { execSync } from 'node:child_process';
 import path from 'node:path';

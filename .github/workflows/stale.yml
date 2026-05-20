@@ -5,8 +5,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  issues: write
-  pull-requests: write
+  contents: read
 
 concurrency:
   group: stale
@@ -16,7 +15,15 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      issues: write
+      pull-requests: write
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
       - uses: actions/stale@b5d41d4e1d5dceea10e7104786b73624c18a190f # v10
         with:
           stale-issue-message: >
@@ -35,7 +42,7 @@ jobs:
           days-before-pr-close: 14
           stale-issue-label: 'stale'
           stale-pr-label: 'stale'
-          # HP24 — `hired` exempts the "I got hired" success stories
+          # HP24 -- `hired` exempts the "I got hired" success stories
           # (issue template `i-got-hired.yml`) from auto-close. Those
           # stories are the social-proof Hall of Fame; auto-closing them
           # at 60+14 days would silently delete the best signal we have

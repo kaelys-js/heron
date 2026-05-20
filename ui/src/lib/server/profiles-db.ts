@@ -1,36 +1,22 @@
-/**
- * profiles-db -- userId-scoped Profile CRUD backed by app.db.profiles.
- *
- * Replaces the flat `data/profiles.json` file with per-user rows. Every
- * call takes a `userId` and only ever sees that user's profiles, so two
- * users can have separate "Default" / "Engineer search" / "Founder search"
- * profile lists that don't collide.
- *
- * One row per (user_id, slug). Composite unique index enforces it at the
- * DB layer; the application code adds the same dedup logic so we surface
- * friendly errors instead of UNIQUE-constraint exceptions.
- *
- * Migration: on first read for a user, if their app.db row count is zero
- * AND the legacy `data/profiles.json` file still exists, we COPY (don't
- * move) the legacy rows under this user. The owner user (the first
- * account created) inherits the legacy data. Other users start empty.
- * A follow-up migration step will eventually delete the legacy file
- * once every caller is verified to use this module.
- *
- * Why "first user inherits legacy"? Single-user installs had no notion of
- * ownership -- there's only ever been one user's data. Making the owner
- * inherit gives them a smooth upgrade with no manual import step.
- */
+/** profiles-db -- userId-scoped Profile CRUD backed by app.db.profiles.
+ *  Replaces flat data/profiles.json with per-user rows; each call takes
+ *  a userId and only sees that user's profiles, so two users can have
+ *  separate "Default" / "Engineer" / "Founder" lists without collision.
+ *  One row per (user_id, slug); composite unique index enforces it at
+ *  the DB layer, app code dedups for friendlier errors.
+ *  Migration: on first read for a user with zero rows AND a legacy
+ *  data/profiles.json still on disk, we COPY rows under that user. The
+ *  owner (first account) inherits legacy data; others start empty. */
 import fs from 'node:fs';
 import path from 'node:path';
 import { and, eq } from 'drizzle-orm';
 import { appDb } from './db';
 import { profiles } from './db/app-schema';
-import { ROOT } from './files';
+import { ROOT, DATA_ROOT } from './files';
 import { SYSTEM_USER_ID } from './user-context';
 
-const LEGACY_PROFILES_TREE = path.join(ROOT, 'data', 'profiles');
-const PER_USER_ROOT = path.join(ROOT, 'data', 'users');
+const LEGACY_PROFILES_TREE = path.join(DATA_ROOT, 'profiles');
+const PER_USER_ROOT = path.join(DATA_ROOT, 'users');
 
 function copyDirSync(src: string, dst: string): void {
   if (!fs.existsSync(src)) return;
@@ -110,7 +96,7 @@ export type DbProfile = {
   updatedAt: number;
 };
 
-const LEGACY_PROFILES_PATH = path.join(ROOT, 'data', 'profiles.json');
+const LEGACY_PROFILES_PATH = path.join(DATA_ROOT, 'profiles.json');
 
 function nowMs(): number {
   return Date.now();
@@ -151,7 +137,7 @@ function mapRow(row: typeof profiles.$inferSelect): DbProfile {
   };
 }
 
-const LEGACY_CLAIM_FILE = path.join(ROOT, 'data', 'users', '.legacy-claimed');
+const LEGACY_CLAIM_FILE = path.join(DATA_ROOT, 'users', '.legacy-claimed');
 
 /** Returns true if this user is the one inheriting the legacy single-user
  *  install data. Only the FIRST user to call this gets `true`; subsequent
@@ -160,12 +146,17 @@ const LEGACY_CLAIM_FILE = path.join(ROOT, 'data', 'users', '.legacy-claimed');
 function claimLegacyForUser(userId: string): boolean {
   try {
     fs.mkdirSync(path.dirname(LEGACY_CLAIM_FILE), { recursive: true });
-    if (fs.existsSync(LEGACY_CLAIM_FILE)) {
-      const claimedBy = fs.readFileSync(LEGACY_CLAIM_FILE, 'utf8').trim();
-      return claimedBy === userId;
+    // CodeQL js/file-system-race: write with 'wx' (exclusive create) so
+    // only one process wins the claim atomically. If the file already
+    // exists EEXIST is thrown and we fall through to read it.
+    try {
+      fs.writeFileSync(LEGACY_CLAIM_FILE, userId, { flag: 'wx' });
+      return true;
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
     }
-    fs.writeFileSync(LEGACY_CLAIM_FILE, userId);
-    return true;
+    const claimedBy = fs.readFileSync(LEGACY_CLAIM_FILE, 'utf8').trim();
+    return claimedBy === userId;
   } catch {
     return false;
   }

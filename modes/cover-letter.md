@@ -1,12 +1,12 @@
-# Modo: cover-letter -- Tailored Cover Letter
+# Mode: cover-letter -- Tailored Cover Letter
 
-Generate a single-page cover letter for a specific role, anchored on proof points from `__CV__` and tone calibrated by `config/profile.yml` and `__PROFILE_MD__`.
+Generate a single-page cover letter for a specific role, anchored on proof points from `__CV__` and tone calibrated by `__PROFILE_YML__` and `__PROFILE_MD__`.
 
 ## Inputs
 
 - URL or pasted JD (the job offer)
 - `__CV__` (canonical CV)
-- `config/profile.yml` (candidate name, contact, location, comp targets, narrative)
+- `__PROFILE_YML__` (candidate name, contact, location, comp targets, narrative)
 - `__PROFILE_MD__` (archetype mapping, tone, language)
 - `__ARTICLE_DIGEST__` (proof points, optional)
 - The matching report file in `__REPORTS__/{n}-{slug}-{date}.md` (if it exists -- use Bloque B match table for the strongest proof points)
@@ -35,7 +35,7 @@ Where `{n}-{slug}-{date}` matches the existing report/CV pair so all three live 
    - Connect each proof to a problem the company is likely solving (read between the lines of the JD).
 
 4. **Close (1 short paragraph, 2-3 sentences)**
-   - State availability (immediate / N weeks notice -- read from `config/profile.yml` if defined)
+   - State availability (immediate / N weeks notice -- read from `__PROFILE_YML__` if defined)
    - Mention location/work-mode alignment if non-trivial (remote ✓, time zone overlap, willing to relocate, etc.)
    - One sentence that signals self-direction without being pushy ("Happy to walk through {portfolio piece} on a call.")
 

@@ -1,16 +1,9 @@
-/**
- * GET /api/health -- minimal liveness probe.
- *
- * F22 -- pre-fix this endpoint exposed per-user pipeline metadata
- * (file size + mtime + reports count) to anonymous callers. The
- * authenticated /api/stats + /api/insights endpoints carry that data
- * now; /api/health stays minimal so the public backend-discovery
- * probe doesn't leak anything.
- *
- * Backend-discovery clients (online-status.ts, backend-discovery.ts)
- * only care about HTTP 200 + the JSON body's `ok: true` shape, so the
- * minimal response is back-compat.
- */
+/** GET /api/health -- minimal liveness probe. F22 guard: this endpoint
+ *  MUST stay minimal because backend-discovery probes it anonymously.
+ *  Per-user pipeline metadata (file size + mtime + reports count) belongs
+ *  on the authenticated /api/stats + /api/insights endpoints. Existing
+ *  clients (online-status.ts, backend-discovery.ts) only check HTTP 200 +
+ *  `ok: true`, so the minimal shape is back-compat. */
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('$lib/server/events', () => ({

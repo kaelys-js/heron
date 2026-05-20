@@ -147,7 +147,7 @@ if (which('ruby') && which('gem')) {
     allowFail: true,
   });
 } else {
-  warn('ruby/gem not on PATH — skipping App-target source sync');
+  warn('ruby/gem not on PATH -- skipping App-target source sync');
 }
 
 if (usesPodfile) {
@@ -156,7 +156,7 @@ if (usesPodfile) {
     run('pod', ['install', '--silent'], { cwd: iosDir, allowFail: true });
     ok('pods installed');
   } else {
-    warn('skipped — pod not on PATH');
+    warn('skipped -- pod not on PATH');
   }
 } else {
   step(5, 'Skipping CocoaPods (project uses Swift Package Manager)');
@@ -453,10 +453,9 @@ function installSwiftWatcher(targetUdid) {
 installSwiftWatcher(targetUdid);
 
 // Relay terminate signals to the dev (vite) child so vite doesn't get
-// orphaned when this script dies. Pre-fix only SIGINT (Ctrl+C) was
-// handled -- if the parent shell sent SIGTERM, SIGHUP, or the user
-// closed the terminal, vite kept running as a zombie. Three signal
-// channels cover every common kill path:
+// orphaned when this script dies. SIGINT (Ctrl+C) alone leaks vite on
+// SIGTERM / SIGHUP / closed-terminal exits. Three signal channels
+// cover every common kill path:
 //
 //   • SIGINT  -- Ctrl+C (most common)
 //   • SIGTERM -- `kill <pid>` / parent-process kill (e.g. when the

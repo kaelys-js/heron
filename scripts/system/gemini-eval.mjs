@@ -122,7 +122,7 @@ if (!jdText) {
 // ---------------------------------------------------------------------------
 // Validate environment
 // ---------------------------------------------------------------------------
-// Per-user store first (via CAREER_OPS_USER_ID), .env fallback.
+// Per-user store first (via HERON_USER_ID), .env fallback.
 const apiKey = getCredential('GEMINI_API_KEY');
 if (!apiKey) {
   console.error(`

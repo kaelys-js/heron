@@ -1,26 +1,11 @@
-/**
- * test-setup.ts -- runs ONCE per test file BEFORE any test in it.
- *
- * Provides:
- *   • DB isolation: routes auth.db + app.db to a tmpdir so no test
- *     ever writes to the developer's real data/auth.db. This prevents
- *     the "ghost first-user" bug where prior test signups left rows
- *     in users.users and a fresh-clone user could no longer be
- *     promoted to owner.
- *   • testing-library/jest-dom matchers (`toBeInTheDocument`, etc.)
- *   • MSW server lifecycle (`beforeAll`/`afterEach`/`afterAll`)
- *   • matchMedia polyfill for jsdom -- defaults to desktop. Per-test
- *     viewport flip via `setMobileViewport(true|false)` from
- *     `test-helpers/render.ts`.
- *   • `$env/*` stubs so server modules don't blow up on import.
- *   • Capacitor Preferences in-memory shim.
- *   • Deterministic `crypto.randomUUID` for snapshot stability.
- *   • `fake-indexeddb/auto` import so any IDB-using store works under jsdom.
- *
- * Runs in EVERY project (unit, server, component, routes, integration).
- * Browser-mode project still loads this file but the matchMedia polyfill
- * is a no-op there (real browser has the real `window.matchMedia`).
- */
+/** test-setup.ts -- runs once per test file, before any test.
+ *  Provides: DB isolation (auth.db + app.db routed to tmpdir so tests
+ *  never touch data/auth.db -- prevents ghost-first-user bug);
+ *  jest-dom matchers; MSW lifecycle; matchMedia polyfill (desktop default,
+ *  per-test setMobileViewport flip); $env/* stubs; Capacitor Preferences
+ *  in-memory shim; deterministic crypto.randomUUID; fake-indexeddb/auto.
+ *  Runs in every project; in browser-mode the matchMedia polyfill is a
+ *  no-op (real window.matchMedia). */
 import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 
@@ -293,4 +278,27 @@ afterEach(() => {
 
 afterAll(() => {
   server?.close();
+});
+
+// ── better-sqlite3 file-handle teardown ─────────────────────────────
+// db/index.ts opens auth.db + app.db SQLite handles at module load.
+// With `isolate: true` each test file gets a fresh module graph -- the
+// handles open per-file, never close, and the test worker holds them
+// past the test run. Vitest's exit-watchdog then prints "close timed
+// out after 10000ms / Tests closed successfully but something prevents
+// the main process from exiting" with FILEHANDLE leaks visible under
+// --reporter=hanging-process. Closing the singletons in afterAll lets
+// the worker exit cleanly.
+//
+// Browser mode never imports db/index.ts (it's server-only), so the
+// dynamic-import guard below short-circuits there. Server-only files
+// like applications.ts or events.ts may not have triggered db/index.ts
+// load -- the closeAll() in that case is a no-op on the absent module.
+afterAll(async () => {
+  try {
+    const { closeAll } = await import('./lib/server/db');
+    closeAll();
+  } catch {
+    // db module never loaded in this test file -- nothing to close.
+  }
 });

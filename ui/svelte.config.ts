@@ -1,25 +1,11 @@
-/**
- * SvelteKit config -- dual adapter + best-practice preprocessing.
- *
- * Heron ships in two shapes:
- *
- *   1. Web/server build (default) -- adapter-node, embedded inside the
- *      Electron app OR run remotely. Output goes to `build/` (Node entry).
- *
- *   2. Static shell build (CAPACITOR=1) -- adapter-static, the Capacitor
- *      WebView's HTML/JS/CSS bundle. Output goes to `build/static/`. The
- *      WebView loads this shell, which immediately runs backend-discovery
- *      and connects to whichever backend is reachable.
- *
- * The same source code produces both. Server-only modules (`$lib/server/*`)
- * are tree-shaken out of the static build because they're never imported
- * by client code.
- *
- * vitePreprocess() -- handles <script lang="ts">, <style lang="scss">, etc.
- * in .svelte files. Still recommended in Svelte 5 even though the compiler
- * has type-stripping support; vitePreprocess is the canonical bridge to
- * vite's plugin pipeline for source transforms.
- */
+/** SvelteKit config -- dual adapter.
+ *  1. Web/server (default): adapter-node, embedded in Electron OR run
+ *     remotely; output → build/.
+ *  2. Static shell (CAPACITOR=1): adapter-static, the Capacitor WebView
+ *     bundle (build/static/) that boots backend-discovery on load.
+ *  Same source produces both -- `$lib/server/*` tree-shakes out of static.
+ *  vitePreprocess handles <script lang="ts"> etc; still the canonical
+ *  bridge to Vite's transform pipeline in Svelte 5. */
 import nodeAdapter from '@sveltejs/adapter-node';
 import staticAdapter from '@sveltejs/adapter-static';
 import type { Config } from '@sveltejs/kit';
@@ -111,7 +97,33 @@ const config: Config = {
             mode: 'auto',
             directives: {
               'default-src': ["'self'"],
-              'script-src': ["'self'", "'unsafe-eval'", "'wasm-unsafe-eval'"],
+              // 'sha256-...' entries pin our three inline scripts in
+              // `app.html` (theme bootstrap, speculationrules block,
+              // blank-screen guard). SvelteKit's `mode: 'auto'` hashes
+              // ONLY scripts SvelteKit itself injects via `<svelte:head>`
+              // -- it doesn't scan `app.html` -- so we maintain these
+              // hashes manually. They MUST be re-computed when any of
+              // those three blocks changes; helper:
+              //
+              //   python3 -c "import hashlib,base64;
+              //     html=open('ui/src/app.html').read();
+              //     import re;
+              //     [print('sha256-'+base64.b64encode(hashlib.sha256(m.group(1).encode()).digest()).decode())
+              //      for m in re.finditer(r'<script[^>]*>(.*?)</script>', html, re.S)]"
+              //
+              // If you forget to bump the hash after editing one of the
+              // inline blocks, Lighthouse's `errors-in-console` audit
+              // fires with "Executing inline script violates the
+              // following CSP directive" and the page silently breaks
+              // (theme bootstrap won't run, etc).
+              'script-src': [
+                "'self'",
+                "'unsafe-eval'",
+                "'wasm-unsafe-eval'",
+                "'sha256-MegZb3SbZVAzUiaf6ATlJAKhkmCEkr6O499YSuBjk14='", // theme bootstrap
+                "'sha256-AXMfZ0Qft2fuay5SZHCsOAG2dtpQN7X51WmFaMr33hA='", // speculationrules
+                "'sha256-dzrw/NDy+dNpqGGuNpBzxhmDDfDQyont9B+9/vm0blE='", // blank-screen guard
+              ],
               'style-src': ["'self'", "'unsafe-inline'"], // Tailwind JIT inline styles
               'img-src': ["'self'", 'data:', 'blob:', 'https:'],
               'font-src': ["'self'", 'data:'],

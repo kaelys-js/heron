@@ -1,23 +1,10 @@
-/**
- * interview-schedule -- per-job scheduledAt + reminder scheduler.
- *
- * Today the system knows a job is in PhoneScreen/Technical/Onsite/Final
- * status but NOT when the actual call is. The user might have a phone
- * screen Tuesday at 2pm and the dashboard never reminds them.
- *
- * This module:
- *   1. Stores scheduledAt per job in a small JSONL alongside other
- *      per-profile state (data/profiles/{slug}/interview-schedule.jsonl)
- *   2. Exposes set/get/list functions
- *   3. The reminder scheduler is a separate autopilot job (see
- *      interview-reminder.job.ts) that ticks every 15 minutes and
- *      surfaces high-priority activity events for jobs within T-30
- *      minutes or T-24 hours.
- *
- * The email-reactor can ALSO populate scheduledAt automatically when
- * an interview-scheduling email contains a parseable date/time (future
- * extension; today the user sets it manually via the JobActions menu).
- */
+/** interview-schedule -- per-job scheduledAt store + set/get/list API.
+ *  Status fields already track stage (PhoneScreen/Technical/Onsite/
+ *  Final) but not when the call actually is; this fills that gap.
+ *  Storage: per-profile interview-schedule.jsonl. Reminders themselves
+ *  live in interview-reminder.job.ts (15-min tick, surfaces high-
+ *  priority events at T-24h / T-30min). email-reactor may auto-
+ *  populate scheduledAt when a parseable date/time is present. */
 
 import fs from 'node:fs';
 import path from 'node:path';

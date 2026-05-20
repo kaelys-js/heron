@@ -1,16 +1,10 @@
-/**
- * /api/job/[id]/takehome -- scaffold + manage the take-home working dir.
- *
- * GET    → return existing scaffold state (or null if not scaffolded)
- * POST   → scaffold (creates README + CHECKLIST + state.json)
- *          body: { budgetMinutes?, briefExcerpt? }
- * PATCH  → update state (timer status, milestones, budget changes)
- *          body: { status?, budgetMinutes?, milestone? }
- *
- * The email-reactor fires POST automatically when it classifies an
- * email as take-home. The user can call PATCH from the UI to mark
- * submitted / abandoned / add milestones.
- */
+/** /api/job/[id]/takehome -- scaffold + manage the take-home working dir.
+ *  GET returns existing scaffold state (or null). POST scaffolds (README +
+ *  CHECKLIST + state.json); body { budgetMinutes?, briefExcerpt? }. PATCH
+ *  updates state (timer, milestones, budget); body { status?, budgetMinutes?,
+ *  milestone? }. The email-reactor fires POST automatically when it
+ *  classifies an email as take-home. UI calls PATCH to mark
+ *  submitted/abandoned/add milestones. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import {

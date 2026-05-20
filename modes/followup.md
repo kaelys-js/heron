@@ -9,7 +9,7 @@ Track follow-up cadence for active applications. Flag overdue follow-ups, extrac
 - `data/__APPLICATIONS__` -- Application tracker
 - `data/__FOLLOW_UPS__` -- Follow-up history (created on first use)
 - `__REPORTS__/` -- Evaluation reports (for context in drafts)
-- `config/profile.yml` -- User profile (name, identity)
+- `__PROFILE_YML__` -- User profile (name, identity)
 - `__CV__` -- CV for proof points in drafts
 
 ## Step 1 -- Run Cadence Script
@@ -17,7 +17,7 @@ Track follow-up cadence for active applications. Flag overdue follow-ups, extrac
 Execute:
 
 ```bash
-node followup-cadence.mjs
+node scripts/tracker/followup-cadence.mjs
 ```
 
 Parse the JSON output. It contains:
@@ -54,7 +54,7 @@ For each **overdue** or **urgent** entry only:
 
 1. Read the linked report (`reportPath` from JSON) for company context
 2. Read `__CV__` for proof points
-3. Read `config/profile.yml` for candidate name and identity
+3. Read `__PROFILE_YML__` for candidate name and identity
 
 ### Email Follow-up Framework (first follow-up, followupCount == 0)
 
@@ -72,7 +72,7 @@ Generate a 3-4 sentence email:
 - Reference something specific to THAT company (from report Block A)
 - Keep under 150 words
 - Include a subject line
-- Use the candidate's name from `config/profile.yml`
+- Use the candidate's name from `__PROFILE_YML__`
 
 **Example tone:**
 > Subject: Re: Senior PHP/Laravel Developer -- IxDF
@@ -170,4 +170,4 @@ After showing all drafts, summarize:
 | Responded | 1 day (urgent reply) | Every 3 days | No limit |
 | Interview | 1 day after (thank-you) | Every 3 days | No limit |
 
-These defaults can be overridden via `node followup-cadence.mjs --applied-days N`.
+These defaults can be overridden via `node scripts/tracker/followup-cadence.mjs --applied-days N`.

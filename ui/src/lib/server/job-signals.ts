@@ -1,27 +1,12 @@
-/**
- * job-signals -- defensive heuristics over a job posting.
- *
- * Two checks ship here, both run cheaply over the job's metadata +
- * deep-evaluation report text:
- *
- *   1. dysfunctionSignal -- does this posting look like a long-open
- *      dysfunction marker? Signals: posting age > 60 days, re-listing
- *      pattern, "urgent hire" language combined with no recent updates.
- *      Real hiring orgs fill or close roles inside 6-8 weeks. Anything
- *      open longer is either (a) impossible spec, (b) internal politics
- *      blocking the hire, (c) phantom posting for resume harvesting,
- *      (d) hiring freeze that wasn't taken down. None of those are
- *      good for a candidate.
- *
- *   2. remoteReality -- when a posting claims "remote" or "remote-
- *      friendly", how truly remote is it? Many "remote" postings are
- *      hybrid-in-disguise (must live near hub, X days/week in office,
- *      US-only, must travel quarterly). Surfaces a verdict + the
- *      specific phrase that triggered the downgrade.
- *
- * Both are read-only pure functions over the job's text. No spawns,
- * no AGENT_CLI cost.
- */
+/** job-signals -- read-only heuristics over job metadata + report
+ *  text (no spawns, no AGENT_CLI cost).
+ *  dysfunctionSignal: long-open posting marker. Real orgs fill or
+ *  close in 6-8 weeks; >60 days, re-listings, or "urgent hire" + no
+ *  updates suggest impossible spec, internal politics, phantom
+ *  postings, or a stale freeze.
+ *  remoteReality: downgrades "remote"/"remote-friendly" claims that
+ *  are hybrid-in-disguise (near-hub, X days/wk, US-only, quarterly
+ *  travel). Returns verdict + the triggering phrase. */
 
 import fs from 'node:fs';
 import path from 'node:path';

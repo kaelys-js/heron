@@ -4,9 +4,9 @@ name: Tests
 # for the same ref so rapid pushes don't burn CI minutes.
 #
 # Three parallel jobs:
-#   ts     — ubuntu-latest — typecheck + format + Vitest matrix + Codecov
-#   ios    — macos-15      — Fastlane test_ci on iPhone 17 Pro Max sim
-#   audit  — ubuntu-latest — pnpm audit gate
+#   ts     -- ubuntu-latest -- typecheck + format + Vitest matrix + Codecov
+#   ios    -- macos-15      -- Fastlane test_ci on iPhone 17 Pro Max sim
+#   audit  -- ubuntu-latest -- pnpm audit gate
 #
 # `coverage` job (depends on ts + ios) downloads both artifacts and posts
 # a single Codecov PR comment with combined + per-flag deltas.
@@ -19,12 +19,12 @@ on:
 
 # Least-privilege: this workflow only reads source + writes statuses /
 # annotations + uploads coverage. No release artefacts, no Pages, no packages.
-# id-token: write is required for Codecov OIDC upload (G12) — replaces the
-# CODECOV_TOKEN secret. Works on fork PRs (which can't see secrets).
+# id-token: write is required for Codecov OIDC upload (G12) -- replaces the
+# CODECOV_TOKEN secret. Works on fork PRs (which can't see secrets). Declared
+# per-job below so it isn't inherited by jobs that don't upload coverage.
 permissions:
   contents: read
   pull-requests: read
-  id-token: write
 
 concurrency:
   group: tests-${{ github.workflow }}-${{ github.ref }}
@@ -36,12 +36,68 @@ defaults:
 
 jobs:
   # ─────────────────────────────────────────────────────────────────
-  # TS / Svelte / Server / Electron — Vitest + svelte-check + audit
+  # Path-change detector -- decides whether downstream macOS jobs run.
+  # ─────────────────────────────────────────────────────────────────
+  # macos-15 is billed at 10× ubuntu minutes. A 7-min iOS test_ci run
+  # = ~70 ubuntu-min equivalent. When a PR doesn't touch iOS-affecting
+  # files (e.g. a docs-only or pure-TS change), allocating macos-15
+  # and downloading Xcode caches just to no-op is pure waste.
+  #
+  # This job runs in ~10s on ubuntu, emits `ios=true|false`, and the
+  # ios job below uses dynamic `runs-on` to pick macos-15 only when
+  # needed. The ios job's `name:` is preserved so the required-check
+  # context still reports a status on every PR (otherwise branch
+  # protection would treat a skipped job as missing and block merge).
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      ios: ${{ steps.filter.outputs.ios }}
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Filter
+        # dorny/paths-filter v4.0.1 -- pinned by SHA per repo policy
+        # (verify-workflow-pins.yml gates this). v4 runs on Node 24;
+        # v3.0.2 was on Node 20 and tripped the runner's "Node.js 20
+        # actions are deprecated" annotation (run 26183910563).
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: filter
+        with:
+          filters: |
+            ios:
+              # Swift sources, xcodeproj, fastlane, icons, brand
+              - 'ui/ios/**'
+              # Brand propagates into Brand.swift + Info.plist
+              - 'branding/**'
+              # add-xcode-targets.rb owns the AppTests/AppUITests targets
+              - 'scripts/native/add-xcode-targets.rb'
+              # When THIS workflow changes the ios job's behaviour, force a run
+              - '.github/workflows/test.yml'
+              # When capacitor sync into ios changes -- still iOS impact
+              - 'ui/capacitor.config.ts'
+              - 'ui/static/**'
+              # Lockfile drift can change native bundle resolution
+              - 'pnpm-lock.yaml'
+
+  # ─────────────────────────────────────────────────────────────────
+  # TS / Svelte / Server / Electron -- Vitest + svelte-check + audit
   # ─────────────────────────────────────────────────────────────────
   ts:
     name: TS — typecheck + Vitest + coverage
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write # Codecov OIDC upload (G12)
     env:
       CI: "true"
       BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-${{ github.run_id }}
@@ -49,7 +105,7 @@ jobs:
 
     steps:
       - name: Harden runner
-        # G4 — defense-in-depth for the TS test runner. Audit mode for
+        # G4 -- defense-in-depth for the TS test runner. Audit mode for
         # rollout; flip to block after observing legitimate endpoints
         # (pnpm registry, codecov, etc.).
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
@@ -80,7 +136,7 @@ jobs:
             pnpm-store-${{ runner.os }}-
 
       - name: Cache turbo
-        # G22 — multi-tier restore-keys. Pre-fix the key was `turbo-{os}-
+        # G22 -- multi-tier restore-keys. Pre-fix the key was `turbo-{os}-
         # {sha}` which always missed on a new commit; only the
         # `turbo-{os}-` fallback hit (any branch's last build). Now we
         # try most-specific → progressively broader keys, giving ~50%
@@ -120,11 +176,34 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install Python dependencies (cryptography etc.)
+        # The dashboard's orchestrator spawns scripts/scan/*.py +
+        # scripts/apply/*.py children that import `cryptography` via
+        # scripts/lib/user_secrets.py. Without this step the children
+        # crash with ModuleNotFoundError at boot, polluting browser
+        # console (visible in the e2e Playwright step + breaks
+        # `errors-in-console` Lighthouse assertion).
+        # `python -m pip` guarantees the mise-managed interpreter is
+        # the one we install into.
+        run: |
+          # `--require-hashes` makes the install tamper-evident -- pip refuses
+          # to download anything whose archive hash isn't in
+          # `scripts/requirements.txt`. Satisfies Scorecard's
+          # PinnedDependenciesID; matches the lighthouse.yml step.
+          # No `pip install --upgrade pip` -- the mise-managed interpreter
+          # already ships a recent pip, and an unpinned upgrade would itself
+          # trip PinnedDependenciesID.
+          python -m pip install --require-hashes -r scripts/requirements.txt
+          python -c "from cryptography.hazmat.primitives.ciphers.aead import AESGCM; print('cryptography import OK')"
+
       # Playwright browsers are required for the ui-component project.
-      # The cache step above persists ~/.cache/ms-playwright across runs;
-      # this command is a no-op on a cache hit.
-      - name: Install Playwright Chromium
-        run: pnpm --filter ui exec playwright install chromium --with-deps
+      # The vitest workspace's ui-component project runs against BOTH
+      # chromium and webkit (so pointer-event gestures get tested under
+      # Safari too) -- install both. The cache step above persists
+      # ~/.cache/ms-playwright across runs; this command is a no-op on
+      # a cache hit.
+      - name: Install Playwright browsers (chromium + webkit)
+        run: pnpm --filter ui exec playwright install chromium webkit --with-deps
 
       # ── Static checks (fast, fail-fast) ──────────────────────────
       - name: Format check (biome + prettier-svelte)
@@ -152,7 +231,7 @@ jobs:
         # in .markdownlint-cli2.jsonc. Catches bare URLs, malformed
         # tables, missing alt text, broken links, etc. Style rules
         # (line length / heading style / list bullets) are intentionally
-        # disabled — see the file header for the full rule rationale.
+        # disabled -- see the file header for the full rule rationale.
         run: pnpm validate:markdown
 
       - name: Exact-version pins (no ^ / ~ / partial versions)
@@ -172,23 +251,16 @@ jobs:
         run: pnpm validate:version-sync
 
       - name: Lockfile integrity (G21)
-        # Catches:
-        #   - non-pnpm registries (e.g. someone swapped npmjs for a typo-
-        #     squatted mirror)
-        #   - http:// URLs (every dep must be fetched over TLS)
-        #   - git+ssh sources (not auditable, no integrity hash)
-        #   - missing integrity hashes (npm <7-style entries)
-        # Pairs with validate:exact-versions above — that asserts
-        # specifiers in package.json are pinned; this asserts the lockfile
-        # resolves them to safe, verifiable sources.
-        run: |
-          pnpm dlx lockfile-lint@4 \
-            --type pnpm \
-            --path pnpm-lock.yaml \
-            --allowed-hosts npm \
-            --allowed-schemes https: \
-            --validate-https \
-            --validate-integrity
+        # Native pnpm-lock.yaml v9 validator. lockfile-lint@4 cannot
+        # parse v9 (the YAML structure diverged from yarn-lock around
+        # v8 and the maintainers do not plan to add pnpm support).
+        # This step catches the same four supply-chain risks
+        # lockfile-lint covered: non-HTTPS tarballs, missing integrity
+        # hashes, git+ssh refs, and `file:` protocol abuse. Pairs with
+        # validate:exact-versions above (which asserts package.json
+        # specifiers are exact) - this asserts the lockfile resolves
+        # them to safe, verifiable sources.
+        run: pnpm validate:lockfile
 
       - name: No leftover merge-conflict markers (G28)
         # sync-upstream.yml's bot writes conflict markers into the
@@ -209,7 +281,7 @@ jobs:
             exit 1
           fi
           echo "✓ no conflict markers"
-          # HP10 — surface in Actions Summary tab
+          # HP10 -- surface in Actions Summary tab
           {
             echo "### ✅ No merge-conflict markers"
             echo
@@ -222,7 +294,7 @@ jobs:
         # dependency-review-action already blocks NEW GPL deps in PRs;
         # this check catches GPL deps that already lurk in the existing
         # graph (e.g. a transitive upgrade that switched license).
-        # Production deps only — devDeps may include GPL CLI tooling.
+        # Production deps only -- devDeps may include GPL CLI tooling.
         run: |
           pnpm licenses list --prod --json > licenses.json
           node -e '
@@ -255,7 +327,7 @@ jobs:
       # Run the full Vitest matrix (ui-unit + ui-server + ui-component
       # + ui-routes + ui-integration + electron) with coverage. Coverage
       # threshold (70% lines / 65% branches / per-file 50% floor) is
-      # enforced by vitest.config.ts — falling below trips this step.
+      # enforced by vitest.config.ts -- falling below trips this step.
       - name: Vitest matrix (with coverage)
         run: pnpm test:coverage
 
@@ -277,7 +349,7 @@ jobs:
 
       - name: Assert lcov.info exists (Codecov gate)
         # Pre-codecov guard. The codecov-action below is gated on
-        # hashFiles() being non-empty — if the file is MISSING, the
+        # hashFiles() being non-empty -- if the file is MISSING, the
         # upload silently skips and the Codecov badge stays "unknown".
         # This step turns "missing lcov.info" into a hard CI failure
         # so a vitest config drift (reporter list ignored, wrong
@@ -294,11 +366,11 @@ jobs:
           echo "✓ lcov.info present: $(wc -l < ui/coverage/lcov.info) lines"
 
       - name: Upload coverage to Codecov (ts flag)
-        # G12 — OIDC + fail_ci_if_error. OIDC means no CODECOV_TOKEN
+        # G12 -- OIDC + fail_ci_if_error. OIDC means no CODECOV_TOKEN
         # rotation, no token leakage risk, and the upload works on PRs
         # from forks (which can't see secrets). fail_ci_if_error: true
         # turns silent upload skips into real CI failures so the
-        # coverage gate is enforced — pre-fix a broken upload silently
+        # coverage gate is enforced -- pre-fix a broken upload silently
         # passed.
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         with:
@@ -347,47 +419,94 @@ jobs:
           retention-days: 14
 
   # ─────────────────────────────────────────────────────────────────
-  # iOS — Fastlane test_ci on macOS-15 (Xcode 16, Swift 5.9+)
+  # iOS -- Fastlane test_ci on macOS-15 (Xcode 16, Swift 5.9+)
   # ─────────────────────────────────────────────────────────────────
   # Runs XCTest + XCUITest + snapshot tests across AppTests, AppUITests,
   # WidgetTests, WatchTests. xcov produces a Cobertura report consumed by
   # the codecov upload step below (separate `ios` flag from the `ts` flag).
   ios:
     name: iOS — XCTest + XCUITest + Snapshot
+    needs: changes
+    # `runs-on` is FIXED at macos-15. GitHub evaluates `runs-on` at
+    # workflow-PARSE time, before any job has run -- so
+    # `needs.changes.outputs.X` is not available in this context
+    # (confirmed via startup_failure on runs 26179165782 and 26179613200).
+    # Only parse-time contexts (vars, inputs, matrix) work for runs-on.
+    #
+    # Optimisation strategy here: macos-15 is always ALLOCATED
+    # (~30s provisioning = ~5 ubuntu-min equivalent per PR), but the
+    # expensive 4-5min xcodebuild build + 2min post-processing is gated
+    # on `needs.changes.outputs.ios == 'true'` via the `if:` filter on
+    # every subsequent step. When no iOS-affecting paths changed, only
+    # the "Skip iOS" notice step runs -- job total ~30-45s.
+    #
+    # Net savings on non-iOS PRs: ~7min of macos-15 build work skipped =
+    # ~70min ubuntu-equivalent saved per such PR. Worth the ~5ubuntu-min
+    # provisioning overhead.
     runs-on: macos-15
     timeout-minutes: 35
+    permissions:
+      contents: read
+      id-token: write # Codecov OIDC upload (G12)
     env:
       CI: "true"
       FORCE_COLOR: "3"
-      # Pinned Xcode version — must match .mise.toml's swift entry. When
-      # we bump Xcode, this gets bumped too.
-      DEVELOPER_DIR: /Applications/Xcode_16.app/Contents/Developer
+      # Pinned Xcode version -- must match .mise.toml's swift entry. When
+      # we bump Xcode, this gets bumped too. Only honoured on macos-15.
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
 
     steps:
+      # ── Short-circuit ────────────────────────────────────────────
+      # When no iOS-affecting paths changed, this is the ONLY step that
+      # runs. The job reports success on the required-check context
+      # "iOS -- XCTest + XCUITest + Snapshot" without spending macOS
+      # minutes. Branch protection sees a green check; merge proceeds.
+      - name: Skip iOS — no iOS-relevant paths changed
+        if: needs.changes.outputs.ios != 'true'
+        run: |
+          echo "::notice::iOS test_ci skipped — no changes under ui/ios/**, branding/**, scripts/native/add-xcode-targets.rb, ui/capacitor.config.ts, ui/static/**, pnpm-lock.yaml, or .github/workflows/test.yml."
+          {
+            echo "### ⏭️ iOS test_ci skipped"
+            echo ""
+            echo "No iOS-affecting paths changed in this PR. Re-running the"
+            echo "macOS-15 xcodebuild + simulator suite would cost ~7 min of"
+            echo "macOS time (10× billing) for no signal."
+            echo ""
+            echo "Affecting paths: \`ui/ios/**\`, \`branding/**\`,"
+            echo "\`scripts/native/add-xcode-targets.rb\`,"
+            echo "\`ui/capacitor.config.ts\`, \`ui/static/**\`,"
+            echo "\`pnpm-lock.yaml\`, \`.github/workflows/test.yml\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Harden runner
-        # G4 — iOS test runner. xcodebuild reaches sigverify + Apple's
+        if: needs.changes.outputs.ios == 'true'
+        # G4 -- iOS test runner. xcodebuild reaches sigverify + Apple's
         # CDN for simulators; we want to see exactly what before
         # tightening to block.
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
       - name: Checkout
+        if: needs.changes.outputs.ios == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Setup mise (Node + pnpm + Ruby + Swift)
+        if: needs.changes.outputs.ios == 'true'
         uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
         with:
           experimental: true
           cache: true
 
       - name: Resolve pnpm store path
+        if: needs.changes.outputs.ios == 'true'
         id: pnpm-store
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
+        if: needs.changes.outputs.ios == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
@@ -396,6 +515,7 @@ jobs:
             pnpm-store-${{ runner.os }}-
 
       - name: Cache Xcode DerivedData
+        if: needs.changes.outputs.ios == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/Library/Developer/Xcode/DerivedData
@@ -404,6 +524,7 @@ jobs:
             derived-data-${{ runner.os }}-
 
       - name: Cache SPM
+        if: needs.changes.outputs.ios == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/Library/Caches/org.swift.swiftpm
@@ -411,32 +532,73 @@ jobs:
           restore-keys: |
             spm-${{ runner.os }}-
 
+      - name: Cache Bundler gems (Fastlane + xcov + cocoapods-utils)
+        # Fastlane + xcov + dependencies installs ~25 gems on every cold
+        # cache. The Gemfile.lock hash uniquely identifies the resolved
+        # set, so a hit means `bundle install` is a sub-second no-op
+        # instead of a ~30s install. ~/.bundle is the per-user bundler
+        # config dir; ~/.gem is mise-Ruby's gem-install target.
+        if: needs.changes.outputs.ios == 'true'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: |
+            ~/.bundle
+            ~/.gem
+          key: bundler-${{ runner.os }}-${{ hashFiles('ui/ios/App/Gemfile.lock') }}
+          restore-keys: |
+            bundler-${{ runner.os }}-
+
       - name: Install dependencies
+        if: needs.changes.outputs.ios == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Install SwiftLint + SwiftFormat (Brewfile)
+        if: needs.changes.outputs.ios == 'true'
+        # On macos-15 runners both formulae are pre-installed; `brew
+        # install <pkg>` then emits a warning ("already installed and
+        # up-to-date") that surfaces as a yellow annotation on the iOS
+        # job. `brew list` first lets us short-circuit silently when
+        # the pkg is already present, only invoking install on the cold-
+        # cache code path (custom self-hosted runners, future Brewfile
+        # additions).
         run: |
-          brew install swiftlint swiftformat || true
+          for pkg in swiftlint swiftformat; do
+            if ! brew list "$pkg" >/dev/null 2>&1; then
+              brew install "$pkg"
+            fi
+          done
 
       - name: SwiftLint (strict)
-        run: swiftlint --strict ui/ios/App
+        if: needs.changes.outputs.ios == 'true'
+        run: swiftlint --strict --quiet ui/ios/App
 
       - name: Apply brand
+        if: needs.changes.outputs.ios == 'true'
         run: pnpm brand:apply
 
+      - name: Build static web assets (Capacitor webDir = ui/build/static)
+        if: needs.changes.outputs.ios == 'true'
+        # cap sync ios copies the SvelteKit static-adapter output into the
+        # iOS bundle. Without this step, capacitor errors with "Could not
+        # find the web assets directory: ./build/static".
+        run: pnpm --filter ui build:static
+
       - name: Capacitor sync iOS
+        if: needs.changes.outputs.ios == 'true'
         run: pnpm --filter ui exec cap sync ios
 
       - name: Bundle install (Fastlane gems)
+        if: needs.changes.outputs.ios == 'true'
         working-directory: ui/ios/App
         run: bundle install --jobs 4 --retry 3
 
       - name: Fastlane test_ci (XCTest + XCUITest)
+        if: needs.changes.outputs.ios == 'true'
         working-directory: ui/ios/App
         run: bundle exec fastlane test_ci
 
       - name: Upload xcresult bundle
-        if: always()
+        if: always() && needs.changes.outputs.ios == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: xcresult-bundle
@@ -444,8 +606,8 @@ jobs:
           retention-days: 14
 
       - name: Upload coverage to Codecov (ios flag)
-        # G12 — see the ts upload above for OIDC rationale.
-        if: always() && hashFiles('ui/ios/App/fastlane/coverage/cobertura.xml') != ''
+        # G12 -- see the ts upload above for OIDC rationale.
+        if: always() && needs.changes.outputs.ios == 'true' && hashFiles('ui/ios/App/fastlane/coverage/cobertura.xml') != ''
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         with:
           files: ui/ios/App/fastlane/coverage/cobertura.xml
@@ -456,7 +618,7 @@ jobs:
           verbose: true
 
   # ─────────────────────────────────────────────────────────────────
-  # Multi-language format / lint — one job covers every non-JS surface
+  # Multi-language format / lint -- one job covers every non-JS surface
   # so the JS-focused `ts` job stays focused.
   # ─────────────────────────────────────────────────────────────────
   format:
@@ -483,7 +645,7 @@ jobs:
       # All formatters are pinned in .mise.toml and installed by the
       # mise setup step above (`jdx/mise-action@v4` with experimental +
       # cache enabled). No per-tool curl / pip / gem / apt install needed
-      # — fresh-clone reproducibility is the whole point of mise.
+      # -- fresh-clone reproducibility is the whole point of mise.
 
       - name: actionlint .github/workflows/*.yml
         run: actionlint -color
@@ -556,6 +718,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -572,7 +739,7 @@ jobs:
         run: pnpm audit --audit-level moderate
 
   # ─────────────────────────────────────────────────────────────────
-  # Coverage summary — wait on ts + ios, post combined Codecov comment
+  # Coverage summary -- wait on ts + ios, post combined Codecov comment
   # ─────────────────────────────────────────────────────────────────
   coverage:
     name: Coverage summary
@@ -580,6 +747,11 @@ jobs:
     needs: [ts, ios]
     if: always()
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
       - name: Coverage summary
         run: |
           echo "Coverage uploaded per-job via codecov-action@v5"

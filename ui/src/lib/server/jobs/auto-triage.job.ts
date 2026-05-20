@@ -1,24 +1,13 @@
-/**
- * Auto-triage workflow -- silent chain that runs after every scan.
- *
- * Today the user must manually run `triage → update-pipeline → build-batch-input`
- * to prepare a scan's output for batch evaluation. This job stitches the
- * three together so the user's pipeline is auto-classified and the
- * batch-input.tsv is always fresh.
- *
- *   1. triage.mjs           -- classifies pipeline.md by company+role rules
- *                              (survivors.tsv + pipeline-skipped.tsv)
- *   2. update-pipeline.mjs  -- applies `[!] reason` markers in pipeline.md
- *                              and appends SKIP rows to applications.md
- *   3. build-batch-input.mjs -- writes <profile>/batch/batch-input.tsv from survivors
- *
- * Trigger: registered as a manual-invocation job today; users run it
- * explicitly via the Tasks panel after a scan. The job is structured
- * so a future after-event hook on 'scan' / 'scan-portals' can drop in
- * without touching the implementation -- the registry's `trigger` field
- * carries that wiring when added. Manual invocation is the supported
- * path; no behaviour regression exists by waiting on the hook.
- */
+/** Auto-triage workflow -- chains triage → update-pipeline → build-
+ *  batch-input after a scan, so pipeline.md is auto-classified and
+ *  batch/batch-input.tsv stays fresh.
+ *  Steps: triage.mjs (writes survivors.tsv + pipeline-skipped.tsv by
+ *  company+role rules) → update-pipeline.mjs (marks pipeline.md with
+ *  [!] reason and appends SKIP rows to applications.md) → build-
+ *  batch-input.mjs (writes batch/batch-input.tsv from survivors).
+ *  Manual invocation today via Tasks panel. The registry's `trigger`
+ *  field can later wire it to an after-scan hook without changing the
+ *  implementation. */
 
 import { spawn } from 'node:child_process';
 import { ROOT } from '../files';

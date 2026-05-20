@@ -1,22 +1,8 @@
-/**
- * System tray / macOS Menu Bar -- live job-application status at a glance.
- *
- * Renders a tray icon in macOS top-right / Windows bottom-right / Linux
- * as supported. Clicking the icon opens a context menu with:
- *
- *   • Live stats line (queued / applied today / upcoming interviews)
- *   • Per-section deep links (Pipeline, Inbox, Queue, Stats)
- *   • Run actions (Scan now, Pause/Resume autopilot)
- *   • Window controls (Show, Hide, Quit)
- *   • Menu Bar Only mode toggle (macOS) -- hides the Dock icon and
- *     promotes Heron to a pure menu bar app
- *
- * Live updates:
- *   • macOS title shows the queued count when > 0 (e.g. "▶︎ 3")
- *   • Dock badge mirrors the upcoming-interviews count
- *   • Polls /api/stats every 30s; falls back to "(backend offline)"
- *     when unreachable.
- */
+/** System tray / macOS Menu Bar. Context menu carries live stats
+ *  (queued / applied / upcoming), section deep-links, scan/autopilot
+ *  controls, window actions, macOS Menu-Bar-Only toggle. macOS title
+ *  + Dock badge mirror the queued / upcoming counts; polls /api/stats
+ *  every 30s with "(backend offline)" fallback. */
 import { Tray, Menu, MenuItemConstructorOptions, nativeImage, app, BrowserWindow } from 'electron';
 import path from 'node:path';
 import { request as httpRequest } from 'node:http';

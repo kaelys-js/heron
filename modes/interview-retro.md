@@ -1,4 +1,4 @@
-# Interview retrospective -- capture lessons + grow the story bank
+# Mode: interview-retro -- capture lessons + grow the story bank
 
 You're running the post-interview retrospective. Goal: turn the user's
 raw recall of an interview round into:

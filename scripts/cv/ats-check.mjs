@@ -338,7 +338,17 @@ else
 // Contact info presence
 const hasEmail = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/.test(textDefault);
 const hasPhone = /(\+\d{1,3}[\s-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}/.test(textDefault);
-const hasLinkedIn = /linkedin\.com\/in\/[a-z0-9-]+/i.test(textDefault);
+// Substring presence check (CodeQL js/regex/missing-regexp-anchor: pattern 4 -- substring is intended).
+// Preserves the original [a-z0-9-]+ trailing-char requirement via an explicit charCode check.
+const linkedInIdx = textDefault.toLowerCase().indexOf('linkedin.com/in/');
+let hasLinkedIn = false;
+if (linkedInIdx >= 0) {
+  const tail = textDefault.toLowerCase().charCodeAt(linkedInIdx + 'linkedin.com/in/'.length);
+  const isLower = tail >= 97 && tail <= 122; // a-z
+  const isDigit = tail >= 48 && tail <= 57; // 0-9
+  const isDash = tail === 45; // -
+  hasLinkedIn = isLower || isDigit || isDash;
+}
 if (hasEmail) pass('Contact: email detected');
 else failHard('Contact: email missing', 'an extractable email address is required');
 if (hasPhone) pass('Contact: phone detected');

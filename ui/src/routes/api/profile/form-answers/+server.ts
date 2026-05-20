@@ -1,17 +1,11 @@
-/**
- * /api/profile/form-answers -- per-question cache CRUD.
- *
- *   GET    ?profile=slug              → list every answer for a profile
- *   POST   body { label, answer }     → upsert one answer
- *   DELETE body { key }               → delete one answer
- *
- * The cache lives at `data/users/{uid}/profiles/{slug}/form-answers-cache.jsonl`
- * (or `data/profiles/{slug}/form-answers-cache.jsonl` in legacy single-user
- * installs) and is READ by apply-greenhouse.py + apply-ashby.py at
- * form-fill time. Future
- * adapters (Lever, Workable, Workday, Indeed, …) should use the same
- * lib_apply.load_form_answers() helper so the cache is portal-agnostic.
- */
+/** /api/profile/form-answers -- per-question cache CRUD.
+ *    GET    ?profile=slug          → list every answer
+ *    POST   { label, answer }      → upsert
+ *    DELETE { key }                → delete
+ *  Cache at data/users/{uid}/profiles/{slug}/form-answers-cache.jsonl
+ *  (or legacy data/profiles/{slug}/...), read by apply-greenhouse.py /
+ *  apply-ashby.py at form-fill time. New adapters should reuse
+ *  lib_apply.load_form_answers() so the cache stays portal-agnostic. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import {

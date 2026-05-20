@@ -20,7 +20,7 @@
 (function () {
   'use strict';
 
-  var DASHBOARD = window.__CAREER_OPS_HOST__ || 'http://localhost:5174';
+  var DASHBOARD = window.__HERON_HOST__ || 'http://localhost:5174';
   var ENDPOINT = DASHBOARD + '/api/answer-form';
 
   function toast(msg, kind) {
@@ -44,11 +44,24 @@
     }, 5500);
   }
 
+  // Hostname exact-or-subdomain match. CodeQL flagged the previous
+  // host.indexOf('domain') shape under js/incomplete-url-substring-sanitization
+  // because `attacker.greenhouse.io.evil.com` would have matched. Strip the
+  // port, lowercase, then require equality or a `.<allowed>` suffix.
+  function hostnameMatches(host, allowed) {
+    var h = (host || '').toLowerCase().split(':')[0];
+    for (var i = 0; i < allowed.length; i++) {
+      var d = allowed[i];
+      if (h === d || (h.length > d.length + 1 && h.slice(-d.length - 1) === '.' + d)) return true;
+    }
+    return false;
+  }
+
   function detectPortal() {
-    var h = window.location.host;
-    if (/greenhouse\.io/.test(h)) return 'greenhouse';
-    if (/ashbyhq\.com/.test(h) || /jobs\.ashbyhq\.com/.test(h)) return 'ashby';
-    if (/lever\.co/.test(h) || /jobs\.lever\.co/.test(h)) return 'lever';
+    var h = window.location.hostname;
+    if (hostnameMatches(h, ['greenhouse.io'])) return 'greenhouse';
+    if (hostnameMatches(h, ['ashbyhq.com'])) return 'ashby';
+    if (hostnameMatches(h, ['lever.co'])) return 'lever';
     return null;
   }
 
@@ -91,7 +104,7 @@
         var prev = f.previousElementSibling;
         if (prev) label = prev.textContent.trim();
       }
-      if (!label) return; // skip unlabelled fields — we can't match them
+      if (!label) return; // skip unlabelled fields -- we can't match them
 
       var type =
         f.tagName.toLowerCase() === 'textarea'

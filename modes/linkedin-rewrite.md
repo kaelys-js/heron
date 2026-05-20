@@ -1,4 +1,4 @@
-# LinkedIn rewrite -- paste-ready text for every section that needs work
+# Mode: linkedin-rewrite -- paste-ready text for every section that needs work
 
 This mode runs AFTER the audit. The user has the raw LinkedIn snapshot
 + a list of findings; this mode produces the actual rewritten text so
@@ -11,7 +11,7 @@ they can paste it into LinkedIn directly.
   (e.g. ['thin-headline', 'thin-about', 'archetype-skill-gap'])
 - `snapshot` -- the raw scrape (contains current headline, about, etc.)
 
-Also read: `__CV__`, `config/profile.yml` (target archetypes + role title),
+Also read: `__CV__`, `__PROFILE_YML__` (target archetypes + role title),
 `__PROFILE_MD__`, `__ARTICLE_DIGEST__`.
 
 ## Output

@@ -40,7 +40,7 @@ const newLines = lines.map((line) => {
   if (!m) return line;
   const [, url, company, role] = m;
   const skip = skippedMap.get(url);
-  if (!skip) return line; // survivor — leave as-is
+  if (!skip) return line; // survivor -- leave as-is
   return `- [!] ${url} | ${company.trim()} | ${role.trim()} -- SKIPPED: ${skip.reason}`;
 });
 writeFileSync(PIPELINE, newLines.join('\n'));
@@ -67,8 +67,11 @@ const newRows = [];
 let n = maxN;
 for (const e of sortedSkipped) {
   n += 1;
-  // Escape | in role/company/notes.
-  const safe = (s) => s.replace(/\|/g, '\\|').trim();
+  // Escape backslashes BEFORE pipes so `\|` in the input round-trips
+  // back to `\|` in the rendered cell instead of being collapsed into
+  // a real table separator. CodeQL flagged the pipe-only escape as
+  // `js/incomplete-sanitization` because of exactly this asymmetry.
+  const safe = (s) => s.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').trim();
   newRows.push(
     `| ${n} | ${today} | ${safe(e.company)} | ${safe(e.role)} | — | SKIP | ❌ | — | ${safe(e.reason)} |`,
   );

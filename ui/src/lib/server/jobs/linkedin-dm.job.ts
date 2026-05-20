@@ -1,18 +1,11 @@
-/**
- * linkedin-dm-job -- periodic LinkedIn DM ingestion + classification.
- *
- * Runs every 6 hours by default. Each tick:
- *   1. Spawns `linkedin-dm-scraper.py --json`
- *   2. For each message, runs `classifyInbound` (heuristic)
- *   3. Persists to `inbound-leads.jsonl` (deduped by messageId)
- *   4. For 'real-role' messages with a JD URL → triggers auto-enrich
- *      (left as a separate enrich call so a slow JD fetch doesn't
- *      starve the rest of the queue)
- *   5. Files Inbox card "X new recruiter messages"
- *
- * Anti-detection: LinkedIn flags scrapers that hit too often. We cap at
- * 4 invocations/day + use the same humanized cadence as scan-linkedin-auth.
- */
+/** linkedin-dm-job -- periodic LinkedIn DM ingestion + classification.
+ *  Every 6h: spawn linkedin-dm-scraper.py --json, run classifyInbound
+ *  heuristic per message, append to inbound-leads.jsonl (deduped by
+ *  messageId). Real-role messages with a JD URL → separate enrich call
+ *  (decoupled so a slow JD fetch doesn't starve the queue). Files an
+ *  Inbox card "X new recruiter messages".
+ *  Anti-detection: capped at 4 invocations/day with the same humanized
+ *  cadence as scan-linkedin-auth. */
 
 import { spawn } from 'node:child_process';
 import path from 'node:path';

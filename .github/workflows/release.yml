@@ -1,4 +1,4 @@
-# release — automated semantic releases via Release Please.
+# release -- automated semantic releases via Release Please.
 #
 # Flow:
 #
@@ -11,16 +11,16 @@
 #        chore: docs: refactor: test: ci: build: style: → no bump
 #   3. If there are bump-worthy commits, Release Please opens (or updates)
 #      a "release PR" that accumulates the changes + CHANGELOG entries.
-#      The PR sits there until you merge it — gives you a chance to review
+#      The PR sits there until you merge it -- gives you a chance to review
 #      what's about to ship.
 #   4. When the release PR is merged: Release Please cuts the actual
-#      release — creates the git tag, the GitHub Release, the CHANGELOG
+#      release -- creates the git tag, the GitHub Release, the CHANGELOG
 #      commit, and emits a `releases_created: true` output.
 #   5. This workflow then triggers native-release.yml via workflow_call to
 #      build DMG / .exe / .AppImage / iOS TestFlight artifacts and attach
 #      them to the just-created GitHub Release.
 #
-# Manual override: `pnpm release patch` from the CLI still works — it
+# Manual override: `pnpm release patch` from the CLI still works -- it
 # bypasses Release Please and pushes a tag directly. native-release.yml
 # picks up that tag via its `on: push: tags` trigger.
 name: release
@@ -35,20 +35,29 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
+# Top-level is read-only. release-please needs writes to create
+# branches + PRs + tags + comment on issues; declared inside the job.
 permissions:
-  contents: write
-  pull-requests: write
-  issues: write
+  contents: read
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: write # release-please creates tags + the GitHub Release
+      pull-requests: write # creates / updates the release PR
+      issues: write # comments on closed issues that ship in the release
     outputs:
       release_created: ${{ steps.rp.outputs.release_created }}
       tag_name: ${{ steps.rp.outputs.tag_name }}
       version: ${{ steps.rp.outputs.major }}.${{ steps.rp.outputs.minor }}.${{ steps.rp.outputs.patch }}
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5
         id: rp
         with:
@@ -62,12 +71,25 @@ jobs:
 
   # When Release Please cuts a real release (i.e. the release PR was just
   # merged), kick off the cross-platform build. workflow_call within the
-  # same run means we don't need a PAT — secrets: inherit forwards every
-  # repo secret (APPLE_*, MAC_CERTIFICATE_*, etc.) into the called workflow.
+  # same run means we don't need a PAT.
+  #
+  # zizmor/secrets-inherit -- enumerate the signing secrets explicitly
+  # rather than `secrets: inherit`. native-release.yml declares each
+  # secret in its `workflow_call.secrets:` block; this list must stay
+  # in sync. GITHUB_TOKEN is auto-provided to reusable workflows.
   build-natives:
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     uses: ./.github/workflows/native-release.yml
     with:
       version: ${{ needs.release-please.outputs.version }}
-    secrets: inherit
+    secrets:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      MAC_CERTIFICATE: ${{ secrets.MAC_CERTIFICATE }}
+      MAC_CERTIFICATE_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+      IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
+      IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+      IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+      APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}

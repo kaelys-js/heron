@@ -28,7 +28,17 @@
  *   node scan.mjs --probe URL      # probe one URL and print detected ATS + sample
  */
 
-import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from 'fs';
+import {
+  readFileSync,
+  writeFileSync,
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  closeSync,
+  writeSync,
+  fstatSync,
+} from 'fs';
 import yaml from 'js-yaml';
 import {
   profilePath,
@@ -39,7 +49,7 @@ import {
 const parseYaml = yaml.load;
 
 // ── Config -- per-user per-profile paths ────────────────────────────
-// Resolve --user / --profile (or CAREER_OPS_USER_ID / CAREER_OPS_PROFILE_ID
+// Resolve --user / --profile (or HERON_USER_ID / HERON_PROFILE_ID
 // env vars set by the orchestrator). Multi-user installs land at
 // data/users/{uid}/profiles/{slug}/; legacy single-user at data/profiles/{slug}/.
 const USER_ID = userFromArgv();
@@ -330,13 +340,16 @@ function parsePersonio(xml, companyName, meta) {
     const id = pos.match(/<id>(\d+)<\/id>/)?.[1];
     const name = pos.match(/<name>([\s\S]*?)<\/name>/)?.[1]?.trim();
     if (!id || !name) continue;
-    // Decode the most common HTML entities Personio emits in <name>
+    // Decode the most common HTML entities Personio emits in <name>.
+    // Decoding `&amp;` MUST be last: otherwise input like `&amp;lt;`
+    // (literal text "&lt;") gets decoded to `&lt;` then `<`, which is
+    // wrong. CodeQL flags the previous reverse order as `js/double-escaping`.
     const title = name
-      .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
-      .replace(/&#039;/g, "'");
+      .replace(/&#039;/g, "'")
+      .replace(/&amp;/g, '&');
     // Primary <office> appears OUTSIDE <additionalOffices>. Strip the
     // additionalOffices block first so the primary-office regex doesn't
     // accidentally grab the first nested <office>.
@@ -640,17 +653,23 @@ function appendToPipeline(offers) {
 }
 
 function appendToScanHistory(offers, date) {
-  // Ensure file + header exist
-  if (!existsSync(SCAN_HISTORY_PATH)) {
-    writeFileSync(SCAN_HISTORY_PATH, 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\n', 'utf-8');
+  // Open in append-mode (creates if missing). fstat the open fd to know
+  // if we need the header -- TOCTOU-free vs the prior `existsSync ->
+  // writeFileSync(header) ; appendFileSync(rows)` form. CodeQL
+  // `js/file-system-race`-clean.
+  const fd = openSync(SCAN_HISTORY_PATH, 'a+');
+  try {
+    if (fstatSync(fd).size === 0) {
+      writeSync(fd, 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\n');
+    }
+    const lines =
+      offers
+        .map((o) => `${o.url}\t${date}\t${o.source}\t${o.title}\t${o.company}\tadded`)
+        .join('\n') + '\n';
+    writeSync(fd, lines);
+  } finally {
+    closeSync(fd);
   }
-
-  const lines =
-    offers
-      .map((o) => `${o.url}\t${date}\t${o.source}\t${o.title}\t${o.company}\tadded`)
-      .join('\n') + '\n';
-
-  appendFileSync(SCAN_HISTORY_PATH, lines, 'utf-8');
 }
 
 // ── Parallel fetch with concurrency limit ───────────────────────────

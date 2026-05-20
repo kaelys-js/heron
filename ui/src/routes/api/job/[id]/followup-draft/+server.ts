@@ -1,16 +1,8 @@
-/**
- * Per-job follow-up message drafter.
- *
- *   POST /api/job/[id]/followup-draft  { tone?: 'warm' | 'direct' | 'short' }
- *
- * Spawns `claude -p "/heron followup --url <url> --tone <tone>"` to
- * produce 2-3 message variants the user can copy/paste into LinkedIn or
- * email. The mode itself reads applications.md + the report file for
- * context (days since applied, contacts, what's actionable).
- *
- * Persists the result to interview-prep/{slug}-followup.md so reloads
- * don't re-spawn.
- */
+/** POST /api/job/[id]/followup-draft -- per-job follow-up message drafter.
+ *  Body: { tone?: 'warm'|'direct'|'short' }. Spawns the followup mode to
+ *  produce 2-3 LinkedIn/email variants. The mode reads applications.md + the
+ *  report file for context (days since applied, contacts, what's actionable).
+ *  Persists to interview-prep/{slug}-followup.md so reloads don't re-spawn. */
 
 import fs from 'node:fs';
 import path from 'node:path';

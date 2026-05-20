@@ -12,10 +12,10 @@ any of the three implementations and re-run that test.
 
 Resolution order for a Python script that wants a credential:
 
-    1. per-user value (this module) — keyed by CAREER_OPS_USER_ID env
+    1. per-user value (this module) — keyed by HERON_USER_ID env
     2. process.env fallback (legacy single-user install)
 
-If CAREER_OPS_USER_ID isn't set, scripts fall straight through to
+If HERON_USER_ID isn't set, scripts fall straight through to
 os.environ — that's the pre-multi-user path and stays supported.
 
 Dependencies:
@@ -51,11 +51,11 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 def _data_dir() -> Path:
     """Same precedence as the TS impl + ui/src/lib/server/db/index.ts:
-    HERON_DATA_DIR > CAREER_OPS_DATA_DIR > <repo>/data."""
+    HERON_DATA_DIR > HERON_DATA_DIR > <repo>/data."""
     if os.environ.get("HERON_DATA_DIR"):
         return Path(os.environ["HERON_DATA_DIR"])
-    if os.environ.get("CAREER_OPS_DATA_DIR"):
-        return Path(os.environ["CAREER_OPS_DATA_DIR"])
+    if os.environ.get("HERON_DATA_DIR"):
+        return Path(os.environ["HERON_DATA_DIR"])
     return _REPO_ROOT / "data"
 
 
@@ -112,7 +112,7 @@ def get_secret(user_id: str, key: str) -> Optional[str]:
     iv = base64.b64decode(entry["iv"])
     tag = base64.b64decode(entry["tag"])
     ciphertext = base64.b64decode(entry["ciphertext"])
-    # Python's AESGCM expects the auth tag appended to the ciphertext —
+    # Python's AESGCM expects the auth tag appended to the ciphertext --
     # the JS Buffer split it into separate fields, so glue them back.
     aesgcm = AESGCM(aes_key)
     plaintext = aesgcm.decrypt(iv, ciphertext + tag, associated_data=None)
@@ -122,7 +122,7 @@ def get_secret(user_id: str, key: str) -> Optional[str]:
 def get_credential(key: str) -> Optional[str]:
     """Two-tier resolver: per-user store first, os.environ fallback.
 
-    Resolves the userId from CAREER_OPS_USER_ID. When unset, the
+    Resolves the userId from HERON_USER_ID. When unset, the
     function skips the per-user lookup and goes straight to
     os.environ — that's the pre-multi-user path and stays supported.
 
@@ -130,14 +130,14 @@ def get_credential(key: str) -> Optional[str]:
         from lib.user_secrets import get_credential
         api_key = get_credential("GEMINI_API_KEY")
     """
-    user_id = os.environ.get("CAREER_OPS_USER_ID")
+    user_id = os.environ.get("HERON_USER_ID")
     if user_id:
         try:
             from_store = get_secret(user_id, key)
             if from_store is not None:
                 return from_store
         except Exception as err:  # noqa: BLE001 - intentional broad catch
-            # Don't bail the script over a decrypt failure — surface a
+            # Don't bail the script over a decrypt failure -- surface a
             # warning + fall through to os.environ. The dashboard's
             # health-check will flag the corrupt secrets.json separately.
             import sys
