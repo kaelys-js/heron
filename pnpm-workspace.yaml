@@ -172,7 +172,6 @@ catalog:
   prettier-plugin-svelte: "3.5.2"
   sharp: "0.34.5"
   size-limit: "11.2.0"
-  "@size-limit/preset-app": "11.2.0"
   "@axe-core/playwright": "4.10.2"
   axe-core: "4.10.3"
   "@size-limit/file": "11.2.0"
