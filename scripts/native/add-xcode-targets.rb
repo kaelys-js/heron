@@ -684,6 +684,12 @@ TEST_TARGETS.each do |t|
   # Re-runs are safe: existing references are de-duped by path.
   ref = project.main_group.find_subpath(t[:name], true)
   ref.set_source_tree("<group>")
+  # PBX requires `path = <Name>` on the group (not just `name`); without
+  # it children with `sourceTree = "<group>"` and just `path = X.swift`
+  # resolve to PROJECT_ROOT/X.swift instead of PROJECT_ROOT/<Name>/X.swift,
+  # and xcodebuild fails with "Build input files cannot be found". Match
+  # the pattern used by App + WatchApp + extension groups above.
+  ref.path = t[:name]
   existing_paths = ref.files.map(&:path).to_set
 
   # Also dedupe against the build phase -- Xcode tracks "Compile Sources"

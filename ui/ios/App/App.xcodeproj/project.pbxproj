@@ -401,7 +401,7 @@
 				D3D00F0BF04C6ACD70B7ED94 /* NetworkMonitorTests.swift */,
 				735399543377D51D2BECCBD9 /* SpotlightIndexerTests.swift */,
 			);
-			name = AppTests;
+			path = AppTests;
 			sourceTree = "<group>";
 		};
 		CDDF36EC432C08EC8EEFC6B7 /* AppUITests */ = {
@@ -409,7 +409,7 @@
 			children = (
 				1C777DB39253E575C27951E6 /* AppUITestsSmoke.swift */,
 			);
-			name = AppUITests;
+			path = AppUITests;
 			sourceTree = "<group>";
 		};
 		D99AEA55A4EA093281BD5E41 /* watchOS */ = {
