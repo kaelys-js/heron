@@ -29,32 +29,54 @@ import type { Job, Status, BgRisk } from '$lib/types';
 import { STATUS_ORDER } from '$lib/types';
 import fs from 'node:fs';
 
-// Source-pattern matchers. Each `match` returns true if the URL is from that source.
-// Substring presence checks (CodeQL js/regex/missing-regexp-anchor: pattern 4 -- substring is intended).
-const SOURCE_PATTERNS: Array<{ name: string; match: (lower: string) => boolean }> = [
-  { name: 'LinkedIn', match: (u) => u.includes('linkedin.com') },
-  { name: 'Indeed', match: (u) => u.includes('indeed.com') },
-  { name: 'Greenhouse', match: (u) => u.includes('greenhouse.io') },
-  { name: 'Ashby', match: (u) => u.includes('ashbyhq.com') || u.includes('jobs.ashbyhq') },
-  { name: 'Lever', match: (u) => u.includes('lever.co') },
-  { name: 'Workday', match: (u) => u.includes('myworkdayjobs') || u.includes('workday.com') },
-  { name: 'SmartRecruiters', match: (u) => u.includes('smartrecruiters.com') },
-  { name: 'Wellfound', match: (u) => u.includes('wellfound.com') || u.includes('angel.co') },
-  {
-    name: 'YC Work',
-    match: (u) => u.includes('ycombinator.com') || u.includes('workatastartup.com'),
-  },
-  { name: 'Hacker News', match: (u) => u.includes('news.ycombinator') },
-  { name: 'The Muse', match: (u) => u.includes('themuse.com') },
-  { name: 'Adzuna', match: (u) => u.includes('adzuna') },
-  { name: 'Google Jobs', match: (u) => u.includes('jobs.google') },
-  { name: 'Glassdoor', match: (u) => u.includes('glassdoor.com') },
-  { name: 'Monster', match: (u) => u.includes('monster.com') },
+/**
+ * Test whether `url`'s hostname matches any allowlisted domain (exact or subdomain).
+ *
+ * Replaces the previous raw-string `.includes('domain.com')` shape that CodeQL
+ * flagged under `js/incomplete-url-substring-sanitization` -- an attacker URL
+ * like `https://evil.example/?u=linkedin.com` would have passed the substring
+ * test. Hostname parsing prevents that.
+ *
+ * Each allowlisted entry matches the exact host or any subdomain (e.g.
+ * `'linkedin.com'` matches `linkedin.com` and `www.linkedin.com`). Hosts that
+ * fail to parse return false.
+ */
+function hostMatches(url: string, allowed: string[]): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return allowed.some((d) => host === d || host.endsWith('.' + d));
+  } catch {
+    return false;
+  }
+}
+
+// Source-pattern matchers. Each entry lists the allowlist of domains that count
+// as that source; `hostMatches` does the hostname-exact / subdomain check.
+const SOURCE_PATTERNS: Array<{ name: string; domains: string[] }> = [
+  { name: 'LinkedIn', domains: ['linkedin.com'] },
+  { name: 'Indeed', domains: ['indeed.com'] },
+  { name: 'Greenhouse', domains: ['greenhouse.io'] },
+  // jobs.ashbyhq.com is a subdomain of ashbyhq.com so one entry covers both.
+  { name: 'Ashby', domains: ['ashbyhq.com'] },
+  { name: 'Lever', domains: ['lever.co'] },
+  // The legacy substring 'myworkdayjobs' caught hosts like *.myworkdayjobs.com;
+  // hostname suffix matching does the same.
+  { name: 'Workday', domains: ['myworkdayjobs.com', 'workday.com'] },
+  { name: 'SmartRecruiters', domains: ['smartrecruiters.com'] },
+  { name: 'Wellfound', domains: ['wellfound.com', 'angel.co'] },
+  { name: 'YC Work', domains: ['ycombinator.com', 'workatastartup.com'] },
+  // 'news.ycombinator' previously matched news.ycombinator.com; covered above by ycombinator.com.
+  { name: 'Hacker News', domains: ['news.ycombinator.com'] },
+  { name: 'The Muse', domains: ['themuse.com'] },
+  { name: 'Adzuna', domains: ['adzuna.com', 'adzuna.co.uk'] },
+  // 'jobs.google' was a substring catch-all for jobs.google.com.
+  { name: 'Google Jobs', domains: ['jobs.google.com'] },
+  { name: 'Glassdoor', domains: ['glassdoor.com'] },
+  { name: 'Monster', domains: ['monster.com'] },
 ];
 
 function sourceOf(url: string): string {
-  const lower = url.toLowerCase();
-  for (const p of SOURCE_PATTERNS) if (p.match(lower)) return p.name;
+  for (const p of SOURCE_PATTERNS) if (hostMatches(url, p.domains)) return p.name;
   try {
     const h = new URL(url).hostname.replace(/^www\./, '');
     return (

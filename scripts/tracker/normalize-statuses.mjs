@@ -20,7 +20,7 @@
  *   node scripts/tracker/normalize-statuses.mjs --user u_alice --profile engineer
  */
 
-import { readFileSync, writeFileSync, copyFileSync, existsSync, mkdirSync, renameSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, renameSync } from 'fs';
 import { dirname } from 'path';
 import { profilePath, profileFromArgv, userFromArgv } from '../lib/lib-profiles.mjs';
 
@@ -111,12 +111,18 @@ function normalizeStatus(raw) {
   return { status: null, unknown: true };
 }
 
-// Read applications.md
-if (!existsSync(APPS_FILE)) {
-  console.log('No applications.md found. Nothing to normalize.');
-  process.exit(0);
+// Read applications.md. CodeQL `js/file-system-race`: read directly
+// and let ENOENT branch handle "no file" rather than precheck + open.
+let content;
+try {
+  content = readFileSync(APPS_FILE, 'utf-8');
+} catch (e) {
+  if (e?.code === 'ENOENT') {
+    console.log('No applications.md found. Nothing to normalize.');
+    process.exit(0);
+  }
+  throw e;
 }
-const content = readFileSync(APPS_FILE, 'utf-8');
 const lines = content.split('\n');
 
 let changes = 0;

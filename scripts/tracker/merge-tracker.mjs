@@ -14,7 +14,7 @@
  * Run: node heron/merge-tracker.mjs [--dry-run] [--verify]
  */
 
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, renameSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, renameSync } from 'fs';
 import { join, basename, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { execFileSync } from 'child_process';
@@ -342,12 +342,18 @@ function parseTsvContent(content, filename) {
 
 // ---- Main ----
 
-// Read applications.md
-if (!existsSync(APPS_FILE)) {
-  console.log('No applications.md found. Nothing to merge into.');
-  process.exit(0);
+// Read applications.md. CodeQL `js/file-system-race`: read directly
+// and let ENOENT branch handle "no file" rather than precheck + open.
+let appContent;
+try {
+  appContent = readFileSync(APPS_FILE, 'utf-8');
+} catch (e) {
+  if (e?.code === 'ENOENT') {
+    console.log('No applications.md found. Nothing to merge into.');
+    process.exit(0);
+  }
+  throw e;
 }
-const appContent = readFileSync(APPS_FILE, 'utf-8');
 const appLines = appContent.split('\n');
 const existingApps = [];
 let maxNum = 0;
@@ -364,13 +370,18 @@ for (const line of appLines) {
 
 console.log(`📊 Existing: ${existingApps.length} entries, max #${maxNum}`);
 
-// Read tracker additions
-if (!existsSync(ADDITIONS_DIR)) {
-  console.log('No tracker-additions directory found.');
-  process.exit(0);
+// Read tracker additions. CodeQL `js/file-system-race`: readdir
+// directly; ENOENT is the "no dir" branch.
+let tsvFiles;
+try {
+  tsvFiles = readdirSync(ADDITIONS_DIR).filter((f) => f.endsWith('.tsv'));
+} catch (e) {
+  if (e?.code === 'ENOENT') {
+    console.log('No tracker-additions directory found.');
+    process.exit(0);
+  }
+  throw e;
 }
-
-const tsvFiles = readdirSync(ADDITIONS_DIR).filter((f) => f.endsWith('.tsv'));
 if (tsvFiles.length === 0) {
   console.log('✅ No pending additions to merge.');
   process.exit(0);

@@ -13,6 +13,21 @@ import { logEvent, reportServerError } from '$lib/server/events';
 
 const MAX_BATCH = 50;
 
+/**
+ * Hostname-exact match for LinkedIn. CodeQL flagged the previous
+ * `url.includes('linkedin.com')` shape under `js/incomplete-url-substring-sanitization`
+ * because attacker-controlled URLs like `https://evil.example/?u=linkedin.com`
+ * pass the substring test. Parse + check hostname instead.
+ */
+function isLinkedInHost(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host === 'linkedin.com' || host.endsWith('.linkedin.com');
+  } catch {
+    return false;
+  }
+}
+
 export const POST = wrap('queue-send', async ({ request }: { request: Request }) => {
   const body = (await request.json().catch(() => null)) as { jobIds?: string[] } | null;
   const ids = Array.isArray(body?.jobIds)
@@ -33,8 +48,9 @@ export const POST = wrap('queue-send', async ({ request }: { request: Request })
       url: j.url,
       company: j.company,
       role: j.role,
-      // Substring presence check (CodeQL js/regex/missing-regexp-anchor: pattern 4 -- substring is intended).
-      isLinkedIn: j.url.includes('linkedin.com'),
+      // Hostname-based check (CodeQL js/incomplete-url-substring-sanitization):
+      // raw-string .includes('linkedin.com') would also match attacker.example/?u=linkedin.com.
+      isLinkedIn: isLinkedInHost(j.url),
     });
   }
   if (picks.length === 0) badRequest('No Queued jobs found for the given ids');

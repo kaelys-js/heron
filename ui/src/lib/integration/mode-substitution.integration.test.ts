@@ -7,7 +7,7 @@
  * real `modes/` tree on disk. Spawns no processes -- purely textual.
  */
 import { describe, it, expect } from 'vitest';
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { substituteModeTokensForUser, listKnownTokens } from '$lib/server/mode-substitution';
 import { ROOT } from '$lib/server/files';
@@ -51,14 +51,15 @@ describe('mode-substitution end-to-end', () => {
       files.map((f) => [f.slice(ROOT.length + 1)] as const),
     )('substitutes %s without leftover tokens', (rel) => {
       const abs = join(ROOT, rel);
-      if (!statSync(abs).isFile()) return; // belt-and-braces
-      // CodeQL js/file-system-race: read directly and treat ENOENT as a
-      // skip rather than re-checking existence between statSync and read.
+      // CodeQL js/file-system-race: read directly and treat ENOENT
+      // (or EISDIR) as a skip. The previous `statSync().isFile()`
+      // precheck was the TOCTOU partner of readFileSync below.
       let source: string;
       try {
         source = readFileSync(abs, 'utf8');
       } catch (e) {
-        if ((e as NodeJS.ErrnoException).code === 'ENOENT') return;
+        const code = (e as NodeJS.ErrnoException).code;
+        if (code === 'ENOENT' || code === 'EISDIR') return;
         throw e;
       }
       const substituted = substituteModeTokensForUser(TEST_USER, TEST_PROFILE, source);

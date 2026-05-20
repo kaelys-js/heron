@@ -134,7 +134,12 @@ class Bus extends EventEmitter {
         // logEvent from inside rotation would loop forever.
       }
       // Drop a rotation breadcrumb without going through logEvent (avoid
-      // recursion if rotation fails repeatedly).
+      // recursion if rotation fails repeatedly). Use `wx` (exclusive
+      // create) so the post-rename create is race-free: CodeQL flagged
+      // the plain writeFileSync as `js/file-system-race` because a
+      // concurrent append could have re-created LOG_FILE between the
+      // rename and the write. EEXIST = someone beat us to it, and that
+      // someone already wrote a real event line; skip the breadcrumb.
       try {
         fs.writeFileSync(
           LOG_FILE,
@@ -148,10 +153,12 @@ class Bus extends EventEmitter {
             message:
               'previous file moved to activity.jsonl.1 (' + Math.round(size / 1024 / 1024) + 'MB)',
           }) + '\n',
+          { flag: 'wx' },
         );
       } catch {
-        // Rotation breadcrumb write failed -- the next regular append
-        // will recreate LOG_FILE. We can't re-enter logEvent from here.
+        // Rotation breadcrumb write failed (EEXIST or otherwise) --
+        // the next regular append will land in LOG_FILE either way.
+        // We can't re-enter logEvent from here.
       }
     } catch {
       // Rotation is best-effort -- never let it crash the caller, and

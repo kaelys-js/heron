@@ -490,7 +490,14 @@ function patchJson(path, patcher) {
   if (before === after) return false;
   writeFileSync(path, after);
   try {
-    execSync(`pnpm exec biome format --write "${path}"`, { stdio: 'pipe', cwd: ROOT });
+    // execFileSync with argv array avoids shell interpolation -- closes
+    // CodeQL `js/indirect-command-line-injection`. `path` reaches us from
+    // patchJson callers (all internal join() results, never user input),
+    // but the rule fires on the shape regardless of provenance.
+    execFileSync('pnpm', ['exec', 'biome', 'format', '--write', path], {
+      stdio: 'pipe',
+      cwd: ROOT,
+    });
   } catch {
     /* biome may not be installed yet -- best effort */
   }
@@ -1801,9 +1808,13 @@ function applyManifest(brand) {
   });
   // Post-process through biome so the formatter doesn't flag our output
   // on the next CI run. Best-effort; if biome isn't installed yet, the
-  // pre-commit hook will catch it anyway.
+  // pre-commit hook will catch it anyway. execFileSync (argv-array, no
+  // shell) closes CodeQL `js/indirect-command-line-injection`.
   try {
-    execSync(`pnpm exec biome format --write "${path}"`, { stdio: 'pipe', cwd: ROOT });
+    execFileSync('pnpm', ['exec', 'biome', 'format', '--write', path], {
+      stdio: 'pipe',
+      cwd: ROOT,
+    });
   } catch {}
   changed
     ? log.ok(`static/manifest.webmanifest`)

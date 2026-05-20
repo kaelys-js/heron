@@ -299,9 +299,28 @@ export function extractJdUrl(text: string): string | undefined {
       return url.replace(/[)\].,>]+$/, '');
     }
   }
-  // Fallback: first https URL if it's not clearly a profile link
+  // Fallback: first https URL if it's not clearly a profile link.
+  // CodeQL `js/regex/missing-regexp-anchor`: a substring regex against
+  // a URL would also flag `js/incomplete-url-substring-sanitization`,
+  // so resolve via real URL parsing -- hostname end-match + anchored
+  // path prefix is the canonical pattern.
   for (const url of matches) {
-    if (!/linkedin\.com\/(in|company)\//i.test(url)) return url.replace(/[)\].,>]+$/, '');
+    const cleaned = url.replace(/[)\].,>]+$/, '');
+    if (!isLinkedInProfileUrl(cleaned)) return cleaned;
   }
   return undefined;
+}
+
+function isLinkedInProfileUrl(url: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  const host = parsed.hostname.toLowerCase();
+  const isLinkedIn = host === 'linkedin.com' || host.endsWith('.linkedin.com');
+  if (!isLinkedIn) return false;
+  // Anchored path-prefix check: profile (/in/...) or company (/company/...).
+  return /^\/(in|company)\//i.test(parsed.pathname);
 }

@@ -18,7 +18,7 @@
  *   node scripts/tracker/dedup-tracker.mjs --user u_alice --profile engineer
  */
 
-import { readFileSync, writeFileSync, copyFileSync, existsSync, mkdirSync, renameSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, renameSync } from 'fs';
 import { dirname } from 'path';
 import { profilePath, profileFromArgv, userFromArgv } from '../lib/lib-profiles.mjs';
 
@@ -169,12 +169,19 @@ function parseAppLine(line) {
   };
 }
 
-// Read
-if (!existsSync(APPS_FILE)) {
-  console.log('No applications.md found. Nothing to dedup.');
-  process.exit(0);
+// Read. CodeQL `js/file-system-race`: the previous `existsSync ->
+// readFileSync` pair left a TOCTOU window between the check and the
+// open. Read directly; treat ENOENT as the "no file" branch.
+let content;
+try {
+  content = readFileSync(APPS_FILE, 'utf-8');
+} catch (e) {
+  if (e?.code === 'ENOENT') {
+    console.log('No applications.md found. Nothing to dedup.');
+    process.exit(0);
+  }
+  throw e;
 }
-const content = readFileSync(APPS_FILE, 'utf-8');
 const lines = content.split('\n');
 
 // Parse all entries
