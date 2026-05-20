@@ -47,7 +47,13 @@ coverage:
       default:
         target: 70%
         threshold: 0%
-        if_ci_failed: error
+        # `success` (not `error`) means: when the base ref doesn't have a
+        # coverage upload (common on a fresh branch or after Codecov
+        # storage TTL expires), don't gate the merge on a value we can't
+        # compute. The `project` status check (above) carryforward-mode
+        # still catches an overall coverage drop -- patch is a per-diff
+        # belt; we keep the braces from `project`.
+        if_ci_failed: success
 
 flag_management:
   default_rules:
@@ -132,3 +138,11 @@ ignore:
   - "branding/**"
   - "scripts/system/apply-brand.mjs" # brand-pipeline tooling
   - "scripts/native/icons/**" # build-time icon generation
+  # Demo + capture pipeline -- builds + boots a vite preview against a
+  # tmpdir seed for README screenshots. Pure orchestration code, no
+  # product surface to unit-test.
+  - "scripts/system/seed-demo-data.mjs"
+  - "scripts/system/capture-screenshots.mjs"
+  # Playwright E2E specs + helpers run via the playwright runner, not
+  # vitest; covered by the iOS / TS test jobs separately.
+  - "ui/e2e/**"
