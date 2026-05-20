@@ -1,0 +1,22 @@
+# Python dependencies for the dashboard-boot scan/apply Python paths.
+#
+# Why this file: dashboard boot can spawn scripts/scan/*.py +
+# scripts/apply/*.py + scripts/lib/user_secrets.py as child processes.
+# Those need their own pip deps installed against the mise-pinned
+# Python interpreter (`python = "3.13.13"` in .mise.toml).
+#
+# Source of truth for the CI install step in
+# .github/actions/setup-toolchain/action.yml. Local dev: `pnpm setup`
+# bootstraps `.venv` from this file too.
+#
+# Keep this list MINIMAL. Add a dep only when the dashboard's import
+# graph actually reaches it during a default boot (orchestrator +
+# autopilot + scheduled scans). Heavy scraper deps (playwright,
+# jobspy-py, etc.) live in scripts/requirements-scrapers.txt so the
+# core CI install stays fast.
+
+# AES-GCM + HKDF for the per-user secret store. Loaded by every
+# Python helper that needs to read user credentials (Anthropic /
+# Gemini / Adzuna / Gmail-IMAP keys). The TypeScript twin lives at
+# ui/src/lib/server/user-secrets.ts and is binary-format-compatible.
+cryptography>=44.0.0,<46.0.0
