@@ -48,6 +48,14 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 export const AUTH_DB_PATH = process.env.HERON_AUTH_DB ?? path.join(DATA_DIR, 'auth.db');
 export const APP_DB_PATH = process.env.HERON_APP_DB ?? path.join(DATA_DIR, 'app.db');
 
+// Diagnostic boot log -- removable once the e2e seed/serve race is
+// proven stable. Logs once per process at module load.
+if (process.env.HERON_DATA_DIR || process.env.CI) {
+  console.log(
+    `[db/index] HERON_DATA_DIR=${process.env.HERON_DATA_DIR ?? '(unset)'} DATA_DIR=${DATA_DIR} AUTH_DB_PATH=${AUTH_DB_PATH}`,
+  );
+}
+
 /** Lazy-open raw sqlite handles. We open eagerly at module load -- the cost
  *  is microseconds and lazy-init across SSR + jobs caused weird races. */
 const authSqlite = new Database(AUTH_DB_PATH);
