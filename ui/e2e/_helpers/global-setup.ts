@@ -36,8 +36,14 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
 import { TEST_USER_EMAIL, TEST_USER_ID, TEST_USER_NAME } from './seed';
+
+// `ui/package.json` is `"type": "module"` so the playwright config +
+// helpers run as ESM. ESM doesn't define `__dirname`; reconstruct it
+// from `import.meta.url`.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default async function globalSetup(): Promise<void> {
   const dataDir = process.env.HERON_E2E_DATA_DIR;

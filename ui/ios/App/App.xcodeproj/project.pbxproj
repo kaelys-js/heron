@@ -25,7 +25,6 @@
 		464E3AF67C92B9D73E4AD958 /* BrandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C6DBE48967C2185A1EA702 /* BrandTests.swift */; };
 		4CDC6A84B0B5B438F8ACFA84 /* WidgetTestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6F3EBB92FC26A8909F2E030 /* WidgetTestsSmoke.swift */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
-		4E179D94F2EDE1A0231C4015 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27884949441377C8C7559A26 /* Foundation.framework */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
@@ -41,7 +40,6 @@
 		7623847E565D6D406BE4999D /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6FF0483296BD7B4DF03552B /* ErrorReporter.swift */; };
 		7A5501C8C2D0C2B9160EB349 /* KeychainStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A60ED4B98EE76C3731F81BA /* KeychainStoreTests.swift */; };
 		7AC0D36C2BBD93C60EFC3C4F /* BridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26631DCF28D85F99FB13A91E /* BridgeViewController.swift */; };
-		7DBFA4641E2729F109B35EF2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27884949441377C8C7559A26 /* Foundation.framework */; };
 		8914930D75A1C77BA5BFB215 /* WatchTestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = A341629834FE8424663D0140 /* WatchTestsSmoke.swift */; };
 		91269196C8EDE956B323C1CA /* NetworkMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D00F0BF04C6ACD70B7ED94 /* NetworkMonitorTests.swift */; };
 		967E279FFF6CBEBE28CEC91D /* AppShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C05A76F56281A0EFD15DAD02 /* AppShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -159,7 +157,6 @@
 		1C777DB39253E575C27951E6 /* AppUITestsSmoke.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppUITestsSmoke.swift; sourceTree = "<group>"; };
 		1F1F2BF74317E3F6B16DDA93 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		26631DCF28D85F99FB13A91E /* BridgeViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BridgeViewController.swift; sourceTree = "<group>"; };
-		27884949441377C8C7559A26 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		29AFA3C1756697C1450E03AC /* NextInterviewWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NextInterviewWidget.swift; sourceTree = "<group>"; };
 		2BAC25F9472B859A8F679955 /* AppUITests.bundle */ = {isa = PBXFileReference; explicitFileType = "wrapper.plug-in"; includeInIndex = 0; path = AppUITests.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CE88770478FB968E108A903 /* NativePlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NativePlugin.swift; sourceTree = "<group>"; };
@@ -218,7 +215,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7DBFA4641E2729F109B35EF2 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -241,7 +237,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4E179D94F2EDE1A0231C4015 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -420,7 +415,6 @@
 		D99AEA55A4EA093281BD5E41 /* watchOS */ = {
 			isa = PBXGroup;
 			children = (
-				27884949441377C8C7559A26 /* Foundation.framework */,
 			);
 			name = watchOS;
 			sourceTree = "<group>";

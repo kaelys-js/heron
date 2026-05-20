@@ -30,6 +30,15 @@ APP_IDENTIFIER = "com.heron.app"
 # integration workspace fastlane expects when you pass `workspace:`.)
 PROJECT = "App.xcodeproj"
 SCHEME = "App"
+# Separate scheme for test_ci: AppTests bundle (which has App as its
+# test host, so xcodebuild builds the host app as an implicit
+# dependency). The handwritten App.xcscheme triggered a persistent
+# "Scheme App is not currently configured for the build action" error
+# under Xcode 16 even after Foundation-SDK hardcodes were stripped --
+# the App scheme metadata Xcode generates for a freshly-imported
+# project diverges from what scan expects. AppTests.xcscheme came from
+# the original Xcode-managed scheme generation + has no such bug.
+TEST_SCHEME = "AppTests"
 
 # Fastlane defaults that affect every lane.
 ENV["FASTLANE_OPT_OUT_USAGE"] = "1"           # don't phone home
@@ -198,7 +207,7 @@ platform :ios do
     # Raw xcodebuild output is uglier but unblocks CI.
     run_tests(
       project: PROJECT,
-      scheme: SCHEME,
+      scheme: TEST_SCHEME,
       destination: "platform=iOS Simulator,OS=latest,name=iPhone 16 Pro",
       code_coverage: true,
       result_bundle: true,
@@ -211,7 +220,7 @@ platform :ios do
     # the plan. Drop below → xcov returns non-zero → CI red.
     xcov(
       project: PROJECT,
-      scheme: SCHEME,
+      scheme: TEST_SCHEME,
       output_directory: "fastlane/coverage",
       minimum_coverage_percentage: 60.0,
       include_test_targets: false,

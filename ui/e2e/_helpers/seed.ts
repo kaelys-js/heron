@@ -34,11 +34,13 @@ export type SeededInstall = {
 /** Read the seed metadata that globalSetup wrote. Specs call this in
  *  `beforeAll` when they need the dataDir path (most don't -- the
  *  webServer is already pointed at it via env). */
-export function getSeededInstall(): SeededInstall {
-  // Lazy-load fs so this module is safe to import in non-Node contexts.
-  // (Specs run under Node; this is just defence-in-depth.)
-  const fs = require('node:fs') as typeof import('node:fs');
-  const path = require('node:path') as typeof import('node:path');
+export async function getSeededInstall(): Promise<SeededInstall> {
+  // ESM imports (ui/package.json is "type": "module"). __dirname needs
+  // import.meta.url reconstruction.
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const sidecar = path.join(__dirname, '.dataDir');
   if (!fs.existsSync(sidecar)) {
     throw new Error(

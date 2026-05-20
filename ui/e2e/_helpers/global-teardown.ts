@@ -11,6 +11,11 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// ESM (`"type": "module"` in ui/package.json) doesn't define
+// `__dirname`; reconstruct it from `import.meta.url`.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default async function globalTeardown(): Promise<void> {
   if (process.env.HERON_E2E_PRESERVE === '1') {
