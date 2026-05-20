@@ -98,7 +98,10 @@ describe('lib-profiles.mjs::resolveUserArg — path-traversal guard', () => {
       expect(() => lib.resolveUserArg(badId)).toThrow('__EXIT__');
       expect(exited).toBe(true);
       expect(exitCode).toBe(2);
-      expect(errMsg).toMatch(/invalid characters/);
+      // Message was widened in the CodeQL js/clear-text-logging fix --
+      // it no longer echoes the raw id value but does say "invalid path
+      // characters" plus a sanitized summary of the offending chars.
+      expect(errMsg).toMatch(/invalid path characters/);
     } finally {
       process.exit = origExit;
       console.error = origErr;

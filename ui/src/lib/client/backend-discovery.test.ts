@@ -188,12 +188,16 @@ describe('resolveBackend — waterfall', () => {
 
   it('tailscaleHost without protocol gets http:// prefix', async () => {
     fetchSpy.mockImplementation(async (url: string) => {
-      // Parse the URL instead of substring-prefix matching -- CodeQL's
-      // `js/incomplete-url-substring-sanitization` flags `startsWith`
-      // on a raw URL because it can be tricked by userinfo / path
-      // contortions.
+      // Parse the URL; host check uses parsed `.hostname` and an exact
+      // equal-or-suffix match. `u.host.startsWith('mac.tail')` (the
+      // previous form) is what CodeQL's
+      // `js/incomplete-url-substring-sanitization` rule flags -- a host
+      // like `mac.tailspoof.com` would have passed.
       const u = new URL(url);
-      if (u.protocol === 'http:' && u.host.startsWith('mac.tail')) {
+      if (
+        u.protocol === 'http:' &&
+        (u.hostname === 'mac.tail.ts.net' || u.hostname.endsWith('.tail.ts.net'))
+      ) {
         return new Response('ok', { status: 200 });
       }
       return new Response('boom', { status: 500 });

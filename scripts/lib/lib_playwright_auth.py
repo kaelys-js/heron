@@ -46,6 +46,7 @@ import random
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator, Literal
+from urllib.parse import urlparse
 
 try:
     from playwright.sync_api import (
@@ -176,7 +177,14 @@ def humanize(min_s: float = 1.5, max_s: float = 4.0) -> None:
 def is_logged_in_linkedin(page: Page) -> bool:
     """Navigate to /feed/ and infer login state from the resulting URL.
     LinkedIn redirects unauthenticated users to /authwall, /login, or
-    /signup; logged-in users stay on /feed."""
+    /signup; logged-in users stay on /feed.
+
+    Match on parsed hostname + path rather than `in url` substring. The
+    previous substring form was flagged by CodeQL's
+    `py/incomplete-url-substring-sanitization`: a URL whose PATH contains
+    `linkedin.com` (`https://attacker.example/?u=linkedin.com`) would
+    have fooled the host check.
+    """
     try:
         page.goto(
             "https://www.linkedin.com/feed/",
@@ -185,15 +193,21 @@ def is_logged_in_linkedin(page: Page) -> bool:
         )
     except PlaywrightTimeout:
         return False
-    url = page.url.lower()
-    if "login" in url or "signup" in url or "authwall" in url or "checkpoint" in url:
+    parsed = urlparse(page.url)
+    host = (parsed.hostname or "").lower()
+    path = (parsed.path or "").lower()
+    if "login" in path or "signup" in path or "authwall" in path or "checkpoint" in path:
         return False
-    return "/feed" in url or "linkedin.com" in url
+    return path.startswith("/feed") or host == "linkedin.com" or host.endswith(".linkedin.com")
 
 
 def is_logged_in_indeed(page: Page) -> bool:
     """Navigate to /account and infer login state. Indeed redirects
-    unauthenticated users to secure.indeed.com/auth or /account/login."""
+    unauthenticated users to secure.indeed.com/auth or /account/login.
+
+    Match on parsed hostname + path rather than `in url` substring (see
+    is_logged_in_linkedin for the CodeQL rationale).
+    """
     try:
         page.goto(
             "https://www.indeed.com/account",
@@ -202,10 +216,14 @@ def is_logged_in_indeed(page: Page) -> bool:
         )
     except PlaywrightTimeout:
         return False
-    url = page.url.lower()
-    if "/auth" in url or "/login" in url or "secure.indeed.com" in url and "auth" in url:
+    parsed = urlparse(page.url)
+    host = (parsed.hostname or "").lower()
+    path = (parsed.path or "").lower()
+    if path.startswith("/auth") or path.startswith("/login"):
         return False
-    return "indeed.com" in url
+    if host == "secure.indeed.com" and "auth" in path:
+        return False
+    return host == "indeed.com" or host.endswith(".indeed.com")
 
 
 def login_interactive(portal: Literal["linkedin", "indeed"]) -> bool:

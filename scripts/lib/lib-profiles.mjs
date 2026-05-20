@@ -256,7 +256,15 @@ export function resolveUserArg(value) {
     process.exit(2);
   }
   if (id.includes('/') || id.includes('\\') || id.includes('..')) {
-    console.error(`ERROR: --user has invalid characters: ${JSON.stringify(id)}`);
+    // Don't echo the raw id back to stderr. CodeQL's
+    // `js/clear-text-logging` flags JSON.stringify(id) here as it can't
+    // prove the input isn't a secret leaked via env. The user already
+    // knows what they typed; reporting the length + offending chars is
+    // enough to debug.
+    const badChars = [...new Set(id.split('').filter((c) => '/\\.'.includes(c)))].join('');
+    console.error(
+      `ERROR: --user has invalid path characters (len=${id.length}, bad="${badChars}")`,
+    );
     process.exit(2);
   }
   return id;

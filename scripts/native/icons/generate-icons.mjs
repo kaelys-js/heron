@@ -19,11 +19,34 @@
  * back if available).
  */
 import fs from 'node:fs/promises';
-import { readFileSync as fsReadFileSync } from 'node:fs';
+import { readFileSync as fsReadFileSync, accessSync, constants as fsConstants } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execSync, execFileSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
+
+// Safe PATH allowlist for resolving auxiliary build tools (iconutil,
+// png2icns, magick, convert). The original `execSync('which X')` pattern
+// was flagged by CodeQL's `js/shell-command-injection-from-environment`
+// because PATH is env-controlled -- a malicious PATH could redirect to
+// a different binary. Resolving against a literal-array allowlist
+// constrains the lookup to known system + homebrew directories.
+const SAFE_PATH_DIRS = ['/usr/local/bin', '/opt/homebrew/bin', '/usr/bin', '/bin'];
+
+/** Find the absolute path of `cmd` on the safe-PATH allowlist, or null
+ *  if not present. Replaces `execSync('which cmd')` patterns. */
+function resolveOnSafePath(cmd) {
+  for (const dir of SAFE_PATH_DIRS) {
+    const candidate = path.join(dir, cmd);
+    try {
+      accessSync(candidate, fsConstants.X_OK);
+      return candidate;
+    } catch {
+      /* not in this dir; try next */
+    }
+  }
+  return null;
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // scripts/native/icons/generate-icons.mjs → repo root is 3 dirs up.
@@ -374,23 +397,9 @@ async function main() {
   // Both produce the same wire format; iconutil's output is just a hair
   // smaller because it deduplicates @1x/@2x pairs.
   const icnsPath = path.join(electronBuild, 'icon.icns');
-  const hasIconutil = (() => {
-    try {
-      execSync('which iconutil', { stdio: 'ignore' });
-      return true;
-    } catch {
-      return false;
-    }
-  })();
-  const hasPng2icns = (() => {
-    try {
-      execSync('which png2icns', { stdio: 'ignore' });
-      return true;
-    } catch {
-      return false;
-    }
-  })();
-  if (hasIconutil) {
+  const iconutilBin = resolveOnSafePath('iconutil');
+  const png2icnsBin = resolveOnSafePath('png2icns');
+  if (iconutilBin) {
     const iconset = path.join(electronBuild, 'icon.iconset');
     await fs.rm(iconset, { recursive: true, force: true });
     await fs.mkdir(iconset, { recursive: true });
@@ -409,10 +418,10 @@ async function main() {
     for (const { size, name } of icnsMatrix) {
       await renderAtSize(sharp, svgBuffer, size, path.join(iconset, name));
     }
-    execSync(`iconutil -c icns "${iconset}" -o "${icnsPath}"`, { stdio: 'inherit' });
+    execFileSync(iconutilBin, ['-c', 'icns', iconset, '-o', icnsPath], { stdio: 'inherit' });
     await fs.rm(iconset, { recursive: true });
     console.log('  icon.icns generated (iconutil)');
-  } else if (hasPng2icns) {
+  } else if (png2icnsBin) {
     // png2icns expects discrete PNGs at icon-size boundaries.
     const sizes = [16, 32, 48, 128, 256, 512, 1024];
     const tmpDir = path.join(electronBuild, 'icon.tmp');
@@ -424,9 +433,7 @@ async function main() {
       await renderAtSize(sharp, svgBuffer, s, p);
       tmpFiles.push(p);
     }
-    execSync(`png2icns "${icnsPath}" ${tmpFiles.map((f) => `"${f}"`).join(' ')}`, {
-      stdio: 'inherit',
-    });
+    execFileSync(png2icnsBin, [icnsPath, ...tmpFiles], { stdio: 'inherit' });
     await fs.rm(tmpDir, { recursive: true });
     console.log('  icon.icns generated (png2icns / libicns)');
   } else {
@@ -441,21 +448,13 @@ async function main() {
   // input set; the v6 syntax is `convert inputs output`.
   const icoPath = path.join(electronBuild, 'icon.ico');
   const sizes = [16, 24, 32, 48, 64, 128, 256];
-  const inputs = sizes.map((s) => `"${path.join(BUILD, `${s}.png`)}"`).join(' ');
-  const magickBin = (() => {
-    for (const cmd of ['magick', 'convert']) {
-      try {
-        execSync(`which ${cmd}`, { stdio: 'ignore' });
-        return cmd;
-      } catch {
-        /* try next */
-      }
-    }
-    return null;
-  })();
+  const inputFiles = sizes.map((s) => path.join(BUILD, `${s}.png`));
+  // Resolve magick (IM v7) or fall back to convert (IM v6). Both
+  // produce the same .ico output for our input set.
+  const magickBin = resolveOnSafePath('magick') || resolveOnSafePath('convert');
   if (magickBin) {
-    execSync(`${magickBin} ${inputs} "${icoPath}"`, { stdio: 'inherit' });
-    console.log(`  icon.ico generated (${magickBin})`);
+    execFileSync(magickBin, [...inputFiles, icoPath], { stdio: 'inherit' });
+    console.log(`  icon.ico generated (${path.basename(magickBin)})`);
   } else {
     console.warn(
       '  ImageMagick (magick / convert) not found — skipping icon.ico (Windows builds will fall back to .png).' +
@@ -540,16 +539,22 @@ async function main() {
   console.log('Building /favicon.ico...');
   const staticDir = path.join(ROOT, 'ui/static');
   const faviconIco = path.join(staticDir, 'favicon.ico');
-  try {
-    execSync('which magick', { stdio: 'ignore' });
-    const inputs = [16, 32, 48].map((s) => path.join(BUILD, `${s}.png`));
-    // execFileSync (argv-passed) instead of execSync (shell-parsed) so
-    // any future caller passing a tainted BUILD dir can't smuggle shell
-    // metachars in. CodeQL flagged the previous string-concat form as
-    // `js/shell-command-injection-from-environment`.
-    execFileSync('magick', [...inputs, faviconIco], { stdio: 'inherit' });
-    console.log('  favicon.ico generated (multi-size via ImageMagick)');
-  } catch {
+  // Resolve magick via the safe-PATH allowlist (CodeQL `js/shell-command-
+  // injection-from-environment`-clean) and pass argv directly so a
+  // tainted BUILD dir can't smuggle shell metachars in.
+  const faviconMagickBin = resolveOnSafePath('magick');
+  let faviconBuilt = false;
+  if (faviconMagickBin) {
+    try {
+      const inputs = [16, 32, 48].map((s) => path.join(BUILD, `${s}.png`));
+      execFileSync(faviconMagickBin, [...inputs, faviconIco], { stdio: 'inherit' });
+      console.log('  favicon.ico generated (multi-size via ImageMagick)');
+      faviconBuilt = true;
+    } catch (e) {
+      console.warn(`  magick favicon.ico generation failed: ${e.message}`);
+    }
+  }
+  if (!faviconBuilt) {
     // Fallback: write a single-size 32x32 PNG masquerading as .ico --
     // browsers accept this gracefully. ImageMagick is the right way
     // to build a true ICO container.

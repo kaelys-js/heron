@@ -16,6 +16,25 @@ import { execFileSync } from 'node:child_process';
 const REPO_ROOT = path.resolve(__dirname, '../../../..');
 const SERVER_ROOT = path.join(REPO_ROOT, 'ui/src/lib/server');
 
+// Resolve `grep` to an absolute path ONCE at module load, via a literal
+// list of safe PATH directories. CodeQL's `js/shell-command-injection-
+// from-environment` flags `execFileSync('grep', ...)` because the
+// binary name is resolved through process.env.PATH (env-controlled).
+// Resolving from a literal-array allowlist eliminates the data flow
+// from the env into the command.
+const GREP_BIN: string = ((): string => {
+  for (const dir of ['/usr/local/bin', '/opt/homebrew/bin', '/usr/bin', '/bin']) {
+    const candidate = path.join(dir, 'grep');
+    try {
+      fs.accessSync(candidate, fs.constants.X_OK);
+      return candidate;
+    } catch {
+      /* not in this dir; try next */
+    }
+  }
+  throw new Error('grep not found on the safe PATH allowlist');
+})();
+
 /** Run grep with argv-passed args (no shell) and return matching lines.
  *  CodeQL flagged the previous string-concat `execSync('grep ... ' + DIR)`
  *  as `js/shell-command-injection-from-environment` because DIR is path-
@@ -24,7 +43,7 @@ const SERVER_ROOT = path.join(REPO_ROOT, 'ui/src/lib/server');
  *  output, NOT an error. */
 function grepLines(args: string[]): string[] {
   try {
-    const out = execFileSync('grep', args, { encoding: 'utf8' });
+    const out = execFileSync(GREP_BIN, args, { encoding: 'utf8' });
     return out
       .split('\n')
       .map((s) => s.trim())

@@ -52,6 +52,7 @@ import sys
 import time
 import urllib.request
 import urllib.error
+import urllib.parse
 from pathlib import Path
 from typing import Optional, Any
 
@@ -123,13 +124,20 @@ def step(name: str) -> None:
 
 def schema_api_hosts(url: str) -> list[str]:
     """Return the list of API base URLs to try, ordered by likelihood.
-    The form may live on either the legacy or new domain — fetch from
-    the API host that matches."""
-    if "job-boards.eu.greenhouse.io" in url:
+    The form may live on either the legacy or new domain -- fetch from
+    the API host that matches.
+
+    Match on parsed hostname rather than `in url` substring. The previous
+    substring form was flagged by CodeQL's
+    `py/incomplete-url-substring-sanitization` because a path-level match
+    like `https://attacker.example/?u=boards.greenhouse.io` would fool it.
+    """
+    host = (urllib.parse.urlparse(url).hostname or "").lower()
+    if host == "job-boards.eu.greenhouse.io":
         return ["https://job-boards-api.eu.greenhouse.io/v1/boards"]
-    if "job-boards.greenhouse.io" in url:
+    if host == "job-boards.greenhouse.io":
         return ["https://job-boards-api.greenhouse.io/v1/boards"]
-    if "boards.greenhouse.io" in url:
+    if host == "boards.greenhouse.io":
         return ["https://boards-api.greenhouse.io/v1/boards"]
     # Embedded iframe on careers.{company}.com -- try both, prefer new.
     return [

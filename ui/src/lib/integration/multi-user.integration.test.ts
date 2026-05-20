@@ -15,6 +15,23 @@ import { execFileSync } from 'node:child_process';
 
 const REPO_ROOT = path.resolve(__dirname, '../../../..');
 
+// See multi-user-patterns.integration.test.ts for the rationale: CodeQL's
+// `js/shell-command-injection-from-environment` flags PATH-resolved
+// binary names; we pre-resolve `grep` from a literal-allowlist of
+// directories so the call site uses an absolute path.
+const GREP_BIN: string = ((): string => {
+  for (const dir of ['/usr/local/bin', '/opt/homebrew/bin', '/usr/bin', '/bin']) {
+    const candidate = path.join(dir, 'grep');
+    try {
+      fs.accessSync(candidate, fs.constants.X_OK);
+      return candidate;
+    } catch {
+      /* not in this dir; try next */
+    }
+  }
+  throw new Error('grep not found on the safe PATH allowlist');
+})();
+
 function exists(rel: string): boolean {
   return fs.existsSync(path.join(REPO_ROOT, rel));
 }
@@ -146,7 +163,7 @@ describe('Multi-user — sign-out scrubs local state (F2 regression guard)', () 
     let sweepOut = '';
     try {
       sweepOut = execFileSync(
-        'grep',
+        GREP_BIN,
         ['-rln', 'authClient\\.signOut', path.join(REPO_ROOT, 'ui/src')],
         { encoding: 'utf8' },
       );
