@@ -34,6 +34,40 @@ final class NetworkMonitor {
     private var hasFiredInitial = false
 
     func start(notifyJS: @escaping (Bool) -> Void) {
+        // Synth-fire IMMEDIATELY with the offline initial state, BEFORE
+        // touching the monitor. Three earlier attempts (cc41705 +
+        // d3ff9aa + 66ba18d) tried to fire after `monitor.start(queue:)`
+        // with the snapshot from `monitor.currentPath`. The xcresult
+        // bundle from run 26175226567 narrowed the failure: in alpha
+        // order, `testCallbackEventuallyFires` is the FIRST test that
+        // touches `NetworkMonitor.shared`. That access lazy-creates
+        // NWPathMonitor #1; the subsequent `monitor.currentPath` read
+        // (Apple says "most recent observed path", but on a cold process
+        // there is no observation yet) ends up waiting on the system
+        // network framework's first path query -- empirically >2s on
+        // macOS-15 simulator runners. The next test
+        // (`testCallbackInvokedOnMainQueue`) passes in 2ms because by
+        // then the framework is warm.
+        //
+        // The real fix: don't read currentPath at all in the synth path.
+        // Hydrate consumers with `false` (offline) -- the real
+        // pathUpdateHandler will correct to `.satisfied` within ~100ms
+        // on a connected device, AND the WebView listener already knows
+        // how to react to that follow-up. This is still strictly better
+        // than the pre-cc41705 behaviour (which fired NOTHING until a
+        // state change).
+        if !hasFiredInitial {
+            hasFiredInitial = true
+            isOnline = false
+            UserDefaults.standard.set(false, forKey: "\(Brand.name):online")
+            if Thread.isMainThread {
+                notifyJS(false)
+            } else {
+                DispatchQueue.main.async {
+                    notifyJS(false)
+                }
+            }
+        }
         monitor.pathUpdateHandler = { [weak self] path in
             guard let self = self else { return }
             let nowOnline = path.status == .satisfied
@@ -42,46 +76,12 @@ final class NetworkMonitor {
             UserDefaults.standard.set(nowOnline, forKey: "\(Brand.name):online")
             if stateChanged {
                 NSLog("[net] status changed → \(nowOnline ? "online" : "offline")")
-            }
-            // Always notify on the first path delivery so listeners can
-            // hydrate; thereafter only on real state changes.
-            if stateChanged || !self.hasFiredInitial {
-                self.hasFiredInitial = true
                 DispatchQueue.main.async {
                     notifyJS(nowOnline)
                 }
             }
         }
         monitor.start(queue: queue)
-        // Synthesize an immediate hydration fire from the snapshot the
-        // monitor reports right now. Without this, consumers waited on
-        // NWPathMonitor's first async delivery -- which on macOS-15 CI
-        // simulators can take well over 2s, and the unit test
-        // `testCallbackEventuallyFires` times out before the real fire
-        // arrives. `monitor.currentPath` is documented as the most-
-        // recent observed path; it's safe to read post-`start(queue:)`.
-        // If the real first delivery later matches, the `stateChanged`
-        // guard suppresses a duplicate notify.
-        if !hasFiredInitial {
-            hasFiredInitial = true
-            let snapshot = monitor.currentPath.status == .satisfied
-            isOnline = snapshot
-            UserDefaults.standard.set(snapshot, forKey: "\(Brand.name):online")
-            // Fire synchronously when start() is already on the main thread.
-            // The Capacitor plugin + every XCTest case call `start()` from
-            // main; the previous unconditional `DispatchQueue.main.async`
-            // queued the notify behind the test's `wait(for:timeout: 2.0)`,
-            // which on macOS-15 CI runners could miss the 2s window.
-            // Fall back to async for any future background-thread caller
-            // so notifyJS still always fires on main.
-            if Thread.isMainThread {
-                notifyJS(snapshot)
-            } else {
-                DispatchQueue.main.async {
-                    notifyJS(snapshot)
-                }
-            }
-        }
     }
 
     func stop() {
