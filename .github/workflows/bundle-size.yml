@@ -1,20 +1,15 @@
 name: Bundle size
-# HP1 -- track client-bundle size on every PR and post a sticky comment
-# with the delta vs main. The `andresz1/size-limit-action` runs
-# `pnpm size` in both base + PR commits and produces a comparison
-# table:
-#
-#   ┌──────────────────────────────┬──────────┬─────────────┐
-#   │ Bundle                       │ Size     │ Diff vs main│
-#   ├──────────────────────────────┼──────────┼─────────────┤
-#   │ SvelteKit entry chunk        │ 62.3 KB  │ +1.2 KB     │
-#   │ Total client bundle (gz)     │ 542.1 KB │ +18.4 KB    │
-#   └──────────────────────────────┴──────────┴─────────────┘
-#
-# Budgets are configured in `ui/package.json` under `"size-limit"`.
-# Exceeding a per-bundle limit FAILS the workflow → PR can't merge
-# until the budget is bumped (explicitly) or the regression is
-# investigated.
+# HP1 -- track client-bundle size on every PR. Hard fail when any
+# bundle exceeds the budget configured in `ui/package.json`
+# under `"size-limit"`. PR-comment delta vs main was previously
+# produced by `andresz1/size-limit-action` but that action is
+# fundamentally broken under mise (its internal `pnpm` shim invocation
+# loses mise's env, plus its second-checkout-of-`main` flow can't
+# resolve our pnpm pin because main's pnpm install isn't activated
+# in the same docker layer). Direct invocation is simpler + reliable
+# AND gives us a deterministic exit-code-based gate; we just lose the
+# magic comment. Re-evaluate once size-limit-action ships a mise-
+# aware release or we migrate to a maintained fork.
 on:
   pull_request:
     paths:
@@ -46,36 +41,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
-          # size-limit-action checks out main internally; we just need
-          # the PR head.
           persist-credentials: false
 
-      - name: Setup mise (Node + pnpm)
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+      - name: Setup toolchain
+        uses: ./.github/actions/setup-toolchain
+        with:
+          apply_brand: true
+
+      - name: Build dashboard (prod bundle)
+        run: pnpm --filter ui build
 
       - name: size-limit
-        uses: andresz1/size-limit-action@94bc357df29c36c8f8d50ea497c3e225c3c95d1d # v1.8.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Direct invocation. The package.json `size` script wraps
+        # `size-limit`; pass `--json` so we can post-process if we
+        # want PR comments later. `size-limit` exits non-zero when
+        # any bundle exceeds its configured budget -> CI red.
+        working-directory: ui
+        run: pnpm size --json | tee size-report.json
+
+      - name: Upload size report artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          # `github_token` is a REQUIRED `with:` input on this action --
-          # setting it only via the `env: GITHUB_TOKEN:` block is not
-          # enough; v1.8.0 errors with "Parameter token or opts.auth is
-          # required" because the JS @actions/github wrapper reads it
-          # from `core.getInput('github_token')`, not the env. Keep the
-          # env line too for the internal git operations.
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          # Build before measuring. Apply brand first so generated TS
-          # imports resolve.
-          build_script: "brand && build"
-          # `script:` is executed as a literal shell command -- v1.8.0
-          # does NOT respect `package_manager:` for the size step, only
-          # for install. Passing bare "size" got the action to invoke
-          # `/usr/bin/size` (the binutils binary), failing with
-          # "'a.out': No such file" + "Error parsing size-limit output".
-          # Spell out the pnpm invocation + --json so the JSON parser
-          # gets what it expects.
-          script: "pnpm size --json"
-          package_manager: pnpm
-          directory: ui
-          skip_step: install # mise-action already installed pnpm + ran install
+          name: size-report
+          path: ui/size-report.json
+          retention-days: 14
