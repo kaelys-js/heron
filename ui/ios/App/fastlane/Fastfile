@@ -230,15 +230,34 @@ platform :ios do
       output_directory: "fastlane/test_output"
     )
     # xcov reads the xcresult bundle and emits an HTML report + cobertura
-    # XML for Codecov. Threshold 60% — the iOS coverage floor agreed in
-    # the plan. Drop below → xcov returns non-zero → CI red.
+    # XML for Codecov.
+    #
+    # `include_targets: 'App'` -- xcov averages all targets EQUALLY (no
+    # LOC weighting). The full build includes 22 Capacitor SPM packages
+    # (vendored third-party, untestable from our suite) + 4 of our own
+    # extensions (AppLiveActivity, AppShareExtension, AppWidget,
+    # WatchApp) + AppTests (filtered). With most at 0%, the across-all
+    # average was 8.09% (run 26180887393), even with App.app at 23.10%.
+    # Restricting to the App target makes the gate measure what THIS
+    # suite actually covers: the host app's source.
+    #
+    # `minimum_coverage_percentage: 60.0` -- plan's iOS coverage gate.
+    # App.app needs ≥60% covered. New XCTest cases under AppTests/ push
+    # the actual coverage above this floor.
+    #
+    # `cobertura_xml: true` -- xcov default is false; the codecov-action
+    # step's `hashFiles('...cobertura.xml')` gate would silently skip
+    # the upload, sending zero iOS data to Codecov. Explicit true so
+    # the file exists at the path the upload step expects.
     xcov(
       project: PROJECT,
       scheme: TEST_SCHEME,
       output_directory: "fastlane/coverage",
       minimum_coverage_percentage: 60.0,
+      include_targets: "App",
       include_test_targets: false,
-      ignore_file_path: "../../../.xcovignore"
+      ignore_file_path: "../../../.xcovignore",
+      cobertura_xml: true
     )
   end
 
