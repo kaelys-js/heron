@@ -9,7 +9,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 
-const TMP = path.join(tmpdir(), 'heron-apply-timing-' + Date.now());
+// fs.mkdtempSync creates a unique directory with a random suffix --
+// CodeQL `js/insecure-temporary-file`-clean. The previous form
+// `path.join(tmpdir(), 'heron-apply-timing-' + Date.now())` produced
+// a guessable path (race with attacker creating the same name first).
+const TMP = fs.mkdtempSync(path.join(tmpdir(), 'heron-apply-timing-'));
 
 vi.mock('./profile-paths', () => ({
   profilePath: (_p: string, kind: string) => {

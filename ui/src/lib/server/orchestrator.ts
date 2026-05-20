@@ -677,10 +677,13 @@ export async function runBulkOfertaParallel(
       resolvedProfileId,
       path.join(ROOT, 'modes', 'batch-prompt.md'),
     );
-    batchPromptTempFile = path.join(
-      require('node:os').tmpdir(),
-      `${BRAND.name}-batch-prompt-` + Date.now() + '.md',
+    // mkdtempSync returns a unique random-suffix directory. CodeQL
+    // `js/insecure-temporary-file` flagged the prior Date.now()-suffix
+    // path as guessable (collision / pre-creation by attacker).
+    const tmpDir = fs.mkdtempSync(
+      path.join(require('node:os').tmpdir(), `${BRAND.name}-batch-prompt-`),
     );
+    batchPromptTempFile = path.join(tmpDir, 'prompt.md');
     fs.writeFileSync(batchPromptTempFile, realizedPrompt, 'utf8');
   } catch (e) {
     logEvent('bulk-cv', 'Failed to resolve batch-prompt tokens', {

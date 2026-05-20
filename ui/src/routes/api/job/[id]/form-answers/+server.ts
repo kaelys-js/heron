@@ -78,8 +78,15 @@ function spawnFormAnswers(
         const fullPath = persistedPath(profileId, jobId);
         // The mode is supposed to write the file itself; if it didn't, persist
         // stdout as a safety net so the user always gets something.
-        if (!fs.existsSync(fullPath) && stdout.trim()) {
-          fs.writeFileSync(fullPath, stdout);
+        // CodeQL js/file-system-race: use 'wx' (exclusive create) so we
+        // never clobber the file the mode wrote between our check and
+        // our write. EEXIST means the mode wrote it -- we use that.
+        if (stdout.trim()) {
+          try {
+            fs.writeFileSync(fullPath, stdout, { flag: 'wx' });
+          } catch (e) {
+            if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
+          }
         }
         if (!fs.existsSync(fullPath)) {
           reject(

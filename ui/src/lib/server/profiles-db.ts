@@ -146,12 +146,17 @@ const LEGACY_CLAIM_FILE = path.join(DATA_ROOT, 'users', '.legacy-claimed');
 function claimLegacyForUser(userId: string): boolean {
   try {
     fs.mkdirSync(path.dirname(LEGACY_CLAIM_FILE), { recursive: true });
-    if (fs.existsSync(LEGACY_CLAIM_FILE)) {
-      const claimedBy = fs.readFileSync(LEGACY_CLAIM_FILE, 'utf8').trim();
-      return claimedBy === userId;
+    // CodeQL js/file-system-race: write with 'wx' (exclusive create) so
+    // only one process wins the claim atomically. If the file already
+    // exists EEXIST is thrown and we fall through to read it.
+    try {
+      fs.writeFileSync(LEGACY_CLAIM_FILE, userId, { flag: 'wx' });
+      return true;
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
     }
-    fs.writeFileSync(LEGACY_CLAIM_FILE, userId);
-    return true;
+    const claimedBy = fs.readFileSync(LEGACY_CLAIM_FILE, 'utf8').trim();
+    return claimedBy === userId;
   } catch {
     return false;
   }

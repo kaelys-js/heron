@@ -16,7 +16,15 @@
  */
 
 import { execFileSync, execSync } from 'child_process';
-import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  unlinkSync,
+  openSync,
+  closeSync,
+  writeSync,
+} from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -285,17 +293,27 @@ async function apply() {
     process.exit(2);
   }
 
-  // Check for lock
+  // Check for + acquire lock atomically. `openSync` with the 'wx' flag
+  // creates the file with O_CREAT | O_EXCL -- fails with EEXIST if it
+  // already exists. Replaces the prior `existsSync -> writeFileSync`
+  // pair (CodeQL `js/file-system-race`: two processes hitting the
+  // existsSync check simultaneously would both proceed and overwrite).
   const lockFile = join(ROOT, '.update-lock');
-  if (existsSync(lockFile)) {
-    console.error(
-      'Update already in progress (.update-lock exists). If stuck, delete it manually.',
-    );
-    process.exit(1);
+  let lockFd;
+  try {
+    lockFd = openSync(lockFile, 'wx');
+    writeSync(lockFd, new Date().toISOString());
+  } catch (e) {
+    if (e.code === 'EEXIST') {
+      console.error(
+        'Update already in progress (.update-lock exists). If stuck, delete it manually.',
+      );
+      process.exit(1);
+    }
+    throw e;
+  } finally {
+    if (lockFd !== undefined) closeSync(lockFd);
   }
-
-  // Create lock
-  writeFileSync(lockFile, new Date().toISOString());
 
   try {
     // 1. Backup: create branch

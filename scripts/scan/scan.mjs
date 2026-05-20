@@ -28,7 +28,17 @@
  *   node scan.mjs --probe URL      # probe one URL and print detected ATS + sample
  */
 
-import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from 'fs';
+import {
+  readFileSync,
+  writeFileSync,
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  closeSync,
+  writeSync,
+  fstatSync,
+} from 'fs';
 import yaml from 'js-yaml';
 import {
   profilePath,
@@ -643,17 +653,23 @@ function appendToPipeline(offers) {
 }
 
 function appendToScanHistory(offers, date) {
-  // Ensure file + header exist
-  if (!existsSync(SCAN_HISTORY_PATH)) {
-    writeFileSync(SCAN_HISTORY_PATH, 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\n', 'utf-8');
+  // Open in append-mode (creates if missing). fstat the open fd to know
+  // if we need the header -- TOCTOU-free vs the prior `existsSync ->
+  // writeFileSync(header) ; appendFileSync(rows)` form. CodeQL
+  // `js/file-system-race`-clean.
+  const fd = openSync(SCAN_HISTORY_PATH, 'a+');
+  try {
+    if (fstatSync(fd).size === 0) {
+      writeSync(fd, 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\n');
+    }
+    const lines =
+      offers
+        .map((o) => `${o.url}\t${date}\t${o.source}\t${o.title}\t${o.company}\tadded`)
+        .join('\n') + '\n';
+    writeSync(fd, lines);
+  } finally {
+    closeSync(fd);
   }
-
-  const lines =
-    offers
-      .map((o) => `${o.url}\t${date}\t${o.source}\t${o.title}\t${o.company}\tadded`)
-      .join('\n') + '\n';
-
-  appendFileSync(SCAN_HISTORY_PATH, lines, 'utf-8');
 }
 
 // ── Parallel fetch with concurrency limit ───────────────────────────

@@ -59,12 +59,21 @@ jobs:
         uses: github/codeql-action/init@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4
         with:
           languages: ${{ matrix.language }}
-          # `security-and-quality` runs ~70 queries beyond the default
-          # `security-extended`. Catches dataflow + control-flow patterns
-          # the default set misses. ~5min extra per leg, run weekly + on
-          # main pushes only (not every PR -- those use the lighter default
-          # set on the path filter).
-          queries: ${{ github.event_name == 'pull_request' && 'security-extended' || 'security-and-quality' }}
+          # `security-and-quality` always -- on PRs AND on push-to-main
+          # AND on the weekly cron. Reason: the previous ternary ran the
+          # smaller `security-extended` on PRs and the broader
+          # `security-and-quality` on main. PRs passed CI green but the
+          # merge-ref evaluation re-ran security-and-quality against
+          # (PR + main), surfacing rules like js/file-system-race,
+          # js/regex/missing-regexp-anchor, js/indirect-command-line-
+          # injection that the PR CI never saw. The branch protection
+          # `code_scanning` rule then blocked merge on alerts that the
+          # PR could have fixed if they'd been surfaced at PR-open time.
+          # Single-suite-everywhere closes that gap: anything the merge
+          # would inherit is flagged in the PR's own CI run.
+          # Cost: ~5min extra per matrix leg vs security-extended. Worth
+          # it for the catch-it-in-PR-not-at-merge property.
+          queries: security-and-quality
 
       # JavaScript/TypeScript + Python autobuild via pnpm install / uv pip
       # -- no extra build step.

@@ -126,13 +126,21 @@ export const GET = wrap('linkedin-audit', async ({ url }: { url: URL }) => {
   entries.sort();
   const newest = entries[entries.length - 1];
   const full = path.join(dir, newest);
-  const stat = fs.statSync(full);
-  return {
-    exists: true,
-    path: path.relative(ROOT, full),
-    body: fs.readFileSync(full, 'utf8'),
-    lastUpdatedAt: stat.mtimeMs,
-  };
+  // CodeQL js/file-system-race: open once and use fstatSync/readFileSync
+  // through the fd so the stat and read see the same inode atomically.
+  const fd = fs.openSync(full, 'r');
+  try {
+    const stat = fs.fstatSync(fd);
+    const body = fs.readFileSync(fd, 'utf8');
+    return {
+      exists: true,
+      path: path.relative(ROOT, full),
+      body,
+      lastUpdatedAt: stat.mtimeMs,
+    };
+  } finally {
+    fs.closeSync(fd);
+  }
 });
 
 export const POST = wrap(

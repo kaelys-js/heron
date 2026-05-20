@@ -40,10 +40,18 @@ export const POST = wrap('cv-fix', async ({ request }: { request: Request }) => 
   const apply = body?.apply === true;
 
   const cvMd = activePath('cv-md');
-  if (!fs.existsSync(cvMd)) {
-    badRequest('No cv.md yet — paste your CV first via onboarding.');
+  // CodeQL js/file-system-race: read directly. ENOENT means the user
+  // hasn't onboarded yet -- surface the same badRequest as before
+  // without racing existsSync against the read.
+  let before: string;
+  try {
+    before = fs.readFileSync(cvMd, 'utf8');
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
+      badRequest('No cv.md yet — paste your CV first via onboarding.');
+    }
+    throw e;
   }
-  const before = fs.readFileSync(cvMd, 'utf8');
 
   // Run a quality check first so we know what to fix.
   const quality = await checkResumeQuality(cvMd);

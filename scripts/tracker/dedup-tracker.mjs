@@ -18,7 +18,7 @@
  *   node scripts/tracker/dedup-tracker.mjs --user u_alice --profile engineer
  */
 
-import { readFileSync, writeFileSync, copyFileSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, copyFileSync, existsSync, mkdirSync, renameSync } from 'fs';
 import { dirname } from 'path';
 import { profilePath, profileFromArgv, userFromArgv } from '../lib/lib-profiles.mjs';
 
@@ -276,7 +276,11 @@ for (const idx of sortedRemoveIndices) {
 console.log(`\n📊 ${removed} duplicates removed`);
 
 if (!DRY_RUN && removed > 0) {
-  copyFileSync(APPS_FILE, APPS_FILE + '.bak');
+  // Atomic backup-then-replace: renameSync moves the current file to
+  // .bak in a single syscall, then writeFileSync creates the fresh
+  // APPS_FILE. CodeQL flagged the previous `copyFileSync ; writeFileSync`
+  // pair as `js/file-system-race` (the read + write windows overlap).
+  renameSync(APPS_FILE, APPS_FILE + '.bak');
   writeFileSync(APPS_FILE, lines.join('\n'));
   console.log(`✅ Written to ${APPS_FILE} (backup: ${APPS_FILE}.bak)`);
 } else if (DRY_RUN) {

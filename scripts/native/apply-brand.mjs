@@ -96,13 +96,16 @@ function writeFileSync(path, content) {
   // Many apply-brand call sites already gate on a `changed` boolean
   // from patchJson(), but the few unconditional writes (snapshot,
   // migration log) would dirty mtime unnecessarily without this.
-  if (existsSync(path)) {
-    const buf = Buffer.isBuffer(content) ? content : Buffer.from(content);
-    try {
-      if (readFileSync(path).equals(buf)) return;
-    } catch {
-      // Unreadable (permission / lock) -- fall through and rewrite
-    }
+  //
+  // try/catch on readFileSync (without a prior existsSync) avoids
+  // CodeQL `js/file-system-race` -- the existsSync->readFileSync pair
+  // is a TOCTOU window. ENOENT means "doesn't exist yet" (fall through
+  // to write); any other error means "unreadable" (also fall through).
+  const buf = Buffer.isBuffer(content) ? content : Buffer.from(content);
+  try {
+    if (readFileSync(path).equals(buf)) return;
+  } catch {
+    // ENOENT or permission/lock -- fall through to write.
   }
   // Ensure parent dir exists. Production trees always have these dirs,
   // but the integration suite scaffolds a partial tree under tmpdir and

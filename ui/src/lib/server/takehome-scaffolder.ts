@@ -166,23 +166,41 @@ export function scaffoldTakeHome(input: {
 
   const createdFiles: string[] = [];
   const readmePath = path.join(dir, 'README.md');
-  if (!fs.existsSync(readmePath)) {
+  // CodeQL js/file-system-race: write with 'wx' (exclusive create) so
+  // we only create the file when it doesn't exist and never overwrite
+  // a hand-edited version. EEXIST is treated as "already there, skip".
+  try {
     fs.writeFileSync(
       readmePath,
       README_TEMPLATE(input.company, input.role, input.briefExcerpt ?? ''),
+      { flag: 'wx' },
     );
     createdFiles.push(path.relative(ROOT, readmePath));
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
   }
   const checklistPath = path.join(dir, 'CHECKLIST.md');
-  if (!fs.existsSync(checklistPath)) {
-    fs.writeFileSync(checklistPath, CHECKLIST_TEMPLATE(input.company, input.role));
+  // CodeQL js/file-system-race: same exclusive-create pattern.
+  try {
+    fs.writeFileSync(checklistPath, CHECKLIST_TEMPLATE(input.company, input.role), { flag: 'wx' });
     createdFiles.push(path.relative(ROOT, checklistPath));
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
   }
 
   const statePath = path.join(dir, 'state.json');
   let state: TakeHomeState;
-  if (fs.existsSync(statePath)) {
-    state = JSON.parse(fs.readFileSync(statePath, 'utf8')) as TakeHomeState;
+  // CodeQL js/file-system-race: read directly; ENOENT means we need to
+  // seed a fresh state. Exclusive-create on the write so two concurrent
+  // scaffolds can't clobber each other.
+  let existingState: string | null = null;
+  try {
+    existingState = fs.readFileSync(statePath, 'utf8');
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+  }
+  if (existingState !== null) {
+    state = JSON.parse(existingState) as TakeHomeState;
   } else {
     state = {
       jobId: input.jobId,
@@ -194,8 +212,14 @@ export function scaffoldTakeHome(input: {
       status: 'active',
       milestones: [],
     };
-    fs.writeFileSync(statePath, JSON.stringify(state, null, 2) + '\n');
-    createdFiles.push(path.relative(ROOT, statePath));
+    try {
+      fs.writeFileSync(statePath, JSON.stringify(state, null, 2) + '\n', { flag: 'wx' });
+      createdFiles.push(path.relative(ROOT, statePath));
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
+      // Someone else seeded it between our read and write -- adopt theirs.
+      state = JSON.parse(fs.readFileSync(statePath, 'utf8')) as TakeHomeState;
+    }
   }
   return { dir: path.relative(ROOT, dir), state, createdFiles };
 }
@@ -225,9 +249,17 @@ export function updateTakeHomeState(
 ): TakeHomeState | null {
   const dir = workingDir(profileId, company, role);
   const statePath = path.join(dir, 'state.json');
-  if (!fs.existsSync(statePath)) return null;
+  // CodeQL js/file-system-race: read directly and treat ENOENT as "no
+  // scaffold to update". Any other parse/IO error also returns null.
+  let raw: string;
   try {
-    const cur = JSON.parse(fs.readFileSync(statePath, 'utf8')) as TakeHomeState;
+    raw = fs.readFileSync(statePath, 'utf8');
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    return null;
+  }
+  try {
+    const cur = JSON.parse(raw) as TakeHomeState;
     const next: TakeHomeState = { ...cur, ...patch };
     fs.writeFileSync(statePath, JSON.stringify(next, null, 2) + '\n');
     return next;

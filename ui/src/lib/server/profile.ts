@@ -562,9 +562,15 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
   resetFiles.push(path.relative(ROOT, APPLICATIONS_MD));
 
   backupTo(PIPELINE_MD, backups);
-  if (fs.existsSync(PIPELINE_MD)) {
-    fs.writeFileSync(PIPELINE_MD, '');
+  // CodeQL js/file-system-race: truncateSync(...) throws ENOENT if the
+  // file vanished between the existsSync check and the write -- catch
+  // that and skip the resetFiles push to preserve original semantics
+  // ("only mark as reset if the file actually existed").
+  try {
+    fs.truncateSync(PIPELINE_MD, 0);
     resetFiles.push(path.relative(ROOT, PIPELINE_MD));
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
   }
 
   for (const p of [SCAN_HISTORY_TSV, GEMINI_SCORES_TSV, FOLLOW_UPS_MD]) {
@@ -641,12 +647,15 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
 
   // Activity feed -- backup then truncate (preserve file so the bus's append
   // path doesn't need to recreate it on next emit).
-  if (fs.existsSync(ACTIVITY_JSONL)) {
+  // CodeQL js/file-system-race: try truncateSync directly; ENOENT means
+  // the file isn't there and we silently skip (matches the original
+  // "only if exists" branch) -- other errors are logged as before.
+  try {
     backupTo(ACTIVITY_JSONL, backups);
-    try {
-      fs.writeFileSync(ACTIVITY_JSONL, '');
-      resetFiles.push(path.relative(ROOT, ACTIVITY_JSONL));
-    } catch (e) {
+    fs.truncateSync(ACTIVITY_JSONL, 0);
+    resetFiles.push(path.relative(ROOT, ACTIVITY_JSONL));
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
       logEvent('reset-profile', 'Could not truncate activity.jsonl', {
         level: 'warn',
         category: 'application',
@@ -697,12 +706,14 @@ export function writeSiblingFile(
   const p = name === 'profileMd' ? profilePath(id, 'profile-md') : profilePath(id, 'cv-md');
   let backedUp = false;
   let backupPath: string | null = null;
-  if (fs.existsSync(p)) {
-    try {
-      fs.copyFileSync(p, p + '.bak');
-      backedUp = true;
-      backupPath = p + '.bak';
-    } catch {
+  // CodeQL js/file-system-race: attempt the copy directly. ENOENT means
+  // there's nothing to back up; any other error is non-fatal as before.
+  try {
+    fs.copyFileSync(p, p + '.bak');
+    backedUp = true;
+    backupPath = p + '.bak';
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
       // Backup failures are non-fatal -- proceed with the write so the user
       // doesn't lose their new content.
     }

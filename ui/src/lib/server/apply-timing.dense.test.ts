@@ -6,7 +6,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 
-const TMP = path.join(tmpdir(), 'heron-apply-timing-dense-' + Date.now());
+// mkdtempSync = unique directory with random suffix.
+// CodeQL `js/insecure-temporary-file`-clean replacement for
+// `path.join(tmpdir(), 'heron-...-' + Date.now())`.
+const TMP = fs.mkdtempSync(path.join(tmpdir(), 'heron-apply-timing-dense-'));
 
 vi.mock('./profile-paths', () => ({
   profilePath: (_p: string, _kind: string) => path.join(TMP, 'scan-history.tsv'),

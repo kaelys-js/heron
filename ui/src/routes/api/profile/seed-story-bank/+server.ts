@@ -96,11 +96,25 @@ export const GET = wrap('seed-story-bank', async () => {
   // GET → stats about the current story bank so the UI can show
   // "23 stories · last updated 2 days ago" or "empty -- seed now".
   const bankPath = path.join(ROOT, 'interview-prep', 'story-bank.md');
-  if (!fs.existsSync(bankPath)) {
-    return { exists: false, storyCount: 0, lastUpdatedAt: null };
+  // CodeQL js/file-system-race: open once and use fstatSync/readFileSync
+  // through the fd so stat and read agree on the same inode atomically.
+  let fd: number;
+  try {
+    fd = fs.openSync(bankPath, 'r');
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
+      return { exists: false, storyCount: 0, lastUpdatedAt: null };
+    }
+    throw e;
   }
-  const stat = fs.statSync(bankPath);
-  const txt = fs.readFileSync(bankPath, 'utf8');
+  let stat: fs.Stats;
+  let txt: string;
+  try {
+    stat = fs.fstatSync(fd);
+    txt = fs.readFileSync(fd, 'utf8');
+  } finally {
+    fs.closeSync(fd);
+  }
   // Count `### ` headings (skipping the bullet-list intro). Each story
   // starts with `### [Theme] Title`. Must skip headings inside HTML
   // comments -- the shipped story-bank.md includes a "Format:" example

@@ -52,7 +52,15 @@ describe('mode-substitution end-to-end', () => {
     )('substitutes %s without leftover tokens', (rel) => {
       const abs = join(ROOT, rel);
       if (!statSync(abs).isFile()) return; // belt-and-braces
-      const source = readFileSync(abs, 'utf8');
+      // CodeQL js/file-system-race: read directly and treat ENOENT as a
+      // skip rather than re-checking existence between statSync and read.
+      let source: string;
+      try {
+        source = readFileSync(abs, 'utf8');
+      } catch (e) {
+        if ((e as NodeJS.ErrnoException).code === 'ENOENT') return;
+        throw e;
+      }
       const substituted = substituteModeTokensForUser(TEST_USER, TEST_PROFILE, source);
 
       // No __KNOWN_TOKEN__ literals should remain after substitution.

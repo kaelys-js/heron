@@ -55,26 +55,37 @@ class Bus extends EventEmitter {
 
   private loadFromDisk() {
     try {
-      if (!fs.existsSync(LOG_FILE)) return;
-      // Read only the tail so a runaway log doesn't OOM us at boot.
-      const stat = fs.statSync(LOG_FILE);
-      const size = stat.size;
-      const TAIL_BYTES = 256 * 1024; // 256KB tail is more than 500 events worth
+      // Open first, then fstat the open fd. This is the
+      // CodeQL `js/file-system-race`-clean replacement for
+      // `existsSync -> statSync -> openSync`: ENOENT at openSync
+      // means "file gone since startup" (return early), and the
+      // size read from fstat is bound to the same fd we read from.
+      let fd: number;
+      try {
+        fd = fs.openSync(LOG_FILE, 'r');
+      } catch (e) {
+        if ((e as NodeJS.ErrnoException).code === 'ENOENT') return;
+        throw e;
+      }
       let txt: string;
-      if (size > TAIL_BYTES) {
-        const fd = fs.openSync(LOG_FILE, 'r');
-        try {
+      try {
+        const stat = fs.fstatSync(fd);
+        const size = stat.size;
+        const TAIL_BYTES = 256 * 1024; // 256KB tail is more than 500 events worth
+        if (size > TAIL_BYTES) {
           const buf = Buffer.alloc(TAIL_BYTES);
           fs.readSync(fd, buf, 0, TAIL_BYTES, size - TAIL_BYTES);
           txt = buf.toString('utf8');
           // Drop the first (probably partial) line
           const nl = txt.indexOf('\n');
           if (nl >= 0) txt = txt.slice(nl + 1);
-        } finally {
-          fs.closeSync(fd);
+        } else {
+          const buf = Buffer.alloc(size);
+          fs.readSync(fd, buf, 0, size, 0);
+          txt = buf.toString('utf8');
         }
-      } else {
-        txt = fs.readFileSync(LOG_FILE, 'utf8');
+      } finally {
+        fs.closeSync(fd);
       }
       const lines = txt.trim().split('\n').slice(-MAX_BUFFER);
       for (const line of lines) {
@@ -95,17 +106,26 @@ class Bus extends EventEmitter {
 
   private rotateIfNeeded(): void {
     try {
-      if (!fs.existsSync(LOG_FILE)) return;
-      const size = fs.statSync(LOG_FILE).size;
+      // Race-free size check: stat directly; ENOENT means no log yet.
+      // CodeQL flagged the previous `existsSync -> statSync` form as
+      // `js/file-system-race`.
+      let size: number;
+      try {
+        size = fs.statSync(LOG_FILE).size;
+      } catch (e) {
+        if ((e as NodeJS.ErrnoException).code === 'ENOENT') return;
+        throw e;
+      }
       if (size <= MAX_LOG_BYTES) return;
       // Move the current log out of the way; the next append re-creates it.
       // Replace any existing .1 (we keep only one backup to bound disk use).
       try {
-        if (fs.existsSync(LOG_BACKUP)) fs.unlinkSync(LOG_BACKUP);
+        fs.unlinkSync(LOG_BACKUP);
       } catch {
-        // Old backup unlink failed (EBUSY on Windows, EACCES on shared
-        // volumes). Rotation is best-effort -- the rename below will fail
-        // too in that case and the outer catch will surface it.
+        // Old backup unlink failed (EBUSY / EACCES / ENOENT). Rotation is
+        // best-effort -- the rename below will fail too in real-failure
+        // cases and the outer catch will surface it. Race-free vs the
+        // previous `if (existsSync) unlink` form.
       }
       try {
         fs.renameSync(LOG_FILE, LOG_BACKUP);

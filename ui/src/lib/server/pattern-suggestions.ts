@@ -190,7 +190,14 @@ export function applySuggestion(
         const keywords = s.payload?.keywords ?? [];
         if (keywords.length === 0) return { ok: false, error: 'No keywords in payload' };
         const portalsPath = profileFilePath(profileId, 'portals');
-        const before = fs.existsSync(portalsPath) ? fs.readFileSync(portalsPath, 'utf8') : '';
+        // CodeQL js/file-system-race: read directly and treat ENOENT as
+        // empty rather than racing existsSync against the read.
+        let before = '';
+        try {
+          before = fs.readFileSync(portalsPath, 'utf8');
+        } catch (e) {
+          if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+        }
         if (!before) return { ok: false, error: 'portals.yml not found at ' + portalsPath };
         const parsed = (yamlParse(before) as Record<string, unknown>) ?? {};
         const tf = (parsed.title_filter as Record<string, unknown>) ?? {};
@@ -218,7 +225,14 @@ export function applySuggestion(
         const minScore = s.payload?.minScore;
         if (typeof minScore !== 'number') return { ok: false, error: 'No minScore in payload' };
         const profilePath_ = profileFilePath(profileId, 'profile-yml');
-        const before = fs.existsSync(profilePath_) ? fs.readFileSync(profilePath_, 'utf8') : '';
+        // CodeQL js/file-system-race: read directly and treat ENOENT as
+        // empty rather than racing existsSync against the read.
+        let before = '';
+        try {
+          before = fs.readFileSync(profilePath_, 'utf8');
+        } catch (e) {
+          if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+        }
         if (!before) return { ok: false, error: 'profile.yml not found' };
         const parsed = (yamlParse(before) as Record<string, unknown>) ?? {};
         const automation = (parsed.automation as Record<string, unknown>) ?? {};
@@ -239,7 +253,14 @@ export function applySuggestion(
         const archetype = s.payload?.archetype;
         if (!archetype) return { ok: false, error: 'No archetype in payload' };
         const target = profileFilePath(profileId, 'profile-md');
-        const before = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : '';
+        // CodeQL js/file-system-race: read directly and treat ENOENT as
+        // empty rather than racing existsSync against the read.
+        let before = '';
+        try {
+          before = fs.readFileSync(target, 'utf8');
+        } catch (e) {
+          if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+        }
         const isStrong = s.op === 'profile-flag-archetype-strong';
         const tag = isStrong ? 'STRONG-FIT' : 'AVOID';
         const note =

@@ -20,7 +20,7 @@
  *   node scripts/tracker/normalize-statuses.mjs --user u_alice --profile engineer
  */
 
-import { readFileSync, writeFileSync, copyFileSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, copyFileSync, existsSync, mkdirSync, renameSync } from 'fs';
 import { dirname } from 'path';
 import { profilePath, profileFromArgv, userFromArgv } from '../lib/lib-profiles.mjs';
 
@@ -195,8 +195,11 @@ console.log(`\n📊 ${changes} statuses normalized · ${scoreFixes} scores fixed
 
 const totalChanges = changes + scoreFixes;
 if (!DRY_RUN && totalChanges > 0) {
-  // Backup first
-  copyFileSync(APPS_FILE, APPS_FILE + '.bak');
+  // Atomic backup-then-replace: see dedup-tracker.mjs for the
+  // CodeQL `js/file-system-race` rationale. renameSync is a single
+  // syscall; the previous `copyFileSync ; writeFileSync` pair had
+  // overlapping read+write windows on APPS_FILE.
+  renameSync(APPS_FILE, APPS_FILE + '.bak');
   writeFileSync(APPS_FILE, lines.join('\n'));
   console.log(`✅ Written to ${APPS_FILE} (backup: ${APPS_FILE}.bak)`);
 } else if (DRY_RUN) {

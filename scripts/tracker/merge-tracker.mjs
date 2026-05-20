@@ -477,8 +477,10 @@ if (newLines.length > 0) {
 if (!DRY_RUN) {
   writeFileSync(APPS_FILE, appLines.join('\n'));
 
-  // Move processed files to merged/
-  if (!existsSync(MERGED_DIR)) mkdirSync(MERGED_DIR, { recursive: true });
+  // Move processed files to merged/. mkdirSync with recursive:true is
+  // idempotent -- safe to call when the dir already exists. The prior
+  // `if (!existsSync) mkdirSync` form was CodeQL `js/file-system-race`.
+  mkdirSync(MERGED_DIR, { recursive: true });
   for (const file of tsvFiles) {
     renameSync(join(ADDITIONS_DIR, file), join(MERGED_DIR, file));
   }

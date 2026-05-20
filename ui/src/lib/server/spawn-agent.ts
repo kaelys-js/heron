@@ -67,9 +67,14 @@ export function spawnAgentWithMode(
   const userId = opts.userId ?? currentUserIdOrDefault();
   const realizedPrompt = realizeModePromptForUser(userId, opts.profileId, modePath);
 
-  // Write to a fresh temp file. UUID prevents collisions when two
-  // spawns fire simultaneously.
-  const tempPromptPath = path.join(os.tmpdir(), `${BRAND.name}-${modeName}-${randomUUID()}.md`);
+  // mkdtempSync creates a unique random-suffix directory.
+  // CodeQL `js/insecure-temporary-file` flagged the prior
+  // `randomUUID()` path -- in theory UUIDs are unpredictable but
+  // CodeQL's data-flow tracker still considers join'd paths
+  // predictable. Using the OS's mkdtempSync syscall (which uses
+  // mkstemp internally) is the canonical race-free pattern.
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), `${BRAND.name}-${modeName}-`));
+  const tempPromptPath = path.join(tmpDir, 'prompt.md');
   fs.writeFileSync(tempPromptPath, realizedPrompt, 'utf8');
 
   const env: NodeJS.ProcessEnv = { ...process.env, ...(opts.env ?? {}) };

@@ -49,20 +49,38 @@ jobs:
         with:
           persist-credentials: false
 
+      # SHA-pinned uv installer instead of `curl ... | sh`. CodeQL
+      # `PinnedDependenciesID` flagged the curl-pipe-sh pattern -- the
+      # script is fetched + executed in one shot with no integrity
+      # verification. The astral-sh/setup-uv action is published by the
+      # uv maintainers and is SHA-pinned per repo policy.
+      - name: Install uv
+        uses: astral-sh/setup-uv@bd01e18f51369d5a26f1651c3cb451d3417e3bba # v6.10.1
+        with:
+          version: "0.5.20"
+
       - name: Run zizmor
-        # uvx zips through the install in <5s vs `pip install zizmor`'s
-        # 30s. Re-uses the existing python/uv stack the format job
-        # already provisions.
+        # No `|| true`: zizmor's non-zero exit FAILS this step, which
+        # marks the `Scan workflows` PR check red. The previous form
+        # ('always exit 0; let branch protection block via SARIF
+        # severity') let zizmor findings sneak through PR CI because
+        # the SARIF gate fires only at MERGE time -- by then it's
+        # already a 'why didn't this fail in PR?' incident.
+        #
+        # `--min-severity=medium` filters out pedantic informational
+        # findings (audit-only) so CI failures map to real
+        # ⩾ medium-severity workflow issues worth fixing.
         run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          source "$HOME/.local/bin/env" || true
+          set -e
           # zizmor 1.x writes SARIF to stdout; redirect to a file.
           # `--output=zizmor.sarif` was rejected as an unknown flag.
-          uvx zizmor@1.25.2 --format=sarif .github/workflows/ > zizmor.sarif || true
-          # Always exit 0 -- we want the SARIF upload even on findings;
-          # branch protection blocks via the SARIF severity, not exit code.
+          uvx zizmor@1.25.2 --min-severity=medium --format=sarif .github/workflows/ > zizmor.sarif
 
       - name: Upload SARIF to code-scanning
+        # `if: always()` so the SARIF still uploads when zizmor exited
+        # non-zero -- otherwise the developer sees "Scan workflows red"
+        # with no visible findings to act on.
+        if: always()
         uses: github/codeql-action/upload-sarif@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4
         with:
           sarif_file: zizmor.sarif

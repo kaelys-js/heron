@@ -50,8 +50,14 @@ function persistSecretToEnv(secret: string): void {
   const path = require('node:path') as typeof import('node:path');
   const ROOT = path.resolve(process.cwd(), '..');
   const ENV_FILE = path.join(ROOT, '.env');
+  // CodeQL js/file-system-race: read directly and treat ENOENT as empty
+  // rather than racing existsSync against the subsequent read.
   let existing = '';
-  if (fs.existsSync(ENV_FILE)) existing = fs.readFileSync(ENV_FILE, 'utf8');
+  try {
+    existing = fs.readFileSync(ENV_FILE, 'utf8');
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+  }
   if (/^BETTER_AUTH_SECRET=/m.test(existing)) {
     existing = existing.replace(/^BETTER_AUTH_SECRET=.*$/m, `BETTER_AUTH_SECRET=${secret}`);
   } else {

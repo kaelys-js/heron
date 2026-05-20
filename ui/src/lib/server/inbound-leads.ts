@@ -96,10 +96,15 @@ export function appendLead(lead: InboundLead, profileId?: string): boolean {
   const p = leadsPath(profileId);
   fs.mkdirSync(path.dirname(p), { recursive: true });
   // Dedup by messageId -- read existing
-  if (fs.existsSync(p)) {
-    const text = fs.readFileSync(p, 'utf8');
-    if (text.includes('"messageId":"' + lead.messageId + '"')) return false;
+  // CodeQL js/file-system-race: read directly and treat ENOENT as no
+  // existing leads rather than racing existsSync against the read.
+  let text: string | null = null;
+  try {
+    text = fs.readFileSync(p, 'utf8');
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
   }
+  if (text !== null && text.includes('"messageId":"' + lead.messageId + '"')) return false;
   fs.appendFileSync(p, JSON.stringify(lead) + '\n');
   // Initialise thread state
   const threads = readThreadsMap(profileId);
@@ -166,12 +171,14 @@ export function attachDraftPath(leadId: string, draftPath: string, profileId?: s
   // We don't rewrite the jsonl -- we add a side-channel record.
   const draftMapPath = path.join(path.dirname(threadsPath(profileId)), 'inbound-drafts.json');
   let map: Record<string, string> = {};
-  if (fs.existsSync(draftMapPath)) {
-    try {
-      map = JSON.parse(fs.readFileSync(draftMapPath, 'utf8'));
-    } catch {
-      // Corrupt JSON -- start with an empty map; the new entry will
-      // overwrite the bad file on the writeFileSync below.
+  // CodeQL js/file-system-race: read directly and treat ENOENT as an
+  // empty map rather than racing existsSync against the read.
+  try {
+    map = JSON.parse(fs.readFileSync(draftMapPath, 'utf8'));
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
+      // Corrupt JSON or other read error -- start with an empty map; the
+      // new entry will overwrite the bad file on the writeFileSync below.
     }
   }
   map[leadId] = draftPath;

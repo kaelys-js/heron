@@ -104,7 +104,17 @@ const hasEmail = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/.test(text);
 const hasPhone =
   /(?:\+\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{0,4}\b/.test(text) &&
   (text.match(/\d/g) || []).length >= 7;
-const hasLinkedIn = /linkedin\.com\/in\/[a-z0-9-]+/i.test(text);
+// Substring presence check (CodeQL js/regex/missing-regexp-anchor: pattern 4 -- substring is intended).
+// Preserves the original [a-z0-9-]+ trailing-char requirement via an explicit charCode check.
+const linkedInIdx = text.toLowerCase().indexOf('linkedin.com/in/');
+let hasLinkedIn = false;
+if (linkedInIdx >= 0) {
+  const tail = text.toLowerCase().charCodeAt(linkedInIdx + 'linkedin.com/in/'.length);
+  const isLower = tail >= 97 && tail <= 122; // a-z
+  const isDigit = tail >= 48 && tail <= 57; // 0-9
+  const isDash = tail === 45; // -
+  hasLinkedIn = isLower || isDigit || isDash;
+}
 const hasLocation =
   /\b(city|country|remote|us|uk|eu|ca|au|nz|de|fr|es|pt|jp|kr|cn|in|br|mx)\b/i.test(
     plain.slice(0, 800),
