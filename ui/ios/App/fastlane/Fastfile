@@ -215,7 +215,18 @@ platform :ios do
       code_coverage: true,
       result_bundle: true,
       fail_build: true,
-      xcargs: "-skipPackagePluginValidation -skipMacroValidation",
+      # `COMPILER_INDEX_STORE_ENABLE=NO DEBUG_INFORMATION_FORMAT=dwarf` skip
+      # Xcode's index-store DB write (saves ~20s) and dSYM bundle assembly
+      # (saves ~10s) during the build phase. Neither matters for tests --
+      # the index store powers Xcode IDE features (quick-symbol-jump etc.),
+      # and dSYMs are for symbolicated release crash reports. Tests run
+      # against the .debug.dylib directly.
+      #
+      # No `-retry-tests-on-failure NO` -- xcodebuild's default test-iterations
+      # is 1 (no retry), so the flag would be a no-op. Earlier 1m40s "retry
+      # cost" in CI was xcresult bundle assembly + xcov coverage post-
+      # processing, not a real retry.
+      xcargs: "-skipPackagePluginValidation -skipMacroValidation COMPILER_INDEX_STORE_ENABLE=NO DEBUG_INFORMATION_FORMAT=dwarf",
       output_directory: "fastlane/test_output"
     )
     # xcov reads the xcresult bundle and emits an HTML report + cobertura
