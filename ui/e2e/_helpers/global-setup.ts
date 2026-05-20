@@ -118,6 +118,63 @@ export default async function globalSetup(): Promise<void> {
     'utf8',
   );
 
+  // LEGACY single-user paths -- ALSO seed at `data/profiles/default/`
+  // and `data/profiles/_shared/`. When there's no session (anonymous
+  // visit, which is what the redirect-to-/login test exercises),
+  // `currentUserIdOrDefault()` returns SYSTEM_USER_ID and the file
+  // resolvers fall back to the legacy single-user layout under
+  // `data/profiles/`. The per-user `data/users/u_e2e/...` paths above
+  // are read AFTER a session is established; for the no-session
+  // checks we need the legacy paths populated too. Same content,
+  // duplicated paths.
+  const legacyProfileDir = path.join(dataDir, 'profiles', 'default');
+  fs.mkdirSync(legacyProfileDir, { recursive: true });
+  const legacySharedDir = path.join(dataDir, 'profiles', '_shared');
+  fs.mkdirSync(legacySharedDir, { recursive: true });
+  for (const [file, content] of [
+    ['cv.md', '# E2E Test User\n\nSenior Software Engineer · Test University · 2020-Present'],
+    [
+      'profile.yml',
+      'name: E2E Test User\nemail: e2e@heron.test\ntargets:\n  - "Senior Software Engineer"\n',
+    ],
+    ['portals.yml', 'companies: []\nqueries: []\n'],
+    ['_profile.md', '# E2E Test Profile\n\nMinimal profile fragment for tests.\n'],
+    [
+      'applications.md',
+      '# Applications Tracker\n\n| # | Date | Company | Role | Score | Status | PDF | Report | Notes |\n|---|------|---------|------|-------|--------|-----|--------|-------|\n',
+    ],
+  ] as const) {
+    fs.writeFileSync(path.join(legacyProfileDir, file), content, 'utf8');
+  }
+  fs.writeFileSync(
+    path.join(legacySharedDir, 'onboarding-state.json'),
+    JSON.stringify({ completed: true, completedAt: Date.now() }, null, 2),
+    'utf8',
+  );
+
+  // data/profiles.json -- the multi-profile registry. Without this,
+  // `readProfiles()` errors with "profiles.json not found" and the
+  // layout loader 500s before it can even get to isFreshInstall.
+  fs.writeFileSync(
+    path.join(dataDir, 'profiles.json'),
+    JSON.stringify(
+      {
+        activeId: 'default',
+        profiles: [
+          {
+            id: 'default',
+            label: 'E2E Test Profile',
+            slug: 'default',
+            createdAt: Date.now(),
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+    'utf8',
+  );
+
   // auth.db -- minimal schema (just `users` + `schema_meta`). The
   // app's ensureSchema() on first request creates the rest (sessions,
   // accounts, verification, passkeys, etc.) -- CREATE TABLE IF NOT
