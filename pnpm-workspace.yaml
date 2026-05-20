@@ -88,7 +88,7 @@ peerDependencyRules:
 # shared. Removes the entire class of "root has X@1, ui has X@2"
 # drift bugs -- alignment is structural, not test-enforced.
 catalog:
-  "@anthropic-ai/sdk": "0.95.1"
+  "@anthropic-ai/sdk": "0.97.1"
   "@better-auth/passkey": "1.6.10"
   "@biomejs/biome": "2.4.15"
   "@capacitor-community/electron": "5.0.1"
