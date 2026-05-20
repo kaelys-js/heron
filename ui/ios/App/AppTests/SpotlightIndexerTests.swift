@@ -1,4 +1,7 @@
 //
+@testable import App
+import CoreSpotlight
+
 // SpotlightIndexerTests — payload shape + ID stability + clear semantics.
 //
 // We don't hit the REAL CSSearchableIndex (that would mutate the
@@ -7,11 +10,14 @@
 // that can be exercised without touching the OS index.
 //
 import XCTest
-import CoreSpotlight
-@testable import App
+
+// `kUTTypeText` is exported by MobileCoreServices.framework. The
+// production code at App/SpotlightIndexer.swift:3 imports it the same
+// way; this test was copying the indexer's setup logic but missed the
+// import, so `kUTTypeText` couldn't be resolved by the test compiler.
+import MobileCoreServices
 
 final class SpotlightIndexerTests: XCTestCase {
-
     func testJobIndexEntryRoundTrip() {
         let entry = JobIndexEntry(
             id: "j-1",
