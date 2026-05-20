@@ -123,8 +123,23 @@ export default defineConfig({
       thresholds: {
         // Repo-wide floor -- CI red below this. Numbers track the
         // linux-runner achievable floor; macOS local runs ~3pp higher
-        // for v8-internal reasons (worker timing + JIT). The
-        // assert-coverage-thresholds.mjs script mirrors these exact
+        // for v8-internal reasons (v8 branch counting includes implicit
+        // `??` / optional-chain branches whose count varies per
+        // runtime, plus JIT optimisation tier differs under runner CPU
+        // contention).
+        //
+        // To restore the original 70/65/70/70 ambition: add tests to
+        // the lowest-coverage modules until both platforms sit above
+        // 70 across every metric. The biggest wins (by uncovered-line
+        // count, per the macOS run's coverage-summary.json) are:
+        //   • ui/src/lib/server/jobs/auto-merge-batch.ts (0%)
+        //   • ui/src/lib/server/cv-pdf.ts (26%)
+        //   • ui/src/lib/server/jobs/scan-*.ts (avg ~30%)
+        //   • ui/src/lib/server/orchestrator.ts (~45%)
+        // Closing those would lift the linux floor above 75 across
+        // every metric and let us raise the gate without flake risk.
+        //
+        // The assert-coverage-thresholds.mjs script mirrors these exact
         // numbers and has the full rationale in its header.
         lines: 70,
         branches: 62,
@@ -135,9 +150,6 @@ export default defineConfig({
         perFile: true,
         autoUpdate: false,
       },
-      // V8's branch counting includes implicit `?? undefined` chains
-      // that exaggerate the denominator -- that's why branches sits
-      // lower than the other thresholds.
     },
     // Vitest 4 promoted `execArgv` from
     // `test.poolOptions.{forks,threads}.execArgv` to top-level
