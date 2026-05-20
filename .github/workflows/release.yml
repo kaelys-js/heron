@@ -35,20 +35,29 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
+# Top-level is read-only. release-please needs writes to create
+# branches + PRs + tags + comment on issues; declared inside the job.
 permissions:
-  contents: write
-  pull-requests: write
-  issues: write
+  contents: read
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: write # release-please creates tags + the GitHub Release
+      pull-requests: write # creates / updates the release PR
+      issues: write # comments on closed issues that ship in the release
     outputs:
       release_created: ${{ steps.rp.outputs.release_created }}
       tag_name: ${{ steps.rp.outputs.tag_name }}
       version: ${{ steps.rp.outputs.major }}.${{ steps.rp.outputs.minor }}.${{ steps.rp.outputs.patch }}
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5
         id: rp
         with:

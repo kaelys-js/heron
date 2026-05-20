@@ -20,10 +20,11 @@ on:
   schedule:
     - cron: '0 4 * * 1' # Weekly Monday 4am UTC
 
+# Workflow-level stays read-only; the one job that needs to upload
+# SARIF claims `security-events: write` for itself. Scorecard's
+# TokenPermissions rubric wants writes scoped to the job that uses them.
 permissions:
-  actions: read
   contents: read
-  security-events: write
 
 concurrency:
   group: codeql-${{ github.workflow }}-${{ github.ref }}
@@ -35,6 +36,10 @@ jobs:
     # Swift needs macOS; everything else stays on ubuntu for speed + cost.
     runs-on: ${{ matrix.language == 'swift' && 'macos-15' || 'ubuntu-latest' }}
     timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      security-events: write # SARIF upload to Code Scanning
     strategy:
       fail-fast: false
       matrix:

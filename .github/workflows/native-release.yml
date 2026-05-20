@@ -34,12 +34,13 @@ on:
         required: true
         type: string
 
-# Least-privilege: needs to attach artifacts to a release + (G1) mint
-# Sigstore OIDC tokens for build-provenance attestations on every binary.
+# Workflow-level is read-only -- each job declares the writes it
+# genuinely needs (contents: write to attach binaries, id-token /
+# attestations for Sigstore provenance). Keeps Scorecard's
+# TokenPermissions check happy and prevents a newly-added job from
+# silently inheriting release-time writes.
 permissions:
-  contents: write
-  id-token: write # G1 — SLSA provenance via Sigstore
-  attestations: write # G1 — write attestation to GitHub's attestation API
+  contents: read
 
 # Two release tags landing in quick succession waste 30min of CI per
 # job. Only one native-release run per ref at a time. We don't cancel
@@ -106,6 +107,10 @@ jobs:
     needs: preflight
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+    permissions:
+      contents: write # gh release upload
+      id-token: write # SLSA / Sigstore provenance
+      attestations: write # GitHub attestations API
     strategy:
       fail-fast: false
       matrix:
@@ -273,6 +278,10 @@ jobs:
     needs: preflight
     runs-on: macos-15
     timeout-minutes: 60
+    permissions:
+      contents: write # gh release upload (TestFlight + GitHub Release)
+      id-token: write # SLSA / Sigstore provenance
+      attestations: write # GitHub attestations API
     env:
       # Pinned Xcode version -- keeps Swift toolchain consistent with
       # .mise.toml + test.yml's `ios` job. Bump in lockstep.

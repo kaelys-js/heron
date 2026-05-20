@@ -3,8 +3,12 @@ on:
   release:
     types: [published]
 
+# Workflow-level stays read-only. The `sbom` job below escalates to
+# write + id-token + attestations because gh release upload + Sigstore
+# attestations need them; future jobs added to this workflow inherit
+# only `contents: read` from here.
 permissions:
-  contents: write
+  contents: read
 
 # G35 -- guard against double-fire on retry. Without this, re-running the
 # workflow from the GitHub UI (e.g. after a transient anchore API blip)

@@ -130,8 +130,14 @@ jobs:
         # `python -m pip` guarantees the mise-managed interpreter is
         # the one we install into.
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r scripts/requirements.txt
+          # `--require-hashes` makes the install tamper-evident -- pip refuses
+          # to download anything whose archive hash isn't in
+          # `scripts/requirements.txt`. Satisfies Scorecard's
+          # PinnedDependenciesID; matches the lighthouse.yml step.
+          # No `pip install --upgrade pip` -- the mise-managed interpreter
+          # already ships a recent pip, and an unpinned upgrade would itself
+          # trip PinnedDependenciesID.
+          python -m pip install --require-hashes -r scripts/requirements.txt
           python -c "from cryptography.hazmat.primitives.ciphers.aead import AESGCM; print('cryptography import OK')"
 
       # Playwright browsers are required for the ui-component project.
@@ -572,6 +578,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -596,6 +607,11 @@ jobs:
     needs: [ts, ios]
     if: always()
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
       - name: Coverage summary
         run: |
           echo "Coverage uploaded per-job via codecov-action@v5"

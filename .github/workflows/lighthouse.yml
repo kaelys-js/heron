@@ -63,8 +63,14 @@ jobs:
         # assertion fails on what looks like a UI bug but is actually
         # a missing pip install.
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r scripts/requirements.txt
+          # `--require-hashes` makes the install tamper-evident -- pip refuses
+          # to download anything whose archive hash isn't in
+          # `scripts/requirements.txt`. Satisfies Scorecard's
+          # PinnedDependenciesID; matches the test.yml step.
+          # No `pip install --upgrade pip` -- the mise-managed interpreter
+          # already ships a recent pip, and an unpinned upgrade would itself
+          # trip PinnedDependenciesID.
+          python -m pip install --require-hashes -r scripts/requirements.txt
           python -c "from cryptography.hazmat.primitives.ciphers.aead import AESGCM; print('cryptography import OK')"
 
       - name: Apply brand
