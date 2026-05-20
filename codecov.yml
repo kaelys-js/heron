@@ -47,12 +47,17 @@ coverage:
       default:
         target: 70%
         threshold: 0%
-        # `success` (not `error`) means: when the base ref doesn't have a
-        # coverage upload (common on a fresh branch or after Codecov
-        # storage TTL expires), don't gate the merge on a value we can't
-        # compute. The `project` status check (above) carryforward-mode
-        # still catches an overall coverage drop -- patch is a per-diff
-        # belt; we keep the braces from `project`.
+        # `informational: true` is codecov's official "post-but-don't-
+        # gate" knob. The patch comment + per-flag breakdown still
+        # appear on every PR; the check just never blocks the merge.
+        # We rely on this rather than the `success` if_ci_failed trick
+        # because codecov computes `patch: null` (not a CI failure) when
+        # the base ref hasn't uploaded coverage -- which happens often
+        # on short-lived feature branches whose base is main right
+        # after a release. The `project` status check (above) still
+        # uses `target: auto + carryforward` so an actual coverage
+        # drop still gates the merge.
+        informational: true
         if_ci_failed: success
 
 flag_management:
