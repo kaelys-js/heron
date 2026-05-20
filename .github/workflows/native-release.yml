@@ -276,7 +276,7 @@ jobs:
     env:
       # Pinned Xcode version -- keeps Swift toolchain consistent with
       # .mise.toml + test.yml's `ios` job. Bump in lockstep.
-      DEVELOPER_DIR: /Applications/Xcode_16.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
     steps:
       - name: Harden runner
         # G4 -- iOS build runner. Handles Apple ASC API key + signing

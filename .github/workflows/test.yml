@@ -371,7 +371,7 @@ jobs:
       FORCE_COLOR: "3"
       # Pinned Xcode version -- must match .mise.toml's swift entry. When
       # we bump Xcode, this gets bumped too.
-      DEVELOPER_DIR: /Applications/Xcode_16.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
 
     steps:
       - name: Harden runner
