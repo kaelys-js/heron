@@ -54,6 +54,14 @@ jobs:
     timeout-minutes: 2
     outputs:
       ios: ${{ steps.filter.outputs.ios }}
+      # `runner` is a plain string output (resolved via shell, not a
+      # ternary expression embedded in runs-on). GitHub's workflow
+      # validator rejects `runs-on: ${{ X && 'macos-15' || 'ubuntu-latest' }}`
+      # with a startup_failure (run 26179165782) -- it can't statically
+      # prove the result is a valid runner label at workflow-parse time
+      # when the expression references needs.X.outputs.Y. Emitting the
+      # label as a simple string output sidesteps that.
+      runner: ${{ steps.set-runner.outputs.runner }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
@@ -85,6 +93,20 @@ jobs:
               - 'ui/static/**'
               # Lockfile drift can change native bundle resolution
               - 'pnpm-lock.yaml'
+      - name: Select runner
+        id: set-runner
+        # zizmor: read the filter output via env var (not direct `${{ }}`
+        # expansion in the shell body) -- defends against template-injection
+        # even though dorny/paths-filter's output is guaranteed to be the
+        # literal "true" or "false".
+        env:
+          IOS_CHANGED: ${{ steps.filter.outputs.ios }}
+        run: |
+          if [ "$IOS_CHANGED" = "true" ]; then
+            echo "runner=macos-15" >> "$GITHUB_OUTPUT"
+          else
+            echo "runner=ubuntu-latest" >> "$GITHUB_OUTPUT"
+          fi
 
   # ─────────────────────────────────────────────────────────────────
   # TS / Svelte / Server / Electron -- Vitest + svelte-check + audit
@@ -422,11 +444,16 @@ jobs:
   ios:
     name: iOS — XCTest + XCUITest + Snapshot
     needs: changes
-    # Dynamic runner: macos-15 ONLY when iOS-affecting paths changed.
-    # Otherwise stay on ubuntu-latest so the short-circuit step below
-    # finishes in ~10s without burning macOS minutes (10× billing).
-    runs-on: ${{ needs.changes.outputs.ios == 'true' && 'macos-15' || 'ubuntu-latest' }}
-    timeout-minutes: ${{ needs.changes.outputs.ios == 'true' && 35 || 3 }}
+    # `runs-on` is a SIMPLE STRING interpolation of the runner label
+    # emitted by the `changes` job's Select-runner step. The validator
+    # accepts this form because the expression is a single output ref
+    # (no ternary), which can be statically typed as a string.
+    # macos-15 when iOS-affecting paths changed; ubuntu-latest otherwise.
+    runs-on: ${{ needs.changes.outputs.runner }}
+    # Fixed timeout-minutes -- both branches of the runner short-circuit
+    # exit far below 35min anyway. Trying to dynamic-set this with a
+    # ternary tripped the same validator (run 26179165782).
+    timeout-minutes: 35
     env:
       CI: "true"
       FORCE_COLOR: "3"
