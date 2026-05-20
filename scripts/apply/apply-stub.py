@@ -61,7 +61,7 @@ def main() -> int:
     # APPLY_STEP line to stdout (see lib_apply.py). If the state file
     # doesn't exist (standalone invocation, not via apply-portal.py),
     # append_step is a no-op for the file but we still want the protocol
-    # line — fall back to printing explicitly.
+    # line -- fall back to printing explicitly.
     try:
         append_step(args.job_id, f"stub-detected:{portal}")
     except Exception:
@@ -69,7 +69,7 @@ def main() -> int:
     # Defensive: if append_step's auto-print was skipped (no state file for
     # THIS job), the dispatcher's parser still needs to see this step.
     # apply-portal.py seeds state before calling us, so this should be a
-    # no-op in the production path — but standalone debug runs benefit.
+    # no-op in the production path -- but standalone debug runs benefit.
     if not _state_file_for(args.job_id).exists():
         print(f"APPLY_STEP: stub-detected:{portal}", flush=True)
 

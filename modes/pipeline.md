@@ -52,6 +52,6 @@ Processes offer URLs accumulated in `data/__PIPELINE__`. The user adds URLs when
 
 Before processing any URL, verify sync:
 ```bash
-node cv-sync-check.mjs
+node scripts/quality/cv-sync-check.mjs
 ```
 If there's drift, warn the user before continuing.

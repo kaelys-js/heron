@@ -68,7 +68,7 @@ describe('theme.init — corrupt localStorage values', () => {
     'invalid',
     '',
     '   ',
-    'LIGHT', // uppercase — should NOT match
+    'LIGHT', // uppercase -- should NOT match
     'foo',
     '123',
     'null',

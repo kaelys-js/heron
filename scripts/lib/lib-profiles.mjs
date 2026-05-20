@@ -20,7 +20,7 @@
 //
 // Scripts get the userId from the dashboard via either:
 //   • --user <userId>   CLI flag (preferred)
-//   • CAREER_OPS_USER_ID env var (set by the orchestrator when it spawns)
+//   • HERON_USER_ID env var (set by the orchestrator when it spawns)
 //
 // When neither is set, lib-profiles falls back to the legacy data/profiles/
 // root. This lets old single-user workflows keep working.
@@ -241,7 +241,7 @@ export function profileFromArgv(argv = process.argv.slice(2)) {
 }
 
 /**
- * Resolve a `--user <userId>` arg or CAREER_OPS_USER_ID env var. Returns
+ * Resolve a `--user <userId>` arg or HERON_USER_ID env var. Returns
  * SYSTEM_USER_ID when neither is set (legacy single-user fallback).
  *
  * Path-traversal guard: any value containing /, \, or .. is rejected with
@@ -249,14 +249,22 @@ export function profileFromArgv(argv = process.argv.slice(2)) {
  */
 export function resolveUserArg(value) {
   let id = value;
-  if (id == null) id = process.env.CAREER_OPS_USER_ID;
+  if (id == null) id = process.env.HERON_USER_ID;
   if (id == null || id === '') return SYSTEM_USER_ID;
   if (typeof id !== 'string') {
     console.error(`ERROR: --user must be a string, got ${typeof id}`);
     process.exit(2);
   }
   if (id.includes('/') || id.includes('\\') || id.includes('..')) {
-    console.error(`ERROR: --user has invalid characters: ${JSON.stringify(id)}`);
+    // Don't echo the raw id back to stderr. CodeQL's
+    // `js/clear-text-logging` flags JSON.stringify(id) here as it can't
+    // prove the input isn't a secret leaked via env. The user already
+    // knows what they typed; reporting the length + offending chars is
+    // enough to debug.
+    const badChars = [...new Set(id.split('').filter((c) => '/\\.'.includes(c)))].join('');
+    console.error(
+      `ERROR: --user has invalid path characters (len=${id.length}, bad="${badChars}")`,
+    );
     process.exit(2);
   }
   return id;

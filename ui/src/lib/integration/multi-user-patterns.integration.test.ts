@@ -1,33 +1,66 @@
-/**
- * Multi-user safety -- structural pattern guards (F9-F30 regression suite).
- *
- * Catches the easy-to-regress anti-patterns that the F9-F30 audit
- * surfaced. Each test greps the codebase for the unsafe pattern and
- * asserts only an allowlisted set of files contains it.
- *
- * Patterns enforced:
- *   1. No bare `env: { ...process.env }` in spawn() / execFile() --
- *      every server-side spawn must use `userContextEnv()` so the child
- *      inherits `CAREER_OPS_USER_ID` from the parent's ALS scope (F13).
- *   2. No module-level `let cached: AutopilotConfig` (or similar
- *      single-instance Config singletons) -- they cross users (F9).
- *   3. Every `installBusListener` callback that touches user data must
- *      reference `ev.userId` (F11).
- *   4. Background daemons (setInterval at module load) must NOT call
- *      job functions directly -- they must go through `runById()` so the
- *      registry's `perUser: true` fan-out fires (F15).
- *
- * Mechanism: regex-on-source rather than runtime. The F9-F30 fixes
- * landed alongside this file; future regressions are caught at CI time
- * before they ship.
- */
+/** Multi-user pattern guards (F9-F30 regression suite). Each test
+ *  greps source for an anti-pattern + asserts only allowlisted files
+ *  match. Patterns:
+ *    1. spawn() / execFile() must use userContextEnv() (no bare
+ *       `env: { ...process.env }`) so the child inherits HERON_USER_ID
+ *    2. No module-level Config singletons (cross-user leak)
+ *    3. installBusListener callbacks touching user data must read
+ *       `ev.userId`
+ *    4. Background daemons go through runById(), not direct job calls
+ *  Mechanism: regex-on-source, runs in CI before merge. */
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 const REPO_ROOT = path.resolve(__dirname, '../../../..');
 const SERVER_ROOT = path.join(REPO_ROOT, 'ui/src/lib/server');
+
+// Resolve `grep` to an absolute path ONCE at module load, via a literal
+// list of safe PATH directories. CodeQL's `js/shell-command-injection-
+// from-environment` flags `execFileSync('grep', ...)` because the
+// binary name is resolved through process.env.PATH (env-controlled).
+// Resolving from a literal-array allowlist eliminates the data flow
+// from the env into the command.
+const GREP_BIN: string = ((): string => {
+  for (const dir of ['/usr/local/bin', '/opt/homebrew/bin', '/usr/bin', '/bin']) {
+    const candidate = path.join(dir, 'grep');
+    try {
+      fs.accessSync(candidate, fs.constants.X_OK);
+      return candidate;
+    } catch {
+      /* not in this dir; try next */
+    }
+  }
+  throw new Error('grep not found on the safe PATH allowlist');
+})();
+
+/** Run grep with argv-passed args (no shell) and return matching lines.
+ *  CodeQL flagged the previous string-concat `execSync('grep ... ' + DIR)`
+ *  as `js/shell-command-injection-from-environment` because DIR is path-
+ *  derived; even though we control it, the safer pattern is argv-passing.
+ *  grep exits 1 when there are zero matches -- we treat that as empty
+ *  output, NOT an error. */
+function grepLines(args: string[]): string[] {
+  try {
+    const out = execFileSync(GREP_BIN, args, { encoding: 'utf8' });
+    return out
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  } catch (e: unknown) {
+    const err = e as { status?: number; stdout?: string | Buffer };
+    if (err.status === 1) {
+      // Standard "no match" exit -- not an error.
+      const stdout = typeof err.stdout === 'string' ? err.stdout : (err.stdout?.toString() ?? '');
+      return stdout
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+    throw e;
+  }
+}
 
 /** ──────────────────────────────────────────────────────────────────────
  *  F13 -- spawn-env injection
@@ -38,25 +71,21 @@ describe('Multi-user — every spawn() injects userContextEnv (F13 guard)', () =
     // spawn sites because the original grep only covered lib/server/.
     // Now the pattern guard sweeps both trees.
     const ROUTES_API_ROOT = path.join(REPO_ROOT, 'ui/src/routes/api');
-    const hits = execSync(
-      // -E for extended regex, -l doesn't help here because we want line context
-      // Match `env: { ...process.env }` (and the variant without spaces).
-      'grep -rln --include="*.ts" "env: { ...process.env }\\|env: process\\.env\\>" ' +
-        SERVER_ROOT +
-        ' ' +
-        ROUTES_API_ROOT +
-        ' || true',
-      { encoding: 'utf8' },
-    )
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean)
+    // Match `env: { ...process.env }` (and the variant without spaces).
+    // `-l` doesn't help here because we want line context.
+    const hits = grepLines([
+      '-rln',
+      '--include=*.ts',
+      'env: { ...process.env }\\|env: process\\.env\\>',
+      SERVER_ROOT,
+      ROUTES_API_ROOT,
+    ])
       .filter((p) => !p.endsWith('.test.ts'))
       .map((abs) => path.relative(REPO_ROOT, abs));
 
     expect(
       hits,
-      `Spawn sites must use \`env: userContextEnv()\` so the child inherits CAREER_OPS_USER_ID.\nOffending files:\n  ${hits.join(
+      `Spawn sites must use \`env: userContextEnv()\` so the child inherits HERON_USER_ID.\nOffending files:\n  ${hits.join(
         '\n  ',
       )}`,
     ).toEqual([]);
@@ -65,9 +94,9 @@ describe('Multi-user — every spawn() injects userContextEnv (F13 guard)', () =
   it('userContextEnv is exported from user-context.ts', () => {
     const src = fs.readFileSync(path.join(SERVER_ROOT, 'user-context.ts'), 'utf8');
     expect(src).toMatch(/export\s+function\s+userContextEnv\s*\(/);
-    // The helper must inject CAREER_OPS_USER_ID (the contract the
+    // The helper must inject HERON_USER_ID (the contract the
     // scripts-side `lib-profiles.mjs::resolveUserArg()` expects).
-    expect(src).toContain('CAREER_OPS_USER_ID');
+    expect(src).toContain('HERON_USER_ID');
   });
 });
 
@@ -95,15 +124,13 @@ describe('Multi-user — no module-singleton user config caches (F9 guard)', () 
     // grep for `let cached:`, `let _cache:`, `let _config:` patterns
     // followed by a type that LOOKS like a Config (capital first letter,
     // ends in `Config`/`State`/`Settings`).
-    const hits = execSync(
-      'grep -rln --include="*.ts" -E "^(let|var)\\s+(cached|_cache|_config|configCache)\\s*:?\\s*[A-Z][a-zA-Z]*(Config|State|Settings)" ' +
-        SERVER_ROOT +
-        ' || true',
-      { encoding: 'utf8' },
-    )
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean)
+    const hits = grepLines([
+      '-rln',
+      '--include=*.ts',
+      '-E',
+      '^(let|var)\\s+(cached|_cache|_config|configCache)\\s*:?\\s*[A-Z][a-zA-Z]*(Config|State|Settings)',
+      SERVER_ROOT,
+    ])
       .filter((p) => !p.endsWith('.test.ts'))
       .map((abs) => path.relative(REPO_ROOT, abs))
       .filter((rel) => !ALLOWED_FILES.has(rel));
@@ -118,8 +145,8 @@ describe('Multi-user — no module-singleton user config caches (F9 guard)', () 
 
   it('autopilot.ts uses Map<userId, AutopilotConfig> not a single cached singleton', () => {
     const src = fs.readFileSync(path.join(SERVER_ROOT, 'autopilot.ts'), 'utf8');
-    // F9 specifically: no `let cached: AutopilotConfig` line. The
-    // post-fix file has `const cache = new Map<string, AutopilotConfig>()`.
+    // F9: no `let cached: AutopilotConfig` (would cross users); the
+    // file must use `const cache = new Map<string, AutopilotConfig>()`.
     expect(src).not.toMatch(/^\s*let\s+cached\s*:\s*AutopilotConfig/m);
     expect(src).toMatch(/new\s+Map<\s*string,\s*AutopilotConfig\s*>/);
   });
@@ -144,14 +171,12 @@ describe('Multi-user — bus listeners scope to ev.userId (F11 guard)', () => {
     // Heuristic: find files containing both `installBusListener(` and
     // `loadAllJobs(` or `markStatus(`. Assert each one references
     // `ev.userId`.
-    const candidates = execSync(
-      'grep -rln --include="*.ts" "installBusListener(" ' + SERVER_ROOT + ' || true',
-      { encoding: 'utf8' },
-    )
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .filter((p) => !p.endsWith('.test.ts'));
+    const candidates = grepLines([
+      '-rln',
+      '--include=*.ts',
+      'installBusListener(',
+      SERVER_ROOT,
+    ]).filter((p) => !p.endsWith('.test.ts'));
 
     const offenders: string[] = [];
     for (const abs of candidates) {
@@ -175,15 +200,16 @@ describe('Multi-user — bus listeners scope to ev.userId (F11 guard)', () => {
 describe('Multi-user — setInterval daemons in jobs/ go through runById (F15 guard)', () => {
   it('interview-reminder daemon calls runById, not the raw function', () => {
     const src = fs.readFileSync(path.join(SERVER_ROOT, 'jobs/interview-reminder.job.ts'), 'utf8');
-    // Pre-F15 the daemon called `runInterviewReminder()` directly from
-    // setInterval. Post-fix it imports `runById` and fires that.
+    // F15 requires the daemon to import `runById` and fire it, NOT call
+    // `runInterviewReminder()` directly from setInterval (which would
+    // skip the registry fan-out across users).
     expect(src).toMatch(/runById\(\s*['"]interview-reminder['"]\s*\)/);
   });
 
   it('scan-email-imap daemon fans out across all schedulable users via runAsUser (F14/F19/F27)', () => {
-    // Pre-fix the daemon ran only under the OWNER (getOwnerUserId).
-    // Post-fix it iterates listSchedulableUsers() so every user's
-    // gmail-imap mailbox gets polled under their own ALS context.
+    // F14/F19/F27: the daemon iterates listSchedulableUsers() so every
+    // user's gmail-imap mailbox gets polled under their own ALS context
+    // -- running only under the OWNER would silently skip everyone else.
     const src = fs.readFileSync(path.join(SERVER_ROOT, 'jobs/scan-email-imap.job.ts'), 'utf8');
     expect(src).toMatch(/\blistSchedulableUsers\(/);
     expect(src).toMatch(/\brunAsUser\(/);
@@ -222,10 +248,11 @@ describe('Multi-user — autopilot tick fans out across users (F10 guard)', () =
 describe('Multi-user — circuit breaker per-user state (F12 guard)', () => {
   it('autopilot-circuit-breaker.ts uses Map for consecutiveLinkedInFailures', () => {
     const src = fs.readFileSync(path.join(SERVER_ROOT, 'autopilot-circuit-breaker.ts'), 'utf8');
-    // Pre-F12: `let consecutiveLinkedInFailures = 0`. Post-fix:
-    // `const consecutiveLinkedInFailures = new Map<string, number>()`.
+    // F12: must be `const consecutiveLinkedInFailures = new Map<string,
+    // number>()`, NOT `let consecutiveLinkedInFailures = 0` (which would
+    // share one counter across every user and cross-trip the breaker).
     // Anchor to start-of-line + skip comment prefixes (` * ` block
-    // comments mention the pre-fix pattern for context).
+    // comments may cite the banned pattern for context).
     expect(src).not.toMatch(/^\s*let\s+consecutiveLinkedInFailures\b/m);
     expect(src).toMatch(/consecutiveLinkedInFailures\s*=\s*new Map<\s*string,\s*number\s*>/);
     // trip() should take a userId

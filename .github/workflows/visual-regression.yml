@@ -1,5 +1,5 @@
 name: Visual regression (Lost Pixel)
-# HP4 — self-hosted visual regression testing. Each PR builds the
+# HP4 -- self-hosted visual regression testing. Each PR builds the
 # dashboard, boots `vite preview`, snapshots the canonical routes
 # (config at lostpixel.config.ts), and diffs against the baselines
 # committed under .lostpixel/baseline/.
@@ -7,8 +7,8 @@ name: Visual regression (Lost Pixel)
 # Diff threshold: 10% pixel difference (configurable in
 # lostpixel.config.ts). Exceeding it fails the workflow. Failure
 # artifacts:
-#   - .lostpixel/current/     — fresh snapshots for the PR commit
-#   - .lostpixel/difference/  — diff images (pink overlay over changed pixels)
+#   - .lostpixel/current/     -- fresh snapshots for the PR commit
+#   - .lostpixel/difference/  -- diff images (pink overlay over changed pixels)
 # Both uploaded as GH Actions artifacts on red, accessible from the
 # PR's Checks tab.
 #
@@ -28,8 +28,7 @@ on:
       - "pnpm-lock.yaml"
 
 permissions:
-  contents: write # baseline regeneration on `accept-snapshots`
-  pull-requests: write
+  contents: read
 
 concurrency:
   group: visual-regression-${{ github.event.pull_request.number }}
@@ -40,6 +39,9 @@ jobs:
     name: Snapshot + diff
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: write # baseline regeneration on `accept-snapshots` label
+      pull-requests: write # comment diff results on the PR
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
@@ -50,13 +52,25 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           # Need write access for baseline regeneration when the PR is
-          # labeled `accept-snapshots`. Otherwise read-only.
-          token: ${{ github.event.pull_request.user.login == github.repository_owner && secrets.GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          # labeled `accept-snapshots`. zizmor/artipacked -- don't
+          # persist the token in .git/config; the baseline-commit step
+          # below re-injects it inline so the token can't leak into
+          # the upload-artifact step on failure.
+          persist-credentials: false
 
       - name: Setup toolchain
         uses: ./.github/actions/setup-toolchain
         with:
           apply_brand: true
+
+      # Lost Pixel uses Playwright under the hood -- specifically
+      # chromium_headless_shell. `pnpm exec playwright install chromium`
+      # would install the full Chromium build, but the headless-shell
+      # variant is what Lost Pixel actually launches. `playwright install`
+      # with no args installs every browser + headless-shell variants,
+      # which is the simplest reliable path.
+      - name: Install Playwright browsers (Lost Pixel needs headless-shell)
+        run: pnpm --filter ui exec playwright install --with-deps chromium
 
       - name: Build dashboard
         run: pnpm --filter ui build
@@ -95,6 +109,9 @@ jobs:
         env:
           HEAD_REF: ${{ github.head_ref }}
           PR_NUM: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
@@ -106,7 +123,11 @@ jobs:
           fi
           git commit -m "chore(visual-regression): regenerate baselines [skip ci]" \
                      -m "Triggered by the \`accept-snapshots\` label on PR #${PR_NUM}."
-          git push origin "HEAD:${HEAD_REF}"
+          # Token-injected push URL keeps the credential scoped to this
+          # single command -- never lands in .git/config or the
+          # upload-artifact step.
+          HOSTLESS_URL="${SERVER_URL#https://}"
+          git push "https://x-access-token:${GH_TOKEN}@${HOSTLESS_URL}/${REPO}.git" "HEAD:${HEAD_REF}"
 
       - name: Upload diff artifacts on failure
         if: failure()

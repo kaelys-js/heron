@@ -1,20 +1,11 @@
-/**
- * Auto-ghost sweep -- flags applications silent for ≥ DAYS_TO_GHOST days.
- *
- * Why a sweep (not on-write): `lastTouchAt` is updated whenever a stage
- * transition happens. Detecting "silence" is the absence of an event,
- * which can't be detected on-write. A daily sweep is the right shape.
- *
- * For each silent job:
- *   1. `markGhosted` appends a Ghosted transition + sets ghostedAt
- *      (which is a no-op if the user has manually transitioned to one of
- *      the terminal states since)
- *   2. An Issue is filed with `dedupeKey = 'ghost:' + jobId` so the
- *      same application can't accumulate duplicate cards over multiple
- *      sweeps.
- *
- * Trigger: daily 09:00 (weekdays). Manual run is allowed.
- */
+/** Auto-ghost sweep -- flags applications silent for ≥ DAYS_TO_GHOST
+ *  days (21). Silence is the absence of a stage transition; can't be
+ *  detected on-write, hence a daily sweep.
+ *  Per silent job: markGhosted() appends a Ghosted transition + sets
+ *  ghostedAt (no-op if the user already moved to a terminal state).
+ *  Issue filed with dedupeKey='ghost:'+jobId so repeated sweeps don't
+ *  duplicate cards.
+ *  Trigger: weekdays 09:00. Manual run allowed. */
 
 import { register } from './registry';
 import type { JobResult } from './types';
@@ -52,12 +43,11 @@ function runOneProfile(profileId: string): { ghosted: number } {
 }
 
 async function runAutoGhost(): Promise<JobResult> {
-  // F26 -- single fan-out only. Pre-fix runAutoGhost manually iterated
-  // listSchedulableUsers() AND was registered with perUser:true, so the
-  // registry's runById fan-out invoked this N times and each invocation
-  // looped over N users → N² work + N²× redundant logs. Now: declare
-  // perUser:true and trust the registry to fan out, operate on the
-  // current user only inside this function.
+  // F26 -- single fan-out only. Declared `perUser:true`, so the registry
+  // fans out across users; this function MUST operate on the current
+  // user only. Manually iterating listSchedulableUsers() inside while
+  // also being perUser:true would invoke this N times each looping over
+  // N users → N² work + N² redundant logs.
   let totalGhosted = 0;
   let profilesScanned = 0;
   const userId = currentUserIdOrDefault();

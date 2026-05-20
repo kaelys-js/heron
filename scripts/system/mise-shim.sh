@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# mise-shim.sh — auto-route any command through mise's resolved tools.
+# mise-shim.sh -- auto-route any command through mise's resolved tools.
 #
 # Goal: contributors should NEVER have to think about Node version,
 # even when their shell PATH points at a wrong/stale install. Every
@@ -35,13 +35,13 @@ if [ "${HERON_MISE_SHIM_ACTIVE:-0}" = "1" ]; then
 fi
 
 # Find the engines-pinned Node version. Single source of truth is
-# root package.json::engines.node — same value the preinstall guard
+# root package.json::engines.node -- same value the preinstall guard
 # (ensure-pnpm.mjs) checks. Pinned to an EXACT version (e.g. "26.1.0").
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PKG_JSON="$REPO_ROOT/package.json"
 
-# Use Node to parse package.json IF Node is available — falls through
+# Use Node to parse package.json IF Node is available -- falls through
 # gracefully if even Node can't run (extremely cold environment).
 # `node -p` is faster than node -e for one-liners.
 if command -v node >/dev/null 2>&1; then
@@ -60,10 +60,10 @@ fi
 
 # Mismatch. Try mise.
 if ! command -v mise >/dev/null 2>&1; then
-  # No mise — fall through. The user will see pnpm's engine warning,
+  # No mise -- fall through. The user will see pnpm's engine warning,
   # which is the documented hand-fix path (install mise + run
   # `mise install`). We don't want to add a NEW error message on top
-  # of that — just let the existing flow surface.
+  # of that -- just let the existing flow surface.
   exec "$@"
 fi
 
@@ -71,7 +71,7 @@ fi
 if ! mise where "node@$EXPECTED" >/dev/null 2>&1; then
   # Mise installed but the pinned version isn't. Surface a one-liner
   # then fall through (so the command still runs, even if on wrong
-  # Node — the engine warning will then fire and pnpm shows what's
+  # Node -- the engine warning will then fire and pnpm shows what's
   # off).
   printf '\033[33m↻\033[0m Node v%s on PATH but repo wants v%s. Install via: \033[36mmise install\033[0m\n' "$ACTUAL" "$EXPECTED" >&2
   exec "$@"
@@ -91,7 +91,7 @@ fi
 # Correct fix: PREPEND mise's bin dir to PATH ourselves, then `exec`
 # the command. Every spawned subprocess inherits PATH and resolves
 # `node` / `npm` / `pnpm` to mise's pinned version. Equivalent to
-# what `mise activate` does for a login shell — but scoped to this
+# what `mise activate` does for a login shell -- but scoped to this
 # single command tree without polluting the parent shell.
 NODE_BIN_DIR="$(mise where "node@$EXPECTED" 2>/dev/null)/bin"
 if [ ! -d "$NODE_BIN_DIR" ]; then
@@ -103,11 +103,11 @@ fi
 export HERON_MISE_SHIM_ACTIVE=1
 export PATH="$NODE_BIN_DIR:$PATH"
 
-# NODE_OPTIONS — suppress known-third-party warnings so they don't
+# NODE_OPTIONS -- suppress known-third-party warnings so they don't
 # pollute output. Node 22+ allows --disable-warning in NODE_OPTIONS.
 # The OUTER vitest CLI fires DEP0205 (module.register deprecation
 # from tsx/vitest/vite) BEFORE my vitest.config.ts execArgv applies
-# to spawned workers — setting it here means the outer process and
+# to spawned workers -- setting it here means the outer process and
 # every subprocess inherit the suppression.
 #
 #   --enable-source-maps:        better stack traces (mirrors .mise.toml)
@@ -117,9 +117,9 @@ export PATH="$NODE_BIN_DIR:$PATH"
 #                                 webstorage stub probe in jsdom + the
 #                                 polyfill we install in test-setup.ts
 #
-# Do NOT set --localstorage-file here — it needs a real per-run path
+# Do NOT set --localstorage-file here -- it needs a real per-run path
 # which vitest.config.ts assembles into the worker execArgv.
-# Do NOT set --throw-deprecation here either — it'd convert third-
+# Do NOT set --throw-deprecation here either -- it'd convert third-
 # party deprecations into errors at process load before our
 # --disable-warning kicks in (order is parse-then-apply). The
 # vitest.config.ts worker execArgv already adds it scoped to workers

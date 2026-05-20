@@ -1,18 +1,9 @@
-/**
- * POST /api/job/[id]/interviewers/[slug]/thank-you
- *
- * Generate a personalised thank-you note after the interview. The note
- * pulls in:
- *   • What the interviewer's likely focus was (their stage + title)
- *   • A discussion-point hook the user supplies in the body
- *     (`talkingPoints`) -- usually 1-2 things that came up in the call
- *   • One concrete callback connecting their challenge to a story
- *     from the user's CV
- *
- * Output: `interview-prep/{company}-{slug}-thank-you.md` written by the
- * `thank-you` mode. The Interviewer record's `thankYouPath` field is
- * updated, which clears the "thank-you owed" Inbox card.
- */
+/** POST /api/job/[id]/interviewers/[slug]/thank-you -- generate a personalised
+ *  thank-you note after the interview. The note draws on: the interviewer's
+ *  likely focus (stage + title); a discussion-point hook from body.talkingPoints
+ *  (1-2 things from the call); one callback connecting their challenge to a
+ *  CV story. Output: interview-prep/{company}-{slug}-thank-you.md via the
+ *  thank-you mode. Updates Interviewer.thankYouPath, clearing the Inbox card. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';

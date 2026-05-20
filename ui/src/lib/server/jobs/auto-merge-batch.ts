@@ -1,39 +1,19 @@
-/**
- * Auto-merge batch additions -- fs watcher.
- *
- * The batch runner (`scripts/batch/batch-runner.sh`) writes one TSV per
- * evaluated job into the active profile's `batch/tracker-additions/`.
- * Today the user must run `node merge-tracker.mjs` by hand. This watcher
- * does it automatically, debouncing so multiple TSVs landing in quick
- * succession trigger only one merge-tracker invocation.
- *
- * After a successful merge:
- *   - merge-tracker itself moves consumed TSVs to `tracker-additions/merged/`
- *     so we don't reprocess them
- *   - We emit a synthetic 'batch-merge' success event so normalize + dedup
- *     hygiene jobs chain via the after-trigger listener
- *   - Issue stream gets a row if anything looked malformed
- *
- * Boot path: also runs once at startup so any TSVs that landed while the
- * dev server was down get caught up -- for every user × profile, not just
- * the active one.
- *
- * Multi-user (F16): pre-fix the watcher resolved a single
- * `additionsDir()` from SYSTEM_USER's ALS context at boot and used
- * `fs.watch` against that one directory. TSVs landing under
- * `data/users/{uid}/profiles/{slug}/batch/tracker-additions/` (where the
- * per-user batch runner writes them -- see `orchestrator.ts:701`) were
- * never seen, so the auto-merge → dedup → normalize chain never fired
- * for real users. Now: chokidar globs across every user × profile and
- * each event fires `runMergeTracker` inside `runAsUser(userId, …)` so
- * the merge writes back into the correct user's applications.md.
- */
+/** Auto-merge batch additions -- fs watcher that auto-runs
+ *  merge-tracker.mjs as the batch runner drops TSVs into per-profile
+ *  batch/tracker-additions/. Debounced so a burst of TSVs triggers one
+ *  merge. Post-merge: consumed TSVs move to tracker-additions/merged/;
+ *  a synthetic 'batch-merge' success event chains normalize + dedup;
+ *  malformed input → Issue.
+ *  Boot: also runs once for backlog catch-up across every user × profile.
+ *  F16 multi-user: chokidar globs over every user × profile and each
+ *  event runs inside runAsUser(uid, …) so merges write into the right
+ *  user's applications.md. */
 
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import chokidar, { type FSWatcher } from 'chokidar';
-import { ROOT } from '../files';
+import { ROOT, DATA_ROOT } from '../files';
 import { logEvent } from '../events';
 import { reportIssue } from '../issues';
 import { register } from './registry';
@@ -86,8 +66,8 @@ function pendingTsvCountForUser(userId: string): number {
     // Synchronous traversal -- small directory, runs at boot only.
     const usersRoot =
       userId === SYSTEM_USER_ID
-        ? path.join(ROOT, 'data', 'profiles')
-        : path.join(ROOT, 'data', 'users', userId, 'profiles');
+        ? path.join(DATA_ROOT, 'profiles')
+        : path.join(DATA_ROOT, 'users', userId, 'profiles');
     if (!fs.existsSync(usersRoot)) return 0;
     for (const slug of fs.readdirSync(usersRoot)) {
       const dir = path.join(usersRoot, slug, 'batch', 'tracker-additions');
@@ -274,7 +254,7 @@ export function startBatchWatcher(): void {
     watcher.on('add', (filepath: string) => {
       if (!filepath.endsWith('.tsv')) return;
       const userId = userIdFromTsvPath(filepath);
-      if (!userId) return; // unexpected layout — skip
+      if (!userId) return; // unexpected layout -- skip
       scheduleMergeForUser(userId, 'fs-watch · ' + path.basename(filepath));
     });
     watcher.on('error', (err: unknown) => {

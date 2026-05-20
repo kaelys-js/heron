@@ -18,12 +18,20 @@ type AdvertiseOptions = {
 
 let advertiser: any = null;
 
-export function startMdnsAdvertise(opts: AdvertiseOptions): void {
+export async function startMdnsAdvertise(opts: AdvertiseOptions): Promise<void> {
   try {
-    // Lazy-require so a missing dep doesn't break the whole main process.
+    // Lazy-load so a missing dep doesn't break the whole main process.
     // bonjour-service is added to the electron/package.json deps.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { Bonjour } = require('bonjour-service');
+    // Use dynamic import (not require) so vi.mock can intercept the
+    // module in tests -- CJS `require()` bypasses Vitest's mock layer.
+    const mod = (await import('bonjour-service')) as unknown as {
+      Bonjour?: new () => { publish: (opts: unknown) => unknown };
+      default?: { Bonjour?: new () => { publish: (opts: unknown) => unknown } };
+    };
+    // CJS dynamic import can land on either `mod.Bonjour` (vitest mock
+    // factory shape) or `mod.default.Bonjour` (Node's CJS interop).
+    const Bonjour = mod.Bonjour ?? mod.default?.Bonjour;
+    if (!Bonjour) throw new Error('Bonjour constructor missing from bonjour-service');
     const instance = new Bonjour();
     advertiser = instance.publish({
       name: opts.name,

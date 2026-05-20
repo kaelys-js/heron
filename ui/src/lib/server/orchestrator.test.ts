@@ -16,6 +16,12 @@ const fsMock = {
   appendFileSync: vi.fn(),
   mkdirSync: vi.fn(),
   statSync: vi.fn(() => ({ size: 0, mtimeMs: 0 })),
+  // mkdtempSync added after the CodeQL `js/insecure-temporary-file`
+  // refactor in orchestrator.ts moved the batch-prompt temp path
+  // construction from `Date.now()` suffix to `fs.mkdtempSync`.
+  // Returns a deterministic mock path so spawn-env assertions don't
+  // need to know about random suffixes.
+  mkdtempSync: vi.fn((prefix: string) => prefix + 'mock-suffix'),
 };
 vi.mock('node:fs', () => ({ default: fsMock, ...fsMock }));
 
@@ -35,7 +41,7 @@ vi.mock('node:child_process', () => ({
   }),
 }));
 
-vi.mock('./files', () => ({ ROOT: '/tmp/repo' }));
+vi.mock('./files', () => ({ ROOT: '/tmp/repo', DATA_ROOT: '/tmp/repo/data' }));
 
 const loggedEvents: { source: string; msg: string }[] = [];
 vi.mock('./events', () => ({
@@ -113,11 +119,11 @@ describe('orchestrator — bootOnce', () => {
 });
 
 describe('orchestrator — runBulkOfertaParallel forwards user+profile env', () => {
-  // The batch-runner.sh script reads CAREER_OPS_USER_ID +
-  // CAREER_OPS_PROFILE_ID + CAREER_OPS_BATCH_DIR to resolve per-user
+  // The batch-runner.sh script reads HERON_USER_ID +
+  // HERON_PROFILE_ID + HERON_BATCH_DIR to resolve per-user
   // per-profile paths. Without USER_ID it falls back to legacy
   // data/profiles/{slug}/ -- every user's batches collide on one tree.
-  it('sets CAREER_OPS_USER_ID + CAREER_OPS_PROFILE_ID on the spawn env when invoked under a user context', async () => {
+  it('sets HERON_USER_ID + HERON_PROFILE_ID on the spawn env when invoked under a user context', async () => {
     // Reset the running guard between tests by re-requiring? Module-scope
     // state means the second call could short-circuit. Use a unique user
     // each run to ensure independence.
@@ -132,8 +138,8 @@ describe('orchestrator — runBulkOfertaParallel forwards user+profile env', () 
     );
     expect(batchCall, 'expected a bash batch-runner.sh spawn').toBeDefined();
     const env = batchCall!.opts.env as Record<string, string>;
-    expect(env.CAREER_OPS_USER_ID).toBe('orch-alice');
-    expect(env.CAREER_OPS_PROFILE_ID).toBe('work');
-    expect(env.CAREER_OPS_BATCH_DIR).toBeDefined();
+    expect(env.HERON_USER_ID).toBe('orch-alice');
+    expect(env.HERON_PROFILE_ID).toBe('work');
+    expect(env.HERON_BATCH_DIR).toBeDefined();
   });
 });

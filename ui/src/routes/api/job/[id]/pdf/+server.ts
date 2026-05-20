@@ -1,17 +1,9 @@
-/**
- * Stream a job's tailored CV PDF inline.
- *
- *   GET /api/job/[id]/pdf
- *
- * Looks up the job's `pdfFile` (relative to output/) and streams it with
- * Content-Type: application/pdf · Content-Disposition: inline so browsers
- * render it in an iframe instead of downloading. 404 if no PDF has been
- * generated for this job yet.
- *
- * Defence-in-depth: rejects any pdfFile that resolves outside OUTPUT_DIR
- * (guards against ../../../etc/passwd-style filename injection from a
- * malformed applications.md row).
- */
+/** GET /api/job/[id]/pdf -- stream a job's tailored CV PDF inline. Looks up
+ *  job.pdfFile (relative to output/) and streams with Content-Type:
+ *  application/pdf + Content-Disposition: inline so browsers render in an
+ *  iframe instead of downloading. 404 if no PDF generated yet. Defence-in-
+ *  depth: rejects pdfFile resolving outside OUTPUT_DIR (guards traversal
+ *  injection from a malformed applications.md row). */
 
 import fs from 'node:fs';
 import path from 'node:path';

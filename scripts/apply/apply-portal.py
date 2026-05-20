@@ -45,7 +45,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Import shared helpers — these define the state-file convention and
+# Import shared helpers -- these define the state-file convention and
 # canonical APPLY_RESULT format that ui-side parses.
 ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
@@ -57,7 +57,7 @@ PRODUCTION_PORTALS = {
     "ashby",
     "lever",
     "workday",
-    # Second-round graduations — heuristic-quality where instance-specific,
+    # Second-round graduations -- heuristic-quality where instance-specific,
     # selector-stable on the common case. Each adapter is 50-80 lines on
     # top of the shared lib_portal.PortalConfig scaffold.
     "workable",
@@ -98,7 +98,7 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    # Detect portal first — emit APPLY_STEP so the caller's parser sees us
+    # Detect portal first -- emit APPLY_STEP so the caller's parser sees us
     # before any subprocess output mixes in.
     det = detect_portal(args.url)
     portal = det.get("portal", "unknown")
@@ -106,7 +106,7 @@ def main() -> int:
 
     print(f"APPLY_STEP: dispatch-detect:{portal}", flush=True)
 
-    # Seed the apply-state file — the adapter will append_step over it.
+    # Seed the apply-state file -- the adapter will append_step over it.
     # If apply-queue.job.ts already wrote one, this is a benign overwrite.
     write_apply_state(
         args.job_id,
@@ -128,7 +128,7 @@ def main() -> int:
         return emit_result("error", f"missing-adapter:{portal}")
 
     # Build the child argv. We pass through every relevant arg so each
-    # adapter has uniform access — adapters can ignore flags they don't use.
+    # adapter has uniform access -- adapters can ignore flags they don't use.
     cmd = [
         sys.executable,
         str(script),
@@ -149,7 +149,7 @@ def main() -> int:
     print(f"APPLY_STEP: dispatch-spawn:{script.name}", flush=True)
 
     # Stream stdout/stderr directly to the caller. apply-queue.job.ts is
-    # already line-parsing for APPLY_STEP / APPLY_RESULT — we don't need to
+    # already line-parsing for APPLY_STEP / APPLY_RESULT -- we don't need to
     # buffer here.
     try:
         rc = subprocess.call(cmd, cwd=str(ROOT), env=os.environ.copy())
@@ -157,7 +157,7 @@ def main() -> int:
         print(f"[dispatch] failed to spawn adapter: {e}", file=sys.stderr, flush=True)
         return emit_result("error", f"spawn-failed:{e}")
     except KeyboardInterrupt:
-        # Bubble up — autopilot will mark the parent run as cancelled.
+        # Bubble up -- autopilot will mark the parent run as cancelled.
         return emit_result("error", "interrupted")
 
     # If the adapter exited without emitting APPLY_RESULT, derive one from
@@ -165,7 +165,7 @@ def main() -> int:
     # (The adapter SHOULD emit its own; this is defensive.)
     if rc not in (0, 1, 2):
         # Treat unknown exit codes as system errors. Don't double-emit
-        # APPLY_RESULT if the adapter already wrote one — the caller's
+        # APPLY_RESULT if the adapter already wrote one -- the caller's
         # parser keeps the last value.
         print(
             f"[dispatch] adapter exited with unexpected code {rc}",

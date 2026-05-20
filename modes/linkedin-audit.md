@@ -1,4 +1,4 @@
-# LinkedIn profile audit -- optimize for recruiter SEARCH visibility
+# Mode: linkedin-audit -- optimize for recruiter SEARCH visibility
 
 You're auditing the user's OWN LinkedIn profile against their __CV__, with
 ONE specific goal: make recruiters find them when searching LinkedIn.
@@ -25,7 +25,7 @@ strong their actual experience is.
 - `linkedinText` -- the extracted text from the user's profile (the
   endpoint runs extract-linkedin-profile.py first and passes it here)
 - `cv` -- full contents of __CV__
-- `targetRoles` -- from profile.yml: array of role titles they're after
+- `targetRoles` -- from `__PROFILE_YML__`: array of role titles they're after
 
 ## Output
 

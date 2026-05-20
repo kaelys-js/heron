@@ -1,4 +1,4 @@
-# Modo: form-answers -- Pre-Filled Application Q&A
+# Mode: form-answers -- Pre-Filled Application Q&A
 
 Generate concise, candidate-voiced answers to the most common application-form questions for a specific role. Used for non-LinkedIn portals (Greenhouse, Ashby, Lever, Workday, custom ATS) where the user copies answers manually into the form.
 
@@ -6,7 +6,7 @@ Generate concise, candidate-voiced answers to the most common application-form q
 
 - URL or pasted JD (the job offer)
 - `__CV__` (canonical CV)
-- `config/profile.yml` (location, comp targets, work auth, notice period)
+- `__PROFILE_YML__` (location, comp targets, work auth, notice period)
 - `__PROFILE_MD__` (archetype mapping, narrative)
 - `__ARTICLE_DIGEST__` (proof points, optional)
 - The matching report file in `__REPORTS__/{n}-{slug}-{date}.md` (if it exists -- use Bloque B match table)
@@ -19,7 +19,7 @@ Where `{slug}` is the slugified company-role pair used elsewhere in the system.
 
 ## Question set
 
-Generate answers to ALL of the following. If something is unknown (notice period, salary range), pull the value from `config/profile.yml`. If still unknown, write the answer with a TODO marker so the user fills it in:
+Generate answers to ALL of the following. If something is unknown (notice period, salary range), pull the value from `__PROFILE_YML__`. If still unknown, write the answer with a TODO marker so the user fills it in:
 
 1. **Why this role?** (1-4 sentences)
    - One concrete thing about the team's mandate or the product that resonates
@@ -36,16 +36,16 @@ Generate answers to ALL of the following. If something is unknown (notice period
    - If a skill is adjacent rather than direct, frame the adjacency honestly
 
 4. **Salary expectations** (1 sentence)
-   - Read from `config/profile.yml` (`compensation.target` etc.)
+   - Read from `__PROFILE_YML__` (`compensation.target` etc.)
    - State a range if available, with a note that it's flexible based on total comp + scope
-   - If profile.yml has no comp target, write `_TODO_: Set comp target in profile.yml_`
+   - If `__PROFILE_YML__` has no comp target, write `_TODO_: Set comp target in profile.yml_`
 
 5. **When can you start?** (1 sentence)
-   - Read from `config/profile.yml` (`availability.notice_period` if present)
+   - Read from `__PROFILE_YML__` (`availability.notice_period` if present)
    - Default to "Available with 2 weeks notice" if not specified
 
 6. **Authorized to work in [country]?** (1 sentence)
-   - Read from `config/profile.yml` (`candidate.work_auth` etc.)
+   - Read from `__PROFILE_YML__` (`candidate.work_auth` etc.)
    - Be explicit about visa status, work permits, or citizenship for the role's country
 
 7. **Anything else we should know?** (2-4 sentences)
@@ -109,5 +109,5 @@ _Generated from `__CV__` and the matching evaluation report. Tweak any answer th
 ## Validation before writing
 
 1. Check that the strongest claim in each answer maps to a line in `__CV__`.
-2. Check `config/profile.yml` for comp/notice/work-auth fields. If missing, write `_TODO_:` markers.
+2. Check `__PROFILE_YML__` for comp/notice/work-auth fields. If missing, write `_TODO_:` markers.
 3. Print the path written and a 1-line summary.

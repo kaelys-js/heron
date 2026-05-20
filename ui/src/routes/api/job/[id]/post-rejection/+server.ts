@@ -1,18 +1,9 @@
-/**
- * Post-rejection learning capture.
- *
- *   POST /api/job/[id]/post-rejection
- *     body: { wentWell?: string; surprised?: string; wouldChange?: string }
- *
- * Spawns `claude -p "/heron post-rejection --url <url> --notes <json>"`
- * to expand the user's notes into a story-bank entry. Appends the result
- * to interview-prep/story-bank.md (creates the file if missing) so future
- * applications + interview prep have access to the learning.
- *
- * Empty bodies are valid -- the mode can introspect from applications.md
- * and the report alone, useful when the user just wants the system to
- * derive learnings without typing.
- */
+/** POST /api/job/[id]/post-rejection -- post-rejection learning capture.
+ *  Body: { wentWell?: string; surprised?: string; wouldChange?: string }
+ *  (all optional -- the mode can introspect from applications.md + the
+ *  report alone). Spawns the post-rejection mode to expand notes into a
+ *  story-bank entry, appending to interview-prep/story-bank.md (creates if
+ *  missing) so future applications + interview prep see the learning. */
 
 import fs from 'node:fs';
 import path from 'node:path';

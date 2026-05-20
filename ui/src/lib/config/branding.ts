@@ -1,19 +1,6 @@
-/**
- * User-facing brand strings -- re-exported from the generated brand.ts so
- * everything ultimately resolves to branding/brand.json.
- *
- * This file is the LEGACY entry point. New code should import directly
- * from `$lib/client/brand`. Keeping these re-exports for back-compat with
- * the dozens of components/pages already importing APP_NAME / docTitle /
- * cmd / etc. -- they keep working without rewrites.
- *
- * NOT branded (kept as literal "heron"):
- *   - localStorage keys (changing would wipe user state) -- these now use
- *     BRAND.name prefix so a rename namespaces them correctly going forward
- *   - custom DOM event names (internal coupling, not user-visible)
- *   - the `/heron` slash-command namespace can be overridden via
- *     `CLI_NAMESPACE` from brand.json's `ai.cliNamespace` if set.
- */
+/** Legacy import surface for brand strings. Re-exports from
+ *  `$lib/client/brand` (which is generated from branding/brand.json).
+ *  New code should import from `$lib/client/brand` directly. */
 import { BRAND } from '$lib/client/brand';
 
 export const APP_NAME = BRAND.displayName;

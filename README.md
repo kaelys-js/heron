@@ -5,8 +5,6 @@
   <img src="branding/assets/wordmark-slate.svg" alt="Heron" width="220" />
 </picture>
 
-# Heron
-
 <!-- AUTO-GENERATED:doc-meta -->
 *[Heron](https://heron.app) · Stand still. Strike well.*
 <!-- /AUTO-GENERATED:doc-meta -->
@@ -38,34 +36,28 @@ It runs entirely on your machine. Your data is yours. See [`docs/PHILOSOPHY.md`]
 
 ## See it in action
 
-<table>
-  <tr>
-    <td width="50%">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/inbox-dark.png">
-        <img src="docs/screenshots/inbox-light.png" alt="Inbox" />
-      </picture>
-      <p align="center"><b>Inbox</b> -- triaged opportunities by score</p>
-    </td>
-    <td width="50%">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/evaluation-dark.png">
-        <img src="docs/screenshots/evaluation-light.png" alt="A-F evaluation report" />
-      </picture>
-      <p align="center"><b>A-F evaluation</b> -- six-block analysis per role</p>
-    </td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/autopilot.png" alt="Autopilot config" /><p align="center"><b>Autopilot</b> -- score-gated automation, opt-in</p></td>
-    <td><img src="docs/screenshots/patterns.png" alt="Pattern analysis" /><p align="center"><b>Patterns</b> -- rejection-pattern insights</p></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/interview-prep.png" alt="Interview prep" /><p align="center"><b>Interview prep</b> -- STAR+R stories from real projects</p></td>
-    <td><img src="docs/screenshots/mobile-inbox.png" alt="Mobile inbox" width="40%" /><p align="center"><b>Mobile</b> -- iOS / Android via Capacitor</p></td>
-  </tr>
-</table>
+<div align="center">
 
-> Screenshots not rendering? Run `pnpm screenshots` against a `pnpm dev` instance to regenerate. PNGs land under `docs/screenshots/`.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/inbox-dark.png">
+  <img src="docs/screenshots/inbox-light.png" alt="Inbox -- triaged opportunities by score" width="900" />
+</picture>
+
+**Inbox** -- triaged opportunities by score, sortable, multi-profile
+
+<br />
+
+<img src="docs/screenshots/evaluation.png" alt="A-F evaluation report" width="900" />
+
+**A-F evaluation** -- six-block analysis per role (fit, CV match, level, comp, personalization, prep)
+
+<br />
+
+<img src="docs/screenshots/autopilot.png" alt="Autopilot configuration" width="600" />&nbsp;<img src="docs/screenshots/mobile-inbox.png" alt="Mobile inbox" width="240" />
+
+**Autopilot** -- score-gated, daily-capped, opt-in &nbsp;·&nbsp; **Mobile** -- iOS / Android via Capacitor
+
+</div>
 
 ## What it does
 
@@ -162,15 +154,13 @@ Heron is built in volunteer time. If it saves you a job-search week, consider [s
 
 ## Acknowledgements
 
-Heron is a hard fork of [`santifer/career-ops`](https://github.com/santifer/career-ops) -- the original CLI-driven job-search system [santifer](https://santifer.io) built and used to evaluate 740+ offers, generate 100+ tailored CVs, and land a Head of Applied AI role. His [case study](https://santifer.io/career-ops-system) is required reading for the philosophy (filter, not cannon).
-
-This fork adds: multi-user system + RBAC + GDPR lifecycle, SvelteKit + Better Auth + Drizzle dashboard, Capacitor 8 native apps (iOS + Android + Electron + Watch), 4 iOS widgets + Live Activity, autonomous-apply pipeline, Vitest matrix replacing legacy verifiers, 0-CVE supply chain, OSSF Scorecard + SLSA L2 + CodeQL × 3 languages, and the Heron brand system.
+Original work © 2026 santifer, MIT-licensed. See [`REUSE.toml`](REUSE.toml) for the full SPDX attribution.
 
 ## License
 
 [MIT](LICENSE) for code. [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) for `branding/*` (logos, mascot specs, voice guide). [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) for `docs/examples/*`. See [`REUSE.toml`](REUSE.toml) for the full SPDX declaration.
 
-Original work © santifer. This fork © resist.js.
+This fork © resist.js.
 
 See [`docs/TRADEMARK.md`](docs/TRADEMARK.md) for trademark policy, [`docs/LEGAL_DISCLAIMER.md`](docs/LEGAL_DISCLAIMER.md) for usage disclaimers, and [`docs/GOVERNANCE.md`](docs/GOVERNANCE.md) for contribution governance.
 
@@ -184,6 +174,6 @@ Maintained by [@kaelys-js](https://github.com/kaelys-js).
 [Discord](https://discord.gg/8pRpHETxa4) ·
 [hello@heron.app](mailto:hello@heron.app)
 
-Forked from [`santifer/career-ops`](https://github.com/santifer/career-ops). MIT licensed.
+MIT licensed.
 
 </div>

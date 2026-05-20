@@ -1,23 +1,9 @@
-/**
- * DB-isolation regression guard.
- *
- * The bug: every test that imports anything reaching lib/server/db
- * (transitively, via auth-helpers, profiles-db, etc.) used to open
- * the developer's REAL `data/auth.db` and `data/app.db` at module-
- * load. Tests that signed users up via Better Auth then left ghost
- * rows in users.users -- and the FIRST-USER-BECOMES-OWNER rule in
- * Better Auth's databaseHooks (see lib/server/auth.ts) only fires
- * when the row count is exactly zero. So after a verification run,
- * a fresh-clone user could no longer become owner.
- *
- * The fix lives in lib/server/db/index.ts:
- *   - If VITEST=true (or NODE_ENV=test, or HERON_DATA_DIR is
- *     explicitly set), the DB paths route to a tmpdir.
- *   - test-setup.ts sets HERON_DATA_DIR to os.tmpdir()/career-
- *     ops-test-<pid> as belt-and-braces.
- *
- * These tests fail loudly if either guard regresses.
- */
+/** Asserts test runs cannot open the developer's real auth.db / app.db.
+ *  Two guards: lib/server/db/index.ts routes to tmpdir when VITEST=true
+ *  / NODE_ENV=test / HERON_DATA_DIR is set, and test-setup.ts sets
+ *  HERON_DATA_DIR to a per-pid tmp path. Regression here would let
+ *  Better Auth's first-user-becomes-owner hook stop firing for
+ *  fresh-clone users. */
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -32,12 +18,12 @@ describe('db/index.ts — DB paths are isolated during tests', () => {
     expect(dbSrc).toMatch(/process\.env\.HERON_DATA_DIR/);
   });
 
-  it('reads CAREER_OPS_AUTH_DB env override', () => {
-    expect(dbSrc).toMatch(/process\.env\.CAREER_OPS_AUTH_DB/);
+  it('reads HERON_AUTH_DB env override', () => {
+    expect(dbSrc).toMatch(/process\.env\.HERON_AUTH_DB/);
   });
 
-  it('reads CAREER_OPS_APP_DB env override', () => {
-    expect(dbSrc).toMatch(/process\.env\.CAREER_OPS_APP_DB/);
+  it('reads HERON_APP_DB env override', () => {
+    expect(dbSrc).toMatch(/process\.env\.HERON_APP_DB/);
   });
 
   it('auto-routes to tmpdir when VITEST=true', () => {

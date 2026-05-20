@@ -30,7 +30,7 @@ from lib_playwright_auth import user_data_dir as _resolve_user_data_dir  # noqa:
 def personio_config() -> PortalConfig:
     return PortalConfig(
         portal_id="personio",
-        # Per-user Playwright session — resolves to data/users/{uid}/.playwright-personio/
+        # Per-user Playwright session -- resolves to data/users/{uid}/.playwright-personio/
         # under multi-user, or data/profiles/_shared/.playwright-personio/ for legacy.
         user_data_dir=_resolve_user_data_dir("personio"),
         first_name_selectors=[

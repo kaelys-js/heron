@@ -1,4 +1,4 @@
-# Psychometric test prep -- gate-clearing for Pymetrics / Plum / Harver / etc.
+# Mode: psychometric-prep -- gate-clearing for Pymetrics / Plum / Harver / etc.
 
 Behavioural + cognitive tests are a real gate at F500 / consulting /
 big tech entry-level. Unlike technical interviews, you can't "practice

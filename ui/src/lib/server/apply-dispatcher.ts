@@ -1,22 +1,9 @@
-/**
- * apply-dispatcher -- URL → portal detection + Python adapter dispatch.
- *
- * Single source of truth for "which ATS is this URL on?" -- used by the
- * apply-queue drain to route each job to the right per-portal Playwright
- * adapter. Mirrors the logic in `lib_apply.py:detect_portal` (the Python
- * adapters call that one).
- *
- * Patterns extracted from scan.mjs:detectApi where overlap exists.
- *
- * Production-quality concerns:
- *  - Greenhouse migrated from boards.greenhouse.io → job-boards.greenhouse.io
- *    in 2025. Both must match.
- *  - Iframe-embedded boards on careers.{company}.com aren't detectable from
- *    URL alone -- the adapter handles that case after navigating.
- *  - LinkedIn jobs use /jobs/view/{id} or /jobs/collections/.../?currentJobId=.
- *  - Workday is identified by *.myworkdayjobs.com (every customer has its
- *    own subdomain).
- */
+/** URL -> ATS portal detection + Python adapter dispatch. Mirrors
+ *  `lib_apply.py::detect_portal`. Notes: Greenhouse boards.greenhouse.io
+ *  AND job-boards.greenhouse.io (2025 migration). LinkedIn jobs are
+ *  /jobs/view/{id} OR /jobs/collections/...?currentJobId=. Workday =
+ *  *.myworkdayjobs.com. Iframe-embedded boards on careers.{company}.com
+ *  detect after navigation, not URL-only. */
 
 export type SupportedPortal =
   | 'linkedin'

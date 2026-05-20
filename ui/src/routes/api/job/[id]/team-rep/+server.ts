@@ -1,23 +1,11 @@
-/**
- * GET /api/job/[id]/team-rep
- *
- * Team-reputation signals for a target company. Pulls from public sources:
- *
- *   • Glassdoor -- overall rating, Recommend %, CEO approval, interview difficulty
- *   • Blind -- company sentiment, recent layoff/cash-burn discussion (text snippets only)
- *   • Layoffs.fyi -- recent layoff events at this company
- *   • LinkedIn -- headcount trend (growth vs shrink) -- proxy via the
- *     deep-research mode since direct scraping isn't allowed
- *
- * Same legal/ToS posture as comp-benchmark.ts: we don't scrape, we ask
- * the agent CLI to deep-research the company (which is the same as a
- * human visiting the public pages once).
- *
- * Cache: returns the cached blob from `data/users/.../profiles/.../team-rep/{slug}.json`
- * if it's less than 21 days old. Otherwise spawns the deep-research mode.
- *
- * Body for forced refresh: { force: true }
- */
+/** GET /api/job/[id]/team-rep -- team-reputation signals from public sources:
+ *  Glassdoor (rating, Recommend %, CEO approval, interview difficulty), Blind
+ *  (sentiment, layoff/cash-burn discussion snippets), Layoffs.fyi (events),
+ *  LinkedIn headcount trend (via deep-research, no direct scraping). Same
+ *  ToS posture as comp-benchmark.ts: agent CLI deep-researches, same as a
+ *  human visiting once. Cache: returns the blob at data/users/.../team-rep/
+ *  {slug}.json if <21d old; else spawns deep-research. Force refresh:
+ *  body { force: true }. */
 
 import fs from 'node:fs';
 import path from 'node:path';

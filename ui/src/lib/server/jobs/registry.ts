@@ -1,21 +1,12 @@
-/**
- * Pluggable job registry -- a Map<id, JobDef> singleton populated at module
- * init time by individual `*.job.ts` modules.
- *
- * Designed to coexist with the legacy `runScan / runGemini / runLinkedInApply`
- * exports in `orchestrator.ts`. Those existing functions remain importable
- * for backward compatibility; we additionally register them here so that:
- *  - The Agents page (lists all `allowManual: true` jobs)
- *  - Autopilot's scheduler (honors `trigger: daily | weekly` for every
- *    registered job -- see `autopilot.ts:tick()`)
- *  - `/api/jobs/[id]/run` (the manual-trigger HTTP endpoint)
- *  - After-event chains (`installAfterListener` below)
- * all see the same canonical set.
- *
- * Bus listening for `after`-trigger jobs lives here so any job module can
- * declare `trigger: { type: 'after', tasks: ['scan'] }` and fire automatically
- * when a `Task finished` event for that source comes through the activity bus.
- */
+/** Pluggable job registry -- Map<id, JobDef> singleton populated at
+ *  module-init by every *.job.ts.
+ *  Coexists with the legacy runScan/runGemini/runLinkedInApply exports
+ *  in orchestrator.ts (kept for back-compat). Registering here ensures
+ *  /agents (allowManual=true), autopilot.tick (trigger: daily|weekly),
+ *  /api/jobs/[id]/run, and after-event chains all see one canonical set.
+ *  Bus listening for after-trigger jobs lives here so any module can
+ *  declare trigger: { type: 'after', tasks: ['scan'] } and fire on a
+ *  matching "Task finished" event. */
 
 import { installBusListener, logEvent, reportServerError } from '../events';
 import type { ActivityEvent } from '$lib/types';

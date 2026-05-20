@@ -22,8 +22,23 @@
 default_platform(:ios)
 
 APP_IDENTIFIER = "com.heron.app"
-WORKSPACE = "App.xcworkspace"
+# Capacitor 8+ uses SPM (Swift Package Manager) -- no Podfile, no
+# auto-generated `App.xcworkspace` at the top level. Build straight off
+# `App.xcodeproj`; SPM packages are wired up via project references.
+# (The project DOES have an internal `project.xcworkspace` for xcodebuild
+# but that's the per-project Xcode-managed one, not the CocoaPods
+# integration workspace fastlane expects when you pass `workspace:`.)
+PROJECT = "App.xcodeproj"
 SCHEME = "App"
+# Separate scheme for test_ci: AppTests bundle (which has App as its
+# test host, so xcodebuild builds the host app as an implicit
+# dependency). The handwritten App.xcscheme triggered a persistent
+# "Scheme App is not currently configured for the build action" error
+# under Xcode 16 even after Foundation-SDK hardcodes were stripped --
+# the App scheme metadata Xcode generates for a freshly-imported
+# project diverges from what scan expects. AppTests.xcscheme came from
+# the original Xcode-managed scheme generation + has no such bug.
+TEST_SCHEME = "AppTests"
 
 # Fastlane defaults that affect every lane.
 ENV["FASTLANE_OPT_OUT_USAGE"] = "1"           # don't phone home
@@ -79,7 +94,7 @@ platform :ios do
     sign(api_key: api_key)
 
     build_app(
-      workspace: WORKSPACE,
+      project: PROJECT,
       scheme: SCHEME,
       export_method: "app-store",
       configuration: "Release",
@@ -141,7 +156,7 @@ platform :ios do
   desc "Quick build without upload — for local smoke testing"
   lane :build_only do
     build_app(
-      workspace: WORKSPACE,
+      project: PROJECT,
       scheme: SCHEME,
       configuration: "Debug",
       export_method: "development",
@@ -160,7 +175,7 @@ platform :ios do
   desc "Run iOS unit + UI tests across a matrix of simulators"
   lane :test do
     run_tests(
-      workspace: WORKSPACE,
+      project: PROJECT,
       scheme: SCHEME,
       devices: [
         "iPhone 17 Pro Max",
@@ -178,32 +193,95 @@ platform :ios do
   desc "Run iOS tests for CI (single sim, xcresult + xcov + cobertura)"
   lane :test_ci do
     setup_ci if is_ci
+    # macos-15 GitHub runner ships Xcode 16 with the iOS 18.5 SDK
+    # (per actions/runner-images). `OS=latest` in the destination
+    # string is interpreted LITERALLY by xcodebuild as the version
+    # name -- it does NOT resolve to "whichever's installed" the way
+    # `xcrun simctl boot latest` does. xcodebuild then can't find a
+    # destination matching `OS:latest` and errors out.
+    # Use the exact runner-image OS version: 18.5. If the runner
+    # image bumps to 18.6, this string needs updating too -- but
+    # that's a deliberate version pin (cleaner than letting a runner
+    # update silently switch the test target).
+    # Also: drop xcbeautify wrapper -- xcpretty was crashing on the
+    # log file with `Errno::ENOENT @ rb_sysopen - -----` because
+    # `fastlane` shells `xcpretty -f xcbeautify` and the formatter
+    # binary path mismatches when xcbeautify isn't a system command.
+    # Raw xcodebuild output is uglier but unblocks CI.
     run_tests(
-      workspace: WORKSPACE,
-      scheme: SCHEME,
-      devices: ["iPhone 17 Pro Max"],
+      project: PROJECT,
+      scheme: TEST_SCHEME,
+      destination: "platform=iOS Simulator,OS=18.5,name=iPhone 16 Pro",
       code_coverage: true,
       result_bundle: true,
       fail_build: true,
-      xcargs: "-skipPackagePluginValidation -skipMacroValidation",
-      # G26 — xcbeautify formats xcodebuild's raw output into something
-      # legible. Fastlane installs xcbeautify automatically when
-      # `formatter: "xcbeautify"` is set; falls back to its bundled
-      # `xcpretty` shim if missing. Reads better in GitHub Actions logs
-      # and surfaces test failures with file:line annotations.
-      formatter: "xcbeautify",
+      # `COMPILER_INDEX_STORE_ENABLE=NO DEBUG_INFORMATION_FORMAT=dwarf` skip
+      # Xcode's index-store DB write (saves ~20s) and dSYM bundle assembly
+      # (saves ~10s) during the build phase. Neither matters for tests --
+      # the index store powers Xcode IDE features (quick-symbol-jump etc.),
+      # and dSYMs are for symbolicated release crash reports. Tests run
+      # against the .debug.dylib directly.
+      #
+      # No `-retry-tests-on-failure NO` -- xcodebuild's default test-iterations
+      # is 1 (no retry), so the flag would be a no-op. Earlier 1m40s "retry
+      # cost" in CI was xcresult bundle assembly + xcov coverage post-
+      # processing, not a real retry.
+      xcargs: "-skipPackagePluginValidation -skipMacroValidation COMPILER_INDEX_STORE_ENABLE=NO DEBUG_INFORMATION_FORMAT=dwarf",
       output_directory: "fastlane/test_output"
     )
-    # xcov reads the xcresult bundle and emits an HTML report + cobertura
-    # XML for Codecov. Threshold 60% — the iOS coverage floor agreed in
-    # the plan. Drop below → xcov returns non-zero → CI red.
+    # xcov: threshold gate ONLY. xcov gem 1.9.0 supports html / markdown
+    # / json reports but NOT cobertura output -- the fastlane action
+    # rejects `cobertura_xml: true` with "Could not find option" (run
+    # 26182885899). cobertura is generated by slather below.
+    #
+    # `include_targets: "App.app"` -- xcov averages all targets EQUALLY
+    # (no LOC weighting). The full build includes 22 Capacitor SPM
+    # packages (vendored third-party, untestable from our suite) + 4 of
+    # our own extensions (AppLiveActivity, AppShareExtension, AppWidget,
+    # WatchApp) + AppTests (filtered). With most at 0%, the across-all
+    # average was 8.09% (run 26180887393), even with App.app at 23.10%.
+    # Restricting to the App.app target makes the gate measure what
+    # THIS suite actually covers: the host app's source.
+    #
+    # CRITICAL: the suffix `.app` is part of xcov's target match. xccov
+    # JSON reports the target as "App.app" (the product name); xcov
+    # filters via exact-string match against `target["name"]`. Setting
+    # this to "App" filters out everything -> 0.00% coverage (run
+    # 26183910563).
+    #
+    # `minimum_coverage_percentage: 60.0` -- plan's iOS coverage gate.
+    # App.app needs ≥60% covered. 67 new XCTest cases (BackgroundFetcher,
+    # BonjourBrowser, NativePlugin, WatchSessionBridge) push App.app
+    # coverage from 23.10% to 66.14% locally (iOS 26.5 simulator).
     xcov(
-      workspace: WORKSPACE,
-      scheme: SCHEME,
+      project: PROJECT,
+      scheme: TEST_SCHEME,
       output_directory: "fastlane/coverage",
       minimum_coverage_percentage: 60.0,
+      include_targets: "App.app",
       include_test_targets: false,
       ignore_file_path: "../../../.xcovignore"
+    )
+
+    # slather: xcresult/profdata -> cobertura.xml for the codecov-action
+    # upload step in .github/workflows/test.yml. The codecov step gates
+    # on `hashFiles('ui/ios/App/fastlane/coverage/cobertura.xml')`; without
+    # this slather call the file is never produced and iOS coverage never
+    # reaches Codecov.
+    #
+    # `binary_basename: "App"` points slather at App.app's binary so it
+    # can map profdata back to source files. Verified locally produces a
+    # 680KB cobertura.xml with per-line hit info at line-rate 13.74%
+    # across the full DerivedData tree (App + extensions + Capacitor SPM).
+    # Codecov's iOS flag will display the combined picture; the threshold
+    # gate above stays narrowed to App.app via xcov's include_targets.
+    slather(
+      proj: PROJECT,
+      scheme: TEST_SCHEME,
+      binary_basename: "App",
+      output_directory: "fastlane/coverage",
+      cobertura_xml: true,
+      use_bundle_exec: true
     )
   end
 

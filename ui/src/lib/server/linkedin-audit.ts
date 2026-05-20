@@ -1,26 +1,10 @@
-/**
- * linkedin-audit -- turn the raw scraper snapshot into a remediation report.
- *
- * The Python scraper (`linkedin-audit.py`) dumps a structured snapshot:
- *   { profile, experience, skills, recommendations, featured, activity,
- *     openToWork, visibility, security, errors }
- *
- * This module classifies each gap into a `Finding`, attaches a paste-
- * ready fix where possible, and persists the report so the UX can show
- * progress as the user works through it.
- *
- * Findings have three severities:
- *   - error  : recruiters definitely down-rank this (missing photo, no
- *              About, 0 skills, custom URL is a random hash, 2FA off)
- *   - warn   : noticeable disadvantage (stale activity, no recommendations,
- *              < 5 skills, headline lacks archetype keywords)
- *   - info   : nice-to-have polish (Featured section empty, projects empty)
- *
- * Each finding has a `kind` (machine id), `category` (profile/account/
- * activity), and either a `paste` string (for textual fixes) OR a
- * `settingsPath` string (for "Settings → X → Y") for toggles the user
- * has to flip manually.
- */
+/** linkedin-audit -- turn the raw scraper snapshot into a remediation
+ *  report. linkedin-audit.py dumps { profile, experience, skills,
+ *  recommendations, featured, activity, openToWork, visibility, security,
+ *  errors }; we classify each gap into a Finding with severity (error /
+ *  warn / info), category (profile / account / activity), and either a
+ *  paste-ready string or a "Settings → X → Y" path for manual toggles.
+ *  Persisted so the UX can show progress as the user works through it. */
 
 import fs from 'node:fs';
 import path from 'node:path';

@@ -1,4 +1,4 @@
-# Leadership lookup -- who runs this company and should you care?
+# Mode: leadership-lookup -- who runs this company and should you care?
 
 Before joining, candidates should know:
 

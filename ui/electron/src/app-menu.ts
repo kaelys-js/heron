@@ -4,7 +4,7 @@
  * The macOS menu adds an `appMenu` slot up front (with About + Preferences +
  * Quit) because Apple's HIG mandates that pattern. Win/Linux skip it.
  */
-import { Menu, MenuItemConstructorOptions, shell, app } from 'electron';
+import { BrowserWindow, Menu, MenuItemConstructorOptions, shell, app } from 'electron';
 import { BRAND } from './brand';
 
 export type AppMenuHandlers = {
@@ -54,7 +54,7 @@ export function buildAppMenu(h: AppMenuHandlers): Menu {
         click: () => {
           // Navigate the WebView to /pipeline so the user lands on the
           // add-URL form. Window-loadURL dispatched from main process.
-          const w = require('electron').BrowserWindow.getFocusedWindow();
+          const w = BrowserWindow.getFocusedWindow();
           if (w) {
             const url = w.webContents.getURL();
             const target = url.replace(/\/[^/]*$/, '') + '/pipeline';
@@ -66,7 +66,7 @@ export function buildAppMenu(h: AppMenuHandlers): Menu {
         label: 'Open Pipeline',
         accelerator: 'CmdOrCtrl+O',
         click: () => {
-          const w = require('electron').BrowserWindow.getFocusedWindow();
+          const w = BrowserWindow.getFocusedWindow();
           if (w) {
             const url = w.webContents.getURL();
             const target = new URL(url).origin + '/pipeline';

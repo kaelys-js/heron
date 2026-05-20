@@ -78,7 +78,7 @@ const PER_PROFILE_DELETE_DIRS = ['reports', 'output', 'interview-prep'];
 
 /** Files PRESERVED at the profile level -- explicit allowlist. */
 const PER_PROFILE_KEEP = [
-  'portals.yml', // job sources — user said keep
+  'portals.yml', // job sources -- user said keep
 ];
 
 /** Top-level data/ files (shared across profiles) wiped on full reset. */
@@ -206,10 +206,8 @@ function listToDelete() {
   }
 
   // Multi-user profiles: data/users/{uid}/profiles/{slug}/
-  // Walk every user's profiles tree so a reset truly nukes ALL users'
-  // data, not just the legacy single-user fallback. Pre-fix this loop
-  // was missing and reset-data left every real user's content intact
-  // when a legacy data/profiles/ tree also existed.
+  // Walk every user's profiles tree so reset nukes ALL users' data,
+  // not just the legacy single-user fallback at data/profiles/.
   for (const uid of listSubdirs(USERS_ROOT)) {
     const userProfiles = join(USERS_ROOT, uid, 'profiles');
     for (const p of listSubdirs(userProfiles)) {
@@ -376,7 +374,7 @@ async function main() {
   console.log(color(DIM, `  Backup:    ${bakDir.replace(ROOT, '.')}`));
   console.log(color(DIM, `  Restore:   cp -r ${bakDir.replace(ROOT, '.')}/data/* data/`));
   console.log(color(DIM, `\nNext step:`));
-  console.log('  pnpm dev     # boot — should land on onboarding\n');
+  console.log('  pnpm dev     # boot -- should land on onboarding\n');
 }
 
 main().catch((e) => {

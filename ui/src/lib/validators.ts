@@ -1,17 +1,11 @@
-/**
- * Shared input validators. Every function returns either:
- *   { ok: true }                      -- value is acceptable (incl. empty)
- *   { ok: false, message: string }    -- value is unacceptable
- *
- * The pattern: validators are LENIENT by default -- a blank string is OK,
- * which the parent UI can mark as required separately if it cares. This
- * keeps the validator boundary clean (one job: "is this value sane?") and
- * lets the form layer decide whether emptiness is acceptable.
- *
- * URL validators normalise host-only inputs ("github.com/jane") to https://
- * before checking, so users don't have to type the protocol. The original
- * value is preserved -- we only synthesize a URL for the URL constructor.
- */
+/** Shared input validators. Each returns { ok:true } or
+ *  { ok:false, message }. Lenient by default -- a blank string is OK;
+ *  the form layer marks required-ness separately. One job: "is this
+ *  value sane?".
+ *  URL validators normalise host-only inputs ("github.com/jane") to
+ *  https:// before checking so users don't have to type the protocol;
+ *  the original value is preserved, we only synthesise for the URL
+ *  constructor. */
 
 export type ValidationResult = { ok: true } | { ok: false; message: string };
 

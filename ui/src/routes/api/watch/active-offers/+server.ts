@@ -1,17 +1,7 @@
-/**
- * GET /api/watch/active-offers
- *
- * Compact JSON payload for the Apple Watch / iOS-widget "active offers"
- * surface. Returns:
- *   {
- *     count: number,
- *     bestTc: number,
- *     bestCompany: string,
- *     bestCurrency: 'USD' | ...,
- *     soonestDeadlineMs?: number,
- *     soonestDeadlineCompany?: string,
- *   }
- */
+/** GET /api/watch/active-offers -- compact JSON for the Apple Watch /
+ *  iOS-widget "active offers" surface. Returns
+ *  { count, bestTc, bestCompany, bestCurrency,
+ *    soonestDeadlineMs?, soonestDeadlineCompany? }. */
 
 import { wrap } from '$lib/server/api-helpers';
 import { listActiveOffers, currentRound, annualisedTc } from '$lib/server/offers';

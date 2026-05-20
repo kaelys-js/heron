@@ -1,18 +1,12 @@
-/**
- * verify-pipeline.job -- loadActiveProfileTracker must route through
- * activePath('applications') so multi-user installs verify the right
- * user's tracker.
- *
- * Pre-fix bug: `loadActiveProfileTracker` read data/profiles.json
- * directly, then fell back to data/applications.md at the repo root.
- * Under multi-user neither path matched the active user's tracker
- * (which lives at data/users/{uid}/profiles/{slug}/applications.md).
- * Result: the nightly integrity check ran against an empty/legacy file
- * and never raised real issues.
- *
- * Fix routes through activePath('applications') which respects both
- * the active user (via AsyncLocalStorage) and the active profile.
- */
+/** verify-pipeline.job -- loadActiveProfileTracker MUST route through
+ *  activePath('applications') so multi-user installs verify the right
+ *  user's tracker. Reading data/profiles.json directly + falling back to
+ *  data/applications.md at the repo root would resolve to neither the
+ *  active user's nor profile's file (lives at
+ *  data/users/{uid}/profiles/{slug}/applications.md); the nightly
+ *  integrity check would run against an empty/legacy file and never
+ *  raise real issues. activePath() respects both the active user (via
+ *  AsyncLocalStorage) and the active profile. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -76,16 +70,16 @@ describe('verify-pipeline.job — routes through activePath() for multi-user', (
     const apps = profilePathForUser(userId, 'default', 'applications');
     fs.writeFileSync(apps, APPS_BODY_BAD_STATUS);
 
-    // Put a CLEAN tracker at the legacy single-user path. Pre-fix this
-    // would be what loadActiveProfileTracker reads; post-fix the
-    // resolver routes through activePath() for this user.
+    // Put a CLEAN tracker at the legacy single-user path. A naive
+    // loadActiveProfileTracker would read this; activePath() must route
+    // to alice's per-user tracker instead.
     const legacyPath = path.join(tmpRoot, 'data', 'applications.md');
     fs.mkdirSync(path.dirname(legacyPath), { recursive: true });
     fs.writeFileSync(legacyPath, APPS_BODY_GOOD);
 
     const result = await runWithUser(userId, () => verifyMod.runVerifyPipeline());
-    // If we'd read the LEGACY file, the result would show 0 warnings.
-    // Post-fix we read alice's actual tracker, which contains the bogus
+    // Reading the LEGACY file would yield 0 warnings; the per-user
+    // resolver must read alice's tracker, which contains the bogus
     // status -- non-canonical-status warning.
     expect(result.meta?.warnings).toBeGreaterThan(0);
     expect(result.meta?.trackerPath).toBe(apps);

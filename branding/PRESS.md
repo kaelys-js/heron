@@ -60,7 +60,6 @@ the language is deliberate.
 | **Bundle ID** | `com.heron.app` |
 | **URL scheme** | `heron://` |
 | **Support email** | <hello@heron.app> |
-| **Heritage** | Hard fork of [`santifer/career-ops`](https://github.com/santifer/career-ops) |
 <!-- /AUTO-GENERATED:quick-facts-table -->
 
 ## Identifiers
@@ -207,12 +206,6 @@ attribution, journalism, education, community contributions) are
 enumerated in [`docs/TRADEMARK.md`](../docs/TRADEMARK.md). When in
 doubt, ask <hello@heron.app> -- we default to permissive.
 
-## Heritage statement
-
-For pieces that need to be precise about Heron's lineage:
-
-> Heron is a hard fork of `santifer/career-ops`, the original CLI-driven job-search system [santifer](https://santifer.io) built and used to evaluate 740+ offers, generate 100+ tailored CVs, and land a Head of Applied AI role. His [case study](https://santifer.io/career-ops-system) is the philosophical foundation. The fork extends the original with multi-user RBAC, a SvelteKit dashboard, Capacitor native apps, an autonomous-apply pipeline, and the present brand identity. Credit to santifer is preserved in the README Acknowledgements section and in the upstream repository link from every issue page.
-
 ## What's been published already
 
 For journalists checking precedent:
@@ -221,8 +214,6 @@ For journalists checking precedent:
   Heron rebrand commit chain. Updates here, in `CHANGELOG.md`.
 - The launch announcement (if/when one happens) will reference this
   document and add the launch-specific copy.
-- Earlier articles about the pre-fork `career-ops` project remain
-  attributed to santifer; Heron-era articles should attribute Heron.
 
 ## Versioning this press kit
 

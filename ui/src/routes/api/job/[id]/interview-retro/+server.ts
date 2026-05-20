@@ -1,17 +1,9 @@
-/**
- * /api/job/[id]/interview-retro -- spawn the interview-retro Claude mode.
- *
- * POST body: { stage, notes, outcome }
- *
- * The mode reads the user's free-form interview notes + cv.md + the
- * existing story-bank.md, writes a structured retro file, and APPENDS
- * any strong-moment stories to the bank as "(real rep)" entries.
- * Returns the retro path + count of stories added.
- *
- * Why this matters: the story bank is seeded once from cv.md, but the
- * stories that ACTUALLY land in interviews are different from the ones
- * a CV reviewer would pick. This grows the bank from real reps.
- */
+/** /api/job/[id]/interview-retro -- spawn the interview-retro mode. POST body:
+ *  { stage, notes, outcome }. The mode reads the user's free-form notes +
+ *  cv.md + story-bank.md, writes a structured retro file, and APPENDS strong-
+ *  moment stories to the bank as "(real rep)" entries. Returns the retro path
+ *  + stories-added count. The bank is seeded from cv.md, but the stories that
+ *  land in interviews differ from CV-pick stories -- this grows it from reps. */
 
 import fs from 'node:fs';
 import path from 'node:path';

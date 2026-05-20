@@ -15,6 +15,12 @@ description: |
     pnpm_cache    (default true)  — restore the pnpm store cache
     turbo_cache   (default false) — restore the Turbo cache
     apply_brand   (default false) — run `pnpm brand` after install
+    install_python_deps (default true) — `pip install -r scripts/requirements.txt`
+                                          for the mise-pinned Python interp.
+                                          Required by any workflow that boots
+                                          the dashboard (orchestrator spawns
+                                          scan/apply Python children that
+                                          import `cryptography`).
 
   Usage:
 
@@ -41,6 +47,10 @@ inputs:
     description: Run `pnpm brand` after install (generates Brand.ts etc.)
     required: false
     default: "false"
+  install_python_deps:
+    description: pip install scripts/requirements.txt against mise-pinned python
+    required: false
+    default: "true"
 
 runs:
   using: composite
@@ -79,7 +89,27 @@ runs:
       shell: bash
       run: pnpm install --frozen-lockfile
 
+    - name: Install Python dependencies (cryptography etc.)
+      if: inputs.install_python_deps == 'true'
+      shell: bash
+      # The dashboard's orchestrator spawns scripts/scan/*.py + scripts/
+      # apply/*.py children that import `cryptography` (via
+      # scripts/lib/user_secrets.py). Without this step the children
+      # crash with `ModuleNotFoundError: No module named 'cryptography'`
+      # at boot, polluting the browser console -> Lighthouse asserts +
+      # E2E Playwright tests both fail with second-order errors that
+      # look like UI bugs but are actually a missing-pip-install.
+      # `python -m pip` instead of bare `pip` guarantees the
+      # mise-managed interpreter (3.13.13) is the one we install into,
+      # not whatever stray pip the runner image happened to ship.
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -r scripts/requirements.txt
+        python -c "from cryptography.hazmat.primitives.ciphers.aead import AESGCM; print('cryptography import OK')"
+
     - name: Apply brand
       if: inputs.apply_brand == 'true'
       shell: bash
-      run: pnpm brand
+      # The script is `brand:apply`, not `brand` -- the latter doesn't
+      # exist at root and pnpm errors with "Command 'brand' not found".
+      run: pnpm brand:apply

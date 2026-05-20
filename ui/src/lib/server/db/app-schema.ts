@@ -1,27 +1,13 @@
-/**
- * app-schema -- Drizzle schema for the app.db SQLite file.
- *
- * Scope: ONLY the tables the dashboard actually queries. Per-user user
- * data -- CV, profile.yml, portals.yml, _profile.md, applications.md,
- * pipeline.md, scan-history.tsv, gemini-scores.tsv, reports/*.md,
- * output/*.pdf, interview-prep/*.md, form-answers-cache.jsonl,
- * apply-state JSON, comp-overrides JSON, interview-schedule.jsonl --
- * stays on the filesystem under `data/users/{userId}/profiles/{slug}/...`
- * because the Claude CLI reads/writes those paths directly per AGENTS.md.
- * User separation is enforced at the filesystem layer via the per-user
- * path prefix; moving these into SQLite would break the CLI integration.
- *
- * Tables in this file:
- *   • profiles          -- per-user career-track list + active flag
- *   • ui_prefs          -- per-user appearance / theme / display name
- *   • activity_events   -- append-only mirror of data/activity.jsonl for
- *                          indexed per-user queries on the UI side
- *   • issues            -- append-only mirror of data/issues.jsonl for
- *                          indexed per-user queries on the UI side
- *
- * Every row has `user_id` (FK to auth.db users; enforced application-side
- * because Drizzle / SQLite don't support cross-file FKs).
- */
+/** app-schema -- Drizzle schema for app.db. Scope: only tables the
+ *  dashboard queries. Per-user content (CV, profile.yml, portals.yml,
+ *  applications.md, reports, etc.) stays on the filesystem under
+ *  data/users/{uid}/profiles/{slug}/ because the AI CLI reads those
+ *  paths directly per AGENTS.md.
+ *  Tables: profiles (career-track list + active flag), ui_prefs
+ *  (per-user theme/display name), activity_events + issues (indexed
+ *  mirrors of the JSONL files).
+ *  Every row has user_id (FK to auth.db.users enforced application-side
+ *  -- Drizzle/SQLite don't support cross-file FKs). */
 import { sqliteTable, text, integer, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 /** A career profile (e.g. "Engineer search", "Founder search"). */

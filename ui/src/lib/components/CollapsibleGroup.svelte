@@ -54,7 +54,7 @@
       onclick={toggle}
       aria-expanded={open}
       class={cn(
-        'flex items-center gap-1 flex-1 min-w-0 text-[11px] font-medium tracking-wide uppercase text-muted-foreground/70 hover:text-foreground transition-colors rounded -mx-1 px-1 py-0.5',
+        'flex items-center gap-1 flex-1 min-w-0 text-[11px] font-medium tracking-wide uppercase text-muted-foreground dark:text-muted-foreground/70 hover:text-foreground transition-colors rounded -mx-1 px-1 py-0.5',
       )}
     >
       <ChevronRight

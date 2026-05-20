@@ -6,16 +6,17 @@
  * every write lands in /tmp and the live-data guard in test-setup.ts
  * stays out of our way.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import fs from 'node:fs';
-import path from 'node:path';
 import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const TMP = path.join(tmpdir(), 'heron-user-secrets-' + Date.now() + '-' + process.pid);
 
 // MUST run before importing user-secrets so the module-load-time
 // `userSharedPathForUser` resolves under the mocked ROOT.
-vi.mock('./files', () => ({ ROOT: TMP }));
+vi.mock('./files', () => ({ ROOT: TMP, DATA_ROOT: path.join(TMP, 'data') }));
 
 const {
   deleteSecret,
@@ -240,25 +241,25 @@ describe('user-secrets — mjs/ts parity (CLI scripts share the same format)', (
     }
   });
 
-  it('mjs getCredential() honors CAREER_OPS_USER_ID and falls back to process.env', async () => {
+  it('mjs getCredential() honors HERON_USER_ID and falls back to process.env', async () => {
     setSecret(TEST_USER_A, 'ANTHROPIC_API_KEY', 'sk-ant-per-user-WINS-LONG');
     const prevHeron = process.env.HERON_DATA_DIR;
-    const prevUser = process.env.CAREER_OPS_USER_ID;
+    const prevUser = process.env.HERON_USER_ID;
     const prevEnv = process.env.ANTHROPIC_API_KEY;
     process.env.HERON_DATA_DIR = path.join(TMP, 'data');
-    process.env.CAREER_OPS_USER_ID = TEST_USER_A;
+    process.env.HERON_USER_ID = TEST_USER_A;
     process.env.ANTHROPIC_API_KEY = 'env-LOSES';
     try {
       const mjs = await import('../../../../scripts/lib/user-secrets.mjs');
       expect(mjs.getCredential('ANTHROPIC_API_KEY')).toBe('sk-ant-per-user-WINS-LONG');
-      // Now unset CAREER_OPS_USER_ID -- should fall through to process.env
-      delete process.env.CAREER_OPS_USER_ID;
+      // Now unset HERON_USER_ID -- should fall through to process.env
+      delete process.env.HERON_USER_ID;
       expect(mjs.getCredential('ANTHROPIC_API_KEY')).toBe('env-LOSES');
     } finally {
       if (prevHeron === undefined) delete process.env.HERON_DATA_DIR;
       else process.env.HERON_DATA_DIR = prevHeron;
-      if (prevUser === undefined) delete process.env.CAREER_OPS_USER_ID;
-      else process.env.CAREER_OPS_USER_ID = prevUser;
+      if (prevUser === undefined) delete process.env.HERON_USER_ID;
+      else process.env.HERON_USER_ID = prevUser;
       if (prevEnv === undefined) delete process.env.ANTHROPIC_API_KEY;
       else process.env.ANTHROPIC_API_KEY = prevEnv;
     }
@@ -268,14 +269,22 @@ describe('user-secrets — mjs/ts parity (CLI scripts share the same format)', (
 describe('user-secrets — migrateEnvToUserSecrets()', () => {
   // The migration helper calls into ./user-context (DB) + ./events.
   // Mock those at the boundary so the test stays a pure unit test.
+  //
+  // CI quirk: two competing `vi.doMock('./user-context', ...)` calls
+  // (one in beforeEach, one in a single test) DID NOT reliably override
+  // each other under Vitest 4 + full-suite + coverage on linux runners.
+  // We use a shared mutable holder so the factory always returns the
+  // freshest value -- no need to redeclare the mock per-test.
+  const mockState = { ownerId: TEST_USER_A };
+
   beforeEach(() => {
+    mockState.ownerId = TEST_USER_A;
     vi.doMock('./user-context', async (importOriginal) => {
       const real = (await importOriginal()) as Record<string, unknown>;
       return {
         ...real,
         SYSTEM_USER_ID,
-        // Mocked-per-case in each test below via vi.spyOn (default: owner = USER_A)
-        getOwnerUserId: async () => TEST_USER_A,
+        getOwnerUserId: async () => mockState.ownerId,
       };
     });
     vi.doMock('./events', () => ({
@@ -316,11 +325,11 @@ describe('user-secrets — migrateEnvToUserSecrets()', () => {
   });
 
   it('is a no-op when no owner exists', async () => {
-    // Override the user-context mock to report no owner.
-    vi.doMock('./user-context', async (importOriginal) => {
-      const real = (await importOriginal()) as Record<string, unknown>;
-      return { ...real, SYSTEM_USER_ID, getOwnerUserId: async () => SYSTEM_USER_ID };
-    });
+    // Flip the shared mock state -- the factory reads it lazily, so the
+    // next dynamic import of './user-context' from inside migrate() sees
+    // SYSTEM_USER_ID. No second vi.doMock needed (and it WOULDN'T work
+    // reliably in CI -- see describe-block comment above).
+    mockState.ownerId = SYSTEM_USER_ID;
     vi.resetModules();
     const { migrateEnvToUserSecrets: migrate } = await import('./user-secrets');
     process.env.GEMINI_API_KEY = 'env-LONG-value-ZZZZ';

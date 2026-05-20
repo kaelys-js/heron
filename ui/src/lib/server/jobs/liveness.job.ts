@@ -1,22 +1,12 @@
-/**
- * Liveness check -- weekly background sweep + per-job + bulk surfaces.
- *
- * Wraps `check-liveness.mjs` (Playwright-based detector) to classify URLs:
- *   active    -- posting still listed
- *   expired   -- 404 / posting removed / "no longer accepting applications"
- *   uncertain -- couldn't reach a verdict (Playwright timeout, captcha, …)
- *
- * On the bulk sweep, expired URLs auto-flip to status=Closed via markClosed.
- * Uncertain URLs become Inbox issues (so the user can verify by hand).
- *
- * Trigger: weekly (Mondays at 06:00) + manual + per-URL via /api/job/[id]/liveness.
- *
- * Args (manual run):
- *   { urls: string[] }   -- explicit URL list
- *   { scope: 'stale' }   -- every job ≥ 14 days old in pipeline.md / applications.md
- *   { scope: 'all' }     -- every job in pipeline.md (use sparingly -- costs Playwright time)
- *   default              -- same as scope='stale'
- */
+/** Liveness check -- weekly sweep + per-job + bulk surfaces. Wraps
+ *  check-liveness.mjs (Playwright detector) classifying each URL as
+ *  active, expired (404/removed/"no longer accepting"), or uncertain
+ *  (timeout, captcha, …).
+ *  Sweep: expired URLs auto-flip to Closed via markClosed; uncertain
+ *  URLs become Inbox issues for manual check.
+ *  Trigger: Mondays 06:00 + manual + per-URL via /api/job/[id]/liveness.
+ *  Manual args: { urls } explicit list, or { scope: 'stale' | 'all' }
+ *  ('stale'=jobs ≥14 days old, default; 'all'=every pipeline.md URL). */
 
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';

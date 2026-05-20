@@ -1,22 +1,10 @@
-/**
- * GET  /api/job/[id]/referrals  → list pre-drafted referral asks for this job
- * POST /api/job/[id]/referrals  → spawn the referral-discovery mode
- *
- * The mode walks the user's LinkedIn 1st/2nd-degree network for people
- * currently at the target company, ranked by closeness + role-relevance,
- * and pre-drafts an outreach message per person ("Hi {name}, I saw you
- * work at {company} on {team}. I'm applying for {role} -- would you mind
- * passing along my CV?").
- *
- * Body:
- *   { maxResults?: number, locationFilter?: string }
- *
- * Output: `data/users/{userId}/profiles/{slug}/referrals/{jobId}.json`
- * with the ranked list.
- *
- * NOTE: this is a network-graph-only mode -- it does NOT send messages. The
- * user reviews + sends each ask manually (or copies into LinkedIn).
- */
+/** /api/job/[id]/referrals -- GET lists pre-drafted referral asks; POST spawns
+ *  the referral-discovery mode. The mode walks the user's LinkedIn 1st/2nd-
+ *  degree network for people at the target company, ranks by closeness +
+ *  role-relevance, and pre-drafts a per-person outreach message. POST body:
+ *  { maxResults?, locationFilter? }. Output: data/users/{uid}/profiles/{slug}/
+ *  referrals/{jobId}.json. Graph-only -- never sends; user reviews + sends
+ *  each ask manually. */
 
 import fs from 'node:fs';
 import path from 'node:path';

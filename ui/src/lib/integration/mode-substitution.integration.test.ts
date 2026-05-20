@@ -7,7 +7,7 @@
  * real `modes/` tree on disk. Spawns no processes -- purely textual.
  */
 import { describe, it, expect } from 'vitest';
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { substituteModeTokensForUser, listKnownTokens } from '$lib/server/mode-substitution';
 import { ROOT } from '$lib/server/files';
@@ -45,14 +45,23 @@ function modeFiles(): string[] {
 describe('mode-substitution end-to-end', () => {
   describe('every mode file', () => {
     const files = modeFiles();
-    expect(files.length).toBeGreaterThan(20); // sanity — at least 20 mode files exist
+    expect(files.length).toBeGreaterThan(20); // sanity -- at least 20 mode files exist
 
     it.each(
       files.map((f) => [f.slice(ROOT.length + 1)] as const),
     )('substitutes %s without leftover tokens', (rel) => {
       const abs = join(ROOT, rel);
-      if (!statSync(abs).isFile()) return; // belt-and-braces
-      const source = readFileSync(abs, 'utf8');
+      // CodeQL js/file-system-race: read directly and treat ENOENT
+      // (or EISDIR) as a skip. The previous `statSync().isFile()`
+      // precheck was the TOCTOU partner of readFileSync below.
+      let source: string;
+      try {
+        source = readFileSync(abs, 'utf8');
+      } catch (e) {
+        const code = (e as NodeJS.ErrnoException).code;
+        if (code === 'ENOENT' || code === 'EISDIR') return;
+        throw e;
+      }
       const substituted = substituteModeTokensForUser(TEST_USER, TEST_PROFILE, source);
 
       // No __KNOWN_TOKEN__ literals should remain after substitution.

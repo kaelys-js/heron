@@ -326,7 +326,7 @@
         <div class="rounded-md border border-red-500/40 bg-red-500/10 p-3 space-y-2">
           <div class="flex items-baseline gap-2">
             <Flame class="size-3.5 text-red-300" />
-            <span class="text-sm font-medium text-red-200">Everything — what happens</span>
+            <span class="text-sm font-medium text-red-200">Everything -- what happens</span>
           </div>
           <p class="text-[11px] text-red-200/85 leading-relaxed">
             Strict superset of "Profile only" + "Jobs data only", PLUS longer-lived configs:
@@ -387,7 +387,7 @@
         <p class="text-[11px] text-muted-foreground/90 leading-relaxed">
           Every modified file gets backed up to <code class="font-mono">&lt;path&gt;.bak</code>
           first. If you change your mind, restore by hand.
-          <strong>Reports + output PDFs are deleted outright in "Everything" mode</strong> — no backup
+          <strong>Reports + output PDFs are deleted outright in "Everything" mode</strong> -- no backup
           of those.
         </p>
       </div>
@@ -404,7 +404,7 @@
         <span class="text-[11px] leading-relaxed">
           <span class="font-medium text-foreground/90">Also reset onboarding state</span>
           <span class="text-muted-foreground/70">
-            — wipes <code class="font-mono">data/onboarding-state.json</code> so the next dashboard load
+            -- wipes <code class="font-mono">data/onboarding-state.json</code> so the next dashboard load
             lands on the wizard. Force-on for "Everything".</span
           >
         </span>

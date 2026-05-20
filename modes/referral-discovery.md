@@ -1,4 +1,4 @@
-# Referral discovery -- find people who can vouch for you at the target company
+# Mode: referral-discovery -- find people who can vouch for you at the target company
 
 You're producing a ranked list of people the user could ask for a
 referral at a specific company, along with a pre-drafted ask per person.

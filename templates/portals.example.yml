@@ -284,12 +284,12 @@ search_queries:
 # false here. Anything not listed is enabled.
 #
 # Supported ATS providers (auto-detected):
-#   greenhouse, ashby, lever                  — public REST APIs
-#   workday                                   — POST API (paginates 20/req)
-#   smartrecruiters                           — public REST API
-#   workable                                  — public widget API
-#   personio                                  — XML feed (DACH-heavy)
-#   recruitee, teamtailor                     — public REST APIs
+#   greenhouse, ashby, lever                  -- public REST APIs
+#   workday                                   -- POST API (paginates 20/req)
+#   smartrecruiters                           -- public REST API
+#   workable                                  -- public widget API
+#   personio                                  -- XML feed (DACH-heavy)
+#   recruitee, teamtailor                     -- public REST APIs
 #
 # Companies on an ATS we don't auto-detect can use `ats: workday` /
 # `ats: smartrecruiters` overrides plus the matching per-tenant fields

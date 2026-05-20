@@ -91,7 +91,10 @@ vi.mock('../events', () => ({
   reportServerError: vi.fn(),
 }));
 
-vi.mock('../files', () => ({ ROOT: '/tmp/heron-imap-job-test' }));
+vi.mock('./files', () => ({
+  ROOT: '/tmp/heron-imap-job-test',
+  DATA_ROOT: '/tmp/heron-imap-job-test/data',
+}));
 
 // Pull tickOnce as an export so we can drive it without fake timers.
 const { tickOnce } = await import('./scan-email-imap.job');

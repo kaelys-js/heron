@@ -31,25 +31,25 @@
 ## Your Adaptive Framing
 
 <!-- Map YOUR projects to each archetype. Example:
-     | Platform / LLMOps | My monitoring dashboard project | article-digest.md |
-     | Agentic | My chatbot with HITL escalation | cv.md section 3 | -->
+     | Platform / LLMOps | My monitoring dashboard project | `__ARTICLE_DIGEST__` |
+     | Agentic | My chatbot with HITL escalation | `__CV__` section 3 | -->
 
 | If the role is... | Emphasize about you... | Proof point sources |
 |-------------------|------------------------|---------------------|
-| Platform / LLMOps | Production systems builder, observability, evals | article-digest.md + cv.md |
-| Agentic / Automation | Multi-agent orchestration, HITL, reliability | article-digest.md + cv.md |
-| Technical AI PM | Product discovery, PRDs, metrics | cv.md + article-digest.md |
-| Solutions Architect | System design, integrations, enterprise-ready | article-digest.md + cv.md |
-| Forward Deployed Engineer | Fast delivery, client-facing, prototype to prod | cv.md + article-digest.md |
-| AI Transformation Lead | Change management, team enablement, adoption | cv.md + article-digest.md |
+| Platform / LLMOps | Production systems builder, observability, evals | `__ARTICLE_DIGEST__` + `__CV__` |
+| Agentic / Automation | Multi-agent orchestration, HITL, reliability | `__ARTICLE_DIGEST__` + `__CV__` |
+| Technical AI PM | Product discovery, PRDs, metrics | `__CV__` + `__ARTICLE_DIGEST__` |
+| Solutions Architect | System design, integrations, enterprise-ready | `__ARTICLE_DIGEST__` + `__CV__` |
+| Forward Deployed Engineer | Fast delivery, client-facing, prototype to prod | `__CV__` + `__ARTICLE_DIGEST__` |
+| AI Transformation Lead | Change management, team enablement, adoption | `__CV__` + `__ARTICLE_DIGEST__` |
 
 ## Your Exit Narrative
 
 <!-- Replace with YOUR story. This frames everything. -->
 
-Use the candidate's exit story from `config/profile.yml` to frame ALL content:
+Use the candidate's exit story from `__PROFILE_YML__` to frame ALL content:
 - **In PDF Summaries:** Bridge from past to future
-- **In STAR stories:** Reference proof points from article-digest.md
+- **In STAR stories:** Reference proof points from `__ARTICLE_DIGEST__`
 - **In Draft Answers:** The transition narrative appears in the first response
 
 ## Your Cross-cutting Advantage
@@ -65,7 +65,7 @@ Frame profile as **"Technical builder with real-world proof"** that adapts frami
      password: demo-2026
      when_to_share: "LLMOps, AI Platform roles" -->
 
-If you have a live demo/dashboard (check profile.yml), offer access in applications for relevant roles.
+If you have a live demo/dashboard (check `__PROFILE_YML__`), offer access in applications for relevant roles.
 
 ## Your Comp Targets
 
@@ -81,7 +81,7 @@ If you have a live demo/dashboard (check profile.yml), offer access in applicati
 <!-- Adapt to YOUR situation, currency, location -->
 
 **Salary expectations:**
-> "Based on market data for this role, I'm targeting [RANGE from profile.yml]. I'm flexible on structure -- what matters is the total package and the opportunity."
+> "Based on market data for this role, I'm targeting [RANGE from `__PROFILE_YML__`]. I'm flexible on structure -- what matters is the total package and the opportunity."
 
 **Geographic discount pushback:**
 > "The roles I'm competitive for are output-based, not location-based. My track record doesn't change based on postal code."
@@ -94,7 +94,7 @@ If you have a live demo/dashboard (check profile.yml), offer access in applicati
 <!-- Adapt to YOUR situation -->
 
 **In forms:**
-- Follow your actual availability from profile.yml
+- Follow your actual availability from `__PROFILE_YML__`
 - Specify timezone overlap in free-text fields
 
 **In evaluations (scoring):**

@@ -1,24 +1,10 @@
-/**
- * apply-counter -- daily LinkedIn / portal apply rate-limit accounting.
- *
- * Per-user (F17). Each user gets their own counter file at
- * `data/users/{userId}/profiles/_shared/apply-counter.json` (or the
- * legacy `data/profiles/_shared/apply-counter.json` for SYSTEM_USER).
- * The file is keyed by ISO yyyy-mm-dd in the host's local timezone
- * (matching how autopilot's daily-scan weekday logic uses local time).
- *
- * Why per-user: `thresholds.maxAppliesPerDay` from autopilot.json is
- * itself per-user (F9 fix), so the counter MUST also be per-user.
- * Pre-F17 a single global file meant user A's 30 applies ate into user
- * B's cap and concurrent writes race-conditioned on writeState.
- *
- * Used by orchestrator's `runLinkedInApply` (per-job + bulk paths) and
- * `apply-queue.job.ts` to gate each Submit on whether today's count is
- * still under the threshold. Both callers ALREADY run inside a user
- * ALS context (the registry's `runById` fan-out wraps each invocation
- * in `runAsUser(userId, …)`), so the implicit `currentUserIdOrDefault()`
- * resolution here is correct.
- */
+/** Per-user daily apply rate-limit counter at
+ *  data/users/{userId}/profiles/_shared/apply-counter.json. Keyed by
+ *  local-time ISO date to match autopilot's weekday logic. Must be
+ *  per-user because thresholds.maxAppliesPerDay is per-user (F9/F17).
+ *  Callers (orchestrator.runLinkedInApply, apply-queue.job.ts) run
+ *  inside runAsUser() so the implicit currentUserIdOrDefault() is
+ *  correct. */
 
 import fs from 'node:fs';
 import path from 'node:path';

@@ -1,18 +1,9 @@
-/**
- * GET /api/inbox/cards
- *
- * Returns the auto-derived "next action" cards for the current user:
- *   • thank-you-owed   -- interviewers from the last 48h with no thank-you-path yet
- *   • follow-up-due    -- applications past their follow-up cadence
- *   • prep-block-recommended -- upcoming interviews in the next 5 days without a dossier
- *   • offer-decision-due -- offers with decisionDeadline in the next 72h
- *   • ghosted-flagged   -- auto-ghost detector flagged applications silent ≥21d
- *   • next-action-due  -- explicit nextActionDue items from stage-state
- *
- * Used by the Inbox page (alongside the existing apply-failure Issues).
- * Stateless -- derived on every call from sidecar JSON. No persisted card
- * entities; the user reaches the relevant flow via the card's CTA.
- */
+/** GET /api/inbox/cards -- auto-derived "next action" cards for the current
+ *  user. Kinds: thank-you-owed (interviews <48h, no thank-you), follow-up-due
+ *  (past cadence), prep-block-recommended (interview <5d, no dossier),
+ *  offer-decision-due (deadline <72h), ghosted-flagged (silent >=21d),
+ *  next-action-due (from stage-state). Stateless -- derived on every call
+ *  from sidecar JSON. */
 
 import { wrap } from '$lib/server/api-helpers';
 import { findThankYousOwed, findUpcomingInterviews } from '$lib/server/interviewers';

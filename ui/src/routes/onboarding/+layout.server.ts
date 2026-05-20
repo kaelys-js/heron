@@ -1,26 +1,11 @@
-/**
- * Onboarding layout loader.
- *
- * Four responsibilities (after multi-user landed):
- *
- *   0. **Auth gate** -- if no user accounts exist in auth.db, divert to
- *      /onboarding/account (the "create your owner account" step). If a
- *      user exists but isn't signed in for this request, divert to /login
- *      so they can authenticate before continuing setup. Already-authed
- *      users proceed through the rest of the wizard normally.
- *
- *   1. Seeds the active profile's `_profile.md` from the bundled template
- *      the first time the wizard loads. Per-profile copy now; previously
- *      shared at `modes/_profile.md`.
- *
- *   2. Resolves the wizard's TARGET profile:
- *      - `?profile=<slug>` → use that profile
- *      - `?new=1` (no slug yet) → flag that the Welcome step needs to
- *        prompt for a new profile name + color, then create + redirect
- *      - default → active profile
- *
- *   3. Loads onboarding state for the sidebar progress indicator.
- */
+/** Onboarding layout loader -- four jobs:
+ *  0. Auth gate: zero users → /onboarding/account; users-exist-but-anon →
+ *     /login; authed → continue.
+ *  1. Seed active profile's _profile.md from the bundled template on first
+ *     load (per-profile copy; was modes/_profile.md).
+ *  2. Resolve target profile: ?profile=<slug> | ?new=1 (Welcome step
+ *     creates one) | default active.
+ *  3. Load onboarding state for the sidebar progress indicator. */
 
 import fs from 'node:fs';
 import path from 'node:path';

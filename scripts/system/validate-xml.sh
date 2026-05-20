@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# validate-xml.sh — assert every XML-format file in the repo is well-formed.
+# validate-xml.sh -- assert every XML-format file in the repo is well-formed.
 #
 # Covers:
-#   - *.svg         — vector graphics (branding/logo.svg, favicon.svg, etc.)
-#   - *.storyboard  — Apple Interface Builder XML (LaunchScreen, Main)
+#   - *.svg         -- vector graphics (branding/logo.svg, favicon.svg, etc.)
+#   - *.storyboard  -- Apple Interface Builder XML (LaunchScreen, Main)
 #
 # NOT covered:
-#   - *.plist / *.entitlements / *.xcprivacy — Apple plists; XML-format but
+#   - *.plist / *.entitlements / *.xcprivacy -- Apple plists; XML-format but
 #     have their own schema. Handled by scripts/system/validate-plists.py.
-#   - *.pbxproj — OpenStep ASCII plist, not XML. Handled by Xcode itself.
-#   - *.xcconfig — Apple build-setting text, not XML.
+#   - *.pbxproj -- OpenStep ASCII plist, not XML. Handled by Xcode itself.
+#   - *.xcconfig -- Apple build-setting text, not XML.
 #
 # Uses xmllint --noout (well-formedness check, no DTD/schema validation).
 # xmllint ships with libxml2; pre-installed on every macOS and the

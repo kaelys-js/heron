@@ -1,18 +1,12 @@
-/**
- * Status normalization -- silent hygiene job.
- *
- * Runs `normalize-statuses.mjs` to clean non-canonical states in
- * applications.md (DUPLICADO → Discarded, strip markdown bold from status,
- * map Spanish → canonical English statuses, etc.).
- *
- * Triggers (match the `source` field of upstream success events):
- *   - 'status'      -- every /api/status POST emits a success event
- *   - 'batch-merge' -- emitted by the auto-merge fs watcher (`auto-merge-batch.ts`)
- *   - 'boot'        -- emitted by bootOnce when the dev server is fully up
- *
- * Activity feed: silent unless ≥1 row was actually changed. The script's
- * stdout is parsed for the "📊 N statuses normalized" line.
- */
+/** Status normalization -- silent hygiene job. Runs
+ *  normalize-statuses.mjs to clean non-canonical states in
+ *  applications.md (DUPLICADO → Discarded, strip markdown bold,
+ *  Spanish → canonical English, etc.).
+ *  Triggers (matched against upstream success-event source):
+ *  'status' (every /api/status POST), 'batch-merge' (auto-merge fs
+ *  watcher), 'boot' (bootOnce when dev server is up).
+ *  Activity feed: silent unless ≥1 row changed; stdout parsed for
+ *  "N statuses normalized". */
 
 import { spawn } from 'node:child_process';
 import { ROOT } from '../files';
@@ -28,7 +22,7 @@ function runNormalize(): Promise<JobResult> {
     let stdout = '';
     const p = spawn('node', ['scripts/tracker/normalize-statuses.mjs'], {
       cwd: ROOT,
-      // userContextEnv injects CAREER_OPS_USER_ID so the script
+      // userContextEnv injects HERON_USER_ID so the script
       // resolves the right data/users/{uid}/profiles/{slug}/applications.md
       // tree (F13).
       env: userContextEnv(),

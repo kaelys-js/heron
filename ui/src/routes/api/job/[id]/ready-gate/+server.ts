@@ -1,23 +1,9 @@
-/**
- * GET /api/job/[id]/ready-gate
- *
- * Returns a checklist of "are you ready for the upcoming interview" items:
- *
- *   - resume    -- tailored CV PDF exists for this job
- *   - report    -- deep-evaluation report exists
- *   - dossier   -- job-wide pre-call dossier exists (in interview-prep/)
- *   - interviewers -- at least one Interviewer record exists for this job
- *   - perInterviewerDossier -- every Interviewer has a dossierPath
- *   - questions -- every Interviewer has a questionsPath
- *   - drills    -- has the user done a mock-interview drill in last 7 days
- *   - sleep     -- interview is far enough away that there's time to prep
- *
- * Returns counts + a boolean "ready" verdict (every required item green).
- *
- * Used by:
- *   • Job-page Ready-to-interview gate widget (Phase III.3)
- *   • Apple Watch glance ("3 items missing for tomorrow's interview")
- */
+/** GET /api/job/[id]/ready-gate -- "are you ready for the upcoming interview"
+ *  checklist. Items: resume (tailored CV PDF), report (deep-eval), dossier
+ *  (job-wide pre-call), interviewers (>=1 record), perInterviewerDossier
+ *  (each has dossierPath), questions (each has questionsPath), drills
+ *  (mock-interview in last 7d), sleep (interview far enough out to prep).
+ *  Returns counts + boolean ready (every required item green). */
 
 import fs from 'node:fs';
 import path from 'node:path';

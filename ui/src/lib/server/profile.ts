@@ -1,20 +1,13 @@
-/**
- * Read/write per-profile `profile.yml`, `cv.md`, `_profile.md` + reset helpers.
- *
- * Every exported function takes an OPTIONAL `profileId` as its first argument.
- * When omitted, the active profile (from `data/profiles.json`) is used. This
- * keeps existing single-profile callers working unchanged while letting new
- * callers explicitly target a specific profile.
- *
- * Path resolution is centralised in `profile-paths.ts`. The flat-layout
- * constants previously imported from `files.ts` (CV_PATH, APPLICATIONS,
- * PIPELINE, …) are no longer used here -- they're per-active-profile shims
- * for legacy callers and shouldn't be used from new code.
- */
+/** Read/write per-profile profile.yml, cv.md, _profile.md + reset helpers.
+ *  Every export takes optional `profileId` first; undefined → active
+ *  profile (from data/profiles.json). Path resolution is centralised in
+ *  profile-paths.ts; the flat-layout constants in files.ts (CV_PATH,
+ *  APPLICATIONS, PIPELINE, …) are legacy-shim only -- don't use them
+ *  from new code. */
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, readSafe } from './files';
+import { ROOT, DATA_ROOT, readSafe } from './files';
 import { parse, stringify } from 'yaml';
 import { logEvent } from './events';
 import { profilePath, ensureProfileDirs, userSharedPath } from './profile-paths';
@@ -569,9 +562,15 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
   resetFiles.push(path.relative(ROOT, APPLICATIONS_MD));
 
   backupTo(PIPELINE_MD, backups);
-  if (fs.existsSync(PIPELINE_MD)) {
-    fs.writeFileSync(PIPELINE_MD, '');
+  // CodeQL js/file-system-race: truncateSync(...) throws ENOENT if the
+  // file vanished between the existsSync check and the write -- catch
+  // that and skip the resetFiles push to preserve original semantics
+  // ("only mark as reset if the file actually existed").
+  try {
+    fs.truncateSync(PIPELINE_MD, 0);
     resetFiles.push(path.relative(ROOT, PIPELINE_MD));
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
   }
 
   for (const p of [SCAN_HISTORY_TSV, GEMINI_SCORES_TSV, FOLLOW_UPS_MD]) {
@@ -614,9 +613,9 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
   // remains at the flat repo-root paths -- see AGENTS.md "Globally shared
   // infrastructure" line.
   const AUTOPILOT_JSON = userSharedPath('autopilot');
-  const ACTIVITY_JSONL = path.join(ROOT, 'data', 'activity.jsonl');
-  const JOB_LAST_RUN_JSON = path.join(ROOT, 'data', 'job-last-run.json');
-  const APPLY_COUNTER_JSON = path.join(ROOT, 'data', 'apply-counter.json');
+  const ACTIVITY_JSONL = path.join(DATA_ROOT, 'activity.jsonl');
+  const JOB_LAST_RUN_JSON = path.join(DATA_ROOT, 'job-last-run.json');
+  const APPLY_COUNTER_JSON = path.join(DATA_ROOT, 'apply-counter.json');
   const STORY_BANK_MD = userSharedPath('story-bank');
 
   // Reset autopilot.json to defaults rather than deleting it -- the
@@ -648,12 +647,15 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
 
   // Activity feed -- backup then truncate (preserve file so the bus's append
   // path doesn't need to recreate it on next emit).
-  if (fs.existsSync(ACTIVITY_JSONL)) {
+  // CodeQL js/file-system-race: try truncateSync directly; ENOENT means
+  // the file isn't there and we silently skip (matches the original
+  // "only if exists" branch) -- other errors are logged as before.
+  try {
     backupTo(ACTIVITY_JSONL, backups);
-    try {
-      fs.writeFileSync(ACTIVITY_JSONL, '');
-      resetFiles.push(path.relative(ROOT, ACTIVITY_JSONL));
-    } catch (e) {
+    fs.truncateSync(ACTIVITY_JSONL, 0);
+    resetFiles.push(path.relative(ROOT, ACTIVITY_JSONL));
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
       logEvent('reset-profile', 'Could not truncate activity.jsonl', {
         level: 'warn',
         category: 'application',
@@ -704,12 +706,14 @@ export function writeSiblingFile(
   const p = name === 'profileMd' ? profilePath(id, 'profile-md') : profilePath(id, 'cv-md');
   let backedUp = false;
   let backupPath: string | null = null;
-  if (fs.existsSync(p)) {
-    try {
-      fs.copyFileSync(p, p + '.bak');
-      backedUp = true;
-      backupPath = p + '.bak';
-    } catch {
+  // CodeQL js/file-system-race: attempt the copy directly. ENOENT means
+  // there's nothing to back up; any other error is non-fatal as before.
+  try {
+    fs.copyFileSync(p, p + '.bak');
+    backedUp = true;
+    backupPath = p + '.bak';
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
       // Backup failures are non-fatal -- proceed with the write so the user
       // doesn't lose their new content.
     }

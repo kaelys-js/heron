@@ -2,6 +2,7 @@ import { bootOnce } from '$lib/server/orchestrator';
 import { reportServerError, logEvent } from '$lib/server/events';
 import { auth } from '$lib/server/auth';
 import { runWithUser, SYSTEM_USER_ID } from '$lib/server/user-context';
+import { screenshotBypassUser } from '$lib/server/screenshot-bypass';
 import { json, redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
 import { building } from '$app/environment';
 
@@ -49,7 +50,7 @@ function isBenignIO(err: unknown): boolean {
 
 if (typeof process !== 'undefined') {
   process.on('uncaughtException', (err: Error) => {
-    if (isBenignIO(err)) return; // swallow — see comment above
+    if (isBenignIO(err)) return; // swallow -- see comment above
     reportServerError('process', 'uncaughtException', err);
   });
   process.on('unhandledRejection', (reason: unknown) => {
@@ -98,7 +99,11 @@ function isPublicPath(pathname: string): boolean {
   return false;
 }
 
-/** Population: fill event.locals from the Better Auth session cookie. */
+/** Population: fill event.locals from the Better Auth session cookie.
+ *  A real Better Auth session always wins. Only if NO session lands AND
+ *  the double-gated screenshot bypass is active (HERON_SCREENSHOT_MODE=1
+ *  AND HERON_DATA_DIR resolves under os.tmpdir()) do we inject the
+ *  synthetic demo user. See `screenshot-bypass.ts` for the gate logic. */
 const populateAuth: Handle = async ({ event, resolve }) => {
   try {
     const session = await auth.api.getSession({ headers: event.request.headers });
@@ -110,6 +115,14 @@ const populateAuth: Handle = async ({ event, resolve }) => {
     }
     event.locals.user = null;
     event.locals.session = null;
+  }
+  if (!event.locals.user) {
+    const bypass = screenshotBypassUser();
+    if (bypass) {
+      // The synthetic user shape matches Better Auth's `user` enough for
+      // the route guards downstream; no session token is fabricated.
+      event.locals.user = bypass as unknown as App.Locals['user'];
+    }
   }
   return resolve(event);
 };
@@ -206,7 +219,7 @@ const signupGate: Handle = async ({ event, resolve }) => {
   const { inviteCodes } = await import('$lib/server/db/auth-schema');
 
   const [{ n }] = authDb.select({ n: sql<number>`count(*)` }).from(users).all();
-  if (n === 0) return resolve(event); // first-user path — open
+  if (n === 0) return resolve(event); // first-user path -- open
 
   const code = event.request.headers.get('x-invite-code')?.trim();
   if (!code || !/^\d{6}$/.test(code)) {

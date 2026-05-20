@@ -1,11 +1,11 @@
-# CodeRabbit AI — automated PR review configuration.
+# CodeRabbit AI -- automated PR review configuration.
 # Schema: https://docs.coderabbit.ai/reference/yaml-template
 #
 # CodeRabbit is a GitHub App that auto-reviews PRs. Install (once per
 # repo or org-wide) at:
 #   https://github.com/marketplace/coderabbitai
 #
-# This file does nothing on its own — the App reads it on every PR.
+# This file does nothing on its own -- the App reads it on every PR.
 # After installing the App, the next PR you open will trigger a review.
 
 language: en
@@ -14,7 +14,7 @@ language: en
 reviews:
   # 'assertive' = more aggressive feedback; 'chill' = lighter touch.
   # Heron handles secrets, auth, autonomous browser automation,
-  # and security-sensitive data flows — assertive is appropriate.
+  # and security-sensitive data flows -- assertive is appropriate.
   profile: assertive
 
   # Keep CodeRabbit advisory, not blocking. Required PR checks are
@@ -57,7 +57,7 @@ reviews:
 
   # ── Per-path review instructions ──────────────────────────────────
   # CodeRabbit applies these as additional context when reviewing
-  # files matching each path glob. Order matters — later rules win
+  # files matching each path glob. Order matters -- later rules win
   # on overlapping matches.
   path_instructions:
     # ── Agent-context files ────────────────────────────────────────
@@ -129,7 +129,7 @@ reviews:
         are forward-only and run at boot — a destructive migration ships
         on the next user update. Flag DROP COLUMN, RENAME COLUMN, type
         narrowings. Also flag any change to db/index.ts's
-        CAREER_OPS_DATA_DIR env-var override (DB-isolation safety).
+        HERON_DATA_DIR env-var override (DB-isolation safety).
     - path: "ui/src/lib/server/api-helpers.ts"
       instructions: |
         wrap() is the universal API endpoint envelope. Every endpoint

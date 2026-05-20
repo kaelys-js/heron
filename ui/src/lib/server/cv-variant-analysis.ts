@@ -1,25 +1,10 @@
-/**
- * cv-variant-analysis -- what's making some applications convert + others
- * ghost? Correlate CV variants with outcomes.
- *
- * The system already generates per-job tailored CVs. After 50+
- * applications, the question is: which TAILORING moves correlate with
- * positive outcomes (response, screen, advance) vs which don't?
- *
- * Approach (intentionally simple, explainable):
- *   1. For every job, identify its CV variant by:
- *      - Top 10 keywords in the tailored CV's content (vs. cv-general's
- *        baseline) -- these are what got injected per JD
- *      - Length delta vs cv-general
- *      - Score range bracket the job fell in
- *   2. Tag each application with its outcome bucket (positive: applied →
- *      screened+, negative: rejected/ghosted, pending)
- *   3. Surface: keywords that appear MORE in positive-outcome CVs than
- *      negative-outcome ones, AND the inverse
- *
- * Output a small structured report the user can read in 2 minutes,
- * and a one-line summary surfaced on /patterns.
- */
+/** cv-variant-analysis -- correlate per-job tailored CV variants with
+ *  application outcomes. For every job, tags its CV variant by top-10
+ *  injected keywords (vs cv-general baseline), length delta, and score
+ *  bracket; buckets the application as positive (screened+), negative
+ *  (rejected/ghosted), or pending; then surfaces keywords that skew to
+ *  one side. Output: a 2-min structured report + one-line summary on
+ *  /patterns. Explainable on purpose -- no ML, just frequency counts. */
 
 import fs from 'node:fs';
 import path from 'node:path';

@@ -1,18 +1,9 @@
-/**
- * POST /api/job/[id]/counter-from-current
- *
- * Run the counter-from-current evaluator. The new-employer job is
- * `params.id`; the user supplies their current employer + the counter
- * offer being weighed against it.
- *
- * Body:
- *   {
- *     currentEmployer, currentTitle, currentTC, currentTenureYears,
- *     newOfferTC, newOfferLevel,
- *     counterOffer: { newTitle?, newTC, otherChanges?: string[] },
- *     whyLooking, whatChangedSinceTalking
- *   }
- */
+/** POST /api/job/[id]/counter-from-current -- run the counter-from-current
+ *  evaluator. The new-employer job is params.id; user supplies their current
+ *  employer + counter offer being weighed against it. Body: { currentEmployer,
+ *  currentTitle, currentTC, currentTenureYears, newOfferTC, newOfferLevel,
+ *  counterOffer: { newTitle?, newTC, otherChanges?: string[] }, whyLooking,
+ *  whatChangedSinceTalking }. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';

@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# add-xcode-targets — programmatically add the 3 iOS extension targets
+# add-xcode-targets -- programmatically add the 3 iOS extension targets
 # to App.xcodeproj using the xcodeproj gem.
 #
 # Without this script, the user has to do 3 File→New→Target dances in Xcode
@@ -7,9 +7,9 @@
 # script, one `ruby add-xcode-targets.rb` does it all.
 #
 # Targets created:
-#   • AppWidget          — Widget Extension (small/medium/circular)
-#   • AppLiveActivity    — Widget Extension w/ ActivityKit
-#   • AppShareExtension  — Share Extension
+#   • AppWidget          -- Widget Extension (small/medium/circular)
+#   • AppLiveActivity    -- Widget Extension w/ ActivityKit
+#   • AppShareExtension  -- Share Extension
 #
 # All three get:
 #   • Their Swift source from ui/ios/App/Extensions/AppXxx/ (or WatchApp/)
@@ -17,7 +17,7 @@
 #   • App Group capability: group.com.heron.app
 #   • Deployment target: matches main app
 #
-# Safe to re-run — checks if a target already exists before adding.
+# Safe to re-run -- checks if a target already exists before adding.
 
 require "xcodeproj"
 require "fileutils"
@@ -44,7 +44,7 @@ team_id = main_target.build_configurations.first.build_settings["DEVELOPMENT_TEA
 app_group = "group.com.heron.app"
 bundle_root = "com.heron.app"
 
-# ── PrivacyInfo.xcprivacy — Apple privacy manifest, required for App
+# ── PrivacyInfo.xcprivacy -- Apple privacy manifest, required for App
 # Store submission since May 2024. Must be in the App target's Copy
 # Bundle Resources phase so it ships inside the .app bundle.
 privacy_manifest_path = File.expand_path("App/PrivacyInfo.xcprivacy", File.dirname(PROJECT_PATH))
@@ -118,11 +118,11 @@ EXTENSIONS = [
 # but aren't auto-added to the App target. Without this block xcodebuild
 # fails: "cannot find type 'BonjourBrowser' in scope". Walk App/*.swift
 # and ensure every file is in the App target's compile-sources phase.
-# Safe to re-run — checks for existing refs in both the group and the
+# Safe to re-run -- checks for existing refs in both the group and the
 # build phase.
 app_sources_dir = File.expand_path("App", Dir.pwd)
 if Dir.exist?(app_sources_dir)
-  # NOTE: do NOT name this `app_group` — the outer scope's `app_group`
+  # NOTE: do NOT name this `app_group` -- the outer scope's `app_group`
   # string ('group.com.heron.app') is reused in the entitlements
   # block below. Shadowing it with a PBXGroup object corrupts the
   # entitlements file (the plist gem then Marshal-dumps the Ruby object
@@ -153,7 +153,7 @@ if Dir.exist?(app_sources_dir)
 end
 
 EXTENSIONS.each do |ext|
-  # Extension target sources live at `ui/ios/App/<Name>/` — same level
+  # Extension target sources live at `ui/ios/App/<Name>/` -- same level
   # as the main App/ folder. (Earlier versions of this script used
   # `../<Name>` and silently skipped on every run; consistent with
   # turbo.json + biome.json + capacitor.integration.test.ts which all
@@ -164,13 +164,13 @@ EXTENSIONS.each do |ext|
     next
   end
 
-  # IDEMPOTENCY MODEL — find existing target, REPAIR it; only create
+  # IDEMPOTENCY MODEL -- find existing target, REPAIR it; only create
   # if missing. Earlier this loop just `next`-ed on existing targets,
   # which masked broken state: the three extension targets were
   # already in project.pbxproj from a stale Xcode-edited run with
   # EMPTY PRODUCT_NAME (the xcodeproj gem doesn't set it automatically
   # for :app_extension), so xcodebuild emitted them as `.appex` (no
-  # filename) — duplicate output paths, build aborts. Repair runs on
+  # filename) -- duplicate output paths, build aborts. Repair runs on
   # every script invocation: ensures PRODUCT_NAME, INFOPLIST_FILE,
   # bundle id, signing settings are always correct, even if a previous
   # author hand-edited the pbxproj or an older script version omitted
@@ -191,12 +191,12 @@ EXTENSIONS.each do |ext|
       )
     end
 
-  # Build settings — set EVERY time, overriding whatever was there.
+  # Build settings -- set EVERY time, overriding whatever was there.
   # This is critical for repairing the previously-broken state where
   # `PRODUCT_NAME` was empty (xcodebuild then emitted `.appex` with
   # no filename → duplicate-output errors → BUILD FAILED).
   target.build_configurations.each do |config|
-    # PRODUCT_NAME — the binary basename. MUST be non-empty or every
+    # PRODUCT_NAME -- the binary basename. MUST be non-empty or every
     # build-output path collapses to just `.appex`. xcodeproj gem's
     # `new_target` doesn't auto-set this for :app_extension; the
     # default `$(TARGET_NAME)` only kicks in if the build settings
@@ -215,7 +215,7 @@ EXTENSIONS.each do |ext|
     config.build_settings["SWIFT_VERSION"] = "5.9"
     config.build_settings["CODE_SIGN_ENTITLEMENTS"] = "#{ext[:source_dir]}/#{ext[:source_dir]}.entitlements"
     # ENABLE_USER_SCRIPT_SANDBOXING = YES is the Xcode 15+ best-practice
-    # default — sandboxes shell scripts run in build phases so a stray
+    # default -- sandboxes shell scripts run in build phases so a stray
     # `rm -rf $DERIVED_DATA` in a third-party run-script phase can't
     # nuke user files outside the project tree.
     config.build_settings["ENABLE_USER_SCRIPT_SANDBOXING"] = "YES"
@@ -226,7 +226,7 @@ EXTENSIONS.each do |ext|
     # `$(CURRENT_PROJECT_VERSION)` placeholder expansion). iOS's
     # installer then rejects the .appex with error code 17:
     # "bundleVersion must be set in placeholder attributes for an app
-    # extension placeholder" — which surfaces to the user as the
+    # extension placeholder" -- which surfaces to the user as the
     # vague "Invalid placeholder attributes" deploy failure. Match
     # the main App target's defaults (1 / 1.0) so versions stay in
     # lockstep across host + extensions; the brand pipeline
@@ -328,7 +328,7 @@ EXTENSIONS.each do |ext|
   build_file = embed_phase.add_file_reference(target.product_reference)
   build_file.settings = { "ATTRIBUTES" => ["RemoveHeadersOnCopy"] }
 
-  # Add explicit dependency (idempotent — add_dependency dedupes
+  # Add explicit dependency (idempotent -- add_dependency dedupes
   # against existing PBXTargetDependency entries internally).
   main_target.add_dependency(target) unless main_target.dependencies.any? { |d| d.target == target }
   puts "  ✓ #{ext[:name]} added + linked to App target"
@@ -362,7 +362,7 @@ else
       puts "✓ added #{app_group} to App.entitlements"
     end
   elsif !File.exist?(main_entitlements)
-    # No file at all — safe to create a fresh one.
+    # No file at all -- safe to create a fresh one.
     File.write(main_entitlements, Plist::Emit.dump({
       "com.apple.security.application-groups" => [app_group],
     }))
@@ -379,13 +379,13 @@ end
 # watchOS 10+ single-target SwiftUI app. The source files live at
 # ../WatchApp/ (WatchApp.swift, RootView.swift,
 # WatchModel.swift). Without registering this target, dev:apple-watch
-# can't build — and the user has to do the dance of "File → New →
+# can't build -- and the user has to do the dance of "File → New →
 # Target → watchOS → App" through the Xcode UI, which is fragile and
 # manual. Idempotent: skips if a WatchApp target already exists.
 WATCH_NAME = "WatchApp"
-# Source dir lives at ui/ios/App/WatchApp/ — same level as the
+# Source dir lives at ui/ios/App/WatchApp/ -- same level as the
 # .xcodeproj (cwd), NOT one level up. The legacy EXTENSIONS loop above
-# uses `../#{name}` which resolves to ui/ios/ — those extension dirs
+# uses `../#{name}` which resolves to ui/ios/ -- those extension dirs
 # don't actually exist on disk, so that branch has been silently
 # skipped. The Watch target ships real source files so we get the path
 # right here.
@@ -454,7 +454,7 @@ else
       # 5.9 matches the main App target so the same toolchain compiles
       # both. 5.0 was Xcode 13's default; 5.9 ships with Xcode 15.
       "SWIFT_VERSION" => "5.9",
-      # Xcode 15+ default — sandbox build-phase scripts. See the
+      # Xcode 15+ default -- sandbox build-phase scripts. See the
       # extension-target version of this comment above for context.
       "ENABLE_USER_SCRIPT_SANDBOXING" => "YES",
       "SKIP_INSTALL" => "YES",
@@ -498,7 +498,7 @@ else
   # Embed the watch app inside the iPhone host app target. Without this
   # the .app bundle ships without the watch app and there's nothing for
   # the paired watch to discover. The build phase is "Embed Watch
-  # Content" — Xcode's symbolic dst_subfolder for watch is :wrapper +
+  # Content" -- Xcode's symbolic dst_subfolder for watch is :wrapper +
   # custom path `$(CONTENTS_FOLDER_PATH)/Watch`.
   embed_phase = main_target.copy_files_build_phases.find { |p| p.name == "Embed Watch Content" }
   unless embed_phase
@@ -512,7 +512,7 @@ else
   end
   main_target.add_dependency(watch_target)
 
-  # Shared scheme — without this, `xcodebuild -scheme WatchApp`
+  # Shared scheme -- without this, `xcodebuild -scheme WatchApp`
   # errors "scheme not found" (Xcode only auto-generates user schemes
   # on first open, which CI / dev:apple-watch can't rely on).
   schemes_dir = File.join(PROJECT_PATH, "xcshareddata", "xcschemes")
@@ -540,11 +540,11 @@ else
 end
 
 # ──────────────────────────────────────────────────────────────────
-# Test targets — AppTests / AppUITests / WidgetTests / WatchTests.
+# Test targets -- AppTests / AppUITests / WidgetTests / WatchTests.
 #
 # Added separately from the source-target loop above because:
 #   • Their product_type is com.apple.product-type.bundle.unit-test (or
-#     .bundle.ui-testing for UI tests) — different lifecycle than app/
+#     .bundle.ui-testing for UI tests) -- different lifecycle than app/
 #     widget targets, no Info.plist NSExtension key needed.
 #   • Each test target needs a TEST_HOST + BUNDLE_LOADER setting pointing
 #     at the host app/widget so XCTest can inject into it.
@@ -552,7 +552,7 @@ end
 #     this loop creates if missing (with a placeholder .swift file so
 #     `xcodebuild test` doesn't error "no source files").
 #
-# Idempotent — re-runs are no-ops if every test target already exists.
+# Idempotent -- re-runs are no-ops if every test target already exists.
 TEST_TARGETS = [
   {
     name: "AppTests",
@@ -684,9 +684,15 @@ TEST_TARGETS.each do |t|
   # Re-runs are safe: existing references are de-duped by path.
   ref = project.main_group.find_subpath(t[:name], true)
   ref.set_source_tree("<group>")
+  # PBX requires `path = <Name>` on the group (not just `name`); without
+  # it children with `sourceTree = "<group>"` and just `path = X.swift`
+  # resolve to PROJECT_ROOT/X.swift instead of PROJECT_ROOT/<Name>/X.swift,
+  # and xcodebuild fails with "Build input files cannot be found". Match
+  # the pattern used by App + WatchApp + extension groups above.
+  ref.path = t[:name]
   existing_paths = ref.files.map(&:path).to_set
 
-  # Also dedupe against the build phase — Xcode tracks "Compile Sources"
+  # Also dedupe against the build phase -- Xcode tracks "Compile Sources"
   # separately from file refs and re-runs could double-add otherwise.
   sources_phase = new_target.source_build_phase
   sources_in_phase = sources_phase.files.map { |bf| bf.file_ref&.path }.compact.to_set

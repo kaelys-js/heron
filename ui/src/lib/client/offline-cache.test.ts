@@ -28,7 +28,7 @@ describe('offline-cache — isCacheable', () => {
   });
 
   it('rejects URLs not on the allowlist', () => {
-    expect(isCacheable('/api/health')).toBe(false); // probe — never cache
+    expect(isCacheable('/api/health')).toBe(false); // probe -- never cache
     expect(isCacheable('/api/scan')).toBe(false); // mutation
     expect(isCacheable('/api/job/abc123')).toBe(false); // individual job
     expect(isCacheable('/api/auth/session')).toBe(false);

@@ -59,7 +59,7 @@ SKIP_DIRS = {
 }
 
 # Apple plist file extensions we validate. .pbxproj is intentionally
-# excluded — it's OpenStep ASCII plist which plistlib doesn't read.
+# excluded -- it's OpenStep ASCII plist which plistlib doesn't read.
 PLIST_GLOBS = ["*.plist", "*.entitlements", "*.xcprivacy"]
 
 

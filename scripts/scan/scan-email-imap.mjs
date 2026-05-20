@@ -25,7 +25,17 @@
  *   node scan-email-imap.mjs --keep-unread  # process but don't mark Seen
  */
 
-import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from 'fs';
+import {
+  readFileSync,
+  writeFileSync,
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  closeSync,
+  writeSync,
+  fstatSync,
+} from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
 import { ImapFlow } from 'imapflow';
@@ -55,7 +65,7 @@ if (existsSync(ENV_FILE)) {
   dotenv.config({ path: ENV_FILE, override: false });
 }
 
-// Per-user secrets first (via CAREER_OPS_USER_ID, set by the orchestrator
+// Per-user secrets first (via HERON_USER_ID, set by the orchestrator
 // before spawn), .env fallback. Closes F14/F19/F27 -- gmail-imap creds
 // are no longer install-wide; each user manages their own mailbox.
 const HOST = getCredential('GMAIL_IMAP_HOST') || 'imap.gmail.com';
@@ -193,7 +203,14 @@ function loadSeenUrls() {
 
 function appendToPipeline(offers) {
   if (offers.length === 0) return;
-  let text = existsSync(PIPELINE) ? readFileSync(PIPELINE, 'utf8') : '';
+  // try/catch on readFileSync (no existsSync precheck) -- CodeQL
+  // `js/file-system-race`-clean. ENOENT means "no pipeline file yet".
+  let text = '';
+  try {
+    text = readFileSync(PIPELINE, 'utf8');
+  } catch (e) {
+    if (e.code !== 'ENOENT') throw e;
+  }
   const block = offers
     .map((o) => `- [ ] ${o.url} | ${o.company || '(unknown)'} | ${o.title || '(see email)'}`)
     .join('\n');
@@ -209,14 +226,22 @@ function appendToPipeline(offers) {
 }
 
 function appendToScanHistory(offers, date) {
-  if (!existsSync(SCAN_HISTORY)) {
-    writeFileSync(SCAN_HISTORY, 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\n');
+  // Open in append-mode (creates if missing). fstat the open fd to
+  // know if we need the header -- TOCTOU-free vs `existsSync` form.
+  // CodeQL `js/file-system-race`-clean.
+  const fd = openSync(SCAN_HISTORY, 'a+');
+  try {
+    if (fstatSync(fd).size === 0) {
+      writeSync(fd, 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\n');
+    }
+    const lines =
+      offers
+        .map((o) => `${o.url}\t${date}\t${o.source}\t${o.title || ''}\t${o.company || ''}\tadded`)
+        .join('\n') + '\n';
+    writeSync(fd, lines);
+  } finally {
+    closeSync(fd);
   }
-  const lines =
-    offers
-      .map((o) => `${o.url}\t${date}\t${o.source}\t${o.title || ''}\t${o.company || ''}\tadded`)
-      .join('\n') + '\n';
-  appendFileSync(SCAN_HISTORY, lines);
 }
 
 // ── Main ──────────────────────────────────────────────────────────────
@@ -309,12 +334,6 @@ async function main() {
           // IN-PROCESS -- preserving the OWNER's ALS user context that
           // the .mjs HTTP-out path would otherwise lose at the network
           // boundary (F14/F19).
-          //
-          // Pre-fix this POSTed to /api/email/react over localhost with
-          // no Authorization header. The dashboard's hooks guard 401'd
-          // every call, OR (worse) processed under whoever's session
-          // happened to be active -- flipping the wrong user's job
-          // statuses on each rejection email.
           //
           // Format: `INBOUND_REACTION: {json}\n` -- the parent reads stdout
           // line-by-line, matches the sentinel prefix, JSON.parses the

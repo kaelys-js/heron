@@ -78,7 +78,7 @@ from lib_apply import (  # noqa: E402
 from lib_profiles import resolve_profile_arg, resolve_user_arg, profile_path  # noqa: E402
 from lib_playwright_auth import user_data_dir as _resolve_user_data_dir  # noqa: E402
 
-# Per-user Playwright session dir — resolves per active CAREER_OPS_USER_ID.
+# Per-user Playwright session dir -- resolves per active HERON_USER_ID.
 USER_DATA_DIR = _resolve_user_data_dir("workday")
 DISPATCHER_JOB_ID: str = ""
 
@@ -101,7 +101,7 @@ WORKDAY_SELECTORS = {
     "review_button": 'button:has-text("Review")',
 }
 
-MAX_WIZARD_PAGES = 12  # safety stop — no Workday form is more than ~6 pages
+MAX_WIZARD_PAGES = 12  # safety stop -- no Workday form is more than ~6 pages
 
 
 def step(name: str) -> None:
@@ -200,7 +200,7 @@ def walk_page_questions(page, answers_cache: dict) -> tuple[int, list[str]]:
                         filled += 1
                     continue
 
-                # Already-handled basic fields — skip.
+                # Already-handled basic fields -- skip.
                 lower = label_text.lower()
                 if any(
                     k in lower
@@ -379,7 +379,7 @@ def run(args) -> int:
             except Exception:
                 pass
 
-            # Account gate — bail before doing anything else.
+            # Account gate -- bail before doing anything else.
             if detect_account_gate(page):
                 screenshot_for_issue(page, DISPATCHER_JOB_ID)
                 return emit_result(

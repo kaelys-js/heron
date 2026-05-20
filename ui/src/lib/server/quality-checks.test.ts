@@ -44,7 +44,7 @@ vi.mock('node:child_process', () => ({
         proc.emit('error', nextOutcome.errors);
         return;
       }
-      if (nextOutcome.hangs) return; // never closes — timer in code will fire
+      if (nextOutcome.hangs) return; // never closes -- timer in code will fire
       if (nextOutcome.stdout) proc.stdout.emit('data', Buffer.from(nextOutcome.stdout));
       if (nextOutcome.stderr) proc.stderr.emit('data', Buffer.from(nextOutcome.stderr));
       proc.emit('close', nextOutcome.exitCode ?? 0);
@@ -53,7 +53,7 @@ vi.mock('node:child_process', () => ({
   }),
 }));
 
-vi.mock('./files', () => ({ ROOT: '/tmp/repo' }));
+vi.mock('./files', () => ({ ROOT: '/tmp/repo', DATA_ROOT: '/tmp/repo/data' }));
 
 const reportedErrors: { source: string; msg: string }[] = [];
 vi.mock('./events', () => ({

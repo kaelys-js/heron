@@ -1,26 +1,12 @@
-/**
- * POST /api/sources/[id]/test -- light health probe.
- *
- *   linkedin-auth / indeed-auth → spawn a short python `--check-session`
- *                                  invocation (read-only -- opens browser
- *                                  headless, navigates to /feed/, checks
- *                                  for redirect to login)
- *
- *   gmail-imap                  → reads creds from .env, opens an IMAP
- *                                  connection, lists inbox (no fetch)
- *
- *   anthropic / gemini / adzuna → delegates to /api/settings/test logic
- *                                  which does the real round-trip probe
- *                                  against the provider (issue B13).
- *
- *   scan-portals / scan-broad / → dry-run --probe of the underlying
- *   scan-curated                  scanner (B12) -- confirms the scanner
- *                                  can hit at least one provider without
- *                                  actually adding rows to pipeline.md.
- *
- * On success: recordSuccess updates lastSuccessfulPullAt.
- * On failure: recordFailure increments consecutiveFailures (3 strikes → disconnect).
- */
+/** POST /api/sources/[id]/test -- light per-source health probe.
+ *    linkedin-auth/indeed-auth → headless python `--check-session`,
+ *                                detects login redirect.
+ *    gmail-imap → read .env, open IMAP, list inbox (no fetch).
+ *    anthropic/gemini/adzuna → delegate to /api/settings/test (B13).
+ *    scan-portals/scan-broad/scan-curated → scanner dry-run --probe (B12),
+ *                                           no pipeline.md writes.
+ *  recordSuccess updates lastSuccessfulPullAt; recordFailure increments
+ *  consecutiveFailures (3 strikes → disconnect). */
 
 import { spawn } from 'node:child_process';
 import path from 'node:path';
@@ -42,9 +28,10 @@ export const POST = wrap(
 
     if (id === 'linkedin-auth' || id === 'indeed-auth') {
       const portal = id === 'linkedin-auth' ? 'linkedin' : 'indeed';
-      // F20 -- match the path Playwright writes to. Pre-fix this checked
-      // the legacy `.playwright-{portal}/` at repo root which never
-      // existed, so "Test connection" always reported "No saved session".
+      // F20 -- match the path Playwright writes to. Checking the legacy
+      // repo-root `.playwright-{portal}/` would never match (the dir
+      // doesn't exist in multi-user mode), so "Test connection" would
+      // always report "No saved session".
       const stateDir = playwrightUserDataDir(userId, portal);
       if (!fs.existsSync(stateDir)) {
         const err = new Error('No saved session — click Connect first.');

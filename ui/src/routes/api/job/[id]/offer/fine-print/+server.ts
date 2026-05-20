@@ -1,16 +1,8 @@
-/**
- * POST /api/job/[id]/offer/fine-print
- *
- * Run the offer-fine-print extractor mode against pasted offer-letter
- * text. Body:
- *   {
- *     offerText: string,           // pasted directly OR from disk if empty
- *     userQuestions?: string[]
- *   }
- *
- * Output: `output/{company-slug}-fine-print-review.md` with high/medium
- * priority concerns + missing-in-writing items + a summary verdict.
- */
+/** POST /api/job/[id]/offer/fine-print -- run the offer-fine-print extractor
+ *  against pasted offer-letter text. Body: { offerText: string (pasted, or
+ *  loaded from disk if empty), userQuestions?: string[] }. Output:
+ *  output/{company-slug}-fine-print-review.md with high/medium priority
+ *  concerns + missing-in-writing items + a summary verdict. */
 
 import fs from 'node:fs';
 import path from 'node:path';

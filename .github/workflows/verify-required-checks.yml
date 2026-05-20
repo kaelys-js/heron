@@ -4,7 +4,7 @@ name: Verify required-check names
 # defined under `.github/workflows/`.
 #
 # Catches the HP28 audit finding: ruleset said `Tests / ts` but the
-# actual job was named `Tests / TS — typecheck + Vitest + coverage` —
+# actual job was named `Tests / TS -- typecheck + Vitest + coverage` --
 # every PR was technically passing all required checks but the
 # REQUIRED-CHECK NAMES themselves were dead strings. This workflow
 # catches that mismatch at PR time + on a weekly cron sweep.
@@ -82,7 +82,7 @@ jobs:
                       continue
                   if not in_jobs:
                       continue
-                  # job-id line — 2 leading spaces, ends with `:`
+                  # job-id line -- 2 leading spaces, ends with `:`
                   m2 = re.match(r'^  ([a-z][a-z0-9_-]*):\s*(?:#.*)?$', line)
                   if m2:
                       # Default to job-id if no explicit name found
@@ -130,7 +130,7 @@ jobs:
               print("\nFix: rename the job's `name:` field to match the ruleset context,")
               print("OR update .github/rulesets/main.json::required_status_checks.")
 
-          # Unused is informational, not an error — many workflows
+          # Unused is informational, not an error -- many workflows
           # (welcome.yml, stale.yml) intentionally aren't required.
           if unused:
               print("\n(info) Workflows that exist but aren't required checks:")

@@ -1,17 +1,9 @@
-/**
- * /api/profile/comp-bands -- read merged bands + write overrides.
- *
- * GET → { bands, staleness }
- *   bands = defaults overlaid with per-profile overrides
- *   staleness = { stale, ageMonths, hasOverrides }
- *
- * POST body: { key, band: { band?, base?, total?, notes? } }
- *   Upsert an override for one tier key. Partial fields fall through
- *   to the default.
- *
- * DELETE body: { key }
- *   Remove an override so the default kicks back in.
- */
+/** /api/profile/comp-bands -- read merged bands + write overrides. GET →
+ *  { bands (defaults overlaid with per-profile overrides), staleness:
+ *  { stale, ageMonths, hasOverrides } }. POST body { key, band: { band?,
+ *  base?, total?, notes? } } upserts an override for one tier key; partial
+ *  fields fall through to the default. DELETE body { key } removes the
+ *  override so the default kicks back in. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import {

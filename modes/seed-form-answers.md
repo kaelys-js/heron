@@ -1,4 +1,4 @@
-# Seed Form Answers -- Pre-populate the per-question cache from CV + profile
+# Mode: seed-form-answers -- Pre-populate the per-question cache from CV + profile
 
 You're seeding the user's persistent form-answers cache (the JSONL at
 `data/profiles/{slug}/form-answers-cache.jsonl`) so that the autonomous-
@@ -9,7 +9,7 @@ realistic, ready-to-use answers to every common ATS form question.
 ## Inputs
 
 - `__CV__` -- work history, skills, projects, education
-- `config/profile.yml` -- candidate (name, email, phone, location, links),
+- `__PROFILE_YML__` -- candidate (name, email, phone, location, links),
   compensation (target_range, minimum, walkaway), location (country,
   city, visa_status, onsite_availability), preferences (must_have,
   strong_plus, hard_no), target_roles (primary, archetypes), narrative
@@ -37,7 +37,7 @@ per line. Format (must match the existing cache schema exactly):
 
 ## The questions to seed (~25 entries -- write ALL of them if you can answer)
 
-Skip a question only if the data genuinely isn't in __CV__ / profile.yml.
+Skip a question only if the data genuinely isn't in __CV__ / `__PROFILE_YML__`.
 Never fabricate -- for any answer where the source is missing or
 ambiguous, omit the row (the dispatcher will surface a `ManualApplyNeeded`
 once and the user fills it then).
@@ -73,7 +73,7 @@ once and the user fills it then).
 - "Minimum salary" / "Walkaway" → `compensation.minimum` if present.
 
 ### Logistics
-- "When can you start?" / "Notice period" → if __CV__ or profile.yml has
+- "When can you start?" / "Notice period" → if __CV__ or `__PROFILE_YML__` has
   this, use it. Otherwise pick a sensible default of "2 weeks" and tag
   it with a note that the user should confirm.
 - "Are you willing to relocate?" → derive from `location.onsite_availability`.

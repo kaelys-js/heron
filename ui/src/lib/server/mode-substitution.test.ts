@@ -141,7 +141,7 @@ describe('substituteModeTokensForUser', () => {
 
     it('SYSTEM_USER_ID resolves to the legacy data/profiles/ layout', () => {
       const out = substituteModeTokensForUser(SYSTEM_USER_ID, PROFILE, '__CV__');
-      expect(out).toContain('/data/profiles/default/cv.md');
+      expect(out).toMatch(/profiles\/default\/cv\.md$/);
       expect(out).not.toContain('/users/');
     });
   });

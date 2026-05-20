@@ -1,34 +1,10 @@
-/**
- * auth-helpers -- server-side helpers that build on top of Better Auth.
- *
- * Layer 1 -- authentication (is there a session?):
- *   • requireUser(locals)         → user or 401
- *   • requireUserId(locals)       → user id or 401
- *
- * Layer 2 -- role-based access control (is this user allowed to do X?):
- *   • requireRole(locals, roles)  → user with matching role, else 403
- *   • requireOwner(locals)        → 403 unless role === 'owner'
- *   • requireOwnerOrAdmin(locals) → 403 unless role in ['owner', 'admin']
- *
- * Role model (3 tiers):
- *   - owner   : the install owner. Single user. Full access including
- *               install-wide settings (API keys, backups, danger-zone
- *               reset, user role promotion).
- *   - admin   : delegated owner. Can invite/revoke users and view all
- *               users, but cannot reset the install or change owner.
- *               Currently unused by the UI -- surfaced when a host
- *               needs an extra trusted operator alongside the owner.
- *   - member  : a regular user. Sees only their own data. Cannot affect
- *               other users or install-wide config.
- *
- * The first user created on a fresh install gets role='owner'; subsequent
- * signups via invite codes get role='member' (settable later by the owner).
- *
- * All endpoints that touch shared infra (API keys, autopilot.json,
- * sources.json, activity.jsonl, backup operations) MUST call
- * `requireOwner` or `requireOwnerOrAdmin`. Endpoints that only touch
- * per-user data only need `requireUserId`.
- */
+/** Better Auth helpers in two layers. Auth: requireUser / requireUserId
+ *  -> 401 on no session. RBAC: requireRole / requireOwner /
+ *  requireOwnerOrAdmin -> 403 on role mismatch. 3 roles: owner (sole,
+ *  full install-wide access), admin (delegated, no reset), member
+ *  (per-user data only). First signup -> owner; subsequent invite-code
+ *  signups -> member. Endpoints touching shared infra MUST require
+ *  owner/admin; per-user endpoints need requireUserId. */
 import { error, type RequestEvent } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { authDb } from './db';

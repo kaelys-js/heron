@@ -24,21 +24,29 @@ concurrency:
 
 jobs:
   rebuild:
-    # Tagging doesn't need macOS — pick the cheap runner. The actual
+    # Tagging doesn't need macOS -- pick the cheap runner. The actual
     # build runs on macOS via native-release.yml after the tag push.
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
-      contents: write
+      contents: write # pushes the keepalive tag that triggers native-release
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
-          # We push back with this token so persist-credentials must
-          # stay on (the default).
+          # zizmor/artipacked -- don't persist token in .git/config; we
+          # re-inject it inline in the push step below.
+          persist-credentials: false
           fetch-depth: 0
       - name: Bump build number + tag
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
         run: |
           set -euo pipefail
           CURRENT=$(node -p "require('./ui/electron/package.json').version")
@@ -47,5 +55,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "$NEW_TAG" -m "TestFlight keepalive rebuild ${DATE_TAG}"
-          git push origin "$NEW_TAG"
+          # Push via a token-injected URL so the credential is scoped to
+          # this single command and never lands in .git/config.
+          HOSTLESS_URL="${SERVER_URL#https://}"
+          git push "https://x-access-token:${GH_TOKEN}@${HOSTLESS_URL}/${REPO}.git" "$NEW_TAG"
       # The tag push triggers native-release.yml which runs build-ios.

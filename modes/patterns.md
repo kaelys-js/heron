@@ -8,7 +8,7 @@ Analyze all tracked applications to find patterns in outcomes and surface action
 
 - `data/__APPLICATIONS__` -- Application tracker
 - `__REPORTS__/` -- Individual evaluation reports
-- `config/profile.yml` -- User profile (for recommendation context)
+- `__PROFILE_YML__` -- User profile (for recommendation context)
 - `__PROFILE_MD__` -- User archetypes and framing
 - `__PORTALS__` -- Portal config (for filter update recommendations)
 
@@ -26,7 +26,7 @@ Exit gracefully.
 Execute:
 
 ```bash
-node analyze-patterns.mjs
+node scripts/tracker/analyze-patterns.mjs
 ```
 
 Parse the JSON output. It contains:
@@ -140,7 +140,7 @@ Ask the user if they want to act on any recommendations:
 If the user agrees:
 - For portal filter changes: edit `__PORTALS__`
 - For profile/archetype changes: edit `__PROFILE_MD__` (NEVER `_shared.md`)
-- For score threshold: add to `config/profile.yml` under a `patterns` key
+- For score threshold: add to `__PROFILE_YML__` under a `patterns` key
 
 ## Outcome Classification
 

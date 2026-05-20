@@ -1,24 +1,10 @@
-/**
- * pattern-suggestions -- convert analyze-patterns.mjs textual recommendations
- * into STRUCTURED suggestions the UI can one-click apply.
- *
- * The analyzer outputs `recommendations: [{ action, reasoning, impact }]`
- * but doesn't say WHERE to put the change. This module:
- *
- *   1. Spawns the analyzer (JSON mode) and parses its output
- *   2. Maps each recommendation to a structured suggestion with
- *      `targetFile` + `op` + `payload`
- *   3. Exposes `applySuggestion(s)` that actually edits portals.yml /
- *      _profile.md based on the payload
- *
- * Why structured: textual "tighten location filters" leaves the user to
- * figure out which file + which line. Structured "add negative keyword
- * `US only` to portals.yml title_filter.negative" lets the dashboard do
- * it with one click + rollback if wrong.
- *
- * Safety: every mutation writes `<file>.bak` first (matches the existing
- * resetProfile() backup convention) so the user can revert via `mv`.
- */
+/** pattern-suggestions -- turn analyze-patterns.mjs textual output into
+ *  structured, one-click-applyable suggestions. The analyzer emits
+ *  recommendations: [{ action, reasoning, impact }] but doesn't say WHERE
+ *  to apply them; we (1) spawn it in JSON mode, (2) map each rec to
+ *  { targetFile, op, payload }, (3) expose applySuggestion(s) that mutate
+ *  portals.yml / _profile.md. Every mutation writes <file>.bak first
+ *  (same convention as resetProfile) so the user can revert with `mv`. */
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -204,7 +190,14 @@ export function applySuggestion(
         const keywords = s.payload?.keywords ?? [];
         if (keywords.length === 0) return { ok: false, error: 'No keywords in payload' };
         const portalsPath = profileFilePath(profileId, 'portals');
-        const before = fs.existsSync(portalsPath) ? fs.readFileSync(portalsPath, 'utf8') : '';
+        // CodeQL js/file-system-race: read directly and treat ENOENT as
+        // empty rather than racing existsSync against the read.
+        let before = '';
+        try {
+          before = fs.readFileSync(portalsPath, 'utf8');
+        } catch (e) {
+          if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+        }
         if (!before) return { ok: false, error: 'portals.yml not found at ' + portalsPath };
         const parsed = (yamlParse(before) as Record<string, unknown>) ?? {};
         const tf = (parsed.title_filter as Record<string, unknown>) ?? {};
@@ -232,7 +225,14 @@ export function applySuggestion(
         const minScore = s.payload?.minScore;
         if (typeof minScore !== 'number') return { ok: false, error: 'No minScore in payload' };
         const profilePath_ = profileFilePath(profileId, 'profile-yml');
-        const before = fs.existsSync(profilePath_) ? fs.readFileSync(profilePath_, 'utf8') : '';
+        // CodeQL js/file-system-race: read directly and treat ENOENT as
+        // empty rather than racing existsSync against the read.
+        let before = '';
+        try {
+          before = fs.readFileSync(profilePath_, 'utf8');
+        } catch (e) {
+          if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+        }
         if (!before) return { ok: false, error: 'profile.yml not found' };
         const parsed = (yamlParse(before) as Record<string, unknown>) ?? {};
         const automation = (parsed.automation as Record<string, unknown>) ?? {};
@@ -253,7 +253,14 @@ export function applySuggestion(
         const archetype = s.payload?.archetype;
         if (!archetype) return { ok: false, error: 'No archetype in payload' };
         const target = profileFilePath(profileId, 'profile-md');
-        const before = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : '';
+        // CodeQL js/file-system-race: read directly and treat ENOENT as
+        // empty rather than racing existsSync against the read.
+        let before = '';
+        try {
+          before = fs.readFileSync(target, 'utf8');
+        } catch (e) {
+          if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+        }
         const isStrong = s.op === 'profile-flag-archetype-strong';
         const tag = isStrong ? 'STRONG-FIT' : 'AVOID';
         const note =

@@ -38,7 +38,7 @@ Context: I'm evaluating a candidacy for [role] at [company]. I need actionable i
 - How do they position vs competition?
 
 ### 6. The candidate angle
-Given my profile (read from __CV__ and profile.yml for specific experience):
+Given my profile (read from `__CV__` and `__PROFILE_YML__` for specific experience):
 - What unique value do I bring to this team?
 - Which of my projects are most relevant?
 - What story should I tell in the interview?

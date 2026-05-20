@@ -16,6 +16,21 @@ import { logEvent } from '$lib/server/events';
 
 type ApplyMode = 'mark' | 'linkedin' | 'open-and-mark';
 
+/**
+ * Hostname-exact match for LinkedIn. CodeQL flagged the previous
+ * `url.includes('linkedin.com')` shape under `js/incomplete-url-substring-sanitization`
+ * because attacker-controlled URLs like `https://evil.example/?u=linkedin.com`
+ * pass the substring test. Parse + check hostname instead.
+ */
+function isLinkedInHost(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host === 'linkedin.com' || host.endsWith('.linkedin.com');
+  } catch {
+    return false;
+  }
+}
+
 export const POST = wrap(
   'job-apply',
   async ({ params, request, url }: { params: { id: string }; request: Request; url: URL }) => {
@@ -30,7 +45,9 @@ export const POST = wrap(
     const { job, profileId } = resolved!;
 
     if (mode === 'linkedin') {
-      if (!/linkedin\.com/.test(job.url)) {
+      // Hostname-based check (CodeQL js/incomplete-url-substring-sanitization):
+      // raw-string .includes('linkedin.com') would also match attacker.example/?u=linkedin.com.
+      if (!isLinkedInHost(job.url)) {
         badRequest('Job URL is not on LinkedIn — only Easy Apply jobs can be auto-applied');
       }
       // Pass profileId so easy-apply spawns with --profile + uses that profile's

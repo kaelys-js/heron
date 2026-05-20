@@ -152,7 +152,7 @@
 
     "test": {
       "dependsOn": ["brand"],
-      "outputs": ["coverage/**", ".vitest-cache/**"],
+      "outputs": [".vitest-cache/**"],
       "inputs": [
         "src/**",
         "static/**",
@@ -165,17 +165,9 @@
     },
 
     "test:coverage": {
-      "dependsOn": ["test"],
-      "outputs": ["coverage/**"],
-      "inputs": [
-        "src/**",
-        "static/**",
-        "vite.config.ts",
-        "vitest.config.ts",
-        "vitest.workspace.ts",
-        "tsconfig.json",
-        "package.json"
-      ]
+      "dependsOn": ["brand"],
+      "cache": false,
+      "outputs": ["coverage/**"]
     },
 
     "test:ui": {

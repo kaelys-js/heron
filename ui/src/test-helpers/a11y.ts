@@ -1,36 +1,10 @@
-/**
- * Accessibility test helper -- drop-in axe-core wrapper for component tests.
- *
- * HP3 -- Heron's component tests run via Vitest's browser provider against
- * real Chromium/WebKit. axe-core integrates by running against the
- * `document` inside the test page; the helper returns the same Promise
- * shape `expect()` understands so we can chain into a regular assertion.
- *
- * Usage in a `*.component.test.ts`:
- *
- *     import { render } from '$lib/../test-helpers/render';
- *     import { expectNoAxeViolations } from '$lib/../test-helpers/a11y';
- *     import MyComponent from '$lib/components/MyComponent.svelte';
- *
- *     it('has no axe violations in the default state', async () => {
- *       const { container } = render(MyComponent);
- *       await expectNoAxeViolations(container);
- *     });
- *
- * Scoping: pass a specific element (e.g. just the rendered component
- * container, not the entire test page) so we don't fail on harness-
- * level DOM issues outside our control.
- *
- * Rules we DISABLE by default:
- *   - `region` -- landmark-region rule fails on isolated components that
- *     don't include `<main>` / `<nav>` etc. Real-page tests assert this.
- *   - `color-contrast` -- depends on computed styles from the surrounding
- *     theme; surfaces too many false positives in JSDOM-influenced
- *     theming. Re-enable per-test when explicitly testing theme.
- *
- * To enforce a stricter ruleset in a specific test, pass `{ rules: {} }`
- * to opt back into the disabled rules.
- */
+/** axe-core wrapper for component tests (HP3). Heron's component tests
+ *  run in Vitest's browser provider against Chromium/WebKit; axe runs
+ *  against `document` and we return an `expect()`-chainable Promise.
+ *  Pass a scoped element so harness-level DOM doesn't fail us.
+ *  Defaults disabled: `region` (isolated components lack <main>/<nav>;
+ *  real-page tests assert this) and `color-contrast` (false positives
+ *  from surrounding theme). Pass `{ rules: {} }` to opt them back in. */
 import axe from 'axe-core';
 
 export type AxeOptions = {

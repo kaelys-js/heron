@@ -1,16 +1,9 @@
-/**
- * /api/profile/seed-story-bank -- extract STAR+R stories from cv.md.
- *
- * POST → spawns the seed-story-bank Claude mode (`claude -p` + the prompt
- * file at modes/seed-story-bank.md). The mode reads cv.md + _profile.md +
- * the EXISTING story-bank.md, appends new stories, and prints a one-line
- * summary on stdout that we parse for the UI toast.
- *
- * Why an explicit "seed" action (vs. running oferta and waiting for Block F
- * to do it): users with no applications yet have an empty story-bank.md.
- * That blocks every future interview-prep run. One-shot seeding from the
- * CV fixes that bootstrap problem.
- */
+/** /api/profile/seed-story-bank -- extract STAR+R stories from cv.md.
+ *  POST → spawn seed-story-bank Claude mode (modes/seed-story-bank.md).
+ *  Mode reads cv.md + _profile.md + existing story-bank.md, appends new
+ *  stories, prints a one-line stdout summary parsed for the UI toast.
+ *  Explicit seed (vs. waiting for Block F in evaluate) so first-time
+ *  users with empty story-bank.md can still run interview-prep. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { ROOT } from '$lib/server/files';
@@ -103,11 +96,25 @@ export const GET = wrap('seed-story-bank', async () => {
   // GET → stats about the current story bank so the UI can show
   // "23 stories · last updated 2 days ago" or "empty -- seed now".
   const bankPath = path.join(ROOT, 'interview-prep', 'story-bank.md');
-  if (!fs.existsSync(bankPath)) {
-    return { exists: false, storyCount: 0, lastUpdatedAt: null };
+  // CodeQL js/file-system-race: open once and use fstatSync/readFileSync
+  // through the fd so stat and read agree on the same inode atomically.
+  let fd: number;
+  try {
+    fd = fs.openSync(bankPath, 'r');
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
+      return { exists: false, storyCount: 0, lastUpdatedAt: null };
+    }
+    throw e;
   }
-  const stat = fs.statSync(bankPath);
-  const txt = fs.readFileSync(bankPath, 'utf8');
+  let stat: fs.Stats;
+  let txt: string;
+  try {
+    stat = fs.fstatSync(fd);
+    txt = fs.readFileSync(fd, 'utf8');
+  } finally {
+    fs.closeSync(fd);
+  }
   // Count `### ` headings (skipping the bullet-list intro). Each story
   // starts with `### [Theme] Title`. Must skip headings inside HTML
   // comments -- the shipped story-bank.md includes a "Format:" example

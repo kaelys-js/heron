@@ -1,21 +1,8 @@
-/**
- * Pattern-analysis wrapper.
- *
- * Spawns `node analyze-patterns.mjs` (which already returns JSON) and
- * caches the result on disk for ~10 minutes so a noisy reload of
- * /insights doesn't re-run the script unnecessarily.
- *
- * The script reads applications.md and reports/ to compute conversion
- * funnel, score-vs-outcome stats, archetype breakdown, blocker analysis,
- * remote-policy correlation, and recommendations. We just transport its
- * output and let the page render it.
- *
- * IMPORTANT -- the type definitions below are the *script's actual JSON
- * shape*, not what felt natural at the time of writing the page. Keys
- * like `total` (not `count`), `conversionRate` (already 0-100, not 0-1),
- * and array-of-objects (not Record<>) are the source of truth. The
- * /insights page reads against these types verbatim.
- */
+/** Wraps `node scripts/tracker/analyze-patterns.mjs`. Caches the JSON
+ *  output on disk for ~10min so /insights reloads don't re-spawn.
+ *  Types below MUST mirror the script's actual JSON shape (keys like
+ *  `total` / `conversionRate` 0-100 / array-of-objects) -- the page
+ *  reads against them verbatim. */
 
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';

@@ -1,4 +1,4 @@
-# Heron — Canonical States
+# Heron -- Canonical States
 # Source of truth for Heron (writer) and dashboard (reader).
 # Both systems MUST use these exact states.
 #
@@ -31,7 +31,7 @@ states:
     description: Active interview process (use sub-stages below for finer tracking)
     dashboard_group: interview
 
-  # Interview sub-stages — finer-grained than the legacy 'Interview' bucket.
+  # Interview sub-stages -- finer-grained than the legacy 'Interview' bucket.
   # Pick one of these for new rows; 'Interview' stays as a fallback for
   # legacy data + ambiguous early-stage outreach.
   - id: phonescreen
@@ -70,7 +70,7 @@ states:
     description: Offer received (verbal or written)
     dashboard_group: offer
 
-  # Post-offer stages — used by negotiation + decision-support flows.
+  # Post-offer stages -- used by negotiation + decision-support flows.
   - id: negotiating
     label: Negotiating
     aliases: [negotiation, in-negotiation, counter]

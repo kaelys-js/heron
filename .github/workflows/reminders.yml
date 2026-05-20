@@ -1,23 +1,23 @@
 name: Cadence reminders
 # Four cadence reminders sharing one workflow + one harden-runner setup:
 #
-#   • quarterly-audit  — opens an issue if no `chore(audit)` /
+#   • quarterly-audit  -- opens an issue if no `chore(audit)` /
 #                        `fix(audit)` commit landed in 90 days.
 #                        Forces a regular sweep of the multi-user
 #                        + GitHub-workflow audits.
-#   • release-cadence  — opens an issue if no release tag in 60 days.
+#   • release-cadence  -- opens an issue if no release tag in 60 days.
 #                        Heron should ship at least every 2 months;
 #                        longer means we're hoarding unmerged work.
-#   • issue-stale-pinger — friendly @mention 7 days BEFORE stale.yml
+#   • issue-stale-pinger -- friendly @mention 7 days BEFORE stale.yml
 #                        closes a 60-day-inactive issue (stale.yml
 #                        marks at 60d + closes 14d after; we ping at
 #                        day 67 = 7 days before close).
-#   • dependency-staleness — alerts if the Renovate dependency
+#   • dependency-staleness -- alerts if the Renovate dependency
 #                        dashboard issue's open-item count grows above
 #                        a threshold (signal that nobody's reviewing
 #                        Renovate PRs).
 #
-# All 4 jobs are idempotent — they check for an existing open issue
+# All 4 jobs are idempotent -- they check for an existing open issue
 # matching their signature before opening a new one (dedupe via labels
 # + body sentinel string).
 on:
@@ -27,7 +27,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
 
 concurrency:
   group: reminders-${{ github.run_id }}
@@ -39,6 +38,9 @@ jobs:
     name: Quarterly audit reminder (90d cadence)
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    permissions:
+      contents: read # git log on the checked-out tree
+      issues: write # opens an audit-due issue if cadence breaches
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
@@ -48,6 +50,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Last audit commit ≤ 90 days?
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -95,6 +98,9 @@ jobs:
     name: Release cadence reminder (60d cadence)
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    permissions:
+      contents: read
+      issues: write # opens a release-due issue if cadence breaches
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
@@ -148,6 +154,9 @@ jobs:
     name: Ping issues 7d before stale-close
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write # gh issue comment on stale issues
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
@@ -191,6 +200,9 @@ jobs:
     name: Renovate dashboard backlog alert
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    permissions:
+      contents: read
+      issues: write # opens a renovate-backlog issue if PR count exceeds threshold
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3

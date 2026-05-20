@@ -1,4 +1,4 @@
-# Lefthook — git hooks manager.
+# Lefthook -- git hooks manager.
 #
 # Run hooks in parallel, skip on rebase/merge, share config across the team.
 # Activate: `lefthook install` (the setup wizard does this automatically;
@@ -8,16 +8,16 @@
 # YAML-driven (vs scripts), no Node dependency for the hook runtime itself,
 # and `lefthook run <name>` lets you trigger any hook manually for debugging.
 
-# skip_output: REMOVED — lefthook 2.x dropped the `meta` / `success` /
+# skip_output: REMOVED -- lefthook 2.x dropped the `meta` / `success` /
 # `skips` keys we previously suppressed. The array form (`- meta`) emits
 # a "Value is array but should be object" advisory in `lefthook validate`;
 # the object form (`meta: true`) errors with "No values are allowed because
 # the schema is set to 'false'" (the keys can't be enabled in 2.x). Either
 # way, hooks run fine. Easiest: remove entirely. Lefthook prints a small
-# header on each run — acceptable tax for clean `validate`.
+# header on each run -- acceptable tax for clean `validate`.
 
 # Bypass the entire hook suite with: SKIP_LEFTHOOK=1 git commit ...
-# Use sparingly — CI re-runs everything anyway.
+# Use sparingly -- CI re-runs everything anyway.
 
 # ── pre-commit ──────────────────────────────────────────────────────
 # Fast checks that gate every commit (~1-2s total on warm cache).
@@ -30,7 +30,7 @@ pre-commit:
     - merge
   commands:
     format-pipeline:
-      # SERIAL PIPELINE — the apply-brand → biome-format → sort-pkg →
+      # SERIAL PIPELINE -- the apply-brand → biome-format → sort-pkg →
       # biome-format-check chain MUST run in order, never in parallel
       # with itself. Previously these were three separate parallel
       # hooks; the race showed up as "✗ biome-format-check" failing
@@ -52,7 +52,7 @@ pre-commit:
       run: |
         set -e
         # Step 1: apply-brand (only meaningful when branding/ changed,
-        # but cheap to run unconditionally — it's a no-op when nothing
+        # but cheap to run unconditionally -- it's a no-op when nothing
         # drifted). Regenerates 20+ propagated artifacts.
         #
         # `--stage` tells apply-brand to `git add` everything it
@@ -71,7 +71,7 @@ pre-commit:
         # files apply-brand just regenerated.
         #
         # We pass `--write` so biome mutates in place. We INTENTIONALLY
-        # do NOT use `|| true` here — a biome parse failure is a real
+        # do NOT use `|| true` here -- a biome parse failure is a real
         # bug (the file is syntactically broken) and silencing it
         # masks the issue until biome-format-check below catches a
         # ghost "format drift" that's actually unparseable code.
@@ -81,7 +81,7 @@ pre-commit:
           echo "$STAGED_BIOME" | xargs git add
         fi
 
-        # Step 3: sort-package-json (after biome — biome's JSON
+        # Step 3: sort-package-json (after biome -- biome's JSON
         # formatter cares about key order WITHIN objects but not
         # about the top-level ordering this enforces).
         STAGED_PKGS=$(git diff --cached --name-only --diff-filter=d | grep -E '(^|/)package\.json$' || true)
@@ -103,7 +103,7 @@ pre-commit:
       stage_fixed: true
 
     verify-fonts:
-      # Closes TYPOGRAPHY.md Task 9 item 5 — guard against accidental /
+      # Closes TYPOGRAPHY.md Task 9 item 5 -- guard against accidental /
       # malicious woff2 swaps. Fires only when a font binary or the
       # checksum lockfile is staged; otherwise no-op. Run
       # `pnpm fonts:lock` after a deliberate font upgrade.
@@ -127,19 +127,19 @@ pre-commit:
 
     prettier-svelte:
       # Biome doesn't support .svelte yet (as of 2026-05). Run prettier
-      # with prettier-plugin-svelte for those files only — style matches
+      # with prettier-plugin-svelte for those files only -- style matches
       # biome.jsonc so .ts and .svelte feel identical.
       #
       # PRE-FIX BUG (caught during the verification-loop commit that
       # introduced this comment): the previous form did `cd ui` then
-      # passed {staged_files} verbatim — but lefthook always interpolates
+      # passed {staged_files} verbatim -- but lefthook always interpolates
       # {staged_files} as repo-relative paths (`ui/src/...`). From inside
       # `ui/` those resolved to `ui/ui/src/...` which doesn't exist, so
       # prettier silently no-op'd (because of `|| true`), the file stayed
       # unformatted, and the prettier-svelte-check verification pass
       # below caught it and failed the commit. Net effect: every commit
       # touching a .svelte file required a manual `pnpm exec prettier
-      # --write` BEFORE staging — which defeats the whole point of an
+      # --write` BEFORE staging -- which defeats the whole point of an
       # auto-format hook.
       #
       # The fix mirrors prettier-svelte-check below: run from the repo
@@ -169,7 +169,7 @@ pre-commit:
       # paths relative to its workspace root. CRITICAL: the leading
       # token must be `^ui/` or ` ui/` (boundary-anchored), NOT a
       # plain `ui/` with /g. Plain /g would mangle paths that have
-      # `ui/` in the MIDDLE — e.g. `ui/src/lib/components/ui/sonner/...`
+      # `ui/` in the MIDDLE -- e.g. `ui/src/lib/components/ui/sonner/...`
       # collapses to `src/lib/components/sonner/...` which prettier
       # can't find. We use awk to map per-token so the anchoring is
       # unambiguous regardless of how many `ui/`s appear in the path.
@@ -201,7 +201,7 @@ pre-commit:
       stage_fixed: true
 
     ruff-python-check:
-      # Verification pass — fails if any .py file still has lint or
+      # Verification pass -- fails if any .py file still has lint or
       # format errors after the auto-fix above.
       glob: "*.py"
       run: |
@@ -224,7 +224,7 @@ pre-commit:
         ktlint {staged_files}
 
     swiftformat:
-      # SwiftFormat — auto-formats Swift files in place. Pairs with
+      # SwiftFormat -- auto-formats Swift files in place. Pairs with
       # swiftlint below which lints structural rules SwiftFormat doesn't
       # touch (force-cast, force-try, line length, etc.).
       glob: "*.swift"
@@ -275,14 +275,14 @@ pre-commit:
 
     yamllint:
       # YAML linter (style + syntax). Workflows are the highest-signal
-      # surface — actionlint runs in pre-push for the deeper schema check.
+      # surface -- actionlint runs in pre-push for the deeper schema check.
       glob: "*.{yaml,yml}"
       run: |
         command -v yamllint >/dev/null 2>&1 || exit 0
         yamllint --no-warnings {staged_files} 2>/dev/null || true
 
     actionlint:
-      # Workflow file validator — catches typos, unknown action inputs,
+      # Workflow file validator -- catches typos, unknown action inputs,
       # job-needs cycles. Runs only when a workflow file is staged.
       glob: ".github/workflows/*.{yml,yaml}"
       run: |
@@ -293,7 +293,7 @@ pre-commit:
       # Apple plist validator (Info.plist, .entitlements, .xcprivacy).
       # Uses Python's stdlib plistlib so no install needed beyond the
       # python pin in .mise.toml. A malformed Info.plist breaks the
-      # iOS build with a confusing xcodebuild error — catching it at
+      # iOS build with a confusing xcodebuild error -- catching it at
       # pre-commit means the contributor learns about it before push.
       glob: "*.{plist,entitlements,xcprivacy}"
       run: |
@@ -301,7 +301,7 @@ pre-commit:
         python3 scripts/system/validate-plists.py
 
     xml-validate:
-      # XML well-formedness check via xmllint — *.svg + *.storyboard.
+      # XML well-formedness check via xmllint -- *.svg + *.storyboard.
       # xmllint ships with libxml2 (pre-installed on macOS + Ubuntu CI).
       # No schema/DTD validation, just "does this parse as XML".
       glob: "*.{svg,storyboard}"
@@ -322,18 +322,18 @@ pre-commit:
     tiny-configs:
       # Syntax checks for the small static config files no formatter /
       # linter ecosystem owns: .gitattributes, .npmrc, .actrc, LICENSE,
-      # robots.txt. Each gets a regex-driven sanity pass — catches
+      # robots.txt. Each gets a regex-driven sanity pass -- catches
       # truncated lines, typo'd directives, missing MIT-template phrases.
       glob: "{.gitattributes,.npmrc,.actrc,LICENSE,**/robots.txt}"
       run: pnpm validate:tiny-configs
 
     markdownlint:
       # markdownlint-cli2 with a relaxed config (.markdownlint-cli2.jsonc)
-      # — disables 100s of cosmetic rules, enables the ~20 that catch real
+      # -- disables 100s of cosmetic rules, enables the ~20 that catch real
       # rendering bugs (bare URLs, malformed tables, broken links, empty
       # link text, missing alt text, dropped emphasis markers, etc.).
       # Runs on the FULL set (not just staged) because rule MD053
-      # (orphan reference definitions) is cross-file — a definition can
+      # (orphan reference definitions) is cross-file -- a definition can
       # be orphaned by a deletion in a different file. Fast even at full
       # repo scope (109 files, ~200ms).
       glob: "*.md"
@@ -341,22 +341,54 @@ pre-commit:
 
     english-only:
       # Heron ships English-only mode templates + system docs. This gate
-      # catches Spanish prose (or other accented-language slip-ins) before
-      # they reach main. Inline-allowlist English loan words / proper
-      # nouns / language-detection regex literals in
-      # scripts/system/verify-english-only.mjs::ALLOWLIST when adding new
-      # legitimate cases. Runs on the full set -- fast (~50 ms).
+      # catches Spanish prose (accented + unambiguous-cluster) before it
+      # reaches main. Two detection layers: accented characters (with
+      # ALLOWLIST for English loan words / proper nouns) and a Spanish
+      # word-cluster heuristic that catches 3+ Spanish-only function
+      # words on a single line (aunque / mientras / porque / etc.). See
+      # scripts/system/verify-english-only.mjs for tunables and
+      # scripts/system/verify-english-only.test.mjs for the regression
+      # suite. Runs on the full set -- fast (~50 ms).
       glob: "*.{md,ts,tsx,svelte,mjs,py,sh}"
-      run: pnpm verify:english-only
+      run: pnpm verify:english-only:test && pnpm verify:english-only
+
+    modes-correctness:
+      # Asserts every modes/*.md is multi-user-aware:
+      #   - declared __TOKEN__ vocabulary (no typos like __CV___)
+      #   - no literal repo-root paths that bypass active-profile
+      #     resolution (cv.md / config/profile.yml / etc.)
+      #   - bare script invocations (`node generate-pdf.mjs`) include
+      #     their real scripts/<dir>/<name>.mjs path
+      #   - `# Mode: <slug> -- <subtitle>` header schema matches
+      #     the filename slug
+      # See scripts/system/verify-modes.mjs for the gates + the
+      # .test.mjs sibling for TDD-regression coverage.
+      glob: "modes/*.md"
+      run: pnpm verify:modes:test && pnpm verify:modes
 
     no-slop:
-      # Block accidental re-introduction of em-/en-dashes in prose. They
-      # are the most reliable LLM-prose tell -- GPT-style models emit
-      # U+2014 / U+2013 freely; humans typing on a US keyboard reach for
-      # the hyphen-minus. The .md set is scanned full-body (outside code
-      # fences). See scripts/system/verify-no-slop.mjs for the allowlist.
-      glob: "*.md"
-      run: pnpm verify:no-slop
+      # Block accidental re-introduction of em-/en-dashes in prose or
+      # comments. GPT-style models emit U+2014 / U+2013 freely; humans
+      # typing on a US keyboard reach for the hyphen-minus. The verifier
+      # scans .md (full body outside fences), TS/Svelte/mjs comments
+      # only, Python/Ruby/Shell # comments, and YAML whole-line #
+      # comments. String literals + UI text are exempt by design.
+      # The .test.mjs sibling regression-tests the detector logic.
+      glob: "*.{md,ts,tsx,svelte,mjs,js,cjs,py,rb,sh,bash,yml,yaml}"
+      run: pnpm verify:no-slop:test && pnpm verify:no-slop
+
+    comment-style:
+      # Enforce docs/COMMENT-STYLE.md across .ts/.tsx/.svelte/.mjs/.js/.cjs:
+      #   - Top-of-file /** ... */ headers capped at 12 lines (HEADER_MAX_LINES)
+      #   - AI-slop adjectives banned in comments (comprehensive, robust,
+      #     elegant, seamless, leverage(s|ing), powerful, cutting-edge, etc.)
+      #   - "Pre-fix" / "Post-fix" / "historical context" framing banned
+      # Backtick-quoted runs are citations and exempt -- write `leverage`
+      # if the literal word is the subject. String literals + JSX text +
+      # UI copy never get inspected; only comment context does. See
+      # scripts/system/verify-comment-style.mjs + its .test.mjs sibling.
+      glob: "*.{ts,tsx,svelte,mjs,js,cjs}"
+      run: pnpm verify:comment-style:test && pnpm verify:comment-style
 
     exact-versions:
       # Reject any version specifier that isn't an EXACT pin (no ^, ~,
@@ -368,7 +400,7 @@ pre-commit:
       run: pnpm validate:exact-versions
 
     oxlint:
-      # oxlint — Rust-based JS/TS linter (50-100x faster than ESLint).
+      # oxlint -- Rust-based JS/TS linter (50-100x faster than ESLint).
       # All rules currently OFF (see .oxlintrc.jsonc header for why).
       # Runs anyway to:
       #   - catch parse failures in any .js/.ts/.jsx/.tsx/.mjs/.cjs
@@ -387,7 +419,7 @@ pre-commit:
       run: pnpm validate:version-sync
 
     taplo:
-      # TOML formatter — pyproject.toml + .mise.toml. taplo is the
+      # TOML formatter -- pyproject.toml + .mise.toml. taplo is the
       # canonical Rust-based formatter (the TOML equivalent of biome).
       # Format pass; the verification check below catches anything
       # taplo couldn't auto-fix.
@@ -405,7 +437,7 @@ pre-commit:
         taplo format --check {staged_files}
 
     no-secrets:
-      # Cheap regex guard — block obvious secrets from being committed.
+      # Cheap regex guard -- block obvious secrets from being committed.
       # Patterns: Anthropic API keys, GitHub PATs (classic + fine-grained),
       # AWS access keys, OpenAI keys, Google API keys, generic PEM blocks,
       # Stripe live keys, Slack bot tokens.
@@ -431,7 +463,7 @@ pre-push:
       # Background: .npmrc + .mise.toml + package.json::engines all agree
       # on a single exact Node version (currently 26.1.0). If the user's
       # shell PATH resolves a DIFFERENT Node version (orphaned install,
-      # missing mise activation, etc.), pnpm only WARNS and proceeds —
+      # missing mise activation, etc.), pnpm only WARNS and proceeds --
       # which means every line of output gets smeared with the warning
       # AND the pre-push gauntlet runs on the wrong Node (test results
       # diverge from CI).
@@ -455,11 +487,11 @@ pre-push:
       # Run the full Vitest matrix (ui-unit + ui-server + ui-component +
       # ui-routes + ui-integration + electron) via turbo. Cold ~30s on
       # a warm pnpm-store; warm (FULL TURBO cache hit) <100ms. iOS tests
-      # are NOT in pre-push — they're CI-only because the simulator
+      # are NOT in pre-push -- they're CI-only because the simulator
       # bootstrap dwarfs the speedup turbo would give us.
       #
       # Self-heals better-sqlite3 ABI mismatches inline BEFORE invoking
-      # vitest — otherwise a mid-session Node-version swap (mise 26.x ↔
+      # vitest -- otherwise a mid-session Node-version swap (mise 26.x ↔
       # 25.x) leaves the cached binding stale and vitest red-bars 11+
       # test files with a confusing "NODE_MODULE_VERSION 141 vs 147"
       # error that looks like a test failure but is a tooling glitch.
@@ -477,7 +509,7 @@ pre-push:
       # (thresholds in ui/vitest.config.ts: lines 70 / branches 65 /
       # functions 70 / statements 70 with perFile floor) is enforced
       # locally on every push. Without --coverage, vitest doesn't read
-      # the threshold block at all — push would succeed at 0% coverage
+      # the threshold block at all -- push would succeed at 0% coverage
       # and CI would catch it later. Pre-push wall-time grows ~60s →
       # ~75s for the v8 coverage collection; acceptable.
       run: |
@@ -500,7 +532,7 @@ pre-push:
       #      one-liner the developer needs.
       #
       # Why not auto-amend automatically: amending during push is
-      # invasive — the SHA changes mid-flight, the developer's local
+      # invasive -- the SHA changes mid-flight, the developer's local
       # state diverges from what they typed into the editor, and a
       # `git rev-parse HEAD` they saved earlier silently breaks. Better
       # to surface the fix and let the developer drive.
@@ -512,7 +544,7 @@ pre-push:
       # biome major release), or (c) apply-brand regenerating a file
       # whose biome-preferred format diverges from what apply-brand
       # writes verbatim. This gate catches all three.
-      # Whole pipeline routes through mise-shim — biome / prettier /
+      # Whole pipeline routes through mise-shim -- biome / prettier /
       # sort-package-json all need consistent Node + pnpm versions to
       # produce reproducible output. The shim is a no-op when shell
       # PATH already matches the pin.
@@ -528,7 +560,7 @@ pre-push:
         CHANGED=$(git diff --name-only)
         if [ -z "$CHANGED" ]; then
           # `pnpm format` didn't actually change anything but check still
-          # fails — likely a config issue, not auto-fixable. Surface the
+          # fails -- likely a config issue, not auto-fixable. Surface the
           # original check output so the developer can see what biome
           # objects to.
           echo ""
@@ -554,7 +586,7 @@ pre-push:
       # mirrors CI exactly so the surprise is caught locally.
       run: |
         command -v swiftlint >/dev/null 2>&1 || { echo "skip: swiftlint not installed (mise install)"; exit 0; }
-        swiftlint --strict --no-cache ui/ios/App
+        swiftlint --strict --quiet --no-cache ui/ios/App
     ktlint-strict:
       # Mirror of CI's strict ktlint check. Pre-commit auto-formats;
       # this catches anything ktlint --format couldn't auto-fix
@@ -570,7 +602,7 @@ pre-push:
         command -v ruff >/dev/null 2>&1 || exit 0
         ruff format --check . && ruff check .
     actionlint:
-      # Lint .github/workflows/*.yml — catches typos / unknown action inputs
+      # Lint .github/workflows/*.yml -- catches typos / unknown action inputs
       # / job-needs cycles before they ever hit GitHub. Free + fast.
       glob: ".github/workflows/*.{yml,yaml}"
       run: actionlint {staged_files} 2>/dev/null || actionlint .github/workflows/*.yml

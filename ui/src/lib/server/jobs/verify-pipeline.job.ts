@@ -1,16 +1,9 @@
-/**
- * Pipeline integrity verification -- silent + on-demand.
- *
- * Runs in-process, in pure TS, against the active profile's
- * applications.md. Emits one issue per problem class with a stable
- * dedupeKey, so repeat detections refresh the existing row rather
- * than spamming.
- *
- * Schedule: nightly at 04:00. Manual run via the Agents page and via
- * `POST /api/jobs/verify-pipeline/run`. Output is parsed into the
- * issue stream so the user only sees a notification when something
- * is actually broken.
- */
+/** Pipeline integrity verification -- silent + on-demand. Runs in-process
+ *  (pure TS) against the active profile's applications.md. Emits one issue
+ *  per problem class with a stable dedupeKey so repeat detections refresh
+ *  the existing row instead of spamming. Schedule: nightly 04:00. Manual
+ *  run via the Agents page + POST /api/jobs/verify-pipeline/run. Output
+ *  flows to the issue stream; the user is pinged only on actual breakage. */
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { logEvent } from '../events';

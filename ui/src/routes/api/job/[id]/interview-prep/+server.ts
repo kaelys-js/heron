@@ -1,17 +1,9 @@
-/**
- * Per-job interview prep -- cached + on-demand.
- *
- *   GET /api/job/[id]/interview-prep
- *     → returns the persisted file at interview-prep/{slug}.md if one exists,
- *       or 404 with { exists: false } so the UI can show a Generate CTA.
- *
- *   POST /api/job/[id]/interview-prep
- *     → spawns generateInterviewPrep(), persists the result, returns the
- *       fresh markdown. Re-runs OK -- overwrites the persisted file.
- *
- * Auto-firing on status→Interview is handled by `auto-interview-prep.ts`
- * (a bus listener). This endpoint is the manual escape hatch.
- */
+/** /api/job/[id]/interview-prep -- per-job interview prep, cached + on-demand.
+ *  GET returns the persisted file at interview-prep/{slug}.md if one exists,
+ *  else 404 + { exists: false } so the UI shows a Generate CTA. POST spawns
+ *  generateInterviewPrep(), persists, returns the markdown; re-runs overwrite.
+ *  Auto-firing on status→Interview lives in auto-interview-prep.ts (bus
+ *  listener) -- this endpoint is the manual escape hatch. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';

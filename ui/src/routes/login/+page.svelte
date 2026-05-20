@@ -210,7 +210,7 @@
         icon next to multi-line text.
       -->
       <div
-        class="mt-6 w-full overflow-hidden rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200"
+        class="mt-6 w-full overflow-hidden rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-200"
         role="alert"
         transition:slide={{ duration: 220, easing: cubicOut }}
       >
@@ -305,7 +305,7 @@
          marketing-speak like "end-to-end" which is properly a term
          for E2E encryption and not what passkeys actually are. -->
     <div
-      class="mt-6 flex items-center gap-2 rounded-full bg-emerald-500/8 px-3 py-1.5 text-[11px] text-emerald-300/80"
+      class="mt-6 flex items-center gap-2 rounded-full bg-emerald-500/8 px-3 py-1.5 text-[11px] text-emerald-800 dark:text-emerald-300/80"
     >
       <ShieldCheck class="size-3.5" />
       <span>Private by design · Your device is the key</span>

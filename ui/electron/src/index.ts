@@ -1,26 +1,8 @@
-/**
- * Heron desktop -- Electron main process.
- *
- * Responsibilities (in boot order):
- *
- *   1. Spawn the embedded Node SvelteKit server (the same `build/index.js`
- *      that adapter-node produces). Pick a free port at random; pass the
- *      resolved URL into the WebView via preload's `window.__CAREER_OPS__`.
- *
- *   2. Advertise the running server on the local network via mDNS
- *      (`_heron._tcp.local`) so an iOS app on the same wifi can
- *      auto-discover it through the same backend-discovery resolver.
- *
- *   3. Wait for `/api/health` to respond, then create the BrowserWindow.
- *
- *   4. Install the full AppMenuBar (File / Edit / View / Window / Help)
- *      and a system Tray with live quick-glance stats.
- *
- *   5. Wire `heron://job/abc` deep links (custom protocol) to
- *      `mainWindow.loadURL(backend + '/job/abc')`.
- *
- *   6. Auto-update via electron-updater + GitHub Releases.
- */
+/** Electron main: spawns embedded SvelteKit server (random port,
+ *  injects URL via preload's window.__HERON__), advertises via mDNS
+ *  (`_heron._tcp.local`), waits for /api/health, creates BrowserWindow,
+ *  installs AppMenuBar + tray, wires heron:// deep links to
+ *  mainWindow.loadURL, runs electron-updater against GitHub Releases. */
 import type { CapacitorElectronConfig } from '@capacitor-community/electron';
 import {
   getCapacitorElectronConfig,
@@ -241,13 +223,13 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
     // Don't bail -- the WebView's resolver may still find a remote backend.
   }
 
-  // 2. mDNS advertise (only if we have an embedded server)
+  // 2. mDNS advertise (only if we have an embedded server). Fire and
+  // forget -- startMdnsAdvertise is async (dynamic import + try/catch
+  // internal) so callers can ignore the returned Promise safely.
   if (state.serverPort) {
-    try {
-      startMdnsAdvertise({ name: BRAND.name, port: state.serverPort });
-    } catch (e) {
+    startMdnsAdvertise({ name: BRAND.name, port: state.serverPort }).catch((e) => {
       console.warn('[main] mDNS advertise failed', e);
-    }
+    });
   }
 
   // 3. Security CSP + WebView init
@@ -255,12 +237,10 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
   await myCapacitorApp.init();
   state.mainWindow = myCapacitorApp.getMainWindow();
 
-  // Inject embedded URL into the WebView via window.__CAREER_OPS__
+  // Inject embedded URL into the WebView via window.__HERON__
   if (state.serverUrl && state.mainWindow) {
     state.mainWindow.webContents
-      .executeJavaScript(
-        `window.__CAREER_OPS__ = { embeddedUrl: ${JSON.stringify(state.serverUrl)} };`,
-      )
+      .executeJavaScript(`window.__HERON__ = { embeddedUrl: ${JSON.stringify(state.serverUrl)} };`)
       .catch(() => {});
   }
 

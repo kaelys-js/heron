@@ -30,7 +30,7 @@ from urllib.request import Request, urlopen
 from urllib.parse import urlencode
 from xml.etree import ElementTree as ET
 
-# Resolve per-user secrets when CAREER_OPS_USER_ID is set; .env fallback
+# Resolve per-user secrets when HERON_USER_ID is set; .env fallback
 # otherwise. Each user holds their own Adzuna credentials in their
 # encrypted secrets store; this helper hides that lookup behind the
 # same shape as os.environ.get.
@@ -50,7 +50,7 @@ REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 
-# PIPELINE and HISTORY are now per-profile — set inside main() once we
+# PIPELINE and HISTORY are now per-profile -- set inside main() once we
 # know which profile this run targets (parse_args resolves --profile).
 PIPELINE: Path = REPO_ROOT / "data" / "pipeline.md"  # placeholder; overridden in main()
 HISTORY: Path = REPO_ROOT / "data" / "scan-history.tsv"
@@ -58,7 +58,7 @@ HISTORY: Path = REPO_ROOT / "data" / "scan-history.tsv"
 from lib_profiles import resolve_profile_arg, resolve_user_arg, profile_path, ensure_profile_dirs
 
 # ----- Cole's search profiles -----
-# results_wanted is per (search, source) combination — JobSpy fans out to
+# results_wanted is per (search, source) combination -- JobSpy fans out to
 # LinkedIn / Indeed / Glassdoor / ZipRecruiter / Google Jobs internally.
 # Higher numbers fetch more from each source but trip rate limits on
 # LinkedIn/Indeed sooner. 200 per source × 5 sources × 10 searches =
@@ -633,7 +633,7 @@ def main():
     global PIPELINE, HISTORY
     args = parse_args()
 
-    # /sources Test button (B12) — quick connectivity probe.
+    # /sources Test button (B12) -- quick connectivity probe.
     if args.probe:
         try:
             import urllib.request

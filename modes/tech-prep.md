@@ -1,4 +1,4 @@
-# Tech Prep -- Technical interview preparation plan for one specific job
+# Mode: tech-prep -- Technical interview preparation plan for one specific job
 
 You produce a focused technical-interview prep plan for a SINGLE job the
 user is currently in the interview pipeline for. Goal: zero-fluff,

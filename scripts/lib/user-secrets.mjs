@@ -1,21 +1,7 @@
-/**
- * user-secrets.mjs -- JS twin of ui/src/lib/server/user-secrets.ts.
- *
- * CLI scripts (gemini-eval.mjs, scan-email-imap.mjs, etc.) can't easily
- * import from the TypeScript dashboard codebase, so this file mirrors
- * the encryption format byte-for-byte. The on-disk schema is identical;
- * a file written by either side decrypts correctly with the other.
- *
- * Round-trip parity is enforced by a vitest case (search for
- * `mjs-ts parity`). Touch either side and re-run that test.
- *
- * Resolution order for a CLI script that wants a credential:
- *   1. per-user value (this module) -- keyed by `CAREER_OPS_USER_ID` env
- *   2. process.env fallback (legacy single-user install)
- *
- * If CAREER_OPS_USER_ID isn't set, scripts fall straight through to
- * process.env -- that's the pre-multi-user path and stays supported.
- */
+/** JS twin of ui/src/lib/server/user-secrets.ts. Same encryption
+ *  format byte-for-byte (round-trip parity gated by a vitest case
+ *  search for `mjs-ts parity`). Credential resolution: per-user value
+ *  keyed by HERON_USER_ID first, then process.env fallback. */
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,11 +15,11 @@ const SYSTEM_USER_ID = 'system-user';
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /** Data directory. Same precedence as ui/src/lib/server/db/index.ts:
- *  HERON_DATA_DIR > CAREER_OPS_DATA_DIR > <repo>/data. The override
+ *  HERON_DATA_DIR > HERON_DATA_DIR > <repo>/data. The override
  *  variants let the vitest parity case and any future migration scripts
  *  point at a tmpdir without touching the developer's real `data/`. */
 function dataDir() {
-  return process.env.HERON_DATA_DIR || process.env.CAREER_OPS_DATA_DIR || join(REPO_ROOT, 'data');
+  return process.env.HERON_DATA_DIR || process.env.HERON_DATA_DIR || join(REPO_ROOT, 'data');
 }
 
 /** Resolve the on-disk secrets path for a user. Mirrors
@@ -102,14 +88,14 @@ export function getSecret(userId, key) {
  *    import { getCredential } from '../lib/user-secrets.mjs';
  *    const apiKey = getCredential('GEMINI_API_KEY');
  *
- *  Resolves the userId from CAREER_OPS_USER_ID. When unset, the function
+ *  Resolves the userId from HERON_USER_ID. When unset, the function
  *  skips the per-user lookup and goes straight to process.env -- that's
  *  the pre-multi-user path and stays supported.
  *  @param {string} key
  *  @returns {string | null}
  */
 export function getCredential(key) {
-  const userId = process.env.CAREER_OPS_USER_ID;
+  const userId = process.env.HERON_USER_ID;
   if (userId) {
     try {
       const fromStore = getSecret(userId, key);

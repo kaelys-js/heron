@@ -1,34 +1,21 @@
-/**
- * Issue stream -- append-only persistent queue of "open problems" that need
- * user attention. Distinct from the activity feed (transient information):
- * issues live in data/issues.jsonl and stay visible until explicitly resolved.
- *
- * Multi-user: every issue is tagged with the user_id of the request that
- * reported it (resolved via `user-context.ts`). The `listOpenIssues()` /
- * `listAllIssues()` readers filter to that user; system-wide issues
- * (those with no userId) are visible to every authenticated user.
- *
- * Use cases:
- *   - Pipeline integrity checker found 3 invalid statuses → 1 issue
- *   - Liveness sweep flagged 4 uncertain URLs → 1 issue
- *   - Autopilot circuit-breaker tripped → 1 issue
- *   - Profile YAML failed to parse → 1 issue
- *
- * The dedupeKey contract: when a job re-detects the same problem class on a
- * later run, it passes a stable dedupeKey. We rewrite the file in place so
- * the open list always shows ONE row for that key (the latest detection),
- * not a growing log of duplicates. Dedup is scoped per-user so two users
- * can each have their own open instance of the same dedupeKey.
- */
+/** Issue stream -- append-only persistent queue of open problems
+ *  needing user attention. Distinct from the activity feed: issues
+ *  live in data/issues.jsonl and stay visible until resolved.
+ *  Multi-user: every issue tagged with user_id from user-context.ts;
+ *  listOpenIssues()/listAllIssues() filter to that user. System-wide
+ *  issues (no userId) are visible to every authenticated user.
+ *  dedupeKey contract: when a job re-detects the same problem class,
+ *  it passes a stable key; the file is rewritten in place so the
+ *  open list shows ONE row per key. Dedup is per-user. */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { ROOT } from './files';
+import { ROOT, DATA_ROOT } from './files';
 import type { Issue } from '$lib/types';
 import { maybeCurrentUserId, SYSTEM_USER_ID } from './user-context';
 
-const ISSUES_PATH = path.join(ROOT, 'data', 'issues.jsonl');
+const ISSUES_PATH = path.join(DATA_ROOT, 'issues.jsonl');
 
 function ensureDir() {
   try {

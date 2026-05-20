@@ -1,12 +1,12 @@
 name: 'CodeQL Analysis'
-# G8 — extended to cover Python (scripts/) + Swift (ui/ios/App). Pre-fix
+# G8 -- extended to cover Python (scripts/) + Swift (ui/ios/App). Pre-fix
 # only TS was analyzed; we ship Python scrapers + a 5-target iOS app
 # and missed half the attack surface.
 #
 # Matrix legs run in parallel on independent runners.
-#   • javascript-typescript — ubuntu, autobuild (just `pnpm install`)
-#   • python                — ubuntu, autobuild (scripts/ pure Python)
-#   • swift                 — macos-15, manual build (xcodebuild)
+#   • javascript-typescript -- ubuntu, autobuild (just `pnpm install`)
+#   • python                -- ubuntu, autobuild (scripts/ pure Python)
+#   • swift                 -- macos-15, manual build (xcodebuild)
 #
 # Go was dropped in commit 7b15e50 (the Go TUI was superseded by the
 # SvelteKit dashboard). Renovate is also gated against the deleted
@@ -20,10 +20,11 @@ on:
   schedule:
     - cron: '0 4 * * 1' # Weekly Monday 4am UTC
 
+# Workflow-level stays read-only; the one job that needs to upload
+# SARIF claims `security-events: write` for itself. Scorecard's
+# TokenPermissions rubric wants writes scoped to the job that uses them.
 permissions:
-  actions: read
   contents: read
-  security-events: write
 
 concurrency:
   group: codeql-${{ github.workflow }}-${{ github.ref }}
@@ -35,6 +36,10 @@ jobs:
     # Swift needs macOS; everything else stays on ubuntu for speed + cost.
     runs-on: ${{ matrix.language == 'swift' && 'macos-15' || 'ubuntu-latest' }}
     timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      security-events: write # SARIF upload to Code Scanning
     strategy:
       fail-fast: false
       matrix:
@@ -54,25 +59,40 @@ jobs:
         uses: github/codeql-action/init@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4
         with:
           languages: ${{ matrix.language }}
-          # `security-and-quality` runs ~70 queries beyond the default
-          # `security-extended`. Catches dataflow + control-flow patterns
-          # the default set misses. ~5min extra per leg, run weekly + on
-          # main pushes only (not every PR — those use the lighter default
-          # set on the path filter).
-          queries: ${{ github.event_name == 'pull_request' && 'security-extended' || 'security-and-quality' }}
+          # `security-and-quality` always -- on PRs AND on push-to-main
+          # AND on the weekly cron. Reason: the previous ternary ran the
+          # smaller `security-extended` on PRs and the broader
+          # `security-and-quality` on main. PRs passed CI green but the
+          # merge-ref evaluation re-ran security-and-quality against
+          # (PR + main), surfacing rules like js/file-system-race,
+          # js/regex/missing-regexp-anchor, js/indirect-command-line-
+          # injection that the PR CI never saw. The branch protection
+          # `code_scanning` rule then blocked merge on alerts that the
+          # PR could have fixed if they'd been surfaced at PR-open time.
+          # Single-suite-everywhere closes that gap: anything the merge
+          # would inherit is flagged in the PR's own CI run.
+          # Cost: ~5min extra per matrix leg vs security-extended. Worth
+          # it for the catch-it-in-PR-not-at-merge property.
+          queries: security-and-quality
 
       # JavaScript/TypeScript + Python autobuild via pnpm install / uv pip
-      # — no extra build step.
+      # -- no extra build step.
       - name: Autobuild
         if: matrix.language != 'swift'
         uses: github/codeql-action/autobuild@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4
 
       # Swift needs an explicit xcodebuild step so CodeQL can extract the
       # full module graph. Match the test.yml ios job's Xcode pin.
+      #
+      # Capacitor 8 uses SPM (Swift Package Manager) -- there is NO
+      # App.xcworkspace at the project root. Build against
+      # App.xcodeproj directly. SPM dependencies (CapApp-SPM +
+      # @capacitor/* plugin local packages) resolve via the xcodeproj's
+      # package references.
       - name: Build Swift target
         if: matrix.language == 'swift'
         env:
-          DEVELOPER_DIR: /Applications/Xcode_16.app/Contents/Developer
+          DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
         working-directory: ui/ios/App
         run: |
           # Generate any missing Xcode targets first (matches `pnpm setup:native`).
@@ -80,7 +100,7 @@ jobs:
             ruby ../../../scripts/native/add-xcode-targets.rb || true
           fi
           xcodebuild \
-            -workspace App.xcworkspace \
+            -project App.xcodeproj \
             -scheme App \
             -configuration Debug \
             -destination 'generic/platform=iOS Simulator' \

@@ -54,7 +54,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 from lib_profiles import resolve_profile_arg, resolve_user_arg, profile_path, ensure_profile_dirs
 
-# Placeholders — set in main() once --profile is resolved.
+# Placeholders -- set in main() once --profile is resolved.
 PROFILE_YML: Path = REPO_ROOT / "data" / "profiles" / "default" / "profile.yml"
 PORTALS_YML: Path = REPO_ROOT / "data" / "profiles" / "default" / "portals.yml"
 PIPELINE_MD: Path = REPO_ROOT / "data" / "profiles" / "default" / "pipeline.md"
@@ -167,7 +167,7 @@ def scrape_one_query(page, q: str, l: str, max_pages: int) -> list[dict]:
             print(f"  Timed out on page {page_num + 1}", file=sys.stderr)
             break
 
-        # Captcha check — Indeed shows interstitials with these phrases.
+        # Captcha check -- Indeed shows interstitials with these phrases.
         body = (page.content() or "")[:5000].lower()
         if any(
             k in body
@@ -224,7 +224,7 @@ def scrape_one_query(page, q: str, l: str, max_pages: int) -> list[dict]:
             )
 
         if new_on_page == 0:
-            # No new cards on this page — we've exhausted results.
+            # No new cards on this page -- we've exhausted results.
             break
 
         humanize(0.8, 2.0)

@@ -1,16 +1,9 @@
-/**
- * POST /api/job/[id]/offer/benchmark
- *
- * Pull a comp benchmark (levels.fyi / Glassdoor band) for this job's
- * role + level + location and attach it to the OfferRecord. Two modes:
- *
- *   - Auto: omits `manualValues`. Spawns `claude -p '/heron deep --benchmark-comp ...'`
- *     which hits the public pages and returns a band JSON.
- *
- *   - Manual: body has `manualValues: { medianTc, p25Tc?, p75Tc?, sourceUrl? }`.
- *     Used when the user wants to paste a band they already looked up
- *     (no agent spawn, instant).
- */
+/** POST /api/job/[id]/offer/benchmark -- pull a comp benchmark (levels.fyi /
+ *  Glassdoor) for this job's role + level + location and attach it to the
+ *  OfferRecord. Auto mode (no manualValues): spawns the deep --benchmark-comp
+ *  flow against public pages. Manual mode: body { manualValues: { medianTc,
+ *  p25Tc?, p75Tc?, sourceUrl? } } -- paste a band already looked up, no
+ *  agent spawn, instant. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resolveJobAndProfile } from '$lib/server/job-resolver';

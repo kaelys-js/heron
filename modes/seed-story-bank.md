@@ -1,4 +1,4 @@
-# Seed Story Bank -- Extract STAR+R stories from CV
+# Mode: seed-story-bank -- Extract STAR+R stories from CV
 
 You're seeding the master interview story bank. Walk through the user's
 `__CV__` and pull out 5-10 high-impact stories using the STAR+R format
@@ -9,7 +9,7 @@ You're seeding the master interview story bank. Walk through the user's
 1. `__CV__` -- canonical CV with experience, projects, achievements
 2. `data/profiles/{slug}/__PROFILE_MD__` (if exists) -- narrative context,
    superpowers, proof points
-3. `config/profile.yml` → `narrative.proof_points` if present
+3. `__PROFILE_YML__` → `narrative.proof_points` if present
 4. The existing `__STORY_BANK__` -- DON'T overwrite stories
    that are already there; APPEND new ones below them
 

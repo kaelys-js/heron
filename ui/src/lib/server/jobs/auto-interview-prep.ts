@@ -1,25 +1,13 @@
-/**
- * Auto-fire interview prep when a job transitions to status=Interview.
- *
- * /api/status emits a success event with title 'Status changed to Interview'
- * (and source='status') for every status update. We watch for that exact
- * shape and spawn generateInterviewPrep() in the background so the brief
- * is waiting on the Interview Prep tab when the user opens it.
- *
- * Runs at most one prep at a time per (userId, jobId) -- duplicate flips
- * while the first generation is in flight are dropped (the persisted
- * file from the winning run will be served on next read either way).
- *
- * Boot path: imported from `jobs/index.ts`. The bus listener installs
- * exactly once.
- *
- * Multi-user safety (F11): the listener re-enters the user context via
- * `runAsUser(ev.userId, …)` before calling `loadAllJobs()` /
- * `generateInterviewPrep()` so the matched job + persisted prep land in
- * THAT user's tree, not whatever context the bus emit happened to hold.
- * Events without a userId are skipped (broadcast events shouldn't trigger
- * per-user side effects).
- */
+/** Auto-fire interview prep on status→Interview transitions.
+ *  Watches /api/status's success events (title='Status changed to
+ *  Interview', source='status') and spawns generateInterviewPrep() in
+ *  the background so the brief is ready when the user opens the tab.
+ *  At most one prep per (userId, jobId); duplicate flips during a
+ *  generation are dropped (persisted file wins on next read).
+ *  Boot: imported from jobs/index.ts; bus listener installs once.
+ *  F11 multi-user: re-enters via runAsUser(ev.userId, …) before
+ *  loadAllJobs/generateInterviewPrep so output lands in THAT user's
+ *  tree. Events without userId are skipped. */
 
 import { installBusListener, logEvent, reportServerError } from '../events';
 import { generateInterviewPrep, readPersistedInterviewPrep } from '../interview';

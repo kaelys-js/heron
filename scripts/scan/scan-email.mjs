@@ -45,6 +45,10 @@ import {
   readdirSync,
   renameSync,
   statSync,
+  openSync,
+  closeSync,
+  writeSync,
+  fstatSync,
 } from 'fs';
 import path from 'path';
 import {
@@ -189,7 +193,7 @@ function parseLinkedInAlert(rawMessage) {
     out.push({
       url: `https://www.linkedin.com/jobs/view/${jobId}/`,
       title: '', // LinkedIn alerts often inline the title near the URL but
-      // robust HTML→title extraction is brittle without a parser. Leave
+      // HTML→title extraction without a parser would be brittle. Leave
       // blank -- the downstream evaluator (evaluate) reads the JD anyway.
       company: '',
       source: 'linkedin-alert-email',
@@ -297,7 +301,14 @@ function loadSeenUrls() {
 
 function appendToPipeline(offers) {
   if (offers.length === 0) return;
-  let text = existsSync(PIPELINE_PATH) ? readFileSync(PIPELINE_PATH, 'utf-8') : '';
+  // try/catch on readFileSync (no existsSync precheck) -- CodeQL
+  // `js/file-system-race`-clean. ENOENT means "no pipeline file yet".
+  let text = '';
+  try {
+    text = readFileSync(PIPELINE_PATH, 'utf-8');
+  } catch (e) {
+    if (e.code !== 'ENOENT') throw e;
+  }
   const marker = '## Pendientes';
   const idx = text.indexOf(marker);
   const block = offers
@@ -317,14 +328,22 @@ function appendToPipeline(offers) {
 }
 
 function appendToScanHistory(offers, date) {
-  if (!existsSync(SCAN_HISTORY_PATH)) {
-    writeFileSync(SCAN_HISTORY_PATH, 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\n', 'utf-8');
+  // Open in append-mode (creates if missing). fstat the open fd to
+  // know if we need the header -- TOCTOU-free vs `existsSync` form.
+  // CodeQL `js/file-system-race`-clean.
+  const fd = openSync(SCAN_HISTORY_PATH, 'a+');
+  try {
+    if (fstatSync(fd).size === 0) {
+      writeSync(fd, 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\n');
+    }
+    const lines =
+      offers
+        .map((o) => `${o.url}\t${date}\t${o.source}\t${o.title || ''}\t${o.company || ''}\tadded`)
+        .join('\n') + '\n';
+    writeSync(fd, lines);
+  } finally {
+    closeSync(fd);
   }
-  const lines =
-    offers
-      .map((o) => `${o.url}\t${date}\t${o.source}\t${o.title || ''}\t${o.company || ''}\tadded`)
-      .join('\n') + '\n';
-  appendFileSync(SCAN_HISTORY_PATH, lines, 'utf-8');
 }
 
 // ── Main ────────────────────────────────────────────────────────────

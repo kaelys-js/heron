@@ -92,7 +92,7 @@ def parse_time_ago(text: str) -> int:
     m = re.match(r"^(\d+)\s*d$", text)
     if m:
         return now_ms - int(m.group(1)) * 24 * 3600 * 1000
-    # "Apr 12" / "Apr 12, 2024" — too noisy to parse precisely. Use
+    # "Apr 12" / "Apr 12, 2024" -- too noisy to parse precisely. Use
     # 30-days-ago as a conservative fallback.
     return now_ms - 30 * 24 * 3600 * 1000
 
@@ -147,7 +147,7 @@ def scrape_messages(page: Page, max_messages: int, since_ms: int) -> list[dict[s
                 sender_profile_url = (link.get_attribute("href", timeout=1500) or "").strip()
             except Exception:
                 pass
-            # Subject — InMails have a subject line
+            # Subject -- InMails have a subject line
             subject = ""
             try:
                 subj = page.locator("h2.msg-s-event-listitem__subject").first
@@ -155,7 +155,7 @@ def scrape_messages(page: Page, max_messages: int, since_ms: int) -> list[dict[s
             except Exception:
                 pass
             kind = "inmail" if subject else "direct"
-            # Body — last message-body block
+            # Body -- last message-body block
             body = ""
             try:
                 bodies = page.locator(

@@ -1,6 +1,16 @@
 name: Label PRs
 
-on:
+# pull_request_target is REQUIRED for this workflow -- actions/labeler
+# writes labels to the PR which needs the BASE branch's repo-write token.
+# Risk mitigation:
+#   1. No `actions/checkout` step anywhere -- the workflow never fetches
+#      PR head code, just reads PR metadata + writes labels.
+#   2. actions/labeler is SHA-pinned (v6.1.0 -- pinned by verify-
+#      workflow-pins.yml) so the action's behaviour can't change without
+#      a deliberate PR.
+#   3. Workflow-level permissions are {} -- the label job declares the
+#      narrowest necessary scope (pull-requests: write) on its own.
+on: # zizmor: ignore[dangerous-triggers]
   pull_request_target:
     types: [opened, synchronize]
 
@@ -20,6 +30,11 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
       - uses: actions/labeler@f27b608878404679385c85cfa523b85ccb86e213 # v6.1.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}

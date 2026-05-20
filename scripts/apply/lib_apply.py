@@ -127,7 +127,7 @@ def human_click(page, locator) -> None:
             time.sleep(random.uniform(0.2, 0.6))
     except Exception:
         # bounding_box can fail on scrolled-out or detached elements;
-        # falling through to a plain click is fine — the timing is the
+        # falling through to a plain click is fine -- the timing is the
         # primary signal anti-bot watches for.
         pass
     locator.click()
@@ -149,17 +149,34 @@ def detect_captcha(page) -> CaptchaKind:
     fall back to body text heuristics. Don't try to solve — return the
     kind so the adapter can fail soft and surface an Issue with context."""
     try:
-        # Iframe sniffing — each provider loads a distinct domain.
+        # Iframe sniffing -- each provider loads a distinct domain.
         frames = page.frames
         for f in frames:
-            src = (f.url or "").lower()
-            if "recaptcha" in src or "google.com/recaptcha" in src:
+            # Match on hostname (parsed) instead of substring on the raw
+            # URL -- CodeQL flagged the previous `'host' in url` form as
+            # `py/incomplete-url-substring-sanitization` because a path
+            # like /challenges.cloudflare.com/anything would fool it.
+            raw = f.url or ""
+            host = (urlparse(raw).hostname or "").lower()
+            path = (urlparse(raw).path or "").lower()
+            if host == "www.google.com" and "/recaptcha" in path:
                 return "recaptcha"
-            if "hcaptcha.com" in src:
+            if (
+                host == "recaptcha.net"
+                or host.endswith(".recaptcha.net")
+                or host == "recaptcha.google.com"
+                or host.endswith(".recaptcha.google.com")
+            ):
+                return "recaptcha"
+            if host == "hcaptcha.com" or host.endswith(".hcaptcha.com"):
                 return "hcaptcha"
-            if "challenges.cloudflare.com" in src or "turnstile" in src:
+            if (
+                host == "challenges.cloudflare.com"
+                or host.endswith(".cloudflare.com")
+                and "turnstile" in path
+            ):
                 return "turnstile"
-        # Body-text heuristics — slower; only used when iframe sniffing missed.
+        # Body-text heuristics -- slower; only used when iframe sniffing missed.
         body = (page.content() or "").lower()
         if "cloudflare" in body and ("checking your browser" in body or "ray id" in body):
             return "cloudflare-block"
@@ -317,7 +334,7 @@ def screenshot_for_issue(page, job_id: str) -> Optional[str]:
 #
 # Every US-facing ATS (Greenhouse, Ashby, Lever, Workday) appends an EEO /
 # voluntary self-identification step asking about race, gender, ethnicity,
-# disability, and veteran status. These fields are LEGALLY voluntary —
+# disability, and veteran status. These fields are LEGALLY voluntary --
 # every form offers a "Decline to answer" / "I don't wish to self-identify"
 # option, and many candidates exercise that right.
 #
@@ -403,7 +420,7 @@ def auto_decline_eeo(page, label: str) -> bool:
         # 1. react-select.
         if fill_react_select(page, label, decline_text):
             return True
-    # 2. Radio group — look for any label-element that contains a decline phrase.
+    # 2. Radio group -- look for any label-element that contains a decline phrase.
     try:
         for decline_text in EEO_DECLINE_OPTIONS:
             radio = page.get_by_label(decline_text, exact=False).first
@@ -448,7 +465,7 @@ def detect_portal(url: str) -> dict:
         m = re.search(r"/jobs/view/(\d+)", p)
         return {"portal": "linkedin", "meta": {"jobId": m.group(1) if m else None}}
 
-    # Greenhouse — boards / job-boards / .eu shard
+    # Greenhouse -- boards / job-boards / .eu shard
     m = re.match(r"^((?:job-)?boards)(?:\.eu)?\.greenhouse\.io$", h)
     if m:
         parts = [x for x in p.split("/") if x]
@@ -501,7 +518,7 @@ def detect_portal(url: str) -> dict:
             "meta": {"company": parts[0] if parts else None},
         }
 
-    # Recruitee — {company}.recruitee.com
+    # Recruitee -- {company}.recruitee.com
     if re.search(r"(^|\.)recruitee\.com$", h):
         return {"portal": "recruitee", "meta": {"company": h.split(".")[0]}}
 

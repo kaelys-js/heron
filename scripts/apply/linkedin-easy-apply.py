@@ -46,7 +46,7 @@ except ImportError:
     print("ERROR: pyyaml not installed. Run:\n  .venv/bin/pip install pyyaml")
     sys.exit(1)
 
-# Shared Playwright session helpers — same persistent profile dir as
+# Shared Playwright session helpers -- same persistent profile dir as
 # scan-linkedin-auth.py uses, so a single `--login` works for both apply
 # + scrape. user_data_dir() resolves PER USER under multi-user:
 #   data/users/{uid}/.playwright-linkedin/
@@ -60,16 +60,16 @@ REPO_ROOT = ROOT.parent.parent  # scripts/<domain>/ → repo/
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
 # Backward-compat alias; resolved lazily on each access so the active
-# CAREER_OPS_USER_ID env var (set by the orchestrator per-spawn) drives
+# HERON_USER_ID env var (set by the orchestrator per-spawn) drives
 # the chosen dir.
 USER_DATA_DIR = user_data_dir("linkedin")
 
 from lib_profiles import resolve_profile_arg, resolve_user_arg, profile_path, ensure_profile_dirs
 
-# Shared apply helpers — anti-bot cadence, CAPTCHA detection, state file,
+# Shared apply helpers -- anti-bot cadence, CAPTCHA detection, state file,
 # canonical APPLY_RESULT emission. The autonomous-apply dispatcher
 # (apply-portal.py) calls us with --job-id, which puts us in "dispatcher
-# mode" — we emit APPLY_STEP / APPLY_RESULT lines so apply-queue-drain
+# mode" -- we emit APPLY_STEP / APPLY_RESULT lines so apply-queue-drain
 # can pipe them straight into the activity feed.
 from lib_apply import (
     human_type,
@@ -86,7 +86,7 @@ from lib_apply import (
 PROFILE_YML: Path = REPO_ROOT / "data" / "profiles" / "default" / "profile.yml"
 APPLICATIONS_MD: Path = REPO_ROOT / "data" / "profiles" / "default" / "applications.md"
 PIPELINE_MD: Path = REPO_ROOT / "data" / "profiles" / "default" / "pipeline.md"
-# General-purpose CV PDF — per profile. Falls back to default profile's
+# General-purpose CV PDF -- per profile. Falls back to default profile's
 # cv-general.pdf when no --profile is passed.
 DEFAULT_GENERAL_CV: Path = REPO_ROOT / "data" / "profiles" / "default" / "output" / "cv-general.pdf"
 
@@ -283,7 +283,7 @@ def fill_easy_apply(page, profile, pdf_path, may_submit: bool = False) -> str:
                 except Exception:
                     pass
 
-            # Resume upload — only if the user has actually generated a general
+            # Resume upload -- only if the user has actually generated a general
             # CV. We DELIBERATELY do not fall back to any other PDF. Uploading
             # a per-job tailored CV here is a recruiter red flag (LinkedIn
             # shows them the user's profile + resume side by side) and
@@ -388,7 +388,7 @@ def main():
     parser.add_argument(
         "--url", help="Apply to this single job URL (instead of iterating the pipeline)"
     )
-    # Dispatcher-mode args — when --job-id is given, we emit APPLY_STEP /
+    # Dispatcher-mode args -- when --job-id is given, we emit APPLY_STEP /
     # APPLY_RESULT lines on stdout so apply-portal.py → apply-queue-drain
     # can stream progress to the activity feed.
     parser.add_argument(
@@ -425,7 +425,7 @@ def main():
     PIPELINE_MD = profile_path(profile_id, "pipeline", user_id=user_id)
     profile_general_cv = profile_path(profile_id, "output-dir", user_id=user_id) / "cv-general.pdf"
 
-    # Dispatcher mode — toggled when apply-portal.py passes --job-id. From
+    # Dispatcher mode -- toggled when apply-portal.py passes --job-id. From
     # this point onward emit_step() (and other helpers) emit APPLY_STEP
     # lines instead of plain log prefixes.
     if args.job_id:
@@ -620,7 +620,7 @@ def main():
         # ── Dispatcher exit path ──
         if DISPATCHER_MODE:
             if dispatcher_result is None:
-                # Loop finished without hitting any branch — defensive fallback.
+                # Loop finished without hitting any branch -- defensive fallback.
                 dispatcher_result = ("manual-apply-needed", "no-candidate")
             status, detail = dispatcher_result
             # Don't block on the input() prompt in dispatcher mode.

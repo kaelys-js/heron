@@ -1,4 +1,4 @@
-# Reference prep -- brief each reference before the company calls them
+# Mode: reference-prep -- brief each reference before the company calls them
 
 Most candidates send references cold without context. Reviewers asking
 references "tell me about working with $name" get rambling answers that

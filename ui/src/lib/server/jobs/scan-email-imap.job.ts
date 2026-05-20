@@ -1,21 +1,12 @@
-/**
- * Gmail IMAP poller -- wraps `scan-email-imap.mjs`.
- *
- * Runs every 30 minutes via a tiny setInterval daemon kicked off at boot
- * (see `installImapPollerDaemon` below). The daemon checks the gmail-imap
- * source state on every tick and only spawns the script when connected,
- * so disconnected installs pay zero cost.
- *
- * Why a setInterval instead of an autopilot Schedule entry: the autopilot
- * scheduler is daily-tick-based and was designed for once-per-day tasks.
- * Real-time mail polling needs a cadence the scheduler doesn't model
- * cleanly. A 30-min setInterval is ~30 lines and keeps the autopilot
- * system focused on its happy path.
- *
- * Args:
- *   { dryRun?: boolean }     -- pass --dry-run, no writes, no Seen-marking
- *   { keepUnread?: boolean } -- process but don't mark Seen (for testing)
- */
+/** Gmail IMAP poller -- wraps scan-email-imap.mjs. Runs every 30 min
+ *  via a setInterval daemon (installImapPollerDaemon, kicked off at
+ *  boot) that checks the gmail-imap source state per tick and only
+ *  spawns when connected; disconnected installs pay zero cost.
+ *  setInterval rather than an autopilot Schedule entry because the
+ *  scheduler is daily-tick-based; 30-min mail polling doesn't fit
+ *  cleanly and is cheap to model directly.
+ *  Args: { dryRun } (no writes, no Seen-marking),
+ *  { keepUnread } (process without marking Seen, for testing). */
 
 import { spawn } from 'node:child_process';
 import { ROOT } from '../files';
@@ -87,11 +78,11 @@ function runScanEmailImap(args?: JobArgs): Promise<JobResult> {
       // F14/F19/F30 -- process inbound reactions IN-PROCESS, not via
       // an HTTP roundtrip that would drop the ALS user context. The
       // .mjs child emits `INBOUND_REACTION: {json}` lines on stdout;
-      // we parse them here and call reactToEmail() directly. Pre-fix
-      // the child POSTed to /api/email/react which 401'd OR processed
-      // under the wrong user. Now reactor side-effects (markStatus,
-      // generateTechPrep, appendLead) all run under the CURRENT user
-      // context -- which the daemon set to the OWNER via runAsUser.
+      // we parse them here and call reactToEmail() directly. POSTing
+      // to /api/email/react would 401 (no cookie) OR process under the
+      // wrong user; in-process keeps reactor side-effects (markStatus,
+      // generateTechPrep, appendLead) under the CURRENT user context
+      // (set by the daemon via runAsUser).
       let reactedActed = 0;
       let reactedTotal = 0;
       try {
@@ -165,7 +156,7 @@ let pollerHandle: ReturnType<typeof setInterval> | null = null;
  *  gmail-imap connected, and -- if so -- runs the poll under that user.
  *
  *  Why per-user ALS context matters: the child process inherits
- *  `CAREER_OPS_USER_ID` from the orchestrator's env injection
+ *  `HERON_USER_ID` from the orchestrator's env injection
  *  (orchestrator.ts::start) which means the .mjs script reads THAT
  *  user's encrypted credentials via `scripts/lib/user-secrets.mjs`,
  *  writes pipeline / applications / scan-history into THAT user's
@@ -227,11 +218,16 @@ export function installImapPollerDaemon(): void {
     });
   };
   // Run a first poll 60s after boot (don't block boot itself), then
-  // every 30 min thereafter.
-  setTimeout(fire, 60_000);
+  // every 30 min thereafter. Both timers MUST be unref'd: in `vitest`
+  // worker processes, an alive timer at module-import time keeps the
+  // event loop running past `afterAll` -- vitest then prints "close
+  // timed out after 10000ms" because the worker can't exit cleanly.
+  // The `installImapPollerDaemon()` call at the bottom of this file
+  // auto-runs on first import, so any test that touches the registry
+  // barrel triggers this code path.
+  const initialFire = setTimeout(fire, 60_000);
+  initialFire.unref?.();
   pollerHandle = setInterval(fire, POLL_INTERVAL_MS);
-  // Don't keep the event loop alive solely for this timer -- pairs well
-  // with the spawn-cleanup handlers in orchestrator.ts.
   pollerHandle.unref?.();
 }
 

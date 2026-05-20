@@ -1,26 +1,13 @@
-/**
- * /api/email/react -- accept an inbound email + react to it.
- *
- * POST body: { ts, from, subject, body, messageId? }
- * Returns: { classification, match, actions, execution }
- *
- * The IMAP poller used to call this from a child process, which crossed
- * an HTTP boundary that dropped the ALS user context -- the reactor then
- * resolved to SYSTEM_USER and either 401'd OR processed under the wrong
- * user (F14). After F14/F19 the IMAP poller calls `reactToEmail()`
- * IN-PROCESS under the OWNER's ALS context, so this HTTP endpoint is
- * now ONLY hit from the dashboard UI (the "Replay last email" debug
- * tool) -- never from the IMAP child.
- *
- * Side-effects (status flips, tech-prep generation, etc.) happen
- * synchronously inside the request. Per-email cost is one fs scan
- * (loadAllJobs) + ~10 regexes. Sub-100ms for typical emails.
- *
- * Auth: `requireUserId` runs first so the reactor's `loadAllJobs()` /
- * `markStatus()` calls land in THE REQUESTING user's tree. The global
- * hooks.server.ts guard 401s anonymous requests; this explicit call is
- * defense in depth (F21).
- */
+/** /api/email/react -- accept an inbound email + react to it.
+ *  POST body: { ts, from, subject, body, messageId? }
+ *  Returns: { classification, match, actions, execution }.
+ *  Since F14/F19 the IMAP poller calls reactToEmail() IN-PROCESS under
+ *  the OWNER's ALS context, so this HTTP endpoint is only hit from the
+ *  dashboard's "Replay last email" debug tool -- never from IMAP.
+ *  Side-effects (status flips, tech-prep generation) run synchronously;
+ *  ~1 fs scan + ~10 regexes per email, sub-100ms typical.
+ *  Auth: requireUserId() runs first so reactor's loadAllJobs() and
+ *  markStatus() land in the REQUESTER's tree (F21 defense in depth). */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { requireUserId } from '$lib/server/auth-helpers';

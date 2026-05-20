@@ -1,21 +1,8 @@
-/**
- * audit-log -- append-only record of every security-relevant event.
- *
- * Events: signup, login, login-failed, logout, passkey-add, passkey-revoke,
- * oauth-link, oauth-unlink, deletion-requested, deletion-cancelled,
- * account-restored, account-purged, data-exported, role-changed,
- * backup-code-used, invite-generated, invite-claimed, invite-revoked.
- *
- * Even admins can't delete from this log (we never expose a DELETE
- * endpoint). The only path to purge is via hard account deletion, which
- * cascades through the user_id FK → 'set null' on audit_log so we keep
- * the historical row but anonymise it. That preserves the security
- * timeline while honouring GDPR right-to-erasure.
- *
- * No PII inside the JSON details blob -- only event-shape data
- * (ip address, user-agent, anonymous context). The user's email and
- * name live in `users` (and are cleared on hard delete).
- */
+/** Append-only security event log (signup / login* / passkey* /
+ *  oauth* / deletion* / data-exported / role-changed / invite*).
+ *  No DELETE endpoint; hard account deletion sets user_id = NULL on
+ *  audit_log rows (security timeline preserved, GDPR honoured).
+ *  Details blob carries no PII -- only ip / user-agent / context. */
 import crypto from 'node:crypto';
 import { and, desc, eq, gte } from 'drizzle-orm';
 import { authDb } from './db';

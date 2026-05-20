@@ -1,20 +1,9 @@
-/**
- * offers -- per-job structured offer + negotiation tracking.
- *
- * Stored at `data/users/{userId}/profiles/{slug}/offers.json` as a map
- * of jobId → OfferRecord. Captures every offer round (initial, counter,
- * final) so we can:
- *   • Compare multi-offers side-by-side (BATNA strength on /comparison)
- *   • Drive the EV calculator (Phase VII.1)
- *   • Surface a "Negotiation" tab per job (Phase VI.3)
- *   • Pull comp benchmark via levels.fyi/Glassdoor (Phase VI.2)
- *
- * Used by:
- *   • POST /api/job/[id]/offer       → upsert offer details
- *   • POST /api/job/[id]/offer/counter → record a counter round
- *   • GET  /api/comparison           → list every active offer for /comparison
- *   • GET  /api/job/[id]/offer/benchmark → run levels.fyi pull
- */
+/** offers -- per-job structured offer + negotiation tracking. Stored at
+ *  data/users/{userId}/profiles/{slug}/offers.json as jobId → OfferRecord.
+ *  Captures every round (initial / counter / final) to drive multi-offer
+ *  side-by-side comparison (BATNA on /comparison), the EV calculator
+ *  (Phase VII.1), the per-job Negotiation tab (Phase VI.3), and the
+ *  levels.fyi / Glassdoor comp benchmark (Phase VI.2). */
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -189,7 +178,7 @@ export function attachBenchmark(
 
 /** BATNA strength: how does this offer compare to the user's current best
  *  alternative? Returns a 0-100 score where 100 = strongest alternative,
- *  0 = no alternative. Drives the negotiation tab's "leverage" badge. */
+ *  0 = no alternative. Drives the negotiation tab's `leverage` badge. */
 export function batnaScore(jobId: string, profileId?: string): number {
   const all = listActiveOffers(profileId);
   const target = all.find((o) => o.jobId === jobId);
@@ -198,7 +187,7 @@ export function batnaScore(jobId: string, profileId?: string): number {
   if (others.length === 0) return 0;
   const bestAlt = Math.max(...others.map((o) => o.cachedTc!));
   // BATNA strength as a ratio: 1.0 means alternative matches current,
-  // higher means the alternative is BETTER (strong leverage).
+  // higher means the alternative is BETTER (strong `leverage`).
   const ratio = bestAlt / target.cachedTc;
   if (ratio >= 1.15) return 100;
   if (ratio >= 1.05) return 80;

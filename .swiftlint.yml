@@ -1,4 +1,4 @@
-# SwiftLint config — applies to every Swift file in the repo.
+# SwiftLint config -- applies to every Swift file in the repo.
 #
 # Discovery: swiftlint walks up from the directory it's invoked in and
 # uses the first .swiftlint.yml it finds. Running `swiftlint ui/ios/App`
@@ -8,22 +8,22 @@
 #
 # What we lint vs what we don't:
 #
-# SwiftFormat (pre-commit auto-format) owns layout — indent / brace
+# SwiftFormat (pre-commit auto-format) owns layout -- indent / brace
 # placement / blank lines / spaces. We don't double-enforce those
 # rules here; they'd just fight each other.
 #
-# SwiftLint owns semantic + structural rules — force_cast, force_unwrap,
+# SwiftLint owns semantic + structural rules -- force_cast, force_unwrap,
 # missing-availability-version, todo-comment, control_statement,
 # for_where, etc. The defaults catch the bugs we care about.
 #
 # What we explicitly disable (below) are rules whose defaults disagree
 # with our intentional style:
 #   - identifier_name: short names (i, c, s, k, v, ok, ts) are normal
-#     in tight closure scopes — Swift's verbose names make 3-char
+#     in tight closure scopes -- Swift's verbose names make 3-char
 #     minimums actively harmful
 #   - trailing_comma: SwiftFormat's `--trailingcommas always` (the
 #     idiomatic multi-line style) conflicts with SwiftLint's default
-#     "no trailing commas" rule — disable to align with SwiftFormat
+#     "no trailing commas" rule -- disable to align with SwiftFormat
 #   - line_length: 120-char limit is too short for SwiftUI view bodies
 #     and Capacitor PluginMethod signatures; rely on SwiftFormat's
 #     `--maxwidth` instead
@@ -32,7 +32,7 @@
 #     enforcing arbitrary line caps drives bad refactors
 #   - cyclomatic_complexity: Capacitor plugin's PluginMethod dispatch
 #     tables and SwiftUI's view-builder switches naturally hit complexity
-#     22+ without being hard to read — the dispatch IS the function
+#     22+ without being hard to read -- the dispatch IS the function
 
 # ── Paths we never lint ─────────────────────────────────────────────
 excluded:
@@ -60,26 +60,26 @@ disabled_rules:
   # on `init() {` formatting and we trust SwiftFormat's auto-fix
 
 # ── Rules we EXPLICITLY KEEP (default) ───────────────────────────────
-# Listed for documentation — not a setting. Adding any of these to
+# Listed for documentation -- not a setting. Adding any of these to
 # `disabled_rules` above silences them. Removing one re-enables it.
 #
-#   force_cast              — `as!` flagged. Use `as?` + guard instead.
-#   force_unwrapping        — `!` flagged. Use `?? default` or guard.
-#   force_try               — `try!` flagged. Catch the error.
-#   implicitly_unwrapped_optional  — `String!` flagged.
-#   todo                    — TODO/FIXME flagged as a warning, never error
-#   control_statement       — `if (x)` flagged; Swift doesn't need parens
-#   statement_position      — `else` placement, `} catch` placement
-#   for_where               — `for { if cond {}}` → `for x where cond {}`
-#   comma                   — comma spacing
-#   comment_spacing         — `//comment` → `// comment`
-#   colon                   — `x:Int` → `x: Int`
-#   trailing_whitespace     — trailing spaces on lines
-#   trailing_newline        — exactly one newline at EOF
-#   type_name               — type names match `^[A-Z][a-zA-Z0-9]+$`
-#   vertical_whitespace     — no 2+ consecutive blank lines
+#   force_cast              -- `as!` flagged. Use `as?` + guard instead.
+#   force_unwrapping        -- `!` flagged. Use `?? default` or guard.
+#   force_try               -- `try!` flagged. Catch the error.
+#   implicitly_unwrapped_optional  -- `String!` flagged.
+#   todo                    -- TODO/FIXME flagged as a warning, never error
+#   control_statement       -- `if (x)` flagged; Swift doesn't need parens
+#   statement_position      -- `else` placement, `} catch` placement
+#   for_where               -- `for { if cond {}}` → `for x where cond {}`
+#   comma                   -- comma spacing
+#   comment_spacing         -- `//comment` → `// comment`
+#   colon                   -- `x:Int` → `x: Int`
+#   trailing_whitespace     -- trailing spaces on lines
+#   trailing_newline        -- exactly one newline at EOF
+#   type_name               -- type names match `^[A-Z][a-zA-Z0-9]+$`
+#   vertical_whitespace     -- no 2+ consecutive blank lines
 
-# `todo` defaults to "warning" severity — keep it that way (a TODO in
+# `todo` defaults to "warning" severity -- keep it that way (a TODO in
 # code isn't a CI-blocker, but it should surface in `swiftlint` output)
 todo:
   severity: warning

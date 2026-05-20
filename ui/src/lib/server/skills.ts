@@ -21,7 +21,7 @@ export type SkillCategory =
 
 export type Skill = {
   id: string; // 'evaluate'
-  name: string; // 'evaluate — Complete A-G Evaluation'
+  name: string; // 'evaluate -- Complete A-G Evaluation'
   title: string; // 'evaluate'
   subtitle: string; // 'Complete A-G Evaluation'
   description: string; // first non-heading paragraph

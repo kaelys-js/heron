@@ -1,26 +1,10 @@
-/**
- * _brand.mjs -- shared brand.json loader for Node scripts.
+/** Shared brand.json loader for Node scripts. Defaults baked in for
+ *  fresh-clone bootstrap (when brand.json is missing/corrupt). Resolves
+ *  brand.json by walking up from this file's location, so callers from
+ *  any scripts/ subdir work without path math.
  *
- * Any .mjs script that needs the brand identifiers (display name,
- * repo URL, URL scheme, etc.) imports from here. Centralising the
- * load gives us:
- *   • Single source of truth -- every consumer hits the same JSON.
- *   • Fail-safe fallback -- if brand.json is missing/corrupt (e.g.
- *     during early bootstrap on a fresh clone), we return the
- *     historical defaults so the script still works.
- *   • Resilient path resolution -- works regardless of which subdir
- *     under scripts/ the caller lives in (lib/, native/, system/,
- *     etc.) because we walk up from this file's location.
- *
- * Usage:
- *   import { BRAND } from '../lib/_brand.mjs';
- *   console.log(BRAND.name);          // → 'heron' (or whatever brand.json says)
- *   console.log(BRAND.repo.url);      // → 'https://github.com/kaelys-js/heron'
- *   console.log(BRAND.urlScheme);     // → 'heron'
- *
- * If you need the Python equivalent for scan-*.py / apply-*.py:
- *   from _brand import BRAND
- */
+ *  Usage:  `import { BRAND } from '../lib/_brand.mjs';`
+ *  Python twin: `from _brand import BRAND`. */
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';

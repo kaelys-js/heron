@@ -241,10 +241,15 @@
   );
   let velocityNumbers = $derived(data.velocity.map((v) => v.count));
 
+  // Each tint is paired with a dark: variant so the pale-200 text the
+  // dark-mode tile relies on doesn't render as invisible-on-white in
+  // light mode (Lighthouse `color-contrast` previously caught this on
+  // /login + /signup). The light-mode -700 shade hits WCAG AA against
+  // the 5-10% bg tint these alerts use.
   let alertLevelTint: Record<string, string> = {
-    error: 'border-red-500/40 bg-red-500/10 text-red-200',
-    warning: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
-    info: 'border-blue-500/30 bg-blue-500/5 text-blue-200',
+    error: 'border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-200',
+    warning: 'border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-200',
+    info: 'border-blue-500/30 bg-blue-500/5 text-blue-700 dark:text-blue-200',
   };
   function alertIcon(level: 'error' | 'warning' | 'info') {
     return level === 'error' ? AlertCircle : level === 'warning' ? AlertTriangle : Info;
@@ -306,11 +311,13 @@
                     <div class="flex items-center gap-1.5">
                       <Flame class="size-3.5 text-emerald-400" />
                       <span
-                        class="text-[11px] uppercase tracking-wide text-emerald-300/80 font-medium"
+                        class="text-[11px] uppercase tracking-wide text-emerald-800 dark:text-emerald-300/80 font-medium"
                         >Up next</span
                       >
                     </div>
-                    <div class="text-2xl font-mono tabular-nums mt-1 text-emerald-200">
+                    <div
+                      class="text-2xl font-mono tabular-nums mt-1 text-emerald-700 dark:text-emerald-200"
+                    >
                       {data.upNextTotal}
                     </div>
                     <div class="text-[11px] text-muted-foreground">≥4.0 awaiting eval</div>
@@ -333,11 +340,13 @@
                     <div class="flex items-center gap-1.5">
                       <Target class="size-3.5 text-orange-400" />
                       <span
-                        class="text-[11px] uppercase tracking-wide text-orange-300/80 font-medium"
+                        class="text-[11px] uppercase tracking-wide text-orange-800 dark:text-orange-300/80 font-medium"
                         >In flight</span
                       >
                     </div>
-                    <div class="text-2xl font-mono tabular-nums mt-1 text-orange-200">
+                    <div
+                      class="text-2xl font-mono tabular-nums mt-1 text-orange-700 dark:text-orange-200"
+                    >
                       {data.inFlightTotal}
                     </div>
                     <div class="text-[11px] text-muted-foreground">interview + offer</div>
@@ -360,11 +369,13 @@
                     <div class="flex items-center gap-1.5">
                       <ListTodo class="size-3.5 text-violet-400" />
                       <span
-                        class="text-[11px] uppercase tracking-wide text-violet-300/80 font-medium"
+                        class="text-[11px] uppercase tracking-wide text-violet-800 dark:text-violet-300/80 font-medium"
                         >Active apps</span
                       >
                     </div>
-                    <div class="text-2xl font-mono tabular-nums mt-1 text-violet-200">
+                    <div
+                      class="text-2xl font-mono tabular-nums mt-1 text-violet-700 dark:text-violet-200"
+                    >
                       {data.followUpsTotal}
                     </div>
                     <div class="text-[11px] text-muted-foreground">applied / screened</div>

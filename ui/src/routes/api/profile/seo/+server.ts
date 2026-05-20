@@ -1,18 +1,8 @@
-/**
- * POST /api/profile/seo
- *
- * Run the LinkedIn / portfolio SEO checker for the active profile.
- *
- * Body (all optional):
- *   { headline?: string, about?: string }
- *
- * When body is empty, the script reads `data/users/{userId}/profiles/
- * {slug}/linkedin-export.txt` if it exists. The user creates that file
- * by exporting their LinkedIn About + headline (Settings → Data Export).
- *
- * Returns the composite 0-100 score + per-check evidence + the gap list
- * (target keywords missing from headline/about for the user's archetypes).
- */
+/** POST /api/profile/seo -- LinkedIn / portfolio SEO checker for the
+ *  active profile. Body { headline?, about? } both optional; when empty,
+ *  the script falls back to data/users/{uid}/profiles/{slug}/linkedin-export.txt
+ *  (user exports it from Settings → Data Export). Returns composite 0-100 +
+ *  per-check evidence + target-keyword gap list against archetypes. */
 
 import { spawn } from 'node:child_process';
 import { wrap } from '$lib/server/api-helpers';

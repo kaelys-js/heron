@@ -1,4 +1,4 @@
-# Questions to ask THIS interviewer -- the "Do you have any questions?" close
+# Mode: questions-to-ask -- the "Do you have any questions?" close
 
 You're producing the file the user opens during the last 5 minutes of
 the call when the interviewer says "Do you have any questions for us?"

@@ -1,20 +1,8 @@
-/**
- * comp-bands-overrides -- per-profile overrides of the static TIER_COMP_BANDS.
- *
- * The defaults in negotiation-playbook.ts are baked-at-build-time 2024-2025
- * data. They WILL drift. This module:
- *   1. Tags the defaults with a known last-updated date
- *   2. Lets the user override any band per profile via JSONL at
- *      `data/users/{uid}/profiles/{slug}/comp-bands.jsonl` (or
- *      `data/profiles/{slug}/comp-bands.jsonl` in legacy single-user installs)
- *   3. Surfaces a staleness warning when the bands are >6 months old
- *      AND the user has no overrides
- *   4. Exposes mergedBands(profileId) = defaults overlaid with overrides
- *
- * Why per-profile and not global: a Software Engineering profile + a
- * Consulting profile target very different bands. The user can maintain
- * their own per-identity reference.
- */
+/** Per-profile overrides for TIER_COMP_BANDS. Defaults in
+ *  negotiation-playbook.ts are 2024-2025 baseline data that drifts;
+ *  this module tags defaults with last-updated date, lets the user
+ *  override per profile via comp-bands.jsonl, warns on staleness
+ *  (>6mo + no overrides), and exposes mergedBands(profileId). */
 
 import fs from 'node:fs';
 import path from 'node:path';

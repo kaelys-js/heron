@@ -26,9 +26,10 @@ export const POST = wrap(
 
     if (id === 'linkedin-auth' || id === 'indeed-auth') {
       const portal = id === 'linkedin-auth' ? 'linkedin' : 'indeed';
-      // F20 -- use the same path Playwright writes to. Pre-fix this hit
-      // the legacy repo-root `.playwright-{portal}/` which never
-      // existed in multi-user mode, so "Disconnect" was a no-op.
+      // F20 -- use the same path Playwright writes to. Hitting the
+      // legacy repo-root `.playwright-{portal}/` would never match
+      // multi-user mode (the dir doesn't exist there), making
+      // "Disconnect" a silent no-op.
       const stateDir = playwrightUserDataDir(userId, portal);
       try {
         if (fs.existsSync(stateDir)) {

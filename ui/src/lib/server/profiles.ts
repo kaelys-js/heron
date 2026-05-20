@@ -1,28 +1,11 @@
-/**
- * Profiles -- multi-track career identity support.
- *
- * Storage layer:
- *   • For multi-user installs, profiles live in app.db.profiles (one row
- *     per (user_id, slug)). See `profiles-db.ts` for the userId-aware
- *     CRUD helpers.
- *   • This file is the LEGACY single-user facade. It exposes the same
- *     functions every existing caller knows about (readProfiles,
- *     createProfile, setActiveProfileId, …) but routes every call through
- *     `profiles-db.ts` scoped to the request's current user (resolved
- *     via `user-context.ts`'s AsyncLocalStorage).
- *
- * Why this indirection: the codebase had ~30 call sites for these
- * functions when multi-user was retrofitted. Forcing every caller to
- * thread a userId explicitly would have been a 30-file refactor in one
- * PR. The user-context AsyncLocalStorage lets us migrate incrementally --
- * routes/jobs can opt into the explicit `*-db.ts` API while everything
- * else keeps working through this facade.
- *
- * SHARED INFRA (still file-based, not per-user):
- *   .env, .playwright-{linkedin,indeed}/, data/sources.json,
- *   data/onboarding-state.json, data/autopilot.json, data/activity.jsonl,
- *   data/issues.jsonl, interview-prep/story-bank.md.
- */
+/** Profiles -- multi-track career identity facade. Multi-user installs
+ *  store rows in app.db.profiles (one per (user_id, slug)); see
+ *  profiles-db.ts for the userId-aware CRUD. This file is the legacy
+ *  single-arg facade -- readProfiles, createProfile, setActiveProfileId,
+ *  etc. route through profiles-db.ts scoped to the request's current
+ *  user via user-context.ts's AsyncLocalStorage.
+ *  The indirection lets ~30 legacy call sites migrate incrementally
+ *  rather than threading userId through every signature at once. */
 import { currentUserIdOrDefault } from './user-context';
 import {
   listProfilesForUser,

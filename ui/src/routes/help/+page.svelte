@@ -331,7 +331,7 @@
       a:
         'Run `' +
         cmd('scan') +
-        '` (or click Run Scan on Agents) and check the Activity feed. If the scan reports 0 new jobs, your portals.yml may be too narrow or the scanner may have hit a CAPTCHA — check Runtimes → Python for last errors.',
+        '` (or click Run Scan on Agents) and check the Activity feed. If the scan reports 0 new jobs, your portals.yml may be too narrow or the scanner may have hit a CAPTCHA -- check Runtimes → Python for last errors.',
     },
     {
       q: 'My Anthropic key shows "Connected" but agent chat fails.',
@@ -342,16 +342,16 @@
       a: "Autopilot's scheduler only runs while the dashboard is open. For 24/7 scheduling, set up a macOS launchd agent that opens http://localhost:5174 at boot, or invoke the Python scripts directly from cron.",
     },
     {
-      q: 'A job has BG risk MEDIUM/HIGH — does that block the application?',
+      q: 'A job has BG risk MEDIUM/HIGH -- does that block the application?',
       a: 'No. BG risk is informational only. The system never auto-skips a job based on it (only explicit clearance/security keywords trigger BLOCKED). You decide per-company whether to apply and how to handle disclosure.',
     },
     {
       q: 'How do I customize archetypes / scoring weights?',
-      a: "Edit modes/_profile.md (your overrides — never auto-updated) for per-user customization. Don't touch modes/_shared.md — that's system-layer and gets overwritten by updates.",
+      a: "Edit modes/_profile.md (your overrides -- never auto-updated) for per-user customization. Don't touch modes/_shared.md -- that's system-layer and gets overwritten by updates.",
     },
     {
       q: 'Why does a job show two status badges (e.g. "Closed" + "Discarded")?',
-      a: "They're tracking different things. The colored dot is the pipeline stage (where the job lives in the funnel — New / Scored / Applied / Closed). The all-caps chip is the canonical application status from applications.md (evaluated / applied / discarded / skip / ...). See docs/STATUS_MODEL.md for the full mapping table.",
+      a: "They're tracking different things. The colored dot is the pipeline stage (where the job lives in the funnel -- New / Scored / Applied / Closed). The all-caps chip is the canonical application status from applications.md (evaluated / applied / discarded / skip / ...). See docs/STATUS_MODEL.md for the full mapping table.",
     },
   ];
 </script>

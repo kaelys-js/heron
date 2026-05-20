@@ -1,5 +1,5 @@
 name: Verify GitHub config (drift detection)
-# Daily drift check — asserts the live repository state matches the
+# Daily drift check -- asserts the live repository state matches the
 # source-of-truth files (branding/brand.json + .github/rulesets/*.json).
 #
 # Catches: silent topic drift (someone toggled a topic in the UI),
@@ -13,7 +13,7 @@ name: Verify GitHub config (drift detection)
 #
 # The actual diff logic lives in scripts/system/apply-github-config.mjs
 # so the local `pnpm gh:verify` produces the same output as this
-# workflow — no surprise differences between local + CI.
+# workflow -- no surprise differences between local + CI.
 on:
   schedule:
     - cron: "13 6 * * *" # Daily 06:13 UTC (off-peak; avoids cron-storm)

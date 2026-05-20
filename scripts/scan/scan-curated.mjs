@@ -34,7 +34,17 @@
  *   node scan-curated.mjs --pages 3        # max pages per source (default 2)
  */
 
-import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from 'fs';
+import {
+  readFileSync,
+  writeFileSync,
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  closeSync,
+  writeSync,
+  fstatSync,
+} from 'fs';
 import yaml from 'js-yaml';
 import {
   profilePath,
@@ -229,7 +239,15 @@ function loadSeenUrls() {
 
 function appendToPipeline(offers) {
   if (offers.length === 0) return;
-  let text = existsSync(PIPELINE_PATH) ? readFileSync(PIPELINE_PATH, 'utf-8') : '';
+  // Try-catch on readFileSync replaces `existsSync ? read : ''`. ENOENT
+  // means "no pipeline file yet" (start with empty). Race-free vs the
+  // previous form (CodeQL `js/file-system-race`).
+  let text = '';
+  try {
+    text = readFileSync(PIPELINE_PATH, 'utf-8');
+  } catch (e) {
+    if (e.code !== 'ENOENT') throw e;
+  }
   const marker = '## Pendientes';
   const idx = text.indexOf(marker);
   if (idx === -1) {
@@ -252,14 +270,23 @@ function appendToPipeline(offers) {
 }
 
 function appendToScanHistory(offers, date) {
-  if (!existsSync(SCAN_HISTORY_PATH)) {
-    writeFileSync(SCAN_HISTORY_PATH, 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\n', 'utf-8');
+  // Open in append mode (creates if missing). fstat on the same fd lets
+  // us check whether the file is empty without a TOCTOU vs `existsSync`.
+  // CodeQL flagged the previous `existsSync -> writeFileSync` pair as
+  // `js/file-system-race`.
+  const fd = openSync(SCAN_HISTORY_PATH, 'a+');
+  try {
+    if (fstatSync(fd).size === 0) {
+      writeSync(fd, 'url\tfirst_seen\tportal\ttitle\tcompany\tstatus\n');
+    }
+    const lines =
+      offers
+        .map((o) => `${o.url}\t${date}\t${o.source}\t${o.title}\t${o.company}\tadded`)
+        .join('\n') + '\n';
+    writeSync(fd, lines);
+  } finally {
+    closeSync(fd);
   }
-  const lines =
-    offers
-      .map((o) => `${o.url}\t${date}\t${o.source}\t${o.title}\t${o.company}\tadded`)
-      .join('\n') + '\n';
-  appendFileSync(SCAN_HISTORY_PATH, lines, 'utf-8');
 }
 
 // ── Main ────────────────────────────────────────────────────────────

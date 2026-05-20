@@ -1,18 +1,10 @@
-/**
- * GET /api/calendar
- *
- * Returns the unified interview-and-prep calendar:
- *   • Every interview with a scheduledAt within the next `?days` (default 14)
- *   • A "prep block" entry 24h before each interview (or 48h for onsite/final)
- *     IF a dossier exists; otherwise the prep block is a "needs research" marker
- *   • Every offer with a decisionDeadline in the window
- *   • Every nextActionDue from stage-state
- *
- * Used by:
- *   • /calendar page
- *   • Capacitor Calendar plugin sync API (one-way push to iOS/macOS Calendar)
- *   • Apple Watch glance (next-event card)
- */
+/** GET /api/calendar -- unified interview-and-prep calendar within the
+ *  next `?days` window (default 14): every scheduled interview, a prep
+ *  block 24h (or 48h for onsite/final) before each one (dossier present
+ *  → real block; absent → "needs research" marker), every offer with a
+ *  decisionDeadline, every nextActionDue from stage-state.
+ *  Consumed by /calendar page, Capacitor Calendar plugin (one-way push
+ *  to iOS / macOS Calendar), Apple Watch next-event glance. */
 
 import { wrap } from '$lib/server/api-helpers';
 import { findUpcomingInterviews } from '$lib/server/interviewers';

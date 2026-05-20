@@ -1,23 +1,10 @@
-/**
- * POST /api/profile/cv-fix
- *
- * Auto-fix the user's base CV based on the failed checks from
- * /api/profile/cv-check. Uses the Anthropic SDK to rewrite cv.md so the
- * checks pass -- preserving every fact while removing AI-detection
- * patterns, clichés, missing sections, etc.
- *
- * Safe by default:
- *   • Original cv.md is backed up to `cv.md.bak` before the rewrite.
- *   • Returns the proposed new content + a diff summary; the caller can
- *     show a preview and require user confirmation before persisting.
- *   • `?apply=1` (or `body.apply: true`) is what actually persists.
- *
- * Request body:
- *   { apply?: boolean, dryRun?: boolean }
- *
- * Response:
- *   { ok, before, after, backedUp, atsScoreAfter?, qualityScoreAfter? }
- */
+/** POST /api/profile/cv-fix -- rewrite cv.md to pass the failing checks
+ *  from /api/profile/cv-check. Preserves facts, removes AI-tells / cliches /
+ *  missing sections. Original is backed up to cv.md.bak. By default returns
+ *  the proposed content + diff for preview; only persists when
+ *  `?apply=1` (or body.apply: true).
+ *  Body:  { apply?, dryRun? }
+ *  Reply: { ok, before, after, backedUp, atsScoreAfter?, qualityScoreAfter? } */
 
 import fs from 'node:fs';
 import { wrap, badRequest } from '$lib/server/api-helpers';
@@ -53,10 +40,18 @@ export const POST = wrap('cv-fix', async ({ request }: { request: Request }) => 
   const apply = body?.apply === true;
 
   const cvMd = activePath('cv-md');
-  if (!fs.existsSync(cvMd)) {
-    badRequest('No cv.md yet — paste your CV first via onboarding.');
+  // CodeQL js/file-system-race: read directly. ENOENT means the user
+  // hasn't onboarded yet -- surface the same badRequest as before
+  // without racing existsSync against the read.
+  let before: string;
+  try {
+    before = fs.readFileSync(cvMd, 'utf8');
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
+      badRequest('No cv.md yet — paste your CV first via onboarding.');
+    }
+    throw e;
   }
-  const before = fs.readFileSync(cvMd, 'utf8');
 
   // Run a quality check first so we know what to fix.
   const quality = await checkResumeQuality(cvMd);

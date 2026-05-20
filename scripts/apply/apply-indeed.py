@@ -34,7 +34,7 @@ from lib_playwright_auth import user_data_dir as _resolve_user_data_dir  # noqa:
 def indeed_config() -> PortalConfig:
     return PortalConfig(
         portal_id="indeed",
-        # Per-user Playwright session — resolves to
+        # Per-user Playwright session -- resolves to
         # data/users/{uid}/.playwright-indeed/ under multi-user.
         user_data_dir=_resolve_user_data_dir("indeed"),
         first_name_selectors=[

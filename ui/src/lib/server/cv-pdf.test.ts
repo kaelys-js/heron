@@ -138,13 +138,12 @@ describe('generalCvStatus — path field is repo-relative', () => {
 
 describe('resolveTemplate — routes through profilePath() for multi-user', () => {
   it("reads cv_template from the active user's profile.yml (mocked profilePath)", () => {
-    // Pre-fix bug: the function read from
-    //   path.join(ROOT, 'data', 'profiles', profileId, 'profile.yml')
+    // Guards against a regression where the function reads from
+    //   path.join(DATA_ROOT, 'profiles', profileId, 'profile.yml')
     // bypassing the multi-user resolver. The mocked profilePath('profile-yml')
-    // returns /tmp/data/profiles/{id}/profile.yml; if the function were still
-    // using the old hardcoded path it would resolve to
-    //   /tmp/repo/data/profiles/work/profile.yml
-    // and miss our test fixture entirely.
+    // returns /tmp/data/profiles/{id}/profile.yml; a hardcoded path would
+    // resolve to /tmp/repo/data/profiles/work/profile.yml and miss the
+    // test fixture entirely.
     files[PROFILE_YML] = {
       content: 'full_name: Alice\ncv_template: missing-variant\n',
       mtimeMs: 1000,

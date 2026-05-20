@@ -25,15 +25,13 @@
 		464E3AF67C92B9D73E4AD958 /* BrandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C6DBE48967C2185A1EA702 /* BrandTests.swift */; };
 		4CDC6A84B0B5B438F8ACFA84 /* WidgetTestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6F3EBB92FC26A8909F2E030 /* WidgetTestsSmoke.swift */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
-		4E179D94F2EDE1A0231C4015 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27884949441377C8C7559A26 /* Foundation.framework */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
-		5832F85B1A07FC4585ED0944 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB936BF2B6B11D3A31B7859C /* Foundation.framework */; };
-		5B2739B8821A37B837534B46 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB936BF2B6B11D3A31B7859C /* Foundation.framework */; };
+		5811D3B6CF68036EA7C35636 /* BackgroundFetcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51BDB1C1385AB8990893E635 /* BackgroundFetcherTests.swift */; };
 		5C10E71DF4CB6EA4C40FF156 /* InboxIssuesWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 559AF47C7C7A75A0218312AA /* InboxIssuesWidget.swift */; };
 		5C7BEACB7A09695AF511E256 /* SpotlightIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8126D767BB835DA855B58552 /* SpotlightIndexer.swift */; };
 		61B92C376B6A0BFDE5B3A999 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B04DDA8861B187894F3581C1 /* Assets.xcassets */; };
@@ -43,27 +41,25 @@
 		7623847E565D6D406BE4999D /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6FF0483296BD7B4DF03552B /* ErrorReporter.swift */; };
 		7A5501C8C2D0C2B9160EB349 /* KeychainStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A60ED4B98EE76C3731F81BA /* KeychainStoreTests.swift */; };
 		7AC0D36C2BBD93C60EFC3C4F /* BridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26631DCF28D85F99FB13A91E /* BridgeViewController.swift */; };
-		7DBFA4641E2729F109B35EF2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27884949441377C8C7559A26 /* Foundation.framework */; };
 		8914930D75A1C77BA5BFB215 /* WatchTestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = A341629834FE8424663D0140 /* WatchTestsSmoke.swift */; };
 		91269196C8EDE956B323C1CA /* NetworkMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D00F0BF04C6ACD70B7ED94 /* NetworkMonitorTests.swift */; };
 		967E279FFF6CBEBE28CEC91D /* AppShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C05A76F56281A0EFD15DAD02 /* AppShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		A17A18173DACDECD9ECF0E6A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB936BF2B6B11D3A31B7859C /* Foundation.framework */; };
+		A100244C98B73FC75ED81377 /* WatchSessionBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98FE0BE080929E3A65B710BB /* WatchSessionBridgeTests.swift */; };
 		A8C93FC3E1C6E5089E3AA399 /* BiometricAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9012709D08A85C7A9CEB2C91 /* BiometricAuth.swift */; };
 		ACCBB797BD9C29A3EA53C321 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54DE54E7F784B44516C7B1D5 /* Brand.swift */; };
 		B1166C2AFCE9CB88941BA785 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7738EEBCC31A28A769071A /* RootView.swift */; };
-		C24D6B6C91A56390FD8C6ABC /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB936BF2B6B11D3A31B7859C /* Foundation.framework */; };
 		C362913F0191FC3C677CCE21 /* WatchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 604BE1F005FDB069FF3F1985 /* WatchModel.swift */; };
 		C61D7BBE9991CEF00B516A6B /* SpotlightIndexerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735399543377D51D2BECCBD9 /* SpotlightIndexerTests.swift */; };
-		CC0F3E437FBFF23CA0DE6CC5 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB936BF2B6B11D3A31B7859C /* Foundation.framework */; };
 		DB9888B9A6B6413600F13C3D /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31513D0E4528E2BF567E770E /* ErrorReporter.swift */; };
 		DD736F2150095034A1A5D70A /* WidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B536A0A3EB877FABCC9B18D3 /* WidgetBundle.swift */; };
 		E876A9D11F7DC6FE329E1D80 /* AppTestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C1D23B601810C4801F8ED2 /* AppTestsSmoke.swift */; };
 		E965C7A3C853232B1A0AA3EE /* AppUITestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C777DB39253E575C27951E6 /* AppUITestsSmoke.swift */; };
 		F144B112F6B3589C16293DBF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 1F1F2BF74317E3F6B16DDA93 /* PrivacyInfo.xcprivacy */; };
-		F1E4AF21110F4A7FF4ED8647 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB936BF2B6B11D3A31B7859C /* Foundation.framework */; };
 		F1F394828835CCEEBB9D625C /* BonjourBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DA0F3C2FA120D4A573F42DD /* BonjourBrowser.swift */; };
+		F418257D7BB8D8D3AA9C542A /* NativePluginTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23CFCE5AA5DAB1BF905DE91E /* NativePluginTests.swift */; };
 		F7767B589F14995F442A2D97 /* BackgroundFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2CB39CFF5FD8265A4264E6 /* BackgroundFetcher.swift */; };
 		FB144018EF447333F7EC2B37 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C73C9434A8B33AAD827E716 /* Brand.swift */; };
+		FDAEA7BE343B9F8961A45215 /* BonjourBrowserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7F71EC2066DFCD85C58584C /* BonjourBrowserTests.swift */; };
 		FEDC0D7E63F105A7E9D216B8 /* WatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B6989861C5B4F1B0CDA0EC /* WatchApp.swift */; };
 		FF24E0EAF3EB998992F290D6 /* TopApplyWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07E05E7932775592D5BE6108 /* TopApplyWidget.swift */; };
 		FF4D01143FCAC7E73E98408A /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 725697F6C88065D295E18F63 /* ShareViewController.swift */; };
@@ -164,8 +160,8 @@
 		1A60ED4B98EE76C3731F81BA /* KeychainStoreTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KeychainStoreTests.swift; sourceTree = "<group>"; };
 		1C777DB39253E575C27951E6 /* AppUITestsSmoke.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppUITestsSmoke.swift; sourceTree = "<group>"; };
 		1F1F2BF74317E3F6B16DDA93 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		23CFCE5AA5DAB1BF905DE91E /* NativePluginTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NativePluginTests.swift; sourceTree = "<group>"; };
 		26631DCF28D85F99FB13A91E /* BridgeViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BridgeViewController.swift; sourceTree = "<group>"; };
-		27884949441377C8C7559A26 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		29AFA3C1756697C1450E03AC /* NextInterviewWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NextInterviewWidget.swift; sourceTree = "<group>"; };
 		2BAC25F9472B859A8F679955 /* AppUITests.bundle */ = {isa = PBXFileReference; explicitFileType = "wrapper.plug-in"; includeInIndex = 0; path = AppUITests.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CE88770478FB968E108A903 /* NativePlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NativePlugin.swift; sourceTree = "<group>"; };
@@ -185,6 +181,7 @@
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
+		51BDB1C1385AB8990893E635 /* BackgroundFetcherTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackgroundFetcherTests.swift; sourceTree = "<group>"; };
 		51CD8E57475622C06A0B72CA /* WatchSessionBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSessionBridge.swift; sourceTree = "<group>"; };
 		527F4909548255C904FEC97F /* Brand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
 		54DE54E7F784B44516C7B1D5 /* Brand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
@@ -199,6 +196,7 @@
 		9012709D08A85C7A9CEB2C91 /* BiometricAuth.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BiometricAuth.swift; sourceTree = "<group>"; };
 		939AF9DEAE52F3A5D09A7C5A /* WatchApp.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = WatchApp.entitlements; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		98FE0BE080929E3A65B710BB /* WatchSessionBridgeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSessionBridgeTests.swift; sourceTree = "<group>"; };
 		9D8E6EDB09C70285DE6FC30E /* AppTests.bundle */ = {isa = PBXFileReference; explicitFileType = "wrapper.plug-in"; includeInIndex = 0; path = AppTests.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		9FD7C6838A42199F3A5357F9 /* Brand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
 		A043EEDC504358B4A9D56041 /* BiometricAuthTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BiometricAuthTests.swift; sourceTree = "<group>"; };
@@ -212,8 +210,8 @@
 		C6FF0483296BD7B4DF03552B /* ErrorReporter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ErrorReporter.swift; sourceTree = "<group>"; };
 		C7C1D23B601810C4801F8ED2 /* AppTestsSmoke.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppTestsSmoke.swift; sourceTree = "<group>"; };
 		C85AA568F77B851EEABF69F5 /* Brand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
-		CB936BF2B6B11D3A31B7859C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		D3D00F0BF04C6ACD70B7ED94 /* NetworkMonitorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkMonitorTests.swift; sourceTree = "<group>"; };
+		D7F71EC2066DFCD85C58584C /* BonjourBrowserTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BonjourBrowserTests.swift; sourceTree = "<group>"; };
 		D9A6456417C346D5DF36A0BF /* WidgetTests.bundle */ = {isa = PBXFileReference; explicitFileType = "wrapper.plug-in"; includeInIndex = 0; path = WidgetTests.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		DB2CB39CFF5FD8265A4264E6 /* BackgroundFetcher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackgroundFetcher.swift; sourceTree = "<group>"; };
 		DD18818E6F512F4FDB4E0E23 /* NetworkMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
@@ -225,7 +223,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7DBFA4641E2729F109B35EF2 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -241,7 +238,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C24D6B6C91A56390FD8C6ABC /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -249,7 +245,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4E179D94F2EDE1A0231C4015 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -257,7 +252,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5B2739B8821A37B837534B46 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -265,7 +259,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A17A18173DACDECD9ECF0E6A /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -273,7 +266,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5832F85B1A07FC4585ED0944 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -281,7 +273,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F1E4AF21110F4A7FF4ED8647 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -289,7 +280,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CC0F3E437FBFF23CA0DE6CC5 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -418,8 +408,12 @@
 				1A60ED4B98EE76C3731F81BA /* KeychainStoreTests.swift */,
 				D3D00F0BF04C6ACD70B7ED94 /* NetworkMonitorTests.swift */,
 				735399543377D51D2BECCBD9 /* SpotlightIndexerTests.swift */,
+				51BDB1C1385AB8990893E635 /* BackgroundFetcherTests.swift */,
+				D7F71EC2066DFCD85C58584C /* BonjourBrowserTests.swift */,
+				23CFCE5AA5DAB1BF905DE91E /* NativePluginTests.swift */,
+				98FE0BE080929E3A65B710BB /* WatchSessionBridgeTests.swift */,
 			);
-			name = AppTests;
+			path = AppTests;
 			sourceTree = "<group>";
 		};
 		CDDF36EC432C08EC8EEFC6B7 /* AppUITests */ = {
@@ -427,13 +421,12 @@
 			children = (
 				1C777DB39253E575C27951E6 /* AppUITestsSmoke.swift */,
 			);
-			name = AppUITests;
+			path = AppUITests;
 			sourceTree = "<group>";
 		};
 		D99AEA55A4EA093281BD5E41 /* watchOS */ = {
 			isa = PBXGroup;
 			children = (
-				27884949441377C8C7559A26 /* Foundation.framework */,
 			);
 			name = watchOS;
 			sourceTree = "<group>";
@@ -456,7 +449,6 @@
 		EDB8A354F93C6457E2A3B486 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
-				CB936BF2B6B11D3A31B7859C /* Foundation.framework */,
 			);
 			name = iOS;
 			sourceTree = "<group>";
@@ -815,6 +807,10 @@
 				7A5501C8C2D0C2B9160EB349 /* KeychainStoreTests.swift in Sources */,
 				91269196C8EDE956B323C1CA /* NetworkMonitorTests.swift in Sources */,
 				C61D7BBE9991CEF00B516A6B /* SpotlightIndexerTests.swift in Sources */,
+				5811D3B6CF68036EA7C35636 /* BackgroundFetcherTests.swift in Sources */,
+				FDAEA7BE343B9F8961A45215 /* BonjourBrowserTests.swift in Sources */,
+				F418257D7BB8D8D3AA9C542A /* NativePluginTests.swift in Sources */,
+				A100244C98B73FC75ED81377 /* WatchSessionBridgeTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -946,6 +942,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = AppTests;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -959,11 +956,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_ENTITLEMENTS = AppWidget/AppWidget.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Extensions/AppWidget/AppWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				INFOPLIST_FILE = AppWidget/Info.plist;
+				INFOPLIST_FILE = Extensions/AppWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.widget;
@@ -985,6 +982,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = AppUITests;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -1018,11 +1016,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_ENTITLEMENTS = AppShareExtension/AppShareExtension.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Extensions/AppShareExtension/AppShareExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				INFOPLIST_FILE = AppShareExtension/Info.plist;
+				INFOPLIST_FILE = Extensions/AppShareExtension/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.share;
@@ -1193,11 +1191,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_ENTITLEMENTS = AppShareExtension/AppShareExtension.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Extensions/AppShareExtension/AppShareExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				INFOPLIST_FILE = AppShareExtension/Info.plist;
+				INFOPLIST_FILE = Extensions/AppShareExtension/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.share;
@@ -1218,6 +1216,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = AppTests;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -1232,11 +1231,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_ENTITLEMENTS = AppLiveActivity/AppLiveActivity.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Extensions/AppLiveActivity/AppLiveActivity.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				INFOPLIST_FILE = AppLiveActivity/Info.plist;
+				INFOPLIST_FILE = Extensions/AppLiveActivity/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.liveactivity;
@@ -1282,6 +1281,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = AppUITests;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -1295,11 +1295,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_ENTITLEMENTS = AppWidget/AppWidget.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Extensions/AppWidget/AppWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				INFOPLIST_FILE = AppWidget/Info.plist;
+				INFOPLIST_FILE = Extensions/AppWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.widget;
@@ -1333,11 +1333,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_ENTITLEMENTS = AppLiveActivity/AppLiveActivity.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Extensions/AppLiveActivity/AppLiveActivity.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				INFOPLIST_FILE = AppLiveActivity/Info.plist;
+				INFOPLIST_FILE = Extensions/AppLiveActivity/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.liveactivity;

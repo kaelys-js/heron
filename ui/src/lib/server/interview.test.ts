@@ -1,20 +1,11 @@
-/**
- * interview.ts -- per-user story-bank + writing-samples reads.
- *
- * Pre-fix bug: interview.ts hardcoded
- *   - `<repo>/interview-prep/story-bank.md`
- *   - `<repo>/writing-samples/`
- * regardless of which user invoked `generateInterviewPrep`. Two users on
- * one machine had their interview briefs mixed: Alice's STAR stories
- * appeared in Bob's prep, and vice versa.
- *
- * The fix routes both reads through `userSharedPath('story-bank')` and
- * `profilePath(id, 'writing-samples-dir')` so the data is segregated by
- * user. These tests assert that segregation directly -- call the helpers
- * for one user, write content, switch users, call again, and verify the
- * second user reads their own content (or empty if missing) rather than
- * the first user's.
- */
+/** interview.ts -- per-user story-bank + writing-samples reads. Guards
+ *  against a regression where the module hardcodes <repo>-relative paths
+ *  (interview-prep/story-bank.md, writing-samples/) and mixes two users'
+ *  data on one machine. Both reads must route through
+ *  `userSharedPath('story-bank')` and `profilePath(id, 'writing-samples-dir')`.
+ *  These tests assert segregation directly: call as user A, write, switch
+ *  to user B, and confirm B sees their own content (or empty if missing)
+ *  rather than A's. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';

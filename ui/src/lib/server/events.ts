@@ -3,10 +3,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import type { ActivityEvent, EventLevel, EventCategory } from '$lib/types';
-import { ROOT } from './files';
+import { ROOT, DATA_ROOT } from './files';
 import { maybeCurrentUserId, SYSTEM_USER_ID } from './user-context';
 
-const LOG_FILE = path.join(ROOT, 'data', 'activity.jsonl');
+const LOG_FILE = path.join(DATA_ROOT, 'activity.jsonl');
 const LOG_BACKUP = LOG_FILE + '.1';
 const MAX_BUFFER = 500;
 /** Rotate the activity log when it exceeds this size on append.
@@ -49,32 +49,43 @@ class Bus extends EventEmitter {
 
   constructor() {
     super();
-    this.setMaxListeners(50); // dev HMR can stack listeners — avoid noise warning
+    this.setMaxListeners(50); // dev HMR can stack listeners -- avoid noise warning
     this.loadFromDisk();
   }
 
   private loadFromDisk() {
     try {
-      if (!fs.existsSync(LOG_FILE)) return;
-      // Read only the tail so a runaway log doesn't OOM us at boot.
-      const stat = fs.statSync(LOG_FILE);
-      const size = stat.size;
-      const TAIL_BYTES = 256 * 1024; // 256KB tail is more than 500 events worth
+      // Open first, then fstat the open fd. This is the
+      // CodeQL `js/file-system-race`-clean replacement for
+      // `existsSync -> statSync -> openSync`: ENOENT at openSync
+      // means "file gone since startup" (return early), and the
+      // size read from fstat is bound to the same fd we read from.
+      let fd: number;
+      try {
+        fd = fs.openSync(LOG_FILE, 'r');
+      } catch (e) {
+        if ((e as NodeJS.ErrnoException).code === 'ENOENT') return;
+        throw e;
+      }
       let txt: string;
-      if (size > TAIL_BYTES) {
-        const fd = fs.openSync(LOG_FILE, 'r');
-        try {
+      try {
+        const stat = fs.fstatSync(fd);
+        const size = stat.size;
+        const TAIL_BYTES = 256 * 1024; // 256KB tail is more than 500 events worth
+        if (size > TAIL_BYTES) {
           const buf = Buffer.alloc(TAIL_BYTES);
           fs.readSync(fd, buf, 0, TAIL_BYTES, size - TAIL_BYTES);
           txt = buf.toString('utf8');
           // Drop the first (probably partial) line
           const nl = txt.indexOf('\n');
           if (nl >= 0) txt = txt.slice(nl + 1);
-        } finally {
-          fs.closeSync(fd);
+        } else {
+          const buf = Buffer.alloc(size);
+          fs.readSync(fd, buf, 0, size, 0);
+          txt = buf.toString('utf8');
         }
-      } else {
-        txt = fs.readFileSync(LOG_FILE, 'utf8');
+      } finally {
+        fs.closeSync(fd);
       }
       const lines = txt.trim().split('\n').slice(-MAX_BUFFER);
       for (const line of lines) {
@@ -95,17 +106,26 @@ class Bus extends EventEmitter {
 
   private rotateIfNeeded(): void {
     try {
-      if (!fs.existsSync(LOG_FILE)) return;
-      const size = fs.statSync(LOG_FILE).size;
+      // Race-free size check: stat directly; ENOENT means no log yet.
+      // CodeQL flagged the previous `existsSync -> statSync` form as
+      // `js/file-system-race`.
+      let size: number;
+      try {
+        size = fs.statSync(LOG_FILE).size;
+      } catch (e) {
+        if ((e as NodeJS.ErrnoException).code === 'ENOENT') return;
+        throw e;
+      }
       if (size <= MAX_LOG_BYTES) return;
       // Move the current log out of the way; the next append re-creates it.
       // Replace any existing .1 (we keep only one backup to bound disk use).
       try {
-        if (fs.existsSync(LOG_BACKUP)) fs.unlinkSync(LOG_BACKUP);
+        fs.unlinkSync(LOG_BACKUP);
       } catch {
-        // Old backup unlink failed (EBUSY on Windows, EACCES on shared
-        // volumes). Rotation is best-effort -- the rename below will fail
-        // too in that case and the outer catch will surface it.
+        // Old backup unlink failed (EBUSY / EACCES / ENOENT). Rotation is
+        // best-effort -- the rename below will fail too in real-failure
+        // cases and the outer catch will surface it. Race-free vs the
+        // previous `if (existsSync) unlink` form.
       }
       try {
         fs.renameSync(LOG_FILE, LOG_BACKUP);
@@ -114,7 +134,12 @@ class Bus extends EventEmitter {
         // logEvent from inside rotation would loop forever.
       }
       // Drop a rotation breadcrumb without going through logEvent (avoid
-      // recursion if rotation fails repeatedly).
+      // recursion if rotation fails repeatedly). Use `wx` (exclusive
+      // create) so the post-rename create is race-free: CodeQL flagged
+      // the plain writeFileSync as `js/file-system-race` because a
+      // concurrent append could have re-created LOG_FILE between the
+      // rename and the write. EEXIST = someone beat us to it, and that
+      // someone already wrote a real event line; skip the breadcrumb.
       try {
         fs.writeFileSync(
           LOG_FILE,
@@ -128,10 +153,12 @@ class Bus extends EventEmitter {
             message:
               'previous file moved to activity.jsonl.1 (' + Math.round(size / 1024 / 1024) + 'MB)',
           }) + '\n',
+          { flag: 'wx' },
         );
       } catch {
-        // Rotation breadcrumb write failed -- the next regular append
-        // will recreate LOG_FILE. We can't re-enter logEvent from here.
+        // Rotation breadcrumb write failed (EEXIST or otherwise) --
+        // the next regular append will land in LOG_FILE either way.
+        // We can't re-enter logEvent from here.
       }
     } catch {
       // Rotation is best-effort -- never let it crash the caller, and
@@ -299,7 +326,7 @@ export function logEvent(
 ): ActivityEvent {
   const resolvedUserId =
     opts.userId === null
-      ? undefined // broadcast — no userId tag
+      ? undefined // broadcast -- no userId tag
       : (opts.userId ?? maybeCurrentUserId() ?? undefined);
   const ev: ActivityEvent = {
     id: crypto.randomBytes(6).toString('hex'),

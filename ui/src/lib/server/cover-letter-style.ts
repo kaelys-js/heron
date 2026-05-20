@@ -1,20 +1,8 @@
-/**
- * cover-letter-style -- collect user-edited cover letters as style refs.
- *
- * The cover-letter generator produces a different tone every run because
- * Claude has no prior context on YOUR voice. After a few cover letters
- * the user has either accepted as-is or edited, we have signal -- feed
- * the 3 most-recent ones back as style references on subsequent runs.
- *
- * Heuristic: a cover letter is considered "user-approved style" if the
- * user has either:
- *   (a) Marked the job as Applied/Interview/Offer (signal: it went out)
- *   (b) Manually edited the .md file (mtime > generator's stdout-write time
- *       on the report -- proxied by comparing file mtime to report mtime)
- *
- * Pure-function. The generator endpoint reads styleSamples() and includes
- * the bodies in its Claude prompt.
- */
+/** Collects user-approved cover letters as style references. The
+ *  generator has no prior voice context; feeding the 3 most recent
+ *  approved letters back as references stabilises tone across runs.
+ *  "Approved" = job is Applied/Interview/Offer OR the .md mtime is
+ *  newer than the originating report (user edited). Pure function. */
 
 import fs from 'node:fs';
 import path from 'node:path';

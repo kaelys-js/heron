@@ -256,7 +256,7 @@
     if (typeof window === 'undefined') return '#';
     const host = window.location.origin;
     const code =
-      "(function(){window.__CAREER_OPS_HOST__='" +
+      "(function(){window.__HERON_HOST__='" +
       host +
       "';" +
       "var s=document.createElement('script');" +

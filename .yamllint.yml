@@ -1,5 +1,5 @@
 ---
-# yamllint config — repo-wide.
+# yamllint config -- repo-wide.
 # We use yamllint as a syntax / structure gate, not a strict 80-col style
 # linter. Workflow YAMLs and lefthook.yml have inline shell commands +
 # heredocs that are routinely > 80 chars; forcing 80-col reflow would
@@ -19,7 +19,7 @@ rules:
     allow-non-breakable-words: true
     allow-non-breakable-inline-mappings: true
   comments:
-    # Allow `#text` and `# text` — both common in workflows.
+    # Allow `#text` and `# text` -- both common in workflows.
     require-starting-space: false
     min-spaces-from-content: 1
   comments-indentation: disable

@@ -1,24 +1,11 @@
-/**
- * Daily digest -- once-per-day rollup of operationally meaningful changes.
- *
- * Computes today's deltas across:
- *   - Applications fired (status = Applied today)
- *   - Auto-queued jobs (status = Queued today)
- *   - Interviews scheduled / advanced
- *   - Offers
- *   - Rejections
- *   - Follow-ups due / overdue (read from cadence wrapper)
- *   - New patterns detected (open issues with severity=info from
- *     recompute-patterns)
- *   - Errors logged in last 24h
- *
- * Emits a single info-level activity event with a rich one-liner so the
- * bell shows it without spamming the feed. Idempotent on multiple manual
- * runs -- re-emitting the same digest is harmless.
- *
- * Default trigger: daily at 18:00 local. allowManual=true so power users
- * can run it from the Agents page.
- */
+/** Daily digest -- once-per-day rollup of today's operationally
+ *  meaningful changes: applications fired (Applied today), auto-
+ *  queued, interviews scheduled/advanced, offers, rejections,
+ *  follow-ups due/overdue (from cadence wrapper), new patterns
+ *  (info-severity issues from recompute-patterns), errors in last 24h.
+ *  Emits one info-level activity event with a one-liner so the bell
+ *  shows it without spamming the feed. Re-emit-safe.
+ *  Default trigger: daily 18:00 local; allowManual=true for /agents. */
 
 import { loadAllJobs } from '../parsers';
 import { logEvent, bus } from '../events';
@@ -46,11 +33,11 @@ function todayCount(events: ActivityEvent[], match: (ev: ActivityEvent) => boole
 async function runDailyDigest(): Promise<JobResult> {
   try {
     const jobs = loadAllJobs();
-    // F25 -- scope events to THIS user (the digest is per-user; daily-digest
-    // is registered as perUser:true so each invocation runs inside
-    // runAsUser(userId, …)). Pre-fix `bus.recent()` returned events
-    // tagged for every user → user A's "Applied" events counted into
-    // user B's digest delta.
+    // F25 -- scope events to THIS user. The digest is per-user (registered
+    // `perUser:true`, runs inside runAsUser(userId, …)). Calling
+    // `bus.recent()` instead of `bus.recentForUser()` would return events
+    // for every user, so user A's "Applied" events would land in user B's
+    // digest delta.
     const events = bus.recentForUser(currentUserIdOrDefault());
 
     // Status snapshot

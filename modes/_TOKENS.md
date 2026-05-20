@@ -12,6 +12,7 @@ This replaces the older approach (repo-root symlinks like `cv.md` → `data/prof
 |---|---|
 | `__PROFILE__` | absolute path of the active profile dir |
 | `__CV__` | absolute path of `<profile>/cv.md` |
+| `__PROFILE_YML__` | absolute path of `<profile>/profile.yml` (candidate identity, comp targets, contact) |
 | `__PROFILE_MD__` | absolute path of `<profile>/_profile.md` (per-profile customization) |
 | `__PORTALS__` | absolute path of `<profile>/portals.yml` |
 | `__ARTICLE_DIGEST__` | absolute path of `<profile>/article-digest.md` |
@@ -26,6 +27,7 @@ This replaces the older approach (repo-root symlinks like `cv.md` → `data/prof
 | `__JDS__` | absolute path of `<profile>/jds/` (dir) |
 | `__WRITING_SAMPLES__` | absolute path of `<profile>/writing-samples/` (dir) |
 | `__INTERVIEW_PREP__` | absolute path of `<profile>/interview-prep/` (dir) |
+| `__BATCH__` | absolute path of `<profile>/batch/` (dir) -- holds `batch-input.tsv`, `batch-state.tsv`, `logs/`, `tracker-additions/` for the bulk-CV worker |
 | `__STORY_BANK__` | absolute path of `<user-shared>/story-bank.md` -- lives ABOVE the profile tree, shared across this user's profiles, isolated per-user |
 
 ## Substitution rules

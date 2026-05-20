@@ -1,18 +1,11 @@
-/**
- * render -- thin wrapper around @testing-library/svelte's render that
- *
- *   1. Flips the matchMedia polyfill BEFORE mount (so components that
- *      branch on `useIsMobile()` get the right value during their first
- *      render -- not after a reactive update)
- *   2. Returns a typed `{ component, container, queries, …userEvent }`
- *      bundle so tests don't have to import `userEvent` themselves
- *   3. Auto-cleans the singleton state stores via `resetAll()` from
- *      state-helpers (Svelte 5 module-singletons leak across renders
- *      without this).
- *
- * Use `renderMobile(...)` and `renderDesktop(...)` for the responsive
- * primitive sweep; both call this same `render()` under the hood.
- */
+/** Wrapper around @testing-library/svelte's render that:
+ *  (1) flips the matchMedia polyfill before mount so useIsMobile()
+ *      sees the right value on first render, not after a reactive update;
+ *  (2) returns { component, container, queries, …userEvent } so tests
+ *      don't need to import userEvent;
+ *  (3) calls resetAll() to clear singleton state stores (Svelte 5 module
+ *      singletons leak across renders).
+ *  renderMobile / renderDesktop wrap this for the responsive sweep. */
 import { render as tlRender } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import { setMobileViewport } from '../test-setup';

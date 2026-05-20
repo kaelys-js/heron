@@ -16,7 +16,7 @@ When `--interviewer` is set:
 ## Setup
 
 1. Read `__REPORTS__/<id>-<company>-*.md` for the JD context (Block A: role summary, Block B: requirements, Block F: STAR stories already prepared)
-2. Read `config/profile.yml` and `__CV__` for candidate context
+2. Read `__PROFILE_YML__` and `__CV__` for candidate context
 3. Read `__STORY_BANK__` for accumulated stories
 4. When `--interviewer` is provided, also read the per-interviewer dossier file
 

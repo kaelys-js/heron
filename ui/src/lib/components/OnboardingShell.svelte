@@ -115,8 +115,8 @@
     <div
       class="text-[11px] text-muted-foreground/60 leading-relaxed border-t border-border/40 pt-3"
     >
-      Estimated time: 5–10 minutes. You can come back to any completed step from this sidebar — your
-      work is auto-saved as you go.
+      Estimated time: 5-10 minutes. You can come back to any completed step from this sidebar --
+      your work is auto-saved as you go.
     </div>
   </aside>
 

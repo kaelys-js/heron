@@ -1,24 +1,11 @@
-/**
- * MSW handlers -- central HTTP fixture set. Imported by `test-setup.ts`
- * for jsdom/node projects and by `test-helpers/render.ts` for the
- * browser project (via the Service Worker variant).
- *
- * Add a base handler here when a TEST FILE needs the same response
- * across cases. Override per-test via `server.use(...)` for failure
- * modes or assertion-specific payloads.
- *
- * Coverage mirrors the most-trafficked endpoints:
- *   • Auth (/api/auth/*) -- pass-through OK responses
- *   • Health probe (/api/health) -- 200 by default; flip to 503 per-test
- *   • Jobs / pipeline (/api/jobs, /api/status)
- *   • Per-job actions (/api/job/[id]/cv, /api/job/[id]/apply)
- *   • Notifications feed (/api/notifications/feed)
- *   • Profiles (/api/profiles)
- *   • Scan (/api/scan, /api/scan/results)
- *
- * Each handler also returns a deterministic `ETag` so caches behave
- * the same in tests as in prod.
- */
+/** MSW handlers -- central HTTP fixture set. Loaded by test-setup.ts for
+ *  jsdom/node + by test-helpers/render.ts for the browser project via SW.
+ *  Add a base handler here when multiple tests want the same response;
+ *  per-test overrides go through `server.use(...)` for failure modes /
+ *  assertion-specific payloads. Each handler emits a deterministic ETag
+ *  so caches behave the same in test and prod. Covers /api/auth/*,
+ *  /api/health, /api/jobs, /api/status, /api/job/[id]/{cv,apply},
+ *  /api/notifications/feed, /api/profiles, /api/scan*. */
 import { http, HttpResponse } from 'msw';
 
 export const handlers = [

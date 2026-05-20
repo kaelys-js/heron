@@ -1,17 +1,8 @@
-/**
- * Queue batch send.
- *
- *   POST /api/queue/send  { jobIds: string[] }
- *
- * Splits the jobs by source:
- *   - LinkedIn URLs → kicked off via runLinkedInApply (one at a time)
- *   - others        → marked Applied immediately + their URLs returned in
- *                     `openInTabs` so the client can open them
- *
- * Same shape as /api/bulk/apply but specifically for Queued jobs (the
- * /queue page passes the already-filtered list). Respects the autopilot
- * `maxAppliesPerDay` cap by trimming the LinkedIn portion if needed.
- */
+/** POST /api/queue/send { jobIds } -- batch-send Queued jobs.
+ *  Splits by source: LinkedIn URLs → runLinkedInApply (one at a time);
+ *  others → marked Applied + URLs returned in `openInTabs` for the client
+ *  to open. Same shape as /api/bulk/apply but pre-filtered to Queued.
+ *  Honors autopilot.maxAppliesPerDay by trimming the LinkedIn portion. */
 
 import { wrap, badRequest } from '$lib/server/api-helpers';
 import { loadAllJobs } from '$lib/server/parsers';
@@ -21,6 +12,21 @@ import { readConfig } from '$lib/server/autopilot';
 import { logEvent, reportServerError } from '$lib/server/events';
 
 const MAX_BATCH = 50;
+
+/**
+ * Hostname-exact match for LinkedIn. CodeQL flagged the previous
+ * `url.includes('linkedin.com')` shape under `js/incomplete-url-substring-sanitization`
+ * because attacker-controlled URLs like `https://evil.example/?u=linkedin.com`
+ * pass the substring test. Parse + check hostname instead.
+ */
+function isLinkedInHost(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host === 'linkedin.com' || host.endsWith('.linkedin.com');
+  } catch {
+    return false;
+  }
+}
 
 export const POST = wrap('queue-send', async ({ request }: { request: Request }) => {
   const body = (await request.json().catch(() => null)) as { jobIds?: string[] } | null;
@@ -42,7 +48,9 @@ export const POST = wrap('queue-send', async ({ request }: { request: Request })
       url: j.url,
       company: j.company,
       role: j.role,
-      isLinkedIn: /linkedin\.com/.test(j.url),
+      // Hostname-based check (CodeQL js/incomplete-url-substring-sanitization):
+      // raw-string .includes('linkedin.com') would also match attacker.example/?u=linkedin.com.
+      isLinkedIn: isLinkedInHost(j.url),
     });
   }
   if (picks.length === 0) badRequest('No Queued jobs found for the given ids');
