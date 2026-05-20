@@ -54,7 +54,9 @@ jobs:
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           source "$HOME/.local/bin/env" || true
-          uvx zizmor@1.25.2 --format=sarif --output=zizmor.sarif .github/workflows/ || true
+          # zizmor 1.x writes SARIF to stdout; redirect to a file.
+          # `--output=zizmor.sarif` was rejected as an unknown flag.
+          uvx zizmor@1.25.2 --format=sarif .github/workflows/ > zizmor.sarif || true
           # Always exit 0 -- we want the SARIF upload even on findings;
           # branch protection blocks via the SARIF severity, not exit code.
 
