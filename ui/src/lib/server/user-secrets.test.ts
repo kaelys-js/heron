@@ -6,10 +6,11 @@
  * every write lands in /tmp and the live-data guard in test-setup.ts
  * stays out of our way.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import fs from 'node:fs';
-import path from 'node:path';
 import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const TMP = path.join(tmpdir(), 'heron-user-secrets-' + Date.now() + '-' + process.pid);
 
@@ -268,14 +269,22 @@ describe('user-secrets — mjs/ts parity (CLI scripts share the same format)', (
 describe('user-secrets — migrateEnvToUserSecrets()', () => {
   // The migration helper calls into ./user-context (DB) + ./events.
   // Mock those at the boundary so the test stays a pure unit test.
+  //
+  // CI quirk: two competing `vi.doMock('./user-context', ...)` calls
+  // (one in beforeEach, one in a single test) DID NOT reliably override
+  // each other under Vitest 4 + full-suite + coverage on linux runners.
+  // We use a shared mutable holder so the factory always returns the
+  // freshest value -- no need to redeclare the mock per-test.
+  const mockState = { ownerId: TEST_USER_A };
+
   beforeEach(() => {
+    mockState.ownerId = TEST_USER_A;
     vi.doMock('./user-context', async (importOriginal) => {
       const real = (await importOriginal()) as Record<string, unknown>;
       return {
         ...real,
         SYSTEM_USER_ID,
-        // Mocked-per-case in each test below via vi.spyOn (default: owner = USER_A)
-        getOwnerUserId: async () => TEST_USER_A,
+        getOwnerUserId: async () => mockState.ownerId,
       };
     });
     vi.doMock('./events', () => ({
@@ -316,11 +325,11 @@ describe('user-secrets — migrateEnvToUserSecrets()', () => {
   });
 
   it('is a no-op when no owner exists', async () => {
-    // Override the user-context mock to report no owner.
-    vi.doMock('./user-context', async (importOriginal) => {
-      const real = (await importOriginal()) as Record<string, unknown>;
-      return { ...real, SYSTEM_USER_ID, getOwnerUserId: async () => SYSTEM_USER_ID };
-    });
+    // Flip the shared mock state -- the factory reads it lazily, so the
+    // next dynamic import of './user-context' from inside migrate() sees
+    // SYSTEM_USER_ID. No second vi.doMock needed (and it WOULDN'T work
+    // reliably in CI -- see describe-block comment above).
+    mockState.ownerId = SYSTEM_USER_ID;
     vi.resetModules();
     const { migrateEnvToUserSecrets: migrate } = await import('./user-secrets');
     process.env.GEMINI_API_KEY = 'env-LONG-value-ZZZZ';

@@ -22,7 +22,13 @@
 default_platform(:ios)
 
 APP_IDENTIFIER = "com.heron.app"
-WORKSPACE = "App.xcworkspace"
+# Capacitor 8+ uses SPM (Swift Package Manager) -- no Podfile, no
+# auto-generated `App.xcworkspace` at the top level. Build straight off
+# `App.xcodeproj`; SPM packages are wired up via project references.
+# (The project DOES have an internal `project.xcworkspace` for xcodebuild
+# but that's the per-project Xcode-managed one, not the CocoaPods
+# integration workspace fastlane expects when you pass `workspace:`.)
+PROJECT = "App.xcodeproj"
 SCHEME = "App"
 
 # Fastlane defaults that affect every lane.
@@ -79,7 +85,7 @@ platform :ios do
     sign(api_key: api_key)
 
     build_app(
-      workspace: WORKSPACE,
+      project: PROJECT,
       scheme: SCHEME,
       export_method: "app-store",
       configuration: "Release",
@@ -141,7 +147,7 @@ platform :ios do
   desc "Quick build without upload — for local smoke testing"
   lane :build_only do
     build_app(
-      workspace: WORKSPACE,
+      project: PROJECT,
       scheme: SCHEME,
       configuration: "Debug",
       export_method: "development",
@@ -160,7 +166,7 @@ platform :ios do
   desc "Run iOS unit + UI tests across a matrix of simulators"
   lane :test do
     run_tests(
-      workspace: WORKSPACE,
+      project: PROJECT,
       scheme: SCHEME,
       devices: [
         "iPhone 17 Pro Max",
@@ -179,7 +185,7 @@ platform :ios do
   lane :test_ci do
     setup_ci if is_ci
     run_tests(
-      workspace: WORKSPACE,
+      project: PROJECT,
       scheme: SCHEME,
       devices: ["iPhone 17 Pro Max"],
       code_coverage: true,
@@ -198,7 +204,7 @@ platform :ios do
     # XML for Codecov. Threshold 60% — the iOS coverage floor agreed in
     # the plan. Drop below → xcov returns non-zero → CI red.
     xcov(
-      workspace: WORKSPACE,
+      project: PROJECT,
       scheme: SCHEME,
       output_directory: "fastlane/coverage",
       minimum_coverage_percentage: 60.0,
