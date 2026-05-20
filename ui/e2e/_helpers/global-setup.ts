@@ -60,12 +60,37 @@ export default async function globalSetup(): Promise<void> {
     );
   }
 
-  // Idempotent: if a prior run left the dir, wipe + recreate so each
-  // run starts from a known state.
-  if (fs.existsSync(dataDir)) {
-    fs.rmSync(dataDir, { recursive: true, force: true });
-  }
+  // Non-destructive reset. Playwright doesn't guarantee globalSetup
+  // runs BEFORE webServer launches; on CI the build step of the
+  // webServer command imports SvelteKit route modules → which import
+  // `db/index.ts` → which calls `new Database(authDbPath)` at module
+  // load time. If globalSetup then `rmSync`'s the dataDir, the
+  // webServer's still-open `better-sqlite3` handle survives by inode
+  // but reads the OLD (empty) file, while we write our seed row into
+  // a NEW file at the same path. Symptom: webServer's `count(*)` on
+  // `users` returns 0 → `/login` 302's to `/signup?first=1` → the
+  // anonymous-root-redirects-to-/login spec fails.
+  //
+  // The fix: never unlink files the webServer might already have
+  // open. Wipe ONLY the profile subtrees (webServer reads those per-
+  // request from disk, no open handle to break), and reset the
+  // sqlite tables via DELETE statements over the SAME inode the
+  // webServer holds open.
   fs.mkdirSync(dataDir, { recursive: true });
+  for (const sub of ['users', 'profiles', 'inbox-mbox']) {
+    const p = path.join(dataDir, sub);
+    if (fs.existsSync(p)) fs.rmSync(p, { recursive: true, force: true });
+  }
+  for (const f of ['profiles.json', 'activity.jsonl', 'issues.jsonl']) {
+    const p = path.join(dataDir, f);
+    if (fs.existsSync(p)) {
+      try {
+        fs.unlinkSync(p);
+      } catch {
+        /* best-effort */
+      }
+    }
+  }
 
   // Per-user profile FS layout -- needed so the post-login flow
   // doesn't bounce the user back to /onboarding because cv.md is
@@ -180,10 +205,25 @@ export default async function globalSetup(): Promise<void> {
   // accounts, verification, passkeys, etc.) -- CREATE TABLE IF NOT
   // EXISTS in the DDL means our pre-seed is preserved.
   //
+  // CRITICAL inode-preservation: we OPEN the existing file (or create
+  // it if absent) and reset state via DELETE statements -- we do NOT
+  // unlink + recreate. better-sqlite3 readers in the webServer process
+  // (which Playwright launches in parallel with this globalSetup) hold
+  // the file by inode; if we unlinked the file here, those readers
+  // would see an empty stale snapshot and `count(*)` on users would
+  // return 0 while we wrote 1 to the new inode. Then `/login` would
+  // bounce to `/signup?first=1` and the spec would fail.
+  //
+  // PRAGMA wal_checkpoint(TRUNCATE) right after the write forces every
+  // committed page into the main DB file (vs sitting in the WAL),
+  // which makes reader visibility immediate on file systems that don't
+  // honour shared-mode page reads from the WAL.
+  //
   // Column shapes mirror ui/src/lib/server/db/auth-schema.ts::users.
   // `email_verified` + `two_factor_enabled` are stored as INTEGER
   // (0/1) per drizzle's boolean mode.
-  const authDb = new Database(path.join(dataDir, 'auth.db'));
+  const authDbPath = path.join(dataDir, 'auth.db');
+  const authDb = new Database(authDbPath);
   try {
     authDb.exec(`
       CREATE TABLE IF NOT EXISTS users (
@@ -203,6 +243,11 @@ export default async function globalSetup(): Promise<void> {
         value TEXT NOT NULL
       );
     `);
+    // Reset to a known state without unlinking the file. DELETE FROM
+    // users is enough; sessions / passkeys / accounts cascade via FK
+    // ON DELETE if they exist (and are harmless to skip if they don't,
+    // because the spec only depends on users.count).
+    authDb.exec('DELETE FROM users;');
     const now = Date.now();
     authDb
       .prepare(
@@ -211,6 +256,9 @@ export default async function globalSetup(): Promise<void> {
          VALUES (?, ?, 1, ?, 'owner', 0, ?, ?)`,
       )
       .run(TEST_USER_ID, TEST_USER_EMAIL, TEST_USER_NAME, now, now);
+    // Flush any WAL frames into the main file so the webServer's
+    // already-open handle sees the row on its very next read.
+    authDb.pragma('wal_checkpoint(TRUNCATE)');
   } finally {
     authDb.close();
   }
@@ -218,7 +266,7 @@ export default async function globalSetup(): Promise<void> {
   // Sanity check -- read back what we wrote so we know the DB file is
   // healthy + the row landed. Logged so CI debug surfaces any drift
   // between "seed says count=1" and "webServer sees count=0".
-  const verifyDb = new Database(path.join(dataDir, 'auth.db'));
+  const verifyDb = new Database(authDbPath);
   try {
     const row = verifyDb.prepare('SELECT COUNT(*) AS n FROM users').get() as { n: number };
     console.log(`[e2e:global-setup] auth.db users count: ${row.n}`);
