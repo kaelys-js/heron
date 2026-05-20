@@ -65,9 +65,11 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
       - name: Filter
-        # dorny/paths-filter v3.0.2 -- pinned by SHA per repo policy
-        # (verify-workflow-pins.yml gates this).
-        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        # dorny/paths-filter v4.0.1 -- pinned by SHA per repo policy
+        # (verify-workflow-pins.yml gates this). v4 runs on Node 24;
+        # v3.0.2 was on Node 20 and tripped the runner's "Node.js 20
+        # actions are deprecated" annotation (run 26183910563).
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: filter
         with:
           filters: |
@@ -546,8 +548,19 @@ jobs:
 
       - name: Install SwiftLint + SwiftFormat (Brewfile)
         if: needs.changes.outputs.ios == 'true'
+        # On macos-15 runners both formulae are pre-installed; `brew
+        # install <pkg>` then emits a warning ("already installed and
+        # up-to-date") that surfaces as a yellow annotation on the iOS
+        # job. `brew list` first lets us short-circuit silently when
+        # the pkg is already present, only invoking install on the cold-
+        # cache code path (custom self-hosted runners, future Brewfile
+        # additions).
         run: |
-          brew install swiftlint swiftformat || true
+          for pkg in swiftlint swiftformat; do
+            if ! brew list "$pkg" >/dev/null 2>&1; then
+              brew install "$pkg"
+            fi
+          done
 
       - name: SwiftLint (strict)
         if: needs.changes.outputs.ios == 'true'
