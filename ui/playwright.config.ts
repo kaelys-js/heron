@@ -81,8 +81,14 @@ export default defineConfig({
     stderr: 'pipe',
     // Pass the seeded HERON_DATA_DIR to the preview server so db/index.ts
     // resolves auth.db + app.db under the tmpdir globalSetup populated.
+    // ANTHROPIC_API_KEY placeholder: isFreshInstall() in onboarding.ts
+    // gates on the env var; without ANY value the freshInstall branch
+    // fires and root redirects to /onboarding/account (not /login).
+    // The placeholder never gets used at runtime -- the test paths
+    // don't invoke the Anthropic SDK.
     env: {
       HERON_DATA_DIR: HERON_E2E_DATA_DIR,
+      ANTHROPIC_API_KEY: 'sk-ant-e2e-placeholder-never-fires',
     },
   },
 });

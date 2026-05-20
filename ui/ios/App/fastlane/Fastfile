@@ -194,12 +194,15 @@ platform :ios do
   lane :test_ci do
     setup_ci if is_ci
     # macos-15 GitHub runner ships Xcode 16 with the iOS 18.5 SDK
-    # (per actions/runner-images). Use `destination:` directly with
-    # `OS=latest` instead of fastlane's `devices:` resolver -- the
-    # resolver kept resolving to a UUID xcodebuild then rejected
-    # ("Unable to find a destination matching..."). The `OS=latest`
-    # form tells xcodebuild to pick whichever iOS 18.x runtime IS
-    # installed, side-stepping the "iOS 18.0 not installed" trap.
+    # (per actions/runner-images). `OS=latest` in the destination
+    # string is interpreted LITERALLY by xcodebuild as the version
+    # name -- it does NOT resolve to "whichever's installed" the way
+    # `xcrun simctl boot latest` does. xcodebuild then can't find a
+    # destination matching `OS:latest` and errors out.
+    # Use the exact runner-image OS version: 18.5. If the runner
+    # image bumps to 18.6, this string needs updating too -- but
+    # that's a deliberate version pin (cleaner than letting a runner
+    # update silently switch the test target).
     # Also: drop xcbeautify wrapper -- xcpretty was crashing on the
     # log file with `Errno::ENOENT @ rb_sysopen - -----` because
     # `fastlane` shells `xcpretty -f xcbeautify` and the formatter
@@ -208,7 +211,7 @@ platform :ios do
     run_tests(
       project: PROJECT,
       scheme: TEST_SCHEME,
-      destination: "platform=iOS Simulator,OS=latest,name=iPhone 16 Pro",
+      destination: "platform=iOS Simulator,OS=18.5,name=iPhone 16 Pro",
       code_coverage: true,
       result_bundle: true,
       fail_build: true,

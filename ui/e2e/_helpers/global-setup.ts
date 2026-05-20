@@ -24,9 +24,15 @@
  *   3. ONE owner-role user row (id=u_e2e, email=e2e@heron.test) so the
  *      app considers the DB "not a fresh install" and routes anonymous
  *      visits to `/login` instead of `/onboarding/account`.
- *   4. Per-user profile FS layout (cv.md, profile.yml, applications.md)
- *      under data/users/u_e2e/profiles/default/ so the user wouldn't
- *      be redirected to `/onboarding` if they DID sign in.
+ *   4. Per-user profile FS layout (cv.md, profile.yml, portals.yml,
+ *      _profile.md, applications.md) under
+ *      data/users/u_e2e/profiles/default/.
+ *   5. onboarding-state.json with `completed: true` so
+ *      `isFreshInstall()` short-circuits FALSE even if some files
+ *      drift OR ANTHROPIC_API_KEY isn't in env (it isn't in CI).
+ *      Without this the +layout.server.ts auth gate redirects
+ *      anonymous root -> /onboarding -> /onboarding/account, NOT
+ *      /login as the test expects.
  *
  * Counterpart: `global-teardown.ts` removes the tmpdir at end of run.
  *
@@ -85,6 +91,30 @@ export default async function globalSetup(): Promise<void> {
       '|---|------|---------|------|-------|--------|-----|--------|-------|',
       '',
     ].join('\n'),
+    'utf8',
+  );
+
+  // portals.yml + _profile.md round out the four required files that
+  // isFreshInstall() checks. Missing ANY of these would flip
+  // isFreshInstall to true and trigger the /onboarding redirect.
+  fs.writeFileSync(path.join(profileDir, 'portals.yml'), 'companies: []\nqueries: []\n', 'utf8');
+  fs.writeFileSync(
+    path.join(profileDir, '_profile.md'),
+    '# E2E Test Profile\n\nMinimal profile fragment for tests.\n',
+    'utf8',
+  );
+
+  // Per-user _shared dir with onboarding-state.json set to
+  // `completed: true`. This is the SHORTEST short-circuit in
+  // isFreshInstall() -- it bails on the very first check before
+  // even looking at the FS files OR the ANTHROPIC_API_KEY env var.
+  // Defence-in-depth: even if a future check is added that we
+  // haven't covered, completed=true keeps the redirect on /login.
+  const sharedDir = path.join(dataDir, 'users', TEST_USER_ID, 'profiles', '_shared');
+  fs.mkdirSync(sharedDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(sharedDir, 'onboarding-state.json'),
+    JSON.stringify({ completed: true, completedAt: Date.now() }, null, 2),
     'utf8',
   );
 
