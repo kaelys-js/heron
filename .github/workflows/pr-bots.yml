@@ -103,9 +103,16 @@ jobs:
             echo "::notice::PR #$PR has $APPROVALS approval(s) — auto-merge needs 1+"
             exit 0
           fi
-          gh pr merge "$PR" --auto --squash --delete-branch || {
+          # `set -euo pipefail` at the top of the step propagates the
+          # non-zero exit from `gh pr merge` through the `|| { ... }`
+          # catch block on some bash builds, marking the step as failed
+          # even though the catch ran. Use explicit `if !` + `exit 0`
+          # so the step always succeeds when the PR isn't merge-ready
+          # (auto-merge wasn't enabled, but that's not a workflow failure).
+          if ! gh pr merge "$PR" --auto --squash --delete-branch; then
             echo "::warning::Could not enable auto-merge for PR #$PR (likely a branch-protection or merge-conflict issue)"
-          }
+            exit 0
+          fi
           echo "::notice::Auto-merge enabled for PR #$PR"
 
   # ── stale-PR pinger -- friendly nudge 7d before stale.yml closes ───
