@@ -67,8 +67,19 @@ final class NetworkMonitor {
             let snapshot = monitor.currentPath.status == .satisfied
             isOnline = snapshot
             UserDefaults.standard.set(snapshot, forKey: "\(Brand.name):online")
-            DispatchQueue.main.async {
+            // Fire synchronously when start() is already on the main thread.
+            // The Capacitor plugin + every XCTest case call `start()` from
+            // main; the previous unconditional `DispatchQueue.main.async`
+            // queued the notify behind the test's `wait(for:timeout: 2.0)`,
+            // which on macOS-15 CI runners could miss the 2s window.
+            // Fall back to async for any future background-thread caller
+            // so notifyJS still always fires on main.
+            if Thread.isMainThread {
                 notifyJS(snapshot)
+            } else {
+                DispatchQueue.main.async {
+                    notifyJS(snapshot)
+                }
             }
         }
     }
