@@ -30,3 +30,15 @@ __CV__
 
 # Production domain — not active yet, will resolve after launch.
 ^https?://heron\.app
+
+# GitHub-relative repo links from inside .github/ template files.
+# `../../discussions`, `../../issues`, `../../actions` are GitHub's
+# canonical pattern for linking to repo features without hardcoding
+# the org/repo name (so forks work). Lychee in --offline mode tries
+# to resolve them as local files and fails. Match the `file://`
+# scheme + `/heron/<verb>` tail it converts them into.
+^file://.*/discussions$
+^file://.*/issues(/.*)?$
+^file://.*/actions(/.*)?$
+^file://.*/security/advisories(/.*)?$
+^file://.*/pulls(/.*)?$
