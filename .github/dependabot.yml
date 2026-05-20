@@ -1,0 +1,123 @@
+version: 2
+
+# Why this file exists -- and what NOT to expect from it.
+#
+# Without a dependabot.yml, GitHub Dependabot auto-discovers every
+# manifest in the repo and opens version-update PRs against each. That
+# worked fine for npm + pip + actions, but it tripped over the iOS
+# Fastlane Gemfile pattern:
+#
+#   plugins_path = File.join(File.dirname(__FILE__), "fastlane", "Pluginfile")
+#   eval_gemfile(plugins_path) if File.exist?(plugins_path)
+#
+# Dependabot's Gemfile parser only supports `eval_gemfile("string-literal")`
+# and explicitly rejects variables -- the resulting error
+#   "Dependabot only supports uninterpolated string arguments to
+#    eval_gemfile. Got 'plugins_path'"
+# turned the `bundler in /ui/ios/App` job red on every iOS gem update.
+#
+# Once a dependabot.yml exists, Dependabot ONLY runs against the
+# ecosystems listed here. So this file's purpose is to enumerate the
+# manifests we WANT tracked + omit the iOS Gemfile, accepting the
+# trade-off that the iOS Fastlane gems get manual bumps. The iOS deps
+# (fastlane, cocoapods, xcov, slather) are all major-pinned in the
+# Gemfile itself with comments documenting the bump policy, so manual
+# is the right level of touch here.
+
+updates:
+  # ── npm: root + workspaces ────────────────────────────────────────
+  # The root package.json + ui/ + ui/electron/ are three independent
+  # manifests despite the pnpm workspace catalog: each carries its own
+  # devDependencies, and Dependabot opens one PR per manifest per
+  # outdated dep. The pnpm catalog in pnpm-workspace.yaml is the
+  # single source of truth for production versions; Dependabot only
+  # rewrites the literal manifest entries.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "javascript"
+
+  - package-ecosystem: npm
+    directory: "/ui"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "javascript"
+
+  - package-ecosystem: npm
+    directory: "/ui/electron"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "electron"
+
+  # ── pip: root pyproject + scripts/requirements ────────────────────
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+
+  - package-ecosystem: pip
+    directory: "/scripts"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+
+  # ── GitHub Actions: every workflow under .github/workflows/ ───────
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+  # ── bundler: ROOT ONLY (rufo formatter). The iOS Gemfile at
+  # ui/ios/App/Gemfile is intentionally NOT tracked -- see the file
+  # header for the eval_gemfile-with-variable parser limitation.
+  - package-ecosystem: bundler
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "ruby"
