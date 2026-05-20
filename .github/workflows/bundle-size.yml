@@ -47,6 +47,14 @@ jobs:
         uses: ./.github/actions/setup-toolchain
         with:
           apply_brand: true
+          # Restore the Turbo task-graph cache so an unchanged source
+          # tree skips the 5-7min cold build entirely. The two prior
+          # "Compare bundle size: failure" events on this branch were
+          # both runner-side shutdowns DURING the build window
+          # (89a42ea: "operation was canceled.", 66006a7: "runner
+          # received a shutdown signal."). Shorter build = smaller
+          # cancellation window.
+          turbo_cache: true
 
       - name: Build dashboard (prod bundle)
         run: pnpm --filter ui build
