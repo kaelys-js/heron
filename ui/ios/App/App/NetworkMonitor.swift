@@ -53,6 +53,24 @@ final class NetworkMonitor {
             }
         }
         monitor.start(queue: queue)
+        // Synthesize an immediate hydration fire from the snapshot the
+        // monitor reports right now. Without this, consumers waited on
+        // NWPathMonitor's first async delivery -- which on macOS-15 CI
+        // simulators can take well over 2s, and the unit test
+        // `testCallbackEventuallyFires` times out before the real fire
+        // arrives. `monitor.currentPath` is documented as the most-
+        // recent observed path; it's safe to read post-`start(queue:)`.
+        // If the real first delivery later matches, the `stateChanged`
+        // guard suppresses a duplicate notify.
+        if !hasFiredInitial {
+            hasFiredInitial = true
+            let snapshot = monitor.currentPath.status == .satisfied
+            isOnline = snapshot
+            UserDefaults.standard.set(snapshot, forKey: "\(Brand.name):online")
+            DispatchQueue.main.async {
+                notifyJS(snapshot)
+            }
+        }
     }
 
     func stop() {
