@@ -39,6 +39,13 @@ const PRESERVE_TMP = process.env.PRESERVE_TMP === '1';
 // back to a normal flow if the prerequisite isn't present.
 const SKIP_BUILD = process.argv.includes('--skip-build');
 const SKIP_SEED = process.argv.includes('--skip-seed');
+// Daemon mode. `--serve` keeps the vite preview process alive after
+// the first capture so subsequent `pnpm screenshots` calls connect to
+// the running daemon at `http://127.0.0.1:4173` instead of spawning
+// a fresh preview each time. Cuts iteration cost from ~37s to ~10s.
+const SERVE = process.argv.includes('--serve');
+const DAEMON_PORT = 4173;
+const DAEMON_URL = `http://127.0.0.1:${DAEMON_PORT}`;
 
 // Deterministic IDs derived from the seed fixtures (parsers.ts urlId =
 // md5(url).slice(0, 12)).
@@ -153,6 +160,8 @@ async function captureAll(baseUrl) {
 }
 
 async function main() {
+  const tStart = Date.now();
+  const phase = (label) => console.log(`[screenshots] ${label} (+${Date.now() - tStart}ms)`);
   // Path 1: external dev server (caller manages lifecycle).
   if (BASE_URL_OVERRIDE) {
     if (!(await waitForServer(BASE_URL_OVERRIDE, 10_000))) {
@@ -161,7 +170,19 @@ async function main() {
       );
       process.exit(2);
     }
+    phase('using external base url');
     await captureAll(BASE_URL_OVERRIDE);
+    phase('captures done');
+    return;
+  }
+
+  // Path 1.5: persistent daemon detection. If a previous
+  // `pnpm screenshots:serve` is running on :4173 we use it directly.
+  // Iteration cost drops to ~10s (just the captures).
+  if (!SERVE && (await waitForServer(DAEMON_URL, 500))) {
+    phase('found running daemon on :4173');
+    await captureAll(DAEMON_URL);
+    phase('captures done');
     return;
   }
 
@@ -185,15 +206,20 @@ async function main() {
   const demoUserDir = join(tmpDataDir, 'users', 'demo-screenshots');
   const buildDir = join(ROOT, 'ui', 'build');
   try {
-    // ── Seed (cacheable via --skip-seed) ─────────────────────────────
-    const seedAlreadyExists = existsSync(demoUserDir);
-    if (SKIP_SEED && seedAlreadyExists) {
-      console.log(`--skip-seed: reusing ${demoUserDir}`);
-    } else {
+    // Run seed + build CONCURRENTLY. They touch independent paths
+    // (tmpdir DB + repo build dir respectively), so serializing them
+    // wasted ~2-3s on every cold run. Promise.all means whichever is
+    // slower dictates the wall clock.
+    const seedPromise = (async () => {
+      const seedAlreadyExists = existsSync(demoUserDir);
+      if (SKIP_SEED && seedAlreadyExists) {
+        phase(`seed: reusing ${demoUserDir}`);
+        return;
+      }
       if (SKIP_SEED && !seedAlreadyExists) {
         console.log('--skip-seed requested but no prior seed found -- seeding anyway.');
       }
-      console.log(`Seeding demo data: DATA_DIR=${tmpDataDir}`);
+      phase('seed: starting');
       await new Promise((res, rej) => {
         const p = spawn('node', ['scripts/system/seed-demo-data.mjs'], {
           cwd: ROOT,
@@ -206,11 +232,8 @@ async function main() {
         p.on('exit', (code) => (code === 0 ? res() : rej(new Error('seed exit ' + code))));
         p.on('error', rej);
       });
-    }
-
-    // Pick a free-ish port so concurrent invocations don't collide.
-    const port = 4173 + Math.floor(Math.random() * 100);
-    const baseUrl = 'http://127.0.0.1:' + port;
+      phase('seed: done');
+    })();
 
     // ── Build (turbo-cached + cacheable via --skip-build) ────────────
     // Turbo hashes ui/src/**, vite.config.ts, package.json, lockfile,
@@ -220,27 +243,37 @@ async function main() {
     // keeps turbo's hash stable across runs (each run uses a different
     // tmpdir for HERON_DATA_DIR, which would otherwise invalidate the
     // cache if it were a declared input).
-    const buildAlreadyExists = existsSync(buildDir);
-    if (SKIP_BUILD && buildAlreadyExists) {
-      console.log(`--skip-build: reusing ${buildDir}`);
-    } else {
+    const buildPromise = (async () => {
+      const buildAlreadyExists = existsSync(buildDir);
+      if (SKIP_BUILD && buildAlreadyExists) {
+        phase(`build: reusing ${buildDir}`);
+        return;
+      }
       if (SKIP_BUILD && !buildAlreadyExists) {
         console.log('--skip-build requested but no prior build found -- building anyway.');
       }
-      console.log('Building dashboard for preview (turbo-cached)...');
+      phase('build: starting (turbo-cached)');
       await new Promise((res, rej) => {
         const p = spawn('pnpm', ['exec', 'turbo', 'run', 'build', '--filter=ui'], {
           cwd: ROOT,
-          // Deliberately omit HERON_DATA_DIR from build env -- see comment above.
           env: process.env,
           stdio: 'inherit',
         });
         p.on('exit', (code) => (code === 0 ? res() : rej(new Error('build exit ' + code))));
         p.on('error', rej);
       });
-    }
+      phase('build: done');
+    })();
 
-    console.log(`Booting vite preview on ${baseUrl}...`);
+    await Promise.all([seedPromise, buildPromise]);
+
+    // Daemon mode uses the standard port so other invocations can
+    // detect it; one-shot mode uses a random port to avoid collisions
+    // with a developer's running `pnpm dev` / preview server.
+    const port = SERVE ? DAEMON_PORT : 4173 + Math.floor(Math.random() * 100);
+    const baseUrl = 'http://127.0.0.1:' + port;
+
+    phase(`booting vite preview on ${baseUrl}`);
     const server = spawn(
       'pnpm',
       ['--filter', 'ui', 'exec', 'vite', 'preview', '--port', String(port), '--host', '127.0.0.1'],
@@ -277,7 +310,22 @@ async function main() {
         console.error(serverLog.slice(-2000));
         process.exit(3);
       }
-      await captureAll(baseUrl);
+      phase('preview reachable');
+      if (SERVE) {
+        // Daemon mode: hand control back to the caller. They run
+        // `pnpm screenshots` in another terminal to capture against
+        // this preview. Ctrl-C closes the daemon.
+        console.log(
+          `\n[screenshots:serve] ready at ${baseUrl}\n[screenshots:serve] run \`pnpm screenshots\` from another terminal to capture (much faster than the one-shot path)\n[screenshots:serve] Ctrl-C to stop\n`,
+        );
+        await new Promise((resolve) => {
+          process.once('SIGINT', resolve);
+          process.once('SIGTERM', resolve);
+        });
+      } else {
+        await captureAll(baseUrl);
+        phase('captures done');
+      }
     } finally {
       try {
         server.kill('SIGTERM');
