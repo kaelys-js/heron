@@ -5,8 +5,6 @@
   <img src="branding/assets/wordmark-slate.svg" alt="Heron" width="220" />
 </picture>
 
-# Heron
-
 <!-- AUTO-GENERATED:doc-meta -->
 *[Heron](https://heron.app) · Stand still. Strike well.*
 <!-- /AUTO-GENERATED:doc-meta -->
@@ -38,34 +36,37 @@ It runs entirely on your machine. Your data is yours. See [`docs/PHILOSOPHY.md`]
 
 ## See it in action
 
-<table>
-  <tr>
-    <td width="50%">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/inbox-dark.png">
-        <img src="docs/screenshots/inbox-light.png" alt="Inbox" />
-      </picture>
-      <p align="center"><b>Inbox</b> -- triaged opportunities by score</p>
-    </td>
-    <td width="50%">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/evaluation-dark.png">
-        <img src="docs/screenshots/evaluation-light.png" alt="A-F evaluation report" />
-      </picture>
-      <p align="center"><b>A-F evaluation</b> -- six-block analysis per role</p>
-    </td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/autopilot.png" alt="Autopilot config" /><p align="center"><b>Autopilot</b> -- score-gated automation, opt-in</p></td>
-    <td><img src="docs/screenshots/patterns.png" alt="Pattern analysis" /><p align="center"><b>Patterns</b> -- rejection-pattern insights</p></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/interview-prep.png" alt="Interview prep" /><p align="center"><b>Interview prep</b> -- STAR+R stories from real projects</p></td>
-    <td><img src="docs/screenshots/mobile-inbox.png" alt="Mobile inbox" width="40%" /><p align="center"><b>Mobile</b> -- iOS / Android via Capacitor</p></td>
-  </tr>
-</table>
+<div align="center">
 
-> Screenshots not rendering? Run `pnpm screenshots` against a `pnpm dev` instance to regenerate. PNGs land under `docs/screenshots/`.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/inbox-dark.png">
+  <img src="docs/screenshots/inbox-light.png" alt="Inbox -- triaged opportunities by score" width="900" />
+</picture>
+
+**Inbox** -- triaged opportunities by score, sortable, multi-profile
+
+<br />
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/evaluation-dark.png">
+  <img src="docs/screenshots/evaluation-light.png" alt="A-F evaluation report" width="900" />
+</picture>
+
+**A-F evaluation** -- six-block analysis per role (fit, CV match, level, comp, personalization, prep)
+
+<br />
+
+<img src="docs/screenshots/autopilot.png" alt="Autopilot configuration" width="440" />&nbsp;<img src="docs/screenshots/patterns.png" alt="Pattern analysis" width="440" />
+
+**Autopilot** -- score-gated, daily-capped, opt-in &nbsp;·&nbsp; **Patterns** -- rejection-trend insights
+
+<br />
+
+<img src="docs/screenshots/interview-prep.png" alt="Interview prep" width="600" />&nbsp;<img src="docs/screenshots/mobile-inbox.png" alt="Mobile inbox" width="240" />
+
+**Interview prep** -- STAR+R stories from real projects &nbsp;·&nbsp; **Mobile** -- iOS / Android via Capacitor
+
+</div>
 
 ## What it does
 

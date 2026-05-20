@@ -103,6 +103,8 @@
     "rollback": "node scripts/system/update-system.mjs rollback",
     "scan": "node scripts/scan/scan.mjs",
     "screenshots": "node scripts/system/capture-screenshots.mjs",
+    "screenshots:seed": "node scripts/system/seed-demo-data.mjs",
+    "screenshots:seed:test": "node scripts/system/seed-demo-data.test.mjs",
     "semantic:match": "node scripts/quality/semantic-match.mjs",
     "setup:native": "node scripts/native/setup.mjs",
     "sync-check": "node scripts/quality/cv-sync-check.mjs",

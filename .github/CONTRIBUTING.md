@@ -138,6 +138,27 @@ Pre-commit hooks (lefthook, wired by `pnpm install`): biome-format, svelte-check
 3. Merge release PR → tag + CHANGELOG + GitHub Release.
 4. Tag push fires `native-release.yml`: **preflight** (secrets) → **desktop × 3 OS** → **iOS via fastlane**.
 
+### README screenshots
+
+The README's "See it in action" section pulls PNGs from
+`docs/screenshots/`. Those PNGs are regenerated automatically by the
+`screenshots-refresh.yml` workflow (on push-to-main + weekly cron) using
+a seeded demo profile, so contributors normally do nothing.
+
+To regenerate locally for a docs-only PR:
+
+```bash
+pnpm dev                       # one terminal
+pnpm screenshots               # another terminal -- Playwright captures
+```
+
+The capture script seeds an isolated SQLite DB under `os.tmpdir()` and
+authenticates a demo user via a double-gated bypass token
+(`HERON_SCREENSHOT_MODE=1` + `HERON_DATA_DIR=<tmp>`), so it never
+touches your real data. Output lands under `docs/screenshots/`.
+
+See `docs/screenshots/README.md` for the canonical capture catalogue.
+
 ### Running CI locally
 
 [`act`](https://github.com/nektos/act) runs GitHub Actions workflows on

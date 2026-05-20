@@ -29,7 +29,23 @@ vi.mock('$lib/server/events', () => ({
   reportServerError: vi.fn(),
 }));
 
-const { DELETE, GET, POST, KNOWN_KEYS } = await import('./+server');
+const { DELETE, GET, POST } = await import('./+server');
+// Replicated locally -- SvelteKit's `+server.ts` exports allowlist refuses
+// arbitrary named exports, so the constant is scoped to the endpoint file.
+// Test pins the contract by mirror; drift fails the schema-coverage test
+// near the bottom of this file.
+const KNOWN_KEYS = [
+  'ANTHROPIC_API_KEY',
+  'GEMINI_API_KEY',
+  'GEMINI_MODEL',
+  'OPENAI_API_KEY',
+  'ADZUNA_APP_ID',
+  'ADZUNA_APP_KEY',
+  'GMAIL_IMAP_HOST',
+  'GMAIL_IMAP_USER',
+  'GMAIL_IMAP_PASSWORD',
+  'GMAIL_IMAP_LABEL',
+] as const;
 const { setSecret, getSecret } = await import('$lib/server/user-secrets');
 
 const USER_A = '11111111-1111-1111-1111-111111111111';
