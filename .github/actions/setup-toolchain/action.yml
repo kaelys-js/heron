@@ -82,4 +82,6 @@ runs:
     - name: Apply brand
       if: inputs.apply_brand == 'true'
       shell: bash
-      run: pnpm brand
+      # The script is `brand:apply`, not `brand` -- the latter doesn't
+      # exist at root and pnpm errors with "Command 'brand' not found".
+      run: pnpm brand:apply
