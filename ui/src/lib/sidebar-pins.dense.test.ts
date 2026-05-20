@@ -85,3 +85,46 @@ describe('pinStore — persistence across virtual re-init', () => {
     expect(pinStore.excluded.size).toBe(n);
   });
 });
+
+describe('pinStore — readSet defensive branches', () => {
+  const KEY = 'heron:sidebar-pin-excluded';
+  beforeEach(() => {
+    if (typeof localStorage !== 'undefined') localStorage.clear();
+    pinStore.resetAll();
+  });
+
+  it('init() returns empty set when localStorage contains corrupted JSON', () => {
+    localStorage.setItem(KEY, '{not-json');
+    pinStore.excluded = new Set();
+    pinStore.init();
+    expect(pinStore.excluded.size).toBe(0);
+  });
+
+  it('init() returns empty set when localStorage parses to a non-array', () => {
+    localStorage.setItem(KEY, '"a string, not an array"');
+    pinStore.excluded = new Set();
+    pinStore.init();
+    expect(pinStore.excluded.size).toBe(0);
+  });
+
+  it('init() filters out non-string items in a mixed-type array', () => {
+    localStorage.setItem(KEY, JSON.stringify(['ok', 42, null, 'also-ok']));
+    pinStore.excluded = new Set();
+    pinStore.init();
+    expect(pinStore.excluded.size).toBe(2);
+    expect(pinStore.excluded.has('ok')).toBe(true);
+    expect(pinStore.excluded.has('also-ok')).toBe(true);
+  });
+});
+
+describe('pinStore.pin -- noop when not excluded', () => {
+  beforeEach(() => {
+    if (typeof localStorage !== 'undefined') localStorage.clear();
+    pinStore.resetAll();
+  });
+
+  it('pin(id) is a noop when id is not currently excluded', () => {
+    pinStore.pin('was-never-excluded');
+    expect(pinStore.excluded.size).toBe(0);
+  });
+});
