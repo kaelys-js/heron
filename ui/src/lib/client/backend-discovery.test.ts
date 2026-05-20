@@ -152,10 +152,10 @@ describe('resolveBackend — waterfall', () => {
 
   it('falls through to tailscale when local options unavailable', async () => {
     fetchSpy.mockImplementation(async (url: string) => {
-      // Match on hostname rather than `.includes()` to avoid CodeQL's
-      // `js/incomplete-url-substring-sanitization` (substring matches
-      // on raw URLs can be fooled by paths like /tail.ts.net/anything).
-      if (new URL(url).hostname.endsWith('tail.ts.net')) {
+      // Match on parsed hostname with an explicit boundary check:
+      // allow exactly `tail.ts.net` or any subdomain like `*.tail.ts.net`.
+      const hostname = new URL(url).hostname;
+      if (hostname === 'tail.ts.net' || hostname.endsWith('.tail.ts.net')) {
         return new Response('ok', { status: 200 });
       }
       return new Response('boom', { status: 500 });
