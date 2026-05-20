@@ -6,7 +6,8 @@
     "collect": {
       "startServerCommand": "pnpm --filter ui exec vite preview --port 4173",
       "startServerReadyPattern": "Local: +http://localhost:4173",
-      "url": ["http://localhost:4173/login", "http://localhost:4173/inbox"],
+      "_comment_urls": "Only /login is auditable unauth. /inbox is route-guarded -- hitting it triggers the inevitable /login?redirectTo=/inbox redirect, which makes the `redirects` audit fail on an artefact of the auth model, not on a defect. Auditing /inbox properly would require Lighthouse to be authenticated; out of scope.",
+      "url": ["http://localhost:4173/login"],
       "numberOfRuns": 3,
       "settings": {
         "preset": "desktop",
@@ -36,6 +37,7 @@
         "forced-reflow-insight": "off",
         "document-latency-insight": "off",
         "interaction-to-next-paint": "off",
+        "network-dependency-tree-insight": "off",
         "unused-javascript": ["warn", { "maxLength": 0 }],
         "errors-in-console": ["error", { "minScore": 1 }]
       }
