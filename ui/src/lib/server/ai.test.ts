@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 
 const TMP = path.join(tmpdir(), 'heron-ai-test-' + Date.now() + '-' + process.pid);
 
-vi.mock('./files', () => ({ ROOT: TMP, readSafe: () => '' }));
+vi.mock('./files', () => ({ ROOT: TMP, DATA_ROOT: path.join(TMP, 'data'), readSafe: () => '' }));
 
 // Track instantiations so we can assert client memoization works correctly.
 const instances: Array<{ apiKey: string; createCalls: any[] }> = [];

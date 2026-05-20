@@ -3,10 +3,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import type { ActivityEvent, EventLevel, EventCategory } from '$lib/types';
-import { ROOT } from './files';
+import { ROOT, DATA_ROOT } from './files';
 import { maybeCurrentUserId, SYSTEM_USER_ID } from './user-context';
 
-const LOG_FILE = path.join(ROOT, 'data', 'activity.jsonl');
+const LOG_FILE = path.join(DATA_ROOT, 'activity.jsonl');
 const LOG_BACKUP = LOG_FILE + '.1';
 const MAX_BUFFER = 500;
 /** Rotate the activity log when it exceeds this size on append.

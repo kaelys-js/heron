@@ -14,12 +14,12 @@ import { wrap, badRequest } from '$lib/server/api-helpers';
 import { resetProfile, type ResetScope } from '$lib/server/profile';
 import { getActiveProfile, getProfileBySlug } from '$lib/server/profiles-db';
 import { requireUserId, requireOwner } from '$lib/server/auth-helpers';
-import { ROOT } from '$lib/server/files';
+import { DATA_ROOT, ROOT } from '$lib/server/files';
 import { logEvent } from '$lib/server/events';
 
 const VALID_SCOPES = new Set<ResetScope>(['profile', 'jobs', 'everything']);
 
-const ONBOARDING_STATE = path.join(ROOT, 'data', 'onboarding-state.json');
+const ONBOARDING_STATE = path.join(DATA_ROOT, 'onboarding-state.json');
 
 export const POST = wrap(
   'profile-reset',

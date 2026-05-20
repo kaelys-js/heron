@@ -9,6 +9,19 @@ export const ROOT = path.resolve(process.cwd(), '..');
 export const MODES_DIR = path.join(ROOT, 'modes');
 export const ENV_FILE = path.join(ROOT, '.env');
 
+/** Per-user / per-profile data root. Single source of truth for every
+ *  filesystem path under `data/` (profiles, users, sources.json, etc.).
+ *
+ *  Resolution: explicit `HERON_DATA_DIR` env override -> repo-relative
+ *  `<ROOT>/data` fallback. The override lets E2E tests (Playwright
+ *  globalSetup + webServer env) point the dashboard at a tmpdir seed
+ *  AND keeps screenshot-mode + CI sandboxes isolated from the
+ *  developer's real data/. The DB module (`db/index.ts`) reads the
+ *  same env var so SQLite + FS land in the same parent dir. */
+export const DATA_ROOT = process.env.HERON_DATA_DIR
+  ? path.resolve(process.env.HERON_DATA_DIR)
+  : path.join(ROOT, 'data');
+
 export function readSafe(p: string): string {
   try {
     return fs.readFileSync(p, 'utf8');

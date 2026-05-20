@@ -10,14 +10,14 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT } from '../files';
+import { ROOT, DATA_ROOT } from '../files';
 import { logEvent } from '../events';
 import { runById, has as hasJob } from './registry';
 import { register } from './registry';
 import { getSource } from '../sources';
 import type { JobArgs, JobResult } from './types';
 
-const INBOX_MBOX = path.join(ROOT, 'data', 'inbox-mbox');
+const INBOX_MBOX = path.join(DATA_ROOT, 'inbox-mbox');
 
 function inboxHasMbox(): boolean {
   try {

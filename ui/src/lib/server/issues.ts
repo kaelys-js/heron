@@ -11,11 +11,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { ROOT } from './files';
+import { ROOT, DATA_ROOT } from './files';
 import type { Issue } from '$lib/types';
 import { maybeCurrentUserId, SYSTEM_USER_ID } from './user-context';
 
-const ISSUES_PATH = path.join(ROOT, 'data', 'issues.jsonl');
+const ISSUES_PATH = path.join(DATA_ROOT, 'issues.jsonl');
 
 function ensureDir() {
   try {

@@ -13,7 +13,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import chokidar, { type FSWatcher } from 'chokidar';
-import { ROOT } from '../files';
+import { ROOT, DATA_ROOT } from '../files';
 import { logEvent } from '../events';
 import { reportIssue } from '../issues';
 import { register } from './registry';
@@ -66,8 +66,8 @@ function pendingTsvCountForUser(userId: string): number {
     // Synchronous traversal -- small directory, runs at boot only.
     const usersRoot =
       userId === SYSTEM_USER_ID
-        ? path.join(ROOT, 'data', 'profiles')
-        : path.join(ROOT, 'data', 'users', userId, 'profiles');
+        ? path.join(DATA_ROOT, 'profiles')
+        : path.join(DATA_ROOT, 'users', userId, 'profiles');
     if (!fs.existsSync(usersRoot)) return 0;
     for (const slug of fs.readdirSync(usersRoot)) {
       const dir = path.join(usersRoot, slug, 'batch', 'tracker-additions');

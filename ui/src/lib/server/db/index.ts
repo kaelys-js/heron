@@ -15,7 +15,7 @@ import os from 'node:os';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { ROOT } from '../files';
+import { DATA_ROOT, ROOT } from '../files';
 import { BRAND } from '$lib/client/brand';
 import * as authSchema from './auth-schema';
 import * as appSchema from './app-schema';
@@ -26,7 +26,10 @@ const IS_TEST = process.env.VITEST === 'true' || process.env.NODE_ENV === 'test'
 /** Resolve the SQLite root dir. Order: explicit env override → tmpdir
  *  during tests → repo `data/` for normal runs. */
 function resolveDataDir(): string {
-  if (process.env.HERON_DATA_DIR) return process.env.HERON_DATA_DIR;
+  // HERON_DATA_DIR override is already baked into DATA_ROOT (files.ts).
+  // Vitest's per-process tmpdir is preserved as a second branch so
+  // unit tests stay isolated even when HERON_DATA_DIR isn't set.
+  if (process.env.HERON_DATA_DIR) return DATA_ROOT;
   if (IS_TEST) {
     // Per-process tmpdir so parallel test workers don't clobber each
     // other's auth.db. pid is enough; vitest re-uses process pools but
@@ -36,7 +39,7 @@ function resolveDataDir(): string {
     fs.mkdirSync(tmp, { recursive: true });
     return tmp;
   }
-  return path.join(ROOT, 'data');
+  return DATA_ROOT;
 }
 
 const DATA_DIR = resolveDataDir();

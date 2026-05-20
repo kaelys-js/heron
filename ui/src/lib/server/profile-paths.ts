@@ -12,7 +12,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT } from './files';
+import { ROOT, DATA_ROOT } from './files';
 import { currentUserIdOrDefault, SYSTEM_USER_ID } from './user-context';
 
 export type ProfileFileKind =
@@ -80,8 +80,8 @@ export type UserSharedFileKind =
 // key derived via HKDF(BETTER_AUTH_SECRET + per-user salt). See
 // user-secrets.ts for the threat model + format spec.
 
-const PROFILES_ROOT = path.join(ROOT, 'data', 'profiles');
-const USERS_ROOT = path.join(ROOT, 'data', 'users');
+const PROFILES_ROOT = path.join(DATA_ROOT, 'profiles');
+const USERS_ROOT = path.join(DATA_ROOT, 'users');
 
 /**
  * Where the per-profile content tree lives for the given user.

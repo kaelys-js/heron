@@ -16,7 +16,7 @@ const TMP = path.join(tmpdir(), 'heron-user-secrets-' + Date.now() + '-' + proce
 
 // MUST run before importing user-secrets so the module-load-time
 // `userSharedPathForUser` resolves under the mocked ROOT.
-vi.mock('./files', () => ({ ROOT: TMP }));
+vi.mock('./files', () => ({ ROOT: TMP, DATA_ROOT: path.join(TMP, 'data') }));
 
 const {
   deleteSecret,

@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { authDb, appDb } from './db';
-import { ROOT } from './files';
+import { ROOT, DATA_ROOT } from './files';
 import {
   users as authUsers,
   pendingDeletions,
@@ -119,13 +119,13 @@ export function hardDeleteUser(userId: string): void {
   }
 
   // 2. FS tree under data/users/{userId}/.
-  const userDir = path.join(ROOT, 'data', 'users', userId);
+  const userDir = path.join(DATA_ROOT, 'users', userId);
   try {
     fs.rmSync(userDir, { recursive: true, force: true });
   } catch {
     /* best-effort */
   }
-  const avatarDir = path.join(ROOT, 'data', 'avatars', userId);
+  const avatarDir = path.join(DATA_ROOT, 'avatars', userId);
   try {
     fs.rmSync(avatarDir, { recursive: true, force: true });
   } catch {
@@ -199,7 +199,7 @@ export function buildExport(userId: string): { json: unknown; files: Record<stri
   // Inventory the per-user filesystem tree. We base64-encode files so the
   // export is a single self-contained JSON blob (no zip dependency).
   const files: Record<string, string> = {};
-  const userDir = path.join(ROOT, 'data', 'users', userId);
+  const userDir = path.join(DATA_ROOT, 'users', userId);
   if (fs.existsSync(userDir)) {
     walkDir(userDir, userDir, files);
   }

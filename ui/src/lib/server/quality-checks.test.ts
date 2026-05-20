@@ -53,7 +53,7 @@ vi.mock('node:child_process', () => ({
   }),
 }));
 
-vi.mock('./files', () => ({ ROOT: '/tmp/repo' }));
+vi.mock('./files', () => ({ ROOT: '/tmp/repo', DATA_ROOT: '/tmp/repo/data' }));
 
 const reportedErrors: { source: string; msg: string }[] = [];
 vi.mock('./events', () => ({

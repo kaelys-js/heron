@@ -12,11 +12,11 @@ import path from 'node:path';
 import { and, eq } from 'drizzle-orm';
 import { appDb } from './db';
 import { profiles } from './db/app-schema';
-import { ROOT } from './files';
+import { ROOT, DATA_ROOT } from './files';
 import { SYSTEM_USER_ID } from './user-context';
 
-const LEGACY_PROFILES_TREE = path.join(ROOT, 'data', 'profiles');
-const PER_USER_ROOT = path.join(ROOT, 'data', 'users');
+const LEGACY_PROFILES_TREE = path.join(DATA_ROOT, 'profiles');
+const PER_USER_ROOT = path.join(DATA_ROOT, 'users');
 
 function copyDirSync(src: string, dst: string): void {
   if (!fs.existsSync(src)) return;
@@ -96,7 +96,7 @@ export type DbProfile = {
   updatedAt: number;
 };
 
-const LEGACY_PROFILES_PATH = path.join(ROOT, 'data', 'profiles.json');
+const LEGACY_PROFILES_PATH = path.join(DATA_ROOT, 'profiles.json');
 
 function nowMs(): number {
   return Date.now();
@@ -137,7 +137,7 @@ function mapRow(row: typeof profiles.$inferSelect): DbProfile {
   };
 }
 
-const LEGACY_CLAIM_FILE = path.join(ROOT, 'data', 'users', '.legacy-claimed');
+const LEGACY_CLAIM_FILE = path.join(DATA_ROOT, 'users', '.legacy-claimed');
 
 /** Returns true if this user is the one inheriting the legacy single-user
  *  install data. Only the FIRST user to call this gets `true`; subsequent

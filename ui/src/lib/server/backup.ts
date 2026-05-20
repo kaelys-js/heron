@@ -11,7 +11,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import { spawnSync, spawn } from 'node:child_process';
-import { ROOT } from './files';
+import { ROOT, DATA_ROOT } from './files';
 import { logEvent, reportServerError } from './events';
 import { listRunning } from './orchestrator';
 import { userSharedPath } from './profile-paths';
@@ -158,7 +158,7 @@ function listBackupInventory(): { users: string[]; legacyProfiles: string[] } {
   const users: string[] = [];
   const legacyProfiles: string[] = [];
   // Multi-user: data/users/{userId}/profiles/{slug}/...
-  const usersRoot = path.join(ROOT, 'data', 'users');
+  const usersRoot = path.join(DATA_ROOT, 'users');
   try {
     if (fs.existsSync(usersRoot)) {
       for (const entry of fs.readdirSync(usersRoot, { withFileTypes: true })) {
@@ -175,7 +175,7 @@ function listBackupInventory(): { users: string[]; legacyProfiles: string[] } {
     });
   }
   // Legacy single-user: data/profiles/{slug}/...
-  const legacyRoot = path.join(ROOT, 'data', 'profiles');
+  const legacyRoot = path.join(DATA_ROOT, 'profiles');
   try {
     if (fs.existsSync(legacyRoot)) {
       for (const entry of fs.readdirSync(legacyRoot, { withFileTypes: true })) {

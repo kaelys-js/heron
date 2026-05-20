@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 
 // Mock the ROOT export so all paths land in a tmpdir.
 const TMP = path.join(tmpdir(), 'heron-apply-counter-' + Date.now());
-vi.mock('./files', () => ({ ROOT: TMP }));
+vi.mock('./files', () => ({ ROOT: TMP, DATA_ROOT: path.join(TMP, 'data') }));
 
 const {
   todayCount,

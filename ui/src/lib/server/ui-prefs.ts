@@ -13,11 +13,11 @@ import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { appDb } from './db';
 import { uiPrefs } from './db/app-schema';
-import { ROOT } from './files';
+import { ROOT, DATA_ROOT } from './files';
 import { currentUserIdOrDefault, SYSTEM_USER_ID } from './user-context';
 
-const LEGACY_PREFS_FILE = path.join(ROOT, 'data', 'ui-prefs.json');
-const AVATAR_DIR = path.join(ROOT, 'data', 'avatars');
+const LEGACY_PREFS_FILE = path.join(DATA_ROOT, 'ui-prefs.json');
+const AVATAR_DIR = path.join(DATA_ROOT, 'avatars');
 
 export type Appearance = 'system' | 'light' | 'dark';
 export type Theme = 'default' | 'fuchsia' | 'emerald' | 'amber' | 'blue' | 'rose';
@@ -280,7 +280,7 @@ export function readAvatar(): { buffer: Buffer; contentType: string } | null {
 export function clearAvatar(): void {
   const prefs = readPrefs();
   if (prefs.avatarPath) {
-    const full = path.join(ROOT, 'data', prefs.avatarPath);
+    const full = path.join(DATA_ROOT, prefs.avatarPath);
     try {
       fs.unlinkSync(full);
     } catch {

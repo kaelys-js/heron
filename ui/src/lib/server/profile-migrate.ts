@@ -10,12 +10,12 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT } from './files';
+import { ROOT, DATA_ROOT } from './files';
 import { ensureProfileDirs, profilePath } from './profile-paths';
 import { writeProfiles, type ProfilesState } from './profiles';
 import { logEvent } from './events';
 
-const PROFILES_JSON = path.join(ROOT, 'data', 'profiles.json');
+const PROFILES_JSON = path.join(DATA_ROOT, 'profiles.json');
 const DEFAULT_PROFILE_ID = 'default';
 
 type MoveSpec =
@@ -33,12 +33,12 @@ function buildMoveSpecs(): MoveSpec[] {
     { kind: 'file', src: path.join(ROOT, 'modes', '_profile.md'), dst: dst('profile-md') },
     { kind: 'file', src: path.join(ROOT, 'article-digest.md'), dst: dst('article-digest') },
     // Per-profile data
-    { kind: 'file', src: path.join(ROOT, 'data', 'pipeline.md'), dst: dst('pipeline') },
-    { kind: 'file', src: path.join(ROOT, 'data', 'applications.md'), dst: dst('applications') },
-    { kind: 'file', src: path.join(ROOT, 'data', 'scan-history.tsv'), dst: dst('scan-history') },
-    { kind: 'file', src: path.join(ROOT, 'data', 'gemini-scores.tsv'), dst: dst('gemini-scores') },
-    { kind: 'file', src: path.join(ROOT, 'data', 'follow-ups.md'), dst: dst('follow-ups') },
-    { kind: 'file', src: path.join(ROOT, 'data', 'projects.json'), dst: dst('projects-json') },
+    { kind: 'file', src: path.join(DATA_ROOT, 'pipeline.md'), dst: dst('pipeline') },
+    { kind: 'file', src: path.join(DATA_ROOT, 'applications.md'), dst: dst('applications') },
+    { kind: 'file', src: path.join(DATA_ROOT, 'scan-history.tsv'), dst: dst('scan-history') },
+    { kind: 'file', src: path.join(DATA_ROOT, 'gemini-scores.tsv'), dst: dst('gemini-scores') },
+    { kind: 'file', src: path.join(DATA_ROOT, 'follow-ups.md'), dst: dst('follow-ups') },
+    { kind: 'file', src: path.join(DATA_ROOT, 'projects.json'), dst: dst('projects-json') },
     // Per-profile directories -- move CONTENTS not the directory itself
     // (so .gitkeep / system-managed entries stay where they are).
     { kind: 'dir-contents', src: path.join(ROOT, 'reports'), dst: dst('reports-dir') },
@@ -146,8 +146,8 @@ function legacyLayoutDetected(): boolean {
     path.join(ROOT, 'cv.md'),
     path.join(ROOT, 'config', 'profile.yml'),
     path.join(ROOT, 'portals.yml'),
-    path.join(ROOT, 'data', 'pipeline.md'),
-    path.join(ROOT, 'data', 'applications.md'),
+    path.join(DATA_ROOT, 'pipeline.md'),
+    path.join(DATA_ROOT, 'applications.md'),
   ];
   return candidates.some((p) => fs.existsSync(p));
 }

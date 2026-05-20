@@ -13,7 +13,11 @@ import { tmpdir } from 'node:os';
 
 const TMP = path.join(tmpdir(), 'heron-secrets-api-' + Date.now() + '-' + process.pid);
 
-vi.mock('$lib/server/files', () => ({ ROOT: TMP, readSafe: () => '' }));
+vi.mock('$lib/server/files', () => ({
+  ROOT: TMP,
+  DATA_ROOT: path.join(TMP, 'data'),
+  readSafe: () => '',
+}));
 
 // Active-user mock; flipped per case.
 let activeUserId = '11111111-1111-1111-1111-111111111111';

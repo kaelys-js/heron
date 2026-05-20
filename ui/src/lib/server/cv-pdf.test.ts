@@ -139,7 +139,7 @@ describe('generalCvStatus — path field is repo-relative', () => {
 describe('resolveTemplate — routes through profilePath() for multi-user', () => {
   it("reads cv_template from the active user's profile.yml (mocked profilePath)", () => {
     // Guards against a regression where the function reads from
-    //   path.join(ROOT, 'data', 'profiles', profileId, 'profile.yml')
+    //   path.join(DATA_ROOT, 'profiles', profileId, 'profile.yml')
     // bypassing the multi-user resolver. The mocked profilePath('profile-yml')
     // returns /tmp/data/profiles/{id}/profile.yml; a hardcoded path would
     // resolve to /tmp/repo/data/profiles/work/profile.yml and miss the

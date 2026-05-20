@@ -7,7 +7,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, readSafe } from './files';
+import { ROOT, DATA_ROOT, readSafe } from './files';
 import { parse, stringify } from 'yaml';
 import { logEvent } from './events';
 import { profilePath, ensureProfileDirs, userSharedPath } from './profile-paths';
@@ -607,9 +607,9 @@ export function resetProfile(arg1?: string | ResetScope, arg2?: ResetScope): Res
   // remains at the flat repo-root paths -- see AGENTS.md "Globally shared
   // infrastructure" line.
   const AUTOPILOT_JSON = userSharedPath('autopilot');
-  const ACTIVITY_JSONL = path.join(ROOT, 'data', 'activity.jsonl');
-  const JOB_LAST_RUN_JSON = path.join(ROOT, 'data', 'job-last-run.json');
-  const APPLY_COUNTER_JSON = path.join(ROOT, 'data', 'apply-counter.json');
+  const ACTIVITY_JSONL = path.join(DATA_ROOT, 'activity.jsonl');
+  const JOB_LAST_RUN_JSON = path.join(DATA_ROOT, 'job-last-run.json');
+  const APPLY_COUNTER_JSON = path.join(DATA_ROOT, 'apply-counter.json');
   const STORY_BANK_MD = userSharedPath('story-bank');
 
   // Reset autopilot.json to defaults rather than deleting it -- the

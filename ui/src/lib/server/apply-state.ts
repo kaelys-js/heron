@@ -7,10 +7,10 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT } from './files';
+import { ROOT, DATA_ROOT } from './files';
 import { logEvent, reportServerError } from './events';
 
-const DIR = path.join(ROOT, 'data', 'apply-state');
+const DIR = path.join(DATA_ROOT, 'apply-state');
 
 export type ApplyState = {
   jobId: string;
