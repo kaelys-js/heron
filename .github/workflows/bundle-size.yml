@@ -68,7 +68,14 @@ jobs:
           # Build before measuring. Apply brand first so generated TS
           # imports resolve.
           build_script: "brand && build"
-          script: "size"
+          # `script:` is executed as a literal shell command -- v1.8.0
+          # does NOT respect `package_manager:` for the size step, only
+          # for install. Passing bare "size" got the action to invoke
+          # `/usr/bin/size` (the binutils binary), failing with
+          # "'a.out': No such file" + "Error parsing size-limit output".
+          # Spell out the pnpm invocation + --json so the JSON parser
+          # gets what it expects.
+          script: "pnpm size --json"
           package_manager: pnpm
           directory: ui
           skip_step: install # mise-action already installed pnpm + ran install
