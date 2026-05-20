@@ -4,8 +4,10 @@
  *  per-user Heron row, all user_id-scoped). Split for blast-radius
  *  isolation, independent backup cadence, and clean GDPR cascade.
  *  Paths resolve in order: HERON_DATA_DIR → HERON_AUTH_DB/HERON_APP_DB
- *  (accept ":memory:") → VITEST tmpdir → repo data/. Test isolation
- *  prevents prior runs from claiming the "first-user/owner" slot.
+ *  (accept ":memory:") → VITEST tmpdir → repo data/. Test / fresh-clone safety:
+ *  prior-run ghost rows from a leftover data/auth.db can't claim the
+ *  "first-user/owner" slot under vitest because each test process
+ *  gets its own tmpdir-scoped path.
  *  Connections are module-load singletons; better-sqlite3 is
  *  synchronous and fine for SvelteKit's per-request model. */
 import fs from 'node:fs';

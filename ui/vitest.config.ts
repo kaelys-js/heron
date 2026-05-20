@@ -113,7 +113,12 @@ export default defineConfig({
         'src/**/types.ts',
         'src/**/*.d.ts',
         'src/test-setup.ts',
-        'src/test-helpers/**',
+        // `src/test-helpers/**` alone doesn't reliably match top-level
+        // files under picomatch -- use the explicit-glob form so
+        // msw-handlers.ts / fs-fixtures.ts / render.ts / etc. don't
+        // skew the coverage totals downward.
+        'src/test-helpers/**/*',
+        'src/test-helpers/*',
         'src/**/*.{test,spec,component.test}.{ts,svelte}',
       ],
       thresholds: {

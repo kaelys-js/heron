@@ -1143,6 +1143,7 @@ function applyMarkdownSections(brand) {
     join(ROOT, '.github', 'SECURITY.md'),
     // docs/
     join(ROOT, 'docs', 'ARCHITECTURE.md'),
+    join(ROOT, 'docs', 'COMMENT-STYLE.md'),
     join(ROOT, 'docs', 'COMPARISON.md'),
     join(ROOT, 'docs', 'CUSTOMIZATION.md'),
     join(ROOT, 'docs', 'DATA_CONTRACT.md'),

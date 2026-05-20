@@ -278,6 +278,7 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
     '.github/CONTRIBUTING.md',
     '.github/SECURITY.md',
     'docs/ARCHITECTURE.md',
+    'docs/COMMENT-STYLE.md',
     'docs/COMPARISON.md',
     'docs/CUSTOMIZATION.md',
     'docs/DATA_CONTRACT.md',
