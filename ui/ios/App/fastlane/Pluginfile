@@ -10,6 +10,9 @@
 
 # xcov — code-coverage report generator. Reads the xcresult bundle from
 # run_tests, emits HTML for humans and cobertura.xml for Codecov.
-gem 'fastlane-plugin-xcov'
+# The gem is `xcov`, NOT `fastlane-plugin-xcov` (the latter doesn't
+# exist on RubyGems -- xcov is a standalone tool that integrates with
+# fastlane, not a fastlane plugin in the auto-registering sense).
+gem 'xcov'
 
 # Add additional plugins below as the build pipeline grows.

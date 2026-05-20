@@ -58,6 +58,15 @@ jobs:
         with:
           apply_brand: true
 
+      # Lost Pixel uses Playwright under the hood -- specifically
+      # chromium_headless_shell. `pnpm exec playwright install chromium`
+      # would install the full Chromium build, but the headless-shell
+      # variant is what Lost Pixel actually launches. `playwright install`
+      # with no args installs every browser + headless-shell variants,
+      # which is the simplest reliable path.
+      - name: Install Playwright browsers (Lost Pixel needs headless-shell)
+        run: pnpm --filter ui exec playwright install --with-deps chromium
+
       - name: Build dashboard
         run: pnpm --filter ui build
 

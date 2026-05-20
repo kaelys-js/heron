@@ -121,10 +121,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # Playwright browsers are required for the ui-component project.
-      # The cache step above persists ~/.cache/ms-playwright across runs;
-      # this command is a no-op on a cache hit.
-      - name: Install Playwright Chromium
-        run: pnpm --filter ui exec playwright install chromium --with-deps
+      # The vitest workspace's ui-component project runs against BOTH
+      # chromium and webkit (so pointer-event gestures get tested under
+      # Safari too) -- install both. The cache step above persists
+      # ~/.cache/ms-playwright across runs; this command is a no-op on
+      # a cache hit.
+      - name: Install Playwright browsers (chromium + webkit)
+        run: pnpm --filter ui exec playwright install chromium webkit --with-deps
 
       # ── Static checks (fast, fail-fast) ──────────────────────────
       - name: Format check (biome + prettier-svelte)
