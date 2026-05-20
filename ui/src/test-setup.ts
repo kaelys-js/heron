@@ -279,3 +279,26 @@ afterEach(() => {
 afterAll(() => {
   server?.close();
 });
+
+// ── better-sqlite3 file-handle teardown ─────────────────────────────
+// db/index.ts opens auth.db + app.db SQLite handles at module load.
+// With `isolate: true` each test file gets a fresh module graph -- the
+// handles open per-file, never close, and the test worker holds them
+// past the test run. Vitest's exit-watchdog then prints "close timed
+// out after 10000ms / Tests closed successfully but something prevents
+// the main process from exiting" with FILEHANDLE leaks visible under
+// --reporter=hanging-process. Closing the singletons in afterAll lets
+// the worker exit cleanly.
+//
+// Browser mode never imports db/index.ts (it's server-only), so the
+// dynamic-import guard below short-circuits there. Server-only files
+// like applications.ts or events.ts may not have triggered db/index.ts
+// load -- the closeAll() in that case is a no-op on the absent module.
+afterAll(async () => {
+  try {
+    const { closeAll } = await import('./lib/server/db');
+    closeAll();
+  } catch {
+    // db module never loaded in this test file -- nothing to close.
+  }
+});

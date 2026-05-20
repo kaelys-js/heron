@@ -218,11 +218,16 @@ export function installImapPollerDaemon(): void {
     });
   };
   // Run a first poll 60s after boot (don't block boot itself), then
-  // every 30 min thereafter.
-  setTimeout(fire, 60_000);
+  // every 30 min thereafter. Both timers MUST be unref'd: in `vitest`
+  // worker processes, an alive timer at module-import time keeps the
+  // event loop running past `afterAll` -- vitest then prints "close
+  // timed out after 10000ms" because the worker can't exit cleanly.
+  // The `installImapPollerDaemon()` call at the bottom of this file
+  // auto-runs on first import, so any test that touches the registry
+  // barrel triggers this code path.
+  const initialFire = setTimeout(fire, 60_000);
+  initialFire.unref?.();
   pollerHandle = setInterval(fire, POLL_INTERVAL_MS);
-  // Don't keep the event loop alive solely for this timer -- pairs well
-  // with the spawn-cleanup handlers in orchestrator.ts.
   pollerHandle.unref?.();
 }
 
