@@ -152,7 +152,12 @@ describe('resolveBackend — waterfall', () => {
 
   it('falls through to tailscale when local options unavailable', async () => {
     fetchSpy.mockImplementation(async (url: string) => {
-      if (url.includes('tail.ts.net')) return new Response('ok', { status: 200 });
+      // Match on hostname rather than `.includes()` to avoid CodeQL's
+      // `js/incomplete-url-substring-sanitization` (substring matches
+      // on raw URLs can be fooled by paths like /tail.ts.net/anything).
+      if (new URL(url).hostname.endsWith('tail.ts.net')) {
+        return new Response('ok', { status: 200 });
+      }
       return new Response('boom', { status: 500 });
     });
     const r = await resolveBackend({ tailscaleHost: 'mac.tail.ts.net' });
@@ -183,7 +188,14 @@ describe('resolveBackend — waterfall', () => {
 
   it('tailscaleHost without protocol gets http:// prefix', async () => {
     fetchSpy.mockImplementation(async (url: string) => {
-      if (url.startsWith('http://mac.tail')) return new Response('ok', { status: 200 });
+      // Parse the URL instead of substring-prefix matching -- CodeQL's
+      // `js/incomplete-url-substring-sanitization` flags `startsWith`
+      // on a raw URL because it can be tricked by userinfo / path
+      // contortions.
+      const u = new URL(url);
+      if (u.protocol === 'http:' && u.host.startsWith('mac.tail')) {
+        return new Response('ok', { status: 200 });
+      }
       return new Response('boom', { status: 500 });
     });
     const r = await resolveBackend({ tailscaleHost: 'mac.tail.ts.net:5173' });

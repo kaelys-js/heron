@@ -11,10 +11,37 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 const REPO_ROOT = path.resolve(__dirname, '../../../..');
 const SERVER_ROOT = path.join(REPO_ROOT, 'ui/src/lib/server');
+
+/** Run grep with argv-passed args (no shell) and return matching lines.
+ *  CodeQL flagged the previous string-concat `execSync('grep ... ' + DIR)`
+ *  as `js/shell-command-injection-from-environment` because DIR is path-
+ *  derived; even though we control it, the safer pattern is argv-passing.
+ *  grep exits 1 when there are zero matches -- we treat that as empty
+ *  output, NOT an error. */
+function grepLines(args: string[]): string[] {
+  try {
+    const out = execFileSync('grep', args, { encoding: 'utf8' });
+    return out
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  } catch (e: unknown) {
+    const err = e as { status?: number; stdout?: string | Buffer };
+    if (err.status === 1) {
+      // Standard "no match" exit -- not an error.
+      const stdout = typeof err.stdout === 'string' ? err.stdout : (err.stdout?.toString() ?? '');
+      return stdout
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+    throw e;
+  }
+}
 
 /** ──────────────────────────────────────────────────────────────────────
  *  F13 -- spawn-env injection
@@ -25,19 +52,15 @@ describe('Multi-user — every spawn() injects userContextEnv (F13 guard)', () =
     // spawn sites because the original grep only covered lib/server/.
     // Now the pattern guard sweeps both trees.
     const ROUTES_API_ROOT = path.join(REPO_ROOT, 'ui/src/routes/api');
-    const hits = execSync(
-      // -E for extended regex, -l doesn't help here because we want line context
-      // Match `env: { ...process.env }` (and the variant without spaces).
-      'grep -rln --include="*.ts" "env: { ...process.env }\\|env: process\\.env\\>" ' +
-        SERVER_ROOT +
-        ' ' +
-        ROUTES_API_ROOT +
-        ' || true',
-      { encoding: 'utf8' },
-    )
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean)
+    // Match `env: { ...process.env }` (and the variant without spaces).
+    // `-l` doesn't help here because we want line context.
+    const hits = grepLines([
+      '-rln',
+      '--include=*.ts',
+      'env: { ...process.env }\\|env: process\\.env\\>',
+      SERVER_ROOT,
+      ROUTES_API_ROOT,
+    ])
       .filter((p) => !p.endsWith('.test.ts'))
       .map((abs) => path.relative(REPO_ROOT, abs));
 
@@ -82,15 +105,13 @@ describe('Multi-user — no module-singleton user config caches (F9 guard)', () 
     // grep for `let cached:`, `let _cache:`, `let _config:` patterns
     // followed by a type that LOOKS like a Config (capital first letter,
     // ends in `Config`/`State`/`Settings`).
-    const hits = execSync(
-      'grep -rln --include="*.ts" -E "^(let|var)\\s+(cached|_cache|_config|configCache)\\s*:?\\s*[A-Z][a-zA-Z]*(Config|State|Settings)" ' +
-        SERVER_ROOT +
-        ' || true',
-      { encoding: 'utf8' },
-    )
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean)
+    const hits = grepLines([
+      '-rln',
+      '--include=*.ts',
+      '-E',
+      '^(let|var)\\s+(cached|_cache|_config|configCache)\\s*:?\\s*[A-Z][a-zA-Z]*(Config|State|Settings)',
+      SERVER_ROOT,
+    ])
       .filter((p) => !p.endsWith('.test.ts'))
       .map((abs) => path.relative(REPO_ROOT, abs))
       .filter((rel) => !ALLOWED_FILES.has(rel));
@@ -131,14 +152,12 @@ describe('Multi-user — bus listeners scope to ev.userId (F11 guard)', () => {
     // Heuristic: find files containing both `installBusListener(` and
     // `loadAllJobs(` or `markStatus(`. Assert each one references
     // `ev.userId`.
-    const candidates = execSync(
-      'grep -rln --include="*.ts" "installBusListener(" ' + SERVER_ROOT + ' || true',
-      { encoding: 'utf8' },
-    )
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .filter((p) => !p.endsWith('.test.ts'));
+    const candidates = grepLines([
+      '-rln',
+      '--include=*.ts',
+      'installBusListener(',
+      SERVER_ROOT,
+    ]).filter((p) => !p.endsWith('.test.ts'));
 
     const offenders: string[] = [];
     for (const abs of candidates) {

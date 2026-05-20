@@ -11,7 +11,7 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 const REPO_ROOT = path.resolve(__dirname, '../../../..');
 
@@ -141,10 +141,24 @@ describe('Multi-user — sign-out scrubs local state (F2 regression guard)', () 
     // aren't on our known-paired allowlist. Any new call site MUST be
     // added to SIGNOUT_CALL_SITES (and pair clearLocalAuthState) at the
     // same time.
-    const sweep = execSync(
-      `grep -rln "authClient\\.signOut" ${path.join(REPO_ROOT, 'ui/src')} || true`,
-      { encoding: 'utf8' },
-    )
+    // argv-passed grep -- avoids `js/shell-command-injection-from-environment`
+    // false positives that the string-concat exec form triggers.
+    let sweepOut = '';
+    try {
+      sweepOut = execFileSync(
+        'grep',
+        ['-rln', 'authClient\\.signOut', path.join(REPO_ROOT, 'ui/src')],
+        { encoding: 'utf8' },
+      );
+    } catch (e: unknown) {
+      const err = e as { status?: number; stdout?: string | Buffer };
+      if (err.status === 1) {
+        sweepOut = typeof err.stdout === 'string' ? err.stdout : (err.stdout?.toString() ?? '');
+      } else {
+        throw e;
+      }
+    }
+    const sweep = sweepOut
       .split('\n')
       .map((l) => l.trim())
       .filter(Boolean)

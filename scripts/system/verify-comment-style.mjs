@@ -122,8 +122,14 @@ export function findCommentSlop(body) {
       // before checking.
       const stripped = commentText.replace(/`[^`]*`/g, ' ');
       const lower = stripped.toLowerCase();
+      // Escape EVERY regex meta-character before building the test
+      // pattern. The prior `[-]` was a partial sanitiser (CodeQL flagged
+      // `js/incomplete-sanitization`) -- a word with `.` or `+` in it
+      // would compile into a wildcard at runtime. SLOP_ADJECTIVES is a
+      // closed list today, but the escape protects future additions.
+      const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&');
       for (const word of SLOP_ADJECTIVES) {
-        const rx = new RegExp(`\\b${word.replace(/[-]/g, '\\-')}\\b`, 'i');
+        const rx = new RegExp(`\\b${escapeRegex(word)}\\b`, 'i');
         if (rx.test(stripped)) {
           offenders.push({
             line: i + 1,

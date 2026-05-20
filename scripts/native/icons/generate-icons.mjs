@@ -23,7 +23,7 @@ import { readFileSync as fsReadFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execSync } from 'node:child_process';
+import { execSync, execFileSync } from 'node:child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // scripts/native/icons/generate-icons.mjs → repo root is 3 dirs up.
@@ -542,8 +542,12 @@ async function main() {
   const faviconIco = path.join(staticDir, 'favicon.ico');
   try {
     execSync('which magick', { stdio: 'ignore' });
-    const inputs = [16, 32, 48].map((s) => path.join(BUILD, `${s}.png`)).join(' ');
-    execSync(`magick ${inputs} "${faviconIco}"`, { stdio: 'inherit' });
+    const inputs = [16, 32, 48].map((s) => path.join(BUILD, `${s}.png`));
+    // execFileSync (argv-passed) instead of execSync (shell-parsed) so
+    // any future caller passing a tainted BUILD dir can't smuggle shell
+    // metachars in. CodeQL flagged the previous string-concat form as
+    // `js/shell-command-injection-from-environment`.
+    execFileSync('magick', [...inputs, faviconIco], { stdio: 'inherit' });
     console.log('  favicon.ico generated (multi-size via ImageMagick)');
   } catch {
     // Fallback: write a single-size 32x32 PNG masquerading as .ico --

@@ -152,12 +152,24 @@ def detect_captcha(page) -> CaptchaKind:
         # Iframe sniffing -- each provider loads a distinct domain.
         frames = page.frames
         for f in frames:
-            src = (f.url or "").lower()
-            if "recaptcha" in src or "google.com/recaptcha" in src:
+            # Match on hostname (parsed) instead of substring on the raw
+            # URL -- CodeQL flagged the previous `'host' in url` form as
+            # `py/incomplete-url-substring-sanitization` because a path
+            # like /challenges.cloudflare.com/anything would fool it.
+            raw = f.url or ""
+            host = (urlparse(raw).hostname or "").lower()
+            path = (urlparse(raw).path or "").lower()
+            if host == "www.google.com" and "/recaptcha" in path:
                 return "recaptcha"
-            if "hcaptcha.com" in src:
+            if host.endswith("recaptcha.net") or host.endswith("recaptcha.google.com"):
+                return "recaptcha"
+            if host.endswith("hcaptcha.com"):
                 return "hcaptcha"
-            if "challenges.cloudflare.com" in src or "turnstile" in src:
+            if (
+                host == "challenges.cloudflare.com"
+                or host.endswith(".cloudflare.com")
+                and "turnstile" in path
+            ):
                 return "turnstile"
         # Body-text heuristics -- slower; only used when iframe sniffing missed.
         body = (page.content() or "").lower()

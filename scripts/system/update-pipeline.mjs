@@ -67,8 +67,11 @@ const newRows = [];
 let n = maxN;
 for (const e of sortedSkipped) {
   n += 1;
-  // Escape | in role/company/notes.
-  const safe = (s) => s.replace(/\|/g, '\\|').trim();
+  // Escape backslashes BEFORE pipes so `\|` in the input round-trips
+  // back to `\|` in the rendered cell instead of being collapsed into
+  // a real table separator. CodeQL flagged the pipe-only escape as
+  // `js/incomplete-sanitization` because of exactly this asymmetry.
+  const safe = (s) => s.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').trim();
   newRows.push(
     `| ${n} | ${today} | ${safe(e.company)} | ${safe(e.role)} | — | SKIP | ❌ | — | ${safe(e.reason)} |`,
   );

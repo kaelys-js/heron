@@ -330,13 +330,16 @@ function parsePersonio(xml, companyName, meta) {
     const id = pos.match(/<id>(\d+)<\/id>/)?.[1];
     const name = pos.match(/<name>([\s\S]*?)<\/name>/)?.[1]?.trim();
     if (!id || !name) continue;
-    // Decode the most common HTML entities Personio emits in <name>
+    // Decode the most common HTML entities Personio emits in <name>.
+    // Decoding `&amp;` MUST be last: otherwise input like `&amp;lt;`
+    // (literal text "&lt;") gets decoded to `&lt;` then `<`, which is
+    // wrong. CodeQL flags the previous reverse order as `js/double-escaping`.
     const title = name
-      .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
-      .replace(/&#039;/g, "'");
+      .replace(/&#039;/g, "'")
+      .replace(/&amp;/g, '&');
     // Primary <office> appears OUTSIDE <additionalOffices>. Strip the
     // additionalOffices block first so the primary-office regex doesn't
     // accidentally grab the first nested <office>.

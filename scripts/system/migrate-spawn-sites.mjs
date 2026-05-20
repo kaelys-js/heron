@@ -85,13 +85,31 @@ function rewriteBlock(blockText) {
   const childVar = childMatch ? childMatch[1] : 'p';
 
   // Capture env block. The spawn options look like `{ cwd: ROOT, env: <expr> }`.
-  // Extract the env expression.
-  const envMatch = norm.match(
-    /spawn\(AGENT_CLI,[^\)]*?,\s*\{\s*cwd:\s*ROOT,\s*env:\s*(\{[^}]*(?:\{[^}]*\}[^}]*)*\})\s*,?\s*\}\)/,
-  );
+  // Extract the env expression with a balanced-brace scan -- the prior
+  // version used a regex with nested `[^}]*` quantifiers which CodeQL
+  // flags as `js/redos` (catastrophic backtracking on adversarial input).
+  // For a one-shot migration script that's harmless in practice, but
+  // the simpler linear scan also handles deeper nesting correctly.
+  function extractEnvLiteral(text) {
+    const anchor = text.indexOf('env:');
+    if (anchor < 0) return null;
+    let i = text.indexOf('{', anchor);
+    if (i < 0) return null;
+    const start = i;
+    let depth = 0;
+    for (; i < text.length; i++) {
+      const c = text[i];
+      if (c === '{') depth++;
+      else if (c === '}') {
+        depth--;
+        if (depth === 0) return text.slice(start, i + 1);
+      }
+    }
+    return null;
+  }
+  const envExpr = extractEnvLiteral(norm);
   let envArg = '';
-  if (envMatch) {
-    const envExpr = envMatch[1];
+  if (envExpr) {
     // If env is just `{ ...process.env }`, drop. Otherwise extract extras.
     if (envExpr.trim() === '{ ...process.env }') {
       // no extras
