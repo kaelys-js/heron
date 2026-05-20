@@ -25,13 +25,18 @@ version: 2
 # is the right level of touch here.
 
 updates:
-  # ── npm: root + workspaces ────────────────────────────────────────
-  # The root package.json + ui/ + ui/electron/ are three independent
-  # manifests despite the pnpm workspace catalog: each carries its own
-  # devDependencies, and Dependabot opens one PR per manifest per
-  # outdated dep. The pnpm catalog in pnpm-workspace.yaml is the
-  # single source of truth for production versions; Dependabot only
-  # rewrites the literal manifest entries.
+  # ── npm: root only (pnpm workspace limitation) ────────────────────
+  # Dependabot's pnpm support refuses to update package.json files
+  # that sit inside a pnpm workspace tree -- the runner errors with
+  #   "Updating workspaces from inside a workspace subdirectory is
+  #    not supported. Both pnpm-lock.yaml and pnpm-workspace.yaml
+  #    exist in a parent directory. Dependabot should only update
+  #    from the root workspace."
+  # So we declare only the root manifest. The single root run picks
+  # up every workspace dep because pnpm-workspace.yaml's `catalog`
+  # block is the source-of-truth version for every dep -- Dependabot
+  # rewrites the catalog entry there, and `pnpm install` propagates
+  # the new version to each workspace package on the next install.
   - package-ecosystem: npm
     directory: "/"
     schedule:
@@ -43,31 +48,6 @@ updates:
     labels:
       - "dependencies"
       - "javascript"
-
-  - package-ecosystem: npm
-    directory: "/ui"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "06:00"
-      timezone: "Etc/UTC"
-    open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "javascript"
-
-  - package-ecosystem: npm
-    directory: "/ui/electron"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "06:00"
-      timezone: "Etc/UTC"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "javascript"
-      - "electron"
 
   # ── pip: root pyproject + scripts/requirements ────────────────────
   - package-ecosystem: pip
