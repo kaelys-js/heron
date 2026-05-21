@@ -1,0 +1,211 @@
+name: PR coverage comment
+# Posts the `heron-pr-coverage` sticky comment on every PR. Runs AFTER
+# Tests completes via `workflow_run` so we have actual coverage artifacts
+# to read, not a partial / running snapshot.
+#
+# Auto-discovery design: the scanner walks the working tree for any
+# coverage file in a recognised format (Istanbul / lcov / cobertura /
+# clover / xcov). Add a new test suite that emits coverage in any of
+# those formats and it shows up in the sticky on the next PR with zero
+# config edits.
+#
+# Baseline source: the most recent COMPLETED Tests workflow run on
+# `main` -- artifact `coverage-baseline` (uploaded by this same workflow
+# on main-push). When that artifact doesn't exist (cold start) the
+# sticky shows current numbers only + a `🆕` marker per flag.
+#
+# Permissions:
+#   actions: read     -- query source run + download artifacts
+#   pull-requests: write -- post / edit sticky
+#   contents: read    -- read the scripts from main (no checkout of PR head)
+#
+# Why workflow_run vs pull_request_target: see pr-ci-summary.yml header
+# for the long-form rationale. Short version: workflow_run gives us
+# write permissions without the branch-isolation footgun of
+# pull_request_target.
+
+on: # zizmor: ignore[dangerous-triggers]
+  # SAFETY: workflow_run inherits write secrets, but this workflow:
+  #   1. Never checks out the PR head (no actions/checkout of PR ref --
+  #      the only checkout pulls main, which is trusted)
+  #   2. Composes the sticky body via this repo's own scripts run
+  #      against the downloaded artifact data, never against PR text
+  #   3. Calls only `gh pr comment` / `gh pr edit` via the composite
+  #      action -- argv-passing, no shell-interpolated PR content
+  workflow_run:
+    workflows: ['Tests']
+    types: [completed]
+
+permissions: {}
+
+concurrency:
+  group: coverage-comment-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
+jobs:
+  comment:
+    name: Post heron-pr-coverage sticky
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      pull-requests: write
+      contents: read
+    # Only act on success / failure (skip cancelled). Both pass + fail
+    # runs get a comment so the reviewer sees the current state, not
+    # last-known-good.
+    if: |
+      github.event.workflow_run.event == 'pull_request' &&
+      (github.event.workflow_run.conclusion == 'success' ||
+       github.event.workflow_run.conclusion == 'failure')
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout main (for the scripts; never the PR head)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: main
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Download coverage-ts artifact from the source run
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v5
+        with:
+          name: coverage-ts
+          path: ui/coverage
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true # ts job may have skipped (path filter)
+
+      - name: Download coverage-ios artifact from the source run
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v5
+        with:
+          name: coverage-ios
+          path: ui/ios/App/fastlane/coverage
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true # ios job may have skipped
+
+      - name: Discover coverage
+        run: node .github/scripts/sticky/discover-coverage.mjs --out coverage.json
+
+      - name: Download coverage baseline from main
+        id: baseline
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # Find most recent COMPLETED Tests run on main.
+          LATEST=$(gh api "repos/$GH_REPO/actions/workflows/test.yml/runs?branch=main&status=completed&per_page=1" \
+            --jq '.workflow_runs[0].id // empty')
+          if [ -z "$LATEST" ]; then
+            echo "no_baseline=true" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Try to fetch the baseline artifact. continue-on-error
+          # equivalent: don't fail this step if the artifact doesn't exist.
+          if gh run download "$LATEST" --repo "$GH_REPO" --name coverage-baseline --dir baseline 2>/dev/null; then
+            if [ -f baseline/coverage.json ]; then
+              echo "no_baseline=false" >>"$GITHUB_OUTPUT"
+              echo "::notice::Using baseline from run $LATEST."
+            else
+              echo "no_baseline=true" >>"$GITHUB_OUTPUT"
+            fi
+          else
+            echo "no_baseline=true" >>"$GITHUB_OUTPUT"
+            echo "::notice::No baseline artifact on main yet (cold start). Sticky will show current only."
+          fi
+
+      - name: Format coverage sticky body
+        run: |
+          if [ "${{ steps.baseline.outputs.no_baseline }}" = "true" ]; then
+            node .github/scripts/sticky/format-coverage.mjs coverage.json --out body.md
+          else
+            node .github/scripts/sticky/format-coverage.mjs coverage.json baseline/coverage.json --out body.md
+          fi
+
+      - name: Resolve PR number
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          set -euo pipefail
+          NUM=$(jq -r '.workflow_run.pull_requests[0].number // empty' "$GITHUB_EVENT_PATH" || true)
+          if [ -z "$NUM" ]; then
+            NUM=$(gh pr list --head "$HEAD_BRANCH" --state open --json number --jq '.[0].number // empty')
+          fi
+          if [ -z "$NUM" ]; then
+            echo "::notice::No PR found for $HEAD_BRANCH. Nothing to comment on."
+            echo "skip=true" >>"$GITHUB_OUTPUT"
+          fi
+          echo "number=$NUM" >>"$GITHUB_OUTPUT"
+
+      - name: Post sticky comment
+        if: steps.pr.outputs.skip != 'true'
+        uses: ./.github/actions/sticky-comment
+        with:
+          marker: heron-pr-coverage
+          body-path: body.md
+          pr-number: ${{ steps.pr.outputs.number }}
+
+  # Upload baseline coverage on main pushes so the next PR has something
+  # to diff against. Stored as artifact `coverage-baseline` with stable
+  # name (overwrites each main push).
+  upload-baseline:
+    name: Upload baseline coverage on main
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      actions: read
+      contents: read
+    if: |
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout main
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: main
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Download coverage-ts artifact
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v5
+        with:
+          name: coverage-ts
+          path: ui/coverage
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Download coverage-ios artifact
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v5
+        with:
+          name: coverage-ios
+          path: ui/ios/App/fastlane/coverage
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Discover + upload baseline
+        run: node .github/scripts/sticky/discover-coverage.mjs --out coverage.json
+
+      - name: Upload baseline artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: coverage-baseline
+          path: coverage.json
+          retention-days: 90
+          overwrite: true

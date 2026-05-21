@@ -138,11 +138,16 @@ jobs:
             STATUS="Failed"
           fi
 
-          # Compose the sticky comment. HTML-comment marker on the
-          # FIRST and LAST line lets the lookup-and-update step replace
-          # the whole block on the next push instead of stacking comments.
+          # Compose the sticky comment body. The composite sticky-comment
+          # action adds its own `<!-- heron-pr-ci-status -->` marker on
+          # the first line + a footer at the bottom -- so this template
+          # writes JUST the body content.
+          #
+          # Two files written:
+          #   /tmp/comment.md           -- legacy "with marker" form, kept
+          #                                for the step summary at the end
+          #   /tmp/comment-noheader.md  -- body-only, passed to the composite
           {
-            echo "<!-- heron-pr-ci-status -->"
             echo "## 🚦 Heron CI"
             echo ""
             echo "| Status | Commit | Run | Branch |"
@@ -161,7 +166,15 @@ jobs:
               echo "> Open the [run]($RUN_URL) for the full log + failing-step annotations."
               echo ""
             fi
-            echo "_Auto-posted by [pr-ci-summary.yml]($SERVER_URL/$GH_REPO/blob/main/.github/workflows/pr-ci-summary.yml) — updates in place on each push._"
+            echo "_Auto-posted by [pr-ci-summary.yml]($SERVER_URL/$GH_REPO/blob/main/.github/workflows/pr-ci-summary.yml) -- updates in place on each push._"
+          } > /tmp/comment-noheader.md
+
+          # Legacy `comment.md` with marker -- used by the step-summary
+          # block at the bottom of the workflow for human-readable
+          # archival in the Actions UI. Not posted to the PR.
+          {
+            echo "<!-- heron-pr-ci-status -->"
+            cat /tmp/comment-noheader.md
             echo "<!-- /heron-pr-ci-status -->"
           } > /tmp/comment.md
 
@@ -173,36 +186,39 @@ jobs:
             echo "<!-- CI-STATUS-MARKER-END -->"
           } > /tmp/marker.md
 
-      - name: Post or update sticky comment + refresh body marker
+      - name: Checkout main (for the composite sticky-comment action)
+        if: steps.compose.outputs.skip != 'true'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: main
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Post or update sticky CI status comment
+        if: steps.compose.outputs.skip != 'true'
+        uses: ./.github/actions/sticky-comment
+        with:
+          marker: heron-pr-ci-status
+          # body-path is the marker-less compose output -- the composite
+          # adds its own marker + footer.
+          body-path: /tmp/comment-noheader.md
+          pr-number: ${{ steps.compose.outputs.pr_num }}
+          # Suppress the composite footer since this comment composes its
+          # own attribution line via the existing pr-ci-summary.yml template.
+          footer: 'false'
+
+      - name: Refresh PR description CI-STATUS marker block
         if: steps.compose.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
           PR_NUM: ${{ steps.compose.outputs.pr_num }}
-          SHORT_SHA: ${{ steps.compose.outputs.short_sha }}
         run: |
           set -euo pipefail
-
-          # 1. Find existing sticky comment by marker.
-          EXISTING_ID=$(gh api "repos/$GH_REPO/issues/$PR_NUM/comments" --paginate \
-            --jq '[.[] | select(.body | contains("<!-- heron-pr-ci-status -->")) | .id] | .[0] // empty')
-
-          if [ -n "$EXISTING_ID" ]; then
-            # Update in place. gh api PATCH on the comment id.
-            # `--raw-field body=@<path>` reads the body straight from
-            # the file -- no need to cat-and-encode via jq.
-            gh api "repos/$GH_REPO/issues/comments/$EXISTING_ID" \
-              --method PATCH \
-              --raw-field body=@/tmp/comment.md > /dev/null
-            echo "::notice::Updated sticky CI comment on PR #$PR_NUM (id $EXISTING_ID, sha $SHORT_SHA)."
-          else
-            # First comment for this PR. Create.
-            gh pr comment "$PR_NUM" --body-file /tmp/comment.md
-            echo "::notice::Created sticky CI comment on PR #$PR_NUM (sha $SHORT_SHA)."
-          fi
-
-          # 2. Refresh PR description marker block. Fetch the current
-          # body, replace (or prepend) the one-line marker.
+          # Refresh PR description marker block. Fetch the current body,
+          # replace (or prepend) the one-line marker. This is separate
+          # from the sticky comment -- it's a compact one-liner in the
+          # PR description so the status is visible at-a-glance without
+          # scrolling to the comments.
           BODY=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
           if printf '%s' "$BODY" | grep -q '<!-- CI-STATUS-MARKER-START -->'; then
             UPDATED=$(printf '%s' "$BODY" | perl -0777 -pe '
@@ -217,7 +233,7 @@ jobs:
           printf '%s' "$UPDATED" | gh pr edit "$PR_NUM" --body-file -
           echo "::notice::Refreshed CI-STATUS marker in PR #$PR_NUM description."
 
-          # 3. Step summary for the action's own run.
+          # Step summary for the action's own run.
           {
             echo "### Posted CI summary to PR #$PR_NUM"
             echo ""
