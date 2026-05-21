@@ -308,6 +308,20 @@ jobs:
           restore-keys: |
             playwright-${{ runner.os }}-
 
+      # Pip wheel cache for the cryptography install below. Pre-fix
+      # every PR re-downloaded the (heavy) cryptography wheels cold
+      # (~1-2 min on cold cache). The --require-hashes lockfile keeps
+      # the install tamper-evident; the wheel cache just makes the
+      # warm path near-instant.
+      - name: Cache pip wheels (cryptography etc.)
+        if: needs.changes.outputs.ts == 'true'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('scripts/requirements.txt', 'pyproject.toml') }}
+          restore-keys: |
+            pip-${{ runner.os }}-
+
       - name: Install dependencies
         if: needs.changes.outputs.ts == 'true'
         run: pnpm install --frozen-lockfile

@@ -191,6 +191,33 @@ jobs:
           restore-keys: |
             codeql-spm-${{ runner.os }}-
 
+      # JavaScript/TypeScript pnpm-store cache. CodeQL's `autobuild`
+      # step runs `pnpm install` internally; without this cache that's
+      # ~2 min cold every PR. Same key shape as test.yml's TS job so
+      # warm pnpm-store entries are shared across workflows.
+      - name: Cache pnpm store (JS/TS only)
+        if: steps.gate.outputs.should_run == 'true' && matrix.language == 'javascript-typescript'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.local/share/pnpm/store/v3
+          key: codeql-pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            codeql-pnpm-${{ runner.os }}-
+            pnpm-${{ runner.os }}-
+
+      # Python pip wheel cache. The Python leg's `autobuild` runs
+      # `pip install` against scripts/requirements.txt; without this
+      # cache that's ~45s cold every PR. Mirrors the wheel-cache key
+      # used by the ts job's cryptography install.
+      - name: Cache pip wheels (Python only)
+        if: steps.gate.outputs.should_run == 'true' && matrix.language == 'python'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.cache/pip
+          key: codeql-pip-${{ runner.os }}-${{ hashFiles('scripts/requirements.txt', 'pyproject.toml') }}
+          restore-keys: |
+            codeql-pip-${{ runner.os }}-
+
       - name: Initialize CodeQL
         if: steps.gate.outputs.should_run == 'true'
         uses: github/codeql-action/init@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4
