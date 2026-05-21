@@ -649,6 +649,29 @@ commit-msg:
           exit 1
         fi
 
+    # DCO sign-off enforcement. Catches the missing `Signed-off-by:`
+    # trailer locally instead of at push-time when the probot.github.io
+    # DCO check fails the PR and forces a re-push with `--amend -s`.
+    # Same exemptions as `conventional` above (merge / revert /
+    # release-please commits skip DCO too).
+    signoff:
+      run: |
+        msg=$(cat {1})
+        if echo "$msg" | grep -qE '^(Merge|Revert|fixup!|squash!|chore\(main\): release)'; then
+          exit 0
+        fi
+        # Matches the probot.github.io/apps/dco rule: a
+        # `Signed-off-by: Name <email>` trailer line. Name + email
+        # both required; spaces around the angle brackets are fine.
+        if ! echo "$msg" | grep -qE '^Signed-off-by: .+ <.+@.+>'; then
+          echo "✗ Commit message lacks a DCO sign-off."
+          echo "  Add a 'Signed-off-by: Your Name <you@example.com>' trailer."
+          echo "  Easiest fix:  git commit --amend -s  (or use -s on the next commit)"
+          echo "  Reference:    https://probot.github.io/apps/dco/"
+          echo "  Bypass:       SKIP_LEFTHOOK=1 git commit ..."
+          exit 1
+        fi
+
 # ── Manual invocation ───────────────────────────────────────────────
 # Run individual checks via:
 #   lefthook run pre-commit
