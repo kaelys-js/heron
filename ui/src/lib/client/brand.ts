@@ -348,7 +348,16 @@ export const BRAND = {
       "watchos"
     ]
   },
+  community: {
+    "discord": {
+      "url": "https://discord.gg/MyFbztUK5U",
+      "serverId": "1507162919421612134"
+    }
+  },
 } as const;
+
+/** Community Discord invite URL. Empty string when not configured. */
+export const DISCORD_URL: string = "https://discord.gg/MyFbztUK5U";
 
 /** Build a custom-scheme deep link for a job. */
 export function jobDeepLink(jobId: string): string {
