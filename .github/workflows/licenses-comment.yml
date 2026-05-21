@@ -1,0 +1,65 @@
+name: PR licenses comment
+# Posts the heron-pr-licenses sticky -- runs license-checker-rseidelsohn
+# over the pnpm tree and flags any NEW copyleft or unknown licenses
+# introduced in this PR vs main.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'pnpm-lock.yaml'
+      - '**/package.json'
+
+permissions: {}
+
+concurrency:
+  group: licenses-comment-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  comment:
+    name: Post heron-pr-licenses sticky
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Checkout PR
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Setup mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+        with:
+          experimental: true
+          cache: true
+      - name: Install deps + license-checker
+        run: |
+          pnpm install --frozen-lockfile
+          npx --yes license-checker-rseidelsohn --json --excludePrivatePackages > licenses-current.json
+
+      - name: Baseline licenses from main
+        run: |
+          git fetch origin main --depth 1
+          git checkout origin/main -- pnpm-lock.yaml
+          pnpm install --frozen-lockfile
+          npx --yes license-checker-rseidelsohn --json --excludePrivatePackages > licenses-baseline.json || true
+          # Restore PR head
+          git checkout HEAD -- pnpm-lock.yaml
+          pnpm install --frozen-lockfile
+
+      - name: Format licenses sticky
+        run: node .github/scripts/sticky/format-licenses.mjs licenses-current.json licenses-baseline.json --out body.md
+
+      - name: Post sticky comment
+        uses: ./.github/actions/sticky-comment
+        with:
+          marker: heron-pr-licenses
+          body-path: body.md
+          pr-number: ${{ github.event.pull_request.number }}
