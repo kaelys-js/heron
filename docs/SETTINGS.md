@@ -77,11 +77,7 @@ Visit <https://github.com/marketplace/stepsecurity-harden-runner>, click Install
 - Free for OSS
 - After install: appears under Repo Settings → Integrations → GitHub Apps
 
-### 6. Install Allstar GitHub App (org-only)
-
-Allstar requires an organization context. Skip for now; revisit if the repo ever moves under an org. The equivalent assertions (branch protection, code scanning, signed commits, etc.) are already enforced by our rulesets + verify-gh-config workflow.
-
-### 7. Discord webhook for `release` + `discussion` events
+### 6. Discord webhook for `release` + `discussion` events
 
 Repo Settings → Webhooks → Add webhook.
 
@@ -90,26 +86,26 @@ Repo Settings → Webhooks → Add webhook.
 - Events: select individual events → check `Releases` + `Discussions`
 - Secret: optional (Discord ignores it)
 
-### 8. Pin Roadmap 2026 issue + Introduce yourself / Start here discussions
+### 7. Pin Roadmap 2026 issue + Introduce yourself / Start here discussions
 
 Once an issue / discussion exists with the right title:
 
 - Issues: open the issue → Pin issue (top-right dropdown)
 - Discussions: open the discussion → Pin discussion (top-right dropdown)
 
-### 9. Custom Properties
+### 8. Custom Properties
 
 Not available on personal-account repos. Once a repo lives under an organization, the built-in `deployable` / `deployed` custom properties auto-populate once environments + deployments exist (we have the environments in `gh:apply-features`).
 
-### 10. Profile-level: `kaelys-js/kaelys-js` profile README
+### 9. Profile-level: `kaelys-js/kaelys-js` profile README
 
 Create the special-purpose repo `kaelys-js/kaelys-js` with a single `README.md` that GitHub renders on the user profile page. Recommended: link Heron + pinned repos + status + sponsorship link.
 
-### 11. Profile Achievements
+### 10. Profile Achievements
 
 Settings → Achievements → Profile achievements → opt in to: Pull Shark, YOLO, Galaxy Brain (if not already).
 
-### 12. Project v2 "Heron Roadmap"
+### 11. Project v2 "Heron Roadmap"
 
 User-scope project, not repo-scope.
 
@@ -119,7 +115,7 @@ User-scope project, not repo-scope.
 - Workflow: auto-add issues + PRs with label `triaged`
 - Surface from README via the Projects sidebar
 
-### 13. Saved replies (PR triage)
+### 12. Saved replies (PR triage)
 
 Settings → Saved replies → New saved reply. Recommended:
 
@@ -131,12 +127,14 @@ Settings → Saved replies → New saved reply. Recommended:
 | Help wanted | This looks like a good candidate for `help wanted`. If you'd like to take it, please comment + I'll assign. |
 | Closing as duplicate | Closing as a duplicate of #N. Continuing the conversation there. |
 
-### 14. GitHub Pages (docs site)
+### 13. GitHub Pages (docs site)
 
-If/when we extract docs from the README into a hosted site:
+The `.github/workflows/pages.yml` workflow ships docs to Pages on every push to main. After this workflow lands, enable Pages once via:
 
 - Settings → Pages → Source → "GitHub Actions"
-- Add a Pages workflow that builds docs from `/docs/`
+
+After that flip, the workflow auto-publishes on every push touching `docs/**` or `README.md`. The `pnpm gh:apply-features` script can also enable it programmatically.
+
 - Custom domain optional (currently the app uses `heron.app` for the product, so a separate Pages domain isn't urgent)
 
 ---

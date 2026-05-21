@@ -2,15 +2,18 @@
 /**
  * format-reviewers.mjs -- emits the heron-pr-reviewers sticky body.
  *
- * v1: reads .github/CODEOWNERS and the list of files changed in the PR,
+ * Reads .github/CODEOWNERS + the list of files changed in the PR,
  * matches each file to its owners, and produces a "who should review"
  * table with one final assignment recommendation.
  *
- * Reviewer-lottery extension (later): random-pick from CODEOWNERS to
- * avoid bus factor when multiple owners match.
+ * --lottery <N>: random-pick N reviewers from the CODEOWNERS union to
+ * avoid bus-factor. When there are M owners on the union and you ask
+ * for N (N < M), the sticky shows the random pick instead of the full
+ * union. Deterministic seeded by the PR head SHA so re-runs on the
+ * same commit pick the same reviewers.
  *
  * Usage:
- *   node format-reviewers.mjs <changed-files.txt> <CODEOWNERS-path> [--out path]
+ *   node format-reviewers.mjs <changed-files.txt> <CODEOWNERS-path> [--lottery N] [--seed SHA] [--out path]
  *
  *   <changed-files.txt> = one path per line (typically from
  *                         `git diff --name-only base..head`)
@@ -20,7 +23,11 @@ import { parseArgs } from 'node:util';
 import { table, verdictHeader } from './lib.mjs';
 
 const { values: opts, positionals } = parseArgs({
-  options: { out: { type: 'string' } },
+  options: {
+    out: { type: 'string' },
+    lottery: { type: 'string' },
+    seed: { type: 'string' },
+  },
   allowPositionals: true,
 });
 
@@ -94,22 +101,62 @@ for (const f of fileOwners) {
   for (const o of f.owners) allOwners.add(o);
 }
 
+/** Deterministic PRNG -- seeded by the PR head SHA (or empty string)
+ *  so re-running the lottery on the same commit always picks the same
+ *  reviewers. Mulberry32 -- 32-bit state, good enough for sampling. */
+function makeRng(seed) {
+  let state = 0;
+  for (const ch of seed || 'seed') {
+    state = (state + ch.charCodeAt(0)) >>> 0;
+    state = (state * 0x6c8e9cf5) >>> 0;
+    state = (state ^ (state >>> 13)) >>> 0;
+  }
+  return function () {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Fisher-Yates shuffle using the provided rng; returns a NEW array. */
+function shuffle(arr, rng) {
+  const out = arr.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+const ownerList = [...allOwners];
+const lotterySize = opts.lottery ? Math.max(1, parseInt(opts.lottery, 10)) : null;
+const useLottery = lotterySize !== null && ownerList.length > lotterySize;
+const picked = useLottery
+  ? shuffle(ownerList, makeRng(opts.seed || '')).slice(0, lotterySize)
+  : ownerList;
+
 const lines = [];
 const total = changedFiles.length;
 const orphaned = fileOwners.filter((f) => f.owners.length === 0).length;
 const verdict = orphaned === 0 ? 'pass' : 'warn';
-const title =
-  orphaned === 0
-    ? `Reviewers: ${allOwners.size} owner${allOwners.size === 1 ? '' : 's'} covers all ${total} changed file${total === 1 ? '' : 's'}`
+const title = useLottery
+  ? `Reviewers: ${picked.length} of ${ownerList.length} owner${ownerList.length === 1 ? '' : 's'} picked by lottery (${total} changed file${total === 1 ? '' : 's'})`
+  : orphaned === 0
+    ? `Reviewers: ${ownerList.length} owner${ownerList.length === 1 ? '' : 's'} covers all ${total} changed file${total === 1 ? '' : 's'}`
     : `Reviewers: ${orphaned} of ${total} changed files have no CODEOWNER`;
 
 lines.push(verdictHeader(title, verdict));
 lines.push('');
 
-if (allOwners.size > 0) {
-  lines.push('**Suggested reviewers** (union of CODEOWNERS for the changed paths):');
+if (picked.length > 0) {
+  const heading = useLottery
+    ? `**Suggested reviewers** (random pick of ${picked.length} from ${ownerList.length} eligible owners; seeded by commit SHA for reproducibility):`
+    : '**Suggested reviewers** (union of CODEOWNERS for the changed paths):';
+  lines.push(heading);
   lines.push('');
-  lines.push([...allOwners].map((o) => `- ${o}`).join('\n'));
+  lines.push(picked.map((o) => `- ${o}`).join('\n'));
   lines.push('');
 }
 

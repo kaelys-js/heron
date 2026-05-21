@@ -1,0 +1,99 @@
+name: Pages
+# Publishes `docs/` to GitHub Pages on every push to main.
+#
+# Strategy: upload the docs/ directory as a Pages artifact + deploy.
+# Jekyll (Pages default processor) renders the .md files with a basic
+# theme. For richer docs we can swap in mkdocs/Astro/etc. later; this
+# bootstraps the hosted site without that decision blocking the
+# infrastructure.
+#
+# Pages source must be set to "GitHub Actions" before this works. The
+# `scripts/system/apply-github-features.mjs` script enables Pages via
+# `PUT /repos/{owner}/{repo}/pages` -- run `pnpm gh:apply-features`
+# after this workflow lands for the first time.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false # never cancel a deploy mid-publish
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Assemble site directory
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          # Drop the README into the site root as index.md so Pages
+          # serves it as the landing page.
+          cp README.md _site/index.md
+          # Mirror the entire docs/ folder.
+          cp -r docs _site/docs
+          # Bring along branding assets the README references.
+          if [ -d branding/assets ]; then
+            mkdir -p _site/branding
+            cp -r branding/assets _site/branding/
+          fi
+          # Minimal Jekyll config so the root README renders cleanly.
+          cat > _site/_config.yml <<'YML'
+          title: Heron
+          description: Job-search automation for AI coding CLIs
+          theme: jekyll-theme-cayman
+          markdown: kramdown
+          relative_links:
+            enabled: true
+          include:
+            - docs
+          YML
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Deploy
+        id: deploy
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
