@@ -54,6 +54,15 @@ reviews:
     drafts: false
     base_branches:
       - main
+    # Skip bot PRs -- dependency-bump PRs from Dependabot / Renovate /
+    # github-actions are large in count (25+ per Dependabot batch) and
+    # each one cost a CodeRabbit review against the free-tier rate
+    # limit. The CI matrix + dependency-review-action already validate
+    # these; CodeRabbit's value there is low.
+    ignore_usernames:
+      - "dependabot[bot]"
+      - "renovate[bot]"
+      - "github-actions[bot]"
 
   # ── Per-path review instructions ──────────────────────────────────
   # CodeRabbit applies these as additional context when reviewing
