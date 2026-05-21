@@ -189,7 +189,46 @@ if (liveSec.secret_scanning_validity_checks?.status !== 'enabled') {
   console.log('  secret_scanning_validity_checks: ok');
 }
 
-// ── 4. Summary ────────────────────────────────────────────────
+// ── 4. GitHub Pages enable (source = "workflow") ────────────────
+// pages.yml deploys docs/ via the `actions/deploy-pages` action. That
+// step requires Pages to be enabled on the repo with `build_type =
+// workflow`. The setting is admin-scope: PUT /repos/{r}/pages creates
+// or updates the Pages config. When the requesting token lacks the
+// admin scope (GITHUB_TOKEN does, GH_USER_PAT may not), the call
+// returns 403 -- log + continue so the workflow stays green; the
+// maintainer can flip Settings → Pages → "GitHub Actions" by hand.
+console.log('▸ GitHub Pages');
+const pagesLive = gh('GET', `/repos/${REPO}/pages`);
+if (pagesLive?.__error?.includes('Not Found')) {
+  console.log('  pages: missing -> creating with build_type=workflow');
+  driftCount++;
+  if (!VERIFY_ONLY) {
+    const create = gh('POST', `/repos/${REPO}/pages`, { build_type: 'workflow' });
+    if (create?.__error) {
+      if (/Resource not accessible/i.test(create.__error)) {
+        console.log(
+          '  (skip) pages: PAT lacks admin scope -- flip Settings -> Pages -> Source = "GitHub Actions" manually.',
+        );
+      } else {
+        console.log(`  pages: create failed -- ${create.__error.split('\n')[0]}`);
+      }
+    } else {
+      console.log('  pages: created');
+    }
+  }
+} else if (pagesLive?.build_type !== 'workflow') {
+  logChange('pages.build_type', pagesLive?.build_type || 'unset', 'workflow');
+  if (!VERIFY_ONLY) {
+    const update = gh('PUT', `/repos/${REPO}/pages`, { build_type: 'workflow' });
+    if (update?.__error && !/Resource not accessible/i.test(update.__error)) {
+      console.log(`  pages: update failed -- ${update.__error.split('\n')[0]}`);
+    }
+  }
+} else {
+  console.log('  pages.build_type: ok (workflow)');
+}
+
+// ── 5. Summary ────────────────────────────────────────────────
 console.log('');
 if (driftCount === 0) {
   console.log('✓ No drift -- features state matches SSOT.');
