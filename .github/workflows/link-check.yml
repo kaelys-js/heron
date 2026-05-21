@@ -37,6 +37,7 @@ concurrency:
 
 jobs:
   lychee:
+    name: Link check (lychee)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

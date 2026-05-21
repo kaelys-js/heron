@@ -148,7 +148,8 @@ jobs:
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
 
@@ -162,7 +163,8 @@ jobs:
       # repo content (.mise.toml, lockfiles) that's only mutable via
       # merged PRs that already passed PR CI, so a malicious PR can't
       # poison the release-time cache without first getting code merged.
-      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4 # zizmor: ignore[cache-poisoning]
+      - name: Setup mise (Node + pnpm from .mise.toml)
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4 # zizmor: ignore[cache-poisoning]
         with:
           experimental: true
           cache: true
@@ -175,7 +177,8 @@ jobs:
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
       # zizmor: ignore[cache-poisoning] -- see jdx/mise-action note above.
       # pnpm-lock.yaml is integrity-verified at install time.
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
+      - name: Cache pnpm store
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -187,7 +190,8 @@ jobs:
       # zizmor: ignore[cache-poisoning] -- electron downloads are
       # SHA256-verified by electron-builder against the version pinned
       # in ui/electron/package.json (which keys the cache).
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
+      - name: Cache electron-builder downloads
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
         with:
           path: |
             ~/.cache/electron
@@ -331,7 +335,8 @@ jobs:
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
 
@@ -340,7 +345,8 @@ jobs:
       # zizmor/cache-poisoning -- same release-only-trigger rationale
       # as the build-desktop job above (this workflow runs only on
       # maintainer-pushed tags / workflow_call from release.yml).
-      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4 # zizmor: ignore[cache-poisoning]
+      - name: Setup mise (Node + pnpm + Ruby from .mise.toml)
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4 # zizmor: ignore[cache-poisoning]
         with:
           experimental: true
           cache: true
@@ -352,7 +358,8 @@ jobs:
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
       # zizmor: ignore[cache-poisoning] -- pnpm integrity-verifies from
       # the lockfile that keys this cache; see build-desktop job notes.
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
+      - name: Cache pnpm store
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -364,7 +371,8 @@ jobs:
       # zizmor: ignore[cache-poisoning] -- SPM dependencies are SHA-
       # pinned in Package.resolved (which keys the cache); xcodebuild
       # re-verifies on restore.
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
+      - name: Cache Xcode DerivedData + SPM packages
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
         with:
           path: |
             ~/Library/Developer/Xcode/DerivedData
@@ -378,7 +386,8 @@ jobs:
       # zizmor: ignore[cache-poisoning] -- bundler verifies gems
       # against the Gemfile.lock checksums; the lockfile is committed
       # and changes only via PR.
-      - uses: ruby/setup-ruby@97ecb7b512899eb71ab1bf2310a624c6f1589ac6 # v1.308.0 # zizmor: ignore[cache-poisoning]
+      - name: Setup Ruby + bundler-cache (Fastlane gems)
+        uses: ruby/setup-ruby@97ecb7b512899eb71ab1bf2310a624c6f1589ac6 # v1.308.0 # zizmor: ignore[cache-poisoning]
         with:
           bundler-cache: true
           working-directory: ui/ios/App
