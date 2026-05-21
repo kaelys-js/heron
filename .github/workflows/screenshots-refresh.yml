@@ -67,6 +67,25 @@ jobs:
         uses: ./.github/actions/setup-toolchain
         with:
           apply_brand: true
+          # Warm Turbo cache speeds the `pnpm brand:apply` codegen +
+          # any downstream pnpm task that this workflow may invoke
+          # (currently just the screenshot capture, but turbo's
+          # graph-aware fingerprinting makes the warm path noticeably
+          # faster on incremental pushes).
+          turbo_cache: true
+
+      # Cache the Playwright browsers binary store so `playwright install`
+      # below is a near-noop on warm cache. Pre-fix every run downloaded
+      # Chromium + deps from scratch (~30s). Same pattern test.yml uses
+      # for its Vitest browser-mode + E2E steps; key shared on
+      # pnpm-lock.yaml so a Playwright bump in the lockfile invalidates.
+      - name: Cache Playwright browsers (screenshots)
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
 
       - name: Install Playwright browsers (Chromium only)
         run: pnpm --filter ui exec playwright install chromium --with-deps

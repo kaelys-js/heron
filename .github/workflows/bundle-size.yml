@@ -55,6 +55,12 @@ jobs:
           # received a shutdown signal."). Shorter build = smaller
           # cancellation window.
           turbo_cache: true
+          # Skip the cryptography wheel install -- bundle-size never
+          # boots the orchestrator (it just runs `pnpm size`), so the
+          # ~30s pip install was pure waste. The setup-toolchain
+          # composite installs Python deps by default for workflows
+          # that DO boot the dashboard.
+          install_python_deps: false
 
       - name: Build dashboard (prod bundle)
         run: pnpm --filter ui build
