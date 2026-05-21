@@ -1,7 +1,7 @@
 # E2E tests (Playwright)
 
-HP5 -- top-down user-flow smoke tests against `pnpm preview` (prod
-build). Complement the per-component Vitest browser-mode suite.
+HP5 -- top-down user-flow smoke tests against `pnpm --filter ui preview`
+(prod build). Complement the per-component Vitest browser-mode suite.
 
 ## Why a separate suite
 

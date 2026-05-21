@@ -154,8 +154,7 @@ always-parens arrow functions, brace spacing.
 Run:
 
 - `pnpm format` -- formats everything (biome + prettier)
-- `pnpm format:check` -- CI check
-- `pnpm format:svelte` -- only the prettier pass on `.svelte` files
+- `pnpm format:check` -- CI check (biome + prettier in --check mode)
 
 Lefthook pre-commit auto-runs both formatters on staged files of the
 appropriate types -- you generally don't need to invoke them manually.

@@ -16,7 +16,7 @@ name: PR bots
 #                       instructions. Fires on push-to-main.
 #   • first-timer-help -- extends welcome.yml: when a NEW contributor
 #                       opens their first PR, drop a comment with the
-#                       exact `pnpm test` / `pnpm test:e2e` /
+#                       exact `pnpm test` / `pnpm --filter ui test:e2e` /
 #                       `pnpm act:test` commands they need to verify
 #                       locally before requesting review.
 #
