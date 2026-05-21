@@ -78,6 +78,31 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      - name: Setup toolchain
+        uses: ./.github/actions/setup-toolchain
+        with:
+          install_deps: "true"
+
+      - name: Regenerate social preview PNG
+        # Keeps ui/static/og/default.png fresh so the maintainer can
+        # upload it via Settings -> General -> Social preview at any
+        # time and pick up the latest brand. GitHub has no public API
+        # to push the social preview image; this is the cleanest
+        # automation possible until that API ships.
+        run: pnpm og:generate
+
+      - name: Upload social preview PNG as artifact
+        # Persists ui/static/og/default.png from the ephemeral runner
+        # so the maintainer can download it from the Actions run page
+        # + drag into Settings -> Social preview. 90-day retention is
+        # the GitHub default; enough lead time across rebrands.
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: social-preview-png
+          path: ui/static/og/default.png
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Reconcile
         env:
           GH_TOKEN: ${{ secrets.GH_USER_PAT || secrets.GITHUB_TOKEN }}

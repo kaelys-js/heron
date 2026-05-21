@@ -244,6 +244,64 @@ async function main() {
     }
   }
 
+  // ── 4b. Full settings audit (read-only checks for fields the script
+  //         can read but won't apply silently) ─────────────────────
+  // Surfaces visible-via-API state that doesn't fit the apply path
+  // above: visibility, has_wiki, has_projects, has_pages, has_downloads,
+  // default_branch, archived, image_url (social preview), license,
+  // and merge-policy toggles (allow_squash_merge / allow_merge_commit /
+  // allow_rebase_merge / allow_update_branch). Each is reported as a
+  // (notice) when the live value differs from the expected default --
+  // not as drift, because some of these are subjective preferences
+  // and forcing them via PATCH would be too aggressive. The notice
+  // gives the maintainer the actionable signal to fix in UI.
+  const EXPECTED_SETTINGS = {
+    has_wiki: false,
+    has_projects: true,
+    has_pages: true,
+    has_downloads: true,
+    default_branch: 'main',
+    archived: false,
+    disabled: false,
+    allow_squash_merge: true,
+    allow_merge_commit: false,
+    allow_rebase_merge: false,
+    allow_update_branch: true,
+    visibility: 'public',
+  };
+  const auditDiff = [];
+  for (const [k, expected] of Object.entries(EXPECTED_SETTINGS)) {
+    if (repoState[k] === undefined) continue; // field not visible to token
+    if (repoState[k] !== expected) {
+      auditDiff.push({ key: k, before: repoState[k], after: expected });
+    }
+  }
+  if (repoState.image_url === null || repoState.image_url === undefined) {
+    auditDiff.push({
+      key: 'image_url',
+      before: '(default auto-generated)',
+      after: '(custom upload via UI)',
+    });
+  }
+  if (!repoState.license || repoState.license.spdx_id === 'NOASSERTION') {
+    auditDiff.push({
+      key: 'license',
+      before: repoState.license?.spdx_id || 'NOASSERTION',
+      after: 'MIT (or any SPDX)',
+    });
+  }
+  if (auditDiff.length > 0) {
+    console.log('▸ Settings audit (read-only — see notices)');
+    for (const d of auditDiff) {
+      console.log(
+        `  (notice) ${d.key}: ${JSON.stringify(d.before)} (expected ${JSON.stringify(d.after)})`,
+      );
+    }
+    // Don't increment driftCount -- these are notices, not auto-applied.
+  } else {
+    console.log('▸ Settings audit: ok');
+  }
+
   // ── 5. Branch protection rulesets ──────────────────────────────
   const liveRulesets = gh('GET', `/repos/${repoSlug}/rulesets`) || [];
   const desiredRulesets = readRulesets();
