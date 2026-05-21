@@ -1,0 +1,125 @@
+name: PR content gates
+# Replacement gates for the 4 Enterprise-only ruleset rules we cannot
+# apply on a personal-account Free + public repo:
+#
+#   1. `commit_message_pattern`       (Enterprise only) → per-commit Conventional Commits + DCO
+#   2. `max_file_size`                (Team org-owned private only) → file size <= 5MB
+#   3. `max_file_path_length`         (Team org-owned private only) → path length <= 255 chars
+#   4. `file_extension_restriction`   (Team org-owned private only) → file extensions allowlist
+#
+# Each job becomes a required status check in `.github/rulesets/main.json`,
+# so the gate quality matches what the ruleset rules would have given us.
+#
+# Lefthook pre-push mirrors each gate (same logic, same exit codes) so
+# violations are caught before the PR is pushed.
+#
+# Required-check contexts (referenced by main.json + verify-required-checks):
+#   PR content gates / Per-commit Conventional Commits
+#   PR content gates / File size <= 5MB
+#   PR content gates / Path length <= 255 chars
+#   PR content gates / File extensions allowlist
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-content-gates-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  per-commit-conventional:
+    name: Per-commit Conventional Commits
+    # Lints EVERY commit in the PR (not just the squash title). A
+    # 10-commit branch with one sloppy middle commit fails here.
+    # The squash-merge happy path means the title becomes the commit,
+    # but maintainers may merge-commit certain release-please PRs --
+    # individual commits surviving the merge need to pass too.
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout PR with full history
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          # fetch every commit in the PR -- needed because we lint each.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Lint every commit in the PR
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        # Shared with lefthook pre-push via scripts/system/check-content-gates.sh.
+        run: bash scripts/system/check-content-gates.sh per-commit-conventional "$BASE_SHA" "$HEAD_SHA"
+
+  file-size-gate:
+    name: File size <= 5MB
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Checkout PR
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check that no file added/modified in this PR exceeds 5MB
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: bash scripts/system/check-content-gates.sh file-size "$BASE_SHA" "$HEAD_SHA"
+
+  path-length-gate:
+    name: Path length <= 255 chars
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Checkout PR
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check that no path added in this PR exceeds 255 chars
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: bash scripts/system/check-content-gates.sh path-length "$BASE_SHA" "$HEAD_SHA"
+
+  file-extensions-gate:
+    name: File extensions allowlist
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Checkout PR
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Block binary + key extensions
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: bash scripts/system/check-content-gates.sh file-extensions "$BASE_SHA" "$HEAD_SHA"
