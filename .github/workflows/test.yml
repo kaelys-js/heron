@@ -524,7 +524,7 @@ jobs:
         # coverage gate is enforced -- pre-fix a broken upload silently
         # passed.
         if: needs.changes.outputs.ts == 'true'
-        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
           files: ui/coverage/lcov.info
           flags: ts
@@ -765,7 +765,7 @@ jobs:
       - name: Upload coverage to Codecov (ios flag)
         # G12 -- see the ts upload above for OIDC rationale.
         if: always() && needs.changes.outputs.ios == 'true' && hashFiles('ui/ios/App/fastlane/coverage/cobertura.xml') != ''
-        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
           files: ui/ios/App/fastlane/coverage/cobertura.xml
           flags: ios
