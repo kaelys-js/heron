@@ -289,3 +289,39 @@ jobs:
           } > /tmp/comment.md
           gh pr comment "$PR" --body-file /tmp/comment.md
           echo "::notice::Welcomed first-time contributor @$AUTHOR on PR #$PR"
+
+  # ── auto-assign-author -- PR appears in author's Assigned dashboard ──
+  # GitHub's "Assigned" tab is the only built-in way to surface "PRs I
+  # opened" alongside "PRs assigned to me for review". Without this,
+  # every author has to remember to self-assign manually. Bot PRs skip
+  # -- they don't browse dashboards.
+  auto-assign-author:
+    name: Auto-assign PR author
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: write
+    if: |
+      github.event_name == 'pull_request_target' &&
+      (github.event.action == 'opened' || github.event.action == 'reopened') &&
+      github.event.pull_request.user.type != 'Bot'
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Assign PR author
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          set -euo pipefail
+          # gh pr edit --add-assignee is idempotent -- re-running on an
+          # already-assigned PR is a no-op + exits 0. Safe to fire on
+          # both `opened` and `reopened`.
+          gh pr edit "$PR" --add-assignee "$AUTHOR"
+          echo "::notice::Assigned @$AUTHOR to PR #$PR (PR author)."
