@@ -42,6 +42,7 @@ permissions:
 
 jobs:
   release-please:
+    name: Release Please (semver + CHANGELOG + tag)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -58,7 +59,8 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5
+      - name: Run release-please
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5
         id: rp
         with:
           config-file: release-please-config.json
@@ -68,6 +70,33 @@ jobs:
           # the workflow_call below, which inherits the same run context
           # without needing a PAT.
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Visible outcome in the Actions summary tab. Release Please's own
+      # output is opaque (just `release_created: true|false`); this step
+      # makes the result legible at a glance + tells the maintainer what
+      # to expect next (the build-natives workflow_call to native-release.yml).
+      - name: Log release-please outcome
+        if: always()
+        env:
+          RELEASE_CREATED: ${{ steps.rp.outputs.release_created }}
+          TAG_NAME: ${{ steps.rp.outputs.tag_name }}
+          VERSION: ${{ steps.rp.outputs.major }}.${{ steps.rp.outputs.minor }}.${{ steps.rp.outputs.patch }}
+        run: |
+          if [ "$RELEASE_CREATED" = "true" ]; then
+            echo "::notice::Released $TAG_NAME (v$VERSION). native-release.yml fires next."
+            {
+              echo "### 🚀 Release cut: $TAG_NAME"
+              echo ""
+              echo "Version: \`v$VERSION\`"
+              echo ""
+              echo "GitHub Release created + tag pushed. \`native-release.yml\` now builds"
+              echo "DMG / .exe / .AppImage / iOS TestFlight artefacts and attaches them"
+              echo "to the Release."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::notice::No release this run (no bump-worthy commits since last tag, or release PR not yet merged)."
+            echo "### 🟦 No release cut this run" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   # When Release Please cuts a real release (i.e. the release PR was just
   # merged), kick off the cross-platform build. workflow_call within the

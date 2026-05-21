@@ -1,10 +1,25 @@
 name: PR quality
 # G20 -- lightweight PR-title + size enforcement.
 #
-# Semantic PR title check is a 2s no-op when the title is already
-# Conventional Commits format (which Release Please depends on). The
-# size labeler adds XS/S/M/L/XL labels based on diff lines so reviewers
-# can budget time + we can spot mega-PRs early.
+# Two jobs, both fast (<5s each on the typical PR):
+#
+# 1. **Conventional Commits PR title** -- amannn/action-semantic-pull-request
+#    validates the title matches the Conventional Commits grammar
+#    (`<type>(<scope>): <subject>`). The 11 allowed types match
+#    release-please-config.json so the title becomes the squash-merge
+#    commit message that Release Please then categorises into
+#    CHANGELOG.md. `subjectPattern` enforces lowercase subject so
+#    `feat: Add retry helper` is rejected in favour of
+#    `feat(api): add retry helper`.
+#
+# 2. **PR size label** -- pascalgn/size-label-action tags every PR
+#    with `size/XS|S|M|L|XL` based on additions+deletions excluding
+#    auto-generated noise (lockfile, snapshots, icons, CHANGELOG).
+#    Bot PRs are skipped (Renovate / Dependabot self-size via their
+#    own labels). Helps reviewers budget time + flags mega-PRs early.
+#
+# Fires on every PR edit (opened/edited/synchronize/reopened) so a
+# title rename or force-push gets re-validated.
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
@@ -29,7 +44,9 @@ jobs:
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
-      - uses: amannn/action-semantic-pull-request@0723387faaf9b38adef4775cd42cfd5155ed6017 # v5.5.3
+      - name: Validate Conventional Commits title
+        id: semantic
+        uses: amannn/action-semantic-pull-request@0723387faaf9b38adef4775cd42cfd5155ed6017 # v5.5.3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -55,6 +72,24 @@ jobs:
             The PR-title subject (after the `type:` prefix) must start
             lowercase. e.g. `feat(api): add retry helper`, not
             `feat: Add retry helper`.
+
+      - name: Log title-check outcome
+        if: always()
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if [ "${{ steps.semantic.outcome }}" = "success" ]; then
+            echo "::notice::Conventional Commits title check passed: \"$TITLE\""
+            {
+              echo "### ✅ Conventional Commits title check passed"
+              echo ""
+              echo "PR title: \`$TITLE\`"
+              echo ""
+              echo "This title becomes the squash-merge commit subject + feeds Release Please into CHANGELOG.md."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::PR title \"$TITLE\" failed the Conventional Commits check. Rename to match \`<type>(<scope>): <lowercase subject>\`."
+          fi
 
   size-label:
     name: PR size label
