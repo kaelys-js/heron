@@ -189,7 +189,8 @@ jobs:
 
           if [ -n "$EXISTING_ID" ]; then
             # Update in place. gh api PATCH on the comment id.
-            BODY=$(cat /tmp/comment.md | jq -Rs .)
+            # `--raw-field body=@<path>` reads the body straight from
+            # the file -- no need to cat-and-encode via jq.
             gh api "repos/$GH_REPO/issues/comments/$EXISTING_ID" \
               --method PATCH \
               --raw-field body=@/tmp/comment.md > /dev/null
