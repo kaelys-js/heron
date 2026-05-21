@@ -30,15 +30,15 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Avoid overlapping releases.
-concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: false
-
 # Top-level is read-only. release-please needs writes to create
 # branches + PRs + tags + comment on issues; declared inside the job.
 permissions:
   contents: read
+
+# Avoid overlapping releases.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   release-please:

@@ -129,6 +129,7 @@
     "validate:plists": "python3 scripts/system/validate-plists.py",
     "validate:tiny-configs": "node scripts/system/validate-tiny-configs.mjs",
     "validate:version-sync": "node scripts/system/validate-version-sync.mjs",
+    "validate:workflows": "node scripts/system/verify-workflow-quality.mjs",
     "validate:xml": "bash scripts/system/validate-xml.sh",
     "verify:comment-style": "node scripts/system/verify-comment-style.mjs",
     "verify:comment-style:test": "node scripts/system/verify-comment-style.test.mjs",

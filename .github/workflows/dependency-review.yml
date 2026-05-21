@@ -29,6 +29,11 @@ concurrency:
 
 jobs:
   dependency-review:
+    # `name:` matches the key so the branch-protection required-check
+    # context (`Dependency Review / dependency-review`) stays stable.
+    # Renaming this string would break the rule until the ruleset SSOT
+    # is also updated.
+    name: dependency-review
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

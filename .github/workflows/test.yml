@@ -838,9 +838,35 @@ jobs:
       # cache enabled). No per-tool curl / pip / gem / apt install needed
       # -- fresh-clone reproducibility is the whole point of mise.
 
+      # `validate:workflows` needs js-yaml from node_modules. Install
+      # only what's needed (root deps, not the ui/electron workspaces)
+      # so the install is fast on warm cache. Same `pnpm-` cache key as
+      # the ts job so the pnpm store cross-pollinates.
+      - name: Cache pnpm store (format job)
+        if: needs.changes.outputs.format == 'true'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.local/share/pnpm/store/v3
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-
+      - name: Install root node_modules (for validate:workflows)
+        if: needs.changes.outputs.format == 'true'
+        # --filter=. installs only the root manifest's deps, skipping
+        # ui/ui-electron workspaces. Keeps the format job lean.
+        run: pnpm install --filter=. --frozen-lockfile
+
       - name: actionlint .github/workflows/*.yml
         if: needs.changes.outputs.format == 'true'
         run: actionlint -color
+
+      # Naming / docstring / structure discipline across workflows.
+      # Complements actionlint (syntax), zizmor (security), and
+      # verify-workflow-pins (third-party SHA pins). See
+      # scripts/system/verify-workflow-quality.mjs for the 7 rules.
+      - name: Workflow quality (header / permissions / concurrency / names / order)
+        if: needs.changes.outputs.format == 'true'
+        run: pnpm validate:workflows
 
       - name: ruff format --check
         if: needs.changes.outputs.format == 'true'
