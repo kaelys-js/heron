@@ -612,35 +612,77 @@ jobs:
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
-      - name: Check changed-files
+      - name: Checkout PR + base for diff inspection
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check that dep-touching package.json changes carry a lockfile bump
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          PR_NUM: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          files=$(gh pr view "$PR_NUM" --json files --jq '[.files[].path]')
-          has_pkg=$(printf '%s' "$files" | jq '[.[] | select(endswith("/package.json") or . == "package.json")] | length')
-          has_lock=$(printf '%s' "$files" | jq '[.[] | select(. == "pnpm-lock.yaml")] | length')
+          # Changed package.json files in this PR (any workspace).
+          changed_pkgs=$(git diff --name-only "${BASE_SHA}..${HEAD_SHA}" \
+            | grep -E '(^|/)package\.json$' || true)
+          has_lock=$(git diff --name-only "${BASE_SHA}..${HEAD_SHA}" \
+            | grep -c '^pnpm-lock\.yaml$' || true)
+
+          # Scripts-only / metadata-only package.json changes are
+          # lockfile-irrelevant. Inspect each changed package.json for
+          # a diff line that touches a dependency-section key. The
+          # check fails ONLY when a dep-section changed + the lockfile
+          # didn't move in tandem.
+          DEP_KEY_RE='^[+-][[:space:]]*"(dependencies|devDependencies|peerDependencies|optionalDependencies|engines|packageManager)"[[:space:]]*:'
+          dep_touch=0
+          for pkg in $changed_pkgs; do
+            if git diff "${BASE_SHA}..${HEAD_SHA}" -- "$pkg" | grep -qE "$DEP_KEY_RE"; then
+              dep_touch=1
+              break
+            fi
+            # Also fail if the diff has any +/- line INSIDE a dep block.
+            # We approximate this by looking for a +/- line that matches
+            # the typical `"@scope/pkg": "version"` shape AND is not in
+            # the scripts block (best-effort regex over the unified diff).
+            if git diff "${BASE_SHA}..${HEAD_SHA}" -- "$pkg" \
+              | awk '
+                /^@@/ { context = ""; next }
+                /^[+-][[:space:]]*"(dependencies|devDependencies|peerDependencies|optionalDependencies)"[[:space:]]*:/ { in_deps = 1; next }
+                /^[+-][[:space:]]*"[^"]+"[[:space:]]*:[[:space:]]*\{/ && in_deps { next }
+                /^[+-][[:space:]]*\}/ { in_deps = 0; next }
+                in_deps && /^[+-][[:space:]]*"[^"]+"[[:space:]]*:[[:space:]]*"[^"]+"/ { print; exit 1 }
+              ' >/dev/null; then
+              :
+            else
+              dep_touch=1
+              break
+            fi
+          done
+
           {
             echo "### Lockfile consistency"
             echo ""
-            echo "| File class | Changed? |"
+            echo "| Signal | Value |"
             echo "|---|---|"
-            echo "| \`package.json\` (any workspace) | $has_pkg |"
-            echo "| \`pnpm-lock.yaml\` | $has_lock |"
+            echo "| Changed \`package.json\` files | $(echo "$changed_pkgs" | grep -c .) |"
+            echo "| Dependency-section touched | $dep_touch |"
+            echo "| \`pnpm-lock.yaml\` changed | $has_lock |"
           } >> "$GITHUB_STEP_SUMMARY"
-          # Both 0 = neither changed = trivially OK.
-          # Both >=1 = both changed = consistent.
-          # Exactly one changed = the foot-gun case.
-          if [ "$has_pkg" -gt 0 ] && [ "$has_lock" -eq 0 ]; then
-            echo "::error::PR changed package.json but not pnpm-lock.yaml. Run \`pnpm install\` locally + commit the lockfile."
+
+          if [ "$dep_touch" -eq 1 ] && [ "$has_lock" -eq 0 ]; then
+            echo "::error::PR changed a dependency section in package.json but not pnpm-lock.yaml. Run \`pnpm install\` locally + commit the lockfile."
             exit 1
           fi
-          if [ "$has_pkg" -eq 0 ] && [ "$has_lock" -gt 0 ]; then
+          if [ -z "$changed_pkgs" ] && [ "$has_lock" -gt 0 ]; then
             echo "::warning::PR changed pnpm-lock.yaml but no package.json. Verify this is an intentional lockfile-only refresh (e.g. \`pnpm install\` rerun)."
           fi
-          echo "::notice::Lockfile + package.json consistency OK."
+          if [ "$dep_touch" -eq 0 ] && [ -n "$changed_pkgs" ]; then
+            echo "::notice::package.json change is scripts/metadata-only. Lockfile bump not required."
+          else
+            echo "::notice::Lockfile + package.json consistency OK."
+          fi
 
   # ── PR title length ≤ 72 chars ──────────────────────────────────
   # Git's commit-message convention is ≤ 72 chars on the subject

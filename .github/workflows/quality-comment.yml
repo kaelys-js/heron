@@ -57,9 +57,13 @@ jobs:
           RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
           set -euo pipefail
+          # `gh api --paginate` emits multiple JSON objects concatenated
+          # (one per page). We need them merged into one `{jobs: [...]}`.
+          # `--slurp` is a `jq` flag, not a `gh api` flag (that was the bug
+          # that took quality-comment red on main). Pipe through `jq -s` to
+          # slurp the pages into an array, then merge the `jobs` arrays.
           gh api "repos/$GH_REPO/actions/runs/$RUN_ID/jobs" --paginate \
-            --slurp \
-            --jq '{jobs: (map(.jobs) | add)}' > jobs.json
+            | jq -s '{jobs: (map(.jobs) | add)}' > jobs.json
           echo "::notice::Fetched $(jq '.jobs | length' jobs.json) jobs for run $RUN_ID."
 
       - name: Format quality sticky body
