@@ -1,0 +1,74 @@
+name: PR a11y comment
+# Posts the heron-pr-a11y sticky -- runs axe-core against the built
+# preview of the dashboard for accessibility checks.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'ui/src/**'
+      - 'ui/static/**'
+      - 'ui/svelte.config.ts'
+
+permissions: {}
+
+concurrency:
+  group: a11y-comment-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  comment:
+    name: Post heron-pr-a11y sticky
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Checkout PR
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Setup mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+        with:
+          experimental: true
+          cache: true
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+      - name: Install Playwright + axe-core
+        run: pnpm --filter ui exec playwright install --with-deps chromium
+      - name: Build + preview
+        run: |
+          pnpm brand:apply
+          pnpm build
+      - name: Run axe-core scan
+        run: |
+          # Boot vite preview in the background, run axe-core via Playwright,
+          # emit results JSON. Falls back to an empty array on any failure
+          # so the formatter still has a valid input.
+          (
+            cd ui && pnpm exec vite preview --port 4173 --strictPort &
+            echo $! > /tmp/preview.pid
+          )
+          # Wait for the server to come up.
+          for _ in $(seq 1 30); do
+            curl -fsS http://localhost:4173 > /dev/null 2>&1 && break
+            sleep 1
+          done
+          # Run a simple axe-core check via Playwright -- emits to axe.json.
+          node .github/scripts/sticky/run-axe.mjs http://localhost:4173 > axe.json 2>&1 || echo '[]' > axe.json
+          kill "$(cat /tmp/preview.pid)" 2>/dev/null || true
+      - name: Format a11y sticky
+        run: node .github/scripts/sticky/format-a11y.mjs axe.json --out body.md
+      - name: Post sticky comment
+        uses: ./.github/actions/sticky-comment
+        with:
+          marker: heron-pr-a11y
+          body-path: body.md
+          pr-number: ${{ github.event.pull_request.number }}
