@@ -27,6 +27,15 @@ on:
 permissions:
   contents: read
   issues: write
+  # NB: GITHUB_TOKEN cannot grant the `administration` scope (only PATs
+  # can). That means GET /repos/{slug} returns admin-only fields
+  # (allow_auto_merge, delete_branch_on_merge, security_and_analysis.*)
+  # as undefined here. apply-github-config.mjs treats undefined as
+  # "field not visible to this token" and skips it rather than
+  # false-positive-flagging it as drift. The drift checks that DO
+  # work under GITHUB_TOKEN: description, homepage, topics, rulesets,
+  # private vulnerability reporting -- which covers the main concerns
+  # this workflow exists to catch.
 
 concurrency:
   group: verify-gh-config-${{ github.run_id }}
