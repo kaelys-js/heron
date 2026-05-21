@@ -83,26 +83,11 @@ jobs:
         with:
           install_deps: "true"
 
-      - name: Regenerate social preview PNG
-        # Keeps ui/static/og/default.png fresh so the maintainer can
-        # upload it via Settings -> General -> Social preview at any
-        # time and pick up the latest brand. GitHub has no public API
-        # to push the social preview image; this is the cleanest
-        # automation possible until that API ships.
-        run: pnpm og:generate
-
-      - name: Upload social preview PNG as artifact
-        # Persists ui/static/og/default.png from the ephemeral runner
-        # so the maintainer can download it from the Actions run page
-        # + drag into Settings -> Social preview. 90-day retention is
-        # the GitHub default; enough lead time across rebrands.
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: social-preview-png
-          path: ui/static/og/default.png
-          if-no-files-found: error
-          retention-days: 90
-
+      # IMPORTANT ordering: reconcile runs BEFORE og:generate so the
+      # Pages enable + environment/label/validity-check reconciliation
+      # ships even if PNG generation fails (chromium install issues,
+      # disk full, etc.). The PNG regen is a "nice to have" that
+      # should never gate the actual reconcile work.
       - name: Reconcile
         env:
           GH_TOKEN: ${{ secrets.GH_USER_PAT || secrets.GITHUB_TOKEN }}
@@ -114,3 +99,36 @@ jobs:
           else
             node scripts/system/apply-github-features.mjs
           fi
+
+      - name: Install Playwright chromium for OG generation
+        # generate-og-cards.mjs uses Playwright + chromium to render
+        # the social-card HTML. Default ubuntu runner doesn't bundle
+        # the chromium binary; --with-deps adds the system libs too.
+        # Failure here is non-fatal (continue-on-error) -- the
+        # reconcile already shipped above; missing PNG just means the
+        # artifact upload step (also continue-on-error) is skipped.
+        run: pnpm --filter ui exec playwright install --with-deps chromium
+        continue-on-error: true
+
+      - name: Regenerate social preview PNG
+        # Keeps ui/static/og/default.png fresh so the maintainer can
+        # upload it via Settings -> General -> Social preview at any
+        # time and pick up the latest brand. GitHub has no public API
+        # to push the social preview image; this is the cleanest
+        # automation possible until that API ships.
+        # continue-on-error because the reconcile already happened
+        # and the artifact upload below also handles missing files.
+        run: pnpm og:generate
+        continue-on-error: true
+
+      - name: Upload social preview PNG as artifact
+        # Persists ui/static/og/default.png from the ephemeral runner
+        # so the maintainer can download it from the Actions run page
+        # + drag into Settings -> Social preview. Skips silently if
+        # the PNG didn't generate (e.g. chromium install failed).
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: social-preview-png
+          path: ui/static/og/default.png
+          if-no-files-found: ignore
+          retention-days: 90
