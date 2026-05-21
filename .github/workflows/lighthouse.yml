@@ -1,8 +1,8 @@
 name: Lighthouse CI
 # HP2 -- perf + a11y + SEO budgets enforced on the SvelteKit dashboard.
-# Boots `pnpm preview` against the prod-build static bundle and runs
-# Lighthouse against 2 canonical routes (/login as the cold-start, /inbox
-# as the warm dashboard).
+# Boots `pnpm --filter ui preview` against the prod-build static bundle
+# and runs Lighthouse against 2 canonical routes (/login as the cold-
+# start, /inbox as the warm dashboard).
 #
 # Budgets (lighthouserc.json):
 #   performance      ≥85 (error if below)

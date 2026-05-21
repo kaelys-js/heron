@@ -213,7 +213,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # When Renovate's backlog grows past N PRs, nobody's reviewing
         # them. Open an alert so the maintainer either auto-merges the
-        # safe ones (`pnpm renovate:merge-all`) or triages the rest.
+        # safe ones (review + bulk-merge through the GH UI) or triages
+        # the rest.
         run: |
           set -euo pipefail
           OPEN=$(gh pr list --state open --author "renovate[bot]" --json number --jq 'length')

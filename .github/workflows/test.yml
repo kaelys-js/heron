@@ -868,6 +868,22 @@ jobs:
         if: needs.changes.outputs.format == 'true'
         run: pnpm validate:workflows
 
+      # Catch stale `pnpm <script>` references across workflows / docs /
+      # shell scripts. See scripts/system/verify-pnpm-scripts.mjs --
+      # validates every `pnpm X` invocation against the relevant
+      # package.json::scripts (root, ui, ui/electron).
+      - name: pnpm script references (no stale doc / workflow names)
+        if: needs.changes.outputs.format == 'true'
+        run: pnpm validate:pnpm-scripts
+
+      # Catch drift between app.html inline-script content + the
+      # sha256 hashes declared in svelte.config.ts's CSP script-src
+      # array. If a hash goes stale, CSP silently blocks the inline
+      # script. See scripts/system/verify-csp-hashes.mjs.
+      - name: CSP hashes vs app.html inline scripts
+        if: needs.changes.outputs.format == 'true'
+        run: pnpm validate:csp-hashes
+
       - name: ruff format --check
         if: needs.changes.outputs.format == 'true'
         run: git ls-files '*.py' | xargs -r ruff format --check
