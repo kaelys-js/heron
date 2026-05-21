@@ -77,7 +77,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Resolve PR number + compose comment
+      - name: Resolve PR + compose sticky comment
         id: compose
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -88,6 +88,7 @@ jobs:
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
           CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          SERVER_URL: ${{ github.server_url }}
         run: |
           set -euo pipefail
 
@@ -107,51 +108,72 @@ jobs:
           SHORT_SHA="${HEAD_SHA:0:7}"
           echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
 
-          # 2. Compose the marker block + the standalone comment.
+          # 2. Resolve job-level outcomes for the table breakdown.
+          # We name each canonical check (Tests/* and CodeQL Analyze/*)
+          # so reviewers see the same context strings branch protection
+          # uses; anything else is rolled up under "Other".
+          JOBS_JSON=$(gh api "repos/$GH_REPO/actions/runs/$RUN_ID/jobs" --paginate)
+
+          # Generate the "Job breakdown" rows. `duration_s` is the
+          # difference between completed_at + started_at; format as Nm Ms.
+          rows=$(printf '%s' "$JOBS_JSON" | jq -r '
+            [.jobs // [] | .[] |
+              select(.conclusion != null) |
+              {name, conclusion,
+               dur: ((((.completed_at | fromdateiso8601) // 0) - ((.started_at | fromdateiso8601) // 0)) | floor)}
+            ] | .[] |
+            "| \(.name) | \(
+              if .conclusion == "success" then "✅ pass"
+              elif .conclusion == "failure" then "❌ fail"
+              elif .conclusion == "cancelled" then "🚫 cancelled"
+              elif .conclusion == "skipped" then "⏭️ skip"
+              else .conclusion end) | \((.dur / 60 | floor) | tostring)m \((.dur % 60) | tostring)s |"
+          ')
+
           if [ "$CONCLUSION" = "success" ]; then
             ICON="✅"
-            STATUS="passed"
+            STATUS="Passed"
           else
             ICON="❌"
-            STATUS="failed"
+            STATUS="Failed"
           fi
 
-          # Marker block (prepended/replaced in PR description body).
-          # Keep the delimiters EXACT -- the replacer below greps for
-          # the literal strings.
+          # Compose the sticky comment. HTML-comment marker on the
+          # FIRST and LAST line lets the lookup-and-update step replace
+          # the whole block on the next push instead of stacking comments.
+          {
+            echo "<!-- heron-pr-ci-status -->"
+            echo "## 🚦 Heron CI"
+            echo ""
+            echo "| Status | Commit | Run | Branch |"
+            echo "|---|---|---|---|"
+            echo "| $ICON **$STATUS** | [\`$SHORT_SHA\`]($SERVER_URL/$GH_REPO/commit/$HEAD_SHA) | [#$RUN_NUMBER]($RUN_URL) | \`$HEAD_BRANCH\` |"
+            echo ""
+            echo "<details><summary>Job breakdown</summary>"
+            echo ""
+            echo "| Job | Result | Duration |"
+            echo "|---|---|---|"
+            printf '%s\n' "$rows"
+            echo ""
+            echo "</details>"
+            echo ""
+            if [ "$CONCLUSION" != "success" ]; then
+              echo "> Open the [run]($RUN_URL) for the full log + failing-step annotations."
+              echo ""
+            fi
+            echo "_Auto-posted by [pr-ci-summary.yml]($SERVER_URL/$GH_REPO/blob/main/.github/workflows/pr-ci-summary.yml) — updates in place on each push._"
+            echo "<!-- /heron-pr-ci-status -->"
+          } > /tmp/comment.md
+
+          # Description-marker block (one-liner, separate from the rich
+          # sticky comment so it doesn't bloat the PR body).
           {
             echo "<!-- CI-STATUS-MARKER-START -->"
             echo "> **Latest CI**: $ICON $STATUS on \`$SHORT_SHA\` (run [#$RUN_NUMBER]($RUN_URL))"
             echo "<!-- CI-STATUS-MARKER-END -->"
           } > /tmp/marker.md
 
-          # Standalone comment -- richer than the marker.
-          if [ "$CONCLUSION" = "success" ]; then
-            cat > /tmp/comment.md <<EOF
-          $ICON **CI passed** on commit \`$SHORT_SHA\` (run [#$RUN_NUMBER]($RUN_URL)).
-
-          All required checks completed successfully.
-
-          _Posted by .github/workflows/pr-ci-summary.yml — fires after each push when the Tests workflow completes._
-          EOF
-          else
-            # Failure path: list the failed jobs + grab the first
-            # error annotation as a teaser.
-            FAILED_JOBS=$(gh api "repos/$GH_REPO/actions/runs/$RUN_ID/jobs" \
-              --jq '[.jobs[] | select(.conclusion == "failure") | .name] | join(", ")')
-            FAILED_JOBS="${FAILED_JOBS:-<unknown>}"
-            cat > /tmp/comment.md <<EOF
-          $ICON **CI failed** on commit \`$SHORT_SHA\` (run [#$RUN_NUMBER]($RUN_URL)).
-
-          Failed jobs: \`$FAILED_JOBS\`
-
-          Open the [run]($RUN_URL) for the full log + failing-step annotations.
-
-          _Posted by .github/workflows/pr-ci-summary.yml — fires after each push when the Tests workflow completes._
-          EOF
-          fi
-
-      - name: Post comment + update PR body
+      - name: Post or update sticky comment + refresh body marker
         if: steps.compose.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -161,26 +183,36 @@ jobs:
         run: |
           set -euo pipefail
 
-          # 1. Post the standalone comment.
-          gh pr comment "$PR_NUM" --body-file /tmp/comment.md
-          echo "::notice::Posted CI summary comment on PR #$PR_NUM (sha $SHORT_SHA)."
+          # 1. Find existing sticky comment by marker.
+          EXISTING_ID=$(gh api "repos/$GH_REPO/issues/$PR_NUM/comments" --paginate \
+            --jq '[.[] | select(.body | contains("<!-- heron-pr-ci-status -->")) | .id] | .[0] // empty')
 
-          # 2. Update PR description marker block.
-          # Fetch the current body, replace (or prepend) the marker.
+          if [ -n "$EXISTING_ID" ]; then
+            # Update in place. gh api PATCH on the comment id.
+            BODY=$(cat /tmp/comment.md | jq -Rs .)
+            gh api "repos/$GH_REPO/issues/comments/$EXISTING_ID" \
+              --method PATCH \
+              --raw-field body=@/tmp/comment.md > /dev/null
+            echo "::notice::Updated sticky CI comment on PR #$PR_NUM (id $EXISTING_ID, sha $SHORT_SHA)."
+          else
+            # First comment for this PR. Create.
+            gh pr comment "$PR_NUM" --body-file /tmp/comment.md
+            echo "::notice::Created sticky CI comment on PR #$PR_NUM (sha $SHORT_SHA)."
+          fi
+
+          # 2. Refresh PR description marker block. Fetch the current
+          # body, replace (or prepend) the one-line marker.
           BODY=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
-          MARKER_NEW=$(cat /tmp/marker.md)
           if printf '%s' "$BODY" | grep -q '<!-- CI-STATUS-MARKER-START -->'; then
-            # Replace existing marker block in place.
             UPDATED=$(printf '%s' "$BODY" | perl -0777 -pe '
               my $new = `cat /tmp/marker.md`;
               chomp $new;
               s/<!-- CI-STATUS-MARKER-START -->.*?<!-- CI-STATUS-MARKER-END -->/$new/gs;
             ')
           else
-            # Prepend marker block, with a blank line separating from existing body.
+            MARKER_NEW=$(cat /tmp/marker.md)
             UPDATED=$(printf '%s\n\n%s' "$MARKER_NEW" "$BODY")
           fi
-          # gh pr edit --body reads from stdin via the special `-` arg.
           printf '%s' "$UPDATED" | gh pr edit "$PR_NUM" --body-file -
           echo "::notice::Refreshed CI-STATUS marker in PR #$PR_NUM description."
 
@@ -188,5 +220,5 @@ jobs:
           {
             echo "### Posted CI summary to PR #$PR_NUM"
             echo ""
-            cat /tmp/marker.md
+            cat /tmp/comment.md
           } >> "$GITHUB_STEP_SUMMARY"
