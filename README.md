@@ -17,10 +17,10 @@
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/kaelys-js/heron/badge)](https://securityscorecards.dev/viewer/?uri=github.com/kaelys-js/heron)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/github/v/release/kaelys-js/heron)](https://github.com/kaelys-js/heron/releases)
-[![Discord](https://img.shields.io/discord/1383123430472122572?label=discord&logo=discord)](https://discord.gg/8pRpHETxa4)
+[![Discord](https://img.shields.io/discord/1507162919421612134?label=discord&logo=discord)](https://discord.gg/MyFbztUK5U)
 [![REUSE compliant](https://img.shields.io/badge/REUSE-compliant-blue)](https://reuse.software)
 
-[**Quick start**](#quick-start) · [**Documentation**](docs/) · [**Architecture**](docs/ARCHITECTURE.md) · [**FAQ**](docs/FAQ.md) · [**Discord**](https://discord.gg/8pRpHETxa4) · [**Sponsor**](https://github.com/sponsors/kaelys-js)
+[**Quick start**](#quick-start) · [**Documentation**](docs/) · [**Architecture**](docs/ARCHITECTURE.md) · [**FAQ**](docs/FAQ.md) · [**Discord**](https://discord.gg/MyFbztUK5U) · [**Sponsor**](https://github.com/sponsors/kaelys-js)
 
 </div>
 
@@ -119,7 +119,7 @@ See [`docs/SETUP.md`](docs/SETUP.md) for the long form including Capacitor / iOS
 
 | Channel | Use for |
 |---|---|
-| 💬 [Discord](https://discord.gg/8pRpHETxa4) | Real-time questions, setup help, show-and-tell -- typically same-day during EU/US working hours |
+| 💬 [Discord](https://discord.gg/MyFbztUK5U) | Real-time questions, setup help, show-and-tell -- typically same-day during EU/US working hours |
 | 📚 [GitHub Discussions](https://github.com/kaelys-js/heron/discussions) | Async Q&A + ideas + roadmap + success stories |
 | 🐛 [Issues](https://github.com/kaelys-js/heron/issues) | Bugs + feature requests (use the templates) |
 | 🎓 [I got hired](https://github.com/kaelys-js/heron/issues/new?template=i-got-hired.yml) | Tell the Hall of Fame your story |
@@ -138,7 +138,7 @@ See [`.github/SECURITY.md`](.github/SECURITY.md) for the full posture + vulnerab
 
 We welcome PRs. Start with [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) -- covers the contributor ladder (Participant → Contributor → Triager → Reviewer → Maintainer), commit-message rules, DCO sign-off, and the "what we do NOT accept" list.
 
-Issues labeled [`good first issue`](https://github.com/kaelys-js/heron/labels/good%20first%20issue) are scoped for first-time contributors. Join [Discord](https://discord.gg/8pRpHETxa4) before opening a feature PR -- saves you scope-rework.
+Issues labeled [`good first issue`](https://github.com/kaelys-js/heron/labels/good%20first%20issue) are scoped for first-time contributors. Join [Discord](https://discord.gg/MyFbztUK5U) before opening a feature PR -- saves you scope-rework.
 
 ### Contributors
 
@@ -171,7 +171,7 @@ See [`docs/TRADEMARK.md`](docs/TRADEMARK.md) for trademark policy, [`docs/LEGAL_
 Maintained by [@kaelys-js](https://github.com/kaelys-js).
 [Sponsor](https://github.com/sponsors/kaelys-js) ·
 [Press kit](branding/PRESS.md) ·
-[Discord](https://discord.gg/8pRpHETxa4) ·
+[Discord](https://discord.gg/MyFbztUK5U) ·
 [hello@heron.app](mailto:hello@heron.app)
 
 MIT licensed.

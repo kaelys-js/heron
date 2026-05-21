@@ -1333,7 +1333,7 @@ function mdQuickFactsTable(b) {
     `| **License** | ${b.license} |`,
     `| **Source** | <${b.repo.url}> |`,
     `| **Website** | <${b.homepageUrl}> |`,
-    `| **Discord** | <https://discord.gg/8pRpHETxa4> |`,
+    ...(b.community?.discord?.url ? [`| **Discord** | <${b.community.discord.url}> |`] : []),
     `| **Bundle ID** | \`${b.identifiers.bundleId}\` |`,
     `| **URL scheme** | \`${b.identifiers.urlScheme}://\` |`,
     `| **Support email** | <${b.supportEmail}> |`,

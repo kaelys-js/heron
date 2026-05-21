@@ -57,4 +57,4 @@
 <!-- Anything reviewers should know before reading the diff: gotchas, follow-ups, alternatives considered. -->
 
 ---
-<sub>Questions? [Open a Discussion](../../discussions) or [join Discord](https://discord.gg/8pRpHETxa4).</sub>
+<sub>Questions? [Open a Discussion](../../discussions) or [join Discord](https://discord.gg/MyFbztUK5U).</sub>

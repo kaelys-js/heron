@@ -284,7 +284,7 @@ jobs:
             printf '```\n\n'
             printf "For CI without pushing: \`pnpm act:test\` (needs Docker).\n\n"
             printf "Sign off your commits with \`git commit -s\` — DCO required (see CONTRIBUTING.md).\n\n"
-            printf "Need a hand? Drop into [Discord](https://discord.gg/8pRpHETxa4) — same-day response during EU/US hours.\n\n"
+            printf "Need a hand? Drop into [Discord](https://discord.gg/MyFbztUK5U) — same-day response during EU/US hours.\n\n"
             printf "_Posted automatically by .github/workflows/pr-bots.yml — first-timer-help job._\n"
           } > /tmp/comment.md
           gh pr comment "$PR" --body-file /tmp/comment.md

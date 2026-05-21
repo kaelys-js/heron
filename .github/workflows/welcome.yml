@@ -126,7 +126,7 @@ jobs:
           - Make sure you've linked a related issue (required for features)
           - Read [CONTRIBUTING.md](../blob/main/.github/CONTRIBUTING.md) if you haven't
 
-          We'll review your PR soon. Join our [Discord](https://discord.gg/8pRpHETxa4) if you have questions.
+          We'll review your PR soon. Join our [Discord](https://discord.gg/MyFbztUK5U) if you have questions.
           EOF
             gh pr comment "$num" --body-file /tmp/welcome.md
           else
@@ -135,7 +135,7 @@ jobs:
 
           In the meantime:
           - Check [SUPPORT.md](../blob/main/.github/SUPPORT.md) for setup help
-          - Join our [Discord](https://discord.gg/8pRpHETxa4) for quick answers
+          - Join our [Discord](https://discord.gg/MyFbztUK5U) for quick answers
           EOF
             gh issue comment "$num" --body-file /tmp/welcome.md
           fi

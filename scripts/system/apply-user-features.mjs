@@ -35,17 +35,26 @@ const OWNER = process.env.GH_OWNER || REPO.split('/')[0];
 const PAT = process.env.GH_USER_PAT || process.env.GH_TOKEN || '';
 
 // Read brand.json for SSOT values (Discord URL, supportEmail, etc.).
-// Fall back to safe defaults when fields are absent or the file is
-// missing -- the script must run even when invoked outside a checkout.
+// Fall back to safe defaults when fields are absent, the file is
+// missing, OR parsing throws (malformed JSON) -- the script must run
+// even when invoked outside a checkout AND must not hard-crash on
+// transiently-bad input.
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const BRAND_JSON = resolve(__dirname, '..', '..', 'branding', 'brand.json');
-const BRAND = existsSync(BRAND_JSON)
-  ? JSON.parse(
+let BRAND = {};
+if (existsSync(BRAND_JSON)) {
+  try {
+    BRAND = JSON.parse(
       readFileSync(BRAND_JSON, 'utf8')
         .replace(/\/\*[\s\S]*?\*\//g, '')
         .replace(/,(\s*[}\]])/g, '$1'),
-    )
-  : {};
+    );
+  } catch (e) {
+    console.log(
+      `::warning::branding/brand.json parse failed (${e.message?.split('\n')[0] || e}); falling back to defaults.`,
+    );
+  }
+}
 const DISCORD_URL = BRAND.community?.discord?.url || '';
 const SUPPORT_EMAIL = BRAND.supportEmail || 'hello@heron.app';
 
@@ -331,7 +340,7 @@ const README = [
   `[![Sponsor](https://img.shields.io/github/sponsors/${OWNER}?label=sponsor&logo=github)](https://github.com/sponsors/${OWNER})`,
   `[![Followers](https://img.shields.io/github/followers/${OWNER}?label=follow&style=social)](https://github.com/${OWNER})`,
   '',
-  `[**Heron**](https://github.com/${OWNER}/heron) · [**Sponsor**](https://github.com/sponsors/${OWNER}) · [**Email**](mailto:hello@heron.app)`,
+  `[**Heron**](https://github.com/${OWNER}/heron) · [**Sponsor**](https://github.com/sponsors/${OWNER}) · [**Email**](mailto:${SUPPORT_EMAIL})`,
   '',
   '</div>',
   '',

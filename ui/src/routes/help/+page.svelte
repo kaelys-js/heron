@@ -321,7 +321,7 @@
   type LinkDef = { label: string; href: string; icon: any };
   const LINKS: LinkDef[] = [
     { label: 'GitHub repo', href: REPO_URL, icon: Code2 },
-    { label: 'Discord community', href: 'https://discord.gg/8pRpHETxa4', icon: MessageCircle },
+    { label: 'Discord community', href: 'https://discord.gg/MyFbztUK5U', icon: MessageCircle },
   ];
 
   type FaqDef = { q: string; a: string };
