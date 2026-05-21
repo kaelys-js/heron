@@ -106,10 +106,13 @@ pnpm visual:baseline          # Generate baselines (first run + after legitimate
 pnpm visual:diff              # Compare current vs baseline; fails on >10% pixel diff
 pnpm visual:diff --open       # Open .lostpixel/difference/ in Finder on diff (macOS)
 
-# Brand + GH config (single source of truth)
+# Brand (single source of truth)
 pnpm brand:apply              # Propagate branding/brand.json → 30+ files
-pnpm gh:verify                # Diff live GitHub state vs brand.json + .github/rulesets/
-pnpm gh:apply                 # Reconcile (needs `gh auth status` + admin scope)
+# GitHub-side state (description, homepage, topics, GHAS, rulesets, env
+# policies, labels, validity checks) is reconciled in CI by
+# .github/workflows/maintain-config.yml + maintain-features.yml on
+# push:main + weekly cron. Trigger manually via Actions → "Maintain
+# GitHub config" / "Maintain repo features" → Run workflow.
 
 # Setup
 pnpm run doctor               # Setup validation

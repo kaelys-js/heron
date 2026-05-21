@@ -14,11 +14,13 @@
  * Re-runnable safely: every API call is PUT/PATCH (idempotent) or
  * conditional CREATE. Output is a one-line summary per item.
  *
- * Usage:
- *   pnpm gh:apply-features          (apply)
- *   pnpm gh:apply-features --check  (verify-only -- exits 1 on drift)
+ * Usage (CI-only -- no `pnpm gh:*` script wrappers; the workflow calls
+ * `node` directly):
+ *   node scripts/system/apply-github-features.mjs           (apply)
+ *   node scripts/system/apply-github-features.mjs --check   (verify-only)
  *
- * Requires: gh CLI authenticated with `repo` + `admin:org` scopes.
+ * Invoked by `.github/workflows/maintain-features.yml`. Local invocation
+ * requires `gh auth status` with admin scope on the target repo.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -167,9 +169,9 @@ for (const lbl of LABELS) {
 // without an error, but the toggle stays "disabled" until the
 // maintainer flips it via the UI. That's a documented API limitation
 // (the validity-checks beta gates the actual enablement on a separate
-// UI consent). To keep `pnpm gh:verify-features` from permafailing on
-// a one-shot UI step, attempt the toggle but treat the unchanged state
-// as informational, not drift.
+// UI consent). To keep `maintain-features.yml --check` from permafailing
+// on a one-shot UI step, attempt the toggle but treat the unchanged
+// state as informational, not drift.
 console.log('▸ Code-security toggles');
 const security = gh('GET', `/repos/${REPO}`);
 const liveSec = security?.security_and_analysis || {};
@@ -194,7 +196,9 @@ if (driftCount === 0) {
   process.exit(0);
 }
 if (VERIFY_ONLY) {
-  console.log(`✗ ${driftCount} drift item(s) -- run \`pnpm gh:apply-features\` to reconcile.`);
+  console.log(
+    `✗ ${driftCount} drift item(s) -- trigger \`maintain-features.yml\` (Actions → Maintain repo features → Run workflow, mode=apply) to reconcile.`,
+  );
   process.exit(1);
 }
 console.log(`✓ Applied ${driftCount} change(s).`);

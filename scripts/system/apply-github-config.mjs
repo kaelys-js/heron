@@ -32,13 +32,15 @@
  *   • Branch creation / deletion -- out of scope
  *   • Workflow secrets -- `gh secret` is the right tool
  *
- * Usage:
+ * Usage (CI-only -- no `pnpm gh:*` script wrappers; the workflow calls
+ * `node` directly):
  *
- *   pnpm gh:apply          # propagate brand.json + rulesets to live repo
- *   pnpm gh:verify         # diff live state vs files; exit 1 on drift (CI)
- *   pnpm gh:apply --dry    # show what would change; no writes
+ *   node scripts/system/apply-github-config.mjs            # apply
+ *   node scripts/system/apply-github-config.mjs --verify   # CI drift check
+ *   node scripts/system/apply-github-config.mjs --dry      # plan, no writes
  *
- * Requires `gh auth status` with admin scope on the target repo.
+ * Invoked by `.github/workflows/maintain-config.yml`. Local invocation
+ * requires `gh auth status` with admin scope on the target repo.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -279,7 +281,9 @@ async function main() {
     process.exit(0);
   }
   if (VERIFY_ONLY) {
-    console.log(`\n✗ ${driftCount} drift item(s) — run \`pnpm gh:apply\` to reconcile.`);
+    console.log(
+      `\n✗ ${driftCount} drift item(s) — trigger \`maintain-config.yml\` (Actions → Maintain GitHub config → Run workflow, mode=apply) to reconcile.`,
+    );
     process.exit(1);
   }
   if (DRY_RUN) {
