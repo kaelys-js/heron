@@ -112,12 +112,15 @@ if (roadmapIssue?.node_id && !VERIFY_ONLY) {
   }
 }
 
-// ── 2. Pinned discussions ("Introduce yourself" + "Start here") ──
-// Pinning state is exposed via repository.pinnedDiscussions (a separate
-// connection); the `Discussion` type itself does NOT have an `isPinned`
-// field. Query both: existing discussions by title (for create-or-skip
-// decision) + pinnedDiscussions (to detect already-pinned ones).
-console.log('▸ Pinned discussions');
+// ── 2. Discussions ("Introduce yourself" + "Start here") ──
+// CREATE the discussions when missing. We CANNOT pin them programmatically
+// -- `pinDiscussion` is NOT on the public GraphQL Mutation schema (only
+// `pinIssue`, `pinIssueComment`, `pinEnvironment` exist). Pinning is a
+// UI-only feature; surface the URL for the one-time manual step.
+//
+// The `pinnedDiscussions` query is kept (read-only) so we can log
+// whether each WANTED discussion happens to already be pinned via UI.
+console.log('▸ Discussions');
 const discussionsQ = ghGraphQL(
   `query($o: String!, $n: String!) {
     repository(owner: $o, name: $n) {
@@ -158,28 +161,17 @@ if (discussionsQ?.__error || discussionsQ?.errors || !discussionsQ?.data?.reposi
       body: 'Quickstart for new contributors. See `.github/CONTRIBUTING.md` for the canonical guide.',
     },
   ];
+  let needsUiPin = false;
   for (const w of WANTED) {
     const existing = discussionsQ.data.repository.discussions.nodes.find(
       (d) => d.title === w.title,
     );
     if (existing) {
-      if (!pinnedIds.has(existing.id)) {
-        if (VERIFY_ONLY) {
-          drift(`"${w.title}" discussion`, 'unpinned');
-        } else {
-          const pin = ghGraphQL(
-            `mutation($id: ID!) { pinDiscussion(input: {discussionId: $id}) { pinnedDiscussion { id } } }`,
-            { id: existing.id },
-          );
-          if (pin?.__error && !/maximum.*pinned|already/i.test(pin.__error)) {
-            console.log(`  "${w.title}" pin: ${pin.__error.split('\n')[0]}`);
-          } else {
-            console.log(`  "${w.title}" pin: ok`);
-          }
-        }
-      } else {
-        console.log(`  "${w.title}": ok`);
-      }
+      const isPinned = pinnedIds.has(existing.id);
+      console.log(
+        `  "${w.title}": exists${isPinned ? ' + pinned (UI)' : ' (UNPINNED -- pin via UI)'}`,
+      );
+      if (!isPinned) needsUiPin = true;
     } else if (generalCat) {
       if (VERIFY_ONLY) {
         drift(`"${w.title}" discussion`, 'missing');
@@ -196,20 +188,18 @@ if (discussionsQ?.__error || discussionsQ?.errors || !discussionsQ?.data?.reposi
           const e = create?.__error?.split('\n')[0] || create?.errors?.[0]?.message;
           console.log(`  "${w.title}": create failed -- ${e}`);
         } else {
-          const newId = create.data.createDiscussion.discussion.id;
-          const pin = ghGraphQL(
-            `mutation($id: ID!) { pinDiscussion(input: {discussionId: $id}) { pinnedDiscussion { id } } }`,
-            { id: newId },
-          );
-          if (pin?.__error && !/maximum.*pinned|already/i.test(pin.__error)) {
-            console.log(`  "${w.title}": created but pin failed -- ${pin.__error.split('\n')[0]}`);
-          } else {
-            console.log(`  "${w.title}": created + pinned`);
-          }
+          console.log(`  "${w.title}": created (UNPINNED -- pin via UI)`);
+          needsUiPin = true;
           driftCount++;
         }
       }
     }
+  }
+  if (needsUiPin && !VERIFY_ONLY) {
+    console.log(
+      `  (manual step) Pin both discussions via UI at https://github.com/${REPO}/discussions ` +
+        `-- pinDiscussion is not on the public GraphQL Mutation schema.`,
+    );
   }
 }
 
