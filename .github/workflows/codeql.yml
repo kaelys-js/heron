@@ -167,6 +167,30 @@ jobs:
         with:
           persist-credentials: false
 
+      # Swift-only caches. xcodebuild does the heavy work for the Swift
+      # leg; on a cold runner that's ~10 min of SPM resolve + Xcode
+      # build. Mirrors the cache strategy of test.yml's `ios` job:
+      # DerivedData keyed on pbxproj + Package.resolved, SPM keyed on
+      # Package.resolved. Cold-cache cost stays the same; warm-cache
+      # runs the Swift leg in ~3 min instead of ~12.
+      - name: Cache Xcode DerivedData (Swift only)
+        if: steps.gate.outputs.should_run == 'true' && matrix.language == 'swift'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData
+          key: codeql-derived-data-${{ runner.os }}-${{ hashFiles('ui/ios/App/App.xcodeproj/project.pbxproj', 'ui/ios/App/Package.resolved') }}
+          restore-keys: |
+            codeql-derived-data-${{ runner.os }}-
+
+      - name: Cache SPM (Swift only)
+        if: steps.gate.outputs.should_run == 'true' && matrix.language == 'swift'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/Library/Caches/org.swift.swiftpm
+          key: codeql-spm-${{ runner.os }}-${{ hashFiles('ui/ios/App/Package.resolved') }}
+          restore-keys: |
+            codeql-spm-${{ runner.os }}-
+
       - name: Initialize CodeQL
         if: steps.gate.outputs.should_run == 'true'
         uses: github/codeql-action/init@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4

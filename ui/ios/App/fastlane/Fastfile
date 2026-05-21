@@ -270,18 +270,48 @@ platform :ios do
     # reaches Codecov.
     #
     # `binary_basename: "App"` points slather at App.app's binary so it
-    # can map profdata back to source files. Verified locally produces a
-    # 680KB cobertura.xml with per-line hit info at line-rate 13.74%
-    # across the full DerivedData tree (App + extensions + Capacitor SPM).
-    # Codecov's iOS flag will display the combined picture; the threshold
-    # gate above stays narrowed to App.app via xcov's include_targets.
+    # can map profdata back to source files; on its own it produced a
+    # 680KB cobertura.xml with line-rate 13.74% across the full
+    # DerivedData tree (App + extensions + 22 Capacitor SPM packages
+    # + the WatchKit extension). Codecov's "iOS coverage" badge then
+    # displayed that misleading 13.74% even though the real product
+    # surface (App.app) tests at 66.14% via xcov's threshold gate.
+    #
+    # The `ignore` patterns below mirror xcov's `include_targets: "App.app"`
+    # filter: everything outside App's own sources is excluded from
+    # the Codecov cobertura. This brings the uploaded number into
+    # agreement with xcov's gate so a future regression in App
+    # coverage shows up as a Codecov delta, not buried in a giant
+    # DerivedData average.
     slather(
       proj: PROJECT,
       scheme: TEST_SCHEME,
       binary_basename: "App",
       output_directory: "fastlane/coverage",
       cobertura_xml: true,
-      use_bundle_exec: true
+      use_bundle_exec: true,
+      ignore: [
+        # SPM packages -- 22 Capacitor + plugins, vendored third-party
+        "**/SourcePackages/**",
+        "**/.build/**",
+        "**/DerivedSources/**",
+        # Build intermediates + compiled framework caches
+        "**/Build/Intermediates.noindex/**",
+        "**/Frameworks/**",
+        # Sibling app-extension targets (each has its own xcov entry
+        # via xcov's per-target table, not relevant to App.app)
+        "**/AppLiveActivity/**",
+        "**/AppShareExtension/**",
+        "**/AppWidget/**",
+        "**/CareerOpsWatch/**",
+        "**/CareerOpsWatchApp/**",
+        # Test bundles themselves -- 100% coverage of test code is
+        # meaningless noise.
+        "**/AppTests/**",
+        "**/AppUITests/**",
+        "**/WidgetTests/**",
+        "**/WatchTests/**"
+      ]
     )
   end
 
