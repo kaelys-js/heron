@@ -1,7 +1,7 @@
 name: PR quality
-# G20 -- lightweight PR-title + size enforcement.
+# G20 -- PR-title + size + body enforcement.
 #
-# Two jobs, both fast (<5s each on the typical PR):
+# Four jobs, all fast (<5s each on the typical PR):
 #
 # 1. **Conventional Commits PR title** -- amannn/action-semantic-pull-request
 #    validates the title matches the Conventional Commits grammar
@@ -17,6 +17,15 @@ name: PR quality
 #    auto-generated noise (lockfile, snapshots, icons, CHANGELOG).
 #    Bot PRs are skipped (Renovate / Dependabot self-size via their
 #    own labels). Helps reviewers budget time + flags mega-PRs early.
+#
+# 3. **Max-size hard fail** -- block PRs over 2000 LOC unless they
+#    carry the `oversize-ok` label. Prevents accidental mega-PRs.
+#    Bot PRs are exempt (Renovate lockfile bumps can legitimately
+#    cross 2000 LOC).
+#
+# 4. **PR description validation** -- assert the body has non-template
+#    content in the `## Summary` and `## Test plan` sections. Catches
+#    "I forgot to fill the template" before reviewer notices.
 #
 # Fires on every PR edit (opened/edited/synchronize/reopened) so a
 # title rename or force-push gets re-validated.
@@ -122,3 +131,127 @@ jobs:
           sizes: >
             {"0": "size/XS", "20": "size/S", "100": "size/M",
              "400": "size/L", "1000": "size/XL"}
+
+  # ── max-size hard fail ──────────────────────────────────────────
+  # The size-label job above tags every PR but doesn't block. This
+  # job hard-fails when additions+deletions exceed 2000 LOC, unless
+  # the PR carries the `oversize-ok` label (the explicit "yes I know
+  # this is huge, here's why" escape hatch). Bot PRs are exempt --
+  # a Renovate lockfile bump or a Dependabot major-version PR can
+  # legitimately cross 2000 LOC without being a review problem.
+  max-size:
+    name: PR size budget (≤ 2000 LOC)
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: read
+    if: github.event.pull_request.user.type != 'Bot'
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Check additions + deletions against budget
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+          ADD: ${{ github.event.pull_request.additions }}
+          DEL: ${{ github.event.pull_request.deletions }}
+        run: |
+          set -euo pipefail
+          TOTAL=$((ADD + DEL))
+          LIMIT=2000
+          BYPASS=$(gh pr view "$PR_NUM" --json labels --jq '[.labels[].name] | contains(["oversize-ok"])')
+          {
+            echo "### 📏 PR size budget"
+            echo ""
+            echo "| Metric | Value |"
+            echo "|---|---|"
+            echo "| Additions | $ADD |"
+            echo "| Deletions | $DEL |"
+            echo "| Total | $TOTAL |"
+            echo "| Budget | $LIMIT |"
+            echo "| Bypass label | \`oversize-ok\` ${BYPASS} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$TOTAL" -gt "$LIMIT" ]; then
+            if [ "$BYPASS" = "true" ]; then
+              echo "::warning::PR #$PR_NUM is $TOTAL LOC (> $LIMIT) but has the \`oversize-ok\` label. Letting it through."
+              exit 0
+            fi
+            echo "::error::PR #$PR_NUM is $TOTAL LOC, over the $LIMIT budget. Split into smaller PRs, or add the \`oversize-ok\` label with a comment explaining why this PR must ship as one unit."
+            exit 1
+          fi
+          echo "::notice::PR #$PR_NUM is $TOTAL LOC, within the $LIMIT budget."
+
+  # ── PR description validation ───────────────────────────────────
+  # Catches "I forgot to fill the template" before a reviewer notices.
+  # The check is intentionally narrow: validate that the `## Summary`
+  # and `## Test plan` sections contain non-template content. Other
+  # sections (Related issue, Screenshots, Notes for reviewers) stay
+  # advisory in the template -- they're situational.
+  pr-description:
+    name: PR description has Summary + Test plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: read
+    if: github.event.pull_request.user.type != 'Bot'
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Validate Summary + Test plan sections are non-empty
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          body=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
+          # Strip HTML comments (template placeholders) before checking
+          # whether each section has real content. Use perl for
+          # multi-line non-greedy regex -- sed has no portable -z mode.
+          stripped=$(printf '%s' "$body" | perl -0777 -pe 's/<!--.*?-->//gs')
+          fail=0
+          extract_section() {
+            local heading="$1"
+            printf '%s' "$stripped" \
+              | awk -v h="$heading" '
+                  $0 ~ "^##[[:space:]]+" h "[[:space:]]*$" {flag=1; next}
+                  /^##[[:space:]]/ && flag {flag=0}
+                  flag {print}
+                '
+          }
+          summary=$(extract_section "Summary")
+          test_plan=$(extract_section "Test plan")
+          # Each section must have at least 20 chars of non-whitespace
+          # content (a sentence or so). Lower numbers were too easy to
+          # game; higher numbers blocked legit fix-typo PRs.
+          if [ "$(printf '%s' "$summary" | tr -d '[:space:]' | wc -c)" -lt 20 ]; then
+            echo "::error::PR description is missing a non-empty \`## Summary\` section. Fill it in via the PR template."
+            fail=1
+          fi
+          if [ "$(printf '%s' "$test_plan" | tr -d '[:space:]' | wc -c)" -lt 20 ]; then
+            echo "::error::PR description is missing a non-empty \`## Test plan\` section. Document how you verified the change."
+            fail=1
+          fi
+          if [ "$fail" -eq 1 ]; then
+            {
+              echo "### ❌ PR description validation"
+              echo ""
+              echo "Both \`## Summary\` and \`## Test plan\` sections must contain real content (>= 20 chars each, excluding HTML-comment placeholders)."
+              echo ""
+              echo "See \`.github/PULL_REQUEST_TEMPLATE.md\` for the expected shape."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "::notice::PR description has both Summary + Test plan sections filled."
+          {
+            echo "### ✅ PR description validation"
+            echo ""
+            echo "Summary: $(printf '%s' "$summary" | tr -d '[:space:]' | wc -c) chars · Test plan: $(printf '%s' "$test_plan" | tr -d '[:space:]' | wc -c) chars"
+          } >> "$GITHUB_STEP_SUMMARY"
