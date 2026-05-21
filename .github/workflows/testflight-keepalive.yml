@@ -24,6 +24,7 @@ concurrency:
 
 jobs:
   rebuild:
+    name: Push keepalive tag (triggers native-release.yml)
     # Tagging doesn't need macOS -- pick the cheap runner. The actual
     # build runs on macOS via native-release.yml after the tag push.
     runs-on: ubuntu-latest
@@ -36,13 +37,14 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           # zizmor/artipacked -- don't persist token in .git/config; we
           # re-inject it inline in the push step below.
           persist-credentials: false
           fetch-depth: 0
-      - name: Bump build number + tag
+      - name: Bump build number + push keepalive tag
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
@@ -59,4 +61,15 @@ jobs:
           # this single command and never lands in .git/config.
           HOSTLESS_URL="${SERVER_URL#https://}"
           git push "https://x-access-token:${GH_TOKEN}@${HOSTLESS_URL}/${REPO}.git" "$NEW_TAG"
+          # Visible outcome -- the tag push triggers native-release.yml
+          # which runs build-ios on macOS-15 and pushes to TestFlight.
+          echo "::notice::Pushed keepalive tag $NEW_TAG. native-release.yml will now build + upload to TestFlight."
+          {
+            echo "### 📦 Keepalive tag pushed: $NEW_TAG"
+            echo ""
+            echo "Base version: \`$CURRENT\`"
+            echo "Build date:   \`$DATE_TAG\`"
+            echo ""
+            echo "Watch \`native-release.yml\` for the iOS build + TestFlight upload."
+          } >> "$GITHUB_STEP_SUMMARY"
       # The tag push triggers native-release.yml which runs build-ios.

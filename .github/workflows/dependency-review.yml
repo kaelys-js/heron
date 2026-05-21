@@ -1,4 +1,20 @@
 name: Dependency Review
+# Blocks PRs that introduce dependencies with high-severity GHSAs OR
+# non-permissive (GPL/AGPL/LGPL) licenses. Two layers of protection:
+#
+# 1. **License gate** -- positive allowlist (MIT / BSD / Apache-2 / ISC /
+#    MPL-2 / CC0 / Unlicense / 0BSD / Ruby / Python-2 / Zlib /
+#    BlueOak-1.0 / CC-BY-3/4 / WTFPL). Anything outside fails the PR.
+#    Heron ships under MIT + bundles Electron, so a GPL transitive would
+#    taint the binary's license.
+#
+# 2. **Vulnerability gate** -- fail-on-severity: high. Two transitive
+#    allowlist entries (jwt empty-key HMAC + highline GPL-OR-Ruby SPDX)
+#    are documented inline with rationale + revisit conditions.
+#
+# Fires on every pull_request against main; comments the dep diff on
+# the PR via comment-summary-in-pr: always. SARIF results also land in
+# the Code Scanning view for cross-referencing with CodeQL alerts.
 on:
   pull_request:
     branches: [main]
@@ -25,7 +41,8 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
-      - name: Dependency Review
+      - name: Dependency Review (GHSA + license gating)
+        id: review
         # G7 -- blocking again. The Dependency Graph must be enabled in
         # Settings → Security & Analysis (it's enabled by default for
         # public repos as of 2024). If a fork or restored repo somehow
@@ -91,3 +108,25 @@ jobs:
           # fastlane swaps in a different prompt library, drop this
           # allow-list line.
           allow-dependencies-licenses: pkg:gem/highline
+
+      # Visible outcome in the Actions summary tab. The dependency-review
+      # action posts a PR comment on every run; this step gives the
+      # maintainer a one-glance pass/fail in the Actions UI without
+      # opening the comment.
+      - name: Log outcome
+        if: always()
+        run: |
+          if [ "${{ steps.review.outcome }}" = "success" ]; then
+            echo "::notice::Dependency Review passed -- no high-severity GHSAs + all licenses on the allowlist."
+            echo "### ✅ Dependency Review passed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::Dependency Review failed -- check the PR comment for the GHSA / license violation."
+            {
+              echo "### ❌ Dependency Review failed"
+              echo ""
+              echo "See the PR comment for the specific dependency that triggered the block."
+              echo "If it's a license mismatch, decide between adding the license to the"
+              echo "allowlist or removing the dependency. If it's a GHSA, upgrade or add"
+              echo "to the inline allow-ghsas with rationale."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

@@ -1,5 +1,17 @@
 name: Label PRs
 
+# Applies path-based labels to every PR so reviewers can spot the
+# blast radius at a glance. Rules live in `.github/labeler.yml`; this
+# workflow only invokes the third-party action.
+#
+# Fires on:
+#   - pull_request_target [opened, synchronize] -- relabels on every push
+#     to a PR branch so the labels track the current diff, not the first.
+#
+# What it produces:
+#   - 1-N labels on the PR (e.g. `area:ui`, `area:scripts`, `area:ci`).
+#   - No comments; the action is silent on success.
+#
 # pull_request_target is REQUIRED for this workflow -- actions/labeler
 # writes labels to the PR which needs the BASE branch's repo-write token.
 # Risk mitigation:
@@ -24,6 +36,7 @@ concurrency:
 
 jobs:
   label:
+    name: Apply path-based labels
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -35,6 +48,26 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/labeler@f27b608878404679385c85cfa523b85ccb86e213 # v6.1.0
+      - name: Apply labels from .github/labeler.yml
+        id: labeler
+        uses: actions/labeler@f27b608878404679385c85cfa523b85ccb86e213 # v6.1.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log applied labels
+        if: always() && steps.labeler.outputs.all-labels != ''
+        env:
+          ALL_LABELS: ${{ steps.labeler.outputs.all-labels }}
+          NEW_LABELS: ${{ steps.labeler.outputs.new-labels }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+        run: |
+          echo "::notice::Labeler applied {$ALL_LABELS} to PR #$PR_NUM (new: {$NEW_LABELS})."
+          {
+            echo "### 🏷️ Labels applied"
+            echo ""
+            echo "**All labels on this PR:** $ALL_LABELS"
+            if [ -n "$NEW_LABELS" ]; then
+              echo ""
+              echo "**Newly added this run:** $NEW_LABELS"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

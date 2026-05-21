@@ -1,4 +1,25 @@
 name: 'Close stale issues and PRs'
+# Weekly housekeeping for inactive issues + PRs. Cadence:
+#
+# **Issues**: stale at 60 days inactivity, closed 14 days later (so
+# 74 days total to auto-close).
+# **PRs**:    stale at 30 days inactivity, closed 14 days later (so
+# 44 days total to auto-close).
+#
+# Stale + closed states post a friendly comment explaining how to
+# revive (rebase + comment). The pr-bots workflow's stale-pinger job
+# pings 7 days before close as an extra nudge.
+#
+# Exempt labels:
+#   - `pinned`     (manual override -- "keep this regardless")
+#   - `security`   (security-sensitive work shouldn't bit-rot silently)
+#   - `roadmap`    (long-running planning issues)
+#   - `hired`      (success stories from i-got-hired.yml -- the social
+#                   proof Hall of Fame; HP24)
+#
+# Fires:
+#   - Mondays 06:00 UTC (off-peak)
+#   - workflow_dispatch (manual sweep)
 on:
   schedule:
     - cron: '0 6 * * 1' # Every Monday at 6am UTC
@@ -13,6 +34,7 @@ concurrency:
 
 jobs:
   stale:
+    name: Auto-stale + auto-close housekeeping
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
