@@ -42,14 +42,17 @@ jobs:
       - name: Install deps + license-checker
         run: |
           pnpm install --frozen-lockfile
-          npx --yes license-checker-rseidelsohn --json --excludePrivatePackages > licenses-current.json
+          npx --yes license-checker-rseidelsohn --json --excludePrivatePackages 2>/dev/null > licenses-current.json
+          # Belt-and-suspenders against pnpm/npm warning leakage.
+          head -c1 licenses-current.json | grep -qE '[\[{]' || echo '{}' > licenses-current.json
 
       - name: Baseline licenses from main
         run: |
           git fetch origin main --depth 1
           git checkout origin/main -- pnpm-lock.yaml
           pnpm install --frozen-lockfile
-          npx --yes license-checker-rseidelsohn --json --excludePrivatePackages > licenses-baseline.json || true
+          npx --yes license-checker-rseidelsohn --json --excludePrivatePackages 2>/dev/null > licenses-baseline.json || true
+          head -c1 licenses-baseline.json | grep -qE '[\[{]' || echo '{}' > licenses-baseline.json
           # Restore PR head
           git checkout HEAD -- pnpm-lock.yaml
           pnpm install --frozen-lockfile

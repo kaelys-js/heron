@@ -49,7 +49,8 @@ jobs:
           # { locales: [...], totals: { <lang>: { translated, missing } }, english_count }.
           # Exit 0 on both "no locales" + "drift" so we always have
           # parseable input for the sticky formatter.
-          node scripts/system/verify-i18n.mjs --json > i18n.json
+          node scripts/system/verify-i18n.mjs --json 2>/dev/null > i18n.json
+          head -c1 i18n.json | grep -qE '[\[{]' || echo '{"locales":[],"totals":{},"english_count":0}' > i18n.json
       - name: Format i18n sticky
         run: node .github/scripts/sticky/format-i18n.mjs i18n.json --out body.md
       - name: Post sticky comment

@@ -68,8 +68,9 @@ jobs:
           # Emit diff JSON in the format format-api.mjs consumes.
           # `--format json` requires the v1.x oasdiff binary. The
           # `breaking-changes` subcommand returns a categorised list.
-          /tmp/oasdiff changelog /tmp/base.json /tmp/head.json --format json > /tmp/oasdiff.json \
+          /tmp/oasdiff changelog /tmp/base.json /tmp/head.json --format json 2>/dev/null > /tmp/oasdiff.json \
             || echo '{}' > /tmp/oasdiff.json
+          head -c1 /tmp/oasdiff.json | grep -qE '[\[{]' || echo '{}' > /tmp/oasdiff.json
           # format-api.mjs accepts oasdiff's array shape too -- if the
           # JSON came back empty, the formatter renders "no changes".
 

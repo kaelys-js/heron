@@ -45,14 +45,25 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Run type-coverage on PR head
         working-directory: ui
-        run: npx --yes type-coverage --detail --reportType json > ../type-coverage-current.json || true
+        # 2>/dev/null isolates stderr (engine warnings + pnpm chatter) so it
+        # doesn't smuggle non-JSON into the output. Falls back to `{}` when
+        # the run fails entirely so the formatter still has parseable input.
+        run: |
+          npx --yes type-coverage --detail --reportType json 2>/dev/null > ../type-coverage-current.json || echo '{}' > ../type-coverage-current.json
+          # Guard: if non-JSON snuck in anyway, swap for empty object.
+          head -c1 ../type-coverage-current.json | grep -qE '[\[{]' || echo '{}' > ../type-coverage-current.json
       - name: Run type-coverage on main
         run: |
           set -euo pipefail
           git fetch origin main --depth 1
           git stash push -m pr-changes -- || true
           git checkout origin/main -- .
-          (cd ui && pnpm install --frozen-lockfile && npx --yes type-coverage --detail --reportType json > ../type-coverage-baseline.json) || echo '{}' > type-coverage-baseline.json
+          if (cd ui && pnpm install --frozen-lockfile && npx --yes type-coverage --detail --reportType json 2>/dev/null > ../type-coverage-baseline.json); then
+            :
+          else
+            echo '{}' > type-coverage-baseline.json
+          fi
+          head -c1 type-coverage-baseline.json | grep -qE '[\[{]' || echo '{}' > type-coverage-baseline.json
           git checkout HEAD -- .
           git stash pop || true
       - name: Format type-coverage sticky
