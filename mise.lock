@@ -301,6 +301,32 @@ url = "https://github.com/astral-sh/ruff/releases/download/0.7.4/ruff-x86_64-app
 checksum = "sha256:d6c1c7ecfcce022f87a172ed8586f068f616e9844d6ee5d2527dfcfb7348f45c"
 url = "https://github.com/astral-sh/ruff/releases/download/0.7.4/ruff-x86_64-pc-windows-msvc.zip"
 
+[[tools.shellcheck]]
+version = "0.10.0"
+backend = "aqua:koalaman/shellcheck"
+
+[tools.shellcheck."platforms.linux-arm64"]
+url = "https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.linux.aarch64.tar.xz"
+
+[tools.shellcheck."platforms.linux-arm64-musl"]
+url = "https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.linux.aarch64.tar.xz"
+
+[tools.shellcheck."platforms.linux-x64"]
+url = "https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.linux.x86_64.tar.xz"
+
+[tools.shellcheck."platforms.linux-x64-musl"]
+url = "https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.linux.x86_64.tar.xz"
+
+[tools.shellcheck."platforms.macos-arm64"]
+checksum = "blake3:a03f7e89a3ae96103d5a425053566ff0643ce8aa1a0bee7fd0f09da50c18b41c"
+url = "https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.darwin.aarch64.tar.xz"
+
+[tools.shellcheck."platforms.macos-x64"]
+url = "https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.darwin.x86_64.tar.xz"
+
+[tools.shellcheck."platforms.windows-x64"]
+url = "https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.zip"
+
 [[tools.shfmt]]
 version = "3.10.0"
 backend = "aqua:mvdan/sh"

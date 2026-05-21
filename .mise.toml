@@ -33,7 +33,14 @@ python = "3.13.13"
 # ── Formatters / Linters (managed by mise so fresh-clone works) ──────
 # Every formatter the lefthook + CI gates use must be installable from
 # mise alone — no `brew install` step required for a fresh checkout.
-actionlint = "1.7.12"  # GH Workflow validator + shellcheck
+actionlint = "1.7.12" # GH Workflow validator + shellcheck
+# shellcheck — actionlint integrates with shellcheck to lint the bash
+# inside `run:` blocks in workflows. Without shellcheck on PATH,
+# actionlint silently skips SC* rules — local runs miss bugs that CI
+# (which installs shellcheck via mise) catches. Pinning it here closes
+# that gap. SC2002 (Useless cat) cost a PR a CI cycle on 2026-05-21
+# precisely because shellcheck wasn't on the dev machine.
+shellcheck = "0.10.0"  # Shell linter — pairs with actionlint
 ruff = "0.7.4"         # Python formatter + linter
 shfmt = "3.10.0"       # POSIX shell formatter
 swiftlint = "0.57.1"   # Swift lint gate

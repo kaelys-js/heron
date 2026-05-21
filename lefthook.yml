@@ -109,7 +109,7 @@ pre-commit:
       # `pnpm fonts:lock` after a deliberate font upgrade.
       glob: "ui/static/fonts/*"
       run: node scripts/system/verify-fonts.mjs
-      fail_text: "woff2 drift — see verify-fonts output. Run `pnpm fonts:lock` after a deliberate font swap."
+      fail_text: "woff2 drift -- see verify-fonts output. Run `pnpm fonts:lock` after a deliberate font swap."
 
     # NOTE: biome-format / sort-package-json / biome-format-check were
     # merged into the `format-pipeline` command above so they run in
@@ -477,7 +477,7 @@ pre-push:
       #   - If it doesn't AND mise isn't usable → falls into the
       #     actionable error message from ensure-pnpm.mjs.
       run: bash scripts/system/mise-shim.sh node scripts/system/ensure-pnpm.mjs
-      fail_text: "Node version doesn't match engines pin. mise isn't installed or doesn't have the pinned Node version — see message above."
+      fail_text: "Node version doesn't match engines pin. mise isn't installed or doesn't have the pinned Node version -- see message above."
     typecheck:
       # svelte-check (ui) + tsgo (electron), turbo-cached.
       # Cold ~12s, warm <100ms. Wrapped in mise-shim so it auto-routes
@@ -515,7 +515,7 @@ pre-push:
       run: |
         bash scripts/system/mise-shim.sh sh -c '
           node scripts/native/ensure-native-bindings.mjs --quiet || {
-            echo "✗ native bindings unhealthy — run \`pnpm rebuild:native\` to fix."
+            echo "✗ native bindings unhealthy -- run \`pnpm rebuild:native\` to fix."
             exit 1
           }
           pnpm exec turbo run test:coverage
@@ -554,7 +554,7 @@ pre-push:
         fi
         echo "✗ Format drift detected. Auto-formatting…"
         bash scripts/system/mise-shim.sh pnpm format > /dev/null 2>&1 || {
-          echo "  (pnpm format itself failed — run it manually to see the error)"
+          echo "  (pnpm format itself failed -- run it manually to see the error)"
           exit 1
         }
         CHANGED=$(git diff --name-only)
@@ -604,8 +604,45 @@ pre-push:
     actionlint:
       # Lint .github/workflows/*.yml -- catches typos / unknown action inputs
       # / job-needs cycles before they ever hit GitHub. Free + fast.
+      #
+      # `-shellcheck=shellcheck` makes the shellcheck integration EXPLICIT
+      # so it fails loudly if shellcheck isn't on PATH (rather than silently
+      # skipping SC* rules, which is what bit PR #69 with SC2002 reaching
+      # remote). shellcheck is pinned in .mise.toml -- `mise install` puts
+      # it on PATH.
       glob: ".github/workflows/*.{yml,yaml}"
-      run: actionlint {staged_files} 2>/dev/null || actionlint .github/workflows/*.yml
+      run: actionlint -shellcheck=shellcheck {staged_files} 2>/dev/null || actionlint -shellcheck=shellcheck .github/workflows/*.yml
+
+    pr-title-budget:
+      # When the current branch has an open PR, fetch its title via `gh pr view`
+      # and apply the 72-char budget that pr-quality.yml's "PR title <= 72 chars"
+      # check enforces. Skip when no PR exists yet (first push from a new branch).
+      #
+      # Caught locally instead of after a remote round-trip: PR #69 took an
+      # extra CI cycle because the title was 81 chars; this hook would have
+      # rejected the push and saved that round-trip.
+      #
+      # Bypass: SKIP_LEFTHOOK=1 git push (or simply trim the title via gh pr edit).
+      run: |
+        command -v gh >/dev/null 2>&1 || { echo "skip: gh CLI not installed"; exit 0; }
+        BRANCH=$(git rev-parse --abbrev-ref HEAD)
+        # Skip the check when pushing main, release tags, dependabot branches, or in detached HEAD.
+        case "$BRANCH" in
+          main|HEAD|dependabot/*|release-please--*) exit 0 ;;
+        esac
+        TITLE=$(gh pr view --json title --jq .title 2>/dev/null || true)
+        if [ -z "$TITLE" ]; then
+          # No PR yet -- first push from a feature branch. The check fires on subsequent pushes.
+          exit 0
+        fi
+        LEN=${#TITLE}
+        if [ "$LEN" -gt 72 ]; then
+          echo "✗ PR title is $LEN chars; budget is 72."
+          echo "  Title: $TITLE"
+          echo "  Fix:   gh pr edit --title \"<shorter title>\""
+          echo "  Bypass: SKIP_LEFTHOOK=1 git push"
+          exit 1
+        fi
     release-readiness:
       # When pushing a release tag (v1.2.3 / v1.2.3-beta.1), gate on
       # native-release readiness. This catches "I forgot to run
@@ -627,6 +664,22 @@ pre-push:
         echo "▸ Release tag(s) detected: $TAG_REFS"
         echo "▸ Running doctor:native to verify CI can release..."
         pnpm doctor:native
+
+    # ── Content gates -- mirror .github/workflows/pr-content-gates.yml ──
+    # The 4 Enterprise-only ruleset rules we couldn't apply on Free + public
+    # (commit_message_pattern / max_file_size / max_file_path_length /
+    # file_extension_restriction) are now CI required-checks. Catching the
+    # same violations pre-push saves a CI round-trip. Logic shared with CI
+    # via scripts/system/check-content-gates.sh so there's no drift between
+    # the local + remote gate behaviour.
+    per-commit-conventional:
+      run: bash scripts/system/check-content-gates.sh per-commit-conventional
+    file-size-gate:
+      run: bash scripts/system/check-content-gates.sh file-size
+    path-length-gate:
+      run: bash scripts/system/check-content-gates.sh path-length
+    file-extensions-gate:
+      run: bash scripts/system/check-content-gates.sh file-extensions
 
 # ── commit-msg (lightweight) ────────────────────────────────────────
 # Enforce Conventional Commits format (so release-please can generate
