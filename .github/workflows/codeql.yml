@@ -9,9 +9,16 @@ name: 'CodeQL Analysis'
 #   • swift                 -- macos-15, manual build (xcodebuild)
 #
 # Go was dropped in commit 7b15e50 (the Go TUI was superseded by the
-# SvelteKit dashboard). Renovate is also gated against the deleted
-# directory in renovate.json::gomod.enabled=false + ignorePaths so
-# stale PRs against the removed go.mod can't reappear.
+# SvelteKit dashboard).
+#
+# Path-filter gating (Task M, see STATE.md):
+# On pull_request events, each matrix leg is gated on whether files
+# its language touches actually changed. Docs-only PRs and PRs that
+# only touch one language skip the other legs. Push to main +
+# weekly cron always run all three -- the security baseline + safety
+# net stay intact. The skip-stub pattern reports SUCCESS under the
+# required-check context (`Analyze (javascript-typescript)` etc.) so
+# branch protection's required-check list stays green.
 on:
   push:
     branches: [main]
@@ -31,8 +38,83 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # ─────────────────────────────────────────────────────────────────
+  # Path-filter detector. Same pattern as test.yml's changes job:
+  # gates on pull_request only; emits 'true' for every output on
+  # push/schedule/workflow_dispatch so the full pipeline runs.
+  # ─────────────────────────────────────────────────────────────────
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      js_ts: ${{ steps.filter.outputs.js_ts || steps.force-true.outputs.js_ts }}
+      python: ${{ steps.filter.outputs.python || steps.force-true.outputs.python }}
+      swift: ${{ steps.filter.outputs.swift || steps.force-true.outputs.swift }}
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Filter
+        # dorny/paths-filter v4.0.1 -- pinned by SHA per repo policy.
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: filter
+        with:
+          filters: |
+            js_ts:
+              # JS/TS/Svelte sources -- where the bulk of dataflow analysis lives
+              - '**/*.ts'
+              - '**/*.tsx'
+              - '**/*.js'
+              - '**/*.mjs'
+              - '**/*.svelte'
+              # Lockfile + manifests -- transitive dep upgrades change dataflow
+              - '**/package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              # When THIS workflow changes the analyze leg's behaviour, force a run
+              - '.github/workflows/codeql.yml'
+            python:
+              # Python sources
+              - '**/*.py'
+              # Python deps -- pip / pyproject changes can introduce new dataflow
+              - 'pyproject.toml'
+              - 'scripts/requirements.txt'
+              - '**/requirements*.txt'
+              - '.github/workflows/codeql.yml'
+            swift:
+              # Swift sources + Xcode project files
+              - '**/*.swift'
+              - 'ui/ios/App/**'
+              # Brand propagates into Brand.swift / Info.plist
+              - 'branding/**'
+              # Xcode target generator
+              - 'scripts/native/add-xcode-targets.rb'
+              # SPM resolution affects which framework code CodeQL sees
+              - '**/Package.resolved'
+              # Force run when this workflow changes the swift leg's behaviour
+              - '.github/workflows/codeql.yml'
+
+      - name: Force-true on non-PR events
+        if: github.event_name != 'pull_request'
+        id: force-true
+        run: |
+          {
+            echo "js_ts=true"
+            echo "python=true"
+            echo "swift=true"
+          } >> "$GITHUB_OUTPUT"
+
   analyze:
     name: Analyze (${{ matrix.language }})
+    needs: changes
     # Swift needs macOS; everything else stays on ubuntu for speed + cost.
     runs-on: ${{ matrix.language == 'swift' && 'macos-15' || 'ubuntu-latest' }}
     timeout-minutes: 30
@@ -45,17 +127,48 @@ jobs:
       matrix:
         language: [javascript-typescript, python, swift]
     steps:
+      # Resolve the matrix language to the corresponding paths-filter
+      # output key. `matrix.language` contains a hyphen
+      # ('javascript-typescript') which isn't a valid GitHub Actions
+      # context-key name, so we can't write `needs.changes.outputs[matrix.language]`.
+      # Instead, set a step output `should_run` that's "true" iff this
+      # leg should execute; every downstream step gates on that.
+      - name: Resolve gate for ${{ matrix.language }}
+        id: gate
+        run: |
+          case "${{ matrix.language }}" in
+            javascript-typescript) gate='${{ needs.changes.outputs.js_ts }}' ;;
+            python)                gate='${{ needs.changes.outputs.python }}' ;;
+            swift)                 gate='${{ needs.changes.outputs.swift }}' ;;
+            *)                     gate='true' ;;
+          esac
+          echo "should_run=$gate" >> "$GITHUB_OUTPUT"
+          if [ "$gate" = "true" ]; then
+            echo "::notice::CodeQL ${{ matrix.language }} -- analysing (path filter matched)"
+          else
+            echo "::notice::CodeQL ${{ matrix.language }} -- skipping (no ${{ matrix.language }} paths changed)"
+            {
+              echo "### ⏭️ CodeQL ${{ matrix.language }} skipped"
+              echo ""
+              echo "No paths matching the \`${{ matrix.language }}\` filter changed in this PR."
+              echo "Last main-branch scan stands; weekly cron + push-to-main will re-evaluate."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Harden runner
+        if: steps.gate.outputs.should_run == 'true'
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
 
       - name: Checkout
+        if: steps.gate.outputs.should_run == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
 
       - name: Initialize CodeQL
+        if: steps.gate.outputs.should_run == 'true'
         uses: github/codeql-action/init@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4
         with:
           languages: ${{ matrix.language }}
@@ -78,7 +191,7 @@ jobs:
       # JavaScript/TypeScript + Python autobuild via pnpm install / uv pip
       # -- no extra build step.
       - name: Autobuild
-        if: matrix.language != 'swift'
+        if: steps.gate.outputs.should_run == 'true' && matrix.language != 'swift'
         uses: github/codeql-action/autobuild@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4
 
       # Swift needs an explicit xcodebuild step so CodeQL can extract the
@@ -90,7 +203,7 @@ jobs:
       # @capacitor/* plugin local packages) resolve via the xcodeproj's
       # package references.
       - name: Build Swift target
-        if: matrix.language == 'swift'
+        if: steps.gate.outputs.should_run == 'true' && matrix.language == 'swift'
         env:
           DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
         working-directory: ui/ios/App
@@ -110,6 +223,7 @@ jobs:
             build-for-testing | xcbeautify --renderer github-actions || true
 
       - name: Perform CodeQL Analysis
+        if: steps.gate.outputs.should_run == 'true'
         uses: github/codeql-action/analyze@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4
         with:
           category: '/language:${{ matrix.language }}'
