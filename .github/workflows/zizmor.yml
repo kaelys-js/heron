@@ -55,7 +55,7 @@ jobs:
       # verification. The astral-sh/setup-uv action is published by the
       # uv maintainers and is SHA-pinned per repo policy.
       - name: Install uv
-        uses: astral-sh/setup-uv@bd01e18f51369d5a26f1651c3cb451d3417e3bba # v6.10.1
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v6.10.1
         with:
           version: "0.5.20"
 
