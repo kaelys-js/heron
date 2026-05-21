@@ -423,3 +423,37 @@ jobs:
           APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
         run: bundle exec fastlane beta
+
+      - name: Attest build provenance (.ipa)
+        # SLSA build provenance for the iOS .ipa, matching what
+        # build-electron already does for the DMG / exe / AppImage.
+        # Fastlane's beta lane outputs the signed .ipa to
+        # `fastlane/builds/heron-<timestamp>.ipa` before TestFlight
+        # upload -- we attest that local file before it gets shipped.
+        # `continue-on-error: true` mirrors the electron-side attestation:
+        # the binary is already uploaded; we want the attestation but
+        # don't kill the release over a Sigstore blip.
+        if: success() && hashFiles('ui/ios/App/fastlane/builds/*.ipa') != ''
+        continue-on-error: true
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-path: |
+            ui/ios/App/fastlane/builds/*.ipa
+
+      - name: Upload .ipa as release asset
+        # Attach the .ipa to the GitHub Release so end users can verify
+        # the attestation against the artifact they downloaded from
+        # github.com. `gh attestation verify <ipa> --owner kaelys-js`
+        # then succeeds. TestFlight is the primary distribution
+        # channel; this is for transparency + audit.
+        if: success() && hashFiles('ui/ios/App/fastlane/builds/*.ipa') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          for ipa in ui/ios/App/fastlane/builds/*.ipa; do
+            [ -f "$ipa" ] || continue
+            gh release upload "$TAG_NAME" "$ipa" --clobber || \
+              echo "::warning::Couldn't attach $ipa to release $TAG_NAME (release may not exist yet)."
+          done

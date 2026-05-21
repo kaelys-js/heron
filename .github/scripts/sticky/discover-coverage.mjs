@@ -264,22 +264,35 @@ function parseCobertura(absPath) {
   const branchRate = parseFloat((attrs.match(/branch-rate=["']([\d.]+)["']/) || [, '0'])[1]);
   const linesValid = parseInt((attrs.match(/lines-valid=["'](\d+)["']/) || [, '0'])[1], 10);
   const linesCovered = parseInt((attrs.match(/lines-covered=["'](\d+)["']/) || [, '0'])[1], 10);
-  // Per-file stats from <class filename="..." line-rate="..." ...>
-  const classRe = /<class\s+([^>]*?)>/g;
+  // Per-file stats from <class filename="..." line-rate="..." ...>...</class>.
+  // Need the FULL block (not just the open tag) so we can count inner
+  // <line number="N" hits="0"/> for the missing-lines breakdown.
+  // Regex with `s` flag for cross-line match against the inner body.
+  const classBlockRe = /<class\s+([^>]*?)>([\s\S]*?)<\/class>/g;
   const fileStats = [];
   let m;
-  while ((m = classRe.exec(src))) {
+  while ((m = classBlockRe.exec(src))) {
     const a = m[1];
+    const body = m[2];
     const fileMatch = a.match(/filename=["']([^"']+)["']/);
     const rateMatch = a.match(/line-rate=["']([\d.]+)["']/);
     if (!fileMatch) continue;
     const file = fileMatch[1];
     const rate = rateMatch ? parseFloat(rateMatch[1]) : 0;
-    fileStats.push({ path: file, lines_pct: rate * 100, missing: 0 }); // missing requires inner <lines> parse; skip for cobertura
+    // Count inner `<line ... hits="0" />` entries for the per-file
+    // missing-lines count. Cobertura emits one <line> per executable
+    // line with a `hits` attribute (0 = uncovered).
+    const lineRe = /<line\s+[^>]*?hits=["'](\d+)["']/g;
+    let missing = 0;
+    let lm;
+    while ((lm = lineRe.exec(body))) {
+      if (parseInt(lm[1], 10) === 0) missing += 1;
+    }
+    fileStats.push({ path: file, lines_pct: rate * 100, missing });
   }
   const topUncovered = fileStats
-    .filter((r) => r.lines_pct < 100)
-    .sort((a, b) => a.lines_pct - b.lines_pct)
+    .filter((r) => r.missing > 0 || r.lines_pct < 100)
+    .sort((a, b) => b.missing - a.missing || a.lines_pct - b.lines_pct)
     .slice(0, 10);
   return {
     lines_pct: lineRate * 100,

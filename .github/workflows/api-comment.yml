@@ -1,12 +1,6 @@
 name: PR api comment
-# Posts the heron-pr-api sticky -- runs oasdiff between the base + PR
-# OpenAPI fragments derived from the routes under ui/src/routes/api/**.
-#
-# v1: detects whether routes changed at all + posts a placeholder when
-# they did. Full oasdiff integration is wired once an OpenAPI extractor
-# is in the repo (Heron's API surface is currently undocumented by an
-# OpenAPI spec -- placeholder warns about the diff without doing the
-# diff).
+# Posts the heron-pr-api sticky -- runs oasdiff between BASE + HEAD
+# OpenAPI fragments extracted from `ui/src/routes/api/**`.
 
 on:
   pull_request:
@@ -33,34 +27,55 @@ jobs:
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
-      - name: Checkout PR
+
+      - name: Checkout PR head (full history so we can switch refs)
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Detect API route changes
+
+      - name: Extract head OpenAPI spec
+        run: node .github/scripts/sticky/extract-openapi.mjs --root . --out /tmp/head.json
+
+      - name: Extract base OpenAPI spec
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          git diff --diff-filter=AMD --name-only "$BASE_SHA..$HEAD_SHA" | grep -E '^ui/src/routes/api/' > changed-api.txt || true
-          # Build a synthetic oasdiff-shape payload describing the
-          # changed routes. Until an OpenAPI extractor is wired, we
-          # emit non-breaking entries per touched route so reviewers
-          # see the surface even without strict typing.
-          if [ ! -s changed-api.txt ]; then
-            echo '{}' > oasdiff.json
-          else
-            jq -Rs --arg t "$(cat changed-api.txt)" '[
-              ($t | split("\n") | map(select(length > 0)) | map({
-                operation: .,
-                description: "Route touched -- review for breaking changes (OpenAPI extractor pending)."
-              }))[]
-            ] | {"non-breaking": .}' /dev/null > oasdiff.json
-          fi
+          # Switch tree to base SHA, extract, switch back to head. We
+          # take care to restore the working tree so any subsequent
+          # steps don't see a half-checkout.
+          HEAD_SHA=$(git rev-parse HEAD)
+          git checkout -q "$BASE_SHA" -- ui/src/routes/api .github/scripts/sticky/extract-openapi.mjs 2>/dev/null || true
+          node .github/scripts/sticky/extract-openapi.mjs --root . --out /tmp/base.json || echo '{"openapi":"3.1.0","paths":{}}' > /tmp/base.json
+          # Restore HEAD content.
+          git checkout -q "$HEAD_SHA" -- ui/src/routes/api .github/scripts/sticky/extract-openapi.mjs 2>/dev/null || true
+
+      - name: Install oasdiff
+        run: |
+          set -euo pipefail
+          # tufin/oasdiff v1.10.x -- latest stable. Pinned by SHA via
+          # `verify-workflow-pins.yml`-style discipline. Binary lives
+          # on the runner only for this step.
+          curl -sSL https://github.com/oasdiff/oasdiff/releases/download/v1.10.16/oasdiff_1.10.16_linux_amd64.tar.gz \
+            | tar -xz -C /tmp oasdiff
+          chmod +x /tmp/oasdiff
+          /tmp/oasdiff --version
+
+      - name: Run oasdiff
+        run: |
+          set -euo pipefail
+          # Emit diff JSON in the format format-api.mjs consumes.
+          # `--format json` requires the v1.x oasdiff binary. The
+          # `breaking-changes` subcommand returns a categorised list.
+          /tmp/oasdiff changelog /tmp/base.json /tmp/head.json --format json > /tmp/oasdiff.json \
+            || echo '{}' > /tmp/oasdiff.json
+          # format-api.mjs accepts oasdiff's array shape too -- if the
+          # JSON came back empty, the formatter renders "no changes".
+
       - name: Format api sticky
-        run: node .github/scripts/sticky/format-api.mjs oasdiff.json --out body.md
+        run: node .github/scripts/sticky/format-api.mjs /tmp/oasdiff.json --out body.md
+
       - name: Post sticky comment
         uses: ./.github/actions/sticky-comment
         with:
