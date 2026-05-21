@@ -78,6 +78,19 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      - name: Setup toolchain
+        uses: ./.github/actions/setup-toolchain
+        with:
+          install_deps: "true"
+
+      - name: Regenerate social preview PNG
+        # Keeps ui/static/og/default.png fresh so the maintainer can
+        # upload it via Settings -> General -> Social preview at any
+        # time and pick up the latest brand. GitHub has no public API
+        # to push the social preview image; this is the cleanest
+        # automation possible until that API ships.
+        run: pnpm og:generate
+
       - name: Reconcile
         env:
           GH_TOKEN: ${{ secrets.GH_USER_PAT || secrets.GITHUB_TOKEN }}

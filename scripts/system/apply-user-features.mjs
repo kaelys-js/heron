@@ -139,8 +139,14 @@ if (discussionsQ?.__error || discussionsQ?.errors || !discussionsQ?.data?.reposi
   const repoId = discussionsQ.data.repository.id;
   const cats = discussionsQ.data.repository.discussionCategories.nodes;
   const generalCat = cats.find((c) => /^(General|Q&A|Welcome)$/i.test(c.name)) || cats[0] || null;
+  // Pinned discussions can carry a null `discussion` node when the
+  // underlying discussion was deleted but the pin record lingered, or
+  // when the PAT scope hides it. Filter before .map so we don't crash
+  // on the .id deref.
   const pinnedIds = new Set(
-    (discussionsQ.data.repository.pinnedDiscussions?.nodes || []).map((n) => n.discussion.id),
+    (discussionsQ.data.repository.pinnedDiscussions?.nodes || [])
+      .filter((n) => n?.discussion)
+      .map((n) => n.discussion.id),
   );
   const WANTED = [
     {
@@ -327,6 +333,30 @@ if (liveMeta?.content) {
       driftCount++;
     }
   }
+}
+
+// ── 6. GitHub Sponsors listing audit (read-only) ────────────────
+// We can't enable Sponsors via API -- the maintainer has to complete
+// bank/tax verification on github.com/sponsors/<OWNER>. But we CAN
+// warn when the listing is still pending so the `funding` field in
+// package.json + `.github/FUNDING.yml` aren't dead links.
+console.log('▸ GitHub Sponsors listing');
+const sponsorsQ = ghGraphQL(`query($l: String!) { user(login: $l) { hasSponsorsListing } }`, {
+  l: OWNER,
+});
+if (sponsorsQ?.__error || sponsorsQ?.errors || !sponsorsQ?.data?.user) {
+  const reason =
+    sponsorsQ?.__error?.split('\n')[0] || sponsorsQ?.errors?.[0]?.message || 'no user data';
+  console.log(`  (skip) couldn't query Sponsors listing -- ${reason}`);
+} else if (sponsorsQ.data.user.hasSponsorsListing) {
+  console.log('  Sponsors listing: ok');
+} else {
+  console.log(
+    `  Sponsors listing: NOT YET VERIFIED -- complete signup at ` +
+      `https://github.com/sponsors/${OWNER} (bank + tax required; no API path).`,
+  );
+  // Not flagged as drift -- it's a one-time manual step, not state
+  // the script can reconcile. Surfaced as a notice only.
 }
 
 // ── Summary ─────────────────────────────────────────────────────

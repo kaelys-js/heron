@@ -32,9 +32,23 @@ jobs:
     permissions:
       issues: write
       pull-requests: write
-    # Bot PRs (Dependabot / Renovate / github-actions) don't get a welcome.
-    # The check below handles human PRs + issues separately.
-    if: github.event_name == 'issues' || github.event.pull_request.user.type != 'Bot'
+    # Skip for bots (Dependabot / Renovate / github-actions) AND for the
+    # maintainer + project members. The inline gh-count check below is
+    # defense-in-depth, but the author_association gate is cleaner --
+    # heron's young-repo edge case (kaelys-js had only 1 issue in this
+    # repo, so the count-based check posted a welcome on issue #82) is
+    # only avoidable by trusting GitHub's relationship metadata directly.
+    # OWNER / MEMBER / COLLABORATOR all skip; first-time contributors
+    # (NONE / FIRST_TIMER / FIRST_TIME_CONTRIBUTOR / CONTRIBUTOR) get
+    # the welcome.
+    if: |
+      (github.event_name == 'issues' || github.event.pull_request.user.type != 'Bot') &&
+      github.event.pull_request.author_association != 'OWNER' &&
+      github.event.pull_request.author_association != 'MEMBER' &&
+      github.event.pull_request.author_association != 'COLLABORATOR' &&
+      github.event.issue.author_association != 'OWNER' &&
+      github.event.issue.author_association != 'MEMBER' &&
+      github.event.issue.author_association != 'COLLABORATOR'
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
