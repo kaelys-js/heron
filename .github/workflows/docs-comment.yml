@@ -1,0 +1,72 @@
+name: PR docs comment
+# Posts the heron-pr-docs sticky -- aggregates cspell + remark-lint
+# over the .md files changed in the PR.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**/*.md'
+
+permissions: {}
+
+concurrency:
+  group: docs-comment-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  comment:
+    name: Post heron-pr-docs sticky
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Checkout PR
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Setup mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+        with:
+          experimental: true
+          cache: true
+
+      - name: Resolve changed .md files
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          git diff --diff-filter=AM --name-only "$BASE_SHA..$HEAD_SHA" | grep -E '\.md$' > changed-md.txt || true
+
+      - name: Run cspell
+        run: |
+          set -euo pipefail
+          if [ ! -s changed-md.txt ]; then echo "[]" > cspell.json; exit 0; fi
+          # Build the file-arg list as a space-separated string so cspell
+          # gets ONE quoted argument per file via xargs (shellcheck-safe).
+          xargs -a changed-md.txt npx --yes cspell --reporter=json --no-progress --no-summary -- > cspell.json 2>&1 || true
+
+      - name: Run remark-lint
+        run: |
+          set -euo pipefail
+          if [ ! -s changed-md.txt ]; then echo "[]" > remark.json; exit 0; fi
+          # Same xargs pattern -- avoids the SC2046 unquoted-substitution warning.
+          xargs -a changed-md.txt npx --yes remark --quiet --report json --setting commonmark > remark.json 2>&1 || true
+
+      - name: Format docs sticky
+        run: node .github/scripts/sticky/format-docs.mjs --cspell=cspell.json --remark=remark.json --out body.md
+
+      - name: Post sticky comment
+        uses: ./.github/actions/sticky-comment
+        with:
+          marker: heron-pr-docs
+          body-path: body.md
+          pr-number: ${{ github.event.pull_request.number }}
