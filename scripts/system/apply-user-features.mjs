@@ -124,8 +124,12 @@ const discussionsQ = ghGraphQL(
   }`,
   { o: REPO.split('/')[0], n: REPO.split('/')[1] },
 );
-if (discussionsQ?.__error) {
-  console.log(`  (skip) couldn't query discussions -- ${discussionsQ.__error.split('\n')[0]}`);
+if (discussionsQ?.__error || discussionsQ?.errors || !discussionsQ?.data?.repository) {
+  const reason =
+    discussionsQ?.__error?.split('\n')[0] ||
+    discussionsQ?.errors?.[0]?.message ||
+    'no repository data';
+  console.log(`  (skip) couldn't query discussions -- ${reason}`);
 } else {
   const repoId = discussionsQ.data.repository.id;
   const cats = discussionsQ.data.repository.discussionCategories.nodes;
@@ -319,7 +323,7 @@ if (liveMeta?.content) {
       driftCount++;
     }
   }
-} else if (!liveMeta?.__error?.includes('Not Found')) {
+} else if (liveMeta?.__error?.includes('Not Found')) {
   // Repo exists but README absent -- create.
   if (VERIFY_ONLY) {
     drift('profile README', 'missing');

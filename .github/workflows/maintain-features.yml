@@ -56,12 +56,15 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: read
-      issues: write
       # NB: GITHUB_TOKEN cannot grant the `administration` scope (only
       # fine-grained PATs can). Without `GH_USER_PAT`, environment ops
       # (production-ios, production-electron, npm-publish, github-pages
       # branch policies) silently no-op. Labels + validity-checks
       # attempt apply regardless. Land `GH_USER_PAT` for full reconcile.
+      # `issues: write` not requested -- this workflow has no drift-issue
+      # opening path (unlike maintain-config.yml's schedule branch); the
+      # script applies idempotently with no user-facing surface beyond
+      # the step summary.
 
     steps:
       - name: Harden runner
