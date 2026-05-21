@@ -171,7 +171,14 @@ if (discussionsQ?.__error || discussionsQ?.errors || !discussionsQ?.data?.reposi
       console.log(
         `  "${w.title}": exists${isPinned ? ' + pinned (UI)' : ' (UNPINNED -- pin via UI)'}`,
       );
-      if (!isPinned) needsUiPin = true;
+      if (!isPinned) {
+        needsUiPin = true;
+        // Treat unpinned existing discussions as drift so --check exits
+        // non-zero + apply runs increment the change counter. Pinning
+        // is UI-only, but the OUTCOME (a discussion not in pinned state)
+        // is real drift; bookkeep it the same way.
+        drift(`"${w.title}" discussion`, 'unpinned (manual UI pin required)');
+      }
     } else if (generalCat) {
       if (VERIFY_ONLY) {
         drift(`"${w.title}" discussion`, 'missing');
@@ -190,7 +197,8 @@ if (discussionsQ?.__error || discussionsQ?.errors || !discussionsQ?.data?.reposi
         } else {
           console.log(`  "${w.title}": created (UNPINNED -- pin via UI)`);
           needsUiPin = true;
-          driftCount++;
+          driftCount++; // for the create
+          drift(`"${w.title}" discussion`, 'unpinned (manual UI pin required)');
         }
       }
     }
@@ -227,11 +235,13 @@ if (projectsQ?.__error || !projectsQ?.data?.user) {
     if (create?.__error || create?.errors) {
       const e = create?.__error?.split('\n')[0] || create?.errors?.[0]?.message;
       if (/Resource not accessible/i.test(e)) {
+        const tokenLabel = process.env.GH_USER_PAT ? 'GH_USER_PAT' : 'GH_TOKEN';
         console.log(
-          `  (skip) Heron Roadmap project: fine-grained PATs don't expose user-scope ` +
-            `Project v2 creation. EASIEST FIX: create it ONCE via UI at ` +
-            `https://github.com/users/${OWNER}/projects (click "New project" -> Roadmap template ` +
-            `-> name "Heron Roadmap"). Subsequent runs will detect + skip.`,
+          `  (skip) Heron Roadmap project: ${tokenLabel} can't create user-scope Project v2s. ` +
+            `If running under GH_TOKEN: set GH_USER_PAT (a PAT with project scope) and re-run. ` +
+            `Otherwise: create it ONCE via UI at https://github.com/users/${OWNER}/projects ` +
+            `(click "New project" -> Roadmap template -> name "Heron Roadmap"). ` +
+            `Subsequent runs will detect + skip.`,
         );
       } else {
         console.log(`  Heron Roadmap: create failed -- ${e}`);
@@ -275,12 +285,13 @@ if (!VERIFY_ONLY) {
     if (/name already exists|already exists on this account/i.test(repoCreate.__error)) {
       // expected when the repo already exists -- continue to README upsert
     } else if (/Resource not accessible/i.test(repoCreate.__error)) {
+      const tokenLabel = process.env.GH_USER_PAT ? 'GH_USER_PAT' : 'GH_TOKEN';
       console.log(
-        `  (skip) Profile repo: fine-grained PATs don't grant user-account repo CREATION. ` +
-          `EASIEST FIX: create it ONCE via UI -- https://github.com/new -> name "${OWNER}", ` +
-          `public, with README -- THEN edit the PAT at https://github.com/settings/personal-access-tokens, ` +
-          `"Only select repositories" -> add "${OWNER}/${OWNER}" with Contents Read+Write. ` +
-          `Subsequent runs will upsert the README idempotently.`,
+        `  (skip) Profile repo: ${tokenLabel} can't create user-account repos. ` +
+          `If running under GH_TOKEN: set GH_USER_PAT (a PAT with repo scope at account level) ` +
+          `and re-run. Otherwise: create it ONCE via UI -- https://github.com/new -> name "${OWNER}", ` +
+          `public, with README -- THEN add "${OWNER}/${OWNER}" to the PAT's "Only select repositories" ` +
+          `list with Contents Read+Write. Subsequent runs will upsert the README idempotently.`,
       );
     } else {
       console.log(`  Profile repo: ${repoCreate.__error.split('\n')[0]}`);
