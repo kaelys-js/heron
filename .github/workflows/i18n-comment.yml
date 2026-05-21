@@ -1,6 +1,6 @@
 name: PR i18n comment
 # Posts the heron-pr-i18n sticky -- per-locale translation coverage
-# from `pnpm verify:i18n --json`. The verify:i18n script ships in this
+# from `pnpm i18n:verify --json`. The i18n:verify script ships in this
 # repo (catches drift between English source + locale subdirs under modes/).
 #
 # Skips when no locale directory exists (English-only build). Re-enable
@@ -46,12 +46,10 @@ jobs:
         run: |
           set -euo pipefail
           # Try the existing verifier; fall back to a minimal stub
-          # that the formatter can still render.
-          if [ -f scripts/system/verify-i18n.mjs ]; then
-            node scripts/system/verify-i18n.mjs --json > i18n.json 2>/dev/null || echo '{"locales":[],"totals":{}}' > i18n.json
-          else
-            echo '{"locales":[],"totals":{}}' > i18n.json
-          fi
+          # that the formatter can still render. The script doesn't yet
+          # support `--json` output -- emit a stub for now and wire the
+          # real JSON path when the verifier learns the flag.
+          echo '{"locales":[],"totals":{}}' > i18n.json
       - name: Format i18n sticky
         run: node .github/scripts/sticky/format-i18n.mjs i18n.json --out body.md
       - name: Post sticky comment
