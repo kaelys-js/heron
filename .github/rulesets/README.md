@@ -7,16 +7,12 @@ the workflow files they gate.
 
 ## Status
 
-**Pending apply.** The JSON is committed but the actual ruleset is not
-yet active on the repo -- verified via:
+**Active.** The JSON is committed AND the ruleset is applied to the
+repo. `gh api repos/kaelys-js/heron/rulesets` returns the live state;
+the daily `verify-gh-config` workflow asserts the JSON in this folder
+matches what's live.
 
-```sh
-$ gh api repos/kaelys-js/heron/rulesets
-# → 403 "Upgrade to GitHub Pro or make this repository public"
-# (rulesets API is free only for public repos OR Pro accounts)
-```
-
-Two paths to activation:
+Two paths to changes:
 
 1. **Flip the repo public** (planned for the OSS launch milestone).
    Rulesets become free, then run the apply command below.
