@@ -168,6 +168,13 @@ async function main() {
   }
 
   // ── 3. Repo settings (auto-merge, delete-branch, commit-signoff) ──
+  // `allow_auto_merge`, `delete_branch_on_merge`, and the GHAS fields
+  // below are only included in GET /repos/{slug} when the requesting
+  // token has `administration: read`. GITHUB_TOKEN in workflows cannot
+  // grant that scope (PAT-only). So in CI those fields come back
+  // undefined -- we treat that as "invisible to this token, skip"
+  // rather than false-positive-flag as drift. Local runs with an
+  // admin PAT still see the fields and catch real drift.
   const desiredSettings = {
     allow_auto_merge: true,
     delete_branch_on_merge: true,
@@ -175,7 +182,10 @@ async function main() {
     has_discussions: true,
     has_issues: true,
   };
-  const settingsDrift = Object.entries(desiredSettings).filter(([k, v]) => repoState[k] !== v);
+  const settingsDrift = Object.entries(desiredSettings).filter(([k, v]) => {
+    if (repoState[k] === undefined) return false; // field not visible to current token
+    return repoState[k] !== v;
+  });
   if (settingsDrift.length > 0) {
     driftCount++;
     console.log('▸ Repo settings');
@@ -186,15 +196,19 @@ async function main() {
   }
 
   // ── 4. GHAS toggles ────────────────────────────────────────────
+  // Same admin-only-visibility caveat as section 3. When sec[k] is
+  // undefined the token can't read this GHAS field; skip rather
+  // than assume "disabled".
   const sec = repoState.security_and_analysis || {};
   const ghasDesired = {
     secret_scanning: 'enabled',
     secret_scanning_push_protection: 'enabled',
     dependabot_security_updates: 'enabled',
   };
-  const ghasDrift = Object.entries(ghasDesired).filter(
-    ([k, v]) => (sec[k]?.status || 'disabled') !== v,
-  );
+  const ghasDrift = Object.entries(ghasDesired).filter(([k, v]) => {
+    if (sec[k] === undefined) return false; // field not visible to current token
+    return sec[k].status !== v;
+  });
   if (ghasDrift.length > 0) {
     driftCount++;
     console.log('▸ GitHub Advanced Security');
