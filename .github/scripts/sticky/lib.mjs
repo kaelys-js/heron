@@ -55,6 +55,9 @@ export function statusEmoji(state) {
       return EMOJI.skip;
     case 'neutral':
       return EMOJI.neutral;
+    case 'warn':
+    case 'warning':
+      return EMOJI.warn;
     case 'in_progress':
     case 'queued':
     case 'pending':

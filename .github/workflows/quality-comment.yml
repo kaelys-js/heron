@@ -66,10 +66,31 @@ jobs:
             | jq -s '{jobs: (map(.jobs) | add)}' > jobs.json
           echo "::notice::Fetched $(jq '.jobs | length' jobs.json) jobs for run $RUN_ID."
 
+      - name: Fetch logs for each failed job
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # Per-job logs feed format-quality's per-tool error-count
+          # aggregation. The gh api endpoint returns plain text.
+          mkdir -p failed-logs
+          jq -r '.jobs[] | select(.conclusion == "failure") | .id' jobs.json \
+            | while read -r job_id; do
+                [ -z "$job_id" ] && continue
+                gh api "repos/$GH_REPO/actions/jobs/$job_id/logs" \
+                  > "failed-logs/$job_id.txt" 2>/dev/null \
+                  || echo "::warning::Couldn't fetch log for job $job_id"
+              done
+
       - name: Format quality sticky body
         env:
           GH_REPO: ${{ github.repository }}
-        run: node .github/scripts/sticky/format-quality.mjs jobs.json --repo "$GH_REPO" --out body.md
+        run: |
+          node .github/scripts/sticky/format-quality.mjs jobs.json \
+            --repo "$GH_REPO" \
+            --logs-dir failed-logs \
+            --out body.md
 
       - name: Resolve PR number
         id: pr

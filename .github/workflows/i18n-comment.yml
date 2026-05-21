@@ -45,11 +45,11 @@ jobs:
       - name: Generate i18n coverage JSON
         run: |
           set -euo pipefail
-          # Try the existing verifier; fall back to a minimal stub
-          # that the formatter can still render. The script doesn't yet
-          # support `--json` output -- emit a stub for now and wire the
-          # real JSON path when the verifier learns the flag.
-          echo '{"locales":[],"totals":{}}' > i18n.json
+          # verify-i18n.mjs --json emits a coverage report shaped as
+          # { locales: [...], totals: { <lang>: { translated, missing } }, english_count }.
+          # Exit 0 on both "no locales" + "drift" so we always have
+          # parseable input for the sticky formatter.
+          node scripts/system/verify-i18n.mjs --json > i18n.json
       - name: Format i18n sticky
         run: node .github/scripts/sticky/format-i18n.mjs i18n.json --out body.md
       - name: Post sticky comment

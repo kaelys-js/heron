@@ -30,6 +30,19 @@
  *   default   verify parity; exit 1 on drift
  *   --strict  treat "no locale dirs" as drift (use during CI for any
  *             release that promises i18n)
+ *   --json    emit machine-readable coverage report on stdout in the
+ *             shape:
+ *               {
+ *                 "locales": ["de", "fr", ...],
+ *                 "totals": {
+ *                   "de": { "translated": <int>, "missing": <int> },
+ *                   ...
+ *                 },
+ *                 "english_count": <int>
+ *               }
+ *             Used by `.github/workflows/i18n-comment.yml` to power
+ *             the `heron-pr-i18n` sticky. Exits 0 regardless of drift
+ *             when --json is set (the consumer formats the data).
  *
  * Wired into:
  *   - lefthook.yml `verify-i18n` pre-commit hook (when modes/* changes)
@@ -44,6 +57,7 @@ const MODES_DIR = join(ROOT, 'modes');
 const KNOWN_LOCALES = ['de', 'fr', 'ja', 'pt', 'ru', 'es'];
 
 const STRICT = process.argv.includes('--strict');
+const JSON_OUT = process.argv.includes('--json');
 
 if (!existsSync(MODES_DIR)) {
   console.error('::error::modes/ directory missing');
@@ -67,6 +81,12 @@ const existingLocales = KNOWN_LOCALES.filter((lang) => {
 });
 
 if (existingLocales.length === 0) {
+  if (JSON_OUT) {
+    process.stdout.write(
+      JSON.stringify({ locales: [], totals: {}, english_count: englishModes.length }) + '\n',
+    );
+    process.exit(0);
+  }
   if (STRICT) {
     console.error(
       '::error::no locale directories under modes/ — strict mode requires at least one',
@@ -79,12 +99,18 @@ if (existingLocales.length === 0) {
   process.exit(0);
 }
 
+// Per-locale stats for the JSON path + the human-readable path below.
+const stats = {};
 let drift = 0;
 for (const lang of existingLocales) {
   const dir = join(MODES_DIR, lang);
   const localeMd = readdirSync(dir)
     .filter((f) => f.endsWith('.md') && !f.startsWith('_'))
     .sort();
+  stats[lang] = {
+    translated: Math.min(localeMd.length, englishModes.length),
+    missing: Math.max(0, englishModes.length - localeMd.length),
+  };
   // Locale files may be RENAMED versions of the English ones (e.g.
   // German `angebot.md` mirrors English `evaluate.md`). The parity gate
   // checks COUNT + locale-specific-allowlist, not literal filenames.
@@ -92,15 +118,28 @@ for (const lang of existingLocales) {
   // optimise for "either has every mode or none" which is the actual
   // failure mode (a half-localised dir leaves the user with mixed
   // language responses).
-  const missingCount = Math.max(0, englishModes.length - localeMd.length);
+  const missingCount = stats[lang].missing;
   if (missingCount > 0) {
-    console.error(
-      `  ✗ modes/${lang}/ — ${localeMd.length} files (expected ${englishModes.length} for parity)`,
-    );
+    if (!JSON_OUT) {
+      console.error(
+        `  ✗ modes/${lang}/ -- ${localeMd.length} files (expected ${englishModes.length} for parity)`,
+      );
+    }
     drift += 1;
-  } else {
-    console.log(`  ✓ modes/${lang}/ — ${localeMd.length} files (parity with English)`);
+  } else if (!JSON_OUT) {
+    console.log(`  ✓ modes/${lang}/ -- ${localeMd.length} files (parity with English)`);
   }
+}
+
+if (JSON_OUT) {
+  process.stdout.write(
+    JSON.stringify({
+      locales: existingLocales,
+      totals: stats,
+      english_count: englishModes.length,
+    }) + '\n',
+  );
+  process.exit(0);
 }
 
 if (drift > 0) {
