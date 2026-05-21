@@ -46,7 +46,11 @@ jobs:
         continue-on-error: true
       - name: Format bundle sticky
         run: |
-          if [ ! -f bundle/bundle-size.json ]; then echo "[]" > bundle/bundle-size.json; mkdir -p bundle; fi
+          # mkdir BEFORE the redirect -- the prior form did `echo > path; mkdir -p`
+          # which fails when the dir doesn't exist yet (the bundle-size artifact
+          # may be absent on a fresh main run or when the source workflow skipped).
+          mkdir -p bundle
+          if [ ! -f bundle/bundle-size.json ]; then echo "[]" > bundle/bundle-size.json; fi
           node .github/scripts/sticky/format-bundle.mjs bundle/bundle-size.json --out body.md
       - name: Resolve PR number
         id: pr
