@@ -61,8 +61,8 @@ catalogs:
       specifier: 8.0.3
       version: 8.0.3
     '@capacitor/local-notifications':
-      specifier: 8.1.0
-      version: 8.1.0
+      specifier: 8.2.0
+      version: 8.2.0
     '@capacitor/network':
       specifier: 8.0.1
       version: 8.0.1
@@ -470,7 +470,7 @@ importers:
         version: 8.3.4(@capacitor/core@8.3.3)
       '@capacitor/local-notifications':
         specifier: 'catalog:'
-        version: 8.1.0(@capacitor/core@8.3.3)
+        version: 8.2.0(@capacitor/core@8.3.3)
       '@capacitor/network':
         specifier: 'catalog:'
         version: 8.0.1(@capacitor/core@8.3.3)
@@ -932,8 +932,8 @@ packages:
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
-  '@capacitor/local-notifications@8.1.0':
-    resolution: {integrity: sha512-rc1vWw7G7LXLL9AOoi6DKA740UMDEVpBbRBFByI4KVPV4wJi30gtr5k2D3/WwiwwYvjm55eD1k03QhOrGYf9cA==}
+  '@capacitor/local-notifications@8.2.0':
+    resolution: {integrity: sha512-fvLY0w2w4MiX+DD4+Wv4DOwOLdzKZsMDwAcRv/Juudd+QbKbn69s6cM3xVqPwAiDqfnqsY4/S8xtQD6M73wY2A==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -5424,7 +5424,7 @@ snapshots:
     dependencies:
       '@capacitor/core': 8.3.3
 
-  '@capacitor/local-notifications@8.1.0(@capacitor/core@8.3.3)':
+  '@capacitor/local-notifications@8.2.0(@capacitor/core@8.3.3)':
     dependencies:
       '@capacitor/core': 8.3.3
 
