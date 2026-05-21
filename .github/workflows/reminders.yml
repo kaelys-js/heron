@@ -85,7 +85,7 @@ jobs:
             printf "- Dependency staleness (Renovate dashboard backlog)\n"
             printf "- Security advisory backlog (GHSA + open security issues)\n"
             printf "- README screenshots refresh (drift from UI changes)\n\n"
-            printf "Trigger the audit with:\n\n\`\`\`sh\npnpm gh:verify  # config drift check\npnpm test       # full test matrix\npnpm screenshots # README assets refresh\n\`\`\`\n\n"
+            printf "Trigger the audit with:\n\n\`\`\`sh\n# Config drift check -- Actions UI:\n#   Actions → \"Maintain GitHub config\" → Run workflow → mode=check\npnpm test         # full test matrix\npnpm screenshots  # README assets refresh\n\`\`\`\n\n"
             printf "_Posted by reminders.yml — close when the next audit lands._\n"
           } > /tmp/issue.md
           gh issue create \

@@ -53,7 +53,7 @@ fix / has a regression / signed binaries don't load.
 1. **Confirm it's environmental** -- look at the failing check log. If the failure is a code issue, fix the code instead.
 2. **Open the auto-fix path first** -- can pre-push hooks or `pnpm format` solve it? Run `gh pr checks N --watch` to see the live state.
 3. **Admin merge as last resort** -- `gh pr merge N --admin`. This bypasses the failing check. Use sparingly (audit log records every admin merge); pair with a follow-up issue describing why bypass was needed.
-4. **Disable the broken check temporarily** -- ONLY if it's stuck-failing and will need an actual CI fix. Edit `.github/rulesets/main.json` to remove the context from `required_status_checks` -> commit -> `pnpm gh:apply`. Re-add after the underlying CI is fixed.
+4. **Disable the broken check temporarily** -- ONLY if it's stuck-failing and will need an actual CI fix. Edit `.github/rulesets/main.json` to remove the context from `required_status_checks` -> commit + push to `main` (the `maintain-config.yml` workflow auto-applies on changes under `.github/rulesets/**`). Re-add after the underlying CI is fixed.
 
 ## Bot account compromised / impersonation
 

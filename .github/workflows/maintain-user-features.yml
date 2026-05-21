@@ -1,0 +1,63 @@
+name: Maintain user-scope features
+
+# Reconciles user-scope GitHub state (Project v2, saved replies,
+# profile README) + repo-scope features that need write auth (pinned
+# Roadmap 2026 issue, pinned discussions). Companion to
+# `maintain-config.yml` + `maintain-features.yml` for items the
+# `GITHUB_TOKEN` cannot reach.
+#
+# Auth: `GH_USER_PAT` secret. Fine-grained PAT with scopes:
+#   repo, write:discussion, read/write:user, read/write:project
+# When GH_USER_PAT is absent the script no-ops with a notice so
+# first-time maintainers can land the secret without breaking CI.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/system/apply-user-features.mjs'
+      - '.github/workflows/maintain-user-features.yml'
+  schedule:
+    # Weekly drift sweep, Monday 06:23 UTC (off-peak; avoids cron storms).
+    - cron: '23 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'apply | check'
+        required: false
+        default: 'apply'
+
+permissions: {}
+
+concurrency:
+  group: maintain-user-features
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    name: Reconcile user-scope GitHub state
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Reconcile
+        env:
+          GH_USER_PAT: ${{ secrets.GH_USER_PAT }}
+          GH_REPO: ${{ github.repository }}
+          GH_OWNER: ${{ github.repository_owner }}
+        run: |
+          if [ "${{ github.event.inputs.mode }}" = "check" ]; then
+            node scripts/system/apply-user-features.mjs --check
+          else
+            node scripts/system/apply-user-features.mjs
+          fi

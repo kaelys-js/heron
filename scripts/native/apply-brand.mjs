@@ -32,7 +32,7 @@ import {
 import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execSync, execFileSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 // ROOT is the repo root by default -- the script lives at
 // scripts/native/apply-brand.mjs so two `..` jumps land at /<repo>.
@@ -361,8 +361,9 @@ function generateMigrationDoc(drift, brand) {
     '- ui/src/app.css color + font token blocks (AUTO-GENERATED).',
     '- 4 wordmark SVG variants (regenerated from brand.displayName).',
     '- 8 .md docs with AUTO-GENERATED:<section> markers fill from brand.json.',
-    '- GitHub-side state (description, homepage, topics, GHAS, rulesets) via the',
-    '  auto-chained `pnpm gh:apply` call -- see branding/REBRAND-PROCESS.md.',
+    '- GitHub-side state (description, homepage, topics, GHAS, rulesets) is',
+    '  reconciled by .github/workflows/maintain-config.yml on push:main + weekly',
+    '  cron -- see branding/REBRAND-PROCESS.md.',
     '- branding/.brand-snapshot.json updates to record the new applied state.',
     '',
     '## Rollback',
@@ -2228,10 +2229,6 @@ function recordApplied() {
 
 function apply() {
   const brand = loadBrand();
-  // Capture the previous snapshot BEFORE writeSnapshot overwrites it.
-  // maybeApplyGitHubConfig (called at the end) needs the pre-apply
-  // repo block to decide whether to auto-chain into `gh:apply`.
-  const prevSnapshot = loadSnapshot();
   // Drift check runs BEFORE shouldSkip -- a destructive rebrand should
   // never be hidden by a stale cache hit. If REBRAND_CONFIRMED=1 isn't
   // set when destructive fields drift, this exits 1.
@@ -2306,9 +2303,12 @@ function apply() {
   recordApplied();
   writeSnapshot(brand);
 
-  // Auto-chain into gh:apply if brand.json::repo changed AND `gh` is
-  // authed. Best-effort: silent skip on no-auth, warn-only on error.
-  maybeApplyGitHubConfig(brand, prevSnapshot);
+  // NB: GitHub-side state (description, homepage, topics, rulesets,
+  // GHAS, env policies, labels) is reconciled in CI by
+  // `.github/workflows/maintain-config.yml` + `maintain-features.yml`
+  // on push:main + weekly cron -- not auto-chained from apply-brand.
+  // Local apply-brand is pure file-propagation; commit + push triggers
+  // the live reconcile.
 
   // Auto-stage the mutated files when invoked from a git hook (or any
   // caller that passes --stage). Avoids the brittle hard-coded `git
@@ -2390,64 +2390,6 @@ function apply() {
   }
 
   console.log(`\n${GREEN}✓${RESET} brand applied — every consumer reads from branding/brand.json`);
-}
-
-/**
- * Auto-invoke `pnpm gh:apply` when the `brand.json::repo` block changed
- * since the last snapshot AND `gh` is authed on the local machine.
- *
- * Rationale: apply-brand owns local-file propagation; gh:apply owns
- * GitHub-side state (description, homepage, topics, GHAS, rulesets).
- * Chaining them makes "edit brand.json → commit" the single workflow,
- * matching the SSOT contract documented in branding/REBRAND-PROCESS.md.
- *
- * Skip conditions (each a deliberate design choice):
- *
- *   • No prior snapshot -- first-ever run, user hasn't yet demonstrated
- *     intent to manage GitHub state via this repo. They may not even
- *     own the repo yet (fresh fork).
- *   • repo block unchanged -- gh:apply is idempotent but a network
- *     round-trip with no expected work is wasted time.
- *   • `gh auth status` fails -- CI without GH_TOKEN, dev container
- *     without gh installed, etc. Print one line + continue; the next
- *     authed run catches up.
- *
- * Errors during the gh:apply child process are warn-only -- apply-brand's
- * own file changes are already on disk, and gh:apply can be re-invoked
- * manually any time via `pnpm gh:apply`.
- */
-function maybeApplyGitHubConfig(brand, prevSnapshot) {
-  if (!prevSnapshot) return;
-  if (!brand.repo) return;
-
-  // Fields that map onto gh:apply's reconciliation surface. Other
-  // brand.json::repo keys (url, issues, docs) are informational --
-  // they don't drive any `gh api` call.
-  const REPO_FIELDS = ['description', 'homepage', 'topics', 'owner', 'name'];
-  const repoChanged = REPO_FIELDS.some((f) => {
-    const before = prevSnapshot.repo?.[f];
-    const after = brand.repo?.[f];
-    return JSON.stringify(before) !== JSON.stringify(after);
-  });
-  if (!repoChanged) return;
-
-  log.step('GitHub-side state (auto-chained from brand.json::repo)');
-
-  try {
-    execSync('gh auth status', { stdio: 'pipe' });
-  } catch {
-    log.skip('gh:apply — `gh` not authed (run `gh auth login` then `pnpm gh:apply`)');
-    return;
-  }
-
-  try {
-    execSync('node scripts/system/apply-github-config.mjs', {
-      cwd: ROOT,
-      stdio: 'inherit',
-    });
-  } catch {
-    log.warn('gh:apply failed — run `pnpm gh:verify` to diagnose, then `pnpm gh:apply` manually.');
-  }
 }
 
 // CommonJS require shim for the version-display in apply()

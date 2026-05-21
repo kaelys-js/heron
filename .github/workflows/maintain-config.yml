@@ -1,0 +1,164 @@
+name: Maintain GitHub config
+
+# Reconciles repo-scope GitHub state (description, homepage, topics,
+# rulesets, GHAS toggles, PVR, repo settings) against the SSOT files:
+#
+#   branding/brand.json::repo
+#   .github/rulesets/*.json
+#
+# Modes:
+#   push:main on SSOT paths       → apply (propagate file changes live)
+#   schedule (Mon 06:13 UTC)      → check (drift sweep; opens issue on drift)
+#   workflow_dispatch             → apply by default, --check via input
+#
+# Auth: prefers GH_USER_PAT (fine-grained PAT with `repo` +
+# `administration: write`) when set, falls back to GITHUB_TOKEN. The
+# fallback can apply description/homepage/topics/rulesets but cannot
+# read/write admin-only fields (allow_auto_merge, delete_branch_on_merge,
+# security_and_analysis.*) --apply-github-config.mjs treats those as
+# "invisible to this token, skip" rather than false-positive drift.
+#
+# Replaces the previous local-script flow (gh:apply / gh:verify npm
+# scripts + verify-gh-config.yml cron). The reconciler script lives at
+# scripts/system/apply-github-config.mjs and is invoked here directly.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "branding/brand.json"
+      - ".github/rulesets/**"
+      - "scripts/system/apply-github-config.mjs"
+      - ".github/workflows/maintain-config.yml"
+  schedule:
+    # Weekly drift sweep, Monday 06:13 UTC (off-peak; staggered with the
+    # other maintain-* cron jobs at :18 + :23 to avoid resource contention).
+    - cron: "13 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "apply | check"
+        required: false
+        default: "apply"
+
+permissions: {}
+
+concurrency:
+  group: maintain-config
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    name: Reconcile GitHub config
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+      # NB: GITHUB_TOKEN cannot grant the `administration` scope (only
+      # fine-grained PATs can). Without `GH_USER_PAT`, the script
+      # silently skips admin-only fields (rulesets, allow_auto_merge,
+      # delete_branch_on_merge, security_and_analysis.*) --the
+      # non-admin work (description, homepage, topics) still applies.
+      # Land `GH_USER_PAT` as a repo secret to enable full reconcile;
+      # see TODO-INSTRUCTIONS.md for the scope list.
+
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Decide mode
+        id: mode
+        env:
+          DISPATCH_MODE: ${{ github.event.inputs.mode }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            echo "mode=check" >> "$GITHUB_OUTPUT"
+          elif [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$DISPATCH_MODE" = "check" ]; then
+            echo "mode=check" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=apply" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Reconcile
+        id: reconcile
+        env:
+          GH_TOKEN: ${{ secrets.GH_USER_PAT || secrets.GITHUB_TOKEN }}
+          MODE: ${{ steps.mode.outputs.mode }}
+        run: |
+          set +e
+          if [ "$MODE" = "check" ]; then
+            OUTPUT=$(node scripts/system/apply-github-config.mjs --verify 2>&1)
+          else
+            OUTPUT=$(node scripts/system/apply-github-config.mjs 2>&1)
+          fi
+          STATUS=$?
+          echo "$OUTPUT"
+          {
+            echo "exit_status=$STATUS"
+            echo 'output<<DRIFTEOF'
+            echo "$OUTPUT"
+            echo 'DRIFTEOF'
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "## GH config reconcile (mode=$MODE)"
+            echo ""
+            if [ "$STATUS" -eq 0 ]; then
+              echo "✓ Repo state matches SSOT."
+            elif [ "$MODE" = "check" ]; then
+              echo "✗ Drift detected. Trigger \`maintain-config.yml\` manually (mode=apply) or commit a fix."
+              echo ""
+              echo '```'
+              echo "$OUTPUT"
+              echo '```'
+            else
+              echo "✗ Apply failed."
+              echo ""
+              echo '```'
+              echo "$OUTPUT"
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$STATUS"
+
+      - name: Open drift issue (schedule + drift only)
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRIFT: ${{ steps.reconcile.outputs.output }}
+        run: |
+          set -euo pipefail
+          EXISTING=$(gh issue list --label "drift" --state open --json number --jq '.[0].number // empty')
+          {
+            echo "Drift detected by weekly \`maintain-config.yml\`."
+            echo ""
+            echo "Reconcile by running the workflow manually with \`mode=apply\` (Actions → Maintain GitHub config → Run workflow),"
+            echo "OR revert the UI change that caused the drift."
+            echo ""
+            echo "<details><summary>Drift report</summary>"
+            echo ""
+            echo '```'
+            printf '%s\n' "$DRIFT"
+            echo '```'
+            echo ""
+            echo "</details>"
+          } > /tmp/issue.md
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body-file /tmp/issue.md
+            echo "::notice::Drift recurred --commented on existing issue #$EXISTING"
+          else
+            gh issue create \
+              --title "GH config drift detected ($(date -u +%Y-%m-%d))" \
+              --label "drift,maintenance" \
+              --body-file /tmp/issue.md
+          fi

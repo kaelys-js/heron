@@ -7,10 +7,11 @@ name: Pages
 # bootstraps the hosted site without that decision blocking the
 # infrastructure.
 #
-# Pages source must be set to "GitHub Actions" before this works. The
-# `scripts/system/apply-github-features.mjs` script enables Pages via
-# `PUT /repos/{owner}/{repo}/pages` -- run `pnpm gh:apply-features`
-# after this workflow lands for the first time.
+# Pages source must be set to "GitHub Actions" before this works.
+# `.github/workflows/maintain-features.yml` reconciles it via
+# `PUT /repos/{owner}/{repo}/pages` -- trigger that workflow manually
+# (Actions → "Maintain repo features" → Run workflow) after this lands
+# for the first time, or wait for the weekly cron sweep.
 
 on:
   push:

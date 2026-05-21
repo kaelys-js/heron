@@ -1,0 +1,105 @@
+name: CodeRabbit threads
+
+# Fails the PR check when CodeRabbit has unresolved review-thread
+# comments. The existing ruleset rule `required_review_thread_resolution`
+# already blocks non-admin merges on unresolved threads, but it's
+# bypassable by admin + invisible until you try to merge. This makes the
+# unresolved count VISIBLE as a status check + adds a CI gate so the PR
+# author sees the block early.
+#
+# Triggered on every PR edit + review-thread state change so the gate
+# updates in near-real-time as threads get resolved.
+
+on:
+  # Re-runs on every PR push + every CodeRabbit comment edit/delete.
+  # GitHub doesn't expose a thread-resolve event in Actions, so we
+  # also re-run on pull_request_review submission (which fires when
+  # someone clicks "Resolve conversation").
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  pull_request_review:
+    types: [submitted, edited]
+  pull_request_review_comment:
+    types: [created, edited, deleted]
+
+permissions: {}
+
+concurrency:
+  # All 3 trigger events carry github.event.pull_request.number.
+  group: coderabbit-threads-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Unresolved CodeRabbit threads
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Query unresolved CodeRabbit threads
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          if [ -z "$PR_NUM" ]; then
+            echo "::notice::No PR context (likely a non-PR event); skipping."
+            exit 0
+          fi
+          # GraphQL: enumerate the review threads + filter to CodeRabbit
+          # author + unresolved. Pagination not needed for typical PR
+          # sizes; 100 threads is far above what any single PR will hit.
+          UNRESOLVED=$(gh api graphql -f query="
+            query {
+              repository(owner: \"${GH_REPO%/*}\", name: \"${GH_REPO#*/}\") {
+                pullRequest(number: $PR_NUM) {
+                  reviewThreads(first: 100) {
+                    nodes {
+                      isResolved
+                      path
+                      line
+                      comments(first: 1) { nodes { author { login } body } }
+                    }
+                  }
+                }
+              }
+            }
+          " --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false and .comments.nodes[0].author.login == "coderabbitai")] | length')
+          {
+            echo "### 🐇 CodeRabbit threads"
+            echo ""
+            echo "Unresolved: **$UNRESOLVED**"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$UNRESOLVED" -gt 0 ]; then
+            # Surface the offending paths in the step summary so the author
+            # can find them without re-querying.
+            {
+              echo ""
+              echo "| Path | Line | Snippet |"
+              echo "|---|---|---|"
+              gh api graphql -f query="
+                query {
+                  repository(owner: \"${GH_REPO%/*}\", name: \"${GH_REPO#*/}\") {
+                    pullRequest(number: $PR_NUM) {
+                      reviewThreads(first: 100) {
+                        nodes {
+                          isResolved path line
+                          comments(first: 1) { nodes { author { login } body } }
+                        }
+                      }
+                    }
+                  }
+                }
+              " --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false and .comments.nodes[0].author.login == "coderabbitai") | "| \(.path // "(file?)") | \(.line // "-") | \((.comments.nodes[0].body // "" | gsub("[\n|]"; " ") )[0:120]) |"'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::$UNRESOLVED unresolved CodeRabbit review-thread comment(s). Resolve each via GitHub UI or 'Resolve conversation' button to unblock the merge."
+            exit 1
+          fi
+          echo "::notice::No unresolved CodeRabbit threads."

@@ -1,0 +1,91 @@
+name: Maintain repo features
+
+# Reconciles repo-scope GitHub features that aren't owned by
+# apply-github-config.mjs (rulesets + topics + GHAS toggles) and don't
+# fit cleanly into brand.json:
+#
+#   • Deployment environments (production-ios, production-electron,
+#     npm-publish, github-pages) with branch policies
+#   • Standard issue labels (good first issue, oversize-ok, no-issue, etc.)
+#   • Secret-scanning validity checks (toggle attempt)
+#
+# Replaces the previous local-script flow (gh:apply-features /
+# gh:verify-features npm scripts). The reconciler script lives at
+# scripts/system/apply-github-features.mjs and is invoked here directly.
+#
+# Modes:
+#   push:main on SSOT paths       → apply
+#   schedule (Mon 06:18 UTC)      → apply (idempotent; environments + labels
+#                                          drift via the UI more often than
+#                                          rulesets do, so weekly apply is
+#                                          cheaper than weekly check-then-issue)
+#   workflow_dispatch             → apply by default, --check via input
+#
+# Auth: prefers GH_USER_PAT (fine-grained PAT with `repo` +
+# `administration: write`) when set, falls back to GITHUB_TOKEN. The
+# fallback can manage labels but cannot create environments --when the
+# admin scope is unavailable, environment ops silently no-op.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/system/apply-github-features.mjs"
+      - ".github/workflows/maintain-features.yml"
+  schedule:
+    # Weekly apply sweep, Monday 06:18 UTC (5 min after maintain-config,
+    # 5 min before maintain-user-features --off-peak + staggered).
+    - cron: "18 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "apply | check"
+        required: false
+        default: "apply"
+
+permissions: {}
+
+concurrency:
+  group: maintain-features
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    name: Reconcile repo features
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      # NB: GITHUB_TOKEN cannot grant the `administration` scope (only
+      # fine-grained PATs can). Without `GH_USER_PAT`, environment ops
+      # (production-ios, production-electron, npm-publish, github-pages
+      # branch policies) silently no-op. Labels + validity-checks
+      # attempt apply regardless. Land `GH_USER_PAT` for full reconcile.
+      # `issues: write` not requested -- this workflow has no drift-issue
+      # opening path (unlike maintain-config.yml's schedule branch); the
+      # script applies idempotently with no user-facing surface beyond
+      # the step summary.
+
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Reconcile
+        env:
+          GH_TOKEN: ${{ secrets.GH_USER_PAT || secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          GH_OWNER: ${{ github.repository_owner }}
+        run: |
+          if [ "${{ github.event.inputs.mode }}" = "check" ]; then
+            node scripts/system/apply-github-features.mjs --check
+          else
+            node scripts/system/apply-github-features.mjs
+          fi
