@@ -33,16 +33,25 @@ jobs:
       issues: write
       pull-requests: write
     # Skip for bots (Dependabot / Renovate / github-actions) AND for the
-    # maintainer + project members. The inline gh-count check below is
-    # defense-in-depth, but the author_association gate is cleaner --
-    # heron's young-repo edge case (kaelys-js had only 1 issue in this
-    # repo, so the count-based check posted a welcome on issue #82) is
-    # only avoidable by trusting GitHub's relationship metadata directly.
-    # OWNER / MEMBER / COLLABORATOR all skip; first-time contributors
-    # (NONE / FIRST_TIMER / FIRST_TIME_CONTRIBUTOR / CONTRIBUTOR) get
-    # the welcome.
+    # maintainer + project members. Two-layer gate:
+    #   (a) per-event bot-check -- splits issues vs PR paths so the
+    #       issue.user.type is actually checked on `issues` events
+    #       (the previous `event_name == 'issues' || pr.user.type !=
+    #       Bot` short-circuited to true for ALL issue events,
+    #       letting bot-authored issues through)
+    #   (b) author_association OWNER/MEMBER/COLLABORATOR skip --
+    #       heron's young-repo edge case (kaelys-js had only 1
+    #       kaelys-js-authored issue in this repo when issue #82 was
+    #       auto-created, so the inline count-based check posted a
+    #       welcome on it) is only avoidable by trusting GitHub's
+    #       relationship metadata directly.
+    # First-time contributors (NONE / FIRST_TIMER / FIRST_TIME_CONTRIBUTOR
+    # / CONTRIBUTOR) get the welcome.
     if: |
-      (github.event_name == 'issues' || github.event.pull_request.user.type != 'Bot') &&
+      (
+        (github.event_name == 'issues' && github.event.issue.user.type != 'Bot') ||
+        (github.event_name == 'pull_request_target' && github.event.pull_request.user.type != 'Bot')
+      ) &&
       github.event.pull_request.author_association != 'OWNER' &&
       github.event.pull_request.author_association != 'MEMBER' &&
       github.event.pull_request.author_association != 'COLLABORATOR' &&
