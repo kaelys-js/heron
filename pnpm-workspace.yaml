@@ -108,7 +108,7 @@ catalog:
   "@capacitor/local-notifications": "8.1.0"
   "@capacitor/network": "8.0.1"
   "@capacitor/preferences": "8.0.1"
-  "@capacitor/push-notifications": "8.0.4"
+  "@capacitor/push-notifications": "8.1.1"
   "@capacitor/screen-reader": "8.0.1"
   "@capacitor/share": "8.0.1"
   "@capacitor/splash-screen": "8.0.1"
