@@ -242,32 +242,51 @@ jobs:
           }
           summary=$(extract_section "Summary")
           test_plan=$(extract_section "Test plan")
-          # Each section must have at least 20 chars of non-whitespace
-          # content (a sentence or so). Lower numbers were too easy to
-          # game; higher numbers blocked legit fix-typo PRs.
-          if [ "$(printf '%s' "$summary" | tr -d '[:space:]' | wc -c)" -lt 20 ]; then
-            echo "::error::PR description is missing a non-empty \`## Summary\` section. Fill it in via the PR template."
+          # Stricter thresholds: 50 chars (sentence-ish) for Summary and
+          # Test plan each, plus at least one completed checkbox (`- [x]`)
+          # in Test plan. The 20-char threshold was easy to game with
+          # "see commit message" or similar placeholders; 50 chars forces
+          # the author to write at least one descriptive sentence. The
+          # `[x]` requirement makes "Test plan" a real artefact, not
+          # just a heading.
+          summary_chars=$(printf '%s' "$summary" | tr -d '[:space:]' | wc -c)
+          test_plan_chars=$(printf '%s' "$test_plan" | tr -d '[:space:]' | wc -c)
+          checked_items=$(printf '%s' "$test_plan" | grep -cE '^\s*-\s+\[[xX]\]' || true)
+          if [ "$summary_chars" -lt 50 ]; then
+            echo "::error::PR \`## Summary\` is only $summary_chars chars (need >= 50). Write at least one descriptive sentence."
             fail=1
           fi
-          if [ "$(printf '%s' "$test_plan" | tr -d '[:space:]' | wc -c)" -lt 20 ]; then
-            echo "::error::PR description is missing a non-empty \`## Test plan\` section. Document how you verified the change."
+          if [ "$test_plan_chars" -lt 50 ]; then
+            echo "::error::PR \`## Test plan\` is only $test_plan_chars chars (need >= 50). Document the commands you ran + the manual smoke path."
+            fail=1
+          fi
+          if [ "$checked_items" -lt 1 ]; then
+            echo "::error::PR \`## Test plan\` has no completed checkbox (look for \`- [x]\` lines). Check off at least the verification step that proves the change works."
             fail=1
           fi
           if [ "$fail" -eq 1 ]; then
             {
               echo "### ❌ PR description validation"
               echo ""
-              echo "Both \`## Summary\` and \`## Test plan\` sections must contain real content (>= 20 chars each, excluding HTML-comment placeholders)."
+              echo "| Metric | Value | Required |"
+              echo "|---|---|---|"
+              echo "| Summary chars | $summary_chars | >= 50 |"
+              echo "| Test plan chars | $test_plan_chars | >= 50 |"
+              echo "| Test plan checked items | $checked_items | >= 1 |"
               echo ""
               echo "See \`.github/PULL_REQUEST_TEMPLATE.md\` for the expected shape."
             } >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
-          echo "::notice::PR description has both Summary + Test plan sections filled."
+          echo "::notice::PR description has Summary ($summary_chars chars) + Test plan ($test_plan_chars chars, $checked_items checked items)."
           {
             echo "### ✅ PR description validation"
             echo ""
-            echo "Summary: $(printf '%s' "$summary" | tr -d '[:space:]' | wc -c) chars · Test plan: $(printf '%s' "$test_plan" | tr -d '[:space:]' | wc -c) chars"
+            echo "| Metric | Value |"
+            echo "|---|---|"
+            echo "| Summary chars | $summary_chars |"
+            echo "| Test plan chars | $test_plan_chars |"
+            echo "| Test plan checked items | $checked_items |"
           } >> "$GITHUB_STEP_SUMMARY"
 
   # ── feat: requires issue link ───────────────────────────────────
@@ -460,3 +479,200 @@ jobs:
             echo ""
             echo "Code files: $has_code · Test files: $has_tests"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # ── feat: requires `## Motivation` ──────────────────────────────
+  # New features should ship with their "why" recorded in the PR
+  # body. The PR-description gate above asserts Summary + Test plan
+  # are non-template; this job adds the type-specific `## Motivation`
+  # (or `## Why`) requirement only for `feat:` PRs. `chore:` and
+  # `fix:` are exempt -- they're typically self-evident.
+  feat-needs-motivation:
+    name: feat PRs need a Motivation section
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: read
+    if: |
+      github.event.pull_request.user.type != 'Bot' &&
+      startsWith(github.event.pull_request.title, 'feat')
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Look for Motivation or Why section
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          body=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
+          stripped=$(printf '%s' "$body" | perl -0777 -pe 's/<!--.*?-->//gs')
+          # Accept either `## Motivation` or `## Why`. Each needs >= 30
+          # chars of body content to count as a real section.
+          for heading in Motivation Why; do
+            chars=$(printf '%s' "$stripped" \
+              | awk -v h="$heading" '
+                  $0 ~ "^##[[:space:]]+" h "[[:space:]]*$" {flag=1; next}
+                  /^##[[:space:]]/ && flag {flag=0}
+                  flag {print}
+                ' \
+              | tr -d '[:space:]' | wc -c)
+            if [ "$chars" -ge 30 ]; then
+              echo "::notice::PR #$PR_NUM has \`## $heading\` ($chars chars). feat: PR motivated."
+              {
+                echo "### ✅ feat PR has motivation"
+                echo "Section: \`## $heading\` ($chars chars)"
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          done
+          echo "::error::PR #$PR_NUM is a \`feat:\` PR but lacks a \`## Motivation\` (or \`## Why\`) section with >= 30 chars of content. Document why the feature exists, not just what it does."
+          {
+            echo "### ❌ feat PR missing motivation"
+            echo ""
+            echo "Add a \`## Motivation\` (or \`## Why\`) section with at least 30 chars explaining"
+            echo "the user pain or the strategic value the feature unlocks."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+  # ── <type>!: requires `## Migration` section ─────────────────────
+  # Breaking changes need a documented upgrade path so users know
+  # how to adapt. Pairs with the BREAKING CHANGE: footer + the
+  # `breaking-change-body` gate.
+  breaking-needs-migration:
+    name: "<type>!: needs Migration section"
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: read
+    if: |
+      github.event.pull_request.user.type != 'Bot' &&
+      contains(github.event.pull_request.title, '!:')
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Look for Migration or Rollback section
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          body=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
+          stripped=$(printf '%s' "$body" | perl -0777 -pe 's/<!--.*?-->//gs')
+          for heading in Migration "Rollback plan" Upgrade; do
+            chars=$(printf '%s' "$stripped" \
+              | awk -v h="$heading" '
+                  $0 ~ "^##[[:space:]]+" h "[[:space:]]*$" {flag=1; next}
+                  /^##[[:space:]]/ && flag {flag=0}
+                  flag {print}
+                ' \
+              | tr -d '[:space:]' | wc -c)
+            if [ "$chars" -ge 30 ]; then
+              echo "::notice::PR #$PR_NUM has \`## $heading\` ($chars chars)."
+              {
+                echo "### ✅ Breaking PR has migration path"
+                echo "Section: \`## $heading\` ($chars chars)"
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          done
+          echo "::error::PR #$PR_NUM is a \`<type>!:\` (breaking) PR but lacks a \`## Migration\` (or \`## Rollback plan\` / \`## Upgrade\`) section with >= 30 chars. Document the upgrade path."
+          {
+            echo "### ❌ Breaking PR missing migration"
+            echo ""
+            echo "Add a \`## Migration\` section showing the before/after code, env, or schema delta"
+            echo "consumers need to apply."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+  # ── Lockfile / package.json consistency ─────────────────────────
+  # When `package.json` changes, `pnpm-lock.yaml` MUST change too
+  # (and vice versa). A package.json change without a lockfile bump
+  # means CI passes via the OLD lockfile + the new entry only takes
+  # effect on the next `pnpm install`, which is a foot-gun. Bot PRs
+  # are exempt -- Dependabot intentionally lands lockfile-only or
+  # manifest-only updates in batches that the framework handles.
+  lockfile-consistency:
+    name: pnpm-lock + package.json change together
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: read
+    if: github.event.pull_request.user.type != 'Bot'
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Check changed-files
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          files=$(gh pr view "$PR_NUM" --json files --jq '[.files[].path]')
+          has_pkg=$(printf '%s' "$files" | jq '[.[] | select(endswith("/package.json") or . == "package.json")] | length')
+          has_lock=$(printf '%s' "$files" | jq '[.[] | select(. == "pnpm-lock.yaml")] | length')
+          {
+            echo "### Lockfile consistency"
+            echo ""
+            echo "| File class | Changed? |"
+            echo "|---|---|"
+            echo "| \`package.json\` (any workspace) | $has_pkg |"
+            echo "| \`pnpm-lock.yaml\` | $has_lock |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          # Both 0 = neither changed = trivially OK.
+          # Both >=1 = both changed = consistent.
+          # Exactly one changed = the foot-gun case.
+          if [ "$has_pkg" -gt 0 ] && [ "$has_lock" -eq 0 ]; then
+            echo "::error::PR changed package.json but not pnpm-lock.yaml. Run \`pnpm install\` locally + commit the lockfile."
+            exit 1
+          fi
+          if [ "$has_pkg" -eq 0 ] && [ "$has_lock" -gt 0 ]; then
+            echo "::warning::PR changed pnpm-lock.yaml but no package.json. Verify this is an intentional lockfile-only refresh (e.g. \`pnpm install\` rerun)."
+          fi
+          echo "::notice::Lockfile + package.json consistency OK."
+
+  # ── PR title length ≤ 72 chars ──────────────────────────────────
+  # Git's commit-message convention is ≤ 72 chars on the subject
+  # line. The PR title becomes the squash-merge commit subject, so
+  # enforcing 72 here keeps `git log --oneline` readable.
+  title-length:
+    name: PR title <= 72 chars
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+    if: github.event.pull_request.user.type != 'Bot'
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Check title length
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          LEN=${#TITLE}
+          {
+            echo "### PR title length"
+            echo ""
+            echo "Title: \`$TITLE\`"
+            echo ""
+            echo "Length: **$LEN chars** (budget: 72)"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$LEN" -gt 72 ]; then
+            echo "::error::PR title is $LEN chars, over the 72-char budget. Trim it -- this becomes the squash-merge commit subject + appears in \`git log --oneline\`."
+            exit 1
+          fi
+          echo "::notice::PR title is $LEN chars (<= 72)."

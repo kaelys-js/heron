@@ -65,7 +65,49 @@
       "parameters": {
         "severity": "errors"
       }
+    },
+    {
+      "type": "commit_message_pattern",
+      "parameters": {
+        "name": "Conventional Commits",
+        "negate": false,
+        "operator": "regex",
+        "pattern": "^((Merge|Revert|fixup!|squash!|chore\\(main\\): release)|(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\\([a-z0-9_-]+\\))?!?: .{1,72})"
+      }
+    },
+    {
+      "type": "max_file_size",
+      "parameters": {
+        "max_file_size": 5
+      }
+    },
+    {
+      "type": "max_file_path_length",
+      "parameters": {
+        "max_file_path_length": 255
+      }
+    },
+    {
+      "type": "file_extension_restriction",
+      "parameters": {
+        "restricted_file_extensions": [
+          ".exe",
+          ".dll",
+          ".so",
+          ".dylib",
+          ".pem",
+          ".key",
+          ".p8",
+          ".p12"
+        ]
+      }
     }
   ],
-  "bypass_actors": []
+  "bypass_actors": [
+    {
+      "actor_id": 5,
+      "actor_type": "RepositoryRole",
+      "bypass_mode": "always"
+    }
+  ]
 }
