@@ -1,0 +1,73 @@
+{
+  "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
+  "name": "Heron dev",
+
+  // Microsoft's universal devcontainer image has Node + Python + Ruby + Java + Go + .NET + PHP
+  // pre-installed. We bolt mise on top as the source of truth for runtime versions so the
+  // codespace ends up identical to a local clone after `mise install`.
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+
+  "features": {
+    // mise -- our runtime version manager. .mise.toml in repo root pins Node / pnpm / Ruby /
+    // Python / Swift, plus every linter (actionlint, shellcheck, ruff, swiftformat, swiftlint,
+    // ktlint, yamllint, taplo, shfmt, dotenv-linter). One `mise install` and the codespace
+    // matches CI byte-for-byte.
+    "ghcr.io/devcontainers-extra/features/mise:1": {}
+  },
+
+  "postCreateCommand": "mise trust && mise install --quiet && pnpm install --frozen-lockfile && pnpm --filter ui exec playwright install --with-deps chromium && lefthook install",
+
+  "postStartCommand": "echo 'Heron codespace ready -- run `pnpm dev` to start the dashboard.'",
+
+  // Workspace customisations. The recommended extensions match what most maintainers run
+  // locally; codespaces auto-install them on first open.
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "biomejs.biome",
+        "svelte.svelte-vscode",
+        "esbenp.prettier-vscode",
+        "tamasfe.even-better-toml",
+        "ms-vscode.makefile-tools",
+        "redhat.vscode-yaml",
+        "Vue.volar",
+        "GitHub.vscode-pull-request-github",
+        "GitHub.vscode-github-actions",
+        "EditorConfig.EditorConfig"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "biomejs.biome",
+        "[svelte]": { "editor.defaultFormatter": "svelte.svelte-vscode" },
+        "[markdown]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+        "files.eol": "\n"
+      }
+    }
+  },
+
+  // Codespaces machine size. The dashboard build + Vitest matrix + Playwright + iOS build
+  // is heavy -- 4-core 16GB is the floor that finishes in reasonable time. Free users get
+  // 120 core-hours/month which works out to ~30h on this size.
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "16gb",
+    "storage": "32gb"
+  },
+
+  // Mount the parent's git config so `git commit` Just Works.
+  "mounts": [
+    "source=${localEnv:HOME}/.gitconfig,target=/home/codespace/.gitconfig,type=bind,consistency=cached"
+  ],
+
+  // Forwarded ports -- only the dev server. Codespaces auto-handles Playwright + Vitest
+  // browser-mode (those listen on random ports, not forwarded).
+  "forwardPorts": [5173, 4173],
+  "portsAttributes": {
+    "5173": { "label": "Heron dev (vite)", "onAutoForward": "openPreview" },
+    "4173": { "label": "Heron preview (vite preview)", "onAutoForward": "ignore" }
+  },
+
+  // Don't auto-start lefthook hooks on container build -- the hook runner gets installed via
+  // pnpm install above; lefthook install wires it.
+  "remoteUser": "codespace"
+}
