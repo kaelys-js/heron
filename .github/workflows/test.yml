@@ -53,7 +53,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     outputs:
-      ios: ${{ steps.filter.outputs.ios }}
+      # On pull_request events `steps.filter.outputs.X` is populated by
+      # dorny/paths-filter; on push/schedule/workflow_dispatch the
+      # filter step is skipped and `steps.force-true.outputs.X` provides
+      # 'true' for every key. GitHub Actions evaluates `||` lazily, so
+      # the first non-empty value wins.
+      ios: ${{ steps.filter.outputs.ios || steps.force-true.outputs.ios }}
+      ts: ${{ steps.filter.outputs.ts || steps.force-true.outputs.ts }}
+      format: ${{ steps.filter.outputs.format || steps.force-true.outputs.format }}
+      audit: ${{ steps.filter.outputs.audit || steps.force-true.outputs.audit }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
@@ -69,6 +77,17 @@ jobs:
         # (verify-workflow-pins.yml gates this). v4 runs on Node 24;
         # v3.0.2 was on Node 20 and tripped the runner's "Node.js 20
         # actions are deprecated" annotation (run 26183910563).
+        #
+        # Each `<key>: true` output gates a downstream job that runs in
+        # full if any path under that key changed. False = skip-stub
+        # mode -- the job still reports green under its required-check
+        # name (branch protection sees it pass) but only runs a ~30s
+        # notice step. On push to main / scheduled / manual events
+        # dorny/paths-filter is bypassed: the `false-by-default` job
+        # below sets every output to 'true' so full pipelines run.
+        # Net effect: PR-time savings on docs-only / single-ecosystem
+        # bumps; main-branch + cron always gets the full safety net.
+        if: github.event_name == 'pull_request'
         uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: filter
         with:
@@ -87,12 +106,104 @@ jobs:
               - 'ui/static/**'
               # Lockfile drift can change native bundle resolution
               - 'pnpm-lock.yaml'
+            ts:
+              # TS / Svelte / JS sources -- everything Vitest + svelte-check exercise
+              - '**/*.ts'
+              - '**/*.tsx'
+              - '**/*.js'
+              - '**/*.mjs'
+              - '**/*.svelte'
+              # Vite + Vitest config drives the test runner config
+              - 'vite.config.ts'
+              - 'vitest.config.ts'
+              - 'vitest.workspace.ts'
+              - 'ui/vite.config.ts'
+              - 'ui/vitest.config.ts'
+              - 'ui/vitest.workspace.ts'
+              - 'ui/electron/vitest.config.ts'
+              # Test-setup + helper changes can affect every test
+              - 'ui/src/test-setup.ts'
+              - 'ui/src/test-helpers/**'
+              # Dep / lockfile changes can shift the test surface
+              - '**/package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              # Brand propagation feeds into the generated brand.ts that
+              # ui/electron + tests import
+              - 'branding/**'
+              # Validators / static-check scripts the ts job runs
+              - 'scripts/system/validate-*.mjs'
+              - 'scripts/system/validate-plists.py'
+              # Schema files validated by validate-json-schemas.mjs
+              - '**/*.json'
+              - '**/*.jsonc'
+              # When THIS workflow changes the ts job's behaviour, force a run
+              - '.github/workflows/test.yml'
+            format:
+              # Python / Ruby / Shell / Kotlin / Go sources for the
+              # multi-language linters in the format job
+              - '**/*.py'
+              - '**/*.rb'
+              - '**/*.sh'
+              - '**/*.bash'
+              - '**/*.go'
+              - '**/*.kt'
+              - '**/*.kts'
+              - '**/*.gradle*'
+              # YAML for yamllint + actionlint
+              - '**/*.yml'
+              - '**/*.yaml'
+              # TOML for taplo
+              - '**/*.toml'
+              # Ruby manifest for rufo (Gemfile is extensionless)
+              - '**/Gemfile'
+              - '**/Gemfile.lock'
+              # Plists + XML / SVG / storyboards for the Apple validators
+              - '**/*.plist'
+              - '**/*.entitlements'
+              - '**/*.xcprivacy'
+              - '**/*.svg'
+              - '**/*.storyboard'
+              # .env templates for dotenv-linter
+              - '**/.env*.example'
+              # Tiny-config files for validate-tiny-configs
+              - '.gitattributes'
+              - '.npmrc'
+              - '.actrc'
+              - 'LICENSE'
+              - 'robots.txt'
+              # When THIS workflow changes the format job's behaviour, force a run
+              - '.github/workflows/test.yml'
+            audit:
+              # pnpm audit only cares about package-state files
+              - '**/package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              # When THIS workflow changes the audit job's behaviour, force a run
+              - '.github/workflows/test.yml'
+
+      # Non-PR events (push to main, schedule, workflow_dispatch) bypass
+      # the path filter entirely. Set every output to 'true' so the
+      # downstream gates pass through and the full pipeline runs. This
+      # preserves the security baseline on main + the weekly cron safety
+      # net regardless of which paths the merge commit touched.
+      - name: Force-true on non-PR events
+        if: github.event_name != 'pull_request'
+        id: force-true
+        run: |
+          {
+            echo "ios=true"
+            echo "ts=true"
+            echo "format=true"
+            echo "audit=true"
+          } >> "$GITHUB_OUTPUT"
 
   # ─────────────────────────────────────────────────────────────────
   # TS / Svelte / Server / Electron -- Vitest + svelte-check + audit
   # ─────────────────────────────────────────────────────────────────
   ts:
     name: TS — typecheck + Vitest + coverage
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -104,7 +215,24 @@ jobs:
       FORCE_COLOR: "3"
 
     steps:
+      # Skip-stub. When the path filter says no TS-touching files changed
+      # in this PR, this is the ONLY step that runs. The job reports
+      # success under the required-check context "TS -- typecheck +
+      # Vitest + coverage" without spending the ~5min Vitest matrix.
+      # Branch protection sees the green check and merge proceeds.
+      - name: Skip — no TS-relevant paths changed
+        if: needs.changes.outputs.ts != 'true'
+        run: |
+          echo "::notice::TS Tests skipped — no changes under TS/Svelte/JS/JSON/lockfile/config paths."
+          {
+            echo "### ⏭️ TS Tests skipped"
+            echo ""
+            echo "No paths matching the \`ts\` filter changed in this PR."
+            echo "See \`changes\` job in \`.github/workflows/test.yml\` for the full list."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Harden runner
+        if: needs.changes.outputs.ts == 'true'
         # G4 -- defense-in-depth for the TS test runner. Audit mode for
         # rollout; flip to block after observing legitimate endpoints
         # (pnpm registry, codecov, etc.).
@@ -112,22 +240,26 @@ jobs:
         with:
           egress-policy: audit
       - name: Checkout
+        if: needs.changes.outputs.ts == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Setup mise (Node + pnpm + Ruby)
+        if: needs.changes.outputs.ts == 'true'
         uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
         with:
           experimental: true
           cache: true
 
       - name: Resolve pnpm store path
+        if: needs.changes.outputs.ts == 'true'
         id: pnpm-store
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
+        if: needs.changes.outputs.ts == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
@@ -143,6 +275,7 @@ jobs:
         # warm hits on the same branch and ~100% on the same PR
         # incremental push. The `${{ github.sha }}` SAVE key still
         # ensures fresh writes don't pollute older caches.
+        if: needs.changes.outputs.ts == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: |
@@ -156,6 +289,7 @@ jobs:
             turbo-${{ runner.os }}-
 
       - name: Cache Vitest
+        if: needs.changes.outputs.ts == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: |
@@ -166,6 +300,7 @@ jobs:
             vitest-${{ runner.os }}-
 
       - name: Cache Playwright browsers
+        if: needs.changes.outputs.ts == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.cache/ms-playwright
@@ -174,6 +309,7 @@ jobs:
             playwright-${{ runner.os }}-
 
       - name: Install dependencies
+        if: needs.changes.outputs.ts == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Install Python dependencies (cryptography etc.)
@@ -185,6 +321,7 @@ jobs:
         # `errors-in-console` Lighthouse assertion).
         # `python -m pip` guarantees the mise-managed interpreter is
         # the one we install into.
+        if: needs.changes.outputs.ts == 'true'
         run: |
           # `--require-hashes` makes the install tamper-evident -- pip refuses
           # to download anything whose archive hash isn't in
@@ -203,10 +340,12 @@ jobs:
       # ~/.cache/ms-playwright across runs; this command is a no-op on
       # a cache hit.
       - name: Install Playwright browsers (chromium + webkit)
+        if: needs.changes.outputs.ts == 'true'
         run: pnpm --filter ui exec playwright install chromium webkit --with-deps
 
       # ── Static checks (fast, fail-fast) ──────────────────────────
       - name: Format check (biome + prettier-svelte)
+        if: needs.changes.outputs.ts == 'true'
         run: pnpm format:check
 
       - name: Validate JSON schemas
@@ -214,6 +353,7 @@ jobs:
         # $schema-annotated JSON/JSONC and validates against the
         # referenced schema via ajv. Catches typos / unknown keys
         # BEFORE the consuming tool's runtime would surface them.
+        if: needs.changes.outputs.ts == 'true'
         run: pnpm validate:json-schemas
 
       - name: Validate format-config sync
@@ -224,6 +364,7 @@ jobs:
         # another" surprise. Pre-commit catches it on the contributor's
         # machine when one of the three is staged; this CI step is the
         # belt-and-braces full-repo check.
+        if: needs.changes.outputs.ts == 'true'
         run: pnpm validate:format-sync
 
       - name: markdownlint (relaxed config — real bugs only)
@@ -232,6 +373,7 @@ jobs:
         # tables, missing alt text, broken links, etc. Style rules
         # (line length / heading style / list bullets) are intentionally
         # disabled -- see the file header for the full rule rationale.
+        if: needs.changes.outputs.ts == 'true'
         run: pnpm validate:markdown
 
       - name: Exact-version pins (no ^ / ~ / partial versions)
@@ -240,6 +382,7 @@ jobs:
         # [tools]. Exact pinning + lockfile = reproducible builds + a
         # supply-chain attack via malicious-publish can't escalate to a
         # new prod build without an explicit version-bump PR.
+        if: needs.changes.outputs.ts == 'true'
         run: pnpm validate:exact-versions
 
       - name: Version-source sync (release-please vs manual bumps)
@@ -248,6 +391,7 @@ jobs:
         # update-system.mjs probe target) + .release-please-manifest.
         # release-please auto-bumps all 5 on real releases; this catches
         # manual / partial bumps that bypass the release-please PR flow.
+        if: needs.changes.outputs.ts == 'true'
         run: pnpm validate:version-sync
 
       - name: Lockfile integrity (G21)
@@ -260,6 +404,7 @@ jobs:
         # validate:exact-versions above (which asserts package.json
         # specifiers are exact) - this asserts the lockfile resolves
         # them to safe, verifiable sources.
+        if: needs.changes.outputs.ts == 'true'
         run: pnpm validate:lockfile
 
       - name: No leftover merge-conflict markers (G28)
@@ -271,6 +416,7 @@ jobs:
         # `=======` / `>>>>>>>` triple-character marker lines in
         # source files. Skips docs that intentionally explain merge
         # conflicts.
+        if: needs.changes.outputs.ts == 'true'
         run: |
           set -euo pipefail
           if git grep -l -E '^(<{7}|={7}|>{7})( |$)' -- \
@@ -295,6 +441,7 @@ jobs:
         # this check catches GPL deps that already lurk in the existing
         # graph (e.g. a transitive upgrade that switched license).
         # Production deps only -- devDeps may include GPL CLI tooling.
+        if: needs.changes.outputs.ts == 'true'
         run: |
           pnpm licenses list --prod --json > licenses.json
           node -e '
@@ -318,9 +465,11 @@ jobs:
         # "wire it up but disable everything for now" directive.
         # Running anyway catches parse-level failures (~50 ms full-repo)
         # and keeps the lint-infrastructure live for incremental rollout.
+        if: needs.changes.outputs.ts == 'true'
         run: pnpm lint
 
       - name: Typecheck (svelte-check + tsgo, turbo-cached)
+        if: needs.changes.outputs.ts == 'true'
         run: pnpm exec turbo run check
 
       # ── Behavioural checks ───────────────────────────────────────
@@ -329,10 +478,11 @@ jobs:
       # threshold (70% lines / 65% branches / per-file 50% floor) is
       # enforced by vitest.config.ts -- falling below trips this step.
       - name: Vitest matrix (with coverage)
+        if: needs.changes.outputs.ts == 'true'
         run: pnpm test:coverage
 
       - name: Coverage summary (HP10)
-        if: always() && hashFiles('ui/coverage/coverage-summary.json') != ''
+        if: needs.changes.outputs.ts == 'true' && (always() && hashFiles('ui/coverage/coverage-summary.json') != '')
         run: |
           node -e '
             const s = require("./ui/coverage/coverage-summary.json").total;
@@ -355,6 +505,7 @@ jobs:
         # so a vitest config drift (reporter list ignored, wrong
         # path, etc.) surfaces immediately instead of letting Codecov
         # display stale data forever.
+        if: needs.changes.outputs.ts == 'true'
         run: |
           if [ ! -s ui/coverage/lcov.info ]; then
             echo "::error::ui/coverage/lcov.info missing or empty after test:coverage."
@@ -372,6 +523,7 @@ jobs:
         # turns silent upload skips into real CI failures so the
         # coverage gate is enforced -- pre-fix a broken upload silently
         # passed.
+        if: needs.changes.outputs.ts == 'true'
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         with:
           files: ui/coverage/lcov.info
@@ -386,13 +538,16 @@ jobs:
       # under ui/electron/build/ which is .gitignored, so CI must
       # produce them before the verifier runs.
       - name: Install icon-generation toolchain (Linux only)
+        if: needs.changes.outputs.ts == 'true'
         run: sudo apt-get update && sudo apt-get install -y imagemagick icnsutils
 
       - name: Apply brand (generate icons + propagated configs)
+        if: needs.changes.outputs.ts == 'true'
         run: pnpm brand:apply
 
       # ── Build ────────────────────────────────────────────────────
       - name: Build (turbo)
+        if: needs.changes.outputs.ts == 'true'
         run: pnpm build
 
       # ── E2E (Playwright against prod build via vite preview) ─────
@@ -401,15 +556,17 @@ jobs:
       # smoke specs in headless Chromium. CI=1 enables retry-on-flake
       # + trace-on-failure for diagnostics.
       - name: Install Playwright browsers
+        if: needs.changes.outputs.ts == 'true'
         run: pnpm --filter ui exec playwright install --with-deps chromium
 
       - name: E2E (Playwright)
+        if: needs.changes.outputs.ts == 'true'
         env:
           CI: "1"
         run: pnpm --filter ui test:e2e
 
       - name: Upload Playwright trace + screenshots on failure
-        if: failure() && hashFiles('ui/playwright-report/**') != ''
+        if: needs.changes.outputs.ts == 'true' && (failure() && hashFiles('ui/playwright-report/**') != '')
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: playwright-report-${{ github.run_id }}
@@ -623,20 +780,40 @@ jobs:
   # ─────────────────────────────────────────────────────────────────
   format:
     name: Lint + format (Python / Go / Kotlin / Shell / Ruby / YAML)
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      # Skip-stub. When no Python/Ruby/Shell/Kotlin/Go/YAML/TOML/plist/
+      # XML paths changed, this is the only step that runs. The job
+      # reports green under "Lint + format (Python / Go / Kotlin /
+      # Shell / Ruby / YAML)" without burning the ~3min multi-language
+      # toolchain install.
+      - name: Skip — no format-relevant paths changed
+        if: needs.changes.outputs.format != 'true'
+        run: |
+          echo "::notice::Lint + format skipped — no Python/Ruby/Shell/Kotlin/Go/YAML/TOML/plist/XML changes."
+          {
+            echo "### ⏭️ Lint + format skipped"
+            echo ""
+            echo "No paths matching the \`format\` filter changed in this PR."
+            echo "See \`changes\` job in \`.github/workflows/test.yml\` for the full list."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Harden runner
+        if: needs.changes.outputs.format == 'true'
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
       - name: Checkout
+        if: needs.changes.outputs.format == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 1
           persist-credentials: false
 
       - name: Setup mise (Node + pnpm + Ruby)
+        if: needs.changes.outputs.format == 'true'
         uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
         with:
           experimental: true
@@ -648,18 +825,23 @@ jobs:
       # -- fresh-clone reproducibility is the whole point of mise.
 
       - name: actionlint .github/workflows/*.yml
+        if: needs.changes.outputs.format == 'true'
         run: actionlint -color
 
       - name: ruff format --check
+        if: needs.changes.outputs.format == 'true'
         run: git ls-files '*.py' | xargs -r ruff format --check
 
       - name: ruff check (lint)
+        if: needs.changes.outputs.format == 'true'
         run: git ls-files '*.py' | xargs -r ruff check
 
       - name: ktlint
+        if: needs.changes.outputs.format == 'true'
         run: git ls-files '*.kt' | xargs -r ktlint
 
       - name: shfmt check (2-space indent)
+        if: needs.changes.outputs.format == 'true'
         run: |
           drift=$(git ls-files '*.sh' '*.bash' | xargs -r shfmt -l -i 2 -ci 2>/dev/null || true)
           if [ -n "$drift" ]; then
@@ -669,43 +851,51 @@ jobs:
           fi
 
       - name: Install root Gemfile (rufo)
+        if: needs.changes.outputs.format == 'true'
         run: bundle install
 
       - name: rufo --check
         # Covers .rb source files AND the extensionless Gemfile at root +
         # ui/ios/App/. Gemfile.lock is auto-generated; the '*Gemfile' glob
         # naturally excludes anything ending in .lock.
+        if: needs.changes.outputs.format == 'true'
         run: git ls-files '*.rb' '*Gemfile' | xargs -r bundle exec rufo -c
 
       - name: yamllint
+        if: needs.changes.outputs.format == 'true'
         run: git ls-files '*.yml' '*.yaml' | xargs -r yamllint --no-warnings
 
       - name: taplo format --check
         # TOML formatter (pyproject.toml + .mise.toml). taplo is pinned in
         # .mise.toml so mise installs the same version locally + in CI.
+        if: needs.changes.outputs.format == 'true'
         run: git ls-files '*.toml' | xargs -r taplo format --check
 
       - name: Validate Apple plists
         # Python stdlib plistlib parses every .plist / .entitlements /
         # .xcprivacy under the repo. Catches malformed iOS configs that
         # would otherwise blow up xcodebuild on the ios CI runner.
+        if: needs.changes.outputs.format == 'true'
         run: python3 scripts/system/validate-plists.py
 
       - name: Validate XML files (*.svg + *.storyboard)
         # xmllint --noout well-formedness check; ships with libxml2 on
         # every ubuntu-latest + macOS runner. No schema validation, just
         # "does this parse as XML".
+        if: needs.changes.outputs.format == 'true'
         run: bash scripts/system/validate-xml.sh
 
       - name: dotenv-linter (.env.example templates)
         # Catches duplicate keys / leading-space typos / quote
         # inconsistency in the tracked .env*.example templates. The
         # real .env is gitignored and never linted.
+        if: needs.changes.outputs.format == 'true'
         run: pnpm validate:dotenv
 
       - name: Tiny-config syntax (.gitattributes / .npmrc / .actrc / LICENSE / robots.txt)
         # Regex-driven sanity passes for the small static config files
         # no formatter/linter ecosystem owns.
+        if: needs.changes.outputs.format == 'true'
         run: pnpm validate:tiny-configs
         # JSON-schema validation + format-sync run in the ts job (need
         # node_modules for the ajv + jsonc-parser devDeps).
@@ -715,27 +905,46 @@ jobs:
   # ─────────────────────────────────────────────────────────────────
   audit:
     name: Security audit
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      # Skip-stub. Audit only meaningfully runs when the dep graph
+      # changes. If no package.json / lockfile changed, the audit's
+      # result is necessarily identical to the previous run -- skip.
+      - name: Skip — no dep-graph changes
+        if: needs.changes.outputs.audit != 'true'
+        run: |
+          echo "::notice::Security audit skipped — no package.json / pnpm-lock.yaml / pnpm-workspace.yaml changes."
+          {
+            echo "### ⏭️ Security audit skipped"
+            echo ""
+            echo "No paths matching the \`audit\` filter changed in this PR."
+            echo "Audit result is unchanged from the previous run."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Harden the runner (Audit all outbound calls)
+        if: needs.changes.outputs.audit == 'true'
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
 
       - name: Checkout
+        if: needs.changes.outputs.audit == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 1
           persist-credentials: false
 
       - name: Setup mise
+        if: needs.changes.outputs.audit == 'true'
         uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
         with:
           experimental: true
           cache: true
 
       - name: pnpm audit (moderate+)
+        if: needs.changes.outputs.audit == 'true'
         run: pnpm audit --audit-level moderate
 
   # ─────────────────────────────────────────────────────────────────
