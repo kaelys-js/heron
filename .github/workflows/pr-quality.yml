@@ -1,7 +1,7 @@
 name: PR quality
-# G20 -- PR-title + size + body enforcement.
+# G20 -- PR-title + size + body + semantic-content enforcement.
 #
-# Four jobs, all fast (<5s each on the typical PR):
+# Seven jobs, all fast (<5s each on the typical PR):
 #
 # 1. **Conventional Commits PR title** -- amannn/action-semantic-pull-request
 #    validates the title matches the Conventional Commits grammar
@@ -26,6 +26,20 @@ name: PR quality
 # 4. **PR description validation** -- assert the body has non-template
 #    content in the `## Summary` and `## Test plan` sections. Catches
 #    "I forgot to fill the template" before reviewer notices.
+#
+# 5. **feat-needs-issue** -- `feat:` / `feat!:` PRs must reference an
+#    issue (Fixes/Closes/Refs/Resolves #N) in the body. Issue-first
+#    workflow: features get traced back to the discussion that
+#    motivated them. Bug fixes + chores exempt.
+#
+# 6. **breaking-change body** -- `<type>!:` titles must contain a
+#    `BREAKING CHANGE:` block in the body so release-please picks the
+#    change up as a MAJOR bump + categorises it correctly in CHANGELOG.
+#
+# 7. **missing-tests soft-warning** -- non-blocking comment when the
+#    PR touches code paths (`ui/src/lib/**`, `scripts/**`) but no
+#    `*.test.*` file changed. Surface only -- reviewer decides whether
+#    the omission is OK (e.g. trivial type-only refactor).
 #
 # Fires on every PR edit (opened/edited/synchronize/reopened) so a
 # title rename or force-push gets re-validated.
@@ -254,4 +268,195 @@ jobs:
             echo "### ✅ PR description validation"
             echo ""
             echo "Summary: $(printf '%s' "$summary" | tr -d '[:space:]' | wc -c) chars · Test plan: $(printf '%s' "$test_plan" | tr -d '[:space:]' | wc -c) chars"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ── feat: requires issue link ───────────────────────────────────
+  # New features should trace back to the discussion that motivated
+  # them. The PR body must reference an issue via one of the standard
+  # closing keywords + `#N`: Fixes / Closes / Resolves / Refs. Bug
+  # fixes + chores + docs are exempt -- they're often self-evident or
+  # cross-reference a CHANGELOG entry instead. The `no-issue` label
+  # is the explicit "intentionally no issue -- here's why in the
+  # body" escape hatch.
+  feat-needs-issue:
+    name: feat PRs must link an issue
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: read
+    if: |
+      github.event.pull_request.user.type != 'Bot' &&
+      startsWith(github.event.pull_request.title, 'feat')
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Look for issue reference in PR body
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          body=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
+          # Standard closing keywords -- case-insensitive match.
+          # Pattern: `<keyword>(#|GH-)<number>` or `<keyword> <repo>#<number>`.
+          if printf '%s' "$body" | grep -qiE '\b(fix(es)?|close[sd]?|resolve[sd]?|refs?)[[:space:]]+([a-z0-9._/-]+)?#[0-9]+'; then
+            echo "::notice::PR #$PR_NUM links an issue."
+            echo "### ✅ feat PR links an issue" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          # Bypass via no-issue label.
+          BYPASS=$(gh pr view "$PR_NUM" --json labels --jq '[.labels[].name] | contains(["no-issue"])')
+          if [ "$BYPASS" = "true" ]; then
+            echo "::warning::PR #$PR_NUM is a feat without an issue link but has the \`no-issue\` label. Letting it through."
+            exit 0
+          fi
+          echo "::error::PR #$PR_NUM is a \`feat:\` PR but the body does not reference an issue (Fixes #N / Closes #N / Refs #N). Add a reference or add the \`no-issue\` label with a comment explaining why."
+          {
+            echo "### ❌ feat PR missing issue link"
+            echo ""
+            echo "PR title: \`$TITLE\`"
+            echo ""
+            echo "feat: PRs should trace back to the issue that motivated them."
+            echo "Add one of: \`Fixes #N\`, \`Closes #N\`, \`Refs #N\` to the body."
+            echo ""
+            echo "Or add the \`no-issue\` label with a body comment explaining why."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+  # ── breaking-change body validation ─────────────────────────────
+  # Conventional Commits `<type>!:` marks a breaking change. Release
+  # Please uses this AND the `BREAKING CHANGE:` body block together
+  # to (a) bump the major version and (b) populate the "BREAKING
+  # CHANGES" section of CHANGELOG.md. A `!` title without the body
+  # block bumps major correctly but the CHANGELOG entry is empty.
+  # This job enforces both halves of the contract.
+  breaking-change-body:
+    name: "<type>!: requires BREAKING CHANGE body"
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: read
+    # Title pattern: `feat!:`, `fix!:`, `feat(scope)!:`, etc.
+    # The action-semantic-pull-request job catches malformed titles
+    # earlier; here we just check the `!` marker is present.
+    if: |
+      github.event.pull_request.user.type != 'Bot' &&
+      contains(github.event.pull_request.title, '!:')
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Require BREAKING CHANGE block in body
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          body=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
+          # `BREAKING CHANGE:` (with colon) on its own line is the
+          # canonical Conventional Commits marker. Some teams write
+          # `BREAKING-CHANGE:` -- accept both.
+          if printf '%s' "$body" | grep -qE '^BREAKING[ -]CHANGE:'; then
+            echo "::notice::PR #$PR_NUM has a BREAKING CHANGE block."
+            echo "### ✅ Breaking-change body present" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "::error::PR #$PR_NUM title (\`$TITLE\`) contains \`!:\` indicating a breaking change, but the body lacks a \`BREAKING CHANGE:\` block. Release Please needs both halves to populate the CHANGELOG correctly."
+          {
+            echo "### ❌ Breaking-change body missing"
+            echo ""
+            echo "PR title: \`$TITLE\`"
+            echo ""
+            echo "Add a \`BREAKING CHANGE: <description>\` line in the body, OR"
+            echo "remove the \`!\` from the title if this isn't actually breaking."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+  # ── missing-tests soft-warning ──────────────────────────────────
+  # Non-blocking comment when the PR touches code paths but no test
+  # file changed. Surface only -- reviewer decides whether the
+  # omission is OK (e.g. trivial type-only refactor, doc move, etc.).
+  # Catches the "I forgot to add a test" reflex before the reviewer
+  # has to mention it.
+  missing-tests-check:
+    name: Missing tests soft-warning
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: write # comment only -- never fails the job
+    if: github.event.pull_request.user.type != 'Bot'
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Detect code-without-tests
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          # Get the list of changed files from the PR. --json files
+          # returns the per-file additions/deletions; we just want the
+          # path strings.
+          files=$(gh pr view "$PR_NUM" --json files --jq '[.files[].path]')
+          # Split into code vs test. Code paths under ui/src/lib/server,
+          # ui/src/lib/client, ui/src/routes, ui/electron/src, and
+          # scripts/. Test paths are anything matching *.test.* or
+          # *.spec.* under those trees.
+          has_code=$(printf '%s' "$files" | jq '[.[] | select(
+            (test("^ui/src/lib/server/") or
+             test("^ui/src/lib/client/") or
+             test("^ui/src/routes/") or
+             test("^ui/electron/src/") or
+             test("^scripts/")) and
+            (test("\\.test\\.") | not) and
+            (test("\\.spec\\.") | not) and
+            (test("\\.(ts|tsx|js|mjs|svelte|py)$"))
+          )] | length')
+          has_tests=$(printf '%s' "$files" | jq '[.[] | select(
+            test("\\.test\\.") or test("\\.spec\\.")
+          )] | length')
+          echo "::notice::PR #$PR_NUM touched $has_code code file(s) + $has_tests test file(s)."
+          if [ "$has_code" -gt 0 ] && [ "$has_tests" -eq 0 ]; then
+            # Soft-warning: post a comment, but exit 0 (don't fail the job).
+            # Skip the warning if the PR already carries a `no-tests-needed`
+            # label (e.g. type-only changes, doc moves, etc.).
+            BYPASS=$(gh pr view "$PR_NUM" --json labels --jq '[.labels[].name] | contains(["no-tests-needed"])')
+            if [ "$BYPASS" = "true" ]; then
+              echo "::notice::PR #$PR_NUM touched code without tests but has \`no-tests-needed\` label. Skipping warning."
+              exit 0
+            fi
+            # Avoid spamming -- only post if we haven't already commented
+            # for this signature on this PR.
+            EXISTING=$(gh pr view "$PR_NUM" --json comments --jq '[.comments[] | select(.body | contains("[pr-quality/missing-tests]"))] | length')
+            if [ "$EXISTING" -gt 0 ]; then
+              echo "::notice::Missing-tests soft-warning already posted on PR #$PR_NUM; not duplicating."
+              exit 0
+            fi
+            cat > /tmp/missing-tests.md <<'EOF'
+          📝 **Missing tests?** This PR touches code paths (ui/src/lib/**, ui/src/routes, ui/electron/src/**, or scripts/**) but no `*.test.*` file changed.
+
+          That's often fine (type-only refactor, doc move, formatting) -- in which case add the `no-tests-needed` label and ignore this. But if the change is behavioural, tests are usually the right complement.
+
+          _Soft-warning from .github/workflows/pr-quality.yml::missing-tests-check. [pr-quality/missing-tests]_
+          EOF
+            gh pr comment "$PR_NUM" --body-file /tmp/missing-tests.md
+            echo "::warning::PR #$PR_NUM touched code without adding tests. Posted soft-warning."
+          fi
+          {
+            echo "### Missing-tests check"
+            echo ""
+            echo "Code files: $has_code · Test files: $has_tests"
           } >> "$GITHUB_STEP_SUMMARY"
