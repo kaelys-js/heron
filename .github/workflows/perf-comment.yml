@@ -37,6 +37,10 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
       - name: Download lighthouse manifest
+        # treosh/lighthouse-ci-action uploads `.lighthouseci/` as artifact
+        # named `lighthouse-results`. We extract to `lhci/`, then locate
+        # the manifest.json wherever it landed (may be at the root OR
+        # under a `.lighthouseci/` subdir depending on the action version).
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v5
         with:
           name: lighthouse-results
@@ -46,8 +50,21 @@ jobs:
         continue-on-error: true
       - name: Format perf sticky
         run: |
-          if [ ! -f lhci/manifest.json ]; then echo "[]" > lhci/manifest.json; mkdir -p lhci; fi
-          node .github/scripts/sticky/format-perf.mjs lhci/manifest.json --out body.md
+          mkdir -p lhci
+          # Locate manifest.json. v12 of treosh's action may flatten or
+          # preserve the `.lighthouseci/` prefix; try both.
+          MANIFEST=""
+          if [ -f lhci/manifest.json ]; then
+            MANIFEST=lhci/manifest.json
+          elif [ -f lhci/.lighthouseci/manifest.json ]; then
+            MANIFEST=lhci/.lighthouseci/manifest.json
+          else
+            echo "[]" > lhci/manifest.json
+            MANIFEST=lhci/manifest.json
+          fi
+          # Belt-and-suspenders: ensure JSON-parseable.
+          head -c1 "$MANIFEST" | grep -qE '[\[{]' || echo "[]" > "$MANIFEST"
+          node .github/scripts/sticky/format-perf.mjs "$MANIFEST" --out body.md
       - name: Resolve PR number
         id: pr
         env:
