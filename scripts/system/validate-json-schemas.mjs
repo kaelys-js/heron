@@ -145,7 +145,14 @@ function discoverFiles(jsoncParser) {
     // (tsconfig.app.json / tsconfig.build.json). Match the basename so
     // the rule applies inside any directory.
     const base = relPath.split('/').pop() ?? relPath;
-    const isJsonc = relPath.endsWith('.jsonc') || /^tsconfig(\..+)?\.json$/.test(base);
+    // `.devcontainer/devcontainer.json` is JSON-with-Comments per the
+    // devcontainer spec even though the extension is `.json`. Same for
+    // `tsconfig.json` variants. Treat both as JSONC at parse time so
+    // `// comment` lines don't blow up JSON.parse.
+    const isJsonc =
+      relPath.endsWith('.jsonc') ||
+      /^tsconfig(\..+)?\.json$/.test(base) ||
+      relPath === '.devcontainer/devcontainer.json';
     out.push({
       path: relPath,
       schema,
