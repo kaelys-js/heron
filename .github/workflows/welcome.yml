@@ -6,8 +6,8 @@ name: Welcome
 # point of this workflow) would silently fail on every fork PR.
 # Risk mitigation:
 #   1. No `actions/checkout` step -- we never fetch PR head code.
-#   2. actions/first-interaction is SHA-pinned -- behaviour can't change
-#      without a deliberate PR through verify-workflow-pins.yml.
+#   2. No third-party action that does the "first interaction" check --
+#      we use gh CLI inline (see below for the rationale).
 #   3. Workflow-level permissions are {} -- the welcome job declares
 #      issues:write + pull-requests:write only on itself.
 on: # zizmor: ignore[dangerous-triggers]
@@ -31,12 +31,8 @@ jobs:
     permissions:
       issues: write
       pull-requests: write
-    # actions/first-interaction's "is this their first PR?" detection
-    # works correctly for human users but treats every bot-account PR
-    # as the bot's first interaction (queries `author:` which doesn't
-    # index `[bot]`-suffixed accounts the same way). Result: Dependabot
-    # / Renovate / github-actions PRs got a fresh welcome on every PR.
-    # Skip bot PRs entirely -- they don't read welcome messages anyway.
+    # Bot PRs (Dependabot / Renovate / github-actions) don't get a welcome.
+    # The check below handles human PRs + issues separately.
     if: github.event_name == 'issues' || github.event.pull_request.user.type != 'Bot'
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -44,21 +40,78 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/first-interaction@1c4688942c71f71d4f5502a26ea67c331730fa4d # v3
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          pr_message: |
-            Welcome to Heron, @${{ github.actor }}! Thanks for your first PR.
+      # Replaced actions/first-interaction@v3 with an inline gh check.
+      # The action's "is this the user's first interaction?" GraphQL
+      # query returns 0 for the repo owner under certain query shapes
+      # (known upstream bug), causing it to post the welcome on every
+      # PR by the maintainer -- including 5+ recent merged PRs (#55-#59).
+      # Verified locally: every recent PR has exactly one "Welcome to
+      # Heron, @kaelys-js! Thanks for your first PR." comment.
+      #
+      # Inline replacement: count the author's prior PRs/issues with
+      # `gh` and only post the welcome when this is genuinely their
+      # first (count == 1, where the 1 is this very PR/issue).
+      - name: Welcome first-time contributor (inline check)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+          ISSUE_NUM: ${{ github.event.issue.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login || github.event.issue.user.login }}
+        run: |
+          set -euo pipefail
+          # Bail if we somehow got here without an author (defensive --
+          # the workflow's `on:` triggers all include user context, but
+          # gh would fail with an empty --author).
+          if [ -z "${AUTHOR:-}" ]; then
+            echo "::notice::No author resolved from event payload; skipping welcome."
+            exit 0
+          fi
+          # Count the author's prior items of this kind. Including the
+          # current PR/issue means a true first-timer has count == 1.
+          # --limit 2 caps the lookup; we don't care beyond "more than 1".
+          case "$EVENT_NAME" in
+            pull_request_target)
+              count=$(gh pr list --author "$AUTHOR" --state all --limit 2 --json number --jq 'length')
+              kind=PR
+              num=$PR_NUM
+              ;;
+            issues)
+              count=$(gh issue list --author "$AUTHOR" --state all --limit 2 --json number --jq 'length')
+              kind=issue
+              num=$ISSUE_NUM
+              ;;
+            *)
+              echo "::notice::Unexpected event $EVENT_NAME; skipping welcome."
+              exit 0
+              ;;
+          esac
+          if [ "$count" -gt 1 ]; then
+            echo "::notice::Author @$AUTHOR has $count prior ${kind}s -- not a first-timer, skipping welcome."
+            exit 0
+          fi
+          echo "::notice::Author @$AUTHOR appears to be a first-timer (count=$count). Posting welcome on $kind #$num."
+          # Render the right message body via heredoc + post via gh.
+          if [ "$EVENT_NAME" = pull_request_target ]; then
+            cat > /tmp/welcome.md <<EOF
+          Welcome to Heron, @${AUTHOR}! Thanks for your first PR.
 
-            A few things to know:
-            - Tests will run automatically — check the status below
-            - Make sure you've linked a related issue (required for features)
-            - Read [CONTRIBUTING.md](../blob/main/.github/CONTRIBUTING.md) if you haven't
+          A few things to know:
+          - Tests will run automatically -- check the status below
+          - Make sure you've linked a related issue (required for features)
+          - Read [CONTRIBUTING.md](../blob/main/.github/CONTRIBUTING.md) if you haven't
 
-            We'll review your PR soon. Join our [Discord](https://discord.gg/8pRpHETxa4) if you have questions.
-          issue_message: |
-            Thanks for opening your first issue, @${{ github.actor }}! We'll take a look soon.
+          We'll review your PR soon. Join our [Discord](https://discord.gg/8pRpHETxa4) if you have questions.
+          EOF
+            gh pr comment "$num" --body-file /tmp/welcome.md
+          else
+            cat > /tmp/welcome.md <<EOF
+          Thanks for opening your first issue, @${AUTHOR}! We'll take a look soon.
 
-            In the meantime:
-            - Check [SUPPORT.md](../blob/main/.github/SUPPORT.md) for setup help
-            - Join our [Discord](https://discord.gg/8pRpHETxa4) for quick answers
+          In the meantime:
+          - Check [SUPPORT.md](../blob/main/.github/SUPPORT.md) for setup help
+          - Join our [Discord](https://discord.gg/8pRpHETxa4) for quick answers
+          EOF
+            gh issue comment "$num" --body-file /tmp/welcome.md
+          fi
