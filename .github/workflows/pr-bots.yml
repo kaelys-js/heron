@@ -81,6 +81,12 @@ jobs:
         # below verifies the PR meets the gates BEFORE enabling.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # gh CLI otherwise falls back to `git config remote.origin.url`
+          # for repo resolution. No actions/checkout in this workflow
+          # (security: pull_request_target must never check out PR head
+          # code) -- so without GH_REPO every `gh pr ...` call errors
+          # with "fatal: not a git repository".
+          GH_REPO: ${{ github.repository }}
           PR: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
@@ -138,6 +144,9 @@ jobs:
         # 14d close window). We ping at day 23 -- 7d before the close.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # See needs-rebase comment for GH_REPO rationale -- no checkout,
+          # so gh CLI needs the repo via env to avoid `git config` lookup.
+          GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           THRESHOLD=$(date -u -d '23 days ago' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
@@ -257,6 +266,9 @@ jobs:
       - name: Drop the test-help comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # See needs-rebase comment for GH_REPO rationale -- no checkout,
+          # so gh CLI needs the repo via env to avoid `git config` lookup.
+          GH_REPO: ${{ github.repository }}
           PR: ${{ github.event.pull_request.number }}
           AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |

@@ -33,13 +33,21 @@ jobs:
         # message and the maintainer can re-enable it in 2 clicks. This
         # is preferable to silently passing on vulnerable PRs.
         #
-        # Also denies GPL/AGPL/LGPL licenses since Heron ships under
-        # MIT and bundles Electron -- any GPL-family transitive would
-        # taint the binary.
+        # License gating: Heron ships under MIT and bundles Electron --
+        # any GPL-family transitive would taint the binary. Migrated from
+        # `deny-licenses` (deprecated per actions/dependency-review-action
+        # #997, slated for removal in v6) to `allow-licenses`: a positive
+        # allowlist of permissive SPDX identifiers. Anything outside this
+        # set (including GPL-2.0, GPL-3.0, AGPL-3.0, LGPL-2.1, LGPL-3.0)
+        # is rejected by default. Adding a license here is the explicit
+        # gesture required to take on a new ecosystem's licensing risk.
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: high
-          deny-licenses: AGPL-3.0, GPL-2.0, GPL-3.0, LGPL-2.1, LGPL-3.0
+          allow-licenses: >-
+            0BSD, Apache-2.0, BSD-2-Clause, BSD-3-Clause, BlueOak-1.0.0,
+            CC-BY-3.0, CC-BY-4.0, CC0-1.0, ISC, MIT, MPL-2.0,
+            Python-2.0, Ruby, Unlicense, WTFPL, Zlib
           comment-summary-in-pr: always
           # ALLOW-LIST: GHSA-c32j-vqhx-rx3x  (jwt 2.10.2 -- empty-key HMAC bypass)
           #
