@@ -113,13 +113,18 @@ if (roadmapIssue?.node_id && !VERIFY_ONLY) {
 }
 
 // ── 2. Pinned discussions ("Introduce yourself" + "Start here") ──
+// Pinning state is exposed via repository.pinnedDiscussions (a separate
+// connection); the `Discussion` type itself does NOT have an `isPinned`
+// field. Query both: existing discussions by title (for create-or-skip
+// decision) + pinnedDiscussions (to detect already-pinned ones).
 console.log('▸ Pinned discussions');
 const discussionsQ = ghGraphQL(
   `query($o: String!, $n: String!) {
     repository(owner: $o, name: $n) {
       id
       discussionCategories(first: 30) { nodes { id name } }
-      discussions(first: 50) { nodes { id title isPinned } }
+      discussions(first: 50) { nodes { id title } }
+      pinnedDiscussions(first: 10) { nodes { discussion { id title } } }
     }
   }`,
   { o: REPO.split('/')[0], n: REPO.split('/')[1] },
@@ -134,6 +139,9 @@ if (discussionsQ?.__error || discussionsQ?.errors || !discussionsQ?.data?.reposi
   const repoId = discussionsQ.data.repository.id;
   const cats = discussionsQ.data.repository.discussionCategories.nodes;
   const generalCat = cats.find((c) => /^(General|Q&A|Welcome)$/i.test(c.name)) || cats[0] || null;
+  const pinnedIds = new Set(
+    (discussionsQ.data.repository.pinnedDiscussions?.nodes || []).map((n) => n.discussion.id),
+  );
   const WANTED = [
     {
       title: 'Introduce yourself',
@@ -149,7 +157,7 @@ if (discussionsQ?.__error || discussionsQ?.errors || !discussionsQ?.data?.reposi
       (d) => d.title === w.title,
     );
     if (existing) {
-      if (!existing.isPinned) {
+      if (!pinnedIds.has(existing.id)) {
         if (VERIFY_ONLY) {
           drift(`"${w.title}" discussion`, 'unpinned');
         } else {
@@ -178,8 +186,9 @@ if (discussionsQ?.__error || discussionsQ?.errors || !discussionsQ?.data?.reposi
           }`,
           { r: repoId, c: generalCat.id, t: w.title, b: w.body },
         );
-        if (create?.__error) {
-          console.log(`  "${w.title}": create failed -- ${create.__error.split('\n')[0]}`);
+        if (create?.__error || create?.errors) {
+          const e = create?.__error?.split('\n')[0] || create?.errors?.[0]?.message;
+          console.log(`  "${w.title}": create failed -- ${e}`);
         } else {
           const newId = create.data.createDiscussion.discussion.id;
           const pin = ghGraphQL(
@@ -219,8 +228,16 @@ if (projectsQ?.__error || !projectsQ?.data?.user) {
       `mutation($o: ID!, $t: String!) { createProjectV2(input: {ownerId: $o, title: $t}) { projectV2 { id title } } }`,
       { o: projectsQ.data.user.id, t: 'Heron Roadmap' },
     );
-    if (create?.__error) {
-      console.log(`  Heron Roadmap: create failed -- ${create.__error.split('\n')[0]}`);
+    if (create?.__error || create?.errors) {
+      const e = create?.__error?.split('\n')[0] || create?.errors?.[0]?.message;
+      if (/Resource not accessible/i.test(e)) {
+        console.log(
+          `  (skip) Heron Roadmap project: PAT lacks 'projects: write' scope -- update at ` +
+            `https://github.com/settings/personal-access-tokens and re-run.`,
+        );
+      } else {
+        console.log(`  Heron Roadmap: create failed -- ${e}`);
+      }
     } else {
       console.log(`  Heron Roadmap: created`);
       driftCount++;
@@ -228,80 +245,51 @@ if (projectsQ?.__error || !projectsQ?.data?.user) {
   }
 }
 
-// ── 4. 5 standard saved replies ─────────────────────────────────
-console.log('▸ Saved replies');
-const SAVED_REPLIES = [
-  {
-    title: 'Thanks for the PR',
-    body: "Thanks for the contribution! CI is running -- I'll review once it's green.",
-  },
-  {
-    title: 'Please add a test',
-    body: 'Could you add a regression test for this? See `docs/TESTING.md` for the convention.',
-  },
-  {
-    title: 'Reproduction needed',
-    body: 'Could you share the exact command + a small repro? I want the fix to target the right behaviour.',
-  },
-  {
-    title: 'Help wanted',
-    body: "This looks like a good `help wanted` candidate. If you'd like to take it, please comment + I'll assign.",
-  },
-  {
-    title: 'Closing as duplicate',
-    body: 'Closing as a duplicate of #N. Continuing the conversation there.',
-  },
-];
-const repliesQ = ghGraphQL(`query { viewer { savedReplies(first: 100) { nodes { id title } } } }`);
-if (repliesQ?.__error || !repliesQ?.data?.viewer) {
-  console.log(
-    `  (skip) couldn't query saved replies -- ${repliesQ?.__error?.split('\n')[0] || 'no viewer'}`,
-  );
-} else {
-  const have = new Set((repliesQ.data.viewer.savedReplies.nodes || []).map((n) => n.title));
-  for (const r of SAVED_REPLIES) {
-    if (have.has(r.title)) {
-      console.log(`  "${r.title}": ok`);
-    } else if (VERIFY_ONLY) {
-      drift(`"${r.title}" saved reply`, 'missing');
-    } else {
-      const create = ghGraphQL(
-        `mutation($t: String!, $b: String!) { createSavedReply(input: {title: $t, body: $b}) { savedReply { id title } } }`,
-        { t: r.title, b: r.body },
-      );
-      if (create?.__error) {
-        console.log(`  "${r.title}": create failed -- ${create.__error.split('\n')[0]}`);
-      } else {
-        console.log(`  "${r.title}": created`);
-        driftCount++;
-      }
-    }
-  }
-}
+// ── 4. Saved replies ─ NO-OP (no public GraphQL/REST API) ───────
+// GitHub does not expose saved-reply mutations on the public GraphQL
+// schema (only available on enterprise installs, and the field name
+// drifts between previews). They're user-scoped UI-only objects --
+// the maintainer creates them once at https://github.com/settings/replies
+// and the reconciler can't help. Skipping this section keeps
+// `maintain-user-features.yml` reliably green; remove this comment
+// + add an entry to TODO-INSTRUCTIONS.md if the API ever lands.
+console.log(
+  '▸ Saved replies: SKIPPED (no public API -- create via UI at github.com/settings/replies)',
+);
 
 // ── 5. Profile README at <owner>/<owner> ────────────────────────
 console.log(`▸ Profile README at ${OWNER}/${OWNER}`);
 const README = `# ${OWNER}\n\n> Builder. Shipping [Heron](https://github.com/${OWNER}/heron) and a handful of smaller tools.\n\n## What I'm working on\n\n- **[Heron](https://github.com/${OWNER}/heron)** -- AI-agnostic job-search automation.\n\n## Reach me\n\n- GitHub: [@${OWNER}](https://github.com/${OWNER})\n- Sponsor: [github.com/sponsors/${OWNER}](https://github.com/sponsors/${OWNER})\n- Discord: <https://discord.gg/8pRpHETxa4> (Heron community)\n\n<sub>This README auto-applies from \`.github/workflows/maintain-user-features.yml\` in the Heron repo. Edits made directly to this file are overwritten on the next reconcile.</sub>\n`;
-const profileExists = gh('GET', `/repos/${OWNER}/${OWNER}`);
-if (profileExists?.__error?.includes('Not Found')) {
-  if (VERIFY_ONLY) {
-    drift(`profile repo ${OWNER}/${OWNER}`, 'missing');
-  } else {
-    // Create via REST.
-    const created = gh('POST', `/user/repos`, {
-      name: OWNER,
-      description: `${OWNER}'s profile -- pinned + sponsor link + Heron`,
-      private: false,
-      auto_init: true,
-    });
-    if (created?.__error) {
-      console.log(`  Profile repo: create failed -- ${created.__error.split('\n')[0]}`);
+
+// Always TRY to create the profile repo. POST /user/repos is idempotent
+// when the repo already exists -- GitHub returns 422 "name already
+// exists" which we treat as a no-op. Avoids the previous GET-then-decide
+// flow that races against propagation + relies on a __error.includes
+// substring match that's fragile across gh CLI versions.
+if (!VERIFY_ONLY) {
+  const repoCreate = gh('POST', `/user/repos`, {
+    name: OWNER,
+    description: `${OWNER}'s profile`,
+    private: false,
+    auto_init: true,
+  });
+  if (repoCreate?.__error) {
+    if (/name already exists|already exists on this account/i.test(repoCreate.__error)) {
+      // expected when the repo already exists -- continue to README upsert
+    } else if (/Resource not accessible/i.test(repoCreate.__error)) {
+      console.log(
+        `  (skip) Profile repo: PAT lacks 'public_repo' or 'repo' scope on user-account level -- ` +
+          `cannot create ${OWNER}/${OWNER}. Create manually + re-run.`,
+      );
     } else {
-      console.log(`  Profile repo: created`);
-      driftCount++;
+      console.log(`  Profile repo: ${repoCreate.__error.split('\n')[0]}`);
     }
+  } else {
+    console.log(`  Profile repo: created`);
+    driftCount++;
   }
 }
+
 // Upsert README via contents API. Idempotent on identical content.
 const liveMeta = gh('GET', `/repos/${OWNER}/${OWNER}/contents/README.md`);
 if (liveMeta?.content) {
