@@ -228,8 +228,10 @@ if (projectsQ?.__error || !projectsQ?.data?.user) {
       const e = create?.__error?.split('\n')[0] || create?.errors?.[0]?.message;
       if (/Resource not accessible/i.test(e)) {
         console.log(
-          `  (skip) Heron Roadmap project: PAT lacks 'projects: write' scope -- update at ` +
-            `https://github.com/settings/personal-access-tokens and re-run.`,
+          `  (skip) Heron Roadmap project: fine-grained PATs don't expose user-scope ` +
+            `Project v2 creation. EASIEST FIX: create it ONCE via UI at ` +
+            `https://github.com/users/${OWNER}/projects (click "New project" -> Roadmap template ` +
+            `-> name "Heron Roadmap"). Subsequent runs will detect + skip.`,
         );
       } else {
         console.log(`  Heron Roadmap: create failed -- ${e}`);
@@ -274,8 +276,11 @@ if (!VERIFY_ONLY) {
       // expected when the repo already exists -- continue to README upsert
     } else if (/Resource not accessible/i.test(repoCreate.__error)) {
       console.log(
-        `  (skip) Profile repo: PAT lacks 'public_repo' or 'repo' scope on user-account level -- ` +
-          `cannot create ${OWNER}/${OWNER}. Create manually + re-run.`,
+        `  (skip) Profile repo: fine-grained PATs don't grant user-account repo CREATION. ` +
+          `EASIEST FIX: create it ONCE via UI -- https://github.com/new -> name "${OWNER}", ` +
+          `public, with README -- THEN edit the PAT at https://github.com/settings/personal-access-tokens, ` +
+          `"Only select repositories" -> add "${OWNER}/${OWNER}" with Contents Read+Write. ` +
+          `Subsequent runs will upsert the README idempotently.`,
       );
     } else {
       console.log(`  Profile repo: ${repoCreate.__error.split('\n')[0]}`);
