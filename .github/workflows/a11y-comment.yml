@@ -61,8 +61,14 @@ jobs:
             curl -fsS http://localhost:4173 > /dev/null 2>&1 && break
             sleep 1
           done
-          # Run a simple axe-core check via Playwright -- emits to axe.json.
-          node .github/scripts/sticky/run-axe.mjs http://localhost:4173 > axe.json 2>&1 || echo '[]' > axe.json
+          # Run axe-core via Playwright. Isolate stderr so warnings
+          # from run-axe.mjs (e.g. `::warning::Playwright ... not installed`,
+          # `npm warn Unsupported engine:`) don't smuggle into the JSON.
+          # Same bug class as docs + type-coverage stickies: `2>&1` was
+          # writing `::warning::...` lines to axe.json, breaking JSON.parse.
+          node .github/scripts/sticky/run-axe.mjs http://localhost:4173 2>/dev/null > axe.json || echo '[]' > axe.json
+          # Belt-and-suspenders: if anything non-JSON snuck in, swap for [].
+          head -c1 axe.json | grep -qE '[\[{]' || echo '[]' > axe.json
           kill "$(cat /tmp/preview.pid)" 2>/dev/null || true
       - name: Format a11y sticky
         run: node .github/scripts/sticky/format-a11y.mjs axe.json --out body.md

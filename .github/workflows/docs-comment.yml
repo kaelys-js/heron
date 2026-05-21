@@ -50,16 +50,32 @@ jobs:
         run: |
           set -euo pipefail
           if [ ! -s changed-md.txt ]; then echo "[]" > cspell.json; exit 0; fi
-          # Build the file-arg list as a space-separated string so cspell
-          # gets ONE quoted argument per file via xargs (shellcheck-safe).
-          xargs -a changed-md.txt npx --yes cspell --reporter=json --no-progress --no-summary -- > cspell.json 2>&1 || true
+          # Build the file-arg list via xargs so cspell gets one arg per file.
+          # CRITICAL: redirect stderr to /dev/null (not to the JSON file).
+          # `2>&1` would smuggle `npm warn Unsupported engine:` (and
+          # pnpm/npm version mismatch chatter) into the JSON, making the
+          # formatter's `JSON.parse` blow up with "Unexpected token 'p'".
+          # `|| echo "[]"` ensures we always have valid JSON even when
+          # cspell exits non-zero with findings.
+          if ! xargs -a changed-md.txt npx --yes cspell --reporter=json --no-progress --no-summary -- 2>/dev/null > cspell.json; then
+            # cspell exits non-zero when issues are found; keep its JSON.
+            if [ ! -s cspell.json ]; then echo "[]" > cspell.json; fi
+          fi
+          # Sanity-check: if anything ate the start of the file (engine
+          # warnings, pnpm noise), fall back to an empty array so the
+          # formatter doesn't crash.
+          head -c1 cspell.json | grep -qE '[\[{]' || echo "[]" > cspell.json
 
       - name: Run remark-lint
         run: |
           set -euo pipefail
           if [ ! -s changed-md.txt ]; then echo "[]" > remark.json; exit 0; fi
-          # Same xargs pattern -- avoids the SC2046 unquoted-substitution warning.
-          xargs -a changed-md.txt npx --yes remark --quiet --report json --setting commonmark > remark.json 2>&1 || true
+          # Same stderr-isolation as cspell. remark-cli sends progress + path
+          # info to stderr; only the structured report goes to stdout.
+          if ! xargs -a changed-md.txt npx --yes remark --quiet --report json --setting commonmark 2>/dev/null > remark.json; then
+            if [ ! -s remark.json ]; then echo "[]" > remark.json; fi
+          fi
+          head -c1 remark.json | grep -qE '[\[{]' || echo "[]" > remark.json
 
       - name: Format docs sticky
         run: node .github/scripts/sticky/format-docs.mjs --cspell=cspell.json --remark=remark.json --out body.md

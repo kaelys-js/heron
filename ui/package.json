@@ -121,6 +121,7 @@
     "svelte-check": "catalog:",
     "tailwindcss": "catalog:",
     "tw-animate-css": "catalog:",
+    "type-coverage": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"

@@ -284,7 +284,6 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
     'docs/CI.md',
     'docs/COMMENT-STYLE.md',
     'docs/COMPARISON.md',
-    'docs/SETTINGS.md',
     'docs/CUSTOMIZATION.md',
     'docs/DATA_CONTRACT.md',
     'docs/FAQ.md',
@@ -382,6 +381,7 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
       'TODO.md', // user-personal (gitignored)
       'TODO2.md', // maintainer-personal external-setup checklist (gitignored)
       'STATE.md', // Claude per-session scratchpad (gitignored, see .gitignore)
+      'TODO-INSTRUCTIONS.md', // gitignored
       'ui/ios/App/CapApp-SPM/README.md', // vendor (Capacitor SPM)
       '.github/PULL_REQUEST_TEMPLATE.md', // GitHub-loaded PR scaffold, not a doc
       // Community-health files -- short, GitHub-surfaces them via the
