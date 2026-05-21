@@ -44,6 +44,10 @@
           { "context": "OSSF Scorecard / Scorecard analysis" },
           { "context": "zizmor — workflow security scan / Scan workflows" },
           { "context": "PR quality / Conventional Commits PR title" },
+          { "context": "PR content gates / Per-commit Conventional Commits" },
+          { "context": "PR content gates / File size <= 5MB" },
+          { "context": "PR content gates / Path length <= 255 chars" },
+          { "context": "PR content gates / File extensions allowlist" },
           { "context": "DCO" }
         ]
       }
