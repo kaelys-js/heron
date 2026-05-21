@@ -12,6 +12,10 @@ repo. `gh api repos/kaelys-js/heron/rulesets` returns the live state;
 the daily `verify-gh-config` workflow asserts the JSON in this folder
 matches what's live.
 
+Bypass actors: the `Repository admin` role is configured as a bypass
+actor (mode: always) to allow `gh pr merge --admin` overrides. Tracked
+in `verify-gh-config` so any drift is caught the next morning.
+
 Two paths to changes:
 
 1. **Flip the repo public** (planned for the OSS launch milestone).
