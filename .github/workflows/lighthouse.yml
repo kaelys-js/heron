@@ -49,32 +49,35 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup mise (Node + pnpm)
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+      - name: Setup toolchain
+        # Migrated from inline mise + pnpm install + pip install +
+        # `pnpm brand:apply` (28 lines) to the shared composite. Wins:
+        # (1) pnpm store cache enabled by default, so cold install
+        #     skips the registry round-trips (~30-60s).
+        # (2) Turbo cache enabled here so the `pnpm --filter ui build`
+        #     step below hits the warm task graph (~3-4 min saved on
+        #     no-op source changes; first build of a PR is still cold).
+        # (3) install_python_deps stays default (true) -- the dashboard
+        #     preview server boots orchestrator children that import
+        #     `cryptography`. Disabling that would surface as
+        #     ModuleNotFoundError in the browser console, which
+        #     Lighthouse's `errors-in-console` audit then flags.
+        uses: ./.github/actions/setup-toolchain
+        with:
+          apply_brand: true
+          turbo_cache: true
 
-      - name: Install deps
-        run: pnpm install --frozen-lockfile
-
-      - name: Install Python dependencies (cryptography etc.)
-        # The preview server boots scan/apply Python children that
-        # import `cryptography` via scripts/lib/user_secrets.py.
-        # Without this step the children crash at boot, pollute the
-        # browser console, and Lighthouse's `errors-in-console`
-        # assertion fails on what looks like a UI bug but is actually
-        # a missing pip install.
-        run: |
-          # `--require-hashes` makes the install tamper-evident -- pip refuses
-          # to download anything whose archive hash isn't in
-          # `scripts/requirements.txt`. Satisfies Scorecard's
-          # PinnedDependenciesID; matches the test.yml step.
-          # No `pip install --upgrade pip` -- the mise-managed interpreter
-          # already ships a recent pip, and an unpinned upgrade would itself
-          # trip PinnedDependenciesID.
-          python -m pip install --require-hashes -r scripts/requirements.txt
-          python -c "from cryptography.hazmat.primitives.ciphers.aead import AESGCM; print('cryptography import OK')"
-
-      - name: Apply brand
-        run: pnpm brand:apply
+      # Cache the Playwright browsers binary store so the Lighthouse
+      # CI action's internal Chromium launch is warm. Pre-fix every run
+      # paid the ~30s "download + extract Chromium" cost via Lighthouse
+      # CI's bootstrap; cache restoration drops that to a few seconds.
+      - name: Cache Playwright browsers (Chromium only)
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: lighthouse-playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            lighthouse-playwright-${{ runner.os }}-
 
       - name: Build dashboard
         run: pnpm --filter ui build
