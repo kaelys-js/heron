@@ -145,8 +145,9 @@ lefthook run pre-push --commands per-commit-conventional
 1. Add the workflow + job in `.github/workflows/<workflow>.yml`.
 2. Add the context string to `required_status_checks` in
    `.github/rulesets/main.json`.
-3. Apply the ruleset live: `pnpm gh:apply` (or via PR; the SSOT JSON +
-   `verify-gh-config.yml` will keep them in sync going forward).
+3. Apply the ruleset live: commit + push to `main` (the `maintain-config.yml`
+   workflow auto-applies on changes under `.github/rulesets/**`), or trigger
+   it manually (Actions → "Maintain GitHub config" → Run workflow → mode=apply).
 4. Optionally add a pre-push mirror in `lefthook.yml`.
 5. Update this document.
 

@@ -38,12 +38,13 @@ pnpm brand:apply             ← propagates everywhere
        ├──→ lefthook.yml + turbo.json paths
        └──→ All platform icons (icons regen via brand.iconSource)
        │
-       │  (After a successful apply, if `brand.json::repo` differs from
-       │   the previous snapshot AND `gh auth status` succeeds, apply-brand
-       │   automatically chains into:)
+       │  (After commit + push to main, the maintain-config.yml workflow
+       │   reconciles GitHub-side state for you:)
        │
        ▼
-pnpm gh:apply                ← propagates the repo block to GitHub
+.github/workflows/maintain-config.yml   ← push:main on branding/brand.json
+       │                                  triggers it; weekly cron at
+       │                                  Mon 06:13 UTC catches manual drift
        │
        ├──→ Repo description + homepage
        ├──→ Repository topics (set-union with brand.json::repo.topics)
@@ -56,12 +57,10 @@ pnpm gh:apply                ← propagates the repo block to GitHub
 branding/.brand-snapshot.json  ← apply-brand records post-state here
 ```
 
-> **Note.** The auto-chain is best-effort and idempotent. If `gh` isn't
-> authed locally (e.g., in a Docker dev container), apply-brand prints
-> a `· skipped gh:apply -- gh CLI not authed` line and continues. The
-> next time a maintainer runs apply-brand on an authed machine, the
-> chain catches up. `pnpm gh:apply` can also be invoked directly any
-> time to force a sync.
+> **Note.** Local `pnpm brand:apply` is pure file-propagation. GitHub-side
+> reconcile happens in CI -- the workflow runs idempotently on push:main
+> and again on the weekly Monday cron. To force a sync without
+> committing, trigger Actions → "Maintain GitHub config" → Run workflow.
 
 ## Day-to-day edits (low risk)
 
@@ -150,11 +149,11 @@ the changelog flags the rebrand clearly.
 External systems live outside the repo. The MIGRATION doc auto-emits
 a summary; this section is the full checklist.
 
-### GitHub repository state -- automated via `pnpm gh:apply`
+### GitHub repository state -- automated via `maintain-config.yml`
 
 What used to be 6+ manual GitHub-UI clicks is now reconciled by a single
-script. After you edit `brand.json::repo` (description, homepage, topics)
-and run apply-brand, the chain auto-invokes `pnpm gh:apply`, which calls
+workflow. Edit `brand.json::repo` (description, homepage, topics), commit,
+and push to `main` -- `.github/workflows/maintain-config.yml` calls
 `gh api` to upsert:
 
 | GitHub-side state | Source of truth |
@@ -167,9 +166,9 @@ and run apply-brand, the chain auto-invokes `pnpm gh:apply`, which calls
 | `has_discussions` / `has_issues` | hard-coded "true" |
 | Branch-protection rulesets | `.github/rulesets/*.json` (matched by `name` field) |
 
-The script is idempotent -- re-running is a no-op unless something
-drifted. `pnpm gh:verify` reports drift without writing (CI uses this).
-`pnpm gh:apply:dry` shows what would change without writing.
+The workflow is idempotent -- re-running is a no-op unless something
+drifted. Trigger it manually with mode=check to dry-run, or mode=apply
+to reconcile (Actions → "Maintain GitHub config" → Run workflow).
 
 ### Local working tree + GitHub (still manual)
 
@@ -178,14 +177,14 @@ are either too sensitive (visibility flips) or affect git history that
 apply-brand should never touch (rename, ownership transfer).
 
 ```sh
-# 1. Rename the GitHub repo — gh:apply does NOT do this (too destructive
-#    for an idempotent reconciliation script):
+# 1. Rename the GitHub repo — maintain-config.yml does NOT do this (too
+#    destructive for an idempotent reconciliation workflow):
 gh repo rename <new-name> --repo <old-owner>/<old-name>
 
 # 2. If also moving to a new GitHub org:
 #    Transfer ownership via Settings → Transfer (new org must exist first).
-#    Wait ~30s after the transfer, then run `pnpm gh:apply` to re-apply
-#    topics + rulesets in the new namespace.
+#    Wait ~30s, then trigger Actions → "Maintain GitHub config" → Run
+#    workflow → mode=apply to re-apply topics + rulesets in the new namespace.
 
 # 3. Update the local remote URL (git doesn't follow GitHub's redirect):
 git remote set-url origin git@github.com:<new-owner>/<new-name>.git
@@ -195,13 +194,13 @@ git remote -v
 mv ~/<old-dir> ~/<new-dir>
 cd ~/<new-dir>
 
-# 5. Now run apply-brand — it propagates everything and auto-invokes
-#    gh:apply to reconcile description / homepage / topics / GHAS / rulesets
+# 5. Now run apply-brand — it propagates the new brand to every local file.
+#    Commit + push, and maintain-config.yml will reconcile GitHub-side state
 #    in the renamed repo:
 REBRAND_CONFIRMED=1 pnpm brand:apply
 ```
 
-> **Visibility flips.** `gh:apply` deliberately does NOT touch
+> **Visibility flips.** `maintain-config.yml` deliberately does NOT touch
 > public/private visibility. Flipping a repo public is a one-way trip
 > (search engines crawl, forks spread) -- it requires explicit
 > maintainer intent, not silent automation. Use the GitHub UI or `gh
@@ -326,7 +325,7 @@ After running through the above:
 
 - [ ] `git remote -v` shows the new URL.
 - [ ] `cd <new-dir> && pnpm brand:apply` runs cleanly (no drift).
-- [ ] `pnpm gh:verify` reports `✓ No drift` (live GitHub matches `brand.json` + `.github/rulesets/`).
+- [ ] Trigger Actions → "Maintain GitHub config" → Run workflow → mode=check; step summary reports `✓ Repo state matches SSOT` (live GitHub matches `brand.json` + `.github/rulesets/`).
 - [ ] `pnpm exec vitest run capacitor.integration.test.ts` passes.
 - [ ] `pnpm visual:diff` reports no regressions (UI hasn't shifted under the new brand).
 - [ ] iOS simulator launches under the new bundle ID:
