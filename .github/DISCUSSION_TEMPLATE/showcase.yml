@@ -1,0 +1,55 @@
+title: 'Showcase'
+labels: ['showcase']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Show off something cool you built with or on top of Heron -- a portfolio site, a
+        custom adapter, a multi-profile workflow, a brand-new mode. The Showcase category
+        is where the community sees what's possible.
+
+  - type: input
+    id: title
+    attributes:
+      label: One-line summary
+      placeholder: "Custom Workday ATS adapter for the apply pipeline"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What did you build?
+      description: A few paragraphs on the what + why.
+    validations:
+      required: true
+
+  - type: input
+    id: link
+    attributes:
+      label: Link (repo / site / video / screenshot)
+      placeholder: "https://github.com/your-handle/your-thing"
+
+  - type: textarea
+    id: how
+    attributes:
+      label: How did you do it?
+      description: |
+        Walkthrough of the implementation. Code snippets welcome -- use ```` ```ts ```` fences.
+        If you forked or extended a Heron mode, link the diff.
+
+  - type: dropdown
+    id: would-upstream
+    attributes:
+      label: Would you upstream this into Heron?
+      options:
+        - 'Yes -- I will open a PR'
+        - "Yes -- but I'd love a maintainer review first"
+        - "No -- it's too specific to my workflow"
+        - "Not sure -- looking for feedback"
+
+  - type: textarea
+    id: anything-else
+    attributes:
+      label: Anything else
+      description: Questions, feature requests, bug reports related to this build.
