@@ -1,0 +1,92 @@
+name: PR quality comment
+# Posts the `heron-pr-quality` sticky comment on every PR. Triggered by
+# Tests completing -- reads the Tests run's jobs via the GH API and
+# aggregates lint / format / typecheck outcomes into one table.
+#
+# Auto-discovery via keyword match (see format-quality.mjs::QUALITY_KEYWORDS):
+# add a new lint workflow with `lint`, `format`, or any of the matching
+# keywords in the job name and it shows up here without code edits.
+
+on: # zizmor: ignore[dangerous-triggers]
+  # SAFETY: same as coverage-comment.yml + pr-ci-summary.yml -- this
+  # workflow:
+  #   1. Never checks out the PR head; only reads main + queries the GH
+  #      API for job metadata (no PR-controlled content reaches a shell).
+  #   2. Calls only the composite sticky-comment action, which is also
+  #      argv-safe.
+  workflow_run:
+    workflows: ['Tests']
+    types: [completed]
+
+permissions: {}
+
+concurrency:
+  group: quality-comment-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
+jobs:
+  comment:
+    name: Post heron-pr-quality sticky
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      actions: read
+      pull-requests: write
+      contents: read
+    if: |
+      github.event.workflow_run.event == 'pull_request' &&
+      (github.event.workflow_run.conclusion == 'success' ||
+       github.event.workflow_run.conclusion == 'failure')
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout main (for the scripts; never the PR head)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: main
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Fetch source-run jobs from GH API
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GH_REPO/actions/runs/$RUN_ID/jobs" --paginate \
+            --slurp \
+            --jq '{jobs: (map(.jobs) | add)}' > jobs.json
+          echo "::notice::Fetched $(jq '.jobs | length' jobs.json) jobs for run $RUN_ID."
+
+      - name: Format quality sticky body
+        env:
+          GH_REPO: ${{ github.repository }}
+        run: node .github/scripts/sticky/format-quality.mjs jobs.json --repo "$GH_REPO" --out body.md
+
+      - name: Resolve PR number
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          set -euo pipefail
+          NUM=$(jq -r '.workflow_run.pull_requests[0].number // empty' "$GITHUB_EVENT_PATH" || true)
+          if [ -z "$NUM" ]; then
+            NUM=$(gh pr list --head "$HEAD_BRANCH" --state open --json number --jq '.[0].number // empty')
+          fi
+          if [ -z "$NUM" ]; then
+            echo "skip=true" >>"$GITHUB_OUTPUT"
+          fi
+          echo "number=$NUM" >>"$GITHUB_OUTPUT"
+
+      - name: Post sticky comment
+        if: steps.pr.outputs.skip != 'true'
+        uses: ./.github/actions/sticky-comment
+        with:
+          marker: heron-pr-quality
+          body-path: body.md
+          pr-number: ${{ steps.pr.outputs.number }}

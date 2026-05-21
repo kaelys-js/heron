@@ -589,6 +589,21 @@ jobs:
             ui/test-results/
           retention-days: 14
 
+      # Upload coverage as a workflow artifact so the `coverage-comment.yml`
+      # sticky-comment workflow (triggered by workflow_run after this run
+      # completes) can download + scan it. Codecov uploads the same file
+      # for its own sunburst; this artifact is for the in-repo sticky.
+      - name: Upload TS coverage artifact for sticky-comment workflow
+        if: needs.changes.outputs.ts == 'true' && always() && hashFiles('ui/coverage/lcov.info') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: coverage-ts
+          path: |
+            ui/coverage/lcov.info
+            ui/coverage/coverage-summary.json
+          retention-days: 14
+          if-no-files-found: warn
+
   # ─────────────────────────────────────────────────────────────────
   # iOS -- Fastlane test_ci on macOS-15 (Xcode 16, Swift 5.9+)
   # ─────────────────────────────────────────────────────────────────
@@ -787,6 +802,16 @@ jobs:
           fail_ci_if_error: true
           use_oidc: true
           verbose: true
+
+      # Sibling of the ts-job upload, for the heron-pr-coverage sticky.
+      - name: Upload iOS coverage artifact for sticky-comment workflow
+        if: needs.changes.outputs.ios == 'true' && always() && hashFiles('ui/ios/App/fastlane/coverage/cobertura.xml') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: coverage-ios
+          path: ui/ios/App/fastlane/coverage/cobertura.xml
+          retention-days: 14
+          if-no-files-found: warn
 
   # ─────────────────────────────────────────────────────────────────
   # Multi-language format / lint -- one job covers every non-JS surface
