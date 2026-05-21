@@ -91,5 +91,4 @@ fix / has a regression / signed binaries don't load.
 - `.github/CODE_OF_CONDUCT.md` -- enforcement actions
 - `.github/CONTRIBUTING.md` -- contribution flow
 - `docs/CI.md` -- gate inventory + bypass paths
-- `docs/SETTINGS.md` -- runbook for repo settings
 - `docs/GOVERNANCE.md` -- decision-making model

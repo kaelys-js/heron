@@ -175,7 +175,7 @@ const security = gh('GET', `/repos/${REPO}`);
 const liveSec = security?.security_and_analysis || {};
 if (liveSec.secret_scanning_validity_checks?.status !== 'enabled') {
   console.log(
-    `  secret_scanning_validity_checks: ${liveSec.secret_scanning_validity_checks?.status || 'unset'} (API sticky -- requires manual UI flip; see TODO-INSTRUCTIONS.md if present)`,
+    `  secret_scanning_validity_checks: ${liveSec.secret_scanning_validity_checks?.status || 'unset'} (API sticky -- toggle stays disabled until the maintainer flips it via the UI)`,
   );
   if (!VERIFY_ONLY) {
     // Best-effort PATCH -- silent no-op when the API ignores it.
