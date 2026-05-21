@@ -146,14 +146,7 @@
   --secondary: #efeae0;
   --secondary-foreground: #1a1f26;
   --muted: #efeae0;
-  /* Darkened from #6b7585 to clear WCAG-AA against `--sidebar` /
-     `--muted` cream (#efeae0). The old slate read at ~3.88:1; this
-     hits ~5.0:1, so every full-opacity `text-muted-foreground`
-     usage passes axe `color-contrast`. Sub-100% opacity callers
-     (kbd chips, CollapsibleGroup headers) drop the slash in light
-     mode and keep a `dark:` variant so the blended colour still
-     clears AA on the cream surface. */
-  --muted-foreground: #525c6c;
+  --muted-foreground: #6b7585;
   --accent: #c89b4a;
   --accent-foreground: #1a1f26;
   --accent-secondary: #7a8c6d;

@@ -12,6 +12,12 @@ contact_links:
   - name: Setup / how-to question
     url: https://discord.gg/8pRpHETxa4
     about: Faster than opening an issue. Real humans, real-time.
+  - name: I got hired with Heron 🎉
+    url: https://github.com/kaelys-js/heron/discussions/categories/showcase
+    about: Share your success story. Heron helped you land a role -- tell the community how.
+  - name: Showcase what you built
+    url: https://github.com/kaelys-js/heron/discussions/categories/showcase
+    about: Custom adapters, dashboards, modes -- show off your work.
   - name: GitHub Discussions
     url: https://github.com/kaelys-js/heron/discussions
     about: Ideas, Q&A, show-and-tell, community conversations.
