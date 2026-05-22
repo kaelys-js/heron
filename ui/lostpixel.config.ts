@@ -75,7 +75,13 @@ async function mintAuthToken(page: import('playwright-core').Page): Promise<stri
         'seed-lighthouse-user.mjs has run.',
     );
   }
-  const body = (await resp.json()) as { token: string };
+  const body = (await resp.json()) as { token?: unknown };
+  if (typeof body.token !== 'string' || body.token.length === 0) {
+    throw new Error(
+      'lost-pixel: /api/auth/e2e-login response missing or empty `token`. ' +
+        'Confirm the auth-bypass endpoint is wired + the e2e seed populated u_e2e.',
+    );
+  }
   cachedAuthToken = body.token;
   return cachedAuthToken;
 }

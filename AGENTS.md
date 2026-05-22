@@ -8,7 +8,7 @@
 >
 > Code-mode agents (you, CodeRabbit reviews, refactor sessions) only need this file. Product-mode agents that the dashboard spawns via `spawnAgentWithMode()` get both: this file PLUS [AGENTS-PRODUCT.md](AGENTS-PRODUCT.md).
 
-## 12 rules
+## 13 rules
 
 These apply to every code task in this project unless explicitly overridden.
 Bias: caution over speed on non-trivial work. Use judgment on trivial tasks.
@@ -97,7 +97,7 @@ Heron is a local-first job-search platform -- pipeline tracking, A-F offer evalu
 
 2. **Product layer.** Modes (`modes/*.md`) that AI CLIs run for product workflows (`evaluate`, `apply`, `outreach`, etc.). Per-user / per-profile data (`data/users/{uid}/profiles/{slug}/`). Application tracker, reports, CV templates, scoring logic.
 
-If your task touches the **engineering layer only** (CI, build, refactor, bug fix in `ui/` or `scripts/`), the 12 rules above are everything you need. If it touches the **product layer** (changing a mode prompt, adjusting scoring, anything in `data/` or `modes/_profile.md`), **read [AGENTS-PRODUCT.md](AGENTS-PRODUCT.md) first** -- it has the data contract (which files agents can vs. can't auto-update), the multi-profile path resolution rules, the canonical states, etc.
+If your task touches the **engineering layer only** (CI, build, refactor, bug fix in `ui/` or `scripts/`), the 13 rules above are everything you need. If it touches the **product layer** (changing a mode prompt, adjusting scoring, anything in `data/` or `modes/_profile.md`), **read [AGENTS-PRODUCT.md](AGENTS-PRODUCT.md) first** -- it has the data contract (which files agents can vs. can't auto-update), the multi-profile path resolution rules, the canonical states, etc.
 
 ## Critical safety guardrails (one-liner each -- see AGENTS-PRODUCT.md for full)
 
