@@ -123,6 +123,12 @@ dependencies {
     // APIs; we surface them as Capacitor PluginCall.resolve callbacks
     // so the existing JS surface stays unchanged.
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+    // Guava ListenableFuture -> kotlinx coroutines bridge.
+    // NativePlugin.kt uses `.await()` on AppSearch's ListenableFuture
+    // (LocalStorage.createSearchSessionAsync, session.searchAsync,
+    // etc.) which is part of androidx.appsearch's API; the await()
+    // suspension function lives in this artifact.
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.7.3"
     implementation "androidx.concurrent:concurrent-futures-ktx:1.1.0"
     testImplementation "junit:junit:$junitVersion"
     // Kotlin stdlib test assertions (assertEquals / assertTrue with

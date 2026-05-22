@@ -219,11 +219,13 @@ platform :ios do
     # name -- it does NOT resolve to "whichever's installed" the way
     # `xcrun simctl boot latest` does.
     ios_destination = "platform=iOS Simulator,OS=18.5,name=iPhone 16 Pro"
-    # The default watchOS sim on macos-15 is Apple Watch Series 11 (46mm)
-    # at watchOS 11.5 (paired with iOS 18.5). Production WatchApp pins
-    # WATCHOS_DEPLOYMENT_TARGET = 10.0 so the test bundle is compatible
-    # with everything from watchOS 10+.
-    watch_destination = "platform=watchOS Simulator,OS=11.5,name=Apple Watch Series 11 (46mm)"
+    # macos-15 ships Apple Watch Series 10 (42mm) at watchOS 11.5 as
+    # the canonical watchOS sim. Series 11 isn't pre-installed on the
+    # runner image (per actions/runner-images macos-15 catalog). Pin
+    # to Series 10 so xcodebuild can resolve a real device.
+    # Production WatchApp pins WATCHOS_DEPLOYMENT_TARGET = 10.0 so the
+    # test bundle is compatible with everything from watchOS 10+.
+    watch_destination = "platform=watchOS Simulator,OS=11.5,name=Apple Watch Series 10 (42mm)"
 
     # Run iOS schemes sequentially. Each gets its own output_directory so
     # the xcresult bundles don't clobber each other (run_tests would
