@@ -160,11 +160,13 @@
     >
       <svg width="64" height="64" viewBox="0 0 1024 1024">
         <defs>
+          <!-- AUTO-GENERATED:brand-gradient -->
           <linearGradient id="login-bg" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stop-color="#4a5b6d" />
             <stop offset="55%" stop-color="#7a8c6d" />
             <stop offset="100%" stop-color="#c89b4a" />
           </linearGradient>
+          <!-- /AUTO-GENERATED:brand-gradient -->
         </defs>
         <rect width="1024" height="1024" rx="232" fill="url(#login-bg)" />
         <rect x="0" y="0" width="1024" height="512" rx="232" fill="#ffffff" opacity="0.06" />

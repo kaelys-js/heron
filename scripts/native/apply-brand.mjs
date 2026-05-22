@@ -1670,6 +1670,84 @@ function applyAppHtml(brand) {
   changed ? log.ok(`app.html`) : log.skip(`app.html -- already current`);
 }
 
+/**
+ * Reconcile the brand gradient across every consumer that holds an
+ * inline copy. Stops come from brand.json::colors.primary + .accentSecondary
+ * + .accent so a single brand.json edit cascades to:
+ *
+ *   1. branding/logo.svg (master)
+ *   2. ui/src/error.html
+ *   3. ui/src/app.html (the splash gradient, not the spinner stops)
+ *   4. ui/src/lib/components/BackendUnreachableOverlay.svelte
+ *   5. ui/src/routes/signup/+page.svelte
+ *   6. ui/src/routes/login/+page.svelte
+ *
+ * Each consumer wraps its <linearGradient>...</linearGradient> in
+ * <!-- AUTO-GENERATED:brand-gradient --> markers. This function rewrites
+ * the inner <stop> stop-color values to the brand tokens; the linearGradient
+ * id + viewport attributes stay per-consumer (since IDs must be unique
+ * when multiple SVGs share the DOM).
+ *
+ * Idempotent: re-run is a no-op when stops already match. Drift
+ * detection happens implicitly via writeIfChanged + the snapshot.
+ */
+function applyBrandGradient(brand) {
+  const start = brand.colors.primary;
+  const mid = brand.colors.accentSecondary;
+  const end = brand.colors.accent;
+
+  const startMarker = '<!-- AUTO-GENERATED:brand-gradient -->';
+  const endMarker = '<!-- /AUTO-GENERATED:brand-gradient -->';
+  const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const blockRe = new RegExp(`${escape(startMarker)}[\\s\\S]*?${escape(endMarker)}`, 'm');
+
+  const targets = [
+    join(ROOT, 'branding', 'logo.svg'),
+    join(UI, 'src', 'error.html'),
+    join(UI, 'src', 'app.html'),
+    join(UI, 'src', 'lib', 'components', 'BackendUnreachableOverlay.svelte'),
+    join(UI, 'src', 'routes', 'signup', '+page.svelte'),
+    join(UI, 'src', 'routes', 'login', '+page.svelte'),
+  ];
+
+  let touched = 0;
+  let missing = 0;
+  for (const path of targets) {
+    if (!existsSync(path)) continue;
+    const before = readFileSync(path, 'utf8');
+    const match = blockRe.exec(before);
+    if (!match) {
+      log.warn(
+        `${path.replace(ROOT + '/', '')} missing AUTO-GENERATED:brand-gradient markers; skipped`,
+      );
+      missing++;
+      continue;
+    }
+    const block = match[0];
+    let nextBlock = block;
+    const stops = [
+      [/(<stop offset="0%"\s+stop-color=")[^"]+(")/, start],
+      [/(<stop offset="55%"\s+stop-color=")[^"]+(")/, mid],
+      [/(<stop offset="100%"\s+stop-color=")[^"]+(")/, end],
+    ];
+    for (const [re, color] of stops) {
+      nextBlock = nextBlock.replace(re, `$1${color}$2`);
+    }
+    if (nextBlock !== block) {
+      const next = before.replace(block, nextBlock);
+      writeFileSync(path, next);
+      touched++;
+    }
+  }
+  if (touched > 0) {
+    log.ok(
+      `brand gradient (${touched} file${touched === 1 ? '' : 's'} updated, from brand.json::colors.{primary,accentSecondary,accent})`,
+    );
+  } else if (missing === 0) {
+    log.skip(`brand gradient -- already current across ${targets.length} consumers`);
+  }
+}
+
 function applyErrorHtml(brand) {
   // src/error.html is the SvelteKit fallback shown when +error.svelte
   // can't render (e.g. when a hook throws before routing settles). Same
@@ -1690,12 +1768,10 @@ function applyErrorHtml(brand) {
     [/(<title>%status%\s*·\s*)[^<]+(<\/title>)/, `$1${brand.displayName}$2`],
     // Reload button -- "Reload {displayName}"
     [/(>Reload\s+)[^<]+(<\/a>)/, `$1${brand.displayName}$2`],
-    // Inline SVG gradient stops match logo.svg -- pulled from brand.colors
-    // in case the brand-gradient colors get swapped via brand.json. We
-    // match the THREE gradient stops in order.
-    [/(<stop offset="0%" stop-color=")[^"]+(")/, `$1${brand.colors.gradientStart ?? '#4a5b6d'}$2`],
-    [/(<stop offset="55%" stop-color=")[^"]+(")/, `$1${brand.colors.gradientMid ?? '#7a8c6d'}$2`],
-    [/(<stop offset="100%" stop-color=")[^"]+(")/, `$1${brand.colors.gradientEnd ?? '#c89b4a'}$2`],
+    // Inline SVG gradient stops moved to applyBrandGradient(brand) so every
+    // consumer (logo.svg + app.html + error.html + BackendUnreachableOverlay
+    // + signup/login pages) reads from the same brand.json::colors source
+    // via a single AUTO-GENERATED:brand-gradient marker pair per file.
   ];
   for (const [re, val] of subs) {
     const next = body.replace(re, val);
@@ -2272,6 +2348,9 @@ function apply() {
   applyAndroidManifest(brand);
   applyAndroidBuildGradle(brand);
   applyAndroidKotlinBrand(brand);
+
+  log.step('Brand gradient (logo.svg + app.html + error.html + svelte consumers)');
+  applyBrandGradient(brand);
 
   log.step('Web manifest + favicon + app.html + error.html');
   applyFavicon(brand);
