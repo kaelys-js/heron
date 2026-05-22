@@ -157,7 +157,7 @@ cryptography==48.0.0 \
     --hash=sha256:ecde28a596bead48b0cfd2a1b4416c3d43074c2d785e3a398d7ec1fc4d0f7fbb \
     --hash=sha256:f5333311663ea94f75dd408665686aaf426563556bb5283554a3539177e03b8c \
     --hash=sha256:fdfef35d751d510fcef5252703621574364fec16418c4a1e5e1055248401054b
-    # via -r /Users/home/career-ops/scripts/requirements.txt
+    # via -r requirements.txt
 pycparser==3.0 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy' \
     --hash=sha256:600f49d217304a5902ac3c37e1281c9fe94e4d0489de643a9504c5cdfdfc6b29 \
     --hash=sha256:b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992

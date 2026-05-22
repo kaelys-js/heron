@@ -196,9 +196,13 @@ describe('user-secrets — Python parity (scripts/lib/user_secrets.py decrypts T
     setSecret(TEST_USER_A, 'PYTHON_PARITY_KEY', 'PY-LONG-VAL-9876XYZ');
 
     const { spawnSync } = await import('node:child_process');
+    // Use process.cwd() rather than a hardcoded local path so the test
+    // works on any clone location (CI runner, fresh fork, contributor
+    // checkout). Vitest cwd is the workspace root which has scripts/.
+    const scriptsDir = `${process.cwd()}/scripts`;
     const script = [
       'import sys, os',
-      "sys.path.insert(0, '/Users/home/career-ops/scripts')",
+      `sys.path.insert(0, '${scriptsDir}')`,
       'from lib.user_secrets import get_secret',
       "print(get_secret(os.environ['T_USER'], 'PYTHON_PARITY_KEY'))",
     ].join('\n');

@@ -75,9 +75,11 @@ private func openOnPhone(_ deepLink: String) {
 private struct SignInGate: View {
     var body: some View {
         VStack(spacing: 10) {
-            // Brand mark — system iPhone glyph instead of inlining the
-            // rocket SVG because watchOS SF Symbols compose more cleanly
-            // with the system tint than a custom shape would.
+            // Action glyph — SF Symbol for iPhone-broadcasting because
+            // this gate says "go open the companion iPhone app", not
+            // "this is the brand". The brand glyph (BrandUI.glyphSymbol)
+            // is used elsewhere (Widget AuthGate); keeping the iPhone
+            // symbol here makes the call-to-action visually distinct.
             Image(systemName: "iphone.gen3.radiowaves.left.and.right")
                 .font(.system(size: 32, weight: .regular))
                 .foregroundStyle(.tint)

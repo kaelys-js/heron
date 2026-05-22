@@ -56,7 +56,9 @@ describe('screenshotBypassUser', () => {
   it('returns null when HERON_DATA_DIR is OUTSIDE os.tmpdir()', () => {
     process.env.HERON_SCREENSHOT_MODE = '1';
     // A user's home dir is canonically outside tmpdir on every OS we ship to.
-    process.env.HERON_DATA_DIR = '/Users/whoever/career-ops/data';
+    // Brand-neutral placeholder path; the screenshot-bypass guard only
+    // checks that the path isn't under os.tmpdir().
+    process.env.HERON_DATA_DIR = '/Users/whoever/some-app/data';
     expect(screenshotBypassUser()).toBeNull();
   });
 

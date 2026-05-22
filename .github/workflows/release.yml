@@ -85,7 +85,7 @@ jobs:
           if [ "$RELEASE_CREATED" = "true" ]; then
             echo "::notice::Released $TAG_NAME (v$VERSION). native-release.yml fires next."
             {
-              echo "### 🚀 Release cut: $TAG_NAME"
+              echo "### Release cut: $TAG_NAME"
               echo ""
               echo "Version: \`v$VERSION\`"
               echo ""

@@ -350,12 +350,16 @@
                             width="100"
                             height="40"
                             rx="6"
-                            fill="#1f2937"
-                            stroke="#a78bfa"
+                            fill="var(--card)"
+                            stroke="var(--accent)"
                             stroke-width="1.5"
                           />
-                          <text x="50" y="25" fill="#e9d5ff" font-size="12" text-anchor="middle"
-                            >{node.label}</text
+                          <text
+                            x="50"
+                            y="25"
+                            fill="var(--card-foreground)"
+                            font-size="12"
+                            text-anchor="middle">{node.label}</text
                           >
                         </g>
                       {/each}

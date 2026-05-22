@@ -1,8 +1,8 @@
 # Getting help with Heron
 
-Welcome! This page documents the right channel for each kind of
-question so you can get answered quickly + we can keep the issue
-tracker focused on bugs + feature work.
+This page documents the right channel for each kind of question so
+you can get answered quickly + we can keep the issue tracker focused
+on bugs + feature work.
 
 ## Quick reference
 

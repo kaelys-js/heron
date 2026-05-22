@@ -1653,7 +1653,23 @@ function applyAppHtml(brand) {
     ],
     [
       /(theme-color"\s+content=")[^"]*("\s+media="\(prefers-color-scheme:\s*light\)")/,
-      `$1${brand.colors.lightBg ?? '#fafaf9'}$2`,
+      `$1${brand.colors.lightBg ?? '#f7f5f0'}$2`,
+    ],
+    // Inline-style pre-hydration light/dark backgrounds inside the
+    // <style> block. These render BEFORE CSS loads so they have to be
+    // hardcoded -- apply-brand keeps them aligned with brand.colors.
+    // Light-mode body bg: html:not(.dark) body { background-color: <X>; }
+    [
+      /(html:not\(\.dark\),\s*html:not\(\.dark\)\s*body\s*\{\s*background-color:\s*)#[0-9a-fA-F]{3,6}/,
+      `$1${brand.colors.lightBg ?? '#f7f5f0'}`,
+    ],
+    // Pre-hydration body text color (light mode): the `color:` rule
+    // (not `background-color:`) inside the same block. Anchor with
+    // `\s` BEFORE `color:` so the pattern doesn't substring-match
+    // "background-color:" above.
+    [
+      /(html:not\(\.dark\),\s*html:not\(\.dark\)\s*body\s*\{[\s\S]*?\s)color:\s*#[0-9a-fA-F]{3,6}/,
+      `$1color: ${brand.colors.textOnLight ?? brand.colors.tokens?.light?.foreground ?? '#1a1f26'}`,
     ],
     // author + copyright
     [/(name="author"\s+content=")[^"]*(")/, `$1${brand.author.name}$2`],
@@ -2204,15 +2220,18 @@ function syncSharedSwift(brand) {
   // Files in ui/ios/App/App/ that need to exist in every extension target
   // too (because Xcode app-extension targets can't import from the host).
   // ErrorReporter.swift is the canonical example -- same source, 4 copies.
+  // Path note: extensions live under ui/ios/App/Extensions/<Name>/ (the
+  // historical `ui/ios/App/<Name>/` flat layout was reorganised, but
+  // earlier copies of this script still used the flat paths).
   const sharedFiles = ['ErrorReporter.swift'];
-  const targets = ['AppWidget', 'AppLiveActivity', 'AppShareExtension'];
+  const extensionTargets = ['AppWidget', 'AppLiveActivity', 'AppShareExtension'];
   for (const f of sharedFiles) {
     const src = join(UI, 'ios', 'App', 'App', f);
     if (!existsSync(src)) continue;
     const srcContent = readFileSync(src, 'utf8');
     let copied = 0;
-    for (const tgt of targets) {
-      const tgtDir = join(UI, 'ios', 'App', tgt);
+    for (const tgt of extensionTargets) {
+      const tgtDir = join(UI, 'ios', 'App', 'Extensions', tgt);
       if (!existsSync(tgtDir)) continue;
       const dst = join(tgtDir, f);
       if (writeIfChanged(dst, srcContent)) copied++;
@@ -2220,6 +2239,23 @@ function syncSharedSwift(brand) {
     if (copied > 0) log.ok(`synced ${f} → ${copied} extension target(s)`);
     else log.skip(`${f} -- all extension copies current`);
   }
+}
+
+/**
+ * Convert a 6-hex CSS color (`#4a5b6d`) to a SwiftUI `Color(red:green:blue:)`
+ * literal with float components in [0, 1] (3-decimal precision). Append
+ * the original hex as a trailing comment so re-readers can sanity-check
+ * the conversion without arithmetic. Throws on malformed input.
+ *
+ *   swiftColorLiteral('#4a5b6d')
+ *     -> 'Color(red: 0.290, green: 0.357, blue: 0.427) // #4a5b6d'
+ */
+function swiftColorLiteral(hex) {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(String(hex ?? ''));
+  if (!m) throw new Error(`swiftColorLiteral: invalid hex "${hex}" (need 6-hex)`);
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255);
+  const fmt = (v) => v.toFixed(3);
+  return `Color(red: ${fmt(r)}, green: ${fmt(g)}, blue: ${fmt(b)}) // #${m[1].toLowerCase()}`;
 }
 
 function applySwiftConstants(brand) {
@@ -2234,9 +2270,12 @@ function applySwiftConstants(brand) {
   // template, N copies, one place to edit (branding/brand.json).
   const paths = [
     join(UI, 'ios', 'App', 'App', 'Brand.swift'),
-    join(UI, 'ios', 'App', 'AppWidget', 'Brand.swift'),
-    join(UI, 'ios', 'App', 'AppLiveActivity', 'Brand.swift'),
-    join(UI, 'ios', 'App', 'AppShareExtension', 'Brand.swift'),
+    // Extension targets live under ui/ios/App/Extensions/<Name>/ after
+    // the flat-layout reorganisation. Earlier copies of this script
+    // wrote to the flat paths and silently generated orphan files.
+    join(UI, 'ios', 'App', 'Extensions', 'AppWidget', 'Brand.swift'),
+    join(UI, 'ios', 'App', 'Extensions', 'AppLiveActivity', 'Brand.swift'),
+    join(UI, 'ios', 'App', 'Extensions', 'AppShareExtension', 'Brand.swift'),
     // WatchApp is a separate watchOS target. Without this copy
     // the Watch had to hardcode "group.com.heron.app" and
     // "heron://queue" everywhere -- a rebrand drift waiting to
@@ -2300,6 +2339,51 @@ function applySwiftConstants(brand) {
     `        return "\\(bundleId).handoff.\\(kind)"`,
     `    }`,
     `}`,
+    ``,
+    `// MARK: - BrandUI (SwiftUI Color + SF Symbol constants)`,
+    `//`,
+    `// Generated from brand.json::colors.* and brand.json::nativeGlyph.*`,
+    `// so native Widget / Watch / LiveActivity surfaces can render the`,
+    `// brand identity without hardcoding hex strings or SF Symbol names.`,
+    `// A future rebrand changes brand.json + reruns apply-brand; every`,
+    `// consumer below stays correct automatically.`,
+    `//`,
+    `// Why a separate enum + #if canImport(SwiftUI): the App + every`,
+    `// extension target compiles its own copy of Brand.swift. Some build`,
+    `// graphs surface SwiftUI; some don't. The gate lets Brand.swift`,
+    `// compile cleanly in any target while exposing UI constants where`,
+    `// SwiftUI is available.`,
+    `#if canImport(SwiftUI)`,
+    `import SwiftUI`,
+    ``,
+    `enum BrandUI {`,
+    `    /// Primary brand color (Heron Slate). From brand.json::colors.primary.`,
+    `    static let primary = ${swiftColorLiteral(brand.colors.primary)}`,
+    `    /// Accent brand color (Heron Dawn). From brand.json::colors.accent.`,
+    `    static let accent = ${swiftColorLiteral(brand.colors.accent)}`,
+    `    /// Secondary accent (Heron Reed). From brand.json::colors.accentSecondary.`,
+    `    static let accentSecondary = ${swiftColorLiteral(brand.colors.accentSecondary)}`,
+    `    /// Dark mode background. From brand.json::colors.darkBg.`,
+    `    static let darkBg = ${swiftColorLiteral(brand.colors.darkBg)}`,
+    `    /// Light mode background. From brand.json::colors.lightBg.`,
+    `    static let lightBg = ${swiftColorLiteral(brand.colors.lightBg)}`,
+    ``,
+    `    /// 3-stop brand gradient (primary → accentSecondary → accent),`,
+    `    /// matching the squircle gradient in branding/logo.svg.`,
+    `    /// Use with SwiftUI LinearGradient or any 3-stop gradient API.`,
+    `    static let gradientStops: [Color] = [primary, accentSecondary, accent]`,
+    ``,
+    `    /// SF Symbol name representing the brand glyph on native surfaces`,
+    `    /// (Widget AuthGate, Watch root view, anywhere we can't embed the`,
+    `    /// SVG \`<symbol id="brand-glyph">\` directly). Picked to look as`,
+    `    /// close to logo.svg's inner glyph as the SF Symbols catalog`,
+    `    /// allows. From brand.json::nativeGlyph.ios.`,
+    `    static let glyphSymbol = "${brand.nativeGlyph?.ios ?? 'feather'}"`,
+    `    /// Fallback for OS versions that lack the primary symbol (rare; SF`,
+    `    /// Symbols catalogue is iOS-version-tiered). From brand.json::nativeGlyph.iosFallback.`,
+    `    static let glyphSymbolFallback = "${brand.nativeGlyph?.iosFallback ?? 'paperplane.fill'}"`,
+    `}`,
+    `#endif`,
     ``,
   ].join('\n');
   let anyChanged = false;

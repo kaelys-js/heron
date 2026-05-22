@@ -299,12 +299,13 @@ platform :ios do
         "**/Build/Intermediates.noindex/**",
         "**/Frameworks/**",
         # Sibling app-extension targets (each has its own xcov entry
-        # via xcov's per-target table, not relevant to App.app)
+        # via xcov's per-target table, not relevant to App.app). Patterns
+        # match the actual folder names under ui/ios/App/Extensions/.
         "**/AppLiveActivity/**",
         "**/AppShareExtension/**",
         "**/AppWidget/**",
-        "**/CareerOpsWatch/**",
-        "**/CareerOpsWatchApp/**",
+        # WatchApp is a sibling watchOS target at ui/ios/App/WatchApp/.
+        "**/WatchApp/**",
         # Test bundles themselves -- 100% coverage of test code is
         # meaningless noise.
         "**/AppTests/**",
