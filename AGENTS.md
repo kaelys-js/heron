@@ -1,305 +1,99 @@
-# Heron -- AI Job Search Pipeline
+# AGENTS.md -- engineering rules + Heron orientation
 
 <!-- AUTO-GENERATED:doc-meta -->
 *Part of the [Heron](README.md) docs.*
 <!-- /AUTO-GENERATED:doc-meta -->
 
-## Heritage
-
-This is a hard fork of an open-source CLI-driven job-search system. The
-original archetypes, scoring logic, negotiation scripts, and proof-point
-structure were designed around a specific career search; the fork
-extends them with multi-user RBAC, a SvelteKit dashboard, Capacitor
-native apps, and an autonomous-apply pipeline. See `README.md`
-"Acknowledgements" for the upstream credit + case study link.
-
-**It will work out of the box, but it's designed to be made yours.** If the archetypes don't match your career, the modes are in the wrong language, or the scoring doesn't fit your priorities -- just ask. You (AI Agent) can edit the user's files. The user says "change the archetypes to data engineering roles" and you do it. That's the whole point.
-
-## Data Contract (CRITICAL)
-
-There are two layers. Read `docs/DATA_CONTRACT.md` for the full list.
-
-**User Layer (NEVER auto-updated, personalization goes HERE):**
-- `cv.md`, `config/profile.yml`, `modes/_profile.md`, `article-digest.md`, `portals.yml`
-- `data/*`, `reports/*`, `output/*`, `interview-prep/*`
-
-**System Layer (auto-updatable, DON'T put user data here):**
-- `modes/_shared.md`, `modes/evaluate.md`, all other modes
-- `AGENTS.md`, `CLAUDE.md`, `*.mjs` scripts, `templates/*`, `batch/*`
-
-**THE RULE: When the user asks to customize anything (archetypes, narrative, negotiation scripts, proof points, location policy, comp targets), ALWAYS write to `modes/_profile.md` or `config/profile.yml`. NEVER edit `modes/_shared.md` for user-specific content.** This ensures system updates don't overwrite their customizations.
-
-## Update Check
-
-On the first message of each session, run the update checker silently:
-
-```bash
-node scripts/system/update-system.mjs check
-```
-
-Parse the JSON output:
-- `{"status": "update-available", "local": "1.0.0", "remote": "1.1.0", "changelog": "..."}` → tell the user:
-  > "heron update available (v{local} → v{remote}). Your data (CV, profile, tracker, reports) will NOT be touched. Want me to update?"
-  If yes → run `node scripts/system/update-system.mjs apply`. If no → run `node scripts/system/update-system.mjs dismiss`.
-- `{"status": "up-to-date"}` → say nothing
-- `{"status": "dismissed"}` → say nothing
-- `{"status": "offline"}` → say nothing
-- `{"status": "no-remote-version"}` → say nothing (checker reached GitHub but neither VERSION nor the latest release tag parsed as semver -- treat as a silent non-failure, same as offline)
-
-The user can also say "check for updates" or "update Heron" at any time to force a check.
-To rollback: `node scripts/system/update-system.mjs rollback`
-
-## What is Heron
-
-AI-powered, CLI-agnostic job search automation: pipeline tracking, offer evaluation, CV generation, portal scanning, batch processing. Runs on any AI coding CLI that follows the [open agent skill standard](https://agentskills.io) (Claude Code, Codex, Gemini, OpenCode, Qwen, Copilot, Kimi).
-
-### Main Files
-
-| File | Function |
-|------|----------|
-| `data/applications.md` | Application tracker |
-| `data/pipeline.md` | Inbox of pending URLs |
-| `data/scan-history.tsv` | Scanner dedup history |
-| `portals.yml` | Query and company config |
-| `templates/cv-template.html` | HTML template for CVs |
-| `templates/cv-template.tex` | LaTeX/Overleaf template for CVs |
-| `scripts/cv/generate-pdf.mjs` | Playwright: HTML to PDF |
-| `scripts/cv/generate-latex.mjs` | LaTeX CV validator + pdflatex compiler |
-| `article-digest.md` | Compact proof points from portfolio (optional) |
-| `interview-prep/story-bank.md` | Accumulated STAR+R stories across evaluations |
-| `interview-prep/{company}-{role}.md` | Company-specific interview intel reports |
-| `scripts/tracker/analyze-patterns.mjs` | Pattern analysis script (JSON output) |
-| `scripts/tracker/followup-cadence.mjs` | Follow-up cadence calculator (JSON output) |
-| `data/follow-ups.md` | Follow-up history tracker |
-| `scripts/scan/scan.mjs` | Zero-token portal scanner -- hits Greenhouse/Ashby/Lever APIs directly, zero LLM cost |
-| `scripts/system/check-liveness.mjs` | Job posting liveness checker |
-| `scripts/system/liveness-core.mjs` | Shared liveness logic (expired signals win over generic Apply text) |
-| `reports/` | Evaluation reports (format: `{###}-{company-slug}-{YYYY-MM-DD}.md`). Blocks A-F + G (Posting Legitimacy). Header includes `**Legitimacy:** {tier}`. |
-
-### Multi-Profile Layout (read this first)
-
-Heron supports MULTIPLE distinct career identities ("profiles") per install AND multiple users sharing one machine. Per-profile content lives under `data/users/{userId}/profiles/{slug}/` (or `data/profiles/{slug}/` in legacy single-user mode):
-
-```text
-data/users/{userId}/profiles/{slug}/
-├── cv.md
-├── profile.yml
-├── _profile.md            ← per-profile copy of modes/_profile.md
-├── portals.yml
-├── article-digest.md
-├── pipeline.md
-├── applications.md
-├── scan-history.tsv
-├── gemini-scores.tsv
-├── follow-ups.md
-├── projects.json
-├── reports/
-├── output/                ← incl. cv-general.pdf
-├── interview-prep/        ← per-company files
-├── jds/                   ← saved JD text files (referenced as `local:<file>`)
-└── writing-samples/       ← voice-calibration samples (emails, blog posts, etc.)
-```
-
-Plus a per-user, cross-profile namespace at `data/users/{userId}/profiles/_shared/`:
-
-```text
-data/users/{userId}/profiles/_shared/
-└── story-bank.md          ← STAR+R interview stories; shared across this user's
-                             profiles (engineer + instructor draw on the same
-                             real-project stories) but PRIVATE to this user
-```
-
-**Globally shared infrastructure** (NOT per-profile, NOT per-user -- same for everyone on this machine): `.env` (machine-wide infrastructure only -- `BETTER_AUTH_SECRET`, `GITHUB_CLIENT_ID/SECRET`, `HERON_DATA_DIR`, `HERON_UPDATE_*`), `data/profiles.json`, `data/activity.jsonl`, `data/issues.jsonl`, `data/inbox-mbox/`. NOTE: `data/sources.json`, `data/onboarding-state.json`, `data/autopilot.json` have moved per-user to `data/users/{uid}/profiles/_shared/`. `.playwright-{portal}/` Chromium sessions are also per-user under `data/users/{uid}/` (or `data/profiles/_shared/` for legacy single-user) -- the persistent dir IS the credential and must never be shared across users.
-
-**Personal credentials are per-user**, NOT in `.env`. The keys `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `OPENAI_API_KEY`, `ADZUNA_APP_ID/KEY`, `GMAIL_IMAP_*` live in `data/users/{uid}/profiles/_shared/secrets.json` -- AES-256-GCM encrypted at rest with a key derived via HKDF(`BETTER_AUTH_SECRET` + per-user random salt). Each user manages their own via Settings → API Keys. Resolution order in code: per-user store first, then `.env` fallback for legacy single-user installs. On first boot after upgrade, install-wide `.env` values are silently migrated into the OWNER's per-user store (idempotent -- `.env` still works as fallback until the maintainer deletes the keys). See `ui/src/lib/server/user-secrets.ts` + `scripts/lib/user-secrets.mjs` (JS twin for CLI scripts).
-
-**Active profile**: `data/profiles.json` has `{ activeId, profiles: [...] }`. Reads default to the active profile unless an explicit `--profile <slug>` flag (Python/MJS scripts) or `?profile=<slug>` query param (dashboard routes) is passed.
-
-**Mode prompts use absolute paths.** Every `modes/*.md` prompt references files via `__TOKEN__` placeholders (e.g. `__CV__`, `__REPORTS__`, `__STORY_BANK__`). The dashboard's `spawnAgentWithMode()` resolves each token to the active profile's absolute on-disk path BEFORE handing the prompt to the AI CLI. No repo-root symlinks, no shell-cwd magic -- the AI sees fully-qualified paths and can never read the wrong profile's data. Token vocabulary documented in `modes/_TOKENS.md`.
-
-**Invocation is dashboard-only.** The slash-command flow (`claude "/heron evaluate <url>"` in a terminal) has been deprecated. Mode prompts are loaded by the dashboard's orchestrator, substituted, and passed to Claude via `--append-system-prompt-file`. Direct-CLI invocation is not supported.
-
-**When the user asks for personalization**, ALWAYS write to the active profile's files at `data/users/{userId}/profiles/{slug}/...` (or `data/profiles/{slug}/...` in legacy single-user mode). Never write to `data/profiles/default/` directly when the user might be on a different profile -- let the dashboard's active-profile selection drive the path.
-
-### First Run -- Onboarding (IMPORTANT)
-
-**Before doing ANYTHING else, check if the system is set up.** Run these checks silently every time a session starts:
-
-1. Does `data/profiles.json` exist? If yes, read it -- `activeId` tells you which profile to operate on.
-2. Does the active profile's `cv.md` exist? (at `data/users/{uid}/profiles/{slug}/cv.md` -- or the legacy `data/profiles/{slug}/cv.md` in single-user mode)
-3. Does the active profile's `profile.yml` exist?
-4. Does the active profile's `_profile.md` exist?
-5. Does the active profile's `portals.yml` exist?
-
-If `data/profiles.json` is missing, the install is pre-multi-profile. The dashboard's boot routine auto-migrates the flat layout into `data/profiles/default/` on next start -- let the dashboard handle this rather than running scripts that read the old paths.
-
-**If the active profile is incomplete, enter onboarding mode.** Do NOT proceed with evaluations, scans, or any other mode until the basics are in place. Guide the user step by step (paths below are unqualified for readability -- the dashboard's spawn-time substitution resolves them against the active profile + user, so `cv.md` writes via the orchestrator land in `data/users/{uid}/profiles/{slug}/cv.md`):
-
-#### Step 1: CV (required)
-If `cv.md` is missing, ask:
-> "I don't have your CV yet. You can either:
-> 1. Paste your CV here and I'll convert it to markdown
-> 2. Paste your LinkedIn URL and I'll extract the key info
-> 3. Tell me about your experience and I'll draft a CV for you
+> **What this file is.** The engineering rules every AI agent follows when doing CODE work in this repo (refactors, CI fixes, feature work, code review). It's deliberately short -- read these first, then [AGENTS-PRODUCT.md](AGENTS-PRODUCT.md) for product-specific domain context (modes, profile layout, scoring, ethical-use policy, etc.).
 >
-> Which do you prefer?"
+> Code-mode agents (you, CodeRabbit reviews, refactor sessions) only need this file. Product-mode agents that the dashboard spawns via `spawnAgentWithMode()` get both: this file PLUS [AGENTS-PRODUCT.md](AGENTS-PRODUCT.md).
 
-Create `cv.md` from whatever they provide. Make it clean markdown with standard sections (Summary, Experience, Projects, Education, Skills).
+## 12 rules
 
-#### Step 2: Profile (required)
-If `config/profile.yml` is missing, copy from `templates/profile.example.yml` and then ask:
-> "I need a few details to personalize the system:
-> - Your full name and email
-> - Your location and timezone
-> - What roles are you targeting? (e.g., 'Senior Backend Engineer', 'AI Product Manager')
-> - Your salary target range
->
-> I'll set everything up for you."
+These apply to every code task in this project unless explicitly overridden.
+Bias: caution over speed on non-trivial work. Use judgment on trivial tasks.
 
-Fill in `config/profile.yml` with their answers. For archetypes and targeting narrative, store the user-specific mapping in `modes/_profile.md` or `config/profile.yml` rather than editing `modes/_shared.md`.
+### Rule 1 -- Think before coding
+State assumptions explicitly. If uncertain, ask rather than guess.
+Present multiple interpretations when ambiguity exists.
+Push back when a simpler approach exists.
+Stop when confused. Name what's unclear.
 
-#### Step 3: Portals (recommended)
-If `portals.yml` is missing:
-> "I'll set up the job scanner with 45+ pre-configured companies. Want me to customize the search keywords for your target roles?"
+### Rule 2 -- Simplicity first
+Minimum code that solves the problem. Nothing speculative.
+No features beyond what was asked. No abstractions for single-use code.
+Test: would a senior engineer say this is overcomplicated? If yes, simplify.
 
-Copy `templates/portals.example.yml` → `portals.yml`. If they gave target roles in Step 2, update `title_filter.positive` to match.
+### Rule 3 -- Surgical changes
+Touch only what you must. Clean up only your own mess.
+Don't "improve" adjacent code, comments, or formatting.
+Don't refactor what isn't broken. Match existing style.
 
-#### Step 4: Tracker
-If `data/applications.md` doesn't exist, create it:
-```markdown
-# Applications Tracker
+### Rule 4 -- Goal-driven execution
+Define success criteria. Loop until verified.
+Don't follow steps. Define success and iterate.
+Strong success criteria let you loop independently.
 
-| # | Date | Company | Role | Score | Status | PDF | Report | Notes |
-|---|------|---------|------|-------|--------|-----|--------|-------|
-```
+### Rule 5 -- Use the model only for judgment calls
+Use me for: classification, drafting, summarization, extraction.
+Do NOT use me for: routing, retries, deterministic transforms.
+If code can answer, code answers.
 
-#### Step 5: Get to know the user (important for quality)
+### Rule 6 -- Token budgets are not advisory
+Per-task: 4,000 tokens. Per-session: 30,000 tokens.
+If approaching budget, summarize and start fresh.
+Surface the breach. Do not silently overrun.
 
-After the basics are set up, proactively ask for more context. The more you know, the better your evaluations will be:
+### Rule 7 -- Surface conflicts, don't average them
+If two patterns contradict, pick one (more recent / more tested).
+Explain why. Flag the other for cleanup.
+Don't blend conflicting patterns.
 
-> "The basics are ready. But the system works much better when it knows you well. Can you tell me more about:
-> - What makes you unique? What's your 'superpower' that other candidates don't have?
-> - What kind of work excites you? What drains you?
-> - Any deal-breakers? (e.g., no on-site, no startups under 20 people, no Java shops)
-> - Your best professional achievement -- the one you'd lead with in an interview
-> - Any projects, articles, or case studies you've published?
->
-> The more context you give me, the better I filter. Think of it as onboarding a recruiter -- the first week I need to learn about you, then I become invaluable."
+### Rule 8 -- Read before you write
+Before adding code, read exports, immediate callers, shared utilities.
+"Looks orthogonal" is dangerous. If unsure why code is structured a way, ask.
 
-Store any insights the user shares in `config/profile.yml` (under narrative), `modes/_profile.md`, or in `article-digest.md` if they share proof points. Do not put user-specific archetypes or framing into `modes/_shared.md`.
+### Rule 9 -- Tests verify intent, not just behaviour
+Tests must encode WHY behaviour matters, not just WHAT it does.
+A test that can't fail when business logic changes is wrong.
 
-**After every evaluation, learn.** If the user says "this score is too high, I wouldn't apply here" or "you missed that I have experience in X", update your understanding in `modes/_profile.md`, `config/profile.yml`, or `article-digest.md`. The system should get smarter with every interaction without putting personalization into system-layer files.
+### Rule 10 -- Checkpoint after every significant step
+Summarize what was done, what's verified, what's left.
+Don't continue from a state you can't describe back.
+If you lose track, stop and restate.
 
-#### Step 6: Ready
-Once all files exist, confirm:
-> "You're all set! You can now:
-> - Paste a job URL to evaluate it
-> - Run `/heron scan` (or `/heron-scan` if using OpenCode) to search portals
-> - Run `/heron` to see all commands
->
-> Everything is customizable -- just ask me to change anything.
->
-> Tip: Having a personal portfolio dramatically improves your job search. A simple GitHub Pages site or static HTML CV is enough -- recruiters search for proof of work, not for design awards."
+### Rule 11 -- Match the codebase's conventions, even if you disagree
+Conformance > taste inside the codebase.
+If you genuinely think a convention is harmful, surface it. Don't fork silently.
 
-Then suggest automation:
-> "Want me to scan for new offers automatically? I can set up a recurring scan every few days so you don't miss anything. Just say 'scan every 3 days' and I'll configure it."
-
-If the user accepts, use the `/loop` or `/schedule` skill (if available) to set up a recurring `/heron scan` (or `/heron-scan` if using OpenCode). If those aren't available, suggest adding a cron job or remind them to run `/heron scan` (or `/heron-scan` if using OpenCode) periodically.
-
-### Personalization
-
-This system is designed to be customized by YOU (AI Agent). When the user asks you to change archetypes, translate modes, adjust scoring, add companies, or modify negotiation scripts -- do it directly. You read the same files you use, so you know exactly what to edit.
-
-**Common customization requests:**
-- "Change the archetypes to [backend/frontend/data/devops] roles" → edit `modes/_profile.md` or `config/profile.yml`
-- "Translate the modes to English" → edit all files in `modes/`
-- "Add these companies to my portals" → edit `portals.yml`
-- "Update my profile" → edit `config/profile.yml`
-- "Change the CV template design" → edit `templates/cv-template.html`
-- "Adjust the scoring weights" → edit `modes/_profile.md` for user-specific weighting, or edit `modes/_shared.md` and `modes/batch-prompt.md` only when changing the shared system defaults for everyone
-
-### Language Modes
-
-All modes ship in English under `modes/*.md`. Locale-specific
-translations (`modes/de/`, `modes/fr/`, `modes/ja/`, …) were dropped
-in commit `7e3fd99` after the maintenance burden of keeping 7 × N
-locale files in lock-step exceeded the value for the user base.
-
-`profile.yml::language.modes_dir` still works as a hook: if a user
-restores a locale directory and points to it, `lib/server/modes.ts`
-resolves localised files first and falls back to English on a miss.
-`scripts/system/verify-i18n.mjs` (run via `pnpm i18n:verify`) gates
-locale parity if any directory is reintroduced.
-
-For now the AI CLI handles localisation in-prompt -- when a user
-targets a German posting, the English prompt + the German JD
-together produce German output from the model, with the locale-
-specific terminology cited inline. No file-level translation is
-maintained.
-
-### Skill Modes
-
-| If the user... | Mode |
-|----------------|------|
-| Pastes JD or URL | auto-pipeline (evaluate + report + PDF + tracker) |
-| Asks to evaluate offer | `evaluate` |
-| Asks to compare offers | `compare` |
-| Wants LinkedIn outreach | `outreach` |
-| Asks for company research | `deep` |
-| Preps for interview at specific company | `interview-prep` |
-| Wants to generate CV/PDF | `pdf` |
-| Evaluates a course/cert | `training` |
-| Evaluates portfolio project | `project` |
-| Asks about application status | `tracker` |
-| Fills out application form | `apply` |
-| Searches for new offers | `scan` |
-| Processes pending URLs | `pipeline` |
-| Batch processes offers | `batch` |
-| Asks about rejection patterns or wants to improve targeting | `patterns` |
-| Asks about follow-ups or application cadence | `followup` |
-
-### CV Source of Truth
-
-- `cv.md` in project root is the canonical CV
-- `article-digest.md` has detailed proof points (optional)
-- **NEVER hardcode metrics** -- read them from these files at evaluation time
+### Rule 12 -- Fail loud
+"Completed" is wrong if anything was skipped silently.
+"Tests pass" is wrong if any were skipped.
+Default to surfacing uncertainty, not hiding it.
 
 ---
 
-## Ethical Use -- CRITICAL
+## Heron orientation (90 seconds)
 
-**This system is designed for quality, not quantity.** The goal is to help the user find and apply to roles where there is a genuine match -- not to spam companies with mass applications.
+Heron is a local-first job-search platform -- pipeline tracking, A-F offer evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, opt-in autonomous apply. The repo has two layers:
 
-- **By default, NEVER submit an application without the user reviewing it first.** Fill forms, draft answers, generate PDFs -- but stop at Submit. The user makes the final call.
-- **Autonomous mode is opt-in per profile.** When `profile.yml.automation.autonomous_apply: true`, the system MAY auto-submit on supported portals (LinkedIn, Greenhouse, Ashby) ONLY when ALL four conditions hold:
-  1. The job's score is ≥ `automation.min_score_to_apply` (default 4.0)
-  2. The daily cap (`thresholds.maxAppliesPerDay`, plus the per-profile `automation.warmup_days` window) hasn't been hit
-  3. The portal's automation is supported AND no CAPTCHA / anti-bot / unknown-required-field is encountered
-  4. The pre-apply assembly (tailored CV + cover letter) succeeded
-  If ANY of those fail, the job falls back to `ManualApplyNeeded` and the user finishes by hand from the Inbox.
-- **Strongly discourage low-fit applications.** If a score is below 4.0/5, explicitly recommend against applying. The user's time and the recruiter's time are both valuable. Only proceed if the user has a specific reason to override the score.
-- **Quality over speed.** A well-targeted application to 5 companies beats a generic blast to 50. Guide the user toward fewer, better applications.
-- **Respect recruiters' time.** Every application a human reads costs someone's attention. Only send what's worth reading.
+1. **Engineering layer.** SvelteKit dashboard (`ui/`), Capacitor native apps (iOS/Android/Watch via `ui/ios/` + `ui/android/`), Electron desktop (`ui/electron/`), Node.js scripts (`scripts/`). Standard web/native tooling: TypeScript, Vitest, XCTest, Playwright, etc.
 
----
+2. **Product layer.** Modes (`modes/*.md`) that AI CLIs run for product workflows (`evaluate`, `apply`, `outreach`, etc.). Per-user / per-profile data (`data/users/{uid}/profiles/{slug}/`). Application tracker, reports, CV templates, scoring logic.
 
-## Offer Verification -- MANDATORY
+If your task touches the **engineering layer only** (CI, build, refactor, bug fix in `ui/` or `scripts/`), the 12 rules above are everything you need. If it touches the **product layer** (changing a mode prompt, adjusting scoring, anything in `data/` or `modes/_profile.md`), **read [AGENTS-PRODUCT.md](AGENTS-PRODUCT.md) first** -- it has the data contract (which files agents can vs. can't auto-update), the multi-profile path resolution rules, the canonical states, etc.
 
-**NEVER trust WebSearch/WebFetch to verify if an offer is still active.** ALWAYS use Playwright:
-1. `browser_navigate` to the URL
-2. `browser_snapshot` to read content
-3. Only footer/navbar without JD = closed. Title + description + Apply = active.
+## Critical safety guardrails (one-liner each -- see AGENTS-PRODUCT.md for full)
 
-**Exception for batch workers (headless mode):** Playwright is not available in headless pipe mode. Use WebFetch as fallback and mark the report header with `**Verification:** unconfirmed (batch mode)`. The user can verify manually later.
+- **Data Contract**: NEVER overwrite user files (`cv.md`, `config/profile.yml`, `modes/_profile.md`, `article-digest.md`, `portals.yml`, anything under `data/`/`reports/`/`output/`/`interview-prep/`). Personalization writes go to `modes/_profile.md` or `config/profile.yml`, never `modes/_shared.md`.
+- **Ethical use**: Autonomous apply is opt-in per profile and gated on 4 conditions (score ≥ threshold, daily cap, portal supports it, pre-apply succeeded). Never submit on the user's behalf without those guards.
+- **Offer verification**: Use Playwright `browser_snapshot`, never WebFetch/WebSearch alone, to confirm a posting is still active.
+
+Full text + the rest of the product-mode rules: [AGENTS-PRODUCT.md](AGENTS-PRODUCT.md).
 
 ---
 
-## CI/CD and Quality
-
-- **GitHub Actions** run on every PR: `pnpm test` (Vitest matrix, 1500+ cases), `pnpm test:ios:ci` (Fastlane test_ci → xcov), auto-labeler (risk-based: 🔴 core-architecture, ⚠️ agent-behavior, 📄 docs), welcome bot for first-time contributors
-- **Branch protection** on `main`: status checks must pass before merge. No direct pushes to main (except admin bypass). Squash-merge required so every merge = one Conventional commit.
-- **Dependabot** monitors npm, Go modules, and GitHub Actions for security updates
-- **Contributing process**: issue first → discussion → PR with linked issue → CI passes → maintainer review → merge
+## Engineering tooling reference
 
 ### Tooling stack (mise + lefthook + biome + turborepo + pnpm)
 
@@ -325,12 +119,6 @@ maintained.
 
 Bypass with `--no-verify` if you must (don't).
 
-**Activation:**
-
-- `mise install` -- applies `.mise.toml` (one-time per machine after `mise activate` is in your shell)
-- `pnpm install` -- runs `lefthook install` via the `prepare` script
-- Setup wizard (`pnpm setup:native`) does both automatically
-
 **Daily commands:**
 
 | | |
@@ -345,166 +133,41 @@ CI uses `jdx/mise-action@v2` so the same versions install in GitHub runners as o
 
 ### Branding -- single source of truth
 
-`branding/brand.json` + `branding/logo.svg` are the **only** files you edit when rebranding (app name, bundle ID, URL scheme, colors, copyright, repo URL, permission descriptions, extension bundle suffixes). Running `pnpm brand:apply` propagates these into every consumer:
+`branding/brand.json` + `branding/logo.svg` are the **only** files you edit when rebranding. Running `pnpm brand:apply` propagates these into every consumer (package.json × 3, Capacitor configs × 2, electron-builder, Info.plist, Brand.swift × 4 extension targets, brand.ts × 2, manifest, fastlane, icons). Source code reads brand from generated `brand.ts` / `Brand.swift` -- never hardcode `com.resistjs.heron`, `heron://`, `_heron._tcp` in runtime code.
 
-| Consumer | What's regenerated |
-|---|---|
-| `package.json` (root + `ui/electron/`) | name, description, author, repo, license, keywords |
-| `ui/capacitor.config.ts` + `ui/electron/capacitor.config.ts` | appId, appName, URL scheme, splash colors |
-| `ui/electron/electron-builder.config.json` | appId, productName, copyright, CFBundleURLTypes, NSBonjourServices, GitHub publish target |
-| `ui/ios/App/App/Info.plist` | CFBundleDisplayName, URL scheme, Bonjour services, NSLocalNetworkUsageDescription, NSFaceIDUsageDescription, NSUserActivityTypes |
-| `ui/ios/App/App/Brand.swift` (generated) | Swift constants for every Swift file to import -- `Brand.bundleId`, `Brand.urlScheme`, `Brand.serviceType`, `Brand.DefaultsKey.lanUrl`, `Brand.jobDeepLink(id)`, etc. Replicated into each extension target (`AppWidget/Brand.swift`, `AppLiveActivity/Brand.swift`, `AppShareExtension/Brand.swift`) because Xcode app-extension targets can't import from the host. |
-| `ui/src/lib/client/brand.ts` (generated) | TS constants -- `BRAND.bundleId`, `BRAND.urlScheme`, `jobDeepLink(id)`, `deepLink(route)`. Web/Capacitor sources import from here. |
-| `ui/electron/src/brand.ts` (generated) | Same for the Electron main process. |
-| `ui/static/favicon.svg` | Copy of `branding/logo.svg` |
-| `ui/static/manifest.webmanifest` | name, short_name, description, theme_color, background_color |
-| `ui/ios/App/fastlane/{Appfile,Fastfile}` | app_identifier |
-| `scripts/native/add-xcode-targets.rb` | bundle_root, app_group constants |
-| **All platform icons** (calls `scripts/native/icons/generate-icons.mjs` at the end) | .icns / .ico / iOS appiconset / web manifest sizes |
-
-**Rules:**
-- Source code reads brand from generated `brand.ts` / `Brand.swift`. Never hardcode `com.resistjs.heron`, `heron://`, `_heron._tcp` in runtime code.
-- Comments / docstrings may reference literal values for documentation clarity (they don't affect runtime).
-- Vitest's `capacitor.integration.test.ts` checks every consumer matches `brand.json` -- drift fails CI.
-- Rebrand workflow: edit `branding/brand.json` → `pnpm brand:apply` → commit. All configs update in one shot.
+Vitest's `capacitor.integration.test.ts` checks every consumer matches `brand.json` -- drift fails CI.
 
 ### Release automation (Conventional Commits → Release Please → native-release)
 
 Releases are fully automated. You don't run a release command -- you write commits in [Conventional Commits](https://www.conventionalcommits.org/) format and Release Please does the rest.
 
-**Commit prefix → bump rule:**
-
 | Prefix | Bump | Example |
 |---|---|---|
-| `feat: ...` | minor (1.6.0 → 1.7.0) | `feat: add LinkedIn audit mode` |
-| `fix: ...` | patch (1.6.0 → 1.6.1) | `fix: handle empty pipeline gracefully` |
+| `feat: ...` | minor | `feat: add LinkedIn audit mode` |
+| `fix: ...` | patch | `fix: handle empty pipeline gracefully` |
 | `perf: ...` | patch | `perf: cache /api/stats response` |
-| `feat!: ...` OR `BREAKING CHANGE:` in body | major (1.6.0 → 2.0.0) | `feat!: drop adapter-auto` |
+| `feat!: ...` OR `BREAKING CHANGE:` body | major | `feat!: drop adapter-auto` |
 | `chore:` `docs:` `refactor:` `test:` `ci:` `build:` `style:` | **no release** | `chore: bump deps` |
 
-**Flow:**
-
-1. You merge a PR to `main` (squash-merge, one Conventional commit).
-2. Release Please runs on every push, accumulates the commits in a long-lived "release PR" titled `chore(main): release X.Y.Z`.
-3. When you're ready to ship, you merge that release PR.
-4. Release Please cuts the actual release: tags `vX.Y.Z`, generates `CHANGELOG.md`, bumps `package.json` + `ui/electron/package.json`, creates GitHub Release.
-5. `release.yml` then triggers `native-release.yml` via `workflow_call`, which builds DMG/exe/AppImage + uploads to TestFlight, attaching everything to the GitHub Release.
-
-**Manual override:** `pnpm release patch` (or `minor`/`major`/`x.y.z`) still works for emergencies. It bypasses Release Please and pushes a tag directly. `native-release.yml`'s `on: push: tags` trigger picks it up.
-
-**Commit author guidance:** when in doubt about whether a change deserves a release, use `chore:` (no release). To force-include a tweak in the next release without bumping, use `chore: ... [skip-release-only]` -- Release Please will include the line in the changelog under "Chore" but won't bump the version.
+Flow: merge PR to `main` (squash) → Release Please accumulates commits into a long-lived "release PR" → merge that PR → Release Please tags `vX.Y.Z` + updates CHANGELOG.md + GitHub Release. `release.yml` then triggers `native-release.yml` (workflow_call) to build DMG/exe/AppImage + upload to TestFlight.
 
 Source of truth: `release-please-config.json`, `.github/workflows/release.yml`, `.github/workflows/native-release.yml`.
 
-## Community and Governance
+### CI/CD posture
 
-- **Code of Conduct**: Contributor Covenant 2.1 with enforcement actions (see `.github/CODE_OF_CONDUCT.md`)
-- **Governance**: BDFL model with contributor ladder -- Participant → Contributor → Triager → Reviewer → Maintainer (see `docs/GOVERNANCE.md`)
-- **Security**: private vulnerability reporting via email (see `.github/SECURITY.md`)
-- **Support**: help questions go to Discord/Discussions, not issues (see [`.github/CONTRIBUTING.md#getting-help`](.github/CONTRIBUTING.md))
+- **GitHub Actions** on every PR: `pnpm test` (Vitest matrix, 1500+ cases), `pnpm test:ios:ci` (Fastlane test_ci → xcov), auto-labeler (risk-based), welcome bot for first-time contributors
+- **Branch protection** on `main`: 16 required status checks, signed commits, required PR, required CodeOwners review. No direct pushes to main (except admin bypass). Squash-merge required so every merge = one Conventional commit.
+- **Dependabot** monitors npm, Go modules, and GitHub Actions for security updates
+- **Reconciliation workflows** (push:main + weekly cron):
+  - `maintain-config.yml` → description/topics/rulesets/GHAS via `scripts/system/apply-github-config.mjs`
+  - `maintain-features.yml` → envs/labels/validity-checks/Pages via `scripts/system/apply-github-features.mjs`
+  - `maintain-user-features.yml` → pinned Roadmap issue / pinned discussions / Project v2 / profile README via `scripts/system/apply-user-features.mjs` (uses `GH_USER_PAT`)
+- **Contributing process**: issue first → discussion → PR with linked issue → CI passes → maintainer review → merge
+
+### Community + governance
+
+- **Code of Conduct**: Contributor Covenant 2.1 (`.github/CODE_OF_CONDUCT.md`)
+- **Governance**: BDFL model with contributor ladder -- Participant → Contributor → Triager → Reviewer → Maintainer (`docs/GOVERNANCE.md`)
+- **Security**: private vulnerability reporting via email (`.github/SECURITY.md`)
+- **Support**: help questions go to Discord/Discussions, not issues
 - **Discord**: <https://discord.gg/MyFbztUK5U>
-
-## Headless / Batch Mode
-
-When spawning headless workers for batch processing, use the appropriate command for your CLI:
-
-| CLI | Command |
-|-----|---------|
-| Claude Code | `claude -p "prompt"` |
-| Gemini CLI | `gemini -p "prompt"` |
-| Copilot CLI | `copilot -p "prompt"` |
-| Codex | `codex exec "prompt"` |
-| OpenCode | `opencode run "prompt"` |
-| Qwen | `qwen -p "prompt"` |
-
-## Switching the AI CLI
-
-The dashboard spawns an AI CLI binary for every slash-command-driven flow
-(evaluate, cover-letter, outreach, post-rejection, form-answers, followup-draft,
-answer-form, batch-runner). The binary is read from the `AGENT_CLI`
-environment variable; it defaults to `claude`.
-
-```sh
-# default — Claude Code
-pnpm dev
-
-# Gemini CLI
-AGENT_CLI=gemini pnpm dev
-
-# Codex
-AGENT_CLI=codex pnpm dev
-
-# any other CLI on PATH
-AGENT_CLI=opencode pnpm dev
-```
-
-**Caveat**: Heron still passes Claude-Code-specific flags to every
-spawn (`--dangerously-skip-permissions`, `--append-system-prompt-file`,
-`--model sonnet`). Other CLIs may need adapter shims that translate or
-strip those flags. Track per-CLI compatibility in
-[issues](https://github.com/kaelys-js/heron/issues) -- the abstraction
-ships intentionally minimal so adapter work is incremental and discoverable.
-
-Single source of truth: `ui/src/lib/config/cli.ts`.
-
-## Stack and Conventions
-
-- Node.js (mjs modules), Playwright (PDF + scraping), YAML (config), HTML/CSS (template), Markdown (data), Canva MCP (optional visual CV)
-- Scripts in `.mjs`, configuration in YAML
-- Output in `output/` (gitignored), Reports in `reports/`
-- JDs in `jds/` (referenced as `local:jds/{file}` in pipeline.md)
-- Batch in `batch/` (gitignored except scripts and prompt)
-- Report numbering: sequential 3-digit zero-padded, max existing + 1
-- **RULE: After each batch of evaluations, run `node scripts/tracker/merge-tracker.mjs`** to merge tracker additions and avoid duplications.
-- **RULE: NEVER create new entries in applications.md if company+role already exists.** Update the existing entry.
-
-### TSV Format for Tracker Additions
-
-Write one TSV file per evaluation to the active profile's `batch/tracker-additions/{num}-{company-slug}.tsv` (resolves to `data/users/{uid}/profiles/{slug}/batch/tracker-additions/` for the active user, or `data/profiles/{slug}/batch/tracker-additions/` in legacy single-user installs). Single line, 9 tab-separated columns:
-
-```text
-{num}\t{date}\t{company}\t{role}\t{status}\t{score}/5\t{pdf_emoji}\t[{num}](reports/{num}-{slug}-{date}.md)\t{note}
-```
-
-**Column order (IMPORTANT -- status BEFORE score):**
-1. `num` -- sequential number (integer)
-2. `date` -- YYYY-MM-DD
-3. `company` -- short company name
-4. `role` -- job title
-5. `status` -- canonical status (e.g., `Evaluated`)
-6. `score` -- format `X.X/5` (e.g., `4.2/5`)
-7. `pdf` -- `✅` or `❌`
-8. `report` -- markdown link `[num](reports/...)`
-9. `notes` -- one-line summary
-
-**Note:** In applications.md, score comes BEFORE status. The merge script handles this column swap automatically.
-
-### Pipeline Integrity
-
-1. **NEVER edit applications.md to ADD new entries** -- Write TSV in the active profile's `batch/tracker-additions/` and `scripts/tracker/merge-tracker.mjs` handles the merge.
-2. **YES you can edit applications.md to UPDATE status/notes of existing entries.**
-3. All reports MUST include `**URL:**` in the header (between Score and PDF). Include `**Legitimacy:** {tier}` (see Block G in `modes/evaluate.md`).
-4. All statuses MUST be canonical (see `data/states.yml`).
-5. Health check: `pnpm test --filter=ui-integration` (pipeline.integration.test.ts validates this)
-6. Normalize statuses: `node scripts/tracker/normalize-statuses.mjs`
-7. Dedup: `node scripts/tracker/dedup-tracker.mjs`
-
-### Canonical States (applications.md)
-
-**Source of truth:** `data/states.yml`
-
-| State | When to use |
-|-------|-------------|
-| `Evaluated` | Report completed, pending decision |
-| `Applied` | Application sent |
-| `Responded` | Company responded |
-| `Interview` | In interview process |
-| `Offer` | Offer received |
-| `Rejected` | Rejected by company |
-| `Discarded` | Discarded by candidate or offer closed |
-| `SKIP` | Doesn't fit, don't apply |
-
-**RULES:**
-- No markdown bold (`**`) in status field
-- No dates in status field (use the date column)
-- No extra text (use the notes column)

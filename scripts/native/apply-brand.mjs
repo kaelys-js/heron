@@ -1153,6 +1153,7 @@ function applyMarkdownSections(brand) {
     // Root + community
     join(ROOT, 'README.md'),
     join(ROOT, 'AGENTS.md'),
+    join(ROOT, 'AGENTS-PRODUCT.md'),
     join(ROOT, 'GEMINI.md'),
     join(ROOT, 'CLAUDE.md'),
     join(ROOT, '.github', 'CODE_OF_CONDUCT.md'),
