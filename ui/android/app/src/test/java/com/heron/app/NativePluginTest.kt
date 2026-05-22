@@ -22,8 +22,14 @@
 // LocalStorage.createSearchSessionAsync. Robolectric's AppSearch backing
 // is incomplete in 4.14.1 -- the call typically throws inside the
 // coroutine, which exercises the catch branch in the @PluginMethod. The
-// happy path is covered by instrumented tests (deferred -- emulator
-// required).
+// happy path is covered separately by AppSearchInstrumentedTest in the
+// androidTest source set; that test runs on a real emulator.
+//
+// Coroutine resumption (added with H.C'): runTest + StandardTestDispatcher
+// + advanceUntilIdle drains pluginScope.launch deterministically so
+// JaCoCo sees the continuation classes resume rather than staying
+// suspended at await(). pluginScope's Dispatchers.IO is swapped via
+// reflection at test setup so the test scheduler controls it.
 
 package com.heron.app
 
@@ -43,6 +49,16 @@ import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.unmockkStatic
 import io.mockk.verify
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -454,64 +470,88 @@ class NativePluginTest {
         verify { pc.reject("invalid-args", "jobs array required") }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `indexJobs accepts an empty jobs array without synchronous error`() {
-        // The synchronous portion of indexJobs (jobs != null guard +
-        // pluginScope.launch entry + doc list construction) executes
-        // immediately. The AppSearch coroutine then suspends on
-        // session.putAsync().await(). On Robolectric the AppSearch
-        // backing is not implemented, so the suspended coroutine may
-        // never resume -- the @PluginMethod's catch branch covers that
-        // case at runtime on a real device, but on Robolectric we can't
-        // observe terminal call completion. We assert: no synchronous
-        // exception, jobs != null branch is exercised (no reject fired
-        // synchronously).
-        val jobs = JSArray()
-        val pc = call(getArray = mapOf("jobs" to jobs))
-        plugin.indexJobs(pc)
-        // Pump Robolectric's main looper -- if the coroutine resumed
-        // and called withContext(Dispatchers.Main) { call.reject/resolve },
-        // those tasks pending on Main will now drain.
-        Shadows.shadowOf(Looper.getMainLooper()).idle()
-        // Synchronous-portion contract: no reject for invalid-args.
-        verify(exactly = 0) { pc.reject("invalid-args", any<String>()) }
-    }
+    fun `indexJobs accepts an empty jobs array and resumes coroutine`() =
+        runTest {
+            // Switch Dispatchers.Main to the test-controlled scheduler AND
+            // reflectively replace pluginScope's Dispatchers.IO with the
+            // same test dispatcher. Without the second swap, pluginScope.launch
+            // dispatches onto a real background pool that the test scheduler
+            // doesn't drive -- advanceUntilIdle() can't observe its
+            // completion, and JaCoCo sees the continuation class as 0%
+            // covered.
+            val testDispatcher = StandardTestDispatcher(testScheduler)
+            Dispatchers.setMain(testDispatcher)
+            try {
+                injectTestDispatcher(plugin, testDispatcher)
+                val jobs = JSArray()
+                val pc = call(getArray = mapOf("jobs" to jobs))
+                plugin.indexJobs(pc)
+                // Synchronous-portion contract: no invalid-args reject.
+                verify(exactly = 0) { pc.reject("invalid-args", any<String>()) }
+                // Drain every suspended continuation. After this the
+                // coroutine has either resolved (AppSearch happy path) or
+                // hit the catch branch + rejected (Robolectric backing
+                // broken). Either is a covered outcome.
+                advanceUntilIdle()
+                verifyOneTerminalCall(pc, timeoutMs = 100)
+            } finally {
+                Dispatchers.resetMain()
+            }
+        }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `indexJobs accepts populated jobs array without synchronous error`() {
-        val jobs = JSArray()
-        jobs.put(
-            JSObject().apply {
-                put("id", "j1")
-                put("company", "Acme Co")
-                put("role", "Engineer")
-                put("score", 4.5)
-                put("status", "Applied")
-            },
-        )
-        val pc = call(getArray = mapOf("jobs" to jobs))
-        plugin.indexJobs(pc)
-        Shadows.shadowOf(Looper.getMainLooper()).idle()
-        verify(exactly = 0) { pc.reject("invalid-args", any<String>()) }
-    }
+    fun `indexJobs accepts populated jobs array and resumes coroutine`() =
+        runTest {
+            val testDispatcher = StandardTestDispatcher(testScheduler)
+            Dispatchers.setMain(testDispatcher)
+            try {
+                injectTestDispatcher(plugin, testDispatcher)
+                val jobs = JSArray()
+                jobs.put(
+                    JSObject().apply {
+                        put("id", "j1")
+                        put("company", "Acme Co")
+                        put("role", "Engineer")
+                        put("score", 4.5)
+                        put("status", "Applied")
+                    },
+                )
+                val pc = call(getArray = mapOf("jobs" to jobs))
+                plugin.indexJobs(pc)
+                verify(exactly = 0) { pc.reject("invalid-args", any<String>()) }
+                advanceUntilIdle()
+                verifyOneTerminalCall(pc, timeoutMs = 100)
+            } finally {
+                Dispatchers.resetMain()
+            }
+        }
 
     // ── clearJobIndex ─────────────────────────────────────────────
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `clearJobIndex launches coroutine without synchronous error`() {
-        // clearJobIndex has no synchronous early-return -- the whole
-        // body is inside pluginScope.launch. We assert: launching the
-        // coroutine doesn't crash + Robolectric main-looper idle doesn't
-        // panic. The AppSearch search/remove suspend points won't
-        // resolve on Robolectric, so terminal call may not fire; that's
-        // covered by instrumented tests.
-        val pc = call()
-        plugin.clearJobIndex(pc)
-        Shadows.shadowOf(Looper.getMainLooper()).idle()
-        // No synchronous failure mode for clearJobIndex.
-        // (No assertion needed beyond "did not throw".)
-        assertTrue(true)
-    }
+    fun `clearJobIndex launches coroutine and resumes to terminal call`() =
+        runTest {
+            val testDispatcher = StandardTestDispatcher(testScheduler)
+            Dispatchers.setMain(testDispatcher)
+            try {
+                injectTestDispatcher(plugin, testDispatcher)
+                val pc = call()
+                plugin.clearJobIndex(pc)
+                advanceUntilIdle()
+                // clearJobIndex has no synchronous early-return; the entire
+                // body is inside pluginScope.launch. After drain the
+                // coroutine has either resolved (AppSearch session removed
+                // all docs) or hit the catch branch and rejected with
+                // appsearch-clear-failed. Either is a covered outcome.
+                verifyOneTerminalCall(pc, timeoutMs = 100)
+            } finally {
+                Dispatchers.resetMain()
+            }
+        }
 
     // ── setUserActivity ────────────────────────────────────────────
 
@@ -589,6 +629,27 @@ class NativePluginTest {
     }
 
     // ── helpers ───────────────────────────────────────────────────
+
+    /**
+     * Replace pluginScope on a NativePlugin instance with a new
+     * CoroutineScope whose dispatcher is the provided test dispatcher.
+     * Lets `runTest { advanceUntilIdle() }` drain every coroutine
+     * launched via `pluginScope.launch`. Without this replacement,
+     * pluginScope.launch dispatches onto Dispatchers.IO (a real
+     * background threadpool) which the test scheduler doesn't control.
+     *
+     * Required for the per-CLASS JaCoCo rule (build.gradle::
+     * jacocoTestCoverageVerification) to see continuation classes
+     * resume rather than stay suspended at await() forever.
+     */
+    private fun injectTestDispatcher(
+        plugin: NativePlugin,
+        dispatcher: CoroutineDispatcher,
+    ) {
+        val field = NativePlugin::class.java.getDeclaredField("pluginScope")
+        field.isAccessible = true
+        field.set(plugin, CoroutineScope(SupervisorJob() + dispatcher))
+    }
 
     /**
      * For methods whose happy vs. catch path both exist as covered

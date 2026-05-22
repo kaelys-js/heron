@@ -45,35 +45,85 @@ const COVERAGE_ROOT = resolve(REPO_ROOT, 'ui/ios/App/fastlane/coverage');
 /**
  * Per-scheme cobertura.xml + the thresholds its coverage must clear.
  *
- * Two layers of enforcement:
+ * Three layers of enforcement:
  *
  * 1. `threshold` -- aggregate (whole-binary) line rate. Computed from
  *    the cobertura root `<coverage line-rate>` attribute.
  *
- * 2. `perFileThreshold` -- per-file line rate. Computed from each
- *    `<class filename="..." line-rate="...">` element. A single .swift
- *    file falling below the per-file floor fails the script even when
- *    the aggregate clears the bar. Without this, a heavily-tested
+ * 2. `perFileThreshold` -- DEFAULT per-file line rate. Computed from
+ *    each `<class filename="..." line-rate="...">` element. A single
+ *    .swift file falling below the per-file floor fails the script
+ *    even when the aggregate clears. Without this, a heavily-tested
  *    Brand.swift + Bonjour.swift can mask a 0% NativePlugin.swift.
+ *
+ * 3. `perFileThresholdOverrides` -- per-file bumps that take
+ *    precedence over `perFileThreshold`. Critical files (the public
+ *    bridge surface: NativePlugin, AppDelegate, BridgeViewController,
+ *    KeychainStore, BiometricAuth) are gated at 90% because every
+ *    line is reachable from a test entrypoint. The override mechanism
+ *    is bidirectional -- a value can also LOWER a single file below
+ *    the default if it's known to be inherently hard to cover.
+ *
+ * `COMMON_IGNORE` (below) carves out files that should never count
+ * toward the per-file gate: pure generated/branding stubs (Brand.swift),
+ * runtime-only adapters (ErrorReporter.swift), and the empty smoke
+ * scaffolds that ship one-line "import XCTest" assertions to keep a
+ * scheme buildable.
  *
  * The "target" column is informational -- slather's binary-basename
  * filter (configured in the Fastfile) already restricts each XML to
  * one binary's coverage, so the top-level `line-rate` IS the
  * per-target line rate.
- *
- * Per-file floors are deliberately LOWER than aggregate floors:
- * extensions ship a 30%/file floor because some single-purpose files
- * (e.g. WatchSessionBridge in the WatchApp binary) only have ~12 lines
- * of meaningful logic, and a 50%/file gate is impossible to clear
- * without test-doubling every line. The App.app target gets a stricter
- * 80%/file because its files are larger + more frequently exercised.
  */
+
+/**
+ * Files excluded from the per-file gate across ALL schemes. Three
+ * categories:
+ *   - Generated/branding stubs (Brand.swift) -- mostly compile-time
+ *     constants that don't take logic-tests.
+ *   - Runtime-only adapters (ErrorReporter.swift) -- the public
+ *     surface is `report(error:)`; the implementation logs to oslog
+ *     under conditional-compilation guards that aren't reachable from
+ *     XCTest.
+ *   - Smoke-only test scaffolds (*Smoke.swift) -- one-line files that
+ *     exist to keep an empty XCTest scheme buildable.
+ */
+const COMMON_IGNORE = [
+  'Brand.swift',
+  'ErrorReporter.swift',
+  // Glob-style: any filename ending in Smoke.swift.
+  /Smoke\.swift$/,
+];
+
+function isIgnoredFile(filename) {
+  for (const entry of COMMON_IGNORE) {
+    if (typeof entry === 'string' && entry === filename) return true;
+    if (entry instanceof RegExp && entry.test(filename)) return true;
+  }
+  return false;
+}
+
 const SCHEMES = [
   {
     scheme: 'AppTests',
     target: 'App.app',
     threshold: 95.0,
     perFileThreshold: 80.0,
+    // Critical bracket: every line reachable from the public bridge
+    // surface (the Capacitor plugin entry, the Bridge VC, the
+    // KeychainStore + BiometricAuth credential paths, the
+    // AppDelegate launch sequence). 90% per file == one missed
+    // branch tolerated, no whole-file gaps tolerated.
+    perFileThresholdOverrides: {
+      'NativePlugin.swift': 90.0,
+      'AppDelegate.swift': 90.0,
+      'BridgeViewController.swift': 90.0,
+      'KeychainStore.swift': 90.0,
+      'BiometricAuth.swift': 90.0,
+      // Standard bracket (NetworkMonitor, BonjourBrowser,
+      // SpotlightIndexer, WatchSessionBridge, BackgroundFetcher)
+      // inherits perFileThreshold = 80 implicitly.
+    },
     binaryBasename: 'App',
   },
   {
@@ -81,6 +131,11 @@ const SCHEMES = [
     target: 'AppWidget (logic test bundle)',
     threshold: 50.0,
     perFileThreshold: 30.0,
+    perFileThresholdOverrides: {
+      // Auth gate is plain logic, fully unit-testable through the
+      // shared keychain path -- bump it above the SwiftUI-body floor.
+      'WidgetAuthGate.swift': 70.0,
+    },
     binaryBasename: 'WidgetTests',
   },
   {
@@ -88,6 +143,7 @@ const SCHEMES = [
     target: 'AppLiveActivity (logic test bundle)',
     threshold: 50.0,
     perFileThreshold: 30.0,
+    perFileThresholdOverrides: {},
     binaryBasename: 'AppLiveActivityTests',
   },
   {
@@ -95,6 +151,12 @@ const SCHEMES = [
     target: 'AppShareExtension (logic test bundle)',
     threshold: 50.0,
     perFileThreshold: 30.0,
+    perFileThresholdOverrides: {
+      // ShareViewController has a slice of plain text-extraction
+      // logic that doesn't need extensionContext; bump it 20pts
+      // above the SwiftUI-body floor.
+      'ShareViewController.swift': 50.0,
+    },
     binaryBasename: 'AppShareExtensionTests',
   },
   {
@@ -102,6 +164,13 @@ const SCHEMES = [
     target: 'WatchApp',
     threshold: 50.0,
     perFileThreshold: 30.0,
+    perFileThresholdOverrides: {
+      // Pure data model -- highly unit-testable.
+      'WatchModel.swift': 80.0,
+      // App lifecycle entry -- the SwiftUI scene wiring has small
+      // testable surface (URL handling, AppStorage init).
+      'WatchApp.swift': 60.0,
+    },
     binaryBasename: 'WatchApp',
   },
 ];
@@ -197,16 +266,27 @@ function main() {
 
     // Per-file enforcement. A scheme can clear the aggregate gate but
     // still hide a single .swift file at 0%; catch that here.
+    //
+    // Resolution order per file:
+    //   1. COMMON_IGNORE -- skipped entirely (Brand, ErrorReporter,
+    //      *Smoke.swift -- documented above).
+    //   2. perFileThresholdOverrides[filename] -- specific bump or
+    //      lower. Critical bracket (90%) for the App.app public-bridge
+    //      surface; Standard bracket (80%) inherits perFileThreshold.
+    //   3. perFileThreshold -- the default floor for the scheme.
     const perFile = readPerFileLineRates(xmlPath);
+    const overrides = cfg.perFileThresholdOverrides ?? {};
     for (const f of perFile) {
+      if (isIgnoredFile(f.filename)) continue;
+      const fileThreshold = overrides[f.filename] ?? cfg.perFileThreshold;
       const filePct = f.lineRate * 100;
-      if (filePct < cfg.perFileThreshold) {
+      if (filePct < fileThreshold) {
         perFileFailures.push({
           scheme: cfg.scheme,
           target: cfg.target,
           filename: f.filename,
           actual: filePct,
-          threshold: cfg.perFileThreshold,
+          threshold: fileThreshold,
         });
       }
     }
