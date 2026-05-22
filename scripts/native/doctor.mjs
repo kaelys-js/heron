@@ -175,36 +175,50 @@ if (flags.noRemote) {
 // surface the irreducible manual steps so the maintainer doesn't
 // get caught at `pnpm build:ios` failing 5 layers in.
 //
-// This block doesn't add fail/warn states by default -- the actual
-// build will fail loudly if these are missing. Use --strict to
-// surface them as warnings.
+// Under --strict: emit as warnings (counts toward `results.warn`
+// length, contributes to exit-1 under strict). In normal mode:
+// info-only -- the actual build steps fail loudly if these are
+// missing, so doctor:native stays exit-0 by default.
 log.step('Native readiness -- Apple Dev portal manual steps (checklist)');
 {
-  const bundleId = (() => {
+  // Read brand.json once -- bundleId + name + displayName all come
+  // from the SSOT. Hardcoding "heron" / "Heron" here would silently
+  // drift on rebrand; pulling from brand.json keeps the checklist
+  // consistent with whatever the maintainer set.
+  const brand = (() => {
     try {
-      const brand = JSON.parse(readFileSync(join(ROOT, 'branding', 'brand.json'), 'utf8'));
-      return brand.identifiers?.bundleId || '<set in branding/brand.json>';
+      return JSON.parse(readFileSync(join(ROOT, 'branding', 'brand.json'), 'utf8'));
     } catch {
-      return '<set in branding/brand.json>';
+      return {};
     }
   })();
+  const bundleId = brand.identifiers?.bundleId || '<set in branding/brand.json>';
+  const appName = brand.displayName || brand.name || '<displayName from brand.json>';
+  const sku = brand.name || '<name from brand.json>';
+  const fastlaneLabel = `${brand.name || 'app'} fastlane`;
 
-  log.info('App ID creation -- developer.apple.com/account/resources/identifiers');
-  log.info(`  - Click + -> App IDs -> App; Explicit; paste bundle ID: ${bundleId}`);
-  log.info('  - Capabilities ON: Push Notifications, App Groups, Associated Domains');
+  // The strict-mode hook: emit warnings (which the summary block
+  // tallies) when --strict is set, info lines otherwise. Same content
+  // either way; the difference is whether they count toward the
+  // exit-1 threshold.
+  const emit = flags.strict ? log.warn : log.info;
 
-  log.info('App Store Connect entry -- appstoreconnect.apple.com');
-  log.info(`  - My Apps -> + -> New App; bundle ID = ${bundleId}; SKU = heron; Name = Heron`);
+  emit('App ID creation -- developer.apple.com/account/resources/identifiers');
+  emit(`  - Click + -> App IDs -> App; Explicit; paste bundle ID: ${bundleId}`);
+  emit('  - Capabilities ON: Push Notifications, App Groups, Associated Domains');
 
-  log.info('App-specific password -- appleid.apple.com');
-  log.info('  - Sign-In & Security -> App-Specific Passwords -> + -> label "heron fastlane"');
-  log.info('  - Paste into pnpm setup:native when prompted');
+  emit('App Store Connect entry -- appstoreconnect.apple.com');
+  emit(`  - My Apps -> + -> New App; bundle ID = ${bundleId}; SKU = ${sku}; Name = ${appName}`);
 
-  log.info('ASC API key (.p8) -- appstoreconnect.apple.com/access/integrations/api');
-  log.info('  - + Create new key; Access = App Manager; download .p8 (one-time)');
-  log.info('  - Paste Key ID + Issuer ID + .p8 contents into pnpm setup:native');
+  emit('App-specific password -- appleid.apple.com');
+  emit(`  - Sign-In & Security -> App-Specific Passwords -> + -> label "${fastlaneLabel}"`);
+  emit('  - Paste into pnpm setup:native when prompted');
 
-  log.info('Full walkthrough: TODO-INSTRUCTIONS.md (gitignored, repo root)');
+  emit('ASC API key (.p8) -- appstoreconnect.apple.com/access/integrations/api');
+  emit('  - + Create new key; Access = App Manager; download .p8 (one-time)');
+  emit('  - Paste Key ID + Issuer ID + .p8 contents into pnpm setup:native');
+
+  emit('Full walkthrough: TODO-INSTRUCTIONS.md (gitignored, repo root)');
 }
 
 // ── Summary ─────────────────────────────────────────────────────────

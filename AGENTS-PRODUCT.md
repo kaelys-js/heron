@@ -24,14 +24,14 @@ native apps, and an autonomous-apply pipeline. See `README.md`
 There are two layers. Read `docs/DATA_CONTRACT.md` for the full list.
 
 **User Layer (NEVER auto-updated, personalization goes HERE):**
-- `cv.md`, `config/profile.yml`, `modes/_profile.md`, `article-digest.md`, `portals.yml`
+- `cv.md`, `profile.yml`, `modes/_profile.md`, `article-digest.md`, `portals.yml`
 - `data/*`, `reports/*`, `output/*`, `interview-prep/*`
 
 **System Layer (auto-updatable, DON'T put user data here):**
 - `modes/_shared.md`, `modes/evaluate.md`, all other modes
 - `AGENTS.md`, `CLAUDE.md`, `*.mjs` scripts, `templates/*`, `batch/*`
 
-**THE RULE: When the user asks to customize anything (archetypes, narrative, negotiation scripts, proof points, location policy, comp targets), ALWAYS write to `modes/_profile.md` or `config/profile.yml`. NEVER edit `modes/_shared.md` for user-specific content.** This ensures system updates don't overwrite their customizations.
+**THE RULE: When the user asks to customize anything (archetypes, narrative, negotiation scripts, proof points, location policy, comp targets), ALWAYS write to `modes/_profile.md` or `profile.yml`. NEVER edit `modes/_shared.md` for user-specific content.** This ensures system updates don't overwrite their customizations.
 
 ## Update Check
 
@@ -121,7 +121,7 @@ data/users/{userId}/profiles/_shared/
 
 **Mode prompts use absolute paths.** Every `modes/*.md` prompt references files via `__TOKEN__` placeholders (e.g. `__CV__`, `__REPORTS__`, `__STORY_BANK__`). The dashboard's `spawnAgentWithMode()` resolves each token to the active profile's absolute on-disk path BEFORE handing the prompt to the AI CLI. No repo-root symlinks, no shell-cwd magic -- the AI sees fully-qualified paths and can never read the wrong profile's data. Token vocabulary documented in `modes/_TOKENS.md`.
 
-**Invocation is dashboard-only.** The slash-command flow (`claude "/heron evaluate <url>"` in a terminal) has been deprecated. Mode prompts are loaded by the dashboard's orchestrator, substituted, and passed to Claude via `--append-system-prompt-file`. Direct-CLI invocation is not supported.
+**Invocation is dashboard-only.** Mode prompts are loaded by the dashboard's orchestrator, token-substituted against the active-profile paths, and passed to the AI CLI via `--append-system-prompt-file`. The earlier slash-command flow (`claude "/heron evaluate <url>"` typed directly into a terminal) has been **deprecated and is not supported** -- any onboarding step or in-mode prompt that mentions `/heron ...` is describing what the dashboard's UI surfaces to the user (a button or in-app command palette) that THEN spawns the underlying mode prompt server-side. It is NOT an instruction to literally type a slash-command into a CLI.
 
 **When the user asks for personalization**, ALWAYS write to the active profile's files at `data/users/{userId}/profiles/{slug}/...` (or `data/profiles/{slug}/...` in legacy single-user mode). Never write to `data/profiles/default/` directly when the user might be on a different profile -- let the dashboard's active-profile selection drive the path.
 
@@ -151,7 +151,7 @@ If `cv.md` is missing, ask:
 Create `cv.md` from whatever they provide. Make it clean markdown with standard sections (Summary, Experience, Projects, Education, Skills).
 
 #### Step 2: Profile (required)
-If `config/profile.yml` is missing, copy from `templates/profile.example.yml` and then ask:
+If the active profile's `profile.yml` is missing (resolves to `data/users/{uid}/profiles/{slug}/profile.yml` -- the dashboard's spawn-time substitution handles the absolute path), copy from `templates/profile.example.yml` and then ask:
 > "I need a few details to personalize the system:
 > - Your full name and email
 > - Your location and timezone
@@ -160,7 +160,7 @@ If `config/profile.yml` is missing, copy from `templates/profile.example.yml` an
 >
 > I'll set everything up for you."
 
-Fill in `config/profile.yml` with their answers. For archetypes and targeting narrative, store the user-specific mapping in `modes/_profile.md` or `config/profile.yml` rather than editing `modes/_shared.md`.
+Fill in the active profile's `profile.yml` with their answers. For archetypes and targeting narrative, store the user-specific mapping in the active profile's `_profile.md` (alongside `profile.yml`) rather than editing `modes/_shared.md`.
 
 #### Step 3: Portals (recommended)
 If `portals.yml` is missing:
@@ -190,35 +190,35 @@ After the basics are set up, proactively ask for more context. The more you know
 >
 > The more context you give me, the better I filter. Think of it as onboarding a recruiter -- the first week I need to learn about you, then I become invaluable."
 
-Store any insights the user shares in `config/profile.yml` (under narrative), `modes/_profile.md`, or in `article-digest.md` if they share proof points. Do not put user-specific archetypes or framing into `modes/_shared.md`.
+Store any insights the user shares in `profile.yml` (under narrative), `modes/_profile.md`, or in `article-digest.md` if they share proof points. Do not put user-specific archetypes or framing into `modes/_shared.md`.
 
-**After every evaluation, learn.** If the user says "this score is too high, I wouldn't apply here" or "you missed that I have experience in X", update your understanding in `modes/_profile.md`, `config/profile.yml`, or `article-digest.md`. The system should get smarter with every interaction without putting personalization into system-layer files.
+**After every evaluation, learn.** If the user says "this score is too high, I wouldn't apply here" or "you missed that I have experience in X", update your understanding in the active profile's `_profile.md` / `profile.yml` / `article-digest.md`. The system should get smarter with every interaction without putting personalization into system-layer files.
 
 #### Step 6: Ready
 Once all files exist, confirm:
-> "You're all set! You can now:
-> - Paste a job URL to evaluate it
-> - Run `/heron scan` (or `/heron-scan` if using OpenCode) to search portals
-> - Run `/heron` to see all commands
+> "You're all set! Open the Heron dashboard and you can now:
+> - Paste a job URL into Inbox to evaluate it
+> - Click 'Scan portals' to search for new offers
+> - Click 'Modes' (or the command palette) to see all available product flows
 >
 > Everything is customizable -- just ask me to change anything.
 >
 > Tip: Having a personal portfolio dramatically improves your job search. A simple GitHub Pages site or static HTML CV is enough -- recruiters search for proof of work, not for design awards."
 
 Then suggest automation:
-> "Want me to scan for new offers automatically? I can set up a recurring scan every few days so you don't miss anything. Just say 'scan every 3 days' and I'll configure it."
+> "Want me to scan for new offers automatically? The dashboard's Autopilot settings let you schedule recurring scans every few days. Open Settings -> Autopilot to enable."
 
-If the user accepts, use the `/loop` or `/schedule` skill (if available) to set up a recurring `/heron scan` (or `/heron-scan` if using OpenCode). If those aren't available, suggest adding a cron job or remind them to run `/heron scan` (or `/heron-scan` if using OpenCode) periodically.
+NB: Earlier docs referenced terminal slash-commands like `/heron scan`. Those have been **deprecated -- do NOT type them as CLI invocations**. Today the dashboard owns scheduling (Autopilot UI) + spawning mode agents; the user's CLI session never invokes a mode directly.
 
 ### Personalization
 
 This system is designed to be customized by YOU (AI Agent). When the user asks you to change archetypes, translate modes, adjust scoring, add companies, or modify negotiation scripts -- do it directly. You read the same files you use, so you know exactly what to edit.
 
 **Common customization requests:**
-- "Change the archetypes to [backend/frontend/data/devops] roles" → edit `modes/_profile.md` or `config/profile.yml`
+- "Change the archetypes to [backend/frontend/data/devops] roles" → edit `modes/_profile.md` or `profile.yml`
 - "Translate the modes to English" → edit all files in `modes/`
 - "Add these companies to my portals" → edit `portals.yml`
-- "Update my profile" → edit `config/profile.yml`
+- "Update my profile" → edit `profile.yml`
 - "Change the CV template design" → edit `templates/cv-template.html`
 - "Adjust the scoring weights" → edit `modes/_profile.md` for user-specific weighting, or edit `modes/_shared.md` and `modes/batch-prompt.md` only when changing the shared system defaults for everyone
 
@@ -264,9 +264,9 @@ maintained.
 
 ### CV Source of Truth
 
-- `cv.md` in project root is the canonical CV
-- `article-digest.md` has detailed proof points (optional)
-- **NEVER hardcode metrics** -- read them from these files at evaluation time
+- `cv.md` in the **active profile's directory** (`data/users/{uid}/profiles/{slug}/cv.md`) is the canonical CV. Legacy single-user installs may have it at `data/profiles/{slug}/cv.md` or the project root -- the dashboard's spawn-time substitution resolves the right path against the active profile, so mode prompts always read the correct file.
+- `article-digest.md` (same active-profile directory) has detailed proof points (optional).
+- **NEVER hardcode metrics** -- read them from these files at evaluation time, using the active-profile path the dashboard substitutes in.
 
 ---
 
