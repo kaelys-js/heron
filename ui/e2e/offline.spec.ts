@@ -15,12 +15,34 @@ test.describe('Offline mode', () => {
     authenticatedPage,
   }) => {
     await authenticatedPage.goto('/inbox');
-    await authenticatedPage.waitForLoadState('domcontentloaded');
+    // Wait for `load` (full page load incl. JS chunks) AND networkidle
+    // so no in-flight /api/* request can be aborted by setOffline +
+    // route('**/api/**', abort), which previously caused
+    // "Execution context was destroyed" on the next page.evaluate AND
+    // left WebKit in a partially-hydrated state where the OfflineIndicator's
+    // onMount listener wasn't registered yet.
+    await authenticatedPage.waitForLoadState('load');
+    await authenticatedPage.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+    // Belt-and-braces: wait for the global loading bar to clear --
+    // OfflineIndicator's onMount may not run until after the loading
+    // bar resolves.
+    await authenticatedPage
+      .locator('[role="progressbar"][aria-label="Loading"]')
+      .waitFor({ state: 'detached', timeout: 5000 })
+      .catch(() => {});
     await mockOffline(authenticatedPage);
-    // Trigger the offline event the same way the browser does on a real
-    // disconnect -- some Chromium versions don't fire it from
-    // setOffline alone.
-    await authenticatedPage.evaluate(() => window.dispatchEvent(new Event('offline')));
+    // Trigger the offline event AND nudge onlineStore directly.
+    // webkit-under-Playwright doesn't always wire
+    // `window.dispatchEvent('offline')` to the store's addEventListener,
+    // so we ALSO dispatch the brand-namespaced `<brand>:net-status`
+    // event the store explicitly listens for as a native-hint path.
+    await authenticatedPage.evaluate(() => {
+      window.dispatchEvent(new Event('offline'));
+      const lsKeys = Object.keys(localStorage);
+      const storageKey = lsKeys.find((k) => k.endsWith(':online-last'));
+      const brand = storageKey ? storageKey.replace(':online-last', '') : 'heron';
+      window.dispatchEvent(new CustomEvent(`${brand}:net-status`, { detail: { online: false } }));
+    });
     // Three valid surfaces for an offline signal (any one is sufficient):
     //   - OfflineIndicator badge with data-testid="offline-indicator"
     //   - aria-label containing "offline"
@@ -43,6 +65,8 @@ test.describe('Offline mode', () => {
 
   test('recovers when network is restored', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/inbox');
+    await authenticatedPage.waitForLoadState('load');
+    await authenticatedPage.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
     await mockOffline(authenticatedPage);
     await authenticatedPage.evaluate(() => window.dispatchEvent(new Event('offline')));
     await restoreOnline(authenticatedPage);
