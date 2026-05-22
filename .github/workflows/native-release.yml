@@ -816,6 +816,10 @@ jobs:
   build-android:
     name: Build Android (Play Store internal track)
     needs: preflight
+    # Repo variable PLAY_STORE_ENABLED gates this job. Set to "true" once
+    # the keystore + Play Console service-account JSON are configured.
+    # Manual `workflow_dispatch` runs always execute for testing.
+    # Set via: `gh variable set PLAY_STORE_ENABLED --body 'true'`
     if: ${{ vars.PLAY_STORE_ENABLED == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -830,6 +834,40 @@ jobs:
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
+
+      # Job-local preflight for Android-specific secrets. The top-level
+      # `preflight` job only validates iOS + macOS secrets so a fresh
+      # fork without Android setup stays green; we validate Android
+      # secrets here once the maintainer has flipped PLAY_STORE_ENABLED
+      # = true. Fails fast with a clear list of missing secrets instead
+      # of letting the build run for 30min and silently no-op the upload.
+      - name: Android secret preflight
+        env:
+          PLAY_STORE_JSON_KEY: ${{ secrets.PLAY_STORE_JSON_KEY }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          missing=()
+          for var in PLAY_STORE_JSON_KEY ANDROID_KEYSTORE_BASE64 \
+                     ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS \
+                     ANDROID_KEY_PASSWORD; do
+            if [ -z "${!var}" ]; then
+              missing+=("$var")
+            fi
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Android build blocked -- these secrets are missing:"
+            for m in "${missing[@]}"; do echo "::error::  - $m"; done
+            echo ""
+            echo "Either:"
+            echo "  • configure the secrets (pnpm setup:native walks through it), OR"
+            echo "  • disable: gh variable set PLAY_STORE_ENABLED --body 'false'"
+            exit 1
+          fi
+          echo "✅ all Android secrets present"
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
