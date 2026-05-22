@@ -35,11 +35,17 @@ PROJECT = "App.xcodeproj"
 #    test bundles that compile the extension's production .swift files
 #    into the test bundle directly (extensions can't be TEST_HOST).
 #  - WatchTests runs on a watchOS simulator (Apple Watch Series 11 / 26).
+#
+# Order matters: AppTests runs LAST so its xccov data is the most-
+# recent entry in Xcode's DerivedData/Logs/Test/ -- xcov 1.9.0 reads
+# the latest xccov from DerivedData without a path override, so a
+# later AppLiveActivityTests run would clobber AppTests' coverage
+# and xcov would gate on the wrong xcresult.
 IOS_TEST_SCHEMES = [
-  "AppTests",
   "WidgetTests",
   "AppLiveActivityTests",
-  "AppShareExtensionTests"
+  "AppShareExtensionTests",
+  "AppTests"
 ].freeze
 WATCH_TEST_SCHEME = "WatchTests"
 SCHEME = "App"
@@ -241,12 +247,29 @@ platform :ios do
       ENV["SIMCTL_CHILD_CI"] = "true"
     end
     common_xcargs = "-skipPackagePluginValidation -skipMacroValidation COMPILER_INDEX_STORE_ENABLE=NO DEBUG_INFORMATION_FORMAT=dwarf"
+
+    # Run WatchTests FIRST (different SDK / sim, so its xccov in
+    # DerivedData lives at a separate path and won't clobber the iOS
+    # entries).
+    run_tests(
+      project: PROJECT,
+      scheme: WATCH_TEST_SCHEME,
+      destination: watch_destination,
+      code_coverage: true,
+      result_bundle: true,
+      fail_build: true,
+      xcargs: common_xcargs,
+      output_directory: "fastlane/test_output/#{WATCH_TEST_SCHEME}"
+    )
+
+    # iOS schemes -- AppTests is LAST so its DerivedData/Logs/Test
+    # xccov bundle is the latest entry xcov will read for the gate.
     # AppTests writes to the default `fastlane/test_output/` so the
     # downstream xcov + slather calls find its xccov data without
     # needing a derived_data_path override (xcov 1.9 reads from the
-    # default location only). The other 4 schemes go into per-scheme
-    # subdirectories so their xcresult bundles don't collide with
-    # AppTests' (run_tests refuses to overwrite an existing bundle).
+    # default location only). The other 3 iOS schemes go into per-
+    # scheme subdirectories so their xcresult bundles don't collide
+    # with AppTests' (run_tests refuses to overwrite an existing bundle).
     IOS_TEST_SCHEMES.each do |scheme|
       output_dir = (scheme == "AppTests") ? "fastlane/test_output" : "fastlane/test_output/#{scheme}"
       run_tests(
@@ -260,18 +283,6 @@ platform :ios do
         output_directory: output_dir
       )
     end
-
-    # Run the watchOS scheme on a real watch sim.
-    run_tests(
-      project: PROJECT,
-      scheme: WATCH_TEST_SCHEME,
-      destination: watch_destination,
-      code_coverage: true,
-      result_bundle: true,
-      fail_build: true,
-      xcargs: common_xcargs,
-      output_directory: "fastlane/test_output/#{WATCH_TEST_SCHEME}"
-    )
 
     # xcov gates the App.app target at 60% coverage. Per-scheme xcov
     # calls against the .appex / WatchApp.app targets are not viable
