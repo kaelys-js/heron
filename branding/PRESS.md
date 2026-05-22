@@ -56,7 +56,7 @@ the language is deliberate.
 | **License** | MIT |
 | **Source** | <https://github.com/kaelys-js/heron> |
 | **Website** | <https://heron.app> |
-| **Discord** | <https://discord.gg/8pRpHETxa4> |
+| **Discord** | <https://discord.gg/MyFbztUK5U> |
 | **Bundle ID** | `com.heron.app` |
 | **URL scheme** | `heron://` |
 | **Support email** | <hello@heron.app> |
@@ -192,7 +192,7 @@ If the writer is pitching an editor, here are the four cleanest framings:
 - **General press** -- <hello@heron.app>
 - **Maintainer team** -- `resist.js` (<hello@heron.app>)
 - **Security disclosures** -- see [`.github/SECURITY.md`](../.github/SECURITY.md) (private vulnerability reporting via GitHub)
-- **Community questions** -- Discord (`discord.gg/8pRpHETxa4`) or GitHub Discussions
+- **Community questions** -- Discord (`discord.gg/MyFbztUK5U`) or GitHub Discussions
 - **Speaking + podcast appearances** -- <hello@heron.app> with the format, audience size, and expected publish date
 
 We respond to press queries within two business days. If a deadline

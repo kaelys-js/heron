@@ -25,11 +25,38 @@
 
 import { execFileSync } from 'node:child_process';
 import { Buffer } from 'node:buffer';
+import { readFileSync, existsSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const VERIFY_ONLY = process.argv.includes('--check') || process.argv.includes('--verify');
 const REPO = process.env.GH_REPO || 'kaelys-js/heron';
 const OWNER = process.env.GH_OWNER || REPO.split('/')[0];
 const PAT = process.env.GH_USER_PAT || process.env.GH_TOKEN || '';
+
+// Read brand.json for SSOT values (Discord URL, supportEmail, etc.).
+// Fall back to safe defaults when fields are absent, the file is
+// missing, OR parsing throws (malformed JSON) -- the script must run
+// even when invoked outside a checkout AND must not hard-crash on
+// transiently-bad input.
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const BRAND_JSON = resolve(__dirname, '..', '..', 'branding', 'brand.json');
+let BRAND = {};
+if (existsSync(BRAND_JSON)) {
+  try {
+    BRAND = JSON.parse(
+      readFileSync(BRAND_JSON, 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/,(\s*[}\]])/g, '$1'),
+    );
+  } catch (e) {
+    console.log(
+      `::warning::branding/brand.json parse failed (${e.message?.split('\n')[0] || e}); falling back to defaults.`,
+    );
+  }
+}
+const DISCORD_URL = BRAND.community?.discord?.url || '';
+const SUPPORT_EMAIL = BRAND.supportEmail || 'hello@heron.app';
 
 if (!PAT) {
   console.log(
@@ -87,9 +114,38 @@ if (!roadmapIssue) {
   if (VERIFY_ONLY) {
     drift('Roadmap 2026 issue', 'missing');
   } else {
+    const ROADMAP_BODY = [
+      '## 🪶 Heron Roadmap',
+      '',
+      '> _Stand still. Strike well._',
+      '',
+      'This is the living plan. The maintain-user-features workflow only creates this issue once + re-pins it; the **body is yours to edit freely** as priorities shift.',
+      '',
+      '---',
+      '',
+      '### 🎯 Now — this month',
+      '',
+      '- [ ] _placeholder; replace with current focus_',
+      '',
+      '### ⏭ Next — 1–3 months',
+      '',
+      '- [ ] _placeholder; next on deck_',
+      '',
+      '### 🌅 Later — this year',
+      '',
+      '- [ ] _placeholder; everything beyond the horizon_',
+      '',
+      '---',
+      '',
+      '<sub>',
+      'Lifecycle markers you can use as you fill items in: 🚧 in flight · ✅ shipped · ⏸ paused · ❌ cancelled · 🔗 [linked PR](#)',
+      '<br />',
+      'Issue auto-created by <a href="../blob/main/.github/workflows/maintain-user-features.yml">maintain-user-features.yml</a> when missing. Once it exists, the workflow only re-pins it — never overwrites this body.',
+      '</sub>',
+    ].join('\n');
     const created = gh('POST', `/repos/${REPO}/issues`, {
       title: 'Roadmap 2026',
-      body: '## Heron Roadmap 2026\n\nLiving plan -- edit freely as priorities shift.\n\n### Now\n- _placeholder; replace with current focus_\n\n### Next\n- _next 1-3 months_\n\n### Later\n- _everything else_\n\n---\n\nThis issue is auto-created by `.github/workflows/maintain-user-features.yml` when missing.',
+      body: ROADMAP_BODY,
       labels: ['triaged'],
     });
     if (!created?.__error) {
@@ -266,8 +322,69 @@ console.log(
 );
 
 // ── 5. Profile README at <owner>/<owner> ────────────────────────
+// Beautiful README pattern -- same design language as the Heron repo:
+// centered wordmark, badge row, quick-links bar, featured-project
+// section with screenshot, contact channels, github-readme-stats card.
+// Discord URL is templated from `community.discord.url` in brand.json
+// (SSOT); we read it from a tiny inline json parse here so this script
+// stays standalone (no apply-brand dependency at workflow time).
 console.log(`▸ Profile README at ${OWNER}/${OWNER}`);
-const README = `# ${OWNER}\n\n> Builder. Shipping [Heron](https://github.com/${OWNER}/heron) and a handful of smaller tools.\n\n## What I'm working on\n\n- **[Heron](https://github.com/${OWNER}/heron)** -- AI-agnostic job-search automation.\n\n## Reach me\n\n- GitHub: [@${OWNER}](https://github.com/${OWNER})\n- Sponsor: [github.com/sponsors/${OWNER}](https://github.com/sponsors/${OWNER})\n- Discord: <https://discord.gg/8pRpHETxa4> (Heron community)\n\n<sub>This README auto-applies from \`.github/workflows/maintain-user-features.yml\` in the Heron repo. Edits made directly to this file are overwritten on the next reconcile.</sub>\n`;
+const README = [
+  '<div align="center">',
+  '',
+  `# @${OWNER}`,
+  '',
+  '**Software engineer + builder. ~15 years in. Shipping local-first tools.**',
+  '',
+  `[![Heron stars](https://img.shields.io/github/stars/${OWNER}/heron?label=heron&style=social)](https://github.com/${OWNER}/heron)`,
+  `[![Sponsor](https://img.shields.io/github/sponsors/${OWNER}?label=sponsor&logo=github)](https://github.com/sponsors/${OWNER})`,
+  `[![Followers](https://img.shields.io/github/followers/${OWNER}?label=follow&style=social)](https://github.com/${OWNER})`,
+  '',
+  `[**Heron**](https://github.com/${OWNER}/heron) · [**Sponsor**](https://github.com/sponsors/${OWNER}) · [**Email**](mailto:${SUPPORT_EMAIL})`,
+  '',
+  '</div>',
+  '',
+  '---',
+  '',
+  '## Currently shipping',
+  '',
+  `### 🪶 [Heron](https://github.com/${OWNER}/heron)`,
+  '',
+  '> _Stand still. Strike well._',
+  '',
+  'A thinking partner for career transitions. Local-first job-search platform: pipeline tracking, A–F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Runs on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.',
+  '',
+  `[![Open source · MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/${OWNER}/heron/blob/main/LICENSE) [![Build](https://github.com/${OWNER}/heron/actions/workflows/test.yml/badge.svg)](https://github.com/${OWNER}/heron/actions/workflows/test.yml)`,
+  '',
+  '### 🛡 resist.js',
+  '',
+  '_Private repo opening to public later this year. Watch this profile to know when._',
+  '',
+  '---',
+  '',
+  '## Reach me',
+  '',
+  ...(DISCORD_URL ? [`- 💬 **Discord** — [community for Heron](${DISCORD_URL})`] : []),
+  `- 💼 **GitHub Sponsors** — [github.com/sponsors/${OWNER}](https://github.com/sponsors/${OWNER})`,
+  `- ✉️ **Email** — <${SUPPORT_EMAIL}>`,
+  '',
+  '---',
+  '',
+  '## GitHub stats',
+  '',
+  '<div align="center">',
+  '',
+  `<picture><source media="(prefers-color-scheme: dark)" srcset="https://github-readme-stats.vercel.app/api?username=${OWNER}&show_icons=true&theme=tokyonight&hide_border=true&hide_title=true&hide=issues" /><img src="https://github-readme-stats.vercel.app/api?username=${OWNER}&show_icons=true&theme=default&hide_border=true&hide_title=true&hide=issues" alt="${OWNER}'s GitHub stats" /></picture>`,
+  '',
+  `<picture><source media="(prefers-color-scheme: dark)" srcset="https://github-readme-stats.vercel.app/api/top-langs/?username=${OWNER}&layout=compact&theme=tokyonight&hide_border=true&hide_title=true&card_width=320" /><img src="https://github-readme-stats.vercel.app/api/top-langs/?username=${OWNER}&layout=compact&theme=default&hide_border=true&hide_title=true&card_width=320" alt="Top languages" /></picture>`,
+  '',
+  '</div>',
+  '',
+  '---',
+  '',
+  `<sub>This README auto-applies from <a href="https://github.com/${OWNER}/heron/blob/main/scripts/system/apply-user-features.mjs"><code>apply-user-features.mjs</code></a> in the Heron repo. Edits made directly to this file are overwritten on the next reconcile — change the template at the source instead.</sub>`,
+  '',
+].join('\n');
 
 // Always TRY to create the profile repo. POST /user/repos is idempotent
 // when the repo already exists -- GitHub returns 422 "name already

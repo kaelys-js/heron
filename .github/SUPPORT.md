@@ -8,7 +8,7 @@ tracker focused on bugs + feature work.
 
 | What you need | Where to go |
 |---|---|
-| Setup / installation / "it won't start" | [Discord](https://discord.gg/8pRpHETxa4) or [GitHub Discussions Q&A](https://github.com/kaelys-js/heron/discussions/categories/q-a) |
+| Setup / installation / "it won't start" | [Discord](https://discord.gg/MyFbztUK5U) or [GitHub Discussions Q&A](https://github.com/kaelys-js/heron/discussions/categories/q-a) |
 | Customising prompts / archetypes / scoring | [Discussions → Show and Tell](https://github.com/kaelys-js/heron/discussions/categories/show-and-tell) |
 | Roadmap + feature proposals | [Discussions → Ideas](https://github.com/kaelys-js/heron/discussions/categories/ideas) |
 | **You found a bug** | [Open an issue with the bug template](https://github.com/kaelys-js/heron/issues/new?template=bug.yml) |

@@ -386,6 +386,12 @@
   "privacyPolicyUrl": "https://heron.app/privacy",
   "termsOfServiceUrl": "https://heron.app/terms",
   "marketingUrl": "https://heron.app",
+  "community": {
+    "discord": {
+      "url": "https://discord.gg/MyFbztUK5U",
+      "serverId": "1507162919421612134"
+    }
+  },
   "store": {
     "appStore": {
       "subtitle": "A thinking partner for careers",

@@ -10,7 +10,7 @@ body:
         Thanks for filing a bug. Skip ahead if you already know the section.
 
         - **Security issue?** → Don't open a public issue. Use [GitHub Private Vulnerability Reporting](../../security/advisories/new) or email the address in SECURITY.md.
-        - **Setup / how-to question?** → Use [Discussions](../../discussions) or [Discord](https://discord.gg/8pRpHETxa4) instead — issues are for confirmed bugs.
+        - **Setup / how-to question?** → Use [Discussions](../../discussions) or [Discord](https://discord.gg/MyFbztUK5U) instead — issues are for confirmed bugs.
 
   - type: checkboxes
     id: preflight
