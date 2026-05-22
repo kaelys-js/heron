@@ -113,6 +113,13 @@ const DYNAMIC_MASKS = [
   { selector: '[data-testid="notifications-bell"] [class*="rounded-full"]' },
 ];
 
+// Per-page threshold MUST be set explicitly. Lost Pixel's Zod schema for
+// pageShots.pages[].threshold has `z.number().default(0)` which silently
+// OVERRIDES the config-level `threshold: 0.05` -- pages WITHOUT an explicit
+// threshold land at 0 (any pixel diff fails). Verified by tracing
+// shotItem.threshold at compareImages-call time (was 0, expected 0.05).
+const PAGE_THRESHOLD = 0.05;
+
 const config: CustomProjectConfig = {
   pageShots: {
     pages: [
@@ -123,6 +130,7 @@ const config: CustomProjectConfig = {
         // Wait 6s before screenshot so Sonner toasts auto-dismiss
         // (default duration 5s) + any lazy data-loads settle.
         waitBeforeScreenshot: 6000,
+        threshold: PAGE_THRESHOLD,
         mask: DYNAMIC_MASKS,
       })),
       ...AUTH_ROUTES.map((r) => ({
@@ -130,6 +138,7 @@ const config: CustomProjectConfig = {
         name: r.name,
         breakpoints: BREAKPOINTS,
         waitBeforeScreenshot: 6000,
+        threshold: PAGE_THRESHOLD,
         mask: DYNAMIC_MASKS,
       })),
     ],

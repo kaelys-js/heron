@@ -644,63 +644,6 @@ jobs:
             ui/test-results/
           retention-days: 14
 
-      # ── Lost Pixel (visual regression) ────────────────────────────
-      # Boots its own `vite preview` against the prod build + diffs
-      # every committed baseline in `lost-pixel/baseline/`. The
-      # beforeScreenshot hook in lost-pixel.config.ts mints a bearer
-      # token via /api/auth/e2e-login so auth-gated routes render
-      # correctly (otherwise they'd 302 to /login).
-      #
-      # HERON_E2E_DATA_DIR must match the seeded data dir below so the
-      # e2e-login endpoint resolves the seeded u_e2e user.
-      - name: Seed u_e2e for Lost Pixel auth bypass
-        if: needs.changes.outputs.ts == 'true'
-        env:
-          HERON_DATA_DIR: /tmp/heron-lost-pixel
-        run: |
-          mkdir -p "$HERON_DATA_DIR"
-          node scripts/system/seed-lighthouse-user.mjs
-
-      - name: Lost Pixel (visual regression)
-        if: needs.changes.outputs.ts == 'true'
-        env:
-          HERON_DATA_DIR: /tmp/heron-lost-pixel
-          HERON_E2E_DATA_DIR: /tmp/heron-lost-pixel
-          # HERON_SCREENSHOT_MODE disables the boot auto-scan in
-          # orchestrator.ts so the pipeline stays empty + no transient
-          # "Scanning jobs" toast / "scan running" indicator flicker
-          # between baseline + current runs.
-          HERON_SCREENSHOT_MODE: "1"
-        run: |
-          set -euo pipefail
-          # Boot vite preview from the same prod build the Playwright
-          # step already exercised. Re-used preview port 4173.
-          pnpm --filter ui exec vite preview --port 4173 &
-          PREVIEW_PID=$!
-          cleanup() {
-            kill "${PREVIEW_PID:-}" 2>/dev/null || true
-            wait "${PREVIEW_PID:-}" 2>/dev/null || true
-          }
-          trap cleanup EXIT
-          for _ in $(seq 1 30); do
-            if curl -sf http://localhost:4173/api/health > /dev/null 2>&1; then break; fi
-            sleep 1
-          done
-          # `lost-pixel` (no args) defaults to diff mode. First run
-          # against a missing baseline will fail; this is intentional --
-          # baselines are committed in lost-pixel/baseline/ and updated
-          # via `pnpm --filter ui exec lost-pixel update`.
-          pnpm --filter ui exec lost-pixel
-
-      - name: Upload Lost Pixel diff artifacts on failure
-        if: needs.changes.outputs.ts == 'true' && failure() && hashFiles('lost-pixel/difference/**') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: lost-pixel-diff-${{ github.run_id }}
-          path: |
-            lost-pixel/difference/
-            lost-pixel/current/
-          retention-days: 14
 
       # Upload coverage as a workflow artifact so the `coverage-comment.yml`
       # sticky-comment workflow (triggered by workflow_run after this run
@@ -1043,6 +986,20 @@ jobs:
             echo "PATH=$SDK_ROOT/platform-tools:$SDK_ROOT/cmdline-tools/latest/bin:$PATH"
           } >> "$GITHUB_ENV"
 
+      - name: Resolve pnpm store path
+        if: needs.changes.outputs.android == 'true'
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        if: needs.changes.outputs.android == 'true'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
+
       - name: Install pnpm dependencies (for capacitor + brand:apply)
         if: needs.changes.outputs.android == 'true'
         run: pnpm install --frozen-lockfile
@@ -1113,6 +1070,231 @@ jobs:
           if-no-files-found: warn
 
   # ─────────────────────────────────────────────────────────────────
+  # Android -- Espresso (instrumented) tests on a real emulator
+  # ─────────────────────────────────────────────────────────────────
+  # H.G -- Runs androidTest source set on a real emulator. Two instrumented
+  # tests cover NativePlugin paths Robolectric can't reach:
+  #   - BiometricAuthInstrumentedTest: BiometricPrompt construction against
+  #     a real AppCompatActivity (NativePlugin.kt 168-211).
+  #   - AppSearchInstrumentedTest: AppSearch indexJobs + clearJobIndex
+  #     round-trip against the real on-device backend.
+  #
+  # Runs on ubuntu-latest with KVM enabled (recommended pattern per the
+  # reactivecircus/android-emulator-runner README; macos-15 was attempted
+  # earlier and added cost without diagnosable benefit). AVD layer is
+  # cached so the cold boot is amortised across runs.
+  android-emulator:
+    name: Android — Espresso (instrumented)
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    if: needs.changes.outputs.android == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup mise (Node + pnpm)
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+        with:
+          experimental: true
+          cache: true
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
+
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply brand
+        run: pnpm brand:apply
+
+      - name: Build SvelteKit static (so cap sync has webDir)
+        working-directory: ui
+        env:
+          CAPACITOR: '1'
+        run: pnpm run build:static
+
+      - name: Capacitor sync android
+        working-directory: ui
+        run: pnpm exec cap sync android
+
+      - name: Cache AVD
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-pixel-7-api-34-v1
+
+      - name: Run instrumented tests on Pixel 7 / API 34
+        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.37.0
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          avd-name: pixel-7-api-34
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            cd ui/android
+            ./gradlew :app:connectedDebugAndroidTest :app:jacocoTestReport --no-daemon --stacktrace
+
+      - name: Upload instrumented coverage to Codecov (android flag, additive)
+        if: always() && hashFiles('ui/android/app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml') != ''
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        with:
+          files: ui/android/app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+          flags: android
+          name: android-instrumented
+          fail_ci_if_error: false # additive; the JVM android job is the gate
+          use_oidc: true
+          verbose: true
+
+      - name: Upload instrumented test reports on failure
+        if: always() && hashFiles('ui/android/app/build/reports/androidTests/connected/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: android-instrumented-reports-${{ github.run_id }}
+          path: ui/android/app/build/reports/androidTests/connected/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # ─────────────────────────────────────────────────────────────────
+  # Lost Pixel (visual regression) -- own job, distinct required check
+  # ─────────────────────────────────────────────────────────────────
+  # H.D -- Standalone Lost Pixel job (was a step inside `ts` previously;
+  # extracted so the visual regression has its own required-check name
+  # that maps to "Tests / Lost Pixel (visual regression)" in the
+  # branch-protection ruleset). The beforeScreenshot hook in
+  # ui/lostpixel.config.ts mints a bearer token via /api/auth/e2e-login
+  # so auth-gated routes render correctly + freezes Date for stable
+  # baselines.
+  lost-pixel:
+    name: Lost Pixel (visual regression)
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: needs.changes.outputs.ts == 'true'
+    permissions:
+      contents: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup mise (Node + pnpm)
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+        with:
+          experimental: true
+          cache: true
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
+
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply brand
+        run: pnpm brand:apply
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: playwright-${{ runner.os }}-
+
+      - name: Install Playwright chromium (Lost Pixel uses headless-shell)
+        run: pnpm --filter ui exec playwright install --with-deps chromium
+
+      - name: Build UI
+        run: pnpm --filter ui run build
+
+      - name: Seed u_e2e (Lost Pixel auth bypass)
+        env:
+          HERON_DATA_DIR: /tmp/heron-lost-pixel
+        run: |
+          mkdir -p "$HERON_DATA_DIR"
+          node scripts/system/seed-lighthouse-user.mjs
+
+      - name: Run Lost Pixel (compare against committed baselines)
+        env:
+          HERON_DATA_DIR: /tmp/heron-lost-pixel
+          HERON_E2E_DATA_DIR: /tmp/heron-lost-pixel
+          # HERON_SCREENSHOT_MODE disables the boot auto-scan so the
+          # pipeline stays empty + no transient toast / pulse flicker
+          # between baseline + current runs.
+          HERON_SCREENSHOT_MODE: "1"
+        run: |
+          set -euo pipefail
+          pnpm --filter ui exec vite preview --port 4173 &
+          PREVIEW_PID=$!
+          cleanup() {
+            kill "${PREVIEW_PID:-}" 2>/dev/null || true
+            wait "${PREVIEW_PID:-}" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          for _ in $(seq 1 30); do
+            if curl -sf http://localhost:4173/api/health > /dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          pnpm --filter ui exec lost-pixel
+
+      - name: Upload Lost Pixel diff artifacts on failure
+        if: failure() && hashFiles('ui/lost-pixel/difference/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: lost-pixel-diff-${{ github.run_id }}
+          path: |
+            ui/lost-pixel/difference/
+            ui/lost-pixel/current/
+          retention-days: 14
+
+  # ─────────────────────────────────────────────────────────────────
   # Multi-language format / lint -- one job covers every non-JS surface
   # so the JS-focused `ts` job stays focused.
   # ─────────────────────────────────────────────────────────────────
@@ -1164,16 +1346,22 @@ jobs:
 
       # `validate:workflows` needs js-yaml from node_modules. Install
       # only what's needed (root deps, not the ui/electron workspaces)
-      # so the install is fast on warm cache. Same `pnpm-` cache key as
-      # the ts job so the pnpm store cross-pollinates.
+      # so the install is fast on warm cache. Cache key prefix matches
+      # ts/ios/android jobs (`pnpm-store-`) so the warm cache restored
+      # by those bigger jobs is reused here.
+      - name: Resolve pnpm store path
+        if: needs.changes.outputs.format == 'true'
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
       - name: Cache pnpm store (format job)
         if: needs.changes.outputs.format == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
-          path: ~/.local/share/pnpm/store/v3
-          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-${{ runner.os }}-
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
       - name: Install root node_modules (for validate:workflows)
         if: needs.changes.outputs.format == 'true'
         # --filter=. installs only the root manifest's deps, skipping
