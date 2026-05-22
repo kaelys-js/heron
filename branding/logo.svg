@@ -37,8 +37,12 @@
       logo.svg — the refactor is structural only (separable bg + icon
       via <symbol>/<use>), not visual.
 
-    Design (also unchanged):
-    - Indigo → violet → fuchsia gradient.
+    Design:
+    - Slate → Dawn gradient (Heron's two defining colors; cool morning
+      slate transitioning to warm dawn gold, matching the brand's "stand
+      still at dawn" narrative). Previously was indigo → violet → fuchsia
+      from the pre-rebrand career-ops palette; updated to brand tokens
+      so the master icon matches everything else apply-brand generates.
     - Soft 6% white top-half wash for glass-like depth.
     - Stroke width 1.8 in 24-unit space (~48 visual units in the 1024
       canvas) — keeps the rocket crisp at the 16×16 favicon size.
@@ -58,11 +62,16 @@
   <defs>
     <!-- Brand gradient — used for the background squircle. Centralised
          here so a brand-color tweak (in branding/brand.json) only needs
-         to update this one block. -->
+         to update this one block. The two stops correspond to:
+           0%   = #4a5b6d  Heron Slate  (brand.json::colors.primary)
+           100% = #c89b4a  Heron Dawn   (brand.json::colors.accent)
+         Direction is top-left → bottom-right (x1=0 y1=0 → x2=1 y2=1),
+         so the cool slate sits where the 6% white top-half wash lands
+         (giving the lit area a cool-bright register) and the warm dawn
+         pools in the bottom-right (the visual weight of the icon). -->
     <linearGradient id="brand-bg-gradient" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#6366f1" />
-      <stop offset="55%" stop-color="#8b5cf6" />
-      <stop offset="100%" stop-color="#a855f7" />
+      <stop offset="0%" stop-color="#4a5b6d" />
+      <stop offset="100%" stop-color="#c89b4a" />
     </linearGradient>
 
     <!-- Brand glyph — Lucide-sized 24×24 viewBox so swapping the icon
