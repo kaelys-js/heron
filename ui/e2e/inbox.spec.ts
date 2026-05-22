@@ -37,16 +37,17 @@ test.describe('Inbox', () => {
     await checkA11y(authenticatedPage);
   });
 
-  test('add-job dialog opens on button click', async ({ authenticatedPage }) => {
+  test('add-job dialog opens on button click', async ({ authenticatedPage, isMobile }) => {
+    // Mobile viewports route the "add job" surface through a different
+    // path (FAB + Sheet vs button + Dialog) -- mobile.spec.ts covers
+    // those gestures separately. Skip here to avoid asserting against
+    // the wrong UI on mobile-chrome / mobile-safari.
+    test.skip(isMobile, 'Mobile surfaces handled by mobile.spec.ts');
     const inbox = new InboxPage(authenticatedPage);
     await inbox.goto();
-    // The button might be hidden behind a "+" icon on mobile; tolerate
-    // either an explicit "add job" label or an icon-only trigger.
-    const visible = await inbox.addJobButton.isVisible().catch(() => false);
-    if (visible) {
-      await inbox.openAddJobDialog();
-      // Dialog content should now be in the DOM. Accept any dialog role.
-      await expect(authenticatedPage.getByRole('dialog')).toBeVisible({ timeout: 5000 });
-    }
+    const visible = await inbox.addJobButton.isVisible({ timeout: 3000 }).catch(() => false);
+    if (!visible) return;
+    await inbox.openAddJobDialog();
+    await expect(authenticatedPage.getByRole('dialog')).toBeVisible({ timeout: 5000 });
   });
 });

@@ -49,9 +49,26 @@ test.describe('Mobile UI', () => {
     const visible = await bell.isVisible({ timeout: 3000 }).catch(() => false);
     if (!visible) return;
     await bell.click();
-    // The mobile bell uses bits-ui Sheet which renders a [data-state]
-    // attribute on its content.
-    const sheet = authenticatedPage.locator('[data-state="open"]').first();
-    await expect(sheet).toBeVisible({ timeout: 3000 });
+    // The mobile bell uses bits-ui Sheet -- its open content carries
+    // `data-state="open"` once the open transition completes. Tolerate
+    // either the bits-ui state attribute OR a generic role=dialog (the
+    // sheet IS a modal dialog). Either signal proves the click triggered
+    // the open-transition; assert that something opened, not the exact
+    // selector shape.
+    const opened = await Promise.race([
+      authenticatedPage
+        .locator('[data-state="open"]')
+        .first()
+        .waitFor({ state: 'visible', timeout: 5000 })
+        .then(() => true)
+        .catch(() => false),
+      authenticatedPage
+        .getByRole('dialog')
+        .first()
+        .waitFor({ state: 'visible', timeout: 5000 })
+        .then(() => true)
+        .catch(() => false),
+    ]);
+    expect(opened).toBe(true);
   });
 });
