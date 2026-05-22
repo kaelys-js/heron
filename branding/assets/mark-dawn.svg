@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Heron mark — dawn variant (Heron Slate body, Heron Dawn-gold eye).
+
+  The eye color shifts from warm-white to Heron Dawn (#c89b4a). Per
+  MASCOT.md::Color-usage, the dawn variant signals "the moment of
+  attention" — used in marketing illustration contexts where the
+  brand wants to emphasise the heron's locked-in focus.
+
+  Same silhouette + proportions as mark-slate.svg; only the eye
+  color changes.
+
+  Spec source: branding/MASCOT.md
+  Tier 1 mark (silhouette + dawn-gold eye dot).
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 120 160"
+  role="img"
+  aria-label="Heron"
+>
+  <title>Heron</title>
+
+  <!-- Body: compact teardrop -->
+  <path
+    d="M 30 86
+       C 30 98, 44 104, 60 104
+       C 76 104, 84 96, 80 86
+       C 78 79, 64 76, 52 78
+       C 40 80, 30 82, 30 86 Z"
+    fill="#4a5b6d"
+  />
+
+  <!-- Neck: soft S-curve -->
+  <path
+    d="M 72 84
+       C 80 70, 58 50, 70 30"
+    stroke="#4a5b6d"
+    stroke-width="7.5"
+    stroke-linecap="round"
+    fill="none"
+  />
+
+  <!-- Head -->
+  <ellipse cx="74" cy="22" rx="8" ry="6" fill="#4a5b6d" />
+
+  <!-- Beak -->
+  <path d="M 82 21 L 110 22.5 L 82 24 Z" fill="#4a5b6d" />
+
+  <!-- Eye: dawn-gold dot ("moment of attention") -->
+  <circle cx="76" cy="20.5" r="1.5" fill="#c89b4a" />
+
+  <!-- Legs -->
+  <path
+    d="M 50 104 L 49 128 L 52 153"
+    stroke="#4a5b6d"
+    stroke-width="2.2"
+    stroke-linecap="round"
+    fill="none"
+  />
+  <path
+    d="M 66 104 L 65 128 L 68 153"
+    stroke="#4a5b6d"
+    stroke-width="2.2"
+    stroke-linecap="round"
+    fill="none"
+  />
+
+  <!-- Foot terminators -->
+  <line x1="47" y1="153.5" x2="56" y2="153.5" stroke="#4a5b6d" stroke-width="2.2" stroke-linecap="round" />
+  <line x1="63" y1="153.5" x2="72" y2="153.5" stroke="#4a5b6d" stroke-width="2.2" stroke-linecap="round" />
+</svg>
