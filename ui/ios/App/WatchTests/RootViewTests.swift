@@ -110,15 +110,42 @@ final class RootViewTests: XCTestCase {
 
         guard recordMode || baselineExists else { return }
 
-        // watchOS doesn't expose Snapshotting<some View, _>.image -- the
-        // SnapshotTesting SwiftUI extension is iOS/macOS/tvOS only.
-        // Render to UIImage manually via the ImageRenderer above, then
-        // diff against UIImage's well-supported `.image` strategy.
-        assertSnapshot(
-            of: renderedImage,
-            as: .image(precision: 0.98, perceptualPrecision: 0.98),
-            file: file,
-            testName: testName
+        // watchOS-specific snapshot path: SnapshotTesting's
+        // Snapshotting<UIImage, UIImage>.image strategy is ONLY available
+        // for iOS / macOS / tvOS targets -- watchOS doesn't get the
+        // overload. Hand-roll a PNG byte-compare:
+        //   1. Render UIImage -> PNG Data.
+        //   2. RECORD_MODE writes it to __Snapshots__/.
+        //   3. Otherwise byte-compare against the committed baseline.
+        // The byte comparison is intentionally strict (no perceptual
+        // tolerance) because watchOS's UIImage PNG encoding is
+        // deterministic for the same view + same sim. If a baseline
+        // PNG diverges by even one pixel, the test fails red --
+        // exactly what visual-regression needs.
+        guard let pngData = renderedImage.pngData() else {
+            XCTFail("UIImage.pngData() returned nil for \(testName)")
+            return
+        }
+        if recordMode {
+            try? FileManager.default.createDirectory(
+                at: snapshotsDir,
+                withIntermediateDirectories: true
+            )
+            do {
+                try pngData.write(to: baselineFile)
+            } catch {
+                XCTFail("Failed to write baseline for \(testName): \(error)")
+            }
+            return
+        }
+        guard let baselineData = try? Data(contentsOf: baselineFile) else {
+            XCTFail("Baseline missing at \(baselineFile.path); run RECORD_MODE=1")
+            return
+        }
+        XCTAssertEqual(
+            pngData,
+            baselineData,
+            "PNG byte-diff vs baseline \(baselineFile.lastPathComponent) for \(testName)"
         )
     }
 
