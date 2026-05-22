@@ -255,4 +255,4 @@ Backup: just snapshot `data/` (`tar czf backup.tgz data/`). Restore: extract bac
 - Read the main [README](../README.md) for architecture + commands.
 - Browse [docs/](.) for deeper docs (autopilot, autonomous apply, multi-user RBAC, …).
 - File issues at [github.com/kaelys-js/heron/issues](https://github.com/kaelys-js/heron/issues).
-- Discord: [discord.gg/8pRpHETxa4](https://discord.gg/8pRpHETxa4).
+- Discord: [discord.gg/MyFbztUK5U](https://discord.gg/MyFbztUK5U).

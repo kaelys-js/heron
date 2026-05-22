@@ -402,7 +402,7 @@ Source of truth: `release-please-config.json`, `.github/workflows/release.yml`, 
 - **Governance**: BDFL model with contributor ladder -- Participant → Contributor → Triager → Reviewer → Maintainer (see `docs/GOVERNANCE.md`)
 - **Security**: private vulnerability reporting via email (see `.github/SECURITY.md`)
 - **Support**: help questions go to Discord/Discussions, not issues (see [`.github/CONTRIBUTING.md#getting-help`](.github/CONTRIBUTING.md))
-- **Discord**: <https://discord.gg/8pRpHETxa4>
+- **Discord**: <https://discord.gg/MyFbztUK5U>
 
 ## Headless / Batch Mode
 

@@ -32,7 +32,7 @@
   } from '@lucide/svelte';
   import { toast } from 'svelte-sonner';
   import { cn } from '$lib/utils';
-  import { APP_NAME, REPO_URL, cmd } from '$lib/config/branding';
+  import { APP_NAME, REPO_URL, cmd, DISCORD_URL } from '$lib/config/branding';
 
   let copiedKey = $state<string | null>(null);
   async function copyText(text: string, key: string) {
@@ -321,7 +321,7 @@
   type LinkDef = { label: string; href: string; icon: any };
   const LINKS: LinkDef[] = [
     { label: 'GitHub repo', href: REPO_URL, icon: Code2 },
-    { label: 'Discord community', href: 'https://discord.gg/8pRpHETxa4', icon: MessageCircle },
+    { label: 'Discord community', href: DISCORD_URL, icon: MessageCircle },
   ];
 
   type FaqDef = { q: string; a: string };

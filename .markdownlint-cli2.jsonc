@@ -133,6 +133,7 @@
     // Gitignored Claude session scratchpads — never ship, no lint value.
     "STATE.md",
     "TODO.md",
-    "TODO2.md"
+    "TODO2.md",
+    "TODO-INSTRUCTIONS.md"
   ]
 }

@@ -202,8 +202,8 @@ how to get help efficiently.
 |---|---|
 | **Bug** (something is broken) | [GitHub Issues](https://github.com/kaelys-js/heron/issues) -- use the Bug Report template |
 | **Feature idea** | [GitHub Issues](https://github.com/kaelys-js/heron/issues) -- use the Feature Request template |
-| **How do I…?** | [GitHub Discussions](https://github.com/kaelys-js/heron/discussions) or [Discord](https://discord.gg/8pRpHETxa4) |
-| **Setup help** | Check [`docs/SETUP.md`](../docs/SETUP.md) first, then ask in [Discord](https://discord.gg/8pRpHETxa4) |
+| **How do I…?** | [GitHub Discussions](https://github.com/kaelys-js/heron/discussions) or [Discord](https://discord.gg/MyFbztUK5U) |
+| **Setup help** | Check [`docs/SETUP.md`](../docs/SETUP.md) first, then ask in [Discord](https://discord.gg/MyFbztUK5U) |
 | **Security vulnerability** | Email <hello@heron.app> -- see [`SECURITY.md`](SECURITY.md) |
 
 ### Before opening an issue
@@ -226,4 +226,4 @@ These will be closed and redirected to the appropriate channel.
 
 - [Architecture docs](../docs/ARCHITECTURE.md)
 - [Setup guide](../docs/SETUP.md)
-- [Discord community](https://discord.gg/8pRpHETxa4)
+- [Discord community](https://discord.gg/MyFbztUK5U)

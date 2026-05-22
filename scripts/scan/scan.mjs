@@ -887,7 +887,7 @@ async function main() {
   }
 
   console.log(`\n→ Open the dashboard inbox to evaluate new offers.`);
-  console.log('→ Share results and get help: https://discord.gg/8pRpHETxa4');
+  console.log('→ Share results and get help: https://discord.gg/MyFbztUK5U');
 }
 
 main().catch((err) => {
