@@ -71,6 +71,22 @@ If you genuinely think a convention is harmful, surface it. Don't fork silently.
 "Tests pass" is wrong if any were skipped.
 Default to surfacing uncertainty, not hiding it.
 
+### Rule 13 -- Approved work ships fully
+When you hit friction on approved work -- an API mismatch, an unfamiliar config shape, a missing test fixture, anything -- the response is "investigate the docs/source until you find the right shape and implement it fully". NOT "downgrade scope to a follow-up".
+
+Forbidden vocabulary on approved work:
+`MVP`, `defer`, `out of scope`, `won't fit`, `future PR`, `future work`, `separate ticket`, `separate PR`, `follow-up`, `simplify to`, `for now`, `punt`, `leave for now`.
+
+The pre-commit `no-deflect` hook (`scripts/system/verify-no-deflection.mjs`) blocks commits whose diff or message uses these words. Bypass token: include the literal `[user-approved-deferral]` in either the commit message body OR a code-comment trailer on the same line. Use ONLY when the user has explicitly approved a defer for that specific work.
+
+If something genuinely can't be done with current resources, explain the constraint with evidence (e.g. "this needs Apple ID credentials to download Xcode 16") and ASK for permission before narrowing scope. Don't narrow unilaterally.
+
+Exempt paths (the hook auto-skips these so it doesn't false-positive on policy / history):
+- `AGENTS.md` (this file enumerates the vocab as policy)
+- `CHANGELOG.md`
+- `docs/archive/**`
+- The hook script itself (`scripts/system/verify-no-deflection.{mjs,test.mjs}`)
+
 ---
 
 ## Heron orientation (90 seconds)

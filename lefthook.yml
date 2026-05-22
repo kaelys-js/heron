@@ -391,6 +391,26 @@ pre-commit:
       glob: "*.{ts,tsx,svelte,mjs,js,cjs}"
       run: pnpm verify:comment-style:test && pnpm verify:comment-style
 
+    no-deflect:
+      # Block deflection vocabulary in staged code/docs additions. The
+      # forbidden vocab (MVP / defer / out-of-scope / separate ticket /
+      # follow-up / simplify to / for now / punt / future PR / future
+      # work / leave for now) marks the pattern of "downgrade approved
+      # work the moment friction appears". AGENTS.md Rule 13 enumerates
+      # the policy + the structural gate is this hook.
+      #
+      # Bypass: literal `[user-approved-deferral]` in either the commit
+      # message body OR the same hunk's diff (per-line) bypasses the
+      # detection. Use only when the user has explicitly approved a
+      # defer. Exempt files: this script, its test, AGENTS.md (Rule 13
+      # enumerates the vocab), CHANGELOG.md, docs/archive/**.
+      #
+      # The .test.mjs sibling has 34 unit-test fixtures (positive +
+      # negative + word-boundary + hyphenation) so the regex stays
+      # well-defined under future edits.
+      glob: "*.{ts,tsx,svelte,mjs,mts,js,cjs,kt,swift,rb,go,py,yml,yaml,md}"
+      run: node scripts/system/verify-no-deflection.test.mjs && node scripts/system/verify-no-deflection.mjs --staged
+
     exact-versions:
       # Reject any version specifier that isn't an EXACT pin (no ^, ~,
       # >=, *, "latest", or partial versions like "1.7"). Scans every
@@ -725,6 +745,27 @@ commit-msg:
           echo "  Bypass:       SKIP_LEFTHOOK=1 git commit ..."
           exit 1
         fi
+
+    # No-deflect gate -- scan the commit message body for vocabulary
+    # that has historically marked downgraded scope ("MVP", "follow-up",
+    # "out of scope", "separate ticket", "defer", "for now", "simplify
+    # to", "punt"). Approved work ships fully; this gate enforces the
+    # rule structurally rather than by verbal commitment.
+    #
+    # Bypass: include the literal "[user-approved-deferral]" in the
+    # commit message body (only when the user has explicitly approved
+    # the defer). See AGENTS.md Rule 13 for the policy.
+    #
+    # Same merge / revert / release-please exemption as conventional +
+    # signoff above so automated bot commits don't trip on common
+    # release-management vocabulary.
+    no-deflect-msg:
+      run: |
+        msg=$(cat {1})
+        if echo "$msg" | grep -qE '^(Merge|Revert|fixup!|squash!|chore\(main\): release)'; then
+          exit 0
+        fi
+        node scripts/system/verify-no-deflection.mjs --message {1}
 
 # ── Manual invocation ───────────────────────────────────────────────
 # Run individual checks via:
