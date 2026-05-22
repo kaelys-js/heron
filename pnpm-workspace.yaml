@@ -80,6 +80,13 @@ overrides:
   # node-fetch -> lost-pixel + @adobe/css-tools -> playwright (multiple
   # paths). Override forces every consumer onto the patched version.
   form-data: ">=4.0.4"
+  # Multiple axios advisories pre-1.16.0 (SSRF via absolute URL,
+  # DoS via __proto__ key + missing data-size check, prototype
+  # pollution gadgets in HTTP adapter, header injection, incomplete
+  # NO_PROXY fix). All patched in 1.16.0+. Pulled in transitively
+  # via lost-pixel. Override forces every consumer onto the
+  # patched line.
+  axios: ">=1.16.0"
 
 # ── Peer dependency rules ──────────────────────────────────────────
 peerDependencyRules:
