@@ -629,6 +629,64 @@ jobs:
             ui/test-results/
           retention-days: 14
 
+      # ── Lost Pixel (visual regression) ────────────────────────────
+      # Boots its own `vite preview` against the prod build + diffs
+      # every committed baseline in `lost-pixel/baseline/`. The
+      # beforeScreenshot hook in lost-pixel.config.ts mints a bearer
+      # token via /api/auth/e2e-login so auth-gated routes render
+      # correctly (otherwise they'd 302 to /login).
+      #
+      # HERON_E2E_DATA_DIR must match the seeded data dir below so the
+      # e2e-login endpoint resolves the seeded u_e2e user.
+      - name: Seed u_e2e for Lost Pixel auth bypass
+        if: needs.changes.outputs.ts == 'true'
+        env:
+          HERON_DATA_DIR: /tmp/heron-lost-pixel
+        run: |
+          mkdir -p "$HERON_DATA_DIR"
+          node scripts/system/seed-lighthouse-user.mjs
+
+      - name: Lost Pixel (visual regression)
+        if: needs.changes.outputs.ts == 'true'
+        env:
+          HERON_DATA_DIR: /tmp/heron-lost-pixel
+          HERON_E2E_DATA_DIR: /tmp/heron-lost-pixel
+          # HERON_SCREENSHOT_MODE disables the boot auto-scan in
+          # orchestrator.ts so the pipeline stays empty + no transient
+          # "Scanning jobs" toast / "scan running" indicator flicker
+          # between baseline + current runs.
+          HERON_SCREENSHOT_MODE: "1"
+        run: |
+          set -euo pipefail
+          # Boot vite preview from the same prod build the Playwright
+          # step already exercised. Re-used preview port 4173.
+          pnpm --filter ui exec vite preview --port 4173 &
+          PREVIEW_PID=$!
+          cleanup() {
+            kill "${PREVIEW_PID:-}" 2>/dev/null || true
+            wait "${PREVIEW_PID:-}" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          for _ in $(seq 1 30); do
+            if curl -sf http://localhost:4173/api/health > /dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          # `lost-pixel` (no args) defaults to diff mode. First run
+          # against a missing baseline will fail; this is intentional --
+          # baselines are committed in lost-pixel/baseline/ and updated
+          # via `pnpm --filter ui exec lost-pixel update`.
+          pnpm --filter ui exec lost-pixel
+
+      - name: Upload Lost Pixel diff artifacts on failure
+        if: needs.changes.outputs.ts == 'true' && failure() && hashFiles('lost-pixel/difference/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: lost-pixel-diff-${{ github.run_id }}
+          path: |
+            lost-pixel/difference/
+            lost-pixel/current/
+          retention-days: 14
+
       # Upload coverage as a workflow artifact so the `coverage-comment.yml`
       # sticky-comment workflow (triggered by workflow_run after this run
       # completes) can download + scan it. Codecov uploads the same file
