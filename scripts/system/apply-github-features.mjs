@@ -164,29 +164,56 @@ for (const lbl of LABELS) {
 }
 
 // ── 3. Secret-scanning validity checks ──────────────────────────
-// The REST `PATCH /repos/{owner}/{repo}` accepts the
-// `security_and_analysis.secret_scanning_validity_checks.status` field
-// without an error, but the toggle stays "disabled" until the
-// maintainer flips it via the UI. That's a documented API limitation
-// (the validity-checks beta gates the actual enablement on a separate
-// UI consent). To keep `maintain-features.yml --check` from permafailing
-// on a one-shot UI step, attempt the toggle but treat the unchanged
-// state as informational, not drift.
+// Eligibility: per GitHub docs (May 2026), validity checks for partner
+// patterns are available on **organization-owned repositories on GitHub
+// Team with GitHub Secret Protection enabled** -- a paid plan, not
+// free OSS. User-owned repos (like kaelys-js/heron) are NOT eligible:
+// the settings UI doesn't show the toggle, and the REST PATCH no-ops
+// silently (the API field stays "disabled" indefinitely).
+//
+// Strategy: detect repo owner type via GET /repos/{r}.owner.type.
+// User-owned -> log "not eligible (free / user-owned repo)" + skip
+// the PATCH attempt to avoid misleading log noise. Org-owned -> the
+// PATCH might succeed if the org has Secret Protection; attempt it
+// + log the result.
 console.log('▸ Code-security toggles');
 const security = gh('GET', `/repos/${REPO}`);
-const liveSec = security?.security_and_analysis || {};
-if (liveSec.secret_scanning_validity_checks?.status !== 'enabled') {
+if (security?.__error) {
+  // GET failure: auth error, network error, repo renamed, etc.
+  // Surface as drift so the maintainer notices -- masking it as
+  // "not eligible" would hide a real problem.
+  driftCount++;
   console.log(
-    `  secret_scanning_validity_checks: ${liveSec.secret_scanning_validity_checks?.status || 'unset'} (API sticky -- toggle stays disabled until the maintainer flips it via the UI)`,
+    `  secret_scanning_validity_checks: GET /repos failed -- ${security.__error.split('\n')[0]}`,
   );
-  if (!VERIFY_ONLY) {
-    // Best-effort PATCH -- silent no-op when the API ignores it.
-    gh('PATCH', `/repos/${REPO}`, {
-      security_and_analysis: { secret_scanning_validity_checks: { status: 'enabled' } },
-    });
-  }
 } else {
-  console.log('  secret_scanning_validity_checks: ok');
+  const liveSec = security?.security_and_analysis || {};
+  const ownerType = security?.owner?.type || 'Unknown';
+
+  if (liveSec.secret_scanning_validity_checks?.status === 'enabled') {
+    console.log('  secret_scanning_validity_checks: ok');
+  } else if (ownerType !== 'Organization') {
+    console.log(
+      `  secret_scanning_validity_checks: not eligible (${ownerType}-owned repo; requires GitHub Team org + Secret Protection). See .github/SECURITY.md.`,
+    );
+    // Not drift -- the feature is GENUINELY unavailable for this
+    // repo type. driftCount stays as-is.
+  } else {
+    // Org-owned + validity-checks disabled = real drift. Increment
+    // so --check mode exits 1, and the apply summary reports the
+    // change attempt. (PATCH may still no-op if the org lacks the
+    // Secret Protection license, but that's an org-config issue
+    // the maintainer can act on, not something to silently absorb.)
+    driftCount++;
+    console.log(
+      `  secret_scanning_validity_checks: ${liveSec.secret_scanning_validity_checks?.status || 'unset'} -- attempting PATCH (org-owned, may require Secret Protection license)`,
+    );
+    if (!VERIFY_ONLY) {
+      gh('PATCH', `/repos/${REPO}`, {
+        security_and_analysis: { secret_scanning_validity_checks: { status: 'enabled' } },
+      });
+    }
+  }
 }
 
 // ── 4. GitHub Pages enable (source = "workflow") ────────────────

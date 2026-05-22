@@ -6,7 +6,17 @@
 
 > Production brief for the Heron mascot.
 > Detailed enough that a human illustrator can execute in 1-2 days, or
-> Claude Design can produce a usable first draft in 5 minutes.
+> [Claude Design](https://claude.ai/design) (Anthropic Labs, April
+> 2026) can produce a usable first draft in 5 minutes. To use Claude
+> Design: sign into your claude.ai account, open
+> <https://claude.ai/design>, paste the production prompt below
+> verbatim, iterate on the result until the silhouette is crisp at
+> 16x16 (favicon size), then export the 3 colorways (slate / light /
+> dawn) as SVG. Note: Claude Code (CLI / VS Code extension) is a
+> separate product and is NOT a substitute -- it can write code-style
+> SVG paths but Claude Design's iteration UI is what makes the visual
+> work tractable.
+>
 > Companion docs: [`BRAND.md`](./BRAND.md) (personality, voice),
 > [`COLORS.md`](./COLORS.md) (palette), [`BRAND.md#wordmark`](./BRAND.md#wordmark)
 > (lockup with the wordmark), [`TYPOGRAPHY.md`](./TYPOGRAPHY.md) (face
@@ -171,6 +181,8 @@ now.
 ## Production prompts
 
 ### Prompt for Claude Design
+
+Open <https://claude.ai/design> (you'll need to be signed in). Paste this prompt verbatim:
 
 > Generate a heron mascot for a brand called Heron, in two variants.
 >

@@ -5,9 +5,10 @@
 <!-- /AUTO-GENERATED:doc-meta -->
 
 > Auto-loaded by Gemini CLI as persistent context. The canonical
-> brief lives in [AGENTS.md](AGENTS.md) and is shared by every
-> supported AI CLI (Claude Code, Gemini, Codex, OpenCode, Qwen,
-> Copilot).
+> briefs live in [AGENTS.md](AGENTS.md) (engineering rules + Heron
+> orientation) and [AGENTS-PRODUCT.md](AGENTS-PRODUCT.md) (product-
+> mode domain context) and are shared by every supported AI CLI
+> (Claude Code, Gemini, Codex, OpenCode, Qwen, Copilot).
 
 ## How Heron runs on Gemini
 
@@ -29,7 +30,9 @@ launching an interactive session.
 
 ## Everything else
 
-Data contract, update-check protocol, onboarding flow, ethical use,
-pipeline integrity rules, mode routing -- read [AGENTS.md](AGENTS.md).
-The rules apply identically across every supported AI CLI; there is
-no Gemini-specific fork of any mode prompt.
+Engineering rules (the 12 + tooling stack + release flow) live in
+[AGENTS.md](AGENTS.md). Product-mode rules (data contract, update-
+check protocol, onboarding flow, ethical use, pipeline integrity,
+mode routing, canonical states) live in [AGENTS-PRODUCT.md](AGENTS-PRODUCT.md).
+Both apply identically across every supported AI CLI; there is no
+Gemini-specific fork of any mode prompt.
