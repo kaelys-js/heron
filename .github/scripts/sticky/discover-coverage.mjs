@@ -12,19 +12,24 @@
  *   - Istanbul / v8 coverage-summary.json  (Vitest, Jest, c8)
  *   - lcov.info                            (Vitest --coverage with lcov reporter,
  *                                          Jest, gcov, many others)
- *   - cobertura.xml                        (xcov for iOS via Fastlane slather;
+ *   - cobertura.xml                        (Fastlane slather for iOS;
  *                                          Python coverage.py; Go gocover-cobertura;
  *                                          Java JaCoCo)
  *   - clover.xml                           (PHPUnit, legacy Jest)
  *   - xcov coverage_report.json            (Fastlane xcov action default)
  *
- * Flag/suite name derives from the FIRST meaningful path segment the
- * coverage file lives under, with `coverage` / `fastlane` / `xcov` etc.
+ * Flag/suite name derives from the LAST meaningful path segment the
+ * coverage file lives under, with `coverage` / `fastlane` / `App` etc.
  * stripped. Examples:
- *   ui/coverage/lcov.info                       → flag `ui`
- *   ui/electron/coverage/lcov.info              → flag `ui-electron`
- *   ui/ios/App/fastlane/coverage/cobertura.xml  → flag `ios`
- *   coverage/lcov.info                          → flag `default`
+ *   ui/coverage/lcov.info                                  → flag `ui`
+ *   ui/electron/coverage/lcov.info                         → flag `electron`
+ *   ui/ios/App/fastlane/coverage/AppTests/cobertura.xml    → flag `AppTests`
+ *   ui/ios/App/fastlane/coverage/WidgetTests/cobertura.xml → flag `WidgetTests`
+ *   coverage/lcov.info                                     → flag `default`
+ *
+ * Per-scheme iOS cobertura files (5 of them) surface as separate sticky
+ * rows -- this is intentional, gives reviewers per-target visibility
+ * for App.app (95% gate) vs each .appex / WatchApp (50% gate).
  *
  * Usage:
  *   node .github/scripts/sticky/discover-coverage.mjs [--root <path>] [--out <path>]
@@ -122,10 +127,11 @@ function walk(dir, acc = []) {
  * the way reviewers expect.
  *
  * Examples:
- *   ui/coverage/lcov.info                       -> "ui"
- *   ui/electron/coverage/lcov.info              -> "electron"
- *   ui/ios/App/fastlane/coverage/cobertura.xml  -> "ios"
- *   coverage/lcov.info                          -> "default"
+ *   ui/coverage/lcov.info                                  -> "ui"
+ *   ui/electron/coverage/lcov.info                         -> "electron"
+ *   ui/ios/App/fastlane/coverage/AppTests/cobertura.xml    -> "AppTests"
+ *   ui/ios/App/fastlane/coverage/WidgetTests/cobertura.xml -> "WidgetTests"
+ *   coverage/lcov.info                                     -> "default"
  */
 function flagFromPath(absPath) {
   const rel = path.relative(ROOT, absPath);

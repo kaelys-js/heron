@@ -736,12 +736,12 @@ jobs:
           restore-keys: |
             spm-${{ runner.os }}-
 
-      - name: Cache Bundler gems (Fastlane + xcov + cocoapods-utils)
-        # Fastlane + xcov + dependencies installs ~25 gems on every cold
-        # cache. The Gemfile.lock hash uniquely identifies the resolved
-        # set, so a hit means `bundle install` is a sub-second no-op
-        # instead of a ~30s install. ~/.bundle is the per-user bundler
-        # config dir; ~/.gem is mise-Ruby's gem-install target.
+      - name: Cache Bundler gems (Fastlane + slather + cocoapods-utils)
+        # Fastlane + slather + dependencies installs ~25 gems on every
+        # cold cache. The Gemfile.lock hash uniquely identifies the
+        # resolved set, so a hit means `bundle install` is a sub-second
+        # no-op instead of a ~30s install. ~/.bundle is the per-user
+        # bundler config dir; ~/.gem is mise-Ruby's gem-install target.
         if: needs.changes.outputs.ios == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
@@ -811,10 +811,19 @@ jobs:
 
       - name: Upload coverage to Codecov (ios flag)
         # G12 -- see the ts upload above for OIDC rationale.
-        if: always() && needs.changes.outputs.ios == 'true' && hashFiles('ui/ios/App/fastlane/coverage/cobertura.xml') != ''
+        # Five per-scheme cobertura.xml files (AppTests / WidgetTests /
+        # AppLiveActivityTests / AppShareExtensionTests / WatchTests)
+        # uploaded under the single `ios` flag. Codecov merges them
+        # into one tree -- per-binary coverage is preserved through
+        # the source paths, which already differ per target. The
+        # threshold gate (scripts/native/check-ios-coverage.mjs) ran
+        # inside fastlane test_ci, so by the time we reach this step
+        # the per-target floors (95% App.app + 50% extensions/watch)
+        # are already enforced.
+        if: always() && needs.changes.outputs.ios == 'true' && hashFiles('ui/ios/App/fastlane/coverage/*/cobertura.xml') != ''
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
-          files: ui/ios/App/fastlane/coverage/cobertura.xml
+          files: ui/ios/App/fastlane/coverage/AppTests/cobertura.xml,ui/ios/App/fastlane/coverage/WidgetTests/cobertura.xml,ui/ios/App/fastlane/coverage/AppLiveActivityTests/cobertura.xml,ui/ios/App/fastlane/coverage/AppShareExtensionTests/cobertura.xml,ui/ios/App/fastlane/coverage/WatchTests/cobertura.xml
           flags: ios
           name: ios-coverage
           fail_ci_if_error: true
@@ -823,11 +832,11 @@ jobs:
 
       # Sibling of the ts-job upload, for the heron-pr-coverage sticky.
       - name: Upload iOS coverage artifact for sticky-comment workflow
-        if: needs.changes.outputs.ios == 'true' && always() && hashFiles('ui/ios/App/fastlane/coverage/cobertura.xml') != ''
+        if: needs.changes.outputs.ios == 'true' && always() && hashFiles('ui/ios/App/fastlane/coverage/*/cobertura.xml') != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: coverage-ios
-          path: ui/ios/App/fastlane/coverage/cobertura.xml
+          path: ui/ios/App/fastlane/coverage/*/cobertura.xml
           retention-days: 14
           if-no-files-found: warn
 
@@ -1216,6 +1225,8 @@ jobs:
         run: |
           echo "Coverage uploaded per-job via codecov-action@v6"
           echo "  • ts      flag → ui/coverage/lcov.info"
-          echo "  • ios     flag → ui/ios/App/fastlane/coverage/cobertura.xml"
+          echo "  • ios     flag → ui/ios/App/fastlane/coverage/<scheme>/cobertura.xml × 5"
+          echo "                    (AppTests / WidgetTests / AppLiveActivityTests /"
+          echo "                     AppShareExtensionTests / WatchTests)"
           echo "  • android flag → ui/android/app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
           echo "Combined PR comment posted by Codecov once all flags arrive."

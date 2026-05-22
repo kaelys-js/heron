@@ -127,19 +127,35 @@ Excluded paths (auto-generated, types-only, test infra):
 - `src/test-setup.ts`, `src/test-helpers/**`
 - `src/**/*.test.ts`, `src/**/*.component.test.ts`
 
-iOS coverage (xcov) uses `.xcovignore` at repo root -- same idea: generated
-Brand.swift, ErrorReporter shims, CapApp-SPM bridge, SPM checkouts, and
-Smoke.swift placeholders don't count.
+iOS coverage uses **slather** + a custom per-target gate
+(`scripts/native/check-ios-coverage.mjs`). Each of the 5 test schemes
+emits its own cobertura at `ui/ios/App/fastlane/coverage/<scheme>/cobertura.xml`
+and is gated independently:
+
+| Scheme                  | Target            | Threshold |
+|-------------------------|-------------------|-----------|
+| AppTests                | App.app           | **95%**   |
+| WidgetTests             | AppWidget         | 50%       |
+| AppLiveActivityTests    | AppLiveActivity   | 50%       |
+| AppShareExtensionTests  | AppShareExtension | 50%       |
+| WatchTests              | WatchApp          | 50%       |
+
+Excludes (configured inline in `ui/ios/App/fastlane/Fastfile` --
+`COMMON_IGNORE` + per-scheme cross-target exclusions): SPM checkouts,
+build products, embedded frameworks, every test bundle, CapApp-SPM,
+generated `Brand.swift` / `ErrorReporter.swift`, and `*Smoke.swift`
+placeholders.
 
 Run coverage locally:
 
 ```bash
 pnpm test:coverage           # writes ui/coverage/{lcov.info,html/}
-pnpm test:ios:ci             # writes ui/ios/App/fastlane/coverage/cobertura.xml
+pnpm test:ios:ci             # writes ui/ios/App/fastlane/coverage/<scheme>/cobertura.xml × 5
 ```
 
-CI uploads both to Codecov with flags `ts` + `ios`. PR comments show
-combined + per-flag deltas.
+CI uploads all 5 cobertura files to Codecov with flag `ios` (the `ts`
+flag covers Vitest). PR comments show combined + per-flag deltas, and
+the threshold gate fails the lane on any per-target miss before upload.
 
 ## MSW (HTTP mocking)
 
