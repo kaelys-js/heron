@@ -1,25 +1,10 @@
 # H.G -- Android Espresso (instrumented) tests on a real emulator.
+# Lives in its own workflow file (vs being merged into test.yml) because
+# the emulator job in test.yml triggered `startup_failure` on every
+# push; isolating it here gives an independent diagnostic surface.
 #
-# Separated from test.yml because adding the android-emulator job
-# directly to test.yml caused `startup_failure` on the Tests workflow
-# (the only diagnosable signal GitHub Actions emitted; both the YAML
-# parser and actionlint accept the file locally). Splitting into a
-# dedicated workflow file gives the job an independent lifecycle +
-# isolates any failure surface.
-#
-# Two instrumented tests:
-#   - BiometricAuthInstrumentedTest -- BiometricPrompt construction
-#     against a real AppCompatActivity (covers NativePlugin.kt 168-211).
-#   - AppSearchInstrumentedTest -- AppSearch indexJobs + clearJobIndex
-#     round-trip against the real on-device backend (Robolectric's
-#     AppSearch shim is incomplete; only the catch branch covered in
-#     JVM unit tests).
-#
-# `macos-15` runner: KVM + x86_64 emulator stability is measurably
-# better on macOS than ubuntu. macOS minutes are 10x ubuntu but cold-
-# boot + test run typically finishes in ~12-15 min, fitting CI's
-# billing envelope. Cached AVD layer cuts subsequent boot to ~3 min.
-name: Android — Espresso (instrumented)
+# See ui/android/app/src/androidTest/ for the tests.
+name: Android Espresso
 
 on:
   pull_request:
@@ -31,62 +16,20 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: android-instrumented-${{ github.workflow }}-${{ github.head_ref || github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  changes:
-    name: Detect Android-relevant paths
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-      pull-requests: read
-    outputs:
-      android: ${{ steps.filter.outputs.android || steps.force-true.outputs.android }}
-    steps:
-      - name: Harden runner
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
-        with:
-          egress-policy: audit
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          fetch-depth: 1
-          persist-credentials: false
-      - name: Filter
-        if: github.event_name == 'pull_request'
-        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
-        id: filter
-        with:
-          filters: |
-            android:
-              - 'ui/android/**'
-              - 'branding/**'
-              - 'ui/static/**'
-              - 'ui/capacitor.config.ts'
-              - 'pnpm-lock.yaml'
-              - '.github/workflows/android-instrumented.yml'
-      - name: Default-true (non-PR events)
-        if: github.event_name != 'pull_request'
-        id: force-true
-        run: echo "android=true" >> "$GITHUB_OUTPUT"
-
   emulator:
     name: Espresso on Pixel 7 / API 34
-    needs: changes
-    runs-on: macos-15
+    runs-on: ubuntu-latest
     timeout-minutes: 40
-    if: needs.changes.outputs.android == 'true'
     permissions:
       contents: read
-      id-token: write # codecov OIDC upload
+      id-token: write
     steps:
-      - name: Harden runner
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
-        with:
-          egress-policy: audit
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
 
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -100,7 +43,7 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Setup mise (Node + pnpm)
+      - name: Setup mise
         uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
         with:
           experimental: true
@@ -128,7 +71,7 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-pixel-7-api-34
+          key: avd-pixel-7-api-34-v1
 
       - name: Run instrumented tests on Pixel 7 / API 34
         uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.37.0
@@ -137,9 +80,6 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_7
-          avd-name: pixel-7-api-34
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          disable-animations: true
           script: |
             cd ui/android
             ./gradlew :app:connectedDebugAndroidTest :app:jacocoTestReport --no-daemon --stacktrace
@@ -151,7 +91,7 @@ jobs:
           files: ui/android/app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
           flags: android
           name: android-instrumented
-          fail_ci_if_error: false # additive coverage; test.yml's android job is the gate
+          fail_ci_if_error: false
           use_oidc: true
           verbose: true
 
