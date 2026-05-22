@@ -1098,24 +1098,24 @@ jobs:
   # earlier and added cost without diagnosable benefit). AVD layer is
   # cached so the cold boot is amortised across runs.
   # ─────────────────────────────────────────────────────────────────
-  # Android -- Espresso (instrumented) -- L.1 bisect, step 4
+  # Android -- Espresso (instrumented) -- L.1 bisect, REVERTED to step 2
   # ─────────────────────────────────────────────────────────────────
   # Bisect trail:
   #   Step 1 (0f4ead4): bare echo job -- workflow BOOTED.
   #   Step 2 (568548d): full setup steps -- workflow BOOTED, 9 jobs spawned.
-  #   Step 3 (96bdf71): added `reactivecircus/android-emulator-runner@SHA`
-  #     action call -- workflow startup_failed (confirmed on 26316374520).
-  #     The action call IS the antagonist.
-  #   Step 4 (THIS commit): replace the third-party action with manual
-  #     sdkmanager + AVD create + emulator boot via the SDK's own
-  #     `cmdline-tools` binary. No external action; same effect at
-  #     runtime. The android-actions/setup-android@SHA bootstrap is
-  #     needed first to install cmdline-tools + the avdmanager binary.
+  #   Step 3 (96bdf71): added `reactivecircus/android-emulator-runner` --
+  #     startup_failure returned.
+  #   Step 4 (19dadc0): replaced with manual sdkmanager + emulator boot --
+  #     ALSO startup_failure. So the antagonist may not be the
+  #     emulator-runner action per se -- could be the workflow_dispatch
+  #     input change, or a `setup-android@SHA` resolution failure.
+  # Reverting to the step-2 shape (echo probe) to confirm baseline still
+  # boots, then bisecting workflow_dispatch input separately.
   android-emulator:
     name: Android — Espresso (instrumented)
     needs: changes
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 10
     if: needs.changes.outputs.android == 'true'
     permissions:
       contents: read
@@ -1181,80 +1181,11 @@ jobs:
             ~/.android/adb*
           key: avd-pixel-7-api-34-v1
 
-      - name: Setup Android SDK + system image
-        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
-        with:
-          packages: 'platform-tools platforms;android-34 build-tools;34.0.0 system-images;android-34;google_apis;x86_64 emulator'
-
-      - name: Create + boot AVD (Pixel 7 / API 34, no third-party action)
+      - name: L.1 probe — bisect re-check (revert to known-booting step 2)
         run: |
-          set -euo pipefail
-          echo "no" | avdmanager create avd \
-            --name pixel-7-api-34 \
-            --device 'pixel_7' \
-            --package 'system-images;android-34;google_apis;x86_64' \
-            --force
-          # Boot emulator headless in the background; wait for boot
-          # completion via adb's getprop sys.boot_completed.
-          "$ANDROID_HOME"/emulator/emulator \
-            -avd pixel-7-api-34 \
-            -no-window -no-audio -no-boot-anim -no-snapshot \
-            -gpu swiftshader_indirect \
-            -camera-back none \
-            -accel on > /tmp/emulator.log 2>&1 &
-          EMU_PID=$!
-          echo "EMU_PID=$EMU_PID" >> "$GITHUB_ENV"
-          # Wait up to 8 min for boot completion -- API 34 cold-boots
-          # in ~3-5 min on ubuntu-latest runners with KVM.
-          adb wait-for-device
-          BOOTED=
-          for _ in $(seq 1 96); do
-            if [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; then
-              BOOTED=1
-              break
-            fi
-            sleep 5
-          done
-          if [ -z "$BOOTED" ]; then
-            echo "::error::Emulator failed to reach sys.boot_completed=1 within 8min"
-            tail -100 /tmp/emulator.log || true
-            exit 1
-          fi
-          adb shell input keyevent 82 || true
-          adb devices
-
-      - name: Run instrumented tests on Pixel 7 / API 34
-        working-directory: ui/android
-        run: ./gradlew :app:connectedDebugAndroidTest :app:jacocoTestReport --no-daemon --stacktrace
-
-      - name: Shut down emulator
-        if: always()
-        run: |
-          adb -e emu kill || true
-          # Belt-and-braces: if the EMU_PID is still running, SIGTERM.
-          if [ -n "${EMU_PID:-}" ] && kill -0 "$EMU_PID" 2>/dev/null; then
-            kill -TERM "$EMU_PID" || true
-          fi
-
-      - name: Upload instrumented coverage to Codecov (android flag, additive)
-        if: always() && hashFiles('ui/android/app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml') != ''
-        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
-        with:
-          files: ui/android/app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
-          flags: android
-          name: android-instrumented
-          fail_ci_if_error: false # additive; the JVM android job is the gate
-          use_oidc: true
-          verbose: true
-
-      - name: Upload instrumented test reports on failure
-        if: always() && hashFiles('ui/android/app/build/reports/androidTests/connected/**') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: android-instrumented-reports-${{ github.run_id }}
-          path: ui/android/app/build/reports/androidTests/connected/
-          retention-days: 14
-          if-no-files-found: ignore
+          echo "L.1 step-2 echo probe restored to confirm workflow boot."
+          echo "If THIS commit boots, the antagonist lives in step-3 or step-4 changes."
+          find ui/android -maxdepth 1 -mindepth 1 -printf '%y %f\n' | head
 
   # ─────────────────────────────────────────────────────────────────
   # Lost Pixel (visual regression) -- own job, distinct required check
