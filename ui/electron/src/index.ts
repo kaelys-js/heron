@@ -1,31 +1,20 @@
-/** Electron main: spawns embedded SvelteKit server (random port,
- *  injects URL via preload's window.__HERON__), advertises via mDNS
- *  (`_heron._tcp.local`), waits for /api/health, creates BrowserWindow,
- *  installs AppMenuBar + tray, wires heron:// deep links to
- *  mainWindow.loadURL, runs electron-updater against GitHub Releases. */
+/** Electron main: spawns embedded SvelteKit server, advertises via
+ *  mDNS, waits for /api/health, creates BrowserWindow, installs
+ *  AppMenuBar + tray, wires deep links, runs electron-updater.
+ *
+ *  Bootstrap orchestrator: heavy lifting lives in extracted, unit-
+ *  tested modules (server-process, deep-links, error-routing, net-
+ *  polling, tray). e2e-electron/ exercises the orchestration end-
+ *  to-end against the packaged app. */
 import type { CapacitorElectronConfig } from '@capacitor-community/electron';
 import {
   getCapacitorElectronConfig,
   setupElectronDeepLinking,
 } from '@capacitor-community/electron';
-import {
-  app,
-  BrowserWindow,
-  Menu,
-  Notification,
-  Tray,
-  dialog,
-  shell,
-  ipcMain,
-  net,
-} from 'electron';
+import { app, BrowserWindow, Menu, Notification, dialog, shell, ipcMain, net } from 'electron';
 import electronIsDev from 'electron-is-dev';
 import unhandled from 'electron-unhandled';
 import { autoUpdater } from 'electron-updater';
-import { fork, ChildProcess } from 'node:child_process';
-import { createServer } from 'node:net';
-import { request as httpRequest } from 'node:http';
-import { existsSync } from 'node:fs';
 import path from 'node:path';
 
 import { ElectronCapacitorApp, setupContentSecurityPolicy, setupReloadWatcher } from './setup';
@@ -33,148 +22,32 @@ import { buildAppMenu } from './app-menu';
 import { DesktopTray } from './tray';
 import { startMdnsAdvertise } from './mdns';
 import { BRAND } from './brand';
-
-unhandled({
-  logger: (e: Error) => {
-    // Forward unhandled main-process errors to the renderer via IPC so
-    // the SvelteKit error-reporter funnels them into the same Issues
-    // store everything else uses. Falls back to console if no window.
-    console.error('[main:unhandled]', e);
-    try {
-      const win = state.mainWindow;
-      if (win && !win.isDestroyed()) {
-        win.webContents.send(`${BRAND.name}:main-error`, {
-          message: e?.message ?? String(e),
-          stack: e?.stack,
-          source: 'electron-main',
-        });
-      }
-    } catch {
-      /* swallow secondary errors */
-    }
-  },
-  showDialog: false, // we route to the in-app Issues system instead
-});
-
-// Catch promise rejections in the main process too (electron-unhandled
-// only covers uncaught exceptions by default).
-process.on('unhandledRejection', (reason) => {
-  const err = reason instanceof Error ? reason : new Error(String(reason));
-  console.error('[main:unhandledRejection]', err);
-  try {
-    state.mainWindow?.webContents.send(`${BRAND.name}:main-error`, {
-      message: err.message,
-      stack: err.stack,
-      source: 'electron-main-rejection',
-    });
-  } catch {}
-});
-
-const capacitorFileConfig: CapacitorElectronConfig = getCapacitorElectronConfig();
+import { startEmbeddedServer, stopEmbeddedServer, type ServerHandle } from './server-process';
+import { resolveDeepLink } from './deep-links';
+import { buildUnhandledErrorHandler, buildUnhandledRejectionHandler } from './error-routing';
+import { startNetPoller } from './net-polling';
 
 /** State held by the main process. */
 type AppState = {
-  serverProcess?: ChildProcess;
-  serverPort?: number;
-  serverUrl?: string;
+  server?: ServerHandle;
   tray?: DesktopTray;
   mainWindow?: BrowserWindow;
+  stopNetPoller?: () => void;
 };
 const state: AppState = {};
 
-/** Find a free TCP port the kernel will let us bind to. */
-function findFreePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const srv = createServer();
-    srv.unref();
-    srv.on('error', reject);
-    srv.listen(0, () => {
-      const port = (srv.address() as any)?.port;
-      srv.close(() => resolve(port));
-    });
-  });
-}
+// ── Error routing (forward main-process errors to the renderer) ───
+const errorOpts = {
+  brandName: BRAND.name,
+  getMainWindow: () => state.mainWindow,
+};
+unhandled({
+  logger: buildUnhandledErrorHandler(errorOpts),
+  showDialog: false,
+});
+process.on('unhandledRejection', buildUnhandledRejectionHandler(errorOpts));
 
-/** Probe a URL -- returns true if /api/health returns 2xx within timeoutMs. */
-function probeHealth(url: string, timeoutMs = 1000): Promise<boolean> {
-  return new Promise((resolve) => {
-    const u = new URL('/api/health', url);
-    const req = httpRequest(
-      { hostname: u.hostname, port: u.port, path: u.pathname, method: 'GET', timeout: timeoutMs },
-      (res) => {
-        resolve((res.statusCode ?? 0) >= 200 && res.statusCode! < 300);
-        res.resume();
-      },
-    );
-    req.on('error', () => resolve(false));
-    req.on('timeout', () => {
-      req.destroy();
-      resolve(false);
-    });
-    req.end();
-  });
-}
-
-/** Poll /api/health until it answers or we hit the timeout. */
-async function waitForServer(url: string, timeoutMs = 15000): Promise<boolean> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (await probeHealth(url, 500)) return true;
-    await new Promise((r) => setTimeout(r, 250));
-  }
-  return false;
-}
-
-/**
- * Spawn the embedded Node server. In dev mode (electronIsDev) we don't
- * spawn anything -- we expect the user to run `pnpm dev` separately and
- * the resolver to discover localhost:5173. In prod (packaged app) we
- * spawn `build/index.js` (adapter-node output) on a random free port.
- */
-async function startEmbeddedServer(): Promise<string | undefined> {
-  if (electronIsDev) {
-    // Resolver will hit localhost:5173 via the dev fallback.
-    console.log('[main] dev mode — skipping embedded server spawn');
-    return undefined;
-  }
-  const buildEntry = path.join(__dirname, '..', '..', 'app', 'server', 'index.js');
-  if (!existsSync(buildEntry)) {
-    console.warn(
-      `[main] embedded server entry not found at ${buildEntry} — falling back to resolver discovery`,
-    );
-    return undefined;
-  }
-  const port = await findFreePort();
-  state.serverPort = port;
-  state.serverProcess = fork(buildEntry, [], {
-    env: {
-      ...process.env,
-      PORT: String(port),
-      HOST: '127.0.0.1',
-      ORIGIN: `http://127.0.0.1:${port}`,
-    },
-    silent: false,
-    stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
-  });
-  state.serverProcess.on('exit', (code) => {
-    console.warn(`[main] embedded server exited with code ${code}`);
-    state.serverProcess = undefined;
-    if (code !== 0 && state.mainWindow && !state.mainWindow.isDestroyed()) {
-      dialog.showErrorBox(
-        `${BRAND.displayName} backend stopped`,
-        `The embedded server exited unexpectedly (code ${code}). Restart the app.`,
-      );
-    }
-  });
-  const url = `http://127.0.0.1:${port}`;
-  const healthy = await waitForServer(url, 15000);
-  if (!healthy) {
-    throw new Error(`Embedded server failed to become healthy at ${url} within 15s`);
-  }
-  state.serverUrl = url;
-  console.log(`[main] embedded server up at ${url}`);
-  return url;
-}
+const capacitorFileConfig: CapacitorElectronConfig = getCapacitorElectronConfig();
 
 const myCapacitorApp = new ElectronCapacitorApp(capacitorFileConfig);
 
@@ -189,7 +62,7 @@ if (electronIsDev) {
 }
 
 // ipcMain bridge -- preload calls these to interact with the main process.
-ipcMain.handle(`${BRAND.name}:get-server-url`, () => state.serverUrl);
+ipcMain.handle(`${BRAND.name}:get-server-url`, () => state.server?.url);
 ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; body: string }) => {
   if (Notification.isSupported()) {
     const n = new Notification({ title: opts.title, body: opts.body });
@@ -203,12 +76,10 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
   await app.whenReady();
 
   // Windows: bind toast notifications to the right app. Without an AUMID
-  // Windows shows toasts as "electron.exe" rather than Heron.
-  // Must run BEFORE any new Notification() call.
+  // Windows shows toasts as "electron.exe" rather than the brand display
+  // name. Must run BEFORE any new Notification() call.
   if (process.platform === 'win32') {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { BRAND } = require('./brand') as typeof import('./brand');
       app.setAppUserModelId(BRAND.bundleId);
     } catch {
       /* non-fatal -- toasts still show, just with the wrong app label */
@@ -217,17 +88,35 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
 
   // 1. Embedded server
   try {
-    await startEmbeddedServer();
+    if (!electronIsDev) {
+      const entry = path.join(__dirname, '..', '..', 'app', 'server', 'index.js');
+      const handle = await startEmbeddedServer({ entryPath: entry });
+      if (handle) {
+        state.server = handle;
+        // Surface non-zero exits to the user.
+        handle.process.on('exit', (code) => {
+          console.warn(`[main] embedded server exited with code ${code}`);
+          state.server = undefined;
+          if (code !== 0 && state.mainWindow && !state.mainWindow.isDestroyed()) {
+            dialog.showErrorBox(
+              `${BRAND.displayName} backend stopped`,
+              `The embedded server exited unexpectedly (code ${code}). Restart the app.`,
+            );
+          }
+        });
+      } else {
+        console.warn('[main] embedded server entry not found -- falling back to resolver');
+      }
+    }
   } catch (e) {
     console.error('[main] failed to start embedded server', e);
     // Don't bail -- the WebView's resolver may still find a remote backend.
   }
 
   // 2. mDNS advertise (only if we have an embedded server). Fire and
-  // forget -- startMdnsAdvertise is async (dynamic import + try/catch
-  // internal) so callers can ignore the returned Promise safely.
-  if (state.serverPort) {
-    startMdnsAdvertise({ name: BRAND.name, port: state.serverPort }).catch((e) => {
+  // forget -- startMdnsAdvertise handles its own try/catch internally.
+  if (state.server?.port) {
+    startMdnsAdvertise({ name: BRAND.name, port: state.server.port }).catch((e) => {
       console.warn('[main] mDNS advertise failed', e);
     });
   }
@@ -238,9 +127,9 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
   state.mainWindow = myCapacitorApp.getMainWindow();
 
   // Inject embedded URL into the WebView via window.__HERON__
-  if (state.serverUrl && state.mainWindow) {
+  if (state.server && state.mainWindow) {
     state.mainWindow.webContents
-      .executeJavaScript(`window.__HERON__ = { embeddedUrl: ${JSON.stringify(state.serverUrl)} };`)
+      .executeJavaScript(`window.__HERON__ = { embeddedUrl: ${JSON.stringify(state.server.url)} };`)
       .catch(() => {});
   }
 
@@ -249,14 +138,14 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
     buildAppMenu({
       onPreferences: () =>
         state.mainWindow?.webContents.loadURL(
-          (state.serverUrl ?? 'http://localhost:5173') + '/settings',
+          (state.server?.url ?? 'http://localhost:5173') + '/settings',
         ),
       onAbout: () => {
         dialog.showMessageBox({
           type: 'info',
           title: `About ${BRAND.displayName}`,
           message: BRAND.displayName,
-          detail: `Version: ${app.getVersion()}\nBundle: ${BRAND.bundleId}\nBackend: ${state.serverUrl ?? 'remote'}`,
+          detail: `Version: ${app.getVersion()}\nBundle: ${BRAND.bundleId}\nBackend: ${state.server?.url ?? 'remote'}`,
         });
       },
       onOpenDocs: () => shell.openExternal(BRAND.repoUrl),
@@ -266,53 +155,42 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
 
   // 5. Tray (macOS Menu Bar / Windows / Linux system tray)
   state.tray = new DesktopTray({
-    getBackendUrl: () => state.serverUrl ?? 'http://localhost:5173',
+    getBackendUrl: () => state.server?.url ?? 'http://localhost:5173',
     onOpen: () => {
       state.mainWindow?.show();
       state.mainWindow?.focus();
     },
-    // Per-section deep links: bring the window forward and navigate
-    // the WebView to the requested path. Falls back to "show" if the
-    // window doesn't exist yet.
     onOpenPath: (subPath: string) => {
       if (!state.mainWindow) return;
       state.mainWindow.show();
       state.mainWindow.focus();
-      const base = state.serverUrl ?? 'http://localhost:5173';
-      try {
-        const u = new URL(subPath, base);
-        void state.mainWindow.loadURL(u.toString());
-      } catch {
-        /* invalid subPath -- leave the window where it was */
-      }
+      const url = resolveDeepLink(subPath, state.server?.url ?? 'http://localhost:5173');
+      if (url) void state.mainWindow.loadURL(url);
     },
-    // When the user enables "Menu Bar Only", close-window must NOT quit
-    // (otherwise re-toggling has nothing to show). We track the choice
-    // and `window-all-closed` honours it below.
-    onSetDockVisible: (_visible: boolean) => {
-      /* state currently tracked in tray.ts; if we add behaviours that
-         depend on it elsewhere, surface via state.menuBarOnly = !_visible */
+    onSetDockVisible: () => {
+      /* state currently tracked in tray.ts; no cross-module wiring needed yet */
     },
     onQuit: () => app.quit(),
   });
   state.tray.start();
 
-  // 6. Auto-update
+  // 6. Auto-update against GitHub Releases.
   autoUpdater.checkForUpdatesAndNotify();
 
-  // 7. Network status monitoring -- Electron exposes `net.online` as a
-  //    static getter that reflects Chromium's connectivity heuristic.
-  //    We poll it every 5s and push changes to the renderer; the
-  //    online-status store in the WebView listens for `<brand>:net-status`.
-  let lastOnline = net.isOnline();
-  setInterval(() => {
-    const now = net.isOnline();
-    if (now === lastOnline) return;
-    lastOnline = now;
-    try {
-      state.mainWindow?.webContents.send(`${BRAND.name}:net-status`, { online: now });
-    } catch {}
-  }, 5000);
+  // 7. Network status monitoring -- Electron exposes `net.isOnline()` as
+  // a static getter that reflects Chromium's connectivity heuristic. The
+  // poller fires onChange only on transition (dedup); the renderer
+  // listens for `<brand>:net-status` and updates the online-status store.
+  state.stopNetPoller = startNetPoller({
+    isOnline: () => net.isOnline(),
+    onChange: (online) => {
+      try {
+        state.mainWindow?.webContents.send(`${BRAND.name}:net-status`, { online });
+      } catch {
+        /* swallow secondary errors */
+      }
+    },
+  });
 })();
 
 app.on('window-all-closed', () => {
@@ -337,13 +215,11 @@ app.on('before-quit', () => {
   cleanup();
 });
 
-function cleanup() {
+function cleanup(): void {
   state.tray?.stop();
-  if (state.serverProcess && !state.serverProcess.killed) {
-    state.serverProcess.kill('SIGTERM');
-    // Give it 2s to clean up, then SIGKILL.
-    setTimeout(() => {
-      if (state.serverProcess && !state.serverProcess.killed) state.serverProcess.kill('SIGKILL');
-    }, 2000);
+  state.stopNetPoller?.();
+  if (state.server) {
+    stopEmbeddedServer(state.server);
+    state.server = undefined;
   }
 }
