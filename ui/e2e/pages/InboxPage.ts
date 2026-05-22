@@ -40,7 +40,12 @@ export class InboxPage {
 
   async filterByStatus(status: string): Promise<void> {
     await this.statusFilter.click();
-    await this.page.getByRole('option', { name: new RegExp(status, 'i') }).click();
+    // Escape regex metacharacters in the caller-supplied status string.
+    // Some canonical statuses contain "(" / "." / "+" (e.g. "Offer (open)"),
+    // which would otherwise be interpreted as regex syntax and silently
+    // mis-match the option.
+    const escaped = status.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    await this.page.getByRole('option', { name: new RegExp(escaped, 'i') }).click();
   }
 
   async countRows(): Promise<number> {

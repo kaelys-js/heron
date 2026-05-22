@@ -18,29 +18,34 @@ test.describe('Settings', () => {
   test('theme toggle persists across reload', async ({ authenticatedPage }) => {
     const settings = new SettingsPage(authenticatedPage);
     await settings.gotoProfile();
-    // Capture the current data-theme value (light or dark).
-    const before = await authenticatedPage
-      .locator('html')
-      .getAttribute('data-theme')
-      .catch(() => null);
-    // Toggle only if a theme button exists; not every viewport surfaces
-    // one and we don't want a false-fail.
-    const visible = await settings.themeToggle.isVisible().catch(() => false);
-    if (!visible) return;
+    // The theme toggle MUST be present on /profile -- it's the canonical
+    // place users change theme. Failing this assertion is a real bug.
+    await expect(settings.themeToggle).toBeVisible({ timeout: 5000 });
+    // Capture the initial theme. Either data-theme attr OR .dark class
+    // -- the layout uses both depending on tw mode-watcher version.
+    const readTheme = (): Promise<string | null> =>
+      authenticatedPage.evaluate(() => {
+        const el = document.documentElement;
+        return el.getAttribute('data-theme') ?? (el.classList.contains('dark') ? 'dark' : 'light');
+      });
+    const before = await readTheme();
     await settings.toggleTheme();
-    const after = await authenticatedPage
-      .locator('html')
-      .getAttribute('data-theme')
-      .catch(() => null);
-    if (before && after) {
-      expect(after).not.toBe(before);
-    }
-    // Reload + assert the new theme stuck.
+    // Wait for the DOM to settle before asserting the flip.
+    await authenticatedPage.waitForFunction(
+      (prev) => {
+        const el = document.documentElement;
+        const cur =
+          el.getAttribute('data-theme') ?? (el.classList.contains('dark') ? 'dark' : 'light');
+        return cur !== prev;
+      },
+      before,
+      { timeout: 5000 },
+    );
+    const after = await readTheme();
+    expect(after).not.toBe(before);
+    // Persistence: reload + assert the new theme stuck.
     await authenticatedPage.reload();
-    const persisted = await authenticatedPage
-      .locator('html')
-      .getAttribute('data-theme')
-      .catch(() => null);
-    if (after && persisted) expect(persisted).toBe(after);
+    const persisted = await readTheme();
+    expect(persisted).toBe(after);
   });
 });

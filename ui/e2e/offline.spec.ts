@@ -11,30 +11,33 @@ import { test, expect } from './fixtures/auth-fixtures';
 import { mockOffline, restoreOnline } from './_helpers/network-mocks';
 
 test.describe('Offline mode', () => {
-  test('offline indicator surfaces when the browser goes offline', async ({
+  test('offline indicator or unreachable-overlay surfaces when offline', async ({
     authenticatedPage,
   }) => {
     await authenticatedPage.goto('/inbox');
-    // Wait for initial render.
     await authenticatedPage.waitForLoadState('domcontentloaded');
-    // Flip the context to offline + abort api requests.
     await mockOffline(authenticatedPage);
-    // Trigger the offline event the same way the browser does on a
-    // real disconnect -- some Chromium versions don't fire it from
+    // Trigger the offline event the same way the browser does on a real
+    // disconnect -- some Chromium versions don't fire it from
     // setOffline alone.
     await authenticatedPage.evaluate(() => window.dispatchEvent(new Event('offline')));
-    // The OfflineIndicator should appear somewhere in the layout.
-    const indicator = authenticatedPage.locator(
-      '[data-testid="offline-indicator"], [aria-label*="offline" i]',
-    );
-    // Best-effort: the component might be hidden when the user is
-    // already past the auth gate + the bell holds the state. Don't
-    // fail if absent -- just verify nothing crashed.
-    const visible = await indicator
+    // Three valid surfaces for an offline signal (any one is sufficient):
+    //   - OfflineIndicator badge with data-testid="offline-indicator"
+    //   - aria-label containing "offline"
+    //   - BackendUnreachableOverlay with data-testid="backend-unreachable"
+    // Assert AT LEAST ONE is visible -- a real regression where every
+    // offline-aware component goes dark must fail this test.
+    const indicatorVisible = await authenticatedPage
+      .locator('[data-testid="offline-indicator"], [aria-label*="offline" i]')
       .first()
-      .isVisible({ timeout: 3000 })
+      .isVisible({ timeout: 5000 })
       .catch(() => false);
-    expect(visible || true).toBe(true); // smoke: page didn't crash
+    const overlayVisible = await authenticatedPage
+      .locator('[data-testid="backend-unreachable"]')
+      .first()
+      .isVisible({ timeout: 5000 })
+      .catch(() => false);
+    expect(indicatorVisible || overlayVisible).toBe(true);
     await restoreOnline(authenticatedPage);
   });
 

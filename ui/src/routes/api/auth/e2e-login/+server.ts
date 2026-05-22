@@ -72,6 +72,15 @@ export const POST = async ({ request }: { request: Request }) => {
 
   return new Response(
     JSON.stringify({ ok: true, userId: E2E_USER_ID, token, expiresAt: expiresAt.toISOString() }),
-    { status: 200, headers: { 'content-type': 'application/json' } },
+    {
+      status: 200,
+      headers: {
+        'content-type': 'application/json',
+        // Token material must NEVER land in a shared cache / CDN /
+        // browser store. no-store covers every cache tier.
+        'cache-control': 'no-store, no-cache, must-revalidate, max-age=0',
+        pragma: 'no-cache',
+      },
+    },
   );
 };

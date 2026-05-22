@@ -22,10 +22,16 @@ test.describe('Autopilot', () => {
   test('autopilot status badge is present', async ({ authenticatedPage }) => {
     const autopilot = new AutopilotPage(authenticatedPage);
     await autopilot.goto();
-    // The badge tells the user "enabled" / "paused" / "not configured".
-    // Either it renders OR the route returns to /inbox if autopilot is
-    // not yet bootstrapped. Tolerate both.
+    // Two valid outcomes:
+    //   - /autopilot rendered: the statusBadge MUST be visible
+    //     (regression check -- a missing badge is a real bug)
+    //   - /inbox: autopilot was not bootstrapped, the redirect is the
+    //     designed-fallback path
     const url = authenticatedPage.url();
-    expect(url).toMatch(/\/(autopilot|inbox)/);
+    if (url.includes('/autopilot')) {
+      await expect(autopilot.statusBadge).toBeVisible({ timeout: 5000 });
+    } else {
+      expect(url).toMatch(/\/inbox/);
+    }
   });
 });

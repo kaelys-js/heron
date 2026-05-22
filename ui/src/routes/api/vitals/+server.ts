@@ -25,7 +25,14 @@ export const POST = async ({ request }: { request: Request }) => {
       headers: { 'content-type': 'application/json' },
     });
   }
-  if (!body || typeof body.name !== 'string' || typeof body.value !== 'number') {
+  if (
+    !body ||
+    typeof body.name !== 'string' ||
+    typeof body.value !== 'number' ||
+    !Number.isFinite(body.value)
+  ) {
+    // `typeof number` accepts NaN + Infinity. Use Number.isFinite to
+    // reject them -- a NaN LCP would corrupt downstream trend math.
     return new Response(JSON.stringify({ error: 'invalid-shape' }), {
       status: 400,
       headers: { 'content-type': 'application/json' },

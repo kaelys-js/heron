@@ -70,7 +70,9 @@ async function main() {
   const srcRaw = readFileSync(SRC_CONFIG, 'utf8');
   const src = JSON.parse(srcRaw);
   const token = await mintBearerToken();
-  console.error(`  ✓ minted token (${token.slice(0, 8)}...)`);
+  // Don't log token material -- even partial prefixes increase the
+  // secret-exposure surface in CI logs.
+  console.error('  ✓ minted token');
   const runtime = injectExtraHeaders(src, token);
   writeFileSync(DST_CONFIG, JSON.stringify(runtime, null, 2));
   console.error(`  ✓ wrote ${DST_CONFIG.replace(REPO_ROOT + '/', '')}`);

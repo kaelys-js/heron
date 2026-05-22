@@ -111,19 +111,36 @@ jobs:
           HERON_E2E_DATA_DIR: /tmp/heron-lighthouse
         run: |
           set -euo pipefail
+          # Cleanup runs unconditionally -- without the EXIT trap, a
+          # readiness-poll timeout would leave the preview process
+          # orphaned (and a subsequent step's port-binding could fail).
+          PREVIEW_PID=""
+          cleanup() {
+            if [ -n "${PREVIEW_PID:-}" ]; then
+              kill "${PREVIEW_PID}" 2>/dev/null || true
+              wait "${PREVIEW_PID}" 2>/dev/null || true
+            fi
+          }
+          trap cleanup EXIT
           # Boot the preview server in the background just long enough
           # to mint the token. HERON_DATA_DIR is exported above so the
           # spawned `vite preview` reads from the seeded dir.
           pnpm --filter ui exec vite preview --port 4274 &
           PREVIEW_PID=$!
-          # Wait for readiness -- poll /api/health for up to 30s.
+          # Poll /api/health for up to 30s; explicit fail if it never
+          # comes up so the inject script doesn't sit forever.
+          ready=""
           for _ in $(seq 1 30); do
-            if curl -sf http://localhost:4274/api/health > /dev/null 2>&1; then break; fi
+            if curl -sf http://localhost:4274/api/health > /dev/null 2>&1; then
+              ready="1"; break
+            fi
             sleep 1
           done
+          if [ -z "${ready}" ]; then
+            echo "::error::preview server never reached /api/health within 30s"
+            exit 1
+          fi
           LIGHTHOUSE_PORT=4274 node scripts/system/inject-lighthouse-auth.mjs
-          kill $PREVIEW_PID 2>/dev/null || true
-          wait $PREVIEW_PID 2>/dev/null || true
 
       - name: Run Lighthouse CI
         id: lhci

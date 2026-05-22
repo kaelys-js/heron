@@ -261,6 +261,7 @@
             <div class="flex items-center gap-3 flex-wrap">
               <h2 class="text-base font-semibold">Master switch</h2>
               <span
+                data-testid="autopilot-status"
                 class={cn(
                   'text-[11px] uppercase tracking-wider font-medium',
                   config.globalEnabled ? 'text-emerald-300' : 'text-zinc-400',

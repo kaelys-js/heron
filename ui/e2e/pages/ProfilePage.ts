@@ -30,10 +30,11 @@ export class ProfilePage {
   async deleteProfile(slug: string): Promise<void> {
     const row = this.profileRows.filter({ hasText: slug });
     await row.getByRole('button', { name: /delete|remove/i }).click();
-    // Confirm dialog -- assert it appears + click confirm
-    await this.page
-      .getByRole('button', { name: /confirm|yes|delete/i })
-      .last()
-      .click();
+    // The confirmation is rendered INLINE within the targeted row (not
+    // as a page-level dialog). Scoping the confirm click to `row`
+    // prevents clicking another profile's Delete button when multiple
+    // are armed. The exact button label is "Delete" -- match exactly
+    // to avoid the danger-only initial Delete being re-clicked.
+    await row.getByRole('button', { name: /^delete$/i }).click();
   }
 }

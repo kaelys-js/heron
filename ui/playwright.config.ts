@@ -46,10 +46,11 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: CI,
   retries: CI ? 2 : 0,
-  // Parallel workers: CI shards the e2e run across 4 jobs (matrix.shard
-  // = [1..4] in test.yml), so each job runs its slice with 2 workers
-  // = 8x the throughput of the prior 1-worker config. Local dev keeps
-  // the Playwright default (CPU/2) for snappy reruns.
+  // Parallel workers: CI runs all 5 browser projects in a single job
+  // with workers=2 (no shard split today -- the test.yml E2E step is
+  // monolithic). Local dev keeps the Playwright default (CPU/2) for
+  // snappy reruns. If we shard across matrix runners later, swap to
+  // `workers: 4` and add `--shard ${{ matrix.shard }}/4` in test.yml.
   workers: CI ? 2 : undefined,
   reporter: CI ? [['github'], ['html', { open: 'never' }]] : 'list',
 

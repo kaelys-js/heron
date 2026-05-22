@@ -7,14 +7,19 @@ import { RuntimesPage } from './pages/RuntimesPage';
 import { checkA11y } from './_helpers/a11y';
 
 test.describe('Runtimes', () => {
-  test('runtimes page renders + a11y-clean', async ({ authenticatedPage }) => {
+  test('runtimes page renders + a11y-clean + lists all 6 CLI runtimes', async ({
+    authenticatedPage,
+  }) => {
     const runtimes = new RuntimesPage(authenticatedPage);
     await runtimes.goto();
     await expect(authenticatedPage).toHaveURL(/\/runtimes/);
-    // All 6 CLI options should be enumerated somewhere on the page.
+    // The six-runtime contract: lib/config/cli.ts enumerates these
+    // exact values. The /runtimes page must mention all six -- removing
+    // any one without updating the contract is a regression.
     const body = await authenticatedPage.locator('body').textContent();
-    // At least claude must be mentioned (the default).
-    expect(body).toMatch(/claude/i);
+    for (const cli of ['claude', 'codex', 'gemini', 'copilot', 'opencode', 'qwen']) {
+      expect(body, `expected /runtimes body to mention ${cli}`).toMatch(new RegExp(cli, 'i'));
+    }
     await checkA11y(authenticatedPage);
   });
 });
