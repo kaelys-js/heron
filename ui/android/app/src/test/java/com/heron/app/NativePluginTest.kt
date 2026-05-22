@@ -36,7 +36,9 @@ package com.heron.app
 import android.content.Context
 import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appsearch.app.AppSearchSession
 import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 import androidx.test.core.app.ApplicationProvider
 import com.getcapacitor.Bridge
 import com.getcapacitor.JSArray
@@ -374,6 +376,46 @@ class NativePluginTest {
         invokeHandleOnDestroy(pluginWithActivity)
     }
 
+    @Test
+    fun `biometricCallback onAuthenticationSucceeded resolves with ok=true`() {
+        // Drive the success branch of the extracted callback directly.
+        // Without this test the AuthenticationCallback's
+        // onAuthenticationSucceeded was a per-CLASS dark spot (no live
+        // BiometricPrompt under Robolectric).
+        val pc = call()
+        val resolved = slot<JSObject>()
+        val callback = plugin.biometricCallback(pc)
+        val mockResult = mockk<BiometricPrompt.AuthenticationResult>(relaxed = true)
+        callback.onAuthenticationSucceeded(mockResult)
+        verify { pc.resolve(capture(resolved)) }
+        assertTrue("expected ok=true on succeed", resolved.captured.getBoolean("ok"))
+    }
+
+    @Test
+    fun `biometricCallback onAuthenticationError resolves with reason + message`() {
+        val pc = call()
+        val resolved = slot<JSObject>()
+        val callback = plugin.biometricCallback(pc)
+        callback.onAuthenticationError(13, "Cancelled by user")
+        verify { pc.resolve(capture(resolved)) }
+        assertFalse("expected ok=false on error", resolved.captured.getBoolean("ok"))
+        assertEquals("error-13", resolved.captured.getString("reason"))
+        assertEquals("Cancelled by user", resolved.captured.getString("message"))
+    }
+
+    @Test
+    fun `biometricCallback onAuthenticationFailed does NOT resolve`() {
+        // The "failed" event fires per rejected attempt (e.g. wrong
+        // finger) but the prompt keeps running -- only onError/onSuccess
+        // are terminal. Assert no terminal call lands.
+        val pc = call()
+        val callback = plugin.biometricCallback(pc)
+        callback.onAuthenticationFailed()
+        verify(exactly = 0) { pc.resolve(any()) }
+        verify(exactly = 0) { pc.reject(any<String>()) }
+        verify(exactly = 0) { pc.reject(any<String>(), any<String>()) }
+    }
+
     /** Build a NativePlugin whose bridge returns a real AppCompatActivity. */
     private fun makePluginWithActivity(activity: AppCompatActivity): NativePlugin {
         val pluginInstance = NativePlugin()
@@ -485,15 +527,15 @@ class NativePluginTest {
             Dispatchers.setMain(testDispatcher)
             try {
                 injectTestDispatcher(plugin, testDispatcher)
+                injectFailingAppSearch(plugin)
                 val jobs = JSArray()
                 val pc = call(getArray = mapOf("jobs" to jobs))
                 plugin.indexJobs(pc)
                 // Synchronous-portion contract: no invalid-args reject.
                 verify(exactly = 0) { pc.reject("invalid-args", any<String>()) }
-                // Drain every suspended continuation. After this the
-                // coroutine has either resolved (AppSearch happy path) or
-                // hit the catch branch + rejected (Robolectric backing
-                // broken). Either is a covered outcome.
+                // Drain every suspended continuation. With the failing
+                // AppSearch mock the coroutine resolves through the catch
+                // branch (covered) and pc.reject fires via withContext(Main).
                 advanceUntilIdle()
                 verifyOneTerminalCall(pc, timeoutMs = 100)
             } finally {
@@ -509,6 +551,7 @@ class NativePluginTest {
             Dispatchers.setMain(testDispatcher)
             try {
                 injectTestDispatcher(plugin, testDispatcher)
+                injectFailingAppSearch(plugin)
                 val jobs = JSArray()
                 jobs.put(
                     JSObject().apply {
@@ -529,6 +572,39 @@ class NativePluginTest {
             }
         }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `indexJobs resolves through success branch when AppSearch succeeds`() =
+        runTest {
+            // Success-path twin of `indexJobs accepts populated jobs array`.
+            // Drives the resolve-side continuation class
+            // (NativePlugin$indexJobs$1$1) above the per-CLASS 60%
+            // coverage threshold by forcing the try-branch to completion.
+            val testDispatcher = StandardTestDispatcher(testScheduler)
+            Dispatchers.setMain(testDispatcher)
+            try {
+                injectTestDispatcher(plugin, testDispatcher)
+                injectSuccessAppSearch(plugin)
+                val jobs = JSArray()
+                jobs.put(
+                    JSObject().apply {
+                        put("id", "j1")
+                        put("company", "Acme Co")
+                        put("role", "Engineer")
+                        put("score", 4.5)
+                        put("status", "Applied")
+                    },
+                )
+                val pc = call(getArray = mapOf("jobs" to jobs))
+                plugin.indexJobs(pc)
+                advanceUntilIdle()
+                verify(timeout = 100, atLeast = 1) { pc.resolve(any()) }
+                verify(exactly = 0) { pc.reject(any<String>(), any<String>()) }
+            } finally {
+                Dispatchers.resetMain()
+            }
+        }
+
     // ── clearJobIndex ─────────────────────────────────────────────
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -539,15 +615,39 @@ class NativePluginTest {
             Dispatchers.setMain(testDispatcher)
             try {
                 injectTestDispatcher(plugin, testDispatcher)
+                injectFailingAppSearch(plugin)
                 val pc = call()
                 plugin.clearJobIndex(pc)
                 advanceUntilIdle()
                 // clearJobIndex has no synchronous early-return; the entire
-                // body is inside pluginScope.launch. After drain the
-                // coroutine has either resolved (AppSearch session removed
-                // all docs) or hit the catch branch and rejected with
-                // appsearch-clear-failed. Either is a covered outcome.
+                // body is inside pluginScope.launch. With the failing
+                // AppSearch mock the coroutine resolves through the catch
+                // branch (covered) and pc.reject fires via withContext(Main).
                 verifyOneTerminalCall(pc, timeoutMs = 100)
+            } finally {
+                Dispatchers.resetMain()
+            }
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `clearJobIndex resolves through success branch when AppSearch succeeds`() =
+        runTest {
+            // Success-path twin of `clearJobIndex launches coroutine`.
+            // Drives the resolve-side continuation class
+            // (NativePlugin$clearJobIndex$1$1) above the per-CLASS 60%
+            // coverage threshold by forcing the try-branch to completion
+            // with an empty search-result set.
+            val testDispatcher = StandardTestDispatcher(testScheduler)
+            Dispatchers.setMain(testDispatcher)
+            try {
+                injectTestDispatcher(plugin, testDispatcher)
+                injectSuccessAppSearch(plugin)
+                val pc = call()
+                plugin.clearJobIndex(pc)
+                advanceUntilIdle()
+                verify(timeout = 100, atLeast = 1) { pc.resolve(any()) }
+                verify(exactly = 0) { pc.reject(any<String>(), any<String>()) }
             } finally {
                 Dispatchers.resetMain()
             }
@@ -649,6 +749,94 @@ class NativePluginTest {
         val field = NativePlugin::class.java.getDeclaredField("pluginScope")
         field.isAccessible = true
         field.set(plugin, CoroutineScope(SupervisorJob() + dispatcher))
+    }
+
+    /**
+     * Inject a mock AppSearchSession into the plugin's cached field so
+     * the lazy `appSearch()` lookup never tries to open a real session.
+     *
+     * Why: Robolectric does NOT provide a working AppSearch backend.
+     * The production helper does `LocalStorage.createSearchSessionAsync(...).await()`;
+     * under Robolectric, the returned ListenableFuture never completes
+     * its listener, so the coroutine suspends forever and the
+     * pluginScope test scheduler can't drain it (advanceUntilIdle only
+     * advances RUNNABLE coroutines; permanently-suspended ones stay
+     * dead).
+     *
+     * The mock returned here throws on every method call. Combined with
+     * the per-CLASS JaCoCo rule, this drives the @PluginMethod
+     * coroutine into its catch branch (`withContext(Main) { call.reject(...) }`)
+     * deterministically, which:
+     *   1. runs the continuation state machine to completion (covered
+     *      by per-CLASS verification), and
+     *   2. fires pc.reject so verifyOneTerminalCall observes a terminal
+     *      call within timeoutMs.
+     */
+    private fun injectFailingAppSearch(plugin: NativePlugin) {
+        val failingSession = mockk<AppSearchSession>(relaxed = false)
+        every { failingSession.putAsync(any()) } throws
+            java.io.IOException("test-injected-appsearch-failure")
+        // clearJobIndex calls session.search(...) FIRST (synchronously)
+        // and then nextPageAsync().await(). Throwing on search() trips
+        // the outer try/catch before any async work runs.
+        every {
+            failingSession.search(any(), any())
+        } throws java.io.IOException("test-injected-appsearch-failure")
+        val field = NativePlugin::class.java.getDeclaredField("appSearchSession")
+        field.isAccessible = true
+        field.set(plugin, failingSession)
+    }
+
+    /**
+     * Inject an AppSearchSession mock whose async APIs all return
+     * IMMEDIATELY-completed Futures. Drives the @PluginMethod coroutine
+     * down the success branch (the `withContext(Main) { call.resolve(out) }`
+     * tail) so the resolve-side continuation classes
+     * (e.g. NativePlugin$indexJobs$1$1, NativePlugin$clearJobIndex$1$1)
+     * report >0% coverage rather than 0% (per-CLASS JaCoCo gate).
+     *
+     * Pairs with `injectFailingAppSearch` -- one test per branch.
+     */
+    private fun injectSuccessAppSearch(plugin: NativePlugin) {
+        val session = mockk<AppSearchSession>(relaxed = false)
+
+        // putAsync(...).await() returns AppSearchBatchResult.
+        val batchResult =
+            mockk<androidx.appsearch.app.AppSearchBatchResult<String, Void>>(
+                relaxed = false,
+            )
+        every { batchResult.isSuccess } returns true
+        every { batchResult.successes } returns emptyMap()
+        every { session.putAsync(any()) } returns
+            com.google.common.util.concurrent.Futures
+                .immediateFuture(batchResult)
+
+        // search(...) returns SearchResults (sync). nextPageAsync().await()
+        // returns the page list -- empty here so the while-loop in
+        // clearJobIndex exits cleanly after one iteration.
+        val emptyResults = mockk<androidx.appsearch.app.SearchResults>(relaxed = false)
+        every { emptyResults.nextPageAsync } returns
+            com.google.common.util.concurrent.Futures
+                .immediateFuture(emptyList())
+        every { session.search(any(), any()) } returns emptyResults
+
+        // removeAsync only called when toRemove is non-empty; with empty
+        // search results we never hit it. Mock it anyway so future test
+        // changes don't NPE.
+        every {
+            session.removeAsync(
+                any<androidx.appsearch.app.RemoveByDocumentIdRequest>(),
+            )
+        } returns
+            com.google.common.util.concurrent.Futures.immediateFuture(
+                mockk<androidx.appsearch.app.AppSearchBatchResult<String, Void>>(
+                    relaxed = true,
+                ),
+            )
+
+        val field = NativePlugin::class.java.getDeclaredField("appSearchSession")
+        field.isAccessible = true
+        field.set(plugin, session)
     }
 
     /**
