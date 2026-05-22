@@ -94,15 +94,16 @@ final class AppDelegateTests: XCTestCase {
 
     // MARK: - continue userActivity: (Handoff)
 
-    func testContinueUserActivityHandoffRoutesBrandedScheme() {
-        // Build a Handoff NSUserActivity matching the bundleId.handoff.
-        // prefix. Setting webpageURL to a heron:// URL should route it
-        // through the open(_:open:options:) path.
-        let activity = NSUserActivity(activityType: "\(Brand.bundleId).handoff.job")
-        activity.webpageURL = URL(string: "\(Brand.urlScheme)://job/abc123")
-        let result = delegate.application(UIApplication.shared, continue: activity, restorationHandler: { _ in })
-        XCTAssertTrue(result)
-    }
+    // NOTE: `testContinueUserActivityHandoffRoutesBrandedScheme` was
+    // removed. Setting `activity.webpageURL = URL(string: "heron://...")`
+    // raises NSInvalidArgumentException at runtime -- NSUserActivity's
+    // webpageURL setter enforces an http/https scheme. The production
+    // code reads webpageURL from an incoming Handoff (where the URL
+    // arrives over-the-wire without going through the local setter), so
+    // there's no clean way to test the webpageURL branch from a unit
+    // test. The userInfo["deepLink"] branch below covers the same
+    // routing logic + same prefix gate; coverage of the webpageURL
+    // branch lands via AppUITests' DeepLinkUITests (real Handoff flow).
 
     func testContinueUserActivityHandoffAcceptsDeepLinkUserInfo() {
         // Fallback path: webpageURL is nil, but deepLink userInfo key
