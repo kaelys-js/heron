@@ -22,6 +22,9 @@ out/
 # Gradle files
 .gradle/
 build/
+# Kotlin Gradle plugin cache (new in Kotlin 2.x; per-Kotlin-version
+# warm-cache of incremental compile state).
+.kotlin/
 
 # Local configuration file (sdk path, etc)
 local.properties

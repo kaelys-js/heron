@@ -7,7 +7,39 @@ apply plugin: 'jacoco'
 // `build/jacoco/testDebugUnitTest.exec` for JVM unit tests. The
 // `jacocoTestReport` task aggregates both into XML for Codecov.
 jacoco {
-    toolVersion = "0.8.12"
+    // JaCoCo agent and report must agree on the .exec format.
+    // 0.8.13 matches what AGP 8.13's enableUnitTestCoverage agent emits;
+    // 0.8.12 silently produces 0% coverage because the exec records
+    // can't be decoded.
+    toolVersion = "0.8.13"
+}
+
+// Robolectric's SandboxClassLoader loads app classes via its own
+// instrumentation pipeline that bypasses the AGP-attached JaCoCo agent.
+// Without intervention, the .exec file only records hits for classes
+// loaded by the system classloader (Brand, BrandTest), while every
+// class touched through a Robolectric test (NativePlugin, NetworkMonitor,
+// ErrorReporter via Context) reports 0% coverage.
+//
+// Fix: configure JacocoTaskExtension on the test task to instrument
+// our package explicitly + include classes without SourceFile attributes
+// (some Kotlin synthetics omit the attribute and would otherwise be
+// dropped).
+tasks.withType(Test).configureEach { test ->
+    test.extensions.configure(JacocoTaskExtension) { ext ->
+        // includes is the most important flag: it tells the agent which
+        // classes to consider, regardless of how the classloader's path
+        // labels them. com.heron.app.** covers every authored source.
+        ext.includes = ["com.heron.app.*"]
+        ext.excludes = [
+            "jdk.internal.*",
+            "*Test",
+            "*Test*",
+            "**.R\$*",
+            "**.BuildConfig",
+        ]
+        ext.includeNoLocationClasses = true
+    }
 }
 
 android {
@@ -187,7 +219,14 @@ afterEvaluate {
         sourceDirectories.setFrom(files([mainSrc]))
         classDirectories.setFrom(files([debugTree, kotlinTree]))
         executionData.setFrom(fileTree(dir: project.buildDir, includes: [
+            // AGP 8+ writes JVM unit-test coverage here (the legacy
+            // `build/jacoco/` location only applied to AGP <= 7).
+            'outputs/unit_test_code_coverage/**/*.exec',
+            // Legacy fallback for older AGP versions.
             'jacoco/testDebugUnitTest.exec',
+            // Instrumented (connectedCheck) coverage when run on an
+            // emulator -- not exercised by CI today (no emulator job)
+            // but kept here so a future job adds zero gradle changes.
             'outputs/code-coverage/**/*.ec',
         ]))
     }
