@@ -8,8 +8,12 @@
   repo has something at the expected file path during development.
 
   Replace before press with:
-    - Claude Design output (see MASCOT.md production prompt)
-    - or a human illustrator following the same brief
+    - Claude Design output: open https://claude.ai/design in your
+      browser (logged into your claude.ai account), paste the
+      "Production prompt for Claude Design" from branding/MASCOT.md
+      verbatim, iterate until the silhouette reads cleanly at 16x16
+      px, then export the 3 colorways (slate / light / dawn) as SVG.
+    - OR a human illustrator following the same brief
 
   When the real mascot lands, save it as:
     assets/mark-slate.svg   (Heron Slate body, white eye)
