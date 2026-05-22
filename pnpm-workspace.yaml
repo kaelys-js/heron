@@ -74,6 +74,12 @@ overrides:
   # transitive (including @sveltejs/kit's bundled svelte) onto the
   # safe version.
   svelte: ">=5.55.7"
+  # GHSA-fjxv-7rqg-78g4 -- form-data uses an unsafe random function
+  # to pick the multipart boundary, weakening the boundary's
+  # unguessability. Patched in 4.0.4. Pulled in transitively via
+  # node-fetch -> lost-pixel + @adobe/css-tools -> playwright (multiple
+  # paths). Override forces every consumer onto the patched version.
+  form-data: ">=4.0.4"
 
 # ── Peer dependency rules ──────────────────────────────────────────
 peerDependencyRules:

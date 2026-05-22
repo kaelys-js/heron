@@ -566,8 +566,23 @@ jobs:
       # is on disk. Without this upload, electron coverage would either
       # be invisible OR rolled into the `ts` flag -- masking regressions
       # on the IPC bridge / brand-watcher / auto-updater surfaces.
+      #
+      # Fail-fast gate: previously the upload's `if:` short-circuited
+      # when lcov.info was missing, which would silently green the job
+      # if the electron test step had failed to emit coverage. We now
+      # assert presence BEFORE the upload + drop the hashFiles guard so
+      # any breakage surfaces here rather than at codecov upload time.
+      - name: Assert electron lcov.info exists (Codecov gate)
+        if: needs.changes.outputs.ts == 'true'
+        run: |
+          if [ ! -s ui/electron/coverage/lcov.info ]; then
+            echo "::error::ui/electron/coverage/lcov.info missing or empty after test:coverage."
+            exit 1
+          fi
+          echo "OK electron lcov.info present"
+
       - name: Upload coverage to Codecov (electron flag)
-        if: needs.changes.outputs.ts == 'true' && hashFiles('ui/electron/coverage/lcov.info') != ''
+        if: needs.changes.outputs.ts == 'true'
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
           files: ui/electron/coverage/lcov.info
@@ -1177,7 +1192,7 @@ jobs:
           key: avd-pixel-7-api-34
 
       - name: Run instrumented tests on Pixel 7 / API 34
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@0a638108440efd5c7f980e6ba145dbcdd8f32009 # v2.37.0
         with:
           api-level: 34
           target: google_apis
