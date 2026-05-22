@@ -178,24 +178,41 @@ for (const lbl of LABELS) {
 // + log the result.
 console.log('▸ Code-security toggles');
 const security = gh('GET', `/repos/${REPO}`);
-const liveSec = security?.security_and_analysis || {};
-const ownerType = security?.owner?.type || 'Unknown';
-
-if (liveSec.secret_scanning_validity_checks?.status === 'enabled') {
-  console.log('  secret_scanning_validity_checks: ok');
-} else if (ownerType !== 'Organization') {
+if (security?.__error) {
+  // GET failure: auth error, network error, repo renamed, etc.
+  // Surface as drift so the maintainer notices -- masking it as
+  // "not eligible" would hide a real problem.
+  driftCount++;
   console.log(
-    `  secret_scanning_validity_checks: not eligible (${ownerType}-owned repo; requires GitHub Team org + Secret Protection). See .github/SECURITY.md.`,
+    `  secret_scanning_validity_checks: GET /repos failed -- ${security.__error.split('\n')[0]}`,
   );
-  // Don't attempt the PATCH -- API will accept it + silently keep status disabled.
 } else {
-  console.log(
-    `  secret_scanning_validity_checks: ${liveSec.secret_scanning_validity_checks?.status || 'unset'} -- attempting PATCH (org-owned, may require Secret Protection license)`,
-  );
-  if (!VERIFY_ONLY) {
-    gh('PATCH', `/repos/${REPO}`, {
-      security_and_analysis: { secret_scanning_validity_checks: { status: 'enabled' } },
-    });
+  const liveSec = security?.security_and_analysis || {};
+  const ownerType = security?.owner?.type || 'Unknown';
+
+  if (liveSec.secret_scanning_validity_checks?.status === 'enabled') {
+    console.log('  secret_scanning_validity_checks: ok');
+  } else if (ownerType !== 'Organization') {
+    console.log(
+      `  secret_scanning_validity_checks: not eligible (${ownerType}-owned repo; requires GitHub Team org + Secret Protection). See .github/SECURITY.md.`,
+    );
+    // Not drift -- the feature is GENUINELY unavailable for this
+    // repo type. driftCount stays as-is.
+  } else {
+    // Org-owned + validity-checks disabled = real drift. Increment
+    // so --check mode exits 1, and the apply summary reports the
+    // change attempt. (PATCH may still no-op if the org lacks the
+    // Secret Protection license, but that's an org-config issue
+    // the maintainer can act on, not something to silently absorb.)
+    driftCount++;
+    console.log(
+      `  secret_scanning_validity_checks: ${liveSec.secret_scanning_validity_checks?.status || 'unset'} -- attempting PATCH (org-owned, may require Secret Protection license)`,
+    );
+    if (!VERIFY_ONLY) {
+      gh('PATCH', `/repos/${REPO}`, {
+        security_and_analysis: { secret_scanning_validity_checks: { status: 'enabled' } },
+      });
+    }
   }
 }
 
