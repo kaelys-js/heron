@@ -4,7 +4,6 @@
 // widget. TimelineProviderContext can't be constructed in tests, so we
 // reproduce the read path against the same App Group suite.
 //
-@testable import AppWidget
 import WidgetKit
 import XCTest
 

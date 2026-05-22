@@ -630,7 +630,12 @@ jobs:
     # ~70min ubuntu-equivalent saved per such PR. Worth the ~5ubuntu-min
     # provisioning overhead.
     runs-on: macos-15
-    timeout-minutes: 35
+    # 5 test schemes run sequentially (AppTests + WidgetTests +
+    # AppLiveActivityTests + AppShareExtensionTests on iOS sim,
+    # WatchTests on watchOS sim) + xcov per scheme + slather aggregator.
+    # Cold sim boot is ~30s per platform; tests each take ~5s. 60min
+    # buys headroom for the first cold run after a runner-image bump.
+    timeout-minutes: 60
     permissions:
       contents: read
       id-token: write # Codecov OIDC upload (G12)

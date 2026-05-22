@@ -4,7 +4,6 @@
 // init, so we reproduce the read path against the same suite the widget
 // will read at refresh time rather than calling placeholder(in:) directly.
 //
-@testable import AppWidget
 import WidgetKit
 import XCTest
 

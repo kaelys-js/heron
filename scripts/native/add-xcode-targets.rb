@@ -23,6 +23,7 @@
 
 require "xcodeproj"
 require "fileutils"
+require "pathname"
 require "plist"
 require "set"
 require "json"
@@ -46,7 +47,7 @@ DEFAULT_GROUP = "group.com.heron.app"
 brand_json =
   if File.exist?(BRAND_JSON_PATH)
     begin
-      JSON.parse(File.read(BRAND_JSON_PATH))
+      JSON.parse(File.read(BRAND_JSON_PATH, encoding: "UTF-8"))
     rescue JSON::ParserError
       {}
     end
@@ -238,7 +239,10 @@ EXTENSIONS.each do |ext|
     # parameter packs + macro support without breaking any older
     # extensions.
     config.build_settings["SWIFT_VERSION"] = "5.9"
-    config.build_settings["CODE_SIGN_ENTITLEMENTS"] = "#{ext[:source_dir]}/#{ext[:source_dir]}.entitlements"
+    # CODE_SIGN_ENTITLEMENTS is repo-relative; ext[:source_dir] is
+    # already "Extensions/<Name>", so use ext[:name] (just "<Name>")
+    # for the file basename to avoid the historical double-prefix bug.
+    config.build_settings["CODE_SIGN_ENTITLEMENTS"] = "#{ext[:source_dir]}/#{ext[:name]}.entitlements"
     # ENABLE_USER_SCRIPT_SANDBOXING = YES is the Xcode 15+ best-practice
     # default -- sandboxes shell scripts run in build phases so a stray
     # `rm -rf $DERIVED_DATA` in a third-party run-script phase can't
@@ -316,8 +320,12 @@ EXTENSIONS.each do |ext|
     puts "    + Info.plist"
   end
 
-  # Generate Entitlements with App Group + Live Activity if applicable
-  entitlements_path = File.join(source_dir_abs, "#{ext[:source_dir]}.entitlements")
+  # Generate Entitlements with App Group + Live Activity if applicable.
+  # File lives at `<source_dir>/<extension-name>.entitlements`, NOT under
+  # a nested `<source_dir>/Extensions/<name>.entitlements` (a stale bug
+  # from a prior layout where source_dir was a basename instead of a
+  # repo-relative path).
+  entitlements_path = File.join(source_dir_abs, "#{ext[:name]}.entitlements")
   unless File.exist?(entitlements_path)
     entitlements = {
       "com.apple.security.application-groups" => [app_group],
@@ -578,6 +586,24 @@ end
 #     `xcodebuild test` doesn't error "no source files").
 #
 # Idempotent -- re-runs are no-ops if every test target already exists.
+#
+# Two test patterns are supported:
+#
+# 1. HOSTED tests (default): TEST_HOST + BUNDLE_LOADER point at a real
+#    `.app` target. The test bundle is injected into the host process
+#    at runtime. `@testable import <Host>` works because Swift
+#    surfaces the host's internal symbols through ENABLE_TESTABILITY.
+#    AppTests + AppUITests + WatchTests use this.
+#
+# 2. LOGIC tests (`logic_test: true`): no TEST_HOST. The test bundle
+#    is built standalone; the production `.swift` files we want to
+#    test are added to the test target's Compile Sources phase
+#    (via `host_source_paths`). All symbols are local to the test
+#    bundle, so `@testable import` is unnecessary -- callers just
+#    reference the production types directly. Used for `.appex` host
+#    targets (extensions can't be TEST_HOST -- xcodebuild rejects
+#    "AppWidget.app/AppWidget" because the product is `.appex`).
+#    WidgetTests + AppLiveActivityTests + AppShareExtensionTests use this.
 TEST_TARGETS = [
   {
     name: "AppTests",
@@ -586,7 +612,7 @@ TEST_TARGETS = [
     host: "App",
     deployment_min: "15.0",
     placeholder: <<~SWIFT,
-      // AppTests — XCTest unit tests for the App target. The smoke case
+      // AppTests -- XCTest unit tests for the App target. The smoke case
       // here just exercises the host-bundle wiring; the real coverage
       // lives in BrandTests.swift, KeychainStoreTests.swift, etc.
       import XCTest
@@ -606,7 +632,7 @@ TEST_TARGETS = [
     host: "App",
     deployment_min: "15.0",
     placeholder: <<~SWIFT,
-      // AppUITests — XCUITest end-to-end tests. Drives a real simulator
+      // AppUITests -- XCUITest end-to-end tests. Drives a real simulator
       // running the app. Real cases land in ColdLaunchUITests.swift,
       // SidebarUITests.swift, NotificationsBellUITests.swift, etc.
       import XCTest
@@ -625,11 +651,22 @@ TEST_TARGETS = [
     bundle_suffix: "widgettests",
     type: "com.apple.product-type.bundle.unit-test",
     host: "AppWidget",
+    logic_test: true,
+    host_source_paths: [
+      "Extensions/AppWidget/WidgetAuthGate.swift",
+      "Extensions/AppWidget/InboxIssuesWidget.swift",
+      "Extensions/AppWidget/NextInterviewWidget.swift",
+      "Extensions/AppWidget/TopApplyWidget.swift",
+      "Extensions/AppWidget/WidgetBundle.swift",
+      "Extensions/AppWidget/Brand.swift",
+      "Extensions/AppWidget/ErrorReporter.swift",
+    ],
     deployment_min: "16.0",
     placeholder: <<~SWIFT,
-      // WidgetTests — XCTest unit tests for the AppWidget extension
-      // target. Real cases live in WidgetAuthGateTests.swift,
-      // NextInterviewWidgetTests.swift, snapshot tests, etc.
+      // WidgetTests -- XCTest LOGIC tests for the AppWidget extension.
+      // Source files from Extensions/AppWidget/ are compiled into this
+      // test bundle (no TEST_HOST -- .appex can't be a test host), so
+      // tests reference widget types directly without @testable import.
       import XCTest
 
       final class WidgetTestsSmoke: XCTestCase {
@@ -644,15 +681,65 @@ TEST_TARGETS = [
     bundle_suffix: "watchtests",
     type: "com.apple.product-type.bundle.unit-test",
     host: "WatchApp",
-    deployment_min: "15.0",
+    deployment_min: "10.0",
     sdk: "watchos",
     placeholder: <<~SWIFT,
-      // WatchTests — XCTest unit tests for the WatchApp target.
-      // Real cases live in WatchModelTests.swift, RootViewTests.swift
-      // (ViewInspector), snapshot tests, etc.
+      // WatchTests -- XCTest unit tests for the WatchApp target.
+      // WatchApp is a real `.app` so TEST_HOST works; tests use
+      // @testable import WatchApp.
       import XCTest
 
       final class WatchTestsSmoke: XCTestCase {
+        func testHostBundleAvailable() {
+          XCTAssertNotNil(Bundle.main.bundleIdentifier)
+        }
+      }
+    SWIFT
+  },
+  {
+    name: "AppLiveActivityTests",
+    bundle_suffix: "liveactivitytests",
+    type: "com.apple.product-type.bundle.unit-test",
+    host: "AppLiveActivity",
+    logic_test: true,
+    host_source_paths: [
+      "Extensions/AppLiveActivity/LiveActivity.swift",
+      "Extensions/AppLiveActivity/Brand.swift",
+      "Extensions/AppLiveActivity/ErrorReporter.swift",
+    ],
+    deployment_min: "16.1",
+    placeholder: <<~SWIFT,
+      // AppLiveActivityTests -- LOGIC tests for the AppLiveActivity
+      // extension. The extension is `.appex` so TEST_HOST won't work;
+      // source files are compiled into this test bundle directly.
+      import XCTest
+
+      final class AppLiveActivityTestsSmoke: XCTestCase {
+        func testHostBundleAvailable() {
+          XCTAssertNotNil(Bundle.main.bundleIdentifier)
+        }
+      }
+    SWIFT
+  },
+  {
+    name: "AppShareExtensionTests",
+    bundle_suffix: "sharetests",
+    type: "com.apple.product-type.bundle.unit-test",
+    host: "AppShareExtension",
+    logic_test: true,
+    host_source_paths: [
+      "Extensions/AppShareExtension/ShareViewController.swift",
+      "Extensions/AppShareExtension/Brand.swift",
+      "Extensions/AppShareExtension/ErrorReporter.swift",
+    ],
+    deployment_min: "15.0",
+    placeholder: <<~SWIFT,
+      // AppShareExtensionTests -- LOGIC tests for the AppShareExtension.
+      // `.appex` target so TEST_HOST won't work; source files are
+      // compiled into this test bundle directly.
+      import XCTest
+
+      final class AppShareExtensionTestsSmoke: XCTestCase {
         func testHostBundleAvailable() {
           XCTAssertNotNil(Bundle.main.bundleIdentifier)
         }
@@ -672,37 +759,55 @@ TEST_TARGETS.each do |t|
 
   host_target = project.targets.find { |x| x.name == t[:host] }
   unless host_target
-    puts "✗ host target #{t[:host]} not found — skipping #{t[:name]}"
+    puts "✗ host target #{t[:host]} not found -- skipping #{t[:name]}"
     next
   end
 
   bundle_id = "#{bundle_root}.#{t[:bundle_suffix]}"
   is_watch = t[:sdk] == "watchos"
+  is_logic = t[:logic_test] == true
   platform = is_watch ? :watchos : :ios
 
   existing = project.targets.find { |x| x.name == t[:name] }
   if existing
     new_target = existing
-    puts "= #{t[:name]} target exists — syncing sources"
+    puts "= #{t[:name]} target exists -- syncing sources"
+    # Re-apply build settings every run so prior misconfiguration heals.
+    new_target.build_configurations.each do |bc|
+      bc.build_settings["PRODUCT_NAME"] = "$(TARGET_NAME)"
+      if is_logic
+        # Logic tests run standalone -- remove host/loader to avoid
+        # xcodebuild trying to inject into a non-existent .app.
+        bc.build_settings.delete("TEST_HOST")
+        bc.build_settings.delete("BUNDLE_LOADER")
+      end
+    end
   else
     new_target = project.new_target(:bundle, t[:name], platform, t[:deployment_min])
     new_target.product_type = t[:type]
     new_target.build_configurations.each do |bc|
-      bc.build_settings.merge!(
+      settings = {
         "PRODUCT_BUNDLE_IDENTIFIER" => bundle_id,
+        "PRODUCT_NAME" => "$(TARGET_NAME)",
         "#{is_watch ? "WATCHOS" : "IPHONEOS"}_DEPLOYMENT_TARGET" => t[:deployment_min],
         "SWIFT_VERSION" => "5.0",
         "CODE_SIGN_STYLE" => "Automatic",
         "INFOPLIST_KEY_CFBundleDisplayName" => t[:name],
         "GENERATE_INFOPLIST_FILE" => "YES",
-        "TEST_HOST" => "$(BUILT_PRODUCTS_DIR)/#{t[:host]}.app/#{t[:host]}",
-        "BUNDLE_LOADER" => "$(TEST_HOST)",
         "TARGETED_DEVICE_FAMILY" => is_watch ? "4" : "1,2",
-      )
+      }
+      unless is_logic
+        # Hosted tests need TEST_HOST + BUNDLE_LOADER pointing at a real
+        # `.app` product. The test bundle is injected at runtime.
+        settings["TEST_HOST"] = "$(BUILT_PRODUCTS_DIR)/#{t[:host]}.app/#{t[:host]}"
+        settings["BUNDLE_LOADER"] = "$(TEST_HOST)"
+      end
+      bc.build_settings.merge!(settings)
       bc.build_settings["DEVELOPMENT_TEAM"] = team_id if team_id
     end
     new_target.add_dependency(host_target)
-    puts "  ✓ #{t[:name]} created (host=#{t[:host]}, bundle=#{bundle_id}, deploy=#{t[:deployment_min]})"
+    pattern = is_logic ? "logic" : "host=#{t[:host]}"
+    puts "  ✓ #{t[:name]} created (#{pattern}, bundle=#{bundle_id}, deploy=#{t[:deployment_min]})"
   end
 
   # Wire every .swift file in the test target dir into the target.
@@ -732,6 +837,44 @@ TEST_TARGETS.each do |t|
       puts "    + #{t[:name]}/#{basename}"
     end
     new_target.add_file_references([file_ref]) unless sources_in_phase.include?(basename)
+  end
+
+  # Logic tests: also pull in the production source files we want to
+  # test. They're referenced from the host extension's group so the IDE
+  # still shows them in one place; the build phase here gets a duplicate
+  # PBXBuildFile entry so the test bundle compiles its own copy.
+  if is_logic && t[:host_source_paths]
+    t[:host_source_paths].each do |rel_path|
+      abs_path = File.expand_path(rel_path, File.dirname(PROJECT_PATH))
+      unless File.exist?(abs_path)
+        puts "    ! #{t[:name]} host source missing: #{rel_path}"
+        next
+      end
+      # Find an existing PBXFileReference for this path (created by the
+      # host extension's target). If multiple Brand.swift refs exist
+      # (one per extension), match on the absolute path.
+      basename = File.basename(rel_path)
+      candidates = project.files.select { |f| f.path == basename }
+      file_ref = candidates.find do |f|
+        File.expand_path(f.real_path.to_s) == abs_path
+      end
+      file_ref ||= candidates.first # fallback to any matching basename
+      if file_ref.nil?
+        # No file ref exists -- create one in the test target's group
+        # with a relative path back to the source file.
+        rel_from_group = Pathname.new(abs_path).relative_path_from(
+          Pathname.new(File.dirname(PROJECT_PATH))
+        ).to_s
+        file_ref = ref.new_reference(rel_from_group)
+        puts "    + #{t[:name]} (production source) #{rel_path}"
+      end
+      already_in_phase = sources_phase.files.any? do |bf|
+        bf.file_ref && File.expand_path(bf.file_ref.real_path.to_s) == abs_path
+      end
+      next if already_in_phase
+      sources_phase.add_file_reference(file_ref)
+      puts "    + #{t[:name]} compile #{rel_path}"
+    end
   end
 
   # Shared scheme so `xcodebuild test -scheme <Name>` works in CI.

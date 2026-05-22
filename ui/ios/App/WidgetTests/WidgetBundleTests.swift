@@ -3,7 +3,6 @@
 // types declared in WidgetBundle.swift. The @main AppWidgetBundle itself
 // is exercised at app-launch time on the host, not in unit tests.
 //
-@testable import AppWidget
 import WidgetKit
 import XCTest
 

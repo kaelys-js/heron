@@ -3,7 +3,6 @@
 // UserDefaults written by NativePlugin.updateWidgets. We seed that suite
 // directly and assert the gate flips under each documented branch.
 //
-@testable import AppWidget
 import XCTest
 
 final class WidgetAuthGateTests: XCTestCase {
