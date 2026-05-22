@@ -1,5 +1,5 @@
 # H.G -- Android Espresso (instrumented) tests on a real emulator.
-# Minimal smoke -- isolating the startup_failure cause.
+# Isolating startup_failure cause -- only emulator-runner action added.
 name: Android Espresso
 
 on:
@@ -18,5 +18,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - name: Hello
-        run: echo "hello"
+      - name: Run emulator
+        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a
+        with:
+          api-level: 34
+          script: echo "hello"
