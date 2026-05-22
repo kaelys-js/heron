@@ -363,6 +363,12 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
         'writing-samples',
         '.gradle',
         'modes',
+        // CI/test artifact dirs -- gitignored but a local Playwright /
+        // Lost Pixel run may have populated them; .md files inside (e.g.
+        // Playwright's error-context.md) are not doc-meta candidates.
+        'test-results',
+        'playwright-report',
+        'lost-pixel',
       ]);
       const fullDir = path.join(REPO_ROOT, dir);
       if (!fs.existsSync(fullDir)) return acc;
