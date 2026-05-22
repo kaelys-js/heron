@@ -45,7 +45,14 @@ IOS_TEST_SCHEMES = [
   "WidgetTests",
   "AppLiveActivityTests",
   "AppShareExtensionTests",
-  "AppTests"
+  "AppTests",
+  # H.F -- XCUITest cases live in the AppUITests target. They exercise
+  # the Capacitor WKWebView host + the App's lifecycle + deep-link +
+  # share-extension flow on a real simulator. Coverage from these
+  # tests merges into App's per-scheme slather report via the
+  # AppTests basename (AppUITests has the same host app), but the
+  # scheme is enumerated separately so xcodebuild runs the bundle.
+  "AppUITests"
 ].freeze
 WATCH_TEST_SCHEME = "WatchTests"
 SCHEME = "App"
