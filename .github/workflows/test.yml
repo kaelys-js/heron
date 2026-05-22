@@ -1084,24 +1084,24 @@ jobs:
   # earlier and added cost without diagnosable benefit). AVD layer is
   # cached so the cold boot is amortised across runs.
   # ─────────────────────────────────────────────────────────────────
-  # Android -- Espresso (instrumented) -- L.1 bisect, step 2
+  # Android -- Espresso (instrumented) -- L.1 bisect, step 3
   # ─────────────────────────────────────────────────────────────────
-  # Step 1 (commit 0f4ead4): bare job with `echo` only -- workflow
-  # booted (run 26313326586 conclusion=failure, NOT startup_failure).
-  # So the job's PRESENCE isn't the antagonist; the cause lives in
-  # its step CONTENT.
-  #
-  # Step 2 (THIS commit): restore EVERY step EXCEPT the
-  # `reactivecircus/android-emulator-runner@SHA` call. If the
-  # workflow still boots, the action call is the antagonist;
-  # alternative: pre-create the AVD via cmdline-tools so the action
-  # isn't required. If startup_failure returns, one of these
-  # earlier steps is the trigger -- the next commit bisects them.
+  # Step 1 (0f4ead4): bare job with `echo` only -- workflow BOOTED.
+  # Step 2 (d0b2f74 + subsequent): full setup steps (Checkout / JDK /
+  # mise / caches / install / brand / build / cap sync) -- workflow
+  # BOOTED (verified on 568548d via `gh api .../jobs`, all 9 jobs spawn).
+  # Step 3 (THIS commit): add the
+  # `reactivecircus/android-emulator-runner@SHA` action call. If the
+  # workflow boots, the action is fine + the lane just needs the real
+  # script. If startup_failure returns, the action's `runs.using:
+  # composite` declaration (or its bundled requirements) is the
+  # antagonist + we need an alternative (sdkmanager + emulator binary
+  # directly, no third-party action).
   android-emulator:
     name: Android — Espresso (instrumented)
     needs: changes
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 40
     if: needs.changes.outputs.android == 'true'
     permissions:
       contents: read
@@ -1167,11 +1167,39 @@ jobs:
             ~/.android/adb*
           key: avd-pixel-7-api-34-v1
 
-      - name: L.1 probe — confirm all earlier setup steps ran (no emulator-runner yet)
-        run: |
-          echo "L.1 bisect step 2: setup completed without startup_failure."
-          echo "PWD=$(pwd)"
-          find ui/android -maxdepth 1 -mindepth 1 -printf '%y %f\n' | head
+      - name: Run instrumented tests on Pixel 7 / API 34
+        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.37.0
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          avd-name: pixel-7-api-34
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            cd ui/android
+            ./gradlew :app:connectedDebugAndroidTest :app:jacocoTestReport --no-daemon --stacktrace
+
+      - name: Upload instrumented coverage to Codecov (android flag, additive)
+        if: always() && hashFiles('ui/android/app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml') != ''
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        with:
+          files: ui/android/app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+          flags: android
+          name: android-instrumented
+          fail_ci_if_error: false # additive; the JVM android job is the gate
+          use_oidc: true
+          verbose: true
+
+      - name: Upload instrumented test reports on failure
+        if: always() && hashFiles('ui/android/app/build/reports/androidTests/connected/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: android-instrumented-reports-${{ github.run_id }}
+          path: ui/android/app/build/reports/androidTests/connected/
+          retention-days: 14
+          if-no-files-found: ignore
 
   # ─────────────────────────────────────────────────────────────────
   # Lost Pixel (visual regression) -- own job, distinct required check
