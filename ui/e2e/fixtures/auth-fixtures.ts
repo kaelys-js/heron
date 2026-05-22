@@ -30,6 +30,7 @@ import {
   type Page,
   type BrowserContext,
 } from '@playwright/test';
+import { PREVIEW_BASE_URL } from '../_helpers/preview-server';
 import { TEST_PROFILE_SLUG, TEST_USER_EMAIL, TEST_USER_ID, TEST_USER_NAME } from '../_helpers/seed';
 
 export interface SeededUserFixture {
@@ -71,7 +72,7 @@ export const test = base.extend<AuthFixtures>({
     // eslint-disable-next-line no-empty-pattern
     async ({}, use) => {
       const ctx = await playwrightRequest.newContext({
-        baseURL: 'http://localhost:4173',
+        baseURL: PREVIEW_BASE_URL,
       });
       try {
         const resp = await ctx.post('/api/auth/e2e-login', {

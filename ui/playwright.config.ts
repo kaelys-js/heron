@@ -27,6 +27,7 @@
 import os from 'node:os';
 import path from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
+import { PREVIEW_BASE_URL, PREVIEW_PORT } from './e2e/_helpers/preview-server';
 
 const CI = !!process.env.CI;
 
@@ -61,7 +62,7 @@ export default defineConfig({
   globalTeardown: './e2e/_helpers/global-teardown.ts',
 
   use: {
-    baseURL: 'http://localhost:4173',
+    baseURL: PREVIEW_BASE_URL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: CI ? 'retain-on-failure' : 'off',
@@ -90,8 +91,8 @@ export default defineConfig({
 
   webServer: {
     // Build first so `vite preview` serves prod-mode artifacts.
-    command: 'pnpm --filter ui run build && pnpm --filter ui exec vite preview --port 4173',
-    port: 4173,
+    command: `pnpm --filter ui run build && pnpm --filter ui exec vite preview --port ${PREVIEW_PORT}`,
+    port: PREVIEW_PORT,
     reuseExistingServer: !CI,
     timeout: 180_000, // give the build + preview boot a budget
     stdout: 'pipe',

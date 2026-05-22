@@ -9,7 +9,7 @@
  * its API layer is mocked.
  */
 
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 /** All /api/* requests fail with a network error. context.setOffline
  *  is also flipped so the browser's navigator.onLine reflects the
@@ -20,10 +20,27 @@ export async function mockOffline(page: Page): Promise<void> {
 }
 
 /** Reverse mockOffline. Lets a spec test the offline -> online
- *  recovery transition. */
+ *  recovery transition. Self-verifies by hitting /api/health -- if
+ *  the route handlers + offline flag aren't fully cleared, the probe
+ *  fails fast within 3s rather than letting the spec proceed in a
+ *  silently-still-broken state. */
 export async function restoreOnline(page: Page): Promise<void> {
   await page.unrouteAll({ behavior: 'wait' });
   await page.context().setOffline(false);
+  // Self-verify: a real round-trip to /api/health must succeed within
+  // 3s, else unroute + setOffline didn't fully clear. Without this
+  // probe restoreOnline could "silently fail" -- no exception thrown
+  // but the routes still mocked -- and the offline -> online recovery
+  // test would still pass under broken plumbing.
+  await expect
+    .poll(
+      async () => {
+        const resp = await page.request.get('/api/health', { failOnStatusCode: false });
+        return resp.status();
+      },
+      { timeout: 3000, intervals: [200] },
+    )
+    .toBe(200);
 }
 
 /** Every /api/* request returns 401 with a Location header to /login.

@@ -27,21 +27,18 @@ test.describe('web-vitals telemetry', () => {
       document.dispatchEvent(new Event('visibilitychange'));
       window.dispatchEvent(new Event('pagehide'));
     });
-    await authenticatedPage.waitForTimeout(800);
-    // Real assertion: chromium MUST emit at least TTFB (which fires on
-    // navigation start and doesn't need visibility flush). webkit +
-    // firefox have less predictable beacon delivery under
-    // browser-emulated visibility flips -- assert at least one beacon
-    // there too, but allow a longer grace window.
-    if (browserName === 'chromium') {
-      expect(seenRequests.length).toBeGreaterThan(0);
-    } else {
-      // Best-effort floor: at least one beacon SOMEWHERE on this load.
-      // If web-vitals client-wiring breaks entirely, this still catches
-      // it on chromium above; webkit/firefox stay green when emit
-      // semantics differ.
-      expect(seenRequests.length >= 0).toBe(true);
-    }
+    // web-vitals 5.x emits TTFB on `pagehide` for every browser that
+    // supports PerformanceObserver -- all five projects do. WebKit +
+    // mobile-safari flush slower under emulated visibility flips, so
+    // they get a longer grace window. The assertion is REAL on every
+    // engine: a regression that breaks sendBeacon wiring on any one
+    // browser must fail this test (no chromium-only escape hatch).
+    const graceMs = browserName === 'webkit' || browserName === 'mobile-safari' ? 2000 : 800;
+    await authenticatedPage.waitForTimeout(graceMs);
+    expect(
+      seenRequests.length,
+      `web-vitals must emit >=1 /api/vitals beacon on ${browserName}`,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   test('POST /api/vitals accepts a valid payload', async ({ authenticatedPage }) => {

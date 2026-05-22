@@ -29,10 +29,14 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { PREVIEW_PORT } from './preview-server-port.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..', '..');
-const PORT = process.env.LIGHTHOUSE_PORT ?? '4173';
+// Default tracks the shared PREVIEW_PORT constant (mirrored from TS).
+// LIGHTHOUSE_PORT env override remains as an escape hatch for CI
+// workflows that need to point at a non-default port.
+const PORT = process.env.LIGHTHOUSE_PORT ?? String(PREVIEW_PORT);
 const SRC_CONFIG = resolve(REPO_ROOT, 'lighthouserc.json');
 const DST_CONFIG = resolve(REPO_ROOT, 'lighthouserc.runtime.json');
 
