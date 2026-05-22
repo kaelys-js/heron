@@ -163,6 +163,50 @@ if (flags.noRemote) {
   }
 }
 
+// ── 4. Apple Dev portal manual steps (read-only checklist) ─────────
+// Apple gates 3 setup actions behind their developer-portal UI:
+// (a) App ID creation on developer.apple.com/account/resources/identifiers
+// (b) App Store Connect app entry creation
+// (c) App-specific password + ASC API key generation
+//
+// None of these are scriptable via public Apple APIs without a
+// pre-existing API key (which itself requires (c) to obtain). The
+// best we can do here is emit a checklist with direct URLs +
+// surface the irreducible manual steps so the maintainer doesn't
+// get caught at `pnpm build:ios` failing 5 layers in.
+//
+// This block doesn't add fail/warn states by default -- the actual
+// build will fail loudly if these are missing. Use --strict to
+// surface them as warnings.
+log.step('Native readiness -- Apple Dev portal manual steps (checklist)');
+{
+  const bundleId = (() => {
+    try {
+      const brand = JSON.parse(readFileSync(join(ROOT, 'branding', 'brand.json'), 'utf8'));
+      return brand.identifiers?.bundleId || '<set in branding/brand.json>';
+    } catch {
+      return '<set in branding/brand.json>';
+    }
+  })();
+
+  log.info('App ID creation -- developer.apple.com/account/resources/identifiers');
+  log.info(`  - Click + -> App IDs -> App; Explicit; paste bundle ID: ${bundleId}`);
+  log.info('  - Capabilities ON: Push Notifications, App Groups, Associated Domains');
+
+  log.info('App Store Connect entry -- appstoreconnect.apple.com');
+  log.info(`  - My Apps -> + -> New App; bundle ID = ${bundleId}; SKU = heron; Name = Heron`);
+
+  log.info('App-specific password -- appleid.apple.com');
+  log.info('  - Sign-In & Security -> App-Specific Passwords -> + -> label "heron fastlane"');
+  log.info('  - Paste into pnpm setup:native when prompted');
+
+  log.info('ASC API key (.p8) -- appstoreconnect.apple.com/access/integrations/api');
+  log.info('  - + Create new key; Access = App Manager; download .p8 (one-time)');
+  log.info('  - Paste Key ID + Issuer ID + .p8 contents into pnpm setup:native');
+
+  log.info('Full walkthrough: TODO-INSTRUCTIONS.md (gitignored, repo root)');
+}
+
 // ── Summary ─────────────────────────────────────────────────────────
 if (flags.json) {
   console.log(JSON.stringify(results, null, 2));
