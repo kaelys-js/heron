@@ -44,11 +44,11 @@
 
 ## Checklist
 
-- [ ] I have read [CONTRIBUTING.md](CONTRIBUTING.md)
+- [ ] I have read [CONTRIBUTING.md](../CONTRIBUTING.md)
 - [ ] I linked a related issue above (required for features + arch changes)
 - [ ] My PR title follows [Conventional Commits](https://www.conventionalcommits.org/)
 - [ ] My PR does not include personal data (real CV / email / names / API keys)
-- [ ] My changes respect the [Data Contract](../docs/DATA_CONTRACT.md) (no modifications to user-layer files)
+- [ ] My changes respect the [Data Contract](../../docs/DATA_CONTRACT.md) (no modifications to user-layer files)
 - [ ] If I added a dependency, it's pinned exactly (no `^` / `~`)
 - [ ] If I touched native (iOS / Android / Electron), I ran the platform build locally
 

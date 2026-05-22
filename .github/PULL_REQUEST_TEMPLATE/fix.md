@@ -44,7 +44,7 @@
 - [ ] PR title follows [Conventional Commits](https://www.conventionalcommits.org/) (`fix(scope): …`)
 - [ ] Linked a related issue above (or justified the skip)
 - [ ] No personal data in the diff
-- [ ] Respects the [Data Contract](../docs/DATA_CONTRACT.md)
+- [ ] Respects the [Data Contract](../../docs/DATA_CONTRACT.md)
 
 ## Notes for reviewers
 
