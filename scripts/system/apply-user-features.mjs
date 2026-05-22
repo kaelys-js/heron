@@ -323,8 +323,10 @@ console.log(
 
 // ── 5. Profile README at <owner>/<owner> ────────────────────────
 // Beautiful README pattern -- same design language as the Heron repo:
-// centered wordmark, badge row, quick-links bar, featured-project
-// section with screenshot, contact channels, github-readme-stats card.
+// centered hero, badge row, featured-project section, contact channels.
+// Structure: resist.js is the company; Heron is its first product.
+// Stats use shields.io (always-on) -- the previous github-readme-stats
+// Vercel cards were 503-ing because that public instance is unreliable.
 // Discord URL is templated from `community.discord.url` in brand.json
 // (SSOT); we read it from a tiny inline json parse here so this script
 // stays standalone (no apply-brand dependency at workflow time).
@@ -334,10 +336,14 @@ const README = [
   '',
   `# @${OWNER}`,
   '',
-  '**Software engineer + builder. ~15 years in. Shipping local-first tools.**',
+  '**Building [resist.js](https://github.com/' +
+    OWNER +
+    ') — local-first software. Currently shipping [Heron](https://github.com/' +
+    OWNER +
+    '/heron).**',
   '',
-  `[![Heron stars](https://img.shields.io/github/stars/${OWNER}/heron?label=heron&style=social)](https://github.com/${OWNER}/heron)`,
-  `[![Sponsor](https://img.shields.io/github/sponsors/${OWNER}?label=sponsor&logo=github)](https://github.com/sponsors/${OWNER})`,
+  `[![Heron stars](https://img.shields.io/github/stars/${OWNER}/heron?label=heron%20%E2%98%85&style=social)](https://github.com/${OWNER}/heron)`,
+  `[![Sponsor](https://img.shields.io/github/sponsors/${OWNER}?label=sponsor&logo=githubsponsors&logoColor=white&color=ea4aaa)](https://github.com/sponsors/${OWNER})`,
   `[![Followers](https://img.shields.io/github/followers/${OWNER}?label=follow&style=social)](https://github.com/${OWNER})`,
   '',
   `[**Heron**](https://github.com/${OWNER}/heron) · [**Sponsor**](https://github.com/sponsors/${OWNER}) · [**Email**](mailto:${SUPPORT_EMAIL})`,
@@ -348,17 +354,20 @@ const README = [
   '',
   '## Currently shipping',
   '',
-  `### 🪶 [Heron](https://github.com/${OWNER}/heron)`,
+  '### 🛡 resist.js',
+  '',
+  '_A local-first software company. The monorepo is private while early products mature; expect it to open up later this year. Heron is the first product._',
+  '',
+  `### 🪶 [Heron](https://github.com/${OWNER}/heron) — resist.js's first product`,
   '',
   '> _Stand still. Strike well._',
   '',
   'A thinking partner for career transitions. Local-first job-search platform: pipeline tracking, A–F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Runs on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.',
   '',
-  `[![Open source · MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/${OWNER}/heron/blob/main/LICENSE) [![Build](https://github.com/${OWNER}/heron/actions/workflows/test.yml/badge.svg)](https://github.com/${OWNER}/heron/actions/workflows/test.yml)`,
-  '',
-  '### 🛡 resist.js',
-  '',
-  '_Private repo opening to public later this year. Watch this profile to know when._',
+  `[![License](https://img.shields.io/github/license/${OWNER}/heron?color=blue)](https://github.com/${OWNER}/heron/blob/main/LICENSE)`,
+  `[![Build](https://github.com/${OWNER}/heron/actions/workflows/test.yml/badge.svg)](https://github.com/${OWNER}/heron/actions/workflows/test.yml)`,
+  `[![Release](https://img.shields.io/github/v/release/${OWNER}/heron?label=release&color=success)](https://github.com/${OWNER}/heron/releases)`,
+  `[![Languages](https://img.shields.io/github/languages/top/${OWNER}/heron?label=top%20lang)](https://github.com/${OWNER}/heron)`,
   '',
   '---',
   '',
@@ -367,18 +376,6 @@ const README = [
   ...(DISCORD_URL ? [`- 💬 **Discord** — [community for Heron](${DISCORD_URL})`] : []),
   `- 💼 **GitHub Sponsors** — [github.com/sponsors/${OWNER}](https://github.com/sponsors/${OWNER})`,
   `- ✉️ **Email** — <${SUPPORT_EMAIL}>`,
-  '',
-  '---',
-  '',
-  '## GitHub stats',
-  '',
-  '<div align="center">',
-  '',
-  `<picture><source media="(prefers-color-scheme: dark)" srcset="https://github-readme-stats.vercel.app/api?username=${OWNER}&show_icons=true&theme=tokyonight&hide_border=true&hide_title=true&hide=issues" /><img src="https://github-readme-stats.vercel.app/api?username=${OWNER}&show_icons=true&theme=default&hide_border=true&hide_title=true&hide=issues" alt="${OWNER}'s GitHub stats" /></picture>`,
-  '',
-  `<picture><source media="(prefers-color-scheme: dark)" srcset="https://github-readme-stats.vercel.app/api/top-langs/?username=${OWNER}&layout=compact&theme=tokyonight&hide_border=true&hide_title=true&card_width=320" /><img src="https://github-readme-stats.vercel.app/api/top-langs/?username=${OWNER}&layout=compact&theme=default&hide_border=true&hide_title=true&card_width=320" alt="Top languages" /></picture>`,
-  '',
-  '</div>',
   '',
   '---',
   '',
