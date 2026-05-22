@@ -1,5 +1,5 @@
 ---
-# yaml-language-server: $schema=https://www.schemastore.org/yamllint.json
+# yaml-language-server: $schema=https://json.schemastore.org/yamllint.json
 # yamllint config -- repo-wide.
 # We use yamllint as a syntax / structure gate, not a strict 80-col style
 # linter. Workflow YAMLs and lefthook.yml have inline shell commands +

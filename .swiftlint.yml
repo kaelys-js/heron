@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://www.schemastore.org/swiftlint.json
+# yaml-language-server: $schema=https://json.schemastore.org/swiftlint.json
 # SwiftLint config -- applies to every Swift file in the repo.
 #
 # Discovery: swiftlint walks up from the directory it's invoked in and
