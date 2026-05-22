@@ -22,7 +22,7 @@
     Matches the boot-fallback / error.html design language so a user
     who saw the loading screen and then hits this overlay perceives
     one continuous "we're trying to reach the server" narrative.
-    Brand bloom background + rocket mark + status copy + Retry button.
+    Brand bloom background + brand mark + status copy + Retry button.
 
   Tap Retry → calls `onlineStore.refresh()` + `resetApiBase()` so both
   the navigator.onLine probe AND the backend-discovery cache get
@@ -195,20 +195,20 @@
     <div
       class="relative w-full max-w-sm flex flex-col items-center gap-4 rounded-2xl border border-white/10 bg-zinc-900/80 p-8 text-center shadow-[0_24px_64px_-12px_rgba(0,0,0,0.6)] backdrop-blur-lg"
     >
-      <!-- Brand mark — same rocket from logo.svg, scaled down. Drop
+      <!-- Brand mark — mirrors branding/logo.svg via apply-brand's
+           AUTO-GENERATED:brand-mark marker pair, scaled down. Drop
            shadow matches boot-fallback's halo. -->
       <div
         class="size-16 drop-shadow-[0_0_24px_rgba(139,92,246,0.35)] drop-shadow-[0_6px_16px_rgba(139,92,246,0.2)]"
       >
         <svg viewBox="0 0 1024 1024" aria-hidden="true" class="block size-full">
+          <!-- AUTO-GENERATED:brand-mark gradient-id="bu-grad" -->
           <defs>
-            <!-- AUTO-GENERATED:brand-gradient -->
             <linearGradient id="bu-grad" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stop-color="#4a5b6d" />
               <stop offset="55%" stop-color="#7a8c6d" />
               <stop offset="100%" stop-color="#c89b4a" />
             </linearGradient>
-            <!-- /AUTO-GENERATED:brand-gradient -->
           </defs>
           <rect width="1024" height="1024" rx="232" fill="url(#bu-grad)" />
           <rect x="0" y="0" width="1024" height="512" rx="232" fill="#ffffff" opacity="0.06" />
@@ -220,15 +220,14 @@
             stroke-linecap="round"
             stroke-linejoin="round"
           >
-            <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
-            <path
-              d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09"
-            />
-            <path
-              d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z"
-            />
-            <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" />
+            <path d="M16 7h.01" />
+            <path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20" />
+            <path d="m20 7 2 .5-2 .5" />
+            <path d="M10 18v3" />
+            <path d="M14 17.75V21" />
+            <path d="M7 18a6 6 0 0 0 3.84-10.61" />
           </g>
+          <!-- /AUTO-GENERATED:brand-mark -->
         </svg>
       </div>
 

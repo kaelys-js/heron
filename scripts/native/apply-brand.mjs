@@ -1671,38 +1671,90 @@ function applyAppHtml(brand) {
 }
 
 /**
- * Reconcile the brand gradient across every consumer that holds an
- * inline copy. Stops come from brand.json::colors.primary + .accentSecondary
- * + .accent so a single brand.json edit cascades to:
+ * Reconcile the full inline brand mark across every consumer that
+ * holds a hand-rolled copy. The brand mark = <defs> + linearGradient
+ * (3 stops) + 1024x1024 squircle background + 6% white top-half wash +
+ * scaled glyph paths. Source of truth is `branding/logo.svg`; this
+ * function reads its <symbol id="brand-glyph"> + gradient stops and
+ * writes them into every consumer in lockstep.
  *
- *   1. branding/logo.svg (master)
- *   2. ui/src/error.html
- *   3. ui/src/app.html (the splash gradient, not the spinner stops)
- *   4. ui/src/lib/components/BackendUnreachableOverlay.svelte
- *   5. ui/src/routes/signup/+page.svelte
- *   6. ui/src/routes/login/+page.svelte
+ * Consumers (each wraps the inner-SVG block in
+ * <!-- AUTO-GENERATED:brand-mark gradient-id="X-bg" --> markers; the
+ * per-consumer gradient-id avoids DOM-wide ID collisions when multiple
+ * SVGs share a page):
  *
- * Each consumer wraps its <linearGradient>...</linearGradient> in
- * <!-- AUTO-GENERATED:brand-gradient --> markers. This function rewrites
- * the inner <stop> stop-color values to the brand tokens; the linearGradient
- * id + viewport attributes stay per-consumer (since IDs must be unique
- * when multiple SVGs share the DOM).
+ *   1. ui/src/error.html                                       (err-bg)
+ *   2. ui/src/app.html (boot fallback)                         (bfb-bg)
+ *   3. ui/src/lib/components/BackendUnreachableOverlay.svelte  (bu-grad)
+ *   4. ui/src/routes/signup/+page.svelte                       (signup-bg)
+ *   5. ui/src/routes/login/+page.svelte                        (login-bg)
  *
- * Idempotent: re-run is a no-op when stops already match. Drift
- * detection happens implicitly via writeIfChanged + the snapshot.
+ * branding/logo.svg itself is NOT a consumer; it's the source. The
+ * AUTO-GENERATED:brand-gradient marker pair INSIDE logo.svg only wraps
+ * the <linearGradient> definition (since logo.svg uses <symbol>+<use>
+ * for the glyph, not the inline rect+g pattern the consumers do).
+ *
+ * Idempotent: re-run is a no-op when consumers already match logo.svg.
+ *
+ * Why a full-mark reconciler vs. just gradient stops: the consumers'
+ * "Inline brand mark -- mirror of branding/logo.svg" header comments
+ * are now actually enforced; before this function existed, swapping
+ * the glyph in logo.svg (e.g. rocket -> bird) left every consumer
+ * silently rendering the OLD glyph. apply-brand now keeps the inline
+ * copies aligned with the master.
  */
-function applyBrandGradient(brand) {
-  const start = brand.colors.primary;
-  const mid = brand.colors.accentSecondary;
-  const end = brand.colors.accent;
+function applyBrandMark(brand) {
+  // 1. Parse logo.svg to extract:
+  //    - 3 gradient stops (from the AUTO-GENERATED:brand-gradient block)
+  //    - glyph paths (from <symbol id="brand-glyph"><g>...</g></symbol>)
+  //    The squircle dims (1024x1024 rx=232) + highlight overlay +
+  //    glyph <g> styling are stable contract; we hardcode them in the
+  //    template below.
+  if (!existsSync(BRAND_LOGO)) {
+    log.warn(`branding/logo.svg missing -- skipping brand-mark reconciliation`);
+    return;
+  }
+  const logoSvg = readFileSync(BRAND_LOGO, 'utf8');
 
-  const startMarker = '<!-- AUTO-GENERATED:brand-gradient -->';
-  const endMarker = '<!-- /AUTO-GENERATED:brand-gradient -->';
+  // Also reconcile logo.svg's OWN AUTO-GENERATED:brand-gradient block
+  // so the source-of-truth stops stay in sync with brand.json. The
+  // consumers below get their stops from `stops` (built from brand.json)
+  // directly, so this self-update is mainly for the source file's own
+  // values to drift-match brand.json on every apply-brand run.
+  reconcileLogoSvgGradient(brand);
+
+  const symbolRe = /<symbol id="brand-glyph"[^>]*>\s*<g[^>]*>([\s\S]*?)<\/g>\s*<\/symbol>/m;
+  const symbolMatch = symbolRe.exec(logoSvg);
+  if (!symbolMatch) {
+    log.warn(
+      `logo.svg missing <symbol id="brand-glyph"><g>...</g> -- skipping brand-mark reconciliation`,
+    );
+    return;
+  }
+  // Normalize: flatten whitespace, then extract individual <path .../>
+  // elements. This way logo.svg can format paths across multiple lines
+  // (it does) and we still emit one path per line in each consumer.
+  const glyphInner = symbolMatch[1].replace(/\s+/g, ' ').trim();
+  const glyphPathRe = /<path\s+[^/]*\/>/g;
+  const glyphPaths = glyphInner.match(glyphPathRe) ?? [];
+  if (glyphPaths.length === 0) {
+    log.warn(`logo.svg <symbol id="brand-glyph"> has no <path> children -- skipping`);
+    return;
+  }
+
+  // 2. Stops driven by brand.json.
+  const stops = [
+    { offset: '0%', color: brand.colors.primary },
+    { offset: '55%', color: brand.colors.accentSecondary },
+    { offset: '100%', color: brand.colors.accent },
+  ];
+
+  // 3. Reconcile each consumer.
   const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const blockRe = new RegExp(`${escape(startMarker)}[\\s\\S]*?${escape(endMarker)}`, 'm');
+  const startMarkerRe = /<!-- AUTO-GENERATED:brand-mark gradient-id="([^"]+)" -->/;
+  const endMarker = '<!-- /AUTO-GENERATED:brand-mark -->';
 
   const targets = [
-    join(ROOT, 'branding', 'logo.svg'),
     join(UI, 'src', 'error.html'),
     join(UI, 'src', 'app.html'),
     join(UI, 'src', 'lib', 'components', 'BackendUnreachableOverlay.svelte'),
@@ -1715,36 +1767,95 @@ function applyBrandGradient(brand) {
   for (const path of targets) {
     if (!existsSync(path)) continue;
     const before = readFileSync(path, 'utf8');
-    const match = blockRe.exec(before);
-    if (!match) {
+    const startMatch = startMarkerRe.exec(before);
+    if (!startMatch) {
       log.warn(
-        `${path.replace(ROOT + '/', '')} missing AUTO-GENERATED:brand-gradient markers; skipped`,
+        `${path.replace(ROOT + '/', '')} missing AUTO-GENERATED:brand-mark markers; skipped`,
       );
       missing++;
       continue;
     }
-    const block = match[0];
-    let nextBlock = block;
-    const stops = [
-      [/(<stop offset="0%"\s+stop-color=")[^"]+(")/, start],
-      [/(<stop offset="55%"\s+stop-color=")[^"]+(")/, mid],
-      [/(<stop offset="100%"\s+stop-color=")[^"]+(")/, end],
+    const gradientId = startMatch[1];
+
+    // Match the leading indent of the start-marker line so the block we
+    // emit preserves the consumer's surrounding indentation. Falls back
+    // to a sensible default if the marker is at column 0.
+    const lineRe = new RegExp(`^([ \\t]*)${escape(startMatch[0])}`, 'm');
+    const indentMatch = before.match(lineRe);
+    const indent = indentMatch ? indentMatch[1] : '          ';
+
+    // Build the reconciled block. Sibling-level indent for marker pair
+    // and all the block content between them.
+    const lines = [
+      `${indent}${startMatch[0]}`,
+      `${indent}<defs>`,
+      `${indent}  <linearGradient id="${gradientId}" x1="0" y1="0" x2="1" y2="1">`,
+      ...stops.map((s) => `${indent}    <stop offset="${s.offset}" stop-color="${s.color}" />`),
+      `${indent}  </linearGradient>`,
+      `${indent}</defs>`,
+      `${indent}<rect width="1024" height="1024" rx="232" fill="url(#${gradientId})" />`,
+      `${indent}<rect x="0" y="0" width="1024" height="512" rx="232" fill="#ffffff" opacity="0.06" />`,
+      `${indent}<g`,
+      `${indent}  transform="translate(192,192) scale(26.667)"`,
+      `${indent}  fill="none"`,
+      `${indent}  stroke="#ffffff"`,
+      `${indent}  stroke-width="1.8"`,
+      `${indent}  stroke-linecap="round"`,
+      `${indent}  stroke-linejoin="round"`,
+      `${indent}>`,
+      ...glyphPaths.map((p) => `${indent}  ${p}`),
+      `${indent}</g>`,
+      `${indent}${endMarker}`,
     ];
-    for (const [re, color] of stops) {
-      nextBlock = nextBlock.replace(re, `$1${color}$2`);
-    }
-    if (nextBlock !== block) {
-      const next = before.replace(block, nextBlock);
-      writeFileSync(path, next);
+    const nextBlock = lines.join('\n');
+
+    // Replace from start-marker line to end-marker line inclusive.
+    const replaceRe = new RegExp(
+      `${escape(indent)}${escape(startMatch[0])}[\\s\\S]*?${escape(endMarker)}`,
+      'm',
+    );
+    const after = before.replace(replaceRe, nextBlock);
+    if (after !== before) {
+      writeFileSync(path, after);
       touched++;
     }
   }
   if (touched > 0) {
     log.ok(
-      `brand gradient (${touched} file${touched === 1 ? '' : 's'} updated, from brand.json::colors.{primary,accentSecondary,accent})`,
+      `brand mark (${touched} file${touched === 1 ? '' : 's'} updated from branding/logo.svg's <symbol id="brand-glyph"> + brand.json colors)`,
     );
   } else if (missing === 0) {
-    log.skip(`brand gradient -- already current across ${targets.length} consumers`);
+    log.skip(`brand mark -- already current across ${targets.length} consumers`);
+  }
+}
+
+/**
+ * Self-reconcile branding/logo.svg's own AUTO-GENERATED:brand-gradient
+ * block from brand.json colors. logo.svg is the source for everything
+ * else, but the gradient stops INSIDE it still need to track brand.json
+ * (the glyph paths in <symbol id="brand-glyph"> are hand-edited; only
+ * the gradient is data-driven here).
+ */
+function reconcileLogoSvgGradient(brand) {
+  if (!existsSync(BRAND_LOGO)) return;
+  const before = readFileSync(BRAND_LOGO, 'utf8');
+  const startMarker = '<!-- AUTO-GENERATED:brand-gradient -->';
+  const endMarker = '<!-- /AUTO-GENERATED:brand-gradient -->';
+  const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const blockRe = new RegExp(`${escape(startMarker)}[\\s\\S]*?${escape(endMarker)}`, 'm');
+  const match = blockRe.exec(before);
+  if (!match) return; // logo.svg lost its markers; not fatal, brand-mark still works for consumers
+  let nextBlock = match[0];
+  const stopRewrites = [
+    [/(<stop offset="0%"\s+stop-color=")[^"]+(")/, brand.colors.primary],
+    [/(<stop offset="55%"\s+stop-color=")[^"]+(")/, brand.colors.accentSecondary],
+    [/(<stop offset="100%"\s+stop-color=")[^"]+(")/, brand.colors.accent],
+  ];
+  for (const [re, color] of stopRewrites) {
+    nextBlock = nextBlock.replace(re, `$1${color}$2`);
+  }
+  if (nextBlock !== match[0]) {
+    writeFileSync(BRAND_LOGO, before.replace(match[0], nextBlock));
   }
 }
 
@@ -1768,10 +1879,10 @@ function applyErrorHtml(brand) {
     [/(<title>%status%\s*·\s*)[^<]+(<\/title>)/, `$1${brand.displayName}$2`],
     // Reload button -- "Reload {displayName}"
     [/(>Reload\s+)[^<]+(<\/a>)/, `$1${brand.displayName}$2`],
-    // Inline SVG gradient stops moved to applyBrandGradient(brand) so every
-    // consumer (logo.svg + app.html + error.html + BackendUnreachableOverlay
-    // + signup/login pages) reads from the same brand.json::colors source
-    // via a single AUTO-GENERATED:brand-gradient marker pair per file.
+    // Inline SVG gradient + glyph + squircle are reconciled by
+    // applyBrandMark(brand) so every consumer (app.html, error.html,
+    // BackendUnreachableOverlay, signup, login) tracks branding/logo.svg
+    // via AUTO-GENERATED:brand-mark gradient-id="X-bg" marker pairs.
   ];
   for (const [re, val] of subs) {
     const next = body.replace(re, val);
@@ -2349,8 +2460,8 @@ function apply() {
   applyAndroidBuildGradle(brand);
   applyAndroidKotlinBrand(brand);
 
-  log.step('Brand gradient (logo.svg + app.html + error.html + svelte consumers)');
-  applyBrandGradient(brand);
+  log.step('Brand mark (logo.svg <symbol> + brand.json colors -> 5 inline consumers)');
+  applyBrandMark(brand);
 
   log.step('Web manifest + favicon + app.html + error.html');
   applyFavicon(brand);
