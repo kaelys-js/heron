@@ -43,41 +43,65 @@ const REPO_ROOT = resolve(__dirname, '..', '..');
 const COVERAGE_ROOT = resolve(REPO_ROOT, 'ui/ios/App/fastlane/coverage');
 
 /**
- * Per-scheme cobertura.xml and the threshold its primary covered
- * surface must clear. The "target" column is informational --
- * slather's binary-basename filter (configured in the Fastfile)
- * already restricts each XML to one binary's coverage, so the
- * top-level `line-rate` IS the per-target line rate.
+ * Per-scheme cobertura.xml + the thresholds its coverage must clear.
+ *
+ * Two layers of enforcement:
+ *
+ * 1. `threshold` -- aggregate (whole-binary) line rate. Computed from
+ *    the cobertura root `<coverage line-rate>` attribute.
+ *
+ * 2. `perFileThreshold` -- per-file line rate. Computed from each
+ *    `<class filename="..." line-rate="...">` element. A single .swift
+ *    file falling below the per-file floor fails the script even when
+ *    the aggregate clears the bar. Without this, a heavily-tested
+ *    Brand.swift + Bonjour.swift can mask a 0% NativePlugin.swift.
+ *
+ * The "target" column is informational -- slather's binary-basename
+ * filter (configured in the Fastfile) already restricts each XML to
+ * one binary's coverage, so the top-level `line-rate` IS the
+ * per-target line rate.
+ *
+ * Per-file floors are deliberately LOWER than aggregate floors:
+ * extensions ship a 30%/file floor because some single-purpose files
+ * (e.g. WatchSessionBridge in the WatchApp binary) only have ~12 lines
+ * of meaningful logic, and a 50%/file gate is impossible to clear
+ * without test-doubling every line. The App.app target gets a stricter
+ * 80%/file because its files are larger + more frequently exercised.
  */
 const SCHEMES = [
   {
     scheme: 'AppTests',
     target: 'App.app',
     threshold: 95.0,
+    perFileThreshold: 80.0,
     binaryBasename: 'App',
   },
   {
     scheme: 'WidgetTests',
     target: 'AppWidget (logic test bundle)',
     threshold: 50.0,
+    perFileThreshold: 30.0,
     binaryBasename: 'WidgetTests',
   },
   {
     scheme: 'AppLiveActivityTests',
     target: 'AppLiveActivity (logic test bundle)',
     threshold: 50.0,
+    perFileThreshold: 30.0,
     binaryBasename: 'AppLiveActivityTests',
   },
   {
     scheme: 'AppShareExtensionTests',
     target: 'AppShareExtension (logic test bundle)',
     threshold: 50.0,
+    perFileThreshold: 30.0,
     binaryBasename: 'AppShareExtensionTests',
   },
   {
     scheme: 'WatchTests',
     target: 'WatchApp',
     threshold: 50.0,
+    perFileThreshold: 30.0,
     binaryBasename: 'WatchApp',
   },
 ];
@@ -98,6 +122,30 @@ function readLineRate(xmlPath) {
 }
 
 /**
+ * Pull per-file line rates out of cobertura XML.
+ *
+ * Cobertura emits one `<class filename="..." line-rate="..." ...>` per
+ * source file. The filename is RELATIVE to the source-root attribute on
+ * the root `<sources>` element; we just keep the filename as-is for
+ * reporting (the user reads "NativePlugin.swift" easier than
+ * "App/NativePlugin.swift").
+ *
+ * Returns an array of { filename, lineRate } objects. Empty array when
+ * the XML is missing or has no <class> elements.
+ */
+function readPerFileLineRates(xmlPath) {
+  if (!existsSync(xmlPath)) return [];
+  const content = readFileSync(xmlPath, 'utf8');
+  const classMatches = [
+    ...content.matchAll(/<class\s+[^>]*\bfilename="([^"]+)"[^>]*\bline-rate="([0-9.]+)"/g),
+  ];
+  return classMatches.map((m) => ({
+    filename: m[1].replace(/^.*\//, ''), // basename only for readability
+    lineRate: Number(m[2]),
+  }));
+}
+
+/**
  * Format a percentage with one decimal place + a fixed width so the
  * report table aligns.
  */
@@ -112,6 +160,7 @@ function main() {
 
   const rows = [];
   const failures = [];
+  const perFileFailures = [];
   let missing = 0;
 
   for (const cfg of SCHEMES) {
@@ -144,6 +193,22 @@ function main() {
         ...cfg,
         actual: actualPct,
       });
+    }
+
+    // Per-file enforcement. A scheme can clear the aggregate gate but
+    // still hide a single .swift file at 0%; catch that here.
+    const perFile = readPerFileLineRates(xmlPath);
+    for (const f of perFile) {
+      const filePct = f.lineRate * 100;
+      if (filePct < cfg.perFileThreshold) {
+        perFileFailures.push({
+          scheme: cfg.scheme,
+          target: cfg.target,
+          filename: f.filename,
+          actual: filePct,
+          threshold: cfg.perFileThreshold,
+        });
+      }
     }
   }
 
@@ -184,11 +249,25 @@ function main() {
     process.exit(1);
   }
 
+  // Per-file gate runs AFTER the aggregate check. Aggregate pass +
+  // per-file fail still fails the script -- the per-file gate is
+  // strictly additive, never overridden by an aggregate pass.
+  if (perFileFailures.length > 0) {
+    console.error('');
+    console.error(`::error::${perFileFailures.length} file(s) below per-file threshold:`);
+    for (const pf of perFileFailures) {
+      console.error(
+        `::error::  ${pf.scheme}/${pf.filename} -- actual ${pf.actual.toFixed(2)}% vs per-file threshold ${pf.threshold}%`,
+      );
+    }
+    process.exit(1);
+  }
+
   if (missing > 0) {
     process.exit(2);
   }
 
-  console.log('✓ all targets meet coverage thresholds');
+  console.log('✓ all targets meet coverage thresholds (aggregate + per-file)');
 }
 
 main();

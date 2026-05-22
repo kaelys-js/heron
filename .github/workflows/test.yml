@@ -560,6 +560,23 @@ jobs:
           use_oidc: true
           verbose: true
 
+      # Electron main-process coverage as a SEPARATE Codecov flag. The
+      # `pnpm test:coverage` turbo task already ran electron's vitest
+      # (per ui/electron/package.json::test:coverage), so the lcov.info
+      # is on disk. Without this upload, electron coverage would either
+      # be invisible OR rolled into the `ts` flag -- masking regressions
+      # on the IPC bridge / brand-watcher / auto-updater surfaces.
+      - name: Upload coverage to Codecov (electron flag)
+        if: needs.changes.outputs.ts == 'true' && hashFiles('ui/electron/coverage/lcov.info') != ''
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        with:
+          files: ui/electron/coverage/lcov.info
+          flags: electron
+          name: electron-coverage
+          fail_ci_if_error: true
+          use_oidc: true
+          verbose: true
+
       # apply-brand regenerates the platform icons + propagated configs
       # that verify-capacitor inspects. Icons (.png/.icns/.ico) live
       # under ui/electron/build/ which is .gitignored, so CI must
