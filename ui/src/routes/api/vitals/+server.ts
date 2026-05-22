@@ -1,8 +1,10 @@
 /** POST /api/vitals -- ingest web-vitals CLS / INP / LCP / TTFB / FCP
- *  beacons fired from +layout.svelte. Poor ratings log as level=warn
- *  (surface as Issues); good/needs-improvement log level=info for trend
- *  analysis. No auth -- vitals fire before auth-state hydration on cold
- *  loads + we don't want to drop measurements. POST + JSON body only. */
+ *  beacons from +layout.svelte. Poor ratings log warn (surface as
+ *  Issues); good / needs-improvement log info. No auth -- vitals fire
+ *  before auth hydration on cold loads. GET returns the in-process
+ *  beacon counter for e2e/web-vitals.spec.ts (Playwright's WebKit
+ *  driver doesn't reliably notify page.route on sendBeacon; the
+ *  counter is the server-truth fallback). */
 
 import { logEvent } from '$lib/server/events';
 
@@ -14,6 +16,14 @@ interface VitalPayload {
   url?: string;
   ts?: number;
 }
+
+// Module-level counter. Cleared on server restart -- the e2e flow
+// reads before/after snapshots + asserts after > before, so the
+// running total at any moment doesn't matter.
+let beaconCount = 0;
+let lastBeaconAt = 0;
+let lastBeaconName: string | null = null;
+let lastBeaconUrl: string | null = null;
 
 export const POST = async ({ request }: { request: Request }) => {
   let body: VitalPayload | null = null;
@@ -52,5 +62,38 @@ export const POST = async ({ request }: { request: Request }) => {
     message: `${body.name}=${body.value.toFixed(2)} (${rating}) on ${body.url ?? 'unknown'}`,
   });
 
+  // Increment counter AFTER successful logging so failed beacons don't
+  // inflate the count -- the e2e test reads this to verify the full
+  // wire (web-vitals chunk -> sendBeacon -> /api/vitals receipt).
+  beaconCount += 1;
+  lastBeaconAt = Date.now();
+  lastBeaconName = body.name;
+  lastBeaconUrl = body.url ?? null;
+
   return new Response(null, { status: 204 });
+};
+
+/**
+ * Test-only observability endpoint. Returns the cumulative number of
+ * beacons received since process start, plus the last beacon's
+ * timestamp / name / url for diagnostics. Public (no auth) because
+ * the counter exposes no per-user state; only an integer counter
+ * + the last beacon's metric name. Used by e2e/web-vitals.spec.ts
+ * to verify webkit + mobile-safari actually emitted beacons even
+ * when Playwright's client-side route handler doesn't fire on
+ * sendBeacon().
+ */
+export const GET = async () => {
+  return new Response(
+    JSON.stringify({
+      count: beaconCount,
+      lastAt: lastBeaconAt,
+      lastName: lastBeaconName,
+      lastUrl: lastBeaconUrl,
+    }),
+    {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    },
+  );
 };
