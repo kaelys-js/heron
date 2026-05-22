@@ -48,7 +48,7 @@
 - [ ] PR title follows [Conventional Commits](https://www.conventionalcommits.org/) (`feat(scope): …`)
 - [ ] Linked a related issue above
 - [ ] No personal data in the diff (real CV / email / names / API keys)
-- [ ] Respects the [Data Contract](../docs/DATA_CONTRACT.md) (no writes to user-layer files)
+- [ ] Respects the [Data Contract](../../docs/DATA_CONTRACT.md) (no writes to user-layer files)
 - [ ] Any new dependency is pinned exactly (no `^` / `~`)
 - [ ] If native (iOS / Android / Electron) touched, platform build verified locally
 
