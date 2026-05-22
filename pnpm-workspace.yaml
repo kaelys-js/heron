@@ -35,6 +35,10 @@ allowBuilds:
   electron-winstaller: true
   esbuild: true
   msw: false
+  # odiff-bin -- Lost Pixel's pixel-diff engine (ReasonML-compiled
+  # native binary). Postinstall downloads the platform-specific
+  # prebuilt; required for `pnpm exec lost-pixel` to function.
+  odiff-bin: true
   sharp: true
 
 # ── Transitive override pinning ─────────────────────────────────────

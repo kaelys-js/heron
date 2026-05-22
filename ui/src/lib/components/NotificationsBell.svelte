@@ -123,6 +123,7 @@
     size="icon"
     aria-label="Notifications"
     class="relative h-8 w-8"
+    data-testid="notifications-bell"
   >
     {#if notifications.connected === 'error'}
       <BellOff class="size-4 text-muted-foreground" />
