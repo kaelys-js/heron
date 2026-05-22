@@ -33,29 +33,42 @@ on:
         description: 'Version tag to build (e.g. 1.7.0). Required when called.'
         required: true
         type: string
-    # zizmor/secrets-inherit -- enumerate the secrets the called
-    # workflow consumes instead of `secrets: inherit` in release.yml.
-    # When a new signing secret is added to a job below, declare it
-    # here AND mirror it in release.yml's `secrets:` block.
+    # Declared secrets: required: false on every entry.
+    #
+    # Why not required: true: GitHub's workflow-call parser hard-rejects
+    # the calling workflow at PARSE time when any `required: true`
+    # secret is undefined on the repo, even when the calling job has
+    # an `if:` that would skip the call. That's a startup_failure
+    # before any job runs -- the user never sees the helpful error
+    # message from the preflight job below.
+    #
+    # The right enforcement point is the `preflight` job (below),
+    # which has an explicit secret-by-secret check with clear
+    # remediation instructions. Marking required: false here lets
+    # the workflow LOAD; preflight then validates + fails loud with
+    # the actionable error if any secret is empty.
+    #
+    # Adding a new signing secret? Declare it here (required: false)
+    # AND add it to the preflight `for var in ...` loop below.
     secrets:
       APPLE_TEAM_ID:
-        required: true
+        required: false
       MAC_CERTIFICATE:
-        required: true
+        required: false
       MAC_CERTIFICATE_PASSWORD:
-        required: true
+        required: false
       IOS_CERTIFICATE:
-        required: true
+        required: false
       IOS_CERTIFICATE_PASSWORD:
-        required: true
+        required: false
       IOS_PROVISIONING_PROFILE:
-        required: true
+        required: false
       APP_STORE_CONNECT_KEY_ID:
-        required: true
+        required: false
       APP_STORE_CONNECT_ISSUER_ID:
-        required: true
+        required: false
       APP_STORE_CONNECT_PRIVATE_KEY:
-        required: true
+        required: false
 
 # Workflow-level is read-only -- each job declares the writes it
 # genuinely needs (contents: write to attach binaries, id-token /
