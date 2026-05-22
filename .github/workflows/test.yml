@@ -15,7 +15,13 @@ on:
     branches: [main]
   push:
     branches: [main]
-  workflow_dispatch: # manual re-run
+  workflow_dispatch:
+    inputs:
+      record_mode:
+        description: 'Set true to record iOS snapshot baselines + upload __Snapshots__ as an artifact (H.E.3 path B).'
+        type: boolean
+        default: false
+        required: false
 
 # Least-privilege: this workflow only reads source + writes statuses /
 # annotations + uploads coverage. No release artefacts, no Pages, no packages.
@@ -842,6 +848,14 @@ jobs:
       - name: Fastlane test_ci (XCTest + XCUITest)
         if: needs.changes.outputs.ios == 'true'
         working-directory: ui/ios/App
+        env:
+          # H.E.3 path B -- when triggered via
+          # `gh workflow run test.yml -f record_mode=true`, the iOS
+          # snapshot tests write fresh PNGs to __Snapshots__/ rather
+          # than diff against committed baselines. The next step
+          # uploads those PNGs as a workflow artifact for download +
+          # local commit.
+          RECORD_MODE: ${{ github.event.inputs.record_mode == 'true' && '1' || '' }}
         run: bundle exec fastlane test_ci
 
       - name: Upload xcresult bundle
