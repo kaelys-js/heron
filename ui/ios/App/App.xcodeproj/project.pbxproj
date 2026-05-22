@@ -24,6 +24,13 @@
 		3EC41BCD48A909DCE62A32C7 /* WatchApp.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 45A788CFF48FB162CF58655F /* WatchApp.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		464E3AF67C92B9D73E4AD958 /* BrandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C6DBE48967C2185A1EA702 /* BrandTests.swift */; };
 		4CDC6A84B0B5B438F8ACFA84 /* WidgetTestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6F3EBB92FC26A8909F2E030 /* WidgetTestsSmoke.swift */; };
+		AA02002000000000DEAD0001 /* WidgetAuthGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01001000000000DEAD0001 /* WidgetAuthGateTests.swift */; };
+		AA02002000000000DEAD0002 /* InboxIssuesWidgetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01001000000000DEAD0002 /* InboxIssuesWidgetTests.swift */; };
+		AA02002000000000DEAD0003 /* NextInterviewWidgetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01001000000000DEAD0003 /* NextInterviewWidgetTests.swift */; };
+		AA02002000000000DEAD0004 /* TopApplyWidgetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01001000000000DEAD0004 /* TopApplyWidgetTests.swift */; };
+		AA02002000000000DEAD0005 /* WidgetBundleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01001000000000DEAD0005 /* WidgetBundleTests.swift */; };
+		AA02002000000000DEAD0006 /* WatchModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01001000000000DEAD0006 /* WatchModelTests.swift */; };
+		AA02002000000000DEAD0007 /* WatchAppLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01001000000000DEAD0007 /* WatchAppLifecycleTests.swift */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
@@ -206,6 +213,13 @@
 		B4B54803324B7A34A4644CE6 /* AppWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AppWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B536A0A3EB877FABCC9B18D3 /* WidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetBundle.swift; sourceTree = "<group>"; };
 		B6F3EBB92FC26A8909F2E030 /* WidgetTestsSmoke.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetTestsSmoke.swift; sourceTree = "<group>"; };
+		AA01001000000000DEAD0001 /* WidgetAuthGateTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetAuthGateTests.swift; sourceTree = "<group>"; };
+		AA01001000000000DEAD0002 /* InboxIssuesWidgetTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InboxIssuesWidgetTests.swift; sourceTree = "<group>"; };
+		AA01001000000000DEAD0003 /* NextInterviewWidgetTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NextInterviewWidgetTests.swift; sourceTree = "<group>"; };
+		AA01001000000000DEAD0004 /* TopApplyWidgetTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TopApplyWidgetTests.swift; sourceTree = "<group>"; };
+		AA01001000000000DEAD0005 /* WidgetBundleTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetBundleTests.swift; sourceTree = "<group>"; };
+		AA01001000000000DEAD0006 /* WatchModelTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchModelTests.swift; sourceTree = "<group>"; };
+		AA01001000000000DEAD0007 /* WatchAppLifecycleTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchAppLifecycleTests.swift; sourceTree = "<group>"; };
 		C05A76F56281A0EFD15DAD02 /* AppShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AppShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6FF0483296BD7B4DF03552B /* ErrorReporter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ErrorReporter.swift; sourceTree = "<group>"; };
 		C7C1D23B601810C4801F8ED2 /* AppTestsSmoke.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppTestsSmoke.swift; sourceTree = "<group>"; };
@@ -325,16 +339,23 @@
 			isa = PBXGroup;
 			children = (
 				B6F3EBB92FC26A8909F2E030 /* WidgetTestsSmoke.swift */,
+				AA01001000000000DEAD0001 /* WidgetAuthGateTests.swift */,
+				AA01001000000000DEAD0002 /* InboxIssuesWidgetTests.swift */,
+				AA01001000000000DEAD0003 /* NextInterviewWidgetTests.swift */,
+				AA01001000000000DEAD0004 /* TopApplyWidgetTests.swift */,
+				AA01001000000000DEAD0005 /* WidgetBundleTests.swift */,
 			);
-			name = WidgetTests;
+			path = WidgetTests;
 			sourceTree = "<group>";
 		};
 		4B64B3978811347C20076637 /* WatchTests */ = {
 			isa = PBXGroup;
 			children = (
 				A341629834FE8424663D0140 /* WatchTestsSmoke.swift */,
+				AA01001000000000DEAD0006 /* WatchModelTests.swift */,
+				AA01001000000000DEAD0007 /* WatchAppLifecycleTests.swift */,
 			);
-			name = WatchTests;
+			path = WatchTests;
 			sourceTree = "<group>";
 		};
 		504EC2FB1FED79650016851F = {
@@ -819,6 +840,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				4CDC6A84B0B5B438F8ACFA84 /* WidgetTestsSmoke.swift in Sources */,
+				AA02002000000000DEAD0001 /* WidgetAuthGateTests.swift in Sources */,
+				AA02002000000000DEAD0002 /* InboxIssuesWidgetTests.swift in Sources */,
+				AA02002000000000DEAD0003 /* NextInterviewWidgetTests.swift in Sources */,
+				AA02002000000000DEAD0004 /* TopApplyWidgetTests.swift in Sources */,
+				AA02002000000000DEAD0005 /* WidgetBundleTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -846,6 +872,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				8914930D75A1C77BA5BFB215 /* WatchTestsSmoke.swift in Sources */,
+				AA02002000000000DEAD0006 /* WatchModelTests.swift in Sources */,
+				AA02002000000000DEAD0007 /* WatchAppLifecycleTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -58,18 +58,33 @@ Baseline `bundle exec fastlane test_ci` (existing gate 60%). Per-target authored
 
 Total authored gap: **~3,515 LOC** to bring to 95%.
 
-### Phase 3 plan
+### Phase 3 status
 
-- **3.1** SPM deps: `swift-snapshot-testing`, `ViewInspector`
-- **3.2** New test targets: `AppLiveActivityTests`, `AppShareExtensionTests` (extends `add-xcode-targets.rb`)
-- **3.3** Widget tests (~24 cases incl. snapshot baselines for systemSmall/Medium/Large/accessoryCircular)
-- **3.4** LiveActivity tests (~10 cases incl. lockScreen + dynamicIsland snapshots)
-- **3.5** ShareExtension tests (~12 cases)
-- **3.6** Watch tests (~18 cases incl. RootView ViewInspector + watch-face snapshots)
-- **3.7** AppTests gap fill (~25 additional cases against the long-tail uncovered branches)
-- **3.8** Bump `.fastlane/Fastfile::test_ci` `minimum_coverage_percentage 60 → 95`
-- **3.9** Extend `include_targets` to `App.app, AppWidget.appex, AppLiveActivity.appex, AppShareExtension.appex, WatchApp.app`
-- **3.10** Bump test.yml `ios` job timeout `35 → 60` min
+**Logic tests written** (804 LOC across 7 new Swift test files):
+
+- `WidgetTests/WidgetAuthGateTests.swift` -- 12 cases for `WidgetAuth.isAuthenticated()`
+- `WidgetTests/InboxIssuesWidgetTests.swift` -- 6 cases for `IssueSnapshot` codability + entry shape
+- `WidgetTests/NextInterviewWidgetTests.swift` -- 6 cases for `NextInterviewSnapshot` codability
+- `WidgetTests/TopApplyWidgetTests.swift` -- 6 cases for `TopApplyCandidate` codability + runner-ups
+- `WidgetTests/WidgetBundleTests.swift` -- 4 cases for `WidgetStats` + `WidgetEntry`
+- `WatchTests/WatchModelTests.swift` -- 16 cases for `applyPayload` branches, persist/load round-trip
+- `WatchTests/WatchAppLifecycleTests.swift` -- 4 cases for singleton + codability
+
+**Deferred to follow-up PR -- iOS test infrastructure work**:
+
+1. **WidgetTests target setup is broken**: `TEST_HOST = $(BUILT_PRODUCTS_DIR)/AppWidget.app/AppWidget`, but AppWidget is an `.appex` (app extension), not a `.app`. xcodebuild rejects this. Fix: refactor the widget code into a static library / framework that both AppWidget and WidgetTests link, OR set TEST_HOST = `App.app` and link the widget extension binary into the test bundle via `OTHER_LDFLAGS`.
+
+2. **WatchTests target produces output conflict**: "Multiple commands produce 'WatchApp.app/PlugIns/.bundle'". Fix: ensure the test bundle's PRODUCT_NAME is unique so it doesn't collide with WatchApp's PlugIns convention.
+
+3. **Fastlane `test_ci` only runs `AppTests` scheme** (`TEST_SCHEME = "AppTests"` in Fastfile). The Widget + Watch + future LiveActivity / ShareExtension test schemes need adding via `run_tests` invocations or a multi-scheme orchestrator.
+
+4. **xcov gate stays at 60% on App.app only**. Bumping requires (1)+(2)+(3) above to land first so the new test bundles actually execute.
+
+5. **SPM deps not added**: `swift-snapshot-testing` + `ViewInspector` deferred. The logic-only tests above don't need them, but pixel-level SwiftUI testing eventually will.
+
+6. **LiveActivity + ShareExtension test targets not created**: both extensions need new test bundles via `scripts/native/add-xcode-targets.rb` extension. Deferred until the existing Widget/Watch targets compile.
+
+Once the infrastructure work lands, the existing Swift tests above auto-contribute coverage. Estimated effort: 6-8 hours of careful Xcode project surgery, best done as an isolated PR.
 
 ## Android -- `ui/android/app/src/main/**`
 
