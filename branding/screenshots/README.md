@@ -82,8 +82,8 @@ during the submission flow.
 ## What NOT to commit here
 
 - Personal data in screenshots (real CV contents, real recruiter
-  emails, real interview notes). Use the demo dataset
-  (`pnpm seed:demo`) before capturing.
+  emails, real interview notes). Capture against a fresh seeded
+  dataset rather than your real working profile.
 - Original 5K / 10K-px captures: scale down to the per-store maximum
   before committing -- store CDNs reject oversized files.
 - Animated GIFs / mp4s: store-screenshot fields don't accept

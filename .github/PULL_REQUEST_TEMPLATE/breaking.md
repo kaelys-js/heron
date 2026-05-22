@@ -43,8 +43,8 @@
      Example:
      1. Update `config/profile.yml`: rename key `apply_threshold` to
         `automation.min_score_to_apply`.
-     2. Run `pnpm migrate:profile` once to apply the schema change to
-        existing per-user data.
+     2. Run the migration script (e.g. `node scripts/system/migrate-<X>.mjs`)
+        once to apply the schema change to existing per-user data.
      3. Re-run `pnpm build` -- the new build expects the migrated
         config layout. -->
 
