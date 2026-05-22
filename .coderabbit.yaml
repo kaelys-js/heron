@@ -1,5 +1,6 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 # CodeRabbit AI -- automated PR review configuration.
-# Schema: https://docs.coderabbit.ai/reference/yaml-template
+# Schema reference docs: https://docs.coderabbit.ai/reference/yaml-template
 #
 # CodeRabbit is a GitHub App that auto-reviews PRs. Install (once per
 # repo or org-wide) at:

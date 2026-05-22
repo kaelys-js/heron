@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/codecov.json
 # HP8 -- Codecov PR-comment + coverage gate shape.
 #
 # Lives at repo root (codecov.io scans this path). Shapes:
