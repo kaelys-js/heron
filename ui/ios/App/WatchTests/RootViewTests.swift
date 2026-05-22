@@ -92,7 +92,10 @@ final class RootViewTests: XCTestCase {
         // SwiftUI's body{} to evaluate. Even if image-diff is gated off
         // (no baseline yet), this assertion lines coverage.
         let renderer = ImageRenderer(content: AnyView(view))
-        XCTAssertNotNil(renderer.uiImage)
+        guard let renderedImage = renderer.uiImage else {
+            XCTFail("ImageRenderer.uiImage returned nil for \(testName)")
+            return
+        }
 
         let recordMode = ProcessInfo.processInfo.environment["RECORD_MODE"] == "1"
         let testFile = URL(fileURLWithPath: "\(file)")
@@ -107,8 +110,12 @@ final class RootViewTests: XCTestCase {
 
         guard recordMode || baselineExists else { return }
 
+        // watchOS doesn't expose Snapshotting<some View, _>.image -- the
+        // SnapshotTesting SwiftUI extension is iOS/macOS/tvOS only.
+        // Render to UIImage manually via the ImageRenderer above, then
+        // diff against UIImage's well-supported `.image` strategy.
         assertSnapshot(
-            of: view,
+            of: renderedImage,
             as: .image(precision: 0.98, perceptualPrecision: 0.98),
             file: file,
             testName: testName
