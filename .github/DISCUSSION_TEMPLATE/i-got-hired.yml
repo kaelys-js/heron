@@ -1,5 +1,5 @@
 title: 'I got hired'
-labels: ['showcase']
+labels: ['hired-story']
 body:
   - type: markdown
     attributes:

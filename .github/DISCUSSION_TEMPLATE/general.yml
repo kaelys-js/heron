@@ -1,0 +1,51 @@
+# General discussion template -- introductions, chat, off-topic
+# threads. Looser than Q&A or Ideas; this is the welcome-mat thread
+# template. Maps to the "General" category.
+title: '[General] '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Welcome. General Discussion is the place for introductions, chat,
+        off-topic threads, and conversations that don't fit Q&A / Ideas /
+        Showcase.
+
+        Looking for a faster answer to a support question? Join the
+        [Discord](https://discord.gg/MyFbztUK5U) -- real humans, real-time.
+
+  - type: input
+    id: handle
+    attributes:
+      label: How should we address you?
+      description: First name, handle, whatever feels right.
+      placeholder: 'Alex / @alex-dev / Just call me coffee'
+
+  - type: textarea
+    id: context
+    attributes:
+      label: What brings you here?
+      description: |
+        A few sentences. Are you exploring Heron? Job-searching with it?
+        Building something on top? Just saying hi?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: usage
+    attributes:
+      label: How are you using Heron (if at all)?
+      options:
+        - 'Just exploring / poking around'
+        - 'Active job search'
+        - 'Following the project for inspiration'
+        - 'Building / forking my own version'
+        - 'Maintainer / contributor'
+        - 'Not using yet -- here for the community'
+
+  - type: textarea
+    id: extras
+    attributes:
+      label: Anything else
+      description: |
+        Background, skills, what you're hoping to get out of the community,
+        links to your work -- whatever you'd like to share.

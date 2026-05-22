@@ -122,7 +122,7 @@ See [`docs/SETUP.md`](docs/SETUP.md) for the long form including Capacitor / iOS
 | 💬 [Discord](https://discord.gg/MyFbztUK5U) | Real-time questions, setup help, show-and-tell -- typically same-day during EU/US working hours |
 | 📚 [GitHub Discussions](https://github.com/kaelys-js/heron/discussions) | Async Q&A + ideas + roadmap + success stories |
 | 🐛 [Issues](https://github.com/kaelys-js/heron/issues) | Bugs + feature requests (use the templates) |
-| 🎓 [I got hired](https://github.com/kaelys-js/heron/issues/new?template=i-got-hired.yml) | Tell the Hall of Fame your story |
+| 🎓 [I got hired](https://github.com/kaelys-js/heron/discussions/new?category=show-and-tell&template=i-got-hired.yml) | Share your hiring outcome with the community |
 | 📰 [Press kit](branding/PRESS.md) | Pre-written boilerplate for journalists + bloggers |
 | 🔒 [Security disclosure](.github/SECURITY.md) | Private vulnerability reporting (NOT public issues) |
 
@@ -146,7 +146,15 @@ Issues labeled [`good first issue`](https://github.com/kaelys-js/heron/labels/go
   <img src="https://contrib.rocks/image?repo=kaelys-js/heron" alt="Contributors" />
 </a>
 
-This project follows the [all-contributors](https://allcontributors.org) specification. Non-code contributions (docs, design, translation, ideas, infrastructure) count. See [`.all-contributorsrc`](.all-contributorsrc).
+This project follows the [all-contributors](https://allcontributors.org) specification. Non-code contributions (docs, design, translation, ideas, infrastructure) count -- the bot adds you when someone comments `@all-contributors please add @your-handle for translation, ideas` on any PR / issue. Full list + how-to: [`CONTRIBUTORS.md`](CONTRIBUTORS.md).
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ### Sponsors
 
