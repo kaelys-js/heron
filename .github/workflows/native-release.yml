@@ -130,6 +130,10 @@ on:
         required: false
       ANDROID_KEY_PASSWORD:
         required: false
+      # Discord webhook for per-platform build-status posts (#ci-builds).
+      # If unset, no Discord posting -- the workflow stays green.
+      DISCORD_WEBHOOK_BUILDS:
+        required: false
 
 # Workflow-level is read-only -- each job declares the writes it
 # genuinely needs (contents: write to attach binaries, id-token /
@@ -576,6 +580,54 @@ jobs:
             ui/electron/dist/*.deb
             ui/electron/dist/*.zip
 
+      # Per-platform Discord status post (gated on DISCORD_WEBHOOK_BUILDS).
+      # if: always() so we still post when an earlier step failed --
+      # contributors watching #ci-builds need to know which platforms
+      # broke, not just which succeeded.
+      - name: Post desktop build status to Discord
+        if: always() && env.DISCORD_WEBHOOK_BUILDS != ''
+        env:
+          DISCORD_WEBHOOK_BUILDS: ${{ secrets.DISCORD_WEBHOOK_BUILDS }}
+          JOB_STATUS: ${{ job.status }}
+          TAG: ${{ github.ref_name }}
+          OS: ${{ matrix.os }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Map matrix.os to a friendly platform name + colour.
+          case "$OS" in
+            macos-latest)   PLATFORM="macOS"   ;;
+            ubuntu-latest)  PLATFORM="Linux"   ;;
+            windows-latest) PLATFORM="Windows" ;;
+            *)              PLATFORM="$OS"     ;;
+          esac
+          # Color via Discord embed: ok = brand reed, fail = destructive red.
+          case "$JOB_STATUS" in
+            success)   COLOR=8030573; ICON="OK"    ;;
+            failure)   COLOR=11026010; ICON="FAIL" ;;
+            cancelled) COLOR=10920880; ICON="CANCEL" ;;
+            *)         COLOR=11045300; ICON="$JOB_STATUS" ;;
+          esac
+          PAYLOAD=$(jq -nc \
+            --arg title "[$ICON] $PLATFORM build for $TAG" \
+            --arg url "$RUN_URL" \
+            --argjson color "$COLOR" \
+            --arg footer "${{ github.repository }} . native-release.yml . build-desktop" \
+            '{
+              username: "Heron Builds",
+              embeds: [{
+                title: $title,
+                url: $url,
+                color: $color,
+                footer: { text: $footer }
+              }]
+            }')
+          curl -sS -X POST -H "Content-Type: application/json" \
+            -d "$PAYLOAD" "$DISCORD_WEBHOOK_BUILDS" \
+            -o /dev/null --max-time 30 \
+            || echo "::warning::Discord webhook POST failed (build status, $PLATFORM)."
+
   build-ios:
     name: Build iOS (TestFlight)
     needs: preflight
@@ -720,6 +772,41 @@ jobs:
             gh release upload "$TAG_NAME" "$ipa" --clobber || \
               echo "::warning::Couldn't attach $ipa to release $TAG_NAME (release may not exist yet)."
           done
+
+      - name: Post iOS build status to Discord
+        if: always() && env.DISCORD_WEBHOOK_BUILDS != ''
+        env:
+          DISCORD_WEBHOOK_BUILDS: ${{ secrets.DISCORD_WEBHOOK_BUILDS }}
+          JOB_STATUS: ${{ job.status }}
+          TAG: ${{ github.ref_name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$JOB_STATUS" in
+            success)   COLOR=8030573; ICON="OK"    ;;
+            failure)   COLOR=11026010; ICON="FAIL" ;;
+            cancelled) COLOR=10920880; ICON="CANCEL" ;;
+            *)         COLOR=11045300; ICON="$JOB_STATUS" ;;
+          esac
+          PAYLOAD=$(jq -nc \
+            --arg title "[$ICON] iOS / iPadOS / watchOS build for $TAG" \
+            --arg url "$RUN_URL" \
+            --argjson color "$COLOR" \
+            --arg footer "${{ github.repository }} . native-release.yml . build-ios" \
+            '{
+              username: "Heron Builds",
+              embeds: [{
+                title: $title,
+                url: $url,
+                color: $color,
+                footer: { text: $footer }
+              }]
+            }')
+          curl -sS -X POST -H "Content-Type: application/json" \
+            -d "$PAYLOAD" "$DISCORD_WEBHOOK_BUILDS" \
+            -o /dev/null --max-time 30 \
+            || echo "::warning::Discord webhook POST failed (iOS build status)."
 
   # Android Play Store build + upload. Gated on PLAY_STORE_JSON_KEY so
   # the workflow stays green while the maintainer is still onboarding
@@ -900,3 +987,38 @@ jobs:
             gh release upload "$TAG_NAME" "$aab" --clobber || \
               echo "::warning::Couldn't attach $aab to release $TAG_NAME (release may not exist yet)."
           done
+
+      - name: Post Android build status to Discord
+        if: always() && env.DISCORD_WEBHOOK_BUILDS != ''
+        env:
+          DISCORD_WEBHOOK_BUILDS: ${{ secrets.DISCORD_WEBHOOK_BUILDS }}
+          JOB_STATUS: ${{ job.status }}
+          TAG: ${{ github.ref_name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$JOB_STATUS" in
+            success)   COLOR=8030573; ICON="OK"    ;;
+            failure)   COLOR=11026010; ICON="FAIL" ;;
+            cancelled) COLOR=10920880; ICON="CANCEL" ;;
+            *)         COLOR=11045300; ICON="$JOB_STATUS" ;;
+          esac
+          PAYLOAD=$(jq -nc \
+            --arg title "[$ICON] Android build for $TAG" \
+            --arg url "$RUN_URL" \
+            --argjson color "$COLOR" \
+            --arg footer "${{ github.repository }} . native-release.yml . build-android" \
+            '{
+              username: "Heron Builds",
+              embeds: [{
+                title: $title,
+                url: $url,
+                color: $color,
+                footer: { text: $footer }
+              }]
+            }')
+          curl -sS -X POST -H "Content-Type: application/json" \
+            -d "$PAYLOAD" "$DISCORD_WEBHOOK_BUILDS" \
+            -o /dev/null --max-time 30 \
+            || echo "::warning::Discord webhook POST failed (Android build status)."

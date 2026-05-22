@@ -521,10 +521,56 @@ if (await confirm('  Collect trader info now?', false)) {
 }
 
 // ───────────────────────────────────────────────────────────────────
-step(14, 'Pushing Play Store / Microsoft Store / EU secrets to GitHub Actions');
+step(14, 'Discord bot + release-pipeline webhooks (optional)');
+info('Skip if you have no plans to wire Discord automation.');
+info('Discord bot reconciles channels + roles + AutoMod + Onboarding from');
+info('.github/discord/config.yml via .github/workflows/maintain-discord.yml.');
+info('Webhooks let release.yml + native-release.yml + CodeQL post directly to channels.');
+info('See TODO-INSTRUCTIONS.md section 11 for the bot-creation walkthrough.');
+if (await confirm('  Set up Discord bot + webhooks now?', false)) {
+  info('Discord Developer Portal: https://discord.com/developers/applications');
+  info('  1. New Application -> name "Heron Reconciler"');
+  info('  2. Bot tab -> Reset Token (record the token; only shown once)');
+  info('  3. Enable: Server Members Intent + Presence Intent (Privileged Gateway Intents)');
+  info('  4. OAuth2 -> URL Generator -> scopes: bot + applications.commands');
+  info('     bot permissions: Administrator (or scoped: Manage Server +');
+  info('     Manage Channels + Manage Roles + Manage Webhooks + Moderate Members)');
+  info('  5. Visit the generated URL to install the bot on the Heron server.');
+  await openUrl('https://discord.com/developers/applications');
+  const botToken = await ask('  DISCORD_BOT_TOKEN (the bot token from step 2):');
+  if (botToken) {
+    state.discord = state.discord || {};
+    state.discord.DISCORD_BOT_TOKEN = botToken;
+  }
+  info('');
+  info('Now the per-channel webhooks. In Discord:');
+  info('  Server Settings -> Integrations -> Webhooks -> New Webhook for each:');
+  info('    - #changelog        -> DISCORD_WEBHOOK_RELEASES');
+  info('    - #ci-builds        -> DISCORD_WEBHOOK_BUILDS');
+  info('    - #security         -> DISCORD_WEBHOOK_SECURITY');
+  info('  Copy each webhook URL + paste below. Press Enter to skip any.');
+  const webhookReleases = await ask('  DISCORD_WEBHOOK_RELEASES (full webhook URL):');
+  if (webhookReleases) state.discord.DISCORD_WEBHOOK_RELEASES = webhookReleases;
+  const webhookBuilds = await ask('  DISCORD_WEBHOOK_BUILDS:');
+  if (webhookBuilds) state.discord.DISCORD_WEBHOOK_BUILDS = webhookBuilds;
+  const webhookSecurity = await ask('  DISCORD_WEBHOOK_SECURITY:');
+  if (webhookSecurity) state.discord.DISCORD_WEBHOOK_SECURITY = webhookSecurity;
+  writeState(state);
+  ok('Discord credentials saved locally');
+  info('Set the DISCORD_GUILD_ID repo variable too (the 18-digit guild id):');
+  info(`  gh variable set DISCORD_GUILD_ID --body '1507162919421612134' --repo ${repo}`);
+  info('After this completes + secrets push (next step), kick off the first reconcile:');
+  info(`  gh workflow run maintain-discord.yml --ref main -f mode=apply --repo ${repo}`);
+} else {
+  info('Skipped. Re-run when ready.');
+}
+
+// ───────────────────────────────────────────────────────────────────
+step(15, 'Pushing Play Store / Microsoft Store / Discord secrets to GitHub Actions');
 const extraSecrets = {
   ...(state.android || {}),
   ...(state.microsoft || {}),
+  ...(state.discord || {}),
 };
 for (const [name, value] of Object.entries(extraSecrets)) {
   if (!value) continue;
@@ -539,11 +585,11 @@ for (const [name, value] of Object.entries(extraSecrets)) {
   }
 }
 if (Object.keys(extraSecrets).length === 0) {
-  info('No extra secrets to push (Play Store + Microsoft Store both skipped).');
+  info('No extra secrets to push (Play Store + Microsoft Store + Discord all skipped).');
 }
 
 // ───────────────────────────────────────────────────────────────────
-step(15, 'Done');
+step(16, 'Done');
 console.log(c.green('\n✓ Setup complete.\n'));
 console.log(c.bold('Try one of these:'));
 console.log('  pnpm dev:desktop          — Electron with HMR');

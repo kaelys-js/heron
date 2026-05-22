@@ -1,0 +1,230 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Discord security alerts
+# Posts HIGH+ severity CodeQL findings + Dependabot alerts to
+# Discord #security channel.
+#
+# NB: GitHub does NOT expose a `code_scanning_alert` workflow trigger
+# (it's a webhook event for GitHub Apps only). So we instead:
+#
+#   1. workflow_run -- fires after "CodeQL Analysis" completes on main.
+#      We then query /repos/{r}/code-scanning/alerts for new HIGH+
+#      findings opened/reopened since the prior CodeQL run started.
+#
+#   2. schedule -- nightly sweep at 06:00 UTC catches alert state
+#      transitions that didn't coincide with a CodeQL run (e.g. a
+#      newly-published advisory matching a fixed-version Dependabot
+#      alert reopens it the next day) + new Dependabot alerts.
+#
+#   3. workflow_dispatch -- manual sweep with custom `since` window
+#      for backfilling after a Discord outage / channel re-config.
+#
+# All paths gated on DISCORD_WEBHOOK_SECURITY -- if unset, posts are
+# skipped (the workflow still runs but the curl is no-op'd).
+#
+# Why a separate workflow vs an inline step on codeql.yml:
+# codeql.yml runs the analyzer; this workflow consumes its alert
+# state. Decoupling lets us swap the analyzer (Trivy / Snyk / etc.)
+# without rewriting the Discord-posting layer.
+
+on:
+  # Fires after CodeQL Analysis completes. The job below filters to
+  # "conclusion == success" + branch == main so reruns from forks /
+  # feature branches don't post.
+  workflow_run:
+    workflows: ['CodeQL Analysis']
+    types: [completed]
+    branches: [main]
+  # Nightly sweep for Dependabot + missed code-scanning state changes.
+  schedule:
+    - cron: '0 6 * * *'
+  # Manual sweep for ad-hoc backfills.
+  workflow_dispatch:
+    inputs:
+      since:
+        description: 'Only post alerts created/updated after this ISO timestamp (e.g. 2026-05-01T00:00:00Z). Default: last 24h.'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  # security-events read needed for gh api access to alerts
+  security-events: read
+
+concurrency:
+  group: discord-security-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    name: Sweep + post security alerts to Discord
+    # workflow_run from a non-success CodeQL is a no-op (security
+    # findings only land on successful analyses)
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Sweep + post
+        if: ${{ env.DISCORD_WEBHOOK_SECURITY != '' }}
+        env:
+          DISCORD_WEBHOOK_SECURITY: ${{ secrets.DISCORD_WEBHOOK_SECURITY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SINCE_INPUT: ${{ inputs.since }}
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_RUN_STARTED: ${{ github.event.workflow_run.run_started_at }}
+        run: |
+          set -euo pipefail
+          # Compute SINCE window:
+          #   workflow_run  -- the prior CodeQL run's start time
+          #                    (catches everything that became visible
+          #                    during this CodeQL pass)
+          #   schedule      -- last 24h
+          #   dispatch      -- user-provided or last 24h
+          case "$EVENT_NAME" in
+            workflow_run)
+              SINCE="${WORKFLOW_RUN_STARTED:-}"
+              if [ -z "$SINCE" ]; then
+                SINCE=$(date -u -d '6 hours ago' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
+                  || date -u -v-6H +%Y-%m-%dT%H:%M:%SZ)
+              fi
+              ;;
+            workflow_dispatch)
+              SINCE="${SINCE_INPUT:-}"
+              if [ -z "$SINCE" ]; then
+                SINCE=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
+                  || date -u -v-24H +%Y-%m-%dT%H:%M:%SZ)
+              fi
+              ;;
+            *)
+              SINCE=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
+                || date -u -v-24H +%Y-%m-%dT%H:%M:%SZ)
+              ;;
+          esac
+          echo "::notice::Sweeping security alerts since $SINCE (event=$EVENT_NAME)"
+
+          # ---- CodeQL / code-scanning alerts ----
+          # `created` filters at the API level isn't supported on this
+          # endpoint, so we pull open + filter client-side.
+          CQ_ALERTS=$(gh api "/repos/${{ github.repository }}/code-scanning/alerts?state=open&per_page=100" \
+            --jq "[.[] | select(.created_at > \"$SINCE\" or .updated_at > \"$SINCE\") | select(.rule.security_severity_level == \"high\" or .rule.security_severity_level == \"critical\" or .rule.severity == \"error\")]" \
+            2>/dev/null || echo '[]')
+          CQ_COUNT=$(echo "$CQ_ALERTS" | jq 'length')
+          echo "::notice::Found $CQ_COUNT new HIGH+ CodeQL alerts."
+
+          # ---- Dependabot alerts ----
+          DB_ALERTS=$(gh api "/repos/${{ github.repository }}/dependabot/alerts?state=open&per_page=100" \
+            --jq "[.[] | select(.created_at > \"$SINCE\" or .updated_at > \"$SINCE\") | select(.security_advisory.severity == \"high\" or .security_advisory.severity == \"critical\")]" \
+            2>/dev/null || echo '[]')
+          DB_COUNT=$(echo "$DB_ALERTS" | jq 'length')
+          echo "::notice::Found $DB_COUNT new HIGH+ Dependabot alerts."
+
+          TOTAL=$((CQ_COUNT + DB_COUNT))
+          if [ "$TOTAL" -eq 0 ]; then
+            echo "::notice::No new HIGH+ alerts to post since $SINCE."
+            exit 0
+          fi
+
+          # Cap at 10 posts total per run to avoid spamming on a
+          # large transitional sweep (Dependabot deluge / advisory
+          # backfill). The rest still surface in GitHub's Security
+          # tab; the Discord post is a convenience, not the SoR.
+          MAX=10
+          POSTED=0
+
+          # ---- Post CodeQL alerts ----
+          if [ "$CQ_COUNT" -gt 0 ]; then
+            echo "$CQ_ALERTS" | jq -c '.[]' | while IFS= read -r alert; do
+              if [ "$POSTED" -ge "$MAX" ]; then break; fi
+              SEVERITY=$(echo "$alert" | jq -r '.rule.security_severity_level // .rule.severity // "high"')
+              RULE_ID=$(echo "$alert" | jq -r '.rule.id')
+              DESC=$(echo "$alert" | jq -r '.rule.description // .rule.name // "no description"')
+              URL=$(echo "$alert" | jq -r '.html_url')
+              NUMBER=$(echo "$alert" | jq -r '.number')
+              REF=$(echo "$alert" | jq -r '.most_recent_instance.ref // "main"')
+              case "$SEVERITY" in
+                critical|error) COLOR=11539018 ;;
+                high)           COLOR=15224675 ;;
+                *)              COLOR=8030573  ;;
+              esac
+              PAYLOAD=$(jq -nc \
+                --arg title "[$SEVERITY] $RULE_ID" \
+                --arg desc "$DESC" \
+                --arg url "$URL" \
+                --arg ref "$REF" \
+                --argjson color "$COLOR" \
+                --arg footer "${{ github.repository }} . CodeQL alert #$NUMBER" \
+                '{
+                  username: "Heron Security",
+                  embeds: [{
+                    title: $title,
+                    description: $desc,
+                    url: $url,
+                    color: $color,
+                    fields: [
+                      { name: "Branch", value: $ref, inline: true }
+                    ],
+                    footer: { text: $footer }
+                  }]
+                }')
+              curl -sS -X POST -H "Content-Type: application/json" \
+                -d "$PAYLOAD" "$DISCORD_WEBHOOK_SECURITY" \
+                -o /dev/null --max-time 30 \
+                || echo "::warning::Discord webhook POST failed (CodeQL alert #$NUMBER)."
+              POSTED=$((POSTED + 1))
+              sleep 1
+            done
+          fi
+
+          # ---- Post Dependabot alerts ----
+          if [ "$DB_COUNT" -gt 0 ]; then
+            echo "$DB_ALERTS" | jq -c '.[]' | while IFS= read -r alert; do
+              if [ "$POSTED" -ge "$MAX" ]; then break; fi
+              SEVERITY=$(echo "$alert" | jq -r '.security_advisory.severity')
+              PACKAGE=$(echo "$alert" | jq -r '.dependency.package.name')
+              ECOSYSTEM=$(echo "$alert" | jq -r '.dependency.package.ecosystem')
+              CVE=$(echo "$alert" | jq -r '.security_advisory.cve_id // "no CVE"')
+              SUMMARY=$(echo "$alert" | jq -r '.security_advisory.summary')
+              URL=$(echo "$alert" | jq -r '.html_url')
+              NUMBER=$(echo "$alert" | jq -r '.number')
+              case "$SEVERITY" in
+                critical) COLOR=11539018 ;;
+                high)     COLOR=15224675 ;;
+                *)        COLOR=8030573  ;;
+              esac
+              PAYLOAD=$(jq -nc \
+                --arg title "[$SEVERITY] $PACKAGE ($ECOSYSTEM)" \
+                --arg desc "$SUMMARY" \
+                --arg cve "$CVE" \
+                --arg url "$URL" \
+                --argjson color "$COLOR" \
+                --arg footer "${{ github.repository }} . Dependabot alert #$NUMBER" \
+                '{
+                  username: "Heron Security",
+                  embeds: [{
+                    title: $title,
+                    description: $desc,
+                    url: $url,
+                    color: $color,
+                    fields: [
+                      { name: "Reference", value: $cve, inline: true }
+                    ],
+                    footer: { text: $footer }
+                  }]
+                }')
+              curl -sS -X POST -H "Content-Type: application/json" \
+                -d "$PAYLOAD" "$DISCORD_WEBHOOK_SECURITY" \
+                -o /dev/null --max-time 30 \
+                || echo "::warning::Discord webhook POST failed (Dependabot alert #$NUMBER)."
+              POSTED=$((POSTED + 1))
+              # Discord webhook rate limit: ~30/min; 1s sleep is plenty.
+              sleep 1
+            done
+          fi
+
+          if [ "$TOTAL" -gt "$MAX" ]; then
+            echo "::warning::Posted $MAX of $TOTAL alerts; remainder visible in GitHub Security tab."
+          fi
