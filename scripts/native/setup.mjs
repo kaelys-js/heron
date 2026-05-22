@@ -414,7 +414,136 @@ if (existsSync(xcodegenScript)) {
 }
 
 // ───────────────────────────────────────────────────────────────────
-step(11, 'Done');
+step(11, 'Google Play Store (optional)');
+info('Skip if you have no plans to ship Android via Play Store.');
+info('Required for the build-android job in native-release.yml.');
+if (await confirm('  Set up Play Store credentials now?', false)) {
+  info('Google Cloud Console → IAM & Admin → Service Accounts → Create.');
+  info('  Role: Service Account User.');
+  info('Play Console → Setup → API access → Link to your GCP project, then');
+  info('  grant the service account "Release manager" role on this app.');
+  info('Then in GCP, create a JSON key for that service account + download it.');
+  await openUrl('https://console.cloud.google.com/iam-admin/serviceaccounts');
+  const jsonKeyPath = await ask('  Path to the downloaded service-account JSON file:');
+  if (jsonKeyPath && existsSync(jsonKeyPath)) {
+    const jsonKeyB64 = Buffer.from(readFileSync(jsonKeyPath, 'utf8')).toString('base64');
+    state.android = state.android || {};
+    state.android.PLAY_STORE_JSON_KEY = jsonKeyB64;
+    state.android.PLAY_STORE_PACKAGE_NAME = await ask(
+      '  Play Store package name (default: com.heron.app):',
+      'com.heron.app',
+    );
+    info('Now for the release keystore. In Android Studio:');
+    info('  Build → Generate Signed Bundle/APK → choose "Android App Bundle" → next');
+    info('  Click "Create new..." next to "Key store path".');
+    info('  Save it as ui/android/heron-release.keystore. Pick a strong password.');
+    info('  Alias: heron (or whatever you prefer).');
+    const ksPath = await ask(
+      '  Path to the .keystore file (default: ui/android/heron-release.keystore):',
+      join(UI, 'android', 'heron-release.keystore'),
+    );
+    if (ksPath && existsSync(ksPath)) {
+      const ksB64 = Buffer.from(readFileSync(ksPath)).toString('base64');
+      state.android.ANDROID_KEYSTORE_BASE64 = ksB64;
+      state.android.ANDROID_KEYSTORE_PASSWORD = await ask('  Keystore password:');
+      state.android.ANDROID_KEY_ALIAS = await ask('  Key alias (default: heron):', 'heron');
+      state.android.ANDROID_KEY_PASSWORD = await ask('  Key password (often same as keystore):');
+      writeState(state);
+      ok('Play Store + keystore credentials saved locally');
+    } else {
+      warn('Keystore not found at provided path — skipping. Re-run setup when ready.');
+    }
+  } else {
+    warn('Service-account JSON not found — skipping Play Store setup. Re-run when ready.');
+  }
+} else {
+  info('Skipped. Re-run `pnpm setup:native` when ready to wire Play Store.');
+}
+
+// ───────────────────────────────────────────────────────────────────
+step(12, 'Microsoft Store / Partner Center (optional)');
+info('Skip if you have no plans to ship the Windows .appx via the Microsoft Store.');
+info('Direct .exe via GitHub Releases stays the supported Windows path either way.');
+if (await confirm('  Set up Microsoft Partner Center credentials now?', false)) {
+  info('Partner Center signup: free for individuals, $19 one-time for orgs.');
+  info('  https://partner.microsoft.com/en-us/dashboard/registration');
+  info('After signup:');
+  info('  1. Reserve app name "Heron" in Partner Center → Apps & games → New product');
+  info('  2. Note the 12-char Product ID under "App identity" (e.g. 9NBLGGH4NNS1)');
+  info('Azure AD app registration:');
+  info('  3. Azure portal → App registrations → New registration');
+  info('  4. Add API permissions: Microsoft Store Publishing API → app permissions');
+  info('  5. Create a client secret + record value (only shown once)');
+  await openUrl('https://partner.microsoft.com/en-us/dashboard/');
+  const tenantId = await ask('  Azure AD Tenant ID (GUID):');
+  const clientId = await ask('  Azure AD App registration Client ID (GUID):');
+  const clientSecret = await ask('  Azure AD App registration Client Secret:');
+  const productId = await ask('  Partner Center Product ID (12-char):');
+  if (tenantId && clientId && clientSecret && productId) {
+    state.microsoft = state.microsoft || {};
+    state.microsoft.MICROSOFT_STORE_TENANT_ID = tenantId;
+    state.microsoft.MICROSOFT_STORE_CLIENT_ID = clientId;
+    state.microsoft.MICROSOFT_STORE_CLIENT_SECRET = clientSecret;
+    state.microsoft.MICROSOFT_STORE_PRODUCT_ID = productId;
+    writeState(state);
+    ok('Microsoft Store / Partner Center credentials saved locally');
+  } else {
+    warn('Missing one or more values — skipping. Re-run when complete.');
+  }
+} else {
+  info('Skipped. Re-run when ready.');
+}
+
+// ───────────────────────────────────────────────────────────────────
+step(13, 'EU Digital Services Act trader information (mandatory for EU stores)');
+info('Required for App Store + Play Store + Microsoft Store EU submissions since 2024.');
+info('The stores expose a "Trader Information" form for ALL apps available in the EU.');
+info('You fill this once per store via their web UI; we collect the values here so you can');
+info('paste them in cleanly.');
+if (await confirm('  Collect trader info now?', false)) {
+  state.eu = state.eu || {};
+  state.eu.TRADER_NAME = await ask('  Trader name (full legal name):');
+  state.eu.TRADER_ADDRESS = await ask('  Trader address (street, city, postal code, country):');
+  state.eu.TRADER_PHONE = await ask('  Trader phone (E.164 format, e.g. +1-555-555-1234):');
+  state.eu.TRADER_EMAIL = await ask('  Trader email (public contact):');
+  state.eu.TRADER_REGISTRATION = await ask(
+    '  Trader registration number (if you have one; press Enter to skip):',
+    '',
+  );
+  writeState(state);
+  ok('EU DSA trader info saved locally');
+  info('When submitting, paste these into:');
+  info('  - App Store Connect → App → App Information → Trader Information');
+  info('  - Play Console → Setup → App content → Trader status');
+  info('  - Partner Center → Properties → Trader Information (EU)');
+} else {
+  info('Skipped. Re-run when ready.');
+}
+
+// ───────────────────────────────────────────────────────────────────
+step(14, 'Pushing Play Store / Microsoft Store / EU secrets to GitHub Actions');
+const extraSecrets = {
+  ...(state.android || {}),
+  ...(state.microsoft || {}),
+};
+for (const [name, value] of Object.entries(extraSecrets)) {
+  if (!value) continue;
+  try {
+    execSync(`gh secret set ${name} --repo ${repo}`, {
+      input: value,
+      stdio: ['pipe', 'pipe', 'inherit'],
+    });
+    ok(`set ${name}`);
+  } catch (e) {
+    warn(`couldn't set ${name}: ${e.message}`);
+  }
+}
+if (Object.keys(extraSecrets).length === 0) {
+  info('No extra secrets to push (Play Store + Microsoft Store both skipped).');
+}
+
+// ───────────────────────────────────────────────────────────────────
+step(15, 'Done');
 console.log(c.green('\n✓ Setup complete.\n'));
 console.log(c.bold('Try one of these:'));
 console.log('  pnpm dev:desktop          — Electron with HMR');

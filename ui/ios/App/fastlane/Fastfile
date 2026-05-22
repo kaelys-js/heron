@@ -80,6 +80,13 @@ platform :ios do
   end
 
   desc "Build + sign + upload to TestFlight"
+  # WatchApp bundling: the iOS `App` scheme has an "Embed Watch Content"
+  # build phase that copies WatchApp.app into App.app/Watch/. Verified
+  # via App.xcodeproj/project.pbxproj entry `WatchApp.app in Embed
+  # Watch Content`. So build_app below produces an .ipa that includes
+  # both the iOS app + the watchOS app -- TestFlight then installs the
+  # watch app on any paired Apple Watch automatically. No separate
+  # gym invocation for the WatchApp scheme is needed.
   lane :beta do
     # Bump build number to current epoch — deterministic and always larger
     # than any prior build. Override with EXACT_BUILD_NUMBER when the
