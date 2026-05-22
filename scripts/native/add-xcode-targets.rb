@@ -13,8 +13,10 @@
 #
 # All three get:
 #   • Their Swift source from ui/ios/App/Extensions/AppXxx/ (or WatchApp/)
-#   • Bundle ID: com.heron.app.{widget,liveactivity,share}
-#   • App Group capability: group.com.heron.app
+#   • Bundle ID: <brand.json::identifiers.bundleId>.{widget,liveactivity,share}
+#     (currently com.heron.app.{widget,liveactivity,share})
+#   • App Group capability: <brand.json::identifiers.appGroup>
+#     (currently group.com.heron.app)
 #   • Deployment target: matches main app
 #
 # Safe to re-run -- checks if a target already exists before adding.
@@ -23,6 +25,7 @@ require "xcodeproj"
 require "fileutils"
 require "plist"
 require "set"
+require "json"
 
 PROJECT_PATH = File.expand_path("App.xcodeproj", Dir.pwd)
 unless File.exist?(PROJECT_PATH)
@@ -30,6 +33,29 @@ unless File.exist?(PROJECT_PATH)
   puts "  Run this from ui/ios/App/"
   exit 1
 end
+
+# Load canonical brand identifiers from brand.json. Resolved relative to
+# the repo root (this script lives at scripts/native/, run from
+# ui/ios/App/, so walk up 3 levels). A rebrand changes brand.json and
+# this script auto-picks up new bundle ID / app group; the
+# DEFAULT_BUNDLE / DEFAULT_GROUP literals only fire if brand.json is
+# missing (fresh-clone bootstrap).
+BRAND_JSON_PATH = File.expand_path("../../../branding/brand.json", File.dirname(PROJECT_PATH))
+DEFAULT_BUNDLE = "com.heron.app"
+DEFAULT_GROUP = "group.com.heron.app"
+brand_json =
+  if File.exist?(BRAND_JSON_PATH)
+    begin
+      JSON.parse(File.read(BRAND_JSON_PATH))
+    rescue JSON::ParserError
+      {}
+    end
+  else
+    {}
+  end
+identifiers = brand_json.fetch("identifiers", {})
+bundle_root = identifiers.fetch("bundleId", DEFAULT_BUNDLE)
+app_group = identifiers.fetch("appGroup", DEFAULT_GROUP)
 
 project = Xcodeproj::Project.open(PROJECT_PATH)
 main_target = project.targets.find { |t| t.name == "App" }
@@ -41,8 +67,6 @@ puts "✓ opened #{PROJECT_PATH}"
 
 deployment_target = main_target.build_configurations.first.build_settings["IPHONEOS_DEPLOYMENT_TARGET"] || "15.0"
 team_id = main_target.build_configurations.first.build_settings["DEVELOPMENT_TEAM"]
-app_group = "group.com.heron.app"
-bundle_root = "com.heron.app"
 
 # ── PrivacyInfo.xcprivacy -- Apple privacy manifest, required for App
 # Store submission since May 2024. Must be in the App target's Copy
@@ -123,7 +147,8 @@ EXTENSIONS = [
 app_sources_dir = File.expand_path("App", Dir.pwd)
 if Dir.exist?(app_sources_dir)
   # NOTE: do NOT name this `app_group` -- the outer scope's `app_group`
-  # string ('group.com.heron.app') is reused in the entitlements
+  # string (the App Group identifier loaded from brand.json,
+  # currently 'group.com.heron.app') is reused in the entitlements
   # block below. Shadowing it with a PBXGroup object corrupts the
   # entitlements file (the plist gem then Marshal-dumps the Ruby object
   # into the <data> element).

@@ -34,28 +34,48 @@ import base64
 import hashlib
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Optional
 
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from cryptography.hazmat.primitives import hashes
+# Make sibling scripts/lib/ helpers importable when this file is loaded
+# without going through a package context (the historical pattern for
+# scripts/lib/*).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-SCHEMA_VERSION = 1
-HKDF_INFO = b"heron-user-secrets-v1"
-SYSTEM_USER_ID = "system-user"
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # noqa: E402
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF  # noqa: E402
+from cryptography.hazmat.primitives import hashes  # noqa: E402
+
+from _brand import BRAND as _BRAND  # noqa: E402
 
 # Repo root: scripts/lib/user_secrets.py → scripts → repo root
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
+# Brand-aware env-var prefix (HERON_DATA_DIR, HERON_USER_ID, …). Derived
+# from brand.json::name via scripts/lib/_brand.py so a rebrand re-targets
+# the env-var names in one edit. The literal 'HERON' is only the default
+# baked into _brand.py for fresh-clone bootstrap (when brand.json is
+# missing).
+_ENV_PREFIX = _BRAND["envPrefix"]  # e.g. "HERON"
+
+SCHEMA_VERSION = 1
+# HKDF_INFO is a CRYPTOGRAPHIC FROZEN CONSTANT -- it's mixed into the
+# key-derivation function for every stored secret. Changing it would
+# break decryption of every previously-stored secret across every
+# install. Treat as historical: a future rebrand keeps THIS literal +
+# adds a new versioned constant for NEW secrets, with a migration that
+# re-encrypts using the new info.
+HKDF_INFO = b"heron-user-secrets-v1"
+SYSTEM_USER_ID = "system-user"
+
 
 def _data_dir() -> Path:
     """Same precedence as the TS impl + ui/src/lib/server/db/index.ts:
-    HERON_DATA_DIR > HERON_DATA_DIR > <repo>/data."""
-    if os.environ.get("HERON_DATA_DIR"):
-        return Path(os.environ["HERON_DATA_DIR"])
-    if os.environ.get("HERON_DATA_DIR"):
-        return Path(os.environ["HERON_DATA_DIR"])
+    {ENV_PREFIX}_DATA_DIR > <repo>/data."""
+    key = f"{_ENV_PREFIX}_DATA_DIR"
+    if os.environ.get(key):
+        return Path(os.environ[key])
     return _REPO_ROOT / "data"
 
 
@@ -122,7 +142,7 @@ def get_secret(user_id: str, key: str) -> Optional[str]:
 def get_credential(key: str) -> Optional[str]:
     """Two-tier resolver: per-user store first, os.environ fallback.
 
-    Resolves the userId from HERON_USER_ID. When unset, the
+    Resolves the userId from `{ENV_PREFIX}_USER_ID`. When unset, the
     function skips the per-user lookup and goes straight to
     os.environ — that's the pre-multi-user path and stays supported.
 
@@ -130,7 +150,7 @@ def get_credential(key: str) -> Optional[str]:
         from lib.user_secrets import get_credential
         api_key = get_credential("GEMINI_API_KEY")
     """
-    user_id = os.environ.get("HERON_USER_ID")
+    user_id = os.environ.get(f"{_ENV_PREFIX}_USER_ID")
     if user_id:
         try:
             from_store = get_secret(user_id, key)

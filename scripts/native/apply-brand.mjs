@@ -945,6 +945,127 @@ function applyFavicon(brand) {
   log.ok(`static/favicon.svg ← branding/logo.svg`);
 }
 
+/**
+ * branding/assets/social-card.html is the OG-image source (1200×630).
+ * It renders to PNG via the generate-og-cards.mjs script (Puppeteer).
+ * The four brand-bound strings inside (tagline / displayName /
+ * subline / homepage URL) used to be hand-maintained, drifting on
+ * rebrand. apply-brand now patches them from brand.json so the OG
+ * image stays in sync with the canonical brand.
+ *
+ * URL-strip strategy: strip the scheme + trailing slash from
+ * brand.homepageUrl so the card shows just the domain (e.g.
+ * 'heron.app' not 'https://heron.app/'). Common OG-card convention.
+ */
+function applySocialCardHtml(brand) {
+  const path = join(ROOT, 'branding', 'assets', 'social-card.html');
+  if (!existsSync(path)) {
+    log.skip(`branding/assets/social-card.html — missing`);
+    return;
+  }
+  const homepageDomain = (brand.homepageUrl ?? 'https://heron.app')
+    .replace(/^https?:\/\//, '')
+    .replace(/\/$/, '');
+  let body = readFileSync(path, 'utf8');
+  let changed = false;
+  const subs = [
+    // Tagline (with <br> between sentences for the layout).
+    [
+      /(<h1 class="tagline">)[^<]*(<\/h1>)/,
+      `$1${(brand.voice?.tagline ?? brand.tagline ?? 'Stand still. Strike well.')
+        .replace('. ', '.<br>')
+        .replace(/ /g, '&nbsp;')}$2`,
+    ],
+    // Wordmark = displayName.
+    [/(<p class="wordmark">)[^<]*(<\/p>)/, `$1${brand.displayName}$2`],
+    // Subline.
+    [
+      /(<p class="subline">)[^<]*(<\/p>)/,
+      `$1${brand.voice?.subline ?? 'A thinking partner for career transitions. Patient, precise, local-first.'}$2`,
+    ],
+    // URL strip (domain only, no scheme).
+    [/(<p class="url-strip">)[^<]*(<\/p>)/, `$1${homepageDomain}$2`],
+  ];
+  for (const [re, val] of subs) {
+    const next = body.replace(re, val);
+    if (next !== body) {
+      body = next;
+      changed = true;
+    }
+  }
+  if (changed) {
+    writeFileSync(path, body);
+    log.ok(`branding/assets/social-card.html`);
+  } else {
+    log.skip(`branding/assets/social-card.html — already current`);
+  }
+}
+
+/**
+ * Patch brand-bound URLs + identifiers inside engineering docs that
+ * AREN'T templated via the AUTO-GENERATED:<section> marker system
+ * (AGENTS.md, AGENTS-PRODUCT.md, docs/SETUP.md). These docs have
+ * inline markdown links to the brand's repo + Discord that drift on
+ * rebrand if left literal. Targeted regex subs keep them current.
+ *
+ * Why not AUTO-GENERATED markers in each doc: the references are
+ * inline inside prose paragraphs (e.g. "...track per-CLI compatibility
+ * in [issues](URL) -- the abstraction..."). Wrapping each in marker
+ * pairs would hurt readability. Targeted patterns are smaller +
+ * leave the prose intact.
+ */
+function applyEngDocs(brand) {
+  const repoIssues = brand.repo?.issues ?? 'https://github.com/kaelys-js/heron/issues';
+  const repoUrl = brand.repo?.url ?? 'https://github.com/kaelys-js/heron';
+  const discordUrl = brand.community?.discord?.url ?? 'https://discord.gg/MyFbztUK5U';
+  // Bare host form of Discord URL for places that want the unwrapped
+  // identifier (e.g. "[discord.gg/abc](https://discord.gg/abc)").
+  const discordBare = discordUrl.replace(/^https?:\/\//, '');
+
+  const subs = [
+    // AGENTS-PRODUCT.md inline issues link.
+    {
+      file: join(ROOT, 'AGENTS-PRODUCT.md'),
+      re: /\[issues\]\(https:\/\/github\.com\/[^/]+\/[^/)]+\/issues\)/g,
+      val: () => `[issues](${repoIssues})`,
+    },
+    // docs/SETUP.md issues link (full URL form).
+    {
+      file: join(ROOT, 'docs', 'SETUP.md'),
+      re: /\[github\.com\/[^/]+\/[^/]+\/issues\]\(https:\/\/github\.com\/[^/]+\/[^/]+\/issues\)/g,
+      val: () => `[${repoUrl.replace(/^https?:\/\//, '')}/issues](${repoIssues})`,
+    },
+    // docs/SETUP.md Discord link.
+    {
+      file: join(ROOT, 'docs', 'SETUP.md'),
+      re: /\[discord\.gg\/[A-Za-z0-9]+\]\(https:\/\/discord\.gg\/[A-Za-z0-9]+\)/g,
+      val: () => `[${discordBare}](${discordUrl})`,
+    },
+    // AGENTS.md Discord bullet at the bottom.
+    {
+      file: join(ROOT, 'AGENTS.md'),
+      re: /(- \*\*Discord\*\*: <)https:\/\/discord\.gg\/[A-Za-z0-9]+(>)/,
+      val: `$1${discordUrl}$2`,
+    },
+  ];
+
+  let touched = 0;
+  for (const { file, re, val } of subs) {
+    if (!existsSync(file)) continue;
+    const before = readFileSync(file, 'utf8');
+    const next = typeof val === 'function' ? before.replace(re, val) : before.replace(re, val);
+    if (next !== before) {
+      writeFileSync(file, next);
+      touched++;
+    }
+  }
+  if (touched > 0) {
+    log.ok(`eng-docs URL refs (${touched} file${touched === 1 ? '' : 's'})`);
+  } else {
+    log.skip(`eng-docs URL refs -- already current`);
+  }
+}
+
 function applyExtensionFolders(brand) {
   // iOS extension folder names (AppWidget, AppLiveActivity,
   // AppShareExtension, WatchApp) appear as path segments
@@ -1033,10 +1154,12 @@ function applyGitHubIssueTemplates(brand) {
 }
 
 function applyGitHubWorkflows(brand) {
-  // Patch artifact names in GitHub workflow YAMLs that include the
-  // brand name. We do NOT touch prose comments, doc files, or the
-  // upstream-pin references (sync-upstream used the upstream URL on
-  // purpose). Only the upload-artifact name + SBOM filenames.
+  // Patch artifact names + brand-bound copy in GitHub workflow YAMLs.
+  // We do NOT touch prose comments, doc files, or the upstream-pin
+  // references (sync-upstream used the upstream URL on purpose).
+  // Welcome bot copy is templated here because pull_request_target
+  // workflows skip checkout (no brand.json available at runtime), so
+  // the literal in source has to be kept in sync at apply-brand time.
   const subs = [
     {
       // sbom.yml -- three references to <brand>-sbom.spdx.json
@@ -1049,6 +1172,27 @@ function applyGitHubWorkflows(brand) {
       file: join(ROOT, '.github', 'workflows', 'native-release.yml'),
       re: /name:\s*[a-z0-9-]+(-\$\{\{\s*matrix\.os\s*\}\})/,
       val: `name: ${brand.name}$1`,
+    },
+    {
+      // welcome.yml -- first-time-contributor PR welcome message.
+      // "Welcome to <displayName>, @${AUTHOR}!" -- the brand name is
+      // baked in at apply-brand time (pull_request_target can't read
+      // brand.json safely without enabling fork-code checkout).
+      file: join(ROOT, '.github', 'workflows', 'welcome.yml'),
+      re: /Welcome to [A-Z][A-Za-z]+, @\$\{AUTHOR\}!/,
+      val: `Welcome to ${brand.displayName}, @\${AUTHOR}!`,
+    },
+    {
+      // welcome.yml -- Discord URL in the PR welcome body.
+      file: join(ROOT, '.github', 'workflows', 'welcome.yml'),
+      re: /\[Discord\]\(https:\/\/discord\.gg\/[A-Za-z0-9]+\)/g,
+      val: () => `[Discord](${brand.community?.discord?.url ?? 'https://discord.gg/'})`,
+    },
+    {
+      // pr-bots.yml -- Discord URL in the first-timer-help body.
+      file: join(ROOT, '.github', 'workflows', 'pr-bots.yml'),
+      re: /\[Discord\]\(https:\/\/discord\.gg\/[A-Za-z0-9]+\)/g,
+      val: () => `[Discord](${brand.community?.discord?.url ?? 'https://discord.gg/'})`,
     },
   ];
   for (const { file, re, val } of subs) {
@@ -2557,9 +2701,11 @@ function apply() {
 
   log.step('Branding assets');
   applyWordmarks(brand);
+  applySocialCardHtml(brand);
 
   log.step('Branding markdown sections');
   applyMarkdownSections(brand);
+  applyEngDocs(brand);
 
   log.step('Fastlane');
   applyFastlaneAppfile(brand);

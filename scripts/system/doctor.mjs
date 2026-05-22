@@ -8,6 +8,7 @@
 import { existsSync, mkdirSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { BRAND } from '../lib/_brand.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = __dirname;
@@ -190,7 +191,7 @@ async function main() {
   } else {
     console.log("Result: All checks passed. You're ready to go! Run `claude` to start.");
     console.log('');
-    console.log('Join the community: https://discord.gg/MyFbztUK5U');
+    console.log(`Join the community: ${BRAND.community.discord.url}`);
     process.exit(0);
   }
 }
