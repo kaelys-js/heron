@@ -124,7 +124,8 @@ jobs:
           A few things to know:
           - Tests will run automatically -- check the status below
           - Make sure you've linked a related issue (required for features)
-          - Read [CONTRIBUTING.md](../blob/main/.github/CONTRIBUTING.md) if you haven't
+          - Read [CONTRIBUTING.md](../blob/main/.github/CONTRIBUTING.md) and our [Code of Conduct](../blob/main/.github/CODE_OF_CONDUCT.md) if you haven't
+          - PR title needs a [Conventional Commits](https://www.conventionalcommits.org/) prefix (\`feat:\` / \`fix:\` / \`chore:\` / ...)
 
           We'll review your PR soon. Join our [Discord](https://discord.gg/MyFbztUK5U) if you have questions.
           EOF
@@ -135,7 +136,10 @@ jobs:
 
           In the meantime:
           - Check [SUPPORT.md](../blob/main/.github/SUPPORT.md) for setup help
+          - Read our [Code of Conduct](../blob/main/.github/CODE_OF_CONDUCT.md) — it applies to every interaction here
           - Join our [Discord](https://discord.gg/MyFbztUK5U) for quick answers
+
+          If this turned out to be a how-to question (not a confirmed bug), [Discussions](../../discussions/categories/q-a) is a faster path.
           EOF
             gh issue comment "$num" --body-file /tmp/welcome.md
           fi

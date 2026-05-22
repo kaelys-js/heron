@@ -1,7 +1,7 @@
 name: 📚 Documentation issue
 description: Report a typo, broken link, outdated example, or missing topic
 title: "docs: "
-labels: ["documentation", "good first issue"]
+labels: ["documentation"]
 assignees: []
 body:
   - type: markdown

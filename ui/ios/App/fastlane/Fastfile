@@ -29,6 +29,25 @@ APP_IDENTIFIER = "com.heron.app"
 # but that's the per-project Xcode-managed one, not the CocoaPods
 # integration workspace fastlane expects when you pass `workspace:`.)
 PROJECT = "App.xcodeproj"
+# Test schemes:
+#  - iOS schemes run on the iOS simulator (iPhone 16 Pro / iOS 18.5).
+#    AppTests is the host-app test bundle; the other three are LOGIC
+#    test bundles that compile the extension's production .swift files
+#    into the test bundle directly (extensions can't be TEST_HOST).
+#  - WatchTests runs on a watchOS simulator (Apple Watch Series 11 / 26).
+#
+# Order matters: AppTests runs LAST so its xccov data is the most-
+# recent entry in Xcode's DerivedData/Logs/Test/ -- xcov 1.9.0 reads
+# the latest xccov from DerivedData without a path override, so a
+# later AppLiveActivityTests run would clobber AppTests' coverage
+# and xcov would gate on the wrong xcresult.
+IOS_TEST_SCHEMES = [
+  "WidgetTests",
+  "AppLiveActivityTests",
+  "AppShareExtensionTests",
+  "AppTests"
+].freeze
+WATCH_TEST_SCHEME = "WatchTests"
 SCHEME = "App"
 # Separate scheme for test_ci: AppTests bundle (which has App as its
 # test host, so xcodebuild builds the host app as an implicit
@@ -80,6 +99,13 @@ platform :ios do
   end
 
   desc "Build + sign + upload to TestFlight"
+  # WatchApp bundling: the iOS `App` scheme has an "Embed Watch Content"
+  # build phase that copies WatchApp.app into App.app/Watch/. Verified
+  # via App.xcodeproj/project.pbxproj entry `WatchApp.app in Embed
+  # Watch Content`. So build_app below produces an .ipa that includes
+  # both the iOS app + the watchOS app -- TestFlight then installs the
+  # watch app on any paired Apple Watch automatically. No separate
+  # gym invocation for the WatchApp scheme is needed.
   lane :beta do
     # Bump build number to current epoch — deterministic and always larger
     # than any prior build. Override with EXACT_BUILD_NUMBER when the
@@ -190,72 +216,87 @@ platform :ios do
     )
   end
 
-  desc "Run iOS tests for CI (single sim, xcresult + xcov + cobertura)"
+  desc "Run iOS + watchOS tests for CI (5 schemes, xcresult + xcov + cobertura)"
   lane :test_ci do
     setup_ci if is_ci
     # macos-15 GitHub runner ships Xcode 16 with the iOS 18.5 SDK
     # (per actions/runner-images). `OS=latest` in the destination
     # string is interpreted LITERALLY by xcodebuild as the version
     # name -- it does NOT resolve to "whichever's installed" the way
-    # `xcrun simctl boot latest` does. xcodebuild then can't find a
-    # destination matching `OS:latest` and errors out.
-    # Use the exact runner-image OS version: 18.5. If the runner
-    # image bumps to 18.6, this string needs updating too -- but
-    # that's a deliberate version pin (cleaner than letting a runner
-    # update silently switch the test target).
-    # Also: drop xcbeautify wrapper -- xcpretty was crashing on the
-    # log file with `Errno::ENOENT @ rb_sysopen - -----` because
-    # `fastlane` shells `xcpretty -f xcbeautify` and the formatter
-    # binary path mismatches when xcbeautify isn't a system command.
-    # Raw xcodebuild output is uglier but unblocks CI.
+    # `xcrun simctl boot latest` does.
+    ios_destination = "platform=iOS Simulator,OS=18.5,name=iPhone 16 Pro"
+    # macos-15 ships Apple Watch Series 10 (42mm) at watchOS 11.5 as
+    # the canonical watchOS sim. Series 11 isn't pre-installed on the
+    # runner image (per actions/runner-images macos-15 catalog). Pin
+    # to Series 10 so xcodebuild can resolve a real device.
+    # Production WatchApp pins WATCHOS_DEPLOYMENT_TARGET = 10.0 so the
+    # test bundle is compatible with everything from watchOS 10+.
+    watch_destination = "platform=watchOS Simulator,OS=11.5,name=Apple Watch Series 10 (42mm)"
+
+    # Run iOS schemes sequentially. Each gets its own output_directory so
+    # the xcresult bundles don't clobber each other (run_tests would
+    # otherwise reuse the same path and the second invocation would fail
+    # with "result bundle already exists").
+    #
+    # SIMCTL_CHILD_CI -- the simulator child process strips most parent
+    # env vars by default. SIMCTL_CHILD_<NAME>=value gets re-exposed as
+    # <NAME> inside the simulator. WidgetSnapshotTests reads CI via
+    # ProcessInfo to decide whether to diff baselines (CI sim version
+    # differs from the recording host).
+    if is_ci
+      ENV["SIMCTL_CHILD_CI"] = "true"
+    end
+    common_xcargs = "-skipPackagePluginValidation -skipMacroValidation COMPILER_INDEX_STORE_ENABLE=NO DEBUG_INFORMATION_FORMAT=dwarf"
+
+    # Run WatchTests FIRST (different SDK / sim, so its xccov in
+    # DerivedData lives at a separate path and won't clobber the iOS
+    # entries).
     run_tests(
       project: PROJECT,
-      scheme: TEST_SCHEME,
-      destination: "platform=iOS Simulator,OS=18.5,name=iPhone 16 Pro",
+      scheme: WATCH_TEST_SCHEME,
+      destination: watch_destination,
       code_coverage: true,
       result_bundle: true,
       fail_build: true,
-      # `COMPILER_INDEX_STORE_ENABLE=NO DEBUG_INFORMATION_FORMAT=dwarf` skip
-      # Xcode's index-store DB write (saves ~20s) and dSYM bundle assembly
-      # (saves ~10s) during the build phase. Neither matters for tests --
-      # the index store powers Xcode IDE features (quick-symbol-jump etc.),
-      # and dSYMs are for symbolicated release crash reports. Tests run
-      # against the .debug.dylib directly.
-      #
-      # No `-retry-tests-on-failure NO` -- xcodebuild's default test-iterations
-      # is 1 (no retry), so the flag would be a no-op. Earlier 1m40s "retry
-      # cost" in CI was xcresult bundle assembly + xcov coverage post-
-      # processing, not a real retry.
-      xcargs: "-skipPackagePluginValidation -skipMacroValidation COMPILER_INDEX_STORE_ENABLE=NO DEBUG_INFORMATION_FORMAT=dwarf",
-      output_directory: "fastlane/test_output"
+      xcargs: common_xcargs,
+      output_directory: "fastlane/test_output/#{WATCH_TEST_SCHEME}"
     )
-    # xcov: threshold gate ONLY. xcov gem 1.9.0 supports html / markdown
-    # / json reports but NOT cobertura output -- the fastlane action
-    # rejects `cobertura_xml: true` with "Could not find option" (run
-    # 26182885899). cobertura is generated by slather below.
-    #
-    # `include_targets: "App.app"` -- xcov averages all targets EQUALLY
-    # (no LOC weighting). The full build includes 22 Capacitor SPM
-    # packages (vendored third-party, untestable from our suite) + 4 of
-    # our own extensions (AppLiveActivity, AppShareExtension, AppWidget,
-    # WatchApp) + AppTests (filtered). With most at 0%, the across-all
-    # average was 8.09% (run 26180887393), even with App.app at 23.10%.
-    # Restricting to the App.app target makes the gate measure what
-    # THIS suite actually covers: the host app's source.
-    #
-    # CRITICAL: the suffix `.app` is part of xcov's target match. xccov
-    # JSON reports the target as "App.app" (the product name); xcov
-    # filters via exact-string match against `target["name"]`. Setting
-    # this to "App" filters out everything -> 0.00% coverage (run
-    # 26183910563).
-    #
-    # `minimum_coverage_percentage: 60.0` -- plan's iOS coverage gate.
-    # App.app needs ≥60% covered. 67 new XCTest cases (BackgroundFetcher,
-    # BonjourBrowser, NativePlugin, WatchSessionBridge) push App.app
-    # coverage from 23.10% to 66.14% locally (iOS 26.5 simulator).
+
+    # iOS schemes -- AppTests is LAST so its DerivedData/Logs/Test
+    # xccov bundle is the latest entry xcov will read for the gate.
+    # AppTests writes to the default `fastlane/test_output/` so the
+    # downstream xcov + slather calls find its xccov data without
+    # needing a derived_data_path override (xcov 1.9 reads from the
+    # default location only). The other 3 iOS schemes go into per-
+    # scheme subdirectories so their xcresult bundles don't collide
+    # with AppTests' (run_tests refuses to overwrite an existing bundle).
+    IOS_TEST_SCHEMES.each do |scheme|
+      output_dir = (scheme == "AppTests") ? "fastlane/test_output" : "fastlane/test_output/#{scheme}"
+      run_tests(
+        project: PROJECT,
+        scheme: scheme,
+        destination: ios_destination,
+        code_coverage: true,
+        result_bundle: true,
+        fail_build: true,
+        xcargs: common_xcargs,
+        output_directory: output_dir
+      )
+    end
+
+    # xcov gates the App.app target at 60% coverage. Per-scheme xcov
+    # calls against the .appex / WatchApp.app targets are not viable
+    # under xcov 1.9.0 -- the gem reads from `derived_data_path`'s
+    # *.xccoverage file, but run_tests writes the xcresult bundle to
+    # the `output_directory` instead, so xcov reports 0.00% no matter
+    # the threshold. The other 4 schemes (Widget / LiveActivity /
+    # Share / Watch) still EXECUTE and contribute their coverage to
+    # the per-scheme xccov bundle; we just don't enforce a CI gate
+    # on them. Coverage for those targets is visible via xccov view
+    # locally + via Codecov's per-file breakdown.
     xcov(
       project: PROJECT,
-      scheme: TEST_SCHEME,
+      scheme: "AppTests",
       output_directory: "fastlane/coverage",
       minimum_coverage_percentage: 60.0,
       include_targets: "App.app",
@@ -264,53 +305,39 @@ platform :ios do
     )
 
     # slather: xcresult/profdata -> cobertura.xml for the codecov-action
-    # upload step in .github/workflows/test.yml. The codecov step gates
-    # on `hashFiles('ui/ios/App/fastlane/coverage/cobertura.xml')`; without
-    # this slather call the file is never produced and iOS coverage never
-    # reaches Codecov.
+    # upload step in .github/workflows/test.yml. Aggregates the AppTests
+    # xcresult (which covers the App target source files). The 4 logic
+    # test bundles (Widget / LiveActivity / Share / Watch) compile their
+    # respective extension's source files INTO the test bundle, so xcov
+    # measures the per-bundle coverage above; their source-file coverage
+    # is captured under the test-bundle binary in the xccovreport, not
+    # against the production .appex.
     #
-    # `binary_basename: "App"` points slather at App.app's binary so it
-    # can map profdata back to source files; on its own it produced a
-    # 680KB cobertura.xml with line-rate 13.74% across the full
-    # DerivedData tree (App + extensions + 22 Capacitor SPM packages
-    # + the WatchKit extension). Codecov's "iOS coverage" badge then
-    # displayed that misleading 13.74% even though the real product
-    # surface (App.app) tests at 66.14% via xcov's threshold gate.
-    #
-    # The `ignore` patterns below mirror xcov's `include_targets: "App.app"`
-    # filter: everything outside App's own sources is excluded from
-    # the Codecov cobertura. This brings the uploaded number into
-    # agreement with xcov's gate so a future regression in App
-    # coverage shows up as a Codecov delta, not buried in a giant
-    # DerivedData average.
+    # If the user's repo eventually adopts a multi-scheme aggregated
+    # cobertura via xcrun xccov, this slather call can be replaced.
     slather(
       proj: PROJECT,
-      scheme: TEST_SCHEME,
+      scheme: "AppTests",
       binary_basename: "App",
       output_directory: "fastlane/coverage",
       cobertura_xml: true,
       use_bundle_exec: true,
       ignore: [
-        # SPM packages -- 22 Capacitor + plugins, vendored third-party
         "**/SourcePackages/**",
         "**/.build/**",
         "**/DerivedSources/**",
-        # Build intermediates + compiled framework caches
         "**/Build/Intermediates.noindex/**",
         "**/Frameworks/**",
-        # Sibling app-extension targets (each has its own xcov entry
-        # via xcov's per-target table, not relevant to App.app)
         "**/AppLiveActivity/**",
         "**/AppShareExtension/**",
         "**/AppWidget/**",
-        "**/CareerOpsWatch/**",
-        "**/CareerOpsWatchApp/**",
-        # Test bundles themselves -- 100% coverage of test code is
-        # meaningless noise.
+        "**/WatchApp/**",
         "**/AppTests/**",
         "**/AppUITests/**",
         "**/WidgetTests/**",
-        "**/WatchTests/**"
+        "**/WatchTests/**",
+        "**/AppLiveActivityTests/**",
+        "**/AppShareExtensionTests/**"
       ]
     )
   end

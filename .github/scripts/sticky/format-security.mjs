@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * format-security.mjs -- emits the heron-pr-security sticky body
+ * format-security.mjs -- emits the security PR sticky-comment body
  * aggregating CodeQL Sarif + Dependabot alerts + (optional) Trivy
  * filesystem scan.
  *
@@ -15,6 +15,7 @@
 import fs from 'node:fs';
 import { parseArgs } from 'node:util';
 import { table, verdictHeader } from './lib.mjs';
+import { BRAND } from '../../../scripts/lib/_brand.mjs';
 
 const { values: opts } = parseArgs({
   options: {
@@ -145,7 +146,7 @@ if (sources.length === 0) {
 }
 lines.push('');
 lines.push(
-  '<sub>aggregates CodeQL + Dependabot + Trivy. Click through to the [Security tab](https://github.com/kaelys-js/heron/security) for full details + remediation paths.</sub>',
+  `<sub>aggregates CodeQL + Dependabot + Trivy. Click through to the [Security tab](${BRAND.repo.url}/security) for full details + remediation paths.</sub>`,
 );
 
 const out = lines.join('\n') + '\n';

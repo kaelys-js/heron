@@ -7,10 +7,11 @@
       - electron tray icon
       - Inline copies in app.html / +layout boot-fallback / Watch / Widget BrandMark
 
-    File structure (KEEP THIS STRUCTURE — apply-brand expects it):
+    File structure (KEEP THIS STRUCTURE; apply-brand expects it):
 
       ┌─ <defs>           Reusable gradient + the brand glyph as a <symbol>
-      │   ├─ #brand-bg-gradient   Indigo → violet → fuchsia ramp
+      │   ├─ #brand-bg-gradient   Slate → Reed → Dawn 3-stop ramp
+      │   │                        (AUTO-GENERATED from brand.json colors)
       │   └─ #brand-glyph         The icon, viewBox 24×24 (Lucide-sized).
       │                            Easy to swap: paste a different Lucide
       │                            path set into this <symbol> and run
@@ -18,14 +19,14 @@
       │                            to change.
       ├─ <g id="brand-background">  Squircle + top-half wash
       └─ <g id="brand-icon">         <use href="#brand-glyph"> reference
-                                     — centred + scaled so the 24-unit
+                                     centred + scaled so the 24-unit
                                      glyph fills the iOS-recommended
                                      824/1024 = 81% central area.
 
     Why width="1024" height="1024" on the root: previously the file
     omitted width/height and let consumers infer from viewBox. iOS's
     icon-asset compiler + some web tooling render at the INTRINSIC SVG
-    dimensions when those attributes are absent — which defaulted to
+    dimensions when those attributes are absent; that defaulted to
     300×150 in some renderers, producing a tiny rasterised icon at
     install time. Explicit 1024×1024 matches the highest iOS app-icon
     slot exactly so no rescale ever happens.
@@ -34,16 +35,24 @@
     - The 24-unit Lucide glyph is scaled 26.667× and offset (192, 192),
       so it occupies the central 640×640 region with 192px safe-area
       margins. This produces pixel-identical output to the previous
-      logo.svg — the refactor is structural only (separable bg + icon
+      logo.svg; the refactor is structural only (separable bg + icon
       via <symbol>/<use>), not visual.
 
-    Design (also unchanged):
-    - Indigo → violet → fuchsia gradient.
+    Design:
+    - 3-stop diagonal gradient (top-left → bottom-right):
+        0%   = brand.json::colors.primary           (Heron Slate)
+        55%  = brand.json::colors.accentSecondary   (Heron Reed)
+        100% = brand.json::colors.accent            (Heron Dawn)
+      Cool morning slate transitions through a muted-green midpoint to
+      the warm dawn gold, matching the brand's "stand still at dawn"
+      narrative. The stops live inside the AUTO-GENERATED:brand-gradient
+      block below; do NOT hand-edit the stop-color values (a re-run of
+      `pnpm brand:apply` reverts them; CI verifier flags drift).
     - Soft 6% white top-half wash for glass-like depth.
     - Stroke width 1.8 in 24-unit space (~48 visual units in the 1024
-      canvas) — keeps the rocket crisp at the 16×16 favicon size.
+      canvas); keeps the glyph crisp at 16×16 favicon size.
 
-    To change the brand glyph (e.g. swap rocket for paperplane):
+    To change the brand glyph (e.g. swap bird for paperplane):
     - Browse https://lucide.dev/icons
     - Copy the icon's SVG path set
     - Paste into the <symbol id="brand-glyph"> block below, keeping
@@ -51,26 +60,28 @@
     - Run `pnpm brand:apply` to regenerate every platform icon.
 
     Attribution:
-    - Rocket glyph: Lucide Icons (https://lucide.dev), ISC License.
+    - Bird glyph: Lucide Icons (https://lucide.dev), ISC License.
       Copyright (c) 2024 Lucide Contributors. Originally derived from
-      Feather Icons (https://feathericons.com), MIT License.
+      Feather Icons (https://feathericons.com), MIT License. This is a
+      generic bird-in-flight stopgap; the real Heron silhouette comes
+      from branding/MASCOT.md (illustrator brief, follow-up work).
   -->
   <defs>
-    <!-- Brand gradient — used for the background squircle. Centralised
-         here so a brand-color tweak (in branding/brand.json) only needs
-         to update this one block. -->
+    <!-- AUTO-GENERATED:brand-gradient -->
     <linearGradient id="brand-bg-gradient" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#6366f1" />
-      <stop offset="55%" stop-color="#8b5cf6" />
-      <stop offset="100%" stop-color="#a855f7" />
+      <stop offset="0%" stop-color="#4a5b6d" />
+      <stop offset="55%" stop-color="#7a8c6d" />
+      <stop offset="100%" stop-color="#c89b4a" />
     </linearGradient>
+    <!-- /AUTO-GENERATED:brand-gradient -->
 
-    <!-- Brand glyph — Lucide-sized 24×24 viewBox so swapping the icon
-         is a one-block change. Currently: `rocket`. To swap, replace
-         the <path> set below; do NOT change the viewBox or the stroke
-         attributes — the outer <use> handles positioning + scaling so
-         the visible output stays pixel-identical for any 24-unit
-         Lucide-shaped glyph. -->
+    <!-- Brand glyph: Lucide-sized 24×24 viewBox so swapping the icon
+         is a one-block change. Currently: `bird` (lucide bird-in-flight
+         outline; a stopgap until the real Heron silhouette per
+         branding/MASCOT.md). To swap, replace the <path> set below; do
+         NOT change the viewBox or stroke attributes; the outer <use>
+         handles positioning + scaling so the visible output stays
+         pixel-identical for any 24-unit Lucide-shaped glyph. -->
     <symbol id="brand-glyph" viewBox="0 0 24 24">
       <g
         fill="none"
@@ -79,40 +90,38 @@
         stroke-linecap="round"
         stroke-linejoin="round"
       >
-        <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
-        <path
-          d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09"
-        />
-        <path
-          d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z"
-        />
-        <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" />
+        <path d="M16 7h.01" />
+        <path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20" />
+        <path d="m20 7 2 .5-2 .5" />
+        <path d="M10 18v3" />
+        <path d="M14 17.75V21" />
+        <path d="M7 18a6 6 0 0 0 3.84-10.61" />
       </g>
     </symbol>
   </defs>
 
   <!-- ┌──────────────────────────────────────────────────────────────┐
-       │ #brand-background — squircle + top-half wash. Composition    │
+       │ #brand-background; squircle + top-half wash. Composition    │
        │ lives here so swapping the icon never touches the background. │
        └──────────────────────────────────────────────────────────────┘ -->
   <g id="brand-background">
-    <!-- 1024×1024 with rx=232 — matches iOS 18+ home-screen auto-mask
+    <!-- 1024×1024 with rx=232; matches iOS 18+ home-screen auto-mask
          radius so the icon never gets a halo from a corner mismatch. -->
     <rect width="1024" height="1024" rx="232" fill="url(#brand-bg-gradient)" />
-    <!-- Soft top highlight (no filter — icon generators sometimes flatten
+    <!-- Soft top highlight (no filter; icon generators sometimes flatten
          filters so we use a plain rect overlay instead). -->
     <rect x="0" y="0" width="1024" height="512" rx="232" fill="#ffffff" opacity="0.06" />
   </g>
 
   <!-- ┌──────────────────────────────────────────────────────────────┐
-       │ #brand-icon — the glyph, scaled + centred. <use href> means  │
+       │ #brand-icon; the glyph, scaled + centred. <use href> means  │
        │ the same <symbol> can be reused at any size (e.g. inline in  │
        │ the boot-fallback) without duplicating the path set.          │
        │                                                                │
        │ Math: 24-unit glyph * 26.667 = 640 visual units, positioned   │
        │ at (192, 192) so it occupies the central 192→832 region with  │
        │ a 192px safe-area margin (the same proportions the original   │
-       │ logo.svg had — pixel-identical visible output before/after    │
+       │ logo.svg had; pixel-identical visible output before/after    │
        │ the structural refactor).                                      │
        └──────────────────────────────────────────────────────────────┘ -->
   <g id="brand-icon">

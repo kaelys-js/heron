@@ -3,11 +3,12 @@
  *  controls, window actions, macOS Menu-Bar-Only toggle. macOS title
  *  + Dock badge mirror the queued / upcoming counts; polls /api/stats
  *  every 30s with "(backend offline)" fallback. */
-import { Tray, Menu, MenuItemConstructorOptions, nativeImage, app, BrowserWindow } from 'electron';
+import { Tray, Menu, nativeImage, app, BrowserWindow } from 'electron';
 import path from 'node:path';
-import { request as httpRequest } from 'node:http';
-import { request as httpsRequest } from 'node:https';
+import { existsSync, rmSync, writeFileSync } from 'node:fs';
 import { BRAND } from './brand';
+import { fetchStats, postEmpty, type Stats } from './tray-http';
+import { buildTrayMenuTemplate, computeTrayTitle, computeDockBadge } from './tray-menu-builder';
 
 export type TrayHandlers = {
   getBackendUrl: () => string;
@@ -20,21 +21,7 @@ export type TrayHandlers = {
   onSetDockVisible?: (visible: boolean) => void;
 };
 
-type Stats = {
-  queued: number;
-  appliedToday: number;
-  upcomingInterviews: number;
-  openIssues?: number;
-  autopilotPaused?: boolean;
-};
-
 const POLL_INTERVAL_MS = 30_000;
-// Persisted user-preference key -- INTENTIONALLY kept as a stable literal
-// rather than brand-derived because changing the key on rebrand would
-// silently lose every user's saved "Menu Bar Only" preference. If a
-// future rebrand needs the key changed, ship a migration that reads
-// the old key + writes the new one + deletes the old.
-const PREF_HIDE_DOCK = 'careerOpsHideDock';
 
 /**
  * Electron tray menu controller. Class name is brand-agnostic
@@ -54,9 +41,8 @@ export class DesktopTray {
     // it survives across launches; we don't pull in electron-store for one
     // boolean.
     try {
-      const fs = require('node:fs') as typeof import('node:fs');
       const pref = path.join(app.getPath('userData'), 'menubar-only.pref');
-      this.menuBarOnly = fs.existsSync(pref);
+      this.menuBarOnly = existsSync(pref);
     } catch {
       /* default: false */
     }
@@ -110,134 +96,35 @@ export class DesktopTray {
    */
   private async refresh(): Promise<void> {
     const url = this.handlers.getBackendUrl();
-    this.stats = await this.fetchStats(url).catch(() => null);
+    // fetchStats() is defensively try/catched -- it always resolves
+    // (never rejects), returning null on failure. No outer .catch needed.
+    this.stats = await fetchStats(url);
     this.rebuildMenu();
     this.updateDockBadge();
   }
 
-  private fetchStats(baseUrl: string): Promise<Stats | null> {
-    return new Promise((resolve) => {
-      try {
-        const u = new URL('/api/stats', baseUrl);
-        const isHttps = u.protocol === 'https:';
-        const fn = isHttps ? httpsRequest : httpRequest;
-        const req = fn(
-          {
-            hostname: u.hostname,
-            port: u.port || (isHttps ? 443 : 80),
-            path: u.pathname,
-            timeout: 2000,
-          },
-          (res) => {
-            const chunks: Buffer[] = [];
-            res.on('data', (c: Buffer) => chunks.push(c));
-            res.on('end', () => {
-              try {
-                const body = Buffer.concat(chunks).toString('utf8');
-                const parsed = JSON.parse(body) as Stats;
-                resolve(parsed);
-              } catch {
-                resolve(null);
-              }
-            });
-            res.on('error', () => resolve(null));
-          },
-        );
-        req.on('error', () => resolve(null));
-        req.on('timeout', () => {
-          req.destroy();
-          resolve(null);
-        });
-        req.end();
-      } catch {
-        resolve(null);
-      }
-    });
-  }
-
   private rebuildMenu(): void {
     if (!this.tray) return;
-    const items: MenuItemConstructorOptions[] = [];
-    if (this.stats) {
-      items.push({
-        label: `Today: ${this.stats.queued} queued · ${this.stats.appliedToday} applied · ${this.stats.upcomingInterviews} interviews`,
-        enabled: false,
-      });
-      if ((this.stats.openIssues ?? 0) > 0) {
-        items.push({
-          label: `⚠ ${this.stats.openIssues} open issue${this.stats.openIssues === 1 ? '' : 's'}`,
-          click: () => this.openPath('/inbox'),
-        });
-      }
-    } else {
-      items.push({ label: '(backend offline)', enabled: false });
-    }
-    items.push({ type: 'separator' });
-
-    // Per-section quick-jumps.
-    items.push({
-      label: 'Pipeline',
-      accelerator: 'CmdOrCtrl+P',
-      click: () => this.openPath('/pipeline'),
-    });
-    items.push({
-      label: 'Inbox',
-      accelerator: 'CmdOrCtrl+I',
-      click: () => this.openPath('/inbox'),
-    });
-    items.push({
-      label: 'Queue',
-      click: () => this.openPath('/queue'),
-    });
-    items.push({
-      label: 'Stats',
-      click: () => this.openPath('/stats'),
-    });
-    items.push({ type: 'separator' });
-
-    // Run actions.
-    items.push({
-      label: 'Scan now',
-      click: () => void this.runTask('scan-portals'),
-    });
-    if (this.stats) {
-      items.push({
-        label: this.stats.autopilotPaused ? 'Resume autopilot' : 'Pause autopilot',
-        click: () => void this.toggleAutopilot(),
-      });
-    }
-    items.push({ type: 'separator' });
-
-    // Window + Dock controls (macOS only).
-    if (process.platform === 'darwin') {
-      items.push({
-        label: 'Menu Bar Only (hide Dock icon)',
-        type: 'checkbox',
-        checked: this.menuBarOnly,
-        click: () => this.setMenuBarOnly(!this.menuBarOnly),
-      });
-      items.push({ type: 'separator' });
-    }
-
-    items.push({
-      label: 'Show dashboard',
-      accelerator: 'CmdOrCtrl+0',
-      click: () => this.handlers.onOpen(),
-    });
-    items.push({
-      label: 'Hide window',
-      accelerator: 'CmdOrCtrl+H',
-      click: () => {
-        BrowserWindow.getAllWindows().forEach((w) => w.hide());
+    const items = buildTrayMenuTemplate(
+      {
+        stats: this.stats,
+        platform: process.platform,
+        menuBarOnly: this.menuBarOnly,
+        appVersion: app.getVersion(),
+        displayName: BRAND.displayName,
       },
-    });
-    items.push({ type: 'separator' });
-    items.push({ label: `Version ${app.getVersion()}`, enabled: false });
-    items.push({
-      label: `Quit ${BRAND.displayName}`,
-      accelerator: 'CmdOrCtrl+Q',
-      click: () => this.handlers.onQuit(),
-    });
+      {
+        onOpenPath: (p) => this.openPath(p),
+        onShowDashboard: () => this.handlers.onOpen(),
+        onHideWindow: () => {
+          BrowserWindow.getAllWindows().forEach((w) => w.hide());
+        },
+        onRunTask: (taskId) => void this.runTask(taskId),
+        onToggleAutopilot: () => void this.toggleAutopilot(),
+        onToggleMenuBarOnly: () => this.setMenuBarOnly(!this.menuBarOnly),
+        onQuit: () => this.handlers.onQuit(),
+      },
+    );
 
     const contextMenu = Menu.buildFromTemplate(items);
     this.tray.setContextMenu(contextMenu);
@@ -245,11 +132,7 @@ export class DesktopTray {
     // macOS title -- show queued count as a number badge next to the
     // tray icon when > 0. This is the equivalent of an unread badge for
     // a menu bar app.
-    if (process.platform === 'darwin' && this.stats && this.stats.queued > 0) {
-      this.tray.setTitle(String(this.stats.queued));
-    } else if (process.platform === 'darwin') {
-      this.tray.setTitle('');
-    }
+    this.tray.setTitle(computeTrayTitle(this.stats, process.platform));
   }
 
   /** macOS / Linux Dock badge -- set to the upcoming-interviews count so
@@ -257,8 +140,7 @@ export class DesktopTray {
   private updateDockBadge(): void {
     if (process.platform !== 'darwin') return;
     if (!app.dock) return;
-    const count = this.stats?.upcomingInterviews ?? 0;
-    app.dock.setBadge(count > 0 ? String(count) : '');
+    app.dock.setBadge(computeDockBadge(this.stats, process.platform));
   }
 
   private openPath(p: string): void {
@@ -284,10 +166,9 @@ export class DesktopTray {
       }
       this.handlers.onSetDockVisible?.(!enable);
       // Persist the preference.
-      const fs = require('node:fs') as typeof import('node:fs');
       const pref = path.join(app.getPath('userData'), 'menubar-only.pref');
-      if (enable) fs.writeFileSync(pref, '1');
-      else fs.rmSync(pref, { force: true });
+      if (enable) writeFileSync(pref, '1');
+      else rmSync(pref, { force: true });
     } catch {
       /* non-fatal */
     }
@@ -295,42 +176,12 @@ export class DesktopTray {
   }
 
   private runTask(taskId: string): Promise<void> {
-    return this.postEmpty('/api/jobs/' + taskId + '/run');
+    return postEmpty(this.handlers.getBackendUrl(), '/api/jobs/' + taskId + '/run');
   }
 
   private toggleAutopilot(): Promise<void> {
-    return this.postEmpty('/api/autopilot/toggle').then(() => this.refresh());
-  }
-
-  private postEmpty(pathname: string): Promise<void> {
-    return new Promise((resolve) => {
-      const url = this.handlers.getBackendUrl();
-      try {
-        const u = new URL(pathname, url);
-        const isHttps = u.protocol === 'https:';
-        const fn = isHttps ? httpsRequest : httpRequest;
-        const req = fn(
-          {
-            hostname: u.hostname,
-            port: u.port || (isHttps ? 443 : 80),
-            path: u.pathname,
-            method: 'POST',
-            timeout: 2000,
-          },
-          (res) => {
-            res.resume();
-            res.on('end', () => resolve());
-          },
-        );
-        req.on('error', () => resolve());
-        req.on('timeout', () => {
-          req.destroy();
-          resolve();
-        });
-        req.end();
-      } catch {
-        resolve();
-      }
-    });
+    return postEmpty(this.handlers.getBackendUrl(), '/api/autopilot/toggle').then(() =>
+      this.refresh(),
+    );
   }
 }

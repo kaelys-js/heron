@@ -1,0 +1,89 @@
+# Q&A discussion template -- structured question form so the
+# community can answer faster. Maps to the "Q&A" category which is
+# marked `isAnswerable: true` (so a maintainer reply can be marked
+# as the accepted answer).
+title: '[Q&A] '
+labels: ['question']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for opening a Q&A. The more context you give, the faster
+        someone can help. A complete question usually gets answered in
+        hours; a vague one can sit for days.
+
+        **Heading here:** make sure your question isn't already answered
+        in the [README](https://github.com/kaelys-js/heron#readme), the
+        [docs/](https://github.com/kaelys-js/heron/tree/main/docs), or
+        the existing [Q&A history](../../discussions/categories/q-a).
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: One paragraph. Be specific.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What you've already tried
+      description: |
+        Commands you ran, docs you read, search terms you tried. This
+        usually narrows the answer space dramatically.
+      placeholder: |
+        - Ran `pnpm doctor` -- output attached below
+        - Read docs/SETUP.md "Multi-user mode" section
+        - Searched the README for "Tailscale" -- nothing matched
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected to happen
+      description: |
+        If your question is "how do I do X?", describe what X looks like
+        when it's working. If it's "why is Y broken?", describe what Y
+        should do when it's not broken.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area?
+      multiple: true
+      options:
+        - Setup / install
+        - Dashboard usage
+        - CLI / scripts
+        - Multi-user / RBAC
+        - Native (iOS / Android / macOS / Windows / Linux)
+        - Apple Watch / Widgets
+        - Portal scanner (Greenhouse / Ashby / Lever / Workday / ...)
+        - LinkedIn Easy Apply
+        - Autonomous apply / scoring
+        - CV / PDF generation
+        - Notifications / email triage
+        - Localization / language modes
+        - Other / not sure
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: OS, Node version, pnpm version, AI CLI tool you're using.
+      placeholder: 'macOS 15.2 / node v26.1.0 / pnpm 11.1.0 / Claude Code 1.5'
+    validations:
+      required: true
+
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `pnpm doctor` (optional)
+      description: |
+        Helps if your question is about setup drift or "something's off".
+        Skip if not relevant.
+      render: shell

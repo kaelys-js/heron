@@ -40,6 +40,16 @@ import {
   fstatSync,
 } from 'fs';
 import yaml from 'js-yaml';
+import { BRAND } from '../lib/_brand.mjs';
+
+// User-Agent identifies this scanner to upstream ATS providers. Derived
+// from brand.json so a rebrand re-targets the identifier in one edit.
+// The trailing '/1.0' is intentionally NOT version-pinned to package.json
+// -- ATS providers cache User-Agent strings to throttle traffic; bumping
+// the version with every npm version-bump would defeat their caching.
+const SCANNER_VERSION = '1.0';
+const SCANNER_UA = `${BRAND.name}-scanner/${SCANNER_VERSION} (+${BRAND.repo.url})`;
+const SCANNER_UA_BROWSER = `Mozilla/5.0 (${BRAND.name}-scanner; +${BRAND.repo.url})`;
 import {
   profilePath,
   ensureProfileDirs,
@@ -451,7 +461,7 @@ async function fetchOne(apiSpec) {
   const method = spec.method || 'GET';
   const headers = {
     Accept: 'application/json',
-    'User-Agent': 'heron-scanner/1.0 (+https://github.com/kaelys-js/heron)',
+    'User-Agent': SCANNER_UA,
     ...(method !== 'GET' ? { 'Content-Type': 'application/json' } : {}),
     ...(spec.headers || {}),
   };
@@ -887,7 +897,7 @@ async function main() {
   }
 
   console.log(`\n→ Open the dashboard inbox to evaluate new offers.`);
-  console.log('→ Share results and get help: https://discord.gg/MyFbztUK5U');
+  console.log(`→ Share results and get help: ${BRAND.community.discord.url}`);
 }
 
 main().catch((err) => {

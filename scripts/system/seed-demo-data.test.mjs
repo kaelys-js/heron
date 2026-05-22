@@ -107,7 +107,10 @@ console.log('');
 // Fixture 3: refuses to seed when HERON_DATA_DIR is not a tmpdir-scoped path.
 // Safety guard -- prevents accidental corruption of a real install.
 {
-  const r = tryRunSeed('/Users/whoever/career-ops/data');
+  // Path is intentionally OUTSIDE os.tmpdir() so the seed-script's
+  // safety guard refuses it. Any non-tmpdir path works; brand-neutral
+  // placeholder so a rebrand doesn't have to touch this fixture.
+  const r = tryRunSeed('/Users/whoever/some-app/data');
   ok('safety: refuses non-tmpdir HERON_DATA_DIR', !r.ok, 'expected exit non-zero');
   ok(
     'safety: error message mentions tmpdir',

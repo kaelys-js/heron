@@ -145,7 +145,7 @@ jobs:
             printf "_Posted by reminders.yml — close when the next release ships._\n"
           } > /tmp/issue.md
           gh issue create \
-            --title "🚀 Release overdue (${DAYS} days since ${TAG})" \
+            --title "Release overdue (${DAYS} days since ${TAG})" \
             --label "release-due,maintenance" \
             --body-file /tmp/issue.md
 

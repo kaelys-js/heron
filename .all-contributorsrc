@@ -1,10 +1,10 @@
 {
   "$schema": "https://raw.githubusercontent.com/all-contributors/all-contributors/master/.all-contributorsrc.schema.json",
   "projectName": "heron",
-  "projectOwner": "heron",
+  "projectOwner": "kaelys-js",
   "repoType": "github",
   "repoHost": "https://github.com",
-  "files": ["README.md"],
+  "files": ["CONTRIBUTORS.md", "README.md"],
   "imageSize": 80,
   "commit": false,
   "commitConvention": "angular",
@@ -30,6 +30,19 @@
         "security",
         "tool",
         "test"
+      ]
+    },
+    {
+      "login": "santifer",
+      "name": "santifer",
+      "avatar_url": "https://avatars.githubusercontent.com/santifer",
+      "profile": "https://github.com/santifer",
+      "contributions": [
+        "code",
+        "ideas",
+        "design",
+        "doc",
+        "research"
       ]
     }
   ]

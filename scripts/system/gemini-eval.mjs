@@ -22,6 +22,7 @@ import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { profilePath, profileFromArgv, userFromArgv } from '../lib/lib-profiles.mjs';
 import { getCredential } from '../lib/user-secrets.mjs';
+import { BRAND } from '../lib/_brand.mjs';
 
 // ---------------------------------------------------------------------------
 // Bootstrap: load .env before anything else
@@ -255,7 +256,9 @@ try {
 // Display evaluation
 // ---------------------------------------------------------------------------
 console.log('\n' + '═'.repeat(66));
-console.log('  CAREER-OPS EVALUATION — powered by Google Gemini');
+// Banner title pulls displayName from brand.json via scripts/lib/_brand.mjs
+// so a future rebrand re-derives without touching this file.
+console.log(`  ${BRAND.displayName.toUpperCase()} EVALUATION -- powered by Google Gemini`);
 console.log('═'.repeat(66) + '\n');
 console.log(evaluationText);
 

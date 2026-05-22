@@ -3,8 +3,8 @@
  *
  * Vitest's real config lives in `ui/vitest.config.ts`. Invoking
  * `vitest` (or `pnpm exec vitest`, `npx vitest`, anything that lets
- * vitest auto-discover its config) from `/Users/home/career-ops/`
- * would otherwise find NO config (until this file existed) and
+ * vitest auto-discover its config) from the repo root would
+ * otherwise find NO config (until this file existed) and
  * silently fall back to zero-config mode: no `$lib` alias, no setup
  * file, no workspace projects, no environment overrides. That produces
  * a 70%+ "phantom failure" rate that masks real test bugs and burns
@@ -44,7 +44,7 @@ throw new Error(
     '       pnpm --filter ui test:coverage',
     '       cd ui && pnpm test           (workspace-local)',
     '',
-    '     See /Users/home/career-ops/vitest.config.ts header for why.',
+    '     See vitest.config.ts header at the repo root for why.',
     '',
   ].join('\n'),
 );

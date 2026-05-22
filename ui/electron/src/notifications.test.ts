@@ -131,6 +131,31 @@ describe('showOsNotification', () => {
     const { showOsNotification } = await import('./notifications.js');
     expect(() => showOsNotification({ title: 't', body: 'b' })).not.toThrow();
   });
+
+  it('reuses the cached icon path on subsequent calls', async () => {
+    // First call finds a valid icon (non-empty).
+    __createFromPath.mockReturnValue({ isEmpty: () => false });
+    const { showOsNotification } = await import('./notifications.js');
+    showOsNotification({ title: 't', body: 'b' });
+    const initialCalls = __createFromPath.mock.calls.length;
+    // Second call should re-read the cached path -- exactly ONE new
+    // createFromPath invocation (line 35 of notifications.ts).
+    showOsNotification({ title: 't2', body: 'b2' });
+    expect(__createFromPath.mock.calls.length).toBe(initialCalls + 1);
+  });
+
+  it('skips icon altogether on subsequent calls when no candidate was valid', async () => {
+    // All candidates empty -> iconPath stays ''.
+    __createFromPath.mockReturnValue({ isEmpty: () => true });
+    const { showOsNotification } = await import('./notifications.js');
+    showOsNotification({ title: 't', body: 'b' });
+    const callsAfterFirst = __createFromPath.mock.calls.length;
+    showOsNotification({ title: 't2', body: 'b2' });
+    // Second call should NOT iterate candidates again (iconPath === '');
+    // it should also NOT read the cached path. No new createFromPath
+    // invocations.
+    expect(__createFromPath.mock.calls.length).toBe(callsAfterFirst);
+  });
 });
 
 describe('notificationsSupported', () => {

@@ -45,6 +45,11 @@
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import path from 'node:path';
+import { BRAND } from '../lib/_brand.mjs';
+
+// User-Agent identifies this VC-portfolio crawler to upstream sites.
+// Browser-shape (Mozilla/5.0) for sites that block non-browser UAs.
+const SCANNER_UA = `Mozilla/5.0 (${BRAND.name}-scanner; +${BRAND.repo.url})`;
 import {
   profilePath,
   ensureProfileDirs,
@@ -66,7 +71,7 @@ async function fetchText(url, opts = {}) {
   try {
     const res = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (heron-scanner; +https://github.com/kaelys-js/heron)',
+        'User-Agent': SCANNER_UA,
         ...(opts.headers || {}),
       },
       signal: controller.signal,

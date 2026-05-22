@@ -53,7 +53,7 @@ The source files are committed; you need to create the Xcode target
 
 1. **File → New → Target → watchOS → App**
    - Product Name: `WatchApp`
-   - Bundle ID: `com.resistjs.heron.watchkitapp`
+   - Bundle ID: `<brand.json::identifiers.bundleId>.watchkitapp` -- currently `com.heron.app.watchkitapp`
    - Interface: SwiftUI · Lifecycle: SwiftUI App
    - Embed in: `App` (the iOS main target)
 2. Delete the auto-generated `ContentView.swift`, `WatchApp.swift`,
@@ -62,7 +62,7 @@ The source files are committed; you need to create the Xcode target
    if needed" should be UNCHECKED -- we want references).
 3. Under the watch target's **Signing & Capabilities**:
    - Set **Entitlements**: `WatchApp.entitlements`
-   - Add **App Groups**: `group.com.resistjs.heron`
+   - Add **App Groups**: `<brand.json::identifiers.appGroup>` -- currently `group.com.heron.app`
 4. Add the watch target to `ui/ios/App/fastlane/Fastfile` so the
    `pnpm build:ios` lane archives it alongside the main app.
 5. Run `pnpm brand:apply` -- the icon generator already writes the
