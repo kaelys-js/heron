@@ -80,7 +80,7 @@
 - [ ] Migration guide above is complete (someone with no context can follow it)
 - [ ] Updated CHANGELOG.md or relied on Release Please to populate from the BREAKING CHANGE footer
 - [ ] No personal data in the diff
-- [ ] Respects the [Data Contract](../docs/DATA_CONTRACT.md)
+- [ ] Respects the [Data Contract](../../docs/DATA_CONTRACT.md)
 
 ## Notes for reviewers
 

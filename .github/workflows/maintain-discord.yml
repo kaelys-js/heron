@@ -97,12 +97,26 @@ jobs:
           echo "mode=$m" >> "$GITHUB_OUTPUT"
           echo "::notice::Reconciler mode: $m"
 
+      # Skip cleanly when DISCORD_BOT_TOKEN isn't configured -- a fresh
+      # fork without Discord setup gets a green workflow with a
+      # ":notice::" annotation rather than a red failure. Once the
+      # maintainer sets the secret (pnpm setup:native step 14), the
+      # reconciler runs in earnest.
+      #
+      # Secret presence is exposed via env on the step, then checked at
+      # runtime in bash -- GitHub Actions disallows `secrets.*` in
+      # step-level `if:` expressions.
       - name: Run apply-discord-config.mjs
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_GUILD_ID: ${{ vars.DISCORD_GUILD_ID }}
         run: |
           set -euo pipefail
+          if [ -z "${DISCORD_BOT_TOKEN:-}" ]; then
+            echo "::notice::Discord reconciler skipped -- DISCORD_BOT_TOKEN not configured."
+            echo "Configure via 'pnpm setup:native' step 14, or set the secret manually."
+            exit 0
+          fi
           flag=""
           case "${{ steps.mode.outputs.mode }}" in
             verify) flag="--verify" ;;
