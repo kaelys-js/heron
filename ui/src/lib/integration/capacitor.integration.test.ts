@@ -276,6 +276,7 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
     'branding/REBRAND-PROCESS.md',
     'README.md',
     'AGENTS.md',
+    'AGENTS-PRODUCT.md',
     'GEMINI.md',
     '.github/CODE_OF_CONDUCT.md',
     '.github/CONTRIBUTING.md',
