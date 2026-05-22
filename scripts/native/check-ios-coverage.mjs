@@ -127,6 +127,29 @@ const SCHEMES = [
     binaryBasename: 'App',
   },
   {
+    // H.F.7b -- XCUITests measured against the same App.app binary
+    // as AppTests, but treated as a separate scheme so the
+    // cobertura.xml lands at fastlane/coverage/AppUITests/. The
+    // aggregate threshold is lower (XCUITests can't exercise every
+    // line the unit suite does -- e.g. error branches gated on
+    // unreachable runtime conditions) but the per-file floor still
+    // applies to confirm the public bridge surface is exercised at
+    // least once via the real WebView flow.
+    scheme: 'AppUITests',
+    target: 'App.app (XCUITest user-flow)',
+    threshold: 50.0,
+    perFileThreshold: 50.0,
+    perFileThresholdOverrides: {
+      // The XCUITest flow touches NativePlugin via the WebView
+      // bridge + AppDelegate at launch. Hold these to the standard
+      // bracket (80%) since the user flow drives them deeply.
+      'NativePlugin.swift': 80.0,
+      'AppDelegate.swift': 80.0,
+      'BridgeViewController.swift': 80.0,
+    },
+    binaryBasename: 'App',
+  },
+  {
     scheme: 'WidgetTests',
     target: 'AppWidget (logic test bundle)',
     threshold: 50.0,

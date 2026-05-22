@@ -871,7 +871,7 @@ jobs:
 
       - name: Upload coverage to Codecov (ios flag)
         # G12 -- see the ts upload above for OIDC rationale.
-        # Five per-scheme cobertura.xml files (AppTests / WidgetTests /
+        # Six per-scheme cobertura.xml files (AppTests / AppUITests / WidgetTests /
         # AppLiveActivityTests / AppShareExtensionTests / WatchTests)
         # uploaded under the single `ios` flag. Codecov merges them
         # into one tree -- per-binary coverage is preserved through
@@ -883,7 +883,7 @@ jobs:
         if: always() && needs.changes.outputs.ios == 'true' && hashFiles('ui/ios/App/fastlane/coverage/*/cobertura.xml') != ''
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
-          files: ui/ios/App/fastlane/coverage/AppTests/cobertura.xml,ui/ios/App/fastlane/coverage/WidgetTests/cobertura.xml,ui/ios/App/fastlane/coverage/AppLiveActivityTests/cobertura.xml,ui/ios/App/fastlane/coverage/AppShareExtensionTests/cobertura.xml,ui/ios/App/fastlane/coverage/WatchTests/cobertura.xml
+          files: ui/ios/App/fastlane/coverage/AppTests/cobertura.xml,ui/ios/App/fastlane/coverage/AppUITests/cobertura.xml,ui/ios/App/fastlane/coverage/WidgetTests/cobertura.xml,ui/ios/App/fastlane/coverage/AppLiveActivityTests/cobertura.xml,ui/ios/App/fastlane/coverage/AppShareExtensionTests/cobertura.xml,ui/ios/App/fastlane/coverage/WatchTests/cobertura.xml
           flags: ios
           name: ios-coverage
           fail_ci_if_error: true

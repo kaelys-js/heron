@@ -82,6 +82,15 @@ TEST_SCHEME = "AppTests"
 # COMMON_IGNORE + the per-scheme cross-target excludes below).
 SLATHER_TARGETS = {
   "AppTests"               => { basename: "App",                    sources: "App" },
+  # H.F.7b -- XCUITests run AGAINST the App.app binary (the same host
+  # app target as AppTests), so coverage measured via slather reads
+  # the same `App` basename but the per-scheme cobertura.xml is
+  # written to a SEPARATE directory so codecov sees both flags. The
+  # XCUITest run exercises the BridgeViewController + AppDelegate +
+  # NativePlugin under realistic user flow -- distinct path coverage
+  # from AppTests' XCTest unit-suite (which exercises the same files
+  # in isolation but doesn't drive a real WebView load).
+  "AppUITests"             => { basename: "App",                    sources: "App" },
   "WidgetTests"            => { basename: "WidgetTests",            sources: "AppWidget" },
   "AppLiveActivityTests"   => { basename: "AppLiveActivityTests",   sources: "AppLiveActivity" },
   "AppShareExtensionTests" => { basename: "AppShareExtensionTests", sources: "AppShareExtension" },
