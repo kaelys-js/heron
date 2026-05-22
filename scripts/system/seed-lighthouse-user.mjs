@@ -71,11 +71,17 @@ db.exec(`
 `);
 
 const now = Date.now();
+// User ID `u_e2e` matches the literal that /api/auth/e2e-login expects
+// (see ui/src/routes/api/auth/e2e-login/+server.ts). The Lighthouse
+// workflow's inject-lighthouse-auth.mjs hits that endpoint to mint a
+// bearer token, then writes lighthouserc.runtime.json with the token
+// in settings.extraHeaders. The endpoint rejects every userId except
+// `u_e2e` as a defense-in-depth guard, so the seed needs to match.
 db.prepare(
   `INSERT OR REPLACE INTO users
    (id, email, email_verified, name, role, two_factor_enabled, created_at, updated_at)
    VALUES (?, ?, 1, ?, 'owner', 0, ?, ?)`,
-).run('u_lighthouse', 'lighthouse@heron.test', 'Lighthouse CI User', now, now);
+).run('u_e2e', 'e2e@heron.test', 'E2E + Lighthouse CI User', now, now);
 
 const { n } = db.prepare('SELECT COUNT(*) AS n FROM users').get();
 console.log(`[seed-lighthouse-user] auth.db users count: ${n}`);
