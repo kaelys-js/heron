@@ -1098,6 +1098,119 @@ jobs:
           if-no-files-found: warn
 
   # ─────────────────────────────────────────────────────────────────
+  # Android -- Espresso (instrumented) tests on an emulator
+  # ─────────────────────────────────────────────────────────────────
+  # H.G -- Runs androidTest source set on a real emulator. Two
+  # instrumented tests:
+  #   - BiometricAuthInstrumentedTest: BiometricPrompt construction
+  #     against a real AppCompatActivity (covers NativePlugin.kt 168-211).
+  #   - AppSearchInstrumentedTest: AppSearch indexJobs + clearJobIndex
+  #     round-trip against the real on-device backend (Robolectric's
+  #     AppSearch shim is incomplete; only the catch branch covered
+  #     in JVM unit tests).
+  #
+  # `macos-15` runner: KVM + Android x86_64 emulator stability is
+  # measurably better on macOS runners than the ubuntu-22.04 image.
+  # macOS minutes are 10x ubuntu but cold-boot + test run typically
+  # finishes in ~12-15min total so the budget stays inside CI's
+  # billing envelope. Cached AVD layer in subsequent runs cuts boot
+  # time to ~3min.
+  android-emulator:
+    name: Android — Espresso (instrumented)
+    needs: changes
+    runs-on: macos-15
+    timeout-minutes: 40
+    if: needs.changes.outputs.android == 'true'
+    permissions:
+      contents: read
+      id-token: write # codecov OIDC upload for the instrumented coverage delta
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup mise (Node + pnpm)
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+        with:
+          experimental: true
+          cache: true
+
+      - name: Install pnpm dependencies (for capacitor + brand:apply)
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply brand (regenerates Brand.kt + AndroidManifest)
+        run: pnpm brand:apply
+
+      - name: Build SvelteKit static (so cap sync has webDir)
+        working-directory: ui
+        env:
+          CAPACITOR: '1'
+        run: pnpm run build:static
+
+      - name: Capacitor sync android (regenerate cordova.variables.gradle)
+        working-directory: ui
+        run: pnpm exec cap sync android
+
+      # AVD + emulator-runner: spins up a Pixel 7 / API 34 / google_apis
+      # x86_64 emulator + executes connectedDebugAndroidTest. The action
+      # caches the AVD layer in `~/.android/avd` so subsequent runs
+      # skip the cold-create step.
+      - name: Cache AVD
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-pixel-7-api-34
+
+      - name: Run instrumented tests on Pixel 7 / API 34
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          avd-name: pixel-7-api-34
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            cd ui/android
+            ./gradlew :app:connectedDebugAndroidTest :app:jacocoTestReport --no-daemon --stacktrace
+
+      - name: Upload Android instrumented coverage to Codecov (android flag)
+        if: always() && hashFiles('ui/android/app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml') != ''
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        with:
+          files: ui/android/app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+          flags: android
+          name: android-instrumented
+          fail_ci_if_error: false # additive coverage; main android job is the gate
+          use_oidc: true
+          verbose: true
+
+      - name: Upload instrumented test reports on failure
+        if: always() && hashFiles('ui/android/app/build/reports/androidTests/connected/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: android-instrumented-reports-${{ github.run_id }}
+          path: ui/android/app/build/reports/androidTests/connected/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # ─────────────────────────────────────────────────────────────────
   # Multi-language format / lint -- one job covers every non-JS surface
   # so the JS-focused `ts` job stays focused.
   # ─────────────────────────────────────────────────────────────────

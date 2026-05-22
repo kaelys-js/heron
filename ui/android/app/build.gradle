@@ -184,6 +184,13 @@ dependencies {
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    // H.G -- instrumented tests need their own copies of the JVM unit
+    // test surface (ApplicationProvider lives in :core; ActivityScenario
+    // lives in :core too; MockK has a separate :mockk-android artifact
+    // because the JVM jar relies on Byte Buddy class-loaders that
+    // Dalvik doesn't expose).
+    androidTestImplementation "androidx.test:core:1.6.1"
+    androidTestImplementation "io.mockk:mockk-android:1.13.13"
     implementation project(':capacitor-cordova-android-plugins')
 }
 
@@ -223,9 +230,11 @@ afterEvaluate {
         'outputs/unit_test_code_coverage/**/*.exec',
         // Legacy fallback for older AGP versions.
         'jacoco/testDebugUnitTest.exec',
-        // Instrumented (connectedCheck) coverage when run on an
-        // emulator -- not exercised by CI today (no emulator job)
-        // but kept here so a future job adds zero gradle changes.
+        // Instrumented (connectedCheck) coverage produced by the
+        // android-emulator job in .github/workflows/test.yml (H.G).
+        // The .ec files merge with the .exec files above so
+        // jacocoTestReport emits one combined cobertura.xml under the
+        // codecov `android` flag.
         'outputs/code-coverage/**/*.ec',
     ])
 
