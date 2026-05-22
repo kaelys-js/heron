@@ -44,8 +44,7 @@ end
 BRAND_JSON_PATH = File.expand_path("../../../branding/brand.json", File.dirname(PROJECT_PATH))
 DEFAULT_BUNDLE = "com.heron.app"
 DEFAULT_GROUP = "group.com.heron.app"
-brand_json =
-  if File.exist?(BRAND_JSON_PATH)
+brand_json = if File.exist?(BRAND_JSON_PATH)
     begin
       JSON.parse(File.read(BRAND_JSON_PATH, encoding: "UTF-8"))
     rescue JSON::ParserError

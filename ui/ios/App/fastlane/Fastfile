@@ -229,6 +229,15 @@ platform :ios do
     # the xcresult bundles don't clobber each other (run_tests would
     # otherwise reuse the same path and the second invocation would fail
     # with "result bundle already exists").
+    #
+    # SIMCTL_CHILD_CI -- the simulator child process strips most parent
+    # env vars by default. SIMCTL_CHILD_<NAME>=value gets re-exposed as
+    # <NAME> inside the simulator. WidgetSnapshotTests reads CI via
+    # ProcessInfo to decide whether to diff baselines (CI sim version
+    # differs from the recording host).
+    if is_ci
+      ENV["SIMCTL_CHILD_CI"] = "true"
+    end
     common_xcargs = "-skipPackagePluginValidation -skipMacroValidation COMPILER_INDEX_STORE_ENABLE=NO DEBUG_INFORMATION_FORMAT=dwarf"
     IOS_TEST_SCHEMES.each do |scheme|
       run_tests(

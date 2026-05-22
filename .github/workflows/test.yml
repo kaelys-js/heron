@@ -919,6 +919,19 @@ jobs:
         if: needs.changes.outputs.android == 'true'
         run: pnpm brand:apply
 
+      # Build the SvelteKit static output that Capacitor copies into
+      # ui/android/app/src/main/assets. Without this, `cap sync android`
+      # fails with "Could not find the web assets directory:
+      # ./build/static". The test job doesn't exercise the WebView so
+      # the bundle content doesn't matter, but the directory must
+      # exist for cap sync to succeed.
+      - name: Build SvelteKit static (so cap sync has webDir)
+        if: needs.changes.outputs.android == 'true'
+        working-directory: ui
+        env:
+          CAPACITOR: '1'
+        run: pnpm run build:static
+
       # Capacitor's android scaffold expects
       # `ui/android/capacitor-cordova-android-plugins/cordova.variables.gradle`
       # to exist before the gradle build can evaluate the project. `cap
