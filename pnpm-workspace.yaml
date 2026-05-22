@@ -87,6 +87,12 @@ overrides:
   # via lost-pixel. Override forces every consumer onto the
   # patched line.
   axios: ">=1.16.0"
+  # 3 high-severity minimatch ReDoS advisories (extglob nesting,
+  # GLOBSTAR backtracking, repeated-wildcard pattern). Patched in
+  # 9.0.5+. Pulled in transitively via lost-pixel + many other
+  # legacy consumers. Override forces minimatch >= 9.0.5 across
+  # the dependency graph.
+  minimatch: ">=9.0.5"
 
 # ── Peer dependency rules ──────────────────────────────────────────
 peerDependencyRules:
