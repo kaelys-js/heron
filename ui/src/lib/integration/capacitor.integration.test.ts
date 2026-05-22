@@ -385,6 +385,12 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
       'TODO-INSTRUCTIONS.md', // gitignored
       'ui/ios/App/CapApp-SPM/README.md', // vendor (Capacitor SPM)
       '.github/PULL_REQUEST_TEMPLATE.md', // GitHub-loaded PR scaffold, not a doc
+      // PR template variants per .github/PULL_REQUEST_TEMPLATE/ -- GitHub
+      // routes a PR to the right template via ?template= query param.
+      '.github/PULL_REQUEST_TEMPLATE/breaking.md',
+      '.github/PULL_REQUEST_TEMPLATE/default.md',
+      '.github/PULL_REQUEST_TEMPLATE/feat.md',
+      '.github/PULL_REQUEST_TEMPLATE/fix.md',
       // Community-health files -- short, GitHub-surfaces them via the
       // Community profile. Not a doc-meta candidate.
       '.github/SUPPORT.md',
@@ -394,6 +400,9 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
       '.lostpixel/baseline/README.md',
       'docs/screenshots/README.md',
       'ui/e2e/README.md',
+      'branding/screenshots/README.md', // per-store screenshot specs
+      // all-contributors auto-generates the contributors list block.
+      'CONTRIBUTORS.md',
       // Reference examples -- read-only sample content, no doc-meta needed
       'docs/examples/README.md',
       'docs/examples/article-digest-example.md',

@@ -196,10 +196,14 @@ describe('user-secrets — Python parity (scripts/lib/user_secrets.py decrypts T
     setSecret(TEST_USER_A, 'PYTHON_PARITY_KEY', 'PY-LONG-VAL-9876XYZ');
 
     const { spawnSync } = await import('node:child_process');
-    // Use process.cwd() rather than a hardcoded local path so the test
-    // works on any clone location (CI runner, fresh fork, contributor
-    // checkout). Vitest cwd is the workspace root which has scripts/.
-    const scriptsDir = `${process.cwd()}/scripts`;
+    // Resolve relative to THIS test file so the path is stable across
+    // any clone location (CI runner, fresh fork, contributor checkout).
+    // Previously this used process.cwd(), but vitest's cwd is the
+    // workspace root (ui/), not the repo root -- so cwd/scripts pointed
+    // at ui/scripts which doesn't exist + Python's `import lib` failed
+    // with ModuleNotFoundError. From this file:
+    //   ui/src/lib/server/user-secrets.test.ts -> ../../../../scripts
+    const scriptsDir = path.resolve(__dirname, '..', '..', '..', '..', 'scripts');
     const script = [
       'import sys, os',
       `sys.path.insert(0, '${scriptsDir}')`,
