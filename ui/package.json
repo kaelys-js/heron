@@ -70,6 +70,7 @@
     "svelte-sonner": "catalog:",
     "tailwind-merge": "catalog:",
     "tailwind-variants": "catalog:",
+    "web-vitals": "catalog:",
     "yaml": "catalog:"
   },
   "devDependencies": {

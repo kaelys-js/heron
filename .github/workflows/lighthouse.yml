@@ -91,11 +91,48 @@ jobs:
         # /login URL with no redirect chain.
         run: node scripts/system/seed-lighthouse-user.mjs
 
+      # Mint a bearer token via the e2e auth-bypass so Lighthouse can
+      # audit auth-gated routes (/inbox, /queue, /autopilot). Without
+      # the token those routes 302 to /login and the redirects audit
+      # fails on every run.
+      #
+      # Two-step shape: boot the preview server out-of-band, mint the
+      # token, then write lighthouserc.runtime.json with the token
+      # injected into settings.extraHeaders. The lighthouse-ci-action
+      # below then boots its OWN preview server (via configPath's
+      # startServerCommand) and reads the runtime config we just wrote.
+      - name: Mint bearer token + write runtime config
+        env:
+          HERON_E2E_DATA_DIR: /tmp/heron-lighthouse
+        run: |
+          set -euo pipefail
+          # Boot the preview server in the background just long enough
+          # to mint the token. lighthouse-ci-action will start its own
+          # later; we just need /api/auth/e2e-login briefly.
+          mkdir -p "$HERON_E2E_DATA_DIR"
+          pnpm --filter ui exec vite preview --port 4274 &
+          PREVIEW_PID=$!
+          # Wait for readiness -- poll /api/health for up to 30s.
+          for _ in $(seq 1 30); do
+            if curl -sf http://localhost:4274/api/health > /dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          LIGHTHOUSE_PORT=4274 node scripts/system/inject-lighthouse-auth.mjs
+          kill $PREVIEW_PID 2>/dev/null || true
+          wait $PREVIEW_PID 2>/dev/null || true
+
       - name: Run Lighthouse CI
         id: lhci
         uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12
+        env:
+          # The preview server (started inside lighthouse-ci-action) must
+          # see the same HERON_E2E_DATA_DIR so it reads the same auth.db
+          # as the runtime config's bearer token. Without this the token
+          # references a session row that doesn't exist in the new
+          # process's DB and lighthouse hits 401 on every audit URL.
+          HERON_E2E_DATA_DIR: /tmp/heron-lighthouse
         with:
-          configPath: ./lighthouserc.json
+          configPath: ./lighthouserc.runtime.json
           uploadArtifacts: true
           temporaryPublicStorage: true
 

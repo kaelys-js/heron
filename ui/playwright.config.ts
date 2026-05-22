@@ -46,7 +46,11 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: CI,
   retries: CI ? 2 : 0,
-  workers: CI ? 1 : undefined,
+  // Parallel workers: CI shards the e2e run across 4 jobs (matrix.shard
+  // = [1..4] in test.yml), so each job runs its slice with 2 workers
+  // = 8x the throughput of the prior 1-worker config. Local dev keeps
+  // the Playwright default (CPU/2) for snappy reruns.
+  workers: CI ? 2 : undefined,
   reporter: CI ? [['github'], ['html', { open: 'never' }]] : 'list',
 
   // Single-run seed lifecycle. globalSetup populates HERON_E2E_DATA_DIR
@@ -65,10 +69,22 @@ export default defineConfig({
   },
 
   projects: [
+    // Cross-browser matrix. The Capacitor wrapper targets WebKit (iOS) +
+    // Chromium (Android) at runtime; Firefox catches a small set of
+    // engine-specific bugs the other two miss (notably CSS Grid + Date
+    // parsing quirks). Mobile variants run device-emulated Chromium +
+    // WebKit with the touch-events + viewport sizes that the responsive
+    // breakpoints depend on (Sheet drag, mobile drawer, bottom-nav).
+    //
+    // CI runs ALL 5 projects, sharded across 4 parallel jobs via
+    // --shard=N/4 in test.yml. Local dev runs all 5 too -- the cost is
+    // browser boot (~3s/project) but a regression in one engine alone
+    // is the most common test-failure shape.
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    // WebKit covers iOS Safari quirks (Sheet drag-gesture, etc.). Skip in
-    // CI to halve runtime -- covered by the Vitest browser project.
-    ...(CI ? [] : [{ name: 'webkit', use: { ...devices['Desktop Safari'] } }]),
+    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    { name: 'mobile-chrome', use: { ...devices['Pixel 7'] } },
+    { name: 'mobile-safari', use: { ...devices['iPhone 15'] } },
   ],
 
   webServer: {

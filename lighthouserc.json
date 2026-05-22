@@ -1,18 +1,23 @@
 {
   "$schema": "https://googlechrome.github.io/lighthouse-ci/schemas/lhr-config.json",
-  "_comment": "HP2 — Lighthouse CI budgets for the SvelteKit dashboard.",
+  "_comment": "HP2 — Lighthouse CI budgets for the SvelteKit dashboard. Audits /login (cold start) + 3 authenticated routes (/inbox, /queue, /autopilot). The workflow injects an Authorization header via the e2e-login bypass so Lighthouse can render the auth-gated routes without going through the passkey flow.",
 
   "ci": {
     "collect": {
       "startServerCommand": "pnpm --filter ui exec vite preview --port 4173",
       "startServerReadyPattern": "Local: +http://localhost:4173",
-      "_comment_urls": "Only /login is auditable unauth. /inbox is route-guarded -- hitting it triggers the inevitable /login?redirectTo=/inbox redirect, which makes the `redirects` audit fail on an artefact of the auth model, not on a defect. Auditing /inbox properly would require Lighthouse to be authenticated; out of scope.",
-      "url": ["http://localhost:4173/login"],
+      "url": [
+        "http://localhost:4173/login",
+        "http://localhost:4173/inbox",
+        "http://localhost:4173/queue",
+        "http://localhost:4173/autopilot"
+      ],
       "numberOfRuns": 3,
       "settings": {
         "preset": "desktop",
         "skipAudits": ["uses-http2", "is-on-https", "redirects-http"],
-        "chromeFlags": "--no-sandbox --headless=new"
+        "chromeFlags": "--no-sandbox --headless=new",
+        "_comment_extra_headers": "Workflow runs scripts/system/inject-lighthouse-auth.mjs which clones this config to lighthouserc.runtime.json with extraHeaders.Authorization populated from the e2e-login token. The auth-gated URLs above only render correctly with a valid bearer token; without it they 302 to /login and the redirects audit fails."
       }
     },
     "assert": {
@@ -26,6 +31,7 @@
         "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }],
         "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
         "total-blocking-time": ["warn", { "maxNumericValue": 300 }],
+        "interaction-to-next-paint": ["warn", { "maxNumericValue": 200 }],
         "speed-index": ["warn", { "maxNumericValue": 3000 }],
         "uses-rel-preconnect": "off",
         "uses-text-compression": "off",
@@ -36,7 +42,6 @@
         "inspector-issues": "off",
         "forced-reflow-insight": "off",
         "document-latency-insight": "off",
-        "interaction-to-next-paint": "off",
         "network-dependency-tree-insight": "off",
         "unused-javascript": ["warn", { "maxLength": 0 }],
         "errors-in-console": ["error", { "minScore": 1 }]

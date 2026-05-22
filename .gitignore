@@ -285,3 +285,8 @@ TODO.md
 TODO2.md
 ui/TODO.md
 TODO-INSTRUCTIONS.md
+
+# Lighthouse CI generates this file at workflow runtime from
+# lighthouserc.json + a freshly-minted e2e-login bearer token. Carries
+# secrets (the token); never commit.
+lighthouserc.runtime.json

@@ -272,6 +272,7 @@
                 checked={config.globalEnabled}
                 onCheckedChange={(v: boolean) => (config = { ...config, globalEnabled: v })}
                 class="ml-auto"
+                aria-label="Toggle Autopilot active state"
               />
             </div>
             <p class="text-xs text-muted-foreground mt-1.5 leading-relaxed">
@@ -398,6 +399,7 @@
                   <Switch
                     checked={s.enabled}
                     onCheckedChange={(v: boolean) => updateSchedule(s.id, { enabled: !!v })}
+                    aria-label={`Toggle schedule "${s.name ?? s.id}"`}
                   />
                 </div>
               </div>
