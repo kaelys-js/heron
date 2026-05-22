@@ -7,8 +7,6 @@
 package com.heron.app
 
 import androidx.test.core.app.ApplicationProvider
-import org.json.JSONArray
-import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

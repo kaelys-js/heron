@@ -919,6 +919,18 @@ jobs:
         if: needs.changes.outputs.android == 'true'
         run: pnpm brand:apply
 
+      # Capacitor's android scaffold expects
+      # `ui/android/capacitor-cordova-android-plugins/cordova.variables.gradle`
+      # to exist before the gradle build can evaluate the project. `cap
+      # sync android` regenerates that file + the capacitor-android
+      # bridge sources. Run it BEFORE the gradle invocation so
+      # testDebugUnitTest doesn't fail with
+      # "Could not read script ... cordova.variables.gradle".
+      - name: Capacitor sync android (regenerate cordova.variables.gradle)
+        if: needs.changes.outputs.android == 'true'
+        working-directory: ui
+        run: pnpm exec cap sync android
+
       - name: Cache Gradle dependencies
         if: needs.changes.outputs.android == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
