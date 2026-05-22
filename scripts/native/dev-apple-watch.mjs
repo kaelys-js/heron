@@ -5,7 +5,8 @@
  * The Watch app lives at ui/ios/App/WatchApp/ as a standalone
  * watchOS 10+ SwiftUI app (Single Target -- no WatchKit Extension). It
  * shows the top job to apply to + open issues, reads from the App Group
- * container `group.com.heron.app`, and receives live updates
+ * container `<brand.json::identifiers.appGroup>` (currently
+ * `group.com.heron.app`), and receives live updates
  * via WCSession from the paired iPhone.
  *
  * Flow:
@@ -28,6 +29,13 @@
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { BRAND } from '../lib/_brand.mjs';
+
+// Watch-app bundle ID + App Group derive from the canonical brand
+// identifiers in brand.json. A rebrand re-resolves both. The
+// `.watchkitapp` suffix is the Apple-stipulated watchOS target
+// convention; it gets appended to the host bundle ID.
+const WATCH_BUNDLE_ID = `${BRAND.bundleId}.watchkitapp`;
 import { step, run, capture, which, ok, warn, info, UI, ROOT } from './_lib.mjs';
 
 const iosDir = join(UI, 'ios', 'App');
@@ -80,7 +88,7 @@ if (!watchTargetRegistered) {
   info('One-time setup in Xcode (~5 min):');
   info('  1. File → New → Target → watchOS → "App"');
   info('     • Product name: WatchApp');
-  info('     • Bundle ID:    com.heron.app.watchkitapp');
+  info(`     • Bundle ID:    ${WATCH_BUNDLE_ID}`);
   info('     • Interface:    SwiftUI');
   info('     • Embed in companion iOS app: "App"');
   info('  2. Delete the auto-generated files Xcode creates inside');
@@ -88,8 +96,8 @@ if (!watchTargetRegistered) {
   info('     RootView.swift, WatchModel.swift).');
   info('  3. In the watch target settings:');
   info('     • Signing & Capabilities → +Capability → App Groups');
-  info('       → group.com.heron.app');
-  info('     • Info → WKCompanionAppBundleIdentifier = com.heron.app');
+  info(`       → ${BRAND.appGroup}`);
+  info(`     • Info → WKCompanionAppBundleIdentifier = ${BRAND.bundleId}`);
   info('     • Info → WKWatchOnly = NO');
   info('  4. Save + close Xcode. Then re-run `pnpm dev:apple-watch`.');
   info('');
@@ -314,7 +322,7 @@ if (!existsSync(appPath)) {
   process.exit(1);
 }
 run('xcrun', ['simctl', 'install', watchUdid, appPath], { allowFail: true });
-const bundleId = 'com.heron.app.watchkitapp';
+const bundleId = WATCH_BUNDLE_ID;
 const launch = run('xcrun', ['simctl', 'launch', watchUdid, bundleId], { allowFail: true });
 if (launch?.status === 0) {
   ok('WatchApp launched on the watch simulator');

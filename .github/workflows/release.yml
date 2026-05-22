@@ -85,7 +85,7 @@ jobs:
           if [ "$RELEASE_CREATED" = "true" ]; then
             echo "::notice::Released $TAG_NAME (v$VERSION). native-release.yml fires next."
             {
-              echo "### 🚀 Release cut: $TAG_NAME"
+              echo "### Release cut: $TAG_NAME"
               echo ""
               echo "Version: \`v$VERSION\`"
               echo ""
@@ -95,8 +95,58 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
           else
             echo "::notice::No release this run (no bump-worthy commits since last tag, or release PR not yet merged)."
-            echo "### 🟦 No release cut this run" >> "$GITHUB_STEP_SUMMARY"
+            echo "### No release cut this run" >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      # Post a brand-voiced release announcement to Discord #changelog.
+      # Supplements the existing /github webhook (which auto-formats
+      # releases generically). This post matches VOICE.md tone: no
+      # decorative emojis, no exclamation marks, no urgency-by-typography.
+      # Gated on DISCORD_WEBHOOK_RELEASES so the workflow stays green
+      # when the webhook isn't configured yet.
+      - name: Announce release on Discord
+        if: ${{ steps.rp.outputs.release_created == 'true' && env.DISCORD_WEBHOOK_RELEASES != '' }}
+        env:
+          DISCORD_WEBHOOK_RELEASES: ${{ secrets.DISCORD_WEBHOOK_RELEASES }}
+          TAG_NAME: ${{ steps.rp.outputs.tag_name }}
+          VERSION: ${{ steps.rp.outputs.major }}.${{ steps.rp.outputs.minor }}.${{ steps.rp.outputs.patch }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Pull the release notes (Release Please's auto-generated body)
+          # via the GitHub API; trim to a Discord-safe length (4096 char
+          # cap on embed.description, but we cap to 1500 to leave room
+          # for the surrounding template).
+          NOTES=$(gh api "/repos/${{ github.repository }}/releases/tags/$TAG_NAME" --jq '.body' 2>/dev/null \
+            | head -c 1500 \
+            | sed 's/"/\\"/g' \
+            | tr '\n' '|' | sed 's/|/\\n/g')
+          # Heron-branded embed. No decorative emojis (VOICE.md #3). The
+          # tagline is loaded from brand.json at apply-brand time and
+          # baked into the payload here.
+          PAYLOAD=$(cat <<EOF
+          {
+            "username": "Heron Releases",
+            "avatar_url": "https://github.com/${{ github.repository_owner }}.png",
+            "embeds": [{
+              "title": "v${VERSION} released",
+              "description": "Stand still. Strike well.\n\n${NOTES}",
+              "url": "${REPO_URL}/releases/tag/${TAG_NAME}",
+              "color": 4742519,
+              "footer": {
+                "text": "${{ github.repository }} . release.yml"
+              }
+            }]
+          }
+          EOF
+          )
+          curl -sS -X POST -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "$DISCORD_WEBHOOK_RELEASES" \
+            -o /dev/null \
+            --max-time 30 \
+            || echo "::warning::Discord webhook POST failed (release announcement)."
 
   # When Release Please cuts a real release (i.e. the release PR was just
   # merged), kick off the cross-platform build. workflow_call within the

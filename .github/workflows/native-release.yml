@@ -22,6 +22,31 @@ name: native-release
 #   APP_STORE_CONNECT_ISSUER_ID    -- UUID issuer id
 #   APP_STORE_CONNECT_PRIVATE_KEY  -- full .p8 contents (base64-encoded)
 #
+# Optional (Windows code-signing via SignPath Foundation; if unset, the
+# Windows .exe ships unsigned and triggers SmartScreen on first launch):
+#   SIGNPATH_API_TOKEN              -- REST API token from signpath.io
+#   SIGNPATH_ORGANIZATION_ID        -- org GUID
+#   SIGNPATH_PROJECT_SLUG           -- project identifier
+#   SIGNPATH_SIGNING_POLICY_SLUG    -- signing policy identifier
+#
+# Optional (Microsoft Store submission via Partner Center; if unset,
+# the Windows .appx is built but not uploaded to the Microsoft Store
+# -- direct .exe download via GitHub Releases stays the supported path):
+#   MICROSOFT_STORE_TENANT_ID       -- Azure AD tenant GUID
+#   MICROSOFT_STORE_CLIENT_ID       -- Partner Center app registration client ID
+#   MICROSOFT_STORE_CLIENT_SECRET   -- Partner Center app registration client secret
+#   MICROSOFT_STORE_PRODUCT_ID      -- the 12-char product ID from the app reservation
+#
+# Optional (Google Play Store via Fastlane supply; if unset, the
+# build-android job is skipped entirely. Direct .apk download isn't
+# distributed -- Play Store is the only Android distribution channel):
+#   PLAY_STORE_JSON_KEY             -- base64-encoded service-account .json
+#                                      (Play Console "Release manager" role)
+#   ANDROID_KEYSTORE_BASE64         -- base64-encoded release .keystore
+#   ANDROID_KEYSTORE_PASSWORD       -- keystore password
+#   ANDROID_KEY_ALIAS               -- usually "heron"
+#   ANDROID_KEY_PASSWORD            -- key password
+#
 #   GITHUB_TOKEN             -- auto-provided by Actions
 on:
   push:
@@ -68,6 +93,46 @@ on:
       APP_STORE_CONNECT_ISSUER_ID:
         required: false
       APP_STORE_CONNECT_PRIVATE_KEY:
+        required: false
+      # SignPath Foundation OSS code-signing (optional; if unset, the
+      # Windows .exe ships unsigned and triggers SmartScreen on first
+      # launch). Wired in build-desktop's Windows leg, gated on
+      # env.SIGNPATH_API_TOKEN != '' so missing secrets cleanly skip.
+      SIGNPATH_API_TOKEN:
+        required: false
+      SIGNPATH_ORGANIZATION_ID:
+        required: false
+      SIGNPATH_PROJECT_SLUG:
+        required: false
+      SIGNPATH_SIGNING_POLICY_SLUG:
+        required: false
+      # Microsoft Store Partner Center API (optional; if unset, the
+      # .appx is built but not submitted to the Microsoft Store --
+      # direct .exe via GitHub Releases remains supported).
+      MICROSOFT_STORE_TENANT_ID:
+        required: false
+      MICROSOFT_STORE_CLIENT_ID:
+        required: false
+      MICROSOFT_STORE_CLIENT_SECRET:
+        required: false
+      MICROSOFT_STORE_PRODUCT_ID:
+        required: false
+      # Google Play Store via Fastlane supply (optional; if unset, the
+      # build-android job is skipped). 5 secrets total: a service-account
+      # JSON for Play Console + 4 release-keystore values.
+      PLAY_STORE_JSON_KEY:
+        required: false
+      ANDROID_KEYSTORE_BASE64:
+        required: false
+      ANDROID_KEYSTORE_PASSWORD:
+        required: false
+      ANDROID_KEY_ALIAS:
+        required: false
+      ANDROID_KEY_PASSWORD:
+        required: false
+      # Discord webhook for per-platform build-status posts (#ci-builds).
+      # If unset, no Discord posting -- the workflow stays green.
+      DISCORD_WEBHOOK_BUILDS:
         required: false
 
 # Workflow-level is read-only -- each job declares the writes it
@@ -273,6 +338,195 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: pnpm run electron:make
 
+      # Mac App Store (.pkg) upload via ASC API.
+      #
+      # electron-builder's `mas` target produces a signed .pkg in
+      # ui/electron/dist/mas/. To submit it to Mac App Store review we
+      # upload via `xcrun altool` using the App Store Connect API key
+      # (the same key used for iOS notarization + TestFlight). Gated on
+      # APP_STORE_CONNECT_KEY_ID so the workflow stays green during
+      # ASC onboarding -- if the secret is unset, the .pkg ships only
+      # to the GitHub Release attachment below + Mac App Store
+      # submission is a no-op.
+      #
+      # NB: the .pkg goes to App Store Connect's "processing" state for
+      # 5-30 minutes before becoming available in TestFlight for macOS.
+      # Then the maintainer manually clicks "Submit for review" in ASC.
+      - name: Upload macOS .pkg to App Store Connect (Mac App Store)
+        if: matrix.os == 'macos-latest' && env.APP_STORE_CONNECT_KEY_ID != ''
+        working-directory: ui/electron/dist/mas
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          # Write the .p8 to the canonical location altool expects.
+          # The base64-encoded key gets decoded back to the original
+          # multiline PEM-formatted .p8 file.
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          printf "%s" "$APP_STORE_CONNECT_PRIVATE_KEY" | base64 --decode \
+            > "$HOME/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
+          chmod 600 "$HOME/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
+          shopt -s nullglob
+          any=false
+          for pkg in *.pkg; do
+            any=true
+            echo "::group::altool upload $pkg"
+            xcrun altool --upload-app \
+              --type macos \
+              --file "$pkg" \
+              --apiKey "$APP_STORE_CONNECT_KEY_ID" \
+              --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
+            echo "::endgroup::"
+          done
+          if [ "$any" = false ]; then
+            echo "::warning::No .pkg found in ui/electron/dist/mas/ -- electron-builder did not produce a Mac App Store target."
+          fi
+
+      # SignPath Foundation code-signing for the Windows .exe.
+      #
+      # Why a 3-step dance: SignPath's service signs artifacts that are
+      # uploaded as GitHub Actions artifacts; you can't sign a local file
+      # in-place. The flow is:
+      #
+      #   1. upload-artifact: push the unsigned .exe so SignPath can fetch
+      #      it by artifact-id (returned in the upload step's output)
+      #   2. SignPath/github-action-submit-signing-request: posts a signing
+      #      request, waits for the SignPath operator's policy to sign,
+      #      downloads the signed .exe back over the local unsigned one
+      #   3. Verify Authenticode signature on the downloaded .exe so a
+      #      silent signing regression doesn't ship unsigned bits
+      #
+      # All three steps are gated on `env.SIGNPATH_API_TOKEN != ''` AND
+      # `matrix.os == 'windows-latest'`. With no SIGNPATH_API_TOKEN secret
+      # configured, every step is skipped and the unsigned .exe ships as-is
+      # (SmartScreen warning on first launch; well-known transitional state).
+      # Without this guard the workflow would fail-loud the moment SignPath
+      # secrets aren't there; the guard lets the workflow stay green during
+      # the SignPath Foundation application process.
+      #
+      # See TODO-INSTRUCTIONS.md "Windows code-signing -- SignPath Foundation"
+      # for the application + secret-setup flow.
+      - name: Upload unsigned Windows installer (SignPath input)
+        id: upload-unsigned-exe
+        if: matrix.os == 'windows-latest' && env.SIGNPATH_API_TOKEN != ''
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: heron-windows-unsigned
+          path: ui/electron/dist/*.exe
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Sign Windows installer via SignPath Foundation
+        if: matrix.os == 'windows-latest' && env.SIGNPATH_API_TOKEN != ''
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+        uses: SignPath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd # v2.2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ secrets.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.upload-unsigned-exe.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: ui/electron/dist/
+
+      - name: Verify SignPath Authenticode signature
+        if: matrix.os == 'windows-latest' && env.SIGNPATH_API_TOKEN != ''
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+        shell: pwsh
+        working-directory: ui/electron/dist
+        run: |
+          $any = $false
+          foreach ($exe in Get-ChildItem *.exe) {
+            $any = $true
+            $sig = Get-AuthenticodeSignature $exe.FullName
+            if ($sig.Status -ne 'Valid') {
+              Write-Error "Authenticode verification failed for $($exe.Name): status=$($sig.Status), msg=$($sig.StatusMessage)"
+              exit 1
+            }
+            Write-Host "OK $($exe.Name) signed by $($sig.SignerCertificate.Subject)"
+          }
+          if (-not $any) {
+            Write-Error "No .exe files found in dist/; SignPath download did not write to output-artifact-directory."
+            exit 1
+          }
+
+      # Microsoft Store (.appx) submission via Partner Center REST API.
+      #
+      # electron-builder's `appx` target produces a signed .appx in
+      # ui/electron/dist/. To submit it to Microsoft Store certification
+      # we hit Partner Center's submission API directly with an OAuth
+      # client-credentials flow. Gated on MICROSOFT_STORE_TENANT_ID so
+      # the workflow stays green during Partner Center onboarding -- if
+      # the secrets are unset, the .appx ships only to the GitHub
+      # Release attachment + Microsoft Store submission is a no-op.
+      #
+      # Flow (manual today; could be moved to an action later if MS
+      # publishes one in `actions/`):
+      #   1. POST to login.microsoftonline.com to get an access token
+      #   2. PATCH the app submission with the .appx file URL + metadata
+      #   3. POST to mark the submission as ready for certification
+      #
+      # The MICROSOFT_STORE_PRODUCT_ID secret comes from the app
+      # reservation in Partner Center (the 12-char ID under "Product
+      # identity"). Without it the API doesn't know which app to update.
+      - name: Submit Windows .appx to Microsoft Store via Partner Center
+        if: matrix.os == 'windows-latest' && env.MICROSOFT_STORE_TENANT_ID != ''
+        working-directory: ui/electron/dist
+        shell: pwsh
+        env:
+          MICROSOFT_STORE_TENANT_ID: ${{ secrets.MICROSOFT_STORE_TENANT_ID }}
+          MICROSOFT_STORE_CLIENT_ID: ${{ secrets.MICROSOFT_STORE_CLIENT_ID }}
+          MICROSOFT_STORE_CLIENT_SECRET: ${{ secrets.MICROSOFT_STORE_CLIENT_SECRET }}
+          MICROSOFT_STORE_PRODUCT_ID: ${{ secrets.MICROSOFT_STORE_PRODUCT_ID }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $appx = Get-ChildItem *.appx -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $appx) {
+            Write-Warning "No .appx in ui/electron/dist/; Microsoft Store submission skipped."
+            exit 0
+          }
+          Write-Host "Found $($appx.Name); requesting Partner Center access token..."
+
+          # 1. OAuth client-credentials flow against Azure AD.
+          $tokenUrl = "https://login.microsoftonline.com/$env:MICROSOFT_STORE_TENANT_ID/oauth2/v2.0/token"
+          $tokenBody = @{
+            grant_type = 'client_credentials'
+            client_id = $env:MICROSOFT_STORE_CLIENT_ID
+            client_secret = $env:MICROSOFT_STORE_CLIENT_SECRET
+            scope = 'https://api.partner.microsoft.com/.default'
+          }
+          $tokenResp = Invoke-RestMethod -Uri $tokenUrl -Method Post -Body $tokenBody
+          $accessToken = $tokenResp.access_token
+          if (-not $accessToken) {
+            Write-Error "Partner Center auth failed: no access_token in response."
+            exit 1
+          }
+          $headers = @{ Authorization = "Bearer $accessToken" }
+
+          # 2. Create a new submission for the product. Partner Center
+          #    returns a fileUploadUrl + a submissionId; we PUT the .appx
+          #    bytes to fileUploadUrl, then POST commit on the submission.
+          $apiBase = "https://manage.devcenter.microsoft.com/v1.0/my/applications"
+          $createUrl = "$apiBase/$env:MICROSOFT_STORE_PRODUCT_ID/submissions"
+          $submission = Invoke-RestMethod -Uri $createUrl -Method Post -Headers $headers
+          Write-Host "Created submission $($submission.id); uploading $($appx.Name)..."
+
+          # 3. PUT the .appx bytes to the pre-signed Azure Blob URL.
+          Invoke-RestMethod -Uri $submission.fileUploadUrl -Method Put `
+            -InFile $appx.FullName `
+            -Headers @{ 'x-ms-blob-type' = 'BlockBlob' }
+
+          # 4. POST commit -- tells Partner Center to start certification.
+          $commitUrl = "$apiBase/$env:MICROSOFT_STORE_PRODUCT_ID/submissions/$($submission.id)/commit"
+          Invoke-RestMethod -Uri $commitUrl -Method Post -Headers $headers
+          Write-Host "::notice::Microsoft Store submission $($submission.id) committed for certification (4-72h queue)."
+
       - name: Verify macOS notarization-staple
         # G17 -- without this step, a silent notarization regression
         # (Apple's notarytool returns success but the staple isn't
@@ -325,6 +579,54 @@ jobs:
             ui/electron/dist/*.AppImage
             ui/electron/dist/*.deb
             ui/electron/dist/*.zip
+
+      # Per-platform Discord status post (gated on DISCORD_WEBHOOK_BUILDS).
+      # if: always() so we still post when an earlier step failed --
+      # contributors watching #ci-builds need to know which platforms
+      # broke, not just which succeeded.
+      - name: Post desktop build status to Discord
+        if: always() && env.DISCORD_WEBHOOK_BUILDS != ''
+        env:
+          DISCORD_WEBHOOK_BUILDS: ${{ secrets.DISCORD_WEBHOOK_BUILDS }}
+          JOB_STATUS: ${{ job.status }}
+          TAG: ${{ github.ref_name }}
+          OS: ${{ matrix.os }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Map matrix.os to a friendly platform name + colour.
+          case "$OS" in
+            macos-latest)   PLATFORM="macOS"   ;;
+            ubuntu-latest)  PLATFORM="Linux"   ;;
+            windows-latest) PLATFORM="Windows" ;;
+            *)              PLATFORM="$OS"     ;;
+          esac
+          # Color via Discord embed: ok = brand reed, fail = destructive red.
+          case "$JOB_STATUS" in
+            success)   COLOR=8030573; ICON="OK"    ;;
+            failure)   COLOR=11026010; ICON="FAIL" ;;
+            cancelled) COLOR=10920880; ICON="CANCEL" ;;
+            *)         COLOR=11045300; ICON="$JOB_STATUS" ;;
+          esac
+          PAYLOAD=$(jq -nc \
+            --arg title "[$ICON] $PLATFORM build for $TAG" \
+            --arg url "$RUN_URL" \
+            --argjson color "$COLOR" \
+            --arg footer "${{ github.repository }} . native-release.yml . build-desktop" \
+            '{
+              username: "Heron Builds",
+              embeds: [{
+                title: $title,
+                url: $url,
+                color: $color,
+                footer: { text: $footer }
+              }]
+            }')
+          curl -sS -X POST -H "Content-Type: application/json" \
+            -d "$PAYLOAD" "$DISCORD_WEBHOOK_BUILDS" \
+            -o /dev/null --max-time 30 \
+            || echo "::warning::Discord webhook POST failed (build status, $PLATFORM)."
 
   build-ios:
     name: Build iOS (TestFlight)
@@ -470,3 +772,291 @@ jobs:
             gh release upload "$TAG_NAME" "$ipa" --clobber || \
               echo "::warning::Couldn't attach $ipa to release $TAG_NAME (release may not exist yet)."
           done
+
+      - name: Post iOS build status to Discord
+        if: always() && env.DISCORD_WEBHOOK_BUILDS != ''
+        env:
+          DISCORD_WEBHOOK_BUILDS: ${{ secrets.DISCORD_WEBHOOK_BUILDS }}
+          JOB_STATUS: ${{ job.status }}
+          TAG: ${{ github.ref_name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$JOB_STATUS" in
+            success)   COLOR=8030573; ICON="OK"    ;;
+            failure)   COLOR=11026010; ICON="FAIL" ;;
+            cancelled) COLOR=10920880; ICON="CANCEL" ;;
+            *)         COLOR=11045300; ICON="$JOB_STATUS" ;;
+          esac
+          PAYLOAD=$(jq -nc \
+            --arg title "[$ICON] iOS / iPadOS / watchOS build for $TAG" \
+            --arg url "$RUN_URL" \
+            --argjson color "$COLOR" \
+            --arg footer "${{ github.repository }} . native-release.yml . build-ios" \
+            '{
+              username: "Heron Builds",
+              embeds: [{
+                title: $title,
+                url: $url,
+                color: $color,
+                footer: { text: $footer }
+              }]
+            }')
+          curl -sS -X POST -H "Content-Type: application/json" \
+            -d "$PAYLOAD" "$DISCORD_WEBHOOK_BUILDS" \
+            -o /dev/null --max-time 30 \
+            || echo "::warning::Discord webhook POST failed (iOS build status)."
+
+  # Android Play Store build + upload. Gated on PLAY_STORE_JSON_KEY so
+  # the workflow stays green while the maintainer is still onboarding
+  # Play Console (the only Android distribution channel -- direct .apk
+  # isn't distributed). Runs on ubuntu-latest because the Android
+  # Gradle Plugin builds cleanly on Linux + macOS is 10x more expensive.
+  build-android:
+    name: Build Android (Play Store internal track)
+    needs: preflight
+    # Repo variable PLAY_STORE_ENABLED gates this job. Set to "true" once
+    # the keystore + Play Console service-account JSON are configured.
+    # Manual `workflow_dispatch` runs always execute for testing.
+    # Set via: `gh variable set PLAY_STORE_ENABLED --body 'true'`
+    if: ${{ vars.PLAY_STORE_ENABLED == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write # gh release upload (.aab attestation)
+      id-token: write # SLSA / Sigstore provenance
+      attestations: write # GitHub attestations API
+    steps:
+      - name: Harden runner
+        # G4 -- Android build runner. Handles Play Console service-account
+        # key + keystore signing. Audit mode for rollout observability.
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      # Job-local preflight for Android-specific secrets. The top-level
+      # `preflight` job only validates iOS + macOS secrets so a fresh
+      # fork without Android setup stays green; we validate Android
+      # secrets here once the maintainer has flipped PLAY_STORE_ENABLED
+      # = true. Fails fast with a clear list of missing secrets instead
+      # of letting the build run for 30min and silently no-op the upload.
+      - name: Android secret preflight
+        env:
+          PLAY_STORE_JSON_KEY: ${{ secrets.PLAY_STORE_JSON_KEY }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          missing=()
+          for var in PLAY_STORE_JSON_KEY ANDROID_KEYSTORE_BASE64 \
+                     ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS \
+                     ANDROID_KEY_PASSWORD; do
+            if [ -z "${!var}" ]; then
+              missing+=("$var")
+            fi
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Android build blocked -- these secrets are missing:"
+            for m in "${missing[@]}"; do echo "::error::  - $m"; done
+            echo ""
+            echo "Either:"
+            echo "  • configure the secrets (pnpm setup:native walks through it), OR"
+            echo "  • disable: gh variable set PLAY_STORE_ENABLED --body 'false'"
+            exit 1
+          fi
+          echo "✅ all Android secrets present"
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      # Same mise pin as iOS for Node + pnpm + Ruby consistency.
+      # zizmor: ignore[cache-poisoning] -- maintainer-only-trigger; see
+      # build-desktop notes for full rationale.
+      - name: Setup mise (Node + pnpm + Ruby from .mise.toml)
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4 # zizmor: ignore[cache-poisoning]
+        with:
+          experimental: true
+          cache: true
+
+      # JDK 17 for Android Gradle Plugin 8.x (AGP 8.0+ requires JDK 17).
+      # actions/setup-java is in the org's allowed-actions list
+      # (actions/*) so no allowlist extension required.
+      - name: Setup JDK 17
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Inline Android SDK install -- avoids adding a non-actions/*
+      # owner (e.g. android-actions/setup-android) to the allow-list.
+      # SDK lives under ~/android-sdk; PATH + ANDROID_HOME exported via
+      # GITHUB_ENV so subsequent steps see them.
+      - name: Install Android SDK (cmdline-tools + platform 34 + build-tools 34)
+        shell: bash
+        run: |
+          set -euo pipefail
+          ANDROID_HOME="$HOME/android-sdk"
+          mkdir -p "$ANDROID_HOME/cmdline-tools"
+          curl -fsSL -o /tmp/cmdline-tools.zip \
+            https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip -q /tmp/cmdline-tools.zip -d "$ANDROID_HOME/cmdline-tools"
+          mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager 'platform-tools' 'platforms;android-34' 'build-tools;34.0.0'
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+
+      # Cache pnpm store + Gradle cache. Gradle cache restoration is the
+      # biggest CI-time win on Android (cold = 10+ min, warm = 2-3 min).
+      # zizmor: ignore[cache-poisoning] -- gradle integrity-verifies
+      # dependencies against pom checksums; pnpm verifies via lockfile.
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Cache pnpm store
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+      - name: Cache Gradle
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('ui/android/**/*.gradle', 'ui/android/**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      # Bundler for Fastlane gems (the same Gemfile.lock as iOS pinning
+      # fastlane + supply). zizmor: ignore[cache-poisoning] -- bundler
+      # verifies Gemfile.lock checksums.
+      - name: Setup Ruby + bundler-cache (Fastlane gems)
+        uses: ruby/setup-ruby@afeafc3d1ab54a631816aba4c914a0081c12ff2f # v1.308.0 # zizmor: ignore[cache-poisoning]
+        with:
+          bundler-cache: true
+          working-directory: ui/android
+
+      - name: Install dependencies (pnpm, frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build SvelteKit (static — Capacitor WebView shell)
+        working-directory: ui
+        env:
+          CAPACITOR: '1'
+          PUBLIC_CAPACITOR_BUILD: '1'
+        run: pnpm build
+
+      - name: Generate icons
+        run: node scripts/native/icons/generate-icons.mjs
+
+      - name: Capacitor sync (android)
+        working-directory: ui
+        run: pnpm exec cap sync android
+
+      # Decode the release keystore from base64 -- the .keystore binary
+      # can't live in git. Lives at ui/android/heron-release.keystore for
+      # the duration of the build then gets cleaned up implicitly when
+      # the runner self-destructs.
+      - name: Decode release keystore
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          printf "%s" "$ANDROID_KEYSTORE_BASE64" | base64 --decode > ui/android/heron-release.keystore
+          test -s ui/android/heron-release.keystore || { echo "::error::Decoded keystore is empty"; exit 1; }
+
+      # Write the Play Console service-account JSON to disk. supply (the
+      # Fastlane Play Store action) reads it via PLAY_STORE_JSON_KEY_PATH.
+      - name: Decode Play Console service-account JSON
+        if: ${{ env.PLAY_STORE_JSON_KEY != '' }}
+        env:
+          PLAY_STORE_JSON_KEY: ${{ secrets.PLAY_STORE_JSON_KEY }}
+        run: |
+          set -euo pipefail
+          printf "%s" "$PLAY_STORE_JSON_KEY" | base64 --decode > /tmp/play-store-key.json
+          test -s /tmp/play-store-key.json || { echo "::error::Decoded service-account key is empty"; exit 1; }
+          echo "PLAY_STORE_JSON_KEY_PATH=/tmp/play-store-key.json" >> "$GITHUB_ENV"
+
+      - name: Build + upload to Play Store internal track via Fastlane
+        working-directory: ui/android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          # supply reads this for Play Console auth.
+          SUPPLY_JSON_KEY: ${{ env.PLAY_STORE_JSON_KEY_PATH }}
+        run: bundle exec fastlane internal
+
+      - name: Attest build provenance (.aab)
+        # SLSA build provenance for the Android App Bundle, matching the
+        # .ipa attestation in build-ios above. continue-on-error mirrors
+        # the iOS path: don't kill the release over a Sigstore blip.
+        if: success() && hashFiles('ui/android/app/build/outputs/bundle/release/*.aab') != ''
+        continue-on-error: true
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: |
+            ui/android/app/build/outputs/bundle/release/*.aab
+
+      - name: Upload .aab as release asset
+        # Attach the .aab to the GitHub Release for transparency + audit
+        # (`gh attestation verify <aab> --owner kaelys-js`). Play Store
+        # is the primary distribution channel; the .aab on the Release
+        # is for verification, not user download.
+        if: success() && hashFiles('ui/android/app/build/outputs/bundle/release/*.aab') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          for aab in ui/android/app/build/outputs/bundle/release/*.aab; do
+            [ -f "$aab" ] || continue
+            gh release upload "$TAG_NAME" "$aab" --clobber || \
+              echo "::warning::Couldn't attach $aab to release $TAG_NAME (release may not exist yet)."
+          done
+
+      - name: Post Android build status to Discord
+        if: always() && env.DISCORD_WEBHOOK_BUILDS != ''
+        env:
+          DISCORD_WEBHOOK_BUILDS: ${{ secrets.DISCORD_WEBHOOK_BUILDS }}
+          JOB_STATUS: ${{ job.status }}
+          TAG: ${{ github.ref_name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$JOB_STATUS" in
+            success)   COLOR=8030573; ICON="OK"    ;;
+            failure)   COLOR=11026010; ICON="FAIL" ;;
+            cancelled) COLOR=10920880; ICON="CANCEL" ;;
+            *)         COLOR=11045300; ICON="$JOB_STATUS" ;;
+          esac
+          PAYLOAD=$(jq -nc \
+            --arg title "[$ICON] Android build for $TAG" \
+            --arg url "$RUN_URL" \
+            --argjson color "$COLOR" \
+            --arg footer "${{ github.repository }} . native-release.yml . build-android" \
+            '{
+              username: "Heron Builds",
+              embeds: [{
+                title: $title,
+                url: $url,
+                color: $color,
+                footer: { text: $footer }
+              }]
+            }')
+          curl -sS -X POST -H "Content-Type: application/json" \
+            -d "$PAYLOAD" "$DISCORD_WEBHOOK_BUILDS" \
+            -o /dev/null --max-time 30 \
+            || echo "::warning::Discord webhook POST failed (Android build status)."

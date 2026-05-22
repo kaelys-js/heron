@@ -16,19 +16,37 @@ const BRAND_JSON = join(REPO_ROOT, 'branding', 'brand.json');
 
 /** Historical defaults -- used when brand.json is missing or corrupt.
  *  Keeps scripts functional during fresh-clone bootstrap, repo
- *  surgery, or git-mid-rebase states. */
+ *  surgery, or git-mid-rebase states. The literal values here are
+ *  the LAST KNOWN GOOD brand state; if brand.json is missing they
+ *  give us a sensible failover rather than crashing with undefined.
+ *  When brand.json changes (rebrand, fork), these defaults stay
+ *  pinned to the current canonical brand and get refreshed by hand
+ *  during the next maintainer commit -- they intentionally do NOT
+ *  derive from the brand.json that just disappeared. */
 const DEFAULTS = Object.freeze({
   name: 'heron',
   displayName: 'Heron',
   bundleId: 'com.heron.app',
+  appGroup: 'group.com.heron.app',
   urlScheme: 'heron',
   serviceType: '_heron._tcp',
+  spotlightDomain: 'com.heron.app.jobs',
+  envPrefix: 'HERON',
+  tagline: 'Stand still. Strike well.',
+  subline: 'A thinking partner for career transitions. Patient, precise, local-first.',
+  description:
+    'Heron is a thinking partner for career transitions. Local-first job-search platform.',
+  community: {
+    discord: { url: 'https://discord.gg/MyFbztUK5U' },
+  },
   repo: {
     owner: 'kaelys-js',
     name: 'heron',
     url: 'https://github.com/kaelys-js/heron',
     issues: 'https://github.com/kaelys-js/heron/issues',
   },
+  homepageUrl: 'https://heron.app',
+  supportEmail: 'hello@heron.app',
 });
 
 function loadBrand() {
@@ -42,14 +60,32 @@ function loadBrand() {
       name: raw.name ?? DEFAULTS.name,
       displayName: raw.displayName ?? DEFAULTS.displayName,
       bundleId: raw.identifiers?.bundleId ?? DEFAULTS.bundleId,
+      appGroup: raw.identifiers?.appGroup ?? DEFAULTS.appGroup,
       urlScheme: raw.identifiers?.urlScheme ?? DEFAULTS.urlScheme,
       serviceType: raw.identifiers?.serviceType ?? DEFAULTS.serviceType,
+      spotlightDomain: raw.identifiers?.spotlightDomain ?? DEFAULTS.spotlightDomain,
+      /** Uppercase brand name suffix for env-var names. Callers that
+       *  honour env vars (HERON_DATA_DIR, HERON_USER_ID) compose them
+       *  as `${BRAND.envPrefix}_DATA_DIR` so a rebrand re-derives the
+       *  expected names. Users still have to rename their shell env
+       *  vars on rebrand; we ship a migration note in CHANGELOG. */
+      envPrefix: (raw.name ?? DEFAULTS.name).toUpperCase(),
+      tagline: raw.voice?.tagline ?? DEFAULTS.tagline,
+      subline: raw.voice?.subline ?? DEFAULTS.subline,
+      description: raw.description ?? DEFAULTS.description,
+      community: {
+        discord: {
+          url: raw.community?.discord?.url ?? DEFAULTS.community.discord.url,
+        },
+      },
       repo: {
         owner: raw.repo?.owner ?? DEFAULTS.repo.owner,
         name: raw.repo?.name ?? DEFAULTS.repo.name,
         url: raw.repo?.url ?? DEFAULTS.repo.url,
         issues: raw.repo?.issues ?? DEFAULTS.repo.issues,
       },
+      homepageUrl: raw.homepageUrl ?? DEFAULTS.homepageUrl,
+      supportEmail: raw.supportEmail ?? DEFAULTS.supportEmail,
       // Pass-through for callers that want the raw nested object.
       raw,
     };

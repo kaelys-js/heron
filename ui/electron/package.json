@@ -39,6 +39,7 @@
     "lint:fix": "oxlint --fix --config ../../.oxlintrc.jsonc .",
     "test": "vitest run --passWithNoTests",
     "test:coverage": "vitest run --coverage --passWithNoTests",
+    "test:e2e": "pnpm run build && playwright test --config playwright.config.ts",
     "test:watch": "vitest",
     "typecheck": "tsgo --noEmit -p tsconfig.json"
   },
@@ -53,10 +54,12 @@
     "electron-window-state": "catalog:"
   },
   "devDependencies": {
+    "@playwright/test": "catalog:",
     "@typescript/native-preview": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "electron": "catalog:",
     "electron-builder": "catalog:",
+    "playwright": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

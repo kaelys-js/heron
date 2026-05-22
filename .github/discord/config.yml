@@ -1,0 +1,437 @@
+# yaml-language-server: $schema=./config.schema.json
+#
+# .github/discord/config.yml -- single source of truth for the Heron
+# Discord server (id 1507162919421612134). Reconciled by
+# scripts/system/apply-discord-config.mjs on push:main + weekly cron
+# via .github/workflows/maintain-discord.yml.
+#
+# Schema:
+#   server:     guild-wide settings (verification level, content filter,
+#               default notifications, etc.)
+#   categories: ordered list; each contains channels with role-gated
+#               visibility
+#   roles:      hierarchical list (top of list = highest in Discord
+#               role hierarchy)
+#   automod:    AutoMod rules (Discord-native; no external bot needed)
+#   onboarding: Discord's native member-onboarding flow (prompts +
+#               channel suggestions)
+#   welcome:    Welcome-screen prompts (3-5 channel highlights)
+#
+# When this file changes + the maintainer pushes to main, the
+# maintain-discord.yml workflow reconciles the live server to match.
+# Drift detection: `--verify` mode logs differences without writing.
+#
+# Maintainer manual prerequisites (one-time, documented in
+# TODO-INSTRUCTIONS.md section 11):
+#   1. Create a Discord bot application + install on the server
+#   2. Provide DISCORD_BOT_TOKEN to the repo as a secret
+#   3. Bot needs MANAGE_GUILD + MANAGE_CHANNELS + MANAGE_ROLES +
+#      MANAGE_GUILD (for AutoMod + Onboarding + Welcome screen)
+#
+# Adding a channel / role / AutoMod rule: edit this file + push to
+# main. The reconciler picks it up on the next run.
+
+server:
+  # Guild-wide settings. Reconciled via PATCH /guilds/{id}.
+  name: Heron
+  description: 'Stand still. Strike well. A patient, local-first thinking partner for career transitions.'
+  # Verification level (DiscordEnum):
+  #   0 NONE     -- anyone can talk
+  #   1 LOW      -- verified email required
+  #   2 MEDIUM   -- verified email + registered > 5 min ago
+  #   3 HIGH     -- verified email + member of server > 10 min
+  #   4 VERY_HIGH -- verified phone number required
+  # Heron picks MEDIUM: enough friction to stop drive-by raid spam
+  # without locking out genuine first-time members on a slow morning.
+  verification_level: 2
+  # Default channel notifications (0 ALL_MESSAGES, 1 ONLY_MENTIONS).
+  # ONLY_MENTIONS so members don't get bombarded by every CI build.
+  default_message_notifications: 1
+  # Explicit content filter (0 DISABLED, 1 MEMBERS_WITHOUT_ROLES, 2 ALL_MEMBERS).
+  # ALL_MEMBERS: scan every image/video; safer for the brand register.
+  explicit_content_filter: 2
+
+# ── Roles ────────────────────────────────────────────────────────────
+# Listed TOP-DOWN in Discord role hierarchy (first entry sits highest).
+# Hoisted roles are pinned to their own section in the member sidebar.
+# `connected_role` describes the May 2026 "Connected Roles" feature
+# which auto-assigns the role when the member links their GitHub
+# account AND meets the predicate (e.g., ≥1 merged PR in the repo).
+roles:
+  - name: Maintainer
+    color: '#4a5b6d' # Heron Slate
+    permissions:
+      - ADMINISTRATOR
+    hoist: true
+    mentionable: false
+    icon: ''
+  - name: Reviewer
+    color: '#7a8c6d' # Heron Reed
+    permissions:
+      - MANAGE_MESSAGES
+      - MANAGE_THREADS
+      - KICK_MEMBERS
+      - MUTE_MEMBERS
+      - DEAFEN_MEMBERS
+    hoist: true
+    mentionable: true
+  - name: Triager
+    color: '#c89b4a' # Heron Dawn
+    permissions:
+      - MANAGE_MESSAGES
+      - MANAGE_THREADS
+    hoist: true
+    mentionable: true
+  - name: Contributor
+    color: '#7a8c6d'
+    permissions: []
+    hoist: true
+    mentionable: false
+    connected_role:
+      platform: github
+      predicate: 'merged_pr_count >= 1'
+      verified_repo: kaelys-js/heron
+  - name: Sponsor
+    color: '#c89b4a'
+    permissions: []
+    hoist: true
+    mentionable: false
+    connected_role:
+      platform: github
+      predicate: 'is_sponsor == true'
+      verified_repo: kaelys-js/heron
+  - name: Hired
+    color: '#8a9b7d' # success-leaning green
+    permissions: []
+    hoist: true
+    mentionable: false
+  - name: First-timer
+    color: '#a8b0bb' # subtle grey for new arrivals
+    permissions: []
+    hoist: false
+    mentionable: false
+  - name: Member
+    color: '#6b7585'
+    permissions: []
+    hoist: false
+    mentionable: false
+  - name: Bot
+    color: '#1a1f29'
+    permissions:
+      - SEND_MESSAGES
+      - EMBED_LINKS
+      - ATTACH_FILES
+    hoist: false
+    mentionable: false
+
+# ── Categories + channels ────────────────────────────────────────────
+# Each category contains channels. Channels are ordered as listed.
+# Channel.type: 0 GUILD_TEXT, 2 GUILD_VOICE, 5 GUILD_ANNOUNCEMENT,
+#               15 GUILD_FORUM, 13 GUILD_STAGE_VOICE
+# `topic` shows under the channel name in the member list.
+# `overwrites`: per-role permission overrides (allow / deny lists).
+# `slowmode` rate-limits messages per user (seconds; 0 = off).
+categories:
+  - name: 📌 INFO
+    position: 0
+    channels:
+      - name: rules
+        type: 0
+        topic: 'Code of Conduct + community guidelines. Read first.'
+        overwrites:
+          - role: '@everyone'
+            deny: [SEND_MESSAGES, CREATE_PUBLIC_THREADS, CREATE_PRIVATE_THREADS]
+            allow: [VIEW_CHANNEL, READ_MESSAGE_HISTORY]
+      - name: announcements
+        type: 5 # GUILD_ANNOUNCEMENT
+        topic: 'Maintainer announcements. Reactions only; threads off.'
+        overwrites:
+          - role: '@everyone'
+            deny: [SEND_MESSAGES, CREATE_PUBLIC_THREADS]
+            allow: [VIEW_CHANNEL, READ_MESSAGE_HISTORY, ADD_REACTIONS]
+          - role: Maintainer
+            allow: [SEND_MESSAGES, MANAGE_MESSAGES]
+      - name: changelog
+        type: 0
+        topic: 'Auto-posts from release.yml when Release Please cuts a tag.'
+        overwrites:
+          - role: '@everyone'
+            deny: [SEND_MESSAGES]
+            allow: [VIEW_CHANNEL, READ_MESSAGE_HISTORY, ADD_REACTIONS]
+          - role: Bot
+            allow: [SEND_MESSAGES, EMBED_LINKS]
+        webhook: DISCORD_WEBHOOK_RELEASES
+
+  - name: 💬 COMMUNITY
+    position: 1
+    channels:
+      - name: introductions
+        type: 0
+        topic: "Welcome screen sends new members here. Say hi -- background, what brings you to Heron, what you're job-hunting (or hiring) for."
+        slowmode: 5
+      - name: general
+        type: 0
+        topic: 'Chat about Heron, job-hunting, anything related.'
+        slowmode: 0
+      - name: off-topic
+        type: 0
+        topic: 'Non-Heron chat. Keep it brand-aligned per #rules.'
+        slowmode: 5
+      - name: hired-stories
+        type: 15 # GUILD_FORUM
+        topic: 'Share your hiring outcome. Each post is a thread. Tag with the role type + company size for searchability.'
+        available_tags:
+          - name: 'engineering'
+          - name: 'product'
+          - name: 'design'
+          - name: 'other'
+          - name: 'startup'
+          - name: 'enterprise'
+
+  - name: 🆘 SUPPORT
+    position: 2
+    channels:
+      - name: support
+        type: 15 # GUILD_FORUM (May 2026 best practice for Q&A)
+        topic: 'Got a question or hit a bug? Open a post. Mark answered when resolved.'
+        available_tags:
+          - name: 'iOS'
+          - name: 'Android'
+          - name: 'macOS'
+          - name: 'Windows'
+          - name: 'Linux'
+          - name: 'Web'
+          - name: 'CLI'
+          - name: 'setup'
+          - name: 'apply-pipeline'
+          - name: 'scoring'
+          - name: 'resolved'
+      - name: ideas
+        type: 15 # GUILD_FORUM
+        topic: 'Feature ideas. Concrete proposals -> GitHub Discussions; brainstorming + half-baked thoughts -> here.'
+        available_tags:
+          - name: 'feature'
+          - name: 'rfc'
+          - name: 'reach'
+          - name: 'shipped'
+
+  - name: 🛠 BUILD STATUS
+    position: 3
+    channels:
+      - name: github
+        type: 0
+        topic: 'GitHub events: issues / PRs / discussions. Auto-posted via the GitHub Discord integration.'
+        overwrites:
+          - role: '@everyone'
+            deny: [SEND_MESSAGES]
+            allow: [VIEW_CHANNEL, READ_MESSAGE_HISTORY]
+        # NOTE: this webhook is the existing /github integration. Don't
+        # rotate via the reconciler -- it's GitHub's auto-format flow.
+      - name: ci-builds
+        type: 0
+        topic: 'Per-platform build status from native-release.yml on each release tag.'
+        overwrites:
+          - role: '@everyone'
+            deny: [SEND_MESSAGES]
+            allow: [VIEW_CHANNEL, READ_MESSAGE_HISTORY, ADD_REACTIONS]
+          - role: Bot
+            allow: [SEND_MESSAGES, EMBED_LINKS]
+        webhook: DISCORD_WEBHOOK_BUILDS
+      - name: security
+        type: 0
+        topic: 'Security findings (CodeQL + Dependabot + Trivy). HIGH+ severity only.'
+        overwrites:
+          - role: '@everyone'
+            deny: [VIEW_CHANNEL]
+            allow: []
+          - role: Maintainer
+            allow: [VIEW_CHANNEL, READ_MESSAGE_HISTORY, SEND_MESSAGES]
+          - role: Reviewer
+            allow: [VIEW_CHANNEL, READ_MESSAGE_HISTORY]
+          - role: Bot
+            allow: [SEND_MESSAGES, EMBED_LINKS]
+        webhook: DISCORD_WEBHOOK_SECURITY
+
+  - name: 👥 CONTRIBUTORS
+    position: 4
+    channels:
+      - name: contributor-chat
+        type: 0
+        topic: 'Visible to @Contributor and above. Code-talk, design pre-PR, refactor pitches.'
+        overwrites:
+          - role: '@everyone'
+            deny: [VIEW_CHANNEL]
+          - role: Contributor
+            allow: [VIEW_CHANNEL, SEND_MESSAGES, READ_MESSAGE_HISTORY]
+          - role: Reviewer
+            allow: [VIEW_CHANNEL, SEND_MESSAGES, MANAGE_MESSAGES]
+          - role: Maintainer
+            allow: [VIEW_CHANNEL, SEND_MESSAGES, MANAGE_MESSAGES, MANAGE_THREADS]
+      - name: design-review
+        type: 0
+        topic: 'Sketches + mockups + design questions BEFORE a PR is opened.'
+        overwrites:
+          - role: '@everyone'
+            deny: [VIEW_CHANNEL]
+          - role: Contributor
+            allow: [VIEW_CHANNEL, SEND_MESSAGES, ATTACH_FILES, READ_MESSAGE_HISTORY]
+          - role: Reviewer
+            allow: [VIEW_CHANNEL, SEND_MESSAGES, MANAGE_MESSAGES]
+          - role: Maintainer
+            allow: [VIEW_CHANNEL, SEND_MESSAGES, MANAGE_MESSAGES]
+      - name: maintainer-tea
+        type: 0
+        topic: 'Maintainer-only retrospectives + roadmap whiteboarding.'
+        overwrites:
+          - role: '@everyone'
+            deny: [VIEW_CHANNEL]
+          - role: Maintainer
+            allow: [VIEW_CHANNEL, SEND_MESSAGES, MANAGE_MESSAGES, MANAGE_THREADS]
+
+  - name: 🔊 VOICE
+    position: 5
+    channels:
+      - name: General voice
+        type: 2 # GUILD_VOICE
+        user_limit: 0
+      - name: Maintainer office hours
+        type: 13 # GUILD_STAGE_VOICE
+        topic: 'Scheduled events use this stage. Public listen-only; speakers via invite.'
+
+# ── AutoMod rules (Discord-native; no external bot) ──────────────────
+# Each rule corresponds to POST /guilds/{id}/auto-moderation/rules.
+# Trigger types (May 2026 API):
+#   1 KEYWORD            -- match user-provided keywords/regex
+#   3 SPAM               -- generic-spam classifier (Discord ML)
+#   4 KEYWORD_PRESET     -- Discord's curated lists (profanity / sexual /
+#                            slurs); preset values are 1 PROFANITY,
+#                            2 SEXUAL_CONTENT, 3 SLURS
+#   5 MENTION_SPAM       -- max mention count per message
+#   6 MEMBER_PROFILE     -- match in username/nickname (V2 endpoint)
+# Action types: 1 BLOCK_MESSAGE, 2 SEND_ALERT_MESSAGE, 3 TIMEOUT
+#               (V2 adds 4 BLOCK_MEMBER_INTERACTION)
+automod:
+  - name: 'block excessive mentions'
+    trigger_type: 5 # MENTION_SPAM
+    trigger_metadata:
+      mention_total_limit: 5
+      mention_raid_protection_enabled: true
+    actions:
+      - type: 1 # BLOCK_MESSAGE
+        metadata:
+          custom_message: 'Mention spam blocked by AutoMod. Limit: 5 mentions per message.'
+      - type: 2 # SEND_ALERT_MESSAGE
+        metadata:
+          channel: maintainer-tea
+    enabled: true
+
+  - name: 'block spam content'
+    trigger_type: 3 # SPAM
+    actions:
+      - type: 1
+    enabled: true
+
+  - name: 'flag profanity'
+    trigger_type: 4 # KEYWORD_PRESET
+    trigger_metadata:
+      presets: [1, 3] # PROFANITY + SLURS
+      allow_list: []
+    actions:
+      - type: 2
+        metadata:
+          channel: maintainer-tea
+    enabled: true
+
+  - name: 'block crypto/NFT/scam keywords'
+    trigger_type: 1 # KEYWORD
+    trigger_metadata:
+      keyword_filter:
+        - 'airdrop'
+        - 'whitelist mint'
+        - 'web3 opportunity'
+        - 'guaranteed return'
+        - 'pump and dump'
+        - 'NFT drop'
+        - 'metamask connect'
+      regex_patterns:
+        - '0x[a-fA-F0-9]{40}' # raw Ethereum addresses are nearly always spam
+    actions:
+      - type: 1
+        metadata:
+          custom_message: 'Crypto / scam keywords blocked. If this is a false positive, message a Maintainer.'
+    enabled: true
+
+  - name: 'block server-invite links from non-contributors'
+    trigger_type: 1
+    trigger_metadata:
+      regex_patterns:
+        - 'discord\.(gg|com)\/(invite\/)?[a-zA-Z0-9]+'
+    exempt_roles: [Contributor, Reviewer, Maintainer, Triager]
+    actions:
+      - type: 1
+    enabled: true
+
+# ── Onboarding (May 2026 Discord-native feature) ─────────────────────
+# PUT /guilds/{id}/onboarding. Replaces manual "welcome bot" flows.
+onboarding:
+  enabled: true
+  # Which channels members must see before answering prompts.
+  default_channel_ids: [rules, announcements, introductions]
+  mode: 1 # ONBOARDING_ADVANCED (vs 0 ONBOARDING_DEFAULT)
+  prompts:
+    - title: 'What brings you to Heron?'
+      type: 0 # MULTIPLE_CHOICE
+      single_select: true
+      required: true
+      options:
+        - title: 'Job-hunting'
+          description: 'I want to use Heron to find my next role.'
+          emoji_name: '💼'
+          role_ids: ['Member']
+          channel_ids: ['support', 'ideas', 'hired-stories']
+        - title: 'Building / contributing'
+          description: "I want to contribute code, docs, or design."
+          emoji_name: '🛠'
+          role_ids: ['Member', 'First-timer']
+          channel_ids: ['support', 'ideas', 'contributor-chat']
+        - title: 'Just exploring'
+          description: "Here to learn about the project."
+          emoji_name: '🔍'
+          role_ids: ['Member']
+          channel_ids: ['support', 'ideas']
+
+    - title: 'Notification preferences'
+      type: 0
+      single_select: false
+      required: false
+      options:
+        - title: 'Releases'
+          description: 'Ping me on @Member when Heron ships a new version.'
+          emoji_name: '📦'
+          channel_ids: ['changelog']
+        - title: 'Hired stories'
+          description: 'Notify me when someone shares a hiring outcome.'
+          emoji_name: '🎓'
+          channel_ids: ['hired-stories']
+
+# ── Welcome screen (community feature) ──────────────────────────────
+# PUT /guilds/{id}/welcome-screen.
+welcome:
+  enabled: true
+  description: "Local-first job-search platform. Patient, precise, BYO-LLM-key. Start with #rules + #introductions."
+  channels:
+    - channel: rules
+      description: 'Read the rules first.'
+      emoji_name: '📜'
+    - channel: introductions
+      description: 'Say hi -- what brings you here?'
+      emoji_name: '👋'
+    - channel: support
+      description: 'Got a question? Open a post here.'
+      emoji_name: '🆘'
+    - channel: ideas
+      description: "Feature ideas + RFC discussion."
+      emoji_name: '💡'
+    - channel: hired-stories
+      description: 'Share your hiring outcome.'
+      emoji_name: '🎓'

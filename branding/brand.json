@@ -282,6 +282,12 @@
     ]
   },
 
+  "nativeGlyph": {
+    "$comment": "SF Symbol name used on iOS / watchOS / iPadOS native surfaces where SVG paths from logo.svg can't be embedded directly (Widget AuthGate, Watch root view, Live Activity badges). Chosen to look as close to logo.svg's <symbol id='brand-glyph'> as the SF Symbols catalogue allows. Currently: lucide bird (web) <-> SF Symbol 'feather' (native). `iosFallback` is used when the primary symbol isn't available on the device's iOS / watchOS version (SF Symbols is version-tiered).",
+    "ios": "feather",
+    "iosFallback": "paperplane.fill"
+  },
+
   "mascot": {
     "$comment": "Mascot identity -- fed into the MASCOT.md template + apply-brand placeholder SVG generator. The SVG art itself lives in branding/assets/ (mark-placeholder.svg today, mark-{slate,light,dawn}.svg when the illustrator output lands).",
     "subject": "Great Blue Heron",

@@ -24,6 +24,52 @@
  */
 
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import yaml from 'js-yaml';
+
+const __FILENAME = fileURLToPath(import.meta.url);
+const __DIRNAME = dirname(__FILENAME);
+const REPO_ROOT = join(__DIRNAME, '..', '..');
+
+/**
+ * Load the canonical label set from .github/labels.yml. This is the
+ * single source of truth for every repo label; the reconciler below
+ * upserts each entry (POST if missing, PATCH on color/description
+ * mismatch). Drift surfaced via driftCount + the live --verify gate.
+ *
+ * Adding a label: edit .github/labels.yml + push to main. The
+ * maintain-features.yml workflow reconciles on every push:main +
+ * weekly cron.
+ */
+function loadLabelsFromYaml() {
+  const path = join(REPO_ROOT, '.github', 'labels.yml');
+  const raw = readFileSync(path, 'utf8');
+  const parsed = yaml.load(raw);
+  if (!Array.isArray(parsed)) {
+    throw new Error(`.github/labels.yml must be a top-level array; got ${typeof parsed}`);
+  }
+  // GitHub REST: color is 6-hex without #. YAML 1.1 parses some
+  // unquoted numerics oddly (000000 -> 0; 008672 -> 8672 octal-ish),
+  // so we coerce to string + zero-pad to 6 chars. labels.yml SHOULD
+  // still quote leading-zero colors for readability; this layer is
+  // belt-and-suspenders against drift introduced by future edits.
+  return parsed.map((entry) => {
+    let color = String(entry.color).replace(/^#/, '').toLowerCase();
+    if (color.length < 6) color = color.padStart(6, '0');
+    if (!/^[0-9a-f]{6}$/.test(color)) {
+      throw new Error(
+        `.github/labels.yml: label "${entry.name}" has invalid color "${entry.color}" (need 6-hex)`,
+      );
+    }
+    return {
+      name: String(entry.name),
+      color,
+      description: String(entry.description ?? ''),
+    };
+  });
+}
 
 const VERIFY_ONLY = process.argv.includes('--check') || process.argv.includes('--verify');
 const REPO = process.env.GH_REPO || 'kaelys-js/heron';
@@ -104,40 +150,8 @@ for (const env of ENVS) {
 }
 
 // ── 2. Standard labels ──────────────────────────────────────────
-const LABELS = [
-  {
-    name: 'good first issue',
-    color: '7057ff',
-    description: 'Beginner-friendly issue for new contributors',
-  },
-  { name: 'help wanted', color: '008672', description: 'Extra attention is needed' },
-  {
-    name: 'oversize-ok',
-    color: 'ededed',
-    description: 'Allow PRs above the 2000-LOC budget when justified',
-  },
-  {
-    name: 'no-issue',
-    color: 'ededed',
-    description: 'Bypass the feat-needs-issue check (audit cycle / hotfix)',
-  },
-  { name: 'breaking-change', color: 'b60205', description: 'PR introduces a breaking change' },
-  { name: 'security', color: 'd93f0b', description: 'Security-related change or report' },
-  { name: 'performance', color: '0e8a16', description: 'Performance regression or improvement' },
-  {
-    name: 'regression',
-    color: 'b60205',
-    description: 'Confirmed regression from a recent release',
-  },
-  { name: 'flaky-test', color: 'fbca04', description: 'CI test that intermittently fails' },
-  { name: 'needs-design', color: 'c5def5', description: 'Awaiting design input' },
-  { name: 'needs-product', color: 'c5def5', description: 'Awaiting product / scope decision' },
-  { name: 'triaged', color: 'd4c5f9', description: 'Triaged + accepted into the backlog' },
-  { name: 'wontfix', color: 'ededed', description: 'Not going to be worked on' },
-  { name: 'duplicate', color: 'ededed', description: 'Duplicate issue or PR' },
-  { name: 'discussion', color: 'cccccc', description: 'Convert this issue into a Discussion' },
-  { name: 'showcase', color: '00ff7f', description: 'I-got-hired / built-something-cool showcase' },
-];
+// Loaded from .github/labels.yml (data-driven; previously inline).
+const LABELS = loadLabelsFromYaml();
 
 console.log('▸ Labels');
 for (const lbl of LABELS) {

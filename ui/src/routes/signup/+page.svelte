@@ -209,6 +209,7 @@
       aria-hidden="true"
     >
       <svg width="64" height="64" viewBox="0 0 1024 1024">
+        <!-- AUTO-GENERATED:brand-mark gradient-id="signup-bg" -->
         <defs>
           <linearGradient id="signup-bg" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stop-color="#4a5b6d" />
@@ -226,15 +227,14 @@
           stroke-linecap="round"
           stroke-linejoin="round"
         >
-          <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
-          <path
-            d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09"
-          />
-          <path
-            d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z"
-          />
-          <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" />
+          <path d="M16 7h.01" />
+          <path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20" />
+          <path d="m20 7 2 .5-2 .5" />
+          <path d="M10 18v3" />
+          <path d="M14 17.75V21" />
+          <path d="M7 18a6 6 0 0 0 3.84-10.61" />
         </g>
+        <!-- /AUTO-GENERATED:brand-mark -->
       </svg>
     </div>
 

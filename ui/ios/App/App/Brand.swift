@@ -52,3 +52,49 @@ enum Brand {
         return "\(bundleId).handoff.\(kind)"
     }
 }
+
+// MARK: - BrandUI (SwiftUI Color + SF Symbol constants)
+
+//
+// Generated from brand.json::colors.* and brand.json::nativeGlyph.*
+// so native Widget / Watch / LiveActivity surfaces can render the
+// brand identity without hardcoding hex strings or SF Symbol names.
+// A future rebrand changes brand.json + reruns apply-brand; every
+// consumer below stays correct automatically.
+//
+// Why a separate enum + #if canImport(SwiftUI): the App + every
+// extension target compiles its own copy of Brand.swift. Some build
+// graphs surface SwiftUI; some don't. The gate lets Brand.swift
+// compile cleanly in any target while exposing UI constants where
+// SwiftUI is available.
+#if canImport(SwiftUI)
+    import SwiftUI
+
+    enum BrandUI {
+        /// Primary brand color (Heron Slate). From brand.json::colors.primary.
+        static let primary = Color(red: 0.290, green: 0.357, blue: 0.427) // #4a5b6d
+        /// Accent brand color (Heron Dawn). From brand.json::colors.accent.
+        static let accent = Color(red: 0.784, green: 0.608, blue: 0.290) // #c89b4a
+        /// Secondary accent (Heron Reed). From brand.json::colors.accentSecondary.
+        static let accentSecondary = Color(red: 0.478, green: 0.549, blue: 0.427) // #7a8c6d
+        /// Dark mode background. From brand.json::colors.darkBg.
+        static let darkBg = Color(red: 0.055, green: 0.063, blue: 0.078) // #0e1014
+        /// Light mode background. From brand.json::colors.lightBg.
+        static let lightBg = Color(red: 0.969, green: 0.961, blue: 0.941) // #f7f5f0
+
+        /// 3-stop brand gradient (primary → accentSecondary → accent),
+        /// matching the squircle gradient in branding/logo.svg.
+        /// Use with SwiftUI LinearGradient or any 3-stop gradient API.
+        static let gradientStops: [Color] = [primary, accentSecondary, accent]
+
+        /// SF Symbol name representing the brand glyph on native surfaces
+        /// (Widget AuthGate, Watch root view, anywhere we can't embed the
+        /// SVG `<symbol id="brand-glyph">` directly). Picked to look as
+        /// close to logo.svg's inner glyph as the SF Symbols catalog
+        /// allows. From brand.json::nativeGlyph.ios.
+        static let glyphSymbol = "feather"
+        /// Fallback for OS versions that lack the primary symbol (rare; SF
+        /// Symbols catalogue is iOS-version-tiered). From brand.json::nativeGlyph.iosFallback.
+        static let glyphSymbolFallback = "paperplane.fill"
+    }
+#endif

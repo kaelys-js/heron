@@ -117,7 +117,7 @@ if (!roadmapIssue) {
     const ROADMAP_BODY = [
       '## 🪶 Heron Roadmap',
       '',
-      '> _Stand still. Strike well._',
+      `> _${BRAND.voice?.tagline ?? 'Stand still. Strike well.'}_`,
       '',
       'This is the living plan. The maintain-user-features workflow only creates this issue once + re-pins it; the **body is yours to edit freely** as priorities shift.',
       '',
@@ -358,11 +358,15 @@ const README = [
   '',
   '_A local-first software company. The monorepo is private while early products mature; expect it to open up later this year. Heron is the first product._',
   '',
-  `### 🪶 [Heron](https://github.com/${OWNER}/heron) — resist.js's first product`,
+  `### 🪶 [${BRAND.displayName ?? 'Heron'}](https://github.com/${OWNER}/heron) — resist.js's first product`,
   '',
-  '> _Stand still. Strike well._',
+  `> _${BRAND.voice?.tagline ?? 'Stand still. Strike well.'}_`,
   '',
-  'A thinking partner for career transitions. Local-first job-search platform: pipeline tracking, A–F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Runs on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.',
+  // Description prose pulled from brand.json::description -- a rebrand
+  // re-derives the profile-README body in one edit. Fallback covers the
+  // brand.json-missing edge case (fresh-clone bootstrap).
+  BRAND.description ??
+    'A thinking partner for career transitions. Local-first job-search platform: pipeline tracking, A-F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Runs on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.',
   '',
   `[![License](https://img.shields.io/github/license/${OWNER}/heron?color=blue)](https://github.com/${OWNER}/heron/blob/main/LICENSE)`,
   `[![Build](https://github.com/${OWNER}/heron/actions/workflows/test.yml/badge.svg)](https://github.com/${OWNER}/heron/actions/workflows/test.yml)`,

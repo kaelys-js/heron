@@ -1,0 +1,92 @@
+# Ideas discussion template -- early-stage feature brainstorming
+# BEFORE a feature is scoped enough to file as an issue. If the idea
+# is already concrete + actionable, use the Feature request issue
+# template instead.
+title: '[Idea] '
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing an idea. This is the space for brainstorming
+        + community feedback BEFORE a feature is scoped enough to be a
+        proper issue. If you've got a concrete proposal with steps + a
+        clear "done" definition, use the [Feature request issue
+        template](../../issues/new?template=feature_request.yml)
+        instead -- it gets the idea into the backlog faster.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem you're trying to solve
+      description: |
+        What's the user pain? Where do you currently work around something
+        Heron doesn't do? Be specific -- "I want feature X" is less useful
+        than "When I do A, I have to manually do B every time because Heron
+        doesn't C."
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: |
+        What would Heron do differently? Sketch the UX, the mode, the
+        command, or the flow. Mockups + screenshots welcome -- drag
+        them in.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+      description: |
+        Existing Heron features that get partway there? Third-party tools
+        you use today? Why is this better than working around the gap?
+
+  - type: dropdown
+    id: stage
+    attributes:
+      label: How sure are you?
+      options:
+        - 'Just a thought -- want to see if others want this too'
+        - 'Sure it''s useful -- want to discuss the UX'
+        - 'Sure of the UX -- want to discuss implementation'
+        - 'Ready to PR if maintainers agree on the approach'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area?
+      multiple: true
+      options:
+        - Dashboard (SvelteKit)
+        - Native (iOS / Android / Electron / Watch / Widgets)
+        - Scoring / Evaluation
+        - PDF / CV / cover-letter generation
+        - Portal scanner
+        - LinkedIn Easy Apply
+        - Autonomous apply pipeline
+        - Multi-user / RBAC
+        - Notifications
+        - Localization / language modes
+        - Accessibility
+        - Developer experience / CI
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: willing
+    attributes:
+      label: Are you willing to help?
+      options:
+        - label: I'd write the PR if maintainers approved
+        - label: I'd test a PR for this
+        - label: I'd write docs for this
+        - label: 'I''m just leaving the idea -- someone else can run with it'

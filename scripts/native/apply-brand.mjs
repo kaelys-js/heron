@@ -945,6 +945,127 @@ function applyFavicon(brand) {
   log.ok(`static/favicon.svg ← branding/logo.svg`);
 }
 
+/**
+ * branding/assets/social-card.html is the OG-image source (1200×630).
+ * It renders to PNG via the generate-og-cards.mjs script (Puppeteer).
+ * The four brand-bound strings inside (tagline / displayName /
+ * subline / homepage URL) used to be hand-maintained, drifting on
+ * rebrand. apply-brand now patches them from brand.json so the OG
+ * image stays in sync with the canonical brand.
+ *
+ * URL-strip strategy: strip the scheme + trailing slash from
+ * brand.homepageUrl so the card shows just the domain (e.g.
+ * 'heron.app' not 'https://heron.app/'). Common OG-card convention.
+ */
+function applySocialCardHtml(brand) {
+  const path = join(ROOT, 'branding', 'assets', 'social-card.html');
+  if (!existsSync(path)) {
+    log.skip(`branding/assets/social-card.html — missing`);
+    return;
+  }
+  const homepageDomain = (brand.homepageUrl ?? 'https://heron.app')
+    .replace(/^https?:\/\//, '')
+    .replace(/\/$/, '');
+  let body = readFileSync(path, 'utf8');
+  let changed = false;
+  const subs = [
+    // Tagline (with <br> between sentences for the layout).
+    [
+      /(<h1 class="tagline">)[^<]*(<\/h1>)/,
+      `$1${(brand.voice?.tagline ?? brand.tagline ?? 'Stand still. Strike well.')
+        .replace('. ', '.<br>')
+        .replace(/ /g, '&nbsp;')}$2`,
+    ],
+    // Wordmark = displayName.
+    [/(<p class="wordmark">)[^<]*(<\/p>)/, `$1${brand.displayName}$2`],
+    // Subline.
+    [
+      /(<p class="subline">)[^<]*(<\/p>)/,
+      `$1${brand.voice?.subline ?? 'A thinking partner for career transitions. Patient, precise, local-first.'}$2`,
+    ],
+    // URL strip (domain only, no scheme).
+    [/(<p class="url-strip">)[^<]*(<\/p>)/, `$1${homepageDomain}$2`],
+  ];
+  for (const [re, val] of subs) {
+    const next = body.replace(re, val);
+    if (next !== body) {
+      body = next;
+      changed = true;
+    }
+  }
+  if (changed) {
+    writeFileSync(path, body);
+    log.ok(`branding/assets/social-card.html`);
+  } else {
+    log.skip(`branding/assets/social-card.html — already current`);
+  }
+}
+
+/**
+ * Patch brand-bound URLs + identifiers inside engineering docs that
+ * AREN'T templated via the AUTO-GENERATED:<section> marker system
+ * (AGENTS.md, AGENTS-PRODUCT.md, docs/SETUP.md). These docs have
+ * inline markdown links to the brand's repo + Discord that drift on
+ * rebrand if left literal. Targeted regex subs keep them current.
+ *
+ * Why not AUTO-GENERATED markers in each doc: the references are
+ * inline inside prose paragraphs (e.g. "...track per-CLI compatibility
+ * in [issues](URL) -- the abstraction..."). Wrapping each in marker
+ * pairs would hurt readability. Targeted patterns are smaller +
+ * leave the prose intact.
+ */
+function applyEngDocs(brand) {
+  const repoIssues = brand.repo?.issues ?? 'https://github.com/kaelys-js/heron/issues';
+  const repoUrl = brand.repo?.url ?? 'https://github.com/kaelys-js/heron';
+  const discordUrl = brand.community?.discord?.url ?? 'https://discord.gg/MyFbztUK5U';
+  // Bare host form of Discord URL for places that want the unwrapped
+  // identifier (e.g. "[discord.gg/abc](https://discord.gg/abc)").
+  const discordBare = discordUrl.replace(/^https?:\/\//, '');
+
+  const subs = [
+    // AGENTS-PRODUCT.md inline issues link.
+    {
+      file: join(ROOT, 'AGENTS-PRODUCT.md'),
+      re: /\[issues\]\(https:\/\/github\.com\/[^/]+\/[^/)]+\/issues\)/g,
+      val: () => `[issues](${repoIssues})`,
+    },
+    // docs/SETUP.md issues link (full URL form).
+    {
+      file: join(ROOT, 'docs', 'SETUP.md'),
+      re: /\[github\.com\/[^/]+\/[^/]+\/issues\]\(https:\/\/github\.com\/[^/]+\/[^/]+\/issues\)/g,
+      val: () => `[${repoUrl.replace(/^https?:\/\//, '')}/issues](${repoIssues})`,
+    },
+    // docs/SETUP.md Discord link.
+    {
+      file: join(ROOT, 'docs', 'SETUP.md'),
+      re: /\[discord\.gg\/[A-Za-z0-9]+\]\(https:\/\/discord\.gg\/[A-Za-z0-9]+\)/g,
+      val: () => `[${discordBare}](${discordUrl})`,
+    },
+    // AGENTS.md Discord bullet at the bottom.
+    {
+      file: join(ROOT, 'AGENTS.md'),
+      re: /(- \*\*Discord\*\*: <)https:\/\/discord\.gg\/[A-Za-z0-9]+(>)/,
+      val: `$1${discordUrl}$2`,
+    },
+  ];
+
+  let touched = 0;
+  for (const { file, re, val } of subs) {
+    if (!existsSync(file)) continue;
+    const before = readFileSync(file, 'utf8');
+    const next = typeof val === 'function' ? before.replace(re, val) : before.replace(re, val);
+    if (next !== before) {
+      writeFileSync(file, next);
+      touched++;
+    }
+  }
+  if (touched > 0) {
+    log.ok(`eng-docs URL refs (${touched} file${touched === 1 ? '' : 's'})`);
+  } else {
+    log.skip(`eng-docs URL refs -- already current`);
+  }
+}
+
 function applyExtensionFolders(brand) {
   // iOS extension folder names (AppWidget, AppLiveActivity,
   // AppShareExtension, WatchApp) appear as path segments
@@ -1033,10 +1154,12 @@ function applyGitHubIssueTemplates(brand) {
 }
 
 function applyGitHubWorkflows(brand) {
-  // Patch artifact names in GitHub workflow YAMLs that include the
-  // brand name. We do NOT touch prose comments, doc files, or the
-  // upstream-pin references (sync-upstream used the upstream URL on
-  // purpose). Only the upload-artifact name + SBOM filenames.
+  // Patch artifact names + brand-bound copy in GitHub workflow YAMLs.
+  // We do NOT touch prose comments, doc files, or the upstream-pin
+  // references (sync-upstream used the upstream URL on purpose).
+  // Welcome bot copy is templated here because pull_request_target
+  // workflows skip checkout (no brand.json available at runtime), so
+  // the literal in source has to be kept in sync at apply-brand time.
   const subs = [
     {
       // sbom.yml -- three references to <brand>-sbom.spdx.json
@@ -1049,6 +1172,27 @@ function applyGitHubWorkflows(brand) {
       file: join(ROOT, '.github', 'workflows', 'native-release.yml'),
       re: /name:\s*[a-z0-9-]+(-\$\{\{\s*matrix\.os\s*\}\})/,
       val: `name: ${brand.name}$1`,
+    },
+    {
+      // welcome.yml -- first-time-contributor PR welcome message.
+      // "Welcome to <displayName>, @${AUTHOR}!" -- the brand name is
+      // baked in at apply-brand time (pull_request_target can't read
+      // brand.json safely without enabling fork-code checkout).
+      file: join(ROOT, '.github', 'workflows', 'welcome.yml'),
+      re: /Welcome to [A-Z][A-Za-z]+, @\$\{AUTHOR\}!/,
+      val: `Welcome to ${brand.displayName}, @\${AUTHOR}!`,
+    },
+    {
+      // welcome.yml -- Discord URL in the PR welcome body.
+      file: join(ROOT, '.github', 'workflows', 'welcome.yml'),
+      re: /\[Discord\]\(https:\/\/discord\.gg\/[A-Za-z0-9]+\)/g,
+      val: () => `[Discord](${brand.community?.discord?.url ?? 'https://discord.gg/'})`,
+    },
+    {
+      // pr-bots.yml -- Discord URL in the first-timer-help body.
+      file: join(ROOT, '.github', 'workflows', 'pr-bots.yml'),
+      re: /\[Discord\]\(https:\/\/discord\.gg\/[A-Za-z0-9]+\)/g,
+      val: () => `[Discord](${brand.community?.discord?.url ?? 'https://discord.gg/'})`,
     },
   ];
   for (const { file, re, val } of subs) {
@@ -1653,7 +1797,23 @@ function applyAppHtml(brand) {
     ],
     [
       /(theme-color"\s+content=")[^"]*("\s+media="\(prefers-color-scheme:\s*light\)")/,
-      `$1${brand.colors.lightBg ?? '#fafaf9'}$2`,
+      `$1${brand.colors.lightBg ?? '#f7f5f0'}$2`,
+    ],
+    // Inline-style pre-hydration light/dark backgrounds inside the
+    // <style> block. These render BEFORE CSS loads so they have to be
+    // hardcoded -- apply-brand keeps them aligned with brand.colors.
+    // Light-mode body bg: html:not(.dark) body { background-color: <X>; }
+    [
+      /(html:not\(\.dark\),\s*html:not\(\.dark\)\s*body\s*\{\s*background-color:\s*)#[0-9a-fA-F]{3,6}/,
+      `$1${brand.colors.lightBg ?? '#f7f5f0'}`,
+    ],
+    // Pre-hydration body text color (light mode): the `color:` rule
+    // (not `background-color:`) inside the same block. Anchor with
+    // `\s` BEFORE `color:` so the pattern doesn't substring-match
+    // "background-color:" above.
+    [
+      /(html:not\(\.dark\),\s*html:not\(\.dark\)\s*body\s*\{[\s\S]*?\s)color:\s*#[0-9a-fA-F]{3,6}/,
+      `$1color: ${brand.colors.textOnLight ?? brand.colors.tokens?.light?.foreground ?? '#1a1f26'}`,
     ],
     // author + copyright
     [/(name="author"\s+content=")[^"]*(")/, `$1${brand.author.name}$2`],
@@ -1668,6 +1828,195 @@ function applyAppHtml(brand) {
   }
   if (changed) writeFileSync(path, body);
   changed ? log.ok(`app.html`) : log.skip(`app.html -- already current`);
+}
+
+/**
+ * Reconcile the full inline brand mark across every consumer that
+ * holds a hand-rolled copy. The brand mark = <defs> + linearGradient
+ * (3 stops) + 1024x1024 squircle background + 6% white top-half wash +
+ * scaled glyph paths. Source of truth is `branding/logo.svg`; this
+ * function reads its <symbol id="brand-glyph"> + gradient stops and
+ * writes them into every consumer in lockstep.
+ *
+ * Consumers (each wraps the inner-SVG block in
+ * <!-- AUTO-GENERATED:brand-mark gradient-id="X-bg" --> markers; the
+ * per-consumer gradient-id avoids DOM-wide ID collisions when multiple
+ * SVGs share a page):
+ *
+ *   1. ui/src/error.html                                       (err-bg)
+ *   2. ui/src/app.html (boot fallback)                         (bfb-bg)
+ *   3. ui/src/lib/components/BackendUnreachableOverlay.svelte  (bu-grad)
+ *   4. ui/src/routes/signup/+page.svelte                       (signup-bg)
+ *   5. ui/src/routes/login/+page.svelte                        (login-bg)
+ *
+ * branding/logo.svg itself is NOT a consumer; it's the source. The
+ * AUTO-GENERATED:brand-gradient marker pair INSIDE logo.svg only wraps
+ * the <linearGradient> definition (since logo.svg uses <symbol>+<use>
+ * for the glyph, not the inline rect+g pattern the consumers do).
+ *
+ * Idempotent: re-run is a no-op when consumers already match logo.svg.
+ *
+ * Why a full-mark reconciler vs. just gradient stops: the consumers'
+ * "Inline brand mark -- mirror of branding/logo.svg" header comments
+ * are now actually enforced; before this function existed, swapping
+ * the glyph in logo.svg (e.g. rocket -> bird) left every consumer
+ * silently rendering the OLD glyph. apply-brand now keeps the inline
+ * copies aligned with the master.
+ */
+function applyBrandMark(brand) {
+  // 1. Parse logo.svg to extract:
+  //    - 3 gradient stops (from the AUTO-GENERATED:brand-gradient block)
+  //    - glyph paths (from <symbol id="brand-glyph"><g>...</g></symbol>)
+  //    The squircle dims (1024x1024 rx=232) + highlight overlay +
+  //    glyph <g> styling are stable contract; we hardcode them in the
+  //    template below.
+  if (!existsSync(BRAND_LOGO)) {
+    log.warn(`branding/logo.svg missing -- skipping brand-mark reconciliation`);
+    return;
+  }
+  const logoSvg = readFileSync(BRAND_LOGO, 'utf8');
+
+  // Also reconcile logo.svg's OWN AUTO-GENERATED:brand-gradient block
+  // so the source-of-truth stops stay in sync with brand.json. The
+  // consumers below get their stops from `stops` (built from brand.json)
+  // directly, so this self-update is mainly for the source file's own
+  // values to drift-match brand.json on every apply-brand run.
+  reconcileLogoSvgGradient(brand);
+
+  const symbolRe = /<symbol id="brand-glyph"[^>]*>\s*<g[^>]*>([\s\S]*?)<\/g>\s*<\/symbol>/m;
+  const symbolMatch = symbolRe.exec(logoSvg);
+  if (!symbolMatch) {
+    log.warn(
+      `logo.svg missing <symbol id="brand-glyph"><g>...</g> -- skipping brand-mark reconciliation`,
+    );
+    return;
+  }
+  // Normalize: flatten whitespace, then extract individual <path .../>
+  // elements. This way logo.svg can format paths across multiple lines
+  // (it does) and we still emit one path per line in each consumer.
+  const glyphInner = symbolMatch[1].replace(/\s+/g, ' ').trim();
+  const glyphPathRe = /<path\s+[^/]*\/>/g;
+  const glyphPaths = glyphInner.match(glyphPathRe) ?? [];
+  if (glyphPaths.length === 0) {
+    log.warn(`logo.svg <symbol id="brand-glyph"> has no <path> children -- skipping`);
+    return;
+  }
+
+  // 2. Stops driven by brand.json.
+  const stops = [
+    { offset: '0%', color: brand.colors.primary },
+    { offset: '55%', color: brand.colors.accentSecondary },
+    { offset: '100%', color: brand.colors.accent },
+  ];
+
+  // 3. Reconcile each consumer.
+  const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const startMarkerRe = /<!-- AUTO-GENERATED:brand-mark gradient-id="([^"]+)" -->/;
+  const endMarker = '<!-- /AUTO-GENERATED:brand-mark -->';
+
+  const targets = [
+    join(UI, 'src', 'error.html'),
+    join(UI, 'src', 'app.html'),
+    join(UI, 'src', 'lib', 'components', 'BackendUnreachableOverlay.svelte'),
+    join(UI, 'src', 'routes', 'signup', '+page.svelte'),
+    join(UI, 'src', 'routes', 'login', '+page.svelte'),
+  ];
+
+  let touched = 0;
+  let missing = 0;
+  for (const path of targets) {
+    if (!existsSync(path)) continue;
+    const before = readFileSync(path, 'utf8');
+    const startMatch = startMarkerRe.exec(before);
+    if (!startMatch) {
+      log.warn(
+        `${path.replace(ROOT + '/', '')} missing AUTO-GENERATED:brand-mark markers; skipped`,
+      );
+      missing++;
+      continue;
+    }
+    const gradientId = startMatch[1];
+
+    // Match the leading indent of the start-marker line so the block we
+    // emit preserves the consumer's surrounding indentation. Falls back
+    // to a sensible default if the marker is at column 0.
+    const lineRe = new RegExp(`^([ \\t]*)${escape(startMatch[0])}`, 'm');
+    const indentMatch = before.match(lineRe);
+    const indent = indentMatch ? indentMatch[1] : '          ';
+
+    // Build the reconciled block. Sibling-level indent for marker pair
+    // and all the block content between them.
+    const lines = [
+      `${indent}${startMatch[0]}`,
+      `${indent}<defs>`,
+      `${indent}  <linearGradient id="${gradientId}" x1="0" y1="0" x2="1" y2="1">`,
+      ...stops.map((s) => `${indent}    <stop offset="${s.offset}" stop-color="${s.color}" />`),
+      `${indent}  </linearGradient>`,
+      `${indent}</defs>`,
+      `${indent}<rect width="1024" height="1024" rx="232" fill="url(#${gradientId})" />`,
+      `${indent}<rect x="0" y="0" width="1024" height="512" rx="232" fill="#ffffff" opacity="0.06" />`,
+      `${indent}<g`,
+      `${indent}  transform="translate(192,192) scale(26.667)"`,
+      `${indent}  fill="none"`,
+      `${indent}  stroke="#ffffff"`,
+      `${indent}  stroke-width="1.8"`,
+      `${indent}  stroke-linecap="round"`,
+      `${indent}  stroke-linejoin="round"`,
+      `${indent}>`,
+      ...glyphPaths.map((p) => `${indent}  ${p}`),
+      `${indent}</g>`,
+      `${indent}${endMarker}`,
+    ];
+    const nextBlock = lines.join('\n');
+
+    // Replace from start-marker line to end-marker line inclusive.
+    const replaceRe = new RegExp(
+      `${escape(indent)}${escape(startMatch[0])}[\\s\\S]*?${escape(endMarker)}`,
+      'm',
+    );
+    const after = before.replace(replaceRe, nextBlock);
+    if (after !== before) {
+      writeFileSync(path, after);
+      touched++;
+    }
+  }
+  if (touched > 0) {
+    log.ok(
+      `brand mark (${touched} file${touched === 1 ? '' : 's'} updated from branding/logo.svg's <symbol id="brand-glyph"> + brand.json colors)`,
+    );
+  } else if (missing === 0) {
+    log.skip(`brand mark -- already current across ${targets.length} consumers`);
+  }
+}
+
+/**
+ * Self-reconcile branding/logo.svg's own AUTO-GENERATED:brand-gradient
+ * block from brand.json colors. logo.svg is the source for everything
+ * else, but the gradient stops INSIDE it still need to track brand.json
+ * (the glyph paths in <symbol id="brand-glyph"> are hand-edited; only
+ * the gradient is data-driven here).
+ */
+function reconcileLogoSvgGradient(brand) {
+  if (!existsSync(BRAND_LOGO)) return;
+  const before = readFileSync(BRAND_LOGO, 'utf8');
+  const startMarker = '<!-- AUTO-GENERATED:brand-gradient -->';
+  const endMarker = '<!-- /AUTO-GENERATED:brand-gradient -->';
+  const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const blockRe = new RegExp(`${escape(startMarker)}[\\s\\S]*?${escape(endMarker)}`, 'm');
+  const match = blockRe.exec(before);
+  if (!match) return; // logo.svg lost its markers; not fatal, brand-mark still works for consumers
+  let nextBlock = match[0];
+  const stopRewrites = [
+    [/(<stop offset="0%"\s+stop-color=")[^"]+(")/, brand.colors.primary],
+    [/(<stop offset="55%"\s+stop-color=")[^"]+(")/, brand.colors.accentSecondary],
+    [/(<stop offset="100%"\s+stop-color=")[^"]+(")/, brand.colors.accent],
+  ];
+  for (const [re, color] of stopRewrites) {
+    nextBlock = nextBlock.replace(re, `$1${color}$2`);
+  }
+  if (nextBlock !== match[0]) {
+    writeFileSync(BRAND_LOGO, before.replace(match[0], nextBlock));
+  }
 }
 
 function applyErrorHtml(brand) {
@@ -1690,12 +2039,10 @@ function applyErrorHtml(brand) {
     [/(<title>%status%\s*·\s*)[^<]+(<\/title>)/, `$1${brand.displayName}$2`],
     // Reload button -- "Reload {displayName}"
     [/(>Reload\s+)[^<]+(<\/a>)/, `$1${brand.displayName}$2`],
-    // Inline SVG gradient stops match logo.svg -- pulled from brand.colors
-    // in case the brand-gradient colors get swapped via brand.json. We
-    // match the THREE gradient stops in order.
-    [/(<stop offset="0%" stop-color=")[^"]+(")/, `$1${brand.colors.gradientStart ?? '#4a5b6d'}$2`],
-    [/(<stop offset="55%" stop-color=")[^"]+(")/, `$1${brand.colors.gradientMid ?? '#7a8c6d'}$2`],
-    [/(<stop offset="100%" stop-color=")[^"]+(")/, `$1${brand.colors.gradientEnd ?? '#c89b4a'}$2`],
+    // Inline SVG gradient + glyph + squircle are reconciled by
+    // applyBrandMark(brand) so every consumer (app.html, error.html,
+    // BackendUnreachableOverlay, signup, login) tracks branding/logo.svg
+    // via AUTO-GENERATED:brand-mark gradient-id="X-bg" marker pairs.
   ];
   for (const [re, val] of subs) {
     const next = body.replace(re, val);
@@ -2017,15 +2364,18 @@ function syncSharedSwift(brand) {
   // Files in ui/ios/App/App/ that need to exist in every extension target
   // too (because Xcode app-extension targets can't import from the host).
   // ErrorReporter.swift is the canonical example -- same source, 4 copies.
+  // Path note: extensions live under ui/ios/App/Extensions/<Name>/ (the
+  // historical `ui/ios/App/<Name>/` flat layout was reorganised, but
+  // earlier copies of this script still used the flat paths).
   const sharedFiles = ['ErrorReporter.swift'];
-  const targets = ['AppWidget', 'AppLiveActivity', 'AppShareExtension'];
+  const extensionTargets = ['AppWidget', 'AppLiveActivity', 'AppShareExtension'];
   for (const f of sharedFiles) {
     const src = join(UI, 'ios', 'App', 'App', f);
     if (!existsSync(src)) continue;
     const srcContent = readFileSync(src, 'utf8');
     let copied = 0;
-    for (const tgt of targets) {
-      const tgtDir = join(UI, 'ios', 'App', tgt);
+    for (const tgt of extensionTargets) {
+      const tgtDir = join(UI, 'ios', 'App', 'Extensions', tgt);
       if (!existsSync(tgtDir)) continue;
       const dst = join(tgtDir, f);
       if (writeIfChanged(dst, srcContent)) copied++;
@@ -2033,6 +2383,23 @@ function syncSharedSwift(brand) {
     if (copied > 0) log.ok(`synced ${f} → ${copied} extension target(s)`);
     else log.skip(`${f} -- all extension copies current`);
   }
+}
+
+/**
+ * Convert a 6-hex CSS color (`#4a5b6d`) to a SwiftUI `Color(red:green:blue:)`
+ * literal with float components in [0, 1] (3-decimal precision). Append
+ * the original hex as a trailing comment so re-readers can sanity-check
+ * the conversion without arithmetic. Throws on malformed input.
+ *
+ *   swiftColorLiteral('#4a5b6d')
+ *     -> 'Color(red: 0.290, green: 0.357, blue: 0.427) // #4a5b6d'
+ */
+function swiftColorLiteral(hex) {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(String(hex ?? ''));
+  if (!m) throw new Error(`swiftColorLiteral: invalid hex "${hex}" (need 6-hex)`);
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255);
+  const fmt = (v) => v.toFixed(3);
+  return `Color(red: ${fmt(r)}, green: ${fmt(g)}, blue: ${fmt(b)}) // #${m[1].toLowerCase()}`;
 }
 
 function applySwiftConstants(brand) {
@@ -2047,9 +2414,12 @@ function applySwiftConstants(brand) {
   // template, N copies, one place to edit (branding/brand.json).
   const paths = [
     join(UI, 'ios', 'App', 'App', 'Brand.swift'),
-    join(UI, 'ios', 'App', 'AppWidget', 'Brand.swift'),
-    join(UI, 'ios', 'App', 'AppLiveActivity', 'Brand.swift'),
-    join(UI, 'ios', 'App', 'AppShareExtension', 'Brand.swift'),
+    // Extension targets live under ui/ios/App/Extensions/<Name>/ after
+    // the flat-layout reorganisation. Earlier copies of this script
+    // wrote to the flat paths and silently generated orphan files.
+    join(UI, 'ios', 'App', 'Extensions', 'AppWidget', 'Brand.swift'),
+    join(UI, 'ios', 'App', 'Extensions', 'AppLiveActivity', 'Brand.swift'),
+    join(UI, 'ios', 'App', 'Extensions', 'AppShareExtension', 'Brand.swift'),
     // WatchApp is a separate watchOS target. Without this copy
     // the Watch had to hardcode "group.com.heron.app" and
     // "heron://queue" everywhere -- a rebrand drift waiting to
@@ -2113,6 +2483,51 @@ function applySwiftConstants(brand) {
     `        return "\\(bundleId).handoff.\\(kind)"`,
     `    }`,
     `}`,
+    ``,
+    `// MARK: - BrandUI (SwiftUI Color + SF Symbol constants)`,
+    `//`,
+    `// Generated from brand.json::colors.* and brand.json::nativeGlyph.*`,
+    `// so native Widget / Watch / LiveActivity surfaces can render the`,
+    `// brand identity without hardcoding hex strings or SF Symbol names.`,
+    `// A future rebrand changes brand.json + reruns apply-brand; every`,
+    `// consumer below stays correct automatically.`,
+    `//`,
+    `// Why a separate enum + #if canImport(SwiftUI): the App + every`,
+    `// extension target compiles its own copy of Brand.swift. Some build`,
+    `// graphs surface SwiftUI; some don't. The gate lets Brand.swift`,
+    `// compile cleanly in any target while exposing UI constants where`,
+    `// SwiftUI is available.`,
+    `#if canImport(SwiftUI)`,
+    `import SwiftUI`,
+    ``,
+    `enum BrandUI {`,
+    `    /// Primary brand color (Heron Slate). From brand.json::colors.primary.`,
+    `    static let primary = ${swiftColorLiteral(brand.colors.primary)}`,
+    `    /// Accent brand color (Heron Dawn). From brand.json::colors.accent.`,
+    `    static let accent = ${swiftColorLiteral(brand.colors.accent)}`,
+    `    /// Secondary accent (Heron Reed). From brand.json::colors.accentSecondary.`,
+    `    static let accentSecondary = ${swiftColorLiteral(brand.colors.accentSecondary)}`,
+    `    /// Dark mode background. From brand.json::colors.darkBg.`,
+    `    static let darkBg = ${swiftColorLiteral(brand.colors.darkBg)}`,
+    `    /// Light mode background. From brand.json::colors.lightBg.`,
+    `    static let lightBg = ${swiftColorLiteral(brand.colors.lightBg)}`,
+    ``,
+    `    /// 3-stop brand gradient (primary → accentSecondary → accent),`,
+    `    /// matching the squircle gradient in branding/logo.svg.`,
+    `    /// Use with SwiftUI LinearGradient or any 3-stop gradient API.`,
+    `    static let gradientStops: [Color] = [primary, accentSecondary, accent]`,
+    ``,
+    `    /// SF Symbol name representing the brand glyph on native surfaces`,
+    `    /// (Widget AuthGate, Watch root view, anywhere we can't embed the`,
+    `    /// SVG \`<symbol id="brand-glyph">\` directly). Picked to look as`,
+    `    /// close to logo.svg's inner glyph as the SF Symbols catalog`,
+    `    /// allows. From brand.json::nativeGlyph.ios.`,
+    `    static let glyphSymbol = "${brand.nativeGlyph?.ios ?? 'feather'}"`,
+    `    /// Fallback for OS versions that lack the primary symbol (rare; SF`,
+    `    /// Symbols catalogue is iOS-version-tiered). From brand.json::nativeGlyph.iosFallback.`,
+    `    static let glyphSymbolFallback = "${brand.nativeGlyph?.iosFallback ?? 'paperplane.fill'}"`,
+    `}`,
+    `#endif`,
     ``,
   ].join('\n');
   let anyChanged = false;
@@ -2273,6 +2688,9 @@ function apply() {
   applyAndroidBuildGradle(brand);
   applyAndroidKotlinBrand(brand);
 
+  log.step('Brand mark (logo.svg <symbol> + brand.json colors -> 5 inline consumers)');
+  applyBrandMark(brand);
+
   log.step('Web manifest + favicon + app.html + error.html');
   applyFavicon(brand);
   applyManifest(brand);
@@ -2283,9 +2701,11 @@ function apply() {
 
   log.step('Branding assets');
   applyWordmarks(brand);
+  applySocialCardHtml(brand);
 
   log.step('Branding markdown sections');
   applyMarkdownSections(brand);
+  applyEngDocs(brand);
 
   log.step('Fastlane');
   applyFastlaneAppfile(brand);

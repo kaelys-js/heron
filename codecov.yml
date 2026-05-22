@@ -33,6 +33,16 @@ coverage:
         target: 60%
         threshold: 1%
         only_pulls: true
+      android:
+        flags: [android]
+        # Authored Android Kotlin surface is small (Brand + ErrorReporter +
+        # NetworkMonitor + NativePlugin core; ~620 LOC) so 70% is a
+        # reasonable starting bar. The Capacitor MainActivity scaffold
+        # and Brand.kt are excluded via JaCoCo class-filter rules in
+        # ui/android/app/build.gradle.
+        target: 70%
+        threshold: 1%
+        only_pulls: true
       auth-critical:
         # Auth-critical paths are zero-tolerance -- never below 80%.
         # Set via the `auth` component below.
@@ -77,6 +87,11 @@ flag_management:
     - name: ios
       paths:
         - ui/ios/**
+      carryforward: true
+    - name: android
+      paths:
+        - ui/android/app/src/main/java/**
+        - ui/android/app/src/main/kotlin/**
       carryforward: true
 
 component_management:

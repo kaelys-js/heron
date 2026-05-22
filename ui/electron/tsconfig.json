@@ -7,6 +7,13 @@
   // auto-bind by filename.
   "compileOnSave": true,
   "include": ["./src/**/*", "./capacitor.config.ts", "./capacitor.config.js"],
+  "exclude": [
+    "./src/**/*.test.ts",
+    "./build/**",
+    "./dist/**",
+    "./e2e-electron/**",
+    "./playwright.config.ts"
+  ],
   "compilerOptions": {
     // ── Output ──────────────────────────────────────────────────────
     "outDir": "./build",

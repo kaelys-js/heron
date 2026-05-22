@@ -1,0 +1,112 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Maintain Discord
+# Reconciles the Discord server (channels + roles + AutoMod + Onboarding
+# + Welcome screen) against .github/discord/config.yml. Pattern mirrors
+# .github/workflows/maintain-config.yml + maintain-features.yml --
+# push:main + weekly cron + workflow_dispatch.
+#
+# Drift gate: every push:main runs `apply-discord-config.mjs --verify`.
+# If the live state diverges from the SSOT, the workflow fails red.
+# The workflow_dispatch path is the manual "reconcile now" lever.
+#
+# Required secrets:
+#   DISCORD_BOT_TOKEN  -- bot application token (Developer Portal).
+#                         Bot needs MANAGE_GUILD + MANAGE_CHANNELS +
+#                         MANAGE_ROLES. See TODO-INSTRUCTIONS.md for
+#                         the bot-creation walkthrough.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/discord/config.yml'
+      - 'scripts/system/apply-discord-config.mjs'
+      - '.github/workflows/maintain-discord.yml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Reconciler mode'
+        required: true
+        default: 'verify'
+        type: choice
+        options:
+          - verify
+          - apply
+          - dry
+  schedule:
+    # Weekly drift sweep -- runs Sunday 06:00 UTC. Catches manual UI
+    # changes the maintainer made between push events.
+    - cron: '0 6 * * 0'
+
+permissions: {}
+
+concurrency:
+  group: maintain-discord-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    name: Reconcile Discord server
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Setup mise (Node + pnpm from .mise.toml)
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4 # zizmor: ignore[cache-poisoning]
+        with:
+          experimental: true
+          cache: true
+
+      - name: Install dependencies (pnpm, frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      # Reconciler mode resolution:
+      #   - workflow_dispatch with inputs.mode    => use that
+      #   - push:main                             => apply (drift in
+      #                                              committed config
+      #                                              should land live)
+      #   - schedule                              => verify (cron is a
+      #                                              drift-detection
+      #                                              sweep; don't
+      #                                              auto-apply on
+      #                                              someone's manual
+      #                                              channel edit)
+      - name: Pick mode
+        id: mode
+        env:
+          INPUTS_MODE: ${{ inputs.mode }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          case "$EVENT_NAME" in
+            workflow_dispatch) m="$INPUTS_MODE" ;;
+            push)              m="apply"        ;;
+            schedule)          m="verify"       ;;
+            *)                 m="verify"       ;;
+          esac
+          echo "mode=$m" >> "$GITHUB_OUTPUT"
+          echo "::notice::Reconciler mode: $m"
+
+      - name: Run apply-discord-config.mjs
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_GUILD_ID: ${{ vars.DISCORD_GUILD_ID }}
+        run: |
+          set -euo pipefail
+          flag=""
+          case "${{ steps.mode.outputs.mode }}" in
+            verify) flag="--verify" ;;
+            dry)    flag="--dry"    ;;
+            apply)  flag=""         ;;
+          esac
+          node scripts/system/apply-discord-config.mjs $flag

@@ -86,11 +86,11 @@ struct BrandBackground: View {
 /**
  * BrandMark — miniature reproduction of the app icon for use inside
  * widget content (auth gate, branded headers). Renders the same
- * indigo→violet→purple gradient rounded-rect from branding/logo.svg
- * with the rocket glyph centred on top.
+ * 3-stop brand-gradient rounded-rect from branding/logo.svg with the
+ * brand glyph centred on top.
  *
- * Why not just use the SF Symbol `paperplane.fill` or similar:
- *   Generic SF Symbols don't say "this is YOUR app" the way the brand
+ * Why not just use a stock SF Symbol like `lock.shield.fill`:
+ *   Generic symbols don't say "this is YOUR app" the way the brand
  *   mark does. The previous gate used `lock.shield.fill` which read as
  *   a generic security warning, not a friendly "open Heron to
  *   continue" affordance. Reproducing the actual app icon makes the
@@ -99,9 +99,13 @@ struct BrandBackground: View {
  * Why not load the AppIcon image directly:
  *   WidgetKit extensions can't access the host app's AppIcon — the
  *   image lives in the host's asset catalog, not the extension's. We
- *   could ship a duplicate but that means two places to update. SwiftUI
- *   reproduction stays in sync with branding/logo.svg via the same
- *   indigo/violet/purple constants the inline app.html uses.
+ *   could ship a duplicate but that means two places to update.
+ *
+ * Brand source-of-truth: every value below (gradient stops, glyph
+ * SF Symbol, shadow tint) is read from `BrandUI` in Brand.swift, which
+ * apply-brand.mjs generates from `branding/brand.json`. A rebrand
+ * edits brand.json + reruns brand:apply; this view picks up the new
+ * palette without an edit here.
  *
  * Sizing: the rounded-rect occupies the full frame; callers control
  * the outer size with `.frame(width:height:)`.
@@ -117,11 +121,7 @@ struct BrandMark: View {
                 RoundedRectangle(cornerRadius: size * 0.226, style: .continuous)
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Color(red: 0.388, green: 0.400, blue: 0.945), // #6366f1
-                                Color(red: 0.545, green: 0.361, blue: 0.965), // #8b5cf6
-                                Color(red: 0.659, green: 0.333, blue: 0.969), // #a855f7
-                            ],
+                            colors: BrandUI.gradientStops,
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -135,22 +135,22 @@ struct BrandMark: View {
                             .frame(maxHeight: .infinity, alignment: .top)
                             .clipShape(RoundedRectangle(cornerRadius: size * 0.226, style: .continuous))
                     )
-                    // Rocket glyph centred on top. Uses SF Symbol
-                    // `paperplane.fill` rotated — closest stock symbol
-                    // to the lucide rocket shape used in branding/logo.svg.
-                    // Apple ships `figure.fall.forward` style rockets
-                    // only from iOS 17; we use a more compatible glyph.
+                    // Brand glyph centred on top. SF Symbol name comes
+                    // from BrandUI.glyphSymbol (brand.json::nativeGlyph.ios).
+                    // Currently 'feather' — the closest stock symbol to
+                    // the lucide bird glyph in branding/logo.svg.
                     .overlay(
-                        Image(systemName: "paperplane.fill")
+                        Image(systemName: BrandUI.glyphSymbol)
                             .font(.system(size: size * 0.42, weight: .medium))
                             .foregroundStyle(.white)
-                            .rotationEffect(.degrees(-45))
-                            .offset(x: -size * 0.02, y: 0)
                     )
             }
         }
         .aspectRatio(1, contentMode: .fit)
-        .shadow(color: .indigo.opacity(0.35), radius: 12, x: 0, y: 6)
+        // Shadow tint follows the brand primary so a rebrand re-tints
+        // automatically. Opacity kept low (35%) so the shadow stays
+        // soft against any widget background context.
+        .shadow(color: BrandUI.primary.opacity(0.35), radius: 12, x: 0, y: 6)
     }
 }
 

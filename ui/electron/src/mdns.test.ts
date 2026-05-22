@@ -10,13 +10,25 @@ const __publishMock = vi.fn();
 const __stopMock = vi.fn();
 const __BonjourCtor = vi.fn();
 
-// vi.mock for a CJS package: include both named and default exports so
-// both `import { Bonjour }` and `import('bonjour-service').default.Bonjour`
-// resolve to the same mock constructor.
-vi.mock('bonjour-service', () => ({
-  Bonjour: __BonjourCtor,
-  default: { Bonjour: __BonjourCtor },
-}));
+// Shape selector: 'both' (default), 'default-only', 'neither'. Lets tests
+// reshape the mock exports without re-registering via vi.doMock (which
+// leaked state into later tests).
+let __mockShape: 'both' | 'default-only' | 'neither' = 'both';
+
+vi.mock('bonjour-service', () => {
+  return {
+    get Bonjour() {
+      if (__mockShape === 'default-only' || __mockShape === 'neither') return undefined;
+      return __BonjourCtor;
+    },
+    default: {
+      get Bonjour() {
+        if (__mockShape === 'neither') return undefined;
+        return __BonjourCtor;
+      },
+    },
+  };
+});
 
 vi.mock('electron', () => ({
   app: { getVersion: () => '1.2.3' },
@@ -33,6 +45,7 @@ beforeEach(() => {
   __publishMock.mockReset();
   __stopMock.mockReset();
   __BonjourCtor.mockReset();
+  __mockShape = 'both';
   // Use `function` not arrow so the mock supports `new` invocation.
   __BonjourCtor.mockImplementation(function () {
     return { publish: __publishMock };
@@ -88,6 +101,24 @@ describe('startMdnsAdvertise', () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     await expect(mdns.startMdnsAdvertise({ name: 'Test', port: 4321 })).resolves.toBeUndefined();
     expect(spy).toHaveBeenCalled();
+  });
+
+  it('falls back to mod.default.Bonjour when named export is missing', async () => {
+    __mockShape = 'default-only';
+    const mdns = await import('./mdns.js');
+    await mdns.startMdnsAdvertise({ name: 'Test', port: 4321 });
+    expect(__BonjourCtor).toHaveBeenCalledTimes(1);
+    expect(__publishMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('warns when neither named nor default Bonjour export is available', async () => {
+    __mockShape = 'neither';
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const mdns = await import('./mdns.js');
+    await expect(mdns.startMdnsAdvertise({ name: 'Test', port: 4321 })).resolves.toBeUndefined();
+    expect(warnSpy).toHaveBeenCalled();
+    const msg = warnSpy.mock.calls[0]?.[0] as string;
+    expect(msg).toMatch(/failed to advertise/i);
   });
 });
 

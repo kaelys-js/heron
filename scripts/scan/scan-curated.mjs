@@ -46,6 +46,12 @@ import {
   fstatSync,
 } from 'fs';
 import yaml from 'js-yaml';
+import { BRAND } from '../lib/_brand.mjs';
+
+// User-Agent identifies this scanner to upstream curated boards. Derived
+// from brand.json. Browser-shape (Mozilla/5.0) for boards that block
+// non-browser UAs; some 403 anything that looks like a bot.
+const SCANNER_UA = `Mozilla/5.0 (${BRAND.name}-scanner; +${BRAND.repo.url})`;
 import {
   profilePath,
   ensureProfileDirs,
@@ -99,7 +105,7 @@ async function fetchText(url, opts = {}) {
     try {
       const res = await fetch(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (heron-scanner; +https://github.com/kaelys-js/heron)',
+          'User-Agent': SCANNER_UA,
           Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9',
           ...(opts.headers || {}),
         },

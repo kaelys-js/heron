@@ -298,11 +298,11 @@ async function main() {
   // Doing it inline (rather than compositing PNG layers via sharp) means
   // the icon's glow is computed by an SVG filter that operates on the
   // icon's ALPHA channel -- i.e. the silhouette only. This is critical
-  // for visual quality: blurring the colored icon (the rocket strokes
-  // + the purple squircle gradient) creates an ugly ghost-rocket bleed
+  // for visual quality: blurring the colored icon (the glyph strokes
+  // + the slate/reed/dawn squircle gradient) creates an ugly ghost-bleed
   // visible behind the crisp icon. Blurring just the alpha gives a
-  // clean soft-edged halo of the squircle's outline, tinted purple
-  // via `feFlood`. Matches the CSS `filter: drop-shadow(0 0 56px ...)`
+  // clean soft-edged halo of the squircle's outline, tinted with the
+  // brand accent via `feFlood`. Matches the CSS `filter: drop-shadow(0 0 56px ...)`
   // on the boot-fallback so the cross-fade between the iOS native
   // splash and the SvelteKit boot-fallback matches glyph + glow at the swap.
   //

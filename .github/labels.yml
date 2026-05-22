@@ -1,0 +1,169 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-labels.json
+# .github/labels.yml -- single source of truth for every label on the
+# repo. Reconciled by `scripts/system/apply-github-features.mjs` on
+# push:main + weekly cron via .github/workflows/maintain-features.yml.
+#
+# Schema: each entry is { name, color (6-hex no #), description }.
+# `aliases` (optional, list of old names) is supported -- on apply,
+# if a label with an alias name exists it gets renamed to `name` so
+# old issues/PRs keep their tags. Drift detection picks up missing
+# labels, color mismatches, description mismatches.
+#
+# Adding a label: append a stanza here + run
+# `node scripts/system/apply-github-features.mjs` locally, OR push to
+# main and let maintain-features.yml reconcile.
+#
+# Deleting a label: REMOVE from this file. The reconciler currently
+# does NOT auto-delete (safety: protects against accidental renames
+# nuking issue tags). For deletion, run
+# `gh api -X DELETE repos/kaelys-js/heron/labels/<urlencoded-name>`.
+
+# ── Type labels (what kind of change / issue) ────────────────────────
+- name: bug
+  color: d73a4a
+  description: Something isn't working
+- name: enhancement
+  color: a2eeef
+  description: New feature or request
+- name: documentation
+  color: 0075ca
+  description: Improvements or additions to documentation
+- name: question
+  color: d876e3
+  description: Further information is requested
+- name: discussion
+  color: cccccc
+  description: Convert this issue into a Discussion
+- name: breaking-change
+  color: b60205
+  description: PR introduces a breaking change
+- name: regression
+  color: b60205
+  description: Confirmed regression from a recent release
+- name: security
+  color: d93f0b
+  description: Security-related change or report
+- name: performance
+  color: 0e8a16
+  description: Performance regression or improvement
+- name: flaky-test
+  color: fbca04
+  description: CI test that intermittently fails
+
+# ── Status / triage labels ───────────────────────────────────────────
+- name: needs-triage
+  color: fbca04
+  description: Awaiting maintainer triage
+- name: needs-design
+  color: c5def5
+  description: Awaiting design input
+- name: needs-product
+  color: c5def5
+  description: Awaiting product / scope decision
+- name: triaged
+  color: d4c5f9
+  description: Triaged + accepted into the backlog
+- name: wontfix
+  color: ededed
+  description: Not going to be worked on
+- name: duplicate
+  color: ededed
+  description: Duplicate issue or PR
+- name: invalid
+  color: e4e669
+  description: This doesn't seem right
+
+# ── Onboarding labels ────────────────────────────────────────────────
+- name: good first issue
+  color: 7057ff
+  description: Good for newcomers
+- name: help wanted
+  color: 008672
+  description: Extra attention is needed
+
+# ── PR meta labels ───────────────────────────────────────────────────
+- name: no-issue
+  color: ededed
+  description: Bypass the feat-needs-issue check (audit cycle / hotfix)
+- name: oversize-ok
+  color: ededed
+  description: Allow PRs above the 2000-LOC budget when justified
+
+# ── Community / showcase labels ──────────────────────────────────────
+- name: showcase
+  color: 00ff7f
+  description: Built-something-cool showcase (custom adapters, modes, dashboards)
+- name: hired-story
+  color: 1d76db
+  description: I-got-hired story (community success outcomes)
+
+# ── Size labels (auto-applied by labeler / size-label-action) ────────
+- name: size/XS
+  color: ededed
+  description: PR <= 10 LOC (auto-applied)
+- name: size/S
+  color: ededed
+  description: PR 11-100 LOC (auto-applied)
+- name: size/M
+  color: ededed
+  description: PR 101-500 LOC (auto-applied)
+- name: size/L
+  color: ededed
+  description: PR 501-1000 LOC (auto-applied)
+- name: size/XL
+  color: ededed
+  description: PR 1001-2000 LOC (auto-applied)
+- name: size/XXL
+  color: ededed
+  description: PR 2001+ LOC (auto-applied; needs oversize-ok)
+
+# ── Dependabot ecosystem labels (auto-applied by Dependabot) ─────────
+- name: dependencies
+  color: 0366d6
+  description: Pull requests that update a dependency
+- name: javascript
+  color: f1e05a
+  description: JS/TS dependency or change
+- name: github_actions
+  color: '000000'
+  description: GitHub Actions workflow or action dependency
+- name: ios
+  color: '333333'
+  description: iOS / macOS native dependency or change
+
+# ── Release Please labels ────────────────────────────────────────────
+- name: 'autorelease: pending'
+  color: ededed
+  description: Release Please catch-up PR pending merge
+- name: 'autorelease: tagged'
+  color: ededed
+  description: Release tagged + GitHub Release created
+- name: 'autorelease: snapshot'
+  color: ededed
+  description: Snapshot release (pre-tag preview)
+
+# ── Area labels (emoji-prefixed; referenced by .github/labeler.yml) ──
+- name: '⚙️ ci'
+  color: '000000'
+  description: GitHub Actions / CI workflows
+- name: '🔧 scripts'
+  color: '795548'
+  description: scripts/* and root .mjs tooling
+- name: '📄 docs'
+  color: 0075ca
+  description: docs/ + README + .github community docs
+- name: '📦 dependencies'
+  color: 0366d6
+  description: package-manager + Dependabot ecosystem files
+- name: '🔴 core-architecture'
+  color: b60205
+  description: CLAUDE.md / docs/DATA_CONTRACT.md / modes/_shared.md (high-risk)
+- name: '⚠️ agent-behavior'
+  color: fbca04
+  description: modes/*.md + .claude/skills/** (agent prompts)
+- name: '🟢 ui'
+  color: 0e8a16
+  description: ui/src/** (SvelteKit dashboard)
+- name: '🌐 i18n'
+  color: c5def5
+  description: Translation / locale-specific change

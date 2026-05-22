@@ -1,8 +1,8 @@
 # Getting help with Heron
 
-Welcome! This page documents the right channel for each kind of
-question so you can get answered quickly + we can keep the issue
-tracker focused on bugs + feature work.
+This page documents the right channel for each kind of question so
+you can get answered quickly + we can keep the issue tracker focused
+on bugs + feature work.
 
 ## Quick reference
 
@@ -11,9 +11,9 @@ tracker focused on bugs + feature work.
 | Setup / installation / "it won't start" | [Discord](https://discord.gg/MyFbztUK5U) or [GitHub Discussions Q&A](https://github.com/kaelys-js/heron/discussions/categories/q-a) |
 | Customising prompts / archetypes / scoring | [Discussions → Show and Tell](https://github.com/kaelys-js/heron/discussions/categories/show-and-tell) |
 | Roadmap + feature proposals | [Discussions → Ideas](https://github.com/kaelys-js/heron/discussions/categories/ideas) |
-| **You found a bug** | [Open an issue with the bug template](https://github.com/kaelys-js/heron/issues/new?template=bug.yml) |
-| **You have a feature request** | [Open an issue with the feature template](https://github.com/kaelys-js/heron/issues/new?template=feature.yml) |
-| **You got hired using Heron** | [Open an issue with the "I got hired" template](https://github.com/kaelys-js/heron/issues/new?template=i-got-hired.yml) -- we keep a Hall of Fame |
+| **You found a bug** | [Open an issue with the bug template](https://github.com/kaelys-js/heron/issues/new?template=bug_report.yml) |
+| **You have a feature request** | [Open an issue with the feature template](https://github.com/kaelys-js/heron/issues/new?template=feature_request.yml) |
+| **You got hired using Heron** | [Start a Discussion with the "I got hired" template](https://github.com/kaelys-js/heron/discussions/new?category=show-and-tell&template=i-got-hired.yml) -- shared in the community |
 | Security vulnerability | [SECURITY.md](./SECURITY.md) -- private email, NOT a public issue |
 | Code of conduct concern | [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) -- private email |
 | Help contributing to the codebase | [CONTRIBUTING.md](./CONTRIBUTING.md) |
