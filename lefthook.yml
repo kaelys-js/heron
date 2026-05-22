@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/lefthook.json
 # Lefthook -- git hooks manager.
 #
 # Run hooks in parallel, skip on rebase/merge, share config across the team.

@@ -1,3 +1,4 @@
+#:schema https://json.schemastore.org/pyproject.json
 # pyproject.toml — Python tooling config (ruff + future tools).
 #
 # Schema reference (per-tool — there's no canonical pyproject schema):

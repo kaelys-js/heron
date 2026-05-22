@@ -17,7 +17,7 @@
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/kaelys-js/heron/badge)](https://securityscorecards.dev/viewer/?uri=github.com/kaelys-js/heron)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/github/v/release/kaelys-js/heron)](https://github.com/kaelys-js/heron/releases)
-[![Discord](https://img.shields.io/discord/1507162919421612134?label=discord&logo=discord)](https://discord.gg/MyFbztUK5U)
+[![Discord](https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/MyFbztUK5U)
 [![REUSE compliant](https://img.shields.io/badge/REUSE-compliant-blue)](https://reuse.software)
 
 [**Quick start**](#quick-start) · [**Documentation**](docs/) · [**Architecture**](docs/ARCHITECTURE.md) · [**FAQ**](docs/FAQ.md) · [**Discord**](https://discord.gg/MyFbztUK5U) · [**Sponsor**](https://github.com/sponsors/kaelys-js)
