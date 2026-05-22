@@ -12,7 +12,6 @@
 		0A5C2DA6FCEE4B8D3FF007FD /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6FF0483296BD7B4DF03552B /* ErrorReporter.swift */; };
 		1384E818E0B0BB9C24B3712A /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13A4B88F10BE222B3E1F1BCB /* ErrorReporter.swift */; };
 		1410FAC7E621519DCCAA554E /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FD7C6838A42199F3A5357F9 /* Brand.swift */; };
-		16E8BD9D796EEE4D1CAB1F77 /* AppLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A2BA497A7735FA0C55C2F3F4 /* AppLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1A1E6B6C4CFE57F9BB79B986 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 527F4909548255C904FEC97F /* Brand.swift */; };
 		1CFB3E0DF723F216C35F35C4 /* ViewInspector in Frameworks */ = {isa = PBXBuildFile; productRef = 582E0E546A93A6F32A1D7247 /* ViewInspector */; };
 		27405948A1B1BD54E323E3CE /* ViewInspector in Frameworks */ = {isa = PBXBuildFile; productRef = 6DB711B31CCCEFED22B04B5D /* ViewInspector */; };
@@ -36,6 +35,7 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		5811D3B6CF68036EA7C35636 /* BackgroundFetcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51BDB1C1385AB8990893E635 /* BackgroundFetcherTests.swift */; };
+		59B950883E0887C1E426DDC7 /* AppDelegateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B7A77592E22CA6C35391B1 /* AppDelegateTests.swift */; };
 		5C10E71DF4CB6EA4C40FF156 /* InboxIssuesWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 559AF47C7C7A75A0218312AA /* InboxIssuesWidget.swift */; };
 		5C659E97F15CDA51B2F886CD /* WidgetAuthGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3176B0165C26166B17F7F403 /* WidgetAuthGate.swift */; };
 		5C7BEACB7A09695AF511E256 /* SpotlightIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8126D767BB835DA855B58552 /* SpotlightIndexer.swift */; };
@@ -46,11 +46,14 @@
 		72F610D6F09C4E4101EBDCED /* NextInterviewWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29AFA3C1756697C1450E03AC /* NextInterviewWidget.swift */; };
 		7623847E565D6D406BE4999D /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6FF0483296BD7B4DF03552B /* ErrorReporter.swift */; };
 		77224F2B40E44FF379F678F6 /* LiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61F7E4F675384A34CE49A942 /* LiveActivity.swift */; };
+		792EC98DB2374423F6C3711E /* AppLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A2BA497A7735FA0C55C2F3F4 /* AppLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		7A5501C8C2D0C2B9160EB349 /* KeychainStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A60ED4B98EE76C3731F81BA /* KeychainStoreTests.swift */; };
 		7AC0D36C2BBD93C60EFC3C4F /* BridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26631DCF28D85F99FB13A91E /* BridgeViewController.swift */; };
 		80FBE8E3CA51796E6E8DC10E /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 527F4909548255C904FEC97F /* Brand.swift */; };
 		8914930D75A1C77BA5BFB215 /* WatchTestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = A341629834FE8424663D0140 /* WatchTestsSmoke.swift */; };
 		89AD4BE5DDC76EFCF29EE2DC /* NextInterviewWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29AFA3C1756697C1450E03AC /* NextInterviewWidget.swift */; };
+		8ECE368F5E17720C014B98D9 /* BridgeViewControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EC2D08D25BB0652574B58AB /* BridgeViewControllerTests.swift */; };
+		90CCDF8DDC41CFE42FF5A977 /* AppShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C05A76F56281A0EFD15DAD02 /* AppShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		91269196C8EDE956B323C1CA /* NetworkMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D00F0BF04C6ACD70B7ED94 /* NetworkMonitorTests.swift */; };
 		9CE78950F04704DE84F0844C /* InterviewAttributesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83AEC2292336F688D8BDBBAA /* InterviewAttributesTests.swift */; };
 		9E1089641FED37926AC35F7A /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13A4B88F10BE222B3E1F1BCB /* ErrorReporter.swift */; };
@@ -68,18 +71,17 @@
 		B1166C2AFCE9CB88941BA785 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7738EEBCC31A28A769071A /* RootView.swift */; };
 		B24C37F9AB6EAC8A977C52B4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 465676AAA93B7BDE4A52A3AA /* Foundation.framework */; };
 		B42653365E9F174EE3B0363B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 465676AAA93B7BDE4A52A3AA /* Foundation.framework */; };
+		B9B2523FC9B605F00CB3F0D3 /* AppWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B4B54803324B7A34A4644CE6 /* AppWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		C2FB57FE1DA4B96DC5823325 /* WidgetSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE410D6435447781DF36C55B /* WidgetSnapshotTests.swift */; };
 		C362913F0191FC3C677CCE21 /* WatchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 604BE1F005FDB069FF3F1985 /* WatchModel.swift */; };
 		C3B8720894F6C2768578943E /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85AA568F77B851EEABF69F5 /* Brand.swift */; };
 		C40B0CF755432863F060BAD7 /* AppLiveActivityTestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = C04457D7F07ABD8B128B1576 /* AppLiveActivityTestsSmoke.swift */; };
 		C61D7BBE9991CEF00B516A6B /* SpotlightIndexerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735399543377D51D2BECCBD9 /* SpotlightIndexerTests.swift */; };
-		CA7E0C12728FEC123A1AD04F /* AppWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B4B54803324B7A34A4644CE6 /* AppWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D4E7F530543D563EF6B12749 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 9E3511A680A282AAA2BC1ED2 /* SnapshotTesting */; };
 		D97F05FB2B15F5653D231D96 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FD7C6838A42199F3A5357F9 /* Brand.swift */; };
 		DB312A22A306A2D8FE651276 /* ShareViewControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41ECB3261C93892C076F7492 /* ShareViewControllerTests.swift */; };
 		DB9888B9A6B6413600F13C3D /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31513D0E4528E2BF567E770E /* ErrorReporter.swift */; };
 		DD736F2150095034A1A5D70A /* WidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B536A0A3EB877FABCC9B18D3 /* WidgetBundle.swift */; };
-		DF390E65A7F7ABF95DD2EE57 /* AppShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C05A76F56281A0EFD15DAD02 /* AppShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		DF7C841FD0F886FF8CBD285F /* InboxIssuesWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 559AF47C7C7A75A0218312AA /* InboxIssuesWidget.swift */; };
 		E7D388A968A3043252449F3B /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = B536ACCB0589326E3A51A3FF /* SnapshotTesting */; };
 		E8067880245E7173075585E6 /* TopApplyWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07E05E7932775592D5BE6108 /* TopApplyWidget.swift */; };
@@ -189,9 +191,9 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				CA7E0C12728FEC123A1AD04F /* AppWidget.appex in Embed Foundation Extensions */,
-				16E8BD9D796EEE4D1CAB1F77 /* AppLiveActivity.appex in Embed Foundation Extensions */,
-				DF390E65A7F7ABF95DD2EE57 /* AppShareExtension.appex in Embed Foundation Extensions */,
+				B9B2523FC9B605F00CB3F0D3 /* AppWidget.appex in Embed Foundation Extensions */,
+				792EC98DB2374423F6C3711E /* AppLiveActivity.appex in Embed Foundation Extensions */,
+				90CCDF8DDC41CFE42FF5A977 /* AppShareExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -204,6 +206,7 @@
 		07E05E7932775592D5BE6108 /* TopApplyWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TopApplyWidget.swift; sourceTree = "<group>"; };
 		0864100E15B7E184D1F89EC5 /* KeychainStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		0A63DB96BB61618B21A1A46D /* ErrorReporterTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ErrorReporterTests.swift; sourceTree = "<group>"; };
+		0EC2D08D25BB0652574B58AB /* BridgeViewControllerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BridgeViewControllerTests.swift; sourceTree = "<group>"; };
 		13A4B88F10BE222B3E1F1BCB /* ErrorReporter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ErrorReporter.swift; sourceTree = "<group>"; };
 		15C6DBE48967C2185A1EA702 /* BrandTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BrandTests.swift; sourceTree = "<group>"; };
 		1A60ED4B98EE76C3731F81BA /* KeychainStoreTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KeychainStoreTests.swift; sourceTree = "<group>"; };
@@ -272,6 +275,7 @@
 		C7C1D23B601810C4801F8ED2 /* AppTestsSmoke.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppTestsSmoke.swift; sourceTree = "<group>"; };
 		C85AA568F77B851EEABF69F5 /* Brand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
 		CE410D6435447781DF36C55B /* WidgetSnapshotTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotTests.swift; sourceTree = "<group>"; };
+		D1B7A77592E22CA6C35391B1 /* AppDelegateTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegateTests.swift; sourceTree = "<group>"; };
 		D3D00F0BF04C6ACD70B7ED94 /* NetworkMonitorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkMonitorTests.swift; sourceTree = "<group>"; };
 		D7F71EC2066DFCD85C58584C /* BonjourBrowserTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BonjourBrowserTests.swift; sourceTree = "<group>"; };
 		D9A6456417C346D5DF36A0BF /* WidgetTests.bundle */ = {isa = PBXFileReference; explicitFileType = "wrapper.plug-in"; includeInIndex = 0; path = WidgetTests.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -527,6 +531,8 @@
 				D7F71EC2066DFCD85C58584C /* BonjourBrowserTests.swift */,
 				23CFCE5AA5DAB1BF905DE91E /* NativePluginTests.swift */,
 				98FE0BE080929E3A65B710BB /* WatchSessionBridgeTests.swift */,
+				D1B7A77592E22CA6C35391B1 /* AppDelegateTests.swift */,
+				0EC2D08D25BB0652574B58AB /* BridgeViewControllerTests.swift */,
 			);
 			path = AppTests;
 			sourceTree = "<group>";
@@ -1041,6 +1047,8 @@
 				FDAEA7BE343B9F8961A45215 /* BonjourBrowserTests.swift in Sources */,
 				F418257D7BB8D8D3AA9C542A /* NativePluginTests.swift in Sources */,
 				A100244C98B73FC75ED81377 /* WatchSessionBridgeTests.swift in Sources */,
+				59B950883E0887C1E426DDC7 /* AppDelegateTests.swift in Sources */,
+				8ECE368F5E17720C014B98D9 /* BridgeViewControllerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
