@@ -894,6 +894,23 @@ jobs:
           path: ui/ios/App/fastlane/test_output/
           retention-days: 14
 
+      # H.E -- if WidgetSnapshotTests / RootViewTests recorded new
+      # baselines (typically on a manual `RECORD_MODE=1` run), surface
+      # them as an artifact so a developer can download + commit them
+      # without needing the pinned local sim. Committed baselines live
+      # under __Snapshots__/ next to the test sources; this upload only
+      # exists for the recording flow.
+      - name: Upload iOS snapshot baselines
+        if: always() && needs.changes.outputs.ios == 'true' && (hashFiles('ui/ios/App/WidgetTests/__Snapshots__/**') != '' || hashFiles('ui/ios/App/WatchTests/__Snapshots__/**') != '')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ios-snapshot-baselines-${{ github.run_id }}
+          path: |
+            ui/ios/App/WidgetTests/__Snapshots__/
+            ui/ios/App/WatchTests/__Snapshots__/
+          retention-days: 14
+          if-no-files-found: ignore
+
       - name: Upload coverage to Codecov (ios flag)
         # G12 -- see the ts upload above for OIDC rationale.
         # Five per-scheme cobertura.xml files (AppTests / WidgetTests /

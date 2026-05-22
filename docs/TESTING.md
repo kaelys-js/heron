@@ -222,15 +222,52 @@ final class MyTests: XCTestCase {
 }
 ```
 
-Snapshot tests use [`swift-snapshot-testing`](https://github.com/pointfreeco/swift-snapshot-testing)
-+ [`ViewInspector`](https://github.com/nalexn/ViewInspector). Re-record
-baselines:
+Snapshot tests use [`swift-snapshot-testing`](https://github.com/pointfreeco/swift-snapshot-testing).
+Visual regression covers two scopes:
+
+- `WidgetTests/WidgetSnapshotTests.swift` -- every widget x family-size
+  combination (Small / Medium / Large + Accessory Rectangular /
+  Circular / Inline for NextInterview, TopApply, InboxIssues, plus the
+  AppWidget umbrella).
+- `WatchTests/RootViewTests.swift` -- RootView in 3 states
+  (authenticated populated / authenticated empty / unauthenticated
+  gate) across two form factors (Ultra 2 + Series 10 41 mm).
+
+The helper in each file is gated on baseline existence -- when no
+`__Snapshots__/<TestClass>.<testName>.1.png` is on disk AND
+`RECORD_MODE != "1"`, the image-diff step short-circuits and only the
+view-materialization assertion runs (passes; xcov still records the
+body{} coverage). Once baselines are recorded + committed, every
+subsequent run verifies against them.
+
+Re-record + commit baselines:
 
 ```bash
-RECORD=1 bundle exec fastlane test_ci
+# 1. Pinned sim must be available (iPhone 16 Pro / iOS 18.5 + Apple
+#    Watch Ultra 2 / watchOS 11 — see ui/ios/App/fastlane/Fastfile).
+# 2. RECORD_MODE=1 forces every assertSnapshot call to overwrite the
+#    baseline instead of comparing against it.
+RECORD_MODE=1 bundle exec fastlane test_ci
+
+# 3. Inspect the regenerated __Snapshots__/ subtrees:
+git status ui/ios/App/WidgetTests/__Snapshots__/ ui/ios/App/WatchTests/__Snapshots__/
+git diff  ui/ios/App/WidgetTests/__Snapshots__/ ui/ios/App/WatchTests/__Snapshots__/
+
+# 4. Commit. PR description MUST flag snapshot-update commits.
+git add ui/ios/App/WidgetTests/__Snapshots__/ ui/ios/App/WatchTests/__Snapshots__/
+git commit -m "test(ios): re-record snapshot baselines"
 ```
 
-PR description MUST flag snapshot-update commits.
+If a developer doesn't have the pinned sim locally, the CI iOS job
+uploads its `__Snapshots__/` subtrees as an artifact on test failure
+(see `.github/workflows/test.yml::ios::Upload iOS snapshot baselines`).
+Download the artifact, drop the contents into the corresponding
+`__Snapshots__/` dirs, and commit.
+
+Image-diff tolerance: precision 0.98 + perceptual-precision 0.98 (each
+allows up to 2% per-pixel variance to absorb anti-alias + font-hint
+drift between Xcode patch versions). A real visual regression sits
+above 2% on every dimension we screenshot.
 
 ## Pre-push gate
 
