@@ -38,7 +38,8 @@
  * Test fixtures live in scripts/system/verify-no-deflection.test.mjs.
  */
 import { execSync } from 'node:child_process';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 export const DEFLECTION_REGEX =
   /\b(MVP|defer(?:red|ral|ring)?|out[- ]of[- ]scope|won['’]?t fit|future PR|future work|separate ticket|separate PR|follow[- ]?up|simplify to|for now|punt(?:ed|ing)?|leave for now)\b/i;
@@ -206,6 +207,18 @@ function main() {
 }
 
 // Test-only: skip main() when imported as a module by the test file.
-if (import.meta.url === `file://${process.argv[1]}`) {
+//
+// Previously this used `import.meta.url === \`file://${process.argv[1]}\``
+// which silently broke on macOS (where /tmp is a symlink to /private/tmp,
+// causing the URL ↔ argv path comparison to never match) AND when argv[1]
+// was a relative path. The bug meant `process.exit(main())` NEVER ran,
+// so the hook logged errors but always exited 0 -- it was a no-op gate.
+//
+// Fix: compare REALPATHs via Node's `fileURLToPath` + `realpathSync`.
+// Identical resolution on both sides so symlinks + relative paths
+// round-trip correctly.
+const scriptPath = realpathSync(fileURLToPath(import.meta.url));
+const argvPath = process.argv[1] ? realpathSync(process.argv[1]) : '';
+if (scriptPath === argvPath) {
   process.exit(main());
 }
