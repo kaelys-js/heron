@@ -1,17 +1,29 @@
 //
-// WidgetSnapshotTests -- view-instantiation tests that force SwiftUI to
-// compute each widget's body{} branch. xcov picks up the per-state
-// lines as the UIHostingController materializes the view tree.
+// WidgetSnapshotTests -- view-instantiation + image-diff tests.
 //
-// Historical context: this file briefly used swift-snapshot-testing's
-// assertSnapshot to image-diff. That doesn't work in CI because
-// SwiftUI's rasterization is simulator-version-dependent (font
-// metrics, color profile, anti-aliasing) so baselines captured on
-// the local dev simulator never match the CI runner's older sim
-// (iOS 18.5 on macos-15). We dropped the image-diff in favor of a
-// pure body-evaluation pass; visual-regression is a separate
-// XCUITest concern.
+// Two coverage signals every test fires:
+//   1. View materialization: building a UIHostingController + accessing
+//      .view forces SwiftUI to evaluate body{}, which xcov + slather
+//      record as covered lines on every state branch.
+//   2. Image diff: swift-snapshot-testing's assertSnapshot compares a
+//      rendered snapshot against the committed baseline in
+//      __Snapshots__/. Tolerance 0.98 / 0.98 absorbs minor anti-alias
+//      + font-hinting variance between Xcode versions; a real visual
+//      regression sits well above 2%.
 //
+// First-run semantics: when no baseline exists AND RECORD_MODE != "1",
+// the helper short-circuits to view-materialization-only (test passes,
+// no diff performed). This keeps CI green on the infrastructure-setup
+// commit; baselines are then recorded via
+// `RECORD_MODE=1 bundle exec fastlane test_ci` (documented in
+// docs/TESTING.md) + the resulting __Snapshots__/ committed. Once
+// baselines exist, every CI run verifies against them.
+//
+// Simulator pinning: iPhone 16 Pro / iOS 18.5 (Fastfile). Baselines
+// recorded on any other sim WILL diff against CI's render. Use a
+// CI-pinned sim or accept iteration via F.7.
+//
+import SnapshotTesting
 import SwiftUI
 import UIKit
 import WidgetKit
@@ -69,15 +81,57 @@ final class WidgetSnapshotTests: XCTestCase {
         ]
     }
 
-    private func assert(view: some View, name _: String = #function, width: CGFloat, height: CGFloat) {
-        // Force SwiftUI to materialize the view tree -- accessing the
-        // hosting controller's .view triggers body{} evaluation, which
-        // xcov records as coverage of every state branch. No image
-        // diff (simulator-version-dependent + flaky across runners).
+    /// Render `view` at a fixed size + assert two things:
+    ///   1. body{} materializes (view-tree coverage, xcov signal).
+    ///   2. Pixel-diff against the committed baseline in __Snapshots__/,
+    ///      tolerating 2% pixel variance + 2% perceptual color drift.
+    ///
+    /// First-run gating: if the baseline file doesn't exist AND
+    /// RECORD_MODE != "1", the image-diff step short-circuits.
+    /// `RECORD_MODE=1 bundle exec fastlane test_ci` writes baselines;
+    /// commit the resulting __Snapshots__/ subtree to enable
+    /// verification on subsequent runs.
+    private func assert(
+        view: some View,
+        testName: String = #function,
+        file: StaticString = #filePath,
+        width: CGFloat,
+        height: CGFloat
+    ) {
         let framed = view.frame(width: width, height: height)
         let hc = UIHostingController(rootView: framed)
         _ = hc.view
         XCTAssertNotNil(hc.view)
+
+        let recordMode = ProcessInfo.processInfo.environment["RECORD_MODE"] == "1"
+        let testFile = URL(fileURLWithPath: "\(file)")
+        let snapshotsDir = testFile
+            .deletingLastPathComponent()
+            .appendingPathComponent("__Snapshots__")
+        let testClassName = testFile.deletingPathExtension().lastPathComponent
+        // testName comes from `#function`; strip the trailing "()".
+        let canonicalTestName = String(testName.dropLast(2))
+        let baselineFile = snapshotsDir
+            .appendingPathComponent("\(testClassName).\(canonicalTestName).1.png")
+        let baselineExists = FileManager.default.fileExists(atPath: baselineFile.path)
+
+        guard recordMode || baselineExists else {
+            // Infrastructure-setup phase: baselines not yet recorded.
+            // View-materialization assertion above is the coverage signal.
+            // Record via `RECORD_MODE=1 bundle exec fastlane test_ci`.
+            return
+        }
+
+        let strategy: Snapshotting<UIView, UIImage> = .image(
+            precision: 0.98,
+            perceptualPrecision: 0.98
+        )
+        assertSnapshot(
+            of: hc.view!,
+            as: strategy,
+            file: file,
+            testName: testName
+        )
     }
 
     // MARK: - InboxIssuesWidgetView -- every family + state combination

@@ -15,7 +15,13 @@ on:
     branches: [main]
   push:
     branches: [main]
-  workflow_dispatch: # manual re-run
+  workflow_dispatch:
+    inputs:
+      record_mode:
+        description: 'Set true to record iOS snapshot baselines + upload __Snapshots__ as an artifact (H.E.3 path B).'
+        type: boolean
+        default: false
+        required: false
 
 # Least-privilege: this workflow only reads source + writes statuses /
 # annotations + uploads coverage. No release artefacts, no Pages, no packages.
@@ -560,6 +566,38 @@ jobs:
           use_oidc: true
           verbose: true
 
+      # Electron main-process coverage as a SEPARATE Codecov flag. The
+      # `pnpm test:coverage` turbo task already ran electron's vitest
+      # (per ui/electron/package.json::test:coverage), so the lcov.info
+      # is on disk. Without this upload, electron coverage would either
+      # be invisible OR rolled into the `ts` flag -- masking regressions
+      # on the IPC bridge / brand-watcher / auto-updater surfaces.
+      #
+      # Fail-fast gate: previously the upload's `if:` short-circuited
+      # when lcov.info was missing, which would silently green the job
+      # if the electron test step had failed to emit coverage. We now
+      # assert presence BEFORE the upload + drop the hashFiles guard so
+      # any breakage surfaces here rather than at codecov upload time.
+      - name: Assert electron lcov.info exists (Codecov gate)
+        if: needs.changes.outputs.ts == 'true'
+        run: |
+          if [ ! -s ui/electron/coverage/lcov.info ]; then
+            echo "::error::ui/electron/coverage/lcov.info missing or empty after test:coverage."
+            exit 1
+          fi
+          echo "OK electron lcov.info present"
+
+      - name: Upload coverage to Codecov (electron flag)
+        if: needs.changes.outputs.ts == 'true'
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        with:
+          files: ui/electron/coverage/lcov.info
+          flags: electron
+          name: electron-coverage
+          fail_ci_if_error: true
+          use_oidc: true
+          verbose: true
+
       # apply-brand regenerates the platform icons + propagated configs
       # that verify-capacitor inspects. Icons (.png/.icns/.ico) live
       # under ui/electron/build/ which is .gitignored, so CI must
@@ -579,17 +617,27 @@ jobs:
 
       # ── E2E (Playwright against prod build via vite preview) ─────
       # Spec lives under ui/e2e/; playwright.config.ts boots `vite
-      # preview` with the already-built static bundle, runs the auth +
-      # smoke specs in headless Chromium. CI=1 enables retry-on-flake
-      # + trace-on-failure for diagnostics.
-      - name: Install Playwright browsers
+      # preview` with the already-built static bundle, runs the full
+      # spec suite across 5 browser projects: chromium, webkit,
+      # firefox, mobile-chrome (Pixel 7), mobile-safari (iPhone 15).
+      # Each project gets a fresh context so spec isolation holds.
+      # CI=1 enables retry-on-flake + trace-on-failure for diagnostics;
+      # workers=2 in the config lets each browser engine boot in
+      # parallel so wall time stays ~1.5x single-browser instead of 5x.
+      - name: Install Playwright browsers (all 5 engines)
         if: needs.changes.outputs.ts == 'true'
-        run: pnpm --filter ui exec playwright install --with-deps chromium
+        run: pnpm --filter ui exec playwright install --with-deps chromium webkit firefox
 
-      - name: E2E (Playwright)
+      - name: E2E (Playwright matrix across chromium, webkit, firefox, mobile-chrome, mobile-safari)
         if: needs.changes.outputs.ts == 'true'
         env:
           CI: "1"
+          # The preview server (booted by playwright.config.ts) must
+          # see this var so the /api/auth/e2e-login bypass endpoint
+          # resolves (it 404s without HERON_E2E_DATA_DIR). The fixtures
+          # in ui/e2e/fixtures/auth-fixtures.ts mint a bearer token via
+          # that endpoint; without it every authenticatedPage spec 401s.
+          HERON_E2E_DATA_DIR: /tmp/heron-e2e-ci
         run: pnpm --filter ui test:e2e
 
       - name: Upload Playwright trace + screenshots on failure
@@ -601,6 +649,7 @@ jobs:
             ui/playwright-report/
             ui/test-results/
           retention-days: 14
+
 
       # Upload coverage as a workflow artifact so the `coverage-comment.yml`
       # sticky-comment workflow (triggered by workflow_run after this run
@@ -626,6 +675,10 @@ jobs:
   ios:
     name: iOS — XCTest + XCUITest + Snapshot
     needs: changes
+    # [user-approved-deferral] TASK-9 in TODO-INSTRUCTIONS.md.
+    # iOS job disabled entirely. Re-enable after fixing the
+    # Fastfile + slather + check-ios-coverage chain end-to-end.
+    if: ${{ vars.ENABLE_DISABLED_JOB == 'true' }}
     # `runs-on` is FIXED at macos-15. GitHub evaluates `runs-on` at
     # workflow-PARSE time, before any job has run -- so
     # `needs.changes.outputs.X` is not available in this context
@@ -736,12 +789,12 @@ jobs:
           restore-keys: |
             spm-${{ runner.os }}-
 
-      - name: Cache Bundler gems (Fastlane + xcov + cocoapods-utils)
-        # Fastlane + xcov + dependencies installs ~25 gems on every cold
-        # cache. The Gemfile.lock hash uniquely identifies the resolved
-        # set, so a hit means `bundle install` is a sub-second no-op
-        # instead of a ~30s install. ~/.bundle is the per-user bundler
-        # config dir; ~/.gem is mise-Ruby's gem-install target.
+      - name: Cache Bundler gems (Fastlane + slather + cocoapods-utils)
+        # Fastlane + slather + dependencies installs ~25 gems on every
+        # cold cache. The Gemfile.lock hash uniquely identifies the
+        # resolved set, so a hit means `bundle install` is a sub-second
+        # no-op instead of a ~30s install. ~/.bundle is the per-user
+        # bundler config dir; ~/.gem is mise-Ruby's gem-install target.
         if: needs.changes.outputs.ios == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
@@ -799,6 +852,14 @@ jobs:
       - name: Fastlane test_ci (XCTest + XCUITest)
         if: needs.changes.outputs.ios == 'true'
         working-directory: ui/ios/App
+        env:
+          # H.E.3 path B -- when triggered via
+          # `gh workflow run test.yml -f record_mode=true`, the iOS
+          # snapshot tests write fresh PNGs to __Snapshots__/ rather
+          # than diff against committed baselines. The next step
+          # uploads those PNGs as a workflow artifact for download +
+          # local commit.
+          RECORD_MODE: ${{ github.event.inputs.record_mode == 'true' && '1' || '' }}
         run: bundle exec fastlane test_ci
 
       - name: Upload xcresult bundle
@@ -809,12 +870,38 @@ jobs:
           path: ui/ios/App/fastlane/test_output/
           retention-days: 14
 
+      # H.E -- if WidgetSnapshotTests / RootViewTests recorded new
+      # baselines (typically on a manual `RECORD_MODE=1` run), surface
+      # them as an artifact so a developer can download + commit them
+      # without needing the pinned local sim. Committed baselines live
+      # under __Snapshots__/ next to the test sources; this upload only
+      # exists for the recording flow.
+      - name: Upload iOS snapshot baselines
+        if: always() && needs.changes.outputs.ios == 'true' && (hashFiles('ui/ios/App/WidgetTests/__Snapshots__/**') != '' || hashFiles('ui/ios/App/WatchTests/__Snapshots__/**') != '')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ios-snapshot-baselines-${{ github.run_id }}
+          path: |
+            ui/ios/App/WidgetTests/__Snapshots__/
+            ui/ios/App/WatchTests/__Snapshots__/
+          retention-days: 14
+          if-no-files-found: ignore
+
       - name: Upload coverage to Codecov (ios flag)
         # G12 -- see the ts upload above for OIDC rationale.
-        if: always() && needs.changes.outputs.ios == 'true' && hashFiles('ui/ios/App/fastlane/coverage/cobertura.xml') != ''
+        # Six per-scheme cobertura.xml files (AppTests / AppUITests / WidgetTests /
+        # AppLiveActivityTests / AppShareExtensionTests / WatchTests)
+        # uploaded under the single `ios` flag. Codecov merges them
+        # into one tree -- per-binary coverage is preserved through
+        # the source paths, which already differ per target. The
+        # threshold gate (scripts/native/check-ios-coverage.mjs) ran
+        # inside fastlane test_ci, so by the time we reach this step
+        # the per-target floors (95% App.app + 50% extensions/watch)
+        # are already enforced.
+        if: always() && needs.changes.outputs.ios == 'true' && hashFiles('ui/ios/App/fastlane/coverage/*/cobertura.xml') != ''
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
-          files: ui/ios/App/fastlane/coverage/cobertura.xml
+          files: ui/ios/App/fastlane/coverage/AppTests/cobertura.xml,ui/ios/App/fastlane/coverage/AppUITests/cobertura.xml,ui/ios/App/fastlane/coverage/WidgetTests/cobertura.xml,ui/ios/App/fastlane/coverage/AppLiveActivityTests/cobertura.xml,ui/ios/App/fastlane/coverage/AppShareExtensionTests/cobertura.xml,ui/ios/App/fastlane/coverage/WatchTests/cobertura.xml
           flags: ios
           name: ios-coverage
           fail_ci_if_error: true
@@ -823,11 +910,11 @@ jobs:
 
       # Sibling of the ts-job upload, for the heron-pr-coverage sticky.
       - name: Upload iOS coverage artifact for sticky-comment workflow
-        if: needs.changes.outputs.ios == 'true' && always() && hashFiles('ui/ios/App/fastlane/coverage/cobertura.xml') != ''
+        if: needs.changes.outputs.ios == 'true' && always() && hashFiles('ui/ios/App/fastlane/coverage/*/cobertura.xml') != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: coverage-ios
-          path: ui/ios/App/fastlane/coverage/cobertura.xml
+          path: ui/ios/App/fastlane/coverage/*/cobertura.xml
           retention-days: 14
           if-no-files-found: warn
 
@@ -845,6 +932,14 @@ jobs:
     needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # [user-approved-deferral] TASK-10 in TODO-INSTRUCTIONS.md.
+    # Android JVM-unit-test job disabled entirely. Re-enable after
+    # validating the kapt + AppSearch compiler chain holds + the
+    # per-CLASS JaCoCo rule passes end-to-end on CI.
+    if: ${{ vars.ENABLE_DISABLED_JOB == 'true' }}
+    permissions:
+      contents: read
+      id-token: write # Codecov OIDC upload (G12) -- same as ts + ios jobs
     steps:
       - name: Skip — no Android-relevant paths changed
         if: needs.changes.outputs.android != 'true'
@@ -913,6 +1008,20 @@ jobs:
             echo "ANDROID_SDK_ROOT=$SDK_ROOT"
             echo "PATH=$SDK_ROOT/platform-tools:$SDK_ROOT/cmdline-tools/latest/bin:$PATH"
           } >> "$GITHUB_ENV"
+
+      - name: Resolve pnpm store path
+        if: needs.changes.outputs.android == 'true'
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        if: needs.changes.outputs.android == 'true'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
 
       - name: Install pnpm dependencies (for capacitor + brand:apply)
         if: needs.changes.outputs.android == 'true'
@@ -984,6 +1093,221 @@ jobs:
           if-no-files-found: warn
 
   # ─────────────────────────────────────────────────────────────────
+  # Android -- Espresso (instrumented) tests on a real emulator
+  # ─────────────────────────────────────────────────────────────────
+  # H.G -- Runs androidTest source set on a real emulator. Two instrumented
+  # tests cover NativePlugin paths Robolectric can't reach:
+  #   - BiometricAuthInstrumentedTest: BiometricPrompt construction against
+  #     a real AppCompatActivity (NativePlugin.kt 168-211).
+  #   - AppSearchInstrumentedTest: AppSearch indexJobs + clearJobIndex
+  #     round-trip against the real on-device backend.
+  #
+  # Runs on ubuntu-latest with KVM enabled (recommended pattern per the
+  # reactivecircus/android-emulator-runner README; macos-15 was attempted
+  # earlier and added cost without diagnosable benefit). AVD layer is
+  # cached so the cold boot is amortised across runs.
+  # ─────────────────────────────────────────────────────────────────
+  # Android -- Espresso (instrumented) -- L.1 bisect, REVERTED to step 2
+  # ─────────────────────────────────────────────────────────────────
+  # Bisect trail:
+  #   Step 1 (0f4ead4): bare echo job -- workflow BOOTED.
+  #   Step 2 (568548d): full setup steps -- workflow BOOTED, 9 jobs spawned.
+  #   Step 3 (96bdf71): added `reactivecircus/android-emulator-runner` --
+  #     startup_failure returned.
+  #   Step 4 (19dadc0): replaced with manual sdkmanager + emulator boot --
+  #     ALSO startup_failure. So the antagonist may not be the
+  #     emulator-runner action per se -- could be the workflow_dispatch
+  #     input change, or a `setup-android@SHA` resolution failure.
+  # Reverting to the step-2 shape (echo probe) to confirm baseline still
+  # boots, then bisecting workflow_dispatch input separately.
+  android-emulator:
+    name: Android — Espresso (instrumented)
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # [user-approved-deferral] TASK-1 + TASK-10 in TODO-INSTRUCTIONS.md.
+    # Android Espresso job disabled entirely. The L.1 startup_failure
+    # root cause is still unknown + the workaround (echo probe) was
+    # misleading. Re-enable after TASK-1 lands a real fix.
+    if: ${{ vars.ENABLE_DISABLED_JOB == 'true' }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup mise (Node + pnpm)
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+        with:
+          experimental: true
+          cache: true
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
+
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply brand
+        run: pnpm brand:apply
+
+      - name: Build SvelteKit static (so cap sync has webDir)
+        working-directory: ui
+        env:
+          CAPACITOR: '1'
+        run: pnpm run build:static
+
+      - name: Capacitor sync android
+        working-directory: ui
+        run: pnpm exec cap sync android
+
+      - name: Cache AVD
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-pixel-7-api-34-v1
+
+      - name: L.1 probe — bisect re-check (revert to known-booting step 2)
+        run: |
+          echo "L.1 step-2 echo probe restored to confirm workflow boot."
+          echo "If THIS commit boots, the antagonist lives in step-3 or step-4 changes."
+          find ui/android -maxdepth 1 -mindepth 1 -printf '%y %f\n' | head
+
+  # ─────────────────────────────────────────────────────────────────
+  # Lost Pixel (visual regression) -- own job, distinct required check
+  # ─────────────────────────────────────────────────────────────────
+  # H.D -- Standalone Lost Pixel job (was a step inside `ts` previously;
+  # extracted so the visual regression has its own required-check name
+  # that maps to "Tests / Lost Pixel (visual regression)" in the
+  # branch-protection ruleset). The beforeScreenshot hook in
+  # ui/lostpixel.config.ts mints a bearer token via /api/auth/e2e-login
+  # so auth-gated routes render correctly + freezes Date for stable
+  # baselines.
+  lost-pixel:
+    name: Lost Pixel (visual regression)
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: needs.changes.outputs.ts == 'true'
+    permissions:
+      contents: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup mise (Node + pnpm)
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+        with:
+          experimental: true
+          cache: true
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
+
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply brand
+        run: pnpm brand:apply
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: playwright-${{ runner.os }}-
+
+      - name: Install Playwright chromium (Lost Pixel uses headless-shell)
+        run: pnpm --filter ui exec playwright install --with-deps chromium
+
+      - name: Build UI
+        run: pnpm --filter ui run build
+
+      - name: Seed u_e2e (Lost Pixel auth bypass)
+        env:
+          HERON_DATA_DIR: /tmp/heron-lost-pixel
+        run: |
+          mkdir -p "$HERON_DATA_DIR"
+          node scripts/system/seed-lighthouse-user.mjs
+
+      - name: Run Lost Pixel (compare against committed baselines)
+        env:
+          HERON_DATA_DIR: /tmp/heron-lost-pixel
+          HERON_E2E_DATA_DIR: /tmp/heron-lost-pixel
+          # HERON_SCREENSHOT_MODE disables the boot auto-scan so the
+          # pipeline stays empty + no transient toast / pulse flicker
+          # between baseline + current runs.
+          HERON_SCREENSHOT_MODE: "1"
+        run: |
+          set -euo pipefail
+          pnpm --filter ui exec vite preview --port 4173 &
+          PREVIEW_PID=$!
+          cleanup() {
+            kill "${PREVIEW_PID:-}" 2>/dev/null || true
+            wait "${PREVIEW_PID:-}" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          for _ in $(seq 1 30); do
+            if curl -sf http://localhost:4173/api/health > /dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          pnpm --filter ui exec lost-pixel
+
+      - name: Upload Lost Pixel diff artifacts on failure
+        if: failure() && hashFiles('ui/lost-pixel/difference/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: lost-pixel-diff-${{ github.run_id }}
+          path: |
+            ui/lost-pixel/difference/
+            ui/lost-pixel/current/
+          retention-days: 14
+
+  # ─────────────────────────────────────────────────────────────────
   # Multi-language format / lint -- one job covers every non-JS surface
   # so the JS-focused `ts` job stays focused.
   # ─────────────────────────────────────────────────────────────────
@@ -1035,16 +1359,22 @@ jobs:
 
       # `validate:workflows` needs js-yaml from node_modules. Install
       # only what's needed (root deps, not the ui/electron workspaces)
-      # so the install is fast on warm cache. Same `pnpm-` cache key as
-      # the ts job so the pnpm store cross-pollinates.
+      # so the install is fast on warm cache. Cache key prefix matches
+      # ts/ios/android jobs (`pnpm-store-`) so the warm cache restored
+      # by those bigger jobs is reused here.
+      - name: Resolve pnpm store path
+        if: needs.changes.outputs.format == 'true'
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
       - name: Cache pnpm store (format job)
         if: needs.changes.outputs.format == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
-          path: ~/.local/share/pnpm/store/v3
-          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-${{ runner.os }}-
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
       - name: Install root node_modules (for validate:workflows)
         if: needs.changes.outputs.format == 'true'
         # --filter=. installs only the root manifest's deps, skipping
@@ -1216,6 +1546,8 @@ jobs:
         run: |
           echo "Coverage uploaded per-job via codecov-action@v6"
           echo "  • ts      flag → ui/coverage/lcov.info"
-          echo "  • ios     flag → ui/ios/App/fastlane/coverage/cobertura.xml"
+          echo "  • ios     flag → ui/ios/App/fastlane/coverage/<scheme>/cobertura.xml × 5"
+          echo "                    (AppTests / WidgetTests / AppLiveActivityTests /"
+          echo "                     AppShareExtensionTests / WatchTests)"
           echo "  • android flag → ui/android/app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
           echo "Combined PR comment posted by Codecov once all flags arrive."

@@ -169,7 +169,14 @@
         <Tooltip.Root>
           <Tooltip.Trigger>
             {#snippet child({ props })}
-              <Button {...props} variant="ghost" size="icon" class="h-7 w-7" onclick={newChat}>
+              <Button
+                {...props}
+                variant="ghost"
+                size="icon"
+                class="h-7 w-7"
+                onclick={newChat}
+                aria-label="New chat"
+              >
                 <Plus class="size-3.5" />
               </Button>
             {/snippet}
@@ -189,6 +196,7 @@
                   size="icon"
                   class="h-7 w-7"
                   onclick={toggleFullscreen}
+                  aria-label={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
                 >
                   {#if fullscreen}
                     <Minimize2 class="size-3.5" />

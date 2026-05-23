@@ -283,10 +283,10 @@
       <!-- ===================== HERO ===================== -->
       <section class="space-y-4">
         <div>
-          <h1 class="text-xl font-semibold tracking-tight">
+          <h1 class="text-xl font-semibold tracking-tight" data-testid="inbox-greeting">
             {greeting}{data.firstName ? ', ' + data.firstName : ''}
           </h1>
-          <p class="text-sm text-muted-foreground">
+          <p class="text-sm text-muted-foreground" data-testid="topbar-date">
             {weekday}, {dateStr}
             {#if data.runtime.runningTasks.length > 0}
               · <span class="text-emerald-400 inline-flex items-center gap-1">
@@ -1152,7 +1152,7 @@
           {/if}
 
           <!-- Activity feed -->
-          <Card.Root>
+          <Card.Root data-testid="activity-feed">
             <Card.Header class="pb-2">
               <Card.Title class="text-xs flex items-center gap-1.5">
                 <ActivityIcon class="size-3.5 text-muted-foreground" /> Recent activity

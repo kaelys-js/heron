@@ -27,6 +27,7 @@
 import os from 'node:os';
 import path from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
+import { PREVIEW_BASE_URL, PREVIEW_PORT } from './e2e/_helpers/preview-server';
 
 const CI = !!process.env.CI;
 
@@ -46,7 +47,12 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: CI,
   retries: CI ? 2 : 0,
-  workers: CI ? 1 : undefined,
+  // Parallel workers: CI runs all 5 browser projects in a single job
+  // with workers=2 (no shard split today -- the test.yml E2E step is
+  // monolithic). Local dev keeps the Playwright default (CPU/2) for
+  // snappy reruns. If we shard across matrix runners later, swap to
+  // `workers: 4` and add `--shard ${{ matrix.shard }}/4` in test.yml.
+  workers: CI ? 2 : undefined,
   reporter: CI ? [['github'], ['html', { open: 'never' }]] : 'list',
 
   // Single-run seed lifecycle. globalSetup populates HERON_E2E_DATA_DIR
@@ -56,7 +62,7 @@ export default defineConfig({
   globalTeardown: './e2e/_helpers/global-teardown.ts',
 
   use: {
-    baseURL: 'http://localhost:4173',
+    baseURL: PREVIEW_BASE_URL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: CI ? 'retain-on-failure' : 'off',
@@ -65,16 +71,28 @@ export default defineConfig({
   },
 
   projects: [
+    // Cross-browser matrix. The Capacitor wrapper targets WebKit (iOS) +
+    // Chromium (Android) at runtime; Firefox catches a small set of
+    // engine-specific bugs the other two miss (notably CSS Grid + Date
+    // parsing quirks). Mobile variants run device-emulated Chromium +
+    // WebKit with the touch-events + viewport sizes that the responsive
+    // breakpoints depend on (Sheet drag, mobile drawer, bottom-nav).
+    //
+    // CI runs ALL 5 projects, sharded across 4 parallel jobs via
+    // --shard=N/4 in test.yml. Local dev runs all 5 too -- the cost is
+    // browser boot (~3s/project) but a regression in one engine alone
+    // is the most common test-failure shape.
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    // WebKit covers iOS Safari quirks (Sheet drag-gesture, etc.). Skip in
-    // CI to halve runtime -- covered by the Vitest browser project.
-    ...(CI ? [] : [{ name: 'webkit', use: { ...devices['Desktop Safari'] } }]),
+    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    { name: 'mobile-chrome', use: { ...devices['Pixel 7'] } },
+    { name: 'mobile-safari', use: { ...devices['iPhone 15'] } },
   ],
 
   webServer: {
     // Build first so `vite preview` serves prod-mode artifacts.
-    command: 'pnpm --filter ui run build && pnpm --filter ui exec vite preview --port 4173',
-    port: 4173,
+    command: `pnpm --filter ui run build && pnpm --filter ui exec vite preview --port ${PREVIEW_PORT}`,
+    port: PREVIEW_PORT,
     reuseExistingServer: !CI,
     timeout: 180_000, // give the build + preview boot a budget
     stdout: 'pipe',

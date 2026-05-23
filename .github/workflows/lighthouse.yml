@@ -82,20 +82,80 @@ jobs:
       - name: Build dashboard
         run: pnpm --filter ui build
 
-      - name: Seed first user (so /login doesn't 302 to /signup?first=1)
-        # Without this row, /login's +page.server.ts redirects to
-        # /signup?first=1 because `users.count === 0`. Lighthouse then
-        # audits the signup page, fails `redirects` (170ms wasted)
-        # AND `is-crawlable` (signup is intentionally noindex).
-        # Inserting one owner row lets Lighthouse audit the actual
-        # /login URL with no redirect chain.
-        run: node scripts/system/seed-lighthouse-user.mjs
+      # Seed `u_e2e` (the userId hardcoded into /api/auth/e2e-login) into
+      # auth.db at /tmp/heron-lighthouse. Both the minting preview server
+      # below + the lighthouse-ci-action's preview server below read this
+      # same dir via HERON_DATA_DIR, so the token resolves consistently.
+      # Without the row, /login's +page.server.ts 302s to /signup?first=1.
+      - name: Seed u_e2e in /tmp/heron-lighthouse/auth.db
+        env:
+          HERON_DATA_DIR: /tmp/heron-lighthouse
+        run: |
+          mkdir -p "$HERON_DATA_DIR"
+          node scripts/system/seed-lighthouse-user.mjs
+
+      # Mint a bearer token via the e2e auth-bypass so Lighthouse can
+      # audit auth-gated routes (/inbox, /queue, /autopilot). Without
+      # the token those routes 302 to /login and the redirects audit
+      # fails on every run.
+      #
+      # Two-step shape: boot the preview server out-of-band on port 4274,
+      # mint the token, then write lighthouserc.runtime.json with the
+      # token injected into settings.extraHeaders. The lighthouse-ci-action
+      # below then boots its OWN preview server (via configPath's
+      # startServerCommand on port 4173) against the SAME HERON_DATA_DIR
+      # so the token's session row is visible in both processes.
+      - name: Mint bearer token + write runtime config
+        env:
+          HERON_DATA_DIR: /tmp/heron-lighthouse
+          HERON_E2E_DATA_DIR: /tmp/heron-lighthouse
+        run: |
+          set -euo pipefail
+          # Cleanup runs unconditionally -- without the EXIT trap, a
+          # readiness-poll timeout would leave the preview process
+          # orphaned (and a subsequent step's port-binding could fail).
+          PREVIEW_PID=""
+          cleanup() {
+            if [ -n "${PREVIEW_PID:-}" ]; then
+              kill "${PREVIEW_PID}" 2>/dev/null || true
+              wait "${PREVIEW_PID}" 2>/dev/null || true
+            fi
+          }
+          trap cleanup EXIT
+          # Boot the preview server in the background just long enough
+          # to mint the token. HERON_DATA_DIR is exported above so the
+          # spawned `vite preview` reads from the seeded dir.
+          pnpm --filter ui exec vite preview --port 4274 &
+          PREVIEW_PID=$!
+          # Poll /api/health for up to 30s; explicit fail if it never
+          # comes up so the inject script doesn't sit forever.
+          ready=""
+          for _ in $(seq 1 30); do
+            if curl -sf http://localhost:4274/api/health > /dev/null 2>&1; then
+              ready="1"; break
+            fi
+            sleep 1
+          done
+          if [ -z "${ready}" ]; then
+            echo "::error::preview server never reached /api/health within 30s"
+            exit 1
+          fi
+          LIGHTHOUSE_PORT=4274 node scripts/system/inject-lighthouse-auth.mjs
 
       - name: Run Lighthouse CI
         id: lhci
         uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12
+        env:
+          # The preview server (started inside lighthouse-ci-action via
+          # the configPath's startServerCommand) must see the same
+          # HERON_DATA_DIR + HERON_E2E_DATA_DIR so it reads the same
+          # auth.db as the runtime config's bearer token. Without
+          # HERON_DATA_DIR the new process opens a fresh empty DB +
+          # the bearer's session row is invisible -> 401 on every audit.
+          HERON_DATA_DIR: /tmp/heron-lighthouse
+          HERON_E2E_DATA_DIR: /tmp/heron-lighthouse
         with:
-          configPath: ./lighthouserc.json
+          configPath: ./lighthouserc.runtime.json
           uploadArtifacts: true
           temporaryPublicStorage: true
 

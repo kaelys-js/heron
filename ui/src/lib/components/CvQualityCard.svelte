@@ -111,6 +111,7 @@
       class="h-7 w-7"
       onclick={runCheck}
       disabled={status === 'loading'}
+      aria-label="Re-run CV quality check"
     >
       {#if status === 'loading'}
         <Loader2 class="size-3.5 animate-spin" />
