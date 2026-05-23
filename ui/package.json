@@ -70,6 +70,7 @@
     "svelte-sonner": "catalog:",
     "tailwind-merge": "catalog:",
     "tailwind-variants": "catalog:",
+    "web-vitals": "catalog:",
     "yaml": "catalog:"
   },
   "devDependencies": {
@@ -110,6 +111,7 @@
     "fake-indexeddb": "catalog:",
     "fast-check": "catalog:",
     "jsdom": "catalog:",
+    "lost-pixel": "catalog:",
     "marked": "catalog:",
     "msw": "catalog:",
     "playwright": "catalog:",

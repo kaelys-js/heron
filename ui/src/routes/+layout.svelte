@@ -90,6 +90,51 @@
       // probe + navigator.onLine listeners + native hints (iOS/Electron) all
       // funnel through one boolean -- OfflineIndicator + api.ts subscribe.
       onlineStore.init(window.location.origin);
+      // web-vitals: CLS / INP / LCP / TTFB / FCP all funnel to /api/vitals
+      // for Issues-store ingestion. Dynamic-import keeps the 4KB
+      // web-vitals chunk out of the critical-path bundle. The
+      // `sendBeacon`-friendly fetch only fires when a metric finalises
+      // (route change or page hide), not continuously, so the overhead
+      // is bounded.
+      void import('web-vitals').then(({ onCLS, onINP, onLCP, onTTFB, onFCP }) => {
+        const send = (m: { name: string; value: number; rating?: string; id?: string }): void => {
+          // sendBeacon when available -- non-blocking, survives page unload.
+          // Fall back to fetch with keepalive on Capacitor / older WebKit,
+          // AND when sendBeacon returns false (browser-policy denial or
+          // payload-size quota exceeded -- the spec allows the user agent
+          // to refuse queueing).
+          const body = JSON.stringify({
+            name: m.name,
+            value: m.value,
+            rating: m.rating,
+            id: m.id,
+            url: window.location.pathname,
+            ts: Date.now(),
+          });
+          const fetchFallback = (): void => {
+            void fetch('/api/vitals', {
+              method: 'POST',
+              body,
+              keepalive: true,
+              headers: { 'content-type': 'application/json' },
+            }).catch(() => {});
+          };
+          if ('sendBeacon' in navigator && navigator.sendBeacon) {
+            const queued = navigator.sendBeacon(
+              '/api/vitals',
+              new Blob([body], { type: 'application/json' }),
+            );
+            if (!queued) fetchFallback();
+          } else {
+            fetchFallback();
+          }
+        };
+        onCLS(send);
+        onINP(send);
+        onLCP(send);
+        onTTFB(send);
+        onFCP(send);
+      });
     }
 
     // Kick off backend discovery early so api-base.ts's cache is primed

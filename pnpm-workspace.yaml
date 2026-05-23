@@ -35,6 +35,10 @@ allowBuilds:
   electron-winstaller: true
   esbuild: true
   msw: false
+  # odiff-bin -- Lost Pixel's pixel-diff engine (ReasonML-compiled
+  # native binary). Postinstall downloads the platform-specific
+  # prebuilt; required for `pnpm exec lost-pixel` to function.
+  odiff-bin: true
   sharp: true
 
 # ── Transitive override pinning ─────────────────────────────────────
@@ -70,6 +74,25 @@ overrides:
   # transitive (including @sveltejs/kit's bundled svelte) onto the
   # safe version.
   svelte: ">=5.55.7"
+  # GHSA-fjxv-7rqg-78g4 -- form-data uses an unsafe random function
+  # to pick the multipart boundary, weakening the boundary's
+  # unguessability. Patched in 4.0.4. Pulled in transitively via
+  # node-fetch -> lost-pixel + @adobe/css-tools -> playwright (multiple
+  # paths). Override forces every consumer onto the patched version.
+  form-data: ">=4.0.4"
+  # Multiple axios advisories pre-1.16.0 (SSRF via absolute URL,
+  # DoS via __proto__ key + missing data-size check, prototype
+  # pollution gadgets in HTTP adapter, header injection, incomplete
+  # NO_PROXY fix). All patched in 1.16.0+. Pulled in transitively
+  # via lost-pixel. Override forces every consumer onto the
+  # patched line.
+  axios: ">=1.16.0"
+  # 3 high-severity minimatch ReDoS advisories (extglob nesting,
+  # GLOBSTAR backtracking, repeated-wildcard pattern). Patched in
+  # 9.0.5+. Pulled in transitively via lost-pixel + many other
+  # legacy consumers. Override forces minimatch >= 9.0.5 across
+  # the dependency graph.
+  minimatch: ">=9.0.5"
 
 # ── Peer dependency rules ──────────────────────────────────────────
 peerDependencyRules:
@@ -188,4 +211,5 @@ catalog:
   typescript: "6.0.3"
   vite: "8.0.12"
   vitest: "4.1.7"
+  web-vitals: "5.1.0"
   yaml: "2.8.4"

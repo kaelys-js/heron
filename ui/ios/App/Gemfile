@@ -14,21 +14,22 @@ gem "fastlane", "~> 2.226"
 # `bundle exec pod install` uses the same version on every machine.
 gem "cocoapods", "~> 1.16"
 
-# xcov -- code-coverage threshold gate. Reads the xcresult bundle from
-# run_tests + emits HTML for humans + checks `minimum_coverage_percentage`.
-# CANNOT generate cobertura.xml: the xcov gem (1.9.0) only exposes
-# html_report / markdown_report / json_report; no XML output. Standalone
-# gem (NOT a fastlane plugin -- those must be named fastlane-plugin-*).
-# Bundler loading is sufficient -- fastlane's action loader picks the
-# action up at startup.
-gem "xcov"
-
-# slather -- profdata -> cobertura.xml converter for the Codecov upload
-# step in .github/workflows/test.yml. xcov above gates the iOS coverage
-# threshold; slather is the only piece producing the cobertura.xml that
-# the codecov-action `hashFiles(...)` predicate looks for. Pulls
-# nokogiri as a transitive (native-compiled gem; ~30s install on a cold
-# runner, cached via the bundler-gems cache step in test.yml).
+# slather -- profdata -> cobertura.xml converter + per-target coverage
+# reporter. Runs once PER SCHEME (AppTests, WidgetTests,
+# AppLiveActivityTests, AppShareExtensionTests, WatchTests) with
+# `--binary-basename` filtering, producing one cobertura.xml per binary
+# at `fastlane/coverage/<scheme>/cobertura.xml`. The codecov-action
+# uploads each XML under the `ios` flag; `scripts/native/check-ios-coverage.mjs`
+# (invoked at the end of the Fastlane test_ci lane) enforces per-target
+# thresholds (95% App.app + 50% extensions/watch). Pulls nokogiri as a
+# transitive (native-compiled gem; ~30s install on a cold runner, cached
+# via the bundler-gems cache step in test.yml).
+#
+# xcov was previously used as the threshold gate but xcov 1.9.0 cannot
+# read xcresult bundles from non-default paths (we write per-scheme
+# output_directory), so it was unable to gate the non-default schemes.
+# It's been removed in favour of slather + the custom threshold script
+# (one tool, per-target accuracy).
 gem "slather"
 
 plugins_path = File.join(File.dirname(__FILE__), "fastlane", "Pluginfile")

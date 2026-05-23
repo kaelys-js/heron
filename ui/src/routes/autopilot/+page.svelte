@@ -261,6 +261,7 @@
             <div class="flex items-center gap-3 flex-wrap">
               <h2 class="text-base font-semibold">Master switch</h2>
               <span
+                data-testid="autopilot-status"
                 class={cn(
                   'text-[11px] uppercase tracking-wider font-medium',
                   config.globalEnabled ? 'text-emerald-300' : 'text-zinc-400',
@@ -272,6 +273,7 @@
                 checked={config.globalEnabled}
                 onCheckedChange={(v: boolean) => (config = { ...config, globalEnabled: v })}
                 class="ml-auto"
+                aria-label="Toggle Autopilot active state"
               />
             </div>
             <p class="text-xs text-muted-foreground mt-1.5 leading-relaxed">
@@ -398,6 +400,7 @@
                   <Switch
                     checked={s.enabled}
                     onCheckedChange={(v: boolean) => updateSchedule(s.id, { enabled: !!v })}
+                    aria-label={`Toggle schedule "${s.name ?? s.id}"`}
                   />
                 </div>
               </div>

@@ -36,6 +36,8 @@
         "required_status_checks": [
           { "context": "Tests / TS — typecheck + Vitest + coverage" },
           { "context": "Tests / iOS — XCTest + XCUITest + Snapshot" },
+          { "context": "Tests / Android — Espresso (instrumented)" },
+          { "context": "Tests / Lost Pixel (visual regression)" },
           { "context": "Tests / Lint + format (Python / Go / Kotlin / Shell / Ruby / YAML)" },
           { "context": "CodeQL Analysis / Analyze (javascript-typescript)" },
           { "context": "CodeQL Analysis / Analyze (python)" },

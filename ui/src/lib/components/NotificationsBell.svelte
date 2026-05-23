@@ -117,7 +117,14 @@
   containers via the `feed` snippet at the bottom of this file.
 -->
 {#snippet trigger({ props }: { props: Record<string, unknown> })}
-  <Button {...props} variant="ghost" size="icon" class="relative h-8 w-8">
+  <Button
+    {...props}
+    variant="ghost"
+    size="icon"
+    aria-label="Notifications"
+    class="relative h-8 w-8"
+    data-testid="notifications-bell"
+  >
     {#if notifications.connected === 'error'}
       <BellOff class="size-4 text-muted-foreground" />
     {:else}
@@ -153,6 +160,7 @@
                   size="icon"
                   class="h-7 w-7"
                   onclick={() => notifications.markAllRead()}
+                  aria-label="Mark all notifications read"
                 >
                   <CheckCheck class="size-3.5" />
                 </Button>

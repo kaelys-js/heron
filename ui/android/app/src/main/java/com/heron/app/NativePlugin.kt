@@ -167,37 +167,7 @@ class NativePlugin : Plugin() {
         }
         activity.runOnUiThread {
             val executor = ContextCompat.getMainExecutor(context)
-            val prompt =
-                BiometricPrompt(
-                    activity,
-                    executor,
-                    object : BiometricPrompt.AuthenticationCallback() {
-                        override fun onAuthenticationSucceeded(
-                            result: BiometricPrompt.AuthenticationResult,
-                        ) {
-                            val out = JSObject()
-                            out.put("ok", true)
-                            call.resolve(out)
-                        }
-
-                        override fun onAuthenticationError(
-                            errorCode: Int,
-                            errString: CharSequence,
-                        ) {
-                            val out = JSObject()
-                            out.put("ok", false)
-                            out.put("reason", "error-$errorCode")
-                            out.put("message", errString.toString())
-                            call.resolve(out)
-                        }
-
-                        override fun onAuthenticationFailed() {
-                            // Don't resolve here — Android fires "failed"
-                            // on each rejected attempt; the prompt keeps
-                            // running. The user's "Cancel" hits onError.
-                        }
-                    },
-                )
+            val prompt = BiometricPrompt(activity, executor, biometricCallback(call))
             val info =
                 BiometricPrompt.PromptInfo
                     .Builder()
@@ -210,6 +180,43 @@ class NativePlugin : Plugin() {
             prompt.authenticate(info)
         }
     }
+
+    /**
+     * BiometricPrompt callback. Extracted from `biometricAuth`'s
+     * runOnUiThread closure so the three onAuthentication* branches
+     * are reachable from unit tests via reflection (the previous
+     * inline anonymous class buried the methods inside a
+     * runOnUiThread Runnable that JaCoCo measured at 8% line
+     * coverage). The extraction preserves the closure over `call`
+     * exactly -- the callback resolves the same PluginCall whether
+     * called from the runOnUiThread block or from a unit test.
+     */
+    @androidx.annotation.VisibleForTesting
+    internal fun biometricCallback(call: PluginCall): BiometricPrompt.AuthenticationCallback =
+        object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                val out = JSObject()
+                out.put("ok", true)
+                call.resolve(out)
+            }
+
+            override fun onAuthenticationError(
+                errorCode: Int,
+                errString: CharSequence,
+            ) {
+                val out = JSObject()
+                out.put("ok", false)
+                out.put("reason", "error-$errorCode")
+                out.put("message", errString.toString())
+                call.resolve(out)
+            }
+
+            override fun onAuthenticationFailed() {
+                // Don't resolve here -- Android fires "failed" on each
+                // rejected attempt; the prompt keeps running. The user's
+                // "Cancel" hits onError.
+            }
+        }
 
     // ── F2 — keychain (EncryptedSharedPreferences) ────────────────
 
