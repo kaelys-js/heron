@@ -1,6 +1,8 @@
 # Discord server automation
 
+<!-- AUTO-GENERATED:doc-meta -->
 *Part of the [Heron](../README.md) docs.*
+<!-- /AUTO-GENERATED:doc-meta -->
 
 Heron's Discord server is reconciled from a single source of truth,
 [`.github/discord/config.yml`](../.github/discord/config.yml), by
