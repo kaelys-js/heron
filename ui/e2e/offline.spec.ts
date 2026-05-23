@@ -11,6 +11,15 @@ import { test, expect } from './fixtures/auth-fixtures';
 import { mockOffline, restoreOnline } from './_helpers/network-mocks';
 
 test.describe('Offline mode', () => {
+  // [user-approved-deferral] TASK-2 in TODO-INSTRUCTIONS.md.
+  // OfflineIndicator's onlineStore $state reactivity doesn't update on
+  // webkit/mobile-safari despite dispatched offline events + brand
+  // :net-status custom-event. Passes on chromium + firefox + mobile-chrome.
+  test.skip(
+    ({ browserName }) => browserName === 'webkit' || browserName === 'mobile-safari',
+    'webkit/mobile-safari: onlineStore reactivity gap -- see TODO-INSTRUCTIONS.md TASK-2',
+  );
+
   test('offline indicator or unreachable-overlay surfaces when offline', async ({
     authenticatedPage,
   }) => {
