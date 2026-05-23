@@ -240,18 +240,17 @@ export function safeRepoPath(src, repoRoot = REPO_ROOT) {
   const abs = resolve(repoRoot, src);
   if (abs !== repoRoot && !abs.startsWith(repoRoot + sep)) return null;
   // When the target exists, follow symlinks + require a regular file so a
-  // committed symlink can't escape and a directory can't slip through.
+  // committed symlink can't escape and a directory can't slip through. All
+  // fs calls stay in the try so a TOCTOU removal returns null, not a throw.
   if (existsSync(abs)) {
-    let real;
-    let realRoot;
     try {
-      real = realpathSync(abs);
-      realRoot = realpathSync(repoRoot);
+      const real = realpathSync(abs);
+      const realRoot = realpathSync(repoRoot);
+      if (real !== realRoot && !real.startsWith(realRoot + sep)) return null;
+      if (!statSync(real).isFile()) return null;
     } catch {
       return null;
     }
-    if (real !== realRoot && !real.startsWith(realRoot + sep)) return null;
-    if (!statSync(real).isFile()) return null;
   }
   return abs;
 }
