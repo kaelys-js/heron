@@ -27,7 +27,7 @@
  * CI gate uses on every workflow run.
  */
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import yaml from 'js-yaml';
@@ -231,13 +231,28 @@ export function sha256(buf) {
 }
 
 /** Resolve a repo-relative path and confirm it stays inside the repo root.
- *  Returns the absolute path, or null if it's absolute or escapes via `..`.
- *  The config is trusted, but this stops a crafted path from reading
- *  arbitrary local files (and clears the path-traversal lint). */
+ *  Returns the absolute path, or null if it's absolute, escapes via `..`,
+ *  symlinks out of the root, or isn't a regular file. The config is
+ *  trusted, but this stops a crafted path (or a stray dir/symlink) from
+ *  reading outside the repo or crashing readFileSync with EISDIR. */
 export function safeRepoPath(src, repoRoot = REPO_ROOT) {
   if (typeof src !== 'string' || src.length === 0) return null;
   const abs = resolve(repoRoot, src);
   if (abs !== repoRoot && !abs.startsWith(repoRoot + sep)) return null;
+  // When the target exists, follow symlinks + require a regular file so a
+  // committed symlink can't escape and a directory can't slip through.
+  if (existsSync(abs)) {
+    let real;
+    let realRoot;
+    try {
+      real = realpathSync(abs);
+      realRoot = realpathSync(repoRoot);
+    } catch {
+      return null;
+    }
+    if (real !== realRoot && !real.startsWith(realRoot + sep)) return null;
+    if (!statSync(real).isFile()) return null;
+  }
   return abs;
 }
 

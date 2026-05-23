@@ -3,7 +3,7 @@
 // vitest) so it runs in pre-push + CI without the workspace toolchain.
 // Each phase of the reconciler adds a section below.
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -211,6 +211,17 @@ it('safeRepoPath: keeps in-root paths, rejects absolute / traversal / empty', ()
   assert.equal(safeRepoPath('../outside.png', root), null);
   assert.equal(safeRepoPath('', root), null);
   assert.equal(safeRepoPath(undefined, root), null);
+});
+it('safeRepoPath: accepts a real file, rejects a directory', () => {
+  const root = mkdtempSync(join(tmpdir(), 'disc-root-'));
+  try {
+    mkdirSync(join(root, 'sub'));
+    writeFileSync(join(root, 'f.png'), Buffer.from([1]));
+    assert.equal(safeRepoPath('sub', root), null); // directory -> EISDIR guard
+    assert.equal(safeRepoPath('f.png', root), join(root, 'f.png'));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 it('imageDrift: unseen / source-changed / live-diverged / removed / clean', () => {
   assert.equal(imageDrift(undefined, 'a', 'h'), true);
