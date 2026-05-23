@@ -21,12 +21,12 @@
 # maintain-discord.yml workflow reconciles the live server to match.
 # Drift detection: `--verify` mode logs differences without writing.
 #
-# Maintainer manual prerequisites (one-time, documented in
-# TODO-INSTRUCTIONS.md section 11):
-#   1. Create a Discord bot application + install on the server
-#   2. Provide DISCORD_BOT_TOKEN to the repo as a secret
-#   3. Bot needs MANAGE_GUILD + MANAGE_CHANNELS + MANAGE_ROLES +
-#      MANAGE_GUILD (for AutoMod + Onboarding + Welcome screen)
+# Maintainer manual prerequisites (one-time). Full walkthrough:
+# docs/DISCORD.md. In short:
+#   1. Create a Discord bot application + invite it (permissions integer
+#      1100316934320) and drag its role to the TOP of Server Settings.
+#   2. Provide DISCORD_BOT_TOKEN (secret) + DISCORD_GUILD_ID (variable).
+#   3. Enable the COMMUNITY feature for onboarding / welcome / rules.
 #
 # Adding a channel / role / AutoMod rule: edit this file + push to
 # main. The reconciler picks it up on the next run.
@@ -50,6 +50,45 @@ server:
   # Explicit content filter (0 DISABLED, 1 MEMBERS_WITHOUT_ROLES, 2 ALL_MEMBERS).
   # ALL_MEMBERS: scan every image/video; safer for the brand register.
   explicit_content_filter: 2
+  # Channel that receives join / boost system messages. Resolved to its id.
+  system_channel: general
+  # A SET flag SUPPRESSES that notification. SUPPRESS_GUILD_REMINDER_
+  # NOTIFICATIONS is the "send helpful tips for server setup" toggle.
+  system_channel_flags:
+    - SUPPRESS_GUILD_REMINDER_NOTIFICATIONS
+  # Brand images (repo-relative). `icon` applies always; `banner`,
+  # `splash`, `discovery_splash` apply only when the guild owns the
+  # BANNER / INVITE_SPLASH / DISCOVERABLE feature -- otherwise skipped
+  # with a notice. Tracked in .image-state.json so unchanged images
+  # aren't re-uploaded each run.
+  images:
+    icon: ui/static/icons/heron-512.png
+    banner: ui/static/og/default.png
+  # Server widget: enable it + the channel a widget-generated invite
+  # points at (the "Invite Channel"). Resolved to the channel id.
+  widget:
+    enabled: true
+    invite_channel: general
+  # NOTE: Server Tags / identity "traits" are NOT settable via the Discord
+  # REST API as of May 2026 -- set them in the UI (Server Settings ->
+  # Engagement -> Server Tag). See docs/DISCORD.md.
+
+# ── Webhooks ─────────────────────────────────────────────────────────
+# Shared name + avatar applied to each channel's declared webhook (the
+# `webhook: DISCORD_WEBHOOK_*` fields under categories below). Set via
+# the token-in-URL endpoint -- no bot permission needed, and the secret
+# URL is never rotated. Posting workflows may still override the
+# username/avatar per message. Skipped per webhook if its secret isn't
+# present in the reconciler's environment.
+webhooks:
+  name: Heron
+  avatar: ui/static/icons/heron-512.png
+
+# ── Bot profile ──────────────────────────────────────────────────────
+# The reconciler bot's own avatar (+ optional `banner:`). Discord rate-
+# limits profile edits hard, so this writes only when the source changes.
+bot:
+  avatar: ui/static/icons/heron-512.png
 
 # ── Roles ────────────────────────────────────────────────────────────
 # Listed TOP-DOWN in Discord role hierarchy (first entry sits highest).
@@ -370,6 +409,23 @@ automod:
     actions:
       - type: 1
     enabled: true
+
+# ── Membership screening (Server Rules) ──────────────────────────────
+# Rules a new member must accept before they can talk. Maps to Discord's
+# Community -> "Rules Screening". Requires the COMMUNITY feature (skipped
+# with a notice otherwise). PATCH /guilds/{id}/member-verification.
+rules:
+  enabled: true
+  description: 'A calm, quality-over-quantity community. Read the rules, then say hi.'
+  form_fields:
+    - field_type: TERMS
+      label: 'I agree to follow the Code of Conduct and these rules.'
+      required: true
+      values:
+        - 'Be kind and patient -- assume good faith.'
+        - "Stay on-topic per each channel's stated purpose."
+        - 'No spam, crypto / NFT shilling, or unsolicited DMs.'
+        - "Respect maintainers' time -- search before asking."
 
 # ── Onboarding (May 2026 Discord-native feature) ─────────────────────
 # PUT /guilds/{id}/onboarding. Replaces manual "welcome bot" flows.

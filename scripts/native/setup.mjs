@@ -526,16 +526,20 @@ info('Skip if you have no plans to wire Discord automation.');
 info('Discord bot reconciles channels + roles + AutoMod + Onboarding from');
 info('.github/discord/config.yml via .github/workflows/maintain-discord.yml.');
 info('Webhooks let release.yml + native-release.yml + CodeQL post directly to channels.');
-info('See TODO-INSTRUCTIONS.md section 11 for the bot-creation walkthrough.');
+info('Full walkthrough: docs/DISCORD.md.');
 if (await confirm('  Set up Discord bot + webhooks now?', false)) {
   info('Discord Developer Portal: https://discord.com/developers/applications');
   info('  1. New Application -> name "Heron Reconciler"');
   info('  2. Bot tab -> Reset Token (record the token; only shown once)');
   info('  3. Enable: Server Members Intent + Presence Intent (Privileged Gateway Intents)');
-  info('  4. OAuth2 -> URL Generator -> scopes: bot + applications.commands');
-  info('     bot permissions: Administrator (or scoped: Manage Server +');
-  info('     Manage Channels + Manage Roles + Manage Webhooks + Moderate Members)');
-  info('  5. Visit the generated URL to install the bot on the Heron server.');
+  info('  4. Install the bot with this invite (fill in your Application ID):');
+  info(
+    '     https://discord.com/oauth2/authorize?client_id=<APP_ID>&scope=bot%20applications.commands&permissions=1100316934320',
+  );
+  info('     (= Manage Server + Channels + Roles + Webhooks + Audit Log + Moderate Members)');
+  info('  5. Server Settings -> Roles: drag the bot role to the TOP -- a bot');
+  info('     can only manage roles below its own.');
+  info('  6. Server Settings -> Enable Community (for onboarding / welcome / rules).');
   await openUrl('https://discord.com/developers/applications');
   const botToken = await ask('  DISCORD_BOT_TOKEN (the bot token from step 2):');
   if (botToken) {

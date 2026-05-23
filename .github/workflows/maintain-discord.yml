@@ -5,15 +5,15 @@ name: Maintain Discord
 # .github/workflows/maintain-config.yml + maintain-features.yml --
 # push:main + weekly cron + workflow_dispatch.
 #
-# Drift gate: every push:main runs `apply-discord-config.mjs --verify`.
-# If the live state diverges from the SSOT, the workflow fails red.
-# The workflow_dispatch path is the manual "reconcile now" lever.
+# Modes (see the "Pick mode" step): push:main APPLIES committed config
+# changes live; the weekly cron runs `--verify` (drift sweep -- fails red
+# on divergence); workflow_dispatch picks verify / apply / dry manually.
 #
 # Required secrets:
 #   DISCORD_BOT_TOKEN  -- bot application token (Developer Portal).
 #                         Bot needs MANAGE_GUILD + MANAGE_CHANNELS +
-#                         MANAGE_ROLES. See TODO-INSTRUCTIONS.md for
-#                         the bot-creation walkthrough.
+#                         MANAGE_ROLES. See docs/DISCORD.md for the
+#                         bot-creation + invite walkthrough.
 
 on:
   push:
@@ -70,6 +70,12 @@ jobs:
       - name: Install dependencies (pnpm, frozen lockfile)
         run: pnpm install --frozen-lockfile
 
+      # Token-free: catches config typos + dangling references (a role /
+      # channel / webhook / image that doesn't resolve) before we touch
+      # Discord. Fails the workflow red on a bad config.
+      - name: Validate Discord config
+        run: node scripts/system/verify-discord-config.mjs
+
       # Reconciler mode resolution:
       #   - workflow_dispatch with inputs.mode    => use that
       #   - push:main                             => apply (drift in
@@ -106,10 +112,27 @@ jobs:
       # Secret presence is exposed via env on the step, then checked at
       # runtime in bash -- GitHub Actions disallows `secrets.*` in
       # step-level `if:` expressions.
+      # Brand-image apply state ({sourceSha, discordHash} per slot) lives
+      # in a cache, not the repo (CI can't push to protected main). The
+      # rolling run-id key + prefix restore-keys make it mutable across
+      # runs. A cache miss only costs one harmless image re-upload.
+      - name: Restore Discord image-state cache
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: .github/discord/.image-state.json
+          key: discord-image-state-${{ github.run_id }}
+          restore-keys: |
+            discord-image-state-
+
       - name: Run apply-discord-config.mjs
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_GUILD_ID: ${{ vars.DISCORD_GUILD_ID }}
+          # Webhook secret URLs -- the reconciler sets each webhook's name +
+          # avatar via the token-in-URL endpoint. Absent ones skip cleanly.
+          DISCORD_WEBHOOK_RELEASES: ${{ secrets.DISCORD_WEBHOOK_RELEASES }}
+          DISCORD_WEBHOOK_BUILDS: ${{ secrets.DISCORD_WEBHOOK_BUILDS }}
+          DISCORD_WEBHOOK_SECURITY: ${{ secrets.DISCORD_WEBHOOK_SECURITY }}
         run: |
           set -euo pipefail
           if [ -z "${DISCORD_BOT_TOKEN:-}" ]; then
@@ -124,3 +147,11 @@ jobs:
             apply)  flag=""         ;;
           esac
           node scripts/system/apply-discord-config.mjs $flag
+
+      # Persist updated image-state after an apply that changed an image.
+      - name: Save Discord image-state cache
+        if: ${{ steps.mode.outputs.mode == 'apply' && hashFiles('.github/discord/.image-state.json') != '' }}
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: .github/discord/.image-state.json
+          key: discord-image-state-${{ github.run_id }}

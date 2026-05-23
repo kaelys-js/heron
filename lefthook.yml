@@ -391,6 +391,17 @@ pre-commit:
       glob: "*.{ts,tsx,svelte,mjs,js,cjs}"
       run: pnpm verify:comment-style:test && pnpm verify:comment-style
 
+    discord-config:
+      # Discord reconciler offline gates (the API calls happen only in CI
+      # via maintain-discord.yml):
+      #   - unit tests for the pure helpers (perm bitfields, grantable
+      #     filtering, image + overwrite + automod + onboarding diffs)
+      #   - config.yml schema + referential-integrity validation (every
+      #     role / channel / webhook / rules / image reference resolves)
+      # See the two .test.mjs siblings for the fixtures.
+      glob: "{scripts/system/apply-discord-config.mjs,scripts/system/apply-discord-config.test.mjs,scripts/system/verify-discord-config.mjs,scripts/system/verify-discord-config.test.mjs,.github/discord/config.yml,.github/discord/config.schema.json}"
+      run: pnpm discord:config:test && pnpm verify:discord-config:test && pnpm verify:discord-config
+
     no-deflect:
       # Block deflection vocabulary in staged code/docs additions. The
       # forbidden vocab (MVP / defer / out-of-scope / separate ticket /
