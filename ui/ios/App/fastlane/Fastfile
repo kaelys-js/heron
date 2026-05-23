@@ -399,7 +399,10 @@ platform :ios do
     # attribute and compares against the threshold defined in the script's
     # SCHEMES const. Exit 0 = all pass, 1 = at least one below floor,
     # 2 = at least one cobertura.xml missing.
-    sh "node ../../../scripts/native/check-ios-coverage.mjs"
+    # `sh` runs from this Fastfile's dir (ui/ios/App/fastlane). The
+    # script lives at <repo-root>/scripts/native/...; four `../` to
+    # walk up out of fastlane -> App -> ios -> ui -> repo-root.
+    sh "node ../../../../scripts/native/check-ios-coverage.mjs"
   end
 
   # Pull the last commit's message as TestFlight changelog. Truncates to
