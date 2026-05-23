@@ -16,6 +16,7 @@ import yaml from 'js-yaml';
 import {
   PERMISSION_NAMES,
   SYSTEM_CHANNEL_FLAGS,
+  safeRepoPath,
   validateFormFields,
 } from './apply-discord-config.mjs';
 
@@ -29,7 +30,12 @@ const SCHEMA_PATH = join(ROOT, '.github', 'discord', 'config.schema.json');
  * tests can exercise image-source checks without touching disk.
  */
 export function findConfigIssues(cfg, opts = {}) {
-  const fileExists = opts.fileExists ?? ((p) => existsSync(join(ROOT, p)));
+  const fileExists =
+    opts.fileExists ??
+    ((p) => {
+      const abs = safeRepoPath(p, ROOT);
+      return abs != null && existsSync(abs);
+    });
   const perms = new Set(PERMISSION_NAMES);
   const issues = [];
 
@@ -104,8 +110,10 @@ export function findConfigIssues(cfg, opts = {}) {
   if (cfg.webhooks?.avatar) imageRefs.push(['webhooks.avatar', cfg.webhooks.avatar]);
   if (cfg.bot?.avatar) imageRefs.push(['bot.avatar', cfg.bot.avatar]);
   if (cfg.bot?.banner) imageRefs.push(['bot.banner', cfg.bot.banner]);
-  for (const [label, p] of imageRefs)
-    if (!fileExists(p)) issues.push(`${label}: source image not found at ${p}`);
+  for (const [label, p] of imageRefs) {
+    if (safeRepoPath(p, ROOT) == null) issues.push(`${label}: path "${p}" escapes the repo root`);
+    else if (!fileExists(p)) issues.push(`${label}: source image not found at ${p}`);
+  }
 
   return issues;
 }

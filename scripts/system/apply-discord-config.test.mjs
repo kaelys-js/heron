@@ -3,7 +3,7 @@
 // vitest) so it runs in pre-push + CI without the workspace toolchain.
 // Each phase of the reconciler adds a section below.
 import assert from 'node:assert/strict';
-import { rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -30,6 +30,7 @@ import {
   permsToBits,
   reconcileGrantedBits,
   rolesOutOfOrder,
+  safeRepoPath,
   sha256,
   systemChannelFlagsToBits,
 } from './apply-discord-config.mjs';
@@ -189,7 +190,10 @@ it('mimeForPath: png/jpg/jpeg/gif + case-insensitive + unsupported throws', () =
   assert.throws(() => mimeForPath('a/b.webp'), /Unsupported image type/);
 });
 it('imageToDataUri: encodes bytes + reports source sha', () => {
-  const tmp = join(tmpdir(), `disc-img-${process.pid}.png`);
+  // mkdtempSync gives a randomized dir -- avoids the predictable-temp-file
+  // pitfall (CodeQL js/insecure-temporary-file).
+  const dir = mkdtempSync(join(tmpdir(), 'disc-'));
+  const tmp = join(dir, 'img.png');
   const bytes = Buffer.from([0, 1, 2, 3, 255]);
   writeFileSync(tmp, bytes);
   try {
@@ -197,8 +201,16 @@ it('imageToDataUri: encodes bytes + reports source sha', () => {
     assert.equal(dataUri, `data:image/png;base64,${bytes.toString('base64')}`);
     assert.equal(sourceSha, sha256(bytes));
   } finally {
-    rmSync(tmp, { force: true });
+    rmSync(dir, { recursive: true, force: true });
   }
+});
+it('safeRepoPath: keeps in-root paths, rejects absolute / traversal / empty', () => {
+  const root = '/repo';
+  assert.equal(safeRepoPath('a/b.png', root), '/repo/a/b.png');
+  assert.equal(safeRepoPath('/etc/passwd', root), null);
+  assert.equal(safeRepoPath('../outside.png', root), null);
+  assert.equal(safeRepoPath('', root), null);
+  assert.equal(safeRepoPath(undefined, root), null);
 });
 it('imageDrift: unseen / source-changed / live-diverged / removed / clean', () => {
   assert.equal(imageDrift(undefined, 'a', 'h'), true);

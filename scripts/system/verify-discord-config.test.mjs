@@ -114,6 +114,11 @@ it('missing image sources are flagged', () => {
   assert.ok(hasIssue(issues, 'webhooks.avatar'));
   assert.ok(hasIssue(issues, 'bot.avatar'));
 });
+it('image path escaping the repo root is flagged', () => {
+  const c = valid();
+  c.server.images.icon = '../../etc/passwd';
+  assert.ok(hasIssue(findConfigIssues(c, { fileExists: ALL_EXIST }), 'escapes the repo root'));
+});
 it('malformed rules form_fields is flagged', () => {
   const c = valid();
   c.rules.form_fields = 'nope';

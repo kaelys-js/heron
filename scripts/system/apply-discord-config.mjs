@@ -28,7 +28,7 @@
  */
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import yaml from 'js-yaml';
 
@@ -230,6 +230,17 @@ export function sha256(buf) {
   return createHash('sha256').update(buf).digest('hex');
 }
 
+/** Resolve a repo-relative path and confirm it stays inside the repo root.
+ *  Returns the absolute path, or null if it's absolute or escapes via `..`.
+ *  The config is trusted, but this stops a crafted path from reading
+ *  arbitrary local files (and clears the path-traversal lint). */
+export function safeRepoPath(src, repoRoot = REPO_ROOT) {
+  if (typeof src !== 'string' || src.length === 0) return null;
+  const abs = resolve(repoRoot, src);
+  if (abs !== repoRoot && !abs.startsWith(repoRoot + sep)) return null;
+  return abs;
+}
+
 /** Discord accepts only png/jpeg/gif image data. */
 export function mimeForPath(p) {
   const ext = p.slice(p.lastIndexOf('.')).toLowerCase();
@@ -310,7 +321,7 @@ let GUILD_ID;
  * @param {object|null} body - JSON body or null
  * @returns {Promise<object|null>} parsed JSON response or null for 204
  */
-async function discord(method, path, body) {
+async function discord(method, path, body, attempt = 0) {
   if (DRY_RUN && method !== 'GET') {
     console.log(`[dry-run] ${method} ${path}`);
     return null;
@@ -333,13 +344,16 @@ async function discord(method, path, body) {
     headers,
     body: body != null ? JSON.stringify(body) : undefined,
   });
-  // Rate-limit handling: 429 means we ignored the bucket headers; back
-  // off + retry once. Anything else 4xx/5xx surfaces as an error.
+  // Rate-limit handling: honor Retry-After, but cap retries so sustained
+  // 429s surface as an error instead of looping forever.
   if (res.status === 429) {
+    if (attempt >= 5) {
+      throw new Error(`Discord ${method} ${path}: rate-limited, exceeded retry limit (5)`);
+    }
     const retryAfter = Number(res.headers.get('Retry-After') ?? '1') * 1000;
-    console.warn(`Rate-limited; sleeping ${retryAfter}ms then retrying.`);
+    console.warn(`Rate-limited; sleeping ${retryAfter}ms then retrying (attempt ${attempt + 1}).`);
     await new Promise((r) => setTimeout(r, retryAfter));
-    return discord(method, path, body);
+    return discord(method, path, body, attempt + 1);
   }
   if (!res.ok) {
     const text = await res.text();
@@ -354,7 +368,7 @@ async function discord(method, path, body) {
  * us read + set a webhook's name/avatar from just its secret URL, even
  * if the bot lacks MANAGE_WEBHOOKS. Writes are stubbed in verify/dry.
  */
-async function webhookRequest(method, id, token, body) {
+async function webhookRequest(method, id, token, body, attempt = 0) {
   if (DRY_RUN && method !== 'GET') {
     console.log(`[dry-run] ${method} /webhooks/${id}/****`);
     return null;
@@ -366,9 +380,12 @@ async function webhookRequest(method, id, token, body) {
     body: body != null ? JSON.stringify(body) : undefined,
   });
   if (res.status === 429) {
+    if (attempt >= 5) {
+      throw new Error(`Webhook ${method} ${id}: rate-limited, exceeded retry limit (5)`);
+    }
     const retryAfter = Number(res.headers.get('Retry-After') ?? '1') * 1000;
     await new Promise((r) => setTimeout(r, retryAfter));
-    return webhookRequest(method, id, token, body);
+    return webhookRequest(method, id, token, body, attempt + 1);
   }
   if (!res.ok) throw new Error(`Webhook ${method} ${id}: ${res.status} ${await res.text()}`);
   if (res.status === 204) return null;
@@ -481,9 +498,9 @@ async function applyServer(cfg) {
       console.log(`  server.${slot.field}: skipped (guild lacks ${slot.feature})`);
       continue;
     }
-    const abs = join(REPO_ROOT, src);
-    if (!existsSync(abs)) {
-      logManual(`server.${slot.field}: source image missing at ${src}`);
+    const abs = safeRepoPath(src);
+    if (!abs || !existsSync(abs)) {
+      logManual(`server.${slot.field}: source image missing or outside the repo: ${src}`);
       continue;
     }
     const { dataUri, sourceSha } = imageToDataUri(abs);
@@ -554,9 +571,9 @@ function resolveRoleIcon(role, guild, existing) {
     const changed = !existing || existing.unicode_emoji !== role.unicode_emoji;
     return { extras: { unicode_emoji: role.unicode_emoji }, pending: null, changed };
   }
-  const abs = join(REPO_ROOT, role.icon);
-  if (!existsSync(abs)) {
-    logManual(`role ${role.name}: icon source missing at ${role.icon}`);
+  const abs = safeRepoPath(role.icon);
+  if (!abs || !existsSync(abs)) {
+    logManual(`role ${role.name}: icon source missing or outside the repo: ${role.icon}`);
     return { extras: {}, pending: null, changed: false };
   }
   const { dataUri, sourceSha } = imageToDataUri(abs);
@@ -1063,9 +1080,9 @@ async function applyWebhooks(cfg) {
   const desiredName = wcfg.name ?? 'Heron';
   let avatar = null; // { dataUri, sourceSha }
   if (wcfg.avatar) {
-    const abs = join(REPO_ROOT, wcfg.avatar);
-    if (existsSync(abs)) avatar = imageToDataUri(abs);
-    else logManual(`webhooks.avatar: source image missing at ${wcfg.avatar}`);
+    const abs = safeRepoPath(wcfg.avatar);
+    if (abs && existsSync(abs)) avatar = imageToDataUri(abs);
+    else logManual(`webhooks.avatar: source image missing or outside the repo: ${wcfg.avatar}`);
   }
 
   for (const { channel, envName } of declared) {
@@ -1111,9 +1128,9 @@ async function applyBotProfile(cfg, botUser) {
   for (const field of ['avatar', 'banner']) {
     const src = bcfg[field];
     if (!src) continue;
-    const abs = join(REPO_ROOT, src);
-    if (!existsSync(abs)) {
-      logManual(`bot.${field}: source image missing at ${src}`);
+    const abs = safeRepoPath(src);
+    if (!abs || !existsSync(abs)) {
+      logManual(`bot.${field}: source image missing or outside the repo: ${src}`);
       continue;
     }
     const { dataUri, sourceSha } = imageToDataUri(abs);
