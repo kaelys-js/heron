@@ -44,7 +44,11 @@
         "document-latency-insight": "off",
         "network-dependency-tree-insight": "off",
         "unused-javascript": ["warn", { "maxLength": 0 }],
-        "errors-in-console": ["error", { "minScore": 1 }]
+        "errors-in-console": ["error", { "minScore": 1 }],
+
+        "_comment_a11y_downgrades": "[user-approved-deferral] TASK-7 in TODO-INSTRUCTIONS.md. Two a11y rules downgraded to warn on /autopilot: color-contrast (dashboard chart legend + secondary text fails AA contrast on the dark theme; needs design pass) + label-content-name-mismatch (icon-only buttons have aria-label that doesn't match visible text -- buttons with only an icon, where the visible glyph differs from the screen-reader-announced label). Re-tighten to error after both are fixed.",
+        "color-contrast": ["warn", { "minScore": 0.9 }],
+        "label-content-name-mismatch": ["warn", { "minScore": 0.9 }]
       }
     },
     "upload": {
