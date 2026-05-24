@@ -151,9 +151,14 @@ jobs:
           PR_NUM: ${{ steps.ctx.outputs.pr_num }}
         run: |
           set -euo pipefail
-          if [ -s desc.new.md ]; then
+          # Only edit when the rendered body actually changed -- editing on
+          # every run fires a PR "edited" event up to 13x per commit for no
+          # reason. cmp -s is silent + returns non-zero when the files differ.
+          if [ -s desc.new.md ] && ! cmp -s desc.current.md desc.new.md; then
             gh pr edit "$PR_NUM" --repo "$GH_REPO" --body-file desc.new.md
             echo "::notice::Refreshed CI-STATUS block in PR #$PR_NUM."
+          else
+            echo "::notice::PR-description CI block unchanged; skipped edit."
           fi
 
       - name: Remove superseded per-domain comments
