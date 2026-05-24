@@ -19,7 +19,6 @@ jobs:
     timeout-minutes: 3
     permissions:
       contents: read
-      pull-requests: write
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
@@ -37,9 +36,13 @@ jobs:
         run: git diff --diff-filter=AM --name-only "$BASE_SHA..$HEAD_SHA" > changed-files.txt
       - name: Format reviewers sticky
         run: node .github/scripts/sticky/format-reviewers.mjs changed-files.txt .github/CODEOWNERS --out body.md
-      - name: Post sticky comment
-        uses: ./.github/actions/sticky-comment
+      - name: Stage reviewers summary
+        run: |
+          if [ -f body.md ]; then cp body.md reviewers.md; fi
+      - name: Upload reviewers summary artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          marker: heron-pr-reviewers
-          body-path: body.md
-          pr-number: ${{ github.event.pull_request.number }}
+          name: summary-reviewers
+          path: reviewers.md
+          if-no-files-found: ignore
+          retention-days: 7

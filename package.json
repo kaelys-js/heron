@@ -92,6 +92,7 @@
     "og:generate:force": "node scripts/system/generate-og-cards.mjs --force",
     "outdated": "pnpm outdated -r",
     "pdf": "node scripts/cv/generate-pdf.mjs",
+    "pr:summary:test": "node .github/scripts/sticky/assemble-summary.test.mjs",
     "prepare": "lefthook install || true",
     "profile:seo": "node scripts/quality/profile-seo.mjs",
     "rebuild:native": "node scripts/native/ensure-native-bindings.mjs --force",
