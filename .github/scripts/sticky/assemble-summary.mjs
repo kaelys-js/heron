@@ -1,13 +1,18 @@
 #!/usr/bin/env node
-// assemble-summary.mjs -- render the unified Heron PR comment from a dir of
-// per-domain markdown files (`<domain>.md`, each a format-*.mjs output whose
-// first content line is `## <statusEmoji> <title>`). State is derived by
-// matching the exact EMOJI strings from lib.mjs, so no formatter changes are
-// needed. Pure helpers are exported + unit-tested; main() does the I/O.
+// assemble-summary.mjs -- render the unified Heron PR-checks comment from a
+// dir of per-domain markdown files (`<domain>.md`, each a format-*.mjs
+// output whose first content line is `## <statusEmoji> <title>`).
+//
+// Design: a GitHub-native rollup alert + a scannable Check/Result table for
+// the checks that ran, a compact "Not reported / Pending" line for the rest,
+// and collapsible detail only where there's a real breakdown. Failures are
+// pulled into the alert + their detail auto-expanded. No per-row emoji.
+//
+// Pure helpers are exported + unit-tested; main() does the file I/O.
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { EMOJI, statusEmoji } from './lib.mjs';
+import { EMOJI } from './lib.mjs';
 
 // Matrix + section order (top = most important), and display labels.
 export const ORDER = Object.freeze([
@@ -28,8 +33,8 @@ export const ORDER = Object.freeze([
 export const LABELS = Object.freeze({
   quality: 'Quality',
   coverage: 'Coverage',
-  'type-coverage': 'Types',
-  a11y: 'a11y',
+  'type-coverage': 'Type coverage',
+  a11y: 'Accessibility',
   visual: 'Visual',
   bundle: 'Bundle',
   perf: 'Lighthouse',
@@ -47,7 +52,7 @@ export const DESC_MARKER_END = '<!-- CI-STATUS-MARKER-END -->';
 const firstContentLine = (md) => ((md || '').split('\n').find((l) => l.trim().length) || '').trim();
 
 /** Map a domain's markdown to a state via its verdictHeader emoji.
- *  Missing markdown -> pending. fail/cancelled -> fail; warn/neutral -> warn. */
+ *  Missing markdown -> pending; fail/cancelled -> fail; warn/neutral -> warn. */
 export function deriveState(md) {
   if (!md || !md.trim()) return 'pending';
   const first = firstContentLine(md);
@@ -59,19 +64,19 @@ export function deriveState(md) {
   return 'pending';
 }
 
-/** Only failing / warning sections open by default; the rest stay collapsed. */
-export function isExpanded(state) {
-  return state === 'fail' || state === 'warn';
+/** Strip the leading `## `, the status emoji, and a `Label:`/`Label —` prefix
+ *  off the verdictHeader so the table shows just the result. */
+export function headlineOf(domain, md) {
+  let h = firstContentLine(md).replace(/^#{1,6}\s*/, '');
+  // drop the leading status-emoji token (emoji has no spaces)
+  h = h.replace(/^\S+\s+/, '').trim();
+  // drop a short leading "Prefix:" label (e.g. "Code quality:", "Bundle size:")
+  h = h.replace(/^[^:|#]{1,40}:\s+/, '').trim();
+  return h || (LABELS[domain] ?? domain);
 }
 
-/** The verdictHeader line with the leading `## ` stripped (keeps emoji+title). */
-function summaryLine(md, domain, state) {
-  const stripped = firstContentLine(md).replace(/^#{1,6}\s*/, '');
-  return stripped || `${statusEmoji(state)} ${LABELS[domain] ?? domain}`;
-}
-
-/** Everything after the header line. */
-function bodyAfterHeader(md) {
+/** Body after the header line. */
+export function detailOf(md) {
   const lines = (md || '').split('\n');
   const idx = lines.findIndex((l) => l.trim().length);
   return idx < 0
@@ -82,39 +87,112 @@ function bodyAfterHeader(md) {
         .trim();
 }
 
-/** One `<details>` block for a present domain. */
-export function sectionFor(domain, md) {
-  const state = deriveState(md);
-  const open = isExpanded(state) ? ' open' : '';
-  const body = bodyAfterHeader(md) || '_(no details)_';
-  return `<details${open}><summary>${summaryLine(md, domain, state)}</summary>\n\n${body}\n\n</details>`;
+/** Only a body with a real breakdown (a table or a nested <details>) is worth
+ *  a collapsible; one-line prose is already captured by the headline. */
+export function hasBreakdown(detail) {
+  if (!detail) return false;
+  return /\n?\s*\|.*\|/.test(detail) || detail.includes('<details');
 }
 
-/** Single-row status matrix: one `<emoji> <Label>` per domain, in ORDER. */
-export function renderMatrix(entries) {
-  return entries.map((e) => `${statusEmoji(e.state)} ${LABELS[e.domain] ?? e.domain}`).join(' · ');
+/** Adapter / contract shape: md -> { domain, status, headline, detail }. */
+export function toSummary(domain, md) {
+  return {
+    domain,
+    status: deriveState(md),
+    headline: headlineOf(domain, md),
+    detail: hasBreakdown(detailOf(md)) ? detailOf(md) : '',
+  };
 }
 
-/** The full unified comment body (matrix + sections for present domains). */
-export function renderComment(entries) {
-  const matrix = renderMatrix(entries);
-  const sections = entries
-    .filter((e) => e.md)
-    .map((e) => sectionFor(e.domain, e.md))
-    .join('\n\n');
-  const parts = ['## 🐦 Heron PR report', '', matrix];
-  if (sections) parts.push('', sections);
-  return `${parts.join('\n')}\n`;
+const labelList = (entries) => entries.map((e) => LABELS[e.domain] ?? e.domain).join(', ');
+
+/** GitHub-native rollup alert: NOTE when all green, WARNING/CAUTION on issues. */
+export function renderRollup(groups, meta = {}) {
+  const { passed, attention, notReported, pending } = groups;
+  const fails = attention.filter((e) => e.status === 'fail');
+  const warns = attention.filter((e) => e.status === 'warn');
+  const sha = meta.sha ? ` \`${String(meta.sha).slice(0, 7)}\`` : '';
+  const counts = [];
+  if (passed.length) counts.push(`${passed.length} passed`);
+  if (fails.length) counts.push(`${fails.length} failed`);
+  if (warns.length) counts.push(`${warns.length} warning${warns.length === 1 ? '' : 's'}`);
+  if (notReported.length) counts.push(`${notReported.length} not reported`);
+  if (pending.length) counts.push(`${pending.length} pending`);
+  const kind = fails.length ? 'CAUTION' : warns.length ? 'WARNING' : 'NOTE';
+  const lines = [`> [!${kind}]`, `> **Heron — PR checks**${sha} · ${counts.join(' · ')}`];
+  if (fails.length) lines.push(`>`, `> **Failing:** ${labelList(fails)}`);
+  if (warns.length) lines.push(`>`, `> **Needs a look:** ${labelList(warns)}`);
+  return lines.join('\n');
+}
+
+/** Check / Result table for the checks that ran (passed + attention). */
+export function renderTable(rows) {
+  if (!rows.length) return '';
+  const body = rows
+    .map((e) => `| **${LABELS[e.domain] ?? e.domain}** | ${e.headline} |`)
+    .join('\n');
+  return `| Check | Result |\n|---|---|\n${body}`;
+}
+
+/** Compact one-liner for checks with no actionable detail. */
+export function renderGroupsLine(notReported, pending) {
+  const parts = [];
+  if (notReported.length) parts.push(`**Not reported:** ${labelList(notReported)}`);
+  if (pending.length) parts.push(`**Pending:** ${labelList(pending)}`);
+  return parts.join(' · ');
+}
+
+/** Collapsible detail blocks; attention (fail/warn) auto-expanded. */
+export function renderDetails(entries) {
+  return entries
+    .filter((e) => e.detail)
+    .map((e) => {
+      const open = e.status === 'fail' || e.status === 'warn' ? ' open' : '';
+      return `<details${open}><summary>${LABELS[e.domain] ?? e.domain}</summary>\n\n${e.detail}\n\n</details>`;
+    })
+    .join('\n');
+}
+
+/** Group entries by how they should be presented. */
+export function classify(entries) {
+  const g = { passed: [], attention: [], notReported: [], pending: [] };
+  for (const e of entries) {
+    if (e.status === 'fail' || e.status === 'warn') g.attention.push(e);
+    else if (e.status === 'pass') g.passed.push(e);
+    else if (e.status === 'skip') g.notReported.push(e);
+    else g.pending.push(e);
+  }
+  return g;
+}
+
+/** The full unified comment. */
+export function renderComment(entries, meta = {}) {
+  const g = classify(entries);
+  const tableRows = [...g.attention, ...g.passed]; // attention first
+  const parts = [renderRollup(g, meta), ''];
+  const table = renderTable(tableRows);
+  if (table) parts.push(table, '');
+  const groupsLine = renderGroupsLine(g.notReported, g.pending);
+  if (groupsLine) parts.push(groupsLine, '');
+  const details = renderDetails([...g.attention, ...g.passed]);
+  if (details) parts.push(details);
+  return `${parts.join('\n').trimEnd()}\n`;
 }
 
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-/** The compact CI block for the PR description. */
+/** Compact CI block for the PR description (rollup line, no table). */
 export function renderDescriptionBlock(entries) {
-  return `${DESC_MARKER_START}\n🚦 **CI:** ${renderMatrix(entries)}\n${DESC_MARKER_END}`;
+  const g = classify(entries);
+  const fails = g.attention.filter((e) => e.status === 'fail');
+  const verdict = fails.length
+    ? `❌ ${fails.length} failing — ${labelList(fails)}`
+    : g.attention.length
+      ? `⚠️ ${g.attention.length} need a look`
+      : `✅ ${g.passed.length} passing`;
+  return `${DESC_MARKER_START}\n**CI:** ${verdict}\n${DESC_MARKER_END}`;
 }
 
-/** Replace (or append) the CI block inside an existing PR description body. */
 export function replaceDescriptionBlock(descBody, entries) {
   const block = renderDescriptionBlock(entries);
   const re = new RegExp(`${escapeRe(DESC_MARKER_START)}[\\s\\S]*?${escapeRe(DESC_MARKER_END)}`);
@@ -127,7 +205,7 @@ export function buildEntries(dir) {
   return ORDER.map((domain) => {
     const p = join(dir, `${domain}.md`);
     const md = existsSync(p) ? readFileSync(p, 'utf8') : null;
-    return { domain, md, state: deriveState(md) };
+    return toSummary(domain, md);
   });
 }
 
@@ -139,12 +217,14 @@ function arg(name) {
 function main() {
   const dir = arg('--dir') ?? '.';
   const out = arg('--out');
+  const sha = arg('--sha');
   const descIn = arg('--desc-in');
   const descOut = arg('--desc-out');
   const entries = buildEntries(dir);
+  const body = renderComment(entries, { sha });
 
-  if (out) writeFileSync(out, renderComment(entries));
-  else process.stdout.write(renderComment(entries));
+  if (out) writeFileSync(out, body);
+  else process.stdout.write(body);
 
   if (descIn && descOut) {
     const current = existsSync(descIn) ? readFileSync(descIn, 'utf8') : '';
