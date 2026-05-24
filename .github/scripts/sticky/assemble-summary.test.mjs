@@ -10,7 +10,6 @@ import {
   hasBreakdown,
   headlineOf,
   renderComment,
-  renderGroupsLine,
   renderRollup,
   renderTable,
   replaceDescriptionBlock,
@@ -140,23 +139,23 @@ it('renderRollup: WARNING on a warn (no fail)', () => {
 });
 
 // ── renderTable + groups line ────────────────────────────────────
-it('renderTable: Check | Result rows, no per-row emoji', () => {
-  const t = renderTable([{ domain: 'coverage', status: 'pass', headline: '70.91%' }]);
-  assert.ok(t.includes('| Check | Result |'));
-  assert.ok(t.includes('| **Coverage** | 70.91% |'));
-  assert.ok(!/[✅❌⚠️⬜⏳]/u.test(t), 'no emoji in the table');
-});
-it('renderGroupsLine: compact not-reported + pending', () => {
-  const line = renderGroupsLine(
-    [{ domain: 'type-coverage' }],
-    [{ domain: 'visual' }, { domain: 'api' }],
-  );
-  assert.ok(line.includes('**Not reported:** Type coverage'));
-  assert.ok(line.includes('**Pending:** Visual, API'));
+it('renderTable: Check | Status | Result for every check, urgent-first', () => {
+  const t = renderTable([
+    { domain: 'coverage', status: 'pass', headline: '70.91%' },
+    { domain: 'a11y', status: 'fail', headline: '2 violations' },
+    { domain: 'visual', status: 'pending', headline: '' },
+    { domain: 'type-coverage', status: 'skip', headline: '' },
+  ]);
+  assert.ok(t.includes('| Check | Status | Result |'));
+  assert.ok(t.includes('| Coverage | ✅ | 70.91% |'));
+  assert.ok(t.includes('| Accessibility | ❌ | 2 violations |'));
+  assert.ok(t.includes('| Visual | ⏳ | — |'));
+  assert.ok(t.includes('| Type coverage | ➖ | not reported |'));
+  assert.ok(t.indexOf('Accessibility') < t.indexOf('Coverage'), 'fail sorts before pass');
 });
 
 // ── renderComment (integration) ──────────────────────────────────
-it('renderComment: alert + table + groups line; failure auto-expands', () => {
+it('renderComment: alert + full table; failure auto-expands', () => {
   const entries = [
     toSummary('a11y', mk(EMOJI.fail, 'Accessibility: 2 violations', TABLE)),
     toSummary('coverage', mk(EMOJI.pass, 'Coverage: 70%', TABLE)),
@@ -164,8 +163,8 @@ it('renderComment: alert + table + groups line; failure auto-expands', () => {
   ];
   const c = renderComment(entries, { sha: 'deadbeef' });
   assert.ok(c.includes('> [!CAUTION]'));
-  assert.ok(c.includes('| **Accessibility** | 2 violations |'));
-  assert.ok(c.includes('**Pending:** Visual'));
+  assert.ok(c.includes('| Accessibility | ❌ | 2 violations |'));
+  assert.ok(c.includes('| Visual | ⏳ | — |'));
   assert.ok(c.includes('<details open><summary>Accessibility</summary>'), 'failure expanded');
   assert.ok(c.includes('<details><summary>Coverage</summary>'), 'pass collapsed');
 });

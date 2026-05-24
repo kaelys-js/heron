@@ -72,8 +72,19 @@ export function headlineOf(domain, md) {
   h = h.replace(/^\S+\s+/, '').trim();
   // drop a short leading "Prefix:" label (e.g. "Code quality:", "Bundle size:")
   h = h.replace(/^[^:|#]{1,40}:\s+/, '').trim();
-  return h || (LABELS[domain] ?? domain);
+  return h;
 }
+
+// Status indicator for the table's Status column (one glyph per row).
+const STATUS_GLYPH = Object.freeze({
+  pass: '✅',
+  warn: '⚠️',
+  fail: '❌',
+  skip: '➖',
+  pending: '⏳',
+});
+// Sort order: most-urgent first, pending last.
+const STATUS_ORDER = Object.freeze({ fail: 0, warn: 1, pass: 2, skip: 3, pending: 4 });
 
 /** Body after the header line. */
 export function detailOf(md) {
@@ -125,21 +136,21 @@ export function renderRollup(groups, meta = {}) {
   return lines.join('\n');
 }
 
-/** Check / Result table for the checks that ran (passed + attention). */
-export function renderTable(rows) {
-  if (!rows.length) return '';
-  const body = rows
-    .map((e) => `| **${LABELS[e.domain] ?? e.domain}** | ${e.headline} |`)
+/** One complete Check / Status / Result table for every check, most-urgent
+ *  first. Result falls back to "not reported" (skip) / "—" (pending). */
+export function renderTable(entries) {
+  if (!entries.length) return '';
+  const rows = [...entries]
+    .sort((a, b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9))
+    .map((e) => {
+      // skip headlines from the formatters are inconsistent ("no data",
+      // "no Lighthouse data", ...) -> normalize to one phrase.
+      const result =
+        e.status === 'pending' ? '—' : e.status === 'skip' ? 'not reported' : e.headline || '';
+      return `| ${LABELS[e.domain] ?? e.domain} | ${STATUS_GLYPH[e.status] ?? ''} | ${result} |`;
+    })
     .join('\n');
-  return `| Check | Result |\n|---|---|\n${body}`;
-}
-
-/** Compact one-liner for checks with no actionable detail. */
-export function renderGroupsLine(notReported, pending) {
-  const parts = [];
-  if (notReported.length) parts.push(`**Not reported:** ${labelList(notReported)}`);
-  if (pending.length) parts.push(`**Pending:** ${labelList(pending)}`);
-  return parts.join(' · ');
+  return `| Check | Status | Result |\n|:--|:-:|:--|\n${rows}`;
 }
 
 /** Collapsible detail blocks; attention (fail/warn) auto-expanded. */
@@ -168,12 +179,9 @@ export function classify(entries) {
 /** The full unified comment. */
 export function renderComment(entries, meta = {}) {
   const g = classify(entries);
-  const tableRows = [...g.attention, ...g.passed]; // attention first
   const parts = [renderRollup(g, meta), ''];
-  const table = renderTable(tableRows);
+  const table = renderTable(entries);
   if (table) parts.push(table, '');
-  const groupsLine = renderGroupsLine(g.notReported, g.pending);
-  if (groupsLine) parts.push(groupsLine, '');
   const details = renderDetails([...g.attention, ...g.passed]);
   if (details) parts.push(details);
   return `${parts.join('\n').trimEnd()}\n`;

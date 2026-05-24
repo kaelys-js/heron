@@ -53,8 +53,8 @@ const total = spellIssues.length + remarkIssues.length;
 const verdict = total === 0 ? 'pass' : total < 20 ? 'warn' : 'fail';
 const title =
   total === 0
-    ? 'Docs: cspell + remark-lint clean'
-    : `Docs: ${spellIssues.length} spell + ${remarkIssues.length} lint issue${remarkIssues.length === 1 ? '' : 's'}`;
+    ? 'Docs: no spelling or markdown issues'
+    : `Docs: ${spellIssues.length} spelling + ${remarkIssues.length} markdown issue${remarkIssues.length === 1 ? '' : 's'}`;
 
 const lines = [];
 lines.push(verdictHeader(title, verdict));
