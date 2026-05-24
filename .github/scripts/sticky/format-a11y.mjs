@@ -35,11 +35,20 @@ for (const v of allViolations) {
 }
 
 const total = allViolations.length;
-const verdict = byImpact.critical + byImpact.serious > 0 ? 'fail' : total > 0 ? 'warn' : 'pass';
+const verdict =
+  pages.length === 0
+    ? 'skip'
+    : byImpact.critical + byImpact.serious > 0
+      ? 'fail'
+      : total > 0
+        ? 'warn'
+        : 'pass';
 const title =
-  total === 0
-    ? `Accessibility: clean on ${pages.length} page${pages.length === 1 ? '' : 's'}`
-    : `Accessibility: ${total} violation${total === 1 ? '' : 's'} (${byImpact.critical} critical, ${byImpact.serious} serious)`;
+  pages.length === 0
+    ? 'Accessibility: not scanned'
+    : total === 0
+      ? `Accessibility: no violations (${pages.length} page${pages.length === 1 ? '' : 's'})`
+      : `Accessibility: ${total} violation${total === 1 ? '' : 's'} (${byImpact.critical} critical, ${byImpact.serious} serious)`;
 
 const lines = [];
 lines.push(verdictHeader(title, verdict));
