@@ -92,6 +92,10 @@ qualityJobs.sort((a, b) => {
   return (a.name || '').localeCompare(b.name || '');
 });
 
+// Shorten the displayed job name (drop the parenthetical language list)
+// so it doesn't char-wrap on mobile. This is display-only -- the real
+// job name (a required-check context) is untouched.
+const shortName = (n) => (n || '').replace(/\s*\([^)]*\)\s*$/, '').trim();
 const rows = qualityJobs.map((j) => {
   const duration =
     j.started_at && j.completed_at
@@ -100,9 +104,9 @@ const rows = qualityJobs.map((j) => {
   const jobUrl =
     j.html_url || (REPO ? `${SERVER}/${REPO}/actions/runs/${j.run_id}/job/${j.id}` : '#');
   return {
-    Job: `[\`${j.name}\`](${jobUrl})`,
-    Status: `${statusEmoji(j.conclusion)} ${j.conclusion}`,
-    Duration: humanDuration(duration),
+    Status: statusEmoji(j.conclusion),
+    Check: `[${shortName(j.name)}](${jobUrl})`,
+    Time: humanDuration(duration),
   };
 });
 
@@ -123,7 +127,10 @@ if (qualityJobs.length === 0) {
   );
 } else {
   lines.push(
-    table([{ label: 'Job' }, { label: 'Status' }, { label: 'Duration', align: 'right' }], rows),
+    table(
+      [{ label: 'Status', align: 'center' }, { label: 'Check' }, { label: 'Time', align: 'right' }],
+      rows,
+    ),
   );
 }
 
@@ -226,8 +233,8 @@ if (failures.length > 0) {
 lines.push('');
 lines.push(
   opts['logs-dir']
-    ? '<sub>aggregated from the Tests workflow_run jobs + per-tool error markers parsed from job logs.</sub>'
-    : '<sub>aggregated from the Tests workflow_run jobs. Pass `--logs-dir` to also parse per-tool error counts.</sub>',
+    ? '<sub>From the Tests run: pass/fail per job, with error markers parsed from failing logs.</sub>'
+    : '<sub>From the Tests run: pass/fail per job.</sub>',
 );
 
 const out = lines.join('\n') + '\n';

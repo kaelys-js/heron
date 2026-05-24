@@ -92,7 +92,7 @@ if (total === 0) {
       `Violation details (${ruleList.length} rule${ruleList.length === 1 ? '' : 's'})`,
       ruleList
         .map((r) => {
-          const head = `**${r.impact.toUpperCase()}: ${r.id}** (${r.count} occurrences across ${r.urls.size} URLs)`;
+          const head = `**${r.impact.toUpperCase()}: ${r.id}** (${r.count} occurrence${r.count === 1 ? '' : 's'} across ${r.urls.size} URL${r.urls.size === 1 ? '' : 's'})`;
           const help = `${r.help} -- [docs](${r.helpUrl})`;
           return `${head}\n${help}`;
         })

@@ -1504,7 +1504,7 @@ jobs:
             echo "Audit result is unchanged from the previous run."
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Harden the runner (Audit all outbound calls)
+      - name: Harden runner
         if: needs.changes.outputs.audit == 'true'
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
@@ -1537,7 +1537,7 @@ jobs:
     needs: [ts, ios, android]
     if: always()
     steps:
-      - name: Harden the runner (Audit all outbound calls)
+      - name: Harden runner
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit

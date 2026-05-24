@@ -60,7 +60,7 @@ if (total === 0) {
   lines.push("_No OpenAPI diff. Routes under `ui/src/routes/api/**` haven't changed in this PR._");
 } else {
   if (breaking.length > 0) {
-    lines.push('**🔴 BREAKING changes** -- consumers will need migration:');
+    lines.push('**Breaking changes** -- consumers will need migration:');
     lines.push('');
     lines.push(
       table(

@@ -68,7 +68,7 @@ describe('format-migrations', () => {
     assert.ok(out.includes('## ✅ Migrations:'), 'pass verdict missing');
     assert.ok(out.includes('no danger patterns'), 'no-danger explanation missing');
     assert.ok(out.includes('`0001_create_users`'), 'migration name missing');
-    assert.ok(out.includes('🟢 none detected'), 'safe risk label missing');
+    assert.ok(out.includes('none'), 'safe risk label missing');
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
@@ -84,7 +84,7 @@ describe('format-migrations', () => {
     const out = run(dir, base, head);
     assert.ok(!out.includes('## ✅'), 'should not be pass verdict');
     assert.ok(out.includes('DROP TABLE'), 'pattern label missing');
-    assert.ok(out.includes('🔴 high'), 'high severity missing');
+    assert.ok(out.includes('high'), 'high severity missing');
     assert.ok(out.includes('Danger-pattern details'), 'details collapsible missing');
     assert.ok(out.includes('Forward-only'), 'forward-only footer missing');
     fs.rmSync(dir, { recursive: true, force: true });
@@ -119,7 +119,7 @@ describe('format-migrations', () => {
     const head = execSync('git rev-parse HEAD', { cwd: dir, encoding: 'utf8' }).trim();
     const out = run(dir, base, head);
     assert.ok(out.includes('CREATE INDEX without CONCURRENTLY'), 'pattern label missing');
-    assert.ok(out.includes('🟡 medium'), 'medium severity missing');
+    assert.ok(out.includes('medium'), 'medium severity missing');
     fs.rmSync(dir, { recursive: true, force: true });
   });
 

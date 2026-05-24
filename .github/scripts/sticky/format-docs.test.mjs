@@ -36,7 +36,7 @@ function runFormat(args) {
 describe('format-docs', () => {
   it('renders pass verdict when neither cspell nor remark reported issues', () => {
     const out = execFileSync(process.execPath, [SCRIPT], { encoding: 'utf8', stdio: 'pipe' });
-    assert.ok(out.includes('## ✅ Docs: cspell + remark-lint clean'), 'pass verdict missing');
+    assert.ok(out.includes('## ✅ Docs: no spelling or markdown issues'), 'pass verdict missing');
     assert.ok(out.includes('No spelling'), 'pass explanation missing');
   });
 
@@ -86,7 +86,7 @@ describe('format-docs', () => {
         },
       ],
     });
-    assert.ok(out.includes('1 lint issue'), 'lint count missing');
+    assert.ok(out.includes('1 markdown issue'), 'markdown-lint count missing');
     assert.ok(out.includes('no-shell-dollars'), 'ruleId missing');
     assert.ok(out.includes('shell commands'), 'reason missing');
   });
@@ -97,7 +97,7 @@ describe('format-docs', () => {
       remark: [{ path: 'b.md', messages: [{ line: 2, ruleId: 'r', reason: 'oops' }] }],
     });
     assert.ok(out.includes('1 spell'), 'spell count missing');
-    assert.ok(out.includes('1 lint'), 'lint count missing');
+    assert.ok(out.includes('1 markdown'), 'markdown-lint count missing');
   });
 
   it('caps the top-N collapsible at 20 entries', () => {

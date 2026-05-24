@@ -56,6 +56,9 @@ describe('format-coverage', () => {
     assert.ok(out.includes('| `ui` |'), 'ui flag row missing');
     assert.ok(out.includes('84.32%'), 'lines_pct missing');
     assert.ok(out.includes('█'), 'pctBar character missing');
+    // Secondary metrics live in a nested collapsible, not the headline table.
+    assert.ok(out.includes('Branches, statements, functions'), 'secondary-metrics section missing');
+    assert.ok(out.includes('71.18%'), 'branches_pct should still be reachable');
   });
 
   it('renders multiple flags + delta vs base', () => {
@@ -156,7 +159,7 @@ describe('format-coverage', () => {
     assert.ok(out.includes('40 lines'));
   });
 
-  it('marks 🆕 for a flag without a baseline match', () => {
+  it('marks "new" for a flag without a baseline match', () => {
     const out = runFormat(
       {
         flags: [
@@ -174,6 +177,6 @@ describe('format-coverage', () => {
       },
       { flags: [] },
     );
-    assert.ok(out.includes('🆕'), 'new-flag marker missing');
+    assert.ok(out.includes('new'), 'new-flag marker missing');
   });
 });
