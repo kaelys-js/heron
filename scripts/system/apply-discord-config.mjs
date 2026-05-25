@@ -384,7 +384,9 @@ function loadConfig() {
   if (!existsSync(CONFIG_PATH)) {
     throw new Error(`Config not found at ${CONFIG_PATH}`);
   }
-  return yaml.load(readFileSync(CONFIG_PATH, 'utf8'));
+  // Resolve {{brand.*}} tokens so brand.json is the single source of truth for
+  // every identity value embedded in the config (name, tagline, colors, repo).
+  return resolveBrandTokens(yaml.load(readFileSync(CONFIG_PATH, 'utf8')), loadBrand());
 }
 
 // branding/brand.json is the single source of truth for identity (name,
@@ -400,6 +402,26 @@ export function loadBrand() {
 export function brandRepoSlug(brand = loadBrand()) {
   const r = brand?.repo;
   return r?.owner && r?.name ? `${r.owner}/${r.name}` : '';
+}
+
+/** Replace every {{brand.PATH}} token in a parsed config's strings with the
+ *  value from brand.json (dot-path lookup; {{brand.repo}} -> owner/name slug).
+ *  Unknown tokens resolve to '' so a typo is visible, not a literal brace. */
+export function resolveBrandTokens(value, brand = loadBrand()) {
+  if (typeof value === 'string') {
+    return value.replace(/\{\{brand\.([\w.]+)\}\}/g, (_, path) => {
+      if (path === 'repo') return brandRepoSlug(brand);
+      const v = path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), brand);
+      return v == null ? '' : String(v);
+    });
+  }
+  if (Array.isArray(value)) return value.map((v) => resolveBrandTokens(v, brand));
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) out[k] = resolveBrandTokens(v, brand);
+    return out;
+  }
+  return value;
 }
 
 function resolveGuildId() {
@@ -587,12 +609,11 @@ async function applyServer(cfg) {
   const patch = {};
 
   // ── scalar settings ──
-  // Identity (name + description) is sourced from branding/brand.json so a
-  // rebrand propagates here automatically; config.yml may override.
-  const brand = loadBrand();
+  // name + description come from config.yml's {{brand.*}} tokens, already
+  // resolved against brand.json in loadConfig (single source of truth).
   const desired = {
-    name: cfg.server.name ?? brand.displayName ?? brand.name,
-    description: cfg.server.description ?? brand.tagline ?? brand.description ?? '',
+    name: cfg.server.name,
+    description: cfg.server.description ?? '',
     verification_level: cfg.server.verification_level,
     default_message_notifications: cfg.server.default_message_notifications,
     explicit_content_filter: cfg.server.explicit_content_filter,
@@ -1458,6 +1479,29 @@ async function pruneUndeclared(cfg) {
   }
 }
 
+/**
+ * Set the @everyone base permissions to exactly cfg.server.everyone_permissions,
+ * so omitted bits (Mention @everyone, Create Expressions, Create Events) are
+ * denied -- the declarative form of Discord's "Stop @everyone spam" prompt.
+ * The @everyone role's id equals the guild id.
+ */
+async function applyEveryonePermissions(cfg) {
+  const allow = cfg.server?.everyone_permissions;
+  if (!Array.isArray(allow)) {
+    logOk('@everyone permissions (not declared)');
+    return;
+  }
+  const desired = permsToBits(allow).toString();
+  const roles = (await discord('GET', `/guilds/${GUILD_ID}/roles`)) ?? [];
+  const everyone = roles.find((r) => r.id === GUILD_ID);
+  if (everyone && everyone.permissions === desired) {
+    logOk('@everyone permissions');
+    return;
+  }
+  logChange('@everyone permissions', everyone?.permissions ?? '?', desired);
+  await discord('PATCH', `/guilds/${GUILD_ID}/roles/${GUILD_ID}`, { permissions: desired });
+}
+
 // ── Main ──────────────────────────────────────────────────────────
 async function main() {
   TOKEN = process.env.DISCORD_BOT_TOKEN;
@@ -1481,6 +1525,7 @@ async function main() {
   let guild = await applyServer(cfg);
   await applyBotProfile(cfg, botUser);
   const roleIds = await applyRoles(cfg, botPerms, guild);
+  await applyEveryonePermissions(cfg);
   // First channel pass creates everything except the COMMUNITY-only types
   // (announcement / stage), which wait for pass 2. That guarantees the rules +
   // public-updates channels exist for the COMMUNITY enable below.

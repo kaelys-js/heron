@@ -17,6 +17,7 @@ import {
   channelGatedOut,
   channelsToPrune,
   declaredChannelNames,
+  resolveBrandTokens,
   rolesToPrune,
   filterGrantable,
   hasFeature,
@@ -221,6 +222,30 @@ it('alertChannelNames: collects SEND_ALERT_MESSAGE (type 2) targets, deduped', (
   };
   assert.deepEqual(alertChannelNames(cfg).sort(), ['alerts', 'mods']);
   assert.deepEqual(alertChannelNames({}), []);
+});
+it('resolveBrandTokens: fills {{brand.PATH}} from brand; repo slug; unknown -> empty', () => {
+  const brand = {
+    displayName: 'Heron',
+    tagline: 'Stand still.',
+    colors: { primary: '#4a5b6d' },
+    repo: { owner: 'o', name: 'n' },
+  };
+  const cfg = {
+    server: { name: '{{brand.displayName}}', description: '{{brand.tagline}}' },
+    roles: [{ color: '{{brand.colors.primary}}' }],
+    slug: '{{brand.repo}}',
+    missing: '{{brand.nope}}',
+    list: ['hi {{brand.displayName}}'],
+    keep: 42,
+  };
+  const r = resolveBrandTokens(cfg, brand);
+  assert.equal(r.server.name, 'Heron');
+  assert.equal(r.server.description, 'Stand still.');
+  assert.equal(r.roles[0].color, '#4a5b6d');
+  assert.equal(r.slug, 'o/n');
+  assert.equal(r.missing, ''); // unknown token resolves to empty, not a literal brace
+  assert.equal(r.list[0], 'hi Heron');
+  assert.equal(r.keep, 42); // non-strings pass through
 });
 it('brandRepoSlug: owner/name from brand.repo, empty when missing', () => {
   assert.equal(brandRepoSlug({ repo: { owner: 'kaelys-js', name: 'heron' } }), 'kaelys-js/heron');

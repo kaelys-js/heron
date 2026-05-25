@@ -23,6 +23,7 @@
         "system_channel": { "type": "string" },
         "rules_channel": { "type": "string" },
         "public_updates_channel": { "type": "string" },
+        "everyone_permissions": { "type": "array", "items": { "type": "string" } },
         "system_channel_flags": { "type": "array", "items": { "type": "string" } },
         "images": {
           "type": "object",
