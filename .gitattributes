@@ -151,7 +151,9 @@ docs/**                                               linguist-documentation
 *.entitlements    text -merge
 
 # ── Export-ignore — files NOT included in `git archive` ────────────
-.github/                  export-ignore
+# NB: .github/ is intentionally NOT export-ignored. GitHub's source
+# tarball honors export-ignore and OpenSSF Scorecard scans that tarball;
+# hiding .github/ blinds it to every workflow + CODEOWNERS + SECURITY.md.
 .husky/                   export-ignore
 .vscode/                  export-ignore
 .idea/                    export-ignore

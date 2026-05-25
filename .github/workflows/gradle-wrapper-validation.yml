@@ -1,0 +1,46 @@
+# Gradle wrapper validation.
+#
+# Verifies ui/android/gradle/wrapper/gradle-wrapper.jar against Gradle's
+# published checksums on every push to main, and when wrapper files change
+# in a PR. The checked-in wrapper jar is the single binary OpenSSF Scorecard
+# flags (Binary-Artifacts); Scorecard exempts it once a wrapper-validation
+# Action has a SUCCESSFUL run whose HeadSHA equals the analyzed commit --
+# hence the push:main trigger is intentionally unfiltered.
+#
+# Security value beyond the score: swapping in a tampered wrapper jar is a
+# known supply-chain vector; a mismatched checksum fails the build here.
+name: gradle-wrapper-validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "ui/android/gradle/wrapper/**"
+      - ".github/workflows/gradle-wrapper-validation.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gradle-wrapper-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validation:
+    name: Validate Gradle wrapper
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
