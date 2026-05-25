@@ -28,6 +28,12 @@ on:
 permissions:
   contents: read
 
+# These jobs are gh-only (no PR-head checkout). Without GH_REPO, gh tries
+# to infer the repo from a git remote and dies with "not a git repository".
+# quarterly-audit checks out for `git log`, but the other three don't.
+env:
+  GH_REPO: ${{ github.repository }}
+
 concurrency:
   group: reminders-${{ github.run_id }}
   cancel-in-progress: false
