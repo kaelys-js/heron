@@ -171,7 +171,15 @@ async function captureOne(browser, baseUrl, [filename, route, viewport, theme]) 
     // the ceiling.
     const buf = await page.screenshot({ fullPage: false, timeout: 60_000, animations: 'disabled' });
     const outPath = join(OUT, filename);
-    const committed = existsSync(outPath) ? readFileSync(outPath) : null;
+    // Read the committed baseline directly and treat a missing file as "no
+    // baseline" -- one syscall, no check-then-read TOCTOU race
+    // (CodeQL js/file-system-race).
+    let committed = null;
+    try {
+      committed = readFileSync(outPath);
+    } catch {
+      /* no committed baseline yet -- brand-new screenshot */
+    }
     const result = classify(committed, buf, THRESHOLDS);
     if (result.decision !== 'skip') writeFileSync(outPath, buf);
     console.log(

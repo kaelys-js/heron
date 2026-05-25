@@ -46,7 +46,15 @@ const SIZE_MAX = 2000;
 const ISSUE_RE = /\b(fix(es)?|close[sd]?|resolve[sd]?|refs?)\s+([a-z0-9._/-]+)?#[0-9]+/i;
 
 export function stripComments(s) {
-  return String(s ?? '').replace(/<!--[\s\S]*?-->/g, '');
+  // Loop until stable so an overlapping/reconstructed `<!--` can't survive a
+  // single pass (CodeQL js/incomplete-multi-character-sanitization).
+  let out = String(s ?? '');
+  let prev;
+  do {
+    prev = out;
+    out = out.replace(/<!--[\s\S]*?-->/g, '');
+  } while (out !== prev);
+  return out;
 }
 
 function escapeRegex(s) {
