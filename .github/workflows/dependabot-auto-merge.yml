@@ -76,15 +76,22 @@ jobs:
             echo "::warning::GH_USER_PAT not set -- cannot owner-approve PR #${PR_NUM} (CODEOWNERS needs it). Merge manually."
             exit 0
           fi
-          # Idempotent: don't stack approvals on a later synchronize event.
-          APPROVED=$(gh pr view "$PR_NUM" --json reviews \
-            --jq '[.reviews[] | select(.state == "APPROVED")] | length')
-          if [ "$APPROVED" -eq 0 ]; then
+          # Idempotent, but only skip when the OWNER has already approved: a
+          # non-codeowner approval does NOT satisfy the CODEOWNERS rule, so we
+          # must still add ours or the PR stays blocked. Owner == the
+          # GH_USER_PAT identity.
+          OWNER_LOGIN=$(gh api user --jq '.login')
+          export OWNER_LOGIN
+          # gh's --jq is gojq: read the owner via env.OWNER_LOGIN (gh --jq has
+          # no --arg). Only the owner's approval satisfies CODEOWNERS.
+          APPROVED_BY_OWNER=$(gh pr view "$PR_NUM" --json reviews \
+            --jq '[.reviews[] | select(.state == "APPROVED" and .author.login == env.OWNER_LOGIN)] | length')
+          if [ "$APPROVED_BY_OWNER" -eq 0 ]; then
             gh pr review "$PR_NUM" --approve \
               --body "Auto-approved: non-major dependency update (${UPDATE_TYPE}); cooldown already elapsed. Native auto-merge lands it once the required checks pass."
             echo "::notice::Owner-approved Dependabot PR #${PR_NUM} (${UPDATE_TYPE})."
           else
-            echo "::notice::PR #${PR_NUM} already has an approving review; not duplicating."
+            echo "::notice::PR #${PR_NUM} already approved by ${OWNER_LOGIN}; not duplicating."
           fi
           # Native auto-merge: waits for ALL required checks (already green on
           # Dependabot PRs) + the approval above, then squash-merges. No admin
