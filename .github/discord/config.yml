@@ -39,8 +39,8 @@ prune: true
 
 server:
   # Guild-wide settings. Reconciled via PATCH /guilds/{id}.
-  name: Heron
-  description: 'Stand still. Strike well. A patient, local-first thinking partner for career transitions.'
+  # name + description come from branding/brand.json (displayName + tagline) so
+  # a rebrand propagates here. Add `name:` / `description:` to override.
   # Verification level (DiscordEnum):
   #   0 NONE     -- anyone can talk
   #   1 LOW      -- verified email required

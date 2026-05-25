@@ -387,13 +387,25 @@ function loadConfig() {
   return yaml.load(readFileSync(CONFIG_PATH, 'utf8'));
 }
 
+// branding/brand.json is the single source of truth for identity (name,
+// description, repo, guild id, invite). Cached so we read it once.
+let _brand;
+export function loadBrand() {
+  if (_brand) return _brand;
+  _brand = existsSync(BRAND_PATH) ? JSON.parse(readFileSync(BRAND_PATH, 'utf8')) : {};
+  return _brand;
+}
+
+/** "owner/name" slug from brand.repo, for GitHub API paths. */
+export function brandRepoSlug(brand = loadBrand()) {
+  const r = brand?.repo;
+  return r?.owner && r?.name ? `${r.owner}/${r.name}` : '';
+}
+
 function resolveGuildId() {
   if (process.env.DISCORD_GUILD_ID) return process.env.DISCORD_GUILD_ID;
-  if (existsSync(BRAND_PATH)) {
-    const brand = JSON.parse(readFileSync(BRAND_PATH, 'utf8'));
-    const id = brand?.community?.discord?.serverId;
-    if (id) return id;
-  }
+  const id = loadBrand()?.community?.discord?.serverId;
+  if (id) return id;
   throw new Error('DISCORD_GUILD_ID not set + brand.json::community.discord.serverId missing.');
 }
 
@@ -453,6 +465,18 @@ async function discord(method, path, body, attempt = 0) {
   }
   if (res.status === 204) return null;
   return res.json();
+}
+
+/** GET that returns null on 404 instead of throwing -- for resources that may
+ *  not exist yet on a freshly-Community guild (member-verification form,
+ *  welcome screen, onboarding), so the reconciler creates rather than dies. */
+async function discordGetOptional(path) {
+  try {
+    return await discord('GET', path);
+  } catch (e) {
+    if (/: 404\b/.test(String(e?.message))) return null;
+    throw e;
+  }
 }
 
 /**
@@ -563,9 +587,12 @@ async function applyServer(cfg) {
   const patch = {};
 
   // ── scalar settings ──
+  // Identity (name + description) is sourced from branding/brand.json so a
+  // rebrand propagates here automatically; config.yml may override.
+  const brand = loadBrand();
   const desired = {
-    name: cfg.server.name,
-    description: cfg.server.description,
+    name: cfg.server.name ?? brand.displayName ?? brand.name,
+    description: cfg.server.description ?? brand.tagline ?? brand.description ?? '',
     verification_level: cfg.server.verification_level,
     default_message_notifications: cfg.server.default_message_notifications,
     explicit_content_filter: cfg.server.explicit_content_filter,
@@ -1187,7 +1214,7 @@ async function applyOnboarding(cfg, guild, channelIds, roleIds) {
       `onboarding surfaces only ${need} channels; Discord needs >= 7 (default + prompt-referenced) to enable it.`,
     );
   }
-  const live = await discord('GET', `/guilds/${GUILD_ID}/onboarding`);
+  const live = await discordGetOptional(`/guilds/${GUILD_ID}/onboarding`);
   if (live && normalizeOnboarding(live) === normalizeOnboarding(desired)) {
     logOk('onboarding');
     return;
@@ -1218,7 +1245,7 @@ async function applyWelcome(cfg, guild, channelIds) {
       emoji_name: w.emoji_name,
     })),
   };
-  const live = await discord('GET', `/guilds/${GUILD_ID}/welcome-screen`);
+  const live = await discordGetOptional(`/guilds/${GUILD_ID}/welcome-screen`);
   if (live && normalizeWelcome(live) === normalizeWelcome(desired)) {
     logOk('welcome screen');
     return;
@@ -1368,7 +1395,7 @@ async function applyMemberVerification(cfg, guild) {
     for (const e of errors) logManual(`rules: ${e}`);
     return;
   }
-  const live = await discord('GET', `/guilds/${GUILD_ID}/member-verification`);
+  const live = await discordGetOptional(`/guilds/${GUILD_ID}/member-verification`);
   const desired = {
     enabled: true,
     description: r.description ?? '',

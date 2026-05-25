@@ -12,6 +12,7 @@ import {
   buildInviteUrl,
   alertChannelNames,
   automodToPrune,
+  brandRepoSlug,
   buildCommunityPatch,
   channelGatedOut,
   channelsToPrune,
@@ -220,6 +221,11 @@ it('alertChannelNames: collects SEND_ALERT_MESSAGE (type 2) targets, deduped', (
   };
   assert.deepEqual(alertChannelNames(cfg).sort(), ['alerts', 'mods']);
   assert.deepEqual(alertChannelNames({}), []);
+});
+it('brandRepoSlug: owner/name from brand.repo, empty when missing', () => {
+  assert.equal(brandRepoSlug({ repo: { owner: 'kaelys-js', name: 'heron' } }), 'kaelys-js/heron');
+  assert.equal(brandRepoSlug({ repo: { owner: 'o' } }), '');
+  assert.equal(brandRepoSlug({}), '');
 });
 it('declaredChannelNames: category names + their channels', () => {
   const cfg = {

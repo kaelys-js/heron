@@ -15,9 +15,19 @@
  *
  * Docs: https://discord.com/developers/docs/resources/application-role-connection-metadata
  */
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 const API = 'https://discord.com/api/v10';
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const TOKEN = process.env.DISCORD_BOT_TOKEN;
+
+// Repo slug from branding/brand.json (the single source of truth).
+const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
+const brand = JSON.parse(readFileSync(join(REPO_ROOT, 'branding', 'brand.json'), 'utf8'));
+const REPO =
+  brand.repo?.owner && brand.repo?.name ? `${brand.repo.owner}/${brand.repo.name}` : 'the repo';
 
 if (!CLIENT_ID || !TOKEN) {
   console.error('DISCORD_CLIENT_ID + DISCORD_BOT_TOKEN env vars are required.');
@@ -29,7 +39,7 @@ const METADATA = [
   {
     key: 'merged_prs',
     name: 'Merged PRs',
-    description: 'Merged pull requests in kaelys-js/heron',
+    description: `Merged pull requests in ${REPO}`,
     type: 2,
   },
   {

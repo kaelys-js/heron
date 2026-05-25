@@ -6,11 +6,11 @@
  * /github-callback): counts merged Heron PRs, writes the member's
  * role-connection metadata with HMAC-signed state. Deploy + register per
  * docs/DISCORD.md; run register-metadata.mjs first. Env: DISCORD_CLIENT_ID/
- * SECRET, GITHUB_CLIENT_ID/SECRET, COOKIE_SECRET, BASE_URL.
+ * SECRET, GITHUB_CLIENT_ID/SECRET, COOKIE_SECRET, BASE_URL, REPO (owner/name
+ * from brand.json::repo).
  */
 
 const DISCORD_API = 'https://discord.com/api/v10';
-const REPO = 'kaelys-js/heron';
 const enc = new TextEncoder();
 
 // ── HMAC-signed state (CSRF) ──────────────────────────────────────
@@ -133,7 +133,7 @@ export default {
       ).json();
       const search = await (
         await fetch(
-          `https://api.github.com/search/issues?q=${encodeURIComponent(`repo:${REPO} type:pr author:${ghUser.login} is:merged`)}`,
+          `https://api.github.com/search/issues?q=${encodeURIComponent(`repo:${env.REPO} type:pr author:${ghUser.login} is:merged`)}`,
           { headers: ghHeaders },
         )
       ).json();
@@ -166,6 +166,6 @@ export default {
       );
     }
 
-    return new Response('Heron Connected Roles. Start at /linked-role.', { status: 404 });
+    return new Response('Connected Roles endpoint. Start at /linked-role.', { status: 404 });
   },
 };
