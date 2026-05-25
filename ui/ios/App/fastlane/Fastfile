@@ -22,6 +22,15 @@
 default_platform(:ios)
 
 APP_IDENTIFIER = "com.resistjs.heron"
+# Every app-store-signed bundle id (main app + embedded extensions + watch).
+# match provisions one profile per id, named "match AppStore <id>".
+ALL_APP_IDENTIFIERS = [
+  APP_IDENTIFIER,
+  "#{APP_IDENTIFIER}.watchkitapp",
+  "#{APP_IDENTIFIER}.widget",
+  "#{APP_IDENTIFIER}.liveactivity",
+  "#{APP_IDENTIFIER}.share",
+].freeze
 # Capacitor 8+ uses SPM (Swift Package Manager) -- no Podfile, no
 # auto-generated `App.xcworkspace` at the top level. Build straight off
 # `App.xcodeproj`; SPM packages are wired up via project references.
@@ -165,7 +174,7 @@ platform :ios do
     if ENV["MATCH_GIT_URL"]
       match(
         type: "appstore",
-        app_identifier: APP_IDENTIFIER,
+        app_identifier: ALL_APP_IDENTIFIERS,
         git_url: ENV["MATCH_GIT_URL"],
         api_key: api_key,
         readonly: is_ci,
@@ -199,6 +208,10 @@ platform :ios do
       project: PROJECT,
       scheme: SCHEME,
       export_method: "app-store",
+      export_options: {
+        signingStyle: "manual",
+        provisioningProfiles: ALL_APP_IDENTIFIERS.to_h { |id| [id, "match AppStore #{id}"] }
+      },
       configuration: "Release",
       clean: true,
       output_directory: "fastlane/builds",

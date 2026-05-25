@@ -334,6 +334,27 @@ if (state.apple.MAC_CERTIFICATE && (await confirm('  Re-use stored Mac cert?', t
 }
 
 // ───────────────────────────────────────────────────────────────────
+// ─── iOS code signing (Fastlane match) ──────────────────────────────
+info('');
+info('Fastlane match — iOS code signing:');
+info('  match keeps the Apple Distribution cert + ALL provisioning profiles in');
+info('  ONE encrypted private git repo, fetched read-only by CI (no raw .p12).');
+info('  1. Create an empty PRIVATE repo (e.g. github.com/<you>/heron-certs).');
+info('  2. Populate it ONCE locally (uses the ASC key collected above):');
+info('     cd ui/ios/App && bundle exec fastlane match appstore');
+if (state.apple.MATCH_GIT_URL && (await confirm('  Re-use stored match config?', true))) {
+  ok('using stored match config');
+} else {
+  state.apple.MATCH_GIT_URL = await ask('  MATCH_GIT_URL (private certs repo URL)', {
+    default: state.apple.MATCH_GIT_URL,
+  });
+  state.apple.MATCH_PASSWORD = await ask('  MATCH_PASSWORD (encryption passphrase you choose)', {
+    hidden: true,
+  });
+  writeState(state);
+}
+
+// ───────────────────────────────────────────────────────────────────
 step(7, 'Writing ~/.heron/native-env');
 const envBody = [
   '# Heron native build secrets — auto-generated. Do NOT commit.',
@@ -343,7 +364,10 @@ const envBody = [
   `export APP_STORE_CONNECT_KEY_ID="${state.apple.APP_STORE_CONNECT_KEY_ID}"`,
   `export APP_STORE_CONNECT_ISSUER_ID="${state.apple.APP_STORE_CONNECT_ISSUER_ID}"`,
   `export APP_STORE_CONNECT_PRIVATE_KEY="${Buffer.from(state.apple.APP_STORE_CONNECT_KEY ?? '').toString('base64')}"`,
+  `export MAC_CERTIFICATE="${state.apple.MAC_CERTIFICATE ?? ''}"`,
   `export MAC_CERTIFICATE_PASSWORD="${state.apple.MAC_CERTIFICATE_PASSWORD}"`,
+  `export MATCH_GIT_URL="${state.apple.MATCH_GIT_URL ?? ''}"`,
+  `export MATCH_PASSWORD="${state.apple.MATCH_PASSWORD ?? ''}"`,
   '',
 ].join('\n');
 mkdirSync(NATIVE_STATE_DIR, { recursive: true });
@@ -368,6 +392,8 @@ const secrets = {
   ),
   MAC_CERTIFICATE: state.apple.MAC_CERTIFICATE,
   MAC_CERTIFICATE_PASSWORD: state.apple.MAC_CERTIFICATE_PASSWORD,
+  MATCH_GIT_URL: state.apple.MATCH_GIT_URL,
+  MATCH_PASSWORD: state.apple.MATCH_PASSWORD,
 };
 for (const [name, value] of Object.entries(secrets)) {
   if (!value) {
@@ -453,10 +479,6 @@ if (await confirm('  Set up Play Store credentials now?', false)) {
     const jsonKeyB64 = Buffer.from(readFileSync(jsonKeyPath, 'utf8')).toString('base64');
     state.android = state.android || {};
     state.android.PLAY_STORE_JSON_KEY = jsonKeyB64;
-    state.android.PLAY_STORE_PACKAGE_NAME = await ask(
-      '  Play Store package name (default: com.resistjs.heron):',
-      'com.resistjs.heron',
-    );
     info('Now for the release keystore. In Android Studio:');
     info('  Build → Generate Signed Bundle/APK → choose "Android App Bundle" → next');
     info('  Click "Create new..." next to "Key store path".');
@@ -473,6 +495,14 @@ if (await confirm('  Set up Play Store credentials now?', false)) {
       state.android.ANDROID_KEY_ALIAS = await ask('  Key alias (default: heron):', 'heron');
       state.android.ANDROID_KEY_PASSWORD = await ask('  Key password (often same as keystore):');
       writeState(state);
+      // build.gradle reads release signing from keystore.properties (gitignored);
+      // write it so local `gradlew bundleRelease` signs, mirroring CI.
+      const ksPropsPath = join(UI, 'android', 'keystore.properties');
+      writeFileSync(
+        ksPropsPath,
+        `storeFile=${ksPath}\nstorePassword=${state.android.ANDROID_KEYSTORE_PASSWORD}\nkeyAlias=${state.android.ANDROID_KEY_ALIAS}\nkeyPassword=${state.android.ANDROID_KEY_PASSWORD}\n`,
+      );
+      ok(`wrote ${ksPropsPath}`);
       ok('Play Store + keystore credentials saved locally');
     } else {
       warn('Keystore not found at provided path — skipping. Re-run setup when ready.');
