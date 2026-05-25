@@ -179,7 +179,7 @@ if (flags.noRemote) {
 // length, contributes to exit-1 under strict). In normal mode:
 // info-only -- the actual build steps fail loudly if these are
 // missing, so doctor:native stays exit-0 by default.
-log.step('Native readiness -- Apple Dev portal manual steps (checklist)');
+log.step('Native readiness -- Apple + Google portal manual steps (checklist)');
 {
   // Read brand.json once -- bundleId + name + displayName all come
   // from the SSOT. Hardcoding "heron" / "Heron" here would silently
@@ -217,6 +217,17 @@ log.step('Native readiness -- Apple Dev portal manual steps (checklist)');
   emit('ASC API key (.p8) -- appstoreconnect.apple.com/access/integrations/api');
   emit('  - + Create new key; Access = App Manager; download .p8 (one-time)');
   emit('  - Paste Key ID + Issuer ID + the .p8 file path into pnpm setup:native');
+
+  emit('Google Play Console (Android) -- play.google.com/console');
+  emit('  - Signup: play.google.com/console/signup ($25 one-time + ID verification)');
+  emit(`  - Create app: All apps -> Create app; name = ${appName}; Free; App`);
+  emit(
+    `  - Service account: GCP IAM -> JSON key; Play Console -> API access -> Release manager on ${appName}`,
+  );
+  emit('  - Content rating (IARC) + Data safety (local-first: none collected/shared) +');
+  emit('    Target audience: Policy -> App content');
+  emit('  - Privacy policy URL: mandatory + must resolve (Play rejects dead URLs)');
+  emit('  - Paste the service-account JSON path + 4 keystore values into pnpm setup:native');
 
   emit('Full walkthrough: TODO-INSTRUCTIONS.md (gitignored, repo root)');
 }

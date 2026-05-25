@@ -428,6 +428,14 @@ if (existsSync(xcodegenScript)) {
 step(11, 'Google Play Store (optional)');
 info('Skip if you have no plans to ship Android via Play Store.');
 info('Required for the build-android job in native-release.yml.');
+info('Portal prerequisites (Google gates these on a human session -- do them first):');
+info('  - Play Console signup: play.google.com/console/signup ($25 one-time + ID verification)');
+info('  - Create app: All apps -> Create app; name from brand.json displayName; Free; App');
+info('  - Content rating: Policy -> App content -> Content rating (IARC questionnaire)');
+info('  - Data safety: Policy -> App content -> Data safety (local-first: none collected/shared)');
+info('  - Privacy policy URL: mandatory + must resolve (Play rejects dead URLs)');
+info('  - Target audience: Policy -> App content -> Target audience and content');
+info('  Run `pnpm doctor:native` anytime for the full checklist. Skip if already done.');
 if (await confirm('  Set up Play Store credentials now?', false)) {
   info('Google Cloud Console → IAM & Admin → Service Accounts → Create.');
   info('  Role: Service Account User.');
