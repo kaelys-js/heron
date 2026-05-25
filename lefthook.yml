@@ -733,10 +733,10 @@ pre-push:
 
     # ── Shared-script unit tests ────────────────────────────────────────
     # Guard the validators that BOTH the local hooks + CI depend on, so a
-    # broken check-pr-metadata.mjs / screenshot-diff.mjs can't land. Plain
-    # Node (no vitest), <1s.
+    # broken check-pr-metadata.mjs / screenshot-diff.mjs / apply-github-config.mjs
+    # can't land. Plain Node (no vitest), <1s.
     meta-script-tests:
-      run: bash scripts/system/mise-shim.sh node scripts/system/check-pr-metadata.test.mjs && bash scripts/system/mise-shim.sh node scripts/system/screenshot-diff.test.mjs
+      run: bash scripts/system/mise-shim.sh node scripts/system/check-pr-metadata.test.mjs && bash scripts/system/mise-shim.sh node scripts/system/screenshot-diff.test.mjs && bash scripts/system/mise-shim.sh node scripts/system/apply-github-config.test.mjs
 
 # ── commit-msg (lightweight) ────────────────────────────────────────
 # Enforce Conventional Commits format (so release-please can generate

@@ -44,7 +44,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFileSync, execSync } from 'node:child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -117,6 +117,29 @@ function logChange(label, before, after) {
   console.log(`      - ${JSON.stringify(before)}`);
   console.log(`      + ${JSON.stringify(after)}`);
   return true;
+}
+
+/**
+ * Deep "desired is a subset of live" check. Every leaf the desired (file)
+ * config sets must equal the live value; live may carry extra keys (GitHub
+ * fills in defaults like allowed_merge_methods / required_reviewers, plus
+ * id / _links / timestamps) and those are ignored. Arrays must match length
+ * and pair up order-insensitively, so a reordered required-checks list is
+ * not false drift, but an added, removed, or changed entry is.
+ */
+export function isConfiguredSubset(desired, live) {
+  if (Array.isArray(desired)) {
+    if (!Array.isArray(live) || desired.length !== live.length) return false;
+    const matched = new Array(live.length).fill(false);
+    return desired.every((d) =>
+      live.some((l, i) => !matched[i] && isConfiguredSubset(d, l) && (matched[i] = true)),
+    );
+  }
+  if (desired !== null && typeof desired === 'object') {
+    if (live === null || typeof live !== 'object') return false;
+    return Object.keys(desired).every((k) => isConfiguredSubset(desired[k], live[k]));
+  }
+  return desired === live;
 }
 
 async function main() {
@@ -310,15 +333,15 @@ async function main() {
     if (existing) {
       // GET the full ruleset to compare (the list endpoint omits rules detail)
       const full = gh('GET', `/repos/${repoSlug}/rulesets/${existing.id}`);
-      // Cheap diff: enforce + rule count
-      const enforcementDrift = full.enforcement !== content.enforcement;
-      const ruleCountDrift = (full.rules || []).length !== (content.rules || []).length;
-      if (enforcementDrift || ruleCountDrift) {
+      // Deep subset compare: catches rule-PARAMETER drift (e.g. a flipped
+      // require_last_push_approval) that the old enforce + rule-count check
+      // silently missed, while ignoring API-added keys absent from the file.
+      const drifted = Object.keys(content).filter((k) => !isConfiguredSubset(content[k], full[k]));
+      if (drifted.length > 0) {
         driftCount++;
-        console.log(`▸ Ruleset "${content.name}" (id=${existing.id})`);
-        if (enforcementDrift) logChange('enforcement', full.enforcement, content.enforcement);
-        if (ruleCountDrift)
-          logChange('rules.length', (full.rules || []).length, (content.rules || []).length);
+        console.log(
+          `▸ Ruleset "${content.name}" (id=${existing.id}) — drift in: ${drifted.join(', ')}`,
+        );
         if (!VERIFY_ONLY && !DRY_RUN) {
           gh('PUT', `/repos/${repoSlug}/rulesets/${existing.id}`, content);
         }
@@ -351,7 +374,11 @@ async function main() {
   console.log(`\n✓ Applied ${driftCount} change(s).`);
 }
 
-main().catch((err) => {
-  console.error('::error::', err.message || err);
-  process.exit(1);
-});
+// Only run when invoked directly (`node apply-github-config.mjs`), not when
+// imported by the test, which exercises isConfiguredSubset in isolation.
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    console.error('::error::', err.message || err);
+    process.exit(1);
+  });
+}
