@@ -23,7 +23,7 @@
 	<key>WKApplication</key>
 	<true/>
 	<key>WKCompanionAppBundleIdentifier</key>
-	<string>com.heron.app</string>
+	<string>com.resistjs.heron</string>
 	<key>WKWatchOnly</key>
 	<false/>
 	<key>NSExtension</key>

@@ -9,7 +9,7 @@ import Security
  * Anything secret — LinkedIn session cookies, OpenAI API keys, Tailscale
  * auth keys — goes here instead via a Capacitor plugin bridge.
  *
- * Keychain entries are scoped to the app bundle ID (com.heron.app)
+ * Keychain entries are scoped to the app's keychain service (Brand.keychainService)
  * and survive app deletion only if "Keychain Access Group" entitlement
  * is set, which we deliberately *don't* set — uninstall wipes credentials.
  */

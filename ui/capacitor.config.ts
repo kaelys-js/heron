@@ -24,7 +24,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
  *     plugin → SFSafariViewController.
  */
 const config = {
-  appId: 'com.heron.app',
+  appId: 'com.resistjs.heron',
   appName: 'Heron',
   webDir: 'build/static',
   /** Append a marker so the dashboard server can tell native vs web

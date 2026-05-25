@@ -15,9 +15,9 @@ import WidgetKit
  *
  * To add this target in Xcode:
  *   1. File → New → Target → Widget Extension → "AppWidget"
- *   2. Bundle ID: com.heron.app.widget
+ *   2. Bundle ID: <brand.json::identifiers.bundleId>.widget
  *   3. Add to "App Groups" entitlement (both this target and the
- *      main app): group.com.heron.app
+ *      main app): <brand.json::identifiers.appGroup>
  *   4. Replace the auto-generated AppWidget.swift with this file.
  */
 struct WidgetStats: Codable {

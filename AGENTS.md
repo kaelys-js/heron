@@ -149,7 +149,7 @@ CI uses `jdx/mise-action@v2` so the same versions install in GitHub runners as o
 
 ### Branding -- single source of truth
 
-`branding/brand.json` + `branding/logo.svg` are the **only** files you edit when rebranding. Running `pnpm brand:apply` propagates these into every consumer (package.json × 3, Capacitor configs × 2, electron-builder, Info.plist, Brand.swift × 5 targets, brand.ts × 2, manifest, fastlane, icons). Source code reads brand from generated `brand.ts` / `Brand.swift` -- never hardcode the current identifiers (`com.heron.app`, `heron://`, `_heron._tcp`) in runtime code.
+`branding/brand.json` + `branding/logo.svg` are the **only** files you edit when rebranding. Running `pnpm brand:apply` propagates these into every consumer (package.json × 3, Capacitor configs × 2, electron-builder, Info.plist, Brand.swift × 5 targets, brand.ts × 2, manifest, fastlane, icons). Source code reads brand from generated `brand.ts` / `Brand.swift` -- never hardcode the current identifiers (`com.resistjs.heron`, `heron://`, `_heron._tcp`) in runtime code.
 
 Vitest's `capacitor.integration.test.ts` checks every consumer matches `brand.json` -- drift fails CI.
 

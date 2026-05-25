@@ -7,7 +7,7 @@
 //
 // Mirrors AppTests/BrandTests.swift on the iOS side.
 
-package com.heron.app
+package com.resistjs.heron
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -27,7 +27,7 @@ class BrandTest {
 
     @Test
     fun `bundleId follows reverse-DNS pattern`() {
-        // Must be at least two dot-separated segments (e.g. com.heron.app).
+        // Must be at least two dot-separated segments (e.g. com.resistjs.heron).
         assertTrue(Brand.bundleId.contains("."))
         assertTrue(Brand.bundleId.split(".").size >= 2)
     }

@@ -4,7 +4,7 @@
 //
 // Mirrors AppTests/NetworkMonitorTests.swift on the iOS side.
 
-package com.heron.app
+package com.resistjs.heron
 
 import android.content.Context
 import android.content.SharedPreferences

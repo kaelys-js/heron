@@ -430,8 +430,8 @@ if (await confirm('  Set up Play Store credentials now?', false)) {
     state.android = state.android || {};
     state.android.PLAY_STORE_JSON_KEY = jsonKeyB64;
     state.android.PLAY_STORE_PACKAGE_NAME = await ask(
-      '  Play Store package name (default: com.heron.app):',
-      'com.heron.app',
+      '  Play Store package name (default: com.resistjs.heron):',
+      'com.resistjs.heron',
     );
     info('Now for the release keystore. In Android Studio:');
     info('  Build → Generate Signed Bundle/APK → choose "Android App Bundle" → next');

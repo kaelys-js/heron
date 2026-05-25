@@ -11,7 +11,7 @@
 //     workers can short-circuit when offline
 //   - Single-line forward to JS
 
-package com.heron.app
+package com.resistjs.heron
 
 import android.content.Context
 import android.net.ConnectivityManager

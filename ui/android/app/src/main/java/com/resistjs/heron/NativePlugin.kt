@@ -14,7 +14,7 @@
 //     Handoff doesn't exist; we publish an AppSearch document instead
 //     so the system-wide search picks up the activity.
 
-package com.heron.app
+package com.resistjs.heron
 
 import android.content.Context
 import androidx.appcompat.app.AppCompatActivity

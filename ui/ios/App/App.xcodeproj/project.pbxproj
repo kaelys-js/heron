@@ -1245,7 +1245,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = AppShareExtensionTests;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.sharetests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.sharetests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1265,7 +1265,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = AppTests;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1287,7 +1287,7 @@
 				INFOPLIST_FILE = Extensions/AppWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.widget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.widget;
 				PRODUCT_NAME = AppWidget;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1305,7 +1305,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = AppUITests;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1325,7 +1325,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = WidgetTests;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.widgettests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.widgettests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1346,7 +1346,7 @@
 				INFOPLIST_FILE = Extensions/AppShareExtension/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.share;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.share;
 				PRODUCT_NAME = AppShareExtension;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1480,7 +1480,7 @@
 				);
 				MARKETING_VERSION = 0.1.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_VERSION = 5.9;
@@ -1502,7 +1502,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
 				SWIFT_VERSION = 5.9;
@@ -1521,7 +1521,7 @@
 				INFOPLIST_FILE = Extensions/AppShareExtension/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.share;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.share;
 				PRODUCT_NAME = AppShareExtension;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1538,7 +1538,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = AppTests;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1561,7 +1561,7 @@
 				INFOPLIST_FILE = Extensions/AppLiveActivity/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.liveactivity;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.liveactivity;
 				PRODUCT_NAME = AppLiveActivity;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1583,7 +1583,7 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WatchApp/Info.plist;
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.watchkitapp;
 				PRODUCT_NAME = WatchApp;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1603,7 +1603,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = AppUITests;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1622,7 +1622,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = AppLiveActivityTests;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.liveactivitytests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.liveactivitytests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1644,7 +1644,7 @@
 				INFOPLIST_FILE = Extensions/AppWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.widget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.widget;
 				PRODUCT_NAME = AppWidget;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1659,7 +1659,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = WatchTests;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.watchtests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.watchtests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1683,7 +1683,7 @@
 				INFOPLIST_FILE = Extensions/AppLiveActivity/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.liveactivity;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.liveactivity;
 				PRODUCT_NAME = AppLiveActivity;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1704,7 +1704,7 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WatchApp/Info.plist;
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.watchkitapp;
 				PRODUCT_NAME = WatchApp;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1724,7 +1724,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = WidgetTests;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.widgettests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.widgettests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1743,7 +1743,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = AppShareExtensionTests;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.sharetests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.sharetests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1761,7 +1761,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = AppLiveActivityTests;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.liveactivitytests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.liveactivitytests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1778,7 +1778,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = WatchTests;
-				PRODUCT_BUNDLE_IDENTIFIER = com.heron.app.watchtests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.watchtests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;

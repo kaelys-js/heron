@@ -58,6 +58,36 @@ describe('Capacitor brand consistency — iOS', () => {
       }
     }
   });
+
+  it('WatchApp/Info.plist companion identifier matches bundleId', () => {
+    // WKCompanionAppBundleIdentifier must equal the iOS app's bundleId or
+    // the watch app won't install. apply-brand derives it from brand.json.
+    const p = 'ui/ios/App/WatchApp/Info.plist';
+    if (!exists(p)) return;
+    expect(readFile(p)).toContain(bundleId);
+  });
+
+  it('App.entitlements app-group + keychain group derive from brand.json', () => {
+    const p = 'ui/ios/App/App/App.entitlements';
+    if (!exists(p)) return;
+    const ent = readFile(p);
+    expect(ent).toContain(appGroup);
+    expect(ent).toContain(bundleId);
+  });
+
+  it('project.pbxproj bundle identifiers all derive from bundleId', () => {
+    // Every PRODUCT_BUNDLE_IDENTIFIER is bundleId + a target suffix; a
+    // stale base here means a target ships under the wrong App ID.
+    const p = 'ui/ios/App/App.xcodeproj/project.pbxproj';
+    if (!exists(p)) return;
+    const ids = [...readFile(p).matchAll(/PRODUCT_BUNDLE_IDENTIFIER = ([A-Za-z0-9_.]+);/g)].map(
+      (m) => m[1],
+    );
+    expect(ids.length).toBeGreaterThan(0);
+    for (const id of ids) {
+      expect(id.startsWith(bundleId), `${id} should start with ${bundleId}`).toBe(true);
+    }
+  });
 });
 
 describe('Capacitor brand consistency — Android', () => {
@@ -99,6 +129,14 @@ describe('Capacitor brand consistency — Electron + Fastlane', () => {
     const af = 'ui/ios/App/fastlane/Appfile';
     if (!exists(af)) return;
     expect(readFile(af)).toContain(bundleId);
+  });
+
+  it('MAS entitlements app-group matches appGroup', () => {
+    // entitlements.mas.plist declares the App Group shared with a
+    // sideloaded iOS app under Catalyst; apply-brand keeps it in lock-step.
+    const p = 'ui/electron/build/entitlements.mas.plist';
+    if (!exists(p)) return;
+    expect(readFile(p)).toContain(appGroup);
   });
 });
 

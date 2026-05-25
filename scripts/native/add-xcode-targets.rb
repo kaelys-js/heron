@@ -14,9 +14,9 @@
 # All three get:
 #   • Their Swift source from ui/ios/App/Extensions/AppXxx/ (or WatchApp/)
 #   • Bundle ID: <brand.json::identifiers.bundleId>.{widget,liveactivity,share}
-#     (currently com.heron.app.{widget,liveactivity,share})
+#     (currently com.resistjs.heron.{widget,liveactivity,share})
 #   • App Group capability: <brand.json::identifiers.appGroup>
-#     (currently group.com.heron.app)
+#     (currently group.com.resistjs.heron)
 #   • Deployment target: matches main app
 #
 # Safe to re-run -- checks if a target already exists before adding.
@@ -42,8 +42,8 @@ end
 # DEFAULT_BUNDLE / DEFAULT_GROUP literals only fire if brand.json is
 # missing (fresh-clone bootstrap).
 BRAND_JSON_PATH = File.expand_path("../../../branding/brand.json", File.dirname(PROJECT_PATH))
-DEFAULT_BUNDLE = "com.heron.app"
-DEFAULT_GROUP = "group.com.heron.app"
+DEFAULT_BUNDLE = "com.resistjs.heron"
+DEFAULT_GROUP = "group.com.resistjs.heron"
 brand_json = if File.exist?(BRAND_JSON_PATH)
     begin
       JSON.parse(File.read(BRAND_JSON_PATH, encoding: "UTF-8"))
@@ -148,7 +148,7 @@ app_sources_dir = File.expand_path("App", Dir.pwd)
 if Dir.exist?(app_sources_dir)
   # NOTE: do NOT name this `app_group` -- the outer scope's `app_group`
   # string (the App Group identifier loaded from brand.json,
-  # currently 'group.com.heron.app') is reused in the entitlements
+  # currently 'group.com.resistjs.heron') is reused in the entitlements
   # block below. Shadowing it with a PBXGroup object corrupts the
   # entitlements file (the plist gem then Marshal-dumps the Ruby object
   # into the <data> element).

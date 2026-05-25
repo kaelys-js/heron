@@ -6,7 +6,7 @@
  * watchOS 10+ SwiftUI app (Single Target -- no WatchKit Extension). It
  * shows the top job to apply to + open issues, reads from the App Group
  * container `<brand.json::identifiers.appGroup>` (currently
- * `group.com.heron.app`), and receives live updates
+ * `group.com.resistjs.heron`), and receives live updates
  * via WCSession from the paired iPhone.
  *
  * Flow:

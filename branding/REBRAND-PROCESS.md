@@ -101,8 +101,8 @@ The following fields have changed since the last `pnpm brand:apply`.
 These changes have non-reversible consequences:
 
   identifiers.bundleId  (Bundle ID (App Store + Play Store identifier))
-    old: com.heron.app
-    new: com.heron.test
+    old: com.example.app
+    new: com.example.fork
 
 Consequences:
   • App Store Connect: bundle ID changes are NOT reversible. New bundle ID

@@ -6,13 +6,13 @@ import Foundation
 enum Brand {
     static let name = "heron"
     static let displayName = "Heron"
-    static let bundleId = "com.heron.app"
-    static let appGroup = "group.com.heron.app"
+    static let bundleId = "com.resistjs.heron"
+    static let appGroup = "group.com.resistjs.heron"
     static let urlScheme = "heron"
     static let serviceType = "_heron._tcp"
-    static let spotlightDomain = "com.heron.app.jobs"
-    static let keychainService = "com.heron.app"
-    static let openJobActivityType = "com.heron.app.openJob"
+    static let spotlightDomain = "com.resistjs.heron.jobs"
+    static let keychainService = "com.resistjs.heron"
+    static let openJobActivityType = "com.resistjs.heron.openJob"
     /// Capacitor JS↔Swift bridge name. Must match TS registerPlugin('...') call.
     static let capacitorPluginName = "HeronNative"
 
@@ -45,7 +45,7 @@ enum Brand {
     /// NSUserActivity type for Handoff between Watch / Widget /
     /// Live Activity → iPhone. Pattern: "<bundleId>.handoff.<kind>".
     /// E.g. handoffActivityType("interview-prep") →
-    /// "com.heron.app.handoff.interview-prep". iPhone's AppDelegate
+    /// "com.resistjs.heron.handoff.interview-prep". iPhone's AppDelegate
     /// gates incoming activities on the bundleId prefix so any rogue
     /// app can't push us into a foreign view.
     static func handoffActivityType(_ kind: String) -> String {
