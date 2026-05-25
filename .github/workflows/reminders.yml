@@ -248,3 +248,57 @@ jobs:
             --title "📦 Renovate backlog: ${OPEN} open PRs" \
             --label "renovate-backlog,maintenance" \
             --body-file /tmp/issue.md
+
+  # ── Discord bot token rotation reminder ──────────────────────────
+  discord-token-rotation:
+    name: Discord bot token rotation reminder (90d cadence)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      issues: write # opens a rotation reminder when the token is stale
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Token rotated within 90 days?
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ROTATED_AT: ${{ vars.DISCORD_TOKEN_ROTATED_AT }}
+        # The bot token grants Administrator on the guild, so treat it like a
+        # private key. Discord has no rotate API -- this is a manual quarterly
+        # step. The maintainer sets the DISCORD_TOKEN_ROTATED_AT repo variable
+        # (ISO date) on each rotation; we nudge when it is stale or unset.
+        run: |
+          set -euo pipefail
+          if [ -n "${ROTATED_AT:-}" ]; then
+            THEN=$(date -d "$ROTATED_AT" +%s 2>/dev/null || echo 0)
+            if [ "$THEN" -gt 0 ]; then
+              DAYS=$(( ( $(date +%s) - THEN ) / 86400 ))
+              if [ "$DAYS" -lt 90 ]; then
+                echo "::notice::Discord token rotated ${DAYS}d ago (< 90); OK."
+                exit 0
+              fi
+            fi
+          fi
+          EXISTING=$(gh issue list --state open \
+            --search "Rotate the Discord bot token in:title" \
+            --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            echo "::notice::Token-rotation reminder #$EXISTING already open"
+            exit 0
+          fi
+          {
+            printf "The Discord bot token (\`DISCORD_BOT_TOKEN\`) grants **Administrator** on the server, so treat it like a private key and rotate it quarterly.\n\n"
+            printf "Discord has no rotate API, so this is manual:\n\n"
+            printf "1. Developer Portal -> the app -> Bot -> **Reset Token**.\n"
+            printf "2. \`gh secret set DISCORD_BOT_TOKEN --repo %s\`\n" "$GH_REPO"
+            printf "3. \`gh variable set DISCORD_TOKEN_ROTATED_AT --body \"\$(date -u +%%Y-%%m-%%d)\" --repo %s\`\n" "$GH_REPO"
+            printf "4. Re-run **Maintain Discord** (mode=verify) to confirm post-rotation access.\n\n"
+            printf "_Posted by reminders.yml -- close after rotating._\n"
+          } > /tmp/issue.md
+          gh issue create \
+            --title "Rotate the Discord bot token (admin-scoped)" \
+            --label "maintenance" \
+            --body-file /tmp/issue.md
