@@ -91,29 +91,33 @@ const overallStr = overallCurrent != null ? `${overallCurrent.toFixed(2)}%` : '-
 const deltaStr =
   overallDelta != null ? deltaCell(overallBaseline, overallCurrent, { threshold: 0.05 }) : '';
 
-// Build per-flag table.
+// Headline per-flag table: line coverage + bar + delta. The secondary
+// metrics (branches/statements/functions) go in a nested collapsible so
+// the default view stays to 3 columns and reads on mobile.
 const rows = current.flags.map((f) => {
   const b = baselineFor(f.name);
   const pct =
     typeof f.lines_pct === 'number'
       ? `${f.lines_pct.toFixed(2)}% ${pctBar(f.lines_pct, 10)}`
       : '--';
-  const br = typeof f.branches_pct === 'number' ? `${f.branches_pct.toFixed(2)}%` : '--';
-  const st = typeof f.statements_pct === 'number' ? `${f.statements_pct.toFixed(2)}%` : '--';
-  const fn = typeof f.functions_pct === 'number' ? `${f.functions_pct.toFixed(2)}%` : '--';
   const delta =
     b && typeof b.lines_pct === 'number' && typeof f.lines_pct === 'number'
       ? deltaCell(b.lines_pct, f.lines_pct, { threshold: 0.05 })
-      : '🆕';
+      : 'new';
   return {
     Flag: `\`${f.name}\``,
-    Lines: pct,
-    Branches: br,
-    Statements: st,
-    Functions: fn,
-    'Δ Lines': delta,
+    Coverage: pct,
+    'Δ vs main': delta,
   };
 });
+
+const pctCell = (v) => (typeof v === 'number' ? `${v.toFixed(2)}%` : '--');
+const metricRows = current.flags.map((f) => ({
+  Flag: `\`${f.name}\``,
+  Branches: pctCell(f.branches_pct),
+  Statements: pctCell(f.statements_pct),
+  Functions: pctCell(f.functions_pct),
+}));
 
 // Build top-uncovered-files collapsible (aggregated across flags).
 const allUncovered = current.flags.flatMap((f) =>
@@ -145,16 +149,21 @@ if (rows.length === 0) {
   );
 } else {
   lines.push(
-    table(
-      [
-        { label: 'Flag' },
-        { label: 'Lines' },
-        { label: 'Branches', align: 'right' },
-        { label: 'Statements', align: 'right' },
-        { label: 'Functions', align: 'right' },
-        { label: 'Δ Lines', align: 'right' },
-      ],
-      rows,
+    table([{ label: 'Flag' }, { label: 'Coverage' }, { label: 'Δ vs main', align: 'right' }], rows),
+  );
+  lines.push('');
+  lines.push(
+    collapsibleSection(
+      'Branches, statements, functions',
+      table(
+        [
+          { label: 'Flag' },
+          { label: 'Branches', align: 'right' },
+          { label: 'Statements', align: 'right' },
+          { label: 'Functions', align: 'right' },
+        ],
+        metricRows,
+      ),
     ),
   );
 }
@@ -163,7 +172,7 @@ if (topRows.length > 0) {
   lines.push('');
   lines.push(
     collapsibleSection(
-      `Top ${topRows.length} files with most missing lines (across all flags)`,
+      `Top ${topRows.length} file${topRows.length === 1 ? '' : 's'} with most missing lines`,
       table(
         [
           { label: 'Flag' },

@@ -10,7 +10,7 @@
  */
 import fs from 'node:fs';
 import { parseArgs } from 'node:util';
-import { deltaCell, table, verdictHeader } from './lib.mjs';
+import { collapsibleSection, deltaCell, table, verdictHeader } from './lib.mjs';
 
 const { values: opts, positionals } = parseArgs({
   options: { out: { type: 'string' } },
@@ -43,7 +43,7 @@ const baselineByUrl = new Map(baseline.map((b) => [b.url, b.scores]));
 
 const METRICS = ['performance', 'accessibility', 'bestPractices', 'best-practices', 'seo'];
 
-const rows = current.map((page) => {
+const computed = current.map((page) => {
   const b = baselineByUrl.get(page.url) || {};
   const c = page.scores || {};
   function fmt(key) {
@@ -55,12 +55,13 @@ const rows = current.map((page) => {
     const delta = deltaCell(baseV * 100, v * 100, { threshold: 1, decimals: 0 });
     return `${pct}% ${delta}`;
   }
+  const best = fmt('best-practices');
   return {
-    URL: `\`${page.url}\``,
-    Performance: fmt('performance'),
-    A11y: fmt('accessibility'),
-    'Best practices': fmt('best-practices') !== '--' ? fmt('best-practices') : fmt('bestPractices'),
-    SEO: fmt('seo'),
+    url: `\`${page.url}\``,
+    performance: fmt('performance'),
+    a11y: fmt('accessibility'),
+    best: best !== '--' ? best : fmt('bestPractices'),
+    seo: fmt('seo'),
   };
 });
 
@@ -78,22 +79,33 @@ lines.push('');
 if (current.length === 0) {
   lines.push('_No Lighthouse manifest found. Did the lighthouse.yml workflow finish?_');
 } else {
+  // Performance is this sticky's headline (it alone drives the verdict);
+  // the other three scores sit one click away so the table reads on mobile.
   lines.push(
     table(
-      [
-        { label: 'URL' },
-        { label: 'Performance', align: 'right' },
-        { label: 'A11y', align: 'right' },
-        { label: 'Best practices', align: 'right' },
-        { label: 'SEO', align: 'right' },
-      ],
-      rows,
+      [{ label: 'Page' }, { label: 'Performance', align: 'right' }],
+      computed.map((r) => ({ Page: r.url, Performance: r.performance })),
+    ),
+  );
+  lines.push('');
+  lines.push(
+    collapsibleSection(
+      'Accessibility, best practices, SEO',
+      table(
+        [
+          { label: 'Page' },
+          { label: 'A11y', align: 'right' },
+          { label: 'Best practices', align: 'right' },
+          { label: 'SEO', align: 'right' },
+        ],
+        computed.map((r) => ({ Page: r.url, A11y: r.a11y, 'Best practices': r.best, SEO: r.seo })),
+      ),
     ),
   );
 }
 lines.push('');
 lines.push(
-  '<sub>Lighthouse CI scores 0-100, delta vs the previous main baseline. Performance < 90% triggers a warn.</sub>',
+  '<sub>Lighthouse CI scores 0-100, delta vs the previous main baseline. Performance below 90% triggers a warn.</sub>',
 );
 
 const out = lines.join('\n') + '\n';

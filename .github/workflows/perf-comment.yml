@@ -20,7 +20,6 @@ jobs:
     permissions:
       actions: read
       contents: read
-      pull-requests: write
     if: |
       github.event.workflow_run.event == 'pull_request' &&
       (github.event.workflow_run.conclusion == 'success' ||
@@ -65,22 +64,13 @@ jobs:
           # Belt-and-suspenders: ensure JSON-parseable.
           head -c1 "$MANIFEST" | grep -qE '[\[{]' || echo "[]" > "$MANIFEST"
           node .github/scripts/sticky/format-perf.mjs "$MANIFEST" --out body.md
-      - name: Resolve PR number
-        id: pr
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+      - name: Stage perf summary
         run: |
-          NUM=$(jq -r '.workflow_run.pull_requests[0].number // empty' "$GITHUB_EVENT_PATH" || true)
-          if [ -z "$NUM" ]; then
-            NUM=$(gh pr list --head "$HEAD_BRANCH" --state open --json number --jq '.[0].number // empty')
-          fi
-          if [ -z "$NUM" ]; then echo "skip=true" >>"$GITHUB_OUTPUT"; fi
-          echo "number=$NUM" >>"$GITHUB_OUTPUT"
-      - name: Post sticky comment
-        if: steps.pr.outputs.skip != 'true'
-        uses: ./.github/actions/sticky-comment
+          if [ -f body.md ]; then cp body.md perf.md; fi
+      - name: Upload perf summary artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          marker: heron-pr-perf
-          body-path: body.md
-          pr-number: ${{ steps.pr.outputs.number }}
+          name: summary-perf
+          path: perf.md
+          if-no-files-found: ignore
+          retention-days: 7

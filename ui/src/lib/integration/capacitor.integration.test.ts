@@ -287,6 +287,7 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
     'docs/COMPARISON.md',
     'docs/CUSTOMIZATION.md',
     'docs/DATA_CONTRACT.md',
+    'docs/DISCORD.md',
     'docs/FAQ.md',
     'docs/GOVERNANCE.md',
     'docs/INCIDENT.md',

@@ -51,9 +51,8 @@ const localeRows = (data.locales || Object.keys(totals)).map((loc) => {
   const pct = sum === 0 ? 100 : (t.translated / sum) * 100;
   return {
     Locale: `\`${loc}\``,
-    Translated: String(t.translated),
-    Missing: String(t.missing),
     Coverage: `${pct.toFixed(1)}% ${pctBar(pct, 10)}`,
+    Missing: String(t.missing),
   };
 });
 
@@ -84,12 +83,7 @@ if (localeRows.length === 0) {
 } else {
   lines.push(
     table(
-      [
-        { label: 'Locale' },
-        { label: 'Translated', align: 'right' },
-        { label: 'Missing', align: 'right' },
-        { label: 'Coverage' },
-      ],
+      [{ label: 'Locale' }, { label: 'Coverage' }, { label: 'Missing', align: 'right' }],
       localeRows,
     ),
   );

@@ -49,18 +49,20 @@ if (!current || typeof current.percentage !== 'number') {
 }
 
 const pct = current.percentage;
+// Each delta string carries its own leading space, so the no-baseline case
+// drops to '' cleanly (no dangling marker, no double space in the title).
 const deltaStr = baseline
-  ? deltaCell(baseline.percentage, pct, { threshold: 0.01, decimals: 2 })
-  : '🆕';
+  ? ` ${deltaCell(baseline.percentage, pct, { threshold: 0.01, decimals: 2 })}`
+  : '';
 const anyCount = current.totalCount - current.correctCount;
 const baseAny = baseline ? baseline.totalCount - baseline.correctCount : null;
 const anyDelta =
   baseAny != null
-    ? `(${deltaCell(baseAny, anyCount, { threshold: 1, suffix: ' anys', decimals: 0 })})`
+    ? ` (${deltaCell(baseAny, anyCount, { threshold: 1, suffix: ' anys', decimals: 0 })})`
     : '';
 
 const verdict = pct >= threshold ? 'pass' : 'fail';
-const title = `Type coverage: ${pct.toFixed(2)}% ${deltaStr} -- ${anyCount} \`any\`s ${anyDelta}`;
+const title = `Type coverage: ${pct.toFixed(2)}%${deltaStr} -- ${anyCount} \`any\`s${anyDelta}`;
 
 const lines = [];
 lines.push(verdictHeader(title, verdict));
@@ -87,7 +89,7 @@ const tops = fileCounts
 if (tops.length > 0) {
   lines.push(
     collapsibleSection(
-      `Top ${tops.length} files with most \`any\`s`,
+      `Top ${tops.length} file${tops.length === 1 ? '' : 's'} with most \`any\`s`,
       table(
         [{ label: 'Path' }, { label: 'Anys', align: 'right' }, { label: 'Total', align: 'right' }],
         tops.map((f) => ({ Path: `\`${f.path}\``, Anys: String(f.anys), Total: String(f.total) })),

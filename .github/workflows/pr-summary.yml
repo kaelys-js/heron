@@ -1,0 +1,185 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: PR summary
+# Single unified PR comment (`heron-pr-summary`) that replaces the 13
+# per-domain sticky comments. Fires after each producer workflow
+# completes, gathers every `summary-<domain>` artifact for the head SHA,
+# and renders one comment (status matrix + collapsible per-domain
+# sections, failures auto-expanded) via assemble-summary.mjs. Also
+# refreshes the PR-description CI-STATUS block + deletes the superseded
+# per-domain comments. workflow_dispatch (pr_number) renders on demand.
+#
+# Producers run at different times; this one workflow owns the comment,
+# so concurrent producers never clobber it. Domains whose artifact isn't
+# up yet render as pending.
+
+on: # zizmor: ignore[dangerous-triggers]
+  # SAFETY (same posture as the per-domain comment workflows): never
+  # checks out the PR head, composes the body only from this repo's
+  # scripts run against downloaded artifacts, and posts via argv-passing
+  # (gh + the composite action), never shell-interpolated PR text.
+  workflow_run:
+    workflows:
+      - 'PR a11y comment'
+      - 'PR api comment'
+      - 'PR bundle comment'
+      - 'PR coverage comment'
+      - 'PR docs comment'
+      - 'PR i18n comment'
+      - 'PR licenses comment'
+      - 'PR migrations comment'
+      - 'PR perf comment'
+      - 'PR quality comment'
+      - 'PR reviewers comment'
+      - 'PR type-coverage comment'
+      - 'PR visual comment'
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to render the summary for'
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: pr-summary-${{ github.event.workflow_run.head_branch || inputs.pr_number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  summary:
+    name: Render unified PR summary
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    permissions:
+      actions: read # list runs + download artifacts for the head SHA
+      pull-requests: write # upsert comment, edit description, delete old comments
+      contents: read # checkout main for the scripts + composite action
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.event == 'pull_request' &&
+       (github.event.workflow_run.conclusion == 'success' ||
+        github.event.workflow_run.conclusion == 'failure'))
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout main (scripts + composite action; never the PR head)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: main
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Resolve PR number + head SHA
+        id: ctx
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PR: ${{ inputs.pr_number }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          WR_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            PR_NUM="$INPUT_PR"
+            HEAD_SHA=$(gh pr view "$PR_NUM" --repo "$GH_REPO" --json headRefOid --jq '.headRefOid')
+          else
+            PR_NUM=$(jq -r '.workflow_run.pull_requests[0].number // empty' "$GITHUB_EVENT_PATH" || true)
+            if [ -z "$PR_NUM" ]; then
+              PR_NUM=$(gh pr list --repo "$GH_REPO" --head "$HEAD_BRANCH" --state open --json number --jq '.[0].number // empty')
+            fi
+            HEAD_SHA="$WR_HEAD_SHA"
+          fi
+          if [ -z "${PR_NUM:-}" ]; then
+            echo "::notice::No PR resolved; nothing to summarise."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "pr_num=$PR_NUM" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Gather domain summary artifacts for the head SHA
+        if: steps.ctx.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ steps.ctx.outputs.head_sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p flat
+          # Every completed run for this SHA may carry a `summary-<domain>`
+          # artifact. Download whatever exists; flatten to flat/<domain>.md.
+          RUN_IDS=$(gh api "repos/$GH_REPO/actions/runs?head_sha=$HEAD_SHA&per_page=100" \
+            --jq '.workflow_runs[] | select(.status=="completed") | .id')
+          for rid in $RUN_IDS; do
+            gh run download "$rid" --repo "$GH_REPO" --pattern 'summary-*' --dir "raw-$rid" 2>/dev/null || true
+          done
+          # Artifacts unzip to raw-<rid>/summary-<domain>/<domain>.md.
+          find . -path './raw-*' -name '*.md' -exec cp -f {} flat/ \; 2>/dev/null || true
+          gathered=$(find flat -maxdepth 1 -type f -name '*.md' -printf '%f ' 2>/dev/null || true)
+          echo "::notice::Gathered summaries: ${gathered:-none}"
+
+      - name: Assemble the unified comment + description block
+        if: steps.ctx.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUM: ${{ steps.ctx.outputs.pr_num }}
+        run: |
+          set -euo pipefail
+          gh pr view "$PR_NUM" --repo "$GH_REPO" --json body --jq '.body // ""' > desc.current.md
+          node .github/scripts/sticky/assemble-summary.mjs \
+            --dir flat --out body.md --desc-in desc.current.md --desc-out desc.new.md
+
+      - name: Upsert the unified summary comment
+        if: steps.ctx.outputs.skip != 'true'
+        uses: ./.github/actions/sticky-comment
+        with:
+          marker: heron-pr-summary
+          body-path: body.md
+          pr-number: ${{ steps.ctx.outputs.pr_num }}
+
+      - name: Refresh the PR-description CI block
+        if: steps.ctx.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUM: ${{ steps.ctx.outputs.pr_num }}
+        run: |
+          set -euo pipefail
+          # Only edit when the rendered body actually changed -- editing on
+          # every run fires a PR "edited" event up to 13x per commit for no
+          # reason. cmp -s is silent + returns non-zero when the files differ.
+          if [ -s desc.new.md ] && ! cmp -s desc.current.md desc.new.md; then
+            gh pr edit "$PR_NUM" --repo "$GH_REPO" --body-file desc.new.md
+            echo "::notice::Refreshed CI-STATUS block in PR #$PR_NUM."
+          else
+            echo "::notice::PR-description CI block unchanged; skipped edit."
+          fi
+
+      - name: Remove superseded per-domain comments
+        if: steps.ctx.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUM: ${{ steps.ctx.outputs.pr_num }}
+        run: |
+          set -euo pipefail
+          OLD="a11y api bundle ci-status coverage docs i18n licenses migrations perf quality reviewers type-coverage visual"
+          gh api "repos/$GH_REPO/issues/$PR_NUM/comments" --paginate \
+            --jq '.[] | "\(.id)\t\(.body | gsub("\n";" ") | .[0:80])"' > comments.tsv || true
+          while IFS=$'\t' read -r id snippet; do
+            [ -z "${id:-}" ] && continue
+            for d in $OLD; do
+              case "$snippet" in
+                *"<!-- heron-pr-$d -->"*)
+                  gh api -X DELETE "repos/$GH_REPO/issues/comments/$id" >/dev/null 2>&1 || true
+                  echo "::notice::Removed stale heron-pr-$d comment ($id)."
+                  ;;
+              esac
+            done
+          done < comments.tsv

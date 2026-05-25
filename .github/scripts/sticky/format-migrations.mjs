@@ -44,43 +44,43 @@ const DANGEROUS = [
   {
     label: 'NOT NULL without DEFAULT',
     re: /ALTER\s+TABLE.*ADD\s+COLUMN.*NOT\s+NULL(?!.*DEFAULT)/i,
-    severity: '🔴 high',
+    severity: 'high',
     tip: 'Backfill data first, then add NOT NULL as a separate migration.',
   },
   {
     label: 'DROP COLUMN',
     re: /ALTER\s+TABLE.*DROP\s+COLUMN/i,
-    severity: '🔴 high',
+    severity: 'high',
     tip: 'Verify no application code reads this column. Make read-only first, then drop after a deploy.',
   },
   {
     label: 'DROP TABLE',
     re: /DROP\s+TABLE/i,
-    severity: '🔴 high',
+    severity: 'high',
     tip: 'Make sure no application code references this table. Confirm via Sentry + log scan.',
   },
   {
     label: 'ALTER TYPE on enum',
     re: /ALTER\s+TYPE.*ADD\s+VALUE/i,
-    severity: '🟡 medium',
+    severity: 'medium',
     tip: 'Postgres pre-12 cannot add enum values in a transaction. Run outside the txn.',
   },
   {
     label: 'CREATE INDEX without CONCURRENTLY',
     re: /CREATE\s+(UNIQUE\s+)?INDEX(?!\s+CONCURRENTLY)/i,
-    severity: '🟡 medium',
+    severity: 'medium',
     tip: 'Use CREATE INDEX CONCURRENTLY for tables with concurrent writes.',
   },
   {
     label: 'TRUNCATE',
     re: /TRUNCATE\s+TABLE/i,
-    severity: '🔴 high',
+    severity: 'high',
     tip: 'Irreversible without a backup. Confirm intent.',
   },
   {
     label: 'rename',
     re: /ALTER\s+TABLE.*RENAME/i,
-    severity: '🟡 medium',
+    severity: 'medium',
     tip: 'Application code referencing the old name will break. Coordinate with deploy.',
   },
 ];
@@ -134,20 +134,17 @@ if (migrations.length === 0) {
   lines.push(verdictHeader(title, verdict));
   lines.push('');
 
+  // Migration name + a distinct-severity risk summary (high sorts first).
+  // The full path + per-pattern tips live in the danger-details collapsible.
   lines.push(
     table(
-      [{ label: 'Migration' }, { label: 'Path' }, { label: 'Risk' }],
+      [{ label: 'Migration' }, { label: 'Risk' }],
       perFile.map((f) => ({
         Migration: `\`${f.name}\``,
-        Path: `\`${f.path}\``,
         Risk:
           f.hits.length === 0
-            ? '🟢 none detected'
-            : f.hits
-                .map((h) => h.severity)
-                .sort()
-                .reverse()
-                .join(' '),
+            ? 'none'
+            : [...new Set(f.hits.map((h) => h.severity))].sort().join(', '),
       })),
     ),
   );

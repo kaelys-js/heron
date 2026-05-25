@@ -89,8 +89,8 @@ const verdict =
       : 'warn';
 const title =
   newCopyleft.length === 0 && newUnknown.length === 0
-    ? `Licenses: ${newDeps.length} new, ${removedDeps.length} removed, no copyleft / unknown`
-    : `Licenses: ${newCopyleft.length} copyleft + ${newUnknown.length} unknown introduced`;
+    ? 'Licenses: no copyleft or unknown licenses'
+    : `Licenses: ${newCopyleft.length} copyleft, ${newUnknown.length} unknown introduced`;
 
 const lines = [];
 lines.push(verdictHeader(title, verdict));
