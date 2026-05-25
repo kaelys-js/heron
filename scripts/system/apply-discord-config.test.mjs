@@ -11,8 +11,12 @@ import {
   bitsToPermNames,
   buildInviteUrl,
   alertChannelNames,
+  automodToPrune,
   buildCommunityPatch,
   channelGatedOut,
+  channelsToPrune,
+  declaredChannelNames,
+  rolesToPrune,
   filterGrantable,
   hasFeature,
   imageDrift,
@@ -216,6 +220,48 @@ it('alertChannelNames: collects SEND_ALERT_MESSAGE (type 2) targets, deduped', (
   };
   assert.deepEqual(alertChannelNames(cfg).sort(), ['alerts', 'mods']);
   assert.deepEqual(alertChannelNames({}), []);
+});
+it('declaredChannelNames: category names + their channels', () => {
+  const cfg = {
+    categories: [{ name: 'CAT', channels: [{ name: 'a' }, { name: 'b' }] }, { name: 'EMPTY' }],
+  };
+  assert.deepEqual(declaredChannelNames(cfg).sort(), ['CAT', 'EMPTY', 'a', 'b']);
+});
+it('channelsToPrune: prunes undeclared; categories sort last (children first)', () => {
+  const cfg = { categories: [{ name: 'CAT', channels: [{ name: 'keep' }] }] };
+  const live = [
+    { id: '1', name: 'keep', type: 0 },
+    { id: '2', name: 'stray', type: 0 },
+    { id: '3', name: 'OLD CAT', type: 4 },
+  ];
+  assert.deepEqual(
+    channelsToPrune(live, cfg).map((c) => c.name),
+    ['stray', 'OLD CAT'],
+  );
+});
+it('rolesToPrune: skips @everyone + managed, prunes undeclared', () => {
+  const cfg = { roles: [{ name: 'Keep' }] };
+  const live = [
+    { id: '0', name: '@everyone' },
+    { id: '1', name: 'Keep' },
+    { id: '2', name: 'Stray' },
+    { id: '3', name: 'BotRole', managed: true }, // bot/integration/booster
+  ];
+  assert.deepEqual(
+    rolesToPrune(live, cfg).map((r) => r.name),
+    ['Stray'],
+  );
+});
+it('automodToPrune: prunes rules not in config', () => {
+  const cfg = { automod: [{ name: 'keep-rule' }] };
+  const live = [
+    { id: '1', name: 'keep-rule' },
+    { id: '2', name: 'old-rule' },
+  ];
+  assert.deepEqual(
+    automodToPrune(live, cfg).map((r) => r.name),
+    ['old-rule'],
+  );
 });
 it('sha256: known vector', () => {
   assert.equal(sha256('abc'), 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');

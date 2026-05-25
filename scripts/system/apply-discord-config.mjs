@@ -247,6 +247,45 @@ export function alertChannelNames(cfg) {
   return [...names];
 }
 
+// ── Strict-prune helpers (true source-of-truth) ───────────────────
+// When `prune: true`, anything live but absent from config.yml is deleted.
+// These pure helpers compute the delete-set; the executor (pruneUndeclared)
+// does the I/O + honors dry/verify mode + a mass-delete safety cap.
+
+/** Every channel + category name config.yml declares. */
+export function declaredChannelNames(cfg) {
+  const names = [];
+  for (const cat of cfg?.categories ?? []) {
+    names.push(cat.name);
+    for (const ch of cat.channels ?? []) names.push(ch.name);
+  }
+  return names;
+}
+
+/** Live channels not in config -> prune. (Categories sort last so children
+ *  are deleted first.) */
+export function channelsToPrune(liveChannels, cfg) {
+  const declared = new Set(declaredChannelNames(cfg));
+  return (liveChannels ?? [])
+    .filter((c) => !declared.has(c.name))
+    .sort((a, b) => (a.type === 4 ? 1 : 0) - (b.type === 4 ? 1 : 0));
+}
+
+/** Live roles not in config -> prune. Never @everyone, never managed roles
+ *  (the bot's own + integration roles + the booster role are all `managed`). */
+export function rolesToPrune(liveRoles, cfg) {
+  const declared = new Set((cfg?.roles ?? []).map((r) => r.name));
+  return (liveRoles ?? []).filter(
+    (r) => r.name !== '@everyone' && !r.managed && !declared.has(r.name),
+  );
+}
+
+/** Live AutoMod rules not in config -> prune. */
+export function automodToPrune(liveRules, cfg) {
+  const declared = new Set((cfg?.automod ?? []).map((r) => r.name));
+  return (liveRules ?? []).filter((r) => !declared.has(r.name));
+}
+
 // ── Image data + apply state ──────────────────────────────────────
 // Guild image slots and the guild feature each one needs (icon needs
 // none). banner/splash/discovery_splash silently skip if the guild
@@ -1348,6 +1387,50 @@ async function applyMemberVerification(cfg, guild) {
   await discord('PATCH', `/guilds/${GUILD_ID}/member-verification`, desired);
 }
 
+// Refuse to mass-delete: a prune set this large almost always means a broken
+// config (empty/misparsed), not an intentional teardown. Surface + bail.
+const PRUNE_SAFETY_CAP = 30;
+
+/**
+ * Strict source-of-truth: delete channels / roles / AutoMod rules that exist
+ * live but aren't in config.yml. Opt-in via `prune: true`. dry/verify mode
+ * only logs the would-delete diff (discord() stubs writes); apply mode deletes.
+ * Protected: @everyone, managed roles (bot/integration/booster). Child
+ * channels are deleted before their categories.
+ */
+async function pruneUndeclared(cfg) {
+  if (!cfg.prune) return;
+  const liveChannels = (await discord('GET', `/guilds/${GUILD_ID}/channels`)) ?? [];
+  const liveRoles = (await discord('GET', `/guilds/${GUILD_ID}/roles`)) ?? [];
+  const liveRules = (await discord('GET', `/guilds/${GUILD_ID}/auto-moderation/rules`)) ?? [];
+  const chPrune = channelsToPrune(liveChannels, cfg);
+  const rolePrune = rolesToPrune(liveRoles, cfg);
+  const rulePrune = automodToPrune(liveRules, cfg);
+  const total = chPrune.length + rolePrune.length + rulePrune.length;
+  if (total === 0) {
+    logOk('prune: no undeclared resources');
+    return;
+  }
+  if (total > PRUNE_SAFETY_CAP) {
+    logManual(
+      `prune: ${total} undeclared resources exceed the safety cap (${PRUNE_SAFETY_CAP}); refusing to mass-delete. Check config.yml parsed correctly.`,
+    );
+    return;
+  }
+  for (const c of chPrune) {
+    logChange(`prune channel #${c.name}`, 'live', 'deleted');
+    await discord('DELETE', `/channels/${c.id}`);
+  }
+  for (const r of rolePrune) {
+    logChange(`prune role ${r.name}`, 'live', 'deleted');
+    await discord('DELETE', `/guilds/${GUILD_ID}/roles/${r.id}`);
+  }
+  for (const r of rulePrune) {
+    logChange(`prune automod ${r.name}`, 'live', 'deleted');
+    await discord('DELETE', `/guilds/${GUILD_ID}/auto-moderation/rules/${r.id}`);
+  }
+}
+
 // ── Main ──────────────────────────────────────────────────────────
 async function main() {
   TOKEN = process.env.DISCORD_BOT_TOKEN;
@@ -1401,6 +1484,8 @@ async function main() {
   await applyOnboarding(cfg, guild, channelIds, roleIds);
   await applyWelcome(cfg, guild, channelIds);
   await applyWebhooks(cfg);
+  // Last: delete anything live but undeclared (strict source of truth).
+  await pruneUndeclared(cfg);
 
   if (imageStateDirty) saveImageState(imageState);
 

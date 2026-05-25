@@ -31,6 +31,12 @@
 # Adding a channel / role / AutoMod rule: edit this file + push to
 # main. The reconciler picks it up on the next run.
 
+# Strict source of truth: when true, anything live but NOT declared below
+# (channels, roles, AutoMod rules) is DELETED on apply. Protected: @everyone
+# + managed roles (bot/integration/booster). `--verify` / `--dry` only report
+# the prune diff. Requires an Administrator bot to manage private channels.
+prune: true
+
 server:
   # Guild-wide settings. Reconciled via PATCH /guilds/{id}.
   name: Heron

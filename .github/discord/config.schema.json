@@ -7,6 +7,10 @@
   "additionalProperties": false,
   "required": ["server", "roles", "categories"],
   "properties": {
+    "prune": {
+      "type": "boolean",
+      "description": "Strict source of truth: delete channels/roles/AutoMod rules not declared here. Protected: @everyone + managed roles. Needs an Administrator bot."
+    },
     "server": {
       "type": "object",
       "additionalProperties": false,
