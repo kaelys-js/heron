@@ -160,6 +160,37 @@ if (flags.noRemote) {
     if (secrets.includes(s)) log.ok(s);
     else log.fail(`${s} missing on the repo — release will fail`);
   }
+
+  // Optional platform secrets -- WARN (never fail) when absent. Android is
+  // gated by the PLAY_STORE_ENABLED repo var; Microsoft is its own opt-in.
+  // A fork shipping iOS/macOS only stays green here.
+  const optionalGroups = [
+    [
+      'Android / Play Store',
+      [
+        'PLAY_STORE_JSON_KEY',
+        'ANDROID_KEYSTORE_BASE64',
+        'ANDROID_KEYSTORE_PASSWORD',
+        'ANDROID_KEY_ALIAS',
+        'ANDROID_KEY_PASSWORD',
+      ],
+    ],
+    [
+      'Microsoft Store',
+      [
+        'MICROSOFT_STORE_TENANT_ID',
+        'MICROSOFT_STORE_CLIENT_ID',
+        'MICROSOFT_STORE_CLIENT_SECRET',
+        'MICROSOFT_STORE_PRODUCT_ID',
+      ],
+    ],
+  ];
+  for (const [label, group] of optionalGroups) {
+    const have = group.filter((s) => secrets.includes(s)).length;
+    if (have === group.length) log.ok(`${label}: all ${group.length} secrets set`);
+    else if (have === 0) log.info(`${label}: not configured (optional)`);
+    else log.warn(`${label}: ${have}/${group.length} secrets set — incomplete`);
+  }
 }
 
 // ── 4. Apple Dev portal manual steps (read-only checklist) ─────────
@@ -178,7 +209,7 @@ if (flags.noRemote) {
 // length, contributes to exit-1 under strict). In normal mode:
 // info-only -- the actual build steps fail loudly if these are
 // missing, so doctor:native stays exit-0 by default.
-log.step('Native readiness -- Apple + Google portal manual steps (checklist)');
+log.step('Native readiness -- Apple + Google + Microsoft portal + listing checklist');
 {
   // Read brand.json once -- bundleId + name + displayName all come
   // from the SSOT. Hardcoding "heron" / "Heron" here would silently
@@ -227,6 +258,19 @@ log.step('Native readiness -- Apple + Google portal manual steps (checklist)');
   emit('    Target audience: Policy -> App content');
   emit('  - Privacy policy URL: mandatory + must resolve (Play rejects dead URLs)');
   emit('  - Paste the service-account JSON path + 4 keystore values into pnpm setup:native');
+
+  emit('Microsoft Store (optional) -- partner.microsoft.com/dashboard');
+  emit('  - Signup (Individual free / Company $19); reserve app name -> 12-char Product ID');
+  emit('  - Azure AD app registration -> client secret -> API permission Microsoft Store');
+  emit('    Publishing API (Submissions.ReadWrite) -> grant admin consent -> link tenant');
+  emit('  - Paste the 4 MICROSOFT_STORE_* values into pnpm setup:native (step 12)');
+  emit('  - NB: the .appx is Store-signed on submission (no local appx cert needed)');
+
+  emit('Store listing (all stores, before first submission):');
+  emit('  - Content/age rating (IARC): no objectionable content, 18+ -> expect 4+/Everyone');
+  emit('  - Data safety / privacy: local-first, none collected/shared; privacy URL must resolve');
+  emit('  - EU trader info (App Store + Play + MS): collected via pnpm setup:native step 13');
+  emit('  - Screenshots: iOS `bundle exec fastlane screenshots`; Android/MS captured per store');
 
   emit('Full walkthrough: TODO-INSTRUCTIONS.md (gitignored, repo root)');
 }
