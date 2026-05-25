@@ -142,6 +142,8 @@
     "verify:english-only:test": "node scripts/system/verify-english-only.test.mjs",
     "verify:modes": "node scripts/system/verify-modes.mjs",
     "verify:modes:test": "node scripts/system/verify-modes.test.mjs",
+    "verify:no-personal-identity": "node scripts/system/verify-no-personal-identity.mjs",
+    "verify:no-personal-identity:test": "node scripts/system/verify-no-personal-identity.test.mjs",
     "verify:no-slop": "node scripts/system/verify-no-slop.mjs",
     "verify:no-slop:test": "node scripts/system/verify-no-slop.test.mjs",
     "visual:baseline": "node scripts/system/visual-regression.mjs --generate",

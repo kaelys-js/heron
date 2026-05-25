@@ -50,6 +50,7 @@
           { "context": "PR content gates / File size <= 5MB" },
           { "context": "PR content gates / Path length <= 255 chars" },
           { "context": "PR content gates / File extensions allowlist" },
+          { "context": "PR content gates / No personal identity in commits" },
           { "context": "CodeRabbit threads / Unresolved CodeRabbit threads" },
           { "context": "DCO" }
         ]

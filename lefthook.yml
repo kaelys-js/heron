@@ -430,6 +430,19 @@ pre-commit:
       glob: "*.{ts,tsx,svelte,mjs,mts,js,cjs,kt,swift,rb,go,py,yml,yaml,md}"
       run: node scripts/system/verify-no-deflection.test.mjs && node scripts/system/verify-no-deflection.mjs --staged
 
+    no-personal-identity:
+      # Block a personal email / legal name from the commit's author or
+      # committer identity -- the leak that put a personal address into
+      # `Signed-off-by:` trailers via `git commit -s`. Pairs with the
+      # commit-msg `no-personal-identity` gate (which scans the message +
+      # sign-off) and the CI audit in pr-content-gates.yml. The denylist
+      # is stored as SHA-256 hashes (never plaintext) so the guard can't
+      # re-leak the very PII it scrubs -- see
+      # scripts/system/verify-no-personal-identity.mjs. No glob: identity
+      # is independent of which files are staged, so it runs every commit.
+      # Runs the unit test first so the guard can't silently rot.
+      run: node scripts/system/verify-no-personal-identity.test.mjs && node scripts/system/verify-no-personal-identity.mjs --identity
+
     exact-versions:
       # Reject any version specifier that isn't an EXACT pin (no ^, ~,
       # >=, *, "latest", or partial versions like "1.7"). Scans every
@@ -806,6 +819,19 @@ commit-msg:
           exit 0
         fi
         node scripts/system/verify-no-deflection.mjs --message {1}
+
+    # No-personal-identity gate -- block a personal email / legal name in
+    # the commit message or its Signed-off-by / Co-authored-by trailer.
+    # This is the message-side twin of the pre-commit `no-personal-identity`
+    # (which checks author/committer ident). Same merge / revert /
+    # release-please exemption as the gates above so bot commits don't trip.
+    no-personal-identity:
+      run: |
+        msg=$(cat {1})
+        if echo "$msg" | grep -qE '^(Merge|Revert|fixup!|squash!|chore\(main\): release)'; then
+          exit 0
+        fi
+        node scripts/system/verify-no-personal-identity.mjs --message {1}
 
 # ── Manual invocation ───────────────────────────────────────────────
 # Run individual checks via:
