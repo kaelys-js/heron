@@ -10,6 +10,8 @@ import {
   automodDiffers,
   bitsToPermNames,
   buildInviteUrl,
+  alertChannelNames,
+  buildCommunityPatch,
   channelGatedOut,
   filterGrantable,
   hasFeature,
@@ -191,6 +193,29 @@ it('channelGatedOut: announcement + stage gated only on a non-COMMUNITY guild', 
   assert.equal(channelGatedOut({ type: 0 }, { features: [] }), false);
   assert.equal(channelGatedOut({ type: 2 }, { features: [] }), false);
   assert.equal(channelGatedOut({ type: 15 }, { features: [] }), false);
+});
+it('buildCommunityPatch: adds COMMUNITY (deduped) + the two channel ids', () => {
+  const p = buildCommunityPatch({ features: ['NEWS'] }, '111', '222');
+  assert.deepEqual([...p.features].sort(), ['COMMUNITY', 'NEWS']);
+  assert.equal(p.rules_channel_id, '111');
+  assert.equal(p.public_updates_channel_id, '222');
+  // already-COMMUNITY guild doesn't double it; missing features array is fine.
+  assert.deepEqual(buildCommunityPatch({ features: ['COMMUNITY'] }, '1', '2').features, [
+    'COMMUNITY',
+  ]);
+  assert.deepEqual(buildCommunityPatch({}, '1', '2').features, ['COMMUNITY']);
+});
+it('alertChannelNames: collects SEND_ALERT_MESSAGE (type 2) targets, deduped', () => {
+  const cfg = {
+    automod: [
+      { actions: [{ type: 1 }, { type: 2, metadata: { channel: 'mods' } }] },
+      { actions: [{ type: 2, metadata: { channel: 'mods' } }] }, // dup name
+      { actions: [{ type: 2, metadata: { channel: 'alerts' } }] },
+      { actions: [{ type: 2 }] }, // alert without a channel -> ignored
+    ],
+  };
+  assert.deepEqual(alertChannelNames(cfg).sort(), ['alerts', 'mods']);
+  assert.deepEqual(alertChannelNames({}), []);
 });
 it('sha256: known vector', () => {
   assert.equal(sha256('abc'), 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');

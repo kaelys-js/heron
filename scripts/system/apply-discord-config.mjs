@@ -213,10 +213,38 @@ export function hasFeature(liveGuild, feature) {
 // GUILD_STAGE_VOICE (13) with 50024. (Forum/media work without COMMUNITY.)
 const COMMUNITY_ONLY_CHANNEL_TYPES = new Set([5, 13]);
 
-/** A channel that can't be created on this guild and must be skipped (not
- *  errored on), per docs/DISCORD.md's feature-gate contract. */
+/** A channel that can't be created yet because COMMUNITY isn't on. The
+ *  reconciler enables COMMUNITY (see ensureCommunity) once the rules +
+ *  updates channels exist, then a second channel pass creates these. So this
+ *  holds them for pass 2 within the same run -- it is not a give-up skip. */
 export function channelGatedOut(channel, liveGuild) {
   return COMMUNITY_ONLY_CHANNEL_TYPES.has(channel?.type) && !hasFeature(liveGuild, 'COMMUNITY');
+}
+
+/** PATCH body that turns on COMMUNITY: the feature flag plus a rules + a
+ *  public-updates text channel (both required by Discord). verification_level
+ *  + explicit_content_filter must already meet Community minimums -- applyServer
+ *  sets them from config (Heron uses MEDIUM + ALL_MEMBERS), so they're not
+ *  re-sent here. */
+export function buildCommunityPatch(liveGuild, rulesChannelId, updatesChannelId) {
+  return {
+    features: Array.from(new Set([...(liveGuild?.features ?? []), 'COMMUNITY'])),
+    rules_channel_id: rulesChannelId,
+    public_updates_channel_id: updatesChannelId,
+  };
+}
+
+/** Channel names an AutoMod rule alerts to (SEND_ALERT_MESSAGE = action type
+ *  2). The bot needs View + Send on each or Discord rejects the rule with
+ *  INVALID_AUTO_MODERATION_CHANNEL_FLAG_ACTION_ACCESS. */
+export function alertChannelNames(cfg) {
+  const names = new Set();
+  for (const rule of cfg?.automod ?? []) {
+    for (const action of rule.actions ?? []) {
+      if (action.type === 2 && action.metadata?.channel) names.add(action.metadata.channel);
+    }
+  }
+  return [...names];
 }
 
 // ── Image data + apply state ──────────────────────────────────────
@@ -884,11 +912,12 @@ async function applyChannels(cfg, roleIds, botPerms, guild) {
     }
 
     for (const [chIdx, channel] of (category.channels ?? []).entries()) {
-      // Community-only channel types (announcement, stage voice) are skipped
-      // with a notice on a guild that lacks the feature -- never a hard error.
+      // Community-only channel types (announcement, stage voice) wait for
+      // pass 2; ensureCommunity turns COMMUNITY on, then the second pass
+      // creates them. This holds within the run -- it does not give up.
       if (channelGatedOut(channel, guild)) {
         console.log(
-          `  channel #${channel.name}: skipped (channel type ${channel.type} needs COMMUNITY)`,
+          `  channel #${channel.name}: held for pass 2 (needs COMMUNITY, type ${channel.type})`,
         );
         continue;
       }
@@ -959,6 +988,67 @@ async function applyChannels(cfg, roleIds, botPerms, guild) {
     }
   }
   return idByName;
+}
+
+/**
+ * Enable the COMMUNITY feature programmatically so announcement / stage
+ * channels, onboarding, the welcome screen, and the rules gate can be
+ * provisioned (not skipped). No-op if already on. Needs the rules +
+ * public-updates text channels to exist (created in the first channel pass).
+ * Returns { guild, justEnabled } -- justEnabled triggers a second channel
+ * pass for the now-unlocked types.
+ */
+async function ensureCommunity(cfg, guild, channelIds) {
+  if (hasFeature(guild, 'COMMUNITY')) return { guild, justEnabled: false };
+  const rulesName = cfg.server?.rules_channel;
+  const updatesName = cfg.server?.public_updates_channel;
+  const rulesId = rulesName ? channelIds.get(rulesName) : null;
+  const updatesId = updatesName ? channelIds.get(updatesName) : null;
+  if (!rulesId || !updatesId) {
+    logManual(
+      `COMMUNITY not enabled: needs text channels server.rules_channel ("${rulesName}") + server.public_updates_channel ("${updatesName}") to exist first.`,
+    );
+    return { guild, justEnabled: false };
+  }
+  logChange('server.features', (guild.features ?? []).join(', ') || '(none)', 'COMMUNITY');
+  const updated = await discord(
+    'PATCH',
+    `/guilds/${GUILD_ID}`,
+    buildCommunityPatch(guild, rulesId, updatesId),
+  );
+  // verify/dry stub the PATCH (updated === null) -> report only, no 2nd pass.
+  if (!updated) return { guild, justEnabled: false };
+  return { guild: updated, justEnabled: true };
+}
+
+/** The bot's own managed (integration) role -- the one Discord auto-creates
+ *  for the bot app. Needed to grant the bot channel access it lacks. */
+async function getBotRoleId(botUserId) {
+  const roles = await discord('GET', `/guilds/${GUILD_ID}/roles`);
+  return (roles ?? []).find((r) => r.tags?.bot_id === botUserId)?.id ?? null;
+}
+
+/** Grant the bot View + Send on every AutoMod alert channel, so rule creation
+ *  doesn't 400 with INVALID_AUTO_MODERATION_CHANNEL_FLAG_ACTION_ACCESS. PUT is
+ *  idempotent -- it sets (creates or updates) the bot-role overwrite. */
+async function ensureBotAlertAccess(cfg, channelIds, botRoleId) {
+  const targets = alertChannelNames(cfg);
+  if (targets.length === 0) return;
+  if (!botRoleId) {
+    logManual('Cannot grant bot access to AutoMod alert channels: bot role not found.');
+    return;
+  }
+  const allow = (PERM.VIEW_CHANNEL | PERM.SEND_MESSAGES).toString();
+  for (const name of targets) {
+    const chId = channelIds.get(name);
+    if (!chId) continue;
+    await discord('PUT', `/channels/${chId}/permissions/${botRoleId}`, {
+      type: 0, // role overwrite
+      allow,
+      deny: '0',
+    });
+    logOk(`bot access -> #${name} (AutoMod alert target)`);
+  }
 }
 
 /**
@@ -1274,10 +1364,23 @@ async function main() {
   imageState = loadImageState();
   const { botUser, botPerms } = await preflight();
 
-  const guild = await applyServer(cfg);
+  let guild = await applyServer(cfg);
   await applyBotProfile(cfg, botUser);
   const roleIds = await applyRoles(cfg, botPerms, guild);
-  const channelIds = await applyChannels(cfg, roleIds, botPerms, guild);
+  // First channel pass creates everything except the COMMUNITY-only types
+  // (announcement / stage), which wait for pass 2. That guarantees the rules +
+  // public-updates channels exist for the COMMUNITY enable below.
+  let channelIds = await applyChannels(cfg, roleIds, botPerms, guild);
+  const community = await ensureCommunity(cfg, guild, channelIds);
+  guild = community.guild;
+  // COMMUNITY just turned on -> a second pass now creates those held types
+  // and the newly reachable phases (rules gate / onboarding / welcome) below
+  // provision instead of skipping.
+  if (community.justEnabled) {
+    channelIds = await applyChannels(cfg, roleIds, botPerms, guild);
+  }
+  // Grant the bot access to AutoMod alert channels before creating the rules.
+  await ensureBotAlertAccess(cfg, channelIds, await getBotRoleId(botUser.id));
   await applySystemChannel(cfg, guild, channelIds);
   await applyWidget(cfg, channelIds);
   await applyMemberVerification(cfg, guild);

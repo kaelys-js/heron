@@ -18,6 +18,8 @@
         "default_message_notifications": { "type": "integer", "enum": [0, 1] },
         "explicit_content_filter": { "type": "integer", "enum": [0, 1, 2] },
         "system_channel": { "type": "string" },
+        "rules_channel": { "type": "string" },
+        "public_updates_channel": { "type": "string" },
         "system_channel_flags": { "type": "array", "items": { "type": "string" } },
         "images": {
           "type": "object",

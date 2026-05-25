@@ -52,6 +52,11 @@ server:
   explicit_content_filter: 2
   # Channel that receives join / boost system messages. Resolved to its id.
   system_channel: general
+  # COMMUNITY requires a rules channel + a "Community Updates" channel
+  # (Discord posts admin notices there). The reconciler enables Community
+  # programmatically using these two; both must be text channels.
+  rules_channel: rules
+  public_updates_channel: mod-updates
   # A SET flag SUPPRESSES that notification. SUPPRESS_GUILD_REMINDER_
   # NOTIFICATIONS is the "send helpful tips for server setup" toggle.
   system_channel_flags:
@@ -326,6 +331,14 @@ categories:
             deny: [VIEW_CHANNEL]
           - role: Maintainer
             allow: [VIEW_CHANNEL, SEND_MESSAGES, MANAGE_MESSAGES, MANAGE_THREADS]
+      - name: mod-updates
+        type: 0
+        topic: "Discord's Community Updates land here (feature unlocks, discovery status). Maintainer-only."
+        overwrites:
+          - role: '@everyone'
+            deny: [VIEW_CHANNEL]
+          - role: Maintainer
+            allow: [VIEW_CHANNEL, SEND_MESSAGES, READ_MESSAGE_HISTORY]
 
   - name: 🔊 VOICE
     position: 5
