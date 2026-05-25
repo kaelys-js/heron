@@ -54,7 +54,7 @@ jobs:
         # workflow because it runs with `security-events: write` +
         # `id-token: write` -- a compromised action step here could
         # exfiltrate the OIDC token.
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
 
