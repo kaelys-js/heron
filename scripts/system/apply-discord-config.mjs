@@ -208,11 +208,15 @@ export function hasFeature(liveGuild, feature) {
   return Array.isArray(liveGuild?.features) && liveGuild.features.includes(feature);
 }
 
+// Channel types Discord only permits on a COMMUNITY guild. Creating them on
+// a guild without the feature 400s -- GUILD_ANNOUNCEMENT (5) with 50035, and
+// GUILD_STAGE_VOICE (13) with 50024. (Forum/media work without COMMUNITY.)
+const COMMUNITY_ONLY_CHANNEL_TYPES = new Set([5, 13]);
+
 /** A channel that can't be created on this guild and must be skipped (not
- *  errored on), per docs/DISCORD.md's feature-gate contract. Today that's
- *  GUILD_ANNOUNCEMENT (type 5), which Discord 400s on a non-COMMUNITY guild. */
+ *  errored on), per docs/DISCORD.md's feature-gate contract. */
 export function channelGatedOut(channel, liveGuild) {
-  return channel?.type === 5 && !hasFeature(liveGuild, 'COMMUNITY');
+  return COMMUNITY_ONLY_CHANNEL_TYPES.has(channel?.type) && !hasFeature(liveGuild, 'COMMUNITY');
 }
 
 // ── Image data + apply state ──────────────────────────────────────
@@ -880,10 +884,12 @@ async function applyChannels(cfg, roleIds, botPerms, guild) {
     }
 
     for (const [chIdx, channel] of (category.channels ?? []).entries()) {
-      // Community-gated channel types (announcement) are skipped with a
-      // notice on a guild that lacks the feature -- never a hard error.
+      // Community-only channel types (announcement, stage voice) are skipped
+      // with a notice on a guild that lacks the feature -- never a hard error.
       if (channelGatedOut(channel, guild)) {
-        console.log(`  channel #${channel.name}: skipped (GUILD_ANNOUNCEMENT needs COMMUNITY)`);
+        console.log(
+          `  channel #${channel.name}: skipped (channel type ${channel.type} needs COMMUNITY)`,
+        );
         continue;
       }
       const existing = liveByName.get(channel.name);

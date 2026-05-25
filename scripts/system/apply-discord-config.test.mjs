@@ -180,12 +180,16 @@ it('hasFeature: present / absent / missing array', () => {
   assert.equal(hasFeature({ features: ['COMMUNITY'] }, 'BANNER'), false);
   assert.equal(hasFeature({}, 'BANNER'), false);
 });
-it('channelGatedOut: announcement skipped only on a non-COMMUNITY guild', () => {
-  // The bug that hard-failed maintain-discord: type 5 on a guild w/o COMMUNITY.
+it('channelGatedOut: announcement + stage gated only on a non-COMMUNITY guild', () => {
+  // Both bugs that hard-failed maintain-discord: announcement (5, error 50035)
+  // and stage voice (13, error 50024) on a guild without COMMUNITY.
   assert.equal(channelGatedOut({ type: 5 }, { features: [] }), true);
+  assert.equal(channelGatedOut({ type: 13 }, { features: [] }), true);
   assert.equal(channelGatedOut({ type: 5 }, { features: ['COMMUNITY'] }), false);
-  // Non-announcement types are never gated here (forum type 15 is allowed).
+  assert.equal(channelGatedOut({ type: 13 }, { features: ['COMMUNITY'] }), false);
+  // text/voice/forum are creatable without COMMUNITY -> never gated here.
   assert.equal(channelGatedOut({ type: 0 }, { features: [] }), false);
+  assert.equal(channelGatedOut({ type: 2 }, { features: [] }), false);
   assert.equal(channelGatedOut({ type: 15 }, { features: [] }), false);
 });
 it('sha256: known vector', () => {
