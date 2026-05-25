@@ -5,8 +5,9 @@ name: PR bots
 #
 #   • auto-merge      -- when a PR has 1+ approval AND all required
 #                       checks pass AND no `do-not-merge` label, enable
-#                       auto-merge (squash). Renovate already has this
-#                       for dep updates; this extends to human PRs.
+#                       auto-merge (squash). Dependabot dep PRs are handled
+#                       separately by dependabot-auto-merge.yml; this job
+#                       covers human (and any other) PRs.
 #   • stale-pinger    -- when a PR has had no activity for 14 days,
 #                       drop a friendly @mention 7 days BEFORE
 #                       stale.yml's 30-day close threshold. Pings the
@@ -100,10 +101,11 @@ jobs:
             echo "::notice::PR #$PR is a draft — skipping auto-merge"
             exit 0
           fi
-          # Require at least one approval (Renovate/Dependabot get auto-merge via their own workflow)
+          # Dependabot dependency PRs auto-merge via dependabot-auto-merge.yml
+          # (non-major, owner-approved). Skip them here so we don't double-handle.
           AUTHOR=$(gh pr view "$PR" --json author --jq '.author.login')
           if [ "$AUTHOR" = "renovate[bot]" ] || [ "$AUTHOR" = "dependabot[bot]" ]; then
-            echo "::notice::PR #$PR is a bot PR — Renovate's own automerge handles it"
+            echo "::notice::PR #$PR is a bot dependency PR — dependabot-auto-merge.yml handles non-major auto-merge; majors are manual"
             exit 0
           fi
           APPROVALS=$(gh pr view "$PR" --json reviews --jq '[.reviews[] | select(.state == "APPROVED")] | length')

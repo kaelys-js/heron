@@ -653,35 +653,45 @@ pre-push:
       glob: ".github/workflows/*.{yml,yaml}"
       run: actionlint -shellcheck=shellcheck {staged_files} 2>/dev/null || actionlint -shellcheck=shellcheck .github/workflows/*.yml
 
-    pr-title-budget:
-      # When the current branch has an open PR, fetch its title via `gh pr view`
-      # and apply the 72-char budget that pr-quality.yml's "PR title <= 72 chars"
-      # check enforces. Skip when no PR exists yet (first push from a new branch).
+    pr-preflight:
+      # Mirror the server PR-metadata gates (.github/workflows/pr-quality.yml)
+      # LOCALLY so a bad title / body / size fails on `git push` instead of
+      # after a CI round-trip. Same logic via the shared
+      # scripts/system/check-pr-metadata.mjs, so local + CI can't drift.
       #
-      # Caught locally instead of after a remote round-trip: PR #69 took an
-      # extra CI cycle because the title was 81 chars; this hook would have
-      # rejected the push and saved that round-trip.
+      # When a PR is already open we validate its live title + body + size +
+      # labels (the full `local` suite). Before the PR exists we validate the
+      # prospective squash-merge title (HEAD subject) -- the body suite needs
+      # the PR object, so it runs on the next push once the PR is open.
       #
-      # Bypass: SKIP_LEFTHOOK=1 git push (or simply trim the title via gh pr edit).
+      # Unlike the old opportunistic hook, a failure here BLOCKS the push
+      # (PR #69 burned a CI cycle on an 81-char title this would have caught).
+      # Bypass: SKIP_LEFTHOOK=1 git push.
       run: |
-        command -v gh >/dev/null 2>&1 || { echo "skip: gh CLI not installed"; exit 0; }
+        set -eu
         BRANCH=$(git rev-parse --abbrev-ref HEAD)
-        # Skip the check when pushing main, release tags, dependabot branches, or in detached HEAD.
         case "$BRANCH" in
           main|HEAD|dependabot/*|release-please--*) exit 0 ;;
         esac
-        TITLE=$(gh pr view --json title --jq .title 2>/dev/null || true)
-        if [ -z "$TITLE" ]; then
-          # No PR yet -- first push from a feature branch. The check fires on subsequent pushes.
-          exit 0
+        PR_TITLE=""
+        if command -v gh >/dev/null 2>&1; then
+          PR_TITLE=$(gh pr view --json title --jq .title 2>/dev/null || true)
         fi
-        LEN=${#TITLE}
-        if [ "$LEN" -gt 72 ]; then
-          echo "✗ PR title is $LEN chars; budget is 72."
-          echo "  Title: $TITLE"
-          echo "  Fix:   gh pr edit --title \"<shorter title>\""
-          echo "  Bypass: SKIP_LEFTHOOK=1 git push"
-          exit 1
+        if [ -n "$PR_TITLE" ]; then
+          PR_BODY=$(gh pr view --json body --jq '.body // ""')
+          PR_LABELS=$(gh pr view --json labels --jq '[.labels[].name] | join(",")')
+          PR_ADDITIONS=$(gh pr view --json additions --jq '.additions')
+          PR_DELETIONS=$(gh pr view --json deletions --jq '.deletions')
+          export PR_TITLE PR_BODY PR_LABELS PR_ADDITIONS PR_DELETIONS
+          bash scripts/system/mise-shim.sh node scripts/system/check-pr-metadata.mjs local
+        else
+          # No open PR yet: validate the prospective squash title (defaults to
+          # the latest commit subject). Body/size checks need the PR object.
+          PR_TITLE=$(git log -1 --format=%s)
+          export PR_TITLE
+          bash scripts/system/mise-shim.sh node scripts/system/check-pr-metadata.mjs title-length
+          bash scripts/system/mise-shim.sh node scripts/system/check-pr-metadata.mjs title-grammar
+          echo "i  No open PR yet -- validated the prospective title only. The PR body needs ## Summary + ## Test plan (with a completed [x]); feat PRs also need ## Motivation + a linked issue. Those run on the next push once the PR exists."
         fi
     release-readiness:
       # When pushing a release tag (v1.2.3 / v1.2.3-beta.1), gate on
@@ -721,6 +731,13 @@ pre-push:
     file-extensions-gate:
       run: bash scripts/system/check-content-gates.sh file-extensions
 
+    # ── Shared-script unit tests ────────────────────────────────────────
+    # Guard the validators that BOTH the local hooks + CI depend on, so a
+    # broken check-pr-metadata.mjs / screenshot-diff.mjs can't land. Plain
+    # Node (no vitest), <1s.
+    meta-script-tests:
+      run: bash scripts/system/mise-shim.sh node scripts/system/check-pr-metadata.test.mjs && bash scripts/system/mise-shim.sh node scripts/system/screenshot-diff.test.mjs
+
 # ── commit-msg (lightweight) ────────────────────────────────────────
 # Enforce Conventional Commits format (so release-please can generate
 # the changelog without manual curation).
@@ -733,11 +750,15 @@ commit-msg:
         if echo "$msg" | grep -qE '^(Merge|Revert|fixup!|squash!|chore\(main\): release)'; then
           exit 0
         fi
-        if ! echo "$msg" | grep -qE '^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z0-9_-]+\))?!?: .{1,72}'; then
+        # `[^A-Z]` after `: ` mirrors pr-quality.yml's lowercase-subject rule
+        # (server `subjectPattern: ^(?![A-Z]).+`). grep -E has no lookahead,
+        # so a leading-non-uppercase class is the ERE equivalent. Keeps the
+        # auto-derived squash-merge title passing the server grammar check.
+        if ! echo "$msg" | grep -qE '^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z0-9_-]+\))?!?: [^A-Z]'; then
           echo "✗ Commit message doesn't follow Conventional Commits."
-          echo "  Format: type(scope)!: subject  (max 72 chars on subject line)"
+          echo "  Format: type(scope)!: subject  (subject must start lowercase, <= 72 chars)"
           echo "  Types:  feat fix chore docs style refactor perf test build ci revert"
-          echo "  Example: feat(scan): add Workable ATS adapter"
+          echo "  Example: feat(scan): add Workable ATS adapter (not 'feat: Add ...')"
           echo "  Bypass:  SKIP_LEFTHOOK=1 git commit ..."
           exit 1
         fi

@@ -88,6 +88,15 @@
 - name: oversize-ok
   color: ededed
   description: Allow PRs above the 2000-LOC budget when justified
+- name: screenshots-needs-review
+  color: fbca04
+  description: Screenshot refresh exceeded the visual-diff ceiling; needs manual review
+- name: dependabot-backlog
+  color: 0366d6
+  description: Auto-opened when open Dependabot PRs exceed the backlog threshold
+- name: maintenance
+  color: fef2c0
+  description: Repo maintenance / housekeeping task
 
 # ── Community / showcase labels ──────────────────────────────────────
 - name: showcase

@@ -166,38 +166,24 @@ jobs:
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
-      - name: Check additions + deletions against budget
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - name: Check additions + deletions against budget (scripts/system/check-pr-metadata.mjs)
+        # Shared with the local pre-push hook. The 2000-LOC limit + the
+        # `oversize-ok` bypass live in the script.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           PR_NUM: ${{ github.event.pull_request.number }}
-          ADD: ${{ github.event.pull_request.additions }}
-          DEL: ${{ github.event.pull_request.deletions }}
+          PR_ADDITIONS: ${{ github.event.pull_request.additions }}
+          PR_DELETIONS: ${{ github.event.pull_request.deletions }}
         run: |
           set -euo pipefail
-          TOTAL=$((ADD + DEL))
-          LIMIT=2000
-          BYPASS=$(gh pr view "$PR_NUM" --json labels --jq '[.labels[].name] | contains(["oversize-ok"])')
-          {
-            echo "### 📏 PR size budget"
-            echo ""
-            echo "| Metric | Value |"
-            echo "|---|---|"
-            echo "| Additions | $ADD |"
-            echo "| Deletions | $DEL |"
-            echo "| Total | $TOTAL |"
-            echo "| Budget | $LIMIT |"
-            echo "| Bypass label | \`oversize-ok\` ${BYPASS} |"
-          } >> "$GITHUB_STEP_SUMMARY"
-          if [ "$TOTAL" -gt "$LIMIT" ]; then
-            if [ "$BYPASS" = "true" ]; then
-              echo "::warning::PR #$PR_NUM is $TOTAL LOC (> $LIMIT) but has the \`oversize-ok\` label. Letting it through."
-              exit 0
-            fi
-            echo "::error::PR #$PR_NUM is $TOTAL LOC, over the $LIMIT budget. Split into smaller PRs, or add the \`oversize-ok\` label with a comment explaining why this PR must ship as one unit."
-            exit 1
-          fi
-          echo "::notice::PR #$PR_NUM is $TOTAL LOC, within the $LIMIT budget."
+          PR_LABELS=$(gh pr view "$PR_NUM" --json labels --jq '[.labels[].name] | join(",")')
+          export PR_LABELS
+          node scripts/system/check-pr-metadata.mjs size
 
   # ── PR description validation ───────────────────────────────────
   # Catches "I forgot to fill the template" before a reviewer notices.
@@ -218,76 +204,22 @@ jobs:
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
-      - name: Validate Summary + Test plan sections are non-empty
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - name: Validate Summary + Test plan sections are non-empty (scripts/system/check-pr-metadata.mjs)
+        # Shared with the local pre-push hook. The >=50-char Summary/Test-plan
+        # thresholds + the >=1 completed-checkbox rule live in the script.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           PR_NUM: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          body=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
-          # Strip HTML comments (template placeholders) before checking
-          # whether each section has real content. Use perl for
-          # multi-line non-greedy regex -- sed has no portable -z mode.
-          stripped=$(printf '%s' "$body" | perl -0777 -pe 's/<!--.*?-->//gs')
-          fail=0
-          extract_section() {
-            local heading="$1"
-            printf '%s' "$stripped" \
-              | awk -v h="$heading" '
-                  $0 ~ "^##[[:space:]]+" h "[[:space:]]*$" {flag=1; next}
-                  /^##[[:space:]]/ && flag {flag=0}
-                  flag {print}
-                '
-          }
-          summary=$(extract_section "Summary")
-          test_plan=$(extract_section "Test plan")
-          # Stricter thresholds: 50 chars (sentence-ish) for Summary and
-          # Test plan each, plus at least one completed checkbox (`- [x]`)
-          # in Test plan. The 20-char threshold was easy to game with
-          # "see commit message" or similar placeholders; 50 chars forces
-          # the author to write at least one descriptive sentence. The
-          # `[x]` requirement makes "Test plan" a real artefact, not
-          # just a heading.
-          summary_chars=$(printf '%s' "$summary" | tr -d '[:space:]' | wc -c)
-          test_plan_chars=$(printf '%s' "$test_plan" | tr -d '[:space:]' | wc -c)
-          checked_items=$(printf '%s' "$test_plan" | grep -cE '^\s*-\s+\[[xX]\]' || true)
-          if [ "$summary_chars" -lt 50 ]; then
-            echo "::error::PR \`## Summary\` is only $summary_chars chars (need >= 50). Write at least one descriptive sentence."
-            fail=1
-          fi
-          if [ "$test_plan_chars" -lt 50 ]; then
-            echo "::error::PR \`## Test plan\` is only $test_plan_chars chars (need >= 50). Document the commands you ran + the manual smoke path."
-            fail=1
-          fi
-          if [ "$checked_items" -lt 1 ]; then
-            echo "::error::PR \`## Test plan\` has no completed checkbox (look for \`- [x]\` lines). Check off at least the verification step that proves the change works."
-            fail=1
-          fi
-          if [ "$fail" -eq 1 ]; then
-            {
-              echo "### ❌ PR description validation"
-              echo ""
-              echo "| Metric | Value | Required |"
-              echo "|---|---|---|"
-              echo "| Summary chars | $summary_chars | >= 50 |"
-              echo "| Test plan chars | $test_plan_chars | >= 50 |"
-              echo "| Test plan checked items | $checked_items | >= 1 |"
-              echo ""
-              echo "See \`.github/PULL_REQUEST_TEMPLATE.md\` for the expected shape."
-            } >> "$GITHUB_STEP_SUMMARY"
-            exit 1
-          fi
-          echo "::notice::PR description has Summary ($summary_chars chars) + Test plan ($test_plan_chars chars, $checked_items checked items)."
-          {
-            echo "### ✅ PR description validation"
-            echo ""
-            echo "| Metric | Value |"
-            echo "|---|---|"
-            echo "| Summary chars | $summary_chars |"
-            echo "| Test plan chars | $test_plan_chars |"
-            echo "| Test plan checked items | $checked_items |"
-          } >> "$GITHUB_STEP_SUMMARY"
+          PR_BODY=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
+          export PR_BODY
+          node scripts/system/check-pr-metadata.mjs pr-description
 
   # ── feat: requires issue link ───────────────────────────────────
   # New features should trace back to the discussion that motivated
@@ -312,40 +244,24 @@ jobs:
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
-      - name: Look for issue reference in PR body
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - name: Look for issue reference in PR body (scripts/system/check-pr-metadata.mjs)
+        # Shared with the local pre-push hook. The closing-keyword regex + the
+        # `no-issue` bypass live in the script.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           PR_NUM: ${{ github.event.pull_request.number }}
-          TITLE: ${{ github.event.pull_request.title }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           set -euo pipefail
-          body=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
-          # Standard closing keywords -- case-insensitive match.
-          # Pattern: `<keyword>(#|GH-)<number>` or `<keyword> <repo>#<number>`.
-          if printf '%s' "$body" | grep -qiE '\b(fix(es)?|close[sd]?|resolve[sd]?|refs?)[[:space:]]+([a-z0-9._/-]+)?#[0-9]+'; then
-            echo "::notice::PR #$PR_NUM links an issue."
-            echo "### ✅ feat PR links an issue" >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-          # Bypass via no-issue label.
-          BYPASS=$(gh pr view "$PR_NUM" --json labels --jq '[.labels[].name] | contains(["no-issue"])')
-          if [ "$BYPASS" = "true" ]; then
-            echo "::warning::PR #$PR_NUM is a feat without an issue link but has the \`no-issue\` label. Letting it through."
-            exit 0
-          fi
-          echo "::error::PR #$PR_NUM is a \`feat:\` PR but the body does not reference an issue (Fixes #N / Closes #N / Refs #N). Add a reference or add the \`no-issue\` label with a comment explaining why."
-          {
-            echo "### ❌ feat PR missing issue link"
-            echo ""
-            echo "PR title: \`$TITLE\`"
-            echo ""
-            echo "feat: PRs should trace back to the issue that motivated them."
-            echo "Add one of: \`Fixes #N\`, \`Closes #N\`, \`Refs #N\` to the body."
-            echo ""
-            echo "Or add the \`no-issue\` label with a body comment explaining why."
-          } >> "$GITHUB_STEP_SUMMARY"
-          exit 1
+          PR_BODY=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
+          PR_LABELS=$(gh pr view "$PR_NUM" --json labels --jq '[.labels[].name] | join(",")')
+          export PR_BODY PR_LABELS
+          node scripts/system/check-pr-metadata.mjs feat-issue
 
   # ── breaking-change body validation ─────────────────────────────
   # Conventional Commits `<type>!:` marks a breaking change. Release
@@ -372,33 +288,23 @@ jobs:
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
-      - name: Require BREAKING CHANGE block in body
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - name: Require BREAKING CHANGE block in body (scripts/system/check-pr-metadata.mjs)
+        # Shared with the local pre-push hook. The `BREAKING CHANGE:` marker
+        # rule lives in the script.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           PR_NUM: ${{ github.event.pull_request.number }}
-          TITLE: ${{ github.event.pull_request.title }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           set -euo pipefail
-          body=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
-          # `BREAKING CHANGE:` (with colon) on its own line is the
-          # canonical Conventional Commits marker. Some teams write
-          # `BREAKING-CHANGE:` -- accept both.
-          if printf '%s' "$body" | grep -qE '^BREAKING[ -]CHANGE:'; then
-            echo "::notice::PR #$PR_NUM has a BREAKING CHANGE block."
-            echo "### ✅ Breaking-change body present" >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-          echo "::error::PR #$PR_NUM title (\`$TITLE\`) contains \`!:\` indicating a breaking change, but the body lacks a \`BREAKING CHANGE:\` block. Release Please needs both halves to populate the CHANGELOG correctly."
-          {
-            echo "### ❌ Breaking-change body missing"
-            echo ""
-            echo "PR title: \`$TITLE\`"
-            echo ""
-            echo "Add a \`BREAKING CHANGE: <description>\` line in the body, OR"
-            echo "remove the \`!\` from the title if this isn't actually breaking."
-          } >> "$GITHUB_STEP_SUMMARY"
-          exit 1
+          PR_BODY=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
+          export PR_BODY
+          node scripts/system/check-pr-metadata.mjs breaking-body
 
   # ── missing-tests soft-warning ──────────────────────────────────
   # Non-blocking comment when the PR touches code paths but no test
@@ -501,42 +407,23 @@ jobs:
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
-      - name: Look for Motivation or Why section
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - name: Look for Motivation or Why section (scripts/system/check-pr-metadata.mjs)
+        # Shared with the local pre-push hook. The >=30-char `## Motivation`
+        # (or `## Why`) rule lives in the script.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           PR_NUM: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           set -euo pipefail
-          body=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
-          stripped=$(printf '%s' "$body" | perl -0777 -pe 's/<!--.*?-->//gs')
-          # Accept either `## Motivation` or `## Why`. Each needs >= 30
-          # chars of body content to count as a real section.
-          for heading in Motivation Why; do
-            chars=$(printf '%s' "$stripped" \
-              | awk -v h="$heading" '
-                  $0 ~ "^##[[:space:]]+" h "[[:space:]]*$" {flag=1; next}
-                  /^##[[:space:]]/ && flag {flag=0}
-                  flag {print}
-                ' \
-              | tr -d '[:space:]' | wc -c)
-            if [ "$chars" -ge 30 ]; then
-              echo "::notice::PR #$PR_NUM has \`## $heading\` ($chars chars). feat: PR motivated."
-              {
-                echo "### ✅ feat PR has motivation"
-                echo "Section: \`## $heading\` ($chars chars)"
-              } >> "$GITHUB_STEP_SUMMARY"
-              exit 0
-            fi
-          done
-          echo "::error::PR #$PR_NUM is a \`feat:\` PR but lacks a \`## Motivation\` (or \`## Why\`) section with >= 30 chars of content. Document why the feature exists, not just what it does."
-          {
-            echo "### ❌ feat PR missing motivation"
-            echo ""
-            echo "Add a \`## Motivation\` (or \`## Why\`) section with at least 30 chars explaining"
-            echo "the user pain or the strategic value the feature unlocks."
-          } >> "$GITHUB_STEP_SUMMARY"
-          exit 1
+          PR_BODY=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
+          export PR_BODY
+          node scripts/system/check-pr-metadata.mjs feat-motivation
 
   # ── <type>!: requires `## Migration` section ─────────────────────
   # Breaking changes need a documented upgrade path so users know
@@ -557,40 +444,23 @@ jobs:
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
-      - name: Look for Migration or Rollback section
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - name: Look for Migration or Rollback section (scripts/system/check-pr-metadata.mjs)
+        # Shared with the local pre-push hook. The >=30-char `## Migration`
+        # (or `## Rollback plan` / `## Upgrade`) rule lives in the script.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           PR_NUM: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           set -euo pipefail
-          body=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
-          stripped=$(printf '%s' "$body" | perl -0777 -pe 's/<!--.*?-->//gs')
-          for heading in Migration "Rollback plan" Upgrade; do
-            chars=$(printf '%s' "$stripped" \
-              | awk -v h="$heading" '
-                  $0 ~ "^##[[:space:]]+" h "[[:space:]]*$" {flag=1; next}
-                  /^##[[:space:]]/ && flag {flag=0}
-                  flag {print}
-                ' \
-              | tr -d '[:space:]' | wc -c)
-            if [ "$chars" -ge 30 ]; then
-              echo "::notice::PR #$PR_NUM has \`## $heading\` ($chars chars)."
-              {
-                echo "### ✅ Breaking PR has migration path"
-                echo "Section: \`## $heading\` ($chars chars)"
-              } >> "$GITHUB_STEP_SUMMARY"
-              exit 0
-            fi
-          done
-          echo "::error::PR #$PR_NUM is a \`<type>!:\` (breaking) PR but lacks a \`## Migration\` (or \`## Rollback plan\` / \`## Upgrade\`) section with >= 30 chars. Document the upgrade path."
-          {
-            echo "### ❌ Breaking PR missing migration"
-            echo ""
-            echo "Add a \`## Migration\` section showing the before/after code, env, or schema delta"
-            echo "consumers need to apply."
-          } >> "$GITHUB_STEP_SUMMARY"
-          exit 1
+          PR_BODY=$(gh pr view "$PR_NUM" --json body --jq '.body // ""')
+          export PR_BODY
+          node scripts/system/check-pr-metadata.mjs breaking-migration
 
   # ── Lockfile / package.json consistency ─────────────────────────
   # When `package.json` changes, `pnpm-lock.yaml` MUST change too
@@ -661,28 +531,15 @@ jobs:
             fi
           done
 
-          {
-            echo "### Lockfile consistency"
-            echo ""
-            echo "| Signal | Value |"
-            echo "|---|---|"
-            echo "| Changed \`package.json\` files | $(echo "$changed_pkgs" | grep -c .) |"
-            echo "| Dependency-section touched | $dep_touch |"
-            echo "| \`pnpm-lock.yaml\` changed | $has_lock |"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          if [ "$dep_touch" -eq 1 ] && [ "$has_lock" -eq 0 ]; then
-            echo "::error::PR changed a dependency section in package.json but not pnpm-lock.yaml. Run \`pnpm install\` locally + commit the lockfile."
-            exit 1
-          fi
           if [ -z "$changed_pkgs" ] && [ "$has_lock" -gt 0 ]; then
             echo "::warning::PR changed pnpm-lock.yaml but no package.json. Verify this is an intentional lockfile-only refresh (e.g. \`pnpm install\` rerun)."
           fi
-          if [ "$dep_touch" -eq 0 ] && [ -n "$changed_pkgs" ]; then
-            echo "::notice::package.json change is scripts/metadata-only. Lockfile bump not required."
-          else
-            echo "::notice::Lockfile + package.json consistency OK."
-          fi
+          # Shared decision rule (also used by the local pre-push hook): a
+          # dependency-section change must carry a lockfile bump. Detection
+          # of dep_touch / has_lock stays here (needs the git diff); the
+          # pass/fail rule lives in scripts/system/check-pr-metadata.mjs.
+          node scripts/system/check-pr-metadata.mjs lockfile \
+            --dep-touch "$dep_touch" --lock-changed "$has_lock"
 
   # ── PR title length ≤ 72 chars ──────────────────────────────────
   # Git's commit-message convention is ≤ 72 chars on the subject
@@ -700,21 +557,13 @@ jobs:
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
-      - name: Check title length
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - name: Check title length (scripts/system/check-pr-metadata.mjs)
+        # Shared with the local pre-push `pr-preflight` hook so the 72-char
+        # budget can't drift between CI and local. Limit lives in the script.
         env:
-          TITLE: ${{ github.event.pull_request.title }}
-        run: |
-          set -euo pipefail
-          LEN=${#TITLE}
-          {
-            echo "### PR title length"
-            echo ""
-            echo "Title: \`$TITLE\`"
-            echo ""
-            echo "Length: **$LEN chars** (budget: 72)"
-          } >> "$GITHUB_STEP_SUMMARY"
-          if [ "$LEN" -gt 72 ]; then
-            echo "::error::PR title is $LEN chars, over the 72-char budget. Trim it -- this becomes the squash-merge commit subject + appears in \`git log --oneline\`."
-            exit 1
-          fi
-          echo "::notice::PR title is $LEN chars (<= 72)."
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: node scripts/system/check-pr-metadata.mjs title-length
