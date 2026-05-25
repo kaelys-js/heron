@@ -1028,14 +1028,18 @@ async function getBotRoleId(botUserId) {
   return (roles ?? []).find((r) => r.tags?.bot_id === botUserId)?.id ?? null;
 }
 
-/** Grant the bot View + Send on every AutoMod alert channel, so rule creation
- *  doesn't 400 with INVALID_AUTO_MODERATION_CHANNEL_FLAG_ACTION_ACCESS. PUT is
- *  idempotent -- it sets (creates or updates) the bot-role overwrite. */
-async function ensureBotAlertAccess(cfg, channelIds, botRoleId) {
-  const targets = alertChannelNames(cfg);
+/** Grant the bot View + Send on the named channels via a role overwrite, so
+ *  the bot can reach channels Discord requires it to access:
+ *   - AutoMod alert targets (else rule creation 400s
+ *     INVALID_AUTO_MODERATION_CHANNEL_FLAG_ACTION_ACCESS), and
+ *   - the COMMUNITY rules + public-updates channels (else the enable PATCH
+ *     403s Missing Access when one is a channel the bot can't see).
+ *  PUT is idempotent -- it sets (creates or updates) the bot-role overwrite. */
+async function ensureBotChannelAccess(channelIds, botRoleId, names, label) {
+  const targets = [...new Set(names)].filter(Boolean);
   if (targets.length === 0) return;
   if (!botRoleId) {
-    logManual('Cannot grant bot access to AutoMod alert channels: bot role not found.');
+    logManual(`Cannot grant bot access to ${label} channels: bot role not found.`);
     return;
   }
   const allow = (PERM.VIEW_CHANNEL | PERM.SEND_MESSAGES).toString();
@@ -1047,7 +1051,7 @@ async function ensureBotAlertAccess(cfg, channelIds, botRoleId) {
       allow,
       deny: '0',
     });
-    logOk(`bot access -> #${name} (AutoMod alert target)`);
+    logOk(`bot access -> #${name} (${label})`);
   }
 }
 
@@ -1371,6 +1375,15 @@ async function main() {
   // (announcement / stage), which wait for pass 2. That guarantees the rules +
   // public-updates channels exist for the COMMUNITY enable below.
   let channelIds = await applyChannels(cfg, roleIds, botPerms, guild);
+  const botRoleId = await getBotRoleId(botUser.id);
+  // The COMMUNITY enable PATCH 403s if the bot can't see the rules / updates
+  // channels it names, so grant access first.
+  await ensureBotChannelAccess(
+    channelIds,
+    botRoleId,
+    [cfg.server?.rules_channel, cfg.server?.public_updates_channel],
+    'COMMUNITY channel',
+  );
   const community = await ensureCommunity(cfg, guild, channelIds);
   guild = community.guild;
   // COMMUNITY just turned on -> a second pass now creates those held types
@@ -1380,7 +1393,7 @@ async function main() {
     channelIds = await applyChannels(cfg, roleIds, botPerms, guild);
   }
   // Grant the bot access to AutoMod alert channels before creating the rules.
-  await ensureBotAlertAccess(cfg, channelIds, await getBotRoleId(botUser.id));
+  await ensureBotChannelAccess(channelIds, botRoleId, alertChannelNames(cfg), 'AutoMod alert');
   await applySystemChannel(cfg, guild, channelIds);
   await applyWidget(cfg, channelIds);
   await applyMemberVerification(cfg, guild);
