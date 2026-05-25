@@ -208,6 +208,13 @@ export function hasFeature(liveGuild, feature) {
   return Array.isArray(liveGuild?.features) && liveGuild.features.includes(feature);
 }
 
+/** A channel that can't be created on this guild and must be skipped (not
+ *  errored on), per docs/DISCORD.md's feature-gate contract. Today that's
+ *  GUILD_ANNOUNCEMENT (type 5), which Discord 400s on a non-COMMUNITY guild. */
+export function channelGatedOut(channel, liveGuild) {
+  return channel?.type === 5 && !hasFeature(liveGuild, 'COMMUNITY');
+}
+
 // ── Image data + apply state ──────────────────────────────────────
 // Guild image slots and the guild feature each one needs (icon needs
 // none). banner/splash/discovery_splash silently skip if the guild
@@ -851,7 +858,7 @@ export function normalizeWelcome(ws) {
  * Returns map of channel-name -> channel-id for AutoMod + Onboarding
  * + Welcome screen downstream references.
  */
-async function applyChannels(cfg, roleIds, botPerms) {
+async function applyChannels(cfg, roleIds, botPerms, guild) {
   const live = await discord('GET', `/guilds/${GUILD_ID}/channels`);
   const liveByName = new Map(live.map((c) => [c.name, c]));
   const idByName = new Map();
@@ -873,6 +880,12 @@ async function applyChannels(cfg, roleIds, botPerms) {
     }
 
     for (const [chIdx, channel] of (category.channels ?? []).entries()) {
+      // Community-gated channel types (announcement) are skipped with a
+      // notice on a guild that lacks the feature -- never a hard error.
+      if (channelGatedOut(channel, guild)) {
+        console.log(`  channel #${channel.name}: skipped (GUILD_ANNOUNCEMENT needs COMMUNITY)`);
+        continue;
+      }
       const existing = liveByName.get(channel.name);
       const overwrites = (channel.overwrites ?? []).map((ow) => {
         // Allow only the bits the bot can grant; warn (don't fail) on the
@@ -1258,7 +1271,7 @@ async function main() {
   const guild = await applyServer(cfg);
   await applyBotProfile(cfg, botUser);
   const roleIds = await applyRoles(cfg, botPerms, guild);
-  const channelIds = await applyChannels(cfg, roleIds, botPerms);
+  const channelIds = await applyChannels(cfg, roleIds, botPerms, guild);
   await applySystemChannel(cfg, guild, channelIds);
   await applyWidget(cfg, channelIds);
   await applyMemberVerification(cfg, guild);

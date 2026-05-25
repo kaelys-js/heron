@@ -10,6 +10,7 @@ import {
   automodDiffers,
   bitsToPermNames,
   buildInviteUrl,
+  channelGatedOut,
   filterGrantable,
   hasFeature,
   imageDrift,
@@ -178,6 +179,14 @@ it('hasFeature: present / absent / missing array', () => {
   assert.equal(hasFeature({ features: ['BANNER', 'COMMUNITY'] }, 'BANNER'), true);
   assert.equal(hasFeature({ features: ['COMMUNITY'] }, 'BANNER'), false);
   assert.equal(hasFeature({}, 'BANNER'), false);
+});
+it('channelGatedOut: announcement skipped only on a non-COMMUNITY guild', () => {
+  // The bug that hard-failed maintain-discord: type 5 on a guild w/o COMMUNITY.
+  assert.equal(channelGatedOut({ type: 5 }, { features: [] }), true);
+  assert.equal(channelGatedOut({ type: 5 }, { features: ['COMMUNITY'] }), false);
+  // Non-announcement types are never gated here (forum type 15 is allowed).
+  assert.equal(channelGatedOut({ type: 0 }, { features: [] }), false);
+  assert.equal(channelGatedOut({ type: 15 }, { features: [] }), false);
 });
 it('sha256: known vector', () => {
   assert.equal(sha256('abc'), 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
