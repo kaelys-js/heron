@@ -966,7 +966,7 @@ jobs:
 
       - name: Setup JDK 21
         if: needs.changes.outputs.android == 'true'
-        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.0
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v4.7.0
         with:
           distribution: temurin
           # Capacitor 8.x's capacitor.build.gradle pins sourceCompatibility
@@ -1147,7 +1147,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup JDK 21
-        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.0
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v4.7.0
         with:
           distribution: temurin
           java-version: '21'
