@@ -183,6 +183,28 @@ First run downloads ~3GB of Ubuntu runner images. Subsequent runs are
 fast. `act` doesn't have macOS runners, so the `ios` job is skipped
 locally -- push to a PR branch to exercise it.
 
+### Review gates -- catch failures before you push
+
+Two gates commonly bounce PRs back. The first is now caught locally; the
+second is structurally post-open.
+
+**PR title / body / size (caught locally).** The pre-push `pr-preflight`
+hook runs the *same* checks as the `PR quality` workflow, via the shared
+`scripts/system/check-pr-metadata.mjs` -- so a too-long title (> 72 chars),
+a non-lowercase Conventional-Commits subject, a thin `## Summary` / `## Test
+plan`, a `feat:` without a linked issue or `## Motivation`, or a > 2000-LOC
+diff all fail on `git push` instead of in CI. Fill the PR template
+(`.github/PULL_REQUEST_TEMPLATE/`) and the body checks pass by default.
+
+**CodeRabbit (resolve on the PR).** CodeRabbit auto-reviews every non-bot PR
+and its `Unresolved CodeRabbit threads` check is **required** -- merge is
+blocked until each thread is resolved (address it, or reply and resolve if
+it's a false positive). It can't be pre-run locally because the comments
+only exist once the PR is open. To give it less to flag, before pushing make
+sure `pnpm check` + `pnpm test` are green and avoid the usual nits: unused
+imports/vars, unhandled promise rejections, `any` types, unguarded nullish
+access, stray `console.log`, and new branches without a test.
+
 ## Brand and Trademark
 
 Contributions to the codebase are governed by the MIT [LICENSE](../LICENSE).

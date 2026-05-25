@@ -23,10 +23,11 @@
  *  CI workflow: .github/workflows/screenshots-refresh.yml. */
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, mkdirSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { classify, resolveThresholds } from './screenshot-diff.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..', '..');
@@ -51,6 +52,20 @@ const DAEMON_URL = `http://127.0.0.1:${DAEMON_PORT}`;
 // md5(url).slice(0, 12)).
 const ACME_URL = 'https://boards.greenhouse.io/acme/jobs/4099991';
 const ACME_JOB_ID = createHash('md5').update(ACME_URL).digest('hex').slice(0, 12);
+
+// Frozen wall-clock for capture. Pinned to the seed anchor
+// (seed-demo-data.mjs `NOW = 1747612800000`, 2026-05-19) so every
+// relative timestamp (`formatRelativeTime`) and the time-of-day greeting
+// render identically run-to-run -- the dominant source of spurious diffs.
+// Applied via page.clock.setFixedTime (fixes Date, keeps timers running so
+// the boot splash still dismisses).
+const FROZEN = new Date(1747612800000);
+
+// Diff thresholds resolved once (env-overridable). Below noiseFloor a PNG
+// is left untouched (no git diff -> no PR); above ceiling the run flags
+// for human review (exit EXIT_DIFF_CEILING) instead of auto-merging.
+const THRESHOLDS = resolveThresholds();
+const EXIT_DIFF_CEILING = 20;
 
 // Capture catalogue. Each tuple: [filename, route, viewport, theme].
 // Routes resolve against the seeded demo profile (alex@demo.example).
@@ -93,9 +108,19 @@ async function captureOne(browser, baseUrl, [filename, route, viewport, theme]) 
     viewport,
     colorScheme: theme,
     deviceScaleFactor: 2,
+    // Determinism: fixed timezone so the time-of-day greeting
+    // (new Date().getHours()) doesn't drift with the runner's clock, and
+    // reduced-motion so transition/animation state can't bleed into a shot.
+    timezoneId: 'UTC',
+    reducedMotion: 'reduce',
   });
   const page = await ctx.newPage();
   try {
+    // Freeze Date.now()/new Date() at the seed anchor BEFORE any page
+    // script runs, so formatRelativeTime + greeting are identical every
+    // run. setFixedTime (not install) keeps real timers running -- the
+    // boot-fallback splash still dismisses on its own setTimeout.
+    await page.clock.setFixedTime(FROZEN);
     try {
       await page.goto(baseUrl + route, { waitUntil: 'domcontentloaded', timeout: 30_000 });
     } catch (err) {
@@ -129,9 +154,31 @@ async function captureOne(browser, baseUrl, [filename, route, viewport, theme]) 
     // 300ms boot-fallback fade + 200ms safety margin + extra time for
     // mobile (the smaller layout reflows once after hydration).
     await page.waitForTimeout(viewport.width < 600 ? 3000 : 1500);
-    const path = join(OUT, filename);
-    await page.screenshot({ path, fullPage: false, timeout: 60_000, animations: 'disabled' });
-    console.log(`  - ${filename} (${theme}, ${viewport.width}x${viewport.height})`);
+    // Kill any residual animation/transition + the text caret, then wait
+    // for web fonts so a late FOUT can't show up as a diff.
+    await page.addStyleTag({
+      content:
+        '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important;scroll-behavior:auto!important}',
+    });
+    try {
+      await page.evaluate(() => document.fonts && document.fonts.ready);
+    } catch {
+      /* fonts API absent -- ignore */
+    }
+    // Capture to a buffer and diff against the committed PNG. Only rewrite
+    // the file when the change clears the noise floor (keeps trivial
+    // rendering noise from opening a PR); the caller flags any that exceed
+    // the ceiling.
+    const buf = await page.screenshot({ fullPage: false, timeout: 60_000, animations: 'disabled' });
+    const outPath = join(OUT, filename);
+    const committed = existsSync(outPath) ? readFileSync(outPath) : null;
+    const result = classify(committed, buf, THRESHOLDS);
+    if (result.decision !== 'skip') writeFileSync(outPath, buf);
+    console.log(
+      `  - ${filename} (${theme}, ${viewport.width}x${viewport.height}) ` +
+        `${(result.ratio * 100).toFixed(3)}% -> ${result.isNew ? 'new' : result.decision}`,
+    );
+    return { filename, theme, route, viewport, ...result };
   } finally {
     await ctx.close();
   }
@@ -153,15 +200,55 @@ async function captureAll(baseUrl) {
     // Each capture owns its own context, so they don't share state and
     // can run concurrently. Wall time = slowest single capture, not the
     // sum -- huge win for warm-path iteration.
-    await Promise.all(CAPTURES.map((cap) => captureOne(browser, baseUrl, cap)));
+    return await Promise.all(CAPTURES.map((cap) => captureOne(browser, baseUrl, cap)));
   } finally {
     await browser.close();
   }
 }
 
+/** Print a per-image diff table, write the machine-readable summary the
+ *  workflow consumes (when SCREENSHOT_DIFF_SUMMARY is set), and return the
+ *  process exit code: EXIT_DIFF_CEILING if any image is over the ceiling,
+ *  else 0. */
+function summarize(results) {
+  if (!results || results.length === 0) return 0;
+  let written = 0;
+  let skipped = 0;
+  let exceeded = 0;
+  console.log('\nScreenshot diff summary:');
+  for (const r of results) {
+    const tag = r.isNew ? 'NEW' : r.decision.toUpperCase();
+    console.log(`  ${tag.padEnd(7)}${r.filename.padEnd(22)}${(r.ratio * 100).toFixed(3)}%`);
+    if (r.decision === 'exceed') exceeded += 1;
+    else if (r.decision === 'write') written += 1;
+    else skipped += 1;
+  }
+  console.log(`  -> ${written} written, ${skipped} unchanged, ${exceeded} over ceiling`);
+  const summaryPath = process.env.SCREENSHOT_DIFF_SUMMARY;
+  if (summaryPath) {
+    writeFileSync(summaryPath, JSON.stringify({ thresholds: THRESHOLDS, results }, null, 2));
+  }
+  if (exceeded > 0) {
+    console.error(
+      `::error::${exceeded} screenshot(s) exceeded the ${(THRESHOLDS.ceiling * 100).toFixed(0)}% diff ceiling -- flagged for human review (not auto-merged).`,
+    );
+    return EXIT_DIFF_CEILING;
+  }
+  return 0;
+}
+
+/** Terminal step for every capture path: summarize, log, and exit with the
+ *  right code. Called only after all teardown/cleanup has run. */
+function finish(results) {
+  const code = summarize(results);
+  console.log('Done.');
+  process.exit(code);
+}
+
 async function main() {
   const tStart = Date.now();
   const phase = (label) => console.log(`[screenshots] ${label} (+${Date.now() - tStart}ms)`);
+  let results = null;
   // Path 1: external dev server (caller manages lifecycle).
   if (BASE_URL_OVERRIDE) {
     if (!(await waitForServer(BASE_URL_OVERRIDE, 10_000))) {
@@ -171,9 +258,9 @@ async function main() {
       process.exit(2);
     }
     phase('using external base url');
-    await captureAll(BASE_URL_OVERRIDE);
+    results = await captureAll(BASE_URL_OVERRIDE);
     phase('captures done');
-    return;
+    return finish(results);
   }
 
   // Path 1.5: persistent daemon detection. If a previous
@@ -181,9 +268,9 @@ async function main() {
   // Iteration cost drops to ~10s (just the captures).
   if (!SERVE && (await waitForServer(DAEMON_URL, 500))) {
     phase('found running daemon on :4173');
-    await captureAll(DAEMON_URL);
+    results = await captureAll(DAEMON_URL);
     phase('captures done');
-    return;
+    return finish(results);
   }
 
   // Path 2: managed -- seed + boot + capture + teardown.
@@ -323,7 +410,7 @@ async function main() {
           process.once('SIGTERM', resolve);
         });
       } else {
-        await captureAll(baseUrl);
+        results = await captureAll(baseUrl);
         phase('captures done');
       }
     } finally {
@@ -345,7 +432,11 @@ async function main() {
       rmSync(tmpDataDir, { recursive: true, force: true });
     }
   }
-  console.log('Done.');
+  if (SERVE) {
+    console.log('Done.');
+    return;
+  }
+  finish(results);
 }
 
 main().catch((err) => {

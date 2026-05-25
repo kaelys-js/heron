@@ -67,7 +67,9 @@ source of truth.
 - Pull-request review (1 approver, CODEOWNERS required, stale reviews dismissed)
 - Required CI checks: ts, ios, format, CodeQL × 2, Dependency Review, Scorecard, zizmor
 - Conventional Commit message pattern enforced
-- No bypass actors (admins still subject to the rules)
+- Bypass actor: the Repository admin role (always) -- see "Bypass actors" above.
+  Owner-driven automation relies on it (e.g. screenshots-refresh.yml admin-merges
+  the PNG-refresh PR, which can't satisfy the bot-unsatisfiable code-owner review).
 
 ## Out of scope
 
