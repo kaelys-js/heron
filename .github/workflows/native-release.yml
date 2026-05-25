@@ -166,7 +166,7 @@ jobs:
         # after 2 weeks of green runs once the allowed-endpoints list is
         # known-good. Especially valuable on this job because the secrets
         # block above grants access to Apple signing certs + ASC API key.
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
       - name: Required secret check
@@ -223,7 +223,7 @@ jobs:
         # signs with the (forthcoming G18) Azure trusted-signing token.
         # Audit mode for the rollout -- flip to `block` after observing
         # legitimate endpoints.
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
       - name: Checkout
@@ -647,7 +647,7 @@ jobs:
         # cert; the highest-privilege runner in this workflow. Audit
         # mode to observe what xcodebuild + fastlane reach out to during
         # the rollout.
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
       - name: Checkout
@@ -831,7 +831,7 @@ jobs:
       - name: Harden runner
         # G4 -- Android build runner. Handles Play Console service-account
         # key + keystore signing. Audit mode for rollout observability.
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
 
