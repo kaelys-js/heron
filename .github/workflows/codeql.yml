@@ -220,7 +220,7 @@ jobs:
 
       - name: Initialize CodeQL
         if: steps.gate.outputs.should_run == 'true'
-        uses: github/codeql-action/init@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4
+        uses: github/codeql-action/init@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4
         with:
           languages: ${{ matrix.language }}
           # `security-and-quality` always -- on PRs AND on push-to-main
@@ -243,7 +243,7 @@ jobs:
       # -- no extra build step.
       - name: Autobuild
         if: steps.gate.outputs.should_run == 'true' && matrix.language != 'swift'
-        uses: github/codeql-action/autobuild@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4
+        uses: github/codeql-action/autobuild@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4
 
       # Swift needs an explicit xcodebuild step so CodeQL can extract the
       # full module graph. Match the test.yml ios job's Xcode pin.
@@ -275,6 +275,6 @@ jobs:
 
       - name: Perform CodeQL Analysis
         if: steps.gate.outputs.should_run == 'true'
-        uses: github/codeql-action/analyze@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4
+        uses: github/codeql-action/analyze@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4
         with:
           category: '/language:${{ matrix.language }}'
