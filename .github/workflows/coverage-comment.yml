@@ -72,7 +72,7 @@ jobs:
           fetch-depth: 1
 
       - name: Download coverage-ts artifact from the source run
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v5
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v5
         with:
           name: coverage-ts
           path: ui/coverage
@@ -81,7 +81,7 @@ jobs:
         continue-on-error: true # ts job may have skipped (path filter)
 
       - name: Download coverage-ios artifact from the source run
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v5
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v5
         with:
           name: coverage-ios
           path: ui/ios/App/fastlane/coverage
@@ -182,7 +182,7 @@ jobs:
           fetch-depth: 1
 
       - name: Download coverage-ts artifact
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v5
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v5
         with:
           name: coverage-ts
           path: ui/coverage
@@ -191,7 +191,7 @@ jobs:
         continue-on-error: true
 
       - name: Download coverage-ios artifact
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v5
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v5
         with:
           name: coverage-ios
           path: ui/ios/App/fastlane/coverage
