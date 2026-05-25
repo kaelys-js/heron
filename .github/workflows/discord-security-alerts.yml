@@ -117,17 +117,23 @@ jobs:
           # ---- CodeQL / code-scanning alerts ----
           # `created` filters at the API level isn't supported on this
           # endpoint, so we pull open + filter client-side.
+          # `|| ASSIGN` stays OUTSIDE the $() -- inside it, a partial stdout
+          # before a non-zero exit gets the echo'd '[]' appended, yielding a
+          # two-value blob whose `jq length` prints two lines.
           CQ_ALERTS=$(gh api "/repos/${{ github.repository }}/code-scanning/alerts?state=open&per_page=100" \
             --jq "[.[] | select(.created_at > \"$SINCE\" or .updated_at > \"$SINCE\") | select(.rule.security_severity_level == \"high\" or .rule.security_severity_level == \"critical\" or .rule.severity == \"error\")]" \
-            2>/dev/null || echo '[]')
-          CQ_COUNT=$(echo "$CQ_ALERTS" | jq 'length')
+            2>/dev/null) || CQ_ALERTS='[]'
+          CQ_COUNT=$(jq 'length' <<<"$CQ_ALERTS" 2>/dev/null || echo 0)
+          # Keep it a single integer so the TOTAL arithmetic below can't choke.
+          case "$CQ_COUNT" in '' | *[!0-9]*) CQ_COUNT=0 ;; esac
           echo "::notice::Found $CQ_COUNT new HIGH+ CodeQL alerts."
 
           # ---- Dependabot alerts ----
           DB_ALERTS=$(gh api "/repos/${{ github.repository }}/dependabot/alerts?state=open&per_page=100" \
             --jq "[.[] | select(.created_at > \"$SINCE\" or .updated_at > \"$SINCE\") | select(.security_advisory.severity == \"high\" or .security_advisory.severity == \"critical\")]" \
-            2>/dev/null || echo '[]')
-          DB_COUNT=$(echo "$DB_ALERTS" | jq 'length')
+            2>/dev/null) || DB_ALERTS='[]'
+          DB_COUNT=$(jq 'length' <<<"$DB_ALERTS" 2>/dev/null || echo 0)
+          case "$DB_COUNT" in '' | *[!0-9]*) DB_COUNT=0 ;; esac
           echo "::notice::Found $DB_COUNT new HIGH+ Dependabot alerts."
 
           TOTAL=$((CQ_COUNT + DB_COUNT))
