@@ -31,10 +31,18 @@
 # Adding a channel / role / AutoMod rule: edit this file + push to
 # main. The reconciler picks it up on the next run.
 
+# Strict source of truth: when true, anything live but NOT declared below
+# (channels, roles, AutoMod rules) is DELETED on apply. Protected: @everyone
+# + managed roles (bot/integration/booster). `--verify` / `--dry` only report
+# the prune diff. Requires an Administrator bot to manage private channels.
+prune: true
+
 server:
   # Guild-wide settings. Reconciled via PATCH /guilds/{id}.
-  name: Heron
-  description: 'Stand still. Strike well. A patient, local-first thinking partner for career transitions.'
+  # {{brand.*}} tokens resolve from branding/brand.json at load time, so a
+  # rebrand propagates here. brand.json is the single source of truth.
+  name: '{{brand.displayName}}'
+  description: '{{brand.tagline}}'
   # Verification level (DiscordEnum):
   #   0 NONE     -- anyone can talk
   #   1 LOW      -- verified email required
@@ -50,8 +58,37 @@ server:
   # Explicit content filter (0 DISABLED, 1 MEMBERS_WITHOUT_ROLES, 2 ALL_MEMBERS).
   # ALL_MEMBERS: scan every image/video; safer for the brand register.
   explicit_content_filter: 2
+  # @everyone base permissions -- the reconciler sets the @everyone role to
+  # exactly this set, so anything omitted (Mention @everyone, Create
+  # Expressions, Create Events -- the raid/spam-risky bits Discord nags about)
+  # is denied. This is the declarative answer to Discord's "Stop @everyone
+  # spam" prompt: config is the source of truth, not a one-off UI click.
+  everyone_permissions:
+    - VIEW_CHANNEL
+    - CREATE_INSTANT_INVITE
+    - CHANGE_NICKNAME
+    - SEND_MESSAGES
+    - SEND_MESSAGES_IN_THREADS
+    - CREATE_PUBLIC_THREADS
+    - EMBED_LINKS
+    - ATTACH_FILES
+    - ADD_REACTIONS
+    - USE_EXTERNAL_EMOJIS
+    - USE_EXTERNAL_STICKERS
+    - READ_MESSAGE_HISTORY
+    - USE_APPLICATION_COMMANDS
+    - CONNECT
+    - SPEAK
+    - STREAM
+    - USE_VAD
+    - USE_EMBEDDED_ACTIVITIES
   # Channel that receives join / boost system messages. Resolved to its id.
   system_channel: general
+  # COMMUNITY requires a rules channel + a "Community Updates" channel
+  # (Discord posts admin notices there). The reconciler enables Community
+  # programmatically using these two; both must be text channels.
+  rules_channel: rules
+  public_updates_channel: mod-updates
   # A SET flag SUPPRESSES that notification. SUPPRESS_GUILD_REMINDER_
   # NOTIFICATIONS is the "send helpful tips for server setup" toggle.
   system_channel_flags:
@@ -81,7 +118,7 @@ server:
 # username/avatar per message. Skipped per webhook if its secret isn't
 # present in the reconciler's environment.
 webhooks:
-  name: Heron
+  name: '{{brand.displayName}}'
   avatar: ui/static/icons/heron-512.png
 
 # ── Bot profile ──────────────────────────────────────────────────────
@@ -98,14 +135,14 @@ bot:
 # account AND meets the predicate (e.g., ≥1 merged PR in the repo).
 roles:
   - name: Maintainer
-    color: '#4a5b6d' # Heron Slate
+    color: '{{brand.colors.primary}}' # Heron Slate
     permissions:
       - ADMINISTRATOR
     hoist: true
     mentionable: false
     icon: ''
   - name: Reviewer
-    color: '#7a8c6d' # Heron Reed
+    color: '{{brand.colors.accentSecondary}}' # Heron Reed
     permissions:
       - MANAGE_MESSAGES
       - MANAGE_THREADS
@@ -115,30 +152,30 @@ roles:
     hoist: true
     mentionable: true
   - name: Triager
-    color: '#c89b4a' # Heron Dawn
+    color: '{{brand.colors.accent}}' # Heron Dawn
     permissions:
       - MANAGE_MESSAGES
       - MANAGE_THREADS
     hoist: true
     mentionable: true
   - name: Contributor
-    color: '#7a8c6d'
+    color: '{{brand.colors.accentSecondary}}'
     permissions: []
     hoist: true
     mentionable: false
     connected_role:
       platform: github
       predicate: 'merged_pr_count >= 1'
-      verified_repo: kaelys-js/heron
+      verified_repo: '{{brand.repo}}'
   - name: Sponsor
-    color: '#c89b4a'
+    color: '{{brand.colors.accent}}'
     permissions: []
     hoist: true
     mentionable: false
     connected_role:
       platform: github
       predicate: 'is_sponsor == true'
-      verified_repo: kaelys-js/heron
+      verified_repo: '{{brand.repo}}'
   - name: Hired
     color: '#8a9b7d' # success-leaning green
     permissions: []
@@ -206,15 +243,15 @@ categories:
     channels:
       - name: introductions
         type: 0
-        topic: "Welcome screen sends new members here. Say hi -- background, what brings you to Heron, what you're job-hunting (or hiring) for."
+        topic: "Welcome screen sends new members here. Say hi -- background, what brings you to {{brand.displayName}}, what you're job-hunting (or hiring) for."
         slowmode: 5
       - name: general
         type: 0
-        topic: 'Chat about Heron, job-hunting, anything related.'
+        topic: 'Chat about {{brand.displayName}}, job-hunting, anything related.'
         slowmode: 0
       - name: off-topic
         type: 0
-        topic: 'Non-Heron chat. Keep it brand-aligned per #rules.'
+        topic: 'Non-{{brand.displayName}} chat. Keep it brand-aligned per #rules.'
         slowmode: 5
       - name: hired-stories
         type: 15 # GUILD_FORUM
@@ -326,6 +363,14 @@ categories:
             deny: [VIEW_CHANNEL]
           - role: Maintainer
             allow: [VIEW_CHANNEL, SEND_MESSAGES, MANAGE_MESSAGES, MANAGE_THREADS]
+      - name: mod-updates
+        type: 0
+        topic: "Discord's Community Updates land here (feature unlocks, discovery status). Maintainer-only."
+        overwrites:
+          - role: '@everyone'
+            deny: [VIEW_CHANNEL]
+          - role: Maintainer
+            allow: [VIEW_CHANNEL, SEND_MESSAGES, READ_MESSAGE_HISTORY]
 
   - name: 🔊 VOICE
     position: 5
@@ -435,13 +480,13 @@ onboarding:
   default_channel_ids: [rules, announcements, introductions]
   mode: 1 # ONBOARDING_ADVANCED (vs 0 ONBOARDING_DEFAULT)
   prompts:
-    - title: 'What brings you to Heron?'
+    - title: 'What brings you to {{brand.displayName}}?'
       type: 0 # MULTIPLE_CHOICE
       single_select: true
       required: true
       options:
         - title: 'Job-hunting'
-          description: 'I want to use Heron to find my next role.'
+          description: 'I want to use {{brand.displayName}} to find my next role.'
           emoji_name: '💼'
           role_ids: ['Member']
           channel_ids: ['support', 'ideas', 'hired-stories']
@@ -462,7 +507,7 @@ onboarding:
       required: false
       options:
         - title: 'Releases'
-          description: 'Ping me on @Member when Heron ships a new version.'
+          description: 'Ping me on @Member when {{brand.displayName}} ships a new version.'
           emoji_name: '📦'
           channel_ids: ['changelog']
         - title: 'Hired stories'

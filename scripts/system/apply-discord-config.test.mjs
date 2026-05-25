@@ -10,7 +10,15 @@ import {
   automodDiffers,
   bitsToPermNames,
   buildInviteUrl,
+  alertChannelNames,
+  automodToPrune,
+  brandRepoSlug,
+  buildCommunityPatch,
   channelGatedOut,
+  channelsToPrune,
+  declaredChannelNames,
+  resolveBrandTokens,
+  rolesToPrune,
   filterGrantable,
   hasFeature,
   imageDrift,
@@ -191,6 +199,100 @@ it('channelGatedOut: announcement + stage gated only on a non-COMMUNITY guild', 
   assert.equal(channelGatedOut({ type: 0 }, { features: [] }), false);
   assert.equal(channelGatedOut({ type: 2 }, { features: [] }), false);
   assert.equal(channelGatedOut({ type: 15 }, { features: [] }), false);
+});
+it('buildCommunityPatch: adds COMMUNITY (deduped) + the two channel ids', () => {
+  const p = buildCommunityPatch({ features: ['NEWS'] }, '111', '222');
+  assert.deepEqual([...p.features].sort(), ['COMMUNITY', 'NEWS']);
+  assert.equal(p.rules_channel_id, '111');
+  assert.equal(p.public_updates_channel_id, '222');
+  // already-COMMUNITY guild doesn't double it; missing features array is fine.
+  assert.deepEqual(buildCommunityPatch({ features: ['COMMUNITY'] }, '1', '2').features, [
+    'COMMUNITY',
+  ]);
+  assert.deepEqual(buildCommunityPatch({}, '1', '2').features, ['COMMUNITY']);
+});
+it('alertChannelNames: collects SEND_ALERT_MESSAGE (type 2) targets, deduped', () => {
+  const cfg = {
+    automod: [
+      { actions: [{ type: 1 }, { type: 2, metadata: { channel: 'mods' } }] },
+      { actions: [{ type: 2, metadata: { channel: 'mods' } }] }, // dup name
+      { actions: [{ type: 2, metadata: { channel: 'alerts' } }] },
+      { actions: [{ type: 2 }] }, // alert without a channel -> ignored
+    ],
+  };
+  assert.deepEqual(alertChannelNames(cfg).sort(), ['alerts', 'mods']);
+  assert.deepEqual(alertChannelNames({}), []);
+});
+it('resolveBrandTokens: fills {{brand.PATH}} from brand; repo slug; unknown -> empty', () => {
+  const brand = {
+    displayName: 'Heron',
+    tagline: 'Stand still.',
+    colors: { primary: '#4a5b6d' },
+    repo: { owner: 'o', name: 'n' },
+  };
+  const cfg = {
+    server: { name: '{{brand.displayName}}', description: '{{brand.tagline}}' },
+    roles: [{ color: '{{brand.colors.primary}}' }],
+    slug: '{{brand.repo}}',
+    missing: '{{brand.nope}}',
+    list: ['hi {{brand.displayName}}'],
+    keep: 42,
+  };
+  const r = resolveBrandTokens(cfg, brand);
+  assert.equal(r.server.name, 'Heron');
+  assert.equal(r.server.description, 'Stand still.');
+  assert.equal(r.roles[0].color, '#4a5b6d');
+  assert.equal(r.slug, 'o/n');
+  assert.equal(r.missing, ''); // unknown token resolves to empty, not a literal brace
+  assert.equal(r.list[0], 'hi Heron');
+  assert.equal(r.keep, 42); // non-strings pass through
+});
+it('brandRepoSlug: owner/name from brand.repo, empty when missing', () => {
+  assert.equal(brandRepoSlug({ repo: { owner: 'kaelys-js', name: 'heron' } }), 'kaelys-js/heron');
+  assert.equal(brandRepoSlug({ repo: { owner: 'o' } }), '');
+  assert.equal(brandRepoSlug({}), '');
+});
+it('declaredChannelNames: category names + their channels', () => {
+  const cfg = {
+    categories: [{ name: 'CAT', channels: [{ name: 'a' }, { name: 'b' }] }, { name: 'EMPTY' }],
+  };
+  assert.deepEqual(declaredChannelNames(cfg).sort(), ['CAT', 'EMPTY', 'a', 'b']);
+});
+it('channelsToPrune: prunes undeclared; categories sort last (children first)', () => {
+  const cfg = { categories: [{ name: 'CAT', channels: [{ name: 'keep' }] }] };
+  const live = [
+    { id: '1', name: 'keep', type: 0 },
+    { id: '2', name: 'stray', type: 0 },
+    { id: '3', name: 'OLD CAT', type: 4 },
+  ];
+  assert.deepEqual(
+    channelsToPrune(live, cfg).map((c) => c.name),
+    ['stray', 'OLD CAT'],
+  );
+});
+it('rolesToPrune: skips @everyone + managed, prunes undeclared', () => {
+  const cfg = { roles: [{ name: 'Keep' }] };
+  const live = [
+    { id: '0', name: '@everyone' },
+    { id: '1', name: 'Keep' },
+    { id: '2', name: 'Stray' },
+    { id: '3', name: 'BotRole', managed: true }, // bot/integration/booster
+  ];
+  assert.deepEqual(
+    rolesToPrune(live, cfg).map((r) => r.name),
+    ['Stray'],
+  );
+});
+it('automodToPrune: prunes rules not in config', () => {
+  const cfg = { automod: [{ name: 'keep-rule' }] };
+  const live = [
+    { id: '1', name: 'keep-rule' },
+    { id: '2', name: 'old-rule' },
+  ];
+  assert.deepEqual(
+    automodToPrune(live, cfg).map((r) => r.name),
+    ['old-rule'],
+  );
 });
 it('sha256: known vector', () => {
   assert.equal(sha256('abc'), 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
