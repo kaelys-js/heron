@@ -177,8 +177,10 @@ async function captureOne(browser, baseUrl, [filename, route, viewport, theme]) 
     let committed = null;
     try {
       committed = readFileSync(outPath);
-    } catch {
-      /* no committed baseline yet -- brand-new screenshot */
+    } catch (err) {
+      // Only a missing file means "brand-new screenshot". Surface EACCES /
+      // EIO / etc. instead of silently rewriting a committed baseline.
+      if (err?.code !== 'ENOENT') throw err;
     }
     const result = classify(committed, buf, THRESHOLDS);
     if (result.decision !== 'skip') writeFileSync(outPath, buf);
