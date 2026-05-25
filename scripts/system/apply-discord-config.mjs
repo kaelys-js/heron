@@ -213,10 +213,77 @@ export function hasFeature(liveGuild, feature) {
 // GUILD_STAGE_VOICE (13) with 50024. (Forum/media work without COMMUNITY.)
 const COMMUNITY_ONLY_CHANNEL_TYPES = new Set([5, 13]);
 
-/** A channel that can't be created on this guild and must be skipped (not
- *  errored on), per docs/DISCORD.md's feature-gate contract. */
+/** A channel that can't be created yet because COMMUNITY isn't on. The
+ *  reconciler enables COMMUNITY (see ensureCommunity) once the rules +
+ *  updates channels exist, then a second channel pass creates these. So this
+ *  holds them for pass 2 within the same run -- it is not a give-up skip. */
 export function channelGatedOut(channel, liveGuild) {
   return COMMUNITY_ONLY_CHANNEL_TYPES.has(channel?.type) && !hasFeature(liveGuild, 'COMMUNITY');
+}
+
+/** PATCH body that turns on COMMUNITY: the feature flag plus a rules + a
+ *  public-updates text channel (both required by Discord). verification_level
+ *  + explicit_content_filter must already meet Community minimums -- applyServer
+ *  sets them from config (Heron uses MEDIUM + ALL_MEMBERS), so they're not
+ *  re-sent here. */
+export function buildCommunityPatch(liveGuild, rulesChannelId, updatesChannelId) {
+  return {
+    features: Array.from(new Set([...(liveGuild?.features ?? []), 'COMMUNITY'])),
+    rules_channel_id: rulesChannelId,
+    public_updates_channel_id: updatesChannelId,
+  };
+}
+
+/** Channel names an AutoMod rule alerts to (SEND_ALERT_MESSAGE = action type
+ *  2). The bot needs View + Send on each or Discord rejects the rule with
+ *  INVALID_AUTO_MODERATION_CHANNEL_FLAG_ACTION_ACCESS. */
+export function alertChannelNames(cfg) {
+  const names = new Set();
+  for (const rule of cfg?.automod ?? []) {
+    for (const action of rule.actions ?? []) {
+      if (action.type === 2 && action.metadata?.channel) names.add(action.metadata.channel);
+    }
+  }
+  return [...names];
+}
+
+// ── Strict-prune helpers (true source-of-truth) ───────────────────
+// When `prune: true`, anything live but absent from config.yml is deleted.
+// These pure helpers compute the delete-set; the executor (pruneUndeclared)
+// does the I/O + honors dry/verify mode + a mass-delete safety cap.
+
+/** Every channel + category name config.yml declares. */
+export function declaredChannelNames(cfg) {
+  const names = [];
+  for (const cat of cfg?.categories ?? []) {
+    names.push(cat.name);
+    for (const ch of cat.channels ?? []) names.push(ch.name);
+  }
+  return names;
+}
+
+/** Live channels not in config -> prune. (Categories sort last so children
+ *  are deleted first.) */
+export function channelsToPrune(liveChannels, cfg) {
+  const declared = new Set(declaredChannelNames(cfg));
+  return (liveChannels ?? [])
+    .filter((c) => !declared.has(c.name))
+    .sort((a, b) => (a.type === 4 ? 1 : 0) - (b.type === 4 ? 1 : 0));
+}
+
+/** Live roles not in config -> prune. Never @everyone, never managed roles
+ *  (the bot's own + integration roles + the booster role are all `managed`). */
+export function rolesToPrune(liveRoles, cfg) {
+  const declared = new Set((cfg?.roles ?? []).map((r) => r.name));
+  return (liveRoles ?? []).filter(
+    (r) => r.name !== '@everyone' && !r.managed && !declared.has(r.name),
+  );
+}
+
+/** Live AutoMod rules not in config -> prune. */
+export function automodToPrune(liveRules, cfg) {
+  const declared = new Set((cfg?.automod ?? []).map((r) => r.name));
+  return (liveRules ?? []).filter((r) => !declared.has(r.name));
 }
 
 // ── Image data + apply state ──────────────────────────────────────
@@ -317,16 +384,50 @@ function loadConfig() {
   if (!existsSync(CONFIG_PATH)) {
     throw new Error(`Config not found at ${CONFIG_PATH}`);
   }
-  return yaml.load(readFileSync(CONFIG_PATH, 'utf8'));
+  // Resolve {{brand.*}} tokens so brand.json is the single source of truth for
+  // every identity value embedded in the config (name, tagline, colors, repo).
+  return resolveBrandTokens(yaml.load(readFileSync(CONFIG_PATH, 'utf8')), loadBrand());
+}
+
+// branding/brand.json is the single source of truth for identity (name,
+// description, repo, guild id, invite). Cached so we read it once.
+let _brand;
+export function loadBrand() {
+  if (_brand) return _brand;
+  _brand = existsSync(BRAND_PATH) ? JSON.parse(readFileSync(BRAND_PATH, 'utf8')) : {};
+  return _brand;
+}
+
+/** "owner/name" slug from brand.repo, for GitHub API paths. */
+export function brandRepoSlug(brand = loadBrand()) {
+  const r = brand?.repo;
+  return r?.owner && r?.name ? `${r.owner}/${r.name}` : '';
+}
+
+/** Replace every {{brand.PATH}} token in a parsed config's strings with the
+ *  value from brand.json (dot-path lookup; {{brand.repo}} -> owner/name slug).
+ *  Unknown tokens resolve to '' so a typo is visible, not a literal brace. */
+export function resolveBrandTokens(value, brand = loadBrand()) {
+  if (typeof value === 'string') {
+    return value.replace(/\{\{brand\.([\w.]+)\}\}/g, (_, path) => {
+      if (path === 'repo') return brandRepoSlug(brand);
+      const v = path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), brand);
+      return v == null ? '' : String(v);
+    });
+  }
+  if (Array.isArray(value)) return value.map((v) => resolveBrandTokens(v, brand));
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) out[k] = resolveBrandTokens(v, brand);
+    return out;
+  }
+  return value;
 }
 
 function resolveGuildId() {
   if (process.env.DISCORD_GUILD_ID) return process.env.DISCORD_GUILD_ID;
-  if (existsSync(BRAND_PATH)) {
-    const brand = JSON.parse(readFileSync(BRAND_PATH, 'utf8'));
-    const id = brand?.community?.discord?.serverId;
-    if (id) return id;
-  }
+  const id = loadBrand()?.community?.discord?.serverId;
+  if (id) return id;
   throw new Error('DISCORD_GUILD_ID not set + brand.json::community.discord.serverId missing.');
 }
 
@@ -386,6 +487,18 @@ async function discord(method, path, body, attempt = 0) {
   }
   if (res.status === 204) return null;
   return res.json();
+}
+
+/** GET that returns null on 404 instead of throwing -- for resources that may
+ *  not exist yet on a freshly-Community guild (member-verification form,
+ *  welcome screen, onboarding), so the reconciler creates rather than dies. */
+async function discordGetOptional(path) {
+  try {
+    return await discord('GET', path);
+  } catch (e) {
+    if (/: 404\b/.test(String(e?.message))) return null;
+    throw e;
+  }
 }
 
 /**
@@ -496,13 +609,17 @@ async function applyServer(cfg) {
   const patch = {};
 
   // ── scalar settings ──
+  // name + description come from config.yml's {{brand.*}} tokens, already
+  // resolved against brand.json in loadConfig (single source of truth).
   const desired = {
-    name: cfg.server.name,
-    description: cfg.server.description,
     verification_level: cfg.server.verification_level,
     default_message_notifications: cfg.server.default_message_notifications,
     explicit_content_filter: cfg.server.explicit_content_filter,
   };
+  // Only manage name/description when set, so a missing/partial brand.json
+  // (token -> '') never clears the live server identity.
+  if (cfg.server.name) desired.name = cfg.server.name;
+  if (cfg.server.description) desired.description = cfg.server.description;
   if (cfg.server.system_channel_flags) {
     desired.system_channel_flags = systemChannelFlagsToBits(cfg.server.system_channel_flags);
   }
@@ -884,11 +1001,12 @@ async function applyChannels(cfg, roleIds, botPerms, guild) {
     }
 
     for (const [chIdx, channel] of (category.channels ?? []).entries()) {
-      // Community-only channel types (announcement, stage voice) are skipped
-      // with a notice on a guild that lacks the feature -- never a hard error.
+      // Community-only channel types (announcement, stage voice) wait for
+      // pass 2; ensureCommunity turns COMMUNITY on, then the second pass
+      // creates them. This holds within the run -- it does not give up.
       if (channelGatedOut(channel, guild)) {
         console.log(
-          `  channel #${channel.name}: skipped (channel type ${channel.type} needs COMMUNITY)`,
+          `  channel #${channel.name}: held for pass 2 (needs COMMUNITY, type ${channel.type})`,
         );
         continue;
       }
@@ -959,6 +1077,73 @@ async function applyChannels(cfg, roleIds, botPerms, guild) {
     }
   }
   return idByName;
+}
+
+/**
+ * Enable the COMMUNITY feature programmatically so announcement / stage
+ * channels, onboarding, the welcome screen, and the rules gate can be
+ * provisioned (not skipped). No-op if already on. Needs the rules +
+ * public-updates text channels to exist (created in the first channel pass).
+ * Returns { guild, justEnabled } -- justEnabled triggers a second channel
+ * pass for the now-unlocked types.
+ */
+async function ensureCommunity(cfg, guild, channelIds) {
+  if (hasFeature(guild, 'COMMUNITY')) return { guild, justEnabled: false };
+  const rulesName = cfg.server?.rules_channel;
+  const updatesName = cfg.server?.public_updates_channel;
+  const rulesId = rulesName ? channelIds.get(rulesName) : null;
+  const updatesId = updatesName ? channelIds.get(updatesName) : null;
+  if (!rulesId || !updatesId) {
+    // Fail loud: COMMUNITY is required by config (gated channels/onboarding/
+    // rules depend on it), so a missing rules/updates channel is a real
+    // misconfig, not something to skip and "succeed" past.
+    throw new Error(
+      `COMMUNITY cannot be enabled: server.rules_channel ("${rulesName}") + server.public_updates_channel ("${updatesName}") must name existing text channels.`,
+    );
+  }
+  logChange('server.features', (guild.features ?? []).join(', ') || '(none)', 'COMMUNITY');
+  const updated = await discord(
+    'PATCH',
+    `/guilds/${GUILD_ID}`,
+    buildCommunityPatch(guild, rulesId, updatesId),
+  );
+  // verify/dry stub the PATCH (updated === null) -> report only, no 2nd pass.
+  if (!updated) return { guild, justEnabled: false };
+  return { guild: updated, justEnabled: true };
+}
+
+/** The bot's own managed (integration) role -- the one Discord auto-creates
+ *  for the bot app. Needed to grant the bot channel access it lacks. */
+async function getBotRoleId(botUserId) {
+  const roles = await discord('GET', `/guilds/${GUILD_ID}/roles`);
+  return (roles ?? []).find((r) => r.tags?.bot_id === botUserId)?.id ?? null;
+}
+
+/** Grant the bot View + Send on the named channels via a role overwrite, so
+ *  the bot can reach channels Discord requires it to access:
+ *   - AutoMod alert targets (else rule creation 400s
+ *     INVALID_AUTO_MODERATION_CHANNEL_FLAG_ACTION_ACCESS), and
+ *   - the COMMUNITY rules + public-updates channels (else the enable PATCH
+ *     403s Missing Access when one is a channel the bot can't see).
+ *  PUT is idempotent -- it sets (creates or updates) the bot-role overwrite. */
+async function ensureBotChannelAccess(channelIds, botRoleId, names, label) {
+  const targets = [...new Set(names)].filter(Boolean);
+  if (targets.length === 0) return;
+  if (!botRoleId) {
+    logManual(`Cannot grant bot access to ${label} channels: bot role not found.`);
+    return;
+  }
+  const allow = (PERM.VIEW_CHANNEL | PERM.SEND_MESSAGES).toString();
+  for (const name of targets) {
+    const chId = channelIds.get(name);
+    if (!chId) continue;
+    await discord('PUT', `/channels/${chId}/permissions/${botRoleId}`, {
+      type: 0, // role overwrite
+      allow,
+      deny: '0',
+    });
+    logOk(`bot access -> #${name} (${label})`);
+  }
 }
 
 /**
@@ -1054,7 +1239,7 @@ async function applyOnboarding(cfg, guild, channelIds, roleIds) {
       `onboarding surfaces only ${need} channels; Discord needs >= 7 (default + prompt-referenced) to enable it.`,
     );
   }
-  const live = await discord('GET', `/guilds/${GUILD_ID}/onboarding`);
+  const live = await discordGetOptional(`/guilds/${GUILD_ID}/onboarding`);
   if (live && normalizeOnboarding(live) === normalizeOnboarding(desired)) {
     logOk('onboarding');
     return;
@@ -1085,7 +1270,7 @@ async function applyWelcome(cfg, guild, channelIds) {
       emoji_name: w.emoji_name,
     })),
   };
-  const live = await discord('GET', `/guilds/${GUILD_ID}/welcome-screen`);
+  const live = await discordGetOptional(`/guilds/${GUILD_ID}/welcome-screen`);
   if (live && normalizeWelcome(live) === normalizeWelcome(desired)) {
     logOk('welcome screen');
     return;
@@ -1235,7 +1420,7 @@ async function applyMemberVerification(cfg, guild) {
     for (const e of errors) logManual(`rules: ${e}`);
     return;
   }
-  const live = await discord('GET', `/guilds/${GUILD_ID}/member-verification`);
+  const live = await discordGetOptional(`/guilds/${GUILD_ID}/member-verification`);
   const desired = {
     enabled: true,
     description: r.description ?? '',
@@ -1252,6 +1437,75 @@ async function applyMemberVerification(cfg, guild) {
   }
   logChange('member verification', '(rules)', '(reconciled)');
   await discord('PATCH', `/guilds/${GUILD_ID}/member-verification`, desired);
+}
+
+// Refuse to mass-delete: a prune set this large almost always means a broken
+// config (empty/misparsed), not an intentional teardown. Surface + bail.
+const PRUNE_SAFETY_CAP = 30;
+
+/**
+ * Strict source-of-truth: delete channels / roles / AutoMod rules that exist
+ * live but aren't in config.yml. Opt-in via `prune: true`. dry/verify mode
+ * only logs the would-delete diff (discord() stubs writes); apply mode deletes.
+ * Protected: @everyone, managed roles (bot/integration/booster). Child
+ * channels are deleted before their categories.
+ */
+async function pruneUndeclared(cfg) {
+  if (!cfg.prune) return;
+  const liveChannels = (await discord('GET', `/guilds/${GUILD_ID}/channels`)) ?? [];
+  const liveRoles = (await discord('GET', `/guilds/${GUILD_ID}/roles`)) ?? [];
+  const liveRules = (await discord('GET', `/guilds/${GUILD_ID}/auto-moderation/rules`)) ?? [];
+  const chPrune = channelsToPrune(liveChannels, cfg);
+  const rolePrune = rolesToPrune(liveRoles, cfg);
+  const rulePrune = automodToPrune(liveRules, cfg);
+  const total = chPrune.length + rolePrune.length + rulePrune.length;
+  if (total === 0) {
+    logOk('prune: no undeclared resources');
+    return;
+  }
+  if (total > PRUNE_SAFETY_CAP) {
+    // Fail loud rather than silently no-op: a prune set this large almost
+    // always means a broken/empty config, and a quiet return would let verify
+    // pass green while real drift goes unactioned.
+    throw new Error(
+      `prune: ${total} undeclared resources exceed the safety cap (${PRUNE_SAFETY_CAP}); refusing to mass-delete. Check config.yml parsed correctly.`,
+    );
+  }
+  for (const c of chPrune) {
+    logChange(`prune channel #${c.name}`, 'live', 'deleted');
+    await discord('DELETE', `/channels/${c.id}`);
+  }
+  for (const r of rolePrune) {
+    logChange(`prune role ${r.name}`, 'live', 'deleted');
+    await discord('DELETE', `/guilds/${GUILD_ID}/roles/${r.id}`);
+  }
+  for (const r of rulePrune) {
+    logChange(`prune automod ${r.name}`, 'live', 'deleted');
+    await discord('DELETE', `/guilds/${GUILD_ID}/auto-moderation/rules/${r.id}`);
+  }
+}
+
+/**
+ * Set the @everyone base permissions to exactly cfg.server.everyone_permissions,
+ * so omitted bits (Mention @everyone, Create Expressions, Create Events) are
+ * denied -- the declarative form of Discord's "Stop @everyone spam" prompt.
+ * The @everyone role's id equals the guild id.
+ */
+async function applyEveryonePermissions(cfg) {
+  const allow = cfg.server?.everyone_permissions;
+  if (!Array.isArray(allow)) {
+    logOk('@everyone permissions (not declared)');
+    return;
+  }
+  const desired = permsToBits(allow).toString();
+  const roles = (await discord('GET', `/guilds/${GUILD_ID}/roles`)) ?? [];
+  const everyone = roles.find((r) => r.id === GUILD_ID);
+  if (everyone && everyone.permissions === desired) {
+    logOk('@everyone permissions');
+    return;
+  }
+  logChange('@everyone permissions', everyone?.permissions ?? '?', desired);
+  await discord('PATCH', `/guilds/${GUILD_ID}/roles/${GUILD_ID}`, { permissions: desired });
 }
 
 // ── Main ──────────────────────────────────────────────────────────
@@ -1274,10 +1528,33 @@ async function main() {
   imageState = loadImageState();
   const { botUser, botPerms } = await preflight();
 
-  const guild = await applyServer(cfg);
+  let guild = await applyServer(cfg);
   await applyBotProfile(cfg, botUser);
   const roleIds = await applyRoles(cfg, botPerms, guild);
-  const channelIds = await applyChannels(cfg, roleIds, botPerms, guild);
+  await applyEveryonePermissions(cfg);
+  // First channel pass creates everything except the COMMUNITY-only types
+  // (announcement / stage), which wait for pass 2. That guarantees the rules +
+  // public-updates channels exist for the COMMUNITY enable below.
+  let channelIds = await applyChannels(cfg, roleIds, botPerms, guild);
+  const botRoleId = await getBotRoleId(botUser.id);
+  // The COMMUNITY enable PATCH 403s if the bot can't see the rules / updates
+  // channels it names, so grant access first.
+  await ensureBotChannelAccess(
+    channelIds,
+    botRoleId,
+    [cfg.server?.rules_channel, cfg.server?.public_updates_channel],
+    'COMMUNITY channel',
+  );
+  const community = await ensureCommunity(cfg, guild, channelIds);
+  guild = community.guild;
+  // COMMUNITY just turned on -> a second pass now creates those held types
+  // and the newly reachable phases (rules gate / onboarding / welcome) below
+  // provision instead of skipping.
+  if (community.justEnabled) {
+    channelIds = await applyChannels(cfg, roleIds, botPerms, guild);
+  }
+  // Grant the bot access to AutoMod alert channels before creating the rules.
+  await ensureBotChannelAccess(channelIds, botRoleId, alertChannelNames(cfg), 'AutoMod alert');
   await applySystemChannel(cfg, guild, channelIds);
   await applyWidget(cfg, channelIds);
   await applyMemberVerification(cfg, guild);
@@ -1285,6 +1562,8 @@ async function main() {
   await applyOnboarding(cfg, guild, channelIds, roleIds);
   await applyWelcome(cfg, guild, channelIds);
   await applyWebhooks(cfg);
+  // Last: delete anything live but undeclared (strict source of truth).
+  await pruneUndeclared(cfg);
 
   if (imageStateDirty) saveImageState(imageState);
 
