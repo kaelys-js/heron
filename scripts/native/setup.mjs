@@ -11,7 +11,7 @@
  *   2. Detect your Apple Developer credentials:
  *      - APPLE_ID + APPLE_TEAM_ID (you paste)
  *      - APPLE_APP_SPECIFIC_PASSWORD (opens appleid.apple.com → you paste)
- *      - APP_STORE_CONNECT_KEY_ID + ISSUER_ID + .p8 contents
+ *      - APP_STORE_CONNECT_KEY_ID + ISSUER_ID + .p8 file path
  *        (opens appstoreconnect.apple.com → you paste/select file)
  *   3. Export your Mac code-signing certificate from the Keychain to a
  *      .p12 file (you pick the cert + export password).
@@ -188,6 +188,15 @@ ok(`repo: ${repo}`);
 step(3, 'Apple Developer identifiers');
 state.apple = state.apple || {};
 
+info("Two things must already exist in Apple's portal first (Apple has no API for them):");
+info('  - App ID: developer.apple.com/account/resources/identifiers (Explicit; the');
+info('    bundleId from branding/brand.json; enable Push Notifications, App Groups,');
+info('    Associated Domains)');
+info('  - App Store Connect app: appstoreconnect.apple.com -> Apps -> + (pick that bundle');
+info('    ID; the store Name is globally unique, so append a descriptor if "Heron" is');
+info('    taken -- the home-screen name stays Heron)');
+info('  Run `pnpm doctor:native` anytime for the full checklist. Skip if already done.');
+
 state.apple.APPLE_ID = await ask('Apple ID email', { default: state.apple.APPLE_ID });
 state.apple.APPLE_TEAM_ID = await ask(
   'Apple Team ID (10 chars, from developer.apple.com → Membership)',
@@ -250,6 +259,8 @@ if (
 
 // ───────────────────────────────────────────────────────────────────
 step(6, 'Mac code-signing certificate (.p12 export)');
+info('This is the Mac DESKTOP signing identity (notarised DMG via build:desktop).');
+info('iOS TestFlight signs via the App Store Connect API key above, not this cert.');
 if (state.apple.MAC_CERTIFICATE && (await confirm('  Re-use stored Mac cert?', true))) {
   ok('using stored cert');
 } else {

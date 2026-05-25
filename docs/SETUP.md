@@ -78,12 +78,14 @@ This walks you through:
 1. Tooling check (`gh`, `cocoapods`, `bundler`, `fastlane`) and installs anything missing.
 2. Apple Developer credentials:
    - **Apple ID** + **Team ID** (paste)
-   - **App Store Connect API key** -- opens [appstoreconnect.apple.com](https://appstoreconnect.apple.com) → you create the key → paste the .p8 contents
-3. Mac code-signing cert:
+   - **App Store Connect API key** -- opens [appstoreconnect.apple.com](https://appstoreconnect.apple.com) → you create the key → give it the path to the downloaded .p8 file
+3. Mac code-signing cert (signs the desktop DMG -- iOS TestFlight signs via the ASC API key above, not this cert):
    - Opens Keychain → you pick your "Developer ID Application" cert → exports to `.p12` with a password you choose
 4. Saves everything to `~/.heron/native-env` (mode 0600 -- readable by you only).
 5. Pushes the same values to your repo's GitHub Secrets via `gh secret set` so CI can sign + upload.
 6. Generates the iOS Xcode targets (Widget, LiveActivity, ShareExtension).
+
+> The App ID and App Store Connect app entry must be created by hand in Apple's portal first -- Apple gates these on a human session. `pnpm doctor:native` prints the exact checklist with URLs. The store **Name** is globally unique, so append a descriptor (e.g. "Heron: Job Search") if "Heron" is taken; the home-screen name stays "Heron".
 
 Re-runnable: it skips steps that are already complete.
 

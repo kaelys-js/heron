@@ -7,7 +7,7 @@
  *   • Ruby + Bundler (Apple's Ruby works; system ruby OK)
  *   • Fastlane (the script `bundle install`s it on first run)
  *   • Apple Developer secrets in ~/.heron/native-env
- *     (run `pnpm setup:secrets` once to generate)
+ *     (run `pnpm setup:native` once to generate)
  *
  * On success: build appears in TestFlight within ~5min, internal testers
  * see it immediately (no Apple beta review).
@@ -41,7 +41,7 @@ const envFile = NATIVE_ENV_FILE;
 let env = {};
 if (!existsSync(envFile)) {
   console.error('No Apple Developer secrets found.');
-  console.error('Run `pnpm setup:secrets` once to configure them.');
+  console.error('Run `pnpm setup:native` once to configure them.');
   process.exit(1);
 }
 const raw = readFileSync(envFile, 'utf8');
@@ -57,7 +57,7 @@ for (const required of [
   'APP_STORE_CONNECT_ISSUER_ID',
 ]) {
   if (!env[required]) {
-    console.error(`Missing required env var: ${required}. Re-run pnpm setup:secrets.`);
+    console.error(`Missing required env var: ${required}. Re-run pnpm setup:native.`);
     process.exit(1);
   }
 }

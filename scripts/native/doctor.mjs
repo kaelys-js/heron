@@ -216,7 +216,7 @@ log.step('Native readiness -- Apple Dev portal manual steps (checklist)');
 
   emit('ASC API key (.p8) -- appstoreconnect.apple.com/access/integrations/api');
   emit('  - + Create new key; Access = App Manager; download .p8 (one-time)');
-  emit('  - Paste Key ID + Issuer ID + .p8 contents into pnpm setup:native');
+  emit('  - Paste Key ID + Issuer ID + the .p8 file path into pnpm setup:native');
 
   emit('Full walkthrough: TODO-INSTRUCTIONS.md (gitignored, repo root)');
 }
