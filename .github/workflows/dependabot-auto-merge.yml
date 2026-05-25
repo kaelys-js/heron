@@ -1,0 +1,108 @@
+name: Dependabot auto-merge
+# Auto-merges non-major Dependabot PRs once CI is green.
+#
+# Why this exists: every required status check already passes automatically
+# on a Dependabot PR (Tests, CodeQL, content-gates, DCO -- Dependabot signs
+# its commits, CodeRabbit skips bot PRs). The ONLY thing missing is the
+# code-owner approval that `.github/CODEOWNERS` (`* @kaelys-js`) demands and
+# a bot can't provide. So the maintainer used to merge each one by hand.
+#
+# This workflow supplies that one missing ingredient for patch + minor
+# updates: an OWNER approval (via GH_USER_PAT -- author is dependabot, so
+# approver != author is satisfied) plus GitHub-native auto-merge. Native
+# auto-merge then waits for the required checks to pass before squash-merging
+# -- NO admin bypass, branch protection stays fully enforced. Majors are left
+# untouched for manual review.
+#
+# The "x days old" soak lives in .github/dependabot.yml `cooldown:` -- by the
+# time a PR exists the release has already aged, so merging on green is safe.
+#
+# Security: `pull_request_target` is NOT in GitHub's Dependabot-restricted
+# event list, so the regular GH_USER_PAT Actions secret is available here
+# (same pattern the old screenshot auto-approver used). We never check out or
+# build the PR's code, so there's no untrusted-code execution path.
+
+on: # zizmor: ignore[dangerous-triggers]
+  # pull_request_target is required so the GH_USER_PAT Actions secret is
+  # available for Dependabot-triggered runs (a plain `pull_request` run gets
+  # a read-only token + Dependabot secrets only). Safe here: we never check
+  # out or build the PR's code -- only read metadata + call gh on the PR.
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  auto-merge:
+    name: Auto-merge non-major Dependabot PRs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    permissions:
+      contents: write # enable auto-merge
+      pull-requests: write # approve + enable auto-merge
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Owner-approve + enable native auto-merge (patch/minor only)
+        if: >-
+          steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+          steps.meta.outputs.update-type == 'version-update:semver-minor'
+        env:
+          # Owner PAT: the approval satisfies the CODEOWNERS review rule that a
+          # bot token can't. Author is dependabot[bot] != owner, so this is a
+          # valid (non-self) approval.
+          GH_TOKEN: ${{ secrets.GH_USER_PAT }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+          UPDATE_TYPE: ${{ steps.meta.outputs.update-type }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::warning::GH_USER_PAT not set -- cannot owner-approve PR #${PR_NUM} (CODEOWNERS needs it). Merge manually."
+            exit 0
+          fi
+          # Idempotent, but only skip when the OWNER has already approved: a
+          # non-codeowner approval does NOT satisfy the CODEOWNERS rule, so we
+          # must still add ours or the PR stays blocked. Owner == the
+          # GH_USER_PAT identity.
+          OWNER_LOGIN=$(gh api user --jq '.login')
+          export OWNER_LOGIN
+          # gh's --jq is gojq: read the owner via env.OWNER_LOGIN (gh --jq has
+          # no --arg). Only the owner's approval satisfies CODEOWNERS.
+          APPROVED_BY_OWNER=$(gh pr view "$PR_NUM" --json reviews \
+            --jq '[.reviews[] | select(.state == "APPROVED" and .author.login == env.OWNER_LOGIN)] | length')
+          if [ "$APPROVED_BY_OWNER" -eq 0 ]; then
+            gh pr review "$PR_NUM" --approve \
+              --body "Auto-approved: non-major dependency update (${UPDATE_TYPE}); cooldown already elapsed. Native auto-merge lands it once the required checks pass."
+            echo "::notice::Owner-approved Dependabot PR #${PR_NUM} (${UPDATE_TYPE})."
+          else
+            echo "::notice::PR #${PR_NUM} already approved by ${OWNER_LOGIN}; not duplicating."
+          fi
+          # Native auto-merge: waits for ALL required checks (already green on
+          # Dependabot PRs) + the approval above, then squash-merges. No admin
+          # bypass -- the full required-check set stays enforced.
+          gh pr merge "$PR_NUM" --auto --squash --delete-branch
+          echo "::notice::Enabled native auto-merge (squash) on PR #${PR_NUM}."
+
+      - name: Note skipped majors
+        if: >-
+          steps.meta.outputs.update-type == 'version-update:semver-major'
+        env:
+          PR_NUM: ${{ github.event.pull_request.number }}
+        run: |
+          echo "::notice::PR #${PR_NUM} is a MAJOR update -- left for manual review (not auto-merged)."
