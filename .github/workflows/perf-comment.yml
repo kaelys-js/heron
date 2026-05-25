@@ -40,7 +40,7 @@ jobs:
         # named `lighthouse-results`. We extract to `lhci/`, then locate
         # the manifest.json wherever it landed (may be at the root OR
         # under a `.lighthouseci/` subdir depending on the action version).
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v5
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v5
         with:
           name: lighthouse-results
           path: lhci
