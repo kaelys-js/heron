@@ -150,7 +150,7 @@ catalog:
   "@testing-library/user-event": "14.6.1"
   "@types/better-sqlite3": "7.6.13"
   "@types/node": "25.7.0"
-  "@typescript/native-preview": "7.0.0-dev.20260511.1"
+  "@typescript/native-preview": "7.0.0-dev.20260525.1"
   "@vitest/browser": "4.1.7"
   "@vitest/browser-playwright": "4.1.7"
   "@vitest/coverage-v8": "4.1.7"
