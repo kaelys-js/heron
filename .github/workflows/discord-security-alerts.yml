@@ -69,7 +69,6 @@ jobs:
           egress-policy: audit
 
       - name: Sweep + post
-        if: ${{ env.DISCORD_WEBHOOK_SECURITY != '' }}
         env:
           DISCORD_WEBHOOK_SECURITY: ${{ secrets.DISCORD_WEBHOOK_SECURITY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -78,6 +77,15 @@ jobs:
           WORKFLOW_RUN_STARTED: ${{ github.event.workflow_run.run_started_at }}
         run: |
           set -euo pipefail
+          # GitHub Actions does not expose a step's own `env:` to that
+          # step's `if:`, so the secret guard lives here in bash (the
+          # pattern maintain-discord.yml uses). Previously this was a
+          # step-level `if: env.DISCORD_WEBHOOK_SECURITY != ''`, which
+          # always evaluated empty -> every security post was skipped.
+          if [ -z "${DISCORD_WEBHOOK_SECURITY:-}" ]; then
+            echo "::notice::DISCORD_WEBHOOK_SECURITY not set -- skipping Discord security posts."
+            exit 0
+          fi
           # Compute SINCE window:
           #   workflow_run  -- the prior CodeQL run's start time
           #                    (catches everything that became visible

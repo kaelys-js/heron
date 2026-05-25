@@ -33,7 +33,7 @@ describe('format-a11y', () => {
       { url: 'https://a/', violations: [] },
       { url: 'https://b/', violations: [] },
     ]);
-    assert.ok(out.includes('## ✅ Accessibility: clean on 2 page'), 'pass verdict missing');
+    assert.ok(out.includes('## ✅ Accessibility: no violations (2 page'), 'pass verdict missing');
     assert.ok(out.includes('No axe-core violations'), 'pass explanation missing');
   });
 

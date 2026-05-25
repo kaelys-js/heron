@@ -78,14 +78,16 @@ describe('format-type-coverage', () => {
     assert.ok(out.includes('▴ +'), 'positive delta missing');
   });
 
-  it('renders 🆕 when no baseline supplied', () => {
+  it('omits the delta cleanly when no baseline supplied', () => {
     const out = runFormat({
       percentage: 99,
       totalCount: 100,
       correctCount: 99,
       fileCounts: [],
     });
-    assert.ok(out.includes('🆕'), 'new-baseline marker missing');
+    assert.ok(out.includes('Type coverage: 99.00%'), 'percentage missing');
+    assert.ok(!out.includes('🆕'), 'no new-baseline emoji expected');
+    assert.ok(!out.includes('99.00%  --'), 'no double space where the delta would sit');
   });
 
   it('shows top files with most `any`s', () => {

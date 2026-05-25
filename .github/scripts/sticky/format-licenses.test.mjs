@@ -31,11 +31,12 @@ function runFormat(current, baseline) {
 }
 
 describe('format-licenses', () => {
-  it('renders pass verdict when no deps added or removed', () => {
+  it('renders a clean pass verdict when no deps added or removed', () => {
     const out = runFormat({}, {});
     assert.ok(out.includes('## ✅ Licenses:'), 'pass verdict missing');
-    assert.ok(out.includes('0 new'), 'new count missing');
-    assert.ok(out.includes('0 removed'), 'removed count missing');
+    assert.ok(out.includes('no copyleft or unknown licenses'), 'clean pass message missing');
+    // With no diff at all, the dependency-diff section stays hidden (no noise).
+    assert.ok(!out.includes('Full dependency diff'), 'empty diff section should not render');
   });
 
   it('renders pass verdict for new MIT-only deps', () => {

@@ -54,14 +54,17 @@ const rows = current.map((b) => {
   const delta =
     typeof baseSize === 'number'
       ? deltaCell(baseSize, sizeBytes, { threshold: 100, suffix: ' B', decimals: 0 })
-      : '🆕';
-  const passed = b.passed !== false; // default to pass if size-limit not in use
+      : 'new';
+  const over = b.passed === false;
+  // Only over-budget rows carry a glyph + the limit they busted; passing
+  // rows stay clean (the header already says "N within budget").
   return {
-    Bundle: `\`${b.name}\``,
-    Size: humanBytes(sizeBytes),
-    Limit: b.sizeLimit ? humanBytes(b.sizeLimit) : '--',
-    Δ: delta,
-    Status: passed ? '✅' : '❌',
+    Bundle: `${over ? '❌ ' : ''}\`${b.name}\``,
+    Size:
+      over && b.sizeLimit
+        ? `${humanBytes(sizeBytes)} / ${humanBytes(b.sizeLimit)} limit`
+        : humanBytes(sizeBytes),
+    'Δ vs main': delta,
   };
 });
 
@@ -85,9 +88,7 @@ if (current.length === 0) {
       [
         { label: 'Bundle' },
         { label: 'Size', align: 'right' },
-        { label: 'Limit', align: 'right' },
-        { label: 'Δ', align: 'right' },
-        { label: 'Status', align: 'center' },
+        { label: 'Δ vs main', align: 'right' },
       ],
       rows,
     ),

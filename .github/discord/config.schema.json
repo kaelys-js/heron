@@ -1,0 +1,247 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kaelys-js/heron/.github/discord/config.schema.json",
+  "title": "Heron Discord reconciler config",
+  "description": "Schema for .github/discord/config.yml, reconciled by scripts/system/apply-discord-config.mjs. Referential integrity (role/channel/secret references resolve) is enforced separately by scripts/system/verify-discord-config.mjs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["server", "roles", "categories"],
+  "properties": {
+    "server": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "verification_level": { "type": "integer", "minimum": 0, "maximum": 4 },
+        "default_message_notifications": { "type": "integer", "enum": [0, 1] },
+        "explicit_content_filter": { "type": "integer", "enum": [0, 1, 2] },
+        "system_channel": { "type": "string" },
+        "system_channel_flags": { "type": "array", "items": { "type": "string" } },
+        "images": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "icon": { "type": "string" },
+            "banner": { "type": "string" },
+            "splash": { "type": "string" },
+            "discovery_splash": { "type": "string" }
+          }
+        },
+        "widget": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "invite_channel": { "type": "string" }
+          }
+        }
+      }
+    },
+    "webhooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "avatar": { "type": "string" }
+      }
+    },
+    "bot": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "avatar": { "type": "string" },
+        "banner": { "type": "string" }
+      }
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "color": { "type": "string" },
+          "permissions": { "type": "array", "items": { "type": "string" } },
+          "hoist": { "type": "boolean" },
+          "mentionable": { "type": "boolean" },
+          "icon": { "type": "string" },
+          "unicode_emoji": { "type": "string" },
+          "connected_role": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "platform": { "type": "string" },
+              "predicate": { "type": "string" },
+              "verified_repo": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "categories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "position": { "type": "integer" },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name"],
+              "properties": {
+                "name": { "type": "string", "minLength": 1 },
+                "type": { "type": "integer" },
+                "topic": { "type": "string" },
+                "slowmode": { "type": "integer", "minimum": 0 },
+                "user_limit": { "type": "integer", "minimum": 0 },
+                "nsfw": { "type": "boolean" },
+                "webhook": { "type": "string" },
+                "available_tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["name"],
+                    "properties": { "name": { "type": "string" } }
+                  }
+                },
+                "overwrites": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["role"],
+                    "properties": {
+                      "role": { "type": "string" },
+                      "allow": { "type": "array", "items": { "type": "string" } },
+                      "deny": { "type": "array", "items": { "type": "string" } }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "automod": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "trigger_type"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "trigger_type": { "type": "integer" },
+          "enabled": { "type": "boolean" },
+          "trigger_metadata": { "type": "object" },
+          "exempt_roles": { "type": "array", "items": { "type": "string" } },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["type"],
+              "properties": {
+                "type": { "type": "integer" },
+                "metadata": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "description": { "type": "string" },
+        "form_fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["field_type", "label"],
+            "properties": {
+              "field_type": { "type": "string" },
+              "label": { "type": "string" },
+              "required": { "type": "boolean" },
+              "values": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "onboarding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "mode": { "type": "integer", "enum": [0, 1] },
+        "default_channel_ids": { "type": "array", "items": { "type": "string" } },
+        "prompts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["title", "options"],
+            "properties": {
+              "title": { "type": "string" },
+              "type": { "type": "integer" },
+              "single_select": { "type": "boolean" },
+              "required": { "type": "boolean" },
+              "options": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["title"],
+                  "properties": {
+                    "title": { "type": "string" },
+                    "description": { "type": "string" },
+                    "emoji_name": { "type": "string" },
+                    "role_ids": { "type": "array", "items": { "type": "string" } },
+                    "channel_ids": { "type": "array", "items": { "type": "string" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "welcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "description": { "type": "string" },
+        "channels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["channel"],
+            "properties": {
+              "channel": { "type": "string" },
+              "description": { "type": "string" },
+              "emoji_name": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

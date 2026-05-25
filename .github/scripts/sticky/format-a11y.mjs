@@ -35,11 +35,20 @@ for (const v of allViolations) {
 }
 
 const total = allViolations.length;
-const verdict = byImpact.critical + byImpact.serious > 0 ? 'fail' : total > 0 ? 'warn' : 'pass';
+const verdict =
+  pages.length === 0
+    ? 'skip'
+    : byImpact.critical + byImpact.serious > 0
+      ? 'fail'
+      : total > 0
+        ? 'warn'
+        : 'pass';
 const title =
-  total === 0
-    ? `Accessibility: clean on ${pages.length} page${pages.length === 1 ? '' : 's'}`
-    : `Accessibility: ${total} violation${total === 1 ? '' : 's'} (${byImpact.critical} critical, ${byImpact.serious} serious)`;
+  pages.length === 0
+    ? 'Accessibility: not scanned'
+    : total === 0
+      ? `Accessibility: no violations (${pages.length} page${pages.length === 1 ? '' : 's'})`
+      : `Accessibility: ${total} violation${total === 1 ? '' : 's'} (${byImpact.critical} critical, ${byImpact.serious} serious)`;
 
 const lines = [];
 lines.push(verdictHeader(title, verdict));
@@ -83,7 +92,7 @@ if (total === 0) {
       `Violation details (${ruleList.length} rule${ruleList.length === 1 ? '' : 's'})`,
       ruleList
         .map((r) => {
-          const head = `**${r.impact.toUpperCase()}: ${r.id}** (${r.count} occurrences across ${r.urls.size} URLs)`;
+          const head = `**${r.impact.toUpperCase()}: ${r.id}** (${r.count} occurrence${r.count === 1 ? '' : 's'} across ${r.urls.size} URL${r.urls.size === 1 ? '' : 's'})`;
           const help = `${r.help} -- [docs](${r.helpUrl})`;
           return `${head}\n${help}`;
         })

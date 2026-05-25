@@ -37,24 +37,26 @@ describe('format-bundle', () => {
     assert.ok(out.includes('## ✅'), 'pass verdict expected when zero chunks');
   });
 
-  it('renders a single-bundle row within budget', () => {
+  it('renders a single-bundle row within budget (clean: no per-row limit/status)', () => {
     const out = runFormat([{ name: 'App bundle', size: 12345, sizeLimit: 20000, passed: true }]);
     assert.ok(out.includes('## ✅ Bundle size:'), 'pass verdict missing');
     assert.ok(out.includes('| `App bundle` |'), 'bundle row missing');
     assert.ok(out.includes('12.06 KB') || out.includes('12.07 KB'), 'size humanized missing');
-    assert.ok(out.includes('19.53 KB'), 'limit humanized missing');
-    assert.ok(out.includes('✅'), 'pass status missing');
-    assert.ok(out.includes('🆕'), 'new-flag delta expected (no baseline)');
+    assert.ok(out.includes('Δ vs main'), 'self-describing delta header missing');
+    // Within-budget rows stay clean: the limit is NOT repeated per row.
+    assert.ok(!out.includes('19.53 KB'), 'limit should not clutter a passing row');
+    assert.ok(out.includes('new'), 'plain-text new-flag delta expected (no baseline)');
   });
 
-  it('renders fail verdict + ❌ status for an over-budget chunk', () => {
+  it('flags an over-budget chunk inline with its busted limit', () => {
     const out = runFormat([
       { name: 'App bundle', size: 25000, sizeLimit: 20000, passed: false },
       { name: 'Vendor', size: 5000, sizeLimit: 10000, passed: true },
     ]);
     assert.ok(out.includes('## ❌ Bundle size:'), 'fail verdict missing');
     assert.ok(out.includes('1 chunk') && out.includes('over budget'), 'fail title missing');
-    assert.ok(out.includes('❌'), 'fail status missing');
+    assert.ok(out.includes('❌ `App bundle`'), 'over-budget chunk should carry the glyph');
+    assert.ok(out.includes('19.53 KB'), 'busted limit shown inline on the failing row');
   });
 
   it('renders delta vs baseline when both present', () => {
@@ -70,7 +72,7 @@ describe('format-bundle', () => {
     assert.ok(out.includes('| `a` |'));
   });
 
-  it('marks a brand-new bundle 🆕 when missing from baseline', () => {
+  it('marks a brand-new bundle "new" when missing from baseline', () => {
     const out = runFormat(
       [
         { name: 'A', size: 100, sizeLimit: 1000, passed: true },
@@ -78,7 +80,7 @@ describe('format-bundle', () => {
       ],
       [{ name: 'A', size: 100, sizeLimit: 1000, passed: true }],
     );
-    assert.ok(out.includes('🆕'), 'new-bundle marker missing');
+    assert.ok(out.includes('new'), 'new-bundle marker missing');
   });
 
   it('falls back to gzipped field when size is absent', () => {

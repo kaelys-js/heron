@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   sbom:
-    name: Generate SBOM (CycloneDX) + attest
+    name: Generate SBOM (SPDX) + attest
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
