@@ -342,7 +342,7 @@ const envBody = [
   `export APPLE_APP_SPECIFIC_PASSWORD="${state.apple.APPLE_APP_SPECIFIC_PASSWORD}"`,
   `export APP_STORE_CONNECT_KEY_ID="${state.apple.APP_STORE_CONNECT_KEY_ID}"`,
   `export APP_STORE_CONNECT_ISSUER_ID="${state.apple.APP_STORE_CONNECT_ISSUER_ID}"`,
-  `export APP_STORE_CONNECT_KEY=${JSON.stringify(state.apple.APP_STORE_CONNECT_KEY)}`,
+  `export APP_STORE_CONNECT_PRIVATE_KEY="${Buffer.from(state.apple.APP_STORE_CONNECT_KEY ?? '').toString('base64')}"`,
   `export MAC_CERTIFICATE_PASSWORD="${state.apple.MAC_CERTIFICATE_PASSWORD}"`,
   '',
 ].join('\n');
@@ -360,7 +360,12 @@ const secrets = {
   APPLE_APP_SPECIFIC_PASSWORD: state.apple.APPLE_APP_SPECIFIC_PASSWORD,
   APP_STORE_CONNECT_KEY_ID: state.apple.APP_STORE_CONNECT_KEY_ID,
   APP_STORE_CONNECT_ISSUER_ID: state.apple.APP_STORE_CONNECT_ISSUER_ID,
-  APP_STORE_CONNECT_KEY: state.apple.APP_STORE_CONNECT_KEY,
+  // native-release.yml + doctor:native consume APP_STORE_CONNECT_PRIVATE_KEY
+  // as base64-encoded .p8 contents (the electron leg base64-decodes it; the
+  // ios leg passes it to fastlane with is_key_content_base64). Match that.
+  APP_STORE_CONNECT_PRIVATE_KEY: Buffer.from(state.apple.APP_STORE_CONNECT_KEY ?? '').toString(
+    'base64',
+  ),
   MAC_CERTIFICATE: state.apple.MAC_CERTIFICATE,
   MAC_CERTIFICATE_PASSWORD: state.apple.MAC_CERTIFICATE_PASSWORD,
 };

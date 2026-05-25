@@ -55,6 +55,7 @@ for (const required of [
   'APPLE_TEAM_ID',
   'APP_STORE_CONNECT_KEY_ID',
   'APP_STORE_CONNECT_ISSUER_ID',
+  'APP_STORE_CONNECT_PRIVATE_KEY',
 ]) {
   if (!env[required]) {
     console.error(`Missing required env var: ${required}. Re-run pnpm setup:native.`);
@@ -95,6 +96,12 @@ step(7, 'Bundle install (Fastlane)');
 run('bundle', ['install', '--quiet'], { cwd: iosDir });
 
 step(8, 'Running Fastlane :beta -- uploading to TestFlight');
+// The Fastfile reads APP_STORE_CONNECT_API_* (see asc_key lane). Our env
+// stores APP_STORE_CONNECT_{KEY_ID,ISSUER_ID,PRIVATE_KEY}; remap at the
+// fastlane boundary, exactly as native-release.yml does for CI.
+env.APP_STORE_CONNECT_API_KEY_ID = env.APP_STORE_CONNECT_KEY_ID;
+env.APP_STORE_CONNECT_API_ISSUER_ID = env.APP_STORE_CONNECT_ISSUER_ID;
+env.APP_STORE_CONNECT_API_KEY = env.APP_STORE_CONNECT_PRIVATE_KEY;
 run('bundle', ['exec', 'fastlane', 'beta'], { cwd: iosDir, env });
 
 step(9, 'Done');
