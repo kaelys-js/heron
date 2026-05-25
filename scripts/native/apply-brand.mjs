@@ -2222,9 +2222,12 @@ function applyAddXcodeTargets(brand) {
   }
   let body = readFileSync(path, 'utf8');
   let changed = false;
+  // The .rb derives bundle_root/app_group from brand.json at runtime; only
+  // its DEFAULT_* fallbacks (used when brand.json is missing) are literals,
+  // so those are what a rebrand must re-stamp.
   const subs = [
-    [/app_group\s*=\s*'[^']*'/, `app_group = '${brand.identifiers.appGroup}'`],
-    [/bundle_root\s*=\s*'[^']*'/, `bundle_root = '${brand.identifiers.bundleId}'`],
+    [/DEFAULT_GROUP\s*=\s*"[^"]*"/, `DEFAULT_GROUP = "${brand.identifiers.appGroup}"`],
+    [/DEFAULT_BUNDLE\s*=\s*"[^"]*"/, `DEFAULT_BUNDLE = "${brand.identifiers.bundleId}"`],
   ];
   for (const [re, val] of subs) {
     const next = body.replace(re, val);

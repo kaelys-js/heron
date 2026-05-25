@@ -502,7 +502,8 @@ if (await confirm('  Set up Play Store credentials now?', false)) {
         ksPropsPath,
         `storeFile=${ksPath}\nstorePassword=${state.android.ANDROID_KEYSTORE_PASSWORD}\nkeyAlias=${state.android.ANDROID_KEY_ALIAS}\nkeyPassword=${state.android.ANDROID_KEY_PASSWORD}\n`,
       );
-      ok(`wrote ${ksPropsPath}`);
+      chmodSync(ksPropsPath, 0o600); // contains signing passwords
+      ok(`wrote ${ksPropsPath} (mode 600)`);
       ok('Play Store + keystore credentials saved locally');
     } else {
       warn('Keystore not found at provided path — skipping. Re-run setup when ready.');
