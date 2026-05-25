@@ -23,9 +23,15 @@ const API = 'https://discord.com/api/v10';
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const TOKEN = process.env.DISCORD_BOT_TOKEN;
 
-// Repo slug from branding/brand.json (the single source of truth).
+// Repo slug from branding/brand.json (the single source of truth). Tolerate a
+// missing/malformed brand file -- fall back rather than crash the script.
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const brand = JSON.parse(readFileSync(join(REPO_ROOT, 'branding', 'brand.json'), 'utf8'));
+let brand = {};
+try {
+  brand = JSON.parse(readFileSync(join(REPO_ROOT, 'branding', 'brand.json'), 'utf8'));
+} catch {
+  console.warn('Could not read branding/brand.json; using a generic repo label.');
+}
 const REPO =
   brand.repo?.owner && brand.repo?.name ? `${brand.repo.owner}/${brand.repo.name}` : 'the repo';
 

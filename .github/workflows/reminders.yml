@@ -255,8 +255,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     permissions:
-      contents: read
-      issues: write # opens a rotation reminder when the token is stale
+      issues: write # opens a rotation reminder when the token is stale (issue-only; no contents scope)
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4

@@ -612,12 +612,14 @@ async function applyServer(cfg) {
   // name + description come from config.yml's {{brand.*}} tokens, already
   // resolved against brand.json in loadConfig (single source of truth).
   const desired = {
-    name: cfg.server.name,
-    description: cfg.server.description ?? '',
     verification_level: cfg.server.verification_level,
     default_message_notifications: cfg.server.default_message_notifications,
     explicit_content_filter: cfg.server.explicit_content_filter,
   };
+  // Only manage name/description when set, so a missing/partial brand.json
+  // (token -> '') never clears the live server identity.
+  if (cfg.server.name) desired.name = cfg.server.name;
+  if (cfg.server.description) desired.description = cfg.server.description;
   if (cfg.server.system_channel_flags) {
     desired.system_channel_flags = systemChannelFlagsToBits(cfg.server.system_channel_flags);
   }
@@ -1092,10 +1094,12 @@ async function ensureCommunity(cfg, guild, channelIds) {
   const rulesId = rulesName ? channelIds.get(rulesName) : null;
   const updatesId = updatesName ? channelIds.get(updatesName) : null;
   if (!rulesId || !updatesId) {
-    logManual(
-      `COMMUNITY not enabled: needs text channels server.rules_channel ("${rulesName}") + server.public_updates_channel ("${updatesName}") to exist first.`,
+    // Fail loud: COMMUNITY is required by config (gated channels/onboarding/
+    // rules depend on it), so a missing rules/updates channel is a real
+    // misconfig, not something to skip and "succeed" past.
+    throw new Error(
+      `COMMUNITY cannot be enabled: server.rules_channel ("${rulesName}") + server.public_updates_channel ("${updatesName}") must name existing text channels.`,
     );
-    return { guild, justEnabled: false };
   }
   logChange('server.features', (guild.features ?? []).join(', ') || '(none)', 'COMMUNITY');
   const updated = await discord(
@@ -1460,10 +1464,12 @@ async function pruneUndeclared(cfg) {
     return;
   }
   if (total > PRUNE_SAFETY_CAP) {
-    logManual(
+    // Fail loud rather than silently no-op: a prune set this large almost
+    // always means a broken/empty config, and a quiet return would let verify
+    // pass green while real drift goes unactioned.
+    throw new Error(
       `prune: ${total} undeclared resources exceed the safety cap (${PRUNE_SAFETY_CAP}); refusing to mass-delete. Check config.yml parsed correctly.`,
     );
-    return;
   }
   for (const c of chPrune) {
     logChange(`prune channel #${c.name}`, 'live', 'deleted');

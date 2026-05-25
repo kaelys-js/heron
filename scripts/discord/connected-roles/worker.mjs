@@ -35,6 +35,12 @@ async function verify(secret, signed) {
   const value = signed.slice(0, i);
   return (await sign(secret, value)) === signed ? value : null;
 }
+/** A returned OAuth state is valid when the signed cookie equals the signed
+ *  URL state AND its signature verifies. (Comparing verify()'s unsigned return
+ *  to the signed URL value would never match.) */
+async function stateOk(secret, cookieState, urlState) {
+  return !!cookieState && cookieState === urlState && (await verify(secret, cookieState)) !== null;
+}
 function cookie(name, value, maxAge = 600) {
   return `${name}=${encodeURIComponent(value)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
 }
@@ -82,8 +88,11 @@ export default {
     // 2. Discord callback -> stash the Discord token, bounce to GitHub OAuth.
     if (url.pathname === '/discord-callback') {
       if (
-        (await verify(env.COOKIE_SECRET, readCookie(req, 'd_state'))) !==
-        url.searchParams.get('state')
+        !(await stateOk(
+          env.COOKIE_SECRET,
+          readCookie(req, 'd_state'),
+          url.searchParams.get('state'),
+        ))
       )
         return new Response('bad state', { status: 400 });
       const tok = await exchange(`${DISCORD_API}/oauth2/token`, {
@@ -110,8 +119,11 @@ export default {
     // 3. GitHub callback -> verify contributor, write role-connection metadata.
     if (url.pathname === '/github-callback') {
       if (
-        (await verify(env.COOKIE_SECRET, readCookie(req, 'g_state'))) !==
-        url.searchParams.get('state')
+        !(await stateOk(
+          env.COOKIE_SECRET,
+          readCookie(req, 'g_state'),
+          url.searchParams.get('state'),
+        ))
       )
         return new Response('bad state', { status: 400 });
       const discordToken = await verify(env.COOKIE_SECRET, readCookie(req, 'd_token'));
@@ -128,15 +140,17 @@ export default {
         Authorization: `Bearer ${ghTok.access_token}`,
         'User-Agent': 'heron-connected-roles',
       };
-      const ghUser = await (
-        await fetch('https://api.github.com/user', { headers: ghHeaders })
-      ).json();
-      const search = await (
-        await fetch(
-          `https://api.github.com/search/issues?q=${encodeURIComponent(`repo:${env.REPO} type:pr author:${ghUser.login} is:merged`)}`,
-          { headers: ghHeaders },
-        )
-      ).json();
+      const userRes = await fetch('https://api.github.com/user', { headers: ghHeaders });
+      if (!userRes.ok)
+        return new Response(`GitHub /user failed: ${userRes.status}`, { status: 502 });
+      const ghUser = await userRes.json();
+      const searchRes = await fetch(
+        `https://api.github.com/search/issues?q=${encodeURIComponent(`repo:${env.REPO} type:pr author:${ghUser.login} is:merged`)}`,
+        { headers: ghHeaders },
+      );
+      if (!searchRes.ok)
+        return new Response(`GitHub search failed: ${searchRes.status}`, { status: 502 });
+      const search = await searchRes.json();
       const mergedPrs = search.total_count ?? 0;
 
       const put = await fetch(

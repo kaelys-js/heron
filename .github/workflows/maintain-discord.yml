@@ -11,9 +11,10 @@ name: Maintain Discord
 #
 # Required secrets:
 #   DISCORD_BOT_TOKEN  -- bot application token (Developer Portal).
-#                         Bot needs MANAGE_GUILD + MANAGE_CHANNELS +
-#                         MANAGE_ROLES. See docs/DISCORD.md for the
-#                         bot-creation + invite walkthrough.
+#                         Bot needs ADMINISTRATOR for full provisioning
+#                         (private channels + enabling Community + prune);
+#                         a scoped invite only partially provisions. See
+#                         docs/DISCORD.md for the bot-creation + invite walkthrough.
 
 on:
   push:
