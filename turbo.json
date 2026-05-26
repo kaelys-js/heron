@@ -13,8 +13,6 @@
   ],
   "globalEnv": ["NODE_ENV", "CAPACITOR", "PUBLIC_CAPACITOR_BUILD", "APPLE_ID", "APPLE_TEAM_ID"],
 
-  "remoteCache": { "signature": true },
-
   "tasks": {
     "build": {
       "dependsOn": ["^build", "//#brand"],

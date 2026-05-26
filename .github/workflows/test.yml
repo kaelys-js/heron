@@ -232,12 +232,10 @@ jobs:
       CI: "true"
       BETTER_AUTH_SECRET: ci-verifier-secret-do-not-use-in-prod-${{ github.run_id }}
       FORCE_COLOR: "3"
-      # Turborepo remote cache (Vercel, free). Empty until the repo secrets
-      # exist -- turbo then silently uses only the local actions/cache, so
-      # this is safe to land before `turbo link` + the secrets are set.
+      # Turborepo remote cache (Vercel, free). TURBO_TOKEN/TEAM gate it; when
+      # absent turbo falls back to the local actions/cache.
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-      TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${{ secrets.TURBO_REMOTE_CACHE_SIGNATURE_KEY }}
 
     steps:
       # Skip-stub. When the path filter says no TS-touching files changed
@@ -1736,12 +1734,10 @@ jobs:
     permissions:
       contents: read
     env:
-      # Turborepo remote cache (Vercel, free). Empty until the repo secrets
-      # exist -- turbo then uses only the local actions/cache, so this is safe
-      # to land before `turbo link` + the secrets are set.
+      # Turborepo remote cache (Vercel, free). TURBO_TOKEN/TEAM gate it; when
+      # absent turbo falls back to the local actions/cache.
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-      TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${{ secrets.TURBO_REMOTE_CACHE_SIGNATURE_KEY }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
