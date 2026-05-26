@@ -51,7 +51,10 @@
   let showManual = $state(false);
   let manualUrl = $state('');
   let urlError = $state<string | null>(null);
-  let busy = $state(false);
+  // Which action (if any) is in flight. A single shared boolean used to drive
+  // BOTH buttons' spinners, so triggering one spun the other too -- track the
+  // specific action instead so each button only spins for itself.
+  let inFlight = $state<'retry' | 'connect' | null>(null);
   let showDetails = $state(false);
 
   const msg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
@@ -82,12 +85,16 @@
     }
   }
 
-  // Run an async resolve while keeping the dark error card on screen (busy
-  // spinner) -- never swap to the light overlay. Always shows a >=500ms beat
-  // so the tap registers as "I'm trying" rather than a white flash.
-  async function withBusy(run: () => Promise<ResolvedBackend>): Promise<void> {
-    if (busy) return;
-    busy = true;
+  // Run an async resolve while keeping the dark error card on screen (the
+  // active button shows a spinner) -- never swap to the light overlay. Always
+  // shows a >=500ms beat so the tap registers as "I'm trying" rather than a
+  // white flash. `kind` records which button is busy so only it spins.
+  async function withInFlight(
+    kind: 'retry' | 'connect',
+    run: () => Promise<ResolvedBackend>,
+  ): Promise<void> {
+    if (inFlight) return;
+    inFlight = kind;
     const startedAt = Date.now();
     try {
       const resolved = await run();
@@ -98,12 +105,12 @@
     } finally {
       const elapsed = Date.now() - startedAt;
       if (elapsed < 500) await new Promise((r) => setTimeout(r, 500 - elapsed));
-      busy = false;
+      inFlight = null;
     }
   }
 
   function retry(): void {
-    void withBusy(discover);
+    void withInFlight('retry', discover);
   }
 
   function validateUrl(raw: string): string | null {
@@ -120,13 +127,13 @@
   }
 
   function connectManual(): void {
-    if (busy) return;
+    if (inFlight) return;
     const err = validateUrl(manualUrl);
     urlError = err;
     if (err) return;
     const raw = manualUrl.trim();
     const normalized = (/^https?:\/\//i.test(raw) ? raw : `http://${raw}`).replace(/\/$/, '');
-    void withBusy(async () => {
+    void withInFlight('connect', async () => {
       await setManualBackend(normalized);
       return discover();
     });
@@ -221,8 +228,14 @@
         its address below.
       </p>
 
-      <Button onclick={retry} disabled={busy} class="mt-1 w-full gap-2" size="lg">
-        {#if busy}
+      <Button
+        onclick={retry}
+        disabled={inFlight !== null}
+        data-testid="boot-retry"
+        class="mt-1 w-full gap-2"
+        size="lg"
+      >
+        {#if inFlight === 'retry'}
           <span
             class="inline-block size-4 animate-spin rounded-full border-2 border-current border-r-transparent"
           ></span>
@@ -261,7 +274,7 @@
               placeholder="192.168.1.20:5173"
               aria-invalid={urlError ? 'true' : undefined}
               aria-label="Server address"
-              disabled={busy}
+              disabled={inFlight !== null}
               class="w-full bg-transparent py-2.5 text-base text-zinc-100 placeholder:text-zinc-500 focus:outline-none disabled:opacity-60"
             />
           </label>
@@ -274,8 +287,13 @@
               {urlError}
             </p>
           {/if}
-          <Button onclick={connectManual} disabled={busy || !manualUrl.trim()} class="w-full gap-2">
-            {#if busy}
+          <Button
+            onclick={connectManual}
+            disabled={inFlight !== null || !manualUrl.trim()}
+            data-testid="boot-connect"
+            class="w-full gap-2"
+          >
+            {#if inFlight === 'connect'}
               <span
                 class="inline-block size-3.5 animate-spin rounded-full border-2 border-current border-r-transparent"
               ></span>
