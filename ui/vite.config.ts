@@ -11,12 +11,18 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, type Plugin } from 'vite';
 import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
 const APPLY_BRAND = resolve(REPO_ROOT, 'scripts/native/apply-brand.mjs');
+// Surfaced in the Settings "About" card (and the host of the dev-tools opt-in
+// gesture). Read from the release-versioned root package.json at config time.
+const APP_VERSION: string = JSON.parse(
+  readFileSync(resolve(REPO_ROOT, 'package.json'), 'utf8'),
+).version;
 const WATCH_FILES = [
   resolve(REPO_ROOT, 'branding/brand.json'),
   resolve(REPO_ROOT, 'branding/logo.svg'),
@@ -66,6 +72,7 @@ export default defineConfig({
     'import.meta.env.PUBLIC_CAPACITOR_BUILD': JSON.stringify(
       process.env.PUBLIC_CAPACITOR_BUILD ?? '',
     ),
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
   },
   plugins: [brandWatcherPlugin(), tailwindcss(), sveltekit()],
   server: {

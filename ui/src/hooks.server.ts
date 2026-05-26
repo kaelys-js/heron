@@ -5,6 +5,7 @@ import { runWithUser, SYSTEM_USER_ID } from '$lib/server/user-context';
 import { screenshotBypassUser } from '$lib/server/screenshot-bypass';
 import { json, redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
 import { building, dev } from '$app/environment';
+import { devGalleryUnlocked } from '$lib/server/dev-gate';
 
 // bootOnce() runs at module-load time (top of hooks.server.ts, BEFORE
 // any request handler). If it throws, SvelteKit's module-init fails
@@ -90,13 +91,13 @@ const PUBLIC_PREFIXES = [
   '/branding/',
 ];
 
-function isPublicPath(pathname: string): boolean {
+function isPublicPath(pathname: string, devUnlocked: boolean): boolean {
   // Root '/' is public -- the layout decides whether to show login or dashboard.
   if (pathname === '/') return true;
-  // Dev-only view gallery (/dev/*) -- reachable without a session in dev so the
-  // state previews open directly. `dev` is false in production builds, so this
-  // never widens the gate for shipped apps.
-  if (dev && pathname.startsWith('/dev')) return true;
+  // View gallery (/dev/*) -- reachable without a session under the live dev
+  // server, OR in a built/native app when the owner has opted into developer
+  // tools (see devGalleryUnlocked). Otherwise the gate stays closed.
+  if (devUnlocked && pathname.startsWith('/dev')) return true;
   for (const prefix of PUBLIC_PREFIXES) {
     if (pathname === prefix || pathname.startsWith(prefix)) return true;
   }
@@ -143,7 +144,7 @@ const populateAuth: Handle = async ({ event, resolve }) => {
 const guard: Handle = async ({ event, resolve }) => {
   if (building) return resolve(event);
   const path = event.url.pathname;
-  if (isPublicPath(path)) return resolve(event);
+  if (isPublicPath(path, devGalleryUnlocked(dev, event.cookies))) return resolve(event);
   if (event.locals.user) return resolve(event);
 
   // API requests get a JSON 401; HTML page navigations get redirected to login.

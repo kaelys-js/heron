@@ -22,9 +22,32 @@
     RotateCw,
     Sparkles,
     Activity,
+    Info,
   } from '@lucide/svelte';
   import { cn } from '$lib/utils';
   import { onMount } from 'svelte';
+  import { BRAND } from '$lib/client/brand';
+  import { devtoolsEnabled, setDevtools } from '$lib/client/devtools.svelte';
+
+  // "About" card + hidden developer-tools opt-in. Tapping the version 7x
+  // unlocks the /dev view gallery in built/native apps (where `dev` is false) --
+  // Settings is the conventional hiding spot (cf. Android "tap build number").
+  const appVersion = __APP_VERSION__ ?? '';
+  let versionTaps = 0;
+  let versionTapTimer: ReturnType<typeof setTimeout> | null = null;
+  function onVersionTap(): void {
+    if (devtoolsEnabled()) return;
+    versionTaps += 1;
+    if (versionTapTimer) clearTimeout(versionTapTimer);
+    versionTapTimer = setTimeout(() => (versionTaps = 0), 1200);
+    if (versionTaps >= 7) {
+      versionTaps = 0;
+      setDevtools(true);
+      toast.success('Developer tools enabled', {
+        description: 'The view-gallery button is now available on every screen.',
+      });
+    }
+  }
 
   /** Compact "Nm/Nh/Nd ago" formatter for the health card. */
   function sinceShort(ts: number): string {
@@ -724,6 +747,46 @@
               Nothing leaves your machine.
             </li>
           </ul>
+        </Card.Content>
+      </Card.Root>
+
+      <!-- About + hidden developer-tools opt-in (tap the version 7x). -->
+      <Card.Root>
+        <Card.Header>
+          <div class="flex items-center gap-2">
+            <Info class="size-4 text-muted-foreground" />
+            <Card.Title class="text-base">About</Card.Title>
+          </div>
+        </Card.Header>
+        <Card.Content>
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="text-sm font-medium">{BRAND.displayName}</div>
+              <button
+                type="button"
+                onclick={onVersionTap}
+                class="cursor-default text-xs text-muted-foreground select-none"
+                aria-label="App version"
+              >
+                {appVersion ? `Version ${appVersion}` : 'Local-first job search'}
+              </button>
+            </div>
+            {#if devtoolsEnabled()}
+              <div class="flex shrink-0 items-center gap-2">
+                <Badge variant="secondary" class="text-[11px]">Developer tools on</Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onclick={() => {
+                    setDevtools(false);
+                    toast.info('Developer tools disabled');
+                  }}
+                >
+                  Disable
+                </Button>
+              </div>
+            {/if}
+          </div>
         </Card.Content>
       </Card.Root>
     </div>

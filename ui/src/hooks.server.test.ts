@@ -119,6 +119,7 @@ function evt(
   url: URL;
   request: Request;
   locals: { user: null | unknown; session: null | unknown };
+  cookies: { get: (name: string) => string | undefined };
 } {
   return {
     url: new URL(url),
@@ -127,6 +128,9 @@ function evt(
       headers: opts.headers ?? {},
     }),
     locals: { user: null, session: null },
+    // Real RequestEvent always exposes a cookies API; the guard reads it for
+    // the dev-tools opt-in. No devtools cookie in these tests -> get() is null.
+    cookies: { get: () => undefined },
   };
 }
 

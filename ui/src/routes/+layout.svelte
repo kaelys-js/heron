@@ -1,6 +1,7 @@
 <script lang="ts">
   import '../app.css';
   import { dev } from '$app/environment';
+  import { devtoolsEnabled } from '$lib/client/devtools.svelte';
   import * as Sidebar from '$lib/components/ui/sidebar';
   import AppSidebar from '$lib/components/AppSidebar.svelte';
   import AgentChat from '$lib/components/AgentChat.svelte';
@@ -789,11 +790,11 @@
 </BackendBootGuard>
 <Toaster />
 
-{#if dev}
-  <!-- Dev-only entry to the state/view gallery (/dev/views). Compiled out of
-       production builds (dev === false). Rendered in the root layout so it's
-       reachable from every screen. Minimal icon button (no text pill) so it
-       stays out of the way. -->
+{#if dev || devtoolsEnabled()}
+  <!-- Entry to the state/view gallery (/dev/views). Always shown under the live
+       dev server; in built/native apps it appears once the owner opts into
+       developer tools (Settings version-tap). Rendered in the root layout so
+       it's reachable from every screen. Minimal icon button (no text pill). -->
   <a
     href="/dev/views"
     title="Dev view gallery"
