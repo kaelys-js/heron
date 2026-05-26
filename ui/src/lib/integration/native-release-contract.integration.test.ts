@@ -219,12 +219,25 @@ describe('native-release contract — TestFlight internal delivery invites the m
     expect(iosFastfile).toContain('ensure_internal_delivery');
     expect(iosFastfile, 'lane must read APPLE_ID').toMatch(/ENV\["APPLE_ID"\]/);
   });
-  it('beta sets the TestFlight changelog (skip_waiting must be false)', () => {
-    // fastlane/pilot SKIPS the changelog ("What to Test") when
-    // skip_waiting_for_build_processing is true, so it must be false.
-    expect(iosFastfile).toContain('changelog: changelog_for_this_build');
+  it('beta TestFlight changelog derives from CHANGELOG.md with a fallback (skip_waiting false)', () => {
+    // The "What to Test" must come from the Release Please source (CHANGELOG.md
+    // via release_notes_for_version), falling back to the last commit message
+    // for keepalive / dispatch / pre-release builds that have no CHANGELOG
+    // section. pilot SKIPS the changelog when skip_waiting is true, so it
+    // stays false.
+    expect(iosFastfile).toContain('testflight_changelog');
+    expect(iosFastfile).toContain('release_notes_for_version');
+    expect(iosFastfile, 'fallback to last commit retained').toContain('changelog_for_this_build');
     expect(iosFastfile).toMatch(/skip_waiting_for_build_processing:\s*false/);
     expect(iosFastfile).not.toMatch(/skip_waiting_for_build_processing:\s*true/);
+  });
+  it('beta explicitly sets whatsToTest on the uploaded build (reliability net)', () => {
+    // ASC diagnosis showed the changelog param alone left every build with NO
+    // betaBuildLocalizations. The beta lane must explicitly create/update the
+    // en-US whatsToTest on the build it just uploaded so notes reliably appear.
+    expect(iosFastfile).toContain('set_whats_to_test');
+    expect(iosFastfile).toContain('betaBuildLocalizations');
+    expect(iosFastfile).toMatch(/whatsToTest/);
   });
 });
 

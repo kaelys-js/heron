@@ -284,16 +284,27 @@ platform :ios do
       include_bitcode: false   # Apple deprecated bitcode in Xcode 14
     )
 
+    # "What to Test" notes: CHANGELOG.md for this version (Release Please
+    # source), falling back to the last commit message. See testflight_changelog.
+    notes = testflight_changelog
+
     upload_to_testflight(
       api_key: api_key,
       # Must be false to set the changelog: fastlane/pilot SKIPS the changelog
       # ("What to Test") entirely when skip_waiting is true. Costs a processing
       # wait (a few minutes) but the build then shows release notes in TestFlight.
       skip_waiting_for_build_processing: false,
-      changelog: changelog_for_this_build,
+      changelog: notes,
       distribute_external: false,           # internal testers only
       reject_build_waiting_for_review: false
     )
+
+    # Reliability net. A read-only ASC audit found the changelog param alone
+    # left EVERY uploaded build with no betaBuildLocalizations (whatsToTest
+    # empty) — so internal testers saw no "What to Test". Explicitly create /
+    # update the en-US whatsToTest on the build we just shipped so the notes
+    # reliably land. Best-effort + loud (mirrors ensure_internal_delivery).
+    set_whats_to_test(build_number: new_build, notes: notes)
 
     ensure_internal_delivery
     set_age_rating
@@ -368,6 +379,62 @@ platform :ios do
       msg = "internal-delivery setup FAILED (build + upload still OK): #{e.message}"
       UI.important(msg)
       puts "::warning title=TestFlight invite::#{msg}" if is_ci
+    end
+  end
+
+  desc "Reliably set the uploaded build's TestFlight 'What to Test' (en-US)"
+  # The upload_to_testflight `changelog:` param has, in practice, left builds
+  # with NO betaBuildLocalizations (whatsToTest empty) — confirmed via a
+  # read-only ASC audit. This explicitly creates/updates the en-US localization
+  # on the build we just uploaded so the notes always appear. Uses the low-level
+  # ConnectAPI request client (the high-level models have known POST bugs — same
+  # rationale as ensure_internal_delivery). Best-effort + loud.
+  private_lane :set_whats_to_test do |options|
+    notes = options[:notes].to_s
+    build_number = options[:build_number].to_s
+    begin
+      raise "no notes to set" if notes.strip.empty?
+      raise "no build number" if build_number.empty?
+      app = Spaceship::ConnectAPI::App.all.find { |a| a.bundle_id == APP_IDENTIFIER }
+      raise "App Store Connect app not found for #{APP_IDENTIFIER}" unless app
+
+      # The build we just uploaded carries CFBundleVersion == build_number.
+      # Poll until ASC finishes processing it (VALID) so the localization sticks
+      # (a non-processed build rejects the betaBuildLocalizations write).
+      build = nil
+      30.times do
+        build = Spaceship::ConnectAPI::Build.all(
+          filter: { app: app.id, version: build_number }, limit: 1
+        ).first
+        break if build && build.processing_state == "VALID"
+        sleep(20)
+      end
+      raise "build #{build_number} not found / not VALID in time" unless build && build.processing_state == "VALID"
+
+      client = Spaceship::ConnectAPI.client.test_flight_request_client
+      existing = (build.get_beta_build_localizations rescue []).find { |l| l.locale == "en-US" }
+      if existing
+        client.patch("v1/betaBuildLocalizations/#{existing.id}", {
+          data: {
+            type: "betaBuildLocalizations",
+            id: existing.id,
+            attributes: { whatsToTest: notes }
+          }
+        })
+      else
+        client.post("v1/betaBuildLocalizations", {
+          data: {
+            type: "betaBuildLocalizations",
+            attributes: { locale: "en-US", whatsToTest: notes },
+            relationships: { build: { data: { type: "builds", id: build.id } } }
+          }
+        })
+      end
+      UI.success("What to Test set on build #{build_number}")
+    rescue => e
+      msg = "set_whats_to_test FAILED (build + upload still OK): #{e.message}"
+      UI.important(msg)
+      puts "::warning title=What to Test::#{msg}" if is_ci
     end
   end
 
@@ -507,6 +574,9 @@ platform :ios do
   lane :screenshots do
     capture_screenshots(
       scheme: "AppUITests",
+      # Only the screenshot producer — not the whole AppUITests suite
+      # (ColdLaunch / Login / DeepLink / …). Mirrors the Snapfile.
+      only_testing: ["AppUITests/ScreenshotUITests"],
       devices: [
         "iPhone 17 Pro Max",         # 6.9" (was 6.7")
         "iPhone 17 Pro",             # 6.3"
@@ -515,6 +585,7 @@ platform :ios do
       ],
       languages: ["en-US"],
       reinstall_app: true,
+      concurrent_simulators: false,  # one sim at a time → shared backend isn't contended
       app_identifier: APP_IDENTIFIER,
       output_directory: "fastlane/screenshots"
     )
@@ -704,6 +775,22 @@ platform :ios do
     rescue
       "heron automatic build (#{Time.now.utc.strftime('%Y-%m-%d')})"
     end
+  end
+
+  # TestFlight "What to Test" source. Prefer the CHANGELOG.md section for the
+  # current marketing version (the Release Please source, same as the App Store
+  # lane) so internal testers see real release notes. release_notes_for_version
+  # returns its generic "Maintenance and improvements." fallback when the
+  # version has no CHANGELOG section yet (keepalive / dispatch / pre-release
+  # builds) — in that case the last commit message is more specific, so use it.
+  # Always non-empty.
+  def testflight_changelog
+    notes = release_notes_for_version(marketing_version).to_s.strip
+    if notes.empty? || notes == "Maintenance and improvements."
+      commit = changelog_for_this_build.to_s.strip
+      return commit unless commit.empty?
+    end
+    notes.empty? ? "Maintenance and improvements." : notes
   end
 
   # App Store "What's New" for a marketing version, pulled from CHANGELOG.md
