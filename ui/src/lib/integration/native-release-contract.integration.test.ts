@@ -129,16 +129,18 @@ describe('native-release contract — App Store privacy label + age rating (#4D)
     expect(applyBrand).toContain('exportComplianceEncryptionExempt');
   });
 
-  it('the lane uses the ASC age-rating + data-usage + publish endpoints', () => {
-    expect(iosFastfile).toContain('set_privacy_and_age_rating');
+  it('age rating uses the ASC API key; privacy label is one-time manual', () => {
+    expect(iosFastfile).toContain('set_age_rating');
     expect(iosFastfile, 'age rating via patch_age_rating_declaration').toContain(
       'patch_age_rating_declaration',
     );
-    expect(iosFastfile, 'privacy via AppDataUsage').toContain('AppDataUsage');
-    expect(iosFastfile, 'must publish the data usages').toContain(
-      'patch_app_data_usages_publish_state',
+    expect(iosFastfile, 'derives from brand.json').toContain('brand_app_store');
+    expect(iosFastfile, 'logs the brand-derived privacy entries for manual ASC entry').toContain(
+      'log_manual_privacy_label',
     );
-    expect(iosFastfile, 'age + privacy derive from brand.json').toContain('brand_app_store');
+    // The App Privacy label is NOT reachable via the ASC API key (Apple limit),
+    // so the AppDataUsage path is a dead end and must not be reintroduced.
+    expect(iosFastfile, 'API-key data-usage path must stay removed').not.toContain('AppDataUsage');
   });
 
   it('age rating derives from brand contentRating (4+)', () => {

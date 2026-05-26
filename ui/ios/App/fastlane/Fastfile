@@ -293,7 +293,7 @@ platform :ios do
     )
 
     ensure_internal_delivery
-    set_privacy_and_age_rating
+    set_age_rating
   end
 
   desc "Zero-touch TestFlight: an internal group that auto-receives every"
@@ -368,24 +368,25 @@ platform :ios do
     end
   end
 
-  desc "Set the App Store privacy nutrition label + age rating (ASC API)"
-  # App-level metadata `deliver` can't set. Best-effort + loud (mirrors
-  # ensure_internal_delivery): a hiccup must not fail an otherwise-good build
-  # + upload. Age rating derives from brand contentRating; the privacy label
-  # mirrors brand.store.appStore.privacy (kept in sync with
-  # PrivacyInfo.xcprivacy). Runs on every beta so privacy/age stay current
-  # ahead of any submission.
-  private_lane :set_privacy_and_age_rating do
+  desc "Set the App Store age rating (ASC API). Privacy label is one-time manual."
+  # Age rating derives from brand contentRating and IS settable via the ASC API
+  # key. The App Privacy nutrition LABEL is NOT exposed on the official ASC API
+  # key (Apple limitation -- fastlane's upload_app_privacy_details_to_app_store
+  # docs: "not available on the official App Store Connect API"), so it's a
+  # one-time manual entry in ASC; this lane logs the exact brand-derived entries
+  # to make. Best-effort + loud (mirrors ensure_internal_delivery): a hiccup
+  # must not fail an otherwise-good build.
+  private_lane :set_age_rating do
     begin
       app = Spaceship::ConnectAPI::App.all.find { |a| a.bundle_id == APP_IDENTIFIER }
       raise "App Store Connect app not found for #{APP_IDENTIFIER}" unless app
       apply_age_rating(app)
-      apply_privacy_label(app)
-      UI.success("privacy + age rating applied for #{APP_IDENTIFIER}")
+      log_manual_privacy_label
+      UI.success("age rating applied for #{APP_IDENTIFIER}")
     rescue => e
-      msg = "privacy/age-rating setup FAILED (build + upload still OK): #{e.message}"
+      msg = "age-rating setup FAILED (build + upload still OK): #{e.message}"
       UI.important(msg)
-      puts "::warning title=Privacy/Age::#{msg}" if is_ci
+      puts "::warning title=Age rating::#{msg}" if is_ci
     end
   end
 
@@ -418,28 +419,19 @@ platform :ios do
     UI.message("age rating: 4+ (all descriptors NONE/false)")
   end
 
-  # Privacy nutrition label rebuilt from brand each run (delete existing,
-  # recreate, publish) so it is deterministic. Each data type expands to one
-  # usage row per purpose. Categories/purposes/protections are ASC enum ids.
-  def apply_privacy_label(app)
+  # The App Privacy nutrition label is NOT reachable via the ASC API key, so it
+  # is a one-time manual entry in App Store Connect. Log the exact brand-derived
+  # declaration (kept in sync with PrivacyInfo.xcprivacy) so the manual entry is
+  # unambiguous. Run via `fastlane ios store_config` to print it on demand.
+  def log_manual_privacy_label
     types = brand_app_store.dig("privacy", "dataTypes") || []
-    raise "brand.store.appStore.privacy.dataTypes is empty" if types.empty?
-    Spaceship::ConnectAPI::AppDataUsage.all(app_id: app.id).each(&:delete!)
-    types.each do |t|
-      Array(t["purposes"]).each do |purpose|
-        Spaceship::ConnectAPI::AppDataUsage.create(
-          app_id: app.id,
-          app_data_usage_category_id: t["category"],
-          app_data_usage_protection_id: t["protection"],
-          app_data_usage_purpose_id: purpose
-        )
-      end
+    return if types.empty?
+    lines = types.map do |t|
+      linked = t["protection"] == "DATA_LINKED_TO_YOU" ? "Linked to user" : "Not linked to user"
+      "#{t['category']} -> #{linked}; purposes #{Array(t['purposes']).join(' + ')}; NOT used for tracking"
     end
-    state = Spaceship::ConnectAPI.get_app_data_usages_publish_state(app_id: app.id).to_models.first
-    if state
-      Spaceship::ConnectAPI.patch_app_data_usages_publish_state(app_data_usages_publish_state_id: state.id, published: true)
-    end
-    UI.message("privacy label: #{types.map { |t| t['category'] }.join(', ')} (published)")
+    UI.message("App Privacy (set ONCE in ASC -> App Privacy, then matches PrivacyInfo.xcprivacy):")
+    lines.each { |l| UI.message("  - #{l}") }
   end
 
   # branding/brand.json -> store.appStore, memoized. Path walks up out of
@@ -457,7 +449,7 @@ platform :ios do
   # sets the Spaceship token the ConnectAPI helpers rely on.
   lane :store_config do
     asc_key
-    set_privacy_and_age_rating
+    set_age_rating
   end
 
   desc "Upload App Store metadata + screenshots without rebuilding the IPA"
