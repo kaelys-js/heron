@@ -82,6 +82,16 @@ describe('native-release contract — App Store submission lane (#4E)', () => {
     expect(androidFastfile).toContain('lane :production');
     expect(androidFastfile).toMatch(/track_promote_to:\s*["']production["']/);
   });
+  it('promote.yml gates production on the required-reviewer environments', () => {
+    const promote = read('.github/workflows/promote.yml');
+    expect(promote).toContain('environment: production-ios');
+    expect(promote).toContain('environment: production-electron');
+    expect(promote).toMatch(/bundle exec fastlane ios app_store/);
+    // The gate is only real if the env has a required reviewer.
+    const features = read('scripts/system/apply-github-features.mjs');
+    expect(features, 'production envs must require a reviewer').toContain('requireReviewer');
+    expect(features).toContain('production-android');
+  });
 });
 
 describe('native-release contract — Apple signing chain', () => {

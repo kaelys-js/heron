@@ -1,0 +1,112 @@
+name: promote
+
+# Gated PRODUCTION promotion: App Store + Play + desktop "latest". Each job
+# runs in a GitHub Environment whose required reviewer is the maintainer, so a
+# dispatch PAUSES for explicit approval before anything reaches production.
+#
+# What it does NOT do: the irreversible final submit. The iOS app_store lane
+# preps the App Store version (metadata + screenshots + release notes + age
+# rating) and stops at submit_for_review:false; the maintainer clicks Submit in
+# App Store Connect. Android promotes the internal track to production. Desktop
+# flips the version's GitHub pre-release to "latest".
+#
+# workflow_dispatch only, on a released tag/version. Reuses the same secrets as
+# native-release (set by `pnpm setup:native`).
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Marketing version to promote (e.g. 1.2.0). Defaults to package.json $.version.'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  ios-app-store:
+    name: iOS — App Store (prep, stops before Submit)
+    environment: production-ios # required-reviewer gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      # app_store uses deliver + ConnectAPI only (skip_binary_upload) -- no
+      # Xcode, so Linux + Ruby is enough.
+      - name: Setup Ruby + bundler-cache (Fastlane gems)
+        uses: ruby/setup-ruby@afeafc3d1ab54a631816aba4c914a0081c12ff2f # v1.308.0
+        with:
+          working-directory: ui/ios/App
+          bundler-cache: true
+      - name: Prep App Store version via Fastlane (submit_for_review:false)
+        working-directory: ui/ios/App
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: bundle exec fastlane ios app_store
+
+  android-production:
+    name: Android — promote internal to production
+    # Inert until Play is configured: build-android is gated the same way.
+    if: ${{ vars.PLAY_STORE_ENABLED == 'true' }}
+    environment: production-android # required-reviewer gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - name: Setup Ruby + bundler-cache (Fastlane gems)
+        uses: ruby/setup-ruby@afeafc3d1ab54a631816aba4c914a0081c12ff2f # v1.308.0
+        with:
+          working-directory: ui/android
+          bundler-cache: true
+      - name: Write Play service-account key
+        env:
+          PLAY_STORE_JSON_KEY: ${{ secrets.PLAY_STORE_JSON_KEY }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$PLAY_STORE_JSON_KEY" | base64 --decode > ui/android/play-key.json
+      - name: Promote internal -> production via Fastlane
+        working-directory: ui/android
+        run: bundle exec fastlane android production
+
+  desktop-latest:
+    name: Desktop — mark the GitHub release latest
+    environment: production-electron # required-reviewer gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # gh release edit
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - name: Promote the version's GitHub pre-release to latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          VERSION="${INPUT_VERSION:-$(node -p "require('./package.json').version")}"
+          TAG="v${VERSION}"
+          echo "Promoting release $TAG to latest"
+          gh release edit "$TAG" --draft=false --prerelease=false --latest

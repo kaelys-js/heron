@@ -99,13 +99,23 @@ function logChange(label, before, after) {
 }
 
 // ── 1. Deployment environments ──────────────────────────────────
+// requireReviewer: the production gates (referenced by promote.yml) need the
+// maintainer as a required reviewer, else a dispatch would NOT pause for
+// approval before reaching production.
 const ENVS = [
   {
     name: 'production-ios',
+    requireReviewer: true,
     deployment_branch_policy: { protected_branches: false, custom_branch_policies: true },
   },
   {
     name: 'production-electron',
+    requireReviewer: true,
+    deployment_branch_policy: { protected_branches: false, custom_branch_policies: true },
+  },
+  {
+    name: 'production-android',
+    requireReviewer: true,
     deployment_branch_policy: { protected_branches: false, custom_branch_policies: true },
   },
   {
@@ -118,34 +128,49 @@ const ENVS = [
   },
 ];
 
+// Required reviewer for the production gates = the repo owner (maintainer).
+const ownerId = gh('GET', `/repos/${REPO}`)?.owner?.id;
+
 console.log('▸ Environments');
 for (const env of ENVS) {
+  const desiredReviewers = env.requireReviewer && ownerId ? [{ type: 'User', id: ownerId }] : [];
+  const body = { deployment_branch_policy: env.deployment_branch_policy };
+  if (env.requireReviewer) body.reviewers = desiredReviewers;
+
   const live = gh('GET', `/repos/${REPO}/environments/${env.name}`);
   if (live?.__error) {
     if (live.__error.includes('Not Found')) {
       console.log(`  ${env.name}: missing -> creating`);
       driftCount++;
-      if (!VERIFY_ONLY) {
-        gh('PUT', `/repos/${REPO}/environments/${env.name}`, {
-          deployment_branch_policy: env.deployment_branch_policy,
-        });
-      }
+      if (!VERIFY_ONLY) gh('PUT', `/repos/${REPO}/environments/${env.name}`, body);
     } else {
       console.log(`  ${env.name}: error ${live.__error.split('\n')[0]}`);
     }
+    continue;
+  }
+
+  // Environment exists; reconcile branch policy AND required reviewers.
+  const livePolicy = live.deployment_branch_policy;
+  const liveReviewerIds = (live.protection_rules || [])
+    .filter((r) => r.type === 'required_reviewers')
+    .flatMap((r) => (r.reviewers || []).map((x) => x.reviewer?.id))
+    .filter(Boolean)
+    .sort();
+  const desiredReviewerIds = desiredReviewers.map((r) => r.id).sort();
+  const policyDrift = JSON.stringify(livePolicy) !== JSON.stringify(env.deployment_branch_policy);
+  const reviewerDrift =
+    env.requireReviewer && JSON.stringify(liveReviewerIds) !== JSON.stringify(desiredReviewerIds);
+
+  if (policyDrift) {
+    logChange(`${env.name}.deployment_branch_policy`, livePolicy, env.deployment_branch_policy);
+  }
+  if (reviewerDrift) {
+    logChange(`${env.name}.reviewers`, liveReviewerIds, desiredReviewerIds);
+  }
+  if (policyDrift || reviewerDrift) {
+    if (!VERIFY_ONLY) gh('PUT', `/repos/${REPO}/environments/${env.name}`, body);
   } else {
-    // Environment exists; check branch policy.
-    const livePolicy = live.deployment_branch_policy;
-    if (JSON.stringify(livePolicy) !== JSON.stringify(env.deployment_branch_policy)) {
-      logChange(env.name + '.deployment_branch_policy', livePolicy, env.deployment_branch_policy);
-      if (!VERIFY_ONLY) {
-        gh('PUT', `/repos/${REPO}/environments/${env.name}`, {
-          deployment_branch_policy: env.deployment_branch_policy,
-        });
-      }
-    } else {
-      console.log(`  ${env.name}: ok`);
-    }
+    console.log(`  ${env.name}: ok`);
   }
 }
 
