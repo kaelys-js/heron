@@ -13,6 +13,8 @@
   ],
   "globalEnv": ["NODE_ENV", "CAPACITOR", "PUBLIC_CAPACITOR_BUILD", "APPLE_ID", "APPLE_TEAM_ID"],
 
+  "remoteCache": { "signature": true },
+
   "tasks": {
     "build": {
       "dependsOn": ["^build", "//#brand"],
@@ -202,25 +204,16 @@
       ]
     },
 
-    "//#verify:gates": {
+    "//#verify:no-slop": {
       "outputs": [],
       "inputs": [
-        "scripts/system/**",
-        "ui/src/**/*.{ts,tsx,svelte,js,mjs,cjs}",
-        "ui/electron/src/**/*.{ts,js,mjs,cjs}",
-        "modes/**/*.md",
         "**/*.md",
-        "**/*.{json,jsonc}",
+        "**/*.{ts,tsx,svelte,mjs,js,cjs}",
+        "**/*.py",
+        "**/*.rb",
+        "**/*.{sh,bash}",
         "**/*.{yml,yaml}",
-        "**/*.xml",
-        "**/*.plist",
-        ".github/workflows/**",
-        "package.json",
-        "ui/package.json",
-        "ui/electron/package.json",
-        "pnpm-lock.yaml",
-        "biome.jsonc",
-        ".mise.toml",
+        "scripts/system/verify-no-slop.mjs",
         "!**/node_modules/**",
         "!**/.turbo/**",
         "!**/.svelte-kit/**",
@@ -230,6 +223,7 @@
         "!**/test-results/**",
         "!**/DerivedData/**",
         "!**/SourcePackages/**",
+        "!**/Pods/**",
         "!**/.gradle/**",
         "!data/**",
         "!reports/**",
@@ -237,34 +231,330 @@
       ]
     },
 
-    "//#lint:native": {
+    "//#verify:comment-style": {
       "outputs": [],
       "inputs": [
-        "**/*.swift",
-        "**/*.kt",
-        "**/*.py",
-        "**/*.sh",
-        "**/*.bash",
-        "**/*.rb",
-        "Gemfile",
-        "**/*.toml",
-        "**/*.{yml,yaml}",
-        "**/*.plist",
-        ".env.example",
-        ".env.act.example",
-        ".github/workflows/**",
-        ".swiftlint.yml",
-        "scripts/system/lint-native.sh",
-        "scripts/system/validate-plists.py",
+        "**/*.{ts,tsx,svelte,mjs,js,cjs}",
+        "scripts/system/verify-comment-style.mjs",
         "!**/node_modules/**",
         "!**/.turbo/**",
         "!**/.svelte-kit/**",
         "!**/build/**",
         "!**/dist/**",
-        "!**/Pods/**",
+        "!**/coverage/**",
+        "!**/test-results/**"
+      ]
+    },
+
+    "//#verify:english-only": {
+      "outputs": [],
+      "inputs": [
+        "**/*.md",
+        "**/*.{ts,tsx,svelte,mjs}",
+        "**/*.{py,sh,rb}",
+        "scripts/system/verify-english-only.mjs",
+        "!**/node_modules/**",
+        "!**/.turbo/**",
+        "!**/.svelte-kit/**",
+        "!**/build/**",
+        "!**/dist/**",
+        "!**/coverage/**",
+        "!**/test-results/**",
+        "!data/**",
+        "!reports/**",
+        "!output/**"
+      ]
+    },
+
+    "//#verify:modes": {
+      "outputs": [],
+      "inputs": ["modes/**/*.md", "scripts/system/verify-modes.mjs"]
+    },
+
+    "//#verify:merge-markers": {
+      "outputs": [],
+      "inputs": [
+        "**/*",
+        "scripts/system/verify-merge-markers.sh",
+        "!**/node_modules/**",
+        "!**/.turbo/**",
+        "!**/.svelte-kit/**",
+        "!**/build/**",
+        "!**/dist/**",
+        "!**/coverage/**",
+        "!**/test-results/**",
         "!**/DerivedData/**",
         "!**/SourcePackages/**",
+        "!**/Pods/**",
+        "!**/.gradle/**",
+        "!**/*.test.*",
+        "!**/*.spec.*",
+        "!data/**",
+        "!reports/**",
+        "!output/**"
+      ]
+    },
+
+    "//#validate:exact-versions": {
+      "outputs": [],
+      "inputs": [
+        "package.json",
+        "ui/package.json",
+        "ui/electron/package.json",
+        ".mise.toml",
+        "scripts/system/validate-exact-versions.mjs"
+      ]
+    },
+
+    "//#validate:version-sync": {
+      "outputs": [],
+      "inputs": [
+        "package.json",
+        "ui/package.json",
+        "ui/electron/package.json",
+        "VERSION",
+        ".release-please-manifest.json",
+        "scripts/system/validate-version-sync.mjs"
+      ]
+    },
+
+    "//#validate:format-sync": {
+      "outputs": [],
+      "inputs": [
+        ".editorconfig",
+        "biome.jsonc",
+        ".prettierrc.json",
+        "scripts/system/validate-format-config-sync.mjs"
+      ]
+    },
+
+    "//#validate:json-schemas": {
+      "outputs": [],
+      "inputs": [
+        "**/*.{json,jsonc}",
+        "scripts/system/validate-json-schemas.mjs",
+        "!**/node_modules/**",
+        "!**/.turbo/**",
+        "!**/.svelte-kit/**",
+        "!**/build/**",
+        "!**/dist/**",
+        "!**/coverage/**",
+        "!**/test-results/**",
+        "!**/DerivedData/**",
+        "!**/SourcePackages/**",
+        "!**/Pods/**",
+        "!**/.gradle/**",
+        "!data/**",
+        "!reports/**",
+        "!output/**"
+      ]
+    },
+
+    "//#validate:lockfile": {
+      "outputs": [],
+      "inputs": ["pnpm-lock.yaml", "scripts/system/validate-pnpm-lockfile.mjs"]
+    },
+
+    "//#validate:pnpm-scripts": {
+      "outputs": [],
+      "inputs": [
+        ".github/workflows/**/*.{yml,yaml}",
+        "**/*.md",
+        "**/*.{sh,bash}",
+        "lefthook.yml",
+        "turbo.json",
+        "package.json",
+        "ui/package.json",
+        "ui/electron/package.json",
+        "scripts/system/verify-pnpm-scripts.mjs",
+        "!**/node_modules/**",
+        "!**/.turbo/**",
+        "!**/.svelte-kit/**",
+        "!**/build/**",
+        "!**/dist/**",
+        "!**/coverage/**",
+        "!**/test-results/**",
+        "!data/**",
+        "!reports/**",
+        "!output/**"
+      ]
+    },
+
+    "//#validate:csp-hashes": {
+      "outputs": [],
+      "inputs": ["ui/src/app.html", "ui/svelte.config.ts", "scripts/system/verify-csp-hashes.mjs"]
+    },
+
+    "//#validate:tiny-configs": {
+      "outputs": [],
+      "inputs": [
+        ".gitattributes",
+        ".npmrc",
+        ".actrc",
+        "LICENSE",
+        "ui/static/robots.txt",
+        "scripts/system/validate-tiny-configs.mjs"
+      ]
+    },
+
+    "//#fonts:verify": {
+      "outputs": [],
+      "inputs": ["ui/static/fonts/**", "scripts/system/verify-fonts.mjs"]
+    },
+
+    "//#validate:workflows": {
+      "outputs": [],
+      "inputs": [".github/workflows/*.{yml,yaml}", "scripts/system/verify-workflow-quality.mjs"]
+    },
+
+    "//#validate:markdown": {
+      "outputs": [],
+      "inputs": [
+        "**/*.md",
+        ".markdownlint-cli2.jsonc",
+        "!**/node_modules/**",
+        "!**/.turbo/**",
+        "!**/.svelte-kit/**",
+        "!**/build/**",
+        "!**/dist/**",
+        "!**/coverage/**",
+        "!**/test-results/**",
+        "!**/DerivedData/**",
+        "!**/SourcePackages/**",
+        "!**/Pods/**",
+        "!**/.gradle/**",
+        "!data/**",
+        "!reports/**",
+        "!output/**"
+      ]
+    },
+
+    "//#validate:xml": {
+      "outputs": [],
+      "inputs": [
+        "**/*.svg",
+        "**/*.storyboard",
+        "scripts/system/validate-xml.sh",
+        "!**/node_modules/**",
+        "!**/.turbo/**",
+        "!**/build/**",
+        "!**/dist/**",
+        "!**/DerivedData/**",
+        "!**/SourcePackages/**",
+        "!**/Pods/**"
+      ]
+    },
+
+    "//#lint:swift": {
+      "outputs": [],
+      "inputs": ["ui/ios/App/**/*.swift", ".swiftlint.yml", "scripts/system/lint-native.sh"]
+    },
+
+    "//#lint:kotlin": {
+      "outputs": [],
+      "inputs": [
+        "**/*.kt",
+        "scripts/system/lint-native.sh",
+        "!**/node_modules/**",
+        "!**/.turbo/**",
+        "!**/build/**",
+        "!**/dist/**",
         "!**/.gradle/**"
+      ]
+    },
+
+    "//#lint:python": {
+      "outputs": [],
+      "inputs": [
+        "**/*.py",
+        "pyproject.toml",
+        "scripts/system/lint-native.sh",
+        "!**/node_modules/**",
+        "!**/.turbo/**",
+        "!**/.venv/**",
+        "!**/build/**",
+        "!**/dist/**"
+      ]
+    },
+
+    "//#lint:shell": {
+      "outputs": [],
+      "inputs": [
+        "**/*.{sh,bash}",
+        "scripts/system/lint-native.sh",
+        "!**/node_modules/**",
+        "!**/.turbo/**",
+        "!**/build/**",
+        "!**/dist/**"
+      ]
+    },
+
+    "//#lint:ruby": {
+      "outputs": [],
+      "inputs": [
+        "**/*.rb",
+        "Gemfile",
+        "scripts/system/lint-native.sh",
+        "!**/node_modules/**",
+        "!**/.turbo/**"
+      ]
+    },
+
+    "//#lint:toml": {
+      "outputs": [],
+      "inputs": [
+        "**/*.toml",
+        "scripts/system/lint-native.sh",
+        "!**/node_modules/**",
+        "!**/.turbo/**",
+        "!**/build/**",
+        "!**/dist/**",
+        "!**/.venv/**"
+      ]
+    },
+
+    "//#lint:yaml": {
+      "outputs": [],
+      "inputs": [
+        "**/*.{yml,yaml}",
+        "scripts/system/lint-native.sh",
+        "!**/node_modules/**",
+        "!**/.turbo/**",
+        "!**/build/**",
+        "!**/dist/**"
+      ]
+    },
+
+    "//#lint:dotenv": {
+      "outputs": [],
+      "inputs": [".env.example", ".env.act.example", "scripts/system/lint-native.sh"]
+    },
+
+    "//#lint:plist": {
+      "outputs": [],
+      "inputs": [
+        "**/*.{plist,entitlements,xcprivacy}",
+        "scripts/system/validate-plists.py",
+        "scripts/system/lint-native.sh",
+        "!**/node_modules/**",
+        "!**/.turbo/**",
+        "!**/build/**",
+        "!**/DerivedData/**",
+        "!**/SourcePackages/**",
+        "!**/Pods/**"
+      ]
+    },
+
+    "//#lint:actionlint": {
+      "outputs": [],
+      "inputs": [
+        ".github/workflows/**/*.{yml,yaml}",
+        "**/*.{sh,bash}",
+        "scripts/system/lint-native.sh",
+        "!**/node_modules/**",
+        "!**/.turbo/**",
+        "!**/build/**",
+        "!**/dist/**"
       ]
     }
   }
