@@ -5,7 +5,7 @@
   Web mode: backend is always `location.origin` (the page we just loaded),
   so this component renders children immediately (no gate, no flash).
 
-  Capacitor mode: the WebView loaded the static shell from heron://. The
+  Capacitor mode: the WebView loaded the static shell from `heron://`. The
   resolver figures out where the API server is (embedded → dev → LAN mDNS
   → Tailscale → remote). Until that resolves, every fetch() would fail, so
   we block render with a branded waiting state, then either the app or an

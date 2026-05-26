@@ -57,6 +57,7 @@ vi.mock('$lib/server/user-context', () => ({
 
 vi.mock('$app/environment', () => ({
   building: false,
+  dev: false,
 }));
 
 // Better-Auth signup-gate DB import is lazy -- we can pass through with a
