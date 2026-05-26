@@ -637,9 +637,12 @@ function applyElectronBuilderConfig(brand) {
       cfg.mac.extendInfo.NSBonjourServices = [brand.identifiers.serviceType];
       cfg.mac.extendInfo.NSHumanReadableCopyright = brand.copyright;
     }
-    // Windows publisher + NSIS shortcut metadata
+    // Windows publisher + NSIS shortcut metadata. electron-builder 26 moved
+    // publisherName under win.signtoolOptions; the legacy top-level key is
+    // no longer in the schema and fails config validation.
     if (cfg.win) {
-      cfg.win.publisherName = brand.author.name;
+      cfg.win.signtoolOptions ??= {};
+      cfg.win.signtoolOptions.publisherName = brand.author.name;
     }
     if (cfg.nsis) {
       cfg.nsis.shortcutName = brand.displayName;
