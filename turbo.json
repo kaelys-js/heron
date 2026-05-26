@@ -166,8 +166,16 @@
 
     "test:coverage": {
       "dependsOn": ["brand"],
-      "cache": false,
-      "outputs": ["coverage/**"]
+      "outputs": ["coverage/**"],
+      "inputs": [
+        "src/**",
+        "static/**",
+        "vite.config.ts",
+        "vitest.config.ts",
+        "vitest.base.ts",
+        "tsconfig.json",
+        "package.json"
+      ]
     },
 
     "test:ui": {
@@ -191,6 +199,72 @@
         "ui/ios/App/App.xcodeproj/project.pbxproj",
         "ui/ios/App/fastlane/Fastfile",
         "ui/ios/App/Gemfile.lock"
+      ]
+    },
+
+    "//#verify:gates": {
+      "outputs": [],
+      "inputs": [
+        "scripts/system/**",
+        "ui/src/**/*.{ts,tsx,svelte,js,mjs,cjs}",
+        "ui/electron/src/**/*.{ts,js,mjs,cjs}",
+        "modes/**/*.md",
+        "**/*.md",
+        "**/*.{json,jsonc}",
+        "**/*.{yml,yaml}",
+        "**/*.xml",
+        "**/*.plist",
+        ".github/workflows/**",
+        "package.json",
+        "ui/package.json",
+        "ui/electron/package.json",
+        "pnpm-lock.yaml",
+        "biome.jsonc",
+        ".mise.toml",
+        "!**/node_modules/**",
+        "!**/.turbo/**",
+        "!**/.svelte-kit/**",
+        "!**/build/**",
+        "!**/dist/**",
+        "!**/coverage/**",
+        "!**/test-results/**",
+        "!**/DerivedData/**",
+        "!**/SourcePackages/**",
+        "!**/.gradle/**",
+        "!data/**",
+        "!reports/**",
+        "!output/**"
+      ]
+    },
+
+    "//#lint:native": {
+      "outputs": [],
+      "inputs": [
+        "**/*.swift",
+        "**/*.kt",
+        "**/*.py",
+        "**/*.sh",
+        "**/*.bash",
+        "**/*.rb",
+        "Gemfile",
+        "**/*.toml",
+        "**/*.{yml,yaml}",
+        "**/*.plist",
+        ".env.example",
+        ".env.act.example",
+        ".github/workflows/**",
+        ".swiftlint.yml",
+        "scripts/system/lint-native.sh",
+        "scripts/system/validate-plists.py",
+        "!**/node_modules/**",
+        "!**/.turbo/**",
+        "!**/.svelte-kit/**",
+        "!**/build/**",
+        "!**/dist/**",
+        "!**/Pods/**",
+        "!**/DerivedData/**",
+        "!**/SourcePackages/**",
+        "!**/.gradle/**"
       ]
     }
   }
