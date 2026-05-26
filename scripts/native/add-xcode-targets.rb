@@ -889,6 +889,30 @@ TEST_TARGETS.each do |t|
   end
 end
 
+# Manual (match) signing for the app-store archive. Targets ship as
+# CODE_SIGN_STYLE=Automatic, which needs a team AND would ignore the match
+# profiles -- so the Release config of every archived target switches to
+# Manual + its "match AppStore <id>" profile + the Apple Distribution
+# identity. DEVELOPMENT_TEAM is injected at archive time via gym xcargs
+# (APPLE_TEAM_ID), keeping the account id out of the committed project.
+{
+  "App" => bundle_root,
+  "AppWidget" => "#{bundle_root}.widget",
+  "AppLiveActivity" => "#{bundle_root}.liveactivity",
+  "AppShareExtension" => "#{bundle_root}.share",
+  WATCH_NAME => WATCH_BUNDLE_ID,
+}.each do |tname, bid|
+  signed = project.targets.find { |x| x.name == tname }
+  next unless signed
+  signed.build_configurations.each do |config|
+    next unless config.name == "Release"
+    config.build_settings["CODE_SIGN_STYLE"] = "Manual"
+    config.build_settings["CODE_SIGN_IDENTITY"] = "Apple Distribution"
+    config.build_settings["PROVISIONING_PROFILE_SPECIFIER"] = "match AppStore #{bid}"
+  end
+  puts "    ~ #{tname}: manual Release signing (match AppStore #{bid})"
+end
+
 # Shared scheme for the MAIN app. The beta/release lanes build
 # `-scheme App`, and CI checks out only SHARED schemes (xcuserdata is
 # never committed), so without this gym errors "Multiple schemes found"

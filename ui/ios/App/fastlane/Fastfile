@@ -259,6 +259,11 @@ platform :ios do
       project: PROJECT,
       scheme: SCHEME,
       export_method: "app-store",
+      # DEVELOPMENT_TEAM is injected here (not committed in the project) so the
+      # Manual-signed Release archive resolves a team for every target. The
+      # skip flags avoid SPM build-tool-plugin + macro validation prompts that
+      # hang a non-interactive CI archive.
+      xcargs: "-skipPackagePluginValidation -skipMacroValidation DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']}",
       export_options: {
         signingStyle: "manual",
         provisioningProfiles: ALL_APP_IDENTIFIERS.to_h { |id| [id, "match AppStore #{id}"] }
