@@ -474,6 +474,32 @@ platform :ios do
     )
   end
 
+  desc "Production App Store prep (gated by promote.yml). STOPS before the real submit."
+  # Uploads metadata + screenshots + the version's release notes and sets the
+  # age rating, then leaves the final, irreversible Submit to Cole in ASC
+  # (submit_for_review: false). The binary is the one the beta lane already
+  # pushed to TestFlight (skip_binary_upload). Privacy label is one-time manual
+  # (see set_age_rating). Marketing version + What's New both derive from the
+  # Release Please sources (package.json $.version, CHANGELOG.md).
+  lane :app_store do
+    api_key = asc_key
+    version = marketing_version
+    write_release_notes(version)
+    set_age_rating
+    upload_to_app_store(
+      api_key: api_key,
+      app_version: version,
+      skip_binary_upload: true,
+      skip_screenshots: false,
+      force: true,
+      precheck_include_in_app_purchases: false,
+      submit_for_review: false,
+      automatic_release: false,
+      metadata_path: "fastlane/metadata",
+      screenshots_path: "fastlane/screenshots"
+    )
+  end
+
   desc "Generate App Store screenshots for every device-class via XCUItest snapshot lane"
   lane :screenshots do
     capture_screenshots(
@@ -675,6 +701,34 @@ platform :ios do
     rescue
       "heron automatic build (#{Time.now.utc.strftime('%Y-%m-%d')})"
     end
+  end
+
+  # App Store "What's New" for a marketing version, pulled from CHANGELOG.md
+  # (Release Please maintains it). Extracts the version's section, strips
+  # markdown to the plain text the store expects, truncates to ASC's 4000-char
+  # cap. Falls back so a release never uploads empty notes.
+  def release_notes_for_version(version)
+    path = File.expand_path("../../../../CHANGELOG.md", __dir__)
+    fallback = "Maintenance and improvements."
+    return fallback unless File.exist?(path)
+    # Explicit UTF-8: CHANGELOG headers contain non-ASCII (em dash), which
+    # throws "invalid byte sequence" if the runner locale defaults to ASCII.
+    section = File.read(path, encoding: "UTF-8")[/^##\s*\[#{Regexp.escape(version)}\][^\n]*\n(.*?)(?=^##\s|\z)/m, 1]
+    return fallback if section.nil? || section.strip.empty?
+    notes = section.strip
+      .gsub(/\[([^\]]+)\]\([^)]*\)/, '\1') # [text](url) -> text
+      .gsub(/^#+\s+/, "")                   # drop ###-style subheaders
+      .gsub(/^\s*[*-]\s+/, "- ")           # normalize bullets
+    notes.length > 4000 ? "#{notes[0...3997]}..." : notes
+  end
+
+  # Write the version's notes where deliver reads "What's New" (the same
+  # en-US metadata dir apply-brand populates).
+  def write_release_notes(version)
+    require "fileutils"
+    dir = File.expand_path("metadata/en-US", __dir__)
+    FileUtils.mkdir_p(dir)
+    File.write(File.join(dir, "release_notes.txt"), release_notes_for_version(version))
   end
 
   error do |lane, exception|

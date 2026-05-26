@@ -63,6 +63,27 @@ describe('native-release contract — store version derives from package.json', 
   });
 });
 
+describe('native-release contract — App Store submission lane (#4E)', () => {
+  it('has an app_store lane that uploads metadata + screenshots', () => {
+    expect(iosFastfile).toContain('lane :app_store');
+    expect(iosFastfile).toContain('upload_to_app_store');
+  });
+  it('NEVER auto-submits — submit_for_review is false (Cole does the real submit)', () => {
+    // The lane preps everything but stops before the irreversible Submit.
+    expect(iosFastfile).toMatch(/submit_for_review:\s*false/);
+    expect(iosFastfile).not.toMatch(/submit_for_review:\s*true/);
+  });
+  it('What’s New derives from CHANGELOG.md (Release Please source)', () => {
+    expect(iosFastfile).toContain('release_notes_for_version');
+    expect(iosFastfile, 'reads the CHANGELOG').toContain('CHANGELOG.md');
+  });
+  it('Android production lane promotes internal -> production', () => {
+    const androidFastfile = read('ui/android/fastlane/Fastfile');
+    expect(androidFastfile).toContain('lane :production');
+    expect(androidFastfile).toMatch(/track_promote_to:\s*["']production["']/);
+  });
+});
+
 describe('native-release contract — Apple signing chain', () => {
   it.each(APPLE_SIGNING)('%s is produced by setup.mjs', (s) => {
     expect(setup, `${s} not produced by setup.mjs`).toContain(s);
