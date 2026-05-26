@@ -255,6 +255,13 @@ jobs:
         with:
           experimental: true
           cache: true
+          # Install ONLY the runtimes the electron build needs. The desktop
+          # matrix runs on windows-latest too, and `.mise.toml` pins swiftlint
+          # (aqua: linux/darwin only -- no Windows binary), so a full
+          # `mise install` aborts on Windows. node + pnpm are all the icon-gen
+          # / cap-sync / electron-builder steps use. (build-ios + build-android
+          # keep the full install -- they run on macOS/Linux and need Ruby.)
+          install_args: node pnpm
 
       # Cache pnpm's content-addressable store. Restore-keys lets a
       # changed lockfile still reuse most of the previous cache.
@@ -357,7 +364,8 @@ jobs:
           # Notarization uses the App Store Connect API key (.p8). notarytool
           # needs it as a FILE PATH (decoded in the prior step), not base64.
           APPLE_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APPLE_API_KEY_ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          # @electron/notarize reads APPLE_API_ISSUER (not *_KEY_ISSUER).
+          APPLE_API_ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APPLE_API_KEY: ${{ env.APPLE_API_KEY_PATH }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         # Publish only on real releases (tag push / workflow_call from
