@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Test-APK manifest. BiometricAuthInstrumentedTest launches a bare
+  AppCompatActivity via ActivityScenario to host a real BiometricPrompt.
+  ActivityScenario can only launch activities that are DECLARED in a
+  manifest, and it resolves the host against the test package
+  (com.resistjs.heron.test), so the declaration must live here rather than
+  in the app-under-test manifest. BiometricPrompt requires an AppCompat
+  (or Material) theme on its host activity, hence Theme.AppCompat.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity
+            android:name="androidx.appcompat.app.AppCompatActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
+    </application>
+</manifest>
