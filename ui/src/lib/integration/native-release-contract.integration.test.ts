@@ -92,6 +92,14 @@ describe('native-release contract — iOS signing via match', () => {
   it('ASC API key decoded from base64 (is_key_content_base64)', () => {
     expect(iosFastfile).toContain('is_key_content_base64');
   });
+  it('bootstrap auto-registers missing App IDs + App Groups (match never creates them)', () => {
+    expect(iosFastfile, 'match_bootstrap must register App IDs first').toContain(
+      'register_app_ids',
+    );
+    expect(iosFastfile, 'extension App IDs need App Groups enabled').toContain(
+      'create_capability("APP_GROUPS")',
+    );
+  });
 });
 
 describe('native-release contract — macOS notarize key is a path, not base64', () => {

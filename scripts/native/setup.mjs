@@ -440,9 +440,9 @@ if (state.apple.MATCH_GIT_URL && (await confirm('  Re-use stored match config?',
     ok('certs repo populated (cert + profiles pushed)');
   } else {
     warn('match bootstrap did not finish -- see the error above.');
-    info('Most common cause: one of the 5 App IDs is not yet registered at');
-    info('developer.apple.com (main app + watch + widget + liveactivity + share).');
-    info('After registering them, re-run pnpm setup:native to retry the bootstrap.');
+    info('App IDs + App Groups are auto-registered by the bootstrap. If it still');
+    info('failed, the ASC API key likely lacks the "App Manager" role -- fix that');
+    info('at appstoreconnect.apple.com, then re-run pnpm setup:native.');
   }
 }
 

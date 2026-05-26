@@ -183,20 +183,55 @@ platform :ios do
     end
   end
 
-  desc "One-time: create + push signing certs + profiles to the match repo"
+  desc "One-time: register App IDs + push signing certs + profiles to match repo"
   # Run locally by `pnpm setup:native` after it provisions the certs repo
-  # + deploy key. Writes the Apple Distribution cert + one "match AppStore
-  # <id>" profile per bundle id into the encrypted match repo. CI never
-  # runs this; CI signs read-only via the `sign` lane (readonly: is_ci).
+  # + deploy key. Registers every bundle id, then writes the Apple
+  # Distribution cert + one "match AppStore <id>" profile per bundle id into
+  # the encrypted match repo. CI never runs this; CI signs read-only via the
+  # `sign` lane (readonly: is_ci).
   lane :match_bootstrap do
+    api_key = asc_key
+    register_app_ids
     match(
       type: "appstore",
       app_identifier: ALL_APP_IDENTIFIERS,
       git_url: ENV["MATCH_GIT_URL"],
-      api_key: asc_key,
+      api_key: api_key,
       readonly: false,
       force_for_new_devices: false
     )
+  end
+
+  desc "Ensure every bundle id exists on the Dev Portal with App Groups enabled"
+  # match creates profiles but never App IDs, so on a fresh account the
+  # extension ids (watch / widget / liveactivity / share) must be registered
+  # first or match fails with "couldn't find bundle id". App Groups is the
+  # one capability every extension entitlement needs; Live Activities needs
+  # no portal capability. Idempotent -- skips ids + capabilities that exist.
+  private_lane :register_app_ids do
+    require "spaceship"
+    require "base64"
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      key: Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY"])
+    )
+    existing = Spaceship::ConnectAPI::BundleId.all
+    ALL_APP_IDENTIFIERS.each do |bid|
+      app = existing.find { |b| b.identifier == bid }
+      unless app
+        app = Spaceship::ConnectAPI::BundleId.create(
+          name: "Heron #{bid.split('.').last.capitalize}",
+          identifier: bid,
+          platform: "IOS"
+        )
+        UI.success("registered App ID #{bid}")
+      end
+      unless app.get_capabilities.map { |c| c.capability_type.to_s }.include?("APP_GROUPS")
+        app.create_capability("APP_GROUPS")
+        UI.success("enabled App Groups on #{bid}")
+      end
+    end
   end
 
   desc "Build + sign + upload to TestFlight"
