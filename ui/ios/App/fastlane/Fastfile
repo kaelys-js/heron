@@ -401,10 +401,16 @@ platform :ios do
       # The build we just uploaded carries CFBundleVersion == build_number.
       # Poll until ASC finishes processing it (VALID) so the localization sticks
       # (a non-processed build rejects the betaBuildLocalizations write).
+      # Spaceship's Build.all takes app_id: + build_number: keywords (the
+      # CFBundleVersion), NOT a `filter:` hash. The old `filter:` form raised
+      # ArgumentError: unknown keyword :filter on the FIRST call -- caught by
+      # the rescue below, so the lane silently no-op'd and EVERY build shipped
+      # with no betaBuildLocalizations (empty "What's New"). (`version:` is the
+      # marketing version; the uploaded build is keyed by CFBundleVersion.)
       build = nil
       30.times do
         build = Spaceship::ConnectAPI::Build.all(
-          filter: { app: app.id, version: build_number }, limit: 1
+          app_id: app.id, build_number: build_number, limit: 1
         ).first
         break if build && build.processing_state == "VALID"
         sleep(20)

@@ -238,6 +238,13 @@ describe('native-release contract — TestFlight internal delivery invites the m
     expect(iosFastfile).toContain('set_whats_to_test');
     expect(iosFastfile).toContain('betaBuildLocalizations');
     expect(iosFastfile).toMatch(/whatsToTest/);
+    // Regression pin: the build lookup MUST use spaceship's real keywords
+    // (app_id: + build_number:). The old `filter:` hash raised
+    // ArgumentError on the first call, so the lane silently no-op'd and
+    // every build shipped with empty "What's New".
+    expect(iosFastfile).toMatch(/Build\.all\([^)]*app_id:/s);
+    expect(iosFastfile).toMatch(/Build\.all\([^)]*build_number:/s);
+    expect(iosFastfile).not.toMatch(/Build\.all\([^)]*filter:/s);
   });
 });
 
