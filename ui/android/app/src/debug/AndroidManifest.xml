@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug-only manifest. BiometricAuthInstrumentedTest launches a bare
+  AppCompatActivity via ActivityScenario to host a real BiometricPrompt.
+  ActivityScenario can only launch activities declared in a manifest, and it
+  resolves the host against the app-under-test (the debug variant), so the
+  declaration lives here rather than in src/androidTest (whose resource
+  namespace can't link appcompat themes). AppCompatActivity requires a
+  Theme.AppCompat descendant; the debug app depends on appcompat so the theme
+  resolves. Debug-only -> never ships in the release build.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity
+            android:name="androidx.appcompat.app.AppCompatActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
+    </application>
+</manifest>

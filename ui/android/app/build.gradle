@@ -137,6 +137,21 @@ android {
             returnDefaultValues = true
         }
     }
+
+    // androidTest pulls JUnit 5 (jupiter/platform) in transitively, and
+    // six of those jars each bundle META-INF/LICENSE*.md -- a collision
+    // that fails test-APK packaging with DuplicateRelativeFileException.
+    // Dropping the duplicate license-metadata files is the AGP-recommended
+    // fix and is safe: they are dependency license text, not runtime
+    // resources (AGP already excludes similar META-INF files by default).
+    packaging {
+        resources {
+            excludes += [
+                'META-INF/LICENSE.md',
+                'META-INF/LICENSE-notice.md',
+            ]
+        }
+    }
 }
 
 repositories {
