@@ -31,6 +31,8 @@ const APPLE_SIGNING = [
   'APP_STORE_CONNECT_PRIVATE_KEY',
   'MATCH_GIT_URL',
   'MATCH_PASSWORD',
+  // Repo-scoped SSH deploy key so CI can clone the private match certs repo.
+  'MATCH_GIT_PRIVATE_KEY',
 ];
 // Manual-signing relics that `match` replaces -- must no longer appear.
 const PHANTOM = ['IOS_CERTIFICATE', 'IOS_CERTIFICATE_PASSWORD', 'IOS_PROVISIONING_PROFILE'];

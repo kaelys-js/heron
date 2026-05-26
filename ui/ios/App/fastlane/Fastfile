@@ -183,6 +183,22 @@ platform :ios do
     end
   end
 
+  desc "One-time: create + push signing certs + profiles to the match repo"
+  # Run locally by `pnpm setup:native` after it provisions the certs repo
+  # + deploy key. Writes the Apple Distribution cert + one "match AppStore
+  # <id>" profile per bundle id into the encrypted match repo. CI never
+  # runs this; CI signs read-only via the `sign` lane (readonly: is_ci).
+  lane :match_bootstrap do
+    match(
+      type: "appstore",
+      app_identifier: ALL_APP_IDENTIFIERS,
+      git_url: ENV["MATCH_GIT_URL"],
+      api_key: asc_key,
+      readonly: false,
+      force_for_new_devices: false
+    )
+  end
+
   desc "Build + sign + upload to TestFlight"
   # WatchApp bundling: the iOS `App` scheme has an "Embed Watch Content"
   # build phase that copies WatchApp.app into App.app/Watch/. Verified

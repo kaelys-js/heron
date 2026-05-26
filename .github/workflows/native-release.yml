@@ -88,6 +88,10 @@ on:
         required: false
       MATCH_PASSWORD:
         required: false
+      # Repo-scoped SSH deploy key for the private match certs repo (so CI
+      # can clone it read-only). Provisioned by setup:native.
+      MATCH_GIT_PRIVATE_KEY:
+        required: false
       APP_STORE_CONNECT_KEY_ID:
         required: false
       APP_STORE_CONNECT_ISSUER_ID:
@@ -176,13 +180,14 @@ jobs:
           MAC_CERTIFICATE_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_PRIVATE_KEY: ${{ secrets.MATCH_GIT_PRIVATE_KEY }}
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
         run: |
           missing=()
           for var in APPLE_TEAM_ID MAC_CERTIFICATE MAC_CERTIFICATE_PASSWORD \
-                     MATCH_GIT_URL MATCH_PASSWORD \
+                     MATCH_GIT_URL MATCH_PASSWORD MATCH_GIT_PRIVATE_KEY \
                      APP_STORE_CONNECT_KEY_ID APP_STORE_CONNECT_ISSUER_ID APP_STORE_CONNECT_PRIVATE_KEY; do
             if [ -z "${!var}" ]; then
               missing+=("$var")
@@ -737,6 +742,26 @@ jobs:
       - name: Capacitor sync (ios)
         working-directory: ui
         run: pnpm exec cap sync ios
+
+      # match clones the PRIVATE certs repo over SSH. setup:native registers
+      # a repo-scoped deploy key and stores its private half as the
+      # MATCH_GIT_PRIVATE_KEY secret; load it so the `git@github.com:...`
+      # MATCH_GIT_URL resolves. match runs read-only here (Fastfile
+      # readonly: is_ci); the key's write access is used only by the
+      # one-time local bootstrap, never on CI.
+      - name: Configure SSH for the match certs repo
+        env:
+          MATCH_GIT_PRIVATE_KEY: ${{ secrets.MATCH_GIT_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$MATCH_GIT_PRIVATE_KEY" > ~/.ssh/match_ed25519
+          chmod 600 ~/.ssh/match_ed25519
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+          {
+            echo 'Host github.com'
+            echo '  IdentityFile ~/.ssh/match_ed25519'
+            echo '  IdentitiesOnly yes'
+          } >> ~/.ssh/config
 
       - name: Build + upload to TestFlight via Fastlane
         working-directory: ui/ios/App
