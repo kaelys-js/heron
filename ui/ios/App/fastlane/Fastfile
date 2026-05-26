@@ -293,6 +293,7 @@ platform :ios do
     )
 
     ensure_internal_delivery
+    set_privacy_and_age_rating
   end
 
   desc "Zero-touch TestFlight: an internal group that auto-receives every"
@@ -365,6 +366,88 @@ platform :ios do
       UI.important(msg)
       puts "::warning title=TestFlight invite::#{msg}" if is_ci
     end
+  end
+
+  desc "Set the App Store privacy nutrition label + age rating (ASC API)"
+  # App-level metadata `deliver` can't set. Best-effort + loud (mirrors
+  # ensure_internal_delivery): a hiccup must not fail an otherwise-good build
+  # + upload. Age rating derives from brand contentRating; the privacy label
+  # mirrors brand.store.appStore.privacy (kept in sync with
+  # PrivacyInfo.xcprivacy). Runs on every beta so privacy/age stay current
+  # ahead of any submission.
+  private_lane :set_privacy_and_age_rating do
+    begin
+      app = Spaceship::ConnectAPI::App.all.find { |a| a.bundle_id == APP_IDENTIFIER }
+      raise "App Store Connect app not found for #{APP_IDENTIFIER}" unless app
+      apply_age_rating(app)
+      apply_privacy_label(app)
+      UI.success("privacy + age rating applied for #{APP_IDENTIFIER}")
+    rescue => e
+      msg = "privacy/age-rating setup FAILED (build + upload still OK): #{e.message}"
+      UI.important(msg)
+      puts "::warning title=Privacy/Age::#{msg}" if is_ci
+    end
+  end
+
+  # "4+": every content descriptor NONE and every boolean false, no override
+  # -- ASC then computes 4+. Only 4+ is mapped (Heron has no objectionable
+  # content); a higher brand rating needs its own descriptors, so fail loud
+  # rather than mis-declare. Field set per spaceship 2.234 (2025 overhaul).
+  def apply_age_rating(app)
+    rating = brand_app_store.fetch("contentRating", "4+").to_s
+    UI.user_error!("age rating '#{rating}' not mapped (only 4+ implemented)") unless rating == "4+"
+    app_info = app.fetch_edit_app_info
+    raise "no editable app info (need PREPARE_FOR_SUBMISSION to set age rating)" unless app_info
+    decl = app_info.fetch_age_rating_declaration
+    raise "app info has no age rating declaration" unless decl
+    ratings = %w[
+      alcoholTobaccoOrDrugUseOrReferences contests gamblingSimulated gunsOrOtherWeapons
+      horrorOrFearThemes matureOrSuggestiveThemes medicalOrTreatmentInformation
+      profanityOrCrudeHumor sexualContentGraphicAndNudity sexualContentOrNudity
+      violenceCartoonOrFantasy violenceRealisticProlongedGraphicOrSadistic violenceRealistic
+    ]
+    booleans = %w[
+      advertising ageAssurance gambling healthOrWellnessTopics lootBox messagingAndChat
+      parentalControls unrestrictedWebAccess userGeneratedContent
+    ]
+    attributes = {}
+    ratings.each { |k| attributes[k] = "NONE" }
+    booleans.each { |k| attributes[k] = false }
+    attributes["ageRatingOverrideV2"] = "NONE"
+    Spaceship::ConnectAPI.patch_age_rating_declaration(age_rating_declaration_id: decl.id, attributes: attributes)
+    UI.message("age rating: 4+ (all descriptors NONE/false)")
+  end
+
+  # Privacy nutrition label rebuilt from brand each run (delete existing,
+  # recreate, publish) so it is deterministic. Each data type expands to one
+  # usage row per purpose. Categories/purposes/protections are ASC enum ids.
+  def apply_privacy_label(app)
+    types = brand_app_store.dig("privacy", "dataTypes") || []
+    raise "brand.store.appStore.privacy.dataTypes is empty" if types.empty?
+    Spaceship::ConnectAPI::AppDataUsage.all(app_id: app.id).each(&:delete!)
+    types.each do |t|
+      Array(t["purposes"]).each do |purpose|
+        Spaceship::ConnectAPI::AppDataUsage.create(
+          app_id: app.id,
+          app_data_usage_category_id: t["category"],
+          app_data_usage_protection_id: t["protection"],
+          app_data_usage_purpose_id: purpose
+        )
+      end
+    end
+    state = Spaceship::ConnectAPI.get_app_data_usages_publish_state(app_id: app.id).to_models.first
+    if state
+      Spaceship::ConnectAPI.patch_app_data_usages_publish_state(app_data_usages_publish_state_id: state.id, published: true)
+    end
+    UI.message("privacy label: #{types.map { |t| t['category'] }.join(', ')} (published)")
+  end
+
+  # branding/brand.json -> store.appStore, memoized. Path walks up out of
+  # fastlane -> App -> ios -> ui -> repo root.
+  def brand_app_store
+    require "json"
+    @brand_app_store ||=
+      JSON.parse(File.read(File.expand_path("../../../../branding/brand.json", __dir__))).dig("store", "appStore") || {}
   end
 
   desc "Upload App Store metadata + screenshots without rebuilding the IPA"

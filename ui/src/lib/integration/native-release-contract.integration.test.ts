@@ -20,6 +20,9 @@ const setup = read('scripts/native/setup.mjs');
 const doctor = read('scripts/native/doctor.mjs');
 const iosFastfile = read('ui/ios/App/fastlane/Fastfile');
 const buildGradle = read('ui/android/app/build.gradle');
+const applyBrand = read('scripts/native/apply-brand.mjs');
+const brand = JSON.parse(read('branding/brand.json'));
+const privacyManifest = read('ui/ios/App/App/PrivacyInfo.xcprivacy');
 
 // Apple signing secrets that MUST flow producer -> checker -> consumer.
 const APPLE_SIGNING = [
@@ -115,6 +118,53 @@ describe('native-release contract — iOS signing via match', () => {
     expect(iosFastfile, 'extension App IDs need App Groups enabled').toContain(
       'create_capability("APP_GROUPS")',
     );
+  });
+});
+
+describe('native-release contract — App Store privacy label + age rating (#4D)', () => {
+  it('ITSAppUsesNonExemptEncryption derives from brand export-compliance', () => {
+    expect(applyBrand, 'apply-brand must derive the encryption flag').toContain(
+      'ITSAppUsesNonExemptEncryption',
+    );
+    expect(applyBrand).toContain('exportComplianceEncryptionExempt');
+  });
+
+  it('the lane uses the ASC age-rating + data-usage + publish endpoints', () => {
+    expect(iosFastfile).toContain('set_privacy_and_age_rating');
+    expect(iosFastfile, 'age rating via patch_age_rating_declaration').toContain(
+      'patch_age_rating_declaration',
+    );
+    expect(iosFastfile, 'privacy via AppDataUsage').toContain('AppDataUsage');
+    expect(iosFastfile, 'must publish the data usages').toContain(
+      'patch_app_data_usages_publish_state',
+    );
+    expect(iosFastfile, 'age + privacy derive from brand.json').toContain('brand_app_store');
+  });
+
+  it('age rating derives from brand contentRating (4+)', () => {
+    expect(brand.store.appStore.contentRating).toBe('4+');
+  });
+
+  it('the ASC privacy label MUST match PrivacyInfo.xcprivacy', () => {
+    // The two declarations Apple cross-checks: the brand-derived nutrition
+    // label and the on-device privacy manifest must agree on what is collected.
+    const categories = brand.store.appStore.privacy.dataTypes.map(
+      (t: { category: string }) => t.category,
+    );
+    expect(categories).toContain('EMAIL_ADDRESS');
+    expect(categories).toContain('CRASH_DATA');
+    expect(privacyManifest, 'manifest declares email').toContain(
+      'NSPrivacyCollectedDataTypeEmailAddress',
+    );
+    expect(privacyManifest, 'manifest declares crash').toContain(
+      'NSPrivacyCollectedDataTypeCrashData',
+    );
+    // Neither declaration may mark data as used for tracking.
+    expect(privacyManifest).toContain('<key>NSPrivacyTracking</key>');
+    const tracked = brand.store.appStore.privacy.dataTypes.some(
+      (t: { protection: string }) => t.protection === 'DATA_USED_TO_TRACK_YOU',
+    );
+    expect(tracked, 'brand privacy must not declare tracking').toBe(false);
   });
 });
 

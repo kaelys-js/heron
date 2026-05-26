@@ -814,6 +814,14 @@ function applyIosInfoPlist(brand) {
     return;
   }
   let body = readFileSync(path, 'utf8');
+  // ITSAppUsesNonExemptEncryption: derived from brand export-compliance.
+  // uses-encryption AND not-exempt => true (needs compliance docs); the
+  // common case (HTTPS/TLS + system crypto only, exempt) => false, which
+  // suppresses the per-upload TestFlight export-compliance prompt.
+  const appStore = brand.store?.appStore ?? {};
+  const usesNonExemptEncryption = !!(
+    appStore.exportComplianceUsesEncryption && !appStore.exportComplianceEncryptionExempt
+  );
   const subs = [
     // CFBundleDisplayName
     [
@@ -915,6 +923,12 @@ function applyIosInfoPlist(brand) {
     [
       /(<key>NSHumanReadableCopyright<\/key>\s*\n\s*<string>)[^<]*(<\/string>)/,
       `$1${brand.copyright}$2`,
+    ],
+    // ITSAppUsesNonExemptEncryption (boolean) -- derived above from
+    // brand.store.appStore export-compliance flags.
+    [
+      /(<key>ITSAppUsesNonExemptEncryption<\/key>\s*\n\s*<)(?:true|false)(\/>)/,
+      `$1${usesNonExemptEncryption ? 'true' : 'false'}$2`,
     ],
   ];
   let changed = false;

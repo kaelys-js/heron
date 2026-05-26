@@ -404,6 +404,20 @@
       "primaryCategory": "PRODUCTIVITY",
       "secondaryCategory": "BUSINESS",
       "contentRating": "4+",
+      "privacy": {
+        "dataTypes": [
+          {
+            "category": "EMAIL_ADDRESS",
+            "protection": "DATA_LINKED_TO_YOU",
+            "purposes": ["APP_FUNCTIONALITY"]
+          },
+          {
+            "category": "CRASH_DATA",
+            "protection": "DATA_NOT_LINKED_TO_YOU",
+            "purposes": ["APP_FUNCTIONALITY", "ANALYTICS"]
+          }
+        ]
+      },
       "reviewerNotes": "Heron is a personal job-search productivity tool. The app reads job postings the user pastes, drafts tailored CVs/cover letters locally, and tracks application status in a local SQLite database. No personal data leaves the device unless the user explicitly signs in with their own LLM API key (Anthropic / OpenAI / Google). Demo account: not applicable -- the app is single-user / self-hosted by design.",
       "demoAccount": null,
       "exportComplianceUsesEncryption": true,
