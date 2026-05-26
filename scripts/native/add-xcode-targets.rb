@@ -763,6 +763,7 @@ TEST_TARGETS.each do |t|
   bundle_id = "#{bundle_root}.#{t[:bundle_suffix]}"
   is_watch = t[:sdk] == "watchos"
   is_logic = t[:logic_test] == true
+  is_uitest = t[:type] == "com.apple.product-type.bundle.ui-testing"
   platform = is_watch ? :watchos : :ios
 
   existing = project.targets.find { |x| x.name == t[:name] }
@@ -777,6 +778,15 @@ TEST_TARGETS.each do |t|
         # xcodebuild trying to inject into a non-existent .app.
         bc.build_settings.delete("TEST_HOST")
         bc.build_settings.delete("BUNDLE_LOADER")
+      elsif is_uitest
+        # UI-test bundles drive the app via XCUIApplication and carry
+        # USES_XCTRUNNER (implied by the ui-testing product type). xcodebuild
+        # rejects "sets both USES_XCTRUNNER and TEST_HOST", so strip the
+        # hosted-test keys and bind the runner to the app with
+        # TEST_TARGET_NAME instead. Heals an earlier mis-generated config.
+        bc.build_settings.delete("TEST_HOST")
+        bc.build_settings.delete("BUNDLE_LOADER")
+        bc.build_settings["TEST_TARGET_NAME"] = t[:host]
       end
     end
   else
@@ -793,7 +803,12 @@ TEST_TARGETS.each do |t|
         "GENERATE_INFOPLIST_FILE" => "YES",
         "TARGETED_DEVICE_FAMILY" => is_watch ? "4" : "1,2",
       }
-      unless is_logic
+      if is_uitest
+        # UI tests drive the app externally -- bind via TEST_TARGET_NAME,
+        # never TEST_HOST/BUNDLE_LOADER (xcodebuild rejects that combined
+        # with the USES_XCTRUNNER the ui-testing product type implies).
+        settings["TEST_TARGET_NAME"] = t[:host]
+      elsif !is_logic
         # Hosted tests need TEST_HOST + BUNDLE_LOADER pointing at a real
         # `.app` product. The test bundle is injected at runtime.
         settings["TEST_HOST"] = "$(BUILT_PRODUCTS_DIR)/#{t[:host]}.app/#{t[:host]}"
