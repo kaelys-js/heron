@@ -77,9 +77,17 @@ const config = {
   },
   electron: {
     customUrlScheme: 'heron',
-    trayIconAndMenuEnabled: true,
+    // DesktopTray (electron/src/tray.ts) is the real, brand-aware tray with
+    // the full backend/open/quit menu. The Capacitor template tray (spawned
+    // by ElectronCapacitorApp when this is true) would be a SECOND, redundant
+    // menu-bar icon -- keep it off.
+    trayIconAndMenuEnabled: false,
     deepLinkingEnabled: true,
-    splashScreenEnabled: true,
+    // No splash window: it only ever showed the stale upstream
+    // assets/splash.png (never brand-derived), and the main window now
+    // reveals on ready-to-show / dom-ready (see setup.ts revealMainWindow),
+    // so a separate splash adds a flash of unbranded art with no benefit.
+    splashScreenEnabled: false,
   },
   server: {
     /**

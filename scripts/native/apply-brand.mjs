@@ -2509,6 +2509,8 @@ function applyElectronBrandTs(brand) {
     `  mdnsType: ${JSON.stringify(brand.identifiers.mdnsType)},`,
     `  repoUrl: ${JSON.stringify(brand.repo.url)},`,
     `  issuesUrl: ${JSON.stringify(brand.repo.issues)},`,
+    `  homepageUrl: ${JSON.stringify(brand.homepageUrl)},`,
+    `  copyright: ${JSON.stringify(brand.copyright)},`,
     `} as const;`,
     ``,
   ].join('\n');

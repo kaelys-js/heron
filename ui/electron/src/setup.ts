@@ -168,10 +168,17 @@ export class ElectronCapacitorApp {
       width: safe.width,
       height: safe.height,
       webPreferences: {
-        nodeIntegration: true,
+        // The renderer is the SvelteKit web app -- it must NOT have direct
+        // Node access. Everything it needs (Capacitor plugin IPC + our
+        // namespaced event bridge) is exposed through the contextBridge in
+        // preload.ts + rt/electron-rt.ts, so nodeIntegration stays OFF and
+        // contextIsolation ON (Electron security baseline).
+        nodeIntegration: false,
         contextIsolation: true,
-        // Use preload to inject the electron varriant overrides for capacitor plugins.
-        // preload: join(app.getAppPath(), "node_modules", "@capacitor-community", "electron", "dist", "runtime", "electron-rt.js"),
+        // sandbox stays false: preload.ts does `require('./rt/electron-rt')`
+        // (a relative require), which a sandboxed preload cannot resolve.
+        // Enabling sandbox needs the preload bundled to a single file first.
+        sandbox: false,
         preload: preloadPath,
       },
     });

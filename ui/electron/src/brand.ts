@@ -11,4 +11,6 @@ export const BRAND = {
   mdnsType: "heron",
   repoUrl: "https://github.com/kaelys-js/heron",
   issuesUrl: "https://github.com/kaelys-js/heron/issues",
+  homepageUrl: "https://heron.app",
+  copyright: "© 2026 Heron contributors (original work © 2026 santifer). Licensed under the MIT License.",
 } as const;
