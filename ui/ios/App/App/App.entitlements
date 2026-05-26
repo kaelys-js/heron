@@ -26,14 +26,5 @@
 	     needs it. -->
 	<key>aps-environment</key>
 	<string>development</string>
-
-	<!-- Background fetch + processing — heron uses BGAppRefreshTask
-	     to poll high-priority Issues when the WebView's SSE connection
-	     dropped. BGProcessingTask handles longer-running maintenance. -->
-	<key>com.apple.developer.background-tasks</key>
-	<array>
-		<string>com.resistjs.heron.refresh</string>
-		<string>com.resistjs.heron.maintenance</string>
-	</array>
 </dict>
 </plist>

@@ -99,6 +99,20 @@
 		<string>processing</string>
 	</array>
 
+	<!-- BGTaskScheduler permitted identifiers: the refresh + maintenance task
+	     ids the app registers (BGAppRefreshTask / BGProcessingTask). This is
+	     the correct home for them; it is NOT a code-signing entitlement. -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.resistjs.heron.refresh</string>
+		<string>com.resistjs.heron.maintenance</string>
+	</array>
+
+	<!-- Live Activities (ActivityKit): presented by the app, rendered by the
+	     AppLiveActivity widget extension. Info.plist flag, not an entitlement. -->
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+
 	<!-- App Transport Security: allow http:// to local servers (Capacitor
 	     server cleartext = true mirrors this on the JS side). -->
 	<key>NSAppTransportSecurity</key>

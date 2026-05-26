@@ -319,19 +319,17 @@ EXTENSIONS.each do |ext|
     puts "    + Info.plist"
   end
 
-  # Generate Entitlements with App Group + Live Activity if applicable.
-  # File lives at `<source_dir>/<extension-name>.entitlements`, NOT under
-  # a nested `<source_dir>/Extensions/<name>.entitlements` (a stale bug
-  # from a prior layout where source_dir was a basename instead of a
-  # repo-relative path).
+  # Generate Entitlements with just the App Group. Live Activities is NOT a
+  # code-signing entitlement -- it's the app's Info.plist NSSupportsLiveActivities
+  # flag; putting com.apple.developer.live-activities here only breaks profile
+  # qualification ("profile doesn't include the entitlement"). File lives at
+  # `<source_dir>/<extension-name>.entitlements`, NOT a nested path (stale bug
+  # from when source_dir was a basename instead of a repo-relative path).
   entitlements_path = File.join(source_dir_abs, "#{ext[:name]}.entitlements")
   unless File.exist?(entitlements_path)
     entitlements = {
       "com.apple.security.application-groups" => [app_group],
     }
-    if ext[:bundle_suffix] == "liveactivity"
-      entitlements["com.apple.developer.live-activities"] = true
-    end
     File.write(entitlements_path, Plist::Emit.dump(entitlements))
     puts "    + #{File.basename(entitlements_path)}"
   end
