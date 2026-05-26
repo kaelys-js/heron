@@ -51,7 +51,11 @@ run('node', [join(ROOT, 'scripts/native/apply-brand.mjs')], { silent: true });
 step(3, 'Ensuring electron deps');
 const electronDir = join(UI, 'electron');
 const electronModule = join(electronDir, 'node_modules', 'electron');
-run('npm', ['install', '--no-audit', '--no-fund', '--foreground-scripts'], {
+// pnpm, not npm: ui/electron's deps use pnpm's `catalog:` protocol, which npm
+// rejects ("EUNSUPPORTEDPROTOCOL Unsupported URL Type catalog:"). pnpm install
+// from inside the workspace resolves the whole workspace (idempotent + fast if
+// already installed).
+run('pnpm', ['install'], {
   cwd: electronDir,
   allowFail: true,
 });

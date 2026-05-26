@@ -360,7 +360,11 @@ jobs:
           APPLE_API_KEY_ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APPLE_API_KEY: ${{ env.APPLE_API_KEY_PATH }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: pnpm run electron:make
+        # Publish only on real releases (tag push / workflow_call from
+        # release.yml). On workflow_dispatch test runs, build every target but
+        # do NOT publish: the v0.1.0 GitHub Release is immutable, so attaching
+        # assets fails ("Cannot upload assets to an immutable release").
+        run: pnpm run ${{ github.event_name == 'workflow_dispatch' && 'electron:make:test' || 'electron:make' }}
 
       # Mac App Store (.pkg) upload via ASC API.
       #
