@@ -139,14 +139,17 @@ async function loadSharp() {
   process.exit(1);
 }
 
-async function renderAtSize(sharp, svg, size, outPath) {
-  await sharp(svg)
-    .resize(Math.round(size), Math.round(size), {
-      fit: 'contain',
-      background: { r: 0, g: 0, b: 0, alpha: 0 },
-    })
-    .png()
-    .toFile(outPath);
+async function renderAtSize(sharp, svg, size, outPath, opaque = false) {
+  let pipe = sharp(svg).resize(Math.round(size), Math.round(size), {
+    fit: 'contain',
+    background: { r: 0, g: 0, b: 0, alpha: 0 },
+  });
+  // App Store app icons (iOS + watchOS) must have NO alpha channel -- App
+  // Store Connect rejects transparent/alpha icons. Flatten onto the brand
+  // dark background to drop the channel. macOS / web icons keep their alpha
+  // (squircle shape, favicon transparency).
+  if (opaque) pipe = pipe.flatten({ background: '#0e1014' });
+  await pipe.png().toFile(outPath);
 }
 
 async function readCacheKey() {
@@ -177,6 +180,9 @@ async function main() {
     sizes: SIZES,
     ios: IOS_SLOTS.map((s) => `${s.name}:${s.size}@${s.scale}`),
     icns: ICNS_SIZES,
+    // Bump when render LOGIC changes (not just the matrix), so the cache
+    // busts. v2: iOS + watch app icons flattened opaque (no alpha channel).
+    renderRev: 2,
   });
   const key = createHash('sha256').update(svgBuffer).update(matrixKey).digest('hex').slice(0, 16);
   const prev = await readCacheKey();
@@ -236,7 +242,7 @@ async function main() {
   for (const slot of IOS_SLOTS) {
     const px = Math.round(slot.size * slot.scale);
     const out = path.join(iosDir, slot.name);
-    await renderAtSize(sharp, svgBuffer, px, out);
+    await renderAtSize(sharp, svgBuffer, px, out, true);
     iosContents.images.push({
       idiom: slot.idiom,
       size: `${slot.size}x${slot.size}`,
@@ -249,7 +255,7 @@ async function main() {
   // 1024 source on devices that support per-appearance icons.
   for (const appearance of ['dark', 'tinted']) {
     const fname = `AppIcon-1024-${appearance}.png`;
-    await renderAtSize(sharp, svgBuffer, 1024, path.join(iosDir, fname));
+    await renderAtSize(sharp, svgBuffer, 1024, path.join(iosDir, fname), true);
     iosContents.images.push({
       idiom: 'universal',
       platform: 'ios',
@@ -524,7 +530,7 @@ async function main() {
       .then(() => true)
       .catch(() => false);
     if (exists) {
-      await renderAtSize(sharp, svgBuffer, 1024, path.join(watchIconDir, 'AppIcon-1024.png'));
+      await renderAtSize(sharp, svgBuffer, 1024, path.join(watchIconDir, 'AppIcon-1024.png'), true);
       console.log('  watchOS AppIcon-1024.png rendered');
     }
   } catch {

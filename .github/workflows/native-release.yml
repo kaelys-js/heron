@@ -656,10 +656,6 @@ jobs:
       contents: write # gh release upload (TestFlight + GitHub Release)
       id-token: write # SLSA / Sigstore provenance
       attestations: write # GitHub attestations API
-    env:
-      # Pinned Xcode version -- keeps Swift toolchain consistent with
-      # .mise.toml + test.yml's `ios` job. Bump in lockstep.
-      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
     steps:
       - name: Harden runner
         # G4 -- iOS build runner. Handles Apple ASC API key + signing
@@ -673,6 +669,22 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
+
+      # App Store Connect now requires the iOS 26 SDK (Xcode 26+); the runner's
+      # default Xcode is older. Select the newest Xcode 26.x on the image and
+      # fail fast (listing what IS available) if none, so we never burn a full
+      # archive only to be rejected at upload.
+      - name: Select Xcode 26 (iOS 26 SDK)
+        run: |
+          XC=$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort -V | tail -1)
+          if [ -z "$XC" ]; then
+            echo "::error::No Xcode 26 on this runner -- bump runs-on. Installed:"
+            find /Applications -maxdepth 1 -name 'Xcode_*.app'
+            exit 1
+          fi
+          sudo xcode-select -s "$XC/Contents/Developer"
+          echo "DEVELOPER_DIR=$XC/Contents/Developer" >> "$GITHUB_ENV"
+          xcodebuild -version
 
       # mise pins Node + pnpm + Ruby together so Fastlane uses the same
       # Ruby version we develop against locally.
