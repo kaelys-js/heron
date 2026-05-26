@@ -259,7 +259,6 @@ platform :ios do
       project: PROJECT,
       scheme: SCHEME,
       export_method: "app-store",
-      api_key: api_key,
       # Hybrid signing: `sign` (match) installed the shared distribution cert;
       # Xcode auto-provisions the app group + capabilities + profiles from the
       # entitlements via -allowProvisioningUpdates (the ASC API can't associate
