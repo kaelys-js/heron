@@ -86,7 +86,6 @@
         "src/**/*.mjs",
         "src/**/*.d.ts",
         "src/app.html",
-        "static/**",
         "svelte.config.ts",
         "vite.config.ts",
         "tsconfig.json",
@@ -155,6 +154,8 @@
       "outputs": [".vitest-cache/**"],
       "inputs": [
         "src/**",
+        "!src/**/*.component.test.ts",
+        "!src/**/*.svelte.test.ts",
         "static/**",
         "vite.config.ts",
         "vitest.config.ts",
@@ -169,6 +170,8 @@
       "outputs": ["coverage/**"],
       "inputs": [
         "src/**",
+        "!src/**/*.component.test.ts",
+        "!src/**/*.svelte.test.ts",
         "static/**",
         "vite.config.ts",
         "vitest.config.ts",
