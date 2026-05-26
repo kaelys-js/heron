@@ -1551,3 +1551,76 @@ jobs:
           echo "                     AppShareExtensionTests / WatchTests)"
           echo "  • android flag → ui/android/app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
           echo "Combined PR comment posted by Codecov once all flags arrive."
+
+  # ── Verify (full gate) ──────────────────────────────────────────────
+  # The SAME `pnpm verify` pipeline pre-commit + pre-push run -- typecheck +
+  # build + tests + every linter (swiftlint/ktlint/ruff/shfmt/yamllint/taplo/
+  # actionlint) + every gate (no-slop/comment-style/english-only/modes/csp/
+  # json-schemas/lockfile/...). ALWAYS runs (no path gate) so a docs-only PR
+  # can't skip the content gates -- that was the --no-verify bypass hole.
+  # The only checks NOT here (by design) are E2E, Lost Pixel, CodeQL,
+  # Scorecard, zizmor, and dependency-review, which keep their own jobs.
+  verify-full:
+    name: Verify (full gate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Setup mise (full toolchain)
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
+        with:
+          experimental: true
+          cache: true
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Cache pnpm store
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+      - name: Cache turbo
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: |
+            .turbo
+            ui/.turbo
+            ui/electron/.turbo
+          key: turbo-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ github.ref_name }}-
+            turbo-${{ runner.os }}-main-
+            turbo-${{ runner.os }}-
+      - name: Cache Vitest
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: |
+            ui/.vitest-cache
+            ui/coverage
+          key: vitest-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml', 'ui/vitest.config.ts', 'ui/vitest.base.ts') }}
+          restore-keys: |
+            vitest-${{ runner.os }}-
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: pnpm verify (typecheck + build + tests + every linter + every gate)
+        run: pnpm verify
+      # ui-component (browser) tests need Playwright; they run here in CI
+      # rather than in the shared `pnpm verify` so local pre-commit/pre-push
+      # don't require a browser install. Closes the "ui-component runs
+      # nowhere" hole.
+      - name: Install Playwright browsers (chromium + webkit)
+        run: pnpm --filter ui exec playwright install --with-deps chromium webkit
+      - name: Vitest ui-component (browser project)
+        run: pnpm --filter ui exec vitest run --project=ui-component
