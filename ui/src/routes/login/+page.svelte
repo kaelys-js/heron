@@ -76,8 +76,18 @@
     if (haystack.includes('not supported') || haystack.includes('unsupported')) {
       return "This device doesn't support passkeys.";
     }
-    if (haystack.includes('network') || haystack.includes('fetch')) {
-      return "Couldn't reach the server. Check your connection.";
+    if (
+      haystack.includes('network') ||
+      haystack.includes('fetch') ||
+      // WebKit/iOS surface a failed fetch as the bare TypeError "Load failed"
+      // (Chrome says "Failed to fetch", Firefox "NetworkError") -- none of which
+      // contain "network", so match the WebKit phrasing explicitly. This is the
+      // exact message users saw when the backend was unreachable on iOS.
+      haystack.includes('load failed') ||
+      haystack.includes('connection') ||
+      haystack.includes('offline')
+    ) {
+      return "Couldn't reach the server. Open Heron on your computer (same Wi-Fi), then try again.";
     }
     if (haystack.includes('invalid state') || haystack.includes('invalidstate')) {
       return 'This passkey is already set up — try signing in again.';

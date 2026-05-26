@@ -1,4 +1,5 @@
 import { redirect } from '@sveltejs/kit';
+import { dev } from '$app/environment';
 import { loadAllJobs } from '$lib/server/parsers';
 import { isFreshInstall } from '$lib/server/onboarding';
 import { readProfiles } from '$lib/server/profiles';
@@ -30,6 +31,8 @@ export async function load({ url, locals }: { url: URL; locals: App.Locals }) {
     !url.pathname.startsWith('/onboarding') &&
     !url.pathname.startsWith('/api') &&
     !url.pathname.startsWith('/help') &&
+    // Dev-only view gallery is exempt so it opens directly on a fresh install.
+    !(dev && url.pathname.startsWith('/dev')) &&
     // Multi-user auth pages bypass the onboarding redirect. A user who
     // already has an account on a fresh install (e.g. partner being
     // invited) needs to reach /login or /signup directly.
