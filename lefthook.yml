@@ -131,51 +131,31 @@ pre-commit:
       # with prettier-plugin-svelte for those files only -- style matches
       # biome.jsonc so .ts and .svelte feel identical.
       #
-      # PRE-FIX BUG (caught during the verification-loop commit that
-      # introduced this comment): the previous form did `cd ui` then
-      # passed {staged_files} verbatim -- but lefthook always interpolates
-      # {staged_files} as repo-relative paths (`ui/src/...`). From inside
-      # `ui/` those resolved to `ui/ui/src/...` which doesn't exist, so
-      # prettier silently no-op'd (because of `|| true`), the file stayed
-      # unformatted, and the prettier-svelte-check verification pass
-      # below caught it and failed the commit. Net effect: every commit
-      # touching a .svelte file required a manual `pnpm exec prettier
-      # --write` BEFORE staging -- which defeats the whole point of an
-      # auto-format hook.
+      # SERIAL write -> re-stage -> check, all in ONE step (mirrors the
+      # biome format-pipeline above). This used to be two hooks -- a
+      # `prettier-svelte` writer and a separate `prettier-svelte-check`
+      # verifier. pre-commit runs hooks in parallel (see `parallel: true`),
+      # so the checker could read a .svelte file BEFORE the writer finished
+      # reformatting it: the commit failed with a spurious "Code style
+      # issues found" even though the write had already fixed the file, and
+      # a plain retry "worked" (the file was formatted on disk by then).
+      # Folding write + check into one ordered step removes the race.
       #
-      # The fix mirrors prettier-svelte-check below: run from the repo
-      # root with `pnpm -C ui` and strip the leading `ui/` from each
-      # path via awk (anchored to ^ui/ so paths with `ui/` in the
-      # middle, e.g. `ui/src/lib/components/ui/sonner/sonner.svelte`,
-      # stay intact). `--write` makes the formatting authoritative;
-      # the subsequent `git add` re-stages the formatted versions
-      # and `stage_fixed: true` confirms lefthook reuses them.
+      # Paths: lefthook interpolates {staged_files} as repo-relative
+      # (`ui/src/...`). We run prettier with `pnpm -C ui` and strip the
+      # leading `ui/` from each path via awk (anchored to ^ui/ so a path
+      # with `ui/` in the MIDDLE, e.g.
+      # `ui/src/lib/components/ui/sonner/sonner.svelte`, stays intact).
+      # `--write` is authoritative; `git add` + `stage_fixed: true`
+      # re-stage the formatted blob; the final `--check` (no `|| true`)
+      # still fails the commit on a genuinely unformattable file.
       glob: "*.svelte"
       run: |
         FILES=$(echo {staged_files} | awk '{for(i=1;i<=NF;i++){sub(/^ui\//,"",$i);printf "%s ",$i}}')
         pnpm -C ui exec prettier --write $FILES --ignore-path .prettierignore 2>/dev/null || true
         git add {staged_files} 2>/dev/null || true
+        pnpm -C ui exec prettier --check $FILES --ignore-path .prettierignore
       stage_fixed: true
-
-    prettier-svelte-check:
-      # Verification pass for .svelte files (mirrors biome-format-check).
-      # Run prettier from the repo ROOT (where .prettierrc.json + the
-      # ui workspace's prettier binary both resolve via npx) so the
-      # {staged_files} repo-relative paths (`ui/src/...`) match. The
-      # original `cd ui` form broke for new files because prettier
-      # resolved the paths against ui/, looking for `ui/ui/src/...`.
-      #
-      # The sed strips the leading `ui/` from every file in the
-      # space-separated list so prettier (run with -C ui) sees the
-      # paths relative to its workspace root. CRITICAL: the leading
-      # token must be `^ui/` or ` ui/` (boundary-anchored), NOT a
-      # plain `ui/` with /g. Plain /g would mangle paths that have
-      # `ui/` in the MIDDLE -- e.g. `ui/src/lib/components/ui/sonner/...`
-      # collapses to `src/lib/components/sonner/...` which prettier
-      # can't find. We use awk to map per-token so the anchoring is
-      # unambiguous regardless of how many `ui/`s appear in the path.
-      glob: "*.svelte"
-      run: pnpm -C ui exec prettier --check $(echo {staged_files} | awk '{for(i=1;i<=NF;i++){sub(/^ui\//,"",$i);printf "%s ",$i}}') --ignore-path .prettierignore
 
     typecheck:
       # Type-check ui/ + ui/electron/ on every commit via turbo's per-

@@ -123,10 +123,10 @@ jobs:
               # Vite + Vitest config drives the test runner config
               - 'vite.config.ts'
               - 'vitest.config.ts'
-              - 'vitest.workspace.ts'
+              - 'vitest.base.ts'
               - 'ui/vite.config.ts'
               - 'ui/vitest.config.ts'
-              - 'ui/vitest.workspace.ts'
+              - 'ui/vitest.base.ts'
               - 'ui/electron/vitest.config.ts'
               # Test-setup + helper changes can affect every test
               - 'ui/src/test-setup.ts'
@@ -314,7 +314,7 @@ jobs:
           path: |
             ui/.vitest-cache
             ui/coverage
-          key: vitest-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml', 'ui/vitest.config.ts', 'ui/vitest.workspace.ts') }}
+          key: vitest-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml', 'ui/vitest.config.ts', 'ui/vitest.base.ts') }}
           restore-keys: |
             vitest-${{ runner.os }}-
 
