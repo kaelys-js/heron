@@ -650,7 +650,7 @@ jobs:
   build-ios:
     name: Build iOS (TestFlight)
     needs: preflight
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 60
     permissions:
       contents: write # gh release upload (TestFlight + GitHub Release)
@@ -670,20 +670,13 @@ jobs:
         with:
           persist-credentials: false
 
-      # App Store Connect now requires the iOS 26 SDK (Xcode 26+); the runner's
-      # default Xcode is older. Select the newest Xcode 26.x on the image and
-      # fail fast (listing what IS available) if none, so we never burn a full
-      # archive only to be rejected at upload.
-      - name: Select Xcode 26 (iOS 26 SDK)
+      # macos-26 ships Xcode 26 (the iOS 26 SDK App Store now requires) as its
+      # default. If the image also carries a newer versioned Xcode 26.x, prefer
+      # it; otherwise the default is already correct. Logged for the record.
+      - name: Use Xcode 26 (iOS 26 SDK)
         run: |
           XC=$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort -V | tail -1)
-          if [ -z "$XC" ]; then
-            echo "::error::No Xcode 26 on this runner -- bump runs-on. Installed:"
-            find /Applications -maxdepth 1 -name 'Xcode_*.app'
-            exit 1
-          fi
-          sudo xcode-select -s "$XC/Contents/Developer"
-          echo "DEVELOPER_DIR=$XC/Contents/Developer" >> "$GITHUB_ENV"
+          [ -n "$XC" ] && sudo xcode-select -s "$XC/Contents/Developer"
           xcodebuild -version
 
       # mise pins Node + pnpm + Ruby together so Fastlane uses the same
