@@ -309,7 +309,7 @@ platform :ios do
         # spaceship's create_beta_group always sends publicLinkLimitEnabled,
         # which ASC rejects for internal groups. POST the betaGroup directly
         # with only the internal-valid attributes, then re-fetch it.
-        Spaceship::ConnectAPI.client.test_flight_request_client.post("betaGroups", {
+        Spaceship::ConnectAPI.client.test_flight_request_client.post("v1/betaGroups", {
           data: {
             type: "betaGroups",
             attributes: {

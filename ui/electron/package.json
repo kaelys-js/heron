@@ -50,7 +50,7 @@
     "electron-is-dev": "catalog:",
     "electron-serve": "catalog:",
     "electron-unhandled": "catalog:",
-    "electron-updater": "catalog:",
+    "electron-updater": "6.8.3",
     "electron-window-state": "catalog:"
   },
   "devDependencies": {
