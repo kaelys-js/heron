@@ -78,6 +78,11 @@ on:
     secrets:
       APPLE_TEAM_ID:
         required: false
+      # Account-holder Apple ID. Not a signing secret: the ASC API key
+      # authenticates uploads. ensure_internal_delivery uses it to add the
+      # maintainer to the internal TestFlight group so builds land on-device.
+      APPLE_ID:
+        required: false
       MAC_CERTIFICATE:
         required: false
       MAC_CERTIFICATE_PASSWORD:
@@ -774,6 +779,12 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          # Account-holder Apple ID. The ASC API key authenticates the
+          # upload; APPLE_ID is the email ensure_internal_delivery adds to
+          # the "Heron Internal" group so the maintainer receives every
+          # build on-device. Without it the lane logs "already covers"
+          # (empty) and nobody is invited.
+          APPLE_ID: ${{ secrets.APPLE_ID }}
           # App Store Connect API key (.p8) -- preferred over legacy
           # APPLE_ID + app-specific password. Required for 2FA-enabled
           # accounts; reused across every Fastlane lane.

@@ -110,7 +110,6 @@
       }
     ],
     "icon": "build/icon.ico",
-    "publisherName": "resist.js",
     "verifyUpdateCodeSignature": true,
     "requestedExecutionLevel": "asInvoker",
     "signtoolOptions": {

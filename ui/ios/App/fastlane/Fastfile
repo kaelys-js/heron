@@ -269,9 +269,9 @@ platform :ios do
       export_method: "app-store",
       # Manual signing with the match distribution profiles (automatic signing
       # demands development certs/profiles a distribution-only CI runner does
-      # not have). DEVELOPMENT_TEAM is injected here, not committed. The skip
-      # flags avoid SPM plugin + macro validation prompts that hang CI.
-      xcargs: "-skipPackagePluginValidation -skipMacroValidation DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']}",
+      # not have). xcargs (team id, marketing version, skip flags) are built
+      # by release_xcargs so beta + app_store stay in lockstep.
+      xcargs: release_xcargs,
       export_options: {
         signingStyle: "manual",
         provisioningProfiles: ALL_APP_IDENTIFIERS.to_h { |id| [id, "match AppStore #{id}"] }
@@ -324,14 +324,22 @@ platform :ios do
         raise "internal group missing after create" unless group
       end
       owner = ENV["APPLE_ID"].to_s
-      members = (group.get_beta_testers.map(&:email) rescue [])
-      if !owner.empty? && !members.include?(owner)
-        group.post_bulk_beta_tester_assignments(
-          beta_testers: [{ email: owner, firstName: "Heron", lastName: "Maintainer" }]
-        )
-        UI.success("internal delivery: added #{owner} to '#{INTERNAL_GROUP_NAME}'")
+      if owner.empty?
+        # Loud, not silent: a missing APPLE_ID is exactly why the maintainer
+        # would never receive builds. Surface it as a CI warning annotation.
+        msg = "APPLE_ID not set -- nobody added to '#{INTERNAL_GROUP_NAME}'. Set the APPLE_ID secret so builds reach you."
+        UI.important(msg)
+        puts "::warning title=TestFlight invite::#{msg}" if is_ci
       else
-        UI.message("internal delivery: '#{INTERNAL_GROUP_NAME}' already covers #{owner}")
+        members = (group.get_beta_testers.map(&:email) rescue [])
+        if members.include?(owner)
+          UI.message("internal delivery: '#{INTERNAL_GROUP_NAME}' already covers #{owner}")
+        else
+          group.post_bulk_beta_tester_assignments(
+            beta_testers: [{ email: owner, firstName: "Heron", lastName: "Maintainer" }]
+          )
+          UI.success("internal delivery: added #{owner} to '#{INTERNAL_GROUP_NAME}'")
+        end
       end
     rescue => e
       UI.important("internal-delivery setup skipped (build + upload still OK): #{e.message}")
@@ -526,6 +534,29 @@ platform :ios do
     # script lives at <repo-root>/scripts/native/...; four `../` to
     # walk up out of fastlane -> App -> ios -> ui -> repo-root.
     sh "node ../../../../scripts/native/check-ios-coverage.mjs"
+  end
+
+  # Marketing version (CFBundleShortVersionString) -- the X.Y.Z humans see.
+  # Single source of truth is Release Please -> root package.json $.version.
+  # Injected via xcargs at build time (see release_xcargs) so every target
+  # archives with the released semver, overriding any drifted MARKETING_VERSION
+  # literal in project.pbxproj. Fail loud if it can't be read: a release must
+  # never ship an unknown version.
+  def marketing_version
+    require "json"
+    pkg = File.expand_path("../../../../package.json", __dir__)
+    version = JSON.parse(File.read(pkg))["version"]
+    UI.user_error!("no $.version in #{pkg}") if version.to_s.empty?
+    version
+  end
+
+  # Build settings injected into every release archive. DEVELOPMENT_TEAM is
+  # not committed to the pbxproj (CI-only). MARKETING_VERSION comes from
+  # package.json so the store version always equals the released semver.
+  # The skip flags avoid SPM plugin + macro validation prompts that hang CI.
+  def release_xcargs
+    "-skipPackagePluginValidation -skipMacroValidation " \
+      "DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']} MARKETING_VERSION=#{marketing_version}"
   end
 
   # Pull the last commit's message as TestFlight changelog. Truncates to

@@ -44,6 +44,22 @@ const ANDROID_SIGNING = [
   'ANDROID_KEY_PASSWORD',
 ];
 
+describe('native-release contract — store version derives from package.json', () => {
+  it('iOS injects MARKETING_VERSION from package.json (not a drifted pbxproj literal)', () => {
+    expect(iosFastfile, 'release build must override MARKETING_VERSION').toContain(
+      'MARKETING_VERSION=',
+    );
+    expect(iosFastfile, 'marketing_version must read package.json $.version').toMatch(
+      /package\.json/,
+    );
+  });
+  it('Android versionName derives from package.json $.version', () => {
+    expect(buildGradle, 'versionName must read package.json, not a literal').toMatch(
+      /package\.json/,
+    );
+  });
+});
+
 describe('native-release contract — Apple signing chain', () => {
   it.each(APPLE_SIGNING)('%s is produced by setup.mjs', (s) => {
     expect(setup, `${s} not produced by setup.mjs`).toContain(s);
@@ -99,6 +115,26 @@ describe('native-release contract — iOS signing via match', () => {
     expect(iosFastfile, 'extension App IDs need App Groups enabled').toContain(
       'create_capability("APP_GROUPS")',
     );
+  });
+});
+
+describe('native-release contract — TestFlight internal delivery invites the maintainer', () => {
+  it('APPLE_ID flows setup -> workflow so the lane has someone to invite', () => {
+    expect(setup, 'APPLE_ID not produced by setup.mjs').toContain('APPLE_ID');
+    // Without this the build-ios lane sees ENV["APPLE_ID"] empty and logs
+    // "already covers " (empty) -- the maintainer is never added to the group.
+    expect(workflow, 'APPLE_ID never passed into build-ios').toMatch(
+      /APPLE_ID:\s*\$\{\{\s*secrets\.APPLE_ID\s*\}\}/,
+    );
+  });
+  it('ensure_internal_delivery POSTs to the version-prefixed betaGroups path', () => {
+    // Unprefixed "betaGroups" returns "does not match a defined resource type";
+    // spaceship's request client requires the v1 API-version prefix.
+    expect(iosFastfile, 'betaGroups POST must carry the v1 prefix').toContain('v1/betaGroups');
+  });
+  it('the delivery lane reads APPLE_ID to add the account holder', () => {
+    expect(iosFastfile).toContain('ensure_internal_delivery');
+    expect(iosFastfile, 'lane must read APPLE_ID').toMatch(/ENV\["APPLE_ID"\]/);
   });
 });
 
