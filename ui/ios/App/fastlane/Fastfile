@@ -198,6 +198,10 @@ platform :ios do
       git_url: ENV["MATCH_GIT_URL"],
       api_key: api_key,
       readonly: false,
+      # Force regeneration so profiles pick up capability changes made on the
+      # Dev Portal (App Groups association, background-tasks, live-activities)
+      # that the App Store Connect API can't set.
+      force: true,
       force_for_new_devices: false
     )
   end
@@ -255,31 +259,18 @@ platform :ios do
     api_key = asc_key
     sign(api_key: api_key)
 
-    # xcodebuild's -allowProvisioningUpdates needs the ASC key as a FILE to
-    # authenticate (gym's in-memory key_content alone yields "No Accounts").
-    # Write it + pass the auth flags to both the archive + export xcodebuild.
-    require "base64"
-    require "tmpdir"
-    asc_p8 = File.join(Dir.tmpdir, "AuthKey_#{ENV['APP_STORE_CONNECT_API_KEY_ID']}.p8")
-    File.write(asc_p8, Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY"]))
-    asc_auth = "-authenticationKeyPath #{asc_p8} " \
-               "-authenticationKeyID #{ENV['APP_STORE_CONNECT_API_KEY_ID']} " \
-               "-authenticationKeyIssuerID #{ENV['APP_STORE_CONNECT_API_ISSUER_ID']}"
-
     build_app(
       project: PROJECT,
       scheme: SCHEME,
       export_method: "app-store",
-      # Hybrid signing: `sign` (match) installed the shared distribution cert;
-      # Xcode auto-provisions the app group + capabilities + profiles from the
-      # entitlements via -allowProvisioningUpdates (the ASC API can't associate
-      # app groups). The ASC key file authenticates that; DEVELOPMENT_TEAM is
-      # injected here, not committed. The skip flags avoid SPM plugin + macro
-      # validation prompts that hang CI.
-      xcargs: "-skipPackagePluginValidation -skipMacroValidation -allowProvisioningUpdates #{asc_auth} DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']}",
-      export_xcargs: "-allowProvisioningUpdates #{asc_auth}",
+      # Manual signing with the match distribution profiles (automatic signing
+      # demands development certs/profiles a distribution-only CI runner does
+      # not have). DEVELOPMENT_TEAM is injected here, not committed. The skip
+      # flags avoid SPM plugin + macro validation prompts that hang CI.
+      xcargs: "-skipPackagePluginValidation -skipMacroValidation DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']}",
       export_options: {
-        signingStyle: "automatic"
+        signingStyle: "manual",
+        provisioningProfiles: ALL_APP_IDENTIFIERS.to_h { |id| [id, "match AppStore #{id}"] }
       },
       configuration: "Release",
       clean: true,

@@ -12,7 +12,9 @@
 		0A5C2DA6FCEE4B8D3FF007FD /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6FF0483296BD7B4DF03552B /* ErrorReporter.swift */; };
 		1384E818E0B0BB9C24B3712A /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13A4B88F10BE222B3E1F1BCB /* ErrorReporter.swift */; };
 		1410FAC7E621519DCCAA554E /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FD7C6838A42199F3A5357F9 /* Brand.swift */; };
+		16E54861E72C67951C87C8D1 /* AppShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C05A76F56281A0EFD15DAD02 /* AppShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1A1E6B6C4CFE57F9BB79B986 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 527F4909548255C904FEC97F /* Brand.swift */; };
+		1CA5224B924E66EFAF300497 /* AppWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B4B54803324B7A34A4644CE6 /* AppWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1CFB3E0DF723F216C35F35C4 /* ViewInspector in Frameworks */ = {isa = PBXBuildFile; productRef = 582E0E546A93A6F32A1D7247 /* ViewInspector */; };
 		22AA7C09C005F06732C4EF5F /* ColdLaunchUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5A693552CB2B7598925D9D /* ColdLaunchUITests.swift */; };
 		269CC25BF76E4B5DFE452B6C /* LoginUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0697FDD0D8EDF447B5BE4807 /* LoginUITests.swift */; };
@@ -20,7 +22,6 @@
 		282B8FCC6D1B1FB06EA462D7 /* NativePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE88770478FB968E108A903 /* NativePlugin.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		306F94610F83E2172089B6A2 /* ErrorReporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A63DB96BB61618B21A1A46D /* ErrorReporterTests.swift */; };
-		32276E04BB75B07B27A990CC /* AppLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A2BA497A7735FA0C55C2F3F4 /* AppLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		32EB3B3FF98F8C294977A471 /* BiometricAuthTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A043EEDC504358B4A9D56041 /* BiometricAuthTests.swift */; };
 		3521FD15CAEE97D1B1F89B14 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18818E6F512F4FDB4E0E23 /* NetworkMonitor.swift */; };
 		3669141D3845AE4F49E4D02A /* AppShareExtensionTestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C51919F3155899430D8552 /* AppShareExtensionTestsSmoke.swift */; };
@@ -28,10 +29,10 @@
 		39AE56D8D333DCE81A16A6D5 /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CA1675A1757C18B2FF09E0 /* ErrorReporter.swift */; };
 		3BCA8D89ECD906AE04F604E8 /* WatchSessionBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51CD8E57475622C06A0B72CA /* WatchSessionBridge.swift */; };
 		3EC41BCD48A909DCE62A32C7 /* WatchApp.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 45A788CFF48FB162CF58655F /* WatchApp.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		41E3AD1FC5CDA26CC5742EE2 /* AppShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C05A76F56281A0EFD15DAD02 /* AppShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		464E3AF67C92B9D73E4AD958 /* BrandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C6DBE48967C2185A1EA702 /* BrandTests.swift */; };
 		4CDC6A84B0B5B438F8ACFA84 /* WidgetTestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6F3EBB92FC26A8909F2E030 /* WidgetTestsSmoke.swift */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
+		4E4DD6226C84918F354A67B8 /* AppLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A2BA497A7735FA0C55C2F3F4 /* AppLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
@@ -94,7 +95,6 @@
 		E876A9D11F7DC6FE329E1D80 /* AppTestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C1D23B601810C4801F8ED2 /* AppTestsSmoke.swift */; };
 		E965C7A3C853232B1A0AA3EE /* AppUITestsSmoke.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C777DB39253E575C27951E6 /* AppUITestsSmoke.swift */; };
 		EC525BD16072ABE9DF0C4EE8 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 03734205740D9A56158CE4DA /* SnapshotTesting */; };
-		EE8025A914D2CB815CB30839 /* AppWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B4B54803324B7A34A4644CE6 /* AppWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F144B112F6B3589C16293DBF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 1F1F2BF74317E3F6B16DDA93 /* PrivacyInfo.xcprivacy */; };
 		F1F394828835CCEEBB9D625C /* BonjourBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DA0F3C2FA120D4A573F42DD /* BonjourBrowser.swift */; };
 		F2AF45A348D1030B3D5BD395 /* ErrorReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31513D0E4528E2BF567E770E /* ErrorReporter.swift */; };
@@ -198,9 +198,9 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				EE8025A914D2CB815CB30839 /* AppWidget.appex in Embed Foundation Extensions */,
-				32276E04BB75B07B27A990CC /* AppLiveActivity.appex in Embed Foundation Extensions */,
-				41E3AD1FC5CDA26CC5742EE2 /* AppShareExtension.appex in Embed Foundation Extensions */,
+				1CA5224B924E66EFAF300497 /* AppWidget.appex in Embed Foundation Extensions */,
+				4E4DD6226C84918F354A67B8 /* AppLiveActivity.appex in Embed Foundation Extensions */,
+				16E54861E72C67951C87C8D1 /* AppShareExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1281,7 +1281,8 @@
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Extensions/AppWidget/AppWidget.entitlements;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				INFOPLIST_FILE = Extensions/AppWidget/Info.plist;
@@ -1289,6 +1290,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.widget;
 				PRODUCT_NAME = AppWidget;
+				PROVISIONING_PROFILE_SPECIFIER = "match AppStore com.resistjs.heron.widget";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.9;
@@ -1340,7 +1342,8 @@
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Extensions/AppShareExtension/AppShareExtension.entitlements;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				INFOPLIST_FILE = Extensions/AppShareExtension/Info.plist;
@@ -1348,6 +1351,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.share;
 				PRODUCT_NAME = AppShareExtension;
+				PROVISIONING_PROFILE_SPECIFIER = "match AppStore com.resistjs.heron.share";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.9;
@@ -1493,7 +1497,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -1504,6 +1509,7 @@
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "match AppStore com.resistjs.heron";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1555,7 +1561,8 @@
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Extensions/AppLiveActivity/AppLiveActivity.entitlements;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				INFOPLIST_FILE = Extensions/AppLiveActivity/Info.plist;
@@ -1563,6 +1570,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.liveactivity;
 				PRODUCT_NAME = AppLiveActivity;
+				PROVISIONING_PROFILE_SPECIFIER = "match AppStore com.resistjs.heron.liveactivity";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.9;
@@ -1698,7 +1706,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = WatchApp/WatchApp.entitlements;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -1706,6 +1715,7 @@
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.resistjs.heron.watchkitapp;
 				PRODUCT_NAME = WatchApp;
+				PROVISIONING_PROFILE_SPECIFIER = "match AppStore com.resistjs.heron.watchkitapp";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "watchsimulator watchos";
