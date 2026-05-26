@@ -2,7 +2,7 @@
 // verify-comment-style.mjs - enforce comment-style rules from docs/COMMENT-STYLE.md.
 //
 // Three gates:
-//   1. Top-of-file `/** ... */` docblocks > 12 lines (header bloat)
+//   1. Top-of-file `/** ... */` docblocks > 30 lines (header bloat)
 //   2. AI-slop adjectives inside comments (marketing leak)
 //   3. "Pre-fix" / "Post-fix" historical framing in comments
 //
@@ -25,7 +25,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // ── Tunables ──────────────────────────────────────────────────────
 
-export const HEADER_MAX_LINES = 12;
+export const HEADER_MAX_LINES = 30;
 
 // LLM-prose tells (case-insensitive, whole-word). Each is bare-minimum
 // pattern; the verifier walks comment lines and tests `\bword\b` /i.

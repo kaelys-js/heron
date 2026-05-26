@@ -39,9 +39,13 @@ function ok(name, fn) {
 
 console.log('check-pr-metadata.mjs -- unit tests\n');
 
-// ── title length (≤ 72) ─────────────────────────────────────────────
-ok('title-length: 72 chars passes', () => assert.equal(checkTitleLength('x'.repeat(72)).ok, true));
-ok('title-length: 73 chars fails', () => assert.equal(checkTitleLength('x'.repeat(73)).ok, false));
+// ── title length (≤ 100) ────────────────────────────────────────────
+ok('title-length: 100 chars passes', () =>
+  assert.equal(checkTitleLength('x'.repeat(100)).ok, true),
+);
+ok('title-length: 101 chars fails', () =>
+  assert.equal(checkTitleLength('x'.repeat(101)).ok, false),
+);
 
 // ── title grammar (conventional + lowercase subject) ────────────────
 ok('grammar: feat(scope): lowercase ok', () =>

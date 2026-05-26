@@ -749,7 +749,7 @@ commit-msg:
         # auto-derived squash-merge title passing the server grammar check.
         if ! echo "$msg" | grep -qE '^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z0-9_-]+\))?!?: [^A-Z]'; then
           echo "✗ Commit message doesn't follow Conventional Commits."
-          echo "  Format: type(scope)!: subject  (subject must start lowercase, <= 72 chars)"
+          echo "  Format: type(scope)!: subject  (subject must start lowercase, <= 100 chars)"
           echo "  Types:  feat fix chore docs style refactor perf test build ci revert"
           echo "  Example: feat(scan): add Workable ATS adapter (not 'feat: Add ...')"
           echo "  Bypass:  SKIP_LEFTHOOK=1 git commit ..."

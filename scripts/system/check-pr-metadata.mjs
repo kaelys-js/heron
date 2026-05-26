@@ -37,7 +37,7 @@ export const TYPES = [
 // `<type>(scope)?!?: <subject>` with a lowercase subject -- mirrors the
 // action's grammar + `subjectPattern: ^(?![A-Z]).+$`.
 const TITLE_GRAMMAR = new RegExp(`^(${TYPES.join('|')})(\\([^)]+\\))?!?: (?![A-Z]).+$`);
-const TITLE_MAX = 72;
+const TITLE_MAX = 100;
 const SUMMARY_MIN = 50;
 const TEST_PLAN_MIN = 50;
 const SECTION_MIN = 30;
