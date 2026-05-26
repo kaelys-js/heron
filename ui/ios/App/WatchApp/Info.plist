@@ -26,10 +26,5 @@
 	<string>com.resistjs.heron</string>
 	<key>WKWatchOnly</key>
 	<false/>
-	<key>NSExtension</key>
-	<dict>
-		<key>NSExtensionPointIdentifier</key>
-		<string>com.apple.watchkit</string>
-	</dict>
 </dict>
 </plist>
