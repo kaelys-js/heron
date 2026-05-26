@@ -7,14 +7,14 @@
 	     The $(AppIdentifierPrefix) prefix is required by Apple. -->
 	<key>keychain-access-groups</key>
 	<array>
-		<string>$(AppIdentifierPrefix)com.heron.app</string>
+		<string>$(AppIdentifierPrefix)com.resistjs.heron</string>
 	</array>
 
 	<!-- App Group — used by the Widget + Share Extension to read job data
 	     from the main app's container. -->
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.heron.app</string>
+		<string>group.com.resistjs.heron</string>
 	</array>
 
 	<!-- aps-environment — when this value is "development" / "production",
@@ -26,14 +26,5 @@
 	     needs it. -->
 	<key>aps-environment</key>
 	<string>development</string>
-
-	<!-- Background fetch + processing — heron uses BGAppRefreshTask
-	     to poll high-priority Issues when the WebView's SSE connection
-	     dropped. BGProcessingTask handles longer-running maintenance. -->
-	<key>com.apple.developer.background-tasks</key>
-	<array>
-		<string>com.heron.app.refresh</string>
-		<string>com.heron.app.maintenance</string>
-	</array>
 </dict>
 </plist>

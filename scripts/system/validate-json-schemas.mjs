@@ -42,12 +42,15 @@ const require_ = createRequire(import.meta.url);
 
 // Files explicitly excluded from validation -- these have a $schema
 // declaration but the schema is broken / wrong / lags the runtime.
-const SKIP = new Map([
-  [
-    'ui/electron/electron-builder.config.json',
-    'app-builder-lib bundled scheme.json lags runtime — rejects legitimate options like win.publisherName',
-  ],
-]);
+//
+// electron-builder.config.json USED to be skipped on the theory that the
+// bundled scheme.json wrongly rejected win.publisherName. That was a
+// misdiagnosis: electron-builder 26 genuinely removed top-level
+// publisherName (it moved under win.signtoolOptions), so the config was
+// actually invalid and the skip masked a real build break. apply-brand now
+// writes the correct location and the config validates, so it is no longer
+// skipped -- this validator now guards against the same drift recurring.
+const SKIP = new Map([]);
 
 // Directories never scanned (build outputs, deps, user data).
 const SKIP_DIRS = new Set([

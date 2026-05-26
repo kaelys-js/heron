@@ -21,7 +21,20 @@
 
 default_platform(:ios)
 
-APP_IDENTIFIER = "com.heron.app"
+APP_IDENTIFIER = "com.resistjs.heron"
+# Every app-store-signed bundle id (main app + embedded extensions + watch).
+# match provisions one profile per id, named "match AppStore <id>".
+ALL_APP_IDENTIFIERS = [
+  APP_IDENTIFIER,
+  "#{APP_IDENTIFIER}.watchkitapp",
+  "#{APP_IDENTIFIER}.widget",
+  "#{APP_IDENTIFIER}.liveactivity",
+  "#{APP_IDENTIFIER}.share",
+].freeze
+# Internal TestFlight group that auto-receives every build. The release
+# adds the account holder (ENV APPLE_ID) so each build lands on-device with
+# no manual step.
+INTERNAL_GROUP_NAME = "Heron Internal"
 # Capacitor 8+ uses SPM (Swift Package Manager) -- no Podfile, no
 # auto-generated `App.xcworkspace` at the top level. Build straight off
 # `App.xcodeproj`; SPM packages are wired up via project references.
@@ -153,6 +166,7 @@ platform :ios do
       key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
       issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
       key_content: ENV["APP_STORE_CONNECT_API_KEY"],
+      is_key_content_base64: true,  # secret is stored base64 (see native-release.yml / setup.mjs)
       duration: 1200,    # seconds; ASC max is 1200
       in_house: false
     )
@@ -164,12 +178,67 @@ platform :ios do
     if ENV["MATCH_GIT_URL"]
       match(
         type: "appstore",
-        app_identifier: APP_IDENTIFIER,
+        app_identifier: ALL_APP_IDENTIFIERS,
         git_url: ENV["MATCH_GIT_URL"],
         api_key: api_key,
         readonly: is_ci,
         force_for_new_devices: false
       )
+    end
+  end
+
+  desc "One-time: register App IDs + push signing certs + profiles to match repo"
+  # Run locally by `pnpm setup:native` after it provisions the certs repo
+  # + deploy key. Registers every bundle id, then writes the Apple
+  # Distribution cert + one "match AppStore <id>" profile per bundle id into
+  # the encrypted match repo. CI never runs this; CI signs read-only via the
+  # `sign` lane (readonly: is_ci).
+  lane :match_bootstrap do
+    api_key = asc_key
+    register_app_ids
+    match(
+      type: "appstore",
+      app_identifier: ALL_APP_IDENTIFIERS,
+      git_url: ENV["MATCH_GIT_URL"],
+      api_key: api_key,
+      readonly: false,
+      # Force regeneration so profiles pick up capability changes made on the
+      # Dev Portal (App Groups association, background-tasks, live-activities)
+      # that the App Store Connect API can't set.
+      force: true,
+      force_for_new_devices: false
+    )
+  end
+
+  desc "Ensure every bundle id exists on the Dev Portal with App Groups enabled"
+  # match creates profiles but never App IDs, so on a fresh account the
+  # extension ids (watch / widget / liveactivity / share) must be registered
+  # first or match fails with "couldn't find bundle id". App Groups is the
+  # one capability every extension entitlement needs; Live Activities needs
+  # no portal capability. Idempotent -- skips ids + capabilities that exist.
+  private_lane :register_app_ids do
+    require "spaceship"
+    require "base64"
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      key: Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY"])
+    )
+    existing = Spaceship::ConnectAPI::BundleId.all
+    ALL_APP_IDENTIFIERS.each do |bid|
+      app = existing.find { |b| b.identifier == bid }
+      unless app
+        app = Spaceship::ConnectAPI::BundleId.create(
+          name: "Heron #{bid.split('.').last.capitalize}",
+          identifier: bid,
+          platform: "IOS"
+        )
+        UI.success("registered App ID #{bid}")
+      end
+      unless app.get_capabilities.map { |c| c.capability_type.to_s }.include?("APP_GROUPS")
+        app.create_capability("APP_GROUPS")
+        UI.success("enabled App Groups on #{bid}")
+      end
     end
   end
 
@@ -198,6 +267,15 @@ platform :ios do
       project: PROJECT,
       scheme: SCHEME,
       export_method: "app-store",
+      # Manual signing with the match distribution profiles (automatic signing
+      # demands development certs/profiles a distribution-only CI runner does
+      # not have). xcargs (team id, marketing version, skip flags) are built
+      # by release_xcargs so beta + app_store stay in lockstep.
+      xcargs: release_xcargs,
+      export_options: {
+        signingStyle: "manual",
+        provisioningProfiles: ALL_APP_IDENTIFIERS.to_h { |id| [id, "match AppStore #{id}"] }
+      },
       configuration: "Release",
       clean: true,
       output_directory: "fastlane/builds",
@@ -208,11 +286,173 @@ platform :ios do
 
     upload_to_testflight(
       api_key: api_key,
-      skip_waiting_for_build_processing: true,
+      # Must be false to set the changelog: fastlane/pilot SKIPS the changelog
+      # ("What to Test") entirely when skip_waiting is true. Costs a processing
+      # wait (a few minutes) but the build then shows release notes in TestFlight.
+      skip_waiting_for_build_processing: false,
       changelog: changelog_for_this_build,
       distribute_external: false,           # internal testers only
       reject_build_waiting_for_review: false
     )
+
+    ensure_internal_delivery
+    set_age_rating
+  end
+
+  desc "Zero-touch TestFlight: an internal group that auto-receives every"
+  # build, with the account holder as a member, so each release lands on
+  # their device with no manual step. Best-effort -- a hiccup here must not
+  # fail an otherwise-good build + upload. asc_key already set the Spaceship
+  # token, so ConnectAPI calls are authed.
+  private_lane :ensure_internal_delivery do
+    begin
+      app = Spaceship::ConnectAPI::App.all.find { |a| a.bundle_id == APP_IDENTIFIER }
+      raise "App Store Connect app not found for #{APP_IDENTIFIER}" unless app
+      group = app.get_beta_groups.find { |g| g.name == INTERNAL_GROUP_NAME }
+      unless group
+        # spaceship's create_beta_group always sends publicLinkLimitEnabled,
+        # which ASC rejects for internal groups. POST the betaGroup directly
+        # with only the internal-valid attributes, then re-fetch it.
+        Spaceship::ConnectAPI.client.test_flight_request_client.post("v1/betaGroups", {
+          data: {
+            type: "betaGroups",
+            attributes: {
+              name: INTERNAL_GROUP_NAME,
+              isInternalGroup: true,
+              hasAccessToAllBuilds: true
+            },
+            relationships: { app: { data: { id: app.id, type: "apps" } } }
+          }
+        })
+        group = app.get_beta_groups.find { |g| g.name == INTERNAL_GROUP_NAME }
+        raise "internal group missing after create" unless group
+      end
+      owner = ENV["APPLE_ID"].to_s
+      if owner.empty?
+        # Loud, not silent: a missing APPLE_ID is exactly why the maintainer
+        # would never receive builds. Surface it as a CI warning annotation.
+        msg = "APPLE_ID not set -- nobody added to '#{INTERNAL_GROUP_NAME}'. Set the APPLE_ID secret so builds reach you."
+        UI.important(msg)
+        puts "::warning title=TestFlight invite::#{msg}" if is_ci
+      else
+        members = (group.get_beta_testers.map(&:email) rescue [])
+        if members.include?(owner)
+          UI.message("internal delivery: '#{INTERNAL_GROUP_NAME}' already covers #{owner}")
+        else
+          client = Spaceship::ConnectAPI.client.test_flight_request_client
+          # spaceship's post_bulk_beta_tester_assignments targets
+          # v1/bulkBetaTesterAssignments, which ASC rejects ("resource does
+          # not exist"). Use the stable endpoints instead: attach an already-
+          # existing tester via the group's relationships endpoint, else
+          # create the tester with the group relationship in one POST.
+          existing = (Spaceship::ConnectAPI::BetaTester.all(filter: { email: owner }).first rescue nil)
+          if existing
+            client.post("v1/betaGroups/#{group.id}/relationships/betaTesters", {
+              data: [{ type: "betaTesters", id: existing.id }]
+            })
+          else
+            client.post("v1/betaTesters", {
+              data: {
+                type: "betaTesters",
+                attributes: { email: owner, firstName: "Heron", lastName: "Maintainer" },
+                relationships: { betaGroups: { data: [{ type: "betaGroups", id: group.id }] } }
+              }
+            })
+          end
+          UI.success("internal delivery: added #{owner} to '#{INTERNAL_GROUP_NAME}'")
+        end
+      end
+    rescue => e
+      # Best-effort, but never silent: surface the failure as a CI annotation
+      # so a broken invite can't masquerade as a clean run again.
+      msg = "internal-delivery setup FAILED (build + upload still OK): #{e.message}"
+      UI.important(msg)
+      puts "::warning title=TestFlight invite::#{msg}" if is_ci
+    end
+  end
+
+  desc "Set the App Store age rating (ASC API). Privacy label is one-time manual."
+  # Age rating derives from brand contentRating and IS settable via the ASC API
+  # key. The App Privacy nutrition LABEL is NOT exposed on the official ASC API
+  # key (Apple limitation -- fastlane's upload_app_privacy_details_to_app_store
+  # docs: "not available on the official App Store Connect API"), so it's a
+  # one-time manual entry in ASC; this lane logs the exact brand-derived entries
+  # to make. Best-effort + loud (mirrors ensure_internal_delivery): a hiccup
+  # must not fail an otherwise-good build.
+  private_lane :set_age_rating do
+    begin
+      app = Spaceship::ConnectAPI::App.all.find { |a| a.bundle_id == APP_IDENTIFIER }
+      raise "App Store Connect app not found for #{APP_IDENTIFIER}" unless app
+      apply_age_rating(app)
+      log_manual_privacy_label
+      UI.success("age rating applied for #{APP_IDENTIFIER}")
+    rescue => e
+      msg = "age-rating setup FAILED (build + upload still OK): #{e.message}"
+      UI.important(msg)
+      puts "::warning title=Age rating::#{msg}" if is_ci
+    end
+  end
+
+  # "4+": every content descriptor NONE and every boolean false, no override
+  # -- ASC then computes 4+. Only 4+ is mapped (Heron has no objectionable
+  # content); a higher brand rating needs its own descriptors, so fail loud
+  # rather than mis-declare. Field set per spaceship 2.234 (2025 overhaul).
+  def apply_age_rating(app)
+    rating = brand_app_store.fetch("contentRating", "4+").to_s
+    UI.user_error!("age rating '#{rating}' not mapped (only 4+ implemented)") unless rating == "4+"
+    app_info = app.fetch_edit_app_info
+    raise "no editable app info (need PREPARE_FOR_SUBMISSION to set age rating)" unless app_info
+    decl = app_info.fetch_age_rating_declaration
+    raise "app info has no age rating declaration" unless decl
+    ratings = %w[
+      alcoholTobaccoOrDrugUseOrReferences contests gamblingSimulated gunsOrOtherWeapons
+      horrorOrFearThemes matureOrSuggestiveThemes medicalOrTreatmentInformation
+      profanityOrCrudeHumor sexualContentGraphicAndNudity sexualContentOrNudity
+      violenceCartoonOrFantasy violenceRealisticProlongedGraphicOrSadistic violenceRealistic
+    ]
+    booleans = %w[
+      advertising ageAssurance gambling healthOrWellnessTopics lootBox messagingAndChat
+      parentalControls unrestrictedWebAccess userGeneratedContent
+    ]
+    attributes = {}
+    ratings.each { |k| attributes[k] = "NONE" }
+    booleans.each { |k| attributes[k] = false }
+    attributes["ageRatingOverrideV2"] = "NONE"
+    Spaceship::ConnectAPI.patch_age_rating_declaration(age_rating_declaration_id: decl.id, attributes: attributes)
+    UI.message("age rating: 4+ (all descriptors NONE/false)")
+  end
+
+  # The App Privacy nutrition label is NOT reachable via the ASC API key, so it
+  # is a one-time manual entry in App Store Connect. Log the exact brand-derived
+  # declaration (kept in sync with PrivacyInfo.xcprivacy) so the manual entry is
+  # unambiguous. Run via `fastlane ios store_config` to print it on demand.
+  def log_manual_privacy_label
+    types = brand_app_store.dig("privacy", "dataTypes") || []
+    return if types.empty?
+    lines = types.map do |t|
+      linked = t["protection"] == "DATA_LINKED_TO_YOU" ? "Linked to user" : "Not linked to user"
+      "#{t['category']} -> #{linked}; purposes #{Array(t['purposes']).join(' + ')}; NOT used for tracking"
+    end
+    UI.message("App Privacy (set ONCE in ASC -> App Privacy, then matches PrivacyInfo.xcprivacy):")
+    lines.each { |l| UI.message("  - #{l}") }
+  end
+
+  # branding/brand.json -> store.appStore, memoized. Path walks up out of
+  # fastlane -> App -> ios -> ui -> repo root.
+  def brand_app_store
+    require "json"
+    @brand_app_store ||=
+      JSON.parse(File.read(File.expand_path("../../../../branding/brand.json", __dir__))).dig("store", "appStore") || {}
+  end
+
+  desc "Fast app-level App Store config (privacy label + age rating), no build/upload"
+  # Iterates the ASC-config lanes in ~90s instead of a full ~10min build +
+  # TestFlight upload (which is what dominates native-release time -- see the
+  # caching audit). Dispatched by .github/workflows/store-config.yml. asc_key
+  # sets the Spaceship token the ConnectAPI helpers rely on.
+  lane :store_config do
+    asc_key
+    set_age_rating
   end
 
   desc "Upload App Store metadata + screenshots without rebuilding the IPA"
@@ -229,6 +469,32 @@ platform :ios do
       skip_binary_upload: true,
       skip_screenshots: false,
       force: true,        # don't open Preview.app on screenshots
+      precheck_include_in_app_purchases: false,
+      submit_for_review: false,
+      automatic_release: false,
+      metadata_path: "fastlane/metadata",
+      screenshots_path: "fastlane/screenshots"
+    )
+  end
+
+  desc "Production App Store prep (gated by promote.yml). STOPS before the real submit."
+  # Uploads metadata + screenshots + the version's release notes and sets the
+  # age rating, then leaves the final, irreversible Submit to Cole in ASC
+  # (submit_for_review: false). The binary is the one the beta lane already
+  # pushed to TestFlight (skip_binary_upload). Privacy label is one-time manual
+  # (see set_age_rating). Marketing version + What's New both derive from the
+  # Release Please sources (package.json $.version, CHANGELOG.md).
+  lane :app_store do
+    api_key = asc_key
+    version = marketing_version
+    write_release_notes(version)
+    set_age_rating
+    upload_to_app_store(
+      api_key: api_key,
+      app_version: version,
+      skip_binary_upload: true,
+      skip_screenshots: false,
+      force: true,
       precheck_include_in_app_purchases: false,
       submit_for_review: false,
       automatic_release: false,
@@ -405,6 +671,29 @@ platform :ios do
     sh "node ../../../../scripts/native/check-ios-coverage.mjs"
   end
 
+  # Marketing version (CFBundleShortVersionString) -- the X.Y.Z humans see.
+  # Single source of truth is Release Please -> root package.json $.version.
+  # Injected via xcargs at build time (see release_xcargs) so every target
+  # archives with the released semver, overriding any drifted MARKETING_VERSION
+  # literal in project.pbxproj. Fail loud if it can't be read: a release must
+  # never ship an unknown version.
+  def marketing_version
+    require "json"
+    pkg = File.expand_path("../../../../package.json", __dir__)
+    version = JSON.parse(File.read(pkg))["version"]
+    UI.user_error!("no $.version in #{pkg}") if version.to_s.empty?
+    version
+  end
+
+  # Build settings injected into every release archive. DEVELOPMENT_TEAM is
+  # not committed to the pbxproj (CI-only). MARKETING_VERSION comes from
+  # package.json so the store version always equals the released semver.
+  # The skip flags avoid SPM plugin + macro validation prompts that hang CI.
+  def release_xcargs
+    "-skipPackagePluginValidation -skipMacroValidation " \
+      "DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']} MARKETING_VERSION=#{marketing_version}"
+  end
+
   # Pull the last commit's message as TestFlight changelog. Truncates to
   # 4000 chars (the App Store Connect limit). Falls back to a default
   # if git isn't available.
@@ -415,6 +704,34 @@ platform :ios do
     rescue
       "heron automatic build (#{Time.now.utc.strftime('%Y-%m-%d')})"
     end
+  end
+
+  # App Store "What's New" for a marketing version, pulled from CHANGELOG.md
+  # (Release Please maintains it). Extracts the version's section, strips
+  # markdown to the plain text the store expects, truncates to ASC's 4000-char
+  # cap. Falls back so a release never uploads empty notes.
+  def release_notes_for_version(version)
+    path = File.expand_path("../../../../CHANGELOG.md", __dir__)
+    fallback = "Maintenance and improvements."
+    return fallback unless File.exist?(path)
+    # Explicit UTF-8: CHANGELOG headers contain non-ASCII (em dash), which
+    # throws "invalid byte sequence" if the runner locale defaults to ASCII.
+    section = File.read(path, encoding: "UTF-8")[/^##\s*\[#{Regexp.escape(version)}\][^\n]*\n(.*?)(?=^##\s|\z)/m, 1]
+    return fallback if section.nil? || section.strip.empty?
+    notes = section.strip
+      .gsub(/\[([^\]]+)\]\([^)]*\)/, '\1') # [text](url) -> text
+      .gsub(/^#+\s+/, "")                   # drop ###-style subheaders
+      .gsub(/^\s*[*-]\s+/, "- ")           # normalize bullets
+    notes.length > 4000 ? "#{notes[0...3997]}..." : notes
+  end
+
+  # Write the version's notes where deliver reads "What's New" (the same
+  # en-US metadata dir apply-brand populates).
+  def write_release_notes(version)
+    require "fileutils"
+    dir = File.expand_path("metadata/en-US", __dir__)
+    FileUtils.mkdir_p(dir)
+    File.write(File.join(dir, "release_notes.txt"), release_notes_for_version(version))
   end
 
   error do |lane, exception|

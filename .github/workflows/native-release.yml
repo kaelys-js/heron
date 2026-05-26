@@ -13,9 +13,9 @@ name: native-release
 #   APPLE_TEAM_ID            -- found in developer.apple.com
 #   MAC_CERTIFICATE          -- base64-encoded Developer ID Application .p12
 #   MAC_CERTIFICATE_PASSWORD -- the .p12 export password
-#   IOS_CERTIFICATE          -- base64-encoded Apple Distribution .p12
-#   IOS_CERTIFICATE_PASSWORD -- the .p12 export password
-#   IOS_PROVISIONING_PROFILE -- base64-encoded .mobileprovision
+#   MATCH_GIT_URL            -- private git repo holding the Fastlane match
+#                               certs + provisioning profiles (read-only on CI)
+#   MATCH_PASSWORD           -- match repo encryption passphrase
 #
 #   App Store Connect API auth (preferred over legacy app-specific-password):
 #   APP_STORE_CONNECT_KEY_ID       -- the 10-char key ID
@@ -78,15 +78,24 @@ on:
     secrets:
       APPLE_TEAM_ID:
         required: false
+      # Account-holder Apple ID. Not a signing secret: the ASC API key
+      # authenticates uploads. ensure_internal_delivery uses it to add the
+      # maintainer to the internal TestFlight group so builds land on-device.
+      APPLE_ID:
+        required: false
       MAC_CERTIFICATE:
         required: false
       MAC_CERTIFICATE_PASSWORD:
         required: false
-      IOS_CERTIFICATE:
+      # iOS code signing is Fastlane match (certs + profiles in an encrypted
+      # private repo, fetched read-only on CI). No raw cert/profile secrets.
+      MATCH_GIT_URL:
         required: false
-      IOS_CERTIFICATE_PASSWORD:
+      MATCH_PASSWORD:
         required: false
-      IOS_PROVISIONING_PROFILE:
+      # Repo-scoped SSH deploy key for the private match certs repo (so CI
+      # can clone it read-only). Provisioned by setup:native.
+      MATCH_GIT_PRIVATE_KEY:
         required: false
       APP_STORE_CONNECT_KEY_ID:
         required: false
@@ -174,16 +183,16 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           MAC_CERTIFICATE: ${{ secrets.MAC_CERTIFICATE }}
           MAC_CERTIFICATE_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
-          IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
-          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
-          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_PRIVATE_KEY: ${{ secrets.MATCH_GIT_PRIVATE_KEY }}
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
         run: |
           missing=()
           for var in APPLE_TEAM_ID MAC_CERTIFICATE MAC_CERTIFICATE_PASSWORD \
-                     IOS_CERTIFICATE IOS_CERTIFICATE_PASSWORD IOS_PROVISIONING_PROFILE \
+                     MATCH_GIT_URL MATCH_PASSWORD MATCH_GIT_PRIVATE_KEY \
                      APP_STORE_CONNECT_KEY_ID APP_STORE_CONNECT_ISSUER_ID APP_STORE_CONNECT_PRIVATE_KEY; do
             if [ -z "${!var}" ]; then
               missing+=("$var")
@@ -325,18 +334,37 @@ jobs:
             echo "No signing cert — building unsigned (Gatekeeper warning expected)"
           fi
 
+      # @electron/notarize -> `notarytool --key` expects a FILE PATH, not the
+      # key contents. Decode the base64 .p8 to the canonical location (same as
+      # the .pkg/altool leg below) and point APPLE_API_KEY at the file.
+      - name: Decode ASC API key (.p8) for notarization
+        if: matrix.os == 'macos-latest' && env.APP_STORE_CONNECT_KEY_ID != ''
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          key_path="$HOME/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
+          printf "%s" "$APP_STORE_CONNECT_PRIVATE_KEY" | base64 --decode > "$key_path"
+          chmod 600 "$key_path"
+          echo "APPLE_API_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+
       - name: Run electron-builder (publishes to GitHub Release on tag)
         working-directory: ui/electron
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Notarization uses the App Store Connect API key when present;
-          # otherwise electron-builder falls back to APPLE_ID +
-          # app-specific password if those secrets are configured.
+          # Notarization uses the App Store Connect API key (.p8). notarytool
+          # needs it as a FILE PATH (decoded in the prior step), not base64.
           APPLE_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APPLE_API_KEY_ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APPLE_API_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          APPLE_API_KEY: ${{ env.APPLE_API_KEY_PATH }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: pnpm run electron:make
+        # Publish only on real releases (tag push / workflow_call from
+        # release.yml). On workflow_dispatch test runs, build every target but
+        # do NOT publish: the v0.1.0 GitHub Release is immutable, so attaching
+        # assets fails ("Cannot upload assets to an immutable release").
+        run: pnpm run ${{ github.event_name == 'workflow_dispatch' && 'electron:make:test' || 'electron:make' }}
 
       # Mac App Store (.pkg) upload via ASC API.
       #
@@ -631,16 +659,12 @@ jobs:
   build-ios:
     name: Build iOS (TestFlight)
     needs: preflight
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 60
     permissions:
       contents: write # gh release upload (TestFlight + GitHub Release)
       id-token: write # SLSA / Sigstore provenance
       attestations: write # GitHub attestations API
-    env:
-      # Pinned Xcode version -- keeps Swift toolchain consistent with
-      # .mise.toml + test.yml's `ios` job. Bump in lockstep.
-      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
     steps:
       - name: Harden runner
         # G4 -- iOS build runner. Handles Apple ASC API key + signing
@@ -654,6 +678,15 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
+
+      # macos-26 ships Xcode 26 (the iOS 26 SDK App Store now requires) as its
+      # default. If the image also carries a newer versioned Xcode 26.x, prefer
+      # it; otherwise the default is already correct. Logged for the record.
+      - name: Use Xcode 26 (iOS 26 SDK)
+        run: |
+          XC=$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort -V | tail -1)
+          [ -n "$XC" ] && sudo xcode-select -s "$XC/Contents/Developer"
+          xcodebuild -version
 
       # mise pins Node + pnpm + Ruby together so Fastlane uses the same
       # Ruby version we develop against locally.
@@ -724,13 +757,38 @@ jobs:
         working-directory: ui
         run: pnpm exec cap sync ios
 
+      # match clones the PRIVATE certs repo over SSH. setup:native registers
+      # a repo-scoped deploy key and stores its private half as the
+      # MATCH_GIT_PRIVATE_KEY secret; load it so the `git@github.com:...`
+      # MATCH_GIT_URL resolves. match runs read-only here (Fastfile
+      # readonly: is_ci); the key's write access is used only by the
+      # one-time local bootstrap, never on CI.
+      - name: Configure SSH for the match certs repo
+        env:
+          MATCH_GIT_PRIVATE_KEY: ${{ secrets.MATCH_GIT_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$MATCH_GIT_PRIVATE_KEY" > ~/.ssh/match_ed25519
+          chmod 600 ~/.ssh/match_ed25519
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+          {
+            echo 'Host github.com'
+            echo '  IdentityFile ~/.ssh/match_ed25519'
+            echo '  IdentitiesOnly yes'
+          } >> ~/.ssh/config
+
       - name: Build + upload to TestFlight via Fastlane
         working-directory: ui/ios/App
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
-          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
-          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          # Account-holder Apple ID. The ASC API key authenticates the
+          # upload; APPLE_ID is the email ensure_internal_delivery adds to
+          # the "Heron Internal" group so the maintainer receives every
+          # build on-device. Without it the lane logs "already covers"
+          # (empty) and nobody is invited.
+          APPLE_ID: ${{ secrets.APPLE_ID }}
           # App Store Connect API key (.p8) -- preferred over legacy
           # APPLE_ID + app-specific password. Required for 2FA-enabled
           # accounts; reused across every Fastlane lane.
@@ -820,7 +878,7 @@ jobs:
     # the keystore + Play Console service-account JSON are configured.
     # Manual `workflow_dispatch` runs always execute for testing.
     # Set via: `gh variable set PLAY_STORE_ENABLED --body 'true'`
-    if: ${{ vars.PLAY_STORE_ENABLED == 'true' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ vars.PLAY_STORE_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -975,6 +1033,27 @@ jobs:
           set -euo pipefail
           printf "%s" "$ANDROID_KEYSTORE_BASE64" | base64 --decode > ui/android/heron-release.keystore
           test -s ui/android/heron-release.keystore || { echo "::error::Decoded keystore is empty"; exit 1; }
+
+      # build.gradle reads release signing material from keystore.properties
+      # (rootProject = ui/android), NOT from env. Without this file the
+      # release build silently falls back to debug signing and Play rejects
+      # the AAB. storeFile is absolute so build.gradle's file() (resolved
+      # relative to the app/ module) still finds it.
+      - name: Write keystore.properties (release signing)
+        if: ${{ hashFiles('ui/android/heron-release.keystore') != '' }}
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          {
+            echo "storeFile=$(pwd)/ui/android/heron-release.keystore"
+            echo "storePassword=${ANDROID_KEYSTORE_PASSWORD}"
+            echo "keyAlias=${ANDROID_KEY_ALIAS}"
+            echo "keyPassword=${ANDROID_KEY_PASSWORD}"
+          } > ui/android/keystore.properties
+          echo "wrote ui/android/keystore.properties"
 
       # Write the Play Console service-account JSON to disk. supply (the
       # Fastlane Play Store action) reads it via PLAY_STORE_JSON_KEY_PATH.

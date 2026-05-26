@@ -31,7 +31,7 @@
 // suspended at await(). pluginScope's Dispatchers.IO is swapped via
 // reflection at test setup so the test scheduler controls it.
 
-package com.heron.app
+package com.resistjs.heron
 
 import android.content.Context
 import android.os.Looper

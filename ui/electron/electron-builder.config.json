@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/app-builder-lib/scheme.json",
-  "appId": "com.heron.app",
+  "appId": "com.resistjs.heron",
   "productName": "Heron",
   "copyright": "© 2026 Heron contributors (original work © 2026 santifer). Licensed under the MIT License.",
   "directories": {
@@ -110,7 +110,6 @@
       }
     ],
     "icon": "build/icon.ico",
-    "publisherName": "resist.js",
     "verifyUpdateCodeSignature": true,
     "requestedExecutionLevel": "asInvoker",
     "signtoolOptions": {
@@ -176,7 +175,7 @@
     "priority": "optional"
   },
   "appImage": {
-    "license": "MIT"
+    "license": "../../LICENSE"
   },
   "protocols": [
     {

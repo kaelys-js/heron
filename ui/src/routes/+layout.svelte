@@ -22,6 +22,7 @@
   import { authClient } from '$lib/client/auth-client';
   import OfflineIndicator from '$lib/components/OfflineIndicator.svelte';
   import BackendUnreachableOverlay from '$lib/components/BackendUnreachableOverlay.svelte';
+  import BackendBootGuard from '$lib/components/BackendBootGuard.svelte';
   import { page } from '$app/state';
   import { updateWidgets, isIos, setSharedBackendUrl } from '$lib/client/native-bridge';
   import { apiCall } from '$lib/api';
@@ -569,120 +570,136 @@
   `h-full overflow-y-auto` actually scroll internally. Without this lock, content
   taller than viewport would push the wrapper to grow, breaking sticky topbars.
 -->
-<Sidebar.Provider class="h-svh overflow-hidden">
-  <AppSidebar
-    inboxCount={data?.inboxCount ?? 0}
-    queueCount={data?.queueCount ?? 0}
-    pinnedJobs={data?.pinnedJobs ?? []}
-    profilesState={data?.profilesState}
-    activeProfile={data?.activeProfile}
-  />
-  <Sidebar.Inset class="bg-card overflow-hidden">
-    <!-- `<main id="main-content">` is the target of app.html's
+<!--
+  Block the whole app render on Capacitor until the backend URL is resolved
+  (embedded → localhost → wifi → Tailscale → remote). Without this gate the
+  iOS WebView renders the shell + fires API calls that fail before a backend
+  is known, leaving a black screen. The guard shows a branded LoadingState
+  while resolving, then either the app (children) or an actionable "Can't find
+  your backend" screen. On web it's a no-op (origin IS the backend).
+-->
+<BackendBootGuard>
+  <!-- Top-level boundary: the page boundary below only wraps the route
+       content. A render throw in the shell (AppSidebar / Sidebar / floating
+       UI) would otherwise escape uncaught and blank the WebView. This shows a
+       full-screen crash UI on the brand background instead of black. -->
+  <svelte:boundary onerror={handleBoundaryError}>
+    <Sidebar.Provider class="h-svh overflow-hidden">
+      <AppSidebar
+        inboxCount={data?.inboxCount ?? 0}
+        queueCount={data?.queueCount ?? 0}
+        pinnedJobs={data?.pinnedJobs ?? []}
+        profilesState={data?.profilesState}
+        activeProfile={data?.activeProfile}
+      />
+      <Sidebar.Inset class="bg-card overflow-hidden">
+        <!-- `<main id="main-content">` is the target of app.html's
          skip-to-content link. tabindex=-1 lets keyboard focus land here
          after the skip link is activated. -->
-    <main id="main-content" tabindex="-1" class="contents">
-      <svelte:boundary onerror={handleBoundaryError}>
-        {@render children?.()}
-        {#snippet failed(error, reset)}
-          <!-- Page-level crash UI. Same visual language as ErrorBoundary
+        <main id="main-content" tabindex="-1" class="contents">
+          <svelte:boundary onerror={handleBoundaryError}>
+            {@render children?.()}
+            {#snippet failed(error, reset)}
+              <!-- Page-level crash UI. Same visual language as ErrorBoundary
                (the wrapper used by AgentChat / dialogs) so the user sees
                a consistent failure surface across the app. Reload uses
                location.reload() instead of location.assign('') so the
                URL stays intact and the bug is reproducible. -->
-          <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 sm:p-8">
-            <div
-              class="relative w-full max-w-xl flex flex-col gap-4 p-6 rounded-xl border border-red-500/30 bg-gradient-to-br from-red-500/5 via-card to-card overflow-hidden"
-            >
-              <div
-                class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/60 to-transparent"
-              ></div>
-              <div class="flex items-start gap-3">
+              <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 sm:p-8">
                 <div
-                  class="size-10 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center flex-shrink-0"
+                  class="relative w-full max-w-xl flex flex-col gap-4 p-6 rounded-xl border border-red-500/30 bg-gradient-to-br from-red-500/5 via-card to-card overflow-hidden"
                 >
-                  <AlertTriangle class="size-5 text-red-400" />
-                </div>
-                <div class="flex-1 min-w-0">
-                  <h2 class="text-base font-semibold">This page crashed</h2>
-                  <p class="text-xs text-muted-foreground mt-0.5">
-                    <span
-                      class="font-mono text-[11px] text-red-300/80 bg-red-500/10 px-1.5 py-0.5 rounded mr-1"
+                  <div
+                    class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/60 to-transparent"
+                  ></div>
+                  <div class="flex items-start gap-3">
+                    <div
+                      class="size-10 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center flex-shrink-0"
                     >
-                      {error instanceof Error ? error.constructor.name || 'Error' : typeof error}
-                    </span>
-                    The rest of the app keeps running. This was logged to the activity feed.
-                  </p>
-                </div>
-              </div>
-              <pre
-                class="text-xs font-mono leading-relaxed bg-muted/40 border border-border/50 rounded-md p-3 max-h-32 overflow-y-auto whitespace-pre-wrap break-words text-foreground/90">{error instanceof
-                Error
-                  ? error.message || String(error)
-                  : typeof error === 'string'
-                    ? error
-                    : JSON.stringify(error, null, 2)}</pre>
-              {#if error instanceof Error && error.stack}
-                <details class="group">
-                  <summary
-                    class="cursor-pointer text-[11px] text-muted-foreground hover:text-foreground transition-colors select-none flex items-center gap-1.5"
-                  >
-                    <span
-                      class="inline-block transition-transform group-open:rotate-90 text-muted-foreground/60"
-                      >▸</span
-                    >
-                    Stack trace
-                  </summary>
+                      <AlertTriangle class="size-5 text-red-400" />
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <h2 class="text-base font-semibold">This page crashed</h2>
+                      <p class="text-xs text-muted-foreground mt-0.5">
+                        <span
+                          class="font-mono text-[11px] text-red-300/80 bg-red-500/10 px-1.5 py-0.5 rounded mr-1"
+                        >
+                          {error instanceof Error
+                            ? error.constructor.name || 'Error'
+                            : typeof error}
+                        </span>
+                        The rest of the app keeps running. This was logged to the activity feed.
+                      </p>
+                    </div>
+                  </div>
                   <pre
-                    class="mt-2 p-3 text-[11px] font-mono leading-snug bg-muted/30 border border-border/40 rounded-md max-h-48 overflow-auto whitespace-pre-wrap break-all text-muted-foreground">{error.stack}</pre>
-                </details>
-              {/if}
-              <div class="flex flex-wrap items-center gap-2">
-                <Button variant="outline" size="sm" onclick={reset} class="h-8 gap-1.5">
-                  <RefreshCw class="size-3.5" /> Try again
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onclick={() => location.reload()}
-                  class="h-8 gap-1.5"
-                >
-                  <RefreshCw class="size-3.5" /> Reload page
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  class="h-8 gap-1.5"
-                  onclick={() => {
-                    window.dispatchEvent(new CustomEvent(BRAND_EVENTS.openNotifications));
-                  }}
-                >
-                  Open activity log
-                </Button>
+                    class="text-xs font-mono leading-relaxed bg-muted/40 border border-border/50 rounded-md p-3 max-h-32 overflow-y-auto whitespace-pre-wrap break-words text-foreground/90">{error instanceof
+                    Error
+                      ? error.message || String(error)
+                      : typeof error === 'string'
+                        ? error
+                        : JSON.stringify(error, null, 2)}</pre>
+                  {#if error instanceof Error && error.stack}
+                    <details class="group">
+                      <summary
+                        class="cursor-pointer text-[11px] text-muted-foreground hover:text-foreground transition-colors select-none flex items-center gap-1.5"
+                      >
+                        <span
+                          class="inline-block transition-transform group-open:rotate-90 text-muted-foreground/60"
+                          >▸</span
+                        >
+                        Stack trace
+                      </summary>
+                      <pre
+                        class="mt-2 p-3 text-[11px] font-mono leading-snug bg-muted/30 border border-border/40 rounded-md max-h-48 overflow-auto whitespace-pre-wrap break-all text-muted-foreground">{error.stack}</pre>
+                    </details>
+                  {/if}
+                  <div class="flex flex-wrap items-center gap-2">
+                    <Button variant="outline" size="sm" onclick={reset} class="h-8 gap-1.5">
+                      <RefreshCw class="size-3.5" /> Try again
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onclick={() => location.reload()}
+                      class="h-8 gap-1.5"
+                    >
+                      <RefreshCw class="size-3.5" /> Reload page
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      class="h-8 gap-1.5"
+                      onclick={() => {
+                        window.dispatchEvent(new CustomEvent(BRAND_EVENTS.openNotifications));
+                      }}
+                    >
+                      Open activity log
+                    </Button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        {/snippet}
-      </svelte:boundary>
-    </main>
-  </Sidebar.Inset>
-</Sidebar.Provider>
+            {/snippet}
+          </svelte:boundary>
+        </main>
+      </Sidebar.Inset>
+    </Sidebar.Provider>
 
-<!-- Cross-platform offline banner. Sits above the layout chrome so it's
+    <!-- Cross-platform offline banner. Sits above the layout chrome so it's
      always the topmost element. Always visible (no auth gate) because
      network state is relevant on /login too. -->
-<OfflineIndicator />
+    <OfflineIndicator />
 
-<!--
+    <!--
   Full-screen "backend unreachable" overlay. Shows when /api/health has
   failed for > 4s — a HARD signal that the app can't function at all
   (vs OfflineIndicator's small pill which only signals "this might be
   intermittent"). Auth-state independent: a broken backend matters on
   /login too. Self-dismisses when the server comes back.
 -->
-<BackendUnreachableOverlay />
+    <BackendUnreachableOverlay />
 
-<!--
+    <!--
   Auth-gated floating UI. AgentChat / GlobalSearch / AddJobDialog /
   PostRejectionSheet all operate on user data (or trigger workflows
   that mutate it). Rendering them on /login / /signup / /help leaks
@@ -695,19 +712,19 @@
   ErrorBoundary stays around the AgentChat path so a render error in
   the chat panel never takes down the rest of the auth-required app.
 -->
-{#if isAuthed}
-  <ErrorBoundary title="Agent chat crashed">
-    <AgentChat />
-  </ErrorBoundary>
-  <GlobalSearch />
-  <ErrorBoundary title="Add-job dialog crashed">
-    <AddJobDialog />
-  </ErrorBoundary>
-  <ErrorBoundary title="Post-rejection sheet crashed">
-    <PostRejectionSheet />
-  </ErrorBoundary>
-{:else}
-  <!--
+    {#if isAuthed}
+      <ErrorBoundary title="Agent chat crashed">
+        <AgentChat />
+      </ErrorBoundary>
+      <GlobalSearch />
+      <ErrorBoundary title="Add-job dialog crashed">
+        <AddJobDialog />
+      </ErrorBoundary>
+      <ErrorBoundary title="Post-rejection sheet crashed">
+        <PostRejectionSheet />
+      </ErrorBoundary>
+    {:else}
+      <!--
     Unauthed pages (/login, /signup, /help, /onboarding) get a floating
     theme toggle at top-right so the user can pick light/dark/system
     before signing in. The authed Topbar already has one — this is the
@@ -716,10 +733,28 @@
     Island. Z-50 keeps it above auth-screen content but below toasts
     (z-9999 sonner default).
   -->
-  <div
-    class="fixed top-[max(0.5rem,env(safe-area-inset-top))] right-[max(0.5rem,env(safe-area-inset-right))] z-50"
-  >
-    <ThemeToggle />
-  </div>
-{/if}
+      <div
+        class="fixed top-[max(0.5rem,env(safe-area-inset-top))] right-[max(0.5rem,env(safe-area-inset-right))] z-50"
+      >
+        <ThemeToggle />
+      </div>
+    {/if}
+    {#snippet failed(error)}
+      <div
+        class="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 bg-background p-6 text-center"
+      >
+        <h1 class="text-xl font-semibold">The app failed to load</h1>
+        <p class="max-w-md text-sm text-muted-foreground">
+          {error instanceof Error ? error.message : String(error)}
+        </p>
+        <button
+          class="rounded-md border border-border bg-card px-4 py-2 text-sm hover:bg-accent"
+          onclick={() => location.reload()}
+        >
+          Reload
+        </button>
+      </div>
+    {/snippet}
+  </svelte:boundary>
+</BackendBootGuard>
 <Toaster />

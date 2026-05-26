@@ -1,14 +1,1 @@
-Heron is a personal job-search productivity tool.
-
-• Tailor CVs and cover letters per role with on-device LLMs (Anthropic, OpenAI, or Google — use your own API key)
-• Scan 11+ job portals: LinkedIn, Greenhouse, Ashby, Lever, Workday, SmartRecruiters, Workable, Indeed, Wellfound, Ladders, plus generic ATS support
-• Track every application in a local SQLite database — never leaves the device
-• Prep interviews with mock-question + STAR-story drills, plus per-company research dossiers
-• Receive follow-up reminders at the optimal cadence (3-day, 7-day, 14-day windows)
-• Multi-platform: iPhone, iPad, Apple Watch, Mac, Windows, Linux, web
-
-Heron is open-source (MIT) and self-hostable. The dashboard runs on your Mac, your phone connects via secure local network or Tailscale, and your data stays on YOUR machines.
-
-Built with Capacitor + SvelteKit + Better Auth (passkey-first).
-
-Source: https://github.com/kaelys-js/heron
+Heron is a thinking partner for career transitions. Local-first job-search platform: pipeline tracking, A-F role evaluation, ATS-optimized CVs, 11-portal scanning, recruiter email triage, interview prep, and opt-in autonomous apply. Runs on macOS, Windows, Linux, iOS, iPadOS, Android, and Apple Watch.

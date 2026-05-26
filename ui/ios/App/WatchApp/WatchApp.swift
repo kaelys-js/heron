@@ -3,7 +3,7 @@ import SwiftUI
 /**
  * WatchApp — standalone watchOS app target.
  *
- * Bundle ID: com.heron.app.watchkitapp
+ * Bundle ID: <brand.json::identifiers.bundleId>.watchkitapp
  * Deployment target: watchOS 10.0 (lowest version with current SwiftUI
  *                    Lists + NavigationStack + ContainerBackground).
  *
@@ -13,9 +13,9 @@ import SwiftUI
  *   3. Replace the auto-generated files with the ones in this directory
  *      (WatchApp.swift, RootView.swift, etc.)
  *   4. Add to App Groups entitlement (both watch + iPhone targets):
- *      `group.com.heron.app`
+ *      `<brand.json::identifiers.appGroup>`
  *   5. The Watch app's Info.plist must include WKWatchOnly=false and
- *      WKCompanionAppBundleIdentifier=com.heron.app.
+ *      WKCompanionAppBundleIdentifier=<brand.json::identifiers.bundleId>.
  *
  * Data flow:
  *   iPhone (main app)                   Watch

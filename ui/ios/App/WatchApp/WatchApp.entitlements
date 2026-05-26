@@ -6,7 +6,7 @@
 	     watch reads the same widget state. -->
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.heron.app</string>
+		<string>group.com.resistjs.heron</string>
 	</array>
 </dict>
 </plist>

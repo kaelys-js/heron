@@ -11,7 +11,7 @@
  *   2. Detect your Apple Developer credentials:
  *      - APPLE_ID + APPLE_TEAM_ID (you paste)
  *      - APPLE_APP_SPECIFIC_PASSWORD (opens appleid.apple.com → you paste)
- *      - APP_STORE_CONNECT_KEY_ID + ISSUER_ID + .p8 contents
+ *      - APP_STORE_CONNECT_KEY_ID + ISSUER_ID + .p8 file path
  *        (opens appstoreconnect.apple.com → you paste/select file)
  *   3. Export your Mac code-signing certificate from the Keychain to a
  *      .p12 file (you pick the cert + export password).
@@ -188,6 +188,15 @@ ok(`repo: ${repo}`);
 step(3, 'Apple Developer identifiers');
 state.apple = state.apple || {};
 
+info("Two things must already exist in Apple's portal first (Apple has no API for them):");
+info('  - App ID: developer.apple.com/account/resources/identifiers (Explicit; the');
+info('    bundleId from branding/brand.json; enable Push Notifications, App Groups,');
+info('    Associated Domains)');
+info('  - App Store Connect app: appstoreconnect.apple.com -> Apps -> + (pick that bundle');
+info('    ID; the store Name is globally unique, so append a descriptor if "Heron" is');
+info('    taken -- the home-screen name stays Heron)');
+info('  Run `pnpm doctor:native` anytime for the full checklist. Skip if already done.');
+
 state.apple.APPLE_ID = await ask('Apple ID email', { default: state.apple.APPLE_ID });
 state.apple.APPLE_TEAM_ID = await ask(
   'Apple Team ID (10 chars, from developer.apple.com → Membership)',
@@ -250,6 +259,8 @@ if (
 
 // ───────────────────────────────────────────────────────────────────
 step(6, 'Mac code-signing certificate (.p12 export)');
+info('This is the Mac DESKTOP signing identity (notarised DMG via build:desktop).');
+info('iOS TestFlight signs via the App Store Connect API key above, not this cert.');
 if (state.apple.MAC_CERTIFICATE && (await confirm('  Re-use stored Mac cert?', true))) {
   ok('using stored cert');
 } else {
@@ -323,6 +334,128 @@ if (state.apple.MAC_CERTIFICATE && (await confirm('  Re-use stored Mac cert?', t
 }
 
 // ───────────────────────────────────────────────────────────────────
+// ─── iOS code signing (Fastlane match, auto-provisioned) ────────────
+// match keeps the Apple Distribution cert + every provisioning profile in
+// ONE encrypted PRIVATE git repo. We auto-create that repo + a repo-scoped
+// SSH deploy key, so CI fetches certs with no broad PAT and you never make
+// a repo or paste a URL by hand. CI signs read-only (Fastfile readonly:
+// is_ci); the key's write access is used only for the one-time push below.
+info('');
+info('Fastlane match -- iOS code signing (auto-provisioned):');
+const [certsOwner, heronRepoName] = repo.split('/');
+const certsRepo = `${certsOwner}/${heronRepoName}-certs`;
+const certsSshUrl = `git@github.com:${certsRepo}.git`;
+const deployKeyPath = joinPath(NATIVE_STATE_DIR, 'match_deploy_key');
+
+// Re-use only when a PRIOR run finished the bootstrap (certs repo populated).
+// A stored MATCH_GIT_URL with no successful bootstrap (e.g. the first run hit
+// a missing App ID) must fall through and retry, not be skipped as "done".
+if (
+  state.apple.MATCH_GIT_URL &&
+  state.apple.MATCH_BOOTSTRAPPED &&
+  (await confirm('  Re-use stored match config?', true))
+) {
+  ok('using stored match config');
+} else {
+  // 1. Encryption passphrase (you pick it; protects the repo contents).
+  if (!state.apple.MATCH_PASSWORD) {
+    state.apple.MATCH_PASSWORD = await ask('  MATCH_PASSWORD (encryption passphrase you choose)', {
+      hidden: true,
+    });
+  }
+  if (!state.apple.MATCH_PASSWORD) {
+    fail('MATCH_PASSWORD required.');
+    process.exit(1);
+  }
+
+  // 2. Create the private certs repo if it does not exist yet.
+  let certsRepoExists = false;
+  try {
+    capture('gh', ['repo', 'view', certsRepo, '--json', 'name', '-q', '.name']);
+    certsRepoExists = true;
+  } catch {}
+  if (certsRepoExists) {
+    ok(`certs repo exists: ${certsRepo}`);
+  } else {
+    info(`Creating private certs repo ${certsRepo} ...`);
+    run('gh', [
+      'repo',
+      'create',
+      certsRepo,
+      '--private',
+      '--description',
+      'Heron iOS signing certs + profiles (Fastlane match, encrypted). Keep private.',
+    ]);
+    ok(`created ${certsRepo} (private)`);
+  }
+
+  // 3. Repo-scoped deploy key. Write access lets the bootstrap below push;
+  //    CI only ever reads (Fastfile readonly: is_ci).
+  mkdirSync(NATIVE_STATE_DIR, { recursive: true });
+  if (!existsSync(deployKeyPath)) {
+    run('ssh-keygen', ['-t', 'ed25519', '-N', '', '-C', 'heron-match-ci', '-f', deployKeyPath]);
+    info('Registering write deploy key on the certs repo ...');
+    run(
+      'gh',
+      [
+        'repo',
+        'deploy-key',
+        'add',
+        `${deployKeyPath}.pub`,
+        '-R',
+        certsRepo,
+        '--title',
+        'heron-match-ci',
+        '--allow-write',
+      ],
+      { allowFail: true },
+    );
+    ok('deploy key registered (repo-scoped)');
+  } else {
+    ok('deploy key already present locally');
+  }
+
+  state.apple.MATCH_GIT_URL = certsSshUrl;
+  state.apple.MATCH_GIT_PRIVATE_KEY = readFileSync(deployKeyPath, 'utf8');
+  writeState(state);
+
+  // 4. Populate the repo ONCE: writes the dist cert + one profile per bundle
+  //    id. The deploy key authorises the SSH push; the ASC key (step 5)
+  //    authorises the Apple portal calls.
+  info('Populating certs repo via Fastlane match (one-time bootstrap) ...');
+  const sshCmd = `ssh -i ${deployKeyPath} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new`;
+  const iosAppDir = joinPath(ROOT, 'ui/ios/App');
+  const bootstrapEnv = {
+    GIT_SSH_COMMAND: sshCmd,
+    MATCH_GIT_URL: certsSshUrl,
+    MATCH_PASSWORD: state.apple.MATCH_PASSWORD,
+    APP_STORE_CONNECT_API_KEY_ID: state.apple.APP_STORE_CONNECT_KEY_ID,
+    APP_STORE_CONNECT_API_ISSUER_ID: state.apple.APP_STORE_CONNECT_ISSUER_ID,
+    APP_STORE_CONNECT_API_KEY: Buffer.from(state.apple.APP_STORE_CONNECT_KEY ?? '').toString(
+      'base64',
+    ),
+  };
+  const bundleOk = run('bundle', ['install'], { cwd: iosAppDir, allowFail: true }).status === 0;
+  const bootstrap = bundleOk
+    ? run('bundle', ['exec', 'fastlane', 'ios', 'match_bootstrap'], {
+        cwd: iosAppDir,
+        env: bootstrapEnv,
+        allowFail: true,
+      })
+    : { status: 1 };
+  if (bundleOk && bootstrap.status === 0) {
+    state.apple.MATCH_BOOTSTRAPPED = true;
+    writeState(state);
+    ok('certs repo populated (cert + profiles pushed)');
+  } else {
+    warn('match bootstrap did not finish -- see the error above.');
+    info('App IDs + App Groups are auto-registered by the bootstrap. If it still');
+    info('failed, the ASC API key likely lacks the "App Manager" role -- fix that');
+    info('at appstoreconnect.apple.com, then re-run pnpm setup:native.');
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────
 step(7, 'Writing ~/.heron/native-env');
 const envBody = [
   '# Heron native build secrets — auto-generated. Do NOT commit.',
@@ -331,8 +464,11 @@ const envBody = [
   `export APPLE_APP_SPECIFIC_PASSWORD="${state.apple.APPLE_APP_SPECIFIC_PASSWORD}"`,
   `export APP_STORE_CONNECT_KEY_ID="${state.apple.APP_STORE_CONNECT_KEY_ID}"`,
   `export APP_STORE_CONNECT_ISSUER_ID="${state.apple.APP_STORE_CONNECT_ISSUER_ID}"`,
-  `export APP_STORE_CONNECT_KEY=${JSON.stringify(state.apple.APP_STORE_CONNECT_KEY)}`,
+  `export APP_STORE_CONNECT_PRIVATE_KEY="${Buffer.from(state.apple.APP_STORE_CONNECT_KEY ?? '').toString('base64')}"`,
+  `export MAC_CERTIFICATE="${state.apple.MAC_CERTIFICATE ?? ''}"`,
   `export MAC_CERTIFICATE_PASSWORD="${state.apple.MAC_CERTIFICATE_PASSWORD}"`,
+  `export MATCH_GIT_URL="${state.apple.MATCH_GIT_URL ?? ''}"`,
+  `export MATCH_PASSWORD="${state.apple.MATCH_PASSWORD ?? ''}"`,
   '',
 ].join('\n');
 mkdirSync(NATIVE_STATE_DIR, { recursive: true });
@@ -349,9 +485,19 @@ const secrets = {
   APPLE_APP_SPECIFIC_PASSWORD: state.apple.APPLE_APP_SPECIFIC_PASSWORD,
   APP_STORE_CONNECT_KEY_ID: state.apple.APP_STORE_CONNECT_KEY_ID,
   APP_STORE_CONNECT_ISSUER_ID: state.apple.APP_STORE_CONNECT_ISSUER_ID,
-  APP_STORE_CONNECT_KEY: state.apple.APP_STORE_CONNECT_KEY,
+  // native-release.yml + doctor:native consume APP_STORE_CONNECT_PRIVATE_KEY
+  // as base64-encoded .p8 contents (the electron leg base64-decodes it; the
+  // ios leg passes it to fastlane with is_key_content_base64). Match that.
+  APP_STORE_CONNECT_PRIVATE_KEY: Buffer.from(state.apple.APP_STORE_CONNECT_KEY ?? '').toString(
+    'base64',
+  ),
   MAC_CERTIFICATE: state.apple.MAC_CERTIFICATE,
   MAC_CERTIFICATE_PASSWORD: state.apple.MAC_CERTIFICATE_PASSWORD,
+  MATCH_GIT_URL: state.apple.MATCH_GIT_URL,
+  MATCH_PASSWORD: state.apple.MATCH_PASSWORD,
+  // Repo-scoped SSH deploy key (read-write) so CI can clone the private
+  // certs repo. CI signs read-only; only the local bootstrap pushes.
+  MATCH_GIT_PRIVATE_KEY: state.apple.MATCH_GIT_PRIVATE_KEY,
 };
 for (const [name, value] of Object.entries(secrets)) {
   if (!value) {
@@ -417,6 +563,14 @@ if (existsSync(xcodegenScript)) {
 step(11, 'Google Play Store (optional)');
 info('Skip if you have no plans to ship Android via Play Store.');
 info('Required for the build-android job in native-release.yml.');
+info('Portal prerequisites (Google gates these on a human session -- do them first):');
+info('  - Play Console signup: play.google.com/console/signup ($25 one-time + ID verification)');
+info('  - Create app: All apps -> Create app; name from brand.json displayName; Free; App');
+info('  - Content rating: Policy -> App content -> Content rating (IARC questionnaire)');
+info('  - Data safety: Policy -> App content -> Data safety (local-first: none collected/shared)');
+info('  - Privacy policy URL: mandatory + must resolve (Play rejects dead URLs)');
+info('  - Target audience: Policy -> App content -> Target audience and content');
+info('  Run `pnpm doctor:native` anytime for the full checklist. Skip if already done.');
 if (await confirm('  Set up Play Store credentials now?', false)) {
   info('Google Cloud Console → IAM & Admin → Service Accounts → Create.');
   info('  Role: Service Account User.');
@@ -429,10 +583,6 @@ if (await confirm('  Set up Play Store credentials now?', false)) {
     const jsonKeyB64 = Buffer.from(readFileSync(jsonKeyPath, 'utf8')).toString('base64');
     state.android = state.android || {};
     state.android.PLAY_STORE_JSON_KEY = jsonKeyB64;
-    state.android.PLAY_STORE_PACKAGE_NAME = await ask(
-      '  Play Store package name (default: com.heron.app):',
-      'com.heron.app',
-    );
     info('Now for the release keystore. In Android Studio:');
     info('  Build → Generate Signed Bundle/APK → choose "Android App Bundle" → next');
     info('  Click "Create new..." next to "Key store path".');
@@ -449,6 +599,15 @@ if (await confirm('  Set up Play Store credentials now?', false)) {
       state.android.ANDROID_KEY_ALIAS = await ask('  Key alias (default: heron):', 'heron');
       state.android.ANDROID_KEY_PASSWORD = await ask('  Key password (often same as keystore):');
       writeState(state);
+      // build.gradle reads release signing from keystore.properties (gitignored);
+      // write it so local `gradlew bundleRelease` signs, mirroring CI.
+      const ksPropsPath = join(UI, 'android', 'keystore.properties');
+      writeFileSync(
+        ksPropsPath,
+        `storeFile=${ksPath}\nstorePassword=${state.android.ANDROID_KEYSTORE_PASSWORD}\nkeyAlias=${state.android.ANDROID_KEY_ALIAS}\nkeyPassword=${state.android.ANDROID_KEY_PASSWORD}\n`,
+      );
+      chmodSync(ksPropsPath, 0o600); // contains signing passwords
+      ok(`wrote ${ksPropsPath} (mode 600)`);
       ok('Play Store + keystore credentials saved locally');
     } else {
       warn('Keystore not found at provided path — skipping. Re-run setup when ready.');

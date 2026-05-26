@@ -30,19 +30,19 @@
     "watchos"
   ],
   "identifiers": {
-    "bundleId": "com.heron.app",
-    "appGroup": "group.com.heron.app",
+    "bundleId": "com.resistjs.heron",
+    "appGroup": "group.com.resistjs.heron",
     "urlScheme": "heron",
     "serviceType": "_heron._tcp",
     "mdnsType": "heron",
-    "spotlightDomain": "com.heron.app.jobs",
-    "userActivityTypes": ["com.heron.app.job", "com.heron.app.openJob"],
-    "keychainService": "com.heron.app",
+    "spotlightDomain": "com.resistjs.heron.jobs",
+    "userActivityTypes": ["com.resistjs.heron.job", "com.resistjs.heron.openJob"],
+    "keychainService": "com.resistjs.heron",
     "$comment": "capacitorPluginName: bridge contract between TS (registerPlugin) and Swift (jsName). Must match exactly on both sides; apply-brand generates BRAND.capacitorPluginName + Brand.capacitorPluginName so a rebrand retargets both consumers in one step.",
     "capacitorPluginName": "HeronNative"
   },
   "extensions": {
-    "$comment": "Xcode extension targets -- generic structural identifiers. Folder paths and target names are brand-agnostic (Extensions/AppWidget, Extensions/AppLiveActivity, Extensions/AppShareExtension), so a rebrand never touches Xcode targets. Bundle IDs flow from identifiers.bundleId + bundleSuffix (e.g. com.heron.app.widget). The deploymentMin floor is the platform minimum, not a brand decision.",
+    "$comment": "Xcode extension targets -- generic structural identifiers. Folder paths and target names are brand-agnostic (Extensions/AppWidget, Extensions/AppLiveActivity, Extensions/AppShareExtension), so a rebrand never touches Xcode targets. Bundle IDs flow from identifiers.bundleId + bundleSuffix (e.g. com.resistjs.heron.widget). The deploymentMin floor is the platform minimum, not a brand decision.",
     "widget": {
       "targetName": "AppWidget",
       "bundleSuffix": "widget",
@@ -400,9 +400,24 @@
   "store": {
     "appStore": {
       "subtitle": "A thinking partner for careers",
+      "keywords": "job search,career,resume,cv,interview,recruiter,applications,cover letter,offer,hiring,ats",
       "primaryCategory": "PRODUCTIVITY",
       "secondaryCategory": "BUSINESS",
       "contentRating": "4+",
+      "privacy": {
+        "dataTypes": [
+          {
+            "category": "EMAIL_ADDRESS",
+            "protection": "DATA_LINKED_TO_YOU",
+            "purposes": ["APP_FUNCTIONALITY"]
+          },
+          {
+            "category": "CRASH_DATA",
+            "protection": "DATA_NOT_LINKED_TO_YOU",
+            "purposes": ["APP_FUNCTIONALITY", "ANALYTICS"]
+          }
+        ]
+      },
       "reviewerNotes": "Heron is a personal job-search productivity tool. The app reads job postings the user pastes, drafts tailored CVs/cover letters locally, and tracks application status in a local SQLite database. No personal data leaves the device unless the user explicitly signs in with their own LLM API key (Anthropic / OpenAI / Google). Demo account: not applicable -- the app is single-user / self-hosted by design.",
       "demoAccount": null,
       "exportComplianceUsesEncryption": true,

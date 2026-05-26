@@ -32,7 +32,7 @@
        the iOS app sideloaded via Catalyst — future-proofing). -->
   <key>com.apple.security.application-groups</key>
   <array>
-    <string>group.com.heron.app</string>
+    <string>group.com.resistjs.heron</string>
   </array>
 </dict>
 </plist>

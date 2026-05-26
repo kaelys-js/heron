@@ -14,9 +14,9 @@
 # All three get:
 #   • Their Swift source from ui/ios/App/Extensions/AppXxx/ (or WatchApp/)
 #   • Bundle ID: <brand.json::identifiers.bundleId>.{widget,liveactivity,share}
-#     (currently com.heron.app.{widget,liveactivity,share})
+#     (currently com.resistjs.heron.{widget,liveactivity,share})
 #   • App Group capability: <brand.json::identifiers.appGroup>
-#     (currently group.com.heron.app)
+#     (currently group.com.resistjs.heron)
 #   • Deployment target: matches main app
 #
 # Safe to re-run -- checks if a target already exists before adding.
@@ -42,8 +42,8 @@ end
 # DEFAULT_BUNDLE / DEFAULT_GROUP literals only fire if brand.json is
 # missing (fresh-clone bootstrap).
 BRAND_JSON_PATH = File.expand_path("../../../branding/brand.json", File.dirname(PROJECT_PATH))
-DEFAULT_BUNDLE = "com.heron.app"
-DEFAULT_GROUP = "group.com.heron.app"
+DEFAULT_BUNDLE = "com.resistjs.heron"
+DEFAULT_GROUP = "group.com.resistjs.heron"
 brand_json = if File.exist?(BRAND_JSON_PATH)
     begin
       JSON.parse(File.read(BRAND_JSON_PATH, encoding: "UTF-8"))
@@ -148,7 +148,7 @@ app_sources_dir = File.expand_path("App", Dir.pwd)
 if Dir.exist?(app_sources_dir)
   # NOTE: do NOT name this `app_group` -- the outer scope's `app_group`
   # string (the App Group identifier loaded from brand.json,
-  # currently 'group.com.heron.app') is reused in the entitlements
+  # currently 'group.com.resistjs.heron') is reused in the entitlements
   # block below. Shadowing it with a PBXGroup object corrupts the
   # entitlements file (the plist gem then Marshal-dumps the Ruby object
   # into the <data> element).
@@ -319,19 +319,17 @@ EXTENSIONS.each do |ext|
     puts "    + Info.plist"
   end
 
-  # Generate Entitlements with App Group + Live Activity if applicable.
-  # File lives at `<source_dir>/<extension-name>.entitlements`, NOT under
-  # a nested `<source_dir>/Extensions/<name>.entitlements` (a stale bug
-  # from a prior layout where source_dir was a basename instead of a
-  # repo-relative path).
+  # Generate Entitlements with just the App Group. Live Activities is NOT a
+  # code-signing entitlement -- it's the app's Info.plist NSSupportsLiveActivities
+  # flag; putting com.apple.developer.live-activities here only breaks profile
+  # qualification ("profile doesn't include the entitlement"). File lives at
+  # `<source_dir>/<extension-name>.entitlements`, NOT a nested path (stale bug
+  # from when source_dir was a basename instead of a repo-relative path).
   entitlements_path = File.join(source_dir_abs, "#{ext[:name]}.entitlements")
   unless File.exist?(entitlements_path)
     entitlements = {
       "com.apple.security.application-groups" => [app_group],
     }
-    if ext[:bundle_suffix] == "liveactivity"
-      entitlements["com.apple.developer.live-activities"] = true
-    end
     File.write(entitlements_path, Plist::Emit.dump(entitlements))
     puts "    + #{File.basename(entitlements_path)}"
   end
@@ -765,6 +763,7 @@ TEST_TARGETS.each do |t|
   bundle_id = "#{bundle_root}.#{t[:bundle_suffix]}"
   is_watch = t[:sdk] == "watchos"
   is_logic = t[:logic_test] == true
+  is_uitest = t[:type] == "com.apple.product-type.bundle.ui-testing"
   platform = is_watch ? :watchos : :ios
 
   existing = project.targets.find { |x| x.name == t[:name] }
@@ -779,6 +778,15 @@ TEST_TARGETS.each do |t|
         # xcodebuild trying to inject into a non-existent .app.
         bc.build_settings.delete("TEST_HOST")
         bc.build_settings.delete("BUNDLE_LOADER")
+      elsif is_uitest
+        # UI-test bundles drive the app via XCUIApplication and carry
+        # USES_XCTRUNNER (implied by the ui-testing product type). xcodebuild
+        # rejects "sets both USES_XCTRUNNER and TEST_HOST", so strip the
+        # hosted-test keys and bind the runner to the app with
+        # TEST_TARGET_NAME instead. Heals an earlier mis-generated config.
+        bc.build_settings.delete("TEST_HOST")
+        bc.build_settings.delete("BUNDLE_LOADER")
+        bc.build_settings["TEST_TARGET_NAME"] = t[:host]
       end
     end
   else
@@ -795,7 +803,12 @@ TEST_TARGETS.each do |t|
         "GENERATE_INFOPLIST_FILE" => "YES",
         "TARGETED_DEVICE_FAMILY" => is_watch ? "4" : "1,2",
       }
-      unless is_logic
+      if is_uitest
+        # UI tests drive the app externally -- bind via TEST_TARGET_NAME,
+        # never TEST_HOST/BUNDLE_LOADER (xcodebuild rejects that combined
+        # with the USES_XCTRUNNER the ui-testing product type implies).
+        settings["TEST_TARGET_NAME"] = t[:host]
+      elsif !is_logic
         # Hosted tests need TEST_HOST + BUNDLE_LOADER pointing at a real
         # `.app` product. The test bundle is injected at runtime.
         settings["TEST_HOST"] = "$(BUILT_PRODUCTS_DIR)/#{t[:host]}.app/#{t[:host]}"
@@ -887,6 +900,48 @@ TEST_TARGETS.each do |t|
     scheme.save_as(PROJECT_PATH, t[:name], true)
     puts "    + xcshareddata/xcschemes/#{t[:name]}.xcscheme"
   end
+end
+
+# Manual (match) signing for the app-store archive. Automatic signing
+# demands development certs/profiles a distribution-only CI runner lacks, so
+# the Release config of each archived target uses Manual + its
+# "match AppStore <id>" profile + the Apple Distribution identity. The App
+# IDs must carry the matching capabilities (App Groups + group association,
+# background-tasks, live-activities) -- set once on the Dev Portal, since the
+# ASC API can't associate app groups. DEVELOPMENT_TEAM is injected at archive
+# time via gym xcargs (APPLE_TEAM_ID).
+{
+  "App" => bundle_root,
+  "AppWidget" => "#{bundle_root}.widget",
+  "AppLiveActivity" => "#{bundle_root}.liveactivity",
+  "AppShareExtension" => "#{bundle_root}.share",
+  WATCH_NAME => WATCH_BUNDLE_ID,
+}.each do |tname, bid|
+  signed = project.targets.find { |x| x.name == tname }
+  next unless signed
+  signed.build_configurations.each do |config|
+    next unless config.name == "Release"
+    config.build_settings["CODE_SIGN_STYLE"] = "Manual"
+    config.build_settings["CODE_SIGN_IDENTITY"] = "Apple Distribution"
+    config.build_settings["PROVISIONING_PROFILE_SPECIFIER"] = "match AppStore #{bid}"
+  end
+  puts "    ~ #{tname}: manual Release signing (match AppStore #{bid})"
+end
+
+# Shared scheme for the MAIN app. The beta/release lanes build
+# `-scheme App`, and CI checks out only SHARED schemes (xcuserdata is
+# never committed), so without this gym errors "Multiple schemes found"
+# and the archive never starts.
+app_scheme_path = File.join(PROJECT_PATH, "xcshareddata", "xcschemes", "App.xcscheme")
+unless File.exist?(app_scheme_path)
+  FileUtils.mkdir_p(File.dirname(app_scheme_path))
+  app_scheme = Xcodeproj::XCScheme.new
+  app_scheme.add_build_target(main_target)
+  app_scheme.set_launch_target(main_target)
+  app_tests = project.targets.find { |t| t.name == "AppTests" }
+  app_scheme.add_test_target(app_tests) if app_tests
+  app_scheme.save_as(PROJECT_PATH, "App", true)
+  puts "    + xcshareddata/xcschemes/App.xcscheme"
 end
 
 project.save

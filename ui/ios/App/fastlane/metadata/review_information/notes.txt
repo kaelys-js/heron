@@ -1,9 +1,1 @@
-Heron is a personal job-search productivity tool. The app reads job postings the user pastes, drafts tailored CVs/cover letters locally using the user's own LLM API key (Anthropic / OpenAI / Google), and tracks application status in a local SQLite database.
-
-No data leaves the device unless the user explicitly signs in (passkey + email) or enables LLM features. No advertising, no third-party analytics SDKs, no IDFA collection.
-
-The dashboard backend runs on the user's own Mac or laptop; the iOS WebView connects via local wifi (mDNS) or Tailscale. The app gracefully degrades to a "no backend" mode when offline.
-
-Demo account: not applicable — every user is self-hosted by design.
-
-For testing, please use the TestFlight build with passkey sign-up flow. The app does NOT require an LLM API key to launch — features that need one prompt the user inline.
+Heron is a personal job-search productivity tool. The app reads job postings the user pastes, drafts tailored CVs/cover letters locally, and tracks application status in a local SQLite database. No personal data leaves the device unless the user explicitly signs in with their own LLM API key (Anthropic / OpenAI / Google). Demo account: not applicable -- the app is single-user / self-hosted by design.

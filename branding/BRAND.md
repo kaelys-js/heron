@@ -14,12 +14,12 @@
 ## Identity
 
 <!-- AUTO-GENERATED:identifiers-list -->
-- **Bundle ID** -- `com.heron.app`
+- **Bundle ID** -- `com.resistjs.heron`
 - **URL scheme** -- `heron://`
-- **App Group** -- `group.com.heron.app`
+- **App Group** -- `group.com.resistjs.heron`
 - **Bonjour service** -- `_heron._tcp`
 - **Capacitor plugin** -- `HeronNative`
-- **Keychain service** -- `com.heron.app`
+- **Keychain service** -- `com.resistjs.heron`
 <!-- /AUTO-GENERATED:identifiers-list -->
 
 ## Mission

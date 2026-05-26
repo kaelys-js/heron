@@ -12,7 +12,7 @@
 //   3. Assert both terminal calls fired (resolve or reject -- either
 //      is a covered code path; we just need the suspend body to run
 //      to completion).
-package com.heron.app
+package com.resistjs.heron
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4

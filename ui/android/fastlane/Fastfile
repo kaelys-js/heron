@@ -6,7 +6,7 @@ default_platform(:android)
 #   PLAY_STORE_JSON_KEY              — base64-decoded path to a Google
 #                                       Play service-account JSON file
 #                                       with "Release manager" role.
-#   PLAY_STORE_PACKAGE_NAME          — com.heron.app (matches
+#   PLAY_STORE_PACKAGE_NAME          — com.resistjs.heron (matches
 #                                       applicationId in build.gradle).
 #   ANDROID_KEYSTORE_BASE64          — base64-encoded heron-release
 #                                       .keystore. CI decodes + writes to
@@ -15,7 +15,7 @@ default_platform(:android)
 #   ANDROID_KEY_ALIAS                — usually "heron".
 #   ANDROID_KEY_PASSWORD             — password for the key.
 
-PACKAGE_NAME = "com.heron.app"
+PACKAGE_NAME = "com.resistjs.heron"
 
 platform :android do
   before_all do

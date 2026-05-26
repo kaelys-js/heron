@@ -5,7 +5,7 @@
 export const BRAND = {
   name: "heron",
   displayName: "Heron",
-  bundleId: "com.heron.app",
+  bundleId: "com.resistjs.heron",
   urlScheme: "heron",
   serviceType: "_heron._tcp",
   mdnsType: "heron",

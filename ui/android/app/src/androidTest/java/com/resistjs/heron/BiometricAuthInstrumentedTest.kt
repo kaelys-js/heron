@@ -10,7 +10,7 @@
 // We assert the prompt construction succeeded + the bridge resolved
 // or rejected within a reasonable timeout. Either path covers the
 // instrumented-only lines.
-package com.heron.app
+package com.resistjs.heron
 
 import androidx.appcompat.app.AppCompatActivity
 import androidx.test.core.app.ActivityScenario

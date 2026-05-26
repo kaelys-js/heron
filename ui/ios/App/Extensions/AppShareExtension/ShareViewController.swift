@@ -11,8 +11,8 @@ import UniformTypeIdentifiers
  *
  * To add this target in Xcode:
  *   1. File → New → Target → Share Extension → "AppShareExtension"
- *   2. Bundle ID: com.heron.app.share
- *   3. Add to App Groups: group.com.heron.app
+ *   2. Bundle ID: <brand.json::identifiers.bundleId>.share
+ *   3. Add to App Groups: <brand.json::identifiers.appGroup>
  *   4. NSExtensionAttributes / NSExtensionActivationRule (in
  *      MainInterface.storyboard's Info.plist):
  *         NSExtensionActivationSupportsWebURLWithMaxCount = 1

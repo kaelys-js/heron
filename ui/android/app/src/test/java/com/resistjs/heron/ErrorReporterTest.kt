@@ -4,7 +4,7 @@
 //
 // Mirrors AppTests/ErrorReporterTests.swift on the iOS side.
 
-package com.heron.app
+package com.resistjs.heron
 
 import androidx.test.core.app.ApplicationProvider
 import org.junit.After

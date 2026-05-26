@@ -1,4 +1,4 @@
-package com.heron.app;
+package com.resistjs.heron;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;

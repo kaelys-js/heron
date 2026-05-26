@@ -57,7 +57,7 @@ the language is deliberate.
 | **Source** | <https://github.com/kaelys-js/heron> |
 | **Website** | <https://heron.app> |
 | **Discord** | <https://discord.gg/MyFbztUK5U> |
-| **Bundle ID** | `com.heron.app` |
+| **Bundle ID** | `com.resistjs.heron` |
 | **URL scheme** | `heron://` |
 | **Support email** | <hello@heron.app> |
 <!-- /AUTO-GENERATED:quick-facts-table -->
@@ -65,12 +65,12 @@ the language is deliberate.
 ## Identifiers
 
 <!-- AUTO-GENERATED:identifiers-list -->
-- **Bundle ID** -- `com.heron.app`
+- **Bundle ID** -- `com.resistjs.heron`
 - **URL scheme** -- `heron://`
-- **App Group** -- `group.com.heron.app`
+- **App Group** -- `group.com.resistjs.heron`
 - **Bonjour service** -- `_heron._tcp`
 - **Capacitor plugin** -- `HeronNative`
-- **Keychain service** -- `com.heron.app`
+- **Keychain service** -- `com.resistjs.heron`
 <!-- /AUTO-GENERATED:identifiers-list -->
 
 ## What Heron does (feature list -- for technical articles)

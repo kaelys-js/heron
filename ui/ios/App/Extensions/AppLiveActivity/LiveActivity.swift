@@ -18,8 +18,8 @@ import WidgetKit
  * To add this target in Xcode:
  *   1. File → New → Target → Widget Extension → "AppLiveActivity"
  *      with "Include Live Activity" ticked
- *   2. Bundle ID: com.heron.app.liveactivity
- *   3. Add to App Groups: group.com.heron.app
+ *   2. Bundle ID: <brand.json::identifiers.bundleId>.liveactivity
+ *   3. Add to App Groups: <brand.json::identifiers.appGroup>
  */
 struct HeronInterviewAttributes: ActivityAttributes {
     typealias ContentState = State

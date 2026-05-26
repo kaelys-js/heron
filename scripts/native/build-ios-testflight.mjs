@@ -7,7 +7,7 @@
  *   • Ruby + Bundler (Apple's Ruby works; system ruby OK)
  *   • Fastlane (the script `bundle install`s it on first run)
  *   • Apple Developer secrets in ~/.heron/native-env
- *     (run `pnpm setup:secrets` once to generate)
+ *     (run `pnpm setup:native` once to generate)
  *
  * On success: build appears in TestFlight within ~5min, internal testers
  * see it immediately (no Apple beta review).
@@ -41,7 +41,7 @@ const envFile = NATIVE_ENV_FILE;
 let env = {};
 if (!existsSync(envFile)) {
   console.error('No Apple Developer secrets found.');
-  console.error('Run `pnpm setup:secrets` once to configure them.');
+  console.error('Run `pnpm setup:native` once to configure them.');
   process.exit(1);
 }
 const raw = readFileSync(envFile, 'utf8');
@@ -55,9 +55,10 @@ for (const required of [
   'APPLE_TEAM_ID',
   'APP_STORE_CONNECT_KEY_ID',
   'APP_STORE_CONNECT_ISSUER_ID',
+  'APP_STORE_CONNECT_PRIVATE_KEY',
 ]) {
   if (!env[required]) {
-    console.error(`Missing required env var: ${required}. Re-run pnpm setup:secrets.`);
+    console.error(`Missing required env var: ${required}. Re-run pnpm setup:native.`);
     process.exit(1);
   }
 }
@@ -95,6 +96,12 @@ step(7, 'Bundle install (Fastlane)');
 run('bundle', ['install', '--quiet'], { cwd: iosDir });
 
 step(8, 'Running Fastlane :beta -- uploading to TestFlight');
+// The Fastfile reads APP_STORE_CONNECT_API_* (see asc_key lane). Our env
+// stores APP_STORE_CONNECT_{KEY_ID,ISSUER_ID,PRIVATE_KEY}; remap at the
+// fastlane boundary, exactly as native-release.yml does for CI.
+env.APP_STORE_CONNECT_API_KEY_ID = env.APP_STORE_CONNECT_KEY_ID;
+env.APP_STORE_CONNECT_API_ISSUER_ID = env.APP_STORE_CONNECT_ISSUER_ID;
+env.APP_STORE_CONNECT_API_KEY = env.APP_STORE_CONNECT_PRIVATE_KEY;
 run('bundle', ['exec', 'fastlane', 'beta'], { cwd: iosDir, env });
 
 step(9, 'Done');

@@ -10,7 +10,7 @@
 //   - drain() → return + clear queue (HeronNative plugin exposes
 //     this to JS, which forwards to /api/issues during flush cycles)
 
-package com.heron.app
+package com.resistjs.heron
 
 import android.content.Context
 import android.content.SharedPreferences

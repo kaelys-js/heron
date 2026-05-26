@@ -57,7 +57,9 @@
   });
 </script>
 
-{#if state.kind === 'ready'}
+<!-- Web (incl. SSR) is never Capacitor, so render children immediately: no
+     LoadingState flash, no SSR regression. Only Capacitor gates on resolution. -->
+{#if !isCapacitor || state.kind === 'ready'}
   {@render children?.()}
 {:else if state.kind === 'init' || state.kind === 'resolving'}
   <LoadingState
