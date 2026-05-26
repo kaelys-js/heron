@@ -1200,21 +1200,39 @@ jobs:
         working-directory: ui
         run: pnpm exec cap sync android
 
-      # Cache the API-34 system image + the created AVD so cold boot
-      # amortises. Restored BEFORE the install step so a hit lets
-      # sdkmanager skip the (~1 GB) image download. The AVD is saved in
-      # the post-job step regardless of where this restore sits. Paths
-      # are stable ($HOME=/home/runner on ubuntu-latest) so the cached
-      # AVD's absolute system-image reference stays valid.
-      - name: Cache AVD + system image
+      # Gradle dependency cache (AGP / espresso / mockk-android /
+      # androidx.test). Same key as the JVM `android` job so the two
+      # share one cache. hashFiles runs after `cap sync` regenerated the
+      # capacitor*.gradle files, so the hash reflects the resolved build.
+      - name: Cache Gradle dependencies
         if: needs.changes.outputs.android == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: |
-            ~/.android/avd/*
-            ~/.android/adb*
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('ui/android/**/*.gradle*', 'ui/android/**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      # Cache everything sdkmanager installs (system image + emulator +
+      # platform/build-tools/platform-tools) so a warm run skips the
+      # ~1 GB+ download and the next sdkmanager call no-ops. cmdline-tools
+      # is NOT cached (installed fresh below so the mv-to-latest stays
+      # deterministic). The AVD is recreated fresh each run (cheap,
+      # `--force`) rather than cached, so its system-image reference can't
+      # go stale. Restored BEFORE the install step.
+      - name: Cache Android SDK (system image + emulator + platforms)
+        if: needs.changes.outputs.android == 'true'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: |
             ~/android-sdk/system-images/*
-          key: avd-pixel-7-api-34-v2
+            ~/android-sdk/emulator/*
+            ~/android-sdk/platforms/*
+            ~/android-sdk/build-tools/*
+            ~/android-sdk/platform-tools/*
+          key: android-sdk-api34-bt36-v1
 
       # Inline Android SDK + emulator install. Mirrors the JVM `android`
       # job (platform + build-tools 36 per ui/android/variables.gradle)
@@ -1239,21 +1257,38 @@ jobs:
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager 'platform-tools' 'platforms;android-36' 'build-tools;36.0.0' \
             'emulator' 'system-images;android-34;google_apis;x86_64' >/dev/null
+          # Pin the AVD home explicitly so `avdmanager create` (writer) and
+          # `emulator` (reader) resolve the SAME directory. Without this the
+          # two can disagree on the runner (avdmanager wrote elsewhere while
+          # the emulator searched $HOME/.android/avd -> "Unknown AVD name",
+          # which previously hung `adb wait-for-device` to the job timeout).
+          mkdir -p "$HOME/.android/avd"
           {
             echo "ANDROID_HOME=$SDK_ROOT"
             echo "ANDROID_SDK_ROOT=$SDK_ROOT"
+            echo "ANDROID_USER_HOME=$HOME/.android"
+            echo "ANDROID_AVD_HOME=$HOME/.android/avd"
             echo "PATH=$SDK_ROOT/emulator:$SDK_ROOT/platform-tools:$SDK_ROOT/cmdline-tools/latest/bin:$PATH"
           } >> "$GITHUB_ENV"
 
-      - name: Create AVD (idempotent)
+      - name: Create AVD
         if: needs.changes.outputs.android == 'true'
         shell: bash
         run: |
           set -euo pipefail
-          if ! avdmanager list avd 2>/dev/null | grep -q 'Name: pixel-7-api-34'; then
-            echo no | avdmanager create avd -n pixel-7-api-34 \
-              -k 'system-images;android-34;google_apis;x86_64' -d pixel_7
+          echo no | avdmanager create avd -n pixel-7-api-34 \
+            -k 'system-images;android-34;google_apis;x86_64' -d pixel_7 --force
+          # Cross-check that the emulator can SEE the AVD (proves avdmanager
+          # and emulator agree on $ANDROID_AVD_HOME). Fail fast here rather
+          # than discovering "Unknown AVD name" mid-boot.
+          if ! "$ANDROID_HOME/emulator/emulator" -list-avds 2>/dev/null | grep -qx pixel-7-api-34; then
+            echo "::error::AVD pixel-7-api-34 not visible to the emulator after create."
+            echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME"
+            ls -la "$ANDROID_AVD_HOME" || true
+            "$ANDROID_HOME/emulator/emulator" -list-avds || true
+            exit 1
           fi
+          echo "✓ AVD pixel-7-api-34 visible to emulator"
 
       - name: Boot emulator + run instrumented tests
         if: needs.changes.outputs.android == 'true'
@@ -1261,19 +1296,33 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          EMU_LOG=/tmp/emulator-boot.log
           "$ANDROID_HOME/emulator/emulator" -avd pixel-7-api-34 \
             -no-window -gpu swiftshader_indirect -no-snapshot -noaudio \
-            -no-boot-anim -camera-back none &
-          adb wait-for-device
-          # Poll sys.boot_completed up to 600s; fail loud on timeout.
+            -no-boot-anim -camera-back none >"$EMU_LOG" 2>&1 &
+          EMU_PID=$!
+          # Hard cap on device registration so a dead emulator fails in
+          # minutes, not at the 40-min job timeout (the prior failure mode).
+          if ! timeout 300 adb wait-for-device; then
+            echo "::error::adb wait-for-device timed out — emulator never came online."
+            cat "$EMU_LOG" || true
+            exit 1
+          fi
+          # Poll sys.boot_completed; bail immediately if the emulator died.
           booted=""
-          for _ in $(seq 1 120); do
+          for _ in $(seq 1 90); do
+            if ! kill -0 "$EMU_PID" 2>/dev/null; then
+              echo "::error::Emulator process exited during boot."
+              cat "$EMU_LOG" || true
+              exit 1
+            fi
             booted="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
             [ "$booted" = "1" ] && break
             sleep 5
           done
           if [ "$booted" != "1" ]; then
-            echo "::error::Emulator failed to reach sys.boot_completed within 600s."
+            echo "::error::Emulator failed to reach sys.boot_completed."
+            cat "$EMU_LOG" || true
             adb devices
             exit 1
           fi
