@@ -347,7 +347,14 @@ const certsRepo = `${certsOwner}/${heronRepoName}-certs`;
 const certsSshUrl = `git@github.com:${certsRepo}.git`;
 const deployKeyPath = joinPath(NATIVE_STATE_DIR, 'match_deploy_key');
 
-if (state.apple.MATCH_GIT_URL && (await confirm('  Re-use stored match config?', true))) {
+// Re-use only when a PRIOR run finished the bootstrap (certs repo populated).
+// A stored MATCH_GIT_URL with no successful bootstrap (e.g. the first run hit
+// a missing App ID) must fall through and retry, not be skipped as "done".
+if (
+  state.apple.MATCH_GIT_URL &&
+  state.apple.MATCH_BOOTSTRAPPED &&
+  (await confirm('  Re-use stored match config?', true))
+) {
   ok('using stored match config');
 } else {
   // 1. Encryption passphrase (you pick it; protects the repo contents).
@@ -437,6 +444,8 @@ if (state.apple.MATCH_GIT_URL && (await confirm('  Re-use stored match config?',
       })
     : { status: 1 };
   if (bundleOk && bootstrap.status === 0) {
+    state.apple.MATCH_BOOTSTRAPPED = true;
+    writeState(state);
     ok('certs repo populated (cert + profiles pushed)');
   } else {
     warn('match bootstrap did not finish -- see the error above.');
