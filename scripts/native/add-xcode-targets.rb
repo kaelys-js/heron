@@ -889,28 +889,23 @@ TEST_TARGETS.each do |t|
   end
 end
 
-# Manual (match) signing for the app-store archive. Targets ship as
-# CODE_SIGN_STYLE=Automatic, which needs a team AND would ignore the match
-# profiles -- so the Release config of every archived target switches to
-# Manual + its "match AppStore <id>" profile + the Apple Distribution
-# identity. DEVELOPMENT_TEAM is injected at archive time via gym xcargs
-# (APPLE_TEAM_ID), keeping the account id out of the committed project.
-{
-  "App" => bundle_root,
-  "AppWidget" => "#{bundle_root}.widget",
-  "AppLiveActivity" => "#{bundle_root}.liveactivity",
-  "AppShareExtension" => "#{bundle_root}.share",
-  WATCH_NAME => WATCH_BUNDLE_ID,
-}.each do |tname, bid|
+# Automatic signing for the app-store archive (hybrid). match installs the
+# shared CI distribution cert; Xcode then auto-creates the app group +
+# every capability + the profiles from the entitlements via
+# -allowProvisioningUpdates (the beta lane). The App Store Connect API can
+# NOT associate app groups, so Xcode provisions them. DEVELOPMENT_TEAM is
+# injected at archive time via gym xcargs (APPLE_TEAM_ID).
+%w[App AppWidget AppLiveActivity AppShareExtension WatchApp].each do |tname|
   signed = project.targets.find { |x| x.name == tname }
   next unless signed
   signed.build_configurations.each do |config|
     next unless config.name == "Release"
-    config.build_settings["CODE_SIGN_STYLE"] = "Manual"
-    config.build_settings["CODE_SIGN_IDENTITY"] = "Apple Distribution"
-    config.build_settings["PROVISIONING_PROFILE_SPECIFIER"] = "match AppStore #{bid}"
+    config.build_settings["CODE_SIGN_STYLE"] = "Automatic"
+    config.build_settings.delete("PROVISIONING_PROFILE_SPECIFIER")
+    config.build_settings.delete("PROVISIONING_PROFILE")
+    config.build_settings.delete("CODE_SIGN_IDENTITY")
   end
-  puts "    ~ #{tname}: manual Release signing (match AppStore #{bid})"
+  puts "    ~ #{tname}: automatic Release signing (Xcode-managed via match cert)"
 end
 
 # Shared scheme for the MAIN app. The beta/release lanes build

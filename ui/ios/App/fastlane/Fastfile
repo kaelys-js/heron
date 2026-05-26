@@ -259,14 +259,16 @@ platform :ios do
       project: PROJECT,
       scheme: SCHEME,
       export_method: "app-store",
-      # DEVELOPMENT_TEAM is injected here (not committed in the project) so the
-      # Manual-signed Release archive resolves a team for every target. The
-      # skip flags avoid SPM build-tool-plugin + macro validation prompts that
-      # hang a non-interactive CI archive.
-      xcargs: "-skipPackagePluginValidation -skipMacroValidation DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']}",
+      api_key: api_key,
+      # Hybrid signing: `sign` (match) installed the shared distribution cert;
+      # Xcode auto-provisions the app group + capabilities + profiles from the
+      # entitlements via -allowProvisioningUpdates (the ASC API can't associate
+      # app groups). DEVELOPMENT_TEAM is injected here, not committed. The skip
+      # flags avoid SPM plugin + macro validation prompts that hang CI.
+      xcargs: "-skipPackagePluginValidation -skipMacroValidation -allowProvisioningUpdates DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']}",
+      export_xcargs: "-allowProvisioningUpdates",
       export_options: {
-        signingStyle: "manual",
-        provisioningProfiles: ALL_APP_IDENTIFIERS.to_h { |id| [id, "match AppStore #{id}"] }
+        signingStyle: "automatic"
       },
       configuration: "Release",
       clean: true,
