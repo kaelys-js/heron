@@ -1095,75 +1095,85 @@ jobs:
   # ─────────────────────────────────────────────────────────────────
   # Android -- Espresso (instrumented) tests on a real emulator
   # ─────────────────────────────────────────────────────────────────
-  # H.G -- Runs androidTest source set on a real emulator. Two instrumented
-  # tests cover NativePlugin paths Robolectric can't reach:
+  # H.G -- Runs the androidTest source set on a real emulator. Two
+  # instrumented tests cover NativePlugin paths Robolectric can't reach:
   #   - BiometricAuthInstrumentedTest: BiometricPrompt construction against
   #     a real AppCompatActivity (NativePlugin.kt 168-211).
   #   - AppSearchInstrumentedTest: AppSearch indexJobs + clearJobIndex
   #     round-trip against the real on-device backend.
   #
-  # Runs on ubuntu-latest with KVM enabled (recommended pattern per the
-  # reactivecircus/android-emulator-runner README; macos-15 was attempted
-  # earlier and added cost without diagnosable benefit). AVD layer is
-  # cached so the cold boot is amortised across runs.
-  # ─────────────────────────────────────────────────────────────────
-  # Android -- Espresso (instrumented) -- L.1 bisect, REVERTED to step 2
-  # ─────────────────────────────────────────────────────────────────
-  # Bisect trail:
-  #   Step 1 (0f4ead4): bare echo job -- workflow BOOTED.
-  #   Step 2 (568548d): full setup steps -- workflow BOOTED, 9 jobs spawned.
-  #   Step 3 (96bdf71): added `reactivecircus/android-emulator-runner` --
-  #     startup_failure returned.
-  #   Step 4 (19dadc0): replaced with manual sdkmanager + emulator boot --
-  #     ALSO startup_failure. So the antagonist may not be the
-  #     emulator-runner action per se -- could be the workflow_dispatch
-  #     input change, or a `setup-android@SHA` resolution failure.
-  # Reverting to the step-2 shape (echo probe) to confirm baseline still
-  # boots, then bisecting workflow_dispatch input separately.
+  # Emulator boot is hand-rolled (sdkmanager + avdmanager + `emulator`)
+  # rather than via reactivecircus/android-emulator-runner. This repo pins
+  # Actions to a SELECTED allow-list (actions/*, jdx/*, dorny/*, verified
+  # creators, ...) and neither `reactivecircus/*` nor `android-actions/*`
+  # is on it. A `uses:` of a non-allow-listed action is rejected at
+  # workflow-validation time -> silent `startup_failure` with zero jobs
+  # (root cause of the L.1 bisect: runs 26316374520 + 26316519582). The
+  # inline-sdkmanager pattern mirrors the JVM `android` job +
+  # native-release.yml, which deliberately avoid the same allow-list
+  # dependency. KVM is enabled for HW accel; the emulator boots headless
+  # with no snapshot.
   android-emulator:
     name: Android — Espresso (instrumented)
     needs: changes
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    # [user-approved-deferral] TASK-1 + TASK-10 in TODO-INSTRUCTIONS.md.
-    # Android Espresso job disabled entirely. The L.1 startup_failure
-    # root cause is still unknown + the workaround (echo probe) was
-    # misleading. Re-enable after TASK-1 lands a real fix.
-    if: ${{ vars.ENABLE_DISABLED_JOB == 'true' }}
+    # Cold emulator boot (~3-5 min) + AVD create + connectedCheck. 40 min
+    # buys headroom for the first cold run after a runner-image bump.
+    timeout-minutes: 40
     permissions:
       contents: read
       id-token: write
     steps:
+      # Skip-stub. When no Android-relevant paths changed this is the only
+      # step that runs; the required Espresso check reports success
+      # without booting an emulator. On push to main / dispatch the
+      # `changes` job force-trues android, so the full suite runs.
+      - name: Skip — no Android-relevant paths changed
+        if: needs.changes.outputs.android != 'true'
+        run: |
+          echo "::notice::Android Espresso skipped — no Android-relevant paths changed."
+          {
+            echo "### ⏭️ Android Espresso skipped"
+            echo ""
+            echo "No paths matching the \`android\` filter changed in this PR."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Enable KVM
+        if: needs.changes.outputs.android == 'true'
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
       - name: Checkout
+        if: needs.changes.outputs.android == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 1
           persist-credentials: false
 
       - name: Setup JDK 21
+        if: needs.changes.outputs.android == 'true'
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v4.7.0
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Setup mise (Node + pnpm)
+        if: needs.changes.outputs.android == 'true'
         uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4
         with:
           experimental: true
           cache: true
 
       - name: Resolve pnpm store path
+        if: needs.changes.outputs.android == 'true'
         id: pnpm-store
         shell: bash
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
+        if: needs.changes.outputs.android == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
@@ -1171,34 +1181,129 @@ jobs:
           restore-keys: pnpm-store-${{ runner.os }}-
 
       - name: Install pnpm dependencies
+        if: needs.changes.outputs.android == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Apply brand
+        if: needs.changes.outputs.android == 'true'
         run: pnpm brand:apply
 
       - name: Build SvelteKit static (so cap sync has webDir)
+        if: needs.changes.outputs.android == 'true'
         working-directory: ui
         env:
           CAPACITOR: '1'
         run: pnpm run build:static
 
       - name: Capacitor sync android
+        if: needs.changes.outputs.android == 'true'
         working-directory: ui
         run: pnpm exec cap sync android
 
-      - name: Cache AVD
+      # Cache the API-34 system image + the created AVD so cold boot
+      # amortises. Restored BEFORE the install step so a hit lets
+      # sdkmanager skip the (~1 GB) image download. The AVD is saved in
+      # the post-job step regardless of where this restore sits. Paths
+      # are stable ($HOME=/home/runner on ubuntu-latest) so the cached
+      # AVD's absolute system-image reference stays valid.
+      - name: Cache AVD + system image
+        if: needs.changes.outputs.android == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-pixel-7-api-34-v1
+            ~/android-sdk/system-images/*
+          key: avd-pixel-7-api-34-v2
 
-      - name: L.1 probe — bisect re-check (revert to known-booting step 2)
+      # Inline Android SDK + emulator install. Mirrors the JVM `android`
+      # job (platform + build-tools 36 per ui/android/variables.gradle)
+      # and adds the `emulator` package + an API-34 google_apis x86_64
+      # system image. No third-party action (see job header).
+      - name: Install Android SDK + emulator + system image
+        if: needs.changes.outputs.android == 'true'
+        shell: bash
         run: |
-          echo "L.1 step-2 echo probe restored to confirm workflow boot."
-          echo "If THIS commit boots, the antagonist lives in step-3 or step-4 changes."
-          find ui/android -maxdepth 1 -mindepth 1 -printf '%y %f\n' | head
+          set -euo pipefail
+          SDK_ROOT="$HOME/android-sdk"
+          mkdir -p "$SDK_ROOT/cmdline-tools"
+          curl -sSLo /tmp/cmdline.zip 'https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip'
+          unzip -q /tmp/cmdline.zip -d "$SDK_ROOT/cmdline-tools"
+          mv "$SDK_ROOT/cmdline-tools/cmdline-tools" "$SDK_ROOT/cmdline-tools/latest"
+          export PATH="$SDK_ROOT/cmdline-tools/latest/bin:$SDK_ROOT/platform-tools:$SDK_ROOT/emulator:$PATH"
+          export ANDROID_HOME="$SDK_ROOT"
+          export ANDROID_SDK_ROOT="$SDK_ROOT"
+          # `yes | sdkmanager --licenses` SIGPIPEs when sdkmanager exits;
+          # under pipefail that would propagate exit 1. `|| true` keeps the
+          # licenses-accept from failing the step.
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager 'platform-tools' 'platforms;android-36' 'build-tools;36.0.0' \
+            'emulator' 'system-images;android-34;google_apis;x86_64' >/dev/null
+          {
+            echo "ANDROID_HOME=$SDK_ROOT"
+            echo "ANDROID_SDK_ROOT=$SDK_ROOT"
+            echo "PATH=$SDK_ROOT/emulator:$SDK_ROOT/platform-tools:$SDK_ROOT/cmdline-tools/latest/bin:$PATH"
+          } >> "$GITHUB_ENV"
+
+      - name: Create AVD (idempotent)
+        if: needs.changes.outputs.android == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! avdmanager list avd 2>/dev/null | grep -q 'Name: pixel-7-api-34'; then
+            echo no | avdmanager create avd -n pixel-7-api-34 \
+              -k 'system-images;android-34;google_apis;x86_64' -d pixel_7
+          fi
+
+      - name: Boot emulator + run instrumented tests
+        if: needs.changes.outputs.android == 'true'
+        working-directory: ui/android
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$ANDROID_HOME/emulator/emulator" -avd pixel-7-api-34 \
+            -no-window -gpu swiftshader_indirect -no-snapshot -noaudio \
+            -no-boot-anim -camera-back none &
+          adb wait-for-device
+          # Poll sys.boot_completed up to 600s; fail loud on timeout.
+          booted=""
+          for _ in $(seq 1 120); do
+            booted="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+            [ "$booted" = "1" ] && break
+            sleep 5
+          done
+          if [ "$booted" != "1" ]; then
+            echo "::error::Emulator failed to reach sys.boot_completed within 600s."
+            adb devices
+            exit 1
+          fi
+          adb shell settings put global window_animation_scale 0 || true
+          adb shell settings put global transition_animation_scale 0 || true
+          adb shell settings put global animator_duration_scale 0 || true
+          ./gradlew :app:connectedDebugAndroidTest :app:jacocoTestReport --no-daemon --stacktrace
+
+      # Instrumented coverage is ADDITIVE on top of the JVM `android` job's
+      # JaCoCo upload (same `android` flag). fail_ci_if_error: false -- the
+      # JVM job is the coverage gate; this enriches the tree.
+      - name: Upload instrumented coverage to Codecov (android flag)
+        if: always() && needs.changes.outputs.android == 'true' && hashFiles('ui/android/app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml') != ''
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        with:
+          files: ui/android/app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+          flags: android
+          name: android-instrumented
+          fail_ci_if_error: false
+          use_oidc: true
+          verbose: true
+
+      - name: Upload instrumented test reports on failure
+        if: always() && needs.changes.outputs.android == 'true' && hashFiles('ui/android/app/build/reports/androidTests/connected/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: android-instrumented-reports-${{ github.run_id }}
+          path: ui/android/app/build/reports/androidTests/connected/
+          retention-days: 14
+          if-no-files-found: ignore
 
   # ─────────────────────────────────────────────────────────────────
   # Lost Pixel (visual regression) -- own job, distinct required check
