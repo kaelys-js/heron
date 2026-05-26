@@ -118,3 +118,29 @@ describe('native-release contract — no dead pushed secret', () => {
     );
   });
 });
+
+describe('native-release contract — App Store metadata derives from brand.json', () => {
+  const brand = JSON.parse(read('branding/brand.json'));
+  const a = brand.store.appStore;
+  const md = (rel: string) => read(`ui/ios/App/fastlane/metadata/${rel}`).trim();
+  it('name = brand displayName', () => {
+    expect(md('en-US/name.txt')).toBe(brand.displayName);
+  });
+  it('subtitle = brand + within Apple 30-char cap', () => {
+    expect(md('en-US/subtitle.txt')).toBe(a.subtitle);
+    expect(md('en-US/subtitle.txt').length).toBeLessThanOrEqual(30);
+  });
+  it('keywords = brand + within Apple 100-char cap', () => {
+    expect(md('en-US/keywords.txt')).toBe(a.keywords);
+    expect(md('en-US/keywords.txt').length).toBeLessThanOrEqual(100);
+  });
+  it('privacy + support URLs point at the brand domain', () => {
+    expect(md('en-US/privacy_url.txt')).toBe(brand.privacyPolicyUrl);
+    expect(md('en-US/support_url.txt')).toContain(brand.homepageUrl.replace(/\/$/, ''));
+  });
+  it('categories + review email derive from brand', () => {
+    expect(md('primary_category.txt')).toBe(a.primaryCategory);
+    expect(md('secondary_category.txt')).toBe(a.secondaryCategory);
+    expect(md('review_information/email_address.txt')).toBe(brand.supportEmail);
+  });
+});

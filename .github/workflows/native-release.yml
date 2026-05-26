@@ -863,7 +863,7 @@ jobs:
     # the keystore + Play Console service-account JSON are configured.
     # Manual `workflow_dispatch` runs always execute for testing.
     # Set via: `gh variable set PLAY_STORE_ENABLED --body 'true'`
-    if: ${{ vars.PLAY_STORE_ENABLED == 'true' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ vars.PLAY_STORE_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:

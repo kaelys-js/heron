@@ -31,6 +31,10 @@ ALL_APP_IDENTIFIERS = [
   "#{APP_IDENTIFIER}.liveactivity",
   "#{APP_IDENTIFIER}.share",
 ].freeze
+# Internal TestFlight group that auto-receives every build. The release
+# adds the account holder (ENV APPLE_ID) so each build lands on-device with
+# no manual step.
+INTERNAL_GROUP_NAME = "Heron Internal"
 # Capacitor 8+ uses SPM (Swift Package Manager) -- no Podfile, no
 # auto-generated `App.xcworkspace` at the top level. Build straight off
 # `App.xcodeproj`; SPM packages are wired up via project references.
@@ -287,6 +291,51 @@ platform :ios do
       distribute_external: false,           # internal testers only
       reject_build_waiting_for_review: false
     )
+
+    ensure_internal_delivery
+  end
+
+  desc "Zero-touch TestFlight: an internal group that auto-receives every"
+  # build, with the account holder as a member, so each release lands on
+  # their device with no manual step. Best-effort -- a hiccup here must not
+  # fail an otherwise-good build + upload. asc_key already set the Spaceship
+  # token, so ConnectAPI calls are authed.
+  private_lane :ensure_internal_delivery do
+    begin
+      app = Spaceship::ConnectAPI::App.all.find { |a| a.bundle_id == APP_IDENTIFIER }
+      raise "App Store Connect app not found for #{APP_IDENTIFIER}" unless app
+      group = app.get_beta_groups.find { |g| g.name == INTERNAL_GROUP_NAME }
+      unless group
+        # spaceship's create_beta_group always sends publicLinkLimitEnabled,
+        # which ASC rejects for internal groups. POST the betaGroup directly
+        # with only the internal-valid attributes, then re-fetch it.
+        Spaceship::ConnectAPI.client.test_flight_request_client.post("betaGroups", {
+          data: {
+            type: "betaGroups",
+            attributes: {
+              name: INTERNAL_GROUP_NAME,
+              isInternalGroup: true,
+              hasAccessToAllBuilds: true
+            },
+            relationships: { app: { data: { id: app.id, type: "apps" } } }
+          }
+        })
+        group = app.get_beta_groups.find { |g| g.name == INTERNAL_GROUP_NAME }
+        raise "internal group missing after create" unless group
+      end
+      owner = ENV["APPLE_ID"].to_s
+      members = (group.get_beta_testers.map(&:email) rescue [])
+      if !owner.empty? && !members.include?(owner)
+        group.post_bulk_beta_tester_assignments(
+          beta_testers: [{ email: owner, firstName: "Heron", lastName: "Maintainer" }]
+        )
+        UI.success("internal delivery: added #{owner} to '#{INTERNAL_GROUP_NAME}'")
+      else
+        UI.message("internal delivery: '#{INTERNAL_GROUP_NAME}' already covers #{owner}")
+      end
+    rescue => e
+      UI.important("internal-delivery setup skipped (build + upload still OK): #{e.message}")
+    end
   end
 
   desc "Upload App Store metadata + screenshots without rebuilding the IPA"

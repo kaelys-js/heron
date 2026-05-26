@@ -588,8 +588,10 @@ function applyCapacitorConfig(brand, path) {
   // than parse-and-reserialize.
   let body = readFileSync(path, 'utf8');
   const replacements = [
-    // appId is NOT patched here -- both capacitor.config.ts files import
-    // BRAND.bundleId from the generated brand.ts, so it derives at load time.
+    // appId is patched literally (not a runtime `import { BRAND }`): cap sync
+    // electron copies this file into ui/electron/, where a './src/...' brand
+    // import can't resolve and breaks the electron tsgo build.
+    [/appId:\s*['"][^'"]*['"]/, `appId: '${brand.identifiers.bundleId}'`],
     [/appName:\s*['"][^'"]*['"]/, `appName: '${brand.displayName}'`],
     [/scheme:\s*['"][^'"]*['"]/, `scheme: '${brand.identifiers.urlScheme}'`],
     [/customUrlScheme:\s*['"][^'"]*['"]/, `customUrlScheme: '${brand.identifiers.urlScheme}'`],
@@ -950,6 +952,98 @@ function applyFavicon(brand) {
   }
   copyFileSync(src, dest);
   log.ok(`static/favicon.svg ← branding/logo.svg`);
+}
+
+/**
+ * Public legal pages (App Store + Play Store require a resolving privacy
+ * policy + support URL). Emitted as plain static HTML under ui/static/ so
+ * adapter-static serves them at /privacy, /support, /terms with no auth
+ * and no SvelteKit-route/layout coupling. Content derives from brand.json
+ * (name, support email, Discord, repo, license) so a rebrand updates them.
+ * The privacy copy states the app's real posture: local-first, nothing
+ * collected, bring-your-own LLM key.
+ */
+function applyLegalPages(brand) {
+  const name = brand.displayName ?? brand.name;
+  const email = brand.supportEmail ?? '';
+  const discord = brand.community?.discord?.url ?? '';
+  const repo = brand.repo?.url ?? brand.repo ?? '';
+  const license = brand.license ?? 'MIT';
+  const copyright = brand.copyright ?? '';
+  const home = (brand.homepageUrl ?? '').replace(/\/$/, '');
+  const updated = new Date().toISOString().slice(0, 10);
+  const esc = (s) =>
+    String(s ?? '').replace(
+      /[&<>"]/g,
+      (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
+    );
+  const shell = (title, lead, bodyHtml) => `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>${esc(title)} -- ${esc(name)}</title>
+<meta name="robots" content="index,follow" />
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #0e1014; color: #e7e9ee;
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 44rem; margin: 0 auto; padding: 4rem 1.25rem 6rem; }
+  h1 { font-size: 1.9rem; margin: 0 0 .25rem; }
+  .lead { color: #aab2c0; margin: 0 0 2rem; }
+  h2 { font-size: 1.15rem; margin: 2rem 0 .5rem; }
+  a { color: #8fb5ff; }
+  footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #232733; color: #8b93a3; font-size: .85rem; }
+</style>
+</head>
+<body>
+<main>
+<h1>${esc(name)} -- ${esc(title)}</h1>
+<p class="lead">${esc(lead)}</p>
+${bodyHtml}
+<footer>Last updated ${updated}. ${esc(copyright)} &middot; <a href="${esc(home)}">${esc(home.replace(/^https?:\/\//, ''))}</a></footer>
+</main>
+</body>
+</html>
+`;
+  const pages = {
+    'privacy/index.html': shell(
+      'Privacy Policy',
+      `${name} is local-first. Your data stays on your device.`,
+      `<h2>What we collect</h2><p>Nothing. ${esc(name)} has no analytics, no tracking, and no ${esc(name)}-operated servers. Your CV, applications, reports, and email triage live in a local database on your own device or self-hosted instance.</p>
+<h2>Your AI keys</h2><p>AI features are bring-your-own-key. When you add an Anthropic, OpenAI, or Google key, requests go directly from your device/instance to that provider under their privacy policy. ${esc(name)} never sees or proxies those requests.</p>
+<h2>Job postings &amp; email</h2><p>Postings you paste and recruiter emails you connect are processed locally to draft tailored documents and track status. They are not transmitted to us.</p>
+<h2>Contact</h2><p>Questions about privacy: <a href="mailto:${esc(email)}">${esc(email)}</a>.</p>`,
+    ),
+    'support/index.html': shell(
+      'Support',
+      `Help with ${esc(name)}.`,
+      `<h2>Get help</h2><ul>
+<li>Email: <a href="mailto:${esc(email)}">${esc(email)}</a></li>
+${discord ? `<li>Community chat: <a href="${esc(discord)}">Discord</a></li>` : ''}
+${repo ? `<li>Bugs &amp; feature requests: <a href="${esc(repo)}/issues">GitHub issues</a></li>` : ''}
+</ul>
+<h2>About</h2><p>${esc(name)} is open source (${esc(license)}). ${repo ? `Source: <a href="${esc(repo)}">${esc(repo.replace(/^https?:\/\//, ''))}</a>.` : ''}</p>`,
+    ),
+    'terms/index.html': shell(
+      'Terms of Service',
+      `Plain terms for using ${esc(name)}.`,
+      `<h2>License</h2><p>${esc(name)} is open-source software under the ${esc(license)} License and is provided "as is", without warranty of any kind. ${esc(copyright)}</p>
+<h2>Acceptable use</h2><p>You are responsible for the accounts, API keys, and data you connect. Do not use ${esc(name)} to submit applications you have not reviewed, to misrepresent your experience, or in violation of any job portal's terms.</p>
+<h2>No guarantee of outcomes</h2><p>${esc(name)} is a productivity tool, not a recruiter or employer. It makes no guarantee of interviews, offers, or job outcomes.</p>
+<h2>Contact</h2><p><a href="mailto:${esc(email)}">${esc(email)}</a></p>`,
+    ),
+  };
+  let changed = 0;
+  for (const [rel, html] of Object.entries(pages)) {
+    const p = join(UI, 'static', rel);
+    if (!existsSync(p) || readFileSync(p, 'utf8') !== html) {
+      writeFileSync(p, html);
+      changed++;
+    }
+  }
+  if (changed) log.ok(`legal pages (${changed}: privacy/support/terms)`);
+  else log.skip('legal pages -- already current');
 }
 
 /**
@@ -2180,6 +2274,42 @@ function applyManifest(brand) {
     : log.skip(`manifest.webmanifest -- already current`);
 }
 
+function applyAppStoreMetadata(brand) {
+  // App Store Connect listing, derived from brand.json (single source) so a
+  // rebrand updates the store metadata. `deliver` reads these files; the
+  // promote.yml release uploads them. Apple length caps: subtitle <=30,
+  // keywords <=100, promotional_text <=170.
+  const a = brand.store?.appStore ?? {};
+  const meta = join(UI, 'ios', 'App', 'fastlane', 'metadata');
+  const enUS = join(meta, 'en-US');
+  const home = (brand.homepageUrl ?? '').replace(/\/$/, '');
+  const files = {
+    [join(enUS, 'name.txt')]: brand.displayName,
+    [join(enUS, 'subtitle.txt')]: a.subtitle,
+    [join(enUS, 'description.txt')]: brand.description,
+    [join(enUS, 'keywords.txt')]: a.keywords,
+    [join(enUS, 'promotional_text.txt')]: a.promotionalText,
+    [join(enUS, 'marketing_url.txt')]: brand.marketingUrl ?? home,
+    [join(enUS, 'support_url.txt')]: home ? `${home}/support` : '',
+    [join(enUS, 'privacy_url.txt')]: brand.privacyPolicyUrl,
+    [join(meta, 'primary_category.txt')]: a.primaryCategory,
+    [join(meta, 'secondary_category.txt')]: a.secondaryCategory,
+    [join(meta, 'copyright.txt')]: brand.copyright,
+    [join(meta, 'review_information', 'email_address.txt')]: brand.supportEmail,
+    [join(meta, 'review_information', 'notes.txt')]: a.reviewerNotes,
+  };
+  let changed = 0;
+  for (const [p, value] of Object.entries(files)) {
+    const next = `${(value ?? '').toString().trim()}\n`;
+    if (!existsSync(p) || readFileSync(p, 'utf8') !== next) {
+      writeFileSync(p, next);
+      changed++;
+    }
+  }
+  if (changed) log.ok(`App Store metadata (${changed} file(s))`);
+  else log.skip('App Store metadata -- already current');
+}
+
 function applyFastlaneAppfile(brand) {
   const path = join(UI, 'ios', 'App', 'fastlane', 'Appfile');
   if (!existsSync(path)) {
@@ -2854,6 +2984,7 @@ function apply() {
 
   log.step('Web manifest + favicon + app.html + error.html');
   applyFavicon(brand);
+  applyLegalPages(brand);
   applyManifest(brand);
   applyAppHtml(brand);
   applyErrorHtml(brand);
@@ -2872,6 +3003,7 @@ function apply() {
   applyFastlaneAppfile(brand);
   applyFastfile(brand);
   applyAndroidFastlane(brand);
+  applyAppStoreMetadata(brand);
 
   log.step('Build scripts');
   applyAddXcodeTargets(brand);

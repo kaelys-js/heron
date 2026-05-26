@@ -1,5 +1,4 @@
 import type { CapacitorConfig } from '@capacitor/cli';
-import { BRAND } from './src/lib/client/brand';
 
 /**
  * Capacitor config -- Heron native apps.
@@ -25,7 +24,11 @@ import { BRAND } from './src/lib/client/brand';
  *     plugin → SFSafariViewController.
  */
 const config = {
-  appId: BRAND.bundleId,
+  // Literal, kept in sync by apply-brand (brand.json identifiers.bundleId).
+  // NOT a runtime `import { BRAND }`: `cap sync electron` copies this file
+  // into ui/electron/, where a './src/...' brand import can't resolve and
+  // breaks the electron tsgo build.
+  appId: 'com.resistjs.heron',
   appName: 'Heron',
   webDir: 'build/static',
   /** Append a marker so the dashboard server can tell native vs web
