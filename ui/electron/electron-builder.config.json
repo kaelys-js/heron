@@ -175,7 +175,7 @@
     "priority": "optional"
   },
   "appImage": {
-    "license": "MIT"
+    "license": "../../LICENSE"
   },
   "protocols": [
     {
