@@ -1,0 +1,52 @@
+name: store-config
+
+# Fast, build-free App Store *app-level* config: the privacy nutrition label +
+# age rating, applied via the Fastlane `store_config` lane (ASC ConnectAPI).
+#
+# Why this exists: native-release's build-ios is ~10min, dominated by the
+# Xcode build + the TestFlight upload (see the caching audit -- caches DO hit;
+# the upload is the cost). App-level config changes (privacy/age, and later
+# the App Store metadata) don't need a new build at all, so iterating them
+# through native-release wastes ~9min per try. This lane runs only the
+# ConnectAPI calls -- no checkout-of-Xcode, no signing, no build, no upload --
+# on a Linux runner in ~90s.
+#
+# workflow_dispatch only. Uses the same App Store Connect API key secrets as
+# native-release (set by `pnpm setup:native`).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  store-config:
+    name: Apply App Store config (privacy + age rating)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      # spaceship (ConnectAPI) is pure Ruby + HTTPS -- no Xcode, so this runs on
+      # Linux. .ruby-version in ui/ios/App pins the interpreter; bundler-cache
+      # restores the Fastlane gems keyed on the Gemfile.lock there.
+      - name: Setup Ruby + bundler-cache (Fastlane gems)
+        uses: ruby/setup-ruby@afeafc3d1ab54a631816aba4c914a0081c12ff2f # v1.308.0
+        with:
+          working-directory: ui/ios/App
+          bundler-cache: true
+      - name: Apply store config via Fastlane
+        working-directory: ui/ios/App
+        env:
+          # App Store Connect API key (.p8, base64) -- the only auth the
+          # ConnectAPI privacy/age calls need. No match / signing secrets.
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: bundle exec fastlane ios store_config

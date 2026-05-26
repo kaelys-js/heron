@@ -450,6 +450,16 @@ platform :ios do
       JSON.parse(File.read(File.expand_path("../../../../branding/brand.json", __dir__))).dig("store", "appStore") || {}
   end
 
+  desc "Fast app-level App Store config (privacy label + age rating), no build/upload"
+  # Iterates the ASC-config lanes in ~90s instead of a full ~10min build +
+  # TestFlight upload (which is what dominates native-release time -- see the
+  # caching audit). Dispatched by .github/workflows/store-config.yml. asc_key
+  # sets the Spaceship token the ConnectAPI helpers rely on.
+  lane :store_config do
+    asc_key
+    set_privacy_and_age_rating
+  end
+
   desc "Upload App Store metadata + screenshots without rebuilding the IPA"
   lane :upload_metadata do
     # `deliver` reads fastlane/metadata/* (name, subtitle, description,
