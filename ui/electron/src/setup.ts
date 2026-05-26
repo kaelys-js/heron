@@ -11,6 +11,7 @@ import electronIsDev from 'electron-is-dev';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
 import { join } from 'path';
+import { resolveDevServerUrl, buildCsp, isInternalNavigation } from './dev-server';
 
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
 const reloadWatcher = {
@@ -58,6 +59,9 @@ export class ElectronCapacitorApp {
   private mainWindowState;
   private loadWebApp;
   private customScheme: string;
+  /** Non-null in development → load the vite dev server (live HMR) instead of
+   *  the bundled static app. Null in production. */
+  private devServerUrl: string | null = null;
 
   constructor(
     capacitorFileConfig: CapacitorElectronConfig,
@@ -67,6 +71,7 @@ export class ElectronCapacitorApp {
     this.CapacitorFileConfig = capacitorFileConfig;
 
     this.customScheme = this.CapacitorFileConfig.electron?.customUrlScheme ?? 'capacitor-electron';
+    this.devServerUrl = resolveDevServerUrl(electronIsDev);
 
     if (trayMenuTemplate) {
       this.TrayMenuTemplate = trayMenuTemplate;
@@ -83,9 +88,38 @@ export class ElectronCapacitorApp {
     });
   }
 
-  // Helper function to load in the app.
+  // Helper function to load in the app. In dev, load the running vite dev
+  // server (live content + HMR); in prod, electron-serve the bundled app.
   private async loadMainWindow(thisRef: any) {
-    await thisRef.loadWebApp(thisRef.MainWindow);
+    if (thisRef.devServerUrl) {
+      await thisRef.loadDevServerWithRetry(thisRef.MainWindow, thisRef.devServerUrl);
+    } else {
+      await thisRef.loadWebApp(thisRef.MainWindow);
+    }
+  }
+
+  // Dev: load the vite dev server, retrying until it's up. Electron can start
+  // before vite has bound :5173; without retry the first load hits a closed
+  // port and the window shows a blank page that never recovers (dom-ready
+  // never fires → window stays hidden).
+  //
+  // We use loadURL ITSELF as the readiness probe: it rejects with a network
+  // error (ERR_CONNECTION_REFUSED) while vite isn't listening, and resolves
+  // once vite answers (even on a redirect/4xx). An earlier version pre-probed
+  // with fetch(HEAD), but SvelteKit's dev server doesn't answer HEAD cleanly
+  // so that fetch hung indefinitely and loadURL was never reached.
+  private async loadDevServerWithRetry(win: BrowserWindow, url: string): Promise<void> {
+    const deadlineMs = Date.now() + 30_000;
+    while (Date.now() < deadlineMs) {
+      try {
+        await win.loadURL(url);
+        return;
+      } catch {
+        /* vite not listening yet -- retry */
+      }
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    console.error(`[electron] dev server ${url} did not become available within 30s`);
   }
 
   // Expose the mainWindow ref for use outside of the class.
@@ -190,14 +224,15 @@ export class ElectronCapacitorApp {
 
     // Security
     this.MainWindow.webContents.setWindowOpenHandler((details) => {
-      if (!details.url.includes(this.customScheme)) {
-        return { action: 'deny' };
-      } else {
-        return { action: 'allow' };
-      }
+      return isInternalNavigation(details.url, this.customScheme, this.devServerUrl)
+        ? { action: 'allow' }
+        : { action: 'deny' };
     });
-    this.MainWindow.webContents.on('will-navigate', (event, _newURL) => {
-      if (!this.MainWindow.webContents.getURL().includes(this.customScheme)) {
+    this.MainWindow.webContents.on('will-navigate', (event, newURL) => {
+      // Allow navigation only within the app (custom scheme, or the vite dev
+      // server in development). External links are blocked here and handled by
+      // the Browser plugin / system browser instead.
+      if (!isInternalNavigation(newURL, this.customScheme, this.devServerUrl)) {
         event.preventDefault();
       }
     });
@@ -229,11 +264,7 @@ export function setupContentSecurityPolicy(customScheme: string): void {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        'Content-Security-Policy': [
-          electronIsDev
-            ? `default-src ${customScheme}://* 'unsafe-inline' devtools://* 'unsafe-eval' data:`
-            : `default-src ${customScheme}://* 'unsafe-inline' data:`,
-        ],
+        'Content-Security-Policy': [buildCsp(customScheme, electronIsDev)],
       },
     });
   });
