@@ -1,48 +1,41 @@
 import Capacitor
 import UIKit
+import WebKit
 
-// BridgeViewController — CAPBridgeViewController subclass that
-// explicitly registers our custom NativePlugin with the
-// Capacitor bridge.
+// BridgeViewController — CAPBridgeViewController subclass that registers our
+// custom NativePlugin AND owns the NATIVE boot safety-net: if the WebView
+// never reaches a painted/ready state, we overlay a native BootFailureView
+// (brand-dark + Reload) instead of leaving the user on a black screen.
 //
-// Why this subclass exists: Capacitor 7+ auto-discovers plugins that
-// come from @capacitor/* npm packages (they declare themselves in
-// capacitor.config.json and the SPM build wires them up). Custom
-// plugins compiled into the main App target are NOT auto-discovered —
-// the bridge has no way to know about them. Without explicit
-// registration, JS calls to Capacitor.Plugins.HeronNative.* report
-// "HeronNative plugin is not implemented on ios" and the app keeps
-// running but every Bonjour / biometric / keychain / Spotlight /
-// Handoff call no-ops.
+// Why this subclass exists: Capacitor 7+ auto-discovers plugins from
+// @capacitor/* packages, but custom plugins compiled into the App target are
+// not auto-discovered — without explicit registration, JS calls to
+// Capacitor.Plugins.HeronNative.* report "not implemented on ios".
 //
-// Wiring: App/Base.lproj/Main.storyboard points its root view-
-// controller's customClass at this class (was CAPBridgeViewController
-// from the Capacitor module — now BridgeViewController from
-// the App module).
+// Wiring: App/Base.lproj/Main.storyboard points its root view controller's
+// customClass at this class. (If that wiring ever breaks again, AppDelegate's
+// root-VC guard self-heals by installing a BridgeViewController programmatically
+// — see AppDelegate.ensureBridgeRoot.)
 class BridgeViewController: CAPBridgeViewController {
-    /// Brand-dark background applied natively to the view hierarchy
-    /// BEFORE the WebView paints. Eliminates the white flash users
-    /// previously saw between when the native splash dismissed and
-    /// when the WebView's first paint applied the body CSS background.
-    ///
-    /// Three surfaces matter: the view controller's view (visible if
-    /// the WebView is briefly transparent), the WebView itself (the
-    /// WKWebView's underlying backgroundColor — defaults to white in
-    /// iOS), and the WebView's scrollView (visible during bounce).
-    /// `isOpaque = false` keeps the bg visible even while content is
-    /// composing on top.
-    ///
-    /// Hex #0e1014 = RGB(14, 16, 20). Divided by 255 below.
+    /// Brand-dark background applied natively BEFORE the WebView paints, so
+    /// there's never a white/black flash. Hex #0e1014 = RGB(14,16,20).
     private let brandDarkBg = UIColor(
         red: 14.0 / 255.0, green: 16.0 / 255.0, blue: 20.0 / 255.0, alpha: 1.0
     )
 
+    // ── Native boot safety-net ───────────────────────────────────────────
+    /// How long the WebView gets to reach a painted/ready state before we
+    /// assume it's wedged and show the native fallback. Generous so a slow
+    /// cold launch + backend-discovery on a poor network isn't cut off.
+    private let bootDeadline: TimeInterval = 12
+    private var bootWatchdog: Timer?
+    private var bootFailureView: BootFailureView?
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = brandDarkBg
-        // CAPBridgeViewController creates the WKWebView lazily — by
-        // viewDidLoad the property is non-nil. Setting both view +
-        // scroll-view bgs covers iOS's rubber-band overscroll exposure.
+        // CAPBridgeViewController creates the WKWebView lazily — by viewDidLoad
+        // the property is non-nil. Cover view + scroll-view bgs too.
         webView?.backgroundColor = brandDarkBg
         webView?.isOpaque = false
         webView?.scrollView.backgroundColor = brandDarkBg
@@ -51,11 +44,8 @@ class BridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
         bridge?.registerPluginInstance(NativePlugin())
-        // Trace the resolved load URL so we can tell from the simulator
-        // log whether `server.url` in capacitor.config.json actually
-        // surfaced as the WebView's appStartServerURL. CAPLog is silent
-        // unless `loggingBehavior` is set to debug/production, but
-        // NSLog always shows up in `xcrun simctl spawn booted log show`.
+        // Trace the resolved load URL so we can tell from the simulator log
+        // whether server.url surfaced as the WebView's appStartServerURL.
         let serverURL = bridge?.config.serverURL.absoluteString ?? "nil"
         let localURL = bridge?.config.localURL.absoluteString ?? "nil"
         let startURL = bridge?.config.appStartServerURL.absoluteString ?? "nil"
@@ -72,5 +62,90 @@ class BridgeViewController: CAPBridgeViewController {
         } else {
             NSLog("[Heron] viewDidAppear webView.url=nil")
         }
+        // (Re)arm the boot watchdog on every appearance — covers cold launch
+        // AND returning from background to a dead web-content process.
+        scheduleBootWatchdog()
+    }
+
+    // MARK: - Boot watchdog
+
+    private func scheduleBootWatchdog() {
+        bootWatchdog?.invalidate()
+        bootWatchdog = Timer.scheduledTimer(withTimeInterval: bootDeadline, repeats: false) { [weak self] _ in
+            self?.checkBootHealth()
+        }
+    }
+
+    /// Ask the WebView whether it actually rendered. "Healthy" = the SvelteKit
+    /// shell signalled ready (data-app-ready) OR the body has visible text
+    /// (covers the branded "can't reach server" screen, which is a VALID
+    /// state we must NOT cover). Anything else — blank DOM, dead JS, crashed
+    /// content process, or evaluateJavaScript erroring — means the user is
+    /// staring at nothing, so we show the native fallback.
+    private func checkBootHealth() {
+        guard let webView = webView else {
+            presentBootFailure(reason: "The app view didn't load. Tap Reload to try again.")
+            return
+        }
+        let js = """
+        (function () {
+          try {
+            if (document.documentElement.dataset.appReady === '1') return true;
+            return !!(document.body && document.body.innerText.trim().length > 0);
+          } catch (e) { return false; }
+        })()
+        """
+        webView.evaluateJavaScript(js) { [weak self] result, _ in
+            guard let self = self else { return }
+            if (result as? Bool) == true {
+                self.dismissBootFailure()
+            } else {
+                self.presentBootFailure(
+                    reason: "Heron didn't finish loading. This is usually temporary — tap Reload."
+                )
+                ErrorReporter.shared.report(
+                    message: "WebView boot watchdog fired — app not ready after \(Int(self.bootDeadline))s (url=\(webView.url?.absoluteString ?? "nil"))",
+                    source: "ios-boot-watchdog",
+                    level: "error"
+                )
+            }
+        }
+    }
+
+    private func presentBootFailure(reason: String) {
+        guard bootFailureView == nil else { return }
+        let v = BootFailureView(message: reason) { [weak self] in self?.reloadApp() }
+        v.frame = view.bounds
+        v.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.addSubview(v)
+        bootFailureView = v
+    }
+
+    private func dismissBootFailure() {
+        bootFailureView?.removeFromSuperview()
+        bootFailureView = nil
+    }
+
+    private func reloadApp() {
+        dismissBootFailure()
+        webView?.reload()
+        scheduleBootWatchdog()
+    }
+
+    // MARK: - Web-content process crash recovery
+
+    /// WKNavigationDelegate hook for when the web-content process is killed
+    /// (memory pressure, WebKit crash). The view goes blank with no error —
+    /// the standard recovery is to reload. If Capacitor owns the navigation
+    /// delegate this may not fire, in which case the boot watchdog above
+    /// catches the same blank state on the next appearance.
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        ErrorReporter.shared.report(
+            message: "WebView content process terminated — reloading",
+            source: "ios-webview",
+            level: "warn"
+        )
+        webView.reload()
+        scheduleBootWatchdog()
     }
 }

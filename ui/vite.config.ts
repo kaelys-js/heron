@@ -54,6 +54,19 @@ function brandWatcherPlugin(): Plugin {
 }
 
 export default defineConfig({
+  // Inline the Capacitor-build flag into import.meta.env. Vite only auto-exposes
+  // VITE_-prefixed vars, so `import.meta.env.PUBLIC_CAPACITOR_BUILD` would
+  // otherwise be `undefined` even when the build sets PUBLIC_CAPACITOR_BUILD=1.
+  // Folding it to a literal here lets +layout.ts's `ssr` page option resolve to
+  // a STATIC boolean (SvelteKit reads page options by static analysis; a
+  // non-literal defaults to ssr:true → SSR shipped into the WebView → blank
+  // screen). Empty string when unset (the adapter-node web build), so ssr stays
+  // true there as intended.
+  define: {
+    'import.meta.env.PUBLIC_CAPACITOR_BUILD': JSON.stringify(
+      process.env.PUBLIC_CAPACITOR_BUILD ?? '',
+    ),
+  },
   plugins: [brandWatcherPlugin(), tailwindcss(), sveltekit()],
   server: {
     host: true,
