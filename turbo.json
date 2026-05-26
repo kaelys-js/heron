@@ -15,7 +15,7 @@
 
   "tasks": {
     "build": {
-      "dependsOn": ["^build", "brand"],
+      "dependsOn": ["^build", "//#brand"],
       "outputs": ["build/**", ".svelte-kit/**", "dist/**"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -28,7 +28,7 @@
     },
 
     "build:static": {
-      "dependsOn": ["brand"],
+      "dependsOn": ["//#brand"],
       "env": ["CAPACITOR", "PUBLIC_CAPACITOR_BUILD"],
       "outputs": ["build/static/**"],
       "inputs": [
@@ -41,7 +41,7 @@
       ]
     },
 
-    "brand": {
+    "//#brand": {
       "inputs": [
         "branding/brand.json",
         "branding/logo.svg",
@@ -76,7 +76,7 @@
     },
 
     "typecheck": {
-      "dependsOn": ["brand"],
+      "dependsOn": ["//#brand"],
       "outputs": [],
       "inputs": [
         "src/**/*.ts",
@@ -147,11 +147,11 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "dependsOn": ["brand"]
+      "dependsOn": ["//#brand"]
     },
 
     "test": {
-      "dependsOn": ["brand"],
+      "dependsOn": ["//#brand"],
       "outputs": [".vitest-cache/**"],
       "inputs": [
         "src/**",
@@ -165,7 +165,7 @@
     },
 
     "test:coverage": {
-      "dependsOn": ["brand"],
+      "dependsOn": ["//#brand"],
       "outputs": ["coverage/**"],
       "inputs": [
         "src/**",
@@ -181,13 +181,13 @@
     "test:ui": {
       "cache": false,
       "persistent": true,
-      "dependsOn": ["brand"]
+      "dependsOn": ["//#brand"]
     },
 
     "test:watch": {
       "cache": false,
       "persistent": true,
-      "dependsOn": ["brand"]
+      "dependsOn": ["//#brand"]
     },
 
     "//#test:ios": {

@@ -50,6 +50,7 @@
     "ai-detect:check": "node scripts/cv/ai-detect-check.mjs",
     "ats:check": "node scripts/cv/ats-check.mjs",
     "audit": "pnpm audit",
+    "brand": "node scripts/native/apply-brand.mjs",
     "brand:apply": "node scripts/native/apply-brand.mjs",
     "build": "bash scripts/system/mise-shim.sh turbo build",
     "build:desktop": "node scripts/native/build-desktop.mjs",
