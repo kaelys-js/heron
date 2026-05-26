@@ -11,7 +11,17 @@ import {
   getCapacitorElectronConfig,
   setupElectronDeepLinking,
 } from '@capacitor-community/electron';
-import { app, BrowserWindow, Menu, Notification, dialog, shell, ipcMain, net } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  Menu,
+  nativeImage,
+  Notification,
+  dialog,
+  shell,
+  ipcMain,
+  net,
+} from 'electron';
 import electronIsDev from 'electron-is-dev';
 import unhandled from 'electron-unhandled';
 import { autoUpdater } from 'electron-updater';
@@ -47,6 +57,31 @@ unhandled({
 });
 process.on('unhandledRejection', buildUnhandledRejectionHandler(errorOpts));
 
+// Brand the app identity for the OS BEFORE any window or Dock appears.
+// In an unpackaged dev run (`pnpm dev:desktop`) macOS otherwise shows the
+// Electron helper's name ("Electron"); electron-builder's productName only
+// applies to packaged builds. setName MUST run before app.whenReady().
+app.setName(BRAND.displayName);
+
+// Single-instance lock. Re-launching `pnpm dev:desktop` while a previous
+// instance is still alive (on macOS window-all-closed keeps the app in the
+// tray, so it lingers) would otherwise spawn a SECOND, hidden instance --
+// which reads as "the window didn't come back". Instead, focus the
+// existing window and let the second process exit.
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    const w = state.mainWindow;
+    if (w && !w.isDestroyed()) {
+      if (w.isMinimized()) w.restore();
+      w.show();
+      w.focus();
+    }
+  });
+}
+
 const capacitorFileConfig: CapacitorElectronConfig = getCapacitorElectronConfig();
 
 const myCapacitorApp = new ElectronCapacitorApp(capacitorFileConfig);
@@ -73,6 +108,10 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
 });
 
 (async () => {
+  // Lost the single-instance race -- the primary instance is handling the
+  // launch (and was focused via 'second-instance'); this process is exiting.
+  if (!gotSingleInstanceLock) return;
+
   await app.whenReady();
 
   // Windows: bind toast notifications to the right app. Without an AUMID
@@ -85,6 +124,25 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
       /* non-fatal -- toasts still show, just with the wrong app label */
     }
   }
+
+  // macOS Dock identity (dev AND packaged). The BrowserWindow `icon`
+  // option does not affect the macOS Dock -- only app.dock.setIcon does.
+  // build/icon.png is the apply-brand output (regenerated from
+  // branding/brand.json), so the Dock icon stays brand-derived in dev.
+  if (process.platform === 'darwin' && app.dock) {
+    try {
+      app.dock.setIcon(
+        nativeImage.createFromPath(path.join(app.getAppPath(), 'build', 'icon.png')),
+      );
+    } catch {
+      /* non-fatal -- Dock keeps the default icon */
+    }
+  }
+  // Brand the standard About panel (Cmd-? / app menu -> About).
+  app.setAboutPanelOptions({
+    applicationName: BRAND.displayName,
+    applicationVersion: app.getVersion(),
+  });
 
   // 1. Embedded server
   try {
