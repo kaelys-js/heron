@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+import { BRAND } from './src/brand';
 
 /**
  * Capacitor config -- Heron native apps.
@@ -14,7 +15,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
  * iOS) -- Capacitor never serves the API itself.
  */
 const config = {
-  appId: 'com.resistjs.heron',
+  appId: BRAND.bundleId,
   appName: 'Heron',
   webDir: 'build/static',
   ios: {

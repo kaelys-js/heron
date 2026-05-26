@@ -588,7 +588,8 @@ function applyCapacitorConfig(brand, path) {
   // than parse-and-reserialize.
   let body = readFileSync(path, 'utf8');
   const replacements = [
-    [/appId:\s*['"][^'"]*['"]/, `appId: '${brand.identifiers.bundleId}'`],
+    // appId is NOT patched here -- both capacitor.config.ts files import
+    // BRAND.bundleId from the generated brand.ts, so it derives at load time.
     [/appName:\s*['"][^'"]*['"]/, `appName: '${brand.displayName}'`],
     [/scheme:\s*['"][^'"]*['"]/, `scheme: '${brand.identifiers.urlScheme}'`],
     [/customUrlScheme:\s*['"][^'"]*['"]/, `customUrlScheme: '${brand.identifiers.urlScheme}'`],
