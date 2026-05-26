@@ -286,7 +286,10 @@ platform :ios do
 
     upload_to_testflight(
       api_key: api_key,
-      skip_waiting_for_build_processing: true,
+      # Must be false to set the changelog: fastlane/pilot SKIPS the changelog
+      # ("What to Test") entirely when skip_waiting is true. Costs a processing
+      # wait (a few minutes) but the build then shows release notes in TestFlight.
+      skip_waiting_for_build_processing: false,
       changelog: changelog_for_this_build,
       distribute_external: false,           # internal testers only
       reject_build_waiting_for_review: false

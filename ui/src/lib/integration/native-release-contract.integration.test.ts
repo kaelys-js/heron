@@ -219,6 +219,13 @@ describe('native-release contract — TestFlight internal delivery invites the m
     expect(iosFastfile).toContain('ensure_internal_delivery');
     expect(iosFastfile, 'lane must read APPLE_ID').toMatch(/ENV\["APPLE_ID"\]/);
   });
+  it('beta sets the TestFlight changelog (skip_waiting must be false)', () => {
+    // fastlane/pilot SKIPS the changelog ("What to Test") when
+    // skip_waiting_for_build_processing is true, so it must be false.
+    expect(iosFastfile).toContain('changelog: changelog_for_this_build');
+    expect(iosFastfile).toMatch(/skip_waiting_for_build_processing:\s*false/);
+    expect(iosFastfile).not.toMatch(/skip_waiting_for_build_processing:\s*true/);
+  });
 });
 
 describe('native-release contract — macOS notarize key is a path, not base64', () => {
