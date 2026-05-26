@@ -28,7 +28,7 @@
   import { setReporterBackend, reportWarning } from '$lib/client/error-reporter';
   import { BRAND } from '$lib/client/brand';
   import { Button } from '$lib/components/ui/button';
-  import { RefreshCw, Server, ChevronRight, AlertCircle } from '@lucide/svelte';
+  import { RefreshCw, Server, ChevronRight, AlertCircle, Check } from '@lucide/svelte';
   import { slide } from 'svelte/transition';
   import LoadingState from './LoadingState.svelte';
 
@@ -51,6 +51,10 @@
   let showManual = $state(false);
   let manualUrl = $state('');
   let urlError = $state<string | null>(null);
+  // `touched` gates live validation: no error shows until the user leaves the
+  // field once (or hits Connect), then feedback updates live as they type --
+  // so we don't nag mid-first-entry.
+  let touched = $state(false);
   // Which action (if any) is in flight. A single shared boolean used to drive
   // BOTH buttons' spinners, so triggering one spun the other too -- track the
   // specific action instead so each button only spins for itself.
@@ -113,21 +117,48 @@
     void withInFlight('retry', discover);
   }
 
+  // Validates a manually-typed server address. Returns an error string or null.
+  // Stricter than a bare `new URL()` parse: a bare word like "abc" parses fine
+  // but is never a reachable server, so we require localhost / an IP / a dotted
+  // name, plus a sane port if one is supplied.
   function validateUrl(raw: string): string | null {
     const v = raw.trim();
     if (!v) return 'Enter a server address.';
     const normalized = /^https?:\/\//i.test(v) ? v : `http://${v}`;
+    let u: URL;
     try {
-      const u = new URL(normalized);
-      if (!u.hostname) return 'That address is missing a host name.';
-      return null;
+      u = new URL(normalized);
     } catch {
       return "That doesn't look like a valid address.";
     }
+    const host = u.hostname;
+    if (!host) return 'That address is missing a host name.';
+    const isLocalhost = host === 'localhost';
+    const isIp = /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.startsWith('[');
+    const isDotted = host.includes('.');
+    if (!isLocalhost && !isIp && !isDotted) {
+      return 'Enter a host like 192.168.1.20:5173 or myserver.local.';
+    }
+    if (u.port) {
+      const port = Number(u.port);
+      if (!Number.isInteger(port) || port < 1 || port > 65535) {
+        return "That port number isn't valid.";
+      }
+    }
+    return null;
+  }
+
+  let urlValid = $derived(validateUrl(manualUrl) === null);
+
+  // Error to display live / on blur. An empty field shows nothing (it's
+  // optional until they commit); the submit guard handles the empty case.
+  function fieldError(): string | null {
+    return manualUrl.trim() ? validateUrl(manualUrl) : null;
   }
 
   function connectManual(): void {
     if (inFlight) return;
+    touched = true;
     const err = validateUrl(manualUrl);
     urlError = err;
     if (err) return;
@@ -259,9 +290,15 @@
           <label
             class="flex items-center gap-2 rounded-lg border bg-black/30 px-3 transition-colors {urlError
               ? 'border-red-500/60'
-              : 'border-white/10 focus-within:border-white/25'}"
+              : touched && urlValid && manualUrl.trim()
+                ? 'border-emerald-500/50'
+                : 'border-white/10 focus-within:border-white/25'}"
           >
-            <Server class="size-4 shrink-0 text-zinc-400" />
+            {#if touched && urlValid && manualUrl.trim()}
+              <Check class="size-4 shrink-0 text-emerald-400" />
+            {:else}
+              <Server class="size-4 shrink-0 text-zinc-400" />
+            {/if}
             <input
               type="url"
               inputmode="url"
@@ -269,7 +306,13 @@
               autocorrect="off"
               spellcheck="false"
               bind:value={manualUrl}
-              oninput={() => (urlError = null)}
+              oninput={() => {
+                if (touched) urlError = fieldError();
+              }}
+              onblur={() => {
+                touched = true;
+                urlError = fieldError();
+              }}
               onkeydown={(e) => e.key === 'Enter' && connectManual()}
               placeholder="192.168.1.20:5173"
               aria-invalid={urlError ? 'true' : undefined}
@@ -289,7 +332,7 @@
           {/if}
           <Button
             onclick={connectManual}
-            disabled={inFlight !== null || !manualUrl.trim()}
+            disabled={inFlight !== null || !urlValid}
             data-testid="boot-connect"
             class="w-full gap-2"
           >

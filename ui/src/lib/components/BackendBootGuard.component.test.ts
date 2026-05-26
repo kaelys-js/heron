@@ -77,3 +77,63 @@ describe('BackendBootGuard — per-action loading state', () => {
     expect(retry.textContent).not.toContain('Reconnecting');
   });
 });
+
+describe('BackendBootGuard — URL validation', () => {
+  async function openManual(
+    container: HTMLElement,
+    user: ReturnType<typeof userEvent.setup>,
+  ): Promise<HTMLInputElement> {
+    const toggle = [...container.querySelectorAll('button')].find((b) =>
+      b.textContent?.includes('Enter a server address'),
+    );
+    await user.click(toggle as HTMLButtonElement);
+    await tick();
+    return container.querySelector('input[type="url"]') as HTMLInputElement;
+  }
+
+  it('keeps Connect disabled until a valid address is entered', async () => {
+    const { container } = render(BackendBootGuard, { props: { preview: true } });
+    const user = userEvent.setup();
+    const input = await openManual(container, user);
+    expect(byTestId(container, 'boot-connect').disabled).toBe(true); // empty
+    await user.type(input, 'abc'); // bare word: parses but is not a real host
+    await tick();
+    expect(byTestId(container, 'boot-connect').disabled).toBe(true);
+  });
+
+  it('shows a helpful error (and marks aria-invalid) on blur of an invalid address', async () => {
+    const { container } = render(BackendBootGuard, { props: { preview: true } });
+    const user = userEvent.setup();
+    const input = await openManual(container, user);
+    await user.type(input, 'abc');
+    await user.tab(); // blur
+    await tick();
+    expect(container.textContent).toContain('Enter a host like');
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('does not nag before the field is blurred', async () => {
+    const { container } = render(BackendBootGuard, { props: { preview: true } });
+    const user = userEvent.setup();
+    const input = await openManual(container, user);
+    await user.type(input, 'abc');
+    await tick();
+    expect(container.textContent).not.toContain('Enter a host like');
+  });
+
+  it('enables Connect and clears the error once the address becomes valid', async () => {
+    const { container } = render(BackendBootGuard, { props: { preview: true } });
+    const user = userEvent.setup();
+    const input = await openManual(container, user);
+    await user.type(input, 'abc');
+    await user.tab();
+    await tick();
+    expect(byTestId(container, 'boot-connect').disabled).toBe(true);
+
+    await user.clear(input);
+    await user.type(input, '192.168.1.20:5173');
+    await tick();
+    expect(byTestId(container, 'boot-connect').disabled).toBe(false);
+    expect(container.textContent).not.toContain('Enter a host like');
+  });
+});
