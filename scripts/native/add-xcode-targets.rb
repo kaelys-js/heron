@@ -889,6 +889,22 @@ TEST_TARGETS.each do |t|
   end
 end
 
+# Shared scheme for the MAIN app. The beta/release lanes build
+# `-scheme App`, and CI checks out only SHARED schemes (xcuserdata is
+# never committed), so without this gym errors "Multiple schemes found"
+# and the archive never starts.
+app_scheme_path = File.join(PROJECT_PATH, "xcshareddata", "xcschemes", "App.xcscheme")
+unless File.exist?(app_scheme_path)
+  FileUtils.mkdir_p(File.dirname(app_scheme_path))
+  app_scheme = Xcodeproj::XCScheme.new
+  app_scheme.add_build_target(main_target)
+  app_scheme.set_launch_target(main_target)
+  app_tests = project.targets.find { |t| t.name == "AppTests" }
+  app_scheme.add_test_target(app_tests) if app_tests
+  app_scheme.save_as(PROJECT_PATH, "App", true)
+  puts "    + xcshareddata/xcschemes/App.xcscheme"
+end
+
 project.save
 puts "\n✓ Xcode targets up-to-date."
 puts "  Re-run `pnpm dev:ios` / `pnpm dev:apple-watch` to build with new targets."
