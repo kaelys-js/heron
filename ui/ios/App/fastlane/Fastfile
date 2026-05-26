@@ -335,14 +335,35 @@ platform :ios do
         if members.include?(owner)
           UI.message("internal delivery: '#{INTERNAL_GROUP_NAME}' already covers #{owner}")
         else
-          group.post_bulk_beta_tester_assignments(
-            beta_testers: [{ email: owner, firstName: "Heron", lastName: "Maintainer" }]
-          )
+          client = Spaceship::ConnectAPI.client.test_flight_request_client
+          # spaceship's post_bulk_beta_tester_assignments targets
+          # v1/bulkBetaTesterAssignments, which ASC rejects ("resource does
+          # not exist"). Use the stable endpoints instead: attach an already-
+          # existing tester via the group's relationships endpoint, else
+          # create the tester with the group relationship in one POST.
+          existing = (Spaceship::ConnectAPI::BetaTester.all(filter: { email: owner }).first rescue nil)
+          if existing
+            client.post("v1/betaGroups/#{group.id}/relationships/betaTesters", {
+              data: [{ type: "betaTesters", id: existing.id }]
+            })
+          else
+            client.post("v1/betaTesters", {
+              data: {
+                type: "betaTesters",
+                attributes: { email: owner, firstName: "Heron", lastName: "Maintainer" },
+                relationships: { betaGroups: { data: [{ type: "betaGroups", id: group.id }] } }
+              }
+            })
+          end
           UI.success("internal delivery: added #{owner} to '#{INTERNAL_GROUP_NAME}'")
         end
       end
     rescue => e
-      UI.important("internal-delivery setup skipped (build + upload still OK): #{e.message}")
+      # Best-effort, but never silent: surface the failure as a CI annotation
+      # so a broken invite can't masquerade as a clean run again.
+      msg = "internal-delivery setup FAILED (build + upload still OK): #{e.message}"
+      UI.important(msg)
+      puts "::warning title=TestFlight invite::#{msg}" if is_ci
     end
   end
 
