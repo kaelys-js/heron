@@ -5,7 +5,6 @@ import { runWithUser, SYSTEM_USER_ID } from '$lib/server/user-context';
 import { screenshotBypassUser } from '$lib/server/screenshot-bypass';
 import { json, redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
 import { building, dev } from '$app/environment';
-import { devGalleryUnlocked } from '$lib/server/dev-gate';
 
 // bootOnce() runs at module-load time (top of hooks.server.ts, BEFORE
 // any request handler). If it throws, SvelteKit's module-init fails
@@ -91,13 +90,15 @@ const PUBLIC_PREFIXES = [
   '/branding/',
 ];
 
-function isPublicPath(pathname: string, devUnlocked: boolean): boolean {
+function isPublicPath(pathname: string, devServer: boolean): boolean {
   // Root '/' is public -- the layout decides whether to show login or dashboard.
   if (pathname === '/') return true;
-  // View gallery (/dev/*) -- reachable without a session under the live dev
-  // server, OR in a built/native app when the owner has opted into developer
-  // tools (see devGalleryUnlocked). Otherwise the gate stays closed.
-  if (devUnlocked && pathname.startsWith('/dev')) return true;
+  // View gallery -- reachable WITHOUT a session only under the live dev server.
+  // In a built/native app the owner reaches it via their real session; the
+  // dev-tools opt-in cookie only relaxes the onboarding redirect (see
+  // +layout.server.ts), NOT this auth gate -- a client-settable cookie must not
+  // grant session-less access. Exact-segment match so /development etc. don't slip.
+  if (devServer && (pathname === '/dev' || pathname.startsWith('/dev/'))) return true;
   for (const prefix of PUBLIC_PREFIXES) {
     if (pathname === prefix || pathname.startsWith(prefix)) return true;
   }
@@ -144,7 +145,7 @@ const populateAuth: Handle = async ({ event, resolve }) => {
 const guard: Handle = async ({ event, resolve }) => {
   if (building) return resolve(event);
   const path = event.url.pathname;
-  if (isPublicPath(path, devGalleryUnlocked(dev, event.cookies))) return resolve(event);
+  if (isPublicPath(path, dev)) return resolve(event);
   if (event.locals.user) return resolve(event);
 
   // API requests get a JSON 401; HTML page navigations get redirected to login.

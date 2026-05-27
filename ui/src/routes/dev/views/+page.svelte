@@ -14,6 +14,7 @@
 -->
 <script lang="ts">
   import { dev } from '$app/environment';
+  import { devtoolsEnabled } from '$lib/client/devtools.svelte';
   import { goto } from '$app/navigation';
   import { toast } from 'svelte-sonner';
   import { reportClientError } from '$lib/notifications.svelte';
@@ -106,10 +107,10 @@
   ];
 </script>
 
-{#if !dev}
+{#if !(dev || devtoolsEnabled())}
   <div class="flex h-svh items-center justify-center p-8 text-center text-muted-foreground">
-    The dev view gallery is only available in development (<code>pnpm dev</code> /
-    <code>pnpm dev:ios --live</code>).
+    The dev view gallery is available in development (<code>pnpm dev</code>), or in a built app once
+    developer tools are enabled in Settings &rarr; About.
   </div>
 {:else}
   <!-- Solid full-height bg so navigating in never flashes the bare canvas. -->

@@ -163,7 +163,10 @@
     urlError = err;
     if (err) return;
     const raw = manualUrl.trim();
-    const normalized = (/^https?:\/\//i.test(raw) ? raw : `http://${raw}`).replace(/\/$/, '');
+    // Normalize to an origin only (scheme://host[:port]) -- a backend base URL
+    // should never carry a path/query/hash. validateUrl already passed, so the
+    // URL ctor won't throw.
+    const normalized = new URL(/^https?:\/\//i.test(raw) ? raw : `http://${raw}`).origin;
     void withInFlight('connect', async () => {
       await setManualBackend(normalized);
       return discover();
