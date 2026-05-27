@@ -1786,6 +1786,12 @@ jobs:
             vitest-${{ runner.os }}-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      # Refresh brand-derived generated artifacts (brand.ts / Brand.swift / etc.)
+      # BEFORE the gate so the repo-wide checks never read stale branding. The
+      # other build jobs do this too; verify-full's parallel gate tasks don't all
+      # depend on //#brand, so generate it up front.
+      - name: Generate brand artifacts
+        run: pnpm brand:apply
       - name: pnpm verify (typecheck + build + tests + every linter + every gate)
         run: pnpm verify
       # ui-component (browser) tests need Playwright; they run here in CI

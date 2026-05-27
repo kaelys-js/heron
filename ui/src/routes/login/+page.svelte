@@ -87,7 +87,7 @@
       haystack.includes('connection') ||
       haystack.includes('offline')
     ) {
-      return "Couldn't reach the server. Open Heron on your computer (same Wi-Fi), then try again.";
+      return `Couldn't reach the server. Open ${APP_NAME} on your computer (same Wi-Fi), then try again.`;
     }
     if (haystack.includes('invalid state') || haystack.includes('invalidstate')) {
       return 'This passkey is already set up — try signing in again.';

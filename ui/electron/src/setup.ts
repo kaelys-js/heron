@@ -309,11 +309,14 @@ export class ElectronCapacitorApp {
 
 // Set a CSP up for our application based on the custom scheme
 export function setupContentSecurityPolicy(customScheme: string): void {
+  // Pass the resolved dev-server URL so the CSP allows a non-localhost
+  // ELECTRON_DEV_SERVER_URL / CAPACITOR_SERVER_URL override (else it'd be blocked).
+  const devServerUrl = resolveDevServerUrl(electronIsDev);
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        'Content-Security-Policy': [buildCsp(customScheme, electronIsDev)],
+        'Content-Security-Policy': [buildCsp(customScheme, electronIsDev, devServerUrl)],
       },
     });
   });

@@ -27,10 +27,26 @@ export function resolveDevServerUrl(
  *  without this the page loaded from http://localhost:5173 can't fetch its own
  *  bundle and HMR can't connect, so the window stays blank. Production stays
  *  locked to the app scheme only. */
-export function buildCsp(customScheme: string, isDev: boolean): string {
-  return isDev
-    ? `default-src ${customScheme}://* http://localhost:* ws://localhost:* 'unsafe-inline' devtools://* 'unsafe-eval' data:`
-    : `default-src ${customScheme}://* 'unsafe-inline' data:`;
+export function buildCsp(
+  customScheme: string,
+  isDev: boolean,
+  devServerUrl?: string | null,
+): string {
+  if (!isDev) return `default-src ${customScheme}://* 'unsafe-inline' data:`;
+  // Allow the ACTUAL dev-server origin (http + ws), not just localhost, so a
+  // non-localhost ELECTRON_DEV_SERVER_URL / CAPACITOR_SERVER_URL override (e.g.
+  // a LAN IP) isn't CSP-blocked into a blank window.
+  const allow = new Set(['http://localhost:*', 'ws://localhost:*']);
+  if (devServerUrl) {
+    try {
+      const u = new URL(devServerUrl);
+      allow.add(`${u.protocol}//${u.host}`);
+      allow.add(`${u.protocol === 'https:' ? 'wss' : 'ws'}://${u.host}`);
+    } catch {
+      /* malformed override -- keep the localhost defaults */
+    }
+  }
+  return `default-src ${customScheme}://* ${[...allow].join(' ')} 'unsafe-inline' devtools://* 'unsafe-eval' data:`;
 }
 
 /** Whether a navigation target belongs to the app (so will-navigate /
@@ -44,6 +60,14 @@ export function isInternalNavigation(
 ): boolean {
   if (!url) return false;
   if (url.startsWith(`${customScheme}://`)) return true;
-  if (devServerUrl && url.startsWith(devServerUrl)) return true;
+  // Compare parsed ORIGINS, not raw prefixes -- `startsWith(devServerUrl)` would
+  // wrongly allow `http://localhost:5173.attacker.tld/...`.
+  if (devServerUrl) {
+    try {
+      return new URL(url).origin === new URL(devServerUrl).origin;
+    } catch {
+      return false;
+    }
+  }
   return false;
 }
