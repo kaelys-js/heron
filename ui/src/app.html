@@ -208,13 +208,20 @@
         // our own overlays + non-visual nodes. Used by the blank-screen guard.
         function hasVisibleAppContent() {
           if (!document.body) return false;
-          var kids = document.body.children;
-          for (var i = 0; i < kids.length; i++) {
-            var el = kids[i];
-            if (el.id === 'heron-diag' || el.id === 'boot-fallback') continue;
-            if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE') continue;
+          // Walk the WHOLE body subtree, not just direct children: SvelteKit
+          // mounts under a `display: contents` wrapper (0-sized box), so its
+          // real content lives one level down. querySelectorAll('*') flattens
+          // that. Require a >1px box so the 1x1 sr-only skip link doesn't count
+          // as "content"; skip our own overlays + their subtrees + non-visual
+          // nodes.
+          var all = document.body.querySelectorAll('*');
+          for (var i = 0; i < all.length; i++) {
+            var el = all[i];
+            var tag = el.tagName;
+            if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'TEMPLATE') continue;
+            if (el.closest('#heron-diag, #boot-fallback')) continue;
             var r = el.getBoundingClientRect();
-            if (r.width > 0 && r.height > 0) {
+            if (r.width > 1 && r.height > 1) {
               var cs = getComputedStyle(el);
               if (
                 cs.display !== 'none' &&

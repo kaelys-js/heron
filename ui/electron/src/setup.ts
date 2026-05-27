@@ -175,9 +175,15 @@ export class ElectronCapacitorApp {
         // contextIsolation ON (Electron security baseline).
         nodeIntegration: false,
         contextIsolation: true,
-        // sandbox stays false: preload.ts does `require('./rt/electron-rt')`
-        // (a relative require), which a sandboxed preload cannot resolve.
-        // Enabling sandbox needs the preload bundled to a single file first.
+        // sandbox stays false (deliberate). The renderer is already locked down
+        // by contextIsolation:true + nodeIntegration:false above (web content
+        // can't touch Node). Enabling the preload sandbox isn't a simple bundle:
+        // Capacitor's rt/electron-rt.ts uses Node `crypto.randomBytes` +
+        // `events.EventEmitter`, which a sandboxed preload cannot provide, so
+        // sandbox:true would break the Capacitor IPC bridge. Making it
+        // sandbox-safe means rewriting that framework runtime (Web Crypto + an
+        // EventEmitter shim) + full IPC retest -- tracked as separate hardening,
+        // not done here. @capacitor-community/electron ships sandbox:false too.
         sandbox: false,
         preload: preloadPath,
       },
