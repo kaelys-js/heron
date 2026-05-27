@@ -46,14 +46,19 @@ final class BootFailureView: UIView {
 
         let title = UILabel()
         title.text = "Couldn't load \(Brand.displayName)"
-        title.font = .systemFont(ofSize: 19, weight: .semibold)
+        // Dynamic Type-aware so the message scales with the user's text size.
+        title.font = UIFontMetrics(forTextStyle: .title3).scaledFont(
+            for: .systemFont(ofSize: 19, weight: .semibold)
+        )
+        title.adjustsFontForContentSizeCategory = true
         title.textColor = UIColor(white: 0.96, alpha: 1.0)
         title.textAlignment = .center
         title.numberOfLines = 0
 
         let body = UILabel()
         body.text = message
-        body.font = .systemFont(ofSize: 14, weight: .regular)
+        body.font = UIFontMetrics(forTextStyle: .body).scaledFont(for: .systemFont(ofSize: 14))
+        body.adjustsFontForContentSizeCategory = true
         body.textColor = UIColor(white: 0.7, alpha: 1.0)
         body.textAlignment = .center
         body.numberOfLines = 0
@@ -74,13 +79,34 @@ final class BootFailureView: UIView {
         stack.spacing = 14
         stack.setCustomSpacing(22, after: body)
         stack.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(stack)
+
+        // Host the stack in a scroll view so that at large Dynamic Type sizes
+        // (or short screens) the content -- and crucially the Reload button --
+        // stays reachable instead of being pushed off-screen. It still reads as
+        // centered when the content fits (low-priority centerY).
+        let scroll = UIScrollView()
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        scroll.showsVerticalScrollIndicator = false
+        addSubview(scroll)
+        scroll.addSubview(stack)
+
+        let frame = scroll.frameLayoutGuide
+        let content = scroll.contentLayoutGuide
+        let centerY = stack.centerYAnchor.constraint(equalTo: frame.centerYAnchor)
+        centerY.priority = .defaultLow // yields to the content top/bottom when it can't fit
 
         NSLayoutConstraint.activate([
-            stack.centerXAnchor.constraint(equalTo: centerXAnchor),
-            stack.centerYAnchor.constraint(equalTo: centerYAnchor),
-            stack.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 32),
-            stack.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -32),
+            scroll.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
+            scroll.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor),
+            scroll.leadingAnchor.constraint(equalTo: leadingAnchor),
+            scroll.trailingAnchor.constraint(equalTo: trailingAnchor),
+
+            stack.topAnchor.constraint(greaterThanOrEqualTo: content.topAnchor, constant: 24),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: content.bottomAnchor, constant: -24),
+            stack.centerXAnchor.constraint(equalTo: content.centerXAnchor),
+            centerY,
+            stack.leadingAnchor.constraint(greaterThanOrEqualTo: frame.leadingAnchor, constant: 32),
+            stack.trailingAnchor.constraint(lessThanOrEqualTo: frame.trailingAnchor, constant: -32),
             stack.widthAnchor.constraint(lessThanOrEqualToConstant: 360),
         ])
     }
