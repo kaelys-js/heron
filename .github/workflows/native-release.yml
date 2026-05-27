@@ -205,6 +205,10 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           MAC_CERTIFICATE: ${{ secrets.MAC_CERTIFICATE }}
           MAC_CERTIFICATE_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+          # MAS signing is optional but all-or-nothing -- validated as a group below.
+          MAC_MAS_CERTIFICATE: ${{ secrets.MAC_MAS_CERTIFICATE }}
+          MAC_MAS_CERTIFICATE_PASSWORD: ${{ secrets.MAC_MAS_CERTIFICATE_PASSWORD }}
+          MAC_PROVISIONING_PROFILE_BASE64: ${{ secrets.MAC_PROVISIONING_PROFILE_BASE64 }}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_PRIVATE_KEY: ${{ secrets.MATCH_GIT_PRIVATE_KEY }}
@@ -233,6 +237,26 @@ jobs:
             exit 1
           fi
           echo "✅ all required secrets present"
+
+          # MAS signing is OPTIONAL but all-or-nothing: if the distribution
+          # cert is set, its companion secrets must be too -- otherwise the run
+          # would fail much later (security import / electron-builder) instead
+          # of here in the 2-minute preflight. With none set, MAS simply skips.
+          if [ -n "$MAC_MAS_CERTIFICATE" ]; then
+            mas_missing=()
+            for var in MAC_MAS_CERTIFICATE_PASSWORD MAC_PROVISIONING_PROFILE_BASE64; do
+              if [ -z "${!var}" ]; then
+                mas_missing+=("$var")
+              fi
+            done
+            if [ ${#mas_missing[@]} -gt 0 ]; then
+              echo "::error::MAC_MAS_CERTIFICATE is set but its companion MAS secrets are missing:"
+              for m in "${mas_missing[@]}"; do echo "::error::  • $m"; done
+              echo "::error::Set all three (cert + password + provisioning profile) to enable Mac App Store signing, or none to skip it."
+              exit 1
+            fi
+            echo "✅ MAS signing fully configured"
+          fi
 
   build-desktop:
     name: Build ${{ matrix.os }}
