@@ -132,8 +132,14 @@ describe('BackendBootGuard — URL validation', () => {
 
     await user.clear(input);
     await user.type(input, '192.168.1.20:5173');
-    await tick();
-    expect(byTestId(container, 'boot-connect').disabled).toBe(false);
-    expect(container.textContent).not.toContain('Enter a host like');
+    // boot-connect's `disabled` is a $derived (syncs with the input value the
+    // same microtask) while the error message is rewritten in the input
+    // handler -- in webkit browser-mode those settle a frame apart, so a single
+    // tick() can catch the button enabled while the stale error still paints.
+    // Wait for the DOM to converge instead of asserting on one microtask.
+    await vi.waitFor(() => {
+      expect(byTestId(container, 'boot-connect').disabled).toBe(false);
+      expect(container.textContent).not.toContain('Enter a host like');
+    });
   });
 });
