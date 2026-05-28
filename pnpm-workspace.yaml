@@ -59,6 +59,10 @@ overrides:
   # GHSA-f5x3-32g6-xq36, GHSA-3jfq-g458-7qm9, plus 3 sibling CVEs -- tar
   # path traversal / arbitrary write. Patched in 7.5.7.
   tar: ">=7.5.7"
+  # GHSA-ph9p-34f9-6g65 -- tmp path traversal via an unsanitized prefix/postfix
+  # (symlink directory-escape). Patched in 0.2.6. Pulled in transitively under
+  # electron-builder > app-builder-lib > @malept/flatpak-bundler > tmp-promise > tmp.
+  tmp: ">=0.2.6"
   # GHSA-px2f-25qx-c2pq -- @tootallnate/once is unmaintained and has an
   # incorrect control flow advisory. Last published version was 1.x;
   # forks bundle 2.x which is what agent-base now uses.
