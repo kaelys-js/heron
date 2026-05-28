@@ -92,6 +92,12 @@ class OnlineStore {
     await this.probe();
   }
 
+  /** Dev-only (the /dev/views gallery): force an online↔offline transition
+   *  so the offline pill / overlay can be previewed without a real outage. */
+  __devForce(online: boolean): void {
+    this.update(online, online ? null : 'probe');
+  }
+
   destroy(): void {
     if (this.timer) clearInterval(this.timer);
     this.listeners.clear();

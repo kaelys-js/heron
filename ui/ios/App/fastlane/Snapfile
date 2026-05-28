@@ -1,0 +1,29 @@
+# fastlane snapshot config — App Store screenshots via XCUITest (the
+# `screenshots` lane in Fastfile passes the same settings inline; this file
+# lets `bundle exec fastlane snapshot` run standalone too).
+
+project("App.xcodeproj")
+scheme("AppUITests")
+
+# Device classes Apple requires distinct screenshots for (6.9" + 6.3" phones,
+# 13" + 11" iPads). Must match the `screenshots` lane's device list.
+devices([
+  "iPhone 17 Pro Max",
+  "iPhone 17 Pro",
+  "iPad Pro 13-inch (M4)",
+  "iPad Pro 11-inch (M4)",
+])
+
+languages(["en-US"])
+
+# Only the screenshot test — not the whole AppUITests suite (ColdLaunch /
+# Login / DeepLink / …, which aren't screenshot producers).
+only_testing(["AppUITests/ScreenshotUITests"])
+
+output_directory("./fastlane/screenshots")
+clear_previous_screenshots(true)
+
+# Deterministic: one simulator at a time so a shared screenshot-mode backend
+# isn't contended, and don't abort the whole matrix on a single device hiccup.
+concurrent_simulators(false)
+stop_after_first_error(false)

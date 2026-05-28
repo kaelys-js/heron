@@ -4,31 +4,32 @@ import PackageDescription
 // DO NOT MODIFY THIS FILE - managed by Capacitor CLI commands
 let package = Package(
     name: "CapApp-SPM",
-    platforms: [.iOS(.v16)],
+    platforms: [.iOS(.v15)],
     products: [
         .library(
             name: "CapApp-SPM",
-            targets: ["CapApp-SPM"])
+            targets: ["CapApp-SPM"]
+        ),
     ],
     dependencies: [
-        .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.3.3"),
-        .package(name: "CapacitorAppLauncher", path: "../../../../node_modules/.pnpm/@capacitor+app-launcher@8.0.1_@capacitor+core@8.3.3/node_modules/@capacitor/app-launcher"),
-        .package(name: "CapacitorBrowser", path: "../../../../node_modules/.pnpm/@capacitor+browser@8.0.3_@capacitor+core@8.3.3/node_modules/@capacitor/browser"),
-        .package(name: "CapacitorClipboard", path: "../../../../node_modules/.pnpm/@capacitor+clipboard@8.0.1_@capacitor+core@8.3.3/node_modules/@capacitor/clipboard"),
-        .package(name: "CapacitorDevice", path: "../../../../node_modules/.pnpm/@capacitor+device@8.0.2_@capacitor+core@8.3.3/node_modules/@capacitor/device"),
-        .package(name: "CapacitorDialog", path: "../../../../node_modules/.pnpm/@capacitor+dialog@8.0.1_@capacitor+core@8.3.3/node_modules/@capacitor/dialog"),
-        .package(name: "CapacitorFilesystem", path: "../../../../node_modules/.pnpm/@capacitor+filesystem@8.1.2_@capacitor+core@8.3.3/node_modules/@capacitor/filesystem"),
-        .package(name: "CapacitorHaptics", path: "../../../../node_modules/.pnpm/@capacitor+haptics@8.0.2_@capacitor+core@8.3.3/node_modules/@capacitor/haptics"),
-        .package(name: "CapacitorKeyboard", path: "../../../../node_modules/.pnpm/@capacitor+keyboard@8.0.3_@capacitor+core@8.3.3/node_modules/@capacitor/keyboard"),
-        .package(name: "CapacitorPushNotifications", path: "../../../../node_modules/.pnpm/@capacitor+push-notifications@8.0.4_@capacitor+core@8.3.3/node_modules/@capacitor/push-notifications"),
-        .package(name: "CapacitorScreenReader", path: "../../../../node_modules/.pnpm/@capacitor+screen-reader@8.0.1_@capacitor+core@8.3.3/node_modules/@capacitor/screen-reader"),
-        .package(name: "CapacitorApp", path: "../../../../node_modules/.pnpm/@capacitor+app@8.1.0_@capacitor+core@8.3.3/node_modules/@capacitor/app"),
-        .package(name: "CapacitorLocalNotifications", path: "../../../../node_modules/.pnpm/@capacitor+local-notifications@8.1.0_@capacitor+core@8.3.3/node_modules/@capacitor/local-notifications"),
-        .package(name: "CapacitorNetwork", path: "../../../../node_modules/.pnpm/@capacitor+network@8.0.1_@capacitor+core@8.3.3/node_modules/@capacitor/network"),
-        .package(name: "CapacitorPreferences", path: "../../../../node_modules/.pnpm/@capacitor+preferences@8.0.1_@capacitor+core@8.3.3/node_modules/@capacitor/preferences"),
-        .package(name: "CapacitorShare", path: "../../../../node_modules/.pnpm/@capacitor+share@8.0.1_@capacitor+core@8.3.3/node_modules/@capacitor/share"),
-        .package(name: "CapacitorSplashScreen", path: "../../../../node_modules/.pnpm/@capacitor+splash-screen@8.0.1_@capacitor+core@8.3.3/node_modules/@capacitor/splash-screen"),
-        .package(name: "CapacitorStatusBar", path: "../../../../node_modules/.pnpm/@capacitor+status-bar@8.0.2_@capacitor+core@8.3.3/node_modules/@capacitor/status-bar")
+        .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.3.4"),
+        .package(name: "CapacitorAppLauncher", path: "../../../../node_modules/.pnpm/@capacitor+app-launcher@8.0.1_@capacitor+core@8.3.4/node_modules/@capacitor/app-launcher"),
+        .package(name: "CapacitorBrowser", path: "../../../../node_modules/.pnpm/@capacitor+browser@8.0.3_@capacitor+core@8.3.4/node_modules/@capacitor/browser"),
+        .package(name: "CapacitorClipboard", path: "../../../../node_modules/.pnpm/@capacitor+clipboard@8.0.1_@capacitor+core@8.3.4/node_modules/@capacitor/clipboard"),
+        .package(name: "CapacitorDevice", path: "../../../../node_modules/.pnpm/@capacitor+device@8.0.2_@capacitor+core@8.3.4/node_modules/@capacitor/device"),
+        .package(name: "CapacitorDialog", path: "../../../../node_modules/.pnpm/@capacitor+dialog@8.0.1_@capacitor+core@8.3.4/node_modules/@capacitor/dialog"),
+        .package(name: "CapacitorFilesystem", path: "../../../../node_modules/.pnpm/@capacitor+filesystem@8.1.2_@capacitor+core@8.3.4/node_modules/@capacitor/filesystem"),
+        .package(name: "CapacitorHaptics", path: "../../../../node_modules/.pnpm/@capacitor+haptics@8.0.2_@capacitor+core@8.3.4/node_modules/@capacitor/haptics"),
+        .package(name: "CapacitorKeyboard", path: "../../../../node_modules/.pnpm/@capacitor+keyboard@8.0.3_@capacitor+core@8.3.4/node_modules/@capacitor/keyboard"),
+        .package(name: "CapacitorPushNotifications", path: "../../../../node_modules/.pnpm/@capacitor+push-notifications@8.1.1_@capacitor+core@8.3.4/node_modules/@capacitor/push-notifications"),
+        .package(name: "CapacitorScreenReader", path: "../../../../node_modules/.pnpm/@capacitor+screen-reader@8.0.1_@capacitor+core@8.3.4/node_modules/@capacitor/screen-reader"),
+        .package(name: "CapacitorApp", path: "../../../../node_modules/.pnpm/@capacitor+app@8.1.0_@capacitor+core@8.3.4/node_modules/@capacitor/app"),
+        .package(name: "CapacitorLocalNotifications", path: "../../../../node_modules/.pnpm/@capacitor+local-notifications@8.2.0_@capacitor+core@8.3.4/node_modules/@capacitor/local-notifications"),
+        .package(name: "CapacitorNetwork", path: "../../../../node_modules/.pnpm/@capacitor+network@8.0.1_@capacitor+core@8.3.4/node_modules/@capacitor/network"),
+        .package(name: "CapacitorPreferences", path: "../../../../node_modules/.pnpm/@capacitor+preferences@8.0.1_@capacitor+core@8.3.4/node_modules/@capacitor/preferences"),
+        .package(name: "CapacitorShare", path: "../../../../node_modules/.pnpm/@capacitor+share@8.0.1_@capacitor+core@8.3.4/node_modules/@capacitor/share"),
+        .package(name: "CapacitorSplashScreen", path: "../../../../node_modules/.pnpm/@capacitor+splash-screen@8.0.1_@capacitor+core@8.3.4/node_modules/@capacitor/splash-screen"),
+        .package(name: "CapacitorStatusBar", path: "../../../../node_modules/.pnpm/@capacitor+status-bar@8.0.2_@capacitor+core@8.3.4/node_modules/@capacitor/status-bar"),
     ],
     targets: [
         .target(
@@ -52,8 +53,8 @@ let package = Package(
                 .product(name: "CapacitorPreferences", package: "CapacitorPreferences"),
                 .product(name: "CapacitorShare", package: "CapacitorShare"),
                 .product(name: "CapacitorSplashScreen", package: "CapacitorSplashScreen"),
-                .product(name: "CapacitorStatusBar", package: "CapacitorStatusBar")
+                .product(name: "CapacitorStatusBar", package: "CapacitorStatusBar"),
             ]
-        )
+        ),
     ]
 )

@@ -114,6 +114,9 @@
     "**/.git/**",
     "**/DerivedData/**",
     "**/SourcePackages/**",
+    // Playwright / test artifacts (gitignored generated output)
+    "**/test-results/**",
+    "**/playwright-report/**",
     // ── Generated data / user content ────────────────────────────────
     "data/**",
     "reports/**",

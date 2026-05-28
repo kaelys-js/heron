@@ -457,6 +457,19 @@
     text-rendering: geometricPrecision;
   }
 
+  /* Single-line text inputs (and selects) ellipsis-truncate their value AND
+     placeholder instead of letting a long string overflow / get clipped
+     mid-glyph. Textareas are excluded — they wrap. */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select {
+    text-overflow: ellipsis;
+  }
+  input::placeholder {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
   /* Display headings — Fraunces. Mid-weight by default; layouts opt
    * in to 700 for hero treatments via `font-bold` or per-component
    * styles. `font-optical-sizing: auto` + the wght/SOFT/opsz axes
@@ -697,6 +710,19 @@ html.theme-swap::view-transition-new(app-topbar) {
   .text-base {
     font-size: 1.0625rem !important; /* 17px from 16px */
     line-height: 1.45 !important;
+  }
+
+  /* Form controls MUST render at ≥16px or iOS zooms the whole page on focus
+     (the exact "tapping the input zooms the app" bug). The .text-sm / .text-xs
+     notch-bumps above top out at 15px, which still triggers the zoom — so this
+     rule wins for actual fields. `max(16px, 1em)` keeps any larger authored
+     size (1em = inherited size) while never dropping below the 16px threshold.
+     Checkbox/radio excluded (they have no text + zoom doesn't apply). */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  textarea,
+  select,
+  [contenteditable]:not([contenteditable='false']) {
+    font-size: max(16px, 1em) !important;
   }
 
   /* Arbitrary sub-13px text used heavily in dense dashboards (stat

@@ -11,7 +11,17 @@ import {
   getCapacitorElectronConfig,
   setupElectronDeepLinking,
 } from '@capacitor-community/electron';
-import { app, BrowserWindow, Menu, Notification, dialog, shell, ipcMain, net } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  Menu,
+  nativeImage,
+  Notification,
+  dialog,
+  shell,
+  ipcMain,
+  net,
+} from 'electron';
 import electronIsDev from 'electron-is-dev';
 import unhandled from 'electron-unhandled';
 import { autoUpdater } from 'electron-updater';
@@ -47,14 +57,51 @@ unhandled({
 });
 process.on('unhandledRejection', buildUnhandledRejectionHandler(errorOpts));
 
+// Brand the OS-level app identity BEFORE any window / Dock / notification
+// appears. In an unpackaged dev run (`pnpm dev:desktop`) macOS otherwise
+// shows the Electron helper's name ("Electron"); electron-builder's
+// productName only applies to packaged builds. Both setName and the Windows
+// AppUserModelId (AUMID -- taskbar grouping + toast attribution) MUST be set
+// before app.whenReady() / the first Notification, so they live here at
+// module top, not inside the post-ready IIFE.
+app.setName(BRAND.displayName);
+if (process.platform === 'win32') {
+  try {
+    app.setAppUserModelId(BRAND.bundleId);
+  } catch {
+    /* non-fatal -- toasts still show, just with the wrong app label */
+  }
+}
+
 const capacitorFileConfig: CapacitorElectronConfig = getCapacitorElectronConfig();
 
 const myCapacitorApp = new ElectronCapacitorApp(capacitorFileConfig);
 
 if (capacitorFileConfig.electron?.deepLinkingEnabled) {
+  // setupElectronDeepLinking ALSO calls requestSingleInstanceLock(),
+  // registers its own 'second-instance' handler (focus window + forward the
+  // deep link), and setAsDefaultProtocolClient. It OWNS single-instance --
+  // calling requestSingleInstanceLock() again here would register a second,
+  // racing handler, so we don't.
   setupElectronDeepLinking(myCapacitorApp, {
     customProtocol: BRAND.urlScheme,
   });
+} else {
+  // Deep linking off -> no helper to own single-instance. Do it here so a
+  // re-launch focuses the existing window instead of spawning a second
+  // hidden instance (on macOS window-all-closed keeps the app in the tray).
+  if (!app.requestSingleInstanceLock()) {
+    app.quit();
+  } else {
+    app.on('second-instance', () => {
+      const w = state.mainWindow;
+      if (w && !w.isDestroyed()) {
+        if (w.isMinimized()) w.restore();
+        w.show();
+        w.focus();
+      }
+    });
+  }
 }
 
 if (electronIsDev) {
@@ -75,16 +122,29 @@ ipcMain.handle(`${BRAND.name}:show-notification`, (_e, opts: { title: string; bo
 (async () => {
   await app.whenReady();
 
-  // Windows: bind toast notifications to the right app. Without an AUMID
-  // Windows shows toasts as "electron.exe" rather than the brand display
-  // name. Must run BEFORE any new Notification() call.
-  if (process.platform === 'win32') {
+  // macOS Dock identity (dev AND packaged). The BrowserWindow `icon`
+  // option does not affect the macOS Dock -- only app.dock.setIcon does.
+  // build/icon.png is the apply-brand output (regenerated from
+  // branding/brand.json), so the Dock icon stays brand-derived in dev.
+  if (process.platform === 'darwin' && app.dock) {
     try {
-      app.setAppUserModelId(BRAND.bundleId);
+      app.dock.setIcon(
+        nativeImage.createFromPath(path.join(app.getAppPath(), 'build', 'icon.png')),
+      );
     } catch {
-      /* non-fatal -- toasts still show, just with the wrong app label */
+      /* non-fatal -- Dock keeps the default icon */
     }
   }
+  // Brand the standard About panel (app menu -> About). Electron uses the
+  // fields each platform supports: copyright everywhere, website + iconPath
+  // on Linux. All values derive from branding/brand.json via brand.ts.
+  app.setAboutPanelOptions({
+    applicationName: BRAND.displayName,
+    applicationVersion: app.getVersion(),
+    copyright: BRAND.copyright,
+    website: BRAND.homepageUrl,
+    iconPath: path.join(app.getAppPath(), 'build', 'icon.png'),
+  });
 
   // 1. Embedded server
   try {

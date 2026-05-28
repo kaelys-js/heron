@@ -1,5 +1,7 @@
 <script lang="ts">
   import '../app.css';
+  import { dev } from '$app/environment';
+  import { devtoolsEnabled } from '$lib/client/devtools.svelte';
   import * as Sidebar from '$lib/components/ui/sidebar';
   import AppSidebar from '$lib/components/AppSidebar.svelte';
   import AgentChat from '$lib/components/AgentChat.svelte';
@@ -9,7 +11,7 @@
   import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
   import { Toaster } from '$lib/components/ui/sonner';
   import { Button } from '$lib/components/ui/button';
-  import { AlertTriangle, RefreshCw } from '@lucide/svelte';
+  import { AlertTriangle, RefreshCw, FlaskConical } from '@lucide/svelte';
   import { reportClientError } from '$lib/notifications.svelte';
   import { BRAND_EVENTS, BRAND_STORAGE_KEYS } from '$lib/client/brand';
   import { onNavigate } from '$app/navigation';
@@ -30,6 +32,11 @@
   import { onNotificationTap } from '$lib/client/notifications';
   import { installNotificationsBridge } from '$lib/client/sse-notifications-bridge';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+
+  // Lifecycle breadcrumb → the on-device diagnostics overlay (app.html).
+  // No-op on web/SSR and when the overlay script isn't present.
+  const diag = (m: string): void =>
+    (globalThis as { __heronDiag?: (msg: string) => void }).__heronDiag?.(m);
 
   // Reactive auth flag -- true ONLY when the user is on a private route
   // AND has the local auth marker set. Used to gate the floating UI
@@ -76,6 +83,7 @@
   }
 
   onMount(() => {
+    diag('+layout.svelte onMount entered');
     // Hydrate the theme store so OS-preference changes propagate at runtime.
     // The inline app.html script already applied the initial class -- this
     // just lights up the reactive store.
@@ -120,15 +128,28 @@
               headers: { 'content-type': 'application/json' },
             }).catch(() => {});
           };
-          if ('sendBeacon' in navigator && navigator.sendBeacon) {
-            const queued = navigator.sendBeacon(
-              '/api/vitals',
-              new Blob([body], { type: 'application/json' }),
-            );
-            if (!queued) fetchFallback();
-          } else {
-            fetchFallback();
+          // sendBeacon only works over http(s). On Capacitor the origin is
+          // heron://localhost, where sendBeacon THROWS ("Beacons can only be
+          // sent over HTTP(S)") instead of returning false -- which surfaced as
+          // an uncaught-error toast on the iOS app. Gate on an http(s) origin
+          // and guard the call; fall back to keepalive fetch (Capacitor proxies
+          // it fine) on a non-http origin, a throw, or a refused queue.
+          let queued = false;
+          if (
+            'sendBeacon' in navigator &&
+            navigator.sendBeacon &&
+            window.location.protocol.startsWith('http')
+          ) {
+            try {
+              queued = navigator.sendBeacon(
+                '/api/vitals',
+                new Blob([body], { type: 'application/json' }),
+              );
+            } catch {
+              queued = false;
+            }
           }
+          if (!queued) fetchFallback();
         };
         onCLS(send);
         onINP(send);
@@ -149,7 +170,15 @@
     void import('$lib/client/api-base').then(({ getApiBase }) =>
       getApiBase()
         .then((base) => {
+          diag(`backend resolved: ${base || '(web origin)'}`);
           if (base) setReporterBackend(base);
+          // Point the health probe at the RESOLVED backend. Without this it
+          // kept probing window.location.origin -- which on Capacitor is
+          // heron://localhost, a URL the WebView's scheme handler always
+          // answers -- so a dropped real backend (desktop app / LAN server
+          // going away) was never detected and BackendUnreachableOverlay
+          // never surfaced. On web, base is '' so we keep the origin.
+          onlineStore.setBackend(base || window.location.origin);
           // Mirror the resolved backend URL into App Group UserDefaults so
           // the Share Extension knows where to POST. No-op on web/desktop.
           // Even an empty base on web is mirrored as '' which clears any
@@ -179,7 +208,8 @@
             stopNotificationsBridge = installNotificationsBridge();
           }
         })
-        .catch(() => {
+        .catch((e) => {
+          diag(`backend resolve failed: ${e instanceof Error ? e.message : String(e)}`);
           /* OfflineIndicator surfaces the failure */
         }),
     );
@@ -278,6 +308,7 @@
         // immediately after the boot-fallback dismissal sequence
         // commits, regardless of which route the user landed on.
         document.documentElement.dataset.appReady = '1';
+        diag('appReady=1 (boot-fallback dismissed, shell painted)');
       }
     })();
 
@@ -420,6 +451,13 @@
     // PUBLIC_ROUTES + onboarding remain reachable in both layers.
     if (
       typeof window !== 'undefined' &&
+      // Screenshot mode (XCUITest / capture harness) injects a seeded backend +
+      // server-side auth bypass via window.__HERON_SCREENSHOTS__. Better Auth's
+      // get-session has no real cookie there, so the layer-2 probe below would
+      // scrub the flag and bounce to /login -- skip the whole gate so the seeded
+      // dashboard renders. Inert in production (the global is only set by the
+      // native screenshot injection), same short-circuit as resolveBackend().
+      !(window as { __HERON_SCREENSHOTS__?: unknown }).__HERON_SCREENSHOTS__ &&
       !isPublicRoute(window.location.pathname) &&
       !window.location.protocol.startsWith('http')
     ) {
@@ -758,3 +796,18 @@
   </svelte:boundary>
 </BackendBootGuard>
 <Toaster />
+
+{#if dev || devtoolsEnabled()}
+  <!-- Entry to the state/view gallery (/dev/views). Always shown under the live
+       dev server; in built/native apps it appears once the owner opts into
+       developer tools (Settings version-tap). Rendered in the root layout so
+       it's reachable from every screen. Minimal icon button (no text pill). -->
+  <a
+    href="/dev/views"
+    title="Dev view gallery"
+    aria-label="Open dev view gallery"
+    class="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-[max(0.75rem,env(safe-area-inset-left))] z-[90] flex size-9 items-center justify-center rounded-full border border-border/50 bg-card/70 text-muted-foreground/70 shadow-sm backdrop-blur transition-all duration-150 hover:scale-105 hover:bg-card hover:text-foreground active:scale-95"
+  >
+    <FlaskConical class="size-4" />
+  </a>
+{/if}

@@ -1,4 +1,6 @@
-import { redirect } from '@sveltejs/kit';
+import { redirect, type Cookies } from '@sveltejs/kit';
+import { dev } from '$app/environment';
+import { devGalleryUnlocked } from '$lib/server/dev-gate';
 import { loadAllJobs } from '$lib/server/parsers';
 import { isFreshInstall } from '$lib/server/onboarding';
 import { readProfiles } from '$lib/server/profiles';
@@ -24,12 +26,24 @@ import { readProfile } from '$lib/server/profile';
  *   4. **Sidebar data** -- pinned jobs, inbox count, queue count for the
  *      AppSidebar's badges. Computed against the ACTIVE profile only.
  */
-export async function load({ url, locals }: { url: URL; locals: App.Locals }) {
+export async function load({
+  url,
+  locals,
+  cookies,
+}: {
+  url: URL;
+  locals: App.Locals;
+  cookies: Cookies;
+}) {
+  const devUnlocked = devGalleryUnlocked(dev, cookies);
   if (
     isFreshInstall() &&
     !url.pathname.startsWith('/onboarding') &&
     !url.pathname.startsWith('/api') &&
     !url.pathname.startsWith('/help') &&
+    // View gallery is exempt so it opens directly -- under the live dev server
+    // or when the owner has opted into developer tools in a built app.
+    !(devUnlocked && url.pathname.startsWith('/dev')) &&
     // Multi-user auth pages bypass the onboarding redirect. A user who
     // already has an account on a fresh install (e.g. partner being
     // invited) needs to reach /login or /signup directly.

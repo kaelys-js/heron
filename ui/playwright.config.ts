@@ -1,6 +1,6 @@
 /**
  * Playwright config -- E2E tests only (separate from the
- * `vitest.workspace.ts` browser project which handles component tests).
+ * `vitest.config.ts` ui-component browser project which handles component tests).
  *
  * HP5 -- boots `pnpm preview` against the prod build, runs top-down user
  * journey specs from `ui/e2e/**`. CI runs headless; local dev can flip

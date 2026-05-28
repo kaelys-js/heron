@@ -4,12 +4,34 @@
  * Direct-renders the component (no harness needed -- it uses no
  * snippet props). Drives state via the shared notifications store.
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { render } from '@testing-library/svelte';
 import NotificationsBell from './NotificationsBell.svelte';
 import { notifications } from '$lib/notifications.svelte';
 
+// On mount NotificationsBell calls notifications.init(), whose connect() is
+// fire-and-forget (`void this.connect()`): it does `await import(
+// './client/sse-client')` then opens a live `/api/stream` EventSource. In a
+// real-browser component test that async work resolves on a microtask AFTER
+// render() returns, so the module-serving / network route it triggers races
+// test teardown -- the Playwright provider then double-fulfills a route that
+// is already handled and throws "route.fulfill: Route is already handled!"
+// (intermittently -- ~1 run in 3 locally). These tests only verify rendering,
+// so we neutralise init()/destroy() for the whole file. The SSE wiring itself
+// is covered by the notifications store + sse-client unit tests.
+const realInit = notifications.init.bind(notifications);
+const realDestroy = notifications.destroy.bind(notifications);
+
 describe('NotificationsBell', () => {
+  beforeAll(() => {
+    notifications.init = () => {};
+    notifications.destroy = () => {};
+  });
+  afterAll(() => {
+    notifications.init = realInit;
+    notifications.destroy = realDestroy;
+  });
+
   beforeEach(() => {
     notifications.events.length = 0;
     notifications.connected = 'open';

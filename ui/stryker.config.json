@@ -1,11 +1,11 @@
 {
   "$comment": "Stryker mutation testing — scoped to the 5 server modules whose tests carry the most weight. Mutation testing catches happy-path-only assertions: a test that asserts `expect(result).toBeTruthy()` survives every mutation that produces a truthy non-equal value. The 'mutationScore' threshold gates CI to ≥ 80% on these files; expanding the scope is opt-in. See https://stryker-mutator.io/docs/stryker-js/configuration/.",
   "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
-  "_comment": "Vitest is the test runner; Stryker auto-detects vitest.config.ts + the test-setup.ts mocks.",
+  "_comment": "Vitest is the test runner. Points at vitest.base.ts (NOT vitest.config.ts) on purpose: vitest.config.ts is the project graph (incl. the ui-component browser project that needs Playwright); the base config is the single node-env config stryker needs to run the mutated server modules' tests + the test-setup.ts mocks.",
   "packageManager": "pnpm",
   "testRunner": "vitest",
   "vitest": {
-    "configFile": "vitest.config.ts"
+    "configFile": "vitest.base.ts"
   },
   "reporters": ["clear-text", "progress", "html", "json"],
   "htmlReporter": {

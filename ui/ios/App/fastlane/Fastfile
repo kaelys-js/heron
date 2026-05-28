@@ -284,16 +284,27 @@ platform :ios do
       include_bitcode: false   # Apple deprecated bitcode in Xcode 14
     )
 
+    # "What to Test" notes: CHANGELOG.md for this version (Release Please
+    # source), falling back to the last commit message. See testflight_changelog.
+    notes = testflight_changelog
+
     upload_to_testflight(
       api_key: api_key,
       # Must be false to set the changelog: fastlane/pilot SKIPS the changelog
       # ("What to Test") entirely when skip_waiting is true. Costs a processing
       # wait (a few minutes) but the build then shows release notes in TestFlight.
       skip_waiting_for_build_processing: false,
-      changelog: changelog_for_this_build,
+      changelog: notes,
       distribute_external: false,           # internal testers only
       reject_build_waiting_for_review: false
     )
+
+    # Reliability net. A read-only ASC audit found the changelog param alone
+    # left EVERY uploaded build with no betaBuildLocalizations (whatsNew
+    # empty) — so internal testers saw no "What to Test". Explicitly create /
+    # update the en-US whatsNew on the build we just shipped so the notes
+    # reliably land. Best-effort + loud (mirrors ensure_internal_delivery).
+    set_whats_to_test(build_number: new_build, notes: notes)
 
     ensure_internal_delivery
     set_age_rating
@@ -346,20 +357,31 @@ platform :ios do
           # existing tester via the group's relationships endpoint, else
           # create the tester with the group relationship in one POST.
           existing = (Spaceship::ConnectAPI::BetaTester.all(filter: { email: owner }).first rescue nil)
-          if existing
-            client.post("v1/betaGroups/#{group.id}/relationships/betaTesters", {
-              data: [{ type: "betaTesters", id: existing.id }]
-            })
-          else
-            client.post("v1/betaTesters", {
-              data: {
-                type: "betaTesters",
-                attributes: { email: owner, firstName: "Heron", lastName: "Maintainer" },
-                relationships: { betaGroups: { data: [{ type: "betaGroups", id: group.id }] } }
-              }
-            })
+          begin
+            if existing
+              client.post("v1/betaGroups/#{group.id}/relationships/betaTesters", {
+                data: [{ type: "betaTesters", id: existing.id }]
+              })
+            else
+              client.post("v1/betaTesters", {
+                data: {
+                  type: "betaTesters",
+                  attributes: { email: owner, firstName: "Heron", lastName: "Maintainer" },
+                  relationships: { betaGroups: { data: [{ type: "betaGroups", id: group.id }] } }
+                }
+              })
+            end
+            UI.success("internal delivery: added #{owner} to '#{INTERNAL_GROUP_NAME}'")
+          rescue StandardError => e
+            # Internal groups auto-include App Store Connect users by ASC role.
+            # The account holder already receives every build, so ASC refuses an
+            # explicit assignment with "Tester(s) cannot be assigned" / "state of
+            # another resource". That is the expected steady state once the
+            # maintainer is set up -- treat it as already-covered, not a failure.
+            # Re-raise anything genuinely unexpected.
+            raise unless e.message =~ /cannot be assigned|state of another resource|already exists/i
+            UI.message("internal delivery: #{owner} already covered (internal ASC user)")
           end
-          UI.success("internal delivery: added #{owner} to '#{INTERNAL_GROUP_NAME}'")
         end
       end
     rescue => e
@@ -368,6 +390,68 @@ platform :ios do
       msg = "internal-delivery setup FAILED (build + upload still OK): #{e.message}"
       UI.important(msg)
       puts "::warning title=TestFlight invite::#{msg}" if is_ci
+    end
+  end
+
+  desc "Reliably set the uploaded build's TestFlight 'What to Test' (en-US)"
+  # The upload_to_testflight `changelog:` param has, in practice, left builds
+  # with NO betaBuildLocalizations (whatsNew empty) -- confirmed via a
+  # read-only ASC audit. This explicitly creates/updates the en-US localization
+  # on the build we just uploaded so the notes always appear. Uses the low-level
+  # ConnectAPI request client (the high-level models have known POST bugs — same
+  # rationale as ensure_internal_delivery). Best-effort + loud.
+  private_lane :set_whats_to_test do |options|
+    notes = options[:notes].to_s
+    build_number = options[:build_number].to_s
+    begin
+      raise "no notes to set" if notes.strip.empty?
+      raise "no build number" if build_number.empty?
+      app = Spaceship::ConnectAPI::App.all.find { |a| a.bundle_id == APP_IDENTIFIER }
+      raise "App Store Connect app not found for #{APP_IDENTIFIER}" unless app
+
+      # The build we just uploaded carries CFBundleVersion == build_number.
+      # Poll until ASC finishes processing it (VALID) so the localization sticks
+      # (a non-processed build rejects the betaBuildLocalizations write).
+      # Spaceship's Build.all takes app_id: + build_number: keywords (the
+      # CFBundleVersion), NOT a `filter:` hash. The old `filter:` form raised
+      # ArgumentError: unknown keyword :filter on the FIRST call -- caught by
+      # the rescue below, so the lane silently no-op'd and EVERY build shipped
+      # with no betaBuildLocalizations (empty "What's New"). (`version:` is the
+      # marketing version; the uploaded build is keyed by CFBundleVersion.)
+      build = nil
+      30.times do
+        build = Spaceship::ConnectAPI::Build.all(
+          app_id: app.id, build_number: build_number, limit: 1
+        ).first
+        break if build && build.processing_state == "VALID"
+        sleep(20)
+      end
+      raise "build #{build_number} not found / not VALID in time" unless build && build.processing_state == "VALID"
+
+      client = Spaceship::ConnectAPI.client.test_flight_request_client
+      existing = (build.get_beta_build_localizations rescue []).find { |l| l.locale == "en-US" }
+      if existing
+        client.patch("v1/betaBuildLocalizations/#{existing.id}", {
+          data: {
+            type: "betaBuildLocalizations",
+            id: existing.id,
+            attributes: { whatsNew: notes }
+          }
+        })
+      else
+        client.post("v1/betaBuildLocalizations", {
+          data: {
+            type: "betaBuildLocalizations",
+            attributes: { locale: "en-US", whatsNew: notes },
+            relationships: { build: { data: { type: "builds", id: build.id } } }
+          }
+        })
+      end
+      UI.success("What to Test set on build #{build_number}")
+    rescue => e
+      msg = "set_whats_to_test FAILED (build + upload still OK): #{e.message}"
+      UI.important(msg)
+      puts "::warning title=What to Test::#{msg}" if is_ci
     end
   end
 
@@ -507,6 +591,9 @@ platform :ios do
   lane :screenshots do
     capture_screenshots(
       scheme: "AppUITests",
+      # Only the screenshot producer — not the whole AppUITests suite
+      # (ColdLaunch / Login / DeepLink / …). Mirrors the Snapfile.
+      only_testing: ["AppUITests/ScreenshotUITests"],
       devices: [
         "iPhone 17 Pro Max",         # 6.9" (was 6.7")
         "iPhone 17 Pro",             # 6.3"
@@ -515,6 +602,7 @@ platform :ios do
       ],
       languages: ["en-US"],
       reinstall_app: true,
+      concurrent_simulators: false,  # one sim at a time → shared backend isn't contended
       app_identifier: APP_IDENTIFIER,
       output_directory: "fastlane/screenshots"
     )
@@ -694,16 +782,74 @@ platform :ios do
       "DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']} MARKETING_VERSION=#{marketing_version}"
   end
 
-  # Pull the last commit's message as TestFlight changelog. Truncates to
-  # 4000 chars (the App Store Connect limit). Falls back to a default
-  # if git isn't available.
+  # TestFlight changelog for a non-release (dispatch / dev) build: a bulleted
+  # list of EVERY commit subject since the last release tag, so "What to Test"
+  # reflects everything in the build rather than just the latest commit. Falls
+  # back to the whole history when there is no release tag yet, then to the last
+  # commit, then to a generic line. Truncated to ASC's 4000-char cap.
+  # NB: requires a non-shallow checkout (native-release.yml uses fetch-depth: 0);
+  # a depth-1 clone has only HEAD + no tags, which is why this used to show one
+  # commit.
   def changelog_for_this_build
     begin
-      msg = sh("git log -1 --pretty=%B").strip
-      msg.length > 4000 ? msg[0...3997] + "..." : msg
+      last_tag = (sh("git describe --tags --abbrev=0 --match 'v*'", log: false).strip rescue "")
+      range = last_tag.empty? ? "" : "#{last_tag}..HEAD"
+      list = sh("git log #{range} --no-merges --pretty=format:'- %s'", log: false).strip
+      list = sh("git log -1 --pretty=%B", log: false).strip if list.empty?
+      list = "heron automatic build (#{Time.now.utc.strftime('%Y-%m-%d')})" if list.empty?
+      url = changes_url
+      # Leave room for the trailing compare link under ASC's 4000-char cap.
+      list = list[0...3800] + "..." if list.length > 3800
+      url && !url.empty? ? "#{list}\n\nFull changes: #{url}" : list
     rescue
       "heron automatic build (#{Time.now.utc.strftime('%Y-%m-%d')})"
     end
+  end
+
+  # GitHub compare (or commits) URL covering everything in this build, appended
+  # to the TestFlight notes so testers can click straight to the full diff.
+  def changes_url
+    remote = (sh("git config --get remote.origin.url", log: false).strip rescue "")
+    slug = remote[%r{github\.com[:/](.+?)(?:\.git)?\z}, 1]
+    return nil unless slug
+    sha = (sh("git rev-parse HEAD", log: false).strip rescue "")
+    return nil if sha.empty?
+    last_tag = (sh("git describe --tags --abbrev=0 --match 'v*'", log: false).strip rescue "")
+    last_tag.empty? ? "https://github.com/#{slug}/commits/#{sha}" : "https://github.com/#{slug}/compare/#{last_tag}...#{sha}"
+  end
+
+  # TestFlight "What to Test" source.
+  #
+  # On a REAL release build (HEAD is exactly the vX.Y.Z tag) internal testers
+  # should see the published release notes, so use the CHANGELOG.md section for
+  # the current marketing version (the Release Please source, same as the App
+  # Store lane).
+  #
+  # On a dispatch / dev / keepalive build HEAD is AHEAD of the last tag, so the
+  # CHANGELOG section for the last released version is STALE -- it describes the
+  # prior baseline, not what this build actually contains (e.g. every dispatch
+  # of v0.1.0 would otherwise show the "Initial release post-fork" baseline as
+  # "What to Test"). The last commit message is what is genuinely being tested,
+  # so use it. Always non-empty.
+  def testflight_changelog
+    if head_is_release_tag?
+      notes = release_notes_for_version(marketing_version).to_s.strip
+      return notes unless notes.empty? || notes == "Maintenance and improvements."
+    end
+    commit = changelog_for_this_build.to_s.strip
+    return commit unless commit.empty?
+    notes = release_notes_for_version(marketing_version).to_s.strip
+    notes.empty? ? "Maintenance and improvements." : notes
+  end
+
+  # True only when HEAD is checked out exactly at a release tag (tag-push /
+  # workflow_call release path). A workflow_dispatch / branch build is ahead of
+  # the last tag and returns false, so it uses the commit message above.
+  def head_is_release_tag?
+    sh("git describe --exact-match --tags HEAD", log: false)
+    true
+  rescue StandardError
+    false
   end
 
   # App Store "What's New" for a marketing version, pulled from CHANGELOG.md

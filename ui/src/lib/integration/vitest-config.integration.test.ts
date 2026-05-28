@@ -1,5 +1,5 @@
 /**
- * Regression guard for vitest.workspace.ts configuration.
+ * Regression guard for vitest.config.ts (the project graph) configuration.
  *
  * Vitest 4's default `browser.headless` is `process.env.CI` -- locally
  * that's `undefined` → falsy → a real Chromium window pops every time
@@ -14,8 +14,8 @@ import path from 'node:path';
 
 const REPO_ROOT = path.resolve(__dirname, '../../../..');
 
-describe('vitest.workspace.ts headless gate', () => {
-  const cfg = fs.readFileSync(path.join(REPO_ROOT, 'ui/vitest.workspace.ts'), 'utf8');
+describe('vitest.config.ts headless gate', () => {
+  const cfg = fs.readFileSync(path.join(REPO_ROOT, 'ui/vitest.config.ts'), 'utf8');
 
   it('declares browser.headless explicitly (no CI-env fallback drift)', () => {
     // Must contain the literal `headless: !process.env.BROWSER_HEAD`

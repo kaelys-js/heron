@@ -13,6 +13,19 @@ name: native-release
 #   APPLE_TEAM_ID            -- found in developer.apple.com
 #   MAC_CERTIFICATE          -- base64-encoded Developer ID Application .p12
 #   MAC_CERTIFICATE_PASSWORD -- the .p12 export password
+#
+#   Optional (Mac App Store distribution of the electron-builder `mas`
+#   target; if unset, MAS signing cleanly skips and the Developer-ID
+#   dmg/zip build ships as usual -- gated on MAC_MAS_CERTIFICATE != ''):
+#   MAC_MAS_CERTIFICATE             -- base64 .p12 bundling BOTH the "Apple
+#                                      Distribution" (3rd Party Mac Developer
+#                                      Application) and the "Mac Installer
+#                                      Distribution" identities for the team
+#   MAC_MAS_CERTIFICATE_PASSWORD    -- that .p12's export password
+#   MAC_PROVISIONING_PROFILE_BASE64 -- base64 of the Mac App Store provisioning
+#                                      profile for com.resistjs.heron, decoded to
+#                                      ui/electron/build/embedded.provisionprofile
+#
 #   MATCH_GIT_URL            -- private git repo holding the Fastlane match
 #                               certs + provisioning profiles (read-only on CI)
 #   MATCH_PASSWORD           -- match repo encryption passphrase
@@ -86,6 +99,15 @@ on:
       MAC_CERTIFICATE:
         required: false
       MAC_CERTIFICATE_PASSWORD:
+        required: false
+      # Mac App Store distribution of the electron-builder `mas` target
+      # (optional; gated on MAC_MAS_CERTIFICATE != '' in build-desktop so a
+      # missing cert cleanly skips MAS signing while dmg/zip still ship).
+      MAC_MAS_CERTIFICATE:
+        required: false
+      MAC_MAS_CERTIFICATE_PASSWORD:
+        required: false
+      MAC_PROVISIONING_PROFILE_BASE64:
         required: false
       # iOS code signing is Fastlane match (certs + profiles in an encrypted
       # private repo, fetched read-only on CI). No raw cert/profile secrets.
@@ -183,6 +205,10 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           MAC_CERTIFICATE: ${{ secrets.MAC_CERTIFICATE }}
           MAC_CERTIFICATE_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+          # MAS signing is optional but all-or-nothing -- validated as a group below.
+          MAC_MAS_CERTIFICATE: ${{ secrets.MAC_MAS_CERTIFICATE }}
+          MAC_MAS_CERTIFICATE_PASSWORD: ${{ secrets.MAC_MAS_CERTIFICATE_PASSWORD }}
+          MAC_PROVISIONING_PROFILE_BASE64: ${{ secrets.MAC_PROVISIONING_PROFILE_BASE64 }}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_PRIVATE_KEY: ${{ secrets.MATCH_GIT_PRIVATE_KEY }}
@@ -211,6 +237,26 @@ jobs:
             exit 1
           fi
           echo "✅ all required secrets present"
+
+          # MAS signing is OPTIONAL but all-or-nothing: if the distribution
+          # cert is set, its companion secrets must be too -- otherwise the run
+          # would fail much later (security import / electron-builder) instead
+          # of here in the 2-minute preflight. With none set, MAS simply skips.
+          if [ -n "$MAC_MAS_CERTIFICATE" ]; then
+            mas_missing=()
+            for var in MAC_MAS_CERTIFICATE_PASSWORD MAC_PROVISIONING_PROFILE_BASE64; do
+              if [ -z "${!var}" ]; then
+                mas_missing+=("$var")
+              fi
+            done
+            if [ ${#mas_missing[@]} -gt 0 ]; then
+              echo "::error::MAC_MAS_CERTIFICATE is set but its companion MAS secrets are missing:"
+              for m in "${mas_missing[@]}"; do echo "::error::  • $m"; done
+              echo "::error::Set all three (cert + password + provisioning profile) to enable Mac App Store signing, or none to skip it."
+              exit 1
+            fi
+            echo "✅ MAS signing fully configured"
+          fi
 
   build-desktop:
     name: Build ${{ matrix.os }}
@@ -255,6 +301,13 @@ jobs:
         with:
           experimental: true
           cache: true
+          # Install ONLY the runtimes the electron build needs. The desktop
+          # matrix runs on windows-latest too, and `.mise.toml` pins swiftlint
+          # (aqua: linux/darwin only -- no Windows binary), so a full
+          # `mise install` aborts on Windows. node + pnpm are all the icon-gen
+          # / cap-sync / electron-builder steps use. (build-ios + build-android
+          # keep the full install -- they run on macOS/Linux and need Ruby.)
+          install_args: node pnpm
 
       # Cache pnpm's content-addressable store. Restore-keys lets a
       # changed lockfile still reuse most of the previous cache.
@@ -315,24 +368,47 @@ jobs:
         working-directory: ui/electron
         run: pnpm run build
 
-      # macOS-only: import signing cert before electron-builder runs.
+      # macOS-only: import signing certs before electron-builder runs. One
+      # keychain holds BOTH identities so a single electron-builder run signs
+      # the dmg/zip (Developer ID + notarize) AND the mas .pkg (Apple
+      # Distribution + Mac Installer Distribution). Either cert is optional and
+      # imported only when its secret is set; MAS-specific signing degrades to
+      # a skip (the dmg/zip Developer-ID build still ships).
       - name: Import macOS signing certs
         if: matrix.os == 'macos-latest'
         env:
           MAC_CERTIFICATE: ${{ secrets.MAC_CERTIFICATE }}
           MAC_CERTIFICATE_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+          MAC_MAS_CERTIFICATE: ${{ secrets.MAC_MAS_CERTIFICATE }}
+          MAC_MAS_CERTIFICATE_PASSWORD: ${{ secrets.MAC_MAS_CERTIFICATE_PASSWORD }}
         run: |
+          set -euo pipefail
+          if [ -z "$MAC_CERTIFICATE" ] && [ -z "$MAC_MAS_CERTIFICATE" ]; then
+            echo "No signing certs — building unsigned (Gatekeeper warning expected; mas target won't sign)"
+            exit 0
+          fi
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
           if [ -n "$MAC_CERTIFICATE" ]; then
             echo "$MAC_CERTIFICATE" | base64 --decode > /tmp/cert.p12
-            security create-keychain -p "" build.keychain
-            security default-keychain -s build.keychain
-            security unlock-keychain -p "" build.keychain
-            security import /tmp/cert.p12 -k build.keychain -P "$MAC_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-            security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
-            echo "Signing cert imported"
-          else
-            echo "No signing cert — building unsigned (Gatekeeper warning expected)"
+            security import /tmp/cert.p12 -k build.keychain -P "$MAC_CERTIFICATE_PASSWORD" \
+              -T /usr/bin/codesign
+            rm -f /tmp/cert.p12
+            echo "Developer ID cert imported (dmg/zip signing + notarization)"
           fi
+          if [ -n "$MAC_MAS_CERTIFICATE" ]; then
+            echo "$MAC_MAS_CERTIFICATE" | base64 --decode > /tmp/mas-cert.p12
+            # productbuild/productsign sign the installer .pkg; codesign signs
+            # the bundled .app -- grant all three access to the imported keys.
+            security import /tmp/mas-cert.p12 -k build.keychain -P "$MAC_MAS_CERTIFICATE_PASSWORD" \
+              -T /usr/bin/codesign -T /usr/bin/productbuild -T /usr/bin/productsign
+            rm -f /tmp/mas-cert.p12
+            echo "Mac App Distribution cert imported (mas .app + .pkg signing)"
+          fi
+          # One partition-list pass authorises Apple tools to use every key in
+          # the keychain without an interactive unlock prompt.
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain >/dev/null
 
       # @electron/notarize -> `notarytool --key` expects a FILE PATH, not the
       # key contents. Decode the base64 .p8 to the canonical location (same as
@@ -350,6 +426,20 @@ jobs:
           chmod 600 "$key_path"
           echo "APPLE_API_KEY_PATH=$key_path" >> "$GITHUB_ENV"
 
+      # The electron-builder `mas` target reads its embedded provisioning
+      # profile from build/embedded.provisionprofile (see electron-builder.config.json
+      # mas.provisioningProfile). Decode it from the secret before the build;
+      # gated on the secret so MAS signing skips cleanly when it's unset.
+      - name: Write Mac App Store provisioning profile
+        if: matrix.os == 'macos-latest' && env.MAC_PROVISIONING_PROFILE_BASE64 != ''
+        working-directory: ui/electron
+        env:
+          MAC_PROVISIONING_PROFILE_BASE64: ${{ secrets.MAC_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          set -euo pipefail
+          printf "%s" "$MAC_PROVISIONING_PROFILE_BASE64" | base64 --decode > build/embedded.provisionprofile
+          echo "Wrote build/embedded.provisionprofile ($(wc -c < build/embedded.provisionprofile) bytes)"
+
       - name: Run electron-builder (publishes to GitHub Release on tag)
         working-directory: ui/electron
         env:
@@ -357,7 +447,8 @@ jobs:
           # Notarization uses the App Store Connect API key (.p8). notarytool
           # needs it as a FILE PATH (decoded in the prior step), not base64.
           APPLE_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APPLE_API_KEY_ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          # @electron/notarize reads APPLE_API_ISSUER (not *_KEY_ISSUER).
+          APPLE_API_ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APPLE_API_KEY: ${{ env.APPLE_API_KEY_PATH }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         # Publish only on real releases (tag push / workflow_call from
@@ -401,11 +492,28 @@ jobs:
           for pkg in *.pkg; do
             any=true
             echo "::group::altool upload $pkg"
-            xcrun altool --upload-app \
-              --type macos \
-              --file "$pkg" \
-              --apiKey "$APP_STORE_CONNECT_KEY_ID" \
-              --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
+            # Capture so a duplicate-version rejection (re-running the SAME
+            # version, e.g. a repeat workflow_dispatch test build) is treated as
+            # success: ASC's cfBundleVersion is unique-per-version and the macOS
+            # .pkg version does not auto-increment, so re-uploading 0.1.0 after a
+            # prior successful run returns -19232 / ATTRIBUTE.INVALID.DUPLICATE.
+            # A real release always bumps the version, so this never fires there.
+            # Any OTHER altool error still fails the job.
+            if out=$(xcrun altool --upload-app \
+                  --type macos \
+                  --file "$pkg" \
+                  --apiKey "$APP_STORE_CONNECT_KEY_ID" \
+                  --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" 2>&1); then
+              echo "$out"
+            else
+              echo "$out"
+              if echo "$out" | grep -qiE "already been used|bundle version must be higher|ATTRIBUTE\.INVALID\.DUPLICATE|-19232"; then
+                echo "::warning::$pkg version already uploaded to ASC -- treating duplicate as success."
+              else
+                echo "::endgroup::"
+                exit 1
+              fi
+            fi
             echo "::endgroup::"
           done
           if [ "$any" = false ]; then
@@ -555,6 +663,36 @@ jobs:
           Invoke-RestMethod -Uri $commitUrl -Method Post -Headers $headers
           Write-Host "::notice::Microsoft Store submission $($submission.id) committed for certification (4-72h queue)."
 
+      # electron-builder notarizes + staples the .app INSIDE the dmg, but does
+      # not staple the .dmg container itself, so `stapler validate <dmg>` (the
+      # G17 gate below) fails with "does not have a ticket stapled to it". Staple
+      # the dmg here: try a plain staple first (works if the dmg was already
+      # notarized), else submit the dmg to notarytool + staple. Gated on the ASC
+      # key so unsigned/un-notarized dispatch builds without it skip cleanly.
+      - name: Staple notarization ticket to the DMG
+        if: matrix.os == 'macos-latest' && env.APP_STORE_CONNECT_KEY_ID != ''
+        working-directory: ui/electron/dist
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for dmg in *.dmg; do
+            echo "::group::Staple $dmg"
+            if ! xcrun stapler staple "$dmg"; then
+              echo "No ticket yet for $dmg -- submitting the dmg to notarytool."
+              xcrun notarytool submit "$dmg" \
+                --key "$APPLE_API_KEY_PATH" \
+                --key-id "$APP_STORE_CONNECT_KEY_ID" \
+                --issuer "$APP_STORE_CONNECT_ISSUER_ID" \
+                --wait
+              xcrun stapler staple "$dmg"
+            fi
+            echo "::endgroup::"
+          done
+
       - name: Verify macOS notarization-staple
         # G17 -- without this step, a silent notarization regression
         # (Apple's notarytool returns success but the staple isn't
@@ -678,6 +816,11 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
+          # Full history + tags so the Fastlane changelog can list every commit
+          # since the last release tag (git log <tag>..HEAD). A shallow checkout
+          # (the default depth 1) has no tags and only HEAD, which is why
+          # "What to Test" previously showed just the most recent commit.
+          fetch-depth: 0
 
       # macos-26 ships Xcode 26 (the iOS 26 SDK App Store now requires) as its
       # default. If the image also carries a newer versioned Xcode 26.x, prefer

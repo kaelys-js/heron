@@ -62,7 +62,36 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // the plan (worst case 15min latency for closed-app notifications).
         application.setMinimumBackgroundFetchInterval(UIApplication.backgroundFetchIntervalMinimum)
 
+        // Root-VC self-heal (defense-in-depth). The black screen we shipped
+        // was caused by Main.storyboard's customClass drifting away from the
+        // BridgeViewController class name: the storyboard couldn't instantiate
+        // the root VC and silently fell back to a bare UIViewController with
+        // NO WebView. If that ever happens again, don't strand the user on
+        // black — install a BridgeViewController programmatically. Delayed one
+        // run-loop hop so the storyboard finishes wiring the root first.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.ensureBridgeRoot()
+        }
+
         return true
+    }
+
+    /// If the storyboard failed to instantiate the Capacitor bridge VC, the
+    /// window's root is a plain UIViewController (black, no WebView). Replace
+    /// it with a real BridgeViewController so the app recovers instead of
+    /// showing a dead screen. No-op in the healthy case.
+    private func ensureBridgeRoot() {
+        guard let window = window else { return }
+        if window.rootViewController is CAPBridgeViewController { return }
+        let actual = window.rootViewController.map { String(describing: type(of: $0)) } ?? "nil"
+        ErrorReporter.shared.report(
+            message: "Root VC is \(actual), not a Capacitor bridge VC — storyboard wiring failed; installing BridgeViewController programmatically.",
+            source: "ios-root-guard",
+            level: "error"
+        )
+        let bridge = BridgeViewController()
+        window.rootViewController = bridge
+        window.makeKeyAndVisible()
     }
 
     // MARK: - Deep links

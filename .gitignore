@@ -305,3 +305,6 @@ lighthouserc.runtime.json
 # actions/cache entry (maintain-discord.yml), not the repo -- CI can't
 # push to protected main. Local runs regenerate it.
 .github/discord/.image-state.json
+
+# Turborepo
+.turbo

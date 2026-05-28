@@ -6,11 +6,13 @@ import {
 } from '@capacitor-community/electron';
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
-import { app, BrowserWindow, Menu, MenuItem, nativeImage, Tray, session } from 'electron';
+import { app, BrowserWindow, Menu, MenuItem, nativeImage, screen, Tray, session } from 'electron';
 import electronIsDev from 'electron-is-dev';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
 import { join } from 'path';
+import { resolveDevServerUrl, buildCsp, isInternalNavigation } from './dev-server';
+import { clampWindowBounds } from './window-bounds';
 
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
 const reloadWatcher = {
@@ -58,6 +60,9 @@ export class ElectronCapacitorApp {
   private mainWindowState;
   private loadWebApp;
   private customScheme: string;
+  /** Non-null in development → load the vite dev server (live HMR) instead of
+   *  the bundled static app. Null in production. */
+  private devServerUrl: string | null = null;
 
   constructor(
     capacitorFileConfig: CapacitorElectronConfig,
@@ -67,6 +72,7 @@ export class ElectronCapacitorApp {
     this.CapacitorFileConfig = capacitorFileConfig;
 
     this.customScheme = this.CapacitorFileConfig.electron?.customUrlScheme ?? 'capacitor-electron';
+    this.devServerUrl = resolveDevServerUrl(electronIsDev);
 
     if (trayMenuTemplate) {
       this.TrayMenuTemplate = trayMenuTemplate;
@@ -83,9 +89,41 @@ export class ElectronCapacitorApp {
     });
   }
 
-  // Helper function to load in the app.
+  // Helper function to load in the app. In dev, load the running vite dev
+  // server (live content + HMR); in prod, electron-serve the bundled app.
   private async loadMainWindow(thisRef: any) {
-    await thisRef.loadWebApp(thisRef.MainWindow);
+    if (thisRef.devServerUrl) {
+      await thisRef.loadDevServerWithRetry(thisRef.MainWindow, thisRef.devServerUrl);
+    } else {
+      await thisRef.loadWebApp(thisRef.MainWindow);
+    }
+  }
+
+  // Dev: load the vite dev server, retrying until it's up. Electron can start
+  // before vite has bound :5173; without retry the first load hits a closed
+  // port and the window shows a blank page that never recovers (dom-ready
+  // never fires → window stays hidden).
+  //
+  // We use loadURL ITSELF as the readiness probe: it rejects with a network
+  // error (ERR_CONNECTION_REFUSED) while vite isn't listening, and resolves
+  // once vite answers (even on a redirect/4xx). An earlier version pre-probed
+  // with fetch(HEAD), but SvelteKit's dev server doesn't answer HEAD cleanly
+  // so that fetch hung indefinitely and loadURL was never reached.
+  private async loadDevServerWithRetry(win: BrowserWindow, url: string): Promise<void> {
+    const deadlineMs = Date.now() + 30_000;
+    while (Date.now() < deadlineMs) {
+      try {
+        await win.loadURL(url);
+        return;
+      } catch {
+        /* vite not listening yet -- retry */
+      }
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    console.error(`[electron] dev server ${url} did not become available within 30s`);
+    // Don't strand a hidden window: reveal it so the user sees something
+    // (even an error page) rather than an invisible process in the Dock.
+    this.revealMainWindow();
   }
 
   // Expose the mainWindow ref for use outside of the class.
@@ -98,31 +136,55 @@ export class ElectronCapacitorApp {
   }
 
   async init(): Promise<void> {
+    // Branded icon: `build/icon.{png,ico}` is regenerated from
+    // branding/brand.json by apply-brand. The old `assets/appIcon.*` is
+    // the stale upstream Capacitor default and must NOT be used.
     const icon = nativeImage.createFromPath(
-      join(
-        app.getAppPath(),
-        'assets',
-        process.platform === 'win32' ? 'appIcon.ico' : 'appIcon.png',
-      ),
+      join(app.getAppPath(), 'build', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     );
     this.mainWindowState = windowStateKeeper({
       defaultWidth: 1000,
       defaultHeight: 800,
     });
+    // Drop the saved x/y if it lands off every connected display (laptop
+    // undocked / external monitor asleep) -- otherwise the window opens
+    // off-screen and looks like "no window". `undefined` x/y centers it.
+    const safe = clampWindowBounds(
+      {
+        x: this.mainWindowState.x,
+        y: this.mainWindowState.y,
+        width: this.mainWindowState.width,
+        height: this.mainWindowState.height,
+      },
+      screen.getAllDisplays().map((d) => d.workArea),
+    );
     // Setup preload script path and construct our main window.
     const preloadPath = join(app.getAppPath(), 'build', 'src', 'preload.js');
     this.MainWindow = new BrowserWindow({
       icon,
       show: false,
-      x: this.mainWindowState.x,
-      y: this.mainWindowState.y,
-      width: this.mainWindowState.width,
-      height: this.mainWindowState.height,
+      x: safe.x,
+      y: safe.y,
+      width: safe.width,
+      height: safe.height,
       webPreferences: {
-        nodeIntegration: true,
+        // The renderer is the SvelteKit web app -- it must NOT have direct
+        // Node access. Everything it needs (Capacitor plugin IPC + our
+        // namespaced event bridge) is exposed through the contextBridge in
+        // preload.ts + rt/electron-rt.ts, so nodeIntegration stays OFF and
+        // contextIsolation ON (Electron security baseline).
+        nodeIntegration: false,
         contextIsolation: true,
-        // Use preload to inject the electron varriant overrides for capacitor plugins.
-        // preload: join(app.getAppPath(), "node_modules", "@capacitor-community", "electron", "dist", "runtime", "electron-rt.js"),
+        // sandbox stays false (deliberate). The renderer is already locked down
+        // by contextIsolation:true + nodeIntegration:false above (web content
+        // can't touch Node). Enabling the preload sandbox isn't a simple bundle:
+        // Capacitor's rt/electron-rt.ts uses Node `crypto.randomBytes` +
+        // `events.EventEmitter`, which a sandboxed preload cannot provide, so
+        // sandbox:true would break the Capacitor IPC bridge. Making it
+        // sandbox-safe means rewriting that framework runtime (Web Crypto + an
+        // EventEmitter shim) + full IPC retest -- tracked as separate hardening,
+        // not done here. @capacitor-community/electron ships sandbox:false too.
+        sandbox: false,
         preload: preloadPath,
       },
     });
@@ -190,14 +252,15 @@ export class ElectronCapacitorApp {
 
     // Security
     this.MainWindow.webContents.setWindowOpenHandler((details) => {
-      if (!details.url.includes(this.customScheme)) {
-        return { action: 'deny' };
-      } else {
-        return { action: 'allow' };
-      }
+      return isInternalNavigation(details.url, this.customScheme, this.devServerUrl)
+        ? { action: 'allow' }
+        : { action: 'deny' };
     });
-    this.MainWindow.webContents.on('will-navigate', (event, _newURL) => {
-      if (!this.MainWindow.webContents.getURL().includes(this.customScheme)) {
+    this.MainWindow.webContents.on('will-navigate', (event, newURL) => {
+      // Allow navigation only within the app (custom scheme, or the vite dev
+      // server in development). External links are blocked here and handled by
+      // the Browser plugin / system browser instead.
+      if (!isInternalNavigation(newURL, this.customScheme, this.devServerUrl)) {
         event.preventDefault();
       }
     });
@@ -205,35 +268,61 @@ export class ElectronCapacitorApp {
     // Link electron plugins into the system.
     setupCapacitorElectronPlugins();
 
-    // When the web app is loaded we hide the splashscreen if needed and show the mainwindow.
-    this.MainWindow.webContents.on('dom-ready', () => {
-      if (this.CapacitorFileConfig.electron?.splashScreenEnabled) {
-        this.SplashScreen.getSplashWindow().hide();
+    // Reveal the window the moment the renderer paints its first frame
+    // (ready-to-show) AND when the DOM is ready -- whichever fires first;
+    // revealMainWindow() is idempotent. The window is created with
+    // `show: false`, so if NEITHER ever fires (dev server never answers,
+    // a hard load failure) the window would stay invisible forever -- a
+    // hidden process in the Dock. The fallback timer below guarantees we
+    // show it regardless, and loadDevServerWithRetry reveals on its
+    // deadline too.
+    this.MainWindow.once('ready-to-show', () => this.revealMainWindow());
+    this.MainWindow.webContents.on('dom-ready', () => this.revealMainWindow());
+    this.windowRevealTimer = setTimeout(() => this.revealMainWindow(), 20_000);
+  }
+
+  /** Show + focus the main window exactly once, hiding the splash. Called
+   *  from ready-to-show, dom-ready, the dev-load-failure path, and a
+   *  fallback timer, so it MUST be idempotent. Respects
+   *  hideMainWindowOnLaunch (launch-to-tray) by skipping the show. */
+  private windowRevealTimer: ReturnType<typeof setTimeout> | null = null;
+  private mainWindowRevealed = false;
+  private revealMainWindow(): void {
+    if (this.windowRevealTimer) {
+      clearTimeout(this.windowRevealTimer);
+      this.windowRevealTimer = null;
+    }
+    if (this.mainWindowRevealed) return;
+    if (!this.MainWindow || this.MainWindow.isDestroyed()) return;
+    this.mainWindowRevealed = true;
+
+    if (this.CapacitorFileConfig.electron?.splashScreenEnabled) {
+      const splash = this.SplashScreen?.getSplashWindow();
+      if (splash && !splash.isDestroyed()) splash.hide();
+    }
+    if (!this.CapacitorFileConfig.electron?.hideMainWindowOnLaunch) {
+      this.MainWindow.show();
+      this.MainWindow.focus();
+    }
+    setTimeout(() => {
+      if (electronIsDev && this.MainWindow && !this.MainWindow.isDestroyed()) {
+        this.MainWindow.webContents.openDevTools();
       }
-      if (!this.CapacitorFileConfig.electron?.hideMainWindowOnLaunch) {
-        this.MainWindow.show();
-      }
-      setTimeout(() => {
-        if (electronIsDev) {
-          this.MainWindow.webContents.openDevTools();
-        }
-        CapElectronEventEmitter.emit('CAPELECTRON_DeeplinkListenerInitialized', '');
-      }, 400);
-    });
+      CapElectronEventEmitter.emit('CAPELECTRON_DeeplinkListenerInitialized', '');
+    }, 400);
   }
 }
 
 // Set a CSP up for our application based on the custom scheme
 export function setupContentSecurityPolicy(customScheme: string): void {
+  // Pass the resolved dev-server URL so the CSP allows a non-localhost
+  // ELECTRON_DEV_SERVER_URL / CAPACITOR_SERVER_URL override (else it'd be blocked).
+  const devServerUrl = resolveDevServerUrl(electronIsDev);
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        'Content-Security-Policy': [
-          electronIsDev
-            ? `default-src ${customScheme}://* 'unsafe-inline' devtools://* 'unsafe-eval' data:`
-            : `default-src ${customScheme}://* 'unsafe-inline' data:`,
-        ],
+        'Content-Security-Policy': [buildCsp(customScheme, electronIsDev, devServerUrl)],
       },
     });
   });

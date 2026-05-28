@@ -105,11 +105,21 @@ export function hasBreakdown(detail) {
   return /\n?\s*\|.*\|/.test(detail) || detail.includes('<details');
 }
 
-/** Adapter / contract shape: md -> { domain, status, headline, detail }. */
-export function toSummary(domain, md) {
+/** Adapter / contract shape: md -> { domain, status, headline, detail }.
+ *  A domain with NO markdown produced no artifact for this commit. That's
+ *  "not reported" (skip) by default -- the producer either never fired for
+ *  this commit (its source workflow is path-filtered) or ran with nothing to
+ *  emit. It is only "pending" when its producer is genuinely still in-flight
+ *  for this commit, i.e. the domain is in `inflight`. (Previously a missing
+ *  artifact defaulted to "pending", so the 9 producers that never run for an
+ *  unrelated change sat "pending" forever and the comment looked stuck.) */
+export function toSummary(domain, md, inflight) {
+  const hasMd = !!(md && md.trim());
+  let status = deriveState(md);
+  if (!hasMd) status = inflight && inflight.has(domain) ? 'pending' : 'skip';
   return {
     domain,
-    status: deriveState(md),
+    status,
     headline: headlineOf(domain, md),
     detail: hasBreakdown(detailOf(md)) ? detailOf(md) : '',
   };
@@ -189,31 +199,32 @@ export function renderComment(entries, meta = {}) {
 
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-/** Compact CI block for the PR description (rollup line, no table). */
-export function renderDescriptionBlock(entries) {
+/** CI block for the PR description. It lives at the TOP of the PR (the closest
+ *  GitHub allows to a pinned summary), so it carries the full GitHub-native
+ *  rollup alert: commit SHA + per-status counts + the failing / needs-a-look
+ *  lists. The scannable table stays in the heron-pr-summary comment. */
+export function renderDescriptionBlock(entries, meta = {}) {
   const g = classify(entries);
-  const fails = g.attention.filter((e) => e.status === 'fail');
-  const verdict = fails.length
-    ? `❌ ${fails.length} failing — ${labelList(fails)}`
-    : g.attention.length
-      ? `⚠️ ${g.attention.length} need a look`
-      : `✅ ${g.passed.length} passing`;
-  return `${DESC_MARKER_START}\n**CI:** ${verdict}\n${DESC_MARKER_END}`;
+  return `${DESC_MARKER_START}\n${renderRollup(g, meta)}\n${DESC_MARKER_END}`;
 }
 
-export function replaceDescriptionBlock(descBody, entries) {
-  const block = renderDescriptionBlock(entries);
+export function replaceDescriptionBlock(descBody, entries, meta = {}) {
+  const block = renderDescriptionBlock(entries, meta);
   const re = new RegExp(`${escapeRe(DESC_MARKER_START)}[\\s\\S]*?${escapeRe(DESC_MARKER_END)}`);
   const body = descBody || '';
   return re.test(body) ? body.replace(re, block) : `${body.trimEnd()}\n\n${block}\n`;
 }
 
-/** Build entries (in ORDER) from a directory of `<domain>.md` files. */
-export function buildEntries(dir) {
+/** Build entries (in ORDER) from a directory of `<domain>.md` files.
+ *  `inflight` (array or Set of domain slugs) marks producers whose workflow is
+ *  still running for this commit, so a missing artifact reads "pending"; every
+ *  other missing artifact reads "not reported". */
+export function buildEntries(dir, inflight) {
+  const running = inflight instanceof Set ? inflight : new Set(inflight || []);
   return ORDER.map((domain) => {
     const p = join(dir, `${domain}.md`);
     const md = existsSync(p) ? readFileSync(p, 'utf8') : null;
-    return toSummary(domain, md);
+    return toSummary(domain, md, running);
   });
 }
 
@@ -226,9 +237,16 @@ function main() {
   const dir = arg('--dir') ?? '.';
   const out = arg('--out');
   const sha = arg('--sha');
+  const pendingArg = arg('--pending');
+  const inflight = pendingArg
+    ? pendingArg
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
   const descIn = arg('--desc-in');
   const descOut = arg('--desc-out');
-  const entries = buildEntries(dir);
+  const entries = buildEntries(dir, inflight);
   const body = renderComment(entries, { sha });
 
   if (out) writeFileSync(out, body);
@@ -236,7 +254,7 @@ function main() {
 
   if (descIn && descOut) {
     const current = existsSync(descIn) ? readFileSync(descIn, 'utf8') : '';
-    writeFileSync(descOut, replaceDescriptionBlock(current, entries));
+    writeFileSync(descOut, replaceDescriptionBlock(current, entries, { sha }));
   }
 }
 

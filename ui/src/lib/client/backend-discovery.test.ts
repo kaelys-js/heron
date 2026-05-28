@@ -299,3 +299,19 @@ describe('resolveBackend — waterfall', () => {
     await expect(resolveBackend({ probeTimeoutMs: 10 })).rejects.toThrow(BackendNotFoundError);
   });
 });
+
+describe('resolveBackend -- screenshot mode short-circuit', () => {
+  afterEach(() => {
+    // Must clear or it leaks into every other resolveBackend test.
+    delete (globalThis as { __HERON_SCREENSHOTS__?: unknown }).__HERON_SCREENSHOTS__;
+  });
+
+  it('returns the injected backend immediately (source: manual), trimming trailing slashes', async () => {
+    (globalThis as { __HERON_SCREENSHOTS__?: { backend: string } }).__HERON_SCREENSHOTS__ = {
+      backend: 'http://127.0.0.1:4173//',
+    };
+    const r = await resolveBackend();
+    expect(r.url).toBe('http://127.0.0.1:4173');
+    expect(r.source).toBe('manual');
+  });
+});

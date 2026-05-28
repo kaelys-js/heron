@@ -96,6 +96,323 @@
       })();
     </script>
 
+    <!--
+      On-device diagnostics. Runs FIRST (before the SvelteKit head injection
+      and entry module) so it captures module-eval + pre-hydration
+      errors that <svelte:boundary> structurally cannot — boundaries only
+      catch SYNCHRONOUS render throws, not module-load failures, onMount
+      throws, or async/effect rejections. Those are exactly the failure
+      classes that blank the iOS WebView: the layout's onMount runs far
+      enough to remove #boot-fallback (the boot error surface), and if the
+      app tree never paints the user is left on the bare #0e1014 body with
+      nothing to read — and on an Apple-Silicon Mac the device WKWebView is
+      NOT exposed to Safari's Develop menu, so there's no console either.
+
+      This installs a ring buffer + a self-contained overlay (#heron-diag)
+      that SURVIVES the boot-fallback handoff, auto-reveals on a prolonged
+      blank screen, and opens via a hidden corner-tap gesture. Ships in
+      EVERY build (incl. production TestFlight) on purpose — it's the only
+      way to read a boot failure on a physical device. Pure vanilla JS so it
+      works offline and independent of SvelteKit.
+    -->
+    <script>
+      (function () {
+        var MAX = 300;
+        var buf = [];
+        var t0 = window.performance && performance.now ? performance.now() : Date.now();
+        function ts() {
+          var now = window.performance && performance.now ? performance.now() : Date.now();
+          return ((now - t0) / 1000).toFixed(3) + 's';
+        }
+        function fmt(args) {
+          var out = [];
+          for (var i = 0; i < args.length; i++) {
+            var a = args[i];
+            try {
+              if (a instanceof Error) out.push(String(a.message) + (a.stack ? '\n' + a.stack : ''));
+              else if (a && typeof a === 'object') out.push(JSON.stringify(a));
+              else out.push(String(a));
+            } catch (_) {
+              out.push(String(a));
+            }
+          }
+          return out.join(' ');
+        }
+        function push(kind, msg) {
+          try {
+            buf.push({ t: ts(), kind: kind, msg: String(msg) });
+            if (buf.length > MAX) buf.shift();
+            render();
+          } catch (_) {}
+        }
+
+        // Public API. window.__heronDiag('milestone') records a lifecycle
+        // mark; Svelte code calls it via (globalThis).__heronDiag?.(...).
+        window.__heronDiag = function (msg) {
+          push('mark', msg);
+        };
+        window.__heronDiag.log = push;
+        window.__heronDiag.dump = function () {
+          var head = [
+            'heron — on-device diagnostics',
+            'time: ' + new Date().toISOString(),
+            'url: ' + location.href,
+            'ua: ' + navigator.userAgent,
+            'appReady: ' + (document.documentElement.dataset.appReady || '0'),
+            'bootFallback: ' +
+              (document.getElementById('boot-fallback')
+                ? 'present' +
+                  (document.getElementById('boot-fallback').getAttribute('data-state')
+                    ? ':' + document.getElementById('boot-fallback').getAttribute('data-state')
+                    : '')
+                : 'removed'),
+            '--------',
+          ];
+          var lines = buf.map(function (l) {
+            return '[' + l.t + '] ' + l.kind + ': ' + l.msg;
+          });
+          return head.concat(lines).concat(['--------', domSummary()]).join('\n');
+        };
+
+        // Snapshot of what the app actually painted into <body> — so a blank
+        // screen with JS running (appReady set, but nothing visible) is
+        // diagnosable: which body children exist and their layout/visibility.
+        function domSummary() {
+          if (!document.body) return 'dom: <no body>';
+          var kids = Array.prototype.slice.call(document.body.children);
+          var out = ['dom: ' + kids.length + ' body children'];
+          kids.forEach(function (el) {
+            var r = el.getBoundingClientRect();
+            var cs = getComputedStyle(el);
+            out.push(
+              '  <' +
+                el.tagName.toLowerCase() +
+                (el.id ? '#' + el.id : '') +
+                '> ' +
+                Math.round(r.width) +
+                'x' +
+                Math.round(r.height) +
+                ' disp=' +
+                cs.display +
+                ' vis=' +
+                cs.visibility +
+                ' op=' +
+                cs.opacity,
+            );
+          });
+          out.push('body.innerText.len: ' + ((document.body.innerText || '').length));
+          return out.join('\n');
+        }
+
+        // Does the app tree currently paint anything the user can see? Ignores
+        // our own overlays + non-visual nodes. Used by the blank-screen guard.
+        function hasVisibleAppContent() {
+          if (!document.body) return false;
+          // Walk the WHOLE body subtree, not just direct children: SvelteKit
+          // mounts under a `display: contents` wrapper (0-sized box), so its
+          // real content lives one level down. querySelectorAll('*') flattens
+          // that. Require a >1px box so the 1x1 sr-only skip link doesn't count
+          // as "content"; skip our own overlays + their subtrees + non-visual
+          // nodes.
+          var all = document.body.querySelectorAll('*');
+          for (var i = 0; i < all.length; i++) {
+            var el = all[i];
+            var tag = el.tagName;
+            if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'TEMPLATE') continue;
+            if (el.closest('#heron-diag, #boot-fallback')) continue;
+            var r = el.getBoundingClientRect();
+            if (r.width > 1 && r.height > 1) {
+              var cs = getComputedStyle(el);
+              if (
+                cs.display !== 'none' &&
+                cs.visibility !== 'hidden' &&
+                parseFloat(cs.opacity || '1') > 0.01
+              ) {
+                return true;
+              }
+            }
+          }
+          return false;
+        }
+
+        // Console passthrough — keep originals, mirror into the buffer.
+        ['log', 'info', 'warn', 'error', 'debug'].forEach(function (k) {
+          var orig = console[k] ? console[k].bind(console) : function () {};
+          console[k] = function () {
+            try {
+              push(k, fmt(arguments));
+            } catch (_) {}
+            return orig.apply(null, arguments);
+          };
+        });
+
+        // The capture <svelte:boundary> can't do: window-level errors +
+        // unhandled promise rejections (module-eval, onMount, async).
+        window.addEventListener('error', function (e) {
+          push(
+            'error',
+            String((e && e.message) || (e && e.error && e.error.message) || 'error') +
+              (e && e.filename ? ' @ ' + e.filename + ':' + (e.lineno || 0) : ''),
+          );
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          var r = e && e.reason;
+          push(
+            'reject',
+            String(r && r.message ? r.message : r) + (r && r.stack ? '\n' + r.stack : ''),
+          );
+        });
+
+        push('mark', 'app.html head parsed');
+
+        // ---- Overlay UI: built once on DOMContentLoaded, never removed ----
+        var overlay = null;
+        var pre = null;
+        var visible = false;
+
+        function render() {
+          if (!visible || !pre) return;
+          pre.textContent = window.__heronDiag.dump();
+          pre.scrollTop = pre.scrollHeight;
+        }
+        function mkBtn(label) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = label;
+          b.style.cssText =
+            'padding:8px 12px;border-radius:8px;border:1px solid #3a3a44;background:#1c1f27;' +
+            'color:#e8eaed;font:600 13px -apple-system,system-ui,sans-serif;cursor:pointer;min-height:40px;';
+          return b;
+        }
+        function build() {
+          if (overlay || !document.body) return;
+          overlay = document.createElement('div');
+          overlay.id = 'heron-diag';
+          overlay.style.cssText = [
+            'position:fixed',
+            'inset:0',
+            'z-index:2147483647', // above #boot-fallback (9999)
+            'display:none',
+            'flex-direction:column',
+            'background:#0b0d11',
+            'color:#e8eaed',
+            'font:12px ui-monospace,SFMono-Regular,Menlo,monospace',
+            'padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))',
+            'box-sizing:border-box',
+            'overscroll-behavior:contain',
+          ].join(';');
+
+          var bar = document.createElement('div');
+          bar.style.cssText =
+            'display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;';
+          var title = document.createElement('div');
+          title.textContent = 'heron diagnostics';
+          title.style.cssText = 'font-weight:700;margin-right:auto;font-size:13px;';
+          var copyBtn = mkBtn('Copy');
+          var reloadBtn = mkBtn('Reload');
+          var closeBtn = mkBtn('Close');
+          bar.appendChild(title);
+          bar.appendChild(copyBtn);
+          bar.appendChild(reloadBtn);
+          bar.appendChild(closeBtn);
+
+          pre = document.createElement('pre');
+          pre.style.cssText =
+            'flex:1;margin:0;overflow:auto;white-space:pre-wrap;word-break:break-word;' +
+            'background:#14171e;border:1px solid #262a33;border-radius:8px;padding:10px;' +
+            '-webkit-overflow-scrolling:touch;';
+
+          overlay.appendChild(bar);
+          overlay.appendChild(pre);
+          document.body.appendChild(overlay);
+
+          copyBtn.addEventListener('click', function () {
+            var text = window.__heronDiag.dump();
+            try {
+              navigator.clipboard.writeText(text).then(
+                function () {
+                  copyBtn.textContent = 'Copied ✓';
+                  setTimeout(function () {
+                    copyBtn.textContent = 'Copy';
+                  }, 1500);
+                },
+                function () {
+                  window.prompt('Copy diagnostics:', text);
+                },
+              );
+            } catch (_) {
+              window.prompt('Copy diagnostics:', text);
+            }
+          });
+          reloadBtn.addEventListener('click', function () {
+            location.reload();
+          });
+          closeBtn.addEventListener('click', hide);
+        }
+        function show() {
+          build();
+          if (!overlay) return;
+          visible = true;
+          overlay.style.display = 'flex';
+          render();
+        }
+        function hide() {
+          visible = false;
+          if (overlay) overlay.style.display = 'none';
+        }
+        window.__heronDiag.show = show;
+        window.__heronDiag.hide = hide;
+
+        // Hidden gesture: tap the top-left 44x44pt corner 5x within 3s.
+        var taps = [];
+        document.addEventListener(
+          'pointerdown',
+          function (e) {
+            if (e.clientX > 44 || e.clientY > 44) return;
+            var now = Date.now();
+            taps.push(now);
+            taps = taps.filter(function (t) {
+              return now - t < 3000;
+            });
+            if (taps.length >= 5) {
+              taps = [];
+              visible ? hide() : show();
+            }
+          },
+          true,
+        );
+
+        // Auto-reveal: a prolonged blank screen. Two failure shapes:
+        //   1. the app never signalled ready AND #boot-fallback is gone/error
+        //   2. the app DID signal ready but painted nothing the user can see
+        //      (JS ran, boot-fallback dismissed, yet the tree is empty/invisible
+        //      — the exact "mDNS fires then black" shape on iOS)
+        // Either way the user is on a dead screen with no surface — show the log.
+        setTimeout(function () {
+          var ready = document.documentElement.dataset.appReady === '1';
+          var bf = document.getElementById('boot-fallback');
+          var bootGone =
+            !bf ||
+            bf.getAttribute('data-state') === 'error' ||
+            bf.getAttribute('data-safety-net') === '1';
+          var visible = hasVisibleAppContent();
+          if ((!ready && bootGone) || (ready && !visible)) {
+            push(
+              'mark',
+              'auto-reveal: blank screen (appReady=' + ready + ', visibleAppContent=' + visible + ')',
+            );
+            show();
+          }
+        }, 6000);
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', build);
+        } else {
+          build();
+        }
+      })();
+    </script>
+
     <meta name="generator" content="SvelteKit" />
 
     <!-- Don't index this — local-only dashboard -->
@@ -586,26 +903,12 @@
       </style>
     </div>
     <script>
-      // Capture early errors so the diagnostics button has something
-      // useful to copy. The full error-reporter installs later in
-      // hydration — this is a lightweight bridge so failures BEFORE
-      // hydration get surfaced too.
+      // #boot-fallback blank-screen UX driver. Error capture + the shared
+      // diagnostics buffer now live in the early-head __heronDiag script
+      // (which ALSO catches the module-eval failures this body script runs
+      // too late to see). This block only flips the boot-fallback into its
+      // error / safety-net states; the Copy button reads __heronDiag.dump().
       (function () {
-        var captured = [];
-        window.addEventListener('error', function (e) {
-          captured.push({
-            type: 'error',
-            message: String(e.message || e.error || 'unknown'),
-            source: (e.filename || '') + ':' + (e.lineno || 0),
-          });
-        });
-        window.addEventListener('unhandledrejection', function (e) {
-          captured.push({
-            type: 'unhandledrejection',
-            message: String(e.reason && e.reason.message ? e.reason.message : e.reason),
-          });
-        });
-
         // Blank-screen guard. After 3.5 seconds without successful
         // hydration (which removes the fallback by setting data-hide),
         // flip to the error state. The user always gets a way out
@@ -652,6 +955,8 @@
                 "The app couldn't connect to the backend. Check your network or try again — the issue may be temporary.";
           }
           el.setAttribute('data-state', 'error');
+          if (window.__heronDiag)
+            window.__heronDiag('boot-fallback error state shown (hydration stalled 2.5s)');
         }, 2500);
 
         // Hard safety-net: 8 seconds after the page loads, REMOVE the
@@ -667,6 +972,8 @@
           if (!el) return;
           // Tag a marker so post-mortem inspection knows the safety-net
           // kicked in (rather than the planned 700ms onMount removal).
+          if (window.__heronDiag)
+            window.__heronDiag('boot-fallback safety-net removal fired (8s, hydration never dismissed it)');
           el.setAttribute('data-safety-net', '1');
           el.setAttribute('data-hide', '1');
           setTimeout(function () {
@@ -674,25 +981,21 @@
           }, 300);
         }, 8000);
 
-        // Wire up Copy diagnostics — assembles URL, UA, and any errors
-        // we captured, then writes them to the clipboard. Falls back to
-        // alert() if clipboard write fails (e.g. iOS WKWebView clipboard
-        // permission denied).
+        // Wire up the boot-fallback's Copy button — dumps the shared
+        // __heronDiag buffer (URL, UA, milestones, captured errors) to the
+        // clipboard. Falls back to alert() if clipboard write fails (e.g.
+        // iOS WKWebView clipboard permission denied).
         document.addEventListener('click', function (e) {
           var target = e.target;
           if (!target || target.id !== 'boot-fallback-copy') return;
-          var diag = [
-            'heron — boot diagnostics',
-            'time: ' + new Date().toISOString(),
-            'url: ' + location.href,
-            'ua: ' + navigator.userAgent,
-            'errors: ' + (captured.length === 0 ? 'none' : ''),
-          ];
-          for (var i = 0; i < captured.length; i++) {
-            diag.push('  - [' + captured[i].type + '] ' + captured[i].message);
-            if (captured[i].source) diag.push('    @ ' + captured[i].source);
-          }
-          var text = diag.join('\n');
+          var text = window.__heronDiag
+            ? window.__heronDiag.dump()
+            : 'heron — boot diagnostics\ntime: ' +
+              new Date().toISOString() +
+              '\nurl: ' +
+              location.href +
+              '\nua: ' +
+              navigator.userAgent;
           try {
             navigator.clipboard.writeText(text).then(
               function () {

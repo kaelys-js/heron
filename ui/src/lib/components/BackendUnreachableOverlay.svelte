@@ -46,6 +46,10 @@
   // the same UX at 2s vs 1s).
   const PROBE_INTERVAL_MS = 2_000;
 
+  // `preview` is dev-only (the /dev/views gallery): force the overlay visible
+  // so the state can be inspected without dropping the real backend.
+  let { preview = false } = $props<{ preview?: boolean }>();
+
   let visible = $state(false);
   let retrying = $state(false);
   /** M9 -- once an authed user picks "Continue offline" we stop blocking
@@ -93,6 +97,11 @@
   }
 
   onMount(() => {
+    if (preview) {
+      cachedAuth = true; // show the full set of affordances in the gallery
+      visible = true;
+      return;
+    }
     readCachedAuth();
     // Track online → offline transitions. On going offline, start the
     // grace window. On coming back online, cancel the window, hide,

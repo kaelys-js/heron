@@ -62,7 +62,10 @@
         )}
         aria-hidden="true"
       >
-        <Sun class="size-4 text-amber-300" />
+        <!-- amber-300 is too light on the cream light-mode bg (this icon is
+             only ever shown when mode===light, i.e. on a light surface) — use
+             a darker amber so it's clearly visible; still fine on dark. -->
+        <Sun class="size-4 text-amber-500 dark:text-amber-300" />
       </span>
       <span
         class={cn(

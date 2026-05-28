@@ -1,198 +1,74 @@
 # yaml-language-server: $schema=https://json.schemastore.org/lefthook.json
 # Lefthook -- git hooks manager.
 #
-# Run hooks in parallel, skip on rebase/merge, share config across the team.
-# Activate: `lefthook install` (the setup wizard does this automatically;
-# pnpm install postinstall does it too).
+# 100% parity model: pre-commit, pre-push, and CI all run the SAME
+# `pnpm verify` pipeline (turbo run check build test:coverage lint
+# format:check verify:gates lint:native). Turbo's content-hash cache makes
+# the repeats cheap -- after a commit runs verify, the pre-push verify is
+# all cache hits. The ONLY checks that run exclusively in CI are E2E,
+# Lost Pixel, CodeQL, Scorecard, zizmor, and dependency-review.
 #
-# Why over husky / native .githooks: parallel runs, declarative skip rules,
-# YAML-driven (vs scripts), no Node dependency for the hook runtime itself,
-# and `lefthook run <name>` lets you trigger any hook manually for debugging.
-
-# skip_output: REMOVED -- lefthook 2.x dropped the `meta` / `success` /
-# `skips` keys we previously suppressed. The array form (`- meta`) emits
-# a "Value is array but should be object" advisory in `lefthook validate`;
-# the object form (`meta: true`) errors with "No values are allowed because
-# the schema is set to 'false'" (the keys can't be enabled in 2.x). Either
-# way, hooks run fine. Easiest: remove entirely. Lefthook prints a small
-# header on each run -- acceptable tax for clean `validate`.
-
-# Bypass the entire hook suite with: SKIP_LEFTHOOK=1 git commit ...
+# Bypass the entire suite with: SKIP_LEFTHOOK=1 git commit/push.
 # Use sparingly -- CI re-runs everything anyway.
 
 # ── pre-commit ──────────────────────────────────────────────────────
-# Fast checks that gate every commit (~1-2s total on warm cache).
-# Type-level + behaviour checks are deferred to pre-push (slower, runs
-# fewer times).
+# PIPED (sequential), NOT parallel: the auto-format WRITERS (01-08) must
+# finish + re-stage BEFORE `99-verify` runs its format:check / lint-native
+# --check passes, otherwise the check races the writer (the old
+# prettier-svelte / shfmt-check flakiness). Numeric prefixes pin the order
+# regardless of how lefthook sorts. The check-only hooks that used to live
+# here (typecheck, *-check, swiftlint, no-slop, comment-style, english-only,
+# modes, exact-versions, oxlint, version-sync, markdownlint, yamllint,
+# actionlint, plist/xml/dotenv/tiny-config validators, fonts, format-sync)
+# are all subsumed by `99-verify` now, so they are NOT duplicated here.
 pre-commit:
-  parallel: true
+  piped: true
   skip:
     - rebase
     - merge
   commands:
-    format-pipeline:
-      # SERIAL PIPELINE -- the apply-brand → biome-format → sort-pkg →
-      # biome-format-check chain MUST run in order, never in parallel
-      # with itself. Previously these were three separate parallel
-      # hooks; the race showed up as "✗ biome-format-check" failing
-      # whenever apply-brand happened to write a file biome wanted to
-      # reformat AFTER the check had already read it. End-result for
-      # the contributor: commit blocked, no obvious fix, retry-the-
-      # commit-and-it-works-this-time flakiness.
-      #
-      # Combining into one shell-script command runs each step in a
-      # strict order while still letting all OTHER pre-commit hooks
-      # (no-secrets, version-sync, ktlint, swiftlint, etc.) run in
-      # parallel alongside. ~50ms net cost vs the broken parallel form.
-      #
-      # The glob is the UNION of every step's interest: branding/
-      # source files trigger apply-brand; *.ts/*.json/*.css trigger
-      # biome-format; */package.json triggers sort-package-json.
-      # Lefthook fires the command once if ANY staged file matches.
+    "01-format-pipeline":
+      # SERIAL apply-brand -> biome-format -> sort-pkg -> biome-format-check.
+      # Combined into one command so the steps run in strict order. The glob
+      # is the UNION of every step's interest.
       glob: "{branding/*,*.{ts,tsx,js,mjs,cjs,json,jsonc,css,webmanifest},**/package.json}"
       run: |
         set -e
-        # Step 1: apply-brand (only meaningful when branding/ changed,
-        # but cheap to run unconditionally -- it's a no-op when nothing
-        # drifted). Regenerates 20+ propagated artifacts.
-        #
-        # `--stage` tells apply-brand to `git add` everything it
-        # mutated. The set of mutated paths is tracked internally via
-        # writeFileSync/copyFileSync wrappers in apply-brand.mjs, so
-        # this hook never has to know about specific paths. Adding a
-        # new output to apply-brand is a one-file change; no lefthook
-        # update needed.
         BRAND_CHANGED=$(echo "{staged_files}" | grep -E '(^|/)branding/' || true)
         if [ -n "$BRAND_CHANGED" ]; then
           node scripts/native/apply-brand.mjs --stage > /dev/null 2>&1 || true
         fi
-
-        # Step 2: biome-format (writer). Idempotent for already-
-        # formatted files; rewrites those that drifted. Includes
-        # files apply-brand just regenerated.
-        #
-        # We pass `--write` so biome mutates in place. We INTENTIONALLY
-        # do NOT use `|| true` here -- a biome parse failure is a real
-        # bug (the file is syntactically broken) and silencing it
-        # masks the issue until biome-format-check below catches a
-        # ghost "format drift" that's actually unparseable code.
         STAGED_BIOME=$(git diff --cached --name-only --diff-filter=d | grep -E '\.(ts|tsx|js|mjs|cjs|json|jsonc|css|webmanifest)$' || true)
         if [ -n "$STAGED_BIOME" ]; then
           echo "$STAGED_BIOME" | xargs pnpm exec biome format --write
           echo "$STAGED_BIOME" | xargs git add
         fi
-
-        # Step 3: sort-package-json (after biome -- biome's JSON
-        # formatter cares about key order WITHIN objects but not
-        # about the top-level ordering this enforces).
         STAGED_PKGS=$(git diff --cached --name-only --diff-filter=d | grep -E '(^|/)package\.json$' || true)
         if [ -n "$STAGED_PKGS" ]; then
           echo "$STAGED_PKGS" | xargs pnpm exec sort-package-json
           echo "$STAGED_PKGS" | xargs git add
         fi
-
-        # Step 4: biome-format-check (verifier). At this point Steps
-        # 2+3 just ran on every relevant staged file; this re-read
-        # should be a no-op. If it fails, biome encountered a parse
-        # error or refused to fix something (rare but real, e.g.
-        # ambiguous JSX). We exit non-zero so the commit aborts
-        # with the actual biome diagnostic visible.
         STAGED_CHECK=$(git diff --cached --name-only --diff-filter=d | grep -E '\.(ts|tsx|js|mjs|cjs|json|jsonc|css|webmanifest)$' || true)
         if [ -n "$STAGED_CHECK" ]; then
           echo "$STAGED_CHECK" | xargs pnpm exec biome format
         fi
       stage_fixed: true
 
-    verify-fonts:
-      # Closes TYPOGRAPHY.md Task 9 item 5 -- guard against accidental /
-      # malicious woff2 swaps. Fires only when a font binary or the
-      # checksum lockfile is staged; otherwise no-op. Run
-      # `pnpm fonts:lock` after a deliberate font upgrade.
-      glob: "ui/static/fonts/*"
-      run: node scripts/system/verify-fonts.mjs
-      fail_text: "woff2 drift -- see verify-fonts output. Run `pnpm fonts:lock` after a deliberate font swap."
-
-    # NOTE: biome-format / sort-package-json / biome-format-check were
-    # merged into the `format-pipeline` command above so they run in
-    # order. Keeping them as separate parallel commands re-introduces
-    # the race condition with apply-brand.
-
-    format-config-sync:
-      # Asserts .editorconfig + biome.jsonc + .prettierrc.json agree on
-      # every overlapping setting (indent / line-width / quote-style /
-      # trailing-commas / etc). Drift between these three is the most
-      # common "my editor formats one way, the pre-commit hook formats
-      # another" surprise. Fires only when one of the three is staged.
-      glob: "{.editorconfig,biome.jsonc,.prettierrc.json}"
-      run: pnpm validate:format-sync
-
-    prettier-svelte:
-      # Biome doesn't support .svelte yet (as of 2026-05). Run prettier
-      # with prettier-plugin-svelte for those files only -- style matches
-      # biome.jsonc so .ts and .svelte feel identical.
-      #
-      # PRE-FIX BUG (caught during the verification-loop commit that
-      # introduced this comment): the previous form did `cd ui` then
-      # passed {staged_files} verbatim -- but lefthook always interpolates
-      # {staged_files} as repo-relative paths (`ui/src/...`). From inside
-      # `ui/` those resolved to `ui/ui/src/...` which doesn't exist, so
-      # prettier silently no-op'd (because of `|| true`), the file stayed
-      # unformatted, and the prettier-svelte-check verification pass
-      # below caught it and failed the commit. Net effect: every commit
-      # touching a .svelte file required a manual `pnpm exec prettier
-      # --write` BEFORE staging -- which defeats the whole point of an
-      # auto-format hook.
-      #
-      # The fix mirrors prettier-svelte-check below: run from the repo
-      # root with `pnpm -C ui` and strip the leading `ui/` from each
-      # path via awk (anchored to ^ui/ so paths with `ui/` in the
-      # middle, e.g. `ui/src/lib/components/ui/sonner/sonner.svelte`,
-      # stay intact). `--write` makes the formatting authoritative;
-      # the subsequent `git add` re-stages the formatted versions
-      # and `stage_fixed: true` confirms lefthook reuses them.
+    "02-prettier-svelte":
+      # Biome doesn't support .svelte; prettier-plugin-svelte does. Write ->
+      # re-stage -> check in one step. The awk strips the leading `ui/` from
+      # each repo-relative path (anchored to ^ui/ so a mid-path `ui/` stays).
       glob: "*.svelte"
       run: |
         FILES=$(echo {staged_files} | awk '{for(i=1;i<=NF;i++){sub(/^ui\//,"",$i);printf "%s ",$i}}')
         pnpm -C ui exec prettier --write $FILES --ignore-path .prettierignore 2>/dev/null || true
         git add {staged_files} 2>/dev/null || true
+        pnpm -C ui exec prettier --check $FILES --ignore-path .prettierignore
       stage_fixed: true
 
-    prettier-svelte-check:
-      # Verification pass for .svelte files (mirrors biome-format-check).
-      # Run prettier from the repo ROOT (where .prettierrc.json + the
-      # ui workspace's prettier binary both resolve via npx) so the
-      # {staged_files} repo-relative paths (`ui/src/...`) match. The
-      # original `cd ui` form broke for new files because prettier
-      # resolved the paths against ui/, looking for `ui/ui/src/...`.
-      #
-      # The sed strips the leading `ui/` from every file in the
-      # space-separated list so prettier (run with -C ui) sees the
-      # paths relative to its workspace root. CRITICAL: the leading
-      # token must be `^ui/` or ` ui/` (boundary-anchored), NOT a
-      # plain `ui/` with /g. Plain /g would mangle paths that have
-      # `ui/` in the MIDDLE -- e.g. `ui/src/lib/components/ui/sonner/...`
-      # collapses to `src/lib/components/sonner/...` which prettier
-      # can't find. We use awk to map per-token so the anchoring is
-      # unambiguous regardless of how many `ui/`s appear in the path.
-      glob: "*.svelte"
-      run: pnpm -C ui exec prettier --check $(echo {staged_files} | awk '{for(i=1;i<=NF;i++){sub(/^ui\//,"",$i);printf "%s ",$i}}') --ignore-path .prettierignore
-
-    typecheck:
-      # Type-check ui/ + ui/electron/ on every commit via turbo's per-
-      # workspace `check` task. Turbo caches by file hash so consecutive
-      # commits where source didn't change return instantly (FULL TURBO).
-      # Cold cost is ~12s; warm cost is <100ms.
-      glob: "{ui,ui/electron}/**/*.{svelte,ts,tsx,js,mjs}"
-      run: pnpm exec turbo run check
-
-    # ── Multi-language formatters (one entry per language) ──────────
-    # Each formatter writes in place + re-stages so commits land formatted.
-    # All gated behind `command -v` so a missing tool is a warning, not
-    # a hard fail (CI is the authoritative gate).
-
-    ruff-python:
-      # Python formatter + auto-fix linter (ruff). Single-binary, written
-      # in Rust, ~100× faster than black + flake8 combined.
+    "03-ruff-format":
+      # Python formatter + auto-fix linter (ruff). The blocking `ruff check`
+      # runs in 99-verify (lint-native); this just auto-fixes + re-stages.
       glob: "*.py"
       run: |
         command -v ruff >/dev/null 2>&1 || { echo "skip: ruff not installed (mise install)"; exit 0; }
@@ -201,16 +77,7 @@ pre-commit:
         git add {staged_files} 2>/dev/null || true
       stage_fixed: true
 
-    ruff-python-check:
-      # Verification pass -- fails if any .py file still has lint or
-      # format errors after the auto-fix above.
-      glob: "*.py"
-      run: |
-        command -v ruff >/dev/null 2>&1 || exit 0
-        ruff format --check {staged_files} && ruff check {staged_files}
-
-    ktlint:
-      # Kotlin linter + formatter. Installed via brew/sdkman.
+    "04-ktlint-format":
       glob: "*.kt"
       run: |
         command -v ktlint >/dev/null 2>&1 || { echo "skip: ktlint not installed (mise install)"; exit 0; }
@@ -218,16 +85,7 @@ pre-commit:
         git add {staged_files} 2>/dev/null || true
       stage_fixed: true
 
-    ktlint-check:
-      glob: "*.kt"
-      run: |
-        command -v ktlint >/dev/null 2>&1 || exit 0
-        ktlint {staged_files}
-
-    swiftformat:
-      # SwiftFormat -- auto-formats Swift files in place. Pairs with
-      # swiftlint below which lints structural rules SwiftFormat doesn't
-      # touch (force-cast, force-try, line length, etc.).
+    "05-swiftformat":
       glob: "*.swift"
       run: |
         command -v swiftformat >/dev/null 2>&1 || { echo "skip: swiftformat not installed (mise install)"; exit 0; }
@@ -235,16 +93,7 @@ pre-commit:
         git add {staged_files} 2>/dev/null || true
       stage_fixed: true
 
-    swiftlint:
-      # Strict lint gate. CI uses --strict; pre-commit warns only so
-      # contributors can iterate. CI is the authoritative bar.
-      glob: "*.swift"
-      run: |
-        command -v swiftlint >/dev/null 2>&1 || { echo "skip: swiftlint not installed (mise install)"; exit 0; }
-        swiftlint --quiet --no-cache {staged_files} || true
-
-    shfmt:
-      # POSIX shell formatter (also handles bash). Indent: 2 spaces.
+    "06-shfmt":
       glob: "*.{sh,bash}"
       run: |
         command -v shfmt >/dev/null 2>&1 || { echo "skip: shfmt not installed (mise install)"; exit 0; }
@@ -252,21 +101,8 @@ pre-commit:
         git add {staged_files} 2>/dev/null || true
       stage_fixed: true
 
-    shfmt-check:
-      glob: "*.{sh,bash}"
-      run: |
-        command -v shfmt >/dev/null 2>&1 || exit 0
-        shfmt -d -i 2 -ci {staged_files} >/dev/null
-
-    rufo:
-      # Ruby formatter. Pinned in the root Gemfile so `bundle exec rufo`
-      # uses the same version on every machine (mise installs Ruby, then
-      # `bundle install` resolves the gem against it).
-      #
-      # Glob matches both `.rb` source files AND extensionless `Gemfile`
-      # (root + ui/ios/App/). Gemfile.lock is auto-generated and stays
-      # untouched (the .editorconfig "files we never reformat" block
-      # already calls this out).
+    "07-rufo":
+      # Ruby formatter via bundler (pinned gem). Glob matches .rb + Gemfile.
       glob: "{*.rb,**/Gemfile,Gemfile}"
       run: |
         command -v bundle >/dev/null 2>&1 || { echo "skip: bundler not on PATH (run mise install)"; exit 0; }
@@ -274,208 +110,9 @@ pre-commit:
         git add {staged_files} 2>/dev/null || true
       stage_fixed: true
 
-    yamllint:
-      # YAML linter (style + syntax). Workflows are the highest-signal
-      # surface -- actionlint runs in pre-push for the deeper schema check.
-      glob: "*.{yaml,yml}"
-      run: |
-        command -v yamllint >/dev/null 2>&1 || exit 0
-        yamllint --no-warnings {staged_files} 2>/dev/null || true
-
-    actionlint:
-      # Workflow file validator -- catches typos, unknown action inputs,
-      # job-needs cycles. Runs only when a workflow file is staged.
-      glob: ".github/workflows/*.{yml,yaml}"
-      run: |
-        command -v actionlint >/dev/null 2>&1 || { echo "skip: actionlint not installed (mise install)"; exit 0; }
-        actionlint {staged_files}
-
-    plist-validate:
-      # Apple plist validator (Info.plist, .entitlements, .xcprivacy).
-      # Uses Python's stdlib plistlib so no install needed beyond the
-      # python pin in .mise.toml. A malformed Info.plist breaks the
-      # iOS build with a confusing xcodebuild error -- catching it at
-      # pre-commit means the contributor learns about it before push.
-      glob: "*.{plist,entitlements,xcprivacy}"
-      run: |
-        command -v python3 >/dev/null 2>&1 || { echo "skip: python3 not on PATH"; exit 0; }
-        python3 scripts/system/validate-plists.py
-
-    xml-validate:
-      # XML well-formedness check via xmllint -- *.svg + *.storyboard.
-      # xmllint ships with libxml2 (pre-installed on macOS + Ubuntu CI).
-      # No schema/DTD validation, just "does this parse as XML".
-      glob: "*.{svg,storyboard}"
-      run: bash scripts/system/validate-xml.sh
-
-    dotenv-lint:
-      # dotenv-linter (Rust, mise-installed via ubi). Catches duplicate
-      # keys, leading-space typos, quote inconsistency, etc. in the
-      # tracked .env.example + .env.act.example templates. The real
-      # .env is gitignored and never linted.
-      # --ignore-checks UnorderedKey: env vars are grouped by feature in
-      # these templates, not alphabetically. Other rules stay enabled.
-      glob: ".env*.example"
-      run: |
-        command -v dotenv-linter >/dev/null 2>&1 || { echo "skip: dotenv-linter not installed (mise install)"; exit 0; }
-        dotenv-linter check --ignore-checks UnorderedKey --skip-updates {staged_files}
-
-    tiny-configs:
-      # Syntax checks for the small static config files no formatter /
-      # linter ecosystem owns: .gitattributes, .npmrc, .actrc, LICENSE,
-      # robots.txt. Each gets a regex-driven sanity pass -- catches
-      # truncated lines, typo'd directives, missing MIT-template phrases.
-      glob: "{.gitattributes,.npmrc,.actrc,LICENSE,**/robots.txt}"
-      run: pnpm validate:tiny-configs
-
-    markdownlint:
-      # markdownlint-cli2 with a relaxed config (.markdownlint-cli2.jsonc)
-      # -- disables 100s of cosmetic rules, enables the ~20 that catch real
-      # rendering bugs (bare URLs, malformed tables, broken links, empty
-      # link text, missing alt text, dropped emphasis markers, etc.).
-      # Runs on the FULL set (not just staged) because rule MD053
-      # (orphan reference definitions) is cross-file -- a definition can
-      # be orphaned by a deletion in a different file. Fast even at full
-      # repo scope (109 files, ~200ms).
-      glob: "*.md"
-      run: pnpm validate:markdown
-
-    english-only:
-      # Heron ships English-only mode templates + system docs. This gate
-      # catches Spanish prose (accented + unambiguous-cluster) before it
-      # reaches main. Two detection layers: accented characters (with
-      # ALLOWLIST for English loan words / proper nouns) and a Spanish
-      # word-cluster heuristic that catches 3+ Spanish-only function
-      # words on a single line (aunque / mientras / porque / etc.). See
-      # scripts/system/verify-english-only.mjs for tunables and
-      # scripts/system/verify-english-only.test.mjs for the regression
-      # suite. Runs on the full set -- fast (~50 ms).
-      glob: "*.{md,ts,tsx,svelte,mjs,py,sh}"
-      run: pnpm verify:english-only:test && pnpm verify:english-only
-
-    modes-correctness:
-      # Asserts every modes/*.md is multi-user-aware:
-      #   - declared __TOKEN__ vocabulary (no typos like __CV___)
-      #   - no literal repo-root paths that bypass active-profile
-      #     resolution (cv.md / config/profile.yml / etc.)
-      #   - bare script invocations (`node generate-pdf.mjs`) include
-      #     their real scripts/<dir>/<name>.mjs path
-      #   - `# Mode: <slug> -- <subtitle>` header schema matches
-      #     the filename slug
-      # See scripts/system/verify-modes.mjs for the gates + the
-      # .test.mjs sibling for TDD-regression coverage.
-      glob: "modes/*.md"
-      run: pnpm verify:modes:test && pnpm verify:modes
-
-    no-slop:
-      # Block accidental re-introduction of em-/en-dashes in prose or
-      # comments. GPT-style models emit U+2014 / U+2013 freely; humans
-      # typing on a US keyboard reach for the hyphen-minus. The verifier
-      # scans .md (full body outside fences), TS/Svelte/mjs comments
-      # only, Python/Ruby/Shell # comments, and YAML whole-line #
-      # comments. String literals + UI text are exempt by design.
-      # The .test.mjs sibling regression-tests the detector logic.
-      glob: "*.{md,ts,tsx,svelte,mjs,js,cjs,py,rb,sh,bash,yml,yaml}"
-      run: pnpm verify:no-slop:test && pnpm verify:no-slop
-
-    comment-style:
-      # Enforce docs/COMMENT-STYLE.md across .ts/.tsx/.svelte/.mjs/.js/.cjs:
-      #   - Top-of-file /** ... */ headers capped at 12 lines (HEADER_MAX_LINES)
-      #   - AI-slop adjectives banned in comments (comprehensive, robust,
-      #     elegant, seamless, leverage(s|ing), powerful, cutting-edge, etc.)
-      #   - "Pre-fix" / "Post-fix" / "historical context" framing banned
-      # Backtick-quoted runs are citations and exempt -- write `leverage`
-      # if the literal word is the subject. String literals + JSX text +
-      # UI copy never get inspected; only comment context does. See
-      # scripts/system/verify-comment-style.mjs + its .test.mjs sibling.
-      glob: "*.{ts,tsx,svelte,mjs,js,cjs}"
-      run: pnpm verify:comment-style:test && pnpm verify:comment-style
-
-    discord-config:
-      # Discord reconciler offline gates (the API calls happen only in CI
-      # via maintain-discord.yml):
-      #   - unit tests for the pure helpers (perm bitfields, grantable
-      #     filtering, image + overwrite + automod + onboarding diffs)
-      #   - config.yml schema + referential-integrity validation (every
-      #     role / channel / webhook / rules / image reference resolves)
-      # See the two .test.mjs siblings for the fixtures.
-      glob: "{scripts/system/apply-discord-config.mjs,scripts/system/apply-discord-config.test.mjs,scripts/system/verify-discord-config.mjs,scripts/system/verify-discord-config.test.mjs,.github/discord/config.yml,.github/discord/config.schema.json}"
-      run: pnpm discord:config:test && pnpm verify:discord-config:test && pnpm verify:discord-config
-
-    pr-summary:
-      # Unit-tests the unified PR-comment renderer (status matrix, auto-
-      # expand-on-failure, pending domains, description block). The
-      # aggregator workflow (pr-summary.yml) renders from per-domain
-      # `summary-<domain>` artifacts in CI; this keeps the renderer honest.
-      glob: ".github/scripts/sticky/assemble-summary.{mjs,test.mjs}"
-      run: pnpm pr:summary:test
-
-    no-deflect:
-      # Block deflection vocabulary in staged code/docs additions. The
-      # forbidden vocab (MVP / defer / out-of-scope / separate ticket /
-      # follow-up / simplify to / for now / punt / future PR / future
-      # work / leave for now) marks the pattern of "downgrade approved
-      # work the moment friction appears". AGENTS.md Rule 13 enumerates
-      # the policy + the structural gate is this hook.
-      #
-      # Bypass: literal `[user-approved-deferral]` in either the commit
-      # message body OR the same hunk's diff (per-line) bypasses the
-      # detection. Use only when the user has explicitly approved a
-      # defer. Exempt files: this script, its test, AGENTS.md (Rule 13
-      # enumerates the vocab), CHANGELOG.md, docs/archive/**.
-      #
-      # The .test.mjs sibling has 34 unit-test fixtures (positive +
-      # negative + word-boundary + hyphenation) so the regex stays
-      # well-defined under future edits.
-      glob: "*.{ts,tsx,svelte,mjs,mts,js,cjs,kt,swift,rb,go,py,yml,yaml,md}"
-      run: node scripts/system/verify-no-deflection.test.mjs && node scripts/system/verify-no-deflection.mjs --staged
-
-    no-personal-identity:
-      # Block a personal email / legal name from the commit's author or
-      # committer identity -- the leak that put a personal address into
-      # `Signed-off-by:` trailers via `git commit -s`. Pairs with the
-      # commit-msg `no-personal-identity` gate (which scans the message +
-      # sign-off) and the CI audit in pr-content-gates.yml. The denylist
-      # is stored as SHA-256 hashes (never plaintext) so the guard can't
-      # re-leak the very PII it scrubs -- see
-      # scripts/system/verify-no-personal-identity.mjs. No glob: identity
-      # is independent of which files are staged, so it runs every commit.
-      # Runs the unit test first so the guard can't silently rot.
-      run: node scripts/system/verify-no-personal-identity.test.mjs && node scripts/system/verify-no-personal-identity.mjs --identity
-
-    exact-versions:
-      # Reject any version specifier that isn't an EXACT pin (no ^, ~,
-      # >=, *, "latest", or partial versions like "1.7"). Scans every
-      # package.json (root + workspaces) + .mise.toml::[tools]. Exact
-      # pinning + a lockfile = reproducible builds + supply-chain-safe
-      # against malicious-publish attacks.
-      glob: "{package.json,**/package.json,.mise.toml}"
-      run: pnpm validate:exact-versions
-
-    oxlint:
-      # oxlint -- Rust-based JS/TS linter (50-100x faster than ESLint).
-      # All rules currently OFF (see .oxlintrc.jsonc header for why).
-      # Runs anyway to:
-      #   - catch parse failures in any .js/.ts/.jsx/.tsx/.mjs/.cjs
-      #   - keep the lint-pipeline plumbing alive for incremental rollout
-      # Cost: ~50 ms full-repo. No reason to scope to staged files.
-      glob: "*.{js,jsx,mjs,cjs,ts,tsx}"
-      run: pnpm lint
-
-    version-sync:
-      # Asserts that every place we store the version stays equal:
-      # package.json (root + workspaces) + VERSION (plain text) +
-      # .release-please-manifest.json. release-please auto-bumps all
-      # five on real releases; this hook catches manual / partial
-      # bumps that the manifest doesn't yet know about.
-      glob: "{package.json,**/package.json,VERSION,.release-please-manifest.json}"
-      run: pnpm validate:version-sync
-
-    taplo:
-      # TOML formatter -- pyproject.toml + .mise.toml. taplo is the
-      # canonical Rust-based formatter (the TOML equivalent of biome).
-      # Format pass; the verification check below catches anything
-      # taplo couldn't auto-fix.
+    "08-taplo":
+      # TOML formatter. The blocking `taplo format --check` runs in
+      # 99-verify (lint-native); this just auto-fixes + re-stages.
       glob: "*.toml"
       run: |
         command -v taplo >/dev/null 2>&1 || { echo "skip: taplo not installed (mise install)"; exit 0; }
@@ -483,203 +120,79 @@ pre-commit:
         git add {staged_files} 2>/dev/null || true
       stage_fixed: true
 
-    taplo-check:
-      glob: "*.toml"
-      run: |
-        command -v taplo >/dev/null 2>&1 || exit 0
-        taplo format --check {staged_files}
-
-    no-secrets:
+    # ── Security + policy: staged-diff / identity scans that are inherently
+    #    git-aware (not whole-repo), so they stay separate from 99-verify. ──
+    "10-no-secrets":
       # Cheap regex guard -- block obvious secrets from being committed.
-      # Patterns: Anthropic API keys, GitHub PATs (classic + fine-grained),
-      # AWS access keys, OpenAI keys, Google API keys, generic PEM blocks,
-      # Stripe live keys, Slack bot tokens.
       glob: "*.{ts,tsx,js,mjs,cjs,svelte,json,yaml,yml,md,env,toml,sh,py,rb}"
       run: |
         if grep -lE '(sk-ant-[A-Za-z0-9-]{40,}|sk-[A-Za-z0-9]{32,}|ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{82}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|xoxb-[0-9]{10,}-[0-9]{10,}-[A-Za-z0-9]{20,}|sk_live_[A-Za-z0-9]{20,}|-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----)' {staged_files} 2>/dev/null; then
           echo "✗ Secret pattern detected in staged files"
-          echo "  Patterns checked: Anthropic / OpenAI / GitHub PAT / GitHub fine-grained PAT / AWS / Google / Slack / Stripe / PEM"
+          echo "  Patterns: Anthropic / OpenAI / GitHub PAT / AWS / Google / Slack / Stripe / PEM"
           echo "  If this is a false positive, run: SKIP_LEFTHOOK=1 git commit ..."
           exit 1
         fi
 
+    "11-no-deflect":
+      # Block deflection vocabulary in staged additions (diff-scoped). Bypass:
+      # literal [user-approved-deferral] in the hunk or commit message.
+      glob: "*.{ts,tsx,svelte,mjs,mts,js,cjs,kt,swift,rb,go,py,yml,yaml,md}"
+      run: node scripts/system/verify-no-deflection.test.mjs && node scripts/system/verify-no-deflection.mjs --staged
+
+    "12-no-personal-identity":
+      # Block a personal email / legal name in the commit author/committer
+      # identity (denylist stored as SHA-256, never plaintext). No glob:
+      # identity is independent of which files are staged.
+      run: node scripts/system/verify-no-personal-identity.test.mjs && node scripts/system/verify-no-personal-identity.mjs --identity
+
+    "13-discord-config":
+      # Discord reconciler offline gates (unit tests + config schema). Niche;
+      # fires only when a discord config / its script is staged.
+      glob: "{scripts/system/apply-discord-config.mjs,scripts/system/apply-discord-config.test.mjs,scripts/system/verify-discord-config.mjs,scripts/system/verify-discord-config.test.mjs,.github/discord/config.yml,.github/discord/config.schema.json}"
+      run: pnpm discord:config:test && pnpm verify:discord-config:test && pnpm verify:discord-config
+
+    "14-pr-summary":
+      # Unit-tests the PR-comment renderer; fires only when it's staged.
+      glob: ".github/scripts/sticky/assemble-summary.{mjs,test.mjs}"
+      run: pnpm pr:summary:test
+
+    # ── Full verify pipeline (typecheck + build + tests + every linter +
+    #    every gate), turbo-cached. Runs LAST so the writers above have
+    #    already formatted + re-staged. SAME command pre-push + CI run. ──
+    "99-verify":
+      run: pnpm verify
+
 # ── pre-push ────────────────────────────────────────────────────────
-# Heavier gates that only fire on `git push`. CI re-runs all of these
-# but a green push means the PR will likely go green too. Every check
-# runs through turbo so warm pushes (no source change) finish in <1s.
+# Runs the SAME `verify` pipeline (all cache hits if nothing changed since
+# the commit) PLUS the gates that are inherently push/PR/range-scoped and
+# therefore can't live in the whole-repo verify task.
 pre-push:
   parallel: true
   commands:
     engine-pin:
-      # AUTO-FIX engine mismatch via mise (transparent to the user).
-      #
-      # Background: .npmrc + .mise.toml + package.json::engines all agree
-      # on a single exact Node version (currently 26.1.0). If the user's
-      # shell PATH resolves a DIFFERENT Node version (orphaned install,
-      # missing mise activation, etc.), pnpm only WARNS and proceeds --
-      # which means every line of output gets smeared with the warning
-      # AND the pre-push gauntlet runs on the wrong Node (test results
-      # diverge from CI).
-      #
-      # The shim does the right thing autonomously:
-      #   - If Node-on-PATH matches the pin → exits 0 instantly (~5ms).
-      #   - If it doesn't AND mise has the pinned version installed →
-      #     subsequent hooks already get the right Node via mise-shim.sh
-      #     wrappers (see other pre-push commands below); this hook is
-      #     just the diagnostic ping.
-      #   - If it doesn't AND mise isn't usable → falls into the
-      #     actionable error message from ensure-pnpm.mjs.
+      # AUTO-FIX engine mismatch via mise. If Node-on-PATH matches the pin,
+      # exits instantly; otherwise routes subsequent work through mise.
       run: bash scripts/system/mise-shim.sh node scripts/system/ensure-pnpm.mjs
-      fail_text: "Node version doesn't match engines pin. mise isn't installed or doesn't have the pinned Node version -- see message above."
-    typecheck:
-      # svelte-check (ui) + tsgo (electron), turbo-cached.
-      # Cold ~12s, warm <100ms. Wrapped in mise-shim so it auto-routes
-      # through Node 26.x even when the dev shell has a stale Node.
-      run: bash scripts/system/mise-shim.sh pnpm exec turbo run check
-    vitest:
-      # Run the full Vitest matrix (ui-unit + ui-server + ui-component +
-      # ui-routes + ui-integration + electron) via turbo. Cold ~30s on
-      # a warm pnpm-store; warm (FULL TURBO cache hit) <100ms. iOS tests
-      # are NOT in pre-push -- they're CI-only because the simulator
-      # bootstrap dwarfs the speedup turbo would give us.
-      #
-      # Self-heals better-sqlite3 ABI mismatches inline BEFORE invoking
-      # vitest -- otherwise a mid-session Node-version swap (mise 26.x ↔
-      # 25.x) leaves the cached binding stale and vitest red-bars 11+
-      # test files with a confusing "NODE_MODULE_VERSION 141 vs 147"
-      # error that looks like a test failure but is a tooling glitch.
-      # The heal is fast when healthy (~50ms, just a require-probe in a
-      # subprocess); only actually rebuilds when an ABI mismatch is
-      # detected.
-      #
-      # Bypass for the rare emergency push: `SKIP_LEFTHOOK=1 git push`.
-      #
-      # The whole pipeline runs under mise-shim so Node 26.x is active
-      # for both the native-binding probe AND the test workers. Without
-      # this wrapping a Node 25 shell would still run vitest under 25
-      # (engine warning + cached binding ABI mismatch).
-      # Calls `test:coverage` (not `test`) so vitest's coverage gate
-      # (thresholds in ui/vitest.config.ts: lines 70 / branches 65 /
-      # functions 70 / statements 70 with perFile floor) is enforced
-      # locally on every push. Without --coverage, vitest doesn't read
-      # the threshold block at all -- push would succeed at 0% coverage
-      # and CI would catch it later. Pre-push wall-time grows ~60s →
-      # ~75s for the v8 coverage collection; acceptable.
+      fail_text: "Node version doesn't match engines pin. mise isn't installed or lacks the pinned Node -- see message above."
+
+    verify:
+      # The full pipeline -- identical to pre-commit's 99-verify and CI's
+      # Verify job. Self-heals better-sqlite3 ABI drift before running so a
+      # mid-session Node swap doesn't red-bar vitest with a confusing
+      # NODE_MODULE_VERSION error. Bypass: SKIP_LEFTHOOK=1 git push.
       run: |
         bash scripts/system/mise-shim.sh sh -c '
           node scripts/native/ensure-native-bindings.mjs --quiet || {
             echo "✗ native bindings unhealthy -- run \`pnpm rebuild:native\` to fix."
             exit 1
           }
-          pnpm exec turbo run test:coverage
+          pnpm verify
         '
-    format-check:
-      # LAST-RESORT gate against unformatted code reaching origin. Auto-
-      # recovers on drift so the developer gets a one-liner instead of a
-      # mystery red ✗ at push time:
-      #
-      #   1. Run `pnpm format:check`. If clean → exit 0, no friction.
-      #   2. If dirty → auto-run `pnpm format` to fix in place,
-      #      enumerate the changed files, and exit 1 with the exact
-      #      `git add … && git commit --amend --no-edit && git push`
-      #      one-liner the developer needs.
-      #
-      # Why not auto-amend automatically: amending during push is
-      # invasive -- the SHA changes mid-flight, the developer's local
-      # state diverges from what they typed into the editor, and a
-      # `git rev-parse HEAD` they saved earlier silently breaks. Better
-      # to surface the fix and let the developer drive.
-      #
-      # The pre-commit `format-pipeline` already auto-formats anything
-      # the developer staged. The only way drift survives to pre-push
-      # is (a) a `--no-verify` commit, (b) a file that wasn't staged
-      # at commit time but drifted from a tool-version bump (e.g.
-      # biome major release), or (c) apply-brand regenerating a file
-      # whose biome-preferred format diverges from what apply-brand
-      # writes verbatim. This gate catches all three.
-      # Whole pipeline routes through mise-shim -- biome / prettier /
-      # sort-package-json all need consistent Node + pnpm versions to
-      # produce reproducible output. The shim is a no-op when shell
-      # PATH already matches the pin.
-      run: |
-        if bash scripts/system/mise-shim.sh pnpm format:check > /dev/null 2>&1; then
-          exit 0
-        fi
-        echo "✗ Format drift detected. Auto-formatting…"
-        bash scripts/system/mise-shim.sh pnpm format > /dev/null 2>&1 || {
-          echo "  (pnpm format itself failed -- run it manually to see the error)"
-          exit 1
-        }
-        CHANGED=$(git diff --name-only)
-        if [ -z "$CHANGED" ]; then
-          # `pnpm format` didn't actually change anything but check still
-          # fails -- likely a config issue, not auto-fixable. Surface the
-          # original check output so the developer can see what biome
-          # objects to.
-          echo ""
-          echo "  pnpm format made no changes but format:check still fails."
-          echo "  Surfacing the original diagnostic:"
-          echo ""
-          bash scripts/system/mise-shim.sh pnpm format:check
-          exit 1
-        fi
-        echo ""
-        echo "  Auto-formatted:"
-        printf '    %s\n' $CHANGED
-        echo ""
-        echo "  Fix with this one-liner, then push again:"
-        echo "    git add . && git commit --amend --no-edit && git push"
-        echo ""
-        exit 1
-    swiftlint-strict:
-      # Pre-commit swiftlint is advisory (`|| true`) so contributors can
-      # iterate; CI uses `swiftlint --strict` and BLOCKS. Without this
-      # pre-push step, a developer who fixed everything BUT swiftlint
-      # would push successfully and see CI red after the fact. This
-      # mirrors CI exactly so the surprise is caught locally.
-      run: |
-        command -v swiftlint >/dev/null 2>&1 || { echo "skip: swiftlint not installed (mise install)"; exit 0; }
-        swiftlint --strict --quiet --no-cache ui/ios/App
-    ktlint-strict:
-      # Mirror of CI's strict ktlint check. Pre-commit auto-formats;
-      # this catches anything ktlint --format couldn't auto-fix
-      # (line-length, unused imports, etc.).
-      run: |
-        command -v ktlint >/dev/null 2>&1 || exit 0
-        ktlint 'ui/android/app/src/**/*.kt'
-    ruff-strict:
-      # Mirror of CI's strict ruff check on every Python file. Pre-
-      # commit auto-fixes; this catches anything that needs manual
-      # attention (logic errors, unsafe imports, etc.).
-      run: |
-        command -v ruff >/dev/null 2>&1 || exit 0
-        ruff format --check . && ruff check .
-    actionlint:
-      # Lint .github/workflows/*.yml -- catches typos / unknown action inputs
-      # / job-needs cycles before they ever hit GitHub. Free + fast.
-      #
-      # `-shellcheck=shellcheck` makes the shellcheck integration EXPLICIT
-      # so it fails loudly if shellcheck isn't on PATH (rather than silently
-      # skipping SC* rules, which is what bit PR #69 with SC2002 reaching
-      # remote). shellcheck is pinned in .mise.toml -- `mise install` puts
-      # it on PATH.
-      glob: ".github/workflows/*.{yml,yaml}"
-      run: actionlint -shellcheck=shellcheck {staged_files} 2>/dev/null || actionlint -shellcheck=shellcheck .github/workflows/*.yml
 
     pr-preflight:
-      # Mirror the server PR-metadata gates (.github/workflows/pr-quality.yml)
-      # LOCALLY so a bad title / body / size fails on `git push` instead of
-      # after a CI round-trip. Same logic via the shared
-      # scripts/system/check-pr-metadata.mjs, so local + CI can't drift.
-      #
-      # When a PR is already open we validate its live title + body + size +
-      # labels (the full `local` suite). Before the PR exists we validate the
-      # prospective squash-merge title (HEAD subject) -- the body suite needs
-      # the PR object, so it runs on the next push once the PR is open.
-      #
-      # Unlike the old opportunistic hook, a failure here BLOCKS the push
-      # (PR #69 burned a CI cycle on an 81-char title this would have caught).
-      # Bypass: SKIP_LEFTHOOK=1 git push.
+      # Mirror the server PR-metadata gates locally (shared
+      # scripts/system/check-pr-metadata.mjs) so a bad title/body/size fails
+      # on push, not after a CI round-trip.
       run: |
         set -eu
         BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -698,43 +211,25 @@ pre-push:
           export PR_TITLE PR_BODY PR_LABELS PR_ADDITIONS PR_DELETIONS
           bash scripts/system/mise-shim.sh node scripts/system/check-pr-metadata.mjs local
         else
-          # No open PR yet: validate the prospective squash title (defaults to
-          # the latest commit subject). Body/size checks need the PR object.
           PR_TITLE=$(git log -1 --format=%s)
           export PR_TITLE
           bash scripts/system/mise-shim.sh node scripts/system/check-pr-metadata.mjs title-length
           bash scripts/system/mise-shim.sh node scripts/system/check-pr-metadata.mjs title-grammar
-          echo "i  No open PR yet -- validated the prospective title only. The PR body needs ## Summary + ## Test plan (with a completed [x]); feat PRs also need ## Motivation + a linked issue. Those run on the next push once the PR exists."
+          echo "i  No open PR yet -- validated the prospective title only."
         fi
+
     release-readiness:
-      # When pushing a release tag (v1.2.3 / v1.2.3-beta.1), gate on
-      # native-release readiness. This catches "I forgot to run
-      # setup:native" BEFORE the tag hits origin and burns 30min of CI
-      # trying to sign builds without secrets.
-      #
-      # The hook runs `git for-each-ref` over the refs being pushed.
-      # Empty match → pre-push is a branch push → skip the check.
-      # Non-empty → exec doctor:native, which queries `gh secret list`
-      # to verify every required secret exists.
-      #
-      # Override (for emergency tag-push when secrets are intentionally
-      # unset, e.g. during repo bootstrap): SKIP_LEFTHOOK=1 git push --tags
+      # When pushing a release tag, verify CI can release (secrets present).
       run: |
         TAG_REFS=$(git for-each-ref --format='%(refname:short)' "refs/tags/v*" --no-merged "origin/$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)" 2>/dev/null | head -3)
         if [ -z "$TAG_REFS" ]; then
-          exit 0  # not a release tag push
+          exit 0
         fi
         echo "▸ Release tag(s) detected: $TAG_REFS"
         echo "▸ Running doctor:native to verify CI can release..."
         pnpm doctor:native
 
-    # ── Content gates -- mirror .github/workflows/pr-content-gates.yml ──
-    # The 4 Enterprise-only ruleset rules we couldn't apply on Free + public
-    # (commit_message_pattern / max_file_size / max_file_path_length /
-    # file_extension_restriction) are now CI required-checks. Catching the
-    # same violations pre-push saves a CI round-trip. Logic shared with CI
-    # via scripts/system/check-content-gates.sh so there's no drift between
-    # the local + remote gate behaviour.
+    # ── Content gates -- range-scoped (BASE..HEAD), so not in verify. ──
     per-commit-conventional:
       run: bash scripts/system/check-content-gates.sh per-commit-conventional
     file-size-gate:
@@ -744,52 +239,36 @@ pre-push:
     file-extensions-gate:
       run: bash scripts/system/check-content-gates.sh file-extensions
 
-    # ── Shared-script unit tests ────────────────────────────────────────
-    # Guard the validators that BOTH the local hooks + CI depend on, so a
-    # broken check-pr-metadata.mjs / screenshot-diff.mjs / apply-github-config.mjs
-    # can't land. Plain Node (no vitest), <1s.
     meta-script-tests:
+      # Guard the validators BOTH local hooks + CI depend on. Plain Node, <1s.
       run: bash scripts/system/mise-shim.sh node scripts/system/check-pr-metadata.test.mjs && bash scripts/system/mise-shim.sh node scripts/system/screenshot-diff.test.mjs && bash scripts/system/mise-shim.sh node scripts/system/apply-github-config.test.mjs
 
 # ── commit-msg (lightweight) ────────────────────────────────────────
-# Enforce Conventional Commits format (so release-please can generate
-# the changelog without manual curation).
+# Conventional Commits format + DCO sign-off + deflection/identity scans
+# on the message itself.
 commit-msg:
   commands:
     conventional:
       run: |
         msg=$(cat {1})
-        # Allow merge commits + revert commits + release-please commits + fixup commits.
         if echo "$msg" | grep -qE '^(Merge|Revert|fixup!|squash!|chore\(main\): release)'; then
           exit 0
         fi
-        # `[^A-Z]` after `: ` mirrors pr-quality.yml's lowercase-subject rule
-        # (server `subjectPattern: ^(?![A-Z]).+`). grep -E has no lookahead,
-        # so a leading-non-uppercase class is the ERE equivalent. Keeps the
-        # auto-derived squash-merge title passing the server grammar check.
         if ! echo "$msg" | grep -qE '^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z0-9_-]+\))?!?: [^A-Z]'; then
           echo "✗ Commit message doesn't follow Conventional Commits."
-          echo "  Format: type(scope)!: subject  (subject must start lowercase, <= 72 chars)"
+          echo "  Format: type(scope)!: subject  (subject must start lowercase, <= 100 chars)"
           echo "  Types:  feat fix chore docs style refactor perf test build ci revert"
           echo "  Example: feat(scan): add Workable ATS adapter (not 'feat: Add ...')"
           echo "  Bypass:  SKIP_LEFTHOOK=1 git commit ..."
           exit 1
         fi
 
-    # DCO sign-off enforcement. Catches the missing `Signed-off-by:`
-    # trailer locally instead of at push-time when the probot.github.io
-    # DCO check fails the PR and forces a re-push with `--amend -s`.
-    # Same exemptions as `conventional` above (merge / revert /
-    # release-please commits skip DCO too).
     signoff:
       run: |
         msg=$(cat {1})
         if echo "$msg" | grep -qE '^(Merge|Revert|fixup!|squash!|chore\(main\): release)'; then
           exit 0
         fi
-        # Matches the probot.github.io/apps/dco rule: a
-        # `Signed-off-by: Name <email>` trailer line. Name + email
-        # both required; spaces around the angle brackets are fine.
         if ! echo "$msg" | grep -qE '^Signed-off-by: .+ <.+@.+>'; then
           echo "✗ Commit message lacks a DCO sign-off."
           echo "  Add a 'Signed-off-by: Your Name <you@example.com>' trailer."
@@ -799,19 +278,6 @@ commit-msg:
           exit 1
         fi
 
-    # No-deflect gate -- scan the commit message body for vocabulary
-    # that has historically marked downgraded scope ("MVP", "follow-up",
-    # "out of scope", "separate ticket", "defer", "for now", "simplify
-    # to", "punt"). Approved work ships fully; this gate enforces the
-    # rule structurally rather than by verbal commitment.
-    #
-    # Bypass: include the literal "[user-approved-deferral]" in the
-    # commit message body (only when the user has explicitly approved
-    # the defer). See AGENTS.md Rule 13 for the policy.
-    #
-    # Same merge / revert / release-please exemption as conventional +
-    # signoff above so automated bot commits don't trip on common
-    # release-management vocabulary.
     no-deflect-msg:
       run: |
         msg=$(cat {1})
@@ -820,11 +286,6 @@ commit-msg:
         fi
         node scripts/system/verify-no-deflection.mjs --message {1}
 
-    # No-personal-identity gate -- block a personal email / legal name in
-    # the commit message or its Signed-off-by / Co-authored-by trailer.
-    # This is the message-side twin of the pre-commit `no-personal-identity`
-    # (which checks author/committer ident). Same merge / revert /
-    # release-please exemption as the gates above so bot commits don't trip.
     no-personal-identity:
       run: |
         msg=$(cat {1})
@@ -832,9 +293,3 @@ commit-msg:
           exit 0
         fi
         node scripts/system/verify-no-personal-identity.mjs --message {1}
-
-# ── Manual invocation ───────────────────────────────────────────────
-# Run individual checks via:
-#   lefthook run pre-commit
-#   lefthook run pre-commit --commands svelte-check
-#   lefthook run pre-push --commands verify-multi-user
