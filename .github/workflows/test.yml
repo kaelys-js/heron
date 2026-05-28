@@ -501,11 +501,11 @@ jobs:
             console.log("✓ no banned licenses in prod deps");
           '
 
-      - name: oxlint (Rust-based JS/TS linter — all rules disabled)
-        # All rules currently OFF in .oxlintrc.jsonc per the user's
-        # "wire it up but disable everything for now" directive.
-        # Running anyway catches parse-level failures (~50 ms full-repo)
-        # and keeps the lint-infrastructure live for incremental rollout.
+      - name: oxlint (Rust-based JS/TS linter — curated-safe rules)
+        # 140 curated safe-autofixable rules are enabled in .oxlintrc.jsonc
+        # at `warn` severity (see the config header for the excluded
+        # classes). The gate has no --deny-warnings, so warnings never fail
+        # CI; this still catches parse-level failures (~50 ms full-repo).
         if: needs.changes.outputs.ts == 'true'
         run: pnpm lint
 
@@ -683,10 +683,10 @@ jobs:
   ios:
     name: iOS — XCTest + XCUITest + Snapshot
     needs: changes
-    # [user-approved-deferral] TASK-9 in TODO-INSTRUCTIONS.md.
-    # iOS job disabled entirely. Re-enable after fixing the
-    # Fastfile + slather + check-ios-coverage chain end-to-end.
-    if: ${{ vars.ENABLE_DISABLED_JOB == 'true' }}
+    # Path-gated, not disabled: macos-15 is always allocated (cheap), but the
+    # expensive xcodebuild + slather + coverage steps run only when
+    # iOS-affecting paths changed, via the per-step
+    # `if: needs.changes.outputs.ios == 'true'` filter below.
     # `runs-on` is FIXED at macos-15. GitHub evaluates `runs-on` at
     # workflow-PARSE time, before any job has run -- so
     # `needs.changes.outputs.X` is not available in this context
@@ -940,11 +940,9 @@ jobs:
     needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    # [user-approved-deferral] TASK-10 in TODO-INSTRUCTIONS.md.
-    # Android JVM-unit-test job disabled entirely. Re-enable after
-    # validating the kapt + AppSearch compiler chain holds + the
-    # per-CLASS JaCoCo rule passes end-to-end on CI.
-    if: ${{ vars.ENABLE_DISABLED_JOB == 'true' }}
+    # Path-gated, not disabled: the JVM unit-test + JaCoCo coverage steps run
+    # only when Android-affecting paths changed, via the per-step
+    # `if: needs.changes.outputs.android == 'true'` filter below.
     permissions:
       contents: read
       id-token: write # Codecov OIDC upload (G12) -- same as ts + ios jobs
