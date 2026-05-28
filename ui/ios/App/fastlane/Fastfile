@@ -630,6 +630,14 @@ platform :ios do
     if is_ci
       ENV["SIMCTL_CHILD_CI"] = "true"
     end
+    # Forward RECORD_MODE into the simulator child so WidgetSnapshotTests /
+    # RootViewTests write fresh baselines instead of diffing. test.yml sets
+    # RECORD_MODE=1 on a `record_mode=true` workflow_dispatch, but the sim
+    # strips plain parent env vars -- only SIMCTL_CHILD_<NAME> survives, so
+    # re-expose it. Without this the record flow silently no-ops.
+    if ENV["RECORD_MODE"] == "1"
+      ENV["SIMCTL_CHILD_RECORD_MODE"] = "1"
+    end
     common_xcargs = "-skipPackagePluginValidation -skipMacroValidation COMPILER_INDEX_STORE_ENABLE=NO DEBUG_INFORMATION_FORMAT=dwarf"
 
     # Run WatchTests FIRST (different SDK / sim, so its xccov in
