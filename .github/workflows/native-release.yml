@@ -646,6 +646,36 @@ jobs:
           Invoke-RestMethod -Uri $commitUrl -Method Post -Headers $headers
           Write-Host "::notice::Microsoft Store submission $($submission.id) committed for certification (4-72h queue)."
 
+      # electron-builder notarizes + staples the .app INSIDE the dmg, but does
+      # not staple the .dmg container itself, so `stapler validate <dmg>` (the
+      # G17 gate below) fails with "does not have a ticket stapled to it". Staple
+      # the dmg here: try a plain staple first (works if the dmg was already
+      # notarized), else submit the dmg to notarytool + staple. Gated on the ASC
+      # key so unsigned/un-notarized dispatch builds without it skip cleanly.
+      - name: Staple notarization ticket to the DMG
+        if: matrix.os == 'macos-latest' && env.APP_STORE_CONNECT_KEY_ID != ''
+        working-directory: ui/electron/dist
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for dmg in *.dmg; do
+            echo "::group::Staple $dmg"
+            if ! xcrun stapler staple "$dmg"; then
+              echo "No ticket yet for $dmg -- submitting the dmg to notarytool."
+              xcrun notarytool submit "$dmg" \
+                --key "$APPLE_API_KEY_PATH" \
+                --key-id "$APP_STORE_CONNECT_KEY_ID" \
+                --issuer "$APP_STORE_CONNECT_ISSUER_ID" \
+                --wait
+              xcrun stapler staple "$dmg"
+            fi
+            echo "::endgroup::"
+          done
+
       - name: Verify macOS notarization-staple
         # G17 -- without this step, a silent notarization regression
         # (Apple's notarytool returns success but the staple isn't
