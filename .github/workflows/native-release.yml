@@ -492,11 +492,28 @@ jobs:
           for pkg in *.pkg; do
             any=true
             echo "::group::altool upload $pkg"
-            xcrun altool --upload-app \
-              --type macos \
-              --file "$pkg" \
-              --apiKey "$APP_STORE_CONNECT_KEY_ID" \
-              --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
+            # Capture so a duplicate-version rejection (re-running the SAME
+            # version, e.g. a repeat workflow_dispatch test build) is treated as
+            # success: ASC's cfBundleVersion is unique-per-version and the macOS
+            # .pkg version does not auto-increment, so re-uploading 0.1.0 after a
+            # prior successful run returns -19232 / ATTRIBUTE.INVALID.DUPLICATE.
+            # A real release always bumps the version, so this never fires there.
+            # Any OTHER altool error still fails the job.
+            if out=$(xcrun altool --upload-app \
+                  --type macos \
+                  --file "$pkg" \
+                  --apiKey "$APP_STORE_CONNECT_KEY_ID" \
+                  --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" 2>&1); then
+              echo "$out"
+            else
+              echo "$out"
+              if echo "$out" | grep -qiE "already been used|bundle version must be higher|ATTRIBUTE\.INVALID\.DUPLICATE|-19232"; then
+                echo "::warning::$pkg version already uploaded to ASC -- treating duplicate as success."
+              else
+                echo "::endgroup::"
+                exit 1
+              fi
+            fi
             echo "::endgroup::"
           done
           if [ "$any" = false ]; then
