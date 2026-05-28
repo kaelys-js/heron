@@ -630,13 +630,23 @@ platform :ios do
     if is_ci
       ENV["SIMCTL_CHILD_CI"] = "true"
     end
-    # Forward RECORD_MODE into the simulator child so WidgetSnapshotTests /
-    # RootViewTests write fresh baselines instead of diffing. test.yml sets
-    # RECORD_MODE=1 on a `record_mode=true` workflow_dispatch, but the sim
-    # strips plain parent env vars -- only SIMCTL_CHILD_<NAME> survives, so
-    # re-expose it. Without this the record flow silently no-ops.
+    # Recording baselines: test.yml sets RECORD_MODE=1 on a `record_mode=true`
+    # workflow_dispatch. WidgetSnapshotTests / RootViewTests read RECORD_MODE
+    # from their PROCESS environment, which on the simulator comes from the
+    # scheme's TestAction <EnvironmentVariables> -- SIMCTL_CHILD_* does NOT
+    # reach an xcodebuild-launched XCTest process, and xcargs don't expand into
+    # scheme-env values. The WidgetTests + WatchTests schemes ship RECORD_MODE
+    # disabled; flip it on here for the record run so the tests write fresh
+    # baselines (uploaded as an artifact) instead of diffing. Normal runs leave
+    # it disabled. The edit is to the runner's checkout only (never committed).
     if ENV["RECORD_MODE"] == "1"
-      ENV["SIMCTL_CHILD_RECORD_MODE"] = "1"
+      %w[WidgetTests WatchTests].each do |s|
+        scheme_path = "App.xcodeproj/xcshareddata/xcschemes/#{s}.xcscheme"
+        xml = File.read(scheme_path)
+        xml = xml.sub(/(key = "RECORD_MODE"\s+value = "1"\s+isEnabled = ")NO(")/, '\1YES\2')
+        File.write(scheme_path, xml)
+        UI.message("RECORD_MODE: enabled snapshot recording in #{s}.xcscheme")
+      end
     end
     common_xcargs = "-skipPackagePluginValidation -skipMacroValidation COMPILER_INDEX_STORE_ENABLE=NO DEBUG_INFORMATION_FORMAT=dwarf"
 
