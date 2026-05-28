@@ -89,6 +89,12 @@ on:
     # Adding a new signing secret? Declare it here (required: false)
     # AND add it to the preflight `for var in ...` loop below.
     secrets:
+      # Turborepo remote cache token. Optional -- when absent, turbo falls
+      # back to the local actions/cache. Declared so `secrets.TURBO_TOKEN`
+      # resolves under workflow_call; release.yml passes it via `secrets:
+      # inherit`. (TURBO_TEAM is a `vars`, auto-inherited, no declaration.)
+      TURBO_TOKEN:
+        required: false
       APPLE_TEAM_ID:
         required: false
       # Account-holder Apple ID. Not a signing secret: the ASC API key
@@ -173,6 +179,14 @@ on:
 # silently inheriting release-time writes.
 permissions:
   contents: read
+
+# Turborepo remote cache (Vercel, free). TURBO_TOKEN/TEAM gate it; when
+# absent turbo falls back to the local actions/cache. Workflow-level so the
+# turbo-driven SvelteKit builds in build-desktop / build-ios / build-android
+# all share it.
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
 # Two release tags landing in quick succession waste 30min of CI per
 # job. Only one native-release run per ref at a time. We don't cancel
@@ -341,21 +355,36 @@ jobs:
           restore-keys: |
             electron-builder-${{ runner.os }}-
 
+      # Restore the Turbo task-graph cache so the SvelteKit builds below hit
+      # the warm cache when the source tree is unchanged.
+      # zizmor: ignore[cache-poisoning] -- turbo verifies cached artifacts
+      # against a content hash of their declared inputs before replay.
+      - name: Cache Turbo
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
+        with:
+          path: |
+            .turbo
+            ui/.turbo
+            ui/electron/.turbo
+          key: turbo-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ github.ref_name }}-
+            turbo-${{ runner.os }}-main-
+            turbo-${{ runner.os }}-
+
       # Single root install covers every workspace (ui + ui/electron).
       # The preinstall guard refuses npm/yarn/bun -- pnpm only.
       - name: Install dependencies (pnpm, frozen lockfile)
         run: pnpm install --frozen-lockfile
 
+      # Builds run through turbo (not `cd ui && pnpm build`) so they hit the
+      # local + Vercel cache. Node-adapter = `build`, WebView shell =
+      # `build:static` (distinct tasks -> distinct cache keys, never collide).
       - name: Build SvelteKit (Node adapter — embedded server entry)
-        working-directory: ui
-        run: pnpm build
+        run: pnpm exec turbo run build --filter=ui
 
       - name: Build SvelteKit (static — WebView shell)
-        working-directory: ui
-        env:
-          CAPACITOR: '1'
-          PUBLIC_CAPACITOR_BUILD: '1'
-        run: pnpm build
+        run: pnpm exec turbo run build:static --filter=ui
 
       - name: Generate icons
         run: node scripts/native/icons/generate-icons.mjs
@@ -872,6 +901,22 @@ jobs:
           restore-keys: |
             spm-derived-${{ runner.os }}-
 
+      # Restore the Turbo task-graph cache for the turbo-driven SvelteKit
+      # build below. zizmor: ignore[cache-poisoning] -- turbo verifies cached
+      # artifacts against a content hash of their declared inputs.
+      - name: Cache Turbo
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
+        with:
+          path: |
+            .turbo
+            ui/.turbo
+            ui/electron/.turbo
+          key: turbo-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ github.ref_name }}-
+            turbo-${{ runner.os }}-main-
+            turbo-${{ runner.os }}-
+
       # Bundler installs Fastlane + plugins pinned in Gemfile.lock.
       # Ruby version comes from `.ruby-version` in ui/ios/App/.
       # zizmor: ignore[cache-poisoning] -- bundler verifies gems
@@ -886,12 +931,9 @@ jobs:
       - name: Install dependencies (pnpm, frozen lockfile)
         run: pnpm install --frozen-lockfile
 
+      # Build through turbo so it hits the local + Vercel cache.
       - name: Build SvelteKit (static — WebView shell)
-        working-directory: ui
-        env:
-          CAPACITOR: '1'
-          PUBLIC_CAPACITOR_BUILD: '1'
-        run: pnpm build
+        run: pnpm exec turbo run build:static --filter=ui
 
       - name: Generate icons
         run: node scripts/native/icons/generate-icons.mjs
@@ -1138,6 +1180,22 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-
 
+      # Restore the Turbo task-graph cache for the turbo-driven SvelteKit
+      # build below. zizmor: ignore[cache-poisoning] -- turbo verifies cached
+      # artifacts against a content hash of their declared inputs.
+      - name: Cache Turbo
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5 # zizmor: ignore[cache-poisoning]
+        with:
+          path: |
+            .turbo
+            ui/.turbo
+            ui/electron/.turbo
+          key: turbo-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ github.ref_name }}-
+            turbo-${{ runner.os }}-main-
+            turbo-${{ runner.os }}-
+
       # Bundler for Fastlane gems (the same Gemfile.lock as iOS pinning
       # fastlane + supply). zizmor: ignore[cache-poisoning] -- bundler
       # verifies Gemfile.lock checksums.
@@ -1150,12 +1208,9 @@ jobs:
       - name: Install dependencies (pnpm, frozen lockfile)
         run: pnpm install --frozen-lockfile
 
+      # Build through turbo so it hits the local + Vercel cache.
       - name: Build SvelteKit (static — Capacitor WebView shell)
-        working-directory: ui
-        env:
-          CAPACITOR: '1'
-          PUBLIC_CAPACITOR_BUILD: '1'
-        run: pnpm build
+        run: pnpm exec turbo run build:static --filter=ui
 
       - name: Generate icons
         run: node scripts/native/icons/generate-icons.mjs
