@@ -1158,6 +1158,20 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      # The hand-rolled AVD needs ~7.4 GB for its userdata partition, but a stock
+      # ubuntu-latest runner often has only ~6.5 GB free where the AVD lives, so
+      # the emulator boot aborts with "Not enough space to create userdata
+      # partition". Reclaim space by deleting big toolchains the Espresso run
+      # never touches (.NET, Haskell/GHC, Swift, the CodeQL bundle, Docker
+      # images). Best-effort: never fail the job over cleanup.
+      - name: Free disk space for the emulator
+        if: needs.changes.outputs.android == 'true'
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/share/swift \
+            /opt/hostedtoolcache/CodeQL || true
+          sudo docker image prune -af || true
+          df -h / | tail -1
+
       - name: Checkout
         if: needs.changes.outputs.android == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
