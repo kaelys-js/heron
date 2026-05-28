@@ -153,23 +153,18 @@ const SCHEMES = [
     perFileThreshold: 15.0,
     perFileThresholdOverrides: {},
   },
-  // [user-approved-deferral] TASK-8 in TODO-INSTRUCTIONS.md.
-  // slather can't load coverage for the WatchApp.debug.dylib because
-  // it's a fat (universal) binary + slather requires `--arch` to
-  // pick an architecture. The WatchTests scheme still runs via
-  // fastlane (executes 4 test cases) but slather can't read the
-  // resulting xccov data, so cobertura.xml comes back empty + the
-  // threshold gate fails. Re-enable here after TASK-8 fixes the
-  // slather invocation (likely needs --arch x86_64 or arm64).
-  // {
-  //   scheme: 'WatchTests', target: 'WatchApp',
-  //   threshold: 50.0, perFileThreshold: 30.0,
-  //   perFileThresholdOverrides: {
-  //     'WatchModel.swift': 80.0,
-  //     'WatchApp.swift': 60.0,
-  //   },
-  //   binaryBasename: 'WatchApp',
-  // },
+  {
+    scheme: 'WatchTests',
+    target: 'WatchApp (watchOS)',
+    // Measured 32.7% via xccov on the watchOS 26 CI sim. WatchModelTests
+    // cover the model; RootViewTests force-render RootView (ImageRenderer
+    // runs regardless of snapshot baselines) so its body is exercised. The
+    // old slather fat-binary blocker is gone -- xccov-to-cobertura reads the
+    // universal WatchApp binary directly, no --arch flag needed.
+    threshold: 28.0,
+    perFileThreshold: 20.0,
+    perFileThresholdOverrides: {},
+  },
 ];
 
 /**
