@@ -118,6 +118,7 @@
     "screenshots:dev": "BASE_URL=http://localhost:5173 node scripts/system/capture-screenshots.mjs",
     "screenshots:diff:test": "node scripts/system/screenshot-diff.test.mjs",
     "screenshots:fast": "node scripts/system/capture-screenshots.mjs --skip-build --skip-seed",
+    "screenshots:ios": "node scripts/native/capture-ios-screenshots.mjs",
     "screenshots:seed": "node scripts/system/seed-demo-data.mjs",
     "screenshots:seed:test": "node scripts/system/seed-demo-data.test.mjs",
     "screenshots:serve": "node scripts/system/capture-screenshots.mjs --serve",

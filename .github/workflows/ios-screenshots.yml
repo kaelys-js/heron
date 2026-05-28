@@ -1,0 +1,60 @@
+name: iOS screenshots
+
+# Generates App Store screenshots via XCUITest (AppUITests/ScreenshotUITests)
+# against a seeded screenshot-mode backend, then uploads them as artifacts for
+# review. Manual only (workflow_dispatch): macOS minutes are costly and the
+# native test jobs are intentionally gated, so this runs on demand when the
+# store art needs a refresh -- not on every push.
+#
+# `pnpm screenshots:ios` does the whole dance: build the Capacitor static shell,
+# clean `cap sync ios` (no server.url, so the WebView loads the bundled app),
+# boot the seeded HERON_SCREENSHOT_MODE=1 server on :4173 (auth bypass + demo
+# data), then run `fastlane screenshots` pointed at it. The app's screenshot
+# injection (BridgeViewController + window.__HERON_SCREENSHOTS__) makes the
+# resolver + auth gate short-circuit so the real dashboard paints.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-screenshots
+  cancel-in-progress: false
+
+jobs:
+  screenshots:
+    name: Capture iOS App Store screenshots
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      # mise (Node + pnpm + Ruby from .mise.toml) + pnpm install --frozen-lockfile.
+      - name: Setup toolchain
+        uses: ./.github/actions/setup-toolchain
+
+      # fastlane lives in ui/ios/App/Gemfile; install it before the lane runs.
+      - name: Install fastlane gems
+        working-directory: ui/ios/App
+        run: bundle install
+
+      - name: Capture iOS screenshots
+        run: pnpm screenshots:ios
+
+      - name: Upload screenshots
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ios-app-store-screenshots
+          path: ui/ios/App/fastlane/screenshots/**
+          if-no-files-found: warn

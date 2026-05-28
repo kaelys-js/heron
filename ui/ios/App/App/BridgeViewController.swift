@@ -16,7 +16,7 @@ import WebKit
 // customClass at this class. (If that wiring ever breaks again, AppDelegate's
 // root-VC guard self-heals by installing a BridgeViewController programmatically
 // — see AppDelegate.ensureBridgeRoot.)
-class BridgeViewController: CAPBridgeViewController {
+class BridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
     /// Brand-dark background applied natively BEFORE the WebView paints, so
     /// there's never a white/black flash. Hex #0e1014 = RGB(14,16,20).
     private let brandDarkBg = UIColor(
@@ -39,6 +39,84 @@ class BridgeViewController: CAPBridgeViewController {
         webView?.backgroundColor = brandDarkBg
         webView?.isOpaque = false
         webView?.scrollView.backgroundColor = brandDarkBg
+        injectScreenshotModeIfRequested()
+    }
+
+    // MARK: - Screenshot mode (XCUITest / fastlane snapshot)
+
+    /// When launched by the screenshot harness (the `--heron-screenshots` launch
+    /// argument), inject a document-start user script that points the WebView at
+    /// the seeded screenshot-mode backend (read from the `HERON_SCREENSHOT_BACKEND`
+    /// launch-environment value) and marks the client authed -- so the dashboard
+    /// renders instead of the connect / login gate. A reload is required because
+    /// Capacitor's `super.viewDidLoad()` already kicked off the first navigation
+    /// before user scripts could be registered; reloading re-runs it at document
+    /// start. No-op in normal launches.
+    private func injectScreenshotModeIfRequested() {
+        guard ProcessInfo.processInfo.arguments.contains("--heron-screenshots") else { return }
+        guard let webView = webView else { return }
+        let backend = ProcessInfo.processInfo.environment["HERON_SCREENSHOT_BACKEND"] ?? ""
+        let payloadJSON =
+            (try? String(
+                data: JSONSerialization.data(withJSONObject: ["backend": backend]),
+                encoding: .utf8
+            )) ?? "{}"
+        // Forward JS boot errors to NSLog so a failed screenshot run (the
+        // dashboard never paints) is diagnosable from the CI/sim log instead of
+        // a black box. Only installed in screenshot mode.
+        webView.configuration.userContentController.add(self, name: "heronDiag")
+        let js = """
+        (function () {
+          var post = function (tag, msg) {
+            try { window.webkit.messageHandlers.heronDiag.postMessage(tag + ": " + msg); } catch (e) {}
+          };
+          try {
+            window.__HERON_SCREENSHOTS__ = \(payloadJSON);
+            localStorage.setItem("\(Brand.name):authed", "1");
+          } catch (e) { post("inject-error", String(e)); }
+          window.addEventListener("error", function (e) {
+            post("js-error", (e.message || "") + " @ " + (e.filename || "") + ":" + (e.lineno || ""));
+          });
+          // Capture phase catches RESOURCE load failures (script/css 404s) which
+          // don't bubble to the bubble-phase handler above.
+          window.addEventListener("error", function (e) {
+            var t = e.target || {};
+            if (t && (t.src || t.href)) post("res-error", (t.tagName || "?") + " " + (t.src || t.href));
+          }, true);
+          window.addEventListener("unhandledrejection", function (e) {
+            var r = e.reason;
+            post("js-reject", String((r && (r.stack || r.message)) || r));
+          });
+          var snap = function (when) {
+            try {
+              var b = document.body;
+              post("dom@" + when,
+                "ready=" + (document.documentElement.dataset.appReady || "0") +
+                " txt=" + (b ? b.innerText.trim().length : -1) +
+                " kids=" + (b ? b.children.length : -1) +
+                " scripts=" + document.scripts.length +
+                " href=" + location.href);
+            } catch (e) { post("snap-error", String(e)); }
+          };
+          setTimeout(function () { snap("2s"); }, 2000);
+          setTimeout(function () { snap("6s"); }, 6000);
+          setTimeout(function () { snap("11s"); }, 11000);
+          post("armed", "diag installed");
+        })();
+        """
+        let script = WKUserScript(source: js, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+        webView.configuration.userContentController.addUserScript(script)
+        NSLog("[Heron] screenshot mode armed (backend=%@)", backend)
+        webView.reload()
+    }
+
+    /// Receives the screenshot-mode JS diagnostics (boot errors / rejections)
+    /// posted by the injected script above and mirrors them to NSLog.
+    func userContentController(
+        _: WKUserContentController, didReceive message: WKScriptMessage
+    ) {
+        guard message.name == "heronDiag" else { return }
+        NSLog("[Heron][js] %@", String(describing: message.body))
     }
 
     override func capacitorDidLoad() {

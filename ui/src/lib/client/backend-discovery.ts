@@ -154,6 +154,16 @@ const GLOBAL_RESOLVE_TIMEOUT_MS = 10_000;
  * "Connecting…" forever.
  */
 export async function resolveBackend(opts: ResolverOptions = {}): Promise<ResolvedBackend> {
+  // Screenshot mode: the iOS XCUITest harness (and the local capture script)
+  // inject `window.__HERON_SCREENSHOTS__ = { backend }` at document-start, so
+  // the seeded screenshot-mode server is used directly instead of running the
+  // dev -> mDNS -> Tailscale -> prod ladder (which has no answer in the sim/CI).
+  // Short-circuit before the race so the global resolve timeout never applies.
+  const shot = (globalThis as { __HERON_SCREENSHOTS__?: { backend?: string } })
+    .__HERON_SCREENSHOTS__;
+  if (shot?.backend) {
+    return { url: shot.backend.replace(/\/+$/, ''), source: 'manual', resolvedAt: Date.now() };
+  }
   return Promise.race([
     resolveBackendInner(opts),
     new Promise<ResolvedBackend>((_, reject) =>

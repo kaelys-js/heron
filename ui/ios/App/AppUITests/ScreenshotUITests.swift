@@ -24,6 +24,17 @@ final class ScreenshotUITests: XCTestCase {
 
     func testCaptureKeyScreens() {
         let app = XCUIApplication()
+        // Screenshot mode: when the capture harness provides a seeded backend
+        // (HERON_SCREENSHOT_BACKEND in the test runner's environment), forward it
+        // to the app via a launch arg + launch-environment. BridgeViewController
+        // then points the WebView at it and marks the client authed, so we
+        // capture the real dashboard instead of the connect screen. Absent the
+        // env var the test runs backend-less (best-effort) exactly as before.
+        let backend = ProcessInfo.processInfo.environment["HERON_SCREENSHOT_BACKEND"] ?? ""
+        if !backend.isEmpty {
+            app.launchArguments += ["--heron-screenshots"]
+            app.launchEnvironment["HERON_SCREENSHOT_BACKEND"] = backend
+        }
         setupSnapshot(app)
         app.launch()
 

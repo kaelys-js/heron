@@ -451,6 +451,13 @@
     // PUBLIC_ROUTES + onboarding remain reachable in both layers.
     if (
       typeof window !== 'undefined' &&
+      // Screenshot mode (XCUITest / capture harness) injects a seeded backend +
+      // server-side auth bypass via window.__HERON_SCREENSHOTS__. Better Auth's
+      // get-session has no real cookie there, so the layer-2 probe below would
+      // scrub the flag and bounce to /login -- skip the whole gate so the seeded
+      // dashboard renders. Inert in production (the global is only set by the
+      // native screenshot injection), same short-circuit as resolveBackend().
+      !(window as { __HERON_SCREENSHOTS__?: unknown }).__HERON_SCREENSHOTS__ &&
       !isPublicRoute(window.location.pathname) &&
       !window.location.protocol.startsWith('http')
     ) {
