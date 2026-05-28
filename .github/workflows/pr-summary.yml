@@ -55,6 +55,7 @@ jobs:
       actions: read # list runs + download artifacts for the head SHA
       pull-requests: write # upsert comment, edit description, delete old comments
       contents: read # checkout main for the scripts + composite action
+      statuses: write # post the "PR summary / fresh" commit status on the head SHA
     if: |
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.event == 'pull_request' &&
@@ -103,6 +104,7 @@ jobs:
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
 
       - name: Gather domain summary artifacts for the head SHA
+        id: gather
         if: steps.ctx.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -111,10 +113,12 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p flat
+          # One listing of every run for this SHA feeds both the artifact
+          # download AND the completed-producer set below.
+          runs_json=$(gh api "repos/$GH_REPO/actions/runs?head_sha=$HEAD_SHA&per_page=100")
           # Every completed run for this SHA may carry a `summary-<domain>`
           # artifact. Download whatever exists; flatten to flat/<domain>.md.
-          RUN_IDS=$(gh api "repos/$GH_REPO/actions/runs?head_sha=$HEAD_SHA&per_page=100" \
-            --jq '.workflow_runs[] | select(.status=="completed") | .id')
+          RUN_IDS=$(echo "$runs_json" | jq -r '.workflow_runs[] | select(.status=="completed") | .id')
           for rid in $RUN_IDS; do
             gh run download "$rid" --repo "$GH_REPO" --pattern 'summary-*' --dir "raw-$rid" 2>/dev/null || true
           done
@@ -122,6 +126,20 @@ jobs:
           find . -path './raw-*' -name '*.md' -exec cp -f {} flat/ \; 2>/dev/null || true
           gathered=$(find flat -maxdepth 1 -type f -name '*.md' -printf '%f ' 2>/dev/null || true)
           echo "::notice::Gathered summaries: ${gathered:-none}"
+          # Which producer comment-workflows have a COMPLETED run for this SHA?
+          # Map "PR <domain> comment" -> "<domain>" so the assembler can render
+          # a finished-but-silent producer as "not reported" rather than leave
+          # it stuck on "pending" forever (the bug that made the comment look
+          # perpetually incomplete).
+          completed=$(echo "$runs_json" | jq -r '
+            [ .workflow_runs[]
+              | select(.status=="completed")
+              | .name
+              | select(startswith("PR ") and endswith(" comment"))
+              | ltrimstr("PR ") | rtrimstr(" comment") ]
+            | unique | join(",")')
+          echo "completed=$completed" >> "$GITHUB_OUTPUT"
+          echo "::notice::Completed producers: ${completed:-none}"
 
       - name: Assemble the unified comment + description block
         if: steps.ctx.outputs.skip != 'true'
@@ -129,11 +147,14 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           PR_NUM: ${{ steps.ctx.outputs.pr_num }}
+          HEAD_SHA: ${{ steps.ctx.outputs.head_sha }}
+          COMPLETED: ${{ steps.gather.outputs.completed }}
         run: |
           set -euo pipefail
           gh pr view "$PR_NUM" --repo "$GH_REPO" --json body --jq '.body // ""' > desc.current.md
           node .github/scripts/sticky/assemble-summary.mjs \
-            --dir flat --out body.md --desc-in desc.current.md --desc-out desc.new.md
+            --dir flat --out body.md --sha "$HEAD_SHA" --completed "$COMPLETED" \
+            --desc-in desc.current.md --desc-out desc.new.md
 
       - name: Upsert the unified summary comment
         if: steps.ctx.outputs.skip != 'true'
@@ -183,3 +204,27 @@ jobs:
               esac
             done
           done < comments.tsv
+
+      # The "PR summary / fresh" required check. A success status here means the
+      # unified summary was (re)rendered + upserted for THIS exact commit. A new
+      # commit starts with no such status, so branch protection holds the merge
+      # as "Expected -- waiting for status" until this workflow re-runs for the
+      # new head SHA and posts success. That's what forces the summary to be
+      # current on every commit. Only runs after the upsert succeeded (above),
+      # so a render failure fails loud + keeps blocking rather than marking
+      # a broken summary "fresh".
+      - name: Mark PR summary fresh for this commit
+        if: steps.ctx.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ steps.ctx.outputs.head_sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          gh api -X POST "repos/$GH_REPO/statuses/$HEAD_SHA" \
+            -f state=success \
+            -f context="PR summary / fresh" \
+            -f target_url="$RUN_URL" \
+            -f "description=Summary rendered for ${HEAD_SHA:0:7}" >/dev/null
+          echo "::notice::Posted 'PR summary / fresh' = success on $HEAD_SHA"

@@ -334,6 +334,98 @@ if (state.apple.MAC_CERTIFICATE && (await confirm('  Re-use stored Mac cert?', t
 }
 
 // ───────────────────────────────────────────────────────────────────
+step('6b', 'Mac App Store signing (optional — electron-builder `mas` target)');
+info('Only needed to ship the DESKTOP app via the Mac App Store.');
+info('The notarised DMG (step 6) ships without this. Skip if unsure.');
+if (
+  state.apple.MAC_MAS_CERTIFICATE &&
+  state.apple.MAC_PROVISIONING_PROFILE_BASE64 &&
+  (await confirm('  Re-use stored Mac App Store signing config?', true))
+) {
+  ok('using stored Mac App Store config');
+} else if (await confirm('  Set up Mac App Store signing now?', false)) {
+  info("Two certs + one provisioning profile must exist in Apple's portal first");
+  info('(unlike iOS, there is no API to auto-create these):');
+  info('  - "Apple Distribution" cert        (developer.apple.com → Certificates → +)');
+  info('  - "Mac Installer Distribution" cert (same page)');
+  info('  - a "Mac App Store" provisioning profile for the brand.json bundle id');
+  info('    (developer.apple.com → Profiles → + → Mac App Store)');
+  info('  Install both certs into Keychain Access; download the .provisionprofile.');
+  if (await confirm('  Open the certificates page now?', true)) {
+    openUrl('https://developer.apple.com/account/resources/certificates/list');
+  }
+
+  // The installer cert is NOT a codesigning identity, so query the basic
+  // policy (find-identity -v), not -p codesigning.
+  let allIdent = '';
+  try {
+    allIdent = capture('security', ['find-identity', '-v']);
+  } catch {}
+  const hasAppDist = /Apple Distribution|3rd Party Mac Developer Application/.test(allIdent);
+  const hasInstaller = /Mac Installer Distribution|3rd Party Mac Developer Installer/.test(
+    allIdent,
+  );
+
+  const masPwd = await ask('  Export password for the MAS .p12 (used by CI)', { hidden: true });
+  if (!masPwd) {
+    fail('Password required.');
+    process.exit(1);
+  }
+
+  const masP12 = '/tmp/heron-mas-cert.p12';
+  let exported = false;
+  if (hasAppDist && hasInstaller) {
+    ok('found Apple Distribution + Mac Installer Distribution in the keychain');
+    info(`Exporting signing identities to ${masP12}`);
+    info('Keychain Access will prompt for your login password to authorize the export.');
+    try {
+      execSync(
+        `security export -k login.keychain-db -t identities -f pkcs12 -P "${masPwd}" -o "${masP12}"`,
+        { stdio: 'inherit' },
+      );
+      exported = true;
+    } catch {
+      warn('automatic export failed — fall back to a manual Keychain Access export.');
+    }
+  } else {
+    warn('Apple Distribution and/or Mac Installer Distribution not found in the keychain.');
+    info('Create + install both (links above), then re-run this step or export manually.');
+  }
+  if (!exported) {
+    info('Keychain Access → My Certificates → select BOTH the "Apple Distribution" and');
+    info('"Mac Installer Distribution" certs → right-click → Export 2 items → save .p12');
+    info('with the SAME password you just entered.');
+    const manual = await ask('  Path to the exported MAS .p12 (Enter to skip MAS setup)', {
+      default: '',
+    });
+    if (!manual) {
+      warn('Skipped Mac App Store signing. Re-run setup:native when ready.');
+    } else if (!existsSync(manual)) {
+      fail(`not found: ${manual}`);
+      process.exit(1);
+    } else {
+      execSync(`cp "${manual}" "${masP12}"`);
+      exported = true;
+    }
+  }
+
+  if (exported) {
+    const profilePath = await ask('  Path to the downloaded Mac App Store .provisionprofile');
+    if (!profilePath || !existsSync(profilePath)) {
+      fail(`provisioning profile not found: ${profilePath}`);
+      process.exit(1);
+    }
+    state.apple.MAC_MAS_CERTIFICATE = capture('base64', ['-i', masP12]);
+    state.apple.MAC_MAS_CERTIFICATE_PASSWORD = masPwd;
+    state.apple.MAC_PROVISIONING_PROFILE_BASE64 = capture('base64', ['-i', profilePath]);
+    writeState(state);
+    ok('Mac App Store cert + provisioning profile stashed in state');
+  }
+} else {
+  info('Skipped Mac App Store signing.');
+}
+
+// ───────────────────────────────────────────────────────────────────
 // ─── iOS code signing (Fastlane match, auto-provisioned) ────────────
 // match keeps the Apple Distribution cert + every provisioning profile in
 // ONE encrypted PRIVATE git repo. We auto-create that repo + a repo-scoped
@@ -467,6 +559,9 @@ const envBody = [
   `export APP_STORE_CONNECT_PRIVATE_KEY="${Buffer.from(state.apple.APP_STORE_CONNECT_KEY ?? '').toString('base64')}"`,
   `export MAC_CERTIFICATE="${state.apple.MAC_CERTIFICATE ?? ''}"`,
   `export MAC_CERTIFICATE_PASSWORD="${state.apple.MAC_CERTIFICATE_PASSWORD}"`,
+  `export MAC_MAS_CERTIFICATE="${state.apple.MAC_MAS_CERTIFICATE ?? ''}"`,
+  `export MAC_MAS_CERTIFICATE_PASSWORD="${state.apple.MAC_MAS_CERTIFICATE_PASSWORD ?? ''}"`,
+  `export MAC_PROVISIONING_PROFILE_BASE64="${state.apple.MAC_PROVISIONING_PROFILE_BASE64 ?? ''}"`,
   `export MATCH_GIT_URL="${state.apple.MATCH_GIT_URL ?? ''}"`,
   `export MATCH_PASSWORD="${state.apple.MATCH_PASSWORD ?? ''}"`,
   '',
@@ -493,6 +588,12 @@ const secrets = {
   ),
   MAC_CERTIFICATE: state.apple.MAC_CERTIFICATE,
   MAC_CERTIFICATE_PASSWORD: state.apple.MAC_CERTIFICATE_PASSWORD,
+  // Mac App Store (electron-builder `mas` target) -- only pushed when step 6b
+  // provisioned them; the loop below skips empty values, so a DMG-only setup
+  // leaves these unset and MAS signing cleanly skips in native-release.yml.
+  MAC_MAS_CERTIFICATE: state.apple.MAC_MAS_CERTIFICATE,
+  MAC_MAS_CERTIFICATE_PASSWORD: state.apple.MAC_MAS_CERTIFICATE_PASSWORD,
+  MAC_PROVISIONING_PROFILE_BASE64: state.apple.MAC_PROVISIONING_PROFILE_BASE64,
   MATCH_GIT_URL: state.apple.MATCH_GIT_URL,
   MATCH_PASSWORD: state.apple.MATCH_PASSWORD,
   // Repo-scoped SSH deploy key (read-write) so CI can clone the private

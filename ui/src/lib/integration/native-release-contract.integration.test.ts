@@ -231,13 +231,16 @@ describe('native-release contract — TestFlight internal delivery invites the m
     expect(iosFastfile).toMatch(/skip_waiting_for_build_processing:\s*false/);
     expect(iosFastfile).not.toMatch(/skip_waiting_for_build_processing:\s*true/);
   });
-  it('beta explicitly sets whatsToTest on the uploaded build (reliability net)', () => {
+  it('beta explicitly sets whatsNew on the uploaded build (reliability net)', () => {
     // ASC diagnosis showed the changelog param alone left every build with NO
     // betaBuildLocalizations. The beta lane must explicitly create/update the
-    // en-US whatsToTest on the build it just uploaded so notes reliably appear.
+    // en-US notes on the build it just uploaded so they reliably appear. The
+    // ASC attribute for TestFlight "What to Test" is `whatsNew`, NOT
+    // `whatsToTest` (a live upload proved ASC rejects whatsToTest as unknown).
     expect(iosFastfile).toContain('set_whats_to_test');
     expect(iosFastfile).toContain('betaBuildLocalizations');
-    expect(iosFastfile).toMatch(/whatsToTest/);
+    expect(iosFastfile).toMatch(/whatsNew/);
+    expect(iosFastfile, 'whatsToTest is not a valid ASC attribute').not.toMatch(/whatsToTest/);
     // Regression pin: the build lookup MUST use spaceship's real keywords
     // (app_id: + build_number:). The old `filter:` hash raised
     // ArgumentError on the first call, so the lane silently no-op'd and

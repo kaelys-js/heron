@@ -53,6 +53,7 @@
           { "context": "PR content gates / File extensions allowlist" },
           { "context": "PR content gates / No personal identity in commits" },
           { "context": "CodeRabbit threads / Unresolved CodeRabbit threads" },
+          { "context": "PR summary / fresh" },
           { "context": "DCO" }
         ]
       }

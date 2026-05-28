@@ -408,6 +408,9 @@ describe('doc-meta convention — every in-scope .md has AUTO-GENERATED:doc-meta
         'test-results',
         'playwright-report',
         'lost-pixel',
+        // Agent-local state incl. gitignored worktree copies
+        // (.claude/worktrees/<id>/ is a full repo checkout, not our docs).
+        '.claude',
       ]);
       const fullDir = path.join(REPO_ROOT, dir);
       if (!fs.existsSync(fullDir)) return acc;

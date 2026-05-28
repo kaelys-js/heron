@@ -89,6 +89,19 @@ it('toSummary: structures md; detail empty for prose-only', () => {
   assert.equal(prose.detail, '', 'prose-only -> no collapsible');
 });
 
+it('toSummary: missing md is pending; completed producer -> not reported', () => {
+  // No markdown + producer not finished -> still pending (waiting on artifact).
+  assert.equal(toSummary('perf', null).status, 'pending');
+  assert.equal(toSummary('perf', null, new Set()).status, 'pending');
+  // No markdown but the producer COMPLETED for this commit -> not reported.
+  assert.equal(toSummary('perf', null, new Set(['perf'])).status, 'skip');
+  // A completed producer that DID emit md still derives from the md.
+  assert.equal(
+    toSummary('perf', mk(EMOJI.pass, 'Lighthouse: ok'), new Set(['perf'])).status,
+    'pass',
+  );
+});
+
 // ── classify ─────────────────────────────────────────────────────
 it('classify: groups by status', () => {
   const g = classify([

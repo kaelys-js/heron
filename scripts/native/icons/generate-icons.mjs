@@ -21,8 +21,9 @@
 import fs from 'node:fs/promises';
 import { readFileSync as fsReadFileSync, accessSync, constants as fsConstants } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
 // Safe PATH allowlist for resolving auxiliary build tools (iconutil,
@@ -123,19 +124,43 @@ async function ensureDirs() {
 }
 
 async function loadSharp() {
-  // sharp is installed inside ui/node_modules. Try the direct path first
-  // (when this script is invoked from any cwd), then fall back to the
-  // unqualified import for when it's run from ui/.
-  const candidates = [path.join(ROOT, 'ui/node_modules/sharp/lib/index.js'), 'sharp'];
-  for (const c of candidates) {
+  // sharp is a `ui`-workspace dependency. Resolving it from this script (run
+  // from the repo root) has two cross-platform traps that the previous
+  // try/next/swallow loop hid behind a misleading "Missing peer dep":
+  //   1. A bare `import('sharp')` can't see sharp from the repo-root cwd under
+  //      pnpm's `node-linker=isolated` -- sharp lives in ui/node_modules, not
+  //      hoisted to the root, so bare resolution misses it.
+  //   2. A raw ABSOLUTE path can't be handed to dynamic import() on Windows:
+  //      `C:\...\index.js` parses as a URL whose scheme is `c:`, so import()
+  //      throws ERR_UNSUPPORTED_ESM_URL_SCHEME. POSIX absolute paths import
+  //      fine, which is why ubuntu/macOS passed and only Windows failed here.
+  //      Every path candidate must go through pathToFileURL() first.
+  const require = createRequire(import.meta.url);
+  const attempts = [
+    // Resolve sharp's entry from the ui workspace regardless of cwd.
+    () => require.resolve('sharp', { paths: [path.join(ROOT, 'ui')] }),
+    // Explicit fallback to the known on-disk entry.
+    () => path.join(ROOT, 'ui/node_modules/sharp/lib/index.js'),
+  ];
+  const errors = [];
+  for (const resolve of attempts) {
     try {
-      const mod = await import(c);
+      const mod = await import(pathToFileURL(resolve()).href);
       return mod.default ?? mod;
-    } catch {
-      /* try next */
+    } catch (e) {
+      errors.push(e.message);
     }
   }
-  console.error('Missing peer dep "sharp". Install with: cd ui && pnpm add -D sharp');
+  // Last resort: bare specifier (works only when invoked from inside ui/).
+  try {
+    const mod = await import('sharp');
+    return mod.default ?? mod;
+  } catch (e) {
+    errors.push(e.message);
+  }
+  console.error('Could not load sharp. Tried, in order:');
+  for (const e of errors) console.error(`  - ${e}`);
+  console.error('If sharp is genuinely missing: cd ui && pnpm add -D sharp');
   process.exit(1);
 }
 

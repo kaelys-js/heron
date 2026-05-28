@@ -76,6 +76,7 @@ const SKIP_DIRS = new Set([
   'data', // gitignored user-runtime data
   'reports', // user-layer
   'output', // user-layer
+  '.claude', // agent-local state incl. gitignored worktree copies (.claude/worktrees/*)
 ]);
 
 // Local schema URLs we know about -- speeds up resolution when a schema

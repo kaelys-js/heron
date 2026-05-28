@@ -105,11 +105,18 @@ export function hasBreakdown(detail) {
   return /\n?\s*\|.*\|/.test(detail) || detail.includes('<details');
 }
 
-/** Adapter / contract shape: md -> { domain, status, headline, detail }. */
-export function toSummary(domain, md) {
+/** Adapter / contract shape: md -> { domain, status, headline, detail }.
+ *  `completed` is the set of domains whose producer workflow has already
+ *  finished for this commit: a domain with no markdown is 'pending' by
+ *  default, but if its producer already completed and emitted nothing, the
+ *  check ran with nothing to report -> render "not reported" (skip) instead
+ *  of a stuck "pending". */
+export function toSummary(domain, md, completed) {
+  let status = deriveState(md);
+  if (status === 'pending' && completed && completed.has(domain)) status = 'skip';
   return {
     domain,
-    status: deriveState(md),
+    status,
     headline: headlineOf(domain, md),
     detail: hasBreakdown(detailOf(md)) ? detailOf(md) : '',
   };
@@ -208,12 +215,16 @@ export function replaceDescriptionBlock(descBody, entries) {
   return re.test(body) ? body.replace(re, block) : `${body.trimEnd()}\n\n${block}\n`;
 }
 
-/** Build entries (in ORDER) from a directory of `<domain>.md` files. */
-export function buildEntries(dir) {
+/** Build entries (in ORDER) from a directory of `<domain>.md` files.
+ *  `completed` (array or Set of domain slugs) marks producers that finished
+ *  for this commit, so missing-but-completed domains read "not reported"
+ *  rather than "pending". */
+export function buildEntries(dir, completed) {
+  const done = completed instanceof Set ? completed : new Set(completed || []);
   return ORDER.map((domain) => {
     const p = join(dir, `${domain}.md`);
     const md = existsSync(p) ? readFileSync(p, 'utf8') : null;
-    return toSummary(domain, md);
+    return toSummary(domain, md, done);
   });
 }
 
@@ -226,9 +237,16 @@ function main() {
   const dir = arg('--dir') ?? '.';
   const out = arg('--out');
   const sha = arg('--sha');
+  const completedArg = arg('--completed');
+  const completed = completedArg
+    ? completedArg
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
   const descIn = arg('--desc-in');
   const descOut = arg('--desc-out');
-  const entries = buildEntries(dir);
+  const entries = buildEntries(dir, completed);
   const body = renderComment(entries, { sha });
 
   if (out) writeFileSync(out, body);

@@ -55,12 +55,18 @@ jobs:
           RULESET_DIR = ROOT / '.github' / 'rulesets'
           WORKFLOW_DIR = ROOT / '.github' / 'workflows'
 
-          # Allowlist: contexts provided by GitHub Apps that aren't workflow jobs
+          # Allowlist: contexts that are NOT a workflow `name: / job name:` pair.
+          # GitHub-App checks (DCO, CodeQL) and commit statuses posted via the
+          # REST API (PR summary freshness) live here -- the parser below can't
+          # see them in any workflow file, but they're real required checks.
           ALLOWLIST = {
               "DCO",                                              # github.com/apps/dco
               "CodeQL Analysis / Analyze (javascript-typescript)",
               "CodeQL Analysis / Analyze (python)",
               "CodeQL Analysis / Analyze (swift)",
+              # Posted via the statuses API by pr-summary.yml's
+              # "Mark PR summary fresh for this commit" step, not a job.
+              "PR summary / fresh",
           }
 
           # Parse all workflow files into a set of "Workflow name / job display name"
